@@ -18,6 +18,28 @@ that refusal rather than trusting it.
 
 ---
 
+## 1.9.0
+
+**Reviews from Dream Code Reviews are exported.** (Integrator, 1 October 2026)
+
+- The owner's storefront showed reviews from his own plugin, Dream Code
+  Reviews, which keeps them in `wp_sorina_reviews` and hides WooCommerce's
+  reviews. The export read only `wp_comments`, so the reviews shoppers actually
+  saw -- including every copy made with the plugin's Assign / Duplicate, the
+  Booster Pro → Booster Set case -- never reached the new shop.
+- The reviews stage now reads that table after the comments, writing each row
+  to `reviews.csv` with `source = dream_code` and the plugin's row id. Photos
+  stored as attachment ids become addresses. A row with no product is the
+  plugin's review of the business and is written with no product.
+- A row that is the plugin's own "Sync WooCommerce reviews" copy of a comment
+  (same product, author, rating, text and date, compared as bytes) is not
+  written twice: its approval, likes, title and photos are carried on the
+  comment's row instead.
+- `reviews.csv` gains `helpful` (the plugin's likes, else WooCommerce Photo
+  Reviews' `wcpr_vote_up_count`, which was named as unused before) and
+  `source`. On a site without Dream Code Reviews nothing else changes.
+- Version moved 1.8.0 → 1.9.0 in all three places it lives.
+
 ## 1.8.0
 
 **Review photographs are now on the list of files to fetch.** (Lane IE2)

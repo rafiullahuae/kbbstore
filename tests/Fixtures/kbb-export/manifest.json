@@ -1,13 +1,13 @@
 {
     "format": "kbb-export/1",
-    "export_id": "e30786de-e634-4cfa-b7bb-69e6a7141cd6",
-    "generated_at": "2026-10-01T08:29:59+04:00",
+    "export_id": "3db6ef6e-184b-4e54-9b3b-41a0595b7ce6",
+    "generated_at": "2026-10-01T22:17:54+04:00",
     "source": {
         "site_url": "https://kbeautybliss.com",
         "home_url": "https://kbeautybliss.com",
         "wp_version": "6.5.2",
         "woo_version": "8.7.0",
-        "plugin_version": "1.8.0",
+        "plugin_version": "1.9.0",
         "timezone": "Asia/Dubai",
         "order_storage": "posts",
         "permalink_structure": "/%postname%/",
@@ -130,8 +130,8 @@
         },
         "reviews.csv": {
             "rows": 2,
-            "bytes": 866,
-            "sha256": "cf7938f7413f733adde924605293307d9baeb6037bc085e316208877a3cd5b5d"
+            "bytes": 919,
+            "sha256": "9504829443f2e11c4574f76c8bc7ca38e96ce00d6d936bb7b9a2996b72205586"
         },
         "posts.csv": {
             "rows": 3,

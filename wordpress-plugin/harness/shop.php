@@ -1123,3 +1123,63 @@ function kbb_harness_insert_hpos( callable $insert, array $order ) {
 		}
 	}
 }
+
+/**
+ * Dream Code Reviews' own table, `{$p}sorina_reviews` -- the owner's review
+ * plugin, which hides WooCommerce's reviews and shows these instead.
+ *
+ * OPT-IN (run-export.php --dream=1), and DROPPED otherwise, because the harness
+ * database is shared between runs and every test written before this table
+ * existed counts its reviews.csv without it.
+ *
+ * One of each shape his shop has, all on rows the base seed already made:
+ *   1  the plugin's "Sync WooCommerce reviews" copy of comment 8101, byte for
+ *      byte -- must FOLD into 8101's row (its 12 likes and its title win), not
+ *      become a second review
+ *   2  a review written in the plugin on the serum (4021), with a photograph
+ *      stored as an attachment id (9001)
+ *   3  Assign / Duplicate's copy of row 2 onto the toner (4022) -- the
+ *      Booster Pro → Booster Set case: a row of its own on the other product
+ *   4  a review of the BUSINESS (product_id 0)
+ *   5  a pending review
+ */
+function kbb_harness_dream_reviews( PDO $pdo, $p, $seed ) {
+	$table = $p . 'sorina_reviews';
+	$pdo->exec( "DROP TABLE IF EXISTS `{$table}`" );
+
+	if ( ! $seed ) {
+		return;
+	}
+
+	$pdo->exec( "CREATE TABLE `{$table}` (
+		id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+		product_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+		user_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+		author_name VARCHAR(150) NOT NULL DEFAULT '',
+		author_email VARCHAR(150) NOT NULL DEFAULT '',
+		rating TINYINT UNSIGNED NOT NULL DEFAULT 5,
+		title VARCHAR(200) NOT NULL DEFAULT '',
+		content TEXT NULL,
+		images TEXT NULL,
+		status VARCHAR(20) NOT NULL DEFAULT 'pending',
+		verified TINYINT(1) NOT NULL DEFAULT 0,
+		helpful INT UNSIGNED NOT NULL DEFAULT 0,
+		ip VARCHAR(60) NOT NULL DEFAULT '',
+		created_at DATETIME NULL DEFAULT NULL,
+		PRIMARY KEY (id), KEY product_id (product_id), KEY status (status)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci" );
+
+	$rows = array(
+		array( 1, 4021, 412, 'Layla', 'buyer@example.test', 5, 'Love it', 'Cleared my skin in a week', '', 'approved', 1, 12, '', '2024-03-01 10:00:00' ),
+		array( 2, 4021, 0, 'Mariam', 'mariam@example.test', 4, 'Nice texture', 'Sinks in fast, no stickiness.', '9001', 'approved', 1, 3, '198.51.100.7', '2024-05-02 12:00:00' ),
+		array( 3, 4022, 0, 'Mariam', 'mariam@example.test', 4, 'Nice texture', 'Sinks in fast, no stickiness.', '9001', 'approved', 1, 3, '198.51.100.7', '2024-05-02 12:00:00' ),
+		array( 4, 0, 0, 'Huda', 'huda@example.test', 5, 'Fast delivery', 'Arrived next morning, well packed.', '', 'approved', 0, 0, '', '2024-06-10 09:30:00' ),
+		array( 5, 4022, 0, 'Noor', 'noor@example.test', 3, '', 'Waiting to see results.', '', 'pending', 0, 0, '', '2024-07-01 08:00:00' ),
+	);
+
+	$stmt = $pdo->prepare( "INSERT INTO `{$table}` (id, product_id, user_id, author_name, author_email, rating, title, content, images, status, verified, helpful, ip, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)" );
+
+	foreach ( $rows as $row ) {
+		$stmt->execute( $row );
+	}
+}

@@ -81,6 +81,9 @@ $wpdb = new KBB_Harness_Wpdb( $pdo, $prefix );
 
 kbb_harness_build( $pdo, $prefix, $storage );
 
+// Dream Code Reviews' table: seeded with --dream=1, dropped otherwise (shop.php).
+kbb_harness_dream_reviews( $pdo, $prefix, isset( $args['dream'] ) && '1' === $args['dream'] );
+
 // The plugin, loaded exactly as WordPress would load it.
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-csv.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-wp.php';

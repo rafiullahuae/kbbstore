@@ -57,7 +57,7 @@ class KBB_Export_Stage_Reviews extends KBB_Export_Stage {
 		return array(
 			'comment_id', 'comment_post_id', 'comment_type', 'author', 'email', 'rating',
 			'title', 'content', 'comment_approved', 'comment_date', 'comment_date_gmt',
-			'verified', 'user_id', 'ip', 'reply', 'images',
+			'verified', 'user_id', 'ip', 'reply', 'images', 'helpful', 'source',
 		);
 	}
 
@@ -80,11 +80,17 @@ class KBB_Export_Stage_Reviews extends KBB_Export_Stage {
 
 		return (int) $wpdb->get_var(
 			'SELECT COUNT(*) FROM ' . $wpdb->prefix . 'comments c WHERE ' . $this->where()
-		);
+		) + $this->dream_count();
 	}
 
 	public function batch( $cursor, $limit ) {
 		global $wpdb;
+
+		// A negative cursor is the second phase: Dream Code Reviews' own table.
+		// -1 is its start, -(id + 1) resumes after row `id`. See dream_batch().
+		if ( (int) $cursor < 0 ) {
+			return $this->dream_batch( -(int) $cursor - 1, $limit );
+		}
 
 		$rows = $wpdb->get_results(
 			'SELECT c.comment_ID, c.comment_post_ID, c.comment_type, c.comment_author, c.comment_author_email,
@@ -103,6 +109,10 @@ class KBB_Export_Stage_Reviews extends KBB_Export_Stage {
 			$this->report_unrated();
 			$this->report_photographs();
 
+			if ( '' !== $this->dream_table() ) {
+				return array( 'rows' => array(), 'cursor' => -1, 'done' => false );
+			}
+
 			return array( 'rows' => array(), 'cursor' => (int) $cursor, 'done' => true );
 		}
 
@@ -112,9 +122,10 @@ class KBB_Export_Stage_Reviews extends KBB_Export_Stage {
 			$ids[] = (int) $row['comment_ID'];
 		}
 
-		$meta    = KBB_Export_Wp::comment_meta( $ids, array( 'rating', 'verified' ) );
+		$meta    = KBB_Export_Wp::comment_meta( $ids, array( 'rating', 'verified', 'wcpr_vote_up_count' ) );
 		$replies = $this->replies( $ids );
 		$photos  = $this->photographs( $ids );
+		$copies  = $this->dream_copies( $ids );
 
 		$normalised = 0;
 		$out        = array();
@@ -129,6 +140,18 @@ class KBB_Export_Stage_Reviews extends KBB_Export_Stage {
 				$type = 'review';
 			}
 
+			// The Dream Code copy of this very review, if the plugin's "Sync
+			// WooCommerce reviews" made one. That copy is what the old shop
+			// SHOWED -- its moderation state, its likes, its photos -- so it
+			// wins, and it is carried on this row rather than as a second
+			// review of the same words.
+			$copy   = isset( $copies[ $id ] ) ? $copies[ $id ] : null;
+			$images = isset( $photos[ $id ] ) ? $photos[ $id ] : array();
+
+			if ( null !== $copy ) {
+				$images = array_values( array_unique( array_merge( $images, KBB_Export_Review_Photos::image_urls( (string) $copy['images'] ) ) ) );
+			}
+
 			$out[] = array(
 				'comment_id'      => $id,
 				'comment_post_id' => (int) $row['comment_post_ID'],
@@ -140,22 +163,31 @@ class KBB_Export_Stage_Reviews extends KBB_Export_Stage {
 				// emitted blank rather than omitted, because Row::text() reads
 				// an absent column and a blank one the same way here and a file
 				// whose header matches the fixture is one less thing to check.
-				'title'           => '',
+				'title'           => null !== $copy ? (string) $copy['title'] : '',
 				'content'         => $row['comment_content'],
 				// '1' | '0' | 'spam' | 'trash', which is the exact vocabulary
 				// ReviewImporter::STATUS_MAP folds -- including 'trash', which
 				// it imports as `spam` with an adjustment saying so.
-				'comment_approved' => $row['comment_approved'],
+				'comment_approved' => null !== $copy ? $this->dream_status( (string) $copy['status'] ) : $row['comment_approved'],
 				'comment_date'     => $row['comment_date'],
 				'comment_date_gmt' => $row['comment_date_gmt'],
-				'verified'         => isset( $m['verified'] ) ? $this->yesno( $m['verified'] ) : 'no',
+				'verified'         => null !== $copy
+					? ( (int) $copy['verified'] ? 'yes' : 'no' )
+					: ( isset( $m['verified'] ) ? $this->yesno( $m['verified'] ) : 'no' ),
 				'user_id'          => (int) $row['user_id'] > 0 ? (int) $row['user_id'] : '',
 				'ip'               => $row['comment_author_IP'],
 				'reply'            => isset( $replies[ $id ] ) ? $replies[ $id ] : '',
 				// Pipe-separated, which is the separator ProductImporter
 				// already prefers for `images` on products -- one spelling of
 				// "a list of pictures" in this pipe rather than two.
-				'images'           => isset( $photos[ $id ] ) ? $this->pipes( $photos[ $id ] ) : '',
+				'images'           => $images ? $this->pipes( $images ) : '',
+				// Likes: the Dream Code copy's count when there is one, else
+				// WooCommerce Photo Reviews' own vote count, which the export
+				// used to name as unused meta and leave behind.
+				'helpful'          => null !== $copy
+					? (int) $copy['helpful']
+					: ( isset( $m['wcpr_vote_up_count'] ) ? max( 0, (int) $m['wcpr_vote_up_count'] ) : 0 ),
+				'source'           => 'wp_comment',
 			);
 		}
 
@@ -173,9 +205,218 @@ class KBB_Export_Stage_Reviews extends KBB_Export_Stage {
 		if ( $done ) {
 			$this->report_unrated();
 			$this->report_photographs();
+
+			if ( '' !== $this->dream_table() ) {
+				return array( 'rows' => $out, 'cursor' => -1, 'done' => false );
+			}
 		}
 
 		return array( 'rows' => $out, 'cursor' => (int) end( $ids ), 'done' => $done );
+	}
+
+	/* =====================================================================
+	 * DREAM CODE REVIEWS -- the owner's own plugin, `wp_sorina_reviews`.
+	 * =====================================================================
+	 *
+	 * His storefront did not show WooCommerce's reviews at all: Dream Code
+	 * Reviews removes the reviews tab and prints its own table. That table is
+	 * every review a shopper saw, including the copies he made with its
+	 * Assign / Duplicate (a PHYSICAL copy per target product -- so the Booster
+	 * Set's reviews are rows of their own, product_id = the set). Until this,
+	 * the export read wp_comments only, and on 1 October 2026 the PDRN Glow
+	 * Booster Set arrived with none of the reviews it showed on the old site.
+	 *
+	 * ONE REVIEW, NOT TWO. The plugin's "Sync WooCommerce reviews" copies each
+	 * comment into its table byte for byte: same product, author (blank becomes
+	 * 'Anonymous'), rating, content and date. Such a copy is folded INTO the
+	 * comment's row above (dream_copies) and skipped here (the NOT EXISTS in
+	 * dream_where), by the same predicate both ways, so the two phases can
+	 * never disagree about which rows are the same review. Compared as bytes
+	 * (CAST ... AS BINARY): the two tables can carry different collations, and
+	 * the copy is exact.
+	 *
+	 * product_id 0 is the plugin's REVIEW OF THE BUSINESS; it is written with
+	 * no product, which ReviewImporter imports as a business review.
+	 */
+
+	/** The table's name, or '' on a site without the plugin. */
+	private function dream_table() {
+		global $wpdb;
+
+		// Per instance, not `static`: a static outlives the stage, and the
+		// test harness runs many exports against different shops in one process.
+		if ( null === $this->dream_table ) {
+			$name  = $wpdb->prefix . 'sorina_reviews';
+			// The name is the site's own prefix plus a constant -- configuration,
+			// never input -- and the answer is compared EXACTLY below, so the
+			// LIKE's `_` wildcard cannot let a different table through.
+			$found = $wpdb->get_var( "SHOW TABLES LIKE '" . str_replace( array( "'", '\\' ), '', $name ) . "'" );
+
+			$this->dream_table = ( $found === $name ) ? $name : '';
+		}
+
+		return $this->dream_table;
+	}
+
+	/** @var string|null */
+	private $dream_table = null;
+
+	/** True when comment `c` is an exported review that row `s` is a byte-for-byte copy of. */
+	private function dream_same_as_comment() {
+		global $wpdb;
+
+		return "c.comment_post_ID = s.product_id
+			AND CAST(c.comment_content AS BINARY) = CAST(s.content AS BINARY)
+			AND c.comment_date = s.created_at
+			AND CAST(IF(c.comment_author = '', 'Anonymous', c.comment_author) AS BINARY) = CAST(s.author_name AS BINARY)
+			AND c.comment_post_ID IN (SELECT ID FROM {$wpdb->prefix}posts WHERE post_type = 'product')
+			AND EXISTS (SELECT 1 FROM {$wpdb->prefix}commentmeta cm WHERE cm.comment_id = c.comment_ID
+				AND cm.meta_key = 'rating' AND cm.meta_value <> '' AND CAST(cm.meta_value AS UNSIGNED) = s.rating)";
+	}
+
+	/** Rows of the table that are NOT a copy of an exported comment. */
+	private function dream_where() {
+		global $wpdb;
+
+		return 'NOT EXISTS (SELECT 1 FROM ' . $wpdb->prefix . 'comments c WHERE ' . $this->dream_same_as_comment() . ')';
+	}
+
+	private function dream_count() {
+		global $wpdb;
+
+		$table = $this->dream_table();
+
+		if ( '' === $table ) {
+			return 0;
+		}
+
+		return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $table . ' s WHERE ' . $this->dream_where() );
+	}
+
+	/**
+	 * The Dream Code copy of each of these comments, keyed by comment id.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function dream_copies( array $ids ) {
+		global $wpdb;
+
+		$table = $this->dream_table();
+
+		if ( '' === $table || empty( $ids ) ) {
+			return array();
+		}
+
+		$rows = (array) $wpdb->get_results(
+			'SELECT c.comment_ID AS cid, s.id, s.status, s.verified, s.helpful, s.title, s.images
+			 FROM ' . $wpdb->prefix . 'comments c
+			 JOIN ' . $table . ' s ON ' . $this->dream_same_as_comment() . '
+			 WHERE c.comment_ID IN (' . implode( ',', array_map( 'intval', $ids ) ) . ')
+			 ORDER BY s.id',
+			ARRAY_A
+		);
+
+		$out = array();
+
+		foreach ( $rows as $row ) {
+			$cid = (int) $row['cid'];
+
+			// The lowest id if the sync ever ran twice over one comment.
+			if ( ! isset( $out[ $cid ] ) ) {
+				$out[ $cid ] = $row;
+			}
+		}
+
+		return $out;
+	}
+
+	/** The plugin's status vocabulary onto WordPress's, which ReviewImporter folds. */
+	private function dream_status( $status ) {
+		switch ( strtolower( trim( $status ) ) ) {
+			case 'approved':
+				return '1';
+			case 'spam':
+				return 'spam';
+			case 'trash':
+				return 'trash';
+			default:
+				return '0';
+		}
+	}
+
+	private function dream_batch( $after, $limit ) {
+		global $wpdb;
+
+		$table = $this->dream_table();
+
+		if ( '' === $table ) {
+			return array( 'rows' => array(), 'cursor' => -1, 'done' => true );
+		}
+
+		$rows = (array) $wpdb->get_results(
+			'SELECT s.* FROM ' . $table . ' s
+			 WHERE s.id > ' . (int) $after . ' AND ' . $this->dream_where() . '
+			 ORDER BY s.id
+			 LIMIT ' . (int) $limit,
+			ARRAY_A
+		);
+
+		$out  = array();
+		$last = (int) $after;
+
+		foreach ( $rows as $row ) {
+			$last    = (int) $row['id'];
+			$product = (int) $row['product_id'];
+			$images  = KBB_Export_Review_Photos::image_urls( (string) $row['images'] );
+
+			$out[] = array(
+				'comment_id'       => $last,
+				// Blank, not 0, for the plugin's business reviews: a row that
+				// names no product is ReviewImporter's review of the shop.
+				'comment_post_id'  => $product > 0 ? $product : '',
+				'comment_type'     => 'review',
+				'author'           => (string) $row['author_name'],
+				'email'            => (string) $row['author_email'],
+				'rating'           => (int) $row['rating'],
+				'title'            => (string) $row['title'],
+				'content'          => (string) $row['content'],
+				'comment_approved' => $this->dream_status( (string) $row['status'] ),
+				'comment_date'     => (string) $row['created_at'],
+				'comment_date_gmt' => '',
+				'verified'         => (int) $row['verified'] ? 'yes' : 'no',
+				'user_id'          => (int) $row['user_id'] > 0 ? (int) $row['user_id'] : '',
+				'ip'               => (string) $row['ip'],
+				'reply'            => '',
+				'images'           => $images ? $this->pipes( $images ) : '',
+				'helpful'          => max( 0, (int) $row['helpful'] ),
+				'source'           => 'dream_code',
+			);
+		}
+
+		$done = count( $rows ) < (int) $limit;
+
+		if ( $done ) {
+			$this->report_dream( $table );
+		}
+
+		return array( 'rows' => $out, 'cursor' => -( $last + 1 ), 'done' => $done );
+	}
+
+	private function report_dream( $table ) {
+		global $wpdb;
+
+		$all      = (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $table );
+		$own      = $this->dream_count();
+		$business = (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $table . ' s WHERE s.product_id = 0 AND ' . $this->dream_where() );
+
+		$this->note(
+			'Dream Code Reviews: ' . $all . ' review(s) in ' . $table . '. ' . $own . ' are written to reviews.csv '
+				. 'with source = dream_code (' . $business . ' of them reviews of the business, with no product), '
+				. 'including every copy made with its Assign / Duplicate. The other ' . ( $all - $own ) . ' are the '
+				. "plugin's own copies of WooCommerce reviews made by its \"Sync WooCommerce reviews\": each is "
+				. 'carried on the WooCommerce review it copied -- its approval, likes, title and photos -- '
+				. 'rather than written a second time.'
+		);
 	}
 
 	/**
