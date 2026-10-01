@@ -62,13 +62,20 @@ class ImportMediaFetch extends Command
         $resolved = $sideloader->resolveHosts($requested);
 
         foreach ($resolved['ignored'] as $host) {
-            $this->warn('No picture in this catalogue is on '.$host.'; ignored.');
+            $this->warn('No picture in this catalogue is on '.$host.' (any more); nothing to fetch from it.');
         }
 
+        /*
+         * Every host named is gone from the catalogue. After a finished pass
+         * that is SUCCESS — every row was re-pointed, so the old host is named
+         * nowhere — and the re-run the runbook asks for must say so with exit
+         * 0. Measured: it used to exit 1 with "Nothing was fetched" on a shop
+         * whose 2,907 pictures were all here. finish() decides, from the audit:
+         * if a mistyped host leaves real rows on the real old host, they are
+         * listed and the exit is 1.
+         */
         if ($requested !== [] && $resolved['hosts'] === []) {
-            $this->error('None of the hosts named is one the catalogue\'s pictures are on. Nothing was fetched.');
-
-            return self::FAILURE;
+            return $this->finish($sideloader, []);
         }
 
         $hosts = $resolved['hosts'];

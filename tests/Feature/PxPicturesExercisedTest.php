@@ -268,8 +268,20 @@ it('re-running the pass downloads nothing and rewrites no file', function () {
         $before[$file->getPathname()] = [$file->getInode(), $file->getMTime(), hash_file('sha256', $file->getPathname())];
     }
 
+    /*
+     * The re-run as the runbook writes it, WITH --host. Measured on the
+     * 671-product rig: once every row was re-pointed the catalogue named
+     * kbeautybliss.com nowhere, and this exited 1 — "None of the hosts named
+     * is one the catalogue's pictures are on. Nothing was fetched." — on a shop
+     * whose 2,907 pictures were all here.
+     *
+     * MUTATION NOTE, RUN: restore `return self::FAILURE;` in that branch of
+     * ImportMediaFetch::handle() — red, exit code 1.
+     */
     pxOldSite();
-    $this->artisan('kbb:import-media-fetch')->assertExitCode(0);
+    $this->artisan('kbb:import-media-fetch', ['--host' => ['kbeautybliss.com']])
+        ->expectsOutputToContain('Every picture the catalogue names is served by this shop')
+        ->assertExitCode(0);
 
     Http::assertNothingSent();
 
@@ -279,6 +291,45 @@ it('re-running the pass downloads nothing and rewrites no file', function () {
     }
 
     expect($after)->toBe($before)->and(count($after))->toBeGreaterThanOrEqual(10);
+});
+
+it('fetches nothing a crafted media.csv names that the catalogue does not', function () {
+    /*
+     * media.csv is the export's list of files, written by the old site. It is
+     * NOT the fetch list: the work list is re-derived from the imported rows,
+     * and media.csv is read only for its `exists` column (MediaIndex). That is
+     * the property that makes a hostile media.csv harmless, so it is pinned by
+     * behaviour: an export whose media.csv names the metadata service and this
+     * server's loopback, imported and then fetched in full, sends neither.
+     *
+     * MUTATION NOTE: there is no line to delete — the guard is the absence of
+     * a reader. Teach references() to read media.csv and this goes red.
+     */
+    $dir = storage_path('framework/testing/px-export-'.bin2hex(random_bytes(4)));
+    File::copyDirectory(base_path('tests/Fixtures/kbb-export'), $dir);
+    file_put_contents($dir.'/media.csv',
+        "\"http://169.254.169.254/wp-content/uploads/latest.jpg\",\"1\",\"full\",\"latest.jpg\",\"yes\",\"10\",\"product\",\"4021\",\"image\"\n"
+        ."\"http://127.0.0.1:6379/wp-content/uploads/x.jpg\",\"2\",\"full\",\"x.jpg\",\"yes\",\"10\",\"product\",\"4021\",\"images\"\n",
+        FILE_APPEND);
+
+    try {
+        $manifest = json_decode((string) file_get_contents($dir.'/manifest.json'), true);
+        $manifest['files']['media.csv']['sha256'] = hash_file('sha256', $dir.'/media.csv');
+        $manifest['files']['media.csv']['bytes'] = filesize($dir.'/media.csv');
+        $manifest['files']['media.csv']['rows'] = ($manifest['files']['media.csv']['rows'] ?? 0) + 2;
+        file_put_contents($dir.'/manifest.json', json_encode($manifest));
+
+        (new ImportRunner)->run(new ImportOptions(directory: $dir, sourceTimezone: 'Asia/Dubai', adoptBySlug: true));
+
+        pxOldSite();
+        $this->artisan('kbb:import-media-fetch');
+
+        Http::assertNotSent(fn (Request $r): bool => ! str_starts_with($r->url(), 'https://kbeautybliss.com/')
+            && ! str_starts_with($r->url(), 'http://kbeautybliss.com/'));
+        Http::assertSent(fn (Request $r): bool => str_contains($r->url(), 'layla-selfie.jpg'));
+    } finally {
+        File::deleteDirectory($dir);
+    }
 });
 
 /* ========================================================================== */
