@@ -184,6 +184,18 @@
 
   var SCREEN = 'slimfooter';
 
+  /* UNFINISHED CHANGES (Lane PM). Leaving this screen with edits in `values`
+     used to throw them away without a word. They are kept in Unfinished in
+     the top bar instead (partials/unfinished-drafts.blade.php), and come back
+     into `values` when the screen is next opened. */
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: SCREEN, screen: SCREEN, label: 'Appearance → Footer',
+    values: function () { return tabs ? values : null; },
+    set: function (k, v) { if (Object.prototype.hasOwnProperty.call(values, k)) values[k] = v; },
+    render: function () { render(); },
+    save: function () { save(); }
+  });
+
   var tabs = null, values = {}, open = null, banner = null, busy = false, seq = 0;
   var squeezeKeys = [];  // which controls "Squeeze the bar" drives to their minimum
 
@@ -282,7 +294,10 @@
       if (mine !== seq) return;
       banner = explain(e, 'The Footer settings could not be read.');
     } finally {
-      if (mine === seq) { busy = false; render(); }
+      if (mine === seq) {
+        busy = false; render();
+        if (tabs && !banner && window.kbbDrafts) window.kbbDrafts.ready(SCREEN);
+      }
     }
   }
 
@@ -295,6 +310,7 @@
 
     try {
       await api('/slim-footer', { settings: payload });
+      if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
       say('Footer saved.');
     } catch (e) {
       banner = explain(e, 'That could not be saved.');

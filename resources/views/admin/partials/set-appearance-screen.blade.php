@@ -659,18 +659,31 @@
      another screen in the sidebar, and a reload. The third, closing the tab, is
      beforeunload at the bottom of this file, which a browser will only honour
      as a generic prompt. */
-  function mayLeave(what) {
-    if (!dirty()) return true;
-    return window.confirm('You have ' + changed().length + ' unsaved change(s) to the set.\n\n'
-      + (what || 'Leave them?') + '\n\nPress Cancel to go back and press Save first.');
+  /* LEAVING KEEPS THE DRAFT, AND ASKS NOTHING. (Lane PM)
+     This was window.confirm("You have N unsaved change(s) to the set … Leave
+     them?") — the owner's "weired popup". The typing goes to Unfinished in the
+     top bar instead (partials/unfinished-drafts.blade.php); coming back to
+     this screen puts it back with a bar that says so. */
+  function mayLeave() {
+    if (dirty() && window.kbbDrafts) window.kbbDrafts.flush('setap');
+    return true;
   }
+
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: 'setap', screen: SCREEN, label: 'Appearance → Set',
+    values: function () { return (draft && saved) ? draft : null; },
+    set: function (k, v) { if (draft && Object.prototype.hasOwnProperty.call(saved || {}, k)) draft[k] = v; },
+    count: function () { return changed().length; },
+    render: function () { render(); refreshPreview(); },
+    save: function () { save(); }
+  });
 
   /* ------------------------------------------------------------ the route */
   var previousGo = window.go;
 
   window.go = function (id) {
     if (id !== SCREEN) {
-      if (draft && !mayLeave('Leave this screen and lose them?')) return undefined;
+      mayLeave();
       draft = null;
       return previousGo.apply(this, arguments);
     }
@@ -725,7 +738,11 @@
       banner = explain(e, 'Could not read the set appearance settings.');
       tabs = null;
     } finally {
-      if (mine === seq) { busy = false; render(); refreshPreview(); }
+      if (mine === seq) {
+        busy = false; render(); refreshPreview();
+        /* Unfinished changes to the set, if any, come back now. */
+        if (tabs && !banner && window.kbbDrafts) window.kbbDrafts.ready('setap');
+      }
     }
   }
 
@@ -741,6 +758,7 @@
     try {
       await api('/set-appearance', { method: 'POST', body: JSON.stringify({ settings: payload }) });
       keys.forEach(function (k) { saved[k] = draft[k]; });
+      if (window.kbbDrafts) window.kbbDrafts.saved('setap');
       say('Saved ' + keys.length + ' change(s).');
       renderControls();
     } catch (e) {
@@ -1543,12 +1561,8 @@
     if (discard) discard.disabled = n === 0;
   }
 
-  window.addEventListener('beforeunload', function (e) {
-    if (!dirty()) return undefined;
-    e.preventDefault();
-    e.returnValue = '';
-    return '';
-  });
+  /* Closing the tab or refreshing asks nothing: the draft is already in
+     Unfinished, written as it was typed. (Lane PM) */
 
   addNavEntry();
 })();

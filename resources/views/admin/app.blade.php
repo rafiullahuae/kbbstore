@@ -4422,6 +4422,7 @@ async function renderHomepage(){
   }
   await loadDemo();
   paintHomepage(base);
+  if(window.kbbDrafts) kbbDrafts.ready('homepage');
 }
 
 
@@ -4835,6 +4836,7 @@ async function hpSaveNow(base){
     const j = await r.json();
     if(j.ok){
       HP.sections = j.sections;
+      if(window.kbbDrafts) kbbDrafts.saved('homepage');
       msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} sections — live now`;
       setTimeout(()=>{msg.classList.remove('ok');msg.textContent='Unsaved changes';msg.style.visibility='hidden';},2600);
     }else{
@@ -4884,7 +4886,7 @@ document.addEventListener('click', e=>{
       headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
       body:JSON.stringify({layout:key})})
       .then(r=>r.json()).then(j=>{
-        if(j.ok){ HP.sections=j.sections; HP.layout=j.layout; paintHomepage(base);
+        if(j.ok){ HP.sections=j.sections; HP.layout=j.layout; paintHomepage(base); if(window.kbbDrafts) kbbDrafts.saved('homepage');
           const d=$('#hpDirty'); if(d){d.style.visibility='visible';d.classList.add('ok');d.textContent='Layout applied — live now';
             setTimeout(()=>{d.classList.remove('ok');d.textContent='Unsaved changes';d.style.visibility='hidden';},2600);} }
         else { lay.disabled=false; lay.textContent='Apply layout';
@@ -4895,7 +4897,7 @@ document.addEventListener('click', e=>{
     return;
   }
   if(e.target.id==='hpSave'){ hpSaveNow(base); return; }
-  if(e.target.id==='hpDiscard'){ renderHomepage(); return; }
+  if(e.target.id==='hpDiscard'){ if(window.kbbDrafts) kbbDrafts.discarded('homepage'); renderHomepage(); return; }
 });
 document.addEventListener('change', e=>{
   const sel=e.target.closest('[data-skin]');
@@ -4934,7 +4936,7 @@ async function renderProductPage(){
     return;
   }
   PPPV = (PP && PP.preview) ? PP.preview : {slug:null, url:null, props:{}};
-  paintProductPage(true);
+  paintProductPage(true); if(window.kbbDrafts) kbbDrafts.ready('productpage');
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -5254,7 +5256,7 @@ document.addEventListener('click', async e=>{
     ppMarkDirty('sections');
     return;
   }
-  if(e.target.id==='ppDiscard'){ PPDIRTY={sections:false,layout:false}; renderProductPage(); return; }
+  if(e.target.id==='ppDiscard'){ PPDIRTY={sections:false,layout:false}; if(window.kbbDrafts) kbbDrafts.discarded('productpage'); renderProductPage(); return; }
   if(e.target.id==='ppReset'){
     /* The SHIPPED value of every layout field, which is the number the page
        renders with no <style> block at all. Not a save — it fills the buffer
@@ -5281,7 +5283,7 @@ document.addEventListener('click', async e=>{
     const j=await r.json();
     if(j.ok){
       PP.sections=j.sections; if(Array.isArray(j.layout)) PP.layout=j.layout;
-      PPDIRTY={sections:false,layout:false};
+      PPDIRTY={sections:false,layout:false}; if(window.kbbDrafts) kbbDrafts.saved('productpage');
       paintProductPage();
       /* The Sections switches decide which BLOCKS render at all, and no custom
          property can show that — only the page itself can. So a save reloads
@@ -5318,7 +5320,7 @@ async function renderProdStyles(){
     $('#content').innerHTML=`<div class="wrap"><div class="card" style="padding:22px">Could not load product styles. <button class="btn small" onclick="renderProdStyles()">Retry</button></div></div>`;
     return;
   }
-  paintProdStyles();
+  paintProdStyles(); if(window.kbbDrafts) kbbDrafts.ready('prodstyles');
 }
 function psGet(k){ for(const t of PS.tabs){ const f=t.fields.find(x=>x.key===k); if(f) return f.value; } return null; }
 function psSet(k,v){ for(const t of PS.tabs){ const f=t.fields.find(x=>x.key===k); if(f){ f.value=v; return; } } }
@@ -5489,7 +5491,7 @@ document.addEventListener('click', async e=>{
       headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
       body:JSON.stringify({settings:payload})});
     const j=await r.json();
-    if(j.ok){ msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} settings — live now`;
+    if(j.ok){ if(window.kbbDrafts) kbbDrafts.saved('prodstyles'); msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} settings — live now`;
       setTimeout(()=>{msg.classList.remove('ok');msg.textContent='Unsaved changes';msg.style.visibility='hidden';},2600); }
     else { msg.style.visibility='visible'; msg.textContent=j.error||'Could not save.'; }
   }catch(err){ msg.style.visibility='visible'; msg.textContent='Could not save — check your connection.'; }
@@ -5553,7 +5555,7 @@ async function renderNewsletter(){
       <button class="btn small" onclick="renderNewsletter()">Retry</button></div></div>`;
     return;
   }
-  paintNewsletter();
+  paintNewsletter(); if(window.kbbDrafts) kbbDrafts.ready('newsletter');
 }
 function nlGet(k){ for(const t of NL.tabs){ const f=t.fields.find(x=>x.key===k); if(f) return f.value; } return null; }
 function nlSet(k,v){ for(const t of NL.tabs){ const f=t.fields.find(x=>x.key===k); if(f){ f.value=v; return; } } }
@@ -5645,7 +5647,7 @@ function bindNewsletter(){
       const d=await r.json();
       if(!r.ok||!d.ok) throw new Error(d.error||r.status);
       if(d.stats) NL.stats=d.stats;
-      $('#nlDirty').style.visibility='hidden';
+      if(window.kbbDrafts) kbbDrafts.saved('newsletter'); $('#nlDirty').style.visibility='hidden';
       toast('Newsletter settings saved');
     }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
@@ -6039,7 +6041,7 @@ async function renderMobileHdr(){
       <button class="btn small" onclick="renderMobileHdr()">Retry</button></div></div>`;
     return;
   }
-  paintMobileHdr();
+  paintMobileHdr(); if(window.kbbDrafts) kbbDrafts.ready('mobilehdr');
 }
 function mhGet(k){ for(const t of MH.tabs){ const f=t.fields.find(x=>x.key===k); if(f) return f.value; } return null; }
 function mhSet(k,v){ for(const t of MH.tabs){ const f=t.fields.find(x=>x.key===k); if(f){ f.value=v; return; } } }
@@ -6223,7 +6225,7 @@ function bindMobileHdr(){
         body:JSON.stringify({settings})});
       const d=await r.json();
       if(!r.ok||!d.ok) throw new Error(d.error||r.status);
-      $('#mhDirty').style.visibility='hidden';
+      if(window.kbbDrafts) kbbDrafts.saved('mobilehdr'); $('#mhDirty').style.visibility='hidden';
       toast('Mobile header saved');
     }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
@@ -6257,7 +6259,7 @@ async function renderDividers(){
       <button class="btn small" onclick="renderDividers()">Retry</button></div></div>`;
     return;
   }
-  paintDividers();
+  paintDividers(); if(window.kbbDrafts) kbbDrafts.ready('dividers');
 }
 function dvGet(k){ for(const t of DV.tabs){ const f=t.fields.find(x=>x.key===k); if(f) return f.value; } return null; }
 function dvSet(k,v){ for(const t of DV.tabs){ const f=t.fields.find(x=>x.key===k); if(f){ f.value=v; return; } } }
@@ -7150,7 +7152,7 @@ function bindDividers(){
         body:JSON.stringify({settings})});
       const d=await r.json();
       if(!r.ok||!d.ok) throw new Error(d.error||r.status);
-      $('#dvDirty').style.visibility='hidden';
+      if(window.kbbDrafts) kbbDrafts.saved('dividers'); $('#dvDirty').style.visibility='hidden';
       toast('Dividers saved');
     }catch(e){ toast('Could not save: '+e.message,'bad'); }
     finally{ save.disabled=false; }
@@ -7173,7 +7175,7 @@ async function renderAcctPanel(){
     $('#content').innerHTML=`<div class="wrap"><div class="card" style="padding:22px">Could not load the panel settings. <button class="btn small" onclick="renderAcctPanel()">Retry</button></div></div>`;
     return;
   }
-  apPaint();
+  apPaint(); if(window.kbbDrafts) kbbDrafts.ready('acctpanel');
 }
 function apGet(k){ for(const t of AP.tabs){ const f=t.fields.find(x=>x.key===k); if(f) return f.value; } return null; }
 function apSet(k,v){ for(const t of AP.tabs){ const f=t.fields.find(x=>x.key===k); if(f){ f.value=v; return; } } }
@@ -7298,7 +7300,7 @@ document.addEventListener('click', async e=>{
       headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
       body:JSON.stringify({settings:payload})});
     const j=await r.json();
-    if(j.ok){ msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} settings — live now`;
+    if(j.ok){ if(window.kbbDrafts) kbbDrafts.saved('acctpanel'); msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} settings — live now`;
       setTimeout(()=>{msg.classList.remove('ok');msg.textContent='Unsaved changes';msg.style.visibility='hidden';},2600); }
     else { msg.style.visibility='visible'; msg.textContent=j.error||'Could not save.'; }
   }catch(err){ msg.style.visibility='visible'; msg.textContent='Could not save — check your connection.'; }
@@ -7321,7 +7323,7 @@ async function renderHeader(){
     $('#content').innerHTML=`<div class="wrap"><div class="card" style="padding:22px">Could not load the header settings. <button class="btn small" onclick="renderHeader()">Retry</button></div></div>`;
     return;
   }
-  paintHeader();
+  paintHeader(); if(window.kbbDrafts) kbbDrafts.ready('header');
 }
 
 function hdField(f){
@@ -7523,7 +7525,7 @@ document.addEventListener('click', async e=>{
       headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
       body:JSON.stringify({settings:payload})});
     const j=await r.json();
-    if(j.ok){ msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} settings — live now`;
+    if(j.ok){ if(window.kbbDrafts) kbbDrafts.saved('header'); msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} settings — live now`;
       setTimeout(()=>{msg.classList.remove('ok');msg.textContent='Unsaved changes';msg.style.visibility='hidden';},2600); }
     else { msg.style.visibility='visible'; msg.textContent=j.error||'Could not save.'; }
   }catch(err){ msg.style.visibility='visible'; msg.textContent='Could not save — check your connection.'; }
@@ -7550,7 +7552,7 @@ async function renderSiteSearch(){
     $('#content').innerHTML=`<div class="wrap"><div class="card" style="padding:22px">Could not load search settings. <button class="btn small" onclick="renderSiteSearch()">Retry</button></div></div>`;
     return;
   }
-  paintSiteSearch();
+  paintSiteSearch(); if(window.kbbDrafts) kbbDrafts.ready('search');
 }
 
 function ssField(f){
@@ -7699,7 +7701,7 @@ document.addEventListener('click', async e=>{
        the screen loaded drops back to "Follow the rule above"). Repainting
        replaces #ssDirty, so the message is written to the new one. */
     if(j.ok&&Array.isArray(j.sets_by_brand)){ SS.sets_by_brand=j.sets_by_brand; if(SSTAB==='sets'){ paintSiteSearch(); msg=$('#ssDirty'); } }
-    if(j.ok){ msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} settings — live now`;
+    if(j.ok){ if(window.kbbDrafts) kbbDrafts.saved('search'); msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} settings — live now`;
       setTimeout(()=>{msg.classList.remove('ok');msg.textContent='Unsaved changes';msg.style.visibility='hidden';},2600); }
     else { msg.style.visibility='visible'; msg.textContent=j.error||'Could not save.'; }
   }catch(err){ msg.style.visibility='visible'; msg.textContent='Could not save — check your connection.'; }
@@ -7726,7 +7728,7 @@ async function renderMobileMenu(){
     $('#content').innerHTML=`<div class="wrap"><div class="card" style="padding:22px">Could not load the mobile menu settings. <button class="btn small" onclick="renderMobileMenu()">Retry</button></div></div>`;
     return;
   }
-  paintMobileMenu();
+  paintMobileMenu(); if(window.kbbDrafts) kbbDrafts.ready('mobilemenu');
 }
 
 function mmVal(k){ const f=MM.fields.find(x=>x.key===k); return f?f.value:null; }
@@ -7831,7 +7833,7 @@ document.addEventListener('click', async e=>{
       headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
       body:JSON.stringify({settings:payload})});
     const j=await r.json();
-    if(j.ok){ msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} settings — live now`;
+    if(j.ok){ if(window.kbbDrafts) kbbDrafts.saved('mobilemenu'); msg.style.visibility='visible'; msg.classList.add('ok'); msg.textContent=`Saved ${j.saved} settings — live now`;
       setTimeout(()=>{msg.classList.remove('ok');msg.textContent='Unsaved changes';msg.style.visibility='hidden';},2600); }
     else { msg.style.visibility='visible'; msg.textContent=j.error||'Could not save.'; }
   }catch(err){ msg.style.visibility='visible'; msg.textContent='Could not save — check your connection.'; }
@@ -8719,9 +8721,16 @@ async function catReorder(){
   await reorderLoadProducts();
 }
 
+/* LEAVING THIS PAGE OF THE LIST NO LONGER ASKS. (Lane PM)
+   It used to be a confirm() -- "You have unsaved reorder changes on this page.
+   Discard them?" -- on every page, scope, type and search change: the owner's
+   "weired popup". The order he arranged is kept instead. It is written to
+   Unfinished in the top bar (partials/unfinished-drafts.blade.php), where Open
+   brings this exact page back with his order on it. The name is kept so the
+   callers below read the same. */
 function reorderConfirmDiscard(){
-  if(!reorderDirty) return true;
-  return confirm('You have unsaved reorder changes on this page. Discard them?');
+  if(reorderDirty && window.kbbDrafts) kbbDrafts.flush('reorder');
+  return true;
 }
 
 function reorderScopeOptions(){
@@ -8751,6 +8760,7 @@ async function reorderLoadProducts(){
   reorderDirty=false;
   reorderSelected.clear();
   reorderPaint();
+  if(window.kbbDrafts) kbbDrafts.ready('reorder');
 }
 
 function reorderPaint(){
@@ -8937,7 +8947,7 @@ async function reorderJumpToRank(productId, rank){
       headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
       body:JSON.stringify({product_id:productId, to:rank-1})});
     const j=await r.json();
-    if(j.ok){ toast('Moved and saved'); await reorderLoadProducts(); }
+    if(j.ok){ toast('Moved and saved'); if(window.kbbDrafts) kbbDrafts.saved('reorder'); await reorderLoadProducts(); }
     else{ toast(j.message||'Could not move that product.', 'bad'); }
   }catch(e){ toast('Could not save — check your connection.','bad'); }
   reorderBusy=false;
@@ -8952,7 +8962,7 @@ async function reorderSave(){
       headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
       body:JSON.stringify({page:reorderData.page, per_page:reorderData.per_page, product_ids:reorderLocal.map(p=>p.id)})});
     const j=await r.json();
-    if(j.ok){ toast(`Saved — ${j.updated} products`); reorderDirty=false; await reorderLoadProducts(); }
+    if(j.ok){ toast(`Saved — ${j.updated} products`); reorderDirty=false; if(window.kbbDrafts) kbbDrafts.saved('reorder'); await reorderLoadProducts(); }
     else{ toast(j.message||'Could not save — reload and try again.', 'bad'); }
   }catch(e){ toast('Could not save — check your connection.','bad'); }
   reorderBusy=false;
@@ -23137,6 +23147,12 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
      calls it later. Every one of those screens checks for the global before
      using it, so a build that has them and not this include simply draws no
      Arabic boxes rather than throwing. --}}
+{{-- Unfinished changes: the top-bar list every edit screen keeps its unsaved
+     buffer in, instead of asking "leave and lose them?" (Lane PM). BEFORE the
+     screen partials below, because they register with window.kbbDrafts as they
+     load. --}}
+@include('admin.partials.unfinished-drafts')
+
 @include('admin.partials.arabic-boxes')
 
 @include('admin.partials.media-picker')

@@ -170,6 +170,18 @@
 
   var SCREEN = 'security';
 
+  /* UNFINISHED CHANGES (Lane PM). Leaving this screen with edits in `values`
+     used to throw them away without a word. They are kept in Unfinished in
+     the top bar instead (partials/unfinished-drafts.blade.php), and come back
+     into `values` when the screen is next opened. */
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: SCREEN, screen: SCREEN, label: 'Store → Security',
+    values: function () { return tabs ? values : null; },
+    set: function (k, v) { if (Object.prototype.hasOwnProperty.call(values, k)) values[k] = v; },
+    render: function () { render(); },
+    save: function () { save(); }
+  });
+
   var tabs = null, report = null, values = {}, open = null, banner = null, busy = false, seq = 0;
 
   function cookie(n) {
@@ -277,7 +289,10 @@
       if (mine !== seq) return;
       banner = explain(e, 'The security report could not be read.');
     } finally {
-      if (mine === seq) { busy = false; render(); }
+      if (mine === seq) {
+        busy = false; render();
+        if (tabs && !banner && window.kbbDrafts) window.kbbDrafts.ready(SCREEN);
+      }
     }
   }
 
@@ -290,6 +305,7 @@
 
     try {
       var body = await api('/security', { settings: payload });
+      if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
       report = body.report || report;
       say('Security settings saved.');
     } catch (e) {

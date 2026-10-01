@@ -175,6 +175,17 @@
   var saving = false;
   var seq = 0;          // guards against an older response landing last
 
+  /* UNFINISHED CHANGES (Lane PM). Leaving with edits in `draft` used to throw
+     them away without a word; they are kept in Unfinished in the top bar
+     (partials/unfinished-drafts.blade.php) and come back on the next visit. */
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: SCREEN, screen: SCREEN, label: 'Reviews → Review Settings',
+    values: function(){ return (data && draft) ? draft : null; },
+    set: function(k, v){ if (draft && Object.prototype.hasOwnProperty.call(draft, k)) draft[k] = v; },
+    render: function(){ render(); },
+    save: function(){ save(); }
+  });
+
   /* ------------------------------------------------------------- plumbing */
   function cookie(n){
     var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
@@ -270,7 +281,10 @@
         ? 'The review settings endpoints are not registered on this server yet. Clear the route cache and reload.'
         : 'Could not load review settings (' + (e.status || 'network') + ').'};
     } finally {
-      if (mine === seq) { busy = false; render(); }
+      if (mine === seq) {
+        busy = false; render();
+        if (data && draft && window.kbbDrafts) window.kbbDrafts.ready(SCREEN);
+      }
     }
   }
 
@@ -293,6 +307,7 @@
          looks fine while the storefront has something else. */
       data.settings = body.settings;
       draft = Object.assign({}, body.settings);
+      if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
       banner = {kind:'ok', text:'Saved. The product page uses these straight away.'};
       say('Review settings saved');
     } catch (e) {

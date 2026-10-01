@@ -97,7 +97,11 @@
     if (el.getAttribute('data-kbb-sure-pass') === '1') return;
 
     var label = labelOf(el);
-    if (!RESET_LABEL.test(label)) return;
+    /* data-kbb-sure="<question>" opts any other control in, with its own
+       question — Unfinished → Discard throws work away and starts with none of
+       the words above (Lane PM). The label rule itself is unchanged. */
+    var asks = el.getAttribute('data-kbb-sure');
+    if (!asks && !RESET_LABEL.test(label)) return;
 
     e.preventDefault();
     e.stopPropagation();
@@ -105,7 +109,9 @@
 
     pending = el;
     lastFocus = document.activeElement;
-    text.textContent = 'You pressed “' + label + '”. Press Yes to go ahead, or No to leave everything exactly as it is.';
+    text.textContent = asks
+      ? asks
+      : 'You pressed “' + label + '”. Press Yes to go ahead, or No to leave everything exactly as it is.';
     bg.classList.add('on');
     no.focus();
   }, true);

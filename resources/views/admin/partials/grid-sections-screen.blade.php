@@ -317,11 +317,43 @@
 
   function dirty(){ return changed().length > 0; }
 
-  function mayLeave(what){
-    if (!dirty()) return true;
-    return window.confirm('You have ' + changed().length + ' unsaved change(s). '
-      + (what || 'Leave them?') + '\n\nPress Cancel to go back and press Save first.');
+  /* LEAVING KEEPS THE DRAFT, AND ASKS NOTHING. (Lane PM)
+     This used to be window.confirm("You have N unsaved change(s). Leave them?")
+     on every door out of the editor — the owner's "weired popup". The typing
+     is handed to Unfinished in the top bar instead
+     (partials/unfinished-drafts.blade.php), and reopening this grid puts it
+     back with a bar that says so. */
+  function mayLeave(){
+    if (dirty() && window.kbbDrafts) window.kbbDrafts.flush('gridsections');
+    return true;
   }
+
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: 'gridsections', screen: SCREEN,
+    label: function(){
+      var name = saved && saved.section ? String(saved.section.name || '') : '';
+      return 'Appearance → Grid sections · ' + (name || ('grid ' + openId));
+    },
+    entity: function(){ return saved ? openId : null; },
+    values: function(){
+      if (!draft || !saved) return null;
+      var out = {};
+      fieldKeys().forEach(function(k){ out['v.' + k] = draft.values[k]; });
+      out.manual_ids = draft.manual_ids.join(',');
+      return out;
+    },
+    set: function(k, v){
+      if (k === 'manual_ids') {
+        draft.manual_ids = String(v || '').split(',').filter(Boolean).map(Number);
+        return;
+      }
+      if (k.indexOf('v.') === 0 && fieldKeys().indexOf(k.slice(2)) !== -1) draft.values[k.slice(2)] = v;
+    },
+    count: function(){ return changed().length; },
+    render: function(){ render(); refreshPreview(); },
+    save: function(){ var b = document.querySelector('#gss-save'); if (b) b.click(); },
+    open: function(id){ window.go(SCREEN); openEditor(Number(id)); }
+  });
 
   /* ------------------------------------------------------------ the route */
   var previousGo = window.go;
@@ -330,7 +362,7 @@
     if (id !== SCREEN) {
       /* Asked BEFORE anything is repainted, so Cancel really does leave the
          owner where he was rather than on a half-torn-down screen. */
-      if (openId !== null && !mayLeave('Leave this screen and lose them?')) return undefined;
+      mayLeave();
       draft = null;
       return previousGo.apply(this, arguments);
     }
@@ -395,6 +427,8 @@
 
     render();
     refreshPreview();
+    /* Unfinished changes to this grid, if any, come back now. */
+    if (saved && window.kbbDrafts) window.kbbDrafts.ready('gridsections');
   }
 
   /* The preview, redrawn from the BUFFER and debounced. Debounced because a
@@ -762,6 +796,7 @@
         if (!window.confirm('Delete this grid? It disappears from the homepage and from Appearance → Homepage. This cannot be undone.')) return;
         try {
           await api('/grid-sections/' + b.dataset.gssDel, 'DELETE');
+          if (window.kbbDrafts) window.kbbDrafts.drop('gridsections', b.dataset.gssDel);
           say('Deleted.');
           if (String(openId) === String(b.dataset.gssDel)) { openId = null; saved = null; draft = null; }
           load();
@@ -867,6 +902,7 @@
         });
         saved = Object.assign({}, saved, body);
         startDraft();
+        if (window.kbbDrafts) window.kbbDrafts.saved('gridsections');
         saving = false;
         await load();
         state('Saved. The shop is showing it now.');
@@ -903,14 +939,8 @@
     el.classList.toggle('is-bad', !!bad);
   }
 
-  /* The fourth door out: closing the tab. A browser will only show its own
-     generic wording here, which is why the three doors above ask in this
-     screen's own words instead. */
-  window.addEventListener('beforeunload', function(ev){
-    if (openId === null || !dirty()) return;
-    ev.preventDefault();
-    ev.returnValue = '';
-  });
+  /* The fourth door out, closing the tab or refreshing, asks nothing either:
+     the draft is already in Unfinished, written as it was typed. (Lane PM) */
 
   /* ----------------------------------------------------------------- init */
   if (document.readyState === 'loading') {
