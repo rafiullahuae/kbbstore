@@ -229,3 +229,44 @@ it('survives a hostile tree: wrong types everywhere, and nesting deep enough to 
         ->and(pjbConvert([['elType' => 'widget', 'widgetType' => ['x'], 'settings' => 'nope'], 7, null], '<p>F</p>')['unknown'])
         ->toBe(['(none)' => 1]);
 });
+
+it('keeps the sections an Elementor shortcode widget names, and falls back for any other shortcode', function () {
+    /*
+     * Lane PJ-A's real export: section 18159 names 18160 through Elementor's
+     * shortcode widget. Dropped, the "How To Use" section under the
+     * ingredients vanished; printed raw, the shopper read the shortcode.
+     *
+     * MUTATION, RUN: 'shortcode' removed from widget()'s match -- red, the
+     * block falls back with `shortcode` named as unknown.
+     */
+    $kept = pjbConvert([pjbSection([
+        pjbWidget('heading', ['title' => 'Top']),
+        pjbWidget('shortcode', ['shortcode' => "[rey_global_section id=\"18160\"]\n[elementor-template id='7']"]),
+    ])]);
+
+    expect($kept['mode'])->toBe('elementor')
+        ->and($kept['html'])->toContain('<p>[rey_global_section id="18160"]</p><p>[elementor-template id="7"]</p>');
+
+    $other = pjbConvert([pjbSection([pjbWidget('shortcode', ['shortcode' => '[contact-form-7 id="12"]'])])], '<p>Form</p>');
+
+    expect($other['mode'])->toBe('plain')
+        ->and($other['unknown'])->toBe(['shortcode [contact-form-7]' => 1]);
+});
+
+it('reads Elementor data that still carries the slashes WordPress stores it with', function () {
+    /*
+     * PJ-A exports `_elementor_data` exactly as stored. Read through
+     * get_post_meta() it is plain JSON, but a copy taken from the table by
+     * other means carries wp_slash()'s backslashes, and then nothing decoded
+     * and every such section fell back to its plain text.
+     *
+     * MUTATION, RUN: the stripslashes() retry removed from decode() -- red,
+     * mode "plain".
+     */
+    $slashed = addslashes((string) json_encode([pjbSection([pjbWidget('heading', ['title' => 'Slashed "quotes"'])])]));
+
+    $out = pjbConvert($slashed, '<p>Plain</p>');
+
+    expect($out['mode'])->toBe('elementor')
+        ->and($out['html'])->toContain('Slashed "quotes"');
+});

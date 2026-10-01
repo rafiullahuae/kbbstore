@@ -537,31 +537,33 @@ function gqCensus(): array
          * class-kbb-export-stage-content-blocks.php, Lane PJ-A).
          *
          * Every column is READ BY App\Services\Import\Entities\
-         * ContentBlockImporter, which LANE PJ-B BUILDS -- it is not in this
-         * lane's tree. The entity key and the `content_blocks.*` destinations
-         * below are PROVISIONAL: PJ-B owns the schema, and the integrator
-         * aligns these names with PJ-B's migration when the two lanes merge.
-         * Until that importer is merged, three tests in this file are red in
-         * PJ-A's worktree on purpose, each naming content_blocks.csv: the
-         * table does not exist yet, and the file is one nothing opens yet.
-         * That is the finished state pinned, not the unfinished one.
+         * ContentBlockImporter (Lane PJ-B), entity `content-blocks`, which
+         * writes each section to Content -> HTML Blocks (`blocks`) matched on
+         * `blocks.wc_id`. The Elementor tree is not stored as JSON: it is
+         * converted to the block's HTML (App\Services\Import\ElementorToHtml),
+         * and `plain_html` is what that HTML is when the tree holds a widget
+         * the converter cannot draw -- so both land in `blocks.content`.
          *
          * The default harness shop has no shortcode in any description, so
          * the fixture's content_blocks.csv is header-only and every
          * destination is in gqEmptyInThisFixture(); tests/Fixtures/
-         * kbb-export-rey is the same shop with the sections seeded.
+         * kbb-export-rey is the same shop with the sections seeded, and
+         * ContentBlockImportTest drives the import from it.
          */
         'content_blocks.csv' => ['entity' => 'content-blocks', 'columns' => [
-            'id' => GQ_LANDS.'content_blocks.source_post_id',
-            'post_type' => GQ_LANDS.'content_blocks.post_type',
-            'slug' => GQ_LANDS.'content_blocks.slug',
-            'title' => GQ_LANDS.'content_blocks.title',
-            'status' => GQ_LANDS.'content_blocks.status',
-            'modified' => GQ_LANDS.'content_blocks.source_modified_at',
-            'shortcode' => GQ_LANDS.'content_blocks.shortcode',
-            'referenced_by' => GQ_LANDS.'content_blocks.referenced_by',
-            'elementor_data' => GQ_LANDS.'content_blocks.elementor_data',
-            'plain_html' => GQ_LANDS.'content_blocks.plain_html',
+            'id' => GQ_LANDS.'blocks.wc_id',
+            'post_type' => GQ_GUARD.': read to describe a section that is not published; a Rey section and an '
+                .'elementor_library template both become one kind of HTML Block here',
+            'slug' => GQ_LANDS.'blocks.slug',
+            'title' => GQ_LANDS.'blocks.name',
+            'status' => GQ_LANDS.'blocks.status',
+            'modified' => GQ_LANDS.'blocks.source_modified_at',
+            'shortcode' => GQ_LANDS.'blocks.source',
+            'referenced_by' => GQ_GUARD.': read to say which draft sections products still name; the products '
+                .'that place a block are found from their own copy, live, on Content -> HTML Blocks',
+            'elementor_data' => GQ_LANDS.'blocks.content',
+            'plain_html' => GQ_CARRIED.': the fallback when the Elementor tree holds a widget the converter '
+                .'cannot draw -- it lands in blocks.content in the tree\'s place',
         ]],
 
         /*
@@ -1487,6 +1489,7 @@ function gqImportedRowMarker(): array
         'posts' => 'source_post_id',
         'menus' => 'source_term_id',
         'menu_items' => 'source_post_id',
+        'blocks' => 'wc_id',                // the owner's own HTML Blocks have none
         'product_tabs' => 'import_key',     // the owner's own tabs have none
         'category_product' => null,
         'product_tag' => null,
@@ -1551,18 +1554,15 @@ function gqEmptyInThisFixture(): array
          * content_blocks.csv is header-only here. kbb_harness_rey_sections()
          * in wordpress-plugin/harness/shop.php (run-export.php --rey=1) is the
          * row that changes that, and tests/Fixtures/kbb-export-rey is its
-         * output. Provisional destinations; see the census entry above.
+         * output, and ContentBlockImportTest imports it.
          */
-        'content_blocks.source_post_id' => 'no harness description embeds a section without --rey=1',
-        'content_blocks.post_type' => 'no harness description embeds a section without --rey=1',
-        'content_blocks.slug' => 'no harness description embeds a section without --rey=1',
-        'content_blocks.title' => 'no harness description embeds a section without --rey=1',
-        'content_blocks.status' => 'no harness description embeds a section without --rey=1',
-        'content_blocks.source_modified_at' => 'no harness description embeds a section without --rey=1',
-        'content_blocks.shortcode' => 'no harness description embeds a section without --rey=1',
-        'content_blocks.referenced_by' => 'no harness description embeds a section without --rey=1',
-        'content_blocks.elementor_data' => 'no harness description embeds a section without --rey=1',
-        'content_blocks.plain_html' => 'no harness description embeds a section without --rey=1',
+        'blocks.wc_id' => 'no harness description embeds a section without --rey=1',
+        'blocks.slug' => 'no harness description embeds a section without --rey=1',
+        'blocks.name' => 'no harness description embeds a section without --rey=1',
+        'blocks.status' => 'no harness description embeds a section without --rey=1',
+        'blocks.source_modified_at' => 'no harness description embeds a section without --rey=1',
+        'blocks.source' => 'no harness description embeds a section without --rey=1',
+        'blocks.content' => 'no harness description embeds a section without --rey=1',
     ];
 }
 

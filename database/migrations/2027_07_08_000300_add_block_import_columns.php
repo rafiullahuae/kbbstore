@@ -24,6 +24,9 @@ use Illuminate\Support\Facades\Schema;
  *    (`rey_global_section`), so the admin can show the owner the exact text
  *    his descriptions carry, and a later importer for another builder's
  *    sections does not have to guess which rows are whose.
+ *  - `source_modified_at` is when WordPress last changed the section
+ *    (`post_modified_gmt`, UTC), so the owner can tell from the row whether
+ *    the old site's copy is newer than the import he is looking at.
  *  - `source_hash` is a sha256 of the content the LAST IMPORT wrote. When the
  *    stored content no longer matches it, the owner has edited the block in
  *    Content -> HTML Blocks, and a re-import keeps his edit instead of
@@ -52,6 +55,12 @@ return new class extends Migration
             });
         }
 
+        if (! Schema::hasColumn('blocks', 'source_modified_at')) {
+            Schema::table('blocks', function (Blueprint $t) {
+                $t->timestamp('source_modified_at')->nullable();
+            });
+        }
+
         if (! Schema::hasColumn('blocks', 'source_hash')) {
             Schema::table('blocks', function (Blueprint $t) {
                 $t->char('source_hash', 64)->nullable();
@@ -74,7 +83,7 @@ return new class extends Migration
             });
         }
 
-        foreach (['source', 'source_hash'] as $column) {
+        foreach (['source', 'source_modified_at', 'source_hash'] as $column) {
             if (Schema::hasColumn('blocks', $column)) {
                 Schema::table('blocks', function (Blueprint $t) use ($column) {
                     $t->dropColumn($column);

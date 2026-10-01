@@ -11,6 +11,7 @@ use App\Services\Import\EntityReport;
 use App\Services\Import\ImportContext;
 use App\Services\Import\MediaRewrite;
 use App\Services\Import\Row;
+use App\Services\Import\RowRejected;
 use App\Support\GlobalSections;
 use App\Support\Shortcodes;
 use Illuminate\Support\Str;
@@ -144,6 +145,7 @@ final class ContentBlockImporter extends EntityImporter
             'status' => $status,
             'content' => $converted['html'],
             'source_hash' => self::hash($name, $status, $converted['html']),
+            'source_modified_at' => $this->modifiedAt($row, $report),
         ];
 
         if (! $block->exists) {
@@ -195,6 +197,29 @@ final class ContentBlockImporter extends EntityImporter
         }
 
         Shortcodes::flush();
+    }
+
+    /**
+     * When WordPress last changed the section: `post_modified_gmt`, which is
+     * UTC, unlike the other dates in the export (Lane PJ-A). A date this
+     * cannot read is named and left empty -- it is a note about the source,
+     * and a section must not be refused over it.
+     */
+    private function modifiedAt(Row $row, EntityReport $report): ?\Carbon\CarbonImmutable
+    {
+        try {
+            return $row->date('modified', 'UTC', 'modified', 'post_modified_gmt');
+        } catch (RowRejected $e) {
+            $report->discarded(
+                'a last-modified date this import cannot read -- the section is imported without it',
+                $row->line,
+                $this->identify($row),
+                'modified',
+                (string) $row->raw('modified', 'post_modified_gmt'),
+            );
+
+            return null;
+        }
     }
 
     /**

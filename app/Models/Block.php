@@ -35,6 +35,8 @@ class Block extends Model
 
     protected $fillable = ['slug', 'name', 'content', 'status'];
 
+    protected $casts = ['source_modified_at' => 'datetime'];
+
     /**
      * A write drops what App\Support\GlobalSections holds for this request.
      * Under PHP-FPM a request ends long before a block changes, but a queue

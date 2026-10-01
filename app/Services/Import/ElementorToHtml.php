@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Import;
 
+use App\Support\GlobalSections;
 use App\Support\RichText;
 
 /**
@@ -37,6 +38,10 @@ use App\Support\RichText;
  *   text-editor  -> its HTML, laid out the way wpautop() would
  *   icon-list    -> a list
  *   divider      -> a rule;  spacer -> nothing (it is only space)
+ *   shortcode    -> the sections it names, kept as shortcodes so the
+ *                   storefront draws them (GlobalSections, nested); any OTHER
+ *                   shortcode in it is a thing this shop cannot draw, and is
+ *                   treated as an unknown widget
  *   section / column / container -> a responsive row of columns, or a stack
  *
  * ANY OTHER WIDGET MAKES THE WHOLE BLOCK FALL BACK to the post's plain HTML
@@ -64,7 +69,7 @@ use App\Support\RichText;
 final class ElementorToHtml
 {
     /** Widget types this converter draws. Anything else forces the fallback. */
-    public const KNOWN_WIDGETS = ['heading', 'image-box', 'image', 'text-editor', 'icon-list', 'divider', 'spacer'];
+    public const KNOWN_WIDGETS = ['heading', 'image-box', 'image', 'text-editor', 'icon-list', 'divider', 'spacer', 'shortcode'];
 
     /** The element types that hold other elements. */
     private const CONTAINERS = ['section', 'column', 'container'];
@@ -147,10 +152,22 @@ final class ElementorToHtml
             return null;
         }
 
+        /*
+         * `_elementor_data` IS EXPORTED EXACTLY AS STORED (Lane PJ-A), and
+         * WordPress stores post meta through wp_slash(). Read back with
+         * get_post_meta() it is plain JSON -- `https:\/\/` is JSON's own
+         * escape and decodes -- but a copy taken from the table by other means
+         * carries the slashes WordPress added, and then every quote is `\"`.
+         * Plain first; unslashed only when plain is not JSON at all.
+         */
         try {
             $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
-            return null;
+            try {
+                $decoded = json_decode(stripslashes($json), true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException) {
+                return null;
+            }
         }
 
         /*
@@ -297,6 +314,7 @@ final class ElementorToHtml
             'icon-list' => $this->iconList($s),
             'divider' => '<hr class="kbb-eblock__rule">',
             'spacer' => '',
+            'shortcode' => $this->shortcodeWidget($s),
             default => $this->unknownWidget($type),
         };
     }
@@ -370,12 +388,21 @@ final class ElementorToHtml
 
         $caption = self::html(($s['caption_source'] ?? '') === 'custom' ? ($s['caption'] ?? '') : '');
         $alt = self::imageAlt($s['image'] ?? null) ?? RichText::toText($caption);
-        $dims = self::dimensions($url, $s);
+
+        /*
+         * NO GUESSED SIZE HERE, unlike the image-box. An image-box draws a
+         * fixed square whatever the file is, so 300x300 is true of what is
+         * drawn; a standalone picture is drawn at its own size, and a width
+         * attribute is also a presentational WIDTH -- a guessed 300 would draw
+         * a 1200px banner at 300px. Only a size the file name or the widget
+         * states is written.
+         */
+        $dims = self::dimensions($url, $s) ?? [null, null];
 
         $link = ($s['link_to'] ?? '') === 'file' ? ['url' => $url] : (($s['link_to'] ?? '') === 'custom' ? ($s['link'] ?? null) : null);
 
         return '<figure class="kbb-eblock__figure' . self::alignClass($s) . '">'
-            . self::linked(self::img($url, $alt, $dims[0] ?? null, $dims[1] ?? null, 'kbb-eblock__pic'), $link)
+            . self::linked(self::img($url, $alt, $dims[0], $dims[1], 'kbb-eblock__pic'), $link)
             . (RichText::isBlank($caption) ? '' : '<figcaption>' . $caption . '</figcaption>')
             . '</figure>';
     }
@@ -390,6 +417,47 @@ final class ElementorToHtml
         }
 
         return '<div class="kbb-eblock__copy' . self::alignClass($s) . '">' . $html . '</div>';
+    }
+
+    /**
+     * Elementor's shortcode widget. Rey sections name other sections this way
+     * (`[rey_global_section id="18160"]` inside 18159), so the section
+     * shortcodes are KEPT, one to a paragraph, for GlobalSections to draw at
+     * render time -- where a missing, draft or cyclic one draws nothing. Any
+     * other shortcode in the widget is output this shop has no way to make,
+     * so it is counted as an unknown widget and the block falls back.
+     *
+     * @param  array<string, mixed>  $s
+     */
+    private function shortcodeWidget(array $s): string
+    {
+        $raw = is_string($s['shortcode'] ?? null) ? $s['shortcode'] : '';
+        $out = '';
+
+        $rest = (string) preg_replace_callback(GlobalSections::pattern(), function (array $m) use (&$out): string {
+            $id = GlobalSections::idOf($m[0]);
+
+            if ($id !== null) {
+                preg_match('/^\[([\w-]+)/', $m[0], $name);
+                $out .= '<p>[' . strtolower($name[1]) . ' id="' . $id . '"]</p>';
+            }
+
+            return '';
+        }, $raw);
+
+        if (preg_match_all('/\[\s*([\w-]+)/', $rest, $others) > 0) {
+            foreach ($others[1] as $name) {
+                $this->unknownWidget('shortcode [' . strtolower($name) . ']');
+            }
+
+            return '';
+        }
+
+        if (trim(strip_tags($rest)) !== '') {
+            $out .= '<p>' . e(trim(strip_tags($rest))) . '</p>';
+        }
+
+        return $out;
     }
 
     /** @param array<string, mixed> $s */

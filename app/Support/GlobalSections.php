@@ -28,9 +28,17 @@ use Illuminate\Database\QueryException;
  *    shopper must not read `[rey_global_section ...]`, and an error is not
  *    the storefront's to print. The same rule Shortcodes::block() follows,
  *    and draft is the same off switch.
- *  - ONE QUERY FOR EVERY SECTION A PAGE NAMES, and none at all for copy that
- *    names none -- which is every product in StorefrontQueryBudgetTest. The
- *    rows are kept for the rest of the REQUEST in the container (not in a
+ *  - `[[rey_global_section id=1]]` IS WORDPRESS'S ESCAPE and prints the
+ *    shortcode as text, one bracket each side -- the way a how-to sentence
+ *    shows a shopper what to type. Kept exactly as WordPress did it.
+ *  - A SECTION MAY NAME ANOTHER (Elementor's shortcode widget, or a shortcode
+ *    in a text widget), so a block is expanded in its turn: three levels deep
+ *    -- the exporter carries three levels below a product and no more -- and
+ *    never into a section already being drawn, so a cycle (18159 -> 18160 ->
+ *    18161 -> 18159) stops instead of recursing until PHP runs out of stack.
+ *  - ONE QUERY PER LEVEL OF SECTIONS A PAGE NAMES, and none at all for copy
+ *    that names none -- which is every product in StorefrontQueryBudgetTest.
+ *    The rows are kept for the rest of the REQUEST in the container (not in a
  *    static: CLAUDE.md's Setting::map() landmine is a static memo seeing a
  *    stale table in a long-lived process), so the Description tab and the
  *    short description on one page share the lookup.
@@ -59,21 +67,34 @@ final class GlobalSections
      */
     public const SHORTCODES = [Block::SOURCE_REY, 'elementor-template'];
 
+    /** Sections drawn inside sections, at most. The exporter carries three. */
+    public const MAX_DEPTH = 3;
+
     /** The container key the request's rows are kept under. */
     private const MEMO = 'kbb.global_sections';
 
     /**
-     * One shortcode, any attributes. Group 1 is the attribute string.
+     * One shortcode, any attributes, as a fragment with no delimiters and no
+     * capturing group, so it can be composed.
      *
-     * NEVER INSIDE A TAG. The lookahead refuses a match whose next `>` comes
-     * before any `<` -- i.e. one sitting in an attribute, `<a title="[rey…]">`.
-     * Expanded there, the block's own `class="…"` would close the attribute and
-     * spill markup into the tag. Copy between tags is unaffected.
+     *  - NOT THE ESCAPED FORM. `[[rey…]]` is WordPress's way of printing the
+     *    shortcode as text; the look-behind and look-ahead refuse a doubled
+     *    bracket, and unescape() prints it the way WordPress did.
+     *  - NEVER INSIDE A TAG. The last look-ahead refuses a match whose next `>`
+     *    comes before any `<` -- one sitting in an attribute, `<a title="[rey…]">`.
+     *    Expanded there, the block's own `class="…"` would close the attribute
+     *    and spill markup into the tag.
      */
+    private static function fragment(): string
+    {
+        return '(?<!\[)\[(?:' . implode('|', array_map(static fn (string $s): string => preg_quote($s, '/'), self::SHORTCODES))
+            . ')\b[^\]\[]*\](?!\])(?![^<>]*>)';
+    }
+
+    /** One shortcode as a full pattern. The whole match is the shortcode. */
     public static function pattern(): string
     {
-        return '/\[(?:' . implode('|', array_map(static fn (string $s): string => preg_quote($s, '/'), self::SHORTCODES))
-            . ')\b([^\]\[]*)\](?![^<>]*>)/i';
+        return '/' . self::fragment() . '/i';
     }
 
     /** Is there anything here for expand() to do? Cheap; no query. */
@@ -109,44 +130,11 @@ final class GlobalSections
 
     /**
      * Every shortcode in already-clean HTML replaced by its block, or by
-     * nothing.
+     * nothing; an escaped one printed as WordPress printed it.
      */
     public static function expand(?string $html): string
     {
-        $html = (string) $html;
-
-        if (! self::present($html)) {
-            return $html;
-        }
-
-        $blocks = self::load(self::ids($html));
-
-        /*
-         * A shortcode alone in its paragraph takes the paragraph with it --
-         * `<p><div class="kbb-eblock">` is not HTML, the parser would close
-         * the <p> early and leave an empty one either side of the block.
-         * Stray <br>s and whitespace around it go too, for the same reason.
-         */
-        $edge = '(?:\s|&nbsp;|<br\s*\/?>)*';
-        $shortcode = substr(self::pattern(), 1, -2);
-
-        $html = (string) preg_replace_callback(
-            '/<p(?:\s[^>]*)?>' . $edge . '(' . $shortcode . ')' . $edge . '<\/p>(\r?\n)?/i',
-            static function (array $m) use ($blocks): string {
-                $block = self::render($m[1], $blocks);
-
-                // A section that draws nothing takes its line with it, so the
-                // copy under it starts where the panel starts.
-                return $block === '' ? '' : $block . ($m[3] ?? '');
-            },
-            $html,
-        );
-
-        return (string) preg_replace_callback(
-            self::pattern(),
-            static fn (array $m): string => self::render($m[0], $blocks),
-            $html,
-        );
+        return self::expandWithin((string) $html, []);
     }
 
     /**
@@ -175,6 +163,7 @@ final class GlobalSections
      * The same copy as TEXT, with every shortcode gone -- for the places that
      * print a description as words (the quick view, the meta description), where
      * a block of pictures has no business and the shortcode's letters even less.
+     * An escaped one keeps its letters, as on WordPress.
      */
     public static function strip(string $text): string
     {
@@ -182,7 +171,7 @@ final class GlobalSections
             return $text;
         }
 
-        return (string) preg_replace(self::pattern(), ' ', $text);
+        return self::unescape((string) preg_replace(self::pattern(), ' ', $text));
     }
 
     /** The WordPress ids a run of copy names, in order, once each. @return list<int> */
@@ -192,8 +181,8 @@ final class GlobalSections
 
         $ids = [];
 
-        foreach ($matches[1] as $attributes) {
-            $id = self::idOf($attributes);
+        foreach ($matches[0] as $shortcode) {
+            $id = self::idOf($shortcode);
 
             if ($id !== null && ! in_array($id, $ids, true)) {
                 $ids[] = $id;
@@ -204,8 +193,8 @@ final class GlobalSections
     }
 
     /**
-     * The id attribute out of a shortcode's attribute string, however it was
-     * quoted, or null. `id` as a whole word only -- `product_id="5"` and
+     * The id attribute out of a shortcode (or its attribute string), however it
+     * was quoted, or null. `id` as a whole word only -- `product_id="5"` and
      * `data-id="5"` are other attributes and must not be read as this one.
      */
     public static function idOf(string $attributes): ?int
@@ -221,16 +210,82 @@ final class GlobalSections
         return $id > 0 ? $id : null;
     }
 
-    /** @param array<int, string> $blocks */
-    private static function render(string $shortcode, array $blocks): string
+    /**
+     * @param  list<int>  $stack  the sections being drawn around this copy, outermost first
+     */
+    private static function expandWithin(string $html, array $stack): string
     {
-        if (preg_match(self::pattern(), $shortcode, $m) !== 1) {
+        if (! self::present($html)) {
+            return $html;
+        }
+
+        $blocks = self::load(self::ids($html));
+
+        /*
+         * ONE PASS, BOTH SHAPES. A shortcode alone in its paragraph takes the
+         * paragraph with it -- `<p><div class="kbb-eblock">` is not HTML, the
+         * parser would close the <p> early and leave an empty one either side
+         * of the block -- and a shortcode anywhere else is replaced where it
+         * stands. One preg pass and not two, because a second pass would scan
+         * the blocks the first one inserted and expand what they had printed
+         * as text (an escaped shortcode, already unescaped inside its block).
+         */
+        $edge = '(?:\s|&nbsp;|<br\s*\/?>)*';
+        $fragment = self::fragment();
+
+        $html = (string) preg_replace_callback(
+            '/<p(?:\s[^>]*)?>' . $edge . '(?<para>' . $fragment . ')' . $edge . '<\/p>(?<nl>\r?\n)?|(?<bare>' . $fragment . ')/i',
+            static function (array $m) use ($blocks, $stack): string {
+                if (($m['bare'] ?? '') !== '') {
+                    return self::render($m['bare'], $blocks, $stack);
+                }
+
+                $block = self::render($m['para'], $blocks, $stack);
+
+                // A section that draws nothing takes its line with it, so the
+                // copy under it starts where the panel starts.
+                return $block === '' ? '' : $block . ($m['nl'] ?? '');
+            },
+            $html,
+        );
+
+        return self::unescape($html);
+    }
+
+    /**
+     * WordPress's escape: `[[rey_global_section id=1]]` prints as
+     * `[rey_global_section id=1]`, as text.
+     */
+    private static function unescape(string $html): string
+    {
+        if (! str_contains($html, '[[')) {
+            return $html;
+        }
+
+        $names = implode('|', array_map(static fn (string $s): string => preg_quote($s, '/'), self::SHORTCODES));
+
+        return (string) preg_replace('/\[(\[(?:' . $names . ')\b[^\]\[]*\])\]/i', '$1', $html);
+    }
+
+    /**
+     * @param  array<int, string>  $blocks
+     * @param  list<int>  $stack
+     */
+    private static function render(string $shortcode, array $blocks, array $stack): string
+    {
+        $id = self::idOf($shortcode);
+
+        if ($id === null || in_array($id, $stack, true) || count($stack) >= self::MAX_DEPTH) {
             return '';
         }
 
-        $id = self::idOf($m[1]);
+        $content = $blocks[$id] ?? '';
 
-        return $id === null ? '' : ($blocks[$id] ?? '');
+        if ($content === '') {
+            return '';
+        }
+
+        return self::present($content) ? self::expandWithin($content, [...$stack, $id]) : $content;
     }
 
     /**

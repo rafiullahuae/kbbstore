@@ -265,6 +265,47 @@ it('leaves a shortcode written inside an attribute alone, so the block cannot br
     expect($out)->toBe('<p><a href="/x" title="[rey_global_section id=&quot;18159&quot;]">Link</a></p>');
 });
 
+it('draws a section that names another, and stops a cycle the first time round', function () {
+    /*
+     * A section can name a section (Elementor's shortcode widget). Two that
+     * name each other recursed until the depth cap cut them, so the first one
+     * was drawn twice on the page -- and without the cap, until PHP ran out of
+     * stack and the product page was a 500.
+     *
+     * MUTATION, RUN: render() without the `in_array($id, $stack)` guard --
+     * red, "Section A" drawn twice.
+     */
+    pjbBlock(['wc_id' => 1, 'content' => '<div class="kbb-eblock"><h3 class="kbb-eblock__heading">Section A</h3><p>[rey_global_section id="2"]</p></div>']);
+    pjbBlock(['wc_id' => 2, 'content' => '<div class="kbb-eblock"><h3 class="kbb-eblock__heading">Section B</h3><p>[rey_global_section id="1"]</p></div>']);
+
+    $out = GlobalSections::expand('<p>[rey_global_section id="1"]</p>');
+
+    expect(substr_count($out, 'Section A'))->toBe(1)
+        ->and(substr_count($out, 'Section B'))->toBe(1)
+        ->and($out)->not->toContain('rey_global_section');
+});
+
+it('draws sections three deep and no deeper, as the exporter carries them', function () {
+    /*
+     * Lane PJ-A's exporter stops three levels below a product ("Sections nested
+     * more than 3 levels below a product are NOT in content_blocks.csv"), and so
+     * does the storefront: a chain of distinct sections cannot make one product
+     * page do unbounded work.
+     *
+     * MUTATION, RUN: the `count($stack) >= self::MAX_DEPTH` test removed from
+     * render() -- red, "Level 4" drawn.
+     */
+    foreach ([1, 2, 3, 4, 5] as $n) {
+        pjbBlock(['wc_id' => $n, 'content' => '<div class="kbb-eblock"><h3 class="kbb-eblock__heading">Level ' . $n . '</h3><p>[rey_global_section id="' . ($n + 1) . '"]</p></div>']);
+    }
+
+    $out = GlobalSections::expand('<p>[rey_global_section id="1"]</p>');
+
+    expect($out)->toContain('Level 1')->toContain('Level 2')->toContain('Level 3')
+        ->and($out)->not->toContain('Level 4')
+        ->and($out)->not->toContain('rey_global_section');
+});
+
 it('cleans a block the owner wrote by hand before printing it into a description', function () {
     /*
      * Content -> HTML Blocks stores what is typed; a description is printed
