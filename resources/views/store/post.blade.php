@@ -211,6 +211,8 @@
      source order decides. Emitted earlier, it would lose.
 
      ZERO BYTES until the owner moves one of them. --}}@include('partials.shop-appearance-css')
+{{-- Appearance -> Header -> Breadcrumbs. This document draws a trail and
+     does not extend the layout, so it carries the same one line. (Lane PI-B) --}}@include('partials.breadcrumb-css')
 {{-- Appearance -> Page background (Lane BG). ONE LINE, zero bytes until the
      owner switches the wash on. THIS DOCUMENT DOES NOT EXTEND
      layouts/store.blade.php -- it carries its own <html>, <head> and inline

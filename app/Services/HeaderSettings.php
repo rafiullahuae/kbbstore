@@ -174,6 +174,23 @@ class HeaderSettings
          *   has travelled 21 kilobytes down the document.
          *
          * They live in header_settings and not in a module of their own because
+         * ▲ AND NOW OFF ON BOTH, IN HIS WORDS AGAIN.                (Lane PI-B)
+         *   "Turn off the top countries bar entirely for now." So `fb_mobile`
+         *   and `fb_desktop` below both ship `false` — the third time these
+         *   two defaults have moved, and each time it was his sentence that
+         *   moved them. "Entirely" is why it is BOTH switches rather than one,
+         *   and "for now" is why it is the switches rather than the markup:
+         *   every control on Appearance → Header → Flag bar stays where it is,
+         *   and one press on either switch puts the strip back exactly as it
+         *   was. flagBarOn() answers false with both off, so the strip is not a
+         *   hidden element on any page — it is no element, on the home page
+         *   (under the banner) and on every other page (above the header).
+         *   A shop whose Header screen has been SAVED carries stored `true`s
+         *   these defaults cannot overrule, so the migration
+         *   2027_07_06_000000_flag_bar_ships_off writes both keys too — the
+         *   same two halves `banner_ships_as_image_slider` needed.
+         *
+         * They live in header_settings and not in a module of their own because
          * that is ONE ROW, already read, already memoised, and already loaded by
          * partials/header.blade.php on every page. A settings module of its own
          * would be a second `settings` read on the critical path of every page
@@ -189,8 +206,8 @@ class HeaderSettings
          * out) and is the reason the shipped line is a key rather than a
          * default string sitting in this array.
          */
-        'fb_mobile'       => ['bool',   'Show it on phones', true,
-                              'The thin strip above the header, with the two flags. On, because this is what the bar was asked for.'],
+        'fb_mobile'       => ['bool',   'Show it on phones', false,
+                              'The thin strip with the two flags. Off, because you asked for the countries bar to be turned off for now. Switch it on to bring it back on phones exactly as it was.'],
         /*
          * ▲ OFF -> ON, and it is the owner's own sentence that moved it.
          *                                                            (Lane SEC)
@@ -206,9 +223,13 @@ class HeaderSettings
          * this default can never overrule, so the migration
          * `banner_ships_as_image_slider` writes the key as well. Both halves,
          * for the reason `kind` needed both.
+         *
+         * ▲ ON -> OFF, and his sentence again (Lane PI-B): "Turn off the top
+         *   countries bar entirely for now." See the note at the top of this
+         *   block, and the migration `flag_bar_ships_off`.
          */
-        'fb_desktop'      => ['bool',   'Show it on desktop', true,
-                              'On, so the strip runs across the desktop header too. Turn it off to keep it to phones.'],
+        'fb_desktop'      => ['bool',   'Show it on desktop', false,
+                              'Off, because you asked for the countries bar to be turned off for now. Switch it on to bring the strip back across the desktop header.'],
         'fb_text'         => ['text',   'Wording', '',
                               'Leave it empty to use the line the shop ships — which is translated, so an Arabic page shows Arabic. Typing here replaces it in every language.'],
         /*
@@ -272,6 +293,59 @@ class HeaderSettings
         'fb_pill'         => ['bool',   'Outline around the words', true,
                               'The rounded border the words sit inside. Off leaves the line bare on the strip.'],
         'fb_border'       => ['colour', 'Outline colour', '#F0B6C9', ''],
+
+        /*
+         * ── THE BREADCRUMB TRAIL ───────────────────────────────── Lane PI-B ──
+         *
+         * The line under the header — "Home / Super Sale / Medicube – PDRN
+         * Glow Booster Set (Pink Edition)" — on a product page, a category,
+         * /shop, a brand, a journal article, the wishlist, a content page and
+         * the routines pages. The owner wanted its spacing (above and below)
+         * and an on/off, SEPARATELY for phones and desktop, "by default keep
+         * it off".
+         *
+         * ▲ BOTH SWITCHES SHIP `false`, WHICH IS A MOVED DEFAULT AND HIS. The
+         *   trail has been on every one of those pages since they were built;
+         *   CLAUDE.md's 30-September reversal makes what he asked for the
+         *   shop's new state rather than a switch to go and find. The four
+         *   sliders ship at the product page's own numbers today (18px above,
+         *   nothing below — kbb-product.css's `.crumb{padding:18px 0 0}`), so
+         *   switching a device back on returns the page he named to exactly
+         *   how it looked.
+         *
+         * ── WHY HERE, AND WHY CSS ───────────────────────────────────────────
+         *
+         * HERE for the reason the flag bar's keys are here: `header_settings`
+         * is ONE row that partials/header.blade.php has already read and
+         * memoised on every page, so these six cost no query.
+         * StorefrontQueryBudgetTest is a budget. And the trail is the first
+         * thing under the header, so Appearance → Header is where he looks.
+         *
+         * CSS, NOT LEAVING IT OUT, for the reason `kfb-notx` gives: this shop
+         * serves one document to every device, so "off on phones, on on
+         * desktop" can only be a media query. breadcrumbCss() writes
+         * `display:none` for an off device — out of the layout and out of
+         * the accessibility tree, so no empty gap stays behind — and the
+         * owner's spacing for an on one. The BreadcrumbList JSON-LD is printed
+         * by App\Support\Seo from the controllers, not from this markup, so
+         * hiding the visible trail leaves the structured data untouched.
+         */
+        'bc_mobile'       => ['bool',   'Show it on phones', false,
+                              'Off, because you asked for the breadcrumb to be off by default. Search engines still get the trail either way — it is in the page’s structured data, not in this line.'],
+        'bc_desktop'      => ['bool',   'Show it on desktop', false,
+                              'Off by default too. The two switches are independent: phones off and desktop on is allowed.'],
+        'bc_above_mobile' => ['range',  'Space above · phone', 18,
+                              'Between the header and the trail, on screens up to 900px wide.',
+                              ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        'bc_below_mobile' => ['range',  'Space below · phone', 0,
+                              'Between the trail and the page underneath it.',
+                              ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        'bc_above'        => ['range',  'Space above · desktop', 18,
+                              'Between the header and the trail, on screens wider than 900px.',
+                              ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        'bc_below'        => ['range',  'Space below · desktop', 0,
+                              'Between the trail and the page underneath it.',
+                              ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
     ];
 
     /** tab key => [label, description, field keys] */
@@ -293,9 +367,11 @@ class HeaderSettings
                       ['nav_show', 'nav_uppercase', 'nav_size', 'nav_gap', 'nav_hot_colour']],
         'support' => ['Support', 'The WhatsApp block.',
                       ['support_show', 'support_label', 'support_icon_bg', 'support_icon_fg']],
-        'flagbar' => ['Flag bar', 'The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. On for phones and for desktop — with the wording on phones only.',
+        'flagbar' => ['Flag bar', 'The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. Off on phones and on desktop for now — switch either one on to bring it back, with the wording on phones only.',
                       ['fb_mobile', 'fb_desktop', 'fb_text', 'fb_text_desktop', 'fb_flags', 'fb_height', 'fb_size', 'fb_flag_h',
                        'fb_bg', 'fb_ink', 'fb_pill', 'fb_border']],
+        'crumbs'  => ['Breadcrumbs', 'The "Home / Category / Product" line under the header, on product, category, shop, brand, article, wishlist and content pages. Off on phones and desktop by default; each width has its own switch and its own spacing.',
+                      ['bc_mobile', 'bc_desktop', 'bc_above_mobile', 'bc_below_mobile', 'bc_above', 'bc_below']],
     ];
 
     public function __construct(
@@ -561,6 +637,66 @@ class HeaderSettings
             '--kfb-ink:' . $c['fb_ink'],
             '--kfb-bd:' . $c['fb_border'],
         ]);
+    }
+
+    /**
+     * Every element on the storefront that draws the breadcrumb trail.
+     *
+     * `.crumb` is the product page, a category and /shop (one view), the
+     * wishlist, a journal article and a content page; `.brw-crumb` is the brand
+     * index and a brand page; `.rtn-crumb` is the routines pages. A new page
+     * that draws a trail under one of these names is covered without anything
+     * here changing; one under a new name has to be added here, and
+     * BreadcrumbControlsTest walks the storefront views to say so.
+     */
+    public const CRUMB_SELECTORS = ['.crumb', '.brw-crumb', '.rtn-crumb'];
+
+    /**
+     * The breadcrumb's switches and spacing, as one small stylesheet.
+     *
+     * PRINTED ESCAPED, and it can be: every selector, property and piece of
+     * punctuation below is a literal in this method, and the only thing a
+     * saved value can reach is an integer that cast() has already clamped to
+     * its own slider's 0–48 and that is cast again here. Not one of the
+     * characters htmlspecialchars() rewrites (& < > " ') appears in it, so
+     * `{{ }}` prints it byte for byte — partials/breadcrumb-css.blade.php does,
+     * and BreadcrumbControlsTest pins that the two are the same string.
+     *
+     * ── THE SPECIFICITY IS CHOSEN, NOT INCIDENTAL ───────────────────────────
+     *
+     * `:root body :is(…)` is (0,2,1). The page sheets declare the trail's
+     * spacing at (0,1,0) — `.crumb{padding:18px 0 0}` in kbb-product.css,
+     * `.crumb{padding:14px 0 6px}` inside kbb-shop.css's phone query — and
+     * kbb.css has one at (0,2,0), `.kbb-home .crumb{margin-bottom:16px}`. All
+     * of them lose to this wherever this sits in the document, so the
+     * owner's numbers are the trail's whole spacing without an `!important`
+     * and without depending on which stylesheet the page linked last.
+     *
+     * Margins are zeroed and the spacing is padding: the trail's own box then
+     * IS the space he asked for, and a margin cannot collapse into the
+     * heading's below it and quietly eat his number.
+     *
+     * ── 900 / 901, THE SHOP'S ONE BREAKPOINT ────────────────────────────────
+     *
+     * The same pair the flag bar's `kfb-m` / `kfb-d` and every phone rule in
+     * kbb.css use, so "phone" here means what it means everywhere else on
+     * this shop. No JavaScript, nothing measured.
+     */
+    public function breadcrumbCss(): string
+    {
+        $c = $this->all();
+        $sel = ':root body :is(' . implode(',', self::CRUMB_SELECTORS) . ')';
+
+        $device = static function (string $query, bool $on, int $above, int $below) use ($sel): string {
+            $rule = $on
+                ? 'margin-top:0;margin-bottom:0;padding-top:' . $above . 'px;padding-bottom:' . $below . 'px'
+                : 'display:none';
+
+            return '@media ' . $query . '{' . $sel . '{' . $rule . '}}';
+        };
+
+        return $device('(max-width:900px)', (bool) $c['bc_mobile'], (int) $c['bc_above_mobile'], (int) $c['bc_below_mobile'])
+             . $device('(min-width:901px)', (bool) $c['bc_desktop'], (int) $c['bc_above'], (int) $c['bc_below']);
     }
 
     /**

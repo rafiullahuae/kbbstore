@@ -384,7 +384,18 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // `fb_flags` as having become `fb_text_desktop` and every field after it as
     // moved. Every control already recorded still carries the key, type, label,
     // help, value, default and options it carried.
-    expect($compared)->toBe(559, 'the number of controls drawn changed');
+    //
+    // 565 AFTER LANE PI-B: 559 + 6, the six controls of Appearance → Header →
+    // Breadcrumbs, a new EIGHTH tab appended after Flag bar (it is last in
+    // HeaderSettings::TABS, so appending is the position the screen sends).
+    // Two switches ("Show it on phones" / "on desktop", both false — "by
+    // default keep it off") and four 0–48px spacing sliders at the product
+    // page's own 18 / 0. And three leaves on the Flag bar tab, written off the
+    // diff, not regenerated: the tab's description, and `fb_mobile` and
+    // `fb_desktop` — help, default and value, true => false — because the
+    // owner said "Turn off the top countries bar entirely for now". No other
+    // recorded control moved.
+    expect($compared)->toBe(565, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

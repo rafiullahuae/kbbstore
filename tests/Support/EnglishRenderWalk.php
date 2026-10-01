@@ -1738,9 +1738,52 @@ final class EnglishRenderWalk
              * that cuts more than its element is a rule that hides the next
              * lane's regression.
              */
+            /*
+             * ▲ 31 -> 0, ON PURPOSE.                              (Lane PI-B)
+             *
+             * "Turn off the top countries bar entirely for now." Both switches
+             * ship off, flagBarOn() is false, and the strip is not drawn on any
+             * page of the walk — so every one of the 31 pages that gained it is
+             * back to its BASE_COMMIT bytes at this point, which is what this
+             * count now says. Kept at 0 rather than deleted because 0 is a pin:
+             * a default that flips back on by accident puts the strip on 31
+             * pages and this is red at 31, naming the strip.
+             */
             'the flag bar above the header (Lane FB)' => [
                 'pattern' => '#<div class="kfb [^>]*>\s*<div class="kfb-in">.*?</div>\s*</div>\n#s',
-                'hits' => 31,
+                'hits' => 0,
+            ],
+
+            /*
+             * THE BREADCRUMB SWITCHES — Appearance → Header → Breadcrumbs.
+             *                                                     (Lane PI-B)
+             *
+             * The owner: control of the trail's spacing and an on/off,
+             * separately for mobile and desktop, "by default keep it off". So
+             * every page that extends the layout, plus the journal article
+             * (the one standalone document that draws a trail), gains ONE
+             * <style id="kbb-crumbs"> in its head, and at the shipped settings
+             * it is two media queries of `display:none`. The trail's markup
+             * itself is untouched — it is hidden, not removed, so the
+             * BreadcrumbList JSON-LD and every byte of the trail are still
+             * compared below.
+             *
+             * WHAT IT DOES TO A PAGE, read off the diff before this rule was
+             * written: one insertion, directly after the last stylesheet link
+             * (or the article's own </style>), and nothing else on any page.
+             * 34 OF THE WALK'S 39: the 31 that used to carry the flag bar, the
+             * checkout and the order-received page (they extend the layout as
+             * `bare`), and the article. The five WITHOUT it do not extend the
+             * layout and draw no trail — the quick-view fragment, Laravel's
+             * 404, the Journal index, the quiz and the review wall.
+             *
+             * `[^<]*` AND NOT `.*?`: the rule is literals and integers with no
+             * `<` in it (BreadcrumbControlsTest pins that it prints escaped and
+             * byte-identical), so the match cannot run past its own close.
+             */
+            'the breadcrumb switches in the head (Lane PI-B)' => [
+                'pattern' => '#<style id="kbb-crumbs">[^<]*</style>\n#',
+                'hits' => 34,
             ],
 
             /*

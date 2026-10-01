@@ -285,6 +285,10 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
 
      POSITION UNCHANGED: after @stack('styles') so a page sheet cannot outrank
      the owner's numbers, and before the wash and the set partial. --}}@include('partials.shop-appearance-css')
+{{-- Appearance -> Header -> Breadcrumbs: the trail's per-device switches and
+     spacing. Its own header carries the argument; it sits after
+     @stack('styles') like the line above, though its specificity would win
+     from anywhere in the head.                                    (Lane PI-B) --}}@include('partials.breadcrumb-css')
 {{-- Appearance -> Page background: the soft multi-colour wash.        (Lane BG)
 
      ONE LINE, and the partial's own header carries the argument. The short

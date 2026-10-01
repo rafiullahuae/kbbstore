@@ -95,6 +95,15 @@
  *   other 5,172 calls. `fb_text_desktop|bool|"off"|true` is in there and is
  *   correct: this screen's dialect is the plain `(bool)` cast, the same one the
  *   eleven flag-bar keys beside it already answer with.
+ *
+ *   Lane PI-B added SIX — Appearance → Header → Breadcrumbs: `bc_mobile`,
+ *   `bc_desktop` and four 0–48px spacing ranges — the same way: 58 LINES
+ *   INSERTED (2 × 11 bool + 4 × 9 range), 0 MODIFIED, 0 REMOVED, every existing
+ *   identity keeping the fixture's own line. `bc_above|range|"abc"|0` is
+ *   correct and is this screen's dialect: a range clamps whatever it is given
+ *   into its own bounds, so garbage lands on the minimum, as `fb_height`'s
+ *   does on 22. The flag bar's two defaults also moved to false in that lane;
+ *   no recorded row depends on a bool's default, so none moved with them.
  */
 
 use App\Services\ModuleSchema;
