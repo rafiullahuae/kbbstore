@@ -6,6 +6,7 @@ namespace App\Services\Import;
 
 use App\Models\Media;
 use App\Models\Post;
+use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -98,8 +99,9 @@ final class DocumentMediaRewrite
     /**
      * The columns that hold a DOCUMENT with image addresses inside it.
      *
-     * One today. `pages.content` is the obvious second and is deliberately not
-     * here: the page importer does not run (`PostImporter` refuses a WordPress
+     * Three today: the Journal body, and (Lane PX) a product's description
+     * and short description. `pages.content` is the obvious next one and is
+     * deliberately not here: the page importer does not run (`PostImporter` refuses a WordPress
      * `page` by name, because this shop ships its own /about/ and which of the
      * two it serves is the owner's decision), so there is no imported page body
      * to re-point and adding one would be a rewrite with nothing to rewrite.
@@ -108,6 +110,20 @@ final class DocumentMediaRewrite
      */
     private const DOCUMENTS = [
         [Post::class, 'posts', 'body'],
+
+        /*
+         * A PRODUCT'S COPY IS A DOCUMENT TOO (Lane PX). WooCommerce product
+         * descriptions embed `<img src="…/wp-content/uploads/…">`; the
+         * exporter lists them in media.csv (field `description`) and
+         * product-tabs prints the body raw — and nothing re-pointed them, so
+         * the picture in the copy stayed on the old site after everything
+         * around it had moved. Both doors into these columns go through
+         * RichText::clean() (ProductImporter::cleanHtml() and
+         * ProductEditorApiController), so the srcset argument below holds for
+         * them exactly as it does for `posts.body`.
+         */
+        [Product::class, 'products', 'description'],
+        [Product::class, 'products', 'short_description'],
     ];
 
     /**

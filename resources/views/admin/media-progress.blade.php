@@ -343,10 +343,19 @@ td.u{word-break:break-all;max-width:330px}
 
         return refresh().then(function(){
           var left = r.data.plan ? r.data.plan.remaining : 0;
+          var untried = r.data.plan ? (r.data.plan.untried || 0) : 0;
+          var moved = r.data.repointed ? ((r.data.repointed.rows || 0) + (r.data.repointed.documents || 0)) : 0;
           /* Stop looping when there is nothing left, and ALSO when a whole
-             batch fetched nothing at all — otherwise a set of references that
-             all fail would spin forever against the old host. */
-          if (looping && left > 0 && (r.data.fetched > 0 || r.data.refused > 0)) {
+             batch made no progress — otherwise a set of references that all
+             fail would spin forever against the old host.
+
+             "No progress" has to include "and nothing untried is left" (Lane
+             PX). A batch of ten pictures that all 404 fetched nothing, and
+             stopping on that alone left every untried picture behind them
+             untouched until somebody pressed Fetch again. untriedFirst() puts
+             untried work first, so while plan.untried is above zero the next
+             batch is new work, not a retry. */
+          if (looping && left > 0 && (r.data.fetched > 0 || r.data.refused > 0 || moved > 0 || untried > 0)) {
             setTimeout(step, 250);
           } else {
             looping = false;

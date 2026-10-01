@@ -266,11 +266,60 @@ final class MediaSideloader
     private const UPLOAD_ROOTS = ['wp-content/uploads/', 'uploads/'];
 
     /**
+     * Wall clock for ONE file, start of request to last byte. Lane PX.
+     *
+     * READ_TIMEOUT is not this, and the difference was measured rather than
+     * reasoned about. With `stream => true` Guzzle hands the request to its
+     * StreamHandler, where `timeout` becomes the PHP stream's per-read timeout:
+     * it fires when NOTHING arrives for that long, and never while something
+     * arrives slowly. An old host dripping one byte a second held a single
+     * batch for the whole 150 s the rig allowed it — on a 1.8 KB file that is
+     * half an hour — inside a batch that promises to end after 15 s, and under
+     * PHP-FPM that wait is in a syscall, which `max_execution_time` does not
+     * count on Linux. So the read loop checks its own clock.
+     */
+    public const MAX_FILE_SECONDS = 60;
+
+    /**
+     * A temporary `.part` older than this is debris from a killed request.
+     *
+     * The `finally` below unlinks the temporary file on every way out of
+     * fetchOne() — except the one that matters most: a SIGKILL or a host's
+     * execution limit, where no PHP runs at all. Measured in the rig: a run
+     * killed mid-download left `.kbb-sideload-1fd565176331850c.part` (150
+     * bytes) in the web root, and nothing ever removed it. Generous, so a
+     * concurrent batch's live temporary file is never mistaken for one.
+     */
+    public const STALE_PART_SECONDS = 600;
+
+    /**
+     * Name suffixes that never belong to a host on the public internet.
+     *
+     * A WordPress shop is served from a public name. A catalogue row naming
+     * one of these is either a typo or somebody pointing this server's own
+     * fetcher at its private network — `metadata.google.internal` is the
+     * cloud metadata service by name rather than by address. `.test` is NOT
+     * here: RFC 2606 reserves it for exactly what this suite uses it for, it
+     * never resolves, and so it can never reach anything.
+     *
+     * @var list<string>
+     */
+    private const PRIVATE_SUFFIXES = ['.localhost', '.local', '.internal', '.intranet', '.lan', '.home.arpa', '.corp'];
+
+    /** @var array<string, list<string>> resolved addresses, per host, for this instance */
+    private array $resolved = [];
+
+    /**
      * @param  (\Closure(): ?int)|null  $freeSpace  test seam; see freeBytes()
+     * @param  (\Closure(string): list<string>)|null  $resolve  test seam; see addressesOf()
+     * @param  int  $maxFileSeconds  MAX_FILE_SECONDS, overridable only so a test of the
+     *                               deadline does not have to wait a whole minute for it
      */
     public function __construct(
         private readonly MediaAudit $audit = new MediaAudit,
         private readonly ?\Closure $freeSpace = null,
+        private readonly ?\Closure $resolve = null,
+        private readonly int $maxFileSeconds = self::MAX_FILE_SECONDS,
     ) {}
 
     /* ====================================================================== */
@@ -311,7 +360,13 @@ final class MediaSideloader
             $seen[$host] = true;
         }
 
-        $out = array_keys($seen);
+        /*
+         * STRINGS, explicitly (Lane PX). PHP turns a numeric array key into an
+         * int, so a host spelled `2130706433` (127.0.0.1 as one decimal) came
+         * back as an int, failed references()' strict in_array(), and the row
+         * vanished from the work list without ever being reported or refused.
+         */
+        $out = array_map('strval', array_keys($seen));
         sort($out);
 
         return $out;
@@ -381,11 +436,21 @@ final class MediaSideloader
 
             $target = $this->targetPath($row['url']);
 
+            /*
+             * WHERE THE REQUEST GOES is decided here too, not only where the
+             * bytes land. See hostRefusal(): before Lane PX a catalogue row
+             * naming http://127.0.0.1:9313/wp-content/uploads/… or
+             * http://169.254.169.254/wp-content/uploads/… was requested by this
+             * server like any other picture. A host refusal wins over a path
+             * one because it is the more serious of the two to report.
+             */
+            $refusal = $this->hostRefusal($row['url']) ?? $target['refusal'];
+
             $byUrl[$row['url']] = [
                 'url' => $row['url'],
                 'host' => $host,
-                'path' => $target['path'],
-                'refusal' => $target['refusal'],
+                'path' => $refusal === null ? $target['path'] : null,
+                'refusal' => $refusal,
                 'owners' => [$row['owner'].' ['.$row['field'].']'],
             ];
         }
@@ -417,6 +482,9 @@ final class MediaSideloader
         $failed = 0;
         $refused = 0;
         $bytesOnDisk = 0;
+        $toRepoint = 0;
+        $untried = 0;
+        $landedPaths = $this->landedPaths();
 
         foreach ($references as $reference) {
             if ($reference['refusal'] !== null) {
@@ -431,6 +499,21 @@ final class MediaSideloader
                 $present++;
                 $bytesOnDisk += (int) (@filesize($full) ?: 0);
 
+                /*
+                 * ON DISK IS NOT DONE WHILE THE ROW STILL NAMES THE OLD HOST.
+                 * A reference is only ever in this list because its row is
+                 * still remote, so a file this class landed and a row it has
+                 * not re-pointed is unfinished work — see landedPaths(). It is
+                 * counted in `remaining` so the page's Fetch button stays live
+                 * and the next batch finishes it; leaving it out made a run
+                 * killed after its last download read "Finished" with every
+                 * one of those rows still on the site about to be switched off.
+                 */
+                if (isset($landedPaths[(string) $reference['path']])) {
+                    $toRepoint++;
+                    $remaining++;
+                }
+
                 continue;
             }
 
@@ -444,6 +527,10 @@ final class MediaSideloader
 
             if ($state === self::FAILED) {
                 $failed++;
+            }
+
+            if ($state === null) {
+                $untried++;
             }
 
             $remaining++;
@@ -468,6 +555,15 @@ final class MediaSideloader
             'remaining' => $remaining,
             'failed' => $failed,
             'refused' => $refused,
+            /*
+             * Two parts of `remaining` a loop has to tell apart (Lane PX).
+             * `untried` is work no batch has attempted yet: while it is above
+             * zero a batch that fetched nothing has NOT shown that the rest
+             * will fail too, so the loop goes on. `to_repoint` is files already
+             * here whose rows a killed batch never got to re-point.
+             */
+            'untried' => $untried,
+            'to_repoint' => $toRepoint,
             /*
              * WORK THAT IS DONE AND IS NO LONGER VISIBLE FROM THE CATALOGUE.
              *
@@ -636,7 +732,7 @@ final class MediaSideloader
      * is "every file that finished is on disk and every file that did not is
      * not", which needs no reconciliation at all.
      *
-     * @param  array{hosts?: list<string>, files?: int, bytes?: int, seconds?: int}  $options
+     * @param  array{hosts?: list<string>, files?: int, bytes?: int, seconds?: int, skip_failed?: bool}  $options
      * @return array{ok: bool, fetched: int, failed: int, refused: int, bytes: int,
      *               stopped: string, results: list<array<string, mixed>>, plan: array<string, mixed>,
      *               ignored_hosts: list<string>, run: array<string, mixed>}
@@ -649,6 +745,7 @@ final class MediaSideloader
         $maxFiles = max(1, min(200, (int) ($options['files'] ?? self::DEFAULT_BATCH_FILES)));
         $maxBytes = max(1024, (int) ($options['bytes'] ?? self::DEFAULT_BATCH_BYTES));
         $maxSeconds = max(1, min(120, (int) ($options['seconds'] ?? self::DEFAULT_BATCH_SECONDS)));
+        $skipFailed = (bool) ($options['skip_failed'] ?? false);
 
         $plan = $this->plan($hosts);
 
@@ -692,6 +789,7 @@ final class MediaSideloader
         $stopped = 'nothing left to fetch';
 
         $ledger = $this->ledger();
+        $landedPaths = $this->landedPaths();
 
         foreach ($this->untriedFirst($this->references($hosts), $ledger) as $reference) {
             if (count($results) >= $maxFiles) {
@@ -750,6 +848,51 @@ final class MediaSideloader
              * may have landed it since.
              */
             if (is_file($full)) {
+                /*
+                 * ── BUT A FILE THIS CLASS LANDED IS RE-POINTED HERE ──── Lane PX
+                 *
+                 * THE DEFECT, measured against a real old site: re-pointing
+                 * happens once, at the END of a batch, for the URLs that batch
+                 * downloaded. Two ways a landed file never got there:
+                 *
+                 *  1. THE BATCH WAS KILLED before its end. The rig SIGTERMed a
+                 *     run mid-download: five photographs were on disk with the
+                 *     right bytes, their ledger rows said `fetched`, and their
+                 *     product, gallery and review rows still named
+                 *     kbeautybliss.com. Every later batch reached this line,
+                 *     saw the file and `continue`d — so nothing would ever
+                 *     re-point them, and plan() called them present.
+                 *  2. ONE FILE, TWO SPELLINGS. Review 8102 names
+                 *     `http://kbeautybliss.com/…/skincare-category.jpg`; the
+                 *     category names the same path over https. They are
+                 *     different URLs and one file. The https one was fetched
+                 *     and re-pointed; the http one arrived here, found the file
+                 *     and was skipped, and the customer's photograph went on
+                 *     loading from the old site.
+                 *
+                 * Both are "the file is here because THIS class put it here,
+                 * and this row still names the old host" — so it joins the
+                 * batch's landed list and repoint() finishes it, through the
+                 * same propose() guards as everything else. A file that came by
+                 * FTP is not in the ledger and is still left to the owner's own
+                 * apply, which is the restraint repoint() documents.
+                 */
+                if (isset($landedPaths[(string) $reference['path']])) {
+                    $landed[] = $reference['url'];
+                }
+
+                continue;
+            }
+
+            /*
+             * The console command's "each picture once per run" (Lane PX). The
+             * page retries failures on every batch, which is right for a
+             * button; a command that loops on its own would otherwise spend a
+             * full MAX_FILE_SECONDS on the same slow picture every batch, and
+             * pull a 12 MB file that is over the cap down again each time.
+             * `--retry` clears the failures first when they ARE wanted again.
+             */
+            if ($skipFailed && $state === self::FAILED) {
                 continue;
             }
 
@@ -781,6 +924,9 @@ final class MediaSideloader
                 $fetched++;
                 $bytes += $outcome['bytes'];
                 $landed[] = $reference['url'];
+                // A second spelling of this same file later in THIS batch is
+                // re-pointed by this batch too, not left for the next one.
+                $landedPaths[(string) $reference['path']] = true;
 
                 /*
                  * ── AND IT JOINS THE MEDIA LIBRARY, IN THIS SAME REQUEST ─────
@@ -1013,6 +1159,7 @@ final class MediaSideloader
     public function fetchOne(string $url, string $host, string $path, string $full): array
     {
         $temp = null;
+        $began = microtime(true);
 
         try {
             $hop = $url;
@@ -1061,6 +1208,18 @@ final class MediaSideloader
                         .'. A picture is fetched from the host the catalogue names and from nowhere else.',
                         $status,
                     );
+                }
+
+                /*
+                 * Same host is not enough on its own (Lane PX): a Location of
+                 * `https://<old host>:9313/x.jpg` keeps the host and changes the
+                 * service. The hop answers to the same rules as the first
+                 * request.
+                 */
+                $hopRefusal = $this->hostRefusal($next);
+
+                if ($hopRefusal !== null) {
+                    return $this->fail('refused to follow a redirect to '.$next.': '.$hopRefusal, $status);
                 }
 
                 $hop = $next;
@@ -1121,6 +1280,8 @@ final class MediaSideloader
              * extension a web server would ever hand to an interpreter, and it
              * is unlinked on every path out of here.
              */
+            $this->sweepStaleParts($directory);
+
             $temp = $directory.'/.kbb-sideload-'.bin2hex(random_bytes(8)).'.part';
             $handle = @fopen($temp, 'wb');
 
@@ -1134,7 +1295,47 @@ final class MediaSideloader
 
             // Guard 7: read in chunks, abandon the moment the cap is passed.
             while (! $body->eof()) {
-                $chunk = $body->read(self::CHUNK);
+                /*
+                 * Guard 8's missing half (Lane PX): the per-READ timeout never
+                 * fires on a body that trickles. See MAX_FILE_SECONDS.
+                 */
+                if ((microtime(true) - $began) > $this->maxFileSeconds) {
+                    fclose($handle);
+                    @unlink($temp);
+                    $temp = null;
+
+                    return $this->fail(
+                        $host.' was still sending this picture after '.$this->maxFileSeconds.'s ('
+                        .$this->bytes($written).' so far), so the download was abandoned. The old host is '
+                        .'answering very slowly; press Fetch again later and it will be tried again.',
+                        $status,
+                        $declared,
+                    );
+                }
+
+                try {
+                    $chunk = $body->read(self::CHUNK);
+                } catch (\RuntimeException $e) {
+                    /*
+                     * A read that times out surfaces as "Unable to read from
+                     * stream" — measured in the rig, verbatim, as the whole
+                     * reason shown to the owner for a host that stopped
+                     * sending. It is the same event as the ConnectionException
+                     * branch below and gets the same sentence.
+                     */
+                    fclose($handle);
+                    @unlink($temp);
+                    $temp = null;
+
+                    return $this->fail(
+                        $host.' stopped sending this picture part-way ('.$this->bytes($written).' received) and '
+                        .'did not continue within '.self::READ_TIMEOUT.'s. The old host may be slow, down, or '
+                        .'blocking this shop — press Fetch again later and it will pick this one up. ('
+                        .$this->short($e->getMessage()).')',
+                        $status,
+                        $declared,
+                    );
+                }
 
                 if ($chunk === '') {
                     break;
@@ -1361,6 +1562,212 @@ final class MediaSideloader
         }
 
         return ['path' => $relative, 'refusal' => null];
+    }
+
+    /**
+     * Remove `.part` files a KILLED request left in this directory (Lane PX).
+     *
+     * Only this class's own temporary names, only in the directory about to be
+     * written to, and only when older than STALE_PART_SECONDS — so a batch
+     * running in another tab never loses its live temporary file. A resumed
+     * run re-fetches the picture that was being downloaded when the request
+     * died, into this same directory, which is exactly when the debris is
+     * found.
+     */
+    private function sweepStaleParts(string $directory): void
+    {
+        foreach (glob($directory.'/.kbb-sideload-*.part') ?: [] as $part) {
+            $age = time() - (int) (@filemtime($part) ?: time());
+
+            if ($age > self::STALE_PART_SECONDS && preg_match('/^\.kbb-sideload-[0-9a-f]{16}\.part$/', basename($part)) === 1) {
+                @unlink($part);
+            }
+        }
+    }
+
+    /**
+     * Why this server must not send a request to this URL at all, or null.
+     *
+     * =========================================================================
+     * THE DEFECT, MEASURED (Lane PX)
+     * =========================================================================
+     *
+     * Guard 1 said hosts come from the catalogue, and they do — but the
+     * catalogue is an import of a CSV, and nothing asked what KIND of host a
+     * row named. Against a rig whose proxy logged every outbound request, a
+     * single picture pass sent:
+     *
+     *     GET http://127.0.0.1:9313/wp-content/uploads/2022/02/canary.jpg
+     *     GET http://169.254.169.254/wp-content/uploads/latest.jpg
+     *     GET http://localhost:9313/wp-content/uploads/2022/02/canary2.jpg
+     *     CONNECT kbeautybliss.com:9313
+     *
+     * — this server's loopback, the cloud metadata address, and a port on the
+     * old host that is not a web server. Every one of them came from one
+     * edited cell in products.csv, and every one was recorded as a FAILURE, so
+     * it was re-sent on every later batch for as long as the owner pressed
+     * Fetch.
+     *
+     * So, before any request, the URL must be:
+     *
+     *   · http or https — `ftp://` reached Guzzle and was failed (and retried)
+     *     by it, rather than refused here by name;
+     *   · on the default port for its scheme — a WordPress site's uploads are
+     *     not served from :9313, and the port is how a "same host" request is
+     *     aimed at a different service;
+     *   · a NAME that can exist on the public internet — not `localhost`, not a
+     *     single label, not under a suffix only a private network uses;
+     *   · and, where it is an address or resolves to addresses, every one of
+     *     them public — loopback, RFC 1918, link-local (169.254/16, the
+     *     metadata service), CGNAT and the reserved ranges are all refused.
+     *     `127.1` and `2130706433` are not valid IP literals, but the resolver
+     *     turns both into 127.0.0.1, which is why the check is on what the
+     *     name RESOLVES to and not on its spelling.
+     *
+     * A name that does not resolve at all is let through, deliberately: the
+     * transport cannot connect to it either, so the request fails as a
+     * failure and costs nothing. Refusing it would mean refusing every host in
+     * this suite (`old-shop.test` is RFC 2606's and never resolves).
+     *
+     * WHAT THIS DOES NOT CLOSE, stated rather than implied: the address is
+     * checked when the work list is built and the connection is made a moment
+     * later, so a DNS answer that changes in between (rebinding) is not
+     * caught. Pinning the address needs curl's CURLOPT_RESOLVE, and `stream`
+     * selects PHP's own stream wrapper, which has no equivalent. Doing it
+     * requires controlling DNS for the old site's own domain — at which point
+     * that party already controls every byte this class fetches.
+     */
+    public function hostRefusal(string $url): ?string
+    {
+        $parts = parse_url(trim($url));
+
+        if (! is_array($parts) || ! isset($parts['host'])) {
+            return 'this address names no host to fetch from';
+        }
+
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+
+        if (! in_array($scheme, ['http', 'https'], true)) {
+            return 'this address uses "'.$scheme.'://". Pictures are fetched over http or https and nothing else.';
+        }
+
+        if (isset($parts['port']) && (int) $parts['port'] !== ($scheme === 'https' ? 443 : 80)) {
+            return 'this address names port '.$parts['port'].'. A WordPress site serves its uploads on the ordinary '
+                .'web port, and a picture is never fetched from any other, because the port is how a request to the '
+                .'right host is aimed at a different service on it.';
+        }
+
+        $host = strtolower(rtrim(trim((string) $parts['host'], '[]'), '.'));
+
+        if ($host === '' || $host === 'localhost' || ! str_contains($host, '.') && filter_var($host, FILTER_VALIDATE_IP) === false) {
+            return 'this address names "'.$host.'", which is not a public website — it is this server or a machine '
+                .'on its private network. Nothing is fetched from it.';
+        }
+
+        foreach (self::PRIVATE_SUFFIXES as $suffix) {
+            if (str_ends_with($host, $suffix)) {
+                return 'this address names "'.$host.'", a name that only exists on a private network. Nothing is '
+                    .'fetched from it.';
+            }
+        }
+
+        $addresses = filter_var($host, FILTER_VALIDATE_IP) !== false ? [$host] : $this->addressesOf($host);
+
+        foreach ($addresses as $address) {
+            if (! self::isPublicAddress($address)) {
+                return 'this address leads to '.$address.', which is this server or a private network (loopback, '
+                    .'a private range, or the link-local range where cloud metadata lives). Nothing is fetched from '
+                    .'it — a picture row is not a way to make this shop send a request inside its own network.';
+            }
+        }
+
+        return null;
+    }
+
+    /** Is this IP address one the public internet routes to? */
+    public static function isPublicAddress(string $address): bool
+    {
+        $address = trim($address, '[]');
+
+        if (filter_var($address, FILTER_VALIDATE_IP) === false) {
+            return false;
+        }
+
+        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return false;
+        }
+
+        // Ranges PHP's two flags do not cover: CGNAT 100.64/10, and an IPv6
+        // address that embeds an IPv4 one (::ffff:127.0.0.1).
+        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
+            $long = ip2long($address);
+
+            return ! ($long >= ip2long('100.64.0.0') && $long <= ip2long('100.127.255.255'));
+        }
+
+        if (preg_match('/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i', $address, $m) === 1) {
+            return self::isPublicAddress($m[1]);
+        }
+
+        return true;
+    }
+
+    /**
+     * What this host resolves to, IPv4 and IPv6, memoised for this instance.
+     *
+     * An instance lives for one request or one console command, so the memo
+     * cannot outlive a DNS change by more than that — and it keeps a batch,
+     * which builds the work list three times, to one lookup per host.
+     *
+     * @return list<string>
+     */
+    private function addressesOf(string $host): array
+    {
+        if (isset($this->resolved[$host])) {
+            return $this->resolved[$host];
+        }
+
+        if ($this->resolve !== null) {
+            return $this->resolved[$host] = array_values(array_map('strval', ($this->resolve)($host)));
+        }
+
+        $out = [];
+        $v4 = @gethostbynamel($host);
+
+        foreach (is_array($v4) ? $v4 : [] as $ip) {
+            $out[] = (string) $ip;
+        }
+
+        $v6 = @dns_get_record($host, DNS_AAAA);
+
+        foreach (is_array($v6) ? $v6 : [] as $record) {
+            if (isset($record['ipv6'])) {
+                $out[] = (string) $record['ipv6'];
+            }
+        }
+
+        return $this->resolved[$host] = array_values(array_unique($out));
+    }
+
+    /**
+     * Every uploads-relative path the ledger says THIS CLASS wrote to disk.
+     *
+     * Keyed by path, because that is what two spellings of one picture and a
+     * killed batch's leftovers have in common. See the is_file() branch in
+     * batch() for why this exists.
+     *
+     * @return array<string, true>
+     */
+    private function landedPaths(): array
+    {
+        $out = [];
+
+        foreach (DB::table(self::ITEMS)->where('state', self::FETCHED)->whereNotNull('target_path')
+            ->select(['target_path'])->cursor() as $row) {
+            $out[(string) $row->target_path] = true;
+        }
+
+        return $out;
     }
 
     /**

@@ -434,6 +434,18 @@ class ProductController extends Controller
         ))));
 
         /*
+         * A PICTURE THE MIGRATION COULD NOT BRING ACROSS IS NO PICTURE (Lane PX).
+         * Left in, it was drawn as the browser's broken-image icon in a white
+         * frame the day the old site went off; taken out, a product with none
+         * left gets the placeholder shot below, which is what this page already
+         * draws for a product with no photograph. See App\Support\LostPictures.
+         */
+        $images = array_values(array_filter(
+            $images,
+            static fn ($url): bool => ! \App\Support\LostPictures::isLost(is_string($url) ? $url : null),
+        ));
+
+        /*
          * ── THE DEMO CATALOGUE'S OWN SHOTS ───────────────────────── Lane GAL
          *
          *   "also i can not see the product gallery thumnails, add some demo

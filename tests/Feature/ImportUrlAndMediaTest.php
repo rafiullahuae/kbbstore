@@ -628,7 +628,20 @@ it('accepts an image that really is on disk', function () {
 it('reads a product with no images at all without inventing one', function () {
     urlMapImport();
 
-    Product::query()->where('wc_id', 4021)->update(['image' => null, 'images' => []]);
+    /*
+     * ▲ ADVANCED BY LANE PX, deliberately. This used to clear only `image` and
+     *   `images` and call the result "a product with no images at all". The
+     *   fixture's serum ALSO carries a picture in its description
+     *   (`<img src="…/ginseng-serum-300x300.jpg">`) and a Yoast share picture
+     *   in `seo.og_image` — both on the old host, both published on the
+     *   product page — and the audit could see neither, which is the defect
+     *   docs/PX-PICTURES-EXERCISED.md records. So the old version of this case
+     *   passed BECAUSE of that blindness. A product with no pictures at all has
+     *   none in those three places either, and that is what is cleared now.
+     */
+    Product::query()->where('wc_id', 4021)->update([
+        'image' => null, 'images' => [], 'description' => null, 'short_description' => null, 'seo' => null,
+    ]);
 
     $rows = (new MediaAudit)->audit();
 
