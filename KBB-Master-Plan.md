@@ -3701,13 +3701,13 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | # | What he reported | Lane | State |
 |---|---|---|---|
 | 1 | Search box: "Popular right now" shows raw WooCommerce price markup (`<span class="woocommerce-Price-amount amount"…>AED…`) instead of a price | PI-A | **done — 2.60.341** |
-| 2 | Turn the top countries (flag) bar off entirely for now | PI-B | in progress |
+| 2 | Turn the top countries (flag) bar off entirely for now | PI-B | **done — 2.60.342** |
 | 3 | Long product description has no line breaks or paragraph spacing (old site: headings, numbered items, lists, spaced paragraphs); short description shows a literal `<div>` | PI-A | **done — 2.60.341** |
-| 4 | Breadcrumb ("Home / Super Sale / …") on product pages and the rest: controls for spacing, on/off, separately for phone and desktop — **default OFF** | PI-B | in progress |
+| 4 | Breadcrumb ("Home / Super Sale / …") on product pages and the rest: controls for spacing, on/off, separately for phone and desktop — **default OFF** | PI-B | **done — 2.60.342** |
 | 5 | Product tabs missing after import: the old site showed "Description" **and "Major Ingredients"** (and other tabs on other products); the new product page shows only Description | PI-A | **done — 2.60.341** |
-| 6 | Smallest phones: "Filters" and "Sort" do not fit on one row on category/shop pages — must shrink (size, font) to fit automatically | PI-B | queued after 2 & 4 |
-| 7 | Pagination arrows render giant/broken. Add a choice: arrows, **load more on scroll** in batches (12 / 15 / 20 / a number he types), or **load all** (no pagination). Must be fast, using the existing grey loading placeholders | PI-B | queued after 2 & 4 |
-| 8 | Add to cart: replace the grey "Added to bag" pill with a choice of feedback — **an animated tick, grey → green, very fast, gone immediately** — while the cart panel still opens as now | PI-B | queued |
+| 6 | Smallest phones: "Filters" and "Sort" do not fit on one row on category/shop pages — must shrink (size, font) to fit automatically | PI-B | **done — 2.60.342** |
+| 7 | Pagination arrows render giant/broken. Add a choice: arrows, **load more on scroll** in batches (12 / 15 / 20 / a number he types), or **load all** (no pagination). Must be fast, using the existing grey loading placeholders | PI-B | **done — 2.60.342** |
+| 8 | Add to cart: replace the grey "Added to bag" pill with a choice of feedback — **an animated tick, grey → green, very fast, gone immediately** — while the cart panel still opens as now | PI-B | **done — 2.60.342** |
 | 9 | "Read less" collapses the description but leaves the shopper far down the page; it must bring them back to where the section closed | PI-A | **done — 2.60.341** |
 | 10 | **Major:** on the product edit page, convert any product into a proper **set** (choose its member products) — many of his sets were imported as plain products. Must be reliable and work with every option the set editor has | next free lane | PI-A, in progress |
 | 11 | Reviews were imported from the old site but **no product shows any review** on the new site; they must appear on every product that had reviews | integrator | **diagnosed, nothing lost.** Measured on his server: the export held 209 star reviews (WooCommerce Photo Reviews stores them as ordinary comments, so all were seen), import read 209, created 209, refused 0; 164 approved + 45 pending (pending on the old site too); 68 products carry them. The "2,514 reviews" in docs/IE-IMPORT-END-TO-END.md was a harness assumption, not his data. Remaining: carry the plugin's helpful votes (`wcpr_vote_up_count` → `reviews.helpful`), which the export named as unused — see 11a |

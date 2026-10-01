@@ -3,6 +3,39 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.342
+**After-import fixes, part two: flag bar off, breadcrumb controls, Filters and
+Sort on one row, a working pager with load-on-scroll, and an animated tick on
+Add to bag.** Apply after .341. No plugin change.
+
+| # | Your report | Now | Where the control is |
+|---|---|---|---|
+| 2 | Turn the flag bar off | Off on phones and desktop. Switch either back on any time | Appearance → Header → Flag bar |
+| 4 | Breadcrumb controls, default OFF | Off on both by default; a separate on/off and spacing above/below for phone and for desktop. When it is off, the heading keeps 18px of air under the header | Appearance → Header → Breadcrumbs |
+| 6 | Filters and Sort did not fit on one row on small phones | One row down to 320px wide; text and padding shrink with the screen, no script | — |
+| 7 | Giant pagination arrows; want load-on-scroll / load all | Arrows fixed (normal size, mirror in Arabic). New choice: Arrows, Load more on scroll (12 / 15 / 20 / your own number), or Load all, using the grey loading placeholders | Appearance → Site layout → Loading more products |
+| 8 | Animated tick instead of "Added to bag" | A grey tick turns green and is gone in under half a second; the cart panel still opens. Text pill and None are one click away | Appearance → Cart panel → Behaviour → When something is added |
+
+Defaults that moved because you asked: flag bar off (both), breadcrumbs off
+(both), add-to-cart feedback = Animated tick. "How more products load" ships at
+Arrows, as today, until you pick.
+
+Files: `app/Http/Controllers/Store/CartController.php`,
+`app/Http/Controllers/Store/CollectionController.php`,
+`app/Http/Controllers/Store/ShopController.php`, `app/Services/CartPanel.php`,
+`app/Services/HeaderSettings.php`, `app/Services/SiteLayout.php`,
+`app/Services/Translation/ArabicInterfaceDrafts.php`,
+`app/Services/Translation/InterfaceStrings.php`, `app/Support/ListingBatch.php`,
+`resources/css/kbb/kbb-shop.css`, `resources/css/kbb/kbb.css`,
+`resources/js/kbb/{app,cart,listing-load,toast}.js`, `public/build/*`,
+`resources/views/admin/partials/site-layout-screen.blade.php`,
+`resources/views/layouts/store.blade.php`,
+`resources/views/partials/{breadcrumb-css,drawers,listing-batch,listing-pager}.blade.php`,
+`resources/views/store/{collection,post,shop}.blade.php`,
+`database/migrations/2027_07_06_000000_flag_bar_ships_off.php`,
+`database/migrations/2027_07_06_000100_clear_caches_lane_pib.php`,
+`database/migrations/2027_07_06_000200_seed_listing_pager_arabic_drafts.php`.
+
 ## 2.60.341
 **After-import fixes: search prices, descriptions, product tabs, Read less, and
 the reviews your old shop actually showed.** Apply after .340. Ships with

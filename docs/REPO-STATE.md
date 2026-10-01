@@ -13,9 +13,9 @@ a session went into establishing which was which.
 
 | | |
 |---|---|
-| **Repo synced to** | **2.60.341** |
+| **Repo synced to** | **2.60.342** |
 | Date | 2026-10-01 |
-| Previous entry point | 2.60.340 |
+| Previous entry point | 2.60.341 |
 | Server version at sync | **NOT KNOWN.** See the gap below — this is the one thing this file exists to record and it is open again |
 | Verified how | The 2.60.325 package was built from `3b372db` with `php artisan kbb:package`, and all **155** files in it were compared byte-for-byte against that tree before it was handed over. `UpdatePackage::verify()` accepts it |
 
