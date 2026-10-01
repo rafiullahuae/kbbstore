@@ -685,7 +685,16 @@ it('prints nothing but constants and clamped integers into the style attribute',
     );
 
     // And the class the token becomes is the default's, not the operator's.
-    $html = sbMarkup(['slider_style' => 'inset" onload="alert(1)'], 2);
+    //
+    // ▲ 14 CHARACTERS, NOT 23. This one IS saved, and `slider_style` is
+    // varchar(16): MySQL in strict mode refused `inset" onload="alert(1)` with
+    // 1406 "Data too long" and the case died before asserting anything, while
+    // SQLite stored it whole and passed. The probe still closes the attribute
+    // and opens a handler, which is the whole of what it has to prove.
+    $probe = 'x" onload="a()';
+    expect(strlen($probe))->toBeLessThanOrEqual(16);
+
+    $html = sbMarkup(['slider_style' => $probe], 2);
 
     expect($html)->toContain('class="kbbs is-inset')
         ->and($html)->not->toContain('onload=');

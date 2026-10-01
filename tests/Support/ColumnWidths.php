@@ -157,6 +157,7 @@ final class ColumnWidths
             'button_url' => 400,
             'heading' => 190,
             'image' => 400,
+            'image_m' => 400,
             'status' => 16,
         ],
         /*
@@ -177,9 +178,24 @@ final class ColumnWidths
             'btn_bg' => 9,
             'btn_hover' => 9,
             'btn_text' => 9,
+            /*
+             * ▲ kind, slider_ratio, slider_ratio_m, slider_style and
+             * banner_cards.image_m came with the image-slider banner and the
+             * grid_sections table below with the product grids, and none of the
+             * three migrations added itself here. So on SQLite nothing checked
+             * them: SliderBannerTest saved a 23-character probe into
+             * slider_style (16) and passed, and the MySQL parity run died on it
+             * with 1406 "Data too long". Read off information_schema on MySQL
+             * 8.0, 1 October 2026; case 1 of ColumnWidthGuardTest is what keeps
+             * this list honest, on the -c phpunit-mysql.xml run.
+             */
+            'kind' => 16,
             'name' => 190,
             'ratio' => 16,
             'shadow' => 16,
+            'slider_ratio' => 16,
+            'slider_ratio_m' => 16,
+            'slider_style' => 16,
             'slug' => 190,
             'status' => 16,
             'title_pos' => 16,
@@ -254,6 +270,20 @@ final class ColumnWidths
         ],
         'failed_jobs' => [
             'uuid' => 255,
+        ],
+        'grid_sections' => [
+            'card_label' => 120,
+            'desktop_layout' => 16,
+            'heading' => 190,
+            'mobile_layout' => 16,
+            'name' => 190,
+            'skin' => 32,
+            'slug' => 190,
+            'source' => 24,
+            'status' => 16,
+            'subheading' => 255,
+            'view_all_label' => 120,
+            'view_all_url' => 500,
         ],
         'import_checkpoints' => [
             'entity' => 64,

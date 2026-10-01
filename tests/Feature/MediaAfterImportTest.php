@@ -527,6 +527,18 @@ it('says which tree the file cap cut short instead of stopping in silence', func
      * nothing was cut while the library is provably short of the disk.
      * RUN: red.
      */
+    /*
+     * ▲ THIS CASE OWNS THE CONTENTS OF BOTH TREES, and since 2.60.336 it has to
+     * say so. That release's migration draws 120 demo gallery pictures into
+     * uploads/demo-shots/ on every fresh database -- this suite's included --
+     * so at a cap of three `uploads/` was cut short too and the first
+     * expectation read ['wp-content/uploads/', 'uploads/']. It passed in a full
+     * run only because an earlier file happened to purge that folder, and
+     * failed alone and on the MySQL run. Removed here, inside this run's own
+     * scratch web root (tests/bootstrap.php), never the checkout's.
+     */
+    \Illuminate\Support\Facades\File::deleteDirectory(public_path('uploads/demo-shots'));
+
     for ($i = 0; $i < 4; $i++) {
         mbPut('wp-content/uploads/2021/06/mb-cap-'.$i.'.png', mbPng(8, 8));
     }
