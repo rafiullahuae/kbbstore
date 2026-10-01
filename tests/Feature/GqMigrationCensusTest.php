@@ -151,6 +151,14 @@ function gqCensus(): array
             'description' => GQ_LANDS.'products.description',
             'total_sales' => GQ_LANDS.'products.total_sales',
             /*
+             * The old product page's EXTRA TABS -- "Major Ingredients" beside
+             * Description -- which a tab plugin keeps in its own post meta and
+             * which reached no file before exporter 1.9.0. (Lane PI-A) Each one
+             * lands as a tab of that product's own, keyed by import_key so a
+             * re-import updates it instead of adding a second copy.
+             */
+            'custom_tabs' => GQ_LANDS.'product_tabs.title + product_tabs.body + product_tabs.import_key',
+            /*
              * ── EIGHTEEN MOVED FROM `DROPPED` TO `NAMED` BY LANE PX ──────────
              *
              * Not a change of destination: every one of these still reaches no
@@ -1207,6 +1215,13 @@ function gqMetaKeyCensus(): array
         '_yoast_wpseo_linkdex' => 'seo.csv -- NAMED in the discard list',
         'wpseo_global_identifier_values' => 'seo.csv -> products.gtin',
 
+        /* ── the product page's extra tabs (Lane PI-A, exporter 1.9.0) ─── */
+        'yikes_woo_products_tabs' => 'products.csv `custom_tabs` -> product_tabs (Custom Product Tabs for WooCommerce)',
+        '_custom_tab_title' => 'products.csv `custom_tabs` -> product_tabs.title (Flatsome\'s single tab)',
+        '_custom_tab' => 'products.csv `custom_tabs` -> product_tabs.body (Flatsome\'s single tab)',
+        '_kbb_unknown_tab_plugin' => 'NAMED in manifest.json\'s notes: a tab-like key no listed plugin writes, '
+            .'reported so the build that reads it can be written rather than skipped in silence',
+
         /* ── the media library ──────────────────────────────────────────── */
         '_wp_attached_file' => 'media.csv `path` -- and NOTHING OPENS media.csv',
         '_wp_attachment_metadata' => 'media.csv `size` -- and NOTHING OPENS media.csv',
@@ -1430,6 +1445,7 @@ function gqImportedRowMarker(): array
         'posts' => 'source_post_id',
         'menus' => 'source_term_id',
         'menu_items' => 'source_post_id',
+        'product_tabs' => 'import_key',     // the owner's own tabs have none
         'category_product' => null,
         'product_tag' => null,
         'product_attribute_value' => null,

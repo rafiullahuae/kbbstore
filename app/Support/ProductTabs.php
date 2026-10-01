@@ -195,6 +195,19 @@ final class ProductTabs
      */
     public const LEGACY_SETTING_POSITION = 40;
 
+    /**
+     * Where the WooCommerce import puts a product's extra tabs. (Lane PI-A)
+     *
+     * Straight after the built-ins and the legacy setting's entries and before
+     * any global tab, which is where the old shop drew them: a tab plugin's
+     * tabs came right after Description. One step apart, in the old page's
+     * order, so IMPORTED_MAX of them stay under DEFAULT_GLOBAL_POSITION.
+     */
+    public const IMPORTED_PRODUCT_POSITION = 50;
+
+    /** The most tabs one product brings across; 50 + 40 stays below 100. */
+    public const IMPORTED_MAX = 40;
+
     /** Where a NEW global tab lands, before the owner moves it. */
     public const DEFAULT_GLOBAL_POSITION = 100;
 

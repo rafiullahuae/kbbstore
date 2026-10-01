@@ -318,7 +318,19 @@ final class RichText
             return '';
         }
 
-        return self::clean(self::needsAutop($html) ? self::autop($html) : $html);
+        if (! self::needsAutop($html)) {
+            return self::clean($html);
+        }
+
+        /*
+         * Cleaned BEFORE autop() as well as after it. A <script> in the raw
+         * copy is a line of its own to autop(), which wraps it in a <p>; the
+         * allowlist then drops the script and leaves `<p></p>` behind -- an
+         * empty paragraph, a blank gap on the page. Taking the hostile markup
+         * out first means autop() only ever lays out what will be printed.
+         * The second clean() is still the one that guards the page.
+         */
+        return self::clean(self::autop(self::clean($html)));
     }
 
     /**

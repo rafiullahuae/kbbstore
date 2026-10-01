@@ -18,6 +18,27 @@ that refusal rather than trusting it.
 
 ---
 
+## 1.9.0
+
+**Extra product tabs are now exported.** (Lane PI-A)
+
+- The old product page showed tabs such as **Major Ingredients** beside
+  **Description**; the imported product showed Description alone. WooCommerce
+  has no extra tabs of its own — every plugin and theme that adds them keeps
+  them in its own post meta — and this exporter read none of those keys, so the
+  tabs were in no file.
+- `products.csv` has a new column, `custom_tabs`: a JSON list of
+  `{"title", "content"}` in the order the old page showed them, empty tabs left
+  out. Read from Custom Product Tabs for WooCommerce (`yikes_woo_products_tabs`),
+  Custom Product Tabs Lite (`frs_woo_product_tabs`), WoodMart, Flatsome and
+  Porto. The new shop's importer turns each one into a tab on that product.
+- A product meta key with "tab" in its name that this build does **not** read
+  is named in `manifest.json`'s notes, so a tab plugin nobody listed is
+  reported rather than skipped.
+- **To get the tabs onto the new shop:** install this build, export
+  **Products** again, and import that export. Products already imported are
+  updated in place by their WooCommerce id; nothing is duplicated.
+
 ## 1.8.0
 
 **Review photographs are now on the list of files to fetch.** (Lane IE2)
