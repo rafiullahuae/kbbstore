@@ -73,16 +73,153 @@ class SearchController extends Controller
         // The same query returns the same suggestions for everyone, and the
         // header fires one per keystroke. (Rule 27)
         $payload = Cache::remember(
-            'kbb.search.' . md5(mb_strtolower($q)) . '.' . $this->limitKey(),
+            'kbb.search.' . md5(mb_strtolower($q)) . '.' . $this->limitKey() . '.s2',
             300,
-            fn () => $this->build($q)
+            fn () => $this->build($q) + ['sets' => $this->setCandidates($q)]
         );
+
+        // Picked per request, OUTSIDE the cache, so "a different one each
+        // search" is true and the cached payload is still shared.
+        $payload = $this->setFirst($payload);
 
         // Counted after the results are known, so a term nobody could find is
         // not offered back to the next visitor.
-        $this->insights->record($q, (int) ($payload['total'] ?? 0));
+        //
+        // ▲ ONLY WHEN THE SEARCH HAS SETTLED (1 October 2026). The box asks on
+        //   every keystroke, so counting every request counted "me", "med",
+        //   "medi" on the way to "medicube" -- and Growth -> Search Terms would
+        //   have ranked fragments. search.js sends `log=1` once per term, when
+        //   the shopper stops typing, presses Enter or picks a result. The
+        //   answer is the same cached payload either way.
+        if ($request->boolean('log')) {
+            $this->insights->record($q, (int) ($payload['total'] ?? 0));
+        }
 
         return response()->json($payload);
+    }
+
+    /**
+     * The sets this search fits, best sellers first, as panel rows.
+     *
+     * THE DEFECT (1 October 2026): "the search is not showing set products at
+     * all". Sets were never excluded -- they lost on the ordering. The panel
+     * keeps the top few matches by total_sales, and a set, new or converted
+     * from an imported product, has sold little here yet, so it was always
+     * below the cut. The owner asked for a set at #1: "if i write Anua, any
+     * set which has Anua in it should display #1".
+     *
+     * A search that names a brand (SearchController::detectBrand(), partial
+     * names included) fits every visible set that IS that brand's, or holds
+     * one of its products in the box. Otherwise a set fits when every word of
+     * the search is in its name. One query, at most eight rows, cached with
+     * the rest of the payload.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function setCandidates(string $q): array
+    {
+        $detected = $this->detectBrand($q, true);
+
+        $sets = Product::query()
+            ->select(self::CARD_COLUMNS)
+            ->visible()
+            ->with('brand:id,name,slug')
+            ->where('type', 'set')
+            ->where(function ($w) use ($detected, $q) {
+                if ($detected !== null) {
+                    $brandId = $detected['brand']->id;
+                    $w->where('brand_id', $brandId)
+                        ->orWhereIn('id', \Illuminate\Support\Facades\DB::table('product_set_items')
+                            ->join('products as kbb_member', 'kbb_member.id', '=', 'product_set_items.member_product_id')
+                            ->where('kbb_member.brand_id', $brandId)
+                            ->select('product_set_items.set_product_id'));
+
+                    return;
+                }
+
+                $words = SearchTerms::words($q);
+
+                if ($words === []) {
+                    $w->whereRaw('1 = 0');
+
+                    return;
+                }
+
+                $w->where(function ($all) use ($words) {
+                    foreach ($words as $word) {
+                        SearchTerms::whereLike($all, 'products.name', $word);
+                    }
+                });
+            })
+            ->orderByDesc('total_sales')
+            ->orderByDesc('id')
+            ->limit(8)
+            ->get();
+
+        if ($sets->isEmpty()) {
+            return [];
+        }
+
+        \App\Support\SetPricing::prime($sets);
+
+        return $sets->map(fn ($p) => $this->productRow($p))->all();
+    }
+
+    /**
+     * Put one fitting set at the top of Products, when the owner has it on
+     * (Store -> Site Search -> Sets in search). Never adds a row past the
+     * panel's limit; a set already in the list moves up rather than twice.
+     */
+    private function setFirst(array $payload): array
+    {
+        $sets = $payload['sets'] ?? [];
+        unset($payload['sets']);
+
+        if ($sets === [] || ! $this->header->get('search_sets_first')) {
+            return $payload;
+        }
+
+        $pick = $this->header->get('search_sets_pick') === 'best'
+            ? $sets[0]
+            : $sets[array_rand($sets)];
+
+        $groups = $payload['groups'] ?? [];
+        $at = null;
+
+        foreach ($groups as $i => $group) {
+            if (($group['key'] ?? '') === 'products') {
+                $at = $i;
+                break;
+            }
+        }
+
+        if ($at === null) {
+            array_unshift($groups, ['key' => 'products', 'label' => 'Products', 'items' => []]);
+            $at = 0;
+        }
+
+        $items = array_values(array_filter($groups[$at]['items'], fn ($it) => ($it['url'] ?? null) !== $pick['url']));
+        array_unshift($items, $pick);
+        $groups[$at]['items'] = array_slice($items, 0, max(1, (int) $this->header->get('search_results_max')));
+
+        $payload['groups'] = $groups;
+        $payload['total'] = array_sum(array_map(fn ($g) => count($g['items']), $groups));
+
+        return $payload;
+    }
+
+    /** One product as a panel row -- the shape both result builders print. */
+    private function productRow(Product $p): array
+    {
+        return [
+            'label' => $p->t('name'),
+            'meta' => $p->brand?->t('name'),
+            'price' => Money::plain($p->effectivePrice()),
+            'image' => $p->image,
+            'colour' => \App\Support\Gradient::for(($p->brand?->name ?? '') . $p->name),
+            'initials' => \App\Support\Gradient::initials($p->brand?->t('name') ?: $p->t('name')),
+            'url' => $p->url(),
+        ];
     }
 
     private function limitKey(): string
@@ -204,6 +341,7 @@ class SearchController extends Controller
                 $ownQuery->where(function ($w) use ($rest) {
                     SearchTerms::orWhereLike($w, 'products.name', $rest);
                     SearchTerms::orWhereLike($w, 'products.sku', $rest);
+                    SearchTerms::orWhereEveryWord($w, $rest, ['products.name', 'products.sku']);
                 });
             }
 
@@ -241,6 +379,7 @@ class SearchController extends Controller
                     ->where(function ($w) use ($rest) {
                         SearchTerms::orWhereLike($w, 'products.name', $rest);
                         SearchTerms::orWhereLike($w, 'products.sku', $rest);
+                        SearchTerms::orWhereEveryWord($w, $rest, ['products.name', 'products.sku']);
                     })
                     ->whereNotIn('id', $products->pluck('id')->all() ?: [0])
                     ->orderByDesc('total_sales')
@@ -359,7 +498,11 @@ class SearchController extends Controller
                 ->select(self::CARD_COLUMNS)
                 ->visible()
                 ->with('brand:id,name,slug')
-                ->where(function ($w) use ($terms) {
+                ->where(function ($w) use ($terms, $q) {
+                    // Every word, in any order: "medicube booster x2" finds
+                    // "medicube - AGE-R Booster Pro X2 Pink". See SearchTerms::words().
+                    SearchTerms::orWhereEveryWord($w, $q, ['products.name', 'products.sku', 'brand.name']);
+
                     foreach ($terms as $term) {
                         SearchTerms::orWhereLike($w, 'products.name', $term);
                         SearchTerms::orWhereLike($w, 'products.sku', $term);
@@ -403,23 +546,27 @@ class SearchController extends Controller
              *
              * A search for a brand that stocks three products returned three
              * rows and left the panel looking half-built. Anything short is
-             * filled with the best sellers from the brands already matched,
-             * then from the catalogue at large — still relevant, and the panel
-             * is a consistent size whatever was typed.
+             * filled with the best sellers from the brands already matched.
+             *
+             * ▲ AND ONLY FROM THOSE BRANDS, AND NEVER FROM NOTHING (1 October
+             *   2026). It used to go on to "the catalogue at large", so a
+             *   search that matched NOTHING showed five unrelated best sellers
+             *   and "5 found". The owner typed "medicube booster x2" and saw
+             *   Anua and Dr.Althea -- which read exactly as the search having
+             *   stopped and kept old results. A search that matches nothing
+             *   now says so; one that matches a brand tops up from that brand.
              */
-            if ($products->count() < $n) {
+            $brandIds = $products->pluck('brand_id')->filter()->unique()->all();
+
+            if ($products->count() < $n && $brandIds !== []) {
                 $have = $products->pluck('id')->all();
-                $brandIds = $products->pluck('brand_id')->filter()->unique()->all();
 
                 $filler = Product::query()
                     ->select(self::CARD_COLUMNS)
                     ->visible()
                     ->with('brand:id,name,slug')
                     ->whereNotIn('id', $have ?: [0])
-                    ->when($brandIds !== [], fn ($w) => $w->orderByRaw(
-                        'CASE WHEN brand_id IN (' . implode(',', array_fill(0, count($brandIds), '?')) . ') THEN 0 ELSE 1 END',
-                        $brandIds
-                    ))
+                    ->whereIn('brand_id', $brandIds)
                     ->orderByDesc('total_sales')
                     ->orderByDesc('id')
                     ->limit($n - $products->count())

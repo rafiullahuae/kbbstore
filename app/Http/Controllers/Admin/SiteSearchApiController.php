@@ -47,6 +47,8 @@ class SiteSearchApiController extends Controller
         'extended' => ['Extended Search Results', 'Recognise a brand name in the query and match accordingly.',
             ['search_extended_enabled', 'search_extended_strict_brand',
                 'search_extended_partial_brand_match', 'search_extended_broaden_others']],
+        'sets' => ['Sets in search', 'Put a set at the top of the results when the search fits it.',
+            ['search_sets_first', 'search_sets_pick']],
         'styles' => ['Search styles & colors', 'Colours and shape for the search panel.',
             ['search_radius', 'search_style_accent', 'search_style_accent_deep',
                 'search_style_chip_bg', 'search_style_chip_text', 'search_style_radius']],
