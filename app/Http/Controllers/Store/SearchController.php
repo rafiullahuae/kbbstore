@@ -84,7 +84,16 @@ class SearchController extends Controller
 
         // Counted after the results are known, so a term nobody could find is
         // not offered back to the next visitor.
-        $this->insights->record($q, (int) ($payload['total'] ?? 0));
+        //
+        // ▲ ONLY WHEN THE SEARCH HAS SETTLED (1 October 2026). The box asks on
+        //   every keystroke, so counting every request counted "me", "med",
+        //   "medi" on the way to "medicube" -- and Growth -> Search Terms would
+        //   have ranked fragments. search.js sends `log=1` once per term, when
+        //   the shopper stops typing, presses Enter or picks a result. The
+        //   answer is the same cached payload either way.
+        if ($request->boolean('log')) {
+            $this->insights->record($q, (int) ($payload['total'] ?? 0));
+        }
 
         return response()->json($payload);
     }
