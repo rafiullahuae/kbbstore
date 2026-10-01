@@ -601,6 +601,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // outside auth:admin that is a stranger rewriting the catalogue.
         require __DIR__.'/import-admin.php';
 
+        // Store → Import → a large export uploaded in pieces (Lane IE2). Same
+        // group and the same reason as the import file above: these endpoints
+        // write, join and delete files on the server's disk. Inside the group
+        // that carries `auth:admin` and NoStoreAdminApi, never under /api/.
+        require __DIR__.'/import-parts-admin.php';
+
         /*
          * Lane A's "Articles at addresses the shop owns" report, mounted here
          * and not beside it: the `/import/` prefix is what makes

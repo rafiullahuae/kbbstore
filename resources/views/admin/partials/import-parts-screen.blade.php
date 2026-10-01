@@ -2,32 +2,25 @@
     STORE → IMPORT / EXPORT — an export bigger than the server will accept.
     =======================================================================
 
-    ▲ THE INTEGRATOR STILL HAS TO ADD TWO LINES. This partial is a lane's file
-    and resources/views/admin/app.blade.php is the integrator's, so:
+    ▲ MOUNTED IN 2.60.337. The integrator added both halves: this partial
+    is included by the console, and the route file is required inside the
+    admin-api group. Written in the past tense because a header describing its
+    own mounting in the present tense goes false the day the integrator acts.
 
-        @include('admin.partials.import-parts-screen')
+    ── WHY IT EXISTS, STATED HONESTLY ─────────────────────────────────────────
 
-    goes beside the other Store screens' partials, and
+    It was built on a measurement that turned out to be this BUILD MACHINE's,
+    not the shop's: a 2M upload limit against a 2.18 MB Orders export. The
+    owner then checked his own server and it reports post_max_size = 10M and
+    upload_max_filesize = 100M -- the smaller of the two is the real ceiling,
+    so his export fits as it is today.
 
-        require __DIR__.'/import-parts-admin.php';
-
-    goes into routes/web.php's admin-api group, beneath the import require.
-    Until both are there the import screen behaves exactly as it always has —
-    see "IT FEELS FOR THE ENDPOINT" below, which is why an unmounted half of
-    this is harmless rather than broken.
-
-    ── THE DEFECT ─────────────────────────────────────────────────────────────
-
-    The real shop's Orders export zips to 2.18 MB. PHP's default
-    `upload_max_filesize` is 2M and this build machine reports exactly that,
-    with `post_max_size` at 8M. So the one group he least wants to skip is
-    refused by PHP BEFORE any route runs: `$_FILES` arrives empty, no validator
-    fires, `impUpload()` gets a body that is not JSON, and the screen says "The
-    server would not take that upload" with no number in it.
-
-    The previous round's answer was to go and raise the directive. He may not be
-    able to; a panel may reset it; and it comes back the day his catalogue
-    outgrows whatever it is raised to. So the file is cut up instead.
+    It is kept anyway, for the reason it was right to build: the limit is a
+    server setting the owner does not control from this application. A hosting
+    panel can reset it, a move to another host can halve it, and a catalogue
+    that grows will outgrow whatever it is. When a file no longer fits, this
+    cuts it up instead of the upload failing with no number in the message.
+    When it does fit -- the normal case on his shop today -- it is never used.
 
     ── WHAT THIS DOES ─────────────────────────────────────────────────────────
 

@@ -23541,6 +23541,14 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
      today. --}}
 @include('admin.partials.page-wash-screen')
 
+{{-- Store -> Import: an export file too big for one request goes up in pieces
+     (Lane IE2, mounted by the integrator in 2.60.337). It WRAPS the console's
+     own upload function, which is declared near line ten thousand of this file,
+     so it must come after that declaration -- here, below the last screen
+     partial, is far enough. A file that fits one request still goes through
+     the original function untouched. --}}
+@include('admin.partials.import-parts-screen')
+
 @verbatim
 <script>
 /* ---------------------------------------------------------------------------
