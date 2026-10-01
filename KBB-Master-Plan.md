@@ -3707,6 +3707,9 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 5 | Product tabs missing after import: the old site showed "Description" **and "Major Ingredients"** (and other tabs on other products); the new product page shows only Description | PI-A | queued after 1 & 3 |
 | 6 | Smallest phones: "Filters" and "Sort" do not fit on one row on category/shop pages — must shrink (size, font) to fit automatically | PI-B | queued after 2 & 4 |
 | 7 | Pagination arrows render giant/broken. Add a choice: arrows, **load more on scroll** in batches (12 / 15 / 20 / a number he types), or **load all** (no pagination). Must be fast, using the existing grey loading placeholders | PI-B | queued after 2 & 4 |
+| 8 | Add to cart: replace the grey "Added to bag" pill with a choice of feedback — **an animated tick, grey → green, very fast, gone immediately** — while the cart panel still opens as now | PI-B | queued |
+| 9 | "Read less" collapses the description but leaves the shopper far down the page; it must bring them back to where the section closed | PI-A | queued |
+| 10 | **Major:** on the product edit page, convert any product into a proper **set** (choose its member products) — many of his sets were imported as plain products. Must be reliable and work with every option the set editor has | next free lane | being scoped by integrator |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix
