@@ -63,6 +63,53 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 		'_yoast_wpseo_primary_product_cat',
 	);
 
+	/**
+	 * WHERE A WOOCOMMERCE SHOP KEEPS ITS EXTRA PRODUCT TABS. (Lane PI-A, 1.9.0)
+	 *
+	 * The owner's old product page showed "Description" AND "Major
+	 * Ingredients"; the imported one showed Description alone. WooCommerce has
+	 * no extra tabs of its own -- the `woocommerce_product_tabs` filter is the
+	 * only door, and every plugin and theme that offers per-product tabs keeps
+	 * them in its OWN post meta. This export read none of those keys, so the
+	 * tabs were in no file and no report could name them.
+	 *
+	 * The storages below are the ones in common use. Each is read the way its
+	 * plugin writes it, and all of them come out as one column, `custom_tabs`,
+	 * in one shape. A shop using a plugin that is not listed here is NAMED in
+	 * manifest.json -- see report_unread_tab_keys() -- rather than skipped in
+	 * silence, so the next build can read it.
+	 *
+	 *   yikes_woo_products_tabs   Custom Product Tabs for WooCommerce (YIKES):
+	 *                             a serialised list of {title, id, content}.
+	 *   frs_woo_product_tabs      WooCommerce Custom Product Tabs Lite, the
+	 *                             plugin YIKES forked: the same shape.
+	 *   _woodmart_product_custom_tab_title / _content (and _2)   WoodMart.
+	 *   _custom_tab_title / _custom_tab                          Flatsome.
+	 *   custom_tab_title1..3 / custom_tab_content1..3            Porto.
+	 */
+	const TAB_LIST_KEYS = array( 'yikes_woo_products_tabs', 'frs_woo_product_tabs' );
+
+	const TAB_PAIR_KEYS = array(
+		array( '_woodmart_product_custom_tab_title', '_woodmart_product_custom_tab_content' ),
+		array( '_woodmart_product_custom_tab_title_2', '_woodmart_product_custom_tab_content_2' ),
+		array( '_custom_tab_title', '_custom_tab' ),
+		array( 'custom_tab_title1', 'custom_tab_content1' ),
+		array( 'custom_tab_title2', 'custom_tab_content2' ),
+		array( 'custom_tab_title3', 'custom_tab_content3' ),
+	);
+
+	/** Every key the two lists above read, for the one meta query per batch. */
+	private static function tab_meta_keys() {
+		$keys = self::TAB_LIST_KEYS;
+
+		foreach ( self::TAB_PAIR_KEYS as $pair ) {
+			$keys[] = $pair[0];
+			$keys[] = $pair[1];
+		}
+
+		return $keys;
+	}
+
 	/** Statuses a product row can be in that this export carries. */
 	private function statuses() {
 		$statuses = array( 'publish', 'draft', 'private', 'pending', 'future' );
@@ -133,6 +180,12 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 			 * in the discard channel with their value, exactly like the rest.
 			 */
 			'sold_individually', 'reviews_enabled', 'default_attributes',
+			/*
+			 * READ BY ProductImporter, into product_tabs. (Lane PI-A, 1.9.0)
+			 * A JSON list of {"title","content"}, in the order the old product
+			 * page showed them, empty tabs left out. See TAB_LIST_KEYS.
+			 */
+			'custom_tabs',
 		);
 	}
 
@@ -166,13 +219,14 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 
 		if ( empty( $rows ) ) {
 			$this->report_trash();
+			$this->report_unread_tab_keys();
 
 			return array( 'rows' => array(), 'cursor' => (int) $cursor, 'done' => true );
 		}
 
 		$ids   = $this->ids_of( $rows );
 		$last  = end( $ids );
-		$meta  = KBB_Export_Wp::post_meta( $ids, self::META_KEYS );
+		$meta  = KBB_Export_Wp::post_meta( $ids, array_merge( self::META_KEYS, self::tab_meta_keys() ) );
 		$brand = KBB_Export_Wp::brand_taxonomy();
 
 		$taxonomies = array( 'product_cat', 'product_tag', 'product_type', 'product_visibility', 'product_shipping_class' );
@@ -257,6 +311,7 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 				// one convention to read and not two.
 				'reviews_enabled' => 'closed' === $row['comment_status'] ? 'no' : 'yes',
 				'default_attributes' => $this->default_attributes( $get( '_default_attributes' ) ),
+				'custom_tabs'    => $this->custom_tabs( $get ),
 			);
 		}
 
@@ -264,6 +319,7 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 
 		if ( $done ) {
 			$this->report_trash();
+			$this->report_unread_tab_keys();
 		}
 
 		return array( 'rows' => $out, 'cursor' => (int) $last, 'done' => $done );
@@ -514,6 +570,93 @@ class KBB_Export_Stage_Products extends KBB_Export_Stage {
 		}
 
 		return $this->pipes( $parts );
+	}
+
+	/**
+	 * Every extra tab this product had, as one JSON cell.
+	 *
+	 * List storages first, in their own order, then the title/content pairs.
+	 * A tab with no title or no content is left out: WooCommerce does not draw
+	 * one, so the old product page never showed it. Content is carried exactly
+	 * as stored -- classic-editor HTML with bare newlines -- and the importer
+	 * lays it out and sanitises it, the same path a description takes.
+	 *
+	 * @param callable $get the batch's meta reader for this product.
+	 */
+	private function custom_tabs( $get ) {
+		$tabs = array();
+
+		foreach ( self::TAB_LIST_KEYS as $key ) {
+			$value = maybe_unserialize( (string) $get( $key ) );
+
+			if ( ! is_array( $value ) ) {
+				continue;
+			}
+
+			foreach ( $value as $tab ) {
+				if ( is_array( $tab ) ) {
+					$tabs[] = array(
+						'title'   => isset( $tab['title'] ) ? (string) $tab['title'] : '',
+						'content' => isset( $tab['content'] ) ? (string) $tab['content'] : '',
+					);
+				}
+			}
+		}
+
+		foreach ( self::TAB_PAIR_KEYS as $pair ) {
+			$tabs[] = array( 'title' => (string) $get( $pair[0] ), 'content' => (string) $get( $pair[1] ) );
+		}
+
+		$kept = array();
+
+		foreach ( $tabs as $tab ) {
+			$title   = trim( $tab['title'] );
+			$content = $tab['content'];
+
+			if ( '' === $title || '' === trim( $content ) ) {
+				continue;
+			}
+
+			$kept[] = array( 'title' => $title, 'content' => $content );
+		}
+
+		if ( empty( $kept ) ) {
+			return '';
+		}
+
+		$json = json_encode( $kept, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+
+		return false === $json ? '' : $json;
+	}
+
+	/**
+	 * Name every product meta key that looks like a tab and is not read above.
+	 *
+	 * A tab plugin this build does not know is the same silent loss as the one
+	 * this column fixes, one plugin further along. One query, once per export:
+	 * the keys on product posts with "tab" in the name, minus the ones read.
+	 */
+	private function report_unread_tab_keys() {
+		global $wpdb;
+
+		$keys = (array) $wpdb->get_col(
+			'SELECT DISTINCT pm.meta_key FROM ' . $wpdb->prefix . 'postmeta pm
+			 INNER JOIN ' . $wpdb->prefix . "posts p ON p.ID = pm.post_id
+			 WHERE p.post_type = 'product' AND pm.meta_key LIKE '%tab%'
+			 ORDER BY pm.meta_key"
+		);
+
+		$unread = array_values( array_diff( array_map( 'strval', $keys ), self::tab_meta_keys(), self::META_KEYS ) );
+
+		if ( empty( $unread ) ) {
+			return;
+		}
+
+		$this->note(
+			'These product meta keys look like product tabs and are NOT in products.csv `custom_tabs`: `'
+				. implode( '`, `', $unread ) . '`. If the old product page showed extra tabs, they are stored '
+				. 'under one of these keys and this build of the exporter does not read it yet.'
+		);
 	}
 }
 

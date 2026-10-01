@@ -1,0 +1,40 @@
+{
+  "390": {
+    "beforePress": {
+      "scrollY": 1837,
+      "detailsTop": -272,
+      "detailsBottom": 1448,
+      "headerBottom": 127,
+      "detailsTopVisibleBelowHeader": false,
+      "buttonText": "Read less ↑"
+    },
+    "afterPress": {
+      "scrollY": 1426,
+      "detailsTop": 139,
+      "detailsBottom": 323,
+      "headerBottom": 127,
+      "detailsTopVisibleBelowHeader": true,
+      "buttonText": "Read more ↓"
+    },
+    "scrollWidth": 390
+  },
+  "1280": {
+    "beforePress": {
+      "scrollY": 1333,
+      "detailsTop": -261,
+      "detailsBottom": 1114,
+      "headerBottom": 94,
+      "detailsTopVisibleBelowHeader": false,
+      "buttonText": "Read less ↑"
+    },
+    "afterPress": {
+      "scrollY": 966,
+      "detailsTop": 106,
+      "detailsBottom": 290,
+      "headerBottom": 94,
+      "detailsTopVisibleBelowHeader": true,
+      "buttonText": "Read more ↓"
+    },
+    "scrollWidth": 1280
+  }
+}

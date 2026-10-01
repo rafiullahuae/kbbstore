@@ -1153,3 +1153,33 @@ a{color:inherit;text-decoration:none}
     .kbb-fbt-items{--fbt-thumb:76px;--fbt-pad:8px}
     .kbb-fbt-plus{font-size:15px}
 }
+
+/* ── IMPORTED COPY HAS PARAGRAPHS NOW, SO THEY NEED A GAP. (Lane PI-A) ───────
+   RichText::forDisplay() gives an imported WooCommerce description the <p>s,
+   <br>s, headings and lists the old shop drew. This sheet resets every margin
+   to zero (line 15), so without the rules below those paragraphs would sit
+   flush against each other -- structure in the markup, one slab on the page.
+
+   One step of space between blocks, .75em, the rhythm the pdp-preview layouts
+   already used for the same element. Logical properties only, so /ar mirrors
+   without a [dir] rule. The <ol> gets the 18px the <ul> already has (line 354)
+   or its numbers would hang outside the column. First and last child give their
+   outer margin back, so the panel's clamp and the blurb's cap measure the copy,
+   not the gap after it. */
+.details .dcontent p{margin-block-end:.75em}
+.details .dcontent :is(ul,ol){margin-block-end:.75em}
+.details .dcontent ol{margin-inline-start:18px}
+.details .dcontent :is(h2,h3,h4,h5,h6){margin-block:1em .4em;line-height:1.35}
+.details .dcontent > :first-child{margin-block-start:0}
+.details .dcontent > :last-child{margin-block-end:0}
+.pdp .bb-desc :is(p,div,ul,ol){margin-block-end:.6em}
+.pdp .bb-desc :is(ul,ol){margin-inline-start:18px}
+.pdp .bb-desc > :last-child{margin-block-end:0}
+
+/* ── "READ LESS" LANDS BELOW THE STICKY HEADER, NOT UNDER IT. (Lane PI-A) ────
+   tabs.js scrolls .details back into view with block:'nearest' when a long
+   description is collapsed. The header is sticky -- measured on this page at
+   127px tall on a 390 phone and 94px at 1280 -- so without a margin the tab bar
+   would come to rest behind it. 12px of air on top of each. */
+.details{scroll-margin-top:106px}
+@media (max-width:900px){.details{scroll-margin-top:139px}}

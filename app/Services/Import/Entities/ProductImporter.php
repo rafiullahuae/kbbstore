@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Import\Entities;
 
 use App\Models\Product;
+use App\Models\ProductTab;
 use App\Services\Import\ImportContext;
 use App\Services\Import\Row;
 use App\Services\Import\RowRejected;
 use App\Services\Import\SlugGuard;
+use App\Support\ProductTabs;
 use App\Support\RichText;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -518,6 +520,10 @@ final class ProductImporter extends EntityImporter
             $attributes['created_at'] = $createdAt;
         }
 
+        // Read BEFORE the row is written, so a malformed cell is reported
+        // against this row whatever happens to the product itself.
+        $tabs = $this->tabsFrom($row, $context);
+
         $outcome = $context->apply($product, $attributes);
 
         $context->record($this->name(), $outcome);
@@ -525,14 +531,154 @@ final class ProductImporter extends EntityImporter
 
         $pivotChanged = $this->syncCategories((int) $product->id, $categoryIds);
 
+        if ($tabs !== null && $this->syncTabs((int) $product->id, $tabs)) {
+            $pivotChanged = true;
+        }
+
         // A product whose own columns did not move but whose category
-        // membership did IS an update, and reporting it as unchanged would make
-        // the idempotency evidence a lie.
+        // membership -- or whose tabs -- did IS an update, and reporting it as
+        // unchanged would make the idempotency evidence a lie.
         if ($pivotChanged && $outcome === 'unchanged') {
             $report = $context->report->for($this->name());
             $report->unchanged--;
             $report->updated();
         }
+    }
+
+    /**
+     * The extra tabs the old product page showed, ready to store. (Lane PI-A)
+     *
+     * WHAT THE OWNER SAW. His WordPress product page had "Description" AND
+     * "Major Ingredients"; the imported one had Description alone. Those tabs
+     * live in a tab plugin's post meta, which the exporter did not read until
+     * 1.9.0 -- it now writes them to `custom_tabs` as a JSON list of
+     * {title, content}, and this is the reader.
+     *
+     * NULL MEANS "LEAVE THIS PRODUCT'S IMPORTED TABS ALONE": the column is
+     * absent (an export from a build before 1.9.0) or unreadable. An empty list
+     * means the old shop has none, and a re-import removes the ones an earlier
+     * import wrote. The difference is the whole of the idempotency story -- an
+     * old export re-run must not wipe tabs a newer one brought across.
+     *
+     * The content is THIRD-PARTY HTML and goes through the same render path as
+     * a description: RichText::forDisplay(), the old shop's paragraph rules and
+     * then the allowlist, last. It is stored already laid out, because a tab
+     * row is printed with {!! !!} exactly as the owner's own tabs are. What the
+     * allowlist removed is reported against the row, the way a description's
+     * removals are.
+     *
+     * @return list<array{title: string, body: string}>|null
+     */
+    private function tabsFrom(Row $row, ImportContext $context): ?array
+    {
+        if (! $row->has('custom_tabs')) {
+            return null;
+        }
+
+        $raw = $row->text('custom_tabs');
+
+        if ($raw === null) {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+
+        if (! is_array($decoded) || ! array_is_list($decoded)) {
+            $context->report->for($this->name())->note(
+                'custom_tabs on '.$this->identify($row).' is not a JSON list of tabs; this product\'s tabs were left as they were'
+            );
+
+            return null;
+        }
+
+        $tabs = [];
+
+        foreach ($decoded as $tab) {
+            if (! is_array($tab) || ! is_string($tab['title'] ?? null) || ! is_string($tab['content'] ?? null)) {
+                continue;
+            }
+
+            // A title is printed ESCAPED, into a button and an accordion
+            // heading, so it is text: entities decoded once, tags and runs of
+            // whitespace gone, and cut to the column's width.
+            $title = html_entity_decode(strip_tags($tab['title']), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $title = Str::limit(trim((string) preg_replace('/\s+/u', ' ', $title)), 120, '');
+
+            $this->cleanHtmlReported($tab['content'], 'custom_tabs', $row, $context);
+            $body = RichText::forDisplay($tab['content']);
+
+            // ProductTabs' own drop rule, so a tab stored here is never one the
+            // page would refuse to draw.
+            if ($title === '' || trim(strip_tags($body)) === '') {
+                continue;
+            }
+
+            $tabs[] = ['title' => $title, 'body' => $body];
+
+            if (count($tabs) >= ProductTabs::IMPORTED_MAX) {
+                break;
+            }
+        }
+
+        return $tabs;
+    }
+
+    /**
+     * Make this product's imported tabs exactly $tabs, touching nothing else.
+     *
+     * Rows are found by `import_key` (`wc:1`, `wc:2`, ... in the order the
+     * old page drew them), never by title, so a tab the owner wrote himself in
+     * Catalog -> Product tabs is invisible to this and a renamed imported tab
+     * is still the same row. Title and body follow the export on every run;
+     * the position and the on/off switch are set when the row is created and
+     * then belong to the owner.
+     *
+     * @param  list<array{title: string, body: string}>  $tabs
+     * @return bool whether anything actually moved
+     */
+    private function syncTabs(int $productId, array $tabs): bool
+    {
+        $existing = ProductTab::query()
+            ->where('product_id', $productId)
+            ->whereNotNull('import_key')
+            ->get()
+            ->keyBy('import_key');
+
+        $changed = false;
+        $keep = [];
+
+        foreach ($tabs as $i => $tab) {
+            $key = 'wc:'.($i + 1);
+            $keep[$key] = true;
+
+            $model = $existing->get($key);
+
+            if ($model === null) {
+                $model = (new ProductTab)->forceFill([
+                    'product_id' => $productId,
+                    'source_key' => null,
+                    'import_key' => $key,
+                    'position' => ProductTabs::IMPORTED_PRODUCT_POSITION + $i,
+                    'is_enabled' => true,
+                ]);
+            }
+
+            $model->forceFill(['title' => $tab['title'], 'body' => $tab['body']]);
+
+            if (! $model->exists || $model->isDirty()) {
+                $model->save();
+                $changed = true;
+            }
+        }
+
+        foreach ($existing as $key => $model) {
+            if (! isset($keep[$key])) {
+                $model->delete();
+                $changed = true;
+            }
+        }
+
+        return $changed;
     }
 
     /**

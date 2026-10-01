@@ -195,6 +195,19 @@ final class ProductTabs
      */
     public const LEGACY_SETTING_POSITION = 40;
 
+    /**
+     * Where the WooCommerce import puts a product's extra tabs. (Lane PI-A)
+     *
+     * Straight after the built-ins and the legacy setting's entries and before
+     * any global tab, which is where the old shop drew them: a tab plugin's
+     * tabs came right after Description. One step apart, in the old page's
+     * order, so IMPORTED_MAX of them stay under DEFAULT_GLOBAL_POSITION.
+     */
+    public const IMPORTED_PRODUCT_POSITION = 50;
+
+    /** The most tabs one product brings across; 50 + 40 stays below 100. */
+    public const IMPORTED_MAX = 40;
+
     /** Where a NEW global tab lands, before the owner moves it. */
     public const DEFAULT_GLOBAL_POSITION = 100;
 
@@ -848,7 +861,22 @@ final class ProductTabs
             $out[] = [
                 'key' => 'builtin:' . $key,
                 'title' => (string) __($spec['string']),
-                'body' => $body,
+                /*
+                 * THE PRODUCT'S OWN COLUMN, LAID OUT THE WAY WORDPRESS LAID IT
+                 * OUT. (Lane PI-A) An imported WooCommerce description is
+                 * classic-editor text -- bare newlines, no <p> -- and printed as
+                 * stored it rendered as one run-on slab on the owner's shop.
+                 * RichText::forDisplay() builds the paragraphs and <br>s the old
+                 * site's wpautop() built, then runs the allowlist over the
+                 * result, because this body is printed with {!! !!}. Copy with
+                 * no stray newline (everything the admin editor saves) comes
+                 * back as clean() leaves it.
+                 *
+                 * Here, on the built-in entry only: an override or an authored
+                 * tab is editor HTML the owner wrote in this admin, and it
+                 * replaces this body whole further down.
+                 */
+                'body' => RichText::forDisplay($body),
                 'position' => $spec['position'],
             ];
         }

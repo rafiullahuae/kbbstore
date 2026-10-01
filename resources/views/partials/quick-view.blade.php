@@ -15,7 +15,12 @@
     $name = $product->t('name');
     $img = $product->image;
     $inStock = ($product->stock_status ?? 'instock') !== 'outofstock';
-    $blurb = trim(strip_tags((string) ($product->t('short_description') ?? '')));
+    // TEXT, NOT TAGS-STRIPPED HTML. (Lane PI-A) An imported excerpt is HTML,
+    // and strip_tags() left its entities encoded -- "Lift &amp; glow" was then
+    // escaped again and the modal read "&amp;" -- and welded the words either
+    // side of a removed </p> or <div> into one. toText() decodes the entities
+    // and puts a space at each block boundary; {{ }} below escapes it once.
+    $blurb = \App\Support\RichText::toText($product->t('short_description'));
 @endphp
 
 <div class="qv-wrap">

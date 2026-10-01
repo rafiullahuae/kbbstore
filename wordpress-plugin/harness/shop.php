@@ -430,6 +430,25 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 		// The GTIN, in the key that does NOT start with an underscore.
 		// docs/FX-YOAST-TIER-CENSUS.md §2: "IT DOES NOT START WITH `_yoast_`."
 		'wpseo_global_identifier_values' => serialize( array( 'gtin13' => '8809453510003' ) ),
+		/*
+		 * EXTRA PRODUCT TABS, as Custom Product Tabs for WooCommerce (YIKES)
+		 * stores them. (Lane PI-A) The owner's product page showed "Major
+		 * Ingredients" beside Description, and the export carried neither the
+		 * key nor the tab. Two real tabs -- classic-editor content with bare
+		 * newlines and a list, and a script that must not survive the import --
+		 * and one EMPTY tab, which WooCommerce does not draw and the export must
+		 * leave out.
+		 */
+		'yikes_woo_products_tabs' => serialize( array(
+			array(
+				'title' => 'Major Ingredients',
+				'id' => 'major-ingredients',
+				'content' => "<strong>Ginseng Root Extract</strong>\r\nNourishes and firms.\r\n\r\n<ul>\r\n<li>Niacinamide</li>\r\n<li>Adenosine</li>\r\n</ul>"
+					. '<script>alert(1)</script>',
+			),
+			array( 'title' => 'How to Use', 'id' => 'how-to-use', 'content' => "Two drops, morning and night.\r\nPat in." ),
+			array( 'title' => 'Empty', 'id' => 'empty', 'content' => '  ' ),
+		) ),
 	) );
 
 	$insert( 'posts', array(
@@ -448,6 +467,12 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 		'_regular_price' => '1,234.50',
 		'_stock' => '4', '_stock_status' => 'instock', '_manage_stock' => 'yes',
 		'_yoast_wpseo_metadesc' => 'Only a description was ever written for this one.',
+		// A theme's single custom tab (Flatsome's pair), so the second storage
+		// shape is exercised, and a tab key no listed plugin writes, which the
+		// export must NAME in manifest.json rather than skip in silence.
+		'_custom_tab_title' => 'Shipping',
+		'_custom_tab' => 'Ships in two days.',
+		'_kbb_unknown_tab_plugin' => 'a:0:{}',
 	) );
 
 	$insert( 'posts', array(

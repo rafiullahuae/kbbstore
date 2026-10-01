@@ -279,6 +279,201 @@ final class RichText
     }
 
     /**
+     * Imported or authored product copy, ready to print raw. (Lane PI-A)
+     *
+     * WHAT THE OWNER SAW. His WooCommerce descriptions arrived as one run-on
+     * slab: "…other functions. Medicube – PDRN Pink Collagen Capsule Cream This
+     * elasticity…", headings and paragraphs welded together, where the old
+     * WordPress shop had shown a heading, a bold numbered line, spaced
+     * paragraphs and a list. Nothing was lost on import. WooCommerce stores
+     * classic-editor post_content with BARE NEWLINES and no <p> at all, and
+     * WordPress builds the paragraphs at display time with wpautop(): a blank
+     * line is a paragraph, a single newline is a <br>. This shop printed the
+     * stored text without that step, and a browser renders a newline as a
+     * space.
+     *
+     * So the step happens here, at render time, which is what fixes the
+     * products already imported on the live shop without re-importing a row.
+     *
+     * TWO HALVES, AND THE ORDER IS THE CONTROL.
+     *
+     *   1. autop(), only when the copy has a newline that a browser would
+     *      otherwise swallow (needsAutop()). Copy written in the admin editor
+     *      already carries its own <p> tags, newlines only between blocks, and
+     *      is passed through untouched by this half -- so a description
+     *      nobody imported renders exactly as it did.
+     *   2. clean(), ALWAYS, and LAST. This is printed with {!! !!}, so nothing
+     *      reaches the page that has not just been through the allowlist --
+     *      not the stored value (whose write path may not have cleaned it:
+     *      AdminController's quick edit stores `description` as sent) and not
+     *      the markup autop() itself produced. autop() is regex surgery over
+     *      HTML and is trusted with nothing: its output is parsed and
+     *      re-serialised like any other input.
+     */
+    public static function forDisplay(?string $html): string
+    {
+        $html = (string) $html;
+
+        if (trim($html) === '') {
+            return '';
+        }
+
+        if (! self::needsAutop($html)) {
+            return self::clean($html);
+        }
+
+        /*
+         * Cleaned BEFORE autop() as well as after it. A <script> in the raw
+         * copy is a line of its own to autop(), which wraps it in a <p>; the
+         * allowlist then drops the script and leaves `<p></p>` behind -- an
+         * empty paragraph, a blank gap on the page. Taking the hostile markup
+         * out first means autop() only ever lays out what will be printed.
+         * The second clean() is still the one that guards the page.
+         */
+        return self::clean(self::autop(self::clean($html)));
+    }
+
+    /**
+     * Does any block-level tag survive in this (already clean) HTML?
+     *
+     * The short description sits in a <p> today. A <p> cannot hold a <p>, a
+     * <div> or a <ul> -- the parser closes it at the first one and the rest of
+     * the blurb falls out of the clamp -- so the template asks this and picks
+     * <div> only for a blurb that has blocks in it. A one-line blurb keeps its
+     * <p>, byte for byte.
+     */
+    public static function hasBlocks(string $html): bool
+    {
+        return preg_match('#<' . self::AUTOP_BLOCKS . '[\s/>]#i', $html) === 1;
+    }
+
+    /**
+     * Would a browser lose a line break the author typed?
+     *
+     * Whitespace next to a block tag is layout, not content: `<p>a</p>\n<p>b</p>`
+     * renders the same with or without the newline, and that is the shape the
+     * admin editor saves. Take that whitespace away, and any newline left is
+     * one sitting between words or inline tags -- which a browser renders as a
+     * single space, and which WordPress rendered as a paragraph or a <br>.
+     */
+    public static function needsAutop(string $html): bool
+    {
+        if (! str_contains($html, "\n") && ! str_contains($html, "\r")) {
+            return false;
+        }
+
+        $probe = (string) preg_replace('#<pre[\s>].*?</pre>#is', '', $html);
+        $probe = (string) preg_replace('#\s*(</?' . self::AUTOP_BLOCKS . '(?:[\s/][^>]*)?>)\s*#i', '$1', $probe);
+
+        return str_contains(trim($probe), "\n") || str_contains(trim($probe), "\r");
+    }
+
+    /**
+     * Block-level tags, as WordPress's wpautop() lists them.
+     *
+     * Kept to WordPress's own list, not this file's allowlist, because the job
+     * is to reproduce how the old shop laid the same text out. Several of these
+     * (form, style, map) never survive clean(); naming them here only decides
+     * where autop() refuses to put a <p> or a <br>.
+     */
+    private const AUTOP_BLOCKS = '(?:table|thead|tfoot|caption|col|colgroup|tbody|tr|td|th|div|dl|dd|dt|ul|ol|li|pre'
+        . '|form|map|area|blockquote|address|math|style|p|h[1-6]|hr|fieldset|legend|section|article|aside'
+        . '|hgroup|header|footer|nav|figure|figcaption|details|menu|summary)';
+
+    /**
+     * A port of WordPress's wpautop($text, $br = true), wp-includes/formatting.php.
+     *
+     * Ported rather than approximated, because the target is "looks the way
+     * the old shop looked", and the old shop ran exactly this. Kept: <pre>
+     * protection, the blank-line paragraph split, <br> for a single newline,
+     * no <p> or <br> next to a block tag, and the <li>/<blockquote> fix-ups.
+     * Dropped: the <option>, <object>, <source>/<track> and <!-- wpnl -->
+     * branches -- every one of those tags is removed by clean() regardless, so
+     * there is nothing for them to protect.
+     *
+     * NEVER PRINT THIS ON ITS OWN. It does not sanitise and its output is
+     * not guaranteed well-formed; forDisplay() runs clean() over it.
+     */
+    public static function autop(string $text): string
+    {
+        if (trim($text) === '') {
+            return '';
+        }
+
+        $blocks = self::AUTOP_BLOCKS;
+        $preTags = [];
+        $text .= "\n";
+
+        // <pre> is set aside whole and put back at the end: its newlines are
+        // already meaningful and must not become <br>.
+        if (str_contains($text, '<pre')) {
+            $parts = explode('</pre>', $text);
+            $last = array_pop($parts);
+            $text = '';
+
+            foreach ($parts as $i => $part) {
+                $start = strpos($part, '<pre');
+
+                if ($start === false) {
+                    $text .= $part;
+
+                    continue;
+                }
+
+                $name = "<pre wp-pre-tag-{$i}></pre>";
+                $preTags[$name] = substr($part, $start) . '</pre>';
+                $text .= substr($part, 0, $start) . $name;
+            }
+
+            $text .= $last;
+        }
+
+        $text = (string) preg_replace('|<br\s*/?>\s*<br\s*/?>|', "\n\n", $text);
+        $text = (string) preg_replace('!(<' . $blocks . '[\s/>])!', "\n\n$1", $text);
+        $text = (string) preg_replace('!(</' . $blocks . '>)!', "$1\n\n", $text);
+        $text = (string) preg_replace('!(<hr\s*?/?>)!', "$1\n\n", $text);
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
+
+        // A newline INSIDE a tag (between attributes) is not a line break.
+        $text = (string) preg_replace_callback('/<[^>]*>/', static fn (array $m): string => str_replace("\n", ' ', $m[0]), $text);
+
+        if (str_contains($text, '<figcaption')) {
+            $text = (string) preg_replace('|\s*(<figcaption[^>]*>)|', '$1', $text);
+            $text = (string) preg_replace('|</figcaption>\s*|', '</figcaption>', $text);
+        }
+
+        $text = (string) preg_replace("/\n\n+/", "\n\n", $text);
+        $paragraphs = preg_split('/\n\s*\n/', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $text = '';
+
+        foreach ($paragraphs as $paragraph) {
+            $text .= '<p>' . trim($paragraph, "\n") . "</p>\n";
+        }
+
+        $text = (string) preg_replace('|<p>\s*</p>|', '', $text);
+        $text = (string) preg_replace('!<p>([^<]+)</(div|address|form)>!', '<p>$1</p></$2>', $text);
+        $text = (string) preg_replace('!<p>\s*(</?' . $blocks . '[^>]*>)\s*</p>!', '$1', $text);
+        $text = (string) preg_replace('|<p>(<li.+?)</p>|', '$1', $text);
+        $text = (string) preg_replace('|<p><blockquote([^>]*)>|i', '<blockquote$1><p>', $text);
+        $text = str_replace('</blockquote></p>', '</p></blockquote>', $text);
+        $text = (string) preg_replace('!<p>\s*(</?' . $blocks . '[^>]*>)!', '$1', $text);
+        $text = (string) preg_replace('!(</?' . $blocks . '[^>]*>)\s*</p>!', '$1', $text);
+
+        $text = str_replace(['<br>', '<br/>'], '<br />', $text);
+        $text = (string) preg_replace('|(?<!<br />)\s*\n|', "<br />\n", $text);
+
+        $text = (string) preg_replace('!(</?' . $blocks . '[^>]*>)\s*<br />!', '$1', $text);
+        $text = (string) preg_replace('!<br />(\s*</?(?:p|li|div|dl|dd|dt|th|pre|td|ul|ol)[^>]*>)!', '$1', $text);
+        $text = (string) preg_replace("|\n</p>$|", '</p>', $text);
+
+        if ($preTags !== []) {
+            $text = str_replace(array_keys($preTags), array_values($preTags), $text);
+        }
+
+        return $text;
+    }
+
+    /**
      * Depth-first, and deliberately over a SNAPSHOT of the child list.
      *
      * The walk removes and replaces nodes as it goes, and DOMNodeList is live:

@@ -1,0 +1,26 @@
+{
+  "390": {
+    "tabs": [
+      "Description",
+      "Major Ingredients",
+      "How to Use"
+    ],
+    "scripts": 0,
+    "handlers": 0,
+    "scrollWidth": 390,
+    "panel1": "<p><strong>Ginseng Root Extract</strong><br>\nNourishes and firms.</p>\n<ul>\n<li>Niacinamide</li>\n<li>Adenosine</li>\n</ul>",
+    "panel2": "<p>Two drops, morning and night.<br>\nPat in.</p>"
+  },
+  "1280": {
+    "tabs": [
+      "Description",
+      "Major Ingredients",
+      "How to Use"
+    ],
+    "scripts": 0,
+    "handlers": 0,
+    "scrollWidth": 1280,
+    "panel1": "<p><strong>Ginseng Root Extract</strong><br>\nNourishes and firms.</p>\n<ul>\n<li>Niacinamide</li>\n<li>Adenosine</li>\n</ul>",
+    "panel2": "<p>Two drops, morning and night.<br>\nPat in.</p>"
+  }
+}

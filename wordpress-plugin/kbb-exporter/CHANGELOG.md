@@ -20,7 +20,10 @@ that refusal rather than trusting it.
 
 ## 1.9.0
 
-**Reviews from Dream Code Reviews are exported.** (Integrator, 1 October 2026)
+Two changes ship together in 1.9.0, so the owner installs one plugin and
+re-exports Products (tabs) and Reviews (Dream Code) with it.
+
+### Reviews from Dream Code Reviews
 
 - The owner's storefront showed reviews from his own plugin, Dream Code
   Reviews, which keeps them in `wp_sorina_reviews` and hides WooCommerce's
@@ -38,7 +41,28 @@ that refusal rather than trusting it.
 - `reviews.csv` gains `helpful` (the plugin's likes, else WooCommerce Photo
   Reviews' `wcpr_vote_up_count`, which was named as unused before) and
   `source`. On a site without Dream Code Reviews nothing else changes.
-- Version moved 1.8.0 → 1.9.0 in all three places it lives.
+
+### Product tabs
+
+**Extra product tabs are now exported.** (Lane PI-A)
+
+- The old product page showed tabs such as **Major Ingredients** beside
+  **Description**; the imported product showed Description alone. WooCommerce
+  has no extra tabs of its own — every plugin and theme that adds them keeps
+  them in its own post meta — and this exporter read none of those keys, so the
+  tabs were in no file.
+- `products.csv` has a new column, `custom_tabs`: a JSON list of
+  `{"title", "content"}` in the order the old page showed them, empty tabs left
+  out. Read from Custom Product Tabs for WooCommerce (`yikes_woo_products_tabs`),
+  Custom Product Tabs Lite (`frs_woo_product_tabs`), WoodMart, Flatsome and
+  Porto. The new shop's importer turns each one into a tab on that product.
+- A product meta key with "tab" in its name that this build does **not** read
+  is named in `manifest.json`'s notes, so a tab plugin nobody listed is
+  reported rather than skipped.
+- **To get the tabs onto the new shop:** install this build, export
+  **Products** again, and import that export. Products already imported are
+  updated in place by their WooCommerce id; nothing is duplicated.
+- Version moved 1.8.0 → 1.9.0 in all three places it lives (once, for both).
 
 ## 1.8.0
 
