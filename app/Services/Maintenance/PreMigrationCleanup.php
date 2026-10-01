@@ -369,11 +369,15 @@ final class PreMigrationCleanup
         // selects from the table being deleted (error 1093), which is exactly
         // what otherProductQuery()'s NOT IN does. SQLite allows it, so only
         // the -c phpunit-mysql.xml run can say this line is needed.
-        return DB::transaction(function () {
+        $removed = DB::transaction(function () {
             $ids = $this->otherProductQuery()->pluck('id')->all();
 
             return $ids === [] ? 0 : DB::table('products')->whereNull('wc_id')->whereIn('id', $ids)->delete();
         });
+
+        \App\Services\VariantPricing::invalidate();
+
+        return $removed;
     }
 
     /* ------------------------------------------------ placeholder taxonomies */
@@ -518,7 +522,13 @@ final class PreMigrationCleanup
     {
         // Re-evaluated inside the delete rather than replayed from the ids the
         // preview collected: a product sold between the two must not go.
-        return DB::transaction(fn () => $this->demoProductQuery()->delete());
+        $removed = DB::transaction(fn () => $this->demoProductQuery()->delete());
+
+        // A raw delete, so drop VariantPricing's snapshot as Eloquent would
+        // have (VariantPriceMemoRawWriteGuardTest).
+        \App\Services\VariantPricing::invalidate();
+
+        return $removed;
     }
 
     /** @return array<string, mixed> */
