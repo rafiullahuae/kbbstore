@@ -3718,6 +3718,8 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 15 | Preview of the old order files refused every Order line / Order note (1,197 of 1,197 so far) and 183 Journal articles; reasons not yet seen | integrator | waiting on the refusal reasons from his screen (no data was written) |
 | 16 | Set editor: "Use this total" does not fill **Price** and **Sale price** from a percentage / amount-off rule (it even reset the discount to 0), so the shop showed no discount. Wanted: one press writes Price = bought-separately total, Sale = set price, and the shop shows the struck-through price and badge. Sets only | PK | in progress |
 | 17 | A **Visit** button on every product in the editor, opening the live product page | PK | in progress |
+| 18 | Every **Reset / Restore / Revert / Back to defaults** in the admin asks "Are you sure? Yes / No" in a small box with the page blurred — he hit them by mistake and lost settings | integrator | **built** — one guard for the whole admin (`partials/reset-guard.blade.php`), verified in Chromium; ships in the next package |
+| 19 | No more "Leave without saving?" boxes. Unsaved work is kept, and a list in the admin top bar shows everything left unfinished, each with a link straight back to it to finish | next free lane (after PK, same editor file) | queued |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix

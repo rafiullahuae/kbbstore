@@ -23651,6 +23651,9 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
   };
 })();
 </script>
+@endverbatim
+@include('admin.partials.reset-guard')
+@verbatim
 </body>
 </html>
 
