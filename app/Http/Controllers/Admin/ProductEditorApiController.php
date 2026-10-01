@@ -599,6 +599,25 @@ class ProductEditorApiController extends Controller
                 'rating' => (float) ($product->rating ?? 0),
                 'review_count' => (int) ($product->review_count ?? 0),
                 'url' => $product->url(),
+                /*
+                 * WOULD `url` OPEN THIS PRODUCT ON THE SHOP RIGHT NOW? (Lane PK)
+                 *
+                 * The editor's Visit button opens `url` in a new tab, and the
+                 * owner asked for it on every product -- but a draft, a private
+                 * product, a hidden one or one scheduled for next week is a 404
+                 * on the shop, and a button that opens a 404 is worse than no
+                 * button. So the screen is told, and says "Not live yet".
+                 *
+                 * ProductVisibility::isLive() and not a re-spelling of it: it is
+                 * the in-memory twin of the scope the product page itself runs
+                 * (Product::visible() -> status, is_visible, published_at), so
+                 * this cannot call a product live that the shop would refuse.
+                 * `url` is Product::url(), which goes through Url::to(), so the
+                 * KBB_BASE_PATH prefix is the shop's own -- empty on the live
+                 * site, /kbb-upgrade on the old staging box.
+                 */
+                'live' => $product->exists && ! $product->trashed()
+                    && \App\Support\ProductVisibility::isLive($product),
             ],
         ];
     }
