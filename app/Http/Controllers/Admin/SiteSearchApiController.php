@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\HeaderSettings;
+use App\Support\SearchSetChoices;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -79,7 +80,10 @@ class SiteSearchApiController extends Controller
             ];
         }
 
-        return response()->json(['tabs' => $tabs]);
+        // Sets in search -> "Set shown first, by brand" (Lane PL). Not a
+        // HeaderSettings field: a map keyed by brand, built from one grouped
+        // query -- see App\Support\SearchSetChoices for the storage choice.
+        return response()->json(['tabs' => $tabs, 'sets_by_brand' => SearchSetChoices::adminRows()]);
     }
 
     public function save(Request $request): JsonResponse
@@ -92,8 +96,35 @@ class SiteSearchApiController extends Controller
             return response()->json(['ok' => false, 'error' => 'Unknown setting: ' . implode(', ', $unknown)], 422);
         }
 
+        /*
+         * The per-brand set choices, when the screen sends them. Checked BEFORE
+         * anything is written, so a refused pair saves nothing at all rather
+         * than half a screen: every brand must exist and every set must be a
+         * visible set that fits it NOW (CLAUDE.md rule 5 -- a select stores one
+         * of its own options or the default). The map sent is the whole map:
+         * a brand left out goes back to the rule.
+         */
+        $choices = null;
+
+        if ($request->has('sets_by_brand')) {
+            [$choices, $errors] = SearchSetChoices::clean($request->input('sets_by_brand'));
+
+            if ($errors !== []) {
+                return response()->json(['ok' => false, 'error' => implode(' ', $errors)], 422);
+            }
+        }
+
         $this->header->save($data['settings']);
 
-        return response()->json(['ok' => true, 'saved' => count($data['settings']), 'values' => $this->header->all()]);
+        if ($choices !== null) {
+            SearchSetChoices::save($choices);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'saved' => count($data['settings']) + ($choices === null ? 0 : count($choices)),
+            'values' => $this->header->all(),
+            'sets_by_brand' => SearchSetChoices::adminRows(),
+        ]);
     }
 }
