@@ -33,6 +33,13 @@ use Illuminate\Support\Str;
  * now complete. finalise() is idempotent and cheap — a few hundred rows — so an
  * interrupted run that resumes and finishes still gets a correct tree.
  *
+ * ▲ THAT LAST SENTENCE WAS NOT TRUE UNTIL alreadyCommitted() EXISTED. In
+ * practice the row pass writes NO parent at all -- every link waits in
+ * $pendingParents for finalise() -- and that list is process memory. A
+ * process killed mid-file took the links of every category it had committed
+ * with it, and the resumed process, which skips those rows, never knew them.
+ * Lane KR measured it with kill -9: docs/KR-KILL-AND-RESUME.md.
+ *
  * A parent term id that never appears in the file is NOT an error that stops
  * the category being imported: a partial export of one branch is a legitimate
  * thing to run. It is a note in the report, and the category lands at the root
@@ -61,16 +68,7 @@ final class CategoryImporter extends EntityImporter
 
     public function import(Row $row, ImportContext $context): void
     {
-        $termId = $row->requireId('term_id', 'term_id', 'id', 'category_id');
-        $name = $row->requireText('name', 'name', 'title');
-
-        $slug = $row->text('slug') ?? Str::slug($name);
-
-        if ($slug === '') {
-            throw RowRejected::because("name '".$name."' does not reduce to a usable slug");
-        }
-
-        $parentTermId = $row->id('parent', 'parent', 'parent_id', 'parent_term_id');
+        [$termId, $name, $slug, $parentTermId] = $this->identity($row);
 
         $category = Category::query()->where('source_term_id', $termId)->first();
 
@@ -103,6 +101,53 @@ final class CategoryImporter extends EntityImporter
             $category->parent_id = null;
             $category->save();
         }
+    }
+
+    /**
+     * A category an earlier, killed process committed: put its parent link back
+     * on the list finalise() walks.
+     *
+     * Every link is deferred to finalise() -- even one whose parent is already
+     * in -- so a category committed by a process that died before finalise()
+     * had NO parent until this existed, and the resumed process never re-reads
+     * it. Measured at full volume: killed after 10 of 59 rows, resumed, 9
+     * categories at the top level with the wrong depth and path, and the menu
+     * items built from those paths pointing at the wrong addresses. See
+     * EntityImporter::alreadyCommitted().
+     *
+     * The same three checks import() makes before it writes anything, through
+     * the same method, so a row refused by the earlier pass is refused here too
+     * (the runner ignores the refusal) and is not linked by the resume when an
+     * uninterrupted run would not have linked it. A NEW category that passes
+     * them and is still refused further on (SlugGuard) has no row, and
+     * finalise() skips a term id it cannot resolve.
+     */
+    public function alreadyCommitted(Row $row, ImportContext $context): void
+    {
+        [$termId, , , $parentTermId] = $this->identity($row);
+
+        if ($parentTermId !== null) {
+            $this->pendingParents[$termId] = $parentTermId;
+        }
+    }
+
+    /**
+     * @return array{0: int, 1: string, 2: string, 3: int|null} term id, name, slug, parent term id
+     *
+     * @throws RowRejected
+     */
+    private function identity(Row $row): array
+    {
+        $termId = $row->requireId('term_id', 'term_id', 'id', 'category_id');
+        $name = $row->requireText('name', 'name', 'title');
+
+        $slug = $row->text('slug') ?? Str::slug($name);
+
+        if ($slug === '') {
+            throw RowRejected::because("name '".$name."' does not reduce to a usable slug");
+        }
+
+        return [$termId, $name, $slug, $row->id('parent', 'parent', 'parent_id', 'parent_term_id')];
     }
 
     /**

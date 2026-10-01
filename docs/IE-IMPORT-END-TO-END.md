@@ -441,6 +441,18 @@ lane**; the §2 showstopper took the time that was budgeted for it. The design i
 right and the existing test covers it, but the hard-kill rehearsal is a real gap
 and the cheapest thing a next round could close.
 
+▲ **CLOSED BY LANE KR — and "the existing test covers it" was not quite true.**
+`tools/kr-kill-rehearsal.sh` `kill -9`s `php artisan kbb:import` at eight points
+over the full-volume export and diffs every table against an uninterrupted
+import. Orders, lines, customers and money were identical at every point. Two
+things were not: a kill mid-`categories.csv` left 9 categories at the top level
+(wrong depth, wrong URL), and a kill mid-`reviews.csv` left 32 products rated
+0.0 / 0 reviews — both because finalise() worked from per-process memory that a
+killed process takes with it. `ImportAtVolumeTest` stops runs with `--limit`,
+which ends normally and finalises, so it could not see either. Fixed with
+`EntityImporter::alreadyCommitted()`; measured table and the test that is red
+without it in `docs/KR-KILL-AND-RESUME.md`.
+
 **7.8 The pictures were not exercised.** `media.csv` is a documented gap — nothing
 opens it, and `kbb:import-media` re-derives its own download list from the
 imported product URLs. This lane did not run that pass, did not test a source

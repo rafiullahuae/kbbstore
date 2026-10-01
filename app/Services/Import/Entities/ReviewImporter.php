@@ -137,7 +137,10 @@ use App\Support\ReviewStatus;
  * reviews would otherwise be re-aggregated 40 times, and the aggregate has to
  * be taken after the last of its reviews is in or it is taken against a partial
  * set. It runs in its own transaction after the last batch commits, it is
- * idempotent, and an interrupted run that resumes and finishes still gets it.
+ * idempotent, and an interrupted run that resumes and finishes still gets it --
+ * ▲ for every product, only since alreadyCommitted(): before it, a KILLED run
+ * resumed with the products of its committed batches forgotten, because the
+ * list of products to recompute was process memory (docs/KR-KILL-AND-RESUME.md).
  *
  * IT IS CORRECT UNDER THE DRY RUN TOO, which is worth stating because it looks
  * like a write that escapes the rollback and is not: finalise() is called
@@ -201,6 +204,14 @@ final class ReviewImporter extends EntityImporter
      * @var array<int, true>
      */
     private array $touched = [];
+
+    /**
+     * Comment ids an earlier process committed and this one passed over on
+     * resume -- resolved to products in finalise(). See alreadyCommitted().
+     *
+     * @var list<int>
+     */
+    private array $committedEarlier = [];
 
     /**
      * Adjustments and discards for the row being imported, held until the row
@@ -368,6 +379,28 @@ final class ReviewImporter extends EntityImporter
     }
 
     /**
+     * A review an earlier, killed process committed. Remember its comment id so
+     * finalise() can recompute the product it belongs to.
+     *
+     * finalise() recomputes `products.rating` for $touched, and $touched is
+     * process memory: a process killed after committing some batches took that
+     * list with it, and the resumed process skips those rows. Measured at full
+     * volume, killed after 1,000 of 2,514 reviews: 32 products left at 0.0 out
+     * of 0 reviews while their pages listed the reviews. See
+     * EntityImporter::alreadyCommitted().
+     *
+     * THE PRODUCT IS READ BACK FROM THE ROW THAT WAS COMMITTED, not re-resolved
+     * from the export, so the answer is what the earlier process actually wrote
+     * -- and it costs one query per 500 rows in finalise() rather than one per
+     * row here. A comment id the earlier pass refused has no row, and adds
+     * nothing.
+     */
+    public function alreadyCommitted(Row $row, ImportContext $context): void
+    {
+        $this->committedEarlier[] = $row->requireId('comment_id', 'comment_id', 'id', 'source_id', 'wp_comment_id', 'review_id');
+    }
+
+    /**
      * Put `products.rating` and `products.review_count` back in step.
      *
      * See the class header for why this is here and not per row. One call for
@@ -376,6 +409,21 @@ final class ReviewImporter extends EntityImporter
      */
     public function finalise(ImportContext $context): void
     {
+        foreach (array_chunk($this->committedEarlier, 500) as $chunk) {
+            $products = Review::query()
+                ->where('source', self::SOURCE)
+                ->whereIn('source_id', $chunk)
+                ->whereNotNull('product_id')
+                ->distinct()
+                ->pluck('product_id');
+
+            foreach ($products as $productId) {
+                $this->touched[(int) $productId] = true;
+            }
+        }
+
+        $this->committedEarlier = [];
+
         if ($this->touched === []) {
             return;
         }
