@@ -9251,6 +9251,7 @@ function impPaint(){
     +'Upload the exports, look at what <b>would</b> happen, fix anything it refuses, then import for real. '
     +'Nothing is written until you press Import.</p></div>'
     +impBanner(run)
+    +impCleanupCard()
     +impAssumedCard(s)
     +impFilesCard(s)
     +(anyFile?impChoicesCard(s):'')
@@ -9622,6 +9623,22 @@ function u3ArticleAddressCard(){
     +'before you export again. Opening it writes nothing.</p>'
     +'<a href="'+impBase()+'/import/article-addresses-page" target="_blank" rel="noopener">'
     +'<button class="btn" style="margin-top:10px">Open the list</button></a></div>';
+}
+
+/* The pre-migration clean-up (routes/cleanup-admin.php) had a page and no way
+   in: nothing in this console linked to it, and the owner was sent to look for
+   a button that did not exist. FIRST on the page, because it is the step
+   before uploading anything. The page itself lists, writes nothing until the
+   owner types DELETE, and is owner-only (data.cleanup). */
+function impCleanupCard(){
+  return '<div class="card pad">'
+    +'<b style="font-size:14px">Before you import &mdash; clean up this shop</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:680px">'
+    +'Remove the test orders, demo products, placeholder categories and brands, and anything else this shop '
+    +'holds that did not come from WordPress, before you import. It lists everything by name first and deletes '
+    +'nothing until you tick it and type DELETE. Pages, menus, banners and videos are never listed.</p>'
+    +'<a href="'+impBase()+'/cleanup/page" target="_blank" rel="noopener">'
+    +'<button class="btn" style="margin-top:10px">Open the clean-up</button></a></div>';
 }
 
 function gdLiveProgressCard(){

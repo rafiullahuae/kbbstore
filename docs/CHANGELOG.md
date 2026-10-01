@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.340
+**The clean-up has a button.** Apply after .339.
+
+You could not find "Clean up before the migration" because nothing linked to it
+-- the page existed since .336 and no menu or button led there. It is now the
+first card on **Store → Store Import / Export**: *Before you import -- clean up
+this shop* → **Open the clean-up**.
+
+`CleanupIsReachableFromImportTest` fails if the card is ever missing or drawn
+twice.
+
+Files: `resources/views/admin/app.blade.php`,
+`database/migrations/2027_07_05_000000_clear_caches_cleanup_button.php`.
+
 ## 2.60.339
 **Remove everything that did not come from WordPress, from one screen.** Apply
 after .338, **before** you import.
