@@ -917,6 +917,7 @@
      is the bug this function exists to make impossible. */
   function adopt(product){
     model = product;
+    savedType = product ? product.type : null;
     model.translations = model.translations || {};
     model.ar = {};
     /* The re-anchor instruction is spent. See collect()'s note: it must not
@@ -968,6 +969,11 @@
   /* Pressed, not stored: "start again from today's total" is an instruction for
      ONE save. NOT on `model`, because it is not part of the product. (Lane SP2) */
   var setReanchor = false;
+
+  /* The type this product was SAVED as, which is what decides whether picking
+     Set is a conversion that has to be explained. Set by adopt() from the
+     server's answer, so it is never what the select merely says. (Lane PI-A) */
+  var savedType = null;
 
   function blank(){
     return {
@@ -2370,6 +2376,14 @@
       +   (model.manage_stock ? ' checked' : '') + '><span>Count individual units</span></label>'
       + '<div class="peo-fld"><label>Units in stock</label>'
       +   '<input class="peo-in" inputmode="numeric" data-bind="stock" value="' + esc(model.stock == null ? '' : model.stock) + '"></div>'
+      /* A SET'S OWN COUNT IS A SECOND LIMIT, and a product converted from an
+         import arrives with one. Said here so the number keeps its meaning.
+         (Lane PI-A) */
+      + ((model.type || 'simple') === 'set' && boot && boot.set_stock_mode !== 'set'
+          ? '<div class="peo-note">When this set is sold, one of each product in the box also comes off its own '
+            + 'stock. ' + (model.manage_stock ? 'The count above is a second limit on the set itself; untick '
+            + '<b>Count individual units</b> to let the box decide.' : '') + '</div>'
+          : '')
       + '</div>';
   }
 
@@ -2595,6 +2609,24 @@
     return false;
   }
 
+  /* The sentence the conversion confirm() reads out. Plain text: confirm()
+     prints it, it is never parsed as markup. (Lane PI-A) */
+  function convertMessage(){
+    var members = boot && boot.set_stock_mode === 'set' ? false : true;
+    var units = model.manage_stock && model.stock != null ? ' (' + model.stock + ' now)' : '';
+
+    return 'Turn "' + (model.name || 'this product') + '" into a set?\n\n'
+      + 'Everything it has now stays: its price and sale price (they become the set\'s price), SKU, pictures, '
+      + 'description, tabs, search appearance, reviews and its web address.\n\n'
+      + 'Next, add the products that are in the box, then press Save. Nothing changes on the shop until you save.\n\n'
+      + (members
+          ? 'Stock: when this set is sold, one of each product in the box comes off that product\'s own stock.'
+            + (model.manage_stock ? ' This product\'s own count' + units + ' still applies as well -- untick '
+              + '"Count individual units" if the box alone should decide.' : '')
+          : 'Stock: when this set is sold, only this product\'s own count goes down; the products in the box are not touched.')
+      + '\n\nYou can switch it back to Simple later, and the box is kept.';
+  }
+
   function typeField(){
     var t = model.type || 'simple';
 
@@ -2613,7 +2645,12 @@
       + '</select>'
       + '<div class="peo-note">' + (t === 'set'
           ? 'A set is sold as one product at one price, and the shop shows what is in the box.'
-          : 'Choose <b>Set</b> to build a product out of other products.') + '</div></div>';
+          : (model.id
+              /* A saved product: this is the CONVERSION the owner asked for,
+                 named as one, with what it keeps. (Lane PI-A) */
+              ? '<b>Convert to a set:</b> choose <b>Set</b> to turn this product into a set and pick what is in '
+                + 'the box. Its price, pictures, description, tabs, SEO, reviews and address all stay.'
+              : 'Choose <b>Set</b> to build a product out of other products.')) + '</div></div>';
   }
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -3658,6 +3695,21 @@
            is a `change` on a <select>, which fires once, when the operator has
            finished choosing. */
         if (el.dataset.bind === 'type' || el.dataset.bind === 'price_mode') {
+          /* ── TURNING A SAVED PRODUCT INTO A SET IS SAID OUT LOUD (Lane PI-A)
+
+             The owner is converting products he imported as ordinary ones --
+             "we have alot of sets which we used just as product". The select
+             already did it, silently, like any other dropdown. Before the box
+             appears he is told, once, what stays, what changes meaning, and
+             that it can be undone; "Cancel" leaves the select where it was.
+             Nothing is written by this -- the save is still his. */
+          if (el.dataset.bind === 'type' && el.value === 'set' && model && model.id
+              && savedType !== 'set' && model.type !== 'set') {
+            if (!window.confirm(convertMessage())) {
+              el.value = model.type || 'simple';
+              return;
+            }
+          }
           collect();
           render();
           return;
