@@ -179,6 +179,29 @@ final class VariationImporter extends EntityImporter
             );
         }
 
+        /*
+         * A NEGATIVE PRICE IS REFUSED, BY NAME. `Money::fils()` permits negatives
+         * on purpose -- refunds and order totals need them -- so nothing upstream
+         * stops `-5.00` becoming `price = -500`, and the storefront would print
+         * and CHARGE a negative figure: a basket that pays the shopper. Refused
+         * here rather than clamped to zero, because zero is also a price the shop
+         * would sell at, and the owner can only fix what the report names. Same
+         * rule, same wording, as CouponImporter's negative coupon_amount.
+         */
+        $columns = [
+            'regular_price' => [$price, ['regular_price', 'price']],
+            'sale_price' => [$salePrice, ['sale_price']],
+        ];
+
+        foreach ($columns as $field => [$fils, $aliases]) {
+            if ($fils !== null && $fils < 0) {
+                throw RowRejected::because(
+                    $field." '".(string) $row->raw(...$aliases)."' is negative. A negative price would be printed and charged as a payment to the shopper, "
+                    .'so the row is refused rather than imported -- correct it in WooCommerce and export again'
+                );
+            }
+        }
+
         $stockStatus = $this->mapStockStatus($row);
 
         if (! $sellable) {

@@ -177,7 +177,7 @@ out of this well:** it refuses loudly and specifically, and it never guesses.
   answers false and the storefront draws no strikethrough and no badge
   (`app/Models/Product.php`, the note at the `compareAtPrice()` docblock). Not a
   defect.
-- **A NEGATIVE product price imports silently** (`-5.00` → `price = -500`).
+- **A NEGATIVE product price imported silently** (`-5.00` → `price = -500`) — **fixed since, see §7.1**.
   `Money::fils()` permits negatives deliberately, because refunds and order
   totals need them, and nothing downstream re-checks it for a *product*. This is
   **not fixed here** — see §7.1 — because it is unlikely to exist on his shop and
@@ -360,13 +360,13 @@ limit. §7.4.
 
 ## 7. What is NOT proven, and he should know each one before he starts
 
-**7.1 A negative product price imports silently.** `-5.00` becomes `price = -500`
-and the storefront will print and charge a negative figure. Not fixed: `Money`
-permits negatives on purpose for refunds and order totals, so the guard belongs
-in the product importer rather than the parser, and it is a change worth making
-deliberately rather than at the end of this round. **Unlikely on his shop** —
-WooCommerce's own admin will not save one — but unverified either way until his
-real export is in hand.
+**7.1 A negative product price — FIXED, 1 October 2026.** It used to import
+silently (`-5.00` → `price = -500`, printed and charged). ProductImporter and
+VariationImporter now refuse a negative `regular_price` or `sale_price`, naming
+the cell in the report, with the same wording CouponImporter already used for a
+negative `coupon_amount`. A 0.00 price still imports (free samples).
+`NegativePriceImportTest` drives the plugin's own fixture export with three
+cells made negative; removing either guard turns it red.
 
 **7.2 The plugin has no delivery mechanism.** §6.1. Somebody has to zip it and
 send it to him, and nothing in this repository will remind anyone to.
