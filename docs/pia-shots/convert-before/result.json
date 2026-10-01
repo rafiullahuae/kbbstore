@@ -1,0 +1,148 @@
+{
+  "dialogs": [],
+  "saves": [],
+  "id": 28,
+  "before": {
+    "ok": true,
+    "product": {
+      "id": 28,
+      "name": "Medicube - PDRN Glow Booster Set (Pink Edition)",
+      "slug": "medicube-pdrn-glow-booster-set-pink-edition",
+      "sku": "MED-PDRN-SET-PINK",
+      "gtin": null,
+      "brand_id": 4,
+      "type": "simple",
+      "status": "publish",
+      "is_visible": true,
+      "featured": false,
+      "position": 0,
+      "published_at": null,
+      "category_ids": [
+        7
+      ],
+      "primary_category_id": 7,
+      "price_aed": "950.00",
+      "sale_aed": "850.00",
+      "tags": [],
+      "set_members": [],
+      "price_mode": "fixed",
+      "discount_percent": "",
+      "discount_amount": "",
+      "set_parts_total_aed": "",
+      "set_effective_aed": "",
+      "set_basis_aed": "",
+      "set_adjustment_aed": "",
+      "set_sale_now_aed": "",
+      "set_members_missing": 0,
+      "sale_starts_at": "2026-09-28T18:36",
+      "sale_ends_at": "2026-10-31T18:36",
+      "manage_stock": true,
+      "stock": 7,
+      "stock_status": "instock",
+      "short_description": "The booster device, the capsule cream and the serum, in one pink box.",
+      "description": "<p><strong>WHAT'S INCLUDED IN THE SET :</strong></p>\n<p>1. AGE-R Booster Pro<br>\n2. PDRN Capsule Cream<br>\n3. PDRN Peptide Serum</p>",
+      "ingredients": "",
+      "how_to_use": "",
+      "image": "/uploads/products/pink-set-front.png",
+      "images": [
+        "/uploads/products/pink-set-open.png",
+        "/uploads/products/pink-set-device.png"
+      ],
+      "image_alts": {},
+      "thumbs": [],
+      "seo": {
+        "title": "PDRN Glow Booster Set (Pink) | K-Beauty Bliss",
+        "desc": "The pink PDRN set."
+      },
+      "seo_fallback_title": "Medicube - PDRN Glow Booster Set (Pink Edition) · K-Beauty Bliss | KBB",
+      "seo_fallback_description": "The booster device, the capsule cream and the serum, in one pink box.",
+      "seo_title": "PDRN Glow Booster Set (Pink) | K-Beauty Bliss",
+      "seo_description": "The pink PDRN set.",
+      "translations": {
+        "ar": {
+          "name": {
+            "value": "",
+            "status": "",
+            "source": "",
+            "stale": false
+          },
+          "short_description": {
+            "value": "",
+            "status": "",
+            "source": "",
+            "stale": false
+          },
+          "description": {
+            "value": "",
+            "status": "",
+            "source": "",
+            "stale": false
+          },
+          "ingredients": {
+            "value": "",
+            "status": "",
+            "source": "",
+            "stale": false
+          },
+          "how_to_use": {
+            "value": "",
+            "status": "",
+            "source": "",
+            "stale": false
+          }
+        }
+      },
+      "readonly": {
+        "total_sales": 420,
+        "rating": 0,
+        "review_count": 0,
+        "url": "/product/medicube-pdrn-glow-booster-set-pink-edition/"
+      }
+    }
+  },
+  "editorScrollWidth390": 390,
+  "storefront": {
+    "converted-390": {
+      "setPanel": false,
+      "panelText": null,
+      "price": "AED 950\nAED 850\n-11%",
+      "tabs": [
+        "Description",
+        "Major Ingredients"
+      ],
+      "reviews": "★★★★★ 5.0 · 1 reviews ",
+      "scrollWidth": 390
+    },
+    "native-390": {
+      "setPanel": true,
+      "panelText": "What is in this set\n4 items\nMEDICUBE\nMedicube AGE-R Booster Pro\n1×\nMEDICUBE\nMedicube PDRN Pink Collagen Capsule Cream\n1×\nMEDICUBE\nMedicube PDRN Pink Peptide Serum 30ml\n2×\nBought separately\nAED 1,098\nSet price\nAED 850\nYou save AED 248",
+      "price": "AED 950\nAED 850\n-11%",
+      "tabs": [
+        "Description"
+      ],
+      "reviews": null,
+      "scrollWidth": 390
+    },
+    "converted-1280": {
+      "setPanel": false,
+      "panelText": null,
+      "price": "AED 950\nAED 850\n-11%",
+      "tabs": [
+        "Description",
+        "Major Ingredients"
+      ],
+      "reviews": "★★★★★ 5.0 · 1 reviews ",
+      "scrollWidth": 1280
+    },
+    "native-1280": {
+      "setPanel": true,
+      "panelText": "What is in this set\n4 items\nMEDICUBE\nMedicube AGE-R Booster Pro\n1×\nMEDICUBE\nMedicube PDRN Pink Collagen Capsule Cream\n1×\nMEDICUBE\nMedicube PDRN Pink Peptide Serum 30ml\n2×\nBought separately\nAED 1,098\nSet price\nAED 850\nYou save AED 248",
+      "price": "AED 950\nAED 850\n-11%",
+      "tabs": [
+        "Description"
+      ],
+      "reviews": null,
+      "scrollWidth": 1280
+    }
+  }
+}

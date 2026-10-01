@@ -252,6 +252,13 @@ class ProductEditorApiController extends Controller
 
             'statuses' => self::EDITOR_STATUSES,
             'stock_statuses' => ['instock', 'outofstock', 'onbackorder'],
+            /*
+             * What selling a set does to the shelves, so the screen can SAY it
+             * when a product is turned into a set and on a set's Stock card
+             * (Lane PI-A, item 10). One of StockSetRule's two values, read --
+             * the switch itself stays on Catalog -> Sets -> Stock.
+             */
+            'set_stock_mode' => app(\App\Services\StockSetRule::class)->mode(),
             // The editor posts files here. There is exactly one upload endpoint
             // in this application and a second one is what routes/brands-admin
             // and routes/catalog-admin each went out of their way to avoid:
@@ -1053,6 +1060,26 @@ class ProductEditorApiController extends Controller
             $product->type = (string) $data['type'];
         }
 
+        /*
+         * ── TURNING A SAVED PRODUCT INTO A SET (Lane PI-A, item 10) ────────
+         *
+         * The owner: "we have alot of sets which we used just as product ...
+         * we need to switch the set products to proper set ... make this
+         * super reliable." The switch itself is the type select above, and a
+         * converted set is in every respect the row a set built as a set is:
+         * type='set' plus product_set_items. What was missing were the two
+         * cases where the switch produces a product the rest of the shop
+         * cannot treat as a set, and both are refused HERE, before anything is
+         * written, with a sentence saying what to do.
+         */
+        if ($product->exists && $product->isSet() && $product->getOriginal('type') !== 'set') {
+            $refusal = $this->conversionRefusal($product);
+
+            if ($refusal !== null) {
+                return $refusal;
+            }
+        }
+
         /* ----------------------------------------------------------- plain */
         foreach (['name', 'sku', 'stock', 'stock_status', 'position'] as $field) {
             if (array_key_exists($field, $data)) {
@@ -1465,6 +1492,62 @@ class ProductEditorApiController extends Controller
             $before,
             $this->memberSignature($product) !== $membersBefore
         );
+    }
+
+    /**
+     * Why this saved product cannot become a set, or null when it can.
+     * (Lane PI-A, item 10)
+     *
+     * ▲ IT IS INSIDE ANOTHER SET'S BOX. A set cannot hold a set: writeSetMembers()
+     *   refuses one at the door, SetPricing::partsTotal() skips one, and
+     *   StockSetRule expands one level and no further. Converting a product
+     *   that is ALREADY a member walks round that door from the other side,
+     *   and re-prices a set nobody touched. Measured before this guard: a
+     *   "10% off the box" set holding the booster and a serum fell from
+     *   AED 764.10 to AED 89.10 the moment the booster was converted; a
+     *   hand-priced one kept its figure but stopped following its members
+     *   down, one member counted missing.
+     *
+     * ▲ IT HAS OPTIONS. A variable product's price lives on its variations and
+     *   its own `price` is empty; a set is sold as one thing at one price, so
+     *   the options would stop being offered and the set would be priced from
+     *   a column that holds nothing. Its sizes are not deleted to make room --
+     *   that is a decision about stock and orders, not a type change.
+     */
+    private function conversionRefusal(Product $product): ?JsonResponse
+    {
+        $containers = Product::query()
+            ->whereIn('id', ProductSetItem::query()
+                ->where('member_product_id', $product->id)
+                ->where('set_product_id', '!=', $product->id)
+                ->select('set_product_id'))
+            ->where('type', 'set')
+            ->orderBy('name')
+            ->orderBy('id')
+            ->limit(3)
+            ->pluck('name')
+            ->all();
+
+        if ($containers !== []) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'This product is inside another set ('.implode(', ', $containers).'), and a set '
+                    .'cannot hold a set. Take it out of that set first, then make it a set.',
+                'errors' => ['type' => ['Inside another set.']],
+            ], 422);
+        }
+
+        if (ProductVariant::query()->where('product_id', $product->id)->exists()) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'This product has options (sizes or shades). A set is sold as one thing at one '
+                    .'price, so its options would stop being offered. Make a new set instead, or remove the '
+                    .'options first.',
+                'errors' => ['type' => ['Has options.']],
+            ], 422);
+        }
+
+        return null;
     }
 
     /**

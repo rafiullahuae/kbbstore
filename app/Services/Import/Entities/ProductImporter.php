@@ -520,11 +520,17 @@ final class ProductImporter extends EntityImporter
             $attributes['created_at'] = $createdAt;
         }
 
+        $keptSet = $this->keepLocalSet($product, $attributes, $row, $context);
+
         // Read BEFORE the row is written, so a malformed cell is reported
         // against this row whatever happens to the product itself.
         $tabs = $this->tabsFrom($row, $context);
 
         $outcome = $context->apply($product, $attributes);
+
+        if ($keptSet && $this->reanchorAfterImport($product)) {
+            $outcome = $outcome === 'unchanged' ? 'updated' : $outcome;
+        }
 
         $context->record($this->name(), $outcome);
         $context->remember($this->name(), $wcId, (int) $product->id);
@@ -543,6 +549,91 @@ final class ProductImporter extends EntityImporter
             $report->unchanged--;
             $report->updated();
         }
+    }
+
+    /**
+     * A product the owner turned into a set HERE stays a set. (Lane PI-A, item 10)
+     *
+     * WHAT IT PREVENTS. The owner's old shop sold its gift sets as ordinary
+     * products, and he is converting them to real sets on the product editor.
+     * WooCommerce still calls them `simple`, and this importer wrote
+     * `'type' => mapType($row)` on every run -- so the re-import he has to run
+     * anyway (exporter 1.9.0 carries the tabs) would have turned every one of
+     * them back into a simple product, silently, with its box still in the
+     * pivot and gone from every page. Measured before this guard: a converted
+     * set re-imported from the same export came back `type = simple`.
+     *
+     * THE RULE, AND WHY IT IS THIS ONE. A local set is never downgraded by an
+     * import, whatever the export calls it -- `simple`, `variable`, anything.
+     * A set is something only this shop can make (WooCommerce has no such
+     * type), so an export can never be the newer word on it. Reported as an
+     * adjustment against the row, with what the export said, so the owner sees
+     * every product this kept rather than discovering it.
+     *
+     * AND ITS PRICE IS THE SET'S. A set priced by a rule (a percentage or an
+     * amount off its box) has a derived price and no sale price -- see
+     * App\Support\SetPricing -- so the export's two figures are not written
+     * over it; writing them would put a second answer to "what does this set
+     * cost" back on the row. A set priced by hand keeps taking its typed
+     * figures from the export like any product, and reanchorAfterImport()
+     * re-takes its anchor when they move, exactly as typing a new price on the
+     * editor does.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function keepLocalSet(Product $product, array &$attributes, Row $row, ImportContext $context): bool
+    {
+        if (! $product->exists || ! $product->isSet()) {
+            return false;
+        }
+
+        $exported = (string) $attributes['type'];
+        $attributes['type'] = 'set';
+
+        if ($exported !== 'set') {
+            $context->report->for($this->name())->adjusted(
+                'kept as a set -- this product was turned into a set on this shop, and an import never turns a '
+                .'set back into an ordinary product',
+                $row->line,
+                $this->identify($row),
+                'type',
+                $exported,
+                'set',
+            );
+        }
+
+        if (\App\Support\SetPricing::mode($product) !== \App\Support\SetPricing::MODE_FIXED) {
+            unset($attributes['price'], $attributes['sale_price'], $attributes['sale_starts_at'], $attributes['sale_ends_at']);
+        }
+
+        return true;
+    }
+
+    /**
+     * Re-take a hand-priced set's anchor when the import moved its typed price.
+     * The editor does the same when a new price is typed; without it the new
+     * figure would be marked down at once by whatever the box had fallen since
+     * the old one was typed. Answers whether anything was written.
+     */
+    private function reanchorAfterImport(Product $product): bool
+    {
+        if (\App\Support\SetPricing::mode($product) !== \App\Support\SetPricing::MODE_FIXED
+            || ! ($product->wasChanged('price') || $product->wasChanged('sale_price'))) {
+            return false;
+        }
+
+        \App\Support\SetPricing::forget((int) $product->id);
+        $product->unsetRelation('setItems');
+        $product->set_price_basis = \App\Support\SetPricing::partsTotal($product);
+        \App\Support\SetPricing::forget((int) $product->id);
+
+        if (! $product->isDirty('set_price_basis')) {
+            return false;
+        }
+
+        $product->save();
+
+        return true;
     }
 
     /**
