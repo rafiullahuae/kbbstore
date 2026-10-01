@@ -18,6 +18,23 @@ that refusal rather than trusting it.
 
 ---
 
+## 1.9.1
+
+### Two copies installed no longer crash activation
+
+- On the owner's site an older build was still active in
+  `wp-content/plugins/kbb-exporter-3/` (WordPress names a second upload of the
+  same plugin that way), and 1.9.0 unpacked into `wp-content/plugins/kbb-exporter/`.
+  Both show on Plugins as "KBB Store Exporter". Activating the new one failed
+  with "Cannot redeclare class KBB_Export_Csv (previously declared in
+  .../kbb-exporter-3/...)", and uploading a fresh copy changed nothing.
+- Now a copy that finds another one already running declares nothing, so
+  activation succeeds, and switches the **older** of the two off (deactivated,
+  not deleted). A notice names the folder and version it switched off.
+- Version moved 1.9.0 → 1.9.1 in all three places it lives. No export
+  column or file changed.
+- Tests: `tests/Feature/ExporterDuplicateCopyTest.php`.
+
 ## 1.9.0
 
 Two changes ship together in 1.9.0, so the owner installs one plugin and

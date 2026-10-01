@@ -3,7 +3,7 @@
  * Plugin Name:       KBB Store Exporter
  * Plugin URI:        https://kbeautybliss.com/
  * Description:       Exports this WooCommerce shop as the CSV set the KBB Laravel storefront imports. Batched and resumable from the admin screen, because this host has no shell.
- * Version:           1.9.0
+ * Version:           1.9.1
  * Requires at least: 5.6
  * Requires PHP:      7.4
  * Author:            KBB migration
@@ -63,7 +63,88 @@ defined( 'ABSPATH' ) || exit;
  * is in CHANGELOG.md beside this file, derived from the commits rather than
  * from memory.
  */
-define( 'KBB_EXPORTER_VERSION', '1.9.0' );
+
+/*
+ * ── TWO COPIES INSTALLED: SWITCH THE OLDER ONE OFF, NEVER CRASH ── 1.9.1 ──
+ *
+ * THE DEFECT, ON THE OWNER'S SITE (1 October 2026). An earlier build was
+ * active in wp-content/plugins/kbb-exporter-3/ -- WordPress names a second
+ * upload of the same plugin that way -- and the new zip unpacked into
+ * wp-content/plugins/kbb-exporter/. Both copies show on Plugins as "KBB Store
+ * Exporter". Activating the new one made WordPress include it while the old
+ * one was already loaded, and it died on its first line of code:
+ *
+ *   Warning: Constant KBB_EXPORTER_VERSION already defined
+ *   Fatal error: Cannot redeclare class KBB_Export_Csv (previously declared
+ *   in .../kbb-exporter-3/includes/class-kbb-export-csv.php:28)
+ *
+ * Uploading a fresh copy changed nothing, because the copy in the way was the
+ * old one, still active.
+ *
+ * So a copy that finds another one already loaded defines nothing and
+ * declares nothing (no fatal, so WordPress can activate it), and switches
+ * the OLDER of the two off: the other one if its version is lower or the
+ * same, itself otherwise. Deactivating is not deleting; the old folder stays
+ * on Plugins until the owner deletes it. When an admin page is already under
+ * way (activation happens after admin_init), the switch-off happens at once,
+ * so the two copies are never both active on a later request. Otherwise it
+ * waits for admin_init, where WordPress's plugin functions and the current
+ * user are both loaded.
+ *
+ * tests/Feature/ExporterDuplicateCopyTest.php runs this file after a stand-in
+ * for the old copy, which reproduces that error exactly.
+ */
+if ( defined( 'KBB_EXPORTER_DIR' ) ) {
+	$kbb_exporter_loaded = array(
+		'dir'     => (string) KBB_EXPORTER_DIR,
+		'version' => defined( 'KBB_EXPORTER_VERSION' ) ? (string) KBB_EXPORTER_VERSION : '0',
+	);
+
+	if ( function_exists( 'add_action' ) && realpath( $kbb_exporter_loaded['dir'] ) !== realpath( __DIR__ ) ) {
+		$kbb_exporter_mine      = '1.9.1';
+		$kbb_exporter_keep_mine = version_compare( $kbb_exporter_mine, $kbb_exporter_loaded['version'], '>=' );
+		$kbb_exporter_off_file  = $kbb_exporter_keep_mine
+			? $kbb_exporter_loaded['dir'] . '/kbb-exporter.php'
+			: __FILE__;
+		$kbb_exporter_off_label = $kbb_exporter_keep_mine
+			? basename( $kbb_exporter_loaded['dir'] ) . ' (version ' . $kbb_exporter_loaded['version'] . ')'
+			: basename( __DIR__ ) . ' (version ' . $kbb_exporter_mine . ')';
+
+		$kbb_exporter_switch_off = function () use ( $kbb_exporter_off_file, $kbb_exporter_off_label ) {
+			if ( ! function_exists( 'deactivate_plugins' ) || ! function_exists( 'current_user_can' )
+				|| ! current_user_can( 'activate_plugins' ) ) {
+				return;
+			}
+
+			deactivate_plugins( plugin_basename( $kbb_exporter_off_file ) );
+
+			add_action(
+				'admin_notices',
+				function () use ( $kbb_exporter_off_label ) {
+					echo '<div class="notice notice-warning"><p><strong>KBB Store Exporter:</strong> '
+						. 'two copies were installed. The older copy, in the folder '
+						. esc_html( $kbb_exporter_off_label )
+						. ', has been deactivated so they do not clash. You can delete it under Plugins. '
+						. 'Reload this page to use the exporter.</p></div>';
+				}
+			);
+		};
+
+		if ( function_exists( 'did_action' ) && did_action( 'admin_init' ) ) {
+			$kbb_exporter_switch_off();
+		} else {
+			add_action( 'admin_init', $kbb_exporter_switch_off );
+		}
+
+		unset( $kbb_exporter_mine, $kbb_exporter_keep_mine, $kbb_exporter_off_file, $kbb_exporter_off_label, $kbb_exporter_switch_off );
+	}
+
+	unset( $kbb_exporter_loaded );
+
+	return;
+}
+
+define( 'KBB_EXPORTER_VERSION', '1.9.1' );
 define( 'KBB_EXPORTER_DIR', __DIR__ );
 
 require_once __DIR__ . '/includes/class-kbb-export-csv.php';
