@@ -116,17 +116,23 @@ it('refuses a signed-out request', function () {
 
 /* ═══════════════════════════════════════════════════════ the payload ═══ */
 
-it('draws two tabs and ten controls, and says the shop is sending nothing', function () {
+it('draws three tabs and thirteen controls, and says the shop is sending nothing', function () {
     $this->actingAs(w1Admin(), 'admin');
 
     $body = $this->getJson('/admin-api/site-layout')->assertOk()->json();
 
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid']);
+    /*
+     * THREE SINCE LANE PI-B: "Loading more products" — arrows, more on
+     * scroll, or all at once — with its three controls. They are not CSS, so
+     * the "sending nothing" half below is unchanged by them; ListingLoadTest
+     * covers the tab itself.
+     */
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
     expect($keys)->toBe(array_keys(SiteLayout::SCHEMA));
-    expect($keys)->toHaveCount(10);
+    expect($keys)->toHaveCount(13);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

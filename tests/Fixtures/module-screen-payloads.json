@@ -616,6 +616,20 @@
             "value": true
           },
           {
+              "key": "add_feedback",
+              "name": "add_feedback",
+              "type": "select",
+              "label": "When something is added",
+              "help": "Animated tick: a small grey tick turns green beside the opening panel and is gone in under half a second. Text pill: the \"Added to bag\" message, as before. None: just the panel. Messages that matter — a set that took the last one, a sold-out product — always show as text.",
+              "options": {
+                  "tick": "Animated tick",
+                  "pill": "Text pill (“Added to bag”)",
+                  "none": "None"
+              },
+              "default": "tick",
+              "value": "tick"
+          },
+          {
             "key": "added_note",
             "name": "added_note",
             "type": "bool",

@@ -10,7 +10,7 @@
  */
 
 import { open, closeAll } from './overlay.js';
-import { toast } from './toast.js';
+import { toast, tick } from './toast.js';
 import { t } from './i18n.js';
 import { escapeHtml } from './safe.js';
 
@@ -196,7 +196,19 @@ const apply = (data) => {
 
     showTab();
 
-    if (data.toast) toast(data.toast);
+    /* THE PLAIN "IT WENT IN" CONFIRMATION FOLLOWS THE SETTING. (Lane PI-B)
+       Appearance → Cart panel → Behaviour → "When something is added", which
+       the server prints into the panel's data-cp as one of three words. Only
+       `data.added` is subject to it: every other toast — a set notice, a
+       coupon, "Removed" — still says its sentence. The tick sits beside the
+       panel, so a shop that does not open the panel on add gets the pill. */
+    if (data.added && data.toast) {
+        const cp = config();
+        const mode = cp.feedback === 'tick' || cp.feedback === 'none' ? cp.feedback : 'pill';
+
+        if (mode === 'tick' && cp.openOnAdd !== false) tick(data.toast);
+        else if (mode !== 'none') toast(data.toast);
+    } else if (data.toast) toast(data.toast);
     else if (data.error) toast(data.error);
 };
 

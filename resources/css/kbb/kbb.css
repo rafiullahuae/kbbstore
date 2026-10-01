@@ -4107,6 +4107,91 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
     .kfb-pill .kfb-tx{padding-inline:9px}
 }
 
+/* ── THE LISTING PAGER, AT EVERY WIDTH ─────────────────────────── Lane PI-B ──
+
+   partials/listing-pager.blade.php, on /shop/, every category, the curated
+   listings and the concern pages. Before it, the curated pages drew Laravel's
+   Tailwind pager with 170x170px chevrons (no Tailwind here, and an SVG with no
+   size), and /shop's pager had CSS only inside a phone query, so on desktop it
+   was bare 5x18px text. One rule set now, here, because both pages load this
+   sheet and the curated ones load no other. kbb-shop.css keeps its phone rule
+   for .page-numbers (44px); it says the same thing for the same element. */
+.kbb-pager{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:30px}
+.kbb-pager .page-numbers{box-sizing:border-box;min-width:40px;min-height:40px;
+  display:inline-flex;align-items:center;justify-content:center;padding:0 10px;
+  border:1px solid var(--line,#E8DCE2);border-radius:10px;background:#fff;
+  font-size:14px;font-weight:600;line-height:1;color:var(--ink,#2A2228);text-decoration:none}
+.kbb-pager a.page-numbers:hover{border-color:var(--pink,#E0567B);color:var(--pink-deep,#B4517A)}
+.kbb-pager .page-numbers.current{background:var(--pink-soft,#FCEFF4);color:var(--pink-deep,#B4517A);border-color:transparent}
+.kbb-pager .page-numbers svg{width:16px;height:16px;display:block;flex:none}
+.kbb-pager-status:empty{display:none}
+.kbb-pager-status{font-size:13px;color:var(--muted,#8C828A)}
+@media (max-width:900px){.kbb-pager .page-numbers{min-width:44px;min-height:44px}}
+
+/* "Load more on scroll": listing-load.js puts `is-auto` on the pager once it
+   has taken over, which hides the numbers (they come back if a fetch fails).
+   The pager element itself stays — it is what IntersectionObserver watches. */
+.kbb-pager.is-auto .page-numbers{display:none}
+.kbb-pager.is-auto{min-height:1px;margin-top:8px}
+
+/* The grey placeholder cards while a batch is in flight. The same grey and
+   the same `kbbshim` sweep as the cart drawer's .kc-skel above — this shop's
+   one loading language — in the SHAPE of a card: a square picture and two
+   lines. Grid items like the cards, so they take the cards' own columns. */
+.kbb-pskel{pointer-events:none;display:flex;flex-direction:column;gap:10px;min-width:0}
+.kbb-pskel i,.kbb-pskel b{display:block;border-radius:10px;
+  background:linear-gradient(90deg,#f2f4f7 25%,#e9edf2 37%,#f2f4f7 63%);background-size:400% 100%;
+  animation:kbbshim 1.1s ease infinite}
+.kbb-pskel i{aspect-ratio:1/1;width:100%}
+.kbb-pskel b{height:12px;width:80%}
+.kbb-pskel b+b{width:45%}
+@media (prefers-reduced-motion:reduce){.kbb-pskel i,.kbb-pskel b{animation:none}}
+
+/* ── THE "ADDED" TICK ──────────────────────────────────────────── Lane PI-B ──
+
+   Appearance → Cart panel → Behaviour → "When something is added" → Animated
+   tick (the default — the owner asked for it). partials/drawers.blade.php puts
+   the element inside the cart panel; the panel is position:fixed, so this is
+   placed against the PANEL: 12px outside its leading edge, 14px from the top,
+   over the dimmed page. Measured where the old pill sat at 390: across the
+   panel's own tab row. This never touches the panel's content, and
+   inset-inline-end puts it on the correct side in Arabic, where the panel
+   opens from the left.
+
+   ALL OF IT IS CSS. cart.js adds `on` and takes it off again; the colour, the
+   stroke drawing and the fade are keyframes, 450ms end to end:
+     0–90ms     grey disc pops in
+     60–250ms   the check draws itself (stroke-dashoffset 1 -> 0 on a path
+                with pathLength="1")
+     110–250ms  the disc turns from grey to green
+     250–450ms  holds, then fades
+   Reduced motion: the green tick, no movement and no drawing, shown and then
+   simply gone. Nothing here measures anything. */
+.kbb-tick{position:absolute;top:14px;inset-inline-end:calc(100% + 12px);width:44px;height:44px;
+  border-radius:50%;background:#B9BEC6;color:#fff;display:grid;place-items:center;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;pointer-events:none;z-index:2}
+.kbb-tick svg{width:22px;height:22px;display:block}
+.kbb-tick path{fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:1;stroke-dashoffset:1}
+.kbb-tick-msg{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+.kbb-tick.on{animation:kbbTick 450ms cubic-bezier(.2,.8,.2,1) both}
+.kbb-tick.on path{animation:kbbTickDraw 190ms 60ms ease-out both}
+@keyframes kbbTick{
+  0%{opacity:0;transform:scale(.55);background:#B9BEC6}
+  20%{opacity:1;transform:scale(1.06);background:#B9BEC6}
+  30%{transform:scale(1)}
+  55%{opacity:1;background:#1F9D55}
+  78%{opacity:1;transform:scale(1);background:#1F9D55}
+  100%{opacity:0;transform:scale(.92);background:#1F9D55}}
+@keyframes kbbTickDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes kbbTickStill{0%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  .kbb-tick.on{animation:kbbTickStill 600ms step-end both;background:#1F9D55}
+  .kbb-tick.on path{animation:none;stroke-dashoffset:0}
+}
+
+
 /* ═══════════════════════════════════════════════════════════════════════════
    THE SHOWCASE FAMILY — four treatments of one card                Lane PG2
 

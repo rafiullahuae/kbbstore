@@ -173,7 +173,7 @@ class CollectionController extends Controller
          */
         $page = max(1, (int) $request->query('page', 1));
 
-        $products = $query->paginate(self::PER_PAGE, ['*'], 'page', $page)->withQueryString();
+        $products = $query->paginate($this->perPage(), ['*'], 'page', $page)->withQueryString();
 
         /*
          * ONE STATEMENT FOR EVERY SET ON THIS PAGE, OR NONE AT ALL. (Lane SG)
@@ -196,6 +196,10 @@ class CollectionController extends Controller
         // as its own canonical.
         if ($page > 1 && $page > $products->lastPage()) {
             abort(404);
+        }
+
+        if (\App\Support\ListingBatch::wanted($request)) {
+            return $this->batch($products, $title);
         }
 
         return view('store.collection', [
@@ -265,7 +269,7 @@ class CollectionController extends Controller
 
         $page = max(1, (int) $request->query('page', 1));
 
-        $products = $query->paginate(self::PER_PAGE, ['*'], 'page', $page)->withQueryString();
+        $products = $query->paginate($this->perPage(), ['*'], 'page', $page)->withQueryString();
 
         /*
          * ONE STATEMENT FOR EVERY SET ON THIS PAGE, OR NONE AT ALL. (Lane SG)
@@ -283,6 +287,10 @@ class CollectionController extends Controller
 
         if ($page > 1 && $page > $products->lastPage()) {
             abort(404);
+        }
+
+        if (\App\Support\ListingBatch::wanted($request)) {
+            return $this->batch($products, (string) __(\App\Support\RoutineConcerns::labelKey($concern)));
         }
 
         return view('store.collection', [
@@ -345,6 +353,38 @@ class CollectionController extends Controller
      *
      * @return array{0:string,1:string}  [title, intro]
      */
+    /**
+     * Products per page: the 24 these listings have always used, unless
+     * Appearance → Site layout → Loading more products says otherwise.
+     * (Lane PI-B)
+     */
+    private function perPage(): int
+    {
+        return app(\App\Services\SiteLayout::class)->perPage(self::PER_PAGE);
+    }
+
+    /**
+     * The next batch for "Load more on scroll" — see App\Support\ListingBatch.
+     *
+     * The paginator was built withQueryString(), so it carries `kbbbatch=1`
+     * into every URL it makes; appends(…, null) takes it back out, because
+     * http_build_query() drops a null and the URLs handed back must be the
+     * ordinary page addresses a reload or a crawler would use.
+     */
+    private function batch(\Illuminate\Pagination\LengthAwarePaginator $products, string $catLabel): \Illuminate\Http\JsonResponse
+    {
+        $products->appends(\App\Support\ListingBatch::PARAM, null);
+
+        return \App\Support\ListingBatch::respond(
+            $products,
+            $catLabel,
+            $products->currentPage(),
+            $products->lastPage(),
+            $products->nextPageUrl(),
+            $products->url($products->currentPage()),
+        );
+    }
+
     private function wordingFor(string $key): array
     {
         return match ($key) {

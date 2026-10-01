@@ -395,7 +395,15 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // `fb_desktop` — help, default and value, true => false — because the
     // owner said "Turn off the top countries bar entirely for now". No other
     // recorded control moved.
-    expect($compared)->toBe(565, 'the number of controls drawn changed');
+    //
+    // 566 IN THE SAME LANE, a round later: Appearance → Cart panel → Behaviour
+    // → "When something is added" (`add_feedback`: Animated tick / Text pill /
+    // None, shipping `tick` because the owner asked for the tick). INSERTED at
+    // index 1, directly after `open_on_add`, which is where SCHEMA and TABS put
+    // it — fields are compared by position, so appending it would have read as
+    // `added_note` becoming `add_feedback`. Fourteen lines inserted, none
+    // changed.
+    expect($compared)->toBe(566, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

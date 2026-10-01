@@ -153,6 +153,26 @@ class CartPanel
         'open_on_add'      => ['bool',   'Open the panel when something is added', true, ''],
         'added_note'       => ['bool',   'Show “Added” beside a product added from Browsed', true, ''],
         'note_ms'          => ['range',  'How long that note stays', 1400, '', ['min' => 400, 'max' => 4000, 'step' => 100, 'unit' => 'ms']],
+        /*
+         * ── WHAT PRESSING "ADD TO CART" SHOWS ──────────────────── Lane PI-B ──
+         *
+         * It opened the panel AND put a dark "Added to bag" pill over the top
+         * of it — on a phone, across the panel's own tabs (measured at 390:
+         * the pill at x 134–255, y 14–60, the panel from x 90 and its tab row
+         * y 0–45). The owner asked for a choice, and for one in particular:
+         * an animated tick going grey to green, super fast, gone at once, with
+         * the panel still opening exactly as now.
+         *
+         * ▲ SHIPS AT `tick`, WHICH IS A MOVED DEFAULT AND HIS: CLAUDE.md's
+         *   30-September reversal. `pill` is the old behaviour, one press away.
+         *
+         * Printed to the page inside the panel's data-cp JSON (jsConfig()),
+         * which Blade escapes; cast() holds it to these three keys or the
+         * default, so cart.js can only ever read one of them.
+         */
+        'add_feedback'     => ['select', 'When something is added', 'tick',
+                               'Animated tick: a small grey tick turns green beside the opening panel and is gone in under half a second. Text pill: the "Added to bag" message, as before. None: just the panel. Messages that matter — a set that took the last one, a sold-out product — always show as text.',
+                               ['tick' => 'Animated tick', 'pill' => 'Text pill (“Added to bag”)', 'none' => 'None']],
 
         // ── Wording ──
         // Every string the panel prints, so none of it needs a code change.
@@ -198,7 +218,7 @@ class CartPanel
         'content'  => ['Content', 'What each line and the panel show. The same on both devices.',
                        ['show_thumb', 'show_qty', 'show_remove', 'show_price', 'show_ship_bar', 'show_promo', 'show_browsed']],
         'behaviour'=> ['Behaviour', 'What happens when something is added. The same on both devices.',
-                       ['open_on_add', 'added_note', 'note_ms']],
+                       ['open_on_add', 'add_feedback', 'added_note', 'note_ms']],
         'wording'  => ['Wording', 'Every word the panel prints. The same on both devices.',
                        ['txt_tab_cart', 'txt_tab_browsed', 'txt_ship_away', 'txt_ship_done',
                         'txt_subtotal', 'txt_btn_cart', 'txt_btn_checkout',
@@ -398,6 +418,9 @@ class CartPanel
     {
         $c = $this->all();
 
-        return ['openOnAdd' => $c['open_on_add'], 'note' => $c['added_note'], 'noteMs' => $c['note_ms']];
+        return ['openOnAdd' => $c['open_on_add'], 'note' => $c['added_note'], 'noteMs' => $c['note_ms'],
+            // One of add_feedback's three option keys, never the stored string
+            // itself — all() has already cast it. (Lane PI-B)
+            'feedback' => $c['add_feedback']];
     }
 }

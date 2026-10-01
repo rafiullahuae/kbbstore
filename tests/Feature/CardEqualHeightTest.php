@@ -751,6 +751,12 @@ it('knows every template that draws a product tile, including the grid nobody wa
         // owner's own BEST SELLERS preset: one height at 320, 390 and 1280.
         'resources/views/partials/home/grid-section.blade.php',
         'resources/views/partials/home/grid.blade.php',
+        // ▲ NOT A SEVENTH GRID. (Lane PI-B) "Load more on scroll" fetches the
+        // next page's tiles as a batch and appends them to a grid that is
+        // already on the page — #grid on /shop and a category, the curated
+        // listings' .kbb-pgrid — so these tiles land inside a grid this list
+        // already names and get its card, its skin and its equal heights.
+        'resources/views/partials/listing-batch.blade.php',
         'resources/views/store/product.blade.php',
         'resources/views/store/routines.blade.php',
         'resources/views/store/shop.blade.php',

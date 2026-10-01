@@ -104,6 +104,12 @@
  *   into its own bounds, so garbage lands on the minimum, as `fb_height`'s
  *   does on 22. The flag bar's two defaults also moved to false in that lane;
  *   no recorded row depends on a bool's default, so none moved with them.
+ *
+ *   And FOUR more from the same lane: `cart_panel|add_feedback` (Appearance →
+ *   Cart panel → Behaviour → "When something is added"), the select corpus's
+ *   four inputs, 4 inserted, 0 modified. `"nope"` answers `'tick'`: this
+ *   screen's `invalid => default`, so a select stores one of its own options or
+ *   the default and never the string it was sent.
  */
 
 use App\Services\ModuleSchema;

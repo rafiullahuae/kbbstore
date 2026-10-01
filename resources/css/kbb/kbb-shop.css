@@ -560,3 +560,50 @@ img{max-width:100%}
   .wrap.shop{padding-inline-start:16px;padding-inline-end:16px}
   .sortsel select{font-size:16px}
 }
+
+/* ── FILTERS AND SORT ON ONE ROW, ON EVERY PHONE ───────────── Lane PI-B ──
+
+   The owner, on a ~375px phone: "Filters" and the product count on one line
+   and "Sort [Featured]" wrapped onto a second. Measured before this block
+   (Chromium): the row needed 379px of content box for Filters 88 + count 71
+   + "Sort" 24 + select 164 + three 12px gaps, so it wrapped at every width
+   under 411px — 320, 360, 375 and 390 all drew two rows.
+
+   Phones only (<=900px, where the Filters button is drawn); desktop is not
+   touched by a single declaration. No measuring script: the row is a flex
+   line that may not wrap, and every piece shrinks by clamp() on the
+   viewport, in this order:
+
+     1. the gaps and the Filters button's side padding tighten with vw;
+     2. the count's two words may break onto two lines inside the row's
+        44px height ("45" over "products") rather than push anything out;
+     3. under 411px the word "Sort" is hidden VISUALLY — it is the <label>
+        of the select (store/shop.blade.php), so it stays its accessible
+        name;
+     4. the select may shrink below its widest option's width, down to what
+        its current choice needs — its font stays 16px under 820px, because
+        anything smaller makes iOS zoom the page on focus (the rule above).
+
+   Under 360px, with one of the two long price sorts chosen, the select
+   still needs ~158px and there is not that much left beside the word
+   "Filters"; there the button keeps its icon and its count and drops the
+   word, which is still its accessible name (font-size:0 hides glyphs, not
+   text). :has() decides that from the option that is CHECKED, so
+   "Featured" at 320 keeps the word. */
+@media (max-width: 900px) {
+  .gtop{flex-wrap:nowrap;gap:clamp(6px,2.4vw,12px)}
+  .mobi-filter{flex:none;padding-inline:clamp(9px,3vw,13px)}
+  .gcount{flex:0 1 auto;min-width:0;font-size:clamp(12px,3.4vw,13.5px);line-height:1.15}
+  .gright{flex:1 1 0;min-width:0;justify-content:flex-end;flex-wrap:nowrap}
+  .sortsel{flex:0 1 auto;min-width:0}
+  .sortsel select{min-width:0;max-width:100%;padding-inline:8px}
+}
+@media (max-width: 410px) {
+  .sortsel{gap:0}
+  .sortlbl{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+    clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+}
+@media (max-width: 359px) {
+  .gtop:has(#sort option:checked:is([value="plow"],[value="phigh"])) .mobi-filter{font-size:0;gap:0}
+  .gtop:has(#sort option:checked:is([value="plow"],[value="phigh"])) .mobi-filter .fcount{font-size:11px;margin-inline-start:4px}
+}

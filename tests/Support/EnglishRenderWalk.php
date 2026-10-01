@@ -1540,6 +1540,30 @@ final class EnglishRenderWalk
     public static function approvedStorefrontChanges(): array
     {
         return [
+            /*
+             * "SORT" BECOMES THE SELECT'S LABEL. (Lane PI-B)
+             *
+             * The owner's phone drew Filters and the count on one row and Sort
+             * on a second. Fitting them on one row hides the word "Sort"
+             * visually under 411px, and a word that disappears must still
+             * name the control — it did not before (a bare text node in a
+             * <div>, so the select had no accessible name at all). So the
+             * wrapper becomes `<label for="sort">` and the word a span the
+             * stylesheet can hide. Same element in the same place with the same
+             * class, so nothing moves on screen at any width this walk renders;
+             * two pages, the shop and a category, open and close.
+             */
+            'the sort control is a label, not a div (Lane PI-B)' => [
+                'pattern' => '#<div class="sortsel">([^<\n]*)\n#',
+                'with' => '<label class="sortsel" for="sort"><span class="sortlbl">$1</span>'."\n",
+                'hits' => 2,
+            ],
+            'the sort control\'s closing tag (Lane PI-B)' => [
+                'pattern' => '#(</select>\n {16})</div>#',
+                'with' => '$1</label>',
+                'hits' => 2,
+            ],
+
             'the shipped card style, which the owner asked to change' => [
                 'pattern' => '#<div class="kbb-pgrid" data-skin="classic">#',
                 'with' => '<div class="kbb-pgrid" data-skin="'.\App\Support\GridSkins::DEFAULT.'">',
@@ -1784,6 +1808,24 @@ final class EnglishRenderWalk
             'the breadcrumb switches in the head (Lane PI-B)' => [
                 'pattern' => '#<style id="kbb-crumbs">[^<]*</style>\n#',
                 'hits' => 34,
+            ],
+
+            /*
+             * THE "ADDED" TICK — Appearance → Cart panel → Behaviour → "When
+             * something is added". (Lane PI-B)
+             *
+             * One element inside the cart panel, after the panel's own
+             * fragment: hidden (opacity 0) until cart.js puts `on` on it for
+             * 450ms after an add. It is in every document that draws the
+             * panel. `.*?` is safe: the element holds a span and an svg and no
+             * nested <div>, so the lazy match ends at its own close.
+             */
+            'the added tick inside the cart panel (Lane PI-B)' => [
+                'pattern' => '#<div class="kbb-tick" id="kbbTick">.*?</div>\n#s',
+                // 33: every page that draws the cart panel. One fewer than the
+                // breadcrumb <style> above, because the journal article carries
+                // that and has no cart panel of its own.
+                'hits' => 33,
             ],
 
             /*
@@ -2042,6 +2084,23 @@ final class EnglishRenderWalk
     public static function approvedRemovals(): array
     {
         return [
+            /*
+             * THE CURATED LISTINGS' EMPTY TAILWIND PAGER WRAPPER. (Lane PI-B)
+             *
+             * store/collection.blade.php printed `<div class="pager">` around
+             * `$products->links()` — Laravel's Tailwind pager, whose chevrons
+             * are unsized SVGs that drew 170x170px on this Tailwind-less shop.
+             * It is replaced by partials/listing-pager, which prints NOTHING on
+             * a one-page listing, where the old wrapper printed an empty div.
+             * The walk's four curated listings are one page each, so the whole
+             * change visible here is that empty element going: one per page,
+             * four pages. The paged state is ListingLoadTest's to pin.
+             */
+            'the empty Tailwind pager wrapper on the curated listings (Lane PI-B)' => [
+                'pattern' => '#<div class="pager"></div>\n#',
+                'hits' => 4,
+            ],
+
             /*
              * THE GOOGLE FONTS REQUEST FOR POPPINS — Lane PERF.
              *

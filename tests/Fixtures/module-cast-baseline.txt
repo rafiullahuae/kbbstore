@@ -1205,6 +1205,10 @@ cart_panel|note_ms|range|"abc"|400
 cart_panel|note_ms|range|""|400
 cart_panel|note_ms|range|null|400
 cart_panel|note_ms|range|"3.7"|400
+cart_panel|add_feedback|select|"tick"|'tick'
+cart_panel|add_feedback|select|"nope"|'tick'
+cart_panel|add_feedback|select|""|'tick'
+cart_panel|add_feedback|select|null|'tick'
 cart_panel|txt_tab_cart|text|"abc"|'abc'
 cart_panel|txt_tab_cart|text|""|''
 cart_panel|txt_tab_cart|text|"  sp  "|'sp'

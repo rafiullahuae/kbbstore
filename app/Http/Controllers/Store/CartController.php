@@ -131,7 +131,7 @@ class CartController extends Controller
         $cart = $this->carts->current($request);
         $this->carts->add($cart, $product, (int) ($data['quantity'] ?? 1), $variant);
 
-        return $this->fragments($this->loadCart($request), $request, 'Added to bag');
+        return $this->fragments($this->loadCart($request), $request, 'Added to bag', null, true);
     }
 
     public function update(Request $request): JsonResponse
@@ -541,7 +541,7 @@ class CartController extends Controller
         return $browsed;
     }
 
-    private function fragments($cart, Request $request, ?string $toast = null, ?string $error = null): JsonResponse
+    private function fragments($cart, Request $request, ?string $toast = null, ?string $error = null, bool $added = false): JsonResponse
     {
         $payload = $this->payload($cart, $request);
 
@@ -584,6 +584,15 @@ class CartController extends Controller
             'ok' => $error === null,
             'error' => $error,
             'toast' => $toast,
+            /*
+             * TRUE ONLY FOR THE PLAIN "IT WENT IN" CONFIRMATION. (Lane PI-B)
+             * cart.js shows that one the way Appearance → Cart panel →
+             * Behaviour → "When something is added" says — a tick, the pill,
+             * or nothing. A set notice above REPLACES the toast with a sentence
+             * the shopper must read, so it is not `added` and always shows as
+             * text, whatever that setting is.
+             */
+            'added' => $added && $error === null && $this->setStockNotices === [],
             'count' => $payload['totals']['item_count'],
             'drawer' => $this->drawerHtml($payload),
             'page' => $wantsPage ? view('store.cart-inner', $payload)->render() : null,

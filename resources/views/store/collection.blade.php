@@ -45,7 +45,14 @@
             'catLabel' => $cardLabel ?? $title,
         ])
 
-        <div class="pager">{!! $products->links() !!}</div>
+        {{-- Was `$products->links()`: Laravel's Tailwind pager on a shop with
+             no Tailwind, whose chevrons drew 170px wide. See the partial.
+             (Lane PI-B) --}}@include('partials.listing-pager', [
+            'page' => $products->currentPage(),
+            'lastPage' => $products->lastPage(),
+            'urlFor' => static fn (int $n): string => $products->url($n),
+            'grid' => '.kbb-home .kbb-pgrid',
+        ])
     @endif
 </div></section>
 </div>

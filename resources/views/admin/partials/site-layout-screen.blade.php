@@ -80,6 +80,8 @@
 .sls-f input[type=range]{width:100%;accent-color:var(--accent,#15a85a);margin:0;min-width:0}
 .sls-f select{width:100%;min-width:0;padding:8px 10px;font:inherit;font-size:13px;
   border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
+.sls-f input[type=text]{width:100%;max-width:160px;min-width:0;box-sizing:border-box;padding:8px 10px;font:inherit;font-size:13px;
+  border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
 .sls-check{display:flex;gap:10px;align-items:flex-start;min-width:0}
 .sls-check input{margin-top:3px;flex:none;width:16px;height:16px}
 .sls-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;min-width:0}
@@ -363,9 +365,13 @@
         + help + '</div>';
     }
 
+    /* A typed whole number (Lane PI-B: "My own number" on Loading more
+       products). The phone keyboard opens on digits; the server is still the
+       judge — SiteLayout clamps it to 4–96 and refuses anything else. */
+    var numeric = f.type === 'int' ? ' inputmode="numeric" pattern="[0-9]*"' : '';
     return '<div class="sls-f"><div class="sls-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
       + '<input type="text" id="' + id + '" data-sls-key="' + esc(f.key) + '" value="'
-      + esc(values[f.key]) + '" autocomplete="off">' + help + '</div>';
+      + esc(values[f.key]) + '" autocomplete="off"' + numeric + '>' + help + '</div>';
   }
 
   function tableHTML() {
@@ -446,7 +452,10 @@
       + '<p class="sls-help" style="margin-top:8px">“Back to defaults” moves only the sliders on '
       + '<b>this tab</b>. Nothing is stored until you press Save.</p>'
       + '</div>'
-      + tableHTML()
+      /* The device table is about width and columns. On "Loading more
+         products" it would be a page of numbers that no field on the tab can
+         move, so it is not drawn there. (Lane PI-B) */
+      + (current.key === 'loading' ? '' : tableHTML())
       + '</div>';
   }
 
@@ -482,7 +491,7 @@
   /* Only the table's own card, so the control you are holding is not replaced. */
   function repaintTable() {
     var host = document.querySelector('#content');
-    if (!host || !tabs) return;
+    if (!host || !tabs || open === 'loading') return;
     var cards = host.querySelectorAll('.sls-wrap > .sls-card');
     var last = cards[cards.length - 1];
     if (!last) return;

@@ -577,6 +577,12 @@ it('ships every setting at the value the page already had, except the ones the o
         'cols_cap' => 8,
         'gap' => 16,
         'pin' => 'auto',
+        // Lane PI-B: Loading more products. NOT CSS — these decide how many
+        // products a listing page holds, and ship at "Arrows", the page as it
+        // was (the owner did not say which he wanted by default).
+        'load_mode' => 'arrows',
+        'load_batch' => '12',
+        'load_batch_custom' => 24,
     ];
 
     expect(array_keys($fields))->toEqual(array_keys($expected));

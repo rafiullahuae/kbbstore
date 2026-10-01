@@ -279,6 +279,11 @@ final class InterfaceStrings
             'shop.product_count' => ':formatted product|:formatted products',
             'shop.columns_option' => ':count column|:count columns',
             'shop.sort_label' => 'Sort',
+            // The listing pager and "Load more on scroll" (Lane PI-B).
+            'shop.pages_label' => 'Pages',
+            'shop.page_prev' => 'Previous page',
+            'shop.page_next' => 'Next page',
+            'shop.loading_more' => 'Loading more products…',
             'shop.clear_all' => 'Clear all',
             'shop.empty_heading' => 'No products match those filters',
             'shop.empty_body' => 'Try removing a filter or clearing all.',

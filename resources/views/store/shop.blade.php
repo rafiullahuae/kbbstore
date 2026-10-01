@@ -202,13 +202,16 @@
                     <button type="button" data-c="4"@if ($colsChosen && '4' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 4) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2.5" y="5" width="3.4" height="14" rx="1"/><rect x="7.7" y="5" width="3.4" height="14" rx="1"/><rect x="12.9" y="5" width="3.4" height="14" rx="1"/><rect x="18.1" y="5" width="3.4" height="14" rx="1"/></svg></button>
                     <button type="button" data-c="5"@if ($colsChosen && '5' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 5) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="5" width="2.7" height="14" rx=".9"/><rect x="6.3" y="5" width="2.7" height="14" rx=".9"/><rect x="10.6" y="5" width="2.7" height="14" rx=".9"/><rect x="14.9" y="5" width="2.7" height="14" rx=".9"/><rect x="19.2" y="5" width="2.7" height="14" rx=".9"/></svg></button>
                 </div>
-                <div class="sortsel">{{ __('store.shop.sort_label') }}
+                {{-- A <label>, not a <div>, so "Sort" is the select's accessible
+                     name — it had none. On the narrowest phones the word is
+                     hidden VISUALLY (kbb-shop.css, .sortlbl) to keep Filters and
+                     Sort on one row, and stays the label.        (Lane PI-B) --}}<label class="sortsel" for="sort"><span class="sortlbl">{{ __('store.shop.sort_label') }}</span>
                     <select id="sort" onchange="var u=new URL(location.href);u.searchParams.set('orderby',this.value);u.searchParams.delete('paged');location.href=u.toString()">
                         @foreach ($sorts as $val => $lbl)
                             <option value="{{ $val }}" @selected($curorder === $val)>{{ $lbl }}</option>
                         @endforeach
                     </select>
-                </div>
+                </label>
             </div>
         </div>
 
@@ -252,19 +255,13 @@
             @endforelse
         </div>
 
-        @if ($lastPage > 1)
-            <div class="sec-cta" style="margin-top:30px">
-                @if ($page > 1)<a class="page-numbers" href="{{ Facets::pageUrl($page - 1) }}">‹</a>@endif
-                @foreach (range(max(1, $page - 1), min($lastPage, $page + 1)) as $n)
-                    @if ($n === $page)
-                        <span class="page-numbers current">{{ $n }}</span>
-                    @else
-                        <a class="page-numbers" href="{{ Facets::pageUrl($n) }}">{{ $n }}</a>
-                    @endif
-                @endforeach
-                @if ($page < $lastPage)<a class="page-numbers" href="{{ Facets::pageUrl($page + 1) }}">›</a>@endif
-            </div>
-        @endif
+        {{-- The pager, shared with the curated listings, and the hook for
+             "Load more on scroll". See the partial's header.  (Lane PI-B) --}}@include('partials.listing-pager', [
+            'page' => $page,
+            'lastPage' => $lastPage,
+            'urlFor' => static fn (int $n): string => Facets::pageUrl($n),
+            'grid' => '#grid',
+        ])
     </main>
 </div>
 @endsection
