@@ -202,6 +202,67 @@ final class SearchTerms
     public const ESCAPE = '!';
 
     /**
+     * The separate words of a query, for an every-word match.
+     *
+     * THE DEFECT (1 October 2026, the owner's screenshot): typing "medicube
+     * booster x2" found nothing, because every match here was ONE substring of
+     * the whole phrase, and the product is called "medicube - AGE-R Booster
+     * Pro X2 Pink": "booster x2" is not in it as written. One word further and
+     * the search "stopped working". Words are split on spaces and the dashes
+     * product names use; each must then appear in the name, the SKU or the
+     * brand -- in any order. At most six, so a pasted paragraph cannot build
+     * a query of a hundred clauses.
+     *
+     * @return list<string>
+     */
+    public static function words(string $query): array
+    {
+        $out = [];
+
+        foreach (preg_split('/[\s\-\x{2013}\x{2014}_\/,|]+/u', mb_strtolower(trim($query))) ?: [] as $word) {
+            $word = trim($word, ".()[]'\"+&:;!?");
+
+            if ($word !== '' && ! in_array($word, $out, true)) {
+                $out[] = $word;
+            }
+        }
+
+        return array_slice($out, 0, 6);
+    }
+
+    /**
+     * OR (every word of $query is in one of $columns), added to $query's
+     * builder -- or nothing, for a one-word query, which the phrase match
+     * already covers. $columns are literals from the caller; a `brand.`-
+     * prefixed entry is matched through the product's brand relation, so the
+     * caller needs no join.
+     *
+     * @param  list<string>  $columns
+     */
+    public static function orWhereEveryWord($builder, string $query, array $columns)
+    {
+        $words = self::words($query);
+
+        if (count($words) < 2) {
+            return $builder;
+        }
+
+        return $builder->orWhere(function ($all) use ($words, $columns) {
+            foreach ($words as $word) {
+                $all->where(function ($one) use ($word, $columns) {
+                    foreach ($columns as $column) {
+                        if (str_starts_with($column, 'brand.')) {
+                            $one->orWhereHas('brand', fn ($b) => self::whereLike($b, 'brands.' . substr($column, 6), $word));
+                        } else {
+                            self::orWhereLike($one, $column, $word);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    /**
      * Escape the LIKE wildcards `%` and `_` so a query containing them is
      * matched literally rather than acting as a pattern.
      *
