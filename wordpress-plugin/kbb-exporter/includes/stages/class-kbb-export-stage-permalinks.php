@@ -65,6 +65,9 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 	/** @var array<int,array<string,string>>|null */
 	private $sources;
 
+	/** @var array<int,int>|null the ids content_blocks.csv carries, once per request */
+	private $carried;
+
 	public function file() {
 		return 'permalinks.csv';
 	}
@@ -154,7 +157,7 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 					 JOIN ' . $wpdb->prefix . "posts p ON p.ID = pm.post_id
 					 WHERE pm.meta_key = '_wp_old_slug'
 					   AND p.post_status IN ('publish','draft','private','pending','future')
-					   AND p.post_type NOT IN (" . $this->not_content_list() . ')'
+					   AND p.post_type NOT IN (" . $this->not_content_list() . ')' . $this->carried_clause( 'p.ID' )
 				);
 
 				continue;
@@ -164,7 +167,7 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 				$total += (int) $wpdb->get_var(
 					'SELECT COUNT(*) FROM ' . $wpdb->prefix . 'posts
 					 WHERE post_type = ' . KBB_Export_Wp::quote( $source['type'] ) . "
-					   AND post_status IN ('publish','draft','private','pending','future')"
+					   AND post_status IN ('publish','draft','private','pending','future')" . $this->carried_clause( 'ID' )
 				);
 
 				continue;
@@ -231,8 +234,8 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 		$rows = $wpdb->get_results(
 			'SELECT ID, post_name, post_status FROM ' . $wpdb->prefix . 'posts
 			 WHERE post_type = ' . KBB_Export_Wp::quote( $source['type'] ) . "
-			   AND post_status IN ('publish','draft','private','pending','future')
-			   AND ID > " . (int) $cursor . '
+			   AND post_status IN ('publish','draft','private','pending','future')" . $this->carried_clause( 'ID' ) . '
+			   AND ID > ' . (int) $cursor . '
 			 ORDER BY ID
 			 LIMIT ' . (int) $limit,
 			ARRAY_A
@@ -348,6 +351,28 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 	 * Shared by the count and the batch so the two cannot drift: a type counted
 	 * and not emitted makes `total()` a denominator the bar never reaches.
 	 */
+	private function carried_clause( $column ) {
+		/*
+		 * ── A PAGE-BUILDER SECTION HAS NO ADDRESS TO REDIRECT FROM (1.10.0) ─
+		 *
+		 * A Rey global section that a product description embeds goes out in
+		 * content_blocks.csv from 1.10.0, and it is a fragment of a product
+		 * page, not a page: a redirect from its WordPress address would go
+		 * nowhere useful. Same ids posts.csv leaves out, for the same reason;
+		 * see KBB_Export_Stage_Content_Blocks::carried_ids(). Shared by every
+		 * count and every batch below so the total cannot drift from the rows.
+		 */
+		if ( null === $this->carried ) {
+			$this->carried = KBB_Export_Stage_Content_Blocks::carried_ids( $this->options );
+		}
+
+		if ( empty( $this->carried ) ) {
+			return '';
+		}
+
+		return ' AND ' . $column . ' NOT IN (' . implode( ',', $this->carried ) . ')';
+	}
+
 	private function not_content_list() {
 		$out = array();
 
@@ -426,7 +451,7 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 			 JOIN ' . $wpdb->prefix . "posts p ON p.ID = pm.post_id
 			 WHERE pm.meta_key = '_wp_old_slug'
 			   AND p.post_status IN ('publish','draft','private','pending','future')
-			   AND p.post_type NOT IN (" . $this->not_content_list() . ')
+			   AND p.post_type NOT IN (" . $this->not_content_list() . ')' . $this->carried_clause( 'p.ID' ) . '
 			   AND pm.meta_id > ' . (int) $cursor . '
 			 ORDER BY pm.meta_id
 			 LIMIT ' . (int) $limit,
@@ -537,7 +562,7 @@ class KBB_Export_Stage_Permalinks extends KBB_Export_Stage {
 			 JOIN ' . $wpdb->prefix . "posts p ON p.ID = pm.post_id
 			 WHERE pm.meta_key = '_wp_old_slug'
 			   AND p.post_status IN ('publish','draft','private','pending','future')
-			   AND p.post_type NOT IN (" . $this->not_content_list() . ')'
+			   AND p.post_type NOT IN (" . $this->not_content_list() . ')' . $this->carried_clause( 'p.ID' )
 		);
 
 		if ( 0 === $total ) {

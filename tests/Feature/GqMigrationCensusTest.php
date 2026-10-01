@@ -528,6 +528,43 @@ function gqCensus(): array
         ]],
 
         /*
+         * ── PLUGIN 1.10.0: THE REY GLOBAL SECTIONS A DESCRIPTION EMBEDS ─────
+         *
+         * `[rey_global_section id="18159"]` in a product description names a
+         * post built in Elementor; the export carried the shortcode and not the
+         * post, so the new shop printed it as text. content_blocks.csv carries
+         * the post (wordpress-plugin/kbb-exporter/includes/stages/
+         * class-kbb-export-stage-content-blocks.php, Lane PJ-A).
+         *
+         * Every column is READ BY App\Services\Import\Entities\
+         * ContentBlockImporter, which LANE PJ-B BUILDS -- it is not in this
+         * lane's tree. The entity key and the `content_blocks.*` destinations
+         * below are PROVISIONAL: PJ-B owns the schema, and the integrator
+         * aligns these names with PJ-B's migration when the two lanes merge.
+         * Until that importer is merged, three tests in this file are red in
+         * PJ-A's worktree on purpose, each naming content_blocks.csv: the
+         * table does not exist yet, and the file is one nothing opens yet.
+         * That is the finished state pinned, not the unfinished one.
+         *
+         * The default harness shop has no shortcode in any description, so
+         * the fixture's content_blocks.csv is header-only and every
+         * destination is in gqEmptyInThisFixture(); tests/Fixtures/
+         * kbb-export-rey is the same shop with the sections seeded.
+         */
+        'content_blocks.csv' => ['entity' => 'content-blocks', 'columns' => [
+            'id' => GQ_LANDS.'content_blocks.source_post_id',
+            'post_type' => GQ_LANDS.'content_blocks.post_type',
+            'slug' => GQ_LANDS.'content_blocks.slug',
+            'title' => GQ_LANDS.'content_blocks.title',
+            'status' => GQ_LANDS.'content_blocks.status',
+            'modified' => GQ_LANDS.'content_blocks.source_modified_at',
+            'shortcode' => GQ_LANDS.'content_blocks.shortcode',
+            'referenced_by' => GQ_LANDS.'content_blocks.referenced_by',
+            'elementor_data' => GQ_LANDS.'content_blocks.elementor_data',
+            'plain_html' => GQ_LANDS.'content_blocks.plain_html',
+        ]],
+
+        /*
          * The two files kbb:import does not open, and the difference between
          * them, which is the whole point of having this row in the census.
          */
@@ -1506,6 +1543,26 @@ function gqEmptyInThisFixture(): array
         'product_variants.sale_price' => 'neither harness variation carries a `_sale_price`',
         'product_variants.stock' => 'both harness variations carry `_stock_status` and no `_stock` count',
         'product_variants.image' => 'neither harness variation has its own `_thumbnail_id`',
+
+        /*
+         * ── THE SECTIONS THE DEFAULT HARNESS SHOP DOES NOT EMBED ───────────
+         *
+         * No description in the default harness shop carries a shortcode, so
+         * content_blocks.csv is header-only here. kbb_harness_rey_sections()
+         * in wordpress-plugin/harness/shop.php (run-export.php --rey=1) is the
+         * row that changes that, and tests/Fixtures/kbb-export-rey is its
+         * output. Provisional destinations; see the census entry above.
+         */
+        'content_blocks.source_post_id' => 'no harness description embeds a section without --rey=1',
+        'content_blocks.post_type' => 'no harness description embeds a section without --rey=1',
+        'content_blocks.slug' => 'no harness description embeds a section without --rey=1',
+        'content_blocks.title' => 'no harness description embeds a section without --rey=1',
+        'content_blocks.status' => 'no harness description embeds a section without --rey=1',
+        'content_blocks.source_modified_at' => 'no harness description embeds a section without --rey=1',
+        'content_blocks.shortcode' => 'no harness description embeds a section without --rey=1',
+        'content_blocks.referenced_by' => 'no harness description embeds a section without --rey=1',
+        'content_blocks.elementor_data' => 'no harness description embeds a section without --rey=1',
+        'content_blocks.plain_html' => 'no harness description embeds a section without --rey=1',
     ];
 }
 

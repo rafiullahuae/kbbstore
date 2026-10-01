@@ -93,7 +93,8 @@ class KBB_Export_Groups {
 			'catalogue' => array(
 				'label' => 'Catalogue',
 				'summary' => 'Products, and everything that files them',
-				'help'  => 'Categories, brands, tags, attributes, the products themselves and every variation. '
+				'help'  => 'Categories, brands, tags, attributes, the products themselves, every variation, and the '
+					. 'page-builder sections (Rey global sections) their descriptions embed by shortcode. '
 					. 'Nothing outside this group is needed to import it.',
 				'files' => array(
 					'categories.csv',
@@ -102,6 +103,11 @@ class KBB_Export_Groups {
 					'attributes.csv',
 					'products.csv',
 					'variations.csv',
+					// 1.10.0: the Rey / Elementor sections the descriptions
+					// embed by shortcode. Catalogue, because a section with no
+					// product to sit in is nothing, and a product without its
+					// section prints the shortcode as text.
+					'content_blocks.csv',
 				),
 				'needs' => array(),
 			),

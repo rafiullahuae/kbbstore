@@ -1,0 +1,8 @@
+"id","menu_term_id","parent_id","position","label","label_source","type","object","object_id","object_slug","url","target","classes","description","status"
+"7501","950","0","1","Skincare","item","taxonomy","product_cat","15","skincare","","","","","publish"
+"7502","950","0","2","About us","item","post_type","page","7002","about-us","","","","","publish"
+"7503","950","0","4","Sale","item","custom","custom","0","","https://kbeautybliss.com/super-sale/","_blank","menu-sale,menu-highlight","","publish"
+"7504","950","7501","1","Face Cleansers","object","taxonomy","product_cat","22","face-cleansers","","","","","publish"
+"7505","950","7501","2","Beauty of Joseon","object","taxonomy","pa_brands","502","beauty-of-joseon","","","","","publish"
+"7506","950","7501","3","Our hero serum","item","post_type","product","4021","serum-4021","","","","","publish"
+"7507","950","0","3","How to layer a K-beauty routine","object","post_type","post","7001","how-to-layer-a-k-beauty-routine","","","","","publish"
