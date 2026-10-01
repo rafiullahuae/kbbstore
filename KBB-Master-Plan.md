@@ -3689,3 +3689,22 @@ URL and embedding it at render time.
 - [ ] Ships OFF, and adds nothing to any page until the owner turns it on
 - [ ] Arabic and RTL from the start, not retrofitted
 
+
+---
+
+## Changes after import  *(owner's list, opened 1 October 2026 — kept running)*
+
+The real WooCommerce shop was imported into extrabeauty.ae on 1 October 2026.
+Everything the owner finds afterwards is listed here, in his order, with the
+lane that owns it and its state. New items are appended; nothing is renumbered.
+
+| # | What he reported | Lane | State |
+|---|---|---|---|
+| 1 | Search box: "Popular right now" shows raw WooCommerce price markup (`<span class="woocommerce-Price-amount amount"…>AED…`) instead of a price | PI-A | in progress |
+| 2 | Turn the top countries (flag) bar off entirely for now | PI-B | in progress |
+| 3 | Long product description has no line breaks or paragraph spacing (old site: headings, numbered items, lists, spaced paragraphs); short description shows a literal `<div>` | PI-A | in progress |
+| 4 | Breadcrumb ("Home / Super Sale / …") on product pages and the rest: controls for spacing, on/off, separately for phone and desktop — **default OFF** | PI-B | in progress |
+
+Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
+30 September reversal); everything else stays byte-identical; every fix
+arrives with 390 and 1280 screenshots and a test that fails without it.
