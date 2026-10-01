@@ -856,6 +856,51 @@ final class ImportWorkspace
     }
 
     /**
+     * Every uploaded file, in one go. (Lane PJ-B)
+     *
+     * The owner cleared the "Your exports" card by pressing nine Remove
+     * buttons one at a time. This is those nine presses: forget() for each
+     * entity, forgetCompanion() for the two companion files, and the manifest
+     * last -- the same methods, so the sidecars and the manifest entries go
+     * exactly as they do one at a time, and nothing here can drift from them.
+     *
+     * FILES ONLY. Nothing imported from them is touched: no row, no checkpoint,
+     * no run. That is the same promise the single Remove makes, and the reason
+     * this is not "start over" -- Reset is a different button for a different
+     * job.
+     *
+     * @return int how many files were on disk and are gone
+     */
+    public function forgetAll(): int
+    {
+        $removed = 0;
+
+        foreach (self::entities() as $entity) {
+            if ($this->has($entity)) {
+                $removed++;
+            }
+
+            $this->forget($entity);
+        }
+
+        foreach (self::companionKeys() as $key) {
+            if ($this->hasCompanion($key)) {
+                $removed++;
+            }
+
+            $this->forgetCompanion($key);
+        }
+
+        if ($this->hasManifest()) {
+            $removed++;
+        }
+
+        $this->forgetManifest();
+
+        return $removed;
+    }
+
+    /**
      * Drop one file from the manifest on disk, leaving the rest of it alone.
      *
      * Rewritten rather than deleted: the export id, the source and every other
