@@ -3,6 +3,86 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.337
+**The phone menu opens in Safari and Opera.** Apply after .336.
+
+---
+
+### THE MENU, AND WHY ONLY SAFARI AND OPERA
+
+**Root cause, proved in a browser rather than guessed.** When a visitor reaches
+the shop at `http://extrabeauty.ae` — which Safari and Opera still do when you
+type the address, while Chrome quietly tries `https://` first — the page asked
+for its menu script and its font at **`https://`** extrabeauty.ae. To a browser
+those are two different sites. A menu script of this kind (`type="module"`) and
+a web font are only loaded across sites when the server says so, and it does
+not, so **both were blocked and the menu never started.** Opera's *"connection
+is not secure"* is the same fact seen from the address bar: the page itself had
+arrived over `http`.
+
+**The fix:** the shop now asks for its scripts, styles and fonts by path
+(`/build/assets/…`) instead of by full address, so they always come from
+whichever address the page itself came from — `http` or `https`, with or without
+`www`. Measured on an emulated iPhone, page on one address and assets on the
+other:
+
+| | menu opens | blocked |
+|---|---|---|
+| before | **no** | the font, the menu script |
+| after | **yes** | nothing |
+
+### ONE FAILING STEP CAN NO LONGER TAKE THE MENU WITH IT
+
+The shop starts 21 small pieces when a page opens — search, cart, menu, product
+gallery and so on — one after another. Until now, if any one of them threw an
+error, **every piece after it never started.** The menu is the 9th. Each piece
+now starts on its own; a failure is written to the browser console by name and
+the rest of the page carries on.
+
+### PHONES: FEWER FULL-SCREEN LAYERS BEHIND THE PAGE
+
+On touch screens the page's background wash is now painted once on the page
+itself instead of on three fixed full-screen layers. Measured in Chrome: fewer
+layers composited, no repaint while scrolling.
+
+**Said plainly: this is a risk reduction, not a proven fix for the "giant box"
+you saw after clearing the cache.** It could not be reproduced here. It removes
+the most likely cause; please check it on your phone after applying.
+
+### IMPORT: REVIEW PHOTOGRAPHS AND LARGE FILES
+
+- **Review photographs now travel with the export** (WordPress plugin 1.8.0 —
+  see below). Before, a review's photos were named in `reviews.csv` but missing
+  from `media.csv`, the list of files the new shop downloads from the old one, so
+  they would have been lost when the old site was switched off.
+- **Store → Import:** an export file larger than your server accepts in one
+  request is now uploaded in pieces automatically. Your files fit today (10 MB
+  limit, largest file about 2.2 MB), so you will not see this unless that
+  changes.
+
+**The plugin is not inside this package and cannot be** — the updater refuses
+WordPress files. Install the separate `kbb-exporter-1.8.0.zip` on the
+WordPress site: **Plugins → Add New → Upload Plugin**. WordPress then shows
+version **1.8.0**.
+
+---
+
+### STILL OPEN
+
+- **The "page not found" on a first visit from a new device.** This is the shop
+  being reached over `http`; it is fixed at the server, not in a package —
+  Cloudways → your application → **SSL Certificate** → HTTPS redirection.
+  Waiting on your screenshot of that page to confirm the certificate covers both
+  `extrabeauty.ae` and `www.extrabeauty.ae` before you switch it on.
+
+Files: `app/Providers/AppServiceProvider.php`, `resources/js/kbb/app.js`,
+`resources/css/kbb/kbb.css`, `public/build/*`, `app/Http/Controllers/Admin/ImportPartsController.php`,
+`app/Services/ImportConsole/UploadParts.php`, `app/Services/Import/MediaAudit.php`,
+`app/Services/Import/MediaRewrite.php`, `app/Support/AdminCapabilities.php`,
+`routes/import-parts-admin.php`, `routes/web.php`, `resources/views/admin/app.blade.php`,
+`resources/views/admin/partials/import-parts-screen.blade.php`,
+`database/migrations/2027_07_02_000000_clear_caches_import_parts.php`.
+
 ## 2.60.336
 **Your product-page preview, your gallery thumbnails, and the migration checked
 end to end.** Apply after .335.

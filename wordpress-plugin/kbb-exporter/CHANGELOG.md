@@ -18,6 +18,25 @@ that refusal rather than trusting it.
 
 ---
 
+## 1.8.0
+
+**Review photographs are now on the list of files to fetch.** (Lane IE2)
+
+- `reviews.csv` already named the pictures shoppers attached to their reviews,
+  but `media.csv` — the list the new shop works through to download files off
+  the old one before it is switched off — walked products, categories, brands
+  and articles and **not reviews**. A customer's own photograph, the one image
+  on the shop that cannot be re-created, was named in one file and missing from
+  the only file that says "fetch this".
+- The rule for "this value is a photograph" now lives in one class,
+  `KBB_Export_Review_Photos`, read by both the reviews stage and the media
+  stage, so the two files cannot disagree. It recognises a value by a fact
+  about this site (an attachment ID it resolves, or an address under its own
+  uploads directory), never by a guessed list of other plugins' meta keys.
+- Version moved 1.7.1 → 1.8.0 in all three places it lives (header,
+  `KBB_EXPORTER_VERSION`, `KBB_Export_Runner::PLUGIN_VERSION`), so **Plugins**
+  in WordPress shows which build is installed.
+
 ## 1.7.1
 
 **Two things the plugin was doing right and had never said, both of which the

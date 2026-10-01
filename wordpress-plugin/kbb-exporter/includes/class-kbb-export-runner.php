@@ -87,7 +87,7 @@ class KBB_Export_Runner {
 	 * plugin's main file; a test that they agree is the part a human cannot do
 	 * by looking at one file.
 	 */
-	const PLUGIN_VERSION = '1.7.1';
+	const PLUGIN_VERSION = '1.8.0';
 
 	/** @var array<string,mixed> */
 	private $state;
