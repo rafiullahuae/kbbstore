@@ -567,7 +567,18 @@ class SearchController extends Controller
                     'brand' => $p->brand?->t('name'),
                     'url' => Url::to('/product/' . $p->slug . '/'),
                     'image' => $p->image,
-                    'price' => Money::format($p->effectivePrice()),
+                    /*
+                     * plain(), NOT format(). (Lane PI-A) format() is the
+                     * WooCommerce-shaped <span> markup Blade prints with
+                     * {!! !!}; this is JSON, and search.js escapes every field
+                     * of it before it touches the DOM, as it must. So the
+                     * owner's "Popular right now" read `Anua · <span
+                     * class="woocommerce-Price-amount amount" dir="ltr">…AED
+                     * </span>80</span>` as letters. The suggestion and result
+                     * rows above were already plain(); this was the one row
+                     * that was not. Text in the JSON, escaped once in the JS.
+                     */
+                    'price' => Money::plain($p->effectivePrice()),
                 ])
                 ->all());
 
