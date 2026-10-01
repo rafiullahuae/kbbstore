@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Review;
 use App\Models\Setting;
 use App\Services\Seo\SeoSettings;
@@ -161,6 +162,23 @@ final class MediaRewrite
          * it happens.
          */
         [Review::class, 'reviews', 'images', true],
+
+        /*
+         * ── AND TWO MORE, FOUND BY A REAL PICTURE PASS (Lane PX) ───────────
+         *
+         * After importing the fixture export into a real shop and running the
+         * sideloader against a fake old site, a scan of every text column for
+         * the old host still found these. The audit and this list are changed
+         * together, as the note above says they must be.
+         *
+         * `product_variants.image` is the option swatch and every basket and
+         * checkout thumbnail of a chosen option. `seo.og_image` is a KEY inside
+         * the `products.seo` json column — the Yoast share picture — and
+         * replace() has a branch for it, matched by value like every other
+         * write here.
+         */
+        [ProductVariant::class, 'product_variants', 'image', false],
+        [Product::class, 'products', 'seo.og_image', false],
     ];
 
     /**
@@ -536,6 +554,21 @@ final class MediaRewrite
             return false;
         }
 
+        if (str_contains($field, '.')) {
+            [$column, $key] = explode('.', $field, 2);
+            $cell = $row->{$column};
+
+            if (! is_array($cell) || ! isset($cell[$key]) || (string) $cell[$key] !== $from) {
+                return false;
+            }
+
+            $cell[$key] = $to;
+            $row->{$column} = $cell;
+            $row->save();
+
+            return true;
+        }
+
         if ($field === 'images') {
             $images = (array) ($row->images ?? []);
             $changed = false;
@@ -613,10 +646,16 @@ final class MediaRewrite
         }
 
         foreach (self::COLUMNS as [$model, $table, $field, $isList]) {
-            $column = $field === 'images' ? 'images' : $field;
+            // `seo.og_image` names a key inside the `seo` json column.
+            [$column, $key] = str_contains($field, '.') ? explode('.', $field, 2) : [$field, null];
 
             foreach ($model::query()->select(['id', $column])->cursor() as $row) {
-                $values = $isList ? (array) ($row->{$column} ?? []) : [$row->{$column}];
+                if ($key !== null) {
+                    $cell = $row->{$column};
+                    $values = [is_array($cell) ? ($cell[$key] ?? null) : null];
+                } else {
+                    $values = $isList ? (array) ($row->{$column} ?? []) : [$row->{$column}];
+                }
 
                 foreach ($values as $value) {
                     if (! is_string($value) || trim($value) === '') {

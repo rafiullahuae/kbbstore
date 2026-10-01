@@ -8,6 +8,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Review;
 use App\Models\Setting;
 use App\Services\Seo\SeoSettings;
@@ -150,7 +151,7 @@ final class MediaAudit
      */
     private function references(): iterable
     {
-        foreach (Product::query()->select(['id', 'slug', 'image', 'images'])->cursor() as $product) {
+        foreach (Product::query()->select(['id', 'slug', 'image', 'images', 'seo', 'description', 'short_description'])->cursor() as $product) {
             $owner = 'product '.$product->id.' ('.$product->slug.')';
 
             if (is_string($product->image)) {
@@ -161,6 +162,59 @@ final class MediaAudit
                 if (is_string($image)) {
                     yield [$owner, 'products.images', $image];
                 }
+            }
+
+            /*
+             * ── THREE MORE PLACES A PRODUCT KEEPS A PICTURE (Lane PX) ────────
+             *
+             * Found by importing the fixture export into a real shop and
+             * scanning EVERY text column of EVERY table for the old host after
+             * a full picture pass, rather than by reading this list. Three were
+             * left naming kbeautybliss.com, because nothing here opened them:
+             *
+             *  · `products.seo` → `og_image`, the Yoast share picture
+             *    (`_yoast_wpseo_opengraph-image`, written by SeoImporter).
+             *    ProductController publishes it as og:image ahead of the
+             *    product's own photograph — the settings-level share image
+             *    below was added for exactly this reason and this one was not.
+             *  · `products.description` / `short_description`: WordPress
+             *    product copy embeds `<img src="…/wp-content/uploads/…">`, the
+             *    exporter's media.csv lists them (field `description`), and
+             *    product-tabs prints the body raw. Read the way `posts.body`
+             *    is, through the one document parser.
+             *  · `product_variants.image` — below, after the products.
+             *
+             * Each one rendered perfectly until the old site went off.
+             */
+            $seo = $product->seo;
+
+            if (is_array($seo) && is_string($seo['og_image'] ?? null)) {
+                yield [$owner, 'products.seo.og_image', $seo['og_image']];
+            }
+
+            foreach (['description', 'short_description'] as $document) {
+                $carried = [];
+
+                foreach (DocumentMediaRewrite::addresses($product->{$document}) as $address) {
+                    $carried[$address['url']] ??= [];
+                    $carried[$address['url']][$address['tag']] = true;
+                }
+
+                foreach ($carried as $url => $tags) {
+                    yield [$owner, isset($tags['img']) ? 'products.'.$document : 'products.'.$document.' (link)', (string) $url];
+                }
+            }
+        }
+
+        /*
+         * The option swatch on the product page and every basket and checkout
+         * line (`$item->variant?->image ?: $p?->image`) draw THIS picture, and
+         * VariationImporter fills it straight from the variation's WordPress
+         * thumbnail URL. See the note above.
+         */
+        foreach (ProductVariant::query()->select(['id', 'product_id', 'sku', 'image'])->cursor() as $variant) {
+            if (is_string($variant->image)) {
+                yield ['variant '.$variant->id.' ('.($variant->sku ?: 'product '.$variant->product_id).')', 'product_variants.image', $variant->image];
             }
         }
 

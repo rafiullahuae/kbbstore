@@ -169,7 +169,9 @@
     // — the same shop repainted, for a value nobody reads.
     $seed = ($product->brand?->name ?? '') . $product->name;
     $link = $product->url();
-    $img = $product->image;
+    // A picture the migration could not bring across draws the placeholder
+    // below, not a broken image. Lane PX; see App\Support\LostPictures.
+    $img = \App\Support\LostPictures::usable($product->image);
     $rc = (int) $product->review_count;
     $rating = (int) round((float) $product->rating);
 
