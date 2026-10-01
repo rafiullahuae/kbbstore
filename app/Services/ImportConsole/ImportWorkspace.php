@@ -224,6 +224,17 @@ final class ImportWorkspace
             'unique' => true,
             'help' => 'What is in each menu, in order and at the right depth. Every item points at a category, brand, product or article by its WordPress id, so run this after the catalogue and the articles; anything that cannot be placed is imported with its label and its position, held out of the header until you give it an address, and named in the report.',
         ],
+        /*
+         * MUST MIRROR ImportRunner::entities(), in the same order (Lane PJ-B).
+         * AdminImportScreenTest pins the two lists against each other.
+         */
+        'content-blocks' => [
+            'file' => 'content_blocks.csv',
+            'label' => 'Content blocks',
+            'id' => ['id', 'post_id'],
+            'unique' => false,
+            'help' => 'The Rey "global sections" your product descriptions name with [rey_global_section id="…"] — the ingredient strips and similar blocks built in Elementor. Each one becomes an HTML Block under Content → HTML Blocks, drawn in every product that names it; edit it there once and every product changes.',
+        ],
     ];
 
     /**

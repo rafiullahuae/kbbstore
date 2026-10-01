@@ -92,6 +92,7 @@
 .hb-table tbody tr{cursor:pointer}
 .hb-table tbody tr:hover{background:rgba(127,127,127,.06)}
 .hb-name{font-weight:600}
+.hb-imp{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:#EEF2FF;color:#3730A3;font-size:10.5px;font-weight:600;vertical-align:1px;white-space:nowrap}
 
 .hb-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;
   font-size:11.5px;font-weight:600;border:1px solid transparent}
@@ -410,7 +411,9 @@
 
     var body = rows.map(function(b){
       return '<tr data-hb-open="' + b.id + '">' +
-        '<td class="hb-name">' + esc(b.name) + '</td>' +
+        '<td class="hb-name">' + esc(b.name) +
+          (b.imported ? ' <span class="hb-imp" title="Imported from your WordPress shop. Edit it here and every product that names it changes.">From WordPress</span>' : '') +
+        '</td>' +
         '<td><span class="hb-code">' + esc(b.shortcode) + '</span></td>' +
         '<td><span class="hb-pill ' + (b.status === 'published' ? 'live' : 'draft') + '">' +
           (b.status === 'published' ? 'Published' : 'Draft') + '</span></td>' +
@@ -480,10 +483,12 @@
           '<div class="hb-field">' +
             '<label>Shortcode</label>' +
             '<div class="hb-actions">' +
-              '<span class="hb-code" id="hb-sc">' + esc(shortcodeFor(slug)) + '</span>' +
+              '<span class="hb-code" id="hb-sc">' + esc(b.imported && b.shortcode ? b.shortcode : shortcodeFor(slug)) + '</span>' +
               '<button class="btn ghost sm" id="hb-copy" type="button">Copy</button>' +
             '</div>' +
-            '<div class="hint">Paste this into a page or post. It updates as you change the handle.</div>' +
+            '<div class="hint">' + (b.imported
+              ? 'Imported from your WordPress shop. Your product descriptions already carry this shortcode, so editing this block changes every product that names it.'
+              : 'Paste this into a page or post. It updates as you change the handle.') + '</div>' +
           '</div>' +
         '</div>' +
 
@@ -511,7 +516,7 @@
       '<div class="hb-card">' +
         '<div class="hb-title" style="margin-bottom:4px">Used in</div>' +
         (used
-          ? '<div class="hb-sub" style="margin-bottom:10px">Pages and posts whose content places this block.</div><div class="hb-used">' + used + '</div>'
+          ? '<div class="hb-sub" style="margin-bottom:10px">Pages, posts and products whose content places this block.</div><div class="hb-used">' + used + '</div>'
           : '<div class="hb-sub">Nothing places this block yet. Copy the shortcode above into a page or post.</div>') +
       '</div>') +
 
@@ -588,7 +593,8 @@
     var sc = document.querySelector('#hb-sc');
 
     function syncShortcode(){
-      if (sc) sc.textContent = shortcodeFor(slug ? slug.value : '');
+      // An imported section is placed by its WordPress id, which no handle edit moves.
+      if (sc && !(editing && editing.imported)) sc.textContent = shortcodeFor(slug ? slug.value : '');
     }
 
     /* Field values are read out of the DOM on save rather than mirrored into
@@ -602,7 +608,7 @@
     if (slug) slug.oninput = function(){ slugTouched = true; syncShortcode(); };
 
     var copyBtn = document.querySelector('#hb-copy');
-    if (copyBtn) copyBtn.onclick = function(){ copy(shortcodeFor(slug ? slug.value : '')); };
+    if (copyBtn) copyBtn.onclick = function(){ copy(sc ? sc.textContent : shortcodeFor(slug ? slug.value : '')); };
 
     /* srcdoc + sandbox with no allow-scripts: the block's own markup is shown,
        and any script inside it cannot run in the admin document. The owner
@@ -666,7 +672,9 @@
       busy = false;
       say(editing.id ? 'Block saved' : 'Block created');
       editing = null;
-      banner = {kind:'ok', text:'“' + payload.block.name + '” saved. Place it with ' + shortcodeFor(payload.block.slug) + '.'};
+      banner = {kind:'ok', text:'“' + payload.block.name + '” saved. ' + (payload.block.wc_id
+        ? 'Every product that names it shows the change now.'
+        : 'Place it with ' + shortcodeFor(payload.block.slug) + '.')};
       render();
       load();
     } catch (e) {
