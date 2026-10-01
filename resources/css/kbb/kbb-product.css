@@ -1175,3 +1175,11 @@ a{color:inherit;text-decoration:none}
 .pdp .bb-desc :is(p,div,ul,ol){margin-block-end:.6em}
 .pdp .bb-desc :is(ul,ol){margin-inline-start:18px}
 .pdp .bb-desc > :last-child{margin-block-end:0}
+
+/* ── "READ LESS" LANDS BELOW THE STICKY HEADER, NOT UNDER IT. (Lane PI-A) ────
+   tabs.js scrolls .details back into view with block:'nearest' when a long
+   description is collapsed. The header is sticky -- measured on this page at
+   127px tall on a 390 phone and 94px at 1280 -- so without a margin the tab bar
+   would come to rest behind it. 12px of air on top of each. */
+.details{scroll-margin-top:106px}
+@media (max-width:900px){.details{scroll-margin-top:139px}}

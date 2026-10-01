@@ -61,7 +61,13 @@ $short = 'This set targets elasticity, fine lines and dryness. <div>This set is 
     .'a salon-style lift at home without a salon visit, and pairs the device with a cream made for it.</div>'
     .'<script>window.__piaXss = "short"</script>';
 
+// A description as long as the owner's real ones: a shopper who opens it and
+// reads to the end is two screens below the tab bar on a phone. "Read less"
+// (item 9) is only a problem on copy this long.
+$long = str_repeat($withList."\r\n\r\n", 3);
+
 $rows = [
+    ['pia-long-description', 'Medicube PDRN Booster Set (long copy)', $long, 'One-line blurb.', 39900, null, 100],
     ['pia-pdrn-glow-booster-set', 'Medicube PDRN Glow Booster Set', $withList, $short, 39900, 34900, 9000],
     ['pia-pdrn-dashes', 'Medicube PDRN Booster Set (plain lines)', $withDashes, "Lift & glow in two steps.\nSecond line, after a newline.", 8000, null, 8999],
 ];
