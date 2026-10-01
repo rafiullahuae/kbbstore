@@ -8,6 +8,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Product;
+use App\Models\Review;
 use App\Models\Setting;
 use App\Services\Seo\SeoSettings;
 use App\Support\MediaUsage;
@@ -209,6 +210,42 @@ final class MediaAudit
 
             foreach ($carried as $url => $tags) {
                 yield [$owner, isset($tags['img']) ? 'posts.body' : 'posts.body (link)', (string) $url];
+            }
+        }
+
+        /*
+         * THE CUSTOMERS' OWN PHOTOGRAPHS, AND THEY WERE THE LAST HOLE.
+         *
+         * `reviews.images` is a json column of URLs, written by
+         * `ReviewImporter` straight out of the WordPress export — where every
+         * one of them is a full address on the OLD site, exactly as
+         * `products.image` is. Nothing in this class opened `reviews`, so:
+         *
+         *   · the sideloader never fetched one, because it fetches what this
+         *     yields and nothing else;
+         *   · `MediaRewrite` could not re-point one either — the pair is fixed
+         *     together, from this same reading, because a picture the rewrite
+         *     can reach and the audit cannot see is a rewrite nobody is told
+         *     to make;
+         *   · and `remote` — the number the runbook tells the owner to watch
+         *     to zero before cutover — reached zero with every customer
+         *     photograph still served by the site he was about to switch off.
+         *
+         * IT IS THE ONE PICTURE ON THE SHOP THAT CANNOT BE RE-CREATED. He can
+         * retype a review. He cannot retype a customer's photograph of her own
+         * face, and she is not going to send it again.
+         *
+         * `cursor()` and two columns for the same reason the Journal uses
+         * them: a five-year shop is thousands of reviews and this runs on a
+         * modest host.
+         */
+        foreach (Review::query()->select(['id', 'source_id', 'images'])->cursor() as $review) {
+            $owner = 'review '.$review->id.($review->source_id ? ' (comment '.$review->source_id.')' : '');
+
+            foreach ((array) ($review->images ?? []) as $image) {
+                if (is_string($image)) {
+                    yield [$owner, 'reviews.images', $image];
+                }
             }
         }
 

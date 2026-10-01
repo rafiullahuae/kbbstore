@@ -661,6 +661,20 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 	$meta( 'commentmeta', 'comment_id', 8101, array( 'reviews-images' => '9001' ) );
 	$meta( 'commentmeta', 'comment_id', 8101, array( 'reviews-images' => '9002' ) );
 
+	// HER OWN FACE, and it is referenced by NOTHING ELSE on this shop.
+	//
+	// The two rows above are attachments 9001 and 9002 -- the serum's own
+	// product photographs, which every other stage already exports. That made
+	// the review-photo path look safe when it was not: media.csv carried those
+	// two URLs anyway, as product images, so nothing noticed that media.csv had
+	// no idea reviews existed.
+	//
+	// A customer's photograph of herself is the real shape and the one that
+	// cannot be re-created. Referenced by no product, no category, no brand and
+	// no article, so it appears in media.csv if and only if the review source
+	// put it there.
+	$meta( 'commentmeta', 'comment_id', 8101, array( 'reviews-images' => $uploads . '/2019/03/layla-selfie.jpg' ) );
+
 	// A key that is NOT a photograph. It is here so the export has something to
 	// leave behind and NAME, rather than a fixture in which everything happens
 	// to be a picture and the unused-key report never fires.
@@ -689,6 +703,21 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 			'http://kbeautybliss.com/wp-content/uploads/2020/01/skincare-category.jpg',
 		) ),
 	) );
+
+	// THE THIRD STORAGE SHAPE: a path RELATIVE TO THE UPLOADS ROOT, with no
+	// host, no scheme and no leading slash.
+	//
+	// This is one of the exact two shapes the export's own manifest note used
+	// to name as ones it could not read -- "a bare filename, or a path relative
+	// to the uploads root" -- and then hand to the owner as homework. It is a
+	// photograph if and only if the uploads directory actually holds the file,
+	// which run-export.php puts there.
+	$meta( 'commentmeta', 'comment_id', 8102, array( 'rp_photo_paths' => '2020/01/layla-review-2.jpg' ) );
+
+	// AND THE SAME SHAPE NAMING A FILE THAT IS NOT THERE. A plugin's
+	// bookkeeping value that happens to end in .jpg must NOT become a broken
+	// <img> on the new shop, so the stat() is load-bearing in both directions.
+	$meta( 'commentmeta', 'comment_id', 8102, array( 'rp_missing' => '2020/01/never-uploaded.jpg' ) );
 
 	// A customer QUESTION: a product comment with no rating. Not a review.
 	$insert( 'comments', array(

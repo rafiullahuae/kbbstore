@@ -805,6 +805,23 @@ final class AdminCapabilities
         ['GET', 'api/cart/debug', 'system.diagnostics'],
 
         // --------------------------------------------------- import & demo content
+        /*
+         * Uploading an export the server will not take in one request --
+         * routes/import-parts-admin.php. `admin-api/import/**` below matches
+         * these paths already; they are named ANYWAY, above it, because
+         * CLAUDE.md rule 5 asks that a new admin endpoint's capability be a
+         * decision somebody made rather than one it fell into, and all three
+         * write bytes to this server's disk.
+         *
+         * `data.import` and not a capability of their own: they ARE
+         * POST /admin-api/import/upload, cut into three requests because PHP's
+         * `upload_max_filesize` refuses the whole file before any route runs.
+         * An account that may put a 1 MB brands.csv on this server but not a
+         * 3 MB orders.zip is a distinction nobody wants to administer, and one
+         * an operator would grant in the same breath.
+         */
+        ['*', 'admin-api/import/part', 'data.import'],
+        ['*', 'admin-api/import/part/**', 'data.import'],
         ['*', 'admin-api/import/**', 'data.import'],
         /*
          * Store -> Import -> "Addresses & pictures" (Lane GB). `data.import`

@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\Product;
+use App\Models\Review;
 use App\Models\Setting;
 use App\Services\Seo\SeoSettings;
 use App\Support\MediaUsage;
@@ -143,6 +144,23 @@ final class MediaRewrite
         [Brand::class, 'brands', 'logo', false],
         [Category::class, 'categories', 'image', false],
         [Post::class, 'posts', 'cover', false],
+
+        /*
+         * `reviews.images` IS A CELL AND IT WAS THE LAST ONE MISSING.
+         *
+         * A json list of URLs, filled by `ReviewImporter` from the WordPress
+         * export, where every one of them is a full address on the old site —
+         * exactly as `products.images` is, and handled the same way by the
+         * `$isList` flag. Without it the sideloader could fetch a customer's
+         * photograph (once `MediaAudit` learned to see it) and the review would
+         * go on pointing at WordPress anyway, so the file on this shop's disk
+         * would never be the file the page asked for.
+         *
+         * The audit and this list are changed together on purpose: a picture
+         * one can see and the other cannot is a defect in whichever direction
+         * it happens.
+         */
+        [Review::class, 'reviews', 'images', true],
     ];
 
     /**
