@@ -3700,19 +3700,19 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 
 | # | What he reported | Lane | State |
 |---|---|---|---|
-| 1 | Search box: "Popular right now" shows raw WooCommerce price markup (`<span class="woocommerce-Price-amount amount"…>AED…`) instead of a price | PI-A | in progress |
+| 1 | Search box: "Popular right now" shows raw WooCommerce price markup (`<span class="woocommerce-Price-amount amount"…>AED…`) instead of a price | PI-A | **done — 2.60.341** |
 | 2 | Turn the top countries (flag) bar off entirely for now | PI-B | in progress |
-| 3 | Long product description has no line breaks or paragraph spacing (old site: headings, numbered items, lists, spaced paragraphs); short description shows a literal `<div>` | PI-A | in progress |
+| 3 | Long product description has no line breaks or paragraph spacing (old site: headings, numbered items, lists, spaced paragraphs); short description shows a literal `<div>` | PI-A | **done — 2.60.341** |
 | 4 | Breadcrumb ("Home / Super Sale / …") on product pages and the rest: controls for spacing, on/off, separately for phone and desktop — **default OFF** | PI-B | in progress |
-| 5 | Product tabs missing after import: the old site showed "Description" **and "Major Ingredients"** (and other tabs on other products); the new product page shows only Description | PI-A | queued after 1 & 3 |
+| 5 | Product tabs missing after import: the old site showed "Description" **and "Major Ingredients"** (and other tabs on other products); the new product page shows only Description | PI-A | **done — 2.60.341** |
 | 6 | Smallest phones: "Filters" and "Sort" do not fit on one row on category/shop pages — must shrink (size, font) to fit automatically | PI-B | queued after 2 & 4 |
 | 7 | Pagination arrows render giant/broken. Add a choice: arrows, **load more on scroll** in batches (12 / 15 / 20 / a number he types), or **load all** (no pagination). Must be fast, using the existing grey loading placeholders | PI-B | queued after 2 & 4 |
 | 8 | Add to cart: replace the grey "Added to bag" pill with a choice of feedback — **an animated tick, grey → green, very fast, gone immediately** — while the cart panel still opens as now | PI-B | queued |
-| 9 | "Read less" collapses the description but leaves the shopper far down the page; it must bring them back to where the section closed | PI-A | queued |
-| 10 | **Major:** on the product edit page, convert any product into a proper **set** (choose its member products) — many of his sets were imported as plain products. Must be reliable and work with every option the set editor has | next free lane | being scoped by integrator |
+| 9 | "Read less" collapses the description but leaves the shopper far down the page; it must bring them back to where the section closed | PI-A | **done — 2.60.341** |
+| 10 | **Major:** on the product edit page, convert any product into a proper **set** (choose its member products) — many of his sets were imported as plain products. Must be reliable and work with every option the set editor has | next free lane | PI-A, in progress |
 | 11 | Reviews were imported from the old site but **no product shows any review** on the new site; they must appear on every product that had reviews | integrator | **diagnosed, nothing lost.** Measured on his server: the export held 209 star reviews (WooCommerce Photo Reviews stores them as ordinary comments, so all were seen), import read 209, created 209, refused 0; 164 approved + 45 pending (pending on the old site too); 68 products carry them. The "2,514 reviews" in docs/IE-IMPORT-END-TO-END.md was a harness assumption, not his data. Remaining: carry the plugin's helpful votes (`wcpr_vote_up_count` → `reviews.helpful`), which the export named as unused — see 11a |
-| 11a | Import the "helpful" vote counts from WooCommerce Photo Reviews (`wcpr_vote_up_count`) into the review's helpful counter | integrator | built with 12 (plugin 1.9.0) |
-| 12 | **Reviews his storefront showed never left WordPress.** They live in his own plugin, Dream Code Reviews (`wp_sorina_reviews`), which hides WooCommerce's reviews; Assign / Duplicate copies a product's reviews onto siblings (Booster Pro → PDRN Glow Booster Set). The export read only `wp_comments` | integrator (lane/dcr) | built: plugin 1.9.0 reads the table; importer keys `dream_code` rows; synced copies folded, not doubled; owner re-exports the Reviews group and imports it |
+| 11a | Import the "helpful" vote counts from WooCommerce Photo Reviews (`wcpr_vote_up_count`) into the review's helpful counter | integrator | **done — 2.60.341** (plugin 1.9.0) |
+| 12 | **Reviews his storefront showed never left WordPress.** They live in his own plugin, Dream Code Reviews (`wp_sorina_reviews`), which hides WooCommerce's reviews; Assign / Duplicate copies a product's reviews onto siblings (Booster Pro → PDRN Glow Booster Set). The export read only `wp_comments` | integrator (lane/dcr) | **done — 2.60.341** (plugin 1.9.0; owner re-exports Reviews) |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix

@@ -3,6 +3,36 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.341
+**After-import fixes: search prices, descriptions, product tabs, Read less, and
+the reviews your old shop actually showed.** Apply after .340. Ships with
+**WordPress plugin 1.9.0**.
+
+---
+
+| # | Your report | Now |
+|---|---|---|
+| 1 | Search "Popular right now" showed price code | Shows "AED 349" like everywhere else |
+| 3 | Descriptions ran together; `<div>` showed in the short description | Paragraphs, headings, numbered lines and lists as on the old site; tags render, never print. Unsafe code (scripts, click handlers) is removed |
+| 5 | "Major Ingredients" and other tabs were missing | Imported as the product's own tabs (needs plugin 1.9.0 + Products re-export) |
+| 9 | "Read less" left you far down the page | Brings you back to the top of the text, just under the header |
+| 11a | Review "helpful" likes were not imported | Imported |
+| 12 | Reviews shown on the old site (Dream Code Reviews) never came across, incl. copies on sibling products | Exported by plugin 1.9.0 and imported; synced copies of WooCommerce reviews are not doubled |
+
+Your existing products' descriptions are fixed by this package alone -- no
+re-import. Tabs and the Dream Code reviews need the new plugin and one
+re-export of **Products** and **Reviews** (steps in the message).
+
+Files: `app/Http/Controllers/Store/SearchController.php`,
+`app/Support/RichText.php`, `app/Support/ProductTabs.php`,
+`app/Support/ProductSeo.php`, `app/Services/Import/Entities/ProductImporter.php`,
+`app/Services/Import/Entities/ReviewImporter.php`,
+`resources/views/store/product.blade.php`,
+`resources/views/partials/quick-view.blade.php`, `resources/js/kbb/tabs.js`,
+`resources/css/kbb/kbb-product.css`, `public/build/*`,
+`database/migrations/2027_07_06_000000_clear_caches_imported_descriptions.php`,
+`database/migrations/2027_07_06_000100_add_product_tab_import_key.php`.
+
 ## 2.60.340
 **The clean-up has a button.** Apply after .339.
 
