@@ -382,7 +382,7 @@ not a defect. **Untested by this lane**: no import has been run behind
 **7.4 Nothing here has been run against his real data.** Every measurement in
 this document comes from the harness's deliberately nasty fixture shop or from
 CSVs written by hand. The row counts the harness models (671 products, 4,159
-orders, 10,571 line items, 3,712 customers, 2,514 reviews) are the real shop's,
+orders, 10,571 line items, 3,712 customers, 2,514 reviews) were assumed to be the real shop's -- ▲ the real export, 1 October 2026, held 209 reviews,
 but the *content* is not. Specifically unknown until his export exists:
   - how many orders carry `0000-00-00` dates, all of which will be **refused**;
   - whether his review-photo plugin stores values the export recognises — the
