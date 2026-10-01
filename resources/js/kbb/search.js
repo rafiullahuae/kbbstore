@@ -88,6 +88,26 @@ export function initSearch() {
     let controller = null;
     let index = -1;
 
+    /* COUNTED ONCE, WHEN THE SEARCH SETTLES (Growth -> Search Terms).
+       The panel asks on every keystroke; the server counts a term only when
+       the request says `log=1`, which happens once per term per page: after
+       1.5s with no more typing, on Enter, or when a result is picked. So
+       "medicube" is counted and "me", "med", "medi" are not. The request is
+       the same cached answer the panel already had. */
+    let settle = null;
+    const logged = new Set();
+    const logTerm = (q) => {
+        const key = (q || '').trim().toLowerCase();
+        if (key.length < 2 || logged.has(key)) return;
+        logged.add(key);
+        try {
+            fetch(`${window.KBB.routes.search}?q=${encodeURIComponent(key)}&log=1`, {
+                headers: { Accept: 'application/json' },
+                keepalive: true,
+            }).catch(() => {});
+        } catch (e) { /* counting must never break searching */ }
+    };
+
     const close = () => { panel.classList.remove('on'); index = -1; };
 
     /*
@@ -171,6 +191,8 @@ export function initSearch() {
                 signal: controller.signal,
             });
             render(await response.json());
+            clearTimeout(settle);
+            settle = setTimeout(() => { if (input.value.trim() === q) logTerm(q); }, 1500);
         } catch (error) {
             if (error.name !== 'AbortError') close();
         }
@@ -179,12 +201,19 @@ export function initSearch() {
     input.addEventListener('input', () => {
         const q = input.value.trim();
         clearTimeout(timer);
+        clearTimeout(settle);
 
         if (q.length < 2) { close(); return; }
 
         timer = setTimeout(() => search(q), 180);
     });
 
+    input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') logTerm(input.value);
+    });
+    panel.addEventListener('click', (event) => {
+        if (event.target.closest && event.target.closest('[data-sg-row]')) logTerm(input.value);
+    });
     input.addEventListener('keydown', (event) => {
         if (!panel.classList.contains('on')) return;
 

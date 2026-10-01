@@ -116,6 +116,10 @@ final class AdminCapabilities
         // the order count on the dashboard is not.
         'analytics.view' => ['owner', 'manager'],
 
+        // Growth & Marketing -> Search Terms: what shoppers typed, ranked. Its
+        // own capability so it can be granted apart from revenue figures.
+        'search_terms.view' => ['owner', 'manager'],
+
         // Orders. Split four ways because reading an order, editing one,
         // moving money and destroying one are genuinely different acts.
         'orders.view' => ['owner', 'manager', 'support'],
@@ -1463,6 +1467,7 @@ final class AdminCapabilities
         // --------------------------------------------------------------- dashboard
         ['GET', 'admin-api/stats', 'dashboard.view'],
         ['GET', 'admin-api/analytics', 'analytics.view'],
+        ['GET', 'admin-api/search-terms', 'search_terms.view'],
     ];
 
     /**

@@ -149,7 +149,7 @@ Anchor (occurs once):
 Replacement:
 
 ```
-'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background']};
+'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms']};
 ```
 
 ## Block 4 · arm the deep-link replay
@@ -170,7 +170,7 @@ Anchor (occurs once):
 Replacement:
 
 ```
-'paygw','sitelayout','slimfooter','gridsections','pagewash']);
+'paygw','sitelayout','slimfooter','gridsections','pagewash','searchterms']);
 ```
 
 > **Block 3's replacement above also carries `,'pagewash':['Appearance','Page
@@ -205,7 +205,7 @@ Anchor (occurs once, in `docs/T1B-ADMIN-APP-BLOCKS.md`):
 Replacement:
 
 ```
-'paygw','sitelayout','slimfooter','gridsections','pagewash']);
+'paygw','sitelayout','slimfooter','gridsections','pagewash','searchterms']);
 ```
 
 ---

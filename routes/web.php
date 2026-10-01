@@ -994,6 +994,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         Route::put('/products/{id}',         [AdminController::class, 'updateProduct']);
         Route::post('/inventory',            [AdminController::class, 'saveInventory']);
         Route::get('/analytics',             [AdminController::class, 'analytics']);
+        Route::get('/search-terms',          [\App\Http\Controllers\Admin\SearchTermsApiController::class, 'index']);
         Route::get('/users',                 [AdminController::class, 'users']);
         Route::post('/users',                [AdminController::class, 'createUser']);
         Route::put('/users/{id}',            [AdminController::class, 'updateUser']);

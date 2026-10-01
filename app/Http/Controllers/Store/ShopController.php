@@ -538,7 +538,11 @@ class ShopController extends Controller
              */
             $query->leftJoin('brands', 'products.brand_id', '=', 'brands.id');
 
-            $query->where(function ($q) use ($terms) {
+            $query->where(function ($q) use ($terms, $search) {
+                // Every word, in any order, as the search box does
+                // (SearchTerms::words()). brands is joined above.
+                \App\Support\SearchTerms::orWhereEveryWord($q, $search, ['products.name', 'products.sku', 'brands.name']);
+
                 foreach ($terms as $term) {
                     \App\Support\SearchTerms::orWhereLike($q, 'products.name', $term);
                     \App\Support\SearchTerms::orWhereLike($q, 'products.sku', $term);

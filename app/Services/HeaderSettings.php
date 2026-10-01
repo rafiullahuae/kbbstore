@@ -101,6 +101,16 @@ class HeaderSettings
         'search_extended_broaden_others' => ['bool', 'Widen brand + word searches to other brands', true,
                                       'For "Medicube Serum": the brand\'s own serums come first, then serums from other brands too. Off shows only that brand\'s.'],
 
+        // ── Search: sets first (1 October 2026, the owner: "the search is not
+        //    showing set products at all ... if i write Anua, any set which has
+        //    Anua in it should display #1; if multiple, random on every search").
+        //    ▲ SHIPS ON: he asked for it (CLAUDE.md, 30-September reversal).
+        'search_sets_first' => ['bool', 'Sets first', true,
+                                'When a search names a brand, or matches a set by name, one set is shown at the top of the results. A set counts for a brand when it is that brand\'s own or has one of its products in the box.'],
+        'search_sets_pick'  => ['select', 'Which set comes first', 'random',
+                                'When several sets fit the search.',
+                                ['random' => 'A different one each search', 'best' => 'Always the best-selling set']],
+
         // ── Search: styles & colours ──
         'search_style_accent'      => ['colour', 'Accent colour', '#E0567B', 'Prices, the view-all button, active states.'],
         'search_style_accent_deep' => ['colour', 'Accent colour · hover', '#C13E63', 'Used on hover and for emphasis.'],

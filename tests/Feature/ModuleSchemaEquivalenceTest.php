@@ -110,6 +110,12 @@
  *   four inputs, 4 inserted, 0 modified. `"nope"` answers `'tick'`: this
  *   screen's `invalid => default`, so a select stores one of its own options or
  *   the default and never the string it was sent.
+ *
+ *   The integrator added TWO for search (Store → Site Search → Sets in search):
+ *   `search_sets_first` (bool, 11 rows) and `search_sets_pick` (select, 4
+ *   rows) — 15 LINES INSERTED, 0 MODIFIED, 0 REMOVED, by the same keep-the-
+ *   fixture's-line merge. `search_sets_pick|"nope"` answers `'random'`, the
+ *   default.
  */
 
 use App\Services\ModuleSchema;
