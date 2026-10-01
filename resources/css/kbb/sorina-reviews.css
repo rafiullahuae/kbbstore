@@ -43,7 +43,12 @@
 .sr-card:hover{transform:translateY(-3px);box-shadow:0 16px 34px -24px rgba(0,0,0,.28)}
 .sr-ct{display:flex;align-items:flex-start;gap:9px}
 .sr-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(150deg,var(--sr-accent-soft),var(--sr-accent));color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;flex:0 0 auto}
-.sr-cmeta{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
+/* flex-wrap: a reviewer name that is one long word ("Anonymous", which imported
+   WooCommerce reviews carry) beside five stars that may not shrink pushed the
+   stars 29px past the card edge at 390, over the neighbouring card. Wrapping
+   moves the stars to their own line ONLY when they do not fit, so a card that
+   fits renders exactly as before. ReviewCardStarsWrapTest. */
+.sr-cmeta{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
 .sr-nm{font-weight:700;font-size:13px;line-height:1.25;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .sr-verified{font-size:10px;font-weight:700;color:#1a7f47;border:1px solid #1a7f47;border-radius:10px;padding:1px 6px;white-space:nowrap}
 .sr-cs{font-size:12px;flex:0 0 auto}
