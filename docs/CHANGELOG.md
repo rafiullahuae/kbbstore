@@ -3,6 +3,74 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.338
+**The import, rehearsed before you run it.** Apply after .337.
+
+---
+
+Every part of the move from WordPress was **run, not read**: an export at your
+shop's real size (671 products, 4,159 orders, 10,582 order lines, 3,713
+customers, 2,514 reviews), a fake copy of the old site serving real pictures,
+and the import **killed on purpose** the way a shared host kills long jobs.
+It found real defects. All are fixed, each with a test that fails without it.
+
+### AN IMPORT THAT GETS KILLED NOW RESUMES CORRECTLY
+
+Before: killed partway through **categories**, 9 categories landed at the top
+level with the wrong address and the menu items built from them pointed at the
+wrong pages. Killed partway through **reviews**, 32 products showed **0 stars**
+on their cards while their pages listed the reviews. Every count matched and the
+report said "verified" -- nothing would have told you.
+
+After: killed at 7 different points (once three times in a row) and resumed,
+the result is **identical** to an uninterrupted import every time -- every
+table, every total, every link.
+
+### PICTURES
+
+The pass that copies pictures off the old site before it is switched off:
+
+| | before | after |
+|---|---|---|
+| left pointing at the old site, unexplained | 18 of 29 | **0** |
+| requests the shop could be made to send to internal addresses | 5 | **0** |
+| full size, 2,907 files (779 MB) | -- | **241 s, every file identical** |
+| re-run after it finishes | -- | **0.29 s, nothing downloaded twice** |
+
+A picture that genuinely could not be fetched now shows the shop's own
+placeholder instead of a broken-image frame, and is listed by name so you can
+replace it. Your customers' **review photographs** come across with the rest.
+
+New command for the picture pass: `php artisan kbb:import-media-fetch`.
+
+### PRICES
+
+A **negative price** in the export used to import -- and the basket would have
+paid the shopper. It is now refused and named in the import report. A **0.00**
+free sample still imports.
+
+### REVIEW STARS ON PHONES
+
+A reviewer name that is one long word ("Anonymous", which imported reviews
+carry) pushed the stars **29px into the next card**. They now take their own
+line when they do not fit; every card that fitted looks exactly as before.
+
+### ALSO
+
+- The MySQL test run -- your server's database -- is green. Its three failures
+  were in the tests, not the shop; each was checked against the live schema.
+- No new setting, no admin screen changed.
+
+Files: `app/Services/Import/ImportRunner.php`,
+`app/Services/Import/Entities/{EntityImporter,CategoryImporter,ReviewImporter,ProductImporter,VariationImporter}.php`,
+`app/Services/Import/{MediaSideloader,MediaAudit,MediaRewrite,DocumentMediaRewrite}.php`,
+`app/Support/LostPictures.php`, `app/Console/Commands/ImportMediaFetch.php`,
+`app/Http/Controllers/Store/ProductController.php`,
+`resources/views/components/product-card.blade.php`,
+`resources/views/admin/media-progress.blade.php`,
+`resources/css/kbb/sorina-reviews.css`,
+`database/migrations/2027_07_03_000000_clear_caches_import_rehearsed.php`.
+
 ## 2.60.337
 **The phone menu opens in Safari and Opera.** Apply after .336.
 
