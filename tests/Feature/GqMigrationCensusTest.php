@@ -438,6 +438,11 @@ function gqCensus(): array
             // migration -- cast on the model, drawn by the product page, filtered
             // on by the review wall -- and no export had ever put anything in it.
             'images' => GQ_LANDS.'reviews.images',
+            // Plugin 1.9.0: Dream Code Reviews' likes (else WooCommerce Photo
+            // Reviews' wcpr_vote_up_count), and which table the row came from
+            // -- wp_comment or dream_code, keyed with comment_id.
+            'helpful' => GQ_LANDS.'reviews.helpful',
+            'source' => GQ_LANDS.'reviews.source',
             'comment_date_gmt' => GQ_CONSOLIDATED.": the same instant as comment_date, which IS read -- the date crosses, and this line of the discard list overstates the loss",
         ]],
 

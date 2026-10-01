@@ -170,6 +170,23 @@ final class ReviewImporter extends EntityImporter
     public const SOURCE = 'wp_comment';
 
     /**
+     * Reviews from the owner's own WordPress plugin, Dream Code Reviews, which
+     * keeps them in its own table (`wp_sorina_reviews`) and HIDES WooCommerce's
+     * reviews on the storefront. They are what his old shop actually showed,
+     * including every review he copied onto a sibling product with the plugin's
+     * Assign / Duplicate. The export carries them in reviews.csv with
+     * `source = dream_code` and the plugin's row id as `comment_id`; keyed on
+     * (source, source_id) like every imported review, so a re-run updates
+     * rather than duplicates. 1 October 2026: the Medicube PDRN Glow Booster
+     * Set showed its reviews on the old site and none here, because the export
+     * had only read wp_comments.
+     */
+    public const DREAM_CODE = 'dream_code';
+
+    /** The only values a reviews.csv `source` cell may carry. Anything else is refused by name. */
+    public const SOURCES = [self::SOURCE, self::DREAM_CODE];
+
+    /**
      * `comment_approved` folded onto ReviewStatus' vocabulary.
      *
      * Written out rather than handed to ReviewStatus::normalise(), which reads
@@ -209,7 +226,7 @@ final class ReviewImporter extends EntityImporter
      * Comment ids an earlier process committed and this one passed over on
      * resume -- resolved to products in finalise(). See alreadyCommitted().
      *
-     * @var list<int>
+     * @var array<string, list<int>>  source => source ids
      */
     private array $committedEarlier = [];
 
@@ -244,7 +261,7 @@ final class ReviewImporter extends EntityImporter
     /** Reviews this import wrote. Keyed on `source` rather than on a nullable id column, because Store -> Reviews -> Import writes the same rows through the same key and the two doors must count the same thing. */
     public function countImported(): ?int
     {
-        return Review::query()->where('source', self::SOURCE)->count();
+        return Review::query()->whereIn('source', self::SOURCES)->count();
     }
 
     public function import(Row $row, ImportContext $context): void
@@ -253,6 +270,7 @@ final class ReviewImporter extends EntityImporter
         $this->pendingNotes = [];
 
         $commentId = $row->requireId('comment_id', 'comment_id', 'id', 'source_id', 'wp_comment_id', 'review_id');
+        $source = $this->sourceOf($row);
 
         $this->assertIsAReview($row);
 
@@ -262,12 +280,12 @@ final class ReviewImporter extends EntityImporter
         $author = $this->author($row);
 
         $review = Review::query()
-            ->where('source', self::SOURCE)
+            ->where('source', $source)
             ->where('source_id', $commentId)
             ->first() ?? new Review;
 
         $attributes = [
-            'source' => self::SOURCE,
+            'source' => $source,
             'source_id' => $commentId,
             'product_id' => $productId,
             'customer_id' => $this->resolveCustomer($row, $context),
@@ -397,7 +415,34 @@ final class ReviewImporter extends EntityImporter
      */
     public function alreadyCommitted(Row $row, ImportContext $context): void
     {
-        $this->committedEarlier[] = $row->requireId('comment_id', 'comment_id', 'id', 'source_id', 'wp_comment_id', 'review_id');
+        $id = $row->requireId('comment_id', 'comment_id', 'id', 'source_id', 'wp_comment_id', 'review_id');
+
+        // Keyed by source as well: a Dream Code row id and a WordPress comment
+        // id are different numbering schemes and can be the same number.
+        $this->committedEarlier[$this->sourceOf($row)][] = $id;
+    }
+
+    /**
+     * `source` from the row, or wp_comment when the file has no such column --
+     * every export written before Dream Code reviews were read.
+     *
+     * @throws RowRejected
+     */
+    private function sourceOf(Row $row): string
+    {
+        $raw = trim((string) ($row->text('source', 'source') ?? ''));
+
+        if ($raw === '') {
+            return self::SOURCE;
+        }
+
+        if (! in_array($raw, self::SOURCES, true)) {
+            throw RowRejected::because(
+                "source '".mb_substr($raw, 0, 40)."' is not one this import writes (".implode(', ', self::SOURCES).')'
+            );
+        }
+
+        return $raw;
     }
 
     /**
@@ -409,16 +454,18 @@ final class ReviewImporter extends EntityImporter
      */
     public function finalise(ImportContext $context): void
     {
-        foreach (array_chunk($this->committedEarlier, 500) as $chunk) {
-            $products = Review::query()
-                ->where('source', self::SOURCE)
-                ->whereIn('source_id', $chunk)
-                ->whereNotNull('product_id')
-                ->distinct()
-                ->pluck('product_id');
+        foreach ($this->committedEarlier as $source => $sourceIds) {
+            foreach (array_chunk($sourceIds, 500) as $chunk) {
+                $products = Review::query()
+                    ->where('source', $source)
+                    ->whereIn('source_id', $chunk)
+                    ->whereNotNull('product_id')
+                    ->distinct()
+                    ->pluck('product_id');
 
-            foreach ($products as $productId) {
-                $this->touched[(int) $productId] = true;
+                foreach ($products as $productId) {
+                    $this->touched[(int) $productId] = true;
+                }
             }
         }
 
