@@ -163,7 +163,61 @@ class SiteLayout
                 '2' => '2 columns', '3' => '3 columns', '4' => '4 columns',
                 '5' => '5 columns', '6' => '6 columns', '7' => '7 columns', '8' => '8 columns',
             ]],
+
+        /*
+         * ── LOADING MORE PRODUCTS ──────────────────────────────── Lane PI-B ──
+         *
+         * The owner asked for a choice of how a listing loads more: "Arrows"
+         * (numbered pages — what the shop does today), "Load more on scroll"
+         * (batches of 12, 15, 20 or a number he types) or "Load all". He did
+         * not say which should be the default, so it ships at `arrows`, the
+         * page as it is — CLAUDE.md rule 1. The arrows themselves were broken
+         * on the four curated listings (Laravel's Tailwind pager, with an
+         * unsized SVG, on a shop with no Tailwind) and are fixed regardless of
+         * this setting; see partials/listing-pager.blade.php.
+         *
+         * Read by ShopController (/shop/ and every category) and
+         * CollectionController (/new-in/, /best-sellers/, /super-sale/,
+         * /everything-under-54-aed/ and the concern pages) through perPage().
+         * NOT a stylesheet value: isDefault() and css() skip these three, so a
+         * choice here never puts a byte of CSS on the page.
+         */
+        'load_mode' => ['select', 'How more products load', 'arrows',
+            'Arrows: numbered pages, as the shop has always had. Load more on scroll: the next batch appears as the shopper nears the end of the grid, with grey placeholders while it comes. Load all: every product in one page, up to '.self::LOAD_ALL_CAP.' — past that the arrows take over, so a huge catalogue cannot become one enormous page.',
+            [
+                'arrows' => 'Arrows — numbered pages',
+                'scroll' => 'Load more on scroll',
+                'all' => 'Load all on one page',
+            ]],
+        'load_batch' => ['select', 'Products per batch', '12',
+            'Only used by "Load more on scroll": how many products each batch brings, the first screenful included.',
+            [
+                '12' => '12', '15' => '15', '20' => '20',
+                'custom' => 'My own number',
+            ]],
+        'load_batch_custom' => ['int', 'My own number', 24,
+            'Only used when "Products per batch" is "My own number". A whole number from 4 to 96; anything above or below is pulled to the nearest end, and anything that is not a number is refused.',
+            ['min' => self::BATCH_MIN, 'max' => self::BATCH_MAX, 'step' => 1, 'unit' => '']],
     ];
+
+    /** The bounds a typed batch size is held to, server-side. */
+    public const BATCH_MIN = 4;
+
+    public const BATCH_MAX = 96;
+
+    /**
+     * "Load all" has a ceiling, chosen here and said on the screen.
+     *
+     * A catalogue of 2,000 products as one page is a 2,000-card document — a
+     * multi-megabyte response that ties a phone up for seconds and that a
+     * crawler fetches in full. 200 is every category this shop has (the
+     * owner's largest, "Skincare sets", is 45) with room to spare, and a
+     * listing past it simply keeps the arrows for what is left.
+     */
+    public const LOAD_ALL_CAP = 200;
+
+    /** The keys that are not CSS: skipped by isDefault(), never in css(). */
+    private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom'];
 
     public const TABS = [
         'width' => ['Page width',
@@ -172,6 +226,9 @@ class SiteLayout
         'grid' => ['Product grid',
             'The column count is not set here — it is worked out from the smallest card and the width each grid actually has, so a grid beside the shop filters gets the right answer rather than the window\'s answer.',
             ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin']],
+        'loading' => ['Loading more products',
+            'How /shop, every category and the curated listings bring in more products: numbered arrows, more on scroll, or everything at once. Shoppers without JavaScript always get the arrows.',
+            ['load_mode', 'load_batch', 'load_batch_custom']],
     ];
 
     /** Every key lives in `settings`, written by this module's own endpoint. */
@@ -283,6 +340,28 @@ class SiteLayout
             $out[$key] = ['store' => self::STORE, 'alias' => self::PREFIX.$key];
         }
 
+        /*
+         * A TYPED NUMBER IS CLAMPED; A TYPED WORD IS REFUSED. (Lane PI-B)
+         *
+         * This screen's `clamp` policy would turn "abc" into (int) 0 and then
+         * into the minimum, so a typo would save as 4 and read back "Saved".
+         * The batch box is the one field here a person types into, so it gets
+         * its own rule: digits (and surrounding spaces) or nothing, then held
+         * to BATCH_MIN..BATCH_MAX. null is `invalid => reject`, which the
+         * endpoint reports as a 422 naming the field.
+         */
+        $out['load_batch_custom']['rule'] = static function (mixed $raw): ?int {
+            if (is_int($raw)) {
+                $n = $raw;
+            } elseif (is_string($raw) && preg_match('/^\s*(\d{1,6})\s*$/', $raw, $m) === 1) {
+                $n = (int) $m[1];
+            } else {
+                return null;
+            }
+
+            return max(self::BATCH_MIN, min(self::BATCH_MAX, $n));
+        };
+
         return $out;
     }
 
@@ -369,12 +448,54 @@ class SiteLayout
         $values = $this->all();
 
         foreach (self::normalised() as $key => $field) {
+            if (in_array($key, self::LOAD_KEYS, true)) {
+                continue;
+            }
+
             if ($values[$key] !== $field['default']) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    /**
+     * How this shop loads more products on a listing: arrows, scroll or all.
+     *
+     * Always one of the select's own options — cast() refuses anything else
+     * on the way in and all() falls back to the default on the way out.
+     */
+    public function loadMode(): string
+    {
+        return (string) $this->get('load_mode');
+    }
+
+    /** The batch size "Load more on scroll" uses, 4–96. */
+    public function batchSize(): int
+    {
+        $c = $this->all();
+
+        return $c['load_batch'] === 'custom'
+            ? max(self::BATCH_MIN, min(self::BATCH_MAX, (int) $c['load_batch_custom']))
+            : (int) $c['load_batch'];
+    }
+
+    /**
+     * Products per page on a listing, given what the arrows have always used.
+     *
+     * Arrows: the listing's own number, unchanged (the shop's
+     * `products_per_page`, a curated listing's 24). Scroll: one batch per
+     * page, so ?paged=N is batch N and the no-JavaScript arrows walk the same
+     * slices the scroll loads. All: LOAD_ALL_CAP.
+     */
+    public function perPage(int $arrows): int
+    {
+        return match ($this->loadMode()) {
+            'scroll' => $this->batchSize(),
+            'all' => self::LOAD_ALL_CAP,
+            default => max(1, $arrows),
+        };
     }
 
     /**

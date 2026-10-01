@@ -720,6 +720,17 @@ it('finds every document that carries its own head, and everything in the layout
 
     $layoutOnly = [
         'set-appearance-css' => 'styles .kset-* only, and no set is rendered on any of the five',
+        /*
+         * Lane PI-B. Appearance → Header → Breadcrumbs: it styles the
+         * breadcrumb trail and nothing else, and of the five documents with a
+         * head of their own only the ARTICLE draws a trail — so post.blade.php
+         * includes the partial itself, and BreadcrumbControlsTest's "hides the
+         * trail on every storefront page that draws one, the journal article
+         * included" is red if it ever stops. The journal index, the review
+         * wall and the quiz have no trail to hide (their "Home" is a nav link),
+         * and app.blade.php is the admin-only App Preview.
+         */
+        'breadcrumb-css' => 'styles the breadcrumb trail only; the article, the one standalone document with a trail, includes it itself',
     ];
 
     foreach ([...sdhLayoutHeadIncludes(), ...sdhLayoutHeadStyleIds()] as $thing) {

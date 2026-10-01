@@ -1540,6 +1540,30 @@ final class EnglishRenderWalk
     public static function approvedStorefrontChanges(): array
     {
         return [
+            /*
+             * "SORT" BECOMES THE SELECT'S LABEL. (Lane PI-B)
+             *
+             * The owner's phone drew Filters and the count on one row and Sort
+             * on a second. Fitting them on one row hides the word "Sort"
+             * visually under 411px, and a word that disappears must still
+             * name the control — it did not before (a bare text node in a
+             * <div>, so the select had no accessible name at all). So the
+             * wrapper becomes `<label for="sort">` and the word a span the
+             * stylesheet can hide. Same element in the same place with the same
+             * class, so nothing moves on screen at any width this walk renders;
+             * two pages, the shop and a category, open and close.
+             */
+            'the sort control is a label, not a div (Lane PI-B)' => [
+                'pattern' => '#<div class="sortsel">([^<\n]*)\n#',
+                'with' => '<label class="sortsel" for="sort"><span class="sortlbl">$1</span>'."\n",
+                'hits' => 2,
+            ],
+            'the sort control\'s closing tag (Lane PI-B)' => [
+                'pattern' => '#(</select>\n {16})</div>#',
+                'with' => '$1</label>',
+                'hits' => 2,
+            ],
+
             'the shipped card style, which the owner asked to change' => [
                 'pattern' => '#<div class="kbb-pgrid" data-skin="classic">#',
                 'with' => '<div class="kbb-pgrid" data-skin="'.\App\Support\GridSkins::DEFAULT.'">',
@@ -1738,9 +1762,70 @@ final class EnglishRenderWalk
              * that cuts more than its element is a rule that hides the next
              * lane's regression.
              */
+            /*
+             * ▲ 31 -> 0, ON PURPOSE.                              (Lane PI-B)
+             *
+             * "Turn off the top countries bar entirely for now." Both switches
+             * ship off, flagBarOn() is false, and the strip is not drawn on any
+             * page of the walk — so every one of the 31 pages that gained it is
+             * back to its BASE_COMMIT bytes at this point, which is what this
+             * count now says. Kept at 0 rather than deleted because 0 is a pin:
+             * a default that flips back on by accident puts the strip on 31
+             * pages and this is red at 31, naming the strip.
+             */
             'the flag bar above the header (Lane FB)' => [
                 'pattern' => '#<div class="kfb [^>]*>\s*<div class="kfb-in">.*?</div>\s*</div>\n#s',
-                'hits' => 31,
+                'hits' => 0,
+            ],
+
+            /*
+             * THE BREADCRUMB SWITCHES — Appearance → Header → Breadcrumbs.
+             *                                                     (Lane PI-B)
+             *
+             * The owner: control of the trail's spacing and an on/off,
+             * separately for mobile and desktop, "by default keep it off". So
+             * every page that extends the layout, plus the journal article
+             * (the one standalone document that draws a trail), gains ONE
+             * <style id="kbb-crumbs"> in its head, and at the shipped settings
+             * it is two media queries of `display:none`. The trail's markup
+             * itself is untouched — it is hidden, not removed, so the
+             * BreadcrumbList JSON-LD and every byte of the trail are still
+             * compared below.
+             *
+             * WHAT IT DOES TO A PAGE, read off the diff before this rule was
+             * written: one insertion, directly after the last stylesheet link
+             * (or the article's own </style>), and nothing else on any page.
+             * 34 OF THE WALK'S 39: the 31 that used to carry the flag bar, the
+             * checkout and the order-received page (they extend the layout as
+             * `bare`), and the article. The five WITHOUT it do not extend the
+             * layout and draw no trail — the quick-view fragment, Laravel's
+             * 404, the Journal index, the quiz and the review wall.
+             *
+             * `[^<]*` AND NOT `.*?`: the rule is literals and integers with no
+             * `<` in it (BreadcrumbControlsTest pins that it prints escaped and
+             * byte-identical), so the match cannot run past its own close.
+             */
+            'the breadcrumb switches in the head (Lane PI-B)' => [
+                'pattern' => '#<style id="kbb-crumbs">[^<]*</style>\n#',
+                'hits' => 34,
+            ],
+
+            /*
+             * THE "ADDED" TICK — Appearance → Cart panel → Behaviour → "When
+             * something is added". (Lane PI-B)
+             *
+             * One element inside the cart panel, after the panel's own
+             * fragment: hidden (opacity 0) until cart.js puts `on` on it for
+             * 450ms after an add. It is in every document that draws the
+             * panel. `.*?` is safe: the element holds a span and an svg and no
+             * nested <div>, so the lazy match ends at its own close.
+             */
+            'the added tick inside the cart panel (Lane PI-B)' => [
+                'pattern' => '#<div class="kbb-addmark" id="kbbAddMark">.*?</div>\n#s',
+                // 33: every page that draws the cart panel. One fewer than the
+                // breadcrumb <style> above, because the journal article carries
+                // that and has no cart panel of its own.
+                'hits' => 33,
             ],
 
             /*
@@ -1999,6 +2084,23 @@ final class EnglishRenderWalk
     public static function approvedRemovals(): array
     {
         return [
+            /*
+             * THE CURATED LISTINGS' EMPTY TAILWIND PAGER WRAPPER. (Lane PI-B)
+             *
+             * store/collection.blade.php printed `<div class="pager">` around
+             * `$products->links()` — Laravel's Tailwind pager, whose chevrons
+             * are unsized SVGs that drew 170x170px on this Tailwind-less shop.
+             * It is replaced by partials/listing-pager, which prints NOTHING on
+             * a one-page listing, where the old wrapper printed an empty div.
+             * The walk's four curated listings are one page each, so the whole
+             * change visible here is that empty element going: one per page,
+             * four pages. The paged state is ListingLoadTest's to pin.
+             */
+            'the empty Tailwind pager wrapper on the curated listings (Lane PI-B)' => [
+                'pattern' => '#<div class="pager"></div>\n#',
+                'hits' => 4,
+            ],
+
             /*
              * THE GOOGLE FONTS REQUEST FOR POPPINS — Lane PERF.
              *

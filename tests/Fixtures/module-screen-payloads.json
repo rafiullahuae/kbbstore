@@ -616,6 +616,20 @@
             "value": true
           },
           {
+              "key": "add_feedback",
+              "name": "add_feedback",
+              "type": "select",
+              "label": "When something is added",
+              "help": "Animated tick: a small grey tick turns green beside the opening panel and is gone in under half a second. Text pill: the \"Added to bag\" message, as before. None: just the panel. Messages that matter — a set that took the last one, a sold-out product — always show as text.",
+              "options": {
+                  "tick": "Animated tick",
+                  "pill": "Text pill (“Added to bag”)",
+                  "none": "None"
+              },
+              "default": "tick",
+              "value": "tick"
+          },
+          {
             "key": "added_note",
             "name": "added_note",
             "type": "bool",
@@ -1687,27 +1701,27 @@
       {
         "key": "flagbar",
         "label": "Flag bar",
-        "description": "The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. On for phones and for desktop — with the wording on phones only.",
+        "description": "The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. Off on phones and on desktop for now — switch either one on to bring it back, with the wording on phones only.",
         "fields": [
           {
             "key": "fb_mobile",
             "name": "fb_mobile",
             "type": "bool",
             "label": "Show it on phones",
-            "help": "The thin strip above the header, with the two flags. On, because this is what the bar was asked for.",
+            "help": "The thin strip with the two flags. Off, because you asked for the countries bar to be turned off for now. Switch it on to bring it back on phones exactly as it was.",
             "options": null,
-            "default": true,
-            "value": true
+            "default": false,
+            "value": false
           },
           {
             "key": "fb_desktop",
             "name": "fb_desktop",
             "type": "bool",
             "label": "Show it on desktop",
-            "help": "On, so the strip runs across the desktop header too. Turn it off to keep it to phones.",
+            "help": "Off, because you asked for the countries bar to be turned off for now. Switch it on to bring the strip back across the desktop header.",
             "options": null,
-            "default": true,
-            "value": true
+            "default": false,
+            "value": false
           },
           {
             "key": "fb_text",
@@ -1823,6 +1837,93 @@
             "options": null,
             "default": "#F0B6C9",
             "value": "#F0B6C9"
+          }
+        ]
+      },
+      {
+        "key": "crumbs",
+        "label": "Breadcrumbs",
+        "description": "The \"Home / Category / Product\" line under the header, on product, category, shop, brand, article, wishlist and content pages. Off on phones and desktop by default; each width has its own switch and its own spacing.",
+        "fields": [
+          {
+            "key": "bc_mobile",
+            "name": "bc_mobile",
+            "type": "bool",
+            "label": "Show it on phones",
+            "help": "Off, because you asked for the breadcrumb to be off by default. Search engines still get the trail either way — it is in the page’s structured data, not in this line.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "bc_desktop",
+            "name": "bc_desktop",
+            "type": "bool",
+            "label": "Show it on desktop",
+            "help": "Off by default too. The two switches are independent: phones off and desktop on is allowed.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "bc_above_mobile",
+            "name": "bc_above_mobile",
+            "type": "range",
+            "label": "Space above · phone",
+            "help": "Between the header and the trail, on screens up to 900px wide.",
+            "options": {
+              "min": 0,
+              "max": 48,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 18,
+            "value": 18
+          },
+          {
+            "key": "bc_below_mobile",
+            "name": "bc_below_mobile",
+            "type": "range",
+            "label": "Space below · phone",
+            "help": "Between the trail and the page underneath it.",
+            "options": {
+              "min": 0,
+              "max": 48,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "bc_above",
+            "name": "bc_above",
+            "type": "range",
+            "label": "Space above · desktop",
+            "help": "Between the header and the trail, on screens wider than 900px.",
+            "options": {
+              "min": 0,
+              "max": 48,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 18,
+            "value": 18
+          },
+          {
+            "key": "bc_below",
+            "name": "bc_below",
+            "type": "range",
+            "label": "Space below · desktop",
+            "help": "Between the trail and the page underneath it.",
+            "options": {
+              "min": 0,
+              "max": 48,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
           }
         ]
       }

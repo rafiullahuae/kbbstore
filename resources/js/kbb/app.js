@@ -52,6 +52,7 @@ import { initCheckout } from './checkout.js';
 import { initHome, initAccountPanel, initAccountPage, initReveal, initPasswordMeter } from './home.js';
 import { initProductTabs } from './tabs.js';
 import { initShop } from './shop.js';
+import { initListingLoad } from './listing-load.js';
 import { initFbt } from './fbt.js';
 import { initNewsletter } from './newsletter.js';
 import { initWishlist } from './wishlist.js';
@@ -89,6 +90,7 @@ const STEPS = [
     initProductTabs,
     initGallery,
     initShop,
+    initListingLoad,
     initFbt,
     initNewsletter,
     initWishlist,

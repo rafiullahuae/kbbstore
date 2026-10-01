@@ -294,7 +294,10 @@ it('keeps the nav chevrons on the characters that do mirror themselves', functio
     // notices if one is ever "tidied up" into an arrow that needs everything.
     $surfaces = [
         'resources/views/store/home.blade.php' => ['‹', '›'],         // the hero slider
-        'resources/views/store/shop.blade.php' => ['‹', '›'],         // pagination
+        // Pagination. MOVED, not lost (Lane PI-B): /shop and the curated
+        // listings now share one pager partial, which kept these two
+        // characters precisely because they need nothing on /ar.
+        'resources/views/partials/listing-pager.blade.php' => ['‹', '›'],
         'resources/js/kbb/mobile-nav.js' => ['‹'],                    // the sub-panel back button
         'resources/views/store/account/orders.blade.php' => ['›'],    // the order row
     ];

@@ -53,42 +53,66 @@ function fbElement(string $html): ?string
 
 /* ══════════════════ 1. what ships ══════════════════ */
 
-it('ships on for phones AND for desktop, which is what he asked for in those words', function () {
+/*
+ * ── EVERY CASE BELOW THIS ONE TESTS THE STRIP SWITCHED ON ─── (Lane PI-B) ──
+ *
+ * The owner has since said "Turn off the top countries bar entirely for now",
+ * so both switches ship OFF and a fresh database draws no strip at all. The
+ * strip itself is unchanged and its switches are still on Appearance → Header
+ * → Flag bar, so everything this file pins about it — the flags, the order,
+ * the escaping, the reserved height, the query cost — is still a property of
+ * the strip he can turn back on in one press, and is still worth pinning. So
+ * each case starts by turning it on, the way he would; the first case is the
+ * one that says what SHIPS, and it clears that save before it looks.
+ */
+beforeEach(function () {
+    fbSet(['fb_mobile' => true, 'fb_desktop' => true]);
+});
+
+it('ships OFF for phones AND for desktop, because he asked for it off entirely', function () {
     /*
-     * CLAUDE.md rule 1 says a new setting ships at the value the page already
-     * has, with one exception — "a default the owner asked for in as many
-     * words". This case is where that exception is written down.
+     * CLAUDE.md's 30-September reversal: a thing the owner asked for is the
+     * shop's new state, not a switch he has to go and find.
      *
-     * ▲ AND THE WORDS CHANGED, SO THE PIN MOVED WITH THEM.           (Lane SEC)
+     * ▲ THE THIRD TIME THESE TWO DEFAULTS HAVE MOVED, EACH ON HIS WORDS.
      *
-     * It read `fb_mobile` true, `fb_desktop` FALSE, on this sentence: "(This
-     * bar is only for mobile, keep this turnef off for desktop by default)".
-     * He has since said the other thing, about the same strip: "The top
-     * countries bar, i need under banner ... apply this on desktop and mobile
-     * both." So both defaults are now true.
+     *   Lane FB:   "(This bar is only for mobile, keep this turnef off for
+     *              desktop by default)"            -> phones on, desktop off
+     *   Lane SEC:  "The top countries bar, i need under banner ... apply this
+     *              on desktop and mobile both."    -> on, on
+     *   Lane PI-B: "Turn off the top countries bar entirely for now."
+     *                                              -> off, off
      *
      * TWO PLACES, AND ONE OF THEM IS NOT A DEFAULT. HeaderSettings::SCHEMA
      * covers a shop that has never saved the Header screen; a shop that HAS
-     * saved it carries a stored `fb_desktop: false` that no schema default can
-     * overrule, and the migration `banner_ships_as_image_slider` writes the
-     * key for that shop. This case can only see the first of the two — it
-     * reads `all()` on a fresh database — and that is worth saying, because a
-     * green here would not have told the owner his own shop had moved.
+     * carries stored `true`s, and the migration `flag_bar_ships_off` writes
+     * those — FlagBarShipsOffMigrationTest pins that half. This case reads a
+     * database with no `header_settings` row at all, which is the first half.
      *
-     * MUTATION: flip either default in HeaderSettings::SCHEMA and this is red
-     * naming the one that moved. Ran both — `fb_desktop` false now reports
-     * "the desktop shop is missing the strip he asked for".
+     * NOT HIDDEN — ABSENT. flagBarOn() is false, so neither the home page
+     * (under the banner) nor any other page (above the header) carries the
+     * element.
+     *
+     * MUTATION: flip either default in HeaderSettings::SCHEMA back to true and
+     * this is red naming the one that moved. Ran both — `fb_desktop` true
+     * reports "the countries bar is still on for desktop", and the home page
+     * then carries `<div class="kfb kfb-d …`.
      */
+    Setting::query()->where('key', 'header_settings')->delete();
+    app(SettingsService::class)->flush();
+
     $c = app(HeaderSettings::class)->all();
 
-    expect($c['fb_mobile'])->toBeTrue('the strip the owner asked for is not on for phones');
-    expect($c['fb_desktop'])->toBeTrue('the desktop shop is missing the strip he asked for');
+    expect($c['fb_mobile'])->toBeFalse('the countries bar is still on for phones');
+    expect($c['fb_desktop'])->toBeFalse('the countries bar is still on for desktop');
+    expect(app(HeaderSettings::class)->flagBarOn())->toBeFalse();
 
-    $el = fbElement(fbHome());
+    foreach (['/', '/shop/'] as $path) {
+        $html = test()->get($path)->assertOk()->getContent();
 
-    expect($el)->not->toBeNull('no flag bar on the shipped storefront');
-    expect($el)->toContain('kfb-m')
-        ->and($el)->toContain('kfb-d');
+        expect(str_contains($html, '<div class="kfb '))->toBeFalse("{$path} still draws the countries bar");
+        expect(fbElement($html))->toBeNull();
+    }
 });
 
 it('draws the UAE flag, then the words, then the Korean flag — in that source order', function () {

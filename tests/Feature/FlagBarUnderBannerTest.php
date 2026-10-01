@@ -94,6 +94,16 @@ function fbubFind(string $path): array
     ];
 }
 
+/*
+ * The strip ships OFF since Lane PI-B ("Turn off the top countries bar
+ * entirely for now" — FlagBarTest's first case pins that). Where it is drawn
+ * when the owner switches it back on is still this file's whole subject, so
+ * every case here starts with it on.
+ */
+beforeEach(function () {
+    app(HeaderSettings::class)->save(['fb_mobile' => true, 'fb_desktop' => true]);
+});
+
 it('draws the strip under the banner on the home page, exactly once', function () {
     /*
      * `<header` AND NOT THE BANNER ITSELF, and the difference is the point.

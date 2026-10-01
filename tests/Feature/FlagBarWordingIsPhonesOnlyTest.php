@@ -64,6 +64,12 @@ function fbwCss(): string
 
 beforeEach(function () {
     SettingsService::forgetMemo();
+    /*
+     * The strip ships OFF since Lane PI-B ("Turn off the top countries bar
+     * entirely for now"). The wording switch this file pins is a property of
+     * the strip when it is on, so every case here starts with it on.
+     */
+    app(HeaderSettings::class)->save(['fb_mobile' => true, 'fb_desktop' => true]);
 });
 
 /* ══════════════════ 1. it ships applied ══════════════════ */
@@ -198,21 +204,27 @@ it('hides the line inside the desktop media query and nowhere else', function ()
 it('leaves the bar itself, its flags and its height exactly where they were', function () {
     /*
      * THE OTHER READING OF HIS SENTENCE, REFUSED. `fb_desktop` off would have
-     * removed the whole strip — flags included — and 2.60.330 moved that key
-     * from off to on because he asked for the bar on both. This case is the
-     * pin that says this round did not quietly undo that.
+     * removed the whole strip — flags included — when he asked only for the
+     * line to come off. This case is the pin that says the wording switch
+     * moved nothing but the wording.
      *
-     * MUTATION NOTE: set `fb_desktop`'s default to false in SCHEMA and this
-     * goes red on `fb_desktop`, and `kfb-d` disappears from the element.
+     * ▲ `fb_desktop` and `fb_mobile` THEMSELVES ARE NO LONGER PINNED HERE.
+     *   (Lane PI-B) He has since asked for the whole bar off "for now", so
+     *   both ship false and FlagBarTest's first case pins that. What stays
+     *   true is this round's half: with the strip switched on, the desktop
+     *   strip is still there (`kfb-d`), with its flags and its height.
+     *
+     * MUTATION NOTE: make flagBarClass() drop `kfb-d` when `fb_text_desktop`
+     * is off — the wrong reading — and this is red on the element.
      */
     $c = app(HeaderSettings::class)->all();
 
-    expect($c['fb_desktop'])->toBeTrue('the desktop strip he asked for has gone')
-        ->and($c['fb_mobile'])->toBeTrue()
-        ->and($c['fb_flags'])->toBeTrue('the flags are the half of the bar he kept')
+    expect($c['fb_flags'])->toBeTrue('the flags are the half of the bar he kept')
         // The height is reserved in the stylesheet, so the header below the
         // strip cannot jump — taking the words out must not change it.
         ->and($c['fb_height'])->toBe(30);
+
+    expect(str_contains((string) fbwElement(fbwHome()), 'kfb-d'))->toBeTrue('the desktop strip went with the words');
 
     // The wording setting itself is untouched: phones still read it, so
     // emptying it would have been the wrong fix.

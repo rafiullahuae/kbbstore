@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Services\SettingsService;
 use App\Support\Facets;
 use App\Support\Url;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
@@ -60,7 +61,7 @@ class ShopController extends Controller
      * fixture, 9 with it passed. Still optional, and still resolved from the
      * slug when it is not supplied, so any other caller is unaffected.
      */
-    public function index(Request $request, ?string $categorySlug = null, ?Category $category = null): View
+    public function index(Request $request, ?string $categorySlug = null, ?Category $category = null): View|JsonResponse
     {
         // Facets::active() memoises in a process-level static. Under PHP-FPM
         // that is one request and harmless; in the test suite, a queue worker
@@ -69,7 +70,13 @@ class ShopController extends Controller
 
         $active = Facets::active();
         $page = Facets::page();
-        $perPage = (int) $this->settings->get('products_per_page', 24);
+        /*
+         * Appearance → Site layout → Loading more products (Lane PI-B). With
+         * the shipped "Arrows" this is `products_per_page`, exactly as it was;
+         * "Load more on scroll" makes a page one batch, "Load all" makes it
+         * SiteLayout::LOAD_ALL_CAP.
+         */
+        $perPage = app(\App\Services\SiteLayout::class)->perPage((int) $this->settings->get('products_per_page', 24));
 
         /*
          * EVERY CARD COLUMN QUALIFIED WITH ITS TABLE.
@@ -143,6 +150,21 @@ class ShopController extends Controller
          * card. See prime()'s docblock for the two alternatives and why not.
          */
         \App\Support\SetPricing::prime($products);
+
+        /*
+         * THE NEXT BATCH FOR "LOAD MORE ON SCROLL" (Lane PI-B): the cards of
+         * exactly this page, after exactly this query — see ListingBatch.
+         */
+        if (\App\Support\ListingBatch::wanted($request)) {
+            return \App\Support\ListingBatch::respond(
+                $products,
+                $category?->t('name'),
+                $page,
+                $lastPage,
+                $page < $lastPage ? Facets::pageUrl($page + 1) : null,
+                Facets::pageUrl($page),
+            );
+        }
 
         [$title, $sub, $crumb] = $this->heading($category, (string) $request->query('s', ''));
 

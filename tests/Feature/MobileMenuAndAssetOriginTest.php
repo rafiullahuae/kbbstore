@@ -96,10 +96,13 @@ it('still wires the mobile menu, and in the same position', function () {
     preg_match('/const STEPS = \[(.*?)\];/s', $js, $m);
     $steps = array_values(array_filter(array_map('trim', explode(',', $m[1] ?? ''))));
 
-    // All 21, in the order they always ran -- isolating them must not drop
-    // or reorder any of them.
-    expect($steps)->toHaveCount(21);
+    // All of them, in the order they always ran -- isolating them must not
+    // drop or reorder any of them. 22 since Lane PI-B added initListingLoad
+    // ("Load more on scroll") directly after initShop, at index 16 -- after
+    // initHome, so the mobile menu's position is unchanged.
+    expect($steps)->toHaveCount(22);
     expect($steps[0])->toBe('initOverlay');
     expect($steps[8])->toBe('initHome');   // wires the mobile menu
-    expect($steps[20])->toBe('initNavFit');
+    expect($steps[16])->toBe('initListingLoad');
+    expect($steps[21])->toBe('initNavFit');
 });

@@ -491,7 +491,16 @@ it('counts them as drafts awaiting review and not as work already done', functio
     $progress = TranslationEstimate::progress('ar');
     $ui = $progress['areas'][Translation::GROUP_UI];
 
-    expect($ui['drafts'])->toBe(1059, 'the shipped Arabic is not showing as drafts to review')
+    /*
+     * ── 1,059 -> 1,063: LANE PI-B'S FOUR ─────────────────────────────────
+     *
+     * The listing pager's accessible name, its two arrows' names and the
+     * "Loading more products…" status — store.shop.pages_label, page_prev,
+     * page_next, loading_more — seeded by their own migration,
+     * 2027_07_06_000200_seed_listing_pager_arabic_drafts, for the reason every
+     * round above needed one. Read off the run, not added up.
+     */
+    expect($ui['drafts'])->toBe(1063, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });
