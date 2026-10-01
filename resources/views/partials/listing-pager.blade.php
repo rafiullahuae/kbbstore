@@ -14,11 +14,15 @@
     /super-sale: each chevron 170×170px at 390 and at 1280, the pager 419px
     tall. The same class of defect the admin icons had.
 
-    So: one pager, ours, used by both views. Its chevrons carry width="16"
-    height="16" IN THE MARKUP as well as in kbb.css, so they are 16px even on
-    a page whose stylesheet failed to load. The /shop pager was the other half
-    of the bug — bare 5×18px text links on desktop, because its only CSS was
-    inside a phone media query — and it now gets the same rules at every width.
+    So: one pager, ours, used by both views, and its arrows are not drawings
+    at all. They are ‹ and ›, the characters /shop has always used — text,
+    sized by the link's font, so there is no SVG left to lose its size, and
+    Bidi-mirrored, so on /ar the browser turns them round with no CSS
+    (DirectionalGlyphsTest pins that they stay these two characters). The
+    /shop pager was the other half of the bug — bare 5×18px text links on
+    desktop, because its only CSS was inside a phone media query — and it now
+    gets the same rules at every width: 40px boxes (44px on a phone), the
+    arrows at 20px.
 
     ── LOADING MORE ───────────────────────────────────────────────────────────
 
@@ -37,11 +41,11 @@
 --}}@php $kbbLayout = app(\App\Services\SiteLayout::class); $kbbLoad = $kbbLayout->loadMode(); @endphp
 @if ($lastPage > 1)
 <nav class="kbb-pager" aria-label="{{ __('store.shop.pages_label') }}" data-load="{{ $kbbLoad }}" data-grid="{{ $grid }}"@if ($kbbLoad === 'scroll') data-batch="{{ $kbbLayout->batchSize() }}"@endif>
-@if ($page > 1)<a class="page-numbers prev" rel="prev" href="{{ $urlFor($page - 1) }}" aria-label="{{ __('store.shop.page_prev') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>@endif
+@if ($page > 1)<a class="page-numbers prev" rel="prev" href="{{ $urlFor($page - 1) }}" aria-label="{{ __('store.shop.page_prev') }}">‹</a>@endif
 @foreach (range(max(1, $page - 1), min($lastPage, $page + 1)) as $n)
 @if ($n === $page)<span class="page-numbers current" aria-current="page">{{ $n }}</span>@else<a class="page-numbers" href="{{ $urlFor($n) }}">{{ $n }}</a>@endif
 @endforeach
-@if ($page < $lastPage)<a class="page-numbers next" rel="next" href="{{ $urlFor($page + 1) }}" aria-label="{{ __('store.shop.page_next') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>@endif
+@if ($page < $lastPage)<a class="page-numbers next" rel="next" href="{{ $urlFor($page + 1) }}" aria-label="{{ __('store.shop.page_next') }}">›</a>@endif
 <span class="kbb-pager-status" role="status" aria-live="polite" data-loading="{{ __('store.shop.loading_more') }}"></span>
 </nav>
 @endif

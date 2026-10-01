@@ -168,6 +168,14 @@ const CLC_COVERED = [
      * on the shop's most-hit URL.
      */
     'resources/views/partials/home/grid-section.blade.php' => 'the homepage, rendered cold, with an instance built',
+    /*
+     * Lane PI-B. "Load more on scroll" fetches a listing page as a batch —
+     * /shop/?paged=N&kbbbatch=1 — and partials/listing-batch.blade.php draws
+     * its <x-product-card>s from the SAME query the page ran, after the same
+     * `with('brand:id,name,slug')`. Covered by its own case below, because the
+     * batch is JSON and the render case counts tiles in HTML.
+     */
+    'resources/views/partials/listing-batch.blade.php' => '/shop?kbbbatch=1, the scroll batch',
 ];
 
 /* ══════════════════════════ reading the source ═══════════════════════════ */
@@ -646,6 +654,28 @@ it('costs one statement per tile for each relation the caller did not load', fun
 });
 
 /* ═════════════ 4. every covered page, rendered with the guard on ══════════ */
+
+it('renders the scroll batch without one lazy load', function () {
+    /*
+     * Lane PI-B. The batch is the listing's own controller answering with
+     * JSON, so the card markup arrives inside `html` and is counted there.
+     * Same rule as every page below: at least three tiles before the
+     * violations mean anything.
+     *
+     * MUTATION, RUN: drop `->with('brand:id,name,slug')` from
+     * ShopController::index() and this is red with one lazy load per tile.
+     */
+    clcCatalogue();
+
+    $html = '';
+
+    $violations = clcWatch(function () use (&$html): void {
+        $html = (string) test()->get('/shop?kbbbatch=1')->assertOk()->json('html');
+    });
+
+    expect(substr_count($html, '<div class="kbb-card kbb-tile">'))->toBeGreaterThanOrEqual(3);
+    expect($violations)->toBe([], clcFailure('/shop?kbbbatch=1', $violations));
+});
 
 it('renders every page that calls a contracted template without one lazy load', function () {
     /*

@@ -4114,8 +4114,10 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
    Tailwind pager with 170x170px chevrons (no Tailwind here, and an SVG with no
    size), and /shop's pager had CSS only inside a phone query, so on desktop it
    was bare 5x18px text. One rule set now, here, because both pages load this
-   sheet and the curated ones load no other. kbb-shop.css keeps its phone rule
-   for .page-numbers (44px); it says the same thing for the same element. */
+   sheet and the curated ones load no other. The arrows are the characters
+   ‹ and ›, sized as text — nothing left to lose its size, and they mirror
+   themselves on /ar. kbb-shop.css keeps its phone rule for .page-numbers
+   (44px); it says the same thing for the same element. */
 .kbb-pager{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:30px}
 .kbb-pager .page-numbers{box-sizing:border-box;min-width:40px;min-height:40px;
   display:inline-flex;align-items:center;justify-content:center;padding:0 10px;
@@ -4123,7 +4125,7 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
   font-size:14px;font-weight:600;line-height:1;color:var(--ink,#2A2228);text-decoration:none}
 .kbb-pager a.page-numbers:hover{border-color:var(--pink,#E0567B);color:var(--pink-deep,#B4517A)}
 .kbb-pager .page-numbers.current{background:var(--pink-soft,#FCEFF4);color:var(--pink-deep,#B4517A);border-color:transparent}
-.kbb-pager .page-numbers svg{width:16px;height:16px;display:block;flex:none}
+.kbb-pager .page-numbers.prev,.kbb-pager .page-numbers.next{font-size:20px;font-weight:500}
 .kbb-pager-status:empty{display:none}
 .kbb-pager-status{font-size:13px;color:var(--muted,#8C828A)}
 @media (max-width:900px){.kbb-pager .page-numbers{min-width:44px;min-height:44px}}
@@ -4167,16 +4169,16 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
      250–450ms  holds, then fades
    Reduced motion: the green tick, no movement and no drawing, shown and then
    simply gone. Nothing here measures anything. */
-.kbb-tick{position:absolute;top:14px;inset-inline-end:calc(100% + 12px);width:44px;height:44px;
+.kbb-addmark{position:absolute;top:14px;inset-inline-end:calc(100% + 12px);width:44px;height:44px;
   border-radius:50%;background:#B9BEC6;color:#fff;display:grid;place-items:center;
   box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;pointer-events:none;z-index:2}
-.kbb-tick svg{width:22px;height:22px;display:block}
-.kbb-tick path{fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;
+.kbb-addmark svg{width:22px;height:22px;display:block}
+.kbb-addmark path{fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;
   stroke-dasharray:1;stroke-dashoffset:1}
-.kbb-tick-msg{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+.kbb-addmark-msg{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
-.kbb-tick.on{animation:kbbTick 450ms cubic-bezier(.2,.8,.2,1) both}
-.kbb-tick.on path{animation:kbbTickDraw 190ms 60ms ease-out both}
+.kbb-addmark.on{animation:kbbTick 450ms cubic-bezier(.2,.8,.2,1) both}
+.kbb-addmark.on path{animation:kbbTickDraw 190ms 60ms ease-out both}
 @keyframes kbbTick{
   0%{opacity:0;transform:scale(.55);background:#B9BEC6}
   20%{opacity:1;transform:scale(1.06);background:#B9BEC6}
@@ -4187,8 +4189,8 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 @keyframes kbbTickDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 @keyframes kbbTickStill{0%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){
-  .kbb-tick.on{animation:kbbTickStill 600ms step-end both;background:#1F9D55}
-  .kbb-tick.on path{animation:none;stroke-dashoffset:0}
+  .kbb-addmark.on{animation:kbbTickStill 600ms step-end both;background:#1F9D55}
+  .kbb-addmark.on path{animation:none;stroke-dashoffset:0}
 }
 
 

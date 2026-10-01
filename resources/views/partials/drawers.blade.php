@@ -23,7 +23,7 @@
          the tick travels with it; kbb.css carries the geometry and the whole
          animation. cart.js only adds and removes `on`. The message is the
          same "Added to bag" the pill printed, read out by screen readers from
-         the status span; the drawing itself is decoration. --}}<div class="kbb-tick" id="kbbTick"><span class="kbb-tick-msg" role="status" aria-live="polite"></span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5" pathLength="1"/></svg></div>
+         the status span; the drawing itself is decoration. --}}<div class="kbb-addmark" id="kbbAddMark"><span class="kbb-addmark-msg" role="status" aria-live="polite"></span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5" pathLength="1"/></svg></div>
 </aside>
 
 <nav class="mnav" id="mnav">

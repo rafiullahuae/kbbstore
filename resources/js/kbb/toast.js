@@ -27,13 +27,13 @@ export const toast = (message) => {
 let tickTimer = null;
 
 export const tick = (message) => {
-    const el = document.getElementById('kbbTick');
+    const el = document.getElementById('kbbAddMark');
     if (!el) {
         toast(message);
         return;
     }
 
-    const said = el.querySelector('.kbb-tick-msg');
+    const said = el.querySelector('.kbb-addmark-msg');
     if (said) said.textContent = message || '';
 
     el.classList.remove('on');

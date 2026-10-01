@@ -68,7 +68,7 @@ it('ships the animated tick, because he asked for it', function () {
 
     // Printed inside the panel's data-cp JSON, which Blade escapes.
     expect($html)->toContain('&quot;feedback&quot;:&quot;tick&quot;')
-        ->and(substr_count($html, '<div class="kbb-tick" id="kbbTick">'))->toBe(1);
+        ->and(substr_count($html, '<div class="kbb-addmark" id="kbbAddMark">'))->toBe(1);
 });
 
 it('stores one of its three options or the default, never what it was sent', function () {
@@ -193,8 +193,8 @@ it('animates in CSS only, in 450ms, and restarts without reading layout', functi
 
     $css = afCss();
 
-    expect($css)->toContain('.kbb-tick.on{animation:kbbTick 450ms')
-        ->and($css)->toContain('.kbb-tick.on path{animation:kbbTickDraw 190ms 60ms')
+    expect($css)->toContain('.kbb-addmark.on{animation:kbbTick 450ms')
+        ->and($css)->toContain('.kbb-addmark.on path{animation:kbbTickDraw 190ms 60ms')
         ->and($css)->toContain('stroke-dasharray:1;stroke-dashoffset:1')
         ->and($css)->toMatch('/@keyframes kbbTick\{\s*0%\{opacity:0;transform:scale\(\.55\);background:#B9BEC6\}/')
         ->and($css)->toContain('background:#1F9D55');
@@ -206,7 +206,7 @@ it('shows the green tick without motion when the shopper asks for reduced motion
      */
     $css = afCss();
 
-    expect((bool) preg_match('/@media \(prefers-reduced-motion:reduce\)\{\s*\.kbb-tick\.on\{animation:kbbTickStill 600ms step-end both;background:#1F9D55\}\s*\.kbb-tick\.on path\{animation:none;stroke-dashoffset:0\}\s*\}/', $css))
+    expect((bool) preg_match('/@media \(prefers-reduced-motion:reduce\)\{\s*\.kbb-addmark\.on\{animation:kbbTickStill 600ms step-end both;background:#1F9D55\}\s*\.kbb-addmark\.on path\{animation:none;stroke-dashoffset:0\}\s*\}/', $css))
         ->toBeTrue('no reduced-motion tick: the drawing and the pop still play for a shopper who asked for none');
 
     expect($css)->toContain('@keyframes kbbTickStill{0%{opacity:1}100%{opacity:0}}');
@@ -218,10 +218,10 @@ it('places the tick beside the panel, on the right side in Arabic, never over it
      * 12px past its leading edge. inset-inline-end is what flips it when the
      * panel opens from the left on /ar.
      */
-    expect(afCss())->toContain('.kbb-tick{position:absolute;top:14px;inset-inline-end:calc(100% + 12px);width:44px;height:44px;');
+    expect(afCss())->toContain('.kbb-addmark{position:absolute;top:14px;inset-inline-end:calc(100% + 12px);width:44px;height:44px;');
 
     $drawers = (string) file_get_contents(resource_path('views/partials/drawers.blade.php'));
     $aside = substr($drawers, (int) strpos($drawers, '<aside class="drawer'), (int) strpos($drawers, '</aside>') - (int) strpos($drawers, '<aside class="drawer'));
 
-    expect($aside)->toContain('<div class="kbb-tick" id="kbbTick"><span class="kbb-tick-msg" role="status" aria-live="polite"></span>');
+    expect($aside)->toContain('<div class="kbb-addmark" id="kbbAddMark"><span class="kbb-addmark-msg" role="status" aria-live="polite"></span>');
 });

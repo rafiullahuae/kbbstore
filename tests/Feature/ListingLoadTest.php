@@ -75,11 +75,12 @@ beforeEach(function () {
 
 /* ═══════════════════ (a) the arrows ═══════════════════ */
 
-it('draws the curated listings\' pager as ours, with 16px chevrons, not Laravel\'s Tailwind one', function () {
+it('draws the curated listings\' pager as ours, with text arrows, not Laravel\'s Tailwind one', function () {
     /*
      * The defect on the shop: `<svg class="w-5 h-5" viewBox="0 0 20 20">` with
      * no size, inside a pager that also printed "Showing 1 to 24 of 51
      * results" and "« Previous / Next »" because `sm:hidden` hid nothing.
+     * The arrows are ‹ and › now — text, so there is no SVG to lose its size.
      *
      * MUTATION, RUN: put `{!! $products->links() !!}` back in
      * store/collection.blade.php and this is red on "w-5 h-5".
@@ -91,39 +92,35 @@ it('draws the curated listings\' pager as ours, with 16px chevrons, not Laravel\
     expect($html)->toContain('<nav class="kbb-pager"')
         ->and($html)->not->toContain('w-5 h-5')
         ->and($html)->not->toContain('Showing')
-        ->and($html)->toContain('rel="next"');
+        ->and($html)->toContain('aria-label="Next page">›</a>');
 
-    preg_match_all('#<a class="page-numbers (?:next|prev)"[^>]*><svg ([^>]*)>#', $html, $m);
+    $pager = substr($html, (int) strpos($html, '<nav class="kbb-pager"'));
+    $pager = substr($pager, 0, (int) strpos($pager, '</nav>'));
 
-    expect($m[1])->not->toBeEmpty();
-
-    foreach ($m[1] as $attrs) {
-        expect($attrs)->toContain('width="16"')->toContain('height="16"');
-    }
+    expect($pager)->not->toContain('<svg');
 });
 
 it('sizes the pager at every width, not only inside a phone query', function () {
     /*
      * /shop's pager had `.page-numbers` rules ONLY under (max-width:900px), so
-     * on desktop it was bare 5x18px text. Measured after: 40x40 links and a
-     * 16x16 chevron at 1280, 44x44 at 390.
+     * on desktop it was bare 5x18px text. Measured after: 40x40 links at 1280,
+     * 44x44 at 390, the arrows set at 20px.
      *
-     * MUTATION, RUN: wrap the `.kbb-pager .page-numbers svg{width:16px;…}`
-     * rule in kbb.css inside @media (max-width:900px) and this is red.
+     * MUTATION, RUN: wrap the `.kbb-pager .page-numbers{box-sizing:…}` rule in
+     * kbb.css inside @media (max-width:900px) and this is red.
      */
     $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
     $rules = (string) preg_replace('#/\*.*?\*/#s', '', $css);
 
-    // Top level: everything before the first @media that follows the rule is
-    // not inside a media block — check the rule is not preceded by an open one.
-    $at = strpos($rules, '.kbb-pager .page-numbers svg{width:16px;height:16px');
-    expect($at)->not->toBeFalse();
+    foreach (['.kbb-pager .page-numbers{box-sizing:border-box;min-width:40px;min-height:40px',
+              '.kbb-pager .page-numbers.prev,.kbb-pager .page-numbers.next{font-size:20px'] as $needle) {
+        $at = strpos($rules, $needle);
+        expect($at)->not->toBeFalse($needle.' is gone');
 
-    $before = substr($rules, 0, (int) $at);
-    expect(substr_count($before, '{') - substr_count($before, '}'))
-        ->toBe(0, 'the chevron size is inside a block (a media query), so some width draws it unsized');
-
-    expect($rules)->toContain('.kbb-pager .page-numbers{box-sizing:border-box;min-width:40px;min-height:40px');
+        $before = substr($rules, 0, (int) $at);
+        expect(substr_count($before, '{') - substr_count($before, '}'))
+            ->toBe(0, $needle.' sits inside a block (a media query), so some width draws the pager unstyled');
+    }
 });
 
 /* ═══════════════════ (b) the setting ═══════════════════ */

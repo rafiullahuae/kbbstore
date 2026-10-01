@@ -1821,7 +1821,7 @@ final class EnglishRenderWalk
              * nested <div>, so the lazy match ends at its own close.
              */
             'the added tick inside the cart panel (Lane PI-B)' => [
-                'pattern' => '#<div class="kbb-tick" id="kbbTick">.*?</div>\n#s',
+                'pattern' => '#<div class="kbb-addmark" id="kbbAddMark">.*?</div>\n#s',
                 // 33: every page that draws the cart panel. One fewer than the
                 // breadcrumb <style> above, because the journal article carries
                 // that and has no cart panel of its own.
