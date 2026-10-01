@@ -18,6 +18,41 @@ that refusal rather than trusting it.
 
 ---
 
+## 1.10.0
+
+### The Rey global sections a description embeds
+
+- On the old shop many product descriptions end with
+  `[rey_global_section id="18159"]`, and that line renders a designed block:
+  "Gentle Yet Effective Ingredients" over three pictures with QUERCETINOL /
+  ANTI-SEBUM P / 0.5% BHA under them. The block is its own post, built in
+  Elementor. `products.csv` carried the shortcode and nothing carried the post,
+  so the new shop printed the shortcode as text on the product page.
+- New file **`content_blocks.csv`**, in the **Catalogue** group: one row per
+  section a carried product's description or short description names, plus the
+  sections those sections name, three levels down, each once. Selected by id,
+  whatever its post type. Columns: `id`, `post_type`, `slug`, `title`,
+  `status`, `modified` (GMT), `shortcode`, `referenced_by` (product ids,
+  pipe-separated), `elementor_data` (the raw `_elementor_data` JSON) and
+  `plain_html` (the post's own `post_content`, Elementor's HTML fallback).
+- **A shortcode census** in `manifest.json`'s notes: every shortcode tag found
+  in any product description or short description, how many products use it,
+  and whether this export resolves it. The owner's other Rey / Elementor
+  shortcodes are named on the first export instead of being found one product
+  page at a time.
+- Also in the notes: an id a description names that does not exist (with the
+  products that name it), a section nested too deep to follow, the Elementor
+  widget types the sections use, and how many pictures they name -- those
+  pictures are not in `media.csv` and have to be fetched before the old site
+  goes.
+- A section `content_blocks.csv` carries is no longer ALSO a `posts.csv` row
+  (refused by the importer as "a post type this shop has no screen for") or a
+  `permalinks.csv` row. Only when the Catalogue group is in the export, and
+  never for a post, page or product a shortcode happens to name.
+- Version moved 1.9.1 → 1.10.0 in all four places it lives. On a shop with no
+  shortcodes in its descriptions, every other file is byte-identical to 1.9.1.
+- Tests: `tests/Feature/ReyGlobalSectionExportTest.php`.
+
 ## 1.9.1
 
 ### Two copies installed no longer crash activation

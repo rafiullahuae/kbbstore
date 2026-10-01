@@ -62,11 +62,53 @@ class KBB_Export_Stage_Posts extends KBB_Export_Stage {
 		);
 	}
 
+	/**
+	 * The ids content_blocks.csv carries, once per request. See carried().
+	 *
+	 * @var array<int,int>|null
+	 */
+	private $carried = null;
+
 	private function type_filter() {
 		$denied = implode( ',', array_map( array( 'KBB_Export_Wp', 'quote' ), self::NOT_CONTENT ) );
 		$states = implode( ',', array_map( array( 'KBB_Export_Wp', 'quote' ), self::STATUSES ) );
 
-		return 'post_type NOT IN (' . $denied . ') AND post_status IN (' . $states . ')';
+		$filter = 'post_type NOT IN (' . $denied . ') AND post_status IN (' . $states . ')';
+
+		$carried = $this->carried();
+
+		if ( ! empty( $carried ) ) {
+			$filter .= ' AND ID NOT IN (' . implode( ',', $carried ) . ')';
+		}
+
+		return $filter;
+	}
+
+	/**
+	 * THE PAGE-BUILDER SECTIONS content_blocks.csv CARRIES, LEFT OUT HERE.
+	 * (1.10.0)
+	 *
+	 * "Everything in `wp_posts` that is not already carried by another file" is
+	 * this file's own rule, and from 1.10.0 a Rey global section that a product
+	 * description embeds IS carried by another file. Before that it went out
+	 * here as a row of type `rey-global-sections`, which PostImporter refuses by
+	 * name as a type this shop has no screen for -- a false line in the import
+	 * report once the section is imported from content_blocks.csv.
+	 *
+	 * By ID, not by type: a section that no product uses stays in this file
+	 * exactly as before, and so does any post, page or product a shortcode
+	 * happens to name (KBB_Export_Stage_Content_Blocks::carried_ids()). Only
+	 * when the Catalogue group is in this export, because otherwise nothing
+	 * carries the section and taking it out here would drop it.
+	 *
+	 * @return array<int,int>
+	 */
+	private function carried() {
+		if ( null === $this->carried ) {
+			$this->carried = KBB_Export_Stage_Content_Blocks::carried_ids( $this->options );
+		}
+
+		return $this->carried;
 	}
 
 	public function total() {
