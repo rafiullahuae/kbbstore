@@ -390,16 +390,56 @@
     return p;
   }
 
-  /* THE GUARD ON LEAVING. Three doors out of this editor and all three come
-     through here: another screen in the sidebar, another set in the list, and
-     a structural action that reloads the editor. The fourth — closing the tab —
-     is beforeunload at the bottom of this file, which a browser will only
-     honour as a generic prompt. */
-  function mayLeave(what){
-    if (!dirty()) return true;
-    return window.confirm('You have ' + changed().length + ' unsaved change(s) to this set.\n\n'
-      + (what || 'Leave them?') + '\n\nPress Cancel to go back and press Save first.');
+  /* LEAVING KEEPS THE DRAFT, AND ASKS NOTHING. (Lane PM)
+     Three doors out of this editor come through here: another screen in the
+     sidebar, another set in the list, and a structural action that reloads
+     the editor. Each used to stop the owner with window.confirm("You have N
+     unsaved change(s) to this set … Leave them?") — the "weired popup" he
+     asked to be rid of. Now the typing is handed to Unfinished in the top bar
+     (partials/unfinished-drafts.blade.php) and the door simply opens. Coming
+     back to this set — from the list, from Unfinished → Open, or because Add a
+     card reloaded it — puts the typing back, with a bar that says so. */
+  function mayLeave(){
+    if (dirty() && window.kbbDrafts) window.kbbDrafts.flush('banners');
+    return true;
   }
+
+  /* The draft, flattened for the Unfinished list: set.<column>,
+     card.<id>.<column>, and the two picture thumbnails the picker hands back,
+     so a restored picture shows the file that was picked and not the saved
+     one. */
+  var CARD_DRAFT_KEYS = CARD_KEYS.concat(['image_url', 'image_m_url']);
+
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: 'banners', screen: SCREEN,
+    label: function(){
+      var name = openSet && openSet.set ? String(openSet.set.name || '') : '';
+      return 'Appearance → Banners · ' + (name || ('set ' + openId));
+    },
+    entity: function(){ return openSet ? openId : null; },
+    values: function(){
+      if (!draft || !openSet) return null;
+      var out = {};
+      SET_KEYS.forEach(function(k){ out['set.' + k] = draft.set[k]; });
+      out['set.bgUrl'] = draft.bgUrl;
+      Object.keys(draft.cards).forEach(function(id){
+        CARD_DRAFT_KEYS.forEach(function(k){ out['card.' + id + '.' + k] = draft.cards[id][k]; });
+      });
+      return out;
+    },
+    set: function(k, v){
+      var m = /^card\.(\d+)\.(\w+)$/.exec(k);
+      if (m) { if (draft.cards[m[1]] && CARD_DRAFT_KEYS.indexOf(m[2]) !== -1) draft.cards[m[1]][m[2]] = v; return; }
+      if (k === 'set.bgUrl') { draft.bgUrl = v; return; }
+      if (k.indexOf('set.') === 0 && SET_KEYS.indexOf(k.slice(4)) !== -1) draft.set[k.slice(4)] = v;
+    },
+    count: function(){ return changed().length; },
+    render: function(){ render(); refreshPreview(); },
+    save: function(){ var b = document.querySelector('#bns-saveset'); if (b) b.click(); },
+    /* The row is chosen BEFORE go(), whose entry branch reopens whatever
+       openId names -- two openEditor() calls in flight would race. */
+    open: function(id){ openId = Number(id); openSet = null; draft = null; window.go(SCREEN); }
+  });
 
   /* ------------------------------------------------------------ the route */
   var previousGo = window.go;
@@ -409,7 +449,15 @@
       /* Leaving Banners for another screen. Asked BEFORE anything is repainted,
          so Cancel really does leave the owner where he was rather than on a
          half-torn-down screen. */
-      if (openId !== null && !mayLeave('Leave this screen and lose them?')) return undefined;
+      /* The box he was typing in fires `change` when the screen is torn down
+         under it, and its handler writes into the draft -- so it is blurred
+         HERE, while the draft still exists. Measured in Chromium: leaving with
+         the cursor in the set's name threw "Cannot read properties of null
+         (reading 'set')" from the name box's own handler. (Lane PM) */
+      var host = document.querySelector('#content');
+      var focused = document.activeElement;
+      if (host && focused && focused.blur && host.contains(focused)) focused.blur();
+      mayLeave();
       draft = null;
       return previousGo.apply(this, arguments);
     }
@@ -434,6 +482,11 @@
        twice. */
     render();
     load();
+    /* Coming back to a set that was open when he left (Lane PM): reopen it,
+       which also brings any unfinished changes to it back. Without this the
+       editor sat on "Opening…" -- the draft had been dropped on the way out
+       and nothing fetched it again. */
+    if (openId !== null) openEditor(openId);
     return undefined;
   };
 
@@ -473,6 +526,8 @@
 
     render();
     refreshPreview();
+    /* Unfinished changes to this set, if any, come back now. */
+    if (openSet && window.kbbDrafts) window.kbbDrafts.ready('banners');
   }
 
   /* The preview, redrawn from the BUFFER and debounced.
@@ -1161,7 +1216,7 @@
     document.querySelectorAll('[data-bns-kind]').forEach(function(add){
       add.onclick = async function(){
         var kind = add.dataset.bnsKind;
-        if (!mayLeave('Start a new set and lose them?')) return;
+        if (!mayLeave()) return;
         add.disabled = true;
         try {
           var body = await api('/banners/sets', 'POST', {kind: kind});
@@ -1177,7 +1232,7 @@
     document.querySelectorAll('[data-bns-open]').forEach(function(b){
       b.onclick = function(){
         var id = Number(b.dataset.bnsOpen);
-        if (openId !== null && !mayLeave(openId === id ? 'Close this set and lose them?' : 'Open another set and lose them?')) return;
+        if (openId !== null && !mayLeave()) return;
         if (openId === id) { openId = null; openSet = null; draft = null; render(); return; }
         openEditor(id);
       };
@@ -1185,7 +1240,7 @@
 
     document.querySelectorAll('[data-bns-dup]').forEach(function(b){
       b.onclick = async function(){
-        if (!mayLeave('Duplicate and lose them?')) return;
+        if (!mayLeave()) return;
         b.disabled = true;
         try {
           var body = await api('/banners/sets/' + b.dataset.bnsDup + '/duplicate', 'POST', {});
@@ -1202,6 +1257,7 @@
         b.disabled = true;
         try {
           await api('/banners/sets/' + b.dataset.bnsDel, 'DELETE');
+          if (window.kbbDrafts) window.kbbDrafts.drop('banners', b.dataset.bnsDel);
           if (openId === Number(b.dataset.bnsDel)) { openId = null; openSet = null; draft = null; }
           say('Deleted.');
           await load();
@@ -1329,7 +1385,7 @@
 
     var newCard = document.querySelector('#bns-newcard');
     if (newCard) newCard.onclick = async function(){
-      if (!mayLeave('Add a card and lose them?')) return;
+      if (!mayLeave()) return;
       newCard.disabled = true;
       try {
         await api('/banners/sets/' + openId + '/cards', 'POST', {});
@@ -1478,6 +1534,7 @@
         openSet = {set: body.set, cards: body.cards};
         saving = false;
         startDraft();
+        if (window.kbbDrafts) window.kbbDrafts.saved('banners');
         say('Saved.');
         /* The list above carries the name, the status and the card count, so it
            is refreshed too — but AFTER the editor's own state is settled, so a
@@ -1521,14 +1578,8 @@
     el.classList.toggle('is-bad', !!bad);
   }
 
-  /* The fourth door out: closing the tab. A browser will only show its own
-     generic wording here, which is why the three doors above ask in this
-     screen's own words instead. */
-  window.addEventListener('beforeunload', function(ev){
-    if (openId === null || !dirty()) return;
-    ev.preventDefault();
-    ev.returnValue = '';
-  });
+  /* The fourth door out, closing the tab or refreshing, asks nothing either:
+     the draft is already in Unfinished, written as it was typed. (Lane PM) */
   /* ----------------------------------------------------------------- init */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', addNavEntry);

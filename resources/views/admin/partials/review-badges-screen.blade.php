@@ -291,6 +291,23 @@
   var seq = 0;
   var tab = 'themes';
 
+  /* UNFINISHED CHANGES (Lane PM). Leaving with edits in `draft` used to throw
+     them away without a word; they are kept in Unfinished in the top bar
+     (partials/unfinished-drafts.blade.php) and come back on the next visit.
+     Either id lights this screen, so either counts as "on screen". */
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: SCREEN, screen: SCREEN, label: 'Reviews → Rating Badge',
+    present: function(){
+      var on = document.querySelector('.side .nav-item.on');
+      var g = on ? on.getAttribute('data-go') : '';
+      return g === SCREEN || g === ALIAS;
+    },
+    values: function(){ return (data && draft) ? draft : null; },
+    set: function(k, v){ if (draft && Object.prototype.hasOwnProperty.call(draft, k)) draft[k] = v; },
+    render: function(){ render(); },
+    save: function(){ save(); }
+  });
+
   /* All seven, in one draft and one save. */
   var KEYS = ['review_capsule_style', 'review_badge_heart', 'review_badge_avg',
               'review_badge_count', 'review_badge_label', 'review_badge_sold',
@@ -405,7 +422,10 @@
         ? 'The rating badge endpoints are not registered on this server yet. Clear the route cache and reload.'
         : 'Could not load the rating badge settings (' + (e.status || 'network') + ').'};
     } finally {
-      if (mine === seq) { busy = false; render(); }
+      if (mine === seq) {
+        busy = false; render();
+        if (data && draft && window.kbbDrafts) window.kbbDrafts.ready(SCREEN);
+      }
     }
   }
 
@@ -451,6 +471,7 @@
         body: JSON.stringify(payload)
       });
       seed(body, 'Saved. Every product page uses this straight away.');
+      if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
       say('Rating badge saved');
     } catch (e) {
       var detail = '';
@@ -477,6 +498,7 @@
         body: JSON.stringify({theme: name})
       });
       seed(body, 'Theme applied. Every product page uses it straight away.');
+      if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
       say('Theme applied');
     } catch (e) {
       banner = {kind:'err', text:'Could not apply that theme (' + (e.status || 'network') + ').'};

@@ -317,11 +317,45 @@
 
   function dirty(){ return changed().length > 0; }
 
-  function mayLeave(what){
-    if (!dirty()) return true;
-    return window.confirm('You have ' + changed().length + ' unsaved change(s). '
-      + (what || 'Leave them?') + '\n\nPress Cancel to go back and press Save first.');
+  /* LEAVING KEEPS THE DRAFT, AND ASKS NOTHING. (Lane PM)
+     This used to be window.confirm("You have N unsaved change(s). Leave them?")
+     on every door out of the editor — the owner's "weired popup". The typing
+     is handed to Unfinished in the top bar instead
+     (partials/unfinished-drafts.blade.php), and reopening this grid puts it
+     back with a bar that says so. */
+  function mayLeave(){
+    if (dirty() && window.kbbDrafts) window.kbbDrafts.flush('gridsections');
+    return true;
   }
+
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: 'gridsections', screen: SCREEN,
+    label: function(){
+      var name = saved && saved.section ? String(saved.section.name || '') : '';
+      return 'Appearance → Grid sections · ' + (name || ('grid ' + openId));
+    },
+    entity: function(){ return saved ? openId : null; },
+    values: function(){
+      if (!draft || !saved) return null;
+      var out = {};
+      fieldKeys().forEach(function(k){ out['v.' + k] = draft.values[k]; });
+      out.manual_ids = draft.manual_ids.join(',');
+      return out;
+    },
+    set: function(k, v){
+      if (k === 'manual_ids') {
+        draft.manual_ids = String(v || '').split(',').filter(Boolean).map(Number);
+        return;
+      }
+      if (k.indexOf('v.') === 0 && fieldKeys().indexOf(k.slice(2)) !== -1) draft.values[k.slice(2)] = v;
+    },
+    count: function(){ return changed().length; },
+    render: function(){ render(); refreshPreview(); },
+    save: function(){ var b = document.querySelector('#gss-save'); if (b) b.click(); },
+    /* The row is chosen BEFORE go(), whose entry branch reopens whatever
+       openId names -- two openEditor() calls in flight would race. */
+    open: function(id){ openId = Number(id); saved = null; draft = null; window.go(SCREEN); }
+  });
 
   /* ------------------------------------------------------------ the route */
   var previousGo = window.go;
@@ -330,7 +364,15 @@
     if (id !== SCREEN) {
       /* Asked BEFORE anything is repainted, so Cancel really does leave the
          owner where he was rather than on a half-torn-down screen. */
-      if (openId !== null && !mayLeave('Leave this screen and lose them?')) return undefined;
+      /* The box he was typing in fires `change` when the screen is torn down
+         under it, and its handler writes into the draft -- so it is blurred
+         HERE, while the draft still exists. Measured in Chromium: leaving with
+         the cursor in the set's name threw "Cannot read properties of null
+         (reading 'set')" from the name box's own handler. (Lane PM) */
+      var host = document.querySelector('#content');
+      var focused = document.activeElement;
+      if (host && focused && focused.blur && host.contains(focused)) focused.blur();
+      mayLeave();
       draft = null;
       return previousGo.apply(this, arguments);
     }
@@ -355,6 +397,10 @@
        twice. */
     render();
     load();
+    /* Coming back to a grid that was open when he left (Lane PM): reopen it,
+       which also brings any unfinished changes to it back. Without this the
+       editor was drawn from a draft dropped on the way out. */
+    if (openId !== null) openEditor(openId);
     return undefined;
   };
 
@@ -395,6 +441,8 @@
 
     render();
     refreshPreview();
+    /* Unfinished changes to this grid, if any, come back now. */
+    if (saved && window.kbbDrafts) window.kbbDrafts.ready('gridsections');
   }
 
   /* The preview, redrawn from the BUFFER and debounced. Debounced because a
@@ -728,14 +776,14 @@
   function bind(){
     document.querySelectorAll('[data-gss-edit]').forEach(function(b){
       b.onclick = function(){
-        if (openId !== null && !mayLeave('Open another grid and lose them?')) return;
+        if (openId !== null && !mayLeave()) return;
         openEditor(Number(b.dataset.gssEdit));
       };
     });
 
     document.querySelectorAll('[data-gss-add]').forEach(function(b){
       b.onclick = async function(){
-        if (openId !== null && !mayLeave('Add a grid and lose them?')) return;
+        if (openId !== null && !mayLeave()) return;
         try {
           var body = await api('/grid-sections', 'POST', {preset: b.dataset.gssAdd || null});
           say('Added as a draft. Publish it when you are happy with it.');
@@ -747,7 +795,7 @@
 
     document.querySelectorAll('[data-gss-dup]').forEach(function(b){
       b.onclick = async function(){
-        if (openId !== null && !mayLeave('Duplicate and lose them?')) return;
+        if (openId !== null && !mayLeave()) return;
         try {
           await api('/grid-sections/' + b.dataset.gssDup + '/duplicate', 'POST', {});
           say('Copied, as a draft.');
@@ -762,6 +810,7 @@
         if (!window.confirm('Delete this grid? It disappears from the homepage and from Appearance → Homepage. This cannot be undone.')) return;
         try {
           await api('/grid-sections/' + b.dataset.gssDel, 'DELETE');
+          if (window.kbbDrafts) window.kbbDrafts.drop('gridsections', b.dataset.gssDel);
           say('Deleted.');
           if (String(openId) === String(b.dataset.gssDel)) { openId = null; saved = null; draft = null; }
           load();
@@ -867,6 +916,7 @@
         });
         saved = Object.assign({}, saved, body);
         startDraft();
+        if (window.kbbDrafts) window.kbbDrafts.saved('gridsections');
         saving = false;
         await load();
         state('Saved. The shop is showing it now.');
@@ -890,7 +940,7 @@
 
     var close = document.querySelector('#gss-close');
     if (close) close.onclick = function(){
-      if (!mayLeave('Close the editor and lose them?')) return;
+      if (!mayLeave()) return;
       openId = null; saved = null; draft = null; results = null;
       render();
     };
@@ -903,14 +953,8 @@
     el.classList.toggle('is-bad', !!bad);
   }
 
-  /* The fourth door out: closing the tab. A browser will only show its own
-     generic wording here, which is why the three doors above ask in this
-     screen's own words instead. */
-  window.addEventListener('beforeunload', function(ev){
-    if (openId === null || !dirty()) return;
-    ev.preventDefault();
-    ev.returnValue = '';
-  });
+  /* The fourth door out, closing the tab or refreshing, asks nothing either:
+     the draft is already in Unfinished, written as it was typed. (Lane PM) */
 
   /* ----------------------------------------------------------------- init */
   if (document.readyState === 'loading') {

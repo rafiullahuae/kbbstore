@@ -155,6 +155,18 @@
 
   var SCREEN = 'pagewash';
 
+  /* UNFINISHED CHANGES (Lane PM). Leaving this screen with edits in `values`
+     used to throw them away without a word. They are kept in Unfinished in
+     the top bar instead (partials/unfinished-drafts.blade.php), and come back
+     into `values` when the screen is next opened. */
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: SCREEN, screen: SCREEN, label: 'Appearance → Page background',
+    values: function () { return tabs ? values : null; },
+    set: function (k, v) { if (Object.prototype.hasOwnProperty.call(values, k)) values[k] = v; },
+    render: function () { render(); },
+    save: function () { save(); }
+  });
+
   var tabs = null, values = {}, open = 'preview', banner = null, busy = false, seq = 0;
   var treatments = {}, palettes = {}, pages = [], emittedCss = '', isDefault = true;
   var contrast = {}, contrastToday = {}, previewParam = 'kbbwash';
@@ -267,7 +279,10 @@
       if (mine !== seq) return;
       banner = explain(e, 'The Page background settings could not be read.');
     } finally {
-      if (mine === seq) { busy = false; render(); }
+      if (mine === seq) {
+        busy = false; render();
+        if (tabs && !banner && window.kbbDrafts) window.kbbDrafts.ready(SCREEN);
+      }
     }
   }
 
@@ -280,6 +295,7 @@
 
     try {
       var body = await api('/page-wash', { settings: payload });
+      if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
       emittedCss = body.css || '';
       isDefault = body.is_default !== false;
       say(values.on ? 'Page background saved, and it is ON.' : 'Page background saved. The wash is off, so the shop is unchanged.');

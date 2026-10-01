@@ -90,6 +90,21 @@
   'use strict';
 
   var SCREEN = 'ugcstyle';
+
+  /* UNFINISHED CHANGES (Lane PM). Leaving this screen with edits in `values`
+     used to throw them away without a word. They are kept in Unfinished in
+     the top bar instead (partials/unfinished-drafts.blade.php), and come back
+     into `values` when the screen is next opened. */
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: SCREEN, screen: SCREEN, label: 'Content → Shoppable video · Appearance',
+    /* No sidebar row of its own (it is a TAB of Shoppable video, see below),
+       so "on show" is its own controls being in #content. */
+    present: function () { return !!document.querySelector('#content [data-ugy-key]'); },
+    values: function () { return tabs ? values : null; },
+    set: function (k, v) { if (Object.prototype.hasOwnProperty.call(values, k)) values[k] = v; },
+    render: function () { render(); },
+    save: function () { save(); }
+  });
   var tabs = null, values = {}, open = null, banner = null, busy = false, moduleOn = false, seq = 0;
   var sections = [];
   /* What the storefront will do with the rows and settings this shop has right
@@ -218,7 +233,10 @@
       if (mine !== seq) return;
       banner = explain(e, 'These settings could not be read.');
     } finally {
-      if (mine === seq) { busy = false; render(); }
+      if (mine === seq) {
+        busy = false; render();
+        if (tabs && !banner && window.kbbDrafts) window.kbbDrafts.ready(SCREEN);
+      }
     }
   }
 
@@ -229,6 +247,7 @@
     Object.keys(values).forEach(function (k) { payload[k] = values[k]; });
     try {
       var out = await api('/ugc-appearance', { settings: payload });
+      if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
       /* A REFUSED VALUE IS REPORTED. ModuleSchema::cast() answers null for
          something it will not store, and this module's policy turns most of those
          into the shipped default instead — but the endpoint still lists whatever it

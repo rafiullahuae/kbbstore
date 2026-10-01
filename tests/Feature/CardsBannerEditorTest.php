@@ -505,7 +505,7 @@ it('answers empty rather than drawing a card the buffer has emptied of its pictu
 
 /* ══════════════ 4. the unsaved marker and the guard on leaving ════════════ */
 
-it('marks unsaved work and asks before every door out of the editor', function () {
+it('marks unsaved work and keeps it, without asking, at every door out of the editor', function () {
     /*
      * A buffered editor without these is worse than auto-save: the owner types
      * for five minutes, clicks another screen, and the work is gone with no
@@ -513,22 +513,41 @@ it('marks unsaved work and asks before every door out of the editor', function (
      *
      * FOUR DOORS, and all four are covered: the sidebar (the go() wrapper),
      * another set in the list, a structural action that reloads the editor, and
-     * closing the tab. The first three ask in this screen's own words through
-     * mayLeave(); the fourth can only be the browser's generic prompt.
+     * closing the tab.
      *
-     * MUTATION, run: remove the `mayLeave()` call from the go() wrapper and
-     * this is red on the first expectation.
+     * ── THE DOORS NO LONGER ASK. THE OWNER, 1 OCTOBER 2026 (Lane PM) ───────
+     *
+     * "when now i leave anything un-saved, it keep giving me weired popup ...
+     * it should not give me the weired warning like thing." The three doors
+     * used to stop him with window.confirm("You have N unsaved change(s) to
+     * this set … Leave them?") and the fourth with the browser's "Leave site?".
+     * Now mayLeave() hands the buffer to Unfinished in the top bar
+     * (partials/unfinished-drafts.blade.php) and lets him through, and there is
+     * no beforeunload at all. The work is still never lost — that half of this
+     * test's job is unchanged — it is kept instead of guarded.
+     *
+     * MUTATIONS, run: remove the `mayLeave();` call from the go() wrapper and
+     * this is red on the second expectation; put the window.confirm() back
+     * into mayLeave() and it is red on `not->toContain('confirm(')`.
      */
     $screen = bpeScreen();
 
     expect(str_contains($screen, 'function mayLeave('))->toBeTrue()
-        ->and(str_contains($screen, "if (openId !== null && !mayLeave('Leave this screen and lose them?')) return undefined;"))->toBeTrue()
-        ->and(str_contains($screen, "window.addEventListener('beforeunload'"))->toBeTrue();
+        ->and(str_contains($screen, "mayLeave();\n      draft = null;"))->toBeTrue()
+        ->and(str_contains($screen, "addEventListener('beforeunload'"))->toBeFalse();
+
+    $from = (int) strpos($screen, 'function mayLeave(');
+    $leave = substr($screen, $from, (int) strpos($screen, "\n  }\n", $from) - $from);
+
+    expect($leave)->not->toContain('confirm(')
+        ->and($leave)->toContain("window.kbbDrafts.flush('banners')");
 
     /*
-     * Every structural action asks first, because performing one reloads the
-     * editor and would take the buffer with it. Each is located by the line
-     * that WIRES it, and the question has to be inside that handler.
+     * Every structural action still goes through mayLeave() first, because
+     * performing one reloads the editor and would take the buffer with it —
+     * mayLeave() is now what writes the buffer to Unfinished before that
+     * happens. Each is located by the line that WIRES it, and the call has to
+     * be inside that handler.
      */
     foreach ([
         /*

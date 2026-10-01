@@ -279,6 +279,18 @@
 
   var SCREEN = 'cartpanel';
 
+  /* UNFINISHED CHANGES (Lane PM). Leaving this screen with edits in `values`
+     used to throw them away without a word. They are kept in Unfinished in
+     the top bar instead (partials/unfinished-drafts.blade.php), and come back
+     into `values` when the screen is next opened. */
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: SCREEN, screen: SCREEN, label: 'Appearance → Cart panel',
+    values: function () { return tabs ? values : null; },
+    set: function (k, v) { if (Object.prototype.hasOwnProperty.call(values, k)) values[k] = v; },
+    render: function () { render(); },
+    save: function () { save(); }
+  });
+
   /* ---------------------------------------------------------------- state */
   var tabs = null;        // GET /admin-api/cart-panel -> tabs
   var values = {};        // key -> current value, edited in place
@@ -406,7 +418,10 @@
       if (mine !== seq) return;
       banner = explain(e, 'The Cart panel settings could not be read.');
     } finally {
-      if (mine === seq) { busy = false; render(); }
+      if (mine === seq) {
+        busy = false; render();
+        if (tabs && !banner && window.kbbDrafts) window.kbbDrafts.ready(SCREEN);
+      }
     }
   }
 
@@ -420,6 +435,7 @@
 
     try {
       await api('/cart-panel', { settings: payload });
+      if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
       say('Cart panel saved.');
     } catch (e) {
       banner = explain(e, 'That could not be saved.');

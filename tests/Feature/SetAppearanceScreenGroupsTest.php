@@ -242,14 +242,18 @@ it('keeps every behaviour the re-layout was not supposed to touch', function () 
      *
      *   the count            tells him the thing he just dragged registered
      *   Discard              puts a session of experimenting back
-     *   the two prompts      leaving by the sidebar, and closing the tab
+     *   the kept draft       leaving by the sidebar keeps the typing in
+     *                        Unfinished (top bar), and nothing asks — the
+     *                        two prompts that used to stand here were the
+     *                        owner's "weired popup" (Lane PM, 1 Oct 2026)
      *   the XSRF header      without it every POST is a 419 and the preview
      *                        never draws at all
      *   the sidebar entry    this screen has no other way into the nav
      *   the window.go wrap   and it must still delegate to the previous one
      *
-     * MUTATION NOTE — RUN. Delete the beforeunload listener and this goes red
-     * on that line.
+     * MUTATION NOTE — RUN. Delete the kbbDrafts.track( registration and this
+     * goes red on that line; put a beforeunload listener back and the last
+     * expectation is red.
      */
     $blade = saScreenBlade();
 
@@ -257,8 +261,9 @@ it('keeps every behaviour the re-layout was not supposed to touch', function () 
         "window.kbbAddNavEntry({" => 'the sidebar entry',
         'var previousGo = window.go;' => 'the previous window.go',
         'return previousGo.apply(this, arguments);' => 'delegating to it',
-        "window.addEventListener('beforeunload'" => 'the close-tab prompt',
-        'function mayLeave(' => 'the leave-screen prompt',
+        'window.kbbDrafts.track({' => 'the Unfinished registration that keeps the typing',
+        "window.kbbDrafts.flush('setap')" => 'handing the typing over on the way out',
+        'function mayLeave(' => 'the leave-screen hand-over',
         "'X-XSRF-TOKEN': cookie('XSRF-TOKEN')" => 'the XSRF header',
         'data-sap-discard' => 'Discard',
         'data-sap-save' => 'Save',
@@ -270,6 +275,11 @@ it('keeps every behaviour the re-layout was not supposed to touch', function () 
     ] as $needle => $what) {
         expect(str_contains($blade, $needle))->toBeTrue("The re-layout lost {$what}.");
     }
+
+    // And nothing asks on the way out any more: no "Leave site?" on a refresh.
+    expect(str_contains($blade, "addEventListener('beforeunload'"))->toBeFalse(
+        'The close-tab prompt is back; the owner asked for it to go (Lane PM).'
+    );
 
     /* Everything this screen clicks is prefixed, because app.blade.php binds a
        dozen delegated listeners to `document` on BARE attribute names and a
