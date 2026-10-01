@@ -96,7 +96,10 @@
      the top bar instead (partials/unfinished-drafts.blade.php), and come back
      into `values` when the screen is next opened. */
   if (window.kbbDrafts) window.kbbDrafts.track({
-    id: SCREEN, screen: SCREEN, label: 'Appearance → Video rail',
+    id: SCREEN, screen: SCREEN, label: 'Content → Shoppable video · Appearance',
+    /* No sidebar row of its own (it is a TAB of Shoppable video, see below),
+       so "on show" is its own controls being in #content. */
+    present: function () { return !!document.querySelector('#content [data-ugy-key]'); },
     values: function () { return tabs ? values : null; },
     set: function (k, v) { if (Object.prototype.hasOwnProperty.call(values, k)) values[k] = v; },
     render: function () { render(); },

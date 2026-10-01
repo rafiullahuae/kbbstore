@@ -46,6 +46,7 @@
     kbbDrafts.ready(id)      its buffer has just been (re)loaded from the server
     kbbDrafts.saved(id)      a save of it has just succeeded
     kbbDrafts.discarded(id)  its own Discard is about to reload it
+    kbbDrafts.resume(id)     it is back on show without reloading (kept in memory)
 
   Every value is compared as a string, with true/false as 1/0, because a
   switch hands back true while the server sent 1 — the rule the Banners and
@@ -115,8 +116,8 @@
 (function () {
   'use strict';
 
-  /* ▲ NO ELEMENT MAY BE CALLED id="kbbDrafts". A browser makes every id a
-     property of window, so the first version's wrapper <div id="kbbDrafts">
+  /* ▲ NO ELEMENT MAY CARRY THE ID kbbDrafts. A browser makes every id a
+     property of window, so the first version's wrapper div, given that id,
      WAS window.kbbDrafts: the check below took it for the registry, returned,
      and every screen's track() threw "is not a function" — measured in
      Chromium, twenty-eight errors on load and nothing tracked at all. */
@@ -134,7 +135,7 @@
   var BAR_B = document.getElementById('kbbDraftBarB');
 
   var MAX_AGE = 14 * 24 * 3600 * 1000;
-  var MAX_ENTRY = 64 * 1024;
+  var MAX_ENTRY = 256 * 1024;   // a product with a long description is the largest; past this it is not kept
   /* Never written to the browser, whatever screen offers it. */
   var SECRET = /(pass(word|wd)?|secret|token|api[_-]?key|private[_-]?key|(^|[._-])key$|salt|hash|cvv|otp)/i;
 
@@ -167,11 +168,11 @@
     return out;
   }
 
+  /* Blocked or full: the screen still works, it just cannot keep this. */
   function write(all) {
-    try {
-      if (Object.keys(all).length) window.localStorage.setItem(storeKey(), JSON.stringify(all));
-      else window.localStorage.removeItem(storeKey());
-    } catch (e) { /* blocked or full: the screen still works, it just cannot keep this */ }
+    var body = Object.keys(all).length ? JSON.stringify(all) : null;
+    if (body) { try { window.localStorage.setItem(storeKey(), body); } catch (e) {} return; }
+    try { window.localStorage.removeItem(storeKey()); } catch (e) {}
   }
 
   /* ------------------------------------------------------------ helpers */
@@ -342,6 +343,18 @@
     }
   }
 
+  /* The screen came back on show WITHOUT reloading (the product editor keeps
+     its product in memory across a visit elsewhere). Watching resumes against
+     the values it was loaded with, if it is still the same row — never
+     against what is on screen now, which may already hold his typing. */
+  function resume(id) {
+    var a = adapters[id];
+    if (!a || !base[id]) return;
+    if (base[id].key !== keyOf(a)) return;
+    live[id] = true;
+    schedule();
+  }
+
   function forget(k) {
     var all = read();
     offered[k] = false;
@@ -375,6 +388,9 @@
 
   /* ------------------------------------------------------- owner actions */
   function open(k) {
+    /* Whatever is on screen now is kept first: an adapter's open() may switch
+       its row before go() runs, and after that the old row cannot be read. */
+    flushAll();
     var entry = read()[k];
     closePanel(false);
     if (!entry) return;
@@ -605,7 +621,7 @@
   else installGo();
 
   window.kbbDrafts = {
-    track: track, ready: ready, saved: saved, discarded: discarded, drop: drop,
+    track: track, ready: ready, resume: resume, saved: saved, discarded: discarded, drop: drop,
     flush: function (id) { if (id) flush(id); else flushAll(); },
     open: open, discard: discard, list: function () { return read(); }
   };
@@ -834,6 +850,13 @@
       reorderPerPage = +p[3] || reorderPerPage;
       reorderSearch = decodeURIComponent(p[4] || '');
       window.go('catalog', 'reorder');
+      /* go()'s sub-tab does not survive the console's route interceptor (its
+         fallthrough calls `_go(id)` and drops the second argument), so the
+         Reorder tab is chosen here exactly as a click on it would. */
+      if (typeof catTab !== 'undefined' && catTab !== 'reorder') {
+        var tab = q('#content .subtab[data-t="reorder"]');
+        if (tab) tab.click(); else { catTab = 'reorder'; renderCatalog(); }
+      }
     }
   });
 })();

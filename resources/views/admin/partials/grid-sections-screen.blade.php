@@ -352,7 +352,9 @@
     count: function(){ return changed().length; },
     render: function(){ render(); refreshPreview(); },
     save: function(){ var b = document.querySelector('#gss-save'); if (b) b.click(); },
-    open: function(id){ window.go(SCREEN); openEditor(Number(id)); }
+    /* The row is chosen BEFORE go(), whose entry branch reopens whatever
+       openId names -- two openEditor() calls in flight would race. */
+    open: function(id){ openId = Number(id); saved = null; draft = null; window.go(SCREEN); }
   });
 
   /* ------------------------------------------------------------ the route */
@@ -362,6 +364,14 @@
     if (id !== SCREEN) {
       /* Asked BEFORE anything is repainted, so Cancel really does leave the
          owner where he was rather than on a half-torn-down screen. */
+      /* The box he was typing in fires `change` when the screen is torn down
+         under it, and its handler writes into the draft -- so it is blurred
+         HERE, while the draft still exists. Measured in Chromium: leaving with
+         the cursor in the set's name threw "Cannot read properties of null
+         (reading 'set')" from the name box's own handler. (Lane PM) */
+      var host = document.querySelector('#content');
+      var focused = document.activeElement;
+      if (host && focused && focused.blur && host.contains(focused)) focused.blur();
       mayLeave();
       draft = null;
       return previousGo.apply(this, arguments);
@@ -387,6 +397,10 @@
        twice. */
     render();
     load();
+    /* Coming back to a grid that was open when he left (Lane PM): reopen it,
+       which also brings any unfinished changes to it back. Without this the
+       editor was drawn from a draft dropped on the way out. */
+    if (openId !== null) openEditor(openId);
     return undefined;
   };
 
@@ -762,14 +776,14 @@
   function bind(){
     document.querySelectorAll('[data-gss-edit]').forEach(function(b){
       b.onclick = function(){
-        if (openId !== null && !mayLeave('Open another grid and lose them?')) return;
+        if (openId !== null && !mayLeave()) return;
         openEditor(Number(b.dataset.gssEdit));
       };
     });
 
     document.querySelectorAll('[data-gss-add]').forEach(function(b){
       b.onclick = async function(){
-        if (openId !== null && !mayLeave('Add a grid and lose them?')) return;
+        if (openId !== null && !mayLeave()) return;
         try {
           var body = await api('/grid-sections', 'POST', {preset: b.dataset.gssAdd || null});
           say('Added as a draft. Publish it when you are happy with it.');
@@ -781,7 +795,7 @@
 
     document.querySelectorAll('[data-gss-dup]').forEach(function(b){
       b.onclick = async function(){
-        if (openId !== null && !mayLeave('Duplicate and lose them?')) return;
+        if (openId !== null && !mayLeave()) return;
         try {
           await api('/grid-sections/' + b.dataset.gssDup + '/duplicate', 'POST', {});
           say('Copied, as a draft.');
@@ -926,7 +940,7 @@
 
     var close = document.querySelector('#gss-close');
     if (close) close.onclick = function(){
-      if (!mayLeave('Close the editor and lose them?')) return;
+      if (!mayLeave()) return;
       openId = null; saved = null; draft = null; results = null;
       render();
     };

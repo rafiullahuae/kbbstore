@@ -112,7 +112,7 @@ async function bar(page) {
         const page = await ctx.newPage();
         const errors = [];
         const dialogs = [];
-        page.on('pageerror', (e) => errors.push(String(e)));
+        page.on('pageerror', (e) => errors.push(String(e) + ' @ ' + String(e.stack || '').split('\n').slice(1, 4).join(' | ')));
         page.on('dialog', async (d) => { dialogs.push(d.type() + ': ' + d.message()); await d.dismiss().catch(() => {}); });
         const m = (report[w] = {});
 
@@ -189,19 +189,22 @@ async function bar(page) {
             m.dialogsAfterLeavingBanners = dialogs.slice();
 
             // ── 6. a refresh with banner typing: still there ───────────────
+            // Back to Banners: the set he left open reopens by itself, with
+            // his typing back in it.
             await go(page, 'banners');
-            await page.waitForSelector('[data-bns-open]', { timeout: 15000 });
-            await page.click('[data-bns-open]');
             await page.waitForSelector('#bns-saveset', { timeout: 15000 });
             await settle(page);
             m.bannerBarOnReopen = await bar(page);
+            m.bannerNameOnReopen = await page.locator('input[data-bns-set="name"]').inputValue();
+            await page.screenshot({ path: `${OUT}/5b-banners-reopened-${w}.png` });
             await page.reload({ waitUntil: 'networkidle' });
             await page.waitForTimeout(800);
             m.dialogsAfterRefresh = dialogs.slice();
             m.afterRefresh = await topBar(page);
 
             // ── 7. Reorder ─────────────────────────────────────────────────
-            await go(page, 'catalog', 'reorder');
+            await go(page, 'catalog');
+            await page.click('#content .subtab[data-t="reorder"]');
             await page.waitForSelector('#reSave', { timeout: 15000 });
             await settle(page);
             m.reorderBefore = await page.evaluate(() => reorderLocal.map((p) => p.name));
@@ -215,6 +218,7 @@ async function bar(page) {
             // ── 8. stale: typed, then saved elsewhere ──────────────────────
             await go(page, 'header');
             await page.waitForSelector('#hdSave', { timeout: 15000 });
+            await page.click(`[data-hdtab="${m.headerTab}"]`);   // the reload put the tab back to the first
             await page.locator(`input[data-hd="${m.headerField}"]`).fill('My unfinished words');
             await settle(page);
             await go(page, 'dash');

@@ -655,10 +655,6 @@
     return out;
   }
 
-  /* THE GUARD ON LEAVING. Two doors out of this screen come through here —
-     another screen in the sidebar, and a reload. The third, closing the tab, is
-     beforeunload at the bottom of this file, which a browser will only honour
-     as a generic prompt. */
   /* LEAVING KEEPS THE DRAFT, AND ASKS NOTHING. (Lane PM)
      This was window.confirm("You have N unsaved change(s) to the set … Leave
      them?") — the owner's "weired popup". The typing goes to Unfinished in the

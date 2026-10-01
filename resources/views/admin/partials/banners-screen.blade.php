@@ -436,7 +436,9 @@
     count: function(){ return changed().length; },
     render: function(){ render(); refreshPreview(); },
     save: function(){ var b = document.querySelector('#bns-saveset'); if (b) b.click(); },
-    open: function(id){ window.go(SCREEN); openEditor(Number(id)); }
+    /* The row is chosen BEFORE go(), whose entry branch reopens whatever
+       openId names -- two openEditor() calls in flight would race. */
+    open: function(id){ openId = Number(id); openSet = null; draft = null; window.go(SCREEN); }
   });
 
   /* ------------------------------------------------------------ the route */
@@ -447,6 +449,14 @@
       /* Leaving Banners for another screen. Asked BEFORE anything is repainted,
          so Cancel really does leave the owner where he was rather than on a
          half-torn-down screen. */
+      /* The box he was typing in fires `change` when the screen is torn down
+         under it, and its handler writes into the draft -- so it is blurred
+         HERE, while the draft still exists. Measured in Chromium: leaving with
+         the cursor in the set's name threw "Cannot read properties of null
+         (reading 'set')" from the name box's own handler. (Lane PM) */
+      var host = document.querySelector('#content');
+      var focused = document.activeElement;
+      if (host && focused && focused.blur && host.contains(focused)) focused.blur();
       mayLeave();
       draft = null;
       return previousGo.apply(this, arguments);
@@ -472,6 +482,11 @@
        twice. */
     render();
     load();
+    /* Coming back to a set that was open when he left (Lane PM): reopen it,
+       which also brings any unfinished changes to it back. Without this the
+       editor sat on "Opening…" -- the draft had been dropped on the way out
+       and nothing fetched it again. */
+    if (openId !== null) openEditor(openId);
     return undefined;
   };
 
@@ -1201,7 +1216,7 @@
     document.querySelectorAll('[data-bns-kind]').forEach(function(add){
       add.onclick = async function(){
         var kind = add.dataset.bnsKind;
-        if (!mayLeave('Start a new set and lose them?')) return;
+        if (!mayLeave()) return;
         add.disabled = true;
         try {
           var body = await api('/banners/sets', 'POST', {kind: kind});
@@ -1217,7 +1232,7 @@
     document.querySelectorAll('[data-bns-open]').forEach(function(b){
       b.onclick = function(){
         var id = Number(b.dataset.bnsOpen);
-        if (openId !== null && !mayLeave(openId === id ? 'Close this set and lose them?' : 'Open another set and lose them?')) return;
+        if (openId !== null && !mayLeave()) return;
         if (openId === id) { openId = null; openSet = null; draft = null; render(); return; }
         openEditor(id);
       };
@@ -1225,7 +1240,7 @@
 
     document.querySelectorAll('[data-bns-dup]').forEach(function(b){
       b.onclick = async function(){
-        if (!mayLeave('Duplicate and lose them?')) return;
+        if (!mayLeave()) return;
         b.disabled = true;
         try {
           var body = await api('/banners/sets/' + b.dataset.bnsDup + '/duplicate', 'POST', {});
@@ -1370,7 +1385,7 @@
 
     var newCard = document.querySelector('#bns-newcard');
     if (newCard) newCard.onclick = async function(){
-      if (!mayLeave('Add a card and lose them?')) return;
+      if (!mayLeave()) return;
       newCard.disabled = true;
       try {
         await api('/banners/sets/' + openId + '/cards', 'POST', {});
