@@ -58,28 +58,52 @@ import { initWishlist } from './wishlist.js';
 import { initReviews } from './reviews.js';
 import { initNavFit } from './nav-fit.js';
 
+/* ── EVERY STEP RUNS, WHATEVER ANY OTHER STEP DOES. ─────────────────────────
+ *
+ * This was 21 calls in a row with nothing between them. JavaScript stops a
+ * function at the first error it does not catch, so ONE of these throwing --
+ * on live data, a page shape the fixtures never had, an older cached partial
+ * -- silently cancelled every step after it. initHome() is ninth: it is what
+ * wires the mobile menu, so an error in any of the eight before it left the
+ * menu button doing nothing at all, with no message anywhere a shopper sees.
+ * The owner reported exactly that on his phone.
+ *
+ * Each step now runs on its own. A step that fails is reported to the console
+ * by NAME -- so the next report says which one, rather than "the menu is
+ * broken" -- and the other twenty carry on. The order is unchanged.
+ */
+const STEPS = [
+    initOverlay,
+    initToast,
+    initSearch,
+    initSearchStarter,
+    initMobileNav,
+    initCart,
+    initPdp,
+    initCheckout,
+    initHome,
+    initAccountPanel,
+    initAccountPage,
+    initReveal,
+    initPasswordMeter,
+    initProductTabs,
+    initGallery,
+    initShop,
+    initFbt,
+    initNewsletter,
+    initWishlist,
+    initReviews,
+    initNavFit,
+];
+
 const boot = () => {
-    initOverlay();
-    initToast();
-    initSearch();
-    initSearchStarter();
-    initMobileNav();
-    initCart();
-    initPdp();
-    initCheckout();
-    initHome();
-    initAccountPanel();
-    initAccountPage();
-    initReveal();
-    initPasswordMeter();
-    initProductTabs();
-    initGallery();
-    initShop();
-    initFbt();
-    initNewsletter();
-    initWishlist();
-    initReviews();
-    initNavFit();
+    for (const step of STEPS) {
+        try {
+            step();
+        } catch (error) {
+            console.error('[kbb] ' + (step.name || 'a start-up step') + ' failed; the rest of the page still started.', error);
+        }
+    }
 };
 
 document.readyState === 'loading'

@@ -1689,6 +1689,53 @@ body::after{z-index:-1;opacity:0;background:var(--kbb-page-gradient-c)}
   html::before,body::before,body::after{display:none}
   body{background-color:#fff}
 }
+/* ── ON A TOUCH SCREEN THE BACKGROUND IS ONE PAINT, NOT THREE GPU LAYERS.
+                                                        (2.60.337)
+
+   THE DEFECT, reported by the owner on his phone after .330: scrolling down
+   the home page, the lower part of the screen went blank -- the page's own
+   background colour, with the cards above it cut along a dead-straight line.
+
+   That is a phone's GPU running out of tile memory. Measured with Chrome's own
+   LayerTree on the home page at a Pixel 7's density:
+
+                                        with these layers   without
+     layers drawing content                    33              24
+     full-screen layers                         7               3
+     GPU texture requested                 ~400 MB         ~248 MB
+     the whole 412 x 10,285 page as a layer   YES              no
+
+   The three pseudo-elements above are position:fixed full-viewport layers, two
+   of them animating for ever, and fixed negative-z children also promote the
+   ENTIRE <html> into a page-tall layer. A phone has a tile budget well under
+   what that asks for, and over budget Chrome simply stops painting tiles.
+
+   One fixed layer was measured too and is NOT enough (381 MB, 5 full-screen
+   layers): any fixed pseudo-element here still promotes <html>. So on a touch
+   screen there are none. The same gradient is painted on the root instead --
+   the canvas is not a separate GPU layer.
+
+   ▲ AND IT SCROLLS WITH THE PAGE; IT IS NOT `fixed`. `fixed` was tried first,
+     to keep the diagonal across each screenful, and measured: the document
+     layer repainted 41 times during one scroll, against 5 without it. A fixed
+     background makes the phone repaint the page on every scroll step, which is
+     itself a way to get blank tiles. The cost is the look: the gradient now
+     runs the length of the page, so a single phone screen shows less of the
+     diagonal. Same four colours.
+
+   The slow shift is dropped on touch screens. It was designed to be
+   imperceptible (a five-minute cycle); it is what kept two extra full-screen
+   layers alive. Desktops keep it; they have the memory, and none was reported.
+
+   NOT A PROVEN FIX FOR THE BLANK BOX, and recorded as such: the blank box was
+   not reproduced off a real phone. This removes measured GPU load -- three
+   full-screen layers, two animating for ever, and the page-tall <html> layer
+   they forced -- that arrived in the same release the box was first seen. */
+@media (hover:none) and (pointer:coarse){
+  html::before,body::before,body::after{display:none}
+  html{background:var(--kbb-page-gradient)}
+  body{background-color:transparent}
+}
 .kbb-home .sec{position:relative}
 /* ═══ THE SECTION PANELS COME OFF THE HOME PAGE ══════════════════ Lane BG ══
 

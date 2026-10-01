@@ -609,6 +609,60 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        /*
+         * ── THE SHOP'S OWN FILES ARE ADDRESSED FROM THE ROOT, WITH NO SCHEME.
+         *
+         * THE DEFECT, reported by the owner and reproduced in a real browser:
+         * the mobile menu worked in Chrome and did nothing in Safari or Opera,
+         * and Opera labelled the page "Connection is not secure".
+         *
+         * Opera and Safari had loaded the shop over plain http://. Chrome
+         * upgrades to https:// by itself; they do not. forceScheme() above
+         * then wrote every asset address as https:// -- and a page and a file
+         * that differ only in scheme are DIFFERENT ORIGINS to a browser.
+         * Stylesheets do not care, so the page looked right. But
+         * <script type="module"> is always fetched under cross-origin rules,
+         * and so is every web font, and the host sends no
+         * Access-Control-Allow-Origin header for static files. Measured with
+         * two real servers and no interception, the browser's own words:
+         *
+         *   "Access to script at '.../build/assets/app-BLfAa6WG.js' from origin
+         *    '...' has been blocked by CORS policy: No
+         *    'Access-Control-Allow-Origin' header is present"
+         *
+         * -- and the same sentence for the Outfit font. No script means no
+         * menu; no font file means a fallback typeface. Same page, same files,
+         * same origin: the menu opens.
+         *
+         * A root-relative address has no scheme and no host, so it is ALWAYS
+         * the page's own origin, on http:// and on https:// alike. The path is
+         * taken from asset() so a base path (KBB_BASE_PATH on the staging box)
+         * is kept exactly as before.
+         *
+         * ▲ NOT AN http -> https REDIRECT IN HERE, deliberately. This app does
+         *   not trust the proxy's X-Forwarded-Proto, so it cannot tell an https
+         *   visit from an http one on the live host -- which is the very reason
+         *   forceScheme() exists. A redirect written here would see EVERY
+         *   request as http and redirect for ever, taking the whole shop down.
+         *   That redirect belongs where TLS terminates, on the host.
+         *
+         * An ASSET_URL (a CDN on another host) is left alone: there, absolute
+         * is the point, and the CDN is the one that must send the header.
+         */
+        \Illuminate\Support\Facades\Vite::createAssetPathsUsing(
+            static function (string $path, ?bool $secure = null): string {
+                $absolute = asset($path, $secure);
+
+                if (config('app.asset_url')) {
+                    return $absolute;
+                }
+
+                $rootRelative = parse_url($absolute, PHP_URL_PATH);
+
+                return is_string($rootRelative) && $rootRelative !== '' ? $rootRelative : $absolute;
+            }
+        );
+
         // The mini-cart drawer renders with every page, so it is correct on a
         // hard refresh rather than only after an add. Previously the header
         // badge came from the server while the drawer waited for JavaScript.
