@@ -3,6 +3,30 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.343
+**Turn any product into a set.** Apply after .342. Works with WordPress
+plugin **1.9.1** (1.9.1 only stops a second installed copy from crashing
+activation; the export is the same as 1.9.0).
+
+**Where:** Catalog → Product editor → open the product → Basics → Product type
+→ "Set — made of other products", then add the products in the box and Save.
+
+- Choosing Set asks once and says what stays: price, sale and its dates,
+  pictures, description, tabs, SEO, reviews and the web address.
+- A converted set is the same as a set built as a set: same box on the product
+  page, same pricing rules, same stock (selling one takes one of each product
+  in the box), and it shows under Catalog → Products → Sets.
+- **Re-importing from WordPress no longer turns it back** into a plain product,
+  and does not overwrite the price of a set priced by a rule.
+- Refused, with the reason named: a product that is already inside another set
+  (it would change that set's price), and a product with options/variants.
+- The set's Stock card explains that its own count is a second limit.
+
+Files: `app/Http/Controllers/Admin/ProductEditorApiController.php`,
+`app/Services/Import/Entities/ProductImporter.php`,
+`resources/views/admin/partials/product-editor-screen.blade.php`,
+`database/migrations/2027_07_07_000000_clear_caches_convert_to_set.php`.
+
 ## 2.60.342
 **After-import fixes, part two: flag bar off, breadcrumb controls, Filters and
 Sort on one row, a working pager with load-on-scroll, and an animated tick on
