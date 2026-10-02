@@ -415,7 +415,7 @@ function openEditor(edit, opener) {
     const more = h('div', { class: 'kbb-qe__more' });
     (edit.more || []).forEach((m, i) => {
         const href = safePath(m.href);
-        if (href) more.appendChild(h('a', { href, text: (i === 0 ? 'More design options → ' : '') + String(m.label || '') }));
+        if (href) more.appendChild(h('a', { href, text: (i === 0 ? 'More design options: ' : '') + String(m.label || '') }));
     });
 
     const cancelBtn = h('button', { type: 'button', class: 'kbb-qe__btn', text: 'Cancel' });
