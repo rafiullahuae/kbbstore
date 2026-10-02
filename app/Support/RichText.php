@@ -364,6 +364,164 @@ final class RichText
     }
 
     /**
+     * forStorefront() for the SHORT DESCRIPTION: the same HTML, minus the empty
+     * lines above and below the copy. (Lane PV)
+     *
+     * WHAT THE OWNER SAW. "The short description on mobile for this product is
+     * not showing by default, and it shows after pressing Read more but with
+     * upper space." The product was an imported WooCommerce row, and its
+     * post_excerpt OPENED WITH EMPTY PARAGRAPHS -- `<p>&nbsp;</p>`, which is
+     * what the classic editor saves for every blank line typed above the copy.
+     * The blurb is capped at three line-boxes with a fade (see `.pdp .bb-desc`),
+     * and two empty paragraphs at 13.5px with their .6em margins are 60px of
+     * nothing: they filled the cap, the copy started at 82px inside an 86px box,
+     * and the fade dissolved what little of it was left. Measured in Chromium on
+     * a seeded twin of that row. "Read more" then lifted the cap and showed the
+     * copy under the same blank band, which is the "upper space".
+     *
+     * It is not CSS's to fix: `:empty` does not match `<p>&nbsp;</p>`, and no
+     * selector can tell a paragraph of non-breaking spaces from a paragraph of
+     * words. It is not the importer's either -- the rows are already on the live
+     * shop, and a render-time step fixes every one of them without a re-import,
+     * the same argument forDisplay() makes for autop().
+     *
+     * ONLY THE EDGES. A blank line BETWEEN two paragraphs is the author's
+     * spacing and is kept; only the run before the first word and after the
+     * last one goes. And a blurb with nothing to trim comes back as the SAME
+     * STRING, byte for byte -- not re-serialised -- so every other product page
+     * in the shop is unchanged (StorefrontEnglishUnchangedTest).
+     */
+    public static function forShortDescription(?string $html): string
+    {
+        return self::trimBlankEdges(self::forStorefront($html));
+    }
+
+    /**
+     * Remove what renders as empty space before the first visible thing and
+     * after the last one: whitespace and `&nbsp;` text, `<br>`, and any element
+     * with no text and nothing visible inside it (`<p>&nbsp;</p>`, `<div></div>`,
+     * `<p><strong> </strong></p>`, `<h2><br></h2>`). An element that has content
+     * is entered rather than removed, so `<p><br>&nbsp;Copy</p>` loses the
+     * `<br>&nbsp;` and keeps its <p>.
+     *
+     * The input is HTML this class has ALREADY CLEANED, and this only ever
+     * removes nodes or trims characters out of a text node -- it cannot add
+     * anything, so the result is as safe to print as what came in.
+     */
+    public static function trimBlankEdges(string $html): string
+    {
+        if (trim($html) === '') {
+            return '';
+        }
+
+        $document = new DOMDocument('1.0', 'UTF-8');
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML(
+            '<?xml encoding="UTF-8"><div id="kbb-richtext-root">' . $html . '</div>',
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET
+        );
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $root = $document->getElementById('kbb-richtext-root');
+
+        if (! $root instanceof DOMElement) {
+            return $html;
+        }
+
+        $changed = self::trimEdge($root, true);
+        $changed = self::trimEdge($root, false) || $changed;
+
+        if (! $changed) {
+            return $html;
+        }
+
+        $out = '';
+
+        foreach (iterator_to_array($root->childNodes) as $child) {
+            $out .= $document->saveHTML($child);
+        }
+
+        return trim($out);
+    }
+
+    /** Elements that are something to look at even with no text in them. */
+    private const VISIBLE_EMPTY = ['img', 'hr', 'table', 'picture', 'video', 'iframe', 'svg', 'canvas', 'figure'];
+
+    /** Whitespace a shopper cannot see: ASCII, no-break, zero-width, BOM. */
+    private const BLANK = '[\s\x{00A0}\x{200B}\x{200C}\x{200D}\x{2060}\x{FEFF}]';
+
+    /**
+     * Trim one edge of $parent's children; true when anything a browser would
+     * have drawn as space was removed (pure layout whitespace does not count,
+     * so a blurb that only had a newline at an edge is not re-serialised).
+     */
+    private static function trimEdge(DOMNode $parent, bool $leading): bool
+    {
+        $changed = false;
+
+        while (($node = $leading ? $parent->firstChild : $parent->lastChild) !== null) {
+            if ($node->nodeType === XML_TEXT_NODE) {
+                $text = (string) $node->nodeValue;
+                $kept = (string) preg_replace($leading ? '/^' . self::BLANK . '+/u' : '/' . self::BLANK . '+$/u', '', $text);
+
+                if ($kept === $text) {
+                    return $changed;
+                }
+
+                // Layout whitespace alone is not a change worth re-serialising for;
+                // a no-break or zero-width space is something the page drew.
+                $ascii = $leading ? ltrim($text, " \t\n\r\0\x0B") : rtrim($text, " \t\n\r\0\x0B");
+                $changed = $changed || $kept !== $ascii;
+
+                if ($kept === '') {
+                    $parent->removeChild($node);
+
+                    continue;
+                }
+
+                $node->nodeValue = $kept;
+
+                return $changed;
+            }
+
+            if (! $node instanceof DOMElement) {
+                $parent->removeChild($node);
+
+                continue;
+            }
+
+            if (strtolower($node->nodeName) === 'br' || self::isBlankElement($node)) {
+                $parent->removeChild($node);
+                $changed = true;
+
+                continue;
+            }
+
+            // Something visible is in here: go in and trim its own edge, then stop.
+            return self::trimEdge($node, $leading) || $changed;
+        }
+
+        return $changed;
+    }
+
+    /** No visible text and nothing visible-without-text anywhere inside. */
+    private static function isBlankElement(DOMElement $element): bool
+    {
+        if (in_array(strtolower($element->nodeName), self::VISIBLE_EMPTY, true)) {
+            return false;
+        }
+
+        foreach (self::VISIBLE_EMPTY as $tag) {
+            if ($element->getElementsByTagName($tag)->length > 0) {
+                return false;
+            }
+        }
+
+        return preg_replace('/' . self::BLANK . '+/u', '', (string) $element->textContent) === '';
+    }
+
+    /**
      * Does any block-level tag survive in this (already clean) HTML?
      *
      * The short description sits in a <p> today. A <p> cannot hold a <p>, a

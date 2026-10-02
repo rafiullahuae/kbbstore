@@ -1674,6 +1674,24 @@ final class EnglishRenderWalk
                     .'    <div class="rel kbb-pgrid ymal-track" data-skin="$5" id="related" data-ymal-track tabindex="0" role="region" aria-label="$3">',
                 'hits' => 1,
             ],
+
+            /*
+             * THE DISCOUNT BADGE ON THE PHOTO, WHICH THE OWNER ASKED TO FIX.
+             *                                                     (Lane PV)
+             *
+             * "The discount label has a white box and white text ... It should
+             * be a green box with white text." The gallery's plain "-N%" span
+             * was the only badge branch that wrote no colour, and `.lbl` sets
+             * none, so it drew white on white. It gains one class, `lbl-off`,
+             * which `.gmain .lbl-off` in kbb-product.css colours. Same element,
+             * same text, same inline style; ONE page in this walk carries a
+             * product on sale, and the diff was read before it was approved.
+             */
+            'the photo\'s discount badge gains its colour class (Lane PV)' => [
+                'pattern' => '#<span class=" lbl" style="top:14px;left:14px">#',
+                'with' => '<span class=" lbl lbl-off" style="top:14px;left:14px">',
+                'hits' => 1,
+            ],
         ];
     }
 

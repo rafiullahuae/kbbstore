@@ -287,6 +287,16 @@ function pppConsoleVars(array $tabs, array $props): array
                 continue;
             }
 
+            // (Lane PV) ppPvValue()'s colour arm: `#` and 3 or 6 hex digits,
+            // upper-cased, or the default.
+            if ($f['type'] === 'colour') {
+                $c = strtoupper(trim((string) $f['value']));
+                $out[$props[$f['key']]] = preg_match('/^#(?:[0-9A-F]{3}|[0-9A-F]{6})$/', $c) === 1
+                    ? $c : strtoupper((string) $f['default']);
+
+                continue;
+            }
+
             $scale = ((float) ($o['scale'] ?? 0)) ?: 1.0;
             $n = min((float) $o['max'], max((float) $o['min'], (float) $f['value']));
             $num = rtrim(rtrim(number_format($n / $scale, 6, '.', ''), '0'), '.');
@@ -315,17 +325,25 @@ it('builds the same value in the console as the stylesheet prints on the shop', 
      * every tenths key at once. (Both were run against the PHP twin here,
      * which is the same rule.)
      */
-    expect(pppConsoleVars($tabs, $props))->toBe(ProductLayout::vars($shipped));
+    /* Compared as SETS of property => value. The tabs are in the order the
+       owner reads the page and vars() is in the order the stylesheet was
+       written; since Lane PV put "Photo & badge" first those are two orders,
+       and which property is listed first changes nothing on either side. */
+    $sorted = static function (array $a): array { ksort($a); return $a; };
+
+    expect($sorted(pppConsoleVars($tabs, $props)))->toBe($sorted(ProductLayout::vars($shipped)));
 
     /* And again on values nobody shipped, so the agreement is not an accident
        of the defaults happening to be round numbers. */
     $moved = array_merge($shipped, [
         'title_m' => 275, 'title_d' => 435, 'desc_s' => 175, 'desc_lh' => 118,
         'body_lh' => 235, 'sec_pad' => 90, 'title_w' => '700', 'heading_w' => '400',
+        'thumb_over' => '1', 'badge_bg' => '#C13E63', 'badge_fg' => '#FFF', 'gal_top_m' => 14,
+        'brand_s' => 135, 'desc_gap_d' => 4,
     ]);
     $movedTabs = ModuleSchema::tabs(ProductLayout::SCHEMA, ProductLayout::TABS, $moved, ProductLayout::POLICY);
 
-    expect(pppConsoleVars($movedTabs, $props))->toBe(ProductLayout::vars($moved));
+    expect($sorted(pppConsoleVars($movedTabs, $props)))->toBe($sorted(ProductLayout::vars($moved)));
 });
 
 it('writes those properties on every input rather than only on save', function () {

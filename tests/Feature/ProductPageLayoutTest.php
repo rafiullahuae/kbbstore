@@ -115,7 +115,8 @@ it('groups every layout control into a tab, and no control into two', function (
         }
     }
 
-    expect(count(ProductLayout::TABS))->toBe(4);
+    // Five since Lane PV added "Photo & badge" — the top of the page.
+    expect(count(ProductLayout::TABS))->toBe(5);
     expect(array_values(array_diff(array_keys(ProductLayout::SCHEMA), $placed)))->toBe([]);
     expect(array_values(array_diff($placed, array_keys(ProductLayout::SCHEMA))))->toBe([]);
     expect(count($placed))->toBe(count(array_unique($placed)));
@@ -137,7 +138,9 @@ it('ships every value at the number the stylesheet already falls back to', funct
     $emitted = pdpLayParse(ProductLayout::css(ProductLayout::defaults()));
     $sheet = pdpLaySheet();
 
-    expect($emitted)->toHaveCount(30);
+    // 30, and Lane PV's sixteen: the photo & badge five, ten laptop/phone
+    // halves of the buy column's gaps, and the brand's size.
+    expect($emitted)->toHaveCount(46);
 
     foreach ($emitted as $name => $value) {
         preg_match_all('/var\('.preg_quote($name, '/').'\s*,\s*([^)]+)\)/', $sheet, $m);
@@ -210,7 +213,7 @@ it('puts one style block on the page the moment a single value moves', function 
     expect($vars['--pl-title-m'])->toBe('24px');
     expect($vars['--pl-title-d'])->toBe('30px');
     expect($vars['--pl-sec-pad'])->toBe('34px');
-    expect($vars)->toHaveCount(30);
+    expect($vars)->toHaveCount(46);
 });
 
 it('prints a half-pixel size as a decimal and never as its stored integer', function () {
@@ -233,7 +236,7 @@ it('answers both halves of the screen from the one endpoint', function () {
     $body = $this->getJson('/admin-api/product-page')->assertOk()->json();
 
     expect($body['sections'])->toHaveCount(count(ProductSections::REGISTRY));
-    expect($body['layout'])->toHaveCount(4);
+    expect($body['layout'])->toHaveCount(5);
 
     $counts = [];
 
@@ -241,16 +244,26 @@ it('answers both halves of the screen from the one endpoint', function () {
         $counts[$tab['label']] = count($tab['fields']);
     }
 
-    // The strip draws these four words and these four numbers.
+    // The strip draws these five words and these five numbers. (Lane PV:
+    // "Photo & badge" is new and first, because it is the top of the page;
+    // buybox_gap moved from Page to Buy column, beside its laptop half.)
     expect($counts)->toBe([
-        'Spacing · Page' => 5,
-        'Spacing · Buy column' => 8,
-        'Type · Buy column' => 12,
+        'Photo & badge' => 5,
+        'Spacing · Page' => 4,
+        'Spacing · Buy column' => 19,
+        'Type · Buy column' => 13,
         'Type · Sections & tabs' => 5,
     ]);
 
+    $photo = $body['layout'][0]['fields'];
+    expect(array_column($photo, 'key'))->toBe(['gal_top_m', 'gal_top_d', 'thumb_over', 'badge_bg', 'badge_fg']);
+    expect($photo[0]['value'])->toBe(0);
+    expect($photo[2]['value'])->toBe('0');
+    expect($photo[3]['type'])->toBe('colour');
+    expect($photo[3]['value'])->toBe('#1F9D55');
+
     // Not merely present: a field carries what the renderer needs to draw it.
-    $first = $body['layout'][0]['fields'][0];
+    $first = $body['layout'][1]['fields'][0];
 
     expect($first['key'])->toBe('sec_pad');
     expect($first['type'])->toBe('range');
