@@ -118,7 +118,8 @@ it('hands the screen every field, grouped into the two tabs', function () {
 
     expect($rowFields('desktop_rows'))
         ->toBe(['items_pt', 'row_h', 'row_pt', 'row_pr', 'row_pb', 'row_pl',
-            'row_gap', 'row_font', 'row_bold', 'qty_size', 'rm_size',
+            // row_brand (2.60.348): the owner's per-device brand line switch.
+            'row_gap', 'row_font', 'row_bold', 'row_brand', 'qty_size', 'rm_size',
             'tab_min', 'tab_pad', 'tab_font', 'tab_gap'])
         ->and($rowFields('mobile_rows'))->toBe($rowFields('desktop_rows'));
 

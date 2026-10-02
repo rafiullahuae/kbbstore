@@ -76,9 +76,12 @@
     transition:grid-template-rows .34s cubic-bezier(.2,.7,.2,1),visibility 0s linear .34s}
 .pts-auth-btn[aria-expanded="true"] + .pts-auth-panel{grid-template-rows:1fr;visibility:visible;
     transition:grid-template-rows .34s cubic-bezier(.2,.7,.2,1),visibility 0s linear 0s}
-.pts-auth-in{min-block-size:0;overflow:hidden}
+/* The room at the top and the end is where the close circle overhangs the
+   card's corner: this box clips (it is what the slide collapses), so the
+   overhang has to be inside it. */
+.pts-auth-in{min-block-size:0;overflow:hidden;padding-block-start:2px;padding-inline-end:12px}
 .pts-auth-card{position:relative;display:flex;align-items:flex-start;gap:12px;
-    margin-block-start:10px;padding-block:14px;padding-inline:14px 44px;
+    margin-block-start:20px;padding-block:14px;padding-inline:14px 26px;
     background:#F3FAF6;border:1px solid #D4EEDF;border-radius:12px;
     color:var(--ink-2,#5E545A);font-size:13px;line-height:1.6}
 .pts-auth-card .pts-yes{inline-size:22px;block-size:22px;flex:0 0 auto;color:var(--pts-tick);margin-block-start:1px}
@@ -86,26 +89,36 @@
 .pts-auth-copy p{margin:0}
 .pts-auth-copy p + p{margin-block-start:8px}
 
-/* The small reddish circle with the × in it, in the card's top corner. */
-.pts-auth-x{position:absolute;inset-block-start:10px;inset-inline-end:10px;
+/* The close circle, CENTRED ON THE CARD'S TOP-END CORNER -- half outside the
+   box, on its edge (the owner, 2 October: "the box cross should be half
+   outside the box on right color edge ... keep only circle, remove out border
+   from the cross icon circle"). A solid reddish disc with a white ×, no ring:
+   inside the text it read as a "not provided" mark next to the claim. */
+.pts-auth-x{position:absolute;inset-block-start:-12px;inset-inline-end:-12px;
     inline-size:24px;block-size:24px;padding:0;display:grid;place-items:center;
-    border-radius:50%;border:1px solid #F2B8B5;background:#FDECEC;color:#D64545;cursor:pointer;
+    border-radius:50%;border:0;background:#E5484D;color:#fff;cursor:pointer;
+    box-shadow:0 2px 6px rgba(42,34,40,.18);
     transition:background .15s,transform .15s}
-.pts-auth-x svg{inline-size:13px;block-size:13px}
-.pts-auth-x:hover{background:#FAD9D7}
+.pts-auth-x svg{inline-size:12px;block-size:12px}
+.pts-auth-x:hover{background:#D33A40}
 .pts-auth-x:focus-visible{outline:2px solid #D64545;outline-offset:2px}
 
 /* ── 3. the share bar ────────────────────────────────────────────────────── */
-.pts-share{display:flex;align-items:center;flex-wrap:wrap;gap:10px 12px;position:relative}
-.pts-share-label{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink,#2A2228)}
-.pts-share-list{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none;min-inline-size:0}
+/* ONE LINE, ALWAYS (2.60.348): "share + icons must come in same line". The
+   list never wraps; each button is a flex item that SHRINKS toward 24px when
+   the line is short, so a 320px phone still holds the label and every icon in
+   a row, sized by the browser's own flex arithmetic rather than by script. */
+.pts-share{display:flex;align-items:center;flex-wrap:nowrap;gap:12px;position:relative}
+.pts-share-label{flex:0 0 auto;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink,#2A2228)}
+.pts-share-list{display:flex;flex:1 1 auto;flex-wrap:nowrap;align-items:center;gap:6px;margin:0;padding:0;list-style:none;min-inline-size:0}
+.pts-share-list > li{display:flex;flex:0 1 var(--pts-size,34px);min-inline-size:24px}
 .pts-sb{--pts-c:#2A2228;
-    display:grid;place-items:center;inline-size:var(--pts-size,34px);block-size:var(--pts-size,34px);
+    display:grid;place-items:center;inline-size:100%;max-inline-size:var(--pts-size,34px);block-size:auto;aspect-ratio:1;
     padding:0;border:0;border-radius:50%;cursor:pointer;
     background:var(--pts-c);color:#fff;
     box-shadow:0 2px 6px -2px color-mix(in srgb,var(--pts-c) 70%,transparent);
     transition:transform .16s,box-shadow .16s,filter .16s}
-.pts-sb svg{inline-size:calc(var(--pts-size,34px) * .52);block-size:calc(var(--pts-size,34px) * .52)}
+.pts-sb svg{inline-size:52%;block-size:52%}
 .pts-sb:focus-visible{outline:2px solid var(--pts-c);outline-offset:3px}
 .pts-s-rounded .pts-sb{border-radius:28%}
 /* One dark colour for all, his "mono" choice. */
@@ -114,6 +127,14 @@
 .pts-more{background:linear-gradient(135deg,#F58529,#DD2A7B 55%,#8134AF)}
 .pts-s-mono .pts-more{background:var(--ink,#2A2228)}
 .pts-more[hidden]{display:none}
+
+/* COLOURED ICONS, NO CIRCLES — the shipped style. Each glyph in its own
+   network's colour on the page itself, a little larger inside the same box so
+   it carries the weight the disc used to; on a desktop, a whisper of that
+   colour behind it on hover. */
+.pts-s-icons .pts-sb,.pts-s-icons .pts-more{background:transparent;box-shadow:none;color:var(--pts-c);border-radius:10px}
+.pts-s-icons .pts-more{--pts-c:#DD2A7B}
+.pts-s-icons .pts-sb svg{inline-size:70%;block-size:70%}
 .pts-more-li:has(> [hidden]){display:none}
 
 /* The hover lift, on a device with a real pointer only — a phone's "hover"
@@ -122,11 +143,15 @@
 @media (hover:hover) and (pointer:fine){
     .pts-sb:hover{transform:translateY(-2px);filter:saturate(1.12);
         box-shadow:0 6px 14px -6px color-mix(in srgb,var(--pts-c) 85%,transparent)}
-    .pts-s-mono .pts-sb:hover{box-shadow:0 6px 14px -6px rgba(42,34,40,.5)}}
+    .pts-s-mono .pts-sb:hover{box-shadow:0 6px 14px -6px rgba(42,34,40,.5)}
+    .pts-s-icons .pts-sb:hover{filter:none;box-shadow:none;
+        background:color-mix(in srgb,var(--pts-c) 11%,transparent)}}
 
 /* "Link copied". A role=status live region, so a screen reader hears it; drawn
    as a small pill that fades in beside the buttons and out again. */
-.pts-copied{flex:0 0 auto;font-size:12px;font-weight:700;color:#fff;background:#2E9E6B;
+/* Under the row rather than in it, so the confirmation can never push the
+   icons onto a second line. */
+.pts-copied{position:absolute;inset-block-start:calc(100% + 6px);inset-inline-start:0;z-index:2;font-size:12px;font-weight:700;color:#fff;background:#2E9E6B;
     padding:4px 10px;border-radius:99px;opacity:0;transform:translateY(3px);pointer-events:none;
     transition:opacity .18s,transform .18s}
 .pts-copied:empty{display:none}

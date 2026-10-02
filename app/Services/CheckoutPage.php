@@ -387,6 +387,17 @@ class CheckoutPage
                           ['min' => 80, 'max' => 130, 'step' => 5, 'unit' => '%']],
         'd_row_bold'  => ['bool', 'Bold text in rows', true,
                           'On is what the summary does today: a semibold name and a bold price. Off gives both a lighter weight without changing their sizes.'],
+        /*
+         * THE BRAND LINE IN THE ORDER SUMMARY, PER DEVICE.         (2.60.348)
+         *
+         * "same on checkout rows": the cart page's switch, here, with the same
+         * defaults he set there -- on for a desktop, off for a phone. The rows
+         * had no brand line at all before; partials/checkout/summary-items
+         * draws one only when either switch is on, and the stylesheet hides it
+         * per device at the page's own 900px.
+         */
+        'd_row_brand' => ['bool', 'Show the brand name', true,
+                          'The small uppercase brand line above each product name in the order summary, on a desktop. The phone has its own switch under Mobile · Product rows.'],
         'd_qty_size'  => ['range', 'Quantity stepper size', 100,
                           'The − and + buttons on each line, and the figure between them. A multiplier, so the control keeps its shape at every value instead of a bigger glyph rattling around in the same box.',
                           ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
@@ -453,6 +464,8 @@ class CheckoutPage
                           ['min' => 80, 'max' => 130, 'step' => 5, 'unit' => '%']],
         'm_row_bold'  => ['bool', 'Bold text in rows', true,
                           'On is what the summary does today: a semibold name and a bold price. Off gives both a lighter weight without changing their sizes.'],
+        'm_row_brand' => ['bool', 'Show the brand name', false,
+                          'Off, as asked: a phone shows the product name without the brand line above it.'],
         'm_qty_size'  => ['range', 'Quantity stepper size', 100,
                           'The − and + buttons on each line, and the figure between them. Their 44px touch target is set separately and is not reduced by this, so a smaller stepper is still as easy to hit.',
                           ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
@@ -771,7 +784,7 @@ class CheckoutPage
                            ['d_t_title', 'd_t_lead', 'd_t_h2', 'd_t_label', 'd_t_input', 'd_t_ph', 'd_t_trust']],
         'desktop_rows' => ['Desktop · Product rows', 'The lines in the order summary on the right — picture, name, stepper and price. Nothing on this tab can reach a phone, and nothing on it can reach the cart page.',
                            ['d_items_pt', 'd_row_h', 'd_row_pt', 'd_row_pr', 'd_row_pb', 'd_row_pl',
-                            'd_row_gap', 'd_row_font', 'd_row_bold', 'd_qty_size', 'd_rm_size',
+                            'd_row_gap', 'd_row_font', 'd_row_bold', 'd_row_brand', 'd_qty_size', 'd_rm_size',
                             'd_tab_min', 'd_tab_pad', 'd_tab_font', 'd_tab_gap']],
         'mobile'       => ['Mobile · Layout', 'The single-column checkout, at 900px and below. Nothing on this tab can reach a desktop.',
                            ['m_shell_pt', 'm_shell_pb',
@@ -784,7 +797,7 @@ class CheckoutPage
                             'm_t_input', 'm_t_input_floor', 'm_t_ph', 'm_t_trust']],
         'mobile_rows'  => ['Mobile · Product rows', 'The lines inside the summary card at the top of the phone page. Nothing on this tab can reach a desktop, and nothing on it can reach the cart page.',
                            ['m_items_pt', 'm_row_h', 'm_row_pt', 'm_row_pr', 'm_row_pb', 'm_row_pl',
-                            'm_row_gap', 'm_row_font', 'm_row_bold', 'm_qty_size', 'm_rm_size',
+                            'm_row_gap', 'm_row_font', 'm_row_bold', 'm_row_brand', 'm_qty_size', 'm_rm_size',
                             'm_tab_min', 'm_tab_pad', 'm_tab_font', 'm_tab_gap']],
         /* ITS OWN TAB BECAUSE THE OWNER COULD NOT FIND IT. These four shipped
            at the foot of the two Layout tabs, under ten spacing sliders, and

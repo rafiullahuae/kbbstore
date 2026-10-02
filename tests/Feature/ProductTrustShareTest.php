@@ -309,7 +309,8 @@ it('stores a select only as one of its own options, and clamps every number', fu
     ptsSet(['share_style' => 'neon', 'share_shape' => 'rounded', 'del_above_m' => 999, 'share_size' => -4, 'del_bg' => 'red;background:url(x)']);
 
     $all = app(ProductTrustShare::class)->all();
-    expect($all['share_style'])->toBe('brand')
+    // 'icons' since 2.60.348: the default the owner asked for.
+    expect($all['share_style'])->toBe('icons')
         ->and($all['share_shape'])->toBe('rounded')
         ->and($all['del_above_m'])->toBe(60)
         ->and($all['share_size'])->toBe(26)
@@ -337,7 +338,7 @@ it('refuses a hand-written select or spacing row at render as well', function ()
     SettingsService::forgetMemo();
 
     $html = ptsPage($product);
-    expect($html)->toContain('class="pts-share pts-s-brand pts-s-rounded"')
+    expect($html)->toContain('class="pts-share pts-s-icons pts-s-rounded"')
         ->and($html)->not->toContain('onclick')
         ->and($html)->toContain('--pts-below-d:60px');
 });
@@ -660,4 +661,68 @@ it('clips a long blurb on a word boundary with an ellipsis', function () {
         ->and($clip)->toEndWith('…')
         ->and($clip)->not->toContain('  ');
     expect(ProductShare::clip('Short.', 150))->toBe('Short.');
+});
+
+it('sits the close circle on the card corner, half outside, with no ring', function () {
+    /*
+     * The owner, 2 October 2026, on the open Authenticity panel: "the box
+     * cross should be half outside the box on right color edge. it should not
+     * look like something we don't provide, keep only circle, remove out
+     * border from the cross icon circle." Inside the text, a pale red ringed ×
+     * beside "100% authentic" read as a "not provided" mark.
+     *
+     * Centred on the corner: offsets of minus half its 24px size. The wrapper
+     * that clips the slide keeps room for the overhang, or the half outside
+     * would be cut off.
+     *
+     * MUTATIONS, RUN: put `inset-block-start:10px;inset-inline-end:10px` back
+     * -- red; put `border:1px solid #F2B8B5` back -- red; drop the wrapper's
+     * `padding-inline-end:12px` -- red.
+     */
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-pdp-trust.css'));
+
+    preg_match('/\.pts-auth-x\{([^}]*)\}/', $css, $x);
+    preg_match('/\.pts-auth-in\{([^}]*)\}/', $css, $in);
+
+    expect($x[1])->toContain('inset-block-start:-12px;inset-inline-end:-12px')
+        ->and($x[1])->toContain('inline-size:24px;block-size:24px')
+        ->and($x[1])->toContain('border:0;')
+        ->and($x[1])->not->toContain('solid')
+        ->and($in[1])->toContain('overflow:hidden')
+        ->and($in[1])->toContain('padding-inline-end:12px');
+});
+
+it('ships the share bar as coloured icons, no circles, on one line', function () {
+    /*
+     * The owner, 2 October 2026, on the round brand-coloured buttons: "i want
+     * only icons, not filled with circles. make it super beautiful, and share +
+     * icons must come in same line."
+     *
+     * 'icons' is the shipped style (the circle styles stay as options); the
+     * row never wraps, and each button is a flex item that shrinks toward 24px,
+     * so a narrow phone keeps the label and every icon on one line without a
+     * script measuring anything. The "Link copied" pill sits under the row, out
+     * of the flex line, so it cannot push an icon down either.
+     *
+     * MUTATIONS, RUN: default 'brand' -- red; `flex-wrap:wrap` back on
+     * .pts-share-list -- red; drop the transparent background from the icons
+     * style -- red; put the pill back in the flow (`flex:0 0 auto`) -- red.
+     */
+    expect(ProductTrustShare::SCHEMA['share_style'][2])->toBe('icons');
+
+    $html = ptsPage(ptsProduct());
+    expect($html)->toContain('class="pts-share pts-s-icons pts-s-circle"');
+
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-pdp-trust.css'));
+    $rule = function (string $selector) use ($css): string {
+        preg_match('/(?:^|\})'.preg_quote($selector, '/').'\{([^}]*)\}/m', $css, $m);
+
+        return $m[1] ?? '';
+    };
+
+    expect($rule('.pts-share'))->toContain('flex-wrap:nowrap')
+        ->and($rule('.pts-share-list'))->toContain('flex-wrap:nowrap')
+        ->and($rule('.pts-share-list > li'))->toContain('min-inline-size:24px')
+        ->and($rule('.pts-s-icons .pts-sb,.pts-s-icons .pts-more'))->toContain('background:transparent')
+        ->and($rule('.pts-copied'))->toContain('position:absolute');
 });

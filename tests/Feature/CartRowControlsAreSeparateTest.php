@@ -118,12 +118,20 @@ it('adds no rule and no byte to a shop that has moved nothing', function () {
      */
     crSettings();
 
-    expect(app(CartPage::class)->rowCss())->toBe('');
+    /*
+     * ADVANCED in 2.60.348, for one rule and nothing else: the owner asked for
+     * the brand line OFF on phones by default ("keep for desktop ON by default,
+     * and OFF for mobile devices"), so a shop that moved nothing now prints
+     * exactly that one rule and not one row size. CartCheckoutBrandSwitchTest
+     * owns it.
+     */
+    expect(app(CartPage::class)->rowCss())->toBe('@media (max-width:600px){.kbb-cartpage .items .ci .cbrand{display:none}}');
     expect(app(SetAppearance::class)->storefrontCss())->toBe('');
 
     $html = crTwoLineCartHtml();
 
-    expect($html)->not->toContain('kbb-cartrows')
+    expect(substr_count($html, 'kbb-cartrows'))->toBe(1)
+        ->and($html)->not->toContain('.ci:not(.ci-set)')
         ->and($html)->not->toContain('id="kbb-set"');
 });
 
@@ -212,9 +220,18 @@ it('cannot be dragged into a row that clips its own name or stepper', function (
     $bannedOnRow = ['height:', 'overflow:', 'max-height'];
     $bannedAnywhere = ['display:none', 'visibility:hidden'];
 
-    $walk = function (array $keys, string $prefix, callable $emit) use ($bannedOnRow, $bannedAnywhere) {
+    /*
+     * The brand switches (2.60.348) are the ONE deliberate hide on a cart row,
+     * and they are switches the owner asked for, not sliders: held ON here so
+     * the walk sees only what a slider can emit, and not walked themselves.
+     */
+    $brandSwitches = ['ci_brand_on', 'ci_brand_on_m'];
+    crSettings()->set('cartpage_ci_brand_on', true);
+    crSettings()->set('cartpage_ci_brand_on_m', true);
+
+    $walk = function (array $keys, string $prefix, callable $emit) use ($bannedOnRow, $bannedAnywhere, $brandSwitches) {
         foreach ($keys as $key => $spec) {
-            if (! str_starts_with($key, 'ci_')) {
+            if (! str_starts_with($key, 'ci_') || ($prefix === 'cartpage_' && in_array($key, $brandSwitches, true))) {
                 continue;
             }
 
