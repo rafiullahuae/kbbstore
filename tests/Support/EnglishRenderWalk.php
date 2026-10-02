@@ -1694,6 +1694,21 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * THE SEARCH PANEL CARRIES ITS TRENDING WORDS.         (2.60.346)
+             *
+             * The owner: "the default search tags box showing with little delays
+             * upon click on search box. it must be shown immidiately". The
+             * header's #kbbSuggest gains data-starter, the words the panel
+             * paints on focus without waiting for /api/search/starter. An
+             * attribute, never visible text; one per page that has a header.
+             * SearchStarterInstantTest pins what it carries.
+             */
+            'the search panel seed (2.60.346)' => [
+                'pattern' => '#\n\s*data-starter="[^"]*"#',
+                'hits' => 31,
+            ],
+
+            /*
              * THE BRAND PAGE'S GRID GAINS AN ID.                      (Lane PR)
              *
              * The owner: "Remove pagination from the categories and brands; it
