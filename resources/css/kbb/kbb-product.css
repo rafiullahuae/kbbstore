@@ -1171,7 +1171,9 @@ a{color:inherit;text-decoration:none}
 
 /* ── THE TICK: a real checkbox, laid over the whole picture ─────────────────
    The input covers the picture (opacity 0), so a thumb anywhere on the photo
-   ticks it; the circle is what it looks like. Green with a white tick when on
+   ticks and unticks it — the owner: "the product image will also work same as
+   the check circle" — and the circle is what it looks like. The picture is not
+   a link in this section; the title under it is. Green with a white tick when on
    (the shop's --green, the colour of the cart rail's "+"), an empty white ring
    with a grey edge when off. */
 .bt-cb{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:2}

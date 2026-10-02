@@ -4,6 +4,7 @@
  *
  *   sh tools/rb-preview.sh 9400                     # boots tools/rb-seed.php
  *   RB_BASE=http://127.0.0.1:9400 node tools/rb-shots.cjs
+ *   node tools/rb-shots.cjs overview          # rebuild overview.png only
  *
  * Writes docs/rb-shots/*.png, docs/rb-shots/overview.png and
  * docs/rb-shots/MEASUREMENTS.json.
@@ -101,7 +102,9 @@ async function productPage(ctx, width, url = SUN) {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   const ctx = await browser.newContext({ deviceScaleFactor: 2 });
-  const admin = await login(ctx);
+  const sheetOnly = process.argv[2] === 'overview';
+  const admin = sheetOnly ? null : await login(ctx);
+  if (!sheetOnly) {
 
   // As it ships on his shop: on, four products, best sellers.
   await save(admin, { options: { on: true, count: 4, rule: 'best', hide_oos: true, same_brand: false, show_total: true, title: '', title_ar: '' }, phone: true, laptop: true });
@@ -118,6 +121,29 @@ async function productPage(ctx, width, url = SUN) {
     await page.waitForTimeout(250);
     await sectionShot(page, `02-unchecked-${w}.png`);
     M[`unchecked-${w}`] = await measure(page);
+
+    // 2b. the PICTURE is the same control: tap the toner's photo (away from
+    //     the circle) to clear it again, then the moisturiser's photo off and on.
+    await page.click('.bt-card:nth-child(3) .bt-cb'); // back to four
+    await page.waitForTimeout(150);
+    const im = await page.$('.bt-card:nth-child(2) .im');
+    const ib = await im.boundingBox();
+    const at = { position: { x: Math.round(ib.width * 0.3), y: Math.round(ib.height * 0.75) } };
+    const state = () => page.evaluate(() => ({
+      checked: [...document.querySelectorAll('.bt-cb')].map((c) => c.checked),
+      button: document.querySelector('.bt-buy').textContent.trim(),
+      total: document.querySelector('.bt-total') ? document.querySelector('.bt-total').textContent.replace(/\s+/g, ' ').trim() : null,
+      url: location.pathname,
+    }));
+    await im.click(at);
+    await page.waitForTimeout(250);
+    await sectionShot(page, `07-image-off-${w}.png`);
+    M[`image-off-${w}`] = await state();
+    await im.click(at);
+    await page.waitForTimeout(250);
+    await sectionShot(page, `08-image-on-${w}.png`);
+    M[`image-on-${w}`] = await state();
+    await page.click('.bt-card:nth-child(3) .bt-cb'); // the toner off again, as in shot 02
 
     // 3. the button: every ticked product, one request, the cart panel open
     await page.click('[data-bt-buy]');
@@ -193,11 +219,13 @@ async function productPage(ctx, width, url = SUN) {
   }
 
   fs.writeFileSync(path.join(OUT, 'MEASUREMENTS.json'), JSON.stringify(M, null, 2));
+  }
 
   // overview.png — the set on one sheet
   const sheet = await ctx.newPage();
   await sheet.setViewportSize({ width: 1600, height: 1000 });
-  const img = (f) => `file://${path.join(OUT, f)}`;
+  // Inlined: a page made with setContent() is about:blank and may not load file:// pictures.
+  const img = (f) => `data:image/png;base64,${fs.readFileSync(path.join(OUT, f)).toString('base64')}`;
   const tile = (f, cap, wpx) => fs.existsSync(path.join(OUT, f)) ? `<figure><img src="${img(f)}" style="width:${wpx}px"><figcaption>${cap}</figcaption></figure>` : '';
   await sheet.setContent(`<html><body style="font:14px system-ui;margin:24px;background:#f6f7f9">
     <h1 style="font-size:22px;margin:0 0 6px">Lane RB — Buy these together</h1>
@@ -207,6 +235,7 @@ async function productPage(ctx, width, url = SUN) {
     <div>${tile('01-default-1280.png', '1280 · as it ships', 760)}${tile('05-sunscreen-five-390.png', '390 · five: moisturiser, toner, cleansing oil, mask', 360)}</div>
     <div>${tile('02-unchecked-1280.png', '1280 · one cleared', 760)}${tile('04-cart-rail-1280.png', '1280 · the cart rail', 560)}</div>
     <div>${tile('05-sunscreen-five-1280.png', '1280 · a sunscreen at five', 760)}${tile('03-added-1280.png', '1280 · pressed: the cart panel', 560)}</div>
+    <div>${tile('07-image-off-390.png', '390 · the cream\'s PICTURE tapped → cleared, “Buy 3 items together”', 360)}${tile('08-image-on-390.png', '390 · tapped again → ticked, “Buy 4”', 360)}${tile('07-image-off-1280.png', '1280 · picture tapped → cleared', 560)}${tile('08-image-on-1280.png', '1280 · tapped again', 560)}</div>
     <div>${tile('06-admin-top-1280.png', 'Appearance → Product page → Buy these together', 900)}${tile('06-admin-1280.png', '… its Category pairs, Sunscreens customised', 900)}${tile('06-admin-390.png', 'the tab at 390', 300)}</div>
   </body></html>`, { waitUntil: 'load' });
   await sheet.screenshot({ path: path.join(OUT, 'overview.png'), fullPage: true });

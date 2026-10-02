@@ -655,7 +655,6 @@ final class ArabicInterfaceDrafts
             'store.buy_together.button_one' => 'أضف منتجًا واحدًا إلى السلة',
             'store.buy_together.button_none' => 'اختر منتجًا واحدًا على الأقل',
             'store.buy_together.total' => 'المجموع:',
-            'store.buy_together.include' => 'أضف :name',
             'store.buy_together.sold_out' => 'نفدت الكمية',
             'store.buy_together.added' => 'تمت إضافة :count منتجات إلى حقيبتك',
             'store.buy_together.added_one' => 'تمت الإضافة إلى الحقيبة',

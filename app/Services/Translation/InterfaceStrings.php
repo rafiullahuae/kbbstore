@@ -1156,7 +1156,6 @@ final class InterfaceStrings
             'buy_together.button_one' => 'Add 1 item to cart',
             'buy_together.button_none' => 'Tick at least one product',
             'buy_together.total' => 'Total:',
-            'buy_together.include' => 'Include :name',
             'buy_together.sold_out' => 'Sold out',
             'buy_together.added' => ':count items added to your bag',
             'buy_together.added_one' => 'Added to bag',

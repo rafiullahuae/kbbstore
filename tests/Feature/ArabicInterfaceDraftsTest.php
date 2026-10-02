@@ -547,15 +547,15 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * run. Email is "البريد" rather than "البريد الإلكتروني", which the
      * three e-mail FIELDS already use — the collision test below.
      *
-     * ── 1,094 -> 1,108: LANE RB'S FOURTEEN ──────────────────────────────
+     * ── 1,094 -> 1,107: LANE RB'S THIRTEEN ──────────────────────────────
      *
      * "Buy these together": its heading, the button's three counted
-     * wordings, the total's label, the tick's screen-reader name, "Sold out",
+     * wordings, the total's label, "Sold out",
      * and the seven sentences the one-request add answers with
      * (store.buy_together.*), seeded by
      * 2027_07_16_000700_seed_buy_together_arabic_drafts. Read off the run.
      */
-    expect($ui['drafts'])->toBe(1108, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1107, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

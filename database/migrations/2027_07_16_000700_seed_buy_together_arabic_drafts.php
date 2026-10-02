@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Arabic DRAFTS for the fourteen strings "Buy these together" added. (Lane RB)
+ * Arabic DRAFTS for the thirteen strings "Buy these together" added. (Lane RB)
  *
  * A copy of 2027_07_15_000100_seed_product_mobile_sections_arabic_drafts with
  * its own keys. Drafts are never served (TranslationStore serves approved
@@ -27,7 +27,6 @@ return new class extends Migration
         'store.buy_together.button_one',
         'store.buy_together.button_none',
         'store.buy_together.total',
-        'store.buy_together.include',
         'store.buy_together.sold_out',
         'store.buy_together.added',
         'store.buy_together.added_one',

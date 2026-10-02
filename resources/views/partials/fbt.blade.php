@@ -19,6 +19,16 @@
         with a white tick when on, an empty white ring when off;
       · a small white "+" sits between two cards, centred on the pictures.
 
+    ── THE PICTURE IS THE TICK; THE TITLE IS THE LINK ────────────────────────
+    "the product image will also work same as the check circle [...] and
+    product title will go to the product page. this only for this section."
+    The picture is a <label> around that product's ONE checkbox, which is laid
+    over the whole picture (kbb-product.css .bt-cb), and the circle is drawn
+    inside the same label — so a tap on the photo and a tap on the circle are
+    taps on the same input. No script toggles anything: fbt.js reads `checked`
+    on `change`. The checkbox is named by the product; the name and the price
+    below are the link to the product page, as on the cart rail.
+
     ── ONE BUTTON ─────────────────────────────────────────────────────────────
     "Buy 4 items together" counts the ticks; resources/js/kbb/fbt.js keeps it
     in step (plain counting — nothing is measured) and posts every ticked
@@ -87,7 +97,7 @@
         <div class="bt-rail" role="group" aria-labelledby="btTitle">
             @foreach ($btRows as $btI => $btR)
             <div class="bt-card{{ $btR['main'] ? ' is-main' : '' }}{{ $btR['oos'] ? ' is-oos is-off' : '' }}" data-price="{{ $btR['now'] }}"@if ($btR['main'] && $btMainVar) data-bt-var @endif>
-                <label class="im" style="{{ $btR['style'] }}">{{ $btR['initials'] }}<input type="checkbox" class="bt-cb" value="{{ $btR['p']->id }}"@if (! $btR['oos']) checked @else disabled @endif aria-label="{{ __('store.buy_together.include', ['name' => $btR['name']]) }}"><span class="bt-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5.5 12.5 4.2 4.2 8.8-9.4"/></svg></span>@if ($btI > 0)<span class="bt-plus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></span>@endif</label>
+                <label class="im" style="{{ $btR['style'] }}">{{ $btR['initials'] }}<input type="checkbox" class="bt-cb" value="{{ $btR['p']->id }}"@if (! $btR['oos']) checked @else disabled @endif aria-label="{{ $btR['name'] }}"><span class="bt-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5.5 12.5 4.2 4.2 8.8-9.4"/></svg></span>@if ($btI > 0)<span class="bt-plus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></span>@endif</label>
                 <a class="lk" href="{{ $btR['p']->url() }}">
                     <span class="nm">{{ $btR['name'] }}</span>
                     <span class="pr">@if ($btR['oos']){{ __('store.buy_together.sold_out') }}@else{!! \App\Support\Money::format($btR['now']) !!}@if ($btR['was'] > $btR['now'])<span class="cwas">{!! \App\Support\Money::format($btR['was']) !!}</span>@endif @endif</span>

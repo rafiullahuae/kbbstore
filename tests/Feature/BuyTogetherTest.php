@@ -411,6 +411,119 @@ it('draws the cart rail\'s cards with a green tick on each, a plus between them,
     expect($html)->toContain('--cpg-per:4.50')->toContain('--bt-d-card:calc(');
 });
 
+it('makes the picture the same control as the circle, labelled by the product name, and the title the link', function () {
+    /*
+     * The owner, later the same day: "for buy together section, the product
+     * image will also work same as the check circle. upon click it will
+     * un-check and upon click again on image, it will be checked. and product
+     * title will go to the product page. this only for this section."
+     *
+     * ONE CONTROL, NOT TWO. Each picture is a <label> wrapping that product's
+     * one checkbox, and the checkbox is laid over the whole picture, so a tap
+     * anywhere on the photo — or on the circle, which is inside the same
+     * label — is a tap on the SAME input. The script has no click handler of
+     * its own on the picture and keeps no second state: it reads `checked`
+     * on `change`, so the circle, the count and what is posted cannot
+     * disagree. A screen reader meets one checkbox per product, named by the
+     * product; the title is an ordinary link, so Enter on it follows it.
+     *
+     * What a defect looks like on the shop: the picture opening the product
+     * page (the cart rail's card has its picture outside the link, but a
+     * careless "same card" would wrap it), or a second toggle that unticks the
+     * circle while the button still counts it.
+     *
+     * MUTATIONS, RUN: move the <input> out of the <label class="im"> → red
+     * ("one checkbox inside each picture"); wrap the picture in the title's
+     * <a> → red ("the picture is not a link"); add `cb.checked = !cb.checked`
+     * on a picture click in fbt.js → red ("no second state").
+     */
+    $s = btShop();
+    btOn();
+    $html = btPage($s['self']);
+
+    preg_match_all('#<div class="bt-card[^"]*"[^>]*>(.*?)</a>\s*</div>#s', $html, $cards);
+    expect($cards[1])->toHaveCount(4);
+
+    foreach ([$s['self'], $s['m1'], $s['t1'], $s['o1']] as $i => $p) {
+        $card = $cards[1][$i];
+
+        // One checkbox, INSIDE the picture's label, named by the product.
+        expect(preg_match('#<label class="im"[^>]*>(.*?)</label>#s', $card, $label))->toBe(1);
+        expect(substr_count($card, 'type="checkbox"'))->toBe(1)
+            ->and(substr_count($label[1], '<input type="checkbox" class="bt-cb" value="'.$p->id.'"'))->toBe(1, 'one checkbox inside each picture')
+            ->and($label[1])->toContain('aria-label="'.e($p->name).'"');
+
+        // The picture is not a link, and nothing in it is.
+        expect($label[1])->not->toContain('<a ')
+            ->and($card)->not->toMatch('#<a[^>]*>\s*<label class="im"#');
+
+        // The title is the link, to this product's page.
+        expect($card)->toMatch('#<a class="lk" href="'.preg_quote(e($p->url()), '#').'">\s*<span class="nm">'.preg_quote(e($p->name), '#').'</span>#');
+    }
+
+    // The checkbox covers the picture; the circle and the "+" let the tap through.
+    $css = (string) preg_replace('#/\*.*?\*/#s', '', (string) file_get_contents(resource_path('css/kbb/kbb-product.css')));
+    expect($css)->toMatch('/\.bt-cb\{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:2\}/')
+        ->and($css)->toMatch('/\.bt-tick\{[^}]*pointer-events:none/')
+        ->and($css)->toMatch('/\.bt-plus\{[^}]*pointer-events:none/');
+
+    // No second state: the script never sets a checkbox, it reads them on change.
+    $js = (string) file_get_contents(resource_path('js/kbb/fbt.js'));
+    expect($js)->not->toMatch('/\.checked\s*=[^=]/')
+        ->and($js)->toContain("if (event.target.classList?.contains('bt-cb')) refresh();");
+});
+
+it('leaves the cart page\'s Recommended rail and the shared product card exactly as they were', function () {
+    /*
+     * "this only for this section. don't touch anything else." The section
+     * COPIES the cart rail's card; it does not share a template or a class
+     * with it, so neither can move when this one does.
+     *
+     * Two halves. StorefrontEnglishUnchangedTest renders every storefront
+     * page, the basket's /cart included, and holds it byte-identical. This
+     * adds the direct check: the rail on a real basket still draws its "+"
+     * add button on every card and carries nothing of this section's, and the
+     * four files that draw the rail and the shared card are unchanged on this
+     * branch against the integration branch it was cut from.
+     *
+     * MUTATION, RUN: add `bt-card` to the rail's `<div class="cpg-card">` in
+     * store/cart-inner.blade.php → red, on the rendered rail and on the file.
+     */
+    $s = btShop();
+    btOn();
+
+    $settings = app(SettingsService::class);
+    $settings->set('cartpage_layout', 'squeeze');
+    $settings->set('cartpage_rec_ids', implode(',', [$s['m1']->id, $s['t1']->id, $s['o1']->id]));
+    btFlush();
+
+    $cart = \App\Models\Cart::create(['token' => (string) Str::uuid(), 'currency' => 'AED', 'status' => 'active', 'shipping_country' => 'AE', 'last_activity_at' => now()]);
+    $cart->items()->create(['product_id' => $s['k1']->id, 'quantity' => 1, 'unit_price' => 5000]);
+
+    $html = (string) test()->withCredentials()
+        ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
+        ->withUnencryptedCookie(CartService::COOKIE, $cart->token)
+        ->get('/cart')->assertOk()->getContent();
+
+    expect(preg_match('#<section class="cpg-rec">.*?</section>#s', $html, $rail))->toBe(1);
+    expect(substr_count($rail[0], '<div class="cpg-card">'))->toBe(3)
+        ->and(substr_count($rail[0], 'class="kc-badd" type="button" data-add="'))->toBe(3)
+        ->and($rail[0])->not->toMatch('/bt-(card|cb|tick|plus)/');
+
+    $base = trim((string) @shell_exec('git -C '.escapeshellarg(base_path()).' merge-base HEAD claude/kind-mayer-rpqesv 2>/dev/null'));
+
+    if ($base === '') {
+        test()->markTestSkipped('no integration branch in this checkout; the rendered rail above was still checked.');
+    }
+
+    foreach (['resources/views/store/cart-inner.blade.php', 'resources/views/store/cart-squeeze.blade.php',
+        'resources/views/components/product-card.blade.php', 'resources/css/kbb/kbb-cart.css'] as $file) {
+        $then = (string) shell_exec('git -C '.escapeshellarg(base_path()).' show '.escapeshellarg($base.':'.$file).' 2>/dev/null');
+        expect($then)->not->toBe('', "{$file} is not in git at {$base}")
+            ->and((string) file_get_contents(base_path($file)))->toBe($then, "{$file} changed on this branch");
+    }
+});
+
 it('counts only what can be bought: a sold-out match is drawn without a tick', function () {
     $s = btShop();
     btOn(['hide_oos' => false]);
