@@ -163,6 +163,14 @@ class SiteLayout
                 '2' => '2 columns', '3' => '3 columns', '4' => '4 columns',
                 '5' => '5 columns', '6' => '6 columns', '7' => '7 columns', '8' => '8 columns',
             ]],
+        /*
+         * The "44 products" beside the Filters button on /shop, every category
+         * and every brand page. The owner, 2 October: "turn hide by default the
+         * products count beside the filter button". Hidden, as asked; this
+         * brings it back. (Integrator, 2.60.358)
+         */
+        'show_count' => ['bool', 'Show the product count beside Filters', false,
+            'Off: the "44 products" line beside the Filters button is not shown on the shop, category and brand pages. On: it is.'],
 
         /*
          * ── LOADING MORE PRODUCTS ──────────────────────────────── Lane PI-B ──
@@ -432,6 +440,15 @@ class SiteLayout
         'cat_header_rand_mint' => ['bool', 'In the mix · C Mint icons', true, ''],
         'cat_header_rand_lilac' => ['bool', 'In the mix · D Lilac icons', true, ''],
         'cat_header_rand_plain' => ['bool', 'In the mix · E Plain soft colour', false, ''],
+        /*
+         * The owner, 2 October: "the background banner image in mobile should
+         * display full, not any cut from left or right". On a phone the header
+         * takes the picture's own shape, so the whole picture shows; off gives
+         * back the cropped frame and its Phone crop. ON, as he asked.
+         * (Integrator, 2.60.358)
+         */
+        'cat_header_phone_whole' => ['bool', 'Show the whole picture on phones', true,
+            'On: on a phone the header takes the picture\'s own shape, so nothing is cut from its left or right; the words sit on it as set above. Off: the phone header keeps its own height and the picture is cropped to fill it (Catalog → Categories → Phone crop chooses which part).'],
 
         'cat_header_title_phone' => ['range', 'Title size · phone', 26,
             'A category can set its own in Catalog → Categories.',
@@ -608,6 +625,7 @@ class SiteLayout
         // 2.60.352: the random light box and its mix.
         'cat_header_box_random', 'cat_header_rand_blush', 'cat_header_rand_cream',
         'cat_header_rand_mint', 'cat_header_rand_lilac', 'cat_header_rand_plain',
+        'cat_header_phone_whole',
     ];
 
     /**
@@ -688,7 +706,7 @@ class SiteLayout
             ['max', 'gutter', 'gutter_wide', 'header_follows']],
         'grid' => ['Product grid',
             'The column count is not set here — it is worked out from the smallest card and the width each grid actually has, so a grid beside the shop filters gets the right answer rather than the window\'s answer.',
-            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin']],
+            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count']],
         'loading' => ['Loading more products',
             'How /shop, every category, every brand page and the curated listings bring in more products: more on scroll, numbered arrows, or everything at once. Shoppers without JavaScript always get the arrows.',
             ['load_mode', 'load_batch', 'load_batch_custom']],

@@ -704,7 +704,7 @@
       + 'each for phone and laptop — are on <b>Category header · sizes &amp; spacing</b>, with this same live preview.</p></div>'
       + '</div>';
 
-    var rest = ['cat_header', 'cat_header_box', 'cat_header_fallback', 'cat_header_brands', 'cat_header_box_brands', 'cat_header_generic']
+    var rest = ['cat_header', 'cat_header_box', 'cat_header_fallback', 'cat_header_brands', 'cat_header_box_brands', 'cat_header_phone_whole', 'cat_header_generic']
       .map(function (k) { var f = fieldOf(k); return f ? fieldHTML(f) : ''; }).join('');
 
     return design + '<div class="sls-design"><div class="sls-title">Where it shows, and the words</div>' + rest + '</div>';

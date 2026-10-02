@@ -1581,6 +1581,22 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * THE SORT SELECT ACTUALLY SORTS. (Integrator, 2.60.358)
+             *
+             * The owner: "the selection of low to high etc, is absolutely not
+             * working." Its inline onchange said `new URL(location.href)`, and
+             * inside an inline handler `URL` is looked up on the document
+             * first -- `document.URL`, a string -- so every choice threw "URL
+             * is not a constructor" and the page never moved. `window.URL` is
+             * the constructor. Two pages, the shop and a category.
+             */
+            'the sort select names window.URL (2.60.358)' => [
+                'pattern' => '#<select id="sort" onchange="var u=new URL\(location\.href\);#',
+                'with' => '<select id="sort" onchange="var u=new window.URL(location.href);',
+                'hits' => 2,
+            ],
+
+            /*
              * "SORT" BECOMES THE SELECT'S LABEL. (Lane PI-B)
              *
              * The owner's phone drew Filters and the count on one row and Sort
@@ -2434,6 +2450,21 @@ final class EnglishRenderWalk
     public static function approvedRemovals(): array
     {
         return [
+            /*
+             * THE PRODUCT COUNT BESIDE "SHOW FILTERS". (Integrator, 2.60.358)
+             *
+             * The owner, 2 October: "turn hide by default the products count
+             * beside the filter button". Appearance -> Site layout -> Product
+             * grid -> "Show the product count beside Filters" ships off, so the
+             * `<span class="gcount">` line goes from /shop/ and the category
+             * archive, the two listings the walk renders. Line and all: the
+             * @if sits at the end of the line before it.
+             */
+            'the product count beside Show filters (2.60.358)' => [
+                'pattern' => '#\n            <span class="gcount"><b>\d+</b> products?</span>(?=\n)#',
+                'hits' => 2,
+            ],
+
             /*
              * THE PLAIN CATEGORY TITLE, REPLACED BY THE TITLE HEADER. (Lane PY)
              *

@@ -159,8 +159,9 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
      * controls, all on the Category header tab, none of them CSS on :root.
      */
     // 80 since 2.60.353: the random light box switch and its five-style mix.
-    // 81 since Lane RD: `press`, the press-feedback select.
-    expect($keys)->toHaveCount(81);
+    // 81 since Lane RD: `press`, the press-feedback select. 83 since 2.60.358:
+    // `show_count` (Product grid) and `cat_header_phone_whole` (Category header).
+    expect($keys)->toHaveCount(83);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

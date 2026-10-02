@@ -353,6 +353,15 @@ final class TitleHeader
             $class .= ' kbb-th--fx-'.$focus;
         }
 
+        // On a phone the header takes the picture's own shape, so nothing is
+        // cut from its left or right (2.60.358, "should display full"). The
+        // Phone crop above only matters when this is off.
+        $whole = $kind === 'img' && ! empty($settings['cat_header_phone_whole']);
+
+        if ($whole) {
+            $class .= ' kbb-th--pw';
+        }
+
         $icons = false;
 
         foreach ([$phone, $laptop] as $d) {
@@ -362,6 +371,7 @@ final class TitleHeader
         return [
             'kind' => $kind,
             'image' => $image,
+            'whole' => $whole,
             'icons' => $icons,
             'box' => $phone['box'],
             'heading' => $heading,

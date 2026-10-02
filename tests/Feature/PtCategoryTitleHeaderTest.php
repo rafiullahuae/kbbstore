@@ -290,7 +290,8 @@ it('obeys Appearance -> Site layout -> Category header', function () {
     expect($html)->toContain('src="https://kbeautybliss.com/wp-content/uploads/2020/01/thumb.jpg"')
         // Lane PY: the classes name the shape, the tone, the LOGICAL
         // alignment and the treatment; the heights ride first in the style.
-        ->and($html)->toContain('class="kbb-th kbb-th--img kbb-th--dark kbb-th--a-end kbb-th--v-bottom kbb-th--t-shadow"')
+        // 2.60.358: a picture header also carries kbb-th--pw, the whole picture on a phone.
+        ->and($html)->toContain('class="kbb-th kbb-th--img kbb-th--dark kbb-th--a-end kbb-th--v-bottom kbb-th--t-shadow kbb-th--pw"')
         ->and($html)->toContain('style="--kbb-th-h:260px;--kbb-th-hd:420px;')
         ->and($html)->toContain(';--kbb-th-ov:0.25;--kbb-th-lines:5;');
 

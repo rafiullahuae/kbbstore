@@ -577,6 +577,8 @@ it('ships every setting at the value the page already had, except the ones the o
         'cols_cap' => 8,
         'gap' => 16,
         'pin' => 'auto',
+        // 2.60.358: "turn hide by default the products count".
+        'show_count' => false,
         // Lane PI-B: Loading more products. NOT CSS — these decide how many
         // products a listing page holds. Shipped at "Arrows" while the owner
         // had not chosen; ships at "Load more on scroll" since he did, on
@@ -655,6 +657,8 @@ it('ships every setting at the value the page already had, except the ones the o
         'cat_header_rand_mint' => true,
         'cat_header_rand_lilac' => true,
         'cat_header_rand_plain' => false,
+        // 2.60.358: "the background banner image in mobile should display full".
+        'cat_header_phone_whole' => true,
         'cat_header_title_phone' => 26,
         'cat_header_title_desktop' => 40,
         'cat_header_weight' => '700',

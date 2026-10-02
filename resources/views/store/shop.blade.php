@@ -205,8 +205,7 @@
     <main>
         <div class="gtop">
             <button class="mobi-filter" type="button" onclick="document.body.classList.add('filters-open')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_heading') }}@if ($chips)<span class="fcount">{{ count($chips) }}</span>@endif</button>
-            <button id="showFilters" type="button" onclick="document.body.classList.remove('filters-hidden');document.cookie='kbb_filters=open;path=/;max-age=31536000;samesite=lax'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_show') }}@if ($chips)<span class="fcount">{{ count($chips) }}</span>@endif</button>
-            <span class="gcount">{!! trans_choice('store.shop.product_count', $total, ['formatted' => '<b>' . e($total) . '</b>']) !!}</span>
+            <button id="showFilters" type="button" onclick="document.body.classList.remove('filters-hidden');document.cookie='kbb_filters=open;path=/;max-age=31536000;samesite=lax'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_show') }}@if ($chips)<span class="fcount">{{ count($chips) }}</span>@endif</button>@if (app(\App\Services\SiteLayout::class)->get('show_count')){{ "\n" }}            <span class="gcount">{!! trans_choice('store.shop.product_count', $total, ['formatted' => '<b>' . e($total) . '</b>']) !!}</span>@endif{{ '' }}
             <div class="gright">
                 <div class="colsel" id="colsel">
                     <button type="button" data-c="2"@if ($colsChosen && '2' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 2) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg></button>
@@ -218,7 +217,7 @@
                      name — it had none. On the narrowest phones the word is
                      hidden VISUALLY (kbb-shop.css, .sortlbl) to keep Filters and
                      Sort on one row, and stays the label.        (Lane PI-B) --}}<label class="sortsel" for="sort"><span class="sortlbl">{{ __('store.shop.sort_label') }}</span>
-                    <select id="sort" onchange="var u=new URL(location.href);u.searchParams.set('orderby',this.value);u.searchParams.delete('paged');location.href=u.toString()">
+                    <select id="sort" onchange="var u=new window.URL(location.href);u.searchParams.set('orderby',this.value);u.searchParams.delete('paged');location.href=u.toString()">
                         @foreach ($sorts as $val => $lbl)
                             <option value="{{ $val }}" @selected($curorder === $val)>{{ $lbl }}</option>
                         @endforeach

@@ -30,6 +30,9 @@
 @if ($header)
 <section class="{{ $header['class'] }}{{ $contained ? '' : ' kbb-th--flush' }}" style="{{ $header['style'] }}" data-kbb-title-header aria-labelledby="kbb-th-title">
 @if ($header['image'] !== null)
+@if ($header['whole'] ?? false)
+    <img class="kbb-th__fill" src="{{ $header['image'] }}" alt="" aria-hidden="true" decoding="async">
+@endif
     <img class="kbb-th__img" src="{{ $header['image'] }}" alt="" width="{{ \App\Support\TitleHeader::IMG_WIDTH }}" height="{{ \App\Support\TitleHeader::IMG_HEIGHT }}" decoding="async" fetchpriority="high">
 @elseif ($header['icons'])
     <div class="kbb-th__icons" aria-hidden="true"></div>
