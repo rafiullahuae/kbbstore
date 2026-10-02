@@ -3,6 +3,32 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.356
+**"Buy these together" on the product page, switched on.** Apply after .355.
+No plugin change. Runs four migrations (the product-views table, the switch,
+the Arabic wording, a cache clear).
+
+| Your request | Now |
+|---|---|
+| "one new section called Buy these together ... same design ... as on the cart page Recommended for you" | The cart rail's own card, same size (measured 71.88px at 390, 116.08px at 1280), with "+" between |
+| "empty circle at the corner ... by default checked (filled green) with check ... user can un-check" | Green tick circle on every product, ticked by default; tap to clear |
+| "Buy 4 items together ... number will count as per the user selection ... all those will add to the cart" | The outlined pink button counts what is ticked and adds them all in one go; the cart panel opens |
+| "first product will be the same as on the product page ... sunscreen -> moisturizer, toners, cleansing oils, face masks ... random, or best seller or best visits" | First is the product itself; then one from each paired category; Best sellers / Random / Most viewed / Newest / Top rated |
+| "the product image will also work same as the check circle ... product title will go to the product page" | Tapping the picture ticks and unticks it; the name is the link |
+
+Admin: Appearance → Product page → Buy these together (on/off, phones,
+laptops, how many, how chosen, sold-out, same brand, total, heading, category
+pairs). Store → Modules now points there.
+
+Files (32): see the commit; the section's services (BuyTogether,
+BuyTogetherPairs, BuyTogetherSettings, ProductViews), CartController,
+ProductController, ProductViewController, ProductPageApiController,
+EcommerceApiController, Category, Product, ModuleRegistry,
+ProductMobileSections, ProductSections, InterfaceStrings, ArabicInterfaceDrafts,
+four migrations, kbb-product.css, cart.js, fbt.js, admin/app.blade.php, the
+admin tab, partials/fbt.blade.php, routes/buy-together.php, routes/web.php,
+public/build.
+
 ## 2.60.355
 **Load more on slow internet with no grey cards; the homepage banner flush
 under the header, never cut, with a height control and a Single image type.**
