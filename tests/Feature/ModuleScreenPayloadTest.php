@@ -427,7 +427,13 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // at 3 and 4 against the same recorded objects. Changed leaves: the Layout
     // description and show_discount / show_new's help, default and value — the
     // owner asked for both pills off. See the Lane PR note in the header.
-    expect($compared)->toBe(588, 'the number of controls drawn changed');
+    //
+    // 592 IN 2.60.348: + 4 brand-line switches the owner asked for ("give option
+    // to hide un-hide the brands names. on desktop and mobile seperate options
+    // ... same on checkout rows"): ci_brand_on / ci_brand_on_m on the Cart
+    // page's two row tabs and d_row_brand / m_row_brand on the Checkout page's,
+    // each inserted at its TABS position. Forty lines inserted, none changed.
+    expect($compared)->toBe(592, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

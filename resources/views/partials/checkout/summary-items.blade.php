@@ -20,11 +20,13 @@
         // (Lane SET) NONE unless the line is a set; members eager-loaded by
         // CheckoutController::loadCart() and only when one is.
         $kbbSet = \App\Support\SetContents::fromProduct($p, (int) $item->unit_price);
+        // The brand line (2.60.348), only when either device shows it.
+        $kbbRowBrand = ($kbbBrandD || $kbbBrandM) ? (string) ($p?->brand?->t('name') ?? '') : '';
     @endphp
         <div class="ci" data-key="{{ $item->id }}">
             <div class="cth" style="{{ $thumb }}"><span class="qb">{{ $item->quantity }}</span></div>
             <div class="cinfo">
-@if (($kbbBrandD || $kbbBrandM) && ($kbbRowBrand = (string) ($p?->brand?->t('name') ?? '')) !== '')                <div class="b{{ $kbbBrandCls }}">{{ $kbbRowBrand }}</div>
+@if ($kbbRowBrand !== '')                <div class="b{{ $kbbBrandCls }}">{{ $kbbRowBrand }}</div>
 @endif
                 <div class="n">{{ $name }}</div>
                 @if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'checkout', 'key' => 'o' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="qty">

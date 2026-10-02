@@ -5243,6 +5243,16 @@
             "value": 10
           },
           {
+            "key": "ci_brand_on",
+            "name": "ci_brand_on",
+            "type": "bool",
+            "label": "Show the brand name",
+            "help": "The small uppercase brand line above each product name, on a laptop or desktop. The phone has its own switch on the next card.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
             "key": "ci_brand_f",
             "name": "ci_brand_f",
             "type": "range",
@@ -5458,6 +5468,16 @@
             },
             "default": 10,
             "value": 10
+          },
+          {
+            "key": "ci_brand_on_m",
+            "name": "ci_brand_on_m",
+            "type": "bool",
+            "label": "Show the brand name",
+            "help": "Off, as asked: a phone shows the product name without the brand line above it. Turn it on to bring the brand back on phones.",
+            "options": null,
+            "default": false,
+            "value": false
           },
           {
             "key": "ci_brand_f_m",
@@ -7171,6 +7191,16 @@
             "options": null
           },
           {
+            "key": "d_row_brand",
+            "name": "d_row_brand",
+            "type": "bool",
+            "label": "Show the brand name",
+            "help": "The small uppercase brand line above each product name in the order summary, on a desktop. The phone has its own switch under Mobile · Product rows.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
             "key": "d_qty_size",
             "type": "range",
             "label": "Quantity stepper size",
@@ -7725,6 +7755,16 @@
             "default": true,
             "value": true,
             "options": null
+          },
+          {
+            "key": "m_row_brand",
+            "name": "m_row_brand",
+            "type": "bool",
+            "label": "Show the brand name",
+            "help": "Off, as asked: a phone shows the product name without the brand line above it.",
+            "options": null,
+            "default": false,
+            "value": false
           },
           {
             "key": "m_qty_size",
