@@ -130,6 +130,9 @@ class AdminOrderController extends Controller
         $refundedFils = $refunder->refundedFils($order);
         $refundableFils = max(0, $refunder->capturedFils($order) - $refundedFils);
 
+        // Read once: the settlement block and the payment panel both need it.
+        $settlement = $capturer->status($order);
+
         return response()->json([
             'id' => $order->id,
             'order_number' => $order->order_number ?? (string) $order->id,
@@ -292,7 +295,7 @@ class AdminOrderController extends Controller
 
             // Capture: whether this order's money has actually been taken.
             // Never calls a provider — see PaymentCapturer::status().
-            'settlement' => $capturer->status($order) + [
+            'settlement' => $settlement + [
                 'refundable_fils' => $refundableFils,
                 /*
                  * THE THIRD VERB, ON THE PAYLOAD THE ORDER SCREEN ACTUALLY
@@ -363,7 +366,50 @@ class AdminOrderController extends Controller
              * stored. See App\Services\Mail\OrderStatusMailPolicy.
              */
             'status_emails' => app(\App\Services\Mail\OrderStatusMailPolicy::class)->all(),
+
+            /*
+             * (Lane PU) The payment panel under the Items, decided on the
+             * server -- see App\Support\OrderPaymentPanel for every state and
+             * for why Capture survives only on Tabby and Tamara.
+             */
+            'payment' => \App\Support\OrderPaymentPanel::for($order, $refundedFils, $settlement),
+
+            /*
+             * What the signed-in admin may do on this screen, so the console
+             * draws only the controls the server will accept. The SERVER is
+             * still the gate -- every one of these is its own rule in
+             * AdminCapabilities and fails closed -- this only spares a support
+             * account a modal that ends in a 403.
+             */
+            'can' => self::abilities(),
+
+            // Store -> Orders -> (an order) -> Status -> "Mark as paid": the
+            // methods its select offers. See ManualPayment::methodsFor().
+            'payment_methods' => app(\App\Services\Orders\ManualPayment::class)->methodsFor($order),
+            'unpaid_statuses' => \App\Support\OrderPaymentPanel::UNPAID_STATUSES,
+            'paid_statuses' => \App\Support\OrderPaymentPanel::PAID_STATUSES,
+
+            // The Billing / Shipping editor's two lists.
+            'address_form' => [
+                'countries' => \App\Support\Countries::NAMES,
+                'emirates' => \App\Support\OrderAddress::EMIRATES,
+            ],
         ]);
+    }
+
+    /** @return array<string, bool> */
+    private static function abilities(): array
+    {
+        $role = auth('admin')->user()?->role;
+        $can = fn (string $capability) => \App\Support\AdminCapabilities::canonicalRole($role) === 'owner'
+            || \App\Support\AdminCapabilities::roleCan($role, $capability);
+
+        return [
+            'edit' => $can('orders.edit'),
+            'customer' => $can('orders.customer'),
+            'payment' => $can('orders.payment'),
+            'money' => $can('orders.money'),
+        ];
     }
 
     public function addNote(Request $request, int $id): JsonResponse
@@ -485,19 +531,86 @@ class AdminOrderController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * PUT /admin-api/orders/{id}/address -- Store -> Orders -> (an order) ->
+     * Billing / Shipping -> Edit. Capability `orders.edit`. (Lane PU)
+     *
+     * WHAT THIS WAS. `'address' => ['required', 'array']` and then the array,
+     * whatever it held, written straight over the snapshot: any keys, any
+     * values, any length, no record of who changed what. Its only caller was a
+     * JSON textarea behind the Shipping "Edit"; Billing's "Edit" was an
+     * `<a href="#">` with no handler at all, which is the "I can not edit the
+     * address" the owner reported.
+     *
+     * NOW: the ten fields every writer in the shop uses (App\Support\
+     * OrderAddress), each validated; billing also carries the order's email and
+     * phone, because that is where the order screen shows them and where the
+     * checkout wrote them from. Every save that changes something leaves an
+     * order note naming the field, the old value, the new one and the admin.
+     */
     public function updateAddress(Request $request, int $id): JsonResponse
     {
         $order = Order::find($id);
         if ($order === null) return response()->json(['error' => 'not_found'], 404);
 
+        // "ae" is the same country as "AE"; the list is keyed upper-case.
+        $input = $request->input('address');
+        if (is_array($input) && isset($input['country']) && is_string($input['country'])) {
+            $input['country'] = strtoupper(trim($input['country']));
+            $request->merge(['address' => $input]);
+        }
+
         $data = $request->validate([
             'type' => ['required', 'in:billing,shipping'],
-            'address' => ['required', 'array'],
+            ...\App\Support\OrderAddress::rules('address'),
+            'email' => ['sometimes', 'required', 'string', 'email:rfc', 'max:191'],
+        ], [
+            'address.*.regex' => 'That field contains characters an address cannot hold.',
+            'address.country.in' => 'Choose a country from the list.',
         ]);
 
-        $order->update([($data['type'] === 'billing' ? 'billing_address' : 'shipping_address') => $data['address']]);
+        $column = $data['type'] === 'billing' ? 'billing_address' : 'shipping_address';
+        $old = $order->{$column};
+        $new = \App\Support\OrderAddress::merge(is_array($old) ? $old : null, $data['address']);
 
-        return response()->json(['ok' => true]);
+        $changes = \App\Support\OrderAddress::changes(is_array($old) ? $old : null, $new);
+        $write = [$column => $new];
+
+        if ($data['type'] === 'billing') {
+            if (array_key_exists('email', $data)) {
+                $email = mb_strtolower(trim((string) $data['email']));
+                if ($email !== (string) $order->email) {
+                    $changes[] = 'Email: ' . $order->email . ' → ' . $email;
+                    $write['email'] = $email;
+                }
+            }
+
+            // The order's own phone is the billing phone -- the checkout writes
+            // both from one field -- so they move together.
+            $phone = $new['phone'] ?? null;
+            if (array_key_exists('phone', $data['address']) && $phone !== $order->phone) {
+                $write['phone'] = $phone;
+            }
+        }
+
+        if ($changes === []) {
+            return response()->json(['ok' => true, 'changed' => 0, 'message' => 'Nothing changed.']);
+        }
+
+        $order->forceFill($write)->save();
+
+        $by = auth('admin')->user()?->name ?? 'Admin';
+        $order->notes()->create([
+            'content' => ucfirst($data['type']) . ' details edited by ' . $by . ': ' . implode('; ', $changes) . '.',
+            'author' => $by,
+            'is_customer_note' => false,
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'changed' => count($changes),
+            'message' => ucfirst($data['type']) . ' details saved',
+        ]);
     }
 
     /**
@@ -1055,34 +1168,16 @@ class AdminOrderController extends Controller
         return 'KBB-' . str_pad((string) ($max + 1000), 5, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * The Customer history card. (Lane PU) Moved, unchanged, into
+     * App\Support\OrderCustomerHistory so the "Order history" popup beside the
+     * Customer field counts the same orders the card does -- two copies of
+     * "which orders are this customer's" is how the popup and the card would
+     * come to disagree on the same screen.
+     */
     private function customerHistory(?int $customerId, string $email): array
     {
-        $query = $customerId
-            ? Order::withTrashed()->where('customer_id', $customerId)
-            : Order::withTrashed()->where('email', $email);
-
-        $orders = $query->get(['id', 'total', 'tax_total', 'status']);
-        $real = $orders->whereIn('status', Order::REAL_STATUSES);
-
-        return [
-            'total_orders' => $orders->count(),
-            'total_revenue_aed' => Money::toAed((int) $real->sum('total')),
-            'average_order_value_aed' => $real->count() > 0 ? Money::toAed((int) round($real->sum('total') / $real->count())) : 0,
-            /*
-             * WHAT THIS CUSTOMER WAS BILLED, VAT INCLUDED — Lane DU.
-             *
-             * `total` is the billed figure, so on an exclusive-tax order it
-             * carries VAT the shop collects for the tax authority and does not
-             * keep. This panel sits beside the order the operator is reading
-             * and gets asked "how much has this customer spent with us" — two
-             * different questions, and it should not answer the second with the
-             * first and no note. The VAT inside the figure is published so the
-             * screen can say so; the same disclosure the dashboard carries, in
-             * AdminController::revenueBasis().
-             */
-            'tax_collected_aed' => Money::toAed((int) $real->sum('tax_total')),
-            'revenue_basis' => \App\Http\Controllers\Admin\AdminController::revenueBasis(),
-        ];
+        return \App\Support\OrderCustomerHistory::summary($customerId, $email);
     }
 
     /* ===================================================================
