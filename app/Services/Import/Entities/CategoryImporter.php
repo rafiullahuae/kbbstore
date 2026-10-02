@@ -6,9 +6,11 @@ namespace App\Services\Import\Entities;
 
 use App\Models\Category;
 use App\Services\Import\ImportContext;
+use App\Services\Import\OldSiteLinks;
 use App\Services\Import\Row;
 use App\Services\Import\RowRejected;
 use App\Services\Import\SlugGuard;
+use App\Support\TitleHeader;
 use Illuminate\Support\Str;
 
 /**
@@ -50,6 +52,14 @@ final class CategoryImporter extends EntityImporter
     /** @var array<int, int> source_term_id => parent source_term_id, filled during the row pass */
     private array $pendingParents = [];
 
+    /** The old-site link ledger, replayed onto the description (Lane PT). */
+    private ?OldSiteLinks $links = null;
+
+    private function links(): OldSiteLinks
+    {
+        return $this->links ??= new OldSiteLinks;
+    }
+
     public function name(): string
     {
         return 'categories';
@@ -84,10 +94,10 @@ final class CategoryImporter extends EntityImporter
             'source_term_id' => $termId,
             'slug' => $slug,
             'name' => $name,
-            'description' => $row->text('description'),
+            'description' => $this->links()->replay('categories', $category->id, 'description', TitleHeader::importDescription($row->text('description'))),
             'image' => $row->text('image', 'thumbnail'),
             'position' => $row->int((int) ($category->position ?? 0), 'position', 'menu_order', 'order'),
-        ]);
+        ] + TitleHeader::importColumns($row));
 
         $context->record($this->name(), $outcome);
         $context->remember($this->name(), $termId, (int) $category->id);

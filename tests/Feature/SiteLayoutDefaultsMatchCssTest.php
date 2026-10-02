@@ -170,8 +170,22 @@ it('emits every numeric setting into a property named by a constant in the servi
         array_keys($reflection->getConstant('UNITLESS_VARS')),
     );
 
+    // The category header's sliders (Lane PT) are not :root properties: they
+    // ride on the header element, written by App\Support\TitleHeader under
+    // names that are constants THERE. Pinned from that end instead, so the
+    // "a slider that saves and moves nothing" defect stays caught for them.
+    $titleHeader = (string) file_get_contents(app_path('Support/TitleHeader.php'));
+
     foreach (SiteLayout::SCHEMA as $key => $definition) {
         if ($definition[0] !== 'range') {
+            continue;
+        }
+
+        if (in_array($key, SiteLayout::HEADER_KEYS, true)) {
+            expect(str_contains($titleHeader, "\$settings['".$key."']"))->toBeTrue(
+                "range field '{$key}' is read by nothing that draws the category header"
+            );
+
             continue;
         }
 

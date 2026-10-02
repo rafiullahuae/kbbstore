@@ -1,0 +1,261 @@
+{
+  "after-category-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "h1Count": 1,
+    "header": {
+      "w": 346,
+      "h": 287,
+      "top": 133
+    },
+    "title": {
+      "text": "Korean Sunscreens",
+      "fontSize": "26px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "description": {
+      "w": 314,
+      "h": 60,
+      "top": 252,
+      "fontSize": "13px",
+      "lineHeight": "20.15px",
+      "clamped": true
+    },
+    "image": {
+      "w": 346,
+      "h": 287,
+      "top": 133,
+      "src": "/wp-content/uploads/2023/05/sunscreens-banner.jpg",
+      "naturalW": 1600,
+      "objectFit": "cover"
+    },
+    "readMore": true
+  },
+  "after-category-390-readmore": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "h1Count": 1,
+    "header": {
+      "w": 346,
+      "h": 387,
+      "top": 133
+    },
+    "title": {
+      "text": "Korean Sunscreens",
+      "fontSize": "26px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "description": {
+      "w": 314,
+      "h": 161,
+      "top": 252,
+      "fontSize": "13px",
+      "lineHeight": "20.15px",
+      "clamped": true
+    },
+    "image": {
+      "w": 346,
+      "h": 387,
+      "top": 133,
+      "src": "/wp-content/uploads/2023/05/sunscreens-banner.jpg",
+      "naturalW": 1600,
+      "objectFit": "cover"
+    },
+    "readMore": true
+  },
+  "after-category-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "h1Count": 1,
+    "header": {
+      "w": 1236,
+      "h": 314,
+      "top": 100
+    },
+    "title": {
+      "text": "Korean Sunscreens",
+      "fontSize": "44px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "description": {
+      "w": 695,
+      "h": 68,
+      "top": 238,
+      "fontSize": "14.72px",
+      "lineHeight": "22.816px",
+      "clamped": true
+    },
+    "image": {
+      "w": 1236,
+      "h": 314,
+      "top": 100,
+      "src": "/wp-content/uploads/2023/05/sunscreens-banner.jpg",
+      "naturalW": 1600,
+      "objectFit": "cover"
+    },
+    "readMore": true
+  },
+  "after-category-1280-readmore": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "h1Count": 1,
+    "header": {
+      "w": 1236,
+      "h": 337,
+      "top": 100
+    },
+    "title": {
+      "text": "Korean Sunscreens",
+      "fontSize": "44px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "description": {
+      "w": 695,
+      "h": 91,
+      "top": 238,
+      "fontSize": "14.72px",
+      "lineHeight": "22.816px",
+      "clamped": true
+    },
+    "image": {
+      "w": 1236,
+      "h": 337,
+      "top": 100,
+      "src": "/wp-content/uploads/2023/05/sunscreens-banner.jpg",
+      "naturalW": 1600,
+      "objectFit": "cover"
+    },
+    "readMore": true
+  },
+  "after-unfixed-product-link-390": {
+    "href": "https://kbeautybliss.com/face-washes/",
+    "resolved": "https://kbeautybliss.com/face-washes/",
+    "target": "_blank",
+    "rel": "noopener noreferrer",
+    "scrollWidth": 390
+  },
+  "after-unfixed-product-link-1280": {
+    "href": "https://kbeautybliss.com/face-washes/",
+    "resolved": "https://kbeautybliss.com/face-washes/",
+    "target": "_blank",
+    "rel": "noopener noreferrer",
+    "scrollWidth": 1280
+  },
+  "admin-category-header-390": {
+    "crumb": "Appearance",
+    "title": "Site layout",
+    "tabs": [
+      "Page width",
+      "Product grid",
+      "Loading more products",
+      "Category header"
+    ],
+    "fields": [
+      "Show the old shop's banner behind the category title",
+      "When no banner was imported, use the category picture",
+      "Brand pages too",
+      "Height · phone",
+      "Height · desktop",
+      "Darken the picture",
+      "Text colour",
+      "Text alignment",
+      "Description lines before \"Read more\""
+    ],
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "admin-category-header-1280": {
+    "crumb": "Appearance",
+    "title": "Site layout",
+    "tabs": [
+      "Page width",
+      "Product grid",
+      "Loading more products",
+      "Category header"
+    ],
+    "fields": [
+      "Show the old shop's banner behind the category title",
+      "When no banner was imported, use the category picture",
+      "Brand pages too",
+      "Height · phone",
+      "Height · desktop",
+      "Darken the picture",
+      "Text colour",
+      "Text alignment",
+      "Description lines before \"Read more\""
+    ],
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "admin-old-links-390-preview": {
+    "counts": [
+      "1 links still going to the old site",
+      "1 descriptions and articles they are in",
+      "1 already pointed here (can be undone)"
+    ],
+    "samples": [
+      "Product description — Anua Heartleaf Quercetinol Pore Deep Cleansing Foam 150ml Face Cleansers https://kbeautybliss.com/face-washes/ /collections/skincare/face-washes/"
+    ],
+    "buttons": [
+      "Fix these links",
+      "Preview again",
+      "Undo"
+    ],
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "admin-old-links-1280-preview": {
+    "counts": [
+      "1 links still going to the old site",
+      "1 descriptions and articles they are in",
+      "1 already pointed here (can be undone)"
+    ],
+    "samples": [
+      "Product description — Anua Heartleaf Quercetinol Pore Deep Cleansing Foam 150ml Face Cleansers https://kbeautybliss.com/face-washes/ /collections/skincare/face-washes/"
+    ],
+    "buttons": [
+      "Fix these links",
+      "Preview again",
+      "Undo"
+    ],
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "admin-old-links-1280-fixed": {
+    "counts": [
+      "0 links still going to the old site",
+      "0 descriptions and articles they are in",
+      "2 already pointed here (can be undone)"
+    ],
+    "samples": [],
+    "buttons": [
+      "Fix these links (disabled)",
+      "Preview again",
+      "Undo"
+    ],
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "dialogs": [
+      "Point every link to the old site at this shop?\n\nOnly the address inside each link changes. Undo puts every one back."
+    ],
+    "message": "1 link(s) in 1 description(s) and article(s) now go to this shop."
+  },
+  "after-fixed-product-link-390": {
+    "href": "/collections/skincare/face-washes/",
+    "resolved": "http://127.0.0.1:9571/collections/skincare/face-washes/",
+    "target": "_blank",
+    "rel": "noopener noreferrer",
+    "scrollWidth": 390
+  },
+  "after-fixed-product-link-1280": {
+    "href": "/collections/skincare/face-washes/",
+    "resolved": "http://127.0.0.1:9571/collections/skincare/face-washes/",
+    "target": "_blank",
+    "rel": "noopener noreferrer",
+    "scrollWidth": 1280
+  }
+}

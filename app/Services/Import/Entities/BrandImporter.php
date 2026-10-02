@@ -6,9 +6,11 @@ namespace App\Services\Import\Entities;
 
 use App\Models\Brand;
 use App\Services\Import\ImportContext;
+use App\Services\Import\OldSiteLinks;
 use App\Services\Import\Row;
 use App\Services\Import\RowRejected;
 use App\Services\Import\SlugGuard;
+use App\Support\TitleHeader;
 use Illuminate\Support\Str;
 
 /**
@@ -25,6 +27,9 @@ use Illuminate\Support\Str;
  */
 final class BrandImporter extends EntityImporter
 {
+    /** The old-site link ledger, replayed onto the description (Lane PT). */
+    private ?OldSiteLinks $links = null;
+
     public function name(): string
     {
         return 'brands';
@@ -66,10 +71,10 @@ final class BrandImporter extends EntityImporter
             'source_term_id' => $termId,
             'slug' => $slug,
             'name' => $name,
-            'description' => $row->text('description'),
+            'description' => ($this->links ??= new OldSiteLinks)->replay('brands', $brand->id, 'description', TitleHeader::importDescription($row->text('description'))),
             'logo' => $row->text('logo', 'image', 'thumbnail'),
             'position' => $row->int((int) ($brand->position ?? 0), 'position', 'menu_order', 'order'),
-        ]);
+        ] + TitleHeader::importColumns($row));
 
         $context->record($this->name(), $outcome);
         $context->remember($this->name(), $termId, (int) $brand->id);

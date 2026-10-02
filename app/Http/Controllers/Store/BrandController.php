@@ -477,6 +477,9 @@ class BrandController extends Controller
 
         return view('store.brands', [
             'banner' => $banner,
+            // The old shop's title header for this brand, when its import
+            // carried a banner and the owner's own banner is off. (Lane PT)
+            'titleHeader' => \App\Support\TitleHeader::forModel($brand, (string) $brand->t('name'), $banner, true),
             'seoCtx' => $this->seoCtx($brand, $banner, $products, $page, $perPage),
             // The pager under the grid (Lane PR). See partials/listing-pager.
             'page' => $page,

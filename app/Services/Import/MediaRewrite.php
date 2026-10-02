@@ -144,6 +144,10 @@ final class MediaRewrite
         [Product::class, 'products', 'images', true],
         [Brand::class, 'brands', 'logo', false],
         [Category::class, 'categories', 'image', false],
+        // The old shop's title-header banner (Lane PT). MediaAudit reads the
+        // same two; they are changed together.
+        [Category::class, 'categories', 'header_image', false],
+        [Brand::class, 'brands', 'header_image', false],
         [Post::class, 'posts', 'cover', false],
 
         /*

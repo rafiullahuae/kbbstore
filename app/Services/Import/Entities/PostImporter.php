@@ -7,6 +7,7 @@ namespace App\Services\Import\Entities;
 use App\Http\Controllers\Store\PageController;
 use App\Models\Post;
 use App\Services\Import\ImportContext;
+use App\Services\Import\OldSiteLinks;
 use App\Services\Import\Row;
 use App\Services\Import\RowRejected;
 use App\Services\Import\SlugGuard;
@@ -97,6 +98,9 @@ use Illuminate\Support\Str;
  */
 final class PostImporter extends EntityImporter
 {
+    /** The old-site link ledger, replayed onto imported copy (Lane PT). */
+    private ?OldSiteLinks $links = null;
+
     /**
      * The one post type this entity writes.
      *
@@ -229,6 +233,10 @@ final class PostImporter extends EntityImporter
         }
 
         $body = $this->cleanBodyReported($rawBody, 'content', $row, $report);
+
+        // The old-site links already re-pointed on this article, re-pointed the
+        // same way, so an unchanged export reads unchanged. (Lane PT)
+        $body = ($this->links ??= new OldSiteLinks)->replay('posts', $post->id, 'body', $body);
 
         $outcome = $context->apply($post, [
             'source_post_id' => $id,

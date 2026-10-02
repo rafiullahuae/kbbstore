@@ -502,6 +502,14 @@ final class AdminCapabilities
          * thereby a role trusted to delete part of it. (Lane IE)
          */
         'data.cleanup' => ['owner'],
+        /*
+         * Store -> Import -> Addresses & pictures -> "Links to the old site"
+         * (Lane PT). OWNER ALONE, and its own line rather than `data.import`
+         * beside it: the import loads rows in, and this rewrites the shop's own
+         * copy -- every description, set, article and block that links to the
+         * old site -- in one press. Fails closed for every other role.
+         */
+        'data.old_links' => ['owner'],
     ];
 
     /**
@@ -864,6 +872,9 @@ final class AdminCapabilities
          * write-before-read ordering asks for -- there is no reading half here
          * that a narrower role should reach without the writing half.
          */
+        // ABOVE the wildcard below, or it would never be reached: first match
+        // wins. Its own capability -- see `data.old_links`. (Lane PT)
+        ['*', 'admin-api/urls-media/old-links', 'data.old_links'],
         ['*', 'admin-api/urls-media/**', 'data.import'],
         ['*', 'admin-api/demo-content', 'data.import'],
         ['*', 'admin-api/demo-content/**', 'data.import'],

@@ -18,6 +18,41 @@ that refusal rather than trusting it.
 
 ---
 
+## 1.11.0
+
+### Category (and brand) banners, titles and subtitles
+
+- The owner: "We have a banner image on each category on the old site. Need to
+  bring that on the category pages as title background, like on /sunscreens/
+  -- and the same title, same description." The description was already in
+  `categories.csv`; the banner picture and any title written for the header
+  were in no file.
+- `categories.csv` and `brands.csv` gain four columns at the end:
+  **`banner_image`** (a full URL), **`banner_source_key`** (the term-meta key
+  it was read from), **`title_override`** and **`subtitle`**.
+- Where the banner is stored on a Rey shop could not be checked from here, so
+  no single key is assumed. Every term-meta key whose name reads like a
+  banner, cover, header, hero, background or image is read and RESOLVED
+  whatever its shape: an attachment id, an ACF image array, a serialized
+  array, a JSON object, a plain URL -- or the id of a Rey global section used
+  as a page cover, followed to the first picture in its Elementor data (or its
+  featured image). The best-named one wins (banner > cover > header/hero >
+  background > image) and `banner_source_key` says which, e.g.
+  `cover_section (rey-global-sections 18180)`.
+- `thumbnail_id` is NOT read as a banner: it is already the `image` column.
+- **A term-meta census** in `manifest.json`'s notes, for `product_cat` and for
+  the brand taxonomy: every key the terms carry, how many terms carry it and a
+  sample value -- so the first export names the real storage even if none of
+  the names above matched.
+- `media.csv` lists each banner picture (field `banner_image`) beside the
+  category thumbnail, so the new shop's picture fetch names it.
+- Harness: realistic term meta seeded (an attachment id with its ACF `_field`
+  twin, a URL string, a serialized array on a brand, a title and a subtitle,
+  and under `--rey=1` a page-cover global section); one category description
+  and two pieces of copy now carry a link back into the old site, which is
+  what the new shop's old-site link rewrite is tested against.
+- Version moved 1.10.1 → 1.11.0 in all four places it lives.
+
 ## 1.10.1
 
 ### Orders were exported empty on a shop using HPOS

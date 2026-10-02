@@ -1,0 +1,50 @@
+{
+  "before-category-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "h1Count": 1,
+    "plainTitle": {
+      "text": "Sunscreens",
+      "fontSize": "32px",
+      "w": 346,
+      "h": 35,
+      "top": 169
+    },
+    "plainSub": {
+      "text": "Lightweight Korean sunscreens with high UV protection, made for everyday wear under the UAE sun.",
+      "fontSize": "14px"
+    }
+  },
+  "before-category-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "h1Count": 1,
+    "plainTitle": {
+      "text": "Sunscreens",
+      "fontSize": "32px",
+      "w": 1236,
+      "h": 35,
+      "top": 135
+    },
+    "plainSub": {
+      "text": "Lightweight Korean sunscreens with high UV protection, made for everyday wear under the UAE sun.",
+      "fontSize": "14px"
+    }
+  },
+  "before-product-link-390": {
+    "href": "https://kbeautybliss.com/face-washes/",
+    "resolved": "https://kbeautybliss.com/face-washes/",
+    "target": "_blank",
+    "rel": "noopener noreferrer",
+    "scrollWidth": 390
+  },
+  "before-product-link-1280": {
+    "href": "https://kbeautybliss.com/face-washes/",
+    "resolved": "https://kbeautybliss.com/face-washes/",
+    "target": "_blank",
+    "rel": "noopener noreferrer",
+    "scrollWidth": 1280
+  }
+}
