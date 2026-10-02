@@ -186,6 +186,26 @@ class ShopController extends Controller
             : \App\Support\TitleHeader::forModel($this->listingBrand, $this->listingBrand?->t('name') ?? $title, $banner, true);
 
         /*
+         * A ONE-BRAND LISTING IS NAMED FOR ITS BRAND.              (2.60.346)
+         *
+         * The owner, on /shop/?filter_brands=celimax: "it showin one default
+         * heading and text. show it either the brand name as per the url. or
+         * remove it completely. this thing do only for such brand urls." It
+         * read "Shop all" over "Authentic Korean skincare, curated for the
+         * UAE." -- the unfiltered /shop/ heading, on a page of one brand.
+         *
+         * banner() has already read the brand row, so this costs no query. The
+         * heading (and the tab title and the page schema, which said "Shop all"
+         * too) take the brand's name, and the generic line goes. Only that one
+         * path -- no category, no search, exactly one brand that exists --
+         * because listingBrand is only ever set there. ShopBrandHeadingTest.
+         */
+        if (! $category && $this->listingBrand) {
+            $title = (string) $this->listingBrand->t('name');
+            $sub = '';
+        }
+
+        /*
          * PER-CATEGORY SEO OVERRIDES — `categories.seo`, unread until now.
          *
          * The same column, the same shape and the same story as `brands.seo`;
@@ -490,6 +510,15 @@ class ShopController extends Controller
      */
     private function banner(?Category $category, array $active, string $search, string $title): ?array
     {
+        /*
+         * Cleared first, on every path. The router keeps ONE controller
+         * instance per route, so in any process that serves more than one
+         * request (the test suite, a queue worker, Octane) a brand read here
+         * for /shop/?filter_brands=celimax was still set when /shop/?s=toner
+         * returned early below -- and that search would be titled "Celimax".
+         */
+        $this->listingBrand = null;
+
         if ($category) {
             return \App\Support\PageBanner::forModel($category, $title);
         }

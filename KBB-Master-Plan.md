@@ -3733,13 +3733,13 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 30 | Grid card hover effects off on phones by default | PR | **merged** |
 | 31 | Full control of grid card inner spacing (image/title/price/button) and font weights, per device | PR | **merged** |
 | 32 | "You may also like" as a carousel: brand + category mixed by default, rule controls, manual selection per product | PS | in progress |
-| 33 | Category banners, titles and descriptions from the old site as the category page header | PT (exporter 1.11.0) | in progress |
-| 34 | Internal links in descriptions/articles/blocks still pointing to kbeautybliss.com → this shop's URLs | PT | in progress |
+| 33 | Category banners, titles and descriptions from the old site as the category page header | PT (exporter 1.11.0) | **merged** |
+| 34 | Internal links in descriptions/articles/blocks still pointing to kbeautybliss.com → this shop's URLs | PT | **merged** |
 | 35 | Order page: billing/shipping/customer could not be edited ("Edit" was a bare link; shipping opened raw JSON); "Order history" went to all customers; a green "Paid with …" panel; no Capture box; "Mark as paid" with a reference when an unpaid order moves to a paid status | PU | **merged** — capture kept only for real Tabby/Tamara authorisations; COD amber until collected |
 | 36 | Catalog → Products fits a desktop screen with actions pinned; "Customize columns"; on phones 2×2 summary cards, one swiping tool row, one-line pills | integrator | **merged** |
 | 37 | An uncollected COD order still reads "AED X still refundable" (imported COD orders carry paid_at; PaymentRefunder's ceiling) | integrator | done: PaymentRefunder::capturedFils treats COD not yet collected as unpaid (CodRefundCeilingTest) |
 | 38 | The search box's Trending panel opens with a delay on tap; must appear immediately | integrator | **done** — the header carries the trending words; the panel paints on focus (854 ms → 10 ms with the endpoint held 800 ms) |
-| 39 | `/shop/?filter_brands=celimax` reads "Shop all" with the default line; show the brand name or nothing (brand-filter URLs only) | integrator | in progress (after PT, which owns the same header) |
+| 39 | `/shop/?filter_brands=celimax` reads "Shop all" with the default line; show the brand name or nothing (brand-filter URLs only) | integrator | **done** — the brand's name as the heading and tab title, no generic line; other pages unchanged (ShopBrandHeadingTest) |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix

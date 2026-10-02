@@ -12,8 +12,15 @@
  * and has no cash-received record as unpaid, the same rule as
  * App\Support\OrderPaymentPanel.
  *
- * MUTATION, RUN: make cashStillToCollect() return false and the first case is
- * red (33700 refundable on an uncollected COD order).
+ * IMPORTED ORDERS ONLY. The first version applied to every COD order and
+ * broke five CancellationEmailTruthTest cases and TaxEngineTest's full
+ * refund: on a NATIVE order paid_at is only ever set by ManualPayment, so it
+ * does mean money arrived. The last case pins that half.
+ *
+ * MUTATIONS, RUN: make cashStillToCollect() return false and the first case is
+ * red (33700 refundable on an uncollected COD order); drop the
+ * `wc_order_id !== null` condition and the last case is red (0 on a native
+ * order this shop recorded as paid).
  */
 
 use App\Models\Order;
@@ -30,6 +37,8 @@ function crcOrder(array $attributes): Order
         'total' => 33700,
         'payment_method' => 'cod',
         'paid_at' => now()->subDay(),
+        // Imported: WooCommerce stamped date_paid when it went to Processing.
+        'wc_order_id' => random_int(100000, 999999),
     ], $attributes));
 }
 
@@ -54,4 +63,11 @@ it('offers the total once the cash is collected', function () {
 
 it('leaves card payments as they were', function () {
     expect(app(PaymentRefunder::class)->capturedFils(crcOrder(['payment_method' => 'stripe', 'status' => 'processing'])))->toBe(33700);
+});
+
+it('still trusts paid_at on a cash order this shop itself recorded as paid', function () {
+    // Native: no wc_order_id. paid_at here came from ManualPayment, not from
+    // WooCommerce's Processing stamp.
+    expect(app(PaymentRefunder::class)->capturedFils(crcOrder(['wc_order_id' => null, 'status' => 'cancelled'])))
+        ->toBe(33700);
 });
