@@ -3,6 +3,22 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.350
+**Category headers say the category's name (no more "hide"); the phone
+product page as sections you order and switch; the price row under the title
+on desktop; Tabby & Tamara cards; and an Amazon-style share icon whose links
+carry the picture.** Apply after .349. No plugin change.
+**After applying, run once:** `php artisan kbb:share-images` (makes the share
+pictures for every product now instead of on each product's first view).
+
+| # | Your report | Now | Where |
+|---|---|---|---|
+| 44 | Every category header read "hide"; wanted the name, 2 lines of description, or "Find your favorite products in our wide range <category> category.", bottom-left | The imported "hide" is cleared and never imported again; name + 2 lines; the generic line when there is no description; words at the bottom; the header is exactly the height you set (a stray 52px top and bottom is gone) | Appearance → Site layout → Category header / Category header · sizes & spacing |
+| 46 | Phone product page as sections, drag & drop order, on/off, spacing; price row with rating (no count); Tabby & Tamara; Buy together off; "100% authentic" rows and "THE DETAILS" gone on phones. Desktop: price under the title, rating beside it | All of it, in your order, 18px even spacing with a slider and per-section overrides | Appearance → Product page → Mobile sections |
+| 47 | Share row removed; share icon beside the title; Amazon-style panel with the picture, title and apps; shares must carry the picture | Done; link previews now use a JPEG copy of the product picture that WhatsApp accepts; "More" sends the picture itself on phones | Appearance → Product page → Share |
+
+Files (38): app/Console/Commands/MakeShareImages.php, app/Http/Controllers/Admin/MediaLibraryApiController.php, app/Http/Controllers/Admin/ProductPageApiController.php, app/Http/Controllers/Store/ProductController.php, app/Services/ProductLayout.php, app/Services/ProductMobileSections.php, app/Services/ProductSections.php, app/Services/ProductTrustShare.php, app/Services/SiteLayout.php, app/Services/Translation/ArabicInterfaceDrafts.php, app/Services/Translation/InterfaceStrings.php, app/Support/ImageVariants.php, app/Support/PaymentMarkArt.php, app/Support/ProductShare.php, app/Support/Seo.php, app/Support/ShareImage.php, app/Support/TitleHeader.php, app/Support/TrustShareIcons.php, database/migrations/2027_07_15_000000_clear_caches_product_mobile_sections.php, database/migrations/2027_07_15_000100_seed_product_mobile_sections_arabic_drafts.php, database/migrations/2027_07_15_000500_ship_share_sheet_platform_set.php, database/migrations/2027_07_15_000600_seed_product_share_sheet_arabic_drafts.php, database/migrations/2027_07_15_000700_clear_caches_product_share_sheet.php, database/migrations/2027_07_15_002000_category_header_name_and_generic_line.php, resources/css/kbb/kbb-pdp-trust.css, resources/css/kbb/kbb-product.css, resources/css/kbb/kbb-title-header.css, resources/js/kbb/pdp-trust.js, resources/views/admin/app.blade.php, resources/views/admin/partials/product-mobile-sections-screen.blade.php, resources/views/admin/partials/product-trust-share-screen.blade.php, resources/views/components/kbb-title-header.blade.php, resources/views/partials/product/paylater.blade.php, resources/views/partials/product/share-bar.blade.php, resources/views/partials/product/share-button.blade.php, resources/views/partials/product/share-sheet.blade.php, resources/views/partials/product/trust-share-stack.blade.php, resources/views/store/product.blade.php.
+
 ## 2.60.349
 **Category header: the category name as title unless you set your own,
 left-aligned (right in Arabic), a light icon box for categories with no
