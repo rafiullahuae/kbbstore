@@ -24,7 +24,13 @@ use Illuminate\View\View;
  */
 class ProductController extends Controller
 {
-    private const CARD_COLUMNS = [
+    /*
+     * PUBLIC since Lane PS, read by App\Services\AlsoLikeRail: the "You may
+     * also like" carousel selects these columns in its union, so the cards on
+     * the rail and the ones Frequently Bought Together draws from related()
+     * below are one list of columns rather than two that can drift.
+     */
+    public const CARD_COLUMNS = [
         'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image',
         'rating', 'review_count', 'featured', 'type',
@@ -155,12 +161,32 @@ class ProductController extends Controller
          */
         $realSummary = $summary;
 
+        $alsoLike = app(\App\Services\AlsoLikeRail::class)->forProduct($product);
+
         return view('store.product', [
             'product' => $product,
             'gallery' => $this->gallery($product),
             'summary' => $summary,
             'reviews' => $reviews,
-            'related' => $this->related($product),
+            /*
+             * "You may also like" — a carousel, mixed from the same brand and
+             * the same category, with the owner's controls and per-product
+             * picks. (Lane PS) App\Services\AlsoLikeRail chooses; related()
+             * below is no longer what the page draws, and is kept, unchanged,
+             * because Frequently Bought Together still takes its companions
+             * from it.
+             */
+            'alsoLike' => $alsoLike,
+            /*
+             * The SAME collection under the name the template used for these
+             * cards until the carousel. Nothing in resources/views reads it
+             * now; StorefrontEnglishUnchangedTest renders the pre-conversion
+             * templates against this controller, and they do — so it is what
+             * lets that walk show the cards byte-identical inside a new
+             * wrapper, rather than an error page. Costs no query: it is the
+             * rail's own result.
+             */
+            'related' => $alsoLike['products'],
             'settings' => $this->settings,
             'cutoff' => $this->cutoff($request),
             'bundles' => app(\App\Services\BundleService::class)->forProduct($product),

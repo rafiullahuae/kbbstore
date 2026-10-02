@@ -444,7 +444,17 @@ it('keeps the screen\'s panel registry internally consistent', function () {
      * LAYOUT while it is not drawn, which is what lets the operator arrange it
      * once and find it where they put it the next time they open a set.
      */
-    expect($keys)->toHaveCount(14);
+    /*
+     * ── AND ONCE MORE, 14 -> 15 (Lane PS) ─────────────────────────────────
+     *
+     *   `alsolike`  "You may also like" — this product's own picks for the
+     *               carousel under it, and whether they come first or alone.
+     *               The owner asked for "manual selection also". A new key, so
+     *               reconcile() appends it to the main column of any
+     *               arrangement saved before it existed.
+     */
+    expect($keys)->toHaveCount(15);
+    expect($keys)->toContain('alsolike');
     expect($keys)->toContain('setbox');
     expect($keys)->toContain('tags');
     expect(array_unique($keys))->toHaveCount(count($keys), 'a panel key is listed twice');

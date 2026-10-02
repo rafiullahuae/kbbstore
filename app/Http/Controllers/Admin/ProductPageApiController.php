@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\AlsoLikeSettings;
 use App\Services\ModuleSchema;
 use App\Services\ProductLayout;
 use App\Services\ProductSections;
@@ -40,6 +41,7 @@ class ProductPageApiController extends Controller
     public function __construct(
         private ProductSections $sections,
         private ProductLayout $layout,
+        private AlsoLikeSettings $also,
     ) {}
 
     public function show(): JsonResponse
@@ -54,6 +56,14 @@ class ProductPageApiController extends Controller
             ),
             'trust' => self::trustTabs(),
             'preview' => $this->preview(),
+            /*
+             * THE THIRD HALF: "You may also like".               (Lane PS)
+             * Its own ModuleSchema::tabs() payload over AlsoLikeSettings, and
+             * its own key in save(), for the same reason `layout` has one: a
+             * POST that carries only the carousel's settings must not rewrite
+             * the module switches or the thirty layout values.
+             */
+            'also' => $this->also->tabs(),
         ]);
     }
 
@@ -96,11 +106,25 @@ class ProductPageApiController extends Controller
             'sections.*.desktop' => ['required', 'boolean'],
             'sections.*.mobile' => ['required', 'boolean'],
             'layout' => ['sometimes', 'array', 'min:1'],
+            'also' => ['sometimes', 'array', 'min:1'],
             'trust' => ['sometimes', 'array', 'min:1'],
         ]);
 
-        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['trust'])) {
+        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['also']) && ! isset($data['trust'])) {
             return response()->json(['ok' => false, 'error' => 'Nothing to save.'], 422);
+        }
+
+        /*
+         * "You may also like" (Lane PS): an unknown key is refused rather than
+         * dropped, like `layout`'s below — and checked BEFORE anything is
+         * written, so a refused POST has saved nothing at all.
+         */
+        if (isset($data['also'])) {
+            $unknown = array_diff(array_keys($data['also']), array_keys(AlsoLikeSettings::SCHEMA));
+
+            if ($unknown !== []) {
+                return response()->json(['ok' => false, 'error' => 'Unknown setting: '.implode(', ', $unknown)], 422);
+            }
         }
 
         $saved = 0;
@@ -139,6 +163,11 @@ class ProductPageApiController extends Controller
             $saved += count($data['layout']);
         }
 
+        if (isset($data['also'])) {
+            $this->also->save($data['also']);
+            $saved += count($data['also']);
+        }
+
         if (isset($data['trust'])) {
             /*
              * Lane PW. Refused rather than dropped, for the reason the layout
@@ -157,6 +186,7 @@ class ProductPageApiController extends Controller
         return response()->json([
             'ok' => true,
             'saved' => $saved,
+            'also' => $this->also->tabs(),
             'sections' => array_values($this->sections->all()),
             'layout' => ModuleSchema::tabs(
                 ProductLayout::SCHEMA,

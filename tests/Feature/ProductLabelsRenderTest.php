@@ -121,7 +121,19 @@ function plBadges(string $html): array
 /** The badges on the product's own page. */
 function plOnProductPage(Product $product): array
 {
-    return plBadges(test()->get('/product/' . $product->slug)->assertOk()->getContent());
+    $html = test()->get('/product/' . $product->slug)->assertOk()->getContent();
+
+    /*
+     * THE PRODUCT'S OWN BADGES, NOT ITS NEIGHBOURS'. (Lane PS) "You may also
+     * like" at the foot of the page is a carousel of twelve OTHER products'
+     * tiles now, each with its own label — a featured or reduced neighbour
+     * printed "Top seller" or "On sale" and read here as this product's. The
+     * page is cut at the rail's marker; the gallery and buy column above it
+     * are what these cases are about.
+     */
+    $cut = strpos($html, '<!-- related -->');
+
+    return plBadges($cut === false ? $html : substr($html, 0, $cut));
 }
 
 /** The badges on the shop grid. */

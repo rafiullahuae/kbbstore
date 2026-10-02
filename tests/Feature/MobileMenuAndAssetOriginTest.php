@@ -100,9 +100,12 @@ it('still wires the mobile menu, and in the same position', function () {
     // drop or reorder any of them. 22 since Lane PI-B added initListingLoad
     // ("Load more on scroll") directly after initShop, at index 16 -- after
     // initHome, so the mobile menu's position is unchanged.
-    expect($steps)->toHaveCount(22);
+    // 23 since Lane PS added initAlsoLike (the "You may also like" carousel)
+    // LAST, after initNavFit, so no step before it moved.
+    expect($steps)->toHaveCount(23);
     expect($steps[0])->toBe('initOverlay');
     expect($steps[8])->toBe('initHome');   // wires the mobile menu
     expect($steps[16])->toBe('initListingLoad');
     expect($steps[21])->toBe('initNavFit');
+    expect($steps[22])->toBe('initAlsoLike');
 });

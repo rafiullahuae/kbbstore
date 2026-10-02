@@ -297,7 +297,9 @@
 
     if (t.id !== 'ppSave' || !DIRTY) return;
 
-    var theirs = typeof PPDIRTY !== 'undefined' && PPDIRTY && (PPDIRTY.sections || PPDIRTY.layout);
+    /* ANY of the screen's own halves — sections, layout, and whatever a later
+       lane adds (Lane PS added `also`) — means its handler must still run. */
+    var theirs = typeof PPDIRTY !== 'undefined' && PPDIRTY && Object.keys(PPDIRTY).some(function (k) { return !!PPDIRTY[k]; });
     if (!theirs) { e.stopPropagation(); e.preventDefault(); }
 
     var payload = { trust: {} };

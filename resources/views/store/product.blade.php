@@ -202,8 +202,17 @@
          the old shop's `[rey_global_section id=N]` drawn as its block -- a
          blurb naming no section comes back byte for byte as forDisplay()
          returned it. A blurb that does name one carries a <div>, so
-         hasBlocks() below picks the <div> wrapper for it. */
-    $kbbBlurb = \App\Support\RichText::forStorefront($product->t('short_description'));
+         hasBlocks() below picks the <div> wrapper for it.
+
+       ▲ forShortDescription(), NOT forStorefront(). (Lane PV) The same HTML
+         with the empty lines above and below the copy taken off. An imported
+         excerpt that opened with `<p>&nbsp;</p><p>&nbsp;</p>` filled the
+         three-line cap with nothing, so the page read title, blank band,
+         "Read more" -- RichText::forShortDescription() has the measurement.
+         A blurb with nothing to trim comes back byte for byte. And a blurb
+         that was NOTHING BUT empty lines now prints no box and no "Read more"
+         at all ($kbbBlurb === '' in both @ifs below). */
+    $kbbBlurb = \App\Support\RichText::forShortDescription($product->t('short_description'));
     $kbbBlurbBlocks = \App\Support\RichText::hasBlocks($kbbBlurb);
 
     /* ═══════════════════════════════════════════════════════════════════════
@@ -520,7 +529,7 @@
              directive's own indentation and newline to the rendered page even
              when the directive prints nothing, and this file already records
              what that costs. --}}
-      @if ($product->short_description && ! $kbbShortBelow)<input class="bb-morebox" type="checkbox" id="bbMore">@if ($kbbBlurbBlocks)<div class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</div>@else<p class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</p>@endif<label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
+      @if ($product->short_description && $kbbBlurb !== '' && ! $kbbShortBelow)<input class="bb-morebox" type="checkbox" id="bbMore">@if ($kbbBlurbBlocks)<div class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</div>@else<p class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</p>@endif<label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
 
       <form class="cart kbb-cart-form" data-product_id="{{ $product->id }}" method="post">
         @csrf
@@ -721,7 +730,7 @@
 
                Same trap the .bb-price block above records for computing the
                range beside the markup instead of up in the php block at the top. --}}
-        @include('partials.set-contents-panel')@if ($kbbShortBelow)<input class="bb-morebox" type="checkbox" id="bbMore">@if ($kbbBlurbBlocks)<div class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</div>@else<p class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</p>@endif<label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
+        @include('partials.set-contents-panel')@if ($kbbShortBelow && $kbbBlurb !== '')<input class="bb-morebox" type="checkbox" id="bbMore">@if ($kbbBlurbBlocks)<div class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</div>@else<p class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</p>@endif<label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
 
         @php
             // Scarcity note, from the configured threshold. Only shown when the
@@ -906,13 +915,7 @@
 @endunless
 
   <!-- related -->
-  @if ($related->isNotEmpty())
-  <section class="sec">
-    <div class="eyebrow">{{ __('store.product.related_eyebrow') }}</div>
-    <h2>{{ __('store.product.related_heading') }}</h2>
-    <div class="{{ $modules->classFor('related') }} rel kbb-pgrid" data-skin="{{ \App\Support\GridSkins::resolve(null) }}" id="related">@foreach ($related as $item)<x-product-card :product="$item" />@endforeach</div>
-  </section>
-  @endif
+@include('partials.you-may-also-like')
 </div>
 
 {{-- Sticky add-to-cart. Off unless switched on in Appearance → Product styles →

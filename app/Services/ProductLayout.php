@@ -127,6 +127,24 @@ class ProductLayout
         'tab_s' => '--pl-tab-s',
         'body_s' => '--pl-body-s',
         'body_lh' => '--pl-body-lh',
+
+        /* Lane PV — the top of the page, per device, and the photo's badge. */
+        'gal_top_m' => '--pl-gal-top-m',
+        'gal_top_d' => '--pl-gal-top-d',
+        'thumb_over' => '--pl-thumb-over',
+        'badge_bg' => '--pl-badge-bg',
+        'badge_fg' => '--pl-badge-fg',
+        'buybox_gap_d' => '--pl-buybox-gap-d',
+        'head_gap_d' => '--pl-head-gap-d',
+        'rate_gap_d' => '--pl-rate-gap-d',
+        'desc_gap_m' => '--pl-desc-gap-m',
+        'desc_gap_d' => '--pl-desc-gap-d',
+        'more_gap_m' => '--pl-more-gap-m',
+        'more_gap_d' => '--pl-more-gap-d',
+        'opt_gap_m' => '--pl-opt-gap-m',
+        'opt_gap_d' => '--pl-opt-gap-d',
+        'rule_pad_d' => '--pl-rule-pad-d',
+        'brand_s' => '--pl-brand-s',
     ];
 
     /** key => [type, label, default, help, options] */
@@ -141,14 +159,27 @@ class ProductLayout
             'Above and below “Product details”, the reviews and “You may also like”. The gap between two sections is two of these.',
             ['min' => 0, 'max' => 90, 'step' => 2, 'unit' => 'px']],
 
-        // @media(max-width:880px){.pdp .buybox{padding-block-start:22px}}
-        'buybox_gap' => ['range', 'Space under the photograph, on a phone', 22,
-            'Between the gallery thumbnails and the product name. Phones only — on a laptop the picture sits beside the buy column rather than above it.',
+        // @media(max-width:880px){.pdp .buybox{padding-block-start:48px}}
+        //
+        // (Lane PV) 48 AND NOT 22, AND NOTHING MOVED. The gap on a phone was
+        // the grid's 26px row gap PLUS this padding, so the slider read 22 for
+        // a gap of 48 and could never take it under 26. The row gap is now 0
+        // on a phone and folded in here, so the number on the slider is the
+        // gap on the page. The migration that shipped this adds 26 to a value
+        // that had already been saved, so a moved slider stays where it was.
+        'buybox_gap' => ['range', 'Photo → brand · phone', 48,
+            'Between the gallery (its thumbnails, when it has them) and the brand line.',
+            ['min' => 0, 'max' => 90, 'step' => 1, 'unit' => 'px']],
+        // (Lane PV) On a laptop the photo sits BESIDE the buy column, so the
+        // laptop half of this gap is the space above the brand line, which the
+        // page has always drawn as 0.
+        'buybox_gap_d' => ['range', 'Space above the brand · laptop', 0,
+            'On a laptop the photo sits beside the buy column; this moves the brand line, and everything under it, down from the top of the photo.',
             ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
 
         // @media(max-width:880px){.pdp .gthumbs{gap:8px}}
         'thumb_gap' => ['range', 'Gap between gallery thumbnails', 8,
-            'The little pictures that float on the bottom edge of the photograph.',
+            'The little pictures under the photograph, on a phone.',
             ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
 
         // .details .dtabbar{gap:22px} — the Ledger rule, which beats the
@@ -165,8 +196,10 @@ class ProductLayout
         /* ═══════════ SPACING · the buy column ═════════════════════════════ */
 
         // .pdp .bb-head{margin-block:8px 0}
-        'head_gap' => ['range', 'Space above the product name', 8,
+        'head_gap' => ['range', 'Brand → name · phone', 8,
             'Between the brand line and the row that carries the name and the price.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'head_gap_d' => ['range', 'Brand → name · laptop', 8, '',
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
 
         // .pdp .bb-head{column-gap:16px}
@@ -175,9 +208,36 @@ class ProductLayout
             ['min' => 4, 'max' => 48, 'step' => 1, 'unit' => 'px']],
 
         // .pdp .cap-area{margin-block:10px 0} and .pdp .bb-rate{margin-block:10px 0}
-        'rate_gap' => ['range', 'Space above the rating', 10,
+        'rate_gap' => ['range', 'Name → rating · phone', 10,
             'Above the stars, the score and the thin bar under them. Both rating rows move together, so changing Store → Ecommerce → Product page → Review badges cannot lose it.',
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'rate_gap_d' => ['range', 'Name → rating · laptop', 10, '',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+
+        /*
+         * (Lane PV) "Between rating, title etc, I don't have enough controls to
+         * fix those spaces as per my need." Every gap down the top of the buy
+         * column now has a handle of its own, per device. Each ships at the
+         * number the page draws today -- the two seams used to share
+         * `rule_gap`, so their defaults are its 20 -- and the migration that
+         * ships with them copies any value he had ALREADY saved into the new
+         * keys, so a seam he had moved stays where he put it.
+         */
+        'desc_gap_m' => ['range', 'Rating → short description · phone', 20,
+            'The air above the thin line over the short description.',
+            ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'desc_gap_d' => ['range', 'Rating → short description · laptop', 20, '',
+            ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        // .pdp .bb-more{margin-block-start:6px}
+        'more_gap_m' => ['range', 'Short description → “Read more” · phone', 6, '',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'more_gap_d' => ['range', 'Short description → “Read more” · laptop', 6, '',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'opt_gap_m' => ['range', '“Read more” → options · phone', 20,
+            'The air above the thin line over “Choose your option”.',
+            ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'opt_gap_d' => ['range', '“Read more” → options · laptop', 20, '',
+            ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
 
         /*
          * THE SEAM, AND IT IS TWO NUMBERS BECAUSE IT IS TWO GAPS.
@@ -190,11 +250,13 @@ class ProductLayout
          * them as one control would have meant one of the two moving for a
          * reason the owner did not ask for.
          */
-        'rule_gap' => ['range', 'Space above each dividing line', 20,
-            'The hairline rules that separate the blurb, the options and the stock line. This is the air above the line.',
+        'rule_gap' => ['range', 'Space above the stock line', 20,
+            'The air above the thin line over “In stock”. The lines over the short description and the options have their own controls.',
             ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
-        'rule_pad' => ['range', 'Space below each dividing line', 20,
-            'The air between the line and the block under it.',
+        'rule_pad' => ['range', 'Space below each dividing line · phone', 20,
+            'The air between a thin line and the block under it — the short description, the options, the stock line and the trust lines.',
+            ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'rule_pad_d' => ['range', 'Space below each dividing line · laptop', 20, '',
             ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
 
         // .pdp .trust{margin-block-start:22px} — 22 and not 20, which is the
@@ -215,6 +277,10 @@ class ProductLayout
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
 
         /* ═══════════ TYPE · the buy column ════════════════════════════════ */
+
+        // .bb-brand{font-size:12px} — the eyebrow over the name. (Lane PV)
+        'brand_s' => ['range', 'Brand name', 120, 'The small capitals above the product name.',
+            ['min' => 90, 'max' => 200, 'step' => 5, 'unit' => 'px', 'scale' => self::TENTH]],
 
         // .pdp .bb-title{font-size:19px;font-weight:500} — round 2, option B.
         'title_m' => ['range', 'Product name · phone', 190,
@@ -286,10 +352,58 @@ class ProductLayout
         'body_lh' => ['range', 'Detail tab line spacing', 170,
             'How far apart the lines of that text sit.',
             ['min' => 110, 'max' => 240, 'step' => 2, 'unit' => '', 'scale' => 100]],
+
+        /* ═══════════ PHOTO · the top of the page (Lane PV) ════════════════ */
+
+        /*
+         * "The top space I want to remove completely or give option to
+         * reduce." The band between the header's search bar and the photograph
+         * is `.pdp`'s top padding — 22px at every width, measured. He asked for
+         * it GONE on the phone, so the phone ships at 0 (CLAUDE.md rule 1, as
+         * reversed on 30 September); the laptop was not part of the ask and
+         * keeps its 22.
+         */
+        'gal_top_m' => ['range', 'Space above the photo · phone', 0,
+            'Between the search bar and the photograph. 0 puts the photo right under the header.',
+            ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'gal_top_d' => ['range', 'Space above the photo · laptop', 22,
+            'Between the header and the top of the photograph and the buy column beside it.',
+            ['min' => 0, 'max' => 80, 'step' => 1, 'unit' => 'px']],
+
+        /*
+         * "The thumbnail icons please bring down beneath the image, I don't
+         * like the overlapping style, or give an option on backend to turn it
+         * off, keep it turned off by default." So OFF ships: the strip sits
+         * under the photograph. ON is the overlap exactly as it was — lifted
+         * 30px onto the photo's bottom edge. Phones only, because on a laptop
+         * the strip has always sat 14px under the photo.
+         *
+         * A select of '0' / '1' and not a bool, because the value reaches the
+         * page as a NUMBER the stylesheet multiplies by (`calc(10px - n*40px)`),
+         * which is how a switch moves a layout with no class and no script.
+         */
+        'thumb_over' => ['select', 'Thumbnails overlap the photo (phones)', '0',
+            'Off: the thumbnails sit in a row under the photograph. On: they float on its bottom edge, the old look.',
+            ['0' => 'Off — thumbnails under the photo', '1' => 'On — thumbnails overlap the photo']],
+
+        /*
+         * "The discount label has a white box and white text ... It should be
+         * a green box with white text." The plain “-16%” on the photograph had
+         * NO background at all: partials/product-gallery.blade.php printed it
+         * with a position and no colour, and `.lbl` in kbb-product.css sets
+         * white text and a shadow but no background — so on a white photo it
+         * was a white box with white text. #1F9D55 is the shop's own green, the
+         * default of Appearance → Product styles' “New” badge.
+         */
+        'badge_bg' => ['colour', 'Discount badge colour', '#1F9D55',
+            'The “-16%” on the photograph of a product on sale. A badge from Growth & Marketing → Product Labels keeps the colour set there.'],
+        'badge_fg' => ['colour', 'Discount badge text colour', '#FFFFFF', ''],
     ];
 
     /**
-     * Four tabs, and the split is by WHAT MOVES rather than by CSS property.
+     * Five tabs, and the split is by WHAT MOVES rather than by CSS property.
+     * (Four until Lane PV added "Photo & badge" -- the top of the page the
+     * owner asked about, which had nothing on any of the other four.)
      *
      * Same shape as ProductStyles::TABS and NewsletterSettings::TABS —
      * `tab => [label, description, [keys]]` — because the console draws all
@@ -297,16 +411,21 @@ class ProductLayout
      * screen the next reader has to learn separately.
      */
     public const TABS = [
+        'photo' => ['Photo & badge',
+            'The top of the page: the space above the photograph, whether the thumbnails sit under it or on it, and the colours of the discount badge on it.',
+            ['gal_top_m', 'gal_top_d', 'thumb_over', 'badge_bg', 'badge_fg']],
         'sp_page' => ['Spacing · Page',
             'The gaps between the big blocks of the page — the picture, the buy column, and the three sections under them.',
-            ['sec_pad', 'buybox_gap', 'thumb_gap', 'tab_gap', 'tab_body_gap']],
+            ['sec_pad', 'thumb_gap', 'tab_gap', 'tab_body_gap']],
         'sp_buy' => ['Spacing · Buy column',
-            'The gaps between the elements inside the buy column: the name, the price, the rating, the hairline seams, the trust lines and the payment icons.',
-            ['head_gap', 'name_price_gap', 'rate_gap', 'rule_gap', 'rule_pad',
+            'Every gap down the top of the buy column in reading order, with a phone and a laptop number for each: photo → brand → name → rating → short description → “Read more” → options. Then the seams, the trust lines and the payment icons.',
+            ['buybox_gap', 'buybox_gap_d', 'head_gap', 'head_gap_d', 'rate_gap', 'rate_gap_d',
+                'desc_gap_m', 'desc_gap_d', 'more_gap_m', 'more_gap_d', 'opt_gap_m', 'opt_gap_d',
+                'name_price_gap', 'rule_pad', 'rule_pad_d', 'rule_gap',
                 'trust_gap', 'trust_line_gap', 'chips_gap']],
         'ty_buy' => ['Type · Buy column',
             'Font sizes and weights for the top of the page. The product name has a phone size and a laptop size because those are the two numbers the page really draws.',
-            ['title_m', 'title_d', 'title_w', 'price_s', 'price_w', 'was_s', 'off_s',
+            ['brand_s', 'title_m', 'title_d', 'title_w', 'price_s', 'price_w', 'was_s', 'off_s',
                 'vat_s', 'rate_s', 'desc_s', 'desc_lh', 'trust_s']],
         'ty_sec' => ['Type · Sections & tabs',
             'The headings under the buy column, and the detail tabs.',
@@ -329,6 +448,10 @@ class ProductLayout
      * characters), so the only safe thing to print is a value that cannot
      * contain anything but digits. A range casts to int and a select stores one
      * of its own option keys; nothing else can reach css(). Rule 5.
+     *
+     * (Lane PV) AND A COLOUR, which is `#` and hex digits or nothing: the
+     * `colour` cast repairs or refuses anything else, and hex() in vars() is
+     * the second lock. Neither can let a `;`, a `}` or a `url(` through.
      */
     public const POLICY = [
         'max' => 60,
@@ -446,6 +569,22 @@ class ProductLayout
     }
 
     /**
+     * A colour, as `#` and three or six hex digits, or the shipped default.
+     * (Lane PV)
+     *
+     * The SECOND lock, as weight() is for the weights: ModuleSchema's `colour`
+     * cast already stores nothing else, but a row written by hand on the live
+     * box would otherwise reach a stylesheet. A value that is not a hex colour
+     * cannot carry a `;`, a `}` or a `url(`, so it cannot leave its declaration.
+     */
+    private static function hex(mixed $value, string $fallback): string
+    {
+        $value = is_scalar($value) ? strtoupper(trim((string) $value)) : '';
+
+        return preg_match('/^#(?:[0-9A-F]{3}|[0-9A-F]{6})$/', $value) === 1 ? $value : $fallback;
+    }
+
+    /**
      * Every custom property the product page reads.
      *
      * The names are `--pl-…`, and each one is read in kbb-product.css as
@@ -532,6 +671,25 @@ class ProductLayout
             '--pl-tab-s:'.self::px($n('tab_s')),
             '--pl-body-s:'.self::px($n('body_s')),
             '--pl-body-lh:'.self::num($n('body_lh'), 100),
+
+            /* Lane PV — photo & badge, the per-device buy-column gaps, the brand */
+            '--pl-gal-top-m:'.$n('gal_top_m').'px',
+            '--pl-gal-top-d:'.$n('gal_top_d').'px',
+            // A number the stylesheet multiplies by, and only ever 0 or 1.
+            '--pl-thumb-over:'.(($c['thumb_over'] ?? '0') === '1' ? '1' : '0'),
+            '--pl-badge-bg:'.self::hex($c['badge_bg'] ?? null, '#1F9D55'),
+            '--pl-badge-fg:'.self::hex($c['badge_fg'] ?? null, '#FFFFFF'),
+            '--pl-buybox-gap-d:'.$n('buybox_gap_d').'px',
+            '--pl-head-gap-d:'.$n('head_gap_d').'px',
+            '--pl-rate-gap-d:'.$n('rate_gap_d').'px',
+            '--pl-desc-gap-m:'.$n('desc_gap_m').'px',
+            '--pl-desc-gap-d:'.$n('desc_gap_d').'px',
+            '--pl-more-gap-m:'.$n('more_gap_m').'px',
+            '--pl-more-gap-d:'.$n('more_gap_d').'px',
+            '--pl-opt-gap-m:'.$n('opt_gap_m').'px',
+            '--pl-opt-gap-d:'.$n('opt_gap_d').'px',
+            '--pl-rule-pad-d:'.$n('rule_pad_d').'px',
+            '--pl-brand-s:'.self::px($n('brand_s')),
         ];
 
         $out = [];

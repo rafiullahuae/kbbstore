@@ -541,11 +541,18 @@ it('wraps the blurb in a checkbox and a label, once, on an ordinary product and 
          docs/lane-pdp4-shots/base-measure.json is the browser agreeing —
          `max-block-size: 85.61px` before the change and after it.
 
+       ▲ AND AGAIN IN LANE PV, AND STILL NOT THE NUMBERS. The space under a
+         seam now has a phone and a laptop control, so the cap reads it through
+         `--pdp-rule-pad` -- a property `.pdp` sets from `--pl-rule-pad` on a
+         phone and from `--pl-rule-pad-d` on a laptop. Its fallback is the same
+         20px, and docs/lane-pv-shots/*-measure.json has the box at 85.6px on
+         both widths before and after.
+
        MUTATION NOTE, RUN: put `calc(100% - 1.05em),transparent` back → RED,
        and a one-line blurb fades again. */
     $rules = ledgerCssRules();
     ledgerLacks($rules, 'calc(100% - 1.05em)', 'the blurb fade is not measured from the element bottom');
-    ledgerHas($rules, 'transparent calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px))',
+    ledgerHas($rules, 'transparent calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pdp-rule-pad,20px))',
         'it ends exactly where the cap cuts');
     ledgerLacks($rules, 'calc(100% - 2.2em)', 'nor is the tab panel fade');
     ledgerHas($rules, 'transparent 104px', 'which ends where .dcontent.clamp cuts');

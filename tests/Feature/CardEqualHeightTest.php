@@ -683,7 +683,8 @@ it('measures nothing in the browser to make the heights equal', function () {
         'partials/home/grid-section.blade.php',
         'store/routines.blade.php',
         'store/shop.blade.php',
-        'store/product.blade.php',
+        // Lane PS: the related rail, moved out of store/product.blade.php.
+        'partials/you-may-also-like.blade.php',
     ] as $view) {
         $source = (string) file_get_contents(resource_path('views/'.$view));
 
@@ -759,7 +760,10 @@ it('knows every template that draws a product tile, including the grid nobody wa
         // listings' .kbb-pgrid — so these tiles land inside a grid this list
         // already names and get its card, its skin and its equal heights.
         'resources/views/partials/listing-batch.blade.php',
-        'resources/views/store/product.blade.php',
+        // ▲ MOVED, NOT ADDED (Lane PS). The product page's related rail left
+        // store/product.blade.php for its own partial when it became the "You
+        // may also like" carousel; same tile, same `.rel.kbb-pgrid`, same skin.
+        'resources/views/partials/you-may-also-like.blade.php',
         'resources/views/store/routines.blade.php',
         'resources/views/store/shop.blade.php',
     ], 'the list of templates that draw the product tile has changed, and every one of them has to get the card the owner asked for');

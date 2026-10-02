@@ -739,12 +739,22 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
      * class of thing as the discount percentage and gets the same answer.
      * ApiSecurityTest's product-feed case is the guard that catches a change of
      * mind made by accident.
+     *
+     * ── AND A THIRD TIME (Lane PS) ─────────────────────────────────────────
+     *
+     * `also_like` was added by 2027_07_11_000200_add_also_like_to_products: a
+     * product's own "You may also like" picks, `{"mode": …, "ids": […]}`.
+     * DECIDED FIRST, as this test asks: it is NOT in Product::toApi(). The
+     * storefront prints the chosen cards, never the list; which products the
+     * owner pairs with which is his merchandising and no business of an
+     * unauthenticated feed. ApiSecurityTest's "keeps a product's own 'You may
+     * also like' picks off the public product api" pins the absence by name.
      */
     $columns = Schema::getColumnListing('products');
     sort($columns);
 
     expect($columns)->toBe([
-        'brand_id', 'category_id', 'created_at', 'custom_tabs', 'deleted_at', 'description', 'featured',
+        'also_like', 'brand_id', 'category_id', 'created_at', 'custom_tabs', 'deleted_at', 'description', 'featured',
         'gtin', 'how_to_use', 'id', 'image', 'image_alts', 'images', 'ingredients', 'is_visible',
         'manage_stock', 'meta_feed', 'name', 'position', 'price', 'published_at', 'rating',
         'review_count', 'routine_concerns', 'routine_role', 'sale_ends_at', 'sale_price',

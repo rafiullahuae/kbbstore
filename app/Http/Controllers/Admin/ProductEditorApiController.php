@@ -436,6 +436,9 @@ class ProductEditorApiController extends Controller
                 ? $product->tags()->orderBy('name')->pluck('name')->all()
                 : [],
             'set_members' => $this->setMembersPayload($product),
+            // Catalog → Products → (edit) → You may also like. (Lane PS) No query
+            // for a product with no picks, which is every product until one.
+            'also_like' => \App\Support\AlsoLikePicks::editorPayload($product),
             'price_mode' => SetPricing::mode($product),
             'discount_percent' => SetPricing::mode($product) === SetPricing::MODE_PERCENT
                 ? rtrim(rtrim(number_format(((int) ($product->set_discount ?? 0)) / 100, 2, '.', ''), '0'), '.')
@@ -672,7 +675,24 @@ class ProductEditorApiController extends Controller
             $this->messages()
         );
 
-        $failure = DB::transaction(fn () => $this->apply($product, $data));
+        /*
+         * "You may also like" picks (Lane PS). Checked BEFORE anything is
+         * written -- a pick that is not on the shop is a 422 like any other
+         * field -- and written in the SAME transaction as the product, so the
+         * two cannot be half-saved. Absent from the request means "leave them".
+         * App\Support\AlsoLikePicks carries the rules and why it is JSON.
+         */
+        $alsoLike = \App\Support\AlsoLikePicks::fromRequest($request, $product);
+
+        $failure = DB::transaction(function () use ($product, $data, $alsoLike) {
+            $failure = $this->apply($product, $data);
+
+            if (! $failure instanceof JsonResponse && $alsoLike !== null) {
+                \App\Support\AlsoLikePicks::write($product, $alsoLike);
+            }
+
+            return $failure;
+        });
 
         if ($failure instanceof JsonResponse) {
             return $failure;

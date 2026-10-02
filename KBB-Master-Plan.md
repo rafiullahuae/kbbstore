@@ -3732,7 +3732,7 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 29 | Category and brand pages load more on scroll by default (no pager) | PR | **merged** |
 | 30 | Grid card hover effects off on phones by default | PR | **merged** |
 | 31 | Full control of grid card inner spacing (image/title/price/button) and font weights, per device | PR | **merged** |
-| 32 | "You may also like" as a carousel: brand + category mixed by default, rule controls, manual selection per product | PS | in progress |
+| 32 | "You may also like" as a carousel: brand + category mixed by default, rule controls, manual selection per product | PS | **merged** — Appearance → Product page → "You may also like"; per-product picks in Catalog → Products → edit → "You may also like" |
 | 33 | Category banners, titles and descriptions from the old site as the category page header | PT (exporter 1.11.0) | **merged** |
 | 34 | Internal links in descriptions/articles/blocks still pointing to kbeautybliss.com → this shop's URLs | PT | **merged** |
 | 35 | Order page: billing/shipping/customer could not be edited ("Edit" was a bare link; shipping opened raw JSON); "Order history" went to all customers; a green "Paid with …" panel; no Capture box; "Mark as paid" with a reference when an unpaid order moves to a paid status | PU | **merged** — capture kept only for real Tabby/Tamara authorisations; COD amber until collected |
@@ -3740,6 +3740,8 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 37 | An uncollected COD order still reads "AED X still refundable" (imported COD orders carry paid_at; PaymentRefunder's ceiling) | integrator | done: PaymentRefunder::capturedFils treats COD not yet collected as unpaid (CodRefundCeilingTest) |
 | 38 | The search box's Trending panel opens with a delay on tap; must appear immediately | integrator | **done** — the header carries the trending words; the panel paints on focus (854 ms → 10 ms with the endpoint held 800 ms) |
 | 39 | `/shop/?filter_brands=celimax` reads "Shop all" with the default line; show the brand name or nothing (brand-filter URLs only) | integrator | **done** — the brand's name as the heading and tab title, no generic line; other pages unchanged (ShopBrandHeadingTest) |
+| 40 | Product page, phones: short description hidden behind a blank band; thumbnails over the photo (move below, overlap OFF by default); space above the photo removed; spacing controls with live preview; the photo's discount badge white-on-white → green with white text | PV | **merged** — Appearance → Product page → Photo & badge / Spacing · Buy column / Type · Buy column |
+| 41 | Product page buy column: yellow FAST DELIVERY box above Add to cart; "Authenticity Guaranteed" line that slides open; colourful share bar carrying URL, description and image; spacing controls | PW | in progress |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix

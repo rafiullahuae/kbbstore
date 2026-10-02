@@ -545,6 +545,7 @@ a.peo-btn{display:inline-block;text-decoration:none}
 .peo-panel[data-peo-panel="brand"]{--peo-hue:#c026d3}
 .peo-panel[data-peo-panel="pricing"]{--peo-hue:#b45309}
 .peo-panel[data-peo-panel="stock"]{--peo-hue:#0369a1}
+.peo-panel[data-peo-panel="alsolike"]{--peo-hue:#db2777}
 
 .peo-card{position:relative;overflow:hidden}
 
@@ -696,7 +697,7 @@ a.peo-btn{display:inline-block;text-decoration:none}
     'sale_starts_at', 'sale_ends_at', 'manage_stock', 'stock', 'stock_status',
     'short_description', 'description', 'ingredients', 'how_to_use', 'image', 'images',
     'image_alts', 'seo', 'type', 'tags', 'ar', 'set_members', 'price_mode',
-    'discount_percent', 'discount_amount'];
+    'discount_percent', 'discount_amount', 'also_like'];
 
   if (window.kbbDrafts) window.kbbDrafts.track({
     id: 'product', screen: SCREEN,
@@ -1040,6 +1041,10 @@ a.peo-btn{display:inline-block;text-decoration:none}
      part of the product and neither is saved. (Lane SP) */
   var setFound = [];
   var setQuery = '';
+  /* "You may also like" picker (Lane PS) — its own search results and query,
+     never the set picker's: the two panels can be open at once. */
+  var ymalFound = [];
+  var ymalQuery = '';
 
   /* Pressed, not stored: "start again from today's total" is an instruction for
      ONE save. NOT on `model`, because it is not part of the product. (Lane SP2) */
@@ -1209,6 +1214,15 @@ a.peo-btn{display:inline-block;text-decoration:none}
          server to delete the row. */
       translations: arabicPayload()
     };
+
+    /* "You may also like" picks (Lane PS): the mode and the ids, in his order.
+       Only for a product that exists -- the panel asks him to save first. */
+    if (model.id && model.also_like) {
+      body.also_like = {
+        mode: ymalModel().mode,
+        ids: ymalModel().items.map(function(it){ return Number(it.id); })
+      };
+    }
 
     if ((model.type || 'simple') === 'set') {
       body.set_members = (model.set_members || []).map(function(m){
@@ -2870,6 +2884,206 @@ a.peo-btn{display:inline-block;text-decoration:none}
       + '</div>';
   }
 
+  /* ════════════════════════════════════════════════════════════════════════
+     YOU MAY ALSO LIKE — this product's own picks.                 (Lane PS)
+
+     The owner: "Give us control to choose the products query what to show
+     etc, or manual selection also." The rule is chosen once, for the whole
+     shop, in Appearance → Product page → You may also like; this panel is the
+     manual half, per product, built the way the set's member picker above is
+     built -- search, add, reorder (drag or arrows), remove -- and saved with
+     the product by the ordinary Save, so a product and its picks cannot be
+     half-saved.
+
+     The server checks every pick again (App\Support\AlsoLikePicks): only
+     products the shop can show, never this one, at most 24. A pick that has
+     since been hidden or deleted is listed with a red note rather than
+     silently dropped, so the owner can see why it is not on the page.
+     ════════════════════════════════════════════════════════════════════════ */
+  function ymalModel(){
+    var a = model.also_like;
+    if (!a || typeof a !== 'object') a = model.also_like = { mode: 'rule', items: [] };
+    if (!Array.isArray(a.items)) a.items = [];
+    if (['rule', 'first', 'only'].indexOf(a.mode) === -1) a.mode = 'rule';
+    return a;
+  }
+
+  function ymalView(){
+    if (!model.id) {
+      return '<div class="peo-card"><h3>You may also like</h3>'
+        + '<p class="peo-hint">Save this product first, then choose the products shown under it.</p></div>';
+    }
+
+    var a = ymalModel();
+    var picked = {};
+    a.items.forEach(function(it){ picked[Number(it.id)] = true; });
+
+    var rows = a.items.map(function(it, i){
+      var note = !it.on_shop ? ' &middot; <b style="color:#b8362d">not on the shop</b>'
+        : (it.sold_out ? ' &middot; sold out' : '');
+      return '<div class="peo-setm" draggable="true" data-peo-ymalrow="' + i + '">'
+        + '<span class="peo-grip" aria-hidden="true">&#8942;&#8942;</span>'
+        + '<span class="peo-setth"' + (it.image ? ' style="background-image:url(\'' + esc(it.image) + '\')"' : '') + '></span>'
+        + '<span class="peo-setmid"><b>' + esc(it.name) + '</b>'
+          + '<i>' + (it.brand ? esc(it.brand) : '&nbsp;') + note + '</i></span>'
+        + '<button type="button" class="peo-mini" data-peo-ymalup="' + i + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Move up">&uarr;</button>'
+        + '<button type="button" class="peo-mini" data-peo-ymaldown="' + i + '"' + (i === a.items.length - 1 ? ' disabled' : '') + ' aria-label="Move down">&darr;</button>'
+        + '<button type="button" class="peo-mini is-bad" data-peo-ymalrm="' + i + '" aria-label="Remove">&#10005;</button>'
+        + '</div>';
+    }).join('');
+
+    var found = (ymalFound || []).filter(function(p){ return !picked[Number(p.id)]; }).map(function(p){
+      return '<div class="peo-setm is-find">'
+        + '<span class="peo-setth"' + (p.image ? ' style="background-image:url(\'' + esc(p.image) + '\')"' : '') + '></span>'
+        + '<span class="peo-setmid"><b>' + esc(p.name) + '</b>'
+        + '<i>' + (p.brand ? esc(p.brand) : '&nbsp;') + (p.sold_out ? ' &middot; sold out' : '') + '</i></span>'
+        + '<button type="button" class="peo-mini" data-peo-ymaladd="' + Number(p.id) + '"'
+        + (a.items.length >= 24 ? ' disabled' : '') + '>Add</button>'
+        + '</div>';
+    }).join('');
+
+    var opt = function(v, l){ return '<option value="' + v + '"' + (a.mode === v ? ' selected' : '') + '>' + l + '</option>'; };
+
+    return '<div class="peo-card">'
+      + '<h3>You may also like</h3>'
+      + '<p class="peo-hint">The carousel under this product. Leave it on <b>Use the rule</b> and it follows '
+      + '<b>Appearance &rarr; Product page &rarr; You may also like</b> (same brand and same category, mixed). '
+      + 'Or hand-pick products here.</p>'
+      + '<div class="peo-fld"><label for="peo-ymalmode">How to fill it</label>'
+        + '<select class="peo-sel" id="peo-ymalmode">'
+        + opt('rule', 'Use the rule') + opt('first', 'My picks first, then the rule') + opt('only', 'Only my picks')
+        + '</select>'
+        + (a.mode !== 'rule' && !a.items.length
+            ? '<div class="peo-note">Add at least one product below' + (a.mode === 'only' ? ', or the carousel will not show on this product.' : '.') + '</div>'
+            : '')
+      + '</div>'
+      + '<div class="peo-fld"><label>My picks <span class="peo-note" style="display:inline;margin:0">(' + a.items.length + ' of 24)</span></label>'
+        + '<div class="peo-setlist" id="peo-ymallist">'
+        + (rows || '<div class="peo-note" style="margin:0">No picks yet. Search below.</div>')
+        + '</div>'
+        + (a.items.length > 1 ? '<div class="peo-note">Drag a row to reorder it, or use the arrows. This is the order on the shop.</div>' : '')
+      + '</div>'
+      + '<div class="peo-fld" style="margin-bottom:0"><label for="peo-ymalq">Add a product</label>'
+        + '<input class="peo-in" type="search" id="peo-ymalq" value="' + esc(ymalQuery) + '" '
+        + 'placeholder="Search by name or SKU" autocomplete="off">'
+        + '<div class="peo-setlist" style="margin-top:9px">'
+        + (found || '<div class="peo-note" style="margin:0">' + (ymalQuery ? 'Nothing on the shop matches that.' : 'Type to search the products on your shop.') + '</div>')
+        + '</div></div>'
+      + '</div>';
+  }
+
+  async function ymalSearch(){
+    collect();
+
+    try {
+      var body = await api('/product-editor-also-like?q=' + encodeURIComponent(ymalQuery)
+        + '&exclude=' + encodeURIComponent(String(model.id || 0)));
+      ymalFound = (body && body.products) || [];
+    } catch (e) {
+      ymalFound = [];
+      banner = { kind: 'bad', text: message(e, 'That search could not be run.') };
+    }
+
+    render();
+
+    /* The list redraws under the box he is typing in; give the box back. */
+    var q = document.querySelector('#content #peo-ymalq');
+    if (q) { q.focus(); try { q.setSelectionRange(q.value.length, q.value.length); } catch (err) {} }
+  }
+
+  var ymalDragFrom = null;
+
+  function bindYmal(){
+    var panel = document.querySelector('#content [data-peo-panel="alsolike"]');
+    if (!panel || !model || !model.id) return;
+
+    var a = ymalModel();
+
+    var q = panel.querySelector('#peo-ymalq');
+    if (q) {
+      q.addEventListener('input', function(){
+        ymalQuery = q.value;
+        clearTimeout(bindYmal._t);
+        bindYmal._t = setTimeout(ymalSearch, 220);
+      });
+    }
+
+    var mode = panel.querySelector('#peo-ymalmode');
+    if (mode) {
+      mode.addEventListener('change', function(){
+        collect();
+        a.mode = mode.value;
+        dirty = true;
+        render();
+      });
+    }
+
+    var swap = function(i, d){
+      var j = i + d;
+      if (j < 0 || j >= a.items.length) return;
+      collect();
+      var t = a.items[i]; a.items[i] = a.items[j]; a.items[j] = t;
+      dirty = true;
+      render();
+    };
+
+    panel.querySelectorAll('[data-peo-ymalup]').forEach(function(el){
+      el.addEventListener('click', function(){ swap(Number(el.getAttribute('data-peo-ymalup')), -1); });
+    });
+    panel.querySelectorAll('[data-peo-ymaldown]').forEach(function(el){
+      el.addEventListener('click', function(){ swap(Number(el.getAttribute('data-peo-ymaldown')), 1); });
+    });
+    panel.querySelectorAll('[data-peo-ymalrm]').forEach(function(el){
+      el.addEventListener('click', function(){
+        collect();
+        a.items.splice(Number(el.getAttribute('data-peo-ymalrm')), 1);
+        dirty = true;
+        render();
+      });
+    });
+    panel.querySelectorAll('[data-peo-ymaladd]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var id = Number(el.getAttribute('data-peo-ymaladd'));
+        var p = (ymalFound || []).filter(function(x){ return Number(x.id) === id; })[0];
+        if (!p || a.items.length >= 24) return;
+        if (a.items.some(function(it){ return Number(it.id) === id; })) return;
+        collect();
+        a.items.push({ id: id, name: p.name, brand: p.brand, image: p.image, on_shop: true, sold_out: !!p.sold_out });
+        if (a.mode === 'rule') a.mode = 'first';
+        dirty = true;
+        render();
+      });
+    });
+
+    /* Drag to reorder: the set picker's HTML5 drag events, nothing measured. */
+    panel.querySelectorAll('[data-peo-ymalrow]').forEach(function(row){
+      row.addEventListener('dragstart', function(e){
+        ymalDragFrom = Number(row.getAttribute('data-peo-ymalrow'));
+        row.classList.add('is-drag');
+        try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(ymalDragFrom)); } catch (err) {}
+      });
+      row.addEventListener('dragover', function(e){
+        if (ymalDragFrom === null) return;
+        e.preventDefault();
+        if (Number(row.getAttribute('data-peo-ymalrow')) !== ymalDragFrom) row.classList.add('is-over');
+      });
+      row.addEventListener('dragleave', function(){ row.classList.remove('is-over'); });
+      row.addEventListener('drop', function(e){
+        if (ymalDragFrom === null) return;
+        e.preventDefault();
+        var to = Number(row.getAttribute('data-peo-ymalrow'));
+        var from = ymalDragFrom;
+        ymalDragFrom = null;
+        if (from === to || from < 0 || to < 0 || from >= a.items.length || to >= a.items.length) { render(); return; }
+        collect();
+        a.items.splice(to, 0, a.items.splice(from, 1)[0]);
+        dirty = true;
+        render();
+      });
+      row.addEventListener('dragend', function(){ ymalDragFrom = null; });
+    });
+  }
+
   /* ── THE SET'S OWN ARITHMETIC, IN INTEGER FILS ───────────────────────────
 
      THE SCREEN DOES NOT DECIDE WHAT A SET COSTS -- App\Support\SetPricing does,
@@ -3236,6 +3450,9 @@ a.peo-btn{display:inline-block;text-decoration:none}
       when: function(){ return (model.type || 'simple') === 'set'; },
       view: function(){ return setboxView(); } },
     { key: 'seo',        label: 'Search appearance', col: 'main', view: function(){ return seoView(); } },
+    /* "You may also like" (Lane PS). A new key, so reconcile() appends it to
+       the main column of an arrangement saved before it existed. */
+    { key: 'alsolike',   label: 'You may also like', col: 'main', view: function(){ return ymalView(); } },
     { key: 'publish',    label: 'Publishing',        col: 'side', view: function(){ return publishView(); } },
     { key: 'categories', label: 'Categories',        col: 'side', view: function(){ return categoriesView(); } },
     { key: 'brand',      label: 'Brand',             col: 'side', view: function(){ return brandView(); } },
@@ -3882,6 +4099,7 @@ a.peo-btn{display:inline-block;text-decoration:none}
 
   function bindEditor(){
     bindSetBox();
+    bindYmal();
     bindTags();
 
     /* ---- the save bar ---- */
