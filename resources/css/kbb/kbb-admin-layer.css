@@ -1,0 +1,237 @@
+/*
+ * The storefront admin layer: the thin bar and the quick-edit pencil. (Lane RA)
+ *
+ * NEVER LOADED FOR A SHOPPER. This file is not a Vite entry and no page links
+ * it: resources/js/kbb/admin/storefront-admin.js imports it as a string
+ * (`?inline`) and writes it into one <style> element, and that chunk is only
+ * fetched when the administrator's hint cookie is present and the
+ * authenticated context endpoint answered yes.
+ *
+ * EVERYTHING IS NAMESPACED .kbb-adm-* (the bar) or .kbb-qe-* (the pencil and
+ * its pop-up), and the only rules that reach outside those names are the five
+ * under "MAKING ROOM", each gated on html.kbb-adm-on, a class the script sets
+ * only while the bar is open.
+ *
+ * ── WHERE THE BAR SITS, AND WHY ────────────────────────────────────────────
+ *
+ * position:fixed across the top, 32px, and the page pushed down by the same
+ * amount through a custom property on <html> -- the arrangement WordPress's
+ * own admin bar uses, which the owner already knows. The shop's sticky header
+ * sticks at `top: var(--kbb-adm-h)` instead of 0, so it parks UNDER the bar
+ * rather than behind it.
+ *
+ * z-index 89, deliberately BELOW the shop's own layers: the sticky header is
+ * 90 and every drawer, scrim, sheet and panel (cart, search, mobile menu,
+ * account, quick view, share sheet) is 90 to 120. So an open cart panel or
+ * mobile menu covers the bar the way it covers the rest of the page, rather
+ * than the bar sitting on top of the panel's own close button. "It should not
+ * disturb anything" -- nothing the shop opens is ever under the bar.
+ */
+
+:root{--kbb-adm-h:0px}
+html.kbb-adm-on{--kbb-adm-h:32px;margin-top:var(--kbb-adm-h)!important}
+
+/* ── MAKING ROOM: the shop's sticky things, each moved down by the bar ─────
+   Their own offsets are restated here (0, 18px, 68px, 82px, 84px, 120px), read
+   off kbb.css, kbb-shop.css, kbb-product.css, kbb-cart.css and
+   kbb-checkout.css; StorefrontAdminLayerTest pins each against its source. */
+html.kbb-adm-on body>header,
+html.kbb-adm-on header.hd-sticky,
+html.kbb-adm-on header.head,
+html.kbb-adm-on header.co-head{top:var(--kbb-adm-h)}
+html.kbb-adm-on .filtercol{top:calc(82px + var(--kbb-adm-h))}
+html.kbb-adm-on .gallery{top:calc(84px + var(--kbb-adm-h))}
+html.kbb-adm-on .kbb-cartpage .sum{top:calc(120px + var(--kbb-adm-h))}
+@media (max-width:900px){
+  /* The phone filter drawer is position:fixed, top:0 -- it is a drawer, it
+     covers the bar like every other drawer, so it keeps top:0. */
+  html.kbb-adm-on .filtercol{top:0}
+}
+
+/* ─────────────────────────────────────────────────────────────── the bar */
+.kbb-adm{
+  position:fixed;top:0;inset-inline:0;height:32px;z-index:89;
+  display:flex;align-items:center;gap:6px;padding-inline:10px 6px;
+  background:#1f1a1d;color:#f4eef1;
+  font:500 12.5px/1 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  letter-spacing:0;text-transform:none;
+  box-shadow:0 1px 0 rgba(0,0,0,.25);
+  -webkit-font-smoothing:antialiased;
+}
+.kbb-adm *{box-sizing:border-box}
+.kbb-adm a,.kbb-adm button{
+  color:inherit;font:inherit;text-decoration:none;background:none;border:0;margin:0;
+  cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  height:26px;padding:0 9px;border-radius:6px;
+}
+.kbb-adm a:hover,.kbb-adm button:hover{background:rgba(255,255,255,.1);color:#fff}
+.kbb-adm a:focus-visible,.kbb-adm button:focus-visible{outline:2px solid #f39ab5;outline-offset:0}
+.kbb-adm svg{width:14px;height:14px;flex:none}
+.kbb-adm__brand{font-weight:700;color:#fff!important;padding-inline:4px 10px!important}
+.kbb-adm__brand b{color:#f39ab5;font-weight:700}
+.kbb-adm__links{
+  display:flex;align-items:center;gap:2px;flex:1 1 auto;min-width:0;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.kbb-adm__links::-webkit-scrollbar{display:none}
+.kbb-adm__ctx{background:rgba(243,154,181,.18)!important;color:#ffd3e1!important}
+.kbb-adm__ctx:hover{background:rgba(243,154,181,.3)!important}
+.kbb-adm__badge{
+  min-width:18px;height:16px;padding:0 5px;border-radius:9px;background:#e0567b;color:#fff;
+  font-size:10.5px;font-weight:700;display:inline-grid;place-items:center;line-height:1;
+}
+.kbb-adm__sep{width:1px;height:16px;background:rgba(255,255,255,.18);flex:none;margin-inline:2px}
+.kbb-adm__me{display:flex;align-items:center;gap:2px;flex:none}
+.kbb-adm__name{color:#d9cfd4;padding-inline:6px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kbb-adm__ini{
+  display:none;width:22px;height:22px;border-radius:50%;background:#e0567b;color:#fff;
+  font-size:10.5px;font-weight:700;place-items:center;flex:none;margin-inline:4px;
+}
+.kbb-adm__hide{width:28px;padding:0!important;justify-content:center}
+.kbb-adm__hide svg{transition:transform .2s ease}
+
+/* Collapsed: the bar is gone and a small tab hangs from the top end corner. */
+.kbb-adm-tab{
+  position:fixed;top:0;inset-inline-end:10px;z-index:91;
+  width:34px;height:15px;padding:0;margin:0;border:0;border-radius:0 0 8px 8px;
+  background:#1f1a1d;color:#f4eef1;cursor:pointer;display:grid;place-items:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);opacity:.82;
+}
+.kbb-adm-tab:hover,.kbb-adm-tab:focus-visible{opacity:1;outline:none}
+.kbb-adm-tab svg{width:12px;height:12px}
+
+@media (max-width:700px){
+  .kbb-adm{padding-inline:6px 2px;gap:2px;font-size:12px}
+  .kbb-adm__brand span{display:none}
+  .kbb-adm__name{display:none}
+  .kbb-adm__ini{display:inline-grid}
+  .kbb-adm a,.kbb-adm button{padding:0 7px}
+  .kbb-adm__logout span{display:none}
+}
+
+/* ─────────────────────────────────────────────────────────── the pencil */
+.kbb-qe-host{position:relative}
+.kbb-qe-pill{
+  position:absolute;top:10px;inset-inline-end:10px;z-index:6;
+  display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px 0 10px;margin:0;
+  border:1px solid rgba(255,255,255,.7);border-radius:99px;cursor:pointer;
+  background:rgba(31,26,29,.78);color:#fff;
+  font:600 12.5px/1 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  box-shadow:0 4px 14px -4px rgba(0,0,0,.4);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:background .15s ease,transform .15s ease;
+}
+.kbb-qe-pill:hover{background:#1f1a1d;transform:translateY(-1px)}
+.kbb-qe-pill:focus-visible{outline:2px solid #f39ab5;outline-offset:2px}
+.kbb-qe-pill svg{width:14px;height:14px;flex:none}
+/* A page with no header: the pill sits beside the plain heading instead. */
+.kbb-qe-pill--plain{position:static;margin-inline-start:10px;vertical-align:middle;background:#1f1a1d}
+
+/* ──────────────────────────────────────────────────────────── the pop-up */
+html.kbb-qe-lock{overflow:hidden}
+.kbb-qe{
+  position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:20px;
+  font:400 14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#2a2228;
+}
+.kbb-qe *{box-sizing:border-box}
+.kbb-qe__bg{position:absolute;inset:0;background:rgba(31,26,29,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:kbb-qe-fade .18s ease both}
+.kbb-qe__box{
+  position:relative;width:min(560px,100%);max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);
+  display:flex;flex-direction:column;background:#fff;border-radius:18px;
+  box-shadow:0 30px 80px -20px rgba(31,26,29,.55);animation:kbb-qe-pop .22s cubic-bezier(.2,.8,.2,1) both;
+  overflow:hidden;
+}
+.kbb-qe__head{display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid #f1e8ec}
+.kbb-qe__title{margin:0;font-size:16px;font-weight:700;line-height:1.25;flex:1;min-width:0}
+.kbb-qe__title small{display:block;font-size:12px;font-weight:500;color:#8a7d84;margin-top:2px}
+.kbb-qe__x{width:34px;height:34px;border-radius:10px;border:0;background:#f6f0f3;color:#2a2228;cursor:pointer;display:grid;place-items:center;flex:none}
+.kbb-qe__x:hover{background:#efe4e9}
+.kbb-qe__x svg{width:16px;height:16px}
+.kbb-qe__body{padding:14px 18px 6px;overflow-y:auto;overscroll-behavior:contain}
+.kbb-qe__foot{display:flex;align-items:center;gap:10px;padding:12px 18px 16px;border-top:1px solid #f1e8ec;background:#fff}
+.kbb-qe__more{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px}
+.kbb-qe__more a{color:#b23a62;text-decoration:none;font-weight:600}
+.kbb-qe__more a:hover{text-decoration:underline}
+.kbb-qe__btn{height:40px;padding:0 18px;border-radius:11px;border:1px solid #e6dbe0;background:#fff;color:#2a2228;font:600 14px/1 inherit;font-family:inherit;cursor:pointer;flex:none}
+.kbb-qe__btn:hover{background:#faf6f8}
+.kbb-qe__btn--go{background:#e0567b;border-color:#e0567b;color:#fff;min-width:96px}
+.kbb-qe__btn--go:hover{background:#cc426a}
+.kbb-qe__btn[disabled]{opacity:.6;cursor:progress}
+
+.kbb-qe__label{display:block;font-size:12.5px;font-weight:700;margin:0 0 6px;color:#4a3f45}
+.kbb-qe__hint{font-size:12px;color:#8a7d84;margin:6px 0 0}
+.kbb-qe__fld{margin:0 0 14px}
+.kbb-qe__in{
+  width:100%;height:40px;padding:0 12px;border:1px solid #e6dbe0;border-radius:10px;background:#fff;
+  font:400 14px/1.3 inherit;font-family:inherit;color:#2a2228;
+}
+textarea.kbb-qe__in{height:auto;min-height:84px;padding:10px 12px;resize:vertical}
+.kbb-qe__in:focus{outline:none;border-color:#e0567b;box-shadow:0 0 0 3px rgba(224,86,123,.15)}
+
+/* The live preview: the shop's own header, drawn at the page's width and
+   scaled to the box with `zoom` (set from window.innerWidth -- no element is
+   measured). */
+.kbb-qe__pv{margin:0 0 14px;border-radius:12px;background:#faf6f8;border:1px solid #f1e8ec;overflow:hidden;position:relative;min-height:60px}
+.kbb-qe__pv-stage{width:var(--qe-stage,100%);zoom:var(--qe-zoom,1);pointer-events:none}
+.kbb-qe__pv-stage .kbb-th,.kbb-qe__pv-stage .kbb-banner{margin:0!important}
+.kbb-qe__pv-note{padding:14px;font-size:12.5px;color:#8a7d84;text-align:center}
+.kbb-qe__pv-busy{position:absolute;top:8px;inset-inline-end:8px;width:18px;height:18px;border-radius:50%;border:2px solid rgba(224,86,123,.25);border-top-color:#e0567b;animation:kbb-qe-spin .8s linear infinite;display:none}
+.kbb-qe__pv.is-busy .kbb-qe__pv-busy{display:block}
+.kbb-qe__pv-tag{position:absolute;top:8px;inset-inline-start:8px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:rgba(255,255,255,.85);color:#4a3f45;padding:3px 7px;border-radius:6px}
+
+/* The picture: a drop zone you can also click. */
+.kbb-qe__drop{
+  position:relative;display:flex;align-items:center;gap:14px;padding:14px;border:2px dashed #e6c3d0;border-radius:14px;
+  background:#fdf7f9;cursor:pointer;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease;
+}
+.kbb-qe__drop:hover,.kbb-qe__drop:focus-visible{border-color:#e0567b;outline:none}
+.kbb-qe__drop.is-over{border-color:#e0567b;background:#fdecf2;box-shadow:0 0 0 4px rgba(224,86,123,.12)}
+.kbb-qe__thumb{width:96px;height:54px;border-radius:9px;background:#f1e8ec center/cover no-repeat;flex:none;display:grid;place-items:center;color:#c8a3b2}
+.kbb-qe__thumb svg{width:22px;height:22px}
+.kbb-qe__drop-txt{min-width:0;flex:1}
+.kbb-qe__drop-txt b{display:block;font-size:13.5px;margin-bottom:2px}
+.kbb-qe__drop-txt span{display:block;font-size:12px;color:#8a7d84}
+.kbb-qe__bar{height:6px;border-radius:6px;background:#f1e8ec;overflow:hidden;margin-top:8px;display:none}
+.kbb-qe__bar i{display:block;height:100%;width:0;background:#e0567b;border-radius:6px;transition:width .15s linear}
+.kbb-qe__drop.is-up .kbb-qe__bar{display:block}
+.kbb-qe__pic-row{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.kbb-qe__link{border:0;background:none;padding:0;color:#b23a62;font:600 12.5px/1.2 inherit;font-family:inherit;cursor:pointer}
+.kbb-qe__link:hover{text-decoration:underline}
+.kbb-qe__seg{display:inline-flex;border:1px solid #e6dbe0;border-radius:10px;overflow:hidden}
+.kbb-qe__seg label{position:relative;cursor:pointer}
+.kbb-qe__seg input{position:absolute;opacity:0;pointer-events:none}
+.kbb-qe__seg span{display:block;padding:8px 12px;font-size:12.5px;font-weight:600;color:#4a3f45;border-inline-start:1px solid #e6dbe0}
+.kbb-qe__seg label:first-child span{border-inline-start:0}
+.kbb-qe__seg input:checked+span{background:#2a2228;color:#fff}
+.kbb-qe__seg input:focus-visible+span{box-shadow:inset 0 0 0 2px #e0567b}
+.kbb-qe__err{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#fdecef;color:#9b1c3b;font-size:13px;display:none}
+.kbb-qe__err.is-on{display:block}
+
+/* The saved toast. */
+.kbb-qe-toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:2147483001;
+  display:flex;align-items:center;gap:8px;padding:11px 18px;border-radius:99px;background:#1f1a1d;color:#fff;
+  font:600 13.5px/1 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;box-shadow:0 12px 30px -10px rgba(0,0,0,.45);
+  animation:kbb-qe-toast 2.6s ease both;pointer-events:none;
+}
+.kbb-qe-toast svg{width:16px;height:16px;color:#7be0a5}
+.kbb-qe-swapped{animation:kbb-qe-flash 1.2s ease both}
+
+/* Phones: a bottom sheet. */
+@media (max-width:640px){
+  .kbb-qe{place-items:end stretch;padding:0}
+  .kbb-qe__box{width:100%;max-height:92vh;max-height:92dvh;border-radius:18px 18px 0 0;animation-name:kbb-qe-up}
+  .kbb-qe__foot{flex-wrap:wrap}
+  .kbb-qe__more{flex-basis:100%;order:2}
+  .kbb-qe__btn{flex:1}
+  .kbb-qe__thumb{width:72px;height:44px}
+}
+
+@keyframes kbb-qe-fade{from{opacity:0}to{opacity:1}}
+@keyframes kbb-qe-pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes kbb-qe-up{from{transform:translateY(100%)}to{transform:none}}
+@keyframes kbb-qe-spin{to{transform:rotate(360deg)}}
+@keyframes kbb-qe-toast{0%{opacity:0;transform:translate(-50%,12px)}10%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,6px)}}
+@keyframes kbb-qe-flash{0%{box-shadow:0 0 0 4px rgba(224,86,123,.55)}100%{box-shadow:0 0 0 0 rgba(224,86,123,0)}}
+@media (prefers-reduced-motion:reduce){
+  .kbb-qe__bg,.kbb-qe__box,.kbb-qe-toast,.kbb-qe-swapped{animation:none}
+}

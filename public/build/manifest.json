@@ -74,11 +74,20 @@
     "file": "assets/outfit-latin-Bc-8i84L.woff2",
     "src": "resources/fonts/outfit/outfit-latin.woff2"
   },
+  "resources/js/kbb/admin/storefront-admin.js": {
+    "file": "assets/storefront-admin-DY5Mvm9T.js",
+    "name": "storefront-admin",
+    "src": "resources/js/kbb/admin/storefront-admin.js",
+    "isDynamicEntry": true
+  },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-BqJJLc6N.js",
+    "file": "assets/app-ChRzTMZ1.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
-    "isEntry": true
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/kbb/admin/storefront-admin.js"
+    ]
   },
   "resources/js/kbb/pdp-trust.js": {
     "file": "assets/pdp-trust-CLra4tho.js",
