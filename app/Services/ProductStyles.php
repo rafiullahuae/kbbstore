@@ -122,10 +122,97 @@ class ProductStyles
         'show_category'      => ['bool',   'Category label', false, 'Off, with Brand name, and for the same reason.'],
         'show_rating'        => ['bool',   'Stars and review count', true, ''],
         'show_was_price'     => ['bool',   'Was price', true, 'The struck-through original.'],
-        'show_discount'      => ['bool',   'Discount badge', true, ''],
-        'show_new'           => ['bool',   'New badge', true, 'On products with no reviews yet.'],
+        /*
+         * ▲ AND TWO MORE MOVED FROM true TO false, ALSO ASKED FOR IN AS MANY
+         *   WORDS.                                                   (Lane PR)
+         *
+         * "Turn off by default on the product grid card, new and discount tag."
+         *
+         * Same shape as the pair above, for the same measured reason: the
+         * `.pc-nodisc` / `.pc-nonew` rules live only in kbb-grid-skins.css,
+         * which three pages load, so these two switches never reached /shop,
+         * a category or a brand page. components/product-card.blade.php reads
+         * both keys now and omits the pill, and bodyClass() below no longer
+         * emits the two classes — `.pc-nonew .kbb-badge-new` would also have
+         * hidden the bestsellers rail's `#1`, `#2` rank pills, which wear the
+         * same class and are not a NEW tag.
+         *
+         * 2027_07_11_000000_clear_caches_lane_pr_grid deletes any stored row
+         * for these two, as Lane CARD's migration did for its pair.
+         */
+        'show_discount'      => ['bool',   'Discount badge', false, 'The -N% pill on the photograph. Off by default, as you asked; the struck-through was-price still shows a markdown.'],
+        'show_new'           => ['bool',   'New badge', false, 'The NEW pill on products added in the last 30 days. Off by default, as you asked.'],
         'show_cart'          => ['bool',   'Add to cart button', true, ''],
         'name_lines'         => ['range',  'Product name lines', 0, 'Zero shows the whole name, however long. One to four trims it.', ['min' => 0, 'max' => 4, 'step' => 1, 'unit' => '']],
+
+        /*
+         * ── HOVER ON A PHONE ───────────────────────────────────── Lane PR ──
+         *
+         * "Remove grid hover from products in mobile ... I want to turn off by
+         * default on mobile devices only." A phone has no pointer to rest on a
+         * card, so `:hover` there is the state a TAP leaves behind: the card
+         * keeps its lifted shadow and its zoomed photograph after the finger
+         * has gone, and it stays that way while the shopper scrolls on.
+         * Measured on /collections/{slug}/ at 390 with touch emulation before
+         * this: box-shadow `none` → `0 14px 34px rgba(42,34,40,.12)` and the
+         * photograph `none` → `scale(1.06)` on a tap.
+         *
+         * OFF means the rule block in kbb.css ("CARD HOVER ON A PHONE") applies
+         * on `(hover:none)` and below 701px; ON puts `pc-phonehover` on <body>
+         * and the block steps aside. A desktop with a mouse is untouched either
+         * way. Ships OFF because he asked for it in as many words.
+         */
+        'hover_phone'        => ['bool',   'Card hover effects on phones', false, 'Off: on a phone or tablet a tapped card does not lift, shadow or zoom its photo. A desktop with a mouse keeps its hover either way.'],
+
+        /*
+         * ── SPACING AND TYPE INSIDE THE CARD ────────────────────── Lane PR ──
+         *
+         * "I need the full control of grid card spacing like between image,
+         * title, pricing row, add to cart, and also control of font bold etc."
+         *
+         * Phone (`_m`, up to 700px — where the card itself already changes, see
+         * the heart and the button size in kbb.css) and desktop (`_d`, 701px
+         * up). Weights are one value for both: a weight that differs by screen
+         * size reads as a bug rather than a design.
+         *
+         * EVERY DEFAULT IS THE VALUE THE SHOP RENDERS TODAY, measured in
+         * Chromium on the shipped Showcase card (docs/lane-pr-shots/before):
+         * text-column padding 16, photo → name 16, the price row's own space
+         * above it 12, price row → button 12, name 14px/600, price 13.5px on a
+         * phone and 15px on a desktop, sale price 700, button 11px on a phone
+         * and 12px on a desktop, brand 10.5px/600.
+         *
+         * AND AT THOSE DEFAULTS NOTHING IS EMITTED: cardCss() returns '' until
+         * a value moves, and then emits ONLY the values that moved. That is
+         * what keeps the shop byte-identical when this ships, and what lets the
+         * other card designs keep their own spacing for every control the owner
+         * has not touched — the numbers above are the Showcase card's, not a
+         * value forced onto all of them.
+         *
+         * Sizes are selects, not sliders, because three of today's values are
+         * half pixels (10.5, 13.5) and a `range` here stores whole numbers.
+         */
+        'card_pad_m'         => ['range',  'Inner padding · phone', 16, 'The space inside the card around the text, sides and bottom.', ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'card_pad_d'         => ['range',  'Inner padding · desktop', 16, '', ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'card_gap_img_m'     => ['range',  'Photo → name · phone', 16, 'The space between the photograph and the first line of text.', ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'card_gap_img_d'     => ['range',  'Photo → name · desktop', 16, '', ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'card_gap_price_m'   => ['range',  'Name → price row · phone', 12, 'Extra space above the price. The stars, when a product has reviews, sit in the room above this.', ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'card_gap_price_d'   => ['range',  'Name → price row · desktop', 12, '', ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'card_gap_cart_m'    => ['range',  'Price row → Add to cart · phone', 12, '', ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'card_gap_cart_d'    => ['range',  'Price row → Add to cart · desktop', 12, '', ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'card_fs_title_m'    => ['select', 'Product name size · phone', '14px', '', self::FONT_SIZES],
+        'card_fs_title_d'    => ['select', 'Product name size · desktop', '14px', '', self::FONT_SIZES],
+        'card_fs_price_m'    => ['select', 'Price size · phone', '13.5px', 'The price and the sale price.', self::FONT_SIZES],
+        'card_fs_price_d'    => ['select', 'Price size · desktop', '15px', '', self::FONT_SIZES],
+        'card_fs_btn_m'      => ['select', 'Button text size · phone', '11px', '', self::FONT_SIZES],
+        'card_fs_btn_d'      => ['select', 'Button text size · desktop', '12px', '', self::FONT_SIZES],
+        'card_fs_brand_m'    => ['select', 'Brand name size · phone', '10.5px', 'Only shows when Card content → Brand name is on.', self::FONT_SIZES],
+        'card_fs_brand_d'    => ['select', 'Brand name size · desktop', '10.5px', '', self::FONT_SIZES],
+        'card_fw_title'      => ['select', 'Product name weight', '600', '', self::FONT_WEIGHTS],
+        'card_fw_price'      => ['select', 'Price weight', '700', 'A product at one price.', self::FONT_WEIGHTS],
+        'card_fw_sale'       => ['select', 'Sale price weight', '700', 'The marked-down price beside a struck-through one.', self::FONT_WEIGHTS],
+        'card_fw_btn'        => ['select', 'Button text weight', '700', '', self::FONT_WEIGHTS],
+        'card_fw_brand'      => ['select', 'Brand name weight', '600', '', self::FONT_WEIGHTS],
 
         // ── Colour ──
         'sale_colour'        => ['colour', 'Sale badge', '#E23B57', ''],
@@ -153,11 +240,39 @@ class ProductStyles
         'sticky_radius'      => ['range',  'Button roundness', 99, '', ['min' => 0, 'max' => 99, 'step' => 3, 'unit' => 'px']],
     ];
 
+    /**
+     * The sizes a "size" select offers, 8px to 24px. A select stores one of
+     * its own options or the default (rule 5), so the value that reaches
+     * cardCss() is always one of these keys, unit included.
+     *
+     * THE KEYS CARRY THEIR UNIT ON PURPOSE. '14' is an integer-like key, and
+     * a browser orders an object's integer-like keys ahead of all the others,
+     * so the console's dropdown read 8, 9, 10 … 24, 8.5, 9.5 … — every half
+     * size at the bottom. '14px' is a string key and keeps this order.
+     */
+    public const FONT_SIZES = [
+        '8px' => '8px', '8.5px' => '8.5px', '9px' => '9px', '9.5px' => '9.5px', '10px' => '10px',
+        '10.5px' => '10.5px', '11px' => '11px', '11.5px' => '11.5px', '12px' => '12px', '12.5px' => '12.5px',
+        '13px' => '13px', '13.5px' => '13.5px', '14px' => '14px', '14.5px' => '14.5px', '15px' => '15px',
+        '15.5px' => '15.5px', '16px' => '16px', '17px' => '17px', '18px' => '18px', '19px' => '19px',
+        '20px' => '20px', '22px' => '22px', '24px' => '24px',
+    ];
+
+    public const FONT_WEIGHTS = [
+        '400' => 'Regular (400)', '500' => 'Medium (500)', '600' => 'Semi-bold (600)', '700' => 'Bold (700)',
+    ];
+
     public const TABS = [
-        'layout'  => ['Layout', 'Card shape and corners.',
-                      ['grid_skin', 'card_radius', 'image_ratio']],
+        'layout'  => ['Layout', 'Card shape, corners, and hover on a phone.',
+                      ['grid_skin', 'card_radius', 'image_ratio', 'hover_phone']],
         'content' => ['Card content', 'What each card shows.',
                       ['show_brand', 'show_category', 'show_rating', 'show_was_price', 'show_discount', 'show_new', 'show_cart', 'name_lines']],
+        'spacing' => ['Spacing & type', 'The space between the photo, the name, the price and the button, and the size and weight of each — a phone and a desktop set apart. Every value starts at what the shop shows today, so nothing moves until you move it.',
+                      ['card_pad_m', 'card_pad_d', 'card_gap_img_m', 'card_gap_img_d',
+                       'card_gap_price_m', 'card_gap_price_d', 'card_gap_cart_m', 'card_gap_cart_d',
+                       'card_fs_title_m', 'card_fs_title_d', 'card_fs_price_m', 'card_fs_price_d',
+                       'card_fs_btn_m', 'card_fs_btn_d', 'card_fs_brand_m', 'card_fs_brand_d',
+                       'card_fw_title', 'card_fw_price', 'card_fw_sale', 'card_fw_btn', 'card_fw_brand']],
         'colour'  => ['Colour', 'Badges, price and the button.',
                       ['sale_colour', 'new_colour', 'price_colour', 'star_colour', 'cart_bg', 'cart_fg']],
         'sticky'  => ['Sticky Add to Cart', 'The bar that follows the shopper down the product page.',
@@ -368,9 +483,159 @@ class ProductStyles
             $c['show_category'] ? '' : 'pc-nocat',
             $c['show_rating'] ? '' : 'pc-norate',
             $c['show_was_price'] ? '' : 'pc-nowas',
-            $c['show_discount'] ? '' : 'pc-nodisc',
-            $c['show_new'] ? '' : 'pc-nonew',
+            /*
+             * `pc-nodisc` and `pc-nonew` ARE NOT EMITTED ANY MORE. (Lane PR)
+             * components/product-card.blade.php omits the two pills itself, on
+             * every page; the classes reached three pages, and `pc-nonew` would
+             * also have hidden the bestsellers rail's `#1` rank pills, which
+             * share `.kbb-badge-new`. The rules stay in the sheets for the admin
+             * preview, which sets the classes itself.
+             */
             $c['show_cart'] ? '' : 'pc-nocart',
+            // Opt BACK IN to hover on a phone; see 'hover_phone' and kbb.css.
+            $c['hover_phone'] ? 'pc-phonehover' : '',
         ])));
+    }
+
+    /**
+     * The phone/desktop media queries cardCss() writes into. 700/701 is where
+     * the Showcase card already changes (kbb.css: the heart and the button
+     * size), so "phone" here means what the card itself already means by it.
+     */
+    private const PHONE = '@media (max-width:700px)';
+
+    private const DESKTOP = '@media (min-width:701px)';
+
+    /**
+     * The card's spacing and type, as a stylesheet — or '' when nothing on
+     * Appearance → Product styles → Spacing & type has been moved.  (Lane PR)
+     *
+     * ── EMPTY AT THE DEFAULTS, AND ONLY WHAT MOVED AFTER THAT ───────────────
+     *
+     * Every default is the Showcase card's measured value, and a stylesheet
+     * restating them would be a `<style>` element on every storefront page for
+     * a change that renders identically — StorefrontEnglishUnchangedTest pins
+     * exactly that — and would ALSO force the Showcase numbers onto every
+     * other card design, each of which has spacing of its own. So a key at its
+     * default contributes nothing, and a moved key contributes one declaration.
+     *
+     * ── RULE 5 ON A STYLESHEET ──────────────────────────────────────────────
+     *
+     * Every selector, property, unit and piece of punctuation below is a
+     * literal in this method. A range arrives cast and clamped to its own
+     * bounds and is printed through (int); a size or weight select arrives as
+     * one of its OWN option keys (FONT_SIZES / FONT_WEIGHTS) or its default —
+     * cast() guarantees it — and is re-checked against that list here anyway,
+     * so a value that is not on the list is dropped rather than printed.
+     * Nothing a POST sends can reach a selector, a property name or a unit.
+     *
+     * ── WHY THE SELECTORS LOOK LIKE THIS ────────────────────────────────────
+     *
+     * `.kbb-pgrid[data-skin] .kbb-tile …` is (0,3,0) before the element, one
+     * class above every skin rule it overrides — `.kbb-pgrid[data-skin^=
+     * "showcase"] .cb` and the phone-only `.kbb-pgrid[data-skin="showcase-row"]
+     * .cp` are (0,3,0) — so it wins whatever order the sheets load in. The
+     * custom properties go on the GRID, doubled to (0,3,0), because the
+     * Showcase family derives its reserved row heights from them there:
+     * `--sc-name-slot` follows the name's size, so a larger name does not spill
+     * into the price row; `--sc-brand-fs` drives both the brand line and its
+     * reserved slot; `--sc-pad` moves the wishlist heart with the padding.
+     */
+    public function cardCss(): string
+    {
+        $c = $this->all();
+        $moved = static fn (string $k): bool => $c[$k] !== self::SCHEMA[$k][2];
+        $size = static fn (string $k): ?string => isset(self::FONT_SIZES[(string) $c[$k]]) ? (string) $c[$k] : null;
+        $weight = static fn (string $k): ?string => isset(self::FONT_WEIGHTS[(string) $c[$k]]) ? (string) $c[$k] : null;
+
+        $grid = '.kbb-pgrid.kbb-pgrid[data-skin]';
+        $tile = '.kbb-pgrid[data-skin] .kbb-tile';
+        $out = '';
+
+        foreach (['m' => self::PHONE, 'd' => self::DESKTOP] as $dev => $media) {
+            $rules = [];
+
+            if ($moved("card_pad_{$dev}")) {
+                $p = (int) $c["card_pad_{$dev}"];
+                $rules[$grid][] = "--sc-pad:{$p}px";
+                $rules["{$tile} .cb"][] = "padding-inline:{$p}px;padding-bottom:{$p}px";
+            }
+
+            if ($moved("card_gap_img_{$dev}")) {
+                $rules["{$tile} .cb"][] = 'padding-top:'.(int) $c["card_gap_img_{$dev}"].'px';
+            }
+
+            if ($moved("card_gap_price_{$dev}")) {
+                $rules["{$tile} .cp"][] = 'padding-top:'.(int) $c["card_gap_price_{$dev}"].'px';
+            }
+
+            if ($moved("card_gap_cart_{$dev}")) {
+                $rules["{$tile} .kbb-card-cart"][] = 'margin-top:'.(int) $c["card_gap_cart_{$dev}"].'px';
+            }
+
+            if ($moved("card_fs_title_{$dev}") && ($v = $size("card_fs_title_{$dev}")) !== null) {
+                $rules[$grid][] = "--sc-name-slot:calc({$v} * var(--sc-name-lh,1.32) * var(--sc-name-lines,2))";
+                $rules["{$tile} .kbb-card-nm"][] = "font-size:{$v}";
+            }
+
+            if ($moved("card_fs_price_{$dev}") && ($v = $size("card_fs_price_{$dev}")) !== null) {
+                $rules["{$tile} .kbb-card-price"][] = "font-size:{$v}";
+            }
+
+            if ($moved("card_fs_btn_{$dev}") && ($v = $size("card_fs_btn_{$dev}")) !== null) {
+                $rules["{$tile} .kbb-card-cart"][] = "font-size:{$v}";
+            }
+
+            if ($moved("card_fs_brand_{$dev}") && ($v = $size("card_fs_brand_{$dev}")) !== null) {
+                $rules[$grid][] = "--sc-brand-fs:{$v}";
+                $rules["{$tile} .kbb-card-brand"][] = "font-size:{$v}";
+            }
+
+            if ($rules !== []) {
+                $out .= $media.'{'.self::flatten($rules).'}';
+            }
+        }
+
+        $weights = [];
+
+        foreach ([
+            'card_fw_title' => "{$tile} .kbb-card-nm",
+            'card_fw_price' => "{$tile} .kbb-card-price",
+            'card_fw_sale' => "{$tile} .kbb-card-reg+.kbb-card-price",
+            'card_fw_btn' => "{$tile} .kbb-card-cart",
+            'card_fw_brand' => "{$tile} .kbb-card-brand",
+        ] as $key => $selector) {
+            if ($moved($key) && ($v = $weight($key)) !== null) {
+                $weights[$selector][] = "font-weight:{$v}";
+            }
+        }
+
+        /*
+         * The sale price IS a `.kbb-card-price` (the one after a
+         * `.kbb-card-reg`), so "Price weight" on its own would repaint it too.
+         * When the price weight moved and the sale weight did not, the sale
+         * price is held at ITS value — the two controls stay independent.
+         */
+        if ($moved('card_fw_price') && ! $moved('card_fw_sale')) {
+            $weights["{$tile} .kbb-card-reg+.kbb-card-price"][] = 'font-weight:'.self::SCHEMA['card_fw_sale'][2];
+        }
+
+        if ($weights !== []) {
+            $out .= self::flatten($weights);
+        }
+
+        return $out;
+    }
+
+    /** @param array<string, list<string>> $rules */
+    private static function flatten(array $rules): string
+    {
+        $css = '';
+
+        foreach ($rules as $selector => $declarations) {
+            $css .= $selector.'{'.implode(';', $declarations).'}';
+        }
+
+        return $css;
     }
 }

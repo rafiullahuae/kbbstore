@@ -125,20 +125,33 @@ it('sizes the pager at every width, not only inside a phone query', function () 
 
 /* ═══════════════════ (b) the setting ═══════════════════ */
 
-it('ships at Arrows, with the listing\'s own page size, because he did not choose a default', function () {
+it('ships at Load more on scroll, because the owner asked for it by name', function () {
     /*
-     * MUTATION, RUN: `load_mode` default -> 'scroll' in SiteLayout::SCHEMA
-     * and this is red twice: the mode, and the shop's page of 24 becoming 12.
+     * It shipped at Arrows while he had not chosen. On 2 October 2026 he did:
+     * "Remove pagination from the categories and brands; it should load more
+     * products via scroll with grey loading stuff ... just keep this on by
+     * default." (Lane PR — GridCardOwnerAsksTest has the brand page half.)
+     *
+     * MUTATION, RUN: `load_mode` default -> 'arrows' in SiteLayout::SCHEMA
+     * and this is red twice: the mode, and one batch of 12 becoming 24.
      */
     $layout = app(SiteLayout::class);
 
-    expect($layout->loadMode())->toBe('arrows')
-        ->and($layout->perPage(24))->toBe(24);
+    expect($layout->loadMode())->toBe('scroll')
+        ->and($layout->perPage(24))->toBe(12);
 
     $category = llCategory(30);
     $html = test()->get(llPath($category))->assertOk()->getContent();
 
-    expect(substr_count($html, 'class="kbb-card kbb-tile"'))->toBe(24)
+    expect(substr_count($html, 'class="kbb-card kbb-tile"'))->toBe(12)
+        ->and($html)->toContain('data-load="scroll"');
+
+    // Arrows is still one click away, and still the listing's own page size.
+    llSet(['load_mode' => 'arrows']);
+    $html = test()->get(llPath($category))->assertOk()->getContent();
+
+    expect(app(SiteLayout::class)->perPage(24))->toBe(24)
+        ->and(substr_count($html, 'class="kbb-card kbb-tile"'))->toBe(24)
         ->and($html)->toContain('data-load="arrows"');
 });
 
@@ -191,7 +204,7 @@ it('clamps a typed batch into 4–96, refuses a word, and refuses a mode it does
     test()->postJson('/admin-api/site-layout', ['settings' => ['load_batch' => '13']])->assertStatus(422);
 
     SettingsService::forgetMemo();
-    expect(app(SiteLayout::class)->loadMode())->toBe('arrows');
+    expect(app(SiteLayout::class)->loadMode())->toBe('scroll');   // the shipped default, untouched by a refused POST
 });
 
 it('draws the Loading more products tab on Appearance → Site layout', function () {
@@ -206,7 +219,7 @@ it('draws the Loading more products tab on Appearance → Site layout', function
     expect($fields->keys()->all())->toBe(['load_mode', 'load_batch', 'load_batch_custom'])
         ->and(array_keys($fields['load_mode']['options']))->toBe(['arrows', 'scroll', 'all'])
         ->and(array_map('strval', array_keys($fields['load_batch']['options'])))->toBe(['12', '15', '20', 'custom'])
-        ->and($fields['load_mode']['value'])->toBe('arrows');
+        ->and($fields['load_mode']['value'])->toBe('scroll');
 });
 
 it('keeps the loading choice out of the stylesheet', function () {
@@ -233,7 +246,7 @@ it('keeps a support account out of the screen, and a guest out entirely', functi
         ->assertForbidden();
 
     SettingsService::forgetMemo();
-    expect(app(SiteLayout::class)->loadMode())->toBe('arrows');
+    expect(app(SiteLayout::class)->loadMode())->toBe('scroll');
 });
 
 /* ═══════════════════ (b) the batch ═══════════════════ */

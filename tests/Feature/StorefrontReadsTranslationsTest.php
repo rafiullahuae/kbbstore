@@ -614,6 +614,16 @@ it('does not fetch long prose for a page that only prints a name', function () {
 
 it('costs no query per card on an Arabic grid, whatever the catalogue holds', function () {
     /*
+     * ARROWS, AT THE SHOP'S OWN PAGE SIZE, SAID OUT LOUD.          (Lane PR)
+     * "Load more on scroll" ships as the default now — the owner asked for it
+     * — and makes a page one batch of twelve. This file is about paging at the
+     * listing's own size, not about the load mode, so it pins the mode it was
+     * written against; ListingLoadTest and GridCardOwnerAsksTest pin the
+     * default itself.
+     */
+    app(\App\Services\SiteLayout::class)->save(['load_mode' => 'arrows']);
+    \App\Services\SettingsService::forgetMemo();
+    /*
      * FLATNESS, not a budget — the distinction StorefrontQueryBudgetTest's
      * header makes, applied to the language that file does not measure. A page
      * running one query per card passes any ceiling you like on a small enough

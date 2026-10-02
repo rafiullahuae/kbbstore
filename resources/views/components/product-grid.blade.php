@@ -43,6 +43,10 @@
     'subheading' => null,
     'moreUrl' => null,
     'moreLabel' => null,
+    // An id for the grid, so a pager can name it as the place a batch of
+    // "Load more on scroll" lands (the brand page, Lane PR). A constant from
+    // the caller, never a setting. Ignored when a caller's pin needs the id.
+    'gridId' => null,
 ])
 
 @php
@@ -115,7 +119,7 @@
     @endphp
     <style>@if ($pinCols)@media(min-width:901px){#{{ $pinId }}{grid-template-columns:repeat({{ $pinCols }},minmax(0,1fr))}}@endif @if ($pinMobile)@media(max-width:900px){#{{ $pinId }}{grid-template-columns:repeat({{ $pinMobile }},minmax(0,1fr))}}@endif</style>
 @endif
-<div class="kbb-pgrid" data-skin="{{ $skin }}"@if ($pinCols || $pinMobile) id="{{ $pinId }}"@endif>
+<div class="kbb-pgrid" data-skin="{{ $skin }}"@if ($pinCols || $pinMobile) id="{{ $pinId }}"@elseif ($gridId) id="{{ $gridId }}"@endif>
     @foreach ($products as $p)
         {{-- THE CARD IS <x-product-card> NOW, AND THIS FILE NO LONGER DRAWS ONE.
 

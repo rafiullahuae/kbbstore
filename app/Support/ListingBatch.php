@@ -44,12 +44,17 @@ final class ListingBatch
 
     /**
      * @param  iterable<\App\Models\Product>  $products
+     * @param  (\Closure(\App\Models\Product): ?string)|null  $labelFor  the eyebrow PER
+     *         product, for a page whose grid resolves it per product (a brand
+     *         page, through <x-product-grid>) rather than once for the listing.
+     *         Null keeps $catLabel for every card, which is /shop/'s shape.
      */
-    public static function respond(iterable $products, ?string $catLabel, int $page, int $lastPage, ?string $next, string $self): JsonResponse
+    public static function respond(iterable $products, ?string $catLabel, int $page, int $lastPage, ?string $next, string $self, ?\Closure $labelFor = null): JsonResponse
     {
         $html = view('partials.listing-batch', [
             'products' => $products,
             'catLabel' => $catLabel,
+            'labelFor' => $labelFor,
         ])->render();
 
         return response()->json([
