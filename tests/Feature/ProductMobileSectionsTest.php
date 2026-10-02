@@ -585,3 +585,33 @@ it('adds no JavaScript and no query to the storefront', function () {
     expect(count(DB::getQueryLog()))->toBe($base, 'saving Mobile sections must not add a query to the product page');
     DB::disableQueryLog();
 });
+
+it('keeps every phone section to the column width, and the gallery to the screen', function () {
+    /*
+     * THE DEFECT, ON THE LIVE SHOP (2.60.350): on a phone the Medicube PDRN set
+     * -- ten gallery pictures -- made the whole page scroll sideways, the
+     * gallery and its thumbnails running off the right edge. "i told you that
+     * don't disturb anything. the product image and gallery going outside the
+     * screen and creating a giant weird side spacing."
+     *
+     * `.gallery{align-self:start}` was written for the laptop GRID ("stick to
+     * the top"). Lane QA made the phone page a flex COLUMN, where the axes swap
+     * and align-self:start means "do not stretch across", so the gallery took
+     * the width of its thumbnail strip: 676px on a 390px phone, measured in
+     * Chromium. Fixed: the gallery stretches (and keeps its edge-to-edge bleed,
+     * uncapped), every other section is min-width:0 / max-width:100%. After:
+     * scrollWidth = viewport at 360, 390, 430 and 768 with ten pictures, the
+     * thumbnails scrolling in their own row; 1280 unchanged.
+     *
+     * MUTATIONS, RUN: drop `align-self:stretch` -- red; drop the min-width rule
+     * -- red.
+     */
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-product.css'));
+
+    expect($css)->toContain('.pdp-page > .pdp > .gallery{align-self:stretch;max-width:none}')
+        ->and($css)->toContain('.pdp-page > *,.pdp-page > .pdp > *,.pdp-page .buybox > *,.pdp-page .kbb-cart-form > *{min-width:0;max-width:100%}');
+
+    // Both inside the phone block, so the laptop grid is untouched.
+    $phone = substr($css, (int) strpos($css, '.pdp-page{display:flex;flex-direction:column'));
+    expect(strpos($phone, '.pdp-page > .pdp > .gallery{align-self:stretch'))->toBeLessThan(4000);
+});
