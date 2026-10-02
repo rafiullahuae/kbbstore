@@ -220,19 +220,28 @@ class ProductController extends Controller
                 // editor UI exists to justify reading it.
                 $override = is_array($product->seo) ? $product->seo : [];
 
+                // The picture a share and a crawler get: the SEO override, the
+                // product's main picture, or -- when it has none -- the first
+                // picture of its own gallery (2.60.350: a product with only
+                // gallery pictures shared with no picture at all, and its share
+                // sheet drew an empty card). Never a demo shot: those are not in
+                // `images`.
+                $kbbFirstShot = is_array($product->images) ? collect($product->images)->first(fn ($i) => is_string($i) && trim($i) !== '') : null;
+                $kbbShareSource = $override['og_image'] ?? ($product->image ?: $kbbFirstShot);
+
                 $ctx = [
                     'type' => 'product',
                     // The chain itself lives in App\Support\ProductSeo now, so the
                     // admin's snippet preview can ask what this page will publish
                     // instead of inventing a sentence. Same order, same result.
                     'description' => \App\Support\ProductSeo::rawDescription($product),
-                    'image' => $override['og_image'] ?? $product->image,
+                    'image' => $kbbShareSource,
                     // Lane QB: the JPEG copy og:image publishes once it exists
                     // (made after this response the first time it is missing),
                     // or null for "publish the original as before". See
                     // App\Support\ShareImage for why the original lost its picture.
                     'share_image' => \App\Support\ShareImage::forPage(
-                        \App\Support\ImageVariants::rootRelative((string) ($override['og_image'] ?? $product->image ?? ''))
+                        \App\Support\ImageVariants::rootRelative((string) ($kbbShareSource ?? ''))
                     ),
                     'url' => !empty($override['canonical']) ? $override['canonical'] : ($base . $product->url()),
                     'breadcrumb' => $this->breadcrumbTrail($product),

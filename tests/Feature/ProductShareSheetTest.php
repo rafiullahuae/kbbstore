@@ -763,3 +763,24 @@ it('draws the title-row share icon only while its switch is on', function () {
     expect($blade)->toContain("@if (app(\\App\\Services\\ProductTrustShare::class)->on('share_on'))<button type=\"button\" class=\"pdp-share-btn\"")
         ->and(substr_count($blade, '@endif'))->toBe(1);
 });
+
+it('gives a product with only gallery pictures a share picture from its gallery', function () {
+    /*
+     * Integrator, 2.60.350, found on the merged preview: a product whose main
+     * `image` is empty but whose gallery has pictures published no og:image,
+     * so WhatsApp showed no picture and the share sheet drew an empty card.
+     *
+     * MUTATION, RUN: put `$product->image` back as the only source in
+     * ProductController's SEO context -- red.
+     */
+    $product = \App\Models\Product::create([
+        'name' => 'Gallery Only Serum', 'slug' => 'gallery-only-serum', 'type' => 'simple', 'status' => 'publish',
+        'is_visible' => true, 'price' => 6500, 'stock_status' => 'instock', 'image' => null,
+        'images' => ['/uploads/products/gallery-only-1.jpg', '/uploads/products/gallery-only-2.jpg'],
+    ]);
+
+    $html = $this->get('/product/'.$product->slug.'/')->assertOk()->getContent();
+
+    expect($html)->toMatch('#<meta property="og:image" content="[^"]*/uploads/products/gallery-only-1\.jpg"#')
+        ->and($html)->toMatch('#<div class="pdp-share-pic"><img src="[^"]*gallery-only-1\.jpg"#');
+});
