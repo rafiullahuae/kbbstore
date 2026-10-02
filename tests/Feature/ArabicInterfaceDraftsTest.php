@@ -513,6 +513,13 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * "Read more" / "Read less" under a long description in the imported
      * category title header -- store.shop.header_more, header_less -- seeded
      * by 2027_07_12_000300_seed_title_header_arabic_drafts.
+     *
+     * ── LANE PW'S ELEVEN (counted below, after Lane PS's two) ──────────────
+     *
+     * The product page's delivery box, "Authenticity Guaranteed" panel and
+     * share bar -- store.product.pts_* -- seeded by
+     * 2027_07_13_000100_seed_product_trust_share_arabic_drafts. Read off the
+     * run.
      */
     /*
      * ── 1,072 -> 1,074: LANE PS'S TWO ───────────────────────────────────
@@ -520,8 +527,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * The "You may also like" carousel's two arrows — store.product.
      * related_prev and related_next — seeded by their own migration,
      * 2027_07_11_000250_seed_also_like_arabic_drafts. Read off the run.
+     *
+     * ── 1,074 -> 1,085: LANE PW'S ELEVEN, on top of PS's two at merge ─────
      */
-    expect($ui['drafts'])->toBe(1074, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1085, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

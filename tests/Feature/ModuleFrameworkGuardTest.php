@@ -641,6 +641,18 @@ function ehSchemaModules(): array
          * SCHEMA rather than looked up somewhere else.
          */
         'product_layout' => ['schema' => ProductLayout::SCHEMA, 'tabs' => ProductLayout::TABS, 'policy' => ProductLayout::POLICY],
+
+        /*
+         * ── LANE PW: Appearance → Product page → Trust · … ─────────────────
+         *
+         * Enrolled in the round it shipped. The METHOD and not the constant:
+         * ProductTrustShare::schema() expands the twelve spacing sliders and
+         * attaches the delivery picture's SafeUrl rule, and that is what the
+         * endpoint renders and casts with, so it is what this guard must see.
+         * The two selects carry their options in the schema, which is what
+         * makes "a select stores one of its own options" checkable here.
+         */
+        'product_trust_share' => ['schema' => \App\Services\ProductTrustShare::schema(), 'tabs' => \App\Services\ProductTrustShare::TABS, 'policy' => \App\Services\ProductTrustShare::POLICY],
     ];
 }
 

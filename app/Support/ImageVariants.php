@@ -872,6 +872,41 @@ final class ImageVariants
     }
 
     /**
+     * The pixel size of a photograph on this site's own disk, or null.  (Lane PW)
+     *
+     * aspectOf()'s twin, for the one caller that needs both numbers rather
+     * than their ratio: App\Support\Seo publishes og:image:width and
+     * og:image:height for a product's share picture, which lets Facebook and
+     * WhatsApp draw the preview card at its real shape on the FIRST share
+     * instead of after a second scrape. Null — and no tags — for anything that
+     * is not a file under the web root, exactly as aspectOf() answers.
+     *
+     * @return array{0: int, 1: int}|null
+     */
+    public static function sizeOf(string $image): ?array
+    {
+        $parts = self::split($image);
+
+        if ($parts === null) {
+            return null;
+        }
+
+        $source = self::insidePublicRoot($parts[2]);
+
+        if ($source === null) {
+            return null;
+        }
+
+        $info = @getimagesize($source);
+
+        if (! is_array($info) || (int) ($info[0] ?? 0) < 1 || (int) ($info[1] ?? 0) < 1) {
+            return null;
+        }
+
+        return [(int) $info[0], (int) $info[1]];
+    }
+
+    /**
      * What a REVIEW photograph is drawn at on the review wall
      * (partials/reviews.blade.php, `.sr-pp`), which is the one surface on this
      * shop where a shopper's phone camera original is painted into a card.

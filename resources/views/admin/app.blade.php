@@ -24384,6 +24384,12 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
      today. --}}
 @include('admin.partials.page-wash-screen')
 
+{{-- Appearance → Product page → Trust · Delivery box / Authenticity / Share
+     bar / Spacing (Lane PW). Four more tabs on the Product page screen, added
+     by wrapping paintProductPage() the way the screens above wrap window.go —
+     so this one include is the whole of the change to this file. --}}
+@include('admin.partials.product-trust-share-screen')
+
 {{-- Store -> Import: an export file too big for one request goes up in pieces
      (Lane IE2, mounted by the integrator in 2.60.337). It WRAPS the console's
      own upload function, which is declared near line ten thousand of this file,

@@ -10,6 +10,7 @@ use App\Services\AlsoLikeSettings;
 use App\Services\ModuleSchema;
 use App\Services\ProductLayout;
 use App\Services\ProductSections;
+use App\Services\ProductTrustShare;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -53,6 +54,7 @@ class ProductPageApiController extends Controller
                 $this->layout->all(),
                 ProductLayout::POLICY,
             ),
+            'trust' => self::trustTabs(),
             'preview' => $this->preview(),
             /*
              * THE THIRD HALF: "You may also like".               (Lane PS)
@@ -63,6 +65,27 @@ class ProductPageApiController extends Controller
              */
             'also' => $this->also->tabs(),
         ]);
+    }
+
+    /**
+     * The Trust & share half — Lane PW. The delivery box, "Authenticity
+     * Guaranteed" and the share bar, as four more tabs on this screen, drawn by
+     * resources/views/admin/partials/product-trust-share-screen.blade.php.
+     * Same ModuleSchema::tabs() payload as `layout`, from its own class,
+     * because those values are printed through Blade's escaper and
+     * ProductLayout's are printed into a <style> element — see
+     * App\Services\ProductTrustShare's header.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private static function trustTabs(): array
+    {
+        return ModuleSchema::tabs(
+            ProductTrustShare::schema(),
+            ProductTrustShare::TABS,
+            app(ProductTrustShare::class)->all(),
+            ProductTrustShare::POLICY,
+        );
     }
 
     public function save(Request $request): JsonResponse
@@ -84,9 +107,10 @@ class ProductPageApiController extends Controller
             'sections.*.mobile' => ['required', 'boolean'],
             'layout' => ['sometimes', 'array', 'min:1'],
             'also' => ['sometimes', 'array', 'min:1'],
+            'trust' => ['sometimes', 'array', 'min:1'],
         ]);
 
-        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['also'])) {
+        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['also']) && ! isset($data['trust'])) {
             return response()->json(['ok' => false, 'error' => 'Nothing to save.'], 422);
         }
 
@@ -144,6 +168,21 @@ class ProductPageApiController extends Controller
             $saved += count($data['also']);
         }
 
+        if (isset($data['trust'])) {
+            /*
+             * Lane PW. Refused rather than dropped, for the reason the layout
+             * half above gives: a typo must not report "Saved".
+             */
+            $unknown = array_diff(array_keys($data['trust']), array_keys(ProductTrustShare::fields()));
+
+            if ($unknown !== []) {
+                return response()->json(['ok' => false, 'error' => 'Unknown setting: '.implode(', ', $unknown)], 422);
+            }
+
+            app(ProductTrustShare::class)->save($data['trust']);
+            $saved += count($data['trust']);
+        }
+
         return response()->json([
             'ok' => true,
             'saved' => $saved,
@@ -155,6 +194,7 @@ class ProductPageApiController extends Controller
                 $this->layout->all(),
                 ProductLayout::POLICY,
             ),
+            'trust' => self::trustTabs(),
         ]);
     }
 
@@ -206,6 +246,9 @@ class ProductPageApiController extends Controller
             'slug' => $product?->slug,
             'url' => $product?->url(),
             'props' => ProductLayout::PROPS,
+            // Lane PW: the Trust & share blocks' custom properties, so the
+            // preview can move their spacing and colours live.
+            'trust_props' => ProductTrustShare::props(),
         ];
     }
 }

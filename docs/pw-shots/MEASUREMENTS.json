@@ -1,0 +1,238 @@
+{
+  "before-390": {
+    "viewport": 390,
+    "scrollWidth": 390
+  },
+  "after-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "delivery": {
+      "width": 346,
+      "height": 86,
+      "gapAbove": 16,
+      "gapAboveFrom": " deliver",
+      "gapBelowToBuyRow": 16,
+      "textSize": "13.5px",
+      "logoWidth": 90,
+      "background": "rgb(255, 247, 230)",
+      "radius": "12px"
+    },
+    "authenticity": {
+      "gapBelowButtonRow": 12,
+      "lineHeight": 29,
+      "labelSize": "14px",
+      "labelWeight": "700",
+      "panelHeight": 0,
+      "expanded": "false",
+      "panelVisibility": "hidden",
+      "textSize": "13px"
+    },
+    "share": {
+      "gapBelowAuthenticity": 16,
+      "height": 62,
+      "buttons": 8,
+      "buttonSize": 34,
+      "labelSize": "12px",
+      "moreVisible": false
+    }
+  },
+  "open-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "delivery": {
+      "width": 346,
+      "height": 86,
+      "gapAbove": 16,
+      "gapAboveFrom": " deliver",
+      "gapBelowToBuyRow": 16,
+      "textSize": "13.5px",
+      "logoWidth": 90,
+      "background": "rgb(255, 247, 230)",
+      "radius": "12px"
+    },
+    "authenticity": {
+      "gapBelowButtonRow": 12,
+      "lineHeight": 29,
+      "labelSize": "14px",
+      "labelWeight": "700",
+      "panelHeight": 256,
+      "expanded": "true",
+      "panelVisibility": "visible",
+      "textSize": "13px"
+    },
+    "share": {
+      "gapBelowAuthenticity": 16,
+      "height": 62,
+      "buttons": 8,
+      "buttonSize": 34,
+      "labelSize": "12px",
+      "moreVisible": false
+    },
+    "midSlidePanelHeight": 214
+  },
+  "closed-again-390": {
+    "expanded": "false",
+    "focusOnTrigger": true,
+    "panelHeight": 0
+  },
+  "escape-390": "false",
+  "copy-390": {
+    "status": "Link copied",
+    "clipboard": "http://127.0.0.1:9600/product/pw-heartleaf-toner/?utm_source=copy&utm_medium=social&utm_campaign=product_share"
+  },
+  "hrefs-390": [
+    [
+      "whatsapp",
+      "https://wa.me/?text=Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20AED%2065%0AA%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.%0Ahttp%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dwhatsapp%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share"
+    ],
+    [
+      "facebook",
+      "https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dfacebook%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share"
+    ],
+    [
+      "x",
+      "https://x.com/intent/post?text=Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20AED%2065&url=http%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share"
+    ],
+    [
+      "pinterest",
+      "https://www.pinterest.com/pin/create/button/?url=http%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dpinterest%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share&media=http%3A%2F%2F127.0.0.1%3A9600%2Fuploads%2Fproducts%2Fpw-toner.png&description=Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20A%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it."
+    ],
+    [
+      "linkedin",
+      "https://www.linkedin.com/sharing/share-offsite/?url=http%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dlinkedin%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share"
+    ],
+    [
+      "telegram",
+      "https://t.me/share/url?url=http%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dtelegram%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share&text=Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20AED%2065%0AA%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it."
+    ],
+    [
+      "email",
+      "mailto:?subject=Heartleaf%2077%25%20Soothing%20Toner%20250ml&body=A%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.%0A%0Ahttp%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Demail%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share"
+    ]
+  ],
+  "before-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280
+  },
+  "after-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "delivery": {
+      "width": 582,
+      "height": 72,
+      "gapAbove": 16,
+      "gapAboveFrom": " deliver",
+      "gapBelowToBuyRow": 16,
+      "textSize": "13.5px",
+      "logoWidth": 110,
+      "background": "rgb(255, 247, 230)",
+      "radius": "12px"
+    },
+    "authenticity": {
+      "gapBelowButtonRow": 12,
+      "lineHeight": 29,
+      "labelSize": "14px",
+      "labelWeight": "700",
+      "panelHeight": 0,
+      "expanded": "false",
+      "panelVisibility": "hidden",
+      "textSize": "13px"
+    },
+    "share": {
+      "gapBelowAuthenticity": 16,
+      "height": 34,
+      "buttons": 8,
+      "buttonSize": 34,
+      "labelSize": "12px",
+      "moreVisible": false
+    }
+  },
+  "open-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "delivery": {
+      "width": 582,
+      "height": 72,
+      "gapAbove": 16,
+      "gapAboveFrom": " deliver",
+      "gapBelowToBuyRow": 16,
+      "textSize": "13.5px",
+      "logoWidth": 110,
+      "background": "rgb(255, 247, 230)",
+      "radius": "12px"
+    },
+    "authenticity": {
+      "gapBelowButtonRow": 12,
+      "lineHeight": 29,
+      "labelSize": "14px",
+      "labelWeight": "700",
+      "panelHeight": 152,
+      "expanded": "true",
+      "panelVisibility": "visible",
+      "textSize": "13px"
+    },
+    "share": {
+      "gapBelowAuthenticity": 16,
+      "height": 34,
+      "buttons": 8,
+      "buttonSize": 34,
+      "labelSize": "12px",
+      "moreVisible": false
+    },
+    "midSlidePanelHeight": 127
+  },
+  "closed-again-1280": {
+    "expanded": "false",
+    "focusOnTrigger": true,
+    "panelHeight": 0
+  },
+  "escape-1280": "false",
+  "copy-1280": {
+    "status": "Link copied",
+    "clipboard": "http://127.0.0.1:9600/product/pw-heartleaf-toner/?utm_source=copy&utm_medium=social&utm_campaign=product_share"
+  },
+  "hrefs-1280": [
+    [
+      "whatsapp",
+      "https://wa.me/?text=Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20AED%2065%0AA%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.%0Ahttp%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dwhatsapp%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share"
+    ],
+    [
+      "facebook",
+      "https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dfacebook%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share"
+    ],
+    [
+      "x",
+      "https://x.com/intent/post?text=Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20AED%2065&url=http%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share"
+    ],
+    [
+      "pinterest",
+      "https://www.pinterest.com/pin/create/button/?url=http%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dpinterest%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share&media=http%3A%2F%2F127.0.0.1%3A9600%2Fuploads%2Fproducts%2Fpw-toner.png&description=Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20A%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it."
+    ],
+    [
+      "linkedin",
+      "https://www.linkedin.com/sharing/share-offsite/?url=http%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dlinkedin%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share"
+    ],
+    [
+      "telegram",
+      "https://t.me/share/url?url=http%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Dtelegram%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share&text=Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20AED%2065%0AA%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it."
+    ],
+    [
+      "email",
+      "mailto:?subject=Heartleaf%2077%25%20Soothing%20Toner%20250ml&body=A%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.%0A%0Ahttp%3A%2F%2F127.0.0.1%3A9600%2Fproduct%2Fpw-heartleaf-toner%2F%3Futm_source%3Demail%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share"
+    ]
+  ],
+  "admin-live-preview": {
+    "gapBefore": 16,
+    "gapAfterSliderTo40": 40,
+    "bgAfter": "rgb(253, 226, 228)",
+    "dirty": "Unsaved changes"
+  },
+  "admin-scrollWidth-1280": [
+    1280,
+    1280
+  ],
+  "admin-scrollWidth-390": [
+    390,
+    390
+  ]
+}

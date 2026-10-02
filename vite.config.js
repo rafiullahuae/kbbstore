@@ -32,6 +32,11 @@ export default defineConfig({
                 'resources/css/kbb/sorina-reviews.css',
                 // 28 product-grid card templates, selectable from the admin.
                 'resources/css/kbb/kbb-grid-skins.css',
+                // Lane PW: the product page's delivery box, authenticity
+                // line and share bar. Loaded only on a page that draws one
+                // of them — see partials/product/trust-share-assets.
+                'resources/css/kbb/kbb-pdp-trust.css',
+                'resources/js/kbb/pdp-trust.js',
                 /*
                  * OUTFIT, SELF-HOSTED — Lane PERF's arrangement, Lane PLC's
                  * typeface. The owner asked for Outfit site-wide; it is served

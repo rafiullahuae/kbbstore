@@ -1141,6 +1141,27 @@ final class InterfaceStrings
             'cart_reminder.email_placeholder' => 'you@example.com',
             'cart_reminder.submit' => 'Remind me',
             'product.gallery_front' => 'Front',
+            /*
+             * Lane PW — the delivery box, "Authenticity Guaranteed" and the share
+             * bar. The first five are the DEFAULTS of settings on Appearance →
+             * Product page → Trust ·, read through ProductTrustShare::text(): while
+             * a setting still holds exactly this English the page prints the key,
+             * so /ar gets the reviewed Arabic; once the owner types his own words
+             * his words print everywhere. `{free_from}` is that setting's own
+             * token (the free-delivery figure), not a Laravel placeholder.
+             */
+            'product.pts_del_line1' => 'Express 1-3 Days Delivery All over UAE',
+            'product.pts_del_line2' => 'Free Delivery over {free_from}',
+            'product.pts_auth_label' => 'Authenticity Guaranteed',
+            'product.pts_auth_text' => \App\Services\ProductTrustShare::AUTH_TEXT,
+            'product.pts_share_label' => 'Share',
+            'product.pts_close' => 'Close',
+            'product.pts_copy' => 'Copy link',
+            'product.pts_copied' => 'Link copied',
+            'product.pts_copy_fail' => 'Copy this link:',
+            'product.pts_more' => 'More ways to share',
+            // The network's own name is a proper noun and is not translated.
+            'product.pts_share_on' => 'Share on :network',
             'notify_me.privacy' => 'We will email you once, when this product is back. Your address is used for that and nothing else — it is not added to our mailing list, and every message has an unsubscribe link.',
             'cart_reminder.privacy' => 'We will store your email address with this basket so we can remind you about it. If you place your order, we stop. Every reminder has an unsubscribe link, and using it stops these emails for good.',
         ];

@@ -24,6 +24,11 @@
     "src": "resources/css/kbb/kbb-grid-skins.css",
     "isEntry": true
   },
+  "resources/css/kbb/kbb-pdp-trust.css": {
+    "file": "assets/kbb-pdp-trust-7AZF-RNE.css",
+    "src": "resources/css/kbb/kbb-pdp-trust.css",
+    "isEntry": true
+  },
   "resources/css/kbb/kbb-product.css": {
     "file": "assets/kbb-product-B3oitVHg.css",
     "src": "resources/css/kbb/kbb-product.css",
@@ -73,6 +78,12 @@
     "file": "assets/app-BqJJLc6N.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
+    "isEntry": true
+  },
+  "resources/js/kbb/pdp-trust.js": {
+    "file": "assets/pdp-trust-C97YTmN3.js",
+    "name": "pdp-trust",
+    "src": "resources/js/kbb/pdp-trust.js",
     "isEntry": true
   }
 }
