@@ -33,8 +33,12 @@
   display:flex;
   align-items:center;
   min-height:var(--kbb-th-h);
-  max-width:1200px;
-  width:calc(100% - 40px);
+  /* Exactly the content box of the page's .wrap (kbb.css: max-width
+     --site-max, a --site-gutter each side), so the header's edges line up
+     with the product grid under it at every width and under Appearance ->
+     Site layout's own width settings. */
+  max-width:calc(var(--site-max, 1240px) - 2 * var(--site-gutter, 22px));
+  width:calc(100% - 2 * var(--site-gutter, 22px));
   min-width:0;
   margin:6px auto 26px;
   border-radius:18px;

@@ -278,7 +278,7 @@ class SiteLayout
             'How /shop, every category and the curated listings bring in more products: numbered arrows, more on scroll, or everything at once. Shoppers without JavaScript always get the arrows.',
             ['load_mode', 'load_batch', 'load_batch_custom']],
         'catheader' => ['Category header',
-            'The banner picture each category had on the old shop, behind the category\'s title and description -- brought across by the import. A category with no imported banner keeps its plain title.',
+            'The banner picture each category had on the old shop, behind the category\'s title and description — brought across by the import. A category with no imported banner keeps its plain title.',
             self::HEADER_KEYS],
     ];
 

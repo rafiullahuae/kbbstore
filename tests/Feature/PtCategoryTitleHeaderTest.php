@@ -37,7 +37,12 @@ declare(strict_types=1);
  *     picture is on disk (`it brings the banner across with the pictures`);
  *   - the `cat_header` default flipped to false: red, `it ships switched on`;
  *   - TitleHeader::importDescription() cleaning plain text too: red, "Masks &
- *     Peels" reaches the plain header as "Masks &amp;amp; Peels".
+ *     Peels" is stored as "Masks &amp; Peels" -- which the plain header, which
+ *     escapes, would print as "Masks &amp;amp; Peels" (`it cleans a
+ *     description that carries markup, and stores plain text exactly`).
+ *
+ * All seventeen mutations named in the three Lane PT test files were run with
+ * storage/pt-logs/mutate.py (not committed) and every one went red.
  */
 
 use App\Models\Brand;
