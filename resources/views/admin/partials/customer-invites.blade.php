@@ -110,6 +110,11 @@
   function why(e) {
     if (e && e.status === 403) return 'Only an owner or a manager can send account invites. Ask the shop owner to send them, or to change your role in Settings → Users.';
     if (e && e.status === 419) return 'The admin session expired. Reload the page and try again.';
+    /* A 404 with NO message and NO error is Laravel saying the path is not in
+       the route table at all: the package's routes are not live yet. A 404
+       from the controller itself carries its own message ("No such send."). */
+    var silent = !(e && e.body && (e.body.message || e.body.error));
+    if (e && e.status === 404 && silent) return 'The account-invite endpoints are not in this server\u2019s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.';
     return (e && e.message) || 'Something went wrong.';
   }
 
