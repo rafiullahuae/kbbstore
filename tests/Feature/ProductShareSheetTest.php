@@ -512,9 +512,12 @@ it('publishes the JPEG as og:image with its type and size once it exists, and th
         // Order: og:image, then its structured properties.
         expect(strpos($second, 'og:image:type'))->toBeGreaterThan(strpos($second, '"og:image"'));
 
-        // The sheet's card shows the same picture a friend's preview will.
-        expect(qbSheet($second))->toContain('src="'.$og.'"')
-            ->and(qbSheet($second))->toContain('width="1200" height="630"')
+        // The sheet's card is one row since 2.60.353 (owner: "picture +
+        // title in same row"): its square thumbnail is the product's own
+        // photograph, not the 1.91:1 JPEG -- that still travels as og:image
+        // and as the file "More" hands the phone.
+        expect(qbSheet($second))->toMatch('#<div class="pdp-share-pic"><img src="[^"]*'.preg_quote($image, '#').'" [^>]*width="96" height="96"#')
+            ->and(qbSheet($second))->not->toContain('src="'.$og.'"')
             ->and(qbSheet($second))->toContain('data-file="/'.ShareImage::DIR.$image.'.jpg"');
 
         // The Product rich result keeps the full-resolution original.
@@ -628,7 +631,9 @@ it('slides with CSS, stands still for reduced motion, and is a centred card on a
         ->and($css)->toContain('-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)')
         ->and($css)->toContain('html.pdp-share-lock,html.pdp-share-lock body{overflow:hidden}')
         ->and($css)->toContain('grid-template-columns:repeat(5,minmax(0,1fr))')
-        ->and($css)->toContain('-webkit-line-clamp:2')
+        // Three lines since 2.60.353: the name sits beside a 96px picture
+        // now, not under a full-width one.
+        ->and($css)->toContain('-webkit-line-clamp:3')
         ->and($css)->toMatch('#@media \(min-width:881px\)\{\s*\.pdp-share\{align-items:center\}\s*\.pdp-share-panel\{inline-size:480px#')
         ->and($css)->toMatch('#@media \(prefers-reduced-motion:reduce\)\{[^@]*\.pdp-share-scrim,\.pdp-share-panel,\.pdp-share-toast,\.pdp-share-ico\{transition:none\}#');
 
@@ -783,4 +788,39 @@ it('gives a product with only gallery pictures a share picture from its gallery'
 
     expect($html)->toMatch('#<meta property="og:image" content="[^"]*/uploads/products/gallery-only-1\.jpg"#')
         ->and($html)->toMatch('#<div class="pdp-share-pic"><img src="[^"]*gallery-only-1\.jpg"#');
+});
+
+it('draws the share card as one row: a square thumbnail, the name, the price', function () {
+    /*
+     * Owner, 2 October: "The share popup is too heighted. i want to have
+     * picture + title in same row as in attached screenshot." The card was the
+     * 1.91:1 share JPEG full width with the name on a strip under it -- about
+     * 360px of a phone's sheet before the first icon. It is now one row: a
+     * 96px square of the product's own photograph, then the name and price.
+     *
+     * MUTATION NOTES — RUN.
+     *  · Put `width="{{ ... 1200 }}"` back on the card's <img>: the 96x96
+     *    expectation is red.
+     *  · Make $kbbPsPic read share_image first: the og:image case above is
+     *    red (its thumbnail becomes the 1.91:1 JPEG card).
+     *  · Drop the `@if ($kbbPsWas !== '')` around <s>: the not-on-sale
+     *    expectation is red (an empty <s></s>).
+     *  · Delete `display:flex` from .pdp-share-card: the CSS expectation is red.
+     */
+    $product = qbProduct(['price' => 10000, 'sale_price' => 6500, 'image' => '/media/products/qb-own-photo.jpg']);
+    $sheet = qbSheet(qbPage($product));
+
+    expect($sheet)->toMatch('#<div class="pdp-share-card"><div class="pdp-share-pic"><img src="[^"]*qb-own-photo\.jpg" alt="Heartleaf 77% Soothing Toner" width="96" height="96"#')
+        ->and($sheet)->toContain('<div class="pdp-share-txt"><p class="pdp-share-name">Heartleaf 77% Soothing Toner</p><p class="pdp-share-price"><span class="now">')
+        ->and($sheet)->toContain('<span class="now"><span class="woocommerce-Price-amount amount" dir="ltr"><span class="woocommerce-Price-currencySymbol" dir="auto">AED</span> 65</span></span><s><span class="woocommerce-Price-amount amount" dir="ltr"><span class="woocommerce-Price-currencySymbol" dir="auto">AED</span> 100</span></s></p></div></div>');
+
+    // Not on sale: the price alone, nothing struck.
+    $plain = qbSheet(qbPage(qbProduct(['price' => 6500, 'sale_price' => null])));
+    expect($plain)->toContain('<p class="pdp-share-price"><span class="now">')
+        ->and($plain)->not->toMatch('#<p class="pdp-share-price">.*?<s>#s');
+
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-pdp-trust.css'));
+    expect($css)->toContain('.pdp-share-card{display:flex;align-items:center;')
+        ->and($css)->toContain('.pdp-share-pic{position:relative;flex:0 0 96px;inline-size:96px;block-size:96px;')
+        ->and($css)->toContain('-webkit-line-clamp:3;line-clamp:3;');
 });
