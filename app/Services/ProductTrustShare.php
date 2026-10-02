@@ -150,8 +150,15 @@ class ProductTrustShare
         'share_copy' => ['bool', 'Copy link', true, 'Copies the link and says “Link copied”.'],
         'share_native' => ['bool', '“More” button on phones', true,
             'Opens the phone’s own share sheet (Instagram, Snapchat, Messages…). Only drawn on a phone that has one.'],
-        'share_style' => ['select', 'Colours', 'brand', '',
-            ['brand' => 'Each network’s own colour', 'mono' => 'One dark colour for all']],
+        /*
+         * 'icons' ships as the default because he asked (2.60.348): "i want
+         * only icons, not filled with circles. make it super beautiful, and
+         * share + icons must come in same line." The circle styles stay one
+         * click away.
+         */
+        'share_style' => ['select', 'Style', 'icons',
+            'Coloured icons on their own is how it ships. The two circle styles put each icon on a filled disc.',
+            ['icons' => 'Coloured icons, no circles', 'brand' => 'Circles in each network’s own colour', 'mono' => 'Circles in one dark colour']],
         'share_shape' => ['select', 'Button shape', 'circle', '',
             ['circle' => 'Round', 'rounded' => 'Rounded square']],
         'share_size' => ['range', 'Button size', 34, '',

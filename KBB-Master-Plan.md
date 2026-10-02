@@ -3744,6 +3744,7 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 41 | Product page buy column: yellow FAST DELIVERY box above Add to cart; "Authenticity Guaranteed" line that slides open; colourful share bar carrying URL, description and image; spacing controls | PW | **done — 2.60.347** — Appearance → Product page → Trust · Delivery box / Authenticity / Share bar / Spacing |
 | 42 | Cart page and checkout rows: show / hide the brand name, desktop and phone separately — desktop ON, phone OFF by default | integrator | **done** — Appearance → Cart page → Product rows · spacing and size / Product rows · phone; Appearance → Checkout page → Desktop · Product rows / Mobile · Product rows → "Show the brand name" |
 | 43 | Authenticity panel: the × must sit half outside the box on its corner, a plain circle with no ring | integrator | **done** |
+| 45 | Share bar: only the icons, no filled circles, "super beautiful", and SHARE + icons on one line | integrator | **done** — coloured icons are the default (Appearance → Product page → Trust · Share bar → Style); the row never wraps (buttons shrink to fit, 24px floor) |
 | 44 | Category header: name as title unless a custom one; Start / Centre / End (Start default, mirrored in Arabic); light icon box when no picture; per-category picture, title, size, description; section height/padding; title shadow options | PY | in progress |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
