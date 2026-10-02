@@ -113,7 +113,9 @@ it('loads what was asked for only after the bootstrap, so the list cannot win th
         ->and($edit)->not->toContain('loadProduct(');
 
     // start() honours the intent, and only falls back to the list without one.
-    preg_match('/async function start\(\)\{(.{0,900}?)\n  \}/s', $src, $s2);
+    // 1600, not 900: start() grew to 1,122 characters when the Unfinished list
+    // took over its "product kept in memory" branch (kbbDrafts.ready/resume).
+    preg_match('/async function start\(\)\{(.{0,1600}?)\n  \}/s', $src, $s2);
     $start = $s2[1] ?? '';
 
     expect($start)->toContain('loadProduct(')

@@ -679,6 +679,51 @@ a.peo-btn{display:inline-block;text-decoration:none}
   var dirty = false;
   var seq = 0;
 
+  /* ── UNFINISHED CHANGES (Lane PM) ──────────────────────────────────────
+     Leaving this editor with unsaved work used to stop the owner with
+     window.confirm("You have unsaved changes. Leave without saving?") -- twice
+     over: in the go() wrapper below and on the Back-to-list button. He asked
+     for that popup to go. The product he was typing into is now kept in
+     Unfinished in the top bar (partials/unfinished-drafts.blade.php), keyed by
+     the product's id ('new' for one never saved), and Open brings the editor
+     back on that product with his typing in it.
+
+     The fields are the ones save() sends, read through collect() first, so
+     what is kept is exactly what Save would have written -- including the
+     description pane he was typing in, which lives in the DOM until then. */
+  var DRAFT_FIELDS = ['name', 'slug', 'sku', 'gtin', 'brand_id', 'status', 'published_at',
+    'is_visible', 'featured', 'category_ids', 'primary_category_id', 'price_aed', 'sale_aed',
+    'sale_starts_at', 'sale_ends_at', 'manage_stock', 'stock', 'stock_status',
+    'short_description', 'description', 'ingredients', 'how_to_use', 'image', 'images',
+    'image_alts', 'seo', 'type', 'tags', 'ar', 'set_members', 'price_mode',
+    'discount_percent', 'discount_amount'];
+
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: 'product', screen: SCREEN,
+    label: function(){
+      return 'Catalog → Product · ' + ((model && String(model.name || '').trim()) || 'New product');
+    },
+    entity: function(){ return model ? (model.id || 'new') : null; },
+    values: function(){
+      if (!model || busy) return null;
+      collect();
+      var out = {};
+      DRAFT_FIELDS.forEach(function(k){ out[k] = model[k] === undefined ? null : model[k]; });
+      return out;
+    },
+    set: function(k, v){
+      if (!model || DRAFT_FIELDS.indexOf(k) === -1) return;
+      model[k] = (v && typeof v === 'object') ? JSON.parse(JSON.stringify(v)) : v;
+      dirty = true;
+    },
+    render: function(){ render(); markDirty(); },
+    clean: function(){ dirty = false; render(); },
+    save: function(){ save(); },
+    open: function(id){
+      if (id === 'new') window.peoNew(); else window.peoEdit(parseInt(id, 10));
+    }
+  });
+
   /* ---- panel arrangement (Lane AS) ----------------------------------------
      `layout` is {main:[keys], side:[keys]} and is ALWAYS a reconciled document
      -- never whatever the server handed back. `arranging` is deliberately not
@@ -799,12 +844,10 @@ a.peo-btn{display:inline-block;text-decoration:none}
 
   window.go = function(id){
     if (id !== SCREEN) {
-      // Leaving with unsaved work. confirm() rather than a custom modal: this
-      // has to be reliable more than it has to be pretty, and the console has
-      // no modal primitive this file can reach.
-      if (model && dirty && !window.confirm('You have unsaved changes. Leave without saving?')) {
-        return undefined;
-      }
+      // Leaving with unsaved work asks nothing (Lane PM): it is kept in
+      // Unfinished in the top bar, and the product stays in memory as well, so
+      // coming straight back finds it exactly as it was left.
+      if (model && dirty && window.kbbDrafts) window.kbbDrafts.flush('product');
       return previousGo.apply(this, arguments);
     }
 
@@ -889,11 +932,17 @@ a.peo-btn{display:inline-block;text-decoration:none}
       dirty = false;
       banner = null;
       render();
+      if (window.kbbDrafts) window.kbbDrafts.ready('product');
       return;
     }
 
     if (!model) loadList();
-    else render();
+    else {
+      render();
+      /* Back on the product that never left memory: keep watching it against
+         the values it was LOADED with, not against what is on screen. */
+      if (window.kbbDrafts) window.kbbDrafts.resume('product');
+    }
   }
 
   async function loadList(){
@@ -932,6 +981,8 @@ a.peo-btn{display:inline-block;text-decoration:none}
       banner = message(e, 'Could not open that product.');
     }
     busy = false; render();
+    /* Unfinished changes to this product, if any, come back now. */
+    if (mine === seq && model && window.kbbDrafts) window.kbbDrafts.ready('product');
   }
 
   /* Take a product from the endpoint and make it the model.
@@ -1194,11 +1245,20 @@ a.peo-btn{display:inline-block;text-decoration:none}
       dirty = false;
       banner = null;
       say(creating ? 'Product created.' : 'Saved.');
+      var landed = true;
     } catch (e) {
       banner = message(e, 'Could not save. Check your connection and try again.');
     }
 
     busy = false; render();
+
+    /* After the repaint, so the values the draft is measured against next are
+       the ones this screen now shows. A new product's draft was keyed 'new'
+       and the product now has an id, so that row goes too. */
+    if (landed && window.kbbDrafts) {
+      if (creating) window.kbbDrafts.drop('product', 'new');
+      window.kbbDrafts.saved('product');
+    }
   }
 
   /* ------------------------------------------------------------- uploads */
@@ -3473,7 +3533,10 @@ a.peo-btn{display:inline-block;text-decoration:none}
     });
 
     var add = document.querySelector('#content [data-new]');
-    if (add) add.onclick = function(){ model = blank(); dirty = false; banner = null; render(); };
+    if (add) add.onclick = function(){
+      model = blank(); dirty = false; banner = null; render();
+      if (window.kbbDrafts) window.kbbDrafts.ready('product');
+    };
   }
 
   /* ════════════════════════════════════════════════════════════════════════
@@ -3823,7 +3886,8 @@ a.peo-btn{display:inline-block;text-decoration:none}
 
     /* ---- the save bar ---- */
     on('#peo-back', 'click', function(){
-      if (dirty && !window.confirm('You have unsaved changes. Leave without saving?')) return;
+      // No "Leave without saving?" (Lane PM): the typing is kept in Unfinished.
+      if (dirty && window.kbbDrafts) window.kbbDrafts.flush('product');
       model = null; dirty = false; banner = null;
       render(); loadList();
     });

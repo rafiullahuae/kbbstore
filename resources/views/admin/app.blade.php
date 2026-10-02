@@ -23087,7 +23087,11 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     if(id==='seo'){ _go(id); return renderSeo(); }
     if(id==='analytics'){ _go(id); return renderAnalytics(); }
     if(id==='blog'||id==='posts'){ _go(id); return renderPosts(); }
-    _go(id);
+    /* Every argument, not just the id: go(id, sub) opens a screen ON a tab
+       (`#catalog/reorder`, go('catalog','reorder')), and passing `id` alone
+       dropped the tab, so those links landed on the screen's first tab.
+       Found by Lane PM; item 23. */
+    _go.apply(this, arguments);
     if(id==='dash') hydrateDash();
   };
 

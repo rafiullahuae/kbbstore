@@ -104,6 +104,10 @@ function udPartialScreens(): array
         'ugc-appearance-screen' => 'SCREEN',
         'review-settings-screen' => 'SCREEN',
         'review-badges-screen' => 'SCREEN',
+        // The product editor (applied by the integrator once Lane PK merged and
+        // the owner approved): "You have unsaved changes. Leave without saving?"
+        // is gone from it; an unsaved product is kept in Unfinished.
+        'product-editor-screen' => "'product'",
     ];
 }
 
@@ -273,7 +277,11 @@ it('wires every partial screen to the registry: track(), ready() and saved()', f
         $src = udRead("partials/{$partial}.blade.php");
 
         expect(substr_count($src, 'window.kbbDrafts.track({'))->toBe(1, "{$partial} does not register");
-        expect(substr_count($src, "window.kbbDrafts.ready({$id})"))->toBe(1, "{$partial} never says it has loaded");
+        // The product editor has three ways onto a product -- a new one from
+        // start(), one loaded by loadProduct(), and the picker's Add product --
+        // and each says it has loaded. Every other screen has one.
+        $readies = $partial === 'product-editor-screen' ? 3 : 1;
+        expect(substr_count($src, "window.kbbDrafts.ready({$id})"))->toBe($readies, "{$partial} never says it has loaded");
         expect(substr_count($src, "window.kbbDrafts.saved({$id})"))->toBeGreaterThanOrEqual(1, "{$partial} never says it has saved");
     }
 });
