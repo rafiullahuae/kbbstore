@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.348
+**Brand names on cart and checkout rows per device, the Authenticity × on the
+box corner, and the share bar as coloured icons on one line.** Apply after
+.347. No plugin change.
+
+| # | Your report | Now | Where |
+|---|---|---|---|
+| 42 | Show / hide brand names on the cart page, desktop and mobile separately — desktop ON, mobile OFF; same on checkout rows | Cart: brand hidden on phones, shown on desktop. Checkout rows (which had no brand line) show it on desktop, not on phones | Appearance → Cart page → Product rows · spacing and size / Product rows · phone; Appearance → Checkout page → Desktop · Product rows / Mobile · Product rows → "Show the brand name" |
+| 43 | The × should sit half outside the box on its corner, a plain circle, no ring | A solid red circle with a white ×, centred on the box's top corner | Automatic |
+| 45 | Share icons only, no filled circles; SHARE and icons on one line | Coloured icons, no circles; never wraps (icons shrink a little on very narrow phones) | Appearance → Product page → Trust · Share bar → Style |
+
+Files (7): app/Services/CartPage.php, app/Services/CheckoutPage.php, app/Services/ProductTrustShare.php, database/migrations/2027_07_14_000000_clear_caches_cart_checkout_brand.php, resources/css/kbb/kbb-checkout.css, resources/css/kbb/kbb-pdp-trust.css, resources/views/partials/checkout/summary-items.blade.php.
+
 ## 2.60.347
 **Product page: the FAST DELIVERY box, "Authenticity Guaranteed" that slides
 open, and a colourful share bar whose links carry the product's picture and
