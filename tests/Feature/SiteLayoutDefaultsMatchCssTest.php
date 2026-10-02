@@ -182,7 +182,10 @@ it('emits every numeric setting into a property named by a constant in the servi
         }
 
         if (in_array($key, SiteLayout::HEADER_KEYS, true)) {
-            expect(str_contains($titleHeader, "\$settings['".$key."']"))->toBeTrue(
+            // Read by name, or (Lane PY) written through TitleHeader::PX_VARS,
+            // the constant map from custom property to setting.
+            expect(str_contains($titleHeader, "\$settings['".$key."']")
+                || in_array($key, \App\Support\TitleHeader::PX_VARS, true))->toBeTrue(
                 "range field '{$key}' is read by nothing that draws the category header"
             );
 

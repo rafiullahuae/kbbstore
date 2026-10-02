@@ -1761,6 +1761,34 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * THE CATEGORY TITLE HEADER, ON A CATEGORY WITH NO PICTURE.
+             *                                                       (Lane PY)
+             *
+             * The owner, on Lane PT's preview: "by default make the title name
+             * left side as before, i just wanted the background image or light
+             * colored box containing skincare makeup etc products icons. if no
+             * image." The walk's category has no picture, so it now opens on
+             * the LIGHT BOX: the header's stylesheet in <head>, and the
+             * <section> in place of the plain eyebrow / <h1> / line, which
+             * 'the plain category title' in approvedRemovals() cuts from the
+             * other side. ONE page, the category archive; /shop/, the brand
+             * page and every other page are compared byte for byte as before.
+             *
+             * THE PATTERN NAMES THE SHIPPED DEFAULTS -- box, dark words, Start,
+             * no treatment, Blush icons -- so a default that moves without
+             * this walk being told is red here, not just in a unit test.
+             * PyCategoryHeaderOptionsTest pins what is inside the section.
+             */
+            'the category title header stylesheet (Lane PY)' => [
+                'pattern' => '#<link rel="preload" as="style" href="/build/assets/kbb-title-header-[A-Za-z0-9_-]+\.css" /><link rel="stylesheet" href="/build/assets/kbb-title-header-[A-Za-z0-9_-]+\.css" />#',
+                'hits' => 1,
+            ],
+            'the category title header, the light box (Lane PY)' => [
+                'pattern' => '#<section class="kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush" style="[^"<>]*" data-kbb-title-header aria-labelledby="kbb-th-title">\n.*?</section>\n#s',
+                'hits' => 1,
+            ],
+
+            /*
              * THE SEARCH PANEL CARRIES ITS TRENDING WORDS.         (2.60.346)
              *
              * The owner: "the default search tags box showing with little delays
@@ -2253,6 +2281,21 @@ final class EnglishRenderWalk
     public static function approvedRemovals(): array
     {
         return [
+            /*
+             * THE PLAIN CATEGORY TITLE, REPLACED BY THE TITLE HEADER. (Lane PY)
+             *
+             * The other half of 'the category title header, the light box' in
+             * approvedInsertions(): the "K-Beauty · Skincare" eyebrow, the
+             * plain <h1 class="ptitle"> and the grey line under it, on the
+             * category archive only. `(?!Shop all)` keeps /shop/'s own title
+             * out of it -- /shop/ is not in the owner's request and must still
+             * compare byte for byte.
+             */
+            'the plain category title (Lane PY)' => [
+                'pattern' => '#            <div class="eyebrow">[^<\n]*</div>\n        <h1 class="ptitle">(?!Shop all)[^<\n]*</h1>\n        <p class="psub">[^<\n]*</p>\n#',
+                'hits' => 1,
+            ],
+
             /*
              * THE CURATED LISTINGS' EMPTY TAILWIND PAGER WRAPPER. (Lane PI-B)
              *

@@ -1,0 +1,2392 @@
+{
+  "box-a-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 9.98,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "box-b-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-cream",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 9.79,
+      "median": 14.16,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "box-c-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-mint",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 10.63,
+      "median": 14.25,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "box-d-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-lilac",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 9.69,
+      "median": 13.77,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "box-e-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-plain",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 13.93,
+      "median": 14.31,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "box-f-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-custom",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 10.49,
+      "median": 14.31,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t1-dark-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-shadow",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 3.72,
+      "median": 6.76,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t1-light-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-shadow",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 3.03,
+      "median": 3.07,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t1-box-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-shadow kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 9.98,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t2-dark-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-fade",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 3.72,
+      "median": 10.36,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t2-light-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-fade",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 3.03,
+      "median": 5.99,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t2-box-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-fade kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 9.6,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t3-dark-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-frost",
+    "header": {
+      "w": 346,
+      "h": 294
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 41,
+      "right": 41
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 9.04,
+      "median": 10.48,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t3-light-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-frost",
+    "header": {
+      "w": 346,
+      "h": 294
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 41,
+      "right": 41
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 6.49,
+      "median": 6.62,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t3-box-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-frost kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 294
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 41,
+      "right": 41
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 14.64,
+      "median": 14.87,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t4-dark-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-label",
+    "header": {
+      "w": 346,
+      "h": 271
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 177
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 4.94,
+      "median": 6.74,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t4-light-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-label",
+    "header": {
+      "w": 346,
+      "h": 271
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 177
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 3.07,
+      "median": 6.26,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t4-box-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-label kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 271
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 177
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 13.59,
+      "median": 15.37,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t5-dark-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-none",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 3.72,
+      "median": 6.76,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t5-light-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-none",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 3.03,
+      "median": 3.07,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t5-box-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 9.98,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-start-dark-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-shadow",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 3.72,
+      "median": 6.76,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-start-box-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 9.98,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-start-box-ar-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 10.47,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-center-dark-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-center kbb-th--t-shadow",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "center",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 3.72,
+      "median": 6.76,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-center-box-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-center kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "center",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 11.02,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-center-box-ar-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-center kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "center",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 10.7,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-end-dark-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-end kbb-th--t-shadow",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "end",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 3.72,
+      "median": 6.76,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-end-box-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-end kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "end",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 10.47,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-end-box-ar-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-end kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 260
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "26px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "end",
+      "left": 20,
+      "right": 20
+    },
+    "description": {
+      "fontSize": "13px"
+    },
+    "radius": "18px",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "viewport": 390,
+    "contrast": {
+      "worst": 9.68,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "after-picture-en-390": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 525,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "dir": "ltr",
+    "header": {
+      "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-shadow",
+      "header": {
+        "w": 346,
+        "h": 288
+      },
+      "title": {
+        "text": "Korean Sunscreens",
+        "fontSize": "26px",
+        "fontWeight": "700",
+        "color": "rgb(255, 255, 255)",
+        "textAlign": "start",
+        "left": 20,
+        "right": 20
+      },
+      "description": {
+        "fontSize": "13px"
+      },
+      "radius": "18px",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "viewport": 390,
+      "contrast": {
+        "worst": 3.78,
+        "median": 6.62,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "after-box-en-390": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 476,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "dir": "ltr",
+    "header": {
+      "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+      "header": {
+        "w": 346,
+        "h": 239
+      },
+      "title": {
+        "text": "Lip Care",
+        "fontSize": "26px",
+        "fontWeight": "700",
+        "color": "rgb(42, 34, 40)",
+        "textAlign": "start",
+        "left": 20,
+        "right": 20
+      },
+      "description": {
+        "fontSize": "13px"
+      },
+      "radius": "18px",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "viewport": 390,
+      "contrast": {
+        "worst": 9.98,
+        "median": 13.95,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "after-picture-ar-390": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 525,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "dir": "rtl",
+    "header": {
+      "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-shadow",
+      "header": {
+        "w": 346,
+        "h": 288
+      },
+      "title": {
+        "text": "واقيات الشمس",
+        "fontSize": "26px",
+        "fontWeight": "700",
+        "color": "rgb(255, 255, 255)",
+        "textAlign": "start",
+        "left": 20,
+        "right": 20
+      },
+      "description": {
+        "fontSize": "13px"
+      },
+      "radius": "18px",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "viewport": 390,
+      "contrast": {
+        "worst": 3.78,
+        "median": 6.62,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "after-box-ar-390": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 476,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "dir": "rtl",
+    "header": {
+      "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+      "header": {
+        "w": 346,
+        "h": 239
+      },
+      "title": {
+        "text": "العناية بالشفاه",
+        "fontSize": "26px",
+        "fontWeight": "700",
+        "color": "rgb(42, 34, 40)",
+        "textAlign": "start",
+        "left": 20,
+        "right": 20
+      },
+      "description": {
+        "fontSize": "13px"
+      },
+      "radius": "18px",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "viewport": 390,
+      "contrast": {
+        "worst": 10.47,
+        "median": 13.95,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "after-box-nodesc-en-390": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 427,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "dir": "ltr",
+    "header": {
+      "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+      "header": {
+        "w": 346,
+        "h": 190
+      },
+      "title": {
+        "text": "Face Masks",
+        "fontSize": "26px",
+        "fontWeight": "700",
+        "color": "rgb(42, 34, 40)",
+        "textAlign": "start",
+        "left": 20,
+        "right": 194
+      },
+      "description": null,
+      "radius": "18px",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "viewport": 390,
+      "contrast": {
+        "worst": 13.59,
+        "median": 13.95,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "after-shop-390": {
+    "h1Count": 1,
+    "plainTitle": {
+      "text": "Shop all",
+      "fontSize": "32px",
+      "top": 169,
+      "height": 35
+    },
+    "firstProductTop": 309,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "dir": "ltr",
+    "header": null
+  },
+  "before-picture-en-390": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 528,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "dir": "ltr",
+    "header": {
+      "classes": "kbb-th kbb-th--light kbb-th--center",
+      "header": {
+        "w": 346,
+        "h": 287
+      },
+      "title": {
+        "text": "Korean Sunscreens",
+        "fontSize": "26px",
+        "fontWeight": "700",
+        "color": "rgb(255, 255, 255)",
+        "textAlign": "center",
+        "left": 64,
+        "right": 64
+      },
+      "description": {
+        "fontSize": "13px"
+      },
+      "radius": "18px",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "viewport": 390,
+      "contrast": {
+        "worst": 3.65,
+        "median": 6.65,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "before-box-en-390": {
+    "h1Count": 1,
+    "plainTitle": {
+      "text": "Lip Care",
+      "fontSize": "32px",
+      "top": 169,
+      "height": 35
+    },
+    "firstProductTop": 330,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "dir": "ltr",
+    "header": null
+  },
+  "before-box-ar-390": {
+    "h1Count": 1,
+    "plainTitle": {
+      "text": "العناية بالشفاه",
+      "fontSize": "32px",
+      "top": 169,
+      "height": 35
+    },
+    "firstProductTop": 330,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "dir": "rtl",
+    "header": null
+  },
+  "before-shop-390": {
+    "h1Count": 1,
+    "plainTitle": {
+      "text": "Shop all",
+      "fontSize": "32px",
+      "top": 169,
+      "height": 35
+    },
+    "firstProductTop": 309,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "dir": "ltr",
+    "header": null
+  },
+  "admin-catheader-390": {
+    "crumb": "Appearance",
+    "title": "Site layout",
+    "tabs": [
+      "Page width",
+      "Product grid",
+      "Loading more products",
+      "Category header",
+      "Category header · sizes & spacing"
+    ],
+    "fields": [
+      "Show the header on category pages",
+      "When a category has no picture, show a light box",
+      "When no banner was imported, use the category picture",
+      "Brand pages too (when the brand has a picture)",
+      "Light box on brand pages with no picture",
+      "Text alignment",
+      "Keep the words readable · on a picture",
+      "Keep the words readable · on the light box",
+      "Darken the picture",
+      "Light box style",
+      "Box colour · E and F",
+      "Icon colour · F",
+      "Text colour"
+    ],
+    "previews": 3,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "contentScrollWidth": 390,
+    "contentClientWidth": 390
+  },
+  "admin-catheadersize-390": {
+    "crumb": "Appearance",
+    "title": "Site layout",
+    "tabs": [
+      "Page width",
+      "Product grid",
+      "Loading more products",
+      "Category header",
+      "Category header · sizes & spacing"
+    ],
+    "fields": [
+      "Title size · phone",
+      "Title size · laptop",
+      "Title weight",
+      "Description size · phone",
+      "Description size · laptop",
+      "Description lines before \"Read more\"",
+      "Widest the text may run",
+      "Height · phone",
+      "Height · laptop",
+      "Inner space top and bottom · phone",
+      "Inner space top and bottom · laptop",
+      "Inner space at the sides · phone",
+      "Inner space at the sides · laptop",
+      "Corner rounding",
+      "Space above · phone",
+      "Space above · laptop",
+      "Space below · phone",
+      "Space below · laptop"
+    ],
+    "previews": 3,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "contentScrollWidth": 390,
+    "contentClientWidth": 390
+  },
+  "admin-category-editor-390": {
+    "open": true,
+    "title": "Korean Sunscreens",
+    "importedNote": "Brought across from the old shop, with this title. Change it or clear it here.",
+    "picture": "/uploads/py/sunscreens-banner.jpg",
+    "selects": [
+      "ct-hdralign=(shop)",
+      "ct-hdrtreat=(shop)",
+      "ct-hdrbox=(shop)"
+    ],
+    "statCount": "1",
+    "modalScrollWidth": 354,
+    "modalClientWidth": 354,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "contentScrollWidth": 390,
+    "contentClientWidth": 390
+  },
+  "box-a-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 10.65,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "box-b-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-cream",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 10.45,
+      "median": 14.16,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "box-c-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-mint",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 11.16,
+      "median": 14.25,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "box-d-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-lilac",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 10.31,
+      "median": 13.77,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "box-e-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-plain",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 14.31,
+      "median": 14.31,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "box-f-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-custom",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 11.08,
+      "median": 14.31,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t1-dark-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-shadow",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 3.49,
+      "median": 8.57,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t1-light-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-shadow",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 2.72,
+      "median": 3.06,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t1-box-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-shadow kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 10.65,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t2-dark-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-fade",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 7.25,
+      "median": 14.4,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t2-light-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-fade",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 4.62,
+      "median": 8.62,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t2-box-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-fade kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 11.8,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t3-dark-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-frost",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 69,
+      "right": 502
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 8.68,
+      "median": 12.03,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t3-light-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-frost",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 69,
+      "right": 502
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 6.06,
+      "median": 6.59,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t3-box-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-frost kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 69,
+      "right": 502
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 14.64,
+      "median": 14.87,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t4-dark-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-label",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 958
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 4.18,
+      "median": 7.24,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t4-light-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-label",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 958
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 2.75,
+      "median": 6.26,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t4-box-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-label kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 958
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 13.95,
+      "median": 15.37,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t5-dark-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-none",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 3.49,
+      "median": 8.57,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t5-light-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-none",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 2.72,
+      "median": 3.06,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "t5-box-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 10.65,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-start-dark-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-shadow",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 3.49,
+      "median": 8.57,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-start-box-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 10.65,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-start-box-ar-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "start",
+      "left": 523,
+      "right": 48
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 10.65,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-center-dark-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-center kbb-th--t-shadow",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "center",
+      "left": 286,
+      "right": 286
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 3.62,
+      "median": 7.71,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-center-box-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-center kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "center",
+      "left": 286,
+      "right": 286
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 13.14,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-center-box-ar-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-center kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "center",
+      "left": 286,
+      "right": 286
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 13.14,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-end-dark-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-end kbb-th--t-shadow",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(255, 255, 255)",
+      "textAlign": "end",
+      "left": 523,
+      "right": 48
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 3.2,
+      "median": 7.37,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-end-box-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-end kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "end",
+      "left": 523,
+      "right": 48
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 10.65,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "align-end-box-ar-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-end kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "title": {
+      "text": "Sunscreens",
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "color": "rgb(42, 34, 40)",
+      "textAlign": "end",
+      "left": 48,
+      "right": 523
+    },
+    "description": {
+      "fontSize": "15px"
+    },
+    "radius": "18px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "viewport": 1280,
+    "contrast": {
+      "worst": 10.65,
+      "median": 13.95,
+      "note": "title colour against the pixels behind the title; text-shadow not counted"
+    }
+  },
+  "after-picture-en-1280": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 532,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "dir": "ltr",
+    "header": {
+      "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-shadow",
+      "header": {
+        "w": 1236,
+        "h": 329
+      },
+      "title": {
+        "text": "Korean Sunscreens",
+        "fontSize": "40px",
+        "fontWeight": "700",
+        "color": "rgb(255, 255, 255)",
+        "textAlign": "start",
+        "left": 48,
+        "right": 428
+      },
+      "description": {
+        "fontSize": "15px"
+      },
+      "radius": "18px",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "viewport": 1280,
+      "contrast": {
+        "worst": 2.94,
+        "median": 7.62,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "after-box-en-1280": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 504,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "dir": "ltr",
+    "header": {
+      "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+      "header": {
+        "w": 1236,
+        "h": 300
+      },
+      "title": {
+        "text": "Lip Care",
+        "fontSize": "40px",
+        "fontWeight": "700",
+        "color": "rgb(42, 34, 40)",
+        "textAlign": "start",
+        "left": 48,
+        "right": 639
+      },
+      "description": {
+        "fontSize": "15px"
+      },
+      "radius": "18px",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "viewport": 1280,
+      "contrast": {
+        "worst": 11.63,
+        "median": 13.95,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "after-picture-ar-1280": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 509,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "dir": "rtl",
+    "header": {
+      "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-shadow",
+      "header": {
+        "w": 1236,
+        "h": 305
+      },
+      "title": {
+        "text": "واقيات الشمس",
+        "fontSize": "40px",
+        "fontWeight": "700",
+        "color": "rgb(255, 255, 255)",
+        "textAlign": "start",
+        "left": 428,
+        "right": 48
+      },
+      "description": {
+        "fontSize": "15px"
+      },
+      "radius": "18px",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "viewport": 1280,
+      "contrast": {
+        "worst": 3.04,
+        "median": 7.16,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "after-box-ar-1280": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 504,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "dir": "rtl",
+    "header": {
+      "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+      "header": {
+        "w": 1236,
+        "h": 300
+      },
+      "title": {
+        "text": "العناية بالشفاه",
+        "fontSize": "40px",
+        "fontWeight": "700",
+        "color": "rgb(42, 34, 40)",
+        "textAlign": "start",
+        "left": 646,
+        "right": 48
+      },
+      "description": {
+        "fontSize": "15px"
+      },
+      "radius": "18px",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "viewport": 1280,
+      "contrast": {
+        "worst": 11.63,
+        "median": 13.95,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "after-box-nodesc-en-1280": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 504,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "dir": "ltr",
+    "header": {
+      "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush",
+      "header": {
+        "w": 1236,
+        "h": 300
+      },
+      "title": {
+        "text": "Face Masks",
+        "fontSize": "40px",
+        "fontWeight": "700",
+        "color": "rgb(42, 34, 40)",
+        "textAlign": "start",
+        "left": 48,
+        "right": 985
+      },
+      "description": null,
+      "radius": "18px",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "viewport": 1280,
+      "contrast": {
+        "worst": 13.74,
+        "median": 13.95,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "after-shop-1280": {
+    "h1Count": 1,
+    "plainTitle": {
+      "text": "Shop all",
+      "fontSize": "32px",
+      "top": 135,
+      "height": 35
+    },
+    "firstProductTop": 272,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "dir": "ltr",
+    "header": null
+  },
+  "before-picture-en-1280": {
+    "h1Count": 1,
+    "plainTitle": null,
+    "firstProductTop": 518,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "dir": "ltr",
+    "header": {
+      "classes": "kbb-th kbb-th--light kbb-th--center",
+      "header": {
+        "w": 1236,
+        "h": 314
+      },
+      "title": {
+        "text": "Korean Sunscreens",
+        "fontSize": "44px",
+        "fontWeight": "700",
+        "color": "rgb(255, 255, 255)",
+        "textAlign": "center",
+        "left": 433,
+        "right": 433
+      },
+      "description": {
+        "fontSize": "14.72px"
+      },
+      "radius": "18px",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "viewport": 1280,
+      "contrast": {
+        "worst": 3.87,
+        "median": 6.65,
+        "note": "title colour against the pixels behind the title; text-shadow not counted"
+      }
+    }
+  },
+  "before-box-en-1280": {
+    "h1Count": 1,
+    "plainTitle": {
+      "text": "Lip Care",
+      "fontSize": "32px",
+      "top": 135,
+      "height": 35
+    },
+    "firstProductTop": 272,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "dir": "ltr",
+    "header": null
+  },
+  "before-box-ar-1280": {
+    "h1Count": 1,
+    "plainTitle": {
+      "text": "العناية بالشفاه",
+      "fontSize": "32px",
+      "top": 135,
+      "height": 35
+    },
+    "firstProductTop": 272,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "dir": "rtl",
+    "header": null
+  },
+  "before-shop-1280": {
+    "h1Count": 1,
+    "plainTitle": {
+      "text": "Shop all",
+      "fontSize": "32px",
+      "top": 135,
+      "height": 35
+    },
+    "firstProductTop": 272,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "dir": "ltr",
+    "header": null
+  },
+  "admin-catheader-1280": {
+    "crumb": "Appearance",
+    "title": "Site layout",
+    "tabs": [
+      "Page width",
+      "Product grid",
+      "Loading more products",
+      "Category header",
+      "Category header · sizes & spacing"
+    ],
+    "fields": [
+      "Show the header on category pages",
+      "When a category has no picture, show a light box",
+      "When no banner was imported, use the category picture",
+      "Brand pages too (when the brand has a picture)",
+      "Light box on brand pages with no picture",
+      "Text alignment",
+      "Keep the words readable · on a picture",
+      "Keep the words readable · on the light box",
+      "Darken the picture",
+      "Light box style",
+      "Box colour · E and F",
+      "Icon colour · F",
+      "Text colour"
+    ],
+    "previews": 3,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "contentScrollWidth": 1032,
+    "contentClientWidth": 1032
+  },
+  "admin-catheadersize-1280": {
+    "crumb": "Appearance",
+    "title": "Site layout",
+    "tabs": [
+      "Page width",
+      "Product grid",
+      "Loading more products",
+      "Category header",
+      "Category header · sizes & spacing"
+    ],
+    "fields": [
+      "Title size · phone",
+      "Title size · laptop",
+      "Title weight",
+      "Description size · phone",
+      "Description size · laptop",
+      "Description lines before \"Read more\"",
+      "Widest the text may run",
+      "Height · phone",
+      "Height · laptop",
+      "Inner space top and bottom · phone",
+      "Inner space top and bottom · laptop",
+      "Inner space at the sides · phone",
+      "Inner space at the sides · laptop",
+      "Corner rounding",
+      "Space above · phone",
+      "Space above · laptop",
+      "Space below · phone",
+      "Space below · laptop"
+    ],
+    "previews": 3,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "contentScrollWidth": 1032,
+    "contentClientWidth": 1032
+  },
+  "admin-category-editor-1280": {
+    "open": true,
+    "title": "Korean Sunscreens",
+    "importedNote": "Brought across from the old shop, with this title. Change it or clear it here.",
+    "picture": "/uploads/py/sunscreens-banner.jpg",
+    "selects": [
+      "ct-hdralign=(shop)",
+      "ct-hdrtreat=(shop)",
+      "ct-hdrbox=(shop)"
+    ],
+    "statCount": "1",
+    "modalScrollWidth": 560,
+    "modalClientWidth": 560,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "contentScrollWidth": 1032,
+    "contentClientWidth": 1032
+  }
+}

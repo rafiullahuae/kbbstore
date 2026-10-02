@@ -224,41 +224,129 @@ class SiteLayout
          * The owner: "We have a banner image on each category on the old site.
          * Need to bring that on the category pages as title background, like
          * on /sunscreens/ -- and the same title, same description." He asked
-         * for it, so it SHIPS ON (CLAUDE.md, 30 September): a category whose
-         * import carried a banner shows it the moment the package and the
-         * import are in. A category with NO imported banner renders exactly
-         * what it rendered before -- the switch below is for taking it away
-         * again, not for turning it on.
+         * for it, so it SHIPS ON (CLAUDE.md, 30 September).
+         *
+         * ── AND ON EVERY CATEGORY, PICTURE OR NOT ──────────────── Lane PY ──
+         *
+         * The owner again, on PT's preview: "by default make the title name
+         * left side as before, i just wanted the background image or light
+         * colored box containing skincare makeup etc products icons. if no
+         * image. ... i can be able to update that background iamge, title font
+         * size etc and description etc for each category. and will have
+         * control of overall section height padding etc. and some type of
+         * shadow behind the name ... please give me multiple options to
+         * chooose from."
+         *
+         * So, as shipped, and every one of these is one click away:
+         *
+         *   - alignment START (left in English, right in Arabic) -- he said so;
+         *   - a category with no picture gets the LIGHT BOX ("Blush icons", the
+         *     shop's own pink) instead of the plain title -- he asked for it;
+         *   - over a picture the title has a SOFT SHADOW plus the darkening PT
+         *     shipped -- "some type of shadow behind the name";
+         *   - on the light box the text is dark with no shadow, which is what
+         *     reads on a pale ground.
+         *
+         * Those four defaults were CHOSEN BY THE INTEGRATOR from his words; he
+         * has not picked a letter yet, and docs/py-options/overview.png shows
+         * him every one. Brand pages are NOT in his request: a brand keeps
+         * 2.60.346's behaviour (a header only when it has a picture) and the
+         * brand light box is a separate switch that ships OFF.
          *
          * Read by App\Support\TitleHeader only. NOT a stylesheet value:
          * isDefault() and css() skip these, so none of it puts a byte of CSS
          * on any page; the numbers ride on the header element itself, as
-         * clamped integers in properties whose names are constants.
+         * clamped integers in properties whose names are constants there, and
+         * the two colours are hex validated by this screen's `expand` dialect
+         * (#rgb or #rrggbb, nothing else) before they are stored.
          */
-        'cat_header' => ['bool', 'Show the old shop\'s banner behind the category title', true,
-            'On: a category (or brand) whose import carried a banner picture shows its title, and its description, over that picture. Off: every category page shows the plain title, as before. A category with no imported banner is never affected.'],
+        'cat_header' => ['bool', 'Show the header on category pages', true,
+            'On: every category page opens with its title and description in a header -- over the category\'s picture when it has one, or in the light box below when it has none. Off: every category page shows the plain title, as before.'],
+        'cat_header_box' => ['bool', 'When a category has no picture, show a light box', true,
+            'On: a category with no header picture gets a soft-coloured box behind its title (choose the look below). Off: such a category shows the plain title, as before.'],
         'cat_header_fallback' => ['bool', 'When no banner was imported, use the category picture', false,
-            'Off: only an imported banner is used. On: a category with no banner uses its own category picture (the one the import calls `image`) instead. Turn this on if the export\'s notes say the old shop keeps no separate banner.'],
-        'cat_header_brands' => ['bool', 'Brand pages too', true,
+            'Off: only a header picture (imported, or chosen in Catalog → Categories → Edit → Category header) is used. On: a category with none uses its own square category picture instead.'],
+        'cat_header_brands' => ['bool', 'Brand pages too (when the brand has a picture)', true,
             'The same header on a brand\'s page when the brand\'s import carried a banner.'],
-        'cat_header_h_phone' => ['range', 'Height · phone', 190,
-            'The least the header is on a phone. It grows if the title and description need more room.',
-            ['min' => 120, 'max' => 480, 'step' => 10, 'unit' => 'px']],
-        'cat_header_h_desktop' => ['range', 'Height · desktop', 300,
-            'The least the header is on a screen 900px and wider.',
-            ['min' => 160, 'max' => 640, 'step' => 10, 'unit' => 'px']],
+        'cat_header_box_brands' => ['bool', 'Light box on brand pages with no picture', false,
+            'Off, as shipped: a brand with no banner keeps its page exactly as it is. On: it gets the same light box as a category.'],
+        'cat_header_align' => ['select', 'Text alignment', 'start',
+            'Start is the left edge on the English shop and the right edge on the Arabic one -- where the title sat before. A category can choose its own in Catalog → Categories.',
+            ['start' => 'Start (left in English, right in Arabic)', 'center' => 'Centred', 'end' => 'End (right in English, left in Arabic)']],
+        'cat_header_treatment' => ['select', 'Keep the words readable · on a picture', 'shadow',
+            'What sits behind the title and description over a picture, so they never merge into it. Works together with "Darken the picture".',
+            self::TREATMENTS],
+        'cat_header_box_treatment' => ['select', 'Keep the words readable · on the light box', 'none',
+            'The same choice on the light box. A pale box needs nothing, so it ships at None.',
+            self::TREATMENTS],
         'cat_header_overlay' => ['range', 'Darken the picture', 40,
             'How much the picture is darkened (or, with dark text, lightened) so the words stay readable.',
             ['min' => 0, 'max' => 85, 'step' => 5, 'unit' => '%']],
-        'cat_header_text' => ['select', 'Text colour', 'light',
-            'White text over a darkened picture, or dark text over a lightened one.',
-            ['light' => 'White', 'dark' => 'Dark']],
-        'cat_header_align' => ['select', 'Text alignment', 'center',
-            'Where the title and description sit across the header.',
-            ['center' => 'Centred', 'left' => 'Left']],
+        'cat_header_box_style' => ['select', 'Light box style', 'blush',
+            'The look of the box a category with no picture gets. A, B, C and D carry a soft pattern of beauty-product line icons; E is the plain colour below; F uses both colours below.',
+            self::BOX_STYLES],
+        'cat_header_box_bg' => ['colour', 'Box colour · E and F', '#FFF4EE',
+            'Used by "Plain soft colour" and "My own colours". A hex colour such as #FFF4EE or #FEF.'],
+        'cat_header_box_icon' => ['colour', 'Icon colour · F', '#EFA889',
+            'The colour of the icons for "My own colours". Keep it close to the box colour so the icons stay a pattern, not a picture.'],
+        'cat_header_text' => ['select', 'Text colour', 'auto',
+            'Automatic: white over a picture, dark on the light box (and white on a dark box colour of your own).',
+            ['auto' => 'Automatic', 'light' => 'White', 'dark' => 'Dark']],
+
+        'cat_header_title_phone' => ['range', 'Title size · phone', 26,
+            'A category can set its own in Catalog → Categories.',
+            ['min' => 16, 'max' => 56, 'step' => 1, 'unit' => 'px']],
+        'cat_header_title_desktop' => ['range', 'Title size · laptop', 40,
+            'From 900px wide.',
+            ['min' => 18, 'max' => 80, 'step' => 1, 'unit' => 'px']],
+        'cat_header_weight' => ['select', 'Title weight', '700',
+            'How bold the title is.',
+            ['500' => 'Medium', '600' => 'Semi-bold', '700' => 'Bold', '800' => 'Extra bold']],
+        'cat_header_desc_phone' => ['range', 'Description size · phone', 13,
+            '',
+            ['min' => 11, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        'cat_header_desc_desktop' => ['range', 'Description size · laptop', 15,
+            '',
+            ['min' => 11, 'max' => 22, 'step' => 1, 'unit' => 'px']],
         'cat_header_lines' => ['range', 'Description lines before "Read more"', 3,
             'A longer description is cut to this many lines with a Read more link under it.',
             ['min' => 1, 'max' => 10, 'step' => 1, 'unit' => ' lines']],
+        'cat_header_maxw' => ['range', 'Widest the text may run', 760,
+            'The title and description wrap at this width, so a long description stays a comfortable read on a wide screen.',
+            ['min' => 320, 'max' => 1400, 'step' => 20, 'unit' => 'px']],
+        'cat_header_h_phone' => ['range', 'Height · phone', 190,
+            'The least the header is on a phone. It grows if the title and description need more room.',
+            ['min' => 80, 'max' => 480, 'step' => 10, 'unit' => 'px']],
+        'cat_header_h_desktop' => ['range', 'Height · laptop', 300,
+            'The least the header is on a screen 900px and wider.',
+            ['min' => 100, 'max' => 640, 'step' => 10, 'unit' => 'px']],
+        'cat_header_pad_y_phone' => ['range', 'Inner space top and bottom · phone', 28,
+            '',
+            ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
+        'cat_header_pad_y_desktop' => ['range', 'Inner space top and bottom · laptop', 36,
+            '',
+            ['min' => 0, 'max' => 120, 'step' => 2, 'unit' => 'px']],
+        'cat_header_pad_x_phone' => ['range', 'Inner space at the sides · phone', 20,
+            '',
+            ['min' => 0, 'max' => 60, 'step' => 2, 'unit' => 'px']],
+        'cat_header_pad_x_desktop' => ['range', 'Inner space at the sides · laptop', 48,
+            '',
+            ['min' => 0, 'max' => 160, 'step' => 2, 'unit' => 'px']],
+        'cat_header_radius' => ['range', 'Corner rounding', 18,
+            '0 is square corners.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'cat_header_mt_phone' => ['range', 'Space above · phone', 6,
+            'Between the breadcrumb and the header.',
+            ['min' => 0, 'max' => 60, 'step' => 2, 'unit' => 'px']],
+        'cat_header_mt_desktop' => ['range', 'Space above · laptop', 6,
+            '',
+            ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
+        'cat_header_mb_phone' => ['range', 'Space below · phone', 22,
+            'Between the header and the products.',
+            ['min' => 0, 'max' => 60, 'step' => 2, 'unit' => 'px']],
+        'cat_header_mb_desktop' => ['range', 'Space below · laptop', 26,
+            '',
+            ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
     ];
 
     /** The bounds a typed batch size is held to, server-side. */
@@ -282,8 +370,59 @@ class SiteLayout
 
     /** The category title header's keys (Lane PT): not CSS either, for the same reason. */
     public const HEADER_KEYS = [
-        'cat_header', 'cat_header_fallback', 'cat_header_brands', 'cat_header_h_phone', 'cat_header_h_desktop',
-        'cat_header_overlay', 'cat_header_text', 'cat_header_align', 'cat_header_lines',
+        // What it is, where it shows, and how it looks (Lane PY's first tab).
+        'cat_header', 'cat_header_box', 'cat_header_fallback', 'cat_header_brands', 'cat_header_box_brands',
+        'cat_header_align', 'cat_header_treatment', 'cat_header_box_treatment', 'cat_header_overlay',
+        'cat_header_box_style', 'cat_header_box_bg', 'cat_header_box_icon', 'cat_header_text',
+        // Sizes and spacing (the second).
+        'cat_header_title_phone', 'cat_header_title_desktop', 'cat_header_weight',
+        'cat_header_desc_phone', 'cat_header_desc_desktop', 'cat_header_lines', 'cat_header_maxw',
+        'cat_header_h_phone', 'cat_header_h_desktop',
+        'cat_header_pad_y_phone', 'cat_header_pad_y_desktop', 'cat_header_pad_x_phone', 'cat_header_pad_x_desktop',
+        'cat_header_radius', 'cat_header_mt_phone', 'cat_header_mt_desktop', 'cat_header_mb_phone', 'cat_header_mb_desktop',
+    ];
+
+    /** The look tab of the category header. (Lane PY) */
+    public const HEADER_LOOK_KEYS = [
+        'cat_header', 'cat_header_box', 'cat_header_fallback', 'cat_header_brands', 'cat_header_box_brands',
+        'cat_header_align', 'cat_header_treatment', 'cat_header_box_treatment', 'cat_header_overlay',
+        'cat_header_box_style', 'cat_header_box_bg', 'cat_header_box_icon', 'cat_header_text',
+    ];
+
+    /** The sizes-and-spacing tab of the category header. (Lane PY) */
+    public const HEADER_SIZE_KEYS = [
+        'cat_header_title_phone', 'cat_header_title_desktop', 'cat_header_weight',
+        'cat_header_desc_phone', 'cat_header_desc_desktop', 'cat_header_lines', 'cat_header_maxw',
+        'cat_header_h_phone', 'cat_header_h_desktop',
+        'cat_header_pad_y_phone', 'cat_header_pad_y_desktop', 'cat_header_pad_x_phone', 'cat_header_pad_x_desktop',
+        'cat_header_radius', 'cat_header_mt_phone', 'cat_header_mt_desktop', 'cat_header_mb_phone', 'cat_header_mb_desktop',
+    ];
+
+    /**
+     * "Some type of shadow behind the name, so it will not merged with the
+     * background. please give me multiple options to chooose from." (Lane PY)
+     *
+     * Numbered, because the owner answers an option sheet with a letter and a
+     * number ("B + 3") and the labels here are the sheet's. The KEYS are what
+     * App\Support\TitleHeader turns into a class, after checking them against
+     * this list -- a select stores one of its own options or nothing.
+     */
+    public const TREATMENTS = [
+        'shadow' => '1 · Soft shadow behind the words',
+        'fade' => '2 · Dark fade on the text side',
+        'frost' => '3 · Frosted panel behind the words',
+        'label' => '4 · Solid label behind the title',
+        'none' => '5 · None',
+    ];
+
+    /** The light box's looks, lettered for the same option sheet. (Lane PY) */
+    public const BOX_STYLES = [
+        'blush' => 'A · Blush icons (soft pink)',
+        'cream' => 'B · Cream icons (warm cream, gold)',
+        'mint' => 'C · Mint icons (pale green)',
+        'lilac' => 'D · Lilac icons (pale lilac)',
+        'plain' => 'E · Plain soft colour (no icons)',
+        'custom' => 'F · My own colours (with icons)',
     ];
 
     public const TABS = [
@@ -297,8 +436,11 @@ class SiteLayout
             'How /shop, every category, every brand page and the curated listings bring in more products: more on scroll, numbered arrows, or everything at once. Shoppers without JavaScript always get the arrows.',
             ['load_mode', 'load_batch', 'load_batch_custom']],
         'catheader' => ['Category header',
-            'The banner picture each category had on the old shop, behind the category\'s title and description — brought across by the import. A category with no imported banner keeps its plain title.',
-            self::HEADER_KEYS],
+            'The top of every category page: its title and description over the category\'s picture, or in a light box when it has none. Each category can change its own picture, title, description, sizes and look in Catalog → Categories → Edit → Category header; anything left blank there follows this screen.',
+            self::HEADER_LOOK_KEYS],
+        'catheadersize' => ['Category header · sizes & spacing',
+            'Title and description sizes, the header\'s height, the space inside and around it, and its corners -- for phones and for laptops (900px and wider) separately.',
+            self::HEADER_SIZE_KEYS],
     ];
 
     /** Every key lives in `settings`, written by this module's own endpoint. */
@@ -431,6 +573,16 @@ class SiteLayout
 
             return max(self::BATCH_MIN, min(self::BATCH_MAX, $n));
         };
+
+        /*
+         * THE LIGHT BOX'S TWO COLOURS (Lane PY): `expand`, not this screen's
+         * `strict`. The owner may type #fef as readily as #ffeeff; `expand`
+         * requires the `#`, accepts three or six hex digits, stores six in
+         * upper case and refuses everything else -- so what reaches the
+         * header's `style` attribute is always exactly `#RRGGBB`.
+         */
+        $out['cat_header_box_bg']['hex'] = 'expand';
+        $out['cat_header_box_icon']['hex'] = 'expand';
 
         return $out;
     }

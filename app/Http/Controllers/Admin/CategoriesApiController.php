@@ -73,7 +73,11 @@ class CategoriesApiController extends Controller
         $categories = Category::query()
             ->select('categories.id', 'categories.slug', 'categories.name', 'categories.parent_id',
                 'categories.description', 'categories.image', 'categories.position',
-                'categories.depth', 'categories.path', 'categories.seo', 'categories.banner')
+                'categories.depth', 'categories.path', 'categories.seo', 'categories.banner',
+                // The title header's own fields (Lanes PT and PY), so the
+                // editor can show -- and clear -- what the import put there.
+                'categories.header_image', 'categories.header_source', 'categories.header_title',
+                'categories.header_subtitle', 'categories.header_description', 'categories.header_style')
             // The headline count, and it has to agree with the archive page.
             //
             // It did not. This subquery filtered on `deleted_at IS NULL` alone,
@@ -694,6 +698,36 @@ class CategoriesApiController extends Controller
             // definition of what a banner is rather than a validation rule
             // here and a renderer somewhere else that disagree.
             'banner' => ['nullable', 'array'],
+            /*
+             * THE CATEGORY'S OWN TITLE HEADER. (Lane PY)
+             *
+             * "i can be able to update that background iamge, title font size
+             * etc and description etc for each category." Every one of these
+             * is OPTIONAL IN THE REQUEST, and a key that is not sent is left
+             * exactly as it is: Catalog -> Catalog's own Categories tab
+             * (admin/app.blade.php) writes this same endpoint and has no
+             * header boxes, so a save from there must not wipe them. A key
+             * that IS sent and blank clears it -- that is how the owner
+             * removes an imported title and goes back to the category name.
+             *
+             * Shapes are checked here; meaning is checked by the one
+             * definition the storefront also reads through --
+             * TitleHeader::safeImage() for the picture and
+             * TitleHeader::sanitizeStyle() for the look, which keeps a choice
+             * on its own list and clamps a number into its slider's range.
+             */
+            'header_image' => ['nullable', 'string', 'max:2048'],
+            'header_title' => ['nullable', 'string', 'max:300'],
+            'header_subtitle' => ['nullable', 'string', 'max:300'],
+            'header_description' => ['nullable', 'string', 'max:5000'],
+            'header_style' => ['nullable', 'array'],
+            'header_style.align' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::ALIGNS)],
+            'header_style.treatment' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::TREATMENTS))],
+            'header_style.box' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::BOX_STYLES))],
+            'header_style.title_phone' => ['nullable', 'integer'],
+            'header_style.title_desktop' => ['nullable', 'integer'],
+            'header_style.h_phone' => ['nullable', 'integer'],
+            'header_style.h_desktop' => ['nullable', 'integer'],
         ];
 
         /*
@@ -729,6 +763,43 @@ class CategoriesApiController extends Controller
             ['title', 'description', 'canonical', 'og_image', 'noindex']
         );
         $data['banner'] = \App\Support\PageBanner::sanitize($data['banner'] ?? null);
+
+        return $this->headerFields($data);
+    }
+
+    /**
+     * The title header's fields, each only when the request carried it.
+     * (Lane PY -- see the rules above for why an absent key is left alone.)
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function headerFields(array $data): array
+    {
+        if (array_key_exists('header_image', $data)) {
+            $raw = trim((string) $data['header_image']);
+            $safe = \App\Support\TitleHeader::safeImage($raw);
+
+            if ($raw !== '' && $safe === null) {
+                throw ValidationException::withMessages([
+                    'header_image' => 'The header picture must be an uploaded file or an http(s) address.',
+                ]);
+            }
+
+            $data['header_image'] = $safe;
+        }
+
+        foreach (['header_title', 'header_subtitle', 'header_description'] as $key) {
+            if (array_key_exists($key, $data)) {
+                $value = trim((string) $data[$key]);
+                $data[$key] = $value === '' ? null : $value;
+            }
+        }
+
+        if (array_key_exists('header_style', $data)) {
+            $style = \App\Support\TitleHeader::sanitizeStyle($data['header_style']);
+            $data['header_style'] = $style === [] ? null : $style;
+        }
 
         return $data;
     }
