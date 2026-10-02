@@ -770,6 +770,10 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // moves every product out of a category.
         require __DIR__.'/categories-brands-admin.php';
 
+        // The storefront's admin bar and quick-edit pencil (Lane RA). Owner-only
+        // capabilities storefront.adminbar / storefront.quick_edit.
+        require __DIR__.'/storefront-admin.php';
+
         // Content → Media Library: the grid of every image uploaded through the
         // admin, its search, and what each image is used by before deleting it.
         require __DIR__.'/media-library-admin.php';
