@@ -249,8 +249,12 @@ it('renders no banner on a category page by default', function () {
 
     expect(bwHasBanner($html))->toBeFalse('a category with no banner configured must render no banner element at all');
 
-    // And the ordinary heading is still there, because nothing has replaced it.
-    expect(str_contains($html, 'class="ptitle"'))->toBeTrue('the plain page heading must still render when there is no banner');
+    // And the page still has its heading. Since Lane PY that is the title
+    // header's light box ("i just wanted the background image or light
+    // colored box ... if no image"), not the plain .ptitle -- one <h1> either
+    // way, and never the owner's banner, which is off.
+    expect(str_contains($html, 'id="kbb-th-title"'))->toBeTrue('the category title header must render when there is no banner')
+        ->and(substr_count($html, '<h1'))->toBe(1);
 });
 
 it('renders no banner on a brand page by default', function () {

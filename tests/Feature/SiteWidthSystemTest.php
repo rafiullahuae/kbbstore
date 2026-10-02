@@ -590,14 +590,45 @@ it('ships every setting at the value the page already had, except the ones the o
         // background"); a category with no imported banner is unaffected.
         // Everything else is a choice he has not made, at a neutral value.
         'cat_header' => true,
+        // Lane PY: the owner, on PT's preview -- "by default make the title
+        // name left side as before, i just wanted the background image or
+        // light colored box containing skincare makeup etc products icons. if
+        // no image ... and some type of shadow behind the name". So the light
+        // box is ON for categories, the alignment is START, a picture gets the
+        // SOFT SHADOW and the text colour is AUTOMATIC (white on a picture,
+        // dark on the box). The look -- Blush icons, nothing behind words on
+        // the box -- was chosen by the integrator from his words. Brands are
+        // not in his request: their light box ships OFF.
+        'cat_header_box' => true,
         'cat_header_fallback' => false,
         'cat_header_brands' => true,
+        'cat_header_box_brands' => false,
+        'cat_header_align' => 'start',
+        'cat_header_treatment' => 'shadow',
+        'cat_header_box_treatment' => 'none',
+        'cat_header_overlay' => 40,
+        'cat_header_box_style' => 'blush',
+        'cat_header_box_bg' => '#FFF4EE',
+        'cat_header_box_icon' => '#EFA889',
+        'cat_header_text' => 'auto',
+        'cat_header_title_phone' => 26,
+        'cat_header_title_desktop' => 40,
+        'cat_header_weight' => '700',
+        'cat_header_desc_phone' => 13,
+        'cat_header_desc_desktop' => 15,
+        'cat_header_lines' => 3,
+        'cat_header_maxw' => 760,
         'cat_header_h_phone' => 190,
         'cat_header_h_desktop' => 300,
-        'cat_header_overlay' => 40,
-        'cat_header_text' => 'light',
-        'cat_header_align' => 'center',
-        'cat_header_lines' => 3,
+        'cat_header_pad_y_phone' => 28,
+        'cat_header_pad_y_desktop' => 36,
+        'cat_header_pad_x_phone' => 20,
+        'cat_header_pad_x_desktop' => 48,
+        'cat_header_radius' => 18,
+        'cat_header_mt_phone' => 6,
+        'cat_header_mt_desktop' => 6,
+        'cat_header_mb_phone' => 22,
+        'cat_header_mb_desktop' => 26,
     ];
 
     expect(array_keys($fields))->toEqual(array_keys($expected));

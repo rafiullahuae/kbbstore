@@ -225,7 +225,18 @@ it('never puts a script or data address into the picture', function () {
         ->and(TitleHeader::safeImage('/wp-content/uploads/a.jpg'))->toBe('/wp-content/uploads/a.jpg');
 });
 
-it('draws today\'s plain title for a category with nothing imported', function () {
+it('draws today\'s plain title for a category with nothing imported, once the light box is switched off', function () {
+    /*
+     * Lane PY: a category with no picture gets the light box now -- the owner
+     * asked for it ("i just wanted the background image or light colored box
+     * ... if no image"), so it ships on. With that switch OFF, the plain
+     * title PT kept is still exactly what is drawn, which is what this case
+     * pins. PyCategoryHeaderOptionsTest pins the box itself.
+     */
+    app(SiteLayout::class)->save(['cat_header_box' => false]);
+    \App\Services\SettingsService::forgetMemo();
+    \App\Services\ModuleSchema::forgetNormalised();
+
     ptHeaderCategory(['header_image' => null]);
 
     $html = ptPage('/collections/pt-sunscreens/');
@@ -250,11 +261,16 @@ it('obeys Appearance -> Site layout -> Category header', function () {
 
     $layout = app(SiteLayout::class);
 
+    // Lane PY's light box off, so "no header" is observable as no header.
+    $layout->save(['cat_header_box' => false]);
+    \App\Services\SettingsService::forgetMemo();
+    \App\Services\ModuleSchema::forgetNormalised();
+
     // The fallback to the category picture is OFF as shipped...
     expect(str_contains(ptPage('/collections/pt-sunscreens/'), 'data-kbb-title-header'))->toBeFalse();
 
     // ...and on, it draws the category picture.
-    $layout->save(['cat_header_fallback' => true, 'cat_header_text' => 'dark', 'cat_header_align' => 'left',
+    $layout->save(['cat_header_fallback' => true, 'cat_header_text' => 'dark', 'cat_header_align' => 'end',
         'cat_header_h_phone' => 260, 'cat_header_h_desktop' => 420, 'cat_header_overlay' => 25, 'cat_header_lines' => 5]);
     \App\Services\SettingsService::forgetMemo();
     \App\Services\ModuleSchema::forgetNormalised();
@@ -262,8 +278,11 @@ it('obeys Appearance -> Site layout -> Category header', function () {
     $html = ptPage('/collections/pt-sunscreens/');
 
     expect($html)->toContain('src="https://kbeautybliss.com/wp-content/uploads/2020/01/thumb.jpg"')
-        ->and($html)->toContain('class="kbb-th kbb-th--dark kbb-th--left"')
-        ->and($html)->toContain('style="--kbb-th-h:260px;--kbb-th-hd:420px;--kbb-th-ov:0.25;--kbb-th-lines:5"');
+        // Lane PY: the classes name the shape, the tone, the LOGICAL
+        // alignment and the treatment; the heights ride first in the style.
+        ->and($html)->toContain('class="kbb-th kbb-th--img kbb-th--dark kbb-th--a-end kbb-th--t-shadow"')
+        ->and($html)->toContain('style="--kbb-th-h:260px;--kbb-th-hd:420px;')
+        ->and($html)->toContain(';--kbb-th-ov:0.25;--kbb-th-lines:5;');
 
     // The main switch off: the plain title again.
     $layout->save(['cat_header' => false]);

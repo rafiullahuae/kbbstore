@@ -116,7 +116,7 @@ it('refuses a signed-out request', function () {
 
 /* ═══════════════════════════════════════════════════════ the payload ═══ */
 
-it('draws four tabs and twenty-two controls, and says the shop is sending nothing', function () {
+it('draws five tabs and forty-four controls, and says the shop is sending nothing', function () {
     $this->actingAs(w1Admin(), 'admin');
 
     $body = $this->getJson('/admin-api/site-layout')->assertOk()->json();
@@ -133,12 +133,19 @@ it('draws four tabs and twenty-two controls, and says the shop is sending nothin
      * ride on the header element; TitleHeader), so "sending nothing" below is
      * unchanged by them too.
      */
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader']);
+    /*
+     * FIVE SINCE LANE PY: the category header grew to thirty-one controls --
+     * "multiple options to chooose from" and "control of overall section
+     * height padding etc." -- split over "Category header" (what shows and how
+     * it looks) and "Category header · sizes & spacing". Still none of them CSS
+     * on :root.
+     */
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
     expect($keys)->toBe(array_keys(SiteLayout::SCHEMA));
-    expect($keys)->toHaveCount(22);
+    expect($keys)->toHaveCount(44);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

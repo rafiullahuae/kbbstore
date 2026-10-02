@@ -163,6 +163,12 @@
 .ct-table th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft,#6b7280)}
 .ct-table code{font-family:var(--mono,ui-monospace,monospace);font-size:11px;overflow-wrap:anywhere}
 
+/* The category header panel in the editor (Lane PY). */
+.ct-hdr{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:10px 12px;margin-bottom:12px;min-width:0}
+.ct-hdr > summary{cursor:pointer;font-size:13px;min-width:0;overflow-wrap:anywhere}
+.ct-hdr-body{margin-top:12px;min-width:0}
+.ct-hdr .ct-note{font-size:11.5px;color:var(--ink-soft,#6b7280)}
+
 @media (max-width:560px){
   /* The action buttons move under the name rather than competing with it for
      the row's width. Without this the three-column grid keeps a column for
@@ -385,6 +391,10 @@
       + '<div class="ct-stat"><b>' + esc(live) + '</b><span>Published placements</span></div>'
       + '<div class="ct-stat"><b>' + esc(cats.filter(function(c){ return Number(c.products_count||0) === 0; }).length)
       + '</b><span>Empty on the storefront</span></div>'
+      /* Lane PY: how many categories show a header title other than their
+         name -- the old shop's, or one typed here. */
+      + '<div class="ct-stat" data-hdr-count><b>' + esc(cats.filter(function(c){ return !!c.header_title; }).length)
+      + '</b><span>With their own header title</span></div>'
       + '</div>';
 
     var body;
@@ -405,6 +415,11 @@
             + countPill(c)
             + (r.orphan ? ' <span class="ct-pill is-warn">parent missing</span>' : '')
             + (Number(c.children_count || 0) ? ' <span class="ct-pill">' + esc(c.children_count) + ' sub</span>' : '')
+            /* Lane PY: what this category's header carries, so an imported
+               title is visible from the list and not only inside the dialog. */
+            + (c.header_title ? ' <span class="ct-pill' + (c.header_source ? ' is-warn' : '') + '" data-hdr-title>'
+                + (c.header_source ? 'imported header title' : 'own header title') + '</span>' : '')
+            + (c.header_image ? ' <span class="ct-pill">header picture</span>' : '')
             + '<span class="ct-path">/collections/' + esc(c.path || c.slug) + '/</span>'
           + '</div>'
           + '<div class="ct-acts">'
@@ -656,6 +671,179 @@
     return el ? String(el.value || '').trim() : '';
   }
 
+  /* --------------------------------------------- the category header (PY) */
+  /*
+   * "i can be able to update that background iamge, title font size etc and
+   * description etc for each category." -- the owner, Lane PY.
+   *
+   * One panel in this dialog, saved by this dialog's button in the same
+   * request as everything else. EVERY BOX BLANK MEANS "FOLLOW THE SHOP"
+   * (Appearance -> Site layout -> Category header): a blank title is the
+   * category's name, a blank description is the Description above, a blank
+   * size is the shop's size, "Use the shop setting" is the shop's choice.
+   *
+   * The custom title is ALSO WHERE AN IMPORTED OLD-SHOP TITLE LANDS. It is
+   * shown here, marked as imported, and "Use the category name" empties it --
+   * which is how the owner undoes something he did not type.
+   *
+   * The lists below are the server's own (App\Services\SiteLayout::TREATMENTS
+   * and BOX_STYLES, App\Support\TitleHeader::ALIGNS), and the numbers' bounds
+   * are the matching sliders' -- PyCategoryHeaderOptionsTest reads both files
+   * and requires them to agree. The server is the judge regardless: it keeps a
+   * choice only when it is on its list and clamps a number into its range.
+   */
+  var HDR_ALIGNS = [['', 'Use the shop setting'], ['start', 'Start (left in English, right in Arabic)'],
+    ['center', 'Centred'], ['end', 'End (right in English, left in Arabic)']];
+  var HDR_TREATMENTS = [['', 'Use the shop setting'], ['shadow', '1 · Soft shadow behind the words'],
+    ['fade', '2 · Dark fade on the text side'], ['frost', '3 · Frosted panel behind the words'],
+    ['label', '4 · Solid label behind the title'], ['none', '5 · None']];
+  var HDR_BOXES = [['', 'Use the shop setting'], ['blush', 'A · Blush icons'], ['cream', 'B · Cream icons'],
+    ['mint', 'C · Mint icons'], ['lilac', 'D · Lilac icons'], ['plain', 'E · Plain soft colour'],
+    ['custom', 'F · My own colours']];
+  /* [box id, style key, label, min, max] -- the bounds of the matching slider. */
+  var HDR_NUMBERS = [
+    ['ct-hdrtsp', 'title_phone', 'Title size · phone (px)', 16, 56],
+    ['ct-hdrtsd', 'title_desktop', 'Title size · laptop (px)', 18, 80],
+    ['ct-hdrhp', 'h_phone', 'Height · phone (px)', 80, 480],
+    ['ct-hdrhd', 'h_desktop', 'Height · laptop (px)', 100, 640]
+  ];
+
+  function hdrSelect(id, label, list, current){
+    return '<div class="ct-fld"><label for="' + id + '">' + esc(label) + '</label><select id="' + id + '">'
+      + list.map(function(o){
+          return '<option value="' + esc(o[0]) + '"' + (String(current || '') === o[0] ? ' selected' : '') + '>'
+            + esc(o[1]) + '</option>';
+        }).join('')
+      + '</select></div>';
+  }
+
+  function headerPanel(cat){
+    var st = (cat.header_style && typeof cat.header_style === 'object') ? cat.header_style : {};
+    var anything = !!(cat.header_image || cat.header_title || cat.header_subtitle || cat.header_description
+      || Object.keys(st).length);
+
+    var imported = cat.header_source
+      ? '<p class="ct-note" data-hdr-imported>Brought across from the old shop'
+        + (cat.header_title ? ', with this title' : '') + '. Change it or clear it here.</p>'
+      : '';
+
+    return '<details class="ct-hdr" id="ct-hdr"' + (anything ? ' open' : '') + '>'
+      + '<summary><b>Category header</b> <span class="ct-note" style="display:inline">'
+      + 'picture, title, description and look on this category’s page</span></summary>'
+      + '<div class="ct-hdr-body">'
+      + '<p class="ct-note" style="margin:0 0 12px">Leave anything blank to follow '
+      + '<b>Appearance → Site layout → Category header</b>.</p>'
+
+      + '<div class="ct-fld"><label for="ct-hdrimg">Header picture</label>'
+        + '<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;min-width:0">'
+        + '<img class="ct-thumb" id="ct-hdrthumb" alt=""' + (cat.header_image ? '' : ' style="display:none"')
+        +   ' src="' + esc(cat.header_image || '') + '">'
+        + '<button type="button" class="ct-btn" id="ct-hdrlib">Choose from Media Library</button>'
+        + '<button type="button" class="ct-btn" id="ct-hdrdrop">Remove picture</button>'
+        + '</div>'
+        + '<label for="ct-hdrimg" class="ct-note" style="display:block;margin-top:7px">Picture address</label>'
+        + '<input id="ct-hdrimg" value="' + esc(cat.header_image || '') + '" placeholder="No picture: the light box shows instead">'
+        + '<p class="ct-note">A wide picture works best (about 1600 × 500). With no picture the page shows the light box.</p>'
+      + '</div>'
+
+      + '<div class="ct-fld"><label for="ct-hdrtitle">Title</label>'
+        + '<input id="ct-hdrtitle" maxlength="300" value="' + esc(cat.header_title || '') + '"'
+        + ' placeholder="Blank: the category name (' + esc(cat.name || '') + ')">'
+        + imported
+        + '<p class="ct-note">Blank uses the category name. '
+        + '<button type="button" class="ct-link" id="ct-hdrtitleclear">Use the category name</button></p>'
+      + '</div>'
+
+      + '<div class="ct-fld"><label for="ct-hdrsub">Line under the title</label>'
+        + '<input id="ct-hdrsub" maxlength="300" value="' + esc(cat.header_subtitle || '') + '" placeholder="Optional">'
+      + '</div>'
+
+      + '<div class="ct-fld"><label for="ct-hdrdesc">Description in the header</label>'
+        + '<textarea id="ct-hdrdesc" rows="3" maxlength="5000" placeholder="Blank: the Description above">'
+        + esc(cat.header_description || '') + '</textarea>'
+        + '<p class="ct-note">English pages. The Arabic page shows the category’s Arabic name and description.</p>'
+      + '</div>'
+
+      + '<div class="ct-grid2">'
+        + hdrSelect('ct-hdralign', 'Text alignment', HDR_ALIGNS, st.align)
+        + hdrSelect('ct-hdrtreat', 'Keep the words readable', HDR_TREATMENTS, st.treatment)
+        + hdrSelect('ct-hdrbox', 'Light box style (no picture)', HDR_BOXES, st.box)
+      + '</div>'
+
+      + '<div class="ct-grid2">'
+        + HDR_NUMBERS.map(function(n){
+            var v = st[n[1]];
+            return '<div class="ct-fld"><label for="' + n[0] + '">' + esc(n[2]) + '</label>'
+              + '<input id="' + n[0] + '" type="number" inputmode="numeric" min="' + n[3] + '" max="' + n[4] + '"'
+              + ' value="' + esc(v == null ? '' : v) + '" placeholder="Shop setting"></div>';
+          }).join('')
+      + '</div>'
+      + '</div></details>';
+  }
+
+  /* The panel's values for the save request. A number box that holds
+     something other than digits is sent as typed, so the server refuses it
+     with its own message rather than this screen guessing what was meant. */
+  function headerPayload(){
+    var style = {
+      align: val('ct-hdralign') || null,
+      treatment: val('ct-hdrtreat') || null,
+      box: val('ct-hdrbox') || null
+    };
+    HDR_NUMBERS.forEach(function(n){
+      var raw = val(n[0]);
+      style[n[1]] = raw === '' ? null : (/^\d+$/.test(raw) ? parseInt(raw, 10) : raw);
+    });
+    return {
+      header_image: val('ct-hdrimg'),
+      header_title: val('ct-hdrtitle'),
+      header_subtitle: val('ct-hdrsub'),
+      header_description: val('ct-hdrdesc'),
+      header_style: style
+    };
+  }
+
+  function wireHeaderPanel(){
+    function applyHeaderImage(url){
+      var box = document.getElementById('ct-hdrimg');
+      var thumb = document.getElementById('ct-hdrthumb');
+      if (box) box.value = url || '';
+      if (thumb) {
+        if (url) { thumb.src = url; thumb.style.display = ''; }
+        else { thumb.removeAttribute('src'); thumb.style.display = 'none'; }
+      }
+    }
+
+    var lib = document.getElementById('ct-hdrlib');
+    if (lib) lib.onclick = function(e){
+      e.preventDefault();
+      if (typeof window.kbbPickMedia !== 'function') { say('The Media Library is not available.'); return; }
+      window.kbbPickMedia({
+        title: 'Choose the header picture',
+        note: 'A wide picture works best. Pick one already in the library, or upload a new one — it joins the library first.',
+        folder: 'categories',
+        onPick: function(urls){
+          if (!urls || !urls.length) return;
+          applyHeaderImage(urls[0]);
+          say('Header picture chosen');
+        }
+      });
+    };
+
+    var drop = document.getElementById('ct-hdrdrop');
+    if (drop) drop.onclick = function(e){ e.preventDefault(); applyHeaderImage(''); };
+
+    var box = document.getElementById('ct-hdrimg');
+    if (box) box.oninput = function(){ applyHeaderImage(box.value.trim()); };
+
+    var clear = document.getElementById('ct-hdrtitleclear');
+    if (clear) clear.onclick = function(e){
+      e.preventDefault();
+      var t = document.getElementById('ct-hdrtitle');
+      if (t) { t.value = ''; t.focus(); }
+    };
+  }
+
   /* -------------------------------------------------------------- editor */
   function editor(cat){
     var isNew = !cat;
@@ -730,6 +918,8 @@
         + '<p class="ct-note">Shown under the heading on the category page.</p>'
         + arabicBox(cat, 'description', 'Description', '#ct-desc', 5000, 'textarea')
         + '</div>'
+      /* LANE PY -- the category's own title header. */
+      + headerPanel(cat)
       /* LANE S7 — WHAT GOOGLE WILL ACTUALLY SHOW, above the two boxes that
          decide it. A mount point and nothing else: no control, no stored value,
          nothing added to the save payload below.
@@ -821,6 +1011,8 @@
     var imgBox = document.getElementById('ct-image');
     if (imgBox) imgBox.oninput = function(){ applyImage(imgBox.value); };
 
+    wireHeaderPanel();
+
     /* LANE S7 — the Google-result preview. `id` is null while creating, which
        is a supported state and not a gap: the preview then reads the Name and
        Address boxes on this very form, which is the moment the wording matters
@@ -849,7 +1041,7 @@
 
     document.getElementById('ct-save').onclick = async function(){
       var parent = val('ct-parent');
-      var payload = {
+      var payload = Object.assign(headerPayload(), {
         name: val('ct-name'),
         slug: val('ct-slug'),
         parent_id: parent === '' ? null : parseInt(parent, 10),
@@ -873,7 +1065,7 @@
            rather than omitted: blank means "not translated yet" and has to
            reach the server to delete the row. */
         translations: window.KBBArabic ? KBBArabic.collect(modal || document) : {}
-      };
+      });
 
       if (!payload.name) { say('A category needs a name'); return; }
 

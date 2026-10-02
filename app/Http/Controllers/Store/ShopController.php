@@ -174,12 +174,14 @@ class ShopController extends Controller
         $banner = $this->banner($category, $active, (string) $request->query('s', ''), $title);
 
         /*
-         * THE OLD SHOP'S TITLE HEADER (Lane PT): the category's imported banner
-         * behind its title and description. Null whenever the owner's own
-         * banner is on, whenever nothing was imported, and on /shop/ and a
-         * search -- and a null header is the page exactly as it was. No query
-         * of its own: the category row is already loaded, and the one-brand
-         * listing reuses the row banner() just read.
+         * THE TITLE HEADER (Lanes PT and PY): a category's title and
+         * description over its picture, or in the light box when it has none.
+         * Null whenever the owner's own banner is on, and on /shop/ and a
+         * search; for the one-brand listing, null unless the brand has a
+         * picture (its light box is a separate switch, off) -- and a null
+         * header is the page exactly as it was. No query of its own: the
+         * category row is already loaded, with its own `header_style`, and the
+         * one-brand listing reuses the row banner() just read.
          */
         $titleHeader = $category
             ? \App\Support\TitleHeader::forModel($category, $title, $banner)

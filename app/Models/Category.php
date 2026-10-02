@@ -20,7 +20,7 @@ class Category extends Model
 
     protected function casts(): array
     {
-        return ['depth' => 'int', 'position' => 'int', 'seo' => 'array', 'banner' => 'array'];
+        return ['depth' => 'int', 'position' => 'int', 'seo' => 'array', 'banner' => 'array', 'header_style' => 'array'];
     }
 
     /**
