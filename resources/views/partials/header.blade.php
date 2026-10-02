@@ -46,7 +46,12 @@
           </div>
           <div class="sugg" id="kbbSuggest" role="listbox" aria-label="{{ __('store.header.suggestions_label') }}"
                data-brands-phone="{{ $h['search_brands_phone'] ? '1' : '0' }}"
-               data-max="{{ (int) $h['search_results_max'] }}"></div>
+               data-max="{{ (int) $h['search_results_max'] }}"
+               {{-- The trending words, in the page, so a tap on the field paints
+                    them at once instead of after a round trip to /api/search/starter
+                    (the owner: "showing with little delays upon click"). Settings
+                    only: no query. search.js refreshes the rest in the background. --}}
+               data-starter="{{ json_encode(['trending' => $hd->trendingWords(), 'mobile' => (int) $h['trending_limit_mobile'], 'layout' => $h['search_panel']], JSON_UNESCAPED_UNICODE) }}"></div>
         </form>
       @endif
 
