@@ -100,3 +100,23 @@ it('takes no padding from the shop-wide section rule', function () {
     expect($m[1] ?? '')->toContain("\n  padding:0;")
         ->and((string) file_get_contents(resource_path('css/kbb/kbb.css')))->toContain('section{padding:52px 0}');
 });
+
+it('cuts the description at its line count without -webkit-box, so Safari wraps it', function () {
+    /*
+     * The owner, on 2.60.351 in Safari: "Find your favorite products in our
+     * wide range Moisturizers cat" -- the generic line cut off mid-word on one
+     * line. The words' column is sized to its content and WebKit measures a
+     * -webkit-box line-clamp's intrinsic width short. The cut is now a plain
+     * block with a max-height of N lines. Chromium in this suite never showed
+     * the defect, so the rule is what is pinned.
+     *
+     * MUTATIONS, RUN: put `display:-webkit-box` back in .kbb-th__desc--clamp --
+     * red; drop the max-height -- red.
+     */
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-title-header.css'));
+    preg_match('/\n\.kbb-th__desc--clamp\{(.*?)\n\}/s', $css, $m);
+
+    expect($m[1] ?? '')->not->toContain('-webkit-box')
+        ->and($m[1] ?? '')->toContain('max-height:calc(var(--kbb-th-lines) * 1.55em);')
+        ->and($m[1] ?? '')->toContain('overflow:hidden;');
+});

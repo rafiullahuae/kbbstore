@@ -268,13 +268,21 @@
 .kbb-th__desc a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .kbb-th__desc img{display:none}  /* a picture in the copy does not belong over a picture */
 
+/* THE LINE CUT, WITHOUT -webkit-box (2.60.351). The owner, in Safari:
+   "Find your favorite products in our wide range Moisturizers cat" -- the
+   description cut off mid-word on ONE line. The words' column is sized to its
+   content, and WebKit measures a -webkit-box line-clamp's intrinsic width
+   short, so the column came out narrower than the sentence and the box
+   clipped it. A plain block measures the same in every browser: its
+   paragraphs run on as one passage and a max-height of exactly N lines cuts
+   it. (No "…" at the cut; the trade for a measurement every engine agrees on.) */
 .kbb-th__desc--clamp{
-  display:-webkit-box;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:var(--kbb-th-lines);
-  line-clamp:var(--kbb-th-lines);
+  display:block;
+  max-height:calc(var(--kbb-th-lines) * 1.55em);
   overflow:hidden;
 }
+.kbb-th__desc--clamp :is(p, div, ul, ol, li, blockquote, h1, h2, h3, h4, h5, h6){display:inline;margin:0;padding:0}
+.kbb-th__desc--clamp :is(p, div, li) + :is(p, div, li)::before{content:" "}
 
 /* The "Read more" switch: a real checkbox, visually hidden but focusable, so
    the keyboard reaches it and Space opens the text. */
@@ -298,7 +306,10 @@
 }
 
 .kbb-th__more-close{display:none}
-.kbb-th__toggle:checked ~ .kbb-th__desc--clamp{display:block;-webkit-line-clamp:unset;line-clamp:none;overflow:visible}
+.kbb-th__toggle:checked ~ .kbb-th__desc--clamp{max-height:none;overflow:visible}
+.kbb-th__toggle:checked ~ .kbb-th__desc--clamp :is(p, div, ul, ol, blockquote, h1, h2, h3, h4, h5, h6){display:block;margin:0 0 .6em}
+.kbb-th__toggle:checked ~ .kbb-th__desc--clamp :is(li){display:list-item}
+.kbb-th__toggle:checked ~ .kbb-th__desc--clamp :is(p, div, li) + :is(p, div, li)::before{content:none}
 .kbb-th__toggle:checked ~ .kbb-th__more .kbb-th__more-open{display:none}
 .kbb-th__toggle:checked ~ .kbb-th__more .kbb-th__more-close{display:inline}
 .kbb-th__toggle:focus-visible ~ .kbb-th__more{outline:2px solid currentColor;outline-offset:3px}
