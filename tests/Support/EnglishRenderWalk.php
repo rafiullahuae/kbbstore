@@ -1323,6 +1323,17 @@ final class EnglishRenderWalk
                 'params' => ['id' => (string) $customer->id, 'token' => str_repeat('a1b2c3d4', 8)],
                 'render' => true,
             ],
+            // Lane PQ: the account-invite landing page. NOT rendered here: this
+            // walk compares each page against the templates at BASE_COMMIT, and
+            // store/account/welcome.blade.php did not exist then, so the "before"
+            // pass is an exception page. It was written keyed from the start --
+            // StorefrontStringsAreKeyedTest scans it, and CustomerInvitesTest
+            // asserts the page itself.
+            'my-account/welcome/{token}' => [
+                'params' => ['token' => str_repeat('a1b2c3d4', 8)],
+                'render' => false,
+                'why' => 'added after BASE_COMMIT, so there is no pre-conversion template to compare against',
+            ],
 
             // --- storefront JSON endpoints -------------------------------------
             'api/search' => ['query' => ['q' => 'serum']] + $json,

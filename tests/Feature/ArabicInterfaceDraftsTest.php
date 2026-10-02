@@ -500,7 +500,15 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * 2027_07_06_000200_seed_listing_pager_arabic_drafts, for the reason every
      * round above needed one. Read off the run, not added up.
      */
-    expect($ui['drafts'])->toBe(1063, 'the shipped Arabic is not showing as drafts to review')
+    /*
+     * ── 1,063 -> 1,070: LANE PQ'S SEVEN ──────────────────────────────────
+     *
+     * The account-invite landing page (store.account.welcome_*, five) and the
+     * invite email's button and "why you received this" line
+     * (email.customer_invite.*, two), seeded by
+     * 2027_07_12_000200_seed_customer_invite_arabic_drafts. Read off the run.
+     */
+    expect($ui['drafts'])->toBe(1070, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

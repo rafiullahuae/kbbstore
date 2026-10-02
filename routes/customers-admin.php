@@ -59,6 +59,7 @@ declare(strict_types=1);
 |
 */
 
+use App\Http\Controllers\Admin\CustomerInvitesController;
 use App\Http\Controllers\Admin\CustomersApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -66,6 +67,40 @@ Route::get('/customers/list', [CustomersApiController::class, 'index']);
 Route::get('/customers/export', [CustomersApiController::class, 'export']);
 
 Route::post('/customers/bulk-delete', [CustomersApiController::class, 'bulkDestroy']);
+
+/*
+|------------------------------------------------------------------------------
+| Send account invite (Lane PQ)
+|------------------------------------------------------------------------------
+|
+| Added to THIS file rather than a new one so that no require line has to be
+| added to routes/web.php: this file is already mounted inside the admin-api
+| group, which is exactly where these belong — they email every guest the shop
+| has, so being outside `auth:admin` would make this an open mail cannon.
+|
+|     GET  /admin-api/customers/invites/template         the saved wording
+|     POST /admin-api/customers/invites/template         save it (refused without {set_password_link})
+|     POST /admin-api/customers/invites/prepare          counts for a selection
+|     POST /admin-api/customers/invites/preview          the real email, rendered
+|     POST /admin-api/customers/invites/send             create a run
+|     GET  /admin-api/customers/invites/runs/current     the unfinished run, if any
+|     GET  /admin-api/customers/invites/runs/{run}       progress + failure reasons
+|     POST /admin-api/customers/invites/runs/{run}/step  send the next batch
+|     POST /admin-api/customers/invites/runs/{run}/cancel
+|
+| All of them `customers.invite` (owner, manager) in AdminCapabilities::RULES.
+| Registered before /customers/{id}; the two-segment paths could not match it
+| anyway, and whereNumber() on {id} makes that explicit.
+*/
+Route::get('/customers/invites/template', [CustomerInvitesController::class, 'template']);
+Route::post('/customers/invites/template', [CustomerInvitesController::class, 'saveTemplate']);
+Route::post('/customers/invites/prepare', [CustomerInvitesController::class, 'prepare']);
+Route::post('/customers/invites/preview', [CustomerInvitesController::class, 'preview'])->middleware('throttle:120,1');
+Route::post('/customers/invites/send', [CustomerInvitesController::class, 'send'])->middleware('throttle:10,1');
+Route::get('/customers/invites/runs/current', [CustomerInvitesController::class, 'current']);
+Route::get('/customers/invites/runs/{run}', [CustomerInvitesController::class, 'show'])->whereNumber('run');
+Route::post('/customers/invites/runs/{run}/step', [CustomerInvitesController::class, 'step'])->whereNumber('run');
+Route::post('/customers/invites/runs/{run}/cancel', [CustomerInvitesController::class, 'cancel'])->whereNumber('run');
 
 Route::get('/customers/{id}', [CustomersApiController::class, 'show'])->whereNumber('id');
 Route::post('/customers/{id}/note', [CustomersApiController::class, 'saveNote'])->whereNumber('id');

@@ -395,6 +395,15 @@ function walkExpectations(array $seed): array
             'params' => ['id' => (string) $customer->id, 'token' => str_repeat('a1b2c3d4', 8)],
             'status' => 200,
         ],
+        /*
+         * The account-invite landing page (Lane PQ). 200 for ANY well-formed
+         * token, live or not, for the reason the reset page above gives: a 404
+         * for a dead token and a form for a live one would be an oracle.
+         */
+        'my-account/welcome/{token}'  => [
+            'params' => ['token' => str_repeat('a1b2c3d4', 8)],
+            'status' => 200,
+        ],
 
         // --- Storefront JSON endpoints (session/cookie, not api.php) -----
         'api/search'               => ['query' => ['q' => 'serum'], 'status' => 200],
