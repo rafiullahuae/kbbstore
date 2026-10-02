@@ -409,6 +409,26 @@ final class AdminCapabilities
         // a switch the owner has not yet said yes to. (Lane BG)
         'pagewash.manage' => ['owner', 'manager', 'editor'],
 
+        /*
+         * THE STOREFRONT'S OWN ADMIN LAYER (Lane RA): the thin bar across the
+         * top of every shop page and the pencil on a category or brand header.
+         *
+         * OWNER ONLY, because he said so in as many words: "only administrator
+         * for now, later we will create a user-roles module, and i can select
+         * this option to allow for our specific store managers ... but now for
+         * me only." Two capabilities rather than one so that, when that module
+         * exists, he can hand a manager the bar without the pencil or the
+         * pencil without the bar. Until then granting either is one word in the
+         * array below -- 'manager' -- and nothing else changes: the endpoints
+         * already ask for these by name and the context answer is already
+         * built per capability.
+         *
+         *   storefront.adminbar    see the bar (links, name, log out)
+         *   storefront.quick_edit  the pencil, its preview and its save
+         */
+        'storefront.adminbar' => ['owner'],
+        'storefront.quick_edit' => ['owner'],
+
         // Reviews. The export is separated from the rest of the screen because
         // the review rows carry author_email and the reviewer's IP.
         'reviews.view' => ['owner', 'manager', 'support', 'editor'],
@@ -1514,6 +1534,25 @@ final class AdminCapabilities
         ['GET', 'admin-api/coupons/*', 'marketing.view'],
 
         // --------------------------------------------------------------- dashboard
+        /*
+         * The storefront admin layer -- routes/storefront-admin.php (Lane RA).
+         *
+         * The CONTEXT read is mapped to `admin.access`, the capability every
+         * back-office role holds, and that is deliberate rather than loose: it
+         * is the one endpoint that answers "which of the two may this account
+         * use here?", so it has to be reachable by an account that holds either.
+         * The controller then answers 403 to an account that holds NEITHER,
+         * and returns the bar only with storefront.adminbar and the editable
+         * fields only with storefront.quick_edit. Today both are owner-only,
+         * so every other role gets the 403.
+         *
+         * The two writes -- the preview and the save -- carry the pencil's own
+         * capability. The save also changes what every shopper sees.
+         */
+        ['GET', 'admin-api/storefront/context', 'admin.access'],
+        ['POST', 'admin-api/storefront/quick-edit/*/*/preview', 'storefront.quick_edit'],
+        ['POST', 'admin-api/storefront/quick-edit/*/*', 'storefront.quick_edit'],
+
         ['GET', 'admin-api/stats', 'dashboard.view'],
         ['GET', 'admin-api/analytics', 'analytics.view'],
         ['GET', 'admin-api/search-terms', 'search_terms.view'],

@@ -1,0 +1,988 @@
+{
+  "base": "http://127.0.0.1:9302",
+  "widths": {
+    "390": {
+      "shopper": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "htmlMarginTop": "0px",
+        "bar": null,
+        "tab": null,
+        "header": {
+          "top": 0,
+          "left": 0,
+          "width": 390,
+          "height": 127,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 133,
+          "left": 22,
+          "width": 346,
+          "height": 190,
+          "z": "auto"
+        },
+        "pencil": null,
+        "modalBox": null,
+        "barFont": null,
+        "barLinks": [],
+        "pencilFont": null,
+        "adminRequests": [],
+        "requestCount": 14,
+        "errors": [
+          "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+        ]
+      },
+      "forged": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "htmlMarginTop": "0px",
+        "bar": null,
+        "tab": null,
+        "header": {
+          "top": 0,
+          "left": 0,
+          "width": 390,
+          "height": 127,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 133,
+          "left": 22,
+          "width": 346,
+          "height": 190,
+          "z": "auto"
+        },
+        "pencil": null,
+        "modalBox": null,
+        "barFont": null,
+        "barLinks": [],
+        "pencilFont": null,
+        "adminRequests": [
+          "GET /build/assets/storefront-admin-BW3IU9Rs.js",
+          "GET /admin-api/storefront/context?path=%2Fcollections%2Fskincare%2Fsunscreens%2F"
+        ],
+        "errors": [
+          "401 /admin-api/storefront/context?path=%2Fcollections%2Fskincare%2Fsunscreens%2F",
+          "console: Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+        ],
+        "hintAfter": 0
+      },
+      "hintCookie": [
+        {
+          "httpOnly": false,
+          "sameSite": "Lax",
+          "path": "/"
+        }
+      ],
+      "owner": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 390,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 390,
+          "height": 127,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 165,
+          "left": 22,
+          "width": 346,
+          "height": 190,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 175,
+          "left": 286,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "collapsed": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "htmlMarginTop": "0px",
+        "bar": null,
+        "tab": {
+          "top": 0,
+          "left": 346,
+          "width": 34,
+          "height": 15,
+          "z": "91"
+        },
+        "header": {
+          "top": 0,
+          "left": 0,
+          "width": 390,
+          "height": 127,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 133,
+          "left": 22,
+          "width": 346,
+          "height": 190,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 143,
+          "left": 286,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "collapsedAfterReload": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "htmlMarginTop": "0px",
+        "bar": null,
+        "tab": {
+          "top": 0,
+          "left": 346,
+          "width": 34,
+          "height": 15,
+          "z": "91"
+        },
+        "header": {
+          "top": 0,
+          "left": 0,
+          "width": 390,
+          "height": 127,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 133,
+          "left": 22,
+          "width": 346,
+          "height": 190,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 143,
+          "left": 286,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "reopened": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 390,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 390,
+          "height": 127,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 165,
+          "left": 22,
+          "width": 346,
+          "height": 190,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 175,
+          "left": 286,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "scrolled": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 390,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 390,
+          "height": 127,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": -523,
+          "left": 22,
+          "width": 346,
+          "height": 190,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": -513,
+          "left": 286,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "mobileMenu": {
+        "menuZ": "120",
+        "topRightIsBar": false
+      },
+      "cartPanel": {
+        "topRightElement": "kc-x",
+        "topRightIsBar": false
+      },
+      "modal": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 390,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 390,
+          "height": 127,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 165,
+          "left": 22,
+          "width": 346,
+          "height": 190,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 175,
+          "left": 286,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": {
+          "top": 68,
+          "left": 0,
+          "width": 390,
+          "height": 776,
+          "z": "auto"
+        },
+        "barFont": "12px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px",
+        "activeId": ""
+      },
+      "dragOver": true,
+      "uploadProgress": {
+        "uploading": true,
+        "bar": "67%",
+        "saveDisabled": true
+      },
+      "previewImg": "http://127.0.0.1:9302/uploads/categories/20261002-183026-gQIzxH6J.jpg",
+      "error": {
+        "message": "The header title field must not be greater than 300 characters.",
+        "modalOpen": true,
+        "pageTitle": "Korean Sunscreens"
+      },
+      "saveMs": 112,
+      "saved": {
+        "noReload": "still-here",
+        "title": "Korean Sunscreens · Summer edit",
+        "sub": "Light SPFs for the UAE sun",
+        "img": "http://127.0.0.1:9302/uploads/categories/20261002-183026-gQIzxH6J.jpg",
+        "toast": "Saved",
+        "pencilStillThere": true,
+        "headers": 1,
+        "lock": false
+      },
+      "shopperAfterSave": {
+        "title": "Korean Sunscreens · Summer edit",
+        "bar": false,
+        "pencil": false
+      },
+      "brand": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 390,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 390,
+          "height": 127,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 181,
+          "left": 22,
+          "width": 346,
+          "height": 190,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 191,
+          "left": 286,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12px",
+        "barLinks": [
+          "Edit brand",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "brandSaved": "Gentle, fragrance-free care -- edited from the shop.",
+      "plainBrandAfter": {
+        "header": true,
+        "pencilOnHeader": true
+      },
+      "product": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 390,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 390,
+          "height": 127,
+          "z": "90"
+        },
+        "titleHeader": null,
+        "pencil": null,
+        "modalBox": null,
+        "barFont": "12px",
+        "barLinks": [
+          "Edit product",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": null
+      },
+      "handoff": {
+        "url": "/admin#category-tree",
+        "dialog": true
+      },
+      "loggedOut": {
+        "path": "/collections/skincare/sunscreens/",
+        "bar": false,
+        "hint": false
+      },
+      "ownerErrors": [
+        "422 /admin-api/storefront/quick-edit/category/5",
+        "console: Failed to load resource: the server responded with a status of 422 (Unprocessable Content)",
+        "422 /admin-api/storefront/quick-edit/category/5/preview",
+        "console: Failed to load resource: the server responded with a status of 422 (Unprocessable Content)"
+      ]
+    },
+    "1280": {
+      "shopper": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "htmlMarginTop": "0px",
+        "bar": null,
+        "tab": null,
+        "header": {
+          "top": 0,
+          "left": 0,
+          "width": 1280,
+          "height": 94,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 100,
+          "left": 22,
+          "width": 1236,
+          "height": 300,
+          "z": "auto"
+        },
+        "pencil": null,
+        "modalBox": null,
+        "barFont": null,
+        "barLinks": [],
+        "pencilFont": null,
+        "adminRequests": [],
+        "requestCount": 14,
+        "errors": []
+      },
+      "forged": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "htmlMarginTop": "0px",
+        "bar": null,
+        "tab": null,
+        "header": {
+          "top": 0,
+          "left": 0,
+          "width": 1280,
+          "height": 94,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 100,
+          "left": 22,
+          "width": 1236,
+          "height": 300,
+          "z": "auto"
+        },
+        "pencil": null,
+        "modalBox": null,
+        "barFont": null,
+        "barLinks": [],
+        "pencilFont": null,
+        "adminRequests": [
+          "GET /build/assets/storefront-admin-BW3IU9Rs.js",
+          "GET /admin-api/storefront/context?path=%2Fcollections%2Fskincare%2Fsunscreens%2F"
+        ],
+        "errors": [
+          "401 /admin-api/storefront/context?path=%2Fcollections%2Fskincare%2Fsunscreens%2F",
+          "console: Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+        ],
+        "hintAfter": 0
+      },
+      "hintCookie": [
+        {
+          "httpOnly": false,
+          "sameSite": "Lax",
+          "path": "/"
+        }
+      ],
+      "owner": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 1280,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 1280,
+          "height": 94,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 132,
+          "left": 22,
+          "width": 1236,
+          "height": 300,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 142,
+          "left": 1176,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12.5px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "collapsed": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "htmlMarginTop": "0px",
+        "bar": null,
+        "tab": {
+          "top": 0,
+          "left": 1236,
+          "width": 34,
+          "height": 15,
+          "z": "91"
+        },
+        "header": {
+          "top": 0,
+          "left": 0,
+          "width": 1280,
+          "height": 94,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 100,
+          "left": 22,
+          "width": 1236,
+          "height": 300,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 110,
+          "left": 1176,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12.5px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "collapsedAfterReload": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "htmlMarginTop": "0px",
+        "bar": null,
+        "tab": {
+          "top": 0,
+          "left": 1236,
+          "width": 34,
+          "height": 15,
+          "z": "91"
+        },
+        "header": {
+          "top": 0,
+          "left": 0,
+          "width": 1280,
+          "height": 94,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 100,
+          "left": 22,
+          "width": 1236,
+          "height": 300,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 110,
+          "left": 1176,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12.5px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "reopened": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 1280,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 1280,
+          "height": 94,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 132,
+          "left": 22,
+          "width": 1236,
+          "height": 300,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 142,
+          "left": 1176,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12.5px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "scrolled": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 1280,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 1280,
+          "height": 94,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": -568,
+          "left": 22,
+          "width": 1236,
+          "height": 300,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": -558,
+          "left": 1176,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12.5px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "mega": {
+        "dropTop": 124,
+        "barBottom": 32,
+        "visible": "visible"
+      },
+      "cartPanel": {
+        "topRightElement": "kc-x",
+        "topRightIsBar": false
+      },
+      "modal": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 1280,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 1280,
+          "height": 94,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 132,
+          "left": 22,
+          "width": 1236,
+          "height": 300,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 142,
+          "left": 1176,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": {
+          "top": 20,
+          "left": 360,
+          "width": 560,
+          "height": 860,
+          "z": "auto"
+        },
+        "barFont": "12.5px",
+        "barLinks": [
+          "Edit category",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px",
+        "activeId": "kbb-qe-title"
+      },
+      "dragOver": true,
+      "uploadProgress": {
+        "uploading": true,
+        "bar": "67%",
+        "saveDisabled": true
+      },
+      "previewImg": "http://127.0.0.1:9302/uploads/categories/20261002-183103-mh8irmG1.jpg",
+      "error": {
+        "message": "The header title field must not be greater than 300 characters.",
+        "modalOpen": true,
+        "pageTitle": "Korean Sunscreens · Summer edit"
+      },
+      "saveMs": 191,
+      "saved": {
+        "noReload": "still-here",
+        "title": "Korean Sunscreens · Summer edit",
+        "sub": "Light SPFs for the UAE sun",
+        "img": "http://127.0.0.1:9302/uploads/categories/20261002-183103-mh8irmG1.jpg",
+        "toast": "Saved",
+        "pencilStillThere": true,
+        "headers": 1,
+        "lock": false
+      },
+      "shopperAfterSave": {
+        "title": "Korean Sunscreens · Summer edit",
+        "bar": false,
+        "pencil": false
+      },
+      "brand": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 1280,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 1280,
+          "height": 94,
+          "z": "90"
+        },
+        "titleHeader": {
+          "top": 148,
+          "left": 22,
+          "width": 1236,
+          "height": 300,
+          "z": "auto"
+        },
+        "pencil": {
+          "top": 158,
+          "left": 1176,
+          "width": 72,
+          "height": 30,
+          "z": "6"
+        },
+        "modalBox": null,
+        "barFont": "12.5px",
+        "barLinks": [
+          "Edit brand",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": "12.5px"
+      },
+      "brandSaved": "Gentle, fragrance-free care -- edited from the shop.",
+      "product": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "htmlMarginTop": "32px",
+        "bar": {
+          "top": 0,
+          "left": 0,
+          "width": 1280,
+          "height": 32,
+          "z": "89"
+        },
+        "tab": null,
+        "header": {
+          "top": 32,
+          "left": 0,
+          "width": 1280,
+          "height": 94,
+          "z": "90"
+        },
+        "titleHeader": null,
+        "pencil": null,
+        "modalBox": null,
+        "barFont": "12.5px",
+        "barLinks": [
+          "Edit product",
+          "Dashboard",
+          "Orders3",
+          "Products",
+          "Customers",
+          "Appearance",
+          "Clear cache"
+        ],
+        "pencilFont": null
+      },
+      "handoff": {
+        "url": "/admin#category-tree",
+        "dialog": true
+      },
+      "loggedOut": {
+        "path": "/collections/skincare/sunscreens/",
+        "bar": false,
+        "hint": false
+      },
+      "ownerErrors": [
+        "422 /admin-api/storefront/quick-edit/category/5",
+        "console: Failed to load resource: the server responded with a status of 422 (Unprocessable Content)",
+        "422 /admin-api/storefront/quick-edit/category/5/preview",
+        "console: Failed to load resource: the server responded with a status of 422 (Unprocessable Content)"
+      ]
+    }
+  }
+}

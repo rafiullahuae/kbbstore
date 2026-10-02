@@ -534,7 +534,7 @@ class ShopController extends Controller
         // The header columns ride on the same query, for the title header
         // (Lane PT) -- one row, one statement, as before.
         $brand = Brand::query()
-            ->select('id', 'name', 'banner', 'description', 'logo', 'header_image', 'header_title', 'header_subtitle')
+            ->select('id', 'name', 'banner', 'description', 'logo', 'header_image', 'header_title', 'header_subtitle', 'header_description')
             ->where('slug', $active['brand'][0])
             ->first();
 
