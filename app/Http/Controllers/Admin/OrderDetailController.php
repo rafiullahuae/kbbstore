@@ -262,7 +262,7 @@ class OrderDetailController extends Controller
                     ->orWhereRaw('first_name like ?' . $escape, [$like])
                     ->orWhereRaw('last_name like ?' . $escape, [$like]);
             })
-            ->orderBy('email')
+            ->orderBy('email')->orderBy('id')
             ->limit(self::SEARCH_LIMIT)
             ->get(['id', 'name', 'first_name', 'last_name', 'email']);
 
