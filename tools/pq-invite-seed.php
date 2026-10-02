@@ -103,4 +103,13 @@ preg_match('#https?://[^"\s<]*/my-account/welcome/[a-f0-9]{64}/#', (string) $msg
 file_put_contents($root . '/pq-link.txt', $m[0] ?? '');
 file_put_contents($root . '/pq-sent-email.txt', (string) $msg->getTextBody());
 
+// A second live link, for the 390px picture of the form (the 1280 run spends
+// Mariam's by using it).
+$layla = Customer::create(['name' => 'Layla Nair', 'first_name' => 'Layla', 'email' => 'layla.nair@example.com']);
+$run2 = $inviter->start([$layla->id], $template['subject'], $template['body'], 7, false, null);
+$inviter->step($run2);
+$sent2 = Mail::mailer(MailConfigurator::MAILER)->getSymfonyTransport()->messages()->all();
+preg_match('#https?://[^"\s<]*/my-account/welcome/[a-f0-9]{64}/#', (string) end($sent2)->getOriginalMessage()->getHtmlBody(), $m2);
+file_put_contents($root . '/pq-link-2.txt', $m2[0] ?? '');
+
 echo 'customers: ' . Customer::count() . ', invite link: ' . ($m[0] ?? 'NONE') . "\n";

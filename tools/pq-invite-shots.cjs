@@ -24,7 +24,9 @@ const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const BASE = process.env.PQ_BASE || 'http://127.0.0.1:9520';
 const APP = path.resolve(__dirname, '..');
 const OUT = path.resolve(APP, process.env.PQ_OUT || 'storage/pq-logs/shots');
-const LINK = fs.readFileSync(path.join(APP, 'storage/framework/testing/lane-pq-invite-preview/webroot/pq-link.txt'), 'utf8').trim();
+const WEBROOT = path.join(APP, 'storage/framework/testing/lane-pq-invite-preview/webroot');
+const LINK = fs.readFileSync(path.join(WEBROOT, 'pq-link.txt'), 'utf8').trim();
+const LINK2 = fs.readFileSync(path.join(WEBROOT, 'pq-link-2.txt'), 'utf8').trim();
 
 async function signIn(page) {
     await page.goto(BASE + '/admin/login', { waitUntil: 'networkidle' });
@@ -172,7 +174,7 @@ const sw = (page) => page.evaluate(() => ({ scrollWidth: document.documentElemen
         const shopper = await browser.newContext({ viewport: { width: w, height: h } });
         const sp = await shopper.newPage();
         sp.on('pageerror', (e) => errors.push('shop: ' + String(e)));
-        const resp = await sp.goto(LINK, { waitUntil: 'networkidle' });
+        const resp = await sp.goto(w === 1280 ? LINK : LINK2, { waitUntil: 'networkidle' });
         m.welcomeStatus = resp.status();
         m.welcomeHeaders = { cacheControl: resp.headers()['cache-control'], referrer: resp.headers()['referrer-policy'] };
         m.welcome = await sw(sp);
@@ -195,7 +197,8 @@ const sw = (page) => page.evaluate(() => ({ scrollWidth: document.documentElemen
             m.afterSetUrl = sp.url();
             await sp.screenshot({ path: `${OUT}/15-signed-in-after-set-${w}.png`, fullPage: false });
         } else {
-            // The link is spent now (used at 1280): the one "no longer valid" page.
+            // Mariam's link is spent now (used at 1280): the one "no longer valid" page.
+            await sp.goto(LINK, { waitUntil: 'networkidle' });
             m.spentText = await sp.textContent('.auth-err').catch(() => null);
             await sp.screenshot({ path: `${OUT}/16-set-password-link-used-${w}.png`, fullPage: true });
         }
