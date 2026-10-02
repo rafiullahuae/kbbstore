@@ -1358,6 +1358,11 @@
 
       chosen = (opts && opts.multiple) ? fresh.slice() : fresh.slice(-1);
       paintSelection();
+
+      /* `pickUploaded` (Lane QC, the category editor's "Upload banner"): the
+         caller asked for an upload, so the picture it just put in the library
+         IS the choice -- no second click on a tile it never looked for. */
+      if (opts && opts.pickUploaded) { accept(); return; }
     } else {
       paint();
     }
@@ -1395,7 +1400,12 @@
   }
 
   /**
-   * window.kbbPickMedia({ multiple, title, note, folder, onPick })
+   * window.kbbPickMedia({ multiple, title, note, folder, onPick, upload, pickUploaded })
+   *
+   * `upload: true` opens the computer's file chooser straight away, on the
+   * click that opened the picker (Lane QC: "Upload banner"); the library is
+   * behind it as usual, and the file joins it first. `pickUploaded: true`
+   * chooses what was uploaded without a second click.
    *
    * onPick receives an array of urls, always — a single-select call gets an
    * array of one rather than a bare string, so a caller cannot be written
@@ -1439,6 +1449,13 @@
     load(false);
 
     try { q.focus(); } catch (e) {}
+
+    /* Still inside the click that opened the picker, so the browser lets the
+       file chooser open. */
+    if (options.upload) {
+      var fileBox = el.querySelector('#mp-file');
+      if (fileBox) fileBox.click();
+    }
   };
 })();
 </script>

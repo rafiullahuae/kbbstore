@@ -728,6 +728,25 @@ class CategoriesApiController extends Controller
             'header_style.title_desktop' => ['nullable', 'integer'],
             'header_style.h_phone' => ['nullable', 'integer'],
             'header_style.h_desktop' => ['nullable', 'integer'],
+            /*
+             * Lane QC -- "and for mobile also": the same choices per device,
+             * each "Use the shop setting" when blank, plus where a phone cuts
+             * the picture and the category's own box colours. Same split:
+             * shape and list here, meaning in TitleHeader::sanitizeStyle().
+             */
+            'header_style.align_phone' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::ALIGNS)],
+            'header_style.align_desktop' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::ALIGNS)],
+            'header_style.treatment_phone' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::TREATMENTS))],
+            'header_style.treatment_desktop' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::TREATMENTS))],
+            'header_style.box_phone' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::BOX_STYLES))],
+            'header_style.box_desktop' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::BOX_STYLES))],
+            'header_style.text_phone' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::TEXTS)],
+            'header_style.text_desktop' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::TEXTS)],
+            'header_style.valign_phone' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::VALIGNS)],
+            'header_style.valign_desktop' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::VALIGNS)],
+            'header_style.focus' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::FOCUSES)],
+            'header_style.bg' => ['nullable', 'string', 'regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/'],
+            'header_style.ic' => ['nullable', 'string', 'regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/'],
         ];
 
         /*

@@ -504,8 +504,15 @@ it('names every option the same way in the server, the settings screen and the c
      * selects are drawn in the browser). This is what stops a fourth box style
      * being added to one and not the others.
      */
-    $layout = (string) file_get_contents(resource_path('views/admin/partials/site-layout-screen.blade.php'));
+    /*
+     * Lane QC moved the lists, the preview's header and the design tiles into
+     * admin/partials/title-header-kit.blade.php, which both screens include
+     * -- one copy instead of two, so the lists are read from there.
+     */
+    $layout = (string) file_get_contents(resource_path('views/admin/partials/title-header-kit.blade.php'));
     $editor = (string) file_get_contents(resource_path('views/admin/partials/category-tree-screen.blade.php'));
+
+    expect($editor)->toContain("@include('admin.partials.title-header-kit')");
 
     $quoted = fn (array $words) => implode(', ', array_map(fn ($w) => "'".$w."'", $words));
 
@@ -514,15 +521,10 @@ it('names every option the same way in the server, the settings screen and the c
         ->and($layout)->toContain("var PV_BOXES = [".$quoted(array_keys(SiteLayout::BOX_STYLES)).'];')
         ->and($layout)->toContain("var PV_ICON_BOXES = [".$quoted(TitleHeader::ICON_BOXES).'];');
 
-    foreach (TitleHeader::ALIGNS as $a) {
-        expect($editor)->toContain("['".$a."', ");
-    }
-    foreach (array_keys(SiteLayout::TREATMENTS) + array_keys(SiteLayout::BOX_STYLES) as $w) {
-        expect($editor)->toContain("['".$w."', ");
-    }
-    foreach (array_keys(SiteLayout::TREATMENTS) as $w) {
-        expect($editor)->toContain("['".$w."', ");
-    }
+    // The editor's tiles are the kit's (Lane QC), and it names no list of its own.
+    expect($editor)->toContain('window.kbbTH')
+        ->and($editor)->not->toContain('var HDR_ALIGNS')
+        ->and($editor)->not->toContain('var HDR_BOXES');
 
     // The editor's number bounds are the sliders'.
     foreach (TitleHeader::STYLE_NUMBERS as $mine => $setting) {

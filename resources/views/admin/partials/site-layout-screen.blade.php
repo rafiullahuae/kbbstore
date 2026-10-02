@@ -70,8 +70,36 @@
     .kbb-th and appears nowhere else in the console. Nothing in it measures
     anything: phone and laptop are the two sets of numbers, not a resized
     window.
+
+    ── THE DESIGNS AS TILES, PER DEVICE, WITH A LIVE PREVIEW (Lane QC) ──────
+
+    "i need the same designs on backend to choose the category banner
+    designs, text style etc and for mobile also" -- "along with previews of
+    designs to choose, and also along with LIVE preview" -- "make sure that i
+    should have these designs to chooose from and make edits as per need."
+
+    On "Category header" the dropdowns PY shipped for the box style, the two
+    readability treatments, the alignment and the text colour are TILES: each
+    a small rendering of the header in that design, drawn by the shop's own
+    stylesheet, with the option sheet's letter or number and name under it.
+    A Phone | Laptop switch chooses which device's design is being edited, and
+    the live preview follows it. Under each chosen design, its fine-tuning
+    (colours, strength, blur, reach...), and a "Back to defaults for <design>"
+    that the reset guard asks about first.
+
+    The preview sits beside the controls at a laptop width (sticky, so it
+    stays in view as the page scrolls) and above them on a phone (sticky at
+    the top, with a Hide button). "Preview with" draws it on a sample picture,
+    on the light box, or on any of his categories -- its real banner, title
+    and description.
+
+    The kit -- the tiles, the header renderer, the keyboard handling -- is
+    admin/partials/title-header-kit.blade.php, shared with the category
+    editor and INCLUDED ONCE, by category-tree-screen, which app.blade.php
+    includes before this partial. It loads kbb-title-header.css, which this
+    partial used to load. Without it (a package missing the kit) this tab
+    draws its plain fields, as before.
 --}}
-@vite('resources/css/kbb/kbb-title-header.css')
 @verbatim
 <style>
 .sls-wrap{display:grid;gap:14px;min-width:0}
@@ -129,6 +157,25 @@
 .sls-colour input[type=color]{width:42px;height:36px;padding:2px;border:1px solid var(--border,#e6e6e6);
   border-radius:9px;background:transparent;flex:none;cursor:pointer}
 
+/* The Category header tabs (Lane QC): the controls and the live preview side
+   by side at a laptop width, the preview first and sticky on a phone. */
+.sls-thx{display:grid;gap:14px;min-width:0;grid-template-columns:minmax(0,1fr)}
+.sls-thx > *{min-width:0}
+.sls-live{position:sticky;top:0;z-index:6;box-shadow:0 10px 22px -18px rgba(0,0,0,.45)}
+.sls-live-h{display:flex;gap:10px;align-items:center;justify-content:space-between;min-width:0}
+.sls-live select{width:100%;min-width:0;padding:7px 9px;font:inherit;font-size:12.5px;
+  border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
+.sls-live .sls-with{display:grid;gap:4px;margin-top:9px;font-size:12px;font-weight:650;min-width:0}
+@media (min-width:1100px){
+  .sls-thx{grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);align-items:start}
+  .sls-thx > .sls-main{order:1}
+  .sls-live{order:2;top:12px}
+}
+.sls-design{display:grid;gap:4px;min-width:0;border-top:1px solid var(--border,#e6e6e6);padding-top:14px}
+.sls-sum{font-size:12px;line-height:1.6;margin:8px 0 0;min-width:0;overflow-wrap:anywhere}
+.sls-sum b{font-weight:700}
+.sls-optc{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}
+
 /* The Category header preview (Lane PY). */
 .sls-pv-bar{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-width:0}
 .sls-pv-list{display:grid;gap:14px;margin-top:12px;min-width:0}
@@ -158,7 +205,13 @@
   });
 
   var tabs = null, values = {}, open = null, banner = null, busy = false, seq = 0;
+  /* Lane QC: the device whose design is being EDITED, which is also the
+     device the live preview draws; what the preview is drawn on; whether it
+     is folded away; and his categories, for "Preview with". */
   var pvDevice = 'phone';
+  var pvWith = 'dark';
+  var pvHidden = false;
+  var pvCats = null, pvCatsBusy = false;
   var emittedCss = '', isDefault = true;
 
   /*
@@ -433,165 +486,286 @@
   }
 
   /*
-   * ── THE CATEGORY HEADER PREVIEW (Lane PY) ─────────────────────────────────
+   * ── THE CATEGORY HEADER: DESIGNS, PER DEVICE, AND THE LIVE PREVIEW ─────────
+   *                                                       (Lanes PY and QC)
    *
-   * "please give me multiple options to chooose from" -- and an option is only
-   * a choice if he can see it. So the two Category header tabs show the header
-   * itself, three times: over a busy dark picture, over a light picture, and as
-   * the light box a category with no picture gets. Redrawn as a control moves,
-   * before anything is saved.
+   * PY drew a preview of the header under the fields, three times, from the
+   * unsaved values. QC keeps that promise -- the shop's own stylesheet, the
+   * same classes TitleHeader writes, redrawn before anything is saved -- and
+   * moves the drawing into window.kbbTH (title-header-kit), because the
+   * category editor needs the same header and the same tiles.
    *
-   * THE SAME RESOLUTION AS App\Support\TitleHeader, on the unsaved values: the
-   * same classes, the same custom properties, drawn by the storefront's own
-   * stylesheet (loaded at the top of this partial). A deliberate copy, like the
-   * width arithmetic above, and pinned the same way: PyCategoryHeaderOptionsTest
-   * reads the class words and property names out of this file and out of
-   * TitleHeader and requires them to agree.
-   *
-   * Phone and Laptop are the two SETS OF NUMBERS, not a resized window: the
-   * phone preview writes the phone value into both the phone and the laptop
-   * property, so the stylesheet's 900px switch has nothing to switch between.
-   * Nothing here measures anything.
-   *
-   * The two pictures are constant SVGs drawn here -- no request, and nothing a
-   * setting can reach. Every value that reaches the markup is escaped, and the
-   * words are checked against the same lists the server uses.
+   * THE KEYS a tile writes depend on the device being edited: the phone's are
+   * PY's five (cat_header_align, ...), the laptop's the same with _desktop
+   * (SiteLayout::DEVICE_PAIRS). Everything else -- the fine-tuning, the sizes
+   * -- is one value for both.
    */
-  var PV_ALIGNS = ['start', 'center', 'end'];
-  var PV_TREATMENTS = ['shadow', 'fade', 'frost', 'label', 'none'];
-  var PV_BOXES = ['blush', 'cream', 'mint', 'lilac', 'plain', 'custom'];
-  var PV_ICON_BOXES = ['blush', 'cream', 'mint', 'lilac', 'custom'];
+  var TH = function () { return window.kbbTH; };
 
-  /* [phone property, phone setting, laptop setting]; the laptop property is the
-     phone one with a `d` -- TitleHeader::PX_VARS spells every pair that way. */
-  var PV_PAIRS = [
-    ['--kbb-th-h', 'cat_header_h_phone', 'cat_header_h_desktop'],
-    ['--kbb-th-ts', 'cat_header_title_phone', 'cat_header_title_desktop'],
-    ['--kbb-th-ds', 'cat_header_desc_phone', 'cat_header_desc_desktop'],
-    ['--kbb-th-py', 'cat_header_pad_y_phone', 'cat_header_pad_y_desktop'],
-    ['--kbb-th-px', 'cat_header_pad_x_phone', 'cat_header_pad_x_desktop']
-  ];
+  var PICK_KEYS = {
+    'sls-box': 'cat_header_box_style',
+    'sls-treat-img': 'cat_header_treatment',
+    'sls-treat-box': 'cat_header_box_treatment',
+    'sls-align': 'cat_header_align',
+    'sls-text': 'cat_header_text',
+    'sls-valign': 'cat_header_valign'
+  };
 
-  function pvPicture(dark) {
-    var svg = dark
-      ? "<svg xmlns='http://www.w3.org/2000/svg' width='1600' height='500' viewBox='0 0 1600 500'>"
-        + "<defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='#7a2e3b'/><stop offset='.5' stop-color='#d9774f'/><stop offset='1' stop-color='#2f5e74'/></linearGradient></defs>"
-        + "<rect width='1600' height='500' fill='url(#g)'/>"
-        + "<g fill='#fff' fill-opacity='.22'><circle cx='180' cy='120' r='120'/><circle cx='520' cy='380' r='170'/><circle cx='980' cy='90' r='140'/><circle cx='1350' cy='330' r='190'/></g>"
-        + "<g fill='#1b0f14' fill-opacity='.35'><rect x='300' y='60' width='70' height='260' rx='18'/><rect x='420' y='120' width='90' height='220' rx='20'/><rect x='1120' y='80' width='80' height='300' rx='18'/><rect x='760' y='200' width='160' height='120' rx='26'/></g>"
-        + "<g fill='#fff' fill-opacity='.5'><rect x='315' y='40' width='40' height='28' rx='6'/><rect x='440' y='96' width='50' height='30' rx='6'/><rect x='1135' y='56' width='50' height='30' rx='6'/></g>"
-        + "</svg>"
-      : "<svg xmlns='http://www.w3.org/2000/svg' width='1600' height='500' viewBox='0 0 1600 500'>"
-        + "<defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='#fbe9e7'/><stop offset='.55' stop-color='#f6f1e7'/><stop offset='1' stop-color='#e3f1ef'/></linearGradient></defs>"
-        + "<rect width='1600' height='500' fill='url(#g)'/>"
-        + "<g fill='#ffffff' fill-opacity='.7'><circle cx='240' cy='110' r='130'/><circle cx='900' cy='420' r='180'/><circle cx='1420' cy='120' r='150'/></g>"
-        + "<g fill='#e8c4c0'><rect x='1040' y='130' width='80' height='250' rx='20'/><rect x='1160' y='190' width='110' height='190' rx='24'/><rect x='1310' y='240' width='150' height='140' rx='30'/></g>"
-        + "</svg>";
-    return 'data:image/svg+xml,' + encodeURIComponent(svg);
+  function devKey(base, dev) { return base + ((dev || pvDevice) === 'laptop' ? '_desktop' : ''); }
+
+  function fieldOf(key) {
+    var found = null;
+    (tabs || []).forEach(function (t) { t.fields.forEach(function (f) { if (f.key === key) found = f; }); });
+    return found;
   }
 
-  function pvNum(key) {
-    var n = parseInt(values[key], 10);
-    return isFinite(n) ? n : 0;
+  function pickerHTML(name) {
+    var th = TH();
+    if (!th) return '';
+    var dev = pvDevice === 'laptop' ? 'laptop' : 'phone';
+    var word = dev === 'laptop' ? 'laptop' : 'phone';
+    var common = { values: values, dev: dev };
+
+    if (name === 'box') return th.tiles(Object.assign({ group: 'sls-box', kind: 'box',
+      label: 'A–F · The light box, for a category with no picture · ' + word,
+      value: values[devKey('cat_header_box_style')] }, common));
+    if (name === 'treat-img') return th.tiles(Object.assign({ group: 'sls-treat-img', kind: 'treat-img',
+      label: '1–5 · Keeping the words readable over a picture · ' + word,
+      hint: 'Each tile is the option sheet’s row: the same title on a busy, dark picture and on a light one.',
+      value: values[devKey('cat_header_treatment')] }, common));
+    if (name === 'treat-box') return th.tiles(Object.assign({ group: 'sls-treat-box', kind: 'treat-box',
+      label: '1–5 · Keeping the words readable on the light box · ' + word,
+      value: values[devKey('cat_header_box_treatment')] }, common));
+    if (name === 'align') return th.tiles(Object.assign({ group: 'sls-align', kind: 'align',
+      label: 'Text alignment · ' + word,
+      hint: '<b>Start is right-aligned on Arabic pages</b> — the third picture on each tile is the Arabic page.',
+      value: values[devKey('cat_header_align')] }, common));
+    if (name === 'text') return th.tiles(Object.assign({ group: 'sls-text', kind: 'text',
+      label: 'Text colour · ' + word,
+      value: values[devKey('cat_header_text')] }, common));
+    if (name === 'valign') return th.tiles(Object.assign({ group: 'sls-valign', kind: 'valign',
+      label: 'Where the words sit, top to bottom · ' + word,
+      hint: 'Bottom is what you asked for: the title and description at the foot of the header, on the start side. '
+        + 'Move them in from the edges with the inner-space sliders on <b>Category header · sizes &amp; spacing</b>.',
+      value: values[devKey('cat_header_valign')] }, common));
+    return '';
   }
 
-  function pvPick(v, list, fallback) {
-    return list.indexOf(String(v)) !== -1 ? String(v) : fallback;
+  /* A colour that may be blank ("as drawn"): the picker, the box, and a button
+     back to automatic. The server is the judge: SiteLayout::optionalColour(). */
+  function optColourHTML(f) {
+    var id = 'sls-' + f.key;
+    var hex = String(values[f.key] || '');
+    var six = /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : '#888888';
+    return '<div class="sls-f"><div class="sls-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
+      + '<div class="sls-optc"><span class="sls-colour">'
+      + '<input type="color" data-sls-key="' + esc(f.key) + '" value="' + esc(six) + '" aria-label="' + esc(f.label) + '">'
+      + '<input type="text" id="' + id + '" data-sls-key="' + esc(f.key) + '" value="' + esc(hex) + '" maxlength="7"'
+      + ' autocomplete="off" spellcheck="false" placeholder="Automatic"></span>'
+      + '<button type="button" class="sls-btn" data-sls-auto="' + esc(f.key) + '"' + (hex ? '' : ' disabled') + '>As drawn (automatic)</button>'
+      + '</div>' + (f.help ? '<p class="sls-help">' + esc(f.help) + '</p>' : '') + '</div>';
   }
 
-  function pvHex(v, fallback) {
-    var s = String(v == null ? '' : v).trim().toUpperCase();
-    var m = /^#([0-9A-F])([0-9A-F])([0-9A-F])$/.exec(s);
-    if (m) s = '#' + m[1] + m[1] + m[2] + m[2] + m[3] + m[3];
-    return /^#[0-9A-F]{6}$/.test(s) ? s : fallback;
+  function tuneField(key) {
+    var f = fieldOf(key);
+    if (!f) return '';
+    return TH().OPTIONAL_COLOURS.indexOf(key) !== -1 ? optColourHTML(f) : fieldHTML(f);
   }
 
-  /* WCAG relative luminance -- TitleHeader::luminance(), the same formula. */
-  function pvLum(hex) {
-    var c = [1, 3, 5].map(function (i) {
-      var v = parseInt(hex.substr(i, 2), 16) / 255;
-      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-    });
-    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  /* "Make edits as per need": the chosen design's own fine-tuning. */
+  function tuneHTML(design, kind) {
+    var th = TH();
+    var keys = (th && th.TUNE[design]) || [];
+    var n = kind === 'box' ? th.BOX_NAMES[design] : th.TREATMENT_NAMES[design];
+    if (!n) return '';
+    if (!keys.length) {
+      return '<div class="thk-tune"><p class="sls-help">' + esc(n[0] + ' · ' + n[1]) + ' has nothing to tune: the words sit on the background as they are.</p></div>';
+    }
+    return '<div class="thk-tune" data-sls-tune="' + esc(design) + '">'
+      + '<div class="thk-tune-h"><b>Fine-tune ' + esc(n[0] + ' · ' + n[1]) + ' <span class="sls-help" style="display:inline">(phone and laptop)</span></b>'
+      + '<button type="button" class="sls-btn" data-sls-tunereset="' + esc(design) + '">Back to defaults for ' + esc(n[0] + ' · ' + n[1]) + '</button></div>'
+      + '<div class="thk-tune-grid">' + keys.map(tuneField).join('') + '</div></div>';
   }
 
-  function pvHeader(kind, picture) {
-    var align = pvPick(values.cat_header_align, PV_ALIGNS, 'start');
-    var treatment = pvPick(kind === 'img' ? values.cat_header_treatment : values.cat_header_box_treatment,
-      PV_TREATMENTS, kind === 'img' ? 'shadow' : 'none');
-    var box = kind === 'box' ? pvPick(values.cat_header_box_style, PV_BOXES, 'blush') : null;
-    var ground = pvHex(values.cat_header_box_bg, '#FFF4EE');
-    var ink = pvHex(values.cat_header_box_icon, '#EFA889');
-    var text = String(values.cat_header_text || 'auto');
-    var own = box === 'plain' || box === 'custom';
-    var tone = (text === 'light' || text === 'dark') ? text
-      : (kind === 'img' ? 'light' : (own && pvLum(ground) < 0.4 ? 'light' : 'dark'));
+  function summaryHTML() {
+    var th = TH();
+    function one(dev) {
+      var box = th.BOX_NAMES[values[devKey('cat_header_box_style', dev)]] || ['?', ''];
+      var ti = th.TREATMENT_NAMES[values[devKey('cat_header_treatment', dev)]] || ['?', ''];
+      var tb = th.TREATMENT_NAMES[values[devKey('cat_header_box_treatment', dev)]] || ['?', ''];
+      var al = th.ALIGN_NAMES[values[devKey('cat_header_align', dev)]] || ['?', ''];
+      var tx = th.TEXT_NAMES[values[devKey('cat_header_text', dev)]] || ['?', ''];
+      var va = th.VALIGN_NAMES[values[devKey('cat_header_valign', dev)]] || ['?', ''];
+      return '<b>' + (dev === 'laptop' ? 'Laptop' : 'Phone') + ':</b> box ' + esc(box[0]) + ' · picture ' + esc(ti[0])
+        + ' · box words ' + esc(tb[0]) + ' · ' + esc(al[0]) + ' · ' + esc(va[0]) + ' · ' + esc(tx[0]) + ' text';
+    }
+    return '<p class="sls-sum" data-sls-sum>' + one('phone') + '<br>' + one('laptop') + '</p>'
+      + '<div class="sls-actions" style="margin-top:8px">'
+      + '<button type="button" class="sls-btn" data-sls-copy="laptop">Use the phone’s design on laptop too</button>'
+      + '<button type="button" class="sls-btn" data-sls-copy="phone">Use the laptop’s design on phone too</button>'
+      + '</div>';
+  }
 
-    var cls = 'kbb-th kbb-th--flush kbb-th--' + kind + ' kbb-th--' + tone + ' kbb-th--a-' + align
-      + ' kbb-th--t-' + treatment + (box ? ' kbb-th--box-' + box : '');
+  /*
+   * The "Category header" tab. THE DESIGNS COME FIRST: the owner, on
+   * 2.60.350, "i can not see any designs on backend you made for me" -- so the
+   * tiles are the first thing on the tab, under the Phone | Laptop switch,
+   * and the switches PY shipped (on/off, the light box, brands) and the
+   * generic line follow them.
+   */
+  function lookHTML(tab) {
+    var th = TH();
+    if (!th) return tab.fields.map(fieldHTML).join('');
 
-    var phone = pvDevice === 'phone';
-    var style = PV_PAIRS.map(function (p) {
-      var v = pvNum(phone ? p[1] : p[2]);
-      return p[0] + ':' + v + 'px;' + p[0] + 'd:' + v + 'px';
-    });
-    style.push('--kbb-th-r:' + pvNum('cat_header_radius') + 'px');
-    style.push('--kbb-th-mw:' + pvNum('cat_header_maxw') + 'px');
-    style.push('--kbb-th-ov:' + (Math.max(0, Math.min(85, pvNum('cat_header_overlay'))) / 100));
-    style.push('--kbb-th-lines:' + Math.max(1, Math.min(10, pvNum('cat_header_lines'))));
-    style.push('--kbb-th-tw:' + pvPick(values.cat_header_weight, ['500', '600', '700', '800'], '700'));
-    style.push('--kbb-th-tile:' + (phone ? 220 : 280) + 'px');
-    if (own) style.push('--kbb-th-bg:' + ground);
-    if (box === 'custom') style.push('--kbb-th-ic:' + ink);
+    var phone = pvDevice !== 'laptop';
+    var box = values[devKey('cat_header_box_style')];
+    var ti = values[devKey('cat_header_treatment')];
+    var tb = values[devKey('cat_header_box_treatment')];
 
-    var layer = kind === 'img'
-      ? '<img class="kbb-th__img" src="' + esc(picture) + '" alt="">'
-      : (PV_ICON_BOXES.indexOf(box) !== -1 ? '<div class="kbb-th__icons" aria-hidden="true"></div>' : '');
+    var design = '<div class="sls-design" style="border-top:0;padding-top:0">'
+      + '<div class="sls-title">Choose the design · ' + (phone ? 'Phone' : 'Laptop') + '</div>'
+      + '<p class="sls-help">The designs from the option sheet, A–F and 1–5, each drawn by the shop’s own stylesheet. '
+      + 'Choose the device, then click a design; the live preview follows. Phone is under 900px wide, laptop 900px and wider. '
+      + 'Nothing is stored until you press Save.</p>'
+      + '<div style="margin-top:8px">' + th.deviceSwitch('data-sls-pv', pvDevice, 'Edit and preview the design for') + '</div>'
+      + summaryHTML()
+      + '<div data-sls-tiles="box">' + pickerHTML('box') + '</div>'
+      + tuneHTML(box, 'box')
+      + '<div data-sls-tiles="treat-img">' + pickerHTML('treat-img') + '</div>'
+      + '<div class="thk-tune">' + (fieldOf('cat_header_overlay') ? fieldHTML(fieldOf('cat_header_overlay')) : '') + '</div>'
+      + tuneHTML(ti, 'treat')
+      + '<div data-sls-tiles="treat-box">' + pickerHTML('treat-box') + '</div>'
+      + (tb !== ti ? tuneHTML(tb, 'treat')
+          : '<p class="sls-help" style="margin-top:6px">The fine-tuning of this design is above, under the picture’s — it is one setting for both.</p>')
+      + '<div data-sls-tiles="valign">' + pickerHTML('valign') + '</div>'
+      + '<div data-sls-tiles="align">' + pickerHTML('align') + '</div>'
+      + '<div data-sls-tiles="text">' + pickerHTML('text') + '</div>'
+      + '<div class="thk-tune"><div class="thk-tune-h"><b>Fine-tune the words <span class="sls-help" style="display:inline">(phone and laptop)</span></b></div>'
+      + '<div class="thk-tune-grid">' + tuneField('cat_header_letter') + tuneField('cat_header_desc_colour') + '</div>'
+      + '<p class="sls-help">Title size, title weight, description size and lines, the header’s height, its inner space and the space around it — '
+      + 'each for phone and laptop — are on <b>Category header · sizes &amp; spacing</b>, with this same live preview.</p></div>'
+      + '</div>';
 
-    return '<section class="' + esc(cls) + '" style="' + esc(style.join(';')) + '">'
-      + layer
-      + '<div class="kbb-th__scrim" aria-hidden="true"></div>'
-      + '<div class="kbb-th__inner"><div class="kbb-th__text">'
-      + '<div class="kbb-th__title">Korean Sunscreens</div>'
-      + '<div class="kbb-th__desc"><p>Lightweight Korean sunscreens with high UV protection, made for everyday wear under the UAE sun &mdash; no white cast, no greasy finish.</p></div>'
-      + '</div></div></section>';
+    var rest = ['cat_header', 'cat_header_box', 'cat_header_fallback', 'cat_header_brands', 'cat_header_box_brands', 'cat_header_generic']
+      .map(function (k) { var f = fieldOf(k); return f ? fieldHTML(f) : ''; }).join('');
+
+    return design + '<div class="sls-design"><div class="sls-title">Where it shows, and the words</div>' + rest + '</div>';
+  }
+
+  /* What the live preview is drawn on. */
+  function pvWithHTML() {
+    var opts = [['dark', 'Sample · a busy, dark picture'], ['light', 'Sample · a light picture'], ['box', 'Sample · no picture (the light box)'],
+      ['nodesc', 'Sample · no picture and no description']];
+    var html = opts.map(function (o) {
+      return '<option value="' + o[0] + '"' + (pvWith === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+    }).join('');
+    if (pvCats && pvCats.length) {
+      html += '<optgroup label="Your categories">' + pvCats.map(function (c) {
+        var v = 'cat:' + c.id;
+        return '<option value="' + esc(v) + '"' + (pvWith === v ? ' selected' : '') + '>'
+          + esc(c.name + (c.header_image ? ' · banner' : ' · no banner')) + '</option>';
+      }).join('') + '</optgroup>';
+    }
+    return '<label class="sls-with">Preview with<select data-sls-pvwith>' + html + '</select></label>'
+      + (pvCats === null ? '<p class="sls-help">Loading your categories…</p>' : '');
+  }
+
+  function previewHeader() {
+    var th = TH();
+    var dev = pvDevice === 'laptop' ? 'laptop' : 'phone';
+    var base = { values: values, dev: dev, title: 'Korean Sunscreens',
+      desc: 'Lightweight Korean sunscreens with high UV protection, made for everyday wear under the UAE sun — no white cast, no greasy finish.' };
+
+    if (pvWith.indexOf('cat:') === 0 && pvCats) {
+      var id = pvWith.slice(4);
+      var c = pvCats.filter(function (x) { return String(x.id) === id; })[0];
+      if (c) {
+        var image = th.safeImage(c.header_image) || (th.on(values.cat_header_fallback) ? th.safeImage(c.image) : '');
+        var desc = th.plain(c.header_description || c.description);
+        var own = (c.header_style && typeof c.header_style === 'object') ? Object.keys(c.header_style) : [];
+        return {
+          html: th.header({ values: values, dev: dev, kind: image ? 'img' : 'box', image: image, generic: true,
+            title: c.header_title || c.name, sub: c.header_subtitle || '', desc: desc, long: desc.length > 180 }),
+          note: (image ? 'Its own banner. ' : 'No banner: the light box. ')
+            + (desc ? '' : 'It has no description, so it shows the line for a category with none. ')
+            + (own.length ? 'This category also has its own choices (Catalog → Categories → Edit → Category header), which its page lays over these; here you see the shop’s.' : '')
+        };
+      }
+    }
+
+    if (pvWith === 'nodesc') return { html: th.header(Object.assign({}, base, { kind: 'box', title: 'Lip Care', desc: '', generic: true })),
+      note: 'A category with no description of its own shows the line set under “Line when a category has no description”.' };
+    if (pvWith === 'box') return { html: th.header(Object.assign({ kind: 'box' }, base)),
+      note: th.on(values.cat_header_box) ? '' : 'The light box is switched off: such a category shows its plain title. This is how it would look switched on.' };
+    return { html: th.header(Object.assign({ kind: 'img', image: pvWith === 'light' ? th.PICTURES.light : th.PICTURES.dark }, base)), note: '' };
   }
 
   function previewHTML() {
-    var on = values.cat_header === true || values.cat_header === 1 || values.cat_header === '1';
-    var boxOn = values.cat_header_box === true || values.cat_header_box === 1 || values.cat_header_box === '1';
+    var th = TH();
+    if (!th) return '';
+    var on = th.on(values.cat_header);
+    var body = '';
 
-    function block(caption, inner) {
-      return '<div><p class="sls-pv-cap">' + esc(caption) + '</p>'
-        + '<div class="sls-pv-frame' + (pvDevice === 'phone' ? ' is-phone' : '') + '">' + inner + '</div></div>';
+    if (!pvHidden) {
+      var pv = previewHeader();
+      body = '<div style="margin-top:9px">' + th.deviceSwitch('data-sls-pv', pvDevice, 'Preview for') + '</div>'
+        + pvWithHTML()
+        + '<div data-sls-livebody>' + th.frame(pvDevice, pv.html) + '</div>'
+        + '<p class="thk-livecap">' + (pvDevice === 'laptop'
+            ? 'Laptop: the header as a 1280px screen draws it (1236px wide), scaled to fit.'
+            : 'Phone: the header as a 390px phone draws it (346px wide).')
+          + ' Drawn with the shop’s own stylesheet from the values on this screen, before anything is saved.'
+          + (pv.note ? ' ' + esc(pv.note) : '') + '</p>'
+        + (on ? '' : '<div class="sls-note" style="margin-top:8px">The header is switched off: every category page shows its plain title.</div>');
     }
 
-    var device = ['phone', 'laptop'].map(function (d) {
-      return '<button type="button" class="sls-tab" data-sls-pv="' + d + '" aria-selected="'
-        + (pvDevice === d ? 'true' : 'false') + '">' + (d === 'phone' ? 'Phone' : 'Laptop') + '</button>';
-    }).join('');
+    return '<div class="sls-card sls-live" data-sls-live>'
+      + '<div class="sls-live-h"><div class="sls-title">Live preview · ' + (pvDevice === 'laptop' ? 'Laptop' : 'Phone') + '</div>'
+      + '<button type="button" class="sls-btn" data-sls-livehide aria-expanded="' + (pvHidden ? 'false' : 'true') + '">'
+      + (pvHidden ? 'Show preview' : 'Hide preview') + '</button></div>'
+      + body + '</div>';
+  }
 
-    return '<div class="sls-card">'
-      + '<div class="sls-title">Preview</div>'
-      + '<p class="sls-sub">Drawn with the shop’s own header stylesheet from the values on this screen, before '
-      + 'anything is saved. A category’s own choices (Catalog → Categories → Edit → Category header) '
-      + 'are laid over these.</p>'
-      + (on ? '' : '<div class="sls-note" style="margin-top:10px">The header is switched off: every category page shows '
-          + 'its plain title. This is how it would look switched on.</div>')
-      + '<div class="sls-pv-bar">' + device + '</div>'
-      + '<div class="sls-pv-list">'
-      + block('1 · Over a busy, dark picture', pvHeader('img', pvPicture(true)))
-      + block('2 · Over a light picture', pvHeader('img', pvPicture(false)))
-      + block('3 · No picture — the light box' + (boxOn ? '' : ' (switched off: such a category keeps its plain title)'),
-          pvHeader('box', null))
-      + '</div></div>';
+  async function loadCats() {
+    if (pvCats !== null || pvCatsBusy) return;
+    pvCatsBusy = true;
+    try {
+      var body = await api('/categories');
+      pvCats = ((body && body.categories) || []).slice(0, 500);
+    } catch (e) {
+      pvCats = [];   // no Catalog rights: the samples are still there
+    } finally {
+      pvCatsBusy = false;
+      repaintLive();
+    }
+  }
+
+  /* Redraw the preview and the tiles in place, leaving the control being held. */
+  function repaintLive() {
+    var host = document.querySelector('#content');
+    if (!host || !tabs || (open !== 'catheader' && open !== 'catheadersize')) return;
+    var live = host.querySelector('[data-sls-live]');
+    if (live) {
+      var fresh = document.createElement('div');
+      fresh.innerHTML = previewHTML();
+      if (fresh.firstElementChild) live.replaceWith(fresh.firstElementChild);
+    }
+    /* A tile holding the focus keeps it across the redraw -- tabbing from a
+       colour box into the tiles fires that box's `change`, which redraws. */
+    var heldAt = TH() ? TH().held() : null;
+
+    host.querySelectorAll('[data-sls-tiles]').forEach(function (el) {
+      el.innerHTML = pickerHTML(el.getAttribute('data-sls-tiles'));
+    });
+
+    if (heldAt) TH().refocus(heldAt);
   }
 
   /* The card under the fields: the device table, or on the two Category
      header tabs the header preview. Nothing on "Loading more products". */
   function extraHTML(key) {
     if (key === 'loading') return '';
-    if (key === 'catheader' || key === 'catheadersize') return previewHTML();
+    if (key === 'catheader' || key === 'catheadersize') return '';   // drawn beside the fields (Lane QC)
     return tableHTML();
   }
 
@@ -653,6 +827,9 @@
 
     var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
 
+    var headerTab = current.key === 'catheader' || current.key === 'catheadersize';
+    if (headerTab) loadCats();
+
     host.innerHTML = '<div class="sls-wrap">'
       + (banner ? '<div class="sls-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
           + esc(banner) + '</div>' : '')
@@ -660,10 +837,11 @@
       + 'not on this width. Each keeps its own Content width slider on its own screen — they are pages '
       + 'asking for money, and a narrow single column there is deliberate. Reading widths are not on it '
       + 'either: an article stays 720px wide however wide the page is.</div>'
-      + '<div class="sls-card">'
+      + (headerTab ? '<div class="sls-thx">' + previewHTML() : '')
+      + '<div class="sls-card' + (headerTab ? ' sls-main' : '') + '">'
       + '<div class="sls-tabs">' + strip + '</div>'
       + '<p class="sls-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
-      + '<div class="sls-fields">' + current.fields.map(fieldHTML).join('') + '</div>'
+      + '<div class="sls-fields">' + (current.key === 'catheader' ? lookHTML(current) : current.fields.map(fieldHTML).join('')) + '</div>'
       + '<div class="sls-actions">'
       + '<button class="sls-btn is-primary" data-sls-save' + (busy ? ' disabled' : '') + '>'
       + (busy ? 'Saving…' : 'Save') + '</button>'
@@ -673,6 +851,7 @@
       + '<p class="sls-help" style="margin-top:8px">“Back to defaults” moves only the sliders on '
       + '<b>this tab</b>. Nothing is stored until you press Save.</p>'
       + '</div>'
+      + (headerTab ? '</div>' : '')
       /* The device table is about width and columns. On "Loading more
          products" it would be a page of numbers that no field on the tab can
          move, so it is not drawn there. (Lane PI-B) */
@@ -710,18 +889,40 @@
     repaintTable();
   });
 
+  /* "Preview with": a sample or one of his categories (Lane QC). */
+  document.addEventListener('change', function (e) {
+    var w = e.target.closest ? e.target.closest('[data-sls-pvwith]') : null;
+    if (!w) return;
+    pvWith = String(w.value || 'dark');
+    repaintLive();
+    var again = document.querySelector('[data-sls-pvwith]');
+    if (again) { try { again.focus({ preventScroll: true }); } catch (x) {} }
+  });
+
+  /* A design tile chosen (title-header-kit): the device's own key. */
+  document.addEventListener('kbb-th-pick', function (e) {
+    var d = e.detail || {};
+    if (!PICK_KEYS[d.group] || !tabs) return;
+    values[devKey(PICK_KEYS[d.group])] = d.value;
+    render();
+  });
+
   document.addEventListener('change', function (e) {
     var el = e.target.closest ? e.target.closest('[data-sls-key]') : null;
     if (!el) return;
     values[el.dataset.slsKey] = el.type === 'checkbox' ? el.checked : el.value;
     if (el.type === 'checkbox' || el.tagName === 'SELECT') render();
-    else repaintTable();
+    /* On the Category header tabs `input` has already redrawn the preview
+       and the tiles; redrawing again on `change` -- which fires on blur --
+       would pull the tiles out from under a Tab into them (Lane QC). */
+    else if (open !== 'catheader' && open !== 'catheadersize') repaintTable();
   });
 
   /* Only the table's own card, so the control you are holding is not replaced. */
   function repaintTable() {
     var host = document.querySelector('#content');
     if (!host || !tabs || open === 'loading') return;
+    if (open === 'catheader' || open === 'catheadersize') { repaintLive(); return; }
     /* A colour box mid-typing ("#F") is not a colour yet; the preview keeps
        its last good one rather than flashing the fallback. pvHex() does that. */
     var cards = host.querySelectorAll('.sls-wrap > .sls-card');
@@ -738,8 +939,45 @@
     var tab = e.target.closest('[data-sls-tab]');
     if (tab) { open = tab.dataset.slsTab; render(); return; }
 
+    /* Phone | Laptop: the device being edited AND previewed (Lane QC), so
+       the whole tab is redrawn -- the tiles now write the other device's keys. */
     var pv = e.target.closest('[data-sls-pv]');
-    if (pv) { pvDevice = pv.dataset.slsPv === 'laptop' ? 'laptop' : 'phone'; repaintTable(); return; }
+    if (pv) {
+      pvDevice = pv.dataset.slsPv === 'laptop' ? 'laptop' : 'phone';
+      render();
+      var again = document.querySelector('[data-sls-pv="' + pvDevice + '"]');
+      if (again) { try { again.focus({ preventScroll: true }); } catch (x) {} }
+      return;
+    }
+
+    if (e.target.closest('[data-sls-livehide]')) { pvHidden = !pvHidden; repaintLive(); return; }
+
+    var copy = e.target.closest('[data-sls-copy]');
+    if (copy) {
+      var to = copy.dataset.slsCopy === 'phone' ? 'phone' : 'laptop';
+      Object.keys(PICK_KEYS).forEach(function (g) {
+        var b = PICK_KEYS[g];
+        values[devKey(b, to)] = values[devKey(b, to === 'laptop' ? 'phone' : 'laptop')];
+      });
+      render();
+      say('The ' + to + ' now uses the ' + (to === 'laptop' ? 'phone' : 'laptop') + '’s design. Nothing is saved until you press Save.');
+      return;
+    }
+
+    var auto = e.target.closest('[data-sls-auto]');
+    if (auto) { values[auto.dataset.slsAuto] = ''; render(); return; }
+
+    var tr = e.target.closest('[data-sls-tunereset]');
+    if (tr && window.kbbTH) {
+      var design = tr.dataset.slsTunereset;
+      (window.kbbTH.TUNE[design] || []).forEach(function (k) {
+        var f = fieldOf(k);
+        if (f) values[k] = f['default'];
+      });
+      render();
+      say('Back to the design as drawn. Nothing is saved until you press Save.');
+      return;
+    }
 
     if (e.target.closest('[data-sls-save]')) { save(); return; }
     if (e.target.closest('[data-sls-reload]')) { load(); return; }
