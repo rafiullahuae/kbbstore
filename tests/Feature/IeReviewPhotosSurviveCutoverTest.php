@@ -66,6 +66,23 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 /** The export the plugin wrote. Same directory GeWpExporterTest drives. */
+/*
+ * Remove what the sideloader landed under the web root, after every case.
+ *
+ * Without it the fixture's photographs (ginseng-serum.jpg and the rest) stayed
+ * in public/wp-content for the rest of the run, and since 2.60.345 an import
+ * re-points every picture whose file is on disk (ImportRunner::
+ * keepPicturesLocal) -- so a later test expecting the old address read a local
+ * one, depending only on which tests had run before it.
+ */
+afterEach(function () {
+    foreach (['wp-content', 'uploads'] as $root) {
+        if (is_dir(public_path($root))) {
+            Illuminate\Support\Facades\File::deleteDirectory(public_path($root));
+        }
+    }
+});
+
 function irpExportDir(): string
 {
     return base_path('tests/Fixtures/kbb-export');

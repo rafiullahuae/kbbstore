@@ -18,6 +18,24 @@ that refusal rather than trusting it.
 
 ---
 
+## 1.10.1
+
+### Orders were exported empty on a shop using HPOS
+
+- On the owner's shop (WooCommerce High-Performance Order Storage switched
+  on) the Orders export came out with `orders.csv` holding only its header
+  and `refunds.csv` empty, beside 13,098 order lines and 29,786 order notes.
+- The order query asked WooCommerce's `wc_order_operational_data` table for
+  `cart_tax_amount`, a column that table does not have — only this plugin's
+  test harness had invented it. MySQL refused the whole query, WordPress
+  returned "no rows", and the export finished as if the shop had no orders.
+- The column is gone from the query (nothing used it), and every order query
+  now stops the export with MySQL's own error if it is ever refused, instead
+  of writing an empty file.
+- The harness's copy of WooCommerce's tables now matches WooCommerce's
+  schema, and its `$wpdb` reports a refused query the way WordPress does.
+- Version moved 1.10.0 → 1.10.1 in all four places it lives.
+
 ## 1.10.0
 
 ### The Rey global sections a description embeds

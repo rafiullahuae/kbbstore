@@ -120,6 +120,28 @@ class KBB_Export_Orders_Source {
 	 * row with post_parent set, or a `wc_orders` row with parent_order_id --
 	 * which is why they share this class rather than having their own.
 	 */
+	/**
+	 * Stop, loudly, when the database refused a query. (1.10.1)
+	 *
+	 * THE DEFECT, ON THE OWNER'S SHOP (2 October 2026): the Orders export came
+	 * out with orders.csv HEADERS ONLY and refunds.csv empty, beside 13,098
+	 * order lines and 29,786 order notes. batch_hpos() selected
+	 * cart_tax_amount from the operational data, a column WooCommerce's wc_order_operational_data
+	 * table does not have (only the test harness had invented it); MySQL
+	 * refused the whole query, $wpdb->get_results() returned null, `(array)
+	 * null` is an empty batch, and an empty batch is "no more orders" -- so the
+	 * stage finished, successfully, with nothing. Every refused query here now
+	 * throws with MySQL's own words, and the admin screen prints them as the
+	 * export's error instead of shipping an empty file.
+	 */
+	private static function guard( $what ) {
+		global $wpdb;
+
+		if ( isset( $wpdb->last_error ) && '' !== (string) $wpdb->last_error ) {
+			throw new RuntimeException( 'Reading ' . $what . ' failed: ' . $wpdb->last_error );
+		}
+	}
+
 	public function count( $type = 'shop_order' ) {
 		global $wpdb;
 
@@ -161,7 +183,7 @@ class KBB_Export_Orders_Source {
 			        o.payment_method, o.payment_method_title, o.transaction_id, o.customer_note,
 			        d.created_via, d.date_paid_gmt, d.date_completed_gmt, d.order_key,
 			        d.discount_total_amount, d.discount_tax_amount,
-			        d.shipping_total_amount, d.shipping_tax_amount, d.cart_tax_amount
+			        d.shipping_total_amount, d.shipping_tax_amount
 			 FROM ' . $wpdb->prefix . 'wc_orders o
 			 LEFT JOIN ' . $wpdb->prefix . 'wc_order_operational_data d ON d.order_id = o.id
 			 WHERE o.type = ' . KBB_Export_Wp::quote( $type ) . ' AND o.id > ' . (int) $cursor . '
@@ -169,6 +191,7 @@ class KBB_Export_Orders_Source {
 			 LIMIT ' . (int) $limit,
 			ARRAY_A
 		);
+		self::guard( 'orders from wc_orders' );
 
 		$rows = (array) $rows;
 
@@ -258,6 +281,7 @@ class KBB_Export_Orders_Source {
 			 WHERE order_id IN (' . implode( ',', array_map( 'intval', $ids ) ) . ')',
 			ARRAY_A
 		);
+		self::guard( 'order addresses from wc_order_addresses' );
 
 		foreach ( (array) $rows as $row ) {
 			$type = 'shipping' === $row['address_type'] ? 'shipping' : 'billing';
@@ -298,6 +322,7 @@ class KBB_Export_Orders_Source {
 			   AND meta_key IN (' . implode( ',', array_map( array( 'KBB_Export_Wp', 'quote' ), $keys ) ) . ')',
 			ARRAY_A
 		);
+		self::guard( 'order meta from wc_orders_meta' );
 
 		foreach ( (array) $rows as $row ) {
 			$out[ (int) $row['order_id'] ][ (string) $row['meta_key'] ] = (string) $row['meta_value'];
@@ -322,6 +347,7 @@ class KBB_Export_Orders_Source {
 			 LIMIT ' . (int) $limit,
 			ARRAY_A
 		);
+		self::guard( 'orders from wp_posts' );
 
 		$rows = (array) $rows;
 

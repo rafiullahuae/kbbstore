@@ -226,7 +226,7 @@ function kbb_harness_schema( PDO $pdo, $p ) {
 			discount_tax_amount DECIMAL(26,8) DEFAULT NULL,
 			shipping_total_amount DECIMAL(26,8) DEFAULT NULL,
 			shipping_tax_amount DECIMAL(26,8) DEFAULT NULL,
-			cart_tax_amount DECIMAL(26,8) DEFAULT NULL,
+			recorded_sales TINYINT(1) DEFAULT NULL,
 			PRIMARY KEY (id), UNIQUE KEY order_id (order_id))",
 
 		"{$p}wc_orders_meta" => '(
@@ -1125,7 +1125,6 @@ function kbb_harness_insert_hpos( callable $insert, array $order ) {
 		'date_paid_gmt' => $order['paid_gmt'], 'date_completed_gmt' => $order['completed_gmt'],
 		'discount_total_amount' => $order['discount'], 'discount_tax_amount' => '0.00',
 		'shipping_total_amount' => $order['shipping'], 'shipping_tax_amount' => '0.00',
-		'cart_tax_amount' => '0.00',
 	) );
 
 	foreach ( array( 'billing' => 'billing', 'shipping_address' => 'shipping' ) as $source => $type ) {

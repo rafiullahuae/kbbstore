@@ -61,12 +61,37 @@ class KBB_Harness_Wpdb {
 		$this->prefix = $prefix;
 	}
 
+	/**
+	 * What the last statement's error was, '' when it succeeded -- exactly as
+	 * WordPress's own $wpdb keeps it. (1.10.1)
+	 *
+	 * The real $wpdb does NOT throw on a refused query: it records the error
+	 * here and returns null. This stub used to let PDO's exception escape, so
+	 * the harness could never see the path that hid the owner's orders --
+	 * a query naming a column WooCommerce does not have, "returning" no rows.
+	 */
+	public $last_error = '';
+
 	public function get_results( $sql, $output = null ) {
 		$this->queries[] = $sql;
+		$this->last_error = '';
 
-		$statement = $this->pdo->query( $sql );
+		try {
+			$statement = $this->pdo->query( $sql );
+		} catch ( PDOException $e ) {
+			$this->last_error = $e->getMessage();
 
-		return false === $statement ? array() : $statement->fetchAll( PDO::FETCH_ASSOC );
+			return null;
+		}
+
+		if ( false === $statement ) {
+			$info = $this->pdo->errorInfo();
+			$this->last_error = (string) ( isset( $info[2] ) ? $info[2] : 'query failed' );
+
+			return null;
+		}
+
+		return $statement->fetchAll( PDO::FETCH_ASSOC );
 	}
 
 	public function get_row( $sql, $output = null ) {
@@ -90,7 +115,7 @@ class KBB_Harness_Wpdb {
 	public function get_col( $sql ) {
 		$out = array();
 
-		foreach ( $this->get_results( $sql ) as $row ) {
+		foreach ( (array) $this->get_results( $sql ) as $row ) {
 			$out[] = reset( $row );
 		}
 
