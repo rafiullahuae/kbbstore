@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.352
+**Hotfix: on phones, a product with many gallery pictures made the page
+scroll sideways; and in Safari the category header's description was cut off
+on one line.** Apply after .351. No plugin change.
+
+| Your report | Now |
+|---|---|
+| "the product image and gallery going outside the screen and creating a giant weird side spacing" (phones) | The gallery is exactly the screen's width again; its thumbnails scroll in their own row. Measured with ten pictures at 360, 390, 430 and 768 px: no sideways scroll. Laptop unchanged |
+| "Find your favorite products in our wide range Moisturizers cat" (Safari) | The description is cut at its line count with a method every browser measures the same way |
+
+Files (2): resources/css/kbb/kbb-product.css, resources/css/kbb/kbb-title-header.css.
+
 ## 2.60.351
 **Category header designs as clickable pictures with a live preview, set
 separately for phone and laptop, fine-tuned after choosing, and per category
