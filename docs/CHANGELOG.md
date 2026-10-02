@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.351
+**Category header designs as clickable pictures with a live preview, set
+separately for phone and laptop, fine-tuned after choosing, and per category
+with an Upload banner button.** Apply after .350. No plugin change. Nothing on
+the shop moves until you choose something.
+
+| # | Your report | Now | Where |
+|---|---|---|---|
+| 49 | "i can not see any designs on backend" — the option sheet's designs to choose from, with a live preview, for mobile too, editable after choosing | Tiles A–F, 1–5 (on a picture and on the box), where the words sit, alignment, text colour; Phone / Laptop switch; live preview with "Preview with" any of your categories; fine-tuning per design with "Back to defaults" | Appearance → Site layout → Category header; Category header · sizes & spacing |
+| 49 | Upload banners per category | Live preview of the category; Upload banner; recommended 2400×600; phone crop left / centre / right; the category's own design per device | Catalog → Categories → Edit → Category header |
+
+Files (10): app/Http/Controllers/Admin/CategoriesApiController.php, app/Services/SiteLayout.php, app/Support/TitleHeader.php, app/Support/TitleHeaderSplitCss.php, database/migrations/2027_07_15_001000_clear_caches_category_header_devices.php, resources/css/kbb/kbb-title-header.css, resources/views/admin/partials/category-tree-screen.blade.php, resources/views/admin/partials/media-picker.blade.php, resources/views/admin/partials/site-layout-screen.blade.php, resources/views/admin/partials/title-header-kit.blade.php.
+
 ## 2.60.350
 **Category headers say the category's name (no more "hide"); the phone
 product page as sections you order and switch; the price row under the title
