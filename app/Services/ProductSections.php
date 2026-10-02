@@ -33,7 +33,10 @@ class ProductSections
         'buynow'      => ['Buy it now button', 'Skips the cart and goes straight to checkout.', false],
         'trust'       => ['Trust badges', 'Authentic, delivery, returns, pay later.', true],
         'paychips'    => ['Payment chips', 'Tabby, Tamara, Visa, Mastercard, Apple Pay, COD.', true],
-        'fbt'         => ['Frequently bought together', 'The companion products block.', true],
+        // Lane RB: the old Frequently-bought-together block's slot, now "Buy
+        // these together". The section's own switch and options are on the
+        // Buy these together tab; this row is still its laptop switch.
+        'fbt'         => ['Buy these together', 'The product plus its matches, a tick on each, one pink button.', true],
         'tabs'        => ['Detail tabs', 'Description, ingredients, how to use.', true],
         'reviews'     => ['Reviews', 'Score summary, filters and review cards.', true],
         'related'     => ['You may also like', 'Related products at the foot of the page.', true],

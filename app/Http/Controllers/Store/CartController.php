@@ -134,6 +134,120 @@ class CartController extends Controller
         return $this->fragments($this->loadCart($request), $request, 'Added to bag', null, true);
     }
 
+    /**
+     * "Buy these together": every ticked product, one request.        (Lane RB)
+     *
+     * The owner: "whatever products are checked and user click on Buy 4 items
+     * together [...] all those will add to the cart."
+     *
+     * ONE REQUEST AND NOT FOUR, so the panel opens once, repaints once and the
+     * shopper sees every line arrive together — and so a refusal can name the
+     * product it is about. Mounted from routes/buy-together.php, throttled
+     * there; CSRF like every storefront POST.
+     *
+     * EVERY LINE IS RE-CHECKED HERE, exactly as add() checks one: the product
+     * must be visible (published, not hidden, not scheduled, not deleted), a
+     * product that is sold by its options must arrive WITH one of its own, and
+     * what is added must be in stock. The price is the server's — nothing the
+     * browser sends says what anything costs. A line that fails is named in the
+     * answer; the others still go in.
+     */
+    public function addTogether(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'items' => ['required', 'array', 'min:1', 'max:'.(int) \App\Services\BuyTogetherSettings::SCHEMA['count'][4]['max']],
+            'items.*.product_id' => ['required', 'integer', 'min:1'],
+            'items.*.variant_id' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        // One line per product, in the order the shopper sees them.
+        $wanted = [];
+
+        foreach ($data['items'] as $item) {
+            $id = (int) $item['product_id'];
+            $wanted[$id] ??= empty($item['variant_id']) ? null : (int) $item['variant_id'];
+        }
+
+        $products = Product::query()->select(self::LINE_COLUMNS)->visible()
+            ->whereIn('id', array_keys($wanted))->get()->keyBy(fn ($p) => (int) $p->id);
+
+        $variantIds = array_values(array_filter($wanted));
+        $variants = $variantIds === [] ? collect() : ProductVariant::query()
+            ->whereIn('id', $variantIds)->get()->keyBy(fn ($v) => (int) $v->id);
+
+        $cart = null;
+        $added = 0;
+        $failed = [];
+
+        foreach ($wanted as $id => $variantId) {
+            $product = $products->get($id);
+
+            if (! $product) {
+                $failed[] = ['id' => $id, 'why' => __('store.buy_together.gone')];
+
+                continue;
+            }
+
+            $name = $product->t('name');
+            $variant = null;
+
+            if ($variantId !== null) {
+                $variant = $variants->get($variantId);
+
+                if (! $variant || (int) $variant->product_id !== $id) {
+                    $failed[] = ['id' => $id, 'why' => __('store.buy_together.option_gone', ['name' => $name])];
+
+                    continue;
+                }
+            }
+
+            if (! $variant && $product->requiresVariant()) {
+                $failed[] = ['id' => $id, 'why' => __('store.buy_together.choose_option', ['name' => $name])];
+
+                continue;
+            }
+
+            if (($variant?->stock_status ?? $product->stock_status) !== 'instock') {
+                $failed[] = ['id' => $id, 'why' => __('store.buy_together.sold_out_named', ['name' => $name])];
+
+                continue;
+            }
+
+            try {
+                $cart ??= $this->carts->current($request);
+                $this->carts->add($cart, $product, 1, $variant);
+                $added++;
+            } catch (\Throwable $e) {
+                report($e);
+                $failed[] = ['id' => $id, 'why' => __('store.buy_together.not_added', ['name' => $name])];
+            }
+        }
+
+        $toast = $added === 0 ? null : ($added === 1
+            ? __('store.buy_together.added_one')
+            : __('store.buy_together.added', ['count' => $added]));
+        $error = $failed === [] ? null : implode(' ', array_column($failed, 'why'));
+
+        $response = $this->fragments($this->loadCart($request), $request, $toast, $error, $added > 0 && $failed === []);
+        $out = $response->getData(true);
+
+        /*
+         * SOME IN, SOME NOT: one sentence that says both. cart.js shows `toast`
+         * whenever it is set, and `added` is false here, so the sentence is
+         * shown as text whatever "When something is added" is set to — a
+         * refusal must be read, not acknowledged with a tick.
+         */
+        if ($added > 0 && $error !== null) {
+            $out['toast'] = $toast.' '.$error;
+        }
+
+        $out['ok'] = $added > 0;
+        $out['added_count'] = $added;
+        $out['failed'] = array_column($failed, 'id');
+
+        return response()->json($out, $added > 0 ? 200 : 422);
+    }
+
     public function update(Request $request): JsonResponse
     {
         $data = $request->validate([

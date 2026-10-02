@@ -340,7 +340,13 @@ class EcommerceApiController extends Controller
                      */
                     'stockalert' => ['Back-in-stock alerts', 'The notify-me form on sold-out products, and the email it leads to. Leave these empty and nothing appears and nothing is sent, whatever the switch on Store → Modules says.', 'box',
                         ['stock_alert_form_label', 'stock_alert_subject', 'stock_alert_body']],
-                    'fbt' => ['Frequently bought together', 'A companion-products block below the buy box.', 'box', ['frequently_bought', 'fbt_title', 'fbt_count']],
+                    /*
+                     * 'fbt' — Frequently bought together's switch, title and
+                     * count — WENT IN LANE RB with the block itself. "Buy these
+                     * together" replaced it in its slot and is configured on
+                     * Appearance → Product page → Buy these together; three
+                     * boxes here would save values nothing reads.
+                     */
                     /*
                      * ── 'ratings' WAS `review_capsule_style` A SECOND TIME ──
                      *
@@ -427,9 +433,6 @@ class EcommerceApiController extends Controller
                     'stock_alert_subject'    => ['text', 'Alert subject line', '', 'Used exactly as written. Do not put the product name in it — a subject shows on a locked phone screen and in every mail server’s log. Empty means nothing is ever sent.'],
                     'stock_alert_body'       => ['textarea', 'Alert message', '', 'Your own words. The product name, a link to it, the reason the email arrived and the unsubscribe link are added for you. Empty means nothing is ever sent.'],
                     'bundles_enabled'       => ['bool', 'Quantity bundles', true, 'Tiers are configured in Appearance → Quantity bundles.'],
-                    'frequently_bought'     => ['bool', 'Frequently bought together', false, ''],
-                    'fbt_title'             => ['text', 'Bundle block title', 'Complete your routine', ''],
-                    'fbt_count'             => ['int', 'Companion products', 3, ''],
                     'review_capsule_style'  => ['select', 'Rating display', 'capsule', 'Two badges at once is usually one too many.', ['capsule' => 'Capsule only', 'inline' => 'Inline only', 'both' => 'Capsule and inline', 'off' => 'Hidden']],
                     'review_badge_heart'    => ['bool', 'Heart icon on the capsule', true, ''],
                     'review_badge_avg'      => ['bool', 'Show the average score', true, ''],
@@ -596,11 +599,8 @@ class EcommerceApiController extends Controller
                 'stage' => $ring('<div style="border:1px solid #E0567B;border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:9px;font-size:12.5px"><span style="width:14px;height:14px;border-radius:50%;border:4px solid #E0567B"></span>2-pack bundle<span style="flex:1"></span><s style="color:#7b8697">د.إ110</s> <b>د.إ105</b><span style="background:#e8f6ee;color:#1F7D52;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:700">Save 5%</span></div>'),
                 'legend' => ['Tiers are configured in Appearance → Quantity bundles. This switch only shows or hides them.'],
             ],
-            'fbt' => [
-                'caption' => 'Where this appears',
-                'stage' => $ring('<div style="font-size:12.5px;font-weight:700;margin-bottom:8px">Complete your routine</div><div style="display:flex;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:9px;background:linear-gradient(135deg,#ffd1e2,#ff9fc1)"></span><span style="color:#7b8697">+</span><span style="width:40px;height:40px;border-radius:9px;background:linear-gradient(135deg,#cfe6ff,#8fc0f0)"></span><span style="color:#7b8697">+</span><span style="width:40px;height:40px;border-radius:9px;background:linear-gradient(135deg,#ffe9a8,#f3c969)"></span></div>'),
-                'legend' => ['Sits between the buy box and the details. Off by default.'],
-            ],
+            // The `fbt` preview went with the `fbt` section (Lane RB) — a
+            // drawing of a block this screen no longer configures.
             /*
              * The `ratings` preview went with the `ratings` SECTION — see the
              * note beside where that section used to be. It was a second,

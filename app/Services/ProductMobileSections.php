@@ -103,7 +103,7 @@ class ProductMobileSections
         'auth' => ['Authenticity row', '“Authenticity Guaranteed” with its slide-open explanation.', true],
         'trust' => ['100% authentic · delivery · pay-later rows', 'The three small trust lines. Off on phones, as asked; the laptop keeps them.', false],
         'paychips' => ['Payment chips', 'Tabby · Tamara · Visa · Mastercard · COD chips.', true],
-        'buytogether' => ['Buy together', 'The “Frequently bought together” box. Off by default, as asked.', false],
+        'buytogether' => ['Buy these together', 'The product plus its matches with a tick on each, and one pink “Buy 4 items together” button. Settings: the Buy these together tab.', false],
         'details' => ['Product details + tabs', 'Description, ingredients, how to use…', true],
         'reviews' => ['Reviews', 'Score summary, filters and review cards.', true],
         'related' => ['You may also like', 'The carousel at the foot of the page.', true],
@@ -349,7 +349,7 @@ class ProductMobileSections
                 continue;
             }
 
-            $on[$key] = $default;
+            $on[$key] = $key === 'buytogether' ? self::togetherDefault() : $default;
         }
 
         $savedSpace = is_array($saved['space'] ?? null) ? $saved['space'] : null;
@@ -363,6 +363,23 @@ class ProductMobileSections
         return $this->layoutMemo = ['order' => $order, 'on' => $on, 'space' => $space];
     }
 
+    /**
+     * "Buy these together" on a phone, when this screen has never been saved.
+     *                                                                  (Lane RB)
+     *
+     * It FOLLOWS THE SECTION'S OWN SWITCH (Appearance → Product page → Buy
+     * these together → Show). The row used to default OFF because the owner
+     * asked for the old Frequently-bought-together box to stay off; on 2
+     * October he asked for its replacement on phones and laptops both. Off in
+     * the schema means a fresh install and the test suite are unchanged; the
+     * migration that switches the section on for his shop switches this row
+     * with it. A layout he has saved keeps whatever he saved.
+     */
+    public static function togetherDefault(): bool
+    {
+        return (bool) (app(BuyTogetherSettings::class)->all()['on'] ?? false);
+    }
+
     /** @return array{order: list<string>, on: array<string, bool>, space: array<string, int|null>} */
     public static function defaultLayout(): array
     {
@@ -372,9 +389,12 @@ class ProductMobileSections
             $space[$key] = self::SPACE_DEFAULTS[$key] ?? null;
         }
 
+        $on = array_map(static fn (array $s) => $s[2], self::SECTIONS);
+        $on['buytogether'] = self::togetherDefault();
+
         return [
             'order' => array_keys(self::SECTIONS),
-            'on' => array_map(static fn (array $s) => $s[2], self::SECTIONS),
+            'on' => $on,
             'space' => $space,
         ];
     }

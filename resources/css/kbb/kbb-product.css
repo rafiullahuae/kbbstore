@@ -1082,182 +1082,165 @@ a{color:inherit;text-decoration:none}
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   FREQUENTLY BOUGHT TOGETHER — the block that had NO STYLESHEET AT ALL
-   ───────────────────────────────────────────────────────────────────── Lane CARD
+   BUY THESE TOGETHER                                                  Lane RB
+   ───────────────────────────────────────────────────────────────────────────
+   The owner: "i need the same design section which we have on the cart page
+   "Recommended for you" same carousel, same size [...] empty circle at the
+   corner of product, and by default that circle will be checked (filled
+   green) with check (yes icon) white [...] with + inbetween icon [...] with
+   same outlined button but with our pink color."
 
-   The owner: "i want to hide the brand name, category name by default. only
-   name, rating (if any), pricing and cart buttons ... the grid must remain same
-   heighted overall even if the name of the product is long ... APPLY THIS
-   EVERYWHERE."
+   It replaced Frequently Bought Together in the same slot (partials/fbt.blade
+   .php), and the old block's rules went with it. Its root keeps the class
+   `kbb-fbt`, which is what the phone page's Mobile sections list orders and
+   switches further down this sheet.
 
-   `partials/fbt.blade.php` draws a product tile per bundle item and is the one
-   product-tile surface on this shop that never went through <x-product-card>.
-   Its header says why: "The plugin ships its own CSS for this block, so no
-   theme stylesheet is involved" -- true of the WordPress original, where
-   kbb_fbt_render()'s markup was styled by the KBB Modules plugin. THE PLUGIN'S
-   CSS WAS NEVER PORTED. Measured on the rendered page, Chromium, product page
-   with the module on, before this block existed:
+   ── THE CARD IS THE CART RAIL'S, NUMBER FOR NUMBER ────────────────────────
+   Every value on `.bt-card`, `.im`, `.nm` and `.pr` below is the one
+   store/cart-squeeze.blade.php gives `.cpg-card` and its children, and the
+   cart page's own sliders reach it: App\Services\BuyTogether::cardStyle()
+   prints that page's --cpg-per (and its desktop column, as --bt-d-card) on
+   this section. Measured equal at 390 and 1280 — docs/rb-shots/.
 
-       .kbb-fbt-item heights @320   18 / 81 / 156 / 210      four heights
-       .kbb-fbt-item heights @390   18 / 60 / 81  / 114      four heights
-       .kbb-fbt-item heights @1280  18 / 114                 two heights
+   The one width that differs is the GAP: 16px rather than 7px, because a 22px
+   "+" lives in it. The card's own width does not move with it — the formula
+   still subtracts the cart's 7px, so the card is the cart's card and the row
+   is simply a little longer.
 
-   Not a rounding difference and not a rating row: with no rules at all a
-   <label> is inline, so each item was as tall as however many lines its own
-   name happened to wrap to, the 90px thumbnails floated out of their items and
-   the checkbox, the name and the price ran together as one paragraph. The 18px
-   item is the one whose name fitted on a single line. docs/card-shots/
-   fbt-before-390.png is that page.
-
-   So the numbers below are the FIRST styling this block has had in the Laravel
-   port, and they are the card family's own mechanism rather than a second one:
-   each optional row gets a RESERVED TRACK computed from the numbers the row is
-   drawn with, so an item's height stops depending on what its product happens
-   to be called. The shared card's note at kbb-grid-skins.css --sc-cat-slot
-   carries the full argument.
-
-   WHAT IT DRAWS IS WHAT HE ASKED FOR, AND NO MORE: the picture, the name and
-   the price. No brand line and no category eyebrow -- this block never had
-   either, which is the state he asked every tile to ship in. No rating and no
-   per-item cart button, because a bundle item is not separately buyable: the
-   block has ONE button and a checkbox per item, which is what makes it a
-   bundle. That is the module's own semantics and not a card style. */
-.kbb-fbt{
-    max-width:var(--site-max,1180px);
-    margin:34px auto 0;
-    padding-inline:var(--site-gutter,22px);
-}
-.kbb-fbt-title{font-size:18px;font-weight:600;letter-spacing:-.01em;margin-block-end:14px}
-
-/* ── THE RESERVATIONS, DERIVED AND NOT WRITTEN TWICE ──────────────────────
-   Every figure below is the one the row is actually drawn with, multiplied out.
-   Change --fbt-name-fs and the track follows it; there is no second number to
-   keep in step. `em` would be wrong for the same reason it is wrong on the
-   shared card: these are declared on the CONTAINER, where 1em is the
-   container's font size, while each row has a font size of its own. */
-.kbb-fbt-items{
-    --fbt-thumb:90px;
-    --fbt-pad:10px;
-    --fbt-name-fs:12.5px;
-    --fbt-name-lh:1.35;
-    --fbt-name-lines:2;
-    --fbt-name-slot:calc(var(--fbt-name-fs) * var(--fbt-name-lh) * var(--fbt-name-lines));
-    --fbt-price-fs:13px;
-    --fbt-price-lh:1.4;
-    --fbt-price-slot:calc(var(--fbt-price-fs) * var(--fbt-price-lh));
-
-    display:flex;
-    flex-wrap:wrap;
-    /* `start` and not `stretch`: an item that is stretched by its row is equal
-       to the item BESIDE it and says nothing about the row above -- which is
-       the defect this whole lane exists for. The tracks below make each item
-       one height on its own, so it is uniform after the strip wraps too, which
-       at 320px it always does. */
-    align-items:flex-start;
-    gap:10px;
-}
-.kbb-fbt-item{
+   ── NOTHING IS MEASURED ────────────────────────────────────────────────────
+   The "+" is centred on the PICTURE by being inside it (top:50% of a square),
+   and pushed back into the gap by the card's own padding, border and the gap
+   itself — calc() over constants. The tick sits in the picture's top-end
+   corner with logical properties, so /ar mirrors it without a [dir] rule.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.kbb-fbt.bt{
+    --bt-gap:16px;
+    --bt-plus:22px;
+    --bt-tick:clamp(18px,5.6vw,24px);
     position:relative;
-    display:grid;
-    grid-template-rows:var(--fbt-thumb) var(--fbt-name-slot) var(--fbt-price-slot);
-    row-gap:6px;
-    width:calc(var(--fbt-thumb) + var(--fbt-pad) * 2);
-    padding:var(--fbt-pad);
-    border:1px solid var(--line);
-    border-radius:var(--r-m,14px);
-    background:#fff;
-    cursor:pointer;
-}
-.kbb-fbt-item.is-main{border-color:var(--blush);background:var(--pink-soft)}
-.kbb-fbt-item img,
-.kbb-fbt-item .ph-fallback{
-    width:var(--fbt-thumb);
-    height:var(--fbt-thumb);
-    object-fit:cover;
-    border-radius:10px;
-    display:block;
-}
-/* THE NAME IS CLAMPED TO EXACTLY THE LINES ITS TRACK RESERVES. Two lines
-   reserved and three lines of text is an item taller than the one beside it,
-   which is the defect measured above; two reserved and one line of text is the
-   18px item. The clamp and the track read the same custom property so they
-   cannot drift apart. */
-.kbb-fbt-name{
-    display:-webkit-box;
-    -webkit-line-clamp:var(--fbt-name-lines);
-    -webkit-box-orient:vertical;
+    margin:14px calc(50% - 50vw) 0;
+    width:100vw;
+    max-width:100vw;
+    padding:13px 0 15px;
+    border-radius:0;
     overflow:hidden;
-    font-size:var(--fbt-name-fs);
-    line-height:var(--fbt-name-lh);
-    color:var(--ink-2);
 }
-.kbb-fbt-price{
-    font-size:var(--fbt-price-fs);
-    /* A LENGTH, not a ratio: the price row must not follow the type inside it.
-       Declared as a unitless 1.4 the struck/sale pair took a taller line box
-       than a plain price and put a second height back on the strip -- the same
-       pixel the shared card's `.cp` paid for. */
-    line-height:calc(var(--fbt-price-fs) * var(--fbt-price-lh));
-    font-weight:700;
-    color:var(--pink-deep);
+/* The cart rail's slow colour wash, on a layer of its own so the cards above
+   it stay opaque and the animation repaints nothing else. */
+.kbb-fbt.bt::before{
+    content:"";position:absolute;inset:0;z-index:0;
+    background:linear-gradient(115deg,#FFEDF3,#FFF6EC,#EFF9F3,#F4EFFC,#FFEDF3);
+    background-size:280% 280%;
+    animation:btdrift 26s ease-in-out infinite;
 }
-/* The checkbox sits ON the picture rather than in the flow: in the flow it was
-   an inline box on the name's first line and pushed the name off its own track. */
-.kbb-fbt-cb{
-    position:absolute;
-    inset-block-start:calc(var(--fbt-pad) + 5px);
-    inset-inline-start:calc(var(--fbt-pad) + 5px);
-    width:17px;
-    height:17px;
-    margin:0;
-    accent-color:var(--pink);
-    cursor:pointer;
-}
-/* Centred on the THUMBNAIL and not on the item, so it stays put when the name
-   track changes size. */
-.kbb-fbt-plus{
-    align-self:flex-start;
-    padding-block-start:calc(var(--fbt-pad) + var(--fbt-thumb) / 2 - .6em);
-    font-size:17px;
-    font-weight:600;
-    color:var(--muted);
-    user-select:none;
-}
-.kbb-fbt-foot{
-    display:flex;
-    flex-wrap:wrap;
-    align-items:center;
-    gap:14px;
-    margin-block-start:16px;
-}
-.kbb-fbt-total{font-size:14px;color:var(--ink-2)}
-.kbb-fbt-sum{font-size:17px;color:var(--pink-deep)}
-.kbb-fbt-add{
-    background:var(--pink);
-    color:#fff;
-    border-radius:var(--r-s,8px);
-    padding:12px 20px;
-    font-size:13px;
-    font-weight:600;
-    letter-spacing:.01em;
-    transition:background .18s var(--ease);
-}
-.kbb-fbt-add:hover{background:var(--pink-deep)}
+@keyframes btdrift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@media (prefers-reduced-motion:reduce){.kbb-fbt.bt::before{animation:none}}
+.kbb-fbt.bt > *{position:relative;z-index:1}
+.kbb-fbt.bt h2{font-size:14px;font-weight:600;letter-spacing:0;margin:0 0 10px;padding:0 14px}
 
-/* ── TWO BUNDLE TILES ACROSS A PHONE, NOT ONE ─────────────────── Lane CARD ──
-   Measured at 320: the content box inside `.kbb-fbt` is 230px, and two tiles at
-   the desktop thumbnail cost 2×(90+20) + 10 gap + the `+` and its two gaps ≈
-   254 — so the strip wrapped to ONE TILE PER ROW and the block ran to four
-   stacked rows. A bundle the shopper cannot see as a bundle is most of what
-   this module is for.
+.bt-rail{
+    display:flex;gap:var(--bt-gap);overflow-x:auto;
+    padding:2px 14px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity;scroll-padding-inline:14px;
+}
+.bt-rail::-webkit-scrollbar{display:none}
 
-   The thumbnail is the only number that moves, and every track above is a
-   calc() over its own row, so the reservation follows it and the heights stay
-   equal — re-measured after: one height at 320, 390 and 1280. Nothing else in
-   the block is width-dependent. */
-@media (max-width:400px){
-    .kbb-fbt-items{--fbt-thumb:76px;--fbt-pad:8px}
-    .kbb-fbt-plus{font-size:15px}
+/* .cpg-card, verbatim: a fraction of the rail, not a pixel width. */
+.bt-card{
+    position:relative;
+    flex:0 0 calc((100% - 14px - (7px * (var(--cpg-per,4.5) - 1))) / var(--cpg-per,4.5));
+    background:#fff;border:1px solid var(--line-2);border-radius:9px;padding:5px;min-width:0;
+    scroll-snap-align:start;
+}
+.bt-card .im{
+    position:relative;aspect-ratio:1;border-radius:6px;display:grid;place-items:center;
+    color:#fff;font-weight:500;background-size:cover;background-position:center;
+    font-size:clamp(11px,3.6vw,17px);margin-bottom:var(--cpg-rec-img-gap,5px);cursor:pointer;
+}
+.bt-card .nm{
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;
+    font-size:clamp(8px,2.45vw,10.5px);font-weight:var(--cpg-rec-bold,400);
+    line-height:var(--cpg-rec-lh,1.25);min-height:calc(var(--cpg-rec-lh,1.25) * 2em);
+    margin:0 0 var(--cpg-rec-gap,2px);color:var(--ink-2);
+    -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 0.55em),rgba(0,0,0,.35) 100%);
+    mask-image:linear-gradient(to bottom,#000 calc(100% - 0.55em),rgba(0,0,0,.35) 100%);
+}
+.bt-card .pr{display:block;font-size:clamp(8.5px,2.6vw,11px);line-height:var(--cpg-rec-lh,1.25);font-weight:var(--cpg-rec-price-bold,400);color:var(--ink)}
+.bt-card .pr .cwas{display:inline;margin:0;margin-inline-start:3px;color:var(--muted);text-decoration:line-through;font-size:.9em}
+.bt-card .lk{display:block;color:inherit}
+
+/* ── THE TICK: a real checkbox, laid over the whole picture ─────────────────
+   The input covers the picture (opacity 0), so a thumb anywhere on the photo
+   ticks it; the circle is what it looks like. Green with a white tick when on
+   (the shop's --green, the colour of the cart rail's "+"), an empty white ring
+   with a grey edge when off. */
+.bt-cb{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:2}
+.bt-cb:disabled{cursor:default}
+.bt-tick{
+    position:absolute;top:4px;inset-inline-end:4px;z-index:1;
+    width:var(--bt-tick);height:var(--bt-tick);border-radius:50%;
+    display:grid;place-items:center;color:#fff;background:#fff;
+    border:1.5px solid rgba(42,34,40,.40);box-shadow:0 1px 3px rgba(42,34,40,.18);
+    pointer-events:none;transition:background .15s,border-color .15s;
+}
+.bt-tick svg{width:64%;height:64%;opacity:0;transform:scale(.5);transition:opacity .15s,transform .18s}
+.bt-cb:checked + .bt-tick{background:var(--green);border-color:var(--green)}
+.bt-cb:checked + .bt-tick svg{opacity:1;transform:none}
+.bt-cb:focus-visible + .bt-tick{outline:2px solid var(--pink);outline-offset:2px}
+/* Cleared: the picture washes out under a white veil and the words dim — the
+   tick ring stays crisp above the veil, so it reads as "tap to put it back". */
+.bt-card.is-off .im::after{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,.55)}
+.bt-card.is-off .lk{opacity:.55}
+.bt-card.is-oos .bt-tick{opacity:.45}
+
+/* ── THE "+" BETWEEN TWO CARDS ──────────────────────────────────────────────
+   Inside the picture, at its vertical middle, and moved back by this card's
+   own padding (5px) and border (1px), half the gap and half itself — so its
+   centre is the centre of the gap, at the height of the pictures' centres. */
+.bt-plus{
+    position:absolute;top:50%;z-index:3;
+    inset-inline-start:calc(-6px - var(--bt-gap) / 2 - var(--bt-plus) / 2);
+    width:var(--bt-plus);height:var(--bt-plus);margin-top:calc(var(--bt-plus) / -2);
+    border-radius:50%;background:#fff;color:var(--ink-2);border:1px solid var(--line);
+    box-shadow:0 1px 4px rgba(42,34,40,.14);display:grid;place-items:center;pointer-events:none;
+}
+.bt-plus svg{width:58%;height:58%}
+
+/* ── THE TOTAL AND THE BUTTON ───────────────────────────────────────────────
+   The button is the buy box's outlined "Buy it now" (.buynow: 13px corners,
+   a 1.5px edge, 700 weight), in the shop's pink. */
+.bt-foot{display:flex;flex-direction:column;gap:9px;padding:12px 14px 0}
+.bt-total{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0;font-size:13px;color:var(--ink-2)}
+.bt-total b{font-size:15.5px;font-weight:700;color:var(--ink)}
+.bt-buy{
+    width:100%;height:48px;border-radius:13px;border:1.5px solid var(--pink);background:#fff;
+    color:var(--pink-deep);font:inherit;font-size:14.5px;font-weight:700;letter-spacing:.005em;
+    display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;
+    transition:background .15s,color .15s,border-color .15s;
+}
+.bt-buy:hover:not(:disabled){background:var(--pink);color:#fff}
+.bt-buy:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px}
+.bt-buy:disabled{border-color:var(--line);color:var(--muted);cursor:default}
+.bt-buy.is-busy{cursor:progress}
+.bt-spin{display:none;width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-inline-end-color:transparent;animation:btspin .7s linear infinite}
+.bt-buy.is-busy .bt-spin{display:block}
+@keyframes btspin{to{transform:rotate(360deg)}}
+
+/* ── LAPTOP: a rounded panel, the cards and the button side by side ─────────
+   From the cart page's own desktop breakpoint (1024px shipped). The cards take
+   --bt-d-card, which is the cart's laptop card width worked out from the cart
+   page's column settings; the row never needs arrows at three to six cards. */
+@media (min-width:1024px){
+    .kbb-fbt.bt{margin:34px 0 0;width:auto;max-width:none;border-radius:14px;padding:16px}
+    .kbb-fbt.bt::before{border-radius:inherit}
+    .kbb-fbt.bt h2{font-size:17px;padding:0 14px;margin-block-end:12px}
+    .bt-row{display:flex;align-items:center;gap:20px}
+    .bt-rail{flex:0 1 auto;min-width:0}
+    .bt-card{flex:0 0 var(--bt-d-card,120px)}
+    .bt-foot{flex:1 1 260px;max-width:340px;padding:0 14px 0 0}
+    .bt-total{font-size:13.5px}
+    .bt-total b{font-size:17px}
+    .bt-buy{height:50px}
 }
 
 /* ── IMPORTED COPY HAS PARAGRAPHS NOW, SO THEY NEED A GAP. (Lane PI-A) ───────
