@@ -3732,7 +3732,7 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 29 | Category and brand pages load more on scroll by default (no pager) | PR | **merged** |
 | 30 | Grid card hover effects off on phones by default | PR | **merged** |
 | 31 | Full control of grid card inner spacing (image/title/price/button) and font weights, per device | PR | **merged** |
-| 32 | "You may also like" as a carousel: brand + category mixed by default, rule controls, manual selection per product | PS | in progress |
+| 32 | "You may also like" as a carousel: brand + category mixed by default, rule controls, manual selection per product | PS | **merged** — Appearance → Product page → "You may also like"; per-product picks in Catalog → Products → edit → "You may also like" |
 | 33 | Category banners, titles and descriptions from the old site as the category page header | PT (exporter 1.11.0) | **merged** |
 | 34 | Internal links in descriptions/articles/blocks still pointing to kbeautybliss.com → this shop's URLs | PT | **merged** |
 | 35 | Order page: billing/shipping/customer could not be edited ("Edit" was a bare link; shipping opened raw JSON); "Order history" went to all customers; a green "Paid with …" panel; no Capture box; "Mark as paid" with a reference when an unpaid order moves to a paid status | PU | **merged** — capture kept only for real Tabby/Tamara authorisations; COD amber until collected |
