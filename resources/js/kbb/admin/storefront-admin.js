@@ -29,7 +29,7 @@
  *  - Nothing measures an element. The preview's scale comes from
  *    window.innerWidth, which is a number the browser already has.
  */
-import css from '../../../css/kbb/kbb-admin-layer.css?inline';
+import css from './storefront-admin.css?inline';
 
 const HINT = 'kbb_ah';
 const STORE_KEY = 'kbb_adm_bar';

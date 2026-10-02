@@ -56,7 +56,23 @@
     var base = window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api';
     return fetch(base + path, {
       credentials: 'same-origin', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-    }).then(function(r){ return r.ok ? r.json() : null; });
+    }).then(function(r){
+      if (r.ok) return r.json();
+      return r.json().catch(function(){ return null; }).then(function(body){
+        /* A 404 whose JSON says nothing at all -- Laravel's {"message": ""} --
+           is the compiled route table not knowing the path; a controller's own
+           404 carries a message or an error, and that is not ours to explain. */
+        var silent = r.status === 404 && !(body && (body.message || body.error));
+        say(silent
+          ? 'The Brands endpoints are not in this server\'s compiled route table yet. Clear the route cache (Platform \u2192 Cache) and reload.'
+          : 'The brand could not be opened: ' + ((body && (body.message || body.error)) || ('the server answered ' + r.status)) + '.');
+        return null;
+      });
+    });
+  }
+
+  function say(text){
+    try { if (typeof window.toast === 'function') window.toast(text, 'bad'); } catch (e) {}
   }
 
   function open(){

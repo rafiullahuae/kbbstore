@@ -622,7 +622,7 @@ describe('the bar\'s CSS', function () {
          * panel's close button. If a sheet moves its own offset, this goes red
          * and the rule here has to move with it.
          */
-        $css = (string) file_get_contents(resource_path('css/kbb/kbb-admin-layer.css'));
+        $css = (string) file_get_contents(resource_path('js/kbb/admin/storefront-admin.css'));
         $shop = (string) file_get_contents(resource_path('css/kbb/kbb-shop.css'));
         $kbb = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
         $cart = (string) file_get_contents(resource_path('css/kbb/kbb-cart.css'));

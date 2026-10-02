@@ -2,7 +2,11 @@
  * The storefront admin layer: the thin bar and the quick-edit pencil. (Lane RA)
  *
  * NEVER LOADED FOR A SHOPPER. This file is not a Vite entry and no page links
- * it: resources/js/kbb/admin/storefront-admin.js imports it as a string
+ * it, which is also why it lives HERE beside its script and not in
+ * resources/css/kbb: that directory is the shop's stylesheets, and
+ * BuiltCssIsCurrentTest rightly expects every custom property declared there
+ * to be in a built CSS bundle. This one ships inside the admin JS chunk.
+ * resources/js/kbb/admin/storefront-admin.js imports it as a string
  * (`?inline`) and writes it into one <style> element, and that chunk is only
  * fetched when the administrator's hint cookie is present and the
  * authenticated context endpoint answered yes.
