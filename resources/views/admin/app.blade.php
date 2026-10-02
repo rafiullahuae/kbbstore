@@ -20324,7 +20324,10 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     s.textContent =
       '.cplkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}' +
       '@media(max-width:900px){.cplkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
-      '@media(max-width:430px){.cplkpis{grid-template-columns:minmax(0,1fr)}}' +
+      /* Phones keep two cards a row (the owner, 2 October 2026: "in mobile I
+         want them in two rows maximum"); four stacked cards pushed the list a
+         full screen down. */
+      '@media(max-width:430px){.cplkpis{gap:10px}.cplkpi{padding:13px}.cplkpi .v{font-size:18px}}' +
       '.cplkpi{min-width:0;overflow-wrap:anywhere}' +
       '.cplkpi .v{font-size:21px;font-weight:700;margin-top:6px;line-height:1.15}' +
       '.cplkpi .k{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}' +
@@ -20356,6 +20359,18 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
       '@media(max-width:900px){.cplhint{display:block}}' +
       '.cpltools{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}' +
       '.cpltools .search{flex:1 1 220px;min-width:0}' +
+      /* On desktop the row wrapper is invisible to layout (display:contents),
+         so the toolbar is exactly what it was. On phones the search keeps its
+         own full-width row and Sort / Filters / Customize columns / Export
+         sit in ONE row that swipes sideways, instead of stacking. */
+      '.cpltoolrow{display:contents}' +
+      '@media(max-width:900px){.cpltools .search{flex:1 1 100%}' +
+        '.cpltoolrow{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;width:100%;' +
+        '-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}' +
+        '.cpltoolrow::-webkit-scrollbar{display:none}' +
+        '.cpltoolrow>*{flex:0 0 auto;white-space:nowrap}}' +
+      /* "In stock" and every other pill stay on one line in the table. */
+      '.cplscroll .pill{white-space:nowrap}' +
       '.cpltools .inp{max-width:100%}' +
       '.cplgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}' +
       '.cplbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}' +
@@ -20587,6 +20602,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
           ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>') +
           '<input id="cplSearch" placeholder="Search ' + (d.total || 0) + ' products by name, SKU, brand or Woo ID…" value="' + sesc(CP.search) + '">' +
         '</div>' +
+        '<div class="cpltoolrow">' +
         '<select class="inp" id="cplSort" style="max-width:220px">' +
           CP_SORTS.map(function(s){
             return '<option value="' + s[0] + '"' + (CP.sort === s[0] ? ' selected' : '') + '>' + sesc(s[1]) + '</option>';
@@ -20595,6 +20611,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
         '<button class="btn ghost" id="cplAdvBtn">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Filters ' + (CP.adv ? '▴' : '▾') + '</button>' +
         '<button class="btn ghost" id="cplColsBtn">Customize columns ' + (CP.colsOpen ? '▴' : '▾') + '</button>' +
         '<button class="btn ghost" id="cplExport">' + ic('<path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 19h16"/>') + ' Export CSV</button>' +
+        '</div>' +
       '</div>' +
       (CP.adv ? cpAdvanced() : '') +
       (CP.colsOpen ? cpColumnsPanel() : '') +
