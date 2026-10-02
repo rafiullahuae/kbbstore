@@ -237,6 +237,9 @@ class Seo
         if ($desc)  $out[] = '<meta property="og:description" content="' . $e($desc) . '">';
         if ($url)   $out[] = '<meta property="og:url" content="' . $e($url) . '">';
         if ($image) $out[] = '<meta property="og:image" content="' . $e($image) . '">';
+        foreach (self::productImageMeta($type, $ctx, $image) as $prop => $value) {
+            $out[] = '<meta property="' . $prop . '" content="' . $e($value) . '">';
+        }
 
         // og:product price/availability. These are what Meta's catalogue and
         // Pinterest's rich pins read — og:type=product was already being
@@ -1063,6 +1066,76 @@ class Seo
      * Left alone if it already carries a scheme or is protocol-relative, so a
      * CDN or an absolute og_default_image still works.
      */
+    /**
+     * og:image:width, og:image:height and og:image:alt for a PRODUCT's own
+     * picture.                                                       (Lane PW)
+     *
+     * The owner asked that every share "carry proper url, short description,
+     * image etc.", and Facebook, WhatsApp and LinkedIn build that preview card
+     * from these tags rather than from anything the share link carries. Without
+     * the size, Facebook draws nothing on the FIRST share of a page it has not
+     * scraped before — it fetches the picture asynchronously and the card goes
+     * out bare. The alt is the product's name, which is what the picture is of.
+     *
+     * Only when the page named its own picture (`$ctx['image']`). The site-wide
+     * og_default_image fallback is a logo, not this product, so it gets neither
+     * the product's name as its alt nor a measurement here. The size is read
+     * off the file on this site's disk (ImageVariants::sizeOf()) — a picture on
+     * another host is published without one rather than with a guess.
+     *
+     * Property names are constants; values are escaped by the caller.
+     *
+     * @return array<string, string>
+     */
+    private static function productImageMeta(string $type, array $ctx, ?string $image): array
+    {
+        $own = trim((string) ($ctx['image'] ?? ''));
+
+        if ($type !== 'product' || $image === null || $own === '') {
+            return [];
+        }
+
+        $out = [];
+        $size = ImageVariants::sizeOf($own);
+
+        if ($size !== null) {
+            $out['og:image:width'] = (string) $size[0];
+            $out['og:image:height'] = (string) $size[1];
+        }
+
+        $name = trim((string) ($ctx['product']['name'] ?? ''));
+
+        if ($name !== '') {
+            $out['og:image:alt'] = RichText::toText($name);
+        }
+
+        return $out;
+    }
+
+    /**
+     * The address and the picture a product page publishes, for its share
+     * bar.                                                           (Lane PW)
+     *
+     * The SAME canonical() and absolute() render() runs, on the same base, so
+     * the link a shopper shares is the og:url the <head> names — a share and a
+     * crawler land on one address. The picture is the page's OWN image only:
+     * og_default_image is deliberately not consulted, because a Pinterest pin
+     * of the shop's logo is not a pin of this product, and App\Support\
+     * ProductShare drops `media` altogether when this is null.
+     *
+     * @return array{url: ?string, image: ?string}
+     */
+    public static function shareTargets(array $ctx): array
+    {
+        $s = SeoSettings::map();
+        $base = rtrim(SeoSettings::firstFilled($s['site_url'] ?? null, (string) config('app.url')), '/');
+
+        return [
+            'url' => self::canonical($ctx['url'] ?? null, $base),
+            'image' => self::absolute(isset($ctx['image']) ? (string) $ctx['image'] : null, $base),
+        ];
+    }
+
     private static function absolute(?string $path, string $base): ?string
     {
         if ($path === null || $path === '') {

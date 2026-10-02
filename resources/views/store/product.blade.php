@@ -786,6 +786,7 @@
         </div>
         @endif
 
+@include('partials.product.delivery-box')
         <div class="buyrow">
           <div class="{{ $modules->classFor('quantity') }} qty"><button type="button" data-q="-1">−</button><span id="qtyVal">1</span><button type="button" data-q="1">+</button><input type="hidden" name="quantity" id="qtyInput" value="1"></div>
           <button class="addcart" id="mainAdd" type="submit" @disabled($out)><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg> {{ $out ? __('store.product.sold_out_tag') : __('store.product_card.add_to_cart') }}</button>
@@ -793,6 +794,7 @@
         @unless ($modules->hidden('buynow'))
 <button class="buynow" type="submit" data-buynow="1" @disabled($out)>{{ __('store.product.buy_now') }}</button>
 @endunless
+@include('partials.product.trust-share-stack')
       </form>
 
       {{-- "Tell me when this is back" (Lane EN).

@@ -328,6 +328,22 @@ class ProductController extends Controller
                     ],
                 ];
 
+                /*
+                 * THE TITLE AS TEXT, NOT AS THE ESCAPED SECTION. (Lane PW)
+                 *
+                 * The layout's fallback reads `@section('title', …)`, and the
+                 * short form of @section ESCAPES its value — so a product named
+                 * `Lift & Glow "Serum"` reached Seo::render() as
+                 * `Lift &amp; Glow &quot;Serum&quot;`, which render() escaped
+                 * again: <title>, og:title and twitter:title all published
+                 * `&amp;amp;`, and a WhatsApp or Facebook preview card read
+                 * "Lift &amp; Glow". Handing the same string over unescaped is
+                 * the whole fix; render() is the one place it is escaped. For
+                 * a name with no & < > " ' in it this is byte-identical to what
+                 * the layout computed. ProductTrustShareTest pins it.
+                 */
+                $ctx['title'] = \App\Support\ProductTitle::head($product->brand?->t('name') ?? '', $product->t('name'));
+
                 if (!empty($override['title'])) {
                     $ctx['title'] = $override['title'];
                     $ctx['title_is_final'] = true;

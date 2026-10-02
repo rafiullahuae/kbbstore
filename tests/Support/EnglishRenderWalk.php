@@ -2122,6 +2122,54 @@ final class EnglishRenderWalk
                 'hits' => 3,
                 'perPage' => 3,
             ],
+
+            /*
+             * THE PRODUCT PAGE'S DELIVERY BOX, "AUTHENTICITY GUARANTEED" AND
+             * SHARE BAR.                                              (Lane PW)
+             *
+             * The owner: "on product page i want two things further, one is the
+             * same yellowish delivery box ... and another under add to cart
+             * button, Authenticity guaranteed line ... under this section, i
+             * want a nice bar of share it". He asked for all three, so all
+             * three ship ON (CLAUDE.md, the 30 September reversal) and the
+             * walk's product page gains them.
+             *
+             * THREE INSERTIONS ON ONE PAGE AND NOTHING ELSE, read off the diff:
+             *
+             *   <head>   one Vite tag group for kbb-pdp-trust.css and
+             *            pdp-trust.js, appended to the `styles` stack after the
+             *            sheets that were already there. Pushed by
+             *            partials/product/trust-share-assets under @once.
+             *   buy box  the delivery box, between the dispatch line and the
+             *            buy row, ending in its own `<!--/pts-del-->` marker.
+             *   form     the flex wrapper holding the authenticity line and the
+             *            share bar, after the button row and before </form>,
+             *            ending in `<!--/pts-stack-->`.
+             *
+             * Each partial ends in a marker comment so these cuts stop at the
+             * block's OWN end rather than at "the next </div>", which on markup
+             * three levels deep would leave a closing tag behind or swallow a
+             * neighbour's. Every byte either side — the stock line, the buy
+             * row, Buy it now, the trust lines, the payment chips, the rest of
+             * the page and every other page in the walk — is still compared.
+             * Quick view draws none of them, by choice: it is a glance at a
+             * product, not a place to share it from.
+             */
+            'the product trust and share assets in <head> (Lane PW)' => [
+                'pattern' => '#    <link rel="preload" as="style" href="[^"]*/kbb-pdp-trust-[^"]+" /><link rel="modulepreload" href="[^"]*/pdp-trust-[^"]+" /><link rel="stylesheet" href="[^"]*/kbb-pdp-trust-[^"]+" /><script type="module" src="[^"]*/pdp-trust-[^"]+"></script>#',
+                'hits' => 1,
+                'perPage' => 1,
+            ],
+            'the product delivery box (Lane PW)' => [
+                'pattern' => '#<div class="pts-del" data-pts="del" .*?<!--/pts-del-->\n#s',
+                'hits' => 1,
+                'perPage' => 1,
+            ],
+            'the authenticity line and share bar under Add to cart (Lane PW)' => [
+                'pattern' => '#<div class="pts-stack">\n.*?</div><!--/pts-stack-->\n#s',
+                'hits' => 1,
+                'perPage' => 1,
+            ],
         ];
     }
 
