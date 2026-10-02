@@ -97,6 +97,12 @@
   overflow:hidden;
   display:flex;
   align-items:center;
+  /* kbb.css gives every <section> `padding:52px 0`, and this is a <section>:
+     104px the height and inner-space sliders could not reach, and the words
+     floated mid-box instead of sitting where "Where the words sit" says
+     (2.60.350, measured: 52px above and below the text block). The inner
+     block's own padding is the only space inside the header. */
+  padding:0;
   min-height:var(--kbb-th-h-now);
   /* Exactly the content box of the page's .wrap (kbb.css: max-width
      --site-max, a --site-gutter each side), so the header's edges line up

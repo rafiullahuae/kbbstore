@@ -83,3 +83,20 @@ it('clears the titles the import already wrote', function () {
     $c->refresh();
     expect($c->header_title)->toBeNull()->and($c->header_subtitle)->toBeNull();
 });
+
+it('takes no padding from the shop-wide section rule', function () {
+    /*
+     * kbb.css: `section{padding:52px 0}`. The header is a <section>, so every
+     * header was 104px taller than its Height setting and its words floated in
+     * the middle whatever "Where the words sit" said -- measured in Chromium:
+     * 52px above and below the text block at 390. The owner's live screenshot
+     * of /collections/skincare/ shows exactly that box.
+     *
+     * MUTATION, RUN: delete `padding:0;` from the .kbb-th rule -- red.
+     */
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-title-header.css'));
+    preg_match('/\n\.kbb-th\{(.*?)\n\}/s', $css, $m);
+
+    expect($m[1] ?? '')->toContain("\n  padding:0;")
+        ->and((string) file_get_contents(resource_path('css/kbb/kbb.css')))->toContain('section{padding:52px 0}');
+});

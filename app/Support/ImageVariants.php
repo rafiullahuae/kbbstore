@@ -1589,6 +1589,30 @@ final class ImageVariants
         return true;
     }
 
+    /**
+     * The same split() and insidePublicRoot() every method here runs, for a
+     * caller that writes a derivative of its own.                    (Lane QB)
+     *
+     * App\Support\ShareImage makes the JPEG behind og:image and needs exactly
+     * the guarantees this class already gives — no "..", no other origin, no
+     * cache-as-input, a real file inside this web root after realpath — so it
+     * asks here rather than growing a second, drifting copy of them.
+     *
+     * @return array{prefix: string, rel: string, fsRel: string, file: string}|null
+     */
+    public static function locate(string $image): ?array
+    {
+        $parts = self::split($image);
+
+        if ($parts === null) {
+            return null;
+        }
+
+        $file = self::insidePublicRoot($parts[2]);
+
+        return $file === null ? null : ['prefix' => $parts[0], 'rel' => $parts[1], 'fsRel' => $parts[2], 'file' => $file];
+    }
+
     /* ------------------------------------------------------------------ */
 
     /**

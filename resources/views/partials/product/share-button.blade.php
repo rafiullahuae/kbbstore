@@ -12,4 +12,8 @@
     The glyph is a constant: three dots joined by two lines (top-right,
     middle-left, bottom-right), stroked in currentColor at 22px. The tap target
     is 40px square in kbb-product.css.
---}}<button type="button" class="pdp-share-btn" data-share-open aria-haspopup="dialog" aria-controls="pdpShareSheet" aria-label="{{ __('store.product.share_open') }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="m8.3 10.8 7.4-4.4M8.3 13.2l7.4 4.4"/></svg></button>
+
+    Drawn only while Appearance → Product page → Share → "Show the share icon
+    beside the title" is on (integrator, at the QA/QB merge: without this the
+    switch saved and moved nothing).
+--}}@if (app(\App\Services\ProductTrustShare::class)->on('share_on'))<button type="button" class="pdp-share-btn" data-share-open aria-haspopup="dialog" aria-controls="pdpShareSheet" aria-label="{{ __('store.product.share_open') }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="m8.3 10.8 7.4-4.4M8.3 13.2l7.4 4.4"/></svg></button>@endif

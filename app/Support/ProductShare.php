@@ -8,29 +8,50 @@ use App\Models\Product;
 use App\Services\ProductTrustShare;
 
 /**
- * The share bar's links, built on the server from the product.       (Lane PW)
+ * The share sheet's links, built on the server from the product.
+ *                                              (Lane PW; the sheet, Lane QB)
  *
  * The owner: "each share icon must carry proper url, short description, image
- * etc. and other things if you recommend any."
+ * etc. and other things if you recommend any." And, of the old row: "the share
+ * icons don't bring the image along with the message."
  *
- * ── WHAT EACH NETWORK IS GIVEN, AND WHY NOT MORE ────────────────────────────
+ * ── THE PICTURE TRAVELS AS THE LINK'S PREVIEW, NOT AS AN ATTACHMENT ────────
  *
- *   WhatsApp, Telegram   text = "<name> – <price>" ⏎ <blurb> ⏎ <url>. Both put
- *                        the link in the message body and unfurl it from the
- *                        page's own Open Graph tags.
- *   Facebook             u = url, and nothing else: Facebook's sharer ignores
- *                        every other parameter and reads og:* off the page.
- *   X                    text = "<name> – <price>", url = url. X counts a link
- *                        as 23 characters whatever its length, so the text is
- *                        capped well inside 280 with room for it.
- *   Pinterest            url, media = the ABSOLUTE main photograph,
- *                        description = name + blurb. No photograph, no `media`
- *                        — an empty one makes Pinterest fall back to scraping
- *                        the page and choosing a logo.
- *   LinkedIn             url, which it unfurls from og:* like Facebook.
- *   Email                subject = name, body = blurb ⏎⏎ url.
- *   Copy link            the url.
- *   More (phones)        navigator.share({title, text, url}).
+ * A wa.me, t.me, sms: or mailto: link carries TEXT and nothing else — no web
+ * page can hand WhatsApp a file through a link. The picture a friend sees is
+ * the link PREVIEW the sender's app draws from the page's og:image, which is
+ * now a JPEG made for exactly that (App\Support\ShareImage). So every message
+ * below makes sure the product link is IN it, on its own line, and is the ONLY
+ * address in it — WhatsApp previews the first link it finds, and a blurb that
+ * happened to contain one would steal the preview. "More" is the one path that
+ * sends the actual picture file, through the phone's own share menu
+ * (navigator.share with files), where the phone allows it.
+ *
+ * ── WHAT EACH PLATFORM IS GIVEN ─────────────────────────────────────────────
+ *
+ *   WhatsApp    text = "<name> – <price>" ⏎ <blurb> ⏎ <url>.
+ *   Messenger   phone: fb-messenger://share/?link=<url> (the app's own share
+ *               composer). Laptop: Facebook's sharer, whose window has "Send
+ *               in Messenger" — Facebook's web Send dialog needs an app id this
+ *               shop does not have. The script picks by `(pointer:coarse)`.
+ *   Pinterest   url, media = the ABSOLUTE main photograph (the original, not
+ *               the 1.91:1 share card: a pin wants the tall/square picture),
+ *               description = name + blurb. No photograph, no `media`.
+ *   Telegram    url, text = "<name> – <price>" ⏎ <blurb>. Telegram puts the
+ *               link first and previews it.
+ *   Snapchat    phone: https://www.snapchat.com/scan?attachmentUrl=<url> —
+ *               the deep link Snap's Creative Kit for Web opens, which lands in
+ *               the app's camera with the link attached to a Snap. Laptop:
+ *               https://www.snapchat.com/share?link=<url> — Snap's documented
+ *               Share Sheet link for Snapchat for Web.
+ *   Messages    sms:?&body=<name – price ⏎ url>. `?&` is the form both iOS
+ *               (which wants `&body=`) and Android (which wants `?body=`) read.
+ *   Email       subject = name, body = blurb ⏎⏎ url.
+ *   Copy        the url.
+ *   More        navigator.share({files: [the JPEG], title, text}) where
+ *               navigator.canShare says files are accepted, else
+ *               {title, text, url}.
+ *   Facebook    u = url (off by default). X: text + url. LinkedIn: url.
  *
  * ── PLAIN TEXT, THEN ENCODED ONCE ───────────────────────────────────────────
  *
@@ -45,10 +66,9 @@ use App\Services\ProductTrustShare;
  *
  * `utm_source=<network>&utm_medium=social&utm_campaign=product_share` is
  * appended to the link a visitor carries away when Appearance → Product page →
- * Trust · Share bar → "Tag shared links for analytics" is on. It is never added
- * to the canonical, og:url or anything in the <head>: the canonical is what
- * search engines index, and a crawler following a shared link lands on a page
- * whose canonical names the clean address.
+ * Share → "Tag shared links for analytics" is on. It is never added to the
+ * canonical, og:url or anything in the <head>. It also makes each platform's
+ * URL distinct, so each app keeps its own preview cache of the page.
  *
  * NO QUERY. Everything here is read off the product the page already loaded
  * and the settings snapshot it already took.
@@ -62,22 +82,23 @@ final class ProductShare
     private const X_TEXT = 240;
 
     /**
-     * The buttons, in order, for the switches that are on.
+     * The sheet's tiles, in his order, for the switches that are on. `native`
+     * ("More") is not here — it has no href; see native().
      *
      * @param  array{name: string, headline: string, blurb: string, url: string, image: ?string}  $facts  from facts()
-     * @return list<array{key: string, name: string, href: string, colour: string, external: bool}>
+     * @return list<array{key: string, name: string, href: string, app: ?string, colour: string, external: bool}>
      */
     public static function links(array $facts, ProductTrustShare $ts): array
     {
         $out = [];
 
-        foreach (ProductTrustShare::NETWORKS as $key => [$name, $colour]) {
-            if (! $ts->on('share_'.$key)) {
+        foreach ($ts->shareNetworks() as $key) {
+            if ($key === 'native' || ! isset(ProductTrustShare::NETWORKS[$key])) {
                 continue;
             }
 
+            [$name, $colour] = ProductTrustShare::NETWORKS[$key];
             $url = $ts->on('share_utm') ? self::tag($facts['url'], $key) : $facts['url'];
-
             $href = self::href($key, $url, $facts);
 
             if ($href === null) {
@@ -88,12 +109,24 @@ final class ProductShare
                 'key' => $key,
                 'name' => $name,
                 'href' => $href,
+                'app' => self::appHref($key, $url),
                 'colour' => $colour,
-                'external' => ! in_array($key, ['email', 'copy'], true),
+                'external' => ! in_array($key, ['email', 'copy', 'sms'], true),
             ];
         }
 
         return $out;
+    }
+
+    /**
+     * Where "More" sits among the tiles (its index in the drawn order), or
+     * null when it is switched off.
+     */
+    public static function nativeAt(ProductTrustShare $ts): ?int
+    {
+        $i = array_search('native', $ts->shareNetworks(), true);
+
+        return $i === false ? null : (int) $i;
     }
 
     /**
@@ -116,7 +149,7 @@ final class ProductShare
      *
      * @param  array<string, mixed>  $seoCtx  the page's own SEO context, so the
      *   link and the picture are the canonical and og:image the <head> names.
-     * @return array{name: string, headline: string, blurb: string, url: string, image: ?string}
+     * @return array{name: string, headline: string, blurb: string, url: string, image: ?string, share_image: ?string, share_path: ?string}
      */
     public static function facts(Product $product, array $seoCtx, int $priceMinor): array
     {
@@ -126,9 +159,11 @@ final class ProductShare
         // SEO layer has none (an install with no site_url and no app.url).
         $url = $targets['url'] ?? url($product->url());
 
-        $name = self::plain((string) $product->t('name'));
+        // No address but the product's own may appear in a message: WhatsApp
+        // previews the FIRST link it finds (Lane QB).
+        $name = self::unlinked(self::plain((string) $product->t('name')));
         $price = $priceMinor > 0 ? Money::plain($priceMinor) : '';
-        $blurb = self::clip(RichText::toText((string) $product->t('short_description')), self::BLURB);
+        $blurb = self::clip(self::unlinked(RichText::toText((string) $product->t('short_description'))), self::BLURB);
 
         return [
             'name' => $name,
@@ -138,8 +173,25 @@ final class ProductShare
             // The product's OWN photograph, absolute, or null. Deliberately
             // not og_default_image: a pin of the shop's logo is not a pin of
             // this product.
-            'image' => $targets['image'],
+            //
+            // Lane QB: a picture the migration could not bring across
+            // (LostPictures — memoised, so the gallery already paid for it) is
+            // no picture: no dead `media` for Pinterest, no broken card.
+            'image' => LostPictures::usable($targets['image']),
+            // Lane QB: what og:image names (the JPEG share card, or the
+            // original until it is made), and the same file root-relative for
+            // the phone share sheet's same-origin fetch, or null.
+            'share_image' => LostPictures::usable($targets['share_image'] ?? $targets['image']),
+            'share_path' => $targets['share_path'] ?? null,
         ];
+    }
+
+    /** Any web address taken out of a sentence, and the spaces it leaves tidied. */
+    private static function unlinked(string $text): string
+    {
+        $text = (string) preg_replace('#\b(?:https?://|www\.)\S+#iu', '', $text);
+
+        return trim((string) preg_replace('/[ \t]{2,}/u', ' ', $text));
     }
 
     /** @param array{name: string, headline: string, blurb: string, url: string, image: ?string} $f */
@@ -159,8 +211,29 @@ final class ProductShare
             ], static fn ($v) => $v !== null && $v !== '')),
             'linkedin' => 'https://www.linkedin.com/sharing/share-offsite/?'.$q(['url' => $url]),
             'telegram' => 'https://t.me/share/url?'.$q(['url' => $url, 'text' => trim($f['headline']."\n".$f['blurb'])]),
+            // Laptop forms; appHref() gives the phone ones.
+            'messenger' => 'https://www.facebook.com/sharer/sharer.php?'.$q(['u' => $url]),
+            'snapchat' => 'https://www.snapchat.com/share?'.$q(['link' => $url]),
+            // `sms:?&body=` — iOS reads `&body=`, Android `?body=`; this is both.
+            'sms' => 'sms:?&'.$q(['body' => trim($f['headline']."\n".$url)]),
             'email' => 'mailto:?'.$q(['subject' => $f['name'], 'body' => trim($f['blurb']."\n\n".$url)]),
             'copy' => $url,
+            default => null,
+        };
+    }
+
+    /**
+     * The phone form of a link, where the platform has an app of its own that
+     * the web form would only reach through a login page. The sheet's script
+     * swaps it in on a `(pointer:coarse)` device.
+     */
+    private static function appHref(string $key, string $url): ?string
+    {
+        $q = static fn (array $params): string => http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+
+        return match ($key) {
+            'messenger' => 'fb-messenger://share/?'.$q(['link' => $url]),
+            'snapchat' => 'https://www.snapchat.com/scan?'.$q(['attachmentUrl' => $url]),
             default => null,
         };
     }
