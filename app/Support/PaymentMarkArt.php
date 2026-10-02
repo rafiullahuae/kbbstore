@@ -109,4 +109,48 @@ final class PaymentMarkArt
     {
         return array_keys(self::MARKS);
     }
+
+    /**
+     * The tabby and tamara marks as the product page's pay-later cards draw
+     * them — Lane QA.
+     *
+     *   "Tabby and Tamara. two columns side by side : Split your purchase into
+     *    monthly payments + Tabby logo AND Installments upto 6 months, no late
+     *    fees! + tamara logo."
+     *
+     * DERIVED FROM THE TWO MARKS ABOVE, NOT DRAWN AGAIN: the wordmark geometry
+     * is the cart's, byte for byte, so there is still one place that knows
+     * what each looks like. Two things differ, both to match the cards on his
+     * screenshot: the ground is a PILL (radius half the height), and tamara's
+     * is the soft pastel gradient with a dark wordmark rather than the cart's
+     * dark plum with a white one. The inline size goes too — the card sizes
+     * the mark with a class.
+     *
+     * Still a constant in every sense rule 5 cares about: no argument reaches
+     * the output except to choose between two literals, so `{!! !!}` prints
+     * nothing a setting wrote. The gradient's id is a literal; the card is
+     * drawn once per page.
+     */
+    public static function payLater(string $method): string
+    {
+        $svg = self::MARKS['pay_'.$method] ?? null;
+
+        if (! in_array($method, ['tabby', 'tamara'], true) || $svg === null) {
+            return '';
+        }
+
+        $svg = (string) preg_replace('/^<svg style="[^"]*"/', '<svg class="pdp-pl-mark"', $svg, 1);
+
+        if ($method === 'tabby') {
+            return str_replace('<rect width="49" height="18.3" rx="3" fill="#3EEBC0"/>', '<rect width="49" height="18.3" rx="9.15" fill="#3EEBC0"/>', $svg);
+        }
+
+        $svg = str_replace(
+            '<rect width="55.5" height="16.3" rx="3" fill="#3B1E5E"/>',
+            '<defs><linearGradient id="kbbTamaraPastel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD9C4"/><stop offset=".5" stop-color="#F7C6E3"/><stop offset="1" stop-color="#C8D4F7"/></linearGradient></defs><rect width="55.5" height="16.3" rx="8.15" fill="url(#kbbTamaraPastel)"/>',
+            $svg,
+        );
+
+        return str_replace('fill="#FFFFFF"', 'fill="#1E1A22"', $svg);
+    }
 }

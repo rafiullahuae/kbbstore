@@ -245,6 +245,11 @@ it('takes the average score off the capsule', function () {
 
 it('takes the review count off the capsule', function () {
     rbgAsAdmin();
+    /* Lane QA: the count ships OFF beside the price ("4.9 and bar, remove
+       count"), behind Appearance → Product page → Mobile sections → "Show the
+       review count beside the rating". This case is about the count's own
+       switch and wording, so it asks for the count first. */
+    app(\App\Services\SettingsService::class)->set('pdpms_rate_count', true);
 
     $product = rbgReviewedProduct();
 
@@ -257,6 +262,11 @@ it('takes the review count off the capsule', function () {
 
 it('changes the count wording, substituting the real number for {n}', function () {
     rbgAsAdmin();
+    /* Lane QA: the count ships OFF beside the price ("4.9 and bar, remove
+       count"), behind Appearance → Product page → Mobile sections → "Show the
+       review count beside the rating". This case is about the count's own
+       switch and wording, so it asks for the count first. */
+    app(\App\Services\SettingsService::class)->set('pdpms_rate_count', true);
 
     $product = rbgReviewedProduct(3);
 
@@ -305,6 +315,11 @@ it('takes the sold note off the inline line', function () {
 
 it('applies a preset by writing the keys the storefront already reads', function () {
     rbgAsAdmin();
+    /* Lane QA: the count ships OFF beside the price ("4.9 and bar, remove
+       count"), behind Appearance → Product page → Mobile sections → "Show the
+       review count beside the rating". This case is about the count's own
+       switch and wording, so it asks for the count first. */
+    app(\App\Services\SettingsService::class)->set('pdpms_rate_count', true);
 
     $product = rbgReviewedProduct();
 

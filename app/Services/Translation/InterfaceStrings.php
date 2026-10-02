@@ -1109,6 +1109,18 @@ final class InterfaceStrings
             'product.trust_pay_later' => 'Tabby & Tamara',
             'product.details_eyebrow' => 'The details',
             'product.details_heading' => 'Product details',
+            /*
+             * Lane QA. `share_open` names the share button in the title row
+             * (Lane QB's sheet is what it opens). The two pay-later lines are
+             * the DEFAULTS of settings on Appearance → Product page → Mobile
+             * sections, read through ProductMobileSections::text() the way
+             * ProductTrustShare::text() reads its own: the key prints while
+             * the setting is still this English. "up to" — the owner typed
+             * "upto".
+             */
+            'product.share_open' => 'Share',
+            'product.paylater_tabby' => 'Split your purchase into monthly payments',
+            'product.paylater_tamara' => 'Installments up to 6 months, no late fees!',
             'product.read_more' => 'Read more ↓',
             /*
              * THE THREE TAB HEADINGS, which were English literals inside

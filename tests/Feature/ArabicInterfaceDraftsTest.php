@@ -529,8 +529,16 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * 2027_07_11_000250_seed_also_like_arabic_drafts. Read off the run.
      *
      * ── 1,074 -> 1,085: LANE PW'S ELEVEN, on top of PS's two at merge ─────
+     *
+     * ── 1,085 -> 1,088: LANE QA'S THREE ─────────────────────────────────
+     *
+     * The share button's name (store.product.share_open) and the two
+     * Tabby & Tamara cards' default wording (store.product.paylater_tabby,
+     * paylater_tamara), seeded by
+     * 2027_07_15_000100_seed_product_mobile_sections_arabic_drafts. Read off
+     * the run.
      */
-    expect($ui['drafts'])->toBe(1085, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1088, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

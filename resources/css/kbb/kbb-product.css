@@ -1339,3 +1339,150 @@ a{color:inherit;text-decoration:none}
 .kbb-eblock__figure figcaption{margin-block-start:6px;font-size:12px;color:var(--muted)}
 .kbb-eblock__list{margin-block:0;margin-inline:18px 0}
 .kbb-eblock__rule{border:0;border-block-start:1px solid var(--line);margin:0}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE PRICE ROW, THE SHARE BUTTON, TABBY & TAMARA, AND THE PHONE PAGE AS
+   ORDERED SECTIONS.                                                 (Lane QA)
+
+     "i want things need to work as sections. [...] THIS message changes is
+      only for MOBILE. for desktop everything is fine. [...] also FOR DEKSTOP
+      only two changes. the share icon will also desktop beside the title on
+      right side. and the pricing row will come downside and on right side of
+      the pricing row rating without count."
+
+   Three blocks below, in this order:
+
+     1. both widths  the price row under the title (his desktop change) and
+                     the share button in the title row (his other one);
+     2. phone only   the Tabby & Tamara cards;
+     3. phone only   THE SECTIONS: one flex column, order and on/off from the
+                     custom properties and classes App\Services\
+                     ProductMobileSections writes on `.pdp-page`, and ONE even
+                     gap between them.
+
+   880px is this sheet's own phone breakpoint (`.pdp` turns to one column at
+   max-width:880px), so the sections turn exactly where the page already did.
+   Nothing here measures anything; every number arrives as an integer custom
+   property or is a literal.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. the title row and the price row ───────────────────────────────────── */
+/* The share button is the title row's second track. 40px square for a thumb,
+   22px of glyph, pulled up and out by the difference so the glyph — not the
+   invisible box — lines up with the name's first line and the column edge. */
+.pdp .pdp-share-btn{inline-size:40px;block-size:40px;display:grid;place-items:center;border-radius:50%;
+    color:var(--ink);margin-block-start:-7px;margin-inline-end:-9px;transition:background .15s}
+.pdp .pdp-share-btn:hover{background:var(--line-2)}
+.pdp .pdp-share-btn:focus-visible{outline:2px solid var(--pink-deep);outline-offset:1px}
+.pdp .pdp-share-btn svg{display:block;inline-size:22px;block-size:22px}
+
+/* "price row (cut price + actual price + discount capsule) + on right side
+   rating". One flex row that wraps: the figures on the inline-start side,
+   baseline-aligned, and the rating pushed to the far end. A long price range
+   or a narrow phone wraps the rating under the figures rather than squeezing
+   either. */
+.pdp .bb-pricerow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:14px;row-gap:6px;
+    margin-block-start:var(--pl-rate-gap,10px)}
+.pdp .bb-pricerow .bb-price{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px;row-gap:2px;margin:0;min-inline-size:0;line-height:1.15;white-space:nowrap}
+.pdp .bb-pricerow .bb-price s{font-size:var(--pl-was-s,12.5px);font-weight:500;color:var(--muted)}
+.pdp .bb-pricerow .bb-price .now{font-size:var(--pl-price-s,22px);font-weight:var(--pl-price-w,800);letter-spacing:-.02em}
+.pdp .bb-pricerow .bb-price .off{align-self:center;font-size:var(--pl-off-s,10px);font-weight:700;padding:3px 8px;border-radius:99px;line-height:1.2}
+.pdp .bb-pricerow .cap-area,.pdp .bb-pricerow .bb-rate{margin:0;min-inline-size:0}
+.pdp .bb-pricerow .cap-area .sr-capbar{flex-wrap:nowrap}
+/* "can be shown in seperate row if i like to do so" — the rating takes the
+   whole width, so it wraps under the figures. A class per device. */
+@media (max-width:880px){
+  .pm-rate-m-row .bb-pricerow{flex-direction:column;align-items:flex-start}
+  .pm-rate-m-hidden .bb-pricerow .cap-area,.pm-rate-m-hidden .bb-pricerow .bb-rate{display:none}
+}
+@media (min-width:881px){
+  .pdp .bb-pricerow{margin-block-start:var(--pl-rate-gap-d,10px)}
+  .pdp .pdp-share-btn{margin-block-start:-1px}
+  .pd-rate-d-row .bb-pricerow{flex-direction:column;align-items:flex-start}
+}
+
+/* The two boxes that used to be zeroed by an adjacency in kbb-pdp-trust.css
+   (`.deliver:has(+ .pts-del)`, `.buyrow:has(+ .pts-stack)`) are now each
+   the last box inside a section wrapper, so the adjacency is between the
+   WRAPPER and the block. Restated here at that level, so the laptop's gap above the delivery box and above
+   "Authenticity Guaranteed" is still exactly the Trust · Spacing slider. */
+.pdp .pm-ready:has(+ .pts-del) > :last-child,
+.pdp .pm-cart:has(+ .pts-stack) > :last-child{margin-block-end:0}
+
+/* ── 2. Tabby & Tamara, two cards side by side (phone only) ───────────────── */
+.pdp-paylater{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
+.pdp-pl-card{display:flex;align-items:center;justify-content:space-between;gap:8px;min-inline-size:0;
+    border:1px solid var(--line);border-radius:12px;padding:9px 10px;background:#fff}
+.pdp-pl-text{min-inline-size:0;font-size:11.5px;line-height:1.35;font-weight:500;color:var(--ink-2)}
+.pdp-pl-logo{flex:0 0 auto;display:flex;line-height:0}
+.pdp-pl-mark{display:block;block-size:18px;inline-size:auto}
+@media (min-width:881px){.pdp .pm-paylater{display:none}}
+
+/* ── 3. THE PHONE PAGE, AS SECTIONS ───────────────────────────────────────── */
+@media (max-width:880px){
+  /* One column; the boxes in between step aside. `display:contents` keeps
+     every element where the DOM has it — the cart form still owns its
+     fields, the `~` blurb toggle still finds its siblings, ids and landmarks
+     are untouched — and only the BOX goes, so its children become items of
+     `.pdp-page`. The gallery is already static at this width. */
+  .pdp-page{display:flex;flex-direction:column;row-gap:var(--pm-gap,18px)}
+  .pdp-page > .pdp,.pdp-page > .pdp > .buybox,.pdp-page .buybox > .kbb-cart-form{display:contents}
+  /* Anything this list does not know goes to the END, never to the top. */
+  .pdp-page > *,.pdp-page .buybox > *,.pdp-page .kbb-cart-form > *{order:999}
+  /* The breadcrumb stays first, and the gallery keeps the space under it
+     that Photo & badge → "Space above the photo · phone" sets (0 shipped). */
+  .pdp-page > .crumb{order:-1;margin-block-end:calc(var(--pl-gal-top-m,0px) - var(--pm-gap,18px))}
+  /* A section that drew nothing on this product takes no gap. */
+  .pdp-page .pm-sec:not(:has(*)){display:none}
+
+  /* ORDER, and the per-section difference from the even gap. */
+  .pdp-page > .pdp > .gallery{order:var(--pm-o-gallery,1);margin-block-start:var(--pm-dm-gallery,0px)}
+  .pdp-page .pm-title{order:var(--pm-o-title,2);margin-block-start:var(--pm-dm-title,0px)}
+  .pdp-page .pm-short{order:var(--pm-o-short,3);margin-block-start:var(--pm-dm-short,0px)}
+  .pdp-page .pm-price{order:var(--pm-o-price,4);margin-block-start:var(--pm-dm-price,0px)}
+  .pdp-page .pm-paylater{order:var(--pm-o-paylater,5);margin-block-start:var(--pm-dm-paylater,0px)}
+  .pdp-page .pm-bundles{order:var(--pm-o-bundles,6);margin-block-start:var(--pm-dm-bundles,0px)}
+  .pdp-page .pm-ready{order:var(--pm-o-ready,7);margin-block-start:var(--pm-dm-ready,0px)}
+  .pdp-page .pm-cart{order:var(--pm-o-cart,8);margin-block-start:var(--pm-dm-cart,0px)}
+  .pdp-page .kbb-cart-form > .pts-del{order:var(--pm-o-delivery,9);margin-block:var(--pm-dm-delivery,0px) 0}
+  .pdp-page .kbb-cart-form > .pts-stack{order:var(--pm-o-auth,10);margin-block:var(--pm-dm-auth,0px) 0}
+  .pdp-page .pm-trust{order:var(--pm-o-trust,11);margin-block-start:var(--pm-dm-trust,0px)}
+  .pdp-page .pm-paychips{order:var(--pm-o-paychips,12);margin-block-start:var(--pm-dm-paychips,0px)}
+  .pdp-page > .kbb-fbt{order:var(--pm-o-buytogether,13);margin-block:var(--pm-dm-buytogether,0px) 0}
+  .pdp-page > .pm-details{order:var(--pm-o-details,14);margin-block:var(--pm-dm-details,0px) 0}
+  .pdp-page > .sr{order:var(--pm-o-reviews,15);margin-block:var(--pm-dm-reviews,0px) 0}
+  .pdp-page > .ymal{order:var(--pm-o-related,16);margin-block:var(--pm-dm-related,0px) 0}
+  /* Two passengers. "Tell me when it is back" travels with Add to cart (it
+     cannot live inside the cart form: a form in a form is thrown away), and a
+     set's blurb stays under "What is in this set" — Lane PP's "a short
+     description should come after the list" — switched with the blurb. */
+  .pdp-page .buybox > .notifyme{order:var(--pm-o-cart,8);margin-block:0 !important}
+  .pdp-page .pm-short.pm-short-set{order:var(--pm-o-bundles,6);margin-block-start:var(--pm-dm-bundles,0px)}
+
+  /* ON / OFF. Hidden on a phone only; a laptop never reads these classes. */
+  .pm-off-gallery > .pdp > .gallery,.pm-off-title .pm-title,.pm-off-short .pm-short,.pm-off-price .pm-price,
+  .pm-off-paylater .pm-paylater,.pm-off-bundles .pm-bundles,.pm-off-ready .pm-ready,
+  .pm-off-cart .pm-cart,.pm-off-cart .buybox > .notifyme,.pm-off-delivery .kbb-cart-form > .pts-del,.pm-off-auth .kbb-cart-form > .pts-stack,
+  .pm-off-trust .pm-trust,.pm-off-paychips .pm-paychips,.pm-off-buytogether > .kbb-fbt,
+  .pm-off-details > .pm-details,.pm-off-reviews > .sr,.pm-off-related > .ymal{display:none}
+  /* "remove the THE DETAILS sub heading completely" — on a phone, unless
+     Mobile sections → "Show “The details”" puts it back. */
+  .pdp-page:not(.pm-dhead) > .pm-details > .eyebrow{display:none}
+
+  /* ── THE EVEN GAP IS THE WHOLE GAP ──────────────────────────────────────
+     "by default keep same space between". Each section's OWN outer margin —
+     and the hairline seams the Ledger page drew between blocks of one
+     column — would otherwise add to the gap and make every pair different.
+     Zeroed here at the phone width only; the laptop keeps all of them. What
+     is inside a section (brand → name, blurb → "Read more", the options
+     under their label) keeps its own spacing. */
+  .pdp-page .pm-sec > :first-child{margin-block-start:0}
+  .pdp-page .pm-sec > :last-child{margin-block-end:0}
+  .pdp-page .pm-short{--pdp-rule-pad:0px}
+  .pdp-page .pm-short .bb-desc,.pdp-page .pm-bundles .opt-label,.pdp-page .pm-ready .stockline,.pdp-page .pdp .pm-trust{
+      border-block-start:0;margin-block-start:0;padding-block-start:0}
+  .pdp-page .pm-price .bb-pricerow,.pdp-page .pdp .pm-paychips{margin-block-start:0}
+  .pdp-page .kbb-cart-form > .pts-stack > :first-child{margin-block-start:0}
+  .pdp-page .kbb-cart-form > .pts-stack > :last-child{margin-block-end:0}
+  .pdp-page .pm-cart .buynow{margin-block-end:0}
+}

@@ -1,0 +1,410 @@
+{
+  "toner-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "sections": {
+      "gallery": {
+        "top": 127,
+        "height": 360
+      },
+      "title": {
+        "top": 505,
+        "height": 59
+      },
+      "short": {
+        "top": 574,
+        "height": 90.6
+      },
+      "price": {
+        "top": 682.6,
+        "height": 37.5
+      },
+      "paylater": {
+        "top": 738.1,
+        "height": 82.1
+      },
+      "bundles": {
+        "top": 838.2,
+        "height": 180.8
+      },
+      "ready": {
+        "top": 1036.9,
+        "height": 49
+      },
+      "cart": {
+        "top": 1097.9,
+        "height": 54
+      },
+      "delivery": {
+        "top": 1169.9,
+        "height": 85.7
+      },
+      "auth": {
+        "top": 1273.6,
+        "height": 81.3
+      },
+      "trust": null,
+      "paychips": {
+        "top": 1372.9,
+        "height": 57.5
+      },
+      "buytogether": null,
+      "details": {
+        "top": 1448.4,
+        "height": 317
+      },
+      "reviews": {
+        "top": 1783.4,
+        "height": 1121.3
+      },
+      "related": {
+        "top": 2922.8,
+        "height": 495.5
+      }
+    },
+    "order": [
+      "gallery",
+      "title",
+      "short",
+      "price",
+      "paylater",
+      "bundles",
+      "ready",
+      "cart",
+      "delivery",
+      "auth",
+      "paychips",
+      "details",
+      "reviews",
+      "related"
+    ],
+    "gaps": [
+      "gallery→title: 18px",
+      "title→short: 10px",
+      "short→price: 18px",
+      "price→paylater: 18px",
+      "paylater→bundles: 18px",
+      "bundles→ready: 18px",
+      "ready→cart: 12px",
+      "cart→delivery: 18px",
+      "delivery→auth: 18px",
+      "auth→paychips: 18px",
+      "paychips→details: 18px",
+      "details→reviews: 18px",
+      "reviews→related: 18px"
+    ],
+    "title": {
+      "x": 69,
+      "y": 531,
+      "w": 299,
+      "h": 26
+    },
+    "share": {
+      "x": 13,
+      "y": 524,
+      "w": 40,
+      "h": 40
+    },
+    "price": {
+      "x": 199,
+      "y": 689,
+      "w": 169,
+      "h": 25
+    },
+    "pricerow": {
+      "x": 22,
+      "y": 683,
+      "w": 346,
+      "h": 38
+    },
+    "rating": {
+      "x": 22,
+      "y": 683,
+      "w": 137,
+      "h": 38
+    },
+    "ratingCount": false,
+    "detailsEyebrowShown": false,
+    "trustShown": false,
+    "paylater": {
+      "x": 22,
+      "y": 738,
+      "w": 346,
+      "h": 82
+    },
+    "titleFont": "19px",
+    "priceFont": "22px"
+  },
+  "toner-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "sections": {
+      "gallery": {
+        "top": 115.5,
+        "height": 691.5
+      },
+      "title": {
+        "top": 115.5,
+        "height": 65
+      },
+      "short": {
+        "top": 248,
+        "height": 110.6
+      },
+      "price": {
+        "top": 190.5,
+        "height": 37.5
+      },
+      "paylater": null,
+      "bundles": {
+        "top": 378.6,
+        "height": 201.8
+      },
+      "ready": {
+        "top": 600.4,
+        "height": 70
+      },
+      "cart": {
+        "top": 774.5,
+        "height": 54
+      },
+      "delivery": {
+        "top": 686.4,
+        "height": 72.1
+      },
+      "auth": {
+        "top": 828.5,
+        "height": 98.5
+      },
+      "trust": {
+        "top": 949,
+        "height": 98.3
+      },
+      "paychips": {
+        "top": 1059.2,
+        "height": 25.8
+      },
+      "buytogether": null,
+      "details": {
+        "top": 1135,
+        "height": 315.4
+      },
+      "reviews": {
+        "top": 1484.4,
+        "height": 818.2
+      },
+      "related": {
+        "top": 2358.6,
+        "height": 560.3
+      }
+    },
+    "order": [
+      "gallery",
+      "title",
+      "price",
+      "short",
+      "bundles",
+      "ready",
+      "delivery",
+      "cart",
+      "auth",
+      "trust",
+      "paychips",
+      "details",
+      "reviews",
+      "related"
+    ],
+    "gaps": [
+      "gallery→title: -691.55px",
+      "title→price: 10px",
+      "price→short: 20px",
+      "short→bundles: 20px",
+      "bundles→ready: 20px",
+      "ready→delivery: 16px",
+      "delivery→cart: 16px",
+      "cart→auth: 0px",
+      "auth→trust: 22px",
+      "trust→paychips: 12px",
+      "paychips→details: 50px",
+      "details→reviews: 34px",
+      "reviews→related: 56px"
+    ],
+    "title": {
+      "x": 69,
+      "y": 142,
+      "w": 535,
+      "h": 37
+    },
+    "share": {
+      "x": 13,
+      "y": 141,
+      "w": 40,
+      "h": 40
+    },
+    "price": {
+      "x": 435,
+      "y": 197,
+      "w": 169,
+      "h": 25
+    },
+    "pricerow": {
+      "x": 22,
+      "y": 191,
+      "w": 582,
+      "h": 38
+    },
+    "rating": {
+      "x": 22,
+      "y": 191,
+      "w": 137,
+      "h": 38
+    },
+    "ratingCount": false,
+    "detailsEyebrowShown": true,
+    "trustShown": true,
+    "paylater": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0
+    },
+    "titleFont": "30px",
+    "priceFont": "22px"
+  },
+  "set-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "sections": {
+      "gallery": {
+        "top": 127,
+        "height": 360
+      },
+      "title": {
+        "top": 505,
+        "height": 59
+      },
+      "short": {
+        "top": 955.1,
+        "height": 68.7
+      },
+      "price": {
+        "top": 582,
+        "height": 25.3
+      },
+      "paylater": {
+        "top": 625.3,
+        "height": 82.1
+      },
+      "bundles": {
+        "top": 725.4,
+        "height": 211.8
+      },
+      "ready": {
+        "top": 1041.8,
+        "height": 49
+      },
+      "cart": {
+        "top": 1102.8,
+        "height": 54
+      },
+      "delivery": {
+        "top": 1174.8,
+        "height": 85.7
+      },
+      "auth": {
+        "top": 1278.5,
+        "height": 81.3
+      },
+      "trust": null,
+      "paychips": {
+        "top": 1377.8,
+        "height": 57.5
+      },
+      "buytogether": null,
+      "details": {
+        "top": 1453.3,
+        "height": 258.9
+      },
+      "reviews": {
+        "top": 1730.2,
+        "height": 477
+      },
+      "related": {
+        "top": 2225.2,
+        "height": 495.5
+      }
+    },
+    "order": [
+      "gallery",
+      "title",
+      "price",
+      "paylater",
+      "bundles",
+      "short",
+      "ready",
+      "cart",
+      "delivery",
+      "auth",
+      "paychips",
+      "details",
+      "reviews",
+      "related"
+    ],
+    "gaps": [
+      "gallery→title: 18px",
+      "title→price: 18px",
+      "price→paylater: 18px",
+      "paylater→bundles: 18px",
+      "bundles→short: 18px",
+      "short→ready: 18px",
+      "ready→cart: 12px",
+      "cart→delivery: 18px",
+      "delivery→auth: 18px",
+      "auth→paychips: 18px",
+      "paychips→details: 18px",
+      "details→reviews: 18px",
+      "reviews→related: 18px"
+    ],
+    "title": {
+      "x": 69,
+      "y": 531,
+      "w": 299,
+      "h": 26
+    },
+    "share": {
+      "x": 13,
+      "y": 524,
+      "w": 40,
+      "h": 40
+    },
+    "price": {
+      "x": 287,
+      "y": 582,
+      "w": 81,
+      "h": 25
+    },
+    "pricerow": {
+      "x": 22,
+      "y": 582,
+      "w": 346,
+      "h": 25
+    },
+    "rating": {
+      "x": 22,
+      "y": 595,
+      "w": 0,
+      "h": 0
+    },
+    "ratingCount": false,
+    "detailsEyebrowShown": false,
+    "trustShown": false,
+    "paylater": {
+      "x": 22,
+      "y": 625,
+      "w": 346,
+      "h": 82
+    },
+    "titleFont": "19px",
+    "priceFont": "22px"
+  }
+}

@@ -418,7 +418,7 @@ class ProductLayout
             'The gaps between the big blocks of the page — the picture, the buy column, and the three sections under them.',
             ['sec_pad', 'thumb_gap', 'tab_gap', 'tab_body_gap']],
         'sp_buy' => ['Spacing · Buy column',
-            'Every gap down the top of the buy column in reading order, with a phone and a laptop number for each: photo → brand → name → rating → short description → “Read more” → options. Then the seams, the trust lines and the payment icons.',
+            'Every gap down the top of the buy column in reading order, with a phone and a laptop number for each: photo → brand → name → rating → short description → “Read more” → options. Then the seams, the trust lines and the payment icons. On a phone the space BETWEEN two sections is Mobile sections’ even gap (Lane QA), so the phone numbers here that sit between sections — photo → brand, name → rating, the seams, the trust lines, the payment icons — no longer move the phone page; the ones inside a section (brand → name, blurb → “Read more”) still do, and every laptop number is unchanged.',
             ['buybox_gap', 'buybox_gap_d', 'head_gap', 'head_gap_d', 'rate_gap', 'rate_gap_d',
                 'desc_gap_m', 'desc_gap_d', 'more_gap_m', 'more_gap_d', 'opt_gap_m', 'opt_gap_d',
                 'name_price_gap', 'rule_pad', 'rule_pad_d', 'rule_gap',
