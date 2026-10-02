@@ -293,17 +293,26 @@ it('creates a new set as a picture slider at the same two shapes', function () {
      */
     $fresh = new BannerSet;
 
+    /*
+     * ▲ ADVANCED BY LANE RC: both shapes moved to `auto` -- the first
+     * picture's own shape, which for his 1920 x 550 / 500 x 600 art IS those
+     * two shapes -- in all three places together, on instruction: "image
+     * should adjust auto with the screen without cutting". The two presets
+     * stay below as real choices.
+     */
     expect($fresh->kind())->toBe('slider')
-        ->and($fresh->slider_ratio)->toBe('1920/550')
-        ->and($fresh->slider_ratio_m)->toBe('500/600');
+        ->and($fresh->slider_ratio)->toBe('auto')
+        ->and($fresh->slider_ratio_m)->toBe('auto')
+        ->and($fresh->slider_fit)->toBe('contain');
 
     $controller = (string) file_get_contents(
         (new ReflectionClass(BannerApiController::class))->getFileName()
     );
 
     expect($controller)->toContain("\$kind = (string) (\$data['kind'] ?? 'slider')")
-        ->and($controller)->toContain("'slider_ratio' => '1920/550'")
-        ->and($controller)->toContain("'slider_ratio_m' => '500/600'");
+        ->and($controller)->toContain("'slider_ratio' => 'auto'")
+        ->and($controller)->toContain("'slider_ratio_m' => 'auto'")
+        ->and($controller)->toContain("'slider_fit' => 'contain'");
 
     // And both shapes are real presets, so the screen can show what the shop
     // is doing rather than falling through to a default it cannot name.

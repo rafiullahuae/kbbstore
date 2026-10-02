@@ -194,8 +194,14 @@
      maps its two tokens to two literal view names; a set whose kind is anything
      else, including null, returns the cards partial this line named before the
      column existed. The section, its class, its padding and its query are
-     unchanged, which is why a shop with no slider renders the same bytes. --}}
-<section class="sec {{ $sections->classFor('cards_banner') }}" style="padding-top:8px"><div class="wrap">@include($bnSection[0]->homePartial(), ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>
+     unchanged, which is why a shop with no slider renders the same bytes.
+
+     ▲ THE TOP PADDING IS THE KIND'S NOW (Lane RC): "remove any space between
+     header and banner". It was a literal `padding-top:8px`, measured as an
+     8px strip of page background between the header's bottom edge and the
+     picture at 390 and at 1280. BannerSet::SECTION_STYLES keeps 8px for the
+     cards row and gives the two picture kinds 0. --}}
+<section class="sec {{ $sections->classFor('cards_banner') }}" style="{{ $bnSection[0]->homeSectionStyle() }}"><div class="wrap">@include($bnSection[0]->homePartial(), ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>
 @endif
 @endunless
 @php

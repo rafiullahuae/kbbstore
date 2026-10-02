@@ -120,6 +120,8 @@ class BannerApiController extends Controller
                 // stale, and this one describes pixels a lane may move.
                 'slider_style_notes' => array_map(static fn (array $r): string => $r[1], BannerSet::SLIDER_STYLES),
                 'slider_ratios' => self::labels(BannerSet::SLIDER_RATIOS),
+                // Lane RC. Whole picture or fill-and-crop, drawn as a select.
+                'slider_fits' => BannerSet::SLIDER_FITS,
                 'limits' => BannerSet::LIMITS,
             ],
         ]);
@@ -202,7 +204,11 @@ class BannerApiController extends Controller
         $kind = (string) ($data['kind'] ?? 'slider');
 
         $name = trim((string) ($data['name'] ?? ''));
-        $name = $name === '' ? ($kind === 'slider' ? 'Picture slider' : 'Cards banner') : Str::limit($name, 180, '');
+        $name = $name === '' ? match ($kind) {
+            'slider' => 'Picture slider',
+            'single' => 'Single image banner',
+            default => 'Cards banner',
+        } : Str::limit($name, 180, '');
 
         $set = BannerSet::create([
             'name' => $name,
@@ -217,8 +223,16 @@ class BannerApiController extends Controller
              * shape of a new set readable here instead of two files away, and
              * BannerShipsAsImageSliderTest asserts the two agree.
              */
-            'slider_ratio' => '1920/550',
-            'slider_ratio_m' => '500/600',
+            /*
+             * ▲ BOTH MOVED TO `auto`, AND `contain` IS NEW.          (Lane RC)
+             * "image should adjust auto with the screen without cutting".
+             * `auto` is the first picture's own shape, so his 1920 x 550 art
+             * still draws a 1920 : 550 frame; `contain` fits every other
+             * picture whole. BannerSet::$attributes says the same.
+             */
+            'slider_ratio' => 'auto',
+            'slider_ratio_m' => 'auto',
+            'slider_fit' => 'contain',
         ]);
 
         /*
@@ -298,6 +312,16 @@ class BannerApiController extends Controller
             'slider_style' => ['sometimes', Rule::in(array_keys(BannerSet::SLIDER_STYLES))],
             'slider_ratio' => ['sometimes', Rule::in(array_keys(BannerSet::SLIDER_RATIOS))],
             'slider_ratio_m' => ['sometimes', Rule::in(array_keys(BannerSet::SLIDER_RATIOS))],
+
+            /*
+             * ── LANE RC: the fit and the two height caps ────────────────────
+             * The fit is a select and stores one of its own options; the two
+             * heights are integers, clamped to BannerSet::LIMITS by fillSet()
+             * and again by BannerSet::sliderHeight() at render.
+             */
+            'slider_fit' => ['sometimes', Rule::in(array_keys(BannerSet::SLIDER_FITS))],
+            'slider_h' => ['sometimes', 'integer'],
+            'slider_h_m' => ['sometimes', 'integer'],
         ];
 
         foreach (['bg_color', 'btn_bg', 'btn_text', 'btn_hover'] as $colour) {
@@ -331,6 +355,15 @@ class BannerApiController extends Controller
         foreach (BannerSet::LIMITS as $column => [$min, $max]) {
             if (array_key_exists($column, $data)) {
                 $data[$column] = max($min, min($max, (int) $data[$column]));
+            }
+        }
+
+        // Lane RC: a height cap is 0 (Auto) or at least 80px, the same rule
+        // BannerSet::sliderHeight() applies at render, so what is stored is
+        // what the shop draws.
+        foreach (['slider_h', 'slider_h_m'] as $column) {
+            if (array_key_exists($column, $data) && $data[$column] > 0) {
+                $data[$column] = max(80, $data[$column]);
             }
         }
 
@@ -605,7 +638,10 @@ class BannerApiController extends Controller
 
             $set = $card->relationLoaded('set') ? $card->set : BannerSet::find($card->banner_set_id);
 
-            if (! $set instanceof BannerSet || ! $set->isSlider()) {
+            // Lane RC: and only when the set actually crops. Under `contain`
+            // or an `auto` phone frame nothing is cut, so a crop file would be
+            // written for nobody.
+            if (! $set instanceof BannerSet || ! $set->isSlider() || ! $set->sliderCropsPhone()) {
                 return;
             }
 
@@ -944,6 +980,11 @@ class BannerApiController extends Controller
             'slider_style' => $set->sliderStyle(),
             'slider_ratio' => $set->slider_ratio,
             'slider_ratio_m' => $set->slider_ratio_m,
+            // Lane RC. Read through the model, so the screen shows what the
+            // shop will draw: an unknown fit is `contain`, a height is clamped.
+            'slider_fit' => $set->sliderFit(),
+            'slider_h' => $set->sliderHeight(false),
+            'slider_h_m' => $set->sliderHeight(true),
             'cards_count' => $set->cards_count ?? $set->cards()->count(),
         ];
     }

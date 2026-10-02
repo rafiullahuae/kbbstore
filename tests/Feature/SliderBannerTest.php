@@ -325,10 +325,18 @@ it('ships at slider, at the two shapes the owner gave in pixels', function () {
     // 1. A MODEL BUILT FROM NOTHING is a picture slider at his two shapes.
     $fresh = new BannerSet;
 
+    /*
+     * ▲ ADVANCED BY LANE RC: the two stored tokens moved from '1920/550' and
+     * '500/600' to 'auto' on instruction ("image should adjust auto with the
+     * screen without cutting"). The CSS a set with no pictures resolves to is
+     * still his two shapes -- `auto` reads the first picture, and with none it
+     * answers the presets -- so the two CSS lines are unchanged. With a picture,
+     * `auto` is that picture's own shape: BannerSingleImageTest pins it.
+     */
     expect($fresh->kind())->toBe('slider')
         ->and($fresh->homePartial())->toBe('partials.home.slider-banner')
-        ->and($fresh->slider_ratio)->toBe('1920/550')
-        ->and($fresh->slider_ratio_m)->toBe('500/600')
+        ->and($fresh->slider_ratio)->toBe('auto')
+        ->and($fresh->slider_ratio_m)->toBe('auto')
         ->and($fresh->sliderRatioCss())->toBe('1920 / 550')
         ->and($fresh->sliderRatioMobileCss())->toBe('500 / 600');
 
@@ -418,7 +426,13 @@ it('ships at slider, at the two shapes the owner gave in pixels', function () {
     expect($html)->toContain('uploads/banners/sb-1.webp')
         ->and($html)->toContain('aspect-ratio:var(--kbbs-arm')
         ->and($html)->toContain('--kbbs-ar:1920 / 550')
-        ->and($html)->toContain('--kbbs-arm:500 / 600')
+        /*
+         * ▲ ADVANCED BY LANE RC: was `--kbbs-arm:500 / 600`. This slide has no
+         * phone picture, and under the shipped `auto` the phone frame is the
+         * picture it actually draws -- the 1920 x 550 one, whole -- instead of
+         * a 5 : 6 box that cut it to its middle quarter. "without cutting".
+         */
+        ->and($html)->toContain('--kbbs-arm:1920 / 550')
         ->and($html)->not->toContain('A HEADING NOBODY ASKED FOR')
         ->and($html)->not->toContain('kbbn-c');
 });
@@ -589,8 +603,14 @@ it('reserves the frame in CSS at two shapes, so nothing shifts as a picture arri
      */
     $css = sbCss();
 
-    expect($css)->toContain('.kbbs-vp{aspect-ratio:var(--kbbs-arm,4 / 3)')
-        ->and($css)->toContain('@media (min-width:768px){.kbbs-vp{aspect-ratio:var(--kbbs-ar,16 / 9)}}');
+    /*
+     * ▲ ADVANCED BY LANE RC: `width:100%` before the ratio and a `max-height`
+     * after it, on both breakpoints -- the banner height control. Width first
+     * because without it `aspect-ratio` carries the cap across to the width
+     * and the frame shrinks (measured: 250 x 300 at 390, pinned left).
+     */
+    expect($css)->toContain('.kbbs-vp{width:100%;aspect-ratio:var(--kbbs-arm,4 / 3);max-height:var(--kbbs-hm,none)')
+        ->and($css)->toContain('@media (min-width:768px){.kbbs-vp{aspect-ratio:var(--kbbs-ar,16 / 9);max-height:var(--kbbs-hd,none)}}');
 
     $html = sbRender(['slider_ratio' => '21/9', 'slider_ratio_m' => '1/1']);
 

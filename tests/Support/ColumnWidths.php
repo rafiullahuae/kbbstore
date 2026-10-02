@@ -193,6 +193,8 @@ final class ColumnWidths
             'name' => 190,
             'ratio' => 16,
             'shadow' => 16,
+            // Lane RC: string(16), added by 2027_07_18_000300.
+            'slider_fit' => 16,
             'slider_ratio' => 16,
             'slider_ratio_m' => 16,
             'slider_style' => 16,

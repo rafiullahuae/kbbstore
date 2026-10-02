@@ -256,7 +256,14 @@
        slider. They are in this one list with everything else because the Save
        and the preview both send exactly these keys — a control added to the
        screen without its key here is a control that saves nothing. */
-    'kind', 'slider_style', 'slider_ratio', 'slider_ratio_m'];
+    'kind', 'slider_style', 'slider_ratio', 'slider_ratio_m',
+    /* Lane RC. The slider's fit and its two height caps -- in this list for
+       the reason the note above gives, or they are controls that save nothing. */
+    'slider_fit', 'slider_h', 'slider_h_m'];
+
+  /* Lane RC. What each kind is called on a set's row. The labels in the type
+     select come from the server (BannerSet::KINDS); these are the short pill. */
+  var KIND_PILLS = {cards: 'Cards banner', slider: 'Picture slider', single: 'Single image'};
 
   /* `image_m` IS IN THIS LIST AND IT HAS TO BE. (Lane SEC) The buffer sends
      exactly these keys on Save, so a column left out of it is a control the
@@ -566,6 +573,52 @@
      height is fixed per width rather than measured, because measuring it would
      mean reaching into the frame for a box, which is the one thing this whole
      feature is built not to do. */
+  /* Lane RC. The frame's width over its height, as the partial will draw it:
+     a preset's two integers, or under `auto` (and always for a single image)
+     the first showing picture's own stored size -- its phone picture's below
+     768px when it has one. */
+  function previewShape(phone){
+    var s = draft.set;
+    var token = String((phone ? s.slider_ratio_m : s.slider_ratio) || 'auto');
+
+    if (s.kind === 'slider' && token !== 'auto' && data.enums.slider_ratios[token]) {
+      var parts = token.split('/');
+      var pw = Number(parts[0]), ph = Number(parts[1]);
+      if (pw > 0 && ph > 0) return pw / ph;
+    }
+
+    var first = null;
+    (openSet.cards || []).slice().sort(function(a, b){
+      var da = draft.cards[a.id] || a, db = draft.cards[b.id] || b;
+      return (Number(da.position) - Number(db.position)) || (a.id - b.id);
+    }).forEach(function(c){
+      var d = draft.cards[c.id] || c;
+      if (!first && d.image && d.status === 'publish') first = c;
+    });
+
+    if (first) {
+      var fd = draft.cards[first.id] || first;
+      if (phone && fd.image_m && first.image_m_w > 0 && first.image_m_h > 0) return first.image_m_w / first.image_m_h;
+      if (first.image_w > 0 && first.image_h > 0) return first.image_w / first.image_h;
+    }
+
+    return phone && s.kind === 'slider' && token !== 'auto' ? 500 / 600 : 1920 / 550;
+  }
+
+  /* Lane RC. A height cap as a range, whose read-out says "Auto" at 0 rather
+     than "0", because 0 here is not a height -- it is "no cap". */
+  function heightText(v){
+    v = Number(v) || 0;
+    return v <= 0 ? 'Auto' : Math.max(80, v) + 'px';
+  }
+
+  function heightField(key, label, help, value, min, max){
+    return '<div class="bns-fld"><span class="bns-lab">' + esc(label) + '</span>'
+      + '<input class="bns-rng" type="range" data-bns-set="' + esc(key) + '" data-bns-height="1" value="' + esc(value || 0) + '" '
+      + 'min="' + esc(min) + '" max="' + esc(max) + '" step="10">'
+      + '<span class="bns-help"><b data-bns-out="' + esc(key) + '">' + esc(heightText(value)) + '</b> — ' + esc(help) + '</span></div>';
+  }
+
   function paintPreview(stage, body){
     if (!body || body.empty || !body.html) {
       stage.innerHTML = '<div class="bns-empty">Nothing to draw yet — add a card with a picture, and publish the set to show it on the shop.</div>';
@@ -612,12 +665,16 @@
     var height = previewWidth <= 430 ? 470 : (previewWidth <= 800 ? 430 : 470);
     var box = 'height:' + height + 'px';
 
-    if (draft && draft.set && draft.set.kind === 'slider') {
-      var token = String((previewWidth < 768 ? draft.set.slider_ratio_m : draft.set.slider_ratio) || '');
-      var parts = token.split('/');
-      var w = Number(parts[0]);
-      var h = Number(parts[1]);
-      var ratio = (w > 0 && h > 0) ? w / h : 16 / 9;
+    if (draft && draft.set && (draft.set.kind === 'slider' || draft.set.kind === 'single')) {
+      /* Lane RC: the shape is the preset's, or -- under `auto` and for a single
+         image -- the first picture's own stored width and height, and the
+         slider's height cap is applied the way the partial's `max-height` does.
+         Two integers and a constant, still no measurement. */
+      var phone = previewWidth < 768;
+      var ratio = previewShape(phone);
+      var bodyH = Math.round((previewWidth - 36) / ratio);
+      var cap = draft.set.kind === 'slider' ? Number((phone ? draft.set.slider_h_m : draft.set.slider_h) || 0) : 0;
+      if (cap > 0) bodyH = Math.min(bodyH, Math.max(80, cap));
 
       /*
        * AN ASPECT RATIO ON THE FRAME, NOT A HEIGHT, and the difference shows on
@@ -628,7 +685,7 @@
        * with, which is also what the banner inside it does. No measurement: it
        * is two integers out of BannerSet::SLIDER_RATIOS and a constant.
        */
-      box = 'aspect-ratio:' + (previewWidth / (Math.round((previewWidth - 36) / ratio) + 92)).toFixed(4) + ';height:auto';
+      box = 'aspect-ratio:' + (previewWidth / (bodyH + 92)).toFixed(4) + ';height:auto';
     }
 
     /*
@@ -690,7 +747,7 @@
   function setsView(){
     var html = '<div class="bns-card">'
       + '<div class="bns-title">Your banner sets</div>'
-      + '<div class="bns-sub">Two types live in this one list. A <b>cards banner</b> is a row of picture cards that scrolls itself; a <b>picture slider</b> is one picture at a time with arrows and thin bars along the bottom. Each set carries its own speed, background and shape. Build as many as you like and pick which one the homepage shows, above.</div>'
+      + '<div class="bns-sub">Three types live in this one list. A <b>cards banner</b> is a row of picture cards that scrolls itself; a <b>picture slider</b> is one picture at a time with arrows and thin bars along the bottom; a <b>single image</b> is one picture, shown whole at its own height. Each set carries its own speed, background and shape. Build as many as you like and pick which one the homepage shows, above.</div>'
       + '<div class="bns-row" style="margin-bottom:11px">'
       /* NO `id` ON EITHER, and that is a rule rather than a tidy-up:
          AdminConsoleControlsAreLiveTest walks this console for an `id` that no
@@ -699,10 +756,11 @@
          be a control the guard has to take on trust. */
       + '<button class="bns-btn is-primary" data-bns-kind="cards">New cards banner</button>'
       + '<button class="bns-btn is-primary" data-bns-kind="slider">New picture slider</button>'
+      + '<button class="bns-btn is-primary" data-bns-kind="single">New single image</button>'
       + '</div>';
 
     if (!(data.sets || []).length) {
-      html += '<div class="bns-empty">No sets yet. Press one of the two buttons above to build your first one.</div></div>';
+      html += '<div class="bns-empty">No sets yet. Press one of the buttons above to build your first one.</div></div>';
       return html;
     }
 
@@ -721,9 +779,9 @@
         /* THE TYPE, ON EVERY ROW. Two kinds in one list is unreadable without
            it — the sets are named by the owner and nothing else on the row says
            which editor opening it will give him. */
-        + '<span class="bns-pill">' + esc(s.kind === 'slider' ? 'Picture slider' : 'Cards banner') + '</span>'
+        + '<span class="bns-pill">' + esc(KIND_PILLS[s.kind] || KIND_PILLS.cards) + '</span>'
         + '<span class="bns-pill">' + esc(s.cards_count)
-          + (s.kind === 'slider' ? ' picture' : ' card') + (s.cards_count === 1 ? '' : 's') + '</span>'
+          + (s.kind === 'cards' ? ' card' : ' picture') + (s.cards_count === 1 ? '' : 's') + '</span>'
         + '<button class="bns-btn" data-bns-open="' + esc(s.id) + '">' + (openId === s.id ? 'Close' : 'Edit') + '</button>'
         + '<button class="bns-btn" data-bns-dup="' + esc(s.id) + '">Duplicate</button>'
         + '<button class="bns-btn is-danger" data-bns-del="' + esc(s.id) + '">Delete</button>'
@@ -896,9 +954,14 @@
        it is the same buffer — so nothing typed is lost by looking at the other
        type and changing back. */
     var slider = s.kind === 'slider';
+    /* Lane RC. `single` is the third type: one picture, whole, at its own
+       height. It shares the PICTURE half of the slider's editor (a phone
+       picture, a link, a description, no text) and none of its motion. */
+    var single = s.kind === 'single';
+    var pictures = slider || single;
 
     html += '<div class="bns-sec">Banner type</div><div class="bns-grid">'
-      + pick('kind', 'What this set is', 'Both types live in the same list and the homepage shows whichever set you pick above. Changing this changes nothing until you press Save.', s.kind, e.kinds)
+      + pick('kind', 'What this set is', 'All three types live in the same list and the homepage shows whichever set you pick above. Changing this changes nothing until you press Save.', s.kind, e.kinds)
       + '</div>';
 
     if (slider) {
@@ -909,10 +972,14 @@
         + '<div class="bns-help" style="margin-top:9px" data-bns-note="slider_style">'
         + esc(e.slider_style_notes[s.slider_style] || '') + '</div>';
 
-      /* ── shape ── */
-      html += '<div class="bns-sec">Shape &amp; frame</div><div class="bns-grid">'
-        + pick('slider_ratio', 'Shape on a computer', 'From a tablet up. The picture is cropped to fill this shape, centred.', s.slider_ratio, e.slider_ratios)
-        + pick('slider_ratio_m', 'Shape on a phone', 'Below a tablet. A 21:9 banner is a 44px band on a phone, which is why this is its own choice.', s.slider_ratio_m, e.slider_ratios)
+      /* ── size & fit (Lane RC: "height control of the overall banner. and
+         image should adjust auto with the screen without cutting") ── */
+      html += '<div class="bns-sec">Size &amp; fit</div><div class="bns-grid">'
+        + pick('slider_fit', 'How the pictures fit', 'Whole picture is how the shop ships: nothing is ever cut, at any screen size, and any spare room shows what is behind the banner. Fill the frame crops the edges, centred, so there is no spare room.', s.slider_fit, e.slider_fits)
+        + pick('slider_ratio', 'Shape on a computer', 'From a tablet up. Auto is the first picture\u2019s own shape, so the banner is exactly as tall as the picture at every screen width.', s.slider_ratio, e.slider_ratios)
+        + pick('slider_ratio_m', 'Shape on a phone', 'Below a tablet. Auto uses the phone picture\u2019s own shape, or the computer one\u2019s when a slide has no phone picture.', s.slider_ratio_m, e.slider_ratios)
+        + heightField('slider_h', 'Banner height on a computer', 'the most the banner may be. Auto follows the picture. With a number, a wider screen stops the banner at that height and the picture is shown whole inside it, centred.', s.slider_h, L.slider_h[0], L.slider_h[1])
+        + heightField('slider_h_m', 'Banner height on a phone', 'the same, below a tablet. Auto follows the phone picture.', s.slider_h_m, L.slider_h_m[0], L.slider_h_m[1])
         + num('card_radius', 'Corner radius', 'px', s.card_radius, L.card_radius[0], L.card_radius[1])
         + pick('shadow', 'Shadow', 'No border at all — the corner radius and the shadow are what lift the picture off the page.', s.shadow, e.shadows)
         + '</div>';
@@ -943,6 +1010,19 @@
         + 'A shopper can also swipe, and use the left and right arrow keys once he has tabbed into it. '
         + 'With one picture in the set neither is drawn, because there is nowhere to go.'
         + '</div>';
+    } else if (single) {
+      /* ── Lane RC: the single image. Its height is the picture's own, so
+         there is no shape and no height control to offer -- only the two
+         things it shares with every banner: corners and shadow, and what is
+         behind it. ── */
+      html += '<div class="bns-sec">The picture</div>'
+        + '<div class="bns-sub">The first <b>showing</b> picture below is drawn across the full width at <b>its own height</b> — a 1920 × 550 picture is 367px tall on a 1280 screen and 550px on a 1920 one, and nothing is ever cut. On a phone it shows the phone picture at that picture\u2019s own shape, or the computer picture whole if there is none. No arrows, no bars, no movement.</div>'
+        + '<div class="bns-grid">'
+        + num('card_radius', 'Corner radius', 'px', s.card_radius, L.card_radius[0], L.card_radius[1])
+        + pick('shadow', 'Shadow', 'None is flat and edge to edge, which is how the shop ships.', s.shadow, e.shadows)
+        + '</div>';
+
+      html += backgroundSection(s, 'Behind the banner', 'Shown behind the picture, right across the page.');
     } else {
         /* ── motion ── */
         html += '<div class="bns-sec">Motion</div><div class="bns-grid">'
@@ -1013,15 +1093,17 @@
       + '</div>';
 
     /* ---------------------------------------------------------- the cards */
-    html += '<div class="bns-sec">' + (slider ? 'Pictures' : 'Cards') + '</div>'
-      + '<div class="bns-sub">' + (slider
+    html += '<div class="bns-sec">' + (pictures ? 'Pictures' : 'Cards') + '</div>'
+      + '<div class="bns-sub">' + (single
+          ? 'Only the first showing picture is drawn — keep others here hidden to swap them in later. A picture with a link becomes a link. The description is what a screen reader says.'
+          : slider
           ? 'One picture each, in this order. A picture with a link becomes a link — the whole picture, since there is no button on this banner type. The description is what a screen reader says; leave it empty for a picture that is decoration and has nothing to add.'
           : 'A picture, one or two lines under it, and a small button. Anything you leave blank is simply not drawn — it leaves no gap.')
       + '</div>'
-      + '<div class="bns-row"><button class="bns-btn is-primary" id="bns-newcard">' + (slider ? 'Add a picture' : 'Add a card') + '</button></div>';
+      + '<div class="bns-row"><button class="bns-btn is-primary" id="bns-newcard">' + (pictures ? 'Add a picture' : 'Add a card') + '</button></div>';
 
     if (!cards.length) {
-      html += '<div class="bns-empty">' + (slider ? 'No pictures yet.' : 'No cards yet.') + '</div>' + footer() + '</div>';
+      html += '<div class="bns-empty">' + (pictures ? 'No pictures yet.' : 'No cards yet.') + '</div>' + footer() + '</div>';
       return html;
     }
 
@@ -1029,7 +1111,7 @@
 
     cards.forEach(function(c){
       var d = draft.cards[c.id] || {};
-      html += '<div class="bns-cd' + (slider ? ' is-two' : '') + '">'
+      html += '<div class="bns-cd' + (pictures ? ' is-two' : '') + '">'
         + '<div class="bns-th" data-bns-thumb="' + esc(c.id) + '">' + (d.image_url
             ? '<img src="' + esc(d.image_url) + '" alt="">'
             : 'no picture') + '</div>'
@@ -1049,15 +1131,15 @@
            the same picture at every width, so a second upload there would be a
            control that does nothing -- the fault rule 5 and this file's own
            notes keep coming back to. */
-        + (slider
+        + (pictures
             ? '<div class="bns-th bns-th-m" data-bns-thumbm="' + esc(c.id) + '" title="Phone picture, 500 x 600">' + (d.image_m_url
                 ? '<img src="' + esc(d.image_m_url) + '" alt="">'
                 : 'no phone<br>picture') + '</div>'
             : '')
         + '<div class="bns-cdb">'
         + '<div class="bns-row">'
-          + '<button class="bns-btn" data-bns-pic="' + esc(c.id) + '">' + (d.image ? 'Change picture' : 'Choose a picture') + (slider ? ' · 1920 × 550' : '') + '</button>'
-          + (slider
+          + '<button class="bns-btn" data-bns-pic="' + esc(c.id) + '">' + (d.image ? 'Change picture' : 'Choose a picture') + (pictures ? ' · 1920 × 550' : '') + '</button>'
+          + (pictures
               ? '<button class="bns-btn" data-bns-picm="' + esc(c.id) + '">' + (d.image_m ? 'Change phone picture' : 'Choose the phone picture') + ' · 500 × 600</button>'
                 + (d.image_m
                     ? '<button class="bns-btn" data-bns-clearm="' + esc(c.id) + '">Remove the phone one</button>'
@@ -1096,8 +1178,14 @@
 
              Slider only — a cards banner has one frame shape and wants one
              picture. */
-          + (slider && d.image && !d.image_m
-              ? '<span class="bns-warn">No phone picture yet, so phones see only the middle of this one — sharp, but cropped to about a quarter of its width. Choose one at 500 × 600 to decide what they see.</span>'
+          /* ▲ Lane RC: the crop warning is only true when the set CROPS --
+             `cover` with a fixed phone shape. Under the shipped whole-picture
+             fit, an Auto phone shape, or a single image, the phone shows the
+             whole wide picture, small; and the line says that instead. */
+          + (pictures && d.image && !d.image_m
+              ? (slider && s.slider_fit === 'cover' && String(s.slider_ratio_m || 'auto') !== 'auto'
+                  ? '<span class="bns-warn">No phone picture yet, so phones see only the middle of this one — sharp, but cropped to about a quarter of its width. Choose one at 500 × 600 to decide what they see.</span>'
+                  : '<span class="bns-warn">No phone picture yet, so phones show this one whole — nothing cut, but a wide picture is a short strip on a phone (1920 × 550 is 112px tall at 390). Choose one at 500 × 600 for a taller phone banner.</span>')
               : '')
         + '</div>'
         /* THE THREE TEXT BOXES ARE THE CARDS ROW'S AND ARE NOT DRAWN FOR A
@@ -1107,11 +1195,11 @@
            back has its headings again. The link and the description ARE drawn,
            because a slider picture can still be a link and still needs a name
            for a screen reader. */
-        + (slider ? ''
+        + (pictures ? ''
             : '<input class="bns-in" type="text" placeholder="Heading" maxlength="190" data-bns-card="' + esc(c.id) + '" data-bns-k="heading" value="' + esc(d.heading) + '">'
               + '<input class="bns-in" type="text" placeholder="One short line under it" maxlength="255" data-bns-card="' + esc(c.id) + '" data-bns-k="body" value="' + esc(d.body) + '">')
         + '<div class="bns-grid">'
-          + (slider ? ''
+          + (pictures ? ''
               : '<input class="bns-in" type="text" placeholder="Button label" maxlength="80" data-bns-card="' + esc(c.id) + '" data-bns-k="button_label" value="' + esc(d.button_label) + '">')
           + '<input class="bns-in" type="text" placeholder="Where it goes, e.g. /shop/" maxlength="400" data-bns-card="' + esc(c.id) + '" data-bns-k="button_url" value="' + esc(d.button_url) + '">'
           + '<input class="bns-in" type="text" placeholder="Picture description, for screen readers" maxlength="255" data-bns-card="' + esc(c.id) + '" data-bns-k="alt" value="' + esc(d.alt) + '">'
@@ -1278,7 +1366,7 @@
 
       var apply = function(){
         draft.set[key] = el.type === 'checkbox' ? el.checked : (el.type === 'number' || el.type === 'range' ? Number(el.value) : el.value);
-        if (out) out.textContent = el.value;
+        if (out) out.textContent = el.dataset.bnsHeight ? heightText(el.value) : el.value;
         if (key === 'bg_mode') {
           document.querySelectorAll('[data-bns-when]').forEach(function(w){
             w.hidden = w.dataset.bnsWhen !== el.value;

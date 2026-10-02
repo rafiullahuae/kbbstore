@@ -170,6 +170,11 @@ final class StaticMemos
              * would depend on whether some earlier file had opened the screen.
              */
             SetAppearanceLiveMap::class => static fn () => SetAppearanceLiveMap::forget(),
+            /*
+             * BannerCard::naturalSize() memoises the header it reads off a
+             * picture with no stored size, per path, per process. (Lane RC)
+             */
+            \App\Models\BannerCard::class => static fn () => \App\Models\BannerCard::forgetSizes(),
             // Public and written from the transport itself; there is no forget()
             // to call, so this is the assignment.
             ServerMailTransport::class => static function (): void {
