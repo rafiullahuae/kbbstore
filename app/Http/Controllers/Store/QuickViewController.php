@@ -32,7 +32,7 @@ class QuickViewController extends Controller
         // Off at Store -> Modules means gone, not merely hidden: the button is
         // not rendered, and this endpoint stops answering too. A module switch
         // that leaves its endpoint live is not really a switch.
-        abort_unless($this->settings->moduleEnabled('quick_view', true), 404);
+        abort_unless($this->settings->moduleEnabled('quick_view', false), 404);
 
         $product = Product::visible()
             ->with('brand')

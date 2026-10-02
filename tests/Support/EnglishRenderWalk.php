@@ -1001,6 +1001,12 @@ final class EnglishRenderWalk
         $test->seed(\Database\Seeders\DatabaseSeeder::class);
         $test->seed(\Database\Seeders\DemoReviewsSeeder::class);
 
+        // Quick view is OFF by default since 2.60.354 (owner: "by default off
+        // this function everywhere"). The walk's baseline was written with the
+        // button on every card and serves /quick-view/{id}, so it switches the
+        // module on; QuickViewCentredTest pins the default-off page itself.
+        app(\App\Services\SettingsService::class)->setModule('quick_view', true);
+
         $post = Post::create([
             'slug' => 'walk-article',
             'title' => 'Walk Article',

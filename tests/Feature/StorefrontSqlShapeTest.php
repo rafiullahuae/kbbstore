@@ -35,6 +35,10 @@ function shapeSeed(): array
 {
     test()->seed(\Database\Seeders\DatabaseSeeder::class);
     test()->seed(\Database\Seeders\DemoReviewsSeeder::class);
+    // Quick view is OFF by default since 2.60.354 (owner: "by default off this
+    // function everywhere"). This walk serves /quick-view/{id} and was measured
+    // with the button on every card, so it switches the module on.
+    app(\App\Services\SettingsService::class)->setModule('quick_view', true);
 
     /*
      * One product per page, so that the 'shop paged' entry in shapePages()

@@ -35,7 +35,7 @@ it('centres the quick view pill on the photograph, Showcase included', function 
 
     expect($css)->toContain('.kbb-tile .kbb-card-thumb > .qv-btn{position:absolute;inset:auto;top:50%;left:50%;margin:0;align-self:auto;justify-self:auto;transform:translate(-50%,calc(-50% + 6px))}')
         ->and($css)->toContain(".kbb-tile:hover .kbb-card-thumb > .qv-btn,\n.kbb-tile .kbb-card-thumb > .qv-btn:focus-visible{transform:translate(-50%,-50%)}")
-        ->and($css)->toContain('.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-thumb > .qv-btn{transform:translate(-50%,calc(-50% + 6px))}')
+        ->and($css)->toContain('.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-thumb > .qv-btn{position:absolute;inset:auto;top:50%;left:50%;margin:0;align-self:auto;justify-self:auto;transform:translate(-50%,calc(-50% + 6px))}')
         ->and($css)->toContain('.kbb-pgrid[data-skin^="showcase"] .kbb-tile:hover .kbb-card-thumb > .qv-btn,');
 
     // And it comes AFTER the rule that made it relative, or it loses the tie.
@@ -75,4 +75,38 @@ it('switches Quick view off on the shop, and only on the shop', function () {
     DB::table('module_toggles')->where('module', 'quick_view')->delete();
     $migration->up();
     expect(DB::table('module_toggles')->where('module', 'quick_view')->exists())->toBeFalse();
+});
+
+it('draws no quick view anywhere on the shop by default', function () {
+    /*
+     * Owner, 2 October, after the first fix: "The Quick view is still coming
+     * same. i have told you by default off this function everywhere on the
+     * site-frontend. on every page." The shop had no `quick_view` row -- the
+     * module seeder never wrote one -- so every card read the code's own
+     * default, which was ON. The default is now OFF in all four places that
+     * read it: the card, the layout's modal shell, the endpoint, and
+     * ModuleRegistry (what Store -> Modules shows and saves).
+     *
+     * MUTATION, RUN: put `true` back as the default in product-card.blade.php
+     * -- red (the button is on every card); in layouts/store.blade.php -- red
+     * (the modal shell is on the page); in QuickViewController -- red (200).
+     */
+    test()->seed(\Database\Seeders\DatabaseSeeder::class);
+    \Illuminate\Support\Facades\DB::table('module_toggles')->where('module', 'quick_view')->delete();
+    \Illuminate\Support\Facades\Cache::forget('kbb.modules');
+
+    $product = \App\Models\Product::query()->visible()->firstOrFail();
+
+    foreach (['/', '/shop/', '/product/'.$product->slug.'/'] as $path) {
+        $html = (string) test()->get($path)->assertOk()->getContent();
+        expect($html)->not->toContain('class="qv-btn"')
+            ->and($html)->not->toContain('id="kbbQv"');
+    }
+
+    test()->getJson('/quick-view/'.$product->id)->assertNotFound();
+    expect(\App\Services\ModuleRegistry::REGISTRY['quick_view'][3])->toBeFalse();
+
+    // And switched on in Store -> Modules, it comes back.
+    app(\App\Services\SettingsService::class)->setModule('quick_view', true);
+    expect((string) test()->get('/shop/')->getContent())->toContain('class="qv-btn"');
 });

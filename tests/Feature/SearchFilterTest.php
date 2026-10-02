@@ -309,6 +309,7 @@ it('renders quick view for a visible product', function () {
     $b = brand('Medicube', 'medicube');
     $p = shopProduct(['name' => 'Quick Serum', 'brand_id' => $b->id]);
 
+    app(\App\Services\SettingsService::class)->setModule('quick_view', true); // off by default since 2.60.354; this case exercises it
     $this->getJson("/quick-view/{$p->id}")
         ->assertOk()
         ->assertJson(['ok' => true, 'title' => 'Quick Serum'])

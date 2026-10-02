@@ -536,7 +536,7 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
 <script>window.KBB = @json($kbbJs);</script>
 @include('partials.js-strings')
 
-@if (app(\App\Services\SettingsService::class)->moduleEnabled('quick_view', true))
+@if (app(\App\Services\SettingsService::class)->moduleEnabled('quick_view', false))
 {{-- Quick view: one shell per page, filled on demand from /quick-view/{id}. --}}
 <div class="qv-back" id="kbbQv" hidden>
   <div class="qv-modal" role="dialog" aria-modal="true" aria-label="{{ __('store.quick_view.dialog_label') }}">

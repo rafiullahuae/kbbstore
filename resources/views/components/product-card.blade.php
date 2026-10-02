@@ -39,7 +39,7 @@
     here:
 
         the wishlist heart        Catalogue -> Wishlist, off by default
-        the quick-view button     Catalogue -> Quick view, ON by default
+        the quick-view button     Catalogue -> Quick view, off by default
         Product Labels            Growth & Marketing -> Product Labels, off by
                                   default; when ON it takes the badge over
                                   entirely, including deciding there is none.
@@ -114,8 +114,9 @@
     // Catalogue → Wishlist. The heart is markup only until the module is on.
     $kbbWishlist = app(\App\Services\SettingsService::class)->moduleEnabled('wishlist', false);
 
-    // Catalogue → Quick view. Registered in ModuleRegistry, default on.
-    $kbbQuickView = app(\App\Services\SettingsService::class)->moduleEnabled('quick_view', true);
+    // Catalogue → Quick view. Registered in ModuleRegistry, default OFF since
+    // 2.60.354 (owner: "by default off this function everywhere").
+    $kbbQuickView = app(\App\Services\SettingsService::class)->moduleEnabled('quick_view', false);
 
     /*
      * ── WHAT THE CARD SHOWS, DECIDED HERE AND NOT IN CSS ───────── Lane CARD ──
