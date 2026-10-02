@@ -100,7 +100,17 @@ function htmlTag(string $url): string
         return '(HTTP ' . $response->status() . ')';
     }
 
-    return preg_match('/<html[^>]*>/', $response->getContent(), $m) === 1 ? $m[0] : '(no <html> element)';
+    if (preg_match('/<html[^>]*>/', $response->getContent(), $m) !== 1) {
+        return '(no <html> element)';
+    }
+
+    /*
+     * The control's tag also carries Lane RD's press-feedback attribute,
+     * ` data-press="c"`. It says nothing about language and is not this file's
+     * to pin -- PressFeedbackTest pins it -- so it is taken out here, and only
+     * in its exact shape, so that anything else added to <html> is still seen.
+     */
+    return (string) preg_replace('/ data-press="[a-e]"(?=>$)/', '', $m[0]);
 }
 
 it('serves all five documents and the control, so the sweeps below are asked of real pages', function () {

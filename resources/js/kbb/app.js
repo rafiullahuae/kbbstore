@@ -62,6 +62,9 @@ import { initAlsoLike } from './ymal.js';
 // Lane RA: the admin bar and quick-edit pencil, LAST in STEPS. For a shopper
 // it is one cookie test and nothing else; see admin-hint.js.
 import { initAdminLayer } from './admin-hint.js';
+// Lane RD: press feedback -- no grey box, a live response on every button and
+// icon. Classes only; it returns at once when the owner chose Off. See press.js.
+import { initPress } from './press.js';
 
 /* ── EVERY STEP RUNS, WHATEVER ANY OTHER STEP DOES. ─────────────────────────
  *
@@ -102,6 +105,7 @@ const STEPS = [
     initNavFit,
     initAlsoLike,
     initAdminLayer,
+    initPress,
 ];
 
 const boot = () => {

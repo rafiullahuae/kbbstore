@@ -24,6 +24,7 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Translation;
 use App\Services\SettingsService;
+use App\Services\SiteLayout;
 use App\Services\Translation\DatabaseTranslationLoader;
 use App\Services\Translation\GoogleProvider;
 use App\Services\Translation\InterfaceStrings;
@@ -207,7 +208,9 @@ it('marks an Arabic page as Arabic and right-to-left', function () {
 
     $html = test()->get('/ar/my-wishlist/')->getContent();
 
-    expect($html)->toContain('<html lang="ar" dir="rtl">');
+    // The tag also carries Lane RD's press-feedback attribute, the shipped
+    // default; PressFeedbackTest pins that. Language and direction are this case's.
+    expect($html)->toContain('<html lang="ar" dir="rtl"'.SiteLayout::PRESS_ATTR[SiteLayout::SCHEMA['press'][2]].'>');
 });
 
 it('keeps Arabic and right-to-left as two separate switches', function () {
@@ -218,7 +221,7 @@ it('keeps Arabic and right-to-left as two separate switches', function () {
 
     $html = test()->get('/ar/my-wishlist/')->getContent();
 
-    expect($html)->toContain('<html lang="ar" dir="ltr">')
+    expect($html)->toContain('<html lang="ar" dir="ltr"'.SiteLayout::PRESS_ATTR[SiteLayout::SCHEMA['press'][2]].'>')
         ->and(Locale::isRtl('ar'))->toBeFalse();
 });
 

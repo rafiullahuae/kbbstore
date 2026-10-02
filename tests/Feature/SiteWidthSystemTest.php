@@ -674,6 +674,10 @@ it('ships every setting at the value the page already had, except the ones the o
         'cat_header_mt_desktop' => 6,
         'cat_header_mb_phone' => 22,
         'cat_header_mb_desktop' => 26,
+        // Lane RD: press feedback ships at C · Ripple, which the owner chose in
+        // as many words -- "set C · Ripple by default, and give other as
+        // options to set from backend". Not CSS on :root; an attribute on <html>.
+        'press' => 'c',
     ];
 
     expect(array_keys($fields))->toEqual(array_keys($expected));

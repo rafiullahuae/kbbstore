@@ -140,7 +140,13 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
      * it looks) and "Category header · sizes & spacing". Still none of them CSS
      * on :root.
      */
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize']);
+    /*
+     * SIX SINCE LANE RD: "Press feedback" -- what every button and icon does
+     * under a finger, C · Ripple by default, which the owner chose. One select;
+     * not CSS on :root either (it is an attribute on <html>), so "sending
+     * nothing" below is unchanged by it. PressFeedbackTest covers the tab.
+     */
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize', 'press']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
@@ -153,7 +159,8 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
      * controls, all on the Category header tab, none of them CSS on :root.
      */
     // 80 since 2.60.353: the random light box switch and its five-style mix.
-    expect($keys)->toHaveCount(80);
+    // 81 since Lane RD: `press`, the press-feedback select.
+    expect($keys)->toHaveCount(81);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

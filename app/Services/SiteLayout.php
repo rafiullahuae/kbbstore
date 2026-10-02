@@ -489,7 +489,70 @@ class SiteLayout
         'cat_header_mb_desktop' => ['range', 'Space below · laptop', 26,
             '',
             ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
+
+        /*
+         * ── PRESS FEEDBACK ──────────────────────────────────────── Lane RD ──
+         *
+         * "when u click on any button or icon. it leaves gray square /
+         *  rectangle box instead of changing the color of button icon itself.
+         *  it give feeling that we put just png images and clickable."
+         *
+         * The grey box is the browser's own tap highlight: the storefront never
+         * set `-webkit-tap-highlight-color`, so every tapped control got the
+         * default -- measured in Chromium's phone emulation on the header icons,
+         * the heart, Add to cart and the pills: rgba(51,181,229,.4) at 390px and
+         * rgba(0,0,0,.18) at 1280px, grey on an iPhone. And no control had a
+         * pressed state of its own; the header icons had a :hover tint and
+         * nothing else.
+         *
+         * He was shown five styles on a playground and answered: "set C · Ripple
+         * by default, and give other as options to set from backend." So it
+         * SHIPS AT `c`, in the code and not only on his shop -- a default that
+         * lives only in a migration is a default a fresh install never sees,
+         * and he has just complained about exactly that. CLAUDE.md rule 1's
+         * 30 September reversal: a thing he asked for is the shop's new state.
+         *
+         * `off` is the shop exactly as it was: no attribute on <html>, so not
+         * one byte of any page changes, and the stylesheet's rules -- every one
+         * keyed by that attribute -- match nothing. See pressAttribute().
+         */
+        'press' => ['select', 'When a shopper taps a button or icon', 'c',
+            'Every choice except Off removes the grey box the phone draws over whatever was tapped. They differ only in what the button itself does: the header icons, the menu, the search box, every Add to cart, the heart, the pills and tabs, the − / + buttons, the arrows and the share sheet.',
+            self::PRESS_OPTIONS],
     ];
+
+    /**
+     * The press styles, lettered as they were on the owner's playground, so
+     * "C" on the screen is the "C" he chose. (Lane RD)
+     */
+    public const PRESS_OPTIONS = [
+        'off' => 'Off · the phone’s own grey box (how the shop was)',
+        'a' => 'A · Soft fill — a blush circle, the icon turns pink, a small press-in',
+        'b' => 'B · Pink pop — a solid pink circle with a white icon; buttons press in',
+        'c' => 'C · Ripple — a pink wave spreads out from the middle',
+        'd' => 'D · Bounce — squeezes in under the finger and springs back',
+        'e' => 'E · Glow ring — a soft pink halo around what was pressed; nothing moves',
+    ];
+
+    /**
+     * WHAT EACH STYLE PUTS ON <html>, AND THE ONLY THING IT PUTS THERE.
+     *
+     * Rule 5: this is printed unescaped into the layout's <html> tag, so it is a
+     * constant -- the setting chooses a KEY of this map, never a byte of the
+     * markup. `off` is the empty string, so a shop on Off renders the tag it
+     * always did, byte for byte. (Lane RD)
+     */
+    public const PRESS_ATTR = [
+        'off' => '',
+        'a' => ' data-press="a"',
+        'b' => ' data-press="b"',
+        'c' => ' data-press="c"',
+        'd' => ' data-press="d"',
+        'e' => ' data-press="e"',
+    ];
+
+    /** Not CSS on :root: skipped by isDefault(), never in css(). (Lane RD) */
+    private const PRESS_KEYS = ['press'];
 
     /** The bounds a typed batch size is held to, server-side. */
     public const BATCH_MIN = 4;
@@ -635,6 +698,9 @@ class SiteLayout
         'catheadersize' => ['Category header · sizes & spacing',
             'Title and description sizes, the header\'s height, the space inside and around it, and its corners -- for phones and for laptops (900px and wider) separately.',
             self::HEADER_SIZE_KEYS],
+        'press' => ['Press feedback',
+            'What every button and icon in the shop does under a finger or a click. Tap the samples below to feel each one before you save; nothing changes on the shop until you press Save.',
+            self::PRESS_KEYS],
     ];
 
     /** Every key lives in `settings`, written by this module's own endpoint. */
@@ -920,7 +986,8 @@ class SiteLayout
         $values = $this->all();
 
         foreach (self::normalised() as $key => $field) {
-            if (in_array($key, self::LOAD_KEYS, true) || in_array($key, self::HEADER_KEYS, true)) {
+            if (in_array($key, self::LOAD_KEYS, true) || in_array($key, self::HEADER_KEYS, true)
+                || in_array($key, self::PRESS_KEYS, true)) {
                 continue;
             }
 
@@ -968,6 +1035,30 @@ class SiteLayout
             'all' => self::LOAD_ALL_CAP,
             default => max(1, $arrows),
         };
+    }
+
+    /**
+     * The press style in force: always a key of PRESS_OPTIONS. (Lane RD)
+     *
+     * all() already falls back to the default for a stored value cast() would
+     * refuse; the second check is for a row written behind the screen's back
+     * (a raw UPDATE, an import), which must still render the shipped style
+     * rather than an attribute nobody can read.
+     */
+    public function press(): string
+    {
+        $press = (string) $this->get('press');
+
+        return array_key_exists($press, self::PRESS_ATTR) ? $press : (string) self::SCHEMA['press'][2];
+    }
+
+    /**
+     * The attribute the storefront layout prints on <html>: a constant from
+     * PRESS_ATTR, '' for Off. (Lane RD)
+     */
+    public function pressAttribute(): string
+    {
+        return self::PRESS_ATTR[$this->press()];
     }
 
     /**

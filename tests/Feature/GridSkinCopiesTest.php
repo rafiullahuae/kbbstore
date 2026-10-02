@@ -256,6 +256,18 @@ function kbbCardCopy(string $which): array
             continue;
         }
 
+        /*
+         * Lane RD's press feedback names the card's controls (.heart,
+         * .kbb-card-cart) among every other button in the shop, but it is not a
+         * copy of the card: it is keyed by html[data-press], lives only in
+         * kbb.css ON PURPOSE because it must reach every page, and is pinned by
+         * PressFeedbackTest. Counting it here would record forty "divergences"
+         * that are one site-wide rule set.
+         */
+        if ($which === 'kbb' && str_contains($rule['selector'], 'html[data-press')) {
+            continue;
+        }
+
         $out[$rule['context'].'|'.$rule['selector']][] = $rule;
     }
 

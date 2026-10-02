@@ -127,9 +127,18 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
      * document's own attributes and belong to the document, not to the <head>
      * block a helper renders into it.
      */
+
+    /*
+     * PRESS FEEDBACK (Lane RD): ` data-press="c"`, or '' when the owner chose
+     * Off. A constant from SiteLayout::PRESS_ATTR, never the stored value, which
+     * is why it may be printed unescaped. Every press rule in kbb.css and every
+     * line of resources/js/kbb/press.js is keyed by this one attribute, so Off
+     * is the page exactly as it was. Appearance -> Site layout -> Press feedback.
+     */
+    $kbbPress = app(\App\Services\SiteLayout::class)->pressAttribute();
 @endphp
 <!DOCTYPE html>
-<html lang="{{ $kbbLocale }}" dir="{{ $kbbDir }}">
+<html lang="{{ $kbbLocale }}" dir="{{ $kbbDir }}"{!! $kbbPress !!}>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
