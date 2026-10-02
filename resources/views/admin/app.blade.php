@@ -533,6 +533,70 @@ input.inp[type=file]{padding:6px 9px}
 .odaddr .odname{font-weight:700;color:var(--ink)}
 .odcustchip{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1.5px solid #D8DCE3;border-radius:8px;font-size:12px;font-weight:600;background:#FAFBFC;box-shadow:inset 0 1px 2px rgba(18,21,31,.03)}
 @media(max-width:1100px){.odgrid{grid-template-columns:1fr}.odcols3{grid-template-columns:1fr}.odcols2{grid-template-columns:1fr}.odcolcell.odcolmid{border-left:none;border-right:none;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}}
+/* (Lane PU) Store → Orders → an order: the payment panel under the Items, the
+   link-style buttons that replaced <a href="#">, and the four modals. Sized
+   with flex-wrap and grid, never measured: the panel takes the space left of
+   the totals and drops onto its own row when there is no room beside them. */
+.odpayrow{display:flex;flex-wrap:wrap;gap:0 22px;align-items:flex-start}
+.odpay{flex:1 1 240px;min-width:0;margin-top:14px;border-radius:12px;padding:16px 18px;border:1.5px solid;font-size:12.5px}
+.odpay-green{background:#ECFDF3;border-color:#3FB97A;color:#05603A}
+.odpay-amber{background:#FFF7E8;border-color:#F0A73A;color:#8A4B06}
+.odpay-grey{background:#F5F6F8;border-color:#D8DCE3;color:#3C4253}
+.odpay-red{background:#FEF1F0;border-color:#F0A29B;color:#9B231A}
+.odpay-head{display:flex;gap:12px;align-items:flex-start}
+.odpay-ic{flex:0 0 34px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:currentColor}
+.odpay-ic svg{color:#fff}
+.odpay-h{font-size:17px;font-weight:800;line-height:1.3;color:inherit;overflow-wrap:anywhere}
+.odpay-d{font-size:12px;line-height:1.5;margin-top:3px;opacity:.85}
+.odpay-dl{margin:14px 0 0;display:grid;gap:7px;border-top:1px solid rgba(0,0,0,.08);padding-top:12px}
+.odpay-r{display:grid;grid-template-columns:108px minmax(0,1fr);gap:10px;align-items:baseline}
+.odpay-r dt{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;opacity:.75}
+.odpay-r dd{margin:0;color:var(--ink);font-weight:600;display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+.odpay-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.08);border-radius:6px;padding:2px 6px;overflow-wrap:anywhere;word-break:break-all}
+.odpay-copy{font-size:11px;font-weight:700;color:inherit;background:#fff;border:1px solid currentColor;border-radius:6px;padding:2px 8px;cursor:pointer}
+.odpay-soft{font-weight:500;opacity:.8;font-size:11.5px}
+.odpay-urgent{color:#B42318;opacity:1;font-weight:700}
+.odpay-acts{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+.odlinkbtn{background:none;border:0;padding:0;font:inherit;font-size:11px;font-weight:600;color:#E08A1A;cursor:pointer;letter-spacing:0}
+.odlinkbtn:hover{text-decoration:underline}
+.odmodal .odm-lead{font-size:12.5px;line-height:1.55;color:var(--ink-2);margin:0 0 14px}
+.odm-opt{font-weight:500;color:var(--ink-faint)}
+.odm-err{color:#B42318;font-size:12px;margin:0 0 10px;min-height:0}
+.odm-err:empty{display:none}
+.odm-ferr{display:block;color:#B42318;font-size:11px;margin-top:4px}
+.odm-ferr:empty{display:none}
+.odm-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0 12px}
+.odm-acts{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:6px}
+.odm-list{display:grid;gap:6px;max-height:260px;overflow:auto}
+.odm-item{display:grid;text-align:left;gap:2px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font:inherit;font-size:12.5px}
+.odm-item span{color:var(--ink-soft);font-size:11.5px}
+.odm-item:hover{border-color:#E08A1A}
+.odm-item:disabled{opacity:.5;cursor:default}
+.odm-empty{font-size:12.5px;color:var(--ink-soft);margin:6px 0}
+.odh-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.odh-kpis div{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:#FAFBFC;min-width:0}
+.odh-kpis small{display:block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint)}
+.odh-kpis b{display:block;font-size:16px;font-weight:800;margin-top:3px;overflow-wrap:anywhere}
+.odh-head,.odh-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.1fr) minmax(0,.7fr) minmax(0,1fr);gap:8px;align-items:center}
+.odh-head{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);padding:0 10px 6px}
+.odh-list{display:grid;gap:5px}
+.odh-row{width:100%;text-align:left;font:inherit;font-size:12.5px;padding:10px;border:1px solid var(--border);border-radius:9px;background:#fff;cursor:pointer;color:var(--ink)}
+.odh-row:hover{border-color:#E08A1A;background:#FFFBF4}
+.odh-row.is-current{background:#FFF8EC}
+.odh-no{font-weight:700;overflow-wrap:anywhere}
+.odh-st .pill{white-space:nowrap}
+.odh-no em{font-style:normal;font-weight:600;font-size:10.5px;color:#92600A}
+.odh-date,.odh-items{color:var(--ink-soft)}
+.odh-total{font-weight:700;text-align:right}
+.odh-pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:var(--ink-soft)}
+@media(max-width:560px){
+  .odh-head{display:none}
+  .odh-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"no total" "date st" "items st"}
+  .odh-no{grid-area:no}.odh-total{grid-area:total}.odh-date{grid-area:date}.odh-st{grid-area:st;justify-self:end}.odh-items{grid-area:items}
+  .odh-kpis{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .odh-kpis div:first-child{grid-column:1/-1}
+  .odpay-r{grid-template-columns:minmax(0,1fr)}
+}
 .imgdrop{border:1.5px dashed var(--border);border-radius:12px;padding:22px;text-align:center;color:var(--ink-soft);font-size:12.5px}
 .imgrow{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .imgrow .ph2{width:54px;height:54px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;color:var(--ink-faint);font-size:10px}
@@ -14566,8 +14630,14 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     try{ o = await api('/admin-api/orders/'+id+'/detail'); }
     catch(e){ document.querySelector('#content').innerHTML = '<div class="wrap"><p style="padding:40px;color:var(--sale)">Could not load this order.</p></div>'; return; }
 
+    /* (Lane PU) "Paid on" only when the payment panel below agrees the order
+       IS paid. WooCommerce stamps date_paid on a cash-on-delivery order the
+       moment it reaches Processing, so an imported COD order read "Paid on
+       29 Sep" here directly above an amber "AED 337 to collect". */
+    var payState = (o.payment && o.payment.state) || '';
+    var paidSaid = o.paid_at && (!o.payment || payState === 'paid' || payState === 'refunded');
     var paidLine = o.payment_method_title
-      ? 'Payment via '+sesc(o.payment_method_title)+'.'+(o.transaction_id?' ('+sesc(o.transaction_id)+').':'')+(o.paid_at?' Paid on '+fmtDT(o.paid_at)+'.':'')+(o.ip_address?' Customer IP: '+sesc(o.ip_address)+'.':'')
+      ? 'Payment via '+sesc(o.payment_method_title)+'.'+(o.transaction_id?' ('+sesc(o.transaction_id)+').':'')+(paidSaid?' Paid on '+fmtDT(o.paid_at)+'.':'')+(o.ip_address?' Customer IP: '+sesc(o.ip_address)+'.':'')
       : 'No payment recorded yet.';
 
     document.querySelector('#content').innerHTML =
@@ -14728,12 +14798,45 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     return sesc(String(parseInt(s.slice(8,10),10))+' '+mo+' '+s.slice(0,4)+' at '+s.slice(11,16));
   }
 
+  /*
+   * (Lane PU) THE ADDRESSES, IN THE SHAPE EVERY WRITER STORES.
+   *
+   * This printed `a.name` and `a.emirate`. Nothing in the shop writes either:
+   * the checkout, New Order and the WooCommerce import all store first_name /
+   * last_name / company / line1 / line2 / city / state / postcode / country /
+   * phone (App\Support\OrderAddress). So the shipping name was blank and the
+   * emirate missing on every order. odAddrName() still reads a legacy `name`
+   * for the demo rows that carry one.
+   */
+  function odAddrName(a){
+    a = a || {};
+    return [a.first_name, a.last_name].filter(Boolean).join(' ') || a.name || '';
+  }
+
+  function odAddrLines(a, countries){
+    a = a || {};
+    var city = a.city || '', state = a.state || a.emirate || '';
+    // "Dubai, Dubai" is what city + emirate gives in most of the UAE.
+    var place = (state && String(state).toLowerCase() !== String(city).toLowerCase()) ? [city, state].filter(Boolean).join(', ') : city;
+    var country = a.country ? ((countries && countries[a.country]) || a.country) : '';
+    return [a.company, a.line1, a.line2, place, a.postcode, country].filter(Boolean).map(sesc).join('<br>');
+  }
+
   function odOverviewAddressesCard(o){
     var c = o.customer||{};
     var b = o.billing_address||{}, s = o.shipping_address||{};
-    var addrLines = function(a){
-      return [a.line1, a.line2, [a.city,a.emirate].filter(Boolean).join(', ')].filter(Boolean).map(sesc).join('<br>');
+    var can = o.can||{};
+    var countries = (o.address_form||{}).countries || {};
+    /* "Edit" is drawn only for an admin the server will let save, and it is a
+       BUTTON: the link it replaces was <a href="#"> with no handler, so a click
+       did nothing but clear the URL's hash. */
+    var editBtn = function(type){
+      return can.edit ? '<button type="button" class="odlinkbtn" data-odedit="'+type+'" aria-label="Edit '+type+' details">Edit</button>' : '';
     };
+    /* Order history works for a guest too -- matched by the order's email, the
+       way the Customer history card on the right already counts one. */
+    var histLink = (c.id || o.email) ? ' &middot; <button type="button" class="odlinkbtn" id="odCustHist">Order history</button>' : '';
+    var changeLink = can.customer ? '<button type="button" class="odlinkbtn" id="odCustChange">Change</button>' : '';
     return '<div class="odcard" style="margin-bottom:16px" id="odGeneral">'+
       '<div class="odcols3">'+
       '<div class="odcolcell">'+
@@ -14742,23 +14845,20 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
         '<div class="odreadonly">'+odShopDateTime(o.created_at)+'</div></div>'+
         '<div class="odfld"><label>Status</label>'+seoSel2('odStatusSel', o.status, ORDER_STATUSES.map(function(s){return [s, s.charAt(0).toUpperCase()+s.slice(1)];}))+'</div>'+
         odNotifyFieldHTML(o)+
-        '<div class="odfld" style="margin-bottom:0"><label>Customer'+(c.id?' &middot; <a href="#" id="odCustHist" style="color:#E08A1A;font-weight:600">Order history</a>':'')+'</label>'+
-        (c.id ? '<div class="odcustchip"><span>'+sesc(c.name)+'</span></div>' : '<div class="odcustchip"><span style="color:var(--ink-faint)">Guest checkout</span></div>')+
+        '<div class="odfld" style="margin-bottom:0"><label>Customer'+histLink+'</label>'+
+        (c.id ? '<div class="odcustchip"><span>'+sesc(c.name||c.email)+'</span>'+changeLink+'</div>' : '<div class="odcustchip"><span style="color:var(--ink-faint)">Guest checkout</span>'+changeLink+'</div>')+
         '</div>'+
       '</div>'+
       '<div class="odcolcell odcolmid">'+
-        '<div class="odcollabel">BILLING <a href="#">Edit</a></div>'+
-        '<div class="odaddr"><span class="odname">'+sesc(b.name||o.customer&&o.customer.name||'')+'</span><br>'+(addrLines(b)||'\u2014')+'</div>'+
-        '<div class="odfld" style="margin-top:14px;margin-bottom:0"><label>Email address</label>'+(o.email?'<a href="mailto:'+sesc(o.email)+'" style="font-size:11.5px">'+sesc(o.email)+'</a>':'\u2014')+'</div>'+
-        '<div class="odfld" style="margin-top:10px;margin-bottom:0"><label>Phone</label>'+(o.phone?'<a href="tel:'+sesc(o.phone)+'" style="font-size:11.5px">'+sesc(o.phone)+'</a>':'\u2014')+'</div>'+
+        '<div class="odcollabel">BILLING '+editBtn('billing')+'</div>'+
+        '<div class="odaddr"><span class="odname">'+sesc(odAddrName(b)||c.name||'')+'</span><br>'+(odAddrLines(b, countries)||'—')+'</div>'+
+        '<div class="odfld" style="margin-top:14px;margin-bottom:0"><label>Email address</label>'+(o.email?'<a href="mailto:'+sesc(o.email)+'" style="font-size:11.5px">'+sesc(o.email)+'</a>':'—')+'</div>'+
+        '<div class="odfld" style="margin-top:10px;margin-bottom:0"><label>Phone</label>'+(o.phone?'<a href="tel:'+sesc(o.phone)+'" style="font-size:11.5px">'+sesc(o.phone)+'</a>':'—')+'</div>'+
       '</div>'+
       '<div class="odcolcell">'+
-        '<div class="odcollabel">SHIPPING <span class="odedit" data-odedit="shipping" style="cursor:pointer;color:#E08A1A;font-weight:600">Edit</span></div>'+
-        '<div class="odaddr" id="odShipView"><span class="odname">'+sesc(s.name||'')+'</span><br>'+(addrLines(s)||'\u2014')+'</div>'+
-        '<div id="odShipEdit" style="display:none;margin-top:10px">'+
-          '<textarea class="odinp" id="odShipJson" rows="4" style="font-size:11px;font-family:monospace">'+sesc(JSON.stringify(s||{}, null, 2))+'</textarea>'+
-          '<button class="btn sm" id="odShipSave" style="margin-top:8px">Save</button></div>'+
-        '<div class="odfld" style="margin-top:14px;margin-bottom:0"><label>Phone</label>'+(o.phone?'<a href="tel:'+sesc(o.phone)+'" style="font-size:11.5px">'+sesc(o.phone)+'</a>':'\u2014')+'</div>'+
+        '<div class="odcollabel">SHIPPING '+editBtn('shipping')+'</div>'+
+        '<div class="odaddr" id="odShipView"><span class="odname">'+sesc(odAddrName(s))+'</span><br>'+(odAddrLines(s, countries)||'—')+'</div>'+
+        '<div class="odfld" style="margin-top:14px;margin-bottom:0"><label>Phone</label>'+((s.phone||o.phone)?'<a href="tel:'+sesc(s.phone||o.phone)+'" style="font-size:11.5px">'+sesc(s.phone||o.phone)+'</a>':'—')+'</div>'+
       '</div>'+
       '</div></div>';
   }
@@ -14847,6 +14947,10 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
       '<div style="overflow:auto"><table><thead><tr><th></th><th>Item</th><th>Price</th><th>Qty</th><th>Total</th>'+(editable?'<th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'+
       addProductBlock+
       (o.shipping_method?'<p style="font-size:12px;color:var(--ink-soft);margin-top:10px">Shipping: '+sesc(o.shipping_method)+'</p>':'')+
+      /* (Lane PU) The payment panel sits in the empty space LEFT of the
+         totals -- "a big green box" -- and the two wrap onto separate rows on a
+         phone. The totals block itself is unchanged. */
+      '<div class="odpayrow">'+odPaymentPanel(o)+
       '<div style="margin-top:14px;max-width:280px;margin-left:auto;'+(editable?'margin-right:140px;':'')+'display:flex;flex-direction:column;gap:5px;font-size:13px">'+
       '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+
       (o.discount_total_aed>0?'<div class="between"><span style="color:var(--ink-soft)">Discount'+(o.coupon_code?' ('+sesc(o.coupon_code)+')':'')+'</span><span>-AED '+o.discount_total_aed+'</span></div>':'')+
@@ -14857,7 +14961,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
       capturedLine+
       refundedLine+
       '</div>'+
-      odCapturePanel(o)+
+      '</div>'+
       '<div class="row" style="margin-top:16px;gap:10px;align-items:center">'+
       '<button class="btn ghost sm" id="odRefundToggle">Refund</button>'+
       '<div id="odRefundForm" style="display:none;gap:8px;align-items:center" class="row">'+
@@ -14887,57 +14991,64 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
   }
 
   /*
-   * Capture.
+   * (Lane PU) THE PAYMENT PANEL -- "a big green box where clearly written
+   * 'Paid with <payment method name>'". Every word of it is decided by the
+   * server (App\Support\OrderPaymentPanel); this only draws it, and escapes
+   * all of it: the method title and the reference came from WooCommerce.
    *
-   * The reason this panel exists at all: Tabby and Tamara AUTHORISE at
-   * checkout and auto-void an authorisation that is never captured. An order
-   * that reads "paid" and was never captured is one the merchant does not get
-   * paid for, so the state is shown on the order rather than left to be
-   * discovered in a provider dashboard, and it shouts when the window is
-   * nearly up.
+   * IT REPLACES THE CAPTURE BOX. "Not captured ... Capture AED X" was drawn on
+   * every cash-on-delivery order, including delivered ones. Capture now
+   * appears in exactly one place: inside this panel, on a Tabby or Tamara
+   * order this shop authorised and has not yet taken the money for -- the
+   * only orders where pressing it moves money. The button keeps its id, so the
+   * existing wiring in wireOrderDetail() still serves it.
+   *
+   * Green paid, amber cash-on-delivery-to-collect, grey/red not paid.
    */
-  function odCapturePanel(o){
-    var s = o.settlement;
-    if(!s || !s.supported) return '';
-
-    if(s.captured){
-      return '<div style="margin-top:14px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;color:var(--ink-soft)">'+
-        '<b style="color:var(--ink)">Captured</b> \u00b7 AED '+s.captured_total_aed+
-        (s.captured_at?' on '+fmtDT(s.captured_at):'')+
-        (s.capture_ref?' \u00b7 ref '+sesc(s.capture_ref):'')+'</div>';
+  function odPaymentPanel(o){
+    var p = o.payment;
+    if(!p) return '';
+    var can = o.can || {};
+    var rows = [];
+    var row = function(label, value, extra){
+      rows.push('<div class="odpay-r"><dt>'+label+'</dt><dd>'+value+(extra||'')+'</dd></div>');
+    };
+    if(p.method_title) row('Method', sesc(p.method_title));
+    if(p.gateway && p.gateway !== p.method_title) row('Gateway', sesc(p.gateway));
+    if(p.transaction_id){
+      row('Transaction ID', '<code class="odpay-id">'+sesc(p.transaction_id)+'</code>',
+        '<button type="button" class="odpay-copy" data-odcopy="'+sesc(p.transaction_id)+'" aria-label="Copy the transaction ID">Copy</button>');
+    }
+    if(p.capture_ref){
+      row('Capture ID', '<code class="odpay-id">'+sesc(p.capture_ref)+'</code>',
+        '<button type="button" class="odpay-copy" data-odcopy="'+sesc(p.capture_ref)+'" aria-label="Copy the capture ID">Copy</button>');
+    }
+    if(p.date_label) row(p.state === 'cod_collected' ? 'Collected' : 'Date paid', sesc(p.date_label));
+    if(p.state !== 'unpaid') row('Amount', 'AED '+sesc(String(p.amount_aed)));
+    if(p.refunds && p.refunds.any){
+      row('Refunded', '-AED '+sesc(String(p.refunds.total_aed))+' <span class="odpay-soft">· net AED '+sesc(String(p.refunds.net_aed))+'</span>');
     }
 
-    if(!s.capturable){
-      /* WHY THERE ARE TWO SENTENCES HERE NOW. The single one said "this order
-         has not been authorised by the payment provider", which is a lie on the
-         one order most likely to be looked at: a released authorisation. It WAS
-         authorised — this shop then gave the hold back, on purpose, and the
-         order's own note says so a few inches further down the same screen.
-         Telling the operator it was never authorised sends him to the provider
-         to ask why, for something the shop did itself.
-
-         `s.void` is PaymentVoider::status(), which Lane O1 added to this
-         endpoint; before that the drawer had no way to know. It never calls a
-         provider, so this costs the screen nothing. */
-      var released = s.void && s.void.voided;
-
-      return '<div style="margin-top:14px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;color:var(--ink-faint)">'+
-        (released
-          ? 'The authorisation on this order was released'+
-            (s.void.voided_at?' on '+fmtDT(s.void.voided_at):'')+
-            ', so there is nothing left to capture. The customer would have to order and pay again.'
-          : 'Not capturable yet \u2014 this order has not been authorised by the payment provider.')+'</div>';
+    var actions = '';
+    if(p.can_record_cash && can.payment){
+      actions += '<button type="button" class="btn sm odpay-act" id="odRecordCash">Record cash received</button>';
+    }
+    if(p.capture && p.capture.offered && can.money){
+      actions += '<button type="button" class="btn sm odpay-act" id="odCaptureGo" title="'+sesc(p.capture.window||'')+'">Capture AED '+sesc(String(o.total_aed))+'</button>'+
+        (p.capture.days_left!=null ? '<span class="odpay-soft'+(p.capture.expiring?' odpay-urgent':'')+'">'+
+          (p.capture.days_left>0 ? p.capture.days_left+' day'+(p.capture.days_left===1?'':'s')+' left to capture' : 'Capture window has run out')+'</span>' : '');
     }
 
-    var urgent = !!s.expiring;
-    var left = (s.days_left!=null)
-      ? (s.days_left>0 ? s.days_left+' day'+(s.days_left===1?'':'s')+' left to capture.' : 'The capture window has run out. Try anyway \u2014 the provider decides.')
-      : '';
+    var icon = p.tone==='green' ? '<path d="M5 12.5l4.2 4.2L19 7"/>'
+             : p.tone==='amber' ? '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'
+             : '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/>';
 
-    return '<div style="margin-top:14px;padding:12px;border:1px solid '+(urgent?'var(--sale,#c0392b)':'var(--border)')+';border-radius:8px">'+
-      '<div style="font-size:12.5px;color:'+(urgent?'var(--sale,#c0392b)':'var(--ink-soft)')+';margin-bottom:8px">'+
-      '<b style="color:'+(urgent?'var(--sale,#c0392b)':'var(--ink)')+'">Not captured.</b> '+sesc(left)+' '+sesc(s.window||'')+'</div>'+
-      '<button class="btn sm" id="odCaptureGo">Capture AED '+o.total_aed+'</button></div>';
+    return '<section class="odpay odpay-'+sesc(p.tone)+'" id="odPayPanel" data-state="'+sesc(p.state)+'" aria-label="Payment">'+
+      '<div class="odpay-head"><span class="odpay-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">'+icon+'</svg></span>'+
+        '<div><div class="odpay-h">'+sesc(p.headline)+'</div>'+(p.detail?'<div class="odpay-d">'+sesc(p.detail)+'</div>':'')+'</div></div>'+
+      (rows.length?'<dl class="odpay-dl">'+rows.join('')+'</dl>':'')+
+      (actions?'<div class="odpay-acts">'+actions+'</div>':'')+
+    '</section>';
   }
 
   function odNotesCard(o){
@@ -15057,6 +15168,11 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
         written before this field as meaning.
       */
       if(box && !box.disabled) body.notify = box.checked;
+      /* (Lane PU) Unpaid -> paid asks for the payment first: "Mark as paid".
+         The status and the payment then travel in ONE request to
+         /mark-paid, so a refused revive records no payment. Between two paid
+         statuses it never asks. */
+      if(odNeedsPayment(o, status)){ odMarkPaidModal(o, {status:status, notify:body.notify}); return; }
       try{ await api('/admin-api/orders/'+id+'/status',{method:'PUT',body:JSON.stringify(body)});
         toast(body.notify === false ? 'Order updated · no email sent' : 'Order updated');
         renderOrderDetail(id);
@@ -15084,27 +15200,28 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
       catch(e){ toast('Could not trash this order.','bad'); }
     };
 
+    /* (Lane PU) "Order history" opens THIS customer's orders in a popup. It
+       used to open the Customers screen -- the whole list, nobody selected. */
     var custHist = document.getElementById('odCustHist');
-    if(custHist) custHist.onclick = function(e){ e.preventDefault(); go('customers'); };
+    if(custHist) custHist.onclick = function(e){ e.preventDefault(); odHistoryModal(o, 1); };
 
-    // Shipping address inline edit.
-    document.getElementById('odShipEdit') && (function(){
-      document.querySelector('[data-odedit="shipping"]').onclick = function(){
-        var view=document.getElementById('odShipView'), edit=document.getElementById('odShipEdit');
-        var open = edit.style.display==='none'; view.style.display = open?'none':''; edit.style.display = open?'':'none';
-      };
-      document.getElementById('odShipSave').onclick = async function(){
-        var raw = document.getElementById('odShipJson').value;
-        var parsed; try{ parsed = JSON.parse(raw); }catch(e){ toast('That is not valid JSON.','bad'); return; }
-        try{
-          var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/address'),{method:'PUT',credentials:'same-origin',
-            headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
-            body:JSON.stringify({type:'shipping',address:parsed})});
-          if(!r.ok) throw 0;
-          toast('Shipping address updated'); renderOrderDetail(id);
-        }catch(e){ toast('Could not save the address.','bad'); }
-      };
-    })();
+    var custChange = document.getElementById('odCustChange');
+    if(custChange) custChange.onclick = function(e){ e.preventDefault(); odCustomerModal(o); };
+
+    /* (Lane PU) Billing / Shipping -> Edit: a real form in a modal. Billing's
+       "Edit" had no handler at all; Shipping's opened a raw JSON textarea. */
+    document.querySelectorAll('#content [data-odedit]').forEach(function(b){
+      b.onclick = function(e){ e.preventDefault(); odAddressModal(o, b.dataset.odedit); };
+    });
+
+    // (Lane PU) The transaction / capture reference's Copy button.
+    document.querySelectorAll('#content [data-odcopy]').forEach(function(b){
+      b.onclick = function(){ odCopy(b.dataset.odcopy, b); };
+    });
+
+    // (Lane PU) Cash on delivery, amber: "Record cash received".
+    var recordCash = document.getElementById('odRecordCash');
+    if(recordCash) recordCash.onclick = function(){ odMarkPaidModal(o, {cash:true}); };
 
     // Item editing: quantity, price, remove, add product — only rendered when o.editable.
     if(o.editable){
@@ -15208,7 +15325,8 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
       }catch(e){ btn.disabled = false; toast('Could not process that refund.','bad'); }
     };
 
-    // Capture. Present only when the order is capturable -- see odCapturePanel.
+    // Capture. Present only on an authorised, uncaptured Tabby or Tamara
+    // order -- see odPaymentPanel and App\Support\OrderPaymentPanel.
     var captureBtn = document.getElementById('odCaptureGo');
     if(captureBtn){
       captureBtn.onclick = async function(){
@@ -15283,6 +15401,320 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
       };
     });
   }
+
+  /* ===== Lane PU · Store → Orders → (an order): the four modals =====
+
+     Billing / Shipping → Edit, Customer → Order history, Customer → Change,
+     and Status → "Mark as paid". All four use the console's own modal
+     (openModal / closeModal, the same box New Order and the order quick view
+     use), all four cancel on Escape, on ✕, on Cancel and on a click outside,
+     and every value printed into them goes through sesc(). The server is the
+     gate for every write -- each endpoint has its own row in
+     App\Support\AdminCapabilities -- and o.can only spares an admin a modal
+     that would end in a 403. */
+
+  function odModal(html, onCancel){
+    var bg = document.getElementById('modalBg');
+    var closed = false;
+    var cleanup = function(){
+      if(closed) return; closed = true;
+      document.removeEventListener('keydown', onKey, true);
+      if(bg) bg.removeEventListener('click', onBg);
+    };
+    var cancel = function(){ if(closed) return; cleanup(); closeModal(); if(onCancel) onCancel(); };
+    var onKey = function(e){ if(e.key === 'Escape'){ e.preventDefault(); cancel(); } };
+    var onBg = function(e){ if(e.target === bg) cancel(); };
+    openModal(html);
+    document.addEventListener('keydown', onKey, true);
+    if(bg) bg.addEventListener('click', onBg);
+    document.querySelectorAll('#modal [data-odx]').forEach(function(b){ b.onclick = function(e){ e.preventDefault(); cancel(); }; });
+    return { close: function(){ cleanup(); closeModal(); }, cancel: cancel };
+  }
+
+  /* The first validation message the server sent, or a fallback. */
+  function odErrText(e, fallback){
+    var b = e && e.body;
+    if(b && b.errors){ for(var k in b.errors){ if(b.errors[k] && b.errors[k][0]) return b.errors[k][0]; } }
+    if(b && b.message) return b.message;
+    if(e && e.status === 403) return 'Your account is not allowed to do that.';
+    return fallback;
+  }
+
+  /* "Now" on the SHOP's clock, for a datetime-local box. The order's own
+     created_at carries the shop's offset (StoreTime::iso), so the box shows the
+     time the owner sees on his gateway's dashboard, not the laptop's zone. */
+  function odShopNowLocal(o){
+    var m = String(o.created_at||'').match(/([+-])(\d{2}):?(\d{2})$/);
+    var off = m ? (m[1]==='-'?-1:1)*(parseInt(m[2],10)*60+parseInt(m[3],10)) : 0;
+    var d = new Date(Date.now() + off*60000);
+    var p = function(n){ return (n<10?'0':'')+n; };
+    return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+'T'+p(d.getUTCHours())+':'+p(d.getUTCMinutes());
+  }
+
+  function odStatusLabel(s){
+    var m = {onhold:'On hold', pending:'Pending payment'};
+    s = String(s||'');
+    return m[s] || (s.charAt(0).toUpperCase()+s.slice(1));
+  }
+
+  function odNeedsPayment(o, to){
+    var can = o.can || {};
+    if(!can.payment || to === o.status) return false;
+    if((o.unpaid_statuses||[]).indexOf(o.status) < 0) return false;
+    if((o.paid_statuses||[]).indexOf(to) < 0) return false;
+    /* Cash on delivery to Processing or Shipped is not money received -- the
+       panel goes amber "to collect" and there is nothing to write down yet.
+       Straight to Completed is the cash arriving, and that does ask. */
+    if(o.payment_method === 'cod' && to !== 'completed') return false;
+    return true;
+  }
+
+  function odCopy(text, btn){
+    var done = function(ok){
+      if(!btn) return;
+      var was = btn.dataset.label || btn.textContent;
+      btn.dataset.label = was;
+      btn.textContent = ok ? 'Copied' : 'Copy failed';
+      setTimeout(function(){ btn.textContent = was; }, 1500);
+    };
+    var fallback = function(){
+      var t = document.createElement('textarea');
+      t.value = text; t.setAttribute('readonly',''); t.style.position='fixed'; t.style.opacity='0';
+      document.body.appendChild(t); t.select();
+      var ok = false; try{ ok = document.execCommand('copy'); }catch(e){}
+      t.remove(); done(ok);
+    };
+    try{
+      if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(function(){ done(true); }, fallback); return; }
+    }catch(e){}
+    fallback();
+  }
+
+  /* ---------------------------------------------------- Mark as paid */
+  function odMarkPaidModal(o, opts){
+    opts = opts || {};
+    var cash = !!opts.cash;
+    var sel = document.getElementById('odStatusSel');
+    var revert = function(){
+      if(sel && sel.value !== o.status){ sel.value = o.status; sel.dispatchEvent(new Event('change')); }
+    };
+    var methods = o.payment_methods || [];
+    var current = cash ? 'cod' : (o.payment_method || (methods[0] && methods[0].id) || '');
+    var options = methods.map(function(m){
+      return '<option value="'+sesc(m.id)+'"'+(m.id===current?' selected':'')+'>'+sesc(m.title)+'</option>';
+    }).join('');
+    var lead = cash
+      ? 'The courier has handed over the cash for order #'+sesc(o.order_number)+'. The payment panel turns green.'
+      : 'Order #'+sesc(o.order_number)+' moves from <b>'+sesc(odStatusLabel(o.status))+'</b> to <b>'+sesc(odStatusLabel(opts.status))+'</b>. Record how it was paid.';
+
+    var m = odModal(
+      '<div class="modal-h"><b>'+(cash?'Record cash received':'Mark as paid')+'</b><button class="x" data-odx aria-label="Cancel">✕</button></div>'+
+      '<div class="modal-b odmodal">'+
+        '<p class="odm-lead">'+lead+'</p>'+
+        '<div class="odfld"><label for="odMpMethod">Payment method</label>'+
+          '<select class="odinp" id="odMpMethod"'+(cash?' disabled':'')+'>'+options+'</select></div>'+
+        '<div class="odfld"><label for="odMpRef">Payment reference / transaction ID <span class="odm-opt">optional</span></label>'+
+          '<input class="odinp" id="odMpRef" maxlength="191" autocomplete="off" placeholder="The ID from your gateway’s dashboard" value="'+sesc(cash?'':(o.transaction_id||''))+'"></div>'+
+        '<div class="odfld"><label for="odMpDate">Date paid</label>'+
+          '<input class="odinp" id="odMpDate" type="datetime-local" value="'+odShopNowLocal(o)+'" max="'+odShopNowLocal(o)+'"></div>'+
+        '<p class="odm-err" id="odMpErr" role="alert"></p>'+
+        '<div class="odm-acts"><button type="button" class="btn ghost" data-odx>Cancel</button>'+
+          '<button type="button" class="btn primary" id="odMpGo">'+(cash?'Record cash':'Confirm')+'</button></div>'+
+      '</div>', revert);
+
+    var go = document.getElementById('odMpGo');
+    var err = document.getElementById('odMpErr');
+    setTimeout(function(){ var f = document.getElementById(cash?'odMpRef':'odMpMethod'); if(f) f.focus(); }, 30);
+
+    go.onclick = async function(){
+      var body = {
+        payment_method: document.getElementById('odMpMethod').value,
+        reference: document.getElementById('odMpRef').value.trim(),
+        paid_at: document.getElementById('odMpDate').value
+      };
+      if(!body.paid_at){ err.textContent = 'Enter the date the payment was made.'; return; }
+      if(!cash && opts.status){ body.status = opts.status; if(opts.notify !== undefined) body.notify = opts.notify; }
+      go.disabled = true; err.textContent = '';
+      try{
+        var j = await api('/admin-api/orders/'+o.id+'/mark-paid', {method:'POST', body:JSON.stringify(body)});
+        m.close();
+        toast(cash ? 'Cash recorded' : (j.message || 'Payment recorded'));
+        renderOrderDetail(o.id);
+      }catch(e){
+        go.disabled = false;
+        err.textContent = odErrText(e, 'Could not record that payment.');
+      }
+    };
+  }
+
+  /* ---------------------------------------------- Billing / Shipping edit */
+  function odAddressModal(o, type){
+    var a = Object.assign({}, (type==='billing' ? o.billing_address : o.shipping_address) || {});
+    if(!a.first_name && !a.last_name && a.name){
+      var parts = String(a.name).trim().split(/\s+/); a.first_name = parts.shift(); a.last_name = parts.join(' ');
+    }
+    var form = o.address_form || {};
+    var countries = form.countries || {};
+    var codes = Object.keys(countries).sort(function(x,y){ return String(countries[x]).localeCompare(String(countries[y])); });
+    var cur = String(a.country||'').toUpperCase();
+    if(cur && !countries[cur]) codes.unshift(cur);
+    var countryOpts = '<option value="">—</option>'+codes.map(function(c){
+      return '<option value="'+sesc(c)+'"'+(c===cur?' selected':'')+'>'+sesc(countries[c] || c)+'</option>';
+    }).join('');
+    var inp = function(key, label, extra){
+      return '<div class="odfld"><label for="odAd_'+key+'">'+label+'</label>'+
+        '<input class="odinp" id="odAd_'+key+'" data-odad="'+key+'" value="'+sesc(a[key]||'')+'"'+(extra||'')+'>'+
+        '<small class="odm-ferr" data-oderr="address.'+key+'"></small></div>';
+    };
+    var title = type==='billing' ? 'Edit billing details' : 'Edit shipping address';
+
+    var m = odModal(
+      '<div class="modal-h"><b>'+title+'</b><button class="x" data-odx aria-label="Cancel">✕</button></div>'+
+      '<div class="modal-b odmodal">'+
+        '<div class="odm-2">'+inp('first_name','First name',' maxlength="100" autocomplete="off"')+inp('last_name','Last name',' maxlength="100" autocomplete="off"')+'</div>'+
+        inp('company','Company',' maxlength="150"')+
+        inp('line1','Address line 1',' maxlength="200"')+
+        inp('line2','Address line 2',' maxlength="200"')+
+        '<div class="odm-2">'+inp('city','City',' maxlength="100"')+inp('state','State / Emirate',' maxlength="100" list="odEmirates"')+'</div>'+
+        '<datalist id="odEmirates">'+(form.emirates||[]).map(function(e){ return '<option value="'+sesc(e)+'">'; }).join('')+'</datalist>'+
+        '<div class="odm-2">'+inp('postcode','Postcode',' maxlength="20"')+
+          '<div class="odfld"><label for="odAd_country">Country</label><select class="odinp" id="odAd_country" data-odad="country">'+countryOpts+'</select>'+
+          '<small class="odm-ferr" data-oderr="address.country"></small></div></div>'+
+        (type==='billing'
+          ? '<div class="odm-2"><div class="odfld"><label for="odAd_email">Email address</label><input class="odinp" id="odAd_email" type="email" maxlength="191" value="'+sesc(o.email||'')+'"><small class="odm-ferr" data-oderr="email"></small></div>'+
+            inp('phone','Phone',' type="tel" maxlength="40"')+'</div>'
+          : inp('phone','Phone',' type="tel" maxlength="40"'))+
+        '<p class="odm-err" id="odAdErr" role="alert"></p>'+
+        '<div class="odm-acts"><button type="button" class="btn ghost" data-odx>Cancel</button>'+
+          '<button type="button" class="btn primary" id="odAdGo">Save</button></div>'+
+      '</div>');
+
+    setTimeout(function(){ var f = document.getElementById('odAd_first_name'); if(f) f.focus(); }, 30);
+    var go = document.getElementById('odAdGo');
+    go.onclick = async function(){
+      var address = {};
+      document.querySelectorAll('#modal [data-odad]').forEach(function(f){ address[f.dataset.odad] = f.value; });
+      var body = {type:type, address:address};
+      var em = document.getElementById('odAd_email');
+      if(em) body.email = em.value.trim();
+      document.querySelectorAll('#modal [data-oderr]').forEach(function(s){ s.textContent = ''; });
+      document.getElementById('odAdErr').textContent = '';
+      go.disabled = true;
+      try{
+        var j = await api('/admin-api/orders/'+o.id+'/address', {method:'PUT', body:JSON.stringify(body)});
+        m.close();
+        toast(j.message || 'Saved');
+        renderOrderDetail(o.id);
+      }catch(e){
+        go.disabled = false;
+        var errs = (e && e.body && e.body.errors) || {};
+        var placed = false;
+        Object.keys(errs).forEach(function(k){
+          var slot = document.querySelector('#modal [data-oderr="'+k.replace(/"/g,'')+'"]');
+          if(slot){ slot.textContent = errs[k][0]; placed = true; }
+        });
+        if(!placed) document.getElementById('odAdErr').textContent = odErrText(e, 'Could not save those details.');
+      }
+    };
+  }
+
+  /* ------------------------------------------------- Customer → Change */
+  function odCustomerModal(o){
+    var c = o.customer || {};
+    var m = odModal(
+      '<div class="modal-h"><b>Change customer</b><button class="x" data-odx aria-label="Cancel">✕</button></div>'+
+      '<div class="modal-b odmodal">'+
+        '<p class="odm-lead">Now: <b>'+(c.id ? sesc(c.name||c.email)+' · '+sesc(c.email||'') : 'Guest checkout')+'</b>. '+
+          'The order moves to the account you pick; its email and addresses stay as they are.</p>'+
+        '<div class="odfld"><label for="odCuQ">Find a customer</label><input class="odinp" id="odCuQ" autocomplete="off" placeholder="Name or email"></div>'+
+        '<div id="odCuList" class="odm-list" role="listbox" aria-label="Customers"></div>'+
+        '<p class="odm-err" id="odCuErr" role="alert"></p>'+
+        '<div class="odm-acts">'+(c.id?'<button type="button" class="btn ghost" id="odCuGuest" style="margin-right:auto">Make it a guest order</button>':'')+
+          '<button type="button" class="btn ghost" data-odx>Cancel</button></div>'+
+      '</div>');
+
+    var q = document.getElementById('odCuQ'), list = document.getElementById('odCuList'), err = document.getElementById('odCuErr');
+    var timer = null, seq = 0;
+    var save = async function(customerId){
+      err.textContent = '';
+      try{
+        var j = await api('/admin-api/orders/'+o.id+'/customer', {method:'PUT', body:JSON.stringify({customer_id:customerId})});
+        m.close(); toast(j.message || 'Customer updated'); renderOrderDetail(o.id);
+      }catch(e){ err.textContent = odErrText(e, 'Could not change the customer.'); }
+    };
+    var guest = document.getElementById('odCuGuest');
+    if(guest) guest.onclick = function(){ save(null); };
+    setTimeout(function(){ q.focus(); }, 30);
+    q.oninput = function(){
+      clearTimeout(timer);
+      var term = q.value.trim();
+      if(term.length < 2){ list.innerHTML = ''; return; }
+      timer = setTimeout(async function(){
+        var mine = ++seq;
+        try{
+          var j = await api('/admin-api/order-customer-search?search='+encodeURIComponent(term));
+          if(mine !== seq) return;
+          var rows = j.customers || [];
+          list.innerHTML = rows.length ? rows.map(function(r){
+            return '<button type="button" class="odm-item" role="option" data-odcu="'+(+r.id)+'"'+(r.id===c.id?' disabled':'')+'>'+
+              '<b>'+sesc(r.name||'—')+'</b><span>'+sesc(r.email)+'</span></button>';
+          }).join('') : '<p class="odm-empty">No customer matches “'+sesc(term)+'”.</p>';
+          list.querySelectorAll('[data-odcu]').forEach(function(b){ b.onclick = function(){ save(+b.dataset.odcu); }; });
+        }catch(e){ if(mine === seq) err.textContent = odErrText(e, 'Could not search customers.'); }
+      }, 250);
+    };
+  }
+
+  /* --------------------------------------------- Customer → Order history */
+  function odHistoryModal(o, page){
+    var shell = function(inner){
+      return '<div class="modal-h"><b>Order history</b><button class="x" data-odx aria-label="Close">✕</button></div>'+
+        '<div class="modal-b odmodal odhist">'+inner+'</div>';
+    };
+    var m = odModal(shell('<p class="odm-empty">Loading orders…</p>'));
+    var load = async function(p){
+      var j;
+      try{ j = await api('/admin-api/orders/'+o.id+'/customer-orders?page='+p); }
+      catch(e){
+        document.querySelector('#modal .odhist').innerHTML = '<p class="odm-err">'+sesc(odErrText(e, 'Could not load this customer’s orders.'))+'</p>';
+        return;
+      }
+      var s = j.summary || {}, who = j.customer || {};
+      var vat = Number(s.tax_collected_aed||0);
+      var rows = (j.orders||[]).map(function(r){
+        var tone = {completed:'green',processing:'amber',onhold:'amber',shipped:'blue',cancelled:'red',refunded:'red',failed:'red'}[r.status] || 'grey';
+        return '<button type="button" class="odh-row'+(r.current?' is-current':'')+'" data-odhist="'+(+r.id)+'">'+
+          '<span class="odh-no">#'+sesc(r.order_number)+(r.current?' <em>this order</em>':'')+(r.trashed?' <em>in trash</em>':'')+'</span>'+
+          '<span class="odh-date">'+sesc(r.date_label||'')+'</span>'+
+          '<span class="odh-st"><span class="pill '+tone+'"><span class="d"></span>'+sesc(odStatusLabel(r.status))+'</span></span>'+
+          '<span class="odh-items">'+(+r.items)+' item'+(+r.items===1?'':'s')+'</span>'+
+          '<span class="odh-total">AED '+sesc(String(r.total_aed))+'</span>'+
+        '</button>';
+      }).join('');
+      var pager = j.last_page > 1
+        ? '<div class="odh-pager"><button type="button" class="btn ghost sm" data-odhp="'+(j.page-1)+'"'+(j.page<=1?' disabled':'')+'>← Newer</button>'+
+          '<span>Page '+(+j.page)+' of '+(+j.last_page)+'</span>'+
+          '<button type="button" class="btn ghost sm" data-odhp="'+(j.page+1)+'"'+(j.page>=j.last_page?' disabled':'')+'>Older →</button></div>'
+        : '';
+      document.querySelector('#modal .odhist').innerHTML =
+        '<p class="odm-lead"><b>'+sesc(who.name || who.email || '')+'</b>'+(who.name && who.email ? ' · '+sesc(who.email) : '')+(who.guest?' · guest checkout, matched by email':'')+'</p>'+
+        '<div class="odh-kpis">'+
+          '<div><small>Orders</small><b>'+(+s.total_orders||0)+'</b></div>'+
+          '<div><small>Lifetime spend'+(vat?' (incl. VAT)':'')+'</small><b>AED '+sesc(String(s.total_revenue_aed||0))+'</b></div>'+
+          '<div><small>Average order</small><b>AED '+sesc(String(s.average_order_value_aed||0))+'</b></div>'+
+        '</div>'+
+        (rows ? '<div class="odh-head" aria-hidden="true"><span>Order</span><span>Date</span><span>Status</span><span>Items</span><span>Total</span></div><div class="odh-list">'+rows+'</div>' : '<p class="odm-empty">No orders yet.</p>')+
+        pager;
+      document.querySelectorAll('#modal [data-odhist]').forEach(function(b){
+        b.onclick = function(){ m.close(); renderOrderDetail(+b.dataset.odhist); };
+      });
+      document.querySelectorAll('#modal [data-odhp]').forEach(function(b){
+        b.onclick = function(){ load(+b.dataset.odhp); };
+      });
+    };
+    load(page || 1);
+  }
+  /* ===== Lane PU · end ===== */
 
   async function openOrder(id){
     var o; try{ o=await api('/admin-api/orders/'+id); }catch(e){ toast('Could not load order','bad'); return; }
@@ -20352,7 +20784,10 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     s.textContent =
       '.cplkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}' +
       '@media(max-width:900px){.cplkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
-      '@media(max-width:430px){.cplkpis{grid-template-columns:minmax(0,1fr)}}' +
+      /* Phones keep two cards a row (the owner, 2 October 2026: "in mobile I
+         want them in two rows maximum"); four stacked cards pushed the list a
+         full screen down. */
+      '@media(max-width:430px){.cplkpis{gap:10px}.cplkpi{padding:13px}.cplkpi .v{font-size:18px}}' +
       '.cplkpi{min-width:0;overflow-wrap:anywhere}' +
       '.cplkpi .v{font-size:21px;font-weight:700;margin-top:6px;line-height:1.15}' +
       '.cplkpi .k{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}' +
@@ -20362,10 +20797,40 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
          card it is inside. */
       '.cplscroll{max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}' +
       '.cplscroll table{min-width:940px}' +
+      /* THE ACTIONS FELL OFF THE RIGHT EDGE ON DESKTOP (2 October 2026, the
+         owner's screenshot of Catalog with 788 imported products). The Product
+         cell had no width limit, so one long imported name ("medicube - PDRN
+         Pink Collagen Jelly Eye Mask - 6 pairs") widened the whole table past
+         the screen and View / Visit / Edit were only reachable by scrolling
+         sideways. On desktop the Product column now takes only the room the
+         other columns leave and shortens the name with an ellipsis (the full
+         name is its title), and on every width the actions column is pinned
+         to the right edge, so turning more columns on scrolls the middle of
+         the table and never hides the buttons. */
+      '@media(min-width:901px){.cplscroll table{min-width:0;width:100%}' +
+        '.cplscroll th,.cplscroll td{padding-left:9px;padding-right:9px}}' +
+      '.cplscroll td.cplprod{min-width:230px;max-width:360px}' +
+      '@media(min-width:901px){.cplscroll th.cplprod,.cplscroll td.cplprod{width:100%;max-width:0}}' +
+      '.cplscroll td.cplprod>.row>div{min-width:0;overflow:hidden}' +
+      '.cplscroll td.cplprod .pname,.cplscroll td.cplprod .pbrand{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+      '.cplscroll th.cplact,.cplscroll td.cplact{position:sticky;right:0;z-index:1;background:var(--card,#fff);' +
+        'box-shadow:-10px 0 10px -10px rgba(16,23,41,.25)}' +
       '.cplhint{display:none;font-size:11.5px;color:var(--ink-soft);padding:10px 14px 0}' +
       '@media(max-width:900px){.cplhint{display:block}}' +
       '.cpltools{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}' +
       '.cpltools .search{flex:1 1 220px;min-width:0}' +
+      /* On desktop the row wrapper is invisible to layout (display:contents),
+         so the toolbar is exactly what it was. On phones the search keeps its
+         own full-width row and Sort / Filters / Customize columns / Export
+         sit in ONE row that swipes sideways, instead of stacking. */
+      '.cpltoolrow{display:contents}' +
+      '@media(max-width:900px){.cpltools .search{flex:1 1 100%}' +
+        '.cpltoolrow{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;width:100%;' +
+        '-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}' +
+        '.cpltoolrow::-webkit-scrollbar{display:none}' +
+        '.cpltoolrow>*{flex:0 0 auto;white-space:nowrap}}' +
+      /* "In stock" and every other pill stay on one line in the table. */
+      '.cplscroll .pill{white-space:nowrap}' +
       '.cpltools .inp{max-width:100%}' +
       '.cplgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}' +
       '.cplbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}' +
@@ -20409,12 +20874,16 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     ['featured', 'Featured'], ['orders', 'Orders'], ['date', 'Added'], ['wc', 'Woo ID']
   ];
 
-  /* Woo ID and Sale price are off by default and one click away in Columns.
+  /* Woo ID, Sale price, SKU and Added are off by default and one click away
+     in Customize columns. (SKU and Added went off on 2 October 2026 so the
+     default set fits a 1280px screen beside a readable Product column --
+     measured: 1,122px of columns in a 994px table; most imported products
+     carry no SKU at all.)
      The eight that are on already fill a 1032px content area, and a column
      nobody reads is a column that costs horizontal room on every page load. */
   var CP_COLS_DEFAULT = {
-    sku: true, brand: true, status: true, stock: true, price: true,
-    sale: false, categories: true, featured: true, orders: true, date: true, wc: false
+    sku: false, brand: true, status: true, stock: true, price: true,
+    sale: false, categories: true, featured: true, orders: true, date: false, wc: false
   };
 
   /* Which sort each sortable header maps to, so the header caret and the Sort
@@ -20593,14 +21062,16 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
           ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>') +
           '<input id="cplSearch" placeholder="Search ' + (d.total || 0) + ' products by name, SKU, brand or Woo ID…" value="' + sesc(CP.search) + '">' +
         '</div>' +
+        '<div class="cpltoolrow">' +
         '<select class="inp" id="cplSort" style="max-width:220px">' +
           CP_SORTS.map(function(s){
             return '<option value="' + s[0] + '"' + (CP.sort === s[0] ? ' selected' : '') + '>' + sesc(s[1]) + '</option>';
           }).join('') +
         '</select>' +
         '<button class="btn ghost" id="cplAdvBtn">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Filters ' + (CP.adv ? '▴' : '▾') + '</button>' +
-        '<button class="btn ghost" id="cplColsBtn">Columns ' + (CP.colsOpen ? '▴' : '▾') + '</button>' +
+        '<button class="btn ghost" id="cplColsBtn">Customize columns ' + (CP.colsOpen ? '▴' : '▾') + '</button>' +
         '<button class="btn ghost" id="cplExport">' + ic('<path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 19h16"/>') + ' Export CSV</button>' +
+        '</div>' +
       '</div>' +
       (CP.adv ? cpAdvanced() : '') +
       (CP.colsOpen ? cpColumnsPanel() : '') +
@@ -20724,7 +21195,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     var allOn = rows.every(function(p){ return CP.sel[p.id]; });
 
     var head = '<th style="width:34px"><span class="cbx' + (allOn ? ' on' : '') + '" id="cplAll">' + ic(I.check) + '</span></th>' +
-      '<th>Product</th>' +
+      '<th class="cplprod">Product</th>' +
       CP_COLDEF.filter(function(c){ return cols[c[0]]; }).map(function(c){
         var sort = CP_COLSORT[c[0]];
         var align = (c[0] === 'price' || c[0] === 'sale' || c[0] === 'stock' || c[0] === 'orders') ? 'text-align:right' : '';
@@ -20732,12 +21203,12 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
         return '<th style="' + align + (sort ? ';cursor:pointer' : '') + '"' + (sort ? ' data-cpsort="' + sort + '"' : '') + '>' +
           sesc(c[1]) + caret + '</th>';
       }).join('') +
-      '<th style="width:170px"></th>';
+      '<th class="cplact" style="width:170px"></th>';
 
     var bodyRows = rows.map(function(p){
       return '<tr' + (CP.sel[p.id] ? ' style="background:var(--border-2,rgba(0,0,0,.03))"' : '') + '>' +
         '<td><span class="cbx' + (CP.sel[p.id] ? ' on' : '') + '" data-cpsel="' + p.id + '">' + ic(I.check) + '</span></td>' +
-        '<td><div class="row" style="min-width:0;gap:9px">' +
+        '<td class="cplprod" title="' + sesc(p.name) + '"><div class="row" style="min-width:0;gap:9px">' +
           (p.has_image
             ? '<img class="cplthumb" src="' + sesc(p.image) + '" alt="" loading="lazy">'
             : '<span class="cplnoimg" title="No image">no img</span>') +
@@ -20757,7 +21228,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
            included) and only drawn as a link when p.live says the shop would
            answer it; otherwise a disabled "Not live yet", never a 404. The
            scheme is checked because an href is an href. */
-        '<td><div style="display:flex;gap:6px;justify-content:flex-end;white-space:nowrap">' +
+        '<td class="cplact"><div style="display:flex;gap:6px;justify-content:flex-end;white-space:nowrap">' +
           ((p.live && /^(\/|https?:\/\/)/i.test(String(p.url || '')))
             ? '<a class="btn ghost sm" data-cpvisit="' + p.id + '" href="' + sesc(p.url) + '" target="_blank" rel="noopener" title="Open on the shop, in a new tab" style="text-decoration:none">Visit</a>'
             : '<button type="button" class="btn ghost sm" data-cpvisit="' + p.id + '" disabled title="The shop does not show this product yet" style="opacity:.55;cursor:default">Not live yet</button>') +

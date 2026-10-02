@@ -583,6 +583,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // matched by it, and whichever registered first wins. Flat names
         // cannot collide however these requires are ordered.
         require __DIR__.'/orders-admin.php';
+        require __DIR__.'/order-detail-admin.php';
 
         // Store → New Order: creating an order on a customer's behalf for the
         // WhatsApp and Instagram orders that never touch the website. Paths are
