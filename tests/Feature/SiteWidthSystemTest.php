@@ -646,6 +646,15 @@ it('ships every setting at the value the page already had, except the ones the o
         'cat_header_label_fg' => '',
         'cat_header_letter' => -2,
         'cat_header_desc_colour' => '',
+        // The random light box: OFF in the schema (tests and fresh installs
+        // draw the same box); migration 2027_07_16_000100 turns it on for a
+        // live shop. A–D in the mix, E (plain) out.
+        'cat_header_box_random' => false,
+        'cat_header_rand_blush' => true,
+        'cat_header_rand_cream' => true,
+        'cat_header_rand_mint' => true,
+        'cat_header_rand_lilac' => true,
+        'cat_header_rand_plain' => false,
         'cat_header_title_phone' => 26,
         'cat_header_title_desktop' => 40,
         'cat_header_weight' => '700',

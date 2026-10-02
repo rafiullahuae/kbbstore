@@ -631,6 +631,13 @@
       + summaryHTML()
       + '<div data-sls-tiles="box">' + pickerHTML('box') + '</div>'
       + tuneHTML(box, 'box')
+      /* 2.60.353: "random colored background ... on each page load" -- the
+         switch and its mix sit under the box styles they choose between. */
+      + '<div class="thk-tune"><div class="thk-tune-h"><b>A different light box on every visit</b></div>'
+      + ['cat_header_box_random', 'cat_header_rand_blush', 'cat_header_rand_cream', 'cat_header_rand_mint',
+          'cat_header_rand_lilac', 'cat_header_rand_plain']
+          .map(function (k) { var f = fieldOf(k); return f ? fieldHTML(f) : ''; }).join('')
+      + '</div>'
       + '<div data-sls-tiles="treat-img">' + pickerHTML('treat-img') + '</div>'
       + '<div class="thk-tune">' + (fieldOf('cat_header_overlay') ? fieldHTML(fieldOf('cat_header_overlay')) : '') + '</div>'
       + tuneHTML(ti, 'treat')

@@ -152,7 +152,8 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
      * "make edits as per need" gave each design its fine-tuning -- twenty-seven
      * controls, all on the Category header tab, none of them CSS on :root.
      */
-    expect($keys)->toHaveCount(74);
+    // 80 since 2.60.353: the random light box switch and its five-style mix.
+    expect($keys)->toHaveCount(80);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is
