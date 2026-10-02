@@ -1,0 +1,129 @@
+[
+  {
+    "shot": "collections-skincare-sets-390-moved",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "hoverNone": true,
+    "tiles": 12,
+    "badgesNew": 0,
+    "badgesSale": 0,
+    "pager": {
+      "load": "scroll",
+      "batch": "12",
+      "auto": true,
+      "numbersShown": 0
+    },
+    "heights": [
+      342.95
+    ],
+    "tileWidth": 173,
+    "gaps": {
+      "photoToName": 8,
+      "nameToPrice": 26,
+      "priceToButton": 12,
+      "pad": "8px 10px 10px",
+      "cpPaddingTop": "12px",
+      "cartMarginTop": "12px"
+    },
+    "type": {
+      "brand": null,
+      "name": {
+        "size": "14px",
+        "weight": "700"
+      },
+      "price": {
+        "size": "13.5px",
+        "weight": "500"
+      },
+      "salePrice": {
+        "size": "13.5px",
+        "weight": "700"
+      },
+      "was": {
+        "size": "12.5px",
+        "weight": "500"
+      },
+      "button": {
+        "size": "11px",
+        "weight": "700"
+      }
+    },
+    "hover": {
+      "before": {
+        "shadow": "none",
+        "transform": "none",
+        "img": "none"
+      },
+      "after": {
+        "shadow": "none",
+        "transform": "none",
+        "img": "none"
+      },
+      "changed": false
+    }
+  },
+  {
+    "shot": "collections-skincare-sets-1280-moved",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "hoverNone": false,
+    "tiles": 12,
+    "badgesNew": 0,
+    "badgesSale": 0,
+    "pager": {
+      "load": "scroll",
+      "batch": "12",
+      "auto": true,
+      "numbersShown": 0
+    },
+    "heights": [
+      422.05,
+      422.03
+    ],
+    "tileWidth": 232.8,
+    "gaps": {
+      "photoToName": 16,
+      "nameToPrice": 26.02,
+      "priceToButton": 12,
+      "pad": "16px",
+      "cpPaddingTop": "12px",
+      "cartMarginTop": "12px"
+    },
+    "type": {
+      "brand": null,
+      "name": {
+        "size": "16px",
+        "weight": "700"
+      },
+      "price": {
+        "size": "18px",
+        "weight": "500"
+      },
+      "salePrice": {
+        "size": "18px",
+        "weight": "700"
+      },
+      "was": {
+        "size": "12.5px",
+        "weight": "500"
+      },
+      "button": {
+        "size": "12px",
+        "weight": "700"
+      }
+    },
+    "hover": {
+      "before": {
+        "shadow": "none",
+        "transform": "none",
+        "img": "none"
+      },
+      "after": {
+        "shadow": "rgba(42, 34, 40, 0.12) 0px 14px 34px 0px",
+        "transform": "none",
+        "img": "matrix(1.06, 0, 0, 1.06, 0, 0)"
+      },
+      "changed": true
+    }
+  }
+]

@@ -1581,6 +1581,73 @@ body{padding-bottom:46px}
 .kbb-pgrid[data-skin="reveal"] .kbb-card:hover .cb{opacity:1}}
 @media(hover:hover){.kbb-pgrid[data-skin="overlay"] .kbb-card-cart{opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s}
 .kbb-pgrid[data-skin="overlay"] .kbb-card:hover .kbb-card-cart{opacity:1;transform:none}}
+/* ── CARD HOVER ON A PHONE: OFF BY DEFAULT ──────────────────────── Lane PR ──
+   The owner: "Remove grid hover from products in mobile. The hover of grid
+   card, I want to turn off by default on mobile devices only."
+
+   A phone has no pointer to rest on a card, so `:hover` there is the state a
+   TAP leaves behind — the card keeps its lifted shadow and its zoomed photo
+   after the finger has gone, and keeps them while the shopper scrolls on.
+   Measured at 390 with touch emulation on a category page before this block:
+   box-shadow `none` → `0 14px 34px rgba(42,34,40,.12)` and the photograph
+   `none` → `scale(1.06)`, on the shipped Showcase card.
+
+   ON A PHONE means `(hover:none)` — a touch screen of any size, tablets
+   included — OR a viewport of 700px and under, which is where the card itself
+   already turns into its phone layout. A desktop with a mouse at 701px and up
+   is untouched, which is the "mobile devices only" half of the sentence.
+
+   EACH RULE PUTS BACK THE VALUE THE CARD HAS WHEN NOTHING IS ON IT, and that
+   is the only way to do this without forking every hover rule in both copies
+   of the skins: CSS cannot "undo" a :hover rule, it can only win against it
+   with the resting value. Every resting value below is copied from the skin's
+   own base rule (identical in kbb-grid-skins.css), and tools/pr-hover-skins.cjs
+   taps a card on every skin at 390 and reports any property that still moves.
+   `body:not(.pc-phonehover)` adds (0,1,1) to the hover rule's own selector, so
+   these win wherever the sheets load.
+
+   NOT NEUTRALISED, DELIBERATELY:
+     · `actions`' Add to cart slides up from under the card ONLY on hover. That
+       is the skin's one way to reach the button, not an effect; taking it away
+       would leave a phone with no button at all.
+     · `reveal` and `overlay` already hide their text behind `(hover:hover)`, so
+       a phone has always shown them at rest.
+     · the quick-view pill is `display:none` on `(hover:none)` already
+       (layouts/store.blade.php).
+
+   Appearance → Product styles → Layout → "Card hover effects on phones" ON
+   puts `pc-phonehover` on <body> and every rule here steps aside. */
+@media (hover:none),(max-width:700px){
+    body:not(.pc-phonehover) .kbb-pgrid .kbb-card:hover .kbb-card-thumb img,
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="editorial"] .kbb-card:hover img,
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="editorial"] .kbb-card:hover .im{transform:none}
+
+    /* The lift. No skin rests a card on a transform. */
+    body:not(.pc-phonehover) .kbb-pgrid .kbb-card:hover{transform:none}
+
+    /* The shadow, skin by skin — each back to its resting shadow. */
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin^="showcase"] .kbb-card:hover,
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="classic"] .kbb-card:hover,
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="minimal"] .kbb-card:hover,
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="editorial"] .kbb-card:hover,
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="bold"] .kbb-card:hover,
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="luxe"] .kbb-card:hover{box-shadow:none}
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="showcase-airy"] .kbb-card:hover{box-shadow:0 8px 26px rgba(42,34,40,.07)}
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="spotlight"] .kbb-card:hover{box-shadow:0 6px 16px rgba(42,34,40,.07),0 16px 40px rgba(42,34,40,.09)}
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="polaroid"] .kbb-card:hover{box-shadow:0 6px 18px rgba(42,34,40,.12)}
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="rosegold"] .kbb-card:hover{box-shadow:0 6px 18px rgba(42,34,40,.07)}
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="soft"] .kbb-card:hover{background:#FFF0F4;box-shadow:none}
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="outline"] .kbb-card:hover{border-color:transparent;box-shadow:none}
+
+    /* What moves INSIDE a card on hover, each back to rest. */
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="stacked"] .kbb-card:hover .cb{transform:none}
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="petal"] .kbb-card:hover .kbb-card-thumb{border-radius:48% 52% 46% 54% / 56% 46% 54% 44%}
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="duotone"] .kbb-card:hover .kbb-card-thumb:after{opacity:1}
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="fab"] .kbb-card:hover .kbb-card-cart{transform:none}
+    body:not(.pc-phonehover) .kbb-pgrid[data-skin="showcase-airy"] .kbb-card:hover .kbb-card-cart{
+        background:transparent;color:var(--kbb-cart-bg,#E0567B)}
+}
+
 /* ▲ THE LADDER THAT WAS ACTUALLY WINNING, and the reason the first attempt at
    this lane changed nothing at 1680.
 

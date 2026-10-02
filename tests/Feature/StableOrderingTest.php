@@ -179,6 +179,16 @@ function soPage(string $path, int $page): array
 
 beforeEach(function () {
     Cache::flush();
+    /*
+     * ARROWS, AT THE SHOP'S OWN PAGE SIZE, SAID OUT LOUD.          (Lane PR)
+     * "Load more on scroll" ships as the default now — the owner asked for it
+     * — and makes a page one batch of twelve. This file is about paging at the
+     * listing's own size, not about the load mode, so it pins the mode it was
+     * written against; ListingLoadTest and GridCardOwnerAsksTest pin the
+     * default itself.
+     */
+    app(\App\Services\SiteLayout::class)->save(['load_mode' => 'arrows']);
+    \App\Services\SettingsService::forgetMemo();
 });
 
 it('shows the same product on both pages of Best Sellers when the order leaves the tie open', function () {

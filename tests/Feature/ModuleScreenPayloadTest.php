@@ -155,6 +155,21 @@ function mScreenUrls(): array
  * NOTHING ELSE in the file moved: the field count is the same, the other five
  * "what the card shows" toggles still read true, and every other screen is
  * untouched. Read field by field before it was advanced.
+ *
+ * ── AND THE SAME SCREEN AGAIN, 2 OCTOBER ──────────────────────────── Lane PR ──
+ *
+ *     tabs[0].description                    "Card shape and corners." -> names
+ *                                            the hover switch it now carries
+ *     tabs[0].fields[3]                      NEW: hover_phone, default false
+ *     show_discount / show_new .default/.value   true -> false, help says why
+ *     tabs[2]                                NEW: "Spacing & type", 21 fields,
+ *                                            every default today's measured value
+ *
+ * The owner asked for the two pills off and for hover off on phones in as many
+ * words, and for the spacing and type controls. Written by script into the
+ * `product-styles` entry ONLY — the dumped payload, leaf by leaf, with that
+ * entry re-serialised in the file's own format — and the diff read before it
+ * was committed: 7 lines out, every one of them one of the leaves above.
  */
 it('sends every module screen the payload it sent before the shared schema', function () {
     $owner = AdminUser::create([
@@ -403,7 +418,16 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // it — fields are compared by position, so appending it would have read as
     // `added_note` becoming `add_feedback`. Fourteen lines inserted, none
     // changed.
-    expect($compared)->toBe(566, 'the number of controls drawn changed');
+    //
+    // 588 AFTER LANE PR: 566 + 22 on Appearance → Product styles — `hover_phone`
+    // appended to Layout (last in that tab's TABS list, so appending IS its
+    // position) and the twenty-one Spacing & type controls, a NEW tab inserted
+    // at index 2 between Card content and Colour, which is where TABS puts it.
+    // Tabs are compared by position too, so Colour and Sticky are now compared
+    // at 3 and 4 against the same recorded objects. Changed leaves: the Layout
+    // description and show_discount / show_new's help, default and value — the
+    // owner asked for both pills off. See the Lane PR note in the header.
+    expect($compared)->toBe(588, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

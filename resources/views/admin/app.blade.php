@@ -5364,7 +5364,7 @@ function paintProdStyles(){
         <div class="mmhd"><b>${escHtml(tab.label)}</b><span>${escHtml(tab.description)}</span></div>
         <div class="mmbody">${tab.fields.map(psField).join('')}</div></div></div>
       <div class="mmpv"><div class="mmpv-in"><span class="skinprev" id="psPrev"></span></div>
-        <p class="mmpv-note">Live preview</p></div>
+        <p class="mmpv-note">Live preview${PSTAB==='spacing'?' · desktop values':''}</p></div>
     </div>
     <div class="ecsave">
       <span class="ecdirty" id="psDirty" style="visibility:hidden">Unsaved changes</span>
@@ -5393,7 +5393,35 @@ function psPreview(){
     --kbb-price:${psGet('price_colour')};--kbb-star:${psGet('star_colour')};
     --kbb-cart-bg:${psGet('cart_bg')};--kbb-cart-fg:${psGet('cart_fg')};
     --kbb-radius:${psGet('card_radius')}px;--kbb-ratio:${PS_RATIO[psGet('image_ratio')] || '1/1'};--kbb-name-lines:${psGet('name_lines')}`);
-  el.innerHTML=skinCard(psGet('grid_skin'));
+  el.innerHTML=(PSTAB==='spacing' ? psSpaceCss() : '') + skinCard(psGet('grid_skin'));
+}
+
+/* ── Spacing & type, previewed at the DESKTOP values ─────────────── Lane PR ──
+   On that tab only, the preview card is drawn with every desktop number on the
+   tab — not just the moved ones, because this console's preview card has its
+   own 12px padding and the shop's has 16, and a preview that showed a slider
+   moving from the wrong starting point would be a preview that lies.
+   ProductStyles::cardCss() is what the SHOP gets; this is its picture.
+   Rule 5: a range is a number (+v, clamped to the field's own bounds) and a
+   select must be one of the field's own option keys, or the line is skipped. */
+function psSpaceCss(){
+  const f=k=>{ for(const t of PS.tabs){ const x=t.fields.find(y=>y.key===k); if(x) return x; } return null; };
+  const num=k=>{ const x=f(k); if(!x) return null; const o=x.options||{}; const n=+x.value;
+    return Number.isFinite(n) ? Math.min(+o.max, Math.max(+o.min, n)) : null; };
+  const opt=k=>{ const x=f(k); return x && x.options && Object.prototype.hasOwnProperty.call(x.options, String(x.value)) ? String(x.value) : null; };
+  const T='#psPrev .kbb-tile', r=[];
+  const pad=num('card_pad_d'), img=num('card_gap_img_d'), pr=num('card_gap_price_d'), ca=num('card_gap_cart_d');
+  if(pad!==null) r.push(`${T} .cb{padding-inline:${pad}px;padding-bottom:${pad}px}`);
+  if(img!==null) r.push(`${T} .cb{padding-top:${img}px}`);
+  if(pr!==null) r.push(`${T} .cp{padding-top:${pr}px;margin-top:0}`);
+  if(ca!==null) r.push(`${T} .kbb-card-cart{margin-top:${ca}px}`);
+  [['card_fs_title_d','.kbb-card-nm','font-size'],['card_fs_price_d','.kbb-card-price','font-size'],
+   ['card_fs_btn_d','.kbb-card-cart','font-size'],['card_fs_brand_d','.kbb-card-brand','font-size'],
+   ['card_fw_title','.kbb-card-nm','font-weight'],['card_fw_price','.kbb-card-price','font-weight'],
+   ['card_fw_sale','.kbb-card-reg+.kbb-card-price','font-weight'],['card_fw_btn','.kbb-card-cart','font-weight'],
+   ['card_fw_brand','.kbb-card-brand','font-weight']]
+    .forEach(([k,sel,prop])=>{ const v=opt(k); if(v!==null) r.push(`${T} ${sel}{${prop}:${v}}`); });
+  return `<style>${r.join('')}</style>`;
 }
 
 /* ---- shortcode builder ---- */

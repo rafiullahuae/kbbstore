@@ -737,6 +737,15 @@ it('puts a set in the price band its printed price falls in, and leaves it out o
  *   prints.
  */
 it('agrees with the tile about whether a rule-priced set is on sale', function () {
+    /*
+     * THE -N% PILL SWITCHED ON, SAID OUT LOUD.                     (Lane PR)
+     * Appearance → Product styles → Card content → "Discount badge" ships OFF
+     * now — the owner asked for it. This asserts what the pill SAYS when it is
+     * drawn, so it draws it; GridCardOwnerAsksTest pins the default.
+     */
+    app(\App\Services\ProductStyles::class)->save(['show_discount' => true]);
+    \App\Services\SettingsService::forgetMemo();
+    app()->forgetScopedInstances();
     $toner = skProduct('SORT Sale Toner', 10000);
     $serum = skProduct('SORT Sale Serum', 8000);
 

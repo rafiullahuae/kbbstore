@@ -210,7 +210,24 @@
         $kbbStart = '<span class="lbl" style="background:' . e($kbbLabel['colour']) . '">' . e($kbbLabel['text']) . '</span>';
     } elseif (! $kbbLabelsOn) {
         if ($product->created_at && $product->created_at->gt(now()->subDays(30))) {
-            $kbbStart = '<span class="kbb-badge kbb-badge-new">' . e(__('store.product_card.badge_new')) . '</span>';
+            /*
+             * ▲ OFF BY DEFAULT, AND DECIDED HERE RATHER THAN IN CSS. (Lane PR)
+             *
+             * The owner: "Turn off by default on the product grid card, new
+             * and discount tag." Appearance → Product styles → Card content →
+             * "New badge" ships OFF. It was a `.pc-nonew` body class, and that
+             * rule lives only in kbb-grid-skins.css, which three pages load —
+             * so switching it off hid the pill on the homepage and left it on
+             * /shop, every category and every brand page. The same measurement
+             * moved the brand line here (Lane CARD, header above).
+             *
+             * A new product with the switch off draws NO start pill: it does
+             * not fall through to Bestseller, because a new featured product
+             * never showed Bestseller and the owner did not ask about that one.
+             */
+            if ($kbbShows['show_new']) {
+                $kbbStart = '<span class="kbb-badge kbb-badge-new">' . e(__('store.product_card.badge_new')) . '</span>';
+            }
         } elseif ($product->featured && $kbbOff < 1) {
             /*
              * BESTSELLER DEFERS TO A REAL MARKDOWN, and NEW does not.
@@ -233,7 +250,12 @@
     // The top-END pill. Only the theme draws it: when Product Labels is on the
     // module owns the badge, and a second one beside it would be the theme
     // arguing with the setting.
-    $kbbEnd = (! $kbbLabelsOn && $kbbOff >= 1)
+    //
+    // ▲ AND ONLY WHEN Appearance → Product styles → Card content → "Discount
+    // badge" is on, which it no longer is by default (Lane PR — the owner's
+    // "turn off ... new and discount tag"). The struck-through was-price
+    // still shows the markdown; only the -N% pill on the photograph goes.
+    $kbbEnd = (! $kbbLabelsOn && $kbbOff >= 1 && $kbbShows['show_discount'])
         ? '<span class="kbb-badge kbb-badge-sale">' . e(\App\Support\Bidi::number('-' . $kbbOff . '%')) . '</span>'
         : null;
 

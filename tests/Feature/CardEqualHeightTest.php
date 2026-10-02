@@ -183,9 +183,11 @@ it('ships the brand line and the category eyebrow hidden, and keeps both switche
         ->and(ProductStyles::SCHEMA['show_category'][2])
         ->toBeFalse('Category label no longer ships off, so the card draws an eyebrow the owner asked to hide');
 
-    // The five he did not ask about are untouched, which is the half of rule 1
-    // that did NOT change.
-    foreach (['show_rating', 'show_was_price', 'show_discount', 'show_new', 'show_cart'] as $key) {
+    // The ones he did not ask about are untouched, which is the half of rule 1
+    // that did NOT change. (`show_discount` and `show_new` left this list on
+    // 2 October 2026: the owner asked for those two off as well — Lane PR,
+    // pinned in GridCardOwnerAsksTest.)
+    foreach (['show_rating', 'show_was_price', 'show_cart'] as $key) {
         expect(ProductStyles::SCHEMA[$key][2])
             ->toBeTrue($key.' moved, and the owner asked about the brand and the category only');
     }
