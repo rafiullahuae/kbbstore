@@ -15133,7 +15133,8 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
       '<div class="odpayrow">'+odPaymentPanel(o)+
       '<div style="margin-top:14px;max-width:280px;margin-left:auto;'+(editable?'margin-right:140px;':'')+'display:flex;flex-direction:column;gap:5px;font-size:13px">'+
       '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+
-      (o.discount_total_aed>0?'<div class="between"><span style="color:var(--ink-soft)">Discount'+(o.coupon_code?' ('+sesc(o.coupon_code)+')':'')+'</span><span>-AED '+o.discount_total_aed+'</span></div>':'')+
+      (o.bundle_discount_aed>0?'<div class="between"><span style="color:var(--ink-soft)">Buy-together discount</span><span>-AED '+o.bundle_discount_aed+'</span></div>':'')+
+      (Math.round((o.discount_total_aed-(o.bundle_discount_aed||0))*100)>0?'<div class="between"><span style="color:var(--ink-soft)">Discount'+(o.coupon_code?' ('+sesc(o.coupon_code)+')':'')+'</span><span>-AED '+(Math.round((o.discount_total_aed-(o.bundle_discount_aed||0))*100)/100)+'</span></div>':'')+
       '<div class="between"><span style="color:var(--ink-soft)">Shipping</span><span>AED '+o.shipping_total_aed+'</span></div>'+
       (o.fee_total_aed>0?'<div class="between"><span style="color:var(--ink-soft)">Fees</span><span>AED '+o.fee_total_aed+'</span></div>':'')+
       '<div class="between" style="font-weight:800;font-size:14px;border-top:1px solid var(--border);padding-top:8px"><span>Order total</span><span>AED '+o.total_aed+'</span></div>'+

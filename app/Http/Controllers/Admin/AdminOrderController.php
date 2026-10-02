@@ -214,6 +214,9 @@ class AdminOrderController extends Controller
 
             'subtotal_aed' => Money::toAed($order->subtotal),
             'discount_total_aed' => Money::toAed($order->discount_total),
+            // 2.60.360: the buy-together part of discount_total, so the order
+            // screen can show it apart from the coupon. 0 on older orders.
+            'bundle_discount_aed' => Money::toAed((int) ($order->bundle_discount ?? 0)),
             'shipping_total_aed' => Money::toAed($order->shipping_total),
             'fee_total_aed' => Money::toAed($order->fee_total),
             'total_aed' => Money::toAed($order->total),

@@ -624,4 +624,19 @@ it('records on the order what was charged and why, and the payment providers are
     $html = view('partials.checkout.received-summary', ['order' => $order->fresh('items'), 'settings' => app(SettingsService::class)])->render();
     expect($html)->toContain('<span>Buy-together discount</span><span>&ndash; ')
         ->toContain('Discount (GLOW10)');
+
+    /*
+     * And the admin's order screen splits them too (integrator, 2.60.360):
+     * the detail JSON carries the bundle part, and the screen draws
+     * "Buy-together discount" and "Discount (GLOW10)" as two rows.
+     * MUTATION, RUN: drop `bundle_discount_aed` from AdminOrderController's
+     * detail -- red.
+     */
+    $admin = \App\Models\AdminUser::create(['name' => 'Owner', 'email' => 'bundle-owner@example.test', 'password' => \Illuminate\Support\Facades\Hash::make('secret-secret'), 'role' => 'owner']);
+    $json = $this->actingAs($admin, 'admin')->getJson('/admin-api/orders/'.$order->id.'/detail')->assertOk()->json();
+    expect($json['order']['bundle_discount_aed'] ?? $json['bundle_discount_aed'] ?? null)->toEqual(36)
+        ->and($json['order']['discount_total_aed'] ?? $json['discount_total_aed'] ?? null)->toEqual(74);
+
+    $console = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+    expect($console)->toContain("(o.bundle_discount_aed>0?'<div class=\"between\"><span style=\"color:var(--ink-soft)\">Buy-together discount</span>");
 });
