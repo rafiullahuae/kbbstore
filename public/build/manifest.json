@@ -25,7 +25,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-pdp-trust.css": {
-    "file": "assets/kbb-pdp-trust-g8yG1_xF.css",
+    "file": "assets/kbb-pdp-trust-Dax_IKaE.css",
     "src": "resources/css/kbb/kbb-pdp-trust.css",
     "isEntry": true
   },
@@ -45,7 +45,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb.css": {
-    "file": "assets/kbb-D38PBRpJ.css",
+    "file": "assets/kbb-vEsguWKp.css",
     "src": "resources/css/kbb/kbb.css",
     "isEntry": true
   },
@@ -74,11 +74,20 @@
     "file": "assets/outfit-latin-Bc-8i84L.woff2",
     "src": "resources/fonts/outfit/outfit-latin.woff2"
   },
+  "resources/js/kbb/admin/storefront-admin.js": {
+    "file": "assets/storefront-admin-BXCV-xLJ.js",
+    "name": "storefront-admin",
+    "src": "resources/js/kbb/admin/storefront-admin.js",
+    "isDynamicEntry": true
+  },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-xnhvgjbu.js",
+    "file": "assets/app-2SosoxqE.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
-    "isEntry": true
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/kbb/admin/storefront-admin.js"
+    ]
   },
   "resources/js/kbb/pdp-trust.js": {
     "file": "assets/pdp-trust-CLra4tho.js",

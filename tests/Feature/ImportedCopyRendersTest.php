@@ -254,6 +254,7 @@ it('decodes an "&" in an imported excerpt once everywhere it is shown', function
     $product = collect($m[1])->map(fn ($j) => json_decode($j, true))->firstWhere('@type', 'Product');
     expect($product['description'])->toBe('Lift & glow in two steps. Second line.');
 
+    app(\App\Services\SettingsService::class)->setModule('quick_view', true); // off by default since 2.60.354; this case exercises it
     $qv = $this->getJson('/quick-view/' . $p->id)->assertOk()->json('html');
     expect($qv)->toContain('<p class="qv-blurb">Lift &amp; glow in two steps. Second line.</p>');
 });

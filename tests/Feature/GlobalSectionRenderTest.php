@@ -229,6 +229,7 @@ it('keeps the shortcode\'s letters out of the quick view and the meta descriptio
     pjbBlock();
     $p = pjbProduct(['short_description' => "[rey_global_section id=\"18159\"]\nAnua's foam, short."]);
 
+    app(\App\Services\SettingsService::class)->setModule('quick_view', true); // off by default since 2.60.354; this case exercises it
     $html = $this->get('/product/' . $p->slug . '/')->getContent();
     preg_match('#<meta name="description" content="([^"]*)"#', $html, $m);
 

@@ -3,6 +3,54 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.354
+**Quick view OFF on every page; the admin top bar and the ✎ Edit pencil on
+category and brand pages (you only).** Apply after .353. No plugin change.
+Runs three migrations: one new brand column, the Quick view switch, and two
+cache clears.
+
+| Your report | Now |
+|---|---|
+| "turn off the quick view option by default ... by default off this function everywhere on the site-frontend. on every page" | OFF on every page, in the code itself and on your shop's stored switch. Store → Modules → Quick view brings it back, and when it is on it now sits in the middle of the picture (it was at the top, half cut off, on 29 of 33 card designs) |
+| "site thin top bar, will show only for administrators ... administrator name, along with logout button ... hide / unhide arrow" | A 32px dark bar on every shop page, only for you: Edit this category/brand/product, Dashboard, Orders (today's count), Products, Customers, Appearance, Clear cache; your name, Log out, and an arrow that tucks it away (remembered). Shoppers' pages are byte-for-byte unchanged |
+| "pencil icon + edit minimal button ... beautiful popup ... drag n drop image upload ... save ... update the page without being refreshed and close the popup auto" | ✎ Edit on every category and brand header: banner drag-and-drop with progress, title, line under it, description, phone crop, live preview; Save updates the header in place and closes. Owner only for now -- the capability is ready for the user-roles module |
+
+Files (28): app/Http/Controllers/Admin/AdminAuthController.php,
+app/Http/Controllers/Admin/CategoriesApiController.php,
+app/Http/Controllers/Admin/PageController.php,
+app/Http/Controllers/Admin/StorefrontAdminController.php,
+app/Http/Controllers/Store/QuickViewController.php,
+app/Http/Controllers/Store/ShopController.php, app/Services/ModuleRegistry.php,
+app/Support/AdminCapabilities.php, app/Support/StorefrontAdminHint.php,
+app/Support/TitleHeaderInput.php, three migrations
+(2027_07_16_000000_add_header_description_to_brands,
+2027_07_16_000200_clear_caches_storefront_admin_layer,
+2027_07_17_000100_quick_view_off), resources/css/kbb/kbb.css,
+resources/js/kbb/admin-hint.js, resources/js/kbb/admin/storefront-admin.{js,css},
+resources/js/kbb/app.js, resources/views/admin/app.blade.php,
+resources/views/admin/partials/storefront-handoff.blade.php,
+resources/views/components/product-card.blade.php,
+resources/views/layouts/store.blade.php, routes/storefront-admin.php,
+routes/web.php, public/build (manifest + 3 built files).
+
+## 2.60.353
+**A different light box on every visit for categories with no banner, and a
+shorter share sheet: picture and title in one row.** Apply after .352. No plugin
+change. Runs one migration (switches the random light box on, then clears the
+caches).
+
+| Your report | Now |
+|---|---|
+| "options to use random layout on random categories, where we didin't upload the background image yet. so on each page load, it will give random colored background" | ON. A category or brand page with no banner of its own and no box chosen for it gets a light box picked at random on every load, from the colours ticked in Appearance → Site layout → Category header → "A different light box on every visit". A category you gave a box or a banner keeps it |
+| "The share popup is too heighted. i want to have picture + title in same row" | The product card is one row: a 96px square of the product's photograph, then the name (three lines at most) and the price, struck price included when on sale. Card 248px → 118px; the sheet 510px → 381px tall on a 390px phone |
+
+Files (8): app/Services/SiteLayout.php, app/Support/TitleHeader.php,
+database/migrations/2027_07_16_000100_random_light_box_on.php,
+resources/views/admin/partials/site-layout-screen.blade.php,
+resources/views/partials/product/share-sheet.blade.php,
+resources/css/kbb/kbb-pdp-trust.css, public/build/manifest.json,
+public/build/assets/kbb-pdp-trust-Dax_IKaE.css.
+
 ## 2.60.352
 **Hotfix: on phones, a product with many gallery pictures made the page
 scroll sideways; and in Safari the category header's description was cut off

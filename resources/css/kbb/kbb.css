@@ -4042,6 +4042,30 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .kbb-tile .cn{position:static;display:block}
 .kbb-tile .cn::after{content:"";position:absolute;inset:0;z-index:1}
 .kbb-tile .qv-btn,.kbb-tile .heart,.kbb-tile .kbb-card-cart{position:relative;z-index:2}
+/* ── QUICK VIEW SITS IN THE MIDDLE OF THE PHOTOGRAPH ────────────────────────
+   Owner, 2 October: "it's coming on top of the product and hiding at top, it
+   should be center - middle." The cause was `.kbb-tile .qv-btn{position:
+   relative}` above (written to lift the controls over the stretched link):
+   at 0,2,0 it beat layouts/store.blade.php's `.qv-btn{position:absolute}` at
+   0,1,0, so on every template but Showcase the pill fell into the flow at the
+   TOP of .kbb-card-thumb, half of it under the card's top edge. Absolute again
+   here, centred on both axes, rising 6px into place on hover as before.
+   RTL-PHYSICAL: centring idiom (left:50% + translate(-50%,...)). */
+.kbb-tile .kbb-card-thumb > .qv-btn{position:absolute;inset:auto;top:50%;left:50%;margin:0;align-self:auto;justify-self:auto;transform:translate(-50%,calc(-50% + 6px))}
+.kbb-tile:hover .kbb-card-thumb > .qv-btn,
+.kbb-tile .kbb-card-thumb > .qv-btn:focus-visible{transform:translate(-50%,-50%)}
+/* Showcase places the pill itself (`inset:auto; align-self:end;
+   margin-bottom:10px; transform:translateY(6px)`, and `none` on hover), in
+   kbb-grid-skins.css AND in this file's own copy further down, both at the
+   same weight as the rule above and both later in the cascade. So the whole
+   centring is said again at Showcase's weight plus one.
+
+   ▲ HERE AND NOT AT THE END OF THE FILE: FlagBarTest reads everything from
+   the flag bar's first rule to the end of kbb.css as the flag bar's block,
+   and forbids a physical `left` in it. */
+.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-thumb > .qv-btn{position:absolute;inset:auto;top:50%;left:50%;margin:0;align-self:auto;justify-self:auto;transform:translate(-50%,calc(-50% + 6px))}
+.kbb-pgrid[data-skin^="showcase"] .kbb-tile:hover .kbb-card-thumb > .qv-btn,
+.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-thumb > .qv-btn:focus-visible{transform:translate(-50%,-50%)}
 
 /* ── A LONG NAME MUST NOT MAKE ITS ROW TALLER ───────────────────────────────
    The owner: "if the product titles goes long, still the product grid height

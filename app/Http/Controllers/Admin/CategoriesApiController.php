@@ -716,37 +716,11 @@ class CategoriesApiController extends Controller
              * TitleHeader::sanitizeStyle() for the look, which keeps a choice
              * on its own list and clamps a number into its slider's range.
              */
-            'header_image' => ['nullable', 'string', 'max:2048'],
-            'header_title' => ['nullable', 'string', 'max:300'],
-            'header_subtitle' => ['nullable', 'string', 'max:300'],
-            'header_description' => ['nullable', 'string', 'max:5000'],
-            'header_style' => ['nullable', 'array'],
-            'header_style.align' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::ALIGNS)],
-            'header_style.treatment' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::TREATMENTS))],
-            'header_style.box' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::BOX_STYLES))],
-            'header_style.title_phone' => ['nullable', 'integer'],
-            'header_style.title_desktop' => ['nullable', 'integer'],
-            'header_style.h_phone' => ['nullable', 'integer'],
-            'header_style.h_desktop' => ['nullable', 'integer'],
-            /*
-             * Lane QC -- "and for mobile also": the same choices per device,
-             * each "Use the shop setting" when blank, plus where a phone cuts
-             * the picture and the category's own box colours. Same split:
-             * shape and list here, meaning in TitleHeader::sanitizeStyle().
-             */
-            'header_style.align_phone' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::ALIGNS)],
-            'header_style.align_desktop' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::ALIGNS)],
-            'header_style.treatment_phone' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::TREATMENTS))],
-            'header_style.treatment_desktop' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::TREATMENTS))],
-            'header_style.box_phone' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::BOX_STYLES))],
-            'header_style.box_desktop' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::BOX_STYLES))],
-            'header_style.text_phone' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::TEXTS)],
-            'header_style.text_desktop' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::TEXTS)],
-            'header_style.valign_phone' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::VALIGNS)],
-            'header_style.valign_desktop' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::VALIGNS)],
-            'header_style.focus' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::FOCUSES)],
-            'header_style.bg' => ['nullable', 'string', 'regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/'],
-            'header_style.ic' => ['nullable', 'string', 'regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/'],
+            // Lane RA: these rules live in App\Support\TitleHeaderInput now,
+            // moved there verbatim (Lane QC's per-device notes with them), so
+            // the storefront's quick-edit pencil validates with exactly these
+            // and not with a copy of them.
+            ...\App\Support\TitleHeaderInput::rules(),
         ];
 
         /*
@@ -795,32 +769,7 @@ class CategoriesApiController extends Controller
      */
     private function headerFields(array $data): array
     {
-        if (array_key_exists('header_image', $data)) {
-            $raw = trim((string) $data['header_image']);
-            $safe = \App\Support\TitleHeader::safeImage($raw);
-
-            if ($raw !== '' && $safe === null) {
-                throw ValidationException::withMessages([
-                    'header_image' => 'The header picture must be an uploaded file or an http(s) address.',
-                ]);
-            }
-
-            $data['header_image'] = $safe;
-        }
-
-        foreach (['header_title', 'header_subtitle', 'header_description'] as $key) {
-            if (array_key_exists($key, $data)) {
-                $value = trim((string) $data[$key]);
-                $data[$key] = $value === '' ? null : $value;
-            }
-        }
-
-        if (array_key_exists('header_style', $data)) {
-            $style = \App\Support\TitleHeader::sanitizeStyle($data['header_style']);
-            $data['header_style'] = $style === [] ? null : $style;
-        }
-
-        return $data;
+        return \App\Support\TitleHeaderInput::clean($data);
     }
 
     /**

@@ -131,6 +131,19 @@ it('names every admin-api address the server builds and hands out as data', func
         'InvoiceController.php /admin-api/orders/',
         'PageCost.php /admin-api/stats',
         'ProductEditorApiController.php /admin-api/media/upload',
+        /*
+         * Lane RA, on purpose: the storefront admin layer's context answer
+         * hands its script the three addresses it POSTS to -- the pencil's
+         * save/preview, the media library's upload and Platform -> Cache's
+         * clear. All three are fetch() writes from the shop page, never a
+         * navigation, so an expired session is a 401 the pop-up reports in
+         * words rather than a lost screen; each is governed
+         * (storefront.quick_edit, the upload's own rule, cache.manage) and
+         * StorefrontAdminLayerTest asserts that.
+         */
+        'StorefrontAdminController.php /admin-api/cache/clear',
+        'StorefrontAdminController.php /admin-api/media/upload',
+        'StorefrontAdminController.php /admin-api/storefront/quick-edit/',
         'StripeConnect.php /admin-api/payments/stripe/connect/callback',
     ], 'the set of server-built admin-api URLs has changed');
 });

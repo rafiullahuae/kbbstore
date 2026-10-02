@@ -64,7 +64,20 @@ class AdminAuthController extends Controller
         )) {
             RateLimiter::clear($key);
             $request->session()->regenerate();
-            return redirect()->intended(route('admin'));
+
+            $response = redirect()->intended(route('admin'));
+
+            /*
+             * The storefront's admin hint (Lane RA): a non-secret cookie that
+             * tells the shop's ordinary JavaScript it is worth asking whether
+             * to draw the admin bar and the quick-edit pencil. Only for an
+             * account that holds one of those -- see StorefrontAdminHint.
+             */
+            if (\App\Support\StorefrontAdminHint::wantedBy(Auth::guard('admin')->user())) {
+                $response->withCookie(\App\Support\StorefrontAdminHint::make($request->boolean('remember')));
+            }
+
+            return $response;
         }
 
         RateLimiter::hit($key, 60);
@@ -77,6 +90,10 @@ class AdminAuthController extends Controller
         Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('admin.login');
+
+        // Expired whoever is signing out: a hint left behind would only make
+        // the shop ask a question whose answer is now 401. (Lane RA)
+        return redirect()->route('admin.login')
+            ->withCookie(\App\Support\StorefrontAdminHint::forget());
     }
 }

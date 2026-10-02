@@ -295,6 +295,7 @@ it('never prints the same figure twice in the quick-view modal', function () {
 
     // The endpoint answers JSON with the rendered partial under `html`, so the
     // markup has to come back out of it before it can be read.
+    app(\App\Services\SettingsService::class)->setModule('quick_view', true); // off by default since 2.60.354; this case exercises it
     $html = (string) test()->get('/quick-view/' . $product->id)->assertOk()->json('html');
 
     $figures = pdtAmountsIn($html, 'class="qv-price"', 600);

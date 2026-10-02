@@ -404,6 +404,7 @@ it('never prints AED 0 as the price a variable product was marked down from', fu
         ->and($headline)->toContain('25%');
 
     /* 2. the quick-view modal's <del>, which is a JSON route rather than a page. */
+    app(\App\Services\SettingsService::class)->setModule('quick_view', true); // off by default since 2.60.354; this case exercises it
     $modal = test()->getJson('/quick-view/' . $parent->id)->assertOk()->json('html');
 
     preg_match('#<div class="qv-price">(.*?)</div>#s', (string) $modal, $q);

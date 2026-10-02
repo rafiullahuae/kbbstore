@@ -164,7 +164,9 @@ it('does not get dearer as the shop grid fills up', function () {
 
     $large = slopeMeasure('/shop');
 
-    $tiles = fn (array $r) => substr_count($r['html'], 'data-kbb-qv=');
+    // Counted by the tile itself. This counted the quick-view button until
+    // 2.60.354 turned Quick view off by default, and then counted nothing.
+    $tiles = fn (array $r) => substr_count($r['html'], '<div class="kbb-card kbb-tile">');
 
     // The fixture varies — asserted before anything is compared.
     expect($tiles($small))->toBe(2)
