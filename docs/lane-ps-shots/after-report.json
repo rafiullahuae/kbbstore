@@ -1,0 +1,176 @@
+{
+  "tag": "after",
+  "slug": "heartleaf-77-soothing-toner",
+  "widths": [
+    {
+      "width": 390,
+      "rest": {
+        "docScrollWidth": 390,
+        "innerWidth": 390,
+        "cards": 12,
+        "fullyVisibleCards": 2,
+        "cardWidth": 168,
+        "cardHeight": 352,
+        "trackWidth": 390,
+        "trackScrollWidth": 2170,
+        "trackScrollLeft": 0,
+        "heading": "You may also like",
+        "prevDisabled": true,
+        "nextDisabled": false,
+        "prevDisplay": "grid",
+        "sectionTop": 2280
+      },
+      "scrolled": {
+        "docScrollWidth": 390,
+        "innerWidth": 390,
+        "cards": 12,
+        "fullyVisibleCards": 2,
+        "cardWidth": 168,
+        "cardHeight": 352,
+        "trackWidth": 390,
+        "trackScrollWidth": 2170,
+        "trackScrollLeft": 1780,
+        "heading": "You may also like",
+        "prevDisabled": false,
+        "nextDisabled": true,
+        "prevDisplay": "grid",
+        "sectionTop": 2280
+      },
+      "keyboardBack": {
+        "docScrollWidth": 390,
+        "innerWidth": 390,
+        "cards": 12,
+        "fullyVisibleCards": 2,
+        "cardWidth": 168,
+        "cardHeight": 352,
+        "trackWidth": 390,
+        "trackScrollWidth": 2170,
+        "trackScrollLeft": 1068,
+        "heading": "You may also like",
+        "prevDisabled": false,
+        "nextDisabled": false,
+        "prevDisplay": "grid",
+        "sectionTop": 2280
+      },
+      "keyboardFocus": "related",
+      "rtl": {
+        "docScrollWidth": 390,
+        "innerWidth": 390,
+        "cards": 12,
+        "fullyVisibleCards": 2,
+        "cardWidth": 168,
+        "cardHeight": 352,
+        "trackWidth": 390,
+        "trackScrollWidth": 2170,
+        "trackScrollLeft": 0,
+        "heading": "You may also like",
+        "prevDisabled": true,
+        "nextDisabled": false,
+        "prevDisplay": "grid",
+        "sectionTop": 2288
+      },
+      "adminSettings": {
+        "docScrollWidth": 390,
+        "fields": 10
+      },
+      "adminEditor": {
+        "docScrollWidth": 390,
+        "picked": 2,
+        "found": 3
+      }
+    },
+    {
+      "width": 1280,
+      "rest": {
+        "docScrollWidth": 1280,
+        "innerWidth": 1280,
+        "cards": 12,
+        "fullyVisibleCards": 5,
+        "cardWidth": 232.8,
+        "cardHeight": 416.8,
+        "trackWidth": 1236,
+        "trackScrollWidth": 2992,
+        "trackScrollLeft": 0,
+        "heading": "You may also like",
+        "prevDisabled": true,
+        "nextDisabled": false,
+        "prevDisplay": "grid",
+        "sectionTop": 1752
+      },
+      "scrolled": {
+        "docScrollWidth": 1280,
+        "innerWidth": 1280,
+        "cards": 12,
+        "fullyVisibleCards": 5,
+        "cardWidth": 232.8,
+        "cardHeight": 416.8,
+        "trackWidth": 1236,
+        "trackScrollWidth": 2992,
+        "trackScrollLeft": 1003,
+        "heading": "You may also like",
+        "prevDisabled": false,
+        "nextDisabled": false,
+        "prevDisplay": "grid",
+        "sectionTop": 1752
+      },
+      "keyboardBack": {
+        "docScrollWidth": 1280,
+        "innerWidth": 1280,
+        "cards": 12,
+        "fullyVisibleCards": 5,
+        "cardWidth": 232.8,
+        "cardHeight": 416.8,
+        "trackWidth": 1236,
+        "trackScrollWidth": 2992,
+        "trackScrollLeft": 251,
+        "heading": "You may also like",
+        "prevDisabled": false,
+        "nextDisabled": false,
+        "prevDisplay": "grid",
+        "sectionTop": 1752
+      },
+      "keyboardFocus": "related",
+      "rtl": {
+        "docScrollWidth": 1280,
+        "innerWidth": 1280,
+        "cards": 12,
+        "fullyVisibleCards": 5,
+        "cardWidth": 232.8,
+        "cardHeight": 416.8,
+        "trackWidth": 1236,
+        "trackScrollWidth": 2992,
+        "trackScrollLeft": 0,
+        "heading": "You may also like",
+        "prevDisabled": true,
+        "nextDisabled": false,
+        "prevDisplay": "grid",
+        "sectionTop": 1771
+      },
+      "rtlScrolled": {
+        "docScrollWidth": 1280,
+        "innerWidth": 1280,
+        "cards": 12,
+        "fullyVisibleCards": 5,
+        "cardWidth": 232.8,
+        "cardHeight": 416.8,
+        "trackWidth": 1236,
+        "trackScrollWidth": 2992,
+        "trackScrollLeft": -1003,
+        "heading": "You may also like",
+        "prevDisabled": false,
+        "nextDisabled": false,
+        "prevDisplay": "grid",
+        "sectionTop": 1771
+      },
+      "adminSettings": {
+        "docScrollWidth": 1280,
+        "fields": 10
+      },
+      "adminEditor": {
+        "docScrollWidth": 1280,
+        "picked": 2,
+        "found": 3
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "tag": "before",
+  "slug": "heartleaf-77-soothing-toner",
+  "widths": [
+    {
+      "width": 390,
+      "rest": {
+        "docScrollWidth": 390,
+        "innerWidth": 390,
+        "cards": 3,
+        "fullyVisibleCards": 3,
+        "cardWidth": 168,
+        "cardHeight": 352,
+        "trackWidth": 346,
+        "trackScrollWidth": 346,
+        "trackScrollLeft": 0,
+        "heading": "You may also like",
+        "prevDisabled": null,
+        "nextDisabled": null,
+        "prevDisplay": null,
+        "sectionTop": 2280
+      }
+    },
+    {
+      "width": 1280,
+      "rest": {
+        "docScrollWidth": 1280,
+        "innerWidth": 1280,
+        "cards": 3,
+        "fullyVisibleCards": 3,
+        "cardWidth": 232.8,
+        "cardHeight": 416.8,
+        "trackWidth": 1236,
+        "trackScrollWidth": 1236,
+        "trackScrollLeft": 0,
+        "heading": "You may also like",
+        "prevDisabled": null,
+        "nextDisabled": null,
+        "prevDisplay": null,
+        "sectionTop": 1752
+      }
+    }
+  ]
+}

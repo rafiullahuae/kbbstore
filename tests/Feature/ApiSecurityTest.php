@@ -149,6 +149,27 @@ it('serves the product api without leaking internal fields', function () {
         ->assertJsonMissing(['sku' => 'INTERNAL-SKU-1']);
 });
 
+it('keeps a product\'s own "You may also like" picks off the public product api', function () {
+    /*
+     * Lane PS added `products.also_like` — one product's hand-picked companions
+     * and how they are used. It is the merchant's merchandising, not something
+     * a shopper's feed needs: the storefront prints the CARDS, never the list.
+     * Product::toApi() is an allowlist and does not name it; this pins that
+     * decision so a change of mind cannot happen by accident.
+     */
+    $pick = product(['slug' => 'ymal-pick-serum', 'name' => 'Pick Serum']);
+    product(['slug' => 'ymal-owner-serum', 'name' => 'Owner Serum', 'also_like' => ['mode' => 'only', 'ids' => [$pick->id]]]);
+
+    $index = $this->getJson('/api/products')->assertOk()->getContent();
+    $one = $this->getJson('/api/products/ymal-owner-serum')->assertOk()->getContent();
+
+    foreach ([$index, $one] as $raw) {
+        expect($raw)->toContain('Owner Serum')
+            ->not->toContain('also_like')
+            ->not->toContain('"mode":"only"');
+    }
+});
+
 it('hides draft posts from the feed and by slug', function () {
     Post::create(['slug' => 'live-post', 'title' => 'Live post', 'status' => 'published']);
     Post::create(['slug' => 'draft-post', 'title' => 'Unreleased draft', 'status' => 'draft']);

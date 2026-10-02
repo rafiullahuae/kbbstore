@@ -5344,7 +5344,7 @@ function pyaBody(){
   return `<div class="mmcols"><div class="card mmcard">
       <div class="mmhd"><b>${escHtml(t.label)}</b><span>${escHtml(t.description)}</span></div>
       <div class="mmbody">${t.fields.map(pyaField).join('')}</div></div>
-    <p class="ectabs-hint" style="margin-top:12px">Per product: open any product in <b>Catalog → Products</b> and use its <b>You may also like</b> panel to hand-pick products, and choose whether they come first or replace this rule. Showing it on a phone or a laptop only is the <b>You may also like</b> row on the <b>Sections</b> tab.</p></div>`;
+    <p class="mdesc" style="margin-top:12px">Per product: open any product in <b>Catalog → Products</b> and use its <b>You may also like</b> panel to hand-pick products, and choose whether they come first or replace this rule. Showing it on a phone or a laptop only is the <b>You may also like</b> row on the <b>Sections</b> tab.</p></div>`;
 }
 document.addEventListener('input', e=>{
   const el=e.target.closest('[data-pya]');
