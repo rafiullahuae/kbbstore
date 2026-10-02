@@ -236,8 +236,22 @@ class Seo
         $out[] = '<meta property="og:title" content="' . $e($title) . '">';
         if ($desc)  $out[] = '<meta property="og:description" content="' . $e($desc) . '">';
         if ($url)   $out[] = '<meta property="og:url" content="' . $e($url) . '">';
-        if ($image) $out[] = '<meta property="og:image" content="' . $e($image) . '">';
-        foreach (self::productImageMeta($type, $ctx, $image) as $prop => $value) {
+        /*
+         * THE PREVIEW PICTURE, which on a product page is the JPEG share copy
+         * (App\Support\ShareImage) once it exists — Lane QB. The owner: "the
+         * share icons don't bring the image along with the message". WhatsApp
+         * and Telegram build that picture from og:image, and the original was
+         * a full-size WebP that WhatsApp's fetcher drops. Only og:image and
+         * twitter:image move: the JSON-LD Product keeps the original, which is
+         * the full-resolution photograph Google wants for a rich result, and
+         * the page's own <img> tags never see any of this.
+         */
+        $preview = self::previewImage($type, $ctx, $image, $base);
+        if ($preview['url']) $out[] = '<meta property="og:image" content="' . $e($preview['url']) . '">';
+        foreach ($preview['meta'] as $prop => $value) {
+            $out[] = '<meta property="' . $prop . '" content="' . $e($value) . '">';
+        }
+        foreach (self::productImageMeta($type, $ctx, $image, $preview['size']) as $prop => $value) {
             $out[] = '<meta property="' . $prop . '" content="' . $e($value) . '">';
         }
 
@@ -272,7 +286,7 @@ class Seo
         if (!empty($s['twitter_handle'])) $out[] = '<meta name="twitter:site" content="' . $e($s['twitter_handle']) . '">';
         $out[] = '<meta name="twitter:title" content="' . $e($title) . '">';
         if ($desc)  $out[] = '<meta name="twitter:description" content="' . $e($desc) . '">';
-        if ($image) $out[] = '<meta name="twitter:image" content="' . $e($image) . '">';
+        if ($preview['url']) $out[] = '<meta name="twitter:image" content="' . $e($preview['url']) . '">';
 
         // JSON-LD structured data
         foreach (self::jsonLd($ctx, $s, $siteName, $base, $title, $desc, $url, $image) as $node) {
@@ -1087,7 +1101,7 @@ class Seo
      *
      * @return array<string, string>
      */
-    private static function productImageMeta(string $type, array $ctx, ?string $image): array
+    private static function productImageMeta(string $type, array $ctx, ?string $image, ?array $shareSize = null): array
     {
         $own = trim((string) ($ctx['image'] ?? ''));
 
@@ -1096,7 +1110,9 @@ class Seo
         }
 
         $out = [];
-        $size = ImageVariants::sizeOf($own);
+        // The share copy's own size when og:image names it (Lane QB);
+        // otherwise the original's, read off the disk as before.
+        $size = $shareSize ?? ImageVariants::sizeOf($own);
 
         if ($size !== null) {
             $out['og:image:width'] = (string) $size[0];
@@ -1113,6 +1129,50 @@ class Seo
     }
 
     /**
+     * What og:image and twitter:image name, and the tags that describe it.
+     *                                                                (Lane QB)
+     *
+     * A product page whose controller found a JPEG share copy
+     * (`$ctx['share_image']`, from ShareImage::forPage()) publishes THAT, with
+     * og:image:type and — on an https address — og:image:secure_url, which
+     * Facebook and WhatsApp read when og:image is ambiguous. Every other page,
+     * and a product whose copy is not made yet, publishes `$image` exactly as
+     * before and no extra tag at all: the head is byte-identical until the copy
+     * exists.
+     *
+     * Property names are constants; values are escaped by the caller.
+     *
+     * @return array{url: ?string, meta: array<string, string>, size: ?array{0: int, 1: int}}
+     */
+    private static function previewImage(string $type, array $ctx, ?string $image, string $base): array
+    {
+        $share = $ctx['share_image'] ?? null;
+
+        if ($type !== 'product' || ! is_array($share) || ! is_string($share['url'] ?? null) || $share['url'] === '') {
+            return ['url' => $image, 'meta' => [], 'size' => null];
+        }
+
+        $url = self::absolute($share['url'], $base);
+
+        if ($url === null || preg_match('#^https?://#i', $url) !== 1) {
+            return ['url' => $image, 'meta' => [], 'size' => null];
+        }
+
+        $meta = [];
+
+        if (stripos($url, 'https://') === 0) {
+            $meta['og:image:secure_url'] = $url;
+        }
+
+        $meta['og:image:type'] = 'image/jpeg';
+
+        $w = (int) ($share['width'] ?? 0);
+        $h = (int) ($share['height'] ?? 0);
+
+        return ['url' => $url, 'meta' => $meta, 'size' => $w > 0 && $h > 0 ? [$w, $h] : null];
+    }
+
+    /**
      * The address and the picture a product page publishes, for its share
      * bar.                                                           (Lane PW)
      *
@@ -1123,16 +1183,28 @@ class Seo
      * of the shop's logo is not a pin of this product, and App\Support\
      * ProductShare drops `media` altogether when this is null.
      *
-     * @return array{url: ?string, image: ?string}
+     * @return array{url: ?string, image: ?string, share_image: ?string, share_path: ?string}
      */
     public static function shareTargets(array $ctx): array
     {
         $s = SeoSettings::map();
         $base = rtrim(SeoSettings::firstFilled($s['site_url'] ?? null, (string) config('app.url')), '/');
 
+        $share = is_array($ctx['share_image'] ?? null) ? $ctx['share_image'] : null;
+
         return [
             'url' => self::canonical($ctx['url'] ?? null, $base),
             'image' => self::absolute(isset($ctx['image']) ? (string) $ctx['image'] : null, $base),
+            // Lane QB: the JPEG og:image names, absolute, or the original when
+            // there is no copy yet — the sheet's product card shows what a
+            // friend's preview will show. `share_path` is the same file
+            // root-relative, for the phone share sheet's same-origin fetch.
+            'share_image' => $share !== null && is_string($share['url'] ?? null)
+                ? self::absolute($share['url'], $base)
+                : self::absolute(isset($ctx['image']) ? (string) $ctx['image'] : null, $base),
+            'share_path' => $share !== null && is_string($share['path'] ?? null) && str_starts_with($share['path'], '/')
+                ? $share['path']
+                : null,
         ];
     }
 

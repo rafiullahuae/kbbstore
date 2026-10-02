@@ -1,6 +1,14 @@
 {{--
-    Appearance → Product page → Trust · Delivery box / Authenticity / Share bar /
-    Spacing.                                                           (Lane PW)
+    Appearance → Product page → Trust · Delivery box / Authenticity / Share /
+    Trust · Spacing.                          (Lane PW; the Share tab, Lane QB)
+
+    THE SHARE TAB (Lane QB). The row of share buttons is gone from the page —
+    the owner asked for one share icon beside the title that opens a sheet —
+    so this tab now chooses what that SHEET offers: the icon on/off, the
+    sheet's heading, a switch per platform, their order (a small list with
+    ↑ ↓, posted as one comma list the server re-checks against its own keys),
+    and the analytics tags. The bar's style, shape, size and spacing went with
+    the bar.
 
     FOUR MORE TABS ON THE SCREEN THAT ALREADY OWNS THE PRODUCT PAGE, not a new
     screen. The owner asked for the delivery box, the "Authenticity
@@ -51,6 +59,12 @@
 .pts-adm-img input[type=text]{flex:1 1 180px;min-width:0}
 .pts-adm-ta{width:100%;min-height:150px;resize:vertical;font:inherit;font-size:13px;line-height:1.5;padding:9px 11px;border:1px solid var(--border,#e6e9f2);border-radius:9px}
 .pts-adm-note{font-size:12px;color:var(--ink-soft,#626c80);margin:0 0 10px}
+.pts-adm-order{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-width:420px}
+.pts-adm-order li{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border:1px solid var(--border,#e6e9f2);border-radius:9px;background:#fff;font-size:13px}
+.pts-adm-order li b{flex:1 1 auto;font-weight:600}
+.pts-adm-order li em{font-style:normal;font-size:11px;color:var(--ink-soft,#626c80);background:#f2f4f8;border-radius:99px;padding:2px 8px}
+.pts-adm-order li.off b{color:var(--ink-soft,#626c80)}
+.pts-adm-order button{min-width:30px}
 </style>
 <script>
 (function () {
@@ -105,12 +119,31 @@
         + '<button type="button" class="btn small ghost" id="ptsImgClear">Use the drawn truck</button>'
         + '<input type="text" class="inp" placeholder="or paste https://…" value="' + escAttr(v) + '" data-pts-k="' + k + '" aria-label="' + escAttr(f.label) + '"></div></div>';
     }
+    if (f.key === 'share_order') {
+      var names = (typeof PP !== 'undefined' && PP && PP.preview && PP.preview.share_networks) || {};
+      var keys = orderKeys(v, names);
+      return '<div class="mmrow" style="display:block"><div class="mmlbl" style="margin-bottom:8px"><b>' + escHtml(f.label) + '</b>' + help(f) + '</div>'
+        + '<ol class="pts-adm-order" id="ptsOrder">' + keys.map(function (nk, i) {
+          var sw = field('share_' + nk), on = !!(sw && sw.value);
+          return '<li class="' + (on ? 'on' : 'off') + '" data-k="' + escAttr(nk) + '"><b>' + escHtml(names[nk]) + '</b>' + (on ? '' : '<em>off</em>')
+            + '<button type="button" class="btn small ghost" data-pts-move="-1" data-k="' + escAttr(nk) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Move ' + escAttr(names[nk]) + ' up">↑</button>'
+            + '<button type="button" class="btn small ghost" data-pts-move="1" data-k="' + escAttr(nk) + '"' + (i === keys.length - 1 ? ' disabled' : '') + ' aria-label="Move ' + escAttr(names[nk]) + ' down">↓</button></li>';
+        }).join('') + '</ol></div>';
+    }
     if (f.type === 'textarea') {
       return '<div class="mmrow" style="display:block"><div class="mmlbl" style="margin-bottom:8px"><b>' + escHtml(f.label) + '</b>' + help(f) + '</div>'
         + '<textarea class="pts-adm-ta" data-pts-k="' + k + '" aria-label="' + escAttr(f.label) + '">' + escHtml(v) + '</textarea></div>';
     }
     return '<div class="mmrow"><div class="mmlbl"><b>' + escHtml(f.label) + '</b>' + help(f) + '</div>'
       + '<input type="text" value="' + escAttr(v) + '" data-pts-k="' + k + '" aria-label="' + escAttr(f.label) + '"></div>';
+  }
+
+  /** The tile order as a list of known keys, every platform once — the server's cleanOrder(), mirrored. */
+  function orderKeys(v, names) {
+    var out = [];
+    String(v || '').split(',').forEach(function (k) { k = k.trim(); if (names[k] && out.indexOf(k) < 0) out.push(k); });
+    Object.keys(names).forEach(function (k) { if (out.indexOf(k) < 0) out.push(k); });
+    return out;
   }
 
   /** A preview of the picture, only for an address that is http(s) or a path on this site. */
@@ -192,11 +225,11 @@
       if (col) {
         col.innerHTML = '<div class="mmcols"><div class="card mmcard">'
           + '<div class="mmhd"><b>' + escHtml(tab.label) + '</b><span>' + escHtml(tab.description) + '</span></div>'
-          + '<div class="mmbody"><p class="pts-adm-note">Colours, sizes and spacing move in the preview as you change them. Words, the picture and the on/off switches appear there once you press <b>Save changes</b>.</p>'
+          + '<div class="mmbody"><p class="pts-adm-note">Colours, sizes and spacing move in the preview as you change them. Words, the picture and the on/off switches appear there once you press <b>Save changes</b>.' + (tab.key === 'ts_share' ? ' The share sheet opens from the share icon beside the product title.' : '') + '</p>'
           + tab.fields.map(control).join('') + '</div></div></div>';
       }
       var lede = document.getElementById('ppLede');
-      if (lede) lede.textContent = 'The delivery box, “Authenticity Guaranteed” and the share bar — three blocks of the buy column, at both widths.';
+      if (lede) lede.textContent = 'The delivery box and “Authenticity Guaranteed” in the buy column, and the share icon beside the title with the sheet it opens — at both widths.';
       var acts = document.getElementById('ppActs');
       if (acts) acts.innerHTML = '<button class="btn" id="ptsReset">Reset these tabs to defaults</button> <button class="btn" id="ptsDiscard">Discard</button>';
       if (DIRTY) markDirty();
@@ -268,7 +301,27 @@
     if (!t || typeof PP === 'undefined' || !PP) return;
 
     var tog = t.closest && t.closest('.ectog[data-pts-k]');
-    if (tog) { toggle(tog); return; }
+    if (tog) {
+      toggle(tog);
+      // A platform switched on or off shows as such in the order list.
+      if (/^share_/.test(tog.getAttribute('data-pts-k') || '') && document.getElementById('ptsOrder')) window.paintProductPage();
+      return;
+    }
+
+    var mv = t.closest && t.closest('[data-pts-move]');
+    if (mv) {
+      var of = field('share_order');
+      var nm = (PP.preview && PP.preview.share_networks) || {};
+      if (!of) return;
+      var list = orderKeys(of.value, nm), k = mv.getAttribute('data-k'), d = +mv.getAttribute('data-pts-move'), i = list.indexOf(k), j = i + d;
+      if (i < 0 || j < 0 || j >= list.length) return;
+      list.splice(i, 1); list.splice(j, 0, k);
+      of.value = list.join(',');
+      markDirty(); window.paintProductPage();
+      var again = document.querySelector('[data-pts-move="' + (d < 0 ? '-1' : '1') + '"][data-k="' + k + '"]');
+      if (again && !again.disabled) again.focus();
+      return;
+    }
 
     if (t.id === 'ptsImgPick' && typeof window.kbbPickMedia === 'function') {
       window.kbbPickMedia({ title: 'Delivery picture', note: 'Your FAST DELIVERY image. It replaces the drawn truck.', folder: 'appearance', onPick: function (urls) {

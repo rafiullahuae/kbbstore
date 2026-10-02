@@ -638,6 +638,13 @@ final class ArabicInterfaceDrafts
             'store.product.pts_copy_fail' => 'انسخ هذا الرابط:',
             'store.product.pts_more' => 'طرق أخرى للمشاركة',
             'store.product.pts_share_on' => 'شارك عبر :network',
+            // Lane QB — the share sheet.
+            'store.product.pts_sheet_heading' => 'شارك هذا المنتج مع أصدقائك',
+            'store.product.pts_share_btn' => 'مشاركة هذا المنتج',
+            'store.product.pts_tile_messages' => 'الرسائل',
+            'store.product.pts_tile_email' => 'البريد',
+            'store.product.pts_tile_copy' => 'نسخ',
+            'store.product.pts_tile_more' => 'المزيد',
 
             'store.fbt.title' => 'أكمل روتينك',
             'store.fbt.total' => 'الإجمالي: :amount',

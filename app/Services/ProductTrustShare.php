@@ -10,6 +10,12 @@ use App\Support\SafeUrl;
  * Appearance → Product page → Trust & share: the delivery box, the
  * "Authenticity Guaranteed" line and the share bar.                (Lane PW)
  *
+ * ▲ THE SHARE BAR IS GONE (Lane QB, 2 October): "remove the share row
+ *   completely, and make the share icon only, and bring that beside the right
+ *   side of the product title". Its switches now choose what the SHARE SHEET
+ *   offers — see the `share_*` block of SCHEMA and the Share tab. Where this
+ *   header says "share bar" below, read it as history.
+ *
  * The owner, 2 October, pointing at screenshots of his old WordPress page:
  *
  *   "on product page i want two things further, one is the same yellowish
@@ -71,23 +77,33 @@ class ProductTrustShare
     public const AUTH_TEXT = "We understand the importance of authenticity when it comes to skincare. That is why we go extra mile to verify the authenticity of every product by rigorous quality checks and buying directly from trusted suppliers.\n\nWhen you choose K-Beauty Bliss, you can shop with confidence knowing that you will be getting only the best, 100% authentic skincare and beauty.";
 
     /**
-     * The share networks, in the order the bar draws them.
+     * The sheet's platforms. key => [label, brand colour].           (Lane QB)
      *
-     * key => [label, brand colour]. The label is the network's own name, which
-     * is a proper noun and is not translated; the sentence around it ("Share on
-     * :network") is keyed. The colours are each company's published brand
-     * colour, and are CONSTANTS — no setting reaches them.
+     * The label is the platform's own name, a proper noun and not translated —
+     * except the three that are not names (Messages, Email, Copy, More), which
+     * the sheet prints through keyed strings so /ar can say them in Arabic.
+     * The colours are each company's published brand colour, CONSTANTS, and
+     * the tile pictures themselves are App\Support\TrustShareIcons::TILE.
+     * `native` is "More": the device's own share menu, drawn only where the
+     * browser has one.
      */
     public const NETWORKS = [
         'whatsapp' => ['WhatsApp', '#25D366'],
+        'messenger' => ['Messenger', '#0084FF'],
+        'pinterest' => ['Pinterest', '#E60023'],
+        'telegram' => ['Telegram', '#229ED9'],
+        'snapchat' => ['Snapchat', '#FFFC00'],
+        'sms' => ['Messages', '#34C759'],
+        'email' => ['Email', '#2F80ED'],
+        'copy' => ['Copy', '#5F6B7A'],
+        'native' => ['More', '#E9E9EE'],
         'facebook' => ['Facebook', '#1877F2'],
         'x' => ['X', '#000000'],
-        'pinterest' => ['Pinterest', '#E60023'],
         'linkedin' => ['LinkedIn', '#0A66C2'],
-        'telegram' => ['Telegram', '#229ED9'],
-        'email' => ['Email', '#F2994A'],
-        'copy' => ['Copy link', '#8B5CF6'],
     ];
+
+    /** Amazon's order, then the three that ship off. */
+    public const ORDER_DEFAULT = 'whatsapp,messenger,pinterest,telegram,snapchat,sms,email,copy,native,facebook,x,linkedin';
 
     /**
      * Spacing fields, each [label, default, help]. Expanded into four controls
@@ -99,8 +115,7 @@ class ProductTrustShare
         'del' => ['Delivery box', 16, 16],
         // "Authenticity Guaranteed" hugs the button row: ~12px under it.
         'auth' => ['Authenticity line', 12, 0],
-        // The share bar sits ~16px under the authenticity line.
-        'share' => ['Share bar', 16, 4],
+        // (The share bar's pair went with the bar — Lane QB.)
     ];
 
     /** key => [type, label, default, help, options] */
@@ -135,36 +150,51 @@ class ProductTrustShare
             'Plain text. Leave a blank line between paragraphs.'],
         'auth_colour' => ['colour', 'Tick colour', '#2E9E6B', 'The green of the check-square and the “yes” tick.'],
 
-        /* ═══════════ share bar ════════════════════════════════════════════ */
+        /* ═══════════ the share icon and its sheet (Lane QB) ══════════════════ */
 
-        'share_on' => ['bool', 'Show the share bar', true,
-            'A row of round buttons in each network’s own colour under the authenticity line.'],
-        'share_label' => ['text', 'Label', 'Share', 'The word before the buttons. Plain text.'],
-        'share_whatsapp' => ['bool', 'WhatsApp', true, 'Sends the name, the price, the short description and the link.'],
-        'share_facebook' => ['bool', 'Facebook', true, 'Facebook reads the picture and description from the page itself.'],
-        'share_x' => ['bool', 'X (Twitter)', true, ''],
-        'share_pinterest' => ['bool', 'Pinterest', true, 'Pins the main product photograph with the name and description.'],
-        'share_linkedin' => ['bool', 'LinkedIn', true, ''],
-        'share_telegram' => ['bool', 'Telegram', true, ''],
-        'share_email' => ['bool', 'Email', true, ''],
-        'share_copy' => ['bool', 'Copy link', true, 'Copies the link and says “Link copied”.'],
-        'share_native' => ['bool', '“More” button on phones', true,
-            'Opens the phone’s own share sheet (Instagram, Snapchat, Messages…). Only drawn on a phone that has one.'],
         /*
-         * 'icons' ships as the default because he asked (2.60.348): "i want
-         * only icons, not filled with circles. make it super beautiful, and
-         * share + icons must come in same line." The circle styles stay one
-         * click away.
+         * The owner, 2 October, with Amazon's share sheet beside him: "remove
+         * the share row completely, and make the share icon only, and bring that
+         * beside the right side of the product title ... upon click it will open
+         * popup from bottom side same as attached fro mamazon with same product
+         * image carry, title row, and sharing platforms." And: "FOR DEKSTOP ...
+         * the share icon will also desktop beside the title on right side."
+         *
+         * So the row Lane PW built is gone, and its switches now choose what
+         * the SHEET offers. The defaults are Amazon's own set, which is what he
+         * pointed at: WhatsApp, Messenger, Pinterest, Telegram, Snapchat,
+         * Messages, Email, Copy and More — ON. Facebook, X and LinkedIn are
+         * not on Amazon's sheet, so they ship OFF and stay one switch away.
+         *
+         * RETIRED with the row: `share_label`, `share_style`, `share_shape`,
+         * `share_size` and the row's four spacing sliders. They described a
+         * bar that no longer exists; a stored row of any of them is simply
+         * never read again (all() walks fields(), not the table).
          */
-        'share_style' => ['select', 'Style', 'icons',
-            'Coloured icons on their own is how it ships. The two circle styles put each icon on a filled disc.',
-            ['icons' => 'Coloured icons, no circles', 'brand' => 'Circles in each network’s own colour', 'mono' => 'Circles in one dark colour']],
-        'share_shape' => ['select', 'Button shape', 'circle', '',
-            ['circle' => 'Round', 'rounded' => 'Rounded square']],
-        'share_size' => ['range', 'Button size', 34, '',
-            ['min' => 26, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        'share_on' => ['bool', 'Show the share icon beside the title', true,
+            'The share icon at the end of the product title, on a phone and on a laptop. Pressing it opens the share sheet: the product’s picture and name, then a tile for each platform switched on below.'],
+        'share_heading' => ['text', 'Sheet heading', 'Share this product with friends',
+            'The line at the top of the sheet. Plain text.'],
+        'share_whatsapp' => ['bool', 'WhatsApp', true,
+            'Sends the name, the price, a short description and the link. WhatsApp shows the product picture as the link’s preview.'],
+        'share_messenger' => ['bool', 'Messenger', true,
+            'On a phone, opens the Messenger app with the link. On a laptop, opens Facebook’s share window, which has “Send in Messenger”.'],
+        'share_pinterest' => ['bool', 'Pinterest', true, 'Pins the main product photograph with the name and description.'],
+        'share_telegram' => ['bool', 'Telegram', true, 'Sends the link with the name, price and description; Telegram previews the picture.'],
+        'share_snapchat' => ['bool', 'Snapchat', true,
+            'On a phone, opens Snapchat with the link attached to a Snap. On a laptop, opens Snapchat for Web.'],
+        'share_sms' => ['bool', 'Messages (SMS)', true, 'Opens the phone’s text messages with the name, price and link.'],
+        'share_email' => ['bool', 'Email', true, 'Opens an email with the name as the subject and the description and link as the body.'],
+        'share_copy' => ['bool', 'Copy', true, 'Copies the link and says “Link copied”.'],
+        'share_native' => ['bool', 'More', true,
+            'Opens the device’s own share menu (Instagram, Messages, AirDrop…) and sends the product PICTURE itself where the phone allows it. Only shown on a device that has one.'],
+        'share_facebook' => ['bool', 'Facebook', false, 'Not on the Amazon sheet you showed, so off until you switch it on. Facebook reads the picture and description from the page itself.'],
+        'share_x' => ['bool', 'X (Twitter)', false, 'Off until you switch it on.'],
+        'share_linkedin' => ['bool', 'LinkedIn', false, 'Off until you switch it on.'],
+        'share_order' => ['text', 'Order of the tiles', self::ORDER_DEFAULT,
+            'Move a platform up or down to change where its tile sits in the sheet.'],
         'share_utm' => ['bool', 'Tag shared links for analytics', true,
-            'Adds utm_source=whatsapp (and so on) to the link a visitor shares, so visits from shares show up by network in your analytics. The page’s canonical address and its og:url stay clean, so search engines are unaffected.'],
+            'Adds utm_source=whatsapp (and so on) to the link a visitor shares, so visits from shares show up by platform in your analytics. The page’s canonical address and its og:url stay clean, so search engines are unaffected.'],
     ];
 
     /**
@@ -179,17 +209,16 @@ class ProductTrustShare
         'ts_auth' => ['Trust · Authenticity',
             'The “Authenticity Guaranteed” line under Add to cart, and the explanation it slides open.',
             ['auth_on', 'auth_label', 'auth_text', 'auth_colour']],
-        'ts_share' => ['Trust · Share bar',
-            'Which networks the share bar offers, and how its buttons look.',
-            ['share_on', 'share_label', 'share_whatsapp', 'share_facebook', 'share_x', 'share_pinterest',
-                'share_linkedin', 'share_telegram', 'share_email', 'share_copy', 'share_native',
-                'share_style', 'share_shape', 'share_size', 'share_utm']],
+        'ts_share' => ['Share',
+            'The share icon beside the product title, and the sheet it opens: its heading, which platforms it offers and in what order.',
+            ['share_on', 'share_heading', 'share_whatsapp', 'share_messenger', 'share_pinterest', 'share_telegram',
+                'share_snapchat', 'share_sms', 'share_email', 'share_copy', 'share_native',
+                'share_facebook', 'share_x', 'share_linkedin', 'share_order', 'share_utm']],
         'ts_space' => ['Trust · Spacing',
-            'The air above and below each of the three blocks — separately for a phone (880px and narrower, the page’s own turning point) and a laptop.',
+            'The air above and below the delivery box and the authenticity line — separately for a phone (880px and narrower, the page’s own turning point) and a laptop.',
             [
                 'del_above_m', 'del_above_d', 'del_below_m', 'del_below_d',
                 'auth_above_m', 'auth_above_d', 'auth_below_m', 'auth_below_d',
-                'share_above_m', 'share_above_d', 'share_below_m', 'share_below_d',
             ]],
     ];
 
@@ -243,7 +272,58 @@ class ProductTrustShare
             'rule' => [self::class, 'cleanImage'],
         ];
 
+        // The tile order is a list of NETWORKS' own keys and nothing else —
+        // rule 5's "a select stores one of its own options", for a list.
+        $out['share_order'] = [
+            'type' => 'text', 'label' => self::SCHEMA['share_order'][1], 'default' => self::ORDER_DEFAULT,
+            'help' => self::SCHEMA['share_order'][3],
+            'rule' => [self::class, 'cleanOrder'],
+        ];
+
         return $out;
+    }
+
+    /**
+     * The tile order's own rule: every known platform exactly once.
+     *
+     * Keys are taken in the order given, unknown ones and repeats dropped, and
+     * any platform left out is appended in the default order — so a stored
+     * order can never lose a tile, gain one that does not exist, or carry a
+     * byte that is not a lower-case key. Garbage in is the default order out.
+     */
+    public static function cleanOrder(mixed $raw, array $field = []): string
+    {
+        $given = is_array($raw) ? $raw : explode(',', is_scalar($raw) ? (string) $raw : '');
+        $known = array_keys(self::NETWORKS);
+        $out = [];
+
+        foreach ($given as $key) {
+            $key = strtolower(trim(is_scalar($key) ? (string) $key : ''));
+
+            if (in_array($key, $known, true) && ! in_array($key, $out, true)) {
+                $out[] = $key;
+            }
+        }
+
+        foreach (explode(',', self::ORDER_DEFAULT) as $key) {
+            if (! in_array($key, $out, true)) {
+                $out[] = $key;
+            }
+        }
+
+        return implode(',', $out);
+    }
+
+    /**
+     * The platforms the sheet offers, in his order, switches applied.
+     *
+     * @return list<string>
+     */
+    public function shareNetworks(): array
+    {
+        $order = explode(',', self::cleanOrder($this->all()['share_order'] ?? self::ORDER_DEFAULT));
+
+        return array_values(array_filter($order, fn (string $k): bool => $this->on('share_'.$k)));
     }
 
     /**
@@ -335,7 +415,7 @@ class ProductTrustShare
             'del_line2' => 'store.product.pts_del_line2',
             'auth_label' => 'store.product.pts_auth_label',
             'auth_text' => 'store.product.pts_auth_text',
-            'share_label' => 'store.product.pts_share_label',
+            'share_heading' => 'store.product.pts_sheet_heading',
         ];
 
         if (isset($keyed[$key]) && $value === (string) self::fields()[$key]['default']) {
@@ -457,7 +537,6 @@ class ProductTrustShare
                 'del_text_s' => '--pts-text', 'del_logo_m' => '--pts-logo-m', 'del_logo_d' => '--pts-logo-d',
             ],
             'auth' => $space('auth') + ['auth_colour' => '--pts-tick'],
-            'share' => $space('share') + ['share_size' => '--pts-size'],
         ];
     }
 

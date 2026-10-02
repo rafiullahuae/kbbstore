@@ -1,0 +1,186 @@
+{
+  "390": {
+    "shareRowGone": true,
+    "sheetCount": 1,
+    "open": {
+      "viewport": 390,
+      "scrollWidth": 390,
+      "sheetHidden": false,
+      "panel": {
+        "width": 390,
+        "height": 510,
+        "top": 334,
+        "bottomGap": 0
+      },
+      "heading": {
+        "text": "Share this product with friends",
+        "fontSize": "17px",
+        "fontWeight": "700"
+      },
+      "picture": {
+        "w": 356,
+        "h": 187,
+        "src": "http://127.0.0.1:9900/img-cache/share/uploads/products/qb-heartleaf-toner.webp.jpg"
+      },
+      "title": {
+        "fontSize": "14px",
+        "height": 59,
+        "lineHeight": "19.32px",
+        "clamp": "2"
+      },
+      "tiles": {
+        "count": 8,
+        "icon": 52,
+        "rows": 2,
+        "perRow": 5,
+        "labelSize": "12px",
+        "labels": [
+          "WhatsApp",
+          "Messenger",
+          "Pinterest",
+          "Telegram",
+          "Snapchat",
+          "Messages",
+          "Email",
+          "Copy"
+        ]
+      },
+      "htmlLocked": true,
+      "focused": "pdp-share-x"
+    },
+    "toast": "Link copied",
+    "clipboard": "http://127.0.0.1:9900/product/qb-heartleaf-toner/?utm_source=copy&utm_medium=social&utm_campaign=product_share",
+    "afterEscape": {
+      "hidden": true,
+      "focusIsButton": true,
+      "locked": false
+    },
+    "afterBackdrop": true,
+    "afterBack": {
+      "hidden": true,
+      "path": "/product/qb-heartleaf-toner/"
+    },
+    "afterX": true,
+    "hrefs": {
+      "whatsapp": "https://wa.me/?text=Anua%20Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20Calming%20%26%20Hydrating%20Toner%20for%20Sensitive%20Skin%20%E2%80%93%20AED%2065%0AA%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.%0Ahttp%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dwhatsapp%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share",
+      "messenger": "fb-messenger://share/?link=http%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dmessenger%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share",
+      "pinterest": "https://www.pinterest.com/pin/create/button/?url=http%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dpinterest%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share&media=http%3A%2F%2F127.0.0.1%3A9900%2Fuploads%2Fproducts%2Fqb-heartleaf-toner.webp&description=Anua%20Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20Calming%20%26%20Hydrating%20Toner%20for%20Sensitive%20Skin%20%E2%80%93%20A%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.",
+      "telegram": "https://t.me/share/url?url=http%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dtelegram%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share&text=Anua%20Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20Calming%20%26%20Hydrating%20Toner%20for%20Sensitive%20Skin%20%E2%80%93%20AED%2065%0AA%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.",
+      "snapchat": "https://www.snapchat.com/scan?attachmentUrl=http%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dsnapchat%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share",
+      "sms": "sms:?&body=Anua%20Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20Calming%20%26%20Hydrating%20Toner%20for%20Sensitive%20Skin%20%E2%80%93%20AED%2065%0Ahttp%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dsms%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share",
+      "email": "mailto:?subject=Anua%20Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20Calming%20%26%20Hydrating%20Toner%20for%20Sensitive%20Skin&body=A%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.%0A%0Ahttp%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Demail%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share",
+      "copy": "http://127.0.0.1:9900/product/qb-heartleaf-toner/?utm_source=copy&utm_medium=social&utm_campaign=product_share",
+      "native": null
+    }
+  },
+  "1280": {
+    "shareRowGone": true,
+    "sheetCount": 1,
+    "open": {
+      "viewport": 1280,
+      "scrollWidth": 1280,
+      "sheetHidden": false,
+      "panel": {
+        "width": 480,
+        "height": 557,
+        "top": 171,
+        "bottomGap": 171
+      },
+      "heading": {
+        "text": "Share this product with friends",
+        "fontSize": "17px",
+        "fontWeight": "700"
+      },
+      "picture": {
+        "w": 430,
+        "h": 226,
+        "src": "http://127.0.0.1:9900/img-cache/share/uploads/products/qb-heartleaf-toner.webp.jpg"
+      },
+      "title": {
+        "fontSize": "14px",
+        "height": 59,
+        "lineHeight": "19.32px",
+        "clamp": "2"
+      },
+      "tiles": {
+        "count": 8,
+        "icon": 52,
+        "rows": 2,
+        "perRow": 5,
+        "labelSize": "12px",
+        "labels": [
+          "WhatsApp",
+          "Messenger",
+          "Pinterest",
+          "Telegram",
+          "Snapchat",
+          "Messages",
+          "Email",
+          "Copy"
+        ]
+      },
+      "htmlLocked": true,
+      "focused": "pdp-share-x"
+    },
+    "toast": "Link copied",
+    "clipboard": "http://127.0.0.1:9900/product/qb-heartleaf-toner/?utm_source=copy&utm_medium=social&utm_campaign=product_share",
+    "afterEscape": {
+      "hidden": true,
+      "focusIsButton": true,
+      "locked": false
+    },
+    "afterBackdrop": true,
+    "afterBack": {
+      "hidden": true,
+      "path": "/product/qb-heartleaf-toner/"
+    },
+    "afterX": true,
+    "hrefs": {
+      "whatsapp": "https://wa.me/?text=Anua%20Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20Calming%20%26%20Hydrating%20Toner%20for%20Sensitive%20Skin%20%E2%80%93%20AED%2065%0AA%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.%0Ahttp%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dwhatsapp%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share",
+      "messenger": "https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dmessenger%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share",
+      "pinterest": "https://www.pinterest.com/pin/create/button/?url=http%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dpinterest%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share&media=http%3A%2F%2F127.0.0.1%3A9900%2Fuploads%2Fproducts%2Fqb-heartleaf-toner.webp&description=Anua%20Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20Calming%20%26%20Hydrating%20Toner%20for%20Sensitive%20Skin%20%E2%80%93%20A%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.",
+      "telegram": "https://t.me/share/url?url=http%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dtelegram%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share&text=Anua%20Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20Calming%20%26%20Hydrating%20Toner%20for%20Sensitive%20Skin%20%E2%80%93%20AED%2065%0AA%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.",
+      "snapchat": "https://www.snapchat.com/share?link=http%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dsnapchat%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share",
+      "sms": "sms:?&body=Anua%20Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20Calming%20%26%20Hydrating%20Toner%20for%20Sensitive%20Skin%20%E2%80%93%20AED%2065%0Ahttp%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Dsms%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share",
+      "email": "mailto:?subject=Anua%20Heartleaf%2077%25%20Soothing%20Toner%20250ml%20%E2%80%93%20Calming%20%26%20Hydrating%20Toner%20for%20Sensitive%20Skin&body=A%20gentle%20daily%20toner%20with%2077%25%20heartleaf%20extract%20that%20calms%20redness%2C%20balances%20oil%20%26%20water%2C%20and%20preps%20skin%20for%20everything%20after%20it.%0A%0Ahttp%3A%2F%2F127.0.0.1%3A9900%2Fproduct%2Fqb-heartleaf-toner%2F%3Futm_source%3Demail%26utm_medium%3Dsocial%26utm_campaign%3Dproduct_share",
+      "copy": "http://127.0.0.1:9900/product/qb-heartleaf-toner/?utm_source=copy&utm_medium=social&utm_campaign=product_share",
+      "native": null
+    }
+  },
+  "og": {
+    "firstView": "<meta property=\"og:image\" content=\"http://127.0.0.1:9900/img-cache/share/uploads/products/qb-heartleaf-toner.webp.jpg\">\n<meta property=\"og:image:type\" content=\"image/jpeg\">\n<meta property=\"og:image:width\" content=\"1200\">\n<meta property=\"og:image:height\" content=\"630\">\n<meta property=\"og:image:alt\" content=\"Anua Heartleaf 77% Soothing Toner 250ml – Calming &amp; Hydrating Toner for Sensitive Skin\">\n<meta name=\"twitter:image\" content=\"http://127.0.0.1:9900/img-cache/share/uploads/products/qb-heartleaf-toner.webp.jpg\">",
+    "afterFirstView": "<meta property=\"og:image\" content=\"http://127.0.0.1:9900/img-cache/share/uploads/products/qb-heartleaf-toner.webp.jpg\">\n<meta property=\"og:image:type\" content=\"image/jpeg\">\n<meta property=\"og:image:width\" content=\"1200\">\n<meta property=\"og:image:height\" content=\"630\">\n<meta property=\"og:image:alt\" content=\"Anua Heartleaf 77% Soothing Toner 250ml – Calming &amp; Hydrating Toner for Sensitive Skin\">\n<meta name=\"twitter:image\" content=\"http://127.0.0.1:9900/img-cache/share/uploads/products/qb-heartleaf-toner.webp.jpg\">"
+  },
+  "shareImage": {
+    "url": "http://127.0.0.1:9900/img-cache/share/uploads/products/qb-heartleaf-toner.webp.jpg",
+    "contentType": "image/jpeg",
+    "bytes": 18761
+  },
+  "more": {
+    "visible": true,
+    "appHrefs": {
+      "messenger": "fb-messenger://share/?link=http%3A%2F%2F",
+      "snapchat": "https://www.snapchat.com/scan?attachmentUrl=http%3"
+    },
+    "shared": {
+      "files": [
+        {
+          "name": "qb-heartleaf-toner.jpg",
+          "type": "image/jpeg",
+          "size": 18761
+        }
+      ],
+      "title": "Anua Heartleaf 77% Soothing Toner 250ml – Calming & Hydrating Toner for Sensitive Skin",
+      "text": "Anua Heartleaf 77% Soothing Toner 250ml – Calming & Hydrating Toner for Sensitive Skin – AED 65\nA gentle daily toner with 77% heartleaf extract that calms redness, balances oil & water, and preps skin for everything after it.\nhttp://127.0.0.1:9900/product/qb-heartleaf-toner/?utm_source=native&utm_medium=social&utm_campaign=product_share",
+      "url": null
+    }
+  },
+  "reducedMotion": "0s",
+  "adminTabs": [
+    "Trust · Delivery box10",
+    "Trust · Authenticity4",
+    "Share16",
+    "Trust · Spacing8"
+  ],
+  "adminOrderAfterMove": "whatsapp,messenger,pinterest,snapchat,telegram,sms,email,copy,native,facebook,x,linkedin"
+}
