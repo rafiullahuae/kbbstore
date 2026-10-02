@@ -59,6 +59,8 @@ import { initWishlist } from './wishlist.js';
 import { initReviews } from './reviews.js';
 import { initNavFit } from './nav-fit.js';
 import { initAlsoLike } from './ymal.js';
+// Lane RA: the admin bar and quick-edit pencil, LAST in STEPS. For a shopper
+// it is one cookie test and nothing else; see admin-hint.js.
 import { initAdminLayer } from './admin-hint.js';
 
 /* ── EVERY STEP RUNS, WHATEVER ANY OTHER STEP DOES. ─────────────────────────
@@ -99,8 +101,6 @@ const STEPS = [
     initReviews,
     initNavFit,
     initAlsoLike,
-    // Lane RA: the admin bar and quick-edit pencil. For a shopper this is one
-    // cookie test and nothing else; see admin-hint.js.
     initAdminLayer,
 ];
 

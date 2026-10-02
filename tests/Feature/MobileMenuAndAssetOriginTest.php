@@ -102,10 +102,13 @@ it('still wires the mobile menu, and in the same position', function () {
     // initHome, so the mobile menu's position is unchanged.
     // 23 since Lane PS added initAlsoLike (the "You may also like" carousel)
     // LAST, after initNavFit, so no step before it moved.
-    expect($steps)->toHaveCount(23);
+    // 24 since Lane RA added initAdminLayer (the admin bar's cookie test)
+    // LAST, after initAlsoLike, so again no step before it moved.
+    expect($steps)->toHaveCount(24);
     expect($steps[0])->toBe('initOverlay');
     expect($steps[8])->toBe('initHome');   // wires the mobile menu
     expect($steps[16])->toBe('initListingLoad');
     expect($steps[21])->toBe('initNavFit');
     expect($steps[22])->toBe('initAlsoLike');
+    expect($steps[23])->toBe('initAdminLayer');
 });
