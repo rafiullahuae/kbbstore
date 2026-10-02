@@ -238,6 +238,15 @@
          names. Both go through {{ }} regardless. */
     $kbbMsec = app(\App\Services\ProductMobileSections::class);
 
+    /* THE LAPTOP ORDER OF THE FOUR BLOCKS UNDER THE TWO COLUMNS. (Lane RF)
+       App\Services\ProductDesktopSections. While the order is the default it
+       adds NOTHING to the wrapper below -- not a class, not a property, not a
+       byte -- and `$kbbDsecDrawn` is not even worked out. Once he moves a
+       block it appends ` pds-on …` to the class and `;--pds-o-<key>:<int>` to
+       the style, read only inside the laptop media query. */
+    $kbbDsec = app(\App\Services\ProductDesktopSections::class);
+    $kbbDsecDrawn = $kbbDsec->isDefault() ? [] : \App\Services\ProductDesktopSections::drawn($modules, $buyTogether ?? null, $alsoLike ?? null);
+
     /* ═══════════════════════════════════════════════════════════════════════
        THE THREE PROPOSED LAYOUTS ARE GONE. (Lane PP2)
 
@@ -356,7 +365,7 @@
 @endpush
 
 @section('content')
-<div class="wrap pdp-page {{ $kbbMsec->wrapperClass() }}" style="{{ $kbbMsec->wrapperStyle() }}">
+<div class="wrap pdp-page {{ $kbbMsec->wrapperClass() }}{{ $kbbDsec->wrapperClass($kbbDsecDrawn) }}" style="{{ $kbbMsec->wrapperStyle() }}{{ $kbbDsec->wrapperStyle() }}">
   <div class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ $product->categories->first()?->url() ?? Url::to('/shop/') }}">{{ $product->categories->first()?->t('name') ?? __('store.breadcrumb.shop') }}</a> / {{ $name }}</div>
   <div class="pdp">
     <!-- gallery -->
