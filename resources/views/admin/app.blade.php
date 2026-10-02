@@ -5035,7 +5035,8 @@ async function renderProductPage(){
      touched, so opening a tab and pressing Save cannot write the half he was
      not looking at.
    ═════════════════════════════════════════════════════════════════════════ */
-let PPTAB='sections', PPDIRTY={sections:false,layout:false};
+let PPTAB='sections', PPDIRTY={sections:false,layout:false,also:false};
+
 
 /* ═════════════════════════════════════════════════════════════════════════
    THE LIVE PREVIEW — PHONE AND LAPTOP, BOTH, AS HE MOVES A SLIDER.   (R5)
@@ -5222,9 +5223,10 @@ function paintProductPage(rebuild){
   const strip=`<div class="ectabs">
     <button class="ectab${PPTAB==='sections'?' on':''}" data-pptab="sections">Sections<span class="ecn">${PP.sections.length}</span></button>
     ${ppTabs().map(t=>`<button class="ectab${t.key===PPTAB?' on':''}" data-pptab="${escAttr(t.key)}">${escHtml(t.label)}<span class="ecn">${t.fields.length}</span></button>`).join('')}
+    ${pyaTab()?`<button class="ectab${PPTAB==='ymal'?' on':''}" data-pptab="ymal">${escHtml(pyaTab().label)}<span class="ecn">${pyaFields().length}</span></button>`:''}
   </div>`;
 
-  const body = lt
+  const body = PPTAB==='ymal' && pyaTab() ? pyaBody() : lt
     ? `<div class="mmcols"><div class="card mmcard">
          <div class="mmhd"><b>${escHtml(lt.label)}</b><span>${escHtml(lt.description)}</span></div>
          <div class="mmbody">${lt.fields.map(ppField).join('')}</div></div></div>`
@@ -5251,7 +5253,7 @@ function paintProductPage(rebuild){
       <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Product page</h2>
         <p class="mdesc" style="margin:0" id="ppLede"></p></div>
       <div id="ppStrip"></div>
-      <p class="ectabs-hint">Five views of one product page, and they do different jobs. <b>Sections</b> switches a whole block of the page on or off, per device — that is the only tab that can make something disappear. The four Layout tabs move what is already there: <b>Spacing</b> is the gaps, between the big blocks of the page and between the elements inside the buy column; <b>Type</b> is the sizes and weights. The preview shown with them is the real product page at both widths — a laptop and a phone, side by side — and it follows every slider as you drag it, before anything is saved; <b>Reset layout to defaults</b> puts them all back.</p>
+      <p class="ectabs-hint">Six views of one product page, and they do different jobs. <b>Sections</b> switches a whole block of the page on or off, per device — that is the only tab that can make something disappear. The four Layout tabs move what is already there: <b>Spacing</b> is the gaps, between the big blocks of the page and between the elements inside the buy column; <b>Type</b> is the sizes and weights. The preview shown with them is the real product page at both widths — a laptop and a phone, side by side — and it follows every slider as you drag it, before anything is saved; <b>Reset layout to defaults</b> puts them all back. <b>You may also like</b> is the carousel at the foot of the page: which products it suggests and how it moves.</p>
       <div class="ppwrap"><div class="ppcol" id="ppCol"></div>${ppPreviewPanel()}</div>
       <div class="ecsave">
         <span class="ecdirty" id="ppDirty" style="visibility:hidden">Unsaved changes</span>
@@ -5263,7 +5265,9 @@ function paintProductPage(rebuild){
     $$('[data-ppframe]').forEach(fr => fr.addEventListener('load', ppPaintPreview));
   }
 
-  $('#ppLede').textContent = lt
+  $('#ppLede').textContent = PPTAB==='ymal'
+    ? 'The carousel at the foot of every product page — which products it suggests, how many, and how it moves. Saved changes show in the preview after you press Save changes.'
+    : lt
     ? 'Spacing and type for one product page. The preview is the real page at both widths — laptop and phone together — and follows every control as you move it.'
     : 'Switch any module off, per device. A module off for both is not rendered at all.';
   $('#ppStrip').innerHTML = strip;
@@ -5276,7 +5280,7 @@ function paintProductPage(rebuild){
   if(dirty){
     dirty.classList.remove('ok');
     dirty.textContent = 'Unsaved changes';
-    dirty.style.visibility = (PPDIRTY.sections||PPDIRTY.layout) ? 'visible' : 'hidden';
+    dirty.style.visibility = (PPDIRTY.sections||PPDIRTY.layout||PPDIRTY.also) ? 'visible' : 'hidden';
   }
 
   $$('[data-pptab]').forEach(b=>b.onclick=()=>{ PPTAB=b.dataset.pptab; paintProductPage(); });
@@ -5320,7 +5324,7 @@ document.addEventListener('click', async e=>{
     ppMarkDirty('sections');
     return;
   }
-  if(e.target.id==='ppDiscard'){ PPDIRTY={sections:false,layout:false}; if(window.kbbDrafts) kbbDrafts.discarded('productpage'); renderProductPage(); return; }
+  if(e.target.id==='ppDiscard'){ PPDIRTY={sections:false,layout:false,also:false}; if(window.kbbDrafts) kbbDrafts.discarded('productpage'); renderProductPage(); return; }
   if(e.target.id==='ppReset'){
     /* The SHIPPED value of every layout field, which is the number the page
        renders with no <style> block at all. Not a save — it fills the buffer
@@ -5334,8 +5338,9 @@ document.addEventListener('click', async e=>{
   const payload={};
   if(PPDIRTY.sections) payload.sections=PP.sections.map(s=>({key:s.key,desktop:s.desktop,mobile:s.mobile}));
   if(PPDIRTY.layout){ payload.layout={}; ppFields().forEach(f=>{ payload.layout[f.key]=f.value; }); }
+  if(PPDIRTY.also){ payload.also={}; pyaFields().forEach(f=>{ payload.also[f.key]=f.value; }); }
 
-  if(!payload.sections && !payload.layout){
+  if(!payload.sections && !payload.layout && !payload.also){
     if(msg){ msg.style.visibility='visible'; msg.textContent='Nothing has changed.'; }
     return;
   }
@@ -5346,8 +5351,8 @@ document.addEventListener('click', async e=>{
       body:JSON.stringify(payload)});
     const j=await r.json();
     if(j.ok){
-      PP.sections=j.sections; if(Array.isArray(j.layout)) PP.layout=j.layout;
-      PPDIRTY={sections:false,layout:false}; if(window.kbbDrafts) kbbDrafts.saved('productpage');
+      PP.sections=j.sections; if(Array.isArray(j.layout)) PP.layout=j.layout; if(Array.isArray(j.also)) PP.also=j.also;
+      PPDIRTY={sections:false,layout:false,also:false}; if(window.kbbDrafts) kbbDrafts.saved('productpage');
       paintProductPage();
       /* The Sections switches decide which BLOCKS render at all, and no custom
          property can show that — only the page itself can. So a save reloads
@@ -5362,6 +5367,77 @@ document.addEventListener('click', async e=>{
 });
 document.addEventListener('keydown', e=>{
   if(e.target.dataset && e.target.dataset.pp && (e.key===' '||e.key==='Enter')){ e.preventDefault(); e.target.click(); }
+});
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Appearance → Product page → You may also like.               (Lane PS)
+
+     "You may also like should be a slider on each product page, I need it
+      carousel by suggesting products from the same brand and category mixed.
+      Give us control to choose the products query what to show etc, or
+      manual selection also."
+
+   A SIXTH TAB, AND A THIRD HALF. `PP.also` is the same ModuleSchema::tabs()
+   payload `PP.layout` is (App\Services\AlsoLikeSettings), posted back under
+   its own `also` key — so saving the carousel never rewrites the module
+   switches or the thirty layout values, and they never rewrite it.
+
+   Its fields carry `data-pya`, NOT `data-pl`: the layout tabs' input handler
+   looks every `data-pl` up in ppFields() and marks the LAYOUT half dirty, so
+   sharing the attribute would have posted these keys to the layout half,
+   which refuses them as unknown. Switches are `.ectog` like the Sections tab's
+   own, so a bool reads the same here as everywhere else on this screen.
+   ═════════════════════════════════════════════════════════════════════════ */
+function pyaTab(){ return (PP && Array.isArray(PP.also) && PP.also[0]) ? PP.also[0] : null; }
+function pyaFields(){ const t=pyaTab(); return t ? t.fields : []; }
+function pyaField(f){
+  const lbl=`<div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>`;
+  if(f.type==='bool')
+    return `<div class="mmrow">${lbl}<span class="ectog${f.value?' on':''}" data-pya-tog="${escAttr(f.key)}" role="switch" aria-checked="${f.value?'true':'false'}" aria-label="${escAttr(f.label)}" tabindex="0"></span></div>`;
+  if(f.type==='range'){ const o=f.options||{};
+    return `<div class="mmrow">${lbl}<span class="mmrange"><input type="range" min="${o.min}" max="${o.max}" step="${o.step||1}" value="${escAttr(String(f.value))}" data-pya="${escAttr(f.key)}">
+      <i id="pyav-${escAttr(f.key)}">${escHtml(String(f.value))}${escHtml(o.unit||'')}</i></span></div>`; }
+  if(f.type==='select')
+    return `<div class="mmrow">${lbl}<select data-pya="${escAttr(f.key)}">${Object.entries(f.options||{}).map(([k,l])=>`<option value="${escAttr(k)}"${String(k)===String(f.value)?' selected':''}>${escHtml(l)}</option>`).join('')}</select></div>`;
+  const rtl = /_ar$/.test(f.key) ? ' dir="rtl" lang="ar"' : '';
+  return `<div class="mmrow">${lbl}<input type="text" maxlength="60" value="${escAttr(String(f.value))}" data-pya="${escAttr(f.key)}"${rtl}></div>`;
+}
+function pyaBody(){
+  const t=pyaTab();
+  if(!t) return '';
+  return `<div class="mmcols"><div class="card mmcard">
+      <div class="mmhd"><b>${escHtml(t.label)}</b><span>${escHtml(t.description)}</span></div>
+      <div class="mmbody">${t.fields.map(pyaField).join('')}</div></div>
+    <p class="mdesc" style="margin-top:12px">Per product: open any product in <b>Catalog → Products</b> and use its <b>You may also like</b> panel to hand-pick products, and choose whether they come first or replace this rule. Showing it on a phone or a laptop only is the <b>You may also like</b> row on the <b>Sections</b> tab.</p></div>`;
+}
+document.addEventListener('input', e=>{
+  const el=e.target.closest('[data-pya]');
+  if(!el||!PP) return;
+  const f=pyaFields().find(x=>x.key===el.dataset.pya);
+  if(!f) return;
+  f.value = el.type==='range' ? +el.value : el.value;
+  const out=$('#pyav-'+f.key); if(out) out.textContent=String(f.value)+((f.options&&f.options.unit)||'');
+  ppMarkDirty('also');
+});
+document.addEventListener('change', e=>{
+  const el=e.target.closest('select[data-pya]');
+  if(!el||!PP) return;
+  const f=pyaFields().find(x=>x.key===el.dataset.pya);
+  if(!f) return;
+  f.value=el.value; ppMarkDirty('also');
+});
+document.addEventListener('click', e=>{
+  const tg=e.target.closest('[data-pya-tog]');
+  if(!tg||!PP) return;
+  const f=pyaFields().find(x=>x.key===tg.dataset.pyaTog);
+  if(!f) return;
+  f.value=!f.value;
+  tg.classList.toggle('on', f.value);
+  tg.setAttribute('aria-checked', f.value?'true':'false');
+  ppMarkDirty('also');
+});
+document.addEventListener('keydown', e=>{
+  if(e.target.dataset && e.target.dataset.pyaTog && (e.key===' '||e.key==='Enter')){ e.preventDefault(); e.target.click(); }
 });
 
 

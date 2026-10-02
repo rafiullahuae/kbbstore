@@ -122,6 +122,15 @@
  *   each) and thirteen size/weight selects (4 rows each) — 135 LINES INSERTED,
  *   0 MODIFIED, 0 REMOVED, by the same merge. A size select's `"nope"` answers
  *   its default (`'14px'`, `'13.5px'`…), never the string it was sent.
+ *
+ *   Lane PS added a FOURTEENTH MODULE rather than keys to an existing one —
+ *   App\Services\AlsoLikeSettings, Appearance → Product page → You may also
+ *   like — and put it LAST in mEquivRows()'s list, so its rows are generated
+ *   after every other module's: 102 LINES APPENDED at the end of the fixture
+ *   (4 bool × 11 + 2 range × 9 + 4 select × 4 + 4 text × 6 = 44 + 18 + 16 + 24),
+ *   0 MODIFIED, 0 REMOVED. `count|range|"abc"|4` and
+ *   `rule|select|"nope"|'mix'` are this module's dialect: a range clamps
+ *   garbage to its minimum and a select stores its default.
  */
 
 use App\Services\ModuleSchema;
@@ -143,6 +152,9 @@ function mEquivRows(): array
         'newsletter'       => App\Services\NewsletterSettings::class,
         'section_dividers' => App\Services\SectionDividers::class,
         'security'         => App\Services\SecurityModule::class,
+        // Lane PS — Appearance → Product page → You may also like. LAST, so its
+        // 102 rows are appended to the fixture and no existing line moves.
+        'also_like'        => App\Services\AlsoLikeSettings::class,
     ];
 
     // The same corpus the fixture was recorded with. Changing it invalidates

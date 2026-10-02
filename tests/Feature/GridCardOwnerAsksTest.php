@@ -213,7 +213,9 @@ it('draws the NEW and -N% pills in exactly one template, so one switch covers ev
 
     // And every grid template draws THAT component rather than a card of its own.
     foreach (['components/product-grid.blade.php', 'partials/home/grid.blade.php', 'partials/home/grid-section.blade.php',
-        'partials/listing-batch.blade.php', 'store/shop.blade.php', 'store/product.blade.php', 'store/routines.blade.php'] as $grid) {
+        // Lane PS: the product page's related rail now lives in its own
+        // partial, the "You may also like" carousel — same <x-product-card>.
+        'partials/listing-batch.blade.php', 'store/shop.blade.php', 'partials/you-may-also-like.blade.php', 'store/routines.blade.php'] as $grid) {
         expect(substr_count((string) file_get_contents(resource_path('views/'.$grid)), '<x-product-card'))
             ->toBeGreaterThan(0, "{$grid} no longer draws <x-product-card>");
     }

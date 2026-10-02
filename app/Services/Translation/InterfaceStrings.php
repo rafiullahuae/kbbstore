@@ -1123,6 +1123,9 @@ final class InterfaceStrings
             'product.tab_how_to_use' => 'How to use',
             'product.related_eyebrow' => 'Complete your routine',
             'product.related_heading' => 'You may also like',
+            // The carousel's two arrows (Lane PS). Read by a screen reader only.
+            'product.related_prev' => 'Previous products',
+            'product.related_next' => 'More products',
             'product.save_to_wishlist' => 'Save to wishlist',
             // The DEFAULT of the `fbt_title` setting.
             'fbt.title' => 'Complete your routine',

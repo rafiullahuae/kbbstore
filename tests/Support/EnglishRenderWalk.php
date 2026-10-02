@@ -1636,6 +1636,44 @@ final class EnglishRenderWalk
                 'with' => 'Outfit',
                 'hits' => 4,
             ],
+
+            /*
+             * "YOU MAY ALSO LIKE" BECOMES A CAROUSEL, WHICH THE OWNER ASKED FOR.
+             *                                                       (Lane PS)
+             *
+             * "You may also like should be a slider on each product page, I
+             * need it carousel by suggesting products from the same brand and
+             * category mixed."
+             *
+             * ONE PAGE, ONE OPENING, AND THE CARDS UNTOUCHED. The rule rewrites
+             * only the wrapper around the cards — the section gains its carousel
+             * hooks and the two custom properties that size a card, the heading
+             * an id the region is labelled by, the arrows arrive, and the track
+             * keeps `rel kbb-pgrid` + the skin and gains `ymal-track` and its
+             * keyboard focus. Every card after it is compared BYTE FOR BYTE: the
+             * controller hands the pre-conversion template the very collection
+             * the carousel draws, so the twelve cards on both sides are the same
+             * <x-product-card> renders of the same rows. A card that moved by a
+             * byte would still be red.
+             *
+             * WHICH cards they are — brand and category mixed, rather than four
+             * from the category — is the owner's other half of the request and
+             * is AlsoLikeCarouselTest's to pin; this walk proves only that the
+             * carousel did not change a card. The closing pair moves by
+             * whitespace only (the partial's `@endif` sits at the left margin).
+             */
+            'You may also like, the carousel the owner asked for (Lane PS)' => [
+                'pattern' => '#(<!-- related -->\n)\s*<section class="sec">\n    <div class="eyebrow">(Complete your routine)</div>\n    <h2>(You may also like)</h2>\n    <div class="([^"]*?) ?rel kbb-pgrid" data-skin="([a-z0-9-]+)" id="related">#',
+                'with' => '$1<section class="sec ymal $4" data-ymal data-ymal-auto="0" aria-labelledby="ymal-h" style="--ymal-d:5;--ymal-m:2">'."\n"
+                    .'    <div class="eyebrow">$2</div>'."\n"
+                    .'    <h2 id="ymal-h">$3</h2>'."\n"
+                    .'    <div class="ymal-nav">'."\n"
+                    .'      <button type="button" class="ymal-btn" data-ymal-prev aria-controls="related" aria-label="Previous products" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>'."\n"
+                    .'      <button type="button" class="ymal-btn" data-ymal-next aria-controls="related" aria-label="More products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>'."\n"
+                    .'    </div>'."\n"
+                    .'    <div class="rel kbb-pgrid ymal-track" data-skin="$5" id="related" data-ymal-track tabindex="0" role="region" aria-label="$3">',
+                'hits' => 1,
+            ],
         ];
     }
 
@@ -2352,9 +2390,17 @@ final class EnglishRenderWalk
                 'pattern' => '#<div class="kbb-card-cat">[^<]*</div>#',
                 'hits' => 83,
             ],
+            /*
+             * 110 -> 119 (Lane PS). The product page's "You may also like"
+             * draws twelve tiles where it drew three — the owner's carousel,
+             * and the count moving with it is exactly what the note above says
+             * a new grid does. Nine more brand lines cut, on that one page; the
+             * category eyebrow's 83 does not move because the rail passes no
+             * catLabel, as it never did.
+             */
             'the brand line on every product tile (Lane CARD)' => [
                 'pattern' => '#<span class="kbb-card-brand">[^<]*</span>#',
-                'hits' => 110,
+                'hits' => 119,
             ],
 
             /*
@@ -2385,7 +2431,10 @@ final class EnglishRenderWalk
             ],
             'the -N% pill on every product tile (Lane PR)' => [
                 'pattern' => '#<span class="kbb-badge kbb-badge-sale">-\d+%</span>#',
-                'hits' => 37,
+                // 37 -> 40 (Lane PS): the product page's "You may also like"
+                // draws twelve tiles where it drew three, and three of the nine
+                // new ones are reduced. One page; the NEW count does not move.
+                'hits' => 40,
             ],
         ];
     }

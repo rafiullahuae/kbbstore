@@ -620,6 +620,8 @@ final class ArabicInterfaceDrafts
             'store.product.tab_how_to_use' => 'طريقة الاستخدام',
             'store.product.related_eyebrow' => 'أكمل روتينك',
             'store.product.related_heading' => 'قد يعجبك أيضًا',
+            'store.product.related_prev' => 'المنتجات السابقة',
+            'store.product.related_next' => 'المزيد من المنتجات',
             'store.product.save_to_wishlist' => 'أضف إلى المفضلة',
             'store.product.gallery_front' => 'الأمام',
 

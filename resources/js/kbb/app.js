@@ -58,6 +58,7 @@ import { initNewsletter } from './newsletter.js';
 import { initWishlist } from './wishlist.js';
 import { initReviews } from './reviews.js';
 import { initNavFit } from './nav-fit.js';
+import { initAlsoLike } from './ymal.js';
 
 /* ── EVERY STEP RUNS, WHATEVER ANY OTHER STEP DOES. ─────────────────────────
  *
@@ -96,6 +97,7 @@ const STEPS = [
     initWishlist,
     initReviews,
     initNavFit,
+    initAlsoLike,
 ];
 
 const boot = () => {
