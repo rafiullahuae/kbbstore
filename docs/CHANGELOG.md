@@ -3,6 +3,23 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.359
+**Desktop sections: put the product page's blocks in your own order on
+laptops.** Apply after .358. No plugin change. Runs one migration (a cache
+clear).
+
+| Your request | Now |
+|---|---|
+| "give option to change position in desktop also fo the sections" | Appearance → Product page → Desktop sections: drag (or ↑/↓) Buy these together, Product details, Reviews and You may also like into any order on laptops; the laptop preview follows as you drag. The picture and buy column stay at the top. Nothing moves until you drag (measured identical at 1000/1280/1440); phones keep their own Mobile sections order |
+
+Files (9): app/Http/Controllers/Admin/ProductPageApiController.php,
+app/Services/ProductDesktopSections.php,
+database/migrations/2027_07_20_000100_clear_caches_product_desktop_sections.php,
+resources/css/kbb/kbb-product.css,
+resources/views/admin/partials/product-desktop-sections-screen.blade.php,
+resources/views/admin/partials/product-mobile-sections-screen.blade.php,
+resources/views/store/product.blade.php, public/build (manifest + product css).
+
 ## 2.60.358
 **Sort works; the product count beside Filters is hidden; the whole category
 banner on phones.** Apply after .357. No plugin change. Runs one migration (a
