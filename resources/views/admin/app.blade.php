@@ -14602,8 +14602,14 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     try{ o = await api('/admin-api/orders/'+id+'/detail'); }
     catch(e){ document.querySelector('#content').innerHTML = '<div class="wrap"><p style="padding:40px;color:var(--sale)">Could not load this order.</p></div>'; return; }
 
+    /* (Lane PU) "Paid on" only when the payment panel below agrees the order
+       IS paid. WooCommerce stamps date_paid on a cash-on-delivery order the
+       moment it reaches Processing, so an imported COD order read "Paid on
+       29 Sep" here directly above an amber "AED 337 to collect". */
+    var payState = (o.payment && o.payment.state) || '';
+    var paidSaid = o.paid_at && (!o.payment || payState === 'paid' || payState === 'refunded');
     var paidLine = o.payment_method_title
-      ? 'Payment via '+sesc(o.payment_method_title)+'.'+(o.transaction_id?' ('+sesc(o.transaction_id)+').':'')+(o.paid_at?' Paid on '+fmtDT(o.paid_at)+'.':'')+(o.ip_address?' Customer IP: '+sesc(o.ip_address)+'.':'')
+      ? 'Payment via '+sesc(o.payment_method_title)+'.'+(o.transaction_id?' ('+sesc(o.transaction_id)+').':'')+(paidSaid?' Paid on '+fmtDT(o.paid_at)+'.':'')+(o.ip_address?' Customer IP: '+sesc(o.ip_address)+'.':'')
       : 'No payment recorded yet.';
 
     document.querySelector('#content').innerHTML =

@@ -357,6 +357,14 @@ it('shows a cash-on-delivery order in Processing as amber "to collect", although
         ->and($p['to_collect_aed'])->toEqual(337)
         ->and($p['can_record_cash'])->toBeTrue()
         ->and($p['capture']['offered'])->toBeFalse();
+
+    /*
+     * And the grey sentence under the heading stops saying "Paid on 29 Sep"
+     * directly above that amber box. MUTATION: put `(o.paid_at?' Paid on '`
+     * back in renderOrderDetail -> red.
+     */
+    expect(puConsole())->toContain("(paidSaid?' Paid on '+fmtDT(o.paid_at)")
+        ->and(puConsole())->not->toContain("(o.paid_at?' Paid on '+fmtDT(o.paid_at)");
 });
 
 it('turns cash on delivery green on Completed, and on a cash-received record', function () {
