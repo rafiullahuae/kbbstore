@@ -10,6 +10,7 @@ use App\Services\AlsoLikeSettings;
 use App\Services\BuyTogetherPairs;
 use App\Services\BuyTogetherSettings;
 use App\Services\ModuleSchema;
+use App\Services\ProductDesktopSections;
 use App\Services\ProductLayout;
 use App\Services\ProductMobileSections;
 use App\Services\ProductSections;
@@ -82,6 +83,14 @@ class ProductPageApiController extends Controller
              * category pairs. Its own key in save() like every half.
              */
             'together' => self::togetherPayload(),
+            /*
+             * THE SEVENTH HALF: Desktop sections.                  (Lane RF)
+             * The order of the four full-width blocks under the laptop page's
+             * two columns. Its own key in save() for the reason every half has
+             * one: a POST that reorders the laptop page must not rewrite any
+             * other half's values.
+             */
+            'dsections' => app(ProductDesktopSections::class)->payload(),
         ]);
     }
 
@@ -150,9 +159,10 @@ class ProductPageApiController extends Controller
             'trust' => ['sometimes', 'array', 'min:1'],
             'msections' => ['sometimes', 'array', 'min:1'],
             'together' => ['sometimes', 'array', 'min:1'],
+            'dsections' => ['sometimes', 'array', 'min:1'],
         ]);
 
-        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['also']) && ! isset($data['trust']) && ! isset($data['msections']) && ! isset($data['together'])) {
+        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['also']) && ! isset($data['trust']) && ! isset($data['msections']) && ! isset($data['together']) && ! isset($data['dsections'])) {
             return response()->json(['ok' => false, 'error' => 'Nothing to save.'], 422);
         }
 
@@ -265,6 +275,30 @@ class ProductPageApiController extends Controller
             }
         }
 
+        /*
+         * Desktop sections (Lane RF): validated before anything is written,
+         * like every half above. `order` is the only part; every key in it
+         * exactly once, an unknown key or a repeat refused, a missing key
+         * appended in the default order (ProductDesktopSections::validate()).
+         */
+        $dsecOrder = null;
+
+        if (isset($data['dsections'])) {
+            $unknown = array_diff(array_keys($data['dsections']), ['order']);
+
+            if ($unknown !== []) {
+                return response()->json(['ok' => false, 'error' => 'Unknown part: '.implode(', ', $unknown)], 422);
+            }
+
+            if (array_key_exists('order', $data['dsections'])) {
+                $dsecOrder = ProductDesktopSections::validate($data['dsections']['order']);
+
+                if (is_string($dsecOrder)) {
+                    return response()->json(['ok' => false, 'error' => $dsecOrder], 422);
+                }
+            }
+        }
+
         $saved = 0;
 
         if (isset($data['sections'])) {
@@ -335,6 +369,11 @@ class ProductPageApiController extends Controller
             }
         }
 
+        if (is_array($dsecOrder)) {
+            app(ProductDesktopSections::class)->save($dsecOrder);
+            $saved += count($dsecOrder);
+        }
+
         if (is_array($together)) {
             if (isset($together['options'])) {
                 app(BuyTogetherSettings::class)->save($together['options']);
@@ -390,6 +429,7 @@ class ProductPageApiController extends Controller
             'trust' => self::trustTabs(),
             'msections' => app(ProductMobileSections::class)->payload(),
             'together' => self::togetherPayload(),
+            'dsections' => app(ProductDesktopSections::class)->payload(),
         ]);
     }
 

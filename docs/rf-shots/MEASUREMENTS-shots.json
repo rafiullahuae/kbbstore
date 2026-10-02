@@ -1,0 +1,573 @@
+{
+ "reset": 200,
+ "default-1280": {
+  "order": [
+   "columns",
+   "buytogether",
+   "details",
+   "reviews",
+   "related"
+  ],
+  "blocks": [
+   {
+    "k": "columns",
+    "top": 93.5,
+    "bottom": 1080.98,
+    "left": 22,
+    "width": 1236,
+    "height": 987.48,
+    "gapAbove": null
+   },
+   {
+    "k": "buytogether",
+    "top": 1114.98,
+    "bottom": 1353.56,
+    "left": 22,
+    "width": 1236,
+    "height": 238.58,
+    "gapAbove": 34
+   },
+   {
+    "k": "details",
+    "top": 1353.56,
+    "bottom": 1656,
+    "left": 22,
+    "width": 1236,
+    "height": 302.44,
+    "gapAbove": 0
+   },
+   {
+    "k": "reviews",
+    "top": 1690,
+    "bottom": 2471.22,
+    "left": 190,
+    "width": 900,
+    "height": 781.22,
+    "gapAbove": 34
+   },
+   {
+    "k": "related",
+    "top": 2527.22,
+    "bottom": 3087.47,
+    "left": 22,
+    "width": 1236,
+    "height": 560.25,
+    "gapAbove": 56
+   }
+  ],
+  "wrapperClass": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+  "pageHeight": 3427,
+  "scrollWidth": 1280,
+  "display": "block"
+ },
+ "default-1440": {
+  "order": [
+   "columns",
+   "buytogether",
+   "details",
+   "reviews",
+   "related"
+  ],
+  "blocks": [
+   {
+    "k": "columns",
+    "top": 93.5,
+    "bottom": 1080.98,
+    "left": 22,
+    "width": 1396,
+    "height": 987.48,
+    "gapAbove": null
+   },
+   {
+    "k": "buytogether",
+    "top": 1114.98,
+    "bottom": 1353.56,
+    "left": 22,
+    "width": 1396,
+    "height": 238.58,
+    "gapAbove": 34
+   },
+   {
+    "k": "details",
+    "top": 1353.56,
+    "bottom": 1656,
+    "left": 22,
+    "width": 1396,
+    "height": 302.44,
+    "gapAbove": 0
+   },
+   {
+    "k": "reviews",
+    "top": 1690,
+    "bottom": 2471.22,
+    "left": 270,
+    "width": 900,
+    "height": 781.22,
+    "gapAbove": 34
+   },
+   {
+    "k": "related",
+    "top": 2527.22,
+    "bottom": 3119.47,
+    "left": 22,
+    "width": 1396,
+    "height": 592.25,
+    "gapAbove": 56
+   }
+  ],
+  "wrapperClass": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+  "pageHeight": 3459,
+  "scrollWidth": 1440,
+  "display": "block"
+ },
+ "default-390": {
+  "order": [
+   "columns",
+   "buytogether",
+   "details",
+   "reviews",
+   "related"
+  ],
+  "blocks": [
+   {
+    "k": "columns",
+    "top": 0,
+    "bottom": 0,
+    "left": 0,
+    "width": 0,
+    "height": 0,
+    "gapAbove": null
+   },
+   {
+    "k": "buytogether",
+    "top": 1484.5,
+    "bottom": 1769.16,
+    "left": 0,
+    "width": 390,
+    "height": 284.66,
+    "gapAbove": 1484.5
+   },
+   {
+    "k": "details",
+    "top": 1787.16,
+    "bottom": 2091.16,
+    "left": 22,
+    "width": 346,
+    "height": 304,
+    "gapAbove": 18
+   },
+   {
+    "k": "reviews",
+    "top": 2109.16,
+    "bottom": 3195.48,
+    "left": 22,
+    "width": 346,
+    "height": 1086.33,
+    "gapAbove": 18
+   },
+   {
+    "k": "related",
+    "top": 3213.48,
+    "bottom": 3708.94,
+    "left": 22,
+    "width": 346,
+    "height": 495.45,
+    "gapAbove": 18
+   }
+  ],
+  "wrapperClass": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+  "pageHeight": 4488,
+  "scrollWidth": 390,
+  "display": "flex"
+ },
+ "tab-1280": {
+  "list": [
+   "buytogether",
+   "details",
+   "reviews",
+   "related"
+  ],
+  "strip": [
+   "Sections",
+   "Photo & badge",
+   "Spacing · Page",
+   "Spacing · Buy column",
+   "Type · Buy column",
+   "Type · Sections & tabs",
+   "You may also like",
+   "Trust · Delivery box",
+   "Trust · Authenticity",
+   "Share",
+   "Trust · Spacing",
+   "Mobile sections",
+   "Desktop sections",
+   "Buy these together"
+  ],
+  "scrollWidth": 1280
+ },
+ "tab-390": {
+  "list": [
+   "buytogether",
+   "details",
+   "reviews",
+   "related"
+  ],
+  "strip": [
+   "Sections",
+   "Photo & badge",
+   "Spacing · Page",
+   "Spacing · Buy column",
+   "Type · Buy column",
+   "Type · Sections & tabs",
+   "You may also like",
+   "Trust · Delivery box",
+   "Trust · Authenticity",
+   "Share",
+   "Trust · Spacing",
+   "Mobile sections",
+   "Desktop sections",
+   "Buy these together"
+  ],
+  "scrollWidth": 390
+ },
+ "drag-in-progress": {
+  "dragging": [
+   "reviews"
+  ],
+  "over": [
+   "buytogether"
+  ]
+ },
+ "after-drop": [
+  "reviews",
+  "buytogether",
+  "details",
+  "related"
+ ],
+ "after-down-button": [
+  "reviews",
+  "details",
+  "buytogether",
+  "related"
+ ],
+ "preview-frame-live": {
+  "className": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pds-on pds-ar-details",
+  "style": [
+   "--pds-o-reviews: 1",
+   "--pds-o-details: 2",
+   "--pds-o-buytogether: 3",
+   "--pds-o-related: 4"
+  ]
+ },
+ "after-save": {
+  "list": [
+   "reviews",
+   "details",
+   "buytogether",
+   "related"
+  ],
+  "bar": "Saved 4 settings — live now"
+ },
+ "reordered-1280": {
+  "order": [
+   "columns",
+   "reviews",
+   "details",
+   "buytogether",
+   "related"
+  ],
+  "blocks": [
+   {
+    "k": "columns",
+    "top": 93.5,
+    "bottom": 1080.98,
+    "left": 22,
+    "width": 1236,
+    "height": 987.48,
+    "gapAbove": null
+   },
+   {
+    "k": "reviews",
+    "top": 1114.98,
+    "bottom": 1896.2,
+    "left": 190,
+    "width": 900,
+    "height": 781.22,
+    "gapAbove": 34
+   },
+   {
+    "k": "details",
+    "top": 1952.2,
+    "bottom": 2254.64,
+    "left": 22,
+    "width": 1236,
+    "height": 302.44,
+    "gapAbove": 56
+   },
+   {
+    "k": "buytogether",
+    "top": 2288.64,
+    "bottom": 2527.22,
+    "left": 22,
+    "width": 1236,
+    "height": 238.58,
+    "gapAbove": 34
+   },
+   {
+    "k": "related",
+    "top": 2527.22,
+    "bottom": 3087.47,
+    "left": 22,
+    "width": 1236,
+    "height": 560.25,
+    "gapAbove": 0
+   }
+  ],
+  "wrapperClass": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pds-on pds-ar-details",
+  "pageHeight": 3427,
+  "scrollWidth": 1280,
+  "display": "flex"
+ },
+ "reordered-1440": {
+  "order": [
+   "columns",
+   "reviews",
+   "details",
+   "buytogether",
+   "related"
+  ],
+  "blocks": [
+   {
+    "k": "columns",
+    "top": 93.5,
+    "bottom": 1080.98,
+    "left": 22,
+    "width": 1396,
+    "height": 987.48,
+    "gapAbove": null
+   },
+   {
+    "k": "reviews",
+    "top": 1114.98,
+    "bottom": 1896.2,
+    "left": 270,
+    "width": 900,
+    "height": 781.22,
+    "gapAbove": 34
+   },
+   {
+    "k": "details",
+    "top": 1952.2,
+    "bottom": 2254.64,
+    "left": 22,
+    "width": 1396,
+    "height": 302.44,
+    "gapAbove": 56
+   },
+   {
+    "k": "buytogether",
+    "top": 2288.64,
+    "bottom": 2527.22,
+    "left": 22,
+    "width": 1396,
+    "height": 238.58,
+    "gapAbove": 34
+   },
+   {
+    "k": "related",
+    "top": 2527.22,
+    "bottom": 3119.47,
+    "left": 22,
+    "width": 1396,
+    "height": 592.25,
+    "gapAbove": 0
+   }
+  ],
+  "wrapperClass": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pds-on pds-ar-details",
+  "pageHeight": 3459,
+  "scrollWidth": 1440,
+  "display": "flex"
+ },
+ "reordered-390": {
+  "order": [
+   "columns",
+   "buytogether",
+   "details",
+   "reviews",
+   "related"
+  ],
+  "blocks": [
+   {
+    "k": "columns",
+    "top": 0,
+    "bottom": 0,
+    "left": 0,
+    "width": 0,
+    "height": 0,
+    "gapAbove": null
+   },
+   {
+    "k": "buytogether",
+    "top": 1484.5,
+    "bottom": 1769.16,
+    "left": 0,
+    "width": 390,
+    "height": 284.66,
+    "gapAbove": 1484.5
+   },
+   {
+    "k": "details",
+    "top": 1787.16,
+    "bottom": 2091.16,
+    "left": 22,
+    "width": 346,
+    "height": 304,
+    "gapAbove": 18
+   },
+   {
+    "k": "reviews",
+    "top": 2109.16,
+    "bottom": 3195.48,
+    "left": 22,
+    "width": 346,
+    "height": 1086.33,
+    "gapAbove": 18
+   },
+   {
+    "k": "related",
+    "top": 3213.48,
+    "bottom": 3708.94,
+    "left": 22,
+    "width": 346,
+    "height": 495.45,
+    "gapAbove": 18
+   }
+  ],
+  "wrapperClass": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pds-on pds-ar-details",
+  "pageHeight": 4488,
+  "scrollWidth": 390,
+  "display": "flex"
+ },
+ "set-fbt-after-reviews": 200,
+ "fbt-after-reviews-1280": {
+  "order": [
+   "columns",
+   "details",
+   "reviews",
+   "buytogether",
+   "related"
+  ],
+  "blocks": [
+   {
+    "k": "columns",
+    "top": 93.5,
+    "bottom": 1080.98,
+    "left": 22,
+    "width": 1236,
+    "height": 987.48,
+    "gapAbove": null
+   },
+   {
+    "k": "details",
+    "top": 1080.98,
+    "bottom": 1383.42,
+    "left": 22,
+    "width": 1236,
+    "height": 302.44,
+    "gapAbove": 0
+   },
+   {
+    "k": "reviews",
+    "top": 1417.42,
+    "bottom": 2198.64,
+    "left": 190,
+    "width": 900,
+    "height": 781.22,
+    "gapAbove": 34
+   },
+   {
+    "k": "buytogether",
+    "top": 2254.64,
+    "bottom": 2493.22,
+    "left": 22,
+    "width": 1236,
+    "height": 238.58,
+    "gapAbove": 56
+   },
+   {
+    "k": "related",
+    "top": 2493.22,
+    "bottom": 3053.47,
+    "left": 22,
+    "width": 1236,
+    "height": 560.25,
+    "gapAbove": 0
+   }
+  ],
+  "wrapperClass": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pds-on pds-ar-buytogether",
+  "pageHeight": 3393,
+  "scrollWidth": 1280,
+  "display": "flex"
+ },
+ "fbt-after-reviews-1440": {
+  "order": [
+   "columns",
+   "details",
+   "reviews",
+   "buytogether",
+   "related"
+  ],
+  "blocks": [
+   {
+    "k": "columns",
+    "top": 93.5,
+    "bottom": 1080.98,
+    "left": 22,
+    "width": 1396,
+    "height": 987.48,
+    "gapAbove": null
+   },
+   {
+    "k": "details",
+    "top": 1080.98,
+    "bottom": 1383.42,
+    "left": 22,
+    "width": 1396,
+    "height": 302.44,
+    "gapAbove": 0
+   },
+   {
+    "k": "reviews",
+    "top": 1417.42,
+    "bottom": 2198.64,
+    "left": 270,
+    "width": 900,
+    "height": 781.22,
+    "gapAbove": 34
+   },
+   {
+    "k": "buytogether",
+    "top": 2254.64,
+    "bottom": 2493.22,
+    "left": 22,
+    "width": 1396,
+    "height": 238.58,
+    "gapAbove": 56
+   },
+   {
+    "k": "related",
+    "top": 2493.22,
+    "bottom": 3085.47,
+    "left": 22,
+    "width": 1396,
+    "height": 592.25,
+    "gapAbove": 0
+   }
+  ],
+  "wrapperClass": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pds-on pds-ar-buytogether",
+  "pageHeight": 3425,
+  "scrollWidth": 1440,
+  "display": "flex"
+ },
+ "reset-end": 200
+}

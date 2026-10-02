@@ -521,3 +521,8 @@
 })();
 </script>
 @endverbatim
+{{-- Appearance → Product page → Desktop sections (Lane RF): the laptop order
+     of the four blocks under the two columns. Included HERE, after this
+     screen's wrap of paintProductPage(), so its tab lands directly after
+     "Mobile sections" and admin/app.blade.php is not touched. --}}
+@include('admin.partials.product-desktop-sections-screen')
