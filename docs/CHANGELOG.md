@@ -3,6 +3,36 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.354
+**Quick view OFF on every page; the admin top bar and the ✎ Edit pencil on
+category and brand pages (you only).** Apply after .353. No plugin change.
+Runs three migrations: one new brand column, the Quick view switch, and two
+cache clears.
+
+| Your report | Now |
+|---|---|
+| "turn off the quick view option by default ... by default off this function everywhere on the site-frontend. on every page" | OFF on every page, in the code itself and on your shop's stored switch. Store → Modules → Quick view brings it back, and when it is on it now sits in the middle of the picture (it was at the top, half cut off, on 29 of 33 card designs) |
+| "site thin top bar, will show only for administrators ... administrator name, along with logout button ... hide / unhide arrow" | A 32px dark bar on every shop page, only for you: Edit this category/brand/product, Dashboard, Orders (today's count), Products, Customers, Appearance, Clear cache; your name, Log out, and an arrow that tucks it away (remembered). Shoppers' pages are byte-for-byte unchanged |
+| "pencil icon + edit minimal button ... beautiful popup ... drag n drop image upload ... save ... update the page without being refreshed and close the popup auto" | ✎ Edit on every category and brand header: banner drag-and-drop with progress, title, line under it, description, phone crop, live preview; Save updates the header in place and closes. Owner only for now -- the capability is ready for the user-roles module |
+
+Files (29): app/Http/Controllers/Admin/AdminAuthController.php,
+app/Http/Controllers/Admin/CategoriesApiController.php,
+app/Http/Controllers/Admin/PageController.php,
+app/Http/Controllers/Admin/StorefrontAdminController.php,
+app/Http/Controllers/Store/QuickViewController.php,
+app/Http/Controllers/Store/ShopController.php, app/Services/ModuleRegistry.php,
+app/Support/AdminCapabilities.php, app/Support/StorefrontAdminHint.php,
+app/Support/TitleHeaderInput.php, three migrations
+(2027_07_16_000000_add_header_description_to_brands,
+2027_07_16_000200_clear_caches_storefront_admin_layer,
+2027_07_17_000100_quick_view_off), resources/css/kbb/kbb.css,
+resources/js/kbb/admin-hint.js, resources/js/kbb/admin/storefront-admin.{js,css},
+resources/js/kbb/app.js, resources/views/admin/app.blade.php,
+resources/views/admin/partials/storefront-handoff.blade.php,
+resources/views/components/product-card.blade.php,
+resources/views/layouts/store.blade.php, routes/storefront-admin.php,
+routes/web.php, docs/rtl-audit.md, public/build (manifest + 3 built files).
+
 ## 2.60.353
 **A different light box on every visit for categories with no banner, and a
 shorter share sheet: picture and title in one row.** Apply after .352. No plugin
