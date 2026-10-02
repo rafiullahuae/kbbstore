@@ -519,11 +519,15 @@ it('draws the designs as a radio group: role, checked state, one tab stop, arrow
         expect($kit)->toContain('e.key === '.$key);
     }
 
-    // Both screens include the kit, and it renders once and as a stylesheet, not as text.
-    foreach (['site-layout-screen', 'category-tree-screen'] as $screen) {
-        $src = (string) file_get_contents(resource_path('views/admin/partials/'.$screen.'.blade.php'));
-        expect(substr_count($src, "@include('admin.partials.title-header-kit')"))->toBe(1, $screen);
-    }
+    // The kit is included once, by the editor, which the console includes
+    // BEFORE the Site layout screen -- so window.kbbTH exists for both.
+    $tree = (string) file_get_contents(resource_path('views/admin/partials/category-tree-screen.blade.php'));
+    $layout = (string) file_get_contents(resource_path('views/admin/partials/site-layout-screen.blade.php'));
+    $app = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+    expect(substr_count($tree, "@include('admin.partials.title-header-kit')"))->toBe(1)
+        ->and($layout)->not->toContain("@include('admin.partials.title-header-kit')")
+        ->and(strpos($app, "@include('admin.partials.category-tree-screen')"))
+        ->toBeLessThan(strpos($app, "@include('admin.partials.site-layout-screen')"));
 
     $html = view('admin.partials.title-header-kit')->render();
     expect($html)->toContain('window.kbbTH = {')

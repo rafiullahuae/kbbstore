@@ -512,9 +512,7 @@ it('names every option the same way in the server, the settings screen and the c
     $layout = (string) file_get_contents(resource_path('views/admin/partials/title-header-kit.blade.php'));
     $editor = (string) file_get_contents(resource_path('views/admin/partials/category-tree-screen.blade.php'));
 
-    expect($editor)->toContain("@include('admin.partials.title-header-kit')")
-        ->and((string) file_get_contents(resource_path('views/admin/partials/site-layout-screen.blade.php')))
-        ->toContain("@include('admin.partials.title-header-kit')");
+    expect($editor)->toContain("@include('admin.partials.title-header-kit')");
 
     $quoted = fn (array $words) => implode(', ', array_map(fn ($w) => "'".$w."'", $words));
 

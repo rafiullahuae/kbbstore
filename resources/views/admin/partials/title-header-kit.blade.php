@@ -1,11 +1,16 @@
 {{--
     The category header's DESIGN KIT for the console.                  Lane QC
 
-    Included (once, whichever includes it first) by the two screens that edit
-    the category header:
+    Used by the two screens that edit the category header:
 
       Appearance → Site layout → Category header       (site-layout-screen)
       Catalog → Categories → Edit → Category header    (category-tree-screen)
+
+    INCLUDED ONCE, by category-tree-screen -- which app.blade.php includes
+    before site-layout-screen, so window.kbbTH exists before either screen
+    first draws. One include because EverythingIsMountedOnceTest counts every
+    admin partial's includes and two is its "registered twice" shape; both
+    screens still guard on window.kbbTH and draw their plain fields without it.
 
     THE OWNER, IN HIS WORDS:
 
@@ -659,6 +664,21 @@
     choose(next, true);
   });
 
+  /* The tile holding the focus, as [group, value], and putting it back after a
+     screen has redrawn its tiles -- so a screen never names this kit's
+     attributes itself. */
+  function held() {
+    var t = document.activeElement && document.activeElement.closest
+      ? document.activeElement.closest('[data-thk-group] [role="radio"]') : null;
+    return t ? [t.closest('[data-thk-group]').getAttribute('data-thk-group'), t.getAttribute('data-thk-value')] : null;
+  }
+
+  function refocus(at) {
+    if (!at) return;
+    var t = document.querySelector('[data-thk-group="' + at[0] + '"] [data-thk-value="' + at[1] + '"]');
+    if (t) { try { t.focus({ preventScroll: true }); } catch (e) { t.focus(); } }
+  }
+
   /* A Phone | Laptop switch. `attr` is the screen's own data- attribute. */
   function deviceSwitch(attr, dev, label) {
     return '<div class="thk-dev" role="group" aria-label="' + esc(label || 'Device') + '">'
@@ -707,7 +727,7 @@
     OPTIONAL_COLOURS: OPTIONAL_COLOURS, BOX_NAMES: BOX_NAMES, TREATMENT_NAMES: TREATMENT_NAMES,
     ALIGN_NAMES: ALIGN_NAMES, TEXT_NAMES: TEXT_NAMES, FOCUS_NAMES: FOCUS_NAMES, PICTURES: PICTURES,
     esc: esc, hex: hex, on: on, resolve: resolve, header: header, tiles: tiles, deviceSwitch: deviceSwitch,
-    frame: frame, plain: plain, safeImage: safeImage, flatten: flatten
+    frame: frame, plain: plain, safeImage: safeImage, flatten: flatten, held: held, refocus: refocus
   };
 })();
 </script>

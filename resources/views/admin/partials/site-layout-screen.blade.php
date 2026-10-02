@@ -95,9 +95,11 @@
 
     The kit -- the tiles, the header renderer, the keyboard handling -- is
     admin/partials/title-header-kit.blade.php, shared with the category
-    editor. It loads kbb-title-header.css, which this partial used to load.
+    editor and INCLUDED ONCE, by category-tree-screen, which app.blade.php
+    includes before this partial. It loads kbb-title-header.css, which this
+    partial used to load. Without it (a package missing the kit) this tab
+    draws its plain fields, as before.
 --}}
-@include('admin.partials.title-header-kit')
 @verbatim
 <style>
 .sls-wrap{display:grid;gap:14px;min-width:0}
@@ -750,18 +752,13 @@
     }
     /* A tile holding the focus keeps it across the redraw -- tabbing from a
        colour box into the tiles fires that box's `change`, which redraws. */
-    var held = document.activeElement && document.activeElement.closest
-      ? document.activeElement.closest('[data-thk-group] [role="radio"]') : null;
-    var heldAt = held ? [held.closest('[data-thk-group]').getAttribute('data-thk-group'), held.getAttribute('data-thk-value')] : null;
+    var heldAt = TH() ? TH().held() : null;
 
     host.querySelectorAll('[data-sls-tiles]').forEach(function (el) {
       el.innerHTML = pickerHTML(el.getAttribute('data-sls-tiles'));
     });
 
-    if (heldAt) {
-      var again = host.querySelector('[data-thk-group="' + heldAt[0] + '"] [data-thk-value="' + heldAt[1] + '"]');
-      if (again) { try { again.focus({ preventScroll: true }); } catch (x) {} }
-    }
+    if (heldAt) TH().refocus(heldAt);
   }
 
   /* The card under the fields: the device table, or on the two Category

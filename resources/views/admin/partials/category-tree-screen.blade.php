@@ -44,7 +44,8 @@
 
     LANE QC: the Category header panel draws its live preview and its design
     tiles with window.kbbTH, from admin/partials/title-header-kit.blade.php --
-    included here (and by the Site layout screen; it is drawn once).
+    included HERE, once, for the whole console: app.blade.php includes this
+    partial before site-layout-screen, which uses the same kit.
 --}}
 @include('admin.partials.title-header-kit')
 @verbatim
