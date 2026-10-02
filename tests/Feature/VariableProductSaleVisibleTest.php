@@ -335,6 +335,15 @@ it('keeps the simple products in that facet exactly as they were', function () {
 
 it('keeps the facet and the badge saying the same thing', function () {
     /*
+     * THE -N% PILL SWITCHED ON, SAID OUT LOUD.                     (Lane PR)
+     * Appearance → Product styles → Card content → "Discount badge" ships OFF
+     * now — the owner asked for it. This asserts what the pill SAYS when it is
+     * drawn, so it draws it; GridCardOwnerAsksTest pins the default.
+     */
+    app(\App\Services\ProductStyles::class)->save(['show_discount' => true]);
+    \App\Services\SettingsService::forgetMemo();
+    app()->forgetScopedInstances();
+    /*
      * THE ONE INVARIANT THIS LANE IS ABOUT. A product listed under "On sale"
      * whose tile carries no sale badge is the disagreement EffectivePrice's
      * header was written about; a badge on a product the facet excludes is the

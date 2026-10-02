@@ -21,6 +21,9 @@ export default defineConfig({
                 // archive (kbb-shop.css) and the brand landing page (which
                 // has its own inline block and loads none of the shop's).
                 'resources/css/kbb/kbb-banner.css',
+                // The old shop's category title header (Lane PT), loaded only
+                // by a category or brand page that draws one.
+                'resources/css/kbb/kbb-title-header.css',
                 'resources/css/kbb/kbb-product.css',
                 'resources/css/kbb/kbb-cart.css',
                 'resources/css/kbb/kbb-checkout.css',

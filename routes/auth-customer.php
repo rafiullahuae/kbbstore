@@ -63,6 +63,7 @@ declare(strict_types=1);
 |
 */
 
+use App\Http\Controllers\Store\AccountInviteController;
 use App\Http\Controllers\Store\EmailVerificationController;
 use App\Http\Controllers\Store\PasswordResetController;
 use Illuminate\Support\Facades\Route;
@@ -92,6 +93,30 @@ Route::get('/my-account/reset/{id}/{token}/', [PasswordResetController::class, '
 Route::post('/my-account/reset', [PasswordResetController::class, 'update'])
     ->middleware('throttle:30,1')
     ->name('customer.password.update');
+
+/*
+|------------------------------------------------------------------------------
+| Account invite — "your account is ready, choose a password" (Lane PQ)
+|------------------------------------------------------------------------------
+|
+| The link in the email sent from Store -> Customers -> Send account invite.
+| Added to THIS file so that it rides the require routes/web.php already has:
+| it is the same kind of route as the reset link above — public, clicked from a
+| mail client, its authority a one-time token rather than a session.
+|
+| The token pattern is deliberately looser than the 64 hex characters a real
+| token has, so that a mangled or made-up link reaches the controller and gets
+| the SAME "no longer valid" page as an expired one, instead of a 404 that
+| looks different. Both throttled; the POST also has a per-IP limiter inside.
+*/
+Route::get('/my-account/welcome/{token}/', [AccountInviteController::class, 'edit'])
+    ->where('token', '[A-Za-z0-9-]{1,128}')
+    ->middleware('throttle:60,1')
+    ->name('customer.invite.welcome');
+
+Route::post('/my-account/welcome', [AccountInviteController::class, 'update'])
+    ->middleware('throttle:30,1')
+    ->name('customer.invite.accept');
 
 /*
 |------------------------------------------------------------------------------

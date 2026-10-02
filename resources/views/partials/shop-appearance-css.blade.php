@@ -79,8 +79,14 @@
 --}}@php
     $kbbAccentCss = \App\Support\BrandAccent::css();
     $kbbLayoutCss = app(\App\Services\SiteLayout::class)->css();
+    // Appearance → Product styles → Spacing & type (Lane PR). '' until a
+    // value there moves, so this is no element at all on a shop that has not
+    // touched it. ProductStyles::cardCss() has the rule-5 note.
+    $kbbCardCss = app(\App\Services\ProductStyles::class)->cardCss();
 @endphp
 @if ($kbbAccentCss !== '')<style id="kbb-brand-accent">{!! $kbbAccentCss !!}</style>
 @endif
 @if ($kbbLayoutCss !== '')<style id="kbb-layout">{!! $kbbLayoutCss !!}</style>
+@endif
+@if ($kbbCardCss !== '')<style id="kbb-card-type">{!! $kbbCardCss !!}</style>
 @endif

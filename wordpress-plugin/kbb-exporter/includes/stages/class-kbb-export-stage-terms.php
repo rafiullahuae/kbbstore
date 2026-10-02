@@ -113,6 +113,31 @@ abstract class KBB_Export_Stage_Terms extends KBB_Export_Stage {
 	}
 
 	/**
+	 * On the LAST batch of a category or brand stage, the term-meta census.
+	 * (1.11.0)
+	 *
+	 * Once per stage and only when the stage is done, because it is one
+	 * GROUP BY over the whole taxonomy and its answer does not change between
+	 * batches. The note is the thing that names where the old shop really
+	 * keeps a category's banner -- see KBB_Export_Term_Header.
+	 *
+	 * @param array{rows: array, cursor: int, done: bool} $batch
+	 */
+	protected function header_census( array $batch ) {
+		if ( empty( $batch['done'] ) ) {
+			return;
+		}
+
+		$taxonomy = $this->taxonomy();
+
+		if ( '' === $taxonomy ) {
+			return;
+		}
+
+		$this->note( KBB_Export_Term_Header::census_note( $taxonomy, $this->file() ) );
+	}
+
+	/**
 	 * The product ids filed under each of these terms.
 	 *
 	 * Restricted to post_type = product on purpose: `term_relationships` holds
@@ -172,18 +197,24 @@ class KBB_Export_Stage_Categories extends KBB_Export_Stage_Terms {
 	 * 0 -- deliberately, per its own comment -- so 0 needs no special case here.
 	 */
 	public function columns() {
-		return array( 'term_id', 'name', 'slug', 'parent', 'description', 'image', 'position' );
+		return array_merge(
+			array( 'term_id', 'name', 'slug', 'parent', 'description', 'image', 'position' ),
+			KBB_Export_Term_Header::COLUMNS
+		);
 	}
 
 	public function batch( $cursor, $limit ) {
 		$batch = $this->term_batch( $cursor, $limit );
 
 		if ( empty( $batch['rows'] ) ) {
+			$this->header_census( $batch );
+
 			return $batch;
 		}
 
 		$ids    = $this->ids_of( $batch['rows'], 'term_id' );
 		$extras = $this->term_extras( $ids );
+		$header = KBB_Export_Term_Header::for_terms( $ids );
 
 		$out = array();
 
@@ -199,10 +230,12 @@ class KBB_Export_Stage_Categories extends KBB_Export_Stage_Terms {
 				'description' => $row['description'],
 				'image'       => isset( $extra['thumbnail_id'] ) ? KBB_Export_Wp::attachment_url( $extra['thumbnail_id'] ) : '',
 				'position'    => isset( $extra['order'] ) ? (int) $extra['order'] : 0,
-			);
+			) + KBB_Export_Term_Header::row( $header, $id );
 		}
 
 		$batch['rows'] = $out;
+
+		$this->header_census( $batch );
 
 		return $batch;
 	}
@@ -238,18 +271,24 @@ class KBB_Export_Stage_Brands extends KBB_Export_Stage_Terms {
 
 	/** Exactly what BrandImporter::import() reads: term_id, name, slug, description, logo, position. */
 	public function columns() {
-		return array( 'term_id', 'name', 'slug', 'description', 'logo', 'position' );
+		return array_merge(
+			array( 'term_id', 'name', 'slug', 'description', 'logo', 'position' ),
+			KBB_Export_Term_Header::COLUMNS
+		);
 	}
 
 	public function batch( $cursor, $limit ) {
 		$batch = $this->term_batch( $cursor, $limit );
 
 		if ( empty( $batch['rows'] ) ) {
+			$this->header_census( $batch );
+
 			return $batch;
 		}
 
 		$ids    = $this->ids_of( $batch['rows'], 'term_id' );
 		$extras = $this->term_extras( $ids );
+		$header = KBB_Export_Term_Header::for_terms( $ids );
 
 		$out = array();
 
@@ -264,10 +303,12 @@ class KBB_Export_Stage_Brands extends KBB_Export_Stage_Terms {
 				'description' => $row['description'],
 				'logo'        => isset( $extra['thumbnail_id'] ) ? KBB_Export_Wp::attachment_url( $extra['thumbnail_id'] ) : '',
 				'position'    => isset( $extra['order'] ) ? (int) $extra['order'] : 0,
-			);
+			) + KBB_Export_Term_Header::row( $header, $id );
 		}
 
 		$batch['rows'] = $out;
+
+		$this->header_census( $batch );
 
 		return $batch;
 	}
@@ -534,5 +575,443 @@ class KBB_Export_Stage_Attributes extends KBB_Export_Stage_Terms {
 		}
 
 		return $out;
+	}
+}
+
+/**
+ * A category's (or brand's) TITLE HEADER on the old shop: the banner picture
+ * behind the title, and any title or subtitle written for it. (1.11.0)
+ *
+ * ── WHAT THE OWNER ASKED, AND WHY THIS DOES NOT GUESS ONE META KEY ──────────
+ *
+ * "We have a banner image on each category on the old site. Need to bring that
+ * on the category pages as title background, like on /sunscreens/ -- and the
+ * same title, same description." The description is `term_taxonomy.description`
+ * and categories.csv has always carried it. The picture is the question: on a
+ * WooCommerce + Rey shop it may be WooCommerce's own category thumbnail
+ * (`thumbnail_id`, already exported as `image`), a Rey or ACF term field, a
+ * Rey "page cover" global section assigned to the term, or another plugin's
+ * meta. Nobody writing this could see the live site, so nothing here names
+ * one key as THE banner. Instead:
+ *
+ *  1. every term-meta key whose NAME reads like a picture, a cover, a banner,
+ *     a header, a title or a subtitle is read, for every term;
+ *  2. a picture value is RESOLVED whatever shape it is stored in -- an
+ *     attachment id, an ACF image array, a serialized array, a JSON object or
+ *     a plain URL -- and an id that names a non-attachment post (a Rey global
+ *     section used as a cover) is followed to the first picture in that post's
+ *     Elementor data, or its featured image;
+ *  3. the best-named picture becomes `banner_image`, and `banner_source_key`
+ *     says which key it came from, so the choice is visible in the file;
+ *  4. a census note lists EVERY term-meta key the taxonomy carries, with how
+ *     many terms carry it and a sample value -- so the owner's first export
+ *     names the real storage even if none of the names above matched.
+ *
+ * `thumbnail_id` is deliberately NOT a banner candidate: it is already the
+ * `image` column, and a square category thumbnail stretched behind a title is
+ * a different picture from the one the owner means. If the census shows the
+ * shop has no banner key at all, the banner IS the thumbnail -- and the new
+ * shop has a switch for exactly that (Appearance -> Site layout -> Category
+ * header -> "When no banner was imported, use the category picture").
+ */
+final class KBB_Export_Term_Header {
+
+	/** The columns appended to categories.csv and brands.csv, in this order. */
+	const COLUMNS = array( 'banner_image', 'banner_source_key', 'title_override', 'subtitle' );
+
+	/** Keys that are WooCommerce's own bookkeeping, never a header field. */
+	const SKIP = array( 'order', 'thumbnail_id', 'display_type', 'product_count_product_cat', 'product_count_product_tag' );
+
+	/** A picture-ish name, ranked: lower is a better banner. */
+	const IMAGE_WORDS = array(
+		'banner'     => 0,
+		'cover'      => 1,
+		'header'     => 2,
+		'hero'       => 2,
+		'background' => 3,
+		'bg'         => 3,
+		'image'      => 4,
+		'img'        => 4,
+		'picture'    => 4,
+		'photo'      => 4,
+		'thumb'      => 5,
+	);
+
+	/** Search-appearance keys: a title for Google, not for the page. */
+	const SEO_WORDS = '/(seo|yoast|rank_?math|wpseo|og_|opengraph|twitter|meta_?title|aioseo)/i';
+
+	/**
+	 * Every header field for a batch of terms, keyed by term id.
+	 *
+	 * ONE query for the batch's meta (not one per term), and at most two more
+	 * per cover id that names a post rather than an attachment.
+	 *
+	 * @param array<int,int> $ids
+	 * @return array<int,array<string,string>>
+	 */
+	public static function for_terms( array $ids ) {
+		global $wpdb;
+
+		$out = array();
+
+		if ( empty( $ids ) ) {
+			return $out;
+		}
+
+		$rows = (array) $wpdb->get_results(
+			'SELECT term_id, meta_key, meta_value FROM ' . $wpdb->prefix . 'termmeta
+			 WHERE term_id IN (' . implode( ',', array_map( 'intval', $ids ) ) . ')
+			 ORDER BY meta_id DESC',
+			ARRAY_A
+		);
+
+		// DESC and overwrite: the lowest meta_id wins, which is what
+		// get_term_meta( $id, $key, true ) returns. KBB_Export_Wp::meta_for()
+		// carries the same rule and the reason for it.
+		$meta = array();
+
+		foreach ( $rows as $row ) {
+			$meta[ (int) $row['term_id'] ][ (string) $row['meta_key'] ] = (string) $row['meta_value'];
+		}
+
+		foreach ( $ids as $id ) {
+			$out[ (int) $id ] = self::fields( isset( $meta[ (int) $id ] ) ? $meta[ (int) $id ] : array() );
+		}
+
+		return $out;
+	}
+
+	/**
+	 * The four column values for one term, '' where there is nothing.
+	 *
+	 * @param array<int,array<string,string>> $header
+	 * @return array<string,string>
+	 */
+	public static function row( array $header, $id ) {
+		$fields = isset( $header[ (int) $id ] ) ? $header[ (int) $id ] : array();
+		$out    = array();
+
+		foreach ( self::COLUMNS as $column ) {
+			$out[ $column ] = isset( $fields[ $column ] ) ? (string) $fields[ $column ] : '';
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Pick the banner, the title and the subtitle out of one term's meta.
+	 *
+	 * @param array<string,string> $meta key => raw value
+	 * @return array<string,string>
+	 */
+	public static function fields( array $meta ) {
+		$images    = array();
+		$titles    = array();
+		$subtitles = array();
+
+		foreach ( $meta as $key => $value ) {
+			$key = (string) $key;
+
+			if ( self::skipped( $key ) ) {
+				continue;
+			}
+
+			$lower = strtolower( $key );
+
+			if ( preg_match( '/(subtitle|sub_title|sub-title|subheading|sub_heading|tagline)/', $lower ) === 1 ) {
+				$text = self::text( $value );
+
+				if ( '' !== $text ) {
+					$subtitles[ $key ] = $text;
+				}
+
+				continue;
+			}
+
+			$rank = self::image_rank( $lower );
+
+			if ( null !== $rank ) {
+				$resolved = self::picture( $value );
+
+				if ( '' !== $resolved['url'] ) {
+					$images[] = array( 'rank' => $rank, 'key' => $key, 'url' => $resolved['url'], 'via' => $resolved['via'] );
+				}
+
+				continue;
+			}
+
+			if ( preg_match( '/(^|[_-])(title|heading)([_-]|$)/', $lower ) === 1 && preg_match( self::SEO_WORDS, $lower ) !== 1 ) {
+				$text = self::text( $value );
+
+				if ( '' !== $text ) {
+					$titles[ $key ] = $text;
+				}
+			}
+		}
+
+		usort(
+			$images,
+			function ( $a, $b ) {
+				return $a['rank'] === $b['rank'] ? strcmp( $a['key'], $b['key'] ) : $a['rank'] - $b['rank'];
+			}
+		);
+
+		ksort( $titles );
+		ksort( $subtitles );
+
+		$out = array( 'banner_image' => '', 'banner_source_key' => '', 'title_override' => '', 'subtitle' => '' );
+
+		if ( ! empty( $images ) ) {
+			$out['banner_image']      = $images[0]['url'];
+			$out['banner_source_key'] = $images[0]['key'] . ( '' === $images[0]['via'] ? '' : ' (' . $images[0]['via'] . ')' );
+		}
+
+		if ( ! empty( $titles ) ) {
+			$out['title_override'] = (string) reset( $titles );
+		}
+
+		if ( ! empty( $subtitles ) ) {
+			$out['subtitle'] = (string) reset( $subtitles );
+		}
+
+		return $out;
+	}
+
+	/** Bookkeeping, ACF's `_field` references and product counts are never header fields. */
+	private static function skipped( $key ) {
+		return in_array( $key, self::SKIP, true )
+			|| '' === $key
+			|| '_' === substr( $key, 0, 1 )
+			|| 0 === strpos( $key, 'product_count_' );
+	}
+
+	/** @return int|null the rank of a picture-ish key name, or null when it is not one */
+	private static function image_rank( $lower ) {
+		$best = null;
+
+		foreach ( self::IMAGE_WORDS as $word => $rank ) {
+			if ( false !== strpos( $lower, $word ) && ( null === $best || $rank < $best ) ) {
+				$best = $rank;
+			}
+		}
+
+		return $best;
+	}
+
+	/** A single line of plain text, or '' for anything that is not one. */
+	private static function text( $raw ) {
+		$value = maybe_unserialize( $raw );
+
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		$value = trim( (string) preg_replace( '/\s+/u', ' ', strip_tags( $value ) ) );
+
+		// A bare number is an id, never words someone wrote for a header.
+		if ( '' === $value || is_numeric( $value ) ) {
+			return '';
+		}
+
+		return function_exists( 'mb_substr' ) ? mb_substr( $value, 0, 300 ) : substr( $value, 0, 300 );
+	}
+
+	/**
+	 * A picture address out of whatever shape a meta value stores it in.
+	 *
+	 * @return array{url: string, via: string}
+	 */
+	public static function picture( $raw ) {
+		$value = maybe_unserialize( $raw );
+
+		if ( is_string( $value ) ) {
+			$trimmed = trim( $value );
+
+			if ( '' !== $trimmed && '{' === substr( $trimmed, 0, 1 ) ) {
+				$decoded = json_decode( $trimmed, true );
+
+				if ( is_array( $decoded ) ) {
+					$value = $decoded;
+				}
+			}
+		}
+
+		if ( is_array( $value ) ) {
+			foreach ( array( 'url', 'src', 'full' ) as $field ) {
+				if ( isset( $value[ $field ] ) && is_string( $value[ $field ] ) && self::is_url( $value[ $field ] ) ) {
+					return array( 'url' => trim( $value[ $field ] ), 'via' => '' );
+				}
+			}
+
+			foreach ( array( 'id', 'ID', 'attachment_id' ) as $field ) {
+				if ( isset( $value[ $field ] ) && is_numeric( $value[ $field ] ) ) {
+					return self::from_id( (int) $value[ $field ] );
+				}
+			}
+
+			$first = reset( $value );
+
+			return is_numeric( $first ) ? self::from_id( (int) $first ) : array( 'url' => '', 'via' => '' );
+		}
+
+		if ( is_numeric( $value ) ) {
+			return self::from_id( (int) $value );
+		}
+
+		if ( is_string( $value ) && self::is_url( $value ) ) {
+			return array( 'url' => trim( $value ), 'via' => '' );
+		}
+
+		return array( 'url' => '', 'via' => '' );
+	}
+
+	private static function is_url( $value ) {
+		$value = trim( (string) $value );
+
+		return 1 === preg_match( '#^(https?:)?//[^\s"<>]+$#i', $value )
+			|| 1 === preg_match( '#^/wp-content/uploads/[^\s"<>]+$#i', $value );
+	}
+
+	/**
+	 * An attachment's address -- or, for an id naming any OTHER post, the first
+	 * picture that post shows. That second branch is a Rey "page cover": a
+	 * global section assigned to the term, whose picture is an Elementor
+	 * background inside it rather than an attachment of its own.
+	 *
+	 * @return array{url: string, via: string}
+	 */
+	private static function from_id( $id ) {
+		if ( $id <= 0 ) {
+			return array( 'url' => '', 'via' => '' );
+		}
+
+		$url = KBB_Export_Wp::attachment_url( $id );
+
+		if ( '' !== $url ) {
+			return array( 'url' => $url, 'via' => '' );
+		}
+
+		global $wpdb;
+
+		$post = $wpdb->get_row(
+			'SELECT ID, post_type FROM ' . $wpdb->prefix . 'posts WHERE ID = ' . (int) $id . ' LIMIT 1',
+			ARRAY_A
+		);
+
+		if ( empty( $post ) ) {
+			return array( 'url' => '', 'via' => '' );
+		}
+
+		$meta = KBB_Export_Wp::post_meta( array( $id ), array( '_elementor_data', '_thumbnail_id' ) );
+		$meta = isset( $meta[ $id ] ) ? $meta[ $id ] : array();
+		$via  = $post['post_type'] . ' ' . $id;
+
+		if ( isset( $meta['_elementor_data'] ) ) {
+			$found = self::first_elementor_image( json_decode( (string) $meta['_elementor_data'], true ) );
+
+			if ( '' !== $found ) {
+				return array( 'url' => $found, 'via' => $via );
+			}
+		}
+
+		if ( isset( $meta['_thumbnail_id'] ) ) {
+			$url = KBB_Export_Wp::attachment_url( (int) $meta['_thumbnail_id'] );
+
+			if ( '' !== $url ) {
+				return array( 'url' => $url, 'via' => $via . ' featured image' );
+			}
+		}
+
+		return array( 'url' => '', 'via' => '' );
+	}
+
+	/** Depth-first, in document order: the first background or image a section shows. */
+	private static function first_elementor_image( $node ) {
+		if ( ! is_array( $node ) ) {
+			return '';
+		}
+
+		if ( isset( $node['settings'] ) && is_array( $node['settings'] ) ) {
+			foreach ( array( 'background_image', 'background_overlay_image', 'image', 'bg_image' ) as $field ) {
+				$setting = isset( $node['settings'][ $field ] ) ? $node['settings'][ $field ] : null;
+
+				if ( is_array( $setting ) && isset( $setting['url'] ) && is_string( $setting['url'] ) && self::is_url( $setting['url'] ) ) {
+					return trim( $setting['url'] );
+				}
+			}
+		}
+
+		if ( isset( $node['elements'] ) && is_array( $node['elements'] ) ) {
+			$children = $node['elements'];
+		} elseif ( isset( $node[0] ) ) {
+			$children = $node;
+		} else {
+			$children = array();
+		}
+
+		foreach ( $children as $child ) {
+			$found = self::first_elementor_image( $child );
+
+			if ( '' !== $found ) {
+				return $found;
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * The census: every term-meta key this taxonomy carries, with counts.
+	 *
+	 * ALWAYS written, "none" included, so the owner's first export answers
+	 * "where does the old shop keep a category banner?" in the manifest
+	 * whether or not any name above matched.
+	 */
+	public static function census_note( $taxonomy, $file ) {
+		global $wpdb;
+
+		$rows = (array) $wpdb->get_results(
+			'SELECT tm.meta_key, COUNT(DISTINCT tm.term_id) AS terms, MIN(tm.meta_value) AS sample
+			 FROM ' . $wpdb->prefix . 'termmeta tm
+			 JOIN ' . $wpdb->prefix . 'term_taxonomy tt ON tt.term_id = tm.term_id
+			 WHERE tt.taxonomy = ' . KBB_Export_Wp::quote( $taxonomy ) . '
+			 GROUP BY tm.meta_key
+			 ORDER BY terms DESC, tm.meta_key',
+			ARRAY_A
+		);
+
+		$label = 'TERM META ON `' . $taxonomy . '` (' . $file . ')';
+
+		if ( empty( $rows ) ) {
+			return $label . ': none. No term of this taxonomy carries any term meta, so banner_image, '
+				. 'title_override and subtitle are empty for every row.';
+		}
+
+		$parts  = array();
+		$banner = array();
+
+		foreach ( $rows as $row ) {
+			$key    = (string) $row['meta_key'];
+			$sample = trim( (string) preg_replace( '/\s+/', ' ', (string) $row['sample'] ) );
+
+			if ( strlen( $sample ) > 60 ) {
+				$sample = substr( $sample, 0, 57 ) . '...';
+			}
+
+			$parts[] = $key . ' x' . (int) $row['terms'] . ( '' === $sample ? '' : ' (e.g. "' . $sample . '")' );
+
+			if ( ! self::skipped( $key ) && null !== self::image_rank( strtolower( $key ) ) ) {
+				$banner[] = $key;
+			}
+		}
+
+		return $label . ': ' . count( $rows ) . ' key' . ( 1 === count( $rows ) ? '' : 's' ) . ' -- '
+			. implode( '; ', $parts ) . '. '
+			. ( empty( $banner )
+				? 'NONE of them is named like a banner, cover, header or background picture, so banner_image is '
+					. 'empty: if the old shop shows a picture behind its category titles, it is the category '
+					. 'thumbnail (`thumbnail_id`, the `image` column) or something not stored on the term.'
+				: 'Read as banner candidates: ' . implode( ', ', $banner ) . ' -- banner_source_key on each row says '
+					. 'which one it came from.' );
 	}
 }

@@ -578,11 +578,26 @@ it('ships every setting at the value the page already had, except the ones the o
         'gap' => 16,
         'pin' => 'auto',
         // Lane PI-B: Loading more products. NOT CSS — these decide how many
-        // products a listing page holds, and ship at "Arrows", the page as it
-        // was (the owner did not say which he wanted by default).
-        'load_mode' => 'arrows',
+        // products a listing page holds. Shipped at "Arrows" while the owner
+        // had not chosen; ships at "Load more on scroll" since he did, on
+        // 2 October 2026 (Lane PR): "keep this on by default".
+        'load_mode' => 'scroll',
         'load_batch' => '12',
         'load_batch_custom' => 24,
+        // Lane PT: the old shop's category banner behind the title. NOT CSS.
+        // The main switch is ON because the owner asked for it in as many
+        // words ("need to bring that on the category pages as title
+        // background"); a category with no imported banner is unaffected.
+        // Everything else is a choice he has not made, at a neutral value.
+        'cat_header' => true,
+        'cat_header_fallback' => false,
+        'cat_header_brands' => true,
+        'cat_header_h_phone' => 190,
+        'cat_header_h_desktop' => 300,
+        'cat_header_overlay' => 40,
+        'cat_header_text' => 'light',
+        'cat_header_align' => 'center',
+        'cat_header_lines' => 3,
     ];
 
     expect(array_keys($fields))->toEqual(array_keys($expected));

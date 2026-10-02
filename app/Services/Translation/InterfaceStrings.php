@@ -333,6 +333,10 @@ final class InterfaceStrings
             'shop.sub_search' => 'Results across products and brands.',
             'shop.crumb_category' => 'Category',
             'shop.crumb_search' => 'Search',
+            // The imported category title header (Lane PT): the toggle under a
+            // long category description. components/kbb-title-header.
+            'shop.header_more' => 'Read more',
+            'shop.header_less' => 'Read less',
 
             /*
              * THE SKIN QUIZ'S INLINE SCRIPT — Lane FB.
@@ -1582,6 +1586,13 @@ final class InterfaceStrings
             'account.reset_submit' => 'Save new password',
             'account.reset_signed_out_note' => 'Signing in everywhere else will be ended, so you will need to sign in again on your other devices.',
             'account.show_password' => 'Show password',
+            // The page an account invite links to (Store -> Customers -> Send
+            // account invite, Lane PQ). The password fields reuse reset_field_*.
+            'account.welcome_title' => 'Set your password',
+            'account.welcome_lead' => 'Your :shop account is ready. Choose a password to finish setting it up. At least 8 characters.',
+            'account.welcome_for' => 'Account: :email',
+            'account.welcome_submit' => 'Save password and sign in',
+            'account.welcome_invalid' => 'That link is no longer valid. Account links work once and expire after a few days. You can still set a password with a new link.',
         ];
     }
 
@@ -2007,6 +2018,10 @@ final class InterfaceStrings
             'greeting.hello' => 'Hello,',
             'greeting.hello_named' => 'Hello :name,',
             'common.paste_link' => 'Or paste this into your browser:',
+            // The account invite (Lane PQ). The body is the owner's; these are
+            // the button and the line saying why the message arrived.
+            'customer_invite.button' => 'Set your password',
+            'customer_invite.why' => 'You are receiving this because you placed an order with :shop using this email address. If that was not you, ignore this email: nothing happens unless the link is used.',
             'common.unsubscribe' => 'Unsubscribe',
             'layout.masthead_tagline' => 'Authentic K-Beauty, curated for you',
             'layout.support_heading' => 'We are here if you need us',

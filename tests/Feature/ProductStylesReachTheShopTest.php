@@ -77,6 +77,9 @@ function psShopSeed(): void
             'is_visible' => true,
             'brand_id' => $brand->id,
             'price' => 5000,
+            // One markdown, so "Discount badge" has a pill to draw (Lane PR:
+            // it is a markup switch now, not a <body> class).
+            'sale_price' => $i === 2 ? 4000 : null,
             'stock_status' => 'instock',
             'type' => 'simple',
             'rating' => 4.0,
@@ -131,8 +134,11 @@ function psOffDefault(): array
         'show_category' => true,
         'show_rating' => false,
         'show_was_price' => false,
-        'show_discount' => false,
-        'show_new' => false,
+        /* ▲ AND true FOR THESE TWO, for the same reason.            (Lane PR)
+           The owner asked for the NEW and -N% pills off by default on
+           2 October 2026, so switching them back ON is the move. */
+        'show_discount' => true,
+        'show_new' => true,
         'show_cart' => false,
         'name_lines' => 3,
         'sale_colour' => '#123456',
@@ -153,6 +159,19 @@ function psOffDefault(): array
         'sticky_btn_bg' => '#BCDEF0',
         'sticky_btn_fg' => '#CDEF01',
         'sticky_radius' => 3,
+        // Lane PR: hover on a phone (a <body> class) and Spacing & type (a
+        // <style> element) — each moved off its default reaches the shop.
+        'hover_phone' => true,
+        'card_pad_m' => 8, 'card_pad_d' => 24,
+        'card_gap_img_m' => 6, 'card_gap_img_d' => 24,
+        'card_gap_price_m' => 4, 'card_gap_price_d' => 20,
+        'card_gap_cart_m' => 4, 'card_gap_cart_d' => 20,
+        'card_fs_title_m' => '12px', 'card_fs_title_d' => '16px',
+        'card_fs_price_m' => '15px', 'card_fs_price_d' => '18px',
+        'card_fs_btn_m' => '12px', 'card_fs_btn_d' => '13px',
+        'card_fs_brand_m' => '9px', 'card_fs_brand_d' => '12px',
+        'card_fw_title' => '500', 'card_fw_price' => '500', 'card_fw_sale' => '600',
+        'card_fw_btn' => '600', 'card_fw_brand' => '700',
     ];
 }
 

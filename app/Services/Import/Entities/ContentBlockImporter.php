@@ -9,6 +9,7 @@ use App\Services\Import\DocumentMediaRewrite;
 use App\Services\Import\ElementorToHtml;
 use App\Services\Import\EntityReport;
 use App\Services\Import\ImportContext;
+use App\Services\Import\OldSiteLinks;
 use App\Services\Import\MediaRewrite;
 use App\Services\Import\Row;
 use App\Services\Import\RowRejected;
@@ -62,6 +63,9 @@ use Illuminate\Support\Str;
  */
 final class ContentBlockImporter extends EntityImporter
 {
+    /** The old-site link ledger, replayed onto imported copy (Lane PT). */
+    private ?OldSiteLinks $links = null;
+
     /** The longest name the HTML Blocks screen accepts (BlocksApiController). */
     private const NAME_MAX = 120;
 
@@ -135,6 +139,11 @@ final class ContentBlockImporter extends EntityImporter
 
             return;
         }
+
+        // The old-site links already re-pointed in this block, re-pointed the
+        // same way, so an unchanged export reads unchanged and the fingerprint
+        // below matches what OldSiteLinks left behind. (Lane PT)
+        $converted['html'] = (string) ($this->links ??= new OldSiteLinks)->replay('blocks', $block?->id, 'content', $converted['html']);
 
         $block ??= new Block;
 

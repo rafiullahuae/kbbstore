@@ -489,6 +489,7 @@ final class ImportRunner
         if (! $context->dryRun() && $exhausted) {
             $checkpoint->finish();
             $this->keepPicturesLocal($report);
+            $this->keepLinksLocal($report);
         }
 
         $this->verify($importer, $report, $exhausted);
@@ -549,6 +550,39 @@ final class ImportRunner
             }
         } catch (\Throwable $e) {
             $report->note('Pictures: could not re-point images at this server after this file ('.class_basename($e).'). Use Addresses & pictures -> Bring these across.');
+        }
+    }
+
+    /**
+     * Point every link in imported copy that still names the OLD shop at this
+     * shop's address for the same thing, the moment a file finishes importing.
+     * (Lane PT)
+     *
+     * The owner: "Internal links in the end of anua foam and other cleansers --
+     * on all articles and products/sets descriptions, internal links are going
+     * to still old site." The export copies WordPress's copy verbatim, links
+     * and all; this is the same sweep Store -> Store Import / Export ->
+     * Addresses & pictures -> Links to the old site runs, so a re-import can
+     * never put the old links back for good. OldSiteLinks records every change
+     * (Undo is on that screen) and replays them on the next import, which is
+     * what keeps a second pass over an unchanged export reading "unchanged".
+     *
+     * Same terms as keepPicturesLocal(): live runs only, once per finished
+     * file, never fails the import.
+     */
+    private function keepLinksLocal(EntityReport $report): void
+    {
+        try {
+            $done = (new OldSiteLinks)->apply();
+
+            if ($done['links'] > 0) {
+                $report->note(sprintf(
+                    'Links: %d link(s) to the old site in %d description(s) and article(s) now point at this shop (Undo: Addresses & pictures -> Links to the old site).',
+                    $done['links'], $done['documents']
+                ));
+            }
+        } catch (\Throwable $e) {
+            $report->note('Links: could not re-point links to the old site after this file ('.class_basename($e).'). Use Addresses & pictures -> Links to the old site.');
         }
     }
 

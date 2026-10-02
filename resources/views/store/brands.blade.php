@@ -20,6 +20,10 @@
     @if ($banner ?? null)
         @vite('resources/css/kbb/kbb-banner.css')
     @endif
+{{-- The imported title header (Lane PT), at column 0 and on the directive's
+     own line so a brand without one gains no bytes. --}}@if ($titleHeader ?? null)
+@vite('resources/css/kbb/kbb-title-header.css')
+@endif
 @endpush
 
 @section('content')
@@ -48,6 +52,9 @@
             the side gutter.
         --}}
         <x-kbb-banner :banner="$banner ?? null" :contained="false" />
+@if ($titleHeader ?? null)
+<x-kbb-title-header :header="$titleHeader" :contained="false" />
+@endif
 
         <div class="brw-hero">
             <span class="brw-logo brw-logo--lg">
@@ -58,7 +65,7 @@
                 @endif
             </span>
             <div class="brw-hero-txt">
-                @unless ($banner ?? null)
+                @unless (($banner ?? null) || ($titleHeader ?? null))
                     <h1 class="brw-h1">{{ $brand->t('name') }}</h1>
                     @if ($brand->description)
                         <p class="brw-sub">{{ strip_tags($brand->t('description')) }}</p>
@@ -79,7 +86,8 @@
             <p class="brw-empty">{{ __('store.brands.brand_empty') }}</p>
         @else
             <x-product-grid :products="$products" :heading="__('store.brands.popular_heading')"
-                            :more-url="$brand->filterUrl()" :more-label="__('store.product_grid.view_all')" />
+                            :more-url="$brand->filterUrl()" :more-label="__('store.product_grid.view_all')" grid-id="brandGrid" />
+{{-- The rest of the brand, a batch at a time (Lane PR). Draws nothing when the brand fits on one page. At column 0 because StorefrontEnglishUnchangedTest byte-pins this page and an indented line leaves its indent behind. --}}@include('partials.listing-pager', ['page' => $page, 'lastPage' => $lastPage, 'urlFor' => $pageUrl, 'grid' => '#brandGrid'])
         @endif
     @else
         <nav class="brw-crumb" aria-label="{{ __('store.breadcrumb.label') }}">

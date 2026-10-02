@@ -219,15 +219,29 @@ final class MediaAudit
             }
         }
 
-        foreach (Brand::query()->select(['id', 'slug', 'logo'])->cursor() as $brand) {
+        /*
+         * `header_image` on both (Lane PT): the old shop's title-header banner,
+         * which CategoryImporter / BrandImporter write as a URL on the old
+         * site. Counted, fetched and re-pointed exactly like the picture beside
+         * it -- MediaRewrite::COLUMNS carries the same two, changed together.
+         */
+        foreach (Brand::query()->select(['id', 'slug', 'logo', 'header_image'])->cursor() as $brand) {
             if (is_string($brand->logo)) {
                 yield ['brand '.$brand->id.' ('.$brand->slug.')', 'brands.logo', $brand->logo];
             }
+
+            if (is_string($brand->header_image)) {
+                yield ['brand '.$brand->id.' ('.$brand->slug.')', 'brands.header_image', $brand->header_image];
+            }
         }
 
-        foreach (Category::query()->select(['id', 'slug', 'image'])->cursor() as $category) {
+        foreach (Category::query()->select(['id', 'slug', 'image', 'header_image'])->cursor() as $category) {
             if (is_string($category->image)) {
                 yield ['category '.$category->id.' ('.$category->slug.')', 'categories.image', $category->image];
+            }
+
+            if (is_string($category->header_image)) {
+                yield ['category '.$category->id.' ('.$category->slug.')', 'categories.header_image', $category->header_image];
             }
         }
 

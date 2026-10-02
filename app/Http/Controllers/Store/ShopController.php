@@ -51,6 +51,9 @@ class ShopController extends Controller
 
     public function __construct(private SettingsService $settings) {}
 
+    /** The one brand a single-brand listing is about, as banner() read it. (Lane PT) */
+    private ?Brand $listingBrand = null;
+
     /**
      * @param  ?Category  $category  the row, when the caller has already got it.
      *
@@ -171,6 +174,38 @@ class ShopController extends Controller
         $banner = $this->banner($category, $active, (string) $request->query('s', ''), $title);
 
         /*
+         * THE OLD SHOP'S TITLE HEADER (Lane PT): the category's imported banner
+         * behind its title and description. Null whenever the owner's own
+         * banner is on, whenever nothing was imported, and on /shop/ and a
+         * search -- and a null header is the page exactly as it was. No query
+         * of its own: the category row is already loaded, and the one-brand
+         * listing reuses the row banner() just read.
+         */
+        $titleHeader = $category
+            ? \App\Support\TitleHeader::forModel($category, $title, $banner)
+            : \App\Support\TitleHeader::forModel($this->listingBrand, $this->listingBrand?->t('name') ?? $title, $banner, true);
+
+        /*
+         * A ONE-BRAND LISTING IS NAMED FOR ITS BRAND.              (2.60.346)
+         *
+         * The owner, on /shop/?filter_brands=celimax: "it showin one default
+         * heading and text. show it either the brand name as per the url. or
+         * remove it completely. this thing do only for such brand urls." It
+         * read "Shop all" over "Authentic Korean skincare, curated for the
+         * UAE." -- the unfiltered /shop/ heading, on a page of one brand.
+         *
+         * banner() has already read the brand row, so this costs no query. The
+         * heading (and the tab title and the page schema, which said "Shop all"
+         * too) take the brand's name, and the generic line goes. Only that one
+         * path -- no category, no search, exactly one brand that exists --
+         * because listingBrand is only ever set there. ShopBrandHeadingTest.
+         */
+        if (! $category && $this->listingBrand) {
+            $title = (string) $this->listingBrand->t('name');
+            $sub = '';
+        }
+
+        /*
          * PER-CATEGORY SEO OVERRIDES — `categories.seo`, unread until now.
          *
          * The same column, the same shape and the same story as `brands.seo`;
@@ -265,6 +300,7 @@ class ShopController extends Controller
 
         return view('store.shop', [
             'banner' => $banner,
+            'titleHeader' => $titleHeader,
             /*
              * THE ARCHIVE'S CATEGORY, FOR THE TILE'S EYEBROW.          Lane PG
              *
@@ -474,6 +510,15 @@ class ShopController extends Controller
      */
     private function banner(?Category $category, array $active, string $search, string $title): ?array
     {
+        /*
+         * Cleared first, on every path. The router keeps ONE controller
+         * instance per route, so in any process that serves more than one
+         * request (the test suite, a queue worker, Octane) a brand read here
+         * for /shop/?filter_brands=celimax was still set when /shop/?s=toner
+         * returned early below -- and that search would be titled "Celimax".
+         */
+        $this->listingBrand = null;
+
         if ($category) {
             return \App\Support\PageBanner::forModel($category, $title);
         }
@@ -484,10 +529,14 @@ class ShopController extends Controller
             return null;
         }
 
+        // The header columns ride on the same query, for the title header
+        // (Lane PT) -- one row, one statement, as before.
         $brand = Brand::query()
-            ->select('id', 'name', 'banner')
+            ->select('id', 'name', 'banner', 'description', 'logo', 'header_image', 'header_title', 'header_subtitle')
             ->where('slug', $active['brand'][0])
             ->first();
+
+        $this->listingBrand = $brand;
 
         // The fallback heading is catalogue text — see BrandController::show().
         return \App\Support\PageBanner::forModel($brand, $brand?->t('name') ?? $title);

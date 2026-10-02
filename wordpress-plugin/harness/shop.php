@@ -311,7 +311,10 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 	// ── Terms ───────────────────────────────────────────────────────────────
 	$terms = array(
 		array( 15, 'Skincare', 'skincare', 'product_cat', 0, 'Everything for the face' ),
-		array( 22, 'Face Cleansers', 'face-cleansers', 'product_cat', 15, '' ),
+		// A description with a link back into the OLD site in it (1.11.0):
+		// the same shape as the line the owner saw at the end of his product
+		// copy, and the reason the new shop rewrites old-site links.
+		array( 22, 'Face Cleansers', 'face-cleansers', 'product_cat', 15, '<p>Gentle cleansers for every skin. Follow with a <a href="https://kbeautybliss.com/toners/">toner</a>.</p>' ),
 		array( 31, 'Toners', 'toners', 'product_cat', 0, '' ),
 		array( 501, 'COSRX', 'cosrx', 'pa_brands', 0, '' ),
 		array( 502, 'Beauty of Joseon', 'beauty-of-joseon', 'pa_brands', 0, 'Hanbang skincare' ),
@@ -349,6 +352,34 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 	$meta( 'termmeta', 'term_id', 15, array( 'order' => '1', 'thumbnail_id' => '9003' ) );
 	$meta( 'termmeta', 'term_id', 502, array( 'order' => '2', 'thumbnail_id' => '9004' ) );
 
+	// ── Title-header term meta (1.11.0) ─────────────────────────────────────
+	//
+	// THE KEY NAMES BELOW ARE INVENTED FOR THE HARNESS, and say so. Nobody
+	// writing this could see which key the owner's Rey install keeps a category
+	// banner under -- which is exactly why the exporter reads every picture-,
+	// cover-, banner-, header-, title- and subtitle-named key and writes a
+	// census of them all. Each one here exercises one SHAPE a value can take:
+	//
+	//   15  an attachment id (ACF's default), its ACF `_field` reference, a
+	//       title and a subtitle, plus WooCommerce's own `display_type`;
+	//   22  a plain URL string;
+	//   31  nothing -- the "no banner" row (and, with --rey=1, a Rey page-cover
+	//       global section whose picture is an Elementor background);
+	//   502 a brand, with a serialized array carrying `url`.
+	$meta( 'termmeta', 'term_id', 15, array(
+		'display_type'   => '',
+		'header_banner'  => '9007',
+		'_header_banner' => 'field_64a1c0de1b2c3',
+		'page_title'     => 'Korean Skincare',
+		'page_subtitle'  => 'Gentle, effective and authentic',
+	) );
+	$meta( 'termmeta', 'term_id', 22, array(
+		'cover_image' => 'https://kbeautybliss.com/wp-content/uploads/2020/02/face-cleansers-cover.jpg',
+	) );
+	$meta( 'termmeta', 'term_id', 502, array(
+		'brand_banner' => serialize( array( 'url' => 'https://kbeautybliss.com/wp-content/uploads/2020/01/boj-banner.jpg' ) ),
+	) );
+
 	// ── Attachments ─────────────────────────────────────────────────────────
 	$attachments = array(
 		9001 => '2019/03/ginseng-serum.jpg',
@@ -361,6 +392,7 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 		9003 => '2020/01/skincare-category.jpg',
 		9004 => '2020/01/boj-logo.png',
 		9005 => '2021/05/first-post.jpg',
+		9007 => '2020/01/skincare-banner.jpg',
 	);
 
 	foreach ( $attachments as $id => $file ) {
@@ -479,7 +511,9 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 	$insert( 'posts', array(
 		'ID' => 4023, 'post_author' => 1, 'post_type' => 'product', 'post_status' => 'publish',
 		'post_title' => 'Rice Cleanser', 'post_name' => 'cleanser-4023',
-		'post_content' => 'Two sizes.', 'post_excerpt' => '',
+		// Ends the way the owner's cleanser copy ends: an internal link that
+		// still points at the OLD site (1.11.0 / the old-site link rewrite).
+		'post_content' => 'Two sizes. Get premium <a href="https://kbeautybliss.com/face-cleansers/">Face Cleansers</a> at unbeatable prices only at K-Beauty Bliss', 'post_excerpt' => '',
 		'post_date' => '2021-02-01 09:00:00', 'post_date_gmt' => '2021-02-01 05:00:00',
 		'post_modified' => '2021-02-01 09:00:00', 'menu_order' => 3,
 	) );
@@ -767,7 +801,7 @@ function kbb_harness_seed( PDO $pdo, $p, $storage ) {
 	$insert( 'posts', array(
 		'ID' => 7001, 'post_author' => 1, 'post_type' => 'post', 'post_status' => 'publish',
 		'post_title' => 'How to layer a K-beauty routine', 'post_name' => 'how-to-layer-a-k-beauty-routine',
-		'post_content' => 'Start with the thinnest. <img src="' . $uploads . '/2021/05/first-post.jpg">',
+		'post_content' => 'Start with the thinnest. <img src="' . $uploads . '/2021/05/first-post.jpg"> Try <a href="http://www.kbeautybliss.com/product/serum-4021/" target="_blank" rel="noopener">the ginseng serum</a>.',
 		'post_excerpt' => 'Thinnest first.',
 		'post_date' => '2021-05-04 09:00:00', 'post_date_gmt' => '2021-05-04 05:00:00',
 		'post_modified' => '2021-05-04 09:00:00',
@@ -1386,6 +1420,19 @@ function kbb_harness_rey_sections( PDO $pdo, $p, $seed ) {
 			$tip ),
 		array( 18162, 'rey-global-sections', 'too-deep', 'Too Deep', 'publish', '<p>Four levels down.</p>', null ),
 		array( 18170, 'rey-global-sections', 'trashed-only', 'Only The Trash Uses This', 'publish', '<p>Only a trashed product names me.</p>', null ),
+		// A Rey PAGE COVER (1.11.0): a global section assigned to category 31
+		// below, whose picture is the section's Elementor background rather
+		// than an attachment id of its own.
+		array( 18180, 'rey-global-sections', 'toners-cover', 'Toners Cover', 'publish', '<h1>Toners</h1>', array(
+			array(
+				'id' => '7f1e2d3', 'elType' => 'section',
+				'settings' => array(
+					'background_background' => 'classic',
+					'background_image' => $image( '2023/06/toners-cover.jpg', 18206 ),
+				),
+				'elements' => array(),
+			),
+		) ),
 	);
 
 	$post = $pdo->prepare(
@@ -1409,6 +1456,9 @@ function kbb_harness_rey_sections( PDO $pdo, $p, $seed ) {
 			$meta->execute( array( $id, '_elementor_version', '3.21.5' ) );
 		}
 	}
+
+	$pdo->prepare( 'INSERT INTO `' . $p . 'termmeta` (term_id, meta_key, meta_value) VALUES (?, ?, ?)' )
+		->execute( array( 31, 'cover_section', '18180' ) );
 
 	$append = $pdo->prepare(
 		'UPDATE `' . $p . 'posts` SET post_content = CONCAT(post_content, ?), post_excerpt = CONCAT(post_excerpt, ?) WHERE ID = ?'

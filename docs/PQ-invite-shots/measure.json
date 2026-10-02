@@ -1,0 +1,135 @@
+{
+  "390": {
+    "errors": [],
+    "guestChip": "Guest checkout 1045",
+    "invitedChip": "Invited, not activated 1043",
+    "bulkBarTicked": "Send account invite…",
+    "selectAllLabel": "Select all 1,045 matching this view",
+    "bulkBarAll": "All 1,045 customers matching this view are selected\nClear\nSend account invite…",
+    "list": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "summary": "1,045 customers selected\n·\n0 will be sent an invite\n·\n2 with no usable email address — skipped\n·\n 1,043 invited in the last 10 minutes — skipped (tick to send again)",
+    "sendButton": "Send to 0 customers…",
+    "modal": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "modalBox": {
+      "width": 358,
+      "left": 16
+    },
+    "summaryReconfirmed": "1,045 customers selected\n·\n1,043 will be sent an invite\n·\n2 with no usable email address — skipped\n·\n 1,043 invited in the last 10 minutes — will be sent again",
+    "sendButtonReconfirmed": "Send to 1,043 customers…",
+    "invitedChipAfter": "Invited, not activated 1043",
+    "pillsOnPage": [
+      "Invited · 2 Oct",
+      "Invited · 2 Oct",
+      "Invited · 2 Oct",
+      "Invited · 2 Oct",
+      "Invited · 2 Oct",
+      "Invited · 2 Oct"
+    ],
+    "listInvited": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "detailInvite": "Account invite\nSent 2 Oct 2026 (3 invites in all) — not used yet Invited · 2 Oct",
+    "detail": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "email": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "welcomeStatus": 200,
+    "welcomeHeaders": {
+      "cacheControl": "no-store, private",
+      "referrer": "strict-origin-when-cross-origin"
+    },
+    "welcome": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "welcomeH1": "Set your password",
+    "welcomeH1Size": "21px",
+    "spentText": "That link is no longer valid. Account links work once and expire after a few days. You can still set a password with a new link."
+  },
+  "1280": {
+    "errors": [],
+    "guestChip": "Guest checkout 1046",
+    "invitedChip": "Invited, not activated 4",
+    "bulkBarTicked": "Send account invite…",
+    "selectAllLabel": "Select all 1,046 matching this view",
+    "bulkBarAll": "All 1,046 customers matching this view are selected\nClear\nSend account invite…",
+    "list": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "summary": "1,046 customers selected\n·\n1,042 will be sent an invite\n·\n2 with no usable email address — skipped\n·\n 2 invited in the last 10 minutes — skipped (tick to send again)",
+    "sendButton": "Send to 1,042 customers…",
+    "modal": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "modalBox": {
+      "width": 1120,
+      "left": 80
+    },
+    "refusedProblem": "The email must contain {set_password_link} — without it the customer has no way to set a password.",
+    "sendDisabledWithoutLink": true,
+    "previewSubjectAfterEdit": "Aisha, your K Beauty Bliss account is ready",
+    "saveStatus": 200,
+    "confirm": "Send the invite to 1,042 customers now? Each gets a link that expires in 7 days. This emails them straight away.\nBack\nYes, send 1,042 emails",
+    "progressMid": "40 of 1,042 sent\n\nSending… keep this tab open. If you close it, press Resume on Store → Customers to carry on.\n\nSkipped before sending: 2 had no usable email · 2 were invited minutes earlier.",
+    "progressDone": "1,042 of 1,042 sent\n\nDone. 1,042 invites sent.\n\nSkipped before sending: 2 had no usable email · 2 were invited minutes earlier.",
+    "invitedChipAfter": "Invited, not activated 1044",
+    "pillsOnPage": [
+      "Invited · 2 Oct",
+      "Invited · 2 Oct",
+      "Invited · 2 Oct",
+      "Invited · 2 Oct",
+      "Invited · 2 Oct",
+      "Invited · 2 Oct"
+    ],
+    "listInvited": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "detailInvite": "Account invite\nSent 2 Oct 2026 (3 invites in all) — not used yet Invited · 2 Oct",
+    "detail": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "email": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "welcomeStatus": 200,
+    "welcomeHeaders": {
+      "cacheControl": "no-store, private",
+      "referrer": "strict-origin-when-cross-origin"
+    },
+    "welcome": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "welcomeH1": "Set your password",
+    "welcomeH1Size": "21px",
+    "tooShort": "The password field must be at least 8 characters.",
+    "afterSetUrl": "http://127.0.0.1:9521/my-account/",
+    "mariamPills": [
+      "Account",
+      "✓",
+      "Activated",
+      "Guest",
+      "Invited · 2 Oct",
+      "Guest",
+      "Invited · 2 Oct",
+      "Guest",
+      "Invited · 2 Oct"
+    ]
+  }
+}
