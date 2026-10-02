@@ -3,6 +3,24 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.358
+**Sort works; the product count beside Filters is hidden; the whole category
+banner on phones.** Apply after .357. No plugin change. Runs one migration (a
+cache clear).
+
+| Your report | Now |
+|---|---|
+| "the selection of low to high etc, is absolutely not working" | The dropdown's script crashed on every choice ("URL is not a constructor"); it now reloads in the chosen order. The server's sorting was always right |
+| "turn hide by default the products count beside the filter button" | Hidden. Appearance → Site layout → Product grid → "Show the product count beside Filters" brings it back |
+| "the background banner image in mobile should display full, not any cut from left or right" | On phones the header takes the picture's own shape: 46% of a 4:1 banner's width shown before at 390, 100% now, words still on it; extra room is the same picture blurred. Appearance → Site layout → Category header → "Show the whole picture on phones" (on). The description also wraps inside the box on phones |
+
+Files (9): app/Services/SiteLayout.php, app/Support/TitleHeader.php,
+database/migrations/2027_07_18_000950_clear_caches_listing_fixes.php,
+resources/css/kbb/kbb-title-header.css,
+resources/views/admin/partials/site-layout-screen.blade.php,
+resources/views/components/kbb-title-header.blade.php,
+resources/views/store/shop.blade.php, public/build (manifest + title-header css).
+
 ## 2.60.357
 **C · Ripple on every button and icon (no more grey tap box), and every tab of
 Appearance → Product page in view.** Apply after .356. No plugin change. Runs
