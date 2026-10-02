@@ -147,6 +147,10 @@ final class AdminCapabilities
         'customers.view' => ['owner', 'manager', 'support'],
         'customers.manage' => ['owner', 'manager'],
         'customers.export' => ['owner', 'manager'],
+        // Store -> Customers -> Send account invite (Lane PQ). Emails every
+        // guest the shop has in the shop's own name, so it is not something a
+        // support account can do just because it can read the list.
+        'customers.invite' => ['owner', 'manager'],
 
         // Catalogue and storefront content.
         'catalog.view' => ['owner', 'manager', 'editor'],
@@ -919,6 +923,12 @@ final class AdminCapabilities
         // /customers/export also matches 'admin-api/customers/*', and reading
         // one customer is support's job while downloading all of them is not.
         ['GET', 'admin-api/customers/export', 'customers.export'],
+        // Send account invite (Lane PQ). Above every customer rule it could
+        // overlap: every verb, every path under /invites, one capability. Nothing below can
+        // match these paths today (`*` stops at a slash), but a later
+        // `admin-api/customers/**` read rule would, and must not hand a
+        // support account the send.
+        ['*', 'admin-api/customers/invites/**', 'customers.invite'],
         ['POST', 'admin-api/customers/bulk-delete', 'customers.manage'],
         ['POST', 'admin-api/customers/*/note', 'customers.manage'],
         ['POST', 'admin-api/customers/*/restore', 'customers.manage'],

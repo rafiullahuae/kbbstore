@@ -94,14 +94,14 @@ class CustomersApiController extends Controller
      * than the package just applied, the server is serving cached bytecode and
      * the code is not the thing to go and look at.
      */
-    private const BUILD = '2.60.130';
+    private const BUILD = '2.60.328';
 
     /**
      * The chip filters, named once so the list, the chip counts and the export
      * cannot drift apart — a filter meaning one thing on screen and another in
      * the download is how somebody emails the wrong customer list.
      */
-    private const SEGMENTS = ['all', 'ordered', 'never', 'repeat', 'account', 'guest', 'verified', 'unverified', 'trashed'];
+    private const SEGMENTS = ['all', 'ordered', 'never', 'repeat', 'account', 'guest', 'invited', 'verified', 'unverified', 'trashed'];
 
     /**
      * Sentinel for "no activity ever".
@@ -521,6 +521,38 @@ class CustomersApiController extends Controller
         ]);
     }
 
+    /* ----------------------------------------------------- bulk selection */
+
+    /**
+     * Every customer id the list would show for these filters, across ALL
+     * pages — "select all N matching this view" (Lane PQ, Send account invite).
+     *
+     * The same baseQuery() and applySegment() the list and the export use, so
+     * the selection cannot mean something different from the screen the owner
+     * is looking at. Wrapped as a subquery rather than plucked directly:
+     * rowQuery() carries select bindings, and replacing its column list would
+     * leave them dangling.
+     *
+     * @param  array<string, mixed>  $filters  the list's own query parameters
+     * @return list<int>
+     */
+    public function matchingIds(array $filters, int $limit): array
+    {
+        $request = Request::create('/', 'GET', array_intersect_key($filters, array_flip([
+            'search', 'filter', 'from', 'to', 'spend_min', 'spend_max', 'country', 'city',
+        ])));
+
+        $query = $this->applySegment($this->baseQuery($request), $this->segment($request));
+
+        return DB::query()
+            ->fromSub($query->toBase(), 'm')
+            ->orderBy('m.id')
+            ->limit($limit)
+            ->pluck('m.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
     /* --------------------------------------------------------------- queries */
 
     /**
@@ -637,6 +669,11 @@ class CustomersApiController extends Controller
                 'customers.notes',
                 'customers.created_at',
                 'customers.deleted_at',
+                // Store -> Customers -> Send account invite (Lane PQ). The
+                // dates and the count only; the token hash never leaves the row.
+                'customers.invited_at',
+                'customers.invite_count',
+                'customers.invite_accepted_at',
                 DB::raw('(CASE WHEN customers.password IS NOT NULL OR customers.legacy_password IS NOT NULL THEN 1 ELSE 0 END) as has_login'),
                 DB::raw('COALESCE(oa.paid_orders, 0) as paid_orders'),
                 DB::raw('COALESCE(oa.spend_fils, 0) as spend_fils'),
@@ -818,6 +855,13 @@ class CustomersApiController extends Controller
             'account' => $query->where(fn ($q) => $q->whereNotNull('customers.password')
                 ->orWhereNotNull('customers.legacy_password')),
             'guest' => $query->whereNull('customers.password')->whereNull('customers.legacy_password'),
+            // "Invited, not activated": sent an account invite and still cannot
+            // sign in. Someone who set a password some other way since (at
+            // checkout, through Forgot password) has an account and is not
+            // waiting on anything, so they drop out of this view too.
+            'invited' => $query->whereNotNull('customers.invited_at')
+                ->whereNull('customers.invite_accepted_at')
+                ->whereNull('customers.password')->whereNull('customers.legacy_password'),
             'verified' => $query->whereNotNull('customers.email_verified_at'),
             'unverified' => $query->whereNull('customers.email_verified_at'),
             'trashed' => $query->onlyTrashed(),
@@ -843,6 +887,8 @@ class CustomersApiController extends Controller
              SUM(CASE WHEN COALESCE(oa.paid_orders, 0) >= 2 THEN 1 ELSE 0 END) as c_repeat,
              SUM(CASE WHEN customers.password IS NOT NULL OR customers.legacy_password IS NOT NULL THEN 1 ELSE 0 END) as c_account,
              SUM(CASE WHEN customers.password IS NULL AND customers.legacy_password IS NULL THEN 1 ELSE 0 END) as c_guest,
+             SUM(CASE WHEN customers.invited_at IS NOT NULL AND customers.invite_accepted_at IS NULL
+                       AND customers.password IS NULL AND customers.legacy_password IS NULL THEN 1 ELSE 0 END) as c_invited,
              SUM(CASE WHEN customers.email_verified_at IS NOT NULL THEN 1 ELSE 0 END) as c_verified,
              SUM(CASE WHEN customers.email_verified_at IS NULL THEN 1 ELSE 0 END) as c_unverified'
         );
@@ -858,6 +904,7 @@ class CustomersApiController extends Controller
             'repeat' => (int) ($row->c_repeat ?? 0),
             'account' => (int) ($row->c_account ?? 0),
             'guest' => (int) ($row->c_guest ?? 0),
+            'invited' => (int) ($row->c_invited ?? 0),
             'verified' => (int) ($row->c_verified ?? 0),
             'unverified' => (int) ($row->c_unverified ?? 0),
             'trashed' => (int) $trashed,
@@ -1058,6 +1105,10 @@ class CustomersApiController extends Controller
             'state' => $this->blankToNull($c->addr_state),
             'country' => $this->blankToNull($c->addr_country),
             'trashed' => $c->deleted_at !== null,
+            // Store -> Customers -> Send account invite (Lane PQ): the pills.
+            'invited_at' => $this->iso($c->invited_at ?? null),
+            'invite_count' => (int) ($c->invite_count ?? 0),
+            'invite_accepted_at' => $this->iso($c->invite_accepted_at ?? null),
             /*
              * FIGURES EXCLUDE DEMO ROWS; LISTS SHOW THEM AND SAY SO.
              *
