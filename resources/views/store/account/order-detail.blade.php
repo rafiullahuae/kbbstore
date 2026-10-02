@@ -261,8 +261,8 @@
              comment is removed but the newline after it is not, and this
              column's bytes are pinned by StorefrontEnglishUnchangedTest. --}}
         <div class="kbbod-row"><span>{{ __('store.checkout.subtotal') }}</span><span>{!! $receiptMoney((int) $order->subtotal) !!}</span></div>
-        @if ((int) $order->discount_total > 0)
-          <div class="kbbod-row"><span>{{ $order->coupon_code ?: __('store.checkout.discount') }}</span><span>&ndash; {!! $receiptMoney((int) $order->discount_total) !!}</span></div>
+        @includeWhen((int) $order->bundle_discount > 0, 'partials.buy-together.total-row', ['cls' => 'kbbod-row', 'label' => __('email.totals.bundle'), 'amount' => '&ndash; ' . $receiptMoney((int) $order->bundle_discount)])@if ((int) $order->discount_total - (int) $order->bundle_discount > 0)
+          <div class="kbbod-row"><span>{{ $order->coupon_code ?: __('store.checkout.discount') }}</span><span>&ndash; {!! $receiptMoney((int) $order->discount_total - (int) $order->bundle_discount) !!}</span></div>
         @endif
         <div class="kbbod-row">
           <span>{{ __('store.checkout.delivery') }}{{ $order->shipping_method ? ' · ' . $order->shipping_method : '' }}</span>

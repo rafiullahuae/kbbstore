@@ -456,7 +456,21 @@ class InvoiceDocument
 
         $rows = [[__('email.totals.subtotal'), (int) $order->subtotal, false]];
 
-        if ((int) $order->discount_total !== 0) {
+        /*
+         * (Lane RE) A "Buy these together" bundle is its own row, above the
+         * coupon's, and the coupon's row is then the coupon alone:
+         * `discount_total` holds both, `bundle_discount` says which part was
+         * the bundle. 0 on every order without one, so those print exactly as
+         * before.
+         */
+        $bundleOff = max(0, (int) ($order->bundle_discount ?? 0));
+        $couponOff = (int) $order->discount_total - $bundleOff;
+
+        if ($bundleOff > 0) {
+            $rows[] = [__('email.totals.bundle'), -$bundleOff, false];
+        }
+
+        if ($couponOff !== 0) {
             // Rendered negative, because it came off the bill. The column
             // stores it positive, which is right for a column and wrong for a
             // document somebody adds up by hand.
@@ -464,7 +478,7 @@ class InvoiceDocument
                 trim((string) $order->coupon_code) !== ''
                     ? __('email.totals.discount_coupon', ['code' => trim((string) $order->coupon_code)])
                     : __('email.totals.discount'),
-                -abs((int) $order->discount_total),
+                -abs($couponOff),
                 false,
             ];
         }

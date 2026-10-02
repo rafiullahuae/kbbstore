@@ -198,6 +198,18 @@ $kbbLineWas = static function ($kbbWasLine): int {
                         // a line repriced by a quantity bundle reports the
                         // saving it actually got.
                         $kbbSet = \App\Support\SetContents::fromProduct($p, (int) $item->unit_price);
+                        // (Lane RE) THIS LINE'S SHARE OF A "BUY THESE TOGETHER"
+                        // BUNDLE, from the same pricing pass as the summary
+                        // below. Null for every ordinary line, which leaves the
+                        // row byte-identical. A bundled line prints what it
+                        // costs after the bundle, its own price struck beside
+                        // it, and a green tag saying why.
+                        $kbbBt = $totals['bundle']['lines'][$item->id] ?? null;
+                        if ($kbbBt !== null && $kbbBt['off'] > 0) {
+                            $was = max($was, $line);
+                            $line -= $kbbBt['off'];
+                            $wasDp = \App\Support\Money::decimalsToDistinguish($was, $line);
+                        }
                     @endphp
                     {{-- ▲ `ci-set` MARKS A SET LINE AND NOTHING ELSE, and it is what
                          Appearance → Set → Set row on the cart page is scoped to.
@@ -231,7 +243,7 @@ $kbbLineWas = static function ($kbbWasLine): int {
                             @if ($brand)<div class="cbrand">{{ $brand }}</div>@endif
                             <div class="cn"><a href="{{ $p?->url() ?? '#' }}">{{ $name }}</a></div>
                             @if ($attrs)<div class="cvar">{{ $attrs }}</div>@endif
-                            @if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'cart', 'key' => 'c' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="qty">
+                            @includeWhen($kbbBt, 'partials.buy-together.line-tag', ['cls' => 'cbt', 'percent' => $kbbBt['percent'] ?? 0])@if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'cart', 'key' => 'c' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="qty">
                                 <button type="button" data-kcpq="{{ $item->id }}" data-d="-1" aria-label="{{ __('store.cart.decrease_quantity') }}">−</button>
                                 <span>{{ $item->quantity }}</span>
                                 <button type="button" data-kcpq="{{ $item->id }}" data-d="1" aria-label="{{ __('store.cart.increase_quantity') }}">+</button>
@@ -349,6 +361,9 @@ $kbbLineWas = static function ($kbbWasLine): int {
      * line of its own, it adds one.
      */
     $kbbCartDp = (int) ($totals['decimals'] ?? 0);
+    // (Lane RE) The "Buy-together discount" row's figure, signed the way the
+    // coupon's row beside it is.
+    $kbbBtAmount = \App\Support\Bidi::number('– ' . \App\Support\Money::format((int) ($totals['bundle_discount'] ?? 0), $kbbCartDp));
 @endphp
 @if (! $kbbSq)
             <h2>{{ __('store.cart.summary_heading') }}</h2>
@@ -422,7 +437,7 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
 @endphp
             <div class="srow"><span>{{ $kbbCpg['sum_value_label'] }} <span class="cpg-n">({{ trans_choice('store.cart.item_count', $totals['item_count']) }})</span></span><span>@if ($kbbWasTotal > $totals['subtotal'])<span class="cpg-was">{!! \App\Support\Money::format($kbbWasTotal, $kbbCartDp) !!}</span>@endif{!! \App\Support\Money::format($totals['subtotal'], $kbbCartDp) !!}</span></div>
 @endif
-            @if ($totals['discount'])
+            @includeWhen(($totals['bundle_discount'] ?? 0) > 0, 'partials.buy-together.total-row', ['cls' => 'srow disc cbt-row', 'label' => __('store.buy_together.bundle_row'), 'amount' => $kbbBtAmount])@if ($totals['discount'])
                 <div class="srow disc">
                     <span>{{ $totals['coupon_code'] }}</span>
                     <span>{!! \App\Support\Bidi::number('– ' . \App\Support\Money::format($totals['discount'], $kbbCartDp)) !!}</span>

@@ -663,6 +663,10 @@ final class ArabicInterfaceDrafts
             'store.buy_together.choose_option' => 'اختر خيارًا لـ :name أولًا.',
             'store.buy_together.sold_out_named' => 'نفدت كمية :name.',
             'store.buy_together.not_added' => 'تعذّرت إضافة :name.',
+            // Lane RE — the bundle discount.
+            'store.buy_together.saving' => 'أنت توفّر',
+            'store.buy_together.bundle_badge' => 'مشتراة معًا · خصم :percent%',
+            'store.buy_together.bundle_row' => 'خصم الشراء معًا',
 
             'store.quick_view.in_stock' => 'متوفر',
             'store.quick_view.out_of_stock' => 'غير متوفر',
@@ -1398,6 +1402,7 @@ final class ArabicInterfaceDrafts
             'email.totals.subtotal' => 'المجموع الفرعي',
             'email.totals.discount' => 'الخصم',
             'email.totals.discount_coupon' => 'الخصم (:code)',
+            'email.totals.bundle' => 'خصم الشراء معًا',
             'email.totals.delivery' => 'التوصيل',
             'email.totals.gift_wrapping' => 'تغليف الهدية',
             'email.totals.payment_fee' => 'رسوم :method',

@@ -88,12 +88,57 @@ class BuyTogetherSettings
 
         'title_ar' => ['text', 'Heading — Arabic', '',
             'Leave empty for the standard Arabic heading. Your English heading is never shown on the Arabic page.'],
+
+        /*
+         * ── THE BUNDLE DISCOUNT (Lane RE) ──────────────────────────────────
+         *
+         * "give option to give discount upon 5 products purchse, 4 products
+         *  and 3. so the price will change upon user number of selections."
+         *
+         * ▲ ALL THREE SHIP AT 0, WHICH IS OFF. He asked for the OPTION and
+         * named no percentage, and a discount is money: CLAUDE.md's 30
+         * September reversal ships what he ASKED FOR at the value he asked
+         * for, and he asked for none. Until he sets them nothing is cheaper
+         * and the product page looks exactly as it did, less the layout
+         * changes he did ask for.
+         *
+         * Whole percents, 0 to 50. Fifty is the ceiling because a bundle
+         * that gives away more than half of every product in it is not a
+         * setting anybody means to reach with a slider.
+         *
+         * Six products (when "How many products" is 6) take the FIVE tier —
+         * "5 or more" — rather than a fourth slider he never asked for.
+         */
+        // Held to 0–50 on the way OUT as well as in: all() casts a stored row
+        // through this schema, so a row written past save() — an import, a
+        // hand edit — still cannot price a bundle below half.
+        'tier_3' => ['range', 'Discount when 3 are bought together', 0,
+            'Taken off each of the three products when the shopper ticks three and presses the button. 0 is off.',
+            ['min' => 0, 'max' => 50, 'step' => 1, 'unit' => '%']],
+
+        'tier_4' => ['range', 'Discount when 4 are bought together', 0,
+            'Taken off each of the four products. 0 is off.',
+            ['min' => 0, 'max' => 50, 'step' => 1, 'unit' => '%']],
+
+        'tier_5' => ['range', 'Discount when 5 or more are bought together', 0,
+            'Taken off each product when five are bought together — and six, when “How many products” is 6. 0 is off.',
+            ['min' => 0, 'max' => 50, 'step' => 1, 'unit' => '%']],
+
+        /*
+         * "and on top of it, the coupon can be apply. also giveo ption to
+         *  include exclude the coupon apply on the buy together products."
+         *
+         * ON, because "the coupon can be apply" on top is what he asked for;
+         * the switch is how he takes it back.
+         */
+        'coupons' => ['bool', 'Coupons also apply to buy-together products', true,
+            'On: a coupon is taken off AFTER the bundle discount, on the already-reduced prices. Off: a coupon skips the bundled products, which keep only the bundle discount, and applies to the rest of the basket as usual.'],
     ];
 
     public const TABS = [
         'together' => ['Buy these together',
             'The bundle box under the buy column: the product on the page plus one match from each category that goes with it, a tick on each, and one pink button that adds every ticked product.',
-            ['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar']],
+            ['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar', 'tier_3', 'tier_4', 'tier_5', 'coupons']],
     ];
 
     public const POLICY = [

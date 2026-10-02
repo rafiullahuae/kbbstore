@@ -36,6 +36,35 @@
     on the server. Its label templates are printed here through __() so the
     Arabic page counts in Arabic.
 
+    ── FOUR ON A PHONE, THE FIFTH PEEKS (Lane RE) ─────────────────────────────
+    The owner, from a phone at 390px: "the text is going out the boxes. you can
+    adjust the 4 products on the screen, and 5th one can be hidden, and this
+    will be as carousel. and upon scroll this section must slightly animate and
+    display the half of the 5th product."
+
+      · Four cards fill a phone's row exactly (--bt-per, printed here: four, or
+        fewer when the section has fewer); a fifth and sixth wait off the edge
+        in the same swipeable, snapping row (`bt-more`).
+      · The first time the section scrolls into view the row slides to show
+        half of the fifth card and settles back — once. fbt.js only ADDS A
+        CLASS from an IntersectionObserver; the slide is a CSS animation whose
+        distance is half a card plus a gap, a percentage of the card itself.
+        Nothing is measured. Reduced motion gets no slide and a static peek.
+      · The price line scales with its own card (container query units) and
+        the struck price wraps under the current one rather than out of the box.
+
+    ── THE TOTAL, THE CUT PRICE AND THE SAVING (Lane RE) ──────────────────────
+    "above button Total: should be on right side beside the value. and also
+    mention cut price as total calculation. and mention you're saving 'AED
+    amount'". The total reads `Total: AED 300 AED 219` at the end of the row —
+    the struck figure is the ticked products at their REGULAR prices, the other
+    is what the shopper pays after any sale and the bundle discount for the
+    number ticked — and under it a green pill, "You're saving AED 81". The tier
+    for 3, 4 and 5-or-more ticked is printed as data-tiers; fbt.js recomputes
+    all three figures as ticks change, with the server's own arithmetic
+    (App\Services\BuyTogetherPricing::unitOff()). The basket prices the bundle
+    again, on the server, whatever this page said.
+
     Fully qualified class names and no `use`: this partial is conditionally
     included, and a `use` inside an @if is a parse error.
 --}}
@@ -56,6 +85,10 @@
     $btRows = [];
     $btChecked = 0;
     $btTotal = 0;
+    // (Lane RE) The struck total and the bundle discount, for what is ticked.
+    $btWasTotal = 0;
+    $btPricing = app(\App\Services\BuyTogetherPricing::class);
+    $btTiers = $btPricing->tiers();
     foreach ($btItems as $btI => $btP) {
         $btIsMain = 0 === $btI;
         $btOos = ! $btIsMain && $btP->stock_status !== 'instock';
@@ -69,6 +102,9 @@
             'oos' => $btOos,
             'now' => $btNow,
             'was' => $btWas,
+            // The regular price the struck total adds up: the compare-at when
+            // the card prints one, its own price when it does not.
+            'reg' => max($btWas, $btNow),
             'style' => $btImgCss !== '' ? "background-image:url('" . e($btImgCss) . "')" : 'background:' . \App\Support\Gradient::for($btSeed),
             'initials' => $btImgCss !== '' ? '' : \App\Support\Gradient::initials($btP->brand?->name ?: $btP->t('name')),
             'name' => $btP->t('name'),
@@ -76,16 +112,34 @@
         if (! $btOos) {
             $btChecked++;
             $btTotal += $btNow;
+            $btWasTotal += max($btWas, $btNow);
         }
     }
+    // The tier for the number ticked on arrival, taken off each ticked card
+    // exactly as the basket will take it.
+    $btPct = $btTiers[min(\App\Services\BuyTogetherPricing::MAX_GROUP, $btChecked)] ?? 0;
+    $btOff = 0;
+    foreach ($btRows as $btR0) {
+        if (! $btR0['oos']) {
+            $btOff += \App\Services\BuyTogetherPricing::unitOff($btR0['now'], $btPct);
+        }
+    }
+    $btPay = $btTotal - $btOff;
+    $btSave = max(0, $btWasTotal - $btPay);
+    $btWrap = static function (int $minor, string $class): string {
+        $amount = \App\Support\Money::amount($minor);
+
+        return \Illuminate\Support\Str::replaceLast($amount, '<span class="' . $class . '">' . e($amount) . '</span>', \App\Support\Money::format($minor));
+    };
+    $btMore = $btItems->count() > 4;
     $btLabel = $btChecked === 0
         ? __('store.buy_together.button_none')
         : ($btChecked === 1 ? __('store.buy_together.button_one') : __('store.buy_together.button', ['count' => $btChecked]));
-    $btAmount = \App\Support\Money::amount($btTotal);
-    $btTotalHtml = \Illuminate\Support\Str::replaceLast($btAmount, '<span class="bt-num">' . e($btAmount) . '</span>', \App\Support\Money::format($btTotal));
+    $btTotalHtml = $btWrap($btPay, 'bt-num');
 @endphp
-<section class="kbb-fbt bt {{ $modules->classFor('fbt') }}" data-bt="{{ $btMain->id }}" aria-labelledby="btTitle"
-         style="{{ \App\Services\BuyTogether::cardStyle() }}"
+<section class="kbb-fbt bt{{ $btMore ? ' bt-more' : '' }} {{ $modules->classFor('fbt') }}" data-bt="{{ $btMain->id }}" aria-labelledby="btTitle"
+         style="{{ \App\Services\BuyTogether::cardStyle() }};--bt-per:{{ min(4, $btItems->count()) }};--bt-n:{{ $btItems->count() }}"
+         data-tiers="{{ json_encode($btTiers) }}"
          data-many="{{ __('store.buy_together.button', ['count' => ':count']) }}"
          data-one="{{ __('store.buy_together.button_one') }}"
          data-none="{{ __('store.buy_together.button_none') }}"
@@ -96,7 +150,7 @@
     <div class="bt-row">
         <div class="bt-rail" role="group" aria-labelledby="btTitle">
             @foreach ($btRows as $btI => $btR)
-            <div class="bt-card{{ $btR['main'] ? ' is-main' : '' }}{{ $btR['oos'] ? ' is-oos is-off' : '' }}" data-price="{{ $btR['now'] }}"@if ($btR['main'] && $btMainVar) data-bt-var @endif>
+            <div class="bt-card{{ $btR['main'] ? ' is-main' : '' }}{{ $btR['oos'] ? ' is-oos is-off' : '' }}" data-price="{{ $btR['now'] }}" data-reg="{{ $btR['reg'] }}"@if ($btR['main'] && $btMainVar) data-bt-var @endif>
                 <label class="im" style="{{ $btR['style'] }}">{{ $btR['initials'] }}<input type="checkbox" class="bt-cb" value="{{ $btR['p']->id }}"@if (! $btR['oos']) checked @else disabled @endif aria-label="{{ $btR['name'] }}"><span class="bt-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5.5 12.5 4.2 4.2 8.8-9.4"/></svg></span>@if ($btI > 0)<span class="bt-plus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></span>@endif</label>
                 <a class="lk" href="{{ $btR['p']->url() }}">
                     <span class="nm">{{ $btR['name'] }}</span>
@@ -107,7 +161,8 @@
         </div>
         <div class="bt-foot">
             @if ($btCfg['show_total'])
-            <p class="bt-total"><span>{{ __('store.buy_together.total') }}</span> <b class="bt-sum">{!! $btTotalHtml !!}</b></p>
+            <p class="bt-total"><span class="bt-total-label">{{ __('store.buy_together.total') }}</span> <s class="bt-was"@if ($btWasTotal <= $btPay) hidden @endif>{!! $btWrap($btWasTotal, 'bt-was-num') !!}</s> <b class="bt-sum">{!! $btTotalHtml !!}</b></p>
+            <p class="bt-save" aria-live="polite"@if ($btSave <= 0) hidden @endif><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none"/></svg><span>{{ __('store.buy_together.saving') }}</span> <b>{!! $btWrap($btSave, 'bt-save-num') !!}</b></p>
             @endif
             <button type="button" class="bt-buy" data-bt-buy @if ($btChecked === 0) disabled @endif><span class="bt-spin" aria-hidden="true"></span><span class="bt-label" aria-live="polite">{{ $btLabel }}</span></button>
         </div>

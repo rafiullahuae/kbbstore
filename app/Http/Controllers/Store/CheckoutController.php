@@ -573,7 +573,22 @@ class CheckoutController extends Controller
                     'billing_address' => $address,
                     'shipping_address' => $address,
                     'subtotal' => $totals['subtotal'],
-                    'discount_total' => $totals['discount'],
+                    /*
+                     * EVERY DISCOUNT, AND WHICH PART WAS THE BUNDLE — Lane RE.
+                     *
+                     * `discount_total` is the coupon PLUS the "Buy these
+                     * together" bundle, so the sums every reader of this row
+                     * already makes still hold: OrderTax taxes subtotal −
+                     * discount_total + shipping, and Tabby and Tamara send the
+                     * lines at their own prices with discount_total off them,
+                     * which balances to `total` to the fil. `bundle_discount`
+                     * says how much of it was the bundle, and each line below
+                     * says its own share and the tier, so the order records
+                     * what was charged AND why. The coupon's own redemption
+                     * further down still spends `discount` alone.
+                     */
+                    'discount_total' => (int) $totals['discount'] + (int) ($totals['bundle_discount'] ?? 0),
+                    'bundle_discount' => (int) ($totals['bundle_discount'] ?? 0),
                     // From the totals this request already computed, not from
                     // the raw rate. The two were the same number until a
                     // coupon could carry free_shipping; now CartService::
@@ -659,6 +674,10 @@ class CheckoutController extends Controller
 
                 foreach ($cart->items as $item) {
                     $p = $item->product;
+                    // (Lane RE) This line's share of a bundle, if it earned one
+                    // on THIS pricing pass — the same quote the total above was
+                    // built from. Absent for every ordinary line.
+                    $kbbBundle = $totals['bundle']['lines'][(int) $item->id] ?? null;
 
                     $order->items()->create([
                         'product_id' => $p?->id,
@@ -690,6 +709,9 @@ class CheckoutController extends Controller
                         'unit_price' => $item->unit_price,
                         'subtotal' => $item->lineTotal(),
                         'total' => $item->lineTotal(),
+                        'bundle_discount' => (int) ($kbbBundle['off'] ?? 0),
+                        'bundle_group' => $kbbBundle['group'] ?? null,
+                        'bundle_percent' => $kbbBundle['percent'] ?? null,
                     ]);
                 }
 

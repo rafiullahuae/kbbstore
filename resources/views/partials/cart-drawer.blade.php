@@ -52,6 +52,13 @@
 
     // Wording from Appearance → Cart panel, so none of the copy below is fixed.
     $cpText = app(\App\Services\CartPanel::class);
+
+    // (Lane RE) "Buy these together": what the bundle took off, and the lines
+    // it took it from. 0 and [] on every basket without one, which leaves the
+    // panel byte-identical. The footer's figure is what the lines above it
+    // add up to — after the bundle — with the bundle's own row above it.
+    $kbbBundleOff = (int) ($totals['bundle_discount'] ?? 0);
+    $kbbBundleLines = $totals['bundle']['lines'] ?? [];
 @endphp
 
 <div class="kc-fragment">
@@ -131,12 +138,13 @@
                         // CartController::loadCart()/CartDrawerComposer, and
                         // only when a line is a set, so this costs no query.
                         $kbbSet = \App\Support\SetContents::fromProduct($p, (int) $item->unit_price);
+                        $kbbDBt = $kbbBundleLines[$item->id] ?? null;
                     @endphp
                     <div class="kc-item">
                         <div class="kc-th" style="{{ $thumb }}">{{ $imgCss !== '' ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</div>
                         <div class="kc-mid">
                             <div class="kc-nm">{{ $name }}</div>
-                            @if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'drawer', 'key' => 'd' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="kc-qty">
+                            @includeWhen($kbbDBt, 'partials.buy-together.line-tag', ['cls' => 'kc-bt', 'percent' => $kbbDBt['percent'] ?? 0])@if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'drawer', 'key' => 'd' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="kc-qty">
                                 <button type="button" data-kcq="{{ $item->id }}" data-d="-1">−</button>
                                 <span>{{ $item->quantity }}</span>
                                 <button type="button" data-kcq="{{ $item->id }}" data-d="1">+</button>
@@ -144,14 +152,14 @@
                         </div>
                         <div class="kc-right">
                             <button class="kc-rm" type="button" data-kcrm="{{ $item->id }}">✕</button>
-                            <div class="kc-pr">{!! \App\Support\Money::format($item->lineTotal()) !!}</div>
+                            <div class="kc-pr">{!! \App\Support\Money::format($item->lineTotal() - (int) ($kbbDBt['off'] ?? 0)) !!}@if ($kbbDBt)<s style="display:block;color:var(--muted);font-size:11px;font-weight:400">{!! \App\Support\Money::format($item->lineTotal()) !!}</s>@endif</div>
                         </div>
                     </div>
                 @endforeach
             </div>
             <div class="dfoot">
                 @if ($promo)<div class="kc-coupon" style="color:#5e545a;background:#fff0f4;font-size:10px"><span class="ic">🎁</span><div>{!! $promo !!}</div></div>@endif
-                <div class="sumrow tot"><span>{{ $cpText->get("txt_subtotal") }}</span><span>{!! \App\Support\Money::format($sub) !!}</span></div>
+                @includeWhen($kbbBundleOff > 0, 'partials.buy-together.total-row', ['cls' => 'sumrow kc-btrow', 'style' => 'color:#1F7A50;font-weight:600', 'label' => __('store.buy_together.bundle_row'), 'amount' => '&ndash; ' . \App\Support\Money::format($kbbBundleOff)])<div class="sumrow tot"><span>{{ $cpText->get("txt_subtotal") }}</span><span>{!! \App\Support\Money::format($sub - $kbbBundleOff) !!}</span></div>
                 <div class="kc-btns">
                     <a class="btn-ghost" href="{{ Url::to('/cart/') }}">{{ $cpText->get("txt_btn_cart") }}</a>
                     <a class="cobtn" href="{{ Url::to('/checkout/') }}">{{ $cpText->get("txt_btn_checkout") }}</a>

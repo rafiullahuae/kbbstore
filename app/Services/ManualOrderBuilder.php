@@ -334,7 +334,10 @@ class ManualOrderBuilder
             'billing_address' => $address,
             'shipping_address' => $address,
             'subtotal' => (int) $totals['subtotal'],
-            'discount_total' => (int) $totals['discount'],
+            // (Lane RE) Coupon plus any "Buy these together" bundle — the same
+            // sum the storefront writes. Always the coupon alone here today: a
+            // basket built in the admin has no bundle in it.
+            'discount_total' => (int) $totals['discount'] + (int) ($totals['bundle_discount'] ?? 0),
             'shipping_total' => (int) $totals['shipping'],
             'fee_total' => $fee,
             /*

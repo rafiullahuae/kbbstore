@@ -158,12 +158,12 @@
     {{-- Subtotal removed at the owner's request: the line items above already
          show it, and on a phone it pushed the total further down for no gain. --}}
 
-    @if ((int) $order->discount_total > 0)
+    @includeWhen((int) $order->bundle_discount > 0, 'partials.buy-together.total-row', ['cls' => 'sumrow disc', 'label' => __('email.totals.bundle'), 'amount' => '&ndash; ' . Money::format((int) $order->bundle_discount)])@if ((int) $order->discount_total - (int) $order->bundle_discount > 0)
         <div class="sumrow disc">
             <span>{{ trim((string) $order->coupon_code) !== ''
                 ? __('email.totals.discount_coupon', ['code' => trim((string) $order->coupon_code)])
                 : __('email.totals.discount') }}</span>
-            <span>&ndash; {!! Money::format((int) $order->discount_total) !!}</span>
+            <span>&ndash; {!! Money::format((int) $order->discount_total - (int) $order->bundle_discount) !!}</span>
         </div>
     @endif
 

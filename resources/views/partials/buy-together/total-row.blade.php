@@ -1,0 +1,1 @@
+<div class="{{ $cls }}"@if (($style ?? '') !== '') style="{{ $style }}"@endif><span>{{ $label }}</span><span>{!! $amount !!}</span></div>

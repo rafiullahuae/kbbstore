@@ -1,0 +1,212 @@
+{
+  "before-360": {
+    "viewport": 360,
+    "scrollWidth": 360,
+    "cards": [
+      {
+        "i": 0,
+        "cardRight": 79.22,
+        "cardWidth": 65.22,
+        "worstRight": 73.22,
+        "overflowPx": -5,
+        "priceFont": "9.36px",
+        "priceLines": 1,
+        "priceScroll": [
+          53,
+          53
+        ],
+        "nameScroll": [
+          53,
+          53
+        ],
+        "price": "AED 69"
+      },
+      {
+        "i": 1,
+        "cardRight": 160.44,
+        "cardWidth": 65.22,
+        "worstRight": 170.27,
+        "overflowPx": 10.83,
+        "priceFont": "9.36px",
+        "priceLines": 1,
+        "priceScroll": [
+          69,
+          53
+        ],
+        "nameScroll": [
+          53,
+          53
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 2,
+        "cardRight": 241.66,
+        "cardWidth": 65.22,
+        "worstRight": 251.48,
+        "overflowPx": 10.83,
+        "priceFont": "9.36px",
+        "priceLines": 1,
+        "priceScroll": [
+          69,
+          53
+        ],
+        "nameScroll": [
+          53,
+          53
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 3,
+        "cardRight": 322.88,
+        "cardWidth": 65.22,
+        "worstRight": 332.7,
+        "overflowPx": 10.83,
+        "priceFont": "9.36px",
+        "priceLines": 1,
+        "priceScroll": [
+          69,
+          53
+        ],
+        "nameScroll": [
+          53,
+          53
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 4,
+        "cardRight": 404.09,
+        "cardWidth": 65.22,
+        "worstRight": 398.09,
+        "overflowPx": -5,
+        "priceFont": "9.36px",
+        "priceLines": 1,
+        "priceScroll": [
+          53,
+          53
+        ],
+        "nameScroll": [
+          53,
+          53
+        ],
+        "price": "AED 153"
+      }
+    ],
+    "anyOverflow": true,
+    "cardsFullyVisible": 4,
+    "railScroll": [
+      418,
+      360
+    ],
+    "buttonShadow": "none",
+    "total": "Total: AED 546",
+    "save": null
+  },
+  "before-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "cards": [
+      {
+        "i": 0,
+        "cardRight": 85.88,
+        "cardWidth": 71.88,
+        "worstRight": 79.88,
+        "overflowPx": -5,
+        "priceFont": "10.14px",
+        "priceLines": 1,
+        "priceScroll": [
+          60,
+          60
+        ],
+        "nameScroll": [
+          60,
+          60
+        ],
+        "price": "AED 69"
+      },
+      {
+        "i": 1,
+        "cardRight": 173.75,
+        "cardWidth": 71.88,
+        "worstRight": 182.44,
+        "overflowPx": 9.69,
+        "priceFont": "10.14px",
+        "priceLines": 1,
+        "priceScroll": [
+          75,
+          60
+        ],
+        "nameScroll": [
+          60,
+          60
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 2,
+        "cardRight": 261.63,
+        "cardWidth": 71.88,
+        "worstRight": 270.31,
+        "overflowPx": 9.69,
+        "priceFont": "10.14px",
+        "priceLines": 1,
+        "priceScroll": [
+          75,
+          60
+        ],
+        "nameScroll": [
+          60,
+          60
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 3,
+        "cardRight": 349.5,
+        "cardWidth": 71.88,
+        "worstRight": 358.19,
+        "overflowPx": 9.69,
+        "priceFont": "10.14px",
+        "priceLines": 1,
+        "priceScroll": [
+          75,
+          60
+        ],
+        "nameScroll": [
+          60,
+          60
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 4,
+        "cardRight": 437.38,
+        "cardWidth": 71.88,
+        "worstRight": 431.38,
+        "overflowPx": -5,
+        "priceFont": "10.14px",
+        "priceLines": 1,
+        "priceScroll": [
+          60,
+          60
+        ],
+        "nameScroll": [
+          60,
+          60
+        ],
+        "price": "AED 153"
+      }
+    ],
+    "anyOverflow": true,
+    "cardsFullyVisible": 4,
+    "railScroll": [
+      451,
+      390
+    ],
+    "buttonShadow": "none",
+    "total": "Total: AED 546",
+    "save": null
+  }
+}

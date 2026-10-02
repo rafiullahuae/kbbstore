@@ -519,8 +519,27 @@ it('leaves the cart page\'s Recommended rail and the shared product card exactly
     foreach (['resources/views/store/cart-inner.blade.php', 'resources/views/store/cart-squeeze.blade.php',
         'resources/views/components/product-card.blade.php', 'resources/css/kbb/kbb-cart.css'] as $file) {
         $then = (string) shell_exec('git -C '.escapeshellarg(base_path()).' show '.escapeshellarg($base.':'.$file).' 2>/dev/null');
-        expect($then)->not->toBe('', "{$file} is not in git at {$base}")
-            ->and((string) file_get_contents(base_path($file)))->toBe($then, "{$file} changed on this branch");
+        $now = (string) file_get_contents(base_path($file));
+        expect($then)->not->toBe('', "{$file} is not in git at {$base}");
+
+        /*
+         * (Lane RE) cart-inner.blade.php carries the basket's own lines and
+         * summary as well as the rail, and Lane RE gives a bundled line its tag
+         * and the summary its "Buy-together discount" row. So for THAT file the
+         * pin is the rail itself -- the template from `<section class="cpg-rec">`
+         * to its `</section>`, byte for byte -- and the rest of the page is held
+         * by StorefrontEnglishUnchangedTest. Every other file is still pinned
+         * whole.
+         */
+        if (str_ends_with($file, 'cart-inner.blade.php')) {
+            $rail = fn (string $src) => preg_match('#<section class="cpg-rec">.*?</section>#s', $src, $m) ? $m[0] : '';
+            expect($rail($then))->not->toBe('')
+                ->and($rail($now))->toBe($rail($then), "the Recommended rail in {$file} changed on this branch");
+
+            continue;
+        }
+
+        expect($now)->toBe($then, "{$file} changed on this branch");
     }
 });
 
@@ -739,7 +758,8 @@ it('serves the tab from the product page endpoint, with both device switches rea
     $body = test()->getJson('/admin-api/product-page')->assertOk()->json('together');
 
     expect(array_column($body['options'][0]['fields'], 'key'))
-        ->toBe(['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar']);
+        // Lane RE added the three tiers and the coupon switch to the same tab.
+        ->toBe(['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar', 'tier_3', 'tier_4', 'tier_5', 'coupons']);
     expect($body['phone'])->toBeFalse()->and($body['laptop'])->toBeTrue()->and($body['max_pairs'])->toBe(5);
 
     $sun = collect($body['pairs'])->firstWhere('name', 'Sunscreens');

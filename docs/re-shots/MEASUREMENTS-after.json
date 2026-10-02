@@ -1,0 +1,1028 @@
+{
+  "cards-320": {
+    "viewport": 320,
+    "scrollWidth": 320,
+    "cards": [
+      {
+        "i": 0,
+        "cardRight": 75,
+        "cardWidth": 61,
+        "worstRight": 69,
+        "overflowPx": -5,
+        "priceFont": "8px",
+        "priceLines": 1,
+        "priceScroll": [
+          49,
+          49
+        ],
+        "nameScroll": [
+          49,
+          49
+        ],
+        "price": "AED 69"
+      },
+      {
+        "i": 1,
+        "cardRight": 152,
+        "cardWidth": 61,
+        "worstRight": 146,
+        "overflowPx": -5,
+        "priceFont": "8px",
+        "priceLines": 2,
+        "priceScroll": [
+          49,
+          49
+        ],
+        "nameScroll": [
+          49,
+          49
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 2,
+        "cardRight": 229,
+        "cardWidth": 61,
+        "worstRight": 223,
+        "overflowPx": -5,
+        "priceFont": "8px",
+        "priceLines": 2,
+        "priceScroll": [
+          49,
+          49
+        ],
+        "nameScroll": [
+          49,
+          49
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 3,
+        "cardRight": 306,
+        "cardWidth": 61,
+        "worstRight": 300,
+        "overflowPx": -5,
+        "priceFont": "8px",
+        "priceLines": 2,
+        "priceScroll": [
+          49,
+          49
+        ],
+        "nameScroll": [
+          49,
+          49
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 4,
+        "cardRight": 383,
+        "cardWidth": 61,
+        "worstRight": 377,
+        "overflowPx": -5,
+        "priceFont": "8px",
+        "priceLines": 1,
+        "priceScroll": [
+          49,
+          49
+        ],
+        "nameScroll": [
+          49,
+          49
+        ],
+        "price": "AED 87"
+      }
+    ],
+    "anyOverflow": false,
+    "cardsFullyVisible": 4,
+    "railScroll": [
+      397,
+      320
+    ],
+    "buttonShadow": "rgba(224, 86, 123, 0.55) 0px 7px 16px -9px, rgba(224, 86, 123, 0.22) 0px 2px 5px -3px",
+    "total": "Total: AED 615 AED 404",
+    "save": "You're saving AED 211"
+  },
+  "cards-360": {
+    "viewport": 360,
+    "scrollWidth": 360,
+    "cards": [
+      {
+        "i": 0,
+        "cardRight": 85,
+        "cardWidth": 71,
+        "worstRight": 79,
+        "overflowPx": -5,
+        "priceFont": "8.85px",
+        "priceLines": 1,
+        "priceScroll": [
+          59,
+          59
+        ],
+        "nameScroll": [
+          59,
+          59
+        ],
+        "price": "AED 69"
+      },
+      {
+        "i": 1,
+        "cardRight": 172,
+        "cardWidth": 71,
+        "worstRight": 166,
+        "overflowPx": -5,
+        "priceFont": "8.85px",
+        "priceLines": 2,
+        "priceScroll": [
+          59,
+          59
+        ],
+        "nameScroll": [
+          59,
+          59
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 2,
+        "cardRight": 259,
+        "cardWidth": 71,
+        "worstRight": 253,
+        "overflowPx": -5,
+        "priceFont": "8.85px",
+        "priceLines": 2,
+        "priceScroll": [
+          59,
+          59
+        ],
+        "nameScroll": [
+          59,
+          59
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 3,
+        "cardRight": 346,
+        "cardWidth": 71,
+        "worstRight": 340,
+        "overflowPx": -5,
+        "priceFont": "8.85px",
+        "priceLines": 2,
+        "priceScroll": [
+          59,
+          59
+        ],
+        "nameScroll": [
+          59,
+          59
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 4,
+        "cardRight": 433,
+        "cardWidth": 71,
+        "worstRight": 427,
+        "overflowPx": -5,
+        "priceFont": "8.85px",
+        "priceLines": 1,
+        "priceScroll": [
+          59,
+          59
+        ],
+        "nameScroll": [
+          59,
+          59
+        ],
+        "price": "AED 87"
+      }
+    ],
+    "anyOverflow": false,
+    "cardsFullyVisible": 4,
+    "railScroll": [
+      447,
+      360
+    ],
+    "buttonShadow": "rgba(224, 86, 123, 0.55) 0px 7px 16px -9px, rgba(224, 86, 123, 0.22) 0px 2px 5px -3px",
+    "total": "Total: AED 615 AED 404",
+    "save": "You're saving AED 211"
+  },
+  "cards-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "cards": [
+      {
+        "i": 0,
+        "cardRight": 92.5,
+        "cardWidth": 78.5,
+        "worstRight": 86.5,
+        "overflowPx": -5,
+        "priceFont": "9.975px",
+        "priceLines": 1,
+        "priceScroll": [
+          67,
+          67
+        ],
+        "nameScroll": [
+          67,
+          67
+        ],
+        "price": "AED 69"
+      },
+      {
+        "i": 1,
+        "cardRight": 187,
+        "cardWidth": 78.5,
+        "worstRight": 181,
+        "overflowPx": -5,
+        "priceFont": "9.975px",
+        "priceLines": 2,
+        "priceScroll": [
+          67,
+          67
+        ],
+        "nameScroll": [
+          67,
+          67
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 2,
+        "cardRight": 281.5,
+        "cardWidth": 78.5,
+        "worstRight": 275.5,
+        "overflowPx": -5,
+        "priceFont": "9.975px",
+        "priceLines": 2,
+        "priceScroll": [
+          67,
+          67
+        ],
+        "nameScroll": [
+          67,
+          67
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 3,
+        "cardRight": 376,
+        "cardWidth": 78.5,
+        "worstRight": 370,
+        "overflowPx": -5,
+        "priceFont": "9.975px",
+        "priceLines": 2,
+        "priceScroll": [
+          67,
+          67
+        ],
+        "nameScroll": [
+          67,
+          67
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 4,
+        "cardRight": 470.5,
+        "cardWidth": 78.5,
+        "worstRight": 464.5,
+        "overflowPx": -5,
+        "priceFont": "9.975px",
+        "priceLines": 1,
+        "priceScroll": [
+          67,
+          67
+        ],
+        "nameScroll": [
+          67,
+          67
+        ],
+        "price": "AED 87"
+      }
+    ],
+    "anyOverflow": false,
+    "cardsFullyVisible": 4,
+    "railScroll": [
+      485,
+      390
+    ],
+    "buttonShadow": "rgba(224, 86, 123, 0.55) 0px 7px 16px -9px, rgba(224, 86, 123, 0.22) 0px 2px 5px -3px",
+    "total": "Total: AED 615 AED 404",
+    "save": "You're saving AED 211"
+  },
+  "cards-430": {
+    "viewport": 430,
+    "scrollWidth": 430,
+    "cards": [
+      {
+        "i": 0,
+        "cardRight": 102.5,
+        "cardWidth": 88.5,
+        "worstRight": 96.5,
+        "overflowPx": -5,
+        "priceFont": "11.475px",
+        "priceLines": 1,
+        "priceScroll": [
+          77,
+          77
+        ],
+        "nameScroll": [
+          77,
+          77
+        ],
+        "price": "AED 69"
+      },
+      {
+        "i": 1,
+        "cardRight": 207,
+        "cardWidth": 88.5,
+        "worstRight": 201,
+        "overflowPx": -5,
+        "priceFont": "11.475px",
+        "priceLines": 2,
+        "priceScroll": [
+          77,
+          77
+        ],
+        "nameScroll": [
+          77,
+          77
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 2,
+        "cardRight": 311.5,
+        "cardWidth": 88.5,
+        "worstRight": 305.5,
+        "overflowPx": -5,
+        "priceFont": "11.475px",
+        "priceLines": 2,
+        "priceScroll": [
+          77,
+          77
+        ],
+        "nameScroll": [
+          77,
+          77
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 3,
+        "cardRight": 416,
+        "cardWidth": 88.5,
+        "worstRight": 410,
+        "overflowPx": -5,
+        "priceFont": "11.475px",
+        "priceLines": 2,
+        "priceScroll": [
+          77,
+          77
+        ],
+        "nameScroll": [
+          77,
+          77
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 4,
+        "cardRight": 520.5,
+        "cardWidth": 88.5,
+        "worstRight": 514.5,
+        "overflowPx": -5,
+        "priceFont": "11.475px",
+        "priceLines": 1,
+        "priceScroll": [
+          77,
+          77
+        ],
+        "nameScroll": [
+          77,
+          77
+        ],
+        "price": "AED 87"
+      }
+    ],
+    "anyOverflow": false,
+    "cardsFullyVisible": 4,
+    "railScroll": [
+      535,
+      430
+    ],
+    "buttonShadow": "rgba(224, 86, 123, 0.55) 0px 7px 16px -9px, rgba(224, 86, 123, 0.22) 0px 2px 5px -3px",
+    "total": "Total: AED 615 AED 404",
+    "save": "You're saving AED 211"
+  },
+  "cards-768": {
+    "viewport": 768,
+    "scrollWidth": 768,
+    "cards": [
+      {
+        "i": 0,
+        "cardRight": 187,
+        "cardWidth": 173,
+        "worstRight": 181,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          161,
+          161
+        ],
+        "nameScroll": [
+          161,
+          161
+        ],
+        "price": "AED 69"
+      },
+      {
+        "i": 1,
+        "cardRight": 376,
+        "cardWidth": 173,
+        "worstRight": 370,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          161,
+          161
+        ],
+        "nameScroll": [
+          161,
+          161
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 2,
+        "cardRight": 565,
+        "cardWidth": 173,
+        "worstRight": 559,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          161,
+          161
+        ],
+        "nameScroll": [
+          161,
+          161
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 3,
+        "cardRight": 754,
+        "cardWidth": 173,
+        "worstRight": 748,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          161,
+          161
+        ],
+        "nameScroll": [
+          161,
+          161
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 4,
+        "cardRight": 943,
+        "cardWidth": 173,
+        "worstRight": 937,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          161,
+          161
+        ],
+        "nameScroll": [
+          161,
+          161
+        ],
+        "price": "AED 87"
+      }
+    ],
+    "anyOverflow": false,
+    "cardsFullyVisible": 4,
+    "railScroll": [
+      957,
+      768
+    ],
+    "buttonShadow": "rgba(224, 86, 123, 0.55) 0px 7px 16px -9px, rgba(224, 86, 123, 0.22) 0px 2px 5px -3px",
+    "total": "Total: AED 615 AED 404",
+    "save": "You're saving AED 211"
+  },
+  "cards-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "cards": [
+      {
+        "i": 0,
+        "cardRight": 168.08,
+        "cardWidth": 116.08,
+        "worstRight": 162.08,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          104,
+          104
+        ],
+        "nameScroll": [
+          104,
+          104
+        ],
+        "price": "AED 69"
+      },
+      {
+        "i": 1,
+        "cardRight": 300.16,
+        "cardWidth": 116.08,
+        "worstRight": 294.16,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          104,
+          104
+        ],
+        "nameScroll": [
+          104,
+          104
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 2,
+        "cardRight": 432.23,
+        "cardWidth": 116.08,
+        "worstRight": 426.23,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          104,
+          104
+        ],
+        "nameScroll": [
+          104,
+          104
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 3,
+        "cardRight": 564.31,
+        "cardWidth": 116.08,
+        "worstRight": 558.31,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          104,
+          104
+        ],
+        "nameScroll": [
+          104,
+          104
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 4,
+        "cardRight": 696.39,
+        "cardWidth": 116.08,
+        "worstRight": 690.39,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          104,
+          104
+        ],
+        "nameScroll": [
+          104,
+          104
+        ],
+        "price": "AED 87"
+      }
+    ],
+    "anyOverflow": false,
+    "cardsFullyVisible": 5,
+    "railScroll": [
+      672,
+      672
+    ],
+    "buttonShadow": "rgba(224, 86, 123, 0.55) 0px 7px 16px -9px, rgba(224, 86, 123, 0.22) 0px 2px 5px -3px",
+    "total": "Total: AED 615 AED 404",
+    "save": "You're saving AED 211"
+  },
+  "cards-1440": {
+    "viewport": 1440,
+    "scrollWidth": 1440,
+    "cards": [
+      {
+        "i": 0,
+        "cardRight": 168.08,
+        "cardWidth": 116.08,
+        "worstRight": 162.08,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          104,
+          104
+        ],
+        "nameScroll": [
+          104,
+          104
+        ],
+        "price": "AED 69"
+      },
+      {
+        "i": 1,
+        "cardRight": 300.16,
+        "cardWidth": 116.08,
+        "worstRight": 294.16,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          104,
+          104
+        ],
+        "nameScroll": [
+          104,
+          104
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 2,
+        "cardRight": 432.23,
+        "cardWidth": 116.08,
+        "worstRight": 426.23,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          104,
+          104
+        ],
+        "nameScroll": [
+          104,
+          104
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 3,
+        "cardRight": 564.31,
+        "cardWidth": 116.08,
+        "worstRight": 558.31,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          104,
+          104
+        ],
+        "nameScroll": [
+          104,
+          104
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 4,
+        "cardRight": 696.39,
+        "cardWidth": 116.08,
+        "worstRight": 690.39,
+        "overflowPx": -5,
+        "priceFont": "11.5px",
+        "priceLines": 1,
+        "priceScroll": [
+          104,
+          104
+        ],
+        "nameScroll": [
+          104,
+          104
+        ],
+        "price": "AED 87"
+      }
+    ],
+    "anyOverflow": false,
+    "cardsFullyVisible": 5,
+    "railScroll": [
+      672,
+      672
+    ],
+    "buttonShadow": "rgba(224, 86, 123, 0.55) 0px 7px 16px -9px, rgba(224, 86, 123, 0.22) 0px 2px 5px -3px",
+    "total": "Total: AED 615 AED 404",
+    "save": "You're saving AED 211"
+  },
+  "peek-390": [
+    {
+      "at": 2058,
+      "card1Margin": "-41.2344px",
+      "card5Left": 350.8,
+      "peeking": true
+    },
+    {
+      "at": 2832,
+      "card1Margin": "-10.0312px",
+      "card5Left": 382,
+      "peeking": true
+    },
+    {
+      "at": 3612,
+      "card1Margin": "0px",
+      "card5Left": 392,
+      "peeking": true
+    },
+    {
+      "at": 4988,
+      "card1Margin": "0px",
+      "card5Left": 392,
+      "peeking": true
+    }
+  ],
+  "reduced-motion-390": {
+    "animationName": "none",
+    "fifthVisiblePx": 40,
+    "fifthWidth": 68
+  },
+  "cards-ar-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "cards": [
+      {
+        "i": 0,
+        "cardRight": 376,
+        "cardWidth": 78.5,
+        "worstRight": 370,
+        "overflowPx": -5,
+        "priceFont": "9.975px",
+        "priceLines": 1,
+        "priceScroll": [
+          67,
+          67
+        ],
+        "nameScroll": [
+          67,
+          67
+        ],
+        "price": "AED 69"
+      },
+      {
+        "i": 1,
+        "cardRight": 281.5,
+        "cardWidth": 78.5,
+        "worstRight": 275.5,
+        "overflowPx": -5,
+        "priceFont": "9.975px",
+        "priceLines": 2,
+        "priceScroll": [
+          67,
+          67
+        ],
+        "nameScroll": [
+          67,
+          67
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 2,
+        "cardRight": 187,
+        "cardWidth": 78.5,
+        "worstRight": 181,
+        "overflowPx": -5,
+        "priceFont": "9.975px",
+        "priceLines": 2,
+        "priceScroll": [
+          67,
+          67
+        ],
+        "nameScroll": [
+          67,
+          67
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 3,
+        "cardRight": 92.5,
+        "cardWidth": 78.5,
+        "worstRight": 86.5,
+        "overflowPx": -5,
+        "priceFont": "9.975px",
+        "priceLines": 2,
+        "priceScroll": [
+          67,
+          67
+        ],
+        "nameScroll": [
+          67,
+          67
+        ],
+        "price": "AED 108AED 153"
+      },
+      {
+        "i": 4,
+        "cardRight": -2,
+        "cardWidth": 78.5,
+        "worstRight": -8,
+        "overflowPx": -5,
+        "priceFont": "9.975px",
+        "priceLines": 1,
+        "priceScroll": [
+          67,
+          67
+        ],
+        "nameScroll": [
+          67,
+          67
+        ],
+        "price": "AED 87"
+      }
+    ],
+    "anyOverflow": false,
+    "cardsFullyVisible": 4,
+    "railScroll": [
+      485,
+      390
+    ],
+    "buttonShadow": "rgba(224, 86, 123, 0.55) 0px 7px 16px -9px, rgba(224, 86, 123, 0.22) 0px 2px 5px -3px",
+    "total": "المجموع: AED 615 AED 404",
+    "save": "أنت توفّر AED 211"
+  },
+  "total-5-390": {
+    "text": "Total: AED 594 AED 387",
+    "save": "You're saving AED 207",
+    "labelRight": 248.44,
+    "valueLeft": 315.34,
+    "blockLeft": 14,
+    "blockRight": 376,
+    "saveFont": "12.5px",
+    "button": "Buy 5 items together"
+  },
+  "total-4-390": {
+    "text": "Total: AED 528 AED 353",
+    "save": "You're saving AED 175",
+    "labelRight": 248.45,
+    "valueLeft": 314.63,
+    "blockLeft": 14,
+    "blockRight": 376,
+    "saveFont": "12.5px",
+    "button": "Buy 4 items together"
+  },
+  "total-3-390": {
+    "text": "Total: AED 375 AED 269",
+    "save": "You're saving AED 106",
+    "labelRight": 248.73,
+    "valueLeft": 314.33,
+    "blockLeft": 14,
+    "blockRight": 376,
+    "saveFont": "12.5px",
+    "button": "Buy 3 items together"
+  },
+  "total-5-1280": {
+    "text": "Total: AED 594 AED 387",
+    "save": "You're saving AED 207",
+    "labelRight": 923.03,
+    "valueLeft": 989.94,
+    "blockLeft": 730.45,
+    "blockRight": 1056.45,
+    "saveFont": "12.5px",
+    "button": "Buy 5 items together"
+  },
+  "total-4-1280": {
+    "text": "Total: AED 528 AED 353",
+    "save": "You're saving AED 175",
+    "labelRight": 922.98,
+    "valueLeft": 989.16,
+    "blockLeft": 730.45,
+    "blockRight": 1056.45,
+    "saveFont": "12.5px",
+    "button": "Buy 4 items together"
+  },
+  "total-3-1280": {
+    "text": "Total: AED 375 AED 269",
+    "save": "You're saving AED 106",
+    "labelRight": 923.23,
+    "valueLeft": 988.83,
+    "blockLeft": 730.45,
+    "blockRight": 1056.45,
+    "saveFont": "12.5px",
+    "button": "Buy 3 items together"
+  },
+  "drawer-390": [
+    "Relief Sun Rice + Probiotics SPF50+ Bought together · 15% off − 1 + ✕ AED 58AED 69",
+    "Dynasty Cream 50ml Bought together · 15% off − 1 + ✕ AED 91AED 108",
+    "Heartleaf 77% Soothing Toner 250ml Bought together · 15% off − 1 + ✕ AED 91AED 108",
+    "Heartleaf Pore Control Cleansing Oil Bought together · 15% off − 1 + ✕ AED 91AED 108",
+    "Collagen Night Wrapping Mask Bought together · 15% off − 1 + ✕ AED 56AED 66",
+    "Relief Sun Rice + Probiotics SPF50+ AED 69"
+  ],
+  "cart-390": {
+    "lines": [
+      "Beauty of Joseon Relief Sun Rice + Probiotics SPF50+ Bought together · 15% off − 1 + AED 58AED 69 Remove",
+      "Beauty of Joseon Dynasty Cream 50ml Bought together · 15% off − 1 + AED 91AED 153 Remove",
+      "Anua Heartleaf 77% Soothing Toner 250ml Bought together · 15% off − 1 + AED 91AED 153 Remove",
+      "Anua Heartleaf Pore Control Cleansing Oil Bought together · 15% off − 1 + AED 91AED 153 Remove",
+      "SKIN1004 Collagen Night Wrapping Mask Bought together · 15% off − 1 + AED 56AED 66 Remove"
+    ],
+    "summary": [
+      "Order Value (5 items)AED 594AED 459",
+      "Buy-together discount– AED 72",
+      "Delivery is calculated at checkout",
+      "Order Total AED 387"
+    ]
+  },
+  "checkout-390": [
+    "SubtotalAED 459",
+    "Buy-together discount– AED 72",
+    "DeliveryFree",
+    "TotalAED 387",
+    "You're paying VAT (5%)AED 18.43",
+    "SubtotalAED 459",
+    "Buy-together discount– AED 72",
+    "DeliveryFree",
+    "TotalAED 387",
+    "You're paying VAT (5%)AED 18.43",
+    "Buy-together discount– AED 72",
+    "SubtotalAED 387"
+  ],
+  "cart-after-remove-390": {
+    "lines": [
+      "Beauty of Joseon Relief Sun Rice + Probiotics SPF50+ − 1 + AED 69 Remove",
+      "Anua Heartleaf 77% Soothing Toner 250ml − 1 + AED 108AED 153 Remove",
+      "Anua Heartleaf Pore Control Cleansing Oil − 1 + AED 108AED 153 Remove",
+      "SKIN1004 Collagen Night Wrapping Mask − 1 + AED 66 Remove"
+    ],
+    "summary": [
+      "Order Value (4 items)AED 441AED 351",
+      "Delivery is calculated at checkout",
+      "Order Total AED 351"
+    ]
+  },
+  "drawer-1280": [
+    "Relief Sun Rice + Probiotics SPF50+ Bought together · 15% off − 1 + ✕ AED 58AED 69",
+    "Dynasty Cream 50ml Bought together · 15% off − 1 + ✕ AED 91AED 108",
+    "Heartleaf 77% Soothing Toner 250ml Bought together · 15% off − 1 + ✕ AED 91AED 108",
+    "Heartleaf Pore Control Cleansing Oil Bought together · 15% off − 1 + ✕ AED 91AED 108",
+    "Collagen Night Wrapping Mask Bought together · 15% off − 1 + ✕ AED 56AED 66",
+    "Relief Sun Rice + Probiotics SPF50+ AED 69"
+  ],
+  "cart-1280": {
+    "lines": [
+      "Beauty of Joseon Relief Sun Rice + Probiotics SPF50+ Bought together · 15% off − 1 + AED 58AED 69 Remove",
+      "Beauty of Joseon Dynasty Cream 50ml Bought together · 15% off − 1 + AED 91AED 153 Remove",
+      "Anua Heartleaf 77% Soothing Toner 250ml Bought together · 15% off − 1 + AED 91AED 153 Remove",
+      "Anua Heartleaf Pore Control Cleansing Oil Bought together · 15% off − 1 + AED 91AED 153 Remove",
+      "SKIN1004 Collagen Night Wrapping Mask Bought together · 15% off − 1 + AED 56AED 66 Remove"
+    ],
+    "summary": [
+      "Order Value (5 items)AED 594AED 459",
+      "Buy-together discount– AED 72",
+      "Delivery is calculated at checkout",
+      "Order Total AED 387"
+    ]
+  },
+  "checkout-1280": [
+    "SubtotalAED 459",
+    "Buy-together discount– AED 72",
+    "DeliveryFree",
+    "TotalAED 387",
+    "You're paying VAT (5%)AED 18.43",
+    "Buy-together discount– AED 72",
+    "SubtotalAED 387"
+  ],
+  "cart-after-remove-1280": {
+    "lines": [
+      "Beauty of Joseon Relief Sun Rice + Probiotics SPF50+ − 1 + AED 69 Remove",
+      "Anua Heartleaf 77% Soothing Toner 250ml − 1 + AED 108AED 153 Remove",
+      "Anua Heartleaf Pore Control Cleansing Oil − 1 + AED 108AED 153 Remove",
+      "SKIN1004 Collagen Night Wrapping Mask − 1 + AED 66 Remove"
+    ],
+    "summary": [
+      "Order Value (4 items)AED 441AED 351",
+      "Delivery is calculated at checkout",
+      "Order Total AED 351"
+    ]
+  }
+}

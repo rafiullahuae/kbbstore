@@ -434,6 +434,9 @@ class CartService
         }
 
         if ($quantity <= 0) {
+            // Zero is removing it, and removing one member of a "Buy these
+            // together" bundle dissolves the bundle (Lane RE).
+            $this->dissolve($cart, $item->bt_group ?? null);
             $item->delete();
         } else {
             $qty = min(99, $quantity);
@@ -452,8 +455,72 @@ class CartService
     public function remove(Cart $cart, int $itemId): void
     {
         $this->displayLoaded = false;
+        $this->dissolve($cart, $cart->items()->whereKey($itemId)->value('bt_group'));
         $cart->items()->where('id', $itemId)->delete();
         $cart->forceFill(['last_activity_at' => now()])->save();
+    }
+
+    /**
+     * Make the lines one "Buy these together" press just added into a group.
+     *                                                                (Lane RE)
+     *
+     * Called ONLY by Store\CartController::addTogether(), with the ids of the
+     * lines it added in that request — never with anything a browser sent. The
+     * handle is minted here, 32 random characters, and `bt_size` records how
+     * many lines it covers; App\Services\BuyTogetherPricing prices the group
+     * only while exactly that many lines still carry it.
+     *
+     * A line that was already in ANOTHER group (the same product bought
+     * together twice from two pages) moves to this one, and the group it left
+     * is dissolved — its other lines go back to their own prices, exactly as
+     * if this line had been removed from it.
+     *
+     * Fewer than three lines is not a bundle and makes no group.
+     *
+     * @param  list<int>  $itemIds
+     */
+    public function group(Cart $cart, array $itemIds): ?string
+    {
+        $itemIds = array_values(array_unique(array_map('intval', $itemIds)));
+
+        if (count($itemIds) < BuyTogetherPricing::MIN_GROUP || count($itemIds) > BuyTogetherPricing::MAX_GROUP) {
+            return null;
+        }
+
+        $this->displayLoaded = false;
+        $handle = Str::lower(Str::random(32));
+
+        DB::transaction(function () use ($cart, $itemIds, $handle) {
+            $previous = $cart->items()->whereIn('id', $itemIds)->whereNotNull('bt_group')
+                ->distinct()->pluck('bt_group')->all();
+
+            foreach ($previous as $old) {
+                $this->dissolve($cart, (string) $old);
+            }
+
+            $cart->items()->whereIn('id', $itemIds)
+                ->update(['bt_group' => $handle, 'bt_size' => count($itemIds)]);
+        });
+
+        return $handle;
+    }
+
+    /**
+     * The group goes; every line that was in it is an ordinary line again.
+     *
+     * "if any product removed from the cart, the other products prices will
+     * become normal without buy together discount." Pricing already refuses an
+     * incomplete group on every pass; clearing the handle on the survivors as
+     * well is what makes that permanent — a product added back by the ordinary
+     * button later cannot complete a bundle nobody pressed for.
+     */
+    private function dissolve(Cart $cart, ?string $group): void
+    {
+        if ($group === null || $group === '') {
+            return;
+        }
+
+        $cart->items()->where('bt_group', $group)->update(['bt_group' => null, 'bt_size' => null]);
     }
 
     public function clear(Cart $cart): void
@@ -594,13 +661,20 @@ class CartService
                     ->first();
 
                 if ($existing) {
-                    $existing->update(['quantity' => min(99, $existing->quantity + $item->quantity)]);
+                    $existing->update(['quantity' => min(99, $existing->quantity + $item->quantity)]
+                        // A guest's bundle line landing on an ungrouped line
+                        // of the same product keeps the guest's bundle whole.
+                        + ($item->bt_group && ! $existing->bt_group
+                            ? ['bt_group' => $item->bt_group, 'bt_size' => $item->bt_size] : []));
                 } else {
                     $target->items()->create([
                         'product_id' => $item->product_id,
                         'product_variant_id' => $item->product_variant_id,
                         'quantity' => $item->quantity,
                         'unit_price' => $item->unit_price,
+                        // (Lane RE) The bundle travels with the line.
+                        'bt_group' => $item->bt_group,
+                        'bt_size' => $item->bt_size,
                     ]);
                 }
             }
@@ -644,14 +718,33 @@ class CartService
 
         $subtotal = (int) $cart->items->sum(fn ($i) => $i->lineTotal());
 
+        /*
+         * "BUY THESE TOGETHER", PRICED BEFORE THE COUPON — Lane RE.
+         *
+         * The bundle comes first and the coupon second, on what the bundle
+         * left ("and on top of it, the coupon can be apply"), so the quote is
+         * handed to discountFor() rather than recomputed there. NONE — and no
+         * query — for a basket with no group in it.
+         *
+         * `subtotal` STAYS THE SUM OF THE LINES AT THEIR OWN PRICES, and the
+         * bundle is a row of its own beside the coupon's: the owner asked for
+         * the two to be told apart. So the free-delivery bar and a coupon's
+         * minimum spend, which read the subtotal, count the basket BEFORE the
+         * bundle — the same customer-favouring reading the comment below gives
+         * the coupon: a discount never pushes a basket back under a threshold
+         * it had reached. The tax base and the total are after both.
+         */
+        $bundle = app(BuyTogetherPricing::class)->forCart($cart);
+        $bundleOff = (int) $bundle['total'];
+
         $discount = 0;
         $couponCode = null;
         if ($cart->coupon) {
-            $discount = $this->coupons->discountFor($cart->coupon, $cart);
+            $discount = $this->coupons->discountFor($cart->coupon, $cart, $bundle);
             $couponCode = $cart->coupon->code;
         }
 
-        $afterDiscount = max(0, $subtotal - $discount);
+        $afterDiscount = max(0, $subtotal - $bundleOff - $discount);
         $country ??= $cart->shipping_country;
         $state ??= $cart->shipping_state;
 
@@ -756,6 +849,15 @@ class CartService
         return [
             'item_count' => $cart->itemCount(),
             'subtotal' => $subtotal,
+            /*
+             * THE BUNDLE, and what each grouped line gave (Lane RE). The cart
+             * page, the drawer and the checkout print `bundle_discount` as its
+             * own row and read `bundle['lines'][item id]` for the line price;
+             * the order writes both. `discount` is still the coupon and only
+             * the coupon — it is what recordRedemption() spends.
+             */
+            'bundle_discount' => $bundleOff,
+            'bundle' => $bundle,
             'discount' => $discount,
             'coupon_code' => $couponCode,
             'shipping' => $shipping,
@@ -865,7 +967,7 @@ class CartService
              * strings this side formats.
              */
             'decimals' => Money::receiptDecimals(
-                $subtotal, $discount, $shipping, $taxableBase, $total,
+                $subtotal, $bundleOff, $discount, $shipping, $taxableBase, $total,
                 $threshold ?? 0, $toFree ?? 0,
             ),
         ];

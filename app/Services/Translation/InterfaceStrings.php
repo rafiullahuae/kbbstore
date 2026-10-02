@@ -1164,6 +1164,16 @@ final class InterfaceStrings
             'buy_together.choose_option' => 'Choose an option for :name first.',
             'buy_together.sold_out_named' => ':name is sold out.',
             'buy_together.not_added' => ':name could not be added.',
+            /*
+             * Lane RE — the bundle discount. `saving` sits in front of the
+             * amount in a green pill under the total; `bundle_badge` is the
+             * small tag on a bundled line in the cart, the drawer and the
+             * checkout; `bundle_row` is the summary row the coupon's own row
+             * sits under, so the two discounts are told apart.
+             */
+            'buy_together.saving' => "You're saving",
+            'buy_together.bundle_badge' => 'Bought together · :percent% off',
+            'buy_together.bundle_row' => 'Buy-together discount',
             'quick_view.in_stock' => 'In stock',
             'quick_view.out_of_stock' => 'Out of stock',
             'quick_view.view_full' => 'View full details',
@@ -2134,6 +2144,8 @@ final class InterfaceStrings
             'totals.subtotal' => 'Subtotal',
             'totals.discount' => 'Discount',
             'totals.discount_coupon' => 'Discount (:code)',
+            // Lane RE: the "Buy these together" bundle, its own row above the coupon's.
+            'totals.bundle' => 'Buy-together discount',
             'totals.delivery' => 'Delivery',
             'totals.gift_wrapping' => 'Gift wrapping',
             'totals.payment_fee' => ':method fee',
