@@ -45,6 +45,11 @@ class Product extends Model
     {
         static::saved(static fn () => \App\Services\VariantPricing::invalidate());
         static::deleted(static fn () => \App\Services\VariantPricing::invalidate());
+
+        // "You may also like" caches its choice per product for ten minutes
+        // (App\Services\AlsoLikeRail). Saving the product -- its brand, its
+        // picks -- drops that product's choice at once. (Lane PS)
+        static::saved(static fn (self $p) => \App\Services\AlsoLikeRail::forget((int) $p->getKey()));
     }
 
     /**
@@ -91,6 +96,8 @@ class Product extends Model
             'seo' => 'array',
             'meta_feed' => 'array',
             'custom_tabs' => 'array',
+            // One product's own "You may also like" picks. (Lane PS)
+            'also_like' => 'array',
             'featured' => 'bool',
             'is_visible' => 'bool',
             'manage_stock' => 'bool',

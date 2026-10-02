@@ -134,3 +134,14 @@ Route::post('/product-editor-create', [ProductEditorApiController::class, 'store
 
 Route::post('/product-editor-save/{id}', [ProductEditorApiController::class, 'save'])
     ->whereNumber('id');
+
+/*
+ * Catalog → Products → (edit) → You may also like: the picker's search.
+ * (Lane PS) Under the `product-editor-` prefix on purpose, so it keeps the
+ * editor's capability — AdminCapabilities maps a GET here to catalog.view —
+ * and needs no line in routes/web.php. The picks themselves are saved with
+ * the product, through product-editor-save above. Shipped with
+ * 2027_07_11_000100_clear_caches_also_like so the compiled route cache learns
+ * the path.
+ */
+Route::get('/product-editor-also-like', [\App\Http\Controllers\Admin\AlsoLikeApiController::class, 'search']);

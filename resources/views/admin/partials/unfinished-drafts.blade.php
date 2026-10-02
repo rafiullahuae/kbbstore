@@ -741,6 +741,8 @@
       if (typeof PP === 'undefined' || !PP) return null;
       var out = {};
       ppFields().forEach(function (f) { out[f.key] = f.value; });
+      // The "You may also like" tab, its own half (Lane PS).
+      if (typeof pyaFields === 'function') pyaFields().forEach(function (f) { out['ymal.' + f.key] = f.value; });
       (PP.sections || []).forEach(function (s) {
         out['section.' + s.key + '.desktop'] = !!s.desktop;
         out['section.' + s.key + '.mobile'] = !!s.mobile;
@@ -754,11 +756,16 @@
         PPDIRTY.sections = true;
         return;
       }
+      if (k.indexOf('ymal.') === 0) {
+        if (typeof pyaFields === 'function') pyaFields().forEach(function (f) { if ('ymal.' + f.key === k) f.value = v; });
+        PPDIRTY.also = true;
+        return;
+      }
       ppFields().forEach(function (f) { if (f.key === k) f.value = v; });
       PPDIRTY.layout = true;
     },
     render: function () { paintProductPage(); },
-    clean: function () { PPDIRTY = {sections: false, layout: false}; marker('#ppDirty', false); },
+    clean: function () { PPDIRTY = {sections: false, layout: false, also: false}; marker('#ppDirty', false); },
     save: function () { var s = q('#ppSave'); if (s) s.click(); }
   });
 

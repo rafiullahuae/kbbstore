@@ -296,7 +296,7 @@ it('clears a reloaded screen’s row when its own Discard reloads it', function 
      */
     $app = udApp();
 
-    expect($app)->toContain("if(e.target.id==='ppDiscard'){ PPDIRTY={sections:false,layout:false}; if(window.kbbDrafts) kbbDrafts.discarded('productpage'); renderProductPage(); return; }")
+    expect($app)->toContain("if(e.target.id==='ppDiscard'){ PPDIRTY={sections:false,layout:false,also:false}; if(window.kbbDrafts) kbbDrafts.discarded('productpage'); renderProductPage(); return; }")
         ->and($app)->toContain("if(e.target.id==='hpDiscard'){ if(window.kbbDrafts) kbbDrafts.discarded('homepage'); renderHomepage(); return; }");
 });
 

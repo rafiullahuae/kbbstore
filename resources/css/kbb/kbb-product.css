@@ -480,6 +480,75 @@ a{color:inherit;text-decoration:none}
    the four-across desktop grid wants; between two cards that narrow it reads as
    a hole, most of all down the rows, where nothing fills it. */
 @media(max-width:600px){.rel{--kbb-gap:10px}}
+
+/* ── "YOU MAY ALSO LIKE" — ONE ROW THAT SCROLLS ──────────────────── Lane PS ──
+   The owner: "You may also like should be a slider on each product page."
+
+   The track is still `.rel.kbb-pgrid[data-skin]`, so the card, its skin and
+   both gaps above are exactly what they were; only the FLOW changes, from
+   rows that wrap to one row that scrolls. Two classes beat the shared grid's
+   one (`.kbb-pgrid,.rel` in kbb.css and SiteLayout's 901px pin) on
+   specificity rather than on source order.
+
+   A CARD IS SIZED HERE AND NOWHERE ELSE: the row's width, less the gaps
+   between the cards in view, shared between them. --ymal-d / --ymal-m are
+   the "cards in view" settings, printed as integers on the section. Their
+   shipped values, 5 and 2, reproduce the card the grid already drew —
+   232.8px at 1280 and 168px at 390, measured before and after — so applying
+   this changes how the cards move and not how big they are.
+
+   ON A PHONE the row bleeds into the page gutter on both sides and pads it
+   back, so the first card lines up with the text above while the next one
+   peeks in at the edge: the cue that it swipes. scroll-padding keeps snap
+   positions on the gutter, not the glass.
+
+   THE 8px / 14px BLOCK PADDING is room inside the scroller for a card's hover
+   lift and shadow, which overflow would otherwise clip; the equal negative
+   margin gives it back, so the section is the same height it was. */
+.ymal{position:relative}
+.ymal-nav{display:none}
+.rel.ymal-track{
+  grid-template-columns:none;
+  grid-auto-flow:column;
+  grid-auto-columns:calc((100% - (var(--ymal-m,2) - 1) * var(--kbb-gap)) / var(--ymal-m,2));
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  scroll-behavior:smooth;
+  scrollbar-width:none;
+  margin-inline:calc(-1 * var(--site-gutter));
+  padding-inline:var(--site-gutter);
+  scroll-padding-inline:var(--site-gutter);
+  padding-block:8px 14px;
+  margin-block:-8px -14px;
+}
+.rel.ymal-track::-webkit-scrollbar{display:none}
+.rel.ymal-track>*{scroll-snap-align:start;min-width:0}
+.rel.ymal-track:focus-visible{outline:2px solid var(--pink-deep);outline-offset:-2px;border-radius:var(--r-m)}
+.ymal-btn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;padding:0;
+  background:#fff;border:1px solid var(--line-2);color:var(--ink);cursor:pointer;transition:background .16s,color .16s,opacity .16s}
+.ymal-btn:hover:not(:disabled){background:var(--ink);border-color:var(--ink);color:#fff}
+.ymal-btn:disabled{opacity:.35;cursor:default}
+.ymal-btn:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px}
+.ymal-btn svg{width:18px;height:18px}
+/* "Previous" and "next" are named for the reading order, so in Arabic they
+   swap sides with the logical inset below and their chevrons turn round. */
+[dir="rtl"] .ymal-btn svg{transform:scaleX(-1)}
+/* Arrows from 901px, where there is a pointer and room beside the heading.
+   Below that a phone swipes, and a button a thumb can hit while scrolling
+   the page is worse than none. In flow-free position, so they cost the
+   heading no height and nothing shifts when they appear. */
+@media(min-width:901px){
+  .rel.ymal-track{
+    grid-auto-columns:calc((100% - (var(--ymal-d,5) - 1) * var(--kbb-gap)) / var(--ymal-d,5));
+    margin-inline:0;
+    padding-inline:0;
+    scroll-padding-inline:0;
+  }
+  .ymal-nav{display:flex;gap:8px;position:absolute;inset-inline-end:0;top:calc(var(--pl-sec-pad,34px) + 4px)}
+  .ymal h2{padding-inline-end:96px}
+}
+@media(prefers-reduced-motion:reduce){.rel.ymal-track{scroll-behavior:auto}}
 .pc{background:#fff;border:1px solid var(--line-2);border-radius:var(--r-m);overflow:hidden;transition:.18s var(--ease);display:flex;flex-direction:column}
 .pc:hover{box-shadow:var(--sh-m);transform:translateY(-3px)}
 .pc .ph{position:relative;aspect-ratio:1;display:grid;place-items:center}
