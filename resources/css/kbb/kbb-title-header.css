@@ -206,6 +206,10 @@
   max-width:min(100%, var(--kbb-th-mw));
 }
 
+/* Where the words sit, top to bottom (2.60.350: bottom, as the owner asked). */
+.kbb-th--v-top{align-items:flex-start}
+.kbb-th--v-bottom{align-items:flex-end}
+
 .kbb-th--a-center .kbb-th__inner{align-items:center;text-align:center}
 .kbb-th--a-end .kbb-th__inner{align-items:flex-end;text-align:end}
 

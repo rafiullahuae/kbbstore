@@ -74,7 +74,7 @@ it('keeps a category its own name and description', function () {
     // Since Lane PY a category is headed by the title header's light box, not
     // the plain .ptitle -- still its own name and its own description.
     expect($html)->toContain('<h1 class="kbb-th__title" id="kbb-th-title">Sbh Toners</h1>')
-        ->and($html)->toContain('<div class="kbb-th__desc">Every toner we stock.</div>');
+        ->and($html)->toContain('<div class="kbb-th__desc kbb-th__desc--clamp">Every toner we stock.</div>');
 });
 
 it('does not carry a brand from one request into the next', function () {

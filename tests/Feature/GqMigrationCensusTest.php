@@ -91,8 +91,8 @@ function gqCensus(): array
             // Exporter 1.11.0 (Lane PT): the old shop's title header.
             'banner_image' => GQ_LANDS.'categories.header_image',
             'banner_source_key' => GQ_LANDS.'categories.header_source',
-            'title_override' => GQ_LANDS.'categories.header_title',
-            'subtitle' => GQ_LANDS.'categories.header_subtitle',
+            'title_override' => GQ_CONSOLIDATED.': 2.60.350 -- the exporter finds it by key NAME and on the owner\'s shop it held the theme\'s "hide" switch, so every category was headed "hide"; the header shows the name, and a custom title is typed in Catalog → Categories',
+            'subtitle' => GQ_CONSOLIDATED.': 2.60.350 -- the exporter finds it by key NAME and on the owner\'s shop it held the theme\'s "hide" switch, so every category was headed "hide"; the header shows the name, and a custom title is typed in Catalog → Categories',
         ]],
 
         'brands.csv' => ['entity' => 'brands', 'columns' => [
@@ -104,8 +104,8 @@ function gqCensus(): array
             'position' => GQ_LANDS.'brands.position',
             'banner_image' => GQ_LANDS.'brands.header_image',
             'banner_source_key' => GQ_LANDS.'brands.header_source',
-            'title_override' => GQ_LANDS.'brands.header_title',
-            'subtitle' => GQ_LANDS.'brands.header_subtitle',
+            'title_override' => GQ_CONSOLIDATED.': 2.60.350 -- the exporter finds it by key NAME and on the owner\'s shop it held the theme\'s "hide" switch, so every category was headed "hide"; the header shows the name, and a custom title is typed in Catalog → Categories',
+            'subtitle' => GQ_CONSOLIDATED.': 2.60.350 -- the exporter finds it by key NAME and on the owner\'s shop it held the theme\'s "hide" switch, so every category was headed "hide"; the header shows the name, and a custom title is typed in Catalog → Categories',
         ]],
 
         'tags.csv' => ['entity' => 'tags', 'columns' => [
@@ -1542,8 +1542,6 @@ function gqEmptyInThisFixture(): array
          * key that shop does not write; adding one to the harness removes the
          * line from here.
          */
-        'brands.header_title' => 'the harness brand carries a banner but no header title (categories do)',
-        'brands.header_subtitle' => 'the harness brand carries a banner but no header subtitle (categories do)',
         'coupons.minimum_amount' => "the harness coupon has no `minimum_amount` meta",
         'coupons.maximum_amount' => "the harness coupon has no `maximum_amount` meta",
         'coupons.product_ids' => "the harness coupon restricts by CATEGORY, not by product",

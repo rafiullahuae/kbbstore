@@ -47,7 +47,7 @@
                     <div class="kbb-th__desc kbb-th__desc--clamp">{!! $header['description'] !!}</div>
                     <label for="kbb-th-more" class="kbb-th__more"><span class="kbb-th__more-open">{{ __('store.shop.header_more') }}</span><span class="kbb-th__more-close">{{ __('store.shop.header_less') }}</span></label>
                 @else
-                    <div class="kbb-th__desc">{!! $header['description'] !!}</div>
+                    <div class="kbb-th__desc{{ ($header['clamp'] ?? false) ? ' kbb-th__desc--clamp' : '' }}">{!! $header['description'] !!}</div>
                 @endif
             @endif
         </div>

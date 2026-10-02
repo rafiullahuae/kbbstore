@@ -145,7 +145,8 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
     expect($keys)->toBe(array_keys(SiteLayout::SCHEMA));
-    expect($keys)->toHaveCount(44);
+    // 47 since 2.60.350: where the words sit, the generic line, and Read more.
+    expect($keys)->toHaveCount(47);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

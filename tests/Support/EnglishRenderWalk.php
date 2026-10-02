@@ -1810,7 +1810,9 @@ final class EnglishRenderWalk
                 'hits' => 1,
             ],
             'the category title header, the light box (Lane PY)' => [
-                'pattern' => '#<section class="kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush" style="[^"<>]*" data-kbb-title-header aria-labelledby="kbb-th-title">\n.*?</section>\n#s',
+                // 2.60.350: `kbb-th--v-bottom` -- the words at the foot of the box,
+                // as the owner asked.
+                'pattern' => '#<section class="kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush" style="[^"<>]*" data-kbb-title-header aria-labelledby="kbb-th-title">\n.*?</section>\n#s',
                 'hits' => 1,
             ],
 
