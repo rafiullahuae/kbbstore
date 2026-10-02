@@ -154,6 +154,17 @@ const KBB_ONLY_IN_GRID_SKINS = [
  * phone ladder at 900px and the `.ph2` photograph placeholder.
  */
 const KBB_ONLY_IN_KBB_CSS = [
+    /*
+     * Integrator, 2.60.354 — Quick view in the middle of the photograph. In
+     * kbb.css ONLY, deliberately: the card is on every page and so is kbb.css.
+     * The Showcase pair is said at Showcase's weight plus one so that it beats
+     * kbb-grid-skins.css's `transform:none` on the three pages that load both.
+     * QuickViewCentredTest has the measurements.
+     */
+    '|.kbb-tile .kbb-card-thumb>.qv-btn',
+    '|.kbb-tile .kbb-card-thumb>.qv-btn:focus-visible,.kbb-tile:hover .kbb-card-thumb>.qv-btn',
+    '|.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-thumb>.qv-btn',
+    '|.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-thumb>.qv-btn:focus-visible,.kbb-pgrid[data-skin^="showcase"] .kbb-tile:hover .kbb-card-thumb>.qv-btn',
     '@media(max-width:900px)|.kbb-badge',
     '@media(max-width:900px)|.kbb-card',
     '@media(max-width:900px)|.kbb-card-brand',

@@ -4875,3 +4875,22 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
     .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cart{
         grid-row:6;grid-column:1;margin-top:var(--sc-gap);padding:0 10px}
 }
+
+/* ── QUICK VIEW SITS IN THE MIDDLE OF THE PHOTOGRAPH ────────────────────────
+   Owner, 2 October: "it's coming on top of the product and hiding at top, it
+   should be center - middle." The cause was `.kbb-tile .qv-btn{position:
+   relative}` above (written to lift the controls over the stretched link):
+   at 0,2,0 it beat layouts/store.blade.php's `.qv-btn{position:absolute}` at
+   0,1,0, so on every template but Showcase the pill fell into the flow at the
+   TOP of .kbb-card-thumb, half of it under the card's top edge. Absolute again
+   here, centred on both axes, rising 6px into place on hover as before.
+   RTL-PHYSICAL: centring idiom (left:50% + translate(-50%,...)). */
+.kbb-tile .kbb-card-thumb > .qv-btn{position:absolute;inset:auto;top:50%;left:50%;margin:0;align-self:auto;justify-self:auto;transform:translate(-50%,calc(-50% + 6px))}
+.kbb-tile:hover .kbb-card-thumb > .qv-btn,
+.kbb-tile .kbb-card-thumb > .qv-btn:focus-visible{transform:translate(-50%,-50%)}
+/* Showcase's own `transform:translateY(6px)` / `none` pair lives in
+   kbb-grid-skins.css, which loads AFTER this file at the same weight, so the
+   centring has to be said again at Showcase's weight plus one. */
+.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-thumb > .qv-btn{transform:translate(-50%,calc(-50% + 6px))}
+.kbb-pgrid[data-skin^="showcase"] .kbb-tile:hover .kbb-card-thumb > .qv-btn,
+.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-thumb > .qv-btn:focus-visible{transform:translate(-50%,-50%)}
