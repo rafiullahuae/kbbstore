@@ -878,6 +878,7 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'admin-api/products/{id}' => '/admin-api/products/' . $product->id,
         'admin-api/orders/{id}' => '/admin-api/orders/' . $order->id,
         'admin-api/orders/{id}/detail' => '/admin-api/orders/' . $order->id . '/detail',
+        'admin-api/orders/{id}/customer-orders' => '/admin-api/orders/' . $order->id . '/customer-orders',
         'admin-api/orders/{id}/settlement' => '/admin-api/orders/' . $order->id . '/settlement',
         /*
          * Can this order's authorisation be released? (Lane PG2, the order
