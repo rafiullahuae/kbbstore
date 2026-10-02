@@ -5123,6 +5123,14 @@ function ppPvValue(f){
     const keys = Object.keys(o);
     return keys.indexOf(String(f.value)) >= 0 ? String(f.value) : String(f.default);
   }
+  /* (Lane PV) A colour is `#` and three or six hex digits, upper-cased the
+     way ModuleSchema's `repair` stores it, or the shipped default -- never a
+     string that could leave its declaration. ProductLayout::hex() is the
+     server's half of the same rule. */
+  if(f.type === 'colour'){
+    const c = String(f.value == null ? '' : f.value).trim().toUpperCase();
+    return /^#(?:[0-9A-F]{3}|[0-9A-F]{6})$/.test(c) ? c : String(f.default).toUpperCase();
+  }
   if(f.type !== 'range') return null;
   const sc = (+o.scale) || 1;
   let n = Number(f.value);
@@ -5213,6 +5221,9 @@ function ppField(f){
   if(f.type==='select')
     return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
       <select data-pl="${escAttr(f.key)}">${Object.entries(f.options||{}).map(([k,l])=>`<option value="${escAttr(k)}"${String(k)===String(f.value)?' selected':''}>${escHtml(l)}</option>`).join('')}</select></div>`;
+  if(f.type==='colour')
+    return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
+      <span class="mmcol"><input type="color" value="${escAttr(ppPvValue(f))}" data-pl="${escAttr(f.key)}"><code id="plv-${escAttr(f.key)}">${escHtml(ppPvValue(f))}</code></span></div>`;
   return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
     <input type="text" value="${escAttr(String(f.value))}" data-pl="${escAttr(f.key)}"></div>`;
 }
@@ -5251,7 +5262,7 @@ function paintProductPage(rebuild){
       <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Product page</h2>
         <p class="mdesc" style="margin:0" id="ppLede"></p></div>
       <div id="ppStrip"></div>
-      <p class="ectabs-hint">Five views of one product page, and they do different jobs. <b>Sections</b> switches a whole block of the page on or off, per device — that is the only tab that can make something disappear. The four Layout tabs move what is already there: <b>Spacing</b> is the gaps, between the big blocks of the page and between the elements inside the buy column; <b>Type</b> is the sizes and weights. The preview shown with them is the real product page at both widths — a laptop and a phone, side by side — and it follows every slider as you drag it, before anything is saved; <b>Reset layout to defaults</b> puts them all back.</p>
+      <p class="ectabs-hint">Six views of one product page, and they do different jobs. <b>Sections</b> switches a whole block of the page on or off, per device — that is the only tab that can make something disappear. The five Layout tabs move what is already there: <b>Photo &amp; badge</b> is the top of the page — the space above the photo, the thumbnails, the discount badge's colours; <b>Spacing</b> is the gaps, between the big blocks of the page and between the elements inside the buy column; <b>Type</b> is the sizes and weights. The preview shown with them is the real product page at both widths — a laptop and a phone, side by side — and it follows every slider as you drag it, before anything is saved; <b>Reset layout to defaults</b> puts them all back.</p>
       <div class="ppwrap"><div class="ppcol" id="ppCol"></div>${ppPreviewPanel()}</div>
       <div class="ecsave">
         <span class="ecdirty" id="ppDirty" style="visibility:hidden">Unsaved changes</span>
@@ -5293,7 +5304,7 @@ document.addEventListener('input', e=>{
   if(!el||!PP) return;
   const f=ppFields().find(x=>x.key===el.dataset.pl);
   if(!f) return;
-  f.value = el.type==='range' ? +el.value : el.value;
+  f.value = el.type==='range' ? +el.value : (el.type==='color' ? String(el.value).toUpperCase() : el.value);
   const out=$('#plv-'+f.key); if(out) out.textContent=ppShow(f);
   ppMarkDirty('layout');
   /* THE LIVE HALF. `input` and not `change`, so the picture moves while the

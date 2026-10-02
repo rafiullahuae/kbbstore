@@ -129,6 +129,16 @@ a{color:inherit;text-decoration:none}
    inset-inline-start is `right` and inset-inline-end is `left`, so the pair
    moves the badge to the inline start and cancels the inline `left`. */
 [dir="rtl"] .gmain .lbl{inset-inline-start:14px!important;inset-inline-end:auto!important}
+/* THE PLAIN "-16%" ON THE PHOTO HAD NO BACKGROUND AT ALL. (Lane PV)
+   Of the gallery's three badge branches, the first two write their colour
+   inline (a Product Labels badge, a per-product badge) and the third -- the
+   discount a product on sale gets when neither applies -- wrote only its
+   position. `.lbl` above sets white text and a shadow and no background, so on
+   a white photograph it drew as a white box with white text: measured
+   `background-color: rgba(0, 0, 0, 0)`, `color: rgb(255, 255, 255)`. Green with
+   white text is what the owner asked for, and #1F9D55 is the shop's own green.
+   Appearance → Product page → Photo & badge moves both. */
+.gmain .lbl-off{background:var(--pl-badge-bg,#1F9D55);color:var(--pl-badge-fg,#FFFFFF)}
 .gwish{position:absolute;top:14px;inset-inline-end:14px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.92);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:3;box-shadow:var(--sh-s)}
 .gwish svg{width:19px;height:19px;color:var(--ink-2)}
 .gwish.on svg{color:var(--pink);fill:var(--pink)}
@@ -749,6 +759,7 @@ a{color:inherit;text-decoration:none}
    17px/500 with a 23px price, with the measured numbers under each. Picking one
    of those is an edit to the two declarations below and to nothing else. */
 .pdp .bb-title{font-size:var(--pl-title-m,19px);font-weight:var(--pl-title-w,500);line-height:1.36;letter-spacing:-.005em}
+.pdp .bb-brand{font-size:var(--pl-brand-s,12px)}
 .pdp .bb-head .bb-price{display:block;text-align:end;white-space:nowrap;line-height:1.15;margin:0}
 .pdp .bb-head .bb-price s{display:block;font-size:var(--pl-was-s,12.5px);font-weight:500;color:var(--muted);opacity:1}
 .pdp .bb-head .bb-price .now{display:block;font-size:var(--pl-price-s,22px);font-weight:var(--pl-price-w,800);letter-spacing:-.02em}
@@ -792,11 +803,11 @@ a{color:inherit;text-decoration:none}
      a fade is for. Same arithmetic as the cap on the line below it, so the two
      cannot drift apart. */
 .pdp .bb-desc{font-size:var(--pl-desc-s,13.5px);line-height:var(--pl-desc-lh,1.62);color:var(--ink-2);
-    border-block-start:1px solid var(--line-2);margin-block:var(--pl-rule-gap,20px) 0;padding-block-start:var(--pl-rule-pad,20px);
-    max-block-size:calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px));overflow:hidden;
-    -webkit-mask-image:linear-gradient(to bottom,#000 calc(1.95 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px)),transparent calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px)));
-    mask-image:linear-gradient(to bottom,#000 calc(1.95 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px)),transparent calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pl-rule-pad,20px)))}
-.pdp .bb-more{display:inline-flex;align-items:center;gap:4px;margin-block-start:6px;font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer}
+    border-block-start:1px solid var(--line-2);margin-block:var(--pl-desc-gap-m,20px) 0;padding-block-start:var(--pdp-rule-pad,20px);
+    max-block-size:calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pdp-rule-pad,20px));overflow:hidden;
+    -webkit-mask-image:linear-gradient(to bottom,#000 calc(1.95 * var(--pl-desc-lh,1.62) * 1em + var(--pdp-rule-pad,20px)),transparent calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pdp-rule-pad,20px)));
+    mask-image:linear-gradient(to bottom,#000 calc(1.95 * var(--pl-desc-lh,1.62) * 1em + var(--pdp-rule-pad,20px)),transparent calc(3 * var(--pl-desc-lh,1.62) * 1em + var(--pdp-rule-pad,20px)))}
+.pdp .bb-more{display:inline-flex;align-items:center;gap:4px;margin-block-start:var(--pl-more-gap-m,6px);font-size:12px;font-weight:700;color:var(--pink-deep);cursor:pointer}
 .pdp .bb-morebox:checked ~ .bb-desc{max-block-size:none;-webkit-mask-image:none;mask-image:none}
 .pdp .bb-morebox:checked ~ .bb-more{display:none}
 
@@ -812,10 +823,15 @@ a{color:inherit;text-decoration:none}
    of the buy column -- and there is no selector for "the last one that
    rendered". Owned by the block below, a block that does not render takes its
    seam with it and the ones around it close up. */
-.pdp .opt-label{border-block-start:1px solid var(--line-2);margin-block:var(--pl-rule-gap,20px) 9px;padding-block-start:var(--pl-rule-pad,20px)}
-.pdp .stockline{border-block-start:1px solid var(--line-2);margin-block:var(--pl-rule-gap,20px) 10px;padding-block-start:var(--pl-rule-pad,20px)}
+/* (Lane PV) The blurb's and the options' seams have their own gap now, per
+   device, and the space UNDER every seam is `--pdp-rule-pad` -- one local
+   property set from the phone or the laptop control, so the blurb's three-line
+   cap and its fade (calc()s against the same number) follow either. */
+.pdp{--pdp-rule-pad:var(--pl-rule-pad,20px)}
+.pdp .opt-label{border-block-start:1px solid var(--line-2);margin-block:var(--pl-opt-gap-m,20px) 9px;padding-block-start:var(--pdp-rule-pad,20px)}
+.pdp .stockline{border-block-start:1px solid var(--line-2);margin-block:var(--pl-rule-gap,20px) 10px;padding-block-start:var(--pdp-rule-pad,20px)}
 .pdp .trust{background:none;padding:0;border-radius:0;grid-template-columns:minmax(0,1fr);gap:var(--pl-trust-line-gap,10px);
-    border-block-start:1px solid var(--line-2);margin-block-start:var(--pl-trust-gap,22px);padding-block-start:var(--pl-rule-pad,20px)}
+    border-block-start:1px solid var(--line-2);margin-block-start:var(--pl-trust-gap,22px);padding-block-start:var(--pdp-rule-pad,20px)}
 .pdp .trust .ti{font-size:var(--pl-trust-s,12.5px)}
 .pdp .paychips{margin-block-start:var(--pl-chips-gap,12px)}
 
@@ -849,15 +865,28 @@ a{color:inherit;text-decoration:none}
 @media (max-width:880px){
   .pdp .gallery{margin-inline:calc(var(--site-gutter,22px) * -1)}
   .pdp .gmain{border-radius:0;border:0}
-  /* The strip floats ON the picture's bottom edge rather than under it, which
-     is where the 30px comes from: it is lifted by half its own height plus the
-     shadow. `z-index` because the thumbnails now overlap the frame. */
-  .pdp .gthumbs{margin-block-start:-30px;padding-inline:var(--site-gutter,22px);position:relative;z-index:2;
+  /* THE STRIP SITS UNDER THE PHOTOGRAPH, 10px below it. (Lane PV)
+       "The thumbnail icons please bring down beneath the image, I don't like
+        the overlapping style, or give an option on backend to turn it off,
+        keep it turned off by default."
+     It used to float ON the picture's bottom edge, lifted 30px (half its own
+     height plus the shadow). Appearance → Product page → Photo & badge →
+     "Thumbnails overlap the photo (phones)" brings that back: the setting
+     arrives as 0 or 1 and this is `10px - n * 40px`, so 1 is exactly the old
+     -30px and 0 is 10px, with no class and no script. `z-index` stays for the
+     overlap; under the photo it covers nothing. */
+  .pdp .gthumbs{margin-block-start:calc(10px - var(--pl-thumb-over,0) * 40px);padding-inline:var(--site-gutter,22px);position:relative;z-index:2;
       gap:var(--pl-thumb-gap,8px);flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x mandatory;padding-block-end:2px}
   .pdp .gthumbs::-webkit-scrollbar{display:none}
   .pdp .gthumb{flex:0 0 auto;scroll-snap-align:start;width:56px;height:56px;border-radius:10px;
       box-shadow:var(--sh-s);background-color:#fff}
-  .pdp .buybox{padding-block-start:var(--pl-buybox-gap,22px)}
+  /* (Lane PV) "Photo → brand · phone" IS the gap, the whole of it. It was the
+     grid's 26px row gap PLUS this padding, so the control read 22 for a gap of
+     48 and could never take it under 26. The row gap is folded into the
+     padding -- 48 is today's 26 + 22, so nothing moves -- and the migration
+     that shipped this adds 26 to a value he had already saved. */
+  .pdp{row-gap:0;padding-block-start:var(--pl-gal-top-m,0px)}
+  .pdp .buybox{padding-block-start:var(--pl-buybox-gap,48px)}
 }
 
 /* ── the tabs: one row, the open one prominent, the rest at 38% ───────────────
@@ -947,6 +976,14 @@ a{color:inherit;text-decoration:none}
       here are the two the phone rules would otherwise have dragged with them. */
 @media (min-width:881px){
   .pdp .bb-title{font-size:var(--pl-title-d,30px);font-weight:var(--pl-title-w,500);line-height:1.24}
+  /* (Lane PV) the laptop half of every gap down the top of the buy column. */
+  .pdp{padding-block-start:var(--pl-gal-top-d,22px);--pdp-rule-pad:var(--pl-rule-pad-d,20px)}
+  .pdp .buybox{padding-block-start:var(--pl-buybox-gap-d,0px)}
+  .pdp .bb-head{margin-block-start:var(--pl-head-gap-d,8px)}
+  .pdp .cap-area,.pdp .bb-rate{margin-block-start:var(--pl-rate-gap-d,10px)}
+  .pdp .bb-desc{margin-block-start:var(--pl-desc-gap-d,20px)}
+  .pdp .bb-more{margin-block-start:var(--pl-more-gap-d,6px)}
+  .pdp .opt-label{margin-block-start:var(--pl-opt-gap-d,20px)}
   .pdp .bb-head .bb-price .now{font-size:var(--pl-price-s,22px)}
   /* ── THE PHOTOGRAPH STOPS AT THE PAGE'S OWN CONTENT EDGE ON A WIDE SCREEN.
                                                           (2.60.331 follow-up)
