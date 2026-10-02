@@ -20760,6 +20760,24 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
          card it is inside. */
       '.cplscroll{max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}' +
       '.cplscroll table{min-width:940px}' +
+      /* THE ACTIONS FELL OFF THE RIGHT EDGE ON DESKTOP (2 October 2026, the
+         owner's screenshot of Catalog with 788 imported products). The Product
+         cell had no width limit, so one long imported name ("medicube - PDRN
+         Pink Collagen Jelly Eye Mask - 6 pairs") widened the whole table past
+         the screen and View / Visit / Edit were only reachable by scrolling
+         sideways. On desktop the Product column now takes only the room the
+         other columns leave and shortens the name with an ellipsis (the full
+         name is its title), and on every width the actions column is pinned
+         to the right edge, so turning more columns on scrolls the middle of
+         the table and never hides the buttons. */
+      '@media(min-width:901px){.cplscroll table{min-width:0;width:100%}' +
+        '.cplscroll th,.cplscroll td{padding-left:9px;padding-right:9px}}' +
+      '.cplscroll td.cplprod{min-width:230px;max-width:360px}' +
+      '@media(min-width:901px){.cplscroll th.cplprod,.cplscroll td.cplprod{width:100%;max-width:0}}' +
+      '.cplscroll td.cplprod>.row>div{min-width:0;overflow:hidden}' +
+      '.cplscroll td.cplprod .pname,.cplscroll td.cplprod .pbrand{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+      '.cplscroll th.cplact,.cplscroll td.cplact{position:sticky;right:0;z-index:1;background:var(--card,#fff);' +
+        'box-shadow:-10px 0 10px -10px rgba(16,23,41,.25)}' +
       '.cplhint{display:none;font-size:11.5px;color:var(--ink-soft);padding:10px 14px 0}' +
       '@media(max-width:900px){.cplhint{display:block}}' +
       '.cpltools{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}' +
@@ -20807,12 +20825,16 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     ['featured', 'Featured'], ['orders', 'Orders'], ['date', 'Added'], ['wc', 'Woo ID']
   ];
 
-  /* Woo ID and Sale price are off by default and one click away in Columns.
+  /* Woo ID, Sale price, SKU and Added are off by default and one click away
+     in Customize columns. (SKU and Added went off on 2 October 2026 so the
+     default set fits a 1280px screen beside a readable Product column --
+     measured: 1,122px of columns in a 994px table; most imported products
+     carry no SKU at all.)
      The eight that are on already fill a 1032px content area, and a column
      nobody reads is a column that costs horizontal room on every page load. */
   var CP_COLS_DEFAULT = {
-    sku: true, brand: true, status: true, stock: true, price: true,
-    sale: false, categories: true, featured: true, orders: true, date: true, wc: false
+    sku: false, brand: true, status: true, stock: true, price: true,
+    sale: false, categories: true, featured: true, orders: true, date: false, wc: false
   };
 
   /* Which sort each sortable header maps to, so the header caret and the Sort
@@ -20997,7 +21019,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
           }).join('') +
         '</select>' +
         '<button class="btn ghost" id="cplAdvBtn">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Filters ' + (CP.adv ? '▴' : '▾') + '</button>' +
-        '<button class="btn ghost" id="cplColsBtn">Columns ' + (CP.colsOpen ? '▴' : '▾') + '</button>' +
+        '<button class="btn ghost" id="cplColsBtn">Customize columns ' + (CP.colsOpen ? '▴' : '▾') + '</button>' +
         '<button class="btn ghost" id="cplExport">' + ic('<path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 19h16"/>') + ' Export CSV</button>' +
       '</div>' +
       (CP.adv ? cpAdvanced() : '') +
@@ -21122,7 +21144,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     var allOn = rows.every(function(p){ return CP.sel[p.id]; });
 
     var head = '<th style="width:34px"><span class="cbx' + (allOn ? ' on' : '') + '" id="cplAll">' + ic(I.check) + '</span></th>' +
-      '<th>Product</th>' +
+      '<th class="cplprod">Product</th>' +
       CP_COLDEF.filter(function(c){ return cols[c[0]]; }).map(function(c){
         var sort = CP_COLSORT[c[0]];
         var align = (c[0] === 'price' || c[0] === 'sale' || c[0] === 'stock' || c[0] === 'orders') ? 'text-align:right' : '';
@@ -21130,12 +21152,12 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
         return '<th style="' + align + (sort ? ';cursor:pointer' : '') + '"' + (sort ? ' data-cpsort="' + sort + '"' : '') + '>' +
           sesc(c[1]) + caret + '</th>';
       }).join('') +
-      '<th style="width:170px"></th>';
+      '<th class="cplact" style="width:170px"></th>';
 
     var bodyRows = rows.map(function(p){
       return '<tr' + (CP.sel[p.id] ? ' style="background:var(--border-2,rgba(0,0,0,.03))"' : '') + '>' +
         '<td><span class="cbx' + (CP.sel[p.id] ? ' on' : '') + '" data-cpsel="' + p.id + '">' + ic(I.check) + '</span></td>' +
-        '<td><div class="row" style="min-width:0;gap:9px">' +
+        '<td class="cplprod" title="' + sesc(p.name) + '"><div class="row" style="min-width:0;gap:9px">' +
           (p.has_image
             ? '<img class="cplthumb" src="' + sesc(p.image) + '" alt="" loading="lazy">'
             : '<span class="cplnoimg" title="No image">no img</span>') +
@@ -21155,7 +21177,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
            included) and only drawn as a link when p.live says the shop would
            answer it; otherwise a disabled "Not live yet", never a 404. The
            scheme is checked because an href is an href. */
-        '<td><div style="display:flex;gap:6px;justify-content:flex-end;white-space:nowrap">' +
+        '<td class="cplact"><div style="display:flex;gap:6px;justify-content:flex-end;white-space:nowrap">' +
           ((p.live && /^(\/|https?:\/\/)/i.test(String(p.url || '')))
             ? '<a class="btn ghost sm" data-cpvisit="' + p.id + '" href="' + sesc(p.url) + '" target="_blank" rel="noopener" title="Open on the shop, in a new tab" style="text-decoration:none">Visit</a>'
             : '<button type="button" class="btn ghost sm" data-cpvisit="' + p.id + '" disabled title="The shop does not show this product yet" style="opacity:.55;cursor:default">Not live yet</button>') +
