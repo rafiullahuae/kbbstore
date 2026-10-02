@@ -98,7 +98,17 @@ it('draws no NEW and no -N% pill on any listing by default', function () {
      */
     [$cat, $brand] = prSeed(5);
 
-    foreach (['/shop/', prCatPath($cat), '/brands/pr-brand/'] as $uri) {
+    /*
+     * EVERY STOREFRONT PAGE THAT DRAWS A PRODUCT GRID, not three. The owner,
+     * re-confirming with a phone screenshot of Lip Care: "on thumbnails (on
+     * whole site front-end on all pages) turn off the new and discount label
+     * on grids at all!" The search results page, a curated listing, the home
+     * page's rails and the product page's related row all draw the same
+     * <x-product-card>, so they are asserted here rather than assumed.
+     * (The product page's own GALLERY pill is a `.lbl`, not a `.kbb-badge`,
+     * and is Lane PV's — it is not counted and not touched.)
+     */
+    foreach (['/shop/', prCatPath($cat), '/brands/pr-brand/', '/shop/?s=PR+Product', '/new-in/', '/super-sale/', '/', '/product/pr-p1/'] as $uri) {
         $html = prGet($uri);
 
         /*
@@ -109,7 +119,10 @@ it('draws no NEW and no -N% pill on any listing by default', function () {
          * draft of this test stayed green with the NEW pill switched back on.
          */
         expect(substr_count($html, 'class="kbb-card kbb-tile"'))->toBeGreaterThan(0, "{$uri} drew no cards")
-            ->and(substr_count($html, 'kbb-badge-new'))->toBe(0, "{$uri} still draws the NEW pill")
+            // The bestsellers rail's `#1`, `#2` rank pills share the class and are
+            // NOT a NEW tag — the owner did not ask about them — so they are
+            // excluded by their `#`, and only a NEW pill is counted.
+            ->and(preg_match_all('/kbb-badge-new">(?!#)/', $html))->toBe(0, "{$uri} still draws the NEW pill")
             ->and(substr_count($html, 'kbb-badge-sale'))->toBe(0, "{$uri} still draws the -N% pill")
             // The markdown itself is still shown, by the struck-through price.
             ->and($html)->toContain('kbb-card-reg');
@@ -148,6 +161,62 @@ it('no longer puts pc-nonew or pc-nodisc on <body>, which would hide the rank pi
     expect($class)->not->toContain('pc-nonew')
         ->and($class)->not->toContain('pc-nodisc')
         ->and($class)->toBe('pc-nobrand pc-nocat');   // exactly what it was before this lane
+});
+
+it('draws the NEW and -N% pills in exactly one template, so one switch covers every grid', function () {
+    /*
+     * The proof that "every place a product card renders" is ONE place. Every
+     * storefront grid — /shop/, every category, a brand page, the search
+     * results, the curated listings, the home rails and Appearance → Grid
+     * sections, the wishlist, a routine step, the [kbb_products] shortcode,
+     * a "Load more" batch and the product page's related row (and so Lane PS's
+     * "You may also like" carousel, which reuses it) — draws
+     * <x-product-card>, and that component is the only storefront template
+     * that writes either pill. A second template writing one would be a grid
+     * the switch does not reach, which is the defect the owner photographed.
+     *
+     * Not counted, deliberately, and each named so the next reader can check:
+     *   partials/product-gallery     the product page's own photo — `.lbl`,
+     *                                Lane PV's, recoloured there, not removed
+     *   partials/quick-view          the Quick view modal's `.qv-off`, a
+     *                                product detail, not a grid thumbnail
+     *   store/pdp-preview/*          the product-page layout previews
+     *   ugc/rail                     Shoppable video's `.ugcr-off`, beside the
+     *                                price on a video card with no thumbnail;
+     *                                its own switch, Content → Shoppable video
+     *   store/app                    /app, the admin-only developer preview
+     *                                with an invented catalogue (404 to shoppers)
+     *
+     * MUTATION, RUN: paste `<span class="kbb-badge kbb-badge-sale">-10%</span>`
+     * into partials/home/grid.blade.php and this is red naming that file.
+     */
+    $writers = [];
+
+    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(resource_path('views'), FilesystemIterator::SKIP_DOTS));
+
+    foreach ($it as $file) {
+        $rel = str_replace(resource_path('views').'/', '', $file->getPathname());
+
+        if (! str_ends_with($rel, '.blade.php') || str_starts_with($rel, 'admin/')) {
+            continue;
+        }
+
+        $src = (string) file_get_contents($file->getPathname());
+
+        if (str_contains($src, 'kbb-badge-new">') || str_contains($src, 'kbb-badge-sale">')
+            || str_contains($src, "kbb-badge kbb-badge-new'") || str_contains($src, "kbb-badge kbb-badge-sale'")) {
+            $writers[] = $rel;
+        }
+    }
+
+    expect($writers)->toBe(['components/product-card.blade.php']);
+
+    // And every grid template draws THAT component rather than a card of its own.
+    foreach (['components/product-grid.blade.php', 'partials/home/grid.blade.php', 'partials/home/grid-section.blade.php',
+        'partials/listing-batch.blade.php', 'store/shop.blade.php', 'store/product.blade.php', 'store/routines.blade.php'] as $grid) {
+        expect(substr_count((string) file_get_contents(resource_path('views/'.$grid)), '<x-product-card'))
+            ->toBeGreaterThan(0, "{$grid} no longer draws <x-product-card>");
+    }
 });
 
 /* ═══════════════ 2 · more products on scroll, category AND brand ═══════════════ */

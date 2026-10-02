@@ -23,3 +23,4 @@ RED    brand size block dead  [reaches every Spacing]
 RED    size not re-checked against the list  [cannot be made to print]
 RED    migration forgets layout_load_mode  [clears a stored value]
 24 of 24 mutations caught
+RED    second pill writer pasted into partials/home/grid.blade.php  [exactly one template]
