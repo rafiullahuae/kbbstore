@@ -782,6 +782,13 @@ tr.invdirty{background:var(--accent-soft)}
 .ectab.on::after{content:'';position:absolute;left:14px;right:14px;bottom:-1px;height:2px;background:#E0567B;border-radius:2px}
 .ectab .ct{font-size:11px;font-weight:600;color:#7b8697;background:#f3f6fa;border-radius:99px;padding:1px 7px}
 .ectab.on .ct{background:#FFF1F5;color:#C13E63}
+/* Appearance → Product page has thirteen tabs, and in one sideways-scrolling
+   row with its scrollbar hidden the last six were off-screen with nothing to
+   say they existed (measured at 1280: 996px of a 1,902px strip shown, "Buy
+   these together" at x=2167). Owner: "i can not see any tab of this name at
+   the top". That screen's strip wraps instead, so every tab is always in view.
+   Scoped to #ppStrip: the other screens' strips are unchanged. */
+#ppStrip .ectabs{flex-wrap:wrap;overflow-x:visible}
 
 .ecbody{padding:20px 0 8px}
 
