@@ -129,7 +129,7 @@ class ProductTrustShare
         /* ═══════════ authenticity ═════════════════════════════════════════ */
 
         'auth_on' => ['bool', 'Show “Authenticity Guaranteed”', true,
-            'The line under Add to cart with a green tick and an ⓘ. Pressing it slides the explanation open; the small red × closes it.'],
+            'The line under Add to cart with a green tick and an ⓘ. Pressing it slides the explanation open; the small red × closes it. It is also hidden while the shop’s authenticity claim is withdrawn — Store → Ecommerce → Claims → “Beside delivery and returns” left empty — because its text makes the same claim.'],
         'auth_label' => ['text', 'Line label', 'Authenticity Guaranteed', 'Plain text.'],
         'auth_text' => ['textarea', 'What it opens to', self::AUTH_TEXT,
             'Plain text. Leave a blank line between paragraphs.'],
@@ -466,5 +466,23 @@ class ProductTrustShare
     public function on(string $key): bool
     {
         return (bool) ($this->all()[$key] ?? false);
+    }
+
+    /**
+     * Whether "Authenticity Guaranteed" is drawn: its own switch, AND the
+     * shop still making the authenticity claim at all.
+     *
+     * His paragraph says "100% authentic", which is word for word the claim
+     * App\Support\TrustClaims lets him WITHDRAW from the product page by
+     * clearing Store → Ecommerce → Claims → "Beside delivery and returns".
+     * ShelfVatSentenceTest holds that withdrawing it removes every copy from
+     * the page, not just the chip — the defect that test was written for was a
+     * second copy left printing. So a withdrawn claim takes this block with it,
+     * and the switch's help on the screen says so.
+     */
+    public function showsAuthenticity(): bool
+    {
+        return $this->on('auth_on')
+            && \App\Support\TrustClaims::text($this->settings, 'product_authentic_text') !== null;
     }
 }

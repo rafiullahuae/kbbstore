@@ -308,7 +308,14 @@
       var r = await fetch(ppBase(), { method: 'POST', credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': uToken(), Accept: 'application/json' },
         body: JSON.stringify(payload) });
-      var j = await r.json();
+      var j = null;
+      try { j = await r.json(); } catch (e2) { j = null; }
+      /* A route-cache 404 answers a JSON body that says nothing; a controller's
+         own refusal says something. Same discriminator as the media picker. */
+      if (r.status === 404 && (!j || (!j.message && !j.error))) {
+        if (msg) { msg.style.visibility = 'visible'; msg.textContent = 'The Product page endpoint is not in this server\'s compiled route table yet. Clear the route cache (Platform → Cache) and reload.'; }
+        return;
+      }
       if (j && j.ok) {
         if (Array.isArray(j.trust)) PP.trust = j.trust;
         DIRTY = false;

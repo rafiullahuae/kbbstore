@@ -27,6 +27,6 @@
 --}}@php
     $kbbPts = app(\App\Services\ProductTrustShare::class);
 @endphp
-@if ($kbbPts->on('auth_on'))
+@if ($kbbPts->showsAuthenticity())
 <div class="pts-auth" data-pts="auth" data-pts-auth style="{{ $kbbPts->vars('auth') }}"><button type="button" class="pts-auth-btn" id="ptsAuthBtn" aria-expanded="false" aria-controls="ptsAuthPanel">{!! \App\Support\TrustShareIcons::CHECK_SQUARE !!}<span class="pts-auth-label">{{ $kbbPts->text('auth_label') }}</span>{!! \App\Support\TrustShareIcons::INFO !!}</button><div class="pts-auth-panel" id="ptsAuthPanel" role="region" aria-labelledby="ptsAuthBtn"><div class="pts-auth-in"><div class="pts-auth-card">{!! \App\Support\TrustShareIcons::YES !!}<div class="pts-auth-copy">@foreach ($kbbPts->paragraphs() as $kbbPtsP)<p>{{ $kbbPtsP }}</p>@endforeach</div><button type="button" class="pts-auth-x" aria-label="{{ __('store.product.pts_close') }}">{!! \App\Support\TrustShareIcons::CLOSE !!}</button></div></div></div></div><!--/pts-auth-->
 @endif

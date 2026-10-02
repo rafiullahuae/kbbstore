@@ -191,6 +191,28 @@ it('takes each block away with its own switch, and leaves the other two', functi
         ->and($html)->not->toContain('kbb-pdp-trust');
 });
 
+it('withdraws the authenticity line with the shop\'s authenticity claim', function () {
+    /*
+     * His paragraph says "100% authentic", the same words TrustClaims lets him
+     * withdraw from the product page. Clearing that claim must remove every
+     * copy (ShelfVatSentenceTest), so it takes this block with it — and the
+     * share bar stays.
+     *
+     * MUTATION NOTE — RUN. Return `$this->on('auth_on')` alone from
+     * showsAuthenticity() and this is red (and so is ShelfVatSentenceTest).
+     */
+    $product = ptsProduct();
+    app(SettingsService::class)->set('product_authentic_text', '');
+    \App\Models\Setting::flushMap();
+    SettingsService::forgetMemo();
+
+    $html = ptsPage($product);
+
+    expect($html)->not->toContain('class="pts-auth"')
+        ->and($html)->not->toContain('100% authentic')
+        ->and($html)->toContain('class="pts-share');
+});
+
 it('drops the free-delivery line where the shopper has no free delivery, rather than print a hole', function () {
     /*
      * The figure is the checkout's own (ShippingService::thresholdHere()). A

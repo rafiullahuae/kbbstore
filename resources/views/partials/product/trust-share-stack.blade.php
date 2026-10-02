@@ -17,7 +17,7 @@
 --}}@php
     $kbbPts = app(\App\Services\ProductTrustShare::class);
 @endphp
-@if ($kbbPts->on('auth_on') || $kbbPts->on('share_on'))
+@if ($kbbPts->showsAuthenticity() || $kbbPts->on('share_on'))
 @include('partials.product.trust-share-assets')
 <div class="pts-stack">
 @include('partials.product.authenticity')
