@@ -653,6 +653,18 @@ function ehSchemaModules(): array
          * makes "a select stores one of its own options" checkable here.
          */
         'product_trust_share' => ['schema' => \App\Services\ProductTrustShare::schema(), 'tabs' => \App\Services\ProductTrustShare::TABS, 'policy' => \App\Services\ProductTrustShare::POLICY],
+
+        /*
+         * ── LANE QA: Appearance → Product page → Mobile sections ───────────
+         *
+         * Enrolled in the round it shipped. The scalar options only — the
+         * gap, the two rating selects, the count and "The details" switches
+         * and the two pay-later cards. The ordered list itself (order,
+         * switches, per-section space) is one validated row that
+         * ProductMobileSections::validate() owns, drawn by the screen's own
+         * list rather than by the generic renderer.
+         */
+        'product_mobile_sections' => ['schema' => \App\Services\ProductMobileSections::SCHEMA, 'tabs' => \App\Services\ProductMobileSections::TABS, 'policy' => \App\Services\ProductMobileSections::POLICY],
     ];
 }
 

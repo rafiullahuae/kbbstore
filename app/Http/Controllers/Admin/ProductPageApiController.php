@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Services\AlsoLikeSettings;
 use App\Services\ModuleSchema;
 use App\Services\ProductLayout;
+use App\Services\ProductMobileSections;
 use App\Services\ProductSections;
 use App\Services\ProductTrustShare;
 use Illuminate\Http\JsonResponse;
@@ -64,6 +65,14 @@ class ProductPageApiController extends Controller
              * the module switches or the thirty layout values.
              */
             'also' => $this->also->tabs(),
+            /*
+             * THE FIFTH HALF: Mobile sections.                     (Lane QA)
+             * The phone page as an ordered list of switchable sections, its
+             * spacing, and the options under it. Its own key in save() for the
+             * reason every half has one: a POST that reorders the phone page
+             * must not rewrite the module switches or the layout sliders.
+             */
+            'msections' => app(ProductMobileSections::class)->payload(),
         ]);
     }
 
@@ -108,9 +117,10 @@ class ProductPageApiController extends Controller
             'layout' => ['sometimes', 'array', 'min:1'],
             'also' => ['sometimes', 'array', 'min:1'],
             'trust' => ['sometimes', 'array', 'min:1'],
+            'msections' => ['sometimes', 'array', 'min:1'],
         ]);
 
-        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['also']) && ! isset($data['trust'])) {
+        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['also']) && ! isset($data['trust']) && ! isset($data['msections'])) {
             return response()->json(['ok' => false, 'error' => 'Nothing to save.'], 422);
         }
 
@@ -124,6 +134,46 @@ class ProductPageApiController extends Controller
 
             if ($unknown !== []) {
                 return response()->json(['ok' => false, 'error' => 'Unknown setting: '.implode(', ', $unknown)], 422);
+            }
+        }
+
+        /*
+         * Mobile sections (Lane QA): BOTH parts validated before anything is
+         * written, so a refused POST has saved nothing — not the layout, not
+         * the options, and not any other half posted beside them.
+         *
+         *   list     ProductMobileSections::validate(): every key in `order`
+         *            exactly once, an unknown key refused, a missing key
+         *            appended in his default order; switches are booleans;
+         *            spacing is an integer clamped to 0–48 or blank.
+         *   options  an unknown key refused, like `layout` and `trust`; the
+         *            known ones go through ModuleSchema's casts (a select
+         *            stores one of its own options or the default).
+         */
+        $msecList = null;
+
+        if (isset($data['msections'])) {
+            $unknown = array_diff(array_keys($data['msections']), ['list', 'options']);
+
+            if ($unknown !== []) {
+                return response()->json(['ok' => false, 'error' => 'Unknown part: '.implode(', ', $unknown)], 422);
+            }
+
+            if (array_key_exists('list', $data['msections'])) {
+                $msecList = app(ProductMobileSections::class)->validate($data['msections']['list']);
+
+                if (is_string($msecList)) {
+                    return response()->json(['ok' => false, 'error' => $msecList], 422);
+                }
+            }
+
+            if (array_key_exists('options', $data['msections'])) {
+                $opts = $data['msections']['options'];
+                $unknown = is_array($opts) ? array_diff(array_keys($opts), array_keys(ProductMobileSections::fields())) : ['options'];
+
+                if ($unknown !== []) {
+                    return response()->json(['ok' => false, 'error' => 'Unknown setting: '.implode(', ', $unknown)], 422);
+                }
             }
         }
 
@@ -183,6 +233,20 @@ class ProductPageApiController extends Controller
             $saved += count($data['trust']);
         }
 
+        if (isset($data['msections'])) {
+            $msec = app(ProductMobileSections::class);
+
+            if (is_array($msecList)) {
+                $msec->saveLayout($msecList);
+                $saved += count($msecList['order']);
+            }
+
+            if (is_array($data['msections']['options'] ?? null)) {
+                $msec->saveOptions($data['msections']['options']);
+                $saved += count($data['msections']['options']);
+            }
+        }
+
         return response()->json([
             'ok' => true,
             'saved' => $saved,
@@ -195,6 +259,7 @@ class ProductPageApiController extends Controller
                 ProductLayout::POLICY,
             ),
             'trust' => self::trustTabs(),
+            'msections' => app(ProductMobileSections::class)->payload(),
         ]);
     }
 

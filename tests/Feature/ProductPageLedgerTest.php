@@ -188,7 +188,7 @@ function ledgerBuiltCss(): string
 
 /* ═══════════════ 1. the name and the price share one row ═══════════════════ */
 
-it('puts the price inside the title row, with the struck figure above the live one', function () {
+it('puts the price in its own row under the title, struck figure first, with the share button in the title row', function () {
     /*
      * "then product name, and right side cut price and actual price beautifully
      *  present."
@@ -241,11 +241,29 @@ it('puts the price inside the title row, with the struck figure above the live o
          Between the row's opening tag and the price there is exactly one
          element, the <h1>, and an <h1> carries no </div>. So a </div> in that
          slice means the row closed before the price arrived. M1 is RED on it. */
+    /* ▲ PIN ADVANCED BY LANE QA, BECAUSE THE OWNER MOVED THE PRICE BACK OUT.
+
+           "also FOR DEKSTOP only two changes. the share icon will also desktop
+            beside the title on right side. and the pricing row will come
+            downside and on right side of the pricing row rating without count"
+
+         So the title row now holds the name and the SHARE BUTTON, and the
+         price is the first thing in `.bb-pricerow` directly under it. The
+         nesting is still asserted by counting closing tags, the other way
+         round: the title row must close before the price arrives (exactly the
+         row's own `</div>` and the title section's), and the price row must
+         open in between.
+
+         MUTATION NOTE, RUN (QA-M1): move `#bbPrice` back inside `.bb-head`
+         after the share button → RED on "the price has its own row". */
     $untilPrice = ledgerRegion($html, '<div class="bb-head">', 'id="bbPrice"');
-    expect(substr_count($untilPrice, '</div>'))->toBe(
-        0,
-        'the price must sit INSIDE the title\'s row — a closing tag between the two means it does not'
+    expect(substr_count($untilPrice, '<div class="bb-pricerow" id="bbPriceRow">'))->toBe(
+        1,
+        'the price has its own row, under the title — the owner\'s desktop change'
     );
+    expect(substr_count($untilPrice, '</div>'))->toBe(2, 'the title row closes before the price row opens');
+    $titleRow = ledgerRegion($html, '<div class="bb-head">', '</div>');
+    expect(substr_count($titleRow, 'class="pdp-share-btn"'))->toBe(1, 'the share button sits in the title row, beside the name');
 
     // The struck figure FIRST, because Ledger stacks it above the live one.
     $price = ledgerRegion($head, 'id="bbPrice"', '</div>');
@@ -795,8 +813,17 @@ it('leaves every section switch on the product page doing what it did', function
 
     ledgerLacks($off, 'id="sr"', 'the reviews section is off');
     ledgerLacks($off, 'class="dtabbar"', 'the tab row is off');
-    ledgerHas($off, 'class="d-off m-off bb-desc"', 'the blurb carries its off classes');
-    ledgerHas($off, 'd-off m-off trust', 'the trust lines carry theirs');
+    /* ▲ PIN ADVANCED BY LANE QA. The blurb and the trust lines are each a
+         whole SECTION of the phone page now, and their phone switch is
+         Appearance → Product page → Mobile sections' (ProductSections::all()
+         reads it from there). So the element carries the laptop's `d-off`, and
+         the phone hides it with the page wrapper's `pm-off-*` class at the
+         page's own 880px — not with `m-off`, whose 900px would also hide it on
+         the 881–900px laptop layout. Same switch, one source of truth. */
+    ledgerHas($off, 'class="d-off bb-desc"', 'the blurb carries its laptop off class');
+    ledgerHas($off, 'd-off trust pm-sec pm-trust', 'the trust lines carry theirs');
+    ledgerHas($off, ' pm-off-short ', 'the phone page hides the blurb section');
+    ledgerHas($off, ' pm-off-trust ', 'the phone page hides the trust section');
 
     // AND THE READ-MORE GOES WITH THE BLURB IT BELONGS TO rather than being left
     // behind as a label pointing at hidden text.
@@ -820,6 +847,11 @@ it('prints the product name, both price figures, the VAT line and the badge labe
      */
     $settings = app(SettingsService::class);
     $settings->set('vat_note_enabled', true);
+    /* Lane QA: "rating (4.9 and bar, remove count)" — the count ships OFF, so
+       the label is asked for here through its switch (Appearance → Product
+       page → Mobile sections → "Show the review count beside the rating") to
+       keep pinning that its wording still prints when he wants it back. */
+    $settings->set('pdpms_rate_count', true);
 
     $product = ledgerReviewed(5, ['sale_price' => 7425, 'brand_id' => ledgerBrand()->id]);
     $html = ledgerPage($product);

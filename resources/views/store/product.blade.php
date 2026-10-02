@@ -216,6 +216,29 @@
     $kbbBlurbBlocks = \App\Support\RichText::hasBlocks($kbbBlurb);
 
     /* ═══════════════════════════════════════════════════════════════════════
+       THE PHONE PAGE AS SECTIONS. (Lane QA)
+
+         "i want things need to work as sections. [...] and give functionality
+          to drag an drop the positioning changing / sorting, and ON/OFF
+          anything. THIS message changes is only for MOBILE."
+
+       One rendered page serves both widths, so the order is CSS: each section
+       below is ONE element (a `.pm-sec` wrapper, or the root of the partial
+       that draws it), and at the page's own phone breakpoint (880px) the
+       intermediate boxes -- .pdp, .buybox, the cart form -- become
+       `display:contents`, so every section is a flex item of `.pdp-page` and
+       takes `order` from the custom property App\Services\ProductMobileSections
+       writes onto that wrapper. On a laptop the wrappers are plain blocks with
+       no padding or border, so margins collapse through them and the page is
+       drawn as before. The DOM order is the LAPTOP order -- title, price row,
+       short description -- which is the second of his two desktop changes.
+
+       ▲ NOTHING FROM A SETTING REACHES CSS BUT INTEGERS. wrapperStyle() is
+         `--pm-…:<int>` built from literal keys; wrapperClass() is literal class
+         names. Both go through {{ }} regardless. */
+    $kbbMsec = app(\App\Services\ProductMobileSections::class);
+
+    /* ═══════════════════════════════════════════════════════════════════════
        THE THREE PROPOSED LAYOUTS ARE GONE. (Lane PP2)
 
        Lane PP put a three-entry map here -- focus / editorial / compact --
@@ -333,7 +356,7 @@
 @endpush
 
 @section('content')
-<div class="wrap">
+<div class="wrap pdp-page {{ $kbbMsec->wrapperClass() }}" style="{{ $kbbMsec->wrapperStyle() }}">
   <div class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ $product->categories->first()?->url() ?? Url::to('/shop/') }}">{{ $product->categories->first()?->t('name') ?? __('store.breadcrumb.shop') }}</a> / {{ $name }}</div>
   <div class="pdp">
     <!-- gallery -->
@@ -380,7 +403,7 @@
        of this note did exactly that, so every line after it compiled as
        template code and the product page died with `syntax error, unexpected
        token ":"`. Same family as writing the end-of-PHP-block directive inside
-       a PHP comment, which CLAUDE.md already records. --}}      @if ($brand)<div class="bb-brand" id="bbBrand">@if ($product->brand?->url())<a href="{{ $product->brand->url() }}">{{ $brand }}</a>@else{{ $brand }}@endif</div>@endif
+       a PHP comment, which CLAUDE.md already records. --}}<div class="pm-sec pm-title">      @if ($brand)<div class="bb-brand" id="bbBrand">@if ($product->brand?->url())<a href="{{ $product->brand->url() }}">{{ $brand }}</a>@else{{ $brand }}@endif</div>@endif
       @php
           /* ═══════════════════════════════════════════════════════════════
              LEDGER — THE PRICE JOINS THE NAME'S ROW, SO THIS BLOCK MOVED UP.
@@ -460,11 +483,27 @@
            forty-character K-beauty name, at which point the two prices have
            wrapped rather than been designed. pdp.js finds `.now` by selector and
            never by position (see setPrice()), so the order costs nothing. --}}
+      {{-- ── THE TITLE ROW HOLDS THE NAME AND THE SHARE ICON; THE PRICE HAS ITS
+           OWN ROW UNDER IT. (Lane QA)
+
+             "the share icon will also desktop beside the title on right side.
+              and the pricing row will come downside and on right side of the
+              pricing row rating without count (can be shown in seperate row if
+              i like to do so) from backend."
+
+           `.bb-head` keeps its two tracks -- `minmax(0,1fr)` for the name, so a
+           118-character imported name still wraps instead of pushing the page
+           sideways -- and the second track is now the share button (Lane QB
+           draws the sheet it opens). The price moved into `.bb-pricerow`
+           below, with the rating rows beside it; pdp.js finds `#bbPrice` and
+           `.now` by id and selector, never by position, so the tier switch is
+           untouched. --}}
       <div class="bb-head">
         <h1 class="bb-title" id="bbTitle">{{ $name }}</h1>
+        @include('partials.product.share-button')
+      </div></div><!--/pm-->
+      <div class="pm-sec pm-price"><div class="bb-pricerow" id="bbPriceRow">
         <div class="bb-price" id="bbPrice">@if ($onSale)<s>{!! Money::format($kbbWas, $kbbSaleDp) !!}</s>@endif<span class="now">@if ($kbbHeadline !== null){!! $kbbHeadline !!}@else{!! Money::format($price, $kbbSaleDp) !!}@endif</span>@if ($onSale && $off)<span class="off">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>@endif</div>
-      </div>
-      @if ($vatLine)<div class="{{ $modules->classFor('vat') }} bb-vat">{{ $vatLine }}</div>@endif
       <div class="cap-area" id="capArea">
           @if ($showCap && $rcount)
               <a class="{{ $modules->classFor('capsule') }} sr-capbar" href="#sr">
@@ -480,13 +519,18 @@
                        On `both` there are two rating rows and therefore two
                        bars, which is correct: each row states its own rating. --}}
                   <span class="bb-ratebar"><i style="inline-size:{{ $kbbRateFill }}%"></i></span>
-                  @if ($badgeCount)<span class="sr-cap-count">{{ $badgeLabel }}</span>@endif
+                  {{-- "rating (4.9 and bar, remove count)" -- so the count is drawn
+                       only when Mobile sections → "Show the review count" is on
+                       (off as shipped), AND the badge switch still allows it. --}}
+                  @if ($badgeCount && $kbbMsec->on('rate_count'))<span class="sr-cap-count">{{ $badgeLabel }}</span>@endif
               </a>
           @endif
       </div>
       @if ($rcount)
-      <div class="{{ $modules->classFor('rating') }} bb-rate" id="bbRate" @unless ($showRate) style="display:none" @endunless><span class="stars" id="bbStars" style="color:{{ $badgeColour }}">@for ($i = 1; $i <= 5; $i++){!! $i <= round($rating) ? '<span class="f">★</span>' : '<span>★</span>' !!}@endfor</span> @if ($badgeAvg)<span>{{ number_format($rating, 1) }}</span> @endif<span class="bb-ratebar"><i style="inline-size:{{ $kbbRateFill }}%"></i></span>@if ($badgeCount)· <a href="#sr">{{ $badgeLabel }}</a>@endif @if ($badgeSold && $product->total_sales > 999) · <span style="color:var(--green);font-weight:600">{{ __('store.product.sold_thousands', ['count' => round($product->total_sales / 1000)]) }}</span>@endif</div>
+      <div class="{{ $modules->classFor('rating') }} bb-rate" id="bbRate" @unless ($showRate) style="display:none" @endunless><span class="stars" id="bbStars" style="color:{{ $badgeColour }}">@for ($i = 1; $i <= 5; $i++){!! $i <= round($rating) ? '<span class="f">★</span>' : '<span>★</span>' !!}@endfor</span> @if ($badgeAvg)<span>{{ number_format($rating, 1) }}</span> @endif<span class="bb-ratebar"><i style="inline-size:{{ $kbbRateFill }}%"></i></span>@if ($badgeCount && $kbbMsec->on('rate_count'))· <a href="#sr">{{ $badgeLabel }}</a>@endif @if ($badgeSold && $product->total_sales > 999) · <span style="color:var(--green);font-weight:600">{{ __('store.product.sold_thousands', ['count' => round($product->total_sales / 1000)]) }}</span>@endif</div>
       @endif
+      </div>
+      @if ($vatLine)<div class="{{ $modules->classFor('vat') }} bb-vat">{{ $vatLine }}</div>@endif</div><!--/pm-->
       {{-- "2-3 lines short description with fade read more."
 
            THREE LINE-BOXES, THEN A FADE, THEN ONE TAP TO THE REST, AND NO
@@ -529,11 +573,12 @@
              directive's own indentation and newline to the rendered page even
              when the directive prints nothing, and this file already records
              what that costs. --}}
-      @if ($product->short_description && $kbbBlurb !== '' && ! $kbbShortBelow)<input class="bb-morebox" type="checkbox" id="bbMore">@if ($kbbBlurbBlocks)<div class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</div>@else<p class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</p>@endif<label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
+      @if ($product->short_description && $kbbBlurb !== '' && ! $kbbShortBelow)<div class="pm-sec pm-short"><input class="bb-morebox" type="checkbox" id="bbMore">@if ($kbbBlurbBlocks)<div class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</div>@else<p class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</p>@endif<label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label></div><!--/pm-->@endif
+@include('partials.product.paylater')
 
       <form class="cart kbb-cart-form" data-product_id="{{ $product->id }}" method="post">
         @csrf
-        @if ($isVar)
+        <div class="pm-sec pm-bundles">@if ($isVar)
         <div class="opt-label">{{ __('store.product.choose_option') }} <span id="optNote">{{ $optNote }}</span></div>
         <div class="{{ $modules->classFor('options') }} variants" id="variants">
           @foreach ($variants as $n => $v)
@@ -730,7 +775,7 @@
 
                Same trap the .bb-price block above records for computing the
                range beside the markup instead of up in the php block at the top. --}}
-        @include('partials.set-contents-panel')@if ($kbbShortBelow && $kbbBlurb !== '')<input class="bb-morebox" type="checkbox" id="bbMore">@if ($kbbBlurbBlocks)<div class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</div>@else<p class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</p>@endif<label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label>@endif
+        @include('partials.set-contents-panel')</div><!--/pm-->@if ($kbbShortBelow && $kbbBlurb !== '')<div class="pm-sec pm-short pm-short-set"><input class="bb-morebox" type="checkbox" id="bbMore">@if ($kbbBlurbBlocks)<div class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</div>@else<p class="{{ $modules->classFor('short') }} bb-desc">{!! $kbbBlurb !!}</p>@endif<label class="bb-more" for="bbMore">{{ __('store.product.read_more') }}</label></div><!--/pm-->@endif
 
         @php
             // Scarcity note, from the configured threshold. Only shown when the
@@ -756,7 +801,7 @@
         @endphp
         {{-- Each directive needs a non-word character before its @, or Blade
              treats it as literal text and every branch prints at once. --}}
-        <div class="{{ $modules->classFor('stockline') }} stockline{{ $out ? ' out' : '' }}"><span class="dot"></span>
+        <div class="pm-sec pm-ready"><div class="{{ $modules->classFor('stockline') }} stockline{{ $out ? ' out' : '' }}"><span class="dot"></span>
             @if ($out)
                 {{ __('store.product.stock_sold_out') }}
             @elseif ($low)
@@ -794,16 +839,16 @@
             @endif
         </div>
         @endif
-
+</div><!--/pm-->
 @include('partials.product.delivery-box')
-        <div class="buyrow">
+        <div class="pm-sec pm-cart"><div class="buyrow">
           <div class="{{ $modules->classFor('quantity') }} qty"><button type="button" data-q="-1">−</button><span id="qtyVal">1</span><button type="button" data-q="1">+</button><input type="hidden" name="quantity" id="qtyInput" value="1"></div>
           <button class="addcart" id="mainAdd" type="submit" @disabled($out)><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg> {{ $out ? __('store.product.sold_out_tag') : __('store.product_card.add_to_cart') }}</button>
         </div>
         @unless ($modules->hidden('buynow'))
 <button class="buynow" type="submit" data-buynow="1" @disabled($out)>{{ __('store.product.buy_now') }}</button>
 @endunless
-@include('partials.product.trust-share-stack')
+</div><!--/pm-->@include('partials.product.trust-share-stack')
       </form>
 
       {{-- "Tell me when this is back" (Lane EN).
@@ -882,7 +927,7 @@
           $trustDelivery = \App\Support\DeliveryLine::here();
           $trustReturns  = trim((string) $settings->get('trust_returns_text', ''));
       @endphp
-      <div class="{{ $modules->classFor('trust') }} trust">
+      <div class="{{ $modules->classFor('trust') }} trust pm-sec pm-trust">
         @if ($trustAuthentic !== null)<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg> {{ $trustAuthentic }}</div>@endif
         @if ($trustDelivery !== '')<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13v10H3z"/><path d="M16 10h4l1 3v4h-5z"/><circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg> {{ $trustDelivery }}</div>@endif
         @if ($trustReturns !== '')<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 5v4h4"/></svg> {{ $trustReturns }}</div>@endif
@@ -892,7 +937,7 @@
            Pay on App\Services\Payments\Wallets, which is the one place that knows
            whether this shop can take either. The section switch above
            (Catalog → Product page → Sections) still decides whether the row is
-           drawn at all; this decides what it may say when it is. --}}<div class="{{ $modules->classFor('paychips') }} paychips">@foreach (\App\Support\PaymentChips::row('product') as $kbbChip)<span>{{ $kbbChip }}</span>@endforeach<span>{{ __('store.footer.pay_cod') }}</span></div>
+           drawn at all; this decides what it may say when it is. --}}<div class="{{ $modules->classFor('paychips') }} paychips pm-sec pm-paychips">@foreach (\App\Support\PaymentChips::row('product') as $kbbChip)<span>{{ $kbbChip }}</span>@endforeach<span>{{ __('store.footer.pay_cod') }}</span></div>
     </div>
   </div>
 
@@ -901,7 +946,7 @@
 @endunless
 
   <!-- details tabs -->
-  <section class="sec">
+  <section class="sec pm-sec pm-details">
     <div class="eyebrow">{{ __('store.product.details_eyebrow') }}</div>
     <h2>{{ __('store.product.details_heading') }}</h2>
     @unless ($modules->hidden('tabs'))
@@ -967,6 +1012,10 @@
 </div>
 @endif
 
+{{-- The share sheet the title row's button opens -- Lane QB's partial.
+     @includeIf, so this page renders whether or not that file has landed.
+     The comment is glued to the directive: a Blade comment's own newline is
+     not swallowed, and this page is compared byte for byte. --}}@includeIf('partials.product.share-sheet')
 @push('scripts')
 {!! app(\App\Services\MarketingPixels::class)->viewContent($product) !!}
 @endpush
