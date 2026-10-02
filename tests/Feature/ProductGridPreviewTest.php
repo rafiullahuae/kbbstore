@@ -280,8 +280,11 @@ it('ships every surfaced control at the value the shop already renders', functio
         'show_category' => false,
         'show_rating' => true,
         'show_was_price' => true,
-        'show_discount' => true,
-        'show_new' => true,
+        // Off since Lane PR, 2 October 2026 — the owner asked in as many
+        // words: "Turn off by default on the product grid card, new and
+        // discount tag." GridCardOwnerAsksTest pins why and where.
+        'show_discount' => false,
+        'show_new' => false,
         'show_cart' => true,
     ];
 

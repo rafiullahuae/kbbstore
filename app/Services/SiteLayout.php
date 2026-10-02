@@ -170,8 +170,8 @@ class SiteLayout
          * The owner asked for a choice of how a listing loads more: "Arrows"
          * (numbered pages — what the shop does today), "Load more on scroll"
          * (batches of 12, 15, 20 or a number he types) or "Load all". He did
-         * not say which should be the default, so it ships at `arrows`, the
-         * page as it is — CLAUDE.md rule 1. The arrows themselves were broken
+         * not say which should be the default, so it shipped at `arrows`, the
+         * page as it was — CLAUDE.md rule 1. The arrows themselves were broken
          * on the four curated listings (Laravel's Tailwind pager, with an
          * unsized SVG, on a shop with no Tailwind) and are fixed regardless of
          * this setting; see partials/listing-pager.blade.php.
@@ -181,9 +181,28 @@ class SiteLayout
          * /everything-under-54-aed/ and the concern pages) through perPage().
          * NOT a stylesheet value: isDefault() and css() skip these three, so a
          * choice here never puts a byte of CSS on the page.
+         *
+         * ▲ IT SHIPS AT `scroll` NOW, AND THE OWNER ASKED FOR IT IN AS MANY
+         *   WORDS.                                                  (Lane PR)
+         *
+         * "Remove pagination from the categories and brands; it should load
+         *  more products via scroll with grey loading stuff. We have built it
+         *  already, just keep this on by default, the products should load
+         *  automatically by default upon scroll."
+         *
+         * So /shop/, every category, the curated listings AND a brand's own
+         * page (/brands/{slug}/, which Store\BrandController::show() now reads
+         * through perPage() as well — it was a fixed preview of twelve with no
+         * way past them) open on one batch and bring the next as the shopper
+         * nears the end, with the grey placeholders while it comes. The arrows
+         * are still the markup underneath, so a shopper without JavaScript —
+         * and a crawler — still pages through every product. "Arrows" is one
+         * click away on the same screen. 2027_07_11_000000_clear_caches_lane_
+         * pr_grid deletes a stored `layout_load_mode` row so this default is
+         * what the shop actually gets.
          */
-        'load_mode' => ['select', 'How more products load', 'arrows',
-            'Arrows: numbered pages, as the shop has always had. Load more on scroll: the next batch appears as the shopper nears the end of the grid, with grey placeholders while it comes. Load all: every product in one page, up to '.self::LOAD_ALL_CAP.' — past that the arrows take over, so a huge catalogue cannot become one enormous page.',
+        'load_mode' => ['select', 'How more products load', 'scroll',
+            'Load more on scroll, the default: the next batch appears as the shopper nears the end of the grid, with grey placeholders while it comes. Arrows: numbered pages only. Load all: every product in one page, up to '.self::LOAD_ALL_CAP.' — past that the arrows take over, so a huge catalogue cannot become one enormous page.',
             [
                 'arrows' => 'Arrows — numbered pages',
                 'scroll' => 'Load more on scroll',
@@ -227,7 +246,7 @@ class SiteLayout
             'The column count is not set here — it is worked out from the smallest card and the width each grid actually has, so a grid beside the shop filters gets the right answer rather than the window\'s answer.',
             ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin']],
         'loading' => ['Loading more products',
-            'How /shop, every category and the curated listings bring in more products: numbered arrows, more on scroll, or everything at once. Shoppers without JavaScript always get the arrows.',
+            'How /shop, every category, every brand page and the curated listings bring in more products: more on scroll, numbered arrows, or everything at once. Shoppers without JavaScript always get the arrows.',
             ['load_mode', 'load_batch', 'load_batch_custom']],
     ];
 

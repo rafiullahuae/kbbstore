@@ -188,6 +188,29 @@ const KBB_ONLY_IN_KBB_CSS = [
     '|.kbb-tile>.cb',
     '|.kbb-tile>.cb>.cp',
     '|.kbb-tile>.kbb-card-thumb',
+    /*
+     * Lane PR — the phone-hover block. In kbb.css ONLY, deliberately: kbb.css
+     * is on every page, so the owner's "no card hover on a phone" reaches
+     * /shop/, every category, every brand page and the product page's related
+     * row, and not just the three pages kbb-grid-skins.css is on. Each rule
+     * is (0,1,1) above the hover rule it answers, in either sheet, so it wins
+     * on the three pages that load both. tools/pr-hover-skins.sh tapped a
+     * card on all 32 skins at 390: nothing moves.
+     */
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid .kbb-card:hover',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid .kbb-card:hover .kbb-card-thumb img,body:not(.pc-phonehover) .kbb-pgrid[data-skin="editorial"] .kbb-card:hover .im,body:not(.pc-phonehover) .kbb-pgrid[data-skin="editorial"] .kbb-card:hover img',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="bold"] .kbb-card:hover,body:not(.pc-phonehover) .kbb-pgrid[data-skin="classic"] .kbb-card:hover,body:not(.pc-phonehover) .kbb-pgrid[data-skin="editorial"] .kbb-card:hover,body:not(.pc-phonehover) .kbb-pgrid[data-skin="luxe"] .kbb-card:hover,body:not(.pc-phonehover) .kbb-pgrid[data-skin="minimal"] .kbb-card:hover,body:not(.pc-phonehover) .kbb-pgrid[data-skin^="showcase"] .kbb-card:hover',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="duotone"] .kbb-card:hover .kbb-card-thumb:after',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="fab"] .kbb-card:hover .kbb-card-cart',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="outline"] .kbb-card:hover',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="petal"] .kbb-card:hover .kbb-card-thumb',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="polaroid"] .kbb-card:hover',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="rosegold"] .kbb-card:hover',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="showcase-airy"] .kbb-card:hover',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="showcase-airy"] .kbb-card:hover .kbb-card-cart',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="soft"] .kbb-card:hover',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="spotlight"] .kbb-card:hover',
+    '@media (hover:none),(max-width:700px)|body:not(.pc-phonehover) .kbb-pgrid[data-skin="stacked"] .kbb-card:hover .cb',
 ];
 
 /** Every rule in a sheet the repository ships, parsed. */

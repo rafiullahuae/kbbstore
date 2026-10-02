@@ -81,6 +81,11 @@ class Customer extends Authenticatable
         // unauthenticated. Nothing serialises this model there today; this is
         // so that nothing can start to by accident.
         'stripe_customer_ids',
+        // sha256 of the live set-password link (Store -> Customers -> Send
+        // account invite). A hash, not the token, but still nothing any
+        // response has a reason to carry.
+        'invite_token_hash',
+        'invite_expires_at',
     ];
 
     /**
@@ -96,6 +101,10 @@ class Customer extends Authenticatable
             'whatsapp_optin' => 'bool',
             // ['test' => 'cus_…', 'live' => 'cus_…']. See stripeCustomerId().
             'stripe_customer_ids' => 'array',
+            'invited_at' => 'datetime',
+            'invite_accepted_at' => 'datetime',
+            'invite_expires_at' => 'datetime',
+            'invite_count' => 'int',
         ];
     }
 
@@ -199,10 +208,23 @@ class Customer extends Authenticatable
     public function applyNewPassword(string $plain): void
     {
         // `password` is cast `hashed`, so the plain value is hashed on assign.
-        $this->forceFill([
+        //
+        // And any account-invite link still in the inbox dies with it (Lane
+        // PQ): it is a second way to set this password, and once the customer
+        // has chosen one, by whatever route, nothing should still be able to
+        // choose another for them. Guarded on the attribute being present so a
+        // row read before the invite migration ran cannot fail a reset.
+        $fill = [
             'password' => $plain,
             'legacy_password' => null,
-        ])->save();
+        ];
+
+        if (array_key_exists('invite_token_hash', $this->getAttributes())) {
+            $fill['invite_token_hash'] = null;
+            $fill['invite_expires_at'] = null;
+        }
+
+        $this->forceFill($fill)->save();
     }
 
     /* ---------------------------------------------------- email verification */

@@ -11,6 +11,7 @@ use App\Services\SettingsService;
 use App\Support\Url;
 use App\Support\UrlScheme;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
 /**
@@ -56,6 +57,18 @@ class BrandController extends Controller
         'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image',
         'rating', 'review_count', 'featured', 'position', 'type', 'total_sales',
+        /*
+         * `created_at`, AS ShopController's LIST HAS IT, FOR THE NEW PILL. (Lane PR)
+         *
+         * It was missing here, so the NEW pill could never fire on a brand
+         * page — measured on the Lane PR preview with Card content → New badge
+         * switched ON: 6 pills on /shop/ and 0 on /brands/medicube/ for the
+         * same two-day-old Medicube product. Invisible while the badge was on
+         * by default only because no brand page ever had one to show; now that
+         * it is a switch the owner may turn back on, it has to work on every
+         * grid. Nothing renders differently with the switch off (the default).
+         */
+        'created_at',
         /*
          * ▲ AND THE THREE A SET'S PRICE CANNOT BE READ WITHOUT. (Lane SG)
          *
@@ -341,10 +354,47 @@ class BrandController extends Controller
         ];
     }
 
-    /** One brand's landing page, at /brands/{slug}/. */
-    public function show(string $slug): View
+    /**
+     * One brand's landing page, at /brands/{slug}/ — and, since Lane PR, the
+     * rest of that brand's products as the shopper scrolls.
+     *
+     * ── WHY THIS PAGE NOW PAGES ──────────────────────────────── Lane PR ──
+     *
+     * The owner: "Remove pagination from the categories and brands; it should
+     * load more products via scroll with grey loading stuff ... the products
+     * should load automatically by default upon scroll."
+     *
+     * Measured before this change: a category page already took Appearance →
+     * Site layout → Loading more products (it is ShopController), and this
+     * page did not — it drew a fixed PREVIEW_LIMIT of twelve and stopped, so
+     * a brand with forty products showed twelve, with no pager and no loader,
+     * and the other twenty-eight were reachable only through "Shop all".
+     *
+     * So the twelve became a PAGE: SiteLayout::perPage(PREVIEW_LIMIT) is one
+     * batch on "Load more on scroll" (the default), twelve a page on "Arrows",
+     * LOAD_ALL_CAP on "Load all". partials/listing-pager draws the ordinary
+     * numbered links under the grid, and resources/js/kbb/listing-load.js takes
+     * them over exactly as it does on a category. A batch is this same URL with
+     * `kbbbatch=1`, answered here after this same query — App\Support\
+     * ListingBatch, the same allowlisted five keys as /shop/.
+     *
+     * ── NO COUNT QUERY, AND THAT IS WHY THE PAGE KEEPS ITS BUDGET ──────────
+     *
+     * One more row than a page is fetched instead of a COUNT(*). That row is
+     * never drawn; it only answers "is there a next page", which is all the
+     * loader needs (it follows rel="next"). StorefrontQueryBudgetTest's
+     * ceiling for this page does not move. The cost is that the no-JavaScript
+     * pager cannot print the LAST page's number, so it offers ‹ prev, this
+     * page, the next one and › — every product still reachable, one page at
+     * a time.
+     */
+    public function show(string $slug): View|JsonResponse
     {
         $brand = Brand::query()->where('slug', $slug)->firstOrFail();
+
+        $request = request();
+        $perPage = app(\App\Services\SiteLayout::class)->perPage(self::PREVIEW_LIMIT);
+        $page = \App\Support\Facets::page();
 
         $products = Product::query()
             ->visible()
@@ -371,8 +421,22 @@ class BrandController extends Controller
             ->orderBy('position')
             ->orderBy('name')
             ->orderBy('id')
-            ->limit(self::PREVIEW_LIMIT)
+            ->when($page > 1, static fn ($q) => $q->offset(($page - 1) * $perPage))
+            ->limit($perPage + 1)
             ->get();
+
+        // The look-ahead row: there is a next page exactly when it came back.
+        $hasMore = $products->count() > $perPage;
+        $products = $products->take($perPage)->values();
+
+        // A page past the end is not a page — the same 404 ShopController
+        // gives /shop/?paged=4000, for the same crawl-budget reason.
+        if ($page > 1 && $products->isEmpty()) {
+            abort(404);
+        }
+
+        $pageUrl = static fn (int $n): string => Url::to(UrlScheme::brand((string) $brand->slug)).($n > 1 ? '?paged='.$n : '');
+        $lastPage = $hasMore ? $page + 1 : $page;
 
         /*
          * ONE STATEMENT FOR EVERY SET ON THIS BRAND PAGE, OR NONE AT ALL. (Lane SG)
@@ -388,6 +452,20 @@ class BrandController extends Controller
          */
         \App\Support\SetPricing::prime($products);
 
+        if (\App\Support\ListingBatch::wanted($request)) {
+            return \App\Support\ListingBatch::respond(
+                $products,
+                null,
+                $page,
+                $lastPage,
+                $hasMore ? $pageUrl($page + 1) : null,
+                $pageUrl($page),
+                // Per product, as <x-product-grid> resolves it on the page —
+                // so a batch's cards are the cards the page itself draws.
+                static fn (Product $p): ?string => $p->categories->first()?->t('name'),
+            );
+        }
+
         // The brand's own banner, when the owner has turned one on. Null for
         // every brand that has not, which is the default and is decided by the
         // column being NULL rather than by a stored flag.
@@ -399,7 +477,11 @@ class BrandController extends Controller
 
         return view('store.brands', [
             'banner' => $banner,
-            'seoCtx' => $this->seoCtx($brand, $banner, $products),
+            'seoCtx' => $this->seoCtx($brand, $banner, $products, $page, $perPage),
+            // The pager under the grid (Lane PR). See partials/listing-pager.
+            'page' => $page,
+            'lastPage' => $lastPage,
+            'pageUrl' => $pageUrl,
             'brand' => $brand,
             'brands' => collect(),
             'products' => $products,
@@ -474,10 +556,19 @@ class BrandController extends Controller
      * @param  array<string, mixed>|null  $banner
      * @return array<string, mixed>
      */
-    private function seoCtx(Brand $brand, ?array $banner, \Illuminate\Support\Collection $products): array
+    private function seoCtx(Brand $brand, ?array $banner, \Illuminate\Support\Collection $products, int $page = 1, int $perPage = self::PREVIEW_LIMIT): array
     {
         $base = rtrim(\App\Services\Seo\SeoSettings::get('site_url', ''), '/');
         $url = $base . Url::to(UrlScheme::brand((string) $brand->slug));
+
+        // Page 2 onwards is its own document and canonicalises to itself, the
+        // way /shop/?paged=2 does — not to page one, whose products it is not.
+        // The breadcrumb's last crumb keeps naming the brand page itself.
+        $brandUrl = $url;
+
+        if ($page > 1) {
+            $url .= '?paged='.$page;
+        }
 
         /*
          * PER-BRAND SEO OVERRIDES — `brands.seo`, which nothing read until now.
@@ -582,10 +673,10 @@ class BrandController extends Controller
          * carries why the price in it is a decimal string and not the fils
          * column.
          *
-         * OFFSET ZERO, and that is not an assumption: show() draws ONE window
-         * of at most PREVIEW_LIMIT products and this page has no pagination at
-         * all. If it ever grows some, the offset has to grow with it, which is
-         * why it is passed explicitly rather than defaulted.
+         * THE OFFSET IS THE PAGE'S, and that is why it was always passed
+         * explicitly rather than defaulted: show() draws ONE window of
+         * products, and since Lane PR this page has pagination — so page 3's
+         * list starts at position (3 - 1) × the page size + 1, not at 1.
          *
          * NOT WHEN THE OWNER HAS TYPED A CANONICAL. $canonical above replaces
          * the computed URL with a document this method did not render; these
@@ -600,7 +691,7 @@ class BrandController extends Controller
          * can see.
          */
         $collection = $canonical === ''
-            ? \App\Support\CollectionSchema::from($products, $base, 0) + ['name' => $brand->name]
+            ? \App\Support\CollectionSchema::from($products, $base, ($page - 1) * $perPage) + ['name' => $brand->name]
             : null;
 
         $ctx = array_filter([
@@ -616,7 +707,7 @@ class BrandController extends Controller
             'breadcrumb' => [
                 ['name' => __('store.breadcrumb.home'), 'url' => $base . Url::to('/')],
                 ['name' => __('store.breadcrumb.brands'), 'url' => $base . Url::to(UrlScheme::brandIndex())],
-                ['name' => $brand->t('name'), 'url' => $url],
+                ['name' => $brand->t('name'), 'url' => $brandUrl],
             ],
         ], static fn ($v) => $v !== null);
 

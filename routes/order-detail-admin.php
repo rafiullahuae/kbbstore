@@ -7,9 +7,9 @@ declare(strict_types=1);
 | Store -> Orders -> (an order)  (Lane PU)
 |------------------------------------------------------------------------------
 |
-| NOT YET WIRED BY THIS LANE -- CLAUDE.md forbids a lane editing routes/web.php.
-| The integrator adds ONE line, inside the EXISTING admin-api group (the one
-| carrying auth:admin and NoStoreAdminApi), beside the orders-admin.php require:
+| Mounted by routes/web.php with ONE line, inside the EXISTING admin-api group
+| (the one carrying auth:admin and NoStoreAdminApi), beside the orders-admin.php
+| require (integrator, 208e735):
 |
 |     require __DIR__.'/order-detail-admin.php';
 |

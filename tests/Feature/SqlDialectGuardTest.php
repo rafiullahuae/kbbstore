@@ -631,6 +631,17 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
     $customer = Customer::query()->firstOrFail();
     $order = Order::query()->firstOrFail();
 
+    // Store -> Customers -> Send account invite (Lane PQ): one run with one
+    // recipient who failed, so the progress read takes its grouped count AND
+    // its customers join, the two statements that carry any dialect risk.
+    $inviteRun = (int) \Illuminate\Support\Facades\DB::table('customer_invite_runs')->insertGetId([
+        'subject' => 'Hello', 'body' => '{set_password_link}', 'status' => 'done',
+        'created_at' => now(), 'updated_at' => now(),
+    ]);
+    \Illuminate\Support\Facades\DB::table('customer_invite_items')->insert([
+        'run_id' => $inviteRun, 'customer_id' => $customer->id, 'status' => 'failed', 'reason' => 'TransportException: refused',
+    ]);
+
     /*
      * The coupons screen reads redemptions grouped per coupon, so it is the
      * shape that has produced a dialect failure twice in this repo already.
@@ -878,6 +889,7 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'admin-api/products/{id}' => '/admin-api/products/' . $product->id,
         'admin-api/orders/{id}' => '/admin-api/orders/' . $order->id,
         'admin-api/orders/{id}/detail' => '/admin-api/orders/' . $order->id . '/detail',
+        'admin-api/orders/{id}/customer-orders' => '/admin-api/orders/' . $order->id . '/customer-orders',
         'admin-api/orders/{id}/settlement' => '/admin-api/orders/' . $order->id . '/settlement',
         /*
          * Can this order's authorisation be released? (Lane PG2, the order
@@ -895,6 +907,9 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          */
         'admin-api/orders/{id}/void' => '/admin-api/orders/' . $order->id . '/void',
         'admin-api/customers/{id}' => '/admin-api/customers/' . $customer->id,
+        // Send account invite (Lane PQ): progress, a GROUP BY status and a
+        // LEFT JOIN onto customers for the failure reasons.
+        'admin-api/customers/invites/runs/{run}' => '/admin-api/customers/invites/runs/' . $inviteRun,
         'admin-api/catalog-products-detail/{id}' => '/admin-api/catalog-products-detail/' . $product->id,
         'admin-api/catalog/reorder/{type}/{id}/products' => '/admin-api/catalog/reorder/category/' . $category->id . '/products',
         // Both render a whole order with its items and addresses, so they are

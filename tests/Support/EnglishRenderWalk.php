@@ -1095,7 +1095,30 @@ final class EnglishRenderWalk
 
         config(['kbb.health_token' => 'walk-health-token']);
         Setting::updateOrCreate(['key' => 'indexnow_key'], ['value' => 'walkindexnowkey123']);
+
+        /*
+         * THE WALK'S LISTINGS STAY ONE PAGE LONG.                   (Lane PR)
+         *
+         * Appearance → Site layout → Loading more products ships at "Load more
+         * on scroll" now — the owner asked for it in as many words — and that
+         * makes a listing's page ONE BATCH of twelve where it was the shop's
+         * twenty-four. This fixture puts more than twelve products on /shop/,
+         * /new-in and /best-sellers, so the default alone turned three
+         * one-page listings into two-page ones, and a two-page listing draws
+         * Lane PI-B's pager where the BASE_COMMIT template drew Laravel's
+         * Tailwind one or none: a template change that was already read and
+         * approved, on the condition — recorded in approvedRemovals() — that
+         * "the walk's four curated listings are one page each".
+         *
+         * So the walk keeps "Arrows", which is the page size it was approved
+         * at, and compares what it was built to compare: the templates. What
+         * the default does to a listing — a batch of twelve, the pager taken
+         * over by the loader, a brand page that pages at all — is pinned by
+         * ListingLoadTest and GridCardOwnerAsksTest, which assert it directly.
+         */
+        app(\App\Services\SiteLayout::class)->save(['load_mode' => 'arrows']);
         Setting::flushMap();
+        \App\Services\SettingsService::forgetMemo();
 
         return compact('post', 'customer', 'product', 'order', 'address', 'cart');
     }
@@ -1299,6 +1322,17 @@ final class EnglishRenderWalk
             'my-account/reset/{id}/{token}' => [
                 'params' => ['id' => (string) $customer->id, 'token' => str_repeat('a1b2c3d4', 8)],
                 'render' => true,
+            ],
+            // Lane PQ: the account-invite landing page. NOT rendered here: this
+            // walk compares each page against the templates at BASE_COMMIT, and
+            // store/account/welcome.blade.php did not exist then, so the "before"
+            // pass is an exception page. It was written keyed from the start --
+            // StorefrontStringsAreKeyedTest scans it, and CustomerInvitesTest
+            // asserts the page itself.
+            'my-account/welcome/{token}' => [
+                'params' => ['token' => str_repeat('a1b2c3d4', 8)],
+                'render' => false,
+                'why' => 'added after BASE_COMMIT, so there is no pre-conversion template to compare against',
             ],
 
             // --- storefront JSON endpoints -------------------------------------
@@ -1708,6 +1742,37 @@ final class EnglishRenderWalk
     public static function approvedInsertions(): array
     {
         return [
+            /*
+             * THE SEARCH PANEL CARRIES ITS TRENDING WORDS.         (2.60.346)
+             *
+             * The owner: "the default search tags box showing with little delays
+             * upon click on search box. it must be shown immidiately". The
+             * header's #kbbSuggest gains data-starter, the words the panel
+             * paints on focus without waiting for /api/search/starter. An
+             * attribute, never visible text; one per page that has a header.
+             * SearchStarterInstantTest pins what it carries.
+             */
+            'the search panel seed (2.60.346)' => [
+                'pattern' => '#\n\s*data-starter="[^"]*"#',
+                'hits' => 31,
+            ],
+
+            /*
+             * THE BRAND PAGE'S GRID GAINS AN ID.                      (Lane PR)
+             *
+             * The owner: "Remove pagination from the categories and brands; it
+             * should load more products via scroll ... keep this on by
+             * default." A brand page loads its next batch into its grid, and
+             * the pager names that grid by id (`data-grid="#brandGrid"`) — see
+             * Store\BrandController::show(). The walk's brand carries fewer
+             * products than one batch, so there is no pager to cut here; the
+             * paged state is GridCardOwnerAsksTest's to pin.
+             */
+            'the brand page grid id (Lane PR)' => [
+                'pattern' => '# id="brandGrid"#',
+                'hits' => 1,
+            ],
+
             /*
              * THE BRAND NAME BECOMES A LINK TO ITS BRAND PAGE.      (2.60.336)
              *
@@ -2336,6 +2401,37 @@ final class EnglishRenderWalk
             'the brand line on every product tile (Lane CARD)' => [
                 'pattern' => '#<span class="kbb-card-brand">[^<]*</span>#',
                 'hits' => 119,
+            ],
+
+            /*
+             * THE NEW AND -N% PILLS ON EVERY PRODUCT TILE.            (Lane PR)
+             *
+             * The owner, 2 October 2026: "Turn off by default on the product
+             * grid card, new and discount tag." Both ship off and both are
+             * still controls, at Appearance → Product styles → Card content →
+             * "New badge" / "Discount badge". GridCardOwnerAsksTest pins both
+             * directions, on /shop/, a category and a brand page.
+             *
+             * UNPAIRED, like Lane CARD's pair above: nothing replaces a pill.
+             * The pill and nothing around it is cut, so the indentation either
+             * side of it still has to line up byte for byte, and it does.
+             *
+             * `New` AND A SIGN, NOT `[^<]*`, ON PURPOSE. The bestsellers rail's
+             * rank pills (`#1`, `#2`…) wear `.kbb-badge-new` too and are NOT
+             * removed — the owner did not ask about them — so a pattern that
+             * swallowed them would have excused their disappearance as well.
+             *
+             * THE COUNTS ARE THE CLAIM, as above: measured across the walk, the
+             * pills come off nine pages and every other byte of those pages is
+             * unchanged.
+             */
+            'the NEW pill on every product tile (Lane PR)' => [
+                'pattern' => '#<span class="kbb-badge kbb-badge-new">New</span>#',
+                'hits' => 31,
+            ],
+            'the -N% pill on every product tile (Lane PR)' => [
+                'pattern' => '#<span class="kbb-badge kbb-badge-sale">-\d+%</span>#',
+                'hits' => 37,
             ],
         ];
     }

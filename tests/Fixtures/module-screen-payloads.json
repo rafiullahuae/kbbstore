@@ -3044,7 +3044,7 @@
       {
         "key": "layout",
         "label": "Layout",
-        "description": "Card shape and corners.",
+        "description": "Card shape, corners, and hover on a phone.",
         "fields": [
           {
             "key": "grid_skin",
@@ -3082,6 +3082,15 @@
               "tall": "Tall",
               "landscape": "Landscape"
             }
+          },
+          {
+            "key": "hover_phone",
+            "type": "bool",
+            "label": "Card hover effects on phones",
+            "help": "Off: on a phone or tablet a tapped card does not lift, shadow or zoom its photo. A desktop with a mouse keeps its hover either way.",
+            "options": null,
+            "default": false,
+            "value": false
           }
         ]
       },
@@ -3130,18 +3139,18 @@
             "key": "show_discount",
             "type": "bool",
             "label": "Discount badge",
-            "help": "",
-            "default": true,
-            "value": true,
+            "help": "The -N% pill on the photograph. Off by default, as you asked; the struck-through was-price still shows a markdown.",
+            "default": false,
+            "value": false,
             "options": null
           },
           {
             "key": "show_new",
             "type": "bool",
             "label": "New badge",
-            "help": "On products with no reviews yet.",
-            "default": true,
-            "value": true,
+            "help": "The NEW pill on products added in the last 30 days. Off by default, as you asked.",
+            "default": false,
+            "value": false,
             "options": null
           },
           {
@@ -3166,6 +3175,459 @@
               "step": 1,
               "unit": ""
             }
+          }
+        ]
+      },
+      {
+        "key": "spacing",
+        "label": "Spacing & type",
+        "description": "The space between the photo, the name, the price and the button, and the size and weight of each — a phone and a desktop set apart. Every value starts at what the shop shows today, so nothing moves until you move it.",
+        "fields": [
+          {
+            "key": "card_pad_m",
+            "type": "range",
+            "label": "Inner padding · phone",
+            "help": "The space inside the card around the text, sides and bottom.",
+            "options": {
+              "min": 0,
+              "max": 32,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 16,
+            "value": 16
+          },
+          {
+            "key": "card_pad_d",
+            "type": "range",
+            "label": "Inner padding · desktop",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 32,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 16,
+            "value": 16
+          },
+          {
+            "key": "card_gap_img_m",
+            "type": "range",
+            "label": "Photo → name · phone",
+            "help": "The space between the photograph and the first line of text.",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 16,
+            "value": 16
+          },
+          {
+            "key": "card_gap_img_d",
+            "type": "range",
+            "label": "Photo → name · desktop",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 16,
+            "value": 16
+          },
+          {
+            "key": "card_gap_price_m",
+            "type": "range",
+            "label": "Name → price row · phone",
+            "help": "Extra space above the price. The stars, when a product has reviews, sit in the room above this.",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 12,
+            "value": 12
+          },
+          {
+            "key": "card_gap_price_d",
+            "type": "range",
+            "label": "Name → price row · desktop",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 12,
+            "value": 12
+          },
+          {
+            "key": "card_gap_cart_m",
+            "type": "range",
+            "label": "Price row → Add to cart · phone",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 12,
+            "value": 12
+          },
+          {
+            "key": "card_gap_cart_d",
+            "type": "range",
+            "label": "Price row → Add to cart · desktop",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 12,
+            "value": 12
+          },
+          {
+            "key": "card_fs_title_m",
+            "type": "select",
+            "label": "Product name size · phone",
+            "help": "",
+            "options": {
+              "8px": "8px",
+              "8.5px": "8.5px",
+              "9px": "9px",
+              "9.5px": "9.5px",
+              "10px": "10px",
+              "10.5px": "10.5px",
+              "11px": "11px",
+              "11.5px": "11.5px",
+              "12px": "12px",
+              "12.5px": "12.5px",
+              "13px": "13px",
+              "13.5px": "13.5px",
+              "14px": "14px",
+              "14.5px": "14.5px",
+              "15px": "15px",
+              "15.5px": "15.5px",
+              "16px": "16px",
+              "17px": "17px",
+              "18px": "18px",
+              "19px": "19px",
+              "20px": "20px",
+              "22px": "22px",
+              "24px": "24px"
+            },
+            "default": "14px",
+            "value": "14px"
+          },
+          {
+            "key": "card_fs_title_d",
+            "type": "select",
+            "label": "Product name size · desktop",
+            "help": "",
+            "options": {
+              "8px": "8px",
+              "8.5px": "8.5px",
+              "9px": "9px",
+              "9.5px": "9.5px",
+              "10px": "10px",
+              "10.5px": "10.5px",
+              "11px": "11px",
+              "11.5px": "11.5px",
+              "12px": "12px",
+              "12.5px": "12.5px",
+              "13px": "13px",
+              "13.5px": "13.5px",
+              "14px": "14px",
+              "14.5px": "14.5px",
+              "15px": "15px",
+              "15.5px": "15.5px",
+              "16px": "16px",
+              "17px": "17px",
+              "18px": "18px",
+              "19px": "19px",
+              "20px": "20px",
+              "22px": "22px",
+              "24px": "24px"
+            },
+            "default": "14px",
+            "value": "14px"
+          },
+          {
+            "key": "card_fs_price_m",
+            "type": "select",
+            "label": "Price size · phone",
+            "help": "The price and the sale price.",
+            "options": {
+              "8px": "8px",
+              "8.5px": "8.5px",
+              "9px": "9px",
+              "9.5px": "9.5px",
+              "10px": "10px",
+              "10.5px": "10.5px",
+              "11px": "11px",
+              "11.5px": "11.5px",
+              "12px": "12px",
+              "12.5px": "12.5px",
+              "13px": "13px",
+              "13.5px": "13.5px",
+              "14px": "14px",
+              "14.5px": "14.5px",
+              "15px": "15px",
+              "15.5px": "15.5px",
+              "16px": "16px",
+              "17px": "17px",
+              "18px": "18px",
+              "19px": "19px",
+              "20px": "20px",
+              "22px": "22px",
+              "24px": "24px"
+            },
+            "default": "13.5px",
+            "value": "13.5px"
+          },
+          {
+            "key": "card_fs_price_d",
+            "type": "select",
+            "label": "Price size · desktop",
+            "help": "",
+            "options": {
+              "8px": "8px",
+              "8.5px": "8.5px",
+              "9px": "9px",
+              "9.5px": "9.5px",
+              "10px": "10px",
+              "10.5px": "10.5px",
+              "11px": "11px",
+              "11.5px": "11.5px",
+              "12px": "12px",
+              "12.5px": "12.5px",
+              "13px": "13px",
+              "13.5px": "13.5px",
+              "14px": "14px",
+              "14.5px": "14.5px",
+              "15px": "15px",
+              "15.5px": "15.5px",
+              "16px": "16px",
+              "17px": "17px",
+              "18px": "18px",
+              "19px": "19px",
+              "20px": "20px",
+              "22px": "22px",
+              "24px": "24px"
+            },
+            "default": "15px",
+            "value": "15px"
+          },
+          {
+            "key": "card_fs_btn_m",
+            "type": "select",
+            "label": "Button text size · phone",
+            "help": "",
+            "options": {
+              "8px": "8px",
+              "8.5px": "8.5px",
+              "9px": "9px",
+              "9.5px": "9.5px",
+              "10px": "10px",
+              "10.5px": "10.5px",
+              "11px": "11px",
+              "11.5px": "11.5px",
+              "12px": "12px",
+              "12.5px": "12.5px",
+              "13px": "13px",
+              "13.5px": "13.5px",
+              "14px": "14px",
+              "14.5px": "14.5px",
+              "15px": "15px",
+              "15.5px": "15.5px",
+              "16px": "16px",
+              "17px": "17px",
+              "18px": "18px",
+              "19px": "19px",
+              "20px": "20px",
+              "22px": "22px",
+              "24px": "24px"
+            },
+            "default": "11px",
+            "value": "11px"
+          },
+          {
+            "key": "card_fs_btn_d",
+            "type": "select",
+            "label": "Button text size · desktop",
+            "help": "",
+            "options": {
+              "8px": "8px",
+              "8.5px": "8.5px",
+              "9px": "9px",
+              "9.5px": "9.5px",
+              "10px": "10px",
+              "10.5px": "10.5px",
+              "11px": "11px",
+              "11.5px": "11.5px",
+              "12px": "12px",
+              "12.5px": "12.5px",
+              "13px": "13px",
+              "13.5px": "13.5px",
+              "14px": "14px",
+              "14.5px": "14.5px",
+              "15px": "15px",
+              "15.5px": "15.5px",
+              "16px": "16px",
+              "17px": "17px",
+              "18px": "18px",
+              "19px": "19px",
+              "20px": "20px",
+              "22px": "22px",
+              "24px": "24px"
+            },
+            "default": "12px",
+            "value": "12px"
+          },
+          {
+            "key": "card_fs_brand_m",
+            "type": "select",
+            "label": "Brand name size · phone",
+            "help": "Only shows when Card content → Brand name is on.",
+            "options": {
+              "8px": "8px",
+              "8.5px": "8.5px",
+              "9px": "9px",
+              "9.5px": "9.5px",
+              "10px": "10px",
+              "10.5px": "10.5px",
+              "11px": "11px",
+              "11.5px": "11.5px",
+              "12px": "12px",
+              "12.5px": "12.5px",
+              "13px": "13px",
+              "13.5px": "13.5px",
+              "14px": "14px",
+              "14.5px": "14.5px",
+              "15px": "15px",
+              "15.5px": "15.5px",
+              "16px": "16px",
+              "17px": "17px",
+              "18px": "18px",
+              "19px": "19px",
+              "20px": "20px",
+              "22px": "22px",
+              "24px": "24px"
+            },
+            "default": "10.5px",
+            "value": "10.5px"
+          },
+          {
+            "key": "card_fs_brand_d",
+            "type": "select",
+            "label": "Brand name size · desktop",
+            "help": "",
+            "options": {
+              "8px": "8px",
+              "8.5px": "8.5px",
+              "9px": "9px",
+              "9.5px": "9.5px",
+              "10px": "10px",
+              "10.5px": "10.5px",
+              "11px": "11px",
+              "11.5px": "11.5px",
+              "12px": "12px",
+              "12.5px": "12.5px",
+              "13px": "13px",
+              "13.5px": "13.5px",
+              "14px": "14px",
+              "14.5px": "14.5px",
+              "15px": "15px",
+              "15.5px": "15.5px",
+              "16px": "16px",
+              "17px": "17px",
+              "18px": "18px",
+              "19px": "19px",
+              "20px": "20px",
+              "22px": "22px",
+              "24px": "24px"
+            },
+            "default": "10.5px",
+            "value": "10.5px"
+          },
+          {
+            "key": "card_fw_title",
+            "type": "select",
+            "label": "Product name weight",
+            "help": "",
+            "options": {
+              "400": "Regular (400)",
+              "500": "Medium (500)",
+              "600": "Semi-bold (600)",
+              "700": "Bold (700)"
+            },
+            "default": "600",
+            "value": "600"
+          },
+          {
+            "key": "card_fw_price",
+            "type": "select",
+            "label": "Price weight",
+            "help": "A product at one price.",
+            "options": {
+              "400": "Regular (400)",
+              "500": "Medium (500)",
+              "600": "Semi-bold (600)",
+              "700": "Bold (700)"
+            },
+            "default": "700",
+            "value": "700"
+          },
+          {
+            "key": "card_fw_sale",
+            "type": "select",
+            "label": "Sale price weight",
+            "help": "The marked-down price beside a struck-through one.",
+            "options": {
+              "400": "Regular (400)",
+              "500": "Medium (500)",
+              "600": "Semi-bold (600)",
+              "700": "Bold (700)"
+            },
+            "default": "700",
+            "value": "700"
+          },
+          {
+            "key": "card_fw_btn",
+            "type": "select",
+            "label": "Button text weight",
+            "help": "",
+            "options": {
+              "400": "Regular (400)",
+              "500": "Medium (500)",
+              "600": "Semi-bold (600)",
+              "700": "Bold (700)"
+            },
+            "default": "700",
+            "value": "700"
+          },
+          {
+            "key": "card_fw_brand",
+            "type": "select",
+            "label": "Brand name weight",
+            "help": "",
+            "options": {
+              "400": "Regular (400)",
+              "500": "Medium (500)",
+              "600": "Semi-bold (600)",
+              "700": "Bold (700)"
+            },
+            "default": "600",
+            "value": "600"
           }
         ]
       },

@@ -53,9 +53,12 @@ it('registers exactly the paths it documents', function () {
         'GET|HEAD /my-account/reset/{id}/{token}',
         'GET|HEAD /my-account/verify',
         'GET|HEAD /my-account/verify/{id}/{hash}',
+        // Lane PQ: the page an account invite links to, and its form.
+        'GET|HEAD /my-account/welcome/{token}',
         'POST /my-account/forgot',
         'POST /my-account/reset',
         'POST /my-account/verify/resend',
+        'POST /my-account/welcome',
     ]);
 });
 

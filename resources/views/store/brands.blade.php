@@ -79,7 +79,8 @@
             <p class="brw-empty">{{ __('store.brands.brand_empty') }}</p>
         @else
             <x-product-grid :products="$products" :heading="__('store.brands.popular_heading')"
-                            :more-url="$brand->filterUrl()" :more-label="__('store.product_grid.view_all')" />
+                            :more-url="$brand->filterUrl()" :more-label="__('store.product_grid.view_all')" grid-id="brandGrid" />
+{{-- The rest of the brand, a batch at a time (Lane PR). Draws nothing when the brand fits on one page. At column 0 because StorefrontEnglishUnchangedTest byte-pins this page and an indented line leaves its indent behind. --}}@include('partials.listing-pager', ['page' => $page, 'lastPage' => $lastPage, 'urlFor' => $pageUrl, 'grid' => '#brandGrid'])
         @endif
     @else
         <nav class="brw-crumb" aria-label="{{ __('store.breadcrumb.label') }}">

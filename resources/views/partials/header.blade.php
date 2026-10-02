@@ -36,7 +36,13 @@
       @if ($h['search_show'])
         {{-- The script binds to `.search-in input[type=search]` and renders into
              `#kbbSuggest`; the stylesheet dresses `.sugg`. All three have to be
-             here or suggestions silently never appear. --}}
+             here or suggestions silently never appear.
+
+             data-starter carries the trending words, so a tap on the field
+             paints them at once instead of after a round trip to
+             /api/search/starter (the owner: "showing with little delays upon
+             click"). Settings only: no query. search.js refreshes the rest
+             behind it. --}}
         <form class="sbox" method="get" action="{{ Url::to('/shop/') }}" role="search">
           <div class="search-in {{ 'compact' === $h['search_row_size'] ? 'rs-compact' : 'rs-regular' }}{{ $h['search_native_clear'] ? '' : ' no-native-clear' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
@@ -46,7 +52,8 @@
           </div>
           <div class="sugg" id="kbbSuggest" role="listbox" aria-label="{{ __('store.header.suggestions_label') }}"
                data-brands-phone="{{ $h['search_brands_phone'] ? '1' : '0' }}"
-               data-max="{{ (int) $h['search_results_max'] }}"></div>
+               data-max="{{ (int) $h['search_results_max'] }}"
+               data-starter="{{ json_encode(['trending' => $hd->trendingWords(), 'mobile' => (int) $h['trending_limit_mobile'], 'layout' => $h['search_panel']], JSON_UNESCAPED_UNICODE) }}"></div>
         </form>
       @endif
 

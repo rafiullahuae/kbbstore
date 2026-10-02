@@ -49,7 +49,8 @@ const setRight = (panel, html) => { ensureShell(panel); panel.querySelector('.co
 function ensureRightColumn(panel) {
     if (panel.querySelector('.colB')?.innerHTML) return;
 
-    loadStarter().then((data) => {
+    const best = bestStarter(panel);
+    (best ? Promise.resolve(best) : loadStarter()).then((data) => {
         if (!data || panel.querySelector('.colB')?.innerHTML) return;
 
         const trending = data.trending || [];
@@ -272,25 +273,76 @@ export function initSearch() {
 
    The phone is one column throughout, so none of this applies there.
    ═══════════════════════════════════════════════════════════════ */
-let starterCache = null;
+/*
+ * NO WAIT BETWEEN THE TAP AND THE PANEL. (2 October 2026) The owner: "the
+ * default search tags box showing with little delays upon click on search
+ * box. it must be shown immidiately". The focus handler awaited
+ * /api/search/starter before it added `.on`, and the answer lived in a page
+ * variable, so the first tap on EVERY page waited a full round trip.
+ *
+ * Now the panel paints in the same task as the focus, from the best data on
+ * hand: this page's copy, else this tab's copy (sessionStorage), else the
+ * trending words the header printed into #kbbSuggest[data-starter]. The fetch
+ * still runs, in the background, and the panel is redrawn only if what came
+ * back differs from what is on screen. tests/Feature/SearchStarterInstantTest.php.
+ */
+const STARTER_TTL = 5 * 60 * 1000;
+const starterMobile = () => window.matchMedia('(max-width: 900px)').matches;
+const starterKey = () => `kbb.starter.v1.${starterMobile() ? 'm' : 'd'}`;
+let starterCache = {};
+let starterInflight = {};
 
-async function loadStarter() {
-    if (starterCache) return starterCache;
-
-    const base = (window.KBB && window.KBB.routes && window.KBB.routes.search) || '/api/search';
-    const mobile = window.matchMedia('(max-width: 900px)').matches;
-
+function storedStarter() {
+    const key = starterKey();
+    if (starterCache[key]) return starterCache[key];
     try {
-        const r = await fetch(`${base}/starter?mobile=${mobile ? 1 : 0}`, {
-            headers: { Accept: 'application/json' },
-            credentials: 'same-origin',
-        });
-        if (!r.ok) return null;
-        starterCache = await r.json();
-        return starterCache;
+        const kept = JSON.parse(sessionStorage.getItem(key) || 'null');
+        if (kept && kept.data && Date.now() - kept.at < STARTER_TTL) {
+            starterCache[key] = kept.data;
+            return kept.data;
+        }
+    } catch (e) { /* storage blocked or malformed: fall through to the seed */ }
+    return null;
+}
+
+/* The header's own copy: trending words only, so the panel can open before
+   anything has been fetched. Popular products and brands arrive with the fetch. */
+function seedStarter(panel) {
+    try {
+        const seed = JSON.parse(panel.dataset.starter || 'null');
+        if (!seed || !Array.isArray(seed.trending)) return null;
+        const trending = starterMobile() ? seed.trending.slice(0, seed.mobile || seed.trending.length) : seed.trending;
+        return { trending, recent: [], popular: [], brands: [], layout: seed.layout, seed: true };
     } catch (e) {
         return null;
     }
+}
+
+const bestStarter = (panel) => storedStarter() || seedStarter(panel);
+
+function loadStarter() {
+    const key = starterKey();
+    if (starterCache[key] && !starterCache[key].seed) return Promise.resolve(starterCache[key]);
+    if (starterInflight[key]) return starterInflight[key];
+
+    const base = (window.KBB && window.KBB.routes && window.KBB.routes.search) || '/api/search';
+
+    starterInflight[key] = fetch(`${base}/starter?mobile=${starterMobile() ? 1 : 0}`, {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+    })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+            if (data) {
+                starterCache[key] = data;
+                try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data })); } catch (e) { /* private mode */ }
+            }
+            return data;
+        })
+        .catch(() => null)
+        .finally(() => { delete starterInflight[key]; });
+
+    return starterInflight[key];
 }
 
 const chipRow = (items) =>
@@ -399,12 +451,28 @@ export function initSearchStarter() {
         shut();
     }, true);
 
-    input.addEventListener('focus', async () => {
-        if (input.value.trim().length >= 2) return;   // results own the panel
-        const data = await loadStarter();
-        if (input.value.trim().length >= 2) return;   // typing won the race
-        if (renderStarter(panel, data)) panel.classList.add('on');
+    const starterOwnsPanel = () => input.value.trim().length < 2;   // results own it from 2 letters
+
+    input.addEventListener('focus', () => {
+        if (!starterOwnsPanel()) return;
+        // Painted now, in this task. Nothing between the tap and the panel.
+        const painted = bestStarter(panel);
+        if (renderStarter(panel, painted)) panel.classList.add('on');
+        // Redrawn only if the refresh differs from what is on screen; usually
+        // it is exactly what the seed already painted.
+        loadStarter().then((data) => {
+            if (!data || JSON.stringify(data) === JSON.stringify(painted)) return;
+            if (starterOwnsPanel() && panel.classList.contains('on')) renderStarter(panel, data);
+        });
     });
+
+    // Warm this tab's copy once the page is idle, so even the first tap on the
+    // first page has the popular products as well as the trending words.
+    if (!storedStarter()) {
+        const warm = () => loadStarter();
+        if ('requestIdleCallback' in window) window.requestIdleCallback(warm, { timeout: 4000 });
+        else setTimeout(warm, 1500);
+    }
 
     // Clicking a word searches for it rather than just filling the box.
     panel.addEventListener('click', (event) => {
@@ -417,10 +485,9 @@ export function initSearchStarter() {
     });
 
     // Emptying the field brings the starter back instead of leaving a blank.
-    input.addEventListener('input', async () => {
+    input.addEventListener('input', () => {
         if (input.value.trim().length !== 0) return;
-        const data = await loadStarter();
-        if (renderStarter(panel, data)) panel.classList.add('on');
+        if (renderStarter(panel, bestStarter(panel))) panel.classList.add('on');
     });
 }
 

@@ -3727,17 +3727,19 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 24 | **Every image on the shop loaded from kbeautybliss.com** although every file was here: each re-import of Products wrote the export's old addresses back over the re-pointed ones | integrator | **done — 2.60.345** — fixed on the site by Addresses & pictures → Bring these across; an import now re-points every picture whose file is already here when each file finishes |
 | 25 | Some review photographs show as broken frames on product pages | integrator | **done — 2.60.345** — no broken frame (the card drops a photo that fails); the photos themselves come across with Pictures & live progress |
 | 26 | **No orders on the new shop** (customers imported, 0 orders): the preview showed no Orders row and every Order line / note refused — `orders.csv` was never among the uploaded files | owner + integrator | **root cause found and fixed — exporter 1.10.1**: on HPOS the order query named `cart_tax_amount`, which WooCommerce does not have; MySQL refused it and $wpdb returned nothing, so orders.csv was a header row. Re-exported with 1.10.1: preview shows 1,196 orders to create, 0 refused (notes/refunds refused only by the preview slice) |
-| 27 | Guest-checkout customers: select all → "Send account invite" with an editable email template; a set-password link (no plaintext password) | PQ | in progress |
-| 28 | NEW and discount badges on grid cards OFF by default | PR | in progress |
-| 29 | Category and brand pages load more on scroll by default (no pager) | PR | in progress |
-| 30 | Grid card hover effects off on phones by default | PR | in progress |
-| 31 | Full control of grid card inner spacing (image/title/price/button) and font weights, per device | PR | in progress |
+| 27 | Guest-checkout customers: select all → "Send account invite" with an editable email template; a set-password link (no plaintext password) | PQ | **merged** — Store → Customers → tick / "Select all N" → Send account invite…; one-time link, 7-day expiry, `customers.invite` capability |
+| 28 | NEW and discount badges on grid cards OFF by default | PR | **merged** |
+| 29 | Category and brand pages load more on scroll by default (no pager) | PR | **merged** |
+| 30 | Grid card hover effects off on phones by default | PR | **merged** |
+| 31 | Full control of grid card inner spacing (image/title/price/button) and font weights, per device | PR | **merged** |
 | 32 | "You may also like" as a carousel: brand + category mixed by default, rule controls, manual selection per product | PS | in progress |
 | 33 | Category banners, titles and descriptions from the old site as the category page header | PT (exporter 1.11.0) | in progress |
 | 34 | Internal links in descriptions/articles/blocks still pointing to kbeautybliss.com → this shop's URLs | PT | in progress |
 | 35 | Order page: billing/shipping/customer could not be edited ("Edit" was a bare link; shipping opened raw JSON); "Order history" went to all customers; a green "Paid with …" panel; no Capture box; "Mark as paid" with a reference when an unpaid order moves to a paid status | PU | **merged** — capture kept only for real Tabby/Tamara authorisations; COD amber until collected |
 | 36 | Catalog → Products fits a desktop screen with actions pinned; "Customize columns"; on phones 2×2 summary cards, one swiping tool row, one-line pills | integrator | **merged** |
-| 37 | An uncollected COD order still reads "AED X still refundable" (imported COD orders carry paid_at; PaymentRefunder's ceiling) | integrator | queued (found by PU) |
+| 37 | An uncollected COD order still reads "AED X still refundable" (imported COD orders carry paid_at; PaymentRefunder's ceiling) | integrator | done: PaymentRefunder::capturedFils treats COD not yet collected as unpaid (CodRefundCeilingTest) |
+| 38 | The search box's Trending panel opens with a delay on tap; must appear immediately | integrator | **done** — the header carries the trending words; the panel paints on focus (854 ms → 10 ms with the endpoint held 800 ms) |
+| 39 | `/shop/?filter_brands=celimax` reads "Shop all" with the default line; show the brand name or nothing (brand-filter URLs only) | integrator | in progress (after PT, which owns the same header) |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix

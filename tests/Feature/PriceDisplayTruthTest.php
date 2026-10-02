@@ -131,6 +131,16 @@ function pdtAmountsIn(string $html, string $needle, int $length = 600): array
 /** The card for one product on /shop, as a string. */
 function pdtCard(Product $product): string
 {
+    /*
+     * THE -N% PILL SWITCHED ON, SAID OUT LOUD.                     (Lane PR)
+     * Appearance → Product styles → Card content → "Discount badge" ships OFF
+     * now — the owner asked for it. This asserts what the pill SAYS when it is
+     * drawn, so it draws it; GridCardOwnerAsksTest pins the default.
+     */
+    app(\App\Services\ProductStyles::class)->save(['show_discount' => true]);
+    \App\Services\SettingsService::forgetMemo();
+    app()->forgetScopedInstances();
+
     $html = test()->get('/shop')->assertOk()->getContent();
 
     /*

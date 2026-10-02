@@ -117,6 +117,12 @@
  *   fixture's-line merge. `search_sets_pick|"nope"` answers `'random'`, the
  *   default.
  *
+ *   Lane PR added TWENTY-TWO to product_styles (Appearance → Product styles):
+ *   `hover_phone` (bool, 11 rows), eight 0–32/0–40px spacing ranges (9 rows
+ *   each) and thirteen size/weight selects (4 rows each) — 135 LINES INSERTED,
+ *   0 MODIFIED, 0 REMOVED, by the same merge. A size select's `"nope"` answers
+ *   its default (`'14px'`, `'13.5px'`…), never the string it was sent.
+ *
  *   Lane PS added a FOURTEENTH MODULE rather than keys to an existing one —
  *   App\Services\AlsoLikeSettings, Appearance → Product page → You may also
  *   like — and put it LAST in mEquivRows()'s list, so its rows are generated
