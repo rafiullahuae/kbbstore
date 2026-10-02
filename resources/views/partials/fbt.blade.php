@@ -51,7 +51,7 @@
         $btOos = ! $btIsMain && $btP->stock_status !== 'instock';
         $btNow = ($btIsMain && $btMainVar) ? (int) $btMainVar->effectivePrice() : (int) $btP->effectivePrice();
         $btWas = (! $btIsMain || ! $btMainVar) && $btP->isOnSale() ? (int) $btP->compareAtPrice() : 0;
-        $btImg = \App\Support\CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $btP->image, 400));
+        $btImgCss = \App\Support\CssUrl::value(\App\Support\ImageVariants::variantUrl((string) $btP->image, 400));
         $btSeed = ($btP->brand?->name ?? '') . $btP->name;
         $btRows[] = [
             'p' => $btP,
@@ -59,8 +59,8 @@
             'oos' => $btOos,
             'now' => $btNow,
             'was' => $btWas,
-            'style' => $btImg !== '' ? "background-image:url('" . e($btImg) . "')" : 'background:' . \App\Support\Gradient::for($btSeed),
-            'initials' => $btImg !== '' ? '' : \App\Support\Gradient::initials($btP->brand?->name ?: $btP->t('name')),
+            'style' => $btImgCss !== '' ? "background-image:url('" . e($btImgCss) . "')" : 'background:' . \App\Support\Gradient::for($btSeed),
+            'initials' => $btImgCss !== '' ? '' : \App\Support\Gradient::initials($btP->brand?->name ?: $btP->t('name')),
             'name' => $btP->t('name'),
         ];
         if (! $btOos) {

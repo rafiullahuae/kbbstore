@@ -292,6 +292,10 @@
         body: JSON.stringify(payload) });
       var j = null;
       try { j = await r.json(); } catch (e2) { j = null; }
+      if (r.status === 404 && (!j || (!j.message && !j.error))) {
+        if (msg) { msg.style.visibility = 'visible'; msg.textContent = 'The Product page endpoint is not in this server\'s compiled route table yet. Clear the route cache (Platform → Cache) and reload.'; }
+        return;
+      }
       if (j && j.ok) {
         if (j.together) PP.together = j.together;
         if (Array.isArray(j.sections)) PP.sections = j.sections;
