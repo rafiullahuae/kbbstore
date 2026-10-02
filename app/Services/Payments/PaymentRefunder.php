@@ -345,13 +345,21 @@ class PaymentRefunder
     }
 
     /**
-     * A cash-on-delivery order whose cash has not been recorded as collected:
-     * not Completed and no capture (the cash-received record). The same test
-     * OrderPaymentPanel uses for its amber "to collect" state.
+     * An IMPORTED cash-on-delivery order whose cash has not been recorded as
+     * collected: not Completed and no capture (the cash-received record) --
+     * the test OrderPaymentPanel uses for its amber "to collect" state.
+     *
+     * Imported only. WooCommerce stamps date_paid on a COD order the moment it
+     * moves to Processing, so on an imported row `paid_at` is not evidence that
+     * cash changed hands. This shop never does that: CashOnDelivery::start()
+     * leaves `paid_at` null and only ManualPayment sets it -- with
+     * `captured_at` for cash -- so on a native order `paid_at` is trusted as
+     * before (CancellationEmailTruthTest, TaxEngineTest's full refund).
      */
     private static function cashStillToCollect(Order $order): bool
     {
         return strtolower((string) ($order->payment_method ?? '')) === 'cod'
+            && $order->wc_order_id !== null
             && $order->captured_at === null
             && strtolower((string) ($order->status ?? '')) !== 'completed';
     }
