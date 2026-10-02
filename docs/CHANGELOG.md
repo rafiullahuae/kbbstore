@@ -14,12 +14,12 @@ caches).
 | "options to use random layout on random categories, where we didin't upload the background image yet. so on each page load, it will give random colored background" | ON. A category or brand page with no banner of its own and no box chosen for it gets a light box picked at random on every load, from the colours ticked in Appearance → Site layout → Category header → "A different light box on every visit". A category you gave a box or a banner keeps it |
 | "The share popup is too heighted. i want to have picture + title in same row" | The product card is one row: a 96px square of the product's photograph, then the name (three lines at most) and the price, struck price included when on sale. Card 248px → 118px; the sheet 510px → 381px tall on a 390px phone |
 
-Files (9): app/Services/SiteLayout.php, app/Support/TitleHeader.php,
+Files (8): app/Services/SiteLayout.php, app/Support/TitleHeader.php,
 database/migrations/2027_07_16_000100_random_light_box_on.php,
 resources/views/admin/partials/site-layout-screen.blade.php,
 resources/views/partials/product/share-sheet.blade.php,
 resources/css/kbb/kbb-pdp-trust.css, public/build/manifest.json,
-public/build/assets/kbb-pdp-trust-Dax_IKaE.css, VERSION.
+public/build/assets/kbb-pdp-trust-Dax_IKaE.css.
 
 ## 2.60.352
 **Hotfix: on phones, a product with many gallery pictures made the page
