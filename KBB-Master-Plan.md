@@ -3737,7 +3737,7 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 34 | Internal links in descriptions/articles/blocks still pointing to kbeautybliss.com → this shop's URLs | PT | in progress |
 | 35 | Order page: billing/shipping/customer could not be edited ("Edit" was a bare link; shipping opened raw JSON); "Order history" went to all customers; a green "Paid with …" panel; no Capture box; "Mark as paid" with a reference when an unpaid order moves to a paid status | PU | **merged** — capture kept only for real Tabby/Tamara authorisations; COD amber until collected |
 | 36 | Catalog → Products fits a desktop screen with actions pinned; "Customize columns"; on phones 2×2 summary cards, one swiping tool row, one-line pills | integrator | **merged** |
-| 37 | An uncollected COD order still reads "AED X still refundable" (imported COD orders carry paid_at; PaymentRefunder's ceiling) | integrator | queued (found by PU) |
+| 37 | An uncollected COD order still reads "AED X still refundable" (imported COD orders carry paid_at; PaymentRefunder's ceiling) | integrator | done: PaymentRefunder::capturedFils treats COD not yet collected as unpaid (CodRefundCeilingTest) |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix
