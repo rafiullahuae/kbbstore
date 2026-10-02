@@ -138,6 +138,9 @@ final class TitleHeader
     /** The per-category CHOICES, each checked against its own list. */
     public const STYLE_CHOICES = ['align', 'treatment', 'box'];
 
+    /** The light boxes the random pick may use (2.60.352); F needs colours of its own. */
+    public const RANDOM_POOL = ['blush', 'cream', 'mint', 'lilac', 'plain'];
+
     /**
      * The per-category, PER-DEVICE choices (Lane QC), and the list each is
      * checked against. A device's own key beats the both-devices key above,
@@ -291,8 +294,20 @@ final class TitleHeader
          * choice, then its own both-devices choice (what PY stored), then the
          * shop's setting for that device, then the shipped default.
          */
-        $phone = self::device($settings, $own, $kind, '');
-        $laptop = self::device($settings, $own, $kind, '_desktop');
+        /*
+         * The random light box (2.60.352): one pick for this page view, taken
+         * from the styles ticked in the mix, standing in for the SHOP's box
+         * style on both devices -- so the category's own choice still wins.
+         */
+        $random = null;
+
+        if ($kind === 'box' && ! empty($settings['cat_header_box_random'])) {
+            $pool = array_values(array_filter(self::RANDOM_POOL, fn (string $b): bool => ! empty($settings['cat_header_rand_'.$b])));
+            $random = $pool === [] ? null : $pool[random_int(0, count($pool) - 1)];
+        }
+
+        $phone = self::device($settings, $own, $kind, '', $random);
+        $laptop = self::device($settings, $own, $kind, '_desktop', $random);
 
         /*
          * THE SAME ON BOTH: the markup 2.60.349 wrote, byte for byte -- one
@@ -375,7 +390,7 @@ final class TitleHeader
      * @param  array<string, mixed>  $own  sanitizeStyle()'s answer
      * @return array{align: string, valign: string, treatment: string, box: ?string, tone: string, own: ?array{0: string, 1: string}, drawn: ?array{0: string, 1: string}}
      */
-    private static function device(array $settings, array $own, string $kind, string $suffix): array
+    private static function device(array $settings, array $own, string $kind, string $suffix, ?string $random = null): array
     {
         $mine = $suffix === '' ? '_phone' : '_desktop';
 
@@ -399,6 +414,7 @@ final class TitleHeader
             $boxes = array_keys(SiteLayout::BOX_STYLES);
             $box = self::pick($own['box'.$mine] ?? null, $boxes)
                 ?? self::pick($own['box'] ?? null, $boxes)
+                ?? self::pick($random, $boxes)
                 ?? self::pick($settings['cat_header_box_style'.$suffix] ?? null, $boxes)
                 ?? 'blush';
 

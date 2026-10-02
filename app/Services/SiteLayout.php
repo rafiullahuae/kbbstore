@@ -411,6 +411,28 @@ class SiteLayout
         'cat_header_desc_colour' => ['text', 'Description colour', '',
             'Blank is automatic: white over a picture, soft dark on the light box.'],
 
+        /*
+         * RANDOM LIGHT BOX (2.60.352). The owner: "can we have options to use
+         * random layout on random categories, where we didin't upload the
+         * background image yet. so on each page load, it will give random
+         * colored background as we have multiple designs."
+         *
+         * The SCHEMA default is OFF so a fresh install (and every test) draws
+         * the same box every time; 2027_07_16_000100 switches it ON for his
+         * shop, because he asked for it. A category with its own box style
+         * (Catalog → Categories → Edit) keeps it; a category with a banner is
+         * never affected. One pick per page view, the same on phone and
+         * laptop. Storefront HTML is `private, no-cache` (CacheHeaders), so no
+         * cache freezes a pick.
+         */
+        'cat_header_box_random' => ['bool', 'A different light box on every visit', false,
+            'On: a category with no banner gets one of the styles ticked below, picked again each time the page loads. A category given its own style in Catalog → Categories keeps it. Off: every such category uses the box style chosen above.'],
+        'cat_header_rand_blush' => ['bool', 'In the mix · A Blush icons', true, ''],
+        'cat_header_rand_cream' => ['bool', 'In the mix · B Cream icons', true, ''],
+        'cat_header_rand_mint' => ['bool', 'In the mix · C Mint icons', true, ''],
+        'cat_header_rand_lilac' => ['bool', 'In the mix · D Lilac icons', true, ''],
+        'cat_header_rand_plain' => ['bool', 'In the mix · E Plain soft colour', false, ''],
+
         'cat_header_title_phone' => ['range', 'Title size · phone', 26,
             'A category can set its own in Catalog → Categories.',
             ['min' => 16, 'max' => 56, 'step' => 1, 'unit' => 'px']],
@@ -520,6 +542,9 @@ class SiteLayout
         'cat_header_frost_opacity', 'cat_header_frost_blur', 'cat_header_frost_radius',
         'cat_header_label_bg', 'cat_header_label_fg',
         'cat_header_letter', 'cat_header_desc_colour',
+        // 2.60.352: the random light box and its mix.
+        'cat_header_box_random', 'cat_header_rand_blush', 'cat_header_rand_cream',
+        'cat_header_rand_mint', 'cat_header_rand_lilac', 'cat_header_rand_plain',
     ];
 
     /**
