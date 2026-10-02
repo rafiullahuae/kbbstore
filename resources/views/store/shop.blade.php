@@ -142,7 +142,10 @@
     @unless (($banner ?? null) || ($titleHeader ?? null))
         <div class="eyebrow">{{ __('store.shop.eyebrow') }}</div>
         <h1 class="ptitle">{{ $title }}</h1>
+{{-- No generic line under a one-brand listing's name (2.60.346). The directives
+     sit at column 0 so every other page renders byte for byte as before. --}}@if ($sub !== '')
         <p class="psub">{{ $sub }}</p>
+@endif
     @endunless
 </div>
 
