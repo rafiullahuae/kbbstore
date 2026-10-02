@@ -198,6 +198,48 @@ class SiteLayout
         'load_batch_custom' => ['int', 'My own number', 24,
             'Only used when "Products per batch" is "My own number". A whole number from 4 to 96; anything above or below is pulled to the nearest end, and anything that is not a number is refused.',
             ['min' => self::BATCH_MIN, 'max' => self::BATCH_MAX, 'step' => 1, 'unit' => '']],
+
+        /*
+         * ── THE CATEGORY TITLE HEADER ───────────────────────────────── Lane PT ──
+         *
+         * The owner: "We have a banner image on each category on the old site.
+         * Need to bring that on the category pages as title background, like
+         * on /sunscreens/ -- and the same title, same description." He asked
+         * for it, so it SHIPS ON (CLAUDE.md, 30 September): a category whose
+         * import carried a banner shows it the moment the package and the
+         * import are in. A category with NO imported banner renders exactly
+         * what it rendered before -- the switch below is for taking it away
+         * again, not for turning it on.
+         *
+         * Read by App\Support\TitleHeader only. NOT a stylesheet value:
+         * isDefault() and css() skip these, so none of it puts a byte of CSS
+         * on any page; the numbers ride on the header element itself, as
+         * clamped integers in properties whose names are constants.
+         */
+        'cat_header' => ['bool', 'Show the old shop\'s banner behind the category title', true,
+            'On: a category (or brand) whose import carried a banner picture shows its title, and its description, over that picture. Off: every category page shows the plain title, as before. A category with no imported banner is never affected.'],
+        'cat_header_fallback' => ['bool', 'When no banner was imported, use the category picture', false,
+            'Off: only an imported banner is used. On: a category with no banner uses its own category picture (the one the import calls `image`) instead. Turn this on if the export\'s notes say the old shop keeps no separate banner.'],
+        'cat_header_brands' => ['bool', 'Brand pages too', true,
+            'The same header on a brand\'s page when the brand\'s import carried a banner.'],
+        'cat_header_h_phone' => ['range', 'Height · phone', 190,
+            'The least the header is on a phone. It grows if the title and description need more room.',
+            ['min' => 120, 'max' => 480, 'step' => 10, 'unit' => 'px']],
+        'cat_header_h_desktop' => ['range', 'Height · desktop', 300,
+            'The least the header is on a screen 900px and wider.',
+            ['min' => 160, 'max' => 640, 'step' => 10, 'unit' => 'px']],
+        'cat_header_overlay' => ['range', 'Darken the picture', 40,
+            'How much the picture is darkened (or, with dark text, lightened) so the words stay readable.',
+            ['min' => 0, 'max' => 85, 'step' => 5, 'unit' => '%']],
+        'cat_header_text' => ['select', 'Text colour', 'light',
+            'White text over a darkened picture, or dark text over a lightened one.',
+            ['light' => 'White', 'dark' => 'Dark']],
+        'cat_header_align' => ['select', 'Text alignment', 'center',
+            'Where the title and description sit across the header.',
+            ['center' => 'Centred', 'left' => 'Left']],
+        'cat_header_lines' => ['range', 'Description lines before "Read more"', 3,
+            'A longer description is cut to this many lines with a Read more link under it.',
+            ['min' => 1, 'max' => 10, 'step' => 1, 'unit' => ' lines']],
     ];
 
     /** The bounds a typed batch size is held to, server-side. */
@@ -219,6 +261,12 @@ class SiteLayout
     /** The keys that are not CSS: skipped by isDefault(), never in css(). */
     private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom'];
 
+    /** The category title header's keys (Lane PT): not CSS either, for the same reason. */
+    public const HEADER_KEYS = [
+        'cat_header', 'cat_header_fallback', 'cat_header_brands', 'cat_header_h_phone', 'cat_header_h_desktop',
+        'cat_header_overlay', 'cat_header_text', 'cat_header_align', 'cat_header_lines',
+    ];
+
     public const TABS = [
         'width' => ['Page width',
             'One number for the whole shop. The cart page, the checkout and the slim footer keep their own width sliders on their own screens — they are pages asking for money, and a narrow ledger there is deliberate.',
@@ -229,6 +277,9 @@ class SiteLayout
         'loading' => ['Loading more products',
             'How /shop, every category and the curated listings bring in more products: numbered arrows, more on scroll, or everything at once. Shoppers without JavaScript always get the arrows.',
             ['load_mode', 'load_batch', 'load_batch_custom']],
+        'catheader' => ['Category header',
+            'The banner picture each category had on the old shop, behind the category\'s title and description -- brought across by the import. A category with no imported banner keeps its plain title.',
+            self::HEADER_KEYS],
     ];
 
     /** Every key lives in `settings`, written by this module's own endpoint. */
@@ -448,7 +499,7 @@ class SiteLayout
         $values = $this->all();
 
         foreach (self::normalised() as $key => $field) {
-            if (in_array($key, self::LOAD_KEYS, true)) {
+            if (in_array($key, self::LOAD_KEYS, true) || in_array($key, self::HEADER_KEYS, true)) {
                 continue;
             }
 

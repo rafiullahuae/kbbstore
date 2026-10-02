@@ -116,7 +116,7 @@ it('refuses a signed-out request', function () {
 
 /* ═══════════════════════════════════════════════════════ the payload ═══ */
 
-it('draws three tabs and thirteen controls, and says the shop is sending nothing', function () {
+it('draws four tabs and twenty-two controls, and says the shop is sending nothing', function () {
     $this->actingAs(w1Admin(), 'admin');
 
     $body = $this->getJson('/admin-api/site-layout')->assertOk()->json();
@@ -127,12 +127,18 @@ it('draws three tabs and thirteen controls, and says the shop is sending nothing
      * the "sending nothing" half below is unchanged by them; ListingLoadTest
      * covers the tab itself.
      */
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading']);
+    /*
+     * FOUR SINCE LANE PT: "Category header" -- the old shop's banner behind a
+     * category's title, with its nine controls. Not CSS on :root either (they
+     * ride on the header element; TitleHeader), so "sending nothing" below is
+     * unchanged by them too.
+     */
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
     expect($keys)->toBe(array_keys(SiteLayout::SCHEMA));
-    expect($keys)->toHaveCount(13);
+    expect($keys)->toHaveCount(22);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

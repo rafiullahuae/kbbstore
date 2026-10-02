@@ -153,7 +153,7 @@ final class MediaUsage
         }
 
         if ($type === null || $type === 'brand') {
-            $q = Brand::query()->select(['id', 'name', 'logo']);
+            $q = Brand::query()->select(['id', 'name', 'logo', 'header_image']);
 
             if ($owner !== null) {
                 SearchTerms::whereLike($q, 'name', $owner);
@@ -205,7 +205,7 @@ final class MediaUsage
         }
 
         if ($type === null || $type === 'category') {
-            $q = Category::query()->select(['id', 'name', 'image']);
+            $q = Category::query()->select(['id', 'name', 'image', 'header_image']);
 
             if ($owner !== null) {
                 SearchTerms::whereLike($q, 'name', $owner);
@@ -310,14 +310,21 @@ final class MediaUsage
             return;
         }
 
+        /*
+         * `header_image` -- the old shop's title-header banner the import
+         * brought across (Lane PT). A file the category page draws behind its
+         * title is a file the Media Library must not offer to delete.
+         */
         if ($kind === 'brand') {
             $add('Logo', 'logo', $row->logo);
+            $add('Title header picture', 'header_image', $row->header_image ?? null);
 
             return;
         }
 
         if ($kind === 'category') {
             $add('Category image', 'image', $row->image);
+            $add('Title header picture', 'header_image', $row->header_image ?? null);
         }
     }
 

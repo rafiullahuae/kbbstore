@@ -88,6 +88,11 @@ function gqCensus(): array
             'description' => GQ_LANDS.'categories.description',
             'image' => GQ_LANDS.'categories.image',
             'position' => GQ_LANDS.'categories.position',
+            // Exporter 1.11.0 (Lane PT): the old shop's title header.
+            'banner_image' => GQ_LANDS.'categories.header_image',
+            'banner_source_key' => GQ_LANDS.'categories.header_source',
+            'title_override' => GQ_LANDS.'categories.header_title',
+            'subtitle' => GQ_LANDS.'categories.header_subtitle',
         ]],
 
         'brands.csv' => ['entity' => 'brands', 'columns' => [
@@ -97,6 +102,10 @@ function gqCensus(): array
             'description' => GQ_LANDS.'brands.description',
             'logo' => GQ_LANDS.'brands.logo',
             'position' => GQ_LANDS.'brands.position',
+            'banner_image' => GQ_LANDS.'brands.header_image',
+            'banner_source_key' => GQ_LANDS.'brands.header_source',
+            'title_override' => GQ_LANDS.'brands.header_title',
+            'subtitle' => GQ_LANDS.'brands.header_subtitle',
         ]],
 
         'tags.csv' => ['entity' => 'tags', 'columns' => [
@@ -1291,6 +1300,19 @@ function gqMetaKeyCensus(): array
         /* ── the terms ──────────────────────────────────────────────────── */
         'order' => 'categories.csv / brands.csv `position`',
         'thumbnail_id' => 'categories.csv `image`, brands.csv `logo`',
+        /*
+         * The title-header term meta the harness seeds (1.11.0, Lane PT). The
+         * NAMES are the harness's own; the exporter does not look for them by
+         * name but by shape, and its census note in manifest.json lists every
+         * term-meta key the real shop has. See KBB_Export_Term_Header.
+         */
+        'header_banner' => 'categories.csv `banner_image` (an attachment id, resolved to its URL)',
+        '_header_banner' => 'ACF\'s field reference for `header_banner` -- skipped by the exporter, named in its term-meta census note',
+        'cover_image' => 'categories.csv `banner_image` (a plain URL)',
+        'brand_banner' => 'brands.csv `banner_image` (a serialized array carrying `url`)',
+        'page_title' => 'categories.csv `title_override`',
+        'page_subtitle' => 'categories.csv `subtitle`',
+        'display_type' => 'WooCommerce\'s own archive display setting (products / subcategories / both) -- skipped by the exporter, named in its term-meta census note; this shop has no equivalent',
 
         /* ── the line items ─────────────────────────────────────────────── */
         '_product_id' => 'order_items.csv -> order_items.product_id',
@@ -1520,6 +1542,8 @@ function gqEmptyInThisFixture(): array
          * key that shop does not write; adding one to the harness removes the
          * line from here.
          */
+        'brands.header_title' => 'the harness brand carries a banner but no header title (categories do)',
+        'brands.header_subtitle' => 'the harness brand carries a banner but no header subtitle (categories do)',
         'coupons.minimum_amount' => "the harness coupon has no `minimum_amount` meta",
         'coupons.maximum_amount' => "the harness coupon has no `maximum_amount` meta",
         'coupons.product_ids' => "the harness coupon restricts by CATEGORY, not by product",

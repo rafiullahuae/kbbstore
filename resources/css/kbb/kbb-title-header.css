@@ -1,0 +1,159 @@
+/* ===========================================================================
+   The category / brand TITLE HEADER brought across from the old shop.  Lane PT
+
+   "Need to bring that on the category pages as title background, like on
+   kbeautybliss.com/sunscreens/" -- the banner picture, the title over it and
+   the description under the title. Drawn by components/kbb-title-header and
+   loaded ONLY on a page that draws one, so a category with no imported banner
+   downloads nothing new.
+
+   Every selector is prefixed .kbb-th and appears nowhere else in the app, so
+   this file cannot restyle anything it did not ship.
+
+   SIZED WITH CSS, NOT SCRIPT. The heights are custom properties the component
+   writes from Appearance -> Site layout -> Category header (clamped integers);
+   the box is a MIN-height, so a long title or an opened description makes it
+   taller instead of spilling out. "Read more" is a checkbox and a label -- no
+   JavaScript, and nothing measures the text: the server decides a description
+   is long by its length, and line-clamp does the cutting.
+
+   min-width:0 on every flex child, for the reason kbb-banner.css gives: one
+   long unbroken word must not push a 360px page sideways.
+   =========================================================================== */
+
+.kbb-th{
+  --kbb-th-h:190px;
+  --kbb-th-hd:300px;
+  --kbb-th-ov:.4;
+  --kbb-th-lines:3;
+
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  min-height:var(--kbb-th-h);
+  max-width:1200px;
+  width:calc(100% - 40px);
+  min-width:0;
+  margin:6px auto 26px;
+  border-radius:18px;
+  background:#2a2228;          /* what shows while the picture is in flight */
+  color:#fff;
+}
+
+.kbb-th *{min-width:0}
+
+/* Inside a container that already supplies a width and gutter (the brand
+   landing page's .brw). */
+.kbb-th--flush{max-width:none;width:100%;margin:0 0 22px}
+
+@media (min-width:900px){
+  .kbb-th{min-height:var(--kbb-th-hd)}
+}
+
+.kbb-th__img{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.kbb-th__scrim{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  background:rgba(18,12,16,var(--kbb-th-ov));
+}
+
+.kbb-th__inner{
+  position:relative;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  width:100%;
+  padding:28px clamp(16px, 4vw, 56px);
+}
+
+.kbb-th__title{
+  font-family:var(--sans, "Outfit", system-ui, sans-serif);
+  font-size:clamp(26px, 4vw, 44px);
+  font-weight:700;
+  line-height:1.1;
+  letter-spacing:-.02em;
+  margin:0;
+  max-width:24ch;
+  overflow-wrap:anywhere;
+  text-shadow:0 1px 2px rgba(0,0,0,.45), 0 3px 18px rgba(0,0,0,.3);
+}
+
+.kbb-th__sub{
+  font-size:clamp(14px, 1.4vw, 17px);
+  font-weight:600;
+  line-height:1.4;
+  margin:8px 0 0;
+  max-width:60ch;
+  overflow-wrap:anywhere;
+}
+
+.kbb-th__desc{
+  font-size:clamp(13px, 1.15vw, 15px);
+  line-height:1.55;
+  margin:10px 0 0;
+  max-width:72ch;
+  overflow-wrap:anywhere;
+}
+
+.kbb-th__desc > :first-child{margin-top:0}
+.kbb-th__desc > :last-child{margin-bottom:0}
+.kbb-th__desc p{margin:0 0 .6em}
+.kbb-th__desc a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.kbb-th__desc img{display:none}  /* a picture in the copy does not belong over a picture */
+
+.kbb-th__desc--clamp{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:var(--kbb-th-lines);
+  line-clamp:var(--kbb-th-lines);
+  overflow:hidden;
+}
+
+/* The "Read more" switch: a real checkbox, visually hidden but focusable, so
+   the keyboard reaches it and Space opens the text. */
+.kbb-th__toggle{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+}
+
+.kbb-th__more{
+  display:inline-block;
+  margin-top:8px;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.02em;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  cursor:pointer;
+}
+
+.kbb-th__more-close{display:none}
+.kbb-th__toggle:checked ~ .kbb-th__desc--clamp{display:block;-webkit-line-clamp:unset;line-clamp:none;overflow:visible}
+.kbb-th__toggle:checked ~ .kbb-th__more .kbb-th__more-open{display:none}
+.kbb-th__toggle:checked ~ .kbb-th__more .kbb-th__more-close{display:inline}
+.kbb-th__toggle:focus-visible ~ .kbb-th__more{outline:2px solid currentColor;outline-offset:3px}
+
+/* Left-aligned. */
+.kbb-th--left .kbb-th__inner{align-items:flex-start;text-align:left}
+
+/* Dark text over a LIGHTENED picture, for a pale photograph. */
+.kbb-th--dark{color:var(--ink, #2a2228);background:#f4eef0}
+.kbb-th--dark .kbb-th__scrim{background:rgba(255,255,255,var(--kbb-th-ov))}
+.kbb-th--dark .kbb-th__title{text-shadow:none}

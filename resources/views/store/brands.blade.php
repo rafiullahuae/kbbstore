@@ -20,6 +20,10 @@
     @if ($banner ?? null)
         @vite('resources/css/kbb/kbb-banner.css')
     @endif
+{{-- The imported title header (Lane PT), at column 0 and on the directive's
+     own line so a brand without one gains no bytes. --}}@if ($titleHeader ?? null)
+@vite('resources/css/kbb/kbb-title-header.css')
+@endif
 @endpush
 
 @section('content')
@@ -48,6 +52,9 @@
             the side gutter.
         --}}
         <x-kbb-banner :banner="$banner ?? null" :contained="false" />
+@if ($titleHeader ?? null)
+<x-kbb-title-header :header="$titleHeader" :contained="false" />
+@endif
 
         <div class="brw-hero">
             <span class="brw-logo brw-logo--lg">
@@ -58,7 +65,7 @@
                 @endif
             </span>
             <div class="brw-hero-txt">
-                @unless ($banner ?? null)
+                @unless (($banner ?? null) || ($titleHeader ?? null))
                     <h1 class="brw-h1">{{ $brand->t('name') }}</h1>
                     @if ($brand->description)
                         <p class="brw-sub">{{ strip_tags($brand->t('description')) }}</p>
