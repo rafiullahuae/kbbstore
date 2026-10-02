@@ -1,3 +1,3 @@
-"term_id","name","slug","description","logo","position"
-"501","COSRX","cosrx","","","0"
-"502","Beauty of Joseon","beauty-of-joseon","Hanbang skincare","https://kbeautybliss.com/wp-content/uploads/2020/01/boj-logo.png","2"
+"term_id","name","slug","description","logo","position","banner_image","banner_source_key","title_override","subtitle"
+"501","COSRX","cosrx","","","0","","","",""
+"502","Beauty of Joseon","beauty-of-joseon","Hanbang skincare","https://kbeautybliss.com/wp-content/uploads/2020/01/boj-logo.png","2","https://kbeautybliss.com/wp-content/uploads/2020/01/boj-banner.jpg","brand_banner","",""

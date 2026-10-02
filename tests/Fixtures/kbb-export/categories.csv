@@ -1,4 +1,4 @@
-"term_id","name","slug","parent","description","image","position"
-"15","Skincare","skincare","0","Everything for the face","https://kbeautybliss.com/wp-content/uploads/2020/01/skincare-category.jpg","1"
-"22","Face Cleansers","face-cleansers","15","","","0"
-"31","Toners","toners","0","","","0"
+"term_id","name","slug","parent","description","image","position","banner_image","banner_source_key","title_override","subtitle"
+"15","Skincare","skincare","0","Everything for the face","https://kbeautybliss.com/wp-content/uploads/2020/01/skincare-category.jpg","1","https://kbeautybliss.com/wp-content/uploads/2020/01/skincare-banner.jpg","header_banner","Korean Skincare","Gentle, effective and authentic"
+"22","Face Cleansers","face-cleansers","15","<p>Gentle cleansers for every skin. Follow with a <a href=""https://kbeautybliss.com/toners/"">toner</a>.</p>","","0","https://kbeautybliss.com/wp-content/uploads/2020/02/face-cleansers-cover.jpg","cover_image","",""
+"31","Toners","toners","0","","","0","","","",""
