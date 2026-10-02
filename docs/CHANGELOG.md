@@ -3,6 +3,25 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.360
+**Buy these together: four on a phone with a half-card hint, prices inside
+their boxes, the total and "You're saving" line, discounts for 3 / 4 / 5+ and
+coupons on top.** Apply after .359. No plugin change. Runs three migrations
+(the bundle columns on carts and orders, the Arabic wording, a cache clear).
+
+| Your request | Now |
+|---|---|
+| "the text is going out the boxes ... prices inside the box must be auto adjusted" | Price scaled to its card, struck price wraps under it; no overflow 320-1440px |
+| "4 products on the screen, and 5th one can be hidden ... slightly animate and display the half of the 5th" | A swipeable row; one gentle peek at half the 5th when it scrolls into view (none under reduced motion, Arabic mirrored) |
+| "the button has little light bottom shadow" | Soft pink shadow under the outlined button |
+| "Total: should be on right side ... cut price ... you're saving 'AED amount'" | Total on the right with the struck total and a green "You're saving AED x" pill, live |
+| "discount upon 5 products purchse, 4 products and 3 ... if any product removed from the cart, the other products prices will become normal" | Tiers 0-50% (ship at 0 -- set yours); priced on the server in cart, drawer, checkout, order; any removal ends the group's discount |
+| "the coupon can be apply ... option to include exclude the coupon" | Coupon after the bundle discount; "Coupons also apply to buy-together products" (on) |
+
+Admin: Appearance → Product page → Buy these together → Discount for buying
+together. The admin order screen shows the bundle discount and the coupon as
+two rows.
+
 ## 2.60.359
 **Desktop sections: put the product page's blocks in your own order on
 laptops.** Apply after .358. No plugin change. Runs one migration (a cache
