@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.349
+**Category header: the category name as title unless you set your own,
+left-aligned (right in Arabic), a light icon box for categories with no
+picture, and every design choice in the admin.** Apply after .348. No plugin
+change.
+
+| # | Your report | Now | Where |
+|---|---|---|---|
+| 44 | Title from the category name unless a custom title / description is entered; centre / left options with left the default (right in Arabic); a light box with beauty-product icons when there is no picture; per-category picture, title size, description; section height and padding; a shadow so the title never merges into the picture; multiple options | All of it. Box styles A–F, readability options 1–5 (shipped: A and 1 Soft shadow), alignment Start / Centre / End, sizes and spacing for phone and laptop, live preview | Appearance → Site layout → Category header, and Category header · sizes & spacing; per category: Catalog → Categories → Edit → Category header |
+
+Brand pages, /shop/, search and ?filter_brands= are unchanged.
+
+Files (12): app/Http/Controllers/Admin/CategoriesApiController.php, app/Http/Controllers/Store/ShopController.php, app/Models/Category.php, app/Services/SiteLayout.php, app/Support/TitleHeader.php, database/migrations/2027_07_14_000100_add_header_style_to_categories.php, database/migrations/2027_07_14_000200_clear_caches_category_header_options.php, resources/css/kbb/kbb-title-header-icons.svg, resources/css/kbb/kbb-title-header.css, resources/views/admin/partials/category-tree-screen.blade.php, resources/views/admin/partials/site-layout-screen.blade.php, resources/views/components/kbb-title-header.blade.php.
+
 ## 2.60.348
 **Brand names on cart and checkout rows per device, the Authenticity × on the
 box corner, and the share bar as coloured icons on one line.** Apply after
