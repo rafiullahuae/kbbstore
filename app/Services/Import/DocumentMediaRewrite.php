@@ -307,6 +307,52 @@ final class DocumentMediaRewrite
     }
 
     /**
+     * EVERY `<a href>` in a document, with where its value sits. (Lane PT)
+     *
+     * For `OldSiteLinks`, which re-points the anchors this class deliberately
+     * leaves alone -- links to PAGES on the old site. It goes through the same
+     * `tags()` and `attributeOf()` this class edits with, so the two rewriters
+     * agree on what a link and its value are, and the edit stays surgical: the
+     * caller splices the value at `at`/`length` and the rest of the document is
+     * never rebuilt. Unlike `addresses()`, nothing is filtered: deciding which
+     * links are its business is the caller's job.
+     *
+     * @return list<array{at: int, length: int, value: string, url: string, quote: string}>
+     *         `at` is the byte offset of the raw value in the document, `url`
+     *         the value with entities decoded
+     */
+    public static function anchors(?string $html): array
+    {
+        if (! is_string($html) || $html === '') {
+            return [];
+        }
+
+        $out = [];
+
+        foreach (self::tags($html) as $offset => $tag) {
+            if ($tag['name'] !== 'a') {
+                continue;
+            }
+
+            $found = self::attributeOf($tag);
+
+            if ($found === null) {
+                continue;
+            }
+
+            $out[] = [
+                'at' => $offset + $found['at'],
+                'length' => strlen($found['value']),
+                'value' => $found['value'],
+                'url' => trim(html_entity_decode($found['value'], ENT_QUOTES | ENT_HTML5, 'UTF-8')),
+                'quote' => $found['quote'],
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
      * Is this address one this class claims, for the tag it was found on?
      *
      * `<img src>` is claimed unconditionally: whatever it names, it is the

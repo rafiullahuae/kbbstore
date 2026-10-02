@@ -333,6 +333,10 @@ final class InterfaceStrings
             'shop.sub_search' => 'Results across products and brands.',
             'shop.crumb_category' => 'Category',
             'shop.crumb_search' => 'Search',
+            // The imported category title header (Lane PT): the toggle under a
+            // long category description. components/kbb-title-header.
+            'shop.header_more' => 'Read more',
+            'shop.header_less' => 'Read less',
 
             /*
              * THE SKIN QUIZ'S INLINE SCRIPT — Lane FB.

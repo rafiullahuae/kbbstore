@@ -7,6 +7,7 @@ namespace App\Services\Import\Entities;
 use App\Models\Product;
 use App\Models\ProductTab;
 use App\Services\Import\ImportContext;
+use App\Services\Import\OldSiteLinks;
 use App\Services\Import\Row;
 use App\Services\Import\RowRejected;
 use App\Services\Import\SlugGuard;
@@ -63,6 +64,9 @@ use Illuminate\Support\Str;
  */
 final class ProductImporter extends EntityImporter
 {
+    /** The old-site link ledger, replayed onto imported copy (Lane PT). */
+    private ?OldSiteLinks $links = null;
+
     /** @var array<string, string> Woo post status => this schema's status */
     private const STATUS_MAP = [
         'publish' => 'publish',
@@ -465,8 +469,14 @@ final class ProductImporter extends EntityImporter
             // choose, and the result is stored XSS on every imported product
             // page. See App\Support\RichText for why the allowlist is the
             // control and the editor is only a convenience.
-            'short_description' => $this->cleanHtmlReported($row->text('short_description', 'post_excerpt'), 'short_description', $row, $context),
-            'description' => $this->cleanHtmlReported($row->text('description', 'post_content'), 'description', $row, $context),
+            //
+            // AND THEN THE OLD-SITE LINKS THIS SHOP ALREADY RE-POINTED ON THIS
+            // ROW, re-pointed the same way (Lane PT): the export carries
+            // `https://kbeautybliss.com/...` and OldSiteLinks rewrote it after
+            // the last import, so without the replay every product with such a
+            // link would read "updated" on every pass. See OldSiteLinks::replay().
+            'short_description' => ($this->links ??= new OldSiteLinks)->replay('products', $product->id, 'short_description', $this->cleanHtmlReported($row->text('short_description', 'post_excerpt'), 'short_description', $row, $context)),
+            'description' => $this->links->replay('products', $product->id, 'description', $this->cleanHtmlReported($row->text('description', 'post_content'), 'description', $row, $context)),
             'image' => $row->text('image', 'featured_image'),
             'featured' => $row->bool(false, 'featured', 'is_featured'),
             'position' => $row->int((int) ($product->position ?? 0), 'position', 'menu_order'),
@@ -754,7 +764,11 @@ final class ProductImporter extends EntityImporter
                 ]);
             }
 
-            $model->forceFill(['title' => $tab['title'], 'body' => $tab['body']]);
+            // The old-site links already re-pointed in this tab, re-pointed the
+            // same way, so an unchanged export leaves it clean. (Lane PT)
+            $body = ($this->links ??= new OldSiteLinks)->replay('product_tabs', $model->id, 'body', $tab['body']);
+
+            $model->forceFill(['title' => $tab['title'], 'body' => $body]);
 
             if (! $model->exists || $model->isDirty()) {
                 $model->save();

@@ -9820,6 +9820,11 @@ function impExportCard(){
  */
 let gbUM=null, gbUMBusy=false, gbUMMsg='';
 
+/* "Links to the old site" (Lane PT) -- a row of the card below. Loaded only
+   when Preview is pressed: it reads every description that names the old
+   host. POST /admin-api/urls-media/old-links, capability data.old_links. */
+let ptOL=null, ptOLBusy=false, ptOLMsg='';
+
 /* Store → Import → the live progress page (Lane GD).
 
    A LINK, NOT A PANEL. The page it points at is a standalone document served
@@ -10076,7 +10081,73 @@ function gbUrlsMediaCard(){
         +'</div>'
       : '<p class="impwhy" style="max-width:680px">Nothing is being served by another site. This is the state to be in before the old shop is switched off.</p>')
     +'<div style="margin-top:9px"><button class="btn" id="gbUMRebase"'+(gbUMBusy?' disabled':'')+'>The shop has moved folder — re-spell the picture paths</button></div>'
+    +ptOldLinksRow()
     +'</div>';
+}
+
+/* "Links to the old site" (Lane PT). Every <a href> into kbeautybliss.com
+   inside a product or set description, an article, an HTML block or a
+   category/brand description, pointed at this shop's page for the same thing.
+   The import does it by itself now; this is for what was imported before, and
+   it can be undone. Everything printed here is escaped: the samples quote the
+   owner's own copy and addresses. */
+function ptOldLinksRow(){
+  const head='<div style="margin-top:16px" id="ptOldLinks"><b>Links to the old site</b></div>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:3px 0 0;max-width:680px">'
+    +'Links inside product and set descriptions and tabs, articles, HTML blocks and category and brand descriptions that still open '
+    +'<b>kbeautybliss.com</b> — like “Get premium <u>Face Cleansers</u> at unbeatable prices” at the end of a cleanser. '
+    +'Each is pointed at this shop’s page for the same thing; the words, and everything else in the copy, stay as they are. '
+    +'Every import now does this by itself. This is for what was imported before.</p>'
+    +(ptOLMsg?'<div class="impbanner" style="margin-top:9px">'+ptOLMsg+'</div>':'');
+
+  if(!ptOL) return head
+    +'<div style="margin-top:9px"><button class="btn" id="ptOLPreview"'+(ptOLBusy?' disabled':'')+'>Preview</button></div>';
+
+  const sm=ptOL.summary||{documents:0,links:0,samples:[]};
+  const ap=ptOL.applied||{documents:0,links:0};
+
+  return head
+    +'<div class="impgrid" style="margin-top:8px">'
+    +'<div class="impfile"><b>'+impNum(sm.links)+'</b><span>links still going to the old site</span></div>'
+    +'<div class="impfile"><b>'+impNum(sm.documents)+'</b><span>descriptions and articles they are in</span></div>'
+    +'<div class="impfile"><b>'+impNum(ap.links)+'</b><span>already pointed here (can be undone)</span></div>'
+    +'</div>'
+    +(sm.samples&&sm.samples.length
+      ? '<div class="tablewrap" style="margin-top:9px"><table class="t" id="ptOLSamples" style="font-size:12px">'
+        +'<thead><tr><th>Where</th><th>Link text</th><th>Goes to now</th><th>Will go to</th></tr></thead><tbody>'
+        +sm.samples.map(r=>'<tr>'
+          +'<td data-l="Where">'+impEsc(r.where)+'</td>'
+          +'<td data-l="Text">'+impEsc(r.text)+'</td>'
+          +'<td data-l="Now" style="font-family:var(--mono);font-size:11px;word-break:break-all">'+impEsc(r.from)+'</td>'
+          +'<td data-l="Will" style="font-family:var(--mono);font-size:11px;word-break:break-all">'+impEsc(r.to)+'</td>'
+          +'</tr>').join('')
+        +'</tbody></table></div>'
+        +(sm.links>sm.samples.length?'<p style="font-size:11.5px;color:var(--ink-soft);margin:5px 0 0">Showing '+sm.samples.length+' of '+impNum(sm.links)+'.</p>':'')
+      : '<p class="impwhy" style="max-width:680px">No link anywhere in the copy still goes to the old site.</p>')
+    +'<div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap">'
+    +'<button class="btn primary" id="ptOLFix"'+(ptOLBusy||!sm.links?' disabled':'')+'>Fix these links</button>'
+    +'<button class="btn" id="ptOLPreview"'+(ptOLBusy?' disabled':'')+'>Preview again</button>'
+    +(ap.links?'<button class="btn" id="ptOLUndo"'+(ptOLBusy?' disabled':'')+'>Undo</button>':'')
+    +'</div>';
+}
+
+async function ptOLPost(action,say){
+  ptOLBusy=true; impPaint();
+  const r=await impApi('/urls-media/old-links',{method:'POST',body:JSON.stringify({action:action})});
+  ptOLBusy=false;
+  if(r.data&&r.data.ok){
+    ptOLMsg=say?say(r.data):'';
+    if(action==='preview') ptOL=r.data;
+    else{
+      const p=await impApi('/urls-media/old-links',{method:'POST',body:JSON.stringify({action:'preview'})});
+      if(p.data&&p.data.ok) ptOL=p.data;
+    }
+  } else {
+    ptOLMsg=r.status===403
+      ? 'Only the shop owner can change these links.'
+      : 'That did not work.'+(r.raw?' '+impEsc(r.raw):'');
+  }
+  impPaint();
 }
 
 async function gbUMLoad(){
@@ -10157,6 +10228,21 @@ function gbUMWire(){
         d=>d.cleared+' answer(s) undone.');
     };
   });
+
+  const olPreview=$('#ptOLPreview');
+  if(olPreview) olPreview.onclick=()=>ptOLPost('preview',null);
+
+  const olFix=$('#ptOLFix');
+  if(olFix) olFix.onclick=()=>{
+    if(!confirm('Point every link to the old site at this shop?\n\nOnly the address inside each link changes. Undo puts every one back.')) return;
+    ptOLPost('apply',d=>impNum(d.links)+' link(s) in '+impNum(d.documents)+' description(s) and article(s) now go to this shop.');
+  };
+
+  const olUndo=$('#ptOLUndo');
+  if(olUndo) olUndo.onclick=()=>{
+    if(!confirm('Put the old-site links back?\n\nOnly links still exactly as this screen left them; anything edited since is kept. The next import fixes them again.')) return;
+    ptOLPost('restore',d=>impNum(d.links)+' link(s) put back'+(d.kept?', '+impNum(d.kept)+' left alone because they were edited since':'')+'.');
+  };
 
   const rebase=$('#gbUMRebase');
   if(rebase) rebase.onclick=()=>gbUMPost('/urls-media/media',{action:'rebase-apply'},

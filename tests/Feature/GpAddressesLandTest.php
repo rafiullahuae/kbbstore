@@ -859,6 +859,9 @@ it('adds no route, so it needs no capability rule and no clear_caches migration'
         '/urls-media/decisions',
         '/urls-media/map.csv',
         '/urls-media/media',
+        // Lane PT: Links to the old site. Its own clear_caches migration ships
+        // (2027_07_12_000400_clear_caches_title_header_and_old_links).
+        '/urls-media/old-links',
         '/urls-media/redirects',
         '/urls-media/status',
     ]);

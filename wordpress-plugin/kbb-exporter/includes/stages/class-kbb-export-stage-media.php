@@ -242,9 +242,18 @@ class KBB_Export_Stage_Media extends KBB_Export_Stage {
 
 		$references = array();
 
+		// The title-header banner as well (1.11.0): the same picture
+		// categories.csv / brands.csv now carry as `banner_image`, so the new
+		// shop's fetch list names it beside the thumbnail it already named.
+		$header = KBB_Export_Term_Header::for_terms( $ids );
+
 		foreach ( $ids as $id ) {
 			if ( isset( $meta[ $id ]['thumbnail_id'] ) ) {
 				$this->add_by_id( $references, $meta[ $id ]['thumbnail_id'], $label, $id, $field );
+			}
+
+			if ( isset( $header[ $id ]['banner_image'] ) && '' !== $header[ $id ]['banner_image'] ) {
+				$references[] = array( 'url' => $header[ $id ]['banner_image'], 'by' => $label, 'id' => $id, 'field' => 'banner_image' );
 			}
 		}
 

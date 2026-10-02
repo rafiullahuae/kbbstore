@@ -24,6 +24,12 @@
     @if ($banner ?? null)
         @vite('resources/css/kbb/kbb-banner.css')
     @endif
+{{-- The imported title header (Lane PT). At column 0, and this comment on the
+     same line as the directive, on purpose: a directive's indentation and a
+     comment's own line both print even when the condition is false, and a
+     category with no header must not gain a byte. --}}@if ($titleHeader ?? null)
+@vite('resources/css/kbb/kbb-title-header.css')
+@endif
 @endpush
 
 {{-- ── THE FILTER SIDEBAR STARTS HIDDEN ───────────────────────── Lane PG ──
@@ -133,7 +139,7 @@
 --}}
 <div class="wrap">
     <div class="crumb"><b>{{ __('store.breadcrumb.home') }}</b> / {{ $crumb }}</div>
-    @unless ($banner ?? null)
+    @unless (($banner ?? null) || ($titleHeader ?? null))
         <div class="eyebrow">{{ __('store.shop.eyebrow') }}</div>
         <h1 class="ptitle">{{ $title }}</h1>
         <p class="psub">{{ $sub }}</p>
@@ -141,6 +147,9 @@
 </div>
 
 <x-kbb-banner :banner="$banner ?? null" />
+@if ($titleHeader ?? null)
+<x-kbb-title-header :header="$titleHeader" />
+@endif
 
 <div class="wrap shop">
     <aside class="filtercol" id="fcol">

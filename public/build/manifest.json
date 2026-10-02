@@ -34,6 +34,11 @@
     "src": "resources/css/kbb/kbb-shop.css",
     "isEntry": true
   },
+  "resources/css/kbb/kbb-title-header.css": {
+    "file": "assets/kbb-title-header-CnnxW7lC.css",
+    "src": "resources/css/kbb/kbb-title-header.css",
+    "isEntry": true
+  },
   "resources/css/kbb/kbb.css": {
     "file": "assets/kbb-D38PBRpJ.css",
     "src": "resources/css/kbb/kbb.css",

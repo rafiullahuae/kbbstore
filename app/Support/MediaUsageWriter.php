@@ -222,8 +222,8 @@ final class MediaUsageWriter
     {
         $columns = match ($kind) {
             'product' => ['image', 'images'],
-            'brand' => ['logo'],
-            'category' => ['image'],
+            'brand' => ['logo', 'header_image'],
+            'category' => ['image', 'header_image'],
             default => [],
         };
 
