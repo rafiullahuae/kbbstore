@@ -3,6 +3,24 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.347
+**Product page: the FAST DELIVERY box, "Authenticity Guaranteed" that slides
+open, and a colourful share bar whose links carry the product's picture and
+description.** Apply after .346. No plugin change.
+
+| # | Your report | Now | Where |
+|---|---|---|---|
+| 41 | Yellow delivery box above Add to cart | "Express 1-3 Days Delivery All over UAE / Free Delivery over AED 199" (the figure is the checkout's own threshold) beside a drawn FAST DELIVERY truck; upload your own picture to replace it | Appearance → Product page → Trust · Delivery box |
+| 41 | "Authenticity Guaranteed" with an info icon that slides open, green tick, small red × | Under Add to cart, desktop and phone; Escape closes too | Appearance → Product page → Trust · Authenticity |
+| 41 | A nicer, colourful share bar; each link must carry the URL, description, image | WhatsApp, Facebook, X, Pinterest, LinkedIn, Telegram, Email, Copy link (+ the phone's own share sheet). WhatsApp/Telegram send name, price, short description and link; Pinterest the picture; links tagged for analytics (switch) | Appearance → Product page → Trust · Share bar |
+| 41 | Spacing above and below these | 12 sliders, phone and laptop | Appearance → Product page → Trust · Spacing |
+
+Also: link previews (Facebook, WhatsApp, LinkedIn) now carry the picture's
+size and description, and a product name with "&" no longer shows as
+"&amp;amp;" in the browser tab and link previews.
+
+Files (22): app/Http/Controllers/Admin/ProductPageApiController.php, app/Http/Controllers/Store/ProductController.php, app/Services/ProductTrustShare.php, app/Services/Translation/ArabicInterfaceDrafts.php, app/Services/Translation/InterfaceStrings.php, app/Support/ImageVariants.php, app/Support/ProductShare.php, app/Support/Seo.php, app/Support/TrustShareIcons.php, database/migrations/2027_07_13_000000_clear_caches_product_trust_share.php, database/migrations/2027_07_13_000100_seed_product_trust_share_arabic_drafts.php, resources/css/kbb/kbb-pdp-trust.css, resources/js/kbb/pdp-trust.js, resources/views/admin/app.blade.php, resources/views/admin/partials/product-trust-share-screen.blade.php, resources/views/partials/product/authenticity.blade.php, resources/views/partials/product/delivery-box.blade.php, resources/views/partials/product/share-bar.blade.php, resources/views/partials/product/trust-share-assets.blade.php, resources/views/partials/product/trust-share-stack.blade.php, resources/views/store/product.blade.php, vite.config.js.
+
 ## 2.60.346
 **Orders page you can edit, guest account invites, grids without badges that
 load on scroll, "You may also like" as a carousel, the old shop's category
