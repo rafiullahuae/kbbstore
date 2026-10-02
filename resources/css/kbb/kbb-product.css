@@ -1145,12 +1145,22 @@ a{color:inherit;text-decoration:none}
 }
 .bt-rail::-webkit-scrollbar{display:none}
 
-/* .cpg-card, verbatim: a fraction of the rail, not a pixel width. */
+/* FOUR ON A PHONE (Lane RE). The owner, from a phone at 390px: "you can
+   adjust the 4 products on the screen, and 5th one can be hidden, and this will
+   be as carousel." A card is a quarter of the rail's content box less three
+   real gaps — --bt-per is printed by the partial, 4, or the number of cards
+   when there are fewer — so four fill the row exactly and a fifth waits just
+   past the edge. It was the cart rail's 4.5-across formula, which subtracts the
+   cart's 7px gaps from a row that has 16px ones: that is how a card ended up
+   narrower than the price printed in it.
+
+   A CONTAINER, so the price below can be sized against the card itself. */
 .bt-card{
     position:relative;
-    flex:0 0 calc((100% - 14px - (7px * (var(--cpg-per,4.5) - 1))) / var(--cpg-per,4.5));
+    flex:0 0 calc((100% - var(--bt-gap) * (var(--bt-per,4) - 1)) / var(--bt-per,4));
     background:#fff;border:1px solid var(--line-2);border-radius:9px;padding:5px;min-width:0;
     scroll-snap-align:start;
+    container-type:inline-size;
 }
 .bt-card .im{
     position:relative;aspect-ratio:1;border-radius:6px;display:grid;place-items:center;
@@ -1162,11 +1172,28 @@ a{color:inherit;text-decoration:none}
     font-size:clamp(8px,2.45vw,10.5px);font-weight:var(--cpg-rec-bold,400);
     line-height:var(--cpg-rec-lh,1.25);min-height:calc(var(--cpg-rec-lh,1.25) * 2em);
     margin:0 0 var(--cpg-rec-gap,2px);color:var(--ink-2);
+    overflow-wrap:anywhere;
     -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 0.55em),rgba(0,0,0,.35) 100%);
     mask-image:linear-gradient(to bottom,#000 calc(100% - 0.55em),rgba(0,0,0,.35) 100%);
 }
 .bt-card .pr{display:block;font-size:clamp(8.5px,2.6vw,11px);line-height:var(--cpg-rec-lh,1.25);font-weight:var(--cpg-rec-price-bold,400);color:var(--ink)}
 .bt-card .pr .cwas{display:inline;margin:0;margin-inline-start:3px;color:var(--muted);text-decoration:line-through;font-size:.9em}
+/* THE PRICE NEVER LEAVES ITS BOX (Lane RE). "the text is going out the boxes
+   [...] the prices inside the box must be auto adjusted to the screen and
+   re-scaled inside the product box." On his phone "AED 108 AED 153" was 75px
+   of text in a 60px card. Two answers, both CSS:
+     · the size is a share of the CARD (15cqi — 15% of the card's own content
+       width), between 8px and 11.5px, so it re-scales with the box it is in at
+       every width, not with the screen;
+     · each figure is one unbreakable piece and the struck one WRAPS under the
+       current one when the two do not fit side by side, instead of running
+       out of the box.
+   Measured at 320, 360, 390, 430, 768, 1280 and 1440: docs/re-shots/. */
+@supports (container-type:inline-size){
+    .bt-card .pr{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:.32em;font-size:clamp(8px,15cqi,11.5px)}
+    .bt-card .pr > *{white-space:nowrap;min-width:0}
+    .bt-card .pr .cwas{margin-inline-start:0}
+}
 .bt-card .lk{display:block;color:inherit}
 
 /* ── THE TICK: a real checkbox, laid over the whole picture ─────────────────
@@ -1195,6 +1222,45 @@ a{color:inherit;text-decoration:none}
 .bt-card.is-off .lk{opacity:.55}
 .bt-card.is-oos .bt-tick{opacity:.45}
 
+/* ── THE PEEK: half of the fifth card, once (Lane RE) ───────────────────────
+   "upon scroll this section must slightly animate and display the half of the
+   5th product. so the user will understand there's 5th product also."
+
+   Only when there IS a fifth (`bt-more`, printed by the server) and only below
+   the laptop layout, where four fill the row. fbt.js adds `is-peek` the first
+   time the section is half on screen — an IntersectionObserver, nothing
+   measured — and the row glides toward its start by HALF A CARD AND A GAP,
+   less the rail's 14px end padding, which is what puts exactly half of the
+   fifth card inside the screen when four fill it; holds there long enough to
+   be seen, and springs softly home. Once: the class is never removed and the
+   animation does not repeat.
+
+   THE FIRST CARD'S `margin-inline-start` IS WHAT MOVES, and both halves of
+   that are deliberate. A percentage margin is a share of the rail, which is
+   exactly what a card's width is made of, so the distance is the card
+   formula over again — nothing is measured. And it is LOGICAL: on the Arabic
+   page the inline start is the right, so the row slides the other way with
+   no direction rule (the ledger block below this sheet's marker holds one,
+   and only one, `[dir]` selector — ProductPageLedgerTest). The cards behind
+   it ride along, and the "+"s with them, centred in their gaps.
+
+   A thumb on the row cancels it (fbt.js swaps `is-peek` for `is-peeked`).
+   Reduced motion gets no slide: the row is drawn four-and-a-half across
+   instead, so the fifth card's half is simply there. */
+@keyframes btpeek{
+    0%{margin-inline-start:0}
+    34%,60%{margin-inline-start:calc(14px - var(--bt-gap) - (100% - var(--bt-gap) * (var(--bt-per,4) - 1)) / var(--bt-per,4) / 2)}
+    86%{margin-inline-start:3px}
+    100%{margin-inline-start:0}
+}
+@media (max-width:1023.98px){
+    .kbb-fbt.bt.bt-more.is-peek .bt-card:first-child{animation:btpeek 2.1s cubic-bezier(.33,.0,.2,1) .12s 1 both}
+}
+@media (max-width:1023.98px) and (prefers-reduced-motion:reduce){
+    .kbb-fbt.bt.bt-more .bt-card{flex-basis:calc((100% - var(--bt-gap) * 3.5) / 4.5)}
+    .kbb-fbt.bt.bt-more.is-peek .bt-card:first-child{animation:none}
+}
+
 /* ── THE "+" BETWEEN TWO CARDS ──────────────────────────────────────────────
    Inside the picture, at its vertical middle, and moved back by this card's
    own padding (5px) and border (1px), half the gap and half itself — so its
@@ -1212,17 +1278,45 @@ a{color:inherit;text-decoration:none}
    The button is the buy box's outlined "Buy it now" (.buynow: 13px corners,
    a 1.5px edge, 700 weight), in the shop's pink. */
 .bt-foot{display:flex;flex-direction:column;gap:9px;padding:12px 14px 0}
-.bt-total{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0;font-size:13px;color:var(--ink-2)}
+/* "Total: should be on right side beside the value. and also mention cut
+   price as total calculation" (Lane RE): the row sits at the END, the label
+   beside the figures — `Total:  AED 300  AED 219` — the struck one the ticked
+   products at their regular prices, the bold one what is paid. */
+.bt-total{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:flex-end;column-gap:8px;row-gap:2px;margin:0;font-size:13px;color:var(--ink-2)}
 .bt-total b{font-size:15.5px;font-weight:700;color:var(--ink)}
+.bt-total .bt-was{color:var(--muted);font-size:13px;font-weight:500;text-decoration:line-through;text-decoration-thickness:1px}
+.bt-total [hidden]{display:none}
+/* "mention you're saving 'AED amount' i need super beautiful this line, and
+   easy to read and understand by users." A soft green pill at the end of the
+   row, a price-tag mark, the words in the page's ink-green and the amount in
+   bold: one glance, one number. */
+.bt-save{
+    display:inline-flex;align-items:center;gap:6px;align-self:flex-end;margin:-3px 0 0;
+    padding:5px 11px 5px 9px;border-radius:999px;
+    background:linear-gradient(180deg,#EAF8F0,#DDF3E7);border:1px solid rgba(46,158,107,.22);
+    color:#1F7A50;font-size:12.5px;font-weight:600;line-height:1.2;
+    box-shadow:0 2px 6px -3px rgba(46,158,107,.35);
+    animation:btsave .35s ease-out both;
+}
+.bt-save[hidden]{display:none}
+.bt-save svg{width:14px;height:14px;flex:0 0 auto}
+.bt-save b{font-weight:800;color:#17643F}
+@keyframes btsave{from{opacity:0;transform:translateY(3px) scale(.97)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.bt-save{animation:none}}
+/* THE BUTTON'S SOFT SHADOW (Lane RE): "the button has little light bottom
+   shadow as in reference screenshot, i need the same." The buy box's own
+   buttons carry none, so this one is drawn in the button's own pink, below it
+   and tucked in at the sides — a glow under the edge, not a box around it. */
 .bt-buy{
     width:100%;height:48px;border-radius:13px;border:1.5px solid var(--pink);background:#fff;
     color:var(--pink-deep);font:inherit;font-size:14.5px;font-weight:700;letter-spacing:.005em;
     display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;
-    transition:background .15s,color .15s,border-color .15s;
+    box-shadow:0 7px 16px -9px rgba(224,86,123,.55),0 2px 5px -3px rgba(224,86,123,.22);
+    transition:background .15s,color .15s,border-color .15s,box-shadow .15s;
 }
 .bt-buy:hover:not(:disabled){background:var(--pink);color:#fff}
 .bt-buy:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px}
-.bt-buy:disabled{border-color:var(--line);color:var(--muted);cursor:default}
+.bt-buy:disabled{border-color:var(--line);color:var(--muted);cursor:default;box-shadow:none}
 .bt-buy.is-busy{cursor:progress}
 .bt-spin{display:none;width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-inline-end-color:transparent;animation:btspin .7s linear infinite}
 .bt-buy.is-busy .bt-spin{display:block}
@@ -1237,8 +1331,15 @@ a{color:inherit;text-decoration:none}
     .kbb-fbt.bt::before{border-radius:inherit}
     .kbb-fbt.bt h2{font-size:17px;padding:0 14px;margin-block-end:12px}
     .bt-row{display:flex;align-items:center;gap:20px}
-    .bt-rail{flex:0 1 auto;min-width:0}
-    .bt-card{flex:0 0 var(--bt-d-card,120px)}
+    /* Every card on screen on a laptop (Lane RE): the cart's column width is
+       the most a card takes, and five or six shrink to share the row rather
+       than scroll — the price inside re-scales with them.
+       ▲ THE RAIL IS GIVEN ITS WIDTH, not left at `auto`: a card is a size
+       container now, and a size container contributes nothing to its parent's
+       max-content width, so an `auto` rail collapsed to the width of its gaps.
+       --bt-n is the number of cards, printed by the partial. */
+    .bt-rail{flex:0 1 calc(var(--bt-n,4) * var(--bt-d-card,120px) + (var(--bt-n,4) - 1) * var(--bt-gap) + 28px);min-width:0}
+    .bt-card{flex:0 1 var(--bt-d-card,120px)}
     .bt-foot{flex:1 1 260px;max-width:340px;padding:0 14px 0 0}
     .bt-total{font-size:13.5px}
     .bt-total b{font-size:17px}

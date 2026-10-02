@@ -12,6 +12,23 @@
  *
  * The prices are DISPLAY ONLY. The server prices every line again when it is
  * added, and refuses a hidden, sold-out or option-less product by itself.
+ *
+ * ── LANE RE: THE CUT PRICE, THE SAVING, AND THE PEEK ─────────────────────────
+ *
+ * "give option to give discount upon 5 products purchse, 4 products and 3. so
+ * the price will change upon user number of selections." The tier for each
+ * count is printed on the section (data-tiers); bundleOff() takes it off each
+ * ticked card with the server's own integer arithmetic
+ * (App\Services\BuyTogetherPricing::unitOff), and the struck total, the
+ * payable total and "You're saving AED 81" follow every tick. The basket
+ * prices the bundle again on the server; nothing here is sent but product ids
+ * and the page's own product id.
+ *
+ * The peek — "upon scroll this section must slightly animate and display the
+ * half of the 5th product" — is ONE CLASS added by an IntersectionObserver the
+ * first time the section is half on screen. The slide itself is CSS
+ * (kbb-product.css, `btpeek`), its distance a percentage of the card. Still
+ * nothing is measured.
  */
 
 import { addTogether } from './cart.js';
@@ -63,6 +80,46 @@ export function formatMinor(minor, exp, dec) {
     return negative && (whole !== 0 || frac !== 0) ? '-' + out : out;
 }
 
+/**
+ * What one unit at `unit` minor units is reduced BY at `pct` percent — the
+ * server's App\Services\BuyTogetherPricing::unitOff(), line for line: the
+ * reduced price rounded half up to the minor unit, then DOWN to a whole unit
+ * of the currency (WholeDirhams::toward), so the page and the basket agree to
+ * the fil.
+ */
+export function unitOff(unit, pct, exp) {
+    const p = Math.max(0, Math.min(50, Math.round(Number(pct) || 0)));
+    if (p === 0 || unit <= 0) return 0;
+    const whole = 10 ** exp;
+    const exact = Math.floor((unit * (100 - p) + 50) / 100);
+    const reduced = whole <= 1 ? exact : Math.floor(exact / whole) * whole;
+    return Math.max(0, Math.min(unit, unit - reduced));
+}
+
+/**
+ * The three figures under the cards for the ticked prices: the struck total
+ * (regular prices), the payable total (after sale and bundle) and the saving.
+ * `items` is a list of { now, reg } in minor units; `tiers` maps a count of
+ * ticked products to its percent (3, 4, 5, 6).
+ */
+export function bundleTotals(items, tiers, exp) {
+    const n = items.length;
+    const pct = n >= 3 ? Number((tiers || {})[String(Math.min(6, n))] || 0) : 0;
+    let now = 0;
+    let reg = 0;
+    let off = 0;
+
+    items.forEach((it) => {
+        now += it.now;
+        reg += Math.max(it.reg, it.now);
+        off += unitOff(it.now, pct, exp);
+    });
+
+    const pay = now - off;
+
+    return { was: reg, pay, save: Math.max(0, reg - pay), pct };
+}
+
 export function initFbt() {
     const block = document.querySelector('[data-bt]');
     if (!block) return;
@@ -70,6 +127,12 @@ export function initFbt() {
     const button = block.querySelector('[data-bt-buy]');
     const label = block.querySelector('.bt-label');
     const sum = block.querySelector('.bt-num');
+    const wasBox = block.querySelector('.bt-was');
+    const wasNum = block.querySelector('.bt-was-num');
+    const saveBox = block.querySelector('.bt-save');
+    const saveNum = block.querySelector('.bt-save-num');
+    let tiers = {};
+    try { tiers = JSON.parse(block.dataset.tiers || '{}'); } catch { tiers = {}; }
     const exp = Number(block.dataset.exp || 2);
     const dec = Number(block.dataset.dec || 2);
     const varInput = document.getElementById('kbbVarId');
@@ -88,20 +151,32 @@ export function initFbt() {
         return Number(card.dataset.price) || 0;
     };
 
+    /* The regular price the struck total adds up. The option chosen in the
+       buy box has no compare-at on this card, so it is its own price. */
+    const regOf = (card) => (card.hasAttribute('data-bt-var')
+        ? priceOf(card)
+        : Math.max(Number(card.dataset.reg) || 0, priceOf(card)));
+
     const refresh = () => {
         let n = 0;
-        let total = 0;
+        const ticked = [];
 
         boxes().forEach((cb) => {
             const card = cb.closest('.bt-card');
             if (!card) return;
             card.classList.toggle('is-off', !cb.checked);
-            if (cb.checked) { n += 1; total += priceOf(card); }
+            if (cb.checked) { n += 1; ticked.push({ now: priceOf(card), reg: regOf(card) }); }
         });
+
+        const t = bundleTotals(ticked, tiers, exp);
 
         if (label) label.textContent = btLabel(n, block.dataset);
         if (button) button.disabled = busy || n === 0;
-        if (sum) sum.textContent = formatMinor(total, exp, dec);
+        if (sum) sum.textContent = formatMinor(t.pay, exp, dec);
+        if (wasNum) wasNum.textContent = formatMinor(t.was, exp, dec);
+        if (wasBox) wasBox.hidden = !(t.was > t.pay);
+        if (saveNum) saveNum.textContent = formatMinor(t.save, exp, dec);
+        if (saveBox) saveBox.hidden = !(t.save > 0);
     };
 
     block.addEventListener('change', (event) => {
@@ -148,7 +223,7 @@ export function initFbt() {
         });
 
         try {
-            const data = await Promise.race([addTogether(items), giveUp]);
+            const data = await Promise.race([addTogether(items, Number(block.dataset.bt) || null), giveUp]);
 
             if (data === 'timeout') {
                 window.kbbToast?.(t('store.js.add_failed', 'Could not add that just now — please try again.'));
@@ -164,7 +239,57 @@ export function initFbt() {
     });
 
     refresh();
+    peek(block);
     countView(block);
+}
+
+/**
+ * The one-time nudge that shows half of the fifth card. (Lane RE)
+ *
+ * Only when there IS a fifth (`bt-more`, printed by the server). The first
+ * time at least 45% of the section is on screen the class goes on and the CSS
+ * animation runs once; a thumb on the row first (or during it) ends it, so the
+ * row never fights a swipe. Reduced motion: CSS draws a static peek instead and
+ * this adds nothing. No observer support: nothing happens, which is the old
+ * behaviour.
+ */
+function peek(block) {
+    if (!block.classList.contains('bt-more') || typeof IntersectionObserver !== 'function') return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const rail = block.querySelector('.bt-rail');
+    let done = false;
+
+    const stop = () => {
+        if (done) return;
+        done = true;
+        block.classList.remove('is-peek');
+        block.classList.add('is-peeked');
+        io.disconnect();
+    };
+
+    const io = new IntersectionObserver((entries) => {
+        if (done || !entries.some((e) => e.isIntersecting)) return;
+        done = true;
+        io.disconnect();
+        block.classList.add('is-peek');
+        // The class stays: a removed animation would replay on the next add.
+        block.addEventListener('animationend', () => block.classList.add('is-peeked'), { once: true });
+    }, { threshold: 0.45 });
+
+    io.observe(block);
+
+    if (rail) {
+        ['pointerdown', 'touchstart', 'wheel'].forEach((type) => {
+            rail.addEventListener(type, () => {
+                if (block.classList.contains('is-peek') && !block.classList.contains('is-peeked')) {
+                    block.classList.remove('is-peek');
+                    block.classList.add('is-peeked');
+                }
+                stop();
+            }, { passive: true, once: true });
+        });
+    }
 }
 
 /**

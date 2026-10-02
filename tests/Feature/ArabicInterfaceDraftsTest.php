@@ -554,8 +554,17 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * and the seven sentences the one-request add answers with
      * (store.buy_together.*), seeded by
      * 2027_07_16_000700_seed_buy_together_arabic_drafts. Read off the run.
+     *
+     * ── 1,107 -> 1,111: LANE RE'S FOUR ─────────────────────────────────────
+     *
+     * The bundle discount: "You're saving" (the green pill under the total),
+     * the tag on a bundled cart line, the "Buy-together discount" row on the
+     * cart and checkout, and the same row on the order email, invoice and
+     * order pages (store.buy_together.saving, bundle_badge, bundle_row,
+     * email.totals.bundle), seeded by
+     * 2027_07_19_000200_seed_buy_together_bundle_arabic_drafts. Read off the run.
      */
-    expect($ui['drafts'])->toBe(1107, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1111, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

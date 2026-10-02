@@ -240,13 +240,16 @@ export async function addToCart(body) {
  *
  * @param {Array<{product_id:number, variant_id:(number|null)}>} items
  */
-export async function addTogether(items) {
+export async function addTogether(items, mainId = null) {
     if (config().openOnAdd !== false) {
         skeleton();
         open('cart');
     }
 
-    return post('/add-together', { items });
+    // (Lane RE) The page the press came from, so the server can tell whether
+    // these products are a bundle that page's section offered. It carries no
+    // price and no percentage: the server decides both.
+    return post('/add-together', mainId ? { items, main_id: mainId } : { items });
 }
 
 export function initCart() {

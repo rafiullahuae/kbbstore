@@ -79,7 +79,11 @@ class CouponService
             }
         }
 
-        if ($this->eligibleItems($coupon, $cart)->isEmpty()) {
+        // On the lines a coupon actually sees (Lane RE): under "Coupons also
+        // apply to buy-together products" switched OFF, a basket that is
+        // nothing but one bundle has nothing left for a code to discount, and
+        // is told so here rather than shown a code that takes off AED 0.
+        if ($this->couponLines($coupon, $cart) === []) {
             return $this->fail('That code does not apply to anything in your basket.');
         }
 
@@ -120,10 +124,10 @@ class CouponService
      * has been rounded to a dirham. Folding the two together would leave that
      * test passing over the defect it was written for.
      */
-    public function discountFor(Coupon $coupon, Cart $cart): int
+    public function discountFor(Coupon $coupon, Cart $cart, ?array $bundle = null): int
     {
-        $eligibleSubtotal = $this->eligibleSubtotalFor($coupon, $cart);
-        $discount = $this->exactDiscountFor($coupon, $cart);
+        $eligibleSubtotal = $this->eligibleSubtotalFor($coupon, $cart, $bundle);
+        $discount = $this->exactDiscountFor($coupon, $cart, $bundle);
 
         if ($discount <= 0) {
             return 0;
@@ -198,12 +202,12 @@ class CouponService
      * Extracted so discountFor() can apply the whole-dirham cap without
      * recomputing the basket a second way and risking a different answer.
      */
-    private function eligibleSubtotalFor(Coupon $coupon, Cart $cart): int
+    private function eligibleSubtotalFor(Coupon $coupon, Cart $cart, ?array $bundle = null): int
     {
         $coupon = $this->withRules($coupon);
         $total = 0;
 
-        foreach ($this->cappedLines($coupon, $this->eligibleItems($coupon, $cart)) as $line) {
+        foreach ($this->cappedLines($coupon, $this->couponLines($coupon, $cart, $bundle)) as $line) {
             $total += $line['unit_price'] * $line['quantity'];
         }
 
@@ -220,7 +224,7 @@ class CouponService
      *
      * Not what the shop charges. discountFor() is.
      */
-    public function exactDiscountFor(Coupon $coupon, Cart $cart): int
+    public function exactDiscountFor(Coupon $coupon, Cart $cart, ?array $bundle = null): int
     {
         // Before anything reads a rule off it. eligibleItems() does this for
         // itself, but the item cap below is read HERE, on this variable, and a
@@ -228,7 +232,7 @@ class CouponService
         // withRules() exists to stop, one frame further out.
         $coupon = $this->withRules($coupon);
 
-        $lines = $this->cappedLines($coupon, $this->eligibleItems($coupon, $cart));
+        $lines = $this->cappedLines($coupon, $this->couponLines($coupon, $cart, $bundle));
         $eligibleSubtotal = 0;
 
         foreach ($lines as $line) {
@@ -742,16 +746,11 @@ class CouponService
      * basket subtotal and that later callers re-read; reducing a quantity on
      * one of those to express a cap would silently shrink the basket itself.
      *
-     * @param  \Illuminate\Support\Collection  $items
+     * @param  list<array{unit_price: int, quantity: int, id: int}>  $lines  couponLines()
      * @return array<int, array{unit_price: int, quantity: int}>
      */
-    private function cappedLines(Coupon $coupon, $items): array
+    private function cappedLines(Coupon $coupon, array $lines): array
     {
-        $lines = $items->map(fn ($i) => [
-            'unit_price' => (int) $i->unit_price,
-            'quantity' => (int) $i->quantity,
-            'id' => (int) $i->getKey(),
-        ])->values()->all();
 
         // NULL is no cap, which is what every coupon on this shop holds: the
         // WooCommerce import never wrote the column and the migration that
@@ -817,6 +816,47 @@ class CouponService
     }
 
     /** Items the coupon may discount, after product/category/brand include and exclude rules. */
+    /**
+     * The eligible lines as a coupon prices them, AFTER the buy-together
+     * bundle — Lane RE, and the owner's words decide both halves:
+     *
+     *   "and on top of it, the coupon can be apply. also giveo ption to
+     *    include exclude the coupon apply on the buy together products."
+     *
+     * ON TOP OF IT: the coupon comes second. Under Include (the shipped
+     * value, Appearance → Product page → Buy these together → "Coupons also
+     * apply to buy-together products") a bundled unit is priced here at its
+     * bundle price, so 10% off is 10% of what is left, never of the price the
+     * bundle already took something off. Under Exclude a bundled unit is not
+     * here at all: the coupon skips it and discounts the rest of the basket —
+     * so a fixed-amount code is capped at the non-bundled lines.
+     *
+     * Units beyond the bundle's complete sets, and every line of a group that
+     * did not earn its tier on this pass (dissolved, incomplete, a member gone
+     * or sold out), are ordinary units and are priced here like any other —
+     * whatever the switch says. App\Services\BuyTogetherPricing::couponLines()
+     * does the splitting; this applies the coupon's own product, brand,
+     * category and sale rules first, exactly as before.
+     *
+     * $bundle is CartService::totals()' own quote when it has one, so one
+     * pricing pass prices the bundle once; anything else asks for it here,
+     * which costs no query on a basket with no group in it.
+     *
+     * @return list<array{unit_price: int, quantity: int, id: int}>
+     */
+    private function couponLines(Coupon $coupon, Cart $cart, ?array $bundle = null): array
+    {
+        $pricing = app(BuyTogetherPricing::class);
+        $bundle ??= $pricing->forCart($cart);
+
+        return BuyTogetherPricing::couponLines(
+            $this->eligibleItems($coupon, $cart),
+            $bundle,
+            // Only read when there is a bundle to apply it to.
+            $bundle['lines'] === [] || $pricing->couponsInclude(),
+        );
+    }
+
     private function eligibleItems(Coupon $coupon, Cart $cart)
     {
         $coupon = $this->withRules($coupon);

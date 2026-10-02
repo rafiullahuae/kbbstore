@@ -158,6 +158,10 @@ class CartController extends Controller
             'items' => ['required', 'array', 'min:1', 'max:'.(int) \App\Services\BuyTogetherSettings::SCHEMA['count'][4]['max']],
             'items.*.product_id' => ['required', 'integer', 'min:1'],
             'items.*.variant_id' => ['nullable', 'integer', 'min:1'],
+            // (Lane RE) The product whose page the section was on. It says
+            // which section the press came from and nothing else: no price,
+            // no percentage and no group handle is ever read off a request.
+            'main_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         // One line per product, in the order the shopper sees them.
@@ -178,6 +182,8 @@ class CartController extends Controller
         $cart = null;
         $added = 0;
         $failed = [];
+        // product id => the cart line it went into, for the bundle below.
+        $lines = [];
 
         foreach ($wanted as $id => $variantId) {
             $product = $products->get($id);
@@ -215,13 +221,15 @@ class CartController extends Controller
 
             try {
                 $cart ??= $this->carts->current($request);
-                $this->carts->add($cart, $product, 1, $variant);
+                $lines[$id] = (int) $this->carts->add($cart, $product, 1, $variant)->id;
                 $added++;
             } catch (\Throwable $e) {
                 report($e);
                 $failed[] = ['id' => $id, 'why' => __('store.buy_together.not_added', ['name' => $name])];
             }
         }
+
+        $this->groupTogether($cart, $lines, $data['main_id'] ?? null);
 
         $toast = $added === 0 ? null : ($added === 1
             ? __('store.buy_together.added_one')
@@ -246,6 +254,57 @@ class CartController extends Controller
         $out['failed'] = array_column($failed, 'id');
 
         return response()->json($out, $added > 0 ? 200 : 422);
+    }
+
+    /**
+     * Make what one press added a "Buy these together" bundle — or don't.
+     *                                                                (Lane RE)
+     *
+     * The bundle discount is for a bundle the SECTION made, so every condition
+     * here is checked on the server, against what this request actually put in
+     * the basket:
+     *
+     *   - three to six lines went in, and no more than the section shows
+     *     ("How many products");
+     *   - the press names the product whose page it came from (`main_id`), and
+     *     that product is still on sale;
+     *   - every other product is one that page's section could have offered
+     *     (BuyTogether::allowedCompanions()).
+     *
+     * Fail any and the products are still in the basket — they were on sale and
+     * the shopper asked for them — just not grouped, so not discounted. The
+     * group handle is minted by CartService::group(); the percentage is not
+     * decided here at all but on every pricing pass from settings, by
+     * App\Services\BuyTogetherPricing.
+     *
+     * @param  array<int, int>  $lines  product id => cart line id
+     */
+    private function groupTogether($cart, array $lines, mixed $mainId): void
+    {
+        if ($cart === null || count($lines) < \App\Services\BuyTogetherPricing::MIN_GROUP || ! $mainId) {
+            return;
+        }
+
+        $config = app(\App\Services\BuyTogetherSettings::class)->all();
+
+        if (empty($config['on']) || count($lines) > (int) $config['count']) {
+            return;
+        }
+
+        $main = Product::query()->visible()->find((int) $mainId);
+
+        if ($main === null) {
+            return;
+        }
+
+        $others = array_values(array_diff(array_keys($lines), [(int) $main->id]));
+        $allowed = app(\App\Services\BuyTogether::class)->allowedCompanions($main, $others);
+
+        if (count($allowed) !== count($others)) {
+            return;
+        }
+
+        $this->carts->group($cart, array_values($lines));
     }
 
     public function update(Request $request): JsonResponse

@@ -227,6 +227,93 @@ class BuyTogether
     }
 
     /**
+     * Which of these products this product's section could have offered.
+     *                                                                (Lane RE)
+     *
+     * The bundle discount is only for a bundle the SECTION made, so
+     * Store\CartController::addTogether() asks this before it groups anything.
+     * A request naming any five products in the shop and the page of a sixth
+     * gets them added — they are on sale — but not grouped, so not discounted.
+     *
+     * A companion counts when it is visible, bought as it stands (not a
+     * variable product), and is one the section draws from, by any of the
+     * three routes the section itself takes:
+     *
+     *   - it is on one of the main product's complementary shelves (slots());
+     *   - it is among the shop's best sellers that top a short section up;
+     *   - it is in the pools cached for this page right now.
+     *
+     * The first is what makes "Random — a different pick on every visit"
+     * work: the pick a shopper saw is not reproducible, but its shelf is. The
+     * rule (best, newest, most viewed…) only ORDERS a shelf, so any product on
+     * it is a product the section can show.
+     *
+     * Two queries at most, whatever the number asked about.
+     *
+     * @param  list<int>  $ids
+     * @return list<int>  the ids that may be grouped with $main
+     */
+    public function allowedCompanions(Product $main, array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', $ids),
+            fn (int $id) => $id > 0 && $id !== (int) $main->id,
+        )));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $c = $this->settings->all();
+        $allowed = [];
+
+        $hit = Cache::get(self::CACHE_PREFIX.(int) $main->id);
+
+        if (is_array($hit) && is_array($hit['pools'] ?? null)) {
+            foreach ($hit['pools'] as $pool) {
+                foreach ((array) $pool as $id) {
+                    if (in_array((int) $id, $ids, true)) {
+                        $allowed[(int) $id] = true;
+                    }
+                }
+            }
+        }
+
+        $slots = $this->slots($main);
+        $rest = array_values(array_diff($ids, array_keys($allowed)));
+
+        if ($rest !== [] && $slots !== []) {
+            $q = Product::query()->visible()
+                ->whereIn('products.id', $rest)
+                ->where(fn ($w) => $w->whereNull('products.type')->orWhere('products.type', '!=', 'variable'))
+                ->where(fn ($w) => $w->whereIn('products.category_id', $slots)
+                    ->orWhereExists(fn ($e) => $e->selectRaw('1')->from('category_product as btc')
+                        ->whereColumn('btc.product_id', 'products.id')
+                        ->whereIn('btc.category_id', $slots)));
+
+            foreach ($q->pluck('products.id') as $id) {
+                $allowed[(int) $id] = true;
+            }
+        }
+
+        $rest = array_values(array_diff($ids, array_keys($allowed)));
+
+        if ($rest !== []) {
+            $best = $this->part($main, $c, 'f', self::FALLBACK_POOL)
+                ->orderByDesc('products.total_sales')->orderByDesc('products.id')
+                ->get()->pluck('id')->map(fn ($i) => (int) $i)->all();
+
+            foreach ($rest as $id) {
+                if (in_array($id, $best, true)) {
+                    $allowed[$id] = true;
+                }
+            }
+        }
+
+        return array_values(array_filter($ids, fn (int $id) => isset($allowed[$id])));
+    }
+
+    /**
      * The complementary categories this product's section draws from.
      *
      * @return list<int>

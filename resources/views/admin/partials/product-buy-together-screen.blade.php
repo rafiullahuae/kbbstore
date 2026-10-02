@@ -20,7 +20,13 @@
               same brand · Show the total · Heading (English, Arabic).
               "On phones" IS the Mobile sections row and "On laptops" IS the
               Sections row — drawn here as well, written there.
-      Card 2  Category pairs: every category, what it pairs with by default
+      Card 2  Discount for buying together (Lane RE): the 3, 4 and 5-or-more
+              tiers, 0–50 %, 0 is off and every one ships at 0 — and "Coupons
+              also apply to buy-together products", on. Under them a LIVE
+              PREVIEW of what each tier does to an example basket, redrawn as
+              a slider moves, in the product page's own words: the struck
+              total, the payable total, "You're saving AED 45".
+      Card 3  Category pairs: every category, what it pairs with by default
               (worked out from his own category names), and "Customise" to
               choose up to five, in order — or "Use the default" to go back.
 
@@ -51,6 +57,15 @@
 .btp-find label{font-size:12px;color:#5b6576;display:flex;gap:6px;align-items:center}
 .btp-note{font-size:12px;color:#5b6576;margin:0;padding:10px 14px;background:#f2fbf6;border-bottom:1px solid #eef1f5}
 .btp-dev small{display:block;font-size:11.5px;color:#7b8697;margin-top:2px}
+/* Lane RE: the tiers' live preview. */
+.btp-prev{display:grid;gap:8px;padding:12px 14px;background:#fbfcfd;border-top:1px solid #eef1f5}
+.btp-prev h4{margin:0;font-size:12px;font-weight:600;color:#5b6576}
+.btp-pv{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:9px 11px;border:1px solid #eef1f5;border-radius:10px;background:#fff;font-size:12.5px}
+.btp-pv .n{min-width:92px;color:#5b6576}
+.btp-pv s{color:#8b95a5}
+.btp-pv .tot{font-weight:700;color:#1c2330}
+.btp-pv .save{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;background:#e9f7ef;color:#1f6b47;font-weight:600;font-size:11.5px}
+.btp-pv .off{color:#8b95a5;font-style:italic}
 </style>
 <script>
 (function () {
@@ -99,7 +114,7 @@
     if (f.type === 'bool') return '<div class="mmrow">' + lbl(f.label, f.help) + tog('data-btp-opt', k, !!v, f.label) + '</div>';
     if (f.type === 'range') {
       var o = f.options || {};
-      return '<div class="mmrow">' + lbl(f.label, f.help) + '<span class="mmrange"><input type="range" min="' + escAttr(String(o.min)) + '" max="' + escAttr(String(o.max)) + '" step="' + escAttr(String(o.step || 1)) + '" value="' + escAttr(String(v)) + '" data-btp-opt="' + escAttr(k) + '"><i id="btpv-' + escAttr(k) + '">' + escHtml(String(v)) + '</i></span></div>';
+      return '<div class="mmrow">' + lbl(f.label, f.help) + '<span class="mmrange"><input type="range" min="' + escAttr(String(o.min)) + '" max="' + escAttr(String(o.max)) + '" step="' + escAttr(String(o.step || 1)) + '" value="' + escAttr(String(v)) + '" data-btp-opt="' + escAttr(k) + '"><i id="btpv-' + escAttr(k) + '">' + escHtml(String(v) + (o.unit || '')) + '</i></span></div>';
     }
     if (f.type === 'select') {
       var cur = Object.prototype.hasOwnProperty.call(f.options || {}, String(v)) ? String(v) : String(f.default);
@@ -154,16 +169,43 @@
     if (list) list.innerHTML = visibleCats().map(pairRow).join('') || '<li class="btp-row"><span class="btp-none">No category matches.</span></li>';
   }
 
+  /* ── Lane RE: the live preview of the tiers ──────────────────────────────
+     An example basket of AED 100 products, priced by the same arithmetic the
+     server uses (App\Services\BuyTogetherPricing::unitOff): each unit reduced
+     by the tier, rounded half up to the fil, then DOWN to the whole dirham.
+     Redrawn on every slider move, before anything is saved. */
+  var EX_UNIT = 10000; // AED 100 in fils
+  function tierFor(n) { var v = Math.round(Number(W.options['tier_' + Math.min(5, n)])); return isFinite(v) ? Math.max(0, Math.min(50, v)) : 0; }
+  function unitOff(unit, pct) { if (pct <= 0 || unit <= 0) return 0; var exact = Math.floor((unit * (100 - pct) + 50) / 100); var reduced = Math.floor(exact / 100) * 100; return Math.max(0, Math.min(unit, unit - reduced)); }
+  function aed(minor) { return 'AED ' + String(Math.round(minor / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function previewRows() {
+    var max = Math.max(3, Math.min(6, Number(W.options.count) || 4));
+    var out = '';
+    for (var n = 3; n <= max; n++) {
+      var pct = tierFor(n), gross = EX_UNIT * n, off = unitOff(EX_UNIT, pct) * n;
+      out += '<div class="btp-pv"><span class="n">' + n + ' ticked · ' + pct + '%</span>'
+        + (off > 0
+          ? '<span>Total: <s>' + escHtml(aed(gross)) + '</s> <span class="tot">' + escHtml(aed(gross - off)) + '</span></span><span class="save">✓ You’re saving ' + escHtml(aed(off)) + '</span>'
+          : '<span>Total: <span class="tot">' + escHtml(aed(gross)) + '</span></span><span class="off">no bundle discount</span>')
+        + '</div>';
+    }
+    return out;
+  }
+  function paintPreview() { var el = document.getElementById('btpPreview'); if (el && W) el.innerHTML = previewRows(); }
+
   function body() {
     var devices = '<div class="mmrow btp-dev">' + lbl('On phones', 'The “Buy these together” row of the Mobile sections tab — which also sets where it sits on the phone page.') + tog('data-btp-dev', 'phone', W.phone, 'Show on phones') + '</div>'
       + '<div class="mmrow btp-dev">' + lbl('On laptops', 'The “Buy these together” row of the Sections tab, Desktop.') + tog('data-btp-dev', 'laptop', W.laptop, 'Show on laptops') + '</div>';
     var card1 = '<div class="card mmcard"><div class="mmhd"><b>Buy these together</b><span>The product on the page first, then one match from each category that goes with it — each with a green tick the shopper can clear — and one pink “Buy 4 items together” button that adds every ticked product. The cards are the cart page’s “Recommended for you” cards, the same size.</span></div>'
       + '<div class="mmbody">' + optRow('on') + devices + ['count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar'].map(optRow).join('') + '</div></div>';
+    var cardT = '<div class="card mmcard" id="btpTiers"><div class="mmhd"><b>Discount for buying together</b><span>Taken off every product in the bundle when the shopper ticks that many and presses the button — on the product page, in the cart, at the checkout and on the order. All three are 0 (off) until you set them. Remove one bundled product from the cart and the rest go back to their own prices.</span></div>'
+      + '<div class="mmbody">' + ['tier_3', 'tier_4', 'tier_5', 'coupons'].map(optRow).join('') + '</div>'
+      + '<div class="btp-prev"><h4>Preview — an example basket of AED 100 products</h4><div id="btpPreview">' + previewRows() + '</div></div></div>';
     var card2 = '<div class="card mmcard"><div class="mmhd"><b>Category pairs</b><span>Which categories go with which. The default is worked out from your category names — Sunscreens go with Moisturizers, Toners, Cleansing oils and Face masks; Cleansers with Toners, Serums, Moisturizers and Sunscreens; and so on. Customise any category to choose up to ' + maxPairs() + ' matches in your own order. A product uses its most specific category.</span></div>'
       + '<p class="btp-note">One product is taken from each matching category, in this order, by the rule above. When a category is empty, or a product’s category has no matches, the shop’s best sellers fill the gap. Products that need an option chosen (sizes, shades) are never suggested — only the product on the page can be one.</p>'
       + '<div class="btp-find"><input type="search" placeholder="Find a category…" value="' + escAttr(FILTER) + '" data-btp-find aria-label="Find a category"><label><input type="checkbox" data-btp-only' + (ONLY_PAIRED ? ' checked' : '') + '> Only categories with matches</label></div>'
       + '<ul class="btp-rows" id="btpList">' + visibleCats().map(pairRow).join('') + '</ul></div>';
-    return '<div class="mmcols">' + card1 + card2 + '</div>';
+    return '<div class="mmcols">' + card1 + cardT + card2 + '</div>';
   }
 
   var original = window.paintProductPage;
@@ -203,15 +245,23 @@
     return Math.min(+o.max, Math.max(+o.min, n));
   }
 
+  // Any other range, to its OWN bounds — the tiers are 0–50, not the count's 3–6.
+  function clampRange(f, v) {
+    var o = (f && f.options) || {};
+    var n = Math.round(Number(v)); if (!isFinite(n)) n = Number(f ? f.default : 0);
+    return Math.min(+o.max, Math.max(+o.min, n));
+  }
+
   document.addEventListener('input', function (e) {
     var t = e.target;
     if (!t || !W || !t.hasAttribute) return;
     if (t.hasAttribute('data-btp-find')) { FILTER = String(t.value || ''); paintPairs(); return; }
     if (t.hasAttribute('data-btp-opt') && t.tagName === 'INPUT') {
       var k = t.getAttribute('data-btp-opt'); var f = field(k); if (!f) return;
-      W.options[k] = f.type === 'range' ? clampCount(t.value) : String(t.value);
-      var out = document.getElementById('btpv-' + k); if (out) out.textContent = String(W.options[k]);
+      W.options[k] = f.type === 'range' ? (k === 'count' ? clampCount(t.value) : clampRange(f, t.value)) : String(t.value);
+      var out = document.getElementById('btpv-' + k); if (out) out.textContent = String(W.options[k]) + ((f.options && f.options.unit) || '');
       markDirty();
+      if (k === 'count' || /^tier_/.test(k)) paintPreview();
     }
   });
 

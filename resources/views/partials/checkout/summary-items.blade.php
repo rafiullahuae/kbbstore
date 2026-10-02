@@ -22,6 +22,9 @@
         $kbbSet = \App\Support\SetContents::fromProduct($p, (int) $item->unit_price);
         // The brand line (2.60.348), only when either device shows it.
         $kbbRowBrand = ($kbbBrandD || $kbbBrandM) ? (string) ($p?->brand?->t('name') ?? '') : '';
+        // (Lane RE) This line's share of a "Buy these together" bundle; null
+        // for every ordinary line, which leaves the row byte-identical.
+        $kbbCoBt = ($totals['bundle']['lines'] ?? [])[$item->id] ?? null;
     @endphp
         <div class="ci" data-key="{{ $item->id }}">
             <div class="cth" style="{{ $thumb }}"><span class="qb">{{ $item->quantity }}</span></div>
@@ -29,7 +32,7 @@
 @if ($kbbRowBrand !== '')                <div class="b{{ $kbbBrandCls }}">{{ $kbbRowBrand }}</div>
 @endif
                 <div class="n">{{ $name }}</div>
-                @if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'checkout', 'key' => 'o' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="qty">
+                @includeWhen($kbbCoBt, 'partials.buy-together.line-tag', ['cls' => 'co-bt', 'percent' => $kbbCoBt['percent'] ?? 0])@if ($kbbSet['members'])@include('partials.set-row', ['contents' => $kbbSet, 'surface' => 'checkout', 'key' => 'o' . $item->id])@endif{{-- (Lane SET) AT THE START OF THIS LINE and never at the end of the one above. A Blade directive compiles to a PHP close tag, and PHP eats a single newline immediately after one -- so a conditional appended to the end of a line SWALLOWS THAT LINE'S NEWLINE, which is a byte changed on every basket in the shop whether or not it holds a set. Measured: StorefrontEnglishUnchangedTest went red on /cart, /checkout and the account order page for exactly that. Here the directives are followed by the line's own content, so nothing is emitted and nothing is eaten when the line is not a set. --}}<div class="qty">
                     <button type="button" class="co-q" data-key="{{ $item->id }}" data-d="-1" aria-label="{{ __('store.cart.decrease_quantity') }}">−</button>
                     <span>{{ $item->quantity }}</span>
                     <button type="button" class="co-q" data-key="{{ $item->id }}" data-d="1" aria-label="{{ __('store.cart.increase_quantity') }}">+</button>
@@ -37,7 +40,7 @@
             </div>
             <div class="cside">
                 <button type="button" class="co-rm" data-key="{{ $item->id }}" aria-label="{{ __('store.checkout.remove_item_label', ['product' => $name]) }}">✕</button>
-                <div class="cprice">{!! Money::format($item->lineTotal()) !!}</div>
+                <div class="cprice">{!! Money::format($item->lineTotal() - (int) ($kbbCoBt['off'] ?? 0)) !!}@if ($kbbCoBt)<s style="display:block;color:var(--muted);font-size:11.5px;font-weight:400">{!! Money::format($item->lineTotal()) !!}</s>@endif</div>
             </div>
         </div>
 @endforeach

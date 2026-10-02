@@ -1,0 +1,54 @@
+{
+  "checkout-coupon-include-390": [
+    "SubtotalAED 548",
+    "Buy-together discount– AED 72",
+    "GLOW10– AED 48",
+    "DeliveryFree",
+    "TotalAED 428",
+    "You're paying VAT (5%)AED 20.38",
+    "SubtotalAED 548",
+    "Buy-together discount– AED 72",
+    "GLOW10– AED 48",
+    "DeliveryFree",
+    "TotalAED 428",
+    "You're paying VAT (5%)AED 20.38",
+    "Buy-together discount– AED 72",
+    "SubtotalAED 476"
+  ],
+  "checkout-coupon-include-1280": [
+    "SubtotalAED 548",
+    "Buy-together discount– AED 72",
+    "GLOW10– AED 48",
+    "DeliveryFree",
+    "TotalAED 428",
+    "You're paying VAT (5%)AED 20.38",
+    "Buy-together discount– AED 72",
+    "SubtotalAED 476"
+  ],
+  "checkout-coupon-exclude-390": [
+    "SubtotalAED 548",
+    "Buy-together discount– AED 72",
+    "GLOW10– AED 9",
+    "DeliveryFree",
+    "TotalAED 467",
+    "You're paying VAT (5%)AED 22.24",
+    "SubtotalAED 548",
+    "Buy-together discount– AED 72",
+    "GLOW10– AED 9",
+    "DeliveryFree",
+    "TotalAED 467",
+    "You're paying VAT (5%)AED 22.24",
+    "Buy-together discount– AED 72",
+    "SubtotalAED 476"
+  ],
+  "checkout-coupon-exclude-1280": [
+    "SubtotalAED 548",
+    "Buy-together discount– AED 72",
+    "GLOW10– AED 9",
+    "DeliveryFree",
+    "TotalAED 467",
+    "You're paying VAT (5%)AED 22.24",
+    "Buy-together discount– AED 72",
+    "SubtotalAED 476"
+  ]
+}

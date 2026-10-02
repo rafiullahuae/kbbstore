@@ -1,0 +1,1 @@
+<div class="{{ $cls }}" style="display:inline-flex;align-items:center;gap:4px;margin:3px 0 2px;padding:2px 8px;border-radius:99px;background:#EAF8F0;color:#1F7A50;font-size:11px;font-weight:600;line-height:1.35">{{ __('store.buy_together.bundle_badge', ['percent' => (int) $percent]) }}</div>

@@ -52,7 +52,7 @@
 <div class="sumrow"><span>{{ __('store.checkout.subtotal') }}</span><span class="js-subtotal">{!! \App\Support\Money::format($totals['subtotal'], $kbbLedgerDp) !!}</span></div>
 
 <div class="js-coupons">
-    @if ($totals['discount'])
+    @includeWhen(($totals['bundle_discount'] ?? 0) > 0, 'partials.buy-together.total-row', ['cls' => 'sumrow disc co-btrow', 'label' => __('store.buy_together.bundle_row'), 'amount' => '&ndash; ' . \App\Support\Money::format((int) ($totals['bundle_discount'] ?? 0), $kbbLedgerDp)])@if ($totals['discount'])
         <div class="sumrow disc"><span>{{ $totals['coupon_code'] }}</span><span>&ndash; {!! \App\Support\Money::format($totals['discount'], $kbbLedgerDp) !!}</span></div>
     @endif
 </div>
