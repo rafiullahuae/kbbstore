@@ -15352,7 +15352,12 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     perPage: +(localStorage.getItem('kbb_cust_pp') || 50),
     search: '', filter: 'all', sort: 'newest',
     spendMin: '', spendMax: '', from: '', to: '', country: '', city: '',
-    adv: false, cols: null, data: null, err: null, sel: {}, busy: false
+    adv: false, cols: null, data: null, err: null, sel: {}, busy: false,
+    /* "Select all N matching this view" (Lane PQ, Send account invite): the
+       selection is then the FILTER, resolved on the server, not the ticks on
+       this page. Remembered with the query it was made for, so changing a
+       filter quietly drops it rather than sending to a different set. */
+    allMatching: false, allMatchingQs: ''
   };
 
   var CU_COLDEF = [
@@ -15384,6 +15389,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
   var CU_CHIPS = [
     ['all', 'All'], ['ordered', 'Has ordered'], ['never', 'Never ordered'],
     ['repeat', 'Repeat buyers'], ['account', 'Has an account'], ['guest', 'Guest checkout'],
+    ['invited', 'Invited, not activated'],
     ['verified', 'Email verified'], ['unverified', 'Not verified'], ['trashed', 'Trash']
   ];
   /* Bands in whole dirhams; the server converts with Money::fromMajor, so the
@@ -15449,7 +15455,19 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
       ? '<span class="pill blue">Account</span>'
       : '<span class="pill grey">Guest</span>';
     if(c.email_verified) badge += ' <span class="pill green" title="Email verified">✓</span>';
-    return badge;
+    return badge + cuInvitePill(c);
+  }
+  /* Send account invite (Lane PQ). "Activated" once they used an invite to set
+     a password; "Invited · 2 Oct" while one is out and unused. */
+  function cuInvitePill(c){
+    if(c.invite_accepted_at) return ' <span class="pill green" title="Set a password from an account invite on ' + cuDateText(c.invite_accepted_at) + '">Activated</span>';
+    if(c.invited_at) return ' <span class="pill amber" title="' + (c.invite_count > 1 ? c.invite_count + ' invites sent' : '1 invite sent') + '">Invited · ' + cuDateText(c.invited_at, true) + '</span>';
+    return '';
+  }
+  function cuDateText(iso, short){
+    var d = new Date(iso);
+    if(isNaN(d)) return '';
+    return sesc(d.toLocaleDateString('en-GB', short ? {day:'numeric', month:'short'} : {day:'numeric', month:'short', year:'numeric'}));
   }
 
   async function cuLoad(){
@@ -15481,7 +15499,8 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
   }
 
   window.renderCustomers = async function(){
-    CU.page = 1; CU.sel = {};
+    CU.page = 1; CU.sel = {}; CU.allMatching = false;
+    if(window.kbbCustomerInvite) window.kbbCustomerInvite.refreshBanner();
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>Customers</h2>' +
       '<p>Everyone with a record on the store — shoppers who checked out as guests as well as people with an account.</p></div>' +
@@ -15517,6 +15536,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
 
     var cols = CU_COLDEF.filter(function(c){ return cuCols()[c[0]]; });
     var selected = Object.keys(CU.sel).filter(function(k){ return CU.sel[k]; });
+    if(CU.allMatching && (CU.allMatchingQs !== cuParams(true) || !selected.length)) CU.allMatching = false;
     var s = d.summary || {customers:0, orders:0, spend_display:'', aov_display:''};
 
     el.innerHTML =
@@ -15529,6 +15549,8 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
           '<button class="btn" id="cuExport">' + ic('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>') + ' Export CSV</button>' +
         '</div>' +
       '</div>' +
+
+      '<div id="cuInviteBanner"></div>' +
 
       (d.unlinked_orders ?
         '<div class="card pad" style="margin-bottom:14px;border-color:#f0dcae;background:var(--amber-soft)">' +
@@ -15566,10 +15588,16 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
 
       (selected.length ?
         '<div class="card pad" style="margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
-        '<b style="font-size:12.5px">' + selected.length + ' selected</b>' +
+        (CU.allMatching
+          ? '<b style="font-size:12.5px">All ' + d.total.toLocaleString() + ' customers matching this view are selected</b>'
+          : '<b style="font-size:12.5px">' + selected.length + ' selected</b>' +
+            (d.total > selected.length ? '<button class="btn ghost sm" id="cuSelAll">Select all ' + d.total.toLocaleString() + ' matching this view</button>' : '')) +
         '<button class="btn ghost sm" id="cuClearSel">Clear</button>' +
         '<div style="flex:1"></div>' +
-        '<button class="btn sm" style="background:var(--red)" id="cuBulkDelete">Move to trash…</button>' +
+        '<button class="btn sm" id="cuInvite">Send account invite…</button>' +
+        /* Trash stays a per-page action: it is capped at 500 and refuses
+           customers with orders one by one, which does not scale to a filter. */
+        (CU.allMatching ? '' : '<button class="btn sm" style="background:var(--red)" id="cuBulkDelete">Move to trash…</button>') +
         '</div>' : '') +
 
       '<div class="card" style="overflow:auto">' + cuTable(d, cols) + '</div>' +
@@ -15588,6 +15616,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
       '</div></div>';
 
     cuBindList();
+    if(window.kbbCustomerInvite) window.kbbCustomerInvite.paintBanner();
   }
 
   function cuKpi(label, value, sub){
@@ -15728,7 +15757,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     });
 
     $$$('#content .chip[data-cuf]').forEach(function(b){
-      b.onclick = function(){ CU.filter = b.dataset.cuf; CU.page = 1; CU.sel = {}; cuLoad(); };
+      b.onclick = function(){ CU.filter = b.dataset.cuf; CU.page = 1; CU.sel = {}; CU.allMatching = false; cuLoad(); };
     });
 
     var adv = byId('cuAdv');
@@ -15780,7 +15809,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     var next = byId('cuNext'); if(next) next.onclick = function(){ if(CU.data.page < CU.data.last_page){ CU.page = CU.data.page + 1; cuLoad(); } };
 
     $$$('#content [data-cusel]').forEach(function(b){
-      b.onclick = function(){ var id = b.dataset.cusel; CU.sel[id] = !CU.sel[id]; cuPaint(); };
+      b.onclick = function(){ var id = b.dataset.cusel; CU.sel[id] = !CU.sel[id]; CU.allMatching = false; cuPaint(); };
     });
     var all = byId('cuAll');
     if(all) all.onclick = function(){
@@ -15788,7 +15817,26 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
       CU.data.customers.forEach(function(c){ CU.sel[c.id] = on; });
       cuPaint();
     };
-    var clearSel = byId('cuClearSel'); if(clearSel) clearSel.onclick = function(){ CU.sel = {}; cuPaint(); };
+    var clearSel = byId('cuClearSel'); if(clearSel) clearSel.onclick = function(){ CU.sel = {}; CU.allMatching = false; cuPaint(); };
+
+    /* Send account invite (Lane PQ). The dialog itself is
+       partials/customer-invites.blade.php; this hands it the selection. */
+    var selAll = byId('cuSelAll');
+    if(selAll) selAll.onclick = function(){
+      CU.data.customers.forEach(function(c){ CU.sel[c.id] = true; });
+      CU.allMatching = true; CU.allMatchingQs = cuParams(true); cuPaint();
+    };
+    var invite = byId('cuInvite');
+    if(invite) invite.onclick = function(){
+      if(!window.kbbCustomerInvite) return;
+      var filters = {};
+      new URLSearchParams(cuParams(true)).forEach(function(v, k){ filters[k] = v; });
+      window.kbbCustomerInvite.open({
+        ids: Object.keys(CU.sel).filter(function(k){ return CU.sel[k]; }).map(Number),
+        allMatching: CU.allMatching, filters: filters, total: CU.data.total,
+        onDone: function(){ CU.sel = {}; CU.allMatching = false; window.kbbCustomerInvite.refreshBanner(); cuLoad(); }
+      });
+    };
 
     var bulk = byId('cuBulkDelete');
     if(bulk) bulk.onclick = function(){
@@ -15922,8 +15970,11 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
     el.innerHTML = '<div class="wrap">' +
       '<div class="between" style="margin-bottom:14px;flex-wrap:wrap;gap:10px">' +
         '<button class="btn ghost sm" id="cuBack">‹ All customers</button>' +
+        '<div class="row" style="gap:8px;flex-wrap:wrap">' +
+        (!c.trashed && c.account_type !== 'account' ? '<button class="btn sm" id="cuInviteOne">Send account invite…</button>' : '') +
         (c.trashed ? '<button class="btn ghost sm" id="cuRestore">Restore this customer</button>'
                    : '<button class="btn ghost sm" style="color:var(--red)" id="cuTrash">Move to trash</button>') +
+        '</div>' +
       '</div>' +
 
       '<div class="card pad" style="margin-bottom:14px">' +
@@ -15955,6 +16006,11 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
           cuField('Last activity', c.last_active_at ? (cuDate(c.last_active_at) + ' · ' + sesc(cuAgo(c.last_active_at))) : '<span style="color:var(--ink-faint)">—</span>') +
           cuField('Sign-in', c.account_type === 'account' ? 'Has a password and can sign in' : 'Guest — checked out without an account') +
           cuField('Email verified', c.email_verified ? 'Yes' : 'No') +
+          cuField('Account invite', c.invite_accepted_at
+            ? 'Activated ' + cuDate(c.invite_accepted_at) + ' — set a password from an invite' + cuInvitePill(c)
+            : c.invited_at
+              ? 'Sent ' + cuDate(c.invited_at) + (c.invite_count > 1 ? ' (' + c.invite_count + ' invites in all)' : '') + ' — not used yet' + cuInvitePill(c)
+              : (c.account_type === 'account' ? '<span style="color:var(--ink-faint)">Not needed — already has a password</span>' : '<span style="color:var(--ink-faint)">Never sent</span>')) +
           cuField('WooCommerce user ID', c.wp_user_id ? String(c.wp_user_id) : '<span style="color:var(--ink-faint)">Not imported — created on this store</span>') +
           cuField('Customer ID', String(c.id)) +
         '</div>' +
@@ -16005,6 +16061,11 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
 
     var trash = document.getElementById('cuTrash');
     if(trash) trash.onclick = function(){ cuConfirmDelete([c.id], cuLabel(c)); };
+
+    var inviteOne = document.getElementById('cuInviteOne');
+    if(inviteOne) inviteOne.onclick = function(){
+      if(window.kbbCustomerInvite) window.kbbCustomerInvite.open({ids: [c.id], total: 1, onDone: function(){ cuDetail(c.id); }});
+    };
 
     var restore = document.getElementById('cuRestore');
     if(restore) restore.onclick = async function(){
@@ -23196,6 +23257,13 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
 @include('admin.partials.product-picker')
 
 @include('admin.partials.manual-order-screen')
+
+{{-- Store → Customers → Send account invite (Lane PQ). The dialog the
+     Customers screen's bulk bar and a customer's own page open: who gets an
+     invite and who is skipped, the editable template with a live preview of
+     the real email, and the batched send with Resume. Adds no screen and no
+     sidebar entry; the Customers code above calls window.kbbCustomerInvite. --}}
+@include('admin.partials.customer-invites')
 
 {{-- Store -> Coupons. Same arrangement and for the same reason as the screen
      above: its own file, its own sidebar entry appended to the rendered nav,
