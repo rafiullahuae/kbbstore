@@ -2431,7 +2431,10 @@ final class EnglishRenderWalk
             ],
             'the -N% pill on every product tile (Lane PR)' => [
                 'pattern' => '#<span class="kbb-badge kbb-badge-sale">-\d+%</span>#',
-                'hits' => 37,
+                // 37 -> 40 (Lane PS): the product page's "You may also like"
+                // draws twelve tiles where it drew three, and three of the nine
+                // new ones are reduced. One page; the NEW count does not move.
+                'hits' => 40,
             ],
         ];
     }
