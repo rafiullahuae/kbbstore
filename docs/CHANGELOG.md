@@ -20,7 +20,7 @@ Admin: Appearance → Product page → Buy these together (on/off, phones,
 laptops, how many, how chosen, sold-out, same brand, total, heading, category
 pairs). Store → Modules now points there.
 
-Files (32): see the commit; the section's services (BuyTogether,
+Files (31): see the commit; the section's services (BuyTogether,
 BuyTogetherPairs, BuyTogetherSettings, ProductViews), CartController,
 ProductController, ProductViewController, ProductPageApiController,
 EcommerceApiController, Category, Product, ModuleRegistry,
