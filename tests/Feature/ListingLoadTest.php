@@ -405,3 +405,48 @@ it('loads with IntersectionObserver and measures nothing', function () {
     $bundle = (string) file_get_contents(base_path('public/build/'.$manifest['resources/js/kbb/app.js']['file']));
     expect($bundle)->toContain('kbbbatch');
 });
+
+it('fetches the next batch ahead on page open, so the grey cards stand only for a batch still on its way', function () {
+    /*
+     * Owner, 2 October: "on slow internet it keeps displaying the grey
+     * loading stuff. i want that somehow the products path etc should pre
+     * load upon page open."
+     *
+     * Before: the batch was not asked for until the pager came within 600px,
+     * so every scroll to the end showed twelve grey cards for the round trip.
+     * Measured in Chromium on DevTools "Slow 3G" (400ms, 50KB/s), /shop/,
+     * scrolling to the end after reading the first row: grey cards for ~700ms
+     * and the second batch in at 782-849ms, its pictures not yet started.
+     * After: no grey cards at all, the second batch in at 30ms (1280) /
+     * 116ms (390), and its pictures in view already decoded from the cache.
+     *
+     * MUTATIONS, RUN:
+     *   - delete `whenQuiet(fetchAhead);` -- red (nothing fetched on open);
+     *   - delete `fetchAhead();` after the insert -- red (only one batch ahead);
+     *   - move `waiting = placeholders(...)` above `if (!data)` -- red (grey
+     *     cards drawn even when the batch is already here);
+     *   - delete the `saveData ||` guard in warm() -- red.
+     */
+    $js = (string) file_get_contents(resource_path('js/kbb/listing-load.js'));
+    $code = (string) preg_replace(['#/\*.*?\*/#s', '#^\s*//.*$#m'], '', $js);
+
+    expect($code)->toContain("const ROOT_MARGIN = '0px 0px 1200px 0px';")
+        ->and($code)->toContain('whenQuiet(fetchAhead);')
+        ->and($code)->toContain("window.addEventListener('load', idle, { once: true });")
+        ->and($code)->toContain("priority: 'low',")
+        ->and($code)->toContain('if (saveData || !html) return;')
+        ->and($code)->toContain('const pic = new Image();')
+        ->and($code)->toContain("parsed.content.querySelectorAll('img')");
+
+    // Placeholders only inside the not-ready branch.
+    expect($code)->toMatch('#if \(!data\) \{\s*waiting = placeholders\(grid, batch\);#')
+        ->and(substr_count($code, 'placeholders(grid, batch)'))->toBe(1);
+
+    // And the next one is fetched the moment a batch goes in.
+    expect($code)->toMatch('#\} else \{\s*fetchAhead\(\);\s*\}#');
+
+    // The shipped bundle carries it.
+    $manifest = json_decode((string) file_get_contents(base_path('public/build/manifest.json')), true);
+    $bundle = (string) file_get_contents(base_path('public/build/'.$manifest['resources/js/kbb/app.js']['file']));
+    expect($bundle)->toContain('0px 0px 1200px 0px');
+});

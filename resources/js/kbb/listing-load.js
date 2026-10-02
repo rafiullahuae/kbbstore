@@ -16,12 +16,33 @@
  * a shared link lands on the page the shopper had reached. Any failure puts
  * the numbered links back.
  *
+ * ── ONE BATCH AHEAD, ALWAYS (2.60.355) ─────────────────────────────────────
+ *
+ * The owner: "on slow internet it keeps displaying the grey loading stuff. i
+ * want that somehow the products path etc should pre load upon page open."
+ * Measured before this: the batch was not even ASKED FOR until the pager came
+ * within 600px, so on a slow connection the grey cards stood for the whole
+ * round trip, and the pictures only started after the cards went in.
+ *
+ * Now the next batch is fetched as soon as the page has finished loading
+ * (window `load`, then an idle moment, at low priority, so it never competes
+ * with the page's own pictures), and its pictures are warmed into the cache
+ * through detached `Image` objects given the card's own `srcset`/`sizes` --
+ * the browser picks the same file the card will ask for. When the shopper
+ * gets near the end the batch is already here: it goes in with no grey cards
+ * and its pictures come from the cache, and the one after it starts at once.
+ * The grey cards remain only for a batch that is genuinely still on its way.
+ * Save-Data (the phone's "data saver") keeps the batch prefetch -- a few KB of
+ * HTML -- and skips the picture warming.
+ *
  * NOTHING HERE MEASURES LAYOUT. IntersectionObserver reports an intersection
  * the browser has already computed; no element is asked for its size or its
  * position, and the placeholders take the grid's own columns.
  */
 
-const ROOT_MARGIN = '0px 0px 600px 0px';
+// Starts 1200px early (was 600px): with the batch already fetched, starting
+// sooner costs nothing and hides the join completely on a fast flick.
+const ROOT_MARGIN = '0px 0px 1200px 0px';
 const MAX_PLACEHOLDERS = 12;
 
 /** A URL on this origin, or null — a batch is never fetched from anywhere else. */
@@ -66,8 +87,14 @@ export function initListingLoad() {
 
     const status = pager.querySelector('.kbb-pager-status');
     const batch = Math.max(1, Math.min(MAX_PLACEHOLDERS, parseInt(pager.dataset.batch || '4', 10) || 4));
+    const saveData = Boolean(navigator.connection && navigator.connection.saveData);
     let busy = false;
     let observer = null;
+    let near = false;
+
+    // The batch fetched ahead: { url, promise, data } -- `data` is set the
+    // moment it lands, so "is it here yet?" is a property read, not a race.
+    let ahead = null;
 
     const say = (text) => {
         if (status) status.textContent = text;
@@ -79,27 +106,86 @@ export function initListingLoad() {
         say('');
     };
 
+    const fetchBatch = async (target) => {
+        const url = new URL(target.href);
+        url.searchParams.set('kbbbatch', '1');
+
+        const response = await fetch(url.toString(), {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+            priority: 'low',
+        });
+
+        if (!response.ok) throw new Error('batch ' + response.status);
+
+        return response.json();
+    };
+
+    // The batch's pictures, into the HTTP cache before its cards exist. A
+    // <template> parses without fetching anything; each Image is given the
+    // card's own sizes and srcset, so the file it downloads is the one the
+    // card will choose. Attributes are read, nothing is measured.
+    const warm = (html) => {
+        if (saveData || !html) return;
+
+        const parsed = document.createElement('template');
+        parsed.innerHTML = html;
+
+        parsed.content.querySelectorAll('img').forEach((card) => {
+            const pic = new Image();
+            pic.decoding = 'async';
+            if ('fetchPriority' in pic) pic.fetchPriority = 'low';
+            if (card.getAttribute('sizes')) pic.sizes = card.getAttribute('sizes');
+            if (card.getAttribute('srcset')) pic.srcset = card.getAttribute('srcset');
+            pic.src = card.getAttribute('src') || '';
+        });
+    };
+
+    const fetchAhead = () => {
+        if (ahead || !next) return;
+
+        const entry = { url: next.href, data: null, promise: null };
+        entry.promise = fetchBatch(next).then((data) => {
+            entry.data = data;
+            warm(String(data.html || ''));
+
+            return data;
+        });
+        // A failed prefetch is not a failure yet: load() asks again itself.
+        entry.promise.catch(() => {
+            if (ahead === entry) ahead = null;
+        });
+        ahead = entry;
+    };
+
+    // After the page's own pictures, in an idle moment.
+    const whenQuiet = (task) => {
+        const idle = () => (window.requestIdleCallback ? window.requestIdleCallback(task, { timeout: 1500 }) : window.setTimeout(task, 200));
+
+        if (document.readyState === 'complete') idle();
+        else window.addEventListener('load', idle, { once: true });
+    };
+
     const load = async () => {
         if (busy || !next) return;
 
         busy = true;
-        const waiting = placeholders(grid, batch);
-        say(status?.dataset.loading || '');
+        let waiting = [];
 
         try {
-            const url = new URL(next.href);
-            url.searchParams.set('kbbbatch', '1');
+            const ready = ahead && ahead.url === next.href ? ahead : null;
+            let data = ready ? ready.data : null;
 
-            const response = await fetch(url.toString(), {
-                headers: { Accept: 'application/json' },
-                credentials: 'same-origin',
-            });
+            if (!data) {
+                // Still on its way, or never asked for: the grey cards stand in.
+                waiting = placeholders(grid, batch);
+                say(status?.dataset.loading || '');
+                data = ready ? await ready.promise.catch(() => fetchBatch(next)) : await fetchBatch(next);
+            }
 
-            if (!response.ok) throw new Error('batch ' + response.status);
-
-            const data = await response.json();
-
+            ahead = null;
             waiting.forEach((card) => card.remove());
+            waiting = [];
 
             // A whole Blade view, rendered and escaped by Blade on the server —
             // raw on purpose, exactly as cart.js inserts data.drawer.
@@ -115,6 +201,9 @@ export function initListingLoad() {
             if (!next) {
                 observer?.disconnect();
                 pager.hidden = true;
+            } else {
+                // The one after this, straight away.
+                fetchAhead();
             }
         } catch (error) {
             waiting.forEach((card) => card.remove());
@@ -126,16 +215,18 @@ export function initListingLoad() {
 
         // Still in view after the batch landed (a tall screen, a short batch):
         // observing again makes the browser report the intersection afresh.
-        if (next && observer) {
+        if (next && observer && near) {
             observer.unobserve(pager);
             observer.observe(pager);
         }
     };
 
     observer = new IntersectionObserver((entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) load();
+        near = entries.some((entry) => entry.isIntersecting);
+        if (near) load();
     }, { rootMargin: ROOT_MARGIN });
 
     pager.classList.add('is-auto');
     observer.observe(pager);
+    whenQuiet(fetchAhead);
 }
