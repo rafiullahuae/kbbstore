@@ -699,7 +699,7 @@ it('ships the share bar as coloured icons, no circles, on one line', function ()
      * icons must come in same line."
      *
      * 'icons' is the shipped style (the circle styles stay as options); the
-     * row never wraps, and each button is a flex item that shrinks toward 24px,
+     * row never wraps, and each button is a flex item that shrinks toward 20px,
      * so a narrow phone keeps the label and every icon on one line without a
      * script measuring anything. The "Link copied" pill sits under the row, out
      * of the flex line, so it cannot push an icon down either.
@@ -722,7 +722,7 @@ it('ships the share bar as coloured icons, no circles, on one line', function ()
 
     expect($rule('.pts-share'))->toContain('flex-wrap:nowrap')
         ->and($rule('.pts-share-list'))->toContain('flex-wrap:nowrap')
-        ->and($rule('.pts-share-list > li'))->toContain('min-inline-size:24px')
+        ->and($rule('.pts-share-list > li'))->toContain('min-inline-size:20px')
         ->and($rule('.pts-s-icons .pts-sb,.pts-s-icons .pts-more'))->toContain('background:transparent')
         ->and($rule('.pts-copied'))->toContain('position:absolute');
 });

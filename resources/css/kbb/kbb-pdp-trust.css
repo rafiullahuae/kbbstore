@@ -106,12 +106,13 @@
 /* ── 3. the share bar ────────────────────────────────────────────────────── */
 /* ONE LINE, ALWAYS (2.60.348): "share + icons must come in same line". The
    list never wraps; each button is a flex item that SHRINKS toward 24px when
-   the line is short, so a 320px phone still holds the label and every icon in
+   the line is short (floor 20px: label + 9 icons fit 276px, a 320px phone's
+   column, with the phone-only "More" button showing), so it holds every icon in
    a row, sized by the browser's own flex arithmetic rather than by script. */
-.pts-share{display:flex;align-items:center;flex-wrap:nowrap;gap:12px;position:relative}
+.pts-share{display:flex;align-items:center;flex-wrap:nowrap;gap:8px;position:relative}
 .pts-share-label{flex:0 0 auto;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink,#2A2228)}
-.pts-share-list{display:flex;flex:1 1 auto;flex-wrap:nowrap;align-items:center;gap:6px;margin:0;padding:0;list-style:none;min-inline-size:0}
-.pts-share-list > li{display:flex;flex:0 1 var(--pts-size,34px);min-inline-size:24px}
+.pts-share-list{display:flex;flex:1 1 auto;flex-wrap:nowrap;align-items:center;gap:4px;margin:0;padding:0;list-style:none;min-inline-size:0}
+.pts-share-list > li{display:flex;flex:0 1 var(--pts-size,34px);min-inline-size:20px}
 .pts-sb{--pts-c:#2A2228;
     display:grid;place-items:center;inline-size:100%;max-inline-size:var(--pts-size,34px);block-size:auto;aspect-ratio:1;
     padding:0;border:0;border-radius:50%;cursor:pointer;
