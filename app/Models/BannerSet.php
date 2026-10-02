@@ -41,6 +41,8 @@ class BannerSet extends Model
         // level; the rows that already exist are moved by the migration
         // `banner_ships_as_image_slider`.
         'kind', 'slider_style', 'slider_ratio', 'slider_ratio_m',
+        // Lane RC. How a slider fits its pictures, and the two height caps.
+        'slider_fit', 'slider_h', 'slider_h_m',
     ];
 
     /**
@@ -86,10 +88,30 @@ class BannerSet extends Model
      * migration that moves the rows already on the shop is scoped to sliders,
      * so an existing cards set keeps the corners it was given.
      */
+    /*
+     * ── AND FOUR MORE, WHICH ARE "NOTHING IS EVER CUT" ─────────── (Lane RC)
+     *
+     *   slider_ratio    1920/550 -> auto        "image should adjust auto with
+     *   slider_ratio_m  500/600  -> auto         the screen without cutting etc."
+     *   slider_fit      (new)       contain
+     *   slider_h/_h_m   (new)       0 = Auto     "there should be height control
+     *                                             of the overall banner"
+     *
+     * `auto` is the first picture's OWN shape, so a 1920 x 550 upload still
+     * draws a 1920 : 550 frame -- his numbers are kept whenever his art is
+     * those numbers -- and art that is only roughly that shape is no longer
+     * cropped to fit a preset. `contain` is the half that covers every other
+     * picture in the set: fitted whole, never cut. Both ship ON because he
+     * asked for them (CLAUDE.md rule 1, reversed 30 September); both are still
+     * controls on Appearance -> Banners -> (a set) -> Size & fit.
+     */
     protected $attributes = [
         'kind' => 'slider',
-        'slider_ratio' => '1920/550',
-        'slider_ratio_m' => '500/600',
+        'slider_ratio' => 'auto',
+        'slider_ratio_m' => 'auto',
+        'slider_fit' => 'contain',
+        'slider_h' => 0,
+        'slider_h_m' => 0,
         'card_radius' => 0,
         'shadow' => 'none',
     ];
@@ -107,6 +129,8 @@ class BannerSet extends Model
         'pause_on_hover' => 'bool',
         'show_text' => 'bool',
         'show_button' => 'bool',
+        'slider_h' => 'int',
+        'slider_h_m' => 'int',
     ];
 
     /**
@@ -175,13 +199,58 @@ class BannerSet extends Model
     public const KINDS = [
         'cards' => 'Cards — a row of picture cards that scrolls itself',
         'slider' => 'Slider — pictures only, one at a time, with arrows and bars',
+        /*
+         * Lane RC. The owner: "i need here option single image ... in case of
+         * single image, the height will be as per the image height itself".
+         * One picture, full width, its height following from its own
+         * proportions -- no frame shape to choose, so nothing to crop.
+         */
+        'single' => 'Single image — one picture, shown whole at its own height',
     ];
 
     /** The partial each kind draws through. CONSTANTS, never a built string. */
     public const KIND_PARTIALS = [
         'cards' => 'partials.home.cards-banner',
         'slider' => 'partials.home.slider-banner',
+        'single' => 'partials.home.single-banner',
     ];
+
+    /**
+     * The homepage section's top padding, per kind.                 (Lane RC)
+     *
+     * The owner: "remove any space between header and banner". Measured in
+     * Chromium before the fix: the header's bottom edge at y=93.5 (1280) and
+     * y=127 (390), the banner picture's top at 101.5 and 135 -- an 8px strip
+     * of page background at both widths, and the whole of it was the
+     * section's inline `padding-top:8px` in store/home.blade.php.
+     *
+     * The two PICTURE kinds sit flush under the header. The cards row keeps
+     * its 8px: it is a row of rounded cards, not a banner, the owner did not
+     * ask about it, and a shop drawing cards renders the same bytes as before.
+     *
+     * A CONSTANT, printed into a `style` attribute, so it is never a setting.
+     */
+    public const SECTION_STYLES = [
+        'cards' => 'padding-top:8px',
+        'slider' => 'padding-top:0',
+        'single' => 'padding-top:0',
+    ];
+
+    /**
+     * How a slider fills its frame, `token => label`.                (Lane RC)
+     *
+     * `contain` FIRST and it is the default, because the owner asked for it:
+     * "image should adjust auto with the screen without cutting". `cover` is
+     * what every slider drew before this column existed and stays one choice
+     * away -- a control he may want back, which is the reason it is built.
+     */
+    public const SLIDER_FITS = [
+        'contain' => 'Whole picture — never cut',
+        'cover' => 'Fill the frame — edges may be cut',
+    ];
+
+    /** The `auto` frame-shape token: the first picture's own proportions. */
+    public const SLIDER_AUTO = 'auto';
 
     /**
      * The four treatments of the slider, `token => [label, the note]`.
@@ -222,6 +291,15 @@ class BannerSet extends Model
      * literal in this file, exactly as RATIOS' is.
      */
     public const SLIDER_RATIOS = [
+        /*
+         * ── AUTO, FIRST, AND THE DEFAULT ─────────────────────────── (Lane RC)
+         *
+         * Its CSS half is EMPTY on purpose: the value is not a constant, it is
+         * the first picture's stored width and height, two integers, and
+         * sliderRatioCss() builds `<int> / <int>` from them. Nothing an
+         * operator types reaches the stylesheet by this road either.
+         */
+        'auto' => ['Auto — the picture’s own shape, nothing cut', ''],
         /*
          * ── THE TWO THE OWNER ASKED FOR BY NUMBER, FIRST ────────────────────
          *
@@ -284,6 +362,13 @@ class BannerSet extends Model
         'gap' => [0, 48],
         'card_radius' => [0, 40],
         'position' => [0, 9999],
+        /*
+         * Lane RC. The banner's height cap in CSS pixels, 0 = Auto (no cap:
+         * the frame's shape decides the height at every width). See
+         * sliderHeight() for why it is a CAP and not a fixed height.
+         */
+        'slider_h' => [0, 1000],
+        'slider_h_m' => [0, 1000],
     ];
 
     public function cards(): HasMany
@@ -406,6 +491,22 @@ class BannerSet extends Model
         return $this->kind() === 'slider';
     }
 
+    /** Lane RC. One picture, whole, at its own height. */
+    public function isSingle(): bool
+    {
+        return $this->kind() === 'single';
+    }
+
+    /**
+     * The homepage section's `style` attribute for this kind.       (Lane RC)
+     *
+     * A lookup in SECTION_STYLES, so what is printed is one of three literals.
+     */
+    public function homeSectionStyle(): string
+    {
+        return self::SECTION_STYLES[$this->kind()];
+    }
+
     /**
      * The Blade partial this set draws through.
      *
@@ -414,9 +515,9 @@ class BannerSet extends Model
      * `'partials.home.'.$this->kind.'-banner'` would be shorter and it would be
      * a template name assembled from a database column, which is a file path
      * assembled from a database column. `kind()` has already narrowed the value
-     * to one of two literals and this maps those two literals to two literals,
-     * so the set of view names this method can ever return is fixed at two and
-     * is visible in this file.
+     * to one of KINDS' keys and this maps those literals to literals, so the
+     * set of view names this method can ever return is fixed -- three since
+     * Lane RC added `single` -- and is visible in this file.
      *
      * The homepage, the stored preview and the buffered preview all ask this
      * one method, so a set cannot be drawn as a slider in the admin and as
@@ -467,15 +568,121 @@ class BannerSet extends Model
      * not see; the migration is the half that covers a row this method is
      * never asked about because the column holds a valid older key.
      */
-    public function sliderRatioCss(): string
+    public function sliderRatioCss(array $cards = []): string
     {
-        return (self::SLIDER_RATIOS[$this->slider_ratio] ?? self::SLIDER_RATIOS['1920/550'])[1];
+        $key = $this->sliderRatioKey(false);
+
+        return $key === self::SLIDER_AUTO
+            ? self::autoRatioCss($cards, false)
+            : self::SLIDER_RATIOS[$key][1];
     }
 
     /** The same, below 768px. Moved from 4/3 to 500/600 in the same change. */
-    public function sliderRatioMobileCss(): string
+    public function sliderRatioMobileCss(array $cards = []): string
     {
-        return (self::SLIDER_RATIOS[$this->slider_ratio_m] ?? self::SLIDER_RATIOS['500/600'])[1];
+        $key = $this->sliderRatioKey(true);
+
+        return $key === self::SLIDER_AUTO
+            ? self::autoRatioCss($cards, true)
+            : self::SLIDER_RATIOS[$key][1];
+    }
+
+    /**
+     * The stored frame-shape token, or `auto`.                      (Lane RC)
+     *
+     * ▲ THE FALLBACK MOVED FROM 1920/550 (and 500/600) TO `auto`, with the
+     * default it mirrors -- the third door has to agree with the other two or
+     * it is a way in. With no pictures to read, `auto` answers the shipped
+     * presets, so a set with nothing in it draws exactly what it drew before.
+     */
+    public function sliderRatioKey(bool $phone): string
+    {
+        $raw = (string) ($phone ? $this->slider_ratio_m : $this->slider_ratio);
+
+        return isset(self::SLIDER_RATIOS[$raw]) ? $raw : self::SLIDER_AUTO;
+    }
+
+    /**
+     * `auto`'s aspect-ratio: the FIRST picture's own `<w> / <h>`.    (Lane RC)
+     *
+     * The first one because the frame is one box and the first picture is the
+     * one the page opens on -- and the LCP element. Every later picture is
+     * fitted into that box by `slider_fit`, which under the shipped `contain`
+     * means whole, never cut, whatever its shape.
+     *
+     * Phone: the slide's own phone picture when it has one; otherwise the
+     * desktop picture, which is what the phone then draws. Built from two
+     * integers (stored on save, or read off the file once -- see
+     * BannerCard::naturalSize()), so the string is digits, a slash and spaces.
+     * Unknown on both counts falls back to the shipped preset.
+     *
+     * @param  list<BannerCard>  $cards
+     */
+    private static function autoRatioCss(array $cards, bool $phone): string
+    {
+        $first = $cards[0] ?? null;
+        $size = null;
+
+        if ($first instanceof BannerCard) {
+            $size = ($phone ? $first->phoneNaturalSize() : null) ?? $first->naturalSize();
+        }
+
+        if ($size === null) {
+            return self::SLIDER_RATIOS[$phone ? '500/600' : '1920/550'][1];
+        }
+
+        return $size[0].' / '.$size[1];
+    }
+
+    /**
+     * `contain` or `cover`, and anything else is `contain`.         (Lane RC)
+     */
+    public function sliderFit(): string
+    {
+        return isset(self::SLIDER_FITS[(string) $this->slider_fit]) ? (string) $this->slider_fit : 'contain';
+    }
+
+    /**
+     * The slider's height cap in CSS pixels, or 0 for Auto.         (Lane RC)
+     *
+     * ── A CAP, NOT A FIXED HEIGHT, AND THAT IS THE DECISION ─────────────────
+     *
+     * "height control of the overall banner" and "image should adjust auto with
+     * the screen without cutting" have to be true at once. A FIXED height can
+     * only keep the second promise by wasting room: a 1920 x 550 picture is
+     * 229px tall on an 800px window, so a fixed 450px banner is either a
+     * picture cropped to a sliver (cover) or 220px of empty band (contain).
+     * A CAP keeps both: below it the banner is the picture's own shape and
+     * shrinks with the screen; at it, the banner stops growing and the picture
+     * is fitted whole inside it, centred, with what is behind the banner on
+     * either side. Written as `max-height` on the frame, beside its
+     * `aspect-ratio` -- one declaration, no script.
+     *
+     * Clamped here as well as on save, so a hand-edited row cannot print a
+     * number outside LIMITS; a positive value under 80 reads as 80, because a
+     * 5px banner is a typo, not a design.
+     */
+    public function sliderHeight(bool $phone = false): int
+    {
+        $raw = (int) ($phone ? $this->slider_h_m : $this->slider_h);
+        [, $max] = self::LIMITS[$phone ? 'slider_h_m' : 'slider_h'];
+
+        return $raw <= 0 ? 0 : max(80, min($max, $raw));
+    }
+
+    /**
+     * Does the phone frame take a SERVER-MADE CROP of the desktop picture?
+     *                                                               (Lane RC)
+     *
+     * Only when the set crops at all (`cover`) and the phone frame is a fixed
+     * preset. Under `contain` the phone draws the whole picture, and under
+     * `auto` the frame IS the picture's shape -- a crop would cut exactly what
+     * the owner asked never to be cut. The storefront and the admin's crop
+     * writer both ask this one method.
+     */
+    public function sliderCropsPhone(): bool
+    {
+        return $this->sliderFit() === 'cover' && $this->sliderRatioKey(true) !== self::SLIDER_AUTO;
     }
 
     /**
@@ -495,7 +702,12 @@ class BannerSet extends Model
      */
     public function sliderRatioMobileToken(): string
     {
+        // `auto` is a key and NOT a shape, so it answers the shipped phone
+        // preset here, exactly as an unknown key does. Nothing crops under
+        // `auto` (sliderCropsPhone() says no), so this only keeps the token
+        // a valid directory name for the one older caller that asks blind.
         $key = isset(self::SLIDER_RATIOS[(string) $this->slider_ratio_m])
+            && (string) $this->slider_ratio_m !== self::SLIDER_AUTO
             ? (string) $this->slider_ratio_m
             : '500/600';
 
@@ -503,15 +715,15 @@ class BannerSet extends Model
     }
 
     /** The desktop frame's width divided by its height. */
-    public function sliderRatioValue(): float
+    public function sliderRatioValue(array $cards = []): float
     {
-        return self::ratioValue($this->sliderRatioCss());
+        return self::ratioValue($this->sliderRatioCss($cards));
     }
 
     /** The same, below 768px. */
-    public function sliderRatioMobileValue(): float
+    public function sliderRatioMobileValue(array $cards = []): float
     {
-        return self::ratioValue($this->sliderRatioMobileCss());
+        return self::ratioValue($this->sliderRatioMobileCss($cards));
     }
 
     /**

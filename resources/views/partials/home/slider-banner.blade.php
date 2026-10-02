@@ -210,8 +210,23 @@
      * below follows the pixels the browser lays out with rather than the label
      * on the preset.
      */
-    $bsArD = $set->sliderRatioValue();
-    $bsArM = $set->sliderRatioMobileValue();
+    $bsArD = $set->sliderRatioValue($cards);
+    $bsArM = $set->sliderRatioMobileValue($cards);
+
+    /*
+     * ── WHOLE OR CROPPED, ASKED ONCE ──────────────────────────────── (Lane RC)
+     *
+     * "image should adjust auto with the screen without cutting". Under the
+     * shipped `contain` every picture is drawn whole, so the width the browser
+     * needs is never more than the frame's own -- the flat `sizes` is exact,
+     * and the cover arithmetic below (which asks for MORE than the frame,
+     * because cover overflows it) would only overstate. `cover` keeps that
+     * arithmetic exactly as it was.
+     */
+    $bsCover = $set->sliderFit() === 'cover';
+    $bsSizesAt = static function (?int $w, ?int $h, float $ar) use ($bsCover, $bsSizes): string {
+        return $bsCover ? ImageVariants::bannerSliderCoverSizes($w, $h, $ar) : $bsSizes;
+    };
 
     /*
      * WHAT EACH BREAKPOINT WILL ACTUALLY DRAW, decided once per card and here
@@ -230,7 +245,9 @@
      */
     $bsCropToken = $set->sliderRatioMobileToken();
 
-    $bsPhoneFor = static function ($card) use ($bsArM, $bsCropToken): array {
+    $bsCrops = $set->sliderCropsPhone();
+
+    $bsPhoneFor = static function ($card) use ($bsArM, $bsCropToken, $bsCrops, $bsSizesAt): array {
         /*
          * ── THREE WAYS TO FILL THE PHONE FRAME, BEST FIRST ──────────────────
          *
@@ -258,11 +275,21 @@
                 'srcset' => null,
                 'w' => $card->image_m_w,
                 'h' => $card->image_m_h,
-                'sizes' => ImageVariants::bannerSliderCoverSizes($card->image_m_w, $card->image_m_h, $bsArM),
+                'sizes' => $bsSizesAt($card->image_m_w, $card->image_m_h, $bsArM),
             ];
         }
 
-        $crop = ImageVariants::cropSrcsetFor(ImageVariants::rootRelative((string) $card->image), $bsCropToken);
+        /*
+         * ▲ NO CROP UNLESS THE SET CROPS.                              (Lane RC)
+         * A server-made crop is exactly the pixels `cover` would show, so it
+         * is only the right file when the set IS cover and the phone frame is
+         * a fixed shape. Under `contain` or `auto` the phone draws the whole
+         * picture -- measured before this, a 1920 x 550 banner with no phone
+         * picture was cut to its middle 458 x 550 on a 390 phone.
+         */
+        $crop = $bsCrops
+            ? ImageVariants::cropSrcsetFor(ImageVariants::rootRelative((string) $card->image), $bsCropToken)
+            : '';
 
         if ($crop !== '') {
             /*
@@ -282,7 +309,7 @@
                 'srcset' => $crop,
                 'w' => $card->image_w && $card->image_h ? $cropW : null,
                 'h' => $card->image_w && $card->image_h ? $cropH : null,
-                'sizes' => ImageVariants::bannerSliderCoverSizes($cropW, $cropH, $bsArM),
+                'sizes' => $bsSizesAt($cropW, $cropH, $bsArM),
             ];
         }
 
@@ -292,7 +319,7 @@
             'srcset' => null,
             'w' => $card->image_w,
             'h' => $card->image_h,
-            'sizes' => ImageVariants::bannerSliderCoverSizes($card->image_w, $card->image_h, $bsArM),
+            'sizes' => $bsSizesAt($card->image_w, $card->image_h, $bsArM),
         ];
     };
 
@@ -302,8 +329,8 @@
      * and the factor collapses to 1 — so this is byte-identical on the whole
      * existing catalogue and only speaks up for a picture wider than 1920:550.
      */
-    $bsSizesFor = static function ($card) use ($bsArD): string {
-        return ImageVariants::bannerSliderCoverSizes($card->image_w, $card->image_h, $bsArD);
+    $bsSizesFor = static function ($card) use ($bsArD, $bsSizesAt): string {
+        return $bsSizesAt($card->image_w, $card->image_h, $bsArD);
     };
 
     /*
@@ -473,7 +500,11 @@
   background-image:var(--kbbn-bgimg,none);background-size:cover;
   background-position:center;background-repeat:no-repeat;
   margin-inline:calc(var(--kbbs-gut) * -1);
-  padding-inline:var(--kbbs-gut);padding-block:18px}
+  padding-inline:var(--kbbs-gut);padding-block:0 18px}
+/* ▲ NO BAND ABOVE THE PICTURE (Lane RC). "remove any space between header and
+   banner": with a background chosen, the band's 18px top padding was the same
+   strip the section's 8px was, painted the set's colour. The 18px under the
+   picture stays -- the space below the banner is not what was asked about. */
 
 /* ── THE STAGE ───────────────────────────────────────────────────────────────
    The positioning context for the arrows, the bars and the pause button. Its
@@ -502,13 +533,29 @@
    THE SCROLLER IS THE NO-SCRIPT SLIDER. Before `is-js` is added this is a
    native scroll-snap rail: every picture reachable by swipe, by trackpad and
    by keyboard, at the right size. */
-.kbbs-vp{aspect-ratio:var(--kbbs-arm,4 / 3);container-type:inline-size;
+.kbbs-vp{width:100%;aspect-ratio:var(--kbbs-arm,4 / 3);max-height:var(--kbbs-hm,none);container-type:inline-size;
   border-radius:var(--kbbs-r,18px);box-shadow:var(--kbbs-sh,none);
   background:var(--line2,#F4EEF1);overflow-x:auto;overflow-y:hidden;
   scroll-snap-type:x mandatory;scroll-behavior:smooth;
   scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .kbbs-vp::-webkit-scrollbar{display:none}
-@media (min-width:768px){.kbbs-vp{aspect-ratio:var(--kbbs-ar,16 / 9)}}
+@media (min-width:768px){.kbbs-vp{aspect-ratio:var(--kbbs-ar,16 / 9);max-height:var(--kbbs-hd,none)}}
+
+/* ── THE HEIGHT CAP AND THE WHOLE PICTURE ───────────────────────── (Lane RC)
+   `max-height` beside `aspect-ratio`: below the cap the frame is the shape it
+   always was and shrinks with the screen; at the cap it stops growing and the
+   frame keeps its full width. `width:100%` on the frame is what keeps that
+   last promise: without it `aspect-ratio` carries the max-height across to the
+   WIDTH, and measured in Chromium the capped frame shrank to 250 x 300 at 390,
+   pinned to the left edge. `--kbbs-hd`/`--kbbs-hm` are written only when
+   the set names a height, so `none` -- no cap -- is the shipped state.
+
+   `is-whole` is `contain`, the shipped fit: every picture drawn whole inside
+   the frame, never cut. The frame's placeholder tint goes, because under
+   `contain` any room the picture does not fill is the BACKGROUND the set chose
+   ("Behind the banner"), not a pale pink box. */
+.kbbs.is-whole .kbbs-vp{background:transparent}
+.kbbs.is-whole .kbbs-a img{object-fit:contain}
 
 /* With the script running the frame stops being a scroll container and the
    track is moved instead. `touch-action:pan-y` is the half that keeps a swipe
@@ -756,7 +803,7 @@
   .kbbs.is-veil .kbbs-nav,.kbbs.is-veil .kbbs-pp{opacity:1}
 }
 </style>
-<div class="kbbs is-{{ $bsStyle }}{{ $bsArrows ? ' is-arrows' : '' }}{{ $bsBars ? ' is-bars' : '' }}{{ $bsDwell > 0 ? ' is-auto' : '' }}{{ $set->sliderFills() ? ' is-fill' : '' }}{{ $bsBgMode === 'none' ? '' : ' has-bg' }}"
+<div class="kbbs is-{{ $bsStyle }}{{ $bsArrows ? ' is-arrows' : '' }}{{ $bsBars ? ' is-bars' : '' }}{{ $bsDwell > 0 ? ' is-auto' : '' }}{{ $set->sliderFills() ? ' is-fill' : '' }}{{ $bsCover ? '' : ' is-whole' }}{{ $bsBgMode === 'none' ? '' : ' has-bg' }}"
      id="{{ $bsUid }}"
      style="{{ $bsVars }}{{ $bsBgVars === '' ? '' : ';'.$bsBgVars }}"
      role="region"

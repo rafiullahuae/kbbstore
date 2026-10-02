@@ -76,4 +76,60 @@ class BannerCard extends Model
     {
         return trim((string) $this->image_m) !== '';
     }
+
+    /**
+     * The desktop picture's own `[width, height]`, or null.          (Lane RC)
+     *
+     * The stored columns first -- they are read off the file once, when the
+     * picture is saved -- and the FILE ITSELF only when they are empty, which
+     * is a row written before the columns existed or by an import that did not
+     * fill them. Both the single-image banner and a slider's `auto` frame are
+     * sized from this, so it is never measured in the browser.
+     *
+     * @return array{0: int, 1: int}|null
+     */
+    public function naturalSize(): ?array
+    {
+        return self::sizeFrom((string) $this->image, $this->image_w, $this->image_h);
+    }
+
+    /** The same for the phone picture, or null when there is none. */
+    public function phoneNaturalSize(): ?array
+    {
+        if (! $this->hasPhonePicture()) {
+            return null;
+        }
+
+        return self::sizeFrom((string) $this->image_m, $this->image_m_w, $this->image_m_h);
+    }
+
+    /** @var array<string, array{0: int, 1: int}|null> one header read per file per process */
+    private static array $sizes = [];
+
+    /**
+     * @return array{0: int, 1: int}|null
+     */
+    private static function sizeFrom(string $path, mixed $w, mixed $h): ?array
+    {
+        if ((int) $w > 0 && (int) $h > 0) {
+            return [(int) $w, (int) $h];
+        }
+
+        $path = trim($path);
+
+        if ($path === '') {
+            return null;
+        }
+
+        /*
+         * MEMOISED PER PATH, because getimagesize() opens the file and the
+         * homepage asks for the first picture more than once per render. A
+         * miss is memoised too: a remote or missing picture is not retried.
+         */
+        if (! array_key_exists($path, self::$sizes)) {
+            self::$sizes[$path] = \App\Support\ImageVariants::sizeOf(\App\Support\ImageVariants::rootRelative($path));
+        }
+
+        return self::$sizes[$path];
+    }
 }

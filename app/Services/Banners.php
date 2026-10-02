@@ -285,6 +285,10 @@ class Banners
             // the admin preview — the exact "reaches the screen and silently
             // does nothing" fault the note above was written for.
             'kind', 'slider_style', 'slider_ratio', 'slider_ratio_m',
+            // Lane RC, and the warning above applies a third time: the fit and
+            // the two height caps reach the shop through this list or not at
+            // all. BannerSingleImageTest drives the stored value to the page.
+            'slider_fit', 'slider_h', 'slider_h_m',
         ];
 
         $select = ['banner_cards.'.'id as c_id'];
@@ -544,8 +548,10 @@ class Banners
         $dwell = self::clamp($set->speed_ms, ...BannerSet::LIMITS['speed_ms']);
 
         $vars = [
-            '--kbbs-ar:'.$set->sliderRatioCss(),
-            '--kbbs-arm:'.$set->sliderRatioMobileCss(),
+            // Lane RC: the cards are passed so `auto` can read the first
+            // picture's own width and height -- two integers, never a string.
+            '--kbbs-ar:'.$set->sliderRatioCss($cards),
+            '--kbbs-arm:'.$set->sliderRatioMobileCss($cards),
             '--kbbs-r:'.$radius.'px',
             '--kbbs-sh:'.$set->shadowCss(),
             // Printed from an integer this method has already clamped, so the
@@ -555,7 +561,39 @@ class Banners
             '--kbbs-flip:'.($rtl ? '-1' : '1'),
         ];
 
+        /*
+         * ── THE HEIGHT CAPS, OMITTED AT AUTO ──────────────────────── (Lane RC)
+         *
+         * Printed from sliderHeight(), which clamps to an integer, so the
+         * declaration is digits and `px`. At 0 (Auto) the property is LEFT OUT
+         * rather than written as `none`, so the stylesheet's own fallback is
+         * what applies -- the same idiom as the button colours above.
+         */
+        foreach (['--kbbs-hd' => false, '--kbbs-hm' => true] as $property => $phone) {
+            $h = $set->sliderHeight($phone);
+
+            if ($h > 0) {
+                $vars[] = $property.':'.$h.'px';
+            }
+        }
+
         return implode(';', $vars);
+    }
+
+    /**
+     * The custom properties the SINGLE-IMAGE banner is drawn with.  (Lane RC)
+     *
+     * Two, and both are the columns the other two kinds already share: the
+     * corner radius (an integer clamped to LIMITS) and the shadow (a literal
+     * out of BannerSet::SHADOWS). There is no shape and no height here,
+     * because the picture's own proportions are the height -- that is the
+     * whole of what the owner asked this kind to be.
+     */
+    public static function singleVariables(BannerSet $set): string
+    {
+        $radius = self::clamp($set->card_radius, ...BannerSet::LIMITS['card_radius']);
+
+        return '--kbbi-r:'.$radius.'px;--kbbi-sh:'.$set->shadowCss();
     }
 
     /**

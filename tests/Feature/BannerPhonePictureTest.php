@@ -87,6 +87,23 @@ function bppMakeImage(string $rel, int $w, int $h): void
     ImageVariants::generate('/'.ltrim($rel, '/'));
 }
 
+/**
+ * A set that CROPS: `cover` at the two fixed presets.               (Lane RC)
+ *
+ * The server-made crop and the cover `sizes` arithmetic below are still what
+ * a set does when the owner picks "Fill the frame" -- they are just no longer
+ * the shipped state. Since Lane RC a set ships `contain` at `auto` ("image
+ * should adjust auto with the screen without cutting"), where nothing is
+ * cropped and neither is ever used; BannerSingleImageTest pins that half. So
+ * the three cases that are ABOUT cropping ask for a cropping set explicitly.
+ *
+ * @return array<string, string>
+ */
+function bppCover(): array
+{
+    return ['slider_fit' => 'cover', 'slider_ratio' => '1920/550', 'slider_ratio_m' => '500/600'];
+}
+
 /** The partial's markup with its pushed <head> in front, stylesheet stripped. */
 function bppRender(array $card = [], array $setAttributes = []): string
 {
@@ -311,7 +328,7 @@ it('asks for the width that covering the phone frame actually needs, not the fra
      * MUTATION, run: make bannerSliderCoverSizes() return the flat expression
      * unconditionally and this is red on the first expectation.
      */
-    $html = bppRender();
+    $html = bppRender([], bppCover());
     $img = (string) (preg_match('#<img [^>]*>#s', $html, $m) ? $m[0] : '');
 
     /*
@@ -475,7 +492,7 @@ it('draws a server-made crop when there is no phone picture, at the frame shape'
 
     expect($made['made'])->toBeGreaterThan(0, 'no crop was written, so this case proves nothing');
 
-    $html = bppRender();
+    $html = bppRender([], bppCover());
 
     // The phone half is a <source>, exactly as an uploaded phone picture is —
     // the machinery is the same and only the file differs.
@@ -519,7 +536,7 @@ it('falls back to the whole picture, heavily and correctly, when no crop exists'
         @unlink($file);
     }
 
-    $html = bppRender();
+    $html = bppRender([], bppCover());
 
     expect(substr_count($html, '<picture>'))->toBe(0)
         ->and(substr_count($html, '<source'))->toBe(0)
