@@ -37,3 +37,24 @@ it('ships the columns that fit 1280 on by default, the rest one click away', fun
         ->and($app)->toContain('sale: false, categories: true, featured: true, orders: true, date: false, wc: false')
         ->and($app)->toContain('>Customize columns ');
 });
+
+/*
+ * PHONES (the owner, 2 October 2026, screenshot at ~390px): the four summary
+ * cards stacked one per row, Sort / Filters / Customize columns / Export
+ * stacked into rows of their own, and "In stock" broke over two lines.
+ * Measured after: 2 rows of summary cards, the tool buttons on one row that
+ * swipes (572px of buttons in a 362px row), every pill 23px tall (one line),
+ * page width 390; desktop toolbar and cards unchanged at 1280.
+ *
+ * MUTATION, RUN: put back `.cplkpis{grid-template-columns:minmax(0,1fr)}` under
+ * 430px and the first expectation is red.
+ */
+it('keeps the catalog compact on phones', function () {
+    $app = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+
+    expect(str_contains($app, "@media(max-width:430px){.cplkpis{grid-template-columns:minmax(0,1fr)}}"))->toBeFalse()
+        ->and($app)->toContain("'.cpltoolrow{display:contents}'")
+        ->and($app)->toContain(".cpltoolrow{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;")
+        ->and($app)->toContain("'.cplscroll .pill{white-space:nowrap}'")
+        ->and(substr_count($app, '<div class="cpltoolrow">'))->toBe(1);
+});
