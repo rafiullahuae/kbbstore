@@ -525,7 +525,10 @@ describe('the capabilities', function () {
             ->and(AdminCapabilities::CAPABILITIES['storefront.quick_edit'])->toBe(['owner'])
             ->and(AdminCapabilities::forPath('POST', 'admin-api/storefront/quick-edit/{type}/{id}'))->toBe('storefront.quick_edit')
             ->and(AdminCapabilities::forPath('POST', 'admin-api/storefront/quick-edit/{type}/{id}/preview'))->toBe('storefront.quick_edit')
-            ->and(AdminCapabilities::forPath('GET', 'admin-api/storefront/context'))->toBe('admin.access');
+            ->and(AdminCapabilities::forPath('GET', 'admin-api/storefront/context'))->toBe('admin.access')
+            // The other two addresses the context answer hands the script.
+            ->and(AdminCapabilities::forPath('POST', 'admin-api/cache/clear'))->toBe('cache.manage')
+            ->and(AdminCapabilities::forPath('POST', 'admin-api/media/upload'))->not->toBeNull();
 
         foreach (['manager', 'support', 'editor', 'staff', 'nonsense', null] as $role) {
             expect(AdminCapabilities::roleCan($role, 'storefront.quick_edit'))->toBeFalse()
