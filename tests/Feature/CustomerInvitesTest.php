@@ -321,9 +321,9 @@ it('stores only a hash of the link, expires it, and lets it set a password exact
     //  - store $token instead of self::hash($token) in sendOne(): the hash
     //    assertion and the "token is nowhere in the row" assertion fail;
     //  - drop ->where('invite_expires_at', '>', now()) from customerForToken():
-    //    the eight-days-later GET renders the form;
-    //  - drop the hash-clearing UPDATE in accept(): the second POST signs in
-    //    and changes the password again.
+    //    the eight-days-later GET renders the form.
+    //  (Single use has two layers -- accept()'s spend and applyNewPassword()'s
+    //  clear -- so removing one leaves this green; the next test pins the spend.)
     test()->actingAs(pqAdmin(), 'admin');
     $guest = pqGuest();
 
@@ -372,6 +372,30 @@ it('stores only a hash of the link, expires it, and lets it set a password exact
     test()->get('/my-account/welcome/' . $lateToken . '/')->assertOk()
         ->assertDontSee($late->email)
         ->assertSee(e(__('store.account.welcome_invalid')), false);
+});
+
+it('spends the link BEFORE it writes the password, so two submits cannot both win', function () {
+    // MUTATION: drop the conditional UPDATE that clears the hash in
+    // CustomerInviter::accept() — at the moment the password is saved the
+    // token is still live in the database, which is the window two racing
+    // requests with one link would both get through. (The single-use test
+    // above stays green under that mutation, because applyNewPassword() also
+    // clears the hash afterwards; this one pins the ORDER.)
+    test()->actingAs(pqAdmin(), 'admin');
+    $guest = pqGuest();
+    pqSendAll([$guest->id]);
+    $token = pqTokenFrom(pqSent()[0]);
+
+    $seen = 'not saved';
+    Customer::saving(function (Customer $c) use (&$seen, $guest) {
+        if ($c->id === $guest->id && $c->isDirty('password')) {
+            $seen = DB::table('customers')->where('id', $c->id)->value('invite_token_hash');
+        }
+    });
+
+    expect(app(CustomerInviter::class)->accept($token, 'racing-password-1'))->not->toBeNull()
+        ->and($seen)->toBeNull()
+        ->and(app(CustomerInviter::class)->accept($token, 'second-password-1'))->toBeNull();
 });
 
 it('answers an expired, a used and a made-up link with the same page', function () {
@@ -644,12 +668,16 @@ it('records the transport\'s reason per recipient and leaves a failed customer e
 });
 
 it('can be cancelled, and nothing pending is sent after that', function () {
-    // MUTATION: make cancel() leave pending rows pending — the next step sends.
+    // MUTATION: make cancel() leave pending rows pending — `pending` reads 2
+    // and the rows would still be there for anything that ignored the status.
     test()->actingAs(pqAdmin(), 'admin');
     $ids = [pqGuest()->id, pqGuest()->id];
 
     $run = test()->postJson('/admin-api/customers/invites/send', pqTemplate(['ids' => $ids, 'expected' => 2]))->json('run');
-    test()->postJson('/admin-api/customers/invites/runs/' . $run['id'] . '/cancel')->assertOk()->assertJsonPath('run.status', 'cancelled');
+    test()->postJson('/admin-api/customers/invites/runs/' . $run['id'] . '/cancel')->assertOk()
+        ->assertJsonPath('run.status', 'cancelled')
+        ->assertJsonPath('run.pending', 0)
+        ->assertJsonPath('run.skipped_during', 2);
     test()->postJson('/admin-api/customers/invites/runs/' . $run['id'] . '/step')->assertOk();
 
     expect(pqSent())->toBe([]);
