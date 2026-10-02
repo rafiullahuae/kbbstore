@@ -1289,6 +1289,10 @@ require __DIR__.'/auth-customer.php';
  */
 require __DIR__ . '/cart-address.php';
 
+// "Buy these together" on the product page (Lane RB): the add-all endpoint
+// and the product-view beacon, both on the web stack with CSRF.
+require __DIR__.'/buy-together.php';
+
 /*
  * Newsletter confirmation and unsubscribe. Same group and the same reasoning as
  * the file above -- a shopper opens these from their own inbox, so the admin

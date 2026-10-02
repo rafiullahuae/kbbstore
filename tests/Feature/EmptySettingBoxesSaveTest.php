@@ -104,8 +104,14 @@ it('has text boxes on the Ecommerce screen and most of them ship empty', functio
      * The pin is advanced for that one addition and nothing else; the
      * `blankByDefault` count below is unchanged, because the new field is on
      * the Checkout tab and that count is the Cart tab's.
+     *
+     * 16 again in Lane RB, and for a removal: `fbt_title` — Frequently bought
+     * together's heading, on the Product page tab — went with the block. "Buy
+     * these together" replaced it and keeps its heading on Appearance →
+     * Product page → Buy these together, so the box here would save a value
+     * nothing reads. The Cart tab's count below is untouched.
      */
-    expect($fields)->toHaveCount(17);
+    expect($fields)->toHaveCount(16);
 
     $blankByDefault = array_filter(
         ecommerceSchema()['cart']['fields'],
@@ -276,16 +282,16 @@ it('keeps the two screens that already had this right', function () {
  * SettingsService::get($key, $default) returns its default only when the ROW
  * IS ABSENT. A cleared box stores '', so the row exists and the default is out
  * of reach from that moment on. Whether that is what the owner wanted depends
- * entirely on the reader, and the three Ecommerce text fields that ship with a
+ * entirely on the reader, and the Ecommerce text fields that ship with a
  * non-empty default answer differently:
  *
  *   delivery_default_text   cleared means cleared. DeliveryLine::for() prints
  *                           '' and the storefront shows no delivery line. The
  *                           two states are distinct and the reader honours it.
- *   fbt_title               cleared means an EMPTY HEADING. fbt.blade.php
- *                           prints `<h2 class="kbb-fbt-title"></h2>` — it has
- *                           no blank fallback and no blank branch, so the
- *                           owner gets an empty element rather than no title.
+ *   (fbt_title              was the third, and went with Frequently bought
+ *                           together in Lane RB. Its replacement's heading box
+ *                           treats empty as "the standard heading", like the
+ *                           You may also like carousel's.)
  *   review_badge_label      cleared means NOTHING AT ALL.
  *                           ReviewBadgeSettings::label() folds a blank value
  *                           back to '{n} reviews', so '' and the default are
@@ -301,7 +307,7 @@ it('records what a cleared box means for each field that has a non-empty default
 
     $settings = app(SettingsService::class);
 
-    foreach (['delivery_default_text', 'fbt_title', 'review_badge_label'] as $key) {
+    foreach (['delivery_default_text', 'review_badge_label'] as $key) {
         test()->postJson('/admin-api/ecommerce', ['settings' => [$key => '']])->assertOk();
     }
 
@@ -311,7 +317,6 @@ it('records what a cleared box means for each field that has a non-empty default
 
     // The row exists and holds '', so the schema default is no longer reachable.
     foreach (['delivery_default_text' => '1–3 days fast delivery all over UAE',
-              'fbt_title' => 'Complete your routine',
               'review_badge_label' => '{n} reviews'] as $key => $default) {
         expect(Setting::query()->where('key', $key)->value('value'))->toBe('');
         expect($settings->get($key, $default))->toBe('', "{$key} still answered its default after being cleared");

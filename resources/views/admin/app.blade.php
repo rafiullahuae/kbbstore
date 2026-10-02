@@ -24396,6 +24396,12 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
      Trust tabs above are, so this include is the whole of the change here. --}}
 @include('admin.partials.product-mobile-sections-screen')
 
+{{-- Appearance → Product page → Buy these together (Lane RB). The section's
+     switches, how its matches are chosen, and which categories go together.
+     One more tab, added by wrapping paintProductPage() exactly as Mobile
+     sections above is, so this include is the whole of the change here. --}}
+@include('admin.partials.product-buy-together-screen')
+
 {{-- Store -> Import: an export file too big for one request goes up in pieces
      (Lane IE2, mounted by the integrator in 2.60.337). It WRAPS the console's
      own upload function, which is declared near line ten thousand of this file,

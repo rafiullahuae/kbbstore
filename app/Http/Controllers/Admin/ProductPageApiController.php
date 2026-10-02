@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Services\AlsoLikeSettings;
+use App\Services\BuyTogetherPairs;
+use App\Services\BuyTogetherSettings;
 use App\Services\ModuleSchema;
 use App\Services\ProductLayout;
 use App\Services\ProductMobileSections;
@@ -73,7 +75,36 @@ class ProductPageApiController extends Controller
              * must not rewrite the module switches or the layout sliders.
              */
             'msections' => app(ProductMobileSections::class)->payload(),
+            /*
+             * THE SIXTH HALF: Buy these together.                  (Lane RB)
+             * Its options, its two device switches (which LIVE on the Sections
+             * and Mobile sections rows and are only drawn here too), and the
+             * category pairs. Its own key in save() like every half.
+             */
+            'together' => self::togetherPayload(),
         ]);
+    }
+
+    /**
+     * Buy these together, as the screen draws it.
+     *
+     * `phone` and `laptop` are READ from where they live — the Mobile sections
+     * row and the Sections row — so this tab, those two tabs and the page can
+     * never disagree: they are one value each, drawn in two places.
+     *
+     * @return array<string, mixed>
+     */
+    private static function togetherPayload(): array
+    {
+        $sections = app(ProductSections::class)->all();
+
+        return [
+            'options' => app(BuyTogetherSettings::class)->tabs(),
+            'phone' => app(ProductMobileSections::class)->sectionOn('buytogether'),
+            'laptop' => (bool) ($sections['fbt']['desktop'] ?? true),
+            'pairs' => app(BuyTogetherPairs::class)->payload(),
+            'max_pairs' => BuyTogetherPairs::MAX_PAIRS,
+        ];
     }
 
     /**
@@ -118,9 +149,10 @@ class ProductPageApiController extends Controller
             'also' => ['sometimes', 'array', 'min:1'],
             'trust' => ['sometimes', 'array', 'min:1'],
             'msections' => ['sometimes', 'array', 'min:1'],
+            'together' => ['sometimes', 'array', 'min:1'],
         ]);
 
-        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['also']) && ! isset($data['trust']) && ! isset($data['msections'])) {
+        if (! isset($data['sections']) && ! isset($data['layout']) && ! isset($data['also']) && ! isset($data['trust']) && ! isset($data['msections']) && ! isset($data['together'])) {
             return response()->json(['ok' => false, 'error' => 'Nothing to save.'], 422);
         }
 
@@ -174,6 +206,62 @@ class ProductPageApiController extends Controller
                 if ($unknown !== []) {
                     return response()->json(['ok' => false, 'error' => 'Unknown setting: '.implode(', ', $unknown)], 422);
                 }
+            }
+        }
+
+        /*
+         * Buy these together (Lane RB): every part validated before anything
+         * is written, like Mobile sections above.
+         *
+         *   options  an unknown key refused; known ones through ModuleSchema's
+         *            casts (a select stores one of its options or the default,
+         *            the count is clamped 3–6)
+         *   phone    a boolean → the Mobile sections row `buytogether`
+         *   laptop   a boolean → the Sections row `fbt`, Desktop
+         *   pairs    BuyTogetherPairs::validateOverrides(): every category id
+         *            must exist, at most five per category, none twice;
+         *            null / "default" removes an override
+         */
+        $together = null;
+
+        if (isset($data['together'])) {
+            $t = $data['together'];
+            $unknown = array_diff(array_keys($t), ['options', 'phone', 'laptop', 'pairs']);
+
+            if ($unknown !== []) {
+                return response()->json(['ok' => false, 'error' => 'Unknown part: '.implode(', ', $unknown)], 422);
+            }
+
+            $together = [];
+
+            if (array_key_exists('options', $t)) {
+                $unknown = is_array($t['options']) ? array_diff(array_keys($t['options']), array_keys(BuyTogetherSettings::SCHEMA)) : ['options'];
+
+                if ($unknown !== []) {
+                    return response()->json(['ok' => false, 'error' => 'Unknown setting: '.implode(', ', $unknown)], 422);
+                }
+
+                $together['options'] = $t['options'];
+            }
+
+            foreach (['phone', 'laptop'] as $device) {
+                if (array_key_exists($device, $t)) {
+                    if (! is_bool($t[$device]) && ! in_array($t[$device], [0, 1, '0', '1'], true)) {
+                        return response()->json(['ok' => false, 'error' => "The {$device} switch must be on or off."], 422);
+                    }
+
+                    $together[$device] = (bool) $t[$device];
+                }
+            }
+
+            if (array_key_exists('pairs', $t)) {
+                $pairs = app(BuyTogetherPairs::class)->validateOverrides($t['pairs']);
+
+                if (is_string($pairs)) {
+                    return response()->json(['ok' => false, 'error' => $pairs], 422);
+                }
+
+                $together['pairs'] = $pairs;
             }
         }
 
@@ -247,11 +335,52 @@ class ProductPageApiController extends Controller
             }
         }
 
+        if (is_array($together)) {
+            if (isset($together['options'])) {
+                app(BuyTogetherSettings::class)->save($together['options']);
+                $saved += count($together['options']);
+            }
+
+            if (array_key_exists('phone', $together)) {
+                $msec = app(ProductMobileSections::class);
+                $clean = $msec->validate(['on' => ['buytogether' => $together['phone']]]);
+
+                if (is_array($clean)) {
+                    $msec->saveLayout($clean);
+                    $saved++;
+                }
+            }
+
+            if (array_key_exists('laptop', $together)) {
+                /* The Sections row's Desktop value, written into the stored map
+                   and nothing else beside it: ProductSections::save() rewrites
+                   the whole map from what it is given, so it is not used for one
+                   switch. */
+                $settings = app(\App\Services\SettingsService::class);
+                $map = $settings->get('product_sections');
+                $map = is_array($map) ? $map : [];
+                $row = is_array($map['fbt'] ?? null) ? $map['fbt'] : [];
+                $map['fbt'] = ['desktop' => $together['laptop'], 'mobile' => (bool) ($row['mobile'] ?? true)];
+                $settings->set('product_sections', $map);
+                $saved++;
+            }
+
+            if (isset($together['pairs'])) {
+                app(BuyTogetherPairs::class)->save($together['pairs']);
+                $saved++;
+            }
+
+            // Every product's cached choice was made under the old rules.
+            \Illuminate\Support\Facades\Cache::forget(BuyTogetherPairs::CACHE_KEY);
+        }
+
         return response()->json([
             'ok' => true,
             'saved' => $saved,
             'also' => $this->also->tabs(),
-            'sections' => array_values($this->sections->all()),
+            // A fresh instance: the Buy these together half may have written
+            // the `fbt` row after $this->sections memoised the map.
+            'sections' => array_values(app(ProductSections::class)->all()),
             'layout' => ModuleSchema::tabs(
                 ProductLayout::SCHEMA,
                 ProductLayout::TABS,
@@ -260,6 +389,7 @@ class ProductPageApiController extends Controller
             ),
             'trust' => self::trustTabs(),
             'msections' => app(ProductMobileSections::class)->payload(),
+            'together' => self::togetherPayload(),
         ]);
     }
 

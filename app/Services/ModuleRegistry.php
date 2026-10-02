@@ -553,7 +553,15 @@ class ModuleRegistry
          * same reason.
          */
         'reviews' => ['reviews', 'Reviews', 'Customer reviews on the product page — score summary, filters and review cards — plus the moderation screens under Reviews. The on/off switch lives with the rest of the product page sections; this row is here so you can find it.', true, 'Appearance → Product page', 'productpage', 'product', 'bottom', 'The reviews section near the foot of the product page.', 'elsewhere'],
-        'frequently_bought' => ['catalogue', 'Frequently Bought Together', 'A “Complete your routine” block on product pages — the main item plus matches (from WooCommerce cross-sells or the same category), with one-click add-all. Lifts average order value. Off by default.', false, 'Its own screen', '', 'product', 'mid', 'The Complete your routine block on the product page.', 'live'],
+        /*
+         * Lane RB: Frequently Bought Together was replaced, in its slot, by
+         * "Buy these together" — and its switch with it. That section is
+         * switched on Appearance → Product page → Buy these together (and per
+         * device on the Sections and Mobile sections rows), so this row is
+         * `elsewhere`: a `live` row here would be a second toggle stored in
+         * module_toggles that nothing reads any more.
+         */
+        'frequently_bought' => ['catalogue', 'Buy these together', 'The product on the page plus one match from each category that goes with it, a green tick on each, and one “Buy 4 items together” button that adds every ticked product. Replaced Frequently Bought Together. The switch lives with the rest of the product page sections; this row is here so you can find it.', false, 'Appearance → Product page', 'productpage', 'product', 'mid', 'The Buy these together box under the buy column on the product page.', 'elsewhere'],
         // ── Marketing ──
         'marketing_pixels' => ['marketing', 'Marketing Pixels', 'Meta Pixel, Google (GA4) and TikTok tags with standard e-commerce events (view, checkout, purchase). Off by default — add your IDs to activate.', false, 'Growth & Marketing → Marketing Pixels', 'pixels', 'site', 'all', 'Meta, GA4 and TikTok tags on every page. Nothing visible.', 'live'],
         /*

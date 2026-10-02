@@ -230,6 +230,25 @@ export async function addToCart(body) {
     return post('/add', body);
 }
 
+/**
+ * "Buy these together" — every ticked product in ONE request. (Lane RB)
+ *
+ * The same door as addToCart() above: the panel opens on the skeleton, the
+ * request joins the same queue, and the answer is applied by the same code, so
+ * the panel, the badge and the toast behave exactly as a single Add does. The
+ * server re-checks every line (Store\CartController::addTogether()).
+ *
+ * @param {Array<{product_id:number, variant_id:(number|null)}>} items
+ */
+export async function addTogether(items) {
+    if (config().openOnAdd !== false) {
+        skeleton();
+        open('cart');
+    }
+
+    return post('/add-together', { items });
+}
+
 export function initCart() {
     document.addEventListener('click', async (event) => {
         // Add to cart — product cards, and later the product page.

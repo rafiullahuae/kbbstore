@@ -895,77 +895,45 @@ it('draws the card the owner asked for on the four curated collections too', fun
     }
 });
 
-it('gives the Frequently Bought Together strip the stylesheet it never had', function () {
+it('keeps the Buy these together strip one height, by the cart rail\'s own mechanism', function () {
     /*
-     * ── THE ONE PRODUCT TILE ON THIS SHOP THAT HAD NO CSS AT ALL ───────────
+     * ── THE STRIP THIS CASE USED TO PIN WENT, AND ITS RULES WENT WITH IT ───
      *
-     * partials/fbt.blade.php draws a tile per bundle item and is the only
-     * product-tile surface outside the cart that never went through
-     * <x-product-card>. Its own header says why nobody noticed: "The plugin
-     * ships its own CSS for this block, so no theme stylesheet is involved" --
-     * true of the WordPress original, where the KBB Modules plugin styled it.
-     * THE PLUGIN'S CSS WAS NEVER PORTED, so in this Laravel app the block had
-     * no rules whatsoever and rendered as a wall of inline text.
+     * Until Lane RB this case pinned Frequently Bought Together's tiles: the
+     * one product tile on the shop that had NO stylesheet, measured at four
+     * heights at 390px (18 / 60 / 81 / 114) until Lane CARD gave it reserved
+     * tracks. That block was replaced, in its slot, by "Buy these together" —
+     * the owner: "i need the same design section which we have on the cart
+     * page "Recommended for you" same carousel, same size" — and its rules
+     * went with it.
      *
-     * Measured in Chromium on the preview, module on, before this block
-     * existed -- .kbb-fbt-item heights:
+     * The owner's "the grid must remain same heighted overall even if the
+     * name of the product is long ... APPLY THIS EVERYWHERE" still applies to
+     * the new strip, and it holds it the cart rail's way, which is two rules:
      *
-     *     @320    18 / 81 / 156 / 210      four heights
-     *     @390    18 / 60 / 81  / 114      four heights
-     *     @1280   18 / 114                 two heights
+     *   1. the strip is ONE FLEX ROW that does not wrap, with the default
+     *      `align-items:stretch` — so every card is as tall as the tallest
+     *      card in it, whatever its name does;
+     *   2. the name is CLAMPED (three lines) with a two-line floor, so no
+     *      name can make the tallest card unbounded.
      *
-     * and after: 175.94 at all three widths, one height.
-     * docs/card-shots/fbt-before-390.png and fbt-after-390.png are the pair.
-     *
-     * MUTATION: replace `var(--fbt-name-slot)` in `.kbb-fbt-item`'s
-     * grid-template-rows with `auto` and this is red. RUN, and re-measured in
-     * Chromium with the sheet rebuilt: the strip went back to TWO heights at
-     * all three widths -- 159.06 where the name fits one line and 175.94 where
-     * it takes two -- which is the same defect as the rating row on the shared
-     * card, arrived at from the other end. (The first draft of this note
-     * guessed 151.94/168.83 from reading the CSS; the measurement is what
-     * these numbers are, and the two did not agree.)
-     *
-     * A SECOND MUTATION for the clamp: delete `-webkit-line-clamp` from
-     * `.kbb-fbt-name` and the track is still reserved but a three-line name
-     * OVERFLOWS it, so the name runs into the price. RUN.
+     * MUTATION: add `align-items:flex-start` to `.bt-rail` and this is red —
+     * each card goes back to its own height. RUN. Delete the line clamp from
+     * `.bt-card .nm` and the last expectation is red. RUN.
      */
     $css = cehCss('kbb-product.css');
     $rules = (string) preg_replace('#/\*.*?\*/#s', '', $css);
 
     expect(str_contains($rules, '.kbb-fbt-item'))
-        ->toBeTrue('the FBT strip has no stylesheet again — every item is as tall as its own name wraps');
+        ->toBeFalse('the old Frequently Bought Together rules are back, styling a tile no template draws');
 
-    // The reservation is a calc() over the numbers the name row is drawn with,
-    // so the track cannot drift from the row it reserves.
-    expect(preg_match('/--fbt-name-slot:\s*calc\(([^;]+)\)/', $rules, $m))
-        ->toBe(1, '--fbt-name-slot is not a calc() over the name row\'s own numbers');
+    expect(preg_match('/\.bt-rail\{([^}]*)\}/s', $rules, $m))->toBe(1, 'the Buy these together strip has no rule');
+    expect($m[1])->toContain('display:flex')
+        ->and($m[1])->not->toContain('flex-wrap:wrap')
+        ->and($m[1])->not->toMatch('/align-items:\s*(flex-)?(start|end|center|baseline)/');
 
-    foreach (['--fbt-name-fs', '--fbt-name-lh', '--fbt-name-lines'] as $term) {
-        expect(str_contains($m[1], $term))
-            ->toBeTrue('--fbt-name-slot does not read '.$term.', so the reservation can drift from the row it reserves');
-    }
-
-    // And the item SPENDS it, in a grid-template-rows that also reserves the
-    // picture and the price. `auto` in the middle track is the defect.
-    expect(preg_match(
-        '/\.kbb-fbt-item\{[^}]*grid-template-rows:\s*var\(--fbt-thumb\)\s+var\(--fbt-name-slot\)\s+var\(--fbt-price-slot\)/s',
-        $rules
-    ))->toBe(1, '.kbb-fbt-item no longer reserves the three rows in order — the strip goes back to one height per name length');
-
-    // The clamp and the track read the SAME property, which is what stops a
-    // three-line name overflowing a two-line reservation.
-    expect(preg_match('/\.kbb-fbt-name\{[^}]*-webkit-line-clamp:\s*var\(--fbt-name-lines\)/s', $rules))
-        ->toBe(1, '.kbb-fbt-name is not clamped to the number of lines its track reserves');
-
-    /*
-     * AND THE PRICE ROW IS A LENGTH, not a ratio. Declared unitless the
-     * struck/sale pair takes a taller line box than a plain price and puts a
-     * second height back on the strip — the pixel `.cp` already paid for on the
-     * shared card.
-     */
-    expect(preg_match('/\.kbb-fbt-price\{[^}]*line-height:\s*calc\(/s', $rules))
-        ->toBe(1, '.kbb-fbt-price\'s line-height is not a length, so the row follows the type inside it');
+    expect(preg_match('/\.bt-card \.nm\{[^}]*-webkit-line-clamp:\s*3[^}]*min-height:\s*calc\(/s', $rules))
+        ->toBe(1, '.bt-card .nm is not clamped with a reserved floor, so a long name sets the strip\'s height');
 });
 
 it('knows every product tile on this shop that is NOT the shared card', function () {
@@ -977,9 +945,11 @@ it('knows every product tile on this shop that is NOT the shared card', function
      *
      * Two exist. Both are listed here so a third cannot arrive unnoticed:
      *
-     *   partials/fbt.blade.php        .kbb-fbt-item — the bundle strip on the
-     *                                 product page. IN SCOPE, and it is the one
-     *                                 this round fixed.
+     *   partials/fbt.blade.php        .bt-card — "Buy these together" (Lane RB;
+     *                                 it was .kbb-fbt-item, Frequently Bought
+     *                                 Together). The cart rail's card, by the
+     *                                 owner's own request, so it is NOT the
+     *                                 shared card and is listed here.
      *   store/cart-inner.blade.php    .cpg-card — the recommended rail, drawn
      *                                 only under the squeeze cart layout. OUT
      *                                 of scope: the owner excluded the cart and
@@ -1006,7 +976,7 @@ it('knows every product tile on this shop that is NOT the shared card', function
             (string) file_get_contents($file->getPathname())
         );
 
-        foreach (['kbb-fbt-item', 'cpg-card'] as $needle) {
+        foreach (['kbb-fbt-item', 'cpg-card', 'bt-card'] as $needle) {
             if (preg_match('/class="[^"]*\b'.preg_quote($needle, '/').'\b/', $code)) {
                 $drawers[] = str_replace(base_path().DIRECTORY_SEPARATOR, '', $file->getPathname());
             }

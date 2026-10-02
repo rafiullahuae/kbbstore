@@ -1143,6 +1143,27 @@ final class InterfaceStrings
             'fbt.title' => 'Complete your routine',
             'fbt.total' => 'Total: :amount',
             'fbt.add_selected' => 'Add selected to cart',
+            /*
+             * "Buy these together" (Lane RB), which replaced the block above in
+             * its slot. `heading` is what an empty Heading box prints. The three
+             * `button*` strings are the button's words for 2+, 1 and 0 ticked
+             * products; the page prints all three into data attributes so the
+             * script counts in the page's own language. The rest are what the
+             * one-request add answers with.
+             */
+            'buy_together.heading' => 'Buy these together',
+            'buy_together.button' => 'Buy :count items together',
+            'buy_together.button_one' => 'Add 1 item to cart',
+            'buy_together.button_none' => 'Tick at least one product',
+            'buy_together.total' => 'Total:',
+            'buy_together.sold_out' => 'Sold out',
+            'buy_together.added' => ':count items added to your bag',
+            'buy_together.added_one' => 'Added to bag',
+            'buy_together.gone' => 'One of these is no longer available.',
+            'buy_together.option_gone' => 'That option of :name is no longer available.',
+            'buy_together.choose_option' => 'Choose an option for :name first.',
+            'buy_together.sold_out_named' => ':name is sold out.',
+            'buy_together.not_added' => ':name could not be added.',
             'quick_view.in_stock' => 'In stock',
             'quick_view.out_of_stock' => 'Out of stock',
             'quick_view.view_full' => 'View full details',

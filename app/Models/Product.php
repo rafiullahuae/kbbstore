@@ -50,6 +50,8 @@ class Product extends Model
         // (App\Services\AlsoLikeRail). Saving the product -- its brand, its
         // picks -- drops that product's choice at once. (Lane PS)
         static::saved(static fn (self $p) => \App\Services\AlsoLikeRail::forget((int) $p->getKey()));
+        // "Buy these together" caches its candidates the same way. (Lane RB)
+        static::saved(static fn (self $p) => \App\Services\BuyTogether::forget((int) $p->getKey()));
     }
 
     /**

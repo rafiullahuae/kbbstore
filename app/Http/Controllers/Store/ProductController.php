@@ -171,10 +171,9 @@ class ProductController extends Controller
             /*
              * "You may also like" — a carousel, mixed from the same brand and
              * the same category, with the owner's controls and per-product
-             * picks. (Lane PS) App\Services\AlsoLikeRail chooses; related()
-             * below is no longer what the page draws, and is kept, unchanged,
-             * because Frequently Bought Together still takes its companions
-             * from it.
+             * picks. (Lane PS) App\Services\AlsoLikeRail chooses. The old
+             * related() it replaced went in Lane RB, with the Frequently
+             * Bought Together block that was its last caller.
              */
             'alsoLike' => $alsoLike,
             /*
@@ -195,7 +194,20 @@ class ProductController extends Controller
             // Inlined rather than looked up in the build manifest: a missing
             // entry throws, and that took this page down for hours.
             'reviewsCss' => $this->reviewsCss(),
-            'bundle' => $this->bundle($product),
+            /*
+             * "Buy these together" (Lane RB) — the section that replaced
+             * Frequently Bought Together in the same slot. App\Services\
+             * BuyTogether chooses; it asks the database nothing while the
+             * section is off.
+             *
+             * `bundle` is the old block's variable, kept EMPTY rather than
+             * removed: StorefrontEnglishUnchangedTest renders the
+             * pre-conversion templates against this controller, and the old
+             * partial still names it. An empty collection is what it always
+             * received with its module off, so the walk draws nothing there.
+             */
+            'buyTogether' => app(\App\Services\BuyTogether::class)->forProduct($product),
+            'bundle' => collect(),
             'vatLine' => $this->vatLine($request),
             // $summary is built at the top of this method but was never
             // imported here, so the two review lines below referenced a
@@ -609,45 +621,6 @@ class ProductController extends Controller
         return ['total' => $total, 'average' => $total ? round($weighted / $total, 1) : 0.0, 'bars' => $bars];
     }
 
-    private function related(Product $product)
-    {
-        $categoryIds = $product->categories->pluck('id');
-
-        $related = Product::query()
-            ->select(self::CARD_COLUMNS)
-            ->visible()
-            ->where('id', '!=', $product->id)
-            ->when(
-                $categoryIds->isNotEmpty(),
-                fn ($q) => $q->whereHas('categories', fn ($c) => $c->whereIn('categories.id', $categoryIds))
-            )
-            ->with('brand:id,name,slug')
-            // Four out of a category is a LIMIT over a key that ties across
-            // most of this catalogue, so without `id` the four "You may also
-            // like" cards change between two renders of the same product page
-            // with nothing behind the change.
-            ->orderByDesc('total_sales')
-            ->orderByDesc('id')
-            ->limit(4)
-            ->get();
-
-        /*
-         * ONE STATEMENT FOR EVERY SET ON THE RELATED RAIL, OR NONE AT ALL. (Lane SG)
-         *
-         * The three columns on the list above let a set be priced by its RULE;
-         * this is what makes reading that rule affordable. SetPricing::prime()
-         * looks first and touches the database only when one of these rows is
-         * actually a set -- so a shop with none pays nothing and
-         * StorefrontQueryBudgetTest's ceilings do not move. With sets present it
-         * is ONE grouped aggregate for all of them, flat in their number, in
-         * place of the one-per-set tally() the card would otherwise run lazily.
-         * prime()'s docblock carries the two alternatives and why not.
-         */
-        \App\Support\SetPricing::prime($related);
-
-        return $related;
-    }
-
     /**
      * The dispatch countdown — TWO CLAIMS, AND ONLY ONE OF THEM TRAVELS.
      *
@@ -806,29 +779,6 @@ class ProductController extends Controller
             3600,
             static fn () => (string) @file_get_contents($path)
         );
-    }
-
-    /**
-     * Frequently Bought Together: the product itself plus its best companions.
-     *
-     * Cached per product — the set only changes when the catalogue does, and
-     * this runs on the most-visited page type on the site. (Rule 27)
-     */
-    private function bundle(Product $product)
-    {
-        if (! $this->settings->moduleEnabled('frequently_bought', false)) {
-            return collect();
-        }
-
-        $count = max(1, (int) $this->settings->get('fbt_count', 3));
-
-        $mates = \Illuminate\Support\Facades\Cache::remember(
-            "kbb.fbt.{$product->id}.{$count}",
-            900,
-            fn () => $this->related($product)->take($count)->values()
-        );
-
-        return collect([$product])->concat($mates);
     }
 
     /**

@@ -209,7 +209,12 @@ it('names a real console location in every module row that names one at all', fu
     // line below it is again what makes advancing safe: $wrong stayed empty, so
     // the new row's screen string really does resolve to a screen the console
     // can draw.
-    expect($checked)->toBe(39);
+    //
+    // 40 with Lane RB: `frequently_bought` went from a `live` row naming "Its
+    // own screen" (which this test does not check) to an `elsewhere` row naming
+    // 'Appearance → Product page' — the screen where "Buy these together", its
+    // replacement, is switched. Advanced for that, and $wrong is still empty.
+    expect($checked)->toBe(40);
     expect($wrong)->toBe([]);
 });
 

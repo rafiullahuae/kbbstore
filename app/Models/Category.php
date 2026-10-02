@@ -42,6 +42,10 @@ class Category extends Model
     {
         static::saved(static fn () => \App\Support\ProductTabs::flush());
         static::deleted(static fn () => \App\Support\ProductTabs::flush());
+        // "Buy these together" reads every category's name to pair them, from
+        // a ten-minute cache: a renamed or new shelf is paired at once. (Lane RB)
+        static::saved(static fn () => \App\Services\BuyTogetherPairs::forget());
+        static::deleted(static fn () => \App\Services\BuyTogetherPairs::forget());
     }
 
     public function parent()
