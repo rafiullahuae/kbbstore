@@ -55,8 +55,17 @@
 --}}
 @once
 @vite('resources/css/kbb/kbb-title-header.css')
+{{-- The shop's own face, so a preview's title is set in Outfit as the page sets it. Constant CSS from WebFonts. --}}
+<style id="thk-outfit">{!! \App\Support\WebFonts::faceCss(\App\Support\WebFonts::OUTFIT) !!}</style>
 @verbatim
 <style>
+/* THE SHOP'S CONTEXT around every preview, so the header is drawn as the
+   category page draws it: the shop's ink, its second ink and its typeface
+   (kbb.css :root), not the console's. The header itself carries padding:0
+   since 2.60.350, so kbb.css's section{padding:52px 0} -- absent here --
+   makes no difference to its height on either side. */
+.thk-live,.thk-art{--ink:#2A2228;--ink-2:#5E545A;--sans:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
 /* ── The tiles ─────────────────────────────────────────────────────────── */
 .thk-pick{display:grid;gap:7px;min-width:0;margin-top:14px}
 .thk-lab{font-size:12.5px;font-weight:650;min-width:0;overflow-wrap:anywhere}
@@ -80,6 +89,8 @@
 .thk-cap b{font-weight:750}
 .thk-cap small{display:block;color:var(--ink-soft,#6b7280);font-size:10.5px}
 .thk-tiles.is-compact .thk-cap{font-size:10.5px}
+.thk-tiles.is-compact .thk-shop{min-height:58px;font-size:10px;padding:4px 18px 4px 4px}
+.thk-tiles.is-compact .thk-tick{top:6px;width:17px;height:17px;line-height:17px;font-size:10px}
 /* The art: one to three small headers side by side, drawn by the shop's CSS. */
 .thk-art{display:grid;gap:3px;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);min-width:0;pointer-events:none}
 .thk-art .kbb-th{margin:0}
@@ -398,7 +409,11 @@
     var style = [];
     var phone = dev === 'phone';
 
-    if (o.mini) {
+    if (o.mini === 'compact') {
+      style.push('--kbb-th-h:58px;--kbb-th-hd:58px', '--kbb-th-ts:11px;--kbb-th-tsd:11px',
+        '--kbb-th-ds:7px;--kbb-th-dsd:7px', '--kbb-th-py:7px;--kbb-th-pyd:7px', '--kbb-th-px:6px;--kbb-th-pxd:6px',
+        '--kbb-th-r:6px', '--kbb-th-mw:2000px', '--kbb-th-mb:0px;--kbb-th-mbd:0px');
+    } else if (o.mini) {
       style.push('--kbb-th-h:66px;--kbb-th-hd:66px', '--kbb-th-ts:13px;--kbb-th-tsd:13px',
         '--kbb-th-ds:8px;--kbb-th-dsd:8px', '--kbb-th-py:8px;--kbb-th-pyd:8px', '--kbb-th-px:9px;--kbb-th-pxd:9px',
         '--kbb-th-r:7px', '--kbb-th-mw:2000px', '--kbb-th-mb:0px;--kbb-th-mbd:0px');
@@ -478,9 +493,9 @@
   function mini(values, kind, dev, force, extra) {
     extra = extra || {};
     return header({
-      values: values, own: extra.own, kind: kind, dev: dev, force: force, mini: true,
+      values: values, own: extra.own, kind: kind, dev: dev, force: force, mini: extra.compact ? 'compact' : true,
       image: kind === 'img' ? (extra.image || PICTURES.dark) : null,
-      title: extra.rtl ? 'واقيات الشمس' : 'Sunscreens',
+      title: extra.rtl ? 'واقيات الشمس' : (extra.title || 'Sunscreens'),
       desc: extra.rtl ? 'واقيات شمس كورية خفيفة' : 'Lightweight Korean sunscreens, made for every day.',
       rtl: !!extra.rtl
     });
@@ -507,7 +522,13 @@
     ctx = ctx || {};
     var own = ctx.own || {};
     var img = ctx.image || null;
-    var m = function (k, force, extra) { extra = extra || {}; extra.own = Object.assign({}, own, extra.own || {}); return mini(values, k, dev, force, extra); };
+    var m = function (k, force, extra) {
+      extra = extra || {};
+      extra.own = Object.assign({}, own, extra.own || {});
+      extra.compact = !!ctx.compact;
+      if (ctx.title) extra.title = ctx.title;
+      return mini(values, k, dev, force, extra);
+    };
 
     // Each box tile in its own colours, not the category's override of them.
     if (kind === 'box') return m('box', { box: choice }, { own: { bg: null, ic: null } });

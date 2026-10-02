@@ -925,7 +925,7 @@
     var own = hdrOwn();
     var shopR = th.resolve(shop, {}, image ? 'img' : 'box', dev);
     var shopBox = th.resolve(shop, {}, 'box', dev);
-    var ctx = { own: own, image: image };
+    var ctx = { own: own, image: image, title: val('ct-hdrtitle') || val('ct-name') || '' };
     var word = dev === 'laptop' ? 'laptop' : 'phone';
     var says = function(n){ return n ? n[0] + (n[1] && n[0].length < 3 ? ' · ' + n[1] : '') : ''; };
 
@@ -952,7 +952,8 @@
     if (!image) return '';
     return th.tiles({ group: 'ct-focus', kind: 'focus', compact: true, label: 'Phone crop -- which part of the banner a phone keeps',
       hint: 'A phone shows about the middle half of a wide banner. Laptops show nearly all of it whatever this says.',
-      value: hdr.st.focus || 'center', values: hdrShop(), dev: 'phone', ctx: { own: hdrOwn(), image: image } });
+      value: hdr.st.focus || 'center', values: hdrShop(), dev: 'phone',
+      ctx: { own: hdrOwn(), image: image, title: val('ct-hdrtitle') || val('ct-name') || '' } });
   }
 
   /* Redraw the preview and the tiles. Nothing here is a control being held. */

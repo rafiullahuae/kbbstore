@@ -1,0 +1,606 @@
+{
+  "split-box-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--split kbb-th--p-dark kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-fade kbb-th--p-box-blush kbb-th--l-dark kbb-th--l-a-center kbb-th--l-v-bottom kbb-th--l-t-frost kbb-th--l-box-cream",
+    "header": {
+      "w": 346,
+      "h": 190
+    },
+    "alignItems": "flex-end",
+    "textAlign": "start",
+    "innerAlignItems": "flex-start",
+    "textCentreOffset": 0,
+    "textBottomGap": 28,
+    "frost": "none",
+    "textBg": "rgba(0, 0, 0, 0)",
+    "boxBg": "rgb(253, 240, 244)",
+    "scrim": "linear-gradient(to right, rgb(253, 240, 244) 0px, rgb(253, 2",
+    "titleSize": "26px",
+    "visible": null,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "errors": [
+      "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  "split-pic-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--split kbb-th--p-light kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-fade kbb-th--l-light kbb-th--l-a-center kbb-th--l-v-bottom kbb-th--l-t-frost",
+    "header": {
+      "w": 346,
+      "h": 190
+    },
+    "alignItems": "flex-end",
+    "textAlign": "start",
+    "innerAlignItems": "flex-start",
+    "textCentreOffset": 0,
+    "textBottomGap": 28,
+    "frost": "none",
+    "textBg": "rgba(0, 0, 0, 0)",
+    "boxBg": "rgb(42, 34, 40)",
+    "scrim": "linear-gradient(to right, rgba(18, 12, 16, 0.78) 0px, rgba(1",
+    "titleSize": "26px",
+    "visible": {
+      "natural": [
+        1600,
+        500
+      ],
+      "shownWidthPct": 57,
+      "shownHeightPct": 100,
+      "objectPosition": "50% 50%"
+    },
+    "scrollWidth": 390,
+    "viewport": 390,
+    "errors": []
+  },
+  "default-pic-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-shadow",
+    "header": {
+      "w": 346,
+      "h": 190
+    },
+    "alignItems": "flex-end",
+    "textAlign": "start",
+    "innerAlignItems": "flex-start",
+    "textCentreOffset": 0,
+    "textBottomGap": 28,
+    "frost": "none",
+    "textBg": "rgba(0, 0, 0, 0)",
+    "boxBg": "rgb(42, 34, 40)",
+    "scrim": "none",
+    "titleSize": "26px",
+    "visible": {
+      "natural": [
+        1600,
+        500
+      ],
+      "shownWidthPct": 57,
+      "shownHeightPct": 100,
+      "objectPosition": "50% 50%"
+    },
+    "scrollWidth": 390,
+    "viewport": 390,
+    "errors": []
+  },
+  "default-box-390": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 346,
+      "h": 190
+    },
+    "alignItems": "flex-end",
+    "textAlign": "start",
+    "innerAlignItems": "flex-start",
+    "textCentreOffset": 0,
+    "textBottomGap": 28,
+    "frost": "none",
+    "textBg": "rgba(0, 0, 0, 0)",
+    "boxBg": "rgb(253, 240, 244)",
+    "scrim": "linear-gradient(to right, rgb(253, 240, 244) 0px, rgb(253, 2",
+    "titleSize": "26px",
+    "visible": null,
+    "scrollWidth": 390,
+    "viewport": 390,
+    "errors": []
+  },
+  "split-box-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--split kbb-th--p-dark kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-fade kbb-th--p-box-blush kbb-th--l-dark kbb-th--l-a-center kbb-th--l-v-bottom kbb-th--l-t-frost kbb-th--l-box-cream",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "alignItems": "flex-end",
+    "textAlign": "center",
+    "innerAlignItems": "center",
+    "textCentreOffset": 0,
+    "textBottomGap": 36,
+    "frost": "blur(12px) saturate(1.2)",
+    "textBg": "rgba(255, 255, 255, 0.62)",
+    "boxBg": "rgb(251, 244, 234)",
+    "scrim": "radial-gradient(58% 70%, rgb(251, 244, 234) 35%, rgba(0, 0, ",
+    "titleSize": "40px",
+    "visible": null,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "errors": []
+  },
+  "split-pic-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--split kbb-th--p-light kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-fade kbb-th--l-light kbb-th--l-a-center kbb-th--l-v-bottom kbb-th--l-t-frost",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "alignItems": "flex-end",
+    "textAlign": "center",
+    "innerAlignItems": "center",
+    "textCentreOffset": 0,
+    "textBottomGap": 36,
+    "frost": "blur(12px) saturate(1.2)",
+    "textBg": "rgba(24, 16, 20, 0.42)",
+    "boxBg": "rgb(42, 34, 40)",
+    "scrim": "none",
+    "titleSize": "40px",
+    "visible": {
+      "natural": [
+        1600,
+        500
+      ],
+      "shownWidthPct": 100,
+      "shownHeightPct": 78,
+      "objectPosition": "50% 50%"
+    },
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "errors": []
+  },
+  "default-pic-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-shadow",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "alignItems": "flex-end",
+    "textAlign": "start",
+    "innerAlignItems": "flex-start",
+    "textCentreOffset": -190,
+    "textBottomGap": 36,
+    "frost": "none",
+    "textBg": "rgba(0, 0, 0, 0)",
+    "boxBg": "rgb(42, 34, 40)",
+    "scrim": "none",
+    "titleSize": "40px",
+    "visible": {
+      "natural": [
+        1600,
+        500
+      ],
+      "shownWidthPct": 100,
+      "shownHeightPct": 78,
+      "objectPosition": "50% 50%"
+    },
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "errors": []
+  },
+  "default-box-1280": {
+    "classes": "kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "alignItems": "flex-end",
+    "textAlign": "start",
+    "innerAlignItems": "flex-start",
+    "textCentreOffset": -349,
+    "textBottomGap": 36,
+    "frost": "none",
+    "textBg": "rgba(0, 0, 0, 0)",
+    "boxBg": "rgb(253, 240, 244)",
+    "scrim": "linear-gradient(to right, rgb(253, 240, 244) 0px, rgb(253, 2",
+    "titleSize": "40px",
+    "visible": null,
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "errors": []
+  },
+  "default-pic-1680": {
+    "classes": "kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-shadow",
+    "header": {
+      "w": 1636,
+      "h": 300
+    },
+    "alignItems": "flex-end",
+    "textAlign": "start",
+    "innerAlignItems": "flex-start",
+    "textCentreOffset": -390,
+    "textBottomGap": 36,
+    "frost": "none",
+    "textBg": "rgba(0, 0, 0, 0)",
+    "boxBg": "rgb(42, 34, 40)",
+    "scrim": "none",
+    "titleSize": "40px",
+    "visible": {
+      "natural": [
+        1600,
+        500
+      ],
+      "shownWidthPct": 100,
+      "shownHeightPct": 59,
+      "objectPosition": "50% 50%"
+    },
+    "scrollWidth": 1680,
+    "viewport": 1680,
+    "errors": []
+  },
+  "admin-sitelayout-390": {
+    "full": {
+      "groups": [
+        "sls-box:6",
+        "sls-treat-img:5",
+        "sls-treat-box:5",
+        "sls-valign:3",
+        "sls-align:3",
+        "sls-text:3"
+      ],
+      "checked": [
+        "A · Blush icons",
+        "1 · Soft shadow",
+        "5 · None",
+        "Bottom, as asked",
+        "Start, left in English, right in Arabic",
+        "Automatic, white on a picture, dark on the box"
+      ],
+      "tabStops": 6,
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "contentClientWidth": 390
+    },
+    "laptopMode": {
+      "classes": "kbb-th kbb-th--flush kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-shadow",
+      "style": "--kbb-th-h:300px;--kbb-th-hd:300px;--kbb-th-ts:40px;--kbb-th-tsd:40px;--kbb-th-ds:15px;--kbb-th-dsd:15px;--kbb-th-py:36px;--kbb-th-pyd:36px;--kbb-th-px:48px;--kbb-th-pxd:48px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:280px",
+      "w": 334,
+      "h": 73,
+      "titleSize": "40px",
+      "bg": "rgb(42, 34, 40)",
+      "icons": null
+    },
+    "before": {
+      "classes": "kbb-th kbb-th--flush kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px;--kbb-th-bg:#FDF0F4;--kbb-th-ic:#E3A1B5",
+      "w": 334,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(253, 240, 244)",
+      "icons": "rgb(227, 161, 181)"
+    },
+    "afterB": {
+      "classes": "kbb-th kbb-th--flush kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-cream",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px;--kbb-th-bg:#FBF4EA;--kbb-th-ic:#CDA57B",
+      "w": 334,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(251, 244, 234)",
+      "icons": "rgb(205, 165, 123)"
+    },
+    "afterBChecked": "B · Cream icons",
+    "tunedB": {
+      "classes": "kbb-th kbb-th--flush kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-cream",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px;--kbb-th-bg:#FBF4EA;--kbb-th-ic:#8A4B2A",
+      "w": 334,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(251, 244, 234)",
+      "icons": "rgb(138, 75, 42)"
+    },
+    "keyboard": {
+      "checked": "C · Mint icons",
+      "focused": "C · Mint icons",
+      "live": "kbb-th kbb-th--flush kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-mint"
+    },
+    "keyboardHome": "A · Blush icons",
+    "afterFrost": {
+      "classes": "kbb-th kbb-th--flush kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-frost",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px",
+      "w": 334,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(42, 34, 40)",
+      "icons": null
+    },
+    "previewWith": {
+      "value": "cat:2",
+      "live": {
+        "classes": "kbb-th kbb-th--flush kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-frost",
+        "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px",
+        "w": 334,
+        "h": 190,
+        "titleSize": "26px",
+        "bg": "rgb(42, 34, 40)",
+        "icons": null
+      }
+    },
+    "generic": "Find your favorite products in our wide range Lip Care category.",
+    "widths": {
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "contentClientWidth": 390
+    },
+    "errors": []
+  },
+  "admin-editor-390": {
+    "before": {
+      "classes": "kbb-th kbb-th--flush kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px;--kbb-th-bg:#FDF0F4;--kbb-th-ic:#E3A1B5",
+      "w": 270,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(253, 240, 244)",
+      "icons": "rgb(227, 161, 181)"
+    },
+    "uploaded": {
+      "address": "http://127.0.0.1:9950/uploads/categories/20261002-161455-fOM6bwhc.jpg",
+      "pickerOpen": false,
+      "state": "Uploaded to the Media Library. Press Save category to keep it on this category.",
+      "thumb": [
+        2400,
+        600
+      ]
+    },
+    "afterUpload": {
+      "classes": "kbb-th kbb-th--flush kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-shadow",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px",
+      "w": 270,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(42, 34, 40)",
+      "icons": null
+    },
+    "laptopChoice": {
+      "classes": "kbb-th kbb-th--flush kbb-th--img kbb-th--light kbb-th--a-center kbb-th--v-bottom kbb-th--t-frost",
+      "style": "--kbb-th-h:300px;--kbb-th-hd:300px;--kbb-th-ts:40px;--kbb-th-tsd:40px;--kbb-th-ds:15px;--kbb-th-dsd:15px;--kbb-th-py:36px;--kbb-th-pyd:36px;--kbb-th-px:48px;--kbb-th-pxd:48px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:280px",
+      "w": 270,
+      "h": 66,
+      "titleSize": "40px",
+      "bg": "rgb(42, 34, 40)",
+      "icons": null
+    },
+    "modal": {
+      "boxScrollWidth": 354,
+      "boxClientWidth": 354,
+      "groups": [
+        "ct-focus:3",
+        "ct-box:7",
+        "ct-treat:6",
+        "ct-valign:4",
+        "ct-align:4",
+        "ct-text:4"
+      ]
+    },
+    "widths": {
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "contentScrollWidth": 390,
+      "contentClientWidth": 390
+    },
+    "errors": []
+  },
+  "admin-sitelayout-1280": {
+    "full": {
+      "groups": [
+        "sls-box:6",
+        "sls-treat-img:5",
+        "sls-treat-box:5",
+        "sls-valign:3",
+        "sls-align:3",
+        "sls-text:3"
+      ],
+      "checked": [
+        "A · Blush icons",
+        "1 · Soft shadow",
+        "5 · None",
+        "Bottom, as asked",
+        "Start, left in English, right in Arabic",
+        "Automatic, white on a picture, dark on the box"
+      ],
+      "tabStops": 6,
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "contentClientWidth": 1032
+    },
+    "laptopMode": {
+      "classes": "kbb-th kbb-th--flush kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-shadow",
+      "style": "--kbb-th-h:300px;--kbb-th-hd:300px;--kbb-th-ts:40px;--kbb-th-tsd:40px;--kbb-th-ds:15px;--kbb-th-dsd:15px;--kbb-th-py:36px;--kbb-th-pyd:36px;--kbb-th-px:48px;--kbb-th-pxd:48px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:280px",
+      "w": 438,
+      "h": 97,
+      "titleSize": "40px",
+      "bg": "rgb(42, 34, 40)",
+      "icons": null
+    },
+    "before": {
+      "classes": "kbb-th kbb-th--flush kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px;--kbb-th-bg:#FDF0F4;--kbb-th-ic:#E3A1B5",
+      "w": 346,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(253, 240, 244)",
+      "icons": "rgb(227, 161, 181)"
+    },
+    "afterB": {
+      "classes": "kbb-th kbb-th--flush kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-cream",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px;--kbb-th-bg:#FBF4EA;--kbb-th-ic:#CDA57B",
+      "w": 346,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(251, 244, 234)",
+      "icons": "rgb(205, 165, 123)"
+    },
+    "afterBChecked": "B · Cream icons",
+    "tunedB": {
+      "classes": "kbb-th kbb-th--flush kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-cream",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px;--kbb-th-bg:#FBF4EA;--kbb-th-ic:#8A4B2A",
+      "w": 346,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(251, 244, 234)",
+      "icons": "rgb(138, 75, 42)"
+    },
+    "keyboard": {
+      "checked": "C · Mint icons",
+      "focused": "C · Mint icons",
+      "live": "kbb-th kbb-th--flush kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-mint"
+    },
+    "keyboardHome": "A · Blush icons",
+    "afterFrost": {
+      "classes": "kbb-th kbb-th--flush kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-frost",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px",
+      "w": 346,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(42, 34, 40)",
+      "icons": null
+    },
+    "previewWith": {
+      "value": "cat:2",
+      "live": {
+        "classes": "kbb-th kbb-th--flush kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-frost",
+        "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px",
+        "w": 346,
+        "h": 190,
+        "titleSize": "26px",
+        "bg": "rgb(42, 34, 40)",
+        "icons": null
+      }
+    },
+    "generic": "Find your favorite products in our wide range Lip Care category.",
+    "widths": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "contentClientWidth": 1032
+    },
+    "errors": []
+  },
+  "admin-editor-1280": {
+    "before": {
+      "classes": "kbb-th kbb-th--flush kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px;--kbb-th-bg:#FDF0F4;--kbb-th-ic:#E3A1B5",
+      "w": 346,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(253, 240, 244)",
+      "icons": "rgb(227, 161, 181)"
+    },
+    "uploaded": {
+      "address": "http://127.0.0.1:9950/uploads/categories/20261002-161541-HYUr8psy.jpg",
+      "pickerOpen": false,
+      "state": "Uploaded to the Media Library. Press Save category to keep it on this category.",
+      "thumb": [
+        2400,
+        600
+      ]
+    },
+    "afterUpload": {
+      "classes": "kbb-th kbb-th--flush kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-shadow",
+      "style": "--kbb-th-h:190px;--kbb-th-hd:190px;--kbb-th-ts:26px;--kbb-th-tsd:26px;--kbb-th-ds:13px;--kbb-th-dsd:13px;--kbb-th-py:28px;--kbb-th-pyd:28px;--kbb-th-px:20px;--kbb-th-pxd:20px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:220px",
+      "w": 346,
+      "h": 190,
+      "titleSize": "26px",
+      "bg": "rgb(42, 34, 40)",
+      "icons": null
+    },
+    "laptopChoice": {
+      "classes": "kbb-th kbb-th--flush kbb-th--img kbb-th--light kbb-th--a-center kbb-th--v-bottom kbb-th--t-frost",
+      "style": "--kbb-th-h:300px;--kbb-th-hd:300px;--kbb-th-ts:40px;--kbb-th-tsd:40px;--kbb-th-ds:15px;--kbb-th-dsd:15px;--kbb-th-py:36px;--kbb-th-pyd:36px;--kbb-th-px:48px;--kbb-th-pxd:48px;--kbb-th-r:18px;--kbb-th-mw:760px;--kbb-th-mb:0px;--kbb-th-mbd:0px;--kbb-th-ov:0.4;--kbb-th-lines:2;--kbb-th-tw:700;--kbb-th-tile:280px",
+      "w": 476,
+      "h": 109,
+      "titleSize": "40px",
+      "bg": "rgb(42, 34, 40)",
+      "icons": null
+    },
+    "modal": {
+      "boxScrollWidth": 560,
+      "boxClientWidth": 560,
+      "groups": [
+        "ct-focus:3",
+        "ct-box:7",
+        "ct-treat:6",
+        "ct-valign:4",
+        "ct-align:4",
+        "ct-text:4"
+      ]
+    },
+    "saved": {
+      "header_image": "http://127.0.0.1:9950/uploads/categories/20261002-161541-HYUr8psy.jpg",
+      "header_style": {
+        "align_desktop": "center",
+        "treatment_desktop": "frost"
+      }
+    },
+    "widths": {
+      "docScrollWidth": 1280,
+      "docClientWidth": 1280,
+      "contentScrollWidth": 1032,
+      "contentClientWidth": 1032
+    },
+    "errors": []
+  },
+  "saved-banner-390": {
+    "classes": "kbb-th kbb-th--img kbb-th--split kbb-th--p-light kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-shadow kbb-th--l-light kbb-th--l-a-center kbb-th--l-v-bottom kbb-th--l-t-frost",
+    "header": {
+      "w": 346,
+      "h": 190
+    },
+    "alignItems": "flex-end",
+    "textAlign": "start",
+    "innerAlignItems": "flex-start",
+    "textCentreOffset": 0,
+    "textBottomGap": 28,
+    "frost": "none",
+    "textBg": "rgba(0, 0, 0, 0)",
+    "boxBg": "rgb(42, 34, 40)",
+    "scrim": "none",
+    "titleSize": "26px",
+    "visible": {
+      "natural": [
+        2400,
+        600
+      ],
+      "shownWidthPct": 46,
+      "shownHeightPct": 100,
+      "objectPosition": "50% 50%"
+    },
+    "scrollWidth": 390,
+    "viewport": 390,
+    "errors": []
+  },
+  "saved-banner-1280": {
+    "classes": "kbb-th kbb-th--img kbb-th--split kbb-th--p-light kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-shadow kbb-th--l-light kbb-th--l-a-center kbb-th--l-v-bottom kbb-th--l-t-frost",
+    "header": {
+      "w": 1236,
+      "h": 300
+    },
+    "alignItems": "flex-end",
+    "textAlign": "center",
+    "innerAlignItems": "center",
+    "textCentreOffset": 0,
+    "textBottomGap": 36,
+    "frost": "blur(12px) saturate(1.2)",
+    "textBg": "rgba(24, 16, 20, 0.42)",
+    "boxBg": "rgb(42, 34, 40)",
+    "scrim": "none",
+    "titleSize": "40px",
+    "visible": {
+      "natural": [
+        2400,
+        600
+      ],
+      "shownWidthPct": 100,
+      "shownHeightPct": 97,
+      "objectPosition": "50% 50%"
+    },
+    "scrollWidth": 1280,
+    "viewport": 1280,
+    "errors": []
+  }
+}

@@ -26,7 +26,8 @@ declare(strict_types=1);
  * treatment could be tuned; a category could not choose per device.
  *
  * MUTATIONS, RUN (each red, then restored; storage/qc-logs/qc-mutate.py, not
- * committed):
+ * committed). Measured, this file alone: Q1 1 red, Q2 5, Q3 1, Q4 1, Q5 1,
+ * Q6 4, Q7 1, Q8 1, Q9 1, Q10 3 -- no mutation left it green:
  *   Q1  SiteLayout::all(): the DEVICE_PAIRS inheritance loop removed: red,
  *       `a value saved before the split is both devices' value`.
  *   Q2  TitleHeader::forModel(): `$split = $phone !== $laptop` -> `false`:

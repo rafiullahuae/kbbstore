@@ -748,9 +748,20 @@
       fresh.innerHTML = previewHTML();
       if (fresh.firstElementChild) live.replaceWith(fresh.firstElementChild);
     }
+    /* A tile holding the focus keeps it across the redraw -- tabbing from a
+       colour box into the tiles fires that box's `change`, which redraws. */
+    var held = document.activeElement && document.activeElement.closest
+      ? document.activeElement.closest('[data-thk-group] [role="radio"]') : null;
+    var heldAt = held ? [held.closest('[data-thk-group]').getAttribute('data-thk-group'), held.getAttribute('data-thk-value')] : null;
+
     host.querySelectorAll('[data-sls-tiles]').forEach(function (el) {
       el.innerHTML = pickerHTML(el.getAttribute('data-sls-tiles'));
     });
+
+    if (heldAt) {
+      var again = host.querySelector('[data-thk-group="' + heldAt[0] + '"] [data-thk-value="' + heldAt[1] + '"]');
+      if (again) { try { again.focus({ preventScroll: true }); } catch (x) {} }
+    }
   }
 
   /* The card under the fields: the device table, or on the two Category
@@ -904,7 +915,10 @@
     if (!el) return;
     values[el.dataset.slsKey] = el.type === 'checkbox' ? el.checked : el.value;
     if (el.type === 'checkbox' || el.tagName === 'SELECT') render();
-    else repaintTable();
+    /* On the Category header tabs `input` has already redrawn the preview
+       and the tiles; redrawing again on `change` -- which fires on blur --
+       would pull the tiles out from under a Tab into them (Lane QC). */
+    else if (open !== 'catheader' && open !== 'catheadersize') repaintTable();
   });
 
   /* Only the table's own card, so the control you are holding is not replaced. */
