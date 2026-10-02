@@ -132,7 +132,14 @@ it('serves the shipped product page byte for byte whatever query string is on it
      * MUTATION NOTE. Add `@if (request('layout') === 'ledger') <i>x</i> @endif`
      * anywhere in resources/views/store/product.blade.php and this goes red on
      * the first pair. RUN.
+     *
+     * THE CLOCK IS FROZEN for the six requests. The page prints a live
+     * dispatch countdown ("Order within 1h 49m"), so a run that straddled a
+     * minute boundary compared "1h 49m" with "1h 48m" and went red on bytes no
+     * query string had touched (seen on Lane PW's full run, green alone).
      */
+    $this->freezeTime();
+
     $product = pdpProduct();
 
     $plain = $this->get('/product/'.$product->slug.'/');
