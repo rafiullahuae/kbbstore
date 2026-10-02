@@ -3742,6 +3742,9 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 39 | `/shop/?filter_brands=celimax` reads "Shop all" with the default line; show the brand name or nothing (brand-filter URLs only) | integrator | **done — 2.60.346** — the brand's name as the heading and tab title, no generic line; other pages unchanged (ShopBrandHeadingTest) |
 | 40 | Product page, phones: short description hidden behind a blank band; thumbnails over the photo (move below, overlap OFF by default); space above the photo removed; spacing controls with live preview; the photo's discount badge white-on-white → green with white text | PV | **done — 2.60.346** — Appearance → Product page → Photo & badge / Spacing · Buy column / Type · Buy column |
 | 41 | Product page buy column: yellow FAST DELIVERY box above Add to cart; "Authenticity Guaranteed" line that slides open; colourful share bar carrying URL, description and image; spacing controls | PW | **done — 2.60.347** — Appearance → Product page → Trust · Delivery box / Authenticity / Share bar / Spacing |
+| 42 | Cart page and checkout rows: show / hide the brand name, desktop and phone separately — desktop ON, phone OFF by default | integrator | **done** — Appearance → Cart page → Product rows · spacing and size / Product rows · phone; Appearance → Checkout page → Desktop · Product rows / Mobile · Product rows → "Show the brand name" |
+| 43 | Authenticity panel: the × must sit half outside the box on its corner, a plain circle with no ring | integrator | **done** |
+| 44 | Category header: name as title unless a custom one; Start / Centre / End (Start default, mirrored in Arabic); light icon box when no picture; per-category picture, title, size, description; section height/padding; title shadow options | PY | in progress |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix

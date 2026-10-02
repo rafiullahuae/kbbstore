@@ -76,9 +76,12 @@
     transition:grid-template-rows .34s cubic-bezier(.2,.7,.2,1),visibility 0s linear .34s}
 .pts-auth-btn[aria-expanded="true"] + .pts-auth-panel{grid-template-rows:1fr;visibility:visible;
     transition:grid-template-rows .34s cubic-bezier(.2,.7,.2,1),visibility 0s linear 0s}
-.pts-auth-in{min-block-size:0;overflow:hidden}
+/* The room at the top and the end is where the close circle overhangs the
+   card's corner: this box clips (it is what the slide collapses), so the
+   overhang has to be inside it. */
+.pts-auth-in{min-block-size:0;overflow:hidden;padding-block-start:2px;padding-inline-end:12px}
 .pts-auth-card{position:relative;display:flex;align-items:flex-start;gap:12px;
-    margin-block-start:10px;padding-block:14px;padding-inline:14px 44px;
+    margin-block-start:20px;padding-block:14px;padding-inline:14px 26px;
     background:#F3FAF6;border:1px solid #D4EEDF;border-radius:12px;
     color:var(--ink-2,#5E545A);font-size:13px;line-height:1.6}
 .pts-auth-card .pts-yes{inline-size:22px;block-size:22px;flex:0 0 auto;color:var(--pts-tick);margin-block-start:1px}
@@ -86,13 +89,18 @@
 .pts-auth-copy p{margin:0}
 .pts-auth-copy p + p{margin-block-start:8px}
 
-/* The small reddish circle with the × in it, in the card's top corner. */
-.pts-auth-x{position:absolute;inset-block-start:10px;inset-inline-end:10px;
+/* The close circle, CENTRED ON THE CARD'S TOP-END CORNER -- half outside the
+   box, on its edge (the owner, 2 October: "the box cross should be half
+   outside the box on right color edge ... keep only circle, remove out border
+   from the cross icon circle"). A solid reddish disc with a white ×, no ring:
+   inside the text it read as a "not provided" mark next to the claim. */
+.pts-auth-x{position:absolute;inset-block-start:-12px;inset-inline-end:-12px;
     inline-size:24px;block-size:24px;padding:0;display:grid;place-items:center;
-    border-radius:50%;border:1px solid #F2B8B5;background:#FDECEC;color:#D64545;cursor:pointer;
+    border-radius:50%;border:0;background:#E5484D;color:#fff;cursor:pointer;
+    box-shadow:0 2px 6px rgba(42,34,40,.18);
     transition:background .15s,transform .15s}
-.pts-auth-x svg{inline-size:13px;block-size:13px}
-.pts-auth-x:hover{background:#FAD9D7}
+.pts-auth-x svg{inline-size:12px;block-size:12px}
+.pts-auth-x:hover{background:#D33A40}
 .pts-auth-x:focus-visible{outline:2px solid #D64545;outline-offset:2px}
 
 /* ── 3. the share bar ────────────────────────────────────────────────────── */

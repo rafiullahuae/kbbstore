@@ -268,7 +268,9 @@ it('offers spacing and nothing structural', function () {
         // and which parts of the two animations run. None adds or removes a
         // section, and none of them is a layout.
         ->and(array_keys($types, 'bool', true))->toBe([
-            'd_sticky', 'rating_on', 'd_row_bold', 'm_row_bold',
+            // d_/m_row_brand (2.60.348) show or hide the brand line on each
+            // surface, which the owner asked for: "same on checkout rows".
+            'd_sticky', 'rating_on', 'd_row_bold', 'd_row_brand', 'm_row_bold', 'm_row_brand',
             'd_head_sticky', 'm_head_sticky', 'm_t_input_floor',
             'optin_on', 'optin_checked', 'notes_on', 'ph_italic',
             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'trust_tick',

@@ -204,6 +204,17 @@ class CartPage
         'ci_brand_f'  => ['range', 'Brand size', 10,
                           'The small uppercase line above the product name. A row whose product has no brand has never drawn one.',
                           ['min' => 7, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        /*
+         * THE BRAND LINE, PER DEVICE.                              (2.60.348)
+         *
+         * The owner, on the cart page: "give option to hide un-hide the brands
+         * names. on desktop and mobile seperate options. keep for desktop ON by
+         * default, and OFF for mobile devices." Shown by rowCss() as a
+         * display:none rule at the row's own phone width (`ci_bp`), so the
+         * markup is the same at every width and nothing measures anything.
+         */
+        'ci_brand_on' => ['bool', 'Show the brand name', true,
+                          'The small uppercase brand line above each product name, on a laptop or desktop. The phone has its own switch on the next card.'],
         'ci_name_f'   => ['range', 'Name size', 130,
                           'IN TENTHS OF A PIXEL, because the phone’s shipped size is 12.5px and a slider stores whole numbers: 130 is 13px. The floor is 100 — 10px — which is a size, not a way of hiding the name.',
                           ['min' => 100, 'max' => 240, 'step' => 5, 'unit' => '/10 px']],
@@ -236,6 +247,8 @@ class CartPage
                             ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
         'ci_brand_f_m'  => ['range', 'Brand size', 10, '',
                             ['min' => 7, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        'ci_brand_on_m' => ['bool', 'Show the brand name', false,
+                            'Off, as asked: a phone shows the product name without the brand line above it. Turn it on to bring the brand back on phones.'],
         'ci_name_f_m'   => ['range', 'Name size', 125,
                             'In tenths of a pixel: 125 is 12.5px, which is half a pixel smaller than the laptop’s and is what the sheet’s own phone block draws.',
                             ['min' => 100, 'max' => 240, 'step' => 5, 'unit' => '/10 px']],
@@ -755,11 +768,11 @@ class CartPage
                       ['row_h', 'row_font', 'row_bold', 'qty_size']],
         'rowsize' => ['Product rows · spacing and size', 'An ORDINARY product’s row on the cart page, on whichever layout this shop serves, and never a set’s row — a set has its own controls under Appearance → Set. Laptop values; the phone has its own card below. Nothing here can hide what is in the row: the height control is a minimum, so it can only make a row taller.',
                       ['ci_min_h', 'ci_pad_t', 'ci_pad_b', 'ci_pad_s', 'ci_pad_e', 'ci_gap',
-                       'ci_thumb', 'ci_thumb_r', 'ci_brand_f', 'ci_name_f', 'ci_name_gap',
+                       'ci_thumb', 'ci_thumb_r', 'ci_brand_on', 'ci_brand_f', 'ci_name_f', 'ci_name_gap',
                        'ci_qty_top', 'ci_qty_bot']],
         'rowphone' => ['Product rows · phone', 'The phone’s own values for the same row, and the width it starts at. They never inherit the laptop’s — the shipped stylesheet already differs at both widths, so an inheriting field would have to ship already touched to reproduce today’s page.',
                       ['ci_bp', 'ci_min_h_m', 'ci_pad_t_m', 'ci_pad_b_m', 'ci_pad_s_m', 'ci_pad_e_m',
-                       'ci_gap_m', 'ci_thumb_m', 'ci_thumb_r_m', 'ci_brand_f_m', 'ci_name_f_m',
+                       'ci_gap_m', 'ci_thumb_m', 'ci_thumb_r_m', 'ci_brand_on_m', 'ci_brand_f_m', 'ci_name_f_m',
                        'ci_name_gap_m', 'ci_qty_top_m', 'ci_qty_bot_m']],
         'rec'     => ['Recommended', 'Full width, no rounded corners, no padding box around it.',
                       ['rec_on', 'rec_heading', 'rec_per', 'rec_bold', 'rec_price_bold',
@@ -1284,12 +1297,39 @@ class CartPage
             }
         }
 
+        $brand = self::brandRule($c);
+
         if ($shipped && (int) $c['ci_bp'] === (int) self::SCHEMA['ci_bp'][2]) {
-            return '';
+            return $brand;
         }
 
         return self::rowBlock($c, false)
-            .'@media (max-width:'.(int) $c['ci_bp'].'px){'.self::rowBlock($c, true).'}';
+            .'@media (max-width:'.(int) $c['ci_bp'].'px){'.self::rowBlock($c, true).'}'
+            .$brand;
+    }
+
+    /**
+     * The brand line's visibility, per device, at the row's own phone width.
+     *
+     * Every row in the list, a set's included: the owner asked about the brand
+     * names on the cart page, not about one kind of row. Nothing interpolated
+     * but an integer width. Both on is the page as it always was: no rule.
+     *
+     * @param  array<string, mixed>  $c
+     */
+    private static function brandRule(array $c): string
+    {
+        $hide = '.kbb-cartpage .items .ci .cbrand{display:none}';
+        $desk = (bool) $c['ci_brand_on'];
+        $phone = (bool) $c['ci_brand_on_m'];
+        $bp = (int) $c['ci_bp'];
+
+        return match (true) {
+            $desk && $phone => '',
+            ! $desk && ! $phone => $hide,
+            $desk => '@media (max-width:'.$bp.'px){'.$hide.'}',
+            default => '@media (min-width:'.($bp + 1).'px){'.$hide.'}',
+        };
     }
 
     /**

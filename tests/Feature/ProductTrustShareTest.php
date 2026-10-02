@@ -661,3 +661,32 @@ it('clips a long blurb on a word boundary with an ellipsis', function () {
         ->and($clip)->not->toContain('  ');
     expect(ProductShare::clip('Short.', 150))->toBe('Short.');
 });
+
+it('sits the close circle on the card corner, half outside, with no ring', function () {
+    /*
+     * The owner, 2 October 2026, on the open Authenticity panel: "the box
+     * cross should be half outside the box on right color edge. it should not
+     * look like something we don't provide, keep only circle, remove out
+     * border from the cross icon circle." Inside the text, a pale red ringed ×
+     * beside "100% authentic" read as a "not provided" mark.
+     *
+     * Centred on the corner: offsets of minus half its 24px size. The wrapper
+     * that clips the slide keeps room for the overhang, or the half outside
+     * would be cut off.
+     *
+     * MUTATIONS, RUN: put `inset-block-start:10px;inset-inline-end:10px` back
+     * -- red; put `border:1px solid #F2B8B5` back -- red; drop the wrapper's
+     * `padding-inline-end:12px` -- red.
+     */
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-pdp-trust.css'));
+
+    preg_match('/\.pts-auth-x\{([^}]*)\}/', $css, $x);
+    preg_match('/\.pts-auth-in\{([^}]*)\}/', $css, $in);
+
+    expect($x[1])->toContain('inset-block-start:-12px;inset-inline-end:-12px')
+        ->and($x[1])->toContain('inline-size:24px;block-size:24px')
+        ->and($x[1])->toContain('border:0;')
+        ->and($x[1])->not->toContain('solid')
+        ->and($in[1])->toContain('overflow:hidden')
+        ->and($in[1])->toContain('padding-inline-end:12px');
+});

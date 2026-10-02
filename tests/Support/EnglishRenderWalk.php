@@ -1761,6 +1761,28 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * THE BRAND LINE, OFF ON PHONES, ON THE CART AND CHECKOUT ROWS.
+             *                                                      (2.60.348)
+             *
+             * The owner: "give option to hide un-hide the brands names. on
+             * desktop and mobile seperate options. keep for desktop ON by
+             * default, and OFF for mobile devices. same on checkout rows." The
+             * cart page gains the one phone rule CartPage::rowCss() prints at
+             * those defaults; the checkout summary gains the brand line its
+             * rows never had, marked off for a phone. Nothing else moves.
+             * CartCheckoutBrandSwitchTest pins both.
+             */
+            'the cart rows phone brand rule (2.60.348)' => [
+                'pattern' => '#<style id="kbb-cartrows">@media \(max-width:600px\)\{\.kbb-cartpage \.items \.ci \.cbrand\{display:none\}\}</style>\n#',
+                'hits' => 2,
+            ],
+            'the checkout rows brand line (2.60.348)' => [
+                'pattern' => '#                <div class="b co-rb-nom">[^<\n]*</div>\n#',
+                'hits' => 2,
+                'perPage' => 9,
+            ],
+
+            /*
              * THE SEARCH PANEL CARRIES ITS TRENDING WORDS.         (2.60.346)
              *
              * The owner: "the default search tags box showing with little delays
