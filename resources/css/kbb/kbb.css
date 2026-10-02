@@ -4286,6 +4286,151 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   PRESS FEEDBACK                                                     Lane RD
+   ═══════════════════════════════════════════════════════════════════════════
+
+   The owner: "when u click on any button or icon. it leaves gray square /
+   rectangle box instead of changing the color of button icon itself." The box
+   was the browser's own tap highlight -- nothing here ever set
+   -webkit-tap-highlight-color -- and no control had a pressed state of its own.
+   He chose C · Ripple from five on a playground; A, B, D and E stay selectable
+   in Appearance → Site layout → Press feedback.
+
+   ── EVERY RULE IS KEYED BY html[data-press] ────────────────────────────────
+   The layout prints data-press="a".."e", or nothing at all for Off
+   (SiteLayout::PRESS_ATTR). With nothing printed not one rule below matches and
+   resources/js/kbb/press.js adds no listener, so Off is the shop as it was.
+
+   ── WHAT THE SCRIPT DOES ───────────────────────────────────────────────────
+   It only toggles classes: .kbb-pressed while the finger is down (at least
+   180ms, so a quick tap is seen), .kbb-rip/.kbb-rip2 on each press and
+   .kbb-pop/.kbb-pop2 on release, alternating so an animation restarts without
+   anything reading the layout. It never measures.
+
+   ── WHAT MAY NOT CHANGE, AND HOW THE STYLES KEEP TO IT ─────────────────────
+   No control gains `position`, `overflow`, a `transform` or a ::before/::after:
+   .kbb-tile .cn::after is the stretched link across the whole card, .heart and
+   .sarr are positioned (.sarr by transform), and many controls already use
+   their pseudo-elements. So every style here draws ON THE CONTROL ITSELF, with
+   properties that cannot move a box:
+     the ripple   a radial-gradient background-image, clipped by the control's
+                  own border-radius, animated through two registered custom
+                  properties (radius and strength) -- see C below
+     the squeeze  the individual `scale`/`translate` properties, which COMPOSE
+                  with a control's own `transform` instead of replacing it, and
+                  only while pressed
+     the ring     `outline`, which never takes part in layout and follows the
+                  border-radius
+   At rest nothing below applies, so nothing moves by a pixel.
+   Nothing is physical-direction: RTL needs nothing of its own.
+
+   ── THE CONTROLS, IN THREE SHAPES AND ONE COLOUR FAMILY ────────────────────
+   Taken from a census of every tappable element on the home page, the menu, a
+   category, /shop, a product page and its share sheet, the cart drawer, /cart,
+   the checkout, the account and wishlist pages and /brands, at 390 and 1280.
+     ICONS    round or square icon buttons
+     BUTTONS  pills, tabs, chips, tiles and buttons
+     ROWS     full-width rows and the search box (they squeeze least)
+     FILLED   pink, ink or green buttons with light text: a white wave, and a
+              darker shade rather than a pink one
+   Three were left out of the ripple because they draw a background-image of
+   their own that the wave would replace while it ran: .mcol-link, .sl and the
+   account page's .go. They, and every link not named here (a text link, the
+   logo, a footer link, the product card's picture and name), get the quiet
+   response: a brief dim, and no grey box. */
+
+@property --kbb-rip{syntax:'<percentage>';inherits:false;initial-value:0%}
+@property --kbb-rip-o{syntax:'<number>';inherits:false;initial-value:0}
+
+/* 1. NO GREY BOX, under every letter. Inherited, so it reaches every control. */
+html[data-press]{-webkit-tap-highlight-color:transparent}
+
+/* 2. The quiet response, for every control not named in a shape below. */
+html[data-press] .kbb-pressed:not(:is(.ib,.kbbmi,.heart,.gwish,.pdp-share-btn,.pdp-share-x,.sarr,.ymal-btn,.qty button,.kc-qty button,.co-q,.mm-x,.x,.kc-x,.fclose,.kc-rm,.co-rm,.cpg-x,.pts-auth-x,.colsel button,.trail,.lnk,.pchip,.mobi-filter,.gtop>button,.navlink,.kc-tab,.stab,.seg,.dtab,.sr-chip,.sr-write,.pdp-share-tile,.btn,.btn-ghost,.cobtn,.kbb-card-cart,.addcart,.apply,.place,.mb,.rall,.q-next,.wa,.backlink,.conti,.co-tocart,.readmore,.pts-auth-btn,.hi,.bd,.brw-card,.rstep,.ct,.crm,.sortsel select,.cka-chg,.mm-it,.mrow,.fopt,.ftog,.search-in,.viewfull,.q-o)){opacity:.72}
+
+/* ── A · SOFT FILL ── a blush circle, the icon turns pink, a small press-in. */
+html[data-press="a"] :is(.ib,.kbbmi,.heart,.gwish,.pdp-share-btn,.sarr,.ymal-btn,.qty button,.kc-qty button,.co-q,.mm-x,.x,.kc-x,.fclose,.kc-rm,.co-rm,.cpg-x,.colsel button,.trail).kbb-pressed{background-color:var(--blush);color:var(--pink-deep);scale:.92}
+html[data-press="a"] :is(.lnk,.pchip,.mobi-filter,.navlink,.kc-tab,.stab,.seg,.dtab,.sr-chip:not(.on),.pdp-share-tile,.btn:not(.btn-p),.btn-ghost,.backlink,.conti,.co-tocart,.readmore,.pts-auth-btn,.hi,.bd,.brw-card,.rstep,.ct,.crm,.sortsel select,.cka-chg,.mm-it:not(.hot),.mrow,.fopt,.ftog,.viewfull,.q-o).kbb-pressed{background-color:var(--pink-soft);color:var(--pink-deep)}
+html[data-press="a"] .search-in.kbb-pressed{border-color:var(--pink);background-color:#fff}
+
+/* ── B · PINK POP ── a solid pink circle with a white icon; buttons press in. */
+html[data-press="b"] :is(.ib,.kbbmi,.heart,.gwish,.pdp-share-btn,.sarr,.ymal-btn,.qty button,.kc-qty button,.co-q,.mm-x,.x,.kc-x,.fclose,.kc-rm,.co-rm,.cpg-x,.colsel button,.trail).kbb-pressed{background-color:var(--pink);color:#fff;scale:.94}
+html[data-press="b"] .ib.kbb-pressed i{background:#fff;color:var(--pink)}
+html[data-press="b"] :is(.lnk,.pchip,.mobi-filter,.navlink,.kc-tab,.stab,.seg,.dtab,.sr-chip:not(.on),.pdp-share-tile,.btn:not(.btn-p),.btn-ghost,.backlink,.conti,.co-tocart,.readmore,.pts-auth-btn,.hi,.bd,.brw-card,.rstep,.ct,.crm,.sortsel select,.cka-chg).kbb-pressed{background-color:var(--pink);color:#fff;scale:.97}
+html[data-press="b"] :is(.mm-it:not(.hot),.mrow,.fopt,.ftog,.viewfull,.q-o).kbb-pressed{background-color:var(--pink);color:#fff}
+html[data-press="b"] .search-in.kbb-pressed{border-color:var(--pink);background-color:#fff;outline:4px solid rgba(224,86,123,.15);outline-offset:0}
+
+/* FILLED, under A and B: a darker shade of whatever colour the button is, and
+   a press. `filter` rather than a named colour because the family is pink, ink,
+   pink-deep, green and red. */
+html[data-press="a"] :is(.kbb-card-cart,.addcart,.cobtn,.apply,.place,.mb,.rall,.q-next,.sr-write,.sr-chip.on,.mm-it.hot,.wa,.btn-p,.gtop>button:not(.mobi-filter),.pts-auth-x,.pdp-share-x).kbb-pressed{filter:brightness(.88);translate:0 1px}
+html[data-press="b"] :is(.kbb-card-cart,.addcart,.cobtn,.apply,.place,.mb,.rall,.q-next,.sr-write,.sr-chip.on,.mm-it.hot,.wa,.btn-p,.gtop>button:not(.mobi-filter),.pts-auth-x,.pdp-share-x).kbb-pressed{filter:brightness(.82);scale:.96}
+
+/* ── C · RIPPLE ── a pink wave spreads out from the middle.        THE DEFAULT
+   THE TECHNIQUE, AND ITS TRADE-OFF. The playground drew the wave as an ::after
+   circle inside a position:relative, overflow:hidden control. On this shop
+   that would have broken the card's stretched link, the heart's and the
+   arrows' positioning and every control that already uses a pseudo-element.
+   So the wave is a BACKGROUND LAYER of the control itself: a radial-gradient
+   circle centred on the box whose edge, --kbb-rip, runs from 0% to 100% of the
+   distance to the farthest corner (so it always ends exactly covering the box,
+   whatever its shape) while its strength, --kbb-rip-o, fades to nothing. A
+   background is clipped by the control's own border-radius, so a round icon
+   gets a round wave with no overflow:hidden anywhere.
+   The cost: a background paints UNDER the control's content, so the wave is
+   behind the icon and the label rather than over them -- which is how most
+   apps draw it anyway -- and it replaces the control's background-image for
+   the half-second it runs, which is why the three controls that have one are
+   not in these lists. The two custom properties are registered with @property
+   so they can be animated; a browser older than that (Safari before 16.4)
+   still gets the colour change and no grey box, without the wave. */
+html[data-press="c"] :is(.ib,.kbbmi,.heart,.gwish,.pdp-share-btn,.pdp-share-x,.sarr,.ymal-btn,.qty button,.kc-qty button,.co-q,.mm-x,.x,.kc-x,.fclose,.kc-rm,.co-rm,.cpg-x,.pts-auth-x,.colsel button,.trail,.lnk,.pchip,.mobi-filter,.gtop>button,.navlink,.kc-tab,.stab,.seg,.dtab,.sr-chip,.sr-write,.pdp-share-tile,.btn,.btn-ghost,.cobtn,.kbb-card-cart,.addcart,.apply,.place,.mb,.rall,.q-next,.wa,.backlink,.conti,.co-tocart,.readmore,.pts-auth-btn,.hi,.bd,.brw-card,.rstep,.ct,.crm,.sortsel select,.cka-chg,.mm-it,.mrow,.fopt,.ftog,.search-in,.viewfull,.q-o){--kbb-wave:224 86 123}
+html[data-press="c"] :is(.kbb-card-cart,.addcart,.cobtn,.apply,.place,.mb,.rall,.q-next,.sr-write,.sr-chip.on,.mm-it.hot,.wa,.btn-p,.gtop>button:not(.mobi-filter),.pts-auth-x,.pdp-share-x){--kbb-wave:255 255 255}
+html[data-press="c"] :is(.ib,.kbbmi,.heart,.gwish,.pdp-share-btn,.pdp-share-x,.sarr,.ymal-btn,.qty button,.kc-qty button,.co-q,.mm-x,.x,.kc-x,.fclose,.kc-rm,.co-rm,.cpg-x,.pts-auth-x,.colsel button,.trail,.lnk,.pchip,.mobi-filter,.gtop>button,.navlink,.kc-tab,.stab,.seg,.dtab,.sr-chip,.sr-write,.pdp-share-tile,.btn,.btn-ghost,.cobtn,.kbb-card-cart,.addcart,.apply,.place,.mb,.rall,.q-next,.wa,.backlink,.conti,.co-tocart,.readmore,.pts-auth-btn,.hi,.bd,.brw-card,.rstep,.ct,.crm,.sortsel select,.cka-chg,.mm-it,.mrow,.fopt,.ftog,.search-in,.viewfull,.q-o):is(.kbb-rip,.kbb-rip2){background-image:radial-gradient(circle farthest-corner at 50% 50%,rgb(var(--kbb-wave) / var(--kbb-rip-o)) var(--kbb-rip),transparent calc(var(--kbb-rip) + 1%))!important;background-repeat:no-repeat!important;background-position:50% 50%!important;background-size:100% 100%!important}
+html[data-press="c"] .kbb-rip{animation:kbb-press-rip .55s cubic-bezier(.2,.6,.35,1)}
+html[data-press="c"] .kbb-rip2{animation:kbb-press-rip2 .55s cubic-bezier(.2,.6,.35,1)}
+html[data-press="c"] :is(.ib,.kbbmi,.heart,.gwish,.pdp-share-btn,.sarr,.ymal-btn,.qty button,.kc-qty button,.co-q,.mm-x,.x,.kc-x,.fclose,.kc-rm,.co-rm,.cpg-x,.colsel button,.trail).kbb-pressed{color:var(--pink-deep)}
+@keyframes kbb-press-rip{from{--kbb-rip:0%;--kbb-rip-o:.3}to{--kbb-rip:100%;--kbb-rip-o:0}}
+@keyframes kbb-press-rip2{from{--kbb-rip:0%;--kbb-rip-o:.3}to{--kbb-rip:100%;--kbb-rip-o:0}}
+
+/* ── D · BOUNCE ── squeezes in under the finger, springs back past its size,
+   settles. The squeeze is smaller the wider the control, so a full-width row
+   does not lurch. */
+html[data-press="d"] :is(.ib,.kbbmi,.heart,.gwish,.pdp-share-btn,.pdp-share-x,.sarr,.ymal-btn,.qty button,.kc-qty button,.co-q,.mm-x,.x,.kc-x,.fclose,.kc-rm,.co-rm,.cpg-x,.pts-auth-x,.colsel button,.trail){--kbb-sq:.86}
+html[data-press="d"] :is(.lnk,.pchip,.mobi-filter,.gtop>button,.navlink,.kc-tab,.stab,.seg,.dtab,.sr-chip,.sr-write,.pdp-share-tile,.btn,.btn-ghost,.cobtn,.kbb-card-cart,.addcart,.apply,.place,.mb,.rall,.q-next,.wa,.backlink,.conti,.co-tocart,.readmore,.pts-auth-btn,.hi,.bd,.brw-card,.rstep,.ct,.crm,.sortsel select,.cka-chg){--kbb-sq:.94}
+html[data-press="d"] :is(.mm-it,.mrow,.fopt,.ftog,.search-in,.viewfull,.q-o){--kbb-sq:.98}
+html[data-press="d"] .kbb-pressed{scale:var(--kbb-sq,1)}
+html[data-press="d"] :is(.kbb-pop,.kbb-pop2):not(.kbb-pressed){animation:kbb-press-pop .38s cubic-bezier(.3,1.6,.5,1)}
+html[data-press="d"] .kbb-pop2:not(.kbb-pressed){animation-name:kbb-press-pop2}
+html[data-press="d"] :is(.ib,.kbbmi,.heart,.gwish,.pdp-share-btn,.sarr,.ymal-btn,.qty button,.kc-qty button,.co-q,.mm-x,.x,.kc-x,.fclose,.kc-rm,.co-rm,.cpg-x,.colsel button,.trail):is(.kbb-pressed,.kbb-pop,.kbb-pop2){color:var(--pink)}
+html[data-press="d"] :is(.lnk,.pchip,.mobi-filter,.navlink,.kc-tab,.stab,.seg,.dtab,.sr-chip:not(.on),.btn-ghost,.hi,.mm-it:not(.hot),.mrow,.fopt,.ftog,.q-o).kbb-pressed{background-color:var(--pink-soft)}
+html[data-press="d"] .search-in.kbb-pressed{border-color:var(--pink)}
+@keyframes kbb-press-pop{0%{scale:var(--kbb-sq,1)}60%{scale:calc(1 + (1 - var(--kbb-sq,1)) * .55)}100%{scale:1}}
+@keyframes kbb-press-pop2{0%{scale:var(--kbb-sq,1)}60%{scale:calc(1 + (1 - var(--kbb-sq,1)) * .55)}100%{scale:1}}
+
+/* ── E · GLOW RING ── a soft pink halo around what was pressed; nothing moves.
+   `outline`, not box-shadow, so the heart's and the gallery heart's own
+   shadows are kept rather than replaced. Rows are full width, where a ring
+   would be cut off at the screen's edge, so they take a tint instead. */
+html[data-press="e"] :is(.ib,.kbbmi,.heart,.gwish,.pdp-share-btn,.sarr,.ymal-btn,.qty button,.kc-qty button,.co-q,.mm-x,.x,.kc-x,.fclose,.kc-rm,.co-rm,.cpg-x,.colsel button,.trail).kbb-pressed{color:var(--pink-deep);background-color:var(--pink-soft);outline:5px solid rgba(224,86,123,.18);outline-offset:0}
+html[data-press="e"] :is(.lnk,.pchip,.mobi-filter,.navlink,.kc-tab,.stab,.seg,.dtab,.sr-chip:not(.on),.pdp-share-tile,.btn:not(.btn-p),.btn-ghost,.backlink,.conti,.co-tocart,.readmore,.pts-auth-btn,.hi,.bd,.brw-card,.rstep,.ct,.crm,.sortsel select,.cka-chg).kbb-pressed{color:var(--pink-deep);outline:4px solid rgba(224,86,123,.18);outline-offset:0}
+html[data-press="e"] :is(.kbb-card-cart,.addcart,.cobtn,.apply,.place,.mb,.rall,.q-next,.sr-write,.sr-chip.on,.mm-it.hot,.wa,.btn-p,.gtop>button:not(.mobi-filter),.pts-auth-x,.pdp-share-x).kbb-pressed{filter:brightness(.9);outline:5px solid rgba(224,86,123,.28);outline-offset:0}
+html[data-press="e"] :is(.mm-it:not(.hot),.mrow,.fopt,.ftog,.viewfull,.q-o).kbb-pressed{background-color:var(--pink-soft);color:var(--pink-deep)}
+html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-color:#fff;outline:5px solid rgba(224,86,123,.15);outline-offset:0}
+
+/* REDUCED MOTION: colour only. No squeeze, no spring, no spreading wave --
+   C's wave becomes a still tint for as long as the press is shown. */
+@media (prefers-reduced-motion:reduce){
+    html[data-press] :is(.kbb-pressed,.kbb-rip,.kbb-rip2,.kbb-pop,.kbb-pop2){animation:none!important;scale:none!important;translate:none!important}
+    /* With the animation off, the wave's registered strength stays at its
+       initial 0, so the layer C draws is fully transparent: no rule is needed
+       to take it away, and a weaker one could not beat the ripple's own. */
+    html[data-press="c"] :is(.ib,.kbbmi,.heart,.gwish,.pdp-share-btn,.sarr,.ymal-btn,.qty button,.kc-qty button,.co-q,.mm-x,.x,.kc-x,.fclose,.kc-rm,.co-rm,.cpg-x,.colsel button,.trail,.lnk,.pchip,.mobi-filter,.navlink,.kc-tab,.stab,.seg,.dtab,.sr-chip:not(.on),.pdp-share-tile,.btn:not(.btn-p),.btn-ghost,.backlink,.conti,.co-tocart,.readmore,.pts-auth-btn,.hi,.bd,.brw-card,.rstep,.ct,.crm,.sortsel select,.cka-chg,.mm-it:not(.hot),.mrow,.fopt,.ftog,.search-in,.viewfull,.q-o).kbb-pressed{background-color:var(--pink-soft)}
+    html[data-press="c"] :is(.kbb-card-cart,.addcart,.cobtn,.apply,.place,.mb,.rall,.q-next,.sr-write,.sr-chip.on,.mm-it.hot,.wa,.btn-p,.gtop>button:not(.mobi-filter),.pts-auth-x,.pdp-share-x).kbb-pressed{filter:brightness(.88)}
+}
+/* ── end of PRESS FEEDBACK (Lane RD) ── */
+
+/* ═══════════════════════════════════════════════════════════════════════════
    THE SHOWCASE FAMILY — four treatments of one card                Lane PG2
 
    The owner, verbatim: "I need to match the product grid design to the

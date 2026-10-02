@@ -1724,6 +1724,37 @@ final class EnglishRenderWalk
                 'with' => '<section class="sec pm-sec pm-details">$1',
                 'hits' => 1,
             ],
+
+            /*
+             * PRESS FEEDBACK ON <html>, WHICH THE OWNER ASKED FOR.  (Lane RD)
+             *
+             * "click on any icon / button should give feeling live that user
+             * is clicking on some live thing" -- and, shown five styles, "set
+             * C · Ripple by default". The layout's <html> tag gains ONE
+             * attribute, ` data-press="c"`, and that is the whole of the
+             * change to the markup: every press rule in kbb.css and every line
+             * of resources/js/kbb/press.js is keyed by it.
+             *
+             * THIRTY-THREE PAGES: every page in this walk that extends
+             * layouts/store.blade.php, and no other. The four standalone
+             * documents (the journal, an article, the review wall, the skin
+             * quiz) carry their own <html> and do not load kbb.css or the
+             * storefront bundle, so they are unchanged -- which is why the
+             * pattern is anchored on the layout's own head, where the viewport
+             * line is followed by exactly one blank line and then <title>. The
+             * standalone documents leave two blank lines there, or write
+             * `initial-scale=1.0`, and the pattern does not reach them.
+             *
+             * The REPLACEMENT names the constant and the schema default rather
+             * than repeating "c", so it follows the shipped default if it ever
+             * moves and the count does not.
+             */
+            'press feedback: the token on <html>, which the owner asked for (Lane RD)' => [
+                'pattern' => '#<html lang="en" dir="ltr">(\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n\n<title>)#',
+                'with' => '<html lang="en" dir="ltr"'
+                    .\App\Services\SiteLayout::PRESS_ATTR[\App\Services\SiteLayout::SCHEMA['press'][2]].'>$1',
+                'hits' => 33,
+            ],
         ];
     }
 

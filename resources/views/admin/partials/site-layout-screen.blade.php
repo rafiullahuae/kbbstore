@@ -184,6 +184,57 @@
 .sls-pv-frame{min-width:0;margin:0 auto;width:100%}
 .sls-pv-frame.is-phone{max-width:390px}
 .sls-pv-frame .kbb-th{margin:0}
+
+/* "Press feedback" (Lane RD): a few of the shop's controls to tap, drawn with
+   the shop's colours and showing the style chosen in the select above before
+   anything is saved. A SAMPLE, scoped to .slp: the console itself gets none of
+   it, and the storefront's own rules are in kbb.css. */
+@property --slp-r{syntax:'<percentage>';inherits:false;initial-value:0%}
+@property --slp-o{syntax:'<number>';inherits:false;initial-value:0}
+.slp{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;padding:14px;border-radius:12px;
+  background:#FFF8F5;color:#2A2228;min-width:0}
+.slp-t{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;cursor:pointer;
+  border:0;font:inherit;transition:background-color .16s,color .16s,scale .16s,filter .16s}
+.slp-i{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:transparent;color:#2A2228;padding:0}
+.slp-i svg{width:21px;height:21px}
+.slp-h{background:rgba(255,255,255,.94);box-shadow:0 1px 2px rgba(42,34,40,.05),0 4px 14px rgba(42,34,40,.06)}
+.slp-b{padding:11px 18px;border-radius:12px;background:#E0567B;color:#fff;font-weight:700;font-size:14px}
+.slp-p{padding:9px 18px;border-radius:99px;border:1.5px solid #E0567B;background:transparent;color:#2A2228;
+  font-weight:600;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
+.slp-cap{flex-basis:100%;margin:0;font-size:11.5px;color:var(--ink-soft,#6b7280)}
+.slp[data-sls-press="off"] .slp-t{-webkit-tap-highlight-color:rgba(0,0,0,.18)}
+.slp[data-sls-press="off"] .slp-t.is-p{box-shadow:inset 0 0 0 999px rgba(0,0,0,.18);border-radius:0}
+.slp[data-sls-press="a"] :is(.slp-i).is-p{background-color:#FCE0E8;color:#C13E63;scale:.92}
+.slp[data-sls-press="a"] .slp-p.is-p{background-color:#FFF0F4;color:#C13E63}
+.slp[data-sls-press="a"] .slp-b.is-p{filter:brightness(.88);translate:0 1px}
+.slp[data-sls-press="b"] .slp-i.is-p{background-color:#E0567B;color:#fff;scale:.94}
+.slp[data-sls-press="b"] .slp-p.is-p{background-color:#E0567B;color:#fff;scale:.97}
+.slp[data-sls-press="b"] .slp-b.is-p{filter:brightness(.82);scale:.96}
+.slp[data-sls-press="c"] .slp-t{--slp-w:224 86 123}
+.slp[data-sls-press="c"] .slp-b{--slp-w:255 255 255}
+.slp[data-sls-press="c"] .slp-t:is(.is-r,.is-r2){background-image:radial-gradient(circle farthest-corner at 50% 50%,rgb(var(--slp-w) / var(--slp-o)) var(--slp-r),transparent calc(var(--slp-r) + 1%))}
+.slp[data-sls-press="c"] .slp-t.is-r{animation:slp-rip .55s cubic-bezier(.2,.6,.35,1)}
+.slp[data-sls-press="c"] .slp-t.is-r2{animation:slp-rip2 .55s cubic-bezier(.2,.6,.35,1)}
+.slp[data-sls-press="c"] .slp-i.is-p{color:#C13E63}
+.slp[data-sls-press="d"] .slp-i{--slp-q:.86}
+.slp[data-sls-press="d"] :is(.slp-b,.slp-p){--slp-q:.94}
+.slp[data-sls-press="d"] .slp-t.is-p{scale:var(--slp-q)}
+.slp[data-sls-press="d"] .slp-i:is(.is-p,.is-o,.is-o2){color:#E0567B}
+.slp[data-sls-press="d"] .slp-p.is-p{background-color:#FFF0F4}
+.slp[data-sls-press="d"] .slp-t:is(.is-o,.is-o2):not(.is-p){animation:slp-pop .38s cubic-bezier(.3,1.6,.5,1)}
+.slp[data-sls-press="d"] .slp-t.is-o2:not(.is-p){animation-name:slp-pop2}
+.slp[data-sls-press="e"] .slp-i.is-p{color:#C13E63;background-color:#FFF0F4;outline:5px solid rgba(224,86,123,.18);outline-offset:0}
+.slp[data-sls-press="e"] .slp-p.is-p{color:#C13E63;outline:4px solid rgba(224,86,123,.18);outline-offset:0}
+.slp[data-sls-press="e"] .slp-b.is-p{filter:brightness(.9);outline:5px solid rgba(224,86,123,.28);outline-offset:0}
+@keyframes slp-rip{from{--slp-r:0%;--slp-o:.3}to{--slp-r:100%;--slp-o:0}}
+@keyframes slp-rip2{from{--slp-r:0%;--slp-o:.3}to{--slp-r:100%;--slp-o:0}}
+@keyframes slp-pop{0%{scale:var(--slp-q)}60%{scale:calc(1 + (1 - var(--slp-q)) * .55)}100%{scale:1}}
+@keyframes slp-pop2{0%{scale:var(--slp-q)}60%{scale:calc(1 + (1 - var(--slp-q)) * .55)}100%{scale:1}}
+@media (prefers-reduced-motion:reduce){
+  .slp .slp-t{animation:none!important;scale:none!important;translate:none!important}
+  .slp[data-sls-press="c"] .slp-t:is(.is-r,.is-r2){background-image:none}
+  .slp[data-sls-press="c"] :is(.slp-i,.slp-p).is-p{background-color:#FFF0F4}
+}
 </style>
 
 <script>
@@ -773,8 +824,67 @@
   function extraHTML(key) {
     if (key === 'loading') return '';
     if (key === 'catheader' || key === 'catheadersize') return '';   // drawn beside the fields (Lane QC)
+    if (key === 'press') return pressHTML();                          // Lane RD
     return tableHTML();
   }
+
+  /*
+   * "Press feedback" (Lane RD): the shop's header icons, a heart, Add to cart
+   * and the All sets pill, in the style the select above holds RIGHT NOW --
+   * redrawn when it changes, before anything is saved. The letter is checked
+   * against the field's own options before it becomes an attribute.
+   */
+  var PRESS_ICONS = {
+    account: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4.2"/><path d="M4 20.5c.8-4 4-6.3 8-6.3s7.2 2.3 8 6.3z"/></svg>',
+    heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg>',
+    cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.2l2.3 10.5h10.8L20.5 7H6.4"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>'
+  };
+
+  function pressHTML() {
+    var f = fieldOf('press');
+    var v = String(values.press);
+    if (!f || !Object.prototype.hasOwnProperty.call(f.options || {}, v)) v = f ? String(f['default']) : 'c';
+
+    return '<div class="sls-card">'
+      + '<div class="sls-title">Try it</div>'
+      + '<p class="sls-sub">Tap or click the samples. They show the choice above as it is now, before you save; '
+      + 'on the shop it applies to every button and icon.</p>'
+      + '<div class="slp" data-sls-press="' + esc(v) + '" data-sls-press-box>'
+      + '<button type="button" class="slp-t slp-i" aria-label="Account">' + PRESS_ICONS.account + '</button>'
+      + '<button type="button" class="slp-t slp-i" aria-label="Wishlist">' + PRESS_ICONS.heart + '</button>'
+      + '<button type="button" class="slp-t slp-i" aria-label="Cart">' + PRESS_ICONS.cart + '</button>'
+      + '<button type="button" class="slp-t slp-i slp-h" aria-label="Save">' + PRESS_ICONS.heart + '</button>'
+      + '<button type="button" class="slp-t slp-b">Add to cart</button>'
+      + '<button type="button" class="slp-t slp-p">All sets</button>'
+      + '<p class="slp-cap">' + esc((f && f.options && f.options[v]) || '') + '</p>'
+      + '</div></div>';
+  }
+
+  /* The samples' press: the same classes-only scheme as the shop's press.js,
+     held at least 180ms so a quick tap is seen. Nothing is measured. */
+  var slpHeld = null, slpAt = 0;
+  document.addEventListener('pointerdown', function (e) {
+    var t = e.target.closest ? e.target.closest('.slp .slp-t') : null;
+    if (!t) return;
+    slpHeld = t; slpAt = Date.now();
+    t.classList.add('is-p');
+    var r = t.classList.contains('is-r') ? 'is-r2' : 'is-r';
+    t.classList.remove('is-r', 'is-r2'); t.classList.add(r);
+  });
+  function slpRelease() {
+    var t = slpHeld; slpHeld = null;
+    if (!t) return;
+    setTimeout(function () {
+      t.classList.remove('is-p');
+      var o = t.classList.contains('is-o') ? 'is-o2' : 'is-o';
+      t.classList.remove('is-o', 'is-o2'); t.classList.add(o);
+    }, Math.max(0, 180 - (Date.now() - slpAt)));
+  }
+  document.addEventListener('pointerup', slpRelease);
+  document.addEventListener('pointercancel', slpRelease);
+  document.addEventListener('animationend', function (e) {
+    if (e.target.classList && e.target.classList.contains('slp-t')) e.target.classList.remove('is-r', 'is-r2', 'is-o', 'is-o2');
+  });
 
   function tableHTML() {
     var rows = WIDTHS.map(function (w) {

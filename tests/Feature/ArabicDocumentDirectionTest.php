@@ -92,7 +92,11 @@ it('declares right-to-left on every Arabic storefront document', function () {
         $html = $this->get($uri)->assertOk()->getContent();
 
         expect(preg_match('#<html\b[^>]*>#', $html, $m))->toBe(1, "No <html> element on {$name}.");
-        expect($m[0])->toBe('<html lang="ar" dir="rtl">', "{$name} does not declare itself right-to-left: {$m[0]}");
+        // Lane RD's press-feedback attribute rides on the same tag; it is not
+        // direction, and PressFeedbackTest pins it. Only its exact shape is
+        // taken out, so anything else added to <html> is still seen here.
+        $tag = (string) preg_replace('/ data-press="[a-e]"(?=>$)/', '', $m[0]);
+        expect($tag)->toBe('<html lang="ar" dir="rtl">', "{$name} does not declare itself right-to-left: {$m[0]}");
     }
 });
 

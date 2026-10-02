@@ -104,11 +104,15 @@ it('still wires the mobile menu, and in the same position', function () {
     // LAST, after initNavFit, so no step before it moved.
     // 24 since Lane RA added initAdminLayer (the admin bar's cookie test)
     // LAST, after initAlsoLike, so again no step before it moved.
-    expect($steps)->toHaveCount(24);
+    // 25 since Lane RD added initPress (press feedback: classes only, and an
+    // immediate return when the owner chose Off) after initAdminLayer, so no
+    // step before it moved either.
+    expect($steps)->toHaveCount(25);
     expect($steps[0])->toBe('initOverlay');
     expect($steps[8])->toBe('initHome');   // wires the mobile menu
     expect($steps[16])->toBe('initListingLoad');
     expect($steps[21])->toBe('initNavFit');
     expect($steps[22])->toBe('initAlsoLike');
     expect($steps[23])->toBe('initAdminLayer');
+    expect($steps[24])->toBe('initPress');
 });
