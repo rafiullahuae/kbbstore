@@ -128,6 +128,26 @@ final class AdminCapabilities
         'orders.delete' => ['owner', 'manager'],
         'orders.export' => ['owner', 'manager'],
         /*
+         * (Lane PU) Store -> Orders -> (an order). Three, because they are
+         * three different acts and the owner asked for each separately:
+         *
+         *   orders.edit      Billing / Shipping -> Edit: correcting the
+         *                    address, email and phone on an order. Support
+         *                    keeps it -- fixing the address a customer phoned
+         *                    in IS answering customers, and support could
+         *                    already reach this endpoint under orders.manage.
+         *   orders.customer  pointing the order at a different customer
+         *                    account. Not support: it puts the order, with its
+         *                    addresses, in another person's My Account, and its
+         *                    picker searches the whole customer list.
+         *   orders.payment   "Mark as paid": writing that money arrived.
+         *                    Owner and manager only, the same people who hold
+         *                    orders.money -- support "touches no money".
+         */
+        'orders.edit' => ['owner', 'manager', 'support'],
+        'orders.customer' => ['owner', 'manager'],
+        'orders.payment' => ['owner', 'manager'],
+        /*
          * Safety -> Demo Content -> Sample order. OWNER ALONE, and a line of
          * its own rather than a reuse of `data.import` beside the rest of Demo
          * Content, because this is the only endpoint in the back office that
@@ -918,7 +938,15 @@ final class AdminCapabilities
         ['POST', 'admin-api/orders-bulk-status', 'orders.manage'],
         ['POST', 'admin-api/orders/*/notes', 'orders.manage'],
         ['POST', 'admin-api/orders/*/action', 'orders.manage'],
-        ['PUT', 'admin-api/orders/*/address', 'orders.manage'],
+        // (Lane PU) the Billing / Shipping editor, the "Mark as paid" modal,
+        // the customer change and its picker, and the "Order history" popup.
+        // The address route moved off orders.manage onto orders.edit, which
+        // holds the same three roles today and can be narrowed on its own.
+        ['PUT', 'admin-api/orders/*/address', 'orders.edit'],
+        ['POST', 'admin-api/orders/*/mark-paid', 'orders.payment'],
+        ['PUT', 'admin-api/orders/*/customer', 'orders.customer'],
+        ['GET', 'admin-api/order-customer-search', 'orders.customer'],
+        ['GET', 'admin-api/orders/*/customer-orders', 'orders.view'],
         ['PUT', 'admin-api/orders/*/status', 'orders.manage'],
         ['GET', 'admin-api/orders', 'orders.view'],
         ['GET', 'admin-api/orders-list', 'orders.view'],

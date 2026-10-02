@@ -248,7 +248,18 @@ class PaymentRefunder
         return self::ceilingFrom(
             (int) ($order->captured_total ?? 0),
             $order->captured_at !== null,
-            $order->paid_at !== null,
+            /*
+             * ── CASH NOT YET COLLECTED IS NOT REFUNDABLE (2 October 2026) ──
+             *
+             * An imported WooCommerce cash-on-delivery order carries `paid_at`
+             * (WooCommerce stamps date_paid when it moves to Processing), so
+             * the order screen said "AED 337 still refundable" on an order
+             * whose courier had not collected a dirham. The payment panel
+             * already reads such an order as "Cash on delivery — AED X to
+             * collect" (App\Support\OrderPaymentPanel: COD, not Completed,
+             * no cash-received record); the refund ceiling now agrees with it.
+             */
+            $order->paid_at !== null && ! self::cashStillToCollect($order),
             /*
              * ── A RELEASED AUTHORISATION IS NOT REFUNDABLE MONEY ───────────
              *
@@ -331,6 +342,18 @@ class PaymentRefunder
         $confirmed = $confirmedPaid();
 
         return $confirmed > 0 ? $confirmed : $total;
+    }
+
+    /**
+     * A cash-on-delivery order whose cash has not been recorded as collected:
+     * not Completed and no capture (the cash-received record). The same test
+     * OrderPaymentPanel uses for its amber "to collect" state.
+     */
+    private static function cashStillToCollect(Order $order): bool
+    {
+        return strtolower((string) ($order->payment_method ?? '')) === 'cod'
+            && $order->captured_at === null
+            && strtolower((string) ($order->status ?? '')) !== 'completed';
     }
 
     /** Fils already refunded or reserved against this order. */
