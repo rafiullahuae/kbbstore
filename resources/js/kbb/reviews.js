@@ -259,10 +259,49 @@ function initReviewSheet(section) {
 }
 
 
+/* A REVIEW PHOTO THAT DOES NOT LOAD LEAVES THE CARD, NOT A BROKEN FRAME.
+   (2 October 2026) Imported review photographs carry the old site's address
+   until the picture pass has fetched them; one the old site no longer serves
+   drew an empty frame with a broken-image icon and "1" over it on the live
+   product page. The photo is removed, the count follows, and a card left with
+   none drops its photo strip and its place under "With Photos". Driven by the
+   image's own error event (captured on the section, since error does not
+   bubble) plus a check for one that failed before this script ran -- no
+   layout is measured. */
+function initBrokenPhotos(section) {
+    const drop = (img) => {
+        const cell = img.closest('.sr-ph');
+        const strip = img.closest('.sr-pp');
+        const card = img.closest('.sr-card');
+        if (!cell || !strip) return;
+        cell.remove();
+        const left = strip.querySelectorAll('.sr-ph').length;
+        const count = strip.querySelector('.sr-pc');
+        if (left === 0) {
+            strip.remove();
+            if (card) card.dataset.photos = '0';
+            return;
+        }
+        if (count) count.textContent = '📷 ' + left;
+        strip.classList.toggle('one', left === 1);
+        strip.classList.toggle('multi', left > 1);
+    };
+
+    section.addEventListener('error', (event) => {
+        const img = event.target;
+        if (img && img.tagName === 'IMG' && img.closest('.sr-ph')) drop(img);
+    }, true);
+
+    section.querySelectorAll('.sr-ph img').forEach((img) => {
+        if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) drop(img);
+    });
+}
+
 export function initReviews() {
     const section = document.getElementById('sr');
     if (!section) return;
 
+    initBrokenPhotos(section);
     initReviewFilters(section);
     initReviewModal(section);
     initHelpfulVotes(section);

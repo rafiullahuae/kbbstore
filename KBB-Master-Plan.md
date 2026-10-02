@@ -3725,7 +3725,8 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 22 | Growth & Marketing → **Search Terms**: what shoppers search, ranked, by day / week / month, light | integrator | **done — 2.60.344** — real `search_terms` counts; counted once a search settles (no keystroke fragments); zero-result searches now counted ("Found nothing"); own capability `search_terms.view` |
 | 23 | Deep links with a tab (`#catalog/reorder`, `go('catalog','reorder')`) open the wrong tab: the route interceptor around app.blade.php ~23075 calls `_go(id)` and drops the second argument | found by Lane PM | **done — 2.60.345** |
 | 24 | **Every image on the shop loaded from kbeautybliss.com** although every file was here: each re-import of Products wrote the export's old addresses back over the re-pointed ones | integrator | **done — 2.60.345** — fixed on the site by Addresses & pictures → Bring these across; an import now re-points every picture whose file is already here when each file finishes |
-| 25 | Some review photographs show as broken frames on product pages | integrator | diagnosing — waiting for one broken photo's address from his browser |
+| 25 | Some review photographs show as broken frames on product pages | integrator | **done — 2.60.345** — no broken frame (the card drops a photo that fails); the photos themselves come across with Pictures & live progress |
+| 26 | **No orders on the new shop** (customers imported, 0 orders): the preview showed no Orders row and every Order line / note refused — `orders.csv` was never among the uploaded files | owner + integrator | waiting — owner re-exports Customers + Orders and sends the Preview before importing |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix

@@ -13,11 +13,12 @@ No plugin change.
 | 19 | Leaving a page gave a popup; unsaved work was lost on most screens | Leaving never asks. What you typed is kept, and the top bar shows "Unfinished (N)": Open brings you back with it, Discard asks first. 24 screens and the product editor (you approved it) | Top bar, every admin page |
 | 24 | Every picture loaded from kbeautybliss.com | After you pressed "Bring these across" they load from this shop; from now on an import also re-points every picture whose file is already here, so a re-import can no longer send them back | Automatic |
 | 23 | (found while building 19) links to a tab, e.g. Catalog → Reorder, opened the first tab | They open the tab they name | — |
+| 25 | Review photos showed as broken frames | A photo that does not load is removed from its card, the count follows, and a card left with none leaves "With Photos". Run Pictures & live progress to bring the photos themselves across | Product page reviews |
 
 The "turn this product into a set?" question in the product editor stays: it
 is a decision, not a leave warning.
 
-Files: app/Services/Import/ImportRunner.php, resources/views/admin/app.blade.php,
+Files: app/Services/Import/ImportRunner.php, resources/js/kbb/reviews.js, public/build/*, resources/views/admin/app.blade.php,
 resources/views/admin/partials/{unfinished-drafts,product-editor-screen,reset-guard,banners-screen,grid-sections-screen,set-appearance-screen,cart-panel-screen,cart-page-screen,checkout-page-screen,page-wash-screen,slim-footer-screen,site-layout-screen,security-screen,ugc-appearance-screen,review-settings-screen,review-badges-screen}.blade.php,
 database/migrations/2027_07_10_000000_clear_caches_unfinished_drafts.php.
 
