@@ -505,7 +505,7 @@ it('counts them as drafts awaiting review and not as work already done', functio
      *
      * The "You may also like" carousel's two arrows — store.product.
      * related_prev and related_next — seeded by their own migration,
-     * 2027_07_11_000050_seed_also_like_arabic_drafts. Read off the run.
+     * 2027_07_11_000250_seed_also_like_arabic_drafts. Read off the run.
      */
     expect($ui['drafts'])->toBe(1065, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')

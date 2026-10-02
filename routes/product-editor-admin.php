@@ -141,7 +141,7 @@ Route::post('/product-editor-save/{id}', [ProductEditorApiController::class, 'sa
  * editor's capability — AdminCapabilities maps a GET here to catalog.view —
  * and needs no line in routes/web.php. The picks themselves are saved with
  * the product, through product-editor-save above. Shipped with
- * 2027_07_11_000100_clear_caches_also_like so the compiled route cache learns
+ * 2027_07_11_000300_clear_caches_also_like so the compiled route cache learns
  * the path.
  */
 Route::get('/product-editor-also-like', [\App\Http\Controllers\Admin\AlsoLikeApiController::class, 'search']);
