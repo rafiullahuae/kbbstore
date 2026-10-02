@@ -1,0 +1,123 @@
+[
+  {
+    "shot": "shop-390-switches-on",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "hoverNone": true,
+    "tiles": 12,
+    "badgesNew": 6,
+    "badgesSale": 6,
+    "pager": {
+      "load": "scroll",
+      "batch": "12",
+      "auto": true,
+      "numbersShown": 0
+    },
+    "heights": [
+      356.95
+    ],
+    "tileWidth": 173,
+    "gaps": {
+      "photoToName": 16,
+      "nameToPrice": 26,
+      "priceToButton": 12,
+      "pad": "16px",
+      "cpPaddingTop": "12px",
+      "cartMarginTop": "12px"
+    },
+    "type": {
+      "brand": null,
+      "name": {
+        "size": "14px",
+        "weight": "600"
+      },
+      "price": {
+        "size": "13.5px",
+        "weight": "700"
+      },
+      "salePrice": {
+        "size": "13.5px",
+        "weight": "700"
+      },
+      "was": {
+        "size": "12.5px",
+        "weight": "500"
+      },
+      "button": {
+        "size": "11px",
+        "weight": "700"
+      }
+    },
+    "hover": {
+      "before": {
+        "shadow": "none",
+        "transform": "none",
+        "img": "none"
+      },
+      "after": {
+        "shadow": "rgba(42, 34, 40, 0.12) 0px 14px 34px 0px",
+        "transform": "none",
+        "img": "matrix(1.06, 0, 0, 1.06, 0, 0)"
+      },
+      "changed": true
+    }
+  },
+  {
+    "shot": "brands-medicube-390-switches-on",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "hoverNone": true,
+    "tiles": 7,
+    "badgesNew": 4,
+    "badgesSale": 3,
+    "pager": null,
+    "heights": [
+      348.95
+    ],
+    "tileWidth": 165,
+    "gaps": {
+      "photoToName": 16,
+      "nameToPrice": 26,
+      "priceToButton": 12,
+      "pad": "16px",
+      "cpPaddingTop": "12px",
+      "cartMarginTop": "12px"
+    },
+    "type": {
+      "brand": null,
+      "name": {
+        "size": "14px",
+        "weight": "600"
+      },
+      "price": {
+        "size": "13.5px",
+        "weight": "700"
+      },
+      "salePrice": {
+        "size": "13.5px",
+        "weight": "700"
+      },
+      "was": {
+        "size": "12.5px",
+        "weight": "500"
+      },
+      "button": {
+        "size": "11px",
+        "weight": "700"
+      }
+    },
+    "hover": {
+      "before": {
+        "shadow": "none",
+        "transform": "none",
+        "img": "none"
+      },
+      "after": {
+        "shadow": "rgba(42, 34, 40, 0.12) 0px 14px 34px 0px",
+        "transform": "none",
+        "img": "matrix(1.06, 0, 0, 1.06, 0, 0)"
+      },
+      "changed": true
+    }
+  }
+]

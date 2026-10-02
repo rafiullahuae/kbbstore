@@ -1,6 +1,6 @@
 [
   {
-    "shot": "home-390-x",
+    "shot": "home-390-other",
     "viewport": 390,
     "scrollWidth": 390,
     "hoverNone": true,
@@ -60,7 +60,7 @@
     }
   },
   {
-    "shot": "product-card-relief-sun-390-x",
+    "shot": "product-card-relief-sun-390-other",
     "viewport": 390,
     "scrollWidth": 390,
     "hoverNone": true,
@@ -118,7 +118,7 @@
     }
   },
   {
-    "shot": "home-1280-x",
+    "shot": "home-1280-other",
     "viewport": 1280,
     "scrollWidth": 1280,
     "hoverNone": false,
@@ -176,7 +176,7 @@
     }
   },
   {
-    "shot": "product-card-relief-sun-1280-x",
+    "shot": "product-card-relief-sun-1280-other",
     "viewport": 1280,
     "scrollWidth": 1280,
     "hoverNone": false,
