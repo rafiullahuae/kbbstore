@@ -101,9 +101,16 @@ it('draws no NEW and no -N% pill on any listing by default', function () {
     foreach (['/shop/', prCatPath($cat), '/brands/pr-brand/'] as $uri) {
         $html = prGet($uri);
 
+        /*
+         * substr_count and toBe(0), NOT `not->toContain($needle, $message)`.
+         * toContain() is VARIADIC — a second argument is a second NEEDLE — so
+         * the negated form with a message passed whenever the message itself
+         * was absent from the page, which is always. Measured: the first
+         * draft of this test stayed green with the NEW pill switched back on.
+         */
         expect(substr_count($html, 'class="kbb-card kbb-tile"'))->toBeGreaterThan(0, "{$uri} drew no cards")
-            ->and($html)->not->toContain('kbb-badge-new', "{$uri} still draws the NEW pill")
-            ->and($html)->not->toContain('kbb-badge-sale', "{$uri} still draws the -N% pill")
+            ->and(substr_count($html, 'kbb-badge-new'))->toBe(0, "{$uri} still draws the NEW pill")
+            ->and(substr_count($html, 'kbb-badge-sale'))->toBe(0, "{$uri} still draws the -N% pill")
             // The markdown itself is still shown, by the struck-through price.
             ->and($html)->toContain('kbb-card-reg');
     }
@@ -212,15 +219,21 @@ it('walks every product of a brand exactly once, page by page', function () {
     prSeed(30);
     $seen = [];
 
+    $nexts = [];
+
     for ($page = 1; $page <= 3; $page++) {
         prFresh();
         $json = test()->get('/brands/pr-brand/?paged='.$page.'&kbbbatch=1')->assertOk()->json();
         preg_match_all('#href="(/product/pr-p\d+/)"#', $json['html'], $m);
         $seen = array_merge($seen, array_values(array_unique($m[1])));
+        $nexts[$page] = $json['next'];
     }
 
     expect($seen)->toHaveCount(30)
-        ->and(array_unique($seen))->toHaveCount(30);
+        ->and(array_unique($seen))->toHaveCount(30)
+        // …and the loader is TOLD there is more at every seam but the last,
+        // which is the only thing the look-ahead row is for.
+        ->and($nexts)->toBe([1 => '/brands/pr-brand/?paged=2', 2 => '/brands/pr-brand/?paged=3', 3 => null]);
 });
 
 it('404s a brand page past the end and canonicalises page 2 to itself', function () {
@@ -278,8 +291,11 @@ it('still honours Arrows and Load all on a brand page', function () {
 it('adds no query to a brand page for the pager', function () {
     /*
      * A COUNT(*) is what a pager usually costs, and StorefrontQueryBudgetTest
-     * is a budget. One extra ROW stands in for it. MUTATION, RUN: replace the
-     * look-ahead with `$total = (clone $query)->count()` and this is red by one.
+     * is a budget. One extra ROW stands in for it. MUTATION, RUN: add a
+     * `Product::query()->where('brand_id', …)->count()` to show() and this is
+     * red on the direct check below. (Comparing against "Load all" alone did
+     * NOT catch it — a count added to both modes keeps them equal — which is
+     * why the direct check is here.)
      */
     prSeed(30);
     prFresh();
@@ -302,6 +318,17 @@ it('adds no query to a brand page for the pager', function () {
 
     // Page one of a paged brand costs what the whole brand on one page costs.
     expect($paged)->toBe($whole);
+
+    // And directly: nothing on the page counts the brand's products.
+    app(SiteLayout::class)->save(['load_mode' => 'scroll']);
+    prFresh();
+    DB::enableQueryLog();
+    test()->get('/brands/pr-brand/?paged=2')->assertOk();
+    $counts = collect(DB::getQueryLog())->pluck('query')
+        ->filter(fn (string $q): bool => str_contains(strtolower($q), 'count(') && str_contains($q, 'brand_id'));
+    DB::disableQueryLog();
+
+    expect($counts->all())->toBe([]);
 });
 
 /* ═══════════════════ 3 · hover on a phone ═══════════════════ */
@@ -317,7 +344,9 @@ it('neutralises every card hover rule on a phone unless the owner opts back in',
      * `(max-width:700px)` alone and this is red — a tablet in a browser at
      * 1024 is a touch screen with no pointer, and it would keep the sticky
      * hover. Delete the `body:not(.pc-phonehover)` prefix from any rule and
-     * the "every rule is gated" check is red.
+     * the "every rule is gated" check is red. Delete the polaroid line from
+     * the block and the "no hover rule is left out" half is red, naming
+     * `.kbb-pgrid[data-skin="polaroid"] .kbb-card:hover` in both sheets.
      */
     $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
     $rules = (string) preg_replace('#/\*.*?\*/#s', '', $css);
@@ -361,6 +390,12 @@ it('neutralises every card hover rule on a phone unless the owner opts back in',
     ];
     $gated = implode("\n", $selectors);
 
+    // Hover rules whose ONLY property is `transform`, which the generic
+    // `body:not(.pc-phonehover) .kbb-pgrid .kbb-card:hover{transform:none}`
+    // answers for every skin at once.
+    $liftOnly = ['.kbb-pgrid[data-skin="overlay"] .kbb-card:hover'];
+    expect($gated)->toContain('body:not(.pc-phonehover) .kbb-pgrid .kbb-card:hover');
+
     foreach (['css/kbb/kbb.css', 'css/kbb/kbb-grid-skins.css'] as $sheet) {
         $src = (string) preg_replace('#/\*.*?\*/#s', '', (string) file_get_contents(resource_path($sheet)));
         preg_match_all('#([^{}]*\.kbb-card:hover[^{}]*)\{#', $src, $hm);
@@ -372,9 +407,11 @@ it('neutralises every card hover rule on a phone unless the owner opts back in',
                     continue;
                 }
 
-                // The generic transform rule covers a card's own lift on any skin.
+                // Named exactly — the selector the hover rule wrote, gated. The
+                // one rule allowed to rely on the generic `transform:none` is a
+                // skin whose hover moves NOTHING but the transform.
                 $covered = str_contains($gated, 'body:not(.pc-phonehover) '.$sel)
-                    || str_contains($gated, 'body:not(.pc-phonehover) '.preg_replace('#\[data-skin[^\]]*\]#', '', $sel));
+                    || in_array($sel, $liftOnly, true);
 
                 expect($covered)->toBeTrue("{$sheet}: `{$sel}` has no resting value in the phone-hover block");
             }
@@ -520,9 +557,8 @@ it('cannot be made to print anything but its own constants (rule 5)', function (
     /*
      * A select stores one of its own options or the default; a range is a
      * clamped integer. So a POST that tries to break out of the stylesheet
-     * stores the default and emits nothing. MUTATION, RUN: return `(string)
-     * $c[$k]` from the $size closure without the FONT_SIZES check, and store a
-     * raw row directly — the payload reaches the page and this is red.
+     * stores the default and emits nothing. Both layers are asserted: the
+     * cast on the way in and out, and cardCss()'s own re-check below.
      */
     $owner = AdminUser::create([
         'name' => 'PR Owner', 'email' => 'pr-owner@example.test',
@@ -544,14 +580,34 @@ it('cannot be made to print anything but its own constants (rule 5)', function (
         ->and($c['card_pad_d'])->toBe(32)                // clamped to its own max
         ->and($c['card_gap_img_m'])->toBe(0);            // clamped to its own min
 
-    // And a row written behind the cast's back is still not printed.
+    // And a row written behind the cast's back is still not printed: all()
+    // casts it to the default on the way out.
     Setting::query()->updateOrCreate(['key' => 'card_fs_btn_d'], ['value' => '12px;}body{display:none', 'autoload' => true]);
     prFresh();
 
     $css = app(ProductStyles::class)->cardCss();
-    expect($css)->not->toContain('display:none')
-        ->and($css)->not->toContain('<')
-        ->and($css)->toContain('padding-inline:32px');
+    expect(substr_count($css, 'display:none'))->toBe(0)
+        ->and(substr_count($css, '<'))->toBe(0)
+        ->and(substr_count($css, 'padding-inline:32px'))->toBe(1);
+
+    /*
+     * AND cardCss() CHECKS AGAIN, ITSELF. The values it reads are resolved
+     * once per request and memoised; a value that reached that memo by any
+     * route other than cast() — a later refactor, a caller filling it — must
+     * still not be printed. So the memo is filled directly here, past cast(),
+     * and the method must drop the size and the weight it does not recognise.
+     * MUTATION, RUN: drop the FONT_SIZES check from the $size closure and
+     * this is red on `display:none`.
+     */
+    $styles = app(ProductStyles::class);
+    $values = $styles->all();
+    $values['card_fs_title_d'] = '15px}body{display:none';
+    $values['card_fw_btn'] = '700;color:red';
+    (fn () => $this->resolved = $values)->call($styles);
+
+    $forged = $styles->cardCss();
+    expect(substr_count($forged, 'display:none'))->toBe(0)
+        ->and(substr_count($forged, 'color:red'))->toBe(0);
 });
 
 it('offers the new controls on Appearance → Product styles, in their own tab', function () {
