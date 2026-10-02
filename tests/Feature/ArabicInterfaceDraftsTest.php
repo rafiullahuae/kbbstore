@@ -500,7 +500,14 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * 2027_07_06_000200_seed_listing_pager_arabic_drafts, for the reason every
      * round above needed one. Read off the run, not added up.
      */
-    expect($ui['drafts'])->toBe(1063, 'the shipped Arabic is not showing as drafts to review')
+    /*
+     * ── 1,063 -> 1,065: LANE PT'S TWO ───────────────────────────────────────
+     *
+     * "Read more" / "Read less" under a long description in the imported
+     * category title header -- store.shop.header_more, header_less -- seeded
+     * by 2027_07_12_000300_seed_title_header_arabic_drafts.
+     */
+    expect($ui['drafts'])->toBe(1065, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

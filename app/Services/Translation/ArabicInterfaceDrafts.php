@@ -319,7 +319,7 @@ final class ArabicInterfaceDrafts
             'store.shop.crumb_category' => 'الفئة',
             'store.shop.crumb_search' => 'البحث',
             'store.shop.header_more' => 'اقرأ المزيد',
-            'store.shop.header_less' => 'عرض أقل',
+            'store.shop.header_less' => 'اقرأ أقل',
 
             'store.collection.page_title' => ':title · K-Beauty Bliss',
             'store.collection.product_count' => 'لا منتجات|منتج واحد|منتجان|:formatted منتجات|:formatted منتجًا|:formatted منتج',

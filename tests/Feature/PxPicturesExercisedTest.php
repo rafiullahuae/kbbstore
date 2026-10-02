@@ -242,7 +242,10 @@ it('brings every picture in the fixture export across, byte for byte, and names 
         $checked++;
     }
 
-    expect($checked)->toBe(13);
+    // 16 since exporter 1.11.0 (Lane PT): the fixture's three title-header
+    // banners -- categories 15 and 22, brand 502 -- are fetched, re-pointed
+    // and checked byte for byte like every other picture.
+    expect($checked)->toBe(16);
 
     // The customers' photographs specifically — the new path, and the only
     // pictures on a shop that cannot be re-created.
