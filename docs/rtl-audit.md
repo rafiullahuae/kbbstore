@@ -157,6 +157,8 @@ exactly, in both directions, so the document cannot drift from the code.
 | `resources/css/kbb/sorina-reviews.css` | `@media(min-width:760px) .sr-scard` | `right: auto` | centre |
 | `resources/css/kbb/sorina-reviews.css` | `.sr-hp` | `left: -9999px` | off-screen |
 | `resources/views/layouts/store.blade.php` | `.qv-btn` | `left: 50%` | centre |
+| `resources/css/kbb/kbb.css` | `.kbb-tile .kbb-card-thumb > .qv-btn` | `left: 50%` | centre |
+| `resources/css/kbb/kbb.css` | `.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-thumb > .qv-btn` | `left: 50%` | centre |
 | `resources/views/store/app.blade.php` | `.toast` | `left: 50%` | centre |
 | `resources/views/store/skin-quiz.blade.php` | `.toast` | `left: 50%` | centre |
 | `resources/views/invoices/document.blade.php` | `.bc i.b` | `border-left-style: solid` | barcode |
