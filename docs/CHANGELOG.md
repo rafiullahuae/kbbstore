@@ -3,6 +3,24 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.357
+**C · Ripple on every button and icon (no more grey tap box), and every tab of
+Appearance → Product page in view.** Apply after .356. No plugin change. Runs
+one migration (a cache clear).
+
+| Your report | Now |
+|---|---|
+| "when u click on any button or icon. it leaves gray square / rectangle box ... set C · Ripple by default, and give other as options" | No grey box; a pink wave spreads from the middle of whatever is pressed (white on pink buttons). Off / A / B / C / D / E in Appearance → Site layout → Press feedback, with a Try it box. Nothing moves at rest: 28 controls measured identical |
+| "i can not see any tab of this name at the top of the Appearance → Product page → Buy these together" | The tab was 13th in a row that scrolled sideways with no scrollbar; the row now wraps, so all 13 tabs are in view |
+
+Files (11): app/Services/SiteLayout.php, resources/css/kbb/kbb.css,
+resources/js/kbb/app.js, resources/js/kbb/press.js,
+resources/views/admin/app.blade.php,
+resources/views/admin/partials/site-layout-screen.blade.php,
+resources/views/layouts/store.blade.php,
+database/migrations/2027_07_18_000900_clear_caches_press_feedback.php,
+public/build (manifest, app bundle, kbb.css bundle).
+
 ## 2.60.356
 **"Buy these together" on the product page, switched on.** Apply after .355.
 No plugin change. Runs four migrations (the product-views table, the switch,
