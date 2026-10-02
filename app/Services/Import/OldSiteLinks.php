@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Product;
+use App\Models\ProductTab;
 use App\Models\Redirect;
 use App\Services\Import\Entities\ContentBlockImporter;
 use App\Support\CategoryPath;
@@ -109,6 +110,10 @@ final class OldSiteLinks
         [Block::class, 'blocks', 'content'],
         [Category::class, 'categories', 'description'],
         [Brand::class, 'brands', 'description'],
+        // A tab imported from the old shop (ProductImporter::syncTabs) prints
+        // in the product page's tab strip beside the description, so a link
+        // in it is the same defect in the same place.
+        [ProductTab::class, 'product_tabs', 'body'],
     ];
 
     /** Bases the old shop published a brand under. */
@@ -546,6 +551,7 @@ final class OldSiteLinks
             'blocks.content' => 'HTML block',
             'categories.description' => 'Category description',
             'brands.description' => 'Brand description',
+            'product_tabs.body' => 'Product tab',
             default => $table.'.'.$field,
         };
     }
@@ -800,7 +806,7 @@ final class OldSiteLinks
         foreach (self::DOCUMENTS as [$model, $table, $field]) {
             $label = match ($table) {
                 'products', 'categories', 'brands' => 'name',
-                'posts' => 'title',
+                'posts', 'product_tabs' => 'title',
                 default => 'name',
             };
 

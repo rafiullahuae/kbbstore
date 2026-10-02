@@ -764,7 +764,11 @@ final class ProductImporter extends EntityImporter
                 ]);
             }
 
-            $model->forceFill(['title' => $tab['title'], 'body' => $tab['body']]);
+            // The old-site links already re-pointed in this tab, re-pointed the
+            // same way, so an unchanged export leaves it clean. (Lane PT)
+            $body = ($this->links ??= new OldSiteLinks)->replay('product_tabs', $model->id, 'body', $tab['body']);
+
+            $model->forceFill(['title' => $tab['title'], 'body' => $body]);
 
             if (! $model->exists || $model->isDirty()) {
                 $model->save();

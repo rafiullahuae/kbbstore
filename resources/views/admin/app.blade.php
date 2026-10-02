@@ -9926,7 +9926,7 @@ function gbUrlsMediaCard(){
 function ptOldLinksRow(){
   const head='<div style="margin-top:16px" id="ptOldLinks"><b>Links to the old site</b></div>'
     +'<p style="font-size:12px;color:var(--ink-soft);margin:3px 0 0;max-width:680px">'
-    +'Links inside product and set descriptions, articles, HTML blocks and category and brand descriptions that still open '
+    +'Links inside product and set descriptions and tabs, articles, HTML blocks and category and brand descriptions that still open '
     +'<b>kbeautybliss.com</b> — like “Get premium <u>Face Cleansers</u> at unbeatable prices” at the end of a cleanser. '
     +'Each is pointed at this shop’s page for the same thing; the words, and everything else in the copy, stay as they are. '
     +'Every import now does this by itself. This is for what was imported before.</p>'

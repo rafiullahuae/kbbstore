@@ -183,7 +183,7 @@ it('leaves a link to an uploaded FILE to the picture pass', function () {
         ->and(Product::query()->where('slug', 'pt-anua-foam')->value('description'))->toBe($html);
 });
 
-it('reads every kind of imported copy: products, sets, articles, blocks, categories and brands', function () {
+it('reads every kind of imported copy: products, sets, their tabs, articles, blocks, categories and brands', function () {
     ptLinkShop();
 
     $link = '<a href="https://kbeautybliss.com/pt-face-washes/">cleansers</a>';
@@ -193,12 +193,16 @@ it('reads every kind of imported copy: products, sets, articles, blocks, categor
     Category::query()->where('slug', 'pt-skin')->update(['description' => $link]);
     Brand::query()->where('slug', 'pt-anua')->update(['description' => $link]);
     $block = Block::query()->create(['slug' => 'pt-block', 'name' => 'Ingredients', 'content' => $link, 'status' => 'published']);
+    \App\Models\ProductTab::query()->forceCreate([
+        'product_id' => Product::query()->where('slug', 'pt-anua-foam')->value('id'),
+        'title' => 'How to use', 'body' => $link, 'position' => 900, 'is_enabled' => true, 'import_key' => 'wc:1',
+    ]);
 
     $tables = collect((new OldSiteLinks)->propose())->map(fn ($p) => $p['table'].'.'.$p['field'])->sort()->values()->all();
 
     expect($tables)->toBe([
         'blocks.content', 'brands.description', 'categories.description',
-        'posts.body', 'products.description', 'products.short_description',
+        'posts.body', 'product_tabs.body', 'products.description', 'products.short_description',
     ]);
 
     (new OldSiteLinks)->apply();
