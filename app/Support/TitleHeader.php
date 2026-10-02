@@ -139,6 +139,54 @@ final class TitleHeader
     public const STYLE_CHOICES = ['align', 'treatment', 'box'];
 
     /**
+     * The per-category, PER-DEVICE choices (Lane QC), and the list each is
+     * checked against. A device's own key beats the both-devices key above,
+     * which is what a category PY saved still carries -- so "Centred" saved
+     * before phone and laptop were separate is still both devices' choice.
+     */
+    public const DEVICE_CHOICES = [
+        'align_phone' => 'align', 'align_desktop' => 'align',
+        'treatment_phone' => 'treatment', 'treatment_desktop' => 'treatment',
+        'box_phone' => 'box', 'box_desktop' => 'box',
+        'text_phone' => 'text', 'text_desktop' => 'text',
+        'focus' => 'focus',
+    ];
+
+    /** A category's own box colours (Lane QC): #RRGGBB, over whichever box style it shows. */
+    public const STYLE_COLOURS = ['bg', 'ic'];
+
+    /** The text colour words, Automatic included. */
+    public const TEXTS = ['auto', 'light', 'dark'];
+
+    /** Which part of a picture a phone keeps (Lane QC). */
+    public const FOCUSES = ['left', 'center', 'right'];
+
+    /**
+     * The fine-tuning written onto the header (Lane QC): constant property
+     * name => [setting, how it is printed]. Written only off its default.
+     * kbb-title-header.css reads each with the drawn value as its fallback.
+     */
+    public const TWEAK_VARS = [
+        '--kbb-th-io' => ['cat_header_icon_strength', 'factor'],
+        '--kbb-th-isz' => ['cat_header_icon_size', 'factor'],
+        '--kbb-th-shs' => ['cat_header_shadow_strength', 'factor'],
+        '--kbb-th-shb' => ['cat_header_shadow_blur', 'factor'],
+        '--kbb-th-fdd' => ['cat_header_fade_dark', 'factor'],
+        '--kbb-th-fdr' => ['cat_header_fade_reach', 'factor'],
+        '--kbb-th-fro' => ['cat_header_frost_opacity', 'factor'],
+        '--kbb-th-frb' => ['cat_header_frost_blur', 'px'],
+        '--kbb-th-frr' => ['cat_header_frost_radius', 'px'],
+        '--kbb-th-ls' => ['cat_header_letter', 'em'],
+    ];
+
+    /** The colours among them; blank (Automatic) writes nothing. */
+    public const TWEAK_COLOURS = [
+        '--kbb-th-lbl-bg' => 'cat_header_label_bg',
+        '--kbb-th-lbl-fg' => 'cat_header_label_fg',
+        '--kbb-th-dc' => 'cat_header_desc_colour',
+    ];
+
+    /**
      * The header for a Category or a Brand, resolved for drawing, or null.
      *
      * @param  string  $title  the page's own heading -- the translated name
@@ -197,43 +245,176 @@ final class TitleHeader
             : (method_exists($model, 't') ? $model->t('description') : $model->getAttribute('description'));
         $description = RichText::isBlank(is_string($raw) ? $raw : '') ? '' : RichText::forDisplay((string) $raw);
 
-        $align = self::pick($own['align'] ?? null, self::ALIGNS)
-            ?? self::pick($settings['cat_header_align'], self::ALIGNS)
-            ?? 'start';
+        /*
+         * PHONE AND LAPTOP, EACH RESOLVED ON ITS OWN. (Lane QC)
+         *
+         * "... and for mobile also." Every choice -- alignment, the words'
+         * treatment, the box style, the text colour and the box's colours --
+         * is worked out once for the phone (under 900px) and once for the
+         * laptop, each in the same order: the category's own per-device
+         * choice, then its own both-devices choice (what PY stored), then the
+         * shop's setting for that device, then the shipped default.
+         */
+        $phone = self::device($settings, $own, $kind, '');
+        $laptop = self::device($settings, $own, $kind, '_desktop');
 
-        $treatments = array_keys(SiteLayout::TREATMENTS);
-        $treatment = self::pick($own['treatment'] ?? null, $treatments)
-            ?? self::pick($settings[$kind === 'img' ? 'cat_header_treatment' : 'cat_header_box_treatment'], $treatments)
-            ?? ($kind === 'img' ? 'shadow' : 'none');
+        /*
+         * THE SAME ON BOTH: the markup 2.60.349 wrote, byte for byte -- one
+         * class per choice, and the box's own colours (when it has some) as
+         * --kbb-th-bg / --kbb-th-ic on the element. A shop that has not given
+         * its laptop a choice of its own is always here, which is what keeps
+         * every category page identical at the defaults.
+         *
+         * DIFFERENT: `kbb-th--split`, and the same words under a `p-` and an
+         * `l-` prefix. The stylesheet's generated section repeats every rule
+         * that reads one of those words, once inside the phone's media query
+         * with `p-` and once inside the laptop's with `l-` -- so the browser
+         * picks, by width, with no script and nothing measured. A device whose
+         * box has colours of its own carries `p-own` / `l-own`, and its two
+         * colours ride as --kbb-th-p-bg/--kbb-th-p-ic or --kbb-th-l-bg/--kbb-th-l-ic.
+         */
+        $split = $phone !== $laptop;
 
-        $boxes = array_keys(SiteLayout::BOX_STYLES);
-        $box = $kind === 'box'
-            ? (self::pick($own['box'] ?? null, $boxes) ?? self::pick($settings['cat_header_box_style'], $boxes) ?? 'blush')
-            : null;
+        if (! $split) {
+            $class = 'kbb-th kbb-th--'.$kind.' kbb-th--'.$phone['tone'].' kbb-th--a-'.$phone['align']
+                .' kbb-th--t-'.$phone['treatment'].($phone['box'] !== null ? ' kbb-th--box-'.$phone['box'] : '');
+        } else {
+            $class = 'kbb-th kbb-th--'.$kind.' kbb-th--split';
 
-        $ground = self::hex($settings['cat_header_box_bg'], '#FFF4EE');
-        $ink = self::hex($settings['cat_header_box_icon'], '#EFA889');
+            foreach (['p' => $phone, 'l' => $laptop] as $p => $d) {
+                $class .= ' kbb-th--'.$p.'-'.$d['tone'].' kbb-th--'.$p.'-a-'.$d['align'].' kbb-th--'.$p.'-t-'.$d['treatment']
+                    .($d['box'] !== null ? ' kbb-th--'.$p.'-box-'.$d['box'] : '')
+                    .($d['own'] !== null ? ' kbb-th--'.$p.'-own' : '');
+            }
+        }
 
-        $tone = self::tone($settings['cat_header_text'], $kind, $box, $ground);
+        /*
+         * Where a picture is cut on a phone (Lane QC). The phone's header is
+         * about 1.8:1 and a banner about 4:1, so a phone shows the middle half
+         * of it; a category may keep its left or right end instead. Centre is
+         * the stylesheet's own object-fit centre and writes nothing.
+         */
+        $focus = self::pick($own['focus'] ?? null, self::FOCUSES);
 
-        $class = 'kbb-th kbb-th--'.$kind.' kbb-th--'.$tone.' kbb-th--a-'.$align.' kbb-th--t-'.$treatment
-            .($box !== null ? ' kbb-th--box-'.$box : '');
+        if ($kind === 'img' && ($focus === 'left' || $focus === 'right')) {
+            $class .= ' kbb-th--fx-'.$focus;
+        }
+
+        $icons = false;
+
+        foreach ([$phone, $laptop] as $d) {
+            $icons = $icons || ($d['box'] !== null && in_array($d['box'], self::ICON_BOXES, true));
+        }
 
         return [
             'kind' => $kind,
             'image' => $image,
-            'icons' => $box !== null && in_array($box, self::ICON_BOXES, true),
-            'box' => $box,
+            'icons' => $icons,
+            'box' => $phone['box'],
             'heading' => $heading,
             'subtitle' => $subtitle,
             'description' => $description,
             'long' => $description !== '' && mb_strlen(RichText::toText($description)) > self::LONG_DESCRIPTION,
-            'tone' => $tone,
+            'tone' => $phone['tone'],
+            'align' => $phone['align'],
+            'treatment' => $phone['treatment'],
+            'devices' => ['phone' => $phone, 'laptop' => $laptop],
+            'class' => $class,
+            'style' => self::style($settings, $own, $phone, $laptop, $split),
+        ];
+    }
+
+    /**
+     * One device's choices. `$suffix` is '' for the phone and '_desktop' for
+     * the laptop -- the shop's setting keys and the category's own keys are
+     * spelled that way (SiteLayout::DEVICE_PAIRS; `align_phone` /
+     * `align_desktop` in `header_style`).
+     *
+     * @param  array<string, mixed>  $settings
+     * @param  array<string, mixed>  $own  sanitizeStyle()'s answer
+     * @return array{align: string, treatment: string, box: ?string, tone: string, own: ?array{0: string, 1: string}, drawn: ?array{0: string, 1: string}}
+     */
+    private static function device(array $settings, array $own, string $kind, string $suffix): array
+    {
+        $mine = $suffix === '' ? '_phone' : '_desktop';
+
+        $align = self::pick($own['align'.$mine] ?? null, self::ALIGNS)
+            ?? self::pick($own['align'] ?? null, self::ALIGNS)
+            ?? self::pick($settings['cat_header_align'.$suffix] ?? null, self::ALIGNS)
+            ?? 'start';
+
+        $treatments = array_keys(SiteLayout::TREATMENTS);
+        $treatment = self::pick($own['treatment'.$mine] ?? null, $treatments)
+            ?? self::pick($own['treatment'] ?? null, $treatments)
+            ?? self::pick($settings[($kind === 'img' ? 'cat_header_treatment' : 'cat_header_box_treatment').$suffix] ?? null, $treatments)
+            ?? ($kind === 'img' ? 'shadow' : 'none');
+
+        $box = null;
+        $colours = null;
+        $ownColours = null;
+        $drawn = null;
+
+        if ($kind === 'box') {
+            $boxes = array_keys(SiteLayout::BOX_STYLES);
+            $box = self::pick($own['box'.$mine] ?? null, $boxes)
+                ?? self::pick($own['box'] ?? null, $boxes)
+                ?? self::pick($settings['cat_header_box_style'.$suffix] ?? null, $boxes)
+                ?? 'blush';
+
+            [$colours, $drawn] = self::boxColours($settings, $box);
+
+            // The category's own colours, over whichever box this device has.
+            $colours = [
+                self::hex($own['bg'] ?? null, $colours[0]),
+                self::hex($own['ic'] ?? null, $colours[1]),
+            ];
+
+            // Colours of its own: E and F always; A-D only once moved off the drawing.
+            $ownColours = ($drawn === null || $colours !== $drawn) ? $colours : null;
+        }
+
+        $drawnColours = $drawn ?? null;
+
+        $text = self::pick($own['text'.$mine] ?? null, self::TEXTS)
+            ?? self::pick($settings['cat_header_text'.$suffix] ?? null, self::TEXTS)
+            ?? 'auto';
+
+        return [
             'align' => $align,
             'treatment' => $treatment,
-            'class' => $class,
-            'style' => self::style($settings, $own, $box, $ground, $ink),
+            'box' => $box,
+            'tone' => self::tone($text, $kind, $colours[0] ?? null),
+            'own' => $ownColours,
+            'drawn' => $drawnColours,
         ];
+    }
+
+    /**
+     * A box style's two colours as this shop has them, and as drawn.
+     *
+     * A-D: the shop's tuned colours (Appearance -> Site layout -> Category
+     * header -> the style's own fine-tuning), drawn = the preset. E and F:
+     * the shop's own two colours, with nothing "drawn" to compare against --
+     * the stylesheet has no colour for them, so they are always written.
+     *
+     * @param  array<string, mixed>  $settings
+     * @return array{0: array{0: string, 1: string}, 1: ?array{0: string, 1: string}}
+     */
+    private static function boxColours(array $settings, string $box): array
+    {
+        if (isset(SiteLayout::BOX_PRESETS[$box])) {
+            [$bg, $ic] = SiteLayout::BOX_PRESETS[$box];
+
+            return [[
+                self::hex($settings['cat_header_'.$box.'_bg'] ?? null, $bg),
+                self::hex($settings['cat_header_'.$box.'_ic'] ?? null, $ic),
+            ], [$bg, $ic]];
+        }
+
+        return [[
+            self::hex($settings['cat_header_box_bg'] ?? null, '#FFF4EE'),
+            self::hex($settings['cat_header_box_icon'] ?? null, '#EFA889'),
+        ], null];
     }
 
     /**
@@ -241,8 +422,11 @@ final class TitleHeader
      *
      * @param  array<string, mixed>  $settings
      * @param  array<string, mixed>  $own  sanitizeStyle()'s answer
+     * @param  array<string, mixed>  $phone  device()'s answer for the phone
+     * @param  array<string, mixed>  $laptop  device()'s answer for the laptop
+     * @param  bool  $split  the two differ, so the colours ride per device
      */
-    private static function style(array $settings, array $own, ?string $box, string $ground, string $ink): string
+    private static function style(array $settings, array $own, array $phone, array $laptop, bool $split): string
     {
         $values = [];
 
@@ -267,15 +451,70 @@ final class TitleHeader
         $out[] = '--kbb-th-tw:'.(in_array((string) $settings['cat_header_weight'], ['500', '600', '700', '800'], true)
             ? (int) $settings['cat_header_weight'] : 700);
 
-        if ($box !== null && in_array($box, self::OWN_COLOUR_BOXES, true)) {
-            $out[] = '--kbb-th-bg:'.$ground;
+        if (! $split) {
+            // 2.60.349's two, spelled as it spelled them: E writes its ground,
+            // F its ground and its icons. A-D now do too, once tuned.
+            //
+            // A tuned A-D writes only the colour that moved, so each tweak
+            // moves only its own property.
+            if ($phone['own'] !== null) {
+                $drawn = $phone['drawn'];
 
-            if ($box === 'custom') {
-                $out[] = '--kbb-th-ic:'.$ink;
+                if ($drawn === null || $phone['own'][0] !== $drawn[0]) {
+                    $out[] = '--kbb-th-bg:'.$phone['own'][0];
+                }
+
+                if ($phone['box'] !== 'plain' && ($drawn === null || $phone['own'][1] !== $drawn[1])) {
+                    $out[] = '--kbb-th-ic:'.$phone['own'][1];
+                }
+            }
+        } else {
+            foreach (['p' => $phone, 'l' => $laptop] as $p => $d) {
+                if ($d['own'] !== null) {
+                    $out[] = '--kbb-th-'.$p.'-bg:'.$d['own'][0];
+                    $out[] = '--kbb-th-'.$p.'-ic:'.$d['own'][1];
+                }
+            }
+        }
+
+        /*
+         * THE FINE-TUNING (Lane QC), each written only when it is not the
+         * design as drawn -- so nothing is added to a header nobody tuned.
+         * Every name is a constant in TWEAK_VARS; every value is the setting's
+         * own integer, clamped to its slider, printed as a factor (100 -> 1),
+         * a pixel or an em; or a colour checked against ^#[0-9A-F]{6}$ here.
+         */
+        foreach (self::TWEAK_VARS as $var => [$key, $as]) {
+            $n = self::clampTo($key, (int) ($settings[$key] ?? SiteLayout::SCHEMA[$key][2]));
+
+            if ($n === (int) SiteLayout::SCHEMA[$key][2]) {
+                continue;
+            }
+
+            $out[] = $var.':'.match ($as) {
+                'factor' => self::factor($n),
+                'px' => $n.'px',
+                'em' => self::factor($n).'em',
+            };
+        }
+
+        foreach (self::TWEAK_COLOURS as $var => $key) {
+            $hex = self::hex($settings[$key] ?? null, '');
+
+            if ($hex !== '') {
+                $out[] = $var.':'.$hex;
             }
         }
 
         return implode(';', $out);
+    }
+
+    /** 100 -> "1", 60 -> "0.6", -2 -> "-0.02": a percentage as a plain factor. */
+    private static function factor(int $percent): string
+    {
+        $v = rtrim(rtrim(number_format($percent / 100, 2, '.', ''), '0'), '.');
+
+        return $v === '-0' ? '0' : $v;
     }
 
     /**
@@ -284,21 +523,24 @@ final class TitleHeader
      * here from that colour's luminance so the owner's own navy box does not
      * get navy words.
      */
-    private static function tone(mixed $setting, string $kind, ?string $box, string $ground): string
+    private static function tone(string $setting, string $kind, ?string $ground): string
     {
         if (in_array($setting, self::TONES, true)) {
-            return (string) $setting;
+            return $setting;
         }
 
-        if ($kind === 'img') {
+        if ($kind === 'img' || $ground === null) {
             return 'light';
         }
 
-        if ($box !== null && in_array($box, self::OWN_COLOUR_BOXES, true)) {
-            return self::luminance($ground) < 0.4 ? 'light' : 'dark';
-        }
-
-        return 'dark';
+        /*
+         * The box's ACTUAL colour decides, for every style. 2.60.349 did this
+         * for E and F only, because A-D could not change colour; now they can
+         * (Lane QC), and a Cream box tuned to espresso needs white words. The
+         * four presets as drawn are all well above 0.4, so they still get
+         * dark words, as before.
+         */
+        return self::luminance($ground) < 0.4 ? 'light' : 'dark';
     }
 
     /** WCAG relative luminance of a #RRGGBB colour, 0 (black) to 1 (white). */
@@ -358,6 +600,24 @@ final class TitleHeader
             }
         }
 
+        $lists += ['text' => self::TEXTS, 'focus' => self::FOCUSES];
+
+        foreach (self::DEVICE_CHOICES as $key => $list) {
+            $picked = self::pick($raw[$key] ?? null, $lists[$list]);
+
+            if ($picked !== null) {
+                $out[$key] = $picked;
+            }
+        }
+
+        foreach (self::STYLE_COLOURS as $key) {
+            $hex = self::hex(is_string($raw[$key] ?? null) ? self::expandHex($raw[$key]) : null, '');
+
+            if ($hex !== '') {
+                $out[$key] = $hex;
+            }
+        }
+
         foreach (self::STYLE_NUMBERS as $key => $setting) {
             $v = $raw[$key] ?? null;
 
@@ -383,6 +643,16 @@ final class TitleHeader
     private static function pick(mixed $value, array $allowed): ?string
     {
         return is_string($value) && in_array($value, $allowed, true) ? $value : null;
+    }
+
+    /** #rgb as #RRGGBB; anything else as it came, for hex() to judge. */
+    private static function expandHex(string $v): string
+    {
+        $v = strtoupper(trim($v));
+
+        return preg_match('/^#([0-9A-F])([0-9A-F])([0-9A-F])$/', $v, $m) === 1
+            ? '#'.$m[1].$m[1].$m[2].$m[2].$m[3].$m[3]
+            : $v;
     }
 
     /** A colour as #RRGGBB, checked again at the moment it is printed. */

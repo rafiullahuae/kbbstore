@@ -270,28 +270,129 @@ class SiteLayout
             'The same header on a brand\'s page when the brand\'s import carried a banner.'],
         'cat_header_box_brands' => ['bool', 'Light box on brand pages with no picture', false,
             'Off, as shipped: a brand with no banner keeps its page exactly as it is. On: it gets the same light box as a category.'],
-        'cat_header_align' => ['select', 'Text alignment', 'start',
+        'cat_header_align' => ['select', 'Text alignment · phone', 'start',
             'Start is the left edge on the English shop and the right edge on the Arabic one -- where the title sat before. A category can choose its own in Catalog → Categories.',
             ['start' => 'Start (left in English, right in Arabic)', 'center' => 'Centred', 'end' => 'End (right in English, left in Arabic)']],
-        'cat_header_treatment' => ['select', 'Keep the words readable · on a picture', 'shadow',
+        'cat_header_treatment' => ['select', 'Keep the words readable · on a picture · phone', 'shadow',
             'What sits behind the title and description over a picture, so they never merge into it. Works together with "Darken the picture".',
             self::TREATMENTS],
-        'cat_header_box_treatment' => ['select', 'Keep the words readable · on the light box', 'none',
+        'cat_header_box_treatment' => ['select', 'Keep the words readable · on the light box · phone', 'none',
             'The same choice on the light box. A pale box needs nothing, so it ships at None.',
             self::TREATMENTS],
         'cat_header_overlay' => ['range', 'Darken the picture', 40,
             'How much the picture is darkened (or, with dark text, lightened) so the words stay readable.',
             ['min' => 0, 'max' => 85, 'step' => 5, 'unit' => '%']],
-        'cat_header_box_style' => ['select', 'Light box style', 'blush',
+        'cat_header_box_style' => ['select', 'Light box style · phone', 'blush',
             'The look of the box a category with no picture gets. A, B, C and D carry a soft pattern of beauty-product line icons; E is the plain colour below; F uses both colours below.',
             self::BOX_STYLES],
         'cat_header_box_bg' => ['colour', 'Box colour · E and F', '#FFF4EE',
             'Used by "Plain soft colour" and "My own colours". A hex colour such as #FFF4EE or #FEF.'],
         'cat_header_box_icon' => ['colour', 'Icon colour · F', '#EFA889',
             'The colour of the icons for "My own colours". Keep it close to the box colour so the icons stay a pattern, not a picture.'],
-        'cat_header_text' => ['select', 'Text colour', 'auto',
+        'cat_header_text' => ['select', 'Text colour · phone', 'auto',
             'Automatic: white over a picture, dark on the light box (and white on a dark box colour of your own).',
             ['auto' => 'Automatic', 'light' => 'White', 'dark' => 'Dark']],
+
+        /*
+         * ── PHONE AND LAPTOP, SEPARATELY ─────────────────────── (Lane QC) ──
+         *
+         * The owner: "i need the same designs on backend to choose the
+         * category banner designs, text style etc and for mobile also."
+         *
+         * The five choices above are now the PHONE's (under 900px, the
+         * header's own breakpoint in kbb-title-header.css) and these five are
+         * the LAPTOP's (900px and wider). Defaults are 2.60.349's on both.
+         *
+         * NOTHING A SHOP SAVED MAY JUMP. A shop that saved "Centred" before
+         * this has `layout_cat_header_align = center` and no laptop row at
+         * all, and all() below hands the laptop key the PHONE's resolved value
+         * whenever the laptop row is absent -- so the one value he chose is
+         * both devices' value until he gives the laptop one of its own. The
+         * read path, not a data migration: it cannot be skipped by a package
+         * whose migrations did not run, and it cannot race PY's reset.
+         * DEVICE_PAIRS is that map.
+         */
+        'cat_header_align_desktop' => ['select', 'Text alignment · laptop', 'start',
+            'From 900px wide. Start is the left edge on the English shop and the right edge on the Arabic one.',
+            ['start' => 'Start (left in English, right in Arabic)', 'center' => 'Centred', 'end' => 'End (right in English, left in Arabic)']],
+        'cat_header_treatment_desktop' => ['select', 'Keep the words readable · on a picture · laptop', 'shadow',
+            'From 900px wide.',
+            self::TREATMENTS],
+        'cat_header_box_treatment_desktop' => ['select', 'Keep the words readable · on the light box · laptop', 'none',
+            'From 900px wide.',
+            self::TREATMENTS],
+        'cat_header_box_style_desktop' => ['select', 'Light box style · laptop', 'blush',
+            'From 900px wide.',
+            self::BOX_STYLES],
+        'cat_header_text_desktop' => ['select', 'Text colour · laptop', 'auto',
+            'From 900px wide.',
+            ['auto' => 'Automatic', 'light' => 'White', 'dark' => 'Dark']],
+
+        /*
+         * ── "MAKE EDITS AS PER NEED" ─────────────────────────── (Lane QC) ──
+         *
+         * The owner, pointing at the option sheet: "make sure that i should
+         * have these designs to chooose from and make edits as per need."
+         *
+         * So each design can be fine-tuned after it is chosen, and EVERY
+         * DEFAULT BELOW IS THE DESIGN AS THE SHEET DRAWS IT: the four icon
+         * boxes' colours are the presets kbb-title-header.css carries, every
+         * percentage is 100 (the stylesheet's own number, unscaled), the
+         * frosted panel's blur is its 12px. TitleHeader writes a tweak onto
+         * the header only when it differs from that default, so a shop that
+         * touches nothing sends the byte-identical header it sent before.
+         *
+         * Colours: `expand` (#rgb or #rrggbb, stored #RRGGBB). The three that
+         * may be blank -- the label's two colours and the description colour
+         * -- are `text` fields with a rule in overrides(), because ModuleSchema
+         * will not hand a `colour` to a rule: blank is "Automatic", #rgb or
+         * #rrggbb is stored #RRGGBB, anything else is refused. TitleHeader
+         * checks ^#[0-9A-F]{6}$ again before printing one.
+         */
+        'cat_header_blush_bg' => ['colour', 'A · Blush icons · box colour', '#FDF0F4', ''],
+        'cat_header_blush_ic' => ['colour', 'A · Blush icons · icon colour', '#E3A1B5', ''],
+        'cat_header_cream_bg' => ['colour', 'B · Cream icons · box colour', '#FBF4EA', ''],
+        'cat_header_cream_ic' => ['colour', 'B · Cream icons · icon colour', '#CDA57B', ''],
+        'cat_header_mint_bg' => ['colour', 'C · Mint icons · box colour', '#EEF8F2', ''],
+        'cat_header_mint_ic' => ['colour', 'C · Mint icons · icon colour', '#8FC9AB', ''],
+        'cat_header_lilac_bg' => ['colour', 'D · Lilac icons · box colour', '#F4F0FB', ''],
+        'cat_header_lilac_ic' => ['colour', 'D · Lilac icons · icon colour', '#B7A3DD', ''],
+        'cat_header_icon_strength' => ['range', 'Icon strength', 60,
+            'How strongly the icon pattern shows. 60% is the design as drawn.',
+            ['min' => 10, 'max' => 100, 'step' => 5, 'unit' => '%']],
+        'cat_header_icon_size' => ['range', 'Icon size', 100,
+            'Bigger icons are fewer icons. 100% is the design as drawn.',
+            ['min' => 50, 'max' => 200, 'step' => 10, 'unit' => '%']],
+        'cat_header_shadow_strength' => ['range', '1 · Soft shadow · strength', 100,
+            '100% is the shadow as drawn on the option sheet.',
+            ['min' => 0, 'max' => 200, 'step' => 10, 'unit' => '%']],
+        'cat_header_shadow_blur' => ['range', '1 · Soft shadow · blur', 100,
+            'How far the shadow spreads. 100% is as drawn.',
+            ['min' => 0, 'max' => 300, 'step' => 10, 'unit' => '%']],
+        'cat_header_fade_dark' => ['range', '2 · Dark fade · darkness', 100,
+            '100% is the fade as drawn.',
+            ['min' => 0, 'max' => 150, 'step' => 5, 'unit' => '%']],
+        'cat_header_fade_reach' => ['range', '2 · Dark fade · how far it reaches', 100,
+            'How far across the header the fade runs. 100% is as drawn.',
+            ['min' => 50, 'max' => 150, 'step' => 5, 'unit' => '%']],
+        'cat_header_frost_opacity' => ['range', '3 · Frosted panel · how solid', 100,
+            '100% is the panel as drawn.',
+            ['min' => 20, 'max' => 200, 'step' => 10, 'unit' => '%']],
+        'cat_header_frost_blur' => ['range', '3 · Frosted panel · blur', 12,
+            'How much the picture behind the panel is blurred. 12px is as drawn.',
+            ['min' => 0, 'max' => 30, 'step' => 1, 'unit' => 'px']],
+        'cat_header_frost_radius' => ['range', '3 · Frosted panel · corner rounding', 14,
+            'At 14 (as drawn) the panel follows the header’s own corner rounding, 4px less; any other number is used as it is.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'cat_header_label_bg' => ['text', '4 · Solid label · label colour', '',
+            'Blank is the design as drawn: berry behind white words, white behind dark words.'],
+        'cat_header_label_fg' => ['text', '4 · Solid label · title colour on the label', '',
+            'Blank is the design as drawn.'],
+        'cat_header_letter' => ['range', 'Title letter-spacing', -2,
+            'In hundredths of the title size. -2 is the design as drawn. Arabic titles always keep 0: spacing pulls joined letters apart.',
+            ['min' => -5, 'max' => 20, 'step' => 1, 'unit' => '/100 em']],
+        'cat_header_desc_colour' => ['text', 'Description colour', '',
+            'Blank is automatic: white over a picture, soft dark on the light box.'],
 
         'cat_header_title_phone' => ['range', 'Title size · phone', 26,
             'A category can set its own in Catalog → Categories.',
@@ -374,6 +475,8 @@ class SiteLayout
         'cat_header', 'cat_header_box', 'cat_header_fallback', 'cat_header_brands', 'cat_header_box_brands',
         'cat_header_align', 'cat_header_treatment', 'cat_header_box_treatment', 'cat_header_overlay',
         'cat_header_box_style', 'cat_header_box_bg', 'cat_header_box_icon', 'cat_header_text',
+        // Lane QC: the laptop's five, then the fine-tuning of each design.
+        ...self::QC_LOOK_KEYS,
         // Sizes and spacing (the second).
         'cat_header_title_phone', 'cat_header_title_desktop', 'cat_header_weight',
         'cat_header_desc_phone', 'cat_header_desc_desktop', 'cat_header_lines', 'cat_header_maxw',
@@ -382,11 +485,55 @@ class SiteLayout
         'cat_header_radius', 'cat_header_mt_phone', 'cat_header_mt_desktop', 'cat_header_mb_phone', 'cat_header_mb_desktop',
     ];
 
+    /**
+     * Lane QC's keys on the look tab: the laptop's five choices, then the
+     * fine-tuning. In SCHEMA order, which is the order the screen lists them.
+     */
+    public const QC_LOOK_KEYS = [
+        'cat_header_align_desktop', 'cat_header_treatment_desktop', 'cat_header_box_treatment_desktop',
+        'cat_header_box_style_desktop', 'cat_header_text_desktop',
+        'cat_header_blush_bg', 'cat_header_blush_ic', 'cat_header_cream_bg', 'cat_header_cream_ic',
+        'cat_header_mint_bg', 'cat_header_mint_ic', 'cat_header_lilac_bg', 'cat_header_lilac_ic',
+        'cat_header_icon_strength', 'cat_header_icon_size',
+        'cat_header_shadow_strength', 'cat_header_shadow_blur',
+        'cat_header_fade_dark', 'cat_header_fade_reach',
+        'cat_header_frost_opacity', 'cat_header_frost_blur', 'cat_header_frost_radius',
+        'cat_header_label_bg', 'cat_header_label_fg',
+        'cat_header_letter', 'cat_header_desc_colour',
+    ];
+
+    /**
+     * PHONE KEY => LAPTOP KEY. (Lane QC) all() gives the laptop key the
+     * phone's value while the laptop has none stored -- see the note above
+     * `cat_header_align_desktop`.
+     */
+    public const DEVICE_PAIRS = [
+        'cat_header_align' => 'cat_header_align_desktop',
+        'cat_header_treatment' => 'cat_header_treatment_desktop',
+        'cat_header_box_treatment' => 'cat_header_box_treatment_desktop',
+        'cat_header_box_style' => 'cat_header_box_style_desktop',
+        'cat_header_text' => 'cat_header_text_desktop',
+    ];
+
+    /**
+     * The four icon boxes whose colours are settings, and their colours as
+     * drawn -- the same two hex values each `.kbb-th--box-*` rule in
+     * kbb-title-header.css carries. (Lane QC)
+     */
+    public const BOX_PRESETS = [
+        'blush' => ['#FDF0F4', '#E3A1B5'],
+        'cream' => ['#FBF4EA', '#CDA57B'],
+        'mint' => ['#EEF8F2', '#8FC9AB'],
+        'lilac' => ['#F4F0FB', '#B7A3DD'],
+    ];
+
     /** The look tab of the category header. (Lane PY) */
     public const HEADER_LOOK_KEYS = [
         'cat_header', 'cat_header_box', 'cat_header_fallback', 'cat_header_brands', 'cat_header_box_brands',
         'cat_header_align', 'cat_header_treatment', 'cat_header_box_treatment', 'cat_header_overlay',
         'cat_header_box_style', 'cat_header_box_bg', 'cat_header_box_icon', 'cat_header_text',
+        // Lane QC: the laptop's five, then the fine-tuning of each design.
+        ...self::QC_LOOK_KEYS,
     ];
 
     /** The sizes-and-spacing tab of the category header. (Lane PY) */
@@ -584,6 +731,22 @@ class SiteLayout
         $out['cat_header_box_bg']['hex'] = 'expand';
         $out['cat_header_box_icon']['hex'] = 'expand';
 
+        /*
+         * Lane QC: the four icon boxes' own colours, the same dialect. And the
+         * three colours whose blank means "Automatic" -- the design as drawn --
+         * get a rule instead: '' stays '', a colour is expanded and upper-cased
+         * exactly as `expand` does, and anything else is null, which this
+         * screen's `invalid => reject` reports as a 422 naming the field.
+         */
+        foreach (array_keys(self::BOX_PRESETS) as $box) {
+            $out['cat_header_'.$box.'_bg']['hex'] = 'expand';
+            $out['cat_header_'.$box.'_ic']['hex'] = 'expand';
+        }
+
+        foreach (['cat_header_label_bg', 'cat_header_label_fg', 'cat_header_desc_colour'] as $key) {
+            $out[$key]['rule'] = static fn (mixed $raw): ?string => self::optionalColour($raw);
+        }
+
         return $out;
     }
 
@@ -605,16 +768,56 @@ class SiteLayout
     public function all(): array
     {
         $out = [];
+        $stored = [];
 
         foreach (self::normalised() as $key => $field) {
             $saved = $this->settings->get($field['alias'], null);
+            $stored[$key] = $saved !== null;
 
             $out[$key] = $saved === null
                 ? $field['default']
                 : (ModuleSchema::cast($field, $saved) ?? $field['default']);
         }
 
+        /*
+         * Lane QC: a laptop choice nobody has saved is the phone's choice, so
+         * the single value a shop saved before phone and laptop were separate
+         * is both devices' value. See DEVICE_PAIRS.
+         */
+        foreach (self::DEVICE_PAIRS as $phone => $laptop) {
+            if (isset($out[$phone]) && ! ($stored[$laptop] ?? false)) {
+                $out[$laptop] = $out[$phone];
+            }
+        }
+
         return $out;
+    }
+
+    /**
+     * A colour that may be blank (Lane QC): '' for blank, #RRGGBB for #rgb or
+     * #rrggbb, null for anything else.
+     */
+    public static function optionalColour(mixed $raw): ?string
+    {
+        if ($raw === null) {
+            return '';
+        }
+
+        if (! is_string($raw)) {
+            return null;
+        }
+
+        $clean = strtoupper(trim($raw));
+
+        if ($clean === '') {
+            return '';
+        }
+
+        if (preg_match('/^#([0-9A-F]{3})$/', $clean, $m) === 1) {
+            return '#'.$m[1][0].$m[1][0].$m[1][1].$m[1][1].$m[1][2].$m[1][2];
+        }
+
+        return preg_match('/^#[0-9A-F]{6}$/', $clean) === 1 ? $clean : null;
     }
 
     public function get(string $key): mixed

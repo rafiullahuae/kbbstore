@@ -145,7 +145,13 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
     expect($keys)->toBe(array_keys(SiteLayout::SCHEMA));
-    expect($keys)->toHaveCount(44);
+    /*
+     * SEVENTY SINCE LANE QC: "and for mobile also" gave the five design
+     * choices a laptop value each, and "make edits as per need" gave each
+     * design its fine-tuning -- twenty-six controls, all on the Category
+     * header tab, none of them CSS on :root either.
+     */
+    expect($keys)->toHaveCount(70);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

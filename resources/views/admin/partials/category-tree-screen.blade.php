@@ -41,7 +41,12 @@
 
     The whole body is wrapped in one so that the {{ }} inside JavaScript
     template literals is not read as Blade.
+
+    LANE QC: the Category header panel draws its live preview and its design
+    tiles with window.kbbTH, from admin/partials/title-header-kit.blade.php --
+    included here (and by the Site layout screen; it is drawn once).
 --}}
+@include('admin.partials.title-header-kit')
 @verbatim
 <style>
 /* ---------------------------------------------------------------------------
@@ -163,7 +168,21 @@
 .ct-table th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft,#6b7280)}
 .ct-table code{font-family:var(--mono,ui-monospace,monospace);font-size:11px;overflow-wrap:anywhere}
 
-/* The category header panel in the editor (Lane PY). */
+/* The category header panel in the editor (Lane PY; QC: preview, banner, tiles). */
+.ct-hdr-live{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:10px;margin-bottom:12px;min-width:0;
+  background:var(--chip,#f9fafb)}
+.ct-hdr-live > b{font-size:12.5px}
+.ct-banner-prev{margin-top:7px;border:1px solid var(--border,#e6e6e6);border-radius:9px;overflow:hidden;
+  background:repeating-linear-gradient(45deg,#f3f4f6 0 10px,#fff 10px 20px);min-width:0}
+.ct-banner-prev img{display:block;width:100%;height:auto;max-height:200px;object-fit:contain}
+.ct-banner-acts{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:8px;min-width:0}
+.ct-banner-acts .ct-btn{padding:7px 11px;font-size:12px}
+.ct-hdr-look{border-top:1px solid var(--border,#e6e6e6);padding-top:10px;margin:4px 0 12px;min-width:0}
+.ct-hdr-cols{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));margin-top:10px;min-width:0}
+.ct-hdr-cols > *{min-width:0}
+.ct-colour{display:flex;gap:7px;align-items:center;min-width:0}
+.ct-colour input[type=color]{width:40px;height:34px;padding:2px;flex:none}
+.ct-colour input[type=text]{flex:1 1 auto}
 .ct-hdr{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:10px 12px;margin-bottom:12px;min-width:0}
 .ct-hdr > summary{cursor:pointer;font-size:13px;min-width:0;overflow-wrap:anywhere}
 .ct-hdr-body{margin-top:12px;min-width:0}
@@ -686,20 +705,14 @@
    * shown here, marked as imported, and "Use the category name" empties it --
    * which is how the owner undoes something he did not type.
    *
-   * The lists below are the server's own (App\Services\SiteLayout::TREATMENTS
-   * and BOX_STYLES, App\Support\TitleHeader::ALIGNS), and the numbers' bounds
-   * are the matching sliders' -- PyCategoryHeaderOptionsTest reads both files
-   * and requires them to agree. The server is the judge regardless: it keeps a
-   * choice only when it is on its list and clamps a number into its range.
+   * The design choices are tiles drawn by window.kbbTH (title-header-kit),
+   * whose lists are the server's own (App\Services\SiteLayout::TREATMENTS
+   * and BOX_STYLES, App\Support\TitleHeader::ALIGNS) -- Lane QC. The
+   * numbers' bounds below are the matching sliders' -- PyCategoryHeaderOptions-
+   * Test reads both files and requires them to agree. The server is the judge
+   * regardless: it keeps a choice only when it is on its list and clamps a
+   * number into its range.
    */
-  var HDR_ALIGNS = [['', 'Use the shop setting'], ['start', 'Start (left in English, right in Arabic)'],
-    ['center', 'Centred'], ['end', 'End (right in English, left in Arabic)']];
-  var HDR_TREATMENTS = [['', 'Use the shop setting'], ['shadow', '1 · Soft shadow behind the words'],
-    ['fade', '2 · Dark fade on the text side'], ['frost', '3 · Frosted panel behind the words'],
-    ['label', '4 · Solid label behind the title'], ['none', '5 · None']];
-  var HDR_BOXES = [['', 'Use the shop setting'], ['blush', 'A · Blush icons'], ['cream', 'B · Cream icons'],
-    ['mint', 'C · Mint icons'], ['lilac', 'D · Lilac icons'], ['plain', 'E · Plain soft colour'],
-    ['custom', 'F · My own colours']];
   /* [box id, style key, label, min, max] -- the bounds of the matching slider. */
   var HDR_NUMBERS = [
     ['ct-hdrtsp', 'title_phone', 'Title size · phone (px)', 16, 56],
@@ -708,42 +721,115 @@
     ['ct-hdrhd', 'h_desktop', 'Height · laptop (px)', 100, 640]
   ];
 
-  function hdrSelect(id, label, list, current){
-    return '<div class="ct-fld"><label for="' + id + '">' + esc(label) + '</label><select id="' + id + '">'
-      + list.map(function(o){
-          return '<option value="' + esc(o[0]) + '"' + (String(current || '') === o[0] ? ' selected' : '') + '>'
-            + esc(o[1]) + '</option>';
-        }).join('')
-      + '</select></div>';
+  /*
+   * ── LANE QC: PER DEVICE, AS PICTURES, WITH A LIVE PREVIEW ─────────────────
+   *
+   * "i need the same designs on backend to choose the category banner
+   * designs, text style etc and for mobile also. i will set and upload the
+   * banners manually" -- and -- "along with previews of designs to choose, and
+   * also along with LIVE preview."
+   *
+   * So the panel opens with a live preview of THIS category -- its banner, its
+   * title, its description, with its own choices over the shop's -- redrawn
+   * as he uploads a banner, types, or clicks a design. Then the banner itself:
+   * an Upload banner button (the shared Media Library, opened straight onto
+   * the file chooser, so the file lands in the library like every picture),
+   * the library, Remove, a preview of the picture and the size to make it.
+   * Then the designs, as tiles, for the phone and for the laptop, each with
+   * "Shop setting" first.
+   *
+   * WHY TILES HERE AND NOT SELECTS. The dialog is 318px of content on a 390px
+   * phone. A select with a swatch can say "B · Cream icons" but cannot show a
+   * frosted panel or a dark fade, which are the whole point of choosing; a
+   * compact tile -- three to a row, one small header each, drawn by the shop's
+   * stylesheet over this category's own banner when it has one -- can. Seven
+   * tiles (Shop + A-F) are three rows of about 75px.
+   *
+   * THE STORED SHAPE. `align_phone` / `align_desktop` (and treatment, box,
+   * text the same way), `focus`, `bg`, `ic`, beside PY's numbers. PY's
+   * both-devices `align` / `treatment` / `box` are read as both devices'
+   * values when the dialog opens and sent back as nulls, so a category saved
+   * before this keeps its look exactly and is rewritten in the new shape on
+   * its next save. TitleHeader::sanitizeStyle() is the judge either way.
+   */
+  var HDR_GROUPS = { 'ct-box': 'box', 'ct-treat': 'treatment', 'ct-align': 'align', 'ct-text': 'text' };
+  var hdr = { dev: 'phone', st: {}, shop: null, shopBusy: false };
+
+  /* PY's both-devices keys, as both devices' values. */
+  function hdrOpenStyle(raw){
+    var st = {};
+    var src = (raw && typeof raw === 'object') ? raw : {};
+    Object.keys(src).forEach(function(k){ st[k] = src[k]; });
+    ['align', 'treatment', 'box'].forEach(function(c){
+      if (st[c] != null && st[c] !== '') {
+        if (st[c + '_phone'] == null) st[c + '_phone'] = st[c];
+        if (st[c + '_desktop'] == null) st[c + '_desktop'] = st[c];
+      }
+      delete st[c];
+    });
+    return st;
+  }
+
+  function hdrShop(){ return hdr.shop || (window.kbbTH ? window.kbbTH.DEFAULTS : {}); }
+
+  async function hdrLoadShop(){
+    if (hdr.shop || hdr.shopBusy || !window.kbbTH) return;
+    hdr.shopBusy = true;
+    try {
+      var body = await api('/site-layout');
+      hdr.shop = window.kbbTH.flatten(body && body.tabs);
+    } catch (e) {
+      hdr.shop = null;   // no Site layout rights: the shipped defaults stand in
+    } finally {
+      hdr.shopBusy = false;
+      hdrPaint();
+    }
   }
 
   function headerPanel(cat){
-    var st = (cat.header_style && typeof cat.header_style === 'object') ? cat.header_style : {};
-    var anything = !!(cat.header_image || cat.header_title || cat.header_subtitle || cat.header_description
-      || Object.keys(st).length);
+    hdr.st = hdrOpenStyle(cat.header_style);
+    hdr.dev = 'phone';
+    var st = hdr.st;
 
     var imported = cat.header_source
       ? '<p class="ct-note" data-hdr-imported>Brought across from the old shop'
         + (cat.header_title ? ', with this title' : '') + '. Change it or clear it here.</p>'
       : '';
 
-    return '<details class="ct-hdr" id="ct-hdr"' + (anything ? ' open' : '') + '>'
+    var colour = function(id, label, v){
+      return '<div class="ct-fld"><label for="' + id + '">' + esc(label) + '</label>'
+        + '<div class="ct-colour"><input type="color" data-ct-hdrpair="' + id + '" value="' + esc(/^#[0-9A-Fa-f]{6}$/.test(v || '') ? v : '#ffffff') + '" aria-label="' + esc(label) + '">'
+        + '<input id="' + id + '" maxlength="7" value="' + esc(v || '') + '" placeholder="The style’s own" autocomplete="off" spellcheck="false"></div></div>';
+    };
+
+    return '<details class="ct-hdr" id="ct-hdr" open>'
       + '<summary><b>Category header</b> <span class="ct-note" style="display:inline">'
-      + 'picture, title, description and look on this category’s page</span></summary>'
+      + 'banner, title, description and look on this category’s page</span></summary>'
       + '<div class="ct-hdr-body">'
-      + '<p class="ct-note" style="margin:0 0 12px">Leave anything blank to follow '
+      + '<p class="ct-note" style="margin:0 0 10px">Anything left blank or on <b>Shop setting</b> follows '
       + '<b>Appearance → Site layout → Category header</b>.</p>'
 
-      + '<div class="ct-fld"><label for="ct-hdrimg">Header picture</label>'
-        + '<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;min-width:0">'
-        + '<img class="ct-thumb" id="ct-hdrthumb" alt=""' + (cat.header_image ? '' : ' style="display:none"')
-        +   ' src="' + esc(cat.header_image || '') + '">'
+      /* 1. The live preview of THIS category. */
+      + '<div class="ct-hdr-live" data-ct-hdrlive></div>'
+
+      /* 2. The banner, first of the controls. */
+      + '<div class="ct-fld"><label for="ct-hdrimg">Header picture (banner)</label>'
+        + '<div class="ct-banner-prev" id="ct-hdrwrap"' + (cat.header_image ? '' : ' hidden') + '>'
+        + '<img id="ct-hdrthumb" alt="The banner as uploaded"' + (cat.header_image ? ' src="' + esc(cat.header_image) + '"' : '') + '></div>'
+        + '<div class="ct-banner-acts">'
+        + '<button type="button" class="ct-btn is-primary" id="ct-hdrup">Upload banner</button>'
         + '<button type="button" class="ct-btn" id="ct-hdrlib">Choose from Media Library</button>'
         + '<button type="button" class="ct-btn" id="ct-hdrdrop">Remove picture</button>'
         + '</div>'
+        + '<p class="ct-note" id="ct-hdrupstate" aria-live="polite"></p>'
+        + '<p class="ct-note" data-hdr-size><b>Make it 2400 × 600 px</b> (4 : 1), JPG or WebP. '
+        + 'The header is 1236 × 300 on a 1280px laptop and up to 1636 × 300 on a wide screen, so 2400 wide stays sharp on a high-density laptop. '
+        + 'It is cropped to fill, never stretched: on a laptop almost all of it shows; on a 390px phone the header is 346 × 190, '
+        + 'so only the <b>middle 45% of its width</b> shows -- keep what matters there, or set <b>Phone crop</b> below. '
+        + 'With Start alignment the words sit on the left: keep that side calm.</p>'
         + '<label for="ct-hdrimg" class="ct-note" style="display:block;margin-top:7px">Picture address</label>'
         + '<input id="ct-hdrimg" value="' + esc(cat.header_image || '') + '" placeholder="No picture: the light box shows instead">'
-        + '<p class="ct-note">A wide picture works best (about 1600 × 500). With no picture the page shows the light box.</p>'
+        + '<div data-ct-hdrfocus></div>'
       + '</div>'
 
       + '<div class="ct-fld"><label for="ct-hdrtitle">Title</label>'
@@ -764,10 +850,17 @@
         + '<p class="ct-note">English pages. The Arabic page shows the category’s Arabic name and description.</p>'
       + '</div>'
 
-      + '<div class="ct-grid2">'
-        + hdrSelect('ct-hdralign', 'Text alignment', HDR_ALIGNS, st.align)
-        + hdrSelect('ct-hdrtreat', 'Keep the words readable', HDR_TREATMENTS, st.treatment)
-        + hdrSelect('ct-hdrbox', 'Light box style (no picture)', HDR_BOXES, st.box)
+      /* 3. The designs, per device. */
+      + '<div class="ct-hdr-look"><b style="font-size:13px">The design</b>'
+        + '<p class="ct-note" style="margin:3px 0 8px">Phone and laptop separately. <b>Shop setting</b> follows the shop.</p>'
+        + '<div data-ct-hdrdevbar></div>'
+        + '<div data-ct-hdrlook></div>'
+        + '<div class="ct-hdr-cols">'
+          + colour('ct-hdrbg', 'This category’s box colour', st.bg)
+          + colour('ct-hdric', 'This category’s icon colour', st.ic)
+        + '</div>'
+        + '<p class="ct-note" style="margin-top:-4px">For the light box (no banner), on both devices. Blank keeps the chosen style’s own colours. '
+        + '<button type="button" class="ct-link" id="ct-hdrcolclear">Use the style’s own colours</button></p>'
       + '</div>'
 
       + '<div class="ct-grid2">'
@@ -781,14 +874,112 @@
       + '</div></details>';
   }
 
+  /* The category's look as the preview needs it: the chosen tiles, the two
+     colours and the size boxes as they stand, unsaved. */
+  function hdrOwn(){
+    var own = {};
+    Object.keys(hdr.st).forEach(function(k){ own[k] = hdr.st[k]; });
+    own.bg = val('ct-hdrbg') || null;
+    own.ic = val('ct-hdric') || null;
+    HDR_NUMBERS.forEach(function(n){
+      var raw = val(n[0]);
+      own[n[1]] = /^\d+$/.test(raw) ? Math.max(n[3], Math.min(n[4], parseInt(raw, 10))) : null;
+    });
+    return own;
+  }
+
+  function hdrImage(){
+    var th = window.kbbTH;
+    var shop = hdrShop();
+    return th.safeImage(val('ct-hdrimg')) || (th.on(shop.cat_header_fallback) ? th.safeImage(val('ct-image')) : '');
+  }
+
+  function hdrLiveHTML(){
+    var th = window.kbbTH;
+    var shop = hdrShop();
+    var image = hdrImage();
+    var title = val('ct-hdrtitle') || val('ct-name') || 'Category';
+    var desc = val('ct-hdrdesc') || th.plain(val('ct-desc'));
+    var off = !th.on(shop.cat_header) ? 'The header is switched off for the whole shop (Appearance → Site layout → Category header): this page shows its plain title.'
+      : (!image && !th.on(shop.cat_header_box) ? 'No banner, and the light box is switched off for the shop: this page shows its plain title. This is how it would look.' : '');
+
+    return '<b>Live preview · ' + (hdr.dev === 'laptop' ? 'Laptop' : 'Phone') + '</b>'
+      + '<div style="margin-top:7px">' + th.deviceSwitch('data-ct-hdrdev', hdr.dev, 'Preview and edit for') + '</div>'
+      + th.frame(hdr.dev, th.header({ values: shop, own: hdrOwn(), kind: image ? 'img' : 'box', image: image,
+          dev: hdr.dev, title: title, sub: val('ct-hdrsub'), desc: desc, long: desc.length > 180 }))
+      + '<p class="thk-livecap">' + (hdr.dev === 'laptop'
+          ? 'Laptop: as a 1280px screen draws it (1236px wide), scaled to fit.'
+          : 'Phone: as a 390px phone draws it (346px wide).')
+        + (image ? ' This category’s banner.' : ' No banner: the light box.')
+        + (hdr.shop ? '' : ' (The shop’s own settings could not be read, so the shipped ones stand in.)')
+        + (off ? ' ' + esc(off) : '') + '</p>';
+  }
+
+  function hdrLookHTML(){
+    var th = window.kbbTH;
+    var shop = hdrShop();
+    var dev = hdr.dev === 'laptop' ? 'laptop' : 'phone';
+    var sfx = dev === 'laptop' ? '_desktop' : '_phone';
+    var image = hdrImage();
+    var own = hdrOwn();
+    var shopR = th.resolve(shop, {}, image ? 'img' : 'box', dev);
+    var shopBox = th.resolve(shop, {}, 'box', dev);
+    var ctx = { own: own, image: image };
+    var word = dev === 'laptop' ? 'laptop' : 'phone';
+    var says = function(n){ return n ? n[0] + (n[1] && n[0].length < 3 ? ' · ' + n[1] : '') : ''; };
+
+    return th.tiles({ group: 'ct-box', kind: 'box', compact: true, shop: true, label: 'Light box style · ' + word + ' (when there is no banner)',
+        shopSays: says(th.BOX_NAMES[shopBox.box]), value: st0(own, 'box' + sfx), values: shop, dev: dev, ctx: ctx })
+      + th.tiles({ group: 'ct-treat', kind: image ? 'treat-img' : 'treat-box', compact: true, shop: true,
+        label: 'Keep the words readable · ' + word, shopSays: says(th.TREATMENT_NAMES[shopR.treatment]),
+        value: st0(own, 'treatment' + sfx), values: shop, dev: dev, ctx: ctx })
+      + th.tiles({ group: 'ct-align', kind: 'align', compact: true, shop: true, label: 'Text alignment · ' + word,
+        hint: 'Start is right-aligned on Arabic pages.', shopSays: (th.ALIGN_NAMES[shopR.align] || [''])[0],
+        value: st0(own, 'align' + sfx), values: shop, dev: dev, ctx: ctx })
+      + th.tiles({ group: 'ct-text', kind: 'text', compact: true, shop: true, label: 'Text colour · ' + word,
+        shopSays: (th.TEXT_NAMES[shop['cat_header_text' + (dev === 'laptop' ? '_desktop' : '')] || 'auto'] || [''])[0],
+        value: st0(own, 'text' + sfx), values: shop, dev: dev, ctx: ctx });
+  }
+
+  function st0(own, k){ return own[k] == null ? '' : String(own[k]); }
+
+  function hdrFocusHTML(){
+    var th = window.kbbTH;
+    var image = hdrImage();
+    if (!image) return '';
+    return th.tiles({ group: 'ct-focus', kind: 'focus', compact: true, label: 'Phone crop -- which part of the banner a phone keeps',
+      hint: 'A phone shows about the middle half of a wide banner. Laptops show nearly all of it whatever this says.',
+      value: hdr.st.focus || 'center', values: hdrShop(), dev: 'phone', ctx: { own: hdrOwn(), image: image } });
+  }
+
+  /* Redraw the preview and the tiles. Nothing here is a control being held. */
+  function hdrPaint(){
+    if (!window.kbbTH || !document.getElementById('ct-hdr')) return;
+    var live = document.querySelector('[data-ct-hdrlive]');
+    if (live) live.innerHTML = hdrLiveHTML();
+    var look = document.querySelector('[data-ct-hdrlook]');
+    if (look) look.innerHTML = hdrLookHTML();
+    var fx = document.querySelector('[data-ct-hdrfocus]');
+    if (fx) fx.innerHTML = hdrFocusHTML();
+    var dv = document.querySelector('[data-ct-hdrdevbar]');
+    if (dv) dv.innerHTML = window.kbbTH.deviceSwitch('data-ct-hdrdev', hdr.dev, 'Edit the design for');
+  }
+
   /* The panel's values for the save request. A number box that holds
      something other than digits is sent as typed, so the server refuses it
      with its own message rather than this screen guessing what was meant. */
   function headerPayload(){
+    var st = hdr.st;
     var style = {
-      align: val('ct-hdralign') || null,
-      treatment: val('ct-hdrtreat') || null,
-      box: val('ct-hdrbox') || null
+      // PY's both-devices keys, retired on this save (read above as both devices').
+      align: null, treatment: null, box: null,
+      align_phone: st.align_phone || null, align_desktop: st.align_desktop || null,
+      treatment_phone: st.treatment_phone || null, treatment_desktop: st.treatment_desktop || null,
+      box_phone: st.box_phone || null, box_desktop: st.box_desktop || null,
+      text_phone: st.text_phone || null, text_desktop: st.text_desktop || null,
+      focus: (st.focus && st.focus !== 'center') ? st.focus : null,
+      bg: val('ct-hdrbg') || null,
+      ic: val('ct-hdric') || null
     };
     HDR_NUMBERS.forEach(function(n){
       var raw = val(n[0]);
@@ -804,15 +995,43 @@
   }
 
   function wireHeaderPanel(){
+    var state = document.getElementById('ct-hdrupstate');
+
     function applyHeaderImage(url){
       var box = document.getElementById('ct-hdrimg');
       var thumb = document.getElementById('ct-hdrthumb');
+      var wrap = document.getElementById('ct-hdrwrap');
       if (box) box.value = url || '';
+      var safe = window.kbbTH ? window.kbbTH.safeImage(url) : '';
       if (thumb) {
-        if (url) { thumb.src = url; thumb.style.display = ''; }
-        else { thumb.removeAttribute('src'); thumb.style.display = 'none'; }
+        if (safe) thumb.src = safe; else thumb.removeAttribute('src');
       }
+      if (wrap) wrap.hidden = !safe;
+      hdrPaint();
     }
+
+    /* UPLOAD BANNER. Not a second upload path: the shared Media Library,
+       opened straight onto the computer's file chooser (`upload`) and taking
+       the uploaded picture as the choice (`pickUploaded`). The file lands in
+       the library first, like every picture in this console. */
+    var up = document.getElementById('ct-hdrup');
+    if (up) up.onclick = function(e){
+      e.preventDefault();
+      if (typeof window.kbbPickMedia !== 'function') { say('The Media Library is not available.'); return; }
+      window.kbbPickMedia({
+        title: 'Upload a banner',
+        note: 'Best at 2400 × 600. It joins the Media Library, and is used here as soon as it is up.',
+        folder: 'categories',
+        upload: true,
+        pickUploaded: true,
+        onPick: function(urls){
+          if (!urls || !urls.length) return;
+          applyHeaderImage(urls[0]);
+          if (state) state.textContent = 'Uploaded to the Media Library. Press Save category to keep it on this category.';
+          say('Banner uploaded');
+        }
+      });
+    };
 
     var lib = document.getElementById('ct-hdrlib');
     if (lib) lib.onclick = function(e){
@@ -820,7 +1039,7 @@
       if (typeof window.kbbPickMedia !== 'function') { say('The Media Library is not available.'); return; }
       window.kbbPickMedia({
         title: 'Choose the header picture',
-        note: 'A wide picture works best. Pick one already in the library, or upload a new one — it joins the library first.',
+        note: 'Best at 2400 × 600. Pick one already in the library, or upload a new one — it joins the library first.',
         folder: 'categories',
         onPick: function(urls){
           if (!urls || !urls.length) return;
@@ -831,7 +1050,7 @@
     };
 
     var drop = document.getElementById('ct-hdrdrop');
-    if (drop) drop.onclick = function(e){ e.preventDefault(); applyHeaderImage(''); };
+    if (drop) drop.onclick = function(e){ e.preventDefault(); applyHeaderImage(''); if (state) state.textContent = ''; };
 
     var box = document.getElementById('ct-hdrimg');
     if (box) box.oninput = function(){ applyHeaderImage(box.value.trim()); };
@@ -841,7 +1060,53 @@
       e.preventDefault();
       var t = document.getElementById('ct-hdrtitle');
       if (t) { t.value = ''; t.focus(); }
+      hdrPaint();
     };
+
+    var colClear = document.getElementById('ct-hdrcolclear');
+    if (colClear) colClear.onclick = function(e){
+      e.preventDefault();
+      ['ct-hdrbg', 'ct-hdric'].forEach(function(id){ var el = document.getElementById(id); if (el) el.value = ''; });
+      hdrPaint();
+    };
+
+    var root = document.getElementById('ct-hdr');
+    var dlg = root ? root.closest('.ct-modal-box') : null;
+    if (dlg) {
+      /* Anything typed that the preview shows redraws it: the banner address,
+         the words, the colours, the sizes -- and the name and description
+         above, which a blank title and description fall back to. */
+      dlg.addEventListener('input', function(e){
+        var t = e.target;
+        if (!t || !t.id && !t.getAttribute('data-ct-hdrpair')) return;
+        var pair = t.getAttribute('data-ct-hdrpair');
+        if (pair) { var to = document.getElementById(pair); if (to) to.value = t.value.toUpperCase(); }
+        else if (t.id === 'ct-hdrbg' || t.id === 'ct-hdric') {
+          var picker = dlg.querySelector('[data-ct-hdrpair="' + t.id + '"]');
+          if (picker && /^#[0-9A-Fa-f]{6}$/.test(t.value)) picker.value = t.value;
+        }
+        if (pair || /^ct-(hdr|name$|desc$|image$)/.test(t.id || '')) hdrPaint();
+      });
+      dlg.addEventListener('click', function(e){
+        var d = e.target.closest ? e.target.closest('[data-ct-hdrdev]') : null;
+        if (!d || d.tagName !== 'BUTTON') return;
+        hdr.dev = d.getAttribute('data-ct-hdrdev') === 'laptop' ? 'laptop' : 'phone';
+        hdrPaint();
+        var again = dlg.querySelector('[data-ct-hdrlive] [data-ct-hdrdev="' + hdr.dev + '"]');
+        if (again && d.closest('[data-ct-hdrlive]')) again.focus();
+      });
+      dlg.addEventListener('kbb-th-pick', function(e){
+        var g = (e.detail || {}).group, v = (e.detail || {}).value;
+        if (g === 'ct-focus') { hdr.st.focus = v === 'center' ? null : v; hdrPaint(); return; }
+        if (!HDR_GROUPS[g]) return;
+        var key = HDR_GROUPS[g] + (hdr.dev === 'laptop' ? '_desktop' : '_phone');
+        if (v) hdr.st[key] = v; else delete hdr.st[key];
+        hdrPaint();
+      });
+    }
+
+    hdrPaint();
+    hdrLoadShop();
   }
 
   /* -------------------------------------------------------------- editor */
