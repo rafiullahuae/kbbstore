@@ -107,6 +107,16 @@ class BannerCard extends Model
     private static array $sizes = [];
 
     /**
+     * Drop the memo. Registered in tests/Support/StaticMemos, because a
+     * process-level static survives a test: a later test writing a different
+     * file at the same path would otherwise be handed the first one's size.
+     */
+    public static function forgetSizes(): void
+    {
+        self::$sizes = [];
+    }
+
+    /**
      * @return array{0: int, 1: int}|null
      */
     private static function sizeFrom(string $path, mixed $w, mixed $h): ?array
