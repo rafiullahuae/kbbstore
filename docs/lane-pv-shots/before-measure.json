@@ -1,0 +1,262 @@
+{
+  "twin-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "headerBottom": 127,
+    "crumb": {
+      "display": "none",
+      "top": 0,
+      "bottom": 0
+    },
+    "galleryTop": 149,
+    "gapHeaderToPhoto": 22,
+    "photo": [
+      390,
+      390
+    ],
+    "photoBottom": 539,
+    "thumbsTop": 509,
+    "thumbsBottom": 567,
+    "thumbsOverlapPhoto": 30,
+    "gaps": {
+      "galleryToBrand": 48,
+      "brandToTitle": 8,
+      "titleToRating": 16,
+      "ratingToDesc": 34,
+      "descToMore": 6,
+      "moreToOptions": 21
+    },
+    "descBox": [
+      346,
+      85.6
+    ],
+    "descFirstTextOffset": 81.9,
+    "descVisibleText": "A watery, weightless SPF50+ PA++++ sun serum with Madagascar",
+    "titleFont": "19px / 500",
+    "brandFont": "12px",
+    "badge": {
+      "text": "-16%",
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "pricePill": {
+      "text": "-16%",
+      "background": "rgb(226, 58, 78)",
+      "color": "rgb(255, 255, 255)"
+    }
+  },
+  "twin-390-expanded": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "headerBottom": 617,
+    "crumb": {
+      "display": "none",
+      "top": 490,
+      "bottom": 490
+    },
+    "galleryTop": 149,
+    "gapHeaderToPhoto": -468,
+    "photo": [
+      390,
+      390
+    ],
+    "photoBottom": 539,
+    "thumbsTop": 509,
+    "thumbsBottom": 567,
+    "thumbsOverlapPhoto": 30,
+    "gaps": {
+      "galleryToBrand": 48,
+      "brandToTitle": 8,
+      "titleToRating": 16,
+      "ratingToDesc": 34,
+      "descToMore": -542,
+      "moreToOptions": 562
+    },
+    "descBox": [
+      346,
+      220.2
+    ],
+    "descFirstTextOffset": 81.9,
+    "descVisibleText": "A watery, weightless SPF50+ PA++++ sun serum with Madagascar",
+    "titleFont": "19px / 500",
+    "brandFont": "12px",
+    "badge": {
+      "text": "-16%",
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "pricePill": {
+      "text": "-16%",
+      "background": "rgb(226, 58, 78)",
+      "color": "rgb(255, 255, 255)"
+    }
+  },
+  "twin-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "headerBottom": 93.5,
+    "crumb": {
+      "display": "none",
+      "top": 0,
+      "bottom": 0
+    },
+    "galleryTop": 115.5,
+    "gapHeaderToPhoto": 22,
+    "photo": [
+      611.5,
+      611.5
+    ],
+    "photoBottom": 727,
+    "thumbsTop": 741,
+    "thumbsBottom": 807,
+    "thumbsOverlapPhoto": -14,
+    "gaps": {
+      "galleryToBrand": -691.5,
+      "brandToTitle": 8,
+      "titleToRating": 16,
+      "ratingToDesc": 34,
+      "descToMore": 6,
+      "moreToOptions": 21
+    },
+    "descBox": [
+      582.5,
+      85.6
+    ],
+    "descFirstTextOffset": 81.9,
+    "descVisibleText": "A watery, weightless SPF50+ PA++++ sun serum with Madagascar",
+    "titleFont": "30px / 500",
+    "brandFont": "12px",
+    "badge": {
+      "text": "-16%",
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "pricePill": {
+      "text": "-16%",
+      "background": "rgb(226, 58, 78)",
+      "color": "rgb(255, 255, 255)"
+    }
+  },
+  "twin-1280-expanded": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "headerBottom": 93.5,
+    "crumb": {
+      "display": "none",
+      "top": 0,
+      "bottom": 0
+    },
+    "galleryTop": 115.5,
+    "gapHeaderToPhoto": 22,
+    "photo": [
+      611.5,
+      611.5
+    ],
+    "photoBottom": 727,
+    "thumbsTop": 741,
+    "thumbsBottom": 807,
+    "thumbsOverlapPhoto": -14,
+    "gaps": {
+      "galleryToBrand": -691.5,
+      "brandToTitle": 8,
+      "titleToRating": 16,
+      "ratingToDesc": 34,
+      "descToMore": -497,
+      "moreToOptions": 517
+    },
+    "descBox": [
+      582.5,
+      176.4
+    ],
+    "descFirstTextOffset": 81.9,
+    "descVisibleText": "A watery, weightless SPF50+ PA++++ sun serum with Madagascar",
+    "titleFont": "30px / 500",
+    "brandFont": "12px",
+    "badge": {
+      "text": "-16%",
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "pricePill": {
+      "text": "-16%",
+      "background": "rgb(226, 58, 78)",
+      "color": "rgb(255, 255, 255)"
+    }
+  },
+  "control-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "headerBottom": 127,
+    "crumb": {
+      "display": "none",
+      "top": 0,
+      "bottom": 0
+    },
+    "galleryTop": 149,
+    "gapHeaderToPhoto": 22,
+    "photo": [
+      390,
+      390
+    ],
+    "photoBottom": 539,
+    "thumbsTop": 509,
+    "thumbsBottom": 567,
+    "thumbsOverlapPhoto": 30,
+    "gaps": {
+      "galleryToBrand": 48,
+      "brandToTitle": 8,
+      "titleToRating": 16,
+      "ratingToDesc": 34,
+      "descToMore": 6,
+      "moreToOptions": 21
+    },
+    "descBox": [
+      346,
+      85.6
+    ],
+    "descFirstTextOffset": 22,
+    "descVisibleText": "A low-pH toner with centella extract that calms and preps sk",
+    "titleFont": "19px / 500",
+    "brandFont": "12px",
+    "badge": null,
+    "pricePill": null
+  },
+  "control-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "headerBottom": 93.5,
+    "crumb": {
+      "display": "none",
+      "top": 0,
+      "bottom": 0
+    },
+    "galleryTop": 115.5,
+    "gapHeaderToPhoto": 22,
+    "photo": [
+      611.5,
+      611.5
+    ],
+    "photoBottom": 727,
+    "thumbsTop": 741,
+    "thumbsBottom": 807,
+    "thumbsOverlapPhoto": -14,
+    "gaps": {
+      "galleryToBrand": -691.5,
+      "brandToTitle": 8,
+      "titleToRating": 16,
+      "ratingToDesc": 34,
+      "descToMore": 6,
+      "moreToOptions": 21
+    },
+    "descBox": [
+      582.5,
+      64.7
+    ],
+    "descFirstTextOffset": 22,
+    "descVisibleText": "A low-pH toner with centella extract that calms and preps sk",
+    "titleFont": "30px / 500",
+    "brandFont": "12px",
+    "badge": null,
+    "pricePill": null
+  }
+}

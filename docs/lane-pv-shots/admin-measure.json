@@ -1,0 +1,94 @@
+{
+  "photo-shipped": {
+    "scrollWidth": 1440,
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "pdpPaddingTop": "22px",
+      "thumbsOverlapPhoto": -14,
+      "brandToTitle": 8,
+      "ratingToDesc": null,
+      "badgeBg": "rgb(31, 157, 85)",
+      "badgeFg": "rgb(255, 255, 255)",
+      "brandSize": "12px"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "pdpPaddingTop": "0px",
+      "thumbsOverlapPhoto": -10,
+      "brandToTitle": 8,
+      "ratingToDesc": null,
+      "badgeBg": "rgb(31, 157, 85)",
+      "badgeFg": "rgb(255, 255, 255)",
+      "brandSize": "12px"
+    }
+  },
+  "photo-moved": {
+    "scrollWidth": 1440,
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "pdpPaddingTop": "22px",
+      "thumbsOverlapPhoto": -14,
+      "brandToTitle": 8,
+      "ratingToDesc": null,
+      "badgeBg": "rgb(193, 62, 99)",
+      "badgeFg": "rgb(255, 255, 255)",
+      "brandSize": "12px"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "pdpPaddingTop": "30px",
+      "thumbsOverlapPhoto": 30,
+      "brandToTitle": 8,
+      "ratingToDesc": null,
+      "badgeBg": "rgb(193, 62, 99)",
+      "badgeFg": "rgb(255, 255, 255)",
+      "brandSize": "12px"
+    }
+  },
+  "sp_buy-shipped": {
+    "scrollWidth": 1440,
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "pdpPaddingTop": "22px",
+      "thumbsOverlapPhoto": -14,
+      "brandToTitle": 8,
+      "ratingToDesc": null,
+      "badgeBg": "rgb(193, 62, 99)",
+      "badgeFg": "rgb(255, 255, 255)",
+      "brandSize": "12px"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "pdpPaddingTop": "30px",
+      "thumbsOverlapPhoto": 30,
+      "brandToTitle": 8,
+      "ratingToDesc": null,
+      "badgeBg": "rgb(193, 62, 99)",
+      "badgeFg": "rgb(255, 255, 255)",
+      "brandSize": "12px"
+    }
+  },
+  "sp_buy-moved": {
+    "scrollWidth": 1440,
+    "desktop": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "pdpPaddingTop": "22px",
+      "thumbsOverlapPhoto": -14,
+      "brandToTitle": 30,
+      "ratingToDesc": null,
+      "badgeBg": "rgb(193, 62, 99)",
+      "badgeFg": "rgb(255, 255, 255)",
+      "brandSize": "12px"
+    },
+    "mobile": {
+      "title": "Relief Sun Rice + Probiotics SPF50+",
+      "pdpPaddingTop": "30px",
+      "thumbsOverlapPhoto": 30,
+      "brandToTitle": 0,
+      "ratingToDesc": null,
+      "badgeBg": "rgb(193, 62, 99)",
+      "badgeFg": "rgb(255, 255, 255)",
+      "brandSize": "12px"
+    }
+  }
+}
