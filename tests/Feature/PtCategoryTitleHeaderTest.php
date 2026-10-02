@@ -101,11 +101,17 @@ it('lands the banner, title and subtitle the export carries', function () {
     $toner = Category::query()->where('source_term_id', 31)->firstOrFail();
     $brand = Brand::query()->where('source_term_id', 502)->firstOrFail();
 
+    /*
+     * ADVANCED in 2.60.350: the title and subtitle no longer cross. On the
+     * owner's shop the key the exporter read as a title held the theme's
+     * "hide" switch, and every category was headed "hide"; he wants the
+     * category's name (CategoryHeaderNameFirstTest).
+     */
     expect($skin->only(['header_image', 'header_source', 'header_title', 'header_subtitle']))->toBe([
         'header_image' => 'https://kbeautybliss.com/wp-content/uploads/2020/01/skincare-banner.jpg',
         'header_source' => 'header_banner',
-        'header_title' => 'Korean Skincare',
-        'header_subtitle' => 'Gentle, effective and authentic',
+        'header_title' => null,
+        'header_subtitle' => null,
     ]);
 
     expect($wash->header_image)->toBe('https://kbeautybliss.com/wp-content/uploads/2020/02/face-cleansers-cover.jpg')
@@ -181,7 +187,7 @@ it('ships switched on: the banner behind the old title, the subtitle and the des
     expect(substr_count($html, 'data-kbb-title-header'))->toBe(1)
         ->and($html)->toContain('<h1 class="kbb-th__title" id="kbb-th-title">Korean Sunscreens</h1>')
         ->and($html)->toContain('<p class="kbb-th__sub">SPF that feels like nothing</p>')
-        ->and($html)->toContain('<div class="kbb-th__desc"><p>Lightweight <strong>Korean sunscreens</strong> for every day.</p></div>')
+        ->and($html)->toContain('<div class="kbb-th__desc kbb-th__desc--clamp"><p>Lightweight <strong>Korean sunscreens</strong> for every day.</p></div>') // 2.60.350: the description is cut at its line count (kbb-th__desc--clamp), as he asked.
         ->and($html)->toContain('src="https://kbeautybliss.com/wp-content/uploads/2023/05/sunscreens-banner.jpg"')
         ->and($html)->toContain('kbb-title-header');
 
@@ -191,6 +197,10 @@ it('ships switched on: the banner behind the old title, the subtitle and the des
 });
 
 it('clamps a long description behind Read more, with no script', function () {
+    // "Read more" is a switch since 2.60.350 (off, as the owner asked).
+    app(\App\Services\SettingsService::class)->set('layout_cat_header_more', '1');
+    \App\Services\SettingsService::forgetMemo();
+
     ptHeaderCategory(['description' => '<p>'.str_repeat('Broad-spectrum protection that sits light. ', 12).'</p>']);
 
     $html = ptPage('/collections/pt-sunscreens/');
@@ -280,7 +290,7 @@ it('obeys Appearance -> Site layout -> Category header', function () {
     expect($html)->toContain('src="https://kbeautybliss.com/wp-content/uploads/2020/01/thumb.jpg"')
         // Lane PY: the classes name the shape, the tone, the LOGICAL
         // alignment and the treatment; the heights ride first in the style.
-        ->and($html)->toContain('class="kbb-th kbb-th--img kbb-th--dark kbb-th--a-end kbb-th--t-shadow"')
+        ->and($html)->toContain('class="kbb-th kbb-th--img kbb-th--dark kbb-th--a-end kbb-th--v-bottom kbb-th--t-shadow"')
         ->and($html)->toContain('style="--kbb-th-h:260px;--kbb-th-hd:420px;')
         ->and($html)->toContain(';--kbb-th-ov:0.25;--kbb-th-lines:5;');
 

@@ -123,7 +123,7 @@ function qcKit(): string
 const QC_DEFAULT_STYLE = '--kbb-th-h:190px;--kbb-th-hd:300px;--kbb-th-ts:26px;--kbb-th-tsd:40px;--kbb-th-ds:13px;'
     .'--kbb-th-dsd:15px;--kbb-th-py:28px;--kbb-th-pyd:36px;--kbb-th-px:20px;--kbb-th-pxd:48px;--kbb-th-r:18px;'
     .'--kbb-th-mt:6px;--kbb-th-mtd:6px;--kbb-th-mb:22px;--kbb-th-mbd:26px;--kbb-th-mw:760px;--kbb-th-ov:0.4;'
-    .'--kbb-th-lines:3;--kbb-th-tw:700';
+    .'--kbb-th-lines:2;--kbb-th-tw:700';
 
 /* ══════════════════════════════════════════ nothing moves by applying it ═══ */
 
@@ -140,8 +140,8 @@ it('ships the laptop at the phone\'s defaults, and a default category page byte-
     qcCategory();
     qcCategory(['slug' => 'qc-pic', 'header_image' => '/uploads/qc/banner.jpg']);
 
-    expect(qcOpen('/collections/qc-sun/'))->toBe('<section class="kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush" style="'.QC_DEFAULT_STYLE.'" data-kbb-title-header aria-labelledby="kbb-th-title">')
-        ->and(qcOpen('/collections/qc-pic/'))->toBe('<section class="kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-shadow" style="'.QC_DEFAULT_STYLE.'" data-kbb-title-header aria-labelledby="kbb-th-title">');
+    expect(qcOpen('/collections/qc-sun/'))->toBe('<section class="kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush" style="'.QC_DEFAULT_STYLE.'" data-kbb-title-header aria-labelledby="kbb-th-title">')
+        ->and(qcOpen('/collections/qc-pic/'))->toBe('<section class="kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-shadow" style="'.QC_DEFAULT_STYLE.'" data-kbb-title-header aria-labelledby="kbb-th-title">');
 });
 
 it('gives a value saved before the split to both devices, until the laptop gets its own', function () {
@@ -165,7 +165,7 @@ it('gives a value saved before the split to both devices, until the laptop gets 
 
     qcCategory();
     [$class] = qcAttrs(qcOpen('/collections/qc-sun/'));
-    expect($class)->toBe('kbb-th kbb-th--box kbb-th--light kbb-th--a-center kbb-th--t-frost kbb-th--box-lilac');
+    expect($class)->toBe('kbb-th kbb-th--box kbb-th--light kbb-th--a-center kbb-th--v-bottom kbb-th--t-frost kbb-th--box-lilac');
 
     // A laptop row of its own, and only then do they part.
     qcStore('cat_header_align_desktop', 'end');
@@ -187,10 +187,34 @@ it('phone and laptop render their own classes: laptop B + 3 centred, phone A + 2
     [$box] = qcAttrs(qcOpen('/collections/qc-sun/'));
     [$pic] = qcAttrs(qcOpen('/collections/qc-pic/'));
 
-    expect($box)->toBe('kbb-th kbb-th--box kbb-th--split kbb-th--p-dark kbb-th--p-a-start kbb-th--p-t-fade kbb-th--p-box-blush kbb-th--l-dark kbb-th--l-a-center kbb-th--l-t-frost kbb-th--l-box-cream')
-        ->and($pic)->toBe('kbb-th kbb-th--img kbb-th--split kbb-th--p-light kbb-th--p-a-start kbb-th--p-t-fade kbb-th--l-light kbb-th--l-a-center kbb-th--l-t-frost')
+    expect($box)->toBe('kbb-th kbb-th--box kbb-th--split kbb-th--p-dark kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-fade kbb-th--p-box-blush kbb-th--l-dark kbb-th--l-a-center kbb-th--l-v-bottom kbb-th--l-t-frost kbb-th--l-box-cream')
+        ->and($pic)->toBe('kbb-th kbb-th--img kbb-th--split kbb-th--p-light kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-fade kbb-th--l-light kbb-th--l-a-center kbb-th--l-v-bottom kbb-th--l-t-frost')
         // The icon layer is there for the device that has icons.
         ->and((string) $this->get('/collections/qc-sun/')->getContent())->toContain('<div class="kbb-th__icons" aria-hidden="true"></div>');
+});
+
+it('where the words sit is per device too, for the shop and for a category', function () {
+    /*
+     * 2.60.350's "the content will come left bottom with spacing controls, as
+     * give control of the overal box for desktop and mobile also" -- bottom
+     * ships on both; each device may move on its own.
+     */
+    expect(SiteLayout::DEVICE_PAIRS['cat_header_valign'])->toBe('cat_header_valign_desktop')
+        ->and(SiteLayout::SCHEMA['cat_header_valign_desktop'][2])->toBe('bottom');
+
+    qcSave(['cat_header_valign_desktop' => 'top']);
+    qcCategory();
+    qcCategory(['slug' => 'qc-own', 'header_style' => ['valign_phone' => 'center']]);
+
+    [$shop] = qcAttrs(qcOpen('/collections/qc-sun/'));
+    [$own] = qcAttrs(qcOpen('/collections/qc-own/'));
+
+    expect($shop)->toContain('kbb-th--p-v-bottom')->and($shop)->toContain('kbb-th--l-v-top')
+        ->and($own)->toContain('kbb-th--p-v-center')->and($own)->toContain('kbb-th--l-v-top');
+
+    $generated = (string) TitleHeaderSplitCss::generated(qcCss());
+    expect($generated)->toContain('.kbb-th--p-v-bottom{align-items:flex-end}')
+        ->and($generated)->toContain('.kbb-th--l-v-top{align-items:flex-start}');
 });
 
 it('the stylesheet picks by width: every choice rule twice, phone under 900px and laptop from 900px', function () {
@@ -244,8 +268,8 @@ it('writes a split box\'s own colours per device, never as the shared property',
 
     [$class, $style] = qcAttrs(qcOpen('/collections/qc-sun/'));
 
-    expect($class)->toContain('kbb-th--p-light kbb-th--p-a-start kbb-th--p-t-none kbb-th--p-box-plain kbb-th--p-own')
-        ->and($class)->toContain('kbb-th--l-dark kbb-th--l-a-start kbb-th--l-t-none kbb-th--l-box-blush')
+    expect($class)->toContain('kbb-th--p-light kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-none kbb-th--p-box-plain kbb-th--p-own')
+        ->and($class)->toContain('kbb-th--l-dark kbb-th--l-a-start kbb-th--l-v-bottom kbb-th--l-t-none kbb-th--l-box-blush')
         ->and($class)->not->toContain('kbb-th--l-own')
         ->and($style)->toContain('--kbb-th-p-bg:#2A1F3D;--kbb-th-p-ic:#EFA889')
         ->and($style)->not->toContain('--kbb-th-bg:');
@@ -278,7 +302,7 @@ it('a category\'s own colours repaint its box on both devices, and its phone cro
 
     [$class, $style] = qcAttrs(qcOpen('/collections/qc-sun/'));
 
-    expect($class)->toBe('kbb-th kbb-th--box kbb-th--light kbb-th--a-start kbb-th--t-none kbb-th--box-blush')
+    expect($class)->toBe('kbb-th kbb-th--box kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush')
         ->and($style)->toEndWith(';--kbb-th-bg:#123456;--kbb-th-ic:#ABCDEF')
         ->and(qcAttrs(qcOpen('/collections/qc-pic/'))[0])->toEndWith(' kbb-th--fx-right')
         ->and(qcAttrs(qcOpen('/collections/qc-mid/'))[0])->not->toContain('fx-')
@@ -301,7 +325,7 @@ it('untouched, every design is the sheet\'s: no tweak property on any of A-F or 
             qcCategory(['slug' => $slug, 'header_style' => ['box' => $box, 'treatment' => $t]]);
             [$class, $style] = qcAttrs(qcOpen('/collections/'.$slug.'/'));
 
-            expect($class)->toBe('kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-'.$t.' kbb-th--box-'.$box);
+            expect($class)->toBe('kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-'.$t.' kbb-th--box-'.$box);
 
             $extra = match ($box) {
                 'plain' => ';--kbb-th-bg:#FFF4EE',
@@ -371,7 +395,7 @@ it('each tweak moves only its own custom property', function () {
         [$class, $style] = qcAttrs(qcOpen('/collections/qc-sun/'));
 
         expect($style)->toBe(QC_DEFAULT_STYLE.';'.$declaration, $key)
-            ->and($class)->toBe('kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush', $key);
+            ->and($class)->toBe('kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush', $key);
 
         qcSave([$key => SiteLayout::SCHEMA[$key][2]]);
     }
@@ -384,7 +408,7 @@ it('a tuned dark box gets white words when the text colour is Automatic', functi
     qcSave(['cat_header_cream_bg' => '#2B1D14']);
     qcCategory(['header_style' => ['box' => 'cream']]);
 
-    expect(qcAttrs(qcOpen('/collections/qc-sun/'))[0])->toBe('kbb-th kbb-th--box kbb-th--light kbb-th--a-start kbb-th--t-none kbb-th--box-cream');
+    expect(qcAttrs(qcOpen('/collections/qc-sun/'))[0])->toBe('kbb-th kbb-th--box kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-cream');
 });
 
 /* ═════════════════════════════════════════════════════════════════ guards ═══ */
@@ -518,7 +542,10 @@ it('names the sheet\'s letters, numbers and names, and agrees with the server ab
     }
 
     expect($kit)->toContain("var PV_TEXTS = ['".implode("', '", TitleHeader::TEXTS)."'];")
-        ->and($kit)->toContain("var PV_FOCUSES = ['".implode("', '", TitleHeader::FOCUSES)."'];");
+        ->and($kit)->toContain("var PV_FOCUSES = ['".implode("', '", TitleHeader::FOCUSES)."'];")
+        ->and($kit)->toContain("var PV_VALIGNS = ['".implode("', '", TitleHeader::VALIGNS)."'];")
+        // The preview shows his generic line for a category with no description.
+        ->and($kit)->toContain("split('{category}').join(title)");
 
     foreach (SiteLayout::BOX_PRESETS as $box => [$bg, $ic]) {
         expect($kit)->toContain($box.": ['".$bg."', '".$ic."']");

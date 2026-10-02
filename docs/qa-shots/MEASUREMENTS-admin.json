@@ -1,0 +1,134 @@
+{
+  "tab-1280": {
+    "list": [
+      "gallery",
+      "title",
+      "short",
+      "price",
+      "paylater",
+      "bundles",
+      "ready",
+      "cart",
+      "delivery",
+      "auth",
+      "trust (off)",
+      "paychips",
+      "buytogether (off)",
+      "details",
+      "reviews",
+      "related"
+    ],
+    "scrollWidth": 1280
+  },
+  "tab-390": {
+    "list": [
+      "gallery",
+      "title",
+      "short",
+      "price",
+      "paylater",
+      "bundles",
+      "ready",
+      "cart",
+      "delivery",
+      "auth",
+      "trust (off)",
+      "paychips",
+      "buytogether (off)",
+      "details",
+      "reviews",
+      "related"
+    ],
+    "scrollWidth": 390
+  },
+  "drag-in-progress": {
+    "dragging": [
+      "delivery"
+    ],
+    "over": [
+      "cart"
+    ]
+  },
+  "after-drop": [
+    "gallery",
+    "title",
+    "short",
+    "price",
+    "paylater",
+    "bundles",
+    "delivery",
+    "ready",
+    "cart",
+    "auth",
+    "trust (off)",
+    "paychips",
+    "buytogether (off)",
+    "details",
+    "reviews",
+    "related"
+  ],
+  "after-save": [
+    "gallery",
+    "title",
+    "short",
+    "price",
+    "paylater",
+    "bundles",
+    "delivery",
+    "ready",
+    "cart",
+    "auth",
+    "trust",
+    "paychips",
+    "buytogether (off)",
+    "details",
+    "reviews",
+    "related"
+  ],
+  "product-after-save": {
+    "order": [
+      "gallery",
+      "title",
+      "short",
+      "price",
+      "paylater",
+      "bundles",
+      "delivery",
+      "ready",
+      "cart",
+      "auth",
+      "trust",
+      "paychips",
+      "details",
+      "reviews",
+      "related"
+    ],
+    "scrollWidth": 390
+  },
+  "touch-drag-in-progress": {
+    "dragging": [
+      "paychips"
+    ],
+    "over": [
+      "auth"
+    ]
+  },
+  "touch-after-drop": [
+    "gallery",
+    "title",
+    "short",
+    "price",
+    "paylater",
+    "bundles",
+    "delivery",
+    "ready",
+    "cart",
+    "paychips",
+    "auth",
+    "trust",
+    "buytogether (off)",
+    "details",
+    "reviews",
+    "related"
+  ]
+}

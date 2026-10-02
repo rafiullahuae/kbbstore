@@ -41,28 +41,54 @@ class ProductSections
 
     public function __construct(private SettingsService $settings) {}
 
-    /** Saved configuration merged over the defaults. */
+    /**
+     * Saved configuration merged over the defaults.
+     *
+     * ── ▲ EIGHT MOBILE SWITCHES ARE ANSWERED BY ANOTHER SCREEN (Lane QA) ────
+     *
+     * Appearance → Product page → Mobile sections orders and switches the
+     * phone page by SECTION, and eight of these modules ARE a section — the
+     * short description, the options, the trust lines, the payment chips,
+     * frequently bought together, the tabs, the reviews and the related
+     * carousel (ProductMobileSections::MODULE). Two switches for one thing on
+     * one device is two answers, so for those eight `mobile` is read from that
+     * screen and `mobile_owner` says so; the Sections tab draws a pointer
+     * there instead of a toggle. `desktop` is still this registry's, for all
+     * seventeen. A switch that only hides PART of a section — the capsule, the
+     * VAT line, the countdown, the stepper, Buy it now — stays here, per
+     * device, nested inside its section's switch.
+     */
     public function all(): array
     {
+        if ($this->memo !== null) {
+            return $this->memo;
+        }
+
         $saved = $this->settings->get('product_sections');
         $saved = is_array($saved) ? $saved : [];
+        $mobile = app(ProductMobileSections::class);
 
         $out = [];
 
         foreach (self::REGISTRY as $key => [$label, $desc, $default]) {
             $row = is_array($saved[$key] ?? null) ? $saved[$key] : [];
+            $owned = $mobile->moduleMobile($key);
 
             $out[$key] = [
                 'key' => $key,
                 'label' => $label,
                 'description' => $desc,
                 'desktop' => (bool) ($row['desktop'] ?? $default),
-                'mobile' => (bool) ($row['mobile'] ?? $default),
+                'mobile' => $owned ?? (bool) ($row['mobile'] ?? $default),
+                'mobile_owner' => $owned === null ? null : 'Mobile sections',
             ];
         }
 
-        return $out;
+        return $this->memo = $out;
     }
+
+    /** @var array<string, array<string, mixed>>|null */
+    private ?array $memo = null;
 
     public function hidden(string $key): bool
     {
@@ -79,7 +105,14 @@ class ProductSections
             return '';
         }
 
-        return trim(($s['desktop'] ? '' : 'd-off ') . ($s['mobile'] ? '' : 'm-off'));
+        /* A module whose phone switch belongs to Mobile sections is hidden on
+           a phone by that screen's own `pm-off-*` rule, at the product page's
+           own breakpoint (880px). Emitting `m-off` as well would hide it a
+           second time at kbb.css's 900px — on the 881–900px laptop layout,
+           where the Desktop switch is meant to decide. */
+        $mobileOff = $s['mobile'] || ($s['mobile_owner'] ?? null) !== null ? '' : 'm-off';
+
+        return trim(($s['desktop'] ? '' : 'd-off ') . $mobileOff);
     }
 
     public function save(array $sections): void
@@ -98,5 +131,6 @@ class ProductSections
         }
 
         $this->settings->set('product_sections', $clean);
+        $this->memo = null;
     }
 }

@@ -1692,6 +1692,32 @@ final class EnglishRenderWalk
                 'with' => '<span class=" lbl lbl-off" style="top:14px;left:14px">',
                 'hits' => 1,
             ],
+
+            /*
+             * THREE SECTIONS OF THE PHONE PAGE THAT ARE ONE ELEMENT EACH, so
+             * they carry the section's class themselves rather than a wrapper.
+             *                                                       (Lane QA)
+             *
+             * Same element, same place, same contents: the trust lines, the
+             * payment chips and the Product details section each gain
+             * `pm-sec pm-<key>`, which kbb-product.css orders and switches
+             * inside its phone breakpoint only. One page.
+             */
+            'the trust lines are a phone section (Lane QA)' => [
+                'pattern' => '#<div class="([^"]*) trust">#',
+                'with' => '<div class="$1 trust pm-sec pm-trust">',
+                'hits' => 1,
+            ],
+            'the payment chips are a phone section (Lane QA)' => [
+                'pattern' => '#<div class="([^"]*) paychips">#',
+                'with' => '<div class="$1 paychips pm-sec pm-paychips">',
+                'hits' => 1,
+            ],
+            'Product details is a phone section (Lane QA)' => [
+                'pattern' => '#<section class="sec">(\n    <div class="eyebrow">)#',
+                'with' => '<section class="sec pm-sec pm-details">$1',
+                'hits' => 1,
+            ],
         ];
     }
 
@@ -1784,7 +1810,9 @@ final class EnglishRenderWalk
                 'hits' => 1,
             ],
             'the category title header, the light box (Lane PY)' => [
-                'pattern' => '#<section class="kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush" style="[^"<>]*" data-kbb-title-header aria-labelledby="kbb-th-title">\n.*?</section>\n#s',
+                // 2.60.350: `kbb-th--v-bottom` -- the words at the foot of the box,
+                // as the owner asked.
+                'pattern' => '#<section class="kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush" style="[^"<>]*" data-kbb-title-header aria-labelledby="kbb-th-title">\n.*?</section>\n#s',
                 'hits' => 1,
             ],
 
@@ -2275,6 +2303,48 @@ final class EnglishRenderWalk
                 'pattern' => '#<div class="pts-stack">\n.*?</div><!--/pts-stack-->\n#s',
                 'hits' => 1,
                 'perPage' => 1,
+            ],
+
+            /*
+             * THE PHONE PAGE AS SECTIONS — the wrapper and the section boxes.
+             *                                                       (Lane QA)
+             *
+             * The owner: "i want things need to work as sections. [...] give
+             * functionality to drag an drop the positioning changing / sorting,
+             * and ON/OFF anything. THIS message changes is only for MOBILE."
+             *
+             * TWO CUTS ON ONE PAGE, read off the diff, and everything around
+             * them still compared byte for byte:
+             *
+             *   wrapper   `.wrap` gains `pdp-page`, the section classes and the
+             *             integer custom properties ProductMobileSections
+             *             writes. The pattern NAMES THE SHIPPED DEFAULTS — trust
+             *             rows and Buy together off, the rating beside the price
+             *             at both widths, his order, the 18px gap and the two
+             *             named spacing exceptions — so a default that moves
+             *             without this walk being told is red here.
+             *   sections  the `.pm-sec` boxes that group two or more blocks of
+             *             the buy column into one section — title, options,
+             *             ready to ship, quantity + Add to cart — opened and
+             *             closed with nothing else on their lines. The PDP2 cut
+             *             above has already taken the ones inside the head
+             *             (the price row, the short description, the pay-later
+             *             cards and the share button); ProductMobileSectionsTest
+             *             pins those by element.
+             */
+            'the product page wrapper as a column of sections (Lane QA)' => [
+                'pattern' => '#(?<=<div class="wrap) pdp-page pm-off-trust pm-off-buytogether pm-rate-m-beside pd-rate-d-beside" '
+                    .'style="--pm-gap:18px;--pm-o-gallery:1;--pm-o-title:2;--pm-o-short:3;--pm-o-price:4;--pm-o-paylater:5;'
+                    .'--pm-o-bundles:6;--pm-o-ready:7;--pm-o-cart:8;--pm-o-delivery:9;--pm-o-auth:10;--pm-o-trust:11;'
+                    .'--pm-o-paychips:12;--pm-o-buytogether:13;--pm-o-details:14;--pm-o-reviews:15;--pm-o-related:16;'
+                    .'--pm-dm-short:-8px;--pm-dm-cart:-6px(?=">)#',
+                'hits' => 1,
+                'perPage' => 1,
+            ],
+            'the section boxes of the buy column (Lane QA)' => [
+                'pattern' => '#<div class="pm-sec pm-(?:title|bundles|ready|cart)">|</div><!--/pm-->#',
+                'hits' => 7,
+                'perPage' => 7,
             ],
         ];
     }

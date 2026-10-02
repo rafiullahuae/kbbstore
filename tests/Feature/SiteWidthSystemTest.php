@@ -611,7 +611,10 @@ it('ships every setting at the value the page already had, except the ones the o
         'cat_header_box_bg' => '#FFF4EE',
         'cat_header_box_icon' => '#EFA889',
         'cat_header_text' => 'auto',
-        // Lane QC: "... and for mobile also" -- the laptop's five choices,
+        // 2.60.350, as the owner asked: words at the bottom, his generic line.
+        'cat_header_valign' => 'bottom',
+        'cat_header_generic' => 'Find your favorite products in our wide range {category} category.',
+        // Lane QC: "... and for mobile also" -- the laptop's six choices,
         // each shipped at the phone's value (and, unsaved, FOLLOWING the
         // phone's saved value: SiteLayout::all()). Then "make edits as per
         // need": every tweak's default is the design as the option sheet
@@ -621,6 +624,7 @@ it('ships every setting at the value the page already had, except the ones the o
         'cat_header_box_treatment_desktop' => 'none',
         'cat_header_box_style_desktop' => 'blush',
         'cat_header_text_desktop' => 'auto',
+        'cat_header_valign_desktop' => 'bottom',
         'cat_header_blush_bg' => '#FDF0F4',
         'cat_header_blush_ic' => '#E3A1B5',
         'cat_header_cream_bg' => '#FBF4EA',
@@ -647,7 +651,8 @@ it('ships every setting at the value the page already had, except the ones the o
         'cat_header_weight' => '700',
         'cat_header_desc_phone' => 13,
         'cat_header_desc_desktop' => 15,
-        'cat_header_lines' => 3,
+        'cat_header_lines' => 2,
+        'cat_header_more' => false,
         'cat_header_maxw' => 760,
         'cat_header_h_phone' => 190,
         'cat_header_h_desktop' => 300,

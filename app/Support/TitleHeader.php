@@ -149,6 +149,7 @@ final class TitleHeader
         'treatment_phone' => 'treatment', 'treatment_desktop' => 'treatment',
         'box_phone' => 'box', 'box_desktop' => 'box',
         'text_phone' => 'text', 'text_desktop' => 'text',
+        'valign_phone' => 'valign', 'valign_desktop' => 'valign',
         'focus' => 'focus',
     ];
 
@@ -157,6 +158,9 @@ final class TitleHeader
 
     /** The text colour words, Automatic included. */
     public const TEXTS = ['auto', 'light', 'dark'];
+
+    /** Where the words sit, top to bottom (2.60.350; per device since Lane QC). */
+    public const VALIGNS = ['top', 'center', 'bottom'];
 
     /** Which part of a picture a phone keeps (Lane QC). */
     public const FOCUSES = ['left', 'center', 'right'];
@@ -230,9 +234,25 @@ final class TitleHeader
          * keeps the translated name, because the custom title has no Arabic.
          */
         $override = $english ? self::text($model->getAttribute('header_title'), 160) : '';
+
+        /*
+         * 2.60.350: "hide" on every header. The old shop's theme stored its
+         * "hide the title" switch as a term-meta VALUE, exporter 1.11.0 read
+         * that key as a title override, and the import wrote "hide" as the
+         * title of every category. The import no longer writes these two
+         * columns (importColumns), a migration cleared what it wrote, and a
+         * value that is only a switch word is never a heading.
+         */
+        if (self::isSwitchWord($override)) {
+            $override = '';
+        }
+
         $heading = $override !== '' ? $override : self::text($title, 160);
 
         $subtitle = $english ? self::text($model->getAttribute('header_subtitle'), 300) : '';
+        if (self::isSwitchWord($subtitle)) {
+            $subtitle = '';
+        }
 
         /*
          * "... if custom title or description not entered by me." The custom
@@ -244,6 +264,22 @@ final class TitleHeader
             ? $custom
             : (method_exists($model, 't') ? $model->t('description') : $model->getAttribute('description'));
         $description = RichText::isBlank(is_string($raw) ? $raw : '') ? '' : RichText::forDisplay((string) $raw);
+
+        /*
+         * "if no description set from backend, then generic line should come.
+         * Find your favorite products in our wide range <category name>
+         * category." English categories only: the sentence has no Arabic yet,
+         * and a brand is not a category.
+         */
+        if ($description === '' && $english && ! $brand) {
+            $generic = trim((string) ($settings['cat_header_generic'] ?? ''));
+
+            if ($generic !== '') {
+                $description = e(str_replace('{category}', self::text($title, 160), mb_substr($generic, 0, 300)));
+            }
+        }
+
+        $more = (bool) ($settings['cat_header_more'] ?? false);
 
         /*
          * PHONE AND LAPTOP, EACH RESOLVED ON ITS OWN. (Lane QC)
@@ -277,12 +313,14 @@ final class TitleHeader
 
         if (! $split) {
             $class = 'kbb-th kbb-th--'.$kind.' kbb-th--'.$phone['tone'].' kbb-th--a-'.$phone['align']
+                .' kbb-th--v-'.$phone['valign']
                 .' kbb-th--t-'.$phone['treatment'].($phone['box'] !== null ? ' kbb-th--box-'.$phone['box'] : '');
         } else {
             $class = 'kbb-th kbb-th--'.$kind.' kbb-th--split';
 
             foreach (['p' => $phone, 'l' => $laptop] as $p => $d) {
-                $class .= ' kbb-th--'.$p.'-'.$d['tone'].' kbb-th--'.$p.'-a-'.$d['align'].' kbb-th--'.$p.'-t-'.$d['treatment']
+                $class .= ' kbb-th--'.$p.'-'.$d['tone'].' kbb-th--'.$p.'-a-'.$d['align'].' kbb-th--'.$p.'-v-'.$d['valign']
+                    .' kbb-th--'.$p.'-t-'.$d['treatment']
                     .($d['box'] !== null ? ' kbb-th--'.$p.'-box-'.$d['box'] : '')
                     .($d['own'] !== null ? ' kbb-th--'.$p.'-own' : '');
             }
@@ -314,7 +352,10 @@ final class TitleHeader
             'heading' => $heading,
             'subtitle' => $subtitle,
             'description' => $description,
-            'long' => $description !== '' && mb_strlen(RichText::toText($description)) > self::LONG_DESCRIPTION,
+            // "Read more" only when the owner turns it on; otherwise the
+            // description is simply cut at its line count. (2.60.350)
+            'long' => $more && $description !== '' && mb_strlen(RichText::toText($description)) > self::LONG_DESCRIPTION,
+            'clamp' => ! $more,
             'tone' => $phone['tone'],
             'align' => $phone['align'],
             'treatment' => $phone['treatment'],
@@ -332,7 +373,7 @@ final class TitleHeader
      *
      * @param  array<string, mixed>  $settings
      * @param  array<string, mixed>  $own  sanitizeStyle()'s answer
-     * @return array{align: string, treatment: string, box: ?string, tone: string, own: ?array{0: string, 1: string}, drawn: ?array{0: string, 1: string}}
+     * @return array{align: string, valign: string, treatment: string, box: ?string, tone: string, own: ?array{0: string, 1: string}, drawn: ?array{0: string, 1: string}}
      */
     private static function device(array $settings, array $own, string $kind, string $suffix): array
     {
@@ -379,14 +420,29 @@ final class TitleHeader
             ?? self::pick($settings['cat_header_text'.$suffix] ?? null, self::TEXTS)
             ?? 'auto';
 
+        // 2.60.350's "Where the words sit", per device since Lane QC.
+        $valign = self::pick($own['valign'.$mine] ?? null, self::VALIGNS)
+            ?? self::pick($settings['cat_header_valign'.$suffix] ?? null, self::VALIGNS)
+            ?? 'bottom';
+
         return [
             'align' => $align,
+            'valign' => $valign,
             'treatment' => $treatment,
             'box' => $box,
             'tone' => self::tone($text, $kind, $colours[0] ?? null),
             'own' => $ownColours,
             'drawn' => $drawnColours,
         ];
+    }
+
+    /** Values the old theme used as SWITCHES, never as words to print. */
+    private const SWITCH_WORDS = ['hide', 'hidden', 'show', 'yes', 'no', 'on', 'off', 'true', 'false',
+        '0', '1', 'default', 'inherit', 'none', 'auto', 'disable', 'disabled', 'enable', 'enabled'];
+
+    public static function isSwitchWord(string $value): bool
+    {
+        return in_array(mb_strtolower(trim($value)), self::SWITCH_WORDS, true);
     }
 
     /**
@@ -600,7 +656,7 @@ final class TitleHeader
             }
         }
 
-        $lists += ['text' => self::TEXTS, 'focus' => self::FOCUSES];
+        $lists += ['text' => self::TEXTS, 'focus' => self::FOCUSES, 'valign' => self::VALIGNS];
 
         foreach (self::DEVICE_CHOICES as $key => $list) {
             $picked = self::pick($raw[$key] ?? null, $lists[$list]);
@@ -719,15 +775,13 @@ final class TitleHeader
             $out['header_source'] = $source === '' ? null : $source;
         }
 
-        if ($row->has('title_override')) {
-            $title = self::text($row->text('title_override'), 300);
-            $out['header_title'] = $title === '' ? null : $title;
-        }
-
-        if ($row->has('subtitle')) {
-            $subtitle = self::text($row->text('subtitle'), 300);
-            $out['header_subtitle'] = $subtitle === '' ? null : $subtitle;
-        }
+        /*
+         * `title_override` and `subtitle` are NOT imported (2.60.350). The
+         * exporter finds them by key NAME, and on the owner's shop the key it
+         * found held the theme's "hide" switch, which became the title of
+         * every category. The owner wants the category's name; a custom title
+         * is typed on this shop, in Catalog → Categories → Edit.
+         */
 
         return $out;
     }

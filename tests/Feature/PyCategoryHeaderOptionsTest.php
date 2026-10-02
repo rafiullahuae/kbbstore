@@ -143,7 +143,7 @@ it('takes the title from the category name when no custom title is set', functio
     $html = pyPage('/collections/py-lip-care/');
 
     expect($html)->toContain('<h1 class="kbb-th__title" id="kbb-th-title">Lip Care</h1>')
-        ->and($html)->toContain('<div class="kbb-th__desc">Balms and masks for soft lips.</div>')
+        ->and($html)->toContain('<div class="kbb-th__desc kbb-th__desc--clamp">Balms and masks for soft lips.</div>') // 2.60.350: the description is cut at its line count (kbb-th__desc--clamp), as he asked.
         ->and(substr_count($html, '<h1'))->toBe(1)
         ->and($html)->not->toContain('class="ptitle"');
 });
@@ -170,7 +170,8 @@ it('the custom description wins, and a blank one falls back to the category\'s o
 
     $html = pyPage('/collections/py-lip-care/');
 
-    expect($html)->toContain('<div class="kbb-th__desc"><p>Our lip edit.</p>')
+    // 2.60.350: the description is cut at its line count (kbb-th__desc--clamp), as he asked.
+    expect($html)->toContain('<div class="kbb-th__desc kbb-th__desc--clamp"><p>Our lip edit.</p>')
         ->and($html)->toContain('Two paragraphs &amp; an ampersand.')
         ->and($html)->not->toContain('Balms and masks for soft lips.');
 
@@ -203,7 +204,7 @@ it('draws the light box with its icons on a category with no picture, and needs 
     $html = pyPage('/collections/py-lip-care/');
     $open = pyOpen($html);
 
-    expect($open)->toContain('class="kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--t-none kbb-th--box-blush"')
+    expect($open)->toContain('class="kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush"') // 2.60.350: words at the bottom, as he asked
         ->and($html)->toContain('<div class="kbb-th__icons" aria-hidden="true"></div>')
         ->and($html)->not->toContain('class="kbb-th__img"')
         ->and($html)->toContain('kbb-title-header');
@@ -314,7 +315,7 @@ it('renders every text treatment 1 to 5 on a picture and on the box, each with a
         pyCategory(['slug' => 'py-img-'.$t, 'header_image' => '/uploads/py/x.jpg', 'header_style' => ['treatment' => $t]]);
         pyCategory(['slug' => 'py-box-'.$t, 'header_style' => ['treatment' => $t]]);
 
-        expect(pyOpen(pyPage('/collections/py-img-'.$t.'/')))->toContain('kbb-th--img kbb-th--light kbb-th--a-start kbb-th--t-'.$t.'"')
+        expect(pyOpen(pyPage('/collections/py-img-'.$t.'/')))->toContain('kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-'.$t.'"')
             ->and(pyOpen(pyPage('/collections/py-box-'.$t.'/')))->toContain('kbb-th--t-'.$t.' kbb-th--box-blush"');
 
         if ($t !== 'none') {

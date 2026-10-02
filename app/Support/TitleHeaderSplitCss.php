@@ -46,7 +46,7 @@ final class TitleHeaderSplitCss
     public const LAPTOP_QUERY = '@media (min-width:900px)';
 
     /** The words a choice puts on the header, and nothing else. */
-    public const CHOICE_WORD = '/\.kbb-th--(light|dark|a-(?:start|center|end)|t-(?:shadow|fade|frost|label|none)|box-(?:blush|cream|mint|lilac|plain|custom))(?![\w-])/';
+    public const CHOICE_WORD = '/\.kbb-th--(light|dark|a-(?:start|center|end)|v-(?:top|center|bottom)|t-(?:shadow|fade|frost|label|none)|box-(?:blush|cream|mint|lilac|plain|custom))(?![\w-])/';
 
     /**
      * The stylesheet with its generated block rebuilt from the rules above it.

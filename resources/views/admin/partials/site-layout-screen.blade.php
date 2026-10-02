@@ -505,7 +505,8 @@
     'sls-treat-img': 'cat_header_treatment',
     'sls-treat-box': 'cat_header_box_treatment',
     'sls-align': 'cat_header_align',
-    'sls-text': 'cat_header_text'
+    'sls-text': 'cat_header_text',
+    'sls-valign': 'cat_header_valign'
   };
 
   function devKey(base, dev) { return base + ((dev || pvDevice) === 'laptop' ? '_desktop' : ''); }
@@ -540,6 +541,11 @@
     if (name === 'text') return th.tiles(Object.assign({ group: 'sls-text', kind: 'text',
       label: 'Text colour · ' + word,
       value: values[devKey('cat_header_text')] }, common));
+    if (name === 'valign') return th.tiles(Object.assign({ group: 'sls-valign', kind: 'valign',
+      label: 'Where the words sit, top to bottom · ' + word,
+      hint: 'Bottom is what you asked for: the title and description at the foot of the header, on the start side. '
+        + 'Move them in from the edges with the inner-space sliders on <b>Category header · sizes &amp; spacing</b>.',
+      value: values[devKey('cat_header_valign')] }, common));
     return '';
   }
 
@@ -587,8 +593,9 @@
       var tb = th.TREATMENT_NAMES[values[devKey('cat_header_box_treatment', dev)]] || ['?', ''];
       var al = th.ALIGN_NAMES[values[devKey('cat_header_align', dev)]] || ['?', ''];
       var tx = th.TEXT_NAMES[values[devKey('cat_header_text', dev)]] || ['?', ''];
+      var va = th.VALIGN_NAMES[values[devKey('cat_header_valign', dev)]] || ['?', ''];
       return '<b>' + (dev === 'laptop' ? 'Laptop' : 'Phone') + ':</b> box ' + esc(box[0]) + ' · picture ' + esc(ti[0])
-        + ' · box words ' + esc(tb[0]) + ' · ' + esc(al[0]) + ' · ' + esc(tx[0]) + ' text';
+        + ' · box words ' + esc(tb[0]) + ' · ' + esc(al[0]) + ' · ' + esc(va[0]) + ' · ' + esc(tx[0]) + ' text';
     }
     return '<p class="sls-sum" data-sls-sum>' + one('phone') + '<br>' + one('laptop') + '</p>'
       + '<div class="sls-actions" style="margin-top:8px">'
@@ -597,27 +604,27 @@
       + '</div>';
   }
 
-  /* The "Category header" tab: switches, then the designs, per device. */
+  /*
+   * The "Category header" tab. THE DESIGNS COME FIRST: the owner, on
+   * 2.60.350, "i can not see any designs on backend you made for me" -- so the
+   * tiles are the first thing on the tab, under the Phone | Laptop switch,
+   * and the switches PY shipped (on/off, the light box, brands) and the
+   * generic line follow them.
+   */
   function lookHTML(tab) {
     var th = TH();
     if (!th) return tab.fields.map(fieldHTML).join('');
-
-    var drawn = {};
-    var out = [];
-    ['cat_header', 'cat_header_box', 'cat_header_fallback', 'cat_header_brands', 'cat_header_box_brands'].forEach(function (k) {
-      var f = fieldOf(k);
-      if (f) { out.push(fieldHTML(f)); drawn[k] = true; }
-    });
 
     var phone = pvDevice !== 'laptop';
     var box = values[devKey('cat_header_box_style')];
     var ti = values[devKey('cat_header_treatment')];
     var tb = values[devKey('cat_header_box_treatment')];
 
-    out.push('<div class="sls-design">'
-      + '<div class="sls-title">The design · ' + (phone ? 'Phone' : 'Laptop') + '</div>'
-      + '<p class="sls-help">The same designs as the option sheet. Choose the device, then click a design; '
-      + 'the live preview follows. Phone is under 900px wide, laptop 900px and wider. Nothing is stored until you press Save.</p>'
+    var design = '<div class="sls-design" style="border-top:0;padding-top:0">'
+      + '<div class="sls-title">Choose the design · ' + (phone ? 'Phone' : 'Laptop') + '</div>'
+      + '<p class="sls-help">The designs from the option sheet, A–F and 1–5, each drawn by the shop’s own stylesheet. '
+      + 'Choose the device, then click a design; the live preview follows. Phone is under 900px wide, laptop 900px and wider. '
+      + 'Nothing is stored until you press Save.</p>'
       + '<div style="margin-top:8px">' + th.deviceSwitch('data-sls-pv', pvDevice, 'Edit and preview the design for') + '</div>'
       + summaryHTML()
       + '<div data-sls-tiles="box">' + pickerHTML('box') + '</div>'
@@ -628,20 +635,25 @@
       + '<div data-sls-tiles="treat-box">' + pickerHTML('treat-box') + '</div>'
       + (tb !== ti ? tuneHTML(tb, 'treat')
           : '<p class="sls-help" style="margin-top:6px">The fine-tuning of this design is above, under the picture’s — it is one setting for both.</p>')
+      + '<div data-sls-tiles="valign">' + pickerHTML('valign') + '</div>'
       + '<div data-sls-tiles="align">' + pickerHTML('align') + '</div>'
       + '<div data-sls-tiles="text">' + pickerHTML('text') + '</div>'
       + '<div class="thk-tune"><div class="thk-tune-h"><b>Fine-tune the words <span class="sls-help" style="display:inline">(phone and laptop)</span></b></div>'
       + '<div class="thk-tune-grid">' + tuneField('cat_header_letter') + tuneField('cat_header_desc_colour') + '</div>'
-      + '<p class="sls-help">Title size, title weight and description size, each for phone and laptop, are on '
-      + '<b>Category header · sizes &amp; spacing</b>.</p></div>'
-      + '</div>');
+      + '<p class="sls-help">Title size, title weight, description size and lines, the header’s height, its inner space and the space around it — '
+      + 'each for phone and laptop — are on <b>Category header · sizes &amp; spacing</b>, with this same live preview.</p></div>'
+      + '</div>';
 
-    return out.join('');
+    var rest = ['cat_header', 'cat_header_box', 'cat_header_fallback', 'cat_header_brands', 'cat_header_box_brands', 'cat_header_generic']
+      .map(function (k) { var f = fieldOf(k); return f ? fieldHTML(f) : ''; }).join('');
+
+    return design + '<div class="sls-design"><div class="sls-title">Where it shows, and the words</div>' + rest + '</div>';
   }
 
   /* What the live preview is drawn on. */
   function pvWithHTML() {
-    var opts = [['dark', 'Sample · a busy, dark picture'], ['light', 'Sample · a light picture'], ['box', 'Sample · no picture (the light box)']];
+    var opts = [['dark', 'Sample · a busy, dark picture'], ['light', 'Sample · a light picture'], ['box', 'Sample · no picture (the light box)'],
+      ['nodesc', 'Sample · no picture and no description']];
     var html = opts.map(function (o) {
       return '<option value="' + o[0] + '"' + (pvWith === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
     }).join('');
@@ -670,14 +682,17 @@
         var desc = th.plain(c.header_description || c.description);
         var own = (c.header_style && typeof c.header_style === 'object') ? Object.keys(c.header_style) : [];
         return {
-          html: th.header({ values: values, dev: dev, kind: image ? 'img' : 'box', image: image,
+          html: th.header({ values: values, dev: dev, kind: image ? 'img' : 'box', image: image, generic: true,
             title: c.header_title || c.name, sub: c.header_subtitle || '', desc: desc, long: desc.length > 180 }),
           note: (image ? 'Its own banner. ' : 'No banner: the light box. ')
+            + (desc ? '' : 'It has no description, so it shows the line for a category with none. ')
             + (own.length ? 'This category also has its own choices (Catalog → Categories → Edit → Category header), which its page lays over these; here you see the shop’s.' : '')
         };
       }
     }
 
+    if (pvWith === 'nodesc') return { html: th.header(Object.assign({}, base, { kind: 'box', title: 'Lip Care', desc: '', generic: true })),
+      note: 'A category with no description of its own shows the line set under “Line when a category has no description”.' };
     if (pvWith === 'box') return { html: th.header(Object.assign({ kind: 'box' }, base)),
       note: th.on(values.cat_header_box) ? '' : 'The light box is switched off: such a category shows its plain title. This is how it would look switched on.' };
     return { html: th.header(Object.assign({ kind: 'img', image: pvWith === 'light' ? th.PICTURES.light : th.PICTURES.dark }, base)), note: '' };

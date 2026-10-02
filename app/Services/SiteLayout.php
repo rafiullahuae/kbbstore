@@ -292,6 +292,19 @@ class SiteLayout
         'cat_header_text' => ['select', 'Text colour · phone', 'auto',
             'Automatic: white over a picture, dark on the light box (and white on a dark box colour of your own).',
             ['auto' => 'Automatic', 'light' => 'White', 'dark' => 'Dark']],
+        /*
+         * 2.60.350 -- the owner, on every category header reading "hide":
+         * "i wanted the category name, with 2 lines description, that's it,
+         * if no description set from backend, then generic line should come.
+         * Find your favorite products in our wide range <category name>
+         * category.. the content will come left bottom with spacing controls".
+         * Both ship ON as he asked.
+         */
+        'cat_header_valign' => ['select', 'Where the words sit, top to bottom · phone', 'bottom',
+            'Bottom, as asked: the title and description sit at the foot of the header, at the start side. Use the inner-space sliders on the sizes tab to move them in from the edges.',
+            ['top' => 'Top', 'center' => 'Middle', 'bottom' => 'Bottom']],
+        'cat_header_generic' => ['text', 'Line when a category has no description', 'Find your favorite products in our wide range {category} category.',
+            'Shown under the title of a category that has no description of its own. {category} becomes the category\'s name. Empty it to show nothing.'],
 
         /*
          * ── PHONE AND LAPTOP, SEPARATELY ─────────────────────── (Lane QC) ──
@@ -299,9 +312,10 @@ class SiteLayout
          * The owner: "i need the same designs on backend to choose the
          * category banner designs, text style etc and for mobile also."
          *
-         * The five choices above are now the PHONE's (under 900px, the
-         * header's own breakpoint in kbb-title-header.css) and these five are
-         * the LAPTOP's (900px and wider). Defaults are 2.60.349's on both.
+         * The five choices above -- and 2.60.350's "Where the words sit" --
+         * are now the PHONE's (under 900px, the header's own breakpoint in
+         * kbb-title-header.css) and these six are the LAPTOP's (900px and
+         * wider). Defaults are the shipped ones on both.
          *
          * NOTHING A SHOP SAVED MAY JUMP. A shop that saved "Centred" before
          * this has `layout_cat_header_align = center` and no laptop row at
@@ -327,6 +341,9 @@ class SiteLayout
         'cat_header_text_desktop' => ['select', 'Text colour · laptop', 'auto',
             'From 900px wide.',
             ['auto' => 'Automatic', 'light' => 'White', 'dark' => 'Dark']],
+        'cat_header_valign_desktop' => ['select', 'Where the words sit, top to bottom · laptop', 'bottom',
+            'From 900px wide.',
+            ['top' => 'Top', 'center' => 'Middle', 'bottom' => 'Bottom']],
 
         /*
          * ── "MAKE EDITS AS PER NEED" ─────────────────────────── (Lane QC) ──
@@ -409,9 +426,11 @@ class SiteLayout
         'cat_header_desc_desktop' => ['range', 'Description size · laptop', 15,
             '',
             ['min' => 11, 'max' => 22, 'step' => 1, 'unit' => 'px']],
-        'cat_header_lines' => ['range', 'Description lines before "Read more"', 3,
-            'A longer description is cut to this many lines with a Read more link under it.',
+        'cat_header_lines' => ['range', 'Description lines', 2,
+            'A longer description stops after this many lines (2, as asked). Turn on "Read more" below to let shoppers open the rest.',
             ['min' => 1, 'max' => 10, 'step' => 1, 'unit' => ' lines']],
+        'cat_header_more' => ['bool', '"Read more" under a long description', false,
+            'Off, as asked: the description shows its first lines and stops. On: a Read more link opens the rest.'],
         'cat_header_maxw' => ['range', 'Widest the text may run', 760,
             'The title and description wrap at this width, so a long description stays a comfortable read on a wide screen.',
             ['min' => 320, 'max' => 1400, 'step' => 20, 'unit' => 'px']],
@@ -475,11 +494,12 @@ class SiteLayout
         'cat_header', 'cat_header_box', 'cat_header_fallback', 'cat_header_brands', 'cat_header_box_brands',
         'cat_header_align', 'cat_header_treatment', 'cat_header_box_treatment', 'cat_header_overlay',
         'cat_header_box_style', 'cat_header_box_bg', 'cat_header_box_icon', 'cat_header_text',
-        // Lane QC: the laptop's five, then the fine-tuning of each design.
+        'cat_header_valign', 'cat_header_generic',
+        // Lane QC: the laptop's six, then the fine-tuning of each design.
         ...self::QC_LOOK_KEYS,
         // Sizes and spacing (the second).
         'cat_header_title_phone', 'cat_header_title_desktop', 'cat_header_weight',
-        'cat_header_desc_phone', 'cat_header_desc_desktop', 'cat_header_lines', 'cat_header_maxw',
+        'cat_header_desc_phone', 'cat_header_desc_desktop', 'cat_header_lines', 'cat_header_more', 'cat_header_maxw',
         'cat_header_h_phone', 'cat_header_h_desktop',
         'cat_header_pad_y_phone', 'cat_header_pad_y_desktop', 'cat_header_pad_x_phone', 'cat_header_pad_x_desktop',
         'cat_header_radius', 'cat_header_mt_phone', 'cat_header_mt_desktop', 'cat_header_mb_phone', 'cat_header_mb_desktop',
@@ -491,7 +511,7 @@ class SiteLayout
      */
     public const QC_LOOK_KEYS = [
         'cat_header_align_desktop', 'cat_header_treatment_desktop', 'cat_header_box_treatment_desktop',
-        'cat_header_box_style_desktop', 'cat_header_text_desktop',
+        'cat_header_box_style_desktop', 'cat_header_text_desktop', 'cat_header_valign_desktop',
         'cat_header_blush_bg', 'cat_header_blush_ic', 'cat_header_cream_bg', 'cat_header_cream_ic',
         'cat_header_mint_bg', 'cat_header_mint_ic', 'cat_header_lilac_bg', 'cat_header_lilac_ic',
         'cat_header_icon_strength', 'cat_header_icon_size',
@@ -513,6 +533,7 @@ class SiteLayout
         'cat_header_box_treatment' => 'cat_header_box_treatment_desktop',
         'cat_header_box_style' => 'cat_header_box_style_desktop',
         'cat_header_text' => 'cat_header_text_desktop',
+        'cat_header_valign' => 'cat_header_valign_desktop',
     ];
 
     /**
@@ -532,14 +553,15 @@ class SiteLayout
         'cat_header', 'cat_header_box', 'cat_header_fallback', 'cat_header_brands', 'cat_header_box_brands',
         'cat_header_align', 'cat_header_treatment', 'cat_header_box_treatment', 'cat_header_overlay',
         'cat_header_box_style', 'cat_header_box_bg', 'cat_header_box_icon', 'cat_header_text',
-        // Lane QC: the laptop's five, then the fine-tuning of each design.
+        'cat_header_valign', 'cat_header_generic',
+        // Lane QC: the laptop's six, then the fine-tuning of each design.
         ...self::QC_LOOK_KEYS,
     ];
 
     /** The sizes-and-spacing tab of the category header. (Lane PY) */
     public const HEADER_SIZE_KEYS = [
         'cat_header_title_phone', 'cat_header_title_desktop', 'cat_header_weight',
-        'cat_header_desc_phone', 'cat_header_desc_desktop', 'cat_header_lines', 'cat_header_maxw',
+        'cat_header_desc_phone', 'cat_header_desc_desktop', 'cat_header_lines', 'cat_header_more', 'cat_header_maxw',
         'cat_header_h_phone', 'cat_header_h_desktop',
         'cat_header_pad_y_phone', 'cat_header_pad_y_desktop', 'cat_header_pad_x_phone', 'cat_header_pad_x_desktop',
         'cat_header_radius', 'cat_header_mt_phone', 'cat_header_mt_desktop', 'cat_header_mb_phone', 'cat_header_mb_desktop',

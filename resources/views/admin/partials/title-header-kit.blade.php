@@ -156,6 +156,7 @@
   var PV_ICON_BOXES = ['blush', 'cream', 'mint', 'lilac', 'custom'];
   var PV_TEXTS = ['auto', 'light', 'dark'];
   var PV_FOCUSES = ['left', 'center', 'right'];
+  var PV_VALIGNS = ['top', 'center', 'bottom'];
 
   /* The option sheet's own letters, numbers and names -- his "B + 3". */
   var BOX_NAMES = {
@@ -171,6 +172,7 @@
     end: ['End', 'right in English, left in Arabic']
   };
   var TEXT_NAMES = { auto: ['Automatic', 'white on a picture, dark on the box'], light: ['White', ''], dark: ['Dark', ''] };
+  var VALIGN_NAMES = { top: ['Top', ''], center: ['Middle', ''], bottom: ['Bottom', 'as asked'] };
   var FOCUS_NAMES = { left: ['Left', 'keep the left end'], center: ['Centre', 'as shipped'], right: ['Right', 'keep the right end'] };
 
   /* The four icon boxes as drawn: SiteLayout::BOX_PRESETS, and the hex in each
@@ -191,9 +193,10 @@
     cat_header_align: 'start', cat_header_treatment: 'shadow', cat_header_box_treatment: 'none',
     cat_header_overlay: 40, cat_header_box_style: 'blush', cat_header_box_bg: '#FFF4EE',
     cat_header_box_icon: '#EFA889', cat_header_text: 'auto',
+    cat_header_valign: 'bottom', cat_header_generic: 'Find your favorite products in our wide range {category} category.',
     cat_header_align_desktop: 'start', cat_header_treatment_desktop: 'shadow',
     cat_header_box_treatment_desktop: 'none', cat_header_box_style_desktop: 'blush',
-    cat_header_text_desktop: 'auto',
+    cat_header_text_desktop: 'auto', cat_header_valign_desktop: 'bottom',
     cat_header_blush_bg: '#FDF0F4', cat_header_blush_ic: '#E3A1B5',
     cat_header_cream_bg: '#FBF4EA', cat_header_cream_ic: '#CDA57B',
     cat_header_mint_bg: '#EEF8F2', cat_header_mint_ic: '#8FC9AB',
@@ -204,7 +207,7 @@
     cat_header_frost_opacity: 100, cat_header_frost_blur: 12, cat_header_frost_radius: 14,
     cat_header_label_bg: '', cat_header_label_fg: '', cat_header_letter: -2, cat_header_desc_colour: '',
     cat_header_title_phone: 26, cat_header_title_desktop: 40, cat_header_weight: '700',
-    cat_header_desc_phone: 13, cat_header_desc_desktop: 15, cat_header_lines: 3, cat_header_maxw: 760,
+    cat_header_desc_phone: 13, cat_header_desc_desktop: 15, cat_header_lines: 2, cat_header_more: false, cat_header_maxw: 760,
     cat_header_h_phone: 190, cat_header_h_desktop: 300,
     cat_header_pad_y_phone: 28, cat_header_pad_y_desktop: 36,
     cat_header_pad_x_phone: 20, cat_header_pad_x_desktop: 48, cat_header_radius: 18
@@ -363,9 +366,11 @@
 
     var text = pick(force.text, PV_TEXTS, null) || pick(own['text' + mine], PV_TEXTS, null)
       || pick(val(values, 'cat_header_text' + sfx), PV_TEXTS, 'auto');
+    var valign = pick(force.valign, PV_VALIGNS, null) || pick(own['valign' + mine], PV_VALIGNS, null)
+      || pick(val(values, 'cat_header_valign' + sfx), PV_VALIGNS, 'bottom');
     var tone = text !== 'auto' ? text : (kind === 'img' ? 'light' : (lum(bg) < 0.4 ? 'light' : 'dark'));
 
-    return { align: align, treatment: treatment, box: box, bg: bg, ic: ic, tone: tone,
+    return { align: align, valign: valign, treatment: treatment, box: box, bg: bg, ic: ic, tone: tone,
              own: kind === 'box' && (!drawn || bg !== drawn[0] || ic !== drawn[1]) };
   }
 
@@ -388,13 +393,13 @@
     var own = o.own || {};
 
     var cls = 'kbb-th kbb-th--flush kbb-th--' + kind + ' kbb-th--' + r.tone + ' kbb-th--a-' + r.align
-      + ' kbb-th--t-' + r.treatment + (r.box ? ' kbb-th--box-' + r.box : '');
+      + ' kbb-th--v-' + r.valign + ' kbb-th--t-' + r.treatment + (r.box ? ' kbb-th--box-' + r.box : '');
 
     var style = [];
     var phone = dev === 'phone';
 
     if (o.mini) {
-      style.push('--kbb-th-h:60px;--kbb-th-hd:60px', '--kbb-th-ts:13px;--kbb-th-tsd:13px',
+      style.push('--kbb-th-h:66px;--kbb-th-hd:66px', '--kbb-th-ts:13px;--kbb-th-tsd:13px',
         '--kbb-th-ds:8px;--kbb-th-dsd:8px', '--kbb-th-py:8px;--kbb-th-pyd:8px', '--kbb-th-px:9px;--kbb-th-pxd:9px',
         '--kbb-th-r:7px', '--kbb-th-mw:2000px', '--kbb-th-mb:0px;--kbb-th-mbd:0px');
     } else {
@@ -447,11 +452,20 @@
       ? 'Lightweight Korean sunscreens with high UV protection, made for everyday wear under the UAE sun.'
       : String(o.desc);
 
+    /* 2.60.350: a category with no description gets his generic line, with
+       its name in it -- TitleHeader::forModel(), English only. */
+    if (desc === '' && o.generic) {
+      desc = String(val(values, 'cat_header_generic') || '').trim().slice(0, 300).split('{category}').join(title);
+    }
+
+    /* And the description stops at its line count unless "Read more" is on
+       (the component's `clamp`); with it on, a long one gets the link. */
+    var more = on(val(values, 'cat_header_more'));
     var words = '<div class="kbb-th__title">' + esc(title) + '</div>'
       + (o.sub ? '<p class="kbb-th__sub">' + esc(o.sub) + '</p>' : '')
-      + (desc === '' ? '' : (o.long
+      + (desc === '' ? '' : ((more && o.long)
           ? '<div class="kbb-th__desc kbb-th__desc--clamp">' + esc(desc) + '</div><span class="kbb-th__more">Read more</span>'
-          : '<div class="kbb-th__desc">' + esc(desc) + '</div>'));
+          : '<div class="kbb-th__desc' + (more ? '' : ' kbb-th__desc--clamp') + '">' + esc(desc) + '</div>'));
 
     var html = '<section class="' + esc(cls) + '" style="' + esc(style.join(';')) + '">'
       + layer + '<div class="kbb-th__scrim" aria-hidden="true"></div>'
@@ -482,6 +496,7 @@
    *   alignment         the dark picture, the box, and the box as the Arabic
    *                     page draws it -- the sheet's alignment rows
    *   text colour       the dark picture and the box
+   *   where words sit   the dark picture and the box (2.60.350's top/middle/bottom)
    *
    * The sheet showed each treatment on all three grounds at once; the shop
    * has two settings for it (a picture's and the box's, shipped Soft shadow
@@ -502,7 +517,7 @@
        ground its header will actually be drawn on. */
     if (ctx.compact) {
       var force = {};
-      force[{ 'treat-img': 'treatment', 'treat-box': 'treatment', align: 'align', text: 'text' }[kind] || 'x'] = choice;
+      force[{ 'treat-img': 'treatment', 'treat-box': 'treatment', align: 'align', text: 'text', valign: 'valign' }[kind] || 'x'] = choice;
       if (kind === 'focus') return m('img', {}, { image: img, own: { focus: choice } });
       return img ? m('img', force, { image: img }) : m(kind === 'treat-img' ? 'img' : 'box', force);
     }
@@ -515,6 +530,8 @@
       + m('box', { align: choice }) + m('box', { align: choice }, { rtl: true });
     if (kind === 'text') return (img ? m('img', { text: choice }, { image: img }) : m('img', { text: choice }))
       + m('box', { text: choice });
+    if (kind === 'valign') return (img ? m('img', { valign: choice }, { image: img }) : m('img', { valign: choice }))
+      + m('box', { valign: choice });
     if (kind === 'focus') return m('img', {}, { image: img, own: { focus: choice } });
     return '';
   }
@@ -525,6 +542,7 @@
     if (kind === 'align') return ALIGN_NAMES[v];
     if (kind === 'text') return TEXT_NAMES[v];
     if (kind === 'focus') return FOCUS_NAMES[v];
+    if (kind === 'valign') return VALIGN_NAMES[v];
     return [v, ''];
   }
 
@@ -533,7 +551,7 @@
    *
    *   o.group    the name the screen hears back in the kbb-th-pick event
    *   o.label    what the group is called, read out with it
-   *   o.kind     box | treat-img | treat-box | align | text | focus
+   *   o.kind     box | treat-img | treat-box | align | valign | text | focus
    *   o.value    the chosen value ('' = "Use the shop setting")
    *   o.values / o.dev / o.ctx   what the art is drawn with
    *   o.shop     add a first tile, "Use the shop setting", whose value is ''
@@ -542,7 +560,7 @@
    */
   function tiles(o) {
     var list = { box: PV_BOXES, 'treat-img': PV_TREATMENTS, 'treat-box': PV_TREATMENTS, align: PV_ALIGNS,
-                 text: PV_TEXTS, focus: PV_FOCUSES }[o.kind] || [];
+                 text: PV_TEXTS, focus: PV_FOCUSES, valign: PV_VALIGNS }[o.kind] || [];
     var opts = (o.shop ? [''] : []).concat(list);
     var chosen = opts.indexOf(String(o.value == null ? '' : o.value)) !== -1 ? String(o.value == null ? '' : o.value) : opts[0];
     var id = 'thk-l-' + String(o.group).replace(/[^a-z0-9-]/gi, '');
@@ -560,7 +578,7 @@
         + '<div class="thk-cap" aria-hidden="true">' + cap + '</div></div>';
     }).join('');
 
-    var wide = o.kind === 'align' || o.kind === 'treat-img' || o.kind === 'text';
+    var wide = o.kind === 'align' || o.kind === 'treat-img' || o.kind === 'text' || o.kind === 'valign';
 
     return '<div class="thk-pick">'
       + '<div class="thk-lab" id="' + esc(id) + '">' + esc(o.label) + '</div>'
@@ -664,7 +682,7 @@
 
   window.kbbTH = {
     ALIGNS: PV_ALIGNS, TREATMENTS: PV_TREATMENTS, BOXES: PV_BOXES, ICON_BOXES: PV_ICON_BOXES,
-    TEXTS: PV_TEXTS, FOCUSES: PV_FOCUSES, PRESETS: PRESETS, DEFAULTS: DEFAULTS, TUNE: TUNE,
+    TEXTS: PV_TEXTS, FOCUSES: PV_FOCUSES, VALIGNS: PV_VALIGNS, VALIGN_NAMES: VALIGN_NAMES, PRESETS: PRESETS, DEFAULTS: DEFAULTS, TUNE: TUNE,
     OPTIONAL_COLOURS: OPTIONAL_COLOURS, BOX_NAMES: BOX_NAMES, TREATMENT_NAMES: TREATMENT_NAMES,
     ALIGN_NAMES: ALIGN_NAMES, TEXT_NAMES: TEXT_NAMES, FOCUS_NAMES: FOCUS_NAMES, PICTURES: PICTURES,
     esc: esc, hex: hex, on: on, resolve: resolve, header: header, tiles: tiles, deviceSwitch: deviceSwitch,

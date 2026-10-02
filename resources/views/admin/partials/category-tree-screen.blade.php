@@ -752,7 +752,7 @@
    * before this keeps its look exactly and is rewritten in the new shape on
    * its next save. TitleHeader::sanitizeStyle() is the judge either way.
    */
-  var HDR_GROUPS = { 'ct-box': 'box', 'ct-treat': 'treatment', 'ct-align': 'align', 'ct-text': 'text' };
+  var HDR_GROUPS = { 'ct-box': 'box', 'ct-treat': 'treatment', 'ct-align': 'align', 'ct-text': 'text', 'ct-valign': 'valign' };
   var hdr = { dev: 'phone', st: {}, shop: null, shopBusy: false };
 
   /* PY's both-devices keys, as both devices' values. */
@@ -905,12 +905,13 @@
 
     return '<b>Live preview · ' + (hdr.dev === 'laptop' ? 'Laptop' : 'Phone') + '</b>'
       + '<div style="margin-top:7px">' + th.deviceSwitch('data-ct-hdrdev', hdr.dev, 'Preview and edit for') + '</div>'
-      + th.frame(hdr.dev, th.header({ values: shop, own: hdrOwn(), kind: image ? 'img' : 'box', image: image,
+      + th.frame(hdr.dev, th.header({ values: shop, own: hdrOwn(), kind: image ? 'img' : 'box', image: image, generic: true,
           dev: hdr.dev, title: title, sub: val('ct-hdrsub'), desc: desc, long: desc.length > 180 }))
       + '<p class="thk-livecap">' + (hdr.dev === 'laptop'
           ? 'Laptop: as a 1280px screen draws it (1236px wide), scaled to fit.'
           : 'Phone: as a 390px phone draws it (346px wide).')
         + (image ? ' This category’s banner.' : ' No banner: the light box.')
+        + (desc ? '' : ' No description, so the shop’s line for a category with none shows.')
         + (hdr.shop ? '' : ' (The shop’s own settings could not be read, so the shipped ones stand in.)')
         + (off ? ' ' + esc(off) : '') + '</p>';
   }
@@ -933,6 +934,8 @@
       + th.tiles({ group: 'ct-treat', kind: image ? 'treat-img' : 'treat-box', compact: true, shop: true,
         label: 'Keep the words readable · ' + word, shopSays: says(th.TREATMENT_NAMES[shopR.treatment]),
         value: st0(own, 'treatment' + sfx), values: shop, dev: dev, ctx: ctx })
+      + th.tiles({ group: 'ct-valign', kind: 'valign', compact: true, shop: true, label: 'Where the words sit · ' + word,
+        shopSays: (th.VALIGN_NAMES[shopR.valign] || [''])[0], value: st0(own, 'valign' + sfx), values: shop, dev: dev, ctx: ctx })
       + th.tiles({ group: 'ct-align', kind: 'align', compact: true, shop: true, label: 'Text alignment · ' + word,
         hint: 'Start is right-aligned on Arabic pages.', shopSays: (th.ALIGN_NAMES[shopR.align] || [''])[0],
         value: st0(own, 'align' + sfx), values: shop, dev: dev, ctx: ctx })
@@ -977,6 +980,7 @@
       treatment_phone: st.treatment_phone || null, treatment_desktop: st.treatment_desktop || null,
       box_phone: st.box_phone || null, box_desktop: st.box_desktop || null,
       text_phone: st.text_phone || null, text_desktop: st.text_desktop || null,
+      valign_phone: st.valign_phone || null, valign_desktop: st.valign_desktop || null,
       focus: (st.focus && st.focus !== 'center') ? st.focus : null,
       bg: val('ct-hdrbg') || null,
       ic: val('ct-hdric') || null

@@ -267,6 +267,10 @@ it('renders the capsule parts in the preview order, honouring the same switches'
         'review_badge_count' => '1',
         'review_badge_label' => '{n} reviews',
         'review_badge_colour' => '#E8A33D',
+        /* Lane QA: the owner asked for the count off beside the price ("4.9
+           and bar, remove count"), behind its own switch; this case is about
+           the capsule's parts and their order, so it turns the count back on. */
+        'pdpms_rate_count' => '1',
     ] as $key => $value) {
         $settings->set($key, $value);
     }

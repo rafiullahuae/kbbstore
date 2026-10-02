@@ -742,6 +742,8 @@ class CategoriesApiController extends Controller
             'header_style.box_desktop' => ['nullable', 'string', Rule::in(array_keys(\App\Services\SiteLayout::BOX_STYLES))],
             'header_style.text_phone' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::TEXTS)],
             'header_style.text_desktop' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::TEXTS)],
+            'header_style.valign_phone' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::VALIGNS)],
+            'header_style.valign_desktop' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::VALIGNS)],
             'header_style.focus' => ['nullable', 'string', Rule::in(\App\Support\TitleHeader::FOCUSES)],
             'header_style.bg' => ['nullable', 'string', 'regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/'],
             'header_style.ic' => ['nullable', 'string', 'regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/'],

@@ -145,13 +145,14 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
     expect($keys)->toBe(array_keys(SiteLayout::SCHEMA));
+    // 47 since 2.60.350: where the words sit, the generic line, and Read more.
     /*
-     * SEVENTY SINCE LANE QC: "and for mobile also" gave the five design
-     * choices a laptop value each, and "make edits as per need" gave each
-     * design its fine-tuning -- twenty-six controls, all on the Category
-     * header tab, none of them CSS on :root either.
+     * SEVENTY-FOUR SINCE LANE QC: "and for mobile also" gave the six design
+     * choices (with 2.60.350's "where the words sit") a laptop value each, and
+     * "make edits as per need" gave each design its fine-tuning -- twenty-seven
+     * controls, all on the Category header tab, none of them CSS on :root.
      */
-    expect($keys)->toHaveCount(70);
+    expect($keys)->toHaveCount(74);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is
