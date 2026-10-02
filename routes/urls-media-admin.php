@@ -103,7 +103,7 @@ Route::post('/urls-media/decisions', [UrlsMediaApiController::class, 'decisions'
  * "Links to the old site" (Lane PT): {action: preview|apply|restore}. Added to
  * this ALREADY-WIRED file, so it needs no new require in routes/web.php -- but
  * it does need the route cache cleared, which
- * 2027_07_11_000300_clear_caches_title_header_and_old_links does. Its own
+ * 2027_07_12_000400_clear_caches_title_header_and_old_links does. Its own
  * capability, `data.old_links`, named above the `urls-media/**` wildcard in
  * AdminCapabilities::RULES; see OldSiteLinksApiController for why.
  */
