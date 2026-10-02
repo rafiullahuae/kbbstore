@@ -2271,8 +2271,32 @@ final class EnglishRenderWalk
                 'hits' => 1,
                 'perPage' => 1,
             ],
-            'the authenticity line and share bar under Add to cart (Lane PW)' => [
+            /*
+             * Lane QB took the share row OUT of this wrapper (the owner: "i want
+             * to remove the share row completely") — so it now holds the
+             * authenticity line alone, and the cut is the same marker-to-marker
+             * cut it always was. Renamed, not re-patterned.
+             */
+            'the authenticity line under Add to cart (Lane PW; share row removed by Lane QB)' => [
                 'pattern' => '#<div class="pts-stack">\n.*?</div><!--/pts-stack-->\n#s',
+                'hits' => 1,
+                'perPage' => 1,
+            ],
+
+            /*
+             * THE SHARE SHEET.                                        (Lane QB)
+             *
+             * "upon click it will open popup from bottom side same as attached
+             * fro mamazon with same product image carry, title row, and
+             * sharing platforms." One closed (`hidden`) dialog, pushed to the
+             * `scripts` stack so it lands just before </body>, ending in its own
+             * `<!--/pdp-share-->` marker. @once, so ONE per product page however
+             * many partials include it, and none on any other page in the walk.
+             * The icon that opens it is Lane QA's, beside the title, and is
+             * registered by that lane.
+             */
+            'the share sheet before </body> (Lane QB)' => [
+                'pattern' => '#<div class="pdp-share" id="pdpShareSheet" .*?<!--/pdp-share-->\n#s',
                 'hits' => 1,
                 'perPage' => 1,
             ],

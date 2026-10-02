@@ -1162,6 +1162,20 @@ final class InterfaceStrings
             'product.pts_more' => 'More ways to share',
             // The network's own name is a proper noun and is not translated.
             'product.pts_share_on' => 'Share on :network',
+            /*
+             * Lane QB — the share sheet the title's share icon opens. The
+             * heading is the DEFAULT of Appearance → Product page → Share →
+             * "Sheet heading" (read through ProductTrustShare::text()); the
+             * four tile names are the tiles that are not a company's name;
+             * `pts_share_btn` is the share icon's accessible name, for Lane
+             * QA's button.
+             */
+            'product.pts_sheet_heading' => 'Share this product with friends',
+            'product.pts_share_btn' => 'Share this product',
+            'product.pts_tile_messages' => 'Messages',
+            'product.pts_tile_email' => 'Email',
+            'product.pts_tile_copy' => 'Copy',
+            'product.pts_tile_more' => 'More',
             'notify_me.privacy' => 'We will email you once, when this product is back. Your address is used for that and nothing else — it is not added to our mailing list, and every message has an unsubscribe link.',
             'cart_reminder.privacy' => 'We will store your email address with this basket so we can remind you about it. If you place your order, we stop. Every reminder has an unsubscribe link, and using it stops these emails for good.',
         ];

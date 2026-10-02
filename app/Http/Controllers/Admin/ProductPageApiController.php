@@ -249,6 +249,9 @@ class ProductPageApiController extends Controller
             // Lane PW: the Trust & share blocks' custom properties, so the
             // preview can move their spacing and colours live.
             'trust_props' => ProductTrustShare::props(),
+            // Lane QB: the share sheet's platforms, key => name, for the
+            // Share tab's tile-order list. Constants, not settings.
+            'share_networks' => array_map(static fn (array $n): string => $n[0], ProductTrustShare::NETWORKS),
         ];
     }
 }

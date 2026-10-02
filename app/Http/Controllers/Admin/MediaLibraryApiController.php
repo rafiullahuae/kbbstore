@@ -303,6 +303,8 @@ class MediaLibraryApiController extends Controller
          * response carries for the same reason `file_removed` is there.
          */
         $variantsRemoved = \App\Support\ImageVariants::forget('/'.ltrim($path, '/'));
+        // Lane QB: and its JPEG share card, if one was made. Never throws.
+        \App\Support\ShareImage::forget('/'.ltrim($path, '/'));
 
         $media->delete();
 

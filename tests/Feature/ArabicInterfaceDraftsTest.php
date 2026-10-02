@@ -529,8 +529,17 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * 2027_07_11_000250_seed_also_like_arabic_drafts. Read off the run.
      *
      * ── 1,074 -> 1,085: LANE PW'S ELEVEN, on top of PS's two at merge ─────
+     *
+     * ── 1,085 -> 1,091: LANE QB'S SIX ─────────────────────────────────────
+     *
+     * The share sheet's heading, the share icon's name and four tile labels
+     * (store.product.pts_sheet_heading, pts_share_btn, pts_tile_messages,
+     * pts_tile_email, pts_tile_copy, pts_tile_more), seeded by
+     * 2027_07_15_000600_seed_product_share_sheet_arabic_drafts. Read off the
+     * run. Email is "البريد" rather than "البريد الإلكتروني", which the
+     * three e-mail FIELDS already use — the collision test below.
      */
-    expect($ui['drafts'])->toBe(1085, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1091, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

@@ -17,6 +17,12 @@ use Illuminate\Support\Str;
  * The product page's delivery box, "Authenticity Guaranteed" and share bar.
  *                                                                    (Lane PW)
  *
+ * ▲ LANE QB REMOVED THE SHARE BAR ("i want to remove the share row
+ *   completely") and replaced it with a share icon beside the title and the
+ *   sheet it opens. The cases here that were about the bar now assert the
+ *   sheet in its place, or moved to tests/Feature/ProductShareSheetTest.php,
+ *   which pins the sheet, its links and the share picture in full.
+ *
  * WHAT THE OWNER ASKED FOR, pointing at screenshots of his old WordPress page:
  *
  *   "on product page i want two things further, one is the same yellowish
@@ -91,17 +97,17 @@ function ptsFreeDeliveryZone(): void
     ]);
 }
 
-/** Every share href on the page, network => decoded href. */
+/** Every share href in the share sheet, network => decoded href. (Lane QB: the sheet's tiles.) */
 function ptsHrefs(string $html): array
 {
-    preg_match_all('#<a class="pts-sb" data-net="([a-z]+)" href="([^"]+)"#', $html, $m, PREG_SET_ORDER);
+    preg_match_all('#<a class="pdp-share-tile" data-net="([a-z]+)" href="([^"]+)"#', $html, $m, PREG_SET_ORDER);
     $out = [];
 
     foreach ($m as $row) {
         $out[$row[1]] = html_entity_decode($row[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
-    if (preg_match('#data-pts-copy="([^"]+)"#', $html, $c)) {
+    if (preg_match('#data-share-copy="([^"]+)"#', $html, $c)) {
         $out['copy'] = html_entity_decode($c[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
@@ -144,13 +150,14 @@ it('draws all three blocks on a product page out of the box, in the order he dre
         ->and($html)->toContain('Authenticity Guaranteed')
         ->and($html)->toContain('We understand the importance of authenticity when it comes to skincare.')
         ->and($html)->toContain('100% authentic skincare and beauty.')
-        ->and($html)->toContain('<div class="pts-share');
+        ->and($html)->toContain('id="pdpShareSheet"');
 
-    // Delivery box above the button row; authenticity under it; share last.
+    // Delivery box above the button row; authenticity under it; the share
+    // sheet (Lane QB, which replaced the bar) at the end of the page.
     $del = strpos($html, 'class="pts-del"');
     $buy = strpos($html, 'class="buyrow"');
     $auth = strpos($html, 'class="pts-auth"');
-    $share = strpos($html, 'class="pts-share');
+    $share = strpos($html, 'id="pdpShareSheet"');
 
     expect($del)->toBeLessThan($buy)
         ->and($buy)->toBeLessThan($auth)
@@ -168,7 +175,8 @@ it('draws all three blocks on a product page out of the box, in the order he dre
 it('takes each block away with its own switch, and leaves the other two', function () {
     /*
      * MUTATION NOTE — RUN. Drop `$kbbPts->on('share_on')` from
-     * partials/product/share-bar.blade.php's @if and the third pair is red.
+     * partials/product/share-sheet.blade.php's @if (Lane QB; it was the share
+     * bar's) and the third pair is red.
      */
     $product = ptsProduct();
 
@@ -178,11 +186,11 @@ it('takes each block away with its own switch, and leaves the other two', functi
 
     ptsSet(['del_on' => true, 'auth_on' => false]);
     $html = ptsPage($product);
-    expect($html)->not->toContain('class="pts-auth"')->and($html)->toContain('class="pts-share');
+    expect($html)->not->toContain('class="pts-auth"')->and($html)->toContain('id="pdpShareSheet"');
 
     ptsSet(['auth_on' => true, 'share_on' => false]);
     $html = ptsPage($product);
-    expect($html)->not->toContain('class="pts-share')->and($html)->toContain('class="pts-del"');
+    expect($html)->not->toContain('id="pdpShareSheet"')->and($html)->toContain('class="pts-del"');
 
     // All three off: not even the wrapper, and not the stylesheet either.
     ptsSet(['del_on' => false, 'auth_on' => false, 'share_on' => false]);
@@ -196,7 +204,7 @@ it('withdraws the authenticity line with the shop\'s authenticity claim', functi
      * His paragraph says "100% authentic", the same words TrustClaims lets him
      * withdraw from the product page. Clearing that claim must remove every
      * copy (ShelfVatSentenceTest), so it takes this block with it — and the
-     * share bar stays.
+     * share sheet stays.
      *
      * MUTATION NOTE — RUN. Return `$this->on('auth_on')` alone from
      * showsAuthenticity() and this is red (and so is ShelfVatSentenceTest).
@@ -210,7 +218,7 @@ it('withdraws the authenticity line with the shop\'s authenticity claim', functi
 
     expect($html)->not->toContain('class="pts-auth"')
         ->and($html)->not->toContain('100% authentic')
-        ->and($html)->toContain('class="pts-share');
+        ->and($html)->toContain('id="pdpShareSheet"');
 });
 
 it('drops the free-delivery line where the shopper has no free delivery, rather than print a hole', function () {
@@ -244,7 +252,7 @@ it('prints every word he can type as text, never as markup', function () {
     foreach ([
         'del_line1' => 'Fast & "free" > 199 <script>alert(1)</script>',
         'auth_label' => '" onmouseover="alert(2)',
-        'share_label' => "Share it's <b>yours</b>",
+        'share_heading' => "Share it's <b>yours</b>",
         'auth_text' => '<img src=x onerror=alert(3)>Para & one',
     ] as $k => $v) {
         app(SettingsService::class)->set(ProductTrustShare::PREFIX.$k, $v);
@@ -259,7 +267,7 @@ it('prints every word he can type as text, never as markup', function () {
         ->and($html)->toContain('<span>Fast &amp; &quot;free&quot; &gt; 199 alert(1)</span>')
         ->and($html)->not->toContain('" onmouseover="alert(2)')
         ->and($html)->toContain('<span class="pts-auth-label">&quot; onmouseover=&quot;alert(2)</span>')
-        ->and($html)->toContain('<span class="pts-share-label">Share it&#039;s yours</span>')
+        ->and($html)->toContain('<h2 class="pdp-share-h" id="pdpShareTitle">Share it&#039;s yours</h2>')
         ->and($html)->toContain('<p>Para &amp; one</p>');
 });
 
@@ -299,48 +307,48 @@ it('refuses a javascript: picture at save and again at render, and draws the tru
         ->and($html)->not->toContain('<svg class="pts-truck"');
 });
 
-it('stores a select only as one of its own options, and clamps every number', function () {
+it('clamps every number, repairs every colour, and keeps the tile order to its own keys', function () {
     /*
+     * The share bar's two selects went with the bar (Lane QB); its place in
+     * rule 5 is taken by the tile order, a list that stores only NETWORKS'
+     * own keys.
+     *
      * MUTATION NOTE — RUN. Drop `'clamp' => true` from POLICY and the
      * spacing expectation is red.
      */
-    $product = ptsProduct();
-
-    ptsSet(['share_style' => 'neon', 'share_shape' => 'rounded', 'del_above_m' => 999, 'share_size' => -4, 'del_bg' => 'red;background:url(x)']);
+    ptsSet(['del_above_m' => 999, 'del_text_s' => -4, 'del_bg' => 'red;background:url(x)', 'share_order' => 'x" onclick="1,email']);
 
     $all = app(ProductTrustShare::class)->all();
-    // 'icons' since 2.60.348: the default the owner asked for.
-    expect($all['share_style'])->toBe('icons')
-        ->and($all['share_shape'])->toBe('rounded')
-        ->and($all['del_above_m'])->toBe(60)
-        ->and($all['share_size'])->toBe(26)
-        ->and($all['del_bg'])->toBe('#FFF7E6');
-
+    expect($all['del_above_m'])->toBe(60)
+        ->and($all['del_text_s'])->toBe(110)
+        ->and($all['del_bg'])->toBe('#FFF7E6')
+        ->and($all['share_order'])->toStartWith('email,whatsapp,');
 });
 
-it('refuses a hand-written select or spacing row at render as well', function () {
+it('refuses a hand-written spacing or order row at render as well', function () {
     /*
-     * The second lock. all() casts what it READS, and choice() / vars() check
-     * again at print time, so a row written straight into `settings` cannot
-     * reach a class attribute or a style property.
+     * The second lock. all() casts what it READS, and vars() / shareNetworks()
+     * check again at print time, so a row written straight into `settings`
+     * cannot reach a style property or a tile.
      *
-     * MUTATION NOTE — RUN. Return the raw value from choice() alone and this
-     * stays green (the read cast holds); do it together with storing reads
-     * uncast in all() (`$out[$key] = $saved`) and this is red with
-     * `pts-s-x onclick` in the markup.
+     * MUTATION NOTE — RUN, AND IT STAYS GREEN, which is the point of the
+     * case: with reads stored uncast in all() AND cleanOrder() dropped from
+     * shareNetworks(), the bogus key still draws nothing — shareNetworks()
+     * keeps only keys with a switch that is on, and the sheet draws only keys
+     * with a server-built link, and vars() clamps at print. Three locks, and
+     * this pins that the page holds no `onclick` with any two of them gone.
      */
     $product = ptsProduct();
-    ptsSet(['share_shape' => 'rounded']);
 
-    app(SettingsService::class)->set(ProductTrustShare::PREFIX.'share_style', 'x onclick');
+    app(SettingsService::class)->set(ProductTrustShare::PREFIX.'share_order', 'x onclick,copy');
     app(SettingsService::class)->set(ProductTrustShare::PREFIX.'del_below_d', '5000');
     \App\Models\Setting::flushMap();
     SettingsService::forgetMemo();
 
     $html = ptsPage($product);
-    expect($html)->toContain('class="pts-share pts-s-icons pts-s-rounded"')
-        ->and($html)->not->toContain('onclick')
-        ->and($html)->toContain('--pts-below-d:60px');
+    expect($html)->not->toContain('onclick')
+        ->and($html)->toContain('--pts-below-d:60px')
+        ->and($html)->toMatch('#<li><button type="button" class="pdp-share-tile" data-net="copy"#');
 });
 
 it('ships the spacing he measured on his screenshots', function () {
@@ -351,66 +359,23 @@ it('ships the spacing he measured on his screenshots', function () {
     $d = ProductTrustShare::defaults();
 
     expect($d['del_below_m'])->toBe(16)->and($d['del_below_d'])->toBe(16)
-        ->and($d['auth_above_m'])->toBe(12)->and($d['auth_above_d'])->toBe(12)
-        ->and($d['share_above_m'])->toBe(16)->and($d['share_above_d'])->toBe(16);
+        ->and($d['auth_above_m'])->toBe(12)->and($d['auth_above_d'])->toBe(12);
+
+    // The share bar's four sliders went with the bar (Lane QB).
+    expect($d)->not->toHaveKey('share_above_m')->and($d)->not->toHaveKey('share_below_d');
 
     $html = ptsPage(ptsProduct());
     expect($html)->toContain('style="--pts-above-m:12px;--pts-above-d:12px;--pts-below-m:0px;--pts-below-d:0px;--pts-tick:#2E9E6B"');
 });
 
-/* ═══════════════════════════════════════════════════════════ the share bar ═══ */
+/* ═══════════════════════════ the share links (now the sheet's tiles — Lane QB) ═══ */
 
-it('gives every network the name, price, blurb, link and picture it accepts, encoded once', function () {
-    /*
-     * The case the owner's addendum names: quotes, an ampersand and Arabic in
-     * the name and the blurb, an entity in the stored HTML.
-     *
-     * MUTATION NOTES — RUN.
-     *  · Replace RichText::toText() with strip_tags() in ProductShare::facts()
-     *    and the WhatsApp text carries "Lift &amp; glow" — red.
-     *  · Use PHP_QUERY_RFC1738 in ProductShare::href() and the raw-href
-     *    expectation (`%20`, not `+`) is red.
-     *  · Drop 'media' from the Pinterest array and the absolute-media
-     *    expectation is red.
-     */
-    $product = ptsProduct([
-        'name' => 'Rosé "Glow" Toner & Mist — تونر',
-        'short_description' => '<p>Lift &amp; glow, "dewy" skin — ترطيب عميق.</p>',
-    ]);
-
-    $html = ptsPage($product);
-    $h = ptsHrefs($html);
-
-    expect(array_keys($h))->toBe(['whatsapp', 'facebook', 'x', 'pinterest', 'linkedin', 'telegram', 'email', 'copy']);
-
-    $wa = ptsParam($h['whatsapp'], 'text');
-    expect($wa)->toStartWith('Rosé "Glow" Toner & Mist — تونر – AED 65')
-        ->and($wa)->toContain("\nLift & glow, \"dewy\" skin — ترطيب عميق.\n")
-        ->and($wa)->toContain('/product/'.$product->slug.'/');
-
-    // Encoded ONCE: the raw attribute carries %26 for the ampersand, %22 for a
-    // quote and %20 for a space — and no double-encoded %2526 anywhere.
-    preg_match('#data-net="whatsapp" href="([^"]+)"#', $html, $raw);
-    expect($raw[1])->toContain('%26')->and($raw[1])->toContain('%22')->and($raw[1])->toContain('%20')
-        ->and($raw[1])->not->toContain('%2526')->and($raw[1])->not->toContain('&amp;amp;');
-
-    expect(ptsParam($h['facebook'], 'u'))->toContain('/product/'.$product->slug.'/');
-    expect(ptsParam($h['x'], 'text'))->toBe('Rosé "Glow" Toner & Mist — تونر – AED 65');
-    expect(ptsParam($h['x'], 'url'))->toContain('/product/'.$product->slug.'/');
-
-    $media = ptsParam($h['pinterest'], 'media');
-    expect($media)->toStartWith('http')->and($media)->toEndWith('/media/products/pts-toner.jpg');
-    expect(ptsParam($h['pinterest'], 'description'))->toStartWith('Rosé "Glow" Toner & Mist — تونر – Lift & glow');
-
-    expect(ptsParam($h['linkedin'], 'url'))->toContain('/product/'.$product->slug.'/');
-    expect(ptsParam($h['telegram'], 'text'))->toContain('Lift & glow');
-    expect(ptsParam($h['email'], 'subject'))->toBe('Rosé "Glow" Toner & Mist — تونر');
-    expect(ptsParam($h['email'], 'body'))->toContain("ترطيب عميق.\n\nhttp");
-    expect($h['copy'])->toContain('/product/'.$product->slug.'/');
-
-    // Off-site links open in a new tab and hand nothing back to this page.
-    expect(substr_count($html, 'target="_blank" rel="noopener noreferrer"'))->toBeGreaterThanOrEqual(6);
-});
+/*
+ * The full per-platform cases — every href, its encoding, Arabic, quotes,
+ * Messenger / Snapchat / SMS forms — moved to ProductShareSheetTest with the
+ * sheet. The two below stayed because they are about WHAT a share carries,
+ * which did not change.
+ */
 
 it('sends no media at all for a product with no picture, rather than an empty one', function () {
     /*
@@ -441,7 +406,7 @@ it('tags the shared link for analytics and leaves the canonical and og:url clean
 
     $shared = ptsParam($h['whatsapp'], 'text');
     expect($shared)->toContain('utm_source=whatsapp&utm_medium=social&utm_campaign=product_share');
-    expect(ptsParam($h['facebook'], 'u'))->toContain('utm_source=facebook');
+    expect(ptsParam($h['messenger'], 'u'))->toContain('utm_source=messenger');
     expect($h['copy'])->toContain('utm_source=copy');
 
     preg_match('#<link rel="canonical" href="([^"]+)">#', $html, $canon);
@@ -451,21 +416,6 @@ it('tags the shared link for analytics and leaves the canonical and og:url clean
     ptsSet(['share_utm' => false]);
     $h = ptsHrefs(ptsPage($product));
     expect($h['copy'])->not->toContain('utm_')->and($h['copy'])->toBe($canon[1]);
-});
-
-it('offers the networks he leaves on, and the phone share sheet only behind a hidden button', function () {
-    /*
-     * MUTATION NOTE — RUN. Remove `hidden` from the More button in
-     * share-bar.blade.php and the last expectation is red: a laptop would show
-     * a button that does nothing.
-     */
-    $product = ptsProduct();
-
-    ptsSet(['share_linkedin' => false, 'share_telegram' => false]);
-    $html = ptsPage($product);
-
-    expect(array_keys(ptsHrefs($html)))->toBe(['whatsapp', 'facebook', 'x', 'pinterest', 'email', 'copy']);
-    expect($html)->toMatch('#<button type="button" class="pts-sb pts-more" data-net="more" data-pts-native data-title="[^"]*" data-text="[^"]*" data-url="[^"]*utm_source=native[^"]*" aria-label="More ways to share" title="More ways to share" hidden>#');
 });
 
 /* ═══════════════════════════════════════════════════════ Open Graph tags ═══ */
@@ -515,6 +465,8 @@ it('publishes absolute, plain-text Open Graph tags with the picture size, alt an
         expect($html)->not->toContain('&amp;amp;')->and(ptsMeta($html, 'og:description'))->not->toContain('<');
     } finally {
         @unlink($file);
+        // Lane QB: the JPEG share card the first view made after its response.
+        @unlink(public_path(\App\Support\ShareImage::DIR.'/media/products/'.basename($file).'.jpg'));
     }
 });
 
@@ -592,7 +544,7 @@ it('includes each block exactly once, on the product page and nowhere it should 
     $html = ptsPage(ptsProduct());
     expect(substr_count($html, 'class="pts-del"'))->toBe(1)
         ->and(substr_count($html, 'class="pts-auth"'))->toBe(1)
-        ->and(substr_count($html, 'class="pts-share '))->toBe(1)
+        ->and(substr_count($html, 'id="pdpShareSheet"'))->toBe(1)
         ->and(substr_count($html, 'kbb-pdp-trust'))->toBeGreaterThanOrEqual(1);
 
     // One stylesheet link, however many blocks asked for it (@once).
@@ -692,37 +644,3 @@ it('sits the close circle on the card corner, half outside, with no ring', funct
         ->and($in[1])->toContain('padding-inline-end:12px');
 });
 
-it('ships the share bar as coloured icons, no circles, on one line', function () {
-    /*
-     * The owner, 2 October 2026, on the round brand-coloured buttons: "i want
-     * only icons, not filled with circles. make it super beautiful, and share +
-     * icons must come in same line."
-     *
-     * 'icons' is the shipped style (the circle styles stay as options); the
-     * row never wraps, and each button is a flex item that shrinks toward 20px,
-     * so a narrow phone keeps the label and every icon on one line without a
-     * script measuring anything. The "Link copied" pill sits under the row, out
-     * of the flex line, so it cannot push an icon down either.
-     *
-     * MUTATIONS, RUN: default 'brand' -- red; `flex-wrap:wrap` back on
-     * .pts-share-list -- red; drop the transparent background from the icons
-     * style -- red; put the pill back in the flow (`flex:0 0 auto`) -- red.
-     */
-    expect(ProductTrustShare::SCHEMA['share_style'][2])->toBe('icons');
-
-    $html = ptsPage(ptsProduct());
-    expect($html)->toContain('class="pts-share pts-s-icons pts-s-circle"');
-
-    $css = (string) file_get_contents(resource_path('css/kbb/kbb-pdp-trust.css'));
-    $rule = function (string $selector) use ($css): string {
-        preg_match('/(?:^|\})'.preg_quote($selector, '/').'\{([^}]*)\}/m', $css, $m);
-
-        return $m[1] ?? '';
-    };
-
-    expect($rule('.pts-share'))->toContain('flex-wrap:nowrap')
-        ->and($rule('.pts-share-list'))->toContain('flex-wrap:nowrap')
-        ->and($rule('.pts-share-list > li'))->toContain('min-inline-size:20px')
-        ->and($rule('.pts-s-icons .pts-sb,.pts-s-icons .pts-more'))->toContain('background:transparent')
-        ->and($rule('.pts-copied'))->toContain('position:absolute');
-});

@@ -227,6 +227,13 @@ class ProductController extends Controller
                     // instead of inventing a sentence. Same order, same result.
                     'description' => \App\Support\ProductSeo::rawDescription($product),
                     'image' => $override['og_image'] ?? $product->image,
+                    // Lane QB: the JPEG copy og:image publishes once it exists
+                    // (made after this response the first time it is missing),
+                    // or null for "publish the original as before". See
+                    // App\Support\ShareImage for why the original lost its picture.
+                    'share_image' => \App\Support\ShareImage::forPage(
+                        \App\Support\ImageVariants::rootRelative((string) ($override['og_image'] ?? $product->image ?? ''))
+                    ),
                     'url' => !empty($override['canonical']) ? $override['canonical'] : ($base . $product->url()),
                     'breadcrumb' => $this->breadcrumbTrail($product),
                     'noindex' => !empty($override['noindex']),

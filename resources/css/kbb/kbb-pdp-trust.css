@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   The product page's delivery box, "Authenticity Guaranteed" and share bar.
-                                                                     (Lane PW)
+   The product page's delivery box and "Authenticity Guaranteed" (Lane PW),
+   and the share sheet the title's share icon opens (Lane QB).
 
    Loaded only on a page that draws one of them — see
    resources/views/partials/product/trust-share-assets.blade.php.
@@ -21,10 +21,10 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── spacing: the same four properties on every block ─────────────────────── */
-.pts-del,.pts-auth,.pts-share{
+.pts-del,.pts-auth{
     margin-block:var(--pts-above-m,16px) var(--pts-below-m,16px)}
 @media (min-width:881px){
-    .pts-del,.pts-auth,.pts-share{margin-block:var(--pts-above-d,16px) var(--pts-below-d,16px)}}
+    .pts-del,.pts-auth{margin-block:var(--pts-above-d,16px) var(--pts-below-d,16px)}}
 
 /* THE NEIGHBOURS' OWN BOTTOM MARGIN, ZEROED ONLY WHERE ONE OF THESE FOLLOWS.
    `.deliver` carries 18px under it, `.stockline` 10px, `.buyrow` 14px and
@@ -103,63 +103,104 @@
 .pts-auth-x:hover{background:#D33A40}
 .pts-auth-x:focus-visible{outline:2px solid #D64545;outline-offset:2px}
 
-/* ── 3. the share bar ────────────────────────────────────────────────────── */
-/* ONE LINE, ALWAYS (2.60.348): "share + icons must come in same line". The
-   list never wraps; each button is a flex item that SHRINKS toward 24px when
-   the line is short (floor 20px: label + 9 icons fit 276px, a 320px phone's
-   column, with the phone-only "More" button showing), so it holds every icon in
-   a row, sized by the browser's own flex arithmetic rather than by script. */
-.pts-share{display:flex;align-items:center;flex-wrap:nowrap;gap:8px;position:relative}
-.pts-share-label{flex:0 0 auto;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink,#2A2228)}
-.pts-share-list{display:flex;flex:1 1 auto;flex-wrap:nowrap;align-items:center;gap:4px;margin:0;padding:0;list-style:none;min-inline-size:0}
-.pts-share-list > li{display:flex;flex:0 1 var(--pts-size,34px);min-inline-size:20px}
-.pts-sb{--pts-c:#2A2228;
-    display:grid;place-items:center;inline-size:100%;max-inline-size:var(--pts-size,34px);block-size:auto;aspect-ratio:1;
-    padding:0;border:0;border-radius:50%;cursor:pointer;
-    background:var(--pts-c);color:#fff;
-    box-shadow:0 2px 6px -2px color-mix(in srgb,var(--pts-c) 70%,transparent);
-    transition:transform .16s,box-shadow .16s,filter .16s}
-.pts-sb svg{inline-size:52%;block-size:52%}
-.pts-sb:focus-visible{outline:2px solid var(--pts-c);outline-offset:3px}
-.pts-s-rounded .pts-sb{border-radius:28%}
-/* One dark colour for all, his "mono" choice. */
-.pts-s-mono .pts-sb{background:var(--ink,#2A2228);box-shadow:none}
-.pts-s-mono .pts-sb:focus-visible{outline-color:var(--ink,#2A2228)}
-.pts-more{background:linear-gradient(135deg,#F58529,#DD2A7B 55%,#8134AF)}
-.pts-s-mono .pts-more{background:var(--ink,#2A2228)}
-.pts-more[hidden]{display:none}
+/* ── 3. the share sheet (Lane QB) ────────────────────────────────────────── */
+/* "upon click it will open popup from bottom side same as attached fro mamazon
+   with same product image carry, title row, and sharing platforms."
 
-/* COLOURED ICONS, NO CIRCLES — the shipped style. Each glyph in its own
-   network's colour on the page itself, a little larger inside the same box so
-   it carries the weight the disc used to; on a desktop, a whisper of that
-   colour behind it on hover. */
-.pts-s-icons .pts-sb,.pts-s-icons .pts-more{background:transparent;box-shadow:none;color:var(--pts-c);border-radius:10px}
-.pts-s-icons .pts-more{--pts-c:#DD2A7B}
-.pts-s-icons .pts-sb svg{inline-size:70%;block-size:70%}
-.pts-more-li:has(> [hidden]){display:none}
+   A PHONE gets a bottom sheet that slides up over a dimmed, blurred page; a
+   LAPTOP (881px and wider, the page's own turning point) gets the same content
+   as a centred card. The slide is a transform on one class the script toggles
+   — nothing is measured, and `hidden` is what takes a closed sheet out of the
+   page, the tab order and the accessibility tree. */
+.pdp-share{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;justify-content:center}
+.pdp-share[hidden]{display:none}
+.pdp-share-scrim{position:absolute;inset:0;background:rgba(17,17,20,.52);
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+    opacity:0;transition:opacity .28s ease}
+.pdp-share.is-open .pdp-share-scrim{opacity:1}
+.pdp-share-panel{position:relative;inline-size:100%;
+    background:#fff;color:#111;border-radius:18px 18px 0 0;
+    box-shadow:0 -10px 34px rgba(0,0,0,.18);
+    transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.pdp-share.is-open .pdp-share-panel{transform:none}
+.pdp-share-body{max-block-size:calc(100vh - 84px);max-block-size:calc(100dvh - 84px);overflow-y:auto;overscroll-behavior:contain;
+    padding:20px 16px calc(18px + env(safe-area-inset-bottom,0px))}
 
-/* The hover lift, on a device with a real pointer only — a phone's "hover"
-   is the tap itself, and a button that jumps under the thumb reads as a
-   misfire. */
+/* The white ×, on the dimmed page just above the sheet's end corner — where
+   his screenshot has it. */
+.pdp-share-x{position:absolute;inset-block-end:calc(100% + 10px);inset-inline-end:12px;
+    inline-size:38px;block-size:38px;padding:0;display:grid;place-items:center;
+    border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;cursor:pointer}
+.pdp-share-x svg{inline-size:22px;block-size:22px}
+.pdp-share-x:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+.pdp-share-h{margin:0 0 14px;font-size:17px;line-height:1.3;font-weight:700;color:#111;text-align:start}
+
+/* The product card: the picture on white, then the name on a light grey
+   strip, two lines at most. The picture box has the share card's own shape
+   (1200:630), so the JPEG fills it exactly and a fallback original is fitted
+   inside it on white, never cropped. */
+.pdp-share-card{margin:0 0 18px;border:1px solid #E6E6E6;border-radius:12px;overflow:hidden;background:#fff}
+/* The picture is taken OUT of flow (absolute, inset 0), so the box's size is
+   the aspect ratio's alone: an in-flow 1600px original would otherwise make
+   its own minimum height and square the box. */
+.pdp-share-pic{position:relative;aspect-ratio:1200/630;background:#fff}
+.pdp-share-pic img{position:absolute;inset:0;display:block;inline-size:100%;block-size:100%;object-fit:contain}
+.pdp-share-name{margin:0;padding:10px 12px;background:#F3F3F3;color:#222;
+    font-size:14px;line-height:1.38;
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+
+/* The tiles: five to a row, the icon a rounded square in the app's colours
+   and the name under it. `min(52px,100%)` lets a 320px phone's column (about
+   53px) hold the icon without a script asking how wide it is. */
+.pdp-share-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px 6px;margin:0;padding:0;list-style:none}
+.pdp-share-grid > li{display:flex;justify-content:center;min-inline-size:0}
+.pdp-share-grid > li[hidden]{display:none}
+.pdp-share-tile{display:flex;flex-direction:column;align-items:center;gap:7px;inline-size:100%;min-inline-size:0;
+    padding:2px 0;border:0;background:none;cursor:pointer;color:#2A2A2E;text-decoration:none;font:inherit;
+    -webkit-tap-highlight-color:transparent}
+.pdp-share-ico{display:block;inline-size:min(52px,100%);aspect-ratio:1;border-radius:14px;
+    box-shadow:0 2px 6px rgba(0,0,0,.10),0 0 0 1px rgba(0,0,0,.04);transition:transform .16s}
+.pdp-share-ico svg{display:block;inline-size:100%;block-size:100%}
+.pdp-share-lbl{max-inline-size:100%;font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pdp-share-tile:focus-visible{outline:2px solid #2F80ED;outline-offset:2px;border-radius:12px}
+.pdp-share-tile:active .pdp-share-ico{transform:scale(.94)}
 @media (hover:hover) and (pointer:fine){
-    .pts-sb:hover{transform:translateY(-2px);filter:saturate(1.12);
-        box-shadow:0 6px 14px -6px color-mix(in srgb,var(--pts-c) 85%,transparent)}
-    .pts-s-mono .pts-sb:hover{box-shadow:0 6px 14px -6px rgba(42,34,40,.5)}
-    .pts-s-icons .pts-sb:hover{filter:none;box-shadow:none;
-        background:color-mix(in srgb,var(--pts-c) 11%,transparent)}}
+    .pdp-share-tile:hover .pdp-share-ico{transform:translateY(-2px)}}
 
-/* "Link copied". A role=status live region, so a screen reader hears it; drawn
-   as a small pill that fades in beside the buttons and out again. */
-/* Under the row rather than in it, so the confirmation can never push the
-   icons onto a second line. */
-.pts-copied{position:absolute;inset-block-start:calc(100% + 6px);inset-inline-start:0;z-index:2;font-size:12px;font-weight:700;color:#fff;background:#2E9E6B;
-    padding:4px 10px;border-radius:99px;opacity:0;transform:translateY(3px);pointer-events:none;
-    transition:opacity .18s,transform .18s}
-.pts-copied:empty{display:none}
-.pts-copied.on{opacity:1;transform:none}
-.pts-copied.fail{background:var(--ink,#2A2228);white-space:normal;overflow-wrap:anywhere;max-inline-size:100%}
+/* "Link copied" — a role=status live region, drawn as a white pill on the
+   dimmed page just ABOVE the sheet, so it never sits on a tile, and faded
+   out again. */
+.pdp-share-toast{position:absolute;inset-inline:0;inset-block-end:calc(100% + 16px);margin:0 auto;
+    inline-size:max-content;max-inline-size:calc(100% - 120px);
+    padding:9px 16px;border-radius:99px;background:#fff;color:#111;font-size:13px;font-weight:700;text-align:center;overflow-wrap:anywhere;
+    box-shadow:0 6px 18px rgba(0,0,0,.22);
+    opacity:0;transform:translateY(6px);pointer-events:none;transition:opacity .18s,transform .18s}
+.pdp-share-toast:empty{display:none}
+.pdp-share-toast.on{opacity:1;transform:none}
+
+/* While it is open the page behind it does not scroll. A class, not a
+   measured padding: the sheet covers the page, so a scrollbar's width coming
+   and going behind the scrim moves nothing anyone can see. */
+html.pdp-share-lock,html.pdp-share-lock body{overflow:hidden}
+
+@media (min-width:881px){
+    .pdp-share{align-items:center}
+    .pdp-share-panel{inline-size:480px;max-inline-size:calc(100vw - 48px);border-radius:18px;
+        box-shadow:0 24px 60px rgba(0,0,0,.28);
+        opacity:0;transform:translateY(18px) scale(.98);transition:transform .24s cubic-bezier(.2,.8,.2,1),opacity .2s ease}
+    .pdp-share.is-open .pdp-share-panel{opacity:1;transform:none}
+    .pdp-share-body{max-block-size:calc(100vh - 64px);padding:22px 24px 24px}
+    .pdp-share-h{padding-inline-end:40px}
+    .pdp-share-x{inset-block-end:auto;inset-block-start:14px;inset-inline-end:14px;inline-size:34px;block-size:34px;
+        background:#F2F2F2;color:#444}
+    .pdp-share-x:hover{background:#E7E7E7}
+    .pdp-share-x svg{inline-size:18px;block-size:18px}
+    .pdp-share-x:focus-visible{outline-color:#2F80ED}
+    .pdp-share-toast{max-inline-size:calc(100% - 32px)}}
 
 @media (prefers-reduced-motion:reduce){
     .pts-auth-panel,.pts-auth-btn[aria-expanded="true"] + .pts-auth-panel{transition:none}
-    .pts-sb,.pts-copied,.pts-auth-x,.pts-auth-btn .pts-info{transition:none}
-    .pts-sb:hover{transform:none}}
+    .pts-auth-x,.pts-auth-btn .pts-info{transition:none}
+    .pdp-share-scrim,.pdp-share-panel,.pdp-share-toast,.pdp-share-ico{transition:none}
+    .pdp-share-tile:hover .pdp-share-ico{transform:none}}
