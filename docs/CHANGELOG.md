@@ -3,6 +3,33 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.355
+**Load more on slow internet with no grey cards; the homepage banner flush
+under the header, never cut, with a height control and a Single image type.**
+Apply after .354. No plugin change. Runs two migrations (three banner columns,
+then a cache clear).
+
+| Your report | Now |
+|---|---|
+| "on slow internet it keeps displaying the grey loading stuff ... pre load upon page open" | The next products are fetched quietly as soon as the page has loaded, and their pictures warmed, so reaching the end shows them at once. Slow 3G: grey cards ~0.7 s -> none; next 12 in 782-849 ms -> 30-116 ms |
+| "remove any space between header and banner" | The banner's 8px top padding is gone: header and banner meet at 0px, phone and laptop |
+| "image should adjust auto with the screen without cutting" | Pictures are shown whole at their own shape by default (Auto); Fill the frame is still a choice |
+| "for slider images, there should be height control of the overall banner" | Banner height on a computer / on a phone: a maximum; at it the picture is shown whole and centred |
+| "i need here option single image ... the height will be as per the image height itself" | New type: Single image -- one picture, full width, its own height, its own phone picture |
+
+Admin: Appearance → Banners → (a set) → Banner type → What this set is, and →
+Size & fit. A "New single image" button on the Banners list.
+
+Files (13): app/Http/Controllers/Admin/BannerApiController.php,
+app/Models/BannerCard.php, app/Models/BannerSet.php, app/Services/Banners.php,
+database/migrations/2027_07_18_000300_banner_single_image_and_slider_height.php,
+database/migrations/2027_07_18_000310_clear_caches_banner_single_image.php,
+resources/js/kbb/listing-load.js,
+resources/views/admin/partials/banners-screen.blade.php,
+resources/views/partials/home/single-banner.blade.php,
+resources/views/partials/home/slider-banner.blade.php,
+resources/views/store/home.blade.php, public/build (manifest + app bundle).
+
 ## 2.60.354
 **Quick view OFF on every page; the admin top bar and the ✎ Edit pencil on
 category and brand pages (you only).** Apply after .353. No plugin change.
