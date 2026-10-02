@@ -3,6 +3,24 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.345
+**No more "Leave without saving?" — an Unfinished list instead; imports keep
+pictures on this server; tab links open the right tab.** Apply after .344.
+No plugin change.
+
+| # | Your report | Now | Where |
+|---|---|---|---|
+| 19 | Leaving a page gave a popup; unsaved work was lost on most screens | Leaving never asks. What you typed is kept, and the top bar shows "Unfinished (N)": Open brings you back with it, Discard asks first. 24 screens and the product editor (you approved it) | Top bar, every admin page |
+| 24 | Every picture loaded from kbeautybliss.com | After you pressed "Bring these across" they load from this shop; from now on an import also re-points every picture whose file is already here, so a re-import can no longer send them back | Automatic |
+| 23 | (found while building 19) links to a tab, e.g. Catalog → Reorder, opened the first tab | They open the tab they name | — |
+
+The "turn this product into a set?" question in the product editor stays: it
+is a decision, not a leave warning.
+
+Files: app/Services/Import/ImportRunner.php, resources/views/admin/app.blade.php,
+resources/views/admin/partials/{unfinished-drafts,product-editor-screen,reset-guard,banners-screen,grid-sections-screen,set-appearance-screen,cart-panel-screen,cart-page-screen,checkout-page-screen,page-wash-screen,slim-footer-screen,site-layout-screen,security-screen,ugc-appearance-screen,review-settings-screen,review-badges-screen}.blade.php,
+database/migrations/2027_07_10_000000_clear_caches_unfinished_drafts.php.
+
 ## 2.60.344
 **Rey blocks on product pages, search that follows every word, sets first in
 search, Growth → Search Terms, the set price button, Visit, and "Are you
