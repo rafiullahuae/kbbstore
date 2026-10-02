@@ -3726,7 +3726,15 @@ lane that owns it and its state. New items are appended; nothing is renumbered.
 | 23 | Deep links with a tab (`#catalog/reorder`, `go('catalog','reorder')`) open the wrong tab: the route interceptor around app.blade.php ~23075 calls `_go(id)` and drops the second argument | found by Lane PM | **done — 2.60.345** |
 | 24 | **Every image on the shop loaded from kbeautybliss.com** although every file was here: each re-import of Products wrote the export's old addresses back over the re-pointed ones | integrator | **done — 2.60.345** — fixed on the site by Addresses & pictures → Bring these across; an import now re-points every picture whose file is already here when each file finishes |
 | 25 | Some review photographs show as broken frames on product pages | integrator | **done — 2.60.345** — no broken frame (the card drops a photo that fails); the photos themselves come across with Pictures & live progress |
-| 26 | **No orders on the new shop** (customers imported, 0 orders): the preview showed no Orders row and every Order line / note refused — `orders.csv` was never among the uploaded files | owner + integrator | waiting — owner re-exports Customers + Orders and sends the Preview before importing |
+| 26 | **No orders on the new shop** (customers imported, 0 orders): the preview showed no Orders row and every Order line / note refused — `orders.csv` was never among the uploaded files | owner + integrator | **root cause found and fixed — exporter 1.10.1**: on HPOS the order query named `cart_tax_amount`, which WooCommerce does not have; MySQL refused it and $wpdb returned nothing, so orders.csv was a header row. Re-exported with 1.10.1: preview shows 1,196 orders to create, 0 refused (notes/refunds refused only by the preview slice) |
+| 27 | Guest-checkout customers: select all → "Send account invite" with an editable email template; a set-password link (no plaintext password) | PQ | in progress |
+| 28 | NEW and discount badges on grid cards OFF by default | PR | in progress |
+| 29 | Category and brand pages load more on scroll by default (no pager) | PR | in progress |
+| 30 | Grid card hover effects off on phones by default | PR | in progress |
+| 31 | Full control of grid card inner spacing (image/title/price/button) and font weights, per device | PR | in progress |
+| 32 | "You may also like" as a carousel: brand + category mixed by default, rule controls, manual selection per product | PS | in progress |
+| 33 | Category banners, titles and descriptions from the old site as the category page header | PT (exporter 1.11.0) | in progress |
+| 34 | Internal links in descriptions/articles/blocks still pointing to kbeautybliss.com → this shop's URLs | PT | in progress |
 
 Rules for this list: what he asked for ships ON as he asked (CLAUDE.md, the
 30 September reversal); everything else stays byte-identical; every fix
