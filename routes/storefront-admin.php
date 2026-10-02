@@ -36,6 +36,14 @@ declare(strict_types=1);
 | and decides per capability itself; preview and save are
 | storefront.quick_edit. CSRF is the web group's, as for every admin-api write.
 |
+| RATE LIMITS ARE IN THE CONTROLLER, not `throttle:` middleware here, and that
+| is a measured decision: `throttle:N,1` keys every route on the same
+| domain|ip signature (the admin guard is not the default guard, so it never
+| sees a user), which made the context reads and previews spend the save's
+| budget -- the save answered 429 "Too Many Attempts" after one minute of
+| typing. StorefrontAdminController::limit() keys each action on the admin's
+| own id: 120 context reads, 90 previews and 20 saves a minute.
+|
 | The picture is NOT uploaded here. The pop-up posts it to the existing
 | /admin-api/media/upload (MediaUploadController) -- one upload path, one set of
 | type, size and SVG rules -- and sends the URL it returns as header_image.
@@ -45,15 +53,12 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\StorefrontAdminController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/storefront/context', [StorefrontAdminController::class, 'context'])
-    ->middleware('throttle:120,1');
+Route::get('/storefront/context', [StorefrontAdminController::class, 'context']);
 
 Route::post('/storefront/quick-edit/{type}/{id}/preview', [StorefrontAdminController::class, 'preview'])
     ->where('type', 'category|brand')
-    ->where('id', '[0-9]+')
-    ->middleware('throttle:90,1');
+    ->where('id', '[0-9]+');
 
 Route::post('/storefront/quick-edit/{type}/{id}', [StorefrontAdminController::class, 'save'])
     ->where('type', 'category|brand')
-    ->where('id', '[0-9]+')
-    ->middleware('throttle:20,1');
+    ->where('id', '[0-9]+');

@@ -393,6 +393,39 @@ describe('the quick-edit save', function () {
         expect($category->fresh()->header_title)->toBeNull();
     });
 
+    it('rate-limits saves per admin, and previews do not spend the save budget', function () {
+        /*
+         * The defect, measured in the preview: with `throttle:20,1` middleware
+         * every throttled route shared one domain|ip counter (the admin guard is
+         * not the default guard, so the throttle never saw a user), the context
+         * reads and previews used up the twenty, and after a minute of typing
+         * Save answered "Too Many Attempts".
+         *
+         * MUTATION, RUN: key limit() on `request()->ip()` alone, dropping the
+         * action, and the save after 95 previews is a 429 -- red.
+         */
+        $category = raCategory();
+        $this->actingAs(raAdmin(), 'admin');
+
+        for ($i = 0; $i < StorefrontAdminController::LIMITS['preview']; $i++) {
+            $this->postJson("/admin-api/storefront/quick-edit/category/{$category->id}/preview", ['header_title' => "p{$i}"]);
+        }
+
+        $this->postJson("/admin-api/storefront/quick-edit/category/{$category->id}/preview", ['header_title' => 'one too many'])
+            ->assertStatus(429);
+
+        for ($i = 0; $i < StorefrontAdminController::LIMITS['save']; $i++) {
+            $this->postJson("/admin-api/storefront/quick-edit/category/{$category->id}", ['header_title' => "s{$i}"])
+                ->assertOk();
+        }
+
+        $this->postJson("/admin-api/storefront/quick-edit/category/{$category->id}", ['header_title' => 'over'])
+            ->assertStatus(429)
+            ->assertJsonPath('message', 'Too many saves in a minute. Wait a moment and press Save again.');
+
+        expect($category->fresh()->header_title)->toBe('s' . (StorefrontAdminController::LIMITS['save'] - 1));
+    });
+
     it('previews without writing anything', function () {
         $category = raCategory();
         $this->actingAs(raAdmin(), 'admin');

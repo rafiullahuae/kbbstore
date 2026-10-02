@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Validation\ValidationException;
@@ -93,6 +94,9 @@ class StorefrontAdminController extends Controller
 
     public const UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
+    /** Per admin, per minute. See limit(). */
+    public const LIMITS = ['context' => 120, 'preview' => 90, 'save' => 20];
+
     /**
      * GET /admin-api/storefront/context?path=/collections/skincare/
      *
@@ -107,6 +111,10 @@ class StorefrontAdminController extends Controller
 
         if (! $admin instanceof AdminUser) {
             return response()->json(['ok' => false, 'error' => 'unauthenticated'], 401);
+        }
+
+        if ($limited = $this->limit('context', $admin)) {
+            return $limited;
         }
 
         $bar = StorefrontAdminHint::can($admin, 'storefront.adminbar');
@@ -141,9 +149,13 @@ class StorefrontAdminController extends Controller
      * header the shop would draw from it -- through the same Blade component
      * the page uses, so what the owner sees in the pop-up is the shop.
      */
-    public function preview(Request $request, string $type, int $id): JsonResponse
+    public function preview(Request $request, string $type, string $id): JsonResponse
     {
-        [$model, $isBrand] = $this->record($type, $id);
+        if ($limited = $this->limit('preview', Auth::guard('admin')->user())) {
+            return $limited;
+        }
+
+        [$model, $isBrand] = $this->record($type, (int) $id);
         $this->useLocaleOf($request);
 
         $data = $this->validatedFor($request, $model, $isBrand);
@@ -160,9 +172,13 @@ class StorefrontAdminController extends Controller
      * hand back the header exactly as the page will now draw it, so the loader
      * can swap it in place without a reload.
      */
-    public function save(Request $request, string $type, int $id): JsonResponse
+    public function save(Request $request, string $type, string $id): JsonResponse
     {
-        [$model, $isBrand] = $this->record($type, $id);
+        if ($limited = $this->limit('save', Auth::guard('admin')->user())) {
+            return $limited;
+        }
+
+        [$model, $isBrand] = $this->record($type, (int) $id);
         $this->useLocaleOf($request);
 
         $data = $this->validatedFor($request, $model, $isBrand);
@@ -534,7 +550,9 @@ class StorefrontAdminController extends Controller
             return [
                 'kind' => 'none',
                 'html' => '',
-                'note' => 'The header is switched off for this page in Appearance → Site layout → Category header, so nothing is drawn here. Your words are saved and will show when it is on.',
+                'note' => $isBrand
+                    ? 'A brand page draws its header once it has a picture. Drop one above -- or turn on "Light box on brand pages" in Appearance → Site layout → Category header.'
+                    : 'The category header is switched off in Appearance → Site layout → Category header, so nothing is drawn here. Your words are saved and show when it is on.',
             ];
         }
 
@@ -583,6 +601,35 @@ class StorefrontAdminController extends Controller
     }
 
     // ---------------------------------------------------------------- helpers
+
+    /**
+     * A rate limit keyed on THIS admin and THIS action.
+     *
+     * Not `throttle:` middleware: that keys every throttled route on the same
+     * domain|ip signature when the default guard has no user -- and the admin
+     * guard is not the default -- so the context reads and the previews spent
+     * the save's twenty. Measured in the preview: the owner typed for a minute
+     * and Save answered "Too Many Attempts".
+     */
+    private function limit(string $action, mixed $admin): ?JsonResponse
+    {
+        $who = $admin instanceof AdminUser ? 'a' . $admin->getKey() : 'ip' . request()->ip();
+        $key = 'kbb-storefront-admin:' . $action . ':' . $who;
+
+        if (RateLimiter::tooManyAttempts($key, self::LIMITS[$action])) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'rate_limited',
+                'message' => $action === 'save'
+                    ? 'Too many saves in a minute. Wait a moment and press Save again.'
+                    : 'Too many requests in a minute. Wait a moment.',
+            ], 429);
+        }
+
+        RateLimiter::hit($key, 60);
+
+        return null;
+    }
 
     private function consoleUrl(): string
     {

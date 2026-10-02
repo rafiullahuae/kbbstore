@@ -107,6 +107,9 @@ html.kbb-adm-on .kbb-cartpage .sum{top:calc(120px + var(--kbb-adm-h))}
   .kbb-adm__ini{display:inline-grid}
   .kbb-adm a,.kbb-adm button{padding:0 7px}
   .kbb-adm__logout span{display:none}
+  /* The links scroll sideways in one row; the fade says there is more. */
+  .kbb-adm__links{-webkit-mask-image:linear-gradient(to right,#000 82%,transparent);mask-image:linear-gradient(to right,#000 82%,transparent);padding-inline-end:18px}
+  [dir="rtl"] .kbb-adm__links{-webkit-mask-image:linear-gradient(to left,#000 82%,transparent);mask-image:linear-gradient(to left,#000 82%,transparent)}
 }
 
 /* ─────────────────────────────────────────────────────────── the pencil */
@@ -172,7 +175,7 @@ textarea.kbb-qe__in{height:auto;min-height:84px;padding:10px 12px;resize:vertica
    measured). */
 .kbb-qe__pv{margin:0 0 14px;border-radius:12px;background:#faf6f8;border:1px solid #f1e8ec;overflow:hidden;position:relative;min-height:60px}
 .kbb-qe__pv-stage{width:var(--qe-stage,100%);zoom:var(--qe-zoom,1);pointer-events:none}
-.kbb-qe__pv-stage .kbb-th,.kbb-qe__pv-stage .kbb-banner{margin:0!important}
+.kbb-qe__pv-stage .kbb-th,.kbb-qe__pv-stage .kbb-banner{margin-block:0!important}
 .kbb-qe__pv-note{padding:14px;font-size:12.5px;color:#8a7d84;text-align:center}
 .kbb-qe__pv-busy{position:absolute;top:8px;inset-inline-end:8px;width:18px;height:18px;border-radius:50%;border:2px solid rgba(224,86,123,.25);border-top-color:#e0567b;animation:kbb-qe-spin .8s linear infinite;display:none}
 .kbb-qe__pv.is-busy .kbb-qe__pv-busy{display:block}

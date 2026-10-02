@@ -486,13 +486,13 @@ function openEditor(edit, opener) {
     }
 
     function stageScale() {
-        // The header's width on the page: the shop's content column, or the
-        // full window for a brand page's edge-to-edge header. Read from the
-        // window's own width -- no element is measured.
+        // The stage is the WINDOW's width, so the header lays itself out
+        // exactly as it does on the page -- its own gutters, its own maximum
+        // width -- and the stage is then scaled down to the pop-up. Read from
+        // the window's own width: no element is measured.
         const vw = window.innerWidth || 1280;
-        const gutter = vw < 700 ? 16 : 22;
-        const stage = edit.type === 'brand' ? vw : Math.min(vw - 2 * gutter, 1236);
-        const boxW = Math.min(vw < 641 ? vw : 560, vw) - 36;
+        const stage = vw;
+        const boxW = Math.min(vw < 641 ? vw : 560, vw) - 38;
         pvStage.style.setProperty('--qe-stage', `${Math.max(200, stage)}px`);
         pvStage.style.setProperty('--qe-zoom', String(Math.min(1, boxW / Math.max(200, stage))));
     }
