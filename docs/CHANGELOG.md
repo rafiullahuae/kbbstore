@@ -15,7 +15,7 @@ cache clears.
 | "site thin top bar, will show only for administrators ... administrator name, along with logout button ... hide / unhide arrow" | A 32px dark bar on every shop page, only for you: Edit this category/brand/product, Dashboard, Orders (today's count), Products, Customers, Appearance, Clear cache; your name, Log out, and an arrow that tucks it away (remembered). Shoppers' pages are byte-for-byte unchanged |
 | "pencil icon + edit minimal button ... beautiful popup ... drag n drop image upload ... save ... update the page without being refreshed and close the popup auto" | ✎ Edit on every category and brand header: banner drag-and-drop with progress, title, line under it, description, phone crop, live preview; Save updates the header in place and closes. Owner only for now -- the capability is ready for the user-roles module |
 
-Files (29): app/Http/Controllers/Admin/AdminAuthController.php,
+Files (28): app/Http/Controllers/Admin/AdminAuthController.php,
 app/Http/Controllers/Admin/CategoriesApiController.php,
 app/Http/Controllers/Admin/PageController.php,
 app/Http/Controllers/Admin/StorefrontAdminController.php,
@@ -31,7 +31,7 @@ resources/js/kbb/app.js, resources/views/admin/app.blade.php,
 resources/views/admin/partials/storefront-handoff.blade.php,
 resources/views/components/product-card.blade.php,
 resources/views/layouts/store.blade.php, routes/storefront-admin.php,
-routes/web.php, docs/rtl-audit.md, public/build (manifest + 3 built files).
+routes/web.php, public/build (manifest + 3 built files).
 
 ## 2.60.353
 **A different light box on every visit for categories with no banner, and a
