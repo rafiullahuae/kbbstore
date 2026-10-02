@@ -488,9 +488,68 @@ final class ImportRunner
 
         if (! $context->dryRun() && $exhausted) {
             $checkpoint->finish();
+            $this->keepPicturesLocal($report);
         }
 
         $this->verify($importer, $report, $exhausted);
+    }
+
+    /**
+     * Point every imported picture whose file is ALREADY on this server back
+     * at that file, the moment a file finishes importing.
+     *
+     * THE DEFECT, ON THE LIVE SHOP (2 October 2026). Every image on
+     * extrabeauty.ae -- thumbnails, product galleries, the pictures inside
+     * descriptions -- loaded from kbeautybliss.com, while the Media Library
+     * held every one of them. The export names each picture by its address on
+     * the old site, and ProductImporter writes that address as it reads it.
+     * The picture pass (Pictures & live progress, or Addresses & pictures ->
+     * Bring these across) had re-pointed them once; the owner then re-imported
+     * Products twice, as he was told to, and each run put the old address
+     * back. Nothing re-pointed them afterwards, because re-pointing only ever
+     * ran from those two screens.
+     *
+     * So the import does it itself, with exactly the code those screens use:
+     * MediaRewrite for image cells, DocumentMediaRewrite for pictures inside
+     * descriptions, articles and content blocks. Only REWRITE proposals are
+     * applied -- a file that is not here yet (ABSENT) is left pointing at the
+     * old site for the picture pass to fetch, so nothing is ever pointed at a
+     * missing file. Every host that is not this shop's own is considered,
+     * which is safe for the same reason: a picture is only re-pointed when its
+     * own file is on disk under this shop's uploads.
+     *
+     * Live runs only (a preview rolls back anyway) and once per finished file,
+     * not per slice. It can never fail the import: a picture that stays on the
+     * old site still shows, so this is caught and named, never thrown.
+     */
+    private function keepPicturesLocal(EntityReport $report): void
+    {
+        try {
+            $cells = new MediaRewrite;
+            $hosts = array_values(array_map(
+                static fn (array $h): string => $h['host'],
+                array_filter($cells->hostsSeen(), static fn (array $h): bool => ! $h['own'])
+            ));
+
+            if ($hosts === []) {
+                return;
+            }
+
+            $documents = new DocumentMediaRewrite;
+            $rewrite = static fn (array $p): bool => $p['decision'] === MediaRewrite::REWRITE;
+
+            $rows = $cells->apply(array_values(array_filter($cells->propose($hosts), $rewrite)));
+            $docs = $documents->apply(array_values(array_filter($documents->propose($hosts), $rewrite)));
+
+            if ($rows + $docs > 0) {
+                $report->note(sprintf(
+                    'Pictures: %d image address(es) and %d description(s) pointed at the copies already on this server (the export names them on %s).',
+                    $rows, $docs, implode(', ', $hosts)
+                ));
+            }
+        } catch (\Throwable $e) {
+            $report->note('Pictures: could not re-point images at this server after this file ('.class_basename($e).'). Use Addresses & pictures -> Bring these across.');
+        }
     }
 
     /**
