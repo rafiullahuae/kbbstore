@@ -62,6 +62,21 @@ pest()->extend(Tests\TestCase::class)
         StaticMemos::forgetAll();
 
         /*
+         * And a fourth: the order-reminder heartbeat (2.60.372).
+         *
+         * App\Services\Mail\OrderReminderTick runs the reminder sweep at the
+         * end of whichever request finds its marker file a minute old -- three
+         * queries, on a request chosen by the wall clock. In a fifteen-minute
+         * suite that is a random request in a random test, so every test that
+         * COUNTS queries could gain three: SetFixedPriceFollowsMembersTest
+         * measured a set of three at 13 and a set of twelve at 10, and passed
+         * alone. Touching the marker holds the sweep off for this test; the
+         * tests that are about the reminders unlink it in their own
+         * beforeEach, which runs after this one.
+         */
+        @touch(\App\Services\Mail\OrderReminderTick::markerPath());
+
+        /*
          * And the third thing that outlives a test: PHP's own execution clock.
          *
          * App\Http\Controllers\Admin\ImportApiController::step() calls

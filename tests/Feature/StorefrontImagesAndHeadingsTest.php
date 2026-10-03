@@ -192,9 +192,22 @@ it('renders journal and product photographs as img elements', function () {
      * spotted tile's <img> was deleted. Asking the section itself is the only
      * form of the question that can fail.
      */
-    $spotted = sectionHtml($home, 'ugc');
+    /*
+     * 2.60.372: the old product-photo strip (`.ugc`) stepped aside for Lane
+     * HB's #KBeautyBliss Spotted section, which draws the owner's own posts
+     * and nothing at all until one is ticked Homepage. So one is, here, and the
+     * question is asked of the new section's stage instead.
+     */
+    \App\Models\SpottedPost::create([
+        'image' => '/uploads/spotted/look-1.jpg', 'ig_url' => 'https://www.instagram.com/p/ImgTest1/',
+        'handle' => 'lina.skin', 'caption' => 'Anua Toner', 'sort' => 1, 'on_home' => true, 'on_page' => true,
+    ]);
+    \App\Services\SpottedSettings::flush();
+    $home = (string) test()->get('/')->getContent();
+
+    $spotted = sectionHtml($home, 'spt-stage');
     expect($spotted)->not->toBe('', 'the #KBeautyBliss spotted section did not render');
-    expect(renderedImages($spotted))->not->toBeEmpty('the spotted product tiles render no <img>');
+    expect(renderedImages($spotted))->not->toBeEmpty('the spotted cards render no <img>');
     /*
      * str_contains inside toBeFalse, not ->not->toContain($needle, $message):
      * toContain takes a LIST of needles, so a message passed as its second
@@ -203,7 +216,7 @@ it('renders journal and product photographs as img elements', function () {
      * serving a Blade comment.
      */
     expect(str_contains($spotted, 'url('))
-        ->toBeFalse('the spotted tiles still paint the photograph as a CSS background');
+        ->toBeFalse('the spotted cards paint the photograph as a CSS background');
 
     // Row 55 (Lane HA): the journal rail is the homepage's section 6 now, and
     // its list of cards is `.hs-posts` (partials/home/hs-blog).

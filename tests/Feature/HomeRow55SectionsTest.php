@@ -166,7 +166,10 @@ it('switches every other old section off — and keeps each one a switch away', 
      */
     r55Catalogue();
 
-    $html = r55Home();
+    // Above the footer only (2.60.372): the new site footer carries its own
+    // "Your email for offers" box, which uses the same data-kbb-subscribe hook
+    // as the old newsletter band and is on every page by design.
+    $html = strstr(r55Home(), '<footer', true) ?: r55Home();
 
     foreach ([
         'class="tick ' => 'promo ticker', 'class="delivery ' => 'delivery strip', '<div class="cats">' => 'category circles',
