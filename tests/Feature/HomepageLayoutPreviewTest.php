@@ -128,7 +128,15 @@ it('counts the same sections it always did, and names the same ones off', functi
      * move, which is the check rather than four numbers updated until they
      * passed. The `off` comparison in the loop below is what pins the fourth.
      */
-    $expected = ['signature' => 20, 'conversion' => 19, 'editorial' => 19, 'boutique' => 12];
+    /*
+     * ADVANCED BY ROW 55 (Lane HA), from 20/19/19/12, by exactly FOUR in every
+     * preset: `bestselling`, `trending`, `under54` and `feature` joined
+     * REGISTRY. Signature lists them at their registry positions (its claim is
+     * the shipped order); the other three do not mention them, and payloadFor()
+     * keeps a section a preset does not mention at its default — ON — placed
+     * last. No preset's `off` list moved, which the loop below still pins.
+     */
+    $expected = ['signature' => 24, 'conversion' => 23, 'editorial' => 23, 'boutique' => 16];
 
     foreach (app(HomepageLayouts::class)->summaries() as $summary) {
         expect($summary['count'])->toBe($expected[$summary['key']], $summary['key'] . ' changed its section count');

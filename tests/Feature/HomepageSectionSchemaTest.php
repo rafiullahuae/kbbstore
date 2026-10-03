@@ -107,8 +107,15 @@ it('answers every value on read exactly as the hand-written coercion did', funct
                 $row = (array) ($stored[$key] ?? []);
 
                 // ── THE RULES AS THEY WERE, WRITTEN OUT ──────────────────────
-                $wasDesktop = (bool) ($row['desktop'] ?? true);
-                $wasMobile = (bool) ($row['mobile'] ?? true);
+                // ▲ Row 55 (Lane HA): an ABSENT or null switch now means the
+                // section's own default, which is OFF for the sections the
+                // owner took off the homepage (HomepageSections::OFF_BY_DEFAULT)
+                // and ON for every other — "don't include anything from our
+                // existing homepage ... except banner". A present value is
+                // still read exactly as it always was.
+                $shipsOn = ! in_array($key, HomepageSections::OFF_BY_DEFAULT, true);
+                $wasDesktop = (bool) ($row['desktop'] ?? $shipsOn);
+                $wasMobile = (bool) ($row['mobile'] ?? $shipsOn);
                 $rawSkin = (string) ($row['skin'] ?? '');
                 $wasSkin = $hasGrid ? (GridSkins::exists($rawSkin) ? $rawSkin : $defaultSkin) : null;
 
@@ -194,8 +201,10 @@ it('stores every value on write exactly as the hand-written save did', function 
                 $nested = isset(HomepageSections::NESTED[$key]);
 
                 $expected[$key] = [
-                    'desktop' => (bool) ($row['desktop'] ?? true),
-                    'mobile' => (bool) ($row['mobile'] ?? true),
+                    // Row 55 (Lane HA): null means the section's own default —
+                    // off for HomepageSections::OFF_BY_DEFAULT. See above.
+                    'desktop' => (bool) ($row['desktop'] ?? ! in_array($key, HomepageSections::OFF_BY_DEFAULT, true)),
+                    'mobile' => (bool) ($row['mobile'] ?? ! in_array($key, HomepageSections::OFF_BY_DEFAULT, true)),
                     'order' => (int) ($row['order'] ?? $order),
                     'skin' => $hasGrid ? (GridSkins::exists($raw) ? $raw : $defaultSkin) : null,
                     'background' => $nested ? null : 'off',

@@ -45,6 +45,12 @@ use App\Models\Post;
 use App\Services\SettingsService;
 use App\Support\ReadingTime;
 
+/*
+ * ROW 55 (Lane HA): the journal rail is the homepage's section 6 now —
+ * partials/home/hs-blog — and its category chip is `.hs-pcat`. The needles
+ * below name that element; what each case asserts is unchanged.
+ */
+
 beforeEach(function () {
     // Demo content substitutes for empty sections; these cases are about real
     // rows, so it is switched off except where a test says otherwise.
@@ -68,7 +74,7 @@ it('draws the category chip from the column that holds it', function () {
 
     // An ELEMENT, not the bare word: the page inlines its own CSS, and a
     // class-name search of the document matches the stylesheet too.
-    expect((bool) preg_match('/<span[^>]*class="[^"]*\bchip\b[^"]*"[^>]*>\s*Routines\s*<\/span>/', $html))
+    expect((bool) preg_match('/<span[^>]*class="[^"]*\bhs-pcat\b[^"]*"[^>]*>\s*Routines\s*<\/span>/', $html))
         ->toBeTrue('the journal rail did not draw the category chip for a post carrying a tag');
 });
 
@@ -77,7 +83,7 @@ it('draws no chip for an article that carries no tag', function () {
 
     $html = $this->get('/')->assertOk()->getContent();
 
-    expect((bool) preg_match('/<span[^>]*class="[^"]*\bchip\b[^"]*"[^>]*>\s*\S/', $html))
+    expect((bool) preg_match('/<span[^>]*class="[^"]*\bhs-pcat\b[^"]*"[^>]*>\s*\S/', $html))
         ->toBeFalse('an empty chip was drawn for an article with no tag');
 });
 
@@ -158,7 +164,7 @@ it('still renders the rail when demo articles stand in for real ones', function 
 
     $html = $this->get('/')->assertOk()->getContent();
 
-    expect((bool) preg_match('/<span[^>]*class="[^"]*\bchip\b[^"]*"[^>]*>\s*Routines\s*<\/span>/', $html))
+    expect((bool) preg_match('/<span[^>]*class="[^"]*\bhs-pcat\b[^"]*"[^>]*>\s*Routines\s*<\/span>/', $html))
         ->toBeTrue('the demo journal rail lost its category chip');
 
     preg_match_all('/([0-9]+) min read/', $html, $m);
