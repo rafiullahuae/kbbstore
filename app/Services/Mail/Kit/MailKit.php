@@ -124,6 +124,11 @@ final class MailKit
             'fontFace' => $usesOutfit ? self::fontFaceCss() : '',
             'button' => self::hex($look['button'] ?? null, self::P['pinkDeep']),
             'accent' => self::hex($look['accent'] ?? null, self::P['pink']),
+            // Emails → Design & branding → Colours → Background and Text
+            // (Lane EM): the page behind the card and the ink of every
+            // heading and figure. #rrggbb or the approved default.
+            'background' => self::hex($look['background'] ?? null, self::P['cream']),
+            'text' => self::hex($look['text'] ?? null, self::P['ink']),
             'storeName' => $store,
             'wordmark' => [(string) $ink, (string) $accent],
             'logo' => self::logo($brand['logoUrl'] ?? null),

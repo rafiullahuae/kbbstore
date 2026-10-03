@@ -17,7 +17,7 @@
     $dotBg = $isStop ? '#C0392B' : ($reached ? $trkDone : '#FFFFFF');
     $dotBorder = $isStop ? '#C0392B' : ($reached ? $trkDone : '#E4D6DC');
     $glyph = $isStop ? '&#10005;' : ($reached ? '&#10003;' : '');
-    $labColor = $isStop ? '#C0392B' : ($reached ? '#2A2228' : '#8C828A');
+    $labColor = $isStop ? '#C0392B' : ($reached ? $k['text'] : '#8C828A');
     $left = $i === 0 ? 'transparent' : ($i <= $at ? $trkDone : ($isStop ? '#C0392B' : '#EADDE3'));
     $right = $i === $trkLast ? 'transparent' : ($i < $at ? $trkDone : '#EADDE3');
 @endphp<td width="25%" align="center" valign="top" style="width:25%;font-family:{!! $k['sans'] !!};">

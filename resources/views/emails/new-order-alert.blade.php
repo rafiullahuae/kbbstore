@@ -27,7 +27,7 @@
 
 @section('kit')
 @include('emails.kit.card-open')
-<tr><td class="px" style="padding:26px 32px 0;font-family:{!! $k['sans'] !!};"><div style="font-family:{!! $k['sans'] !!};"><div style="font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:#2E9E6B;font-weight:800;">&#9679; {{ __('email.kit.eyebrow_alert') }}</div><div class="ink" style="margin-top:6px;font-size:26px;font-weight:800;color:#2A2228;">{{ $order['number'] }} &middot; {{ $order['totalPlain'] }}</div><div class="ink2" style="margin-top:4px;font-size:14px;color:#5E545A;">{{ $kitWho }}</div></div></td></tr>
+<tr><td class="px" style="padding:26px 32px 0;font-family:{!! $k['sans'] !!};"><div style="font-family:{!! $k['sans'] !!};"><div style="font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:#2E9E6B;font-weight:800;">&#9679; {{ __('email.kit.eyebrow_alert') }}</div><div class="ink" style="margin-top:6px;font-size:26px;font-weight:800;color:{{ $k['text'] }};">{{ $order['number'] }} &middot; {{ $order['totalPlain'] }}</div><div class="ink2" style="margin-top:4px;font-size:14px;color:#5E545A;">{{ $kitWho }}</div></div></td></tr>
 @include('emails.kit.para', ['html' => __('email.alert.next_step', ['number' => $order['number']]), 'pad' => '18px 32px 0', 'size' => 14])
 @include('emails.kit.section-title', ['text' => __('email.alert.items_heading')])
 @include('emails.kit.items', ['lines' => \App\Services\Mail\Kit\KitOrder::lines($order), 'showPrice' => true])

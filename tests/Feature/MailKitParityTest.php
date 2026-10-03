@@ -336,3 +336,35 @@ it('escapes the customer, the owner and the product on the way in', function () 
         // The gift message is still there, with its line break.
         ->and($html)->toContain('Happy birthday<br />');
 });
+
+it('draws every email in the fonts and colours chosen under Emails → Design & branding', function () {
+    /*
+     * THE DEFECT (Lane EM): the Design & branding screen offered four colour
+     * swatches -- Accent, Buttons, Background, Text -- and the kit read only
+     * the first two. Background and Text saved, answered "Saved", and changed
+     * no email: a control that does nothing, on the owner's own screen.
+     *
+     * MUTATION: drop 'background' or 'text' from MailKit::for() (or put the
+     * literal #2A2228 back in a partial) and this is red.
+     */
+    $order = emkOrder();
+
+    app(\App\Services\Mail\EmailLook::class)->save([
+        'email_text' => '#112233', 'email_background' => '#fafafa',
+        'email_accent' => '#aa0011', 'email_button' => '#0011aa',
+        'email_font_heading' => 'georgia', 'email_font_body' => 'system',
+    ]);
+    \App\Models\Setting::flushMap();
+    SettingsService::forgetMemo();
+
+    $html = (string) (new Mail\OrderConfirmation($order->fresh('items')))->render();
+
+    expect($html)->toContain('bgcolor="#FAFAFA"')
+        ->and($html)->toContain('color:#112233')
+        ->and($html)->not->toContain('#2A2228')
+        ->and($html)->toContain('background:#AA0011')       // the accent rule under the header
+        ->and($html)->toContain('bgcolor="#0011AA"')        // the button
+        ->and($html)->toContain("font-family:Georgia,'Times New Roman',Times,serif;font-size:28px")
+        // Neither font is Outfit, so no web font is requested.
+        ->and($html)->not->toContain('@font-face');
+});

@@ -40,8 +40,8 @@
 @section('kit_before')
 <tr><td class="px" style="padding:0 32px;font-family:{!! $k['sans'] !!};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;">
 <tr><td class="ink2" style="font-family:{!! $k['sans'] !!};font-size:14px;color:#5E545A;padding:5px 0;">{{ __('email.refunded.row_refunded') }}</td><td align="right" style="font-family:{!! $k['sans'] !!};font-size:18px;font-weight:800;color:#2E9E6B;">{{ $amountPlain }}</td></tr>
-<tr><td class="ink2" style="font-family:{!! $k['sans'] !!};font-size:14px;color:#5E545A;padding:5px 0;">{{ __('email.refunded.row_order_total') }}</td><td align="right" class="ink" style="font-family:{!! $k['sans'] !!};font-size:14px;color:#2A2228;">{{ $order['totalPlain'] }}</td></tr>
-<tr><td class="ink2" style="font-family:{!! $k['sans'] !!};font-size:14px;color:#5E545A;padding:5px 0;">{{ __('email.refunded.row_paid_by') }}</td><td align="right" class="ink" style="font-family:{!! $k['sans'] !!};font-size:14px;color:#2A2228;">{{ $order['paymentLabel'] }}</td></tr></table></td></tr>
+<tr><td class="ink2" style="font-family:{!! $k['sans'] !!};font-size:14px;color:#5E545A;padding:5px 0;">{{ __('email.refunded.row_order_total') }}</td><td align="right" class="ink" style="font-family:{!! $k['sans'] !!};font-size:14px;color:{{ $k['text'] }};">{{ $order['totalPlain'] }}</td></tr>
+<tr><td class="ink2" style="font-family:{!! $k['sans'] !!};font-size:14px;color:#5E545A;padding:5px 0;">{{ __('email.refunded.row_paid_by') }}</td><td align="right" class="ink" style="font-family:{!! $k['sans'] !!};font-size:14px;color:{{ $k['text'] }};">{{ $order['paymentLabel'] }}</td></tr></table></td></tr>
 @if ($settledByGateway)
 @include('emails.kit.para', ['html' => __('email.refunded.statement_note') . ' ' . __('email.refunded.chase_note', ['number' => $order['number']]), 'pad' => '16px 32px 0', 'size' => 14])
 @endif

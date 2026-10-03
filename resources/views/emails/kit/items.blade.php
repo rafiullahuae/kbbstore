@@ -19,9 +19,9 @@
 <td width="76" valign="top" style="width:76px;">@if (! empty($line['img']))<img class="pimg" src="{{ $line['img'] }}" width="64" height="64" alt="{{ $line['name'] }}" style="display:block;width:64px;height:64px;border-radius:10px;background:#FFF0F4;">@else<div class="pimg" style="width:64px;height:64px;border-radius:10px;background:#FFF0F4;font-size:0;line-height:0;">&nbsp;</div>@endif</td>
 <td valign="top" style="font-family:{!! $k['sans'] !!};">
 @if (($line['brand'] ?? '') !== '')<div class="muted" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#C13E63;font-weight:700;">{{ $line['brand'] }}</div>
-@endif<div class="ink" style="margin-top:2px;font-size:14.5px;line-height:1.35;font-weight:600;color:#2A2228;">{{ $line['name'] }}</div>
+@endif<div class="ink" style="margin-top:2px;font-size:14.5px;line-height:1.35;font-weight:600;color:{{ $k['text'] }};">{{ $line['name'] }}</div>
 @foreach ($line['sub'] ?? [] as $subLine)<div class="muted" style="margin-top:2px;font-size:12px;line-height:1.45;color:#8C828A;">{{ $subLine }}</div>
 @endforeach<div class="muted" style="margin-top:3px;font-size:12.5px;color:#8C828A;">@if (($line['variant'] ?? '') !== ''){{ $line['variant'] }} &middot; @endif{{ __('email.kit.qty', ['count' => (int) $line['qty']]) }}@if (($showPrice ?? true) && (int) $line['qty'] > 1) &middot; {{ $line['unit'] }} {{ __('email.items.each') }}@endif</div>
 </td>
-@if ($showPrice ?? true)<td width="96" align="right" valign="top" class="ink" style="width:96px;font-family:{!! $k['sans'] !!};font-size:14.5px;font-weight:700;color:#2A2228;white-space:nowrap;">{{ $line['total'] }}</td>@endif
+@if ($showPrice ?? true)<td width="96" align="right" valign="top" class="ink" style="width:96px;font-family:{!! $k['sans'] !!};font-size:14.5px;font-weight:700;color:{{ $k['text'] }};white-space:nowrap;">{{ $line['total'] }}</td>@endif
 </tr></table></td></tr>@endforeach</table></td></tr>

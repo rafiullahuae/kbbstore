@@ -62,9 +62,9 @@
   [data-ogsb] .card{background:#211921!important}
 </style>
 </head>
-<body class="bg-outer" style="margin:0;padding:0;background:#FFF8F5;" bgcolor="#FFF8F5">
-<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#FFF8F5;opacity:0;">{{ $kitPreheader ?? '' }}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
-<table role="presentation" class="bg-outer" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF8F5" style="width:100%;background:#FFF8F5;border-collapse:collapse;">
+<body class="bg-outer" style="margin:0;padding:0;background:{{ $k['background'] }};" bgcolor="{{ $k['background'] }}">
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:{{ $k['background'] }};opacity:0;">{{ $kitPreheader ?? '' }}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<table role="presentation" class="bg-outer" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $k['background'] }}" style="width:100%;background:{{ $k['background'] }};border-collapse:collapse;">
 <tr><td align="center" style="padding:22px 10px 30px;">
 <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse;">

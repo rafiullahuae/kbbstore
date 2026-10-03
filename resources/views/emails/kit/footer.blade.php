@@ -25,7 +25,7 @@
     $ftUnsub = \App\Services\Mail\Kit\MailKit::url($unsubscribeUrl ?? null);
 @endphp
 <tr><td align="center" style="padding:26px 26px 14px;font-family:{!! $k['sans'] !!};">
-<div style="font-size:17px;font-weight:800;letter-spacing:-.02em;color:#2A2228;">{{ $k['wordmark'][0] }}<span style="color:#C13E63;">{{ $k['wordmark'][1] }}</span></div>
+<div style="font-size:17px;font-weight:800;letter-spacing:-.02em;color:{{ $k['text'] }};">{{ $k['wordmark'][0] }}<span style="color:#C13E63;">{{ $k['wordmark'][1] }}</span></div>
 <div class="muted" style="margin-top:3px;font-size:11.5px;color:#8C828A;">{{ __('email.kit.footer_tagline') }}</div>
 </td></tr>
 <tr><td style="padding:0 40px;"><div style="height:1px;line-height:1px;font-size:0;background:#FCE0E8;">&nbsp;</div></td></tr>
