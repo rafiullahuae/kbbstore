@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.361
+**Buy these together: "You're saving" counts the buy-together discount only,
+on one row with the total.** Apply after .360. No plugin change. Runs one
+migration (a cache clear).
+
+| Your report | Now |
+|---|---|
+| "the you're saving calculate only the discounted price which is set for this buy together section only!" | The saving is this section's discount alone (it also counted each product's own sale before); the struck total is the products' own prices, so struck − total = saving. With no tier set: no struck total, no pill |
+| "the discount and price line should come in one row" | The saving pill and the total share one row: measured at 320, 360, 390, 1280 and 1440 |
+
+Files (5): resources/views/partials/fbt.blade.php, resources/js/kbb/fbt.js,
+resources/css/kbb/kbb-product.css,
+database/migrations/2027_07_18_000980_clear_caches_buy_together_saving.php,
+public/build (manifest, app bundle, product css).
+
 ## 2.60.360
 **Buy these together: four on a phone with a half-card hint, prices inside
 their boxes, the total and "You're saving" line, discounts for 3 / 4 / 5+ and
