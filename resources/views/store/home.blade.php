@@ -582,7 +582,7 @@
      carries the reasoning; Appearance → Homepage content → Best Sellers the
      controls. A rail with no products draws nothing. --}}@unless ($sections->hidden('bestselling'))
 @if ($home['bestselling']->isNotEmpty())
-@include('partials.home.hs-rail', ['key' => 'bestselling', 'r' => \App\Support\HomeSections::rail($homeSettings, 'bestselling'), 'items' => $home['bestselling']])
+@include('partials.home.hs-rail', ['key' => 'bestselling', 'cls' => $sections->classFor('bestselling'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'bestselling'), 'items' => $home['bestselling']])
 @endif
 @endunless
 
@@ -652,7 +652,7 @@
      homepage row (Appearance → Homepage) and the brands module (Store →
      Modules), which also decides whether /brands/ answers. --}}@unless ($sections->hidden('brands') || ! $settings->moduleEnabled('brands', true))
 @if ($home['brands']->isNotEmpty())
-@include('partials.home.hs-brands', ['b' => \App\Support\HomeSections::brands($homeSettings), 'brandRows' => $home['brands']])
+@include('partials.home.hs-brands', ['cls' => $sections->classFor('brands'), 'b' => \App\Support\HomeSections::brands($homeSettings), 'brandRows' => $home['brands']])
 @endif
 @endunless
 
@@ -813,7 +813,7 @@
      GridSections::trendingScores(); the controls are Appearance → Homepage
      content → Trending. --}}@unless ($sections->hidden('trending'))
 @if ($home['trending']->isNotEmpty())
-@include('partials.home.hs-rail', ['key' => 'trending', 'r' => \App\Support\HomeSections::rail($homeSettings, 'trending'), 'items' => $home['trending']])
+@include('partials.home.hs-rail', ['key' => 'trending', 'cls' => $sections->classFor('trending'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'trending'), 'items' => $home['trending']])
 @endif
 @endunless
 
@@ -846,24 +846,24 @@
     $hsPosts = $hsBlog['source'] === 'manual' && $home['posts']->isNotEmpty() ? $home['posts'] : $posts;
 @endphp
 @if ($hsPosts->isNotEmpty())
-@include('partials.home.hs-blog', ['bl' => $hsBlog, 'postRows' => $hsPosts])
+@include('partials.home.hs-blog', ['cls' => $sections->classFor('blog'), 'bl' => $hsBlog, 'postRows' => $hsPosts])
 @endif
 @endunless
 {{-- UNDER AED 54, SECTION 7 OF ROW 55 (Lane HA). The ceiling is the price
      the shopper pays — GridSections::fetchPool() says how. --}}@unless ($sections->hidden('under54'))
 @if ($home['under54']->isNotEmpty())
-@include('partials.home.hs-rail', ['key' => 'under54', 'r' => \App\Support\HomeSections::rail($homeSettings, 'under54'), 'items' => $home['under54']])
+@include('partials.home.hs-rail', ['key' => 'under54', 'cls' => $sections->classFor('under54'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'under54'), 'items' => $home['under54']])
 @endif
 @endunless
 {{-- THE TWO-COLUMN FEATURE, SECTION 8 OF ROW 55 (Lane HA). --}}@unless ($sections->hidden('feature'))
-@include('partials.home.hs-feature', ['ft' => \App\Support\HomeSections::feature($homeSettings, $home['sunscreens'])])
+@include('partials.home.hs-feature', ['cls' => $sections->classFor('feature'), 'ft' => \App\Support\HomeSections::feature($homeSettings, $home['sunscreens'])])
 @endunless
 {{-- ABOUT US, SECTION 9 OF ROW 55 — LAST ON THE PAGE (Lane HA). The words
      are the owner's four paragraphs (HomeSections::ABOUT_DEFAULT), edited on
      Appearance → Homepage content → About us; cleared, the heading stands
      alone. The old band's counted figures and link are not part of his
      section and are gone with it. --}}@unless ($sections->hidden('about'))
-@include('partials.home.hs-about', ['ab' => \App\Support\HomeSections::about($homeSettings, $aboutText)])
+@include('partials.home.hs-about', ['cls' => $sections->classFor('about'), 'ab' => \App\Support\HomeSections::about($homeSettings, $aboutText)])
 @endunless
 
 {{-- REVIEWS --}}

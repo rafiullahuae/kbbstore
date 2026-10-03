@@ -7,7 +7,7 @@
     paragraph; HomeSections::ABOUT_DEFAULT is his four, verbatim).
 */
 @endphp
-<section class="sec {{ $ab['classes'] }} {{ $sections->classFor('about') }}" style="{{ $ab['style'] }}"@if ($ab['title'] !== '') aria-labelledby="hs-about-h"@endif><div class="wrap"><div class="hs-aboutin">
+<section class="sec {{ $ab['classes'] }} {{ $cls }}" style="{{ $ab['style'] }}"@if ($ab['title'] !== '') aria-labelledby="hs-about-h"@endif><div class="wrap"><div class="hs-aboutin">
 @include('partials.home.hs-head', ['hid' => 'hs-about-h', 'h' => $ab + ['sub' => '', 'btn' => '', 'url' => '']])
 @foreach ($ab['paragraphs'] as $para)
 <p>{{ $para }}</p>

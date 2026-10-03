@@ -1016,11 +1016,13 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
         + t.fields.map(function(f){ return field(f, copy[f.key], 'copy.' + f.key, false); }).join('')
         + '</div>';
     }).join('')
-    + '<div class="hpc-note"><b>Elsewhere on this page</b>'
+    /* Row 55 (Lane HA): the note is about the old brand strip and trust row,
+       so it stands under "Other wording" only, not under every section tab. */
+    + (tab !== 'copy' ? '' : '<div class="hpc-note"><b>Elsewhere on this page</b>'
     + 'The brands strip&rsquo;s note (&ldquo;' + esc(data.claims_elsewhere) + '&rdquo;) and the three trust-row claims are edited on '
     + '<b>Store &rarr; Business Details &rarr; Claims</b>, where every statement this shop makes about itself already lives — the same boxes '
     + 'the checkout and the product page read. They are not repeated here: one sentence with two boxes is a sentence that changes '
-    + 'depending on which box you touched last.</div>';
+    + 'depending on which box you touched last.</div>');
   }
 
   function render(){

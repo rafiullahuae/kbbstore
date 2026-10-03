@@ -79,6 +79,9 @@ final class HomeSections
 
     private const TTL = 600;
 
+    /** Bumped by flush(); part of every entry's key. */
+    private const GENERATION = 'kbb.home.hs.gen';
+
     /** The arrow inside the pill button — the same glyph the All sets button draws. A constant, so printing it raw is safe. */
     public const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
@@ -478,11 +481,23 @@ final class HomeSections
         });
     }
 
-    /** Forget the entry the CURRENT settings point at. Called wherever the homepage's own caches are. */
+    /**
+     * Throw every built entry away. Called wherever the homepage's own caches
+     * are (HomeController::flushCache(), the Brand and Post hooks).
+     *
+     * A GENERATION, NOT A KEY TO FORGET — and it must not read a setting. The
+     * entry's key depends on the settings, so forgetting it would mean reading
+     * them, and this runs inside Product::saved: a settings read there fills
+     * SettingsService's memo in the middle of whatever is saving products — an
+     * import, a seeder, a test that writes a setting next — which is the
+     * Setting::map() trap CLAUDE.md names. Bumping one counter answers "every
+     * entry is stale" with a single cache write and no read of anything else;
+     * superseded entries simply expire.
+     */
     public static function flush(): void
     {
         try {
-            Cache::forget(self::cacheKey(self::settings()));
+            Cache::forever(self::GENERATION, (int) Cache::get(self::GENERATION, 0) + 1);
         } catch (\Throwable) {
             // A cache that cannot be reached is not a failed product save.
         }
@@ -587,7 +602,7 @@ final class HomeSections
             $sig[$k] = (string) ($c[$k] ?? '');
         }
 
-        return 'kbb.home.hs.'.md5(json_encode($sig));
+        return 'kbb.home.hs.'.(int) Cache::get(self::GENERATION, 0).'.'.md5(json_encode($sig));
     }
 
     /** @return list<int> */

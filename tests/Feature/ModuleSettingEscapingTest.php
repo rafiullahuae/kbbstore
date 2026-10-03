@@ -50,6 +50,10 @@ function m3Ticker(string $value): string
 }
 
 it('escapes the promo ticker chip, which is the one chip on that strip that is a setting', function () {
+    // Row 55 (Lane HA): this section ships switched off on the homepage now;
+    // its behaviour when on is what this case pins, so it is switched on first.
+    \Tests\Support\LegacyHomeSections::on(['ticker']);
+
     $html = m3Ticker('<img src=x onerror=alert(1)>');
 
     expect(str_contains($html, '<img src=x onerror=alert(1)>'))
@@ -61,6 +65,10 @@ it('escapes the promo ticker chip, which is the one chip on that strip that is a
 });
 
 it('leaves a chip of ordinary wording byte-identical', function () {
+    // Row 55 (Lane HA): this section ships switched off on the homepage now;
+    // its behaviour when on is what this case pins, so it is switched on first.
+    \Tests\Support\LegacyHomeSections::on(['ticker']);
+
     /*
      * Rule 1. e() over a string with no HTML in it is the identity, so a shop
      * with a real ticker sees nothing move — and the shipped default is no chip

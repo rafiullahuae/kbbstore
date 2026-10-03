@@ -129,6 +129,13 @@ foreach ([4500, 6900] as $j => $price) {
         'position' => $j, 'created_at' => now(), 'updated_at' => now()]);
 }
 
+// The two feature photographs, as the owner will pick them in the Media Library.
+$settings = app(\App\Services\SettingsService::class);
+$settings->set('home_ft_l_img', $bottle('feat-sun.webp', 1280, 720, 6, true));
+$settings->set('home_ft_l_alt', 'Korean sunscreens in the sun');
+$settings->set('home_ft_r_img', $bottle('feat-best.webp', 1280, 720, 0, true));
+$settings->set('home_ft_r_alt', 'K-Beauty Bliss best sellers');
+
 \App\Models\AdminUser::updateOrCreate(['email' => 'owner@preview.test'], ['name' => 'Preview Owner', 'password' => 'preview-secret-1', 'role' => 'owner']);
 \Illuminate\Support\Facades\Cache::flush();
 echo "ha seed done\n";

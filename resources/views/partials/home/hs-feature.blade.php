@@ -10,7 +10,7 @@
     same shape, so nothing moves when one is added.
 */
 @endphp
-<section class="sec {{ $ft['classes'] }} {{ $sections->classFor('feature') }}" style="{{ $ft['style'] }}"><div class="wrap"><div class="hs-feat">
+<section class="sec {{ $ft['classes'] }} {{ $cls }}" style="{{ $ft['style'] }}"><div class="wrap"><div class="hs-feat">
 @foreach ($ft['panels'] as $panel)
 <div class="hs-fp"><a class="hs-fim" href="{{ $panel['url'] }}" tabindex="-1" style="background:{{ \App\Support\Gradient::for($panel['title'] !== '' ? $panel['title'] : $panel['side']) }}">@if ($panel['image'] !== '')<img src="{{ $panel['image'] }}" alt="{{ $panel['alt'] }}" width="800" height="450" loading="lazy" decoding="async">@endif</a>
 @if ($panel['title'] !== '')<h2>{{ $panel['title'] }}</h2>@endif

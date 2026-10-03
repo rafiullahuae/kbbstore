@@ -9,7 +9,7 @@
     CoverImage::src(), as the journal draws it.
 */
 @endphp
-<section class="sec {{ $bl['classes'] }} {{ $sections->classFor('blog') }}" style="{{ $bl['style'] }}"@if ($bl['title'] !== '') aria-labelledby="hs-blog-h"@endif><div class="wrap">
+<section class="sec {{ $bl['classes'] }} {{ $cls }}" style="{{ $bl['style'] }}"@if ($bl['title'] !== '') aria-labelledby="hs-blog-h"@endif><div class="wrap">
 @include('partials.home.hs-head', ['hid' => 'hs-blog-h', 'h' => $bl])
 <div class="hs-posts">
 @foreach ($postRows as $post)
@@ -17,7 +17,7 @@
     $hsCover = \App\Support\CoverImage::src($post->cover);
     $hsTitle = (string) $post->t('title');
 @endphp
-<a class="hs-post" href="{{ \App\Support\Url::to(\App\Support\UrlScheme::article($post->slug)) }}"><span class="hs-pim" style="background:{{ \App\Support\Gradient::for($hsTitle) }}">@if ($hsCover)<img src="{{ $hsCover }}" alt="{{ $hsTitle }}" width="640" height="400" loading="lazy" decoding="async">@endif</span><span class="hs-pcb"><span class="hs-pmeta">@if ($post->tag)<span class="hs-pcat">{{ $post->tag }}</span>@endif<span class="hs-pmin">{{ trans_choice('store.home.read_minutes', $post->readMinutes()) }}</span></span><h3>{{ $hsTitle }}</h3><span class="hs-pex">{{ \Illuminate\Support\Str::limit(strip_tags((string) ($post->t('excerpt') ?: $post->t('body'))), 140) }}</span>@if ($bl['more'] !== '')<span class="hs-pmore">{{ $bl['more'] }} <b aria-hidden="true">→</b></span>@endif</span></a>
+<a class="hs-post" href="{{ \App\Support\Url::to(\App\Support\UrlScheme::article($post->slug)) }}"><span class="hs-pim" style="background:{{ \App\Support\Gradient::for($hsTitle) }}">@if ($hsCover)<img src="{{ $hsCover }}" alt="{{ $hsTitle }}" width="640" height="400" loading="lazy" decoding="async">@endif</span><span class="hs-pcb"><span class="hs-pmeta">@if ($post->tag)<span class="hs-pcat">{{ $post->tag }}</span>@endif<span class="hs-pmin">{{ trans_choice('store.home.read_minutes', $post->readMinutes()) }}</span></span><h3>{{ $hsTitle }}</h3><span class="hs-pex">{{ \Illuminate\Support\Str::limit(strip_tags((string) ($post->t('excerpt') ?: $post->t('body'))), 140) }}</span>@if ($bl['more'] !== '')<span class="hs-pmore">{{ $bl['more'] }} <i>{!! \App\Support\HomeSections::ARROW !!}</i></span>@endif</span></a>
 @endforeach
 </div>
 @include('partials.home.hs-foot', ['h' => $bl])

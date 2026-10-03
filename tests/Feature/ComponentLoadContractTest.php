@@ -177,6 +177,13 @@ const CLC_COVERED = [
      */
     'resources/views/partials/home/grid-section.blade.php' => 'the homepage, rendered cold, with an instance built',
     /*
+     * Row 55 (Lane HA). The homepage's three new product rails — Best Sellers,
+     * Trending, Under AED 54 — include partials/home/grid from here. Covered
+     * by the same cold homepage render, which holds GridSections::fetchPool()
+     * (the rails' query, through ::pool()) to its `with('brand:id,name,slug')`.
+     */
+    'resources/views/partials/home/hs-rail.blade.php' => 'the homepage, rendered cold (Best Sellers, Trending, Under AED 54)',
+    /*
      * Lane PI-B. "Load more on scroll" fetches a listing page as a batch —
      * /shop/?paged=N&kbbbatch=1 — and partials/listing-batch.blade.php draws
      * its <x-product-card>s from the SAME query the page ran, after the same

@@ -15,9 +15,9 @@
     a select. No script.
 */
 @endphp
-<section class="sec {{ $r['classes'] }} {{ $sections->classFor($key) }}" style="{{ $r['style'] }}"@if ($r['title'] !== '') aria-labelledby="hs-{{ $key }}-h"@endif><div class="wrap">
+<section class="sec {{ $r['classes'] }} {{ $cls }}" style="{{ $r['style'] }}"@if ($r['title'] !== '') aria-labelledby="hs-{{ $key }}-h"@endif><div class="wrap">
 @include('partials.home.hs-head', ['hid' => 'hs-'.$key.'-h', 'h' => $r])
-@include('partials.home.grid', ['items' => $items, 'skin' => null, 'catLabel' => null])
+<div class="hs-grid">@include('partials.home.grid', ['items' => $items, 'skin' => null, 'catLabel' => null])</div>
 @include('partials.home.hs-foot', ['h' => $r])
 {!! \App\Support\HomeSections::itemList($r['title'] !== '' ? $r['title'] : $key, $items->map(fn ($p) => ['url' => $p->url(), 'name' => (string) $p->t('name')])) !!}
 </div></section>

@@ -370,6 +370,10 @@ it('emits no dead link in the demo-content menu', function () {
 */
 
 it('publishes six routine steps that all resolve and all carry a product', function () {
+    // Row 55 (Lane HA): this section ships switched off on the homepage now;
+    // its behaviour when on is what this case pins, so it is switched on first.
+    \Tests\Support\LegacyHomeSections::on(['routine']);
+
     $html = $this->get('/')->assertOk()->getContent();
 
     // Counted with preg_match_all over the ELEMENTS, not by searching the body

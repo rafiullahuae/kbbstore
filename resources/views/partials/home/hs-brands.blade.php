@@ -17,7 +17,7 @@
     label either way. The phone's LOGO falls back to the name set in type.
 */
 @endphp
-<section class="sec {{ $b['classes'] }} {{ $sections->classFor('brands') }}" style="{{ $b['style'] }}"@if ($b['title'] !== '') aria-labelledby="hs-brands-h"@endif><div class="wrap">
+<section class="sec {{ $b['classes'] }} {{ $cls }}" style="{{ $b['style'] }}"@if ($b['title'] !== '') aria-labelledby="hs-brands-h"@endif><div class="wrap">
 @include('partials.home.hs-head', ['hid' => 'hs-brands-h', 'h' => $b])
 <div class="hs-brandlist">
 @foreach ($brandRows as $brand)
@@ -26,7 +26,7 @@
     $hsLogo = \App\Support\HomeSections::image((string) data_get($brand, 'logo'));
     $hsPhoto = \App\Support\HomeSections::brandPhoto($brand);
 @endphp
-<a class="hs-brand{{ $hsLogo !== '' ? ' has-logo' : '' }}" href="{{ $brand->url() }}"><span class="hs-bph" style="background:{{ \App\Support\Gradient::for($hsName) }}">@if ($hsPhoto['src'] !== '')<img src="{{ $hsPhoto['src'] }}" alt="{{ $hsPhoto['alt'] !== '' ? $hsPhoto['alt'] : $hsName.' — Korean beauty brand' }}" width="400" height="500" loading="lazy" decoding="async">@elseif ($hsLogo !== '')<img class="hs-bph-logo" src="{{ $hsLogo }}" alt="{{ $hsName }} — Korean beauty brand" width="400" height="500" loading="lazy" decoding="async">@endif</span>@if ($hsLogo !== '')<img class="hs-blogo" src="{{ $hsLogo }}" alt="{{ $hsName }}" width="160" height="80" loading="lazy" decoding="async">@endif<span class="hs-blb"><b>{{ $hsName }}</b></span></a>
+<a class="hs-brand{{ $hsLogo !== '' ? ' has-logo' : '' }}" href="{{ $brand->url() }}"><span class="hs-bph" style="background:{{ \App\Support\Gradient::for($hsName) }}">@if ($hsPhoto['src'] !== '')<img src="{{ $hsPhoto['src'] }}" alt="{{ $hsPhoto['alt'] !== '' ? $hsPhoto['alt'] : $hsName }}" width="400" height="500" loading="lazy" decoding="async">@elseif ($hsLogo !== '')<img class="hs-bph-logo" src="{{ $hsLogo }}" alt="{{ $hsName }}" width="400" height="500" loading="lazy" decoding="async">@endif</span>@if ($hsLogo !== '')<img class="hs-blogo" src="{{ $hsLogo }}" alt="{{ $hsName }}" width="160" height="80" loading="lazy" decoding="async">@endif<span class="hs-blb"><b>{{ $hsName }}</b></span></a>
 @endforeach
 </div>
 @include('partials.home.hs-foot', ['h' => $b])

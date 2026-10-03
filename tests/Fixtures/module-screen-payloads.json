@@ -4246,6 +4246,10 @@
         "label": "Big savings bundles"
       },
       {
+        "key": "bestselling",
+        "label": "Best Sellers"
+      },
+      {
         "key": "recommended",
         "label": "Recommended for you"
       },
@@ -4274,6 +4278,10 @@
         "label": "Instagram Profile"
       },
       {
+        "key": "trending",
+        "label": "Trending"
+      },
+      {
         "key": "bestsellers",
         "label": "Best sellers"
       },
@@ -4284,6 +4292,14 @@
       {
         "key": "blog",
         "label": "Skincare guide"
+      },
+      {
+        "key": "under54",
+        "label": "Under AED 54"
+      },
+      {
+        "key": "feature",
+        "label": "Two-column feature"
       },
       {
         "key": "about",

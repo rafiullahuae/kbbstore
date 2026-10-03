@@ -12,8 +12,8 @@ const { chromium } = require('playwright');
     const p = await b.newPage({ viewport: { width: w, height: w > 500 ? 900 : 844 }, deviceScaleFactor: 1 });
     await p.goto(base + '/', { waitUntil: 'networkidle' });
     // Scroll through so every lazy image loads before the full-page shot.
-    await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 60)); } window.scrollTo(0, 0); });
-    await p.waitForTimeout(600);
+    await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 150)); } window.scrollTo(0, 0); });
+    await p.waitForTimeout(1500);
     const m = await p.evaluate(() => {
       const rows = [];
       document.querySelectorAll('.kbb-home > section').forEach(s => {
