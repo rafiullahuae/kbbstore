@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.363
+**Product page: Desktop switches that work, Tabby & Tamara on laptops, the buy
+column in your own order on laptops, and the details block's headings and
+spacing.** Apply after .362. No plugin change. Runs two migrations (the tab gap
+per device, a cache clear).
+
+| Your report | Now |
+|---|---|
+| "there is control but i turned it off, still it's showing bundle section on desktop" | Sections → Options / bundles → Desktop off hides them at every laptop width (881–1608px measured 0px); it had never reached a simple product's bundles |
+| "i want tabby tamara section in desktop also with controls" | On laptops under the short description, ON as asked; Desktop sections → "Tabby & Tamara", and its laptop spacing |
+| "controls for changing positions of the sections on desktop too" | Desktop sections → Buy column: drag the 11 buy-column blocks; gaps follow your spacing sliders |
+| "need spacing beteen the tab heading and content ... hide ... THE DETAILS and section heading ... keep hide by default" | Separate phone and laptop "Space under the detail tab row" (lifted to at least 18px); the headings hidden by default with phone/laptop switches; leading blank lines in a tab body skipped |
+| "give control to hide unhide any section on desktop too" | Every Desktop sections row has an on/off, the same setting as the Sections tab where both exist |
+
 ## 2.60.362
 **Buy these together: the total and the buy-together discount are OFF until
 you switch them on.** Apply after .361. No plugin change. Runs one migration (a
