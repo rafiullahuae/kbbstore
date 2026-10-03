@@ -379,7 +379,7 @@ it('maps every Emails endpoint to an owner-only capability, and refuses the othe
     EmailsAdminRoutes::wire(app());
 
     $routes = EmailsAdminRoutes::registered();
-    expect($routes)->toHaveCount(6);
+    expect($routes)->toHaveCount(9);
 
     foreach ($routes as $route) {
         $cap = AdminCapabilities::for($route);
@@ -512,9 +512,10 @@ it('escapes everything the server hands the screens', function () {
     // The app password box never carries a value attribute.
     expect($screen)->toContain('id="eml_mail_gmail_password" data-eml-key="mail_gmail_password" placeholder=')
         ->and($screen)->not->toMatch('/eml_mail_gmail_password[^>]*value=/')
-        // Footer preview lines and the test-send's words go through esc().
-        ->and($screen)->toContain('a.lines.map(esc)')
+        // The test-send's words go through esc(), and the preview (the real
+        // order email) sits in an iframe whose script cannot run.
         ->and($screen)->toContain("esc(t.message || '')")
+        ->and($screen)->toContain('sandbox="" src="')
         // No layout-measuring JavaScript (CLAUDE.md rule 4).
         ->and($screen)->not->toContain('getBoundingClientRect')
         ->and($screen)->not->toContain('offsetHeight');
@@ -530,6 +531,9 @@ it('ships the email font as Outfit with the brand colours, and a stable public f
         'email_font_body' => 'outfit',
         'email_accent' => '#e0567b',
         'email_button' => '#c13e63',
+        'email_background' => '#fff8f5',
+        'email_text' => '#2a2228',
+        'email_logo' => '',
     ]);
 
     $present = app(EmailBranding::class)->look();
@@ -603,4 +607,90 @@ it('changes no email yet: the stored look is for the Look A restyle', function (
     $html = (string) (new OrderConfirmation(rkOrder()))->render();
 
     expect($html)->not->toContain('Outfit')->and($html)->not->toContain('@font-face');
+});
+
+/* ============================================= the approved mocks' extra fields */
+
+it('takes an email logo only from the Media Library or https, and puts it in the email', function () {
+    rkAs('owner');
+
+    foreach (['javascript:alert(1)', '//evil.example/x.png', '/x.png" onerror="y', 'data:image/png;base64,AAAA'] as $bad) {
+        $this->postJson('/admin-api/emails/branding', ['settings' => ['email_logo' => $bad]])->assertStatus(422);
+    }
+
+    $this->postJson('/admin-api/emails/branding', ['settings' => ['email_logo' => '/uploads/2026/10/kbb-logo.png']])->assertOk();
+    rkFresh();
+
+    expect(app(EmailBranding::class)->logoUrl())->toEndWith('/uploads/2026/10/kbb-logo.png')
+        ->and((string) (new OrderConfirmation(rkOrder()))->render())->toContain('/uploads/2026/10/kbb-logo.png');
+
+    /*
+     * MUTATION: drop the `//` and quote checks in EmailLook::clean() for LOGO
+     * and '//evil.example/x.png' saves — a scheme-relative src in every email.
+     */
+});
+
+it('sends a real customer email filled with the latest order to the typed address only', function () {
+    rkAs('owner');
+    $order = rkOrder();
+
+    // The test-send rebuilds the store's own mailer (server mail, the
+    // default), whose test-suite guard records what would have reached mail().
+    ServerMailTransport::$lastTestDelivery = null;
+
+    $r = $this->postJson('/admin-api/emails/test', ['to' => 'owner@example.com', 'which' => 'order_shipped'])->assertOk();
+    expect($r->json('ok'))->toBeTrue();
+
+    $sent = ServerMailTransport::$lastTestDelivery;
+
+    // The owner, never the customer on the order.
+    expect($sent)->not->toBeNull()
+        ->and($sent['to'])->toContain('owner@example.com')
+        ->and($sent['to'])->not->toContain($order->email)
+        ->and($sent['headers'] . $sent['subject'])->not->toContain($order->email)
+        ->and($sent['subject'])->toContain('KBB-RK-1');
+
+    $this->postJson('/admin-api/emails/test', ['to' => 'owner@example.com', 'which' => 'everything'])->assertStatus(422);
+});
+
+it('runs the domain check read-only from public DNS, and keeps the last answer', function () {
+    app()->bind(App\Services\Mail\DomainCheck::class, fn () => new class(app(MailSettings::class), app(SettingsService::class)) extends App\Services\Mail\DomainCheck {
+        protected function txt(string $host): array
+        {
+            return [
+                'kbeautybliss.com' => ['v=spf1 include:_spf.google.com ~all', 'google-site-verification=x'],
+                '_dmarc.kbeautybliss.com' => ['v=DMARC1; p=none'],
+            ][$host] ?? [];
+        }
+    });
+
+    rkSave(['mail_transport' => 'gmail', 'mail_from_address' => 'info@kbeautybliss.com']);
+    rkAs('owner');
+
+    $r = $this->postJson('/admin-api/emails/dns')->assertOk();
+    $byRecord = collect($r->json('last.records'))->keyBy('record');
+
+    expect($r->json('domain'))->toBe('kbeautybliss.com')
+        ->and($byRecord['SPF']['status'])->toBe('ok')
+        ->and($byRecord['DKIM']['status'])->toBe('missing')        // google._domainkey has no key
+        ->and($byRecord['DKIM']['host'])->toBe('google._domainkey.kbeautybliss.com')
+        ->and($byRecord['DMARC']['status'])->toBe('ok');
+
+    rkFresh();
+    expect($this->getJson('/admin-api/emails/overview')->json('dns.records'))->toHaveCount(3)
+        ->and($this->getJson('/admin-api/emails/dns')->json('last.domain'))->toBe('kbeautybliss.com');
+});
+
+it('serves the preview as the real order email, sandboxed, to the owner only', function () {
+    rkOrder();
+    rkAs('owner');
+
+    $r = $this->get('/admin-api/emails/preview')->assertOk();
+
+    expect((string) $r->headers->get('Content-Type'))->toContain('text/html')
+        ->and((string) $r->headers->get('Content-Security-Policy'))->toStartWith('sandbox')
+        ->and($r->getContent())->toContain('KBB-RK-1');
+
+    $this->actingAs(rkAdmin('manager'), 'admin');
+    $this->get('/admin-api/emails/preview')->assertForbidden();
 });

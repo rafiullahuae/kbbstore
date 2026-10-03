@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\NewOrderAlert;
+use App\Mail\OrderConfirmation;
+use App\Mail\OrderStatusChanged;
+use App\Models\Order;
+use App\Services\Mail\DomainCheck;
 use App\Services\Mail\EmailBranding;
 use App\Services\Mail\EmailLook;
 use App\Services\Mail\MailConfigurator;
@@ -66,6 +71,20 @@ class EmailsApiController extends Controller
         'mail_support_whatsapp',
         'mail_address_dubai',
         'mail_address_korea',
+        'mail_support_instagram',
+        'mail_signature',
+    ];
+
+    /**
+     * "Which email" on the test-send: the plain test message, or a real
+     * customer email filled with the shop's latest order. key => label.
+     */
+    public const SAMPLES = [
+        'plain' => 'A plain test message',
+        'order_confirmation' => 'Order confirmed — filled with your latest order',
+        'order_shipped' => 'Order shipped — filled with your latest order',
+        'order_cancelled' => 'Order cancelled — filled with your latest order',
+        'new_order_alert' => 'New-order alert — filled with your latest order',
     ];
 
     /** The two the owner chose between, in his order. */
@@ -96,6 +115,8 @@ class EmailsApiController extends Controller
             ],
             'from' => $this->settings->fromAddress(),
             'last_test' => $this->settings->lastTest(),
+            'dns' => app(DomainCheck::class)->last(),
+            'domain' => app(DomainCheck::class)->domain(),
             'sent_7d' => $this->sentLastWeek(),
             'emails' => $this->catalogue(),
         ]);
@@ -234,11 +255,78 @@ class EmailsApiController extends Controller
     {
         $data = $request->validate([
             'to' => ['required', 'string', 'max:255', new \App\Rules\StorefrontEmail],
+            // A select stores (here: sends) one of its own options.
+            'which' => ['sometimes', 'string', 'in:' . implode(',', array_keys(self::SAMPLES))],
         ]);
+
+        $which = (string) ($data['which'] ?? 'plain');
+        $sample = null;
+
+        if ($which !== 'plain') {
+            $order = Order::query()->with('items')->orderByDesc('id')->first();
+
+            if ($order === null) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => 'There is no order yet to fill that email with. Send the plain test message instead.',
+                ], 422);
+            }
+
+            $sample = $this->sample($which, $order);
+        }
 
         // 200 either way: a refused send is the answer the owner asked for,
         // carrying the transport's own words, not a broken request.
-        return response()->json($this->tester->send($data['to']));
+        return response()->json($this->tester->send($data['to'], $sample, 'test.' . $which));
+    }
+
+    /** The Mailable for a "Which email" choice. Never addressed to the order's customer. */
+    private function sample(string $which, Order $order): \Illuminate\Mail\Mailable
+    {
+        return match ($which) {
+            'order_shipped' => new OrderStatusChanged($order, 'shipped'),
+            'order_cancelled' => new OrderStatusChanged($order, 'cancelled'),
+            'new_order_alert' => new NewOrderAlert($order),
+            default => new OrderConfirmation($order),
+        };
+    }
+
+    // ----------------------------------------------------------- domain check
+
+    /** GET: the last answer, without looking anything up. */
+    public function dns(DomainCheck $check): JsonResponse
+    {
+        return response()->json(['domain' => $check->domain(), 'last' => $check->last()]);
+    }
+
+    /** POST: look the three records up now (public DNS, read-only). */
+    public function runDns(DomainCheck $check): JsonResponse
+    {
+        return response()->json(['domain' => $check->domain(), 'last' => $check->run()]);
+    }
+
+    // ---------------------------------------------------------------- preview
+
+    /**
+     * The real order confirmation, rendered with the saved settings and the
+     * latest order, for the Design & branding preview. Served as a document
+     * the screen puts in a sandboxed iframe; the CSP `sandbox` header makes
+     * the same true if it is ever opened on its own. Customer data stays
+     * behind the owner-only capability, like the order screens themselves.
+     */
+    public function preview(): \Illuminate\Http\Response
+    {
+        $order = Order::query()->with('items')->orderByDesc('id')->first();
+
+        $html = $order === null
+            ? '<p style="font-family:sans-serif;color:#626c80;padding:24px">The preview fills itself from the shop\'s latest order, and there is no order yet.</p>'
+            : (string) (new OrderConfirmation($order))->render();
+
+        return response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0">' . $html, 200, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+            'Content-Security-Policy' => 'sandbox; default-src \'none\'; img-src https: http: data:; style-src \'unsafe-inline\'; font-src https: http: data:',
+            'X-Frame-Options' => 'SAMEORIGIN',
+        ]);
     }
 
     /** @return list<string> */
@@ -278,6 +366,10 @@ class EmailsApiController extends Controller
             'effective_from' => $this->settings->fromAddress(),
             'active' => $this->configurator->activeTransport(),
             'last_test' => $this->settings->lastTest(),
+            'samples' => self::SAMPLES,
+            'has_order' => Order::query()->exists(),
+            'dns' => app(DomainCheck::class)->last(),
+            'domain' => app(DomainCheck::class)->domain(),
         ];
     }
 
@@ -318,9 +410,11 @@ class EmailsApiController extends Controller
             if (EmailLook::clean($key, $raw) === null) {
                 return response()->json([
                     'ok' => false,
-                    'error' => str_contains($key, 'font')
-                        ? 'That font is not one of the choices on this screen.'
-                        : 'A colour must be written as # and six hex digits, e.g. #C13E63.',
+                    'error' => match (true) {
+                        str_contains($key, 'font') => 'That font is not one of the choices on this screen.',
+                        $key === EmailLook::LOGO => 'The logo must be a picture from the Media Library or an https:// address.',
+                        default => 'A colour must be written as # and six hex digits, e.g. #C13E63.',
+                    },
                     'rejected' => [$key],
                 ], 422);
             }
@@ -339,6 +433,8 @@ class EmailsApiController extends Controller
             'mail_support_whatsapp' => ['string', 'max:60', 'regex:/^\+?[0-9][0-9 ()\-]{5,}$/'],
             'mail_address_dubai' => ['string', 'max:300'],
             'mail_address_korea' => ['string', 'max:300'],
+            'mail_support_instagram' => ['string', 'max:200'],
+            'mail_signature' => ['string', 'max:500'],
         ];
 
         $rules = [];
@@ -394,7 +490,12 @@ class EmailsApiController extends Controller
                 'mail_support_whatsapp' => (string) $values['mail_support_whatsapp'],
                 'mail_address_dubai' => (string) $values['mail_address_dubai'],
                 'mail_address_korea' => (string) $values['mail_address_korea'],
+                'mail_support_instagram' => (string) $values['mail_support_instagram'],
+                'mail_signature' => (string) $values['mail_signature'],
             ],
+            // Where Design & branding's "Send test" sends: the last address
+            // a test went to from Sending & delivery.
+            'last_to' => (string) ($this->settings->lastTest()['to'] ?? ''),
             // Fonts and colours: the stored value, and the closed font list.
             'look' => app(EmailLook::class)->values(),
             'fonts' => array_map(static fn (array $f): string => $f[0], EmailLook::FONTS),

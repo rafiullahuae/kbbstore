@@ -55,6 +55,14 @@ class CustomerPasswordReset extends Notification
          * AND A TEXT PART (audit B2): [html, text] rather than the HTML alone,
          * which spam filters score down and a text-only client shows blank.
          */
+        // Named in the delivery record, so Emails → Sent mail → Account can
+        // find it (MailLog labels the NEXT message; this is built right
+        // before it is sent). Never allowed to stop the email itself.
+        try {
+            app(\App\Services\Mail\MailLog::class)->labelNext('account.password_reset');
+        } catch (\Throwable) {
+        }
+
         return (new MailMessage)
             ->mailer(MailConfigurator::MAILER)
             ->subject('Reset your K Beauty Bliss password')

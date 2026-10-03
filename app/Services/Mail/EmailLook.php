@@ -39,6 +39,18 @@ final class EmailLook
 
     public const BUTTON = 'email_button';
 
+    public const BACKGROUND = 'email_background';
+
+    public const TEXT = 'email_text';
+
+    /**
+     * The email logo: a picture chosen from the Media Library on Emails →
+     * Design & branding. Blank means "the wordmark in text", which shows even
+     * when a mail client blocks pictures. EmailBranding::logoUrl() prefers it
+     * over Store → Business Details' org_logo.
+     */
+    public const LOGO = 'email_logo';
+
     /** key => [label, CSS font stack]. Constants, so a stack is never operator text. */
     public const FONTS = [
         'outfit' => ['Outfit (the shop’s heading font)', "'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"],
@@ -51,6 +63,9 @@ final class EmailLook
         self::BODY_FONT => 'outfit',
         self::ACCENT => '#e0567b',      // EmailBranding::PALETTE['pink'], as stored (lower case)
         self::BUTTON => '#c13e63',      // EmailBranding::PALETTE['pinkDeep']
+        self::BACKGROUND => '#fff8f5',  // EmailBranding::PALETTE['cream']
+        self::TEXT => '#2a2228',        // EmailBranding::PALETTE['ink']
+        self::LOGO => '',
     ];
 
     /**
@@ -115,6 +130,23 @@ final class EmailLook
             return array_key_exists($value, self::FONTS) ? $value : null;
         }
 
+        /*
+         * A logo is a site-relative path (what the Media Library hands back)
+         * or an http(s) URL — scheme-checked before it can become a src
+         * (CLAUDE.md rule 5). Blank clears it. `//host` (scheme-relative) and
+         * anything with a quote, a bracket or whitespace are refused.
+         */
+        if ($key === self::LOGO) {
+            if ($value === '') {
+                return '';
+            }
+
+            $ok = (str_starts_with($value, '/') && ! str_starts_with($value, '//'))
+                || preg_match('#^https?://#i', $value) === 1;
+
+            return $ok && strlen($value) <= 500 && preg_match('/[\s"\'<>()]/', $value) !== 1 ? $value : null;
+        }
+
         return preg_match('/^#[0-9a-fA-F]{6}$/', $value) === 1 ? strtolower($value) : null;
     }
 
@@ -133,6 +165,8 @@ final class EmailLook
             'bodyFont' => self::FONTS[$v[self::BODY_FONT]][1],
             'accent' => $v[self::ACCENT],
             'button' => $v[self::BUTTON],
+            'background' => $v[self::BACKGROUND],
+            'text' => $v[self::TEXT],
             'fontFaceCss' => $usesOutfit
                 ? "@font-face{font-family:'Outfit';src:url('" . Url::external(self::FONT_PATH)
                     . "') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}"

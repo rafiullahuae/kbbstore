@@ -43,7 +43,15 @@ class MailTester
     /**
      * @return array{ok:bool,status:string,message:string,error:?string,to:string,transport:string,message_id:?string,at:string,duration_ms:int}
      */
-    public function send(string $to): array
+    /**
+     * $sample (Lane RK, Emails → Sending & delivery → "Which email"): a real
+     * customer email, already filled with the shop's latest order, sent to
+     * the address typed INSTEAD of the plain test message — so the owner sees
+     * exactly what a customer would. Addressed here, to $to only: the order
+     * Mailables carry no recipient of their own (OrderMailer adds it), so the
+     * customer on that order is never mailed by a test.
+     */
+    public function send(string $to, ?\Illuminate\Mail\Mailable $sample = null, string $label = 'test'): array
     {
         $transport = $this->settings->transport();
 
@@ -111,9 +119,13 @@ class MailTester
         $log = $this->log();
 
         try {
-            $log?->labelNext('test');
+            $log?->labelNext($label);
 
-            $this->dispatch($to);
+            if ($sample !== null) {
+                Mail::mailer(MailConfigurator::MAILER)->to($to)->send($sample);
+            } else {
+                $this->dispatch($to);
+            }
         } catch (\Throwable $e) {
             $log?->recordFailure($e);
 

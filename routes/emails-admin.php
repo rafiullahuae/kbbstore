@@ -28,6 +28,9 @@ declare(strict_types=1);
 |     POST /admin-api/emails/test       emails.manage   throttle 6/min
 |     GET  /admin-api/emails/branding   emails.manage
 |     POST /admin-api/emails/branding   emails.manage
+|     GET  /admin-api/emails/dns        emails.manage   last domain check
+|     POST /admin-api/emails/dns        emails.manage   look SPF/DKIM/DMARC up now, throttle 10/min
+|     GET  /admin-api/emails/preview    emails.manage   the real order email, for the preview iframe
 |
 | Emails → Sent mail adds no route: it reuses GET /admin-api/mail/log and the
 | outbound backlog, which already exist, through the old screen's own loaders.
@@ -55,3 +58,13 @@ Route::post('/emails/test', [EmailsApiController::class, 'test'])
 
 Route::get('/emails/branding', [EmailsApiController::class, 'branding']);
 Route::post('/emails/branding', [EmailsApiController::class, 'saveBranding']);
+
+/*
+ * The domain check: public DNS, read-only. Throttled because each press is
+ * three outbound lookups from the shop's server.
+ */
+Route::get('/emails/dns', [EmailsApiController::class, 'dns']);
+Route::post('/emails/dns', [EmailsApiController::class, 'runDns'])
+    ->middleware('throttle:10,1');
+
+Route::get('/emails/preview', [EmailsApiController::class, 'preview']);

@@ -703,6 +703,9 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // is an open relay.
         require __DIR__.'/mail-admin.php';
 
+        // Emails → Overview / Sending & delivery / Design & branding (Lane RK, E1).
+        require __DIR__.'/emails-admin.php';
+
         // Categories and attributes. Same guarded group: these write catalogue
         // records and accept an uploaded image.
         require __DIR__.'/catalog-admin.php';

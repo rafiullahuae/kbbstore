@@ -62,7 +62,7 @@ async function open(page, id) {
     await open(page, 'emails-sending');
     await shot(page, 'e2-sending-server', w);
     // The owner picks Google: the account and app-password boxes appear.
-    await page.check('input[name=emlTransport][value=gmail]');
+    await page.click('label.eml-choice:has(input[value=gmail])');
     await page.waitForTimeout(300);
     await shot(page, 'e2-sending-google-picked', w);
 

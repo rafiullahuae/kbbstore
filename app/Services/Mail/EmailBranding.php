@@ -254,7 +254,13 @@ class EmailBranding
             return null;
         }
 
-        $raw = trim((string) ($this->settings->get('org_logo', '') ?? ''));
+        // The email's own logo (Emails → Design & branding, Lane RK) first,
+        // re-checked on the way out; then Store → Business Details' org_logo.
+        $raw = (string) (EmailLook::clean(EmailLook::LOGO, $this->settings->get(EmailLook::LOGO, '')) ?? '');
+
+        if ($raw === '') {
+            $raw = trim((string) ($this->settings->get('org_logo', '') ?? ''));
+        }
 
         if ($raw === '') {
             return null;

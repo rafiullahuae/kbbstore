@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 /**
  * Clear the caches for the Emails menu (Lane RK, package E1).
  *
- * The package adds six routes under /admin-api/emails (routes/emails-admin.php),
+ * The package adds nine routes under /admin-api/emails (routes/emails-admin.php),
  * so the compiled route table is deleted — without that every Emails screen
  * answers 404 until somebody clears it by hand (CLAUDE.md: every package that
  * adds a route ships one of these). Compiled config, views and the opcache go

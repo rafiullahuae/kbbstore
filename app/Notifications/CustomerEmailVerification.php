@@ -44,6 +44,14 @@ class CustomerEmailVerification extends Notification
     {
         // The store's own mailer (audit B3) and a text part (audit B2), for
         // the reasons CustomerPasswordReset::toMail() sets out.
+        // Named in the delivery record, so Emails → Sent mail → Account can
+        // find it (MailLog labels the NEXT message; this is built right
+        // before it is sent). Never allowed to stop the email itself.
+        try {
+            app(\App\Services\Mail\MailLog::class)->labelNext('account.verify_email');
+        } catch (\Throwable) {
+        }
+
         return (new MailMessage)
             ->mailer(MailConfigurator::MAILER)
             ->subject('Confirm your email address')
