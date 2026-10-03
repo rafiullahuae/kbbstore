@@ -477,8 +477,15 @@ it('shows a card only while both its own switch and the shop\'s mark for that me
     expect(pmsPage(pmsProduct()))->not->toContain('pdp-paylater');
 });
 
-it('keeps the pay-later section off the laptop', function () {
-    expect(pmsCss())->toContain('@media (min-width:881px){.pdp .pm-paylater{display:none}}');
+it('draws the pay-later section on the laptop too, behind its own laptop switch', function () {
+    /*
+     * REVERSED BY LANE RG, because the owner asked: "Also i want tabby tamara
+     * section in desktop also with controls." This used to pin the laptop hide
+     * (`.pdp .pm-paylater{display:none}` from 881px). Now the only laptop rule
+     * that hides it is Desktop sections' switch, `pd-off-paylater`.
+     */
+    expect(pmsCss())->not->toContain('.pdp .pm-paylater{display:none}');
+    expect(pmsCss())->toContain('.pdp-page.pd-off-paylater .pm-paylater');
 });
 
 /* ═══════════════ 7. the share button contract with Lane QB ═══════════════ */

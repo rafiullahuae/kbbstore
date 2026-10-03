@@ -145,6 +145,10 @@ class ProductLayout
         'opt_gap_d' => '--pl-opt-gap-d',
         'rule_pad_d' => '--pl-rule-pad-d',
         'brand_s' => '--pl-brand-s',
+
+        /* Lane RG — the tab row's laptop gap, and Tabby & Tamara on a laptop. */
+        'tab_body_gap_d' => '--pl-tab-body-gap-d',
+        'paylater_gap_d' => '--pl-paylater-gap-d',
     ];
 
     /** key => [type, label, default, help, options] */
@@ -189,8 +193,18 @@ class ProductLayout
             ['min' => 4, 'max' => 48, 'step' => 1, 'unit' => 'px']],
 
         // .details .dtabbar{margin-block-end:18px}
-        'tab_body_gap' => ['range', 'Space under the detail tab row', 18,
-            'Between the tab row and the text it opens.',
+        /*
+         * (Lane RG) "give controls of details tab heading and the content
+         * between spacing ... also seperate for mobile." This key was one value
+         * for both devices; it is now the PHONE's, the head_gap / head_gap_d
+         * pattern, and `tab_body_gap_d` is the laptop's. The gap they set is the
+         * whole gap: a tab body's leading blank lines are not drawn and its
+         * first line gives up its top margin (Lane RG, kbb-product.css).
+         */
+        'tab_body_gap' => ['range', 'Space under the detail tab row · phone', 18,
+            'Between the tab row (“Description”, “Ingredients”…) and the first line of the text it opens, on every tab.',
+            ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        'tab_body_gap_d' => ['range', 'Space under the detail tab row · laptop', 18, '',
             ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
 
         /* ═══════════ SPACING · the buy column ═════════════════════════════ */
@@ -237,6 +251,10 @@ class ProductLayout
             'The air above the thin line over “Choose your option”.',
             ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
         'opt_gap_d' => ['range', '“Read more” → options · laptop', 20, '',
+            ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        // (Lane RG) .pdp .pm-paylater{margin-block-start:16px} from 881px.
+        'paylater_gap_d' => ['range', 'Space above Tabby & Tamara · laptop', 16,
+            'Between the short description and the two pay-later cards on a laptop. On a phone the cards are a section of Mobile sections and take its spacing.',
             ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
 
         /*
@@ -416,11 +434,11 @@ class ProductLayout
             ['gal_top_m', 'gal_top_d', 'thumb_over', 'badge_bg', 'badge_fg']],
         'sp_page' => ['Spacing · Page',
             'The gaps between the big blocks of the page — the picture, the buy column, and the three sections under them.',
-            ['sec_pad', 'thumb_gap', 'tab_gap', 'tab_body_gap']],
+            ['sec_pad', 'thumb_gap', 'tab_gap', 'tab_body_gap', 'tab_body_gap_d']],
         'sp_buy' => ['Spacing · Buy column',
             'Every gap down the top of the buy column in reading order, with a phone and a laptop number for each: photo → brand → name → rating → short description → “Read more” → options. Then the seams, the trust lines and the payment icons. On a phone the space BETWEEN two sections is Mobile sections’ even gap (Lane QA), so the phone numbers here that sit between sections — photo → brand, name → rating, the seams, the trust lines, the payment icons — no longer move the phone page; the ones inside a section (brand → name, blurb → “Read more”) still do, and every laptop number is unchanged.',
             ['buybox_gap', 'buybox_gap_d', 'head_gap', 'head_gap_d', 'rate_gap', 'rate_gap_d',
-                'desc_gap_m', 'desc_gap_d', 'more_gap_m', 'more_gap_d', 'opt_gap_m', 'opt_gap_d',
+                'desc_gap_m', 'desc_gap_d', 'more_gap_m', 'more_gap_d', 'opt_gap_m', 'opt_gap_d', 'paylater_gap_d',
                 'name_price_gap', 'rule_pad', 'rule_pad_d', 'rule_gap',
                 'trust_gap', 'trust_line_gap', 'chips_gap']],
         'ty_buy' => ['Type · Buy column',
@@ -690,6 +708,10 @@ class ProductLayout
             '--pl-opt-gap-d:'.$n('opt_gap_d').'px',
             '--pl-rule-pad-d:'.$n('rule_pad_d').'px',
             '--pl-brand-s:'.self::px($n('brand_s')),
+
+            /* Lane RG */
+            '--pl-tab-body-gap-d:'.$n('tab_body_gap_d').'px',
+            '--pl-paylater-gap-d:'.$n('paylater_gap_d').'px',
         ];
 
         $out = [];

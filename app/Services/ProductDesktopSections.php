@@ -65,9 +65,94 @@ namespace App\Services;
  *
  * One row of `settings`, read through the snapshot SettingsService already
  * holds for the request; layout() is memoised on the instance.
+ *
+ * ══ LANE RG: ON/OFF FOR EVERY LAPTOP SECTION, AND THE BUY COLUMN'S ORDER ═══
+ *
+ * The owner, 3 October:
+ *
+ *   "also give control to hide unhide any section on desktop too, like
+ *    bundles i want to hide on desktop too."
+ *   "in fact there is control but i turned it off, still it's showing bundle
+ *    section on desktop."
+ *   "and also controls for changing positions of the sections on desktop too."
+ *
+ * ── THE BUNDLES BUG ─────────────────────────────────────────────────────────
+ *
+ * Sections → "Options / bundles" → Desktop wrote `product_sections.options.
+ * desktop = false`, and the template read it in exactly ONE place: the class
+ * on a VARIABLE product's `.variants` list. A simple product's quantity
+ * bundles ("Choose your option · 1 unit / 2-pack / 3-pack") are drawn by the
+ * `@elseif ($bundles)` branch, whose `.variants` never carried the class, and
+ * the "Choose your option" label above either list never did. So on his
+ * simple product the switch did nothing at any width, and on a variable one
+ * it left the heading standing over nothing. And `.d-off` itself only hides
+ * from 901px (kbb.css, the homepage's breakpoint), so 881–900px — already the
+ * laptop layout of this page — showed every module switched off for laptops.
+ *
+ * Fixed here by switching SECTIONS, not fragments: the wrapper carries
+ * `pd-off-<section>` for every section off on a laptop, and kbb-product.css
+ * hides the section's own box inside `min-width:881px` — the same shape and
+ * the same breakpoint as Mobile sections' `pm-off-<section>` on the phone.
+ *
+ * ── ONE STORED VALUE PER SWITCH ─────────────────────────────────────────────
+ *
+ * Eight sections ARE a Sections-tab module (ProductMobileSections::MODULE:
+ * short, bundles→options, trust, paychips, buytogether→fbt, details→tabs,
+ * reviews, related). Their laptop switch is that module's `desktop` value in
+ * `product_sections` — read from it and written into it, never copied. The
+ * other seven had no laptop switch at all; theirs is the one list
+ * `pdpds_off` (keys switched OFF, so a shop that never saved is all on).
+ * The photograph is not in either list: it is the laptop page's left column,
+ * and "off" would leave half the page empty.
+ *
+ * ── THE BUY COLUMN, REORDERED ───────────────────────────────────────────────
+ *
+ * RF's header above explains why the column was left alone: its gaps are
+ * margins collapsing through the wrappers. That stays true in the DEFAULT
+ * order — nothing below prints a byte until he moves a block. Once he does,
+ * `.pdp-page` gains `pdsb-on pdsb-f-<first>` and `--pdsb-o-<key>:<int>`, and
+ * inside `min-width:881px` the buy column becomes a flex column in which every
+ * block's outer margins are zeroed and each block carries ONE explicit gap
+ * above it: the slider that sets that same gap today (Spacing · Buy column,
+ * Trust · Spacing). So the default order drawn this way measures identical,
+ * and any other order spaces each block by its own slider. The first block
+ * drawn has no gap above it.
  */
 class ProductDesktopSections
 {
+    /** Lane RG: the buy column's laptop order, ONE row, a JSON list of keys. */
+    public const BUY_ORDER_KEY = 'pdpds_buy_order';
+
+    /** Lane RG: the sections switched OFF for laptops that no Sections-tab module owns. */
+    public const OFF_KEY = 'pdpds_off';
+
+    /**
+     * Lane RG: the blocks of the laptop buy column, in TODAY's order (the DOM
+     * order, which is the default). Keys are Mobile sections' own.
+     * key => [label, what it is].
+     *
+     * @var array<string, array{0: string, 1: string}>
+     */
+    public const BUY = [
+        'title' => ['Title', 'The brand line and the product name, with the share icon.'],
+        'price' => ['Price row', 'Struck-through price, live price, discount capsule and the rating.'],
+        'short' => ['Short description', 'The blurb with “Read more”. On a set it stays under “What is in this set”.'],
+        'paylater' => ['Tabby & Tamara', 'Two small cards: monthly payments with tabby, instalments with tamara. Their wording is on Mobile sections.'],
+        'bundles' => ['Bundle section', '“Choose your option” — the quantity bundles, a variable product’s options, or a set’s “What is in this set”.'],
+        'ready' => ['Ready to ship', 'The stock line and the dispatch countdown.'],
+        'delivery' => ['Delivery box', 'The yellow delivery box.'],
+        'cart' => ['Quantity + Add to cart', 'The quantity stepper and the button (and Buy it now, and “tell me when it is back”).'],
+        'auth' => ['Authenticity row', '“Authenticity Guaranteed” with its slide-open explanation.'],
+        'trust' => ['Trust lines', '100% authentic · delivery · pay-later rows.'],
+        'paychips' => ['Payment chips', 'Tabby · Tamara · Visa · Mastercard · COD chips.'],
+    ];
+
+    /** @var list<string>|null */
+    private ?array $buyMemo = null;
+
+    /** @var array<string, bool>|null */
+    private ?array $laptopMemo = null;
+
     /** The stored order: ONE row, a JSON list of section keys. */
     public const ORDER_KEY = 'pdpds_order';
 
@@ -176,6 +261,213 @@ class ProductDesktopSections
         $this->memo = null;
     }
 
+    /* ═══════════════════ Lane RG: the buy column's order ═══════════════════ */
+
+    /** @return list<string> */
+    public static function defaultBuyOrder(): array
+    {
+        return array_keys(self::BUY);
+    }
+
+    /** @return list<string> */
+    public function buyOrder(): array
+    {
+        return $this->buyMemo ??= self::cleanList($this->settings->get(self::BUY_ORDER_KEY, null), self::defaultBuyOrder());
+    }
+
+    public function isBuyDefault(): bool
+    {
+        return $this->buyOrder() === self::defaultBuyOrder();
+    }
+
+    /**
+     * Strict, like validate(): an unknown key or a repeat is refused, a
+     * missing key appended in the default order.
+     *
+     * @return list<string>|string
+     */
+    public static function validateBuy(mixed $posted): array|string
+    {
+        if (! is_array($posted) || ! array_is_list($posted)) {
+            return 'The buy column order must be a list.';
+        }
+
+        $order = [];
+
+        foreach ($posted as $key) {
+            if (! is_string($key) || ! isset(self::BUY[$key])) {
+                return 'Unknown buy column block: '.(is_scalar($key) ? (string) $key : gettype($key)).'.';
+            }
+
+            if (in_array($key, $order, true)) {
+                return "Buy column block listed twice: {$key}.";
+            }
+
+            $order[] = $key;
+        }
+
+        return self::cleanList($order, self::defaultBuyOrder());
+    }
+
+    /** @param list<string> $order a list validateBuy() returned */
+    public function saveBuy(array $order): void
+    {
+        $this->settings->set(self::BUY_ORDER_KEY, self::cleanList($order, self::defaultBuyOrder()));
+        $this->buyMemo = null;
+    }
+
+    /**
+     * @param  list<string>  $defaults
+     * @return list<string>
+     */
+    private static function cleanList(mixed $raw, array $defaults): array
+    {
+        $order = [];
+
+        foreach (is_array($raw) ? $raw : [] as $key) {
+            if (is_string($key) && in_array($key, $defaults, true) && ! in_array($key, $order, true)) {
+                $order[] = $key;
+            }
+        }
+
+        foreach ($defaults as $key) {
+            if (! in_array($key, $order, true)) {
+                $order[] = $key;
+            }
+        }
+
+        return $order;
+    }
+
+    /* ═══════════════ Lane RG: one laptop switch per section ════════════════ */
+
+    /**
+     * Every section that has a laptop switch: the buy column's eleven and the
+     * four full-width blocks, in that order.
+     *
+     * @return list<string>
+     */
+    public static function switchable(): array
+    {
+        return [...array_keys(self::BUY), ...array_keys(self::SECTIONS)];
+    }
+
+    /** The Sections-tab module whose `desktop` value IS this section's switch, or null. */
+    public static function moduleOf(string $section): ?string
+    {
+        $module = array_search($section, ProductMobileSections::MODULE, true);
+
+        return is_string($module) ? $module : null;
+    }
+
+    /**
+     * section => on a laptop?, for every switchable section. A module-owned
+     * section reads `product_sections` through ProductSections (its desktop
+     * default included); the rest are on unless listed in `pdpds_off`.
+     *
+     * @return array<string, bool>
+     */
+    public function laptop(): array
+    {
+        if ($this->laptopMemo !== null) {
+            return $this->laptopMemo;
+        }
+
+        $modules = app(ProductSections::class)->all();
+        $off = $this->settings->get(self::OFF_KEY, null);
+        $off = is_array($off) ? $off : [];
+        $out = [];
+
+        foreach (self::switchable() as $key) {
+            $module = self::moduleOf($key);
+            $out[$key] = $module !== null
+                ? (bool) ($modules[$module]['desktop'] ?? true)
+                : ! in_array($key, $off, true);
+        }
+
+        return $this->laptopMemo = $out;
+    }
+
+    /**
+     * Strict: a POSTed `{section: bool}` map. An unknown key or a non-boolean
+     * is refused.
+     *
+     * @return array<string, bool>|string
+     */
+    public static function validateLaptop(mixed $posted): array|string
+    {
+        if (! is_array($posted) || ($posted !== [] && array_is_list($posted))) {
+            return 'The laptop switches must be a map of section to on/off.';
+        }
+
+        $all = self::switchable();
+        $clean = [];
+
+        foreach ($posted as $key => $on) {
+            if (! is_string($key) || ! in_array($key, $all, true)) {
+                return 'Unknown desktop section: '.(is_scalar($key) ? (string) $key : gettype($key)).'.';
+            }
+
+            if (! is_bool($on) && ! in_array($on, [0, 1, '0', '1'], true)) {
+                return "The laptop switch for {$key} must be on or off.";
+            }
+
+            $clean[$key] = (bool) $on;
+        }
+
+        return $clean;
+    }
+
+    /**
+     * Write each switch where it LIVES: a module-owned section into its
+     * `product_sections` row's `desktop` (the row's `mobile` untouched — the
+     * same targeted write the Buy these together tab makes for `fbt`), the
+     * rest into `pdpds_off`.
+     *
+     * @param  array<string, bool>  $switches  a map validateLaptop() returned
+     */
+    public function saveLaptop(array $switches): void
+    {
+        $map = $this->settings->get('product_sections');
+        $map = is_array($map) ? $map : [];
+        $mapChanged = false;
+
+        $off = $this->settings->get(self::OFF_KEY, null);
+        $off = array_values(array_filter(is_array($off) ? $off : [], static fn ($k) => is_string($k) && isset(self::BUY[$k]) && self::moduleOf($k) === null));
+        $offChanged = false;
+
+        foreach ($switches as $key => $on) {
+            $module = self::moduleOf($key);
+
+            if ($module !== null) {
+                $row = is_array($map[$module] ?? null) ? $map[$module] : [];
+                $default = (bool) (ProductSections::REGISTRY[$module][2] ?? true);
+                $map[$module] = ['desktop' => $on, 'mobile' => (bool) ($row['mobile'] ?? $default)];
+                $mapChanged = true;
+
+                continue;
+            }
+
+            $offChanged = true;
+            $off = array_values(array_diff($off, [$key]));
+
+            if (! $on) {
+                $off[] = $key;
+            }
+        }
+
+        if ($mapChanged) {
+            $this->settings->set('product_sections', $map);
+        }
+
+        if ($offChanged) {
+            // Stored in the buy column's own order, so the row reads the same however it was clicked.
+            $this->settings->set(self::OFF_KEY, array_values(array_intersect(self::defaultBuyOrder(), $off)));
+        }
+
+        $this->laptopMemo = null;
+    }
+
     /** Is the page in the order it has always been drawn in? */
     public function isDefault(): bool
     {
@@ -240,9 +532,11 @@ class ProductDesktopSections
 
         return [
             'buytogether' => $laptop('fbt') && ! $modules->hidden('fbt') && $has($buyTogether),
-            // The heading and its eyebrow are drawn whatever the tabs switch says.
-            'details' => true,
-            'reviews' => ! $modules->hidden('reviews'),
+            /* Lane RG: the section's laptop switch now hides the WHOLE section
+               (`pd-off-details`, `pd-off-reviews`), heading included, so a block
+               switched off for laptops is not "drawn" for the margin rule. */
+            'details' => $laptop('tabs'),
+            'reviews' => $laptop('reviews') && ! $modules->hidden('reviews'),
             'related' => $laptop('related') && $has($alsoLike),
         ];
     }
@@ -253,15 +547,52 @@ class ProductDesktopSections
      *
      * @param  array<string, bool>  $drawn
      */
-    public function wrapperClass(array $drawn = []): string
+    public function wrapperClass(array $drawn = [], array $buyDrawn = []): string
     {
-        if ($this->isDefault()) {
-            return '';
+        $out = '';
+
+        // Lane RG: one class per section switched off for laptops. Literal
+        // names from BUY / SECTIONS keys; none while everything is on.
+        foreach ($this->laptop() as $key => $on) {
+            if (! $on) {
+                $out .= ' pd-off-'.$key;
+            }
         }
 
-        $after = $this->afterReviews($drawn);
+        if (! $this->isDefault()) {
+            $after = $this->afterReviews($drawn);
+            $out .= ' pds-on'.($after === null ? '' : ' pds-ar-'.$after);
+        }
 
-        return ' pds-on'.($after === null ? '' : ' pds-ar-'.$after);
+        if (! $this->isBuyDefault()) {
+            $first = $this->firstBuy($buyDrawn);
+            $out .= ' pdsb-on'.($first === null ? '' : ' pdsb-f-'.$first);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Lane RG: the buy-column block drawn FIRST on this laptop page, which is
+     * the one with no gap above it. A block switched off for laptops is
+     * skipped, and so is one this product does not draw at all — `$buyDrawn`
+     * is the template's answer for the three that depend on the product (a
+     * blurb, the pay-later cards, an options list); every other block is
+     * always drawn.
+     *
+     * @param  array<string, bool>  $buyDrawn
+     */
+    public function firstBuy(array $buyDrawn = []): ?string
+    {
+        $laptop = $this->laptop();
+
+        foreach ($this->buyOrder() as $key) {
+            if (($laptop[$key] ?? true) && ($buyDrawn[$key] ?? true)) {
+                return $key;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -270,40 +601,56 @@ class ProductDesktopSections
      */
     public function wrapperStyle(): string
     {
-        if ($this->isDefault()) {
-            return '';
-        }
-
         $out = '';
 
-        foreach ($this->order() as $i => $key) {
-            $out .= ';--pds-o-'.$key.':'.($i + 1);
+        if (! $this->isDefault()) {
+            foreach ($this->order() as $i => $key) {
+                $out .= ';--pds-o-'.$key.':'.($i + 1);
+            }
+        }
+
+        // Lane RG: the buy column's positions, only once he has moved one.
+        if (! $this->isBuyDefault()) {
+            foreach ($this->buyOrder() as $i => $key) {
+                $out .= ';--pdsb-o-'.$key.':'.($i + 1);
+            }
         }
 
         return $out;
     }
 
     /**
-     * The screen's payload: the list in the saved order, each row with the
-     * laptop switch the Sections tab holds for it.
+     * The screen's payload: both lists in their saved order, each row with
+     * its ONE laptop switch (read from where it lives — see laptop()) and,
+     * for a module-owned row, the Sections-tab module it is.
      *
-     * @return array{list: list<array<string, mixed>>, defaults: list<string>}
+     * @return array{list: list<array<string, mixed>>, defaults: list<string>, buy: list<array<string, mixed>>, buy_defaults: list<string>}
      */
     public function payload(): array
     {
-        $modules = app(ProductSections::class)->all();
+        $laptop = $this->laptop();
+        $row = static fn (string $key, string $label, string $desc): array => [
+            'key' => $key,
+            'label' => $label,
+            'description' => $desc,
+            'desktop' => $laptop[$key] ?? true,
+            'module' => self::moduleOf($key),
+        ];
+
         $list = [];
 
         foreach ($this->order() as $key) {
-            [$label, $desc, $module] = self::SECTIONS[$key];
-            $list[] = [
-                'key' => $key,
-                'label' => $label,
-                'description' => $desc,
-                'desktop' => (bool) ($modules[$module]['desktop'] ?? true),
-            ];
+            [$label, $desc] = self::SECTIONS[$key];
+            $list[] = $row($key, $label, $desc);
         }
 
-        return ['list' => $list, 'defaults' => self::defaultOrder()];
+        $buy = [];
+
+        foreach ($this->buyOrder() as $key) {
+            [$label, $desc] = self::BUY[$key];
+            $buy[] = $row($key, $label, $desc);
+        }
+
+        return ['list' => $list, 'defaults' => self::defaultOrder(), 'buy' => $buy, 'buy_defaults' => self::defaultBuyOrder()];
     }
 }
