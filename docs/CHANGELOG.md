@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.370
+**Homepage: Big savings bundles as a carousel.** Apply after .369. No plugin
+change. Runs one migration (a cache clear).
+
+| Your report | Now |
+|---|---|
+| "i need the bundle section to be carousel with proper beautiful arrows, give controls of everything for desktop mobile both. center the heading, redesign the All Sets button beautifully" | The row is now a swipeable carousel with two round arrows set at the middle of the photos, a centred heading and subtitle, and an All sets pill button (pink, with a round arrow) on the right of the heading on desktop. Measured: 4 cards per view at 1280 (289px each), 1440 (328px) and 1000 (222px); 2 per view at 390 (175px); one arrow press moves one full view. The page is never wider than the window (1000/1280/1440/390 all equal). The product cards inside are byte-identical |
+| "i want this button in mobile at bottom of carsousel, give controls of spacing etc." | On phones the button sits centred under the carousel. Controls at **Appearance → Homepage content → Big savings bundles**: heading, subtitle, button text and link; desktop and mobile separately for layout (carousel/grid), cards per view, arrows on/off, button place (top/bottom/off), side padding, gap under the heading and gap above the button; heading alignment; auto-slide (off/3/5/7/10 s) |
+
+Files (10): app/Http/Controllers/Admin/HomepageApiController.php, app/Services/HomepageContent.php, app/Support/HomeBundles.php, database/migrations/2027_07_24_000300_clear_caches_home_bundles_carousel.php, public/build/assets/kbb-B1Py2VEu.css, public/build/manifest.json, resources/css/kbb/kbb.css, resources/views/admin/partials/homepage-content-screen.blade.php, resources/views/partials/home/grid.blade.php, resources/views/store/home.blade.php.
+
 ## 2.60.369
 **Desktop: no sideways scroll from the menu bar.** Apply after .368. No plugin
 change. No migration.
