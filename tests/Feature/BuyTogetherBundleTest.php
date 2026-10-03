@@ -237,13 +237,21 @@ it('prints four across with the fifth waiting, the struck total and the saving, 
         ->toContain('data-tiers="{&quot;3&quot;:5,&quot;4&quot;:10,&quot;5&quot;:15,&quot;6&quot;:15}"');
     expect(substr_count($html, 'class="bt-card'))->toBe(5);
 
-    // Five ticked at 15%: 69 + 108 + 80 + 95 + 60 = 412, regular 457.
+    // Five ticked at 15%: 69 + 108 + 80 + 95 + 60 = 412.
     // Off: 69→58.65→58 (11) 108→91.80→91 (17) 80→68 (12) 95→80.75→80 (15) 60→51 (9) = 64.
+    // 2.60.361 (owner: "you're saving calculate only the discounted price which
+    // is set for this buy together section only"): the struck total is 412,
+    // the products' own prices, and the saving is the 64 alone -- not 109,
+    // which also counted the moisturizer's own sale (153 → 108).
+    // MUTATION, RUN: put `max($btWas, $btNow)` back in fbt.blade.php -- red.
     expect($html)->toContain('<span class="bt-total-label">Total:</span>')
-        ->toContain('<span class="bt-was-num">457</span>')
+        ->toContain('<span class="bt-was-num">412</span>')
         ->toContain('<span class="bt-num">348</span>')
         ->toContain('You&#039;re saving</span> <b>')
-        ->toContain('<span class="bt-save-num">109</span>');
+        ->toContain('<span class="bt-save-num">64</span>');
+
+    // And the pill and the total share one row, the pill first.
+    expect($html)->toMatch('#<div class="bt-sumrow">\s*<p class="bt-save"[^>]*>.*?</p>\s*<p class="bt-total">.*?</p>\s*</div>#s');
 
     // Four: no carousel class, and nothing peeks.
     reOn(['count' => 4]);
@@ -333,10 +341,12 @@ it('works the live total out exactly as the basket will, in the shipped script',
     }
 
     expect($res['out'])->toBe($php);
-    // Four ticked at 10%: was 397, pay 352 − 36 = 316, saving 81.
-    expect($res['t'])->toBe(['was' => 39700, 'pay' => 31600, 'save' => 8100, 'pct' => 10]);
-    // Two ticked: no tier, the saving is the sale alone.
-    expect($res['two'])->toBe(['was' => 22200, 'pay' => 17700, 'save' => 4500, 'pct' => 0]);
+    // Four ticked at 10%: was 352 (their own prices), pay 352 − 36 = 316,
+    // saving 36 -- the buy-together discount alone (2.60.361).
+    expect($res['t'])->toBe(['was' => 35200, 'pay' => 31600, 'save' => 3600, 'pct' => 10]);
+    // Two ticked: no tier, so nothing struck and nothing saved -- a product's
+    // own sale is not this section's saving.
+    expect($res['two'])->toBe(['was' => 17700, 'pay' => 17700, 'save' => 0, 'pct' => 0]);
 });
 
 /* ═══════════════════════════ the basket ═════════════════════════════════ */

@@ -112,7 +112,12 @@
         if (! $btOos) {
             $btChecked++;
             $btTotal += $btNow;
-            $btWasTotal += max($btWas, $btNow);
+            // The struck total is what the ticked products cost WITHOUT this
+            // section's discount -- their own (sale) prices -- so struck less
+            // payable is exactly the buy-together saving. (2.60.361: "you're
+            // saving calculate only the discounted price which is set for this
+            // buy together section only")
+            $btWasTotal += $btNow;
         }
     }
     // The tier for the number ticked on arrival, taken off each ticked card
@@ -125,7 +130,8 @@
         }
     }
     $btPay = $btTotal - $btOff;
-    $btSave = max(0, $btWasTotal - $btPay);
+    // Only the buy-together discount; a product's own sale is not counted.
+    $btSave = $btOff;
     $btWrap = static function (int $minor, string $class): string {
         $amount = \App\Support\Money::amount($minor);
 
@@ -161,8 +167,10 @@
         </div>
         <div class="bt-foot">
             @if ($btCfg['show_total'])
-            <p class="bt-total"><span class="bt-total-label">{{ __('store.buy_together.total') }}</span> <s class="bt-was"@if ($btWasTotal <= $btPay) hidden @endif>{!! $btWrap($btWasTotal, 'bt-was-num') !!}</s> <b class="bt-sum">{!! $btTotalHtml !!}</b></p>
+            <div class="bt-sumrow">
             <p class="bt-save" aria-live="polite"@if ($btSave <= 0) hidden @endif><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none"/></svg><span>{{ __('store.buy_together.saving') }}</span> <b>{!! $btWrap($btSave, 'bt-save-num') !!}</b></p>
+            <p class="bt-total"><span class="bt-total-label">{{ __('store.buy_together.total') }}</span> <s class="bt-was"@if ($btWasTotal <= $btPay) hidden @endif>{!! $btWrap($btWasTotal, 'bt-was-num') !!}</s> <b class="bt-sum">{!! $btTotalHtml !!}</b></p>
+            </div>
             @endif
             <button type="button" class="bt-buy" data-bt-buy @if ($btChecked === 0) disabled @endif><span class="bt-spin" aria-hidden="true"></span><span class="bt-label" aria-live="polite">{{ $btLabel }}</span></button>
         </div>

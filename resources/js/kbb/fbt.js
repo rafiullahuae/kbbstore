@@ -98,7 +98,10 @@ export function unitOff(unit, pct, exp) {
 
 /**
  * The three figures under the cards for the ticked prices: the struck total
- * (regular prices), the payable total (after sale and bundle) and the saving.
+ * (their own prices, before this section's discount), the payable total and
+ * the saving -- the buy-together discount alone (2.60.361: "you're saving
+ * calculate only the discounted price which is set for this buy together
+ * section only"). A product's own sale is in its price, not in the saving.
  * `items` is a list of { now, reg } in minor units; `tiers` maps a count of
  * ticked products to its percent (3, 4, 5, 6).
  */
@@ -106,18 +109,14 @@ export function bundleTotals(items, tiers, exp) {
     const n = items.length;
     const pct = n >= 3 ? Number((tiers || {})[String(Math.min(6, n))] || 0) : 0;
     let now = 0;
-    let reg = 0;
     let off = 0;
 
     items.forEach((it) => {
         now += it.now;
-        reg += Math.max(it.reg, it.now);
         off += unitOff(it.now, pct, exp);
     });
 
-    const pay = now - off;
-
-    return { was: reg, pay, save: Math.max(0, reg - pay), pct };
+    return { was: now, pay: now - off, save: off, pct };
 }
 
 export function initFbt() {
@@ -151,12 +150,6 @@ export function initFbt() {
         return Number(card.dataset.price) || 0;
     };
 
-    /* The regular price the struck total adds up. The option chosen in the
-       buy box has no compare-at on this card, so it is its own price. */
-    const regOf = (card) => (card.hasAttribute('data-bt-var')
-        ? priceOf(card)
-        : Math.max(Number(card.dataset.reg) || 0, priceOf(card)));
-
     const refresh = () => {
         let n = 0;
         const ticked = [];
@@ -165,7 +158,7 @@ export function initFbt() {
             const card = cb.closest('.bt-card');
             if (!card) return;
             card.classList.toggle('is-off', !cb.checked);
-            if (cb.checked) { n += 1; ticked.push({ now: priceOf(card), reg: regOf(card) }); }
+            if (cb.checked) { n += 1; ticked.push({ now: priceOf(card) }); }
         });
 
         const t = bundleTotals(ticked, tiers, exp);
