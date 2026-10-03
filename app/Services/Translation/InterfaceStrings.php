@@ -2112,6 +2112,9 @@ final class InterfaceStrings
             'layout.masthead_tagline' => 'Authentic K-Beauty, curated for you',
             'layout.support_heading' => 'We are here if you need us',
             'layout.support_body' => 'A real person answers. Ask us anything — a question about your order, or about what to use it with.',
+            // The two address headings in the email small print (Lane RK, E1).
+            'layout.address_dubai' => 'Dubai',
+            'layout.address_korea' => 'Korea',
             'items.col_item' => 'Item',
             'items.col_qty' => 'Qty',
             'items.col_total' => 'Total',

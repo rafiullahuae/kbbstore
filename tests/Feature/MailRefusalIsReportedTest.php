@@ -388,11 +388,16 @@ it('sorts every key on this screen into who refuses it, and reports the ones onl
      * With an address $checks waves through, BOTH reach the writer and both are
      * now reported. Before this lane both answered 200.
      */
-    expect($buckets['passes_email']['writer'])->toBe(['mail_merchant_address', 'mail_reply_to']);
+    //
+    // Lane RK added a third address, the Google account, with the SAME pair of
+    // guards as mail_merchant_address — `email` in $checks and addressOrDrop
+    // in the writer — so it lands in the same bucket and is reported the same
+    // way, not dropped silently.
+    expect($buckets['passes_email']['writer'])->toBe(['mail_merchant_address', 'mail_reply_to', 'mail_gmail_username']);
 
     // And nothing else on the screen can be refused by either, on either probe.
     foreach ($buckets as $name => $b) {
-        expect(array_diff($b['writer'], ['mail_merchant_address', 'mail_reply_to']))
+        expect(array_diff($b['writer'], ['mail_merchant_address', 'mail_reply_to', 'mail_gmail_username']))
             ->toBe([], "a key outside the two addresses was refused by the writer on the {$name} probe");
     }
 });

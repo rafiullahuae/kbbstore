@@ -61,7 +61,15 @@ function verifyTarget(string $url): string
 
 function verifyMessages(): array
 {
-    $transport = Mail::mailer('array')->getSymfonyTransport();
+    /*
+     * The `kbb` mailer, not the default one (Lane RK, audit B3). The account
+     * notifications now name the store's own mailer, so this is where their
+     * messages land; beforeEach points that mailer at an array transport.
+     * MUTATION: drop ->mailer(MailConfigurator::MAILER) from the notification
+     * and the message goes to mail.default instead, this list is empty, and
+     * every case that reads a link out of it is red.
+     */
+    $transport = Mail::mailer('kbb')->getSymfonyTransport();
 
     return $transport instanceof ArrayTransport ? $transport->messages()->all() : [];
 }
@@ -71,6 +79,10 @@ beforeEach(function () {
     config(['mail.default' => 'array', 'kbb.base_path' => '']);
     forgetUrlBase();
     Mail::purge('array');
+    // See CustomerPasswordResetTest: the store's own mailer, read as an array.
+    app('mail.manager');
+    config(['mail.mailers.kbb' => ['transport' => 'array']]);
+    Mail::purge('kbb');
     app('cache')->flush();
 });
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Services\Mail\MailConfigurator;
 use App\Support\Url;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -43,9 +44,21 @@ class CustomerPasswordReset extends Notification
     {
         $minutes = (int) config('auth.passwords.customers.expire', 60);
 
+        /*
+         * THROUGH THE STORE'S OWN MAILER (Lane RK, audit B3). Without
+         * ->mailer() a notification follows MAIL_MAILER from .env, while every
+         * order email names `kbb` -- the mailer Emails → Sending & delivery
+         * configures and its test button proves. An .env with MAIL_MAILER=smtp
+         * and no host (env.staging.txt carries exactly that) meant order mail
+         * worked, the test said so, and password resets failed.
+         *
+         * AND A TEXT PART (audit B2): [html, text] rather than the HTML alone,
+         * which spam filters score down and a text-only client shows blank.
+         */
         return (new MailMessage)
+            ->mailer(MailConfigurator::MAILER)
             ->subject('Reset your K Beauty Bliss password')
-            ->view('store.account.mail.password-reset', [
+            ->view(['store.account.mail.password-reset', 'store.account.mail.password-reset-text'], [
                 'name' => method_exists($notifiable, 'displayName') ? $notifiable->displayName() : '',
                 'url' => $this->url($notifiable),
                 'minutes' => $minutes,

@@ -4,9 +4,11 @@ mail_transport|choice|"nonsense"|all='Use this server\'s mail (default)'|raw='se
 mail_transport|choice|" "|all='Use this server\'s mail (default)'|raw='server'|has=false
 mail_transport|choice|0|all='Use this server\'s mail (default)'|raw='server'|has=false
 mail_transport|choice|"server"|all='Use this server\'s mail (default)'|raw='server'|has=false
+mail_transport|choice|"gmail"|all='gmail'|raw='gmail'|has=false
 mail_transport|choice|"smtp"|all='Use a dedicated SMTP server'|raw='smtp'|has=false
 mail_transport|choice|"log"|all='Send nothing — write to the log (for testing only)'|raw='log'|has=false
 mail_transport|choice|"Use this server's mail (default)"|all='Use this server\'s mail (default)'|raw='server'|has=false
+mail_transport|choice|"Google Workspace (Gmail SMTP)"|all='gmail'|raw='gmail'|has=false
 mail_transport|choice|"Use a dedicated SMTP server"|all='Use a dedicated SMTP server'|raw='smtp'|has=false
 mail_transport|choice|"Send nothing \u2014 write to the log (for testing only)"|all='Send nothing — write to the log (for testing only)'|raw='log'|has=false
 mail_transport|choice|"SMTP"|all='Use this server\'s mail (default)'|raw='server'|has=false
@@ -229,3 +231,54 @@ mail_reply_to|text|"not-an-address"|all=''|raw=NULL|has=false
 mail_reply_to|text|"a@b"|all=''|raw=NULL|has=false
 mail_reply_to|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|all=''|raw=NULL|has=false
 mail_reply_to|text|"yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"|all=''|raw=NULL|has=false
+mail_gmail_username|text|"abc"|all=''|raw=NULL|has=false
+mail_gmail_username|text|""|all=''|raw=''|has=false
+mail_gmail_username|text|"  sp  "|all=''|raw=NULL|has=false
+mail_gmail_username|text|null|all=''|raw=''|has=false
+mail_gmail_username|text|"0"|all=''|raw=NULL|has=false
+mail_gmail_username|text|"line\nbreak"|all=''|raw=NULL|has=false
+mail_gmail_username|text|"<b>x<\/b>"|all=''|raw=NULL|has=false
+mail_gmail_username|text|"<script>alert(1)<\/script>"|all=''|raw=NULL|has=false
+mail_gmail_username|text|"ops@example.com"|all='ops@example.com'|raw='ops@example.com'|has=false
+mail_gmail_username|text|" ops@example.com "|all='ops@example.com'|raw='ops@example.com'|has=false
+mail_gmail_username|text|"not-an-address"|all=''|raw=NULL|has=false
+mail_gmail_username|text|"a@b"|all=''|raw=NULL|has=false
+mail_gmail_username|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|all=''|raw=NULL|has=false
+mail_gmail_username|text|"yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"|all=''|raw=NULL|has=false
+mail_gmail_password|secret|<secret:len=10:e5fe9d7d>|all='__ABSENT__'|raw=NULL|has=false
+mail_gmail_password|secret|<secret:len=0:da39a3ee>|all='__ABSENT__'|raw=NULL|has=false
+mail_gmail_password|secret|<secret:len=3:088fb1a4>|all='__ABSENT__'|raw=NULL|has=false
+mail_gmail_password|secret|<secret:len=1:3bc15c8a>|all='__ABSENT__'|raw=NULL|has=false
+mail_gmail_password|secret|<secret:len=3:fc02e199>|all='__ABSENT__'|raw=NULL|has=false
+mail_gmail_password|secret|<secret:len=2:e6a9fc04>|all='__ABSENT__'|raw=NULL|has=false
+mail_gmail_password|secret|<secret:null>|all='__ABSENT__'|raw=NULL|has=false
+mail_gmail_password|secret|<secret:len=1:11f6ad8e>|all='__ABSENT__'|raw=NULL|has=false
+mail_gmail_password|secret|<secret:len=300:e6068dfb>|all='__ABSENT__'|raw=NULL|has=false
+mail_address_dubai|text|"abc"|all='abc'|raw='abc'|has=false
+mail_address_dubai|text|""|all=''|raw=''|has=false
+mail_address_dubai|text|"  sp  "|all='sp'|raw='sp'|has=false
+mail_address_dubai|text|null|all=''|raw=''|has=false
+mail_address_dubai|text|"0"|all='0'|raw='0'|has=false
+mail_address_dubai|text|"line\nbreak"|all='line\nbreak'|raw='line\nbreak'|has=false
+mail_address_dubai|text|"<b>x<\/b>"|all='<b>x</b>'|raw='<b>x</b>'|has=false
+mail_address_dubai|text|"<script>alert(1)<\/script>"|all='<script>alert(1)</script>'|raw='<script>alert(1)</script>'|has=false
+mail_address_dubai|text|"ops@example.com"|all='ops@example.com'|raw='ops@example.com'|has=false
+mail_address_dubai|text|" ops@example.com "|all='ops@example.com'|raw='ops@example.com'|has=false
+mail_address_dubai|text|"not-an-address"|all='not-an-address'|raw='not-an-address'|has=false
+mail_address_dubai|text|"a@b"|all='a@b'|raw='a@b'|has=false
+mail_address_dubai|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|all='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'|raw='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'|has=false
+mail_address_dubai|text|"yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"|all='yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy'|raw='yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy'|has=false
+mail_address_korea|text|"abc"|all='abc'|raw='abc'|has=false
+mail_address_korea|text|""|all=''|raw=''|has=false
+mail_address_korea|text|"  sp  "|all='sp'|raw='sp'|has=false
+mail_address_korea|text|null|all=''|raw=''|has=false
+mail_address_korea|text|"0"|all='0'|raw='0'|has=false
+mail_address_korea|text|"line\nbreak"|all='line\nbreak'|raw='line\nbreak'|has=false
+mail_address_korea|text|"<b>x<\/b>"|all='<b>x</b>'|raw='<b>x</b>'|has=false
+mail_address_korea|text|"<script>alert(1)<\/script>"|all='<script>alert(1)</script>'|raw='<script>alert(1)</script>'|has=false
+mail_address_korea|text|"ops@example.com"|all='ops@example.com'|raw='ops@example.com'|has=false
+mail_address_korea|text|" ops@example.com "|all='ops@example.com'|raw='ops@example.com'|has=false
+mail_address_korea|text|"not-an-address"|all='not-an-address'|raw='not-an-address'|has=false
+mail_address_korea|text|"a@b"|all='a@b'|raw='a@b'|has=false
+mail_address_korea|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|all='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'|raw='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'|has=false
+mail_address_korea|text|"yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"|all='yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy'|raw='yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy'|has=false

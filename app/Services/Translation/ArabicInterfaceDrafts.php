@@ -1392,6 +1392,8 @@ final class ArabicInterfaceDrafts
             'email.layout.masthead_tagline' => 'جمال كوري أصلي، مختار لك',
             'email.layout.support_heading' => 'نحن هنا إن احتجت إلينا',
             'email.layout.support_body' => 'يرد عليك شخص حقيقي. اسألنا عن أي شيء — سؤال عن طلبك، أو عمّا يُستخدم معه.',
+            'email.layout.address_dubai' => 'دبي',
+            'email.layout.address_korea' => 'كوريا',
             'email.layout.footer_customer' => 'تصلك هذه الرسالة لأن طلبًا أُنشئ لدى :store باستخدام هذا البريد الإلكتروني.',
             // The two admin paths are the names of screens in the back office,
             // which is deliberately not localised (App\Support\Locale), so they

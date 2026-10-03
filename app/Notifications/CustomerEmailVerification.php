@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Customer;
+use App\Services\Mail\MailConfigurator;
 use App\Support\CustomerLinkSigner;
 use App\Support\Url;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -41,9 +42,12 @@ class CustomerEmailVerification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        // The store's own mailer (audit B3) and a text part (audit B2), for
+        // the reasons CustomerPasswordReset::toMail() sets out.
         return (new MailMessage)
+            ->mailer(MailConfigurator::MAILER)
             ->subject('Confirm your email address')
-            ->view('store.account.mail.verify-email', [
+            ->view(['store.account.mail.verify-email', 'store.account.mail.verify-email-text'], [
                 'name' => $this->customer->displayName(),
                 'url' => self::linkFor($this->customer),
                 'hours' => (int) (self::TTL_MINUTES / 60),

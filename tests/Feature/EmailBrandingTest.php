@@ -195,7 +195,9 @@ it('builds the support block from settings', function () {
         // The number as typed, and a wa.me link built from its digits.
         ->and($html)->toContain('+971 58 505 2611')
         ->and($html)->toContain('https://wa.me/971585052611')
-        ->and($html)->toContain('mailto:hello@kbeautybliss.com')
+        // The owner's own address, which now ships as the support-email
+        // default because he asked for it by name (Lane RK, package E1).
+        ->and($html)->toContain('mailto:info@kbeautybliss.com')
         ->and($html)->toContain('https://www.instagram.com/kbeauty.bliss/')
         ->and($html)->toContain('@kbeauty.bliss');
 });
@@ -208,7 +210,10 @@ it('falls back to the values the storefront already uses', function () {
     $settings->set('brand_whatsapp', '+971500000001');
     $settings->set('social_instagram', 'https://www.instagram.com/kbeauty.bliss/?hl=en');
 
-    app(MailSettings::class)->save(['mail_from_address' => 'hello@kbeautybliss.com']);
+    // The support-email box cleared by the owner: it ships as
+    // info@kbeautybliss.com (Lane RK) and an EMPTY box is what still falls
+    // back to the From address, exactly as before.
+    app(MailSettings::class)->save(['mail_from_address' => 'hello@kbeautybliss.com', 'mail_support_email' => '']);
     Setting::flushMap();
     SettingsService::forgetMemo();
 
@@ -240,7 +245,13 @@ it('prints nothing for a channel the store has not configured', function () {
 
 it('shows no support block at all when nothing is configured anywhere', function () {
     // APP_URL is http://localhost in the suite, which yields no usable From
-    // address, so this really is a store with no channel of any kind.
+    // address, so this really is a store with no channel of any kind -- once
+    // the support-email box, which ships as info@kbeautybliss.com since Lane
+    // RK, has been cleared.
+    app(MailSettings::class)->save(['mail_support_email' => '']);
+    Setting::flushMap();
+    SettingsService::forgetMemo();
+
     $html = (string) (new OrderConfirmation(brandingOrder()))->render();
 
     expect($html)->not->toContain('We are here if you need us')

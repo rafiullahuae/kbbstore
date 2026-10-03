@@ -153,6 +153,7 @@ class EmailBranding
                 // No address means no invitation to reply. The safe answer when
                 // branding could not be read is the one that promises nothing.
                 'replyTo' => '',
+                'addresses' => [],
                 'colours' => self::PALETTE,
             ];
         }
@@ -190,6 +191,7 @@ class EmailBranding
              * using his email address — which the footer already declines to do.
              */
             'replyTo' => $customerFacing ? $this->mail->replyToAddress() : '',
+            'addresses' => $customerFacing ? $this->addresses() : [],
             'colours' => self::PALETTE,
         ];
     }
@@ -398,6 +400,89 @@ class EmailBranding
      *
      * @return list<string>
      */
+    /**
+     * The shop's two addresses, for the small print (Lane RK, package E1).
+     *
+     * "we have two addresses, one in dubai, one in Korea ... allow us to
+     * change these details anytime." Set under Emails → Design & branding.
+     *
+     * Each entry is ['place' => 'dubai'|'korea', 'lines' => string[]]. Lines
+     * are split on | or a newline, exactly as the signature is, and handed to
+     * the template as an array so it supplies the line breaks and escapes
+     * every line -- operator text never reaches the email as markup.
+     *
+     * DUBAI FALLS BACK TO THE STORE ADDRESS saved under Store → Business
+     * Details (store_street, store_locality, store_region, store_postcode,
+     * store_country) when its own box is blank. KOREA HAS NO FALLBACK: nothing
+     * is invented for it, and it prints only once somebody types it.
+     *
+     * @return list<array{place: string, lines: list<string>}>
+     */
+    public function addresses(): array
+    {
+        $out = [];
+
+        $dubai = $this->lines($this->mail->get('mail_address_dubai'));
+
+        if ($dubai === []) {
+            $dubai = $this->storeAddressLines();
+        }
+
+        if ($dubai !== []) {
+            $out[] = ['place' => 'dubai', 'lines' => $dubai];
+        }
+
+        $korea = $this->lines($this->mail->get('mail_address_korea'));
+
+        if ($korea !== []) {
+            $out[] = ['place' => 'korea', 'lines' => $korea];
+        }
+
+        return $out;
+    }
+
+    /**
+     * The address under Store → Business Details, as lines. Empty unless a
+     * street or a locality is actually saved: a country on its own is not an
+     * address, and printing "United Arab Emirates" under "Dubai" would only
+     * look like one.
+     *
+     * @return list<string>
+     */
+    public function storeAddressLines(): array
+    {
+        $get = fn (string $key): string => trim((string) ($this->settings->get($key, '') ?? ''));
+
+        $street = $get('store_street');
+        $locality = $get('store_locality');
+
+        if ($street === '' && $locality === '') {
+            return [];
+        }
+
+        $place = OrderEmailPresenter::cityLine($locality, $get('store_region'));
+        $postcode = $get('store_postcode');
+
+        $lines = [
+            $street,
+            trim($place . ($postcode !== '' ? ' ' . $postcode : '')),
+            OrderEmailPresenter::countryName($get('store_country')),
+        ];
+
+        return array_values(array_filter($lines, static fn (string $l) => $l !== ''));
+    }
+
+    /** @return list<string> */
+    private function lines(string $raw): array
+    {
+        $parts = preg_split('/\s*[|\r\n]+\s*/', trim($raw)) ?: [];
+
+        return array_values(array_filter(
+            array_map(static fn ($line) => trim((string) $line), $parts),
+            static fn (string $line) => $line !== '',
+        ));
+    }
+
     public function signature(): array
     {
         $raw = trim($this->mail->get('mail_signature'));

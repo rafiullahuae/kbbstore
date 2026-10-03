@@ -236,7 +236,9 @@ it('renders every order email and saves it for review', function () {
             expect($html)->toContain('We are here if you need us')
                 ->and($html)->toContain('wa.me/97158505261')
                 ->and($html)->toContain('instagram.com/kbeauty.bliss')
-                ->and($html)->toContain('hello@kbeautybliss.com')
+                // The support email ships as the owner's info@ address now
+                // (Lane RK, package E1); the From address is no longer it.
+                ->and($html)->toContain('info@kbeautybliss.com')
                 ->and($html)->toContain('the K Beauty Bliss team');
         } else {
             expect($html)->not->toContain('We are here if you need us')

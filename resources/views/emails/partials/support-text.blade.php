@@ -38,3 +38,10 @@
 {!! $line !!}
 @endforeach
 @endif
+@foreach ($brand['addresses'] ?? [] as $place)
+
+{!! __('email.layout.address_' . $place['place']) !!}
+@foreach ($place['lines'] as $line)
+{!! $line !!}
+@endforeach
+@endforeach

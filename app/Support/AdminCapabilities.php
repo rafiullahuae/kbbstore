@@ -536,6 +536,29 @@ final class AdminCapabilities
          * old site -- in one press. Fails closed for every other role.
          */
         'data.old_links' => ['owner'],
+        /*
+         * Emails (Lane RK, package E1) — the owner's new parent menu.
+         *
+         * OWNER ALONE, both of them, because that is what mail has always been
+         * here: admin-api/mail and admin-api/mail/** map to store.settings,
+         * which is owner-only, and the Emails screens edit the same rows and
+         * press the same test-send. Widening them to a manager would hand the
+         * transport, the From address and an endpoint that makes the server
+         * send mail to a caller-chosen address to a role that never had them.
+         *
+         * TWO and not one, and NOT store.settings, so that the day the owner
+         * lets a manager READ the overview — a reasonable thing to want, it
+         * holds no secret and changes nothing — that does not also hand over
+         * the transport, and so that widening store.settings for currency does
+         * not silently widen mail with it.
+         *
+         *   emails.view    GET admin-api/emails/overview
+         *   emails.manage  every other admin-api/emails route: the sending
+         *                  settings, the Google app password, the test-send
+         *                  and the contact details printed in every email.
+         */
+        'emails.view' => ['owner'],
+        'emails.manage' => ['owner'],
     ];
 
     /**
@@ -785,6 +808,16 @@ final class AdminCapabilities
         ['*', 'admin-api/modules', 'store.settings'],
         ['*', 'admin-api/mail', 'store.settings'],
         ['*', 'admin-api/mail/**', 'store.settings'],
+        /*
+         * Emails (Lane RK). The one read the overview makes FIRST, because
+         * RULES is first-match-wins and the wildcard under it would otherwise
+         * claim it; then everything else under the prefix, reads and writes
+         * alike. There is no reading half of the sending or branding screens a
+         * narrower role should reach without the writing half.
+         */
+        ['GET', 'admin-api/emails/overview', 'emails.view'],
+        ['*', 'admin-api/emails', 'emails.manage'],
+        ['*', 'admin-api/emails/**', 'emails.manage'],
         ['*', 'admin-api/shipping', 'store.shipping'],
         ['*', 'admin-api/extended-delivery', 'store.shipping'],
         ['*', 'admin-api/pay-ship-rules', 'store.shipping'],

@@ -68,6 +68,20 @@ class MailTester
             ]);
         }
 
+        if ($transport === MailSettings::TRANSPORT_GMAIL && ! $this->settings->configured()) {
+            return $this->record([
+                'ok' => false,
+                'status' => 'unconfigured',
+                'message' => 'Nothing was sent: Google Workspace is not set up yet. Still needed: '
+                    . implode(', ', $this->settings->missing())
+                    . '. Order emails are still going out through this server\'s own mail in the meantime.',
+                'error' => null,
+                'to' => $to,
+                'transport' => 'none',
+                'duration_ms' => 0,
+            ]);
+        }
+
         if ($transport === MailSettings::TRANSPORT_SERVER && ! ServerMailTransport::available()) {
             /*
              * Answerable without sending anything, so it is answered here rather
@@ -107,7 +121,7 @@ class MailTester
                 'ok' => false,
                 'status' => 'failed',
                 // The transport's own words. Deliberately not summarised.
-                'message' => $this->redact($e->getMessage()),
+                'message' => $this->redact($e->getMessage()) . $this->hint($active, $e->getMessage()),
                 'error' => $this->redact($this->describe($e)),
                 'to' => $to,
                 'transport' => $active,
@@ -150,6 +164,9 @@ class MailTester
                 MailSettings::TRANSPORT_SERVER => 'This server accepted the message for ' . $to
                     . '. Check that inbox (and its spam folder) to confirm it arrives — a modest host will '
                     . 'often accept a message and then have it filtered, so the inbox is the proof, not this line.',
+                MailSettings::TRANSPORT_GMAIL => 'Google accepted the message for ' . $to
+                    . '. Check that inbox (and its spam folder) to confirm it arrives. A copy is also in the Sent folder of '
+                    . $this->settings->gmailUsername() . '.',
                 MailSettings::TRANSPORT_SMTP => 'The mail server accepted the message for ' . $to
                     . '. Check that inbox (and its spam folder) to confirm it arrives.',
                 default => 'Nothing was sent. "How this store sends email" is set to write to the log, so the '
@@ -222,11 +239,39 @@ class MailTester
      * and the base64 form used on the wire are removed, because both have been
      * seen in a mailer exception message.
      */
+    /**
+     * One plain sentence after Google's own words, for the two refusals an
+     * owner setting this up will actually meet. Google's text stays in full in
+     * front of it -- the real error is the point of this button -- this only
+     * says where to go next. Nothing is appended on any other transport.
+     */
+    private function hint(string $active, string $raw): string
+    {
+        if ($active !== MailSettings::TRANSPORT_GMAIL) {
+            return '';
+        }
+
+        if (preg_match('/\b535\b|Username and Password not accepted|BadCredentials/i', $raw) === 1) {
+            return ' — Google refused the sign-in. Use an app password (Google Account → Security → '
+                . '2-Step Verification → App passwords), not the account\'s normal password, and check the '
+                . 'Google account address is spelled exactly.';
+        }
+
+        if (preg_match('/Connection could not be established|timed out|Network is unreachable/i', $raw) === 1) {
+            return ' — this server could not reach smtp.gmail.com on port 587. Some hosts block outgoing '
+                . 'mail ports; ask the host to allow port 587, or switch back to this server\'s mail.';
+        }
+
+        return '';
+    }
+
     private function redact(string $message): string
     {
-        $password = $this->settings->password();
+        foreach ([$this->settings->password(), $this->settings->gmailPassword()] as $password) {
+            if ($password === '') {
+                continue;
+            }
 
-        if ($password !== '') {
             $message = str_replace(
                 [$password, rawurlencode($password), base64_encode($password)],
                 '[password redacted]',

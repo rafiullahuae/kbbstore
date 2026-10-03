@@ -179,7 +179,15 @@ it('answers every recorded mail call exactly as it did before the shared schema'
 
     // A guard on the guard: an emptied fixture makes the loop pass by doing
     // nothing. 231 when recorded, across sixteen keys.
-    expect(count($recorded))->toBe(231, 'the recorded corpus changed size');
+    //
+    // 284 since Lane RK (package E1): four new keys (mail_gmail_username,
+    // mail_gmail_password, mail_address_dubai, mail_address_korea) and the
+    // two new transport spellings ("gmail", "Google Workspace (Gmail SMTP)")
+    // ADDED 53 lines. Every one of the 231 recorded lines was kept verbatim —
+    // the fixture was merged by payload, not re-recorded — so the comparison
+    // above still measures the old keys against their original answers, and
+    // the exempted count is still 20.
+    expect(count($recorded))->toBe(284, 'the recorded corpus changed size');
 });
 
 /** One `name=value` part of a recorded line. */

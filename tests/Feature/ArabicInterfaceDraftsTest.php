@@ -569,8 +569,15 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * The card's three points and the message above a shared link
      * (store.product.pts_card_p1..p3, pts_card_msg), seeded by
      * 2027_07_23_000200_seed_share_card_arabic_drafts. Read off the run.
+     *
+     * ── 1,115 -> 1,117: THE EMAIL ADDRESS HEADINGS (Lane RK, E1) ──────────
+     *
+     * "Dubai" and "Korea" above the shop's addresses at the foot of every
+     * customer order email (email.layout.address_dubai, address_korea),
+     * seeded by 2027_07_25_000200_seed_email_address_heading_arabic_drafts.
+     * Read off the run.
      */
-    expect($ui['drafts'])->toBe(1115, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1117, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });
