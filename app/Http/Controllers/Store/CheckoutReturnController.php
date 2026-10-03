@@ -332,6 +332,9 @@ class CheckoutReturnController extends Controller
         $restored = false;
 
         DB::transaction(function () use ($order, $cart, &$restored) {
+            // Lane RL: the shopper is looking at this failure on screen, so no
+            // "payment failed" email for it -- the 30-minute reminder follows up.
+            app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideFor($order, false);
             app(OrderStatus::class)->moveTo(
                 $order,
                 'failed',

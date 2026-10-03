@@ -138,7 +138,11 @@ it('has nothing that outlives a single request', function () {
     $console = (string) file_get_contents(base_path('routes/console.php'));
 
     expect(substr_count($console, 'Schedule::call('))->toBe(0, 'a scheduled closure runs in the scheduler process');
-    expect(substr_count($console, 'Schedule::command('))->toBe(2, 'the set of scheduled commands has changed');
+    // 3 with Lane RL: `kbb:order-reminders`, every minute -- the exact driver
+    // for the "Complete your order" reminders and the feedback request. It
+    // sends mail inline and holds nothing between runs; the page heartbeat
+    // (OrderReminderTick) does the same work when no cron line is installed.
+    expect(substr_count($console, 'Schedule::command('))->toBe(3, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

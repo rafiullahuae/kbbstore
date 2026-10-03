@@ -23,10 +23,39 @@ class OrderConfirmation extends OrderMail
 {
     use BrandedSubject;
 
+    /**
+     * "Track your order", signed for this order (App\Support\OrderLinks) so it
+     * opens on any device — Lane RL. Falls back to the old order-received
+     * address if the link cannot be signed.
+     */
+    public string $trackSignedUrl = '';
+
+    /**
+     * Whether the payment is in. The approved preview's lead says "Your payment
+     * is in" — true of a card, Tabby or Tamara order (receipted when the
+     * payment confirms), not of cash on delivery, which keeps the old lead.
+     */
+    public bool $paid = false;
+
+    public function __construct(\App\Models\Order $order)
+    {
+        parent::__construct($order);
+
+        $this->paid = $order->paid_at !== null;
+
+        try {
+            $this->trackSignedUrl = \App\Support\OrderLinks::trackUrl($order);
+        } catch (\Throwable) {
+            $this->trackSignedUrl = (string) ($this->order['trackUrl'] ?? '');
+        }
+    }
+
     public function envelope(): Envelope
     {
+        // Keyed (Lane RL) so it carries the owner's 🎉 and can be translated
+        // and edited like every other subject; it was English in code.
         return new Envelope(
-            subject: 'Your ' . $this->brandName() . ' order ' . $this->orderNumber(),
+            subject: __('email.confirmation.subject', ['store' => $this->brandName(), 'number' => $this->orderNumber()]),
         );
     }
 

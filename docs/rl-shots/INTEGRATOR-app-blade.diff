@@ -1,0 +1,15 @@
+15259c15259
+<     var labels = {cancel:'Cancel order', duplicate:'Duplicate order', resend_confirmation:'Resend confirmation email', email_invoice:'Email invoice'};
+---
+>     var labels = {cancel:'Cancel order', duplicate:'Duplicate order', resend_confirmation:'Resend confirmation email', email_invoice:'Email invoice', email_onhold:'Send on-hold email'};
+15538a15539,15540
+>       var payload = {action:action};
+>       if(action==='email_onhold'){ var msg = prompt('Send the on-hold email. What do you need from the customer? (optional)', ''); if(msg===null) return; payload.message = msg; }
+15542c15544
+<           body:JSON.stringify({action:action})});
+---
+>           body:JSON.stringify(payload)});
+15545c15547
+<         toast('Done'); renderOrderDetail(id);
+---
+>         toast(j.message||'Done'); renderOrderDetail(id);

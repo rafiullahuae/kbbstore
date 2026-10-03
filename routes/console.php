@@ -97,3 +97,17 @@ Schedule::command('payments:tamara-capture')
     ->hourly()
     ->withoutOverlapping(30)
     ->runInBackground();
+
+/*
+| ── "COMPLETE YOUR ORDER" REMINDERS (Lane RL) ───────────────────────────────
+|
+| 30 minutes and 24 hours after an order nobody has paid for. Every minute, so
+| the 30-minute one is never more than a minute late. With no cron line, the
+| same sweep runs after ordinary page requests instead
+| (App\Services\Mail\OrderReminderTick), and each send is claimed in
+| `order_emails`, so both running is harmless. Costs two indexed queries a
+| minute when nothing is due.
+*/
+Schedule::command('kbb:order-reminders')
+    ->everyMinute()
+    ->withoutOverlapping(5);

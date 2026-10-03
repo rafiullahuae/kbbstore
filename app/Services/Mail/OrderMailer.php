@@ -93,6 +93,66 @@ class OrderMailer
         return $this->settings->moduleEnabled('email_order_refunded', true);
     }
 
+    /*
+     * ── LANE RL: THE REST OF THE STATUSES, AND THE TWO REMINDERS ────────────
+     *
+     * The owner, 3 October: "New emails for on hold, delivered/completed and
+     * payment failed ... for hold keep OFF, as we will have manual option to
+     * send for it." Processing, Completed (the shop's "delivered"), Refunded
+     * and Payment failed therefore ship ON, because he asked for them; On hold
+     * ships OFF, because he said so, with "Send on-hold email" on the order
+     * screen as the manual way. Literal keys, one reader each — see the class
+     * header.
+     *
+     * `email_order_marked_refunded` is NOT `email_order_refunded`. That one is
+     * the money email, sent when a refund row settles; this one is the status,
+     * for an order marked Refunded when the money went back some other way.
+     * statusChanged() keeps them from both firing for one refund.
+     */
+
+    public function processingEnabled(): bool
+    {
+        return $this->settings->moduleEnabled('email_order_processing', true);
+    }
+
+    public function onholdEnabled(): bool
+    {
+        return $this->settings->moduleEnabled('email_order_onhold', false);
+    }
+
+    public function completedEnabled(): bool
+    {
+        return $this->settings->moduleEnabled('email_order_completed', true);
+    }
+
+    public function markedRefundedEnabled(): bool
+    {
+        return $this->settings->moduleEnabled('email_order_marked_refunded', true);
+    }
+
+    public function failedEnabled(): bool
+    {
+        return $this->settings->moduleEnabled('email_order_failed', true);
+    }
+
+    /** "Complete your order", 30 minutes after an unpaid order was placed. */
+    public function firstReminderEnabled(): bool
+    {
+        return $this->settings->moduleEnabled('email_order_reminder_1', true);
+    }
+
+    /** And again at 24 hours. */
+    public function secondReminderEnabled(): bool
+    {
+        return $this->settings->moduleEnabled('email_order_reminder_2', true);
+    }
+
+    /** "How is your glow?", 3 hours after the Delivered email went. */
+    public function feedbackEnabled(): bool
+    {
+        return $this->settings->moduleEnabled('email_order_feedback', true);
+    }
+
     /**
      * Which status changes email, and the per-order exception to it.
      *
@@ -156,8 +216,31 @@ class OrderMailer
     {
         $order->loadMissing('items');
 
-        if ($this->confirmationEnabled()) {
-            $this->send(static fn () => new OrderConfirmation($order), (string) $order->email, $order, 'confirmation');
+        /*
+         * B1 — NO RECEIPT FOR AN ORDER NOBODY HAS PAID FOR (Lane RL).
+         *
+         * This used to send the customer's receipt for every order the moment
+         * the gateway had STARTED, which for card, Tabby and Tamara is while
+         * the order is still `pending`: a shopper who abandoned the card form
+         * kept "we are packing it with care" for an order that was never paid.
+         * The owner: the receipt goes "only once the order is actually
+         * paid/placed for real".
+         *
+         * So it is sent here only when the order has already left `pending`
+         * by the time the gateway hands back — cash on delivery, which moves
+         * it to `processing` inside start(). Everything else is receipted by
+         * receipt(), called from OrderMailObserver when the payment confirms
+         * and the order moves out of pending — every gateway's webhook and
+         * return path reaches that through PaymentConfirmer and the
+         * OrderStatus funnel, and "Mark as paid" does too. receipt() claims
+         * the send in `order_emails`, so the COD path (observer AND here)
+         * still sends exactly one.
+         *
+         * The merchant alert below is unchanged: still at placement, paid or
+         * not. Nobody asked for that to move.
+         */
+        if ($this->isPlaced($order)) {
+            $this->receipt($order);
         }
 
         if ($this->merchantAlertEnabled()) {
@@ -171,6 +254,168 @@ class OrderMailer
              * CUSTOMER_FACING = false already says about it.
              */
             $this->send(static fn () => new NewOrderAlert($order), $this->merchantAddress(), $order, 'merchant_alert', false);
+        }
+    }
+
+    /** The statuses an order is in once it has really been placed. */
+    public const PLACED_STATUSES = ['processing', 'onhold', 'shipped', 'completed'];
+
+    /** The statuses an order sits in while nobody has paid for it. */
+    public const UNPAID_STATUSES = ['pending', 'failed'];
+
+    private function isPlaced(Order $order): bool
+    {
+        return in_array((string) $order->status, self::PLACED_STATUSES, true);
+    }
+
+    /**
+     * The customer's receipt, AT MOST ONCE PER ORDER — Lane RL.
+     *
+     * Called when the order is placed for real: at checkout for cash on
+     * delivery, and from OrderMailObserver when a payment confirmation (or a
+     * person) moves the order out of pending/failed. A webhook and the
+     * browser's own return can both confirm one payment; PaymentConfirmer
+     * applies only one of them, and the `order_emails` claim below is the
+     * second lock, so a receipt cannot go twice even if two paths reach here.
+     *
+     * Honours, in this order: sample orders (never), imported WooCommerce
+     * orders (never — WooCommerce receipted them), an import's suppression,
+     * the operator's tick for THIS change if they took one, and the
+     * Order confirmation switch. Only then is the send claimed.
+     */
+    public function receipt(Order $order): void
+    {
+        try {
+            if ($this->isSample($order) || $order->wc_order_id !== null) {
+                return;
+            }
+
+            $decision = $this->statusPolicy()->receiptDecision($order);
+
+            if ($decision === false || ($decision === null && ! $this->confirmationEnabled())) {
+                return;
+            }
+
+            if (trim((string) $order->email) === '') {
+                return;
+            }
+
+            if (! app(OrderEmailLog::class)->claim($order, 'confirmation')) {
+                return;
+            }
+
+            $order->loadMissing('items');
+
+            $this->send(static fn () => new OrderConfirmation($order), (string) $order->email, $order, 'confirmation');
+        } catch (\Throwable $e) {
+            Log::error('order receipt failed before sending', [
+                'order' => $order->order_number,
+                'exception' => class_basename($e),
+                'message' => $this->redact($e->getMessage()),
+            ]);
+        }
+    }
+
+    /**
+     * An order's status moved from $from to $to. What OrderMailObserver calls.
+     *
+     * OUT OF pending/failed INTO A PLACED STATUS is the moment the order became
+     * real, so that is the receipt. When the destination is `processing` the
+     * receipt IS the message — a "we are preparing your order" in the same
+     * second as "thank you for your order" would be two emails about one
+     * event — so the status email is not sent as well. Anything else (an
+     * order paid and marked shipped in one step, say) gets both.
+     */
+    public function transition(Order $order, ?string $from, string $to): void
+    {
+        if ($from !== null
+            && in_array($from, self::UNPAID_STATUSES, true)
+            && in_array($to, self::PLACED_STATUSES, true)) {
+            $this->receipt($order);
+
+            if ($to === 'processing') {
+                return;
+            }
+        }
+
+        $this->statusChanged($order, $to);
+    }
+
+    /**
+     * "Complete your order", reminder 1 (30 minutes) or 2 (24 hours).
+     *
+     * Called by OrderReminders, which has already decided the order is due and
+     * claimed the send. Swallows like every automatic send here.
+     */
+    public function reminder(Order $order, int $stage): void
+    {
+        if ($this->isSample($order)) {
+            return;
+        }
+
+        $order->loadMissing('items');
+
+        $this->send(
+            static fn () => new \App\Mail\OrderPaymentReminder($order, $stage),
+            (string) $order->email,
+            $order,
+            'reminder_' . $stage,
+        );
+    }
+
+    /**
+     * "Send on-hold email", pressed on the order screen — Lane RL.
+     *
+     * The owner keeps the on-hold email OFF and sends it by hand, so this does
+     * NOT consult the switch: the switch decides what the shop sends by
+     * itself, and this is the owner asking, for one order, now (the argument
+     * emailInvoice() makes). It REPORTS, like the other two buttons, because
+     * a person is waiting for the answer.
+     *
+     * $note is the owner's own sentence ("What we need: ..."), plain text,
+     * printed escaped. Only for an order that is actually on hold — an
+     * on-hold email about an order that is not on hold would be untrue.
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function sendOnHold(Order $order, string $note = ''): array
+    {
+        if ($this->isSample($order)) {
+            return $this->sampleRefusal();
+        }
+
+        if ((string) $order->status !== 'onhold') {
+            return ['ok' => false, 'message' => 'This order is not on hold. Change its status to On hold first.'];
+        }
+
+        $to = trim((string) $order->email);
+
+        if ($to === '' || ! str_contains($to, '@')) {
+            return ['ok' => false, 'message' => 'This order has no email address on it.'];
+        }
+
+        try {
+            $order->loadMissing('items');
+
+            \App\Support\OrderLocale::render($order, function () use ($to, $order, $note): void {
+                $this->log()?->labelNext('order.status_onhold');
+
+                Mail::mailer(MailConfigurator::MAILER)
+                    ->to($to)
+                    ->send(new OrderStatusChanged($order, 'onhold', $note));
+            });
+
+            return ['ok' => true, 'message' => 'On-hold email sent to ' . $to . '.'];
+        } catch (\Throwable $e) {
+            $this->log()?->recordFailure($e);
+
+            Log::error('on-hold email failed', [
+                'order' => $order->order_number,
+                'exception' => class_basename($e),
+                'message' => $this->redact($e->getMessage()),
+            ]);
+
+            return ['ok' => false, 'message' => 'Could not send: ' . $this->redact($e->getMessage())];
         }
     }
 
@@ -394,13 +639,69 @@ class OrderMailer
             return;
         }
 
+        /*
+         * ONE REFUND, ONE EMAIL (Lane RL). A refund made through the payment
+         * screen settles a `refunds` row — which sends OrderRefunded, the money
+         * email — and then PaymentRefunder moves the order to `refunded`, which
+         * arrives here. The status email is for the other case: an order marked
+         * Refunded by hand because the money went back some other way. If this
+         * shop has a refund on record for the order, the money email has said
+         * it already.
+         */
+        if ($status === 'refunded') {
+            try {
+                if (app(\App\Services\Payments\PaymentRefunder::class)->refundedFils($order) > 0) {
+                    return;
+                }
+            } catch (\Throwable) {
+                return;
+            }
+        }
+
         $order->loadMissing('items');
 
-        $this->send(
+        $sent = $this->send(
             static fn () => new OrderStatusChanged($order, $status),
             (string) $order->email,
             $order,
             'status_' . $status,
+        );
+
+        /*
+         * WHEN THE DELIVERED EMAIL ACTUALLY WENT (Lane RL) — the feedback
+         * request's clock starts here, and only here: an unticked box or a
+         * switched-off status returned above, and a send that failed returns
+         * false, so neither starts it. The first one counts; a second
+         * Completed later does not restart it.
+         */
+        if ($sent && $status === 'completed') {
+            app(OrderEmailLog::class)->claim($order, 'status_completed');
+        }
+    }
+
+    /**
+     * "How is your glow?" — the feedback request (Lane RL). OrderReminders
+     * decides it is due and claims it; this only sends. One row per product
+     * still on sale, each linking to that product's reviews.
+     */
+    public function feedback(Order $order): bool
+    {
+        if ($this->isSample($order)) {
+            return false;
+        }
+
+        $order->loadMissing('items.product');
+
+        // Nothing still on sale to review: nothing to ask.
+        if (! $order->items->contains(fn ($i) => $i->product !== null && (string) $i->product->status === 'publish')) {
+            return false;
+        }
+
+        return $this->send(
+            static fn () => new \App\Mail\OrderFeedbackRequest($order),
+            (string) $order->email,
+            $order,
+            'feedback',
         );
     }
 
@@ -563,7 +864,8 @@ class OrderMailer
         \App\Support\OrderLocale::render($order, $run);
     }
 
-    private function send(callable $build, string $to, Order $order, string $kind, bool $inOrderLocale = true): void
+    /** @return bool  true when the message was handed to the transport without an exception. */
+    private function send(callable $build, string $to, Order $order, string $kind, bool $inOrderLocale = true): bool
     {
         /*
          * Asked again here, although all three callers have asked already. This
@@ -572,7 +874,7 @@ class OrderMailer
          * send() is covered without being told to be.
          */
         if ($this->isSample($order)) {
-            return;
+            return false;
         }
 
         $to = trim($to);
@@ -583,7 +885,7 @@ class OrderMailer
                 'kind' => $kind,
             ]);
 
-            return;
+            return false;
         }
 
         try {
@@ -602,6 +904,8 @@ class OrderMailer
 
                 Mail::mailer(MailConfigurator::MAILER)->to($to)->send($mailable);
             });
+
+            return true;
         } catch (\Throwable $e) {
             /*
              * Recorded where the owner can see it, as well as in the log he
@@ -622,6 +926,8 @@ class OrderMailer
                 'exception' => class_basename($e),
                 'message' => $this->redact($e->getMessage()),
             ]);
+
+            return false;
         }
     }
 

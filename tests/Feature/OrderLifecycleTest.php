@@ -285,7 +285,10 @@ it('does not read the orders back for a status that emails nobody', function () 
     Mail::fake();
     lifecycleAdmin();
 
-    $orders = collect(range(1, 3))->map(fn () => lifecycleOrder(['status' => 'pending']));
+    // Lane RL: pending -> processing is no longer silent (an unpaid order
+    // being placed for real is the receipt's moment, B1), so the silent
+    // transition this guards is processing -> onhold, whose email ships OFF.
+    $orders = collect(range(1, 3))->map(fn () => lifecycleOrder(['status' => 'processing']));
 
     // The guard in notifyStatus() is a COST guard — OrderMailer would refuse
     // `processing` anyway, so removing it breaks no assertion about email. This
@@ -300,7 +303,7 @@ it('does not read the orders back for a status that emails nobody', function () 
 
     test()->postJson('/admin-api/orders-bulk-status', [
         'ids' => $orders->pluck('id')->all(),
-        'status' => 'processing',
+        'status' => 'onhold',
     ])->assertOk();
 
     expect($selects)->toBe(0);
