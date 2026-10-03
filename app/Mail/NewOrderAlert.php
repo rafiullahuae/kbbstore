@@ -48,6 +48,8 @@ class NewOrderAlert extends OrderMail
         return new Content(
             view: 'emails.new-order-alert',
             text: 'emails.new-order-alert-text',
+            // The <title> of the look-A document: the subject (Lane EM).
+            with: ['kitTitle' => (string) $this->envelope()->subject],
         );
     }
 }

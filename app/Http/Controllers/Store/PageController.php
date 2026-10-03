@@ -99,6 +99,11 @@ class PageController extends Controller
         // catch-all it becomes a post lookup, which is a 404 — an unsubscribe
         // link that 404s is the complaint that gets a sending domain blocked.
         'notify-me', 'mail-preferences',
+        // The email kit (Lanes RM, EM): /mail/view/{token} is the "View this
+        // email in your browser" link at the foot of every email, and
+        // /mail/font/… the font they all ask for. A post called "mail" would
+        // otherwise sit at an address the inbox depends on.
+        'mail',
         'about', 'delivery', 'faqs', 'contact-us',
         'privacy-policy', 'terms-and-conditions',
         /*

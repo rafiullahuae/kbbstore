@@ -212,7 +212,8 @@ it('prints on the receipt the inclusive-VAT line the order recorded', function (
     expect(str_contains($html, e($label)))
         ->toBeTrue('the confirmation email prints no VAT line for an order that recorded tax');
 
-    expect(str_contains($html, OrderEmailPresenter::html(1048, Money::receiptDecimals(1048))))
+    // Look A (Lane EM) prints the figure plain, under the total.
+    expect(str_contains($html, OrderEmailPresenter::plain(1048, Money::receiptDecimals(1048))))
         ->toBeTrue('the confirmation email does not print the VAT figure the order recorded');
 
     expect(str_contains($text, $label))
@@ -444,7 +445,7 @@ it('does not tell a cash customer their refund is on its way to a card', functio
         ->toBeFalse('the plain-text refund note tells a cash customer to watch their card statement');
 
     // And it still says the two things that ARE true: how much, and which order.
-    expect(str_contains($html, OrderEmailPresenter::html(5000, Money::receiptDecimals(5000))))->toBeTrue('the refunded amount is missing')
+    expect(str_contains($html, OrderEmailPresenter::plain(5000, Money::receiptDecimals(5000))))->toBeTrue('the refunded amount is missing')
         ->and(str_contains($html, (string) $order->order_number))->toBeTrue('the order number is missing');
 });
 

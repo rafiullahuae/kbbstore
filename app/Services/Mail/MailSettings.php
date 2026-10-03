@@ -81,7 +81,7 @@ class MailSettings
          * against it, so a field added here works the moment the package lands.
          */
         'mail_support_whatsapp' => ['text', 'Support WhatsApp number', 'Printed in every order confirmation as a "Chat on WhatsApp" link. Blank uses the number the storefront footer already shows.'],
-        'mail_support_email' => ['text', 'Support email address', 'Where a customer should write for help. Blank uses the From address above.'],
+        'mail_support_email' => ['text', 'Support email address', 'Where a customer should write for help. Ships as info@kbeautybliss.com, which the owner asked for. Clear it and the Reply-To or From address is used instead.'],
         'mail_support_instagram' => ['text', 'Instagram', 'Your handle (@kbeauty.bliss) or the full profile link. Blank uses the one saved under Store → Business Details.'],
         'mail_signature' => ['text', 'Signature', 'Signed at the foot of every order email, e.g. "With love, the K Beauty Bliss team". Type a | where you want a new line. Blank prints the store name.'],
 
@@ -165,6 +165,42 @@ class MailSettings
          * by adding an `email` rule to that controller's list.
          */
         'mail_reply_to' => ['text', 'Reply-To address', 'Where a customer\'s reply to an order email goes. Set this and every order email invites the customer to reply and says the reply reaches you. Leave it blank and no such invitation is printed, because with the From box empty this store sends as no-reply@ and a reply would reach nobody.'],
+
+        /*
+         * ── GOOGLE WORKSPACE (Lane RK, package E1) ─────────────────────────
+         *
+         * The owner: "it will be sent through server email. without any
+         * external email. we also use google business email, and via google
+         * smtp we can also send. give both options."
+         *
+         * Two keys of their own rather than a reuse of mail_username /
+         * mail_password, so that choosing Google never inherits whatever a
+         * dedicated-SMTP setup left behind, and switching back to that setup
+         * finds its own credentials untouched. The host, port and STARTTLS are
+         * NOT settings: smtp.gmail.com:587 is the only combination Google
+         * documents for an app password, so offering boxes for them would only
+         * offer ways to get it wrong. MailConfigurator fixes all three.
+         *
+         * The app password lives in the encrypted vault under its own alias,
+         * `gmail_password`, and like the SMTP password is never returned.
+         */
+        'mail_gmail_username' => ['text', 'Google account address', 'The Google Workspace mailbox that signs in to send, e.g. info@kbeautybliss.com. The From address must be this account or one of its aliases (Gmail → Settings → Accounts → "Send mail as"); Google rewrites any other From to this address.'],
+        'mail_gmail_password' => ['secret', 'Google app password', 'A 16-letter app password, not your normal Google password: Google Account → Security → 2-Step Verification → App passwords. Spaces are ignored. Stored encrypted and never shown again once saved.'],
+
+        /*
+         * ── THE TWO ADDRESSES (Lane RK, package E1) ────────────────────────
+         *
+         * "we have two addresses, one in dubai, one in Korea ... also include
+         * our whatsapp and email info@kbeautybliss.com and allow us to change
+         * these details anytime."
+         *
+         * Printed in the small print at the foot of every customer-facing
+         * order email. Dubai falls back to the store address under Store →
+         * Business Details when blank; Korea has no fallback and nothing is
+         * invented for it — it prints only once somebody types it.
+         */
+        'mail_address_dubai' => ['text', 'Dubai address', 'Printed at the foot of every order email. Type a | where you want a new line. Leave blank to use the store address saved under Store → Business Details.'],
+        'mail_address_korea' => ['text', 'Korea address', 'Printed at the foot of every order email under the Dubai address. Type a | where you want a new line. Leave blank and no Korea address is printed.'],
     ];
 
     /*
@@ -192,8 +228,23 @@ class MailSettings
 
     public const TRANSPORT_LOG = 'log';
 
+    /**
+     * Google Workspace through Gmail's SMTP relay (Lane RK, package E1).
+     *
+     * One of the two the owner asked to choose between; the other is
+     * `server`. `smtp` and `log` are kept because a stored value may already
+     * be one of them, and removing a transport would silently switch a live
+     * shop's mail to something nobody chose.
+     */
+    public const TRANSPORT_GMAIL = 'gmail';
+
+    /** Gmail's submission endpoint: the only one Google documents for an app password. */
+    public const GMAIL_HOST = 'smtp.gmail.com';
+
+    public const GMAIL_PORT = 587;
+
     /** The canonical values. This is what is stored and what transport() returns. */
-    public const TRANSPORT_KEYS = [self::TRANSPORT_SERVER, self::TRANSPORT_SMTP, self::TRANSPORT_LOG];
+    public const TRANSPORT_KEYS = [self::TRANSPORT_SERVER, self::TRANSPORT_GMAIL, self::TRANSPORT_SMTP, self::TRANSPORT_LOG];
 
     public const DEFAULT_TRANSPORT = self::TRANSPORT_SERVER;
 
@@ -219,6 +270,7 @@ class MailSettings
      */
     public const TRANSPORT_LABELS = [
         self::TRANSPORT_SERVER => "Use this server's mail (default)",
+        self::TRANSPORT_GMAIL => 'Google Workspace (Gmail SMTP)',
         self::TRANSPORT_SMTP => 'Use a dedicated SMTP server',
         self::TRANSPORT_LOG => 'Send nothing — write to the log (for testing only)',
     ];
@@ -226,9 +278,17 @@ class MailSettings
     /** What the screen offers and what a save is validated against. */
     public const TRANSPORTS = [
         "Use this server's mail (default)",
+        'Google Workspace (Gmail SMTP)',
         'Use a dedicated SMTP server',
         'Send nothing — write to the log (for testing only)',
     ];
+
+    /**
+     * What the owner asked for by name: info@kbeautybliss.com as the support
+     * address. The schema default for `mail_support_email`, so an install with
+     * no row prints it and a row he clears falls back exactly as before.
+     */
+    public const DEFAULT_SUPPORT_EMAIL = 'info@kbeautybliss.com';
 
     public const ENCRYPTIONS = ['ssl', 'tls', 'none'];
 
@@ -248,6 +308,9 @@ class MailSettings
         'mail_cancelled_refund_note' => 400,
         'mail_shipped_timing_note' => 400,
         'mail_reply_to' => 255,
+        'mail_gmail_username' => 255,
+        'mail_address_dubai' => 300,
+        'mail_address_korea' => 300,
     ];
 
     /**
@@ -331,12 +394,15 @@ class MailSettings
         'server' => ['Mail server',
                      'Only needed if you picked the dedicated-SMTP option above. Every value here comes from your hosting control panel.',
                      ['mail_host', 'mail_port', 'mail_username', 'mail_password', 'mail_encryption', 'mail_timeout']],
+        'gmail' => ['Google Workspace',
+                    'Only needed if you picked Google Workspace above. The server, port and encryption are fixed (smtp.gmail.com, 587, STARTTLS).',
+                    ['mail_gmail_username', 'mail_gmail_password']],
         'from' => ['Who the message comes from',
                    'The name and address customers see on everything the shop sends, and the inbox your own new-order alerts go to.',
                    ['mail_from_address', 'mail_from_name', 'mail_merchant_address']],
         'foot' => ['What customers see at the foot',
                    'Printed under every order email. Leave any of them blank and the storefront’s own details are used instead.',
-                   ['mail_support_email', 'mail_support_whatsapp', 'mail_support_instagram', 'mail_signature']],
+                   ['mail_support_email', 'mail_support_whatsapp', 'mail_support_instagram', 'mail_signature', 'mail_address_dubai', 'mail_address_korea']],
         'other' => ['Other settings',
                     'Added to this store after this screen was laid out. They save exactly like the rest.',
                     ['mail_cancelled_refund_note', 'mail_shipped_timing_note', 'mail_reply_to']],
@@ -352,6 +418,16 @@ class MailSettings
      * for one and a blank string would read as an oversight.
      */
     public const MODULE = 'mail';
+
+    /**
+     * The key each secret is kept under INSIDE the credential row. The SMTP
+     * password has always been `password`; the Google app password gets its
+     * own so the two can never overwrite each other.
+     */
+    public const VAULT_ALIASES = [
+        'mail_password' => 'password',
+        'mail_gmail_password' => 'gmail_password',
+    ];
 
     /** Where the last test-send outcome is kept. Not a credential; a plain setting. */
     public const LAST_TEST_KEY = 'mail_last_test';
@@ -455,12 +531,16 @@ class MailSettings
                  * holds one row per mailer and namespaces by row, not by key.
                  */
                 $field['store'] = ModuleSchema::STORE_VAULT;
-                $field['alias'] = 'password';
+                $field['alias'] = self::VAULT_ALIASES[$key] ?? 'password';
                 unset($field['max'], $field['blank'], $field['invalid'], $field['markup']);
             }
 
-            if (in_array($key, ['mail_merchant_address', 'mail_reply_to'], true)) {
+            if (in_array($key, ['mail_merchant_address', 'mail_reply_to', 'mail_gmail_username'], true)) {
                 $field['rule'] = [self::class, 'addressOrDrop'];
+            }
+
+            if ($key === 'mail_support_email') {
+                $field['default'] = self::DEFAULT_SUPPORT_EMAIL;
             }
 
             $out[$key] = $field;
@@ -580,6 +660,25 @@ class MailSettings
         return $this->credentials->get('password');
     }
 
+    /** The Google account that signs in, when Google Workspace is chosen. */
+    public function gmailUsername(): string
+    {
+        $value = trim((string) $this->get('mail_gmail_username'));
+
+        return $value !== '' && filter_var($value, FILTER_VALIDATE_EMAIL) !== false ? $value : '';
+    }
+
+    /** The Google app password. Only MailConfigurator and the redactor read it. */
+    public function gmailPassword(): string
+    {
+        return $this->credentials->get(self::VAULT_ALIASES['mail_gmail_password']);
+    }
+
+    public function hasGmailPassword(): bool
+    {
+        return $this->credentials->filled(self::VAULT_ALIASES['mail_gmail_password']);
+    }
+
     public function hasPassword(): bool
     {
         return $this->credentials->filled('password');
@@ -673,6 +772,16 @@ class MailSettings
             return $configured;
         }
 
+        /*
+         * Google Workspace with the From box empty: send AS the account that
+         * signs in. Gmail would rewrite a no-reply@ From to that account
+         * anyway, so this states what the customer will really see. Only on
+         * this transport -- the server-mail default below is unchanged.
+         */
+        if ($this->transport() === self::TRANSPORT_GMAIL && $this->gmailUsername() !== '') {
+            return $this->gmailUsername();
+        }
+
         $host = (string) (parse_url((string) config('app.url'), PHP_URL_HOST) ?: '');
         $host = preg_replace('/^www\./i', '', $host) ?? '';
 
@@ -713,6 +822,10 @@ class MailSettings
      */
     public function configured(): bool
     {
+        if ($this->transport() === self::TRANSPORT_GMAIL) {
+            return $this->gmailUsername() !== '' && $this->hasGmailPassword();
+        }
+
         if ($this->transport() !== self::TRANSPORT_SMTP) {
             /*
              * Nothing to configure. `log` writes to the log; `server` hands the
@@ -735,6 +848,20 @@ class MailSettings
     /** Which required fields are still blank, for an error the owner can act on. */
     public function missing(): array
     {
+        if ($this->transport() === self::TRANSPORT_GMAIL) {
+            $missing = [];
+
+            if ($this->gmailUsername() === '') {
+                $missing[] = 'Google account address';
+            }
+
+            if (! $this->hasGmailPassword()) {
+                $missing[] = 'Google app password';
+            }
+
+            return $missing;
+        }
+
         if ($this->transport() !== self::TRANSPORT_SMTP) {
             return [];
         }
@@ -845,6 +972,17 @@ class MailSettings
         if (array_key_exists('mail_transport', $values)) {
             $value = $values['mail_transport'];
             $values['mail_transport'] = self::canonicalTransport(is_scalar($value) ? (string) $value : '');
+        }
+
+        /*
+         * Google shows an app password as four groups of four letters with
+         * spaces between them, and that is how it gets pasted. The password
+         * itself has no spaces, so they are removed here rather than sent to
+         * Google as part of it. The literal "-" (forget it) is left alone.
+         */
+        if (isset($values['mail_gmail_password']) && is_string($values['mail_gmail_password'])
+            && trim($values['mail_gmail_password']) !== ModuleSchema::SECRET_FORGET) {
+            $values['mail_gmail_password'] = preg_replace('/\s+/u', '', $values['mail_gmail_password']) ?? '';
         }
 
         $result = ModuleSchema::write($this->settings, self::MODULE, self::schema(), $values, $this->credentials);

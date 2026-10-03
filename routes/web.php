@@ -707,6 +707,9 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // is an open relay.
         require __DIR__.'/mail-admin.php';
 
+        // Emails → Overview / Sending & delivery / Design & branding (Lane RK, E1).
+        require __DIR__.'/emails-admin.php';
+
         // Categories and attributes. Same guarded group: these write catalogue
         // records and accept an uploaded image.
         require __DIR__.'/catalog-admin.php';
@@ -1395,6 +1398,11 @@ require __DIR__.'/wallet-checkout.php';
  * it all the same.
  */
 require __DIR__.'/import-chain.php';
+
+// The email kit (Lanes RM, EM): GET /mail/view/{token} -- "View this email in
+// your browser" -- and the Outfit font every email asks for. Public, outside
+// every group: both are opened from an inbox by someone not signed in.
+require __DIR__.'/mail-kit.php';
 
 /*
  * Required last, and that placement is load-bearing. The final route in this

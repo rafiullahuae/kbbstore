@@ -153,6 +153,7 @@ class EmailBranding
                 // No address means no invitation to reply. The safe answer when
                 // branding could not be read is the one that promises nothing.
                 'replyTo' => '',
+                'addresses' => [],
                 'colours' => self::PALETTE,
             ];
         }
@@ -190,6 +191,13 @@ class EmailBranding
              * using his email address — which the footer already declines to do.
              */
             'replyTo' => $customerFacing ? $this->mail->replyToAddress() : '',
+            'addresses' => $customerFacing ? $this->addresses() : [],
+            // Fonts and brand colours (Lane RK). Stored for the Look A
+            // restyle; no template reads this key yet.
+            'look' => $this->look(),
+            // The small print's data for the restyle (Lane RK): addresses,
+            // legal links, unsubscribe. No template reads this key yet.
+            'footer' => $customerFacing ? $this->footer() : [],
             'colours' => self::PALETTE,
         ];
     }
@@ -246,7 +254,13 @@ class EmailBranding
             return null;
         }
 
-        $raw = trim((string) ($this->settings->get('org_logo', '') ?? ''));
+        // The email's own logo (Emails → Design & branding, Lane RK) first,
+        // re-checked on the way out; then Store → Business Details' org_logo.
+        $raw = (string) (EmailLook::clean(EmailLook::LOGO, $this->settings->get(EmailLook::LOGO, '')) ?? '');
+
+        if ($raw === '') {
+            $raw = trim((string) ($this->settings->get('org_logo', '') ?? ''));
+        }
 
         if ($raw === '') {
             return null;
@@ -398,6 +412,108 @@ class EmailBranding
      *
      * @return list<string>
      */
+    /**
+     * The shop's two addresses, for the small print (Lane RK, package E1).
+     *
+     * "we have two addresses, one in dubai, one in Korea ... allow us to
+     * change these details anytime." Set under Emails → Design & branding.
+     *
+     * Each entry is ['place' => 'dubai'|'korea', 'lines' => string[]]. Lines
+     * are split on | or a newline, exactly as the signature is, and handed to
+     * the template as an array so it supplies the line breaks and escapes
+     * every line -- operator text never reaches the email as markup.
+     *
+     * NEITHER HAS A FALLBACK (Lane EM, at the owner's word): "the Dubai and
+     * Korea addresses are not known yet ... hide each one while it is empty.
+     * Never invent an address." Dubai used to fall back to Store → Business
+     * Details' street and city, which printed an address under "Dubai" that
+     * nobody had typed into the Dubai box -- for a shop whose registered
+     * address is not its Dubai pickup point, a wrong address on every receipt.
+     * Each place now prints only once somebody types it on Emails → Design &
+     * branding → Footer addresses.
+     *
+     * @return list<array{place: string, lines: list<string>}>
+     */
+    public function addresses(): array
+    {
+        $out = [];
+
+        $dubai = $this->lines($this->mail->get('mail_address_dubai'));
+
+        if ($dubai !== []) {
+            $out[] = ['place' => 'dubai', 'lines' => $dubai];
+        }
+
+        $korea = $this->lines($this->mail->get('mail_address_korea'));
+
+        if ($korea !== []) {
+            $out[] = ['place' => 'korea', 'lines' => $korea];
+        }
+
+        return $out;
+    }
+
+    /** @return list<string> */
+    private function lines(string $raw): array
+    {
+        $parts = preg_split('/\s*[|\r\n]+\s*/', trim($raw)) ?: [];
+
+        return array_values(array_filter(
+            array_map(static fn ($line) => trim((string) $line), $parts),
+            static fn (string $line) => $line !== '',
+        ));
+    }
+
+    /**
+     * The pages the bottom footer links to: the shop's real routes
+     * (routes/web.php), with the trailing slash the storefront links with.
+     */
+    public const FOOTER_LINKS = [
+        'terms' => ['Terms & conditions', '/terms-and-conditions/'],
+        'privacy' => ['Privacy policy', '/privacy-policy/'],
+        // NO returns link (Lane EM, at the owner's word): the shop does not
+        // offer returns, and a footer link to a returns policy promises one.
+    ];
+
+    /**
+     * WHAT THE VERY BOTTOM FOOTER CARRIES (Lane RK, at the owner's word):
+     *
+     *   "in very bottom footer, don't include phone email, what is repeated in
+     *    in the questions? box. just keep address, terms pages, un-subscribe
+     *    option etc."
+     *
+     * So: the two addresses, the two legal pages, and the unsubscribe —
+     * and NOT WhatsApp, email or Instagram, which belong to the "Questions?"
+     * help box (support() above). Data only: the Look A restyle draws it.
+     *
+     * `unsubscribe` is null here on purpose. A transactional email (an order
+     * receipt) carries no unsubscribe; a marketing email gets a per-recipient
+     * one-click link from the E3 campaign sender, which is the only thing
+     * that can sign it. The key exists so the template has one place to look.
+     *
+     * @return array{addresses: list<array{place: string, lines: list<string>}>, links: list<array{kind: string, label: string, url: string}>, unsubscribe: ?string}
+     */
+    public function footer(): array
+    {
+        $links = [];
+
+        foreach (self::FOOTER_LINKS as $kind => [$label, $path]) {
+            $links[] = ['kind' => $kind, 'label' => $label, 'url' => Url::external($path)];
+        }
+
+        return [
+            'addresses' => $this->addresses(),
+            'links' => $links,
+            'unsubscribe' => null,
+        ];
+    }
+
+    /** See EmailLook: the chosen fonts, colours and the @font-face rule. */
+    public function look(): array
+    {
+        return app(EmailLook::class)->present();
+    }
+
     public function signature(): array
     {
         $raw = trim($this->mail->get('mail_signature'));

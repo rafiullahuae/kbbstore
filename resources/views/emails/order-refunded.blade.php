@@ -1,75 +1,48 @@
-@extends('emails.layout')
+{{--
+    "Refund sent" in look A — Lane EM, from the owner's approved preview 08.
 
-@section('body')
-    @php $c = $brand['colours'] ?? \App\Services\Mail\EmailBranding::PALETTE; @endphp
+    TWO SETS OF WORDS, BECAUSE TWO DIFFERENT THINGS HAPPEN (unchanged from the
+    template this replaces): a gateway refund really has been pushed back and
+    lands on a statement by itself; a refund on a method with no refund API —
+    cash on delivery — has only been RECORDED, and saying "we have sent it back
+    to the payment method you used" to someone who paid a courier in cash names
+    a transfer that never happened. OrderRefunded::$settledByGateway decides.
 
-    <p style="margin:0 0 14px;font-size:15px;color:{{ $c['ink2'] }};">{{ $order['customerName'] !== '' ? __('email.greeting.hello_named', ['name' => $order['customerName']]) : __('email.greeting.hello') }}</p>
+    The amount is the one piece of markup in the lead: <b> around the escaped
+    plain amount, put in place of a placeholder AFTER the sentence is escaped.
+--}}
+@extends('emails.kit.order')
+@php
+    $k = \App\Services\Mail\Kit\MailKit::for($brand ?? []);
+    $kitBold = static fn (string $key, array $replace) => str_replace('%%AMOUNT%%', '<b>' . e($amountPlain) . '</b>', e(__($key, ['amount' => '%%AMOUNT%%'] + $replace)));
+    $kitLead = $settledByGateway
+        ? $kitBold('email.refunded.sent_body', ['number' => $order['number']])
+        : $kitBold('email.refunded.approved_body', ['number' => $order['number']]);
+    if ($isPartial) {
+        $kitLead .= ' ' . e(__('email.refunded.partial_note'));
+    }
+    if (! $settledByGateway) {
+        $kitLead .= ' ' . e(__('email.refunded.manual_note', ['method' => $order['paymentLabel']]));
+    }
+    $kitTitle = $kitTitle ?? __('email.refunded.heading_sent');
+    $kitPreheader = __('email.kit.pre_refunded', ['amount' => $amountPlain, 'number' => $order['number']]);
+    $kitHero = ['back', 'green', __('email.kit.eyebrow_refund_sent'),
+        $settledByGateway ? __('email.refunded.heading_sent') : __('email.refunded.heading_approved'),
+        new \Illuminate\Support\HtmlString($kitLead)];
+    $kitTracker = null;
+    $kitShowItems = false;
+    $kitShowTotals = false;
+    $kitShowInfo = false;
+    $kitCta = null;
+    $kitWhy = __('email.kit.why_order', ['site' => $k['site']]);
+@endphp
 
-    {{--
-        TWO SETS OF WORDS, BECAUSE TWO DIFFERENT THINGS HAPPEN.
-
-        A gateway refund really has been pushed back and lands on a statement by
-        itself. A refund on a payment method with no refund API — cash on
-        delivery, which is this store's ordinary one — has only been RECORDED;
-        PaymentRefunder settles it `recorded_only` and notes "return the money
-        by hand". Saying "we have sent it back to the payment method you used,
-        it will appear on your card statement in five to ten working days" to
-        someone who paid a courier in cash is not a rounding error in tone: it
-        names a transfer that never happened, to an account that does not exist,
-        and it buys ten days of silence while the customer waits for it.
-
-        OrderRefunded::$settledByGateway asks the registry the same question
-        PaymentRefunder asks before it settles, so the two cannot disagree about
-        whether money moved.
-    --}}
-    <p style="margin:0 0 10px;font-size:19px;font-weight:700;line-height:1.3;color:{{ $c['ink'] }};">
-        {{ $settledByGateway ? __('email.refunded.heading_sent') : __('email.refunded.heading_approved') }}
-    </p>
-
-    @if ($settledByGateway)
-        <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:{{ $c['ink2'] }};">
-            {!! __('email.refunded.sent_body', ['amount' => $amountHtml, 'number' => e($order['number'])]) !!}
-            @if ($isPartial)
-                {{ __('email.refunded.partial_note') }}
-            @endif
-            {{ __('email.refunded.statement_note') }}
-        </p>
-    @else
-        <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:{{ $c['ink2'] }};">
-            {!! __('email.refunded.approved_body', ['amount' => $amountHtml, 'number' => e($order['number'])]) !!}
-            @if ($isPartial)
-                {{ __('email.refunded.partial_note') }}
-            @endif
-            {{ __('email.refunded.manual_note', ['method' => $order['paymentLabel']]) }}
-        </p>
-    @endif
-
-    <div style="padding:13px 15px;background:{{ $c['cream'] }};border-radius:9px;margin:0 0 4px;font-size:14px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
-            <tr>
-                <td style="color:{{ $c['ink2'] }};">{{ __('email.refunded.row_refunded') }}</td>
-                <td align="right" style="text-align:right;font-weight:700;white-space:nowrap;color:{{ $c['pinkDeep'] }};">{!! $amountHtml !!}</td>
-            </tr>
-            <tr>
-                <td style="color:{{ $c['ink2'] }};padding-top:4px;">{{ __('email.refunded.row_order_total') }}</td>
-                <td align="right" style="text-align:right;white-space:nowrap;padding-top:4px;color:{{ $c['ink'] }};">{!! $order['totalHtml'] !!}</td>
-            </tr>
-            <tr>
-                <td style="color:{{ $c['ink2'] }};padding-top:4px;">{{ __('email.refunded.row_paid_by') }}</td>
-                <td align="right" style="text-align:right;padding-top:4px;color:{{ $c['ink'] }};">{{ $order['paymentLabel'] }}</td>
-            </tr>
-        </table>
-    </div>
-
-    @include('emails.partials.items')
-    @include('emails.partials.totals')
-
-    {{-- "Chasing it" only means something once it has been sent. On a refund
-         that has been recorded rather than pushed, the paragraph above has
-         already said what happens next and who to reply to. --}}
-    @if ($settledByGateway)
-        <p style="margin:26px 0 0;font-size:13px;line-height:1.55;color:{{ $c['ink2'] }};">
-            {{ __('email.refunded.chase_note', ['number' => $order['number']]) }}
-        </p>
-    @endif
+@section('kit_before')
+<tr><td class="px" style="padding:0 32px;font-family:{!! $k['sans'] !!};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;">
+<tr><td class="ink2" style="font-family:{!! $k['sans'] !!};font-size:14px;color:#5E545A;padding:5px 0;">{{ __('email.refunded.row_refunded') }}</td><td align="right" style="font-family:{!! $k['sans'] !!};font-size:18px;font-weight:800;color:#2E9E6B;">{{ $amountPlain }}</td></tr>
+<tr><td class="ink2" style="font-family:{!! $k['sans'] !!};font-size:14px;color:#5E545A;padding:5px 0;">{{ __('email.refunded.row_order_total') }}</td><td align="right" class="ink" style="font-family:{!! $k['sans'] !!};font-size:14px;color:{{ $k['text'] }};">{{ $order['totalPlain'] }}</td></tr>
+<tr><td class="ink2" style="font-family:{!! $k['sans'] !!};font-size:14px;color:#5E545A;padding:5px 0;">{{ __('email.refunded.row_paid_by') }}</td><td align="right" class="ink" style="font-family:{!! $k['sans'] !!};font-size:14px;color:{{ $k['text'] }};">{{ $order['paymentLabel'] }}</td></tr></table></td></tr>
+@if ($settledByGateway)
+@include('emails.kit.para', ['html' => __('email.refunded.statement_note') . ' ' . __('email.refunded.chase_note', ['number' => $order['number']]), 'pad' => '16px 32px 0', 'size' => 14])
+@endif
 @endsection

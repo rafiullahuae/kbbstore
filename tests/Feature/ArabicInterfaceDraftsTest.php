@@ -569,7 +569,15 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * The card's three points and the message above a shared link
      * (store.product.pts_card_p1..p3, pts_card_msg), seeded by
      * 2027_07_23_000200_seed_share_card_arabic_drafts. Read off the run.
-     * ── 1,115 -> 1,181: LANE RL'S SIXTY-SIX ───────────────────────────────
+     *
+     * ── 1,115 -> 1,117: THE EMAIL ADDRESS HEADINGS (Lane RK, E1) ──────────
+     *
+     * "Dubai" and "Korea" above the shop's addresses at the foot of every
+     * customer order email (email.layout.address_dubai, address_korea),
+     * seeded by 2027_07_25_000200_seed_email_address_heading_arabic_drafts.
+     * Read off the run.
+     *
+     * ── 1,117 -> 1,183: LANE RL'S SIXTY-SIX ───────────────────────────────
      * The order emails the owner asked for on 3 October: the processing,
      * on-hold, delivered, refunded and payment-failed status emails, the
      * tracking line, the two "Complete your order" reminders with their three
@@ -582,8 +590,14 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * Dubai and Korea labels, four links, the offers box) and #KBeautyBliss
      * Spotted (store.spotted.*), seeded by
      * 2027_07_27_100100_seed_spotted_footer_arabic_drafts. Read off the run.
+     *
+     * ── 1,183 -> 1,279: THE EMAIL KIT'S NINETY-SIX (Lane EM) ─────────────
+     * The approved look-A design's own words: header links, help box,
+     * tracker steps, footer, and each email's eyebrow, preheader and "why"
+     * line (email.kit.*, email.feedback.stars_note/share_*), seeded by
+     * 2027_07_27_000100_seed_email_kit_arabic_drafts. Read off the run.
      */
-    expect($ui['drafts'])->toBe(1212, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1310, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

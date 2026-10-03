@@ -297,6 +297,10 @@ function walkExpectations(array $seed): array
         'checkout/pending'         => ['status' => 302],
         // 2.60.371, Lane RL: no signed ?order=&t= is the same 404 as a forged one (OrderLinks).
         'checkout/order-pay'       => ['status' => 404],
+        // Lane EM, the email kit (routes/mail-kit.php): a token that was never
+        // sent is the same 404 a forged one gets; the font every email asks for.
+        'mail/view/{token}'        => ['params' => ['token' => str_repeat('a', 43)], 'status' => 404],
+        'mail/font/outfit-latin.woff2' => ['status' => 200],
 
         /*
          * 404, and deliberately so: CartAddressController aborts unless the

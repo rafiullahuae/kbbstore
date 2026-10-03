@@ -38,3 +38,10 @@
 {!! $line !!}
 @endforeach
 @endif
+@foreach ($brand['addresses'] ?? [] as $place)
+
+{!! $place['place'] === 'korea' ? __('email.layout.address_korea') : __('email.layout.address_dubai') !!}
+@foreach ($place['lines'] as $line)
+{!! $line !!}
+@endforeach
+@endforeach

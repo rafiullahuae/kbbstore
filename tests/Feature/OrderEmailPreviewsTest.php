@@ -223,23 +223,30 @@ it('renders every order email and saves it for review', function () {
             // Blade escaped the customer's own words rather than running them.
             ->and($html)->not->toContain('<script');
 
-        // Quantity as its own column, in every email that lists what was
-        // bought. The preview order has a line of 2 and a line of 1, so a
-        // template that printed the wrong cell would show 1 twice.
-        expect($html)->toContain('>Qty<')
-            ->and($html)->toContain('each');
+        // Quantity, labelled, in every email that lists what was bought --
+        // look A's "Qty 2 · AED 199 each" under the line's name (Lane EM). The
+        // preview order has a line of 2 and a line of 1, so a template that
+        // printed the wrong number would show 1 twice. The refund email lists
+        // no lines in the approved design (preview 08).
+        if ($name !== 'order-refunded') {
+            expect($html)->toContain('Qty 2')
+                ->and($html)->toContain('Qty 1')
+                ->and($html)->toContain('each');
+        }
 
         // The support block and the signature: on for the customer, off for the
         // merchant's own alert. Asserted both ways round, because a block that
         // is always shown is not a decision.
         if ($customerFacing) {
-            expect($html)->toContain('We are here if you need us')
+            expect($html)->toContain('Questions? A real person answers.')
                 ->and($html)->toContain('wa.me/97158505261')
                 ->and($html)->toContain('instagram.com/kbeauty.bliss')
-                ->and($html)->toContain('hello@kbeautybliss.com')
+                // The support email ships as the owner's info@ address now
+                // (Lane RK, package E1); the From address is no longer it.
+                ->and($html)->toContain('info@kbeautybliss.com')
                 ->and($html)->toContain('the K Beauty Bliss team');
         } else {
-            expect($html)->not->toContain('We are here if you need us')
+            expect($html)->not->toContain('Questions? A real person answers.')
                 ->and($html)->not->toContain('wa.me/');
         }
 

@@ -103,6 +103,25 @@
      * English order email is byte-identical to the one this replaces.
      */
     $kbbMailDir = \App\Support\Locale::direction() === 'rtl' ? ' dir="rtl"' : '';
+
+    /*
+     * THE SHOP'S ADDRESSES (Lane RK, package E1): "we have two addresses, one
+     * in dubai, one in Korea". Set under Emails → Design & branding;
+     * EmailBranding::addresses() returns only what is really saved.
+     *
+     * RENDERED HERE, through emails/partials/addresses.blade.php, and appended
+     * to the footer sentence's own line for the reason $replyInvitation and
+     * $kbbMailDir above give: a directive on a line of its own leaves its
+     * indentation in the output, so an @foreach down there would change every
+     * order email's bytes even with no address saved. Empty addresses append
+     * an empty string, so that email is byte-identical to the one before.
+     *
+     * NOT operator text printed raw: the partial puts every line through
+     * {{ }}. What {!! !!} prints below is that partial's escaped output.
+     */
+    $kbbAddresses = ($brand['customerFacing'] ?? true) && ! empty($brand['addresses'])
+        ? view('emails.partials.addresses', ['addresses' => $brand['addresses'], 'c' => $c])->render()
+        : '';
 @endphp
 <table role="presentation"{!! $kbbMailDir !!} width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $c['cream'] }}" style="width:100%;border-collapse:collapse;background:{{ $c['cream'] }};margin:0;padding:0;">
     <tr>
@@ -238,7 +257,7 @@
                                          configured, each one a real address rather than a guess about
                                          where this message came from. --}}
                                     @if ($brand['customerFacing'] ?? true)
-                                        {{ __('email.layout.footer_customer', ['store' => $brand['storeName'] ?? '']) }}{{ $replyInvitation }}
+                                        {{ __('email.layout.footer_customer', ['store' => $brand['storeName'] ?? '']) }}{{ $replyInvitation }}{!! $kbbAddresses !!}
                                     @else
                                         {!! \App\Support\Phrase::inline(__('email.layout.footer_merchant')) !!}
                                     @endif

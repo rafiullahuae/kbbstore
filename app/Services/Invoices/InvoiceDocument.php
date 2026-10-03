@@ -401,6 +401,8 @@ class InvoiceDocument
             $out[] = [
                 'name' => $name,
                 'nameForCustomer' => $localised !== '' ? $localised : $name,
+                // The emailed invoice's line picture (Lane EM, KitOrder::lines()).
+                'productId' => (int) ($item->product_id ?? 0),
                 'brand' => trim((string) $item->brand),
                 'sku' => trim((string) $item->sku),
                 'variant' => implode(', ', $variant),

@@ -203,13 +203,23 @@ it('applies a Reply-To saved after the mailer was already built', function () {
     );
 });
 
-it('invites a reply once, and only once, when the address is configured', function () {
-    rtSaveThroughScreen(['mail_reply_to' => 'hello@kbeautybliss.com']);
+it('names the Reply-To address in the help box once, and only once, when it is configured', function () {
+    /*
+     * LOOK A (Lane EM). The old layout appended "Reply to this message if
+     * anything looks wrong — it reaches us." to the small print. The owner's
+     * approved design has no such sentence: the "Questions? A real person
+     * answers." box is where a customer is told how to reach the shop, and its
+     * "Email us" channel falls back to the Reply-To address
+     * (EmailBranding::support()) when no support email is set. So the promise
+     * this test guards -- the address that reaches the shop is the one the
+     * email offers -- now lives there, once.
+     */
+    rtSaveThroughScreen(['mail_reply_to' => 'hello@kbeautybliss.com', 'mail_support_email' => '']);
 
     $html = (string) (new OrderConfirmation(rtOrder()))->render();
 
-    expect(substr_count($html, 'it reaches us'))
-        ->toBe(1, 'the invitation to reply is missing, or printed more than once');
+    expect(substr_count($html, 'href="mailto:hello@kbeautybliss.com"'))
+        ->toBe(1, 'the Reply-To address is missing from the help box, or printed more than once');
 });
 
 it('keeps the invitation out of the merchant\'s own new-order alert', function () {
@@ -220,12 +230,12 @@ it('keeps the invitation out of the merchant\'s own new-order alert', function (
 
     $html = (string) (new App\Mail\NewOrderAlert(rtOrder()))->render();
 
-    expect(str_contains($html, 'it reaches us'))
+    expect(str_contains($html, 'mailto:hello@kbeautybliss.com'))
         ->toBeFalse('the merchant alert invites the owner to reply to himself');
 });
 
 it('carries the invitation into every customer-facing order email, not only one of them', function () {
-    rtSaveThroughScreen(['mail_reply_to' => 'hello@kbeautybliss.com']);
+    rtSaveThroughScreen(['mail_reply_to' => 'hello@kbeautybliss.com', 'mail_support_email' => '']);
 
     $order = rtOrder();
 
@@ -234,7 +244,7 @@ it('carries the invitation into every customer-facing order email, not only one 
         'dispatch' => new App\Mail\OrderStatusChanged($order, 'shipped'),
         'invoice' => new App\Mail\OrderInvoice($order),
     ] as $what => $mailable) {
-        expect(str_contains((string) $mailable->render(), 'it reaches us'))
+        expect(str_contains((string) $mailable->render(), 'href="mailto:hello@kbeautybliss.com"'))
             ->toBeTrue("the {$what} email does not invite a reply although one would reach the shop");
     }
 });

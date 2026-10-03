@@ -80,6 +80,7 @@ class CartRecoveryReminder extends Mailable
             view: 'emails.cart-recovery',
             text: 'emails.cart-recovery-text',
             with: [
+                'kitTitle' => (string) $this->envelope()->subject,
                 'body' => $this->body,
                 'items' => $this->items,
                 'cartUrl' => $this->cartUrl,

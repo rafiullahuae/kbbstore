@@ -156,6 +156,9 @@ class MailApiController extends Controller
             // than silently keeping the previous one.
             'mail_merchant_address' => ['string', 'email', 'max:255'],
             'mail_timeout' => ['integer', 'min:1', 'max:120'],
+            // Google Workspace (Lane RK). Same shape as the SMTP pair above.
+            'mail_gmail_username' => ['string', 'email', 'max:255'],
+            'mail_gmail_password' => ['string', 'max:255'],
         ];
 
         /*

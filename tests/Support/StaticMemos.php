@@ -175,6 +175,13 @@ final class StaticMemos
              * picture with no stored size, per path, per process. (Lane RC)
              */
             \App\Models\BannerCard::class => static fn () => \App\Models\BannerCard::forgetSizes(),
+            /*
+             * Lane EM: the browser-copy tokens minted while rendering and the
+             * "does mail_web_copies exist" answer. Without the reset a token
+             * minted by one test's render is still pending in the next, and
+             * a test that migrates the table away keeps being told it exists.
+             */
+            \App\Services\Mail\Kit\WebCopy::class => static fn () => \App\Services\Mail\Kit\WebCopy::reset(),
             // Public and written from the transport itself; there is no forget()
             // to call, so this is the assignment.
             ServerMailTransport::class => static function (): void {

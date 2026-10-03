@@ -254,8 +254,13 @@ class MailConfigurator
     /** Which transport the runtime mailer resolved to: server, smtp or log. */
     public function activeTransport(): string
     {
-        return match ($this->mailerConfig()['transport'] ?? 'log') {
-            'smtp' => MailSettings::TRANSPORT_SMTP,
+        $config = $this->mailerConfig();
+
+        return match ($config['transport'] ?? 'log') {
+            'smtp' => ($config['host'] ?? '') === MailSettings::GMAIL_HOST
+                && $this->settings->transport() === MailSettings::TRANSPORT_GMAIL
+                    ? MailSettings::TRANSPORT_GMAIL
+                    : MailSettings::TRANSPORT_SMTP,
             ServerMailTransport::NAME => MailSettings::TRANSPORT_SERVER,
             default => MailSettings::TRANSPORT_LOG,
         };
@@ -269,6 +274,33 @@ class MailConfigurator
         if ($chosen === MailSettings::TRANSPORT_LOG) {
             // Chosen, never fallen back to.
             return ['transport' => 'log', 'channel' => config('mail.mailers.log.channel')];
+        }
+
+        /*
+         * Google Workspace (Lane RK, package E1). The host, port and STARTTLS
+         * are fixed rather than settings: smtp.gmail.com on 587 with STARTTLS
+         * is what Google documents for an app password, and `require_tls`
+         * makes Symfony refuse to send the password over a connection that did
+         * not upgrade, instead of quietly sending it in the clear.
+         *
+         * Half filled in falls back to server mail, exactly as the dedicated
+         * SMTP option below does and for the same reason: an owner part-way
+         * through typing a password must not stop order email going out.
+         */
+        if ($chosen === MailSettings::TRANSPORT_GMAIL && $this->settings->configured()) {
+            $timeout = (int) ($this->settings->get('mail_timeout') ?: 0);
+
+            return [
+                'transport' => 'smtp',
+                'scheme' => 'smtp',
+                'host' => MailSettings::GMAIL_HOST,
+                'port' => MailSettings::GMAIL_PORT,
+                'username' => $this->settings->gmailUsername(),
+                'password' => $this->settings->gmailPassword(),
+                'require_tls' => true,
+                'local_domain' => parse_url((string) config('app.url'), PHP_URL_HOST) ?: null,
+                'timeout' => $timeout > 0 ? $timeout : 20,
+            ];
         }
 
         if ($chosen !== MailSettings::TRANSPORT_SMTP || ! $this->settings->configured()) {

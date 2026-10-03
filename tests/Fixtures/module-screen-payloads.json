@@ -8899,6 +8899,7 @@
         "has_value": true,
         "options": [
           "Use this server's mail (default)",
+          "Google Workspace (Gmail SMTP)",
           "Use a dedicated SMTP server",
           "Send nothing — write to the log (for testing only)"
         ]
@@ -9001,9 +9002,9 @@
         "key": "mail_support_email",
         "type": "text",
         "label": "Support email address",
-        "help": "Where a customer should write for help. Blank uses the From address above.",
-        "value": "",
-        "has_value": false,
+        "help": "Where a customer should write for help. Ships as info@kbeautybliss.com, which the owner asked for. Clear it and the Reply-To or From address is used instead.",
+        "value": "info@kbeautybliss.com",
+        "has_value": true,
         "options": null
       },
       {
@@ -9047,6 +9048,42 @@
         "type": "text",
         "label": "Reply-To address",
         "help": "Where a customer's reply to an order email goes. Set this and every order email invites the customer to reply and says the reply reaches you. Leave it blank and no such invitation is printed, because with the From box empty this store sends as no-reply@ and a reply would reach nobody.",
+        "value": "",
+        "has_value": false,
+        "options": null
+      },
+      {
+        "key": "mail_gmail_username",
+        "type": "text",
+        "label": "Google account address",
+        "help": "The Google Workspace mailbox that signs in to send, e.g. info@kbeautybliss.com. The From address must be this account or one of its aliases (Gmail → Settings → Accounts → \"Send mail as\"); Google rewrites any other From to this address.",
+        "value": "",
+        "has_value": false,
+        "options": null
+      },
+      {
+        "key": "mail_gmail_password",
+        "type": "secret",
+        "label": "Google app password",
+        "help": "A 16-letter app password, not your normal Google password: Google Account → Security → 2-Step Verification → App passwords. Spaces are ignored. Stored encrypted and never shown again once saved.",
+        "value": "",
+        "has_value": false,
+        "options": null
+      },
+      {
+        "key": "mail_address_dubai",
+        "type": "text",
+        "label": "Dubai address",
+        "help": "Printed at the foot of every order email. Type a | where you want a new line. Leave blank to use the store address saved under Store → Business Details.",
+        "value": "",
+        "has_value": false,
+        "options": null
+      },
+      {
+        "key": "mail_address_korea",
+        "type": "text",
+        "label": "Korea address",
+        "help": "Printed at the foot of every order email under the Dubai address. Type a | where you want a new line. Leave blank and no Korea address is printed.",
         "value": "",
         "has_value": false,
         "options": null

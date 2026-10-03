@@ -62,6 +62,7 @@ class CustomerAccountInvite extends Mailable
             view: 'emails.customer-invite',
             text: 'emails.customer-invite-text',
             with: [
+                'kitTitle' => (string) $this->envelope()->subject,
                 'segments' => $this->segments,
                 'textBody' => $this->textBody,
                 'link' => $this->link,

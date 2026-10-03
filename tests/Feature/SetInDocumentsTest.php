@@ -426,7 +426,9 @@ it('prints nothing at all for an order placed before sets existed', function () 
      * to every text comparison above and would still put a stray inset box on
      * the invoice of every order this shop has ever taken.
      */
-    expect(str_contains($withoutSet['order-invoice (html)'], 'border-inline-start:2px solid #eceff3'))
+    // Look A (Lane EM) draws each member as its own small grey line under
+    // the name -- that line's style is the marker now.
+    expect(str_contains($withoutSet['order-invoice (html)'], 'margin-top:2px;font-size:12px;line-height:1.45'))
         ->toBeFalse('the emailed invoice drew an empty member box on a line with no snapshot');
 
     expect(str_contains($withoutSet['order-invoice (text)'], "\n  * "))
@@ -434,7 +436,7 @@ it('prints nothing at all for an order placed before sets existed', function () 
 
     // The same two markers ARE there when there is something to draw, so the
     // assertions above are measuring the guard and not a typo in a needle.
-    expect(str_contains($withSet['order-invoice (html)'], 'border-inline-start:2px solid #eceff3'))->toBeTrue();
+    expect(str_contains($withSet['order-invoice (html)'], 'margin-top:2px;font-size:12px;line-height:1.45'))->toBeTrue();
     expect(str_contains($withSet['order-invoice (text)'], "\n  * "))->toBeTrue();
 });
 

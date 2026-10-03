@@ -953,7 +953,8 @@ it('uses the owner-approved preview wording, word for word', function () {
     expect($render($failed))->toContain('Nothing was charged and the order is not confirmed. Your order is saved — try again or choose another way to pay.');
 
     $receipt = new OrderConfirmation($order);
-    expect($render($receipt))->toContain('Thank you, Aisha Khan! 🎉')
+    // The first name, as the owner's approved preview greets her (Lane EM).
+    expect($render($receipt))->toContain('Thank you, Aisha! 🎉')
         ->toContain('Your payment is in and your order is confirmed. We are packing it with care — keep this email, it is your receipt.');
     // Cash on delivery has paid nothing, so it is not told it has.
     expect($render(new OrderConfirmation(rlOrder(['payment_method' => 'cod', 'status' => 'processing']))))

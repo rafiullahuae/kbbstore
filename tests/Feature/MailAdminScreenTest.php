@@ -22,8 +22,13 @@ it('registers the mail screen in the nav, the titles and the router', function (
 
     // All three, because any one of them missing makes the screen unreachable
     // in a different and individually silent way.
-    expect($source)->toContain("['mail','Mail'")                 // sidebar entry
-        ->and($source)->toContain("mail:['Store','Mail']")       // breadcrumb + go() gate
+    //
+    // Lane RK (package E1) moved the row into the owner's new Emails parent
+    // menu as "All mail settings"; the screen itself is unchanged. These two
+    // pin that finished state, so they read red until the integrator has made
+    // the move and green after.
+    expect($source)->toContain("['mail','All mail settings'")    // sidebar entry
+        ->and($source)->toContain("mail:['Emails','All mail settings']")   // breadcrumb + go() gate
         ->and($source)->toContain('mail:renderMail')             // the router
         ->and($source)->toContain('function renderMail(');       // and the function it names
 });

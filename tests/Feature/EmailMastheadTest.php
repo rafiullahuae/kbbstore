@@ -62,7 +62,10 @@ function mastheadOrder(): Order
 function mastheadOf(string $html): string
 {
     // The wordmark div: the store name, optionally split into two spans.
-    preg_match('/font-size:23px;font-weight:800;[^>]*>(.*?)<\/div>/s', $html, $m);
+    // Look A (Lane EM): the header's 26px wordmark; the merchant alert, which
+    // has no header, signs its footer with the same two halves at 17px.
+    preg_match('/class="wm-ink"[^>]*>(.*?)<\/div>/s', $html, $m)
+        || preg_match('/font-size:17px;font-weight:800;[^>]*>(.*?)<\/div>/s', $html, $m);
 
     return trim(strip_tags($m[1] ?? ''));
 }

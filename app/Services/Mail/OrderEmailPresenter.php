@@ -89,11 +89,17 @@ class OrderEmailPresenter
             // told the customer they had ordered yesterday. See
             // App\Support\StoreTime.
             'placedAt' => \App\Support\StoreTime::formatDate($order->created_at),
+            // The approved look A's order chip prints "2 Oct 2026" (Lane EM):
+            // the short month keeps Order · Placed · Total on one row at 390px.
+            'placedShort' => \App\Support\StoreTime::formatDate($order->created_at, 'j M Y'),
             'status' => (string) $order->status,
             'customerName' => $this->customerName($order),
             'items' => $this->items($order, $w),
             'totals' => $this->totals($order, $w),
             'vatNote' => $this->vatNote($order, $w),
+            // The receipt's decimal width, so the kit can print a row it
+            // reshapes (a discount as "− AED 35.55") at the same precision.
+            'ledgerWidth' => $w,
             'totalFils' => (int) $order->total,
             'totalHtml' => self::html((int) $order->total, $w),
             'totalPlain' => self::plain((int) $order->total, $w),
@@ -179,6 +185,10 @@ class OrderEmailPresenter
             $out[] = [
                 'name' => $localised !== '' ? $localised : $name,
                 'brand' => trim((string) $item->brand),
+                // The product row, for the line's picture only (Lane EM,
+                // App\Services\Mail\Kit\KitOrder::lines()). Name, brand and
+                // price stay this snapshot whatever the product has become.
+                'productId' => (int) ($item->product_id ?? 0),
                 'sku' => trim((string) $item->sku),
                 'variant' => implode(', ', $variant),
                 /*
@@ -435,12 +445,52 @@ class OrderEmailPresenter
             trim(((string) ($address['first_name'] ?? '')) . ' ' . ((string) ($address['last_name'] ?? ''))),
             (string) ($address['line1'] ?? ''),
             (string) ($address['line2'] ?? ''),
-            trim(((string) ($address['city'] ?? '')) . ' ' . ((string) ($address['state'] ?? ''))),
-            (string) ($address['country'] ?? ''),
+            self::cityLine((string) ($address['city'] ?? ''), (string) ($address['state'] ?? '')),
+            self::countryName((string) ($address['country'] ?? '')),
             (string) ($address['phone'] ?? ''),
         ];
 
         return array_values(array_filter(array_map('trim', $lines), static fn (string $l) => $l !== ''));
+    }
+
+    /**
+     * City and emirate on one line, ONCE when they are the same place (Lane
+     * RK, audit B4).
+     *
+     * The checkout copies the emirate into the city at the owner's own
+     * instruction ("City = Emirates", CartAddressState), so on most UAE orders
+     * the two boxes hold the same word and every order email printed
+     * "Dubai Dubai". Compared without case or surrounding space; when they
+     * differ ("Al Barsha" / "Dubai") both are kept, joined with a comma.
+     */
+    public static function cityLine(string $city, string $state): string
+    {
+        $city = trim($city);
+        $state = trim($state);
+
+        if ($city === '' || $state === '') {
+            return $city . $state;
+        }
+
+        if (mb_strtolower($city) === mb_strtolower($state)) {
+            return $city;
+        }
+
+        return $city . ', ' . $state;
+    }
+
+    /**
+     * The country's name, not its ISO code (Lane RK, audit B4). "AE" on a
+     * receipt is a database value; "United Arab Emirates" is an address. A
+     * code Countries does not know, or a name already spelled out, is printed
+     * as it was stored rather than guessed at.
+     */
+    public static function countryName(string $country): string
+    {
+        $country = trim($country);
+        $code = strtoupper($country);
+
+        return \App\Support\Countries::NAMES[$code] ?? $country;
     }
 
     /**

@@ -49,6 +49,8 @@ class OrderFeedbackRequest extends OrderMail
 
             $seen[$product->id] = true;
             $this->products[] = [
+                // For the row's picture (Lane EM, KitProducts::imagesForIds).
+                'productId' => (int) $product->id,
                 'name' => (string) $item->name,
                 'brand' => (string) ($item->brand ?? ''),
                 'url' => Url::external('/product/' . $product->slug . '/') . '#sr',
@@ -72,6 +74,7 @@ class OrderFeedbackRequest extends OrderMail
             view: 'emails.order-feedback',
             text: 'emails.order-feedback-text',
             with: [
+                'kitTitle' => (string) $this->envelope()->subject,
                 'heading' => $this->firstName !== ''
                     ? __('email.feedback.heading_named', ['name' => $this->firstName])
                     : __('email.feedback.heading'),

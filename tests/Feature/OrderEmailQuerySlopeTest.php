@@ -284,8 +284,17 @@ it('sends the confirmation at a cost that does not grow with its lines', functio
      * settings row, the mail credential, and the two writes to mail_deliveries
      * (the insert before the transport is handed the message, the update with
      * its verdict).
+     *
+     * ── 6 -> 10, RAISED DELIBERATELY (Lane EM) ──────────────────────────────
+     * The owner's approved look A puts each product's own picture beside its
+     * line. That is ONE `select id, image from products where id in (…)` per
+     * render, whatever the number of lines (KitProducts::imagesForIds) -- so
+     * two here, because this window sends once and renders once more -- plus
+     * the browser copy behind "View this email in your browser": one insert
+     * into mail_web_copies and one prune of expired rows (WebCopy::capture()).
+     * The slope above is still 0.00, which is the part that matters.
      */
-    expect($cost[1])->toBe(6, 'sending an order confirmation has taken on another query');
+    expect($cost[1])->toBe(10, 'sending an order confirmation has taken on another query');
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -355,14 +364,21 @@ it('reads no relation lazily while building or sending an order email', function
     expect($seen)->toBe([], 'the order email read a relation off a row nobody eager-loaded: ' . json_encode($seen));
 });
 
-it('asks the catalogue nothing at all while sending an order email', function () {
+it('asks the catalogue for the pictures only, once per email, while sending an order email', function () {
     /*
      * Stated as its own assertion because it is the thing that would change if
      * somebody put product thumbnails in the receipt, which is a plausible and
-     * reasonable request. Every word and number on an order email is a snapshot
+     * reasonable request -- and the owner made it: his approved look A
+     * (docs/rj-email-previews/, Lane EM) draws each product's picture beside
+     * its line. Every word and number on an order email is still a snapshot
      * on `order_items` — name, brand, sku, quantity, price, and since Lane CN
      * the localised name too — so the email survives a product being renamed,
-     * unpublished or deleted, and asks `products` nothing.
+     * unpublished or deleted. What `products` is asked is the picture, by id,
+     * in ONE statement per email whatever the number of lines: id and image,
+     * nothing that could put a live name or price on a receipt.
+     *
+     * MUTATION: select the whole row in KitProducts::forIds(), or look
+     * the pictures up per line, and this is red.
      */
     Mail::mailer(MailConfigurator::MAILER)->to('warm@example.com')
         ->send(new OrderConfirmation(q11Fresh(q11Order(2)->id)));
@@ -389,7 +405,14 @@ it('asks the catalogue nothing at all while sending an order email', function ()
         static fn (string $q) => str_contains($q, '"products"') || str_contains($q, '`products`')
     ));
 
-    expect($catalogue)->toBe([], 'an order email queried the catalogue: ' . json_encode($catalogue));
+    // One send and one render: two statements, each the id/image lookup.
+    expect($catalogue)->toHaveCount(2, 'an order email queried the catalogue more than once per render: ' . json_encode($catalogue));
+
+    foreach ($catalogue as $q) {
+        // id, the picture, and the routine step for the delivered email's
+        // "How to use them together" -- never a name or a price.
+        expect(\Tests\Support\SqlShape::portable($q))->toStartWith('select "id", "image", "routine_role" from "products" where "id" in');
+    }
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════

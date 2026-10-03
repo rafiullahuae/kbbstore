@@ -302,6 +302,23 @@ it('sends every module screen the payload it sent before the shared schema', fun
      * two-column feature — at the places the homepage draws them. Four
      * entries written into the fixture by hand at those places; no other
      * leaf moved.
+     * ── 3 OCTOBER, `mail.fields`, READ OFF THE DIFF AND SPLICED (Lane RK) ──
+     *
+     * Not regenerated: the live GET /admin-api/mail was dumped and only the
+     * `mail` block replaced; every other screen's bytes are untouched.
+     *
+     *   mail_transport.options     + "Google Workspace (Gmail SMTP)", the
+     *                              second of the two transports the owner
+     *                              asked to choose between. Stored key
+     *                              unchanged: a shop on server mail stays on it.
+     *   mail_support_email         help, value '' => info@kbeautybliss.com,
+     *                              has_value => true. The owner asked for that
+     *                              address by name (CLAUDE.md rule 1's
+     *                              reversal); clearing the box restores the
+     *                              old fallback.
+     *   + 4 fields                 mail_gmail_username, mail_gmail_password
+     *                              (secret, never a value), mail_address_dubai,
+     *                              mail_address_korea.
      */
     expect($moved)->toBe([], "These module screens would now draw something different:\n".implode("\n", $moved));
 

@@ -61,6 +61,17 @@ beforeEach(function () {
      * the channel is dropped for the wrong reason.
      */
     config(['app.url' => 'https://kbeautybliss.com']);
+
+    /*
+     * The support-email box ships as info@kbeautybliss.com since Lane RK (the
+     * owner asked for that address by name). Every case here is about the
+     * fallback chain BEHIND that box — Reply-To, then a From the owner typed,
+     * never a derived no-reply@ — which is what an emptied box still falls
+     * to, so each case starts with the box emptied.
+     */
+    app(MailSettings::class)->save(['mail_support_email' => '']);
+    Setting::flushMap();
+    SettingsService::forgetMemo();
 });
 
 afterEach(function () {
@@ -104,6 +115,7 @@ function sbnMail(array $values): void
     Setting::flushMap();
     SettingsService::forgetMemo();
 }
+
 
 /** The email channel of the support block, or null when there is none. */
 function sbnEmailChannel(): ?array

@@ -174,6 +174,8 @@ class OrderRefunded extends OrderMail
         return new Content(
             view: 'emails.order-refunded',
             text: 'emails.order-refunded-text',
+            // The <title> of the look-A document: the subject (Lane EM).
+            with: ['kitTitle' => (string) $this->envelope()->subject],
         );
     }
 }
