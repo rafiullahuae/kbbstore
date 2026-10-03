@@ -3029,6 +3029,21 @@ final class EnglishRenderWalk
                 'with' => wordwrap($note, 78),
                 'hits' => 1,
             ],
+            /*
+             * The receipt of a PAID order (the fixture is paid) opens with the
+             * owner-approved preview's lead (docs/rj-email-previews/after/01,
+             * approved 3 October). Cash on delivery keeps the old lead.
+             */
+            'lane RL: a paid receipt says the payment is in (html)' => [
+                'pattern' => '#Your order is in and we are packing it with care\. Everything you chose is listed below, exactly as it was when you ordered — keep this email, it is your receipt\.#',
+                'with' => 'Your payment is in and your order is confirmed. We are packing it with care — keep this email, it is your receipt.',
+                'hits' => 1,
+            ],
+            'lane RL: a paid receipt says the payment is in (text)' => [
+                'pattern' => '#Your order is in and we are packing it with care\.\s+Everything\s+you\s+chose\s+is\s+listed\s+below,\s+exactly\s+as\s+it\s+was\s+when\s+you\s+ordered\s+—\s+keep\s+this\s+email,\s+it\s+is\s+your\s+receipt\.#',
+                'with' => wordwrap('Your payment is in and your order is confirmed. We are packing it with care — keep this email, it is your receipt.', 78),
+                'hits' => 1,
+            ],
             'lane RL: the dispatch email names the tracking number (html)' => [
                 'pattern' => '#(Your order is on its way.*?KBB-10427</span>\s*</td>\s*</tr>\s*</table>\n\n)#s',
                 'with' => "$1        <p style=\"margin:14px 0 0;font-size:14px;line-height:1.55;color:#5E545A;\">\n"

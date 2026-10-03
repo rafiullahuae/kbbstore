@@ -1,6 +1,6 @@
 {!! $order['customerName'] !== '' ? __('email.text.thank_you_named', ['name' => $order['customerName']]) : __('email.text.thank_you') !!}
 
-{!! wordwrap(__('email.confirmation.lead'), 78) !!}
+{!! wordwrap($paid ? __('email.confirmation.lead_paid') : __('email.confirmation.lead'), 78) !!}
 
 @include('emails.partials.body-text')
 

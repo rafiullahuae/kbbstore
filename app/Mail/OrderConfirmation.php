@@ -30,9 +30,18 @@ class OrderConfirmation extends OrderMail
      */
     public string $trackSignedUrl = '';
 
+    /**
+     * Whether the payment is in. The approved preview's lead says "Your payment
+     * is in" — true of a card, Tabby or Tamara order (receipted when the
+     * payment confirms), not of cash on delivery, which keeps the old lead.
+     */
+    public bool $paid = false;
+
     public function __construct(\App\Models\Order $order)
     {
         parent::__construct($order);
+
+        $this->paid = $order->paid_at !== null;
 
         try {
             $this->trackSignedUrl = \App\Support\OrderLinks::trackUrl($order);

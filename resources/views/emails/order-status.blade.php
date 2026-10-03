@@ -50,11 +50,11 @@
         </tr>
     </table>
 
-@if ($note !== '')
+@if ($status === 'onhold')
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-top:14px;">
             <tr>
                 <td style="padding:13px 15px;font-size:14px;line-height:1.55;color:{{ $c['ink'] }};border:1px solid {{ $c['line'] ?? '#EADFE2' }};border-radius:9px;">
-                    <b>{{ __('email.order_status.onhold_need') }}</b> {!! nl2br(e($note)) !!}
+                    @if ($note !== '')<b>{{ __('email.order_status.onhold_need') }}</b> {!! nl2br(e($note)) !!} @endif{{ __('email.order_status.onhold_reply') }}
                 </td>
             </tr>
         </table>

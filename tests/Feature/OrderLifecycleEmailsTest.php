@@ -787,13 +787,12 @@ it('renders every new email in HTML and text with no missing piece', function ()
         $html = (string) $mail->render();
         $text = view($mail->content()->text, $mail->buildViewData() + $mail->content()->with)->render();
         expect($html)->toContain($order->order_number)->and(trim($text))->not->toBe('')
-            ->and($mail->envelope()->subject)->toContain($order->order_number);
+            ->and(trim((string) $mail->envelope()->subject))->not->toBe('');
     }
 
     foreach ([1, 2] as $stage) {
         $mail = new OrderPaymentReminder($order, $stage);
         expect((string) $mail->render())->toContain('Complete your order')->toContain('/checkout/order-pay?');
-        expect($mail->envelope()->subject)->toContain($order->order_number);
     }
 });
 
@@ -895,7 +894,6 @@ it('carries the owner\'s emoji in subjects, encoded as UTF-8 in the header, and 
         '⏳' => new OrderPaymentReminder($order, 2),
         '🚚💨' => new OrderStatusChanged($order, 'shipped'),
         '✨' => new OrderStatusChanged($order, 'completed'),
-        '😔' => new OrderStatusChanged($order, 'failed'),
     ];
 
     foreach ($cases as $emoji => $mailable) {
@@ -912,6 +910,54 @@ it('carries the owner\'s emoji in subjects, encoded as UTF-8 in the header, and 
         expect(mb_check_encoding($text, 'UTF-8'))->toBeTrue()
             ->and($text)->toContain($emoji === '🎉' ? 'Thank you, Aisha' : $emoji);
     }
+
+    // Payment failed: the approved preview's title carries no emoji; its
+    // heading does ("The payment did not go through 😔").
+    $failed = new OrderStatusChanged($order, 'failed');
+    expect($failed->envelope()->subject)->toBe('Payment did not go through')
+        ->and((string) $failed->render())->toContain('The payment did not go through 😔');
+});
+
+it('uses the owner-approved preview wording, word for word', function () {
+    // docs/rj-email-previews/after at 9d6dea4, approved 3 October:
+    // "i want 100% same stuff as in previews".
+    $order = rlOrder(['paid_at' => now(), 'status' => 'processing']);
+    $render = fn ($m) => html_entity_decode(strip_tags((string) $m->render()));
+
+    $r1 = new OrderPaymentReminder($order, 1);
+    expect($r1->envelope()->subject)->toBe('Complete your order 🛍️');
+    expect($render($r1))->toContain('You are one step away 🛍️')
+        ->toContain('We saved your order, but the payment was not completed, so it is not confirmed yet. Everything is below — finish in one tap.')
+        ->toContain('Fast delivery · 1–3 days, all over the UAE')
+        ->toContain('100% original · straight from the brand')
+        ->toContain('Free samples · random K-beauty samples in every order')
+        ->toContain('Already paid? Ignore this — your confirmation is on its way.');
+
+    $r2 = new OrderPaymentReminder($order, 2);
+    expect($r2->envelope()->subject)->toBe('Your order is still waiting ⏳');
+    expect($render($r2))->toContain('Your order is still waiting for you ⏳')
+        ->toContain('This is the last reminder about this order.');
+
+    $hold = new OrderStatusChanged($order, 'onhold', 'Your building name');
+    expect($hold->envelope()->subject)->toBe('Order on hold');
+    expect($render($hold))->toContain('We have paused your order')
+        ->toContain('Nothing is wrong with your items — we just need to confirm one detail before we can send it.')
+        ->toContain('What we need: Your building name Reply to this email or message us on WhatsApp and we will carry on right away.');
+
+    $done = new OrderStatusChanged($order, 'completed');
+    expect($done->envelope()->subject)->toBe('Delivered ✨');
+    expect($render($done))->toContain('Enjoy your new routine ✨')
+        ->toContain('Your order is complete. Open it, try it, and enjoy the little extras we tucked in.');
+
+    $failed = new OrderStatusChanged($order, 'failed');
+    expect($render($failed))->toContain('Nothing was charged and the order is not confirmed. Your order is saved — try again or choose another way to pay.');
+
+    $receipt = new OrderConfirmation($order);
+    expect($render($receipt))->toContain('Thank you, Aisha Khan! 🎉')
+        ->toContain('Your payment is in and your order is confirmed. We are packing it with care — keep this email, it is your receipt.');
+    // Cash on delivery has paid nothing, so it is not told it has.
+    expect($render(new OrderConfirmation(rlOrder(['payment_method' => 'cod', 'status' => 'processing']))))
+        ->not->toContain('Your payment is in');
 });
 
 it('puts the three reasons to shop in both reminders', function () {
@@ -922,7 +968,7 @@ it('puts the three reasons to shop in both reminders', function () {
         $html = (string) $mail->render();
         $text = view($mail->content()->text, $mail->buildViewData() + $mail->content()->with)->render();
 
-        foreach (['Fast delivery', '1–3 days, all over the UAE', '100% original', 'Straight from the brand', 'Free samples', 'Random K-beauty samples in every order'] as $line) {
+        foreach (['Fast delivery', '1–3 days, all over the UAE', '100% original', 'straight from the brand', 'Free samples', 'random K-beauty samples in every order'] as $line) {
             expect($html)->toContain($line)->and($text)->toContain($line);
         }
     }

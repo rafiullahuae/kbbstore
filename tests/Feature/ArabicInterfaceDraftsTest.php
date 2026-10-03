@@ -569,7 +569,7 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * The card's three points and the message above a shared link
      * (store.product.pts_card_p1..p3, pts_card_msg), seeded by
      * 2027_07_23_000200_seed_share_card_arabic_drafts. Read off the run.
-     * ── 1,115 -> 1,180: LANE RL'S SIXTY-FIVE ───────────────────────────────
+     * ── 1,115 -> 1,181: LANE RL'S SIXTY-SIX ───────────────────────────────
      * The order emails the owner asked for on 3 October: the processing,
      * on-hold, delivered, refunded and payment-failed status emails, the
      * tracking line, the two "Complete your order" reminders with their three
@@ -578,7 +578,7 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * email.feedback.*, email.confirmation.subject, store.order_pay.*), seeded
      * by 2027_07_25_000300_seed_order_email_arabic_drafts. Read off the run.
      */
-    expect($ui['drafts'])->toBe(1180, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1181, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

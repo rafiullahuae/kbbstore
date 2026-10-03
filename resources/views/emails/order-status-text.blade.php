@@ -12,6 +12,9 @@
 
 @if ($note !== '')
 {!! __('email.order_status.onhold_need') !!} {!! wordwrap($note, 72) !!}
+@endif
+@if ($status === 'onhold')
+{!! wordwrap(__('email.order_status.onhold_reply'), 72) !!}
 
 @endif
 @if ($trackable)

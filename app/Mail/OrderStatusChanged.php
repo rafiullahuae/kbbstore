@@ -98,14 +98,14 @@ class OrderStatusChanged extends OrderMail
             'Your order is confirmed and we are getting it ready. We will email you again when it is on its way.',
         ],
         'onhold' => [
-            'Your %1$s order %2$s is on hold',
+            'Order on hold',
             'We have paused your order',
-            'Nothing is wrong with your items — we just need to confirm one detail before we can send it. Reply to this email or message us on WhatsApp and we will carry on right away.',
+            'Nothing is wrong with your items — we just need to confirm one detail before we can send it.',
         ],
         'completed' => [
-            'Your %1$s order %2$s has been delivered ✨',
+            'Delivered ✨',
             'Enjoy your new routine ✨',
-            'Your order is complete. We hope you love it — if anything is not right, reply to this email and we will help.',
+            'Your order is complete. Open it, try it, and enjoy the little extras we tucked in.',
         ],
         'refunded' => [
             'Your %1$s order %2$s has been refunded',
@@ -113,9 +113,9 @@ class OrderStatusChanged extends OrderMail
             'This order has been refunded. If the money went back to a card or payment account, your bank can take a few working days to show it.',
         ],
         'failed' => [
-            'Payment for %1$s order %2$s failed 😔',
+            'Payment did not go through',
             'The payment did not go through 😔',
-            'The order is not confirmed yet. It is saved — you can finish it with any way to pay we offer.',
+            'Nothing was charged and the order is not confirmed. Your order is saved — try again or choose another way to pay.',
         ],
     ];
 

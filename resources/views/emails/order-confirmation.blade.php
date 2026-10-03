@@ -25,7 +25,7 @@
     </p>
 
     <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:{{ $c['ink2'] }};">
-        {{ __('email.confirmation.lead') }}
+        {{ $paid ? __('email.confirmation.lead_paid') : __('email.confirmation.lead') }}
     </p>
 
     {{-- The order chip. Same information as before, in the brand's own tint
