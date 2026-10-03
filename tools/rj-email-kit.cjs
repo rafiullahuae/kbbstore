@@ -25,7 +25,12 @@ const P = {
   green: '#2E9E6B', greenSoft: '#E6F5EE', amber: '#B86E12', amberSoft: '#FDF1E1', red: '#C0392B', redSoft: '#FCEBEA',
   white: '#FFFFFF', ink0: '#141013',
 };
-const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+/* (3 Oct, owner) "change the font to our website heading font in all emails
+   templates" — the shop's own Outfit (product titles and all its text),
+   self-hosted like the shop serves it; the system stack is the fallback for
+   clients that ignore web fonts (Gmail). */
+const SANS = "'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+const FONT_URL = process.env.RJ_FONT_URL || '../assets/outfit-latin.woff2';
 const SERIF = "Georgia,'Times New Roman',Times,serif";
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -44,6 +49,7 @@ function doc({ title, preheader, body, theme = 'A', dir = 'ltr' }) {
 <meta name="color-scheme" content="light dark">
 <meta name="supported-color-schemes" content="light dark">
 <title>${esc(title)}</title>
+<style>@font-face{font-family:'Outfit';src:url('${FONT_URL}') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}</style>
 <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><style>td,th,p,a,span,div{font-family:Arial,sans-serif!important}</style><![endif]-->
 <style>
   body{margin:0!important;padding:0!important;width:100%!important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
@@ -282,7 +288,7 @@ ${ch(P.pink, 'IG', '@kbeauty.bliss', 'Instagram', 'https://www.instagram.com/kbe
 }
 
 function signoff(lines = ['With love,', 'the K Beauty Bliss team']) {
-  return row(`<div class="ink" style="font-family:${SERIF};font-size:16px;line-height:1.55;color:${P.ink};font-style:italic;">${lines.map(esc).join('<br>')}</div>`, '26px 32px 30px');
+  return row(`<div class="ink" style="font-family:${SANS};font-size:15.5px;line-height:1.55;color:${P.ink};font-weight:500;">${lines.map(esc).join('<br>')}</div>`, '26px 32px 30px');
 }
 
 /* Below the card. Transactional: why you got it. Marketing: the unsubscribe
@@ -345,7 +351,7 @@ const THEMES = {
     chipBg: P.cream, chipLine: P.line, chipRadius: '12px', helpBg: P.pinkSoft,
     headBg: P.pinkSoft, headClass: 'soft', headPad: '26px 24px 20px', headRule: P.pink,
     wordFont: SANS, wordSize: '26px', wordWeight: 800, wordTrack: '-.02em', wordInk: P.ink, wordAccent: P.pinkDeep,
-    navInk: P.ink2, navDot: P.pink, headFont: SERIF, h1: '28px', h1Weight: 700, h1Track: '-.01em',
+    navInk: P.ink2, navDot: P.pink, headFont: SANS, h1: '28px', h1Weight: 600, h1Track: '-.015em',
     btnBg: P.pinkDeep, btnRadius: '99px', topInk: P.muted, footInk: P.muted, footStrong: P.ink2,
   },
   /* B — Bold pink. A full-bleed gradient hero in the accent, white type,
@@ -370,7 +376,38 @@ const THEMES = {
   },
 };
 
+/* (3 Oct, owner) "in pending order template, in both 30 and 24 hours. we
+   need to include and focus on the fast delivery, 100% original products from
+   the brand and Free random samples with order." Three tiles, side by side on
+   a laptop and stacked on a phone. */
+function promises(list = [
+  ['&#128666;', 'Fast delivery', '1&ndash;3 days, all over the UAE'],
+  ['&#10004;', '100% original', 'Straight from the brand, never grey-market'],
+  ['&#127873;', 'Free samples', 'Random K-beauty samples in every order'],
+], title = 'Why shop with us') {
+  const cell = ([icon, head, line], i) => `<td class="stack${i ? ' stack-gap' : ''}" width="33%" valign="top" style="width:33%;padding:0 ${i === 2 ? 0 : 6}px 0 ${i === 0 ? 0 : 6}px;font-family:${SANS};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${P.white}" style="background:${P.white};border:1px solid ${P.blush};border-radius:16px;"><tr><td align="center" style="padding:16px 10px 15px;font-family:${SANS};">
+<div style="width:44px;height:44px;line-height:44px;border-radius:22px;background:${P.pinkSoft};color:${P.pinkDeep};font-size:20px;margin:0 auto 9px;text-align:center;">${icon}</div>
+<div class="ink" style="font-size:14.5px;font-weight:700;color:${P.ink};line-height:1.25;">${head}</div>
+<div class="ink2" style="margin-top:4px;font-size:12.5px;line-height:1.45;color:${P.ink2};">${line}</div>
+</td></tr></table></td>`;
+  return row(`<div class="muted" style="text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${P.pinkDeep};font-weight:700;margin-bottom:10px;">${esc(title)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${P.pinkSoft}" style="background:${P.pinkSoft};border-radius:18px;"><tr><td style="padding:12px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${list.map(cell).join('')}</tr></table></td></tr></table>`, '24px 32px 0');
+}
+
+/* Five tappable stars for one product: each opens that product's review form
+   with the rating already chosen. */
+function rateRow(p, href) {
+  const stars = [1, 2, 3, 4, 5].map((n) => `<a href="${href}?rating=${n}#write-review" style="display:inline-block;font-size:24px;line-height:28px;color:${P.pink};text-decoration:none;padding:0 2px;" aria-label="${n} star${n > 1 ? 's' : ''}">&#9733;</a>`).join('');
+  return `<tr><td style="padding:12px 0;border-bottom:1px solid ${P.line};font-family:${SANS};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td width="64" valign="middle" style="width:64px;"><img src="${p.img}" width="56" height="56" alt="" style="display:block;width:56px;height:56px;border-radius:12px;"></td>
+<td valign="middle" style="padding-left:12px;font-family:${SANS};"><div class="muted" style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:${P.pinkDeep};font-weight:700;">${esc(p.brand)}</div>
+<div class="ink" style="font-size:14px;font-weight:600;color:${P.ink};line-height:1.3;">${esc(p.name)}</div>
+<div style="margin-top:4px;white-space:nowrap;">${stars}</div></td></tr></table></td></tr>`;
+}
+
 module.exports = {
+  promises, rateRow,
   P, SANS, SERIF, THEMES, esc, doc, card, gap, row, topbar, header, hero, tracker, orderChip, sectionTitle,
   items, totals, infoPair, button, para, notice, help, signoff, footer, productGrid, coupon, heroImage,
 };

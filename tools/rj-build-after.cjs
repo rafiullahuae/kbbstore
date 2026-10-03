@@ -140,20 +140,20 @@ const STEPS = ['Placed', 'Confirmed', 'Shipped', 'Delivered'];
 /* name => [trigger shown to the owner, default state, builder] */
 const EMAILS = {
   '01-order-confirmation': ['Order confirmed · when paid (card / Tabby / Tamara) or placed with cash on delivery → Processing', 'On', () => orderEmail({
-    title: 'Order confirmed', preheader: 'Thank you, Aisha — payment received, order KBB-10427 is confirmed.',
-    heroOpts: { icon: 'heart', eyebrow: 'Order confirmed', title: 'Thank you, Aisha!', lead: 'Your payment is in and your order is confirmed. We are packing it with care &mdash; keep this email, it is your receipt.' },
+    title: 'Order confirmed 🎉', preheader: 'Thank you, Aisha — payment received, order KBB-10427 is confirmed.',
+    heroOpts: { icon: 'heart', eyebrow: 'Order confirmed', title: 'Thank you, Aisha! 🎉', lead: 'Your payment is in and your order is confirmed. We are packing it with care &mdash; keep this email, it is your receipt.' },
     trackerAt: 1, labels: STEPS, cta: TRACK,
   })],
   '02-complete-order-30min': ['Pending · 30 minutes after an unfinished order, any payment method', 'On', () => orderEmail({
-    title: 'Complete your order', preheader: 'Your order KBB-10427 is saved — one step left to confirm it.',
-    heroOpts: { icon: 'bag', tone: 'amber', eyebrow: 'Order not complete', title: 'You are one step away', lead: 'We saved your order, but the payment was not completed, so it is not confirmed yet. Everything is below &mdash; finish in one tap.' },
-    trackerAt: 0, labels: STEPS, grand: GRAND_DUE, showInfo: false, cta: COMPLETE,
+    title: 'Complete your order 🛍️', preheader: 'Your order KBB-10427 is saved — one step left to confirm it.',
+    heroOpts: { icon: 'bag', tone: 'amber', eyebrow: 'Order not complete', title: 'You are one step away 🛍️', lead: 'We saved your order, but the payment was not completed, so it is not confirmed yet. Everything is below &mdash; finish in one tap.' },
+    trackerAt: 0, labels: STEPS, grand: GRAND_DUE, showInfo: false, cta: COMPLETE, before: K.promises(),
     after: K.para('<div style="text-align:center">Already paid? Ignore this &mdash; your confirmation is on its way.</div>', '10px 32px 0', 12.5),
   })],
   '03-complete-order-24h': ['Pending · 24 hours later, if still unfinished (last reminder)', 'On', () => orderEmail({
-    title: 'Your order is still waiting', preheader: 'Last reminder: order KBB-10427 is saved but not confirmed.',
-    heroOpts: { icon: 'clock', tone: 'red', eyebrow: 'Last reminder', title: 'Your order is still waiting for you', lead: 'Order KBB-10427 is saved but not paid, so we cannot send it yet. Popular items sell out quickly, so we cannot promise they will still be in stock later.' },
-    trackerAt: 0, labels: STEPS, grand: GRAND_DUE, showInfo: false, cta: COMPLETE,
+    title: 'Your order is still waiting ⏳', preheader: 'Last reminder: order KBB-10427 is saved but not confirmed.',
+    heroOpts: { icon: 'clock', tone: 'red', eyebrow: 'Last reminder', title: 'Your order is still waiting for you ⏳', lead: 'Order KBB-10427 is saved but not paid, so we cannot send it yet. Popular items sell out quickly, so we cannot promise they will still be in stock later.' },
+    trackerAt: 0, labels: STEPS, grand: GRAND_DUE, showInfo: false, cta: COMPLETE, before: K.promises(),
     after: K.para('<div style="text-align:center">This is the last reminder about this order.</div>', '10px 32px 0', 12.5),
   })],
   '04-order-on-hold': ['On hold · sent only by hand: “Send on-hold email” on the order screen', 'Off (manual)', () => orderEmail({
@@ -163,15 +163,15 @@ const EMAILS = {
     showTotals: false, cta: ['Reply on WhatsApp', 'https://wa.me/971585052611'],
   })],
   '05-order-shipped': ['Shipped · status → Shipped (untick “Email the customer” to skip)', 'On', () => orderEmail({
-    title: 'Your order is on its way', preheader: 'Order KBB-10427 has shipped. Your order number is your tracking number.',
-    heroOpts: { icon: 'truck', tone: 'pink', eyebrow: 'Shipped', title: 'Your order is on its way', lead: 'It has left us. Delivery in the UAE normally takes one to three working days from dispatch.' },
+    title: 'Your order is on its way 🚚💨', preheader: 'Order KBB-10427 has shipped. Your order number is your tracking number.',
+    heroOpts: { icon: 'truck', tone: 'pink', eyebrow: 'Shipped', title: 'Your order is on its way 🚚💨', lead: 'It has left us. Delivery in the UAE normally takes one to three working days from dispatch.' },
     trackerAt: 2, labels: STEPS, before: TRACK_NOTE, showTotals: false, cta: TRACK,
   })],
   '06-order-delivered': ['Delivered · status → Completed', 'On', () => orderEmail({
-    title: 'Delivered', preheader: 'Order KBB-10427 is delivered. We hope you love it.',
-    heroOpts: { icon: 'gift', tone: 'green', eyebrow: 'Delivered', title: 'Enjoy your new routine', lead: 'Your order is complete. We would love to hear how it works for your skin &mdash; a two-line review helps other shoppers choose.' },
+    title: 'Delivered ✨', preheader: 'Order KBB-10427 is delivered. We hope you love it.',
+    heroOpts: { icon: 'gift', tone: 'green', eyebrow: 'Delivered', title: 'Enjoy your new routine ✨', lead: 'Your order is complete. Open it, try it, and enjoy the little extras we tucked in.' },
     trackerAt: 3, labels: STEPS, before: TRACK_NOTE, showTotals: false, showInfo: false,
-    after: K.button('Review my products', '#', { ghost: true }) + K.para('<b>How to use them together:</b> cleanser (COSRX) &rarr; toner (Anua) &rarr; serum (Beauty of Joseon), morning and evening.', '22px 32px 0', 14),
+    after: K.para('<b>How to use them together:</b> cleanser (COSRX) &rarr; toner (Anua) &rarr; serum (Beauty of Joseon), morning and evening.', '22px 32px 0', 14),
   })],
   '07-order-cancelled': ['Cancelled · status → Cancelled', 'On', () => orderEmail({
     title: 'Order cancelled', preheader: 'Order KBB-10427 has been cancelled.',
@@ -192,7 +192,7 @@ const EMAILS = {
   })],
   '09-order-payment-failed': ['Payment failed · status → Failed', 'On', () => orderEmail({
     title: 'Payment did not go through', preheader: 'The payment for KBB-10427 was declined — nothing was charged.',
-    heroOpts: { icon: 'card', tone: 'red', eyebrow: 'Payment unsuccessful', title: 'The payment did not go through', lead: 'Nothing was charged and the order is not confirmed. Your order is saved &mdash; try again or choose another way to pay.' },
+    heroOpts: { icon: 'card', tone: 'red', eyebrow: 'Payment unsuccessful', title: 'The payment did not go through 😔', lead: 'Nothing was charged and the order is not confirmed. Your order is saved &mdash; try again or choose another way to pay.' },
     trackerAt: 0, stopped: 'Not paid', labels: STEPS, grand: GRAND_DUE, showInfo: false, cta: COMPLETE,
   })],
   '10-new-order-alert': ['To you · new order paid or placed (COD)', 'On', () => K.doc({
@@ -247,6 +247,16 @@ const EMAILS = {
     K.hero({ icon: 'mail', tone: 'pink', eyebrow: 'Almost there', title: 'Confirm your email address', lead: 'Tap the button to confirm this is your address. The link works for 24 hours.' }),
     K.button('Confirm my email', '#'), K.gap(28),
   ], 'Sent because this address was used to create an account at extrabeauty.ae.', false, false)],
+  '19-feedback-request': ['Feedback · automatically 3 hours after the Delivered email', 'On', () => simple('How is your glow, Aisha? 💌', 'Three hours with your new K-beauty — tap a star for each product.', [
+    K.hero({ icon: 'star', tone: 'pink', eyebrow: 'Your opinion matters', title: 'How is your glow, Aisha? 💌', lead: 'By now your order has arrived. One tap per product tells us &mdash; and other shoppers in the UAE &mdash; what is worth it.' }),
+    K.sectionTitle('Tap a star for each product'),
+    K.row(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${ITEMS.map((p) => K.rateRow(p, 'https://extrabeauty.ae/product/' + p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '/')).join('')}</table>`, '0 32px 0'),
+    K.para('<div style="text-align:center">It takes ten seconds and opens the product page with your stars already chosen.</div>', '12px 32px 0', 12.5),
+    K.notice('<b>Share your routine 📸</b> &mdash; post your shelfie and tag <b>@kbeauty.bliss</b>.', 'pink'),
+    K.button('Write a review', '#'),
+    K.para('<div style="text-align:center">Something not right? Reply to this email or WhatsApp us &mdash; a real person will sort it out.</div>', '14px 32px 0', 13),
+    K.signoff(['Thank you for choosing us,', 'the K Beauty Bliss team']),
+  ], WHY_ORDER)],
 };
 
 /* ---------------------------------------------------------------- marketing */
