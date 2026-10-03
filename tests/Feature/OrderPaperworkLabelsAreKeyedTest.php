@@ -776,8 +776,10 @@ it('leaves the English subject exactly as it was', function () {
 
     $order = fbOrderIn('en');
 
+    // ▲ PIN ADVANCED (Lane RL, 3 October): the owner asked for emoji beside
+    // titles and in subjects — 🚚💨 for shipped. Cancelled is unchanged.
     expect(fjSubjectFor($order, 'shipped'))
-        ->toBe('Your K Beauty Bliss order ' . $order->order_number . ' is on its way');
+        ->toBe('Your K Beauty Bliss order ' . $order->order_number . ' is on its way 🚚💨');
     expect(fjSubjectFor($order, 'cancelled'))
         ->toBe('Your K Beauty Bliss order ' . $order->order_number . ' has been cancelled');
 });

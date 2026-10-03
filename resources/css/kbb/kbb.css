@@ -932,6 +932,74 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
 .kbb-home .sh p{margin:5px 0 0;color:var(--muted);font-size:13.5px;max-width:64ch}
 .kbb-home .lnk{font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--pink-d);border:1.5px solid var(--pink);border-radius:99px;padding:9px 18px;white-space:nowrap;transition:.2s}
 .kbb-home .lnk:hover{background:var(--pink);color:#fff}
+/* ── BIG SAVINGS BUNDLES: carousel, arrows, centred heading, All sets ─────
+   (2.60.370) "i need the bundle section to be carousel with proper beautiful
+   arrows, give controls of everything for desktop mobile both. center the
+   heading, redesign the All Sets button beautifully" / "i want this button in
+   mobile at bottom of carsousel, give controls of spacing etc." App\Support\
+   HomeBundles prints the classes and the --bndl-* values from Appearance →
+   Homepage content → Big savings bundles. Sizes are calc() on the row's own
+   width; the arrows and the swipe are ymal.js, which measures nothing. */
+.kbb-home .bndl .bndl-head{position:relative}
+.kbb-home .bndl.bndl-center .bndl-head{justify-content:center;text-align:center}
+.kbb-home .bndl.bndl-center .bndl-head h2{justify-content:center}
+.kbb-home .bndl.bndl-center .bndl-head p{margin-inline:auto}
+.kbb-home .bndl-all{display:inline-flex;align-items:center;gap:12px;padding:7px 7px 7px 20px;border-radius:99px;background:#fff;border:1px solid var(--blush);
+  box-shadow:0 8px 22px -14px rgba(193,62,99,.55);font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink);white-space:nowrap;transition:border-color .2s,color .2s,box-shadow .2s}
+.kbb-home .bndl-all i{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;display:grid;place-items:center;transition:transform .2s}
+.kbb-home .bndl-all svg{width:15px;height:15px}
+.kbb-home .bndl-all:hover{border-color:var(--pink);color:var(--pink-deep);box-shadow:0 10px 24px -12px rgba(193,62,99,.6)}
+.kbb-home .bndl-all:hover i{transform:translateX(3px)}
+[dir="rtl"] .kbb-home .bndl-all svg{transform:scaleX(-1)}
+[dir="rtl"] .kbb-home .bndl-all:hover i{transform:translateX(-3px)}
+.kbb-home .bndl-foot{display:none;justify-content:center}
+.kbb-home .bndl-stage{position:relative}
+.kbb-home .bndl-arr{position:absolute;top:0;z-index:3;width:44px;height:44px;border-radius:50%;border:1px solid var(--blush);background:#fff;color:var(--pink-deep);
+  display:grid;place-items:center;padding:0;cursor:pointer;box-shadow:0 10px 26px -12px rgba(42,34,40,.35);transition:background .2s,color .2s,opacity .2s,transform .2s}
+.kbb-home .bndl-arr svg{width:20px;height:20px}
+.kbb-home .bndl-arr:hover:not(:disabled){background:var(--pink);border-color:var(--pink);color:#fff}
+.kbb-home .bndl-arr:disabled{opacity:0;pointer-events:none}
+.kbb-home .bndl-arr:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px}
+[dir="rtl"] .kbb-home .bndl-arr svg{transform:scaleX(-1)}
+.kbb-home .bndl-track::-webkit-scrollbar{display:none}
+.kbb-home .bndl-track:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px;border-radius:var(--r-m,14px)}
+@media (min-width:901px){
+  .kbb-home .sec.bndl{padding-top:var(--bndl-pad-d)}
+  .kbb-home .bndl .bndl-head{margin-bottom:var(--bndl-hg-d)}
+  .kbb-home .bndl.bndl-center.bndl-btn-d-top .bndl-head{padding-inline:190px}
+  .kbb-home .bndl.bndl-center.bndl-btn-d-top .bndl-all-top{position:absolute;inset-inline-end:0;top:50%;transform:translateY(-50%)}
+  .kbb-home .bndl.bndl-btn-d-bottom .bndl-all-top,.kbb-home .bndl.bndl-btn-d-off .bndl-all{display:none}
+  .kbb-home .bndl.bndl-btn-d-bottom .bndl-foot{display:flex;margin-top:var(--bndl-bg-d)}
+  .kbb-home .bndl.bndl-car-d .bndl-track{grid-template-columns:none;grid-auto-flow:column;
+    grid-auto-columns:calc((100% - (var(--bndl-per-d) - 1) * var(--kbb-gap)) / var(--bndl-per-d));
+    overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain;padding-block:4px 14px;margin-block:-4px -14px}
+  .kbb-home .bndl.bndl-car-d .bndl-track>*{scroll-snap-align:start;min-width:0}
+  /* Centred on the photograph: a margin percentage is a share of the row's
+     WIDTH, and a square photo is as tall as one card is wide. */
+  .kbb-home .bndl.bndl-car-d .bndl-arr{margin-top:calc((100% - (var(--bndl-per-d) - 1) * var(--kbb-gap)) / var(--bndl-per-d) / 2 - 22px)}
+  .kbb-home .bndl.bndl-car-d .bndl-prev{inset-inline-start:calc(-1 * min(22px, var(--site-gutter, 16px)))}
+  .kbb-home .bndl.bndl-car-d .bndl-next{inset-inline-end:calc(-1 * min(22px, var(--site-gutter, 16px)))}
+  .kbb-home .bndl.bndl-grid-d .bndl-arr,.kbb-home .bndl.bndl-noarr-d .bndl-arr{display:none}
+}
+@media (max-width:900px){
+  .kbb-home .sec.bndl{padding-top:var(--bndl-pad-m)}
+  .kbb-home .bndl .bndl-head{margin-bottom:var(--bndl-hg-m)}
+  .kbb-home .bndl.bndl-btn-m-bottom .bndl-all-top,.kbb-home .bndl.bndl-btn-m-off .bndl-all{display:none}
+  .kbb-home .bndl.bndl-btn-m-bottom .bndl-foot{display:flex;margin-top:var(--bndl-bg-m)}
+  .kbb-home .bndl-all{padding:6px 6px 6px 16px;font-size:11.5px;gap:10px}
+  .kbb-home .bndl-all i{width:28px;height:28px}
+  .kbb-home .bndl.bndl-car-m .bndl-track{grid-template-columns:none;grid-auto-flow:column;
+    grid-auto-columns:calc((100% - (var(--bndl-per-m) - 1) * var(--kbb-gap)) / var(--bndl-per-m));
+    overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;padding-block:4px 12px;margin-block:-4px -12px}
+  .kbb-home .bndl.bndl-car-m .bndl-track>*{scroll-snap-align:start;min-width:0}
+  .kbb-home .bndl-arr{width:34px;height:34px}
+  .kbb-home .bndl-arr svg{width:16px;height:16px}
+  .kbb-home .bndl.bndl-car-m .bndl-arr{margin-top:calc((100% - (var(--bndl-per-m) - 1) * var(--kbb-gap)) / var(--bndl-per-m) / 2 - 17px)}
+  .kbb-home .bndl.bndl-car-m .bndl-prev{inset-inline-start:6px}
+  .kbb-home .bndl.bndl-car-m .bndl-next{inset-inline-end:6px}
+  .kbb-home .bndl.bndl-grid-m .bndl-arr,.kbb-home .bndl.bndl-noarr-m .bndl-arr{display:none}
+}
+@media (prefers-reduced-motion:reduce){.kbb-home .bndl-track{scroll-behavior:auto}}
 .kbb-home .util{background:var(--cream);border-bottom:1px solid var(--line)}
 .kbb-home .util .g{display:grid;grid-template-columns:repeat(4,1fr);gap:1px}
 .kbb-home .util .i{display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 12px;font-size:12px;color:var(--ink2)}

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>K-Beauty Bliss Footer</title>
+<style>
+@font-face{font-family:'Outfit';src:url('outfit-latin.woff2') format('woff2');font-weight:100 900}
+:root{
+  --wa:#25D366;--wa-2:#1EBE5D;--wa-3:#12A37A;--wa-4:#128C7E;--wa-ink:#063F37;
+  --pink:#E0567B;--pink-deep:#C13E63;--pink-soft:#FFF0F4;--blush:#FCE0E8;
+  --ink:#2A2228;--ink-2:#5E545A;--muted:#8C828A;--line:#F1E3E8;
+  --gutter:clamp(16px,3vw,40px)
+}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 'Outfit',system-ui,sans-serif;color:var(--ink);background:#EFE9EB}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:var(--gutter)}
+.page-gap{height:40px}
+svg{display:block}
+
+/* ── help strip: WhatsApp greens, drifting slowly within the green range ── */
+.ft-help{color:#fff;background:linear-gradient(110deg,var(--wa-4),var(--wa-3),var(--wa-2),var(--wa),var(--wa-2),var(--wa-3),var(--wa-4));background-size:300% 100%;animation:ft-drift 14s ease-in-out infinite alternate}
+@keyframes ft-drift{from{background-position:0% 50%}to{background-position:100% 50%}}
+.ft-help .wrap{display:flex;align-items:center;gap:18px;padding-block:18px}
+.ft-help .ic{flex:none;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;border:1px solid rgba(255,255,255,.35)}
+.ft-help .tx{min-width:0;flex:1}
+.ft-help h3{margin:0;font-size:22px;line-height:1.2;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.ft-help .chip{display:inline-flex;align-items:center;gap:6px;margin-left:8px;vertical-align:3px;background:#fff;color:var(--wa-ink);border-radius:99px;padding:3px 11px;font-size:12.5px;font-weight:700;letter-spacing:.02em}
+.ft-help .chip::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--wa);box-shadow:0 0 0 3px rgba(37,211,102,.25)}
+.ft-help p{margin:3px 0 0;font-size:14px;opacity:.92}
+.ft-help .bt{display:flex;gap:10px;flex:none}
+.ft-help .bt a{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 20px;border-radius:99px;font-weight:700;font-size:14px}
+.ft-help .bt .p{background:#fff;color:var(--wa-ink);box-shadow:0 8px 18px -10px rgba(6,63,55,.6)}
+.ft-help .bt .o{border:1.5px solid rgba(255,255,255,.75);color:#fff}
+
+/* ── main: white with a faint blush wash ── */
+.ft-main{background:radial-gradient(60% 120% at 0% 0%,#FFF4F7 0%,#fff 60%),#fff;padding-top:30px}
+.ft-grid{display:grid;grid-template-columns:1.35fr .8fr .9fr .8fr 1.25fr;gap:28px}
+.ft-grid > *{min-width:0}
+.ft-logo{font-size:22px;font-weight:800;letter-spacing:-.02em}.ft-logo b{color:var(--pink)}
+.ft-tag{margin:6px 0 12px;color:var(--ink-2);font-size:13.5px;max-width:32ch}
+.ft-soc{display:flex;gap:8px}
+.ft-soc a{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--pink-soft);color:var(--pink-deep);border:1px solid #F7DCE4}
+.ft-main h4{margin:0 0 10px;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--pink-deep)}
+.ft-main ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:14px;color:var(--ink-2)}
+.ft-visit{display:grid;gap:8px;font-size:13px;color:var(--ink-2)}
+.ft-visit div{display:flex;gap:8px}.ft-visit b{color:var(--ink);display:block;font-size:13.5px}
+.ft-visit svg{flex:none;margin-top:2px;color:var(--pink)}
+.ft-news{display:flex;gap:6px;margin-top:14px;max-width:340px}
+.ft-news input{flex:1;min-width:0;height:40px;border-radius:99px;border:1px solid #EAD7DE;padding:0 15px;font:inherit;font-size:13.5px;background:#fff}
+.ft-news button{height:40px;padding:0 16px;border:0;border-radius:99px;background:var(--pink);color:#fff;font:inherit;font-weight:700;font-size:13.5px}
+
+/* ── the name: very big, light, colours drifting ── */
+.ft-name{margin:18px 0 0;text-align:center;font-weight:800;letter-spacing:-.045em;line-height:.86;
+  font-size:min(12.4vw,166px);white-space:nowrap;user-select:none;
+  background:linear-gradient(90deg,#FFB3C8,#FFD1B3,#F8B4E4,#C9B8FF,#A8E6CF,#FFB3C8);background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:ft-drift 12s linear infinite alternate;padding-bottom:.06em}
+
+/* ── bottom bar ── */
+.ft-bot{border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.ft-bot .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
+.ft-bot nav{display:flex;gap:14px}
+.ft-pay{display:flex;gap:6px;flex-wrap:wrap}
+.ft-pay span{border:1px solid #EADDE2;border-radius:99px;padding:2px 10px;font-weight:700;font-size:11px;color:var(--ink);background:#fff}
+
+@media (prefers-reduced-motion:reduce){.ft-help,.ft-name{animation:none}}
+
+/* ── phones: same footer, much shorter ── */
+@media (max-width:900px){
+  .ft-help .wrap{flex-wrap:wrap;gap:10px 12px;padding-block:14px}
+  .ft-help .ic{width:38px;height:38px}
+  .ft-help h3{font-size:17px}
+  .ft-help .chip{font-size:11.5px;padding:2px 9px;margin-left:6px}
+  .ft-help p{display:none}
+  .ft-help .bt{width:100%}
+  .ft-help .bt a{flex:1;justify-content:center;height:40px;padding:0 12px;font-size:13.5px}
+  .ft-main{padding-top:20px}
+  .ft-grid{grid-template-columns:repeat(3,1fr);gap:16px 12px}
+  .ft-brand{grid-column:1 / -1;display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px}
+  .ft-tag{margin:0;grid-column:1 / -1;grid-row:2;font-size:13px;max-width:none}
+  .ft-brand .ft-soc{grid-column:2;grid-row:1}
+  .ft-main h4{margin-bottom:7px;font-size:10.5px}
+  .ft-main ul{gap:4px;font-size:13px}
+  .ft-contact{grid-column:1 / -1}
+  .ft-visit{grid-template-columns:1fr 1fr;gap:10px;font-size:12px}
+  .ft-news{max-width:none;margin-top:12px}
+  .ft-name{margin-top:14px}
+  .ft-bot .wrap{justify-content:center;text-align:center;padding-block:10px;gap:8px}
+}
+</style></head><body>
+<div class="page-gap"></div>
+
+<footer>
+  <div class="ft-help"><div class="wrap">
+    <span class="ic" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-1.9-1-1 .9a3.6 3.6 0 0 1-2.4-2.4l.9-1-1-1.9Z" fill="#fff" stroke="none"/></svg></span>
+    <div class="tx">
+      <h3>Find your perfect K-beauty match <span class="chip">24/7 available</span></h3>
+      <p>Ask us anything about your skin, a product or your order — we reply on WhatsApp.</p>
+    </div>
+    <div class="bt"><a class="p" href="#">Chat on WhatsApp</a><a class="o" href="#">Track my order</a></div>
+  </div></div>
+
+  <div class="ft-main"><div class="wrap">
+    <div class="ft-grid">
+      <div class="ft-brand">
+        <div class="ft-logo">K-Beauty<b>Bliss</b></div>
+        <p class="ft-tag">Authentic Korean skincare and make-up, curated for the UAE. 100% original, from the brands.</p>
+        <div class="ft-soc" aria-label="Follow us">
+          <a href="#" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+          <a href="#" aria-label="TikTok"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14 3h3a4.5 4.5 0 0 0 4 4v3a7.4 7.4 0 0 1-4-1.3V15a6 6 0 1 1-6-6v3.1A3 3 0 1 0 14 15Z"/></svg></a>
+          <a href="#" aria-label="Facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5H16l.5-3h-3V8.6c0-.9.3-1.6 1.6-1.6h1.6V4.3A21 21 0 0 0 14.3 4C12 4 10.5 5.4 10.5 8v2.5H8v3h2.5V21Z"/></svg></a>
+          <a href="#" aria-label="YouTube"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22 8.2a3 3 0 0 0-2.1-2.1C18 5.6 12 5.6 12 5.6s-6 0-7.9.5A3 3 0 0 0 2 8.2 31 31 0 0 0 1.6 12 31 31 0 0 0 2 15.8a3 3 0 0 0 2.1 2.1c1.9.5 7.9.5 7.9.5s6 0 7.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .4-3.8 31 31 0 0 0-.4-3.8ZM10 15V9l5.2 3Z"/></svg></a>
+        </div>
+      </div>
+      <div><h4>Shop</h4><ul><li>New in</li><li>Best sellers</li><li>Brands</li><li>Super sale</li></ul></div>
+      <div><h4>Help</h4><ul><li>Track my order</li><li>Shipping &amp; delivery</li><li>FAQs</li><li>Contact us</li></ul></div>
+      <div><h4>Discover</h4><ul><li>About us</li><li>Journal</li><li>#KBeautyBliss</li><li>My account</li></ul></div>
+      <div class="ft-contact"><h4>Visit us</h4>
+        <div class="ft-visit">
+          <div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span><b>Dubai, UAE</b>[Dubai address]</span></div>
+          <div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span><b>Korea</b>[Korea address]</span></div>
+        </div>
+        <form class="ft-news" onsubmit="return false"><input id="ft-email" type="email" placeholder="Your email for offers" aria-label="Your email"><button>Join</button></form>
+      </div>
+    </div>
+    <div class="ft-name" aria-hidden="true">K-Beauty Bliss</div>
+  </div></div>
+
+  <div class="ft-bot" style="background:#fff"><div class="wrap">
+    <span>© 2026 K-Beauty Bliss UAE</span>
+    <nav><a href="#">Privacy policy</a><a href="#">Terms</a></nav>
+    <div class="ft-pay"><span>VISA</span><span>Mastercard</span><span>tabby</span><span>tamara</span><span>COD</span></div>
+  </div></div>
+</footer>
+</body></html>

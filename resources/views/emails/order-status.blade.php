@@ -17,6 +17,21 @@
     these two strings are the foundation it needs.
 --}}
 
+{{--
+    Lane RL. Three additions, each drawn only when it applies, so a status
+    without them renders exactly as before:
+      - $note: the owner's own sentence, typed when he pressed "Send on-hold
+        email". Plain text, escaped; line breaks kept.
+      - $trackable: "Your tracking number is your order number". The owner:
+        "tracking number is the same order number ... the order can be tracked
+        on our website, and whatever we put the status of the order, it will
+        show." No courier reference exists in this shop and none is invented.
+      - the button is a signed link (App\Support\OrderLinks) that opens on any
+        device, so the old "that link opens on the device you ordered from"
+        note is no longer true and is gone. A payment that failed gets
+        "Complete your order", to the page where it can be paid, instead.
+--}}
+
 @section('body')
     @php $c = $brand['colours'] ?? \App\Services\Mail\EmailBranding::PALETTE; @endphp
 
@@ -35,6 +50,21 @@
         </tr>
     </table>
 
+@if ($status === 'onhold')
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-top:14px;">
+            <tr>
+                <td style="padding:13px 15px;font-size:14px;line-height:1.55;color:{{ $c['ink'] }};border:1px solid {{ $c['line'] ?? '#EADFE2' }};border-radius:9px;">
+                    @if ($note !== '')<b>{{ __('email.order_status.onhold_need') }}</b> {!! nl2br(e($note)) !!} @endif{{ __('email.order_status.onhold_reply') }}
+                </td>
+            </tr>
+        </table>
+@endif
+@if ($trackable)
+        <p style="margin:14px 0 0;font-size:14px;line-height:1.55;color:{{ $c['ink2'] }};">
+            <b style="color:{{ $c['ink'] }};">{{ __('email.order_status.tracking_number', ['number' => $order['number']]) }}</b><br>
+            {{ __('email.order_status.tracking_where') }}
+        </p>
+@endif
     @include('emails.partials.items')
     @include('emails.partials.totals')
     @include('emails.partials.delivery')
@@ -45,15 +75,12 @@
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:26px 0 10px;">
         <tr>
             <td bgcolor="{{ $c['pinkDeep'] }}" style="background:{{ $c['pinkDeep'] }};border-radius:7px;">
-                <a href="{{ $order['trackUrl'] }}" style="display:inline-block;padding:13px 26px;color:{{ $c['white'] }};font-size:15px;font-weight:600;text-decoration:none;">{{ __('email.order_status.view_order') }}</a>
+                <a href="{{ $ctaUrl }}" style="display:inline-block;padding:13px 26px;color:{{ $c['white'] }};font-size:15px;font-weight:600;text-decoration:none;">{{ $ctaLabel }}</a>
             </td>
         </tr>
     </table>
 
     <p style="margin:0;font-size:13px;line-height:1.55;color:{{ $c['ink2'] }};">
-        {!! __('email.order_status.device_note', [
-            'link' => '<a href="' . e($order['accountUrl']) . '" style="color:' . e($c['pinkDeep']) . ';font-weight:600;">' . e(__('email.confirmation.sign_in_link')) . '</a>',
-            'number' => e($order['number']),
-        ]) !!}
+        {{ $status === 'failed' ? __('email.reminder.button_note') : __('email.order_status.track_note') }}
     </p>
 @endsection

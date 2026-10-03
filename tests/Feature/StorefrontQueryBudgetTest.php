@@ -80,6 +80,18 @@ function budgetReset(): void
 {
     SettingsService::forgetMemo();
     app()->forgetScopedInstances();
+
+    /*
+     * Lane RL: the "Complete your order" heartbeat runs a sweep (two or three
+     * indexed queries) after AT MOST ONE request a minute, and costs every
+     * other request one stat() and no query. That is a per-minute cost, not a
+     * per-page one, so it is held off here by marking it as just run, and its
+     * per-page cost — zero queries — is pinned on its own in
+     * OrderLifecycleEmailsTest ("costs an ordinary page no query").
+     * Without this, whichever page this process measures first pays for the
+     * sweep and the growth check reads it as work per catalogue row.
+     */
+    @touch(\App\Services\Mail\OrderReminderTick::markerPath());
 }
 
 /**

@@ -576,8 +576,17 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * customer order email (email.layout.address_dubai, address_korea),
      * seeded by 2027_07_25_000200_seed_email_address_heading_arabic_drafts.
      * Read off the run.
+     *
+     * ── 1,117 -> 1,183: LANE RL'S SIXTY-SIX ───────────────────────────────
+     * The order emails the owner asked for on 3 October: the processing,
+     * on-hold, delivered, refunded and payment-failed status emails, the
+     * tracking line, the two "Complete your order" reminders with their three
+     * reasons to shop, the feedback request, the receipt's keyed subject and
+     * the "Complete your order" page (email.order_status.*, email.reminder.*,
+     * email.feedback.*, email.confirmation.subject, store.order_pay.*), seeded
+     * by 2027_07_25_000300_seed_order_email_arabic_drafts. Read off the run.
      */
-    expect($ui['drafts'])->toBe(1117, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1183, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

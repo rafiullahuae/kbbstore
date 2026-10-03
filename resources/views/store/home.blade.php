@@ -555,13 +555,27 @@
 </div></section>
 @endunless
 
-{{-- BUNDLES --}}
+{{-- BUNDLES — a carousel with arrows, the heading centred and the All sets
+     button redesigned (2.60.370): App\Support\HomeBundles holds the reasoning;
+     Appearance → Homepage content → Big savings bundles holds the controls. --}}
 @unless ($sections->hidden('bundles'))
-<section class="sec {{ $sections->classFor('bundles') }}" style="padding-top:8px"><div class="wrap">
-  <div class="sh"><div><h2>{{ __('store.home.bundles_heading') }} <span class="cnt">{{ trans_choice('store.home.bundles_count', $rails['bundles']->count()) }}</span></h2>
-    <p>{{ __('store.home.bundles_subtitle') }}</p></div>
-    <a class="lnk" href="{{ Url::to('/shop/?cat=skincare-sets') }}">{{ __('store.home.bundles_link') }}</a></div>
-  @include('partials.home.grid', ['items' => $rails['bundles'], 'skin' => $sections->skinFor('bundles'), 'catLabel' => __('store.home.bundles_grid_label')])
+@php
+    $bndl = \App\Support\HomeBundles::config();
+    $bndlUrl = str_starts_with($bndl['url'], '/') ? Url::to($bndl['url']) : $bndl['url'];
+    $bndlLabel = $bndl['label'] !== '' ? $bndl['label'] : __('store.home.bundles_link');
+    $bndlTitle = $bndl['title'] !== '' ? $bndl['title'] : __('store.home.bundles_heading');
+    $bndlArrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+@endphp
+<section class="sec {{ $bndl['classes'] }} {{ $sections->classFor('bundles') }}" style="{{ $bndl['style'] }}" data-ymal data-ymal-auto="{{ $bndl['auto'] }}" aria-labelledby="bndl-h"><div class="wrap">
+  <div class="sh bndl-head"><div><h2 id="bndl-h">{{ $bndlTitle }} <span class="cnt">{{ trans_choice('store.home.bundles_count', $rails['bundles']->count()) }}</span></h2>
+    <p>{{ $bndl['sub'] !== '' ? $bndl['sub'] : __('store.home.bundles_subtitle') }}</p></div>
+    <a class="bndl-all bndl-all-top" href="{{ $bndlUrl }}">{{ $bndlLabel }}<i>{!! $bndlArrow !!}</i></a></div>
+  <div class="bndl-stage">
+    <button type="button" class="bndl-arr bndl-prev" data-ymal-prev aria-controls="bndl-track" aria-label="{{ __('store.product.related_prev') }}" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
+  @include('partials.home.grid', ['items' => $rails['bundles'], 'skin' => $sections->skinFor('bundles'), 'catLabel' => __('store.home.bundles_grid_label'), 'trackLabel' => $bndlTitle])
+    <button type="button" class="bndl-arr bndl-next" data-ymal-next aria-controls="bndl-track" aria-label="{{ __('store.product.related_next') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>
+  </div>
+  <div class="bndl-foot"><a class="bndl-all bndl-all-bottom" href="{{ $bndlUrl }}">{{ $bndlLabel }}<i>{!! $bndlArrow !!}</i></a></div>
 </div></section>
 @endunless
 

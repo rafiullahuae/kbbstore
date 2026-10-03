@@ -45,8 +45,12 @@
      falls back rather than rendering the bare markup.
 
      It is the same expression store/product.blade.php's related rail already
-     used, so the two agree by construction now instead of by coincidence. --}}
-<div class="kbb-pgrid" data-skin="{{ \App\Support\GridSkins::resolve($skin ?? null) }}">
+     used, so the two agree by construction now instead of by coincidence.
+
+     (2.60.370) $trackLabel makes this grid a carousel track for ymal.js — the
+     homepage's Big savings bundles. Absent everywhere else, so every other
+     grid prints exactly what it did. --}}
+<div class="kbb-pgrid{{ isset($trackLabel) ? ' bndl-track' : '' }}" data-skin="{{ \App\Support\GridSkins::resolve($skin ?? null) }}"@isset($trackLabel) id="bndl-track" data-ymal-track tabindex="0" role="region" aria-label="{{ $trackLabel }}"@endisset>
     @foreach ($items as $i => $p)
         <x-product-card :product="$p" :cat-label="$catLabel ?? null" :rank="($rank ?? false) ? $i + 1 : null" />
     @endforeach

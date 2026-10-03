@@ -59,8 +59,8 @@ class OrderStatusChanged extends OrderMail
      */
     public const WORDING = [
         'shipped' => [
-            'Your %1$s order %2$s is on its way',
-            'Your order is on its way',
+            'Your %1$s order %2$s is on its way 🚚💨',
+            'Your order is on its way 🚚💨',
             /*
              * STILL THE DEFAULT, AND NO LONGER THE ONLY POSSIBILITY. The second
              * sentence is a delivery window for one country, and the owner can
@@ -77,7 +77,57 @@ class OrderStatusChanged extends OrderMail
             'Your order has been cancelled',
             'This order has been cancelled and nothing further will be sent.',
         ],
+
+        /*
+         * ── LANE RL: THE REST OF THE STATUSES ──────────────────────────────
+         *
+         * The owner asked for every status (3 October); the wording follows
+         * Lane RJ's approved previews (docs/rj-email-previews/after/), trimmed
+         * to what this shop's own rows can vouch for. The display copy is
+         * keyed in InterfaceStrings under the same names, held equal to these
+         * by OrderStatusEmailsTest, so the owner's wording editor (a later
+         * package) and the Arabic translation have one place each to edit.
+         *
+         * `processing` is not sent when an unpaid order is paid — the receipt
+         * is that message; see OrderMailer::transition(). `refunded` is not
+         * sent when the shop recorded the refund — OrderRefunded said it.
+         */
+        'processing' => [
+            'Your %1$s order %2$s is being prepared',
+            'We are preparing your order',
+            'Your order is confirmed and we are getting it ready. We will email you again when it is on its way.',
+        ],
+        'onhold' => [
+            'Order on hold',
+            'We have paused your order',
+            'Nothing is wrong with your items — we just need to confirm one detail before we can send it.',
+        ],
+        'completed' => [
+            'Delivered ✨',
+            'Enjoy your new routine ✨',
+            'Your order is complete. Open it, try it, and enjoy the little extras we tucked in.',
+        ],
+        'refunded' => [
+            'Your %1$s order %2$s has been refunded',
+            'Your order has been refunded',
+            'This order has been refunded. If the money went back to a card or payment account, your bank can take a few working days to show it.',
+        ],
+        'failed' => [
+            'Payment did not go through',
+            'The payment did not go through 😔',
+            'Nothing was charged and the order is not confirmed. Your order is saved — try again or choose another way to pay.',
+        ],
     ];
+
+    /**
+     * The statuses whose email says "your order number is your tracking
+     * number" and links to the order's own status page — the live ones. The
+     * owner: "tracking number is the same order number ... the order can be
+     * tracked on our website, and whatever we put the status of the order, it
+     * will show." No courier reference exists in this shop and none is
+     * invented.
+     */
+    public const TRACKABLE = ['processing', 'onhold', 'shipped', 'completed'];
 
     /**
      * WHAT THE CANCELLATION EMAIL USED TO SAY ABOUT MONEY, AND WHY IT IS GONE.
@@ -286,14 +336,50 @@ class OrderStatusChanged extends OrderMail
      */
     public string $refundSentence = '';
 
-    public function __construct(Order $order, string $status)
+    /**
+     * The owner's own sentence for a manually-sent on-hold email ("What we
+     * need: ..."), or ''. Plain text from the order screen, printed escaped.
+     */
+    public string $note = '';
+
+    /** The button: where it goes and what it says. Built from the model here. */
+    public string $ctaUrl = '';
+
+    public string $ctaLabel = '';
+
+    public function __construct(Order $order, string $status, string $note = '')
     {
         parent::__construct($order);
 
         $this->status = $status;
+        $this->note = mb_substr(trim(str_replace(["\r\n", "\r"], "\n", $note)), 0, 500);
 
         if ($status === 'cancelled') {
             $this->refundSentence = $this->refundSentenceFor($order);
+        }
+
+        /*
+         * THE BUTTON OPENS ON ANY DEVICE NOW (Lane RL). It used to be
+         * /checkout/success, which only the browser that placed the order may
+         * open. A payment that failed gets "Complete your order", to the signed
+         * page where that order can be paid; every other status gets the
+         * signed status page. Guarded: a link that cannot be signed (no
+         * APP_KEY) falls back to the old address rather than costing the
+         * customer the email.
+         */
+        try {
+            if ($status === 'failed') {
+                $this->ctaUrl = \App\Support\OrderLinks::payUrl($order);
+                $this->ctaLabel = __('email.reminder.button');
+            } else {
+                $this->ctaUrl = \App\Support\OrderLinks::trackUrl($order);
+                $this->ctaLabel = in_array($status, self::TRACKABLE, true)
+                    ? __('email.order_status.track_button')
+                    : __('email.order_status.view_order');
+            }
+        } catch (\Throwable) {
+            $this->ctaUrl = (string) ($this->order['trackUrl'] ?? '');
+            $this->ctaLabel = __('email.order_status.view_order');
         }
     }
 
@@ -463,6 +549,11 @@ class OrderStatusChanged extends OrderMail
         return match ($this->status) {
             'shipped' => __('email.order_status.shipped_subject', $replace),
             'cancelled' => __('email.order_status.cancelled_subject', $replace),
+            'processing' => __('email.order_status.processing_subject', $replace),
+            'onhold' => __('email.order_status.onhold_subject', $replace),
+            'completed' => __('email.order_status.completed_subject', $replace),
+            'refunded' => __('email.order_status.refunded_subject', $replace),
+            'failed' => __('email.order_status.failed_subject', $replace),
             default => sprintf($subject, $this->brandName(), $this->orderNumber()),
         };
     }
@@ -495,6 +586,11 @@ class OrderStatusChanged extends OrderMail
         return match ($this->status) {
             'shipped' => [__('email.order_status.shipped_heading'), __('email.order_status.shipped_body')],
             'cancelled' => [__('email.order_status.cancelled_heading'), __('email.order_status.cancelled_body')],
+            'processing' => [__('email.order_status.processing_heading'), __('email.order_status.processing_body')],
+            'onhold' => [__('email.order_status.onhold_heading'), __('email.order_status.onhold_body')],
+            'completed' => [__('email.order_status.completed_heading'), __('email.order_status.completed_body')],
+            'refunded' => [__('email.order_status.refunded_heading'), __('email.order_status.refunded_body')],
+            'failed' => [__('email.order_status.failed_heading'), __('email.order_status.failed_body')],
             default => [$heading, $body],
         };
     }
@@ -506,7 +602,15 @@ class OrderStatusChanged extends OrderMail
         return new Content(
             view: 'emails.order-status',
             text: 'emails.order-status-text',
-            with: ['heading' => $heading, 'body' => $this->bodyFor($body), 'status' => $this->status],
+            with: [
+                'heading' => $heading,
+                'body' => $this->bodyFor($body),
+                'status' => $this->status,
+                'note' => $this->note,
+                'ctaUrl' => $this->ctaUrl,
+                'ctaLabel' => $this->ctaLabel,
+                'trackable' => in_array($this->status, self::TRACKABLE, true),
+            ],
         );
     }
 }

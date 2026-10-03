@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>K-Beauty Bliss — Homepage preview</title>
+<style>
+@font-face{font-family:'Outfit';src:url('outfit-latin.woff2') format('woff2');font-weight:100 900;font-display:swap}
+:root{--cream:#FFF8F5;--pink-soft:#FFF0F4;--blush:#FCE0E8;--pink:#E0567B;--pink-deep:#C13E63;--pink-ink:#A82F53;--ink:#2A2228;--ink-2:#5E545A;--muted:#8C828A;--line:rgba(42,34,40,.10);--lilac:#F3ECFF;--peach:#FFF1E8;
+  --gutter:clamp(16px,3vw,40px);--max:1320px;--gap:18px;--r:18px}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.55 'Outfit',system-ui,sans-serif;color:var(--ink);background:#fff}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+.wrap{max-width:var(--max);margin:0 auto;padding-inline:var(--gutter)}
+.tag{position:fixed;right:12px;bottom:12px;z-index:50;background:#2A2228;color:#fff;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:7px 12px;border-radius:99px;opacity:.85}
+
+/* header (as the shop has it today) */
+.hd{background:#fff;border-bottom:1px solid var(--line)}
+.hd .row{display:flex;align-items:center;gap:24px;height:66px}
+.logo{font-size:24px;font-weight:800;letter-spacing:-.02em}.logo b{color:var(--pink)}
+.search{flex:1;max-width:620px;height:42px;border-radius:99px;background:#F4F1F2;display:flex;align-items:center;padding:0 18px;color:var(--muted);font-size:14px;gap:10px}
+.icons{display:flex;gap:18px;margin-left:auto;font-size:19px}
+.nav{display:flex;gap:26px;height:48px;align-items:center;font-weight:600;font-size:14px;overflow:hidden;white-space:nowrap}
+.nav .sale{background:var(--pink);color:#fff;border-radius:9px;padding:4px 11px}
+
+/* banner — the owner's own picture banner stays */
+.banner{position:relative;background:linear-gradient(110deg,#FDF3F6 0%,#FBE3EC 48%,#F6E8FF 100%);overflow:hidden}
+.banner .wrap{display:grid;grid-template-columns:1.05fr 1fr;align-items:center;min-height:440px;gap:24px}
+.banner h2{font-size:clamp(34px,4.4vw,60px);line-height:1.04;color:var(--pink-deep);margin:0 0 14px;font-weight:700;letter-spacing:-.02em}
+.banner p{font-size:clamp(16px,1.4vw,21px);color:var(--ink-2);margin:0 0 26px;max-width:30ch}
+.banner .shop{display:inline-block;background:var(--pink);color:#fff;font-weight:700;padding:14px 30px;border-radius:4px;letter-spacing:.04em}
+.banner .note{position:absolute;left:var(--gutter);top:12px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink-deep);opacity:.75}
+.banner .art{display:flex;justify-content:center;gap:16px;align-items:flex-end}
+
+/* the one H1 + the trust line (recommendation 1) */
+.intro{background:#fff;border-bottom:1px solid var(--line)}
+.intro .wrap{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-block:18px;flex-wrap:wrap}
+.intro h1{margin:0;font-size:clamp(17px,1.6vw,21px);font-weight:600;letter-spacing:-.01em}
+.trust{display:flex;gap:10px;flex-wrap:wrap}
+.trust span{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-2);background:var(--cream);border:1px solid #F4E6EA;border-radius:99px;padding:7px 13px}
+.trust i{font-style:normal}
+
+/* sections */
+.sec{padding-block:clamp(44px,6vw,80px)}
+.sec.blush{background:linear-gradient(180deg,#FFF4F7,#FDEBF1)}
+.sec.cream{background:var(--cream)}
+.sec.lilac{background:linear-gradient(160deg,#FCEFF5 0%,#F3ECFF 100%)}
+.head{text-align:center;max-width:720px;margin:0 auto clamp(22px,3vw,36px)}
+.eyebrow{display:inline-block;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--pink-deep);font-weight:700;margin-bottom:10px}
+.head h2{margin:0;font-size:clamp(25px,2.8vw,38px);line-height:1.15;font-weight:700;letter-spacing:-.02em}
+.head p{margin:10px auto 0;color:var(--ink-2);font-size:clamp(14px,1.15vw,16.5px);max-width:56ch}
+.head.split{display:flex;align-items:flex-end;justify-content:space-between;text-align:left;max-width:none;gap:20px}
+.head.split p{margin-inline:0}
+
+/* the global button */
+.btn{display:inline-flex;align-items:center;gap:12px;padding:8px 8px 8px 22px;border-radius:99px;background:#fff;border:1px solid var(--blush);box-shadow:0 10px 24px -14px rgba(193,62,99,.55);font-size:13px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
+.btn i{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;display:grid;place-items:center;font-style:normal;font-size:15px}
+.btn.solid{background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;border-color:transparent}
+.btn.solid i{background:#fff;color:var(--pink-deep)}
+.center{display:flex;justify-content:center;margin-top:clamp(24px,3vw,36px)}
+
+/* product card */
+.grid{display:grid;gap:var(--gap)}
+.g4{grid-template-columns:repeat(4,1fr)}.g5{grid-template-columns:repeat(5,1fr)}
+.card{background:#fff;border-radius:var(--r);border:1px solid #F3E7EB;overflow:hidden;display:flex;flex-direction:column;transition:transform .25s,box-shadow .25s;position:relative}
+.card:hover{transform:translateY(-3px);box-shadow:0 18px 36px -22px rgba(193,62,99,.45)}
+.card .ph{aspect-ratio:1;display:grid;place-items:center;position:relative}
+.card .badge{position:absolute;top:12px;left:12px;font-size:11px;font-weight:700;letter-spacing:.06em;padding:5px 10px;border-radius:99px;color:#fff;background:var(--pink)}
+.card .badge.rank{background:#2A2228}
+.card .wish{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 4px 12px -6px rgba(0,0,0,.3);font-size:14px;color:var(--pink-deep)}
+.card .cb{padding:14px 14px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.card .br{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink-deep);font-weight:700}
+.card .nm{font-size:14.5px;font-weight:600;line-height:1.35;min-height:2.7em}
+.card .rt{font-size:12.5px;color:#E3A13D;letter-spacing:1px}.card .rt span{color:var(--muted);letter-spacing:0;margin-left:4px}
+.card .pr{margin-top:auto;display:flex;align-items:baseline;gap:8px;font-weight:800;font-size:16px}
+.card .pr s{font-size:12.5px;color:var(--muted);font-weight:500}
+.card .pr em{font-style:normal;font-size:11px;font-weight:700;color:#1F8A5B;background:#E6F5EE;border-radius:99px;padding:2px 8px}
+.card .add{margin-top:10px;height:42px;border-radius:12px;background:var(--pink);color:#fff;font-weight:700;font-size:13px;letter-spacing:.06em;display:grid;place-items:center}
+
+/* carousel */
+.car{position:relative}
+.car .track{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 3 * var(--gap)) / 4);gap:var(--gap);overflow:hidden}
+.arr{position:absolute;top:calc((100% - 3 * var(--gap)) / 8);margin-top:-23px;width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid var(--blush);box-shadow:0 12px 26px -12px rgba(42,34,40,.35);display:grid;place-items:center;color:var(--pink-deep);font-size:20px;z-index:2}
+.arr.l{left:-22px;opacity:.0}.arr.r{right:-22px}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:18px}.dots i{width:7px;height:7px;border-radius:99px;background:#EBCBD6}.dots i.on{width:22px;background:var(--pink)}
+
+/* brands — desktop photo cards, phone logo tiles */
+.brands-d{display:grid;grid-template-columns:repeat(7,1fr);gap:16px}
+.bcard{border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 14px 30px -22px rgba(42,34,40,.45);position:relative}
+.bcard .im{aspect-ratio:4/5;position:relative}
+.bcard .lb{position:absolute;left:10px;right:10px;bottom:10px;background:rgba(255,255,255,.88);backdrop-filter:blur(6px);border-radius:14px;padding:10px 12px;text-align:center}
+.bcard .lb b{display:block;font-size:14.5px;font-weight:700}
+.bcard .lb span{font-size:11.5px;color:var(--muted)}
+.brands-m{display:none;grid-template-columns:repeat(2,1fr);gap:10px}
+.logo-t{height:74px;border-radius:14px;background:#fff;border:1px solid #F1E4E9;display:grid;place-items:center;font-size:19px;letter-spacing:.02em}
+
+/* spotted */
+.ig{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 4 * 16px) / 5);gap:16px;overflow:hidden}
+.igc{position:relative;aspect-ratio:9/16;border-radius:22px;overflow:hidden;box-shadow:0 20px 40px -26px rgba(120,40,80,.6)}
+.igc .top{position:absolute;top:12px;left:12px;right:12px;display:flex;align-items:center;gap:8px;color:#fff;font-size:12.5px;font-weight:600;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.igc .av{width:28px;height:28px;border-radius:50%;border:2px solid #fff;background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF)}
+.igc .play{position:absolute;top:50%;left:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(255,255,255,.28);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.55);display:grid;place-items:center;color:#fff;font-size:18px}
+.igc .shop{position:absolute;left:10px;right:10px;bottom:10px;background:#fff;border-radius:14px;padding:8px;display:flex;align-items:center;gap:9px;font-size:12px}
+.igc .shop .t{width:36px;height:36px;border-radius:9px;flex:none}
+.igc .shop b{display:block;font-size:12.5px;line-height:1.2}
+.igc .shop span{color:var(--pink-deep);font-weight:700}
+
+/* blog */
+.blog{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.post{background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 16px 36px -28px rgba(42,34,40,.5);display:flex;flex-direction:column}
+.post .im{aspect-ratio:16/10}
+.post .cb{padding:18px 20px 22px;display:flex;flex-direction:column;gap:8px;flex:1}
+.post .cat{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--pink-deep);font-weight:700}
+.post h3{margin:0;font-size:19px;line-height:1.3}
+.post p{margin:0;color:var(--ink-2);font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post .more{margin-top:auto;padding-top:8px;font-weight:700;font-size:13px;color:var(--pink-deep);letter-spacing:.06em}
+
+/* feature two-column */
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.feat .im{aspect-ratio:16/9;border-radius:22px;overflow:hidden}
+.feat h3{font-size:clamp(22px,2vw,28px);margin:20px 0 12px;padding-bottom:12px;border-bottom:1px solid var(--ink)}
+.feat p{margin:0 0 14px;color:var(--ink-2)}
+.feat .go{font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:14px;display:inline-flex;align-items:center;gap:8px}
+.feat .go b{color:var(--pink-deep)}
+
+/* faq + about */
+.faq{max-width:860px;margin:0 auto;display:grid;gap:10px}
+.faq .q{background:#fff;border:1px solid #F1E3E8;border-radius:16px;padding:16px 20px;display:flex;justify-content:space-between;gap:16px;font-weight:600}
+.faq .q i{font-style:normal;color:var(--pink-deep);font-size:18px}
+.faq .a{border-color:var(--blush);box-shadow:0 12px 26px -20px rgba(193,62,99,.5)}
+.faq .a div{font-weight:400;color:var(--ink-2);margin-top:8px;font-size:14.5px}
+.about{max-width:900px;margin:0 auto;text-align:center}
+.about p{color:var(--ink-2);margin:0 0 14px}
+.about .sign{display:flex;justify-content:center;gap:28px;margin-top:22px;flex-wrap:wrap}
+.about .sign div{font-size:13px;color:var(--muted)}.about .sign b{display:block;font-size:22px;color:var(--pink-deep)}
+
+.ft{background:#2A2228;color:#E9DDE2;padding:36px 0;font-size:13px;text-align:center}
+.prop{display:inline-block;margin-left:8px;font-size:10px;letter-spacing:.12em;background:#FFF3D6;color:#8A5A00;border-radius:99px;padding:3px 9px;vertical-align:middle;font-weight:700}
+
+/* ── phone ─────────────────────────────────────────────── */
+@media (max-width:900px){
+  .hd .row{height:58px;gap:12px}.search{display:none}.nav{display:none}.logo{font-size:21px;margin:0 auto}.icons{margin:0;gap:14px;font-size:17px}
+  .banner .wrap{grid-template-columns:1fr;min-height:0;padding-block:34px 26px;text-align:center}
+  .banner p{margin-inline:auto}.banner .art{transform:scale(.8);margin-top:-6px}
+  .intro .wrap{justify-content:center;text-align:center;padding-block:14px}
+  .trust{justify-content:center;gap:6px}.trust span{font-size:11.5px;padding:5px 10px}
+  .sec{padding-block:38px}
+  .head.split{display:block;text-align:center}.head.split .btn{display:none}
+  .g4,.g5{grid-template-columns:repeat(2,1fr)}
+  .g4 > :nth-child(n+7),.g5 > :nth-child(n+7){display:none}
+  :root{--gap:12px}
+  .card .cb{padding:11px 11px 13px}.card .nm{font-size:13px}.card .add{height:38px;font-size:12px}
+  .car .track{grid-auto-columns:calc((100% - var(--gap)) / 2)}
+  .arr{width:36px;height:36px;font-size:16px;margin-top:-18px;top:calc((100% - var(--gap)) / 4)}.arr.r{right:6px}.arr.l{left:6px}
+  .brands-d{display:none}.brands-m{display:grid}
+  .ig{grid-auto-columns:calc((100% - 12px) / 1.6);gap:12px}
+  .blog{grid-template-columns:1fr;gap:16px}.blog > :nth-child(n+3){display:none}
+  .feat{grid-template-columns:1fr;gap:34px}
+}
+
+/* ── FOOTER (proposal): support first, then the links ───────────── */
+.sup{background:linear-gradient(135deg,#FDE7EE 0%,#F8E9FF 100%);padding-block:clamp(36px,5vw,56px)}
+.sup .head{margin-bottom:24px}
+.sup-g{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.sc{background:#fff;border-radius:20px;padding:20px;display:flex;gap:14px;align-items:center;box-shadow:0 16px 34px -26px rgba(120,40,80,.55)}
+.sc .ic{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;font-size:22px;flex:none}
+.sc b{display:block;font-size:16px}.sc span{color:var(--ink-2);font-size:13.5px}
+.sc .go{margin-left:auto;width:36px;height:36px;border-radius:50%;background:var(--pink-soft);color:var(--pink-deep);display:grid;place-items:center;flex:none}
+.nl{display:flex;align-items:center;gap:18px;justify-content:space-between;background:#fff;border-radius:20px;padding:18px 20px;margin-top:16px;flex-wrap:wrap}
+.nl b{font-size:16px}.nl span{display:block;color:var(--ink-2);font-size:13.5px}
+.nl form{display:flex;gap:8px;flex:1;max-width:460px;min-width:260px}
+.nl input{flex:1;height:46px;border-radius:99px;border:1px solid #EBD9DF;padding:0 18px;font:inherit;min-width:0}
+.nl button{height:46px;border:0;border-radius:99px;padding:0 22px;background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;font:700 13px 'Outfit';letter-spacing:.08em}
+.fm{background:#231C21;color:#D9CCD2;padding-block:44px 0}
+.fm-g{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:28px}
+.fm .logo{color:#fff}.fm p{margin:10px 0 16px;font-size:13.5px;color:#BFAFB7;max-width:30ch}
+.soc{display:flex;gap:10px}.soc a{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);display:grid;place-items:center;font-size:14px;color:#fff}
+.fm h4{margin:0 0 12px;color:#fff;font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+.fm ul{list-style:none;margin:0;padding:0;display:grid;gap:9px;font-size:14px}
+.fm ul a:hover{color:#fff}
+.addr{display:grid;grid-template-columns:1fr 1fr;gap:18px;border-top:1px solid rgba(255,255,255,.1);margin-top:32px;padding-top:22px;font-size:13px}
+.addr b{color:#fff;display:block;margin-bottom:4px}
+.fb{border-top:1px solid rgba(255,255,255,.1);margin-top:22px;padding-block:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:#A897A0}
+.pays{display:flex;gap:8px;flex-wrap:wrap}.pays span{background:#fff;color:#2A2228;border-radius:6px;padding:4px 9px;font-weight:700;font-size:11.5px}
+.fm details{border-bottom:1px solid rgba(255,255,255,.1)}
+.fm summary{list-style:none}
+@media (max-width:900px){
+  .sup-g{grid-template-columns:1fr}
+  .fm-g{grid-template-columns:1fr;gap:0}
+  .fm-g > div:first-child{padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,.1);text-align:center}
+  .fm-g > div:first-child p{margin-inline:auto}.soc{justify-content:center}
+  .fm-col h4{margin:0;padding:16px 0;display:flex;justify-content:space-between}.fm-col h4::after{content:'+';color:var(--pink)}
+  .fm-col ul{display:none}.fm-col.open ul{display:grid;padding-bottom:14px}.fm-col.open h4::after{content:'−'}
+  .addr{grid-template-columns:1fr;text-align:center}
+  .fb{justify-content:center;text-align:center}
+}
+</style>
+</head>
+<body>
+<div class="tag">Preview — not live</div>
+
+<header class="hd"><div class="wrap row"><div class="logo">K-Beauty<b>Bliss</b></div><div class="search">⌕ Search skincare, brands…</div><div class="icons">♡ ⌂ 🛍</div></div>
+<div class="wrap nav"><span>Blog</span><span>Everything Under 54 AED</span><span>Beauty Devices</span><span class="sale">Super Sale</span><span>Skincare Sets</span><span>Hair Care</span><span>Lip Care</span><span>Toners</span><span>Moisturizers</span><span>Sunscreens</span><span>Brands ▾</span><span>Skincare ▾</span></div></header>
+
+<section class="banner"><div class="note">Your picture banner — unchanged</div><div class="wrap">
+  <div><h2>Experience the<br>Skincare Revolution</h2><p>Get up to 45% on your Korean skincare favourites. Don't miss out.</p><a class="shop" href="#">SHOP THE SALE</a></div>
+  <div class="art" id="bannerArt"></div>
+</div></section>
+
+<div class="intro"><div class="wrap">
+  <h1>Korean Skincare &amp; K-Beauty Online in the UAE</h1>
+  <div class="trust"><span><i>🚚</i>1–3 day delivery</span><span><i>✔</i>100% original</span><span><i>🎁</i>Free samples</span><span><i>💳</i>Tabby &amp; Tamara</span></div>
+</div></div>
+
+<!-- 1 BUNDLES -->
+<section class="sec blush"><div class="wrap">
+  <div class="head"><span class="eyebrow">Save more together</span><h2>K-Beauty Bundles &amp; Value Sets</h2><p>Complete Korean skincare routines, priced lower than buying each step on its own.</p></div>
+  <div class="car"><div class="arr l">‹</div><div class="track" id="bundles"></div><div class="arr r">›</div></div>
+  <div class="center"><a class="btn" href="#">All sets <i>→</i></a></div>
+</div></section>
+
+<!-- 2 BEST SELLERS -->
+<section class="sec"><div class="wrap">
+  <div class="head split"><div><span class="eyebrow">Loved most</span><h2>Best-Selling Korean Skincare in the UAE</h2><p>The serums, cleansers and sunscreens our customers reorder most, ranked by real sales.</p></div><a class="btn" href="#">Shop best sellers <i>→</i></a></div>
+  <div class="grid g4" id="best"></div>
+</div></section>
+
+<!-- 3 BRANDS -->
+<section class="sec cream"><div class="wrap">
+  <div class="head"><span class="eyebrow">Authentic, from the source</span><h2>Shop Top Korean Beauty Brands</h2><p>Anua, COSRX, Beauty of Joseon, Medicube and more — 100% original from each brand.</p></div>
+  <div class="brands-d" id="brandsD"></div>
+  <div class="brands-m" id="brandsM"></div>
+  <div class="center"><a class="btn solid" href="#">View all brands <i>→</i></a></div>
+</div></section>
+
+<!-- 4 SPOTTED -->
+<section class="sec lilac"><div class="wrap">
+  <div class="head"><span class="eyebrow">@kbeauty.bliss</span><h2>#KBeautyBliss — Seen on Instagram</h2><p>Real unboxings and routines from our community in Dubai, Abu Dhabi and across the UAE.</p></div>
+  <div class="car"><div class="ig" id="spotted"></div><div class="arr r" style="top:50%">›</div></div>
+  <div class="center"><a class="btn" href="#">Discover more <i>→</i></a></div>
+</div></section>
+
+<!-- 5 TRENDING -->
+<section class="sec"><div class="wrap">
+  <div class="head"><span class="eyebrow">Hot this week</span><h2>Trending K-Beauty This Week</h2><p>The products shoppers in the UAE are viewing most right now.</p></div>
+  <div class="grid g4" id="trending"></div>
+</div></section>
+
+<!-- 6 BLOG -->
+<section class="sec cream"><div class="wrap">
+  <div class="head"><span class="eyebrow">The journal</span><h2>Korean Skincare Tips &amp; Guides</h2><p>Routines, ingredient explainers and honest product reviews from our journal.</p></div>
+  <div class="blog" id="blog"></div>
+</div></section>
+
+<!-- 7 UNDER 54 -->
+<section class="sec blush"><div class="wrap">
+  <div class="head"><span class="eyebrow">Little luxuries</span><h2>K-Beauty Under AED 54</h2><p>Cult favourites and mini sizes that keep a full routine affordable.</p></div>
+  <div class="grid g5" id="under"></div>
+</div></section>
+
+<!-- 8 FEATURE -->
+<section class="sec"><div class="wrap feat" id="feat"></div></section>
+
+<!-- FAQ (proposal) + 9 ABOUT -->
+<section class="sec cream"><div class="wrap">
+  <div class="head"><span class="eyebrow">Good to know <span class="prop">PROPOSAL</span></span><h2>Your K-Beauty Questions, Answered</h2><p>Delivery, authenticity and payment — the things most shoppers ask before their first order.</p></div>
+  <div class="faq">
+    <div class="q a"><div>Are your products original?<div>Yes — every product is 100% original, sourced from the brand, with the batch details on the box.</div></div><i>−</i></div>
+    <div class="q"><span>How fast is delivery in Dubai and the UAE?</span><i>+</i></div>
+    <div class="q"><span>Can I pay with Tabby or Tamara?</span><i>+</i></div>
+    <div class="q"><span>Do I get free samples?</span><i>+</i></div>
+  </div>
+</div></section>
+
+<section class="sec"><div class="wrap about">
+  <div class="head" style="margin-bottom:20px"><span class="eyebrow">Our story</span><h2>About K-Beauty Bliss UAE</h2></div>
+  <p>At K-Beauty Bliss UAE, we are passionate about bringing the best of Korean beauty to skincare enthusiasts across the UAE. Our mission is to provide you with authentic, high-quality K-beauty products that deliver real results. Whether you’re looking to enhance your skincare routine, discover the latest beauty trends, or find effective solutions for your skin concerns, we’ve got you covered.</p>
+  <p>We carefully curate our product range, ensuring that every item fulfills the highest standards of quality and effectiveness. From skincare and hair care to makeup and beauty sets, we offer a wide variety of products created to cater to all your beauty needs.</p>
+  <p>Customer satisfaction is at the heart of everything we do. With fast delivery options, including 1-3 day delivery across the UAE and free shipping on orders over 199 AED, we make it easy and convenient for you to get the products you love.</p>
+  <p>Join the K-Beauty Bliss community and experience the beauty revolution that’s taking the world by storm. Your journey to flawless, radiant skin starts here!</p>
+</div></section>
+
+<!-- FOOTER (proposal) -->
+<section class="sup"><div class="wrap">
+  <div class="head"><span class="eyebrow">We are here for you <span class="prop">PROPOSAL</span></span><h2>Real People, Real Help — 24/7</h2><p>Questions about an order, a product or your routine? Message us and a real person answers.</p></div>
+  <div class="sup-g">
+    <a class="sc" href="#"><span class="ic" style="background:#E7F7EE;color:#1F8A5B">✆</span><div><b>Chat on WhatsApp</b><span>+971 58 505 2611 · quick replies</span></div><span class="go">→</span></a>
+    <a class="sc" href="#"><span class="ic" style="background:var(--pink-soft);color:var(--pink-deep)">✉</span><div><b>Email us</b><span>info@kbeautybliss.com</span></div><span class="go">→</span></a>
+    <a class="sc" href="#"><span class="ic" style="background:#F1EAFE;color:#7A4CC2">⌖</span><div><b>Track your order</b><span>Your order number is your tracking number</span></div><span class="go">→</span></a>
+  </div>
+  <div class="nl"><div><b>New arrivals &amp; offers, first</b><span>One short email when something new lands. Unsubscribe any time.</span></div><form onsubmit="return false"><input placeholder="Your email address" aria-label="Email address"><button>Subscribe</button></form></div>
+</div></section>
+<footer class="fm"><div class="wrap">
+  <div class="fm-g">
+    <div><div class="logo">K-Beauty<b>Bliss</b></div><p>Authentic Korean beauty, curated for the UAE — 100% original, delivered in 1–3 days.</p><div class="soc"><a href="#">IG</a><a href="#">TT</a><a href="#">f</a><a href="#">YT</a></div></div>
+    <div class="fm-col open"><h4>Shop</h4><ul><li><a href="#">All products</a></li><li><a href="#">New in</a></li><li><a href="#">Best sellers</a></li><li><a href="#">Super sale</a></li><li><a href="#">Brands</a></li></ul></div>
+    <div class="fm-col"><h4>Customer care</h4><ul><li><a href="#">Track my order</a></li><li><a href="#">Shipping &amp; delivery</a></li><li><a href="#">Returns</a></li><li><a href="#">FAQs</a></li><li><a href="#">Contact us</a></li></ul></div>
+    <div class="fm-col"><h4>My account</h4><ul><li><a href="#">My account</a></li><li><a href="#">Orders</a></li><li><a href="#">Wishlist</a></li><li><a href="#">Shipping address</a></li></ul></div>
+    <div class="fm-col"><h4>Discover</h4><ul><li><a href="#">About us</a></li><li><a href="#">Journal</a></li><li><a href="#">#KBeautyBliss spotted</a></li><li><a href="#">Privacy policy</a></li><li><a href="#">Terms &amp; conditions</a></li></ul></div>
+  </div>
+  <div class="addr"><div><b>📍 Dubai, UAE</b>[Dubai address]</div><div><b>📍 Korea</b>[Korea address — owner to paste]</div></div>
+  <div class="fb"><span>© 2026 K-Beauty Bliss UAE</span><div class="pays"><span>VISA</span><span>Mastercard</span><span>tabby</span><span>tamara</span><span>COD</span></div></div>
+</div></footer>
+
+
+<script>
+const PAL=[['#FCE4EC','#F48FB1'],['#E3F2FD','#64B5F6'],['#E8F5E9','#81C784'],['#FFF3E0','#FFB74D'],['#F3E5F5','#BA68C8'],['#E0F7FA','#4DD0E1'],['#FFF8E1','#FFD54F'],['#FBE9E7','#FF8A65']];
+const bottle=(c,k,w=86)=>{const [bg,fg]=PAL[k%PAL.length];return `<svg viewBox="0 0 120 200" width="${w}" aria-hidden="true"><rect x="42" y="8" width="36" height="30" rx="6" fill="#2A2228" opacity=".85"/><rect x="26" y="36" width="68" height="156" rx="${k%2?16:30}" fill="${fg}"/><rect x="36" y="88" width="48" height="56" rx="6" fill="#fff" opacity=".95"/><rect x="44" y="104" width="32" height="5" rx="2" fill="${fg}"/><rect x="48" y="116" width="24" height="4" rx="2" fill="#ccc"/></svg>`};
+const scene=(k,ratio)=>{const [bg,fg]=PAL[k%PAL.length];return `background:radial-gradient(120% 90% at 20% 10%,#fff 0%,${bg} 45%,${fg}55 100%)`};
+const P=[['Anua','Heartleaf 77% Soothing Toner 250ml',89,109,'4.9','212'],['Beauty of Joseon','Relief Sun Rice + Probiotics SPF50+',62,79,'4.8','341'],['COSRX','Advanced Snail 96 Mucin Power Essence',75,null,'4.9','508'],['Medicube','Collagen Jelly Cream 110ml',129,159,'4.7','96'],['SKIN1004','Madagascar Centella Ampoule 55ml',72,null,'4.8','187'],['Round Lab','Birch Juice Moisturizing Sun Cream',69,85,'4.8','144'],['Torriden','DIVE-IN Low Molecular Hyaluronic Serum',79,null,'4.9','233'],['numbuzin','No.5 Vitamin Toner Pad',99,119,'4.6','58'],['Anua','Heartleaf Pore Cleansing Oil 200ml',98,null,'4.8','166'],['Dr. Althea','345 Relief Cream 50ml',115,135,'4.7','74']];
+const card=(p,k,o={})=>`<a class="card" href="#"><div class="ph" style="${scene(k)}">${bottle(0,k)}${o.badge?`<span class="badge ${o.rank?'rank':''}">${o.badge}</span>`:''}<span class="wish">♡</span></div><div class="cb"><span class="br">${p[0]}</span><span class="nm">${p[1]}</span><span class="rt">★★★★★<span>${p[4]} (${p[5]})</span></span><span class="pr">AED ${o.price||p[2]} ${p[3]&&!o.price?`<s>AED ${p[3]}</s><em>−${Math.round((1-p[2]/p[3])*100)}%</em>`:''}</span><span class="add">ADD TO CART</span></div></a>`;
+document.getElementById('bannerArt').innerHTML=[3,0,4,1].map((k,i)=>bottle(0,k,i%2?118:140)).join('');
+const SETS=[['Medicube','PDRN Glow Booster Set (Pink Edition)',850,1399],['Medicube','Collagen Booster Set — Pink Edition',850,1299],['Dr. Althea','345 Relief Cream + Mist Spray Set',215,260],['Celimax','Pore + Dark Spot Brightening Set',387,451],['Anua','Heartleaf Double Cleansing Duo',165,198]];
+document.getElementById('bundles').innerHTML=SETS.map((s,k)=>card([s[0],s[1],s[2],s[3],'4.9',20+k*7],k+4)).join('');
+document.getElementById('best').innerHTML=P.slice(0,8).map((p,k)=>card(p,k,{badge:'#'+(k+1),rank:true})).join('');
+document.getElementById('trending').innerHTML=[...P.slice(2),...P.slice(0,2)].slice(0,8).map((p,k)=>card(p,k+3,{badge:k<3?'Trending':null})).join('');
+document.getElementById('under').innerHTML=P.map((p,k)=>card(p,k+1,{price:[29,35,42,49,39,45,52,33,48,54][k]})).join('');
+const BR=['Anua','Beauty of Joseon','COSRX','Torriden','SKIN1004','Round Lab','Medicube','Haru Haru Wonder','Goodal','I\'m from','SOME BY MI','Jumiso','Arencia','AXIS-Y'];
+document.getElementById('brandsD').innerHTML=BR.map((b,k)=>`<a class="bcard" href="#"><div class="im" style="${scene(k)}"><div style="position:absolute;inset:0;display:grid;place-items:center">${bottle(0,k,70)}</div><div class="lb"><b>${b}</b><span>${12+k*3} products</span></div></div></a>`).join('');
+const LOGO=[['Anua',"'Outfit'",'300','.25em'],['Arencia','Georgia','400','.02em'],['SKIN1004','Outfit','500','.35em'],['celimax','Outfit','800','0'],['Beauty of Joseon','Georgia','400','0'],['Dr.Althea','cursive','400','0'],['medicube','Outfit','600','0'],['numbuzin','Outfit','600','.05em'],['Biodance','Georgia','700','0'],['EQQUALBERRY','Outfit','800','.02em']];
+document.getElementById('brandsM').innerHTML=LOGO.map(l=>`<a class="logo-t" href="#" style="font-family:${l[1]},serif;font-weight:${l[2]};letter-spacing:${l[3]}">${l[0]}</a>`).join('');
+const IG=[['@sara.glows','Torriden Serum'],['@kbeauty.bliss','Unboxing day ✨'],['@lina.skin','Anua Toner'],['@kbeauty.bliss','Medicube Set'],['@noor.routine','SKIN1004 Ampoule'],['@kbeauty.bliss','Sun care edit']];
+document.getElementById('spotted').innerHTML=IG.map((g,k)=>`<a class="igc" href="#" style="${scene(k+2)}"><div style="position:absolute;inset:0;display:grid;place-items:center;opacity:.9">${bottle(0,k+2,92)}</div><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.28) 0%,transparent 30%,transparent 62%,rgba(0,0,0,.18) 100%)"></div><div class="top"><span class="av"></span>${g[0]}</div><span class="play">▶</span><div class="shop"><span class="t" style="${scene(k+5)}"></span><div><b>${g[1]}</b><span>Shop the look →</span></div></div></a>`).join('');
+const BL=[['Routines','The 7-step Korean skincare routine, explained for UAE weather','Which steps matter in 40° heat, which to skip, and the order that keeps your barrier calm.'],['Ingredients','Snail mucin, centella, rice: what each one actually does','A plain-language guide to the five ingredients you will see on almost every K-beauty label.'],['Sun care','Best Korean sunscreens for oily skin in Dubai','Lightweight SPF50+ picks that do not pill under makeup or melt by midday.']];
+document.getElementById('blog').innerHTML=BL.map((b,k)=>`<a class="post" href="#"><div class="im" style="${scene(k+1)}"></div><div class="cb"><span class="cat">${b[0]}</span><h3>${b[1]}</h3><p>${b[2]}</p><span class="more">Read the guide →</span></div></a>`).join('');
+document.getElementById('feat').innerHTML=[['Embrace the Sunshine!','Our selection offers the perfect blend of UV protection and hydration, keeping your skin glowing and safe under the sun. Discover your ideal sunscreen with us today!',6],['Top K-Beauty Picks','Explore our handpicked selection of top K-Beauty products loved by beauty enthusiasts worldwide. From cult favorites to hidden gems, these products are must-haves for your skincare routine.',0]].map(f=>`<div><div class="im" style="${scene(f[2])};display:grid;place-items:center">${bottle(0,f[2],120)}</div><h3>${f[0]}</h3><p>${f[1]}</p><a class="go" href="#">Shop now <b>▸</b></a></div>`).join('');
+</script>
+</body>
+</html>

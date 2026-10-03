@@ -208,6 +208,37 @@ final class HomepageContent
             'store' => 'setting',
             'help' => 'The paragraph in the About us band. Clear it and the paragraph is dropped; the heading, the counted figures and the link stay.',
         ],
+        /* ── Big savings bundles (2.60.370) — see TABS['bundles'] ───────── */
+        'home_hb_layout_d' => ['type' => 'select', 'label' => 'Layout · laptop', 'default' => 'carousel', 'store' => 'setting',
+            'options' => ['carousel' => 'Carousel with arrows', 'grid' => 'Grid — all at once'], 'help' => 'Carousel, as asked; Grid puts the sets back in rows.'],
+        'home_hb_layout_m' => ['type' => 'select', 'label' => 'Layout · phone', 'default' => 'carousel', 'store' => 'setting',
+            'options' => ['carousel' => 'Carousel — swipe', 'grid' => 'Grid — all at once'], 'help' => ''],
+        'home_hb_per_d' => ['type' => 'select', 'label' => 'Cards in view · laptop', 'default' => '4', 'store' => 'setting',
+            'options' => ['3' => '3', '4' => '4', '5' => '5', '6' => '6'], 'help' => 'How many sets fit across before the arrows take over.'],
+        'home_hb_per_m' => ['type' => 'select', 'label' => 'Cards in view · phone', 'default' => '2', 'store' => 'setting',
+            'options' => ['1' => '1', '1.5' => '1½ — the next one peeks', '2' => '2', '2.5' => '2½ — the next one peeks'], 'help' => ''],
+        'home_hb_arrows_d' => ['type' => 'bool', 'label' => 'Arrows · laptop', 'default' => true, 'store' => 'setting', 'help' => 'Round arrows at either side of the carousel.'],
+        'home_hb_arrows_m' => ['type' => 'bool', 'label' => 'Arrows · phone', 'default' => true, 'store' => 'setting', 'help' => 'Smaller arrows over the cards; a swipe always works too.'],
+        'home_hb_auto' => ['type' => 'select', 'label' => 'Move on its own', 'default' => '0', 'store' => 'setting',
+            'options' => ['0' => 'Off', '3' => 'Every 3 seconds', '5' => 'Every 5 seconds', '7' => 'Every 7 seconds', '10' => 'Every 10 seconds'],
+            'help' => 'Stops while the shopper hovers, touches or tabs into it, and never runs for a visitor who has asked for reduced motion.'],
+        'home_hb_align' => ['type' => 'select', 'label' => 'Heading position', 'default' => 'center', 'store' => 'setting',
+            'options' => ['center' => 'Centred', 'start' => 'Left'], 'help' => 'Both devices.'],
+        'home_hb_title' => ['type' => 'text', 'label' => 'Heading', 'default' => '', 'store' => 'setting', 'help' => 'Empty: “Big savings bundles”.'],
+        'home_hb_sub' => ['type' => 'text', 'label' => 'Line under the heading (laptop)', 'default' => '', 'store' => 'setting', 'help' => 'Empty: “Complete routines, priced below the sum of their parts.”'],
+        'home_hb_btn_d' => ['type' => 'select', 'label' => 'All sets button · laptop', 'default' => 'top', 'store' => 'setting',
+            'options' => ['top' => 'Beside the heading', 'bottom' => 'Under the carousel', 'off' => 'Hidden'], 'help' => ''],
+        'home_hb_btn_m' => ['type' => 'select', 'label' => 'All sets button · phone', 'default' => 'bottom', 'store' => 'setting',
+            'options' => ['bottom' => 'Under the carousel', 'top' => 'Beside the heading', 'off' => 'Hidden'], 'help' => 'Under the carousel, as asked.'],
+        'home_hb_btn_text' => ['type' => 'text', 'label' => 'Button text', 'default' => '', 'store' => 'setting', 'help' => 'Empty: “All sets”.'],
+        'home_hb_btn_url' => ['type' => 'text', 'label' => 'Button link', 'default' => '', 'store' => 'setting',
+            'help' => 'Empty: the Skincare Sets category. A path on this shop (/…) or a full https:// address; anything else is ignored.'],
+        'home_hb_pad_d' => ['type' => 'select', 'label' => 'Space above the section · laptop', 'default' => '8', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
+        'home_hb_pad_m' => ['type' => 'select', 'label' => 'Space above the section · phone', 'default' => '8', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
+        'home_hb_head_gap_d' => ['type' => 'select', 'label' => 'Space under the heading · laptop', 'default' => '24', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
+        'home_hb_head_gap_m' => ['type' => 'select', 'label' => 'Space under the heading · phone', 'default' => '12', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
+        'home_hb_btn_gap_d' => ['type' => 'select', 'label' => 'Space above the button under the carousel · laptop', 'default' => '24', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
+        'home_hb_btn_gap_m' => ['type' => 'select', 'label' => 'Space above the button under the carousel · phone', 'default' => '16', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
     ];
 
     /**
@@ -222,6 +253,20 @@ final class HomepageContent
      */
     public const TABS = [
         'copy' => ['Other wording', 'Sentences elsewhere on the homepage that had no screen.', ['home_ticker', 'about_text']],
+        /* (2.60.370) The owner: "on homepage, i need the bundle section to be
+           carousel with proper beautiful arrows, give controls of everything
+           for desktop mobile both. center the heading, redesign the All Sets
+           button beautifully" and "i want this button in mobile at bottom of
+           carsousel, give controls of spacing etc." App\Support\HomeBundles
+           reads these; the defaults ARE what he asked for. */
+        'bundles' => ['Big savings bundles', 'The sets row on the homepage: carousel or grid, cards in view, arrows, the heading and the All sets button — separately for a laptop and a phone (900px and narrower).', [
+            'home_hb_layout_d', 'home_hb_layout_m', 'home_hb_per_d', 'home_hb_per_m',
+            'home_hb_arrows_d', 'home_hb_arrows_m', 'home_hb_auto', 'home_hb_align',
+            'home_hb_title', 'home_hb_sub',
+            'home_hb_btn_d', 'home_hb_btn_m', 'home_hb_btn_text', 'home_hb_btn_url',
+            'home_hb_pad_d', 'home_hb_pad_m', 'home_hb_head_gap_d', 'home_hb_head_gap_m',
+            'home_hb_btn_gap_d', 'home_hb_btn_gap_m',
+        ]],
     ];
 
     /**

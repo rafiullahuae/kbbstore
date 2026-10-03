@@ -87,8 +87,26 @@ class OrderStatusMailPolicy
      * @var array<string, string>
      */
     public const MODULE_KEYS = [
+        'processing' => 'email_order_processing',
+        'onhold' => 'email_order_onhold',
         'shipped' => 'email_order_shipped',
+        'completed' => 'email_order_completed',
         'cancelled' => 'email_order_cancelled',
+        'refunded' => 'email_order_marked_refunded',
+        'failed' => 'email_order_failed',
+    ];
+
+    /**
+     * What the owner calls each status, where it is not simply its name. The
+     * shop's "delivered" is `completed`, and `failed` is a payment that did
+     * not go through — the screen says so rather than making him translate.
+     *
+     * @var array<string, string>
+     */
+    public const LABELS = [
+        'onhold' => 'On hold',
+        'completed' => 'Completed (delivered)',
+        'failed' => 'Payment failed',
     ];
 
     /**
@@ -102,12 +120,7 @@ class OrderStatusMailPolicy
      */
     public const SILENT_REASONS = [
         'draft' => 'Internal bookkeeping — a draft has not been placed yet.',
-        'pending' => 'The order has only just been placed; the confirmation email covers it.',
-        'processing' => 'The confirmation email already said so, seconds earlier. Cash on delivery moves an order here during checkout itself.',
-        'onhold' => 'Internal bookkeeping. Nothing about the order has changed for the customer.',
-        'completed' => 'Internal bookkeeping. The dispatch email is what the customer is waiting for.',
-        'refunded' => 'Money going back is its own email, sent when the refund actually settles rather than when this column is typed.',
-        'failed' => 'Written when a gateway declines during checkout, where the shopper is already looking at the error.',
+        'pending' => 'Not paid yet. The two "Complete your order" reminders cover it (Store → Modules → Order emails).',
     ];
 
     /**
@@ -238,8 +251,13 @@ class OrderStatusMailPolicy
         $mailer = app(OrderMailer::class);
 
         return match ($status) {
+            'processing' => $mailer->processingEnabled(),
+            'onhold' => $mailer->onholdEnabled(),
             'shipped' => $mailer->shippedEnabled(),
+            'completed' => $mailer->completedEnabled(),
             'cancelled' => $mailer->cancelledEnabled(),
+            'refunded' => $mailer->markedRefundedEnabled(),
+            'failed' => $mailer->failedEnabled(),
             default => false,
         };
     }
@@ -277,7 +295,7 @@ class OrderStatusMailPolicy
     {
         return array_map(fn (string $status): array => [
             'status' => $status,
-            'label' => ucfirst($status),
+            'label' => self::LABELS[$status] ?? ucfirst($status),
             'supported' => $this->supported($status),
             'enabled' => $this->enabled($status),
             'reason' => $this->supported($status) ? '' : (self::SILENT_REASONS[$status] ?? ''),
@@ -310,6 +328,27 @@ class OrderStatusMailPolicy
     public function decideForRequest(?bool $notify): void
     {
         $this->forRequest = $notify;
+    }
+
+    /**
+     * The decision that governs the RECEIPT sent when an order is paid (Lane RL).
+     *
+     * false while an import holds customer mail back (counted, like a status
+     * message); otherwise the operator's tick for this order or this request
+     * if they gave one; otherwise null, meaning "the Order confirmation switch
+     * decides". It is the same tick as the status email's: moving an unpaid
+     * order to Processing on the order screen with "Email the customer"
+     * unticked must stay quiet, and the receipt is the email that move sends.
+     */
+    public function receiptDecision(Order $order): ?bool
+    {
+        if ($this->suppressedBecause !== null) {
+            $this->suppressed++;
+
+            return false;
+        }
+
+        return $this->perOrder[(int) $order->getKey()] ?? $this->forRequest;
     }
 
     /**

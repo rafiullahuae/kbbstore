@@ -953,7 +953,10 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
   }
 
   function copyTab(){
-    return data.tabs.map(function(t){
+    /* (2.60.370) One tab's fields at a time: a second tab (Big savings
+       bundles) arrived, and drawing every tab under every button would show
+       the bundles controls under "Other wording" too. */
+    return data.tabs.filter(function(t){ return t.key === tab; }).map(function(t){
       return '<div class="hpc-card"><p class="hpc-h">' + esc(t.label) + '</p>'
         + '<p class="hpc-sub" style="margin-bottom:8px">' + esc(t.description) + '</p>'
         + t.fields.map(function(f){ return field(f, copy[f.key], 'copy.' + f.key, false); }).join('')

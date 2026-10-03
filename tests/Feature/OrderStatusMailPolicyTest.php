@@ -114,11 +114,15 @@ it('says which statuses can email and why the rest cannot', function () {
 
     $byStatus = collect($rows)->keyBy('status');
 
-    // Exactly the two OrderStatusChanged has wording for.
-    expect($byStatus['shipped']['supported'])->toBeTrue()
-        ->and($byStatus['cancelled']['supported'])->toBeTrue();
+    // Every status OrderStatusChanged has wording for. Lane RL added
+    // processing, onhold, completed, refunded and failed: the owner asked for
+    // an email on every status (3 October). Draft and pending stay silent —
+    // pending is covered by the "Complete your order" reminders.
+    foreach (['processing', 'onhold', 'shipped', 'completed', 'cancelled', 'refunded', 'failed'] as $status) {
+        expect($byStatus[$status]['supported'])->toBeTrue($status . ' has a message and must be switchable');
+    }
 
-    foreach (['draft', 'pending', 'processing', 'onhold', 'completed', 'refunded', 'failed'] as $silent) {
+    foreach (['draft', 'pending'] as $silent) {
         expect($byStatus[$silent]['supported'])
             ->toBeFalse($silent . ' is reported as emailing the customer, but no message exists for it')
             // A dead tick box is the fault CLAUDE.md records three times. A
@@ -131,10 +135,17 @@ it('says which statuses can email and why the rest cannot', function () {
 it('defaults to exactly what the store did before any of this existed', function () {
     $policy = app(OrderStatusMailPolicy::class);
 
-    // Nothing configured: dispatch and cancellation both email.
+    // Nothing configured: dispatch and cancellation both email, as before.
+    // Lane RL: the statuses the owner asked for ship ON because he asked;
+    // on-hold ships OFF because he said so ("for hold keep OFF").
     expect($policy->enabled('shipped'))->toBeTrue()
         ->and($policy->enabled('cancelled'))->toBeTrue()
-        ->and($policy->enabled('processing'))->toBeFalse();
+        ->and($policy->enabled('processing'))->toBeTrue()
+        ->and($policy->enabled('completed'))->toBeTrue()
+        ->and($policy->enabled('refunded'))->toBeTrue()
+        ->and($policy->enabled('failed'))->toBeTrue()
+        ->and($policy->enabled('onhold'))->toBeFalse()
+        ->and($policy->enabled('pending'))->toBeFalse();
 });
 
 /* --------------------------------------------------- the standing rule -- */
@@ -159,10 +170,12 @@ it('stops the dispatch email for every path when the owner switches it off', fun
 it('refuses to store a toggle for a status that has no message', function () {
     $policy = app(OrderStatusMailPolicy::class);
 
-    expect($policy->setEnabled('processing', true))
+    // `pending` has no status message (the reminders cover it) — Lane RL
+    // gave processing one, so the refusal is asked of pending now.
+    expect($policy->setEnabled('pending', true))
         ->toBeFalse('a toggle was accepted for a status with no customer message')
-        ->and($policy->enabled('processing'))
-        ->toBeFalse('processing reports as emailing after a refused toggle');
+        ->and($policy->enabled('pending'))
+        ->toBeFalse('pending reports as emailing after a refused toggle');
 });
 
 /* ------------------------------------------------- the per-order decision -- */
@@ -308,7 +321,8 @@ it('serves the whole status list to an admin and refuses a stranger', function (
 
     expect($statuses)->toHaveCount(count(OrderStatusMailPolicy::STATUSES))
         ->and($statuses['shipped']['enabled'])->toBeTrue()
-        ->and($statuses['processing']['supported'])->toBeFalse();
+        // Lane RL: pending is the status with no message now (processing has one).
+        ->and($statuses['pending']['supported'])->toBeFalse();
 });
 
 it('saves a toggle and the next status change obeys it', function () {
@@ -330,13 +344,13 @@ it('saves a toggle and the next status change obeys it', function () {
 
 it('refuses a toggle for a status with no message, and says why', function () {
     $response = $this->actingAs(adminUserForPolicy(), 'admin')
-        ->postJson('/admin-api/mail/status-emails', ['status' => 'processing', 'enabled' => true])
+        ->postJson('/admin-api/mail/status-emails', ['status' => 'pending', 'enabled' => true])
         ->assertStatus(422);
 
     expect(str_contains((string) $response->json('message'), 'no customer email'))
         ->toBeTrue('the refusal does not say there is no email for that status')
         ->and(trim((string) $response->json('message')))
-        ->not->toBe('There is no customer email for "processing".', 'the refusal gives no reason');
+        ->not->toBe('There is no customer email for "pending".', 'the refusal gives no reason');
 });
 
 it('honours the notify flag on the single-order status endpoint', function () {
@@ -384,7 +398,7 @@ it('carries the status-email list on the order detail payload', function () {
     $rows = collect($body['status_emails'])->keyBy('status');
 
     expect($rows['shipped']['supported'])->toBeTrue()
-        ->and($rows['processing']['supported'])->toBeFalse();
+        ->and($rows['pending']['supported'])->toBeFalse();
 });
 
 it('draws the tick box and the settings list in the admin console', function () {

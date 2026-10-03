@@ -1768,6 +1768,24 @@ final class InterfaceStrings
     private static function storeTrack(): array
     {
         return [
+            // Lane RL — "Complete your order", the page the reminder emails open.
+            'order_pay.page_title' => 'Complete your order',
+            'order_pay.heading' => 'Complete your order',
+            'order_pay.lead' => 'Order :number is saved but not paid yet. Choose how to pay and you are done.',
+            'order_pay.not_found' => 'This link has expired or is not valid. Find your order with its number and your email address, or message us and we will help.',
+            'order_pay.find_order' => 'Find my order',
+            'order_pay.your_items' => 'Your items',
+            'order_pay.qty' => 'Qty :qty',
+            'order_pay.total' => 'Total to pay',
+            'order_pay.how_to_pay' => 'How would you like to pay?',
+            'order_pay.pay_button' => 'Pay and complete my order',
+            'order_pay.working' => 'Working…',
+            'order_pay.no_methods' => 'No way to pay online is available for this order right now. Message us and we will help you finish it.',
+            'order_pay.method_unavailable' => 'That way to pay is not available for this order. Please choose another.',
+            'order_pay.cannot_reopen' => 'Some items in this order are no longer available, so it cannot be completed here. Message us and we will help.',
+            'order_pay.start_failed' => 'We could not start that payment. Please try again or choose another way to pay.',
+            'order_pay.needs_javascript' => 'Paying by card needs JavaScript switched on in your browser. Please turn it on, or choose another way to pay.',
+            'order_pay.generic_error' => 'Something went wrong. Please try again.',
             'track.page_title' => 'Track my order · K-Beauty Bliss',
             'track.heading' => 'Track my order',
             'track.lead' => 'Your order number is in your confirmation email. We ask for the email as well, so only you can see where your parcel is.',
@@ -2206,12 +2224,72 @@ final class InterfaceStrings
              * OrderPaperworkLabelsAreKeyedTest pins the length and both
              * placeholders for every locale that has one published.
              */
-            'order_status.shipped_subject' => 'Your :store order :number is on its way',
+            'order_status.shipped_subject' => 'Your :store order :number is on its way 🚚💨',
             'order_status.cancelled_subject' => 'Your :store order :number has been cancelled',
-            'order_status.shipped_heading' => 'Your order is on its way',
+            'order_status.shipped_heading' => 'Your order is on its way 🚚💨',
             'order_status.shipped_body' => 'Your order has left us and is with the courier. Delivery in the UAE normally takes one to three working days from dispatch.',
             'order_status.cancelled_heading' => 'Your order has been cancelled',
             'order_status.cancelled_body' => 'This order has been cancelled and nothing further will be sent.',
+
+            /*
+             * LANE RL — THE REST OF THE STATUS EMAILS, THE TRACKING LINE AND THE
+             * "COMPLETE YOUR ORDER" REMINDERS. Subjects/headings/bodies mirror
+             * OrderStatusChanged::WORDING (OrderStatusEmailsTest holds the two
+             * Englishes equal). Wording from Lane RJ's approved previews,
+             * trimmed to what the shop's own rows can vouch for. Arabic falls
+             * back to these until translated (Translation → Strings).
+             */
+            'order_status.processing_subject' => 'Your :store order :number is being prepared',
+            'order_status.processing_heading' => 'We are preparing your order',
+            'order_status.processing_body' => 'Your order is confirmed and we are getting it ready. We will email you again when it is on its way.',
+            'order_status.onhold_subject' => 'Order on hold',
+            'order_status.onhold_heading' => 'We have paused your order',
+            'order_status.onhold_body' => 'Nothing is wrong with your items — we just need to confirm one detail before we can send it.',
+            'order_status.onhold_reply' => 'Reply to this email or message us on WhatsApp and we will carry on right away.',
+            'order_status.onhold_need' => 'What we need:',
+            'order_status.completed_subject' => 'Delivered ✨',
+            'order_status.completed_heading' => 'Enjoy your new routine ✨',
+            'order_status.completed_body' => 'Your order is complete. Open it, try it, and enjoy the little extras we tucked in.',
+            'order_status.refunded_subject' => 'Your :store order :number has been refunded',
+            'order_status.refunded_heading' => 'Your order has been refunded',
+            'order_status.refunded_body' => 'This order has been refunded. If the money went back to a card or payment account, your bank can take a few working days to show it.',
+            'order_status.failed_subject' => 'Payment did not go through',
+            'order_status.failed_heading' => 'The payment did not go through 😔',
+            'order_status.failed_body' => 'Nothing was charged and the order is not confirmed. Your order is saved — try again or choose another way to pay.',
+            'order_status.tracking_number' => 'Your tracking number is your order number: :number.',
+            'order_status.tracking_where' => 'Follow it on our website — whatever we set (Shipped, Delivered) shows there straight away.',
+            'order_status.track_button' => 'Track your order',
+            'order_status.track_note' => 'Opens on any phone or computer — no sign-in needed. The page always shows the latest status.',
+            'reminder.first_subject' => 'Complete your order 🛍️',
+            'reminder.first_heading' => 'You are one step away 🛍️',
+            'reminder.first_body' => 'We saved your order, but the payment was not completed, so it is not confirmed yet. Everything is below — finish in one tap.',
+            'reminder.first_closing' => 'Already paid? Ignore this — your confirmation is on its way.',
+            'reminder.second_subject' => 'Your order is still waiting ⏳',
+            'reminder.second_heading' => 'Your order is still waiting for you ⏳',
+            'reminder.second_body' => 'Order :number is saved but not paid, so we cannot send it yet. Popular items sell out quickly, so we cannot promise they will still be in stock later.',
+            'reminder.second_closing' => 'This is the last reminder about this order.',
+            'reminder.not_paid' => 'Not paid yet',
+            'reminder.button' => 'Complete your order',
+            // The owner, 3 October: "we need to include and focus on the fast
+            // delivery, 100% original products from the brand and Free random
+            // samples with order." Both reminders carry these three lines.
+            'reminder.why_fast' => 'Fast delivery',
+            'reminder.why_fast_note' => '1–3 days, all over the UAE',
+            'reminder.why_original' => '100% original',
+            'reminder.why_original_note' => 'straight from the brand',
+            'reminder.why_samples' => 'Free samples',
+            'reminder.why_samples_note' => 'random K-beauty samples in every order',
+            // The feedback request, 3 hours after the Delivered email.
+            'feedback.subject' => 'How is your glow? 💌',
+            'feedback.subject_named' => 'How is your glow, :name? 💌',
+            'feedback.heading' => 'How is your glow? 💌',
+            'feedback.heading_named' => 'How is your glow, :name? 💌',
+            'feedback.body' => 'By now your order has arrived. One tap per product tells us — and other shoppers in the UAE — what is worth it.',
+            'feedback.items_heading' => 'Review what you bought',
+            'feedback.button' => 'Write a review',
+            'feedback.button_note' => 'Each button opens that product\'s page at its reviews.',
+            'feedback.closing' => 'Something not right? Reply to this email or WhatsApp us — a real person will sort it out.',
+            'reminder.button_note' => 'Opens your saved order on any device. Prefer another way to pay? Message us on WhatsApp and we will help.',
 
             /*
              * THE REST OF THE DISPATCH BODY. bodyFor() picks one of three by
@@ -2250,8 +2328,12 @@ final class InterfaceStrings
             'delivery.gift_heading' => 'Gift message',
             'delivery.note_heading' => 'Order note',
             'delivery.not_recorded' => 'Not recorded',
-            'confirmation.greeting' => 'Thank you ✨',
-            'confirmation.greeting_named' => 'Thank you, :name ✨',
+            'confirmation.subject' => 'Your :store order :number 🎉',
+            'confirmation.greeting' => 'Thank you! 🎉',
+            'confirmation.greeting_named' => 'Thank you, :name! 🎉',
+            // Lane RL: the approved preview's lead, for an order whose payment is in.
+            // Cash on delivery has paid nothing yet and keeps the lead below.
+            'confirmation.lead_paid' => 'Your payment is in and your order is confirmed. We are packing it with care — keep this email, it is your receipt.',
             'confirmation.lead' => 'Your order is in and we are packing it with care. Everything you chose is listed below, exactly as it was when you ordered — keep this email, it is your receipt.',
             'confirmation.placed_on' => 'placed :date',
             'confirmation.track_button' => 'Track your order',
