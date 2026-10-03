@@ -3,6 +3,22 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.372
+**The new homepage, the new footer, #KBeautyBliss Spotted, and every email in the
+approved design.** Apply after .371. No plugin change. **Runs 12 migrations**
+(new tables for order emails, browser copies and Spotted posts; Arabic drafts;
+cache clears). After applying, hard refresh (Cmd/Ctrl + Shift + R).
+
+| Your request | Now |
+|---|---|
+| Homepage: "only these sections … don't include anything from our existing homepage except banner" | Banner, then Big savings bundles, Best-Selling Korean Skincare in the UAE (4×2 / 2×3), Shop Top Korean Beauty Brands (photo cards, logos on phones, no product count), #KBeautyBliss — Seen on Instagram, Trending K-Beauty This Week (8 / 6), Korean Skincare Tips & Guides (3 / 2), K-Beauty Under AED 54 (10 at 5 per row / 6), the two-column feature (Sunscreens, Best sellers), About K-Beauty Bliss UAE (your four paragraphs). Every old section is switched off, not deleted — Appearance → Homepage. Controls: Appearance → Homepage content → Best Sellers / Brands / Trending / Blog / Under AED 54 / Two-column feature / About us. Product cards are the live card, unchanged. One H1, page width = window at 390 and 1280 |
+| Footer: design C, WhatsApp green, "24/7 available", no "return" anywhere, shorter, big name at the bottom | On every page. 457px desktop / 541px phone (497 / 602 with both addresses filled). Appearance → Footer → Site footer · design / help strip / Visit us & name. "Previous" brings the old footer back |
+| #KBeautyBliss Spotted: manual Instagram carousel + /kbeautybliss-spotted | Appearance → #KBeautyBliss Spotted: add posts (picture, Instagram link, handle, caption, optional product, optional heart count), tick Homepage and/or Spotted page, drag the order. The homepage section and the page show nothing until a post is ticked; the page is kept out of Google and the sitemap while empty |
+| Emails: look A, Outfit, emoji titles, thin trust rows under the total, footer with addresses + terms/privacy, View in browser | Every email (19) now drawn by the approved design; side-by-side with the previews in docs/em-emails/. New menu **Emails**: Overview · Sending & delivery (this server, or Google Workspace) · Design & branding (logo, colours, fonts, footer: Dubai and Korea addresses) · Sent mail · All mail settings |
+| Pending orders: "Complete your order" at 30 min and 24 h; no receipt before payment; feedback 3 h after Delivered | On. Only unpaid orders from the last 3 days are reminded (never old ones, never imported or COD orders), at most 10 per run. On-hold email off with a manual send: Orders → an order → Order actions → Send on-hold email. Each email on/off: Store → Modules → Order emails |
+
+Files: 157 (see the package's update.json).
+
 ## 2.60.371
 **Product grid: space inside each card.** Apply after .370. No plugin change. No
 migration.
