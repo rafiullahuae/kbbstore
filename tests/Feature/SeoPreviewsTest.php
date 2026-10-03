@@ -329,7 +329,10 @@ function spHeadTags(string $path): array
 {
     $out = [];
 
-    foreach (preg_split('/\R/', spHead($path)) ?: [] as $line) {
+    // `/u`: without it \R also matches the byte 0x85 (NEL), which is the last
+    // byte of ✅ (E2 9C 85). The link preview card's points (2.60.365) put one
+    // in og:description; the split cut it in half and spEsc() blanked the row.
+    foreach (preg_split('/\R/u', spHead($path)) ?: [] as $line) {
         $line = trim($line);
 
         if ($line === '' || ! preg_match('#^<(title|meta|link)\b#', $line)) {
