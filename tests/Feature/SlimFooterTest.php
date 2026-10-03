@@ -182,14 +182,17 @@ it('hands the screen every field, grouped into the three tabs', function () {
     $body = test()->actingAs(sfOwner(), 'admin')
         ->getJson('/admin-api/slim-footer')->assertOk()->json();
 
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['pages', 'phone', 'layout', 'content', 'marks']);
+    // (Lane HB) The site footer's three tabs come first: Appearance → Footer is
+    // where the owner looks for the footer on every page. Their keys are all
+    // `site_`, so the one payload still splits without ambiguity.
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['site', 'site_help', 'site_visit', 'pages', 'phone', 'layout', 'content', 'marks']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
     // Every schema key is on a tab and every tab key is in the schema. The
     // second direction is the one that bites: a key named on a tab and missing
     // from the schema is a control the screen silently does not draw.
-    expect($keys)->toEqualCanonicalizing(array_keys(SlimFooter::SCHEMA))
+    expect($keys)->toEqualCanonicalizing(array_merge(array_keys(\App\Services\SiteFooter::SCHEMA), array_keys(SlimFooter::SCHEMA)))
         ->and(count($keys))->toBe(count(array_unique($keys)));
 });
 // MUTATION: add a key to TABS and not to SCHEMA. RED.
