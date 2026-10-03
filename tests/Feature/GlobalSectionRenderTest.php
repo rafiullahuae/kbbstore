@@ -79,7 +79,27 @@ it('draws the block where the shortcode stood, and the shortcode is gone from th
     pjbBlock();
     $p = pjbProduct();
 
-    $html = $this->get('/product/' . $p->slug . '/')->assertOk()->getContent();
+    /*
+     * The block's three pictures exist on disk. Since 2.60.364 a description
+     * picture of ours whose file is missing is dropped at render time
+     * (RichText::dropMissingPictures — a 404 held a blank box on the live
+     * Shiseido Fino page), and this case is about the shortcode, not that.
+     */
+    $made = [];
+    foreach (['q', 'a', 'b'] as $n) {
+        $f = public_path('wp-content/uploads/' . $n . '-300x300.jpg');
+        if (! is_file($f)) {
+            @mkdir(\dirname($f), 0755, true);
+            file_put_contents($f, 'x');
+            $made[] = $f;
+        }
+    }
+
+    try {
+        $html = $this->get('/product/' . $p->slug . '/')->assertOk()->getContent();
+    } finally {
+        array_map('unlink', $made);
+    }
     $panel = pjbPanel($html);
 
     expect($html)->not->toContain('rey_global_section')
