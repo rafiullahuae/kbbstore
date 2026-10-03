@@ -339,7 +339,7 @@ final class MailKit
                 continue;
             }
 
-            $out[] = ['place' => $place, 'label' => __('email.kit.place_' . $place), 'lines' => $lines];
+            $out[] = ['place' => $place, 'label' => __('email.layout.address_' . $place), 'lines' => $lines];
         }
 
         return $out;

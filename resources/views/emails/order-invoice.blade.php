@@ -1,192 +1,60 @@
 {{--
-    The emailed invoice.
+    The emailed invoice in look A — Lane EM, from the owner's approved
+    preview 11.
 
-    Renders the SAME InvoiceDocument array the printable page renders, so the
-    invoice in the customer's inbox and the invoice the owner prints cannot
-    disagree about a figure. Money is at the currency's real precision, never
-    the storefront's rounded display — see InvoiceDocument's header.
+    ONE DELIBERATE DIFFERENCE FROM THE PREVIEW: it says "attached as a PDF",
+    and this shop attaches nothing — the invoice IS the body (App\Mail\
+    OrderInvoice explains why). So the headline is "Your invoice" and the
+    body carries everything the printed invoice carries: the lines, the
+    money, who it is billed to and delivered to, and the seller with its TRN.
 
-    Everything below goes through {{ }}. Names, addresses and gift messages are
-    customer input and arrive raw by design; only the money, which Money::format()
-    builds and escapes itself, uses {!! !!}.
+    Everything is {{ }}. The seller's name, address, TRN and footer are the
+    owner's settings and are printed as text, one escaped line per <br>.
 --}}
-@extends('emails.layout')
+@extends('emails.kit.doc')
+@php
+    $k = \App\Services\Mail\Kit\MailKit::for($brand ?? []);
+    $kitTitle = $kitTitle ?? __('email.kit.invoice_title');
+    $kitPreheader = $doc['invoiceReference'] !== ''
+        ? __('email.kit.invoice_lead', ['reference' => $doc['invoiceReference'], 'number' => $doc['orderNumber']])
+        : __('email.kit.invoice_lead_noref', ['number' => $doc['orderNumber']]);
+    $kitLead = $doc['invoiceReference'] !== ''
+        ? str_replace('%%REF%%', '<b>' . e($doc['invoiceReference']) . '</b>', e(__('email.kit.invoice_lead', ['reference' => '%%REF%%', 'number' => $doc['orderNumber']])))
+        : e(__('email.kit.invoice_lead_noref', ['number' => $doc['orderNumber']]));
+    $kitLines = \App\Services\Mail\Kit\KitOrder::lines(['items' => array_map(static fn (array $i) => ['name' => $i['nameForCustomer']] + $i, $doc['items'])]);
+    $kitPayLine = $doc['paid']
+        ? ($doc['paidAt'] !== '' ? __('email.invoice.paid_by_on', ['method' => $doc['paymentLabel'], 'date' => $doc['paidAt']]) : __('email.invoice.paid_by', ['method' => $doc['paymentLabel']]))
+        : __('email.invoice.payment_method', ['method' => $doc['paymentLabel']]);
+    $kitJoin = static fn (array $lines) => new \Illuminate\Support\HtmlString($lines === [] ? '&mdash;' : implode('<br>', array_map('e', $lines)));
+    $kitSeller = array_values(array_filter(array_merge(
+        [$doc['seller']['name']],
+        $doc['seller']['addressLines'],
+        [$doc['seller']['trn'] !== '' ? __('email.invoice.trn', ['trn' => $doc['seller']['trn']]) : ''],
+    ), static fn ($l) => trim((string) $l) !== ''));
+    $kitChipText = implode(' · ', array_values(array_filter([
+        $doc['invoiceReference'] !== '' ? __('email.invoice.reference', ['reference' => $doc['invoiceReference']]) : '',
+        $doc['invoicedAt'] !== '' ? __('email.invoice.issued', ['date' => $doc['invoicedAt']]) : '',
+    ], static fn ($v) => $v !== '')));
+    $kitChipExtra = $kitChipText === '' ? null : new \Illuminate\Support\HtmlString('<div style="margin-top:12px;font-size:13px;color:#5E545A;font-family:' . $k['sans'] . ';">' . e($kitChipText) . '</div>');
+    $kitGrandNote = trim($kitPayLine . ($doc['vatNote'] !== null ? ' · ' . $doc['vatNote']['label'] . ': ' . $doc['vatNote']['plain'] : ''));
+@endphp
 
-@section('body')
-    {{-- The same heading the printable page prints, from the same array, for
-         the same reason every other figure here comes from it: the invoice in
-         the inbox and the invoice on the printer may not disagree about what
-         kind of document they are. InvoiceDocument::docType() decides. --}}
-    <div style="font-size:19px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin:0 0 4px;">{{ $doc['docType'] }}</div>
-
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;margin:0 0 18px;">
-        <tr>
-            <td style="padding:10px 0 0;font-size:13.5px;color:#4b5563;line-height:1.7;vertical-align:top;">
-                @if ($doc['invoiceReference'] !== '')
-                    <div>{!! __('email.invoice.reference', ['reference' => '<strong style="color:#1d1d1f;">' . e($doc['invoiceReference']) . '</strong>']) !!}</div>
-                @endif
-                <div>{!! __('email.invoice.order', ['number' => '<strong style="color:#1d1d1f;">' . e($doc['orderNumber']) . '</strong>']) !!}</div>
-                @if ($doc['invoicedAt'] !== '')
-                    <div>{{ __('email.invoice.issued', ['date' => $doc['invoicedAt']]) }}</div>
-                @endif
-                @if ($doc['placedAt'] !== '')
-                    <div>{{ __('email.invoice.ordered', ['date' => $doc['placedAt']]) }}</div>
-                @endif
-            </td>
-            <td style="padding:10px 0 0;font-size:12.5px;color:#6b7280;line-height:1.6;text-align:right;vertical-align:top;">
-                <div style="font-weight:700;color:#1d1d1f;font-size:13.5px;">{{ $doc['seller']['name'] }}</div>
-                @foreach ($doc['seller']['addressLines'] as $line)
-                    <div>{{ $line }}</div>
-                @endforeach
-                @if ($doc['seller']['trn'] !== '')
-                    <div>{{ __('email.invoice.trn', ['trn' => $doc['seller']['trn']]) }}</div>
-                @endif
-            </td>
-        </tr>
-    </table>
-
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;margin:0 0 20px;">
-        <tr>
-            <td width="50%" style="padding:0 12px 0 0;font-size:13px;color:#4b5563;line-height:1.6;vertical-align:top;">
-                <div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;margin-bottom:3px;">{{ __('email.invoice.bill_to') }}</div>
-                @forelse ($doc['billTo'] as $i => $line)
-                    <div @if ($i === 0) style="font-weight:700;color:#1d1d1f;" @endif>{{ $line }}</div>
-                @empty
-                    <div>&mdash;</div>
-                @endforelse
-            </td>
-            <td width="50%" style="padding:0;font-size:13px;color:#4b5563;line-height:1.6;vertical-align:top;">
-                <div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;margin-bottom:3px;">{{ __('email.invoice.deliver_to') }}</div>
-                @if ($doc['sameAddress'])
-                    <div>{{ __('email.invoice.same_as_billing') }}</div>
-                @else
-                    @forelse ($doc['shipTo'] as $i => $line)
-                        <div @if ($i === 0) style="font-weight:700;color:#1d1d1f;" @endif>{{ $line }}</div>
-                    @empty
-                        <div>&mdash;</div>
-                    @endforelse
-                @endif
-            </td>
-        </tr>
-    </table>
-
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
-        <tr>
-            <th align="left" style="padding:0 6px 7px 0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;">{{ __('email.items.col_item') }}</th>
-            <th align="right" style="padding:0 6px 7px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;white-space:nowrap;">{{ __('email.items.col_qty') }}</th>
-            <th align="right" style="padding:0 6px 7px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;white-space:nowrap;">{{ __('email.invoice.col_unit') }}</th>
-            <th align="right" style="padding:0 0 7px 6px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;white-space:nowrap;">{{ __('email.invoice.col_amount') }}</th>
-        </tr>
-        @foreach ($doc['items'] as $item)
-            <tr>
-                <td style="padding:9px 6px 9px 0;border-bottom:1px solid #eceff3;font-size:14px;">
-                    <div style="font-weight:600;">{{ $item['nameForCustomer'] }}</div>{{-- nameForCustomer: the customer's copy, sent inside OrderLocale::render(). Same string as `name` while this shop serves one language. At the END of this line, because Blade removes a comment and leaves its newline. --}}
-                    @php
-                        $sub = array_values(array_filter([
-                            $item['brand'],
-                            $item['variant'],
-                            $item['sku'] !== '' ? 'SKU ' . $item['sku'] : '',
-                        ], fn ($v) => $v !== ''));
-                    @endphp
-                    @if ($sub !== [])
-                        <div style="font-size:12px;color:#9096a1;margin-top:2px;">{{ implode(' · ', $sub) }}</div>
-                    @endif@php if (($item['setContents'] ?? []) !== []) { echo '<div style="margin-top:4px;padding-inline-start:9px;border-inline-start:2px solid #eceff3;">' . implode('', array_map(fn ($l) => '<div style="font-size:12px;line-height:1.5;color:#4b5563;">' . e($l) . '</div>', $item['setContents'])) . '</div>'; } @endphp{{-- (Lane SE) WHAT WAS IN THE BOX, one member per line.
-
-                         THIS DOCUMENT WAS THE LAST ONE THAT DID NOT SAY. Every
-                         other order document in this shop draws its lines from a
-                         shared partial -- emails/partials/items.blade.php for the
-                         confirmation, the status mail and the merchant alert, and
-                         invoices/partials/sheet-*.blade.php for the three printed
-                         sheets -- and all six gained the member list together. The
-                         emailed invoice is the ONLY one that builds its own table,
-                         off the same $doc['items'] array, so it was handed
-                         `setContents` by InvoiceDocument and simply never read the
-                         key. A customer who asked for an invoice got less than the
-                         confirmation had already told them.
-
-                         THE SNAPSHOT AND NEVER THE LIVE SET. The value is
-                         App\Support\SetContents::lines(fromOrderItem($item)),
-                         built by the presenter off `order_items.set_contents` -- one
-                         JSON column written at checkout. No relation is consulted
-                         here or there, so an invoice reprinted next year lists what
-                         was in the box, an invoice for a set that has since been
-                         DELETED still renders, and no money is re-derived: the
-                         member prices are not printed at all, and the only figures
-                         on this row remain the order's own snapshotted unit and
-                         line totals.
-
-                         THE FORM IS A RAW PHP BLOCK ATTACHED TO @endif, which is
-                         the idiom emails/partials/items.blade.php arrived at by
-                         measurement and states in full. In short: a directive
-                         written hard against a closing directive is not compiled at
-                         all, and a {{ }} interpolation compiles with a newline
-                         appended -- which would change a byte on every invoice this
-                         shop has ever sent. A raw block appends nothing, and a line
-                         that is not a set emits nothing, so an invoice with no set
-                         in it is the invoice it always was. PrintedEnglishUnchanged-
-                         Test measures that; SetInDocumentsTest measures this.
-
-                         GREY AND NOT BLUSH. items.blade.php insets its member list
-                         against the brand pink because a receipt is a friendly
-                         document; this one uses #eceff3, the rule this table
-                         already draws between its rows, because an invoice is a
-                         formal one and nothing else on this page is pink.
-
-                         e() ON EVERY LINE: a member name is a setting, and
-                         CLAUDE.md rule 5 is that anything printed unescaped is a
-                         constant. --}}
-                </td>
-                <td align="right" style="padding:9px 6px;border-bottom:1px solid #eceff3;font-size:14px;color:#4b5563;white-space:nowrap;">{{ $item['quantity'] }}</td>
-                <td align="right" style="padding:9px 6px;border-bottom:1px solid #eceff3;font-size:14px;color:#4b5563;white-space:nowrap;">{!! $item['unitHtml'] !!}</td>
-                <td align="right" style="padding:9px 0 9px 6px;border-bottom:1px solid #eceff3;font-size:14px;white-space:nowrap;">{!! $item['lineHtml'] !!}</td>
-            </tr>
-        @endforeach
-    </table>
-
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;margin:8px 0 0;">
-        @foreach ($doc['totals'] as $row)
-            <tr>
-                <td style="padding:{{ $row['strong'] ? '12px 0 0' : '5px 0' }};color:{{ $row['strong'] ? '#1d1d1f' : '#4b5563' }};font-size:{{ $row['strong'] ? '16px' : '14px' }};font-weight:{{ $row['strong'] ? '700' : '400' }};{{ $row['strong'] ? 'border-top:2px solid #1d1d1f;' : '' }}">
-                    {{ $row['label'] }}
-                </td>
-                <td style="padding:{{ $row['strong'] ? '12px 0 0' : '5px 0' }};text-align:right;white-space:nowrap;color:{{ $row['strong'] ? '#1d1d1f' : '#4b5563' }};font-size:{{ $row['strong'] ? '16px' : '14px' }};font-weight:{{ $row['strong'] ? '700' : '400' }};{{ $row['strong'] ? 'border-top:2px solid #1d1d1f;' : '' }}">
-                    {!! $row['html'] !!}
-                </td>
-            </tr>
-        @endforeach
-    </table>
-
-    @if ($doc['vatNote'] !== null)
-        {{-- A portion OF the total, never an addition to it. Decision D-64. --}}
-        <p style="margin:7px 0 0;text-align:right;font-size:12.5px;color:#6b7280;">
-            {{ $doc['vatNote']['label'] }}: {!! $doc['vatNote']['html'] !!}@if ($doc['vatNote']['trn'] !== '') · {{ __('email.invoice.trn', ['trn' => $doc['vatNote']['trn']]) }}@endif
-        </p>
-    @endif
-
-    {{-- "PAID BY" ONLY WHEN IT HAS BEEN PAID.
-
-         This line read "Paid by {payment method}" for every invoice, including
-         the ones it is most often sent for. An invoice is emailed by the
-         operator from the order screen at whatever moment they choose, and this
-         store's ordinary payment method is cash on delivery, where `paid_at` is
-         deliberately never set until the money is actually collected
-         (CashOnDelivery::start). So the commonest invoice this shop sends —
-         cash on delivery, not yet delivered — told the customer in writing that
-         they had already paid for it.
-
-         The printable invoice has always had this right: it prints the PAID
-         stamp behind `$doc['paid']`, the same flag used here. The two documents
-         render the same InvoiceDocument array and now agree about the one fact
-         an invoice is most often read for. --}}
-    <p style="margin:20px 0 0;font-size:13.5px;color:#4b5563;">
-        @if ($doc['paid'])
-            {{ $doc['paidAt'] !== '' ? __('email.invoice.paid_by_on', ['method' => $doc['paymentLabel'], 'date' => $doc['paidAt']]) : __('email.invoice.paid_by', ['method' => $doc['paymentLabel']]) }} · {{ $doc['deliveryMethod'] }}
-        @else
-            {{ __('email.invoice.payment_method', ['method' => $doc['paymentLabel']]) }} · {{ $doc['deliveryMethod'] }}
-        @endif
-    </p>
-
-    @if ($doc['seller']['footer'] !== '')
-        <p style="margin:14px 0 0;font-size:12.5px;color:#6b7280;white-space:pre-wrap;">{{ $doc['seller']['footer'] }}</p>
-    @endif
+@section('kit')
+@include('emails.kit.topbar')
+@include('emails.kit.card-open')
+@include('emails.kit.header')
+@include('emails.kit.hero', ['icon' => 'mail', 'tone' => 'ink', 'eyebrow' => $doc['docType'], 'title' => __('email.kit.invoice_title'), 'lead' => new \Illuminate\Support\HtmlString($kitLead)])
+@include('emails.kit.order-chip', ['chipNumber' => $doc['orderNumber'], 'chipPlaced' => $doc['placedAt'], 'chipTotal' => $doc['totalPlain'], 'chipExtra' => $kitChipExtra])
+@include('emails.kit.section-title', ['text' => __('email.kit.your_items')])
+@include('emails.kit.items', ['lines' => $kitLines, 'showPrice' => true])
+@include('emails.kit.totals', ['rows' => \App\Services\Mail\Kit\KitOrder::rows($doc), 'grand' => [__('email.totals.total'), $doc['totalPlain'], $kitGrandNote]])
+@include('emails.kit.info-pair', ['left' => [__('email.invoice.bill_to'), $kitJoin($doc['billTo'])], 'right' => [__('email.invoice.deliver_to'), $doc['sameAddress'] ? __('email.invoice.same_as_billing') : $kitJoin($doc['shipTo']), __('email.totals.delivery'), $doc['deliveryMethod']]])
+@include('emails.kit.para', ['html' => $kitJoin($kitSeller), 'pad' => '22px 32px 0', 'size' => 12.5])
+@if ($doc['seller']['footer'] !== '')
+@include('emails.kit.para', ['html' => $kitJoin(preg_split('/\R/', $doc['seller']['footer']) ?: []), 'pad' => '10px 32px 0', 'size' => 12.5])
+@endif
+@include('emails.kit.help')
+@include('emails.kit.signoff')
+@include('emails.kit.card-close')
+@include('emails.kit.footer', ['why' => __('email.kit.why_order', ['site' => $k['site']]), 'unsubscribeUrl' => null])
 @endsection

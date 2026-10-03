@@ -1,32 +1,39 @@
-@extends('emails.layout')
+{{--
+    "New order" — to the shop, not a customer. Look A, Lane EM, from the
+    owner's approved preview 10: no topbar, no header, no help box; the order
+    in one line at the top, then what to pick, the money, where it goes and
+    who bought it.
 
-@section('body')
-    @php $c = $brand['colours'] ?? \App\Services\Mail\EmailBranding::PALETTE; @endphp
+    ONE DELIBERATE DIFFERENCE FROM THE PREVIEW: its "Open in admin" button is
+    not drawn. The admin address is a secret in this codebase (admin_path —
+    App\Support\GuestRedirect, ExportProbe) and a button would put it in every
+    alert's HTML, in every mail log it passes through. The sentence telling the
+    owner where to find the order (email.alert.next_step) stands in its place.
+--}}
+@extends('emails.kit.doc')
+@php
+    $k = \App\Services\Mail\Kit\MailKit::for($brand ?? []);
+    $kitTitle = $kitTitle ?? __('email.alert.heading');
+    $kitPreheader = __('email.kit.pre_alert', ['number' => $order['number'], 'total' => $order['totalPlain']]);
+    $kitCount = array_sum(array_map(static fn (array $i) => (int) ($i['quantity'] ?? 0), $order['items']));
+    $kitWho = implode(' · ', array_values(array_filter([
+        $order['customerName'],
+        $order['paymentLabel'],
+        trans_choice('email.kit.item_count', $kitCount, ['count' => $kitCount]),
+    ], static fn ($v) => trim((string) $v) !== '')));
+    $kitInfo = \App\Services\Mail\Kit\KitOrder::info($order);
+    $kitCustomer = new \Illuminate\Support\HtmlString(implode('<br>', array_map('e', array_values(array_filter([$order['email'], $order['phone']], static fn ($v) => trim((string) $v) !== '')))));
+@endphp
 
-    <p style="margin:0 0 16px;font-size:19px;font-weight:700;line-height:1.3;color:{{ $c['ink'] }};">{{ __('email.alert.heading') }}</p>
-
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $c['cream'] }}" style="width:100%;border-collapse:collapse;background:{{ $c['cream'] }};border-radius:9px;">
-        <tr>
-            <td style="padding:13px 15px;font-size:14px;line-height:1.5;color:{{ $c['ink'] }};">
-                <div><span style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;">{{ __('email.order_status.order_label') }}</span>
-                    <span style="font-weight:700;margin-left:7px;font-size:16px;color:{{ $c['pinkDeep'] }};">{{ $order['number'] }}</span></div>
-                <div style="margin-top:4px;color:{{ $c['ink2'] }};">{{ $order['email'] }}@if ($order['phone'] !== '') &middot; {{ $order['phone'] }}@endif</div>
-            </td>
-        </tr>
-    </table>
-
-    <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;margin:22px 0 -10px;">{{ __('email.alert.items_heading') }}</div>
-    @include('emails.partials.items')
-    @include('emails.partials.totals')
-    @include('emails.partials.delivery')
-
-    {{--
-        No link to the admin. Doing so would print the `admin_path` setting into
-        a mail body; CLAUDE.md lists that column among the ones that must not
-        leak, and mail is the least controlled channel this app has. The order
-        number is enough to find it, and is worth nothing to an interceptor.
-    --}}
-    <p style="margin:26px 0 0;font-size:13px;line-height:1.55;color:{{ $c['ink2'] }};">
-        {{ __('email.alert.next_step', ['number' => $order['number']]) }}
-    </p>
+@section('kit')
+@include('emails.kit.card-open')
+<tr><td class="px" style="padding:26px 32px 0;font-family:{!! $k['sans'] !!};"><div style="font-family:{!! $k['sans'] !!};"><div style="font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:#2E9E6B;font-weight:800;">&#9679; {{ __('email.kit.eyebrow_alert') }}</div><div class="ink" style="margin-top:6px;font-size:26px;font-weight:800;color:#2A2228;">{{ $order['number'] }} &middot; {{ $order['totalPlain'] }}</div><div class="ink2" style="margin-top:4px;font-size:14px;color:#5E545A;">{{ $kitWho }}</div></div></td></tr>
+@include('emails.kit.para', ['html' => __('email.alert.next_step', ['number' => $order['number']]), 'pad' => '18px 32px 0', 'size' => 14])
+@include('emails.kit.section-title', ['text' => __('email.alert.items_heading')])
+@include('emails.kit.items', ['lines' => \App\Services\Mail\Kit\KitOrder::lines($order), 'showPrice' => true])
+@include('emails.kit.totals', ['rows' => \App\Services\Mail\Kit\KitOrder::rows($order), 'grand' => [__('email.totals.total'), $order['totalPlain'], '']])
+@include('emails.kit.info-pair', ['left' => [__('email.kit.ship_to'), $kitInfo['left'][1]], 'right' => [__('email.kit.customer'), $kitCustomer, __('email.totals.delivery'), $order['deliveryMethod']]])
+@include('emails.kit.gap', ['h' => 28])
+@include('emails.kit.card-close')
+@include('emails.kit.footer', ['why' => __('email.kit.why_alert'), 'unsubscribeUrl' => null])
 @endsection

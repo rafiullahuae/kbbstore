@@ -1,86 +1,69 @@
-@extends('emails.layout')
-
 {{--
-    TWO STRINGS CONVERTED, DELIBERATELY (Lane EP).
+    Every order-status email in look A (Lane EM): processing, on hold, shipped
+    🚚💨, delivered ✨, cancelled, refunded and payment failed 😔 — the owner's
+    approved previews 04, 05, 06, 07 and 09 in docs/rj-email-previews/after/.
 
-    An email is where the order's language has to be honoured, because this
-    message is sent LATER — from a queue, or from an admin pressing a status
-    button weeks after checkout — in a process that has no memory of the
-    request. Whatever locale that process happens to be in is English, so
-    without the order's own locale an Arabic customer gets an Arabic checkout
-    and English paperwork forever.
+    Lane RL decided WHAT each says and WHEN it goes (OrderStatusChanged,
+    OrderStatusMailPolicy); its wording is used word for word. This file only
+    decides which of the kit's blocks each status shows, from the preview:
 
-    The language is restored from orders.locale, either with
-    App\Support\OrderLocale::render($order, fn () => ...) or with Laravel's own
-    $mailable->locale($order->locale). Wiring that into the five mailables is
-    Phase 6 and belongs to the lane that owns them; the column, the helper and
-    these two strings are the foundation it needs.
+      status       tracker              before        items totals info  button
+      processing   Confirmed            —             yes   yes    yes   Track
+      onhold       Confirmed            "What we need" yes  no     yes   WhatsApp
+      shipped      Shipped              tracking note yes   no     yes   Track
+      completed    Delivered            tracking note yes   no     no    —
+      cancelled    ✕ Cancelled          refund note   yes   yes    no    Shop again
+      refunded     —                    —             yes   yes    no    View order
+      failed       ✕ Not paid           —             yes   due    no    Complete
+
+    $note (on hold) is the owner's own sentence, escaped, line breaks kept.
 --}}
+@extends('emails.kit.order')
+@php
+    $k = \App\Services\Mail\Kit\MailKit::for($brand ?? []);
+    $kitPreheader = __('email.kit.pre_status', ['number' => $order['number']]);
+    $kitWhy = __('email.kit.why_order', ['site' => $k['site']]);
+    $kitTrack = [__('email.order_status.track_button'), $ctaUrl, __('email.order_status.track_note')];
 
-{{--
-    Lane RL. Three additions, each drawn only when it applies, so a status
-    without them renders exactly as before:
-      - $note: the owner's own sentence, typed when he pressed "Send on-hold
-        email". Plain text, escaped; line breaks kept.
-      - $trackable: "Your tracking number is your order number". The owner:
-        "tracking number is the same order number ... the order can be tracked
-        on our website, and whatever we put the status of the order, it will
-        show." No courier reference exists in this shop and none is invented.
-      - the button is a signed link (App\Support\OrderLinks) that opens on any
-        device, so the old "that link opens on the device you ordered from"
-        note is no longer true and is gone. A payment that failed gets
-        "Complete your order", to the page where it can be paid, instead.
---}}
+    $kitShape = [
+        'processing' => ['box', 'pink', 'eyebrow_processing', [1, null], true, true, $kitTrack],
+        'onhold' => ['pause', 'amber', 'eyebrow_onhold', [1, null], false, true, null],
+        'shipped' => ['truck', 'pink', 'eyebrow_shipped', [2, null], false, true, $kitTrack],
+        'completed' => ['gift', 'green', 'eyebrow_delivered', [3, null], false, false, null],
+        'cancelled' => ['cross', 'red', 'eyebrow_cancelled', [1, __('email.kit.step_cancelled')], true, false, [__('email.kit.shop_again'), \App\Support\Url::external('/shop/'), null]],
+        'refunded' => ['back', 'green', 'eyebrow_refunded', null, true, false, [$ctaLabel, $ctaUrl, null]],
+        'failed' => ['card', 'red', 'eyebrow_failed', [0, __('email.kit.step_not_paid')], true, false, [$ctaLabel, $ctaUrl, __('email.reminder.button_note')]],
+    ][$status] ?? ['heart', 'pink', 'eyebrow_processing', null, true, true, [$ctaLabel, $ctaUrl, null]];
 
-@section('body')
-    @php $c = $brand['colours'] ?? \App\Services\Mail\EmailBranding::PALETTE; @endphp
+    /*
+     * On hold: "Reply on WhatsApp" to the shop's own WhatsApp when one is set
+     * (EmailBranding::support(), already a wa.me link the kit re-checked);
+     * the order's own page otherwise -- never a button to nowhere.
+     */
+    if ($status === 'onhold') {
+        $kitWa = collect($k['support'])->firstWhere('kind', 'whatsapp');
+        $kitShape[6] = $kitWa !== null
+            ? [__('email.kit.reply_whatsapp'), $kitWa['url'], null]
+            : [$ctaLabel, $ctaUrl, null];
+    }
 
-    <p style="margin:0 0 14px;font-size:15px;color:{{ $c['ink2'] }};">{{ $order['customerName'] !== '' ? __('email.greeting.hello_named', ['name' => $order['customerName']]) : __('email.greeting.hello') }}</p>
+    $kitTitle = $kitTitle ?? $heading;
+    $kitHero = [$kitShape[0], $kitShape[1], __('email.kit.' . $kitShape[2]), $heading,
+        $status === 'cancelled' ? __('email.order_status.cancelled_body') : $body];
+    $kitTracker = $kitShape[3];
+    $kitShowTotals = $kitShape[4];
+    $kitShowInfo = $kitShape[5];
+    $kitCta = $kitShape[6];
+    $kitDue = $status === 'failed';
+    $kitPaid = false;
+@endphp
 
-    <p style="margin:0 0 10px;font-size:19px;font-weight:700;line-height:1.3;color:{{ $c['ink'] }};">{{ $heading }}</p>
-
-    <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:{{ $c['ink2'] }};">{{ $body }}</p>
-
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $c['cream'] }}" style="width:100%;border-collapse:collapse;background:{{ $c['cream'] }};border-radius:9px;">
-        <tr>
-            <td style="padding:13px 15px;font-size:14px;color:{{ $c['ink'] }};">
-                <span style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;">{{ __('email.order_status.order_label') }}</span>
-                <span style="font-weight:700;margin-left:7px;font-size:16px;color:{{ $c['pinkDeep'] }};">{{ $order['number'] }}</span>
-            </td>
-        </tr>
-    </table>
-
+@section('kit_before')
 @if ($status === 'onhold')
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-top:14px;">
-            <tr>
-                <td style="padding:13px 15px;font-size:14px;line-height:1.55;color:{{ $c['ink'] }};border:1px solid {{ $c['line'] ?? '#EADFE2' }};border-radius:9px;">
-                    @if ($note !== '')<b>{{ __('email.order_status.onhold_need') }}</b> {!! nl2br(e($note)) !!} @endif{{ __('email.order_status.onhold_reply') }}
-                </td>
-            </tr>
-        </table>
+@include('emails.kit.notice', ['tone' => 'amber', 'html' => new \Illuminate\Support\HtmlString(($note !== '' ? '<b>' . e(__('email.order_status.onhold_need')) . '</b> ' . nl2br(e($note)) . ' ' : '') . e(__('email.order_status.onhold_reply')))])
+@elseif ($trackable && in_array($status, ['shipped', 'completed'], true))
+@include('emails.kit.notice', ['tone' => 'pink', 'html' => new \Illuminate\Support\HtmlString('<b>' . e(__('email.order_status.tracking_number', ['number' => $order['number']])) . '</b><br><span style="font-size:13px;color:#5E545A;">' . e(__('email.order_status.tracking_where')) . '</span>')])
+@elseif ($status === 'cancelled' && $refundSentence !== '')
+@include('emails.kit.notice', ['tone' => 'red', 'html' => $refundSentence])
 @endif
-@if ($trackable)
-        <p style="margin:14px 0 0;font-size:14px;line-height:1.55;color:{{ $c['ink2'] }};">
-            <b style="color:{{ $c['ink'] }};">{{ __('email.order_status.tracking_number', ['number' => $order['number']]) }}</b><br>
-            {{ __('email.order_status.tracking_where') }}
-        </p>
-@endif
-    @include('emails.partials.items')
-    @include('emails.partials.totals')
-    @include('emails.partials.delivery')
-
-    {{-- A table cell with a bgcolor attribute, not a styled anchor: Outlook's
-         Word renderer drops padding and background from an inline <a> and
-         leaves a bare blue link. --}}
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:26px 0 10px;">
-        <tr>
-            <td bgcolor="{{ $c['pinkDeep'] }}" style="background:{{ $c['pinkDeep'] }};border-radius:7px;">
-                <a href="{{ $ctaUrl }}" style="display:inline-block;padding:13px 26px;color:{{ $c['white'] }};font-size:15px;font-weight:600;text-decoration:none;">{{ $ctaLabel }}</a>
-            </td>
-        </tr>
-    </table>
-
-    <p style="margin:0;font-size:13px;line-height:1.55;color:{{ $c['ink2'] }};">
-        {{ $status === 'failed' ? __('email.reminder.button_note') : __('email.order_status.track_note') }}
-    </p>
 @endsection

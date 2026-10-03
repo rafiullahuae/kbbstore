@@ -6,7 +6,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Lane RM: the email kit adds routes (routes/mail-kit.php — the browser copy
+ * Lanes RM and EM (renamed from 2027_07_26_000300_clear_caches_mail_kit by
+ * Lane EM, which finished the port and re-skinned every email view on the
+ * kit). The email kit adds routes (routes/mail-kit.php — the browser copy
  * and the email font) and a discovered event listener
  * (App\Listeners\StoreMailWebCopy), and replaces seven email views. None of
  * that takes effect on the server until the compiled route cache, the cached

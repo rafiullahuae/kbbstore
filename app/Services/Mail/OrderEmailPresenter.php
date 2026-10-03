@@ -94,6 +94,9 @@ class OrderEmailPresenter
             'items' => $this->items($order, $w),
             'totals' => $this->totals($order, $w),
             'vatNote' => $this->vatNote($order, $w),
+            // The receipt's decimal width, so the kit can print a row it
+            // reshapes (a discount as "− AED 35.55") at the same precision.
+            'ledgerWidth' => $w,
             'totalFils' => (int) $order->total,
             'totalHtml' => self::html((int) $order->total, $w),
             'totalPlain' => self::plain((int) $order->total, $w),
@@ -179,6 +182,10 @@ class OrderEmailPresenter
             $out[] = [
                 'name' => $localised !== '' ? $localised : $name,
                 'brand' => trim((string) $item->brand),
+                // The product row, for the line's picture only (Lane EM,
+                // App\Services\Mail\Kit\KitOrder::lines()). Name, brand and
+                // price stay this snapshot whatever the product has become.
+                'productId' => (int) ($item->product_id ?? 0),
                 'sku' => trim((string) $item->sku),
                 'variant' => implode(', ', $variant),
                 /*

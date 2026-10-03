@@ -603,6 +603,7 @@ class OrderStatusChanged extends OrderMail
             view: 'emails.order-status',
             text: 'emails.order-status-text',
             with: [
+                'kitTitle' => (string) $this->envelope()->subject,
                 'heading' => $heading,
                 'body' => $this->bodyFor($body),
                 'status' => $this->status,

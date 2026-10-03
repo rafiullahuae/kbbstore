@@ -84,6 +84,8 @@ class OrderInvoice extends Mailable
         return new Content(
             view: 'emails.order-invoice',
             text: 'emails.order-invoice-text',
+            // The <title> of the look-A document: the subject (Lane EM).
+            with: ['kitTitle' => (string) $this->envelope()->subject],
         );
     }
 }

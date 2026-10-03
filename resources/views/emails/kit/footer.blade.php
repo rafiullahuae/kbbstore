@@ -33,7 +33,8 @@
 <tr><td align="center" style="padding:16px 22px 6px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:460px;margin:0 auto;"><tr>@foreach ($k['addresses'] as $place)<td class="stack" width="{{ count($k['addresses']) > 1 ? '50%' : '100%' }}" valign="top" align="center" style="width:{{ count($k['addresses']) > 1 ? '50%' : '100%' }};padding:0 10px 10px;font-family:{!! $k['sans'] !!};">
 <div style="font-size:15px;line-height:1;">&#128205;</div>
 <div style="margin-top:5px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#5E545A;">{{ $place['label'] }}</div>
-<div class="muted" style="margin-top:4px;font-size:12px;line-height:1.55;color:#8C828A;">@foreach ($place['lines'] as $placeLine){{ $placeLine }}@if (! $loop->last)<br>@endif{{-- --}}@endforeach</div></td>@endforeach</tr></table></td></tr>
+<div class="muted" style="margin-top:4px;font-size:12px;line-height:1.55;color:#8C828A;">@foreach ($place['lines'] as $placeLine){{ $placeLine }}@if (! $loop->last)<br>@endif
+@endforeach</div></td>@endforeach</tr></table></td></tr>
 <tr><td style="padding:0 40px;"><div style="height:1px;line-height:1px;font-size:0;background:#FCE0E8;">&nbsp;</div></td></tr>
 @endif
 <tr><td align="center" style="padding:14px 22px;font-family:{!! $k['sans'] !!};font-size:12px;line-height:1.9;color:#8C828A;" class="muted">

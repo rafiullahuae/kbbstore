@@ -69,6 +69,7 @@ class NewsletterConfirmation extends Mailable
             view: 'emails.newsletter-confirm',
             text: 'emails.newsletter-confirm-text',
             with: [
+                'kitTitle' => (string) $this->envelope()->subject,
                 'confirmUrl' => $this->confirmUrl,
                 'unsubscribeUrl' => $this->unsubscribeUrl,
                 'days' => $this->days,

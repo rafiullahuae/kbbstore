@@ -64,6 +64,8 @@ class OrderConfirmation extends OrderMail
         return new Content(
             view: 'emails.order-confirmation',
             text: 'emails.order-confirmation-text',
+            // The <title> of the look-A document: the subject (Lane EM).
+            with: ['kitTitle' => (string) $this->envelope()->subject],
         );
     }
 }

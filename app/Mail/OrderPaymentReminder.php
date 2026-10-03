@@ -60,7 +60,7 @@ class OrderPaymentReminder extends OrderMail
         return new Content(
             view: 'emails.order-reminder',
             text: 'emails.order-reminder-text',
-            with: $this->stage === 2
+            with: ['kitTitle' => (string) $this->envelope()->subject] + ($this->stage === 2
                 ? [
                     'heading' => __('email.reminder.second_heading'),
                     'body' => __('email.reminder.second_body', $number),
@@ -70,7 +70,7 @@ class OrderPaymentReminder extends OrderMail
                     'heading' => __('email.reminder.first_heading'),
                     'body' => __('email.reminder.first_body', $number),
                     'closing' => __('email.reminder.first_closing'),
-                ],
+                ]),
         );
     }
 }

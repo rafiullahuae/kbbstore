@@ -1,22 +1,22 @@
 {{--
-    The email-confirmation message. Same shape and same reasoning as
-    password-reset.blade.php: no layout, inline styles, visible URL.
+    "Confirm your email" in look A — Lane EM, from the owner's approved
+    preview 18. No shop links in the header; the button's href is the signed
+    confirmation link; the wording is the existing keyed wording
+    (email.verify.*).
 --}}
-<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1d1d1f;">
-    <p>{{ $name ? __('email.greeting.hello_named', ['name' => $name]) : __('email.greeting.hello') }}</p>
+@extends('emails.kit.simple')
+@php
+    $brand = $brand ?? \App\Services\Mail\EmailBranding::forMailable(true, 'CustomerEmailVerification');
+    $k = \App\Services\Mail\Kit\MailKit::for($brand);
+    $kitTitle = __('email.kit.verify_title');
+    $kitPreheader = __('email.kit.pre_verify');
+    $kitWhy = __('email.kit.why_verify', ['site' => $k['site']]);
+    $kitNav = false;
+@endphp
 
-    <p>{{ __('email.verify.lead') }}</p>
-
-    <p style="margin:24px 0;">
-        <a href="{{ $url }}" style="display:inline-block;padding:12px 22px;background:#1d1d1f;color:#ffffff;text-decoration:none;border-radius:6px;">{{ __('email.verify.button') }}</a>
-    </p>
-
-    <p style="font-size:13px;color:#555;">{{ __('email.common.paste_link') }}<br>
-        <span style="word-break:break-all;">{{ $url }}</span></p>
-
-    <p>{{ trans_choice('email.verify.expiry', (int) $hours) }}</p>
-
-    <p>{{ __('email.verify.not_you') }}</p>
-
-    <p style="color:#555;">{{ __('email.common.sign_off') }}</p>
-</div>
+@section('kit_inner')
+@include('emails.kit.hero', ['icon' => 'mail', 'tone' => 'pink', 'eyebrow' => __('email.kit.eyebrow_verify'), 'title' => __('email.kit.verify_title'), 'lead' => __('email.verify.lead') . ' ' . trans_choice('email.verify.expiry', (int) $hours)])
+@include('emails.kit.button', ['label' => __('email.verify.button'), 'href' => $url])
+@include('emails.kit.para', ['html' => __('email.verify.not_you'), 'pad' => '18px 32px 0', 'size' => 13, 'center' => true])
+@include('emails.kit.gap', ['h' => 28])
+@endsection

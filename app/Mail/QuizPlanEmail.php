@@ -118,6 +118,7 @@ class QuizPlanEmail extends Mailable
             view: 'emails.quiz-plan',
             text: 'emails.quiz-plan-text',
             with: [
+                'kitTitle' => (string) $this->envelope()->subject,
                 'name' => $this->name,
                 'skinType' => $this->skinType,
                 'concerns' => $this->concerns,

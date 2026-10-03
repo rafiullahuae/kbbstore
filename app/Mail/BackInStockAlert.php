@@ -79,6 +79,7 @@ class BackInStockAlert extends Mailable
             view: 'emails.back-in-stock',
             text: 'emails.back-in-stock-text',
             with: [
+                'kitTitle' => (string) $this->envelope()->subject,
                 'body' => $this->body,
                 'productName' => $this->productName,
                 'productUrl' => $this->productUrl,

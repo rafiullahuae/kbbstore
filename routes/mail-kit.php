@@ -25,7 +25,7 @@ declare(strict_types=1);
 | and theirs is never spent by others.
 |
 | A clear_caches migration ships with this package:
-| database/migrations/2027_07_26_000300_clear_caches_mail_kit.php.
+| database/migrations/2027_07_27_000200_clear_caches_email_kit.php.
 */
 
 use App\Http\Controllers\Store\MailKitController;
