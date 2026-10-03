@@ -401,6 +401,13 @@ final class AdminCapabilities
         // two above.
         'slimfooter.manage' => ['owner', 'manager', 'editor'],
 
+        // Appearance → #KBeautyBliss Spotted (Lane HB, routes/spotted-admin.php):
+        // the hand-picked Instagram posts on the homepage carousel and on
+        // /kbeautybliss-spotted/, and the section's look. Storefront appearance,
+        // so the same three roles as the footer above; its own capability so
+        // narrowing one never narrows the other.
+        'spotted.manage' => ['owner', 'manager', 'editor'],
+
         // The site width, the side gutter and the product column count: one
         // screen, nine numbers, and every one of them printed into a stylesheet
         // on every page of the shop. Storefront appearance again, and its own
@@ -1410,6 +1417,12 @@ final class AdminCapabilities
         ['*', 'admin-api/set-appearance', 'setappearance.manage'],
         ['*', 'admin-api/set-appearance/**', 'setappearance.manage'],
         ['*', 'admin-api/slim-footer', 'slimfooter.manage'],
+        // Appearance → #KBeautyBliss Spotted (Lane HB). Both lines: the screen's
+        // read is the bare path and every write is under it, and a write left
+        // off the map would be owner-only rather than open -- but the editor
+        // the owner gave this screen to would be refused for no reason.
+        ['*', 'admin-api/spotted', 'spotted.manage'],
+        ['*', 'admin-api/spotted/**', 'spotted.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint.
         ['*', 'admin-api/site-layout', 'sitelayout.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint either.

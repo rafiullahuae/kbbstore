@@ -382,13 +382,21 @@
     }).join('');
 
     var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
+    /* (Lane HB) The three "Site footer" tabs are the footer on every storefront
+       page (App\Services\SiteFooter); the rest are the slim bar. Their keys
+       start `site_`, the tab keys `site`. The bar's preview and its squeeze
+       preset mean nothing for the site footer, so neither is drawn there. */
+    var site = String(current.key).indexOf('site') === 0;
 
     host.innerHTML = '<div class="sfs-wrap">'
       + (banner ? '<div class="sfs-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
           + esc(banner) + '</div>' : '')
-      + '<div class="sfs-note">This is <b>not</b> the site footer. The checkout and the cart page have '
-      + 'never drawn that one, and still do not — this is a separate bar with its own words, and the '
-      + 'switches on the first tab decide which of the two pages carries it.</div>'
+      + (site
+          ? '<div class="sfs-note">The <b>site footer</b> \u2014 the one at the bottom of every storefront page. '
+            + 'The tabs after these three are the slim bar on the checkout and the cart page.</div>'
+          : '<div class="sfs-note">This is <b>not</b> the site footer (that is the three “Site footer” tabs). The checkout and the cart page have '
+            + 'never drawn that one, and still do not — this is a separate bar with its own words, and the '
+            + 'switches on its first tab decide which of the two pages carries it.</div>')
       + '<div class="sfs-card">'
       + '<div class="sfs-tabs">' + strip + '</div>'
       + '<p class="sfs-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
@@ -401,14 +409,14 @@
          in front of you, nothing is stored until Save, and Reload undoes
          either. A stored "squeezed" mode would leave every slider on this
          screen showing a number the bar was not using. */
-      + '<button class="sfs-btn" data-sfs-squeeze' + (busy ? ' disabled' : '') + '>Squeeze this tab</button>'
+      + (site ? '' : '<button class="sfs-btn" data-sfs-squeeze' + (busy ? ' disabled' : '') + '>Squeeze this tab</button>')
       + '<button class="sfs-btn" data-sfs-defaults' + (busy ? ' disabled' : '') + '>Back to defaults</button>'
       + '</div>'
       + '<p class="sfs-help" style="margin-top:8px">Both presets move only the sliders on '
       + '<b>this tab</b> \u2014 the other tabs are left exactly as you set them. Nothing is stored until '
       + 'you press Save.</p>'
       + '</div>'
-      + previewHTML()
+      + (site ? '' : previewHTML())
       + '</div>';
   }
 

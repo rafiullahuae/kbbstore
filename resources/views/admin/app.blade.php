@@ -24288,6 +24288,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
      Applying it changes the CART page by nothing: `cart_on` ships off. The
      CHECKOUT gains the bar, which is what was asked for. --}}
 @include('admin.partials.slim-footer-screen')
+@include('admin.partials.spotted-screen')
 
 {{-- Appearance → Site layout (Lane W1). ONE site width for the whole shop, one
      gutter, and a product grid whose column count is worked out from the row it

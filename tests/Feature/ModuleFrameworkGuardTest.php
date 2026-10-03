@@ -665,6 +665,18 @@ function ehSchemaModules(): array
          * list rather than by the generic renderer.
          */
         'product_mobile_sections' => ['schema' => \App\Services\ProductMobileSections::SCHEMA, 'tabs' => \App\Services\ProductMobileSections::TABS, 'policy' => \App\Services\ProductMobileSections::POLICY],
+
+        /*
+         * ── LANE HB: Appearance → #KBeautyBliss Spotted, and the site footer ──
+         *
+         * Enrolled in the round they shipped. Both are `store: module` on every
+         * field. Spotted's selects are printed into a style attribute (through
+         * SpottedSettings::pick(), which answers only its own literals) and the
+         * footer's `site_design` decides which Blade is drawn, so "a select
+         * stores one of its own options" is the check that matters for both.
+         */
+        'kbb_spotted' => ['schema' => \App\Services\SpottedSettings::SCHEMA, 'tabs' => \App\Services\SpottedSettings::TABS, 'policy' => \App\Services\SpottedSettings::POLICY],
+        'site_footer' => ['schema' => \App\Services\SiteFooter::SCHEMA, 'tabs' => \App\Services\SiteFooter::TABS, 'policy' => \App\Services\SiteFooter::POLICY],
     ];
 }
 

@@ -437,7 +437,12 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // 596 IN 2.60.371: Appearance → Product styles → Spacing & type gained four
     // ranges — brand → name and name → stars, phone and desktop — inserted at
     // their TABS position after card_gap_img_d. Four objects inserted, none changed.
-    expect($compared)->toBe(596, 'the number of controls drawn changed');
+    // 604 (Lane HB): + 12 site-footer controls on Appearance → Footer — the
+    // three "Site footer" tabs (design, help strip, Visit us & name) inserted
+    // FIRST in the slim-footer payload, as SlimFooterApiController now serves
+    // them. The five slim-bar tabs after them are unchanged.
+    // 608 with both: 592 + 4 (card spacing) + 12 (site footer).
+    expect($compared)->toBe(608, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

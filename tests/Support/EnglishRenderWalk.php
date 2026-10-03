@@ -1194,6 +1194,22 @@ final class EnglishRenderWalk
             'everything-under-54-aed' => ['render' => true],
 
             /*
+             * #KBeautyBliss Spotted (Lane HB). Listed exactly when the router has
+             * it, because routes/spotted.php reaches the router only when the
+             * integrator requires it -- and this walk checks the table in BOTH
+             * directions. Written this way the walk is green on both sides of
+             * that one-line change, instead of red on one of them.
+             *
+             * Not rendered: the page was added after BASE_COMMIT, so there is no
+             * pre-conversion template to compare it against. SpottedPageTest
+             * pins its title, H1, canonical, breadcrumb and cards.
+             */
+            ...(Route::has('spotted.page') ? ['kbeautybliss-spotted' => [
+                'render' => false,
+                'why' => 'added after BASE_COMMIT (Lane HB), so there is no pre-conversion template to compare against; SpottedPageTest pins it',
+            ]] : []),
+
+            /*
              * The concern pages, which land in the same commit as the require
              * in routes/web.php -- this walk checks the route table in BOTH
              * directions, so neither half can go first.
@@ -1583,6 +1599,30 @@ final class EnglishRenderWalk
     public static function approvedStorefrontChanges(): array
     {
         return [
+            /*
+             * THE SITE FOOTER, ON EVERY PAGE: THE APPROVED NEW DESIGN. (Lane HB)
+             *
+             * The owner approved docs/home-preview/footer-final.html (master
+             * plan row 55, "Owner's picks, 3 Oct") and asked for it on the shop:
+             * WhatsApp-green help strip with "24/7 available", no word "return"
+             * anywhere, the very big name at the bottom. It ships ON, as he
+             * asked (Appearance -> Footer -> Site footer · design -> Previous
+             * puts the old one back).
+             *
+             * THE OLD FOOTER BLOCK AND NOTHING ELSE: the pattern opens on the
+             * old footer's own first two lines and stops at its own close, and
+             * it must fire exactly once on each of the 29 rendered pages that
+             * carry a footer. Every byte outside it is still compared as
+             * before. The replacement is the new footer exactly as the walk's
+             * seed renders it (CSRF token masked), so a change to it is a change
+             * somebody has to approve here. SiteFooterTest pins its behaviour.
+             */
+            'the site footer: the approved new design (Lane HB)' => [
+                'pattern' => '#<footer><div class="wrap">\n    <div class="fcols">.*?</div></footer>#s',
+                'with' => str_replace(['\\', '$'], ['\\\\', '\\$'], self::laneHbFooter()),
+                'hits' => 29,
+            ],
+
             /*
              * BIG SAVINGS BUNDLES BECOME A CAROUSEL. (Integrator, 2.60.370)
              *
@@ -2151,9 +2191,18 @@ final class EnglishRenderWalk
              * switched off: four on one page and two on another would still add
              * to 87.
              */
+            /*
+             * ▲ NOW 0 (Lane HB): the walk renders the NEW site footer, which has
+             * no `.fcol` at all — its column headings are `<h2 class="kft-ch">`,
+             * inside the block 'the site footer: the approved new design' in
+             * approvedStorefrontChanges() replaces whole. The rule stays, at 0,
+             * because Appearance → Footer → "Previous" draws the old footer
+             * with exactly these h2s again, and the day the walk renders that
+             * design this count is the thing that says so.
+             */
             'the footer column headings as h2 (Lane PERF)' => [
                 'pattern' => '#<div class="fcol"><h2>[^<]*</h2>#',
-                'hits' => 87,
+                'hits' => 0,
                 'perPage' => 3,
             ],
 
@@ -3115,6 +3164,64 @@ final class EnglishRenderWalk
         }
 
         return $report;
+    }
+
+    /**
+     * The new site footer as the walk's seed renders it. (Lane HB)
+     *
+     * A nowdoc, so the bytes below are the bytes compared: nothing in it is
+     * interpolated. Used by approvedStorefrontChanges().
+     */
+    private static function laneHbFooter(): string
+    {
+        return <<<'KBB_HB_FOOTER'
+<footer class="kft kft-motion">
+  <div class="kft-help"><div class="kft-wrap kft-help-in">
+    <span class="kft-help-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-1.9-1-1 .9a3.6 3.6 0 0 1-2.4-2.4l.9-1-1-1.9Z" fill="#fff" stroke="none"/></svg></span>
+    <div class="kft-help-tx">
+      <h2 class="kft-help-h">Find your perfect K-beauty match <span class="kft-avail">24/7 available</span></h2>
+      <p class="kft-help-p">Ask us anything about your skin, a product or your order — we reply on WhatsApp.</p>
+    </div>
+    <div class="kft-help-bt"><a class="kft-bt-p" href="https://wa.me/971585052611" target="_blank" rel="noopener">Chat on WhatsApp</a> <a class="kft-bt-o" href="/track-my-order/">Track my order</a></div>
+  </div></div>
+  <div class="kft-main"><div class="kft-wrap">
+    <div class="kft-grid">
+      <div class="kft-brand">
+        <a class="kft-logo" href="/"><bdi>K-Beauty<b>Bliss</b></bdi></a>
+        <p class="kft-tag">Authentic Korean beauty, curated for the UAE.</p>
+        <div class="kft-soc" aria-label="Follow us"><a href="https://www.instagram.com/kbeauty.bliss/" aria-label="Instagram" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a><a href="https://www.tiktok.com/@kbeauty.bliss" aria-label="TikTok" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 3h3a4.5 4.5 0 0 0 4 4v3a7.4 7.4 0 0 1-4-1.3V15a6 6 0 1 1-6-6v3.1A3 3 0 1 0 14 15Z"/></svg></a><a href="https://www.facebook.com/kbeautyblissuae" aria-label="Facebook" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.5H16l.5-3h-3V8.6c0-.9.3-1.6 1.6-1.6h1.6V4.3A21 21 0 0 0 14.3 4C12 4 10.5 5.4 10.5 8v2.5H8v3h2.5V21Z"/></svg></a></div>
+      </div>
+      <nav class="kft-col" aria-labelledby="kft-shop"><h2 id="kft-shop" class="kft-ch">Shop</h2><ul>
+        <li><a href="/new-in/">New in</a></li>
+        <li><a href="/best-sellers/">Best sellers</a></li>
+        <li><a href="/brands/">Brands</a></li>
+        <li><a href="/super-sale/">Super sale</a></li>
+      </ul></nav>
+      <nav class="kft-col" aria-labelledby="kft-help"><h2 id="kft-help" class="kft-ch">Help</h2><ul>
+        <li><a href="/track-my-order/">Track my order</a></li>
+        <li><a href="/delivery/">Shipping &amp; Delivery</a></li>
+        <li><a href="/faqs/">FAQs</a></li>
+        <li><a href="/contact-us/">Contact us</a></li>
+      </ul></nav>
+      <nav class="kft-col" aria-labelledby="kft-disc"><h2 id="kft-disc" class="kft-ch">Discover</h2><ul>
+        <li><a href="/about/">About us</a></li>
+        <li><a href="/blog/">Journal</a></li>
+        <li><a href="/kbeautybliss-spotted/">#KBeautyBliss</a></li>
+        <li><a href="/my-account/">My Account</a></li>
+      </ul></nav>
+      <div class="kft-contact">
+        <form class="kft-news" method="post" action="/api/subscribe" data-kbb-subscribe><input type="hidden" name="_token" value="TOKEN" autocomplete="off"><input type="email" name="email" required placeholder="Your email for offers" aria-label="Your email" autocomplete="email"><button type="submit">Join</button></form>
+      </div>
+    </div>
+    <p class="kft-name" aria-hidden="true" style="--kft-n:14">K-Beauty Bliss</p>
+  </div></div>
+  <div class="kft-bot"><div class="kft-wrap kft-bot-in">
+    <span>© 2026 K-Beauty Bliss UAE</span>
+    <nav class="kft-legal"><a href="/privacy-policy/">Privacy policy</a><a href="/terms-and-conditions/">Terms</a></nav>
+    <div class="kft-pay"><span>Tabby</span><span>Tamara</span><span>Visa</span><span>Mastercard</span><span>COD</span></div>
+  </div></div>
+</footer>
+KBB_HB_FOOTER;
     }
 
     public static function mask(string $html): string

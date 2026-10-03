@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\ModuleSchema;
+use App\Services\SiteFooter;
 use App\Services\SlimFooter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,16 @@ use Illuminate\Http\Request;
  * Two endpoints and nothing else. This screen picks no products and reads no
  * model — every value that crosses is a string, an integer or a boolean from a
  * schema both sides already know.
+ *
+ * ── TWO SCHEMAS ON ONE SCREEN (Lane HB) ─────────────────────────────────────
+ *
+ * The site footer on every page (App\Services\SiteFooter — the new design,
+ * the switch back to the old one, the help strip, the addresses and the big
+ * name) is drawn here too, in three tabs FIRST, because "Appearance → Footer"
+ * is where the owner looks for the footer. Its keys all start `site_` and none
+ * of SlimFooter's do, so one flat payload splits without ambiguity, and a key
+ * belonging to neither is still refused with the same 422. Same endpoint, same
+ * capability (`slimfooter.manage`): no new route.
  */
 class SlimFooterApiController extends Controller
 {
@@ -30,11 +41,19 @@ class SlimFooterApiController extends Controller
     {
         // One schema, drawn by one renderer. This loop used to be copied
         // into nine controllers that had to agree by hand.
-        $tabs = ModuleSchema::tabs(
-            SlimFooter::SCHEMA,
-            SlimFooter::TABS,
-            $this->footer->all(),
-            SlimFooter::POLICY,
+        $tabs = array_merge(
+            ModuleSchema::tabs(
+                SiteFooter::SCHEMA,
+                SiteFooter::TABS,
+                app(SiteFooter::class)->all(),
+                SiteFooter::POLICY,
+            ),
+            ModuleSchema::tabs(
+                SlimFooter::SCHEMA,
+                SlimFooter::TABS,
+                $this->footer->all(),
+                SlimFooter::POLICY,
+            ),
         );
 
         /*
@@ -50,13 +69,23 @@ class SlimFooterApiController extends Controller
     {
         $data = $request->validate(['settings' => ['required', 'array']]);
 
-        $unknown = array_diff(array_keys($data['settings']), array_keys(SlimFooter::SCHEMA));
+        $unknown = array_diff(
+            array_keys($data['settings']),
+            array_keys(SlimFooter::SCHEMA),
+            array_keys(SiteFooter::SCHEMA),
+        );
 
         if ($unknown !== []) {
             return response()->json(['ok' => false, 'error' => 'Unknown setting: '.implode(', ', $unknown)], 422);
         }
 
-        $this->footer->save($data['settings']);
+        $site = array_intersect_key($data['settings'], SiteFooter::SCHEMA);
+
+        $this->footer->save(array_diff_key($data['settings'], SiteFooter::SCHEMA));
+
+        if ($site !== []) {
+            app(SiteFooter::class)->save($site);
+        }
 
         return response()->json(['ok' => true]);
     }

@@ -72,7 +72,9 @@ it('wraps every wordmark so the document direction cannot reorder it', function 
         'partials/header.blade.php',
         'partials/header-slim.blade.php',
         'partials/drawers.blade.php',
-        'partials/footer.blade.php',
+        // (Lane HB) The previous footer, kept as the "Previous" design. The
+        // new one (footer-bliss) wraps its `.kft-logo` wordmark in <bdi> too.
+        'partials/footer-classic.blade.php',
         'store/checkout.blade.php',
         'store/checkout-success.blade.php',
         'store/blog.blade.php',

@@ -104,6 +104,9 @@ Route::get('/reviews/captcha', [\App\Http\Controllers\Store\ReviewController::cl
 Route::post('/reviews/submit', [\App\Http\Controllers\Store\ReviewController::class, 'submit']);
 Route::post('/reviews/{review}/helpful', [\App\Http\Controllers\Store\ReviewController::class, 'helpful']);
 
+// #KBeautyBliss Spotted: /kbeautybliss-spotted/ (Lane HB, 2.60.372).
+require __DIR__.'/spotted.php';
+
 // Editable content pages. Kept last among the storefront routes so a real
 // page never shadows a functional one.
 Route::get('/privacy-policy', [\App\Http\Controllers\Store\PageController::class, 'show'])->defaults('slug', 'privacy-policy');
@@ -815,6 +818,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          * owner has already granted access.
          */
         require __DIR__.'/instagram-admin.php';
+        require __DIR__.'/spotted-admin.php';   // Appearance → #KBeautyBliss Spotted (Lane HB)
 
         // Content → Media Library → "Make phone-sized copies": the tally, and
         // the bounded batch that walks the existing catalogue making the

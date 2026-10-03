@@ -469,7 +469,9 @@ it('renders the footer of a real page without the Apple Pay chip on a shop that 
 
     // The whole rendered page, not the helper in isolation: a gate that the
     // template does not call is a gate that does nothing.
-    expect($html)->toContain('class="fpay"')
+    // (Lane HB) `kft-pay` is the new site footer's chip row; it reads the
+    // same PaymentChips::row('footer') the previous design's `fpay` did.
+    expect($html)->toContain('class="kft-pay"')
         ->and($html)->not->toContain('<span>Apple Pay</span>');
 });
 // MUTATION, run: put the literal <span>Apple Pay</span> back into
