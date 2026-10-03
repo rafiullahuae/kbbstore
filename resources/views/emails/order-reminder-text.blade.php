@@ -4,6 +4,11 @@
 
 {!! wordwrap($body, 72) !!}
 
+{!! mb_strtoupper(__('email.reminder.why_heading')) !!}
+- {!! __('email.reminder.why_fast') !!} — {!! __('email.reminder.why_fast_note') !!}
+- {!! __('email.reminder.why_original') !!} — {!! __('email.reminder.why_original_note') !!}
+- {!! __('email.reminder.why_samples') !!} — {!! __('email.reminder.why_samples_note') !!}
+
 @include('emails.partials.body-text')
 
 {!! mb_strtoupper(__('email.reminder.button')) !!}

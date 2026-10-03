@@ -242,8 +242,10 @@ it('emails the customer a receipt when an order is placed', function () {
         // paymentLabel(), never the raw gateway id.
         ->and($body)->toContain('Cash on delivery')
         ->and($body)->not->toContain('>cod<')
-        // Somewhere to go and look at it.
-        ->and($body)->toContain('/checkout/success?order=' . $order->order_number);
+        // Somewhere to go and look at it — on any device now (Lane RL): the
+        // signed status page, not the order-received page only the placing
+        // browser could open.
+        ->and($body)->toContain('/track-my-order/?order=' . $order->order_number . '&amp;t=');
 });
 
 it('carries a plain-text part with the same figures as the HTML one', function () {
@@ -473,10 +475,12 @@ it('emails the customer when an order is cancelled', function () {
 it('says nothing for the statuses nobody designed a message for', function () {
     Mail::fake();
 
-    $order = orderMailOrder(['status' => 'pending']);
+    $order = orderMailOrder(['status' => 'processing']);
 
-    // Every other value AdminController::updateOrderStatus will accept.
-    foreach (['processing', 'onhold', 'completed', 'draft', 'failed', 'refunded'] as $status) {
+    // Lane RL: the owner asked for an email on every status, so the silent
+    // ones are now only `draft` and `pending` (the reminders cover pending),
+    // and `onhold`, which ships switched OFF at his word.
+    foreach (['draft', 'pending', 'onhold'] as $status) {
         $order->update(['status' => $status]);
     }
 

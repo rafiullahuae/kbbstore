@@ -10,11 +10,11 @@ use App\Models\Order;
  * The two links an order email carries that must open on ANY device (Lane RL).
  *
  *   track — "Track your order": the shop's own /track-my-order/ page, showing
- *           this order's status card. 30 days. The owner: "tracking number is
+ *           this order's status card. 30 days (to the next midnight UTC after). The owner: "tracking number is
  *           the same order number ... the order can be tracked on our website,
  *           and whatever we put the status of the order, it will show."
  *   pay   — "Complete your order": /checkout/order-pay, where an unpaid order
- *           can be paid with the methods the checkout already offers. 7 days.
+ *           can be paid with the methods the checkout already offers. 7 days (ditto).
  *
  * Before this the email's button went to /checkout/success?order=, which opens
  * only in the browser session that placed the order — on the phone where most
@@ -61,8 +61,12 @@ final class OrderLinks
 
     public static function token(string $purpose, Order $order, int $ttl): string
     {
-        // The application clock, not time(), so a test can move it.
-        $expires = now()->getTimestamp() + $ttl;
+        // The application clock, not time(), so a test can move it. Rounded UP
+        // to the next UTC midnight, so the link lives its full term or up to a
+        // day longer, and two renders of one email in the same day carry the
+        // same link (the English-unchanged guards compare renders byte for byte).
+        $now = now()->getTimestamp();
+        $expires = (intdiv($now, 86400) + 1) * 86400 + $ttl;
 
         return $expires . '.' . CustomerLinkSigner::sign($purpose, self::claims($order), $expires);
     }

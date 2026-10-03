@@ -11,15 +11,14 @@
      is visible in a text part. --}}{!! wordwrap($body, 72) !!}
 
 @if ($note !== '')
-
 {!! __('email.order_status.onhold_need') !!} {!! wordwrap($note, 72) !!}
+
 @endif
 @if ($trackable)
-
 {!! __('email.order_status.tracking_number', ['number' => $order['number']]) !!}
 {!! wordwrap(__('email.order_status.tracking_where'), 72) !!}
-@endif
 
+@endif
 @include('emails.partials.body-text')
 
 {!! mb_strtoupper($ctaLabel) !!}

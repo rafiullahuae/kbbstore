@@ -1,10 +1,9 @@
 Hello Aisha Khan,
 
-YOUR ORDER IS ON ITS WAY
+YOUR ORDER IS ON ITS WAY 🚚💨
 
 Your order has left us and is with the courier. Delivery in the UAE
 normally takes one to three working days from dispatch.
-
 
 Your tracking number is your order number: KBB-10427.
 Follow it on our website — whatever we set (Shipped, Delivered) shows
@@ -47,7 +46,7 @@ ORDER NOTE
 Please ring the doorbell twice — the buzzer is broken.
 
 TRACK YOUR ORDER
-http://localhost/track-my-order/?order=KBB-10427&t=1793620312.9778497fc0e6267b298cdd6f7ffb2904171d81a274d42df92334687bd0f4701a
+http://localhost/track-my-order/?order=KBB-10427&t=1793664000.379dce647676d58ee776a7651dd51bc5a5d39f716f056327289a237ceb042a92
 
 Opens on any phone or computer — no sign-in needed. The page always
 shows the latest status.

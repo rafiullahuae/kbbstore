@@ -59,8 +59,8 @@ class OrderStatusChanged extends OrderMail
      */
     public const WORDING = [
         'shipped' => [
-            'Your %1$s order %2$s is on its way',
-            'Your order is on its way',
+            'Your %1$s order %2$s is on its way 🚚💨',
+            'Your order is on its way 🚚💨',
             /*
              * STILL THE DEFAULT, AND NO LONGER THE ONLY POSSIBILITY. The second
              * sentence is a delivery window for one country, and the owner can
@@ -103,8 +103,8 @@ class OrderStatusChanged extends OrderMail
             'Nothing is wrong with your items — we just need to confirm one detail before we can send it. Reply to this email or message us on WhatsApp and we will carry on right away.',
         ],
         'completed' => [
-            'Your %1$s order %2$s has been delivered',
-            'Enjoy your new routine',
+            'Your %1$s order %2$s has been delivered ✨',
+            'Enjoy your new routine ✨',
             'Your order is complete. We hope you love it — if anything is not right, reply to this email and we will help.',
         ],
         'refunded' => [
@@ -113,8 +113,8 @@ class OrderStatusChanged extends OrderMail
             'This order has been refunded. If the money went back to a card or payment account, your bank can take a few working days to show it.',
         ],
         'failed' => [
-            'The payment for your %1$s order %2$s did not go through',
-            'The payment did not go through',
+            'Payment for your %1$s order %2$s did not go through 😔',
+            'The payment did not go through 😔',
             'The order is not confirmed yet. It is saved — you can finish it with any way to pay we offer.',
         ],
     ];

@@ -54,21 +54,20 @@
                  inline anchor and leaves a bare blue link; a cell with a bgcolor
                  attribute it does render. --}}
             <td bgcolor="{{ $c['pinkDeep'] }}" style="background:{{ $c['pinkDeep'] }};border-radius:7px;">
-                <a href="{{ $order['trackUrl'] }}" style="display:inline-block;padding:13px 26px;color:{{ $c['white'] }};font-size:15px;font-weight:600;text-decoration:none;">{{ __('email.confirmation.track_button') }}</a>
+                <a href="{{ $trackSignedUrl }}" style="display:inline-block;padding:13px 26px;color:{{ $c['white'] }};font-size:15px;font-weight:600;text-decoration:none;">{{ __('email.confirmation.track_button') }}</a>
             </td>
         </tr>
     </table>
 
     {{--
-        The link above only opens on the browser that placed the order — the
-        order-received page is gated to that session, and no link from this app
-        carries its own authority (OrderEmailPresenter::trackUrl explains why).
-        Said here rather than discovered on a phone.
+        Lane RL. The button is a signed link to the order's own status page
+        (App\Support\OrderLinks), so it opens on any device. It used to go to
+        the order-received page, which only the placing browser may open — and
+        since the receipt now goes when the payment CONFIRMS, often from a
+        provider's webhook with no browser at all, that page was no longer one
+        the reader could reach. The device note that apologised for it is gone.
     --}}
     <p style="margin:0;font-size:13px;line-height:1.55;color:{{ $c['ink2'] }};">
-        {!! __('email.confirmation.device_note', [
-            'link' => '<a href="' . e($order['accountUrl']) . '" style="color:' . e($c['pinkDeep']) . ';font-weight:600;">' . e(__('email.confirmation.sign_in_link')) . '</a>',
-            'number' => e($order['number']),
-        ]) !!}
+        {{ __('email.order_status.track_note') }}
     </p>
 @endsection

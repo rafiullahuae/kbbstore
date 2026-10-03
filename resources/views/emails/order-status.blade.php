@@ -17,6 +17,21 @@
     these two strings are the foundation it needs.
 --}}
 
+{{--
+    Lane RL. Three additions, each drawn only when it applies, so a status
+    without them renders exactly as before:
+      - $note: the owner's own sentence, typed when he pressed "Send on-hold
+        email". Plain text, escaped; line breaks kept.
+      - $trackable: "Your tracking number is your order number". The owner:
+        "tracking number is the same order number ... the order can be tracked
+        on our website, and whatever we put the status of the order, it will
+        show." No courier reference exists in this shop and none is invented.
+      - the button is a signed link (App\Support\OrderLinks) that opens on any
+        device, so the old "that link opens on the device you ordered from"
+        note is no longer true and is gone. A payment that failed gets
+        "Complete your order", to the page where it can be paid, instead.
+--}}
+
 @section('body')
     @php $c = $brand['colours'] ?? \App\Services\Mail\EmailBranding::PALETTE; @endphp
 
@@ -35,9 +50,7 @@
         </tr>
     </table>
 
-    @if ($note !== '')
-        {{-- The owner's own sentence, typed when he pressed "Send on-hold
-             email". Plain text, escaped; line breaks kept. --}}
+@if ($note !== '')
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-top:14px;">
             <tr>
                 <td style="padding:13px 15px;font-size:14px;line-height:1.55;color:{{ $c['ink'] }};border:1px solid {{ $c['line'] ?? '#EADFE2' }};border-radius:9px;">
@@ -45,19 +58,13 @@
                 </td>
             </tr>
         </table>
-    @endif
-
-    @if ($trackable)
-        {{-- Lane RL. The owner: "tracking number is the same order number ...
-             the order can be tracked on our website, and whatever we put the
-             status of the order, it will show." No courier reference exists in
-             this shop and none is invented. --}}
+@endif
+@if ($trackable)
         <p style="margin:14px 0 0;font-size:14px;line-height:1.55;color:{{ $c['ink2'] }};">
             <b style="color:{{ $c['ink'] }};">{{ __('email.order_status.tracking_number', ['number' => $order['number']]) }}</b><br>
             {{ __('email.order_status.tracking_where') }}
         </p>
-    @endif
-
+@endif
     @include('emails.partials.items')
     @include('emails.partials.totals')
     @include('emails.partials.delivery')
@@ -73,9 +80,6 @@
         </tr>
     </table>
 
-    {{-- The button is a signed link now (App\Support\OrderLinks), so the old
-         "that link opens on the device you ordered from" note is no longer
-         true and is gone. --}}
     <p style="margin:0;font-size:13px;line-height:1.55;color:{{ $c['ink2'] }};">
         {{ $status === 'failed' ? __('email.reminder.button_note') : __('email.order_status.track_note') }}
     </p>

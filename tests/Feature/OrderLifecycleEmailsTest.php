@@ -648,7 +648,7 @@ it('opens the status page from the email link on any device, for that order only
 
     // Expired after 30 days. Mutation: drop the expiry check in
     // CustomerLinkSigner::verify() and this is a 200.
-    Carbon::setTestNow('2026-11-03 10:00:01');
+    Carbon::setTestNow('2026-11-03 00:00:01'); // 30 days after the next midnight
     $this->get('/track-my-order/?' . http_build_query($q))->assertNotFound();
 });
 
@@ -745,7 +745,7 @@ it('answers a forged, expired or other-order pay link with the same 404', functi
     $this->get('/checkout/order-pay?order=' . $mine->order_number . '&t=1.zz')->assertNotFound();
     $this->postJson('/checkout/order-pay', ['order' => $theirs->order_number, 't' => $q['t'], 'method' => 'stripe'])->assertNotFound();
 
-    Carbon::setTestNow('2026-10-10 10:00:01'); // seven days and a second
+    Carbon::setTestNow('2026-10-11 00:00:01'); // seven days after the next midnight, and a second
     $this->get('/checkout/order-pay?' . http_build_query($q))->assertNotFound();
 });
 
@@ -794,4 +794,117 @@ it('mounts the pay page at most once, and nothing about orders under /api', func
     expect(substr_count($web, "require __DIR__.'/order-pay.php';"))->toBeLessThanOrEqual(1);
 
     expect(file_get_contents(base_path('routes/order-pay.php')))->not->toContain("'/api/");
+});
+
+/* ======================================================= feedback request === */
+
+function rlDelivered(array $overrides = []): Order
+{
+    $product = Product::create(['slug' => 'rl-glow-' . uniqid(), 'name' => 'Glow Serum', 'status' => 'publish', 'is_visible' => true, 'price' => 200, 'stock_status' => 'instock']);
+    $order = rlOrder(array_merge(['status' => 'shipped', 'paid_at' => now()], $overrides));
+    $order->items()->update(['product_id' => $product->id]);
+
+    return $order->fresh('items');
+}
+
+it('asks for feedback 3 hours after the Delivered email went, once, with a link to each product\'s reviews', function () {
+    Mail::fake();
+    Carbon::setTestNow('2026-10-03 10:00:00');
+    $order = rlDelivered();
+    $order->update(['status' => 'completed']);
+    Mail::assertSent(OrderStatusChanged::class, fn ($m) => $m->status === 'completed');
+
+    Carbon::setTestNow('2026-10-03 12:59:00');
+    expect(app(OrderReminders::class)->sweep(10))->toBe(0);
+
+    // Mutation: change FEEDBACK_AFTER_HOURS to 0 and the sweep above sends.
+    Carbon::setTestNow('2026-10-03 13:00:00');
+    expect(app(OrderReminders::class)->sweep(10))->toBe(1);
+    expect(app(OrderReminders::class)->sweep(10))->toBe(0);
+
+    Mail::assertSent(\App\Mail\OrderFeedbackRequest::class, 1);
+    Mail::assertSent(\App\Mail\OrderFeedbackRequest::class, function ($m) {
+        $html = (string) $m->render();
+
+        return count($m->products) === 1
+            && str_contains($m->products[0]['url'], '/product/rl-glow-')
+            && str_ends_with($m->products[0]['url'], '/#sr')
+            && ! str_contains($m->products[0]['url'], 'rating=')
+            && str_contains($html, 'Write a review');
+    });
+});
+
+it('asks for no feedback when the Delivered email was unticked, switched off, or the order was refunded since', function () {
+    Mail::fake();
+    Carbon::setTestNow('2026-10-03 10:00:00');
+
+    // Mutation: in OrderMailer::statusChanged() record `status_completed`
+    // before the policy check and the unticked order is asked.
+    $unticked = rlDelivered(['email' => 'u@example.com']);
+    $this->actingAs(rlAdmin(), 'admin')
+        ->putJson('/admin-api/orders/' . $unticked->id . '/status', ['status' => 'completed', 'notify' => false])->assertOk();
+
+    rlSwitch('email_order_completed', false);
+    $off = rlDelivered(['email' => 'o@example.com']);
+    $off->update(['status' => 'completed']);
+    rlSwitch('email_order_completed', true);
+
+    $refunded = rlDelivered(['email' => 'r@example.com']);
+    $refunded->update(['status' => 'completed']);
+    $refunded->update(['status' => 'refunded']);
+
+    Carbon::setTestNow('2026-10-03 14:00:00');
+    expect(app(OrderReminders::class)->sweep(10))->toBe(0);
+    Mail::assertNotSent(\App\Mail\OrderFeedbackRequest::class);
+
+    rlSwitch('email_order_feedback', false);
+    $later = rlDelivered(['email' => 'l@example.com']);
+    $later->update(['status' => 'completed']);
+    Carbon::setTestNow('2026-10-03 18:00:00');
+    expect(app(OrderReminders::class)->sweep(10))->toBe(0);
+});
+
+/* =============================================================== emoji === */
+
+it('carries the owner\'s emoji in subjects, encoded as UTF-8 in the header, and readable in the text part', function () {
+    $order = rlOrder(['status' => 'completed']);
+    config(['mail.mailers.rltest' => ['transport' => 'array']]);
+
+    $cases = [
+        '🎉' => new OrderConfirmation($order),
+        '🛍️' => new OrderPaymentReminder($order, 1),
+        '⏳' => new OrderPaymentReminder($order, 2),
+        '🚚💨' => new OrderStatusChanged($order, 'shipped'),
+        '✨' => new OrderStatusChanged($order, 'completed'),
+        '😔' => new OrderStatusChanged($order, 'failed'),
+    ];
+
+    foreach ($cases as $emoji => $mailable) {
+        Mail::mailer('rltest')->to('buyer@example.com')->send($mailable);
+        $sent = app('mail.manager')->mailer('rltest')->getSymfonyTransport()->messages()->last()->getOriginalMessage();
+
+        expect($sent->getSubject())->toEndWith($emoji);
+        // RFC 2047: the subject travels as encoded-words, never raw 8-bit.
+        // Unfolded first: a long subject is folded onto a continuation line.
+        expect(preg_replace("/\r\n[ \t]/", ' ', $sent->toString()))->toMatch('/^Subject: [^\r\n]*=\?utf-8\?Q\?/mi');
+        // The text part is UTF-8 and keeps the heading readable; the receipt's
+        // text greeting has never carried a symbol and still does not.
+        $text = (string) $sent->getTextBody();
+        expect(mb_check_encoding($text, 'UTF-8'))->toBeTrue()
+            ->and($text)->toContain($emoji === '🎉' ? 'Thank you, Aisha' : $emoji);
+    }
+});
+
+it('puts the three reasons to shop in both reminders', function () {
+    $order = rlOrder();
+
+    foreach ([1, 2] as $stage) {
+        $mail = new OrderPaymentReminder($order, $stage);
+        $html = (string) $mail->render();
+        $text = view($mail->content()->text, $mail->buildViewData() + $mail->content()->with)->render();
+
+        foreach (['Fast delivery', '1–3 days, all over the UAE', '100% original', 'Straight from the brand', 'Free samples', 'Random K-beauty samples in every order'] as $line) {
+            expect($html)->toContain($line)->and($text)->toContain($line);
+        }
+    }
 });

@@ -5,9 +5,8 @@
 @include('emails.partials.body-text')
 
 {!! mb_strtoupper(__('email.confirmation.track_button')) !!}
-{!! $order['trackUrl'] !!}
+{!! $trackSignedUrl !!}
 
-{!! wordwrap(__('email.text.device_note_confirmation', ['number' => $order['number']]), 78) !!}
-{!! $order['accountUrl'] !!}
+{!! wordwrap(__('email.order_status.track_note'), 78) !!}
 
 @include('emails.partials.support-text')

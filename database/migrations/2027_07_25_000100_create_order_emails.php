@@ -19,8 +19,8 @@ use Illuminate\Support\Facades\Schema;
  * inserts the row sends, everybody else finds it there and does nothing, and
  * that is decided by the database rather than by whoever read first.
  *
- * kinds: `confirmation`, `reminder_1`, `reminder_2` (closed list in
- * App\Services\Mail\OrderEmailLog).
+ * kinds: `confirmation`, `reminder_1`, `reminder_2`, `status_completed`,
+ * `feedback` (closed list in App\Services\Mail\OrderEmailLog).
  *
  * THE BACKFILL. Before this package every order placed through the checkout
  * was receipted the moment it was placed, paid or not (audit B1). An order

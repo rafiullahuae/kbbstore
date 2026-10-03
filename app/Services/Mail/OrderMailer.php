@@ -147,6 +147,12 @@ class OrderMailer
         return $this->settings->moduleEnabled('email_order_reminder_2', true);
     }
 
+    /** "How is your glow?", 3 hours after the Delivered email went. */
+    public function feedbackEnabled(): bool
+    {
+        return $this->settings->moduleEnabled('email_order_feedback', true);
+    }
+
     /**
      * Which status changes email, and the per-order exception to it.
      *
@@ -654,11 +660,48 @@ class OrderMailer
 
         $order->loadMissing('items');
 
-        $this->send(
+        $sent = $this->send(
             static fn () => new OrderStatusChanged($order, $status),
             (string) $order->email,
             $order,
             'status_' . $status,
+        );
+
+        /*
+         * WHEN THE DELIVERED EMAIL ACTUALLY WENT (Lane RL) — the feedback
+         * request's clock starts here, and only here: an unticked box or a
+         * switched-off status returned above, and a send that failed returns
+         * false, so neither starts it. The first one counts; a second
+         * Completed later does not restart it.
+         */
+        if ($sent && $status === 'completed') {
+            app(OrderEmailLog::class)->claim($order, 'status_completed');
+        }
+    }
+
+    /**
+     * "How is your glow?" — the feedback request (Lane RL). OrderReminders
+     * decides it is due and claims it; this only sends. One row per product
+     * still on sale, each linking to that product's reviews.
+     */
+    public function feedback(Order $order): bool
+    {
+        if ($this->isSample($order)) {
+            return false;
+        }
+
+        $order->loadMissing('items.product');
+
+        // Nothing still on sale to review: nothing to ask.
+        if (! $order->items->contains(fn ($i) => $i->product !== null && (string) $i->product->status === 'publish')) {
+            return false;
+        }
+
+        return $this->send(
+            static fn () => new \App\Mail\OrderFeedbackRequest($order),
+            (string) $order->email,
+            $order,
+            'feedback',
         );
     }
 
@@ -821,7 +864,8 @@ class OrderMailer
         \App\Support\OrderLocale::render($order, $run);
     }
 
-    private function send(callable $build, string $to, Order $order, string $kind, bool $inOrderLocale = true): void
+    /** @return bool  true when the message was handed to the transport without an exception. */
+    private function send(callable $build, string $to, Order $order, string $kind, bool $inOrderLocale = true): bool
     {
         /*
          * Asked again here, although all three callers have asked already. This
@@ -830,7 +874,7 @@ class OrderMailer
          * send() is covered without being told to be.
          */
         if ($this->isSample($order)) {
-            return;
+            return false;
         }
 
         $to = trim($to);
@@ -841,7 +885,7 @@ class OrderMailer
                 'kind' => $kind,
             ]);
 
-            return;
+            return false;
         }
 
         try {
@@ -860,6 +904,8 @@ class OrderMailer
 
                 Mail::mailer(MailConfigurator::MAILER)->to($to)->send($mailable);
             });
+
+            return true;
         } catch (\Throwable $e) {
             /*
              * Recorded where the owner can see it, as well as in the log he
@@ -880,6 +926,8 @@ class OrderMailer
                 'exception' => class_basename($e),
                 'message' => $this->redact($e->getMessage()),
             ]);
+
+            return false;
         }
     }
 

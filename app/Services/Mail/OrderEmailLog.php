@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\Log;
 class OrderEmailLog
 {
     /** The closed list of kinds. Anything else is refused rather than stored. */
-    public const KINDS = ['confirmation', 'reminder_1', 'reminder_2'];
+    public const KINDS = ['confirmation', 'reminder_1', 'reminder_2', 'status_completed', 'feedback'];
 
     /** Claim (order, kind). True only for the one caller that inserted the row. */
     public function claim(Order|int $order, string $kind): bool

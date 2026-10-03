@@ -39,6 +39,9 @@ use Illuminate\Support\Facades\Log;
  * that is paid, cancelled, or moved by anybody between the two reminders
  * simply stops matching. Nothing has to be cancelled.
  *
+ * AND THE FEEDBACK REQUEST rides the same sweep: 3 hours after the Delivered
+ * email went — see feedbackDue().
+ *
  * TWO DRIVERS, ONE SWEEP: the scheduler (`kbb:order-reminders`, every minute,
  * when the cron line is installed) and OrderReminderTick (after an ordinary
  * page request, at most once a minute, when it is not). Both call sweep(); the
@@ -51,6 +54,10 @@ class OrderReminders
     public const SECOND_AFTER_HOURS = 24;
 
     public const GIVE_UP_AFTER_HOURS = 72;
+
+    public const FEEDBACK_AFTER_HOURS = 3;
+
+    public const FEEDBACK_GIVE_UP_DAYS = 7;
 
     public function __construct(
         private OrderMailer $mailer,
@@ -72,6 +79,10 @@ class OrderReminders
 
             if ($sent < $limit && $this->mailer->firstReminderEnabled()) {
                 $sent += $this->stage(1, $limit - $sent, $now);
+            }
+
+            if ($sent < $limit && $this->mailer->feedbackEnabled()) {
+                $sent += $this->feedbackStage($limit - $sent, $now);
             }
         } catch (\Throwable $e) {
             Log::warning('order reminder sweep failed', ['exception' => class_basename($e), 'message' => $e->getMessage()]);
@@ -130,6 +141,70 @@ class OrderReminders
                     ->where('later.status', '!=', 'draft')
                     ->whereNull('later.deleted_at');
             });
+    }
+
+    /**
+     * Orders whose Delivered email went at least FEEDBACK_AFTER_HOURS ago and
+     * have not been asked for feedback — Lane RL.
+     *
+     * The owner: "after 3 hours of the completed email sent, we will send them
+     * auto feedback email." The clock is the `status_completed` row
+     * OrderMailer writes only when that email really went, so an unticked
+     * box or a switched-off Delivered email means no feedback request. Still
+     * `completed` now, so an order refunded or cancelled in the meantime is
+     * skipped; given up after FEEDBACK_GIVE_UP_DAYS so the first sweep after
+     * a long quiet spell does not write to last month's customers.
+     */
+    public function feedbackDue(int $limit, ?Carbon $now = null): \Illuminate\Support\Collection
+    {
+        $now ??= now();
+
+        return Order::query()
+            ->select('orders.*')
+            ->join('order_emails as delivered', function ($j) {
+                $j->on('delivered.order_id', '=', 'orders.id')->where('delivered.kind', '=', 'status_completed');
+            })
+            ->where('orders.status', 'completed')
+            ->whereNull('orders.wc_order_id')
+            ->where('orders.email', '!=', '')
+            ->where(fn ($q) => $q->whereNull('orders.origin')->orWhere('orders.origin', '!=', \App\Services\Orders\SampleOrder::ORIGIN))
+            ->where('delivered.sent_at', '<=', $now->copy()->subHours(self::FEEDBACK_AFTER_HOURS))
+            ->where('delivered.sent_at', '>', $now->copy()->subDays(self::FEEDBACK_GIVE_UP_DAYS))
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('order_emails')
+                    ->whereColumn('order_emails.order_id', 'orders.id')
+                    ->where('order_emails.kind', 'feedback');
+            })
+            ->orderBy('delivered.sent_at')
+            ->limit(max(0, $limit))
+            ->get();
+    }
+
+    private function feedbackStage(int $limit, Carbon $now): int
+    {
+        $sent = 0;
+
+        foreach ($this->feedbackDue($limit, $now) as $order) {
+            if (! $this->log->claim($order, 'feedback')) {
+                continue;
+            }
+
+            if ($this->mailer->feedback($order)) {
+                $sent++;
+
+                try {
+                    $order->notes()->create([
+                        'author' => 'system',
+                        'is_customer_note' => false,
+                        'content' => sprintf('Emailed the customer the feedback request ("How is your glow?") to %s.', (string) $order->email),
+                    ]);
+                } catch (\Throwable) {
+                }
+            }
+        }
+
+        return $sent;
     }
 
     private function stage(int $stage, int $limit, Carbon $now): int

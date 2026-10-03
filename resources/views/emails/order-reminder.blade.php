@@ -30,6 +30,20 @@
         </tr>
     </table>
 
+    {{-- The owner: "we need to include and focus on the fast delivery, 100%
+         original products from the brand and Free random samples with order."
+         A plain three-line list on the current layout; the look-A restyle
+         comes later. Strings: email.reminder.why_* (InterfaceStrings). --}}
+    <p style="margin:18px 0 6px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;">{{ __('email.reminder.why_heading') }}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
+        @foreach ([['🚚', 'why_fast'], ['✔', 'why_original'], ['🎁', 'why_samples']] as [$icon, $key])
+            <tr>
+                <td width="28" valign="top" style="padding:5px 0;font-size:16px;line-height:1.3;">{{ $icon }}</td>
+                <td style="padding:5px 0;font-size:14px;line-height:1.45;color:{{ $c['ink2'] }};"><b style="color:{{ $c['ink'] }};">{{ __('email.reminder.' . $key) }}</b> — {{ __('email.reminder.' . $key . '_note') }}</td>
+            </tr>
+        @endforeach
+    </table>
+
     @include('emails.partials.items')
     @include('emails.partials.totals')
 
