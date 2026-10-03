@@ -577,8 +577,13 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * the "Complete your order" page (email.order_status.*, email.reminder.*,
      * email.feedback.*, email.confirmation.subject, store.order_pay.*), seeded
      * by 2027_07_25_000300_seed_order_email_arabic_drafts. Read off the run.
+     * ── 1,181 -> 1,212: LANE HB'S THIRTY-ONE ──────────────────────────────
+     * The new site footer (store.footer.help_*, discover/visit headings, the
+     * Dubai and Korea labels, four links, the offers box) and #KBeautyBliss
+     * Spotted (store.spotted.*), seeded by
+     * 2027_07_27_100100_seed_spotted_footer_arabic_drafts. Read off the run.
      */
-    expect($ui['drafts'])->toBe(1181, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1212, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

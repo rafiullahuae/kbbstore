@@ -5130,3 +5130,178 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
     .kbb-pgrid[data-skin="showcase-row"] .kbb-card-cart{
         grid-row:6;grid-column:1;margin-top:var(--sc-gap);padding:0 10px}
 }
+
+/* ══ #KBEAUTYBLISS SPOTTED — the homepage carousel and /kbeautybliss-spotted/ ══
+   (Lane HB, master plan row 55 item 4.) The owner's card pick is design B in
+   docs/home-preview/cards.html: a white polaroid frame, slightly tilted, a 4:5
+   photo with the handle on a dark top scrim, a caption line, and the heart
+   count only when one was entered. Every size is calc() on the row's own width;
+   the arrows and the swipe are ymal.js, which measures nothing. The values in
+   --spt-* come from App\Services\SpottedSettings::section(), Appearance →
+   #KBeautyBliss Spotted. */
+.kbb-home .sec.spt{--spt-gap:18px;--spt-per:var(--spt-per-d,5);padding-top:var(--spt-pt-d,8px);padding-bottom:var(--spt-pb-d,8px)}
+.kbb-home .sec.spt-lilac{background:linear-gradient(160deg,#FCEFF5 0%,#F3ECFF 100%)}
+.kbb-home .spt .spt-head{justify-content:center;text-align:center;margin-bottom:var(--spt-hg-d,24px)}
+.kbb-home .spt .spt-head :is(h1,h2){justify-content:center}
+.kbb-home .spt .spt-head p{margin-inline:auto;color:var(--ink-2);font-size:14.5px;max-width:58ch}
+.kbb-home .spt-stage{position:relative}
+.kbb-home .spt-track{display:grid;grid-auto-flow:column;gap:var(--spt-gap);list-style:none;margin:0;
+  grid-auto-columns:calc((100% - (var(--spt-per) - 1) * var(--spt-gap)) / var(--spt-per));
+  overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:none;
+  padding:12px 6px 20px;scroll-padding-inline:6px}
+.kbb-home .spt-track::-webkit-scrollbar{display:none}
+.kbb-home .spt-track:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px;border-radius:18px}
+.kbb-home .spt-track>.spt-cell{scroll-snap-align:start;min-width:0}
+.kbb-home .spt-cell{list-style:none;min-width:0}
+.kbb-home .spt-arr{position:absolute;top:calc(50% - 22px);z-index:3;width:44px;height:44px;border-radius:50%;border:1px solid var(--blush);background:#fff;color:var(--pink-deep);
+  display:grid;place-items:center;box-shadow:0 10px 22px -12px rgba(120,40,80,.55);transition:background .2s,color .2s,opacity .2s}
+.kbb-home .spt-arr svg{width:20px;height:20px}
+.kbb-home .spt-arr:hover:not(:disabled){background:var(--pink);border-color:var(--pink);color:#fff}
+.kbb-home .spt-arr:disabled{opacity:0;pointer-events:none}
+.kbb-home .spt-arr:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px}
+.kbb-home .spt-prev{inset-inline-start:calc(-1 * min(22px, var(--site-gutter, 16px)))}
+.kbb-home .spt-next{inset-inline-end:calc(-1 * min(22px, var(--site-gutter, 16px)))}
+[dir="rtl"] .kbb-home .spt-arr svg{transform:scaleX(-1)}
+.kbb-home .spt-foot{display:flex;justify-content:center;margin-top:var(--spt-bg-d,24px)}
+/* The card. */
+.kbb-home .spt-card{display:block;background:#fff;border-radius:18px;padding:10px 10px 12px;color:var(--ink);
+  box-shadow:0 18px 36px -26px rgba(120,40,80,.55),0 1px 2px rgba(42,34,40,.05);
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease)}
+.kbb-home .spt-tilt .spt-cell:nth-child(odd) .spt-card{transform:rotate(-1.2deg)}
+.kbb-home .spt-tilt .spt-cell:nth-child(even) .spt-card{transform:rotate(1.2deg)}
+.kbb-home .spt .spt-cell .spt-card:hover,.kbb-home .spt .spt-cell .spt-card:focus-visible{transform:rotate(0deg) translateY(-4px);box-shadow:0 24px 40px -24px rgba(120,40,80,.6)}
+.kbb-home .spt-card:focus-visible{outline:2px solid var(--pink-deep);outline-offset:3px}
+.kbb-home .spt-ph{position:relative;display:block;aspect-ratio:4/5;border-radius:12px;overflow:hidden;background:var(--pink-soft)}
+.kbb-home .spt-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.kbb-home .spt-ph::before{content:'';position:absolute;inset:0 0 auto;height:72px;background:linear-gradient(180deg,rgba(42,20,32,.55),rgba(42,20,32,0));z-index:1;pointer-events:none}
+.kbb-home .spt-top{position:absolute;top:10px;inset-inline:10px;z-index:2;display:flex;align-items:center;gap:7px;min-width:0;
+  color:#fff;font-size:12.5px;font-weight:600;line-height:1.2;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.kbb-home .spt-av{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF)}
+.kbb-home .spt-hd{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kbb-home .spt-cap{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;min-height:20px;font-size:13px;line-height:1.35}
+.kbb-home .spt-txt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.kbb-home .spt-likes{flex:none;display:inline-flex;align-items:center;gap:4px;color:var(--pink-deep);font-weight:700;font-size:12.5px}
+.kbb-home .spt-likes svg{width:13px;height:13px}
+.kbb-home .spt-sr,.kft-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+.kbb-home .spt .spt-all{text-transform:uppercase;letter-spacing:.09em;font-size:12.5px}
+/* The page: the same cards in a grid. */
+.kbb-home .spt-crumb{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+.kbb-home .spt-crumb a{color:var(--pink-deep)}
+.kbb-home .spt-page-sec .spt-head :is(h1,h2){font-size:clamp(26px,3vw,40px)}
+.kbb-home .spt-grid{display:grid;grid-template-columns:repeat(var(--spt-cols-d,4),minmax(0,1fr));gap:28px 22px;list-style:none;margin:0;padding:8px 6px 10px}
+.kbb-home .spt-empty{text-align:center;color:var(--ink-2);padding:30px 0}
+@media (max-width:900px){
+  .kbb-home .sec.spt{--spt-gap:12px;--spt-per:var(--spt-per-m,1.5);padding-top:var(--spt-pt-m,8px);padding-bottom:var(--spt-pb-m,8px)}
+  .kbb-home .spt .spt-head{margin-bottom:var(--spt-hg-m,16px)}
+  .kbb-home .spt .spt-head p{font-size:13.5px}
+  .kbb-home .spt-foot{margin-top:var(--spt-bg-m,16px)}
+  .kbb-home .spt-arr{width:36px;height:36px;top:calc(50% - 18px)}
+  .kbb-home .spt-arr svg{width:17px;height:17px}
+  .kbb-home .spt-prev{inset-inline-start:2px}
+  .kbb-home .spt-next{inset-inline-end:2px}
+  .kbb-home .spt-card{padding:8px 8px 10px;border-radius:16px}
+  .kbb-home .spt-cap{font-size:12.5px;margin-top:8px}
+  .kbb-home .spt-grid{grid-template-columns:repeat(var(--spt-cols-m,2),minmax(0,1fr));gap:18px 12px;padding-inline:4px}
+}
+@media (min-width:901px){
+  .kbb-home .spt.spt-noarr-d .spt-arr{display:none}
+}
+@media (max-width:900px){
+  .kbb-home .spt.spt-noarr-m .spt-arr{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .kbb-home .spt-card{transition:none}
+}
+
+/* ══ THE SITE FOOTER — the approved design (docs/home-preview/footer-final.html) ══
+   (Lane HB, master plan row 55.) WhatsApp-green help strip drifting slowly
+   within the green range, a white main block with a blush wash, a very big
+   centred name in light colours that slowly change, and a slim bottom bar.
+   `footer.kft` out-specifies the old dark `footer{}` rule above without
+   editing it, so Appearance → Footer → "Previous" still draws exactly as it
+   did. All motion is CSS and stops under prefers-reduced-motion. The big
+   name's size is its length (--kft-n, an integer the server prints): no
+   script measures anything. */
+footer.kft{background:#fff;color:var(--ink);padding:0;margin:0;overflow:hidden;font-size:14px;line-height:1.5}
+.kft a{color:inherit;text-decoration:none}
+.kft-wrap{max-width:var(--site-max,1320px);margin-inline:auto;padding-inline:var(--site-gutter,16px)}
+.kft-help{color:#fff;background:linear-gradient(110deg,#128C7E,#12A37A,#1EBE5D,#25D366,#1EBE5D,#12A37A,#128C7E);background-size:300% 100%;background-position:0% 50%}
+.kft-help-in{display:flex;align-items:center;gap:18px;padding-block:18px}
+.kft-help-ic{flex:none;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);display:grid;place-items:center}
+.kft-help-ic svg{width:24px;height:24px}
+.kft-help-tx{min-width:0;flex:1}
+.kft-help-h{margin:0;font-size:22px;line-height:1.2;font-weight:700;letter-spacing:-.01em;text-wrap:balance;color:#fff}
+.kft-chip{display:inline-flex;align-items:center;gap:6px;margin-inline-start:8px;vertical-align:3px;background:#fff;color:#063F37;border-radius:99px;padding:3px 11px;font-size:12.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.kft-chip::before{content:'';width:7px;height:7px;border-radius:50%;background:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.25)}
+.kft-help-p{margin:3px 0 0;font-size:14px;opacity:.92}
+.kft-help-bt{display:flex;gap:10px;flex:none}
+.kft-help-bt a{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:99px;font-weight:700;font-size:14px;white-space:nowrap}
+.kft-bt-p{background:#fff;color:#063F37;box-shadow:0 8px 18px -10px rgba(6,63,55,.6)}
+.kft-bt-o{border:1.5px solid rgba(255,255,255,.75);color:#fff}
+.kft-help-bt a:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.kft-main{background:radial-gradient(60% 120% at 0% 0%,#FFF4F7 0%,#fff 60%),#fff;padding-top:30px}
+.kft-grid{display:grid;grid-template-columns:1.35fr .8fr .9fr .8fr 1.25fr;gap:28px}
+.kft-grid.kft-grid-4{grid-template-columns:1.35fr 1fr 1fr 1fr}
+.kft-grid>*{min-width:0}
+.kft-logo{display:inline-block;font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.kft-logo b{color:var(--pink)}
+.kft-tag{margin:6px 0 12px;color:var(--ink-2);font-size:13.5px;max-width:32ch}
+.kft-soc{display:flex;gap:8px;flex-wrap:wrap}
+.kft-soc a{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--pink-soft);color:var(--pink-deep);border:1px solid #F7DCE4;transition:background .2s,color .2s}
+.kft-soc a:hover{background:var(--pink);color:#fff}
+.kft-soc svg{width:16px;height:16px}
+.kft-ch{margin:0 0 10px;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--pink-deep);font-weight:700}
+.kft-col ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:14px;color:var(--ink-2)}
+.kft-col a:hover{color:var(--pink-deep)}
+.kft-visit{display:grid;gap:8px;font-size:13px;color:var(--ink-2)}
+.kft-visit>div{display:flex;gap:8px;min-width:0}
+.kft-visit b{color:var(--ink);display:block;font-size:13.5px}
+.kft-visit svg{flex:none;width:14px;height:14px;margin-top:2px;color:var(--pink)}
+.kft-news{display:flex;gap:6px;margin-top:14px;max-width:340px}
+.kft-news input{flex:1;min-width:0;height:40px;border-radius:99px;border:1px solid #EAD7DE;padding:0 15px;font:inherit;font-size:13.5px;background:#fff;color:var(--ink)}
+.kft-news input:focus{outline:2px solid var(--pink);outline-offset:1px}
+.kft-news button{flex:none;height:40px;padding:0 16px;border:0;border-radius:99px;background:var(--pink);color:#fff;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
+.kft-name{margin:18px 0 0;text-align:center;font-weight:800;letter-spacing:-.045em;line-height:.86;white-space:nowrap;overflow:hidden;user-select:none;
+  font-size:min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14)));padding-bottom:.06em;
+  background:linear-gradient(90deg,#FFB3C8,#FFD1B3,#F8B4E4,#C9B8FF,#A8E6CF,#FFB3C8);background-size:300% 100%;background-position:0% 50%;
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.kft-bot{border-top:1px solid #F1E3E8;font-size:12.5px;color:var(--muted);background:#fff}
+.kft-bot-in{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
+.kft-legal{display:flex;gap:14px}
+.kft-legal a:hover{color:var(--pink-deep)}
+.kft-pay{display:flex;gap:6px;flex-wrap:wrap}
+.kft-pay span{border:1px solid #EADDE2;border-radius:99px;padding:2px 10px;font-weight:700;font-size:11px;color:var(--ink);background:#fff}
+.kft-motion .kft-help{animation:kft-drift 14s ease-in-out infinite alternate}
+.kft-motion .kft-name{animation:kft-drift 12s linear infinite alternate}
+@keyframes kft-drift{from{background-position:0% 50%}to{background-position:100% 50%}}
+@media (prefers-reduced-motion:reduce){
+  .kft-motion .kft-help,.kft-motion .kft-name{animation:none}
+  .kft-help-bt a:hover{transform:none}
+}
+/* Phones: the same footer, much shorter — the owner: "reduce the height on mobile". */
+@media (max-width:900px){
+  .kft-help-in{flex-wrap:wrap;gap:10px 12px;padding-block:14px}
+  .kft-help-ic{width:38px;height:38px}
+  .kft-help-ic svg{width:20px;height:20px}
+  .kft-help-h{font-size:17px}
+  .kft-chip{font-size:11.5px;padding:2px 9px;margin-inline-start:6px}
+  .kft-help-p{display:none}
+  .kft-help-bt{width:100%}
+  .kft-help-bt a{flex:1;height:40px;padding:0 12px;font-size:13.5px}
+  .kft-main{padding-top:20px}
+  .kft-grid,.kft-grid.kft-grid-4{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 12px}
+  .kft-brand{grid-column:1 / -1;display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px}
+  .kft-tag{margin:0;grid-column:1 / -1;grid-row:2;font-size:13px;max-width:none}
+  .kft-brand .kft-soc{grid-column:2;grid-row:1}
+  .kft-ch{margin-bottom:7px;font-size:10.5px}
+  .kft-col ul{gap:4px;font-size:13px}
+  .kft-contact{grid-column:1 / -1}
+  .kft-visit{grid-template-columns:1fr 1fr;gap:10px;font-size:12px}
+  .kft-news{max-width:none;margin-top:12px}
+  .kft-name{margin-top:14px}
+  .kft-bot-in{justify-content:center;text-align:center;padding-block:10px;gap:8px}
+}
+@media (max-width:380px){
+  .kft-brand .kft-soc a{width:30px;height:30px}
+  .kft-col ul{font-size:12.5px}
+}

@@ -186,6 +186,28 @@ final class InterfaceStrings
             // not here; 'COD' is an English abbreviation and is.
             'footer.copyright' => '© :year :store UAE',
             'footer.pay_cod' => 'COD',
+            // The new site footer (Lane HB, master plan row 55): the WhatsApp help
+            // strip, the Discover and Visit us columns, the offers form and the
+            // two policy links. No word "return" anywhere — the owner: "we don't
+            // offer returns so don't include any return word".
+            'footer.help_headline' => 'Find your perfect K-beauty match',
+            'footer.help_chip' => '24/7 available',
+            'footer.help_sub' => 'Ask us anything about your skin, a product or your order — we reply on WhatsApp.',
+            'footer.help_heading' => 'Help',
+            'footer.discover_heading' => 'Discover',
+            'footer.visit_heading' => 'Visit us',
+            'footer.visit_dubai' => 'Dubai, UAE',
+            'footer.visit_korea' => 'Korea',
+            'footer.link_brands' => 'Brands',
+            'footer.link_about' => 'About us',
+            'footer.link_journal' => 'Journal',
+            'footer.link_spotted' => '#KBeautyBliss',
+            'footer.link_privacy' => 'Privacy policy',
+            'footer.link_terms' => 'Terms',
+            'footer.follow_label' => 'Follow us',
+            'footer.news_placeholder' => 'Your email for offers',
+            'footer.news_label' => 'Your email',
+            'footer.news_button' => 'Join',
             // The shop's free-delivery line, printed in three places: the announcement
             // strip, the home page's delivery band and the home page's ticker. One key,
             // because it is one sentence; the amount arrives already formatted (and,
@@ -984,6 +1006,23 @@ final class InterfaceStrings
             'home.spotted_badge' => 'Shoppable',
             'home.spotted_subtitle' => 'Real routines from our community.',
             'home.spotted_link' => 'Discover more',
+            // #KBeautyBliss Spotted (Lane HB, master plan row 55 item 4): the
+            // homepage carousel and the /kbeautybliss-spotted/ page. The owner's
+            // own wording can replace each on Appearance → #KBeautyBliss Spotted;
+            // these are what an empty box prints.
+            'spotted.home_heading' => '#KBeautyBliss — Seen on Instagram',
+            'spotted.home_sub' => 'Real unboxings, shelfies and glow-ups from our K-beauty community across the UAE.',
+            'spotted.button' => 'See every #KBeautyBliss look',
+            'spotted.prev' => 'Previous posts',
+            'spotted.next' => 'More posts',
+            'spotted.likes' => 'likes',
+            'spotted.new_tab' => '(opens Instagram in a new tab)',
+            'spotted.page_h1' => '#KBeautyBliss Spotted',
+            'spotted.page_intro' => 'Our community’s real K-beauty moments — routines, unboxings and results from across the UAE. Tap a photo to see the post on Instagram or to shop what is in it.',
+            'spotted.seo_title' => '#KBeautyBliss Spotted — K-Beauty Routines from Our UAE Community',
+            'spotted.seo_desc' => 'Real Korean skincare routines, unboxings and results shared by K-Beauty Bliss customers across the UAE. See their posts and shop the products they love.',
+            'spotted.breadcrumb_label' => 'Breadcrumb',
+            'spotted.empty' => 'New posts are on their way — check back soon.',
             'home.bestsellers_heading' => 'Best sellers',
             'home.bestsellers_badge' => 'This month',
             'home.bestsellers_subtitle' => 'The products customers keep coming back for.',
