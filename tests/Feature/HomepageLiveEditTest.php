@@ -428,7 +428,13 @@ it('joins a section to its wording without growing a second box for it', functio
         // on a box that is on the tab it opens.
         expect(HomepageContent::TABS[$where['tab']][2])->toContain($where['key']);
 
-        $claimed[] = $where['key'];
+        // (2.60.370) A section may own a whole tab of controls — Big savings
+        // bundles owns its carousel tab — and then claims every key on it.
+        if (! empty($where['whole_tab'])) {
+            array_push($claimed, ...HomepageContent::TABS[$where['tab']][2]);
+        } else {
+            $claimed[] = $where['key'];
+        }
     }
 
     // Every flat setting this screen owns is claimed by exactly one section.

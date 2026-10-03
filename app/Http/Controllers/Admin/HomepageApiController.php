@@ -265,6 +265,9 @@ class HomepageApiController extends Controller
         'hero' => ['tab' => 'hero', 'key' => null, 'label' => 'the slides, their colours and their links'],
         'ticker' => ['tab' => 'copy', 'key' => 'home_ticker', 'label' => 'the chip it scrolls'],
         'about' => ['tab' => 'copy', 'key' => 'about_text', 'label' => 'the paragraph'],
+        // (2.60.370) The whole "Big savings bundles" tab is this section's: the
+        // carousel, the heading and the All sets button, laptop and phone.
+        'bundles' => ['tab' => 'bundles', 'key' => 'home_hb_title', 'label' => 'the carousel, the heading and the All sets button', 'whole_tab' => true],
     ];
 
     /**
