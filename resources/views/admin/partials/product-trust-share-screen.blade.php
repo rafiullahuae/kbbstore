@@ -226,7 +226,13 @@
         col.innerHTML = '<div class="mmcols"><div class="card mmcard">'
           + '<div class="mmhd"><b>' + escHtml(tab.label) + '</b><span>' + escHtml(tab.description) + '</span></div>'
           + '<div class="mmbody"><p class="pts-adm-note">Colours, sizes and spacing move in the preview as you change them. Words, the picture and the on/off switches appear there once you press <b>Save changes</b>.' + (tab.key === 'ts_share' ? ' The share sheet opens from the share icon beside the product title.' : '') + (tab.key === 'ts_card' ? ' WhatsApp remembers a link’s card for a while, so a product already shared can show its old card until WhatsApp refreshes it; new shares show the new card.' : '') + '</p>'
-          + tab.fields.map(control).join('') + '</div></div></div>';
+          + tab.fields.map(control).join('')
+          /* 2.60.367: "Make all share pictures now" — the website makes every
+             product's share picture itself, in slices (ShareImagesApiController).
+             Writes picture files only; saves no setting. */
+          + (tab.key === 'ts_card' ? '<div class="mmrow" style="display:block"><div class="mmlbl" style="margin-bottom:8px"><b>Share pictures</b><span>Each product gets its share picture the first time it is opened or shared. This makes all of them now, in the shape picked above (save first if you changed it). It only makes pictures; nothing else changes.</span></div>'
+            + '<button type="button" class="btn small" id="ptsShareMake">Make all share pictures now</button> <span id="ptsShareMsg" role="status" aria-live="polite"></span></div>' : '')
+          + '</div></div></div>';
       }
       var lede = document.getElementById('ppLede');
       if (lede) lede.textContent = 'The delivery box and “Authenticity Guaranteed” in the buy column, and the share icon beside the title with the sheet it opens — at both widths.';
@@ -339,6 +345,36 @@
       var box = document.querySelector('[data-pts-k="del_image"]'); if (box) box.value = '';
       var th = document.getElementById('ptsImgThumb'); if (th) th.innerHTML = thumb('');
       markDirty(); return;
+    }
+    if (t.id === 'ptsShareMake') {
+      e.stopPropagation(); e.preventDefault();
+      if (t.disabled) return;
+      t.disabled = true;
+      var out = document.getElementById('ptsShareMsg');
+      var url = ppBase().replace(/\/product-page$/, '/share-images');
+      var after = 0, total = null, seen = 0, made = 0, fresh = 0, skipped = 0;
+      var say = function (s) { if (out) out.textContent = s; };
+      say('Starting…');
+      try {
+        for (var guard = 0; guard < 2000; guard++) {
+          var r = await fetch(url, { method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': uToken(), Accept: 'application/json' },
+            body: JSON.stringify({ after: after }) });
+          var j = null;
+          try { j = await r.json(); } catch (e3) { j = null; }
+          if (r.status === 404 && (!j || (!j.message && !j.error))) { say('This button is not in the server’s route table yet. Clear the route cache (Platform → Cache) and reload.'); break; }
+          if (!r.ok || !j || !j.ok) { say((j && (j.error || j.message)) || 'Could not make the pictures.'); break; }
+          if (j.total !== null && j.total !== undefined) total = j.total;
+          made += j.made; fresh += j.fresh; skipped += j.skipped;
+          seen = made + fresh + skipped; after = j.after;
+          say((j.done ? 'Done: ' : 'Working… ') + made + ' made, ' + fresh + ' already up to date, ' + skipped + ' skipped' + (total ? ' — ' + seen + ' of ' + total : '') + '.');
+          if (j.done) break;
+        }
+      } catch (err) {
+        say('Stopped — check your connection, then press the button again; pictures already made are passed over quickly.');
+      }
+      t.disabled = false;
+      return;
     }
     if (t.id === 'ptsReset') {
       fields().forEach(function (f) { f.value = f.default; });

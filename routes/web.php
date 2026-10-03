@@ -909,6 +909,9 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Product page modules: visibility per device.
         Route::get('/product-page',  [\App\Http\Controllers\Admin\ProductPageApiController::class, 'show']);
         Route::post('/product-page', [\App\Http\Controllers\Admin\ProductPageApiController::class, 'save']);
+        // 2.60.367: "Make all share pictures now" on the Share · Link preview
+        // card tab. Its own capability, shareimages.make.
+        require __DIR__.'/share-images-admin.php';
 
         // Demo content on/off. Displays only; stores nothing.
         Route::get('/demo',  [\App\Http\Controllers\Admin\DemoApiController::class, 'show']);

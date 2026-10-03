@@ -372,6 +372,12 @@ final class AdminCapabilities
         // The RULES entry below carries the full argument.
         'cartpage.manage' => ['owner', 'manager', 'editor'],
 
+        // (2.60.367) "Make all share pictures now": writes the link-preview
+        // JPEGs under public/img-cache/share and nothing else. The same three
+        // roles as the Product page screen it sits on; its own capability so
+        // it can be narrowed on its own.
+        'shareimages.make' => ['owner', 'manager', 'editor'],
+
         // The set box's own appearance — the fanned member circles, the
         // "What's inside" popup and the saving, on the cart drawer, the cart
         // page, the checkout summary, the browsed rail, an order's detail page
@@ -1366,6 +1372,7 @@ final class AdminCapabilities
         ['*', 'admin-api/dividers', 'content.manage'],
         ['*', 'admin-api/product-styles', 'content.manage'],
         ['*', 'admin-api/product-page', 'content.manage'],
+        ['POST', 'admin-api/share-images', 'shareimages.make'],
         ['*', 'admin-api/cart-panel', 'content.manage'],
 
         /*
