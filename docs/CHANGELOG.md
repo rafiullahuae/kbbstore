@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.371
+**Product grid: space inside each card.** Apply after .370. No plugin change. No
+migration.
+
+| Your report | Now |
+|---|---|
+| "spacing controls for grid card, spacing between image, title, pricing, rating, add to cart … please give me on the grid page setting as marked" | **Appearance → Product grid → Space inside each card**, under the Spacing box you marked: six gaps, each with a Phone and a Desktop slider — Inside the card, Photo → first line, Brand → name (new), Name → stars (new), Above the price, Price → Add to cart. The same settings as Appearance → Product styles → Spacing & type (one setting, shown in both places). The preview on the right follows the sliders. Every product grid on the shop uses them. Measured on the real /shop card after saving: photo → name 16→24px, name → price 38→48px, price → Add to cart 12→20px on a desktop; nothing moves until a slider does; page width = window at 390 and 1280 |
+
+Built from `release/2.60.371` = 2.60.370's tree (`171c960`) plus the card-spacing
+commit only. The order emails merged on the main branch (Lane RL) are **held**:
+the real emails do not yet match the approved previews (9d6dea4), and they ship
+with the emails lane's kit port.
+
+Files (2): app/Services/ProductStyles.php, resources/views/admin/app.blade.php.
+
 ## 2.60.370
 **Homepage: Big savings bundles as a carousel.** Apply after .369. No plugin
 change. Runs one migration (a cache clear).
