@@ -149,6 +149,9 @@ class ProductLayout
         /* Lane RG — the tab row's laptop gap, and Tabby & Tamara on a laptop. */
         'tab_body_gap_d' => '--pl-tab-body-gap-d',
         'paylater_gap_d' => '--pl-paylater-gap-d',
+
+        /* Lane RI — Buy these together, once he drags it into the buy column. */
+        'bt_gap_d' => '--pl-bt-gap-d',
     ];
 
     /** key => [type, label, default, help, options] */
@@ -255,6 +258,10 @@ class ProductLayout
         // (Lane RG) .pdp .pm-paylater{margin-block-start:16px} from 881px.
         'paylater_gap_d' => ['range', 'Space above Tabby & Tamara · laptop', 16,
             'Between the short description and the two pay-later cards on a laptop. On a phone the cards are a section of Mobile sections and take its spacing.',
+            ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        // (Lane RI) read only while Buy these together sits in the buy column.
+        'bt_gap_d' => ['range', 'Space above Buy these together · right column', 20,
+            'Only once Desktop sections has Buy these together in the Buy column: the space above it on a laptop. Under the two columns it keeps its own spacing.',
             ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
 
         /*
@@ -440,7 +447,7 @@ class ProductLayout
             ['buybox_gap', 'buybox_gap_d', 'head_gap', 'head_gap_d', 'rate_gap', 'rate_gap_d',
                 'desc_gap_m', 'desc_gap_d', 'more_gap_m', 'more_gap_d', 'opt_gap_m', 'opt_gap_d', 'paylater_gap_d',
                 'name_price_gap', 'rule_pad', 'rule_pad_d', 'rule_gap',
-                'trust_gap', 'trust_line_gap', 'chips_gap']],
+                'trust_gap', 'trust_line_gap', 'chips_gap', 'bt_gap_d']],
         'ty_buy' => ['Type · Buy column',
             'Font sizes and weights for the top of the page. The product name has a phone size and a laptop size because those are the two numbers the page really draws.',
             ['brand_s', 'title_m', 'title_d', 'title_w', 'price_s', 'price_w', 'was_s', 'off_s',
@@ -712,6 +719,9 @@ class ProductLayout
             /* Lane RG */
             '--pl-tab-body-gap-d:'.$n('tab_body_gap_d').'px',
             '--pl-paylater-gap-d:'.$n('paylater_gap_d').'px',
+
+            /* Lane RI */
+            '--pl-bt-gap-d:'.$n('bt_gap_d').'px',
         ];
 
         $out = [];

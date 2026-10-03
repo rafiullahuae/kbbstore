@@ -1773,3 +1773,57 @@ a{color:inherit;text-decoration:none}
    until its device's class is on the wrapper, so a cached page serves both. */
 @media (max-width:880px){.pdp-page:not(.pm-rbar) .bb-ratebar{display:none}}
 @media (min-width:881px){.pdp-page:not(.pd-rbar) .bb-ratebar{display:none}}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUY THESE TOGETHER IN THE RIGHT COLUMN.                           (Lane RI)
+
+     "ONLY IN DESKTOP: allow me option to bring the buy together section to
+      the right collumn, by drag n drop."
+
+   Appearance → Product page → Desktop sections: drag "Buy these together"
+   from the full-width list into the Buy column list. The template then draws
+   the ONE `.kbb-fbt` element as the last child of `.buybox` (outside the cart
+   form) instead of after `.pdp` — App\Services\ProductDesktopSections'
+   header. Its key in the buy order makes that order non-default, so RG's
+   `.pdsb-on` flex column (block 3 above) is on, and this block gives it its
+   order, its one gap and a compact layout.
+
+   ▲ NOTHING HERE MATCHES ON A PAGE WHERE HE HAS NOT MOVED IT: every selector
+     needs `.kbb-fbt` to be a child of `.buybox`, which it is only then.
+
+   ▲ THE PHONE IS TODAY'S PHONE. `.buybox` is display:contents below 881px,
+     so the element is still an item of `.pdp-page`; the first rule gives it
+     exactly the declarations `.pdp-page > .kbb-fbt` gives it (block 3 of the
+     phone page), and puts back the full-bleed `max-width:100vw` that
+     `.pdp-page .buybox > *{max-width:100%}` — equal specificity to
+     `.kbb-fbt.bt`, and later — would otherwise take from it. Measured
+     pixel-identical at 390 in both placements (docs/ri-shots/).
+
+   ▲ COMPACT, NOT SQUEEZED. The column is ~450–790px wide (1000–1920), too
+     narrow for the laptop panel's cards-beside-the-button row, so the block
+     stacks: cards, then the saving and total row, then the button, the full
+     width of the column. Four cards fill the rail by the phone's own formula
+     (`--bt-per`), a fifth and sixth wait past the edge and the one-off peek
+     shows half of the fifth. Nothing measures anything.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width:880px){
+  .pdp-page .buybox > .kbb-fbt{order:var(--pm-o-buytogether,13);margin-block:var(--pm-dm-buytogether,0px) 0;max-width:100vw}
+  .pm-off-buytogether .buybox > .kbb-fbt{display:none}
+}
+@media (min-width:881px){
+  .pdp-page.pdsb-on .buybox > .kbb-fbt{order:var(--pdsb-o-buytogether,12);margin-block-start:var(--pl-bt-gap-d,20px)}
+  .pdp-page.pdsb-f-buytogether .buybox > .kbb-fbt{margin-block-start:0}
+  .pdp-page.pd-off-buytogether .buybox > .kbb-fbt{display:none}
+
+  .pdp .buybox > .kbb-fbt.bt{margin-inline:0;width:auto;max-width:none;min-inline-size:0;border-radius:14px;padding:14px 0 16px}
+  .pdp .buybox > .kbb-fbt.bt::before{border-radius:inherit}
+  .pdp .buybox > .kbb-fbt.bt h2{font-size:16px;padding:0 14px;margin:0 0 10px}
+  .pdp .buybox > .kbb-fbt .bt-row{display:block}
+  .pdp .buybox > .kbb-fbt .bt-card{flex:0 0 calc((100% - var(--bt-gap) * (var(--bt-per,4) - 1)) / var(--bt-per,4))}
+  .pdp .buybox > .kbb-fbt .bt-foot{display:flex;flex-direction:column;gap:10px;max-width:none;padding:12px 14px 0}
+  .pdp .buybox > .kbb-fbt.bt-more.is-peek .bt-card:first-child{animation:btpeek 2.1s cubic-bezier(.33,.0,.2,1) .12s 1 both}
+}
+@media (min-width:881px) and (prefers-reduced-motion:reduce){
+  .pdp .buybox > .kbb-fbt.bt-more .bt-card{flex-basis:calc((100% - var(--bt-gap) * 3.5) / 4.5)}
+  .pdp .buybox > .kbb-fbt.bt-more.is-peek .bt-card:first-child{animation:none}
+}

@@ -303,20 +303,20 @@ class ProductPageApiController extends Controller
                 return response()->json(['ok' => false, 'error' => 'Unknown part: '.implode(', ', $unknown)], 422);
             }
 
-            if (array_key_exists('order', $data['dsections'])) {
-                $dsecOrder = ProductDesktopSections::validate($data['dsections']['order']);
+            /* (Lane RI) `order` and `buy` are validated TOGETHER: each by its
+               own rule, and Buy these together — the one key both may hold —
+               in one of them only (ProductDesktopSections::validatePlacement()). */
+            if (array_key_exists('order', $data['dsections']) || array_key_exists('buy', $data['dsections'])) {
+                $dsecPlaced = app(ProductDesktopSections::class)->validatePlacement(
+                    array_key_exists('order', $data['dsections']), $data['dsections']['order'] ?? null,
+                    array_key_exists('buy', $data['dsections']), $data['dsections']['buy'] ?? null,
+                );
 
-                if (is_string($dsecOrder)) {
-                    return response()->json(['ok' => false, 'error' => $dsecOrder], 422);
+                if (is_string($dsecPlaced)) {
+                    return response()->json(['ok' => false, 'error' => $dsecPlaced], 422);
                 }
-            }
 
-            if (array_key_exists('buy', $data['dsections'])) {
-                $dsecBuy = ProductDesktopSections::validateBuy($data['dsections']['buy']);
-
-                if (is_string($dsecBuy)) {
-                    return response()->json(['ok' => false, 'error' => $dsecBuy], 422);
-                }
+                [$dsecOrder, $dsecBuy] = $dsecPlaced;
             }
 
             if (array_key_exists('laptop', $data['dsections'])) {

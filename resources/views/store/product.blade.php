@@ -253,7 +253,12 @@
         'short' => (bool) $product->short_description && $kbbBlurb !== '' && ! $kbbShortBelow,
         'paylater' => $kbbMsec->payLater() !== [],
         'bundles' => $isVar || ! empty($bundles) || $product->type === 'set',
+        // (Lane RI) only when he has dragged it in: drawn() asks no query.
+        'buytogether' => $kbbDsec->buyTogetherRight() && \App\Services\ProductDesktopSections::drawn($modules, $buyTogether ?? null, $alsoLike ?? null)['buytogether'],
     ];
+    /* (Lane RI) Buy these together in the buy column: the ONE `.kbb-fbt`
+       element is drawn at the end of `.buybox` instead of after `.pdp`. */
+    $kbbDsecBtRight = $kbbDsec->buyTogetherRight();
 
     /* ═══════════════════════════════════════════════════════════════════════
        THE THREE PROPOSED LAYOUTS ARE GONE. (Lane PP2)
@@ -955,11 +960,23 @@
            whether this shop can take either. The section switch above
            (Catalog → Product page → Sections) still decides whether the row is
            drawn at all; this decides what it may say when it is. --}}<div class="{{ $modules->classFor('paychips') }} paychips pm-sec pm-paychips">@foreach (\App\Support\PaymentChips::row('product') as $kbbChip)<span>{{ $kbbChip }}</span>@endforeach<span>{{ __('store.footer.pay_cod') }}</span></div>
+@if ($kbbDsecBtRight)
+{{-- (Lane RI) Placed in the buy column (Desktop sections): the same partial,
+     drawn here INSTEAD of below — one element, one id, one fbt.js binding.
+     Outside the cart form on purpose: its checkboxes must not submit with Add
+     to cart. On a phone `.buybox` is display:contents, so it is still an item
+     of `.pdp-page` in Mobile sections' order. --}}
+@unless ($modules->hidden('fbt'))
+@include('partials.fbt')
+@endunless
+@endif
     </div>
   </div>
 
+@unless ($kbbDsecBtRight)
   @unless ($modules->hidden('fbt'))
 @include('partials.fbt')
+@endunless
 @endunless
 
   <!-- details tabs -->
