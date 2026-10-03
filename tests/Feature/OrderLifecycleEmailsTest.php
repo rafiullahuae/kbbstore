@@ -462,6 +462,25 @@ it('runs the sweep after an ordinary page request, at most once a minute, with n
     expect(is_file(OrderReminderTick::markerPath()))->toBeTrue();
 });
 
+it('costs an ordinary page no query when the heartbeat has run within the minute', function () {
+    // The per-page half of the heartbeat's cost; StorefrontQueryBudgetTest
+    // holds the sweep itself off for this reason. Mutation: drop the marker
+    // check in OrderReminderTick::onRequest() and the sweep's queries appear.
+    rlOrder(['created_at' => now()->subMinutes(45)]);
+    @touch(OrderReminderTick::markerPath());
+
+    $seen = [];
+    DB::listen(function ($q) use (&$seen) {
+        if (str_contains($q->sql, 'order_emails')) {
+            $seen[] = $q->sql;
+        }
+    });
+
+    $this->get('/track-my-order/')->assertOk();
+
+    expect($seen)->toBe([]);
+});
+
 it('is scheduled every minute for the cron line, and the command sends what is due', function () {
     Mail::fake();
     rlOrder(['created_at' => now()->subMinutes(45)]);
