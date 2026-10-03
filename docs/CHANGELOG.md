@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.369
+**Desktop: no sideways scroll from the menu bar.** Apply after .368. No plugin
+change. No migration.
+
+| Your report | Now |
+|---|---|
+| "in DESKTOP above 1000px width, there's right side horizontal scroll space coming" | Cause, from your browser console: page 1425 / window 1414, the closed two-column dropdown of the last menu item (Skincare) sticking out past the window. The menu bar now clips sideways at the window's edges, and up to 1599px the last two menus (Brands, Skincare) open leftward from their own edge so they show whole. Measured with a menu of your shape: page = window at 1000, 1100, 1280, 1414, 1440, 1650 and 1920 (it was +247 / +122 / +30 / +12 at 1100–1440). From 1600px up the menus open as before; phones unaffected |
+
+Files (4): public/build/assets/kbb-BHzpBMhn.css, public/build/assets/kbb-LgMeNG0s.css, public/build/manifest.json, resources/css/kbb/kbb.css.
+
 ## 2.60.368
 **Buy these together: no giant tick on tap, and every tap ticks or unticks.**
 Apply after .367. No plugin change. No migration.
