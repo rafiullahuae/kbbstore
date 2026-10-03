@@ -423,10 +423,14 @@ class EmailBranding
      * the template as an array so it supplies the line breaks and escapes
      * every line -- operator text never reaches the email as markup.
      *
-     * DUBAI FALLS BACK TO THE STORE ADDRESS saved under Store → Business
-     * Details (store_street, store_locality, store_region, store_postcode,
-     * store_country) when its own box is blank. KOREA HAS NO FALLBACK: nothing
-     * is invented for it, and it prints only once somebody types it.
+     * NEITHER HAS A FALLBACK (Lane EM, at the owner's word): "the Dubai and
+     * Korea addresses are not known yet ... hide each one while it is empty.
+     * Never invent an address." Dubai used to fall back to Store → Business
+     * Details' street and city, which printed an address under "Dubai" that
+     * nobody had typed into the Dubai box -- for a shop whose registered
+     * address is not its Dubai pickup point, a wrong address on every receipt.
+     * Each place now prints only once somebody types it on Emails → Design &
+     * branding → Footer addresses.
      *
      * @return list<array{place: string, lines: list<string>}>
      */
@@ -435,10 +439,6 @@ class EmailBranding
         $out = [];
 
         $dubai = $this->lines($this->mail->get('mail_address_dubai'));
-
-        if ($dubai === []) {
-            $dubai = $this->storeAddressLines();
-        }
 
         if ($dubai !== []) {
             $out[] = ['place' => 'dubai', 'lines' => $dubai];
@@ -451,37 +451,6 @@ class EmailBranding
         }
 
         return $out;
-    }
-
-    /**
-     * The address under Store → Business Details, as lines. Empty unless a
-     * street or a locality is actually saved: a country on its own is not an
-     * address, and printing "United Arab Emirates" under "Dubai" would only
-     * look like one.
-     *
-     * @return list<string>
-     */
-    public function storeAddressLines(): array
-    {
-        $get = fn (string $key): string => trim((string) ($this->settings->get($key, '') ?? ''));
-
-        $street = $get('store_street');
-        $locality = $get('store_locality');
-
-        if ($street === '' && $locality === '') {
-            return [];
-        }
-
-        $place = OrderEmailPresenter::cityLine($locality, $get('store_region'));
-        $postcode = $get('store_postcode');
-
-        $lines = [
-            $street,
-            trim($place . ($postcode !== '' ? ' ' . $postcode : '')),
-            OrderEmailPresenter::countryName($get('store_country')),
-        ];
-
-        return array_values(array_filter($lines, static fn (string $l) => $l !== ''));
     }
 
     /** @return list<string> */
@@ -502,7 +471,8 @@ class EmailBranding
     public const FOOTER_LINKS = [
         'terms' => ['Terms & conditions', '/terms-and-conditions/'],
         'privacy' => ['Privacy policy', '/privacy-policy/'],
-        'returns' => ['Refunds & returns', '/refund_returns/'],
+        // NO returns link (Lane EM, at the owner's word): the shop does not
+        // offer returns, and a footer link to a returns policy promises one.
     ];
 
     /**
@@ -512,7 +482,7 @@ class EmailBranding
      *    in the questions? box. just keep address, terms pages, un-subscribe
      *    option etc."
      *
-     * So: the two addresses, the three legal pages, and the unsubscribe —
+     * So: the two addresses, the two legal pages, and the unsubscribe —
      * and NOT WhatsApp, email or Instagram, which belong to the "Questions?"
      * help box (support() above). Data only: the Look A restyle draws it.
      *

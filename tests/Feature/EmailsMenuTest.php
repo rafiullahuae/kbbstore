@@ -458,7 +458,19 @@ it('prints the Dubai and Korea addresses at the foot of a customer email, escape
      */
 });
 
-it('takes the Dubai address from Store → Business Details until one is typed, and invents nothing for Korea', function () {
+it('hides each footer address while its own box is empty, and never borrows one from Business Details', function () {
+    /*
+     * THE DEFECT (Lane EM): EmailBranding::addresses() fell back to Store →
+     * Business Details' street and city when the Dubai box was blank, so a shop
+     * that had filled in its registered address -- which the LocalBusiness
+     * schema needs anyway -- printed it under a "Dubai" heading on every
+     * receipt, as if the owner had typed it there. The owner: the Dubai and
+     * Korea addresses "are not known yet ... hide each one while it is empty.
+     * Never invent an address."
+     *
+     * MUTATION: restore `if ($dubai === []) { $dubai = $this->storeAddressLines(); }`
+     * and the first expectation is red with the Al Wasl Road address in it.
+     */
     $settings = app(SettingsService::class);
     $settings->set('store_street', 'Shop 4, Al Wasl Road');
     $settings->set('store_locality', 'Dubai');
@@ -466,10 +478,15 @@ it('takes the Dubai address from Store → Business Details until one is typed, 
     $settings->set('store_country', 'AE');
     rkFresh();
 
-    $addresses = app(EmailBranding::class)->addresses();
+    expect(app(EmailBranding::class)->addresses())->toBe([]);
 
-    expect($addresses)->toBe([
-        ['place' => 'dubai', 'lines' => ['Shop 4, Al Wasl Road', 'Dubai', 'United Arab Emirates']],
+    $html = (string) (new OrderConfirmation(rkOrder()))->render();
+    expect($html)->not->toContain('Al Wasl Road');
+
+    // Korea alone prints alone.
+    rkSave(['mail_address_korea' => 'Seoul office']);
+    expect(app(EmailBranding::class)->addresses())->toBe([
+        ['place' => 'korea', 'lines' => ['Seoul office']],
     ]);
 });
 
@@ -540,10 +557,25 @@ it('ships the email font as Outfit with the brand colours, and a stable public f
 
     expect($present['headingFont'])->toStartWith("'Outfit',")
         ->and($present['bodyFont'])->toContain('sans-serif')
-        ->and($present['fontFaceCss'])->toContain('/fonts/email/outfit-latin.woff2')
-        // The file the URL names is shipped, and is the shop's own Outfit.
-        ->and(is_file(base_path('public/fonts/email/outfit-latin.woff2')))->toBeTrue()
-        ->and(md5_file(base_path('public/fonts/email/outfit-latin.woff2')))->toBe(md5_file(resource_path('fonts/outfit/outfit-latin.woff2')));
+        ->and($present['fontFaceCss'])->toContain('/mail/font/outfit-latin.woff2');
+
+    /*
+     * THE URL IS A ROUTE, NOT A FILE UNDER public/ (Lane EM). It used to name
+     * public/fonts/email/outfit-latin.woff2, which the updater refuses to ship
+     * (only public/build/ is allowed) and which would sit outside the live web
+     * root even if it did: every email asked for a font that 404s on the shop.
+     *
+     * MUTATION: set EmailLook::FONT_PATH back to '/fonts/email/outfit-latin.woff2'
+     * and the request below is a 404 -- red.
+     */
+    Illuminate\Support\Facades\Route::middleware('web')->group(base_path('routes/mail-kit.php'));
+    $path = (string) parse_url(App\Services\Mail\EmailLook::FONT_PATH, PHP_URL_PATH);
+    $res = $this->get($path);
+    $res->assertOk();
+    expect($res->headers->get('Content-Type'))->toBe('font/woff2')
+        ->and(md5((string) file_get_contents($res->baseResponse->getFile()->getPathname())))
+        ->toBe(md5_file(resource_path('fonts/outfit/outfit-latin.woff2')))
+        ->and(is_dir(base_path('public/fonts/email')))->toBeFalse();
 });
 
 it('stores a font only from its own list and a colour only as #rrggbb', function () {
@@ -589,16 +621,18 @@ it('keeps phone and email out of the bottom footer data: addresses, legal pages 
     // "don't include phone email, what is repeated in the questions? box.
     //  just keep address, terms pages, un-subscribe option etc."
     expect(array_keys($footer))->toBe(['addresses', 'links', 'unsubscribe'])
-        ->and(array_column($footer['links'], 'kind'))->toBe(['terms', 'privacy', 'returns'])
+        // NO returns link: the shop does not offer returns (the owner, Lane EM).
+        // MUTATION: put 'returns' back in EmailBranding::FOOTER_LINKS -- red.
+        ->and(array_column($footer['links'], 'kind'))->toBe(['terms', 'privacy'])
         ->and($footer['links'][0]['url'])->toEndWith('/terms-and-conditions/')
-        ->and($footer['links'][2]['url'])->toEndWith('/refund_returns/')
+        ->and(json_encode($footer))->not->toContain('refund_returns')
         ->and($footer['unsubscribe'])->toBeNull()
         ->and(json_encode($footer))->not->toContain('wa.me')
         ->and(json_encode($footer))->not->toContain('mailto:')
         ->and(json_encode($footer))->toContain('Seoul office');
 
     // And every linked page is a real route on the shop.
-    foreach (['/terms-and-conditions', '/privacy-policy', '/refund_returns'] as $path) {
+    foreach (['/terms-and-conditions', '/privacy-policy'] as $path) {
         expect(collect(Illuminate\Support\Facades\Route::getRoutes()->getRoutes())->contains(fn ($r) => '/' . $r->uri() === $path))->toBeTrue($path);
     }
 });

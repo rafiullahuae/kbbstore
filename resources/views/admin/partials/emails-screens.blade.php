@@ -476,7 +476,7 @@
   function frameUrl() { return base() + '/preview?v=' + (state.frameRev || 0); }
 
   function paintBranding() {
-    var d = state.branding, v = d.values || {}, fb = (d.fallbacks || {}).mail_address_dubai || [];
+    var d = state.branding, v = d.values || {};
     var lk = d.look || {}, fonts = d.fonts || {};
 
     function input(key, label, help, type) {
@@ -512,8 +512,8 @@
       + '</div>';
 
     var foot = '<div class="sec-title" style="margin:12px 0 0">Footer of every email</div><div class="eml-card">'
-      + area('mail_address_dubai', 'Dubai address', fb.length ? 'Filled from Store → Business Details (street, city) when those are set — that is what prints while this is blank.' : 'Filled from Store → Business Details (street, city) when those are set. Neither is set yet.', fb.length ? fb.join('\n') : '[Dubai address]')
-      + area('mail_address_korea', 'Korea address', '', '[Korea address — owner to paste]')
+      + area('mail_address_dubai', 'Dubai address', 'One line per line. Left blank, the Dubai address is not printed at all.', '')
+      + area('mail_address_korea', 'Korea address', 'One line per line. Left blank, the Korea address is not printed at all.', '')
       + '<div class="mlf-grid">' + input('mail_support_whatsapp', 'WhatsApp', '') + input('mail_support_email', 'Email', '', 'email') + '</div>'
       + input('mail_support_instagram', 'Instagram', '')
       + input('mail_signature', 'Signature', '')

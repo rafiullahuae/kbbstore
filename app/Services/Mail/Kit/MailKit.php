@@ -75,11 +75,14 @@ final class MailKit
         'red' => ['#FCEBEA', '#C0392B'], 'ink' => ['#F1EDEF', '#2A2228'],
     ];
 
-    /** The three policy pages in the footer, in the approved order. */
+    /**
+     * The policy pages in the footer, in the approved order -- WITHOUT the
+     * preview's "Returns & refunds": the owner, after approving the previews,
+     * "no returns link, the shop does not offer returns" (Lane EM).
+     */
     public const FOOTER_LINKS = [
         'terms' => ['email.kit.footer_terms', '/terms-and-conditions/'],
         'privacy' => ['email.kit.footer_privacy', '/privacy-policy/'],
-        'returns' => ['email.kit.footer_returns', '/refund_returns/'],
     ];
 
     /** The header's three links. */

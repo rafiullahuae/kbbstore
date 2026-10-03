@@ -500,10 +500,6 @@ class EmailsApiController extends Controller
             'look' => app(EmailLook::class)->values(),
             'fonts' => array_map(static fn (array $f): string => $f[0], EmailLook::FONTS),
             'look_defaults' => EmailLook::DEFAULTS,
-            // What a blank box falls back to, so the screen can say so.
-            'fallbacks' => [
-                'mail_address_dubai' => $branding->storeAddressLines(),
-            ],
             // Exactly what the next order email's footer will print.
             'footer' => [
                 'support' => $branding->support(),

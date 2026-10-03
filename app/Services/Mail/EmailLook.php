@@ -69,12 +69,19 @@ final class EmailLook
     ];
 
     /**
-     * The STABLE public address of the font file. The storefront serves Outfit
-     * from public/build/assets under a hashed name that changes with every
-     * asset build; an email sent today is opened next month, so it needs a
-     * path that never moves. Shipped by this package as public/fonts/email/.
+     * The STABLE public address of the font file -- the email kit's route
+     * (routes/mail-kit.php, MailKit::FONT_PATH), never a file under public/.
+     *
+     * THE DEFECT THIS REPLACED (Lane EM): Lane RK shipped the font as
+     * public/fonts/email/outfit-latin.woff2 and pointed every email at
+     * /fonts/email/…. On the live shop that address 404s twice over: the
+     * updater accepts nothing under public/ except public/build/
+     * (UpdateGuard::ALLOWED_PREFIXES), and the web root is a different
+     * directory from the app root (CLAUDE.md), so the file never reaches the
+     * place the URL names. Every email would have fallen back to the system
+     * font while every test here stayed green against the repo's own public/.
      */
-    public const FONT_PATH = '/fonts/email/outfit-latin.woff2';
+    public const FONT_PATH = \App\Services\Mail\Kit\MailKit::FONT_PATH;
 
     public function __construct(private SettingsService $settings) {}
 
