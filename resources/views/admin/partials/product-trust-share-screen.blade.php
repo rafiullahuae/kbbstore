@@ -73,7 +73,7 @@
   if (typeof window.paintProductPage !== 'function' || window.paintProductPage.__pts) return;
 
   /** The tab keys this file owns. ProductTrustShare::TABS. */
-  var OURS = ['ts_delivery', 'ts_auth', 'ts_share', 'ts_space'];
+  var OURS = ['ts_delivery', 'ts_auth', 'ts_share', 'ts_card', 'ts_space'];
   var DIRTY = false;
 
   function data() { return (typeof PP !== 'undefined' && PP && Array.isArray(PP.trust)) ? PP.trust : []; }
@@ -225,7 +225,7 @@
       if (col) {
         col.innerHTML = '<div class="mmcols"><div class="card mmcard">'
           + '<div class="mmhd"><b>' + escHtml(tab.label) + '</b><span>' + escHtml(tab.description) + '</span></div>'
-          + '<div class="mmbody"><p class="pts-adm-note">Colours, sizes and spacing move in the preview as you change them. Words, the picture and the on/off switches appear there once you press <b>Save changes</b>.' + (tab.key === 'ts_share' ? ' The share sheet opens from the share icon beside the product title.' : '') + '</p>'
+          + '<div class="mmbody"><p class="pts-adm-note">Colours, sizes and spacing move in the preview as you change them. Words, the picture and the on/off switches appear there once you press <b>Save changes</b>.' + (tab.key === 'ts_share' ? ' The share sheet opens from the share icon beside the product title.' : '') + (tab.key === 'ts_card' ? ' WhatsApp remembers a link’s card for a while, so a product already shared can show its old card until WhatsApp refreshes it; new shares show the new card.' : '') + '</p>'
           + tab.fields.map(control).join('') + '</div></div></div>';
       }
       var lede = document.getElementById('ppLede');

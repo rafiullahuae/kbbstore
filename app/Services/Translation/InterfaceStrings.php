@@ -1214,6 +1214,11 @@ final class InterfaceStrings
              * QA's button.
              */
             'product.pts_sheet_heading' => 'Share this product with friends',
+            // 2.60.365 — the link preview card's shipped wording (ProductTrustShare::text()).
+            'product.pts_card_p1' => 'Express delivery all over UAE & Gulf',
+            'product.pts_card_p2' => '100% original products from the brand',
+            'product.pts_card_p3' => 'Accepts Tabby & Tamara',
+            'product.pts_card_msg' => 'See what I’ve found on K-Beauty Bliss 💖',
             'product.pts_share_btn' => 'Share this product',
             'product.pts_tile_messages' => 'Messages',
             'product.pts_tile_email' => 'Email',

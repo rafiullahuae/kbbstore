@@ -195,10 +195,50 @@ class ProductTrustShare
             'Move a platform up or down to change where its tile sits in the sheet.'],
         'share_utm' => ['bool', 'Tag shared links for analytics', true,
             'Adds utm_source=whatsapp (and so on) to the link a visitor shares, so visits from shares show up by platform in your analytics. The page’s canonical address and its og:url stay clean, so search engines are unaffected.'],
+
+        /* ═══════════ the link preview card (2.60.365) ═════════════════════
+           "icon point is fine. but give options to chooose from backend and
+           control everything." Template C ships ON as he picked it: the
+           product name, three points with their own icons split by " · ",
+           and "See what I've found on K-Beauty Bliss 💖" above the link.
+           App\Support\ShareCard reads these; the card's title and
+           description are og:title / og:description on a product page only
+           (the Google <meta name="description"> is not touched). */
+        'card_on' => ['bool', 'Use this card when a product is shared', true,
+            'The title and the points below are what WhatsApp, Telegram, iMessage and Facebook print under the picture. Off puts back the page title and the short description.'],
+        'card_title' => ['select', 'Card title', 'name',
+            'The bold line under the picture.',
+            ['name' => 'Product name', 'name_price' => 'Product name – price', 'name_shop' => 'Product name | shop name']],
+        'card_shop' => ['text', 'Shop name (for “Product name | shop name”)', 'K-Beauty Bliss', 'Plain text.'],
+        'card_icons' => ['select', 'Point style', 'icons',
+            'What stands before each point.',
+            ['icons' => 'Each point’s own icon', 'ticks' => 'A tick ✓', 'none' => 'Nothing']],
+        'card_p1_on' => ['bool', 'Point 1', true, 'Show this point on the card.'],
+        'card_p1_icon' => ['text', 'Point 1 · icon', '🚚', 'One emoji or symbol. Used when Point style is “Each point’s own icon”.'],
+        'card_p1_text' => ['text', 'Point 1 · text', 'Express delivery all over UAE & Gulf', 'Plain text.'],
+        'card_p2_on' => ['bool', 'Point 2', true, 'Show this point on the card.'],
+        'card_p2_icon' => ['text', 'Point 2 · icon', '✅', 'One emoji or symbol.'],
+        'card_p2_text' => ['text', 'Point 2 · text', '100% original products from the brand', 'Plain text.'],
+        'card_p3_on' => ['bool', 'Point 3', true, 'Show this point on the card.'],
+        'card_p3_icon' => ['text', 'Point 3 · icon', '💳', 'One emoji or symbol.'],
+        'card_p3_text' => ['text', 'Point 3 · text', 'Accepts Tabby & Tamara', 'Plain text.'],
+        'card_sep' => ['select', 'Between the points', 'dot',
+            'WhatsApp prints the card description as one paragraph, so the points are joined on one line.',
+            ['dot' => 'A dot ·', 'bullet' => 'A bullet •', 'bar' => 'A bar |', 'space' => 'A space only']],
+        'card_domain' => ['bool', 'End the points with your domain', false,
+            'WhatsApp already prints the domain (extrabeauty.ae) under the card by itself; this adds it to the points as well.'],
+        'card_msg' => ['text', 'Message above the link', 'See what I’ve found on K-Beauty Bliss 💖',
+            'What the Share button types above the product link. Plain text; never put a web address in it — WhatsApp previews the first link it finds.'],
+        'card_msg_use' => ['select', 'Use the message for', 'chat',
+            'Which share tiles send the message above instead of the name, price and description.',
+            ['chat' => 'WhatsApp, Telegram, Messages and More', 'whatsapp' => 'WhatsApp only', 'off' => 'None (name, price and description as before)']],
+        'card_picture' => ['select', 'Picture shape', 'wide',
+            'Square shows bigger in WhatsApp (like the noon example); Facebook and LinkedIn crop a square to a wide strip. After changing it, run php artisan kbb:share-images once.',
+            ['wide' => 'Wide 1200×630 (best for Facebook / LinkedIn)', 'square' => 'Square 1200×1200 (bigger in WhatsApp)']],
     ];
 
     /**
-     * Four tabs. Same `tab => [label, description, [keys]]` shape as
+     * Five tabs. Same `tab => [label, description, [keys]]` shape as
      * ProductLayout::TABS, so the console's existing tab strip draws them.
      */
     public const TABS = [
@@ -214,6 +254,12 @@ class ProductTrustShare
             ['share_on', 'share_heading', 'share_whatsapp', 'share_messenger', 'share_pinterest', 'share_telegram',
                 'share_snapchat', 'share_sms', 'share_email', 'share_copy', 'share_native',
                 'share_facebook', 'share_x', 'share_linkedin', 'share_order', 'share_utm']],
+        'ts_card' => ['Share · Link preview card',
+            'What a shared product link looks like in WhatsApp, Telegram, iMessage and Facebook: the picture shape, the title, the points under it and the message above the link.',
+            ['card_on', 'card_title', 'card_shop', 'card_icons',
+                'card_p1_on', 'card_p1_icon', 'card_p1_text', 'card_p2_on', 'card_p2_icon', 'card_p2_text',
+                'card_p3_on', 'card_p3_icon', 'card_p3_text', 'card_sep', 'card_domain',
+                'card_msg', 'card_msg_use', 'card_picture']],
         'ts_space' => ['Trust · Spacing',
             'The air above and below the delivery box and the authenticity line — separately for a phone (880px and narrower, the page’s own turning point) and a laptop.',
             [
@@ -416,6 +462,10 @@ class ProductTrustShare
             'auth_label' => 'store.product.pts_auth_label',
             'auth_text' => 'store.product.pts_auth_text',
             'share_heading' => 'store.product.pts_sheet_heading',
+            'card_p1_text' => 'store.product.pts_card_p1',
+            'card_p2_text' => 'store.product.pts_card_p2',
+            'card_p3_text' => 'store.product.pts_card_p3',
+            'card_msg' => 'store.product.pts_card_msg',
         ];
 
         if (isset($keyed[$key]) && $value === (string) self::fields()[$key]['default']) {

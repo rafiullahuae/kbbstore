@@ -100,6 +100,19 @@ final class ShareImage
     /** Below ImageVariants::DIR, so one cache directory holds every derivative. */
     public const DIR = 'img-cache/share';
 
+    /**
+     * (2.60.365) The SQUARE card's directory, beside the wide one. Appearance
+     * → Product page → Share · Link preview card → "Picture shape" picks which
+     * one og:image names; each shape keeps its own files, so switching back
+     * and forth never serves a picture of the other shape.
+     */
+    public const DIR_SQUARE = 'img-cache/share-sq';
+
+    /** The square card's side, and the smallest a small source shrinks it to. */
+    public const SQUARE = 1200;
+
+    public const MIN_SQUARE = 600;
+
     public const WIDTH = 1200;
 
     public const HEIGHT = 630;
@@ -177,7 +190,7 @@ final class ShareImage
             return null;
         }
 
-        $target = public_path(self::DIR.'/'.$loc['fsRel'].'.jpg');
+        $target = public_path(self::dir().'/'.$loc['fsRel'].'.jpg');
 
         if (! is_file($target) || (int) @filemtime($target) < (int) @filemtime($loc['file'])) {
             return null;
@@ -189,7 +202,7 @@ final class ShareImage
             return null;
         }
 
-        $url = $loc['prefix'].'/'.self::DIR.'/'.$loc['rel'].'.jpg';
+        $url = $loc['prefix'].'/'.self::dir().'/'.$loc['rel'].'.jpg';
         $path = (string) (parse_url($url, PHP_URL_PATH) ?: '');
 
         return ['url' => $url, 'path' => $path, 'width' => (int) $info[0], 'height' => (int) $info[1]];
@@ -209,6 +222,22 @@ final class ShareImage
         return $ua !== '' && preg_match(self::PREVIEW_FETCHERS, $ua) === 1;
     }
 
+    /** Whether the owner picked the square card. Never throws: any failure is the wide card. */
+    public static function square(): bool
+    {
+        try {
+            return app(\App\Services\ProductTrustShare::class)->choice('card_picture') === 'square';
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /** The directory of the picked shape. */
+    public static function dir(): string
+    {
+        return self::square() ? self::DIR_SQUARE : self::DIR;
+    }
+
     /** Register one after-response encode for this photograph, at most once per lock window. */
     public static function makeAfterResponse(string $image): void
     {
@@ -216,7 +245,7 @@ final class ShareImage
             return;
         }
 
-        if (! Cache::add('kbb.share-image.'.sha1($image), 1, self::LOCK_SECONDS)) {
+        if (! Cache::add('kbb.share-image.'.sha1($image.'|'.self::dir()), 1, self::LOCK_SECONDS)) {
             return;
         }
 
@@ -253,7 +282,7 @@ final class ShareImage
         }
 
         if (($found = self::find($image)) !== null) {
-            return ['made' => false, 'bytes' => (int) @filesize(public_path(self::DIR.'/'.$loc['fsRel'].'.jpg')),
+            return ['made' => false, 'bytes' => (int) @filesize(public_path(self::dir().'/'.$loc['fsRel'].'.jpg')),
                 'width' => $found['width'], 'height' => $found['height'], 'quality' => 0, 'reason' => 'fresh'];
         }
 
@@ -276,7 +305,7 @@ final class ShareImage
             return $none('could not decode');
         }
 
-        [$cw, $ch, $dx, $dy, $dw, $dh] = self::geometry($sw, $sh);
+        [$cw, $ch, $dx, $dy, $dw, $dh] = self::geometry($sw, $sh, self::square());
 
         $out = imagecreatetruecolor($cw, $ch);
 
@@ -308,7 +337,7 @@ final class ShareImage
             return $none('could not encode');
         }
 
-        $target = public_path(self::DIR.'/'.$loc['fsRel'].'.jpg');
+        $target = public_path(self::dir().'/'.$loc['fsRel'].'.jpg');
         $dir = \dirname($target);
 
         if (! is_dir($dir) && ! @mkdir($dir, 0755, true) && ! is_dir($dir)) {
@@ -335,19 +364,20 @@ final class ShareImage
      *
      * @return array{0: int, 1: int, 2: int, 3: int, 4: int, 5: int} [canvasW, canvasH, x, y, w, h]
      */
-    public static function geometry(int $sw, int $sh): array
+    public static function geometry(int $sw, int $sh, bool $square = false): array
     {
-        $ch = self::HEIGHT;
+        [$W, $H, $min] = $square ? [self::SQUARE, self::SQUARE, self::MIN_SQUARE] : [self::WIDTH, self::HEIGHT, self::MIN_HEIGHT];
+        $ch = $H;
 
         // A source that cannot fill the full card at its own size shrinks the
         // card with it, down to the large-card floor.
-        $fit = min(self::WIDTH / $sw, self::HEIGHT / $sh);
+        $fit = min($W / $sw, $H / $sh);
 
         if ($fit > 1) {
-            $ch = max(self::MIN_HEIGHT, min(self::HEIGHT, (int) ceil(max($sh, $sw * self::HEIGHT / self::WIDTH))));
+            $ch = max($min, min($H, (int) ceil(max($sh, $sw * $H / $W))));
         }
 
-        $cw = (int) round($ch * self::WIDTH / self::HEIGHT);
+        $cw = (int) round($ch * $W / $H);
         $scale = min($cw / $sw, $ch / $sh);
         $dw = max(1, (int) round($sw * $scale));
         $dh = max(1, (int) round($sh * $scale));
@@ -381,9 +411,15 @@ final class ShareImage
                 }
             }
 
-            $file = public_path(self::DIR.'/'.$fsRel.'.jpg');
+            $gone = false;
 
-            return is_file($file) && @unlink($file);
+            // Both shapes: a photograph that has gone away takes both cards with it.
+            foreach ([self::DIR, self::DIR_SQUARE] as $dir) {
+                $file = public_path($dir.'/'.$fsRel.'.jpg');
+                $gone = (is_file($file) && @unlink($file)) || $gone;
+            }
+
+            return $gone;
         } catch (\Throwable $e) {
             return false;
         }

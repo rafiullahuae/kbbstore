@@ -29,7 +29,9 @@ use App\Services\ProductTrustShare;
  *
  * ── WHAT EACH PLATFORM IS GIVEN ─────────────────────────────────────────────
  *
- *   WhatsApp    text = "<name> – <price>" ⏎ <blurb> ⏎ <url>.
+ *   WhatsApp    text = "<name> – <price>" ⏎ <blurb> ⏎ <url>; since 2.60.365, while
+ *               the link preview card is on, "<card message>" ⏎ <url> instead
+ *               (App\Support\ShareCard::message(), also Telegram, SMS, More).
  *   Messenger   phone: fb-messenger://share/?link=<url> (the app's own share
  *               composer). Laptop: Facebook's sharer, whose window has "Send
  *               in Messenger" — Facebook's web Send dialog needs an app id this
@@ -99,7 +101,7 @@ final class ProductShare
 
             [$name, $colour] = ProductTrustShare::NETWORKS[$key];
             $url = $ts->on('share_utm') ? self::tag($facts['url'], $key) : $facts['url'];
-            $href = self::href($key, $url, $facts);
+            $href = self::href($key, $url, $facts, ShareCard::message($ts, $key));
 
             if ($href === null) {
                 continue;
@@ -139,7 +141,8 @@ final class ProductShare
     {
         return [
             'title' => $facts['name'],
-            'text' => trim($facts['headline']."\n".$facts['blurb']),
+            // (2.60.365) The card's message when "Use the message for" covers More.
+            'text' => ShareCard::message($ts, 'native') ?? trim($facts['headline']."\n".$facts['blurb']),
             'url' => $ts->on('share_utm') ? self::tag($facts['url'], 'native') : $facts['url'],
         ];
     }
@@ -195,10 +198,26 @@ final class ProductShare
     }
 
     /** @param array{name: string, headline: string, blurb: string, url: string, image: ?string} $f */
-    private static function href(string $key, string $url, array $f): ?string
+    private static function href(string $key, string $url, array $f, ?string $card = null): ?string
     {
         $q = static fn (array $params): string => http_build_query($params, '', '&', PHP_QUERY_RFC3986);
         $message = implode("\n", array_filter([$f['headline'], $f['blurb'], $url], static fn ($s) => $s !== ''));
+
+        /*
+         * (2.60.365) The link preview card's message — "See what I’ve found on
+         * K-Beauty Bliss 💖" then the link, as the owner asked — on the tiles
+         * Share · Link preview card → "Use the message for" names. The card
+         * itself (picture, name, points, domain) is drawn by the app from the
+         * page's og: tags, so the message carries no name or blurb of its own.
+         */
+        if ($card !== null) {
+            return match ($key) {
+                'whatsapp' => 'https://wa.me/?'.$q(['text' => $card."\n".$url]),
+                'telegram' => 'https://t.me/share/url?'.$q(['url' => $url, 'text' => $card]),
+                'sms' => 'sms:?&'.$q(['body' => $card."\n".$url]),
+                default => self::href($key, $url, $f),
+            };
+        }
 
         return match ($key) {
             'whatsapp' => 'https://wa.me/?'.$q(['text' => $message]),

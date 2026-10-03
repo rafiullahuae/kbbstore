@@ -188,6 +188,13 @@ class Seo
 
         $desc = self::describe($ctx, $tokens, $sep);
 
+        // (2.60.365) The link preview card — App\Support\ShareCard. On a
+        // product page whose card is on, og:/twitter: title and description
+        // are the card's; the <title> and the Google description are not.
+        $card = $type === 'product' && is_array($ctx['share_card'] ?? null) ? $ctx['share_card'] : null;
+        $ogTitle = is_string($card['title'] ?? null) && $card['title'] !== '' ? $card['title'] : $title;
+        $ogDesc = is_string($card['description'] ?? null) && $card['description'] !== '' ? $card['description'] : $desc;
+
         $url    = self::canonical($ctx['url'] ?? null, $base);
         $image  = self::absolute($ctx['image'] ?? ($s['og_default_image'] ?? null), $base);
         /*
@@ -233,8 +240,8 @@ class Seo
         // Open Graph
         $out[] = '<meta property="og:type" content="' . ($type === 'product' ? 'product' : ($type === 'article' ? 'article' : 'website')) . '">';
         $out[] = '<meta property="og:site_name" content="' . $e($siteName) . '">';
-        $out[] = '<meta property="og:title" content="' . $e($title) . '">';
-        if ($desc)  $out[] = '<meta property="og:description" content="' . $e($desc) . '">';
+        $out[] = '<meta property="og:title" content="' . $e($ogTitle) . '">';
+        if ($ogDesc)  $out[] = '<meta property="og:description" content="' . $e($ogDesc) . '">';
         if ($url)   $out[] = '<meta property="og:url" content="' . $e($url) . '">';
         /*
          * THE PREVIEW PICTURE, which on a product page is the JPEG share copy
@@ -284,8 +291,8 @@ class Seo
         // Twitter card
         $out[] = '<meta name="twitter:card" content="' . ($image ? 'summary_large_image' : 'summary') . '">';
         if (!empty($s['twitter_handle'])) $out[] = '<meta name="twitter:site" content="' . $e($s['twitter_handle']) . '">';
-        $out[] = '<meta name="twitter:title" content="' . $e($title) . '">';
-        if ($desc)  $out[] = '<meta name="twitter:description" content="' . $e($desc) . '">';
+        $out[] = '<meta name="twitter:title" content="' . $e($ogTitle) . '">';
+        if ($ogDesc)  $out[] = '<meta name="twitter:description" content="' . $e($ogDesc) . '">';
         if ($preview['url']) $out[] = '<meta name="twitter:image" content="' . $e($preview['url']) . '">';
 
         // JSON-LD structured data

@@ -438,6 +438,12 @@ it('publishes absolute, plain-text Open Graph tags with the picture size, alt an
     imagepng($img, $file);
     imagedestroy($img);
 
+    // og:description is the short description while the link preview card is
+    // off; the card's points are pinned in ShareCardTest (2.60.365).
+    app(ProductTrustShare::class)->save(['card_on' => false]);
+    \App\Models\Setting::flushMap();
+    \App\Services\SettingsService::forgetMemo();
+
     try {
         $product = ptsProduct([
             'name' => 'Lift & Glow "Serum"',
@@ -554,7 +560,7 @@ it('includes each block exactly once, on the product page and nowhere it should 
 
 /* ═════════════════════════════════════════════════════════════ the screen ═══ */
 
-it('serves the four Trust tabs on Appearance → Product page and saves them as their own half', function () {
+it('serves the Trust and Share tabs on Appearance → Product page and saves them as their own half', function () {
     /*
      * MUTATION NOTE — RUN. Remove the unknown-key check in
      * ProductPageApiController::save()'s trust branch and the 422 expectation
@@ -564,7 +570,7 @@ it('serves the four Trust tabs on Appearance → Product page and saves them as 
 
     $body = $this->getJson('/admin-api/product-page')->assertOk()->json();
 
-    expect(array_column($body['trust'], 'key'))->toBe(['ts_delivery', 'ts_auth', 'ts_share', 'ts_space'])
+    expect(array_column($body['trust'], 'key'))->toBe(['ts_delivery', 'ts_auth', 'ts_share', 'ts_card', 'ts_space'])
         ->and($body['preview']['trust_props']['del']['del_bg'])->toBe('--pts-bg');
 
     $count = array_sum(array_map(fn ($t) => count($t['fields']), $body['trust']));

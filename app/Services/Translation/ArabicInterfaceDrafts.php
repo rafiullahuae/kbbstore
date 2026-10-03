@@ -640,6 +640,11 @@ final class ArabicInterfaceDrafts
             'store.product.pts_share_on' => 'شارك عبر :network',
             // Lane QB — the share sheet.
             'store.product.pts_sheet_heading' => 'شارك هذا المنتج مع أصدقائك',
+            // 2.60.365 — the link preview card.
+            'store.product.pts_card_p1' => 'توصيل سريع إلى جميع أنحاء الإمارات والخليج',
+            'store.product.pts_card_p2' => 'منتجات أصلية 100% من العلامة التجارية',
+            'store.product.pts_card_p3' => 'الدفع عبر تابي وتمارا',
+            'store.product.pts_card_msg' => 'شاهد ما وجدته في K-Beauty Bliss 💖',
             'store.product.pts_share_btn' => 'مشاركة هذا المنتج',
             'store.product.pts_tile_messages' => 'الرسائل',
             'store.product.pts_tile_email' => 'البريد',

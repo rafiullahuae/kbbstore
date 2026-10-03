@@ -255,6 +255,9 @@ class ProductController extends Controller
                     'share_image' => \App\Support\ShareImage::forPage(
                         \App\Support\ImageVariants::rootRelative((string) ($kbbShareSource ?? ''))
                     ),
+                    // (2.60.365) The link preview card's title and points —
+                    // og:/twitter: only. Null when the card is switched off.
+                    'share_card' => \App\Support\ShareCard::forProduct($product),
                     'url' => !empty($override['canonical']) ? $override['canonical'] : ($base . $product->url()),
                     'breadcrumb' => $this->breadcrumbTrail($product),
                     'noindex' => !empty($override['noindex']),

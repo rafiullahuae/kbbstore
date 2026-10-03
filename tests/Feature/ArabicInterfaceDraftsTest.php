@@ -563,8 +563,14 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * order pages (store.buy_together.saving, bundle_badge, bundle_row,
      * email.totals.bundle), seeded by
      * 2027_07_19_000200_seed_buy_together_bundle_arabic_drafts. Read off the run.
+     *
+     * ── 1,111 -> 1,115: THE LINK PREVIEW CARD'S FOUR (2.60.365) ────────────
+     *
+     * The card's three points and the message above a shared link
+     * (store.product.pts_card_p1..p3, pts_card_msg), seeded by
+     * 2027_07_23_000200_seed_share_card_arabic_drafts. Read off the run.
      */
-    expect($ui['drafts'])->toBe(1111, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1115, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

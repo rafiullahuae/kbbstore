@@ -307,6 +307,11 @@ it('builds every platform link on the server, encoded once, with the product lin
      *  · Use PHP_QUERY_RFC1738 in href() and the `%20` expectation is red.
      *  · Change `sms:?&` to `sms:?` and the SMS expectation is red.
      */
+    // The name–price–description message, which is what a tile sends while
+    // Share · Link preview card → "Use the message for" is None. The card's
+    // own message is pinned in ShareCardTest (2.60.365).
+    qbSet(['card_msg_use' => 'off']);
+
     $product = qbProduct([
         'name' => 'Rosé "Glow" Toner & Mist — تونر',
         'short_description' => '<p>Lift &amp; glow, "dewy" skin — ترطيب عميق. See https://other.example/x for more.</p>',
@@ -744,6 +749,7 @@ it('carries the sheet’s words in the interface strings, with Arabic drafts', f
 });
 
 it('builds the native share payload from the product, tagged for analytics', function () {
+    qbSet(['card_msg_use' => 'off']); // the card's message: ShareCardTest (2.60.365)
     $ts = app(ProductTrustShare::class);
     $facts = ['name' => 'N', 'headline' => 'N – AED 5', 'blurb' => 'B', 'url' => 'https://shop.test/product/n/', 'image' => null];
 
