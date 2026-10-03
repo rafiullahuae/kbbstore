@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>K-Beauty Bliss — Brand and Instagram card designs</title>
+<style>
+@font-face{font-family:'Outfit';src:url('outfit-latin.woff2') format('woff2');font-weight:100 900}
+:root{--pink-soft:#FFF0F4;--blush:#FCE0E8;--pink:#E0567B;--pink-deep:#C13E63;--ink:#2A2228;--ink-2:#5E545A;--muted:#8C828A;--gutter:clamp(16px,3vw,40px)}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 'Outfit',system-ui,sans-serif;color:var(--ink);background:#FFF8F5}
+.wrap{max-width:1320px;margin:0 auto;padding:30px var(--gutter)}
+h2{margin:6px 0 4px;font-size:24px}h3{margin:26px 0 12px;font-size:18px}h3 span{font-weight:400;color:var(--ink-2);font-size:14px;margin-left:8px}
+.row{display:grid;gap:16px}.r6{grid-template-columns:repeat(6,1fr)}.r5{grid-template-columns:repeat(5,1fr)}
+/* brand A — photo, frosted label (as on the homepage preview) */
+.bA{border-radius:20px;overflow:hidden;position:relative;aspect-ratio:4/5;box-shadow:0 14px 30px -22px rgba(42,34,40,.45)}
+.bA .lb{position:absolute;left:10px;right:10px;bottom:10px;background:rgba(255,255,255,.88);border-radius:14px;padding:10px;text-align:center}.bA b{display:block}.bA span{font-size:11.5px;color:var(--muted)}
+/* brand B — arch photo + name under, editorial */
+.bB{text-align:center}.bB .im{aspect-ratio:3/4;border-radius:999px 999px 18px 18px;overflow:hidden;position:relative;box-shadow:0 16px 32px -24px rgba(193,62,99,.6)}
+.bB b{display:block;margin-top:12px;font-size:16px}.bB span{font-size:12px;color:var(--pink-deep);letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+/* brand C — photo with gradient and name on the image, hover lift */
+.bC{border-radius:22px;overflow:hidden;position:relative;aspect-ratio:1}.bC::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(42,20,32,.72))}
+.bC .t{position:absolute;left:14px;right:14px;bottom:12px;color:#fff;z-index:1;display:flex;justify-content:space-between;align-items:flex-end}.bC b{font-size:17px}.bC i{font-style:normal;width:30px;height:30px;border-radius:50%;background:#fff;color:var(--pink-deep);display:grid;place-items:center}
+/* phone logo tiles */
+.logos{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:380px}.lg{height:72px;border-radius:14px;background:#fff;border:1px solid #F1E4E9;display:grid;place-items:center;font-size:18px}
+/* instagram A — glass play + Shop the look (homepage preview) */
+.iA{position:relative;aspect-ratio:9/16;border-radius:22px;overflow:hidden;box-shadow:0 20px 40px -26px rgba(120,40,80,.6)}
+.iA::before,.iB .im::before,.iC .im::before{content:'';position:absolute;inset:0 0 auto;height:70px;background:linear-gradient(180deg,rgba(42,20,32,.5),transparent);z-index:1}
+.top{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;color:#fff;font-size:12.5px;font-weight:600;text-shadow:0 1px 6px rgba(0,0,0,.35);z-index:2}
+.av{width:28px;height:28px;border-radius:50%;border:2px solid #fff;background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF)}
+.play{position:absolute;top:50%;left:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(42,20,32,.35);border:1px solid rgba(255,255,255,.7);backdrop-filter:blur(6px);display:grid;place-items:center;color:#fff;z-index:2}
+.shop{position:absolute;left:10px;right:10px;bottom:10px;background:#fff;border-radius:14px;padding:8px;display:flex;gap:9px;align-items:center;font-size:12px;z-index:2}.shop .t{width:36px;height:36px;border-radius:9px}.shop b{display:block;font-size:12.5px}.shop span{color:var(--pink-deep);font-weight:700}
+/* instagram B — polaroid frame with caption + heart count */
+.iB{background:#fff;border-radius:18px;padding:10px 10px 14px;box-shadow:0 18px 36px -26px rgba(120,40,80,.55);transform:rotate(-1.2deg)}.iB:nth-child(even){transform:rotate(1.2deg)}
+.iB .im{aspect-ratio:4/5;border-radius:12px;position:relative;overflow:hidden}
+.iB .cap{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px}.iB .cap b{color:var(--pink-deep)}
+/* instagram C — reel with product strip under, magazine */
+.iC{border-radius:24px;overflow:hidden;background:#fff;box-shadow:0 18px 40px -28px rgba(120,40,80,.6)}
+.iC .im{aspect-ratio:4/5;position:relative}
+.iC .pr{display:flex;align-items:center;gap:10px;padding:12px}.iC .pr .t{width:44px;height:44px;border-radius:12px;flex:none}.iC .pr b{display:block;font-size:13.5px;line-height:1.25}.iC .pr span{font-size:12.5px;color:var(--ink-2)}
+.iC .pr a{margin-left:auto;height:34px;padding:0 14px;border-radius:99px;background:var(--pink);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
+@media (max-width:900px){.r6,.r5{grid-template-columns:repeat(2,1fr)}.r6 > :nth-child(n+5),.r5 > :nth-child(n+5){display:none}}
+</style></head><body><div class="wrap">
+<h2>Brands — laptop card designs</h2>
+<h3>A · Photo with a frosted label <span>(on the homepage preview)</span></h3><div class="row r6" id="bA"></div>
+<h3>B · Arch photo, name underneath <span>editorial, soft</span></h3><div class="row r6" id="bB"></div>
+<h3>C · Full photo, name on the image <span>bold, magazine</span></h3><div class="row r6" id="bC"></div>
+<h3>Phones — brand logos only <span>(same for A, B and C)</span></h3><div class="logos" id="lg"></div>
+<h2 style="margin-top:44px">#KBeautyBliss Spotted — Instagram card designs</h2>
+<h3>A · Reel with glass play button and “Shop the look” <span>(on the homepage preview)</span></h3><div class="row r5" id="iA"></div>
+<h3>B · Polaroid frames, slightly tilted <span>playful, scrapbook</span></h3><div class="row r5" id="iB"></div>
+<h3>C · Reel card with the product underneath <span>shoppable, clean</span></h3><div class="row r5" id="iC"></div>
+</div>
+<script>
+const PAL=[['#FCE4EC','#F48FB1'],['#E3F2FD','#64B5F6'],['#E8F5E9','#81C784'],['#FFF3E0','#FFB74D'],['#F3E5F5','#BA68C8'],['#E0F7FA','#4DD0E1'],['#FFF8E1','#FFD54F'],['#FBE9E7','#FF8A65']];
+const bottle=(k,w=70)=>{const [bg,fg]=PAL[k%8];return `<svg viewBox="0 0 120 200" width="${w}"><rect x="42" y="8" width="36" height="30" rx="6" fill="#2A2228" opacity=".85"/><rect x="26" y="36" width="68" height="156" rx="${k%2?16:30}" fill="${fg}"/><rect x="36" y="88" width="48" height="56" rx="6" fill="#fff"/></svg>`};
+const sc=k=>{const [bg,fg]=PAL[k%8];return `background:radial-gradient(120% 90% at 20% 10%,#fff 0%,${bg} 45%,${fg}66 100%)`};
+const art=(k,w)=>`<div style="position:absolute;inset:0;display:grid;place-items:center">${bottle(k,w)}</div>`;
+const B=['Anua','Beauty of Joseon','COSRX','Torriden','SKIN1004','Medicube'];
+bA.innerHTML=B.map((b,k)=>`<div class="bA" style="${sc(k)}">${art(k)}<div class="lb"><b>${b}</b><span>${12+k*3} products</span></div></div>`).join('');
+bB.innerHTML=B.map((b,k)=>`<div class="bB"><div class="im" style="${sc(k+2)}">${art(k+2)}</div><span>${12+k*3} products</span><b>${b}</b></div>`).join('');
+bC.innerHTML=B.map((b,k)=>`<div class="bC" style="${sc(k+4)}">${art(k+4,64)}<div class="t"><b>${b}</b><i>→</i></div></div>`).join('');
+lg.innerHTML=[['Anua',"Outfit",300,'.25em'],['Arencia','Georgia',400,'.02em'],['SKIN1004','Outfit',500,'.35em'],['celimax','Outfit',800,0],['Beauty of Joseon','Georgia',400,0],['medicube','Outfit',600,0]].map(l=>`<div class="lg" style="font-family:${l[1]};font-weight:${l[2]};letter-spacing:${l[3]}">${l[0]}</div>`).join('');
+const IG=[['@sara.glows','Torriden Serum','1.2k'],['@kbeauty.bliss','Unboxing day ✨','860'],['@lina.skin','Anua Toner','2.4k'],['@kbeauty.bliss','Medicube Set','640'],['@noor.routine','SKIN1004 Ampoule','1.1k']];
+iA.innerHTML=IG.map((g,k)=>`<div class="iA" style="${sc(k+2)}">${art(k+2,84)}<div class="top"><span class="av"></span>${g[0]}</div><span class="play">▶</span><div class="shop"><span class="t" style="${sc(k+5)}"></span><div><b>${g[1]}</b><span>Shop the look →</span></div></div></div>`).join('');
+iB.innerHTML=IG.map((g,k)=>`<div class="iB"><div class="im" style="${sc(k+1)}">${art(k+1,78)}<div class="top"><span class="av"></span>${g[0]}</div></div><div class="cap"><span>${g[1]}</span><b>♥ ${g[2]}</b></div></div>`).join('');
+iC.innerHTML=IG.map((g,k)=>`<div class="iC"><div class="im" style="${sc(k+3)}">${art(k+3,84)}<div class="top"><span class="av"></span>${g[0]}</div><span class="play">▶</span></div><div class="pr"><span class="t" style="${sc(k+6)}"></span><div><b>${g[1]}</b><span>AED ${[79,62,89,129,72][k]}</span></div><a>Shop</a></div></div>`).join('');
+</script></body></html>
