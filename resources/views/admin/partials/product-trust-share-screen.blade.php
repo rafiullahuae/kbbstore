@@ -231,7 +231,7 @@
              product's share picture itself, in slices (ShareImagesApiController).
              Writes picture files only; saves no setting. */
           + (tab.key === 'ts_card' ? '<div class="mmrow" style="display:block"><div class="mmlbl" style="margin-bottom:8px"><b>Share pictures</b><span>Each product gets its share picture the first time it is opened or shared. This makes all of them now, in the shape picked above (save first if you changed it). It only makes pictures; nothing else changes.</span></div>'
-            + '<button type="button" class="btn small" id="ptsShareMake">Make all share pictures now</button> <span id="ptsShareMsg" role="status" aria-live="polite"></span></div>' : '')
+            + '<button type="button" class="btn small" id="ptsShareMake">Make all share pictures now</button><div id="ptsShareMsg" role="status" aria-live="polite" style="margin-top:8px"></div></div>' : '')
           + '</div></div></div>';
       }
       var lede = document.getElementById('ppLede');
