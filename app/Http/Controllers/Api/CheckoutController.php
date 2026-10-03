@@ -490,6 +490,9 @@ class CheckoutController extends Controller
                 // discount today, so there is nothing to release; that is a
                 // fact about this path, not a rule of its own, and the day it
                 // does apply one it is already handled.
+                // Lane RL: the shopper is looking at this failure on screen, so no
+                // "payment failed" email for it -- the 30-minute reminder follows up.
+                app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideFor($order, false);
                 app(\App\Services\Orders\OrderStatus::class)->moveTo(
                     $order,
                     'failed',

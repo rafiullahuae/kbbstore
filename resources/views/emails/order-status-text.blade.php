@@ -10,12 +10,21 @@
      removes its own text but not the newline after it, and a stray blank line
      is visible in a text part. --}}{!! wordwrap($body, 72) !!}
 
+@if ($note !== '')
+
+{!! __('email.order_status.onhold_need') !!} {!! wordwrap($note, 72) !!}
+@endif
+@if ($trackable)
+
+{!! __('email.order_status.tracking_number', ['number' => $order['number']]) !!}
+{!! wordwrap(__('email.order_status.tracking_where'), 72) !!}
+@endif
+
 @include('emails.partials.body-text')
 
-{!! mb_strtoupper(__('email.order_status.view_order')) !!}
-{!! $order['trackUrl'] !!}
+{!! mb_strtoupper($ctaLabel) !!}
+{!! $ctaUrl !!}
 
-{!! wordwrap(__('email.text.device_note_status', ['number' => $order['number']]), 78) !!}
-{!! $order['accountUrl'] !!}
+{!! wordwrap($status === 'failed' ? __('email.reminder.button_note') : __('email.order_status.track_note'), 72) !!}
 
 @include('emails.partials.support-text')

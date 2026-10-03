@@ -350,7 +350,15 @@ class AdminOrderController extends Controller
             ],
 
             'actions' => [
-                'real' => self::REAL_ACTIONS,
+                /*
+                 * "Send on-hold email" is offered only while the order IS on
+                 * hold (Lane RL). The owner keeps that email off and sends it by
+                 * hand; offering it on an order that is not on hold would offer
+                 * an email that says something untrue.
+                 */
+                'real' => (string) $order->status === 'onhold'
+                    ? [...self::REAL_ACTIONS, 'email_onhold']
+                    : self::REAL_ACTIONS,
                 'placeholder' => self::PLACEHOLDER_ACTIONS,
             ],
 
@@ -693,6 +701,35 @@ class AdminOrderController extends Controller
             // somebody pressed a button and is waiting for the result. 422 on
             // failure so the screen shows the reason instead of a tick.
             $result = app(\App\Services\Mail\OrderMailer::class)->resendConfirmation($order);
+
+            return response()->json($result, $result['ok'] ? 200 : 422);
+        }
+
+        if ($action === 'email_onhold') {
+            /*
+             * "Send on-hold email" (Lane RL). The owner's manual on-hold email,
+             * with an optional sentence of his own ("What we need: ..."). Same
+             * contract as the two buttons around it: the mailer reports, 422 on
+             * failure so the screen prints the reason. Refused unless the order
+             * is on hold. Rides this endpoint's capability, orders.manage, as
+             * Resend confirmation does — it is the same kind of act.
+             */
+            $note = $request->validate(['message' => ['sometimes', 'nullable', 'string', 'max:500']])['message'] ?? '';
+
+            $result = app(\App\Services\Mail\OrderMailer::class)->sendOnHold($order, (string) $note);
+
+            if ($result['ok']) {
+                try {
+                    $order->notes()->create([
+                        'author' => auth('admin')->user()?->name ?: 'Admin',
+                        'is_customer_note' => false,
+                        'content' => 'Emailed the customer that the order is on hold.'
+                            . (trim((string) $note) !== '' ? ' Message: ' . trim((string) $note) : ''),
+                    ]);
+                } catch (\Throwable) {
+                    // The note is a courtesy; the email has gone.
+                }
+            }
 
             return response()->json($result, $result['ok'] ? 200 : 422);
         }

@@ -174,6 +174,34 @@ class AccountController extends Controller
 
         $data = ['order' => null, 'notFound' => false, 'retryAfter' => 0];
 
+        /*
+         * THE "TRACK YOUR ORDER" BUTTON IN AN EMAIL (Lane RL).
+         *
+         * ?order=<number>&t=<expires>.<mac>, signed by App\Support\OrderLinks
+         * for this one order, 30 days. It stands in for the email field: the
+         * link was sent to the address on the order, so holding it is the same
+         * proof typing that address is. It opens THIS order's status card and
+         * nothing else — the card shows no address, no items, no email.
+         *
+         * A forged, expired or other-order token is a 404 with the same "not
+         * found" block as a wrong email, and costs the same work either way
+         * (OrderLinks::resolve). No rate limiter: the MAC is not guessable,
+         * and a link a customer reopens ten times must keep working.
+         */
+        if ($request->query->has('t')) {
+            $signed = \App\Support\OrderLinks::resolve(
+                \App\Support\OrderLinks::TRACK,
+                $number,
+                (string) $request->query('t', ''),
+            );
+
+            if ($signed === null) {
+                return response()->view('store.account.track', ['notFound' => true] + $data, 404);
+            }
+
+            return view('store.account.track', ['order' => $signed] + $data);
+        }
+
         if ($number === '' || $email === '') {
             return view('store.account.track', $data);
         }

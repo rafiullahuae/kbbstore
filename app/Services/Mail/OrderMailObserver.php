@@ -55,9 +55,19 @@ class OrderMailObserver
 
         $status = (string) $order->status;
 
-        DB::afterCommit(function () use ($order, $status): void {
+        /*
+         * Where it came FROM (Lane RL). `updated` fires before Eloquent syncs
+         * the original attributes, so the raw original is still the old
+         * status here. OrderMailer::transition() needs it: leaving
+         * pending/failed for a placed status is the moment a payment
+         * confirmed, which is when the receipt goes (audit B1).
+         */
+        $from = $order->getRawOriginal('status');
+        $from = is_string($from) ? $from : null;
+
+        DB::afterCommit(function () use ($order, $status, $from): void {
             try {
-                $this->mailer->statusChanged($order, $status);
+                $this->mailer->transition($order, $from, $status);
             } catch (\Throwable $e) {
                 Log::error('order status mail failed', [
                     'order' => $order->order_number,
@@ -78,6 +88,15 @@ class OrderMailObserver
     public static function register(): void
     {
         Order::observe(static::class);
+
+        /*
+         * The "Complete your order" reminders' heartbeat (Lane RL). Registered
+         * here, beside the other order-mail wiring, because this method is
+         * already called from MailServiceProvider::boot() and a new provider
+         * in bootstrap/ would not ship in an update package. It does nothing
+         * on a request but stat one file — see OrderReminderTick.
+         */
+        OrderReminderTick::register();
 
         /*
          * Money actually returned.

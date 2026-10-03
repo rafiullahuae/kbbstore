@@ -859,6 +859,9 @@ class CheckoutController extends Controller
              * answer to "was this code given back", and
              * `coupon_redemptions.released_at` is where it is written down.
              */
+            // Lane RL: the shopper is looking at this failure on screen, so no
+            // "payment failed" email for it -- the 30-minute reminder follows up.
+            app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideFor($order, false);
             app(\App\Services\Orders\OrderStatus::class)->moveTo(
                 $order,
                 'failed',
@@ -933,6 +936,9 @@ class CheckoutController extends Controller
              * told what to do instead.
              */
             if (! $request->expectsJson()) {
+                // Lane RL: the shopper is looking at this failure on screen, so no
+                // "payment failed" email for it -- the 30-minute reminder follows up.
+                app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideFor($order, false);
                 app(\App\Services\Orders\OrderStatus::class)->moveTo(
                     $order,
                     'failed',
@@ -1136,6 +1142,9 @@ class CheckoutController extends Controller
         $released = false;
 
         DB::transaction(function () use ($order, $cart, &$released) {
+            // Lane RL: the shopper is looking at this failure on screen, so no
+            // "payment failed" email for it -- the 30-minute reminder follows up.
+            app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideFor($order, false);
             app(\App\Services\Orders\OrderStatus::class)->moveTo(
                 $order,
                 'failed',
