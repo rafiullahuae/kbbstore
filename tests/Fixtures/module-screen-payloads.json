@@ -3240,6 +3240,62 @@
             "value": 16
           },
           {
+            "key": "card_gap_brand_m",
+            "type": "range",
+            "label": "Brand → name · phone",
+            "help": "The space under the brand line. Only shows when Card content → Brand name is on.",
+            "options": {
+              "min": 0,
+              "max": 24,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 3,
+            "value": 3
+          },
+          {
+            "key": "card_gap_brand_d",
+            "type": "range",
+            "label": "Brand → name · desktop",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 24,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 3,
+            "value": 3
+          },
+          {
+            "key": "card_gap_rate_m",
+            "type": "range",
+            "label": "Name → stars · phone",
+            "help": "The space above the stars, on products that have reviews.",
+            "options": {
+              "min": 0,
+              "max": 24,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 8,
+            "value": 8
+          },
+          {
+            "key": "card_gap_rate_d",
+            "type": "range",
+            "label": "Name → stars · desktop",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 24,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 8,
+            "value": 8
+          },
+          {
             "key": "card_gap_price_m",
             "type": "range",
             "label": "Name → price row · phone",

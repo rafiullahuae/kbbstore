@@ -183,6 +183,7 @@ Route::post('/api/checkout/rates', [\App\Http\Controllers\Store\CheckoutControll
 Route::post('/checkout/place',  [\App\Http\Controllers\Store\CheckoutController::class, 'place'])->name('checkout.place');
 Route::get('/checkout/success', [\App\Http\Controllers\Store\CheckoutController::class, 'success'])->name('checkout.success');
 require __DIR__.'/checkout-return.php';
+require __DIR__.'/order-pay.php';   // "Complete your order" from the reminder and payment-failed emails (Lane RL)
 Route::get('/skin-quiz',   [PageController::class, 'skinQuiz'])->name('skin-quiz');
 Route::get('/reviews',     [PageController::class, 'reviewWall'])->name('review-wall');
 

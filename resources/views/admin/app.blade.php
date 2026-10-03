@@ -2699,6 +2699,10 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .pgrng input[type=range]{width:132px;accent-color:#E0567B}
 .pgrng i{font-style:normal;font-size:12px;color:#475569;min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
 .pgwhere{font-size:11.5px;color:#7b8697;margin:0 0 12px;line-height:1.55}
+.pgdevs{display:grid;gap:6px;flex:none}
+.pgdev{display:flex;align-items:center;gap:8px;margin:0}
+.pgdev em{font-style:normal;font-size:11px;color:#7b8697;width:50px}
+@media (max-width:640px){.pgrow-cs{flex-direction:column;gap:8px}.pgrow-cs .pgdevs{width:100%}.pgrow-cs .pgrng{flex:1}.pgrow-cs .pgrng input[type=range]{flex:1;width:auto;min-width:0}}
 .pgwhere b{color:#2A2228;font-weight:600}
 
 @media (max-width:1100px){
@@ -3868,6 +3872,31 @@ const PG_SPACE = [
    'The column count is worked out from this and the width the grid really has. Smaller means more columns, sooner.'],
 ];
 
+/* ── SPACE INSIDE EACH CARD ───────────────────────────────────── 2.60.371 ──
+   The owner, 3 October, with a screenshot of this screen's Spacing card and
+   arrows under the name, the price and the button: "i asked you several times
+   to give me spacing controls for grid card, spacing between image, title,
+   pricing, rating, add to cart … please give me on the grid page setting as
+   marked." They existed — on Appearance → Product styles → Spacing & type,
+   which is not where he looks. So this screen SURFACES them, the same way it
+   surfaces the seven Card content switches: the same ProductStyles keys,
+   POSTed to the same endpoint, bounded by the bounds that endpoint sends.
+   Not a second copy of a setting. Each row is [phone key, desktop key, label,
+   help]; the bounds come from the field itself (pgSpaceDef). */
+const PG_CARD_SPACE = [
+  ['card_pad_m',       'card_pad_d',       'Inside the card',          'The space around the text, at the sides and the bottom.'],
+  ['card_gap_img_m',   'card_gap_img_d',   'Photo → first line',       'Between the photograph and the brand or the name.'],
+  ['card_gap_brand_m', 'card_gap_brand_d', 'Brand → name',             'Under the brand line.'],
+  ['card_gap_rate_m',  'card_gap_rate_d',  'Name → stars',             'Above the stars, on products that have reviews.'],
+  ['card_gap_price_m', 'card_gap_price_d', 'Above the price',          'Between the name (or the stars) and the price.'],
+  ['card_gap_cart_m',  'card_gap_cart_d',  'Price → Add to cart',      'Between the price and the button.'],
+];
+let PGSDEF = {};     /* ProductStyles range fields, by key: {min,max,step,def} */
+function pgSpaceDef(k){
+  const f = PGSDEF[k];
+  return f && Number.isFinite(f.min) && Number.isFinite(f.max) ? f : null;
+}
+
 /* ── EVERY VALUE THAT REACHES MARKUP OR A STYLE ATTRIBUTE IS CHECKED ─────────
    /admin-api is behind the console's auth, but rule 5 is "secure by
    construction, not by intention": a select stores one of its own options or
@@ -3940,6 +3969,21 @@ function pgPaint(){
   const want = Math.max(2, pgNum(PGCOLS, 1, 6, 4) * 2);
   for (let i = 1; i < want; i++) grid.appendChild(card.cloneNode(true));
   el.appendChild(grid);
+
+  /* Space inside each card, at the DESKTOP values — the same declarations
+     ProductStyles::cardCss() writes for the shop, scoped to this preview. Only
+     numbers reach the sheet, each clamped to its field's own bounds. */
+  const n = k => { const f = pgSpaceDef(k); return f ? pgNum(PGS[k], f.min, f.max, f.def) : null; };
+  const T = '#pgPrev .kbb-tile', r = [];
+  const pad = n('card_pad_d'), img = n('card_gap_img_d'), br = n('card_gap_brand_d'),
+        rt = n('card_gap_rate_d'), pr = n('card_gap_price_d'), ca = n('card_gap_cart_d');
+  if (pad !== null) r.push(`${T} .cb{padding-inline:${pad}px;padding-bottom:${pad}px}`);
+  if (img !== null) r.push(`${T} .cb{padding-top:${img}px}`);
+  if (br !== null) r.push(`${T} .kbb-card-brand{margin-bottom:${br}px}`);
+  if (rt !== null) r.push(`${T} .kbb-card-rate{margin-top:${rt}px}`);
+  if (pr !== null) r.push(`${T} .cp{padding-top:${pr}px;margin-top:0}`);
+  if (ca !== null) r.push(`${T} .kbb-card-cart{margin-top:${ca}px}`);
+  if (r.length) { const st = document.createElement('style'); st.textContent = r.join(''); el.appendChild(st); }
 }
 
 function pgDirty(on){
@@ -3967,6 +4011,11 @@ async function renderLayout(){
 
   PGL = d;
   PGS = psd ? pgFlat(psd.tabs) : {};
+  PGSDEF = {};
+  (psd && psd.tabs || []).forEach(t => (t.fields || []).forEach(f => {
+    const o = f.options || {};
+    if (f.type === 'range') PGSDEF[f.key] = { min: +o.min, max: +o.max, step: +o.step || 1, def: +f.default };
+  }));
   PGSL = sld ? pgFlat(sld.tabs) : {};
   PGS0 = Object.assign({}, PGS);
   PGSL0 = Object.assign({}, PGSL);
@@ -3999,6 +4048,14 @@ async function renderLayout(){
           data-pgnum="${escAttr(k)}" aria-label="${escAttr(label)}"><i id="pgv-${escAttr(k)}">${v}${escHtml(unit)}</i></span></div>`;
     }).join('') : '';
 
+  const cardSpaceRows = psd ? PG_CARD_SPACE.filter(([m, d]) => pgSpaceDef(m) && pgSpaceDef(d)).map(([m, d, label, help]) => {
+      const one = (k, dev) => { const f = pgSpaceDef(k); const v = pgNum(PGS[k], f.min, f.max, f.def);
+        return `<label class="pgdev"><em>${dev}</em><span class="pgrng"><input type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${v}"
+          data-pgcs="${escAttr(k)}" aria-label="${escAttr(label + ' · ' + dev)}"><i id="pgv-${escAttr(k)}">${v}px</i></span></label>`; };
+      return `<div class="pgrow pgrow-cs"><div class="pgrow-l"><b>${escHtml(label)}</b><span>${escHtml(help)}</span></div>
+        <div class="pgdevs">${one(m, 'Phone')}${one(d, 'Desktop')}</div></div>`;
+    }).join('') : '';
+
   $('#content').innerHTML = `<div class="wrap">
     <div class="page-head"><h2>Product grid</h2><p>Pick the card template used across the shop, category pages and every <code>[kbb_products]</code> shortcode. The panel on the right is the design you have picked, with the settings below applied.</p></div>
 
@@ -4024,6 +4081,11 @@ async function renderLayout(){
           <b style="font-size:13px;display:block;margin-bottom:4px">Spacing</b>
           <p class="pgwhere">The same two settings as <b>Appearance → Site layout → Product grid</b>, where the rest of the grid arithmetic lives (never fewer than, never more than, and pinning an exact count).</p>
           ${spaceRows}</div>` : ''}
+
+        ${cardSpaceRows ? `<div class="card" style="padding:18px;margin-top:16px" id="pgCardSpace">
+          <b style="font-size:13px;display:block;margin-bottom:4px">Space inside each card</b>
+          <p class="pgwhere">Photo, brand, name, stars, price and Add to cart — a phone and a desktop set apart. The same settings as <b>Appearance → Product styles → Spacing &amp; type</b>, shown in both places, not a second copy. Every product grid on the shop uses them. The preview shows the desktop values.</p>
+          ${cardSpaceRows}</div>` : ''}
 
         <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="btn primary" id="saveLayout">Save</button>
@@ -4105,6 +4167,17 @@ function pgBind(){
   });
 
   content.addEventListener('input', (e) => {
+    const cs = e.target.closest('[data-pgcs]');
+    if (cs) {
+      const f = pgSpaceDef(cs.dataset.pgcs);
+      if (!f) return;
+      const v = pgNum(cs.value, f.min, f.max, f.def);
+      PGS[cs.dataset.pgcs] = v;
+      const out = document.getElementById('pgv-' + cs.dataset.pgcs);
+      if (out) out.textContent = v + 'px';
+      pgPaint(); pgDirty('styles');
+      return;
+    }
     const r = e.target.closest('[data-pgnum]');
     if (!r) return;
     const def = PG_SPACE.find(x => x[0] === r.dataset.pgnum);
@@ -4147,6 +4220,12 @@ async function pgSave(){
       Object.keys(PG_NOCLASS).forEach(k => {
         if (k in PGS && pgBool(PGS[k]) !== pgBool(PGS0[k])) s[k] = pgBool(PGS[k]);
       });
+      PG_CARD_SPACE.forEach(([m, d]) => [m, d].forEach(k => {
+        const f = pgSpaceDef(k);
+        if (!f || !(k in PGS)) return;
+        const v = pgNum(PGS[k], f.min, f.max, f.def);
+        if (v !== pgNum(PGS0[k], f.min, f.max, f.def)) s[k] = v;
+      }));
       if (Object.keys(s).length) {
         const j = await post(root + '/admin-api/product-styles', { settings: s });
         if (!j.ok) failed.push(j.error || 'card content'); else Object.assign(PGS0, s);
@@ -5579,6 +5658,9 @@ function psSpaceCss(){
   if(img!==null) r.push(`${T} .cb{padding-top:${img}px}`);
   if(pr!==null) r.push(`${T} .cp{padding-top:${pr}px;margin-top:0}`);
   if(ca!==null) r.push(`${T} .kbb-card-cart{margin-top:${ca}px}`);
+  const br=num('card_gap_brand_d'), rt=num('card_gap_rate_d');
+  if(br!==null) r.push(`${T} .kbb-card-brand{margin-bottom:${br}px}`);
+  if(rt!==null) r.push(`${T} .kbb-card-rate{margin-top:${rt}px}`);
   [['card_fs_title_d','.kbb-card-nm','font-size'],['card_fs_price_d','.kbb-card-price','font-size'],
    ['card_fs_btn_d','.kbb-card-cart','font-size'],['card_fs_brand_d','.kbb-card-brand','font-size'],
    ['card_fw_title','.kbb-card-nm','font-weight'],['card_fw_price','.kbb-card-price','font-weight'],
