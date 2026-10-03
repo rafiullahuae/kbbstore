@@ -4,7 +4,7 @@
 **Scope of this lane:** audit, previews and plan only. No code, setting, route, migration or template that ships has been changed.
 **Repo state audited:** `claude/kind-mayer-rpqesv` at `cc216ae` (release 2.60.367).
 
-The pictures referred to below are in `docs/rj-email-previews/`. To review everything in one scroll, open **`OVERVIEW.png`**.
+The pictures referred to below are in `docs/rj-email-previews/`. To review everything in one scroll, open **`OVERVIEW-2.png`** (round 1b, after the owner's decisions).
 
 ---
 
@@ -254,4 +254,4 @@ What this means: today the only clean marketing list is the **confirmed subscrib
 - `marketing/`: 2 sample campaigns built from builder blocks.
 - `admin-before/`: today's Store → Mail, Growth → Newsletter and the sidebar.
 - `admin/`: 11 proposed admin screens at 1280 and 390, the proposed sidebar on desktop and on a phone, the static HTML for each, and `admin-base.css`.
-- `OVERVIEW.html` and `OVERVIEW.png`.
+- `OVERVIEW-2.html` and `OVERVIEW-2.png` (round 1b; the round-1 overview was removed as superseded). `after/`, `marketing/` and `admin/` were regenerated in round 1b as JPEG shots; see EMAILS-PLAN.md §0.

@@ -75,6 +75,11 @@
   <div class="kbbdr-baracts"><button type="button" class="kbbdr-primary" id="kbbDraftBarA"></button><button type="button" id="kbbDraftBarB">Discard</button></div>
 </div><div class="content" id="content" data-bz-watch="1"><style>
 span.tog{display:inline-block;vertical-align:middle}
+.rjm-choice{padding:14px;cursor:pointer}.rjm-choice.on{border:2px solid var(--accent);background:var(--accent-soft)}
+.rjm-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);display:inline-block;flex-shrink:0}.rjm-radio.on{border:5px solid var(--accent)}
+.rjm-gws{border:1px dashed var(--border);border-radius:var(--r-sm);padding:12px;opacity:.75}
+.rjm-tick{display:flex;gap:9px;align-items:flex-start;margin:4px 0 0;font-size:13px}.rjm-tick .rjm-h{display:block}
+.rjm-cb{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);display:grid;place-items:center;font-size:12px;color:#fff;flex-shrink:0;margin-top:1px}.rjm-cb.on{background:var(--accent);border-color:var(--accent)}
 .rjm-proposal{background:#fff6e6;border:1px dashed #e0a43a;color:#7a4d08;border-radius:12px;padding:10px 14px;font-size:12.5px;margin-bottom:16px}
 .rjm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
 .rjm-tab{font-size:13px;font-weight:600;padding:8px 14px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
@@ -120,20 +125,32 @@ span.tog{display:inline-block;vertical-align:middle}
 .rjm-scroll{overflow-x:auto}
 @media(max-width:880px){.rjm-split,.rjm-builder,.rjm-g2,.rjm-g3{grid-template-columns:minmax(0,1fr)}.rjm-g4{grid-template-columns:1fr 1fr}.rjm-rule{grid-template-columns:1fr 1fr}.rjm-hide-sm{display:none}}
 </style><div class="wrap"><div class="rjm-proposal"><b>PROPOSAL · static mockup</b> — nothing on this screen is built or saved. Where it lives: <b>Growth &amp; Marketing → Email Marketing → Customer groups</b></div>
-<div class="page-head"><h2>Customer groups</h2><p>Groups update themselves: a customer joins or leaves as they order.</p></div><div class="rjm-tabs"><span class="rjm-tab">Campaigns</span><span class="rjm-tab">Templates</span><span class="rjm-tab on">Customer groups</span><span class="rjm-tab">Reports</span></div>
+<div class="page-head"><h2>Customer groups</h2><p>Customers (people who ordered or have an account) and Subscribers (newsletter sign-ups) are kept as two separate lists. Groups update themselves as people order.</p></div><div class="rjm-tabs"><span class="rjm-tab">Campaigns</span><span class="rjm-tab">Templates</span><span class="rjm-tab on">Customer groups</span><span class="rjm-tab">Reports</span></div>
+<div class="rjm-tabs"><span class="rjm-tab on">Customers · 3,712</span><span class="rjm-tab">Subscribers · 412</span></div>
 <div class="rjm-split"><div>
- <div class="rjm-card"><h3>Ready-made groups</h3><p class="d">Counts are live. “Can email” leaves out anyone who unsubscribed.</p>
- <table class="rjm-tbl"><tbody><tr><th>Group</th><th>Customers</th><th>Can email</th></tr>
- <tr><td><b>Never ordered</b></td><td>1,920</td><td>612</td></tr><tr><td><b>One order only</b></td><td>1,104</td><td>381</td></tr><tr><td><b>Repeat buyers (2+ orders)</b></td><td>688</td><td>233</td></tr><tr><td><b>VIP — spent AED 1,000+</b></td><td>142</td><td>64</td></tr><tr><td><b>Lapsed — no order in 90 days</b></td><td>1,212</td><td>402</td></tr><tr><td><b>Newsletter subscribers</b></td><td>412</td><td>412</td></tr>
- </tbody></table></div></div>
-<div><div class="rjm-card"><div class="rjm-row"><h3 style="margin:0">New group</h3><span class="rjm-sp"></span><label class="rjm-f"><span class="rjm-l"></span><span class="rjm-in rjm-sel">Match ALL of these</span></label></div>
- <label class="rjm-f"><span class="rjm-l">Name</span><span class="rjm-in">Good customers gone quiet</span></label>
- <div class="rjm-rule"><span class="rjm-in rjm-sel">Number of orders</span><span class="rjm-in rjm-sel">is at least</span><span class="rjm-in">2</span><span class="rjm-x">×</span></div><div class="rjm-rule"><span class="rjm-in rjm-sel">Total spent (AED)</span><span class="rjm-in rjm-sel">is more than</span><span class="rjm-in">500</span><span class="rjm-x">×</span></div><div class="rjm-rule"><span class="rjm-in rjm-sel">Last order</span><span class="rjm-in rjm-sel">before</span><span class="rjm-in">1 Jul 2026</span><span class="rjm-x">×</span></div><div class="rjm-rule"><span class="rjm-in rjm-sel">Email consent</span><span class="rjm-in rjm-sel">is</span><span class="rjm-in">Subscribed or bought before</span><span class="rjm-x">×</span></div>
+ <div class="rjm-card"><div class="rjm-row"><h3 style="margin:0">New group</h3><span class="rjm-sp"></span><span class="rjm-in rjm-sel" style="width:auto">Match ALL rules</span></div><div style="height:10px"></div>
+ <label class="rjm-f"><span class="rjm-l">Name</span><span class="rjm-in">Mostly bought Medicube · Dubai · 2026</span></label>
+ <div class="rjm-rule"><span class="rjm-in rjm-sel">Brands bought</span><span class="rjm-in rjm-sel">mostly</span><span class="rjm-in">Medicube</span><span class="rjm-x">×</span></div>
+ <div class="rjm-rule"><span class="rjm-in rjm-sel">Emirate</span><span class="rjm-in rjm-sel">is any of</span><span class="rjm-in">Dubai, Abu Dhabi, Sharjah</span><span class="rjm-x">×</span></div>
+ <div class="rjm-rule"><span class="rjm-in rjm-sel">Order date</span><span class="rjm-in rjm-sel">in year</span><span class="rjm-in">2026</span><span class="rjm-x">×</span></div>
+ <div class="rjm-rule"><span class="rjm-in rjm-sel">Total spent (AED)</span><span class="rjm-in rjm-sel">at least</span><span class="rjm-in">500</span><span class="rjm-x">×</span></div>
+ <div class="rjm-rule"><span class="rjm-in rjm-sel">Number of orders</span><span class="rjm-in rjm-sel">at least</span><span class="rjm-in">2</span><span class="rjm-x">×</span></div>
  <span class="btn ghost sm">+ Add rule</span>
- <div class="rjm-h" style="margin-top:8px">Rules: number of orders · total spent · average order · last order date · first order date · never ordered · bought a product / brand / category · used a coupon · country / city · has an account · newsletter status.</div>
+ <div class="rjm-h" style="margin-top:10px"><b>Rules:</b> total spent · number of orders · emirate / region (Dubai, Abu Dhabi, Sharjah, Ajman, Ras Al Khaimah, Fujairah, Umm Al Quwain, outside UAE) · order date by month, by year or a custom date range · brands bought (“mostly” = the brand with the biggest share of what they spent; or “ever bought”) · never ordered · newsletter subscribed.</div>
  <div style="height:12px"></div>
- <div class="rjm-count"><b>214</b> customers match · <b>196</b> can be emailed<div class="rjm-h">18 unsubscribed. Spend counts paid orders only, after refunds — the same figures as Store → Customers.</div></div>
- <div style="height:10px"></div><div class="rjm-row"><span class="btn ghost sm">See the 214</span><span class="rjm-sp"></span><span class="btn sm">Save group</span></div>
-</div></div></div></div></div>
+ <div class="rjm-count"><b>86</b> customers match · <b>79</b> can be emailed<div class="rjm-h">7 unsubscribed. Spend counts paid orders only, after refunds. Emirate comes from the delivery address. Sample figures.</div></div>
+ <div style="height:10px"></div><div class="rjm-row"><span class="btn ghost sm">See the 86</span><span class="rjm-sp"></span><span class="btn sm">Save group</span></div>
+ </div></div>
+<div>
+ <div class="rjm-card"><h3>Order date</h3><p class="d">Pick one way to set the period.</p>
+  <div class="rjm-tabs" style="margin-bottom:10px"><span class="rjm-tab">Month</span><span class="rjm-tab on">Year</span><span class="rjm-tab">Custom range</span></div>
+  <div class="rjm-grid rjm-g2"><label class="rjm-f"><span class="rjm-l">Month</span><span class="rjm-in rjm-sel">September 2026</span></label><label class="rjm-f"><span class="rjm-l">Year</span><span class="rjm-in rjm-sel">2026</span></label></div>
+  <div class="rjm-grid rjm-g2"><label class="rjm-f"><span class="rjm-l">From</span><span class="rjm-in">1 Jun 2026</span></label><label class="rjm-f"><span class="rjm-l">To</span><span class="rjm-in">30 Sep 2026</span></label></div></div>
+ <div style="height:14px"></div>
+ <div class="rjm-card"><h3>Saved groups</h3>
+ <table class="rjm-tbl"><tbody><tr><th>Group</th><th>List</th><th>Can email</th></tr>
+ <tr><td><b>Mostly bought Medicube</b></td><td>Customers</td><td>214</td></tr><tr><td><b>Mostly bought COSRX</b></td><td>Customers</td><td>168</td></tr><tr><td><b>Abu Dhabi · spent AED 1,000+</b></td><td>Customers</td><td>41</td></tr><tr><td><b>Ordered in Ramadan 2026 (custom range)</b></td><td>Customers</td><td>302</td></tr><tr><td><b>Never ordered</b></td><td>Customers</td><td>612</td></tr><tr><td><b>All confirmed subscribers</b></td><td>Subscribers</td><td>412</td></tr>
+ </tbody></table><div class="rjm-h" style="margin-top:6px">Sample figures.</div></div>
+</div></div></div></div>
   </div>
 </div></body></html>

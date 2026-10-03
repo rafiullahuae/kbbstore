@@ -1,0 +1,97 @@
+{
+  "01-order-confirmation": {
+    "trigger": "Order confirmed · when paid (card / Tabby / Tamara) or placed with cash on delivery → Processing",
+    "default": "On",
+    "html_bytes": 25629
+  },
+  "02-complete-order-30min": {
+    "trigger": "Pending · 30 minutes after an unfinished order, any payment method",
+    "default": "On",
+    "html_bytes": 27897
+  },
+  "03-complete-order-24h": {
+    "trigger": "Pending · 24 hours later, if still unfinished (last reminder)",
+    "default": "On",
+    "html_bytes": 27899
+  },
+  "04-order-on-hold": {
+    "trigger": "On hold · sent only by hand: “Send on-hold email” on the order screen",
+    "default": "Off (manual)",
+    "html_bytes": 23591
+  },
+  "05-order-shipped": {
+    "trigger": "Shipped · status → Shipped (untick “Email the customer” to skip)",
+    "default": "On",
+    "html_bytes": 24050
+  },
+  "06-order-delivered": {
+    "trigger": "Delivered · status → Completed",
+    "default": "On",
+    "html_bytes": 21693
+  },
+  "07-order-cancelled": {
+    "trigger": "Cancelled · status → Cancelled",
+    "default": "On",
+    "html_bytes": 24313
+  },
+  "08-order-refunded": {
+    "trigger": "Refunded · when a refund is sent (full or part)",
+    "default": "On",
+    "html_bytes": 14623
+  },
+  "09-order-payment-failed": {
+    "trigger": "Payment failed · status → Failed",
+    "default": "On",
+    "html_bytes": 24059
+  },
+  "10-new-order-alert": {
+    "trigger": "To you · new order paid or placed (COD)",
+    "default": "On",
+    "html_bytes": 14670
+  },
+  "11-order-invoice": {
+    "trigger": "Invoice · “Email invoice” button on an order",
+    "default": "Manual",
+    "html_bytes": 19399
+  },
+  "12-back-in-stock": {
+    "trigger": "Back in stock · a product they asked about returns (module)",
+    "default": "Off until switched on",
+    "html_bytes": 9962
+  },
+  "13-basket-reminder": {
+    "trigger": "Basket reminder · basket left with an email (module)",
+    "default": "Off until switched on",
+    "html_bytes": 11753
+  },
+  "14-account-invite": {
+    "trigger": "Account invite · sent from Customers → Send account invite",
+    "default": "Manual",
+    "html_bytes": 8863
+  },
+  "15-newsletter-confirm": {
+    "trigger": "Newsletter · sign-up on the website (double opt-in)",
+    "default": "On",
+    "html_bytes": 8883
+  },
+  "16-quiz-plan": {
+    "trigger": "Skin quiz · quiz finished with an email",
+    "default": "On",
+    "html_bytes": 10163
+  },
+  "17-password-reset": {
+    "trigger": "Password reset · customer asks for one (always on)",
+    "default": "Always on",
+    "html_bytes": 9084
+  },
+  "18-verify-email": {
+    "trigger": "Verify email · account created",
+    "default": "On",
+    "html_bytes": 8017
+  },
+  "19-feedback-request": {
+    "trigger": "Feedback · automatically 3 hours after the Delivered email",
+    "default": "On",
+    "html_bytes": 17356
+  }
+}
