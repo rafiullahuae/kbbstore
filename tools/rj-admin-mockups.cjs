@@ -26,8 +26,8 @@ const EMAILS = path.join(APP, 'docs/rj-email-previews');
 /* ---------------------------------------------------------------- helpers */
 function emailSrcdoc(rel) {
   let html = fs.readFileSync(path.join(EMAILS, rel), 'utf8');
-  html = html.replace(/\.\.\/assets\/([a-z0-9-]+)\.png/g, (_, n) =>
-    'data:image/png;base64,' + fs.readFileSync(path.join(EMAILS, 'assets', n + '.png')).toString('base64'));
+  html = html.replace(/\.\.\/assets\/([a-z0-9-]+)\.(png|jpg)/g, (_, n, ext) =>
+    `data:image/${ext === 'jpg' ? 'jpeg' : 'png'};base64,` + fs.readFileSync(path.join(EMAILS, 'assets', `${n}.${ext}`)).toString('base64'));
   return html.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 const frame = (rel, h = 900, w = '100%') => `<iframe class="rjm-frame" style="height:${h}px;width:${w}" data-rel="../${rel}" srcdoc="${emailSrcdoc(rel)}"></iframe>`;
@@ -39,6 +39,11 @@ const field = (label, value, help = '', type = 'input') => `<label class="rjm-f"
 
 const CSS = `
 span.tog{display:inline-block;vertical-align:middle}
+.rjm-choice{padding:14px;cursor:pointer}.rjm-choice.on{border:2px solid var(--accent);background:var(--accent-soft)}
+.rjm-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);display:inline-block;flex-shrink:0}.rjm-radio.on{border:5px solid var(--accent)}
+.rjm-gws{border:1px dashed var(--border);border-radius:var(--r-sm);padding:12px;opacity:.75}
+.rjm-tick{display:flex;gap:9px;align-items:flex-start;margin:4px 0 0;font-size:13px}.rjm-tick .rjm-h{display:block}
+.rjm-cb{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);display:grid;place-items:center;font-size:12px;color:#fff;flex-shrink:0;margin-top:1px}.rjm-cb.on{background:var(--accent);border-color:var(--accent)}
 .rjm-proposal{background:#fff6e6;border:1px dashed #e0a43a;color:#7a4d08;border-radius:12px;padding:10px 14px;font-size:12.5px;margin-bottom:16px}
 .rjm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
 .rjm-tab{font-size:13px;font-weight:600;padding:8px 14px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
@@ -111,65 +116,73 @@ S['e1-emails-overview'] = {
 
 S['e2-sending'] = {
   crumb: 'Emails', title: 'Sending & delivery', nav: 'em-sending',
-  html: () => `${proposal('Emails → Sending & delivery')}
-<div class="page-head"><h2>Sending &amp; delivery</h2><p>How email leaves the shop, who it is from, and whether inboxes will trust it.</p></div>
+  html: () => `${proposal('Emails → Sending & delivery (owner, 3 Oct: server mail or Google Workspace — nothing external)')}
+<div class="page-head"><h2>Sending &amp; delivery</h2><p>How email leaves the shop and who it is from. Two ways, both already yours.</p></div>
 <div class="rjm-split">
 <div>
-  <div class="rjm-card"><h3>How email leaves this store</h3><p class="d">Unchanged from Store → Mail. Server mail needs nothing filled in.</p>
-    ${field('Send using', "Use this server's mail (default)", 'Or: a dedicated SMTP server (Cloudways’ SMTP add-on, Google Workspace, Brevo, Amazon SES, Postmark…) — recommended for marketing volume.', 'select')}
-    <div class="rjm-grid rjm-g2">${field('From name', 'K Beauty Bliss')}${field('From address', 'hello@extrabeauty.ae', 'Must be on extrabeauty.ae.')}</div>
-    <div class="rjm-grid rjm-g2">${field('Reply-To', 'care@extrabeauty.ae', 'A mailbox somebody reads.')}${field('New-order alerts to', 'orders@extrabeauty.ae')}</div>
-    <div class="rjm-row"><span class="rjm-sp"></span><span class="btn">Save changes</span></div>
+  <div class="rjm-card"><h3>Send using</h3><p class="d">Pick one. You can switch at any time; press Send test after switching.</p>
+    <div class="rjm-grid rjm-g2">
+      <div class="rjm-card rjm-choice on"><div class="rjm-row"><span class="rjm-radio on"></span><b>This server&rsquo;s mail</b>${pill('green', 'In use')}</div><p class="d" style="margin:6px 0 0">Sends from the website&rsquo;s own server. Nothing to fill in.</p></div>
+      <div class="rjm-card rjm-choice"><div class="rjm-row"><span class="rjm-radio"></span><b>Google Workspace (Gmail SMTP)</b></div><p class="d" style="margin:6px 0 0">Sends through your Google business mailbox. Usually lands in the inbox more reliably.</p></div>
+    </div>
+    <div style="height:14px"></div>
+    <div class="rjm-gws"><div class="rjm-l" style="margin-bottom:8px">Google Workspace settings <span class="rjm-h" style="display:inline">· shown when that option is picked</span></div>
+      <div class="rjm-grid rjm-g2">${field('SMTP host', 'smtp.gmail.com')}${field('Port &amp; security', '587 · TLS', '', 'select')}</div>
+      <div class="rjm-grid rjm-g2">${field('Google account (username)', 'info@kbeautybliss.com')}${field('App password', '•••• •••• •••• ••••', 'Google Account → Security → 2-Step Verification → App passwords. Not your normal password. Stored encrypted.')}</div>
+      <div class="rjm-h">Google allows about 2,000 messages a day per Workspace user. Campaigns larger than that are spread over days automatically.</div>
+    </div>
   </div>
-  <div class="sec-title">Send a test</div>
-  <div class="rjm-card">${field('Send a test to', 'rafi@…', 'Pick which email: a plain test, or any customer email filled with your latest order.')}
-    ${field('Which email', 'Order shipped — filled with order KBB-10427', '', 'select')}
-    <div class="rjm-row"><span class="btn">Send test</span>${pill('green', 'Accepted by the mail server · 10:41')}</div></div>
+  <div class="sec-title">Who it is from</div>
+  <div class="rjm-card"><div class="rjm-grid rjm-g2">${field('From name', 'K Beauty Bliss')}${field('From address', 'info@kbeautybliss.com', 'With Google, this must be the Google account above or one of its aliases.')}</div>
+    <div class="rjm-grid rjm-g2">${field('Replies go to', 'info@kbeautybliss.com')}${field('New-order alerts to', 'info@kbeautybliss.com')}</div>
+    <div class="rjm-row"><span class="rjm-sp"></span><span class="btn">Save changes</span></div></div>
 </div>
 <div>
-  <div class="rjm-card"><h3>Will inboxes trust extrabeauty.ae?</h3><p class="d">Checked live with a DNS lookup when you press the button. Copy any missing record into Cloudflare / your DNS host.</p>
+  <div class="rjm-card"><h3>Send a test</h3><p class="d">Sends through whichever option is picked, and shows what the mail server answered.</p>
+    ${field('Send a test to', 'rafi@…')}
+    ${field('Which email', 'Order shipped — filled with your latest order', '', 'select')}
+    <div class="rjm-row"><span class="btn">Send test</span>${pill('green', 'Accepted by the mail server · 10:41')}</div></div>
+  <div class="sec-title">Will inboxes trust the domain?</div>
+  <div class="rjm-card"><p class="d">A read-only DNS check for the From domain. It never changes anything.</p>
     <table class="rjm-tbl"><tr><th>Record</th><th>Status</th></tr>
-    <tr><td><b>SPF</b><div class="sub">Who may send for the domain</div><div class="rjm-dns">v=spf1 include:[your mail server] ~all</div></td><td>${pill('grey', 'Not checked')}</td></tr>
-    <tr><td><b>DKIM</b><div class="sub">Signature proving the mail is yours</div><div class="rjm-dns">[selector]._domainkey → key from your mail provider</div></td><td>${pill('grey', 'Not checked')}</td></tr>
-    <tr><td><b>DMARC</b><div class="sub">What receivers do with failures</div><div class="rjm-dns">_dmarc → v=DMARC1; p=none; rua=mailto:dmarc@extrabeauty.ae</div></td><td>${pill('grey', 'Not checked')}</td></tr>
-    <tr><td><b>MX</b><div class="sub">Where replies to care@ arrive</div></td><td>${pill('grey', 'Not checked')}</td></tr>
-    </table><div class="rjm-row" style="margin-top:12px"><span class="btn ghost sm">Check now</span><span class="rjm-h">The admin reads public DNS only; it never changes it.</span></div></div>
-  <div class="sec-title">Marketing sending speed</div>
-  <div class="rjm-card">${field('Messages per minute', '60', 'Campaigns go out in slices so the server is never flooded. 1,000 customers ≈ 17 minutes.')}
-  ${field('Daily cap', '2,000', 'A safety net while the domain builds reputation.')}</div>
+    <tr><td><b>SPF</b><div class="rjm-dns">v=spf1 include:_spf.google.com ~all <span class="sub">(+ the server, if you keep server mail)</span></div></td><td>${pill('grey', 'Not checked')}</td></tr>
+    <tr><td><b>DKIM</b><div class="rjm-dns">google._domainkey → from Google Admin → Gmail → Authenticate email</div></td><td>${pill('grey', 'Not checked')}</td></tr>
+    <tr><td><b>DMARC</b><div class="rjm-dns">_dmarc → v=DMARC1; p=none; rua=mailto:info@kbeautybliss.com</div></td><td>${pill('grey', 'Not checked')}</td></tr>
+    </table><div class="rjm-row" style="margin-top:12px"><span class="btn ghost sm">Check now</span></div></div>
 </div></div>`,
 };
 
-const ROW = (name, when, on, last, extra = '', lock = false) => `<tr><td><b>${name}</b>${extra ? `<div class="sub">${extra}</div>` : ''}</td><td class="rjm-hide-sm">${when}</td><td>${tog(on, lock)}</td><td class="rjm-hide-sm">${last}</td><td style="white-space:nowrap"><span class="btn ghost sm">Edit</span> <span class="btn ghost sm rjm-hide-sm">Test</span></td></tr>`;
+const ROW = (name, when, on, last, extra = '', lock = false, manual = false) => `<tr><td><b>${name}</b>${extra ? `<div class="sub">${extra}</div>` : ''}</td><td class="rjm-hide-sm">${when}</td><td>${manual ? pill('amber', 'Manual') : tog(on, lock)}</td><td class="rjm-hide-sm">${last}</td><td style="white-space:nowrap"><span class="btn ghost sm">Edit</span> <span class="btn ghost sm rjm-hide-sm">Test</span></td></tr>`;
 S['e3-customer-emails'] = {
   crumb: 'Emails', title: 'Customer emails', nav: 'em-customer',
   html: () => `${proposal('Emails → Customer emails')}
-<div class="page-head"><h2>Customer emails</h2><p>One row per message. The order rows follow the store’s real order statuses. Switch any of them off; edit the words and preview them on a phone.</p></div>
+<div class="page-head"><h2>Customer emails</h2><p>One row per message, following the shop&rsquo;s real order statuses. Switch any of them off, edit the words, preview on a phone. Any single status change can still skip its email: untick &ldquo;Email the customer&rdquo; on the order.</p></div>
 <div class="rjm-card rjm-scroll" style="padding:6px 6px">
 <table class="rjm-tbl"><tr><th>Email</th><th class="rjm-hide-sm">Sent when</th><th>On</th><th class="rjm-hide-sm">Last sent</th><th></th></tr>
 <tr class="rjm-grp"><td colspan="5">Orders — to the customer</td></tr>
-${ROW('Order confirmed', 'Order placed (Processing; Cash on delivery)', true, 'Today 09:41', 'Receipt · items with pictures · totals · address')}
-${ROW('Complete your payment', 'Pending for 30 min (Tabby / Tamara / card left unpaid)', false, '—', 'NEW · status <code>pending</code>')}
-${ROW('Order on hold', 'Status → On hold', false, '—', 'NEW · status <code>onhold</code> · prints your reason')}
-${ROW('Order shipped', 'Status → Shipped', true, 'Today 08:12', 'Status <code>shipped</code> · tracking number if entered')}
-${ROW('Order delivered', 'Status → Completed', false, '—', 'NEW · status <code>completed</code> · review request')}
+${ROW('Order confirmed', 'Paid (card, Tabby, Tamara) or placed with cash on delivery → Processing', true, 'Today 09:41', 'Never before payment')}
+${ROW('Complete your order · 1', 'Still unpaid 30 minutes after it was started, any payment method', true, '—', 'NEW · status <code>pending</code>')}
+${ROW('Complete your order · 2', 'Still unpaid after 24 hours — the last reminder', true, '—', 'NEW · status <code>pending</code>')}
+${ROW('Order on hold', '“Send on-hold email” button on the order', false, '—', 'NEW · status <code>onhold</code> · you type the reason', false, true)}
+${ROW('Order shipped', 'Status → Shipped', true, 'Today 08:12', 'Order number = tracking number · Track your order link')}
+${ROW('Order delivered', 'Status → Completed', true, '—', 'NEW · status <code>completed</code>')}
 ${ROW('Order cancelled', 'Status → Cancelled', true, 'Yesterday', 'Status <code>cancelled</code>')}
-${ROW('Refund sent', 'A refund settles (full or partial)', true, '28 Sep', 'Driven by the refund, not the <code>refunded</code> status')}
-${ROW('Payment failed', 'Status → Failed after a hosted payment', false, '—', 'NEW · status <code>failed</code>')}
-${ROW('Invoice', 'When you press “Email invoice” on an order', true, '27 Sep', 'PDF attached')}
+${ROW('Refund sent', 'A refund is sent (full or part)', true, '28 Sep', 'Follows the money, not the <code>refunded</code> word')}
+${ROW('Payment failed', 'Status → Failed', true, '—', 'NEW · status <code>failed</code>')}
+${ROW('Invoice', '“Email invoice” button on the order', true, '27 Sep', 'PDF attached', false, true)}
 <tr class="rjm-grp"><td colspan="5">To you</td></tr>
-${ROW('New order alert', 'Order placed', true, 'Today 09:41', 'To orders@extrabeauty.ae')}
+${ROW('New order alert', 'Order paid, or placed with cash on delivery', true, 'Today 09:41', 'To info@kbeautybliss.com')}
 <tr class="rjm-grp"><td colspan="5">Account &amp; sign-up</td></tr>
 ${ROW('Password reset', 'Customer asks for one', true, '2 Oct', 'Always on — security', true)}
 ${ROW('Confirm email address', 'Account created', true, '1 Oct')}
-${ROW('Account invite', 'You send one from Customers', true, '20 Sep')}
-${ROW('Newsletter: confirm subscription', 'Homepage sign-up (double opt-in)', true, '30 Sep')}
-${ROW('Skin quiz plan', 'Quiz completed with an email', true, '29 Sep')}
+${ROW('Account invite', 'You send one from Customers', true, '20 Sep', '', false, true)}
+${ROW('Newsletter: confirm subscription', 'Website sign-up (double opt-in)', true, '30 Sep')}
+${ROW('Skin quiz plan', 'Quiz finished with an email', true, '29 Sep')}
 <tr class="rjm-grp"><td colspan="5">Shopping reminders</td></tr>
 ${ROW('Back in stock', 'A product they asked about returns', false, '—', 'Module off today')}
 ${ROW('Basket reminder', 'Basket left with an email', false, '—', 'Module off today')}
 </table></div>
-<div class="rjm-h" style="margin-top:8px">Draft is internal and never emails. “Refunded” typed as a status sends nothing — the refund email follows the money.</div>`,
+<div class="rjm-h" style="margin-top:8px">Draft never emails. Defaults follow the owner&rsquo;s choices of 3 October: status emails on, on hold sent by hand.</div>`,
 };
 
 S['e4-template-editor'] = {
@@ -193,29 +206,31 @@ S['e4-template-editor'] = {
  <div class="rjm-row" style="margin-top:14px"><span class="btn ghost">Reset to default</span><span class="rjm-sp"></span><span class="btn ghost">Send test to me</span><span class="btn">Save</span></div>
 </div>
 <div><div class="rjm-row" style="margin-bottom:10px"><b style="font-size:13px">Live preview</b><span class="rjm-sp"></span><span class="rjm-dev"><span>Desktop</span><span class="on">Phone</span></span></div>
- <div class="rjm-phone">${frame('after/04-order-shipped.html', 1240)}</div></div>
+ <div class="rjm-phone">${frame('after/05-order-shipped.html', 1240)}</div></div>
 </div>`,
 };
 
 S['e5-branding'] = {
   crumb: 'Emails', title: 'Design & branding', nav: 'em-brand',
   html: () => `${proposal('Emails → Design & branding')}
-<div class="page-head"><h2>Design &amp; branding</h2><p>Set once; every customer email and every campaign template uses it.</p></div>
+<div class="page-head"><h2>Design &amp; branding</h2><p>Set once; every customer email and every campaign uses it. Change any of it at any time.</p></div>
 <div class="rjm-split"><div>
- <div class="rjm-card"><h3>Look</h3><p class="d">Pick the direction you approve from the previews (A, B or C); colours start from the shop’s own pinks.</p>
-  <div class="rjm-grid rjm-g3">${['A · Blush editorial', 'B · Bold pink', 'C · Minimal luxe'].map((t, i) => `<div class="rjm-card" style="padding:12px;${i === 0 ? 'border:2px solid var(--accent)' : ''}"><b style="font-size:13px">${t}</b><div class="rjm-h">${i === 0 ? 'Default' : ''}</div></div>`).join('')}</div>
-  <div style="height:12px"></div>
-  ${field('Logo', '⬆ Upload PNG · 340×80 or larger · uses Business Details logo if blank', 'Wordmark “K-Beauty Bliss” is printed when no logo is set — it shows even with images blocked.')}
+ <div class="rjm-card"><h3>Look</h3><p class="d">Blush editorial (A) — your choice of 3 October, used by every email.</p>
+  ${field('Logo', '⬆ Upload PNG or JPG · at least 340×80', 'Blank: the “K-Beauty Bliss” wordmark prints in text, which shows even when pictures are blocked.')}
   <div class="rjm-f"><span class="rjm-l">Colours</span>
-   <span class="rjm-sw" style="background:#E0567B"></span>Accent #E0567B &nbsp; <span class="rjm-sw" style="background:#C13E63"></span>Buttons #C13E63 &nbsp; <span class="rjm-sw" style="background:#FFF8F5"></span>Background #FFF8F5</div>
-  ${field('Headline font', 'Georgia (elegant, every device has it)', 'Web fonts are not used: Gmail removes them.', 'select')}
+   <div class="rjm-row"><span><span class="rjm-sw" style="background:#E0567B"></span>Accent</span><span><span class="rjm-sw" style="background:#C13E63"></span>Buttons</span><span><span class="rjm-sw" style="background:#FFF8F5"></span>Background</span><span><span class="rjm-sw" style="background:#2A2228"></span>Text</span></div></div>
  </div>
- <div class="sec-title">Footer</div>
- <div class="rjm-card">${field('Help box', 'WhatsApp +971 58 505 2611 · care@extrabeauty.ae · @kbeauty.bliss', 'From Store → Business Details unless you change them here.')}
+ <div class="sec-title">Footer of every email</div>
+ <div class="rjm-card">
+  ${field('Dubai address', '[Dubai address]', 'Filled from Store → Business Details (street, city) when those are set.', 'area')}
+  ${field('Korea address', '[Korea address — owner to paste]', '', 'area')}
+  <div class="rjm-grid rjm-g2">${field('WhatsApp', '+971 58 505 2611')}${field('Email', 'info@kbeautybliss.com')}</div>
+  ${field('Instagram', '@kbeauty.bliss')}
   ${field('Signature', 'With love, | the K Beauty Bliss team')}
-  ${field('Business postal address (required on marketing emails)', '[your trade licence address]', 'Printed in the footer of every campaign.')}</div>
+  <div class="rjm-row"><span class="rjm-sp"></span><span class="btn ghost">Send test</span><span class="btn">Save</span></div>
+ </div>
 </div>
-<div><div class="rjm-row" style="margin-bottom:10px"><b style="font-size:13px">Preview</b><span class="rjm-sp"></span><span class="rjm-dev"><span class="on">Desktop</span><span>Phone</span></span></div>${frame('after/01-order-confirmation.html', 1180)}</div></div>`,
+<div><div class="rjm-row" style="margin-bottom:10px"><b style="font-size:13px">Preview</b><span class="rjm-sp"></span><span class="rjm-dev"><span>Desktop</span><span class="on">Phone</span></span></div><div class="rjm-phone">${frame('after/01-order-confirmation.html', 1300)}</div></div></div>`,
 };
 
 S['e6-sent-mail'] = {
@@ -249,64 +264,79 @@ S['m1-campaigns'] = {
 </table></div><div class="rjm-h" style="margin-top:8px">Sample figures. Opens are not shown as a headline number: Apple Mail pre-loads images, so open rates are inflated and unreliable; clicks and orders are real.</div>`,
 };
 
-const BLOCKS = [['▭', 'Mini header'], ['▣', 'Hero image'], ['H', 'Heading'], ['¶', 'Text'], ['⬭', 'Button'], ['▤', 'Product row'], ['▦', 'Product grid'], ['%', 'Coupon'], ['🖼', 'Image'], ['▥', 'Columns 2 / 3'], ['—', 'Divider'], ['↕', 'Spacer'], ['@', 'Social links'], ['▁', 'Mini footer + unsubscribe']];
+const BLOCKS = [['▭', 'Mini header'], ['▣', 'Hero image'], ['H', 'Heading'], ['¶', 'Text'], ['⬭', 'Button'], ['▤', 'Product row'], ['▦', 'Product grid'], ['%', 'Coupon'], ['🖼', 'Image'], ['▥', 'Columns 2 / 3'], ['—', 'Divider'], ['↕', 'Spacer'], ['@', 'Social links'], ['▁', 'Footer + unsubscribe']];
 S['m2-builder'] = {
   crumb: 'Growth & Marketing', title: 'Email Marketing · Builder', nav: 'em-mkt',
-  html: () => `${proposal('Growth & Marketing → Email Marketing → Templates → Autumn Glow Edit')}
-<div class="rjm-row" style="margin-bottom:14px"><b style="font-size:16px">Autumn Glow Edit</b>${pill('grey', 'Draft · saved 10:52')}<span class="rjm-sp"></span><span class="btn ghost sm">↶</span><span class="btn ghost sm">↷</span><span class="rjm-dev"><span class="on">Desktop</span><span>Phone</span></span><span class="btn ghost sm">Send test</span><span class="btn sm">Next: choose customers →</span></div>
+  html: () => `${proposal('Growth & Marketing → Email Marketing → Templates → More Medicube for you')}
+<div class="rjm-row" style="margin-bottom:14px"><b style="font-size:16px">More Medicube for you</b>${pill('grey', 'Draft · saved 10:52')}<span class="rjm-sp"></span><span class="btn ghost sm">↶</span><span class="btn ghost sm">↷</span><span class="rjm-dev"><span class="on">Desktop</span><span>Phone</span></span><span class="btn ghost sm">Send test</span><span class="btn sm">Next: choose customers →</span></div>
 <div class="rjm-builder">
  <div class="rjm-card rjm-blocks" style="padding:12px"><b style="font-size:12px;color:var(--ink-soft);letter-spacing:.08em;text-transform:uppercase">Drag a block</b><div style="height:8px"></div>${BLOCKS.map(([i, n], k) => `<div class="b${k === BLOCKS.length - 1 ? ' lock' : ''}"><i>${i}</i>${n}${k === BLOCKS.length - 1 ? ' 🔒' : ''}</div>`).join('')}
- <div class="rjm-h">The footer with Unsubscribe is always in every campaign and cannot be removed.</div></div>
- <div class="rjm-canvas">${frame('marketing/m1-campaign-autumn-glow.html', 1680)}<div class="rjm-sel-outline" style="top:536px;height:676px"><em>Product grid · 4 products</em></div></div>
- <div class="rjm-card" style="padding:14px"><h3>Product grid</h3><p class="d">Prices, pictures and links come from the catalogue when the email is sent.</p>
-  ${field('Products', '🔍 Search products…')}
-  ${['Round Lab Birch Juice Sunscreen', 'SKIN1004 Centella Ampoule', 'Laneige Lip Sleeping Mask', 'Beauty of Joseon Glow Deep Serum'].map((n) => `<div class="rjm-row" style="font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--border-2);flex-wrap:nowrap"><span>⋮⋮</span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n}</span><span class="rjm-x" style="flex-shrink:0">×</span></div>`).join('')}
-  <div style="height:10px"></div>
-  ${field('Or fill automatically', 'Best sellers · New in · From a category · Picked by hand', '', 'select')}
-  <div class="rjm-grid rjm-g2">${field('Columns', '2', '', 'select')}${field('Button text', 'Shop now')}</div>
-  <div class="rjm-row" style="font-size:13px;flex-wrap:nowrap">Show sale price<span class="rjm-sp"></span>${tog(true)}</div><div class="rjm-row" style="font-size:13px;flex-wrap:nowrap;margin-top:8px">Hide sold-out<span class="rjm-sp"></span>${tog(true)}</div>
+ <div class="rjm-h">The footer (addresses, WhatsApp, email, Unsubscribe) is in every campaign and cannot be removed.</div></div>
+ <div class="rjm-canvas">${frame('marketing/m3-campaign-medicube-fans.html', 1620)}<div class="rjm-sel-outline" style="top:418px;height:676px"><em>Product grid · auto-filled</em></div></div>
+ <div class="rjm-card" style="padding:14px"><h3>Product grid</h3><p class="d">Pictures, prices and links come from the catalogue when each email is sent. Sold-out products are skipped.</p>
+  ${field('Fill with', 'This group’s top brand (auto)', 'For “Mostly bought Medicube” that is Medicube. Each group gets its own brand.', 'select')}
+  <div class="rjm-count" style="padding:10px 12px;margin-bottom:12px"><b style="font-size:15px">Medicube</b><div class="rjm-h">Top brand of the chosen group · 4 best-selling in-stock products</div></div>
+  <div class="rjm-grid rjm-g2">${field('How many', '4', '', 'select')}${field('Columns', '2', '', 'select')}</div>
+  ${field('Order by', 'Best sellers', '', 'select')}
+  ${field('Button text', 'Shop now')}
+  <div class="rjm-row" style="font-size:13px;flex-wrap:nowrap">Show sale price<span class="rjm-sp"></span>${tog(true)}</div>
+  <div class="rjm-h" style="margin-top:10px">Other fills: picked by hand · a brand · a category · new in · best sellers.</div>
  </div>
 </div>`,
 };
 
+const RULE = (a, b, c) => `<div class="rjm-rule"><span class="rjm-in rjm-sel">${a}</span><span class="rjm-in rjm-sel">${b}</span><span class="rjm-in">${c}</span><span class="rjm-x">×</span></div>`;
 S['m3-groups'] = {
   crumb: 'Growth & Marketing', title: 'Email Marketing · Customer groups', nav: 'em-mkt',
   html: () => `${proposal('Growth & Marketing → Email Marketing → Customer groups')}
-<div class="page-head"><h2>Customer groups</h2><p>Groups update themselves: a customer joins or leaves as they order.</p></div>${MKT_TABS('Customer groups')}
+<div class="page-head"><h2>Customer groups</h2><p>Customers (people who ordered or have an account) and Subscribers (newsletter sign-ups) are kept as two separate lists. Groups update themselves as people order.</p></div>${MKT_TABS('Customer groups')}
+<div class="rjm-tabs"><span class="rjm-tab on">Customers · 3,712</span><span class="rjm-tab">Subscribers · 412</span></div>
 <div class="rjm-split"><div>
- <div class="rjm-card"><h3>Ready-made groups</h3><p class="d">Counts are live. “Can email” leaves out anyone who unsubscribed.</p>
- <table class="rjm-tbl"><tr><th>Group</th><th>Customers</th><th>Can email</th></tr>
- ${[['Never ordered', '1,920', '612'], ['One order only', '1,104', '381'], ['Repeat buyers (2+ orders)', '688', '233'], ['VIP — spent AED 1,000+', '142', '64'], ['Lapsed — no order in 90 days', '1,212', '402'], ['Newsletter subscribers', '412', '412']].map(([g, c, e]) => `<tr><td><b>${g}</b></td><td>${c}</td><td>${e}</td></tr>`).join('')}
- </table></div></div>
-<div><div class="rjm-card"><div class="rjm-row"><h3 style="margin:0">New group</h3><span class="rjm-sp"></span>${field('', 'Match ALL of these', '', 'select')}</div>
- ${field('Name', 'Good customers gone quiet')}
- ${[['Number of orders', 'is at least', '2'], ['Total spent (AED)', 'is more than', '500'], ['Last order', 'before', '1 Jul 2026'], ['Email consent', 'is', 'Subscribed or bought before']].map(([a, b, c]) => `<div class="rjm-rule"><span class="rjm-in rjm-sel">${a}</span><span class="rjm-in rjm-sel">${b}</span><span class="rjm-in">${c}</span><span class="rjm-x">×</span></div>`).join('')}
+ <div class="rjm-card"><div class="rjm-row"><h3 style="margin:0">New group</h3><span class="rjm-sp"></span><span class="rjm-in rjm-sel" style="width:auto">Match ALL rules</span></div><div style="height:10px"></div>
+ ${field('Name', 'Mostly bought Medicube · Dubai · 2026')}
+ ${RULE('Brands bought', 'mostly', 'Medicube')}
+ ${RULE('Emirate', 'is any of', 'Dubai, Abu Dhabi, Sharjah')}
+ ${RULE('Order date', 'in year', '2026')}
+ ${RULE('Total spent (AED)', 'at least', '500')}
+ ${RULE('Number of orders', 'at least', '2')}
  <span class="btn ghost sm">+ Add rule</span>
- <div class="rjm-h" style="margin-top:8px">Rules: number of orders · total spent · average order · last order date · first order date · never ordered · bought a product / brand / category · used a coupon · country / city · has an account · newsletter status.</div>
+ <div class="rjm-h" style="margin-top:10px"><b>Rules:</b> total spent · number of orders · emirate / region (Dubai, Abu Dhabi, Sharjah, Ajman, Ras Al Khaimah, Fujairah, Umm Al Quwain, outside UAE) · order date by month, by year or a custom date range · brands bought (“mostly” = the brand with the biggest share of what they spent; or “ever bought”) · never ordered · newsletter subscribed.</div>
  <div style="height:12px"></div>
- <div class="rjm-count"><b>214</b> customers match · <b>196</b> can be emailed<div class="rjm-h">18 unsubscribed. Spend counts paid orders only, after refunds — the same figures as Store → Customers.</div></div>
- <div style="height:10px"></div><div class="rjm-row"><span class="btn ghost sm">See the 214</span><span class="rjm-sp"></span><span class="btn sm">Save group</span></div>
-</div></div></div>`,
+ <div class="rjm-count"><b>86</b> customers match · <b>79</b> can be emailed<div class="rjm-h">7 unsubscribed. Spend counts paid orders only, after refunds. Emirate comes from the delivery address. Sample figures.</div></div>
+ <div style="height:10px"></div><div class="rjm-row"><span class="btn ghost sm">See the 86</span><span class="rjm-sp"></span><span class="btn sm">Save group</span></div>
+ </div></div>
+<div>
+ <div class="rjm-card"><h3>Order date</h3><p class="d">Pick one way to set the period.</p>
+  <div class="rjm-tabs" style="margin-bottom:10px"><span class="rjm-tab">Month</span><span class="rjm-tab on">Year</span><span class="rjm-tab">Custom range</span></div>
+  <div class="rjm-grid rjm-g2">${field('Month', 'September 2026', '', 'select')}${field('Year', '2026', '', 'select')}</div>
+  <div class="rjm-grid rjm-g2">${field('From', '1 Jun 2026')}${field('To', '30 Sep 2026')}</div></div>
+ <div style="height:14px"></div>
+ <div class="rjm-card"><h3>Saved groups</h3>
+ <table class="rjm-tbl"><tr><th>Group</th><th>List</th><th>Can email</th></tr>
+ ${[['Mostly bought Medicube', 'Customers', '214'], ['Mostly bought COSRX', 'Customers', '168'], ['Abu Dhabi · spent AED 1,000+', 'Customers', '41'], ['Ordered in Ramadan 2026 (custom range)', 'Customers', '302'], ['Never ordered', 'Customers', '612'], ['All confirmed subscribers', 'Subscribers', '412']].map(([g, l, e]) => `<tr><td><b>${g}</b></td><td>${l}</td><td>${e}</td></tr>`).join('')}
+ </table><div class="rjm-h" style="margin-top:6px">Sample figures.</div></div>
+</div></div>`,
 };
 
 S['m4-review-send'] = {
   crumb: 'Growth & Marketing', title: 'Email Marketing · Review & send', nav: 'em-mkt',
   html: () => `${proposal('Growth & Marketing → Email Marketing → New campaign → Review & send')}
-<div class="page-head"><h2>Review &amp; send · Autumn Glow Edit</h2><p>Step 3 of 3 — design ✓ · customers ✓ · send</p></div>
+<div class="page-head"><h2>Review &amp; send · More Medicube for you</h2><p>Step 3 of 3 — design ✓ · customers ✓ · send</p></div>
 <div class="rjm-split"><div>
- <div class="rjm-card"><h3>In the inbox</h3><div class="rjm-inbox"><div class="from">K Beauty Bliss</div><div class="subj"><b>Skin that glows back — 15% inside</b></div><div class="pre">15% off the glow edit this week — your code is inside.</div></div>
- <div style="height:12px"></div>${field('Subject', 'Skin that glows back — 15% inside', '38 characters · fits on a phone')}${field('Preview line', '15% off the glow edit this week — your code is inside.')}</div>
+ <div class="rjm-card"><h3>In the inbox</h3><div class="rjm-inbox"><div class="from">K Beauty Bliss</div><div class="subj"><b>More Medicube, just for you</b></div><div class="pre">New Medicube picks, chosen because you love the brand.</div></div>
+ <div style="height:12px"></div>${field('Subject', 'More Medicube, just for you', '27 characters · fits on a phone')}${field('Preview line', 'New Medicube picks, chosen because you love the brand.')}</div>
  <div class="sec-title">Who</div>
- <div class="rjm-card"><div class="rjm-row"><b>Repeat buyers (2+ orders)</b><span class="rjm-sp"></span>${pill('green', '196 will receive it')}</div><div class="rjm-h">Left out automatically: 18 unsubscribed · 3 bounced before · 0 complained.</div></div>
+ <div class="rjm-card"><div class="rjm-row"><b>Mostly bought Medicube</b>${pill('grey', 'Customers')}<span class="rjm-sp"></span>${pill('green', '214 will receive it')}</div><div class="rjm-h">Left out automatically: unsubscribed, and addresses that bounced before.</div></div>
  <div class="sec-title">When</div>
  <div class="rjm-card"><div class="rjm-row" style="gap:16px"><label style="font-size:13px"><input type="radio"> Send now</label><label style="font-size:13px"><input type="radio" checked> Schedule</label></div><div style="height:10px"></div>
   <div class="rjm-grid rjm-g2">${field('Date', 'Wed 8 Oct 2026')}${field('Time (Dubai)', '19:00')}</div>
-  <div class="rjm-h">Goes out at 60 a minute (about 4 minutes). Scheduled sends need the one cron line in Emails → Sending; without it, keep this page open and it sends from here.</div></div>
+  <div class="rjm-h">Goes out at 60 a minute. Scheduled sends need the one cron line; without it, keep this page open and it sends from here.</div></div>
 </div>
 <div><div class="rjm-card"><h3>Before it goes</h3><ul class="rjm-check">
- <li>✅ Unsubscribe link and one-click unsubscribe header</li><li>✅ Business address in the footer</li><li>✅ Test sent to rafi@… at 10:55</li><li>✅ Every product in stock and published</li><li>✅ Coupon GLOW15 exists and expires 12 Oct</li><li>⚠️ Domain check: DMARC not found — mail may land in spam (Emails → Sending)</li></ul>
- <div class="rjm-row" style="margin-top:12px"><span class="btn ghost">Send me a test</span><span class="rjm-sp"></span><span class="btn">Schedule for 8 Oct, 19:00</span></div></div>
- <div style="height:12px"></div><div class="rjm-phone">${frame('marketing/m1-campaign-autumn-glow.html', 760)}</div></div></div>`,
+ <li>✅ Unsubscribe link and one-click unsubscribe</li><li>✅ Dubai and Korea addresses in the footer</li><li>✅ Test sent to rafi@… at 10:55</li><li>✅ Products filled: Medicube, 4 in stock</li><li>✅ Coupon MEDI10 exists</li></ul>
+ <div class="rjm-row" style="margin-top:12px"><span class="btn ghost">Send me a test</span><span class="rjm-sp"></span><span class="btn">Schedule for 8 Oct, 19:00</span></div>
+ <div class="rjm-h" style="margin-top:10px">🔒 Only <b>Owner and Manager (Administrator)</b> can send or schedule a campaign.</div></div>
+ <div style="height:12px"></div><div class="rjm-phone">${frame('marketing/m3-campaign-medicube-fans.html', 760)}</div></div></div>`,
 };
 
 S['m5-report'] = {
@@ -322,6 +352,31 @@ S['m5-report'] = {
 <div class="rjm-card" style="padding:6px"><table class="rjm-tbl"><tr><th>Link</th><th>Clicks</th></tr>
 <tr><td>Shop the Glow Edit (button)</td><td>8</td></tr><tr><td>Round Lab Birch Juice Sunscreen</td><td>4</td></tr><tr><td>SKIN1004 Centella Ampoule</td><td>2</td></tr></table></div>
 <div class="rjm-h" style="margin-top:8px">Sample figures. Opens are shown only as “at least N” — Apple Mail privacy protection opens every message itself.</div>`,
+};
+
+S['o1-order-status'] = {
+  crumb: 'Store', title: 'Orders · KBB-10427', nav: 'orders',
+  html: () => `${proposal('Store → Orders → an order → Status (the tick exists today; the on-hold button and new defaults are proposed)')}
+<div class="page-head"><h2>Order KBB-10427</h2><p>Aisha Khan · Dubai · AED 319.95 · Tabby (paid)</p></div>
+<div class="rjm-split"><div>
+ <div class="rjm-card"><h3>Status</h3>
+  ${field('Change status to', 'Shipped', '', 'select')}
+  <label class="rjm-tick"><span class="rjm-cb on">✓</span><span><b>Email the customer about this change</b><span class="rjm-h">On by default for Shipped. Untick to change the status quietly, just this once.</span></span></label>
+  <div class="rjm-row" style="margin-top:12px"><span class="rjm-sp"></span><span class="btn">Update order</span></div>
+ </div>
+ <div style="height:14px"></div>
+ <div class="rjm-card"><h3>When the status is On hold</h3><p class="d">On hold never emails by itself. Send it by hand when you need something from the customer.</p>
+  ${field('Change status to', 'On hold', '', 'select')}
+  <label class="rjm-tick"><span class="rjm-cb"></span><span><b>Email the customer about this change</b><span class="rjm-h">Off for On hold — use the button below instead.</span></span></label>
+  ${field('What you need from the customer', 'Please confirm the building name for delivery.', 'Printed in the on-hold email.', 'area')}
+  <div class="rjm-row"><span class="btn ghost">Preview</span><span class="rjm-sp"></span><span class="btn">Send on-hold email</span></div>
+ </div>
+</div>
+<div class="rjm-card"><h3>What the tick does, per status</h3>
+ <table class="rjm-tbl"><tr><th>Status</th><th>Tick starts</th></tr>
+ ${[['Processing', 'ticked (receipt)'], ['Shipped', 'ticked'], ['Completed (delivered)', 'ticked'], ['Cancelled', 'ticked'], ['Refunded', 'ticked — refund email follows the money'], ['Failed', 'ticked'], ['On hold', 'unticked — manual button'], ['Pending', 'reminders at 30 min and 24 h, automatic'], ['Draft', 'no email']].map(([a, b]) => `<tr><td><b>${a}</b></td><td>${b}</td></tr>`).join('')}
+ </table><div class="rjm-h" style="margin-top:8px">The same tick is on the bulk status change in Store → Orders.</div></div>
+</div>`,
 };
 
 /* ------------------------------------------------------------- sidebar */
@@ -365,6 +420,7 @@ const GROW = 'html,body{height:auto!important}.app{height:auto!important;min-hei
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
+  for (const f of fs.readdirSync(OUT)) if (f.endsWith('.png')) fs.unlinkSync(path.join(OUT, f));
   const blade = fs.readFileSync(path.join(APP, 'resources/views/admin/app.blade.php'), 'utf8');
   fs.writeFileSync(path.join(OUT, 'admin-base.css'), /<style>([\s\S]*?)<\/style>/.exec(blade)[1]);
 
@@ -392,7 +448,7 @@ const GROW = 'html,body{height:auto!important}.app{height:auto!important;min-hei
       await page.setViewportSize({ width: w, height: 1000 });
       await page.waitForTimeout(500);
       const m = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight }));
-      await page.screenshot({ path: path.join(OUT, `${name}-${w}.png`), fullPage: true });
+      await page.screenshot({ path: path.join(OUT, `${name}-${w}.jpg`), fullPage: true, type: 'jpeg', quality: 80 });
       console.log(JSON.stringify({ shot: `${name}-${w}`, ...m, overflow: m.scrollWidth > w }));
     }
     /* Static copy: the console's own CSS + this screen's DOM, no scripts. */
@@ -414,12 +470,12 @@ const GROW = 'html,body{height:auto!important}.app{height:auto!important;min-hei
     document.querySelector('.nav-group[data-sec="Emails"]').scrollIntoView({ block: 'start' });
   });
   await page.waitForTimeout(500);
-  await page.screenshot({ path: path.join(OUT, 'm0-phone-menu-390.png') });
+  await page.screenshot({ path: path.join(OUT, 'm0-phone-menu-390.jpg'), type: 'jpeg', quality: 80 });
   await page.setViewportSize({ width: 1280, height: 1000 });
   await page.evaluate(() => document.querySelector('#side').classList.remove('open'));
   const side = await page.$('#side');
   await page.evaluate(() => document.querySelector('.nav-group[data-sec="Emails"]').scrollIntoView({ block: 'start' }));
-  await side.screenshot({ path: path.join(OUT, 'm0-sidebar-proposed.png') });
+  await side.screenshot({ path: path.join(OUT, 'm0-sidebar-proposed.jpg'), type: 'jpeg', quality: 80 });
   console.log('done');
   await browser.close();
 })();

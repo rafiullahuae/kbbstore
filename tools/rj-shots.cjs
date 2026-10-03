@@ -22,6 +22,8 @@ const out = path.join(dir, 'shots');
 /* RJ_DARK=1 photographs with prefers-color-scheme: dark, as Apple Mail / iOS Mail
    apply it. Gmail's apps do their own colour inversion and ignore the query. */
 const dark = !!process.env.RJ_DARK;
+/* RJ_FMT=jpg writes JPEG at quality 80 (round 1b: keep the folder small). */
+const jpg = process.env.RJ_FMT === 'jpg';
 
 (async () => {
   fs.mkdirSync(out, { recursive: true });
@@ -39,7 +41,7 @@ const dark = !!process.env.RJ_DARK;
         height: document.documentElement.scrollHeight,
       }));
       const name = f.replace(/\.html$/, '');
-      await page.screenshot({ path: path.join(out, `${name}-${w}${dark ? '-dark' : ''}.png`), fullPage: true });
+      await page.screenshot({ path: path.join(out, `${name}-${w}${dark ? '-dark' : ''}.${jpg ? 'jpg' : 'png'}`), fullPage: true, ...(jpg ? { type: 'jpeg', quality: 80 } : {}) });
       console.log(JSON.stringify({ shot: `${name}-${w}`, viewport: w, ...m, overflow: m.scrollWidth > w }));
       await ctx.close();
     }

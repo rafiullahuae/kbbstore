@@ -75,6 +75,11 @@
   <div class="kbbdr-baracts"><button type="button" class="kbbdr-primary" id="kbbDraftBarA"></button><button type="button" id="kbbDraftBarB">Discard</button></div>
 </div><div class="content" id="content" data-bz-watch="1"><style>
 span.tog{display:inline-block;vertical-align:middle}
+.rjm-choice{padding:14px;cursor:pointer}.rjm-choice.on{border:2px solid var(--accent);background:var(--accent-soft)}
+.rjm-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);display:inline-block;flex-shrink:0}.rjm-radio.on{border:5px solid var(--accent)}
+.rjm-gws{border:1px dashed var(--border);border-radius:var(--r-sm);padding:12px;opacity:.75}
+.rjm-tick{display:flex;gap:9px;align-items:flex-start;margin:4px 0 0;font-size:13px}.rjm-tick .rjm-h{display:block}
+.rjm-cb{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);display:grid;place-items:center;font-size:12px;color:#fff;flex-shrink:0;margin-top:1px}.rjm-cb.on{background:var(--accent);border-color:var(--accent)}
 .rjm-proposal{background:#fff6e6;border:1px dashed #e0a43a;color:#7a4d08;border-radius:12px;padding:10px 14px;font-size:12.5px;margin-bottom:16px}
 .rjm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
 .rjm-tab{font-size:13px;font-weight:600;padding:8px 14px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
@@ -120,21 +125,23 @@ span.tog{display:inline-block;vertical-align:middle}
 .rjm-scroll{overflow-x:auto}
 @media(max-width:880px){.rjm-split,.rjm-builder,.rjm-g2,.rjm-g3{grid-template-columns:minmax(0,1fr)}.rjm-g4{grid-template-columns:1fr 1fr}.rjm-rule{grid-template-columns:1fr 1fr}.rjm-hide-sm{display:none}}
 </style><div class="wrap"><div class="rjm-proposal"><b>PROPOSAL · static mockup</b> — nothing on this screen is built or saved. Where it lives: <b>Emails → Design &amp; branding</b></div>
-<div class="page-head"><h2>Design &amp; branding</h2><p>Set once; every customer email and every campaign template uses it.</p></div>
+<div class="page-head"><h2>Design &amp; branding</h2><p>Set once; every customer email and every campaign uses it. Change any of it at any time.</p></div>
 <div class="rjm-split"><div>
- <div class="rjm-card"><h3>Look</h3><p class="d">Pick the direction you approve from the previews (A, B or C); colours start from the shop’s own pinks.</p>
-  <div class="rjm-grid rjm-g3"><div class="rjm-card" style="padding:12px;border:2px solid var(--accent)"><b style="font-size:13px">A · Blush editorial</b><div class="rjm-h">Default</div></div><div class="rjm-card" style="padding:12px;"><b style="font-size:13px">B · Bold pink</b><div class="rjm-h"></div></div><div class="rjm-card" style="padding:12px;"><b style="font-size:13px">C · Minimal luxe</b><div class="rjm-h"></div></div></div>
-  <div style="height:12px"></div>
-  <label class="rjm-f"><span class="rjm-l">Logo</span><span class="rjm-in">⬆ Upload PNG · 340×80 or larger · uses Business Details logo if blank</span><span class="rjm-h">Wordmark “K-Beauty Bliss” is printed when no logo is set — it shows even with images blocked.</span></label>
+ <div class="rjm-card"><h3>Look</h3><p class="d">Blush editorial (A) — your choice of 3 October, used by every email.</p>
+  <label class="rjm-f"><span class="rjm-l">Logo</span><span class="rjm-in">⬆ Upload PNG or JPG · at least 340×80</span><span class="rjm-h">Blank: the “K-Beauty Bliss” wordmark prints in text, which shows even when pictures are blocked.</span></label>
   <div class="rjm-f"><span class="rjm-l">Colours</span>
-   <span class="rjm-sw" style="background:#E0567B"></span>Accent #E0567B &nbsp; <span class="rjm-sw" style="background:#C13E63"></span>Buttons #C13E63 &nbsp; <span class="rjm-sw" style="background:#FFF8F5"></span>Background #FFF8F5</div>
-  <label class="rjm-f"><span class="rjm-l">Headline font</span><span class="rjm-in rjm-sel">Georgia (elegant, every device has it)</span><span class="rjm-h">Web fonts are not used: Gmail removes them.</span></label>
+   <div class="rjm-row"><span><span class="rjm-sw" style="background:#E0567B"></span>Accent</span><span><span class="rjm-sw" style="background:#C13E63"></span>Buttons</span><span><span class="rjm-sw" style="background:#FFF8F5"></span>Background</span><span><span class="rjm-sw" style="background:#2A2228"></span>Text</span></div></div>
  </div>
- <div class="sec-title">Footer</div>
- <div class="rjm-card"><label class="rjm-f"><span class="rjm-l">Help box</span><span class="rjm-in">WhatsApp +971 58 505 2611 · care@extrabeauty.ae · @kbeauty.bliss</span><span class="rjm-h">From Store → Business Details unless you change them here.</span></label>
+ <div class="sec-title">Footer of every email</div>
+ <div class="rjm-card">
+  <label class="rjm-f"><span class="rjm-l">Dubai address</span><textarea class="rjm-in" rows="4" style="">[Dubai address]</textarea><span class="rjm-h">Filled from Store → Business Details (street, city) when those are set.</span></label>
+  <label class="rjm-f"><span class="rjm-l">Korea address</span><textarea class="rjm-in" rows="4" style="">[Korea address — owner to paste]</textarea></label>
+  <div class="rjm-grid rjm-g2"><label class="rjm-f"><span class="rjm-l">WhatsApp</span><span class="rjm-in">+971 58 505 2611</span></label><label class="rjm-f"><span class="rjm-l">Email</span><span class="rjm-in">info@kbeautybliss.com</span></label></div>
+  <label class="rjm-f"><span class="rjm-l">Instagram</span><span class="rjm-in">@kbeauty.bliss</span></label>
   <label class="rjm-f"><span class="rjm-l">Signature</span><span class="rjm-in">With love, | the K Beauty Bliss team</span></label>
-  <label class="rjm-f"><span class="rjm-l">Business postal address (required on marketing emails)</span><span class="rjm-in">[your trade licence address]</span><span class="rjm-h">Printed in the footer of every campaign.</span></label></div>
+  <div class="rjm-row"><span class="rjm-sp"></span><span class="btn ghost">Send test</span><span class="btn">Save</span></div>
+ </div>
 </div>
-<div><div class="rjm-row" style="margin-bottom:10px"><b style="font-size:13px">Preview</b><span class="rjm-sp"></span><span class="rjm-dev"><span class="on">Desktop</span><span>Phone</span></span></div><iframe class="rjm-frame" style="height:1180px;width:100%" src="../after/01-order-confirmation.html"></iframe></div></div></div></div>
+<div><div class="rjm-row" style="margin-bottom:10px"><b style="font-size:13px">Preview</b><span class="rjm-sp"></span><span class="rjm-dev"><span>Desktop</span><span class="on">Phone</span></span></div><div class="rjm-phone"><iframe class="rjm-frame" style="height:1300px;width:100%" src="../after/01-order-confirmation.html"></iframe></div></div></div></div></div>
   </div>
 </div></body></html>

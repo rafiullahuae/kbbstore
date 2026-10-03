@@ -1,6 +1,6 @@
 # Emails: build plan (Lane RJ, Phase 1 → Phases 2–5)
 
-This plan is written to be built **after the owner picks a direction (A, B or C) and answers the decisions in §9**. Everything here was checked against the code. The evidence is in `docs/EMAILS-AUDIT.md`, and the pictures are in `docs/rj-email-previews/` (start with `OVERVIEW.png`).
+This plan is written to be built **after the owner picks a direction (A, B or C) and answers the decisions in §9**. Everything here was checked against the code. The evidence is in `docs/EMAILS-AUDIT.md`, and the pictures are in `docs/rj-email-previews/` (start with `OVERVIEW-2.png`).
 
 The rules from CLAUDE.md apply to every package:
 
@@ -12,6 +12,21 @@ The rules from CLAUDE.md apply to every package:
 - Nothing marketing-related goes on `/api/*`.
 
 ---
+
+## 0. The owner's decisions (3 October 2026) — these override §1–§9 where they differ
+
+| # | Decision | What changes in this plan |
+|---|---|---|
+| D5 | **Look A for every email**, fast and responsive. "View this email in your browser" goes at the **very bottom** | E1 uses A only. System fonts, JPEG pictures sized to their slot. The largest proposed email is 25 KB of HTML, well under Gmail's 102 KB clip |
+| D1 | **This server's mail, or Google Workspace (Gmail SMTP). Nothing external** | Emails → Sending & delivery offers exactly two choices. Google Workspace uses host `smtp.gmail.com`, port 587 with TLS, a username and an **app password**. The existing SMTP transport already covers it, so the change is the screen and the From-must-match-account check. Google's limit is about 2,000 messages a day per Workspace user, so the campaign daily cap defaults to that when Google is chosen |
+| D2 | **No receipt before payment.** Any unpaid order gets "Complete your order" at **30 minutes** and again at **24 hours**, whatever the payment method | E2 moves `OrderMailer::placed()` to the moment the order is paid. For cash on delivery that is still the moment it is placed. Two reminders are sent for `pending` orders. **They need the schedule cron line** (or a sweep run at the end of page requests, like `OutboundTick`; recommend both). They stop the moment the order is paid, cancelled or failed |
+| D6 | Status emails **on**: processing, shipped, completed, cancelled, refunded, failed. **On hold off**, sent by hand. **"Email the customer" can be unticked on any status change** | The per-order tick already exists (`odNotifyFieldHTML`, `app.blade.php:14906`), and bulk changes honour it (`OrderStatusMailPolicy`). New in E2: support for `completed`, `failed` and `onhold` in the closed lists, and a **"Send on-hold email"** button on the order screen with a typed reason. It needs its own capability (`orders.notify`, owner and manager) |
+| D7, D8 | **The order number is the tracking number**. No courier integration. "Track your order" opens the shop's own order page | No tracking or courier columns, so §2.1's order columns are dropped. The signed "Track your order" link (D7) is required in E2. The shipped and delivered emails print "Your tracking number is your order number" |
+| D9 | **Footer of every email**: Dubai and Korea addresses, WhatsApp +971 58 505 2611, info@kbeautybliss.com, editable any time | Emails → Design & branding gets fields for Dubai address, Korea address, WhatsApp, email, logo and colours. The Dubai address defaults from `store_street`/`store_locality` (`App\Support\BusinessAddress`). **Neither address is filled in anywhere yet**, so the previews show placeholders |
+| D3, D4 | Customers and Subscribers are **separate lists**. Groups by total spent, number of orders, **emirate**, **month / year / custom date range**, and **brands bought** ("mostly bought Medicube") | §3 adds two new rules. **Emirate** comes from the delivery address `state`, normalised to the seven emirates plus "outside UAE". **Brands bought** comes from `order_items.brand` (a snapshot taken at purchase). "Mostly" means the brand with the biggest share of that customer's net spend. The product block gets a fill mode, **"this group's top brand"** |
+| D11 | Campaign Send: **Owner and Manager (Administrator)** | `marketing.email.send` = owner and manager |
+
+Pictures for all of the above are in `docs/rj-email-previews/OVERVIEW-2.png`.
 
 ## 1. What gets built, in four packages
 

@@ -75,6 +75,11 @@
   <div class="kbbdr-baracts"><button type="button" class="kbbdr-primary" id="kbbDraftBarA"></button><button type="button" id="kbbDraftBarB">Discard</button></div>
 </div><div class="content" id="content" data-bz-watch="1"><style>
 span.tog{display:inline-block;vertical-align:middle}
+.rjm-choice{padding:14px;cursor:pointer}.rjm-choice.on{border:2px solid var(--accent);background:var(--accent-soft)}
+.rjm-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);display:inline-block;flex-shrink:0}.rjm-radio.on{border:5px solid var(--accent)}
+.rjm-gws{border:1px dashed var(--border);border-radius:var(--r-sm);padding:12px;opacity:.75}
+.rjm-tick{display:flex;gap:9px;align-items:flex-start;margin:4px 0 0;font-size:13px}.rjm-tick .rjm-h{display:block}
+.rjm-cb{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);display:grid;place-items:center;font-size:12px;color:#fff;flex-shrink:0;margin-top:1px}.rjm-cb.on{background:var(--accent);border-color:var(--accent)}
 .rjm-proposal{background:#fff6e6;border:1px dashed #e0a43a;color:#7a4d08;border-radius:12px;padding:10px 14px;font-size:12.5px;margin-bottom:16px}
 .rjm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
 .rjm-tab{font-size:13px;font-weight:600;padding:8px 14px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
@@ -119,32 +124,39 @@ span.tog{display:inline-block;vertical-align:middle}
 .rjm-bar{height:8px;border-radius:99px;background:var(--surface-3);overflow:hidden}.rjm-bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
 .rjm-scroll{overflow-x:auto}
 @media(max-width:880px){.rjm-split,.rjm-builder,.rjm-g2,.rjm-g3{grid-template-columns:minmax(0,1fr)}.rjm-g4{grid-template-columns:1fr 1fr}.rjm-rule{grid-template-columns:1fr 1fr}.rjm-hide-sm{display:none}}
-</style><div class="wrap"><div class="rjm-proposal"><b>PROPOSAL · static mockup</b> — nothing on this screen is built or saved. Where it lives: <b>Emails → Sending &amp; delivery</b></div>
-<div class="page-head"><h2>Sending &amp; delivery</h2><p>How email leaves the shop, who it is from, and whether inboxes will trust it.</p></div>
+</style><div class="wrap"><div class="rjm-proposal"><b>PROPOSAL · static mockup</b> — nothing on this screen is built or saved. Where it lives: <b>Emails → Sending &amp; delivery (owner, 3 Oct: server mail or Google Workspace — nothing external)</b></div>
+<div class="page-head"><h2>Sending &amp; delivery</h2><p>How email leaves the shop and who it is from. Two ways, both already yours.</p></div>
 <div class="rjm-split">
 <div>
-  <div class="rjm-card"><h3>How email leaves this store</h3><p class="d">Unchanged from Store → Mail. Server mail needs nothing filled in.</p>
-    <label class="rjm-f"><span class="rjm-l">Send using</span><span class="rjm-in rjm-sel">Use this server's mail (default)</span><span class="rjm-h">Or: a dedicated SMTP server (Cloudways’ SMTP add-on, Google Workspace, Brevo, Amazon SES, Postmark…) — recommended for marketing volume.</span></label>
-    <div class="rjm-grid rjm-g2"><label class="rjm-f"><span class="rjm-l">From name</span><span class="rjm-in">K Beauty Bliss</span></label><label class="rjm-f"><span class="rjm-l">From address</span><span class="rjm-in">hello@extrabeauty.ae</span><span class="rjm-h">Must be on extrabeauty.ae.</span></label></div>
-    <div class="rjm-grid rjm-g2"><label class="rjm-f"><span class="rjm-l">Reply-To</span><span class="rjm-in">care@extrabeauty.ae</span><span class="rjm-h">A mailbox somebody reads.</span></label><label class="rjm-f"><span class="rjm-l">New-order alerts to</span><span class="rjm-in">orders@extrabeauty.ae</span></label></div>
-    <div class="rjm-row"><span class="rjm-sp"></span><span class="btn">Save changes</span></div>
+  <div class="rjm-card"><h3>Send using</h3><p class="d">Pick one. You can switch at any time; press Send test after switching.</p>
+    <div class="rjm-grid rjm-g2">
+      <div class="rjm-card rjm-choice on"><div class="rjm-row"><span class="rjm-radio on"></span><b>This server’s mail</b><span class="pill green">In use</span></div><p class="d" style="margin:6px 0 0">Sends from the website’s own server. Nothing to fill in.</p></div>
+      <div class="rjm-card rjm-choice"><div class="rjm-row"><span class="rjm-radio"></span><b>Google Workspace (Gmail SMTP)</b></div><p class="d" style="margin:6px 0 0">Sends through your Google business mailbox. Usually lands in the inbox more reliably.</p></div>
+    </div>
+    <div style="height:14px"></div>
+    <div class="rjm-gws"><div class="rjm-l" style="margin-bottom:8px">Google Workspace settings <span class="rjm-h" style="display:inline">· shown when that option is picked</span></div>
+      <div class="rjm-grid rjm-g2"><label class="rjm-f"><span class="rjm-l">SMTP host</span><span class="rjm-in">smtp.gmail.com</span></label><label class="rjm-f"><span class="rjm-l">Port &amp; security</span><span class="rjm-in rjm-sel">587 · TLS</span></label></div>
+      <div class="rjm-grid rjm-g2"><label class="rjm-f"><span class="rjm-l">Google account (username)</span><span class="rjm-in">info@kbeautybliss.com</span></label><label class="rjm-f"><span class="rjm-l">App password</span><span class="rjm-in">•••• •••• •••• ••••</span><span class="rjm-h">Google Account → Security → 2-Step Verification → App passwords. Not your normal password. Stored encrypted.</span></label></div>
+      <div class="rjm-h">Google allows about 2,000 messages a day per Workspace user. Campaigns larger than that are spread over days automatically.</div>
+    </div>
   </div>
-  <div class="sec-title">Send a test</div>
-  <div class="rjm-card"><label class="rjm-f"><span class="rjm-l">Send a test to</span><span class="rjm-in">rafi@…</span><span class="rjm-h">Pick which email: a plain test, or any customer email filled with your latest order.</span></label>
-    <label class="rjm-f"><span class="rjm-l">Which email</span><span class="rjm-in rjm-sel">Order shipped — filled with order KBB-10427</span></label>
-    <div class="rjm-row"><span class="btn">Send test</span><span class="pill green">Accepted by the mail server · 10:41</span></div></div>
+  <div class="sec-title">Who it is from</div>
+  <div class="rjm-card"><div class="rjm-grid rjm-g2"><label class="rjm-f"><span class="rjm-l">From name</span><span class="rjm-in">K Beauty Bliss</span></label><label class="rjm-f"><span class="rjm-l">From address</span><span class="rjm-in">info@kbeautybliss.com</span><span class="rjm-h">With Google, this must be the Google account above or one of its aliases.</span></label></div>
+    <div class="rjm-grid rjm-g2"><label class="rjm-f"><span class="rjm-l">Replies go to</span><span class="rjm-in">info@kbeautybliss.com</span></label><label class="rjm-f"><span class="rjm-l">New-order alerts to</span><span class="rjm-in">info@kbeautybliss.com</span></label></div>
+    <div class="rjm-row"><span class="rjm-sp"></span><span class="btn">Save changes</span></div></div>
 </div>
 <div>
-  <div class="rjm-card"><h3>Will inboxes trust extrabeauty.ae?</h3><p class="d">Checked live with a DNS lookup when you press the button. Copy any missing record into Cloudflare / your DNS host.</p>
+  <div class="rjm-card"><h3>Send a test</h3><p class="d">Sends through whichever option is picked, and shows what the mail server answered.</p>
+    <label class="rjm-f"><span class="rjm-l">Send a test to</span><span class="rjm-in">rafi@…</span></label>
+    <label class="rjm-f"><span class="rjm-l">Which email</span><span class="rjm-in rjm-sel">Order shipped — filled with your latest order</span></label>
+    <div class="rjm-row"><span class="btn">Send test</span><span class="pill green">Accepted by the mail server · 10:41</span></div></div>
+  <div class="sec-title">Will inboxes trust the domain?</div>
+  <div class="rjm-card"><p class="d">A read-only DNS check for the From domain. It never changes anything.</p>
     <table class="rjm-tbl"><tbody><tr><th>Record</th><th>Status</th></tr>
-    <tr><td><b>SPF</b><div class="sub">Who may send for the domain</div><div class="rjm-dns">v=spf1 include:[your mail server] ~all</div></td><td><span class="pill grey">Not checked</span></td></tr>
-    <tr><td><b>DKIM</b><div class="sub">Signature proving the mail is yours</div><div class="rjm-dns">[selector]._domainkey → key from your mail provider</div></td><td><span class="pill grey">Not checked</span></td></tr>
-    <tr><td><b>DMARC</b><div class="sub">What receivers do with failures</div><div class="rjm-dns">_dmarc → v=DMARC1; p=none; rua=mailto:dmarc@extrabeauty.ae</div></td><td><span class="pill grey">Not checked</span></td></tr>
-    <tr><td><b>MX</b><div class="sub">Where replies to care@ arrive</div></td><td><span class="pill grey">Not checked</span></td></tr>
-    </tbody></table><div class="rjm-row" style="margin-top:12px"><span class="btn ghost sm">Check now</span><span class="rjm-h">The admin reads public DNS only; it never changes it.</span></div></div>
-  <div class="sec-title">Marketing sending speed</div>
-  <div class="rjm-card"><label class="rjm-f"><span class="rjm-l">Messages per minute</span><span class="rjm-in">60</span><span class="rjm-h">Campaigns go out in slices so the server is never flooded. 1,000 customers ≈ 17 minutes.</span></label>
-  <label class="rjm-f"><span class="rjm-l">Daily cap</span><span class="rjm-in">2,000</span><span class="rjm-h">A safety net while the domain builds reputation.</span></label></div>
+    <tr><td><b>SPF</b><div class="rjm-dns">v=spf1 include:_spf.google.com ~all <span class="sub">(+ the server, if you keep server mail)</span></div></td><td><span class="pill grey">Not checked</span></td></tr>
+    <tr><td><b>DKIM</b><div class="rjm-dns">google._domainkey → from Google Admin → Gmail → Authenticate email</div></td><td><span class="pill grey">Not checked</span></td></tr>
+    <tr><td><b>DMARC</b><div class="rjm-dns">_dmarc → v=DMARC1; p=none; rua=mailto:info@kbeautybliss.com</div></td><td><span class="pill grey">Not checked</span></td></tr>
+    </tbody></table><div class="rjm-row" style="margin-top:12px"><span class="btn ghost sm">Check now</span></div></div>
 </div></div></div></div>
   </div>
 </div></body></html>
