@@ -294,21 +294,33 @@ function signoff(lines = ['With love,', 'the K Beauty Bliss team']) {
 /* Below the card. Transactional: why you got it. Marketing: the unsubscribe
    and the postal address the bulk-sender rules require. */
 function footer({ why, unsubscribe = false, theme = 'A' }) {
+  /* (3 Oct, owner) "in very bottom footer, don't include phone email, what is
+     repeated in the questions? box. just keep address, terms pages,
+     un-subscribe option etc. make nice footer, not just throw the content."
+     Wordmark, the two addresses side by side (stacked on a phone), the policy
+     pages, then the small print, each group on its own hairline. */
   const t = THEMES[theme];
-  const a = (href, label, strong = false) => `<a href="${href}" style="color:${t.footStrong};${strong ? 'font-weight:600;text-decoration:underline;' : ''}">${label}</a>`;
-  /* Owner, 3 Oct: both addresses, WhatsApp and email in EVERY footer, editable
-     under Emails -> Design & branding. The addresses are placeholders on purpose:
-     the preview shop has no store_street/store_locality, and none is invented. */
-  const cell = (city, text) => `<td class="stack" valign="top" align="center" style="padding:0 10px 6px;font-family:${SANS};font-size:12px;line-height:1.55;color:${t.footInk};"><b style="color:${t.footStrong};">${city}</b><br>${text}</td>`;
-  return `<tr><td align="center" style="padding:22px 26px 4px;font-family:${SANS};font-size:12px;line-height:1.65;color:${t.footInk};" class="muted">
-<div style="font-weight:700;letter-spacing:.06em;color:${t.footStrong};">K Beauty Bliss</div>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:8px auto 0;"><tr>${cell('Dubai', '[Dubai address]')}${cell('Korea', '[Korea address &mdash; owner to paste]')}</tr></table>
-<div style="margin-top:4px;">WhatsApp ${a('https://wa.me/971585052611', '+971 58 505 2611')} &nbsp;&middot;&nbsp; ${a('mailto:info@kbeautybliss.com', 'info@kbeautybliss.com')}</div>
-<div style="margin-top:8px;">${why}</div>
-${unsubscribe ? `<div style="margin-top:8px;">${a('#unsubscribe', 'Unsubscribe', true)} &nbsp;&middot;&nbsp; ${a('#preferences', 'Email preferences')}</div>` : ''}
-<div style="margin-top:8px;">${a(`${SHOP}/`, 'Shop')} &nbsp;&middot;&nbsp; ${a(`${SHOP}/track-my-order/`, 'Track an order')} &nbsp;&middot;&nbsp; ${a(`${SHOP}/my-account/`, 'My account')}</div>
+  const a = (href, label, strong = false) => `<a href="${href}" style="color:${t.footStrong};text-decoration:${strong ? 'underline' : 'none'};${strong ? 'font-weight:600;' : ''}">${label}</a>`;
+  const dot = '&nbsp;&nbsp;&middot;&nbsp;&nbsp;';
+  const rule = `<tr><td style="padding:0 40px;"><div style="height:1px;line-height:1px;font-size:0;background:${P.blush};">&nbsp;</div></td></tr>`;
+  const place = (city, text) => `<td class="stack" width="50%" valign="top" align="center" style="width:50%;padding:0 10px 10px;font-family:${SANS};">
+<div style="font-size:15px;line-height:1;">&#128205;</div>
+<div style="margin-top:5px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:${t.footStrong};">${city}</div>
+<div class="muted" style="margin-top:4px;font-size:12px;line-height:1.55;color:${t.footInk};">${text}</div></td>`;
+  return `<tr><td align="center" style="padding:26px 26px 14px;font-family:${SANS};">
+<div style="font-size:17px;font-weight:800;letter-spacing:-.02em;color:${P.ink};">K-Beauty<span style="color:${P.pinkDeep};">Bliss</span></div>
+<div class="muted" style="margin-top:3px;font-size:11.5px;color:${t.footInk};">Authentic Korean skincare, delivered across the UAE</div>
 </td></tr>
-<tr><td align="center" style="padding:12px 26px 6px;font-family:${SANS};font-size:11.5px;color:${t.footInk};" class="muted">${a('#view-in-browser', 'View this email in your browser')}</td></tr>
+${rule}
+<tr><td align="center" style="padding:16px 22px 6px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:460px;margin:0 auto;"><tr>${place('Dubai', '[Dubai address]')}${place('Korea', '[Korea address &mdash; owner to paste]')}</tr></table></td></tr>
+${rule}
+<tr><td align="center" style="padding:14px 22px;font-family:${SANS};font-size:12px;line-height:1.9;color:${t.footInk};" class="muted">
+${a(`${SHOP}/terms-and-conditions/`, 'Terms &amp; conditions')}${dot}${a(`${SHOP}/privacy-policy/`, 'Privacy policy')}${dot}${a(`${SHOP}/refund_returns/`, 'Returns &amp; refunds')}
+${unsubscribe ? `<br>${a('#unsubscribe', 'Unsubscribe', true)}${dot}${a('#preferences', 'Email preferences')}` : ''}
+</td></tr>
+${rule}
+<tr><td align="center" style="padding:14px 30px 4px;font-family:${SANS};font-size:11.5px;line-height:1.6;color:${t.footInk};" class="muted">${why}<br>&copy; 2026 K Beauty Bliss</td></tr>
+<tr><td align="center" style="padding:10px 26px 8px;font-family:${SANS};font-size:12px;" class="muted">${a('#view-in-browser', 'View this email in your browser', true)}</td></tr>
 `;
 }
 
@@ -382,17 +394,15 @@ const THEMES = {
    a laptop and stacked on a phone. */
 function promises(list = [
   ['&#128666;', 'Fast delivery', '1&ndash;3 days, all over the UAE'],
-  ['&#10004;', '100% original', 'Straight from the brand, never grey-market'],
-  ['&#127873;', 'Free samples', 'Random K-beauty samples in every order'],
-], title = 'Why shop with us') {
-  const cell = ([icon, head, line], i) => `<td class="stack${i ? ' stack-gap' : ''}" width="33%" valign="top" style="width:33%;padding:0 ${i === 2 ? 0 : 6}px 0 ${i === 0 ? 0 : 6}px;font-family:${SANS};">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${P.white}" style="background:${P.white};border:1px solid ${P.blush};border-radius:16px;"><tr><td align="center" style="padding:16px 10px 15px;font-family:${SANS};">
-<div style="width:44px;height:44px;line-height:44px;border-radius:22px;background:${P.pinkSoft};color:${P.pinkDeep};font-size:20px;margin:0 auto 9px;text-align:center;">${icon}</div>
-<div class="ink" style="font-size:14.5px;font-weight:700;color:${P.ink};line-height:1.25;">${head}</div>
-<div class="ink2" style="margin-top:4px;font-size:12.5px;line-height:1.45;color:${P.ink2};">${line}</div>
-</td></tr></table></td>`;
-  return row(`<div class="muted" style="text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${P.pinkDeep};font-weight:700;margin-bottom:10px;">${esc(title)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${P.pinkSoft}" style="background:${P.pinkSoft};border-radius:18px;"><tr><td style="padding:12px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${list.map(cell).join('')}</tr></table></td></tr></table>`, '24px 32px 0');
+  ['&#10004;', '100% original', 'straight from the brand'],
+  ['&#127873;', 'Free samples', 'random K-beauty samples in every order'],
+]) {
+  /* (3 Oct, owner) "these boxes i need thin. left icon and text. and place
+     under the total bill row." One slim row each: icon left, words beside it. */
+  const line = ([icon, head, text], i) => `<tr><td style="padding:9px 14px;${i ? `border-top:1px solid ${P.blush};` : ''}font-family:${SANS};"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td width="30" valign="middle" style="width:30px;"><div style="width:30px;height:30px;line-height:30px;border-radius:15px;background:${P.white};color:${P.pinkDeep};font-size:15px;text-align:center;">${icon}</div></td>
+<td valign="middle" style="padding-left:12px;font-family:${SANS};font-size:13.5px;line-height:1.4;color:${P.ink2};" class="ink2"><b class="ink" style="color:${P.ink};font-weight:700;">${head}</b> &middot; ${text}</td></tr></table></td></tr>`;
+  return row(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${P.pinkSoft}" style="background:${P.pinkSoft};border-radius:14px;">${list.map(line).join('')}</table>`, '18px 32px 0');
 }
 
 /* Five tappable stars for one product: each opens that product's review form
