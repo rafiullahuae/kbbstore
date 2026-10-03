@@ -294,6 +294,15 @@ it('sends every module screen the payload it sent before the shared schema', fun
      * never opened the screen -- so a fresh install's settings table is
      * untouched and SeoBackOfficePayloadTest's fixture needed no edit at all.
      */
+    /*
+     * ── ROW 55 (Lane HA): FOUR ROWS ADDED TO dividers.sections[] ───────────
+     *
+     * The divider picker lists HomepageSections::REGISTRY, which gained the
+     * owner's new sections — Best Sellers, Trending, Under AED 54 and the
+     * two-column feature — at the places the homepage draws them. Four
+     * entries written into the fixture by hand at those places; no other
+     * leaf moved.
+     */
     expect($moved)->toBe([], "These module screens would now draw something different:\n".implode("\n", $moved));
 
     // A guard on the guard: if the fixture or the URL list is emptied, the loop

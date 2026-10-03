@@ -304,7 +304,14 @@ it('builds the two home rails with one query rather than two', function () {
     test()->get('/')->assertOk();
 
     // One query, fetched once, sliced in PHP.
-    expect($railQueries)->toBe(1);
+    /*
+     * ▲ Row 55 (Lane HA): 1 → 3, and the two new ones are not halves of
+     * anything. The owner's new homepage adds the Best Sellers grid (eight, by
+     * sales) and Trending, whose quiet-week fall-through is the same ordering
+     * — each is ONE query for its whole row, cached with the page, and the
+     * OFFSET sweep below still finds none. The old pair is still one query.
+     */
+    expect($railQueries)->toBe(3);
 
     // And no OFFSET anywhere on the home page. That is the structural half of
     // the fix: two halves of one result set cannot overlap however the
@@ -471,6 +478,12 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
         ['Admin/ReviewsApiController.php', "orderByDesc('reviews.product_id')"],
         ['Support/RepeatPurchase.php', "orderBy('rp.product_id')"],
         ['Services/StockAlerts.php', "orderBy('stock_alerts.product_id')"],
+        // Row 55 (Lane HA): GridSections::trendingScores(), two maps grouped
+        // by product id and ending on it — the GROUP BY key, one row per
+        // product, so total by construction; the real tie (the SUM) is broken
+        // by it. Same terms as RepeatPurchase above.
+        ['Services/GridSections.php', "orderBy('oi.product_id')"],
+        ['Services/GridSections.php', "orderBy('product_id')"],
     ];
 
     $root = app_path();

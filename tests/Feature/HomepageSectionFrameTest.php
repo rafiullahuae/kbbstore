@@ -134,7 +134,14 @@ function bgfCss(): string
     return (string) file_get_contents(base_path('resources/css/kbb/kbb.css'));
 }
 
+/*
+ * Row 55 (Lane HA): the sections this file is about ship switched OFF now
+ * (HomepageSections::OFF_BY_DEFAULT — the owner took them off the homepage).
+ * Their behaviour when ON is unchanged and is what these cases pin, so each
+ * case starts by switching them on, as the owner would on Appearance → Homepage.
+ */
 beforeEach(function () {
+    \Tests\Support\LegacyHomeSections::on();
     SettingsService::forgetMemo();
 });
 

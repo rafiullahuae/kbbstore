@@ -281,7 +281,9 @@ it('takes the home page brand strip down with the module, not just the brand pag
      * in the test below, which records that as a finding rather than fixing it
      * from here.
      */
-    $count = fn (string $html) => preg_match_all('~class="lnk" href="[^"]*/brands/"~', $html);
+    // Row 55 (Lane HA): the strip is the homepage's section 3 now, and its
+    // "Shop all brands" link is the pill under it — `hs-btn` — rather than `.lnk`.
+    $count = fn (string $html) => preg_match_all('~class="bndl-all hs-btn[^"]*" href="[^"]*/brands/"~', $html);
 
     expect($count($on))->toBeGreaterThan(0);
     expect($count($off))->toBe(0);

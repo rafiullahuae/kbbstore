@@ -240,6 +240,10 @@ it('walks the ancestry once per archive page, and not at all when the path colum
    ═════════════════════════════════════════════════════════════════════════ */
 
 it('links the homepage category tile at the full path, and still walks nothing', function () {
+    // Row 55 (Lane HA): this section ships switched off on the homepage now;
+    // its behaviour when on is what this case pins, so it is switched on first.
+    \Tests\Support\LegacyHomeSections::on(['categories']);
+
     /*
      * ── THE DEFECT THIS PINNED IS CLOSED, AND THE OLD ASSERTION IS QUOTED ──
      *

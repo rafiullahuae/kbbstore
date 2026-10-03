@@ -262,6 +262,10 @@ it('does not overstate how many products or brands the shop carries', function (
 });
 
 it('shows a real review wall once real reviews exist, and none before', function () {
+    // Row 55 (Lane HA): this section ships switched off on the homepage now;
+    // its behaviour when on is what this case pins, so it is switched on first.
+    \Tests\Support\LegacyHomeSections::on(['reviews']);
+
     dctDemoOn();
 
     // Nothing invented is substituted for an empty wall.

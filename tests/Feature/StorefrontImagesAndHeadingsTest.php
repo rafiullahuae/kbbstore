@@ -205,7 +205,9 @@ it('renders journal and product photographs as img elements', function () {
     expect(str_contains($spotted, 'url('))
         ->toBeFalse('the spotted tiles still paint the photograph as a CSS background');
 
-    $rail = sectionHtml($home, 'blog');
+    // Row 55 (Lane HA): the journal rail is the homepage's section 6 now, and
+    // its list of cards is `.hs-posts` (partials/home/hs-blog).
+    $rail = sectionHtml($home, 'hs-posts');
     expect($rail)->not->toBe('', 'the home journal rail did not render');
     expect(renderedImages($rail))->not->toBeEmpty('the home journal rail renders no <img>');
 });

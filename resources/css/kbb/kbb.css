@@ -1000,6 +1000,124 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
   .kbb-home .bndl.bndl-grid-m .bndl-arr,.kbb-home .bndl.bndl-noarr-m .bndl-arr{display:none}
 }
 @media (prefers-reduced-motion:reduce){.kbb-home .bndl-track{scroll-behavior:auto}}
+/* ═══ THE HOMEPAGE, SECTION BY SECTION — master plan row 55 ════ Lane HA ══
+
+   The owner, 3 October: Best Sellers, Brands, Trending, the Blog, Under AED
+   54, a two-column feature and About us, under the banner and the bundles —
+   "i really need super beautiful this homepage". The look is
+   docs/home-preview/home.html, which he approved; the PRODUCT CARDS are not
+   touched here — "the grid cards design must not be changed" — so every rule
+   below styles the band around a grid (heading, background, spacing,
+   columns) and none reaches inside `.kbb-card`.
+
+   App\Support\HomeSections prints the classes and the --hs-* values from
+   Appearance → Homepage content → each section's tab: integers and option
+   keys only. Counts per device are constant :nth-child rules over a class
+   (a custom property cannot appear in a selector); columns are var(). No
+   script measures anything. The grid is reached as `.hs-grid>*` — the one
+   child of the wrapper hs-rail draws — so no rule here names the card's own
+   classes and GridSkinCopiesTest's two copies of the card are untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+.kbb-home .sec.hs{padding-block:0}
+.kbb-home .hs-bg-blush{background:linear-gradient(180deg,#FFF4F7,#FDEBF1)}
+.kbb-home .hs-bg-cream{background:var(--cream)}
+.kbb-home .hs-bg-lilac{background:linear-gradient(160deg,#FCEFF5 0%,#F3ECFF 100%)}
+.kbb-home .hs-head{text-align:center;max-width:760px;margin-inline:auto}
+.kbb-home .hs-eyebrow{display:inline-block;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--pink-deep);font-weight:700;margin-bottom:10px}
+.kbb-home .hs-head h2{margin:0;font-size:clamp(23px,2.6vw,34px);line-height:1.15;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+.kbb-home .hs-head p{margin:10px auto 0;color:var(--ink-2);font-size:clamp(14px,1.15vw,16px);line-height:1.55;max-width:58ch}
+.kbb-home .hs-head.hs-split{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;text-align:start;max-width:none}
+.kbb-home .hs-head.hs-split p{margin-inline:0}
+.kbb-home .hs-foot{display:flex;justify-content:center;margin-top:clamp(20px,2.4vw,32px)}
+[dir="rtl"] .kbb-home .hs-btn svg{transform:scaleX(-1)}
+.kbb-home .hs-rail .hs-grid>*{gap:var(--kbb-gap,16px)}
+
+/* Brands — design A on a laptop: a photo, the name on a frosted label. */
+.kbb-home .hs-brandlist{display:grid;gap:16px}
+.kbb-home .hs-brand{position:relative;display:block;min-width:0;border-radius:20px;overflow:hidden;background:#fff;color:var(--ink);
+  box-shadow:0 14px 30px -22px rgba(42,34,40,.45);transition:transform .25s,box-shadow .25s}
+.kbb-home .hs-bph{display:block;position:relative;aspect-ratio:4/5}
+.kbb-home .hs-bph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.kbb-home .hs-bph img.hs-bph-logo{object-fit:contain;padding:18% 14% 36%;box-sizing:border-box}
+.kbb-home .hs-blogo{display:none}
+.kbb-home .hs-blb{position:absolute;inset-inline:10px;bottom:10px;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  border-radius:14px;padding:10px 12px;text-align:center}
+.kbb-home .hs-blb b{display:block;font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* The blog — three equal cards: one photo box, one height. */
+.kbb-home .hs-posts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.kbb-home .hs-post{display:flex;flex-direction:column;min-width:0;height:100%;background:#fff;border-radius:22px;overflow:hidden;color:var(--ink);
+  box-shadow:0 16px 36px -28px rgba(42,34,40,.5);transition:transform .25s,box-shadow .25s}
+.kbb-home .hs-pim{display:block;position:relative;aspect-ratio:16/10}
+.kbb-home .hs-pim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.kbb-home .hs-pcb{display:flex;flex-direction:column;gap:8px;flex:1;padding:18px 20px 22px}
+.kbb-home .hs-pmeta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700}
+.kbb-home .hs-pcat{color:var(--pink-deep)}
+.kbb-home .hs-pmin{color:var(--muted);letter-spacing:.08em}
+.kbb-home .hs-post h3{margin:0;font-size:19px;line-height:1.3;font-weight:700}
+.kbb-home .hs-pex{color:var(--ink-2);font-size:14px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.kbb-home .hs-pmore{margin-top:auto;padding-top:8px;font-weight:700;font-size:13px;letter-spacing:.06em;color:var(--pink-deep)}
+.kbb-home .hs-pmore i{display:inline-flex;vertical-align:-2px}
+.kbb-home .hs-pmore svg{width:14px;height:14px}
+[dir="rtl"] .kbb-home .hs-pmore svg{transform:scaleX(-1)}
+
+/* The two-column feature. */
+.kbb-home .hs-feat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
+.kbb-home .hs-fp{min-width:0}
+.kbb-home .hs-fim{display:block;position:relative;aspect-ratio:16/9;border-radius:22px;overflow:hidden}
+.kbb-home .hs-fim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.kbb-home .hs-fp h2{margin:20px 0 12px;padding-bottom:12px;border-bottom:1px solid var(--ink);font-size:clamp(22px,2vw,28px);line-height:1.2;font-weight:700}
+.kbb-home .hs-fp p{margin:0 0 14px;color:var(--ink-2);line-height:1.6}
+.kbb-home .hs-go{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+.kbb-home .hs-go b{color:var(--pink-deep)}
+.kbb-home .hs-go:hover{color:var(--pink-deep)}
+
+/* About us. */
+.kbb-home .hs-aboutin{max-width:900px;margin-inline:auto;text-align:center}
+.kbb-home .hs-aboutin .hs-head{margin-bottom:20px}
+.kbb-home .hs-aboutin p{margin:0 0 14px;color:var(--ink-2);font-size:15.5px;line-height:1.7}
+.kbb-home .hs-aboutin p:last-child{margin-bottom:0}
+
+@media (hover:hover){
+  .kbb-home .hs-brand:hover,.kbb-home .hs-post:hover{transform:translateY(-3px);box-shadow:0 18px 36px -22px rgba(193,62,99,.45)}
+}
+@media (prefers-reduced-motion:reduce){.kbb-home .hs-brand,.kbb-home .hs-post{transition:none}}
+
+@media (min-width:901px){
+  .kbb-home .sec.hs>.wrap{padding-top:var(--hs-pt-d);padding-bottom:var(--hs-pb-d)}
+  .kbb-home .hs-head{margin-bottom:var(--hs-hg-d)}
+  .kbb-home .hs-aboutin .hs-head{margin-bottom:20px}
+  .kbb-home .hs-head.hs-split~.hs-foot{display:none}
+  .kbb-home .hs-rail .hs-grid>*{grid-template-columns:repeat(var(--hs-cols-d),minmax(0,1fr))}
+  .kbb-home .hs-brandlist{grid-template-columns:repeat(var(--hs-cols-d),minmax(0,1fr))}
+  .kbb-home .hs-dc-2 .hs-grid>*>:nth-child(n+3),.kbb-home .hs-dc-2 .hs-brandlist>:nth-child(n+3),.kbb-home .hs-dc-3 .hs-grid>*>:nth-child(n+4),.kbb-home .hs-dc-3 .hs-brandlist>:nth-child(n+4),.kbb-home .hs-dc-4 .hs-grid>*>:nth-child(n+5),.kbb-home .hs-dc-4 .hs-brandlist>:nth-child(n+5),.kbb-home .hs-dc-5 .hs-grid>*>:nth-child(n+6),.kbb-home .hs-dc-5 .hs-brandlist>:nth-child(n+6),.kbb-home .hs-dc-6 .hs-grid>*>:nth-child(n+7),.kbb-home .hs-dc-6 .hs-brandlist>:nth-child(n+7),.kbb-home .hs-dc-7 .hs-grid>*>:nth-child(n+8),.kbb-home .hs-dc-7 .hs-brandlist>:nth-child(n+8),.kbb-home .hs-dc-8 .hs-grid>*>:nth-child(n+9),.kbb-home .hs-dc-8 .hs-brandlist>:nth-child(n+9),.kbb-home .hs-dc-9 .hs-grid>*>:nth-child(n+10),.kbb-home .hs-dc-9 .hs-brandlist>:nth-child(n+10),.kbb-home .hs-dc-10 .hs-grid>*>:nth-child(n+11),.kbb-home .hs-dc-10 .hs-brandlist>:nth-child(n+11),.kbb-home .hs-dc-12 .hs-grid>*>:nth-child(n+13),.kbb-home .hs-dc-12 .hs-brandlist>:nth-child(n+13),.kbb-home .hs-dc-14 .hs-grid>*>:nth-child(n+15),.kbb-home .hs-dc-14 .hs-brandlist>:nth-child(n+15),.kbb-home .hs-dc-15 .hs-grid>*>:nth-child(n+16),.kbb-home .hs-dc-15 .hs-brandlist>:nth-child(n+16),.kbb-home .hs-dc-16 .hs-grid>*>:nth-child(n+17),.kbb-home .hs-dc-16 .hs-brandlist>:nth-child(n+17),.kbb-home .hs-dc-18 .hs-grid>*>:nth-child(n+19),.kbb-home .hs-dc-18 .hs-brandlist>:nth-child(n+19),.kbb-home .hs-dc-20 .hs-grid>*>:nth-child(n+21),.kbb-home .hs-dc-20 .hs-brandlist>:nth-child(n+21),.kbb-home .hs-dc-21 .hs-grid>*>:nth-child(n+22),.kbb-home .hs-dc-21 .hs-brandlist>:nth-child(n+22),.kbb-home .hs-dc-24 .hs-grid>*>:nth-child(n+25),.kbb-home .hs-dc-24 .hs-brandlist>:nth-child(n+25){display:none}
+}
+@media (max-width:900px){
+  .kbb-home .sec.hs>.wrap{padding-top:var(--hs-pt-m);padding-bottom:var(--hs-pb-m)}
+  .kbb-home .hs-head{margin-bottom:var(--hs-hg-m)}
+  .kbb-home .hs-aboutin .hs-head{margin-bottom:14px}
+  .kbb-home .hs-head.hs-split{display:block;text-align:center}
+  .kbb-home .hs-head.hs-split p{margin-inline:auto}
+  .kbb-home .hs-btn-top{display:none}
+  .kbb-home .hs-head h2{font-size:clamp(21px,6vw,25px)}
+  .kbb-home .hs-head p{font-size:13.5px;margin-top:8px}
+  .kbb-home .hs-eyebrow{font-size:10.5px;margin-bottom:7px}
+  .kbb-home .hs-rail .hs-grid>*{grid-template-columns:repeat(var(--hs-cols-m),minmax(0,1fr));gap:12px}
+  .kbb-home .hs-brandlist{grid-template-columns:repeat(var(--hs-cols-m),minmax(0,1fr));gap:10px}
+  .kbb-home .hs-brand{display:grid;place-items:center;height:74px;padding:10px 14px;border-radius:14px;border:1px solid #F1E4E9;box-shadow:none}
+  .kbb-home .hs-bph{display:none}
+  .kbb-home .hs-brand.has-logo .hs-blogo{display:block;width:auto;height:auto;max-width:100%;max-height:52px;object-fit:contain}
+  .kbb-home .hs-brand.has-logo .hs-blb{display:none}
+  .kbb-home .hs-blb{position:static;inset:auto;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0;border-radius:0}
+  .kbb-home .hs-blb b{font-size:16px;font-weight:600;letter-spacing:.02em;white-space:normal;line-height:1.2}
+  .kbb-home .hs-posts{grid-template-columns:minmax(0,1fr);gap:16px}
+  .kbb-home .hs-post h3{font-size:17px}
+  .kbb-home .hs-pcb{padding:14px 16px 18px}
+  .kbb-home .hs-feat{grid-template-columns:minmax(0,1fr);gap:34px}
+  .kbb-home .hs-aboutin p{font-size:14.5px}
+  .kbb-home .hs-mc-2 .hs-grid>*>:nth-child(n+3),.kbb-home .hs-mc-2 .hs-brandlist>:nth-child(n+3),.kbb-home .hs-mc-3 .hs-grid>*>:nth-child(n+4),.kbb-home .hs-mc-3 .hs-brandlist>:nth-child(n+4),.kbb-home .hs-mc-4 .hs-grid>*>:nth-child(n+5),.kbb-home .hs-mc-4 .hs-brandlist>:nth-child(n+5),.kbb-home .hs-mc-5 .hs-grid>*>:nth-child(n+6),.kbb-home .hs-mc-5 .hs-brandlist>:nth-child(n+6),.kbb-home .hs-mc-6 .hs-grid>*>:nth-child(n+7),.kbb-home .hs-mc-6 .hs-brandlist>:nth-child(n+7),.kbb-home .hs-mc-7 .hs-grid>*>:nth-child(n+8),.kbb-home .hs-mc-7 .hs-brandlist>:nth-child(n+8),.kbb-home .hs-mc-8 .hs-grid>*>:nth-child(n+9),.kbb-home .hs-mc-8 .hs-brandlist>:nth-child(n+9),.kbb-home .hs-mc-9 .hs-grid>*>:nth-child(n+10),.kbb-home .hs-mc-9 .hs-brandlist>:nth-child(n+10),.kbb-home .hs-mc-10 .hs-grid>*>:nth-child(n+11),.kbb-home .hs-mc-10 .hs-brandlist>:nth-child(n+11),.kbb-home .hs-mc-12 .hs-grid>*>:nth-child(n+13),.kbb-home .hs-mc-12 .hs-brandlist>:nth-child(n+13),.kbb-home .hs-mc-14 .hs-grid>*>:nth-child(n+15),.kbb-home .hs-mc-14 .hs-brandlist>:nth-child(n+15),.kbb-home .hs-mc-15 .hs-grid>*>:nth-child(n+16),.kbb-home .hs-mc-15 .hs-brandlist>:nth-child(n+16),.kbb-home .hs-mc-16 .hs-grid>*>:nth-child(n+17),.kbb-home .hs-mc-16 .hs-brandlist>:nth-child(n+17),.kbb-home .hs-mc-18 .hs-grid>*>:nth-child(n+19),.kbb-home .hs-mc-18 .hs-brandlist>:nth-child(n+19),.kbb-home .hs-mc-20 .hs-grid>*>:nth-child(n+21),.kbb-home .hs-mc-20 .hs-brandlist>:nth-child(n+21),.kbb-home .hs-mc-21 .hs-grid>*>:nth-child(n+22),.kbb-home .hs-mc-21 .hs-brandlist>:nth-child(n+22),.kbb-home .hs-mc-24 .hs-grid>*>:nth-child(n+25),.kbb-home .hs-mc-24 .hs-brandlist>:nth-child(n+25){display:none}
+  .kbb-home .hs-blog.hs-mc-1 .hs-posts>:nth-child(n+2),.kbb-home .hs-blog.hs-mc-2 .hs-posts>:nth-child(n+3){display:none}
+}
 .kbb-home .util{background:var(--cream);border-bottom:1px solid var(--line)}
 .kbb-home .util .g{display:grid;grid-template-columns:repeat(4,1fr);gap:1px}
 .kbb-home .util .i{display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 12px;font-size:12px;color:var(--ink2)}

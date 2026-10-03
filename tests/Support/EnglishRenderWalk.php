@@ -1642,7 +1642,17 @@ final class EnglishRenderWalk
                 'hits' => 1,
             ],
             'Big savings bundles: the second arrow and the bottom button (2.60.370)' => [
-                'pattern' => '#(Add to cart</a>\n            </div>\n</div>\n    </div>)\n</div></section>(?=\n\n\n<section class="sec dv" style="padding-top:0"><div class="wrap">\n  <div class="sh"><div><h2>Recommended for you)#',
+                /*
+                 * ▲ Row 55 (Lane HA): the lookahead named "Recommended for
+                 * you", the section that followed the bundles — and that
+                 * section ships switched off now, so the strip after the
+                 * bundles is whatever the next rule leaves. Anchored instead
+                 * on what IS unique to the bundles on this page: the only grid
+                 * on the BEFORE side that closes straight into its section
+                 * (the old rails that did the same are off), which the
+                 * required single hit still proves.
+                 */
+                'pattern' => '#(Add to cart</a>\n            </div>\n</div>\n    </div>)\n</div></section>#',
                 'with' => '$1'."\n".'    <button type="button" class="bndl-arr bndl-next" data-ymal-next aria-controls="bndl-track" aria-label="More products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>'."\n".'  </div>'."\n".'  <div class="bndl-foot"><a class="bndl-all bndl-all-bottom" href="/shop/?cat=skincare-sets">All sets<i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i></a></div>'."\n".'</div></section>',
                 'hits' => 1,
             ],
@@ -1906,6 +1916,59 @@ final class EnglishRenderWalk
     public static function approvedInsertions(): array
     {
         return [
+            /*
+             * ROW 55 — THE OWNER'S NEW HOMEPAGE, SECTIONS 2, 3 AND 5–9. (Lane HA)
+             *
+             * The owner, 3 October: the banner, then Big savings bundles, Best
+             * Sellers, Brands, #KBeautyBliss Spotted, Trending, the Blog, Under
+             * AED 54, a two-column feature and About us — "don't include
+             * anything from our existing homepage on extreabeauty, except
+             * banner". ONE PAGE, the homepage. Each new section is cut from the
+             * AFTER side here, whole, with the blank lines Blade leaves around
+             * it; the three old sections they replace (the brand strip, the
+             * journal rail and the About band) are cut from the BEFORE side in
+             * approvedRemovals(). What is left on both sides — the hero, the
+             * bundles carousel and the old Spotted strip until Lane HB's
+             * partial lands — must still compare byte for byte, and does.
+             *
+             * One rule per section, each required to fire exactly once, and
+             * each anchored on the section's own class — `hs hs-<key>` is
+             * printed by App\Support\HomeSections and by nothing else on the
+             * shop. The cards inside the three product rails are NOT compared
+             * here, and they do not need to be: they are <x-product-card>
+             * through partials/home/grid, the same renders as every listing in
+             * this walk, and HomeRow55SectionsTest pins that the card partial
+             * is the one these sections use.
+             */
+            'Row 55: Best Sellers, section 2 (Lane HA)' => [
+                'pattern' => '#\n*<section class="sec hs hs-rail hs-bestselling\b[^"]*"[^>]*>.*?</div></section>\n*#s',
+                'hits' => 1,
+            ],
+            'Row 55: Shop Top Korean Beauty Brands, section 3 (Lane HA)' => [
+                'pattern' => '#\n*<section class="sec hs hs-brands\b[^"]*"[^>]*>.*?</div></section>\n*#s',
+                'hits' => 1,
+            ],
+            'Row 55: Trending K-Beauty This Week, section 5 (Lane HA)' => [
+                'pattern' => '#\n*<section class="sec hs hs-rail hs-trending\b[^"]*"[^>]*>.*?</div></section>\n*#s',
+                'hits' => 1,
+            ],
+            'Row 55: Korean Skincare Tips & Guides, section 6 (Lane HA)' => [
+                'pattern' => '#\n*<section class="sec hs hs-blog\b[^"]*"[^>]*>.*?</div></section>\n*#s',
+                'hits' => 1,
+            ],
+            'Row 55: K-Beauty Under AED 54, section 7 (Lane HA)' => [
+                'pattern' => '#\n*<section class="sec hs hs-rail hs-under54\b[^"]*"[^>]*>.*?</div></section>\n*#s',
+                'hits' => 1,
+            ],
+            'Row 55: the two-column feature, section 8 (Lane HA)' => [
+                'pattern' => '#\n*<section class="sec hs hs-feature\b[^"]*"[^>]*>.*?</div></div></section>\n*#s',
+                'hits' => 1,
+            ],
+            'Row 55: About K-Beauty Bliss UAE, section 9 (Lane HA)' => [
+                'pattern' => '#\n*<section class="sec hs hs-about\b[^"]*"[^>]*>.*?</div></div></section>\n*#s',
+                'hits' => 1,
+            ],
+
             /*
              * THE CATEGORY TITLE HEADER, ON A CATEGORY WITH NO PICTURE.
              *                                                       (Lane PY)
@@ -2527,6 +2590,32 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * ROW 55 — THE THREE OLD SECTIONS THE NEW ONES REPLACE. (Lane HA)
+             *
+             * The other half of the "Row 55" insertions: the old brand strip
+             * (name tiles with a product count — the owner chose design A
+             * WITHOUT the count), the old journal rail and the old About band
+             * (heading, one paragraph and three counted figures — his section
+             * 9 is the heading and his four paragraphs). Cut from the BEFORE
+             * side, whole, on the homepage only. The rails the owner took off
+             * the page (Recommended, the old Best sellers, Flash sale, …) need
+             * no rule: they ship switched off, the before side is the old
+             * Blade over the current PHP, and so they are absent on both.
+             */
+            'Row 55: the old brand strip (Lane HA)' => [
+                'pattern' => '#\n*<section class="sec tinted dv" style="padding-top:0"><div class="wrap">\s*<div class="sh"><div><h2>Top brands <span class="cnt">.*?</div></section>\n*#s',
+                'hits' => 1,
+            ],
+            'Row 55: the old journal rail (Lane HA)' => [
+                'pattern' => '#\n*<section class="sec tinted dv" style="padding-top:0"><div class="wrap">\n  <div class="sh"><div><h2>Skincare guide <span class="cnt">.*?</div></section>\n*#s',
+                'hits' => 1,
+            ],
+            'Row 55: the old About band (Lane HA)' => [
+                'pattern' => '#\n*<section class="sec dv" style="padding-top:0"><div class="wrap">\n  <div class="about">.*?</div></section>\n*#s',
+                'hits' => 1,
+            ],
+
+            /*
              * THE PRODUCT COUNT BESIDE "SHOW FILTERS". (Integrator, 2.60.358)
              *
              * The owner, 2 October: "turn hide by default the products count
@@ -2757,7 +2846,15 @@ final class EnglishRenderWalk
              */
             'the category eyebrow on every product tile (Lane CARD)' => [
                 'pattern' => '#<div class="kbb-card-cat">[^<]*</div>#',
-                'hits' => 83,
+                /*
+                 * ROW 55 (Lane HA): the homepage's old rails — Recommended (4
+                 * tiles drawn on this fixture), the old Best sellers rail and the
+                 * Flash sale — ship switched OFF now, and the "before" side is
+                 * the old Blade over the CURRENT PHP, so their tiles are no longer
+                 * on it. Twelve tiles fewer on one page, the homepage; the -N%
+                 * count falls by the seven of those twelve that were reduced.
+                 */
+                'hits' => 71,
             ],
             /*
              * 110 -> 119 (Lane PS). The product page's "You may also like"
@@ -2769,7 +2866,15 @@ final class EnglishRenderWalk
              */
             'the brand line on every product tile (Lane CARD)' => [
                 'pattern' => '#<span class="kbb-card-brand">[^<]*</span>#',
-                'hits' => 119,
+                /*
+                 * ROW 55 (Lane HA): the homepage's old rails — Recommended (4
+                 * tiles drawn on this fixture), the old Best sellers rail and the
+                 * Flash sale — ship switched OFF now, and the "before" side is
+                 * the old Blade over the CURRENT PHP, so their tiles are no longer
+                 * on it. Twelve tiles fewer on one page, the homepage; the -N%
+                 * count falls by the seven of those twelve that were reduced.
+                 */
+                'hits' => 107,
             ],
 
             /*
@@ -2803,7 +2908,8 @@ final class EnglishRenderWalk
                 // 37 -> 40 (Lane PS): the product page's "You may also like"
                 // draws twelve tiles where it drew three, and three of the nine
                 // new ones are reduced. One page; the NEW count does not move.
-                'hits' => 40,
+                // 40 -> 33, Row 55 (Lane HA): see the eyebrow's note above.
+                'hits' => 33,
             ],
         ];
     }

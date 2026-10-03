@@ -835,11 +835,13 @@ class AppServiceProvider extends ServiceProvider
             // with nothing failing anywhere.
             if ($post->wasRecentlyCreated || $post->wasChanged(['slug', 'title', 'excerpt', 'status', 'published_at', 'cover'])) {
                 \Illuminate\Support\Facades\Cache::forget('kbb.home.posts');
+                \App\Support\HomeSections::flush(); // Row 55: the Blog section's three articles
             }
         });
 
         \App\Models\Post::deleted(function () {
             \Illuminate\Support\Facades\Cache::forget('kbb.home.posts');
+            \App\Support\HomeSections::flush();
         });
 
         // The strip is ordered by visible product count and the total is quoted
@@ -849,11 +851,17 @@ class AppServiceProvider extends ServiceProvider
                 \Illuminate\Support\Facades\Cache::forget('kbb.home.brands');
                 \Illuminate\Support\Facades\Cache::forget('kbb.home.brandcount');
             }
+
+            // Row 55: the Brands section prints the logo AND the banner photo.
+            if ($brand->wasRecentlyCreated || $brand->wasChanged(['name', 'slug', 'logo', 'banner'])) {
+                \App\Support\HomeSections::flush();
+            }
         });
 
         \App\Models\Brand::deleted(function () {
             \Illuminate\Support\Facades\Cache::forget('kbb.home.brands');
             \Illuminate\Support\Facades\Cache::forget('kbb.home.brandcount');
+            \App\Support\HomeSections::flush();
         });
 
         // Auto-301 on slug change: 'updating' (not 'saved') because this

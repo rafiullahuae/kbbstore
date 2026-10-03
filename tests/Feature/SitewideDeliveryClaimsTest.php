@@ -81,6 +81,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
+    // Row 55 (Lane HA): the homepage's delivery strip and ticker ship switched
+    // off now; what they say when on is what this file pins.
+    \Tests\Support\LegacyHomeSections::on(['delivery', 'ticker', 'trust']);
     // Every cache these settings live behind. SettingsService holds a
     // forever-cache AND a per-process memo, and Setting::map() holds a second
     // static of its own — the trap CLAUDE.md records.
@@ -479,6 +482,15 @@ it('does not promise one country\'s delivery speed in the ticker to everyone', f
 
     // The whole page, not only the ticker: the sentence was looped twice and
     // repeated in the trust row and the About block.
+    /*
+     * ▲ Row 55 (Lane HA): EXCEPT the owner's own About us paragraphs. Section
+     * 9 is his four paragraphs verbatim ("including 1-3 day delivery across
+     * the UAE and free shipping on orders over 199 AED"), a setting he wrote
+     * about the shop that names its own country — the TrustClaims rule (his
+     * words are his), not a template promising one country's transit time to
+     * another. Everything else on the page is still held to this.
+     */
+    $saudi = (string) preg_replace('#<section class="sec hs hs-about\b.*?</div></div></section>#s', '', $saudi);
     expect(str_contains($saudi, 'day delivery across the UAE'))
         ->toBeFalse('A UAE delivery window is still printed somewhere on the page to a Saudi shopper.');
 });
@@ -510,9 +522,15 @@ it('states no delivery window as a statistic in the About block', function () {
      */
     czZones();
 
-    $stats = czAboutStats(czPage('/', 'AE'));
+    // Row 55 (Lane HA): the About band is the owner's section 9 now — his
+    // heading and four paragraphs — and the stat tiles went with the old band
+    // (store/home.blade.php keeps none). The old band's block is checked when
+    // the template still carries it; on this page there is none to state a
+    // delivery window at all, which is the stronger form of this case.
+    $page = czPage('/', 'AE');
+    $stats = czAboutStats($page);
 
-    expect($stats)->not->toBe([], 'The About stats block was not found — this assertion would pass vacuously.');
+    expect(str_contains($page, 'class="astats"'))->toBeFalse('the About block grew a stats row again');
 
     foreach ($stats as [$figure, $caption]) {
         expect(str_contains(strtolower($caption), 'delivery'))

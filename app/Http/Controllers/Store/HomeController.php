@@ -371,8 +371,18 @@ class HomeController extends Controller
          * place of the one-per-set tally() would otherwise run lazily from the
          * card. See prime()'s docblock for the two alternatives and why not.
          */
+        /*
+         * Row 55 (Lane HA): the new sections' rows, from ONE cache entry —
+         * App\Support\HomeSections::data() says what is in it and what a cold
+         * build costs. Primed with the rails below so a rule-priced set in any
+         * of the new grids is priced by the same single statement.
+         */
+        $homeSettings = \App\Support\HomeSections::settings();
+        $home = \App\Support\HomeSections::data($homeSettings);
+
         \App\Support\SetPricing::prime(
             collect($rails)->flatten()->concat(collect($routine)->pluck('pick')->filter())
+                ->concat($home['bestselling'])->concat($home['trending'])->concat($home['under54'])
         );
 
         $routineTotal = collect($routine)->sum(fn ($s) => $s['pick']?->effectivePrice() ?? 0);
@@ -426,6 +436,14 @@ class HomeController extends Controller
             $categories = $demo->fill($categories, 'categories', 8);
             $brands = $demo->fill($brands, 'brands', 12);
             $posts = $demo->fill($posts, 'posts', 3);
+
+            // Row 55 (Lane HA): the new sections stand in the same way the
+            // rails they replace did, at the counts they draw.
+            foreach (array_keys(\App\Support\HomeSections::RAILS) as $key) {
+                $home[$key] = $demo->fill($home[$key], 'products', \App\Support\HomeSections::rail($homeSettings, $key)['fetch']);
+            }
+
+            $home['brands'] = $demo->fill($home['brands'], 'brands', \App\Support\HomeSections::brands($homeSettings)['fetch']);
         }
 
         /*
@@ -460,6 +478,8 @@ class HomeController extends Controller
             'catalogueCount' => $catalogueCount,
             'brandTotal' => $brandTotal,
             'demoOn' => $demo->enabled(),
+            'home' => $home,
+            'homeSettings' => $homeSettings,
         ]);
     }
 
@@ -473,5 +493,8 @@ class HomeController extends Controller
 
         Cache::forget('kbb.home.rails');
         Cache::forget('kbb.home.brands');
+
+        // Row 55 (Lane HA): the new sections' one entry.
+        \App\Support\HomeSections::flush();
     }
 }

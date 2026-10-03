@@ -70,6 +70,22 @@ use Illuminate\Support\Str;
 
 /* ---------------------------------------------------------------- fixtures */
 
+/*
+ * Row 55 (Lane HA): the trust row ships switched OFF on the homepage now
+ * (HomepageSections::OFF_BY_DEFAULT — the owner took it off). How it prints the
+ * owner's claims when it IS on is unchanged, and is what this file pins, so
+ * each case switches it back on first.
+ *
+ * `home_brands_note` IS NO LONGER ON THE HOMEPAGE, and that is the owner's
+ * design rather than a lost claim: it was the old brand strip's line, and
+ * section 3 of his new page (design A) replaced the strip, with its own
+ * editable line at Appearance → Homepage content → Brands. The two cases that
+ * expected the note on the page say so where they changed.
+ */
+beforeEach(function () {
+    \Tests\Support\LegacyHomeSections::on();
+});
+
 function tcSet(string $key, string $value): void
 {
     app(SettingsService::class)->set($key, $value);
@@ -149,7 +165,7 @@ it('still reads exactly as it shipped when no setting has been written', functio
         TrustClaims::CLAIMS['trust_authentic_title'],
         TrustClaims::CLAIMS['trust_authentic_text'],
         TrustClaims::CLAIMS['trust_support_title'],
-        TrustClaims::CLAIMS['home_brands_note'],
+        // home_brands_note: not on the new homepage — see the note at the top.
     ] as $shipped) {
         expect(str_contains($text, $shipped))
             ->toBeTrue('The home page lost "' . $shipped . '" on a shop with no settings.');
@@ -173,13 +189,10 @@ it('still prints the shipped checkout claim when no setting has been written', f
 it('prints the owner wording on the home page instead of the shipped default', function () {
     tcSet('trust_authentic_title', 'Sourced from authorised distributors');
     tcSet('trust_support_title', 'Support, 9am to 6pm');
-    tcSet('home_brands_note', 'The brands we carry today.');
-
     $text = tcHomeText();
 
     expect(str_contains($text, 'Sourced from authorised distributors'))->toBeTrue('The owner title did not reach the page.');
     expect(str_contains($text, 'Support, 9am to 6pm'))->toBeTrue('The owner support title did not reach the page.');
-    expect(str_contains($text, 'The brands we carry today.'))->toBeTrue('The owner brands note did not reach the page.');
 
     expect(str_contains($text, TrustClaims::CLAIMS['trust_authentic_title']))
         ->toBeFalse('The shipped claim is still on the page alongside the owner one.');
@@ -337,22 +350,14 @@ it('keeps the home page counts out of the settings boxes', function () {
      */
     $html = test()->get('/')->assertOk()->getContent();
 
-    expect((bool) preg_match('#<b>([\d,]+)</b><span>products stocked</span>#', $html, $m))
-        ->toBeTrue('The home page no longer prints a counted product stat at all.');
-
     /*
-     * COMPARED AGAINST THE QUERY, NOT AGAINST A NUMBER TYPED HERE.
-     *
-     * A first draft expected "3" — the three products this test creates — and
-     * read 27, because the migration set seeds a demo catalogue of its own. The
-     * figure this test is about is "whatever the catalogue holds", so it asks
-     * the catalogue rather than asserting an arithmetic the fixtures do not
-     * control.
+     * ▲ Row 55 (Lane HA): the homepage prints NO product-count stat now. The
+     * figures lived in the old About band, and the owner's section 9 is his
+     * heading and four paragraphs — so the figure cannot drift because it is
+     * not printed, and no settings box (above) can put one back.
      */
-    expect($m[1])->toBe(
-        number_format(Product::query()->visible()->count()),
-        'The home page stat is no longer counted from the catalogue.',
-    );
+    expect((bool) preg_match('#<span>products stocked</span>#', $html))
+        ->toBeFalse('a product-count stat came back to the homepage');
 });
 
 /*

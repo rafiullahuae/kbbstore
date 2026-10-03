@@ -72,10 +72,12 @@ function p1Rows(array $first = [], array $tweak = []): array
         fn ($k) => ! in_array($k, $first, true)
     )));
 
+    // Row 55 (Lane HA): "the configuration the shop is on" ships with the old
+    // homepage's sections off (HomepageSections::OFF_BY_DEFAULT).
     return array_map(fn ($key) => ($tweak[$key] ?? []) + [
         'key' => $key,
-        'desktop' => true,
-        'mobile' => true,
+        'desktop' => ! in_array($key, HomepageSections::OFF_BY_DEFAULT, true),
+        'mobile' => ! in_array($key, HomepageSections::OFF_BY_DEFAULT, true),
         'skin' => HomepageSections::REGISTRY[$key][3],
     ], $keys);
 }

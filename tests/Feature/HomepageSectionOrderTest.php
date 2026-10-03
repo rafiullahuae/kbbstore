@@ -45,6 +45,15 @@ use App\Services\HomepageSections;
 use App\Services\SettingsService;
 
 /** The section list, saved in this order, everything not named keeping its place. */
+/*
+ * Row 55 (Lane HA): the ordering machinery is pinned against EVERY section
+ * drawing, so the sections the owner took off the homepage
+ * (HomepageSections::OFF_BY_DEFAULT) are switched back on for these cases.
+ */
+beforeEach(function () {
+    \Tests\Support\LegacyHomeSections::on();
+});
+
 function frSaveOrder(array $first): void
 {
     $keys = array_merge($first, array_values(array_filter(
@@ -252,7 +261,10 @@ it('pairs the class on the section with the rule in the style, for the whole ord
     }
 
     // Counted, so the loop above cannot pass by finding nothing to check.
-    expect($paired)->toBe(13);
+    // Row 55 (Lane HA): 13 → 17 — Best Sellers, Trending, Under AED 54 and the
+    // two-column feature each draw on this fixture; the Blog does not (no
+    // article), exactly as the journal rail before it.
+    expect($paired)->toBe(17);
 });
 
 it('gives the hero a later position than the newsletter once it has been moved down', function () {

@@ -233,6 +233,10 @@ it('keeps the claims the shop does back', function () {
 });
 
 it('gives the product page and the home page the same answer for the same visitor', function () {
+    // Row 55 (Lane HA): this section ships switched off on the homepage now;
+    // its behaviour when on is what this case pins, so it is switched on first.
+    \Tests\Support\LegacyHomeSections::on(['delivery']);
+
     /*
      * The point of having one reader. Two screens of one shop cannot be allowed
      * to disagree about where this shopper is standing — that contradiction is

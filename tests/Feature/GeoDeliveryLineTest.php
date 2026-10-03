@@ -46,6 +46,9 @@ use App\Support\ShopperCountry;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
+    // Row 55 (Lane HA): the homepage's delivery strip and ticker ship switched
+    // off now; what they say when on is what this file pins.
+    \Tests\Support\LegacyHomeSections::on(['delivery', 'ticker', 'trust']);
     /*
      * Every cache these settings live behind, dropped before each case.
      * SettingsService holds a forever-cache AND a per-process memo, and

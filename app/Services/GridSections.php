@@ -606,7 +606,7 @@ class GridSections
      * what that costs: a rail whose membership changes on every cache rebuild
      * with no data behind the change.
      */
-    private function fetchPool(string $spec, int $limit): Collection
+    private function fetchPool(string $spec, int $limit, ?int $maxFils = null): Collection
     {
         [$source, $brandId, $categoryId, $children, $manual] = array_pad(explode('|', $spec, 5), 5, '');
 
@@ -615,6 +615,23 @@ class GridSections
             ->visible()
             ->with('brand:id,name,slug');
 
+        /*
+         * ── THE PRICE CEILING, ON THE PRICE THE SHOPPER PAYS ── (Row 55, Lane HA)
+         *
+         * "K-Beauty Under AED 54". EffectivePrice::whereRange() is the shop's
+         * own price facet: the sale price while its window is open, a rule-
+         * priced set's derived figure, and — for a VARIABLE parent, whose own
+         * `price` column is NULL — the cheapest price its variations charge.
+         * `price <= 5400` on the raw column would have dropped every variable
+         * product (NULL compares as nothing) and kept a product whose sale
+         * price is under the ceiling OUT, because its regular price is over.
+         * Null for every caller that does not ask, so the Grid sections
+         * instances and their queries are byte-for-byte what they were.
+         */
+        if ($maxFils !== null && $maxFils > 0) {
+            \App\Support\EffectivePrice::whereRange($base, null, $maxFils);
+        }
+
         return match ($source) {
             /*
              * `products_total_sales_index`
@@ -622,6 +639,29 @@ class GridSections
              * this walks backwards. Checked, not assumed.
              */
             'bestsellers' => $base->orderByDesc('total_sales')->orderByDesc('id')->limit($limit)->get(),
+
+            /*
+             * TRENDING: what moved in the last seven days. trendingScores()
+             * answers a capped map of product => score from the shop's own
+             * records, and the CASE puts those first; everything else ties at
+             * 0 and falls through to best sellers, so a quiet week still draws
+             * a full row rather than an empty one.
+             */
+            'trending' => (function () use ($base, $limit) {
+                $scores = self::trendingScores();
+
+                if ($scores !== []) {
+                    $case = 'CASE products.id';
+
+                    foreach ($scores as $id => $score) {
+                        $case .= ' WHEN '.(int) $id.' THEN '.(int) $score;
+                    }
+
+                    $base->orderByRaw($case.' ELSE 0 END DESC');
+                }
+
+                return $base->orderByDesc('total_sales')->orderByDesc('id')->limit($limit)->get();
+            })(),
 
             /*
              * `products_created_at_index`
@@ -692,6 +732,109 @@ class GridSections
 
             default => collect(),
         };
+    }
+
+    /**
+     * The rows one product selection asks for — the homepage's own rails
+     * (Best Sellers, Trending, Under AED 54) read through this, so they share
+     * every source, every tie-break and every index note above with the Grid
+     * sections instances rather than carrying a second copy of the queries.
+     *                                                        (Row 55, Lane HA)
+     *
+     * @param  list<int>  $manualIds
+     */
+    public function pool(string $source, int $brandId, int $categoryId, array $manualIds, int $limit, ?int $maxFils = null, bool $children = false): Collection
+    {
+        if (! array_key_exists($source, GridSection::SOURCES)) {
+            $source = 'bestsellers';
+        }
+
+        $spec = implode('|', [
+            $source,
+            (string) max(0, $brandId),
+            (string) max(0, $categoryId),
+            $children ? '1' : '0',
+            $source === 'manual' ? implode(',', array_map('intval', $manualIds)) : '',
+        ]);
+
+        return $this->fetchPool($spec, max(1, min(48, $limit)), $maxFils);
+    }
+
+    /**
+     * What "trending" means on this shop, and it is two things it records.
+     *
+     * ── THE DEFINITION ──────────────────────────────────────────────────────
+     *
+     *   score = 3 × units ordered in the last 7 days
+     *         + 1 × product-page views in the last 7 days
+     *
+     * UNITS ORDERED: `order_items.quantity` on orders whose status is one of
+     * Order::REAL_STATUSES (processing, on hold, shipped, completed — the shop's
+     * own definition of an order that happened, shared with the revenue
+     * figures) and that are not deleted, placed in the window. A cancelled,
+     * failed or abandoned checkout is not demand.
+     *
+     * VIEWS: App\Support\ProductViews' daily counter. It is a real record but a
+     * partial one — it counts product pages that draw "Buy these together" and
+     * only for browsers that run JavaScript — which is why it is the lighter
+     * weight: a sale is three views' worth of evidence that something is
+     * moving. Neither number is invented, and a product nobody ordered or
+     * looked at this week scores nothing.
+     *
+     * A QUIET WEEK FALLS THROUGH TO BEST SELLERS, by the ordering in
+     * fetchPool(): the scored products first, then total_sales. That is said in
+     * the admin's help line, so the owner is not told a row is "trending" when
+     * it is a lifetime ranking.
+     *
+     * Two grouped queries, each capped at 60 rows — only the head of the list
+     * can be ordered by it — and only ever inside a cached build.
+     *
+     * @return array<int, int>  product id => score, highest first
+     */
+    public static function trendingScores(): array
+    {
+        $since = now()->subDays(7);
+        $scores = [];
+
+        try {
+            $units = DB::table('order_items as oi')
+                ->join('orders as o', 'o.id', '=', 'oi.order_id')
+                ->whereNull('o.deleted_at')
+                ->whereIn('o.status', \App\Models\Order::REAL_STATUSES)
+                ->where('o.created_at', '>=', $since->toDateTimeString())
+                ->whereNotNull('oi.product_id')
+                ->groupBy('oi.product_id')
+                ->selectRaw('oi.product_id as pid, SUM(oi.quantity) as n')
+                ->orderByDesc('n')
+                ->orderBy('oi.product_id')
+                ->limit(60)
+                ->get();
+
+            foreach ($units as $row) {
+                $scores[(int) $row->pid] = ($scores[(int) $row->pid] ?? 0) + 3 * (int) $row->n;
+            }
+
+            $views = DB::table(\App\Support\ProductViews::TABLE)
+                ->where('day', '>=', $since->toDateString())
+                ->groupBy('product_id')
+                ->selectRaw('product_id as pid, SUM(views) as n')
+                ->orderByDesc('n')
+                ->orderBy('product_id')
+                ->limit(60)
+                ->get();
+
+            foreach ($views as $row) {
+                $scores[(int) $row->pid] = ($scores[(int) $row->pid] ?? 0) + (int) $row->n;
+            }
+        } catch (\Illuminate\Database\QueryException) {
+            // A table not migrated yet answers "nothing is trending", and the
+            // row falls through to best sellers rather than taking the page down.
+            return [];
+        }
+
+        arsort($scores);
+
+        return array_slice($scores, 0, 60, true);
     }
 
     /**
