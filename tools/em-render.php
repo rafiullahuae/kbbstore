@@ -101,11 +101,8 @@ $send = function (\Illuminate\Mail\Mailable $m, string $name) use ($save): void 
     $save($name);
 };
 
-$unpaid = $order->replicate();
-$unpaid->paid_at = null;
-$unpaid->setRelation('items', $order->items);
-$unpaid->id = $order->id;
-$unpaid->exists = true;
+// The same order, not yet paid (a clone keeps created_at; replicate() drops it).
+$unpaid = (clone $order)->forceFill(['paid_at' => null]);
 
 $send(new Mail\OrderConfirmation($order), '01-order-confirmation');
 $send(new Mail\OrderPaymentReminder($unpaid, 1), '02-complete-order-30min');

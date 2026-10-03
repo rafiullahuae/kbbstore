@@ -89,6 +89,9 @@ class OrderEmailPresenter
             // told the customer they had ordered yesterday. See
             // App\Support\StoreTime.
             'placedAt' => \App\Support\StoreTime::formatDate($order->created_at),
+            // The approved look A's order chip prints "2 Oct 2026" (Lane EM):
+            // the short month keeps Order · Placed · Total on one row at 390px.
+            'placedShort' => \App\Support\StoreTime::formatDate($order->created_at, 'j M Y'),
             'status' => (string) $order->status,
             'customerName' => $this->customerName($order),
             'items' => $this->items($order, $w),

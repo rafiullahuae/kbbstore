@@ -5,7 +5,7 @@
   "scrollWidth": 390,
   "height": 2291,
   "font": "Outfit",
-  "outfitLoaded": true
+  "outfitRendered": true
  },
  {
   "name": "01-order-confirmation",
@@ -13,6 +13,6 @@
   "scrollWidth": 600,
   "height": 1931,
   "font": "Outfit",
-  "outfitLoaded": true
+  "outfitRendered": true
  }
 ]

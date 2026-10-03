@@ -37,7 +37,7 @@
 @if (($kitTracker ?? null) !== null)
 @include('emails.kit.tracker', ['at' => $kitTracker[0], 'stopped' => $kitTracker[1] ?? null, 'labels' => \App\Services\Mail\Kit\KitOrder::steps()])
 @endif
-@include('emails.kit.order-chip', ['chipNumber' => $order['number'], 'chipPlaced' => $order['placedAt'], 'chipTotal' => $order['totalPlain'], 'chipExtra' => $kitChipExtra ?? null])
+@include('emails.kit.order-chip', ['chipNumber' => $order['number'], 'chipPlaced' => $order['placedShort'] ?? $order['placedAt'], 'chipTotal' => $order['totalPlain'], 'chipExtra' => $kitChipExtra ?? null])
 @yield('kit_before')
 @if ($kitShowItems ?? true)
 @include('emails.kit.section-title', ['text' => __('email.kit.your_items')])
