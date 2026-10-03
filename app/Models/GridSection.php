@@ -41,6 +41,9 @@ class GridSection extends Model
      */
     public const SOURCES = [
         'bestsellers' => 'Best sellers — most units sold',
+        /* Row 55 (Lane HA): the homepage's "Trending K-Beauty This Week".
+           GridSections::trendingScores() says exactly what it counts. */
+        'trending' => 'Trending — most ordered and viewed in the last 7 days',
         'newest' => 'Newest — most recently added',
         'onsale' => 'On sale — discounted right now',
         'featured' => 'Featured — the ones flagged in the product editor',
