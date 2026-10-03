@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.368
+**Buy these together: no giant tick on tap, and every tap ticks or unticks.**
+Apply after .367. No plugin change. No migration.
+
+| Your report | Now |
+|---|---|
+| "the buy together selection is giving a weird giant tick icon upon click, and it's not selecting and un-selecing. it works rarely" | The tap feedback dimmed the invisible checkbox over each picture to 72%, so the phone drew its own picture-sized blue tick. Now the phone's own drawing is off, the press can't show it, and every quick tap is a tap (no double-tap zoom). Measured at 390: 0.72 → 0 while pressed; 20 taps, 20 ticks/unticks. The picture and the circle still tick and untick; nothing else changes |
+
+Files (3): public/build/assets/kbb-product-CCjmxexD.css, public/build/manifest.json, resources/css/kbb/kbb-product.css.
+
 ## 2.60.367
 **Admin: "Make all share pictures now".** Apply after .366. No plugin change.
 Runs one migration (a cache clear that rebuilds the route table).
