@@ -198,10 +198,10 @@ S['e4-template-editor'] = {
   ${field('Message', 'It has left us and is with the courier. Delivery in the UAE normally takes one to three working days from dispatch.', '', 'area')}
   <div><span class="rjm-tag">{first_name}</span><span class="rjm-tag">{order_number}</span><span class="rjm-tag">{store}</span><span class="rjm-tag">{total}</span><span class="rjm-tag">{tracking_number}</span><span class="rjm-tag">{courier}</span></div>
  </div>
- <div class="sec-title">Blocks in this email</div>
- <div class="rjm-card">
-  ${[['Progress tracker', true], ['Tracking number box', true], ['Items with pictures', true], ['Totals', false], ['Delivery address & payment', true], ['Help box (WhatsApp · email · Instagram)', true], ['Signature', true]].map(([n, on]) => `<div class="rjm-row" style="padding:7px 0;border-bottom:1px solid var(--border-2)"><span style="font-size:13px;font-weight:600">${n}</span><span class="rjm-sp"></span>${tog(on)}</div>`).join('')}
-  ${field('Button', 'Track my parcel → tracking link', '', 'select')}
+ <div class="sec-title">Sections — drag ⠿ to re-order, switch off to hide</div>
+ <div class="rjm-card"><p class="d">(3 Oct, owner) "give facility in edit any template, to re-position any section by drag n drop." Drag a row, or use ↑ ↓; the live preview moves with it. Header and footer stay at the top and bottom.</p>
+  ${[['Header', true, 'fixed'], ['Status headline + emoji 🚚💨', true], ['Progress tracker', true], ['Order number box', true], ['Tracking number note', true], ['Items with pictures', true], ['Totals', false], ['Why shop with us (3 promises)', false], ['Delivery address & payment', true], ['Button · Track your order', true], ['Help box (WhatsApp · email · Instagram)', true], ['Signature', true], ['Footer', true, 'fixed']].map(([n, on, fixed], i) => `<div class="rjm-row" style="padding:7px 8px;border:1px solid var(--border-2);border-radius:10px;margin-bottom:6px;background:${i === 5 ? 'var(--green-soft, #e9f7ef)' : '#fff'};${i === 5 ? 'box-shadow:0 6px 18px -8px rgba(0,0,0,.25);' : ''}"><span style="font-size:16px;color:${fixed ? '#c9c2c6' : '#8a7f86'};cursor:grab;margin-right:8px">⠿</span><span style="font-size:13px;font-weight:600">${n}</span>${i === 5 ? '<span style="margin-left:8px;font-size:11px;color:#1d7a46;font-weight:700">dragging…</span>' : ''}<span class="rjm-sp"></span>${fixed ? '<span style="font-size:11px;color:#8a7f86">fixed</span>' : `<span style="font-size:13px;color:#8a7f86;margin-right:10px">↑ ↓</span>${tog(on)}`}</div>`).join('')}
+  <div class="rjm-row" style="margin-top:8px"><span class="btn ghost">+ Add a section</span><span style="font-size:12px;color:#8a7f86;margin-left:10px">Text · Image · Button · Coupon · Product row · Divider · Spacer</span></div>
  </div>
  <div class="rjm-row" style="margin-top:14px"><span class="btn ghost">Reset to default</span><span class="rjm-sp"></span><span class="btn ghost">Send test to me</span><span class="btn">Save</span></div>
 </div>
