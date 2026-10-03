@@ -113,7 +113,7 @@ const TRACK_NOTE = K.notice('<b>Your tracking number is your order number: KBB-1
 const COMPLETE = ['Complete your order', 'https://extrabeauty.ae/order/KBB-10427/pay/?sig=…',
   'Opens your saved order on any device. Prefer another way to pay? Message us on WhatsApp and we will help.'];
 
-function orderEmail({ title, preheader, heroOpts, trackerAt = null, stopped = null, labels, chipExtra = '', before = '', after = '', showItems = true, showTotals = true, grand = GRAND, showInfo = true, cta = null, why = WHY_ORDER }) {
+function orderEmail({ title, preheader, heroOpts, trackerAt = null, stopped = null, labels, chipExtra = '', before = '', mid = '', after = '', showItems = true, showTotals = true, grand = GRAND, showInfo = true, cta = null, why = WHY_ORDER }) {
   const inner = [
     K.header('A'),
     K.hero({ ...heroOpts, theme: 'A' }),
@@ -122,6 +122,7 @@ function orderEmail({ title, preheader, heroOpts, trackerAt = null, stopped = nu
     before,
     showItems ? K.sectionTitle('Your items') + K.items(ITEMS) : '',
     showTotals ? K.totals(TOTALS, grand) : '',
+    mid,
     showInfo ? K.infoPair(...INFO) : '',
     cta ? K.button(cta[0], cta[1]) : '',
     cta && cta[2] ? K.para(`<div style="text-align:center">${cta[2]}</div>`, '12px 32px 0', 12.5) : '',
@@ -147,13 +148,13 @@ const EMAILS = {
   '02-complete-order-30min': ['Pending · 30 minutes after an unfinished order, any payment method', 'On', () => orderEmail({
     title: 'Complete your order 🛍️', preheader: 'Your order KBB-10427 is saved — one step left to confirm it.',
     heroOpts: { icon: 'bag', tone: 'amber', eyebrow: 'Order not complete', title: 'You are one step away 🛍️', lead: 'We saved your order, but the payment was not completed, so it is not confirmed yet. Everything is below &mdash; finish in one tap.' },
-    trackerAt: 0, labels: STEPS, grand: GRAND_DUE, showInfo: false, cta: COMPLETE, before: K.promises(),
+    trackerAt: 0, labels: STEPS, grand: GRAND_DUE, showInfo: false, cta: COMPLETE, mid: K.promises(),
     after: K.para('<div style="text-align:center">Already paid? Ignore this &mdash; your confirmation is on its way.</div>', '10px 32px 0', 12.5),
   })],
   '03-complete-order-24h': ['Pending · 24 hours later, if still unfinished (last reminder)', 'On', () => orderEmail({
     title: 'Your order is still waiting ⏳', preheader: 'Last reminder: order KBB-10427 is saved but not confirmed.',
     heroOpts: { icon: 'clock', tone: 'red', eyebrow: 'Last reminder', title: 'Your order is still waiting for you ⏳', lead: 'Order KBB-10427 is saved but not paid, so we cannot send it yet. Popular items sell out quickly, so we cannot promise they will still be in stock later.' },
-    trackerAt: 0, labels: STEPS, grand: GRAND_DUE, showInfo: false, cta: COMPLETE, before: K.promises(),
+    trackerAt: 0, labels: STEPS, grand: GRAND_DUE, showInfo: false, cta: COMPLETE, mid: K.promises(),
     after: K.para('<div style="text-align:center">This is the last reminder about this order.</div>', '10px 32px 0', 12.5),
   })],
   '04-order-on-hold': ['On hold · sent only by hand: “Send on-hold email” on the order screen', 'Off (manual)', () => orderEmail({
