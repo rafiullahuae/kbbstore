@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.365
+**Share: the link preview card, template C, with every part of it in the
+admin.** Apply after .364. No plugin change. Runs two migrations (Arabic drafts
+for the card's wording, a cache clear).
+
+| Your report | Now |
+|---|---|
+| "icon point is fine. but give options to chooose from backend and control everything." | A shared product shows the picture, the product name, "🚚 Express delivery all over UAE & Gulf · ✅ 100% original products from the brand · 💳 Accepts Tabby & Tamara" and extrabeauty.ae; the message reads "See what I’ve found on K-Beauty Bliss 💖" then the link. Appearance → Product page → Share · Link preview card: on/off, card title (name / name – price / name \| shop), point style (icons / ticks / none), each point's on/off, icon and text, the separator, the domain at the end, the message and which tiles send it, and the picture shape (wide / square) |
+
+Product pages only: og:/twitter: title and description. The page <title> and
+Google's description are unchanged. The picture stays wide (1200×630) until
+Square is picked; after picking it, run `php artisan kbb:share-images` once.
+
+Files (11): app/Http/Controllers/Store/ProductController.php, app/Services/ProductTrustShare.php, app/Services/Translation/ArabicInterfaceDrafts.php, app/Services/Translation/InterfaceStrings.php, app/Support/ProductShare.php, app/Support/Seo.php, app/Support/ShareCard.php, app/Support/ShareImage.php, database/migrations/2027_07_23_000200_seed_share_card_arabic_drafts.php, database/migrations/2027_07_23_000300_clear_caches_share_card.php, resources/views/admin/partials/product-trust-share-screen.blade.php.
+
 ## 2.60.364
 **Product page: no blank gap from missing description pictures, the rating
 bar hidden by default, and the picture on a first WhatsApp share.** Apply after
