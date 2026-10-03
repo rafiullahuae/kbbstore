@@ -113,7 +113,7 @@ class OrderStatusChanged extends OrderMail
             'This order has been refunded. If the money went back to a card or payment account, your bank can take a few working days to show it.',
         ],
         'failed' => [
-            'Payment for your %1$s order %2$s did not go through 😔',
+            'Payment for %1$s order %2$s failed 😔',
             'The payment did not go through 😔',
             'The order is not confirmed yet. It is saved — you can finish it with any way to pay we offer.',
         ],

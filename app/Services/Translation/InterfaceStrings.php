@@ -2252,7 +2252,7 @@ final class InterfaceStrings
             'order_status.refunded_subject' => 'Your :store order :number has been refunded',
             'order_status.refunded_heading' => 'Your order has been refunded',
             'order_status.refunded_body' => 'This order has been refunded. If the money went back to a card or payment account, your bank can take a few working days to show it.',
-            'order_status.failed_subject' => 'Payment for your :store order :number did not go through 😔',
+            'order_status.failed_subject' => 'Payment for :store order :number failed 😔',
             'order_status.failed_heading' => 'The payment did not go through 😔',
             'order_status.failed_body' => 'The order is not confirmed yet. It is saved — you can finish it with any way to pay we offer.',
             'order_status.tracking_number' => 'Your tracking number is your order number: :number.',
