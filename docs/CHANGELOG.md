@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.364
+**Product page: no blank gap from missing description pictures, the rating
+bar hidden by default, and the picture on a first WhatsApp share.** Apply after
+.363. No plugin change. Runs one migration (a cache clear). After applying, run
+`php artisan kbb:share-images` once to make every product's share picture.
+
+| Your report | Now |
+|---|---|
+| "i have zero space under the tabs, but still i'm getting giant space in desktop" | A description picture of ours whose file is not on the server (imported to /wp-content/uploads but never copied) is left out of the page instead of holding a blank box. Measured 439px → 2px above "Benefits:" at 1280 and 390. Copying wp-content/uploads across brings those pictures back |
+| "give option to hide unhide the rating bar line, keep off by default in desktop and mobile both" | Appearance → Product page → Mobile sections → Price row → "Show the bar after the rating · phone" / "· laptop", both OFF |
+| "when share the product, it picks short description and title. but no image" | WhatsApp's own first fetch of a product link now gets the JPEG share picture (it was given the WebP original, which WhatsApp drops) |
+
+Files (9): app/Http/Controllers/Store/ProductController.php, app/Services/ProductMobileSections.php, app/Support/RichText.php, app/Support/ShareImage.php, database/migrations/2027_07_23_000100_clear_caches_product_page_364.php, public/build/assets/kbb-product-Dqsh9uUA.css, public/build/manifest.json, resources/css/kbb/kbb-product.css, resources/views/admin/partials/product-mobile-sections-screen.blade.php.
+
 ## 2.60.363
 **Product page: Desktop switches that work, Tabby & Tamara on laptops, the buy
 column in your own order on laptops, and the details block's headings and
