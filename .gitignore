@@ -104,3 +104,4 @@ public/wp-content/
 # test output puts it in the package. The glob supersedes the single
 # /storage/pdp-logs/ entry Lane PDP added for itself — same intent, every lane.
 /storage/*-logs/
+/storage/framework/kbb-order-reminders.tick
