@@ -131,6 +131,24 @@ final class ShareImage
         try {
             $found = self::find($image);
 
+            /*
+             * (Integrator, 2.60.364) THE FIRST SHARE CAME BACK WITH NO PICTURE.
+             * The owner: "when share the product, it picks short description
+             * and title. but no image." The first request for a product whose
+             * copy is missing is, more often than not, WhatsApp's OWN fetcher
+             * reading the link a shopper just pasted. After-response made the
+             * JPEG for the NEXT request, so that fetcher was handed the WebP
+             * original, which it drops, and it cached the bare preview for
+             * that URL. Measured on the preview: fetch 1 published
+             * fino.webp, fetch 2 fino.webp.jpg. A link-preview fetcher is not
+             * a shopper and does not mind ~100 ms, so for one the copy is
+             * made NOW and this very response names it.
+             */
+            if ($found === null && self::isPreviewFetcher()) {
+                self::make($image);
+                $found = self::find($image);
+            }
+
             if ($found === null) {
                 self::makeAfterResponse($image);
             }
@@ -175,6 +193,20 @@ final class ShareImage
         $path = (string) (parse_url($url, PHP_URL_PATH) ?: '');
 
         return ['url' => $url, 'path' => $path, 'width' => (int) $info[0], 'height' => (int) $info[1]];
+    }
+
+    /**
+     * Link-preview fetchers, by the names they send. iMessage fetches as
+     * "facebookexternalhit … Twitterbot", so it is covered by those two.
+     */
+    public const PREVIEW_FETCHERS = '#WhatsApp|facebookexternalhit|Facebot|TelegramBot|Twitterbot|LinkedInBot|Slackbot|Discordbot|Pinterest|SkypeUriPreview|Snapchat|Viber|redditbot|vkShare|Embedly|Iframely#i';
+
+    /** Whether the current request is an app building a link preview. */
+    public static function isPreviewFetcher(): bool
+    {
+        $ua = app()->bound('request') ? (string) request()->userAgent() : '';
+
+        return $ua !== '' && preg_match(self::PREVIEW_FETCHERS, $ua) === 1;
     }
 
     /** Register one after-response encode for this photograph, at most once per lock window. */
