@@ -5223,7 +5223,7 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
    name's size is its length (--kft-n, an integer the server prints): no
    script measures anything. */
 footer.kft{background:#fff;color:var(--ink);padding:0;margin:0;overflow:hidden;font-size:14px;line-height:1.5}
-.kft a{color:inherit;text-decoration:none}
+.kft a{text-decoration:none}
 .kft-wrap{max-width:var(--site-max,1320px);margin-inline:auto;padding-inline:var(--site-gutter,16px)}
 .kft-help{color:#fff;background:linear-gradient(110deg,#128C7E,#12A37A,#1EBE5D,#25D366,#1EBE5D,#12A37A,#128C7E);background-size:300% 100%;background-position:0% 50%}
 .kft-help-in{display:flex;align-items:center;gap:18px;padding-block:18px}

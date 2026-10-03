@@ -27,6 +27,8 @@ declare(strict_types=1);
  *   · draw the Korea line without its `@if ($kft['korea'] !== '')` → RED (case 2).
  *   · make footer.blade.php always include footer-bliss → RED (case 3).
  *   · delete the prefers-reduced-motion block from kbb.css → RED (case 5).
+ *   · put `color:inherit` back in `.kft a{}` → RED (case 5): the WhatsApp
+ *     button's words go white on its white pill, as they did on the preview.
  */
 
 use App\Models\AdminUser;
@@ -129,7 +131,11 @@ it('moves with CSS only, and never for a visitor who asked for reduced motion', 
         ->and($block)->toContain('font-size:min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14)))')
         // `footer.kft` out-specifies the old dark rule without editing it.
         ->and($css)->toContain('  footer{background:#241C20;color:#CDBFC6;padding:52px 0 26px}')
-        ->and($block)->toContain('footer.kft{background:#fff;');
+        ->and($block)->toContain('footer.kft{background:#fff;')
+        // Found on the preview: `.kft a{color:inherit}` (0,1,1) outranked
+        // `.kft-bt-p{color:#063F37}` (0,1,0), and "Chat on WhatsApp" was white
+        // on a white pill — an empty button. No colour on the bare-link rule.
+        ->and($block)->not->toMatch('/\.kft a\{[^}]*color/');
 
     kftSave(['site_motion' => false]);
     expect($this->get('/')->getContent())->toContain('<footer class="kft">');
