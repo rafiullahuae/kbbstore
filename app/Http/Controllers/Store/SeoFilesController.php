@@ -497,6 +497,13 @@ class SeoFilesController extends Controller
             $add($base . ConcernCollections::path($concern), null, '0.6', 'weekly');
         }
 
+        // #KBeautyBliss Spotted (2.60.372): submitted only while it has posts,
+        // the same test that lifts its noindex. An empty shop's sitemap is
+        // byte-identical to what it was.
+        if (app(\App\Services\SpottedSettings::class)->pageIsLive()) {
+            $add($base . \App\Services\SpottedSettings::URL, null, '0.5', 'weekly');
+        }
+
         // The content pages behind the footer links. Only the seven slugs
         // routes/web.php actually routes, and only where the row is published:
         // PageController::show() 404s anything else, and a sitemap entry that

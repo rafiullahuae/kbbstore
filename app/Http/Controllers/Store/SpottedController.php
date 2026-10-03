@@ -40,9 +40,11 @@ class SpottedController extends Controller
         $self = Url::to(SpottedSettings::URL);
         $absolute = preg_match('#^https?://#i', $self) === 1 ? $self : $base.$self;
 
+        $cards = $spotted->pageCards();
+
         return view('store.spotted', [
             'page' => $page,
-            'cards' => $spotted->pageCards(),
+            'cards' => $cards,
             'h1' => $h1,
             'intro' => $intro,
             'seoTitle' => $seoTitle,
@@ -51,6 +53,10 @@ class SpottedController extends Controller
                 'title_is_final' => true,
                 'description' => $seoDesc,
                 'url' => $absolute,
+                // An empty grid is a thin page: it asks not to be indexed, and
+                // SeoFilesController leaves it out of /sitemap.xml by the same
+                // test (SpottedSettings::pageIsLive), so the two always agree.
+                'noindex' => $cards === [] ?: null,
                 'breadcrumb' => [
                     ['name' => __('store.breadcrumb.home'), 'url' => $base.'/'],
                     ['name' => $h1, 'url' => $absolute],

@@ -198,3 +198,25 @@ it('is never wired twice: each require and the screen include appear at most onc
         ->and(substr_count($web, "require __DIR__.'/spotted-admin.php';"))->toBeLessThanOrEqual(1)
         ->and(substr_count($app, "@include('admin.partials.spotted-screen')"))->toBeLessThanOrEqual(1);
 });
+
+it('asks not to be indexed and stays out of the sitemap while it has no posts, and is submitted once it has one', function () {
+    /*
+     * 2.60.372, the integrator. Wired, the page said "index, follow" with an
+     * empty grid — a thin page Google would be invited to rank — and
+     * CrawlSurfaceCompletenessTest went red because /sitemap.xml did not carry
+     * it. Both now hang off SpottedSettings::pageIsLive(), so they agree in
+     * either state. MUTATION: drop the `noindex` line from SpottedController
+     * and the first expectation is red; drop the sitemap block from
+     * SeoFilesController and the last one is.
+     */
+    $empty = $this->get('/kbeautybliss-spotted/')->assertOk()->getContent();
+    expect($empty)->toMatch('#<meta name="robots" content="noindex#')
+        ->and($this->get('/sitemap.xml')->getContent())->not->toContain('/kbeautybliss-spotted/');
+
+    sppPost();
+    SpottedSettings::flush();
+
+    $live = $this->get('/kbeautybliss-spotted/')->assertOk()->getContent();
+    expect($live)->not->toMatch('#<meta name="robots" content="noindex#')
+        ->and($this->get('/sitemap.xml')->getContent())->toContain('/kbeautybliss-spotted/</loc>');
+});

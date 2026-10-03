@@ -279,6 +279,16 @@ final class SpottedSettings
         return array_slice($this->cards('home'), 0, $max);
     }
 
+    /**
+     * Whether /kbeautybliss-spotted/ has anything on it. The page asks not to
+     * be indexed while it is empty, and the sitemap submits it only when this
+     * is true — one question, asked in both places.             (2.60.372)
+     */
+    public function pageIsLive(): bool
+    {
+        return $this->pageCards() !== [];
+    }
+
     /** @return list<array<string, mixed>> */
     public function pageCards(): array
     {

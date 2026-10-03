@@ -104,6 +104,8 @@ class PageController extends Controller
         // /mail/font/… the font they all ask for. A post called "mail" would
         // otherwise sit at an address the inbox depends on.
         'mail',
+        // #KBeautyBliss Spotted (Lane HB, 2.60.372).
+        'kbeautybliss-spotted',
         'about', 'delivery', 'faqs', 'contact-us',
         'privacy-policy', 'terms-and-conditions',
         /*

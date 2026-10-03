@@ -2615,6 +2615,13 @@ final class EnglishRenderWalk
                 'pattern' => '#\n*<section class="sec tinted dv" style="padding-top:0"><div class="wrap">\n  <div class="sh"><div><h2>Skincare guide <span class="cnt">.*?</div></section>\n*#s',
                 'hits' => 1,
             ],
+            // Lane HB's partials/home/spotted exists now (2.60.372), so the old
+            // product-photo Spotted strip steps aside, as Lane HA built it to;
+            // the new section renders nothing while no post is ticked Homepage.
+            'Row 55: the old Spotted strip, replaced by Lane HB\'s section (2.60.372)' => [
+                'pattern' => '#\n*<section class="sec dv" style="padding-top:0"><div class="wrap">\n  <div class="sh"><div><h2>\#KBeautyBliss .*?</div></section>\n*#s',
+                'hits' => 1,
+            ],
             'Row 55: the old About band (Lane HA)' => [
                 'pattern' => '#\n*<section class="sec dv" style="padding-top:0"><div class="wrap">\n  <div class="about">.*?</div></section>\n*#s',
                 'hits' => 1,
