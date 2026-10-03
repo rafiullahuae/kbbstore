@@ -52,7 +52,7 @@ it('ships the new footer on every page, with no word about returns anywhere in i
     $footer = kftBlock($html);
 
     expect($footer)->not->toBe('')
-        ->and($footer)->toContain('Find your perfect K-beauty match <span class="kft-chip">24/7 available</span>')
+        ->and($footer)->toContain('Find your perfect K-beauty match <span class="kft-avail">24/7 available</span>')
         ->and($footer)->not->toMatch('/return|refund/i')
         ->and($html)->not->toContain('<footer><div class="wrap">');
 
@@ -112,7 +112,7 @@ it('is fed from the shop\'s own settings, and refuses a profile that is not a we
     kftSave(['site_name_text' => '<i>KBB</i>', 'site_help_title' => 'Need a hand?', 'site_track_on' => false, 'site_news_on' => false]);
     $footer = kftBlock($this->get('/')->getContent());
     expect($footer)->toContain('style="--kft-n:8">KBB</p>')
-        ->toContain('Need a hand? <span class="kft-chip">')
+        ->toContain('Need a hand? <span class="kft-avail">')
         ->not->toContain('kft-bt-o')
         ->not->toContain('kft-news')
         // No address and no sign-up box: the fifth column is not drawn at all.

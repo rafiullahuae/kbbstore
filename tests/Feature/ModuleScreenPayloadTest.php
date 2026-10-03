@@ -433,7 +433,12 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // ... same on checkout rows"): ci_brand_on / ci_brand_on_m on the Cart
     // page's two row tabs and d_row_brand / m_row_brand on the Checkout page's,
     // each inserted at its TABS position. Forty lines inserted, none changed.
-    expect($compared)->toBe(592, 'the number of controls drawn changed');
+    //
+    // 604 (Lane HB): + 12 site-footer controls on Appearance → Footer — the
+    // three "Site footer" tabs (design, help strip, Visit us & name) inserted
+    // FIRST in the slim-footer payload, as SlimFooterApiController now serves
+    // them. The five slim-bar tabs after them are unchanged.
+    expect($compared)->toBe(604, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

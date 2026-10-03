@@ -149,7 +149,9 @@ it('still scrolls the chips the shop does back', function () {
 /** The hrefs of the footer's social row, in order. */
 function dlSocialHrefs(string $html): array
 {
-    if (! preg_match('#<div class="fsoc">(.*?)</div>#s', $html, $m)) {
+    // (Lane HB) The new site footer's icon row is `.kft-soc`; the previous
+    // design's is `.fsoc`. Same three settings behind both.
+    if (! preg_match('#<div class="(?:fsoc|kft-soc)"[^>]*>(.*?)</div>#s', $html, $m)) {
         return [];
     }
 

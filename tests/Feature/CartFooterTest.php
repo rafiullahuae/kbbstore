@@ -104,7 +104,10 @@ function cartFooterGet(Cart $cart): string
  */
 function cartFooterPresent(string $html): bool
 {
-    return str_contains($html, '<footer>') && str_contains($html, 'wa.me/');
+    // (Lane HB) `<footer` and not `<footer>`: the site footer that ships now
+    // is `<footer class="kft …">` (Appearance → Footer → Site footer ·
+    // design); the previous one is the bare tag. Either is "the footer".
+    return preg_match('#<footer[\s>]#', $html) === 1 && str_contains($html, 'wa.me/');
 }
 
 /* ------------------------------------------------------------------------

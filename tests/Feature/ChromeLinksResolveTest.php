@@ -260,6 +260,15 @@ function chromeToleratedDeadEnd(string $path): bool
 */
 
 it('emits no dead link in the footer', function () {
+    /*
+     * (Lane HB) The new footer links /kbeautybliss-spotted/, whose route file
+     * reaches routes/web.php when the integrator requires it. Registered here
+     * exactly as it will be there (idempotent once it is), so this checks the
+     * link resolves rather than whether the wiring has landed yet —
+     * EverythingIsMountedOnceTest is the guard for that.
+     */
+    \Tests\Support\SpottedRoutes::wire($this->app);
+
     $footer = chromeFooter($this->get('/')->assertOk()->getContent());
     $hrefs = chromeHrefs($footer);
 

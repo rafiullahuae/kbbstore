@@ -39,6 +39,15 @@ use Illuminate\Support\Facades\Cache;
  */
 final class SpottedSettings
 {
+    /**
+     * Stored in `settings` under this prefix, NOT in `module_settings`: the
+     * settings map is already loaded on every storefront page, and reading the
+     * module map as well cost /shop and the product page one more query each
+     * (PageCostBudgetTest measured 19 → 20 and 22 → 23). SlimFooter stores the
+     * same way for the same reason.
+     */
+    public const PREFIX = 'spotted_';
+
     public const MODULE = 'kbb_spotted';
 
     public const URL = '/kbeautybliss-spotted/';
@@ -147,7 +156,7 @@ final class SpottedSettings
         $out = [];
 
         foreach (ModuleSchema::normalise(self::SCHEMA, self::POLICY) as $key => $field) {
-            $saved = $this->settings->moduleSetting(self::MODULE, $key, null);
+            $saved = $this->settings->get(self::PREFIX.$key, null);
             $out[$key] = $saved === null ? $field['default'] : ModuleSchema::cast($field, $saved);
         }
 
@@ -177,7 +186,7 @@ final class SpottedSettings
                 continue;
             }
 
-            $this->settings->setModuleSetting(self::MODULE, $key, $cast);
+            $this->settings->set(self::PREFIX.$key, $cast);
             $written[] = $key;
         }
 

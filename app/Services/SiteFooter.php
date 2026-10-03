@@ -43,6 +43,15 @@ use App\Support\Url;
  */
 final class SiteFooter
 {
+    /**
+     * Stored in `settings` under this prefix, NOT in `module_settings`: the
+     * settings map is already loaded on every storefront page, and reading the
+     * module map as well cost /shop and the product page one more query each
+     * (PageCostBudgetTest measured 19 → 20 and 22 → 23). SlimFooter stores the
+     * same way for the same reason.
+     */
+    public const PREFIX = 'sitefooter_';
+
     public const MODULE = 'site_footer';
 
     /** What a footer-menu row may not mention, in the new design. */
@@ -102,7 +111,7 @@ final class SiteFooter
         $out = [];
 
         foreach (ModuleSchema::normalise(self::SCHEMA, self::POLICY) as $key => $field) {
-            $saved = $this->settings->moduleSetting(self::MODULE, $key, null);
+            $saved = $this->settings->get(self::PREFIX.$key, null);
             $out[$key] = $saved === null ? $field['default'] : ModuleSchema::cast($field, $saved);
         }
 
@@ -132,7 +141,7 @@ final class SiteFooter
                 continue;
             }
 
-            $this->settings->setModuleSetting(self::MODULE, $key, $cast);
+            $this->settings->set(self::PREFIX.$key, $cast);
             $written[] = $key;
         }
 
@@ -218,6 +227,10 @@ final class SiteFooter
             'wa' => $wa !== '' ? 'https://wa.me/'.$wa : '',
             'track' => (bool) ($c['site_track_on'] ?? true) ? Url::to('/track-my-order/') : '',
             'socials' => $socials,
+            // The Brands link follows the brands module, exactly as the header's
+            // does (NavigationService): off, /brands/ is a 404 and no chrome
+            // may link to it.
+            'brands' => $s->moduleEnabled('brands', true),
             'help_links' => self::helpLinks($nav),
             'dubai' => $text('site_addr_dubai'),
             'korea' => $text('site_addr_korea'),

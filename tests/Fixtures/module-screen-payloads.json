@@ -4251,6 +4251,150 @@
   "slim-footer": {
     "tabs": [
       {
+        "key": "site",
+        "label": "Site footer · design",
+        "description": "The footer at the bottom of every storefront page. The new design is on, as the owner asked; Previous puts the old footer back.",
+        "fields": [
+          {
+            "key": "site_design",
+            "name": "site_design",
+            "type": "select",
+            "label": "Footer design",
+            "help": "Every storefront page. Choose Previous to go back to the footer the shop had before.",
+            "options": {
+              "bliss": "New — WhatsApp help strip and the big name (approved 3 October)",
+              "classic": "Previous — the dark four-column footer"
+            },
+            "default": "bliss",
+            "value": "bliss"
+          },
+          {
+            "key": "site_motion",
+            "name": "site_motion",
+            "type": "bool",
+            "label": "Colours drift slowly",
+            "help": "The green strip and the big name move gently through their colours. Never for a visitor whose device asks for reduced motion.",
+            "options": null,
+            "default": true,
+            "value": true
+          }
+        ]
+      },
+      {
+        "key": "site_help",
+        "label": "Site footer · help strip",
+        "description": "The WhatsApp-green strip across the top of the footer.",
+        "fields": [
+          {
+            "key": "site_help_on",
+            "name": "site_help_on",
+            "type": "bool",
+            "label": "Show the green help strip",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_help_title",
+            "name": "site_help_title",
+            "type": "text",
+            "label": "Strip headline",
+            "help": "Empty: “Find your perfect K-beauty match”.",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_help_chip",
+            "name": "site_help_chip",
+            "type": "text",
+            "label": "The white chip",
+            "help": "Empty: “24/7 available”.",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_help_sub",
+            "name": "site_help_sub",
+            "type": "text",
+            "label": "Line under the headline (laptop only)",
+            "help": "Empty: “Ask us anything about your skin, a product or your order — we reply on WhatsApp.”",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_track_on",
+            "name": "site_track_on",
+            "type": "bool",
+            "label": "“Track my order” button in the strip",
+            "help": "Beside “Chat on WhatsApp”, which dials the WhatsApp number on Store → Settings.",
+            "options": null,
+            "default": true,
+            "value": true
+          }
+        ]
+      },
+      {
+        "key": "site_visit",
+        "label": "Site footer · Visit us & name",
+        "description": "The addresses, the offers box and the big name. An empty address is not drawn — nothing is made up.",
+        "fields": [
+          {
+            "key": "site_addr_dubai",
+            "name": "site_addr_dubai",
+            "type": "text",
+            "label": "Dubai address",
+            "help": "Empty: the Dubai line is not drawn. With both addresses empty, the whole “Visit us” block is left out.",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_addr_korea",
+            "name": "site_addr_korea",
+            "type": "text",
+            "label": "Korea address",
+            "help": "Empty: the Korea line is not drawn.",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_news_on",
+            "name": "site_news_on",
+            "type": "bool",
+            "label": "Offers sign-up box",
+            "help": "Signs the address up to the newsletter, the same list as the homepage form.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_name_on",
+            "name": "site_name_on",
+            "type": "bool",
+            "label": "The big name at the bottom",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_name_text",
+            "name": "site_name_text",
+            "type": "text",
+            "label": "The big name",
+            "help": "Centred, very large, in light colours that slowly change. Keep it short: it is sized to fit one line.",
+            "options": null,
+            "default": "K-Beauty Bliss",
+            "value": "K-Beauty Bliss"
+          }
+        ]
+      },
+      {
         "key": "pages",
         "label": "Where it shows",
         "description": "One bar, two pages, two switches. The cart ships off so that page is untouched until you say otherwise.",

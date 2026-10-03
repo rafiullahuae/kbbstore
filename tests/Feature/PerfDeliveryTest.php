@@ -774,7 +774,20 @@ it('gives the footer columns headings that do not skip a level', function () {
 it('keeps the footer column headings saying what they said', function () {
     $html = $this->get('/')->assertOk()->getContent();
 
-    preg_match_all('#<div class="fcol"><h2>([^<]*)</h2>#', $html, $m);
+    /*
+     * (Lane HB) The site footer that ships now is the approved new design,
+     * whose column headings are `<h2 … class="kft-ch">` — still h2, for the
+     * reason above. The previous design is one select away (Appearance →
+     * Footer → Site footer · design → Previous) and keeps its three.
+     */
+    preg_match_all('#<h2 (?:id="[^"]*" )?class="kft-ch">([^<]*)</h2>#', $html, $m);
+
+    expect($m[1])->toBe(['Shop', 'Help', 'Discover']);
+
+    app(\App\Services\SiteFooter::class)->save(['site_design' => 'classic']);
+    \App\Services\SettingsService::forgetMemo();
+
+    preg_match_all('#<div class="fcol"><h2>([^<]*)</h2>#', $this->get('/')->assertOk()->getContent(), $m);
 
     expect($m[1])->toBe(['Shop', 'Customer Care', 'My Account']);
 });
