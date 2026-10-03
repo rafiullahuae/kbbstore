@@ -42,8 +42,10 @@ use App\Support\WholeDirhams;
  *      survivors so it cannot be completed again by accident;
  *   2. every member is still VISIBLE (published, not hidden, not scheduled)
  *      and IN STOCK — the option, for a line that holds one;
- *   3. the section is on and the tier for its size, READ FROM SETTINGS NOW,
- *      is above 0. A tier changed in the admin reprices every open basket.
+ *   3. the section is on, "Show the total and buy-together discount" is on
+ *      (Lane RH; off by default), and the tier for its size, READ FROM
+ *      SETTINGS NOW, is above 0. A tier changed in the admin — or the master
+ *      switch turned off — reprices every open basket.
  *
  * Fail any one and the group's lines are ordinary lines at their own prices,
  * on every surface, with a coupon free to treat them like any other line.
@@ -105,7 +107,11 @@ class BuyTogetherPricing
 
         $c = $this->settings->all();
 
-        if (empty($c['on'])) {
+        // (Lane RH) The master switch: off, and no group is worth anything on
+        // any surface, whatever the tiers hold. Every price below — forCart(),
+        // tiers(), anyTier(), and so the cart, drawer, checkout, order, email,
+        // invoice and the payment providers' totals — comes through here.
+        if (empty($c['on']) || empty($c['discount_on'])) {
             return 0;
         }
 
@@ -137,7 +143,11 @@ class BuyTogetherPricing
     /** Do coupons also discount bundled units (Include) or skip them (Exclude)? */
     public function couponsInclude(): bool
     {
-        return (bool) ($this->settings->all()['coupons'] ?? true);
+        $c = $this->settings->all();
+
+        // (Lane RH) No discount, no bundle for a coupon to skip: with the
+        // master switch off a coupon treats every line as an ordinary line.
+        return empty($c['discount_on']) || (bool) ($c['coupons'] ?? true);
     }
 
     /**

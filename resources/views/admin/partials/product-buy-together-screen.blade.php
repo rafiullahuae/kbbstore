@@ -26,6 +26,10 @@
               PREVIEW of what each tier does to an example basket, redrawn as
               a slider moves, in the product page's own words: the struck
               total, the payable total, "You're saving AED 45".
+              (Lane RH) At its top, "Show the total and buy-together
+              discount" — OFF by default, as he asked — with "Show on
+              phones" / "Show on laptops" under it. Off locks everything
+              else in the card (cardTiers()).
       Card 3  Category pairs: every category, what it pairs with by default
               (worked out from his own category names), and "Customise" to
               choose up to five, in order — or "Use the default" to go back.
@@ -66,6 +70,9 @@
 .btp-pv .tot{font-weight:700;color:#1c2330}
 .btp-pv .save{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;background:#e9f7ef;color:#1f6b47;font-weight:600;font-size:11.5px}
 .btp-pv .off{color:#8b95a5;font-style:italic}
+/* Lane RH: what "Show the total and buy-together discount" locks while off. */
+.btp-lock-note{margin:0;padding:9px 14px;font-size:12px;font-weight:600;color:#8a5a00;background:#fff8e6;border-bottom:1px solid #f3e3b5}
+.btp-locked{opacity:.45;filter:grayscale(1);pointer-events:none;user-select:none}
 </style>
 <script>
 (function () {
@@ -108,13 +115,26 @@
     return '<div class="mmlbl"><b>' + escHtml(title) + '</b>' + (help ? '<span>' + escHtml(help) + '</span>' : '') + '</div>';
   }
 
-  function optRow(k) {
+  // Lane RH: the row's own device switches share their visible words with the
+  // section's ("Show on phones"), so a screen reader is told which is which.
+  var ARIA = { row_phone: 'Show the total row on phones', row_laptop: 'Show the total row on laptops' };
+
+  // One argument only: `[...].map(optRow)` passes the index second, which
+  // must never read as `locked`.
+  function optRow(k) { return optRowL(k, false); }
+
+  // `locked`: drawn, but disabled — see cardTiers().
+  function optRowL(k, locked) {
     var f = field(k); if (!f) return '';
     var v = W.options[k];
-    if (f.type === 'bool') return '<div class="mmrow">' + lbl(f.label, f.help) + tog('data-btp-opt', k, !!v, f.label) + '</div>';
+    if (f.type === 'bool') {
+      var t = tog('data-btp-opt', k, !!v, ARIA[k] || f.label);
+      if (locked) t = t.replace(' tabindex="0"', ' tabindex="-1" aria-disabled="true"');
+      return '<div class="mmrow">' + lbl(f.label, f.help) + t + '</div>';
+    }
     if (f.type === 'range') {
       var o = f.options || {};
-      return '<div class="mmrow">' + lbl(f.label, f.help) + '<span class="mmrange"><input type="range" min="' + escAttr(String(o.min)) + '" max="' + escAttr(String(o.max)) + '" step="' + escAttr(String(o.step || 1)) + '" value="' + escAttr(String(v)) + '" data-btp-opt="' + escAttr(k) + '"><i id="btpv-' + escAttr(k) + '">' + escHtml(String(v) + (o.unit || '')) + '</i></span></div>';
+      return '<div class="mmrow">' + lbl(f.label, f.help) + '<span class="mmrange"><input type="range" min="' + escAttr(String(o.min)) + '" max="' + escAttr(String(o.max)) + '" step="' + escAttr(String(o.step || 1)) + '" value="' + escAttr(String(v)) + '" data-btp-opt="' + escAttr(k) + '"' + (locked ? ' disabled aria-disabled="true"' : '') + '><i id="btpv-' + escAttr(k) + '">' + escHtml(String(v) + (o.unit || '')) + '</i></span></div>';
     }
     if (f.type === 'select') {
       var cur = Object.prototype.hasOwnProperty.call(f.options || {}, String(v)) ? String(v) : String(f.default);
@@ -193,14 +213,29 @@
   }
   function paintPreview() { var el = document.getElementById('btpPreview'); if (el && W) el.innerHTML = previewRows(); }
 
+  /* ── Lane RH: the master switch at the top of the discount card ──────────
+     "lock that discount section is the section is hided with toggle button."
+     Off (the default): the row switches, the tiers, the coupons switch and the
+     preview are drawn LOCKED — disabled, greyed, aria-disabled — under one
+     line saying how to unlock them. Their values are kept; the server keeps
+     them too (BuyTogetherSettings::LOCKED) and prices nothing while off. */
+  function discountOn() { return !!W.options.discount_on; }
+  function cardTiers() {
+    var on = discountOn();
+    var lockA = on ? '' : ' btp-locked" aria-disabled="true';
+    return '<div class="card mmcard" id="btpTiers"><div class="mmhd"><b>Discount for buying together</b><span>Taken off every product in the bundle when the shopper ticks that many and presses the button — on the product page, in the cart, at the checkout and on the order. All three are 0 (off) until you set them. Remove one bundled product from the cart and the rest go back to their own prices.</span></div>'
+      + '<div class="mmbody">' + optRow('discount_on') + '</div>'
+      + (on ? '' : '<p class="btp-lock-note" role="note">Turn on ‘Show the total and buy-together discount’ to use these.</p>')
+      + '<div class="mmbody' + lockA + '" data-btp-lock>' + ['row_phone', 'row_laptop', 'tier_3', 'tier_4', 'tier_5', 'coupons'].map(function (k) { return optRowL(k, !on); }).join('') + '</div>'
+      + '<div class="btp-prev' + lockA + '"><h4>Preview — an example basket of AED 100 products</h4><div id="btpPreview">' + previewRows() + '</div></div></div>';
+  }
+
   function body() {
     var devices = '<div class="mmrow btp-dev">' + lbl('On phones', 'The “Buy these together” row of the Mobile sections tab — which also sets where it sits on the phone page.') + tog('data-btp-dev', 'phone', W.phone, 'Show on phones') + '</div>'
       + '<div class="mmrow btp-dev">' + lbl('On laptops', 'The “Buy these together” row of the Sections tab, Desktop.') + tog('data-btp-dev', 'laptop', W.laptop, 'Show on laptops') + '</div>';
     var card1 = '<div class="card mmcard"><div class="mmhd"><b>Buy these together</b><span>The product on the page first, then one match from each category that goes with it — each with a green tick the shopper can clear — and one pink “Buy 4 items together” button that adds every ticked product. The cards are the cart page’s “Recommended for you” cards, the same size.</span></div>'
       + '<div class="mmbody">' + optRow('on') + devices + ['count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar'].map(optRow).join('') + '</div></div>';
-    var cardT = '<div class="card mmcard" id="btpTiers"><div class="mmhd"><b>Discount for buying together</b><span>Taken off every product in the bundle when the shopper ticks that many and presses the button — on the product page, in the cart, at the checkout and on the order. All three are 0 (off) until you set them. Remove one bundled product from the cart and the rest go back to their own prices.</span></div>'
-      + '<div class="mmbody">' + ['tier_3', 'tier_4', 'tier_5', 'coupons'].map(optRow).join('') + '</div>'
-      + '<div class="btp-prev"><h4>Preview — an example basket of AED 100 products</h4><div id="btpPreview">' + previewRows() + '</div></div></div>';
+    var cardT = cardTiers();
     var card2 = '<div class="card mmcard"><div class="mmhd"><b>Category pairs</b><span>Which categories go with which. The default is worked out from your category names — Sunscreens go with Moisturizers, Toners, Cleansing oils and Face masks; Cleansers with Toners, Serums, Moisturizers and Sunscreens; and so on. Customise any category to choose up to ' + maxPairs() + ' matches in your own order. A product uses its most specific category.</span></div>'
       + '<p class="btp-note">One product is taken from each matching category, in this order, by the rule above. When a category is empty, or a product’s category has no matches, the shop’s best sellers fill the gap. Products that need an option chosen (sizes, shades) are never suggested — only the product on the page can be one.</p>'
       + '<div class="btp-find"><input type="search" placeholder="Find a category…" value="' + escAttr(FILTER) + '" data-btp-find aria-label="Find a category"><label><input type="checkbox" data-btp-only' + (ONLY_PAIRED ? ' checked' : '') + '> Only categories with matches</label></div>'
@@ -298,9 +333,16 @@
     var ot = t.closest && t.closest('.ectog[data-btp-opt]');
     if (ot) {
       var k = ot.getAttribute('data-btp-opt'); if (!field(k)) return;
+      if (ot.getAttribute('aria-disabled') === 'true') return; // locked (Lane RH)
       W.options[k] = !W.options[k];
       ot.classList.toggle('on', !!W.options[k]); ot.setAttribute('aria-checked', String(!!W.options[k]));
-      markDirty(); return;
+      markDirty();
+      // The master switch redraws its card locked or unlocked, focus kept.
+      if (k === 'discount_on') {
+        var card = document.getElementById('btpTiers');
+        if (card) { card.outerHTML = cardTiers(); var back = document.querySelector('#btpTiers .ectog[data-btp-opt="discount_on"]'); if (back) back.focus(); }
+      }
+      return;
     }
     var dv = t.closest && t.closest('[data-btp-dev]');
     if (dv) {

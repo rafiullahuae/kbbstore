@@ -1,0 +1,322 @@
+{
+  "off-section-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "sectionHeight": 270.03,
+    "footHeight": 60,
+    "rowInHtml": false,
+    "rowClass": null,
+    "rowDisplay": null,
+    "rowHeight": null,
+    "total": null,
+    "saving": null,
+    "button": "Buy 5 items together",
+    "buttonHeight": 48,
+    "tiers": "{\"3\":0,\"4\":0,\"5\":0,\"6\":0}"
+  },
+  "off-cart-390": {
+    "lines": 5,
+    "boughtTogetherTags": 0,
+    "bundleRow": false,
+    "summary": "Order Value (5 items)AED 739AED 604 Delivery is calculated at checkout Order Total AED 604 Secure checkout | VisaMastercardtabbytamara",
+    "scrollWidth": 390
+  },
+  "off-section-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "sectionHeight": 239.75,
+    "footHeight": 50,
+    "rowInHtml": false,
+    "rowClass": null,
+    "rowDisplay": null,
+    "rowHeight": null,
+    "total": null,
+    "saving": null,
+    "button": "Buy 5 items together",
+    "buttonHeight": 50,
+    "tiers": "{\"3\":0,\"4\":0,\"5\":0,\"6\":0}"
+  },
+  "off-cart-1280": {
+    "lines": 5,
+    "boughtTogetherTags": 0,
+    "bundleRow": false,
+    "summary": "Order Value (5 items)AED 739AED 604 Delivery is calculated at checkout Order Total AED 604 Secure checkout | VisaMastercardtabbytamara",
+    "scrollWidth": 1280
+  },
+  "admin-off-390": {
+    "masterChecked": "false",
+    "note": "Turn on ‘Show the total and buy-together discount’ to use these.",
+    "lockAriaDisabled": "true",
+    "lockOpacity": "0.45",
+    "lockPointerEvents": "none",
+    "sliders": [
+      {
+        "key": "tier_3",
+        "value": "5",
+        "disabled": true
+      },
+      {
+        "key": "tier_4",
+        "value": "10",
+        "disabled": true
+      },
+      {
+        "key": "tier_5",
+        "value": "15",
+        "disabled": true
+      }
+    ],
+    "switches": [
+      {
+        "key": "discount_on",
+        "on": "false",
+        "ariaDisabled": null,
+        "tabindex": "0"
+      },
+      {
+        "key": "row_phone",
+        "on": "true",
+        "ariaDisabled": "true",
+        "tabindex": "-1"
+      },
+      {
+        "key": "row_laptop",
+        "on": "true",
+        "ariaDisabled": "true",
+        "tabindex": "-1"
+      },
+      {
+        "key": "coupons",
+        "on": "true",
+        "ariaDisabled": "true",
+        "tabindex": "-1"
+      }
+    ],
+    "previewOpacity": "0.45",
+    "cardHeight": 1344,
+    "scrollWidth": 390,
+    "couponsAfterClickOnLocked": "true"
+  },
+  "admin-on-390": {
+    "masterChecked": "true",
+    "note": null,
+    "lockAriaDisabled": null,
+    "lockOpacity": "1",
+    "lockPointerEvents": "auto",
+    "sliders": [
+      {
+        "key": "tier_3",
+        "value": "5",
+        "disabled": false
+      },
+      {
+        "key": "tier_4",
+        "value": "10",
+        "disabled": false
+      },
+      {
+        "key": "tier_5",
+        "value": "15",
+        "disabled": false
+      }
+    ],
+    "switches": [
+      {
+        "key": "discount_on",
+        "on": "true",
+        "ariaDisabled": null,
+        "tabindex": "0"
+      },
+      {
+        "key": "row_phone",
+        "on": "true",
+        "ariaDisabled": null,
+        "tabindex": "0"
+      },
+      {
+        "key": "row_laptop",
+        "on": "true",
+        "ariaDisabled": null,
+        "tabindex": "0"
+      },
+      {
+        "key": "coupons",
+        "on": "true",
+        "ariaDisabled": null,
+        "tabindex": "0"
+      }
+    ],
+    "previewOpacity": "1",
+    "cardHeight": 1289,
+    "scrollWidth": 390
+  },
+  "admin-off-1280": {
+    "masterChecked": "false",
+    "note": "Turn on ‘Show the total and buy-together discount’ to use these.",
+    "lockAriaDisabled": "true",
+    "lockOpacity": "0.45",
+    "lockPointerEvents": "none",
+    "sliders": [
+      {
+        "key": "tier_3",
+        "value": "5",
+        "disabled": true
+      },
+      {
+        "key": "tier_4",
+        "value": "10",
+        "disabled": true
+      },
+      {
+        "key": "tier_5",
+        "value": "15",
+        "disabled": true
+      }
+    ],
+    "switches": [
+      {
+        "key": "discount_on",
+        "on": "false",
+        "ariaDisabled": null,
+        "tabindex": "0"
+      },
+      {
+        "key": "row_phone",
+        "on": "true",
+        "ariaDisabled": "true",
+        "tabindex": "-1"
+      },
+      {
+        "key": "row_laptop",
+        "on": "true",
+        "ariaDisabled": "true",
+        "tabindex": "-1"
+      },
+      {
+        "key": "coupons",
+        "on": "true",
+        "ariaDisabled": "true",
+        "tabindex": "-1"
+      }
+    ],
+    "previewOpacity": "0.45",
+    "cardHeight": 1345.25,
+    "scrollWidth": 1280,
+    "couponsAfterClickOnLocked": "true"
+  },
+  "admin-on-1280": {
+    "masterChecked": "true",
+    "note": null,
+    "lockAriaDisabled": null,
+    "lockOpacity": "1",
+    "lockPointerEvents": "auto",
+    "sliders": [
+      {
+        "key": "tier_3",
+        "value": "5",
+        "disabled": false
+      },
+      {
+        "key": "tier_4",
+        "value": "10",
+        "disabled": false
+      },
+      {
+        "key": "tier_5",
+        "value": "15",
+        "disabled": false
+      }
+    ],
+    "switches": [
+      {
+        "key": "discount_on",
+        "on": "true",
+        "ariaDisabled": null,
+        "tabindex": "0"
+      },
+      {
+        "key": "row_phone",
+        "on": "true",
+        "ariaDisabled": null,
+        "tabindex": "0"
+      },
+      {
+        "key": "row_laptop",
+        "on": "true",
+        "ariaDisabled": null,
+        "tabindex": "0"
+      },
+      {
+        "key": "coupons",
+        "on": "true",
+        "ariaDisabled": null,
+        "tabindex": "0"
+      }
+    ],
+    "previewOpacity": "1",
+    "cardHeight": 1290.25,
+    "scrollWidth": 1280
+  },
+  "admin-saved": "Saved 17 settings — live now",
+  "on-section-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "sectionHeight": 306.03,
+    "footHeight": 96,
+    "rowInHtml": true,
+    "rowClass": "bt-sumrow",
+    "rowDisplay": "flex",
+    "rowHeight": 27,
+    "total": "Total: AED 604 AED 510",
+    "saving": "You're saving AED 94",
+    "button": "Buy 5 items together",
+    "buttonHeight": 48,
+    "tiers": "{\"3\":5,\"4\":10,\"5\":15,\"6\":15}"
+  },
+  "on-section-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "sectionHeight": 239.75,
+    "footHeight": 86,
+    "rowInHtml": true,
+    "rowClass": "bt-sumrow",
+    "rowDisplay": "flex",
+    "rowHeight": 27,
+    "total": "Total: AED 604 AED 510",
+    "saving": "You're saving AED 94",
+    "button": "Buy 5 items together",
+    "buttonHeight": 50,
+    "tiers": "{\"3\":5,\"4\":10,\"5\":15,\"6\":15}"
+  },
+  "save-phone-off": true,
+  "on-phone-hidden-390": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "sectionHeight": 270.03,
+    "footHeight": 60,
+    "rowInHtml": true,
+    "rowClass": "bt-sumrow bt-hide-m",
+    "rowDisplay": "none",
+    "rowHeight": 0,
+    "total": "Total: AED 604 AED 510",
+    "saving": "You're saving AED 94",
+    "button": "Buy 5 items together",
+    "buttonHeight": 48,
+    "tiers": "{\"3\":5,\"4\":10,\"5\":15,\"6\":15}"
+  },
+  "on-phone-hidden-1280": {
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "sectionHeight": 239.75,
+    "footHeight": 86,
+    "rowInHtml": true,
+    "rowClass": "bt-sumrow bt-hide-m",
+    "rowDisplay": "flex",
+    "rowHeight": 27,
+    "total": "Total: AED 604 AED 510",
+    "saving": "You're saving AED 94",
+    "button": "Buy 5 items together",
+    "buttonHeight": 50,
+    "tiers": "{\"3\":5,\"4\":10,\"5\":15,\"6\":15}"
+  }
+}

@@ -133,12 +133,60 @@ class BuyTogetherSettings
          */
         'coupons' => ['bool', 'Coupons also apply to buy-together products', true,
             'On: a coupon is taken off AFTER the bundle discount, on the already-reduced prices. Off: a coupon skips the bundled products, which keep only the bundle discount, and applies to the rest of the basket as usual.'],
+
+        /*
+         * ── THE MASTER SWITCH OVER THE TOTAL AND THE DISCOUNT (Lane RH) ─────
+         *
+         * The owner, 3 October:
+         *
+         *   "also buy together pricing and discount row, i want to hide on
+         *    desktop and mobile both by default, if hide, then no any discount
+         *    will be picked from the system from the buy together discount.
+         *    lock that discount section is the section is hided with toggle
+         *    button."
+         *
+         * ▲ OFF BY DEFAULT BECAUSE HE ASKED FOR OFF — the 30 September
+         * reversal: what he asked for is the shop's new state. No setting row
+         * is written: the absent key reads this default, so the live shop and
+         * a fresh install both start OFF, and his stored tiers stay in their
+         * rows untouched, ready for the day he turns it back on.
+         *
+         * OFF is total, not cosmetic:
+         *   · the product page draws no `.bt-sumrow` (no "You're saving" pill,
+         *     no "Total:" line) on any device; the button still adds the
+         *     ticked products, at their own prices;
+         *   · BuyTogetherPricing::percentFor() answers 0 for every size, so
+         *     every surface that prices a basket (cart, drawer, checkout,
+         *     order, email, invoice, the payment providers' totals) sees no
+         *     bundle at all, and a coupon sees ordinary lines;
+         *   · save() will not change a tier or the coupons switch while it is
+         *     off — the admin draws them locked, and the server holds the lock
+         *     too (LOCKED below).
+         */
+        'discount_on' => ['bool', 'Show the total and buy-together discount', false,
+            'Off: no total or “You’re saving” line on the product page, and no buy-together discount anywhere — cart, checkout or order. The button still adds the ticked products at their normal prices. Your percentages below are kept for when you turn it back on.'],
+
+        // Under the master switch: only where the row is DRAWN. The basket
+        // cannot know which device a product was added from, so hiding the
+        // row on one device never stops the discount there.
+        'row_phone' => ['bool', 'Show on phones', true,
+            'The total and “You’re saving” line on phones and tablets (narrower than 1024px).'],
+
+        'row_laptop' => ['bool', 'Show on laptops', true,
+            'The discount still applies at checkout on a device where the row is hidden; switch the whole thing off above to stop the discount.'],
     ];
+
+    /**
+     * What the master switch locks: the money. While `discount_on` is off,
+     * save() keeps the stored value of each of these whatever a request
+     * posts, so nothing can be priced by going round the locked controls.
+     */
+    public const LOCKED = ['tier_3', 'tier_4', 'tier_5', 'coupons'];
 
     public const TABS = [
         'together' => ['Buy these together',
             'The bundle box under the buy column: the product on the page plus one match from each category that goes with it, a tick on each, and one pink button that adds every ticked product.',
-            ['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar', 'tier_3', 'tier_4', 'tier_5', 'coupons']],
+            ['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar', 'tier_3', 'tier_4', 'tier_5', 'coupons', 'discount_on', 'row_phone', 'row_laptop']],
     ];
 
     public const POLICY = [
@@ -186,10 +234,32 @@ class BuyTogetherSettings
         return array_map(static fn (array $def) => $def[2], self::SCHEMA);
     }
 
+    /**
+     * Is the buy-together total shown and its discount live? (Lane RH)
+     *
+     * The ONE question every price and every drawing of the row asks. Off by
+     * default — see `discount_on` in SCHEMA.
+     */
+    public function discountOn(): bool
+    {
+        return ! empty($this->all()['discount_on']);
+    }
+
     /** @param array<string, mixed> $values */
     public function save(array $values): void
     {
+        // The master switch as it will stand after this save: the posted
+        // value when there is one, else the stored one.
+        $on = array_key_exists('discount_on', $values)
+            ? (bool) $this->cast('discount_on', $values['discount_on'])
+            : $this->discountOn();
+
         foreach ($values as $key => $value) {
+            // Locked while off: the stored tier is kept, not overwritten.
+            if (! $on && in_array($key, self::LOCKED, true)) {
+                continue;
+            }
+
             if (isset(self::SCHEMA[$key])) {
                 $this->settings->set(self::PREFIX.$key, $this->cast($key, $value));
             }
