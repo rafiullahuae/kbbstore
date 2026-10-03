@@ -117,6 +117,8 @@ return new class extends Migration
         'email.feedback.stars_note',
         'email.feedback.share_heading',
         'email.feedback.share_body',
+        'email.kit.howto_heading',
+        'email.kit.howto_tail',
     ];
 
     public function up(): void

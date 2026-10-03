@@ -265,6 +265,8 @@ final class ArabicInterfaceDrafts
             'email.feedback.stars_note' => 'كل نجمة تفتح صفحة المنتج عند تقييماته.',
             'email.feedback.share_heading' => 'شاركنا روتينك 📸',
             'email.feedback.share_body' => 'انشر صورة رفّك وأشر إلى :handle.',
+            'email.kit.howto_heading' => 'كيف تستخدمها معًا:',
+            'email.kit.howto_tail' => '، بهذا الترتيب.',
         ];
     }
 

@@ -2557,6 +2557,8 @@ final class InterfaceStrings
             'feedback.stars_note' => 'Each star opens that product’s page at its reviews.',
             'feedback.share_heading' => 'Share your routine 📸',
             'feedback.share_body' => 'post your shelfie and tag :handle.',
+            'kit.howto_heading' => 'How to use them together:',
+            'kit.howto_tail' => ', in this order.',
         ];
     }
 

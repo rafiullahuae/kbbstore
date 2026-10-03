@@ -17,6 +17,5 @@
 @section('kit_inner')
 @include('emails.kit.hero', ['icon' => 'mail', 'tone' => 'pink', 'eyebrow' => __('email.kit.eyebrow_verify'), 'title' => __('email.kit.verify_title'), 'lead' => __('email.verify.lead') . ' ' . trans_choice('email.verify.expiry', (int) $hours)])
 @include('emails.kit.button', ['label' => __('email.verify.button'), 'href' => $url])
-@include('emails.kit.para', ['html' => __('email.verify.not_you'), 'pad' => '18px 32px 0', 'size' => 13, 'center' => true])
 @include('emails.kit.gap', ['h' => 28])
 @endsection

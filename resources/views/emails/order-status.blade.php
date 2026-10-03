@@ -56,6 +56,8 @@
     $kitCta = $kitShape[6];
     $kitDue = $status === 'failed';
     $kitPaid = false;
+    // Read once here (the kit layout reuses it): pictures and routine steps.
+    $kitProducts = \App\Services\Mail\Kit\KitOrder::products($order);
 
     // The box under the order chip: what the owner needs (on hold), that the
     // order number is the tracking number (shipped, delivered), or what
@@ -68,6 +70,12 @@
         default => null,
     };
 @endphp
+
+@section('kit_after')
+@if ($status === 'completed' && ($kitHowTo = \App\Services\Mail\Kit\KitOrder::howTo($order, $kitProducts)) !== null)
+@include('emails.kit.para', ['html' => $kitHowTo, 'pad' => '22px 32px 0', 'size' => 14])
+@endif
+@endsection
 
 @section('kit_before')
 @if ($kitNotice !== null)

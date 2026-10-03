@@ -46,22 +46,24 @@ app(MailSettings::class)->save(['mail_support_email' => 'info@kbeautybliss.com']
 \App\Models\Setting::flushMap();
 SettingsService::forgetMemo();
 
-// The three products, with pictures at an https address the shot script
+// The three products, tagged with their routine step (Catalog → Build my
+// routine) for the delivered email's "How to use them together", with pictures at an https address the shot script
 // serves from docs/rj-email-previews/assets (the previews' own stand-ins).
-$make = function (string $brand, string $name, string $slug, string $pic, int $price): Product {
+$make = function (string $brand, string $name, string $slug, string $pic, int $price, string $role): Product {
     $b = Brand::firstOrCreate(['slug' => \Illuminate\Support\Str::slug($brand)], ['name' => $brand]);
 
     return Product::updateOrCreate(['slug' => $slug], [
         'name' => $name, 'brand_id' => $b->id, 'status' => 'publish', 'is_visible' => 1,
         'price' => $price, 'stock_status' => 'instock', 'type' => 'simple',
         'image' => 'https://shots.test/' . $pic . '.jpg',
+        'routine_role' => $role,
     ]);
 };
 
 $products = [
-    'AN-HL-250' => $make('Anua', 'Heartleaf 77% Soothing Toner 250ml', 'anua-heartleaf-77-soothing-toner-250ml', 'p-anua', 8900),
-    'BOJ-GD-30' => $make('Beauty of Joseon', 'Glow Deep Serum Rice + Alpha-Arbutin 30ml', 'boj-glow-deep-serum', 'p-boj', 11500),
-    'CX-LPH-150' => $make('COSRX', 'Low pH Good Morning Gel Cleanser', 'cosrx-low-ph-good-morning-gel-cleanser', 'p-cosrx', 6250),
+    'AN-HL-250' => $make('Anua', 'Heartleaf 77% Soothing Toner 250ml', 'anua-heartleaf-77-soothing-toner-250ml', 'p-anua', 8900, 'tone'),
+    'BOJ-GD-30' => $make('Beauty of Joseon', 'Glow Deep Serum Rice + Alpha-Arbutin 30ml', 'boj-glow-deep-serum', 'p-boj', 11500, 'treat'),
+    'CX-LPH-150' => $make('COSRX', 'Low pH Good Morning Gel Cleanser', 'cosrx-low-ph-good-morning-gel-cleanser', 'p-cosrx', 6250, 'cleanse'),
 ];
 
 foreach ($order->items as $item) {

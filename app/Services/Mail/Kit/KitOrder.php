@@ -49,14 +49,11 @@ final class KitOrder
      * @param  array<string, mixed>  $order
      * @return list<array<string, mixed>>
      */
-    public static function lines(array $order): array
+    public static function lines(array $order, ?array $products = null): array
     {
         $items = is_array($order['items'] ?? null) ? $order['items'] : [];
-
-        $images = KitProducts::imagesForIds(array_map(
-            static fn (array $item): int => (int) ($item['productId'] ?? 0),
-            $items,
-        ));
+        $products ??= self::products($order);
+        $images = array_map(static fn (array $p) => $p['img'], $products);
 
         $out = [];
 
@@ -76,6 +73,58 @@ final class KitOrder
         }
 
         return $out;
+    }
+
+    /**
+     * The order's products' pictures and routine steps, by id — the one
+     * catalogue statement an order email makes. Computed once per render by
+     * emails/kit/order.blade.php and handed to lines() and howTo().
+     *
+     * @param  array<string, mixed>  $order
+     * @return array<int, array{img: string|null, role: string|null}>
+     */
+    public static function products(array $order): array
+    {
+        return KitProducts::forIds(array_map(
+            static fn (array $item): int => (int) ($item['productId'] ?? 0),
+            is_array($order['items'] ?? null) ? $order['items'] : [],
+        ));
+    }
+
+    /**
+     * "How to use them together: Cleanse (COSRX) → Tone (Anua) → Treat
+     * (Beauty of Joseon), in this order." — the delivered email's last line in
+     * the approved preview 06, built from the routine step the owner tagged
+     * each product with (Catalog → Build my routine, RoutineRoles). Null
+     * unless at least two DIFFERENT steps are tagged: one product is not a
+     * routine, and an untagged basket gets no invented order.
+     *
+     * @param  array<string, mixed>  $order
+     * @param  array<int, array{img: string|null, role: string|null}>  $products
+     */
+    public static function howTo(array $order, array $products): ?\Illuminate\Support\HtmlString
+    {
+        $steps = [];
+
+        foreach ((array) ($order['items'] ?? []) as $item) {
+            $role = $products[(int) ($item['productId'] ?? 0)]['role'] ?? null;
+
+            if ($role === null || isset($steps[$role])) {
+                continue;
+            }
+
+            $who = trim((string) ($item['brand'] ?? '')) !== '' ? (string) $item['brand'] : (string) ($item['name'] ?? '');
+            $steps[$role] = e(__(\App\Support\RoutineRoles::labelKey($role))) . ' (' . e($who) . ')';
+        }
+
+        if (count($steps) < 2) {
+            return null;
+        }
+
+        uksort($steps, static fn (string $a, string $b) => \App\Support\RoutineRoles::position($a) <=> \App\Support\RoutineRoles::position($b));
+
+        return new \Illuminate\Support\HtmlString('<b>' . e(__('email.kit.howto_heading')) . '</b> '
+            . implode(' &rarr; ', $steps) . e(__('email.kit.howto_tail')));
     }
 
     /**

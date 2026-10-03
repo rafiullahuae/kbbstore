@@ -24,6 +24,10 @@
     and may fill @section('kit_before'), ('kit_mid'), ('kit_after').
 --}}
 @extends('emails.kit.doc')
+@php
+    // The one catalogue statement: pictures and routine steps, by id.
+    $kitProducts = $kitProducts ?? \App\Services\Mail\Kit\KitOrder::products($order);
+@endphp
 
 @section('kit')
 @include('emails.kit.topbar')
@@ -37,7 +41,7 @@
 @yield('kit_before')
 @if ($kitShowItems ?? true)
 @include('emails.kit.section-title', ['text' => __('email.kit.your_items')])
-@include('emails.kit.items', ['lines' => \App\Services\Mail\Kit\KitOrder::lines($order), 'showPrice' => true])
+@include('emails.kit.items', ['lines' => \App\Services\Mail\Kit\KitOrder::lines($order, $kitProducts), 'showPrice' => true])
 @endif
 @if ($kitShowTotals ?? true)
 @include('emails.kit.totals', ['rows' => \App\Services\Mail\Kit\KitOrder::rows($order), 'grand' => \App\Services\Mail\Kit\KitOrder::grand($order, $kitDue ?? false, $kitPaid ?? false)])

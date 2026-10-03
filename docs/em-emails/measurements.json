@@ -1,0 +1,338 @@
+[
+ {
+  "name": "01-order-confirmation",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 2135,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "01-order-confirmation",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1841,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "02-complete-order-30min",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 2046,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "02-complete-order-30min",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1857,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "03-complete-order-24h",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 2101,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "03-complete-order-24h",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1882,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "04-order-on-hold",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 2026,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "04-order-on-hold",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1735,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "05-order-shipped",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 2104,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "05-order-shipped",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1788,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "06-order-delivered",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 1728,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "06-order-delivered",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1550,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "07-order-cancelled",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 1858,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "07-order-cancelled",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1678,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "08-order-refunded",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 1386,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "08-order-refunded",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1190,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "09-order-payment-failed",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 1874,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "09-order-payment-failed",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1663,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "10-new-order-alert",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 1295,
+  "font": "\"Times New Roman\"",
+  "outfitLoaded": true
+ },
+ {
+  "name": "10-new-order-alert",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1111,
+  "font": "\"Times New Roman\"",
+  "outfitLoaded": true
+ },
+ {
+  "name": "11-order-invoice",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 1925,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "11-order-invoice",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1656,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "12-back-in-stock",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 1112,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "12-back-in-stock",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1100,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "13-basket-reminder",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 1024,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "13-basket-reminder",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 967,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "14-account-invite",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 900,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "14-account-invite",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 900,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "15-newsletter-confirm",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 900,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "15-newsletter-confirm",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 900,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "16-quiz-plan",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 1176,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "16-quiz-plan",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 968,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "17-password-reset",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 988,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "17-password-reset",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 900,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "18-verify-email",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 900,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "18-verify-email",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 900,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "19-feedback-request",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 1363,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "19-feedback-request",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1261,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "20-order-processing",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 2135,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "20-order-processing",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1841,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "21-order-refunded-status",
+  "width": 390,
+  "scrollWidth": 390,
+  "height": 1716,
+  "font": "Outfit",
+  "outfitLoaded": true
+ },
+ {
+  "name": "21-order-refunded-status",
+  "width": 600,
+  "scrollWidth": 600,
+  "height": 1560,
+  "font": "Outfit",
+  "outfitLoaded": true
+ }
+]

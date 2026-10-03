@@ -31,6 +31,19 @@ final class KitProducts
      */
     public static function imagesForIds(iterable $ids): array
     {
+        return array_map(static fn (array $p) => $p['img'], self::forIds($ids));
+    }
+
+    /**
+     * Picture and routine step per product id, in ONE statement (Lane EM):
+     * the delivered email's "How to use them together" line reads the step
+     * (RoutineRoles) from the same row the picture comes from.
+     *
+     * @param  iterable<mixed>  $ids
+     * @return array<int, array{img: string|null, role: string|null}>
+     */
+    public static function forIds(iterable $ids): array
+    {
         $ids = array_values(array_unique(array_filter(
             array_map('intval', is_array($ids) ? $ids : iterator_to_array($ids)),
             static fn (int $id) => $id > 0,
@@ -41,7 +54,7 @@ final class KitProducts
         }
 
         try {
-            $rows = Product::query()->whereIn('id', $ids)->get(['id', 'image']);
+            $rows = Product::query()->whereIn('id', $ids)->get(['id', 'image', 'routine_role']);
         } catch (\Throwable) {
             return [];
         }
@@ -49,7 +62,10 @@ final class KitProducts
         $out = [];
 
         foreach ($rows as $row) {
-            $out[(int) $row->id] = MailKit::image($row->image, 200);
+            $out[(int) $row->id] = [
+                'img' => MailKit::image($row->image, 200),
+                'role' => \App\Support\RoutineRoles::normalise($row->routine_role),
+            ];
         }
 
         return $out;

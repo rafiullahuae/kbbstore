@@ -377,7 +377,7 @@ it('asks the catalogue for the pictures only, once per email, while sending an o
      * in ONE statement per email whatever the number of lines: id and image,
      * nothing that could put a live name or price on a receipt.
      *
-     * MUTATION: select the whole row in KitProducts::imagesForIds(), or look
+     * MUTATION: select the whole row in KitProducts::forIds(), or look
      * the pictures up per line, and this is red.
      */
     Mail::mailer(MailConfigurator::MAILER)->to('warm@example.com')
@@ -409,7 +409,9 @@ it('asks the catalogue for the pictures only, once per email, while sending an o
     expect($catalogue)->toHaveCount(2, 'an order email queried the catalogue more than once per render: ' . json_encode($catalogue));
 
     foreach ($catalogue as $q) {
-        expect($q)->toStartWith('select "id", "image" from "products" where "id" in');
+        // id, the picture, and the routine step for the delivered email's
+        // "How to use them together" -- never a name or a price.
+        expect($q)->toStartWith('select "id", "image", "routine_role" from "products" where "id" in');
     }
 });
 
