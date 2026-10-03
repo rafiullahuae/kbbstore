@@ -110,7 +110,6 @@ function topbar(text = 'Authentic K-beauty, curated for you', theme = 'A') {
   return `<tr><td style="padding:0 6px 10px;font-family:${SANS};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
 <td class="muted" style="font-size:11.5px;letter-spacing:.06em;color:${t.topInk};">${esc(text)}</td>
-<td class="muted hide-sm" align="right" style="font-size:11.5px;color:${t.topInk};"><a href="#" style="color:${t.topInk};text-decoration:underline;">View in browser</a></td>
 </tr></table></td></tr>`;
 }
 
@@ -277,7 +276,7 @@ function help(theme = 'A') {
 <div class="ink2" style="margin-top:3px;font-size:13px;line-height:1.55;color:${P.ink2};">About your order, or about what to use it with — just ask.</div></td></tr>
 <tr><td style="padding:8px 12px 14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
 ${ch(P.green, 'W', '+971 58 505 2611', 'WhatsApp', 'https://wa.me/971585052611')}
-${ch(P.pinkDeep, '@', 'care@extrabeauty.ae', 'Email us', 'mailto:care@extrabeauty.ae')}
+${ch(P.pinkDeep, '@', 'info@kbeautybliss.com', 'Email us', 'mailto:info@kbeautybliss.com')}
 ${ch(P.pink, 'IG', '@kbeauty.bliss', 'Instagram', 'https://www.instagram.com/kbeauty.bliss/')}
 </tr></table></td></tr></table>`, '28px 32px 0');
 }
@@ -290,13 +289,21 @@ function signoff(lines = ['With love,', 'the K Beauty Bliss team']) {
    and the postal address the bulk-sender rules require. */
 function footer({ why, unsubscribe = false, theme = 'A' }) {
   const t = THEMES[theme];
-  return `<tr><td align="center" style="padding:22px 26px 6px;font-family:${SANS};font-size:12px;line-height:1.65;color:${t.footInk};" class="muted">
-<div style="font-weight:700;letter-spacing:.06em;color:${t.footStrong};">K Beauty Bliss &middot; extrabeauty.ae</div>
-<div style="margin-top:6px;">${why}</div>
-${unsubscribe ? `<div style="margin-top:8px;"><a href="#unsubscribe" style="color:${t.footStrong};text-decoration:underline;font-weight:600;">Unsubscribe</a> &nbsp;&middot;&nbsp; <a href="#preferences" style="color:${t.footStrong};text-decoration:underline;">Email preferences</a></div>
-<div style="margin-top:8px;">[Business postal address — set once in Emails → Branding]</div>` : ''}
-<div style="margin-top:8px;"><a href="${SHOP}/" style="color:${t.footStrong};">Shop</a> &nbsp;&middot;&nbsp; <a href="${SHOP}/track-my-order/" style="color:${t.footStrong};">Track an order</a> &nbsp;&middot;&nbsp; <a href="${SHOP}/my-account/" style="color:${t.footStrong};">My account</a></div>
-</td></tr>`;
+  const a = (href, label, strong = false) => `<a href="${href}" style="color:${t.footStrong};${strong ? 'font-weight:600;text-decoration:underline;' : ''}">${label}</a>`;
+  /* Owner, 3 Oct: both addresses, WhatsApp and email in EVERY footer, editable
+     under Emails -> Design & branding. The addresses are placeholders on purpose:
+     the preview shop has no store_street/store_locality, and none is invented. */
+  const cell = (city, text) => `<td class="stack" valign="top" align="center" style="padding:0 10px 6px;font-family:${SANS};font-size:12px;line-height:1.55;color:${t.footInk};"><b style="color:${t.footStrong};">${city}</b><br>${text}</td>`;
+  return `<tr><td align="center" style="padding:22px 26px 4px;font-family:${SANS};font-size:12px;line-height:1.65;color:${t.footInk};" class="muted">
+<div style="font-weight:700;letter-spacing:.06em;color:${t.footStrong};">K Beauty Bliss</div>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:8px auto 0;"><tr>${cell('Dubai', '[Dubai address]')}${cell('Korea', '[Korea address &mdash; owner to paste]')}</tr></table>
+<div style="margin-top:4px;">WhatsApp ${a('https://wa.me/971585052611', '+971 58 505 2611')} &nbsp;&middot;&nbsp; ${a('mailto:info@kbeautybliss.com', 'info@kbeautybliss.com')}</div>
+<div style="margin-top:8px;">${why}</div>
+${unsubscribe ? `<div style="margin-top:8px;">${a('#unsubscribe', 'Unsubscribe', true)} &nbsp;&middot;&nbsp; ${a('#preferences', 'Email preferences')}</div>` : ''}
+<div style="margin-top:8px;">${a(`${SHOP}/`, 'Shop')} &nbsp;&middot;&nbsp; ${a(`${SHOP}/track-my-order/`, 'Track an order')} &nbsp;&middot;&nbsp; ${a(`${SHOP}/my-account/`, 'My account')}</div>
+</td></tr>
+<tr><td align="center" style="padding:12px 26px 6px;font-family:${SANS};font-size:11.5px;color:${t.footInk};" class="muted">${a('#view-in-browser', 'View this email in your browser')}</td></tr>
+`;
 }
 
 /* ------------------------------------------------------------- marketing */

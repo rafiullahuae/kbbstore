@@ -1,0 +1,14 @@
+{
+  "m1-campaign-autumn-glow": {
+    "trigger": "Campaign · to Subscribers",
+    "html_bytes": 15044
+  },
+  "m2-campaign-we-miss-you": {
+    "trigger": "Campaign · to Customers, no order in 90 days",
+    "html_bytes": 12778
+  },
+  "m3-campaign-medicube-fans": {
+    "trigger": "Campaign · to group “Mostly bought Medicube” — product block auto-filled with that brand",
+    "html_bytes": 14966
+  }
+}

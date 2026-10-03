@@ -75,6 +75,11 @@
   <div class="kbbdr-baracts"><button type="button" class="kbbdr-primary" id="kbbDraftBarA"></button><button type="button" id="kbbDraftBarB">Discard</button></div>
 </div><div class="content" id="content" data-bz-watch="1"><style>
 span.tog{display:inline-block;vertical-align:middle}
+.rjm-choice{padding:14px;cursor:pointer}.rjm-choice.on{border:2px solid var(--accent);background:var(--accent-soft)}
+.rjm-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);display:inline-block;flex-shrink:0}.rjm-radio.on{border:5px solid var(--accent)}
+.rjm-gws{border:1px dashed var(--border);border-radius:var(--r-sm);padding:12px;opacity:.75}
+.rjm-tick{display:flex;gap:9px;align-items:flex-start;margin:4px 0 0;font-size:13px}.rjm-tick .rjm-h{display:block}
+.rjm-cb{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);display:grid;place-items:center;font-size:12px;color:#fff;flex-shrink:0;margin-top:1px}.rjm-cb.on{background:var(--accent);border-color:var(--accent)}
 .rjm-proposal{background:#fff6e6;border:1px dashed #e0a43a;color:#7a4d08;border-radius:12px;padding:10px 14px;font-size:12.5px;margin-bottom:16px}
 .rjm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
 .rjm-tab{font-size:13px;font-weight:600;padding:8px 14px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
@@ -120,20 +125,21 @@ span.tog{display:inline-block;vertical-align:middle}
 .rjm-scroll{overflow-x:auto}
 @media(max-width:880px){.rjm-split,.rjm-builder,.rjm-g2,.rjm-g3{grid-template-columns:minmax(0,1fr)}.rjm-g4{grid-template-columns:1fr 1fr}.rjm-rule{grid-template-columns:1fr 1fr}.rjm-hide-sm{display:none}}
 </style><div class="wrap"><div class="rjm-proposal"><b>PROPOSAL · static mockup</b> — nothing on this screen is built or saved. Where it lives: <b>Growth &amp; Marketing → Email Marketing → New campaign → Review &amp; send</b></div>
-<div class="page-head"><h2>Review &amp; send · Autumn Glow Edit</h2><p>Step 3 of 3 — design ✓ · customers ✓ · send</p></div>
+<div class="page-head"><h2>Review &amp; send · More Medicube for you</h2><p>Step 3 of 3 — design ✓ · customers ✓ · send</p></div>
 <div class="rjm-split"><div>
- <div class="rjm-card"><h3>In the inbox</h3><div class="rjm-inbox"><div class="from">K Beauty Bliss</div><div class="subj"><b>Skin that glows back — 15% inside</b></div><div class="pre">15% off the glow edit this week — your code is inside.</div></div>
- <div style="height:12px"></div><label class="rjm-f"><span class="rjm-l">Subject</span><span class="rjm-in">Skin that glows back — 15% inside</span><span class="rjm-h">38 characters · fits on a phone</span></label><label class="rjm-f"><span class="rjm-l">Preview line</span><span class="rjm-in">15% off the glow edit this week — your code is inside.</span></label></div>
+ <div class="rjm-card"><h3>In the inbox</h3><div class="rjm-inbox"><div class="from">K Beauty Bliss</div><div class="subj"><b>More Medicube, just for you</b></div><div class="pre">New Medicube picks, chosen because you love the brand.</div></div>
+ <div style="height:12px"></div><label class="rjm-f"><span class="rjm-l">Subject</span><span class="rjm-in">More Medicube, just for you</span><span class="rjm-h">27 characters · fits on a phone</span></label><label class="rjm-f"><span class="rjm-l">Preview line</span><span class="rjm-in">New Medicube picks, chosen because you love the brand.</span></label></div>
  <div class="sec-title">Who</div>
- <div class="rjm-card"><div class="rjm-row"><b>Repeat buyers (2+ orders)</b><span class="rjm-sp"></span><span class="pill green">196 will receive it</span></div><div class="rjm-h">Left out automatically: 18 unsubscribed · 3 bounced before · 0 complained.</div></div>
+ <div class="rjm-card"><div class="rjm-row"><b>Mostly bought Medicube</b><span class="pill grey">Customers</span><span class="rjm-sp"></span><span class="pill green">214 will receive it</span></div><div class="rjm-h">Left out automatically: unsubscribed, and addresses that bounced before.</div></div>
  <div class="sec-title">When</div>
  <div class="rjm-card"><div class="rjm-row" style="gap:16px"><label style="font-size:13px"><input type="radio" style=""> Send now</label><label style="font-size:13px"><input type="radio" checked="" style=""> Schedule</label></div><div style="height:10px"></div>
   <div class="rjm-grid rjm-g2"><label class="rjm-f"><span class="rjm-l">Date</span><span class="rjm-in">Wed 8 Oct 2026</span></label><label class="rjm-f"><span class="rjm-l">Time (Dubai)</span><span class="rjm-in">19:00</span></label></div>
-  <div class="rjm-h">Goes out at 60 a minute (about 4 minutes). Scheduled sends need the one cron line in Emails → Sending; without it, keep this page open and it sends from here.</div></div>
+  <div class="rjm-h">Goes out at 60 a minute. Scheduled sends need the one cron line; without it, keep this page open and it sends from here.</div></div>
 </div>
 <div><div class="rjm-card"><h3>Before it goes</h3><ul class="rjm-check">
- <li>✅ Unsubscribe link and one-click unsubscribe header</li><li>✅ Business address in the footer</li><li>✅ Test sent to rafi@… at 10:55</li><li>✅ Every product in stock and published</li><li>✅ Coupon GLOW15 exists and expires 12 Oct</li><li>⚠️ Domain check: DMARC not found — mail may land in spam (Emails → Sending)</li></ul>
- <div class="rjm-row" style="margin-top:12px"><span class="btn ghost">Send me a test</span><span class="rjm-sp"></span><span class="btn">Schedule for 8 Oct, 19:00</span></div></div>
- <div style="height:12px"></div><div class="rjm-phone"><iframe class="rjm-frame" style="height:760px;width:100%" src="../marketing/m1-campaign-autumn-glow.html"></iframe></div></div></div></div></div>
+ <li>✅ Unsubscribe link and one-click unsubscribe</li><li>✅ Dubai and Korea addresses in the footer</li><li>✅ Test sent to rafi@… at 10:55</li><li>✅ Products filled: Medicube, 4 in stock</li><li>✅ Coupon MEDI10 exists</li></ul>
+ <div class="rjm-row" style="margin-top:12px"><span class="btn ghost">Send me a test</span><span class="rjm-sp"></span><span class="btn">Schedule for 8 Oct, 19:00</span></div>
+ <div class="rjm-h" style="margin-top:10px">🔒 Only <b>Owner and Manager (Administrator)</b> can send or schedule a campaign.</div></div>
+ <div style="height:12px"></div><div class="rjm-phone"><iframe class="rjm-frame" style="height:760px;width:100%" src="../marketing/m3-campaign-medicube-fans.html"></iframe></div></div></div></div></div>
   </div>
 </div></body></html>

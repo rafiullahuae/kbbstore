@@ -1,101 +1,79 @@
 /*
- * Lane RJ — compose docs/rj-email-previews/OVERVIEW.html from the shots, and
- * photograph it as OVERVIEW.png (1200px wide) so the owner can review the
- * whole proposal on a phone in one scroll.
+ * Lane RJ — compose docs/rj-email-previews/OVERVIEW-2.html (round 1b, after
+ * the owner's decisions of 3 October 2026) and photograph it as OVERVIEW-2.png.
  *
  *   node tools/rj-overview.cjs
+ *
+ * Every email template, each labelled with what sends it and whether it is on,
+ * then the admin mockups that changed in this round. Reads after/index.json and
+ * marketing/index.json, which tools/rj-build-after.cjs writes, so a label can
+ * never drift from the email it describes.
  */
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
 const D = path.resolve(__dirname, '../docs/rj-email-previews');
+const after = JSON.parse(fs.readFileSync(path.join(D, 'after/index.json'), 'utf8'));
+const mkt = JSON.parse(fs.readFileSync(path.join(D, 'marketing/index.json'), 'utf8'));
 
-const fig = (src, label, sub = '', h = 520) => `<figure><a href="${src}"><img src="${src}" style="height:${h}px" alt="${label}"></a><figcaption><b>${label}</b>${sub ? `<span>${sub}</span>` : ''}</figcaption></figure>`;
+const title = (n) => n.replace(/^[a-z]?\d+-/, '').replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCase());
+const card = (src, name, trigger, state, href) => `<figure><a href="${href}"><img src="${src}" alt="${name}"></a>
+<figcaption><b>${name}</b><span class="trig">${trigger}</span>${state ? `<span class="state">${state}</span>` : ''}</figcaption></figure>`;
 
-const AFTER = [
-  ['01-order-confirmation', 'Order confirmed', 'processing · placed'],
-  ['02-order-pending-payment', 'Complete your payment', 'pending · NEW'],
-  ['03-order-on-hold', 'On hold', 'onhold · NEW'],
-  ['04-order-shipped', 'Shipped', 'shipped'],
-  ['05-order-delivered', 'Delivered', 'completed · NEW'],
-  ['06-order-cancelled', 'Cancelled', 'cancelled'],
-  ['07-order-refunded', 'Refund sent', 'refund settles'],
-  ['08-order-payment-failed', 'Payment failed', 'failed · NEW'],
-  ['09-new-order-alert', 'New order alert', 'to you'],
-  ['10-order-invoice', 'Invoice', 'button on order'],
-  ['11-back-in-stock', 'Back in stock', 'module'],
-  ['12-cart-recovery', 'Basket reminder', 'module'],
-  ['13-account-invite', 'Account invite', 'Customers'],
-  ['14-newsletter-confirm', 'Newsletter confirm', 'double opt-in'],
-  ['15-quiz-plan', 'Skin quiz plan', 'quiz'],
-  ['16-password-reset', 'Password reset', 'account'],
-  ['17-verify-email', 'Verify email', 'account'],
-];
-const BEFORE = [
-  ['01-order-confirmation', 'Order confirmation'], ['03-order-shipped', 'Shipped'], ['04-order-cancelled', 'Cancelled'],
-  ['08-cart-recovery', 'Basket reminder'], ['10-newsletter-confirm', 'Newsletter confirm'], ['12-password-reset', 'Password reset'],
-];
 const ADMIN = [
-  ['e1-emails-overview', 'Emails → Overview'], ['e2-sending', 'Emails → Sending & delivery'], ['e3-customer-emails', 'Emails → Customer emails'],
-  ['e4-template-editor', 'Emails → Customer emails → Edit'], ['e5-branding', 'Emails → Design & branding'], ['e6-sent-mail', 'Emails → Sent mail'],
-  ['m1-campaigns', 'Email Marketing → Campaigns'], ['m2-builder', 'Email Marketing → Builder'], ['m3-groups', 'Email Marketing → Customer groups'],
-  ['m4-review-send', 'Email Marketing → Review & send'], ['m5-report', 'Email Marketing → Report'],
+  ['e2-sending', 'Emails → Sending & delivery', 'Two choices only: this server’s mail, or Google Workspace (smtp.gmail.com, 587 TLS, app password). Send test.'],
+  ['e3-customer-emails', 'Emails → Customer emails', 'Status emails on; on hold manual; two “Complete your order” reminders.'],
+  ['e5-branding', 'Emails → Design & branding', 'Look A; logo, colours; Dubai + Korea addresses, WhatsApp, email — editable any time.'],
+  ['o1-order-status', 'Store → Orders → an order', '“Email the customer” tick on every status change; “Send on-hold email” button.'],
+  ['m3-groups', 'Email Marketing → Customer groups', 'Customers and Subscribers apart; total spent, orders, emirate, month / year / range, brands bought.'],
+  ['m2-builder', 'Email Marketing → Builder', 'Product grid auto-filled with the group’s top brand (Medicube).'],
+  ['m4-review-send', 'Email Marketing → Review & send', 'Send and schedule: Owner and Manager (Administrator) only.'],
 ];
 
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Emails proposal</title>
+<title>Emails — round 2</title>
 <style>
-:root{--ink:#2A2228;--ink2:#5E545A;--pink:#E0567B;--deep:#C13E63;--cream:#FFF8F5;--line:#F0E4E9}
+:root{--ink:#2A2228;--ink2:#5E545A;--muted:#8C828A;--deep:#C13E63;--cream:#FFF8F5;--line:#F0E4E9;--green:#2E9E6B;--amber:#B86E12}
 body{margin:0;background:var(--cream);font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--ink)}
-main{max-width:1200px;margin:0 auto;padding:28px 16px 40px}
-h1{font-family:Georgia,serif;font-size:34px;margin:0}h1 span{color:var(--deep)}
-h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep);margin:34px 0 4px}
-p.lead{font-size:15px;color:var(--ink2);margin:6px 0 0;max-width:820px;line-height:1.55}
-p.note{font-size:13.5px;color:var(--ink2);margin:2px 0 12px;line-height:1.5}
-.g{display:grid;gap:14px}.g6{grid-template-columns:repeat(6,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
-figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-figure img{display:block;width:100%;object-fit:cover;object-position:top}
-figcaption{padding:8px 10px;font-size:12.5px;line-height:1.35}figcaption b{display:block}figcaption span{color:#8C828A;font-size:11.5px}
-.pick{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.pick b{background:#fff;border:1px solid var(--line);border-radius:99px;padding:5px 12px;font-size:13px}
-.pick b.on{background:var(--deep);color:#fff;border-color:var(--deep)}
-@media(max-width:700px){.g6{grid-template-columns:repeat(2,1fr)}.g3,.g2{grid-template-columns:1fr}}
+main{max-width:1000px;margin:0 auto;padding:26px 16px 36px}
+h1{font-family:Georgia,serif;font-size:30px;margin:0}h1 span{color:var(--deep)}
+h2{font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep);margin:30px 0 4px}
+p{font-size:14px;color:var(--ink2);line-height:1.55;margin:6px 0 12px;max-width:760px}
+.g{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(0,1fr))}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+figure img{display:block;width:100%;height:440px;object-fit:cover;object-position:top}
+.g2 figure img{height:420px}
+figcaption{padding:8px 10px 10px;font-size:12px;line-height:1.4}
+figcaption b{display:block;font-size:13px}.trig{display:block;color:var(--ink2);margin-top:2px}
+.state{display:inline-block;margin-top:5px;font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;background:#E6F5EE;color:var(--green)}
+ul{margin:4px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink2);line-height:1.6}
+@media(max-width:700px){.g,.g2{grid-template-columns:repeat(2,minmax(0,1fr))}figure img{height:300px}}
 </style></head><body><main>
-<h1>K-Beauty Bliss <span>emails</span> — first previews</h1>
-<p class="lead">Lane RJ, Phase 1: audit, previews and plan. Nothing here is live. Read <b>docs/EMAILS-AUDIT.md</b> for what the shop sends today and <b>docs/EMAILS-PLAN.md</b> for how it gets built.</p>
+<h1>K-Beauty Bliss <span>emails</span> — round 2</h1>
+<p>Your decisions of 3 October, applied to the previews. Look A everywhere; “View this email in your browser” moved to the very bottom; no receipt before payment; two “Complete your order” reminders; order number = tracking number; Dubai and Korea addresses, WhatsApp and info@kbeautybliss.com in every footer. Nothing is live yet.</p>
+<ul><li>Addresses show as <b>[Dubai address]</b> and <b>[Korea address — owner to paste]</b> until you type them in Emails → Design &amp; branding.</li>
+<li>Medicube products and prices in the brand campaign are placeholders; the real email fills them from the catalogue.</li></ul>
 
-<h2>1 · Today — what customers get now</h2>
-<p class="note">Rendered through the shop’s real email code with a test order (3 products, coupon GLOW10, Tabby, Dubai Marina). Order emails are branded; seven others (basket, back-in-stock, invite, newsletter, quiz, password reset, verify) are plain black-and-white with no logo.</p>
-<div class="g g6">${BEFORE.map(([f, l]) => fig(`before/shots/${f}-390.png`, l, 'today', 460)).join('')}</div>
+<h2>Every customer email · ${Object.keys(after).length}</h2>
+<p>Each card: the email, what sends it, and whether it is on. Tap a picture for the full email.</p>
+<div class="g">${Object.entries(after).map(([n, v]) => card(`after/shots/${n}-390.jpg`, title(n), v.trigger, v.default, `after/${n}.html`)).join('')}</div>
 
-<h2>2 · Pick a look — reply with a letter</h2>
-<p class="note">The same order confirmation in three directions. <b>A</b> is the default and is used for every email below.</p>
-<div class="pick"><b class="on">A · Blush editorial (default)</b><b>B · Bold pink</b><b>C · Minimal luxe</b></div><div style="height:12px"></div>
-<div class="g g3">${['A', 'B', 'C'].map((t) => fig(`directions/shots/${t}-order-confirmation-600.png`, `Direction ${t}`, '600px · laptop / tablet', 900)).join('')}</div>
-<div style="height:14px"></div>
-<div class="g g6">${['A', 'B', 'C'].map((t) => fig(`directions/shots/${t}-order-confirmation-390.png`, `${t} on a phone`, '390px', 560)).join('')}${fig('directions/shots/A-order-confirmation-390-dark.png', 'A in dark mode', 'Apple / iOS Mail', 560)}</div>
+<h2>Marketing campaigns · ${Object.keys(mkt).length}</h2>
+<div class="g">${Object.entries(mkt).map(([n, v]) => card(`marketing/shots/${n}-390.jpg`, title(n), v.trigger, '', `marketing/${n}.html`)).join('')}</div>
 
-<h2>3 · Proposed — every email, one per real order status</h2>
-<p class="note">Status hero + progress tracker (Placed → Confirmed → On its way → Delivered), product pictures, totals, address, payment and a help box. Statuses are the shop’s real ones: pending, processing, onhold, shipped, completed, cancelled, refunded, failed (draft never emails). Four are new.</p>
-<div class="g g6">${AFTER.map(([f, l, s]) => fig(`after/shots/${f}-390.png`, l, s, 520)).join('')}</div>
-
-<h2>4 · Admin — new “Emails” menu</h2>
-<p class="note">Store → Mail moves here and grows: sending, every customer email with on/off and an editor with live preview, design &amp; branding, sent mail.</p>
-<div class="g g3">${fig('admin/m0-phone-menu-390.png', 'The menu (phone)', 'Emails after Store; Email Marketing in Growth & Marketing', 520)}${ADMIN.slice(0, 5).map(([f, l]) => fig(`admin/${f}-1280.png`, l, 'proposal', 520)).join('')}</div>
-
-<h2>5 · Growth &amp; Marketing → Email Marketing</h2>
-<p class="note">Campaigns, a drag-and-drop builder (header, hero image, text, buttons, product rows and grids, coupons, images, columns, footer with unsubscribe), customer groups by orders / spend / last order / never ordered / newsletter, schedule and send, and a report.</p>
-<div class="g g3">${ADMIN.slice(6).map(([f, l]) => fig(`admin/${f}-1280.png`, l, 'proposal', 520)).join('')}${fig('marketing/shots/m1-campaign-autumn-glow-390.png', 'A campaign built from the blocks', 'phone', 520)}</div>
+<h2>Admin screens that changed</h2>
+<div class="g g2">${ADMIN.map(([f, t, d]) => card(`admin/${f}-1280.jpg`, t, d, '', `admin/${f}.html`)).join('')}${card('admin/m0-phone-menu-390.jpg', 'The menu on a phone', 'Emails after Store; Email Marketing first in Growth &amp; Marketing.', '', 'admin/m0-phone-menu-390.jpg')}</div>
 </main></body></html>`;
 
 (async () => {
-  fs.writeFileSync(path.join(D, 'OVERVIEW.html'), html);
+  fs.writeFileSync(path.join(D, 'OVERVIEW-2.html'), html);
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
-  const page = await browser.newPage({ viewport: { width: 1200, height: 1000 }, deviceScaleFactor: 1 });
-  await page.goto('file://' + path.join(D, 'OVERVIEW.html'), { waitUntil: 'load' });
+  const page = await browser.newPage({ viewport: { width: 1000, height: 1000 }, deviceScaleFactor: 1 });
+  await page.goto('file://' + path.join(D, 'OVERVIEW-2.html'), { waitUntil: 'load' });
   await page.waitForTimeout(500);
-  await page.screenshot({ path: path.join(D, 'OVERVIEW.png'), fullPage: true });
-  const h = await page.evaluate(() => document.documentElement.scrollHeight);
-  console.log(JSON.stringify({ overview: 'OVERVIEW.png', width: 1200, height: h }));
+  await page.screenshot({ path: path.join(D, 'OVERVIEW-2.png'), fullPage: true });
+  const m = await page.evaluate(() => ({ height: document.documentElement.scrollHeight, scrollWidth: document.documentElement.scrollWidth, broken: [...document.images].filter((i) => !i.naturalWidth).map((i) => i.src) }));
+  console.log(JSON.stringify({ overview: 'OVERVIEW-2.png', width: 1000, ...m }));
   await browser.close();
 })();
