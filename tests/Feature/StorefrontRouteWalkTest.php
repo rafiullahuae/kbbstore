@@ -295,6 +295,8 @@ function walkExpectations(array $seed): array
         'checkout'                 => ['status' => 302],
         'checkout/success'         => ['status' => 200],
         'checkout/pending'         => ['status' => 302],
+        // 2.60.371, Lane RL: no signed ?order=&t= is the same 404 as a forged one (OrderLinks).
+        'checkout/order-pay'       => ['status' => 404],
 
         /*
          * 404, and deliberately so: CartAddressController aborts unless the
