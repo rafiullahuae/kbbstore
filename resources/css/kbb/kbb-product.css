@@ -1288,6 +1288,12 @@ a{color:inherit;text-decoration:none}
 .bt-sumrow{display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:8px;min-width:0}
 .bt-sumrow .bt-total{margin-inline-start:auto;flex-wrap:nowrap;white-space:nowrap}
 .bt-sumrow .bt-save{white-space:nowrap;flex:0 1 auto;min-width:0}
+/* (Lane RH) "Show on phones" / "Show on laptops" under "Show the total and
+   buy-together discount": hidden by the block's own 1024px breakpoint, the
+   one its laptop panel switches at. Only the row is hidden -- the basket
+   cannot know the device, so the discount still applies there. */
+@media (max-width:1023.98px){.bt-sumrow.bt-hide-m{display:none}}
+@media (min-width:1024px){.bt-sumrow.bt-hide-d{display:none}}
 /* The narrowest phones: both halves a touch smaller, so they still share the row. */
 @media (max-width:380px){
   .bt-sumrow{gap:6px}

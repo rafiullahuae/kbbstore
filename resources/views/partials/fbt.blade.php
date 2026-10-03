@@ -166,8 +166,13 @@
             @endforeach
         </div>
         <div class="bt-foot">
-            @if ($btCfg['show_total'])
-            <div class="bt-sumrow">
+            {{-- (Lane RH) The row needs "Show the total and buy-together
+                 discount" (off by default: with it off there is no discount
+                 to show, BuyTogetherPricing prices nothing). "Show on phones"
+                 / "Show on laptops" only hide it below / from 1024px, the
+                 block's own breakpoint; both off draws nothing. --}}
+            @if ($btCfg['show_total'] && ! empty($btCfg['discount_on']) && (! empty($btCfg['row_phone']) || ! empty($btCfg['row_laptop'])))
+            <div class="bt-sumrow{{ empty($btCfg['row_phone']) ? ' bt-hide-m' : '' }}{{ empty($btCfg['row_laptop']) ? ' bt-hide-d' : '' }}">
             <p class="bt-save" aria-live="polite"@if ($btSave <= 0) hidden @endif><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none"/></svg><span>{{ __('store.buy_together.saving') }}</span> <b>{!! $btWrap($btSave, 'bt-save-num') !!}</b></p>
             <p class="bt-total"><span class="bt-total-label">{{ __('store.buy_together.total') }}</span> <s class="bt-was"@if ($btWasTotal <= $btPay) hidden @endif>{!! $btWrap($btWasTotal, 'bt-was-num') !!}</s> <b class="bt-sum">{!! $btTotalHtml !!}</b></p>
             </div>

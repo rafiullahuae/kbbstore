@@ -759,7 +759,9 @@ it('serves the tab from the product page endpoint, with both device switches rea
 
     expect(array_column($body['options'][0]['fields'], 'key'))
         // Lane RE added the three tiers and the coupon switch to the same tab.
-        ->toBe(['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar', 'tier_3', 'tier_4', 'tier_5', 'coupons']);
+        // Lane RH added the master switch over the total and the discount, and
+        // the row's two device switches -- appended, so the payload is additive.
+        ->toBe(['on', 'count', 'rule', 'hide_oos', 'same_brand', 'show_total', 'title', 'title_ar', 'tier_3', 'tier_4', 'tier_5', 'coupons', 'discount_on', 'row_phone', 'row_laptop']);
     expect($body['phone'])->toBeFalse()->and($body['laptop'])->toBeTrue()->and($body['max_pairs'])->toBe(5);
 
     $sun = collect($body['pairs'])->firstWhere('name', 'Sunscreens');

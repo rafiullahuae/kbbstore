@@ -93,7 +93,13 @@ function reFlush(): void
 /** @param array<string, mixed> $settings */
 function reOn(array $settings = []): void
 {
-    app(BuyTogetherSettings::class)->save(array_merge(['on' => true, 'count' => 4, 'tier_3' => 5, 'tier_4' => 10, 'tier_5' => 15], $settings));
+    // (Lane RH) 'discount_on' => true: "Show the total and buy-together
+    // discount" ships OFF since 3 October because the owner asked for off,
+    // and off prices no bundle and draws no total. Every case in this file is
+    // about the discount working, so it turns the master switch on — in the
+    // same save, because save() keeps a tier locked while the switch is off.
+    // tests/Feature/BuyTogetherDiscountSwitchTest.php covers the off state.
+    app(BuyTogetherSettings::class)->save(array_merge(['on' => true, 'discount_on' => true, 'count' => 4, 'tier_3' => 5, 'tier_4' => 10, 'tier_5' => 15], $settings));
     reFlush();
 }
 
@@ -186,7 +192,8 @@ it('ships every tier at 0 (off) and coupons included; clamps a tier to 0–50 an
     expect([$c['tier_3'], $c['tier_4'], $c['tier_5'], $c['coupons']])->toBe([0, 0, 0, true]);
     expect(app(BuyTogetherPricing::class)->tiers())->toBe([3 => 0, 4 => 0, 5 => 0, 6 => 0]);
 
-    app(BuyTogetherSettings::class)->save(['on' => true, 'tier_3' => 80, 'tier_4' => -5, 'tier_5' => 'lots']);
+    // (Lane RH) With the master switch on: off, save() keeps the tiers locked.
+    app(BuyTogetherSettings::class)->save(['on' => true, 'discount_on' => true, 'tier_3' => 80, 'tier_4' => -5, 'tier_5' => 'lots']);
     reFlush();
     $c = app(BuyTogetherSettings::class)->all();
     expect([$c['tier_3'], $c['tier_4'], $c['tier_5']])->toBe([50, 0, 0]);
@@ -199,6 +206,7 @@ it('ships every tier at 0 (off) and coupons included; clamps a tier to 0–50 an
     // Through the admin endpoint too: an over-range value is clamped, an
     // unknown option refused with nothing written.
     test()->actingAs(AdminUser::create(['name' => 'O', 'email' => 're-'.Str::random(6).'@example.test', 'password' => Hash::make('secret-secret'), 'role' => 'owner']), 'admin');
+    // The master switch is on from the save above, so the tiers are unlocked.
     test()->postJson('/admin-api/product-page', ['together' => ['options' => ['tier_4' => 99, 'coupons' => false]]])->assertOk();
     reFlush();
     expect(app(BuyTogetherSettings::class)->all()['tier_4'])->toBe(50)
@@ -217,7 +225,8 @@ it('draws the tiers card with a live preview in the admin tab', function () {
     $src = (string) file_get_contents(resource_path('views/admin/partials/product-buy-together-screen.blade.php'));
 
     expect($src)->toContain("id=\"btpTiers\"")
-        ->toContain("['tier_3', 'tier_4', 'tier_5', 'coupons'].map(optRow)")
+        // (Lane RH) the same four, now under the master switch's lock
+        ->toContain("['row_phone', 'row_laptop', 'tier_3', 'tier_4', 'tier_5', 'coupons'].map(function (k) { return optRowL(k, !on); })")
         ->toContain('id="btpPreview"')
         // the preview redraws as a tier slider moves, before anything is saved
         ->toContain("if (k === 'count' || /^tier_/.test(k)) paintPreview();")
