@@ -195,6 +195,37 @@ it('renders byte-identical English in every email and printed document', functio
         . "they are excusing nothing: " . json_encode($fired));
 
 
+    /*
+     * ── THE HTML PARTS OF THE EMAILS ARE THE OWNER'S LOOK A (Lane EM) ──────
+     *
+     * The owner approved a redesign of every email on 3 October 2026
+     * (docs/rj-email-previews/ at 9d6dea4: "i want 100% same stuff as in
+     * previews"), so the HTML half of each email below is a different
+     * document on purpose and no rule can turn the old table into it. It is
+     * NOT left unguarded: MailKitParityTest renders every one of them and
+     * holds it, block for block, to the approved preview -- a stronger pin
+     * than this one, because it is against the picture the owner signed off.
+     *
+     * What stays here, byte for byte: every TEXT twin (unchanged by the
+     * redesign) and the four printed documents. Each excused document must
+     * really be the kit (its outer table class), so a template that fell back
+     * to the old layout is not excused by this list.
+     *
+     * MUTATION: point an email view back at emails.layout and this is red.
+     */
+    $lookA = [
+        'order-confirmation (html)', 'new-order-alert (html)', 'order-shipped (html)',
+        'order-cancelled (html)', 'order-refunded (html)', 'order-invoice (html)',
+        'back-in-stock (html)', 'cart-recovery (html)', 'newsletter-confirm (html)',
+        'account mail: verify-email', 'account mail: password-reset',
+    ];
+
+    foreach ($lookA as $name) {
+        expect($after)->toHaveKey($name);
+        expect(str_contains($after[$name], '<table role="presentation" class="bg-outer"'))->toBeTrue("{$name} is not drawn by the look-A kit");
+        unset($before[$name], $after[$name]);
+    }
+
     $changed = [];
     foreach ($before as $name => $body) {
         if (($after[$name] ?? null) !== $body) {

@@ -38,7 +38,17 @@ final class MailKitController extends Controller
             'Content-Type' => 'text/html; charset=utf-8',
             'Cache-Control' => 'private, no-store, max-age=0',
             'X-Robots-Tag' => 'noindex, nofollow, noarchive',
-            'Content-Security-Policy' => "default-src 'none'; img-src https: http: data:; style-src 'unsafe-inline'; font-src 'self' https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+            /*
+             * No enforcing content-security header (Lane EM): this codebase
+             * ships report-only and nothing else, and SecurityCspTest holds
+             * app/ to the absence of the enforcing name. The copy is the
+             * shop's own rendered email -- no script, every value escaped when
+             * it was rendered -- so what is left to stop is framing and
+             * sniffing: X-Frame-Options is SecurityHeaders' SAMEORIGIN on every
+             * response, and nosniff is set here.
+             */
+            'X-Content-Type-Options' => 'nosniff',
+            'Referrer-Policy' => 'no-referrer',
         ]);
     }
 

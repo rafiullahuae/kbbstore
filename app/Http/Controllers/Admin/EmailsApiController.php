@@ -310,8 +310,7 @@ class EmailsApiController extends Controller
     /**
      * The real order confirmation, rendered with the saved settings and the
      * latest order, for the Design & branding preview. Served as a document
-     * the screen puts in a sandboxed iframe; the CSP `sandbox` header makes
-     * the same true if it is ever opened on its own. Customer data stays
+     * the screen puts in a sandboxed iframe. Customer data stays
      * behind the owner-only capability, like the order screens themselves.
      */
     public function preview(): \Illuminate\Http\Response
@@ -324,7 +323,10 @@ class EmailsApiController extends Controller
 
         return response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0">' . $html, 200, [
             'Content-Type' => 'text/html; charset=UTF-8',
-            'Content-Security-Policy' => 'sandbox; default-src \'none\'; img-src https: http: data:; style-src \'unsafe-inline\'; font-src https: http: data:',
+            // The screen frames this with sandbox="" (no script, no forms, no
+            // same-origin). No enforcing content-security header: this
+            // codebase ships report-only only (SecurityCspTest).
+            'X-Content-Type-Options' => 'nosniff',
             'X-Frame-Options' => 'SAMEORIGIN',
         ]);
     }

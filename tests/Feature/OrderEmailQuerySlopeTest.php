@@ -411,7 +411,7 @@ it('asks the catalogue for the pictures only, once per email, while sending an o
     foreach ($catalogue as $q) {
         // id, the picture, and the routine step for the delivered email's
         // "How to use them together" -- never a name or a price.
-        expect($q)->toStartWith('select "id", "image", "routine_role" from "products" where "id" in');
+        expect(\Tests\Support\SqlShape::portable($q))->toStartWith('select "id", "image", "routine_role" from "products" where "id" in');
     }
 });
 

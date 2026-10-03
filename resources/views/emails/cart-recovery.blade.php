@@ -21,7 +21,12 @@
 
         return [
             'img' => $found['img'], 'brand' => $found['brand'], 'name' => (string) ($i['name'] ?? ''), 'variant' => '',
-            'qty' => $qty, 'unit' => \App\Services\Mail\Kit\MailKit::money($unit), 'total' => \App\Services\Mail\Kit\MailKit::money($unit * $qty), 'sub' => [],
+            'qty' => $qty, 'unit' => \App\Services\Mail\Kit\MailKit::money($unit), 'total' => \App\Services\Mail\Kit\MailKit::money($unit * $qty),
+            // What is in a set, one member per line (Lane SE), read live at
+            // send time by CartRecovery::basket(); quantities and names only.
+            'sub' => array_values(array_map('strval', (array) ($i['setContents'] ?? []))),
+            // Absolute: an inbox has no origin to resolve /product/… against.
+            'href' => ($i['slug'] ?? '') !== '' ? \App\Support\Url::external('/product/' . $i['slug'] . '/') : null,
         ];
     }, $items);
 @endphp

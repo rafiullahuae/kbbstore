@@ -14,6 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
+const { probeFamily } = require('./font-probe.cjs');
 
 const ROOT = path.resolve(__dirname, '..');
 const RENDER = path.resolve(process.argv[2] || path.join(ROOT, 'storage/em-logs/render'));
@@ -41,13 +42,15 @@ const SUFFIX = process.env.EM_SUFFIX || '';
       });
       await page.route('**/mail/font/outfit-latin.woff2', (route) => route.fulfill({ path: FONT, contentType: 'font/woff2' }));
       await page.setContent(html, { waitUntil: 'load' });
-      await page.evaluate(() => document.fonts.ready);
+      // Measured, not asked: probeFamily() compares a ruler in Outfit with
+      // one in a family that cannot exist (tools/font-probe.cjs).
+      const probe = await probeFamily(page, 'Outfit', [400, 600, 800]);
       const m = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         height: document.documentElement.scrollHeight,
         font: getComputedStyle(document.querySelector('.h1') || document.body).fontFamily.split(',')[0],
-        outfitLoaded: document.fonts.check("16px 'Outfit'"),
       }));
+      m.outfitRendered = probe.renderedAny;
       const mine = path.join(OUT, `.tmp-${name}-${width}.png`);
       await page.screenshot({ path: mine, fullPage: true });
       await page.close();

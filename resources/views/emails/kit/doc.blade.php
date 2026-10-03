@@ -20,7 +20,7 @@
     by a person reaches the page except through {{ }}.
 --}}
 <!doctype html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ \App\Support\Locale::direction() === 'rtl' ? 'rtl' : 'ltr' }}" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="{{ str_replace('_', '-', \Illuminate\Support\Facades\App::getLocale()) }}" dir="{{ \App\Support\Locale::direction() }}" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">

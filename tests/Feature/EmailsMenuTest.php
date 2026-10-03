@@ -730,9 +730,21 @@ it('serves the preview as the real order email, sandboxed, to the owner only', f
     $r = $this->get('/admin-api/emails/preview')->assertOk();
 
     expect((string) $r->headers->get('Content-Type'))->toContain('text/html')
-        ->and((string) $r->headers->get('Content-Security-Policy'))->toStartWith('sandbox')
+        ->and((string) $r->headers->get('X-Content-Type-Options'))->toBe('nosniff')
         ->and($r->getContent())->toContain('KBB-RK-1');
 
+    /*
+     * SANDBOXED BY THE FRAME, not by a header (Lane EM): this codebase ships
+     * no enforcing content-security header anywhere (SecurityCspTest), so the
+     * screen's iframe carries sandbox="" -- no script, no forms, no origin.
+     * MUTATION: drop sandbox="" from the iframe in emails-screens and red.
+     */
+    expect((string) file_get_contents(resource_path('views/admin/partials/emails-screens.blade.php')))
+        ->toMatch('/<iframe class="eml-frame[^>]*sandbox=""/');
+
+    // Every new endpoint fails closed for anyone but the owner.
     $this->actingAs(rkAdmin('manager'), 'admin');
     $this->get('/admin-api/emails/preview')->assertForbidden();
+    $this->getJson('/admin-api/emails/dns')->assertForbidden();
+    $this->postJson('/admin-api/emails/dns')->assertForbidden();
 });

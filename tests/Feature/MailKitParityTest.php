@@ -263,7 +263,9 @@ it('opens exactly the sent email at its browser-copy link, and answers every oth
     expect($res->getContent())->toBe($html)
         ->and($res->headers->get('Cache-Control'))->toContain('no-store')
         ->and($res->headers->get('X-Robots-Tag'))->toContain('noindex')
-        ->and($res->headers->get('Content-Security-Policy'))->toContain("frame-ancestors 'none'")
+        // No other site can frame it (SecurityHeaders), and it is not sniffed.
+        ->and($res->headers->get('X-Frame-Options'))->toBe('SAMEORIGIN')
+        ->and($res->headers->get('X-Content-Type-Options'))->toBe('nosniff')
         // One copy per sent message, keyed by the hash -- the token is not stored.
         ->and(\Illuminate\Support\Facades\DB::table(WebCopy::TABLE)->count())->toBe(1)
         ->and(\Illuminate\Support\Facades\DB::table(WebCopy::TABLE)->where('token_hash', $m[1])->exists())->toBeFalse();
