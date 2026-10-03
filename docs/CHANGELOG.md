@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.367
+**Admin: "Make all share pictures now".** Apply after .366. No plugin change.
+Runs one migration (a cache clear that rebuilds the route table).
+
+| Your report | Now |
+|---|---|
+| `kbb:share-images` over SSH: "0 made … 17 already up to date, 770 skipped" (could not write) | Appearance → Product page → Share · Link preview card → "Make all share pictures now". The website itself (which may write to the share-picture folder; the SSH master login may not) makes every product's picture, 25 at a time, and shows "Done: N made, N already up to date, N skipped — N of N". It writes picture files only. Its own permission, shareimages.make |
+
+Files (6): app/Http/Controllers/Admin/ShareImagesApiController.php, app/Support/AdminCapabilities.php, database/migrations/2027_07_24_000200_clear_caches_share_images_button.php, resources/views/admin/partials/product-trust-share-screen.blade.php, routes/share-images-admin.php, routes/web.php.
+
 ## 2.60.366
 **Product page: Buy these together can sit in the right column on laptops.**
 Apply after .365. No plugin change. Runs one migration (a cache clear).
