@@ -165,6 +165,8 @@
     out.push('pm-rate-m-' + choice('rate_m'));
     out.push('pd-rate-d-' + choice('rate_d'));
     var dh = opt('details_head'); if (dh && dh.value) out.push('pm-dhead');
+    var rb = opt('rate_bar'); if (rb && rb.value) out.push('pm-rbar');
+    var rbd = opt('rate_bar_d'); if (rbd && rbd.value) out.push('pd-rbar');
     return out;
   }
 
@@ -177,7 +179,7 @@
       var page = doc && doc.querySelector('.pdp-page');
       if (!page) return;
       v.forEach(function (p) { if (!/^--pm-[a-z0-9-]+$/.test(p[0])) return; if (p[1] === '') page.style.removeProperty(p[0]); else page.style.setProperty(p[0], p[1]); });
-      Array.prototype.slice.call(page.classList).forEach(function (cl) { if (/^(pm-off-|pm-rate-m-|pd-rate-d-|pm-dhead$)/.test(cl)) page.classList.remove(cl); });
+      Array.prototype.slice.call(page.classList).forEach(function (cl) { if (/^(pm-off-|pm-rate-m-|pd-rate-d-|pm-dhead$|pm-rbar$|pd-rbar$)/.test(cl)) page.classList.remove(cl); });
       c.forEach(function (cl) { if (/^[a-z0-9-]+$/.test(cl)) page.classList.add(cl); });
     });
   }
@@ -208,7 +210,7 @@
   }
 
   /** The options that belong to one section, drawn under its row. */
-  var SECTION_OPTS = { price: ['rate_m', 'rate_count'], paylater: ['tabby_on', 'tabby_text', 'tamara_on', 'tamara_text'], details: ['details_head'] };
+  var SECTION_OPTS = { price: ['rate_m', 'rate_count', 'rate_bar', 'rate_bar_d'], paylater: ['tabby_on', 'tabby_text', 'tamara_on', 'tamara_text'], details: ['details_head'] };
 
   function row(k, i) {
     var r = ROWS[k], n = ORDER.length, g = gap();

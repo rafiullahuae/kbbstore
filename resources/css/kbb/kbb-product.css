@@ -1767,3 +1767,9 @@ a{color:inherit;text-decoration:none}
 @media (min-width:881px){
   .pdp-page:not(.pd-dhead) > .pm-details > .eyebrow,.pdp-page:not(.pd-dh2) > .pm-details > h2{display:none}
 }
+/* "also give option to hide unhide the rating bar line, keep off by default in
+   desktop and mobile both." Mobile sections → "Show the bar after the rating ·
+   phone / · laptop", both off: the hairline is in the HTML and hidden here
+   until its device's class is on the wrapper, so a cached page serves both. */
+@media (max-width:880px){.pdp-page:not(.pm-rbar) .bb-ratebar{display:none}}
+@media (min-width:881px){.pdp-page:not(.pd-rbar) .bb-ratebar{display:none}}

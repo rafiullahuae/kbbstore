@@ -171,6 +171,15 @@ class ProductMobileSections
             ['beside' => 'Beside the price, on the right', 'row' => 'In its own row under the price']],
         'rate_count' => ['bool', 'Show the review count beside the rating', false,
             'Off, as asked: the price row shows the score and the bar only. On puts “5 reviews” back after the bar, at both widths.'],
+        /* (Integrator, 2.60.364) "also give option to hide unhide the rating
+           bar line, keep off by default in desktop and mobile both." The pink
+           hairline after the score, .bb-ratebar, in BOTH rating rows (capsule
+           and inline). Classes on `.pdp-page`, printed only when ON; hidden in
+           kbb-product.css while they are absent. */
+        'rate_bar' => ['bool', 'Show the bar after the rating · phone', false,
+            'The thin pink line after “★★★★★ 5.0” in the price row. Off, as asked.'],
+        'rate_bar_d' => ['bool', 'Show the bar after the rating · laptop', false,
+            'The same line on a laptop. Off, as asked.'],
         'details_head' => ['bool', 'Show “The details” over Product details · phone', false,
             'The small pink line above the “Product details” heading. Off on phones, as asked.'],
         /* (Lane RG) "also the section heading also i want to hide. and text
@@ -195,8 +204,8 @@ class ProductMobileSections
     /** One tab, ModuleSchema::tabs()' shape. The list itself is drawn by the screen. */
     public const TABS = [
         'msections' => ['Mobile sections',
-            'The options under the list: the even gap, where the rating sits, the review count, “The details” and the “Product details” heading (phone and laptop), and the two pay-later cards.',
-            ['gap', 'rate_m', 'rate_d', 'rate_count', 'details_head', 'details_head_d', 'details_h2', 'details_h2_d', 'tabby_on', 'tabby_text', 'tamara_on', 'tamara_text']],
+            'The options under the list: the even gap, where the rating sits, the review count, the bar after the rating (phone and laptop), “The details” and the “Product details” heading (phone and laptop), and the two pay-later cards.',
+            ['gap', 'rate_m', 'rate_d', 'rate_count', 'rate_bar', 'rate_bar_d', 'details_head', 'details_head_d', 'details_h2', 'details_h2_d', 'tabby_on', 'tabby_text', 'tamara_on', 'tamara_text']],
     ];
 
     public const POLICY = [
@@ -569,7 +578,7 @@ class ProductMobileSections
         }
 
         // (Lane RG) literals, one per switch, printed only when it is ON.
-        foreach (['details_head_d' => 'pd-dhead', 'details_h2' => 'pm-dh2', 'details_h2_d' => 'pd-dh2'] as $key => $class) {
+        foreach (['details_head_d' => 'pd-dhead', 'details_h2' => 'pm-dh2', 'details_h2_d' => 'pd-dh2', 'rate_bar' => 'pm-rbar', 'rate_bar_d' => 'pd-rbar'] as $key => $class) {
             if ($this->on($key)) {
                 $out[] = $class;
             }
