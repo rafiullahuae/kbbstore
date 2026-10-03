@@ -1,0 +1,1139 @@
+{
+ "details": {
+  "390": {
+   "scrollWidth": 390,
+   "tabs": [
+    {
+     "tab": "Description",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Benefits:"
+    },
+    {
+     "tab": "Ingredients",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Houttuynia Cordata Extra"
+    },
+    {
+     "tab": "How to use",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Cleanse and pat the skin"
+    },
+    {
+     "tab": "Shipping & returns",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Dispatched from Dubai wi"
+    },
+    {
+     "tab": "Authenticity",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Every unit in this shop "
+    }
+   ],
+   "buy": {
+    "title": {
+     "top": 603,
+     "bottom": 681,
+     "h": 78
+    },
+    "price": {
+     "top": 799,
+     "bottom": 837,
+     "h": 38
+    },
+    "short": {
+     "top": 691,
+     "bottom": 781,
+     "h": 91
+    },
+    "paylater": {
+     "top": 855,
+     "bottom": 937,
+     "h": 82
+    },
+    "bundles": {
+     "top": 955,
+     "bottom": 1136,
+     "h": 181
+    },
+    "ready": {
+     "top": 1154,
+     "bottom": 1203,
+     "h": 49
+    },
+    "delivery": {
+     "top": 1287,
+     "bottom": 1372,
+     "h": 86
+    },
+    "cart": {
+     "top": 1215,
+     "bottom": 1269,
+     "h": 54
+    },
+    "auth": {
+     "top": 1390,
+     "bottom": 1423,
+     "h": 33
+    },
+    "trust": "hidden",
+    "paychips": {
+     "top": 1441,
+     "bottom": 1467,
+     "h": 26
+    }
+   },
+   "details": {
+    "section": {
+     "top": 1838,
+     "bottom": 2091,
+     "h": 253
+    },
+    "eyebrow": "hidden",
+    "heading": "hidden",
+    "sectionTopToTabbar": 35
+   }
+  },
+  "1280": {
+   "scrollWidth": 1280,
+   "tabs": [
+    {
+     "tab": "Description",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Benefits:"
+    },
+    {
+     "tab": "Ingredients",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Houttuynia Cordata Extra"
+    },
+    {
+     "tab": "How to use",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Cleanse and pat the skin"
+    },
+    {
+     "tab": "Shipping & returns",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Dispatched from Dubai wi"
+    },
+    {
+     "tab": "Authenticity",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Every unit in this shop "
+    }
+   ],
+   "buy": {
+    "title": {
+     "top": 116,
+     "bottom": 181,
+     "h": 65
+    },
+    "price": {
+     "top": 191,
+     "bottom": 228,
+     "h": 38
+    },
+    "short": {
+     "top": 248,
+     "bottom": 359,
+     "h": 111
+    },
+    "paylater": {
+     "top": 375,
+     "bottom": 426,
+     "h": 51
+    },
+    "bundles": {
+     "top": 446,
+     "bottom": 647,
+     "h": 202
+    },
+    "ready": {
+     "top": 667,
+     "bottom": 737,
+     "h": 70
+    },
+    "delivery": {
+     "top": 753,
+     "bottom": 826,
+     "h": 72
+    },
+    "cart": {
+     "top": 842,
+     "bottom": 896,
+     "h": 54
+    },
+    "auth": {
+     "top": 896,
+     "bottom": 940,
+     "h": 45
+    },
+    "trust": {
+     "top": 962,
+     "bottom": 1060,
+     "h": 98
+    },
+    "paychips": {
+     "top": 1072,
+     "bottom": 1098,
+     "h": 26
+    }
+   },
+   "details": {
+    "section": {
+     "top": 1422,
+     "bottom": 1675,
+     "h": 253
+    },
+    "eyebrow": "hidden",
+    "heading": "hidden",
+    "sectionTopToTabbar": 35
+   }
+  }
+ },
+ "bundlesSave": 200,
+ "bundles": {
+  "390": {
+   "section": 181,
+   "label": "Choose your option Save more with bundles",
+   "visibleRows": 3,
+   "paylater": 82,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-bundles",
+   "scrollWidth": 390
+  },
+  "880": {
+   "section": 181,
+   "label": "Choose your option Save more with bundles",
+   "visibleRows": 3,
+   "paylater": 38,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-bundles",
+   "scrollWidth": 880
+  },
+  "881": {
+   "section": 0,
+   "label": null,
+   "visibleRows": 0,
+   "paylater": 67,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-bundles",
+   "scrollWidth": 881
+  },
+  "890": {
+   "section": 0,
+   "label": null,
+   "visibleRows": 0,
+   "paylater": 67,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-bundles",
+   "scrollWidth": 890
+  },
+  "900": {
+   "section": 0,
+   "label": null,
+   "visibleRows": 0,
+   "paylater": 67,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-bundles",
+   "scrollWidth": 900
+  },
+  "1000": {
+   "section": 0,
+   "label": null,
+   "visibleRows": 0,
+   "paylater": 51,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-bundles",
+   "scrollWidth": 1000
+  },
+  "1280": {
+   "section": 0,
+   "label": null,
+   "visibleRows": 0,
+   "paylater": 51,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-bundles",
+   "scrollWidth": 1280
+  },
+  "1440": {
+   "section": 0,
+   "label": null,
+   "visibleRows": 0,
+   "paylater": 38,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-bundles",
+   "scrollWidth": 1440
+  },
+  "1608": {
+   "section": 0,
+   "label": null,
+   "visibleRows": 0,
+   "paylater": 38,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-bundles",
+   "scrollWidth": 1608
+  }
+ },
+ "bundlesRestore": 200,
+ "buy": {
+  "390": {
+   "blocks": {
+    "title": {
+     "top": 603,
+     "bottom": 681,
+     "h": 78
+    },
+    "price": {
+     "top": 799,
+     "bottom": 837,
+     "h": 38
+    },
+    "short": {
+     "top": 691,
+     "bottom": 781,
+     "h": 91
+    },
+    "paylater": {
+     "top": 855,
+     "bottom": 937,
+     "h": 82
+    },
+    "bundles": {
+     "top": 955,
+     "bottom": 1136,
+     "h": 181
+    },
+    "ready": {
+     "top": 1154,
+     "bottom": 1203,
+     "h": 49
+    },
+    "delivery": {
+     "top": 1287,
+     "bottom": 1372,
+     "h": 86
+    },
+    "cart": {
+     "top": 1215,
+     "bottom": 1269,
+     "h": 54
+    },
+    "auth": {
+     "top": 1390,
+     "bottom": 1423,
+     "h": 33
+    },
+    "trust": "hidden",
+    "paychips": {
+     "top": 1441,
+     "bottom": 1467,
+     "h": 26
+    }
+   },
+   "paylater": 82,
+   "scrollWidth": 390,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside"
+  },
+  "1280": {
+   "blocks": {
+    "title": {
+     "top": 116,
+     "bottom": 181,
+     "h": 65
+    },
+    "price": {
+     "top": 191,
+     "bottom": 228,
+     "h": 38
+    },
+    "short": {
+     "top": 248,
+     "bottom": 359,
+     "h": 111
+    },
+    "paylater": {
+     "top": 375,
+     "bottom": 426,
+     "h": 51
+    },
+    "bundles": {
+     "top": 446,
+     "bottom": 647,
+     "h": 202
+    },
+    "ready": {
+     "top": 667,
+     "bottom": 737,
+     "h": 70
+    },
+    "delivery": {
+     "top": 753,
+     "bottom": 826,
+     "h": 72
+    },
+    "cart": {
+     "top": 842,
+     "bottom": 896,
+     "h": 54
+    },
+    "auth": {
+     "top": 896,
+     "bottom": 940,
+     "h": 45
+    },
+    "trust": {
+     "top": 962,
+     "bottom": 1060,
+     "h": 98
+    },
+    "paychips": {
+     "top": 1072,
+     "bottom": 1098,
+     "h": 26
+    }
+   },
+   "paylater": 51,
+   "scrollWidth": 1280,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside"
+  },
+  "1440": {
+   "blocks": {
+    "title": {
+     "top": 116,
+     "bottom": 181,
+     "h": 65
+    },
+    "price": {
+     "top": 191,
+     "bottom": 228,
+     "h": 38
+    },
+    "short": {
+     "top": 248,
+     "bottom": 359,
+     "h": 111
+    },
+    "paylater": {
+     "top": 375,
+     "bottom": 413,
+     "h": 38
+    },
+    "bundles": {
+     "top": 433,
+     "bottom": 634,
+     "h": 202
+    },
+    "ready": {
+     "top": 654,
+     "bottom": 724,
+     "h": 70
+    },
+    "delivery": {
+     "top": 740,
+     "bottom": 812,
+     "h": 72
+    },
+    "cart": {
+     "top": 828,
+     "bottom": 882,
+     "h": 54
+    },
+    "auth": {
+     "top": 882,
+     "bottom": 927,
+     "h": 45
+    },
+    "trust": {
+     "top": 949,
+     "bottom": 1047,
+     "h": 98
+    },
+    "paychips": {
+     "top": 1059,
+     "bottom": 1085,
+     "h": 26
+    }
+   },
+   "paylater": 38,
+   "scrollWidth": 1440,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside"
+  }
+ },
+ "gaps": {
+  "phone8-laptop30": {
+   "390": [
+    "Description: 10px",
+    "Ingredients: 10px",
+    "How to use: 10px",
+    "Shipping & returns: 10px",
+    "Authenticity: 10px"
+   ],
+   "1280": [
+    "Description: 32px",
+    "Ingredients: 32px",
+    "How to use: 32px",
+    "Shipping & returns: 32px",
+    "Authenticity: 32px"
+   ],
+   "save": 200
+  },
+  "phone28-laptop8": {
+   "390": [
+    "Description: 30px",
+    "Ingredients: 30px",
+    "How to use: 30px",
+    "Shipping & returns: 30px",
+    "Authenticity: 30px"
+   ],
+   "1280": [
+    "Description: 10px",
+    "Ingredients: 10px",
+    "How to use: 10px",
+    "Shipping & returns: 10px",
+    "Authenticity: 10px"
+   ],
+   "save": 200
+  }
+ },
+ "gapsRestore": 200,
+ "paylater": {
+  "on": {
+   "390": {
+    "blocks": {
+     "title": {
+      "top": 603,
+      "bottom": 681,
+      "h": 78
+     },
+     "price": {
+      "top": 799,
+      "bottom": 837,
+      "h": 38
+     },
+     "short": {
+      "top": 691,
+      "bottom": 781,
+      "h": 91
+     },
+     "paylater": {
+      "top": 855,
+      "bottom": 937,
+      "h": 82
+     },
+     "bundles": {
+      "top": 955,
+      "bottom": 1136,
+      "h": 181
+     },
+     "ready": {
+      "top": 1154,
+      "bottom": 1203,
+      "h": 49
+     },
+     "delivery": {
+      "top": 1287,
+      "bottom": 1372,
+      "h": 86
+     },
+     "cart": {
+      "top": 1215,
+      "bottom": 1269,
+      "h": 54
+     },
+     "auth": {
+      "top": 1390,
+      "bottom": 1423,
+      "h": 33
+     },
+     "trust": "hidden",
+     "paychips": {
+      "top": 1441,
+      "bottom": 1467,
+      "h": 26
+     }
+    },
+    "paylater": 82,
+    "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+    "scrollWidth": 390
+   },
+   "1280": {
+    "blocks": {
+     "title": {
+      "top": 116,
+      "bottom": 181,
+      "h": 65
+     },
+     "price": {
+      "top": 191,
+      "bottom": 228,
+      "h": 38
+     },
+     "short": {
+      "top": 248,
+      "bottom": 359,
+      "h": 111
+     },
+     "paylater": {
+      "top": 375,
+      "bottom": 426,
+      "h": 51
+     },
+     "bundles": {
+      "top": 446,
+      "bottom": 647,
+      "h": 202
+     },
+     "ready": {
+      "top": 667,
+      "bottom": 737,
+      "h": 70
+     },
+     "delivery": {
+      "top": 753,
+      "bottom": 826,
+      "h": 72
+     },
+     "cart": {
+      "top": 842,
+      "bottom": 896,
+      "h": 54
+     },
+     "auth": {
+      "top": 896,
+      "bottom": 940,
+      "h": 45
+     },
+     "trust": {
+      "top": 962,
+      "bottom": 1060,
+      "h": 98
+     },
+     "paychips": {
+      "top": 1072,
+      "bottom": 1098,
+      "h": 26
+     }
+    },
+    "paylater": 51,
+    "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+    "scrollWidth": 1280
+   },
+   "1440": {
+    "blocks": {
+     "title": {
+      "top": 116,
+      "bottom": 181,
+      "h": 65
+     },
+     "price": {
+      "top": 191,
+      "bottom": 228,
+      "h": 38
+     },
+     "short": {
+      "top": 248,
+      "bottom": 359,
+      "h": 111
+     },
+     "paylater": {
+      "top": 375,
+      "bottom": 413,
+      "h": 38
+     },
+     "bundles": {
+      "top": 433,
+      "bottom": 634,
+      "h": 202
+     },
+     "ready": {
+      "top": 654,
+      "bottom": 724,
+      "h": 70
+     },
+     "delivery": {
+      "top": 740,
+      "bottom": 812,
+      "h": 72
+     },
+     "cart": {
+      "top": 828,
+      "bottom": 882,
+      "h": 54
+     },
+     "auth": {
+      "top": 882,
+      "bottom": 927,
+      "h": 45
+     },
+     "trust": {
+      "top": 949,
+      "bottom": 1047,
+      "h": 98
+     },
+     "paychips": {
+      "top": 1059,
+      "bottom": 1085,
+      "h": 26
+     }
+    },
+    "paylater": 38,
+    "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+    "scrollWidth": 1440
+   },
+   "save": 200
+  },
+  "off": {
+   "390": {
+    "blocks": {
+     "title": {
+      "top": 603,
+      "bottom": 681,
+      "h": 78
+     },
+     "price": {
+      "top": 799,
+      "bottom": 837,
+      "h": 38
+     },
+     "short": {
+      "top": 691,
+      "bottom": 781,
+      "h": 91
+     },
+     "paylater": {
+      "top": 855,
+      "bottom": 937,
+      "h": 82
+     },
+     "bundles": {
+      "top": 955,
+      "bottom": 1136,
+      "h": 181
+     },
+     "ready": {
+      "top": 1154,
+      "bottom": 1203,
+      "h": 49
+     },
+     "delivery": {
+      "top": 1287,
+      "bottom": 1372,
+      "h": 86
+     },
+     "cart": {
+      "top": 1215,
+      "bottom": 1269,
+      "h": 54
+     },
+     "auth": {
+      "top": 1390,
+      "bottom": 1423,
+      "h": 33
+     },
+     "trust": "hidden",
+     "paychips": {
+      "top": 1441,
+      "bottom": 1467,
+      "h": 26
+     }
+    },
+    "paylater": 82,
+    "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-paylater",
+    "scrollWidth": 390
+   },
+   "1280": {
+    "blocks": {
+     "title": {
+      "top": 116,
+      "bottom": 181,
+      "h": 65
+     },
+     "price": {
+      "top": 191,
+      "bottom": 228,
+      "h": 38
+     },
+     "short": {
+      "top": 248,
+      "bottom": 359,
+      "h": 111
+     },
+     "paylater": "hidden",
+     "bundles": {
+      "top": 379,
+      "bottom": 580,
+      "h": 202
+     },
+     "ready": {
+      "top": 600,
+      "bottom": 670,
+      "h": 70
+     },
+     "delivery": {
+      "top": 686,
+      "bottom": 758,
+      "h": 72
+     },
+     "cart": {
+      "top": 774,
+      "bottom": 828,
+      "h": 54
+     },
+     "auth": {
+      "top": 828,
+      "bottom": 873,
+      "h": 45
+     },
+     "trust": {
+      "top": 895,
+      "bottom": 993,
+      "h": 98
+     },
+     "paychips": {
+      "top": 1005,
+      "bottom": 1031,
+      "h": 26
+     }
+    },
+    "paylater": 0,
+    "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-paylater",
+    "scrollWidth": 1280
+   },
+   "1440": {
+    "blocks": {
+     "title": {
+      "top": 116,
+      "bottom": 181,
+      "h": 65
+     },
+     "price": {
+      "top": 191,
+      "bottom": 228,
+      "h": 38
+     },
+     "short": {
+      "top": 248,
+      "bottom": 359,
+      "h": 111
+     },
+     "paylater": "hidden",
+     "bundles": {
+      "top": 379,
+      "bottom": 580,
+      "h": 202
+     },
+     "ready": {
+      "top": 600,
+      "bottom": 670,
+      "h": 70
+     },
+     "delivery": {
+      "top": 686,
+      "bottom": 758,
+      "h": 72
+     },
+     "cart": {
+      "top": 774,
+      "bottom": 828,
+      "h": 54
+     },
+     "auth": {
+      "top": 828,
+      "bottom": 873,
+      "h": 45
+     },
+     "trust": {
+      "top": 895,
+      "bottom": 993,
+      "h": 98
+     },
+     "paychips": {
+      "top": 1005,
+      "bottom": 1031,
+      "h": 26
+     }
+    },
+    "paylater": 0,
+    "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pd-off-paylater",
+    "scrollWidth": 1440
+   },
+   "save": 200
+  }
+ },
+ "adminOrderAfterDrag": [
+  "title",
+  "paylater",
+  "price",
+  "short",
+  "ready",
+  "delivery",
+  "cart",
+  "bundles",
+  "auth",
+  "trust",
+  "paychips"
+ ],
+ "adminSavedMessage": "Saved 30 settings — live now",
+ "reorder": {
+  "390": {
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+   "order": [
+    "title",
+    "short",
+    "price",
+    "paylater",
+    "bundles",
+    "ready",
+    "cart",
+    "delivery",
+    "auth",
+    "paychips"
+   ],
+   "gaps": [
+    "title→short: 10px",
+    "short→price: 18px",
+    "price→paylater: 18px",
+    "paylater→bundles: 18px",
+    "bundles→ready: 18px",
+    "ready→cart: 12px",
+    "cart→delivery: 18px",
+    "delivery→auth: 18px",
+    "auth→paychips: 18px"
+   ],
+   "blocks": {
+    "title": {
+     "top": 603,
+     "bottom": 681,
+     "h": 78
+    },
+    "price": {
+     "top": 799,
+     "bottom": 837,
+     "h": 38
+    },
+    "short": {
+     "top": 691,
+     "bottom": 781,
+     "h": 91
+    },
+    "paylater": {
+     "top": 855,
+     "bottom": 937,
+     "h": 82
+    },
+    "bundles": {
+     "top": 955,
+     "bottom": 1136,
+     "h": 181
+    },
+    "ready": {
+     "top": 1154,
+     "bottom": 1203,
+     "h": 49
+    },
+    "delivery": {
+     "top": 1287,
+     "bottom": 1372,
+     "h": 86
+    },
+    "cart": {
+     "top": 1215,
+     "bottom": 1269,
+     "h": 54
+    },
+    "auth": {
+     "top": 1390,
+     "bottom": 1423,
+     "h": 33
+    },
+    "trust": "hidden",
+    "paychips": {
+     "top": 1441,
+     "bottom": 1467,
+     "h": 26
+    }
+   },
+   "scrollWidth": 390
+  },
+  "1280": {
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+   "order": [
+    "title",
+    "paylater",
+    "price",
+    "short",
+    "ready",
+    "delivery",
+    "cart",
+    "bundles",
+    "auth",
+    "trust",
+    "paychips"
+   ],
+   "gaps": [
+    "title→paylater: 16px",
+    "paylater→price: 10px",
+    "price→short: 20px",
+    "short→ready: 20px",
+    "ready→delivery: 16px",
+    "delivery→cart: 16px",
+    "cart→bundles: 20px",
+    "bundles→auth: 0px",
+    "auth→trust: 22px",
+    "trust→paychips: 12px"
+   ],
+   "blocks": {
+    "title": {
+     "top": 116,
+     "bottom": 181,
+     "h": 65
+    },
+    "price": {
+     "top": 258,
+     "bottom": 295,
+     "h": 38
+    },
+    "short": {
+     "top": 315,
+     "bottom": 426,
+     "h": 111
+    },
+    "paylater": {
+     "top": 197,
+     "bottom": 248,
+     "h": 51
+    },
+    "bundles": {
+     "top": 694,
+     "bottom": 896,
+     "h": 202
+    },
+    "ready": {
+     "top": 446,
+     "bottom": 516,
+     "h": 70
+    },
+    "delivery": {
+     "top": 532,
+     "bottom": 604,
+     "h": 72
+    },
+    "cart": {
+     "top": 620,
+     "bottom": 674,
+     "h": 54
+    },
+    "auth": {
+     "top": 896,
+     "bottom": 940,
+     "h": 45
+    },
+    "trust": {
+     "top": 962,
+     "bottom": 1060,
+     "h": 98
+    },
+    "paychips": {
+     "top": 1072,
+     "bottom": 1098,
+     "h": 26
+    }
+   },
+   "scrollWidth": 1280
+  },
+  "1440": {
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+   "order": [
+    "title",
+    "paylater",
+    "price",
+    "short",
+    "ready",
+    "delivery",
+    "cart",
+    "bundles",
+    "auth",
+    "trust",
+    "paychips"
+   ],
+   "gaps": [
+    "title→paylater: 16px",
+    "paylater→price: 10px",
+    "price→short: 20px",
+    "short→ready: 20px",
+    "ready→delivery: 16px",
+    "delivery→cart: 16px",
+    "cart→bundles: 20px",
+    "bundles→auth: 0px",
+    "auth→trust: 22px",
+    "trust→paychips: 12px"
+   ],
+   "blocks": {
+    "title": {
+     "top": 116,
+     "bottom": 181,
+     "h": 65
+    },
+    "price": {
+     "top": 245,
+     "bottom": 282,
+     "h": 38
+    },
+    "short": {
+     "top": 302,
+     "bottom": 413,
+     "h": 111
+    },
+    "paylater": {
+     "top": 197,
+     "bottom": 235,
+     "h": 38
+    },
+    "bundles": {
+     "top": 681,
+     "bottom": 882,
+     "h": 202
+    },
+    "ready": {
+     "top": 433,
+     "bottom": 503,
+     "h": 70
+    },
+    "delivery": {
+     "top": 519,
+     "bottom": 591,
+     "h": 72
+    },
+    "cart": {
+     "top": 607,
+     "bottom": 661,
+     "h": 54
+    },
+    "auth": {
+     "top": 882,
+     "bottom": 927,
+     "h": 45
+    },
+    "trust": {
+     "top": 949,
+     "bottom": 1047,
+     "h": 98
+    },
+    "paychips": {
+     "top": 1059,
+     "bottom": 1085,
+     "h": 26
+    }
+   },
+   "scrollWidth": 1440
+  }
+ },
+ "reorderRestore": 200,
+ "adminBundlesSwitch": {
+  "desktopSections": "false",
+  "sectionsModel": false
+ },
+ "adminSectionsTabShows": "false"
+}

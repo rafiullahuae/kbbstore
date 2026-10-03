@@ -1517,14 +1517,19 @@ a{color:inherit;text-decoration:none}
 .pdp .pm-ready:has(+ .pts-del) > :last-child,
 .pdp .pm-cart:has(+ .pts-stack) > :last-child{margin-block-end:0}
 
-/* ── 2. Tabby & Tamara, two cards side by side (phone only) ───────────────── */
+/* ── 2. Tabby & Tamara, two cards side by side (both widths since Lane RG) ── */
 .pdp-paylater{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
 .pdp-pl-card{display:flex;align-items:center;justify-content:space-between;gap:8px;min-inline-size:0;
     border:1px solid var(--line);border-radius:12px;padding:9px 10px;background:#fff}
 .pdp-pl-text{min-inline-size:0;font-size:11.5px;line-height:1.35;font-weight:500;color:var(--ink-2)}
 .pdp-pl-logo{flex:0 0 auto;display:flex;line-height:0}
 .pdp-pl-mark{display:block;block-size:18px;inline-size:auto}
-@media (min-width:881px){.pdp .pm-paylater{display:none}}
+/* (Lane RG) "i want tabby tamara section in desktop also with controls." The
+   laptop used to hide this block outright (display:none on `.pm-paylater`
+   from 881px). It is now drawn there too, under the short description and
+   above "Choose your option", with its own space above it (Layout → Spacing ·
+   Buy column → "Space above Tabby & Tamara · laptop") and its own laptop
+   switch (Desktop sections), at the end of this file. */
 
 /* ── 3. THE PHONE PAGE, AS SECTIONS ───────────────────────────────────────── */
 @media (max-width:880px){
@@ -1659,4 +1664,106 @@ a{color:inherit;text-decoration:none}
   .pdp-page.pds-on > .sr{inline-size:100%}
   .pdp-page.pds-on.pds-ar-buytogether > .kbb-fbt,.pdp-page.pds-on.pds-ar-details > .pm-details,
   .pdp-page.pds-on.pds-ar-related > .ymal{margin-block-start:0}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LAPTOP SWITCHES, THE BUY COLUMN'S ORDER, AND THE DETAILS BLOCK.   (Lane RG)
+
+   1. THE MODULE SWITCHES AT THIS PAGE'S OWN BREAKPOINT. kbb.css hides `.d-off`
+      from 901px and `.m-off` to 900px — the homepage's turning point. This
+      page turns at 880/881, so a module switched off for laptops still showed
+      at 881–900px. `.pdp-page .d-off` closes that gap; a module off on phones
+      only carries `pdp-m-off` (App\Services\ProductSections::classFor()),
+      hidden here at 880px and below and never on the laptop layout.
+   2. ONE LAPTOP SWITCH PER SECTION. `pd-off-<section>` on `.pdp-page`
+      (App\Services\ProductDesktopSections::wrapperClass()) hides the
+      section's own box from 881px — the mirror of Mobile sections'
+      `pm-off-<section>` below 881px. "Options / bundles" off on a laptop now
+      hides the whole "Choose your option" block, label and rows, on a simple
+      product's quantity bundles too, which is the bug the owner reported.
+   3. THE BUY COLUMN IN HIS ORDER — only under `.pdsb-on`, which is printed
+      only once a block has been moved; see the class's header.
+   4. THE DETAILS BLOCK: the laptop half of the tab-row gap, the first line of
+      a tab body at the top of its panel, and the eyebrow and heading switches.
+   Nothing here measures anything.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1 ── */
+@media (min-width:881px){.pdp-page .d-off{display:none !important}}
+@media (max-width:880px){.pdp-page .pdp-m-off{display:none !important}}
+
+/* ── 2 ── */
+@media (min-width:881px){
+  .pdp-page.pd-off-title .pm-title,.pdp-page.pd-off-price .pm-price,.pdp-page.pd-off-short .pm-short,
+  .pdp-page.pd-off-paylater .pm-paylater,.pdp-page.pd-off-bundles .pm-bundles,.pdp-page.pd-off-ready .pm-ready,
+  .pdp-page.pd-off-delivery .kbb-cart-form > .pts-del,.pdp-page.pd-off-cart .pm-cart,.pdp-page.pd-off-cart .buybox > .notifyme,
+  .pdp-page.pd-off-auth .kbb-cart-form > .pts-stack,.pdp-page.pd-off-trust .pm-trust,.pdp-page.pd-off-paychips .pm-paychips,
+  .pdp-page.pd-off-buytogether > .kbb-fbt,.pdp-page.pd-off-details > .pm-details,
+  .pdp-page.pd-off-reviews > .sr,.pdp-page.pd-off-related > .ymal{display:none}
+
+  /* Tabby & Tamara on a laptop: under the short description, above "Choose
+     your option". Its own space above it; the gap under it is the options'
+     own "“Read more” → options · laptop", which collapses with nothing here. */
+  .pdp .pm-paylater{margin-block-start:var(--pl-paylater-gap-d,16px)}
+}
+
+/* ── 3 ── THE BUY COLUMN, REORDERED (laptop, `.pdsb-on` only).
+   The column becomes one flex column; the cart form steps aside
+   (`display:contents`, as the phone page does) so its blocks are items of the
+   column too. Flex items do not collapse margins, so every block's outer
+   margins — and the inner first/last margins that used to collapse through
+   it — are zeroed, and each block takes ONE gap above it: the very slider
+   that sets that gap today. In the default order that draws the same rects
+   (measured); in any other order each block is spaced by its own slider.
+   The first block drawn (`pdsb-f-<key>`) has none. */
+@media (min-width:881px){
+  .pdp-page.pdsb-on .pdp .buybox{display:flex;flex-direction:column}
+  .pdp-page.pdsb-on .buybox > .kbb-cart-form{display:contents}
+  .pdp-page.pdsb-on .buybox > *,.pdp-page.pdsb-on .kbb-cart-form > *{order:999;min-inline-size:0;margin-block:0}
+  .pdp-page.pdsb-on .buybox .pm-sec > :last-child{margin-block-end:0}
+  .pdp-page.pdsb-on .pm-price .bb-pricerow,.pdp-page.pdsb-on .pm-short .bb-desc,
+  .pdp-page.pdsb-on .pm-bundles .opt-label,.pdp-page.pdsb-on .pm-ready .stockline{margin-block-start:0}
+
+  .pdp-page.pdsb-on .pm-title{order:var(--pdsb-o-title,1)}
+  .pdp-page.pdsb-on .pm-price{order:var(--pdsb-o-price,2);margin-block-start:var(--pl-rate-gap-d,10px)}
+  .pdp-page.pdsb-on .pm-short{order:var(--pdsb-o-short,3);margin-block-start:var(--pl-desc-gap-d,20px)}
+  .pdp-page.pdsb-on .pm-paylater{order:var(--pdsb-o-paylater,4);margin-block-start:var(--pl-paylater-gap-d,16px)}
+  .pdp-page.pdsb-on .pm-bundles{order:var(--pdsb-o-bundles,5);margin-block-start:var(--pl-opt-gap-d,20px)}
+  .pdp-page.pdsb-on .pm-ready{order:var(--pdsb-o-ready,6);margin-block-start:var(--pl-rule-gap,20px)}
+  .pdp-page.pdsb-on .kbb-cart-form > .pts-del{order:var(--pdsb-o-delivery,7);margin-block-start:var(--pts-above-d,16px)}
+  .pdp-page.pdsb-on .pm-cart{order:var(--pdsb-o-cart,8);margin-block-start:var(--pts-below-d,16px)}
+  .pdp-page.pdsb-on .kbb-cart-form > .pts-stack{order:var(--pdsb-o-auth,9)}
+  .pdp-page.pdsb-on .pm-trust{order:var(--pdsb-o-trust,10);margin-block-start:var(--pl-trust-gap,22px)}
+  .pdp-page.pdsb-on .pm-paychips{order:var(--pdsb-o-paychips,11);margin-block-start:var(--pl-chips-gap,12px)}
+  /* Two passengers, as on the phone: "tell me when it is back" travels with
+     Add to cart, and a set's blurb stays under "What is in this set". */
+  .pdp-page.pdsb-on .buybox > .notifyme{order:var(--pdsb-o-cart,8)}
+  .pdp-page.pdsb-on .pm-short.pm-short-set{order:var(--pdsb-o-bundles,5);margin-block-start:var(--pl-desc-gap-d,20px)}
+
+  .pdp-page.pdsb-f-title .pm-title,.pdp-page.pdsb-f-price .pm-price,.pdp-page.pdsb-f-short .pm-short:not(.pm-short-set),
+  .pdp-page.pdsb-f-paylater .pm-paylater,.pdp-page.pdsb-f-bundles .pm-bundles,.pdp-page.pdsb-f-ready .pm-ready,
+  .pdp-page.pdsb-f-delivery .kbb-cart-form > .pts-del,.pdp-page.pdsb-f-cart .pm-cart,.pdp-page.pdsb-f-auth .kbb-cart-form > .pts-stack,
+  .pdp-page.pdsb-f-trust .pm-trust,.pdp-page.pdsb-f-paychips .pm-paychips{margin-block-start:0}
+}
+
+/* ── 4 ── THE DETAILS BLOCK.
+   "need spacing beteen the tab heading and content in mobile, and desktop
+   both." The phone keeps Layout → Spacing · Page → "Space under the detail tab
+   row · phone" (`--pl-tab-body-gap`, the rule near line 993); the laptop now
+   has its own. The tab bodies arrive with their leading blank lines already
+   dropped (Store\ProductController::tabs()), and the first thing in a body
+   gives up its top margin even when it is wrapped — `<div><h3>Benefits` — so
+   the gap under the tab row is the slider and nothing else, on every tab. */
+@media (min-width:881px){.details .dtabbar{margin-block-end:var(--pl-tab-body-gap-d,18px)}}
+.details .dcontent > :first-child > :first-child,
+.details .dcontent > :first-child > :first-child > :first-child{margin-block-start:0}
+
+/* "also the section heading also i want to hide. and text THE DETAILS and
+   section heading. give controls for desktop and mobile both. and keep hide
+   by default." Mobile sections → the options: the eyebrow's phone switch was
+   already there (`pm-dhead`, in the phone block above); its laptop switch and
+   both of the heading's are new, all off. */
+@media (max-width:880px){.pdp-page:not(.pm-dh2) > .pm-details > h2{display:none}}
+@media (min-width:881px){
+  .pdp-page:not(.pd-dhead) > .pm-details > .eyebrow,.pdp-page:not(.pd-dh2) > .pm-details > h2{display:none}
 }

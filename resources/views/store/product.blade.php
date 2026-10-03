@@ -246,6 +246,14 @@
        the style, read only inside the laptop media query. */
     $kbbDsec = app(\App\Services\ProductDesktopSections::class);
     $kbbDsecDrawn = $kbbDsec->isDefault() ? [] : \App\Services\ProductDesktopSections::drawn($modules, $buyTogether ?? null, $alsoLike ?? null);
+    /* (Lane RG) The buy column's three blocks that depend on the product, for
+       ProductDesktopSections::firstBuy() -- worked out only once he has moved
+       a buy-column block, from values this template already holds. */
+    $kbbDsecBuyDrawn = $kbbDsec->isBuyDefault() ? [] : [
+        'short' => (bool) $product->short_description && $kbbBlurb !== '' && ! $kbbShortBelow,
+        'paylater' => $kbbMsec->payLater() !== [],
+        'bundles' => $isVar || ! empty($bundles) || $product->type === 'set',
+    ];
 
     /* ═══════════════════════════════════════════════════════════════════════
        THE THREE PROPOSED LAYOUTS ARE GONE. (Lane PP2)
@@ -365,7 +373,7 @@
 @endpush
 
 @section('content')
-<div class="wrap pdp-page {{ $kbbMsec->wrapperClass() }}{{ $kbbDsec->wrapperClass($kbbDsecDrawn) }}" style="{{ $kbbMsec->wrapperStyle() }}{{ $kbbDsec->wrapperStyle() }}">
+<div class="wrap pdp-page {{ $kbbMsec->wrapperClass() }}{{ $kbbDsec->wrapperClass($kbbDsecDrawn, $kbbDsecBuyDrawn) }}" style="{{ $kbbMsec->wrapperStyle() }}{{ $kbbDsec->wrapperStyle() }}">
   <div class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ $product->categories->first()?->url() ?? Url::to('/shop/') }}">{{ $product->categories->first()?->t('name') ?? __('store.breadcrumb.shop') }}</a> / {{ $name }}</div>
   <div class="pdp">
     <!-- gallery -->

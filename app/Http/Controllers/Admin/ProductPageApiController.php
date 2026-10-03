@@ -282,9 +282,22 @@ class ProductPageApiController extends Controller
          * appended in the default order (ProductDesktopSections::validate()).
          */
         $dsecOrder = null;
+        $dsecBuy = null;
+        $dsecLaptop = null;
 
+        /*
+         * (Lane RG) two more parts, validated with `order` before anything is
+         * written:
+         *
+         *   buy     the laptop buy column's order — ProductDesktopSections::
+         *           validateBuy(), the same strictness as `order`.
+         *   laptop  `{section: bool}`, one laptop switch per section — an
+         *           unknown section or a non-boolean refused. Written where
+         *           each switch LIVES (saveLaptop()): a Sections-tab module's
+         *           `desktop`, or `pdpds_off`. Never a second copy.
+         */
         if (isset($data['dsections'])) {
-            $unknown = array_diff(array_keys($data['dsections']), ['order']);
+            $unknown = array_diff(array_keys($data['dsections']), ['order', 'buy', 'laptop']);
 
             if ($unknown !== []) {
                 return response()->json(['ok' => false, 'error' => 'Unknown part: '.implode(', ', $unknown)], 422);
@@ -295,6 +308,22 @@ class ProductPageApiController extends Controller
 
                 if (is_string($dsecOrder)) {
                     return response()->json(['ok' => false, 'error' => $dsecOrder], 422);
+                }
+            }
+
+            if (array_key_exists('buy', $data['dsections'])) {
+                $dsecBuy = ProductDesktopSections::validateBuy($data['dsections']['buy']);
+
+                if (is_string($dsecBuy)) {
+                    return response()->json(['ok' => false, 'error' => $dsecBuy], 422);
+                }
+            }
+
+            if (array_key_exists('laptop', $data['dsections'])) {
+                $dsecLaptop = ProductDesktopSections::validateLaptop($data['dsections']['laptop']);
+
+                if (is_string($dsecLaptop)) {
+                    return response()->json(['ok' => false, 'error' => $dsecLaptop], 422);
                 }
             }
         }
@@ -372,6 +401,18 @@ class ProductPageApiController extends Controller
         if (is_array($dsecOrder)) {
             app(ProductDesktopSections::class)->save($dsecOrder);
             $saved += count($dsecOrder);
+        }
+
+        if (is_array($dsecBuy)) {
+            app(ProductDesktopSections::class)->saveBuy($dsecBuy);
+            $saved += count($dsecBuy);
+        }
+
+        if (is_array($dsecLaptop) && $dsecLaptop !== []) {
+            // After `sections` above, so a POST carrying both ends on the
+            // switch drawn on this tab; the screen sends the same value in both.
+            app(ProductDesktopSections::class)->saveLaptop($dsecLaptop);
+            $saved += count($dsecLaptop);
         }
 
         if (is_array($together)) {

@@ -410,6 +410,34 @@ final class RichText
      */
     public static function trimBlankEdges(string $html): string
     {
+        return self::trimBlank($html, true);
+    }
+
+    /**
+     * trimBlankEdges() for the TOP edge only: what renders as empty space
+     * before the first visible thing. (Lane RG)
+     *
+     * WHAT THE OWNER SAW. "give controls of details tab heading and the
+     * content between spacing as marked" -- on his laptop the Description tab
+     * opened about 75px under the tab row and the Major Ingredients tab about
+     * 10px under it, with the same setting behind both. An imported WooCommerce
+     * description that opens with blank lines (`&nbsp;` and an empty line above
+     * the copy, which wpautop() turns into `<p>&nbsp;</p>`) draws them as
+     * paragraphs, each a line-box and a margin tall, so the tab-row spacing
+     * control could only ever decide the SMALLER of the two gaps.
+     *
+     * Applied to the tab bodies at render time (Store\ProductController::
+     * tabs()); nothing stored is altered. A blank line in the MIDDLE or at the
+     * end of a description is the author's and stays. A body with nothing to
+     * trim comes back as the same string, byte for byte.
+     */
+    public static function trimLeadingBlank(string $html): string
+    {
+        return self::trimBlank($html, false);
+    }
+
+    private static function trimBlank(string $html, bool $trailing): string
+    {
         if (trim($html) === '') {
             return '';
         }
@@ -430,7 +458,7 @@ final class RichText
         }
 
         $changed = self::trimEdge($root, true);
-        $changed = self::trimEdge($root, false) || $changed;
+        $changed = ($trailing && self::trimEdge($root, false)) || $changed;
 
         if (! $changed) {
             return $html;

@@ -1,0 +1,464 @@
+{
+ "details": {
+  "390": {
+   "scrollWidth": 390,
+   "tabs": [
+    {
+     "tab": "Description",
+     "gap": 86,
+     "boxGap": 18,
+     "first": "Benefits:"
+    },
+    {
+     "tab": "Ingredients",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Houttuynia Cordata Extra"
+    },
+    {
+     "tab": "How to use",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Cleanse and pat the skin"
+    },
+    {
+     "tab": "Shipping & returns",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Dispatched from Dubai wi"
+    },
+    {
+     "tab": "Authenticity",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Every unit in this shop "
+    }
+   ],
+   "buy": {
+    "title": {
+     "top": 603,
+     "bottom": 681,
+     "h": 78
+    },
+    "price": {
+     "top": 799,
+     "bottom": 837,
+     "h": 38
+    },
+    "short": {
+     "top": 691,
+     "bottom": 781,
+     "h": 91
+    },
+    "paylater": {
+     "top": 855,
+     "bottom": 937,
+     "h": 82
+    },
+    "bundles": {
+     "top": 955,
+     "bottom": 1136,
+     "h": 181
+    },
+    "ready": {
+     "top": 1154,
+     "bottom": 1203,
+     "h": 49
+    },
+    "delivery": {
+     "top": 1287,
+     "bottom": 1372,
+     "h": 86
+    },
+    "cart": {
+     "top": 1215,
+     "bottom": 1269,
+     "h": 54
+    },
+    "auth": {
+     "top": 1390,
+     "bottom": 1423,
+     "h": 33
+    },
+    "trust": "hidden",
+    "paychips": {
+     "top": 1441,
+     "bottom": 1467,
+     "h": 26
+    }
+   },
+   "details": {
+    "section": {
+     "top": 1838,
+     "bottom": 2142,
+     "h": 304
+    },
+    "eyebrow": "hidden",
+    "heading": {
+     "top": 1873,
+     "bottom": 1906,
+     "h": 33
+    },
+    "sectionTopToTabbar": 86
+   }
+  },
+  "1280": {
+   "scrollWidth": 1280,
+   "tabs": [
+    {
+     "tab": "Description",
+     "gap": 86,
+     "boxGap": 18,
+     "first": "Benefits:"
+    },
+    {
+     "tab": "Ingredients",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Houttuynia Cordata Extra"
+    },
+    {
+     "tab": "How to use",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Cleanse and pat the skin"
+    },
+    {
+     "tab": "Shipping & returns",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Dispatched from Dubai wi"
+    },
+    {
+     "tab": "Authenticity",
+     "gap": 20,
+     "boxGap": 18,
+     "first": "Every unit in this shop "
+    }
+   ],
+   "buy": {
+    "title": {
+     "top": 116,
+     "bottom": 181,
+     "h": 65
+    },
+    "price": {
+     "top": 191,
+     "bottom": 228,
+     "h": 38
+    },
+    "short": {
+     "top": 248,
+     "bottom": 359,
+     "h": 111
+    },
+    "paylater": "hidden",
+    "bundles": {
+     "top": 379,
+     "bottom": 580,
+     "h": 202
+    },
+    "ready": {
+     "top": 600,
+     "bottom": 670,
+     "h": 70
+    },
+    "delivery": {
+     "top": 686,
+     "bottom": 758,
+     "h": 72
+    },
+    "cart": {
+     "top": 774,
+     "bottom": 828,
+     "h": 54
+    },
+    "auth": {
+     "top": 828,
+     "bottom": 873,
+     "h": 45
+    },
+    "trust": {
+     "top": 895,
+     "bottom": 993,
+     "h": 98
+    },
+    "paychips": {
+     "top": 1005,
+     "bottom": 1031,
+     "h": 26
+    }
+   },
+   "details": {
+    "section": {
+     "top": 1355,
+     "bottom": 1682,
+     "h": 328
+    },
+    "eyebrow": {
+     "top": 1390,
+     "bottom": 1406,
+     "h": 17
+    },
+    "heading": {
+     "top": 1413,
+     "bottom": 1446,
+     "h": 33
+    },
+    "sectionTopToTabbar": 110
+   }
+  }
+ },
+ "bundlesSave": 200,
+ "bundles": {
+  "390": {
+   "section": 181,
+   "label": "Choose your option Save more with bundles",
+   "visibleRows": 3,
+   "paylater": 82,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+   "scrollWidth": 390
+  },
+  "880": {
+   "section": 181,
+   "label": "Choose your option Save more with bundles",
+   "visibleRows": 3,
+   "paylater": 38,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+   "scrollWidth": 880
+  },
+  "881": {
+   "section": 202,
+   "label": "Choose your option Save more with bundles",
+   "visibleRows": 3,
+   "paylater": 0,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+   "scrollWidth": 881
+  },
+  "890": {
+   "section": 202,
+   "label": "Choose your option Save more with bundles",
+   "visibleRows": 3,
+   "paylater": 0,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+   "scrollWidth": 890
+  },
+  "900": {
+   "section": 202,
+   "label": "Choose your option Save more with bundles",
+   "visibleRows": 3,
+   "paylater": 0,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+   "scrollWidth": 900
+  },
+  "1000": {
+   "section": 202,
+   "label": "Choose your option Save more with bundles",
+   "visibleRows": 3,
+   "paylater": 0,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+   "scrollWidth": 1000
+  },
+  "1280": {
+   "section": 202,
+   "label": "Choose your option Save more with bundles",
+   "visibleRows": 3,
+   "paylater": 0,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+   "scrollWidth": 1280
+  },
+  "1440": {
+   "section": 202,
+   "label": "Choose your option Save more with bundles",
+   "visibleRows": 3,
+   "paylater": 0,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+   "scrollWidth": 1440
+  },
+  "1608": {
+   "section": 202,
+   "label": "Choose your option Save more with bundles",
+   "visibleRows": 3,
+   "paylater": 0,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+   "scrollWidth": 1608
+  }
+ },
+ "bundlesRestore": 200,
+ "buy": {
+  "390": {
+   "blocks": {
+    "title": {
+     "top": 603,
+     "bottom": 681,
+     "h": 78
+    },
+    "price": {
+     "top": 799,
+     "bottom": 837,
+     "h": 38
+    },
+    "short": {
+     "top": 691,
+     "bottom": 781,
+     "h": 91
+    },
+    "paylater": {
+     "top": 855,
+     "bottom": 937,
+     "h": 82
+    },
+    "bundles": {
+     "top": 955,
+     "bottom": 1136,
+     "h": 181
+    },
+    "ready": {
+     "top": 1154,
+     "bottom": 1203,
+     "h": 49
+    },
+    "delivery": {
+     "top": 1287,
+     "bottom": 1372,
+     "h": 86
+    },
+    "cart": {
+     "top": 1215,
+     "bottom": 1269,
+     "h": 54
+    },
+    "auth": {
+     "top": 1390,
+     "bottom": 1423,
+     "h": 33
+    },
+    "trust": "hidden",
+    "paychips": {
+     "top": 1441,
+     "bottom": 1467,
+     "h": 26
+    }
+   },
+   "paylater": 82,
+   "scrollWidth": 390,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside"
+  },
+  "1280": {
+   "blocks": {
+    "title": {
+     "top": 116,
+     "bottom": 181,
+     "h": 65
+    },
+    "price": {
+     "top": 191,
+     "bottom": 228,
+     "h": 38
+    },
+    "short": {
+     "top": 248,
+     "bottom": 359,
+     "h": 111
+    },
+    "paylater": "hidden",
+    "bundles": {
+     "top": 379,
+     "bottom": 580,
+     "h": 202
+    },
+    "ready": {
+     "top": 600,
+     "bottom": 670,
+     "h": 70
+    },
+    "delivery": {
+     "top": 686,
+     "bottom": 758,
+     "h": 72
+    },
+    "cart": {
+     "top": 774,
+     "bottom": 828,
+     "h": 54
+    },
+    "auth": {
+     "top": 828,
+     "bottom": 873,
+     "h": 45
+    },
+    "trust": {
+     "top": 895,
+     "bottom": 993,
+     "h": 98
+    },
+    "paychips": {
+     "top": 1005,
+     "bottom": 1031,
+     "h": 26
+    }
+   },
+   "paylater": 0,
+   "scrollWidth": 1280,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside"
+  },
+  "1440": {
+   "blocks": {
+    "title": {
+     "top": 116,
+     "bottom": 181,
+     "h": 65
+    },
+    "price": {
+     "top": 191,
+     "bottom": 228,
+     "h": 38
+    },
+    "short": {
+     "top": 248,
+     "bottom": 359,
+     "h": 111
+    },
+    "paylater": "hidden",
+    "bundles": {
+     "top": 379,
+     "bottom": 580,
+     "h": 202
+    },
+    "ready": {
+     "top": 600,
+     "bottom": 670,
+     "h": 70
+    },
+    "delivery": {
+     "top": 686,
+     "bottom": 758,
+     "h": 72
+    },
+    "cart": {
+     "top": 774,
+     "bottom": 828,
+     "h": 54
+    },
+    "auth": {
+     "top": 828,
+     "bottom": 873,
+     "h": 45
+    },
+    "trust": {
+     "top": 895,
+     "bottom": 993,
+     "h": 98
+    },
+    "paychips": {
+     "top": 1005,
+     "bottom": 1031,
+     "h": 26
+    }
+   },
+   "paylater": 0,
+   "scrollWidth": 1440,
+   "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside"
+  }
+ }
+}

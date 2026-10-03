@@ -22,8 +22,19 @@
       · "Reset to the default order", which the console's reset guard asks
         about first — it matches the label.
 
-    Why only those four, and not the blocks inside the buy column:
-    App\Services\ProductDesktopSections' header carries the measurement.
+    (Lane RG) AND NOW THE BUY COLUMN TOO, AND A LAPTOP SWITCH ON EVERY ROW.
+      "also give control to hide unhide any section on desktop too" and
+      "also controls for changing positions of the sections on desktop too."
+      · A second list above the four: the buy column's eleven blocks, in the
+        order the laptop draws them, draggable within that list.
+      · Every row carries its laptop on/off switch. A row that IS a Sections-
+        tab module (bundles → Options / bundles, details → Detail tabs, …)
+        flips that module's Desktop value in the console's own PP.sections
+        model, so the Sections tab and this tab show one switch twice and the
+        server stores one value (ProductDesktopSections::saveLaptop()).
+      · The photo stays fixed: it is the laptop page's left column.
+    How a reordered buy column keeps its spacing:
+    App\Services\ProductDesktopSections' header.
 
     ── MOVING A ROW: THREE WAYS, NONE OF THEM MEASURES ANYTHING ──────────────
 
@@ -57,7 +68,7 @@
 .pds-row.over{box-shadow:inset 0 3px 0 #E0567B}
 .pds-row.over.after{box-shadow:inset 0 -3px 0 #E0567B}
 .pds-row.off .pds-main b{color:#8b95a5}
-.pds-row.off .pds-main b::after{content:' · off on laptops (Sections tab)';font-weight:500;color:#a3acb9}
+.pds-row.off .pds-main b::after{content:' · off on laptops';font-weight:500;color:#a3acb9}
 .pds-fixed{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#f8fafc;border-bottom:1px solid #eef1f5;font-size:12.5px;color:#5b6576}
 .pds-fixed b{font-size:13.5px;color:#3a4252}
 .pds-fixed i{font-style:normal;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#a3acb9;margin-inline-start:auto}
@@ -74,6 +85,10 @@
 .pds-arrow{inline-size:30px;block-size:30px;border:1px solid #dfe4ec;background:#fff;border-radius:7px;cursor:pointer;font-size:14px;line-height:1;color:#3a4252}
 .pds-arrow[disabled]{opacity:.35;cursor:default}
 .pds-note{font-size:12px;color:#5b6576;margin:0;padding:10px 14px;background:#fbf6ff;border-bottom:1px solid #eef1f5}
+.pds-sub{background:#fff;padding-block:9px 7px}
+.pds-sub b{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#7b8697}
+.pds-same{font-style:normal;color:#a3acb9}
+.pds-arrows .ectog{margin-inline-end:8px;align-self:center}
 @media (max-width:600px){
   .pds-row{grid-template-columns:30px minmax(0,1fr) auto;padding-inline:6px 10px}
   .pds-num{display:none}
@@ -87,61 +102,102 @@
 
   var TAB = 'dsections';
   var DIRTY = false;
-  var ORDER = null;   // working copy: list of keys
-  var ROWS = null;    // key => {key,label,description,desktop}
+  /* Two lists (Lane RG added the first): `buy` is the laptop buy column,
+     `under` the four full-width blocks under the two columns (Lane RF). */
+  var LISTS = null;   // { buy: [keys], under: [keys] }
+  var ROWS = null;    // key => {key,label,description,module}
+  var SW = null;      // key => on a laptop? (rows no Sections-tab module owns)
   var DRAG = null;    // key being dragged
 
   /* The selector each block is drawn with, for the preview's "is it on this
      page at all" — an existence check, never a measurement. */
   var BLOCK = { buytogether: '.kbb-fbt', details: '.pm-details', reviews: '.sr', related: '.ymal' };
+  var BUYSEL = { title: '.pm-title', price: '.pm-price', short: '.pm-short:not(.pm-short-set)', paylater: '.pm-paylater', bundles: '.pm-bundles',
+    ready: '.pm-ready', delivery: '.kbb-cart-form > .pts-del', cart: '.pm-cart', auth: '.kbb-cart-form > .pts-stack', trust: '.pm-trust', paychips: '.pm-paychips' };
 
   function data() { return (typeof PP !== 'undefined' && PP && PP.dsections) ? PP.dsections : null; }
 
   function load() {
     var d = data();
-    if (!d || !Array.isArray(d.list)) { ORDER = null; ROWS = null; return; }
-    ORDER = []; ROWS = {};
-    d.list.forEach(function (r) {
-      if (!r || typeof r.key !== 'string' || !/^[a-z]+$/.test(r.key) || ROWS[r.key]) return;
-      ORDER.push(r.key);
-      ROWS[r.key] = { key: r.key, label: String(r.label), description: String(r.description), desktop: r.desktop !== false };
+    if (!d || !Array.isArray(d.list)) { LISTS = null; ROWS = null; SW = null; return; }
+    LISTS = { buy: [], under: [] }; ROWS = {}; SW = {};
+    [['buy', Array.isArray(d.buy) ? d.buy : []], ['under', d.list]].forEach(function (pair) {
+      pair[1].forEach(function (r) {
+        if (!r || typeof r.key !== 'string' || !/^[a-z]+$/.test(r.key) || ROWS[r.key]) return;
+        LISTS[pair[0]].push(r.key);
+        ROWS[r.key] = { key: r.key, label: String(r.label), description: String(r.description),
+          module: (typeof r.module === 'string' && /^[a-z]+$/.test(r.module)) ? r.module : null };
+        SW[r.key] = r.desktop !== false;
+      });
     });
   }
 
-  function defaults() {
-    var d = data();
-    var list = (d && Array.isArray(d.defaults)) ? d.defaults : [];
-    return list.filter(function (k) { return ROWS && !!ROWS[k]; });
+  function listOf(k) { return !LISTS ? null : (LISTS.buy.indexOf(k) >= 0 ? 'buy' : (LISTS.under.indexOf(k) >= 0 ? 'under' : null)); }
+
+  /* ONE VALUE PER SWITCH. A row that IS a Sections-tab module reads and
+     writes that module's Desktop value in the console's own model
+     (PP.sections), so this tab and the Sections tab are one switch drawn
+     twice; the server stores it in the same row (ProductDesktopSections::
+     saveLaptop()). */
+  function moduleRow(k) {
+    var m = ROWS && ROWS[k] && ROWS[k].module;
+    if (!m || typeof PP === 'undefined' || !PP || !Array.isArray(PP.sections)) return null;
+    for (var i = 0; i < PP.sections.length; i++) if (PP.sections[i] && PP.sections[i].key === m) return PP.sections[i];
+    return null;
+  }
+  function on(k) { var s = moduleRow(k); return s ? s.desktop !== false : (SW ? SW[k] !== false : true); }
+
+  function defaults(name) {
+    var d = data(), field = name === 'buy' ? 'buy_defaults' : 'defaults';
+    var list = (d && Array.isArray(d[field])) ? d[field] : [];
+    return list.filter(function (k) { return ROWS && !!ROWS[k] && listOf(k) === name; });
   }
 
-  function isDefault() { return ORDER !== null && ORDER.join(',') === defaults().join(','); }
+  function isDefault(name) { return LISTS !== null && LISTS[name].join(',') === defaults(name).join(','); }
 
   /* ── what the server would print, computed here for the preview ────────── */
 
   /** ProductDesktopSections::afterReviews(), against what this frame draws. */
   function afterReviews(page) {
-    var drawn = function (k) { return !!(ROWS[k] && ROWS[k].desktop && page.querySelector(':scope > ' + BLOCK[k])); };
-    var at = ORDER.indexOf('reviews');
+    var drawn = function (k) { return !!(ROWS[k] && on(k) && page.querySelector(':scope > ' + BLOCK[k])); };
+    var at = LISTS.under.indexOf('reviews');
     if (at < 0 || !drawn('reviews')) return null;
-    for (var i = at + 1; i < ORDER.length; i++) if (drawn(ORDER[i])) return ORDER[i];
+    for (var i = at + 1; i < LISTS.under.length; i++) if (drawn(LISTS.under[i])) return LISTS.under[i];
+    return null;
+  }
+
+  /** ProductDesktopSections::firstBuy(), against what this frame draws. */
+  function firstBuy(page) {
+    for (var i = 0; i < LISTS.buy.length; i++) {
+      var k = LISTS.buy[i], el = BUYSEL[k] && page.querySelector(BUYSEL[k]);
+      if (on(k) && el && el.firstElementChild) return k;
+    }
     return null;
   }
 
   function paintFrames() {
-    if (!ORDER) return;
-    var off = isDefault();
+    if (!LISTS) return;
     document.querySelectorAll('[data-ppframe]').forEach(function (fr) {
       var doc = null;
       try { doc = fr.contentDocument; } catch (e) { doc = null; }
       var page = doc && doc.querySelector('.pdp-page');
       if (!page) return;
-      Array.prototype.slice.call(page.classList).forEach(function (cl) { if (/^pds-/.test(cl)) page.classList.remove(cl); });
+      Array.prototype.slice.call(page.classList).forEach(function (cl) { if (/^(pds|pdsb|pd-off)-/.test(cl)) page.classList.remove(cl); });
       Object.keys(BLOCK).forEach(function (k) { page.style.removeProperty('--pds-o-' + k); });
-      if (off) return;
-      page.classList.add('pds-on');
-      var a = afterReviews(page);
-      if (a && /^[a-z]+$/.test(a)) page.classList.add('pds-ar-' + a);
-      ORDER.forEach(function (k, i) { if (/^[a-z]+$/.test(k)) page.style.setProperty('--pds-o-' + k, String(i + 1)); });
+      Object.keys(BUYSEL).forEach(function (k) { page.style.removeProperty('--pdsb-o-' + k); });
+      Object.keys(ROWS).forEach(function (k) { if (!on(k) && /^[a-z]+$/.test(k)) page.classList.add('pd-off-' + k); });
+      if (!isDefault('under')) {
+        page.classList.add('pds-on');
+        var a = afterReviews(page);
+        if (a && /^[a-z]+$/.test(a)) page.classList.add('pds-ar-' + a);
+        LISTS.under.forEach(function (k, i) { if (/^[a-z]+$/.test(k)) page.style.setProperty('--pds-o-' + k, String(i + 1)); });
+      }
+      if (!isDefault('buy')) {
+        page.classList.add('pdsb-on');
+        var f = firstBuy(page);
+        if (f && /^[a-z]+$/.test(f)) page.classList.add('pdsb-f-' + f);
+        LISTS.buy.forEach(function (k, i) { if (/^[a-z]+$/.test(k)) page.style.setProperty('--pdsb-o-' + k, String(i + 1)); });
+      }
     });
   }
 
@@ -154,30 +210,37 @@
 
   /* ── drawing ───────────────────────────────────────────────────────────── */
 
-  function row(k, i) {
-    var r = ROWS[k], n = ORDER.length;
-    return '<li class="pds-row' + (r.desktop ? '' : ' off') + '" data-pds-row="' + escAttr(k) + '">'
+  function row(k, i, all) {
+    var r = ROWS[k], n = all.length, o = on(k);
+    return '<li class="pds-row' + (o ? '' : ' off') + '" data-pds-row="' + escAttr(k) + '">'
       + '<button type="button" class="pds-handle" draggable="true" data-pds-handle="' + escAttr(k) + '" aria-label="' + escAttr('Move ' + r.label + ' — drag, or use the arrow keys') + '" title="Drag to move">⠿</button>'
       + '<span class="pds-num">' + (i + 1) + '</span>'
-      + '<div class="pds-main"><b>' + escHtml(r.label) + '</b><span>' + escHtml(r.description) + '</span></div>'
-      + '<span class="pds-arrows"><button type="button" class="pds-arrow" data-pds-up="' + escAttr(k) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="' + escAttr('Move ' + r.label + ' up') + '">↑</button>'
+      + '<div class="pds-main"><b>' + escHtml(r.label) + '</b><span>' + escHtml(r.description) + (r.module ? ' <em class="pds-same">Same switch as the Sections tab’s Desktop column.</em>' : '') + '</span></div>'
+      + '<span class="pds-arrows"><span class="ectog' + (o ? ' on' : '') + '" data-pds-sw="' + escAttr(k) + '" role="switch" aria-checked="' + (o ? 'true' : 'false') + '" tabindex="0" aria-label="' + escAttr(r.label + ' on laptops') + '" title="Show on laptops"></span>'
+      + '<button type="button" class="pds-arrow" data-pds-up="' + escAttr(k) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="' + escAttr('Move ' + r.label + ' up') + '">↑</button>'
       + '<button type="button" class="pds-arrow" data-pds-down="' + escAttr(k) + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="' + escAttr('Move ' + r.label + ' down') + '">↓</button></span>'
       + '</li>';
   }
 
+  function rows(name) { return LISTS[name].map(function (k, i, all) { return row(k, i, all); }).join(''); }
+
   function body() {
     return '<div class="mmcols"><div class="card mmcard">'
-      + '<div class="mmhd"><b>Desktop sections</b><span>The laptop product page under the photo and the buy column, top to bottom. Drag a block by its handle (or use ↑ ↓) to change where it sits. Laptops only — the phone order is on the Mobile sections tab.</span></div>'
-      + '<p class="pds-note">The photo and the buy column are one two-column block and stay at the top. Switching a block off for laptops is on the <b>Sections</b> tab; here it keeps its place in the list.</p>'
-      + '<div class="pds-fixed"><b>Photo + buy column</b><span>The gallery beside the title, price and Add to cart.</span><i>Always first</i></div>'
-      + '<ol class="pds-list" id="pdsList">' + ORDER.map(row).join('') + '</ol></div></div>';
+      + '<div class="mmhd"><b>Desktop sections</b><span>The laptop product page, top to bottom. The switch on each row shows or hides that block on laptops (phones are the Mobile sections tab). Drag a block by its handle (or use ↑ ↓) to change where it sits.</span></div>'
+      + '<p class="pds-note">A block switched off here is hidden from 881px up — the laptop layout — and still shows on phones if Mobile sections has it on. Rows marked “Same switch as the Sections tab” are one setting drawn in two places: switching either one switches both.</p>'
+      + '<div class="pds-fixed"><b>Photo</b><span>The gallery, the page’s left column.</span><i>Always shown</i></div>'
+      + '<div class="pds-fixed pds-sub"><b>Buy column</b><span>Beside the photo. Moving a block here gives each one the space above it that its own slider sets (Spacing · Buy column, Trust · Spacing).</span></div>'
+      + '<ol class="pds-list" id="pdsBuy" data-pds-list="buy">' + rows('buy') + '</ol>'
+      + '<div class="pds-fixed pds-sub"><b>Under the two columns</b><span>The full-width blocks.</span></div>'
+      + '<ol class="pds-list" id="pdsList" data-pds-list="under">' + rows('under') + '</ol></div></div>';
   }
 
   function repaintList(focusSel) {
-    var list = document.getElementById('pdsList');
-    if (!list) return;
-    list.innerHTML = ORDER.map(row).join('');
-    if (focusSel) { var el = list.querySelector(focusSel); if (el) el.focus(); }
+    [['pdsBuy', 'buy'], ['pdsList', 'under']].forEach(function (p) {
+      var list = document.getElementById(p[0]);
+      if (list) list.innerHTML = rows(p[1]);
+    });
+    if (focusSel) { var el = document.querySelector('#pdsBuy ' + focusSel + ',#pdsList ' + focusSel); if (el) el.focus(); }
   }
 
   /* ── the wrap ──────────────────────────────────────────────────────────── */
@@ -188,12 +251,12 @@
     var ours = (typeof PPTAB !== 'undefined' && PPTAB === TAB);
     original.apply(this, arguments);
     if (!data()) return;
-    if (ORDER === null || rebuild) { if (!DIRTY) load(); }
-    if (!ORDER) return;
+    if (LISTS === null || rebuild) { if (!DIRTY) load(); }
+    if (!LISTS) return;
 
     var strip = document.querySelector('#ppStrip .ectabs');
     if (strip && !strip.querySelector('[data-pdstab]')) {
-      var btn = '<button class="ectab' + (ours ? ' on' : '') + '" data-pdstab="' + TAB + '">Desktop sections<span class="ecn">' + ORDER.length + '</span></button>';
+      var btn = '<button class="ectab' + (ours ? ' on' : '') + '" data-pdstab="' + TAB + '">Desktop sections<span class="ecn">' + (LISTS.buy.length + LISTS.under.length) + '</span></button>';
       var mob = strip.querySelector('[data-pmstab]');
       if (mob) mob.insertAdjacentHTML('afterend', btn); else strip.insertAdjacentHTML('beforeend', btn);
       strip.querySelector('[data-pdstab]').onclick = function () { PPTAB = TAB; window.paintProductPage(); };
@@ -203,7 +266,7 @@
       var col = document.getElementById('ppCol');
       if (col) col.innerHTML = body();
       var lede = document.getElementById('ppLede');
-      if (lede) lede.textContent = 'The laptop product page’s full-width blocks — drag to put them in any order. The laptop preview follows as you go; nothing changes on the shop until you press Save changes.';
+      if (lede) lede.textContent = 'The laptop product page — switch any block off for laptops, and drag to put them in any order. The laptop preview follows as you go; nothing changes on the shop until you press Save changes.';
       var acts = document.getElementById('ppActs');
       if (acts) acts.innerHTML = '<button class="btn" id="pdsReset">Reset to the default order</button> <button class="btn" id="pdsDiscard">Discard</button>';
       if (DIRTY) { var d = document.getElementById('ppDirty'); if (d) { d.style.visibility = 'visible'; d.textContent = 'Unsaved changes'; } }
@@ -219,22 +282,24 @@
     if (e.target && e.target.matches && e.target.matches('[data-ppframe]')) paintFrames();
   }, true);
 
-  /* ── moving ────────────────────────────────────────────────────────────── */
+  /* ── moving: within its own list only ──────────────────────────────────── */
 
   function moveTo(key, to) {
-    var from = ORDER.indexOf(key);
-    if (from < 0) return;
-    to = Math.max(0, Math.min(ORDER.length - 1, to));
+    var name = listOf(key);
+    if (!name) return;
+    var L = LISTS[name], from = L.indexOf(key);
+    to = Math.max(0, Math.min(L.length - 1, to));
     if (to === from) return;
-    ORDER.splice(from, 1);
-    ORDER.splice(to, 0, key);
+    L.splice(from, 1);
+    L.splice(to, 0, key);
     markDirty();
   }
 
   function dropOn(key, target) {
     if (!key || !target || key === target) return;
-    if (ORDER.indexOf(key) < 0 || ORDER.indexOf(target) < 0) return;
-    moveTo(key, ORDER.indexOf(target));
+    var name = listOf(key);
+    if (!name || listOf(target) !== name) return;
+    moveTo(key, LISTS[name].indexOf(target));
     repaintList('[data-pds-handle="' + key + '"]');
   }
 
@@ -245,16 +310,16 @@
   function markOver(rowEl) {
     document.querySelectorAll('.pds-row.over').forEach(function (r) { if (r !== rowEl) r.classList.remove('over', 'after'); });
     if (!rowEl || !DRAG) return;
-    var k = rowEl.getAttribute('data-pds-row');
-    if (k === DRAG) return;
+    var k = rowEl.getAttribute('data-pds-row'), name = listOf(DRAG);
+    if (k === DRAG || listOf(k) !== name) return;
     rowEl.classList.add('over');
-    rowEl.classList.toggle('after', ORDER.indexOf(k) > ORDER.indexOf(DRAG));
+    rowEl.classList.toggle('after', LISTS[name].indexOf(k) > LISTS[name].indexOf(DRAG));
   }
 
   // mouse: HTML5 drag and drop, started from the handle
   document.addEventListener('dragstart', function (e) {
     var h = e.target.closest && e.target.closest('[data-pds-handle]');
-    if (!h || !ORDER) return;
+    if (!h || !LISTS) return;
     DRAG = h.getAttribute('data-pds-handle');
     var r = h.closest('.pds-row'); if (r) r.classList.add('dragging');
     try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', DRAG); if (r) e.dataTransfer.setDragImage(r, 16, 16); } catch (err) {}
@@ -279,7 +344,7 @@
   var PTR = null;
   document.addEventListener('pointerdown', function (e) {
     var h = e.target.closest && e.target.closest('[data-pds-handle]');
-    if (!h || e.pointerType === 'mouse' || !ORDER) return;
+    if (!h || e.pointerType === 'mouse' || !LISTS) return;
     e.preventDefault();
     DRAG = h.getAttribute('data-pds-handle');
     PTR = e.pointerId;
@@ -301,26 +366,49 @@
   document.addEventListener('pointerup', function (e) { endPointer(e, true); });
   document.addEventListener('pointercancel', function (e) { endPointer(e, false); });
 
-  // keyboard: arrow keys on the handle
+  // keyboard: arrow keys on the handle; Space / Enter on a switch
   document.addEventListener('keydown', function (e) {
+    var sw = e.target.closest && e.target.closest('[data-pds-sw]');
+    if (sw && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); toggle(sw.getAttribute('data-pds-sw')); return; }
     var h = e.target.closest && e.target.closest('[data-pds-handle]');
-    if (!h || !ORDER || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+    if (!h || !LISTS || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
     e.preventDefault();
-    var k = h.getAttribute('data-pds-handle');
-    moveTo(k, ORDER.indexOf(k) + (e.key === 'ArrowUp' ? -1 : 1));
+    var k = h.getAttribute('data-pds-handle'), name = listOf(k);
+    if (!name) return;
+    moveTo(k, LISTS[name].indexOf(k) + (e.key === 'ArrowUp' ? -1 : 1));
     repaintList('[data-pds-handle="' + k + '"]');
   });
+
+  /* ── the laptop switch ─────────────────────────────────────────────────── */
+
+  function toggle(k) {
+    if (!ROWS || !ROWS[k]) return;
+    var next = !on(k), s = moduleRow(k);
+    if (s) {
+      /* The Sections tab's own row, in the console's model: its next Save
+         posts it too, with the same value this tab posts. */
+      s.desktop = next;
+      if (typeof ppMarkDirty === 'function') ppMarkDirty('sections');
+    }
+    SW[k] = next;
+    markDirty();
+    repaintList('[data-pds-sw="' + k + '"]');
+  }
 
   /* ── buttons and Save ──────────────────────────────────────────────────── */
 
   window.addEventListener('click', async function (e) {
     var t = e.target;
-    if (!t || typeof PP === 'undefined' || !PP || !ORDER) return;
+    if (!t || typeof PP === 'undefined' || !PP || !LISTS) return;
+
+    var sw = t.closest && t.closest('[data-pds-sw]');
+    if (sw) { toggle(sw.getAttribute('data-pds-sw')); return; }
 
     var up = t.closest && t.closest('[data-pds-up]'), dn = t.closest && t.closest('[data-pds-down]');
     if (up || dn) {
-      var key = (up || dn).getAttribute(up ? 'data-pds-up' : 'data-pds-down');
-      moveTo(key, ORDER.indexOf(key) + (up ? -1 : 1));
+      var key = (up || dn).getAttribute(up ? 'data-pds-up' : 'data-pds-down'), name = listOf(key);
+      if (!name) return;
+      moveTo(key, LISTS[name].indexOf(key) + (up ? -1 : 1));
       repaintList('[data-pds-' + (up ? 'up' : 'down') + '="' + key + '"]:not([disabled])');
       return;
     }
@@ -328,13 +416,13 @@
       /* ASKED FIRST: the console's reset guard (document, capture) stops the
          first click, asks, and on "Yes" clicks again carrying
          data-kbb-sure-pass — the same contract Mobile sections' Reset keeps.
-         A buffer change, not a save. */
+         A buffer change, not a save. Both ORDERS go back; the switches stay. */
       if (t.getAttribute('data-kbb-sure-pass') !== '1') return;
-      ORDER = defaults();
+      LISTS = { buy: defaults('buy'), under: defaults('under') };
       markDirty(); window.paintProductPage(); return;
     }
     if (t.id === 'pdsDiscard' || t.id === 'pmsDiscard' || t.id === 'ppDiscard' || t.id === 'ptsDiscard') {
-      DIRTY = false; ORDER = null;
+      DIRTY = false; LISTS = null;
       if (t.id === 'pdsDiscard') renderProductPage();
       return;
     }
@@ -345,11 +433,13 @@
     if (!theirs) { e.stopPropagation(); e.preventDefault(); }
 
     var msg = document.getElementById('ppDirty');
+    var laptop = {};
+    Object.keys(ROWS).forEach(function (k) { laptop[k] = on(k); });
 
     try {
       var r = await fetch(ppBase(), { method: 'POST', credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': uToken(), Accept: 'application/json' },
-        body: JSON.stringify({ dsections: { order: ORDER.slice() } }) });
+        body: JSON.stringify({ dsections: { order: LISTS.under.slice(), buy: LISTS.buy.slice(), laptop: laptop } }) });
       var j = null;
       try { j = await r.json(); } catch (e2) { j = null; }
       if (r.status === 404 && (!j || (!j.message && !j.error))) {
@@ -358,7 +448,8 @@
       }
       if (j && j.ok) {
         if (j.dsections) PP.dsections = j.dsections;
-        DIRTY = false; ORDER = null; load();
+        if (Array.isArray(j.sections) && !theirs) PP.sections = j.sections;
+        DIRTY = false; LISTS = null; load();
         if (!theirs) {
           window.paintProductPage();
           if (typeof ppReloadPreview === 'function') ppReloadPreview();

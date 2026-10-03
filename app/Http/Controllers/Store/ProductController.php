@@ -745,6 +745,21 @@ class ProductController extends Controller
             (array) $this->settings->get('product_tabs', [])
         );
 
+        /* (Lane RG) THE TAB ROW'S GAP IS THE SLIDER'S, ON EVERY TAB. A body's
+           leading blank lines -- `<p>&nbsp;</p>`, `<br>`, empty paragraphs --
+           are not drawn, so Description no longer opens ~75px under the tab
+           row while Ingredients opens ~10px under it. At render time, for the
+           tab bodies only; stored copy is untouched, and a body that is
+           nothing BUT blank lines keeps them (the drop rule in forProduct()
+           already decided that tab is drawn). */
+        foreach ($tabs as $i => $tab) {
+            $trimmed = \App\Support\RichText::trimLeadingBlank($tab['body']);
+
+            if ($trimmed !== '') {
+                $tabs[$i]['body'] = $trimmed;
+            }
+        }
+
         // With demo content on, top the tabs up so the bar can be seen before
         // the real copy exists. Real tabs always come first.
         $demo = app(DemoContent::class);

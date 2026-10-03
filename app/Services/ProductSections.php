@@ -115,6 +115,17 @@ class ProductSections
            where the Desktop switch is meant to decide. */
         $mobileOff = $s['mobile'] || ($s['mobile_owner'] ?? null) !== null ? '' : 'm-off';
 
+        /* (Lane RG) ▲ kbb.css's `.m-off` hides up to 900px — the HOMEPAGE's
+           breakpoint — and this page is already its laptop layout from 881px.
+           A module off on phones but ON on laptops therefore vanished at
+           881–900px too. It gets this page's own class instead, which
+           kbb-product.css hides at max-width:880px only. Off on BOTH keeps
+           `d-off m-off`, byte for byte: hidden at every width either way
+           (`.pdp-page .d-off` now hides from 881px, the other half below). */
+        if ($mobileOff !== '' && $s['desktop']) {
+            $mobileOff = 'pdp-m-off';
+        }
+
         return trim(($s['desktop'] ? '' : 'd-off ') . $mobileOff);
     }
 

@@ -139,8 +139,8 @@ it('ships every value at the number the stylesheet already falls back to', funct
     $sheet = pdpLaySheet();
 
     // 30, and Lane PV's sixteen: the photo & badge five, ten laptop/phone
-    // halves of the buy column's gaps, and the brand's size.
-    expect($emitted)->toHaveCount(46);
+    // halves of the buy column's gaps, and the brand's size. Lane RG: the tab row's laptop gap, Tabby & Tamara's laptop gap.
+    expect($emitted)->toHaveCount(48);
 
     foreach ($emitted as $name => $value) {
         preg_match_all('/var\('.preg_quote($name, '/').'\s*,\s*([^)]+)\)/', $sheet, $m);
@@ -213,7 +213,7 @@ it('puts one style block on the page the moment a single value moves', function 
     expect($vars['--pl-title-m'])->toBe('24px');
     expect($vars['--pl-title-d'])->toBe('30px');
     expect($vars['--pl-sec-pad'])->toBe('34px');
-    expect($vars)->toHaveCount(46);
+    expect($vars)->toHaveCount(48); // Lane RG: + tab_body_gap_d, paylater_gap_d
 });
 
 it('prints a half-pixel size as a decimal and never as its stored integer', function () {
@@ -249,8 +249,8 @@ it('answers both halves of the screen from the one endpoint', function () {
     // buybox_gap moved from Page to Buy column, beside its laptop half.)
     expect($counts)->toBe([
         'Photo & badge' => 5,
-        'Spacing · Page' => 4,
-        'Spacing · Buy column' => 19,
+        'Spacing · Page' => 5,          // Lane RG: + the tab row's laptop gap
+        'Spacing · Buy column' => 20,   // Lane RG: + space above Tabby & Tamara · laptop
         'Type · Buy column' => 13,
         'Type · Sections & tabs' => 5,
     ]);

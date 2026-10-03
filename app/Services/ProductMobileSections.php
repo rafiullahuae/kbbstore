@@ -172,7 +172,18 @@ class ProductMobileSections
         'rate_count' => ['bool', 'Show the review count beside the rating', false,
             'Off, as asked: the price row shows the score and the bar only. On puts “5 reviews” back after the bar, at both widths.'],
         'details_head' => ['bool', 'Show “The details” over Product details · phone', false,
-            'The small pink line above the “Product details” heading. Off on phones, as asked; the laptop keeps it.'],
+            'The small pink line above the “Product details” heading. Off on phones, as asked.'],
+        /* (Lane RG) "also the section heading also i want to hide. and text
+           THE DETAILS and section heading. give controls for desktop and mobile
+           both. and keep hide by default." Three more switches beside the one
+           above, all OFF: the eyebrow on a laptop, and the heading per device.
+           Classes on `.pdp-page` (wrapperClass()), hidden in kbb-product.css. */
+        'details_head_d' => ['bool', 'Show “The details” over Product details · laptop', false,
+            'Off, as asked: the laptop page no longer draws the small pink line either.'],
+        'details_h2' => ['bool', 'Show the “Product details” heading · phone', false,
+            'Off, as asked: the tab row is the first thing in that block.'],
+        'details_h2_d' => ['bool', 'Show the “Product details” heading · laptop', false,
+            'Off, as asked.'],
         'tabby_on' => ['bool', 'Show the tabby card', true,
             'Also hidden while the tabby mark is switched off under Appearance → Cart page → Trust row, so this card never advertises a method the shop has turned off.'],
         'tabby_text' => ['text', 'tabby card text', 'Split your purchase into monthly payments', 'Plain text.'],
@@ -184,8 +195,8 @@ class ProductMobileSections
     /** One tab, ModuleSchema::tabs()' shape. The list itself is drawn by the screen. */
     public const TABS = [
         'msections' => ['Mobile sections',
-            'The options under the list: the even gap, where the rating sits, the review count, “The details”, and the two pay-later cards.',
-            ['gap', 'rate_m', 'rate_d', 'rate_count', 'details_head', 'tabby_on', 'tabby_text', 'tamara_on', 'tamara_text']],
+            'The options under the list: the even gap, where the rating sits, the review count, “The details” and the “Product details” heading (phone and laptop), and the two pay-later cards.',
+            ['gap', 'rate_m', 'rate_d', 'rate_count', 'details_head', 'details_head_d', 'details_h2', 'details_h2_d', 'tabby_on', 'tabby_text', 'tamara_on', 'tamara_text']],
     ];
 
     public const POLICY = [
@@ -555,6 +566,13 @@ class ProductMobileSections
 
         if ($this->on('details_head')) {
             $out[] = 'pm-dhead';
+        }
+
+        // (Lane RG) literals, one per switch, printed only when it is ON.
+        foreach (['details_head_d' => 'pd-dhead', 'details_h2' => 'pm-dh2', 'details_h2_d' => 'pd-dh2'] as $key => $class) {
+            if ($this->on($key)) {
+                $out[] = $class;
+            }
         }
 
         return implode(' ', $out);
