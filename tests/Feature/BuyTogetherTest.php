@@ -463,7 +463,9 @@ it('makes the picture the same control as the circle, labelled by the product na
 
     // The checkbox covers the picture; the circle and the "+" let the tap through.
     $css = (string) preg_replace('#/\*.*?\*/#s', '', (string) file_get_contents(resource_path('css/kbb/kbb-product.css')));
-    expect($css)->toMatch('/\.bt-cb\{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:2\}/')
+    // 2.60.368: never the phone's own drawing, never shown by the tap feedback,
+    // and a tap is always a tap (no double-tap zoom) — BuyTogetherTapTest.
+    expect($css)->toMatch('/\.bt-cb\{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;touch-action:manipulation\}/')
         ->and($css)->toMatch('/\.bt-tick\{[^}]*pointer-events:none/')
         ->and($css)->toMatch('/\.bt-plus\{[^}]*pointer-events:none/');
 

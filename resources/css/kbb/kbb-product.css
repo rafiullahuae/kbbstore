@@ -1203,8 +1203,20 @@ a{color:inherit;text-decoration:none}
    a link in this section; the title under it is. Green with a white tick when on
    (the shop's --green, the colour of the cart rail's "+"), an empty white ring
    with a grey edge when off. */
-.bt-cb{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:2}
+.bt-cb{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:2;-webkit-appearance:none;appearance:none;touch-action:manipulation}
 .bt-cb:disabled{cursor:default}
+/* (2.60.368) "the buy together selection is giving a weird giant tick icon
+   upon click, and it's not selecting and un-selecing. it works rarely". The
+   tap feedback (C · Ripple, kbb.css: html[data-press] .kbb-pressed:not(…)
+   {opacity:.72}) dimmed every pressed control it did not list — and the
+   pressed control here is this invisible checkbox, so it went to 72% and the
+   phone drew its OWN checkbox, picture-sized: a blue square with a white tick.
+   Measured on the preview at 390: opacity 0.72, appearance auto, while the
+   finger was down. Three answers: the phone's drawing is off (appearance
+   none, above), the press can never show it (this rule, which outranks the
+   generic one), and touch-action:manipulation so a quick second tap is a tap,
+   never the start of a double-tap zoom that swallows it on an iPhone. */
+html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
 .bt-tick{
     position:absolute;top:4px;inset-inline-end:4px;z-index:1;
     width:var(--bt-tick);height:var(--bt-tick);border-radius:50%;
