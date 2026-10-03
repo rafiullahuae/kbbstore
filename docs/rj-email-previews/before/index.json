@@ -1,0 +1,182 @@
+{
+    "01-order-confirmation": {
+        "subject": "Your K Beauty Bliss order KBB-10427",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "",
+        "list_unsubscribe_post": "",
+        "has_text_part": true,
+        "html_bytes": 20132,
+        "images": 0,
+        "links": [
+            "127.0.0.1",
+            "wa.me",
+            "(relative)",
+            "www.instagram.com"
+        ]
+    },
+    "02-new-order-alert": {
+        "subject": "New order KBB-10427 — AED 319.95",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "",
+        "list_unsubscribe_post": "",
+        "has_text_part": true,
+        "html_bytes": 13209,
+        "images": 0,
+        "links": []
+    },
+    "03-order-shipped": {
+        "subject": "Your K Beauty Bliss order KBB-10427 is on its way",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "",
+        "list_unsubscribe_post": "",
+        "has_text_part": true,
+        "html_bytes": 19956,
+        "images": 0,
+        "links": [
+            "127.0.0.1",
+            "wa.me",
+            "(relative)",
+            "www.instagram.com"
+        ]
+    },
+    "04-order-cancelled": {
+        "subject": "Your K Beauty Bliss order KBB-10427 has been cancelled",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "",
+        "list_unsubscribe_post": "",
+        "has_text_part": true,
+        "html_bytes": 19987,
+        "images": 0,
+        "links": [
+            "127.0.0.1",
+            "wa.me",
+            "(relative)",
+            "www.instagram.com"
+        ]
+    },
+    "05-order-refunded": {
+        "subject": "Refund sent for your K Beauty Bliss order KBB-10427",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "",
+        "list_unsubscribe_post": "",
+        "has_text_part": true,
+        "html_bytes": 18874,
+        "images": 0,
+        "links": [
+            "wa.me",
+            "(relative)",
+            "www.instagram.com"
+        ]
+    },
+    "06-order-invoice": {
+        "subject": "Invoice 01000 for your K Beauty Bliss order KBB-10427",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "",
+        "list_unsubscribe_post": "",
+        "has_text_part": true,
+        "html_bytes": 17987,
+        "images": 0,
+        "links": [
+            "wa.me",
+            "(relative)",
+            "www.instagram.com"
+        ]
+    },
+    "07-back-in-stock": {
+        "subject": "Good news — Heartleaf 77% Soothing Toner is back",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "<http://127.0.0.1:9940/mail-preferences/stock/1?expires=0&signature=PREVIEW>",
+        "list_unsubscribe_post": "",
+        "has_text_part": true,
+        "html_bytes": 1259,
+        "images": 0,
+        "links": [
+            "127.0.0.1"
+        ]
+    },
+    "08-cart-recovery": {
+        "subject": "You left something in your basket",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "<http://127.0.0.1:9940/mail-preferences/cart/1?expires=0&signature=PREVIEW>",
+        "list_unsubscribe_post": "",
+        "has_text_part": true,
+        "html_bytes": 2755,
+        "images": 0,
+        "links": [
+            "127.0.0.1"
+        ]
+    },
+    "09-customer-invite": {
+        "subject": "Your K Beauty Bliss account is ready",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "",
+        "list_unsubscribe_post": "",
+        "has_text_part": true,
+        "html_bytes": 1661,
+        "images": 0,
+        "links": [
+            "127.0.0.1"
+        ]
+    },
+    "10-newsletter-confirm": {
+        "subject": "Please confirm your K Beauty Bliss subscription",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "<http://127.0.0.1:9940/newsletter/unsubscribe/1?expires=0&signature=PREVIEW>",
+        "list_unsubscribe_post": "",
+        "has_text_part": true,
+        "html_bytes": 1376,
+        "images": 0,
+        "links": [
+            "127.0.0.1"
+        ]
+    },
+    "11-quiz-plan": {
+        "subject": "Your K Beauty Bliss skin quiz plan",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "",
+        "list_unsubscribe_post": "",
+        "has_text_part": true,
+        "html_bytes": 2935,
+        "images": 0,
+        "links": [
+            "127.0.0.1"
+        ]
+    },
+    "12-password-reset": {
+        "subject": "Reset your K Beauty Bliss password",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "",
+        "list_unsubscribe_post": "",
+        "has_text_part": false,
+        "html_bytes": 1216,
+        "images": 0,
+        "links": [
+            "127.0.0.1"
+        ]
+    },
+    "13-verify-email": {
+        "subject": "Confirm your email address",
+        "from": "\"K Beauty Bliss\" <hello@extrabeauty.ae>",
+        "reply_to": "\"K Beauty Bliss\" <care@extrabeauty.ae>",
+        "list_unsubscribe": "",
+        "list_unsubscribe_post": "",
+        "has_text_part": false,
+        "html_bytes": 1179,
+        "images": 0,
+        "links": [
+            "127.0.0.1"
+        ]
+    }
+}

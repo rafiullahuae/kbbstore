@@ -1,0 +1,7 @@
+From: K Beauty Bliss <hello@extrabeauty.ae>
+Reply-To: K Beauty Bliss <care@extrabeauty.ae>
+To: aisha.khan@example.com
+Subject: Confirm your email address
+MIME-Version: 1.0
+Date: Sat, 03 Oct 2026 10:57:52 +0000
+Message-ID: <fbd4bf7713ab162b1aba57617e51f757@extrabeauty.ae>

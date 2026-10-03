@@ -1,0 +1,7 @@
+From: K Beauty Bliss <hello@extrabeauty.ae>
+Reply-To: K Beauty Bliss <care@extrabeauty.ae>
+To: aisha.khan@example.com
+Subject: New order KBB-10427 =?utf-8?Q?=E2=80=94?= AED 319.95
+MIME-Version: 1.0
+Date: Sat, 03 Oct 2026 10:57:52 +0000
+Message-ID: <b7bed663254347be8c843f468d5eec5c@extrabeauty.ae>

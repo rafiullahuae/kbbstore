@@ -1,0 +1,16 @@
+Hello,
+
+Somebody -- we hope it was you -- asked for K Beauty Bliss emails to be sent to this address.
+
+You are not on the list yet. Open the link below and you will be.
+
+http://127.0.0.1:9940/newsletter/confirm/1?expires=0&amp;signature=PREVIEW
+
+The link works for 14 days.
+
+If it was not you, do nothing. Without that press we will not add this address, and you will not hear from us again.
+
+-- K Beauty Bliss
+
+Never want email from us at this address? Unsubscribe here:
+http://127.0.0.1:9940/newsletter/unsubscribe/1?expires=0&amp;signature=PREVIEW

@@ -1,0 +1,10 @@
+Platform: K-Beauty Bliss Theme | Users & Roles | Settings | Site address | Cache
+Safety: Debug & Monitor | Sandbox & Deploy | Demo Content
+Catalog: Catalog | Product tabs | Sets | Product editor | Build my routine | Categories | Brands
+Store: Modules | Mega Menu | Ecommerce | Tax | Payment & Shipping Rules | Delivery & Shipping | Store Import / Export | Orders | New Order | Coupons | Payments | Gateway webhooks | Security | Analytics | Site Search | SEO & Meta | Mail | Business Details | Customers | Quiz Leads
+Content: Blog Posts | HTML Blocks | Media Library | Shoppable video | Instagram
+Translation: Language settings | Progress | Strings | Machine translation
+Appearance: Homepage | Homepage content | Banners | Grid sections | Product styles | Mobile Header | Section dividers | Page background | Cart panel | Cart page | Checkout page | Footer | Login / Register panel | Header | Mobile menu | Product page | Set | Quantity bundles | Product grid | Site layout
+Pages: Store pages | User pages
+Growth & Marketing: Newsletter | Product Labels | Meta & Facebook | Marketing Pixels | Search Terms
+Reviews: All Reviews | Bulk Tools | Assign / Duplicate | Review Import / Export | Rating Badge | Review Settings

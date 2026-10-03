@@ -1,0 +1,43 @@
+INVOICE
+Invoice 01000
+Order KBB-10427
+Issued 3 October 2026
+Ordered 2 October 2026
+
+FROM
+K Beauty Bliss
+
+BILL TO
+Aisha Khan
+Apartment 1204, Marina Heights Tower
+Al Marsa Street, Dubai Marina
+Dubai
+United Arab Emirates
++971 50 123 4567
+
+DELIVER TO
+Same as the billing address
+
+ITEMS
+- Heartleaf 77% Soothing Toner 250ml (Anua)
+  SKU AN-HL-250
+  2 x AED 89.00 = AED 178.00
+- Glow Deep Serum Rice + Alpha-Arbutin 30ml (Beauty of Joseon)
+  SKU BOJ-GD-30
+  1 x AED 115.00 = AED 115.00
+- Low pH Good Morning Gel Cleanser (COSRX)
+  150ml
+  SKU CX-LPH-150
+  1 x AED 62.50 = AED 62.50
+
+TOTALS
+Subtotal: AED 355.50
+Discount (GLOW10): AED -35.55
+Delivery: AED 0.00
+Total: AED 319.95
+
+Payment method: Tabby — pay in 4, interest-free
+Delivery method: Free UAE delivery (1–3 working days)
+
+With love,
+the K Beauty Bliss team
