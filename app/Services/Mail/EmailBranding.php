@@ -192,6 +192,12 @@ class EmailBranding
              */
             'replyTo' => $customerFacing ? $this->mail->replyToAddress() : '',
             'addresses' => $customerFacing ? $this->addresses() : [],
+            // Fonts and brand colours (Lane RK). Stored for the Look A
+            // restyle; no template reads this key yet.
+            'look' => $this->look(),
+            // The small print's data for the restyle (Lane RK): addresses,
+            // legal links, unsubscribe. No template reads this key yet.
+            'footer' => $customerFacing ? $this->footer() : [],
             'colours' => self::PALETTE,
         ];
     }
@@ -481,6 +487,55 @@ class EmailBranding
             array_map(static fn ($line) => trim((string) $line), $parts),
             static fn (string $line) => $line !== '',
         ));
+    }
+
+    /**
+     * The pages the bottom footer links to: the shop's real routes
+     * (routes/web.php), with the trailing slash the storefront links with.
+     */
+    public const FOOTER_LINKS = [
+        'terms' => ['Terms & conditions', '/terms-and-conditions/'],
+        'privacy' => ['Privacy policy', '/privacy-policy/'],
+        'returns' => ['Refunds & returns', '/refund_returns/'],
+    ];
+
+    /**
+     * WHAT THE VERY BOTTOM FOOTER CARRIES (Lane RK, at the owner's word):
+     *
+     *   "in very bottom footer, don't include phone email, what is repeated in
+     *    in the questions? box. just keep address, terms pages, un-subscribe
+     *    option etc."
+     *
+     * So: the two addresses, the three legal pages, and the unsubscribe —
+     * and NOT WhatsApp, email or Instagram, which belong to the "Questions?"
+     * help box (support() above). Data only: the Look A restyle draws it.
+     *
+     * `unsubscribe` is null here on purpose. A transactional email (an order
+     * receipt) carries no unsubscribe; a marketing email gets a per-recipient
+     * one-click link from the E3 campaign sender, which is the only thing
+     * that can sign it. The key exists so the template has one place to look.
+     *
+     * @return array{addresses: list<array{place: string, lines: list<string>}>, links: list<array{kind: string, label: string, url: string}>, unsubscribe: ?string}
+     */
+    public function footer(): array
+    {
+        $links = [];
+
+        foreach (self::FOOTER_LINKS as $kind => [$label, $path]) {
+            $links[] = ['kind' => $kind, 'label' => $label, 'url' => Url::external($path)];
+        }
+
+        return [
+            'addresses' => $this->addresses(),
+            'links' => $links,
+            'unsubscribe' => null,
+        ];
+    }
+
+    /** See EmailLook: the chosen fonts, colours and the @font-face rule. */
+    public function look(): array
+    {
+        return app(EmailLook::class)->present();
     }
 
     public function signature(): array

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\Mail\EmailBranding;
+use App\Services\Mail\EmailLook;
 use App\Services\Mail\MailConfigurator;
 use App\Services\Mail\MailSettings;
 use App\Services\Mail\MailTester;
@@ -303,6 +304,28 @@ class EmailsApiController extends Controller
         $data = $request->validate(['settings' => ['required', 'array']]);
         $values = $data['settings'];
 
+        /*
+         * Fonts and colours (EmailLook) travel in the same payload as the
+         * contact details because they are on the same screen, and are split
+         * off here: each half goes to its own writer. A font must be one of
+         * EmailLook::FONTS' keys and a colour #rrggbb, or the whole save is
+         * refused before anything is written.
+         */
+        $look = array_intersect_key($values, EmailLook::DEFAULTS);
+        $values = array_diff_key($values, EmailLook::DEFAULTS);
+
+        foreach ($look as $key => $raw) {
+            if (EmailLook::clean($key, $raw) === null) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => str_contains($key, 'font')
+                        ? 'That font is not one of the choices on this screen.'
+                        : 'A colour must be written as # and six hex digits, e.g. #C13E63.',
+                    'rejected' => [$key],
+                ], 422);
+            }
+        }
+
         if (($unknown = array_diff(array_keys($values), self::BRANDING_KEYS)) !== []) {
             return response()->json([
                 'ok' => false,
@@ -346,7 +369,8 @@ class EmailsApiController extends Controller
             ]);
         }
 
-        $rejected = $this->settings->save($values);
+        $rejected = $values === [] ? [] : $this->settings->save($values);
+        app(EmailLook::class)->save($look);
 
         if ($rejected !== []) {
             return response()->json([
@@ -371,6 +395,10 @@ class EmailsApiController extends Controller
                 'mail_address_dubai' => (string) $values['mail_address_dubai'],
                 'mail_address_korea' => (string) $values['mail_address_korea'],
             ],
+            // Fonts and colours: the stored value, and the closed font list.
+            'look' => app(EmailLook::class)->values(),
+            'fonts' => array_map(static fn (array $f): string => $f[0], EmailLook::FONTS),
+            'look_defaults' => EmailLook::DEFAULTS,
             // What a blank box falls back to, so the screen can say so.
             'fallbacks' => [
                 'mail_address_dubai' => $branding->storeAddressLines(),
@@ -379,6 +407,7 @@ class EmailsApiController extends Controller
             'footer' => [
                 'support' => $branding->support(),
                 'addresses' => $branding->addresses(),
+                'links' => $branding->footer()['links'],
                 'store' => $branding->storeName(),
             ],
         ];

@@ -294,6 +294,25 @@ it('sends every module screen the payload it sent before the shared schema', fun
      * never opened the screen -- so a fresh install's settings table is
      * untouched and SeoBackOfficePayloadTest's fixture needed no edit at all.
      */
+    /*
+     * ── 3 OCTOBER, `mail.fields`, READ OFF THE DIFF AND SPLICED (Lane RK) ──
+     *
+     * Not regenerated: the live GET /admin-api/mail was dumped and only the
+     * `mail` block replaced; every other screen's bytes are untouched.
+     *
+     *   mail_transport.options     + "Google Workspace (Gmail SMTP)", the
+     *                              second of the two transports the owner
+     *                              asked to choose between. Stored key
+     *                              unchanged: a shop on server mail stays on it.
+     *   mail_support_email         help, value '' => info@kbeautybliss.com,
+     *                              has_value => true. The owner asked for that
+     *                              address by name (CLAUDE.md rule 1's
+     *                              reversal); clearing the box restores the
+     *                              old fallback.
+     *   + 4 fields                 mail_gmail_username, mail_gmail_password
+     *                              (secret, never a value), mail_address_dubai,
+     *                              mail_address_korea.
+     */
     expect($moved)->toBe([], "These module screens would now draw something different:\n".implode("\n", $moved));
 
     // A guard on the guard: if the fixture or the URL list is emptied, the loop

@@ -25,8 +25,8 @@ Total: AED 338
 DELIVERY ADDRESS
 Aisha Khan
 Apartment 1204, Marina Heights
-Dubai Dubai
-AE
+Dubai
+United Arab Emirates
 +971 50 123 4567
 
 Delivery method: Delivery Charges
@@ -38,6 +38,11 @@ http://localhost/checkout/success?order=KBB-10531
 That link opens on the device you ordered from. Anywhere else, sign in to your
 account and your orders are all listed there under KBB-10531:
 http://localhost/my-account/orders
+
+WE ARE HERE IF YOU NEED US
+A real person answers. Ask us anything — a question about your order, or
+about what to use it with.
+Email us: info@kbeautybliss.com (mailto:info@kbeautybliss.com)
 
 With love,
 the KBB team

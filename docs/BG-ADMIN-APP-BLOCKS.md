@@ -191,7 +191,7 @@ lane's and is not part of the anchor/replacement pair, so a later lane can
 lengthen the line without disturbing it):
 
 ```
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','searchterms']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','searchterms','emails','emails-sending','emails-branding','emails-sent']);
 ```
 
 > **THIS ONE LINE MOVES, AND IT MOVED ONCE WHILE THIS LANE WAS OPEN.** The

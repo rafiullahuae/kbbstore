@@ -29,6 +29,7 @@
 <style>
 .eml{display:grid;gap:0;min-width:0}
 .eml > *{min-width:0}
+.eml .mlf-field{align-content:start}
 .eml-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .eml-tile{background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);border-radius:var(--r,18px);padding:15px 16px;min-width:0}
 .eml-tile .k{display:block;font-size:12px;color:var(--ink-soft,#626c80)}
@@ -43,7 +44,7 @@
 .eml-card p{font-size:12.5px;line-height:1.5;margin:0;color:var(--ink-soft,#626c80)}
 .eml-card .btn{justify-self:start}
 .eml-list{display:grid;min-width:0}
-.eml-row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.5fr) auto minmax(0,1.6fr);gap:10px;align-items:center;padding:9px 0;font-size:12.5px;border-top:1px solid var(--border-2,#eef0f6);min-width:0}
+.eml-row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.5fr) 92px minmax(0,1.6fr);gap:10px;align-items:center;padding:9px 0;font-size:12.5px;border-top:1px solid var(--border-2,#eef0f6);min-width:0}
 .eml-row > *{min-width:0;overflow-wrap:anywhere}
 .eml-row.head{border-top:0;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint,#97a0b2);font-weight:700;padding-top:0}
 .eml-row b{font-weight:650;color:var(--ink,#101729)}
@@ -116,9 +117,28 @@
     return m ? decodeURIComponent(m.pop()) : '';
   }
 
-  function base() {
-    return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '') + '/admin-api/emails';
+  function root() {
+    return window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '');
   }
+
+  function base() { return root() + '/admin-api/emails'; }
+
+  /* The email font, from the same stable address the emails will use, so the
+     sample on Design & branding is drawn in the face customers will get. */
+  function fontFace() {
+    if (document.getElementById('emlFontFace')) return;
+    var st = document.createElement('style');
+    st.id = 'emlFontFace';
+    st.textContent = "@font-face{font-family:'Outfit';src:url('" + root() + "/fonts/email/outfit-latin.woff2') format('woff2');font-weight:100 900;font-display:swap}";
+    document.head.appendChild(st);
+  }
+
+  var STACKS = {
+    outfit: "'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
+    system: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
+    georgia: "Georgia,'Times New Roman',Times,serif"
+  };
+  function hex(v, fallback) { return /^#[0-9a-fA-F]{6}$/.test(String(v || '')) ? v : fallback; }
 
   function when(iso) { try { return new Date(iso).toLocaleString(); } catch (e) { return String(iso || ''); } }
 
@@ -250,7 +270,7 @@
     }
 
     var pw = d.gmail_password && d.gmail_password.has_value;
-    var gmail = '<section class="mlf-sec" data-eml-gmail' + (chosen === 'gmail' ? '' : ' hidden') + '>'
+    var gmail = chosen !== 'gmail' ? '' : '<section class="mlf-sec" data-eml-gmail>'
       + '<div class="mlf-sec-h"><div class="mlf-sec-t">Google Workspace</div><div class="mlf-sec-d">The server, port and encryption are fixed: smtp.gmail.com, 587, STARTTLS.</div></div>'
       + '<div class="mlf-grid">'
       + field('mail_gmail_username', 'Google account address', 'The mailbox that signs in, e.g. info@kbeautybliss.com.', 'email')
@@ -265,11 +285,11 @@
 
     return notes
       + '<section class="mlf-sec"><div class="mlf-sec-h"><div class="mlf-sec-t">How email leaves this store</div><div class="mlf-sec-d">Pick one. Applies to every email the shop sends — order emails, password resets and account emails alike.</div></div><div>' + choices + '</div></section>'
-      + gmail
+      + gmail   // only when Google is the choice: .mlf-sec's display:grid would beat [hidden]
       + '<section class="mlf-sec"><div class="mlf-sec-h"><div class="mlf-sec-t">Who the message comes from</div><div class="mlf-sec-d">The name and address customers see, where their replies go, and where your own new-order alerts arrive.</div></div>'
       + '<div class="mlf-grid">' + field('mail_from_name', 'From name', 'e.g. K Beauty Bliss') + field('mail_from_address', 'From address', fromHelp, 'email') + '</div>'
       + '<div class="mlf-grid">' + field('mail_reply_to', 'Reply-To', 'A mailbox somebody reads.', 'email') + field('mail_merchant_address', 'New-order alerts to', 'Blank uses the From address.', 'email') + '</div></section>'
-      + '<div class="eml-save"><span class="eml-dirty" id="emlDirty" style="visibility:hidden">Unsaved changes</span><button class="btn primary" type="button" id="emlSaveSending">Save changes</button></div>';
+      + '<div class="eml-save"><span class="eml-dirty" data-eml-dirty style="visibility:hidden">Unsaved changes</span><button class="btn primary" type="button" id="emlSaveSending">Save changes</button></div>';
   }
 
   function testResult(t) {
@@ -352,11 +372,46 @@
     return '<div class="eml-foot">'
       + (sup ? '<div class="sup"><b>We are here if you need us</b>' + sup + '</div>' : '')
       + '<div class="small">You are receiving this because an order was placed with ' + esc(f.store || '') + ' using this email address.'
-      + (addr || '<div style="margin-top:8px">No address is printed yet.</div>') + '</div></div>';
+      + (addr || '<div style="margin-top:8px">No address is printed yet.</div>') + '</div>'
+      /* The rest of the bottom footer, as the new look will draw it: the legal
+         pages and (on marketing only) unsubscribe — never phone or email, which
+         live in the "Questions?" box above. Not printed by today's emails. */
+      + '<div class="small" style="border-top:0;margin-top:6px;padding-top:0">With the new look the foot also links: '
+      + (f.links || []).map(function (l) { return esc(l.label); }).join(' · ')
+      + ' · Unsubscribe (marketing emails only)</div></div>';
+  }
+
+  function lookSample() {
+    var d = state.branding, lk = d.look || {}, df = d.look_defaults || {};
+    var pick = function (k) { var el = document.getElementById('eml_' + k); return el ? el.value : lk[k]; };
+    var head = STACKS[pick('email_font_heading')] || STACKS.outfit, body = STACKS[pick('email_font_body')] || STACKS.outfit;
+    var accent = hex(pick('email_accent'), df.email_accent), button = hex(pick('email_button'), df.email_button);
+    return '<div class="eml-foot">'
+      + '<div style="font-family:' + esc(head) + ';font-size:22px;font-weight:700;line-height:1.2">Your order is in <span style="color:' + esc(accent) + '">&hearts;</span></div>'
+      + '<div style="font-family:' + esc(body) + ';font-size:14px;line-height:1.55;margin-top:6px;color:#5E545A">We are packing it with care. You will hear from us again the moment it leaves.</div>'
+      + '<div style="margin-top:12px"><span style="display:inline-block;font-family:' + esc(body) + ';font-weight:700;font-size:14px;color:#fff;background:' + esc(button) + ';border-radius:999px;padding:10px 20px">Track your order</span></div>'
+      + '</div>';
   }
 
   function paintBranding() {
     var d = state.branding, v = d.values || {}, fb = (d.fallbacks || {}).mail_address_dubai || [];
+    var lk = d.look || {}, fonts = d.fonts || {};
+    function fontSelect(key, label, help) {
+      return '<div class="mlf-field"><label class="mlf-label" for="eml_' + key + '">' + esc(label) + '</label><select class="mlf-input" id="eml_' + key + '" data-eml-key="' + key + '">'
+        + Object.keys(fonts).map(function (f) { return '<option value="' + esc(f) + '"' + (f === lk[key] ? ' selected' : '') + '>' + esc(fonts[f]) + '</option>'; }).join('')
+        + '</select><div class="mlf-help">' + help + '</div></div>';
+    }
+    function colour(key, label, help) {
+      var val = esc(lk[key] || '');
+      return '<div class="mlf-field"><label class="mlf-label" for="eml_' + key + '">' + esc(label) + '</label>'
+        + '<div style="display:flex;gap:8px;align-items:center;min-width:0"><input type="color" aria-label="' + esc(label) + ' picker" data-eml-swatch="' + key + '" value="' + val + '" style="flex:0 0 40px;width:40px;height:36px;border:1px solid var(--border,#e6e9f2);border-radius:9px;padding:2px;background:var(--surface,#fff)">'
+        + '<input class="mlf-input" type="text" maxlength="7" id="eml_' + key + '" data-eml-key="' + key + '" value="' + val + '"></div><div class="mlf-help">' + help + '</div></div>';
+    }
+    var lookSec = '<section class="mlf-sec"><div class="mlf-sec-h"><div class="mlf-sec-t">Fonts &amp; colours</div>'
+      + '<div class="mlf-sec-d">Ships as the shop\'s own Outfit, as you asked. Every email takes these when the new look (Look A) is switched on in the next package; today\'s emails do not change yet. Gmail does not load web fonts and shows a close system font instead.</div></div>'
+      + '<div class="mlf-grid">' + fontSelect('email_font_heading', 'Heading font', 'Titles and the big numbers.') + fontSelect('email_font_body', 'Body font', 'Everything else.') + '</div>'
+      + '<div class="mlf-grid">' + colour('email_accent', 'Accent colour', 'Links and small highlights. Default #e0567b.') + colour('email_button', 'Button colour', 'Track order, Pay now. Default #c13e63.') + '</div>'
+      + '<div id="emlLookSample">' + lookSample() + '</div></section>';
     function input(key, label, help, type) {
       return '<div class="mlf-field"><label class="mlf-label" for="eml_' + key + '">' + esc(label) + '</label>'
         + '<input class="mlf-input" type="' + (type || 'text') + '" id="eml_' + key + '" data-eml-key="' + key + '" value="' + esc(v[key] || '') + '"><div class="mlf-help">' + help + '</div></div>';
@@ -376,13 +431,14 @@
       + '</div>'
       + area('mail_address_dubai', 'Dubai address', fb.length ? 'One line per line. Blank uses the store address from Store → Business Details (shown greyed).' : 'One line per line. Blank prints no Dubai address — Store → Business Details has no street or city saved.', fb.join('\n'))
       + area('mail_address_korea', 'Korea address', 'One line per line. Blank prints no Korea address.', '')
-      + '</section><div class="eml-save"><span class="eml-dirty" id="emlDirty" style="visibility:hidden">Unsaved changes</span><button class="btn primary" type="button" id="emlSaveBranding">Save changes</button></div></div></div>'
+      + '</section>' + lookSec + '<div class="eml-save"><span class="eml-dirty" data-eml-dirty style="visibility:hidden">Unsaved changes</span><button class="btn primary" type="button" id="emlSaveBranding">Save changes</button></div></div></div>'
       + '<div><div class="mlf-card"><section class="mlf-sec"><div class="mlf-sec-h"><div class="mlf-sec-t">What the footer says</div>'
       + '<div class="mlf-sec-d">The foot of the next order email, as the server will print it. Updates when you save.</div></div>'
       + footerPreview(d.footer || {}) + '</section></div></div></div>');
   }
 
   async function branding() {
+    fontFace();
     loading('Design & branding');
     try { state.branding = (await api('/branding')).data; } catch (e) { return failed('Design & branding', e); }
     if (state.screen === 'emails-branding') paintBranding();
@@ -391,7 +447,7 @@
   async function saveBranding(btn) {
     btn.disabled = true;
     try {
-      var r = await api('/branding', { settings: collect(['mail_support_email', 'mail_support_whatsapp', 'mail_address_dubai', 'mail_address_korea']) });
+      var r = await api('/branding', { settings: collect(['mail_support_email', 'mail_support_whatsapp', 'mail_address_dubai', 'mail_address_korea', 'email_font_heading', 'email_font_body', 'email_accent', 'email_button']) });
       if (r.status === 422) toastMsg('Could not save: ' + refusal(r.data));
       else { state.branding = r.data; paintBranding(); toastMsg('Saved'); }
     } catch (e) { toastMsg(why(e)); }
@@ -434,7 +490,13 @@
       var typed = collect(['mail_from_name', 'mail_from_address', 'mail_reply_to', 'mail_merchant_address', 'mail_gmail_username']);
       Object.keys(typed).forEach(function (k) { state.sending.values[k] = typed[k]; });
       paintSending();
-      var d = document.getElementById('emlDirty'); if (d) d.style.visibility = 'visible';
+      var d = document.querySelector('[data-eml-dirty]'); if (d) d.style.visibility = 'visible';
+      return;
+    }
+    if (t.id === 'eml_email_font_heading' || t.id === 'eml_email_font_body') {
+      var sample = document.getElementById('emlLookSample');
+      if (sample && state.branding) sample.innerHTML = lookSample();
+      var dd = document.querySelector('[data-eml-dirty]'); if (dd) dd.style.visibility = 'visible';
       return;
     }
     if (t.id === 'mlLogFilter') { try { if (typeof loadMailLog === 'function') loadMailLog(); } catch (err) {} }
@@ -442,8 +504,18 @@
 
   document.addEventListener('input', function (e) {
     if (!document.querySelector('[data-eml]')) return;
-    if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-eml-key')) {
-      var d = document.getElementById('emlDirty'); if (d) d.style.visibility = 'visible';
+    var t = e.target;
+    if (t && t.hasAttribute && t.hasAttribute('data-eml-swatch')) {
+      var box = document.getElementById('eml_' + t.getAttribute('data-eml-swatch'));
+      if (box) box.value = t.value;
+    }
+    if (t && t.hasAttribute && (t.hasAttribute('data-eml-key') || t.hasAttribute('data-eml-swatch'))) {
+      var d = document.querySelector('[data-eml-dirty]'); if (d) d.style.visibility = 'visible';
+      if (t.id && /^eml_email_(accent|button)$/.test(t.id) && /^#[0-9a-fA-F]{6}$/.test(t.value)) {
+        var sw = document.querySelector('[data-eml-swatch="' + t.id.slice(4) + '"]'); if (sw) sw.value = t.value;
+      }
+      var sample = document.getElementById('emlLookSample');
+      if (sample && state.branding) sample.innerHTML = lookSample();
     }
   });
 

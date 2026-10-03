@@ -519,3 +519,88 @@ it('escapes everything the server hands the screens', function () {
         ->and($screen)->not->toContain('getBoundingClientRect')
         ->and($screen)->not->toContain('offsetHeight');
 });
+
+/* ============================================================ fonts & colours */
+
+it('ships the email font as Outfit with the brand colours, and a stable public font file', function () {
+    $look = app(App\Services\Mail\EmailLook::class);
+
+    expect($look->values())->toBe([
+        'email_font_heading' => 'outfit',
+        'email_font_body' => 'outfit',
+        'email_accent' => '#e0567b',
+        'email_button' => '#c13e63',
+    ]);
+
+    $present = app(EmailBranding::class)->look();
+
+    expect($present['headingFont'])->toStartWith("'Outfit',")
+        ->and($present['bodyFont'])->toContain('sans-serif')
+        ->and($present['fontFaceCss'])->toContain('/fonts/email/outfit-latin.woff2')
+        // The file the URL names is shipped, and is the shop's own Outfit.
+        ->and(is_file(base_path('public/fonts/email/outfit-latin.woff2')))->toBeTrue()
+        ->and(md5_file(base_path('public/fonts/email/outfit-latin.woff2')))->toBe(md5_file(resource_path('fonts/outfit/outfit-latin.woff2')));
+});
+
+it('stores a font only from its own list and a colour only as #rrggbb', function () {
+    rkAs('owner');
+
+    $this->postJson('/admin-api/emails/branding', ['settings' => ['email_font_heading' => 'Comic Sans']])->assertStatus(422);
+    $this->postJson('/admin-api/emails/branding', ['settings' => ['email_button' => 'red;background:url(x)']])->assertStatus(422);
+    $this->postJson('/admin-api/emails/branding', ['settings' => ['email_accent' => '#12345']])->assertStatus(422);
+
+    rkFresh();
+    expect(app(App\Services\Mail\EmailLook::class)->values()['email_font_heading'])->toBe('outfit');
+
+    $this->postJson('/admin-api/emails/branding', ['settings' => [
+        'email_font_heading' => 'georgia', 'email_font_body' => 'system', 'email_button' => '#112233',
+    ]])->assertOk()
+        ->assertJsonPath('look.email_font_heading', 'georgia')
+        ->assertJsonPath('look.email_button', '#112233');
+
+    rkFresh();
+    $present = app(EmailBranding::class)->look();
+    expect($present['headingFont'])->toStartWith('Georgia')
+        ->and($present['button'])->toBe('#112233')
+        // Neither font is Outfit any more, so no @font-face is offered.
+        ->and($present['fontFaceCss'])->toBe('');
+
+    // A row written by anything else is re-checked on the way out.
+    app(SettingsService::class)->set('email_accent', 'javascript:alert(1)');
+    rkFresh();
+    expect(app(EmailBranding::class)->look()['accent'])->toBe('#e0567b');
+
+    /*
+     * MUTATION: return $value unchecked from EmailLook::clean() and the
+     * 'red;background:url(x)' save answers 200 — a style-attribute injection
+     * waiting for the restyle to print it.
+     */
+});
+
+it('keeps phone and email out of the bottom footer data: addresses, legal pages and unsubscribe only', function () {
+    rkSave(['mail_address_korea' => 'Seoul office', 'mail_support_whatsapp' => '+971 58 505 2611']);
+
+    $footer = app(EmailBranding::class)->footer();
+
+    // "don't include phone email, what is repeated in the questions? box.
+    //  just keep address, terms pages, un-subscribe option etc."
+    expect(array_keys($footer))->toBe(['addresses', 'links', 'unsubscribe'])
+        ->and(array_column($footer['links'], 'kind'))->toBe(['terms', 'privacy', 'returns'])
+        ->and($footer['links'][0]['url'])->toEndWith('/terms-and-conditions/')
+        ->and($footer['links'][2]['url'])->toEndWith('/refund_returns/')
+        ->and($footer['unsubscribe'])->toBeNull()
+        ->and(json_encode($footer))->not->toContain('wa.me')
+        ->and(json_encode($footer))->not->toContain('mailto:')
+        ->and(json_encode($footer))->toContain('Seoul office');
+
+    // And every linked page is a real route on the shop.
+    foreach (['/terms-and-conditions', '/privacy-policy', '/refund_returns'] as $path) {
+        expect(collect(Illuminate\Support\Facades\Route::getRoutes()->getRoutes())->contains(fn ($r) => '/' . $r->uri() === $path))->toBeTrue($path);
+    }
+});
+
+it('changes no email yet: the stored look is for the Look A restyle', function () {
+    $html = (string) (new OrderConfirmation(rkOrder()))->render();
+
+    expect($html)->not->toContain('Outfit')->and($html)->not->toContain('@font-face');
+});

@@ -6,4 +6,4 @@
     this template's own. One line, no surrounding whitespace, so the footer
     sentence it follows keeps its exact shape.
 --}}
-@foreach ($addresses as $place)<div style="margin-top:{{ $loop->first ? '12px' : '8px' }};"><span style="font-weight:700;color:{{ $c['ink2'] }};">{{ __('email.layout.address_' . $place['place']) }}</span>@foreach ($place['lines'] as $line)<br>{{ $line }}@endforeach</div>@endforeach
+@foreach ($addresses as $place)<div style="margin-top:{{ $loop->first ? '12px' : '8px' }};"><span style="font-weight:700;color:{{ $c['ink2'] }};">{{ $place['place'] === 'korea' ? __('email.layout.address_korea') : __('email.layout.address_dubai') }}</span>@foreach ($place['lines'] as $line)<br>{{ $line }}@endforeach</div>@endforeach
