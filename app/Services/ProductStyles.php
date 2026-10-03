@@ -196,6 +196,12 @@ class ProductStyles
         'card_pad_d'         => ['range',  'Inner padding · desktop', 16, '', ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
         'card_gap_img_m'     => ['range',  'Photo → name · phone', 16, 'The space between the photograph and the first line of text.', ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
         'card_gap_img_d'     => ['range',  'Photo → name · desktop', 16, '', ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        // Brand → name and name → stars: 2.60.371. The owner, 3 October: "spacing between image, title, pricing,
+        // rating add to cart". The defaults are the Showcase card's own --sc-brand-mb (3px) and --sc-rate-mt (8px).
+        'card_gap_brand_m'   => ['range',  'Brand → name · phone', 3, 'The space under the brand line. Only shows when Card content → Brand name is on.', ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'card_gap_brand_d'   => ['range',  'Brand → name · desktop', 3, '', ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'card_gap_rate_m'    => ['range',  'Name → stars · phone', 8, 'The space above the stars, on products that have reviews.', ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'card_gap_rate_d'    => ['range',  'Name → stars · desktop', 8, '', ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
         'card_gap_price_m'   => ['range',  'Name → price row · phone', 12, 'Extra space above the price. The stars, when a product has reviews, sit in the room above this.', ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
         'card_gap_price_d'   => ['range',  'Name → price row · desktop', 12, '', ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
         'card_gap_cart_m'    => ['range',  'Price row → Add to cart · phone', 12, '', ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
@@ -269,6 +275,7 @@ class ProductStyles
                       ['show_brand', 'show_category', 'show_rating', 'show_was_price', 'show_discount', 'show_new', 'show_cart', 'name_lines']],
         'spacing' => ['Spacing & type', 'The space between the photo, the name, the price and the button, and the size and weight of each — a phone and a desktop set apart. Every value starts at what the shop shows today, so nothing moves until you move it.',
                       ['card_pad_m', 'card_pad_d', 'card_gap_img_m', 'card_gap_img_d',
+                       'card_gap_brand_m', 'card_gap_brand_d', 'card_gap_rate_m', 'card_gap_rate_d',
                        'card_gap_price_m', 'card_gap_price_d', 'card_gap_cart_m', 'card_gap_cart_d',
                        'card_fs_title_m', 'card_fs_title_d', 'card_fs_price_m', 'card_fs_price_d',
                        'card_fs_btn_m', 'card_fs_btn_d', 'card_fs_brand_m', 'card_fs_brand_d',
@@ -563,6 +570,22 @@ class ProductStyles
 
             if ($moved("card_gap_img_{$dev}")) {
                 $rules["{$tile} .cb"][] = 'padding-top:'.(int) $c["card_gap_img_{$dev}"].'px';
+            }
+
+            /* The Showcase family reserves the brand and rating rows from these two
+               custom properties, so the reservation moves with the gap and every
+               card in a row stays one height. The plain margin is for the other
+               designs, which reserve nothing. */
+            if ($moved("card_gap_brand_{$dev}")) {
+                $g = (int) $c["card_gap_brand_{$dev}"];
+                $rules[$grid][] = "--sc-brand-mb:{$g}px";
+                $rules["{$tile} .kbb-card-brand"][] = "margin-bottom:{$g}px";
+            }
+
+            if ($moved("card_gap_rate_{$dev}")) {
+                $g = (int) $c["card_gap_rate_{$dev}"];
+                $rules[$grid][] = "--sc-rate-mt:{$g}px";
+                $rules["{$tile} .kbb-card-rate"][] = "margin-top:{$g}px";
             }
 
             if ($moved("card_gap_price_{$dev}")) {

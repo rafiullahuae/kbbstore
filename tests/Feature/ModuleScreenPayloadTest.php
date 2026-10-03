@@ -433,7 +433,11 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // ... same on checkout rows"): ci_brand_on / ci_brand_on_m on the Cart
     // page's two row tabs and d_row_brand / m_row_brand on the Checkout page's,
     // each inserted at its TABS position. Forty lines inserted, none changed.
-    expect($compared)->toBe(592, 'the number of controls drawn changed');
+    //
+    // 596 IN 2.60.371: Appearance → Product styles → Spacing & type gained four
+    // ranges — brand → name and name → stars, phone and desktop — inserted at
+    // their TABS position after card_gap_img_d. Four objects inserted, none changed.
+    expect($compared)->toBe(596, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
