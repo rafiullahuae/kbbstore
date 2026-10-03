@@ -3,6 +3,24 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.362
+**Buy these together: the total and the buy-together discount are OFF until
+you switch them on.** Apply after .361. No plugin change. Runs one migration (a
+cache clear).
+
+| Your request | Now |
+|---|---|
+| "buy together pricing and discount row, i want to hide on desktop and mobile both by default, if hide, then no any discount will be picked ... lock that discount section" | "Show the total and buy-together discount", OFF: no row on any device, no bundle discount in cart, checkout, order, email, invoice or Tabby/Tamara; the tiers, coupon switch and example are locked (your values kept). ON: as before, with "Show on phones" / "Show on laptops" to hide the row on one device |
+
+Admin: Appearance → Product page → Buy these together → Discount for buying
+together. The row also needs "Show the total above the button" (first card) on.
+
+Files (8): app/Services/BuyTogetherPricing.php, app/Services/BuyTogetherSettings.php,
+database/migrations/2027_07_22_000500_clear_caches_buy_together_discount_switch.php,
+resources/css/kbb/kbb-product.css,
+resources/views/admin/partials/product-buy-together-screen.blade.php,
+resources/views/partials/fbt.blade.php, public/build (manifest + product css).
+
 ## 2.60.361
 **Buy these together: "You're saving" counts the buy-together discount only,
 on one row with the total.** Apply after .360. No plugin change. Runs one
