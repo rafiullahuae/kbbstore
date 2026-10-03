@@ -117,9 +117,40 @@ namespace App\Services;
  * Trust · Spacing). So the default order drawn this way measures identical,
  * and any other order spaces each block by its own slider. The first block
  * drawn has no gap above it.
+ *
+ * ══ LANE RI: "BUY THESE TOGETHER" CAN MOVE INTO THE RIGHT COLUMN ═══════════
+ *
+ * The owner, 3 October, from a laptop at ~1900px:
+ *
+ *   "ONLY IN DESKTOP: allow me option to bring the buy together section to
+ *    the right collumn, by drag n drop."
+ *
+ * On a wide laptop the buy column ends ~300px above the bottom of the photo.
+ * `buytogether` is the ONE key allowed in both lists (MOVABLE). It lives in
+ * exactly one of them: in `pdpds_buy_order` when he has dragged it into the
+ * buy column, otherwise in `pdpds_order` (its default home). order() drops it
+ * from the full-width list whenever the buy column holds it, so a stored row
+ * edited from the shell cannot draw it twice; validatePlacement() refuses a
+ * POST that lists it in both.
+ *
+ * WHERE IT IS DRAWN. Placed in the buy column, the template prints the ONE
+ * `.kbb-fbt` element as the last child of `.buybox` (outside the cart form —
+ * the block's checkboxes must never submit with Add to cart) instead of after
+ * `.pdp`. Its key in the buy order makes that order non-default, so RG's
+ * `.pdsb-on` flex column is printed and `--pdsb-o-buytogether` puts it at the
+ * position he chose, with its own slider above it (Layout → Spacing · Buy
+ * column → "Space above Buy these together · right column"). On a phone
+ * `.buybox` is `display:contents`, so the element is still a flex item of
+ * `.pdp-page` and takes Mobile sections' `--pm-o-buytogether` exactly as
+ * before — and the DOM sequence is the same too: it is the element straight
+ * after the payment chips either way.
  */
 class ProductDesktopSections
 {
+    /**
+     * Lane RI: the one full-width block that may also sit in the buy column.
+     */
+    public const MOVABLE = 'buytogether';
     /** Lane RG: the buy column's laptop order, ONE row, a JSON list of keys. */
     public const BUY_ORDER_KEY = 'pdpds_buy_order';
 
@@ -195,7 +226,37 @@ class ProductDesktopSections
      */
     public function order(): array
     {
-        return $this->memo ??= self::clean($this->settings->get(self::ORDER_KEY, null));
+        if ($this->memo !== null) {
+            return $this->memo;
+        }
+
+        $order = self::clean($this->settings->get(self::ORDER_KEY, null));
+
+        // Lane RI: in the buy column, so not in this list — whatever the row says.
+        return $this->memo = $this->buyTogetherRight()
+            ? array_values(array_diff($order, [self::MOVABLE]))
+            : $order;
+    }
+
+    /** Lane RI: has he dragged Buy these together into the buy column? */
+    public function buyTogetherRight(): bool
+    {
+        return in_array(self::MOVABLE, $this->buyOrder(), true);
+    }
+
+    /**
+     * Lane RI: the full-width list's DEFAULT for where Buy these together is
+     * now — the DOM order of the blocks this list holds, so moving Buy these
+     * together across alone prints no `pds-on`: the three blocks left under
+     * the columns are still drawn in the page's own normal flow.
+     *
+     * @return list<string>
+     */
+    private function underDefault(): array
+    {
+        return $this->buyTogetherRight()
+            ? array_values(array_diff(self::defaultOrder(), [self::MOVABLE]))
+            : self::defaultOrder();
     }
 
     /**
@@ -272,7 +333,7 @@ class ProductDesktopSections
     /** @return list<string> */
     public function buyOrder(): array
     {
-        return $this->buyMemo ??= self::cleanList($this->settings->get(self::BUY_ORDER_KEY, null), self::defaultBuyOrder());
+        return $this->buyMemo ??= self::cleanList($this->settings->get(self::BUY_ORDER_KEY, null), self::defaultBuyOrder(), [self::MOVABLE]);
     }
 
     public function isBuyDefault(): bool
@@ -295,7 +356,8 @@ class ProductDesktopSections
         $order = [];
 
         foreach ($posted as $key) {
-            if (! is_string($key) || ! isset(self::BUY[$key])) {
+            // Lane RI: Buy these together is the one full-width block allowed here.
+            if (! is_string($key) || (! isset(self::BUY[$key]) && $key !== self::MOVABLE)) {
                 return 'Unknown buy column block: '.(is_scalar($key) ? (string) $key : gettype($key)).'.';
             }
 
@@ -306,26 +368,80 @@ class ProductDesktopSections
             $order[] = $key;
         }
 
-        return self::cleanList($order, self::defaultBuyOrder());
+        return self::cleanList($order, self::defaultBuyOrder(), [self::MOVABLE]);
     }
 
     /** @param list<string> $order a list validateBuy() returned */
     public function saveBuy(array $order): void
     {
-        $this->settings->set(self::BUY_ORDER_KEY, self::cleanList($order, self::defaultBuyOrder()));
+        $this->settings->set(self::BUY_ORDER_KEY, self::cleanList($order, self::defaultBuyOrder(), [self::MOVABLE]));
         $this->buyMemo = null;
+        $this->memo = null;
     }
 
     /**
-     * @param  list<string>  $defaults
+     * Lane RI: the two lists of one POST, checked TOGETHER for the one key
+     * both may hold. Each list is validated by its own rule first (validate(),
+     * validateBuy() — an unknown key or a repeat refused). Then:
+     *
+     *   · Buy these together in BOTH lists is refused — it is one element.
+     *   · A list not in this POST is the stored one, so a POST of one list
+     *     cannot put the block in the other list's place as well.
+     *   · In NEITHER list it goes home, under the columns (validate()'s own
+     *     "a missing key is appended" rule, which is RF's).
+     *
+     * Returns [order|null, buy|null] — null for a list not posted — or an
+     * error string.
+     *
+     * @return array{0: list<string>|null, 1: list<string>|null}|string
+     */
+    public function validatePlacement(bool $hasOrder, mixed $order, bool $hasBuy, mixed $buy): array|string
+    {
+        $o = null;
+        $b = null;
+
+        if ($hasBuy) {
+            $b = self::validateBuy($buy);
+
+            if (is_string($b)) {
+                return $b;
+            }
+        }
+
+        if ($hasOrder) {
+            // Strict on the keys it was SENT: a missing Buy these together is
+            // not "listed", so it is judged by where the buy list puts it.
+            $sentUnder = is_array($order) && array_is_list($order) && in_array(self::MOVABLE, $order, true);
+            $o = self::validate($order);
+
+            if (is_string($o)) {
+                return $o;
+            }
+        } else {
+            // Not posted: the stored list keeps whatever the buy list leaves it.
+            $sentUnder = false;
+        }
+
+        $inBuy = in_array(self::MOVABLE, $b ?? $this->buyOrder(), true);
+
+        if ($inBuy && $sentUnder) {
+            return 'Buy these together can sit in one place only: the buy column or under the two columns, not both.';
+        }
+
+        return [$o, $b];
+    }
+
+    /**
+     * @param  list<string>  $defaults  every key, in the default order — appended when missing
+     * @param  list<string>  $optional  keys allowed too, but never appended (Lane RI)
      * @return list<string>
      */
-    private static function cleanList(mixed $raw, array $defaults): array
+    private static function cleanList(mixed $raw, array $defaults, array $optional = []): array
     {
         $order = [];
 
         foreach (is_array($raw) ? $raw : [] as $key) {
-            if (is_string($key) && in_array($key, $defaults, true) && ! in_array($key, $order, true)) {
+            if (is_string($key) && (in_array($key, $defaults, true) || in_array($key, $optional, true)) && ! in_array($key, $order, true)) {
                 $order[] = $key;
             }
         }
@@ -471,7 +587,8 @@ class ProductDesktopSections
     /** Is the page in the order it has always been drawn in? */
     public function isDefault(): bool
     {
-        return $this->order() === self::defaultOrder();
+        // Lane RI: against the blocks this list holds (see underDefault()).
+        return $this->order() === $this->underDefault();
     }
 
     /* ═══════════════════════ what reaches the storefront ═══════════════════ */
@@ -647,7 +764,8 @@ class ProductDesktopSections
         $buy = [];
 
         foreach ($this->buyOrder() as $key) {
-            [$label, $desc] = self::BUY[$key];
+            // Lane RI: Buy these together keeps its own label wherever it sits.
+            [$label, $desc] = self::BUY[$key] ?? self::SECTIONS[$key];
             $buy[] = $row($key, $label, $desc);
         }
 

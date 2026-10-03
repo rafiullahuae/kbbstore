@@ -1,0 +1,3693 @@
+{
+  "default": {
+    "390": {
+      "rects": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "blocks": {
+          "crumb": "hidden",
+          "pdp": "hidden",
+          "gallery": {
+            "top": 127,
+            "left": 0,
+            "width": 390,
+            "height": 458
+          },
+          "buybox": "hidden",
+          "title": {
+            "top": 603,
+            "left": 22,
+            "width": 346,
+            "height": 77.66
+          },
+          "price": {
+            "top": 799.27,
+            "left": 22,
+            "width": 346,
+            "height": 37.5
+          },
+          "short": {
+            "top": 690.66,
+            "left": 22,
+            "width": 346,
+            "height": 90.61
+          },
+          "paylater": {
+            "top": 854.77,
+            "left": 22,
+            "width": 346,
+            "height": 82.06
+          },
+          "bundles": {
+            "top": 954.83,
+            "left": 22,
+            "width": 346,
+            "height": 180.75
+          },
+          "ready": {
+            "top": 1153.58,
+            "left": 22,
+            "width": 346,
+            "height": 49
+          },
+          "delivery": {
+            "top": 1286.58,
+            "left": 22,
+            "width": 346,
+            "height": 85.67
+          },
+          "cart": {
+            "top": 1214.58,
+            "left": 22,
+            "width": 346,
+            "height": 54
+          },
+          "auth": {
+            "top": 1390.25,
+            "left": 22,
+            "width": 346,
+            "height": 32.5
+          },
+          "trust": "hidden",
+          "paychips": {
+            "top": 1440.75,
+            "left": 22,
+            "width": 346,
+            "height": 25.75
+          },
+          "fbt": {
+            "top": 1484.5,
+            "left": 0,
+            "width": 390,
+            "height": 270.03
+          },
+          "details": {
+            "top": 1772.53,
+            "left": 22,
+            "width": 346,
+            "height": 253
+          },
+          "reviews": {
+            "top": 2043.53,
+            "left": 22,
+            "width": 346,
+            "height": 1086.33
+          },
+          "related": {
+            "top": 3147.86,
+            "left": 22,
+            "width": 346,
+            "height": 495.45
+          }
+        },
+        "fbtParent": "pdp-page",
+        "fbtCount": 1,
+        "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+        "inside": {
+          "h2": {
+            "fontSize": "14px",
+            "height": 21
+          },
+          "cards": 4,
+          "cardWidths": [
+            78.5,
+            78.5,
+            78.5,
+            78.5
+          ],
+          "cardsFullyInRail": 4,
+          "nameFont": "9.555px",
+          "priceFont": "9.975px",
+          "textOutside": 0,
+          "footOverflow": 0,
+          "sumrow": null,
+          "button": {
+            "top": 1691.53,
+            "left": 14,
+            "width": 362,
+            "height": 48
+          },
+          "rail": {
+            "left": 0,
+            "width": 390
+          },
+          "radius": "0px",
+          "padding": "13px 0px 15px",
+          "marginTop": "0px"
+        },
+        "gapAboveFbt": null,
+        "blockAboveFbt": null,
+        "buyColumnBottomVsPhotoBottom": -585
+      },
+      "sameAsIntegratorStylesheet": true,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+      "scrollWidth": 390
+    },
+    "1000": {
+      "rects": {
+        "scrollWidth": 1000,
+        "clientWidth": 1000,
+        "blocks": {
+          "crumb": "hidden",
+          "pdp": {
+            "top": 47,
+            "left": 22,
+            "width": 956,
+            "height": 1089.89
+          },
+          "gallery": {
+            "top": 84,
+            "left": 22,
+            "width": 468.14,
+            "height": 548.14
+          },
+          "buybox": {
+            "top": 69,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 1017.89
+          },
+          "title": {
+            "top": 69,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 100.38
+          },
+          "price": {
+            "top": 179.38,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 37.5
+          },
+          "short": {
+            "top": 236.88,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 110.61
+          },
+          "paylater": {
+            "top": 363.48,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 51.03
+          },
+          "bundles": {
+            "top": 434.52,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 201.75
+          },
+          "ready": {
+            "top": 656.27,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 70
+          },
+          "delivery": {
+            "top": 742.27,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 72.13
+          },
+          "cart": {
+            "top": 830.39,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 54
+          },
+          "auth": {
+            "top": 884.39,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 44.5
+          },
+          "trust": {
+            "top": 950.89,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 98.25
+          },
+          "paychips": {
+            "top": 1061.14,
+            "left": 532.14,
+            "width": 445.86,
+            "height": 25.75
+          },
+          "fbt": {
+            "top": 1150.89,
+            "left": 0,
+            "width": 1000,
+            "height": 404.17
+          },
+          "details": {
+            "top": 1555.06,
+            "left": 22,
+            "width": 956,
+            "height": 227.94
+          },
+          "reviews": {
+            "top": 1817,
+            "left": 50,
+            "width": 900,
+            "height": 781.22
+          },
+          "related": {
+            "top": 2654.22,
+            "left": 22,
+            "width": 956,
+            "height": 504.25
+          }
+        },
+        "fbtParent": "pdp-page",
+        "fbtCount": 1,
+        "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+        "inside": {
+          "h2": {
+            "fontSize": "14px",
+            "height": 21
+          },
+          "cards": 4,
+          "cardWidths": [
+            231,
+            231,
+            231,
+            231
+          ],
+          "cardsFullyInRail": 4,
+          "nameFont": "10.5px",
+          "priceFont": "11.5px",
+          "textOutside": 0,
+          "footOverflow": 0,
+          "sumrow": null,
+          "button": {
+            "top": 1492.06,
+            "left": 14,
+            "width": 972,
+            "height": 48
+          },
+          "rail": {
+            "left": 0,
+            "width": 1000
+          },
+          "radius": "0px",
+          "padding": "13px 0px 15px",
+          "marginTop": "14px"
+        },
+        "gapAboveFbt": null,
+        "blockAboveFbt": null,
+        "buyColumnBottomVsPhotoBottom": 455
+      },
+      "sameAsIntegratorStylesheet": true,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+      "scrollWidth": 1000
+    },
+    "1280": {
+      "rects": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "blocks": {
+          "crumb": "hidden",
+          "pdp": {
+            "top": 93.5,
+            "left": 22,
+            "width": 1236,
+            "height": 1054.52
+          },
+          "gallery": {
+            "top": 115.5,
+            "left": 22,
+            "width": 611.55,
+            "height": 691.55
+          },
+          "buybox": {
+            "top": 115.5,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 982.52
+          },
+          "title": {
+            "top": 115.5,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 65
+          },
+          "price": {
+            "top": 190.5,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 37.5
+          },
+          "short": {
+            "top": 248,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 110.61
+          },
+          "paylater": {
+            "top": 374.61,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 51.03
+          },
+          "bundles": {
+            "top": 445.64,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 201.75
+          },
+          "ready": {
+            "top": 667.39,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 70
+          },
+          "delivery": {
+            "top": 753.39,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 72.13
+          },
+          "cart": {
+            "top": 841.52,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 54
+          },
+          "auth": {
+            "top": 895.52,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 44.5
+          },
+          "trust": {
+            "top": 962.02,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 98.25
+          },
+          "paychips": {
+            "top": 1072.27,
+            "left": 675.55,
+            "width": 582.45,
+            "height": 25.75
+          },
+          "fbt": {
+            "top": 1182.02,
+            "left": 22,
+            "width": 1236,
+            "height": 239.75
+          },
+          "details": {
+            "top": 1421.77,
+            "left": 22,
+            "width": 1236,
+            "height": 227.94
+          },
+          "reviews": {
+            "top": 1683.7,
+            "left": 190,
+            "width": 900,
+            "height": 781.22
+          },
+          "related": {
+            "top": 2520.92,
+            "left": 22,
+            "width": 1236,
+            "height": 560.25
+          }
+        },
+        "fbtParent": "pdp-page",
+        "fbtCount": 1,
+        "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+        "inside": {
+          "h2": {
+            "fontSize": "17px",
+            "height": 26
+          },
+          "cards": 4,
+          "cardWidths": [
+            116.08,
+            116.08,
+            116.08,
+            116.08
+          ],
+          "cardsFullyInRail": 4,
+          "nameFont": "10.5px",
+          "priceFont": "11.5px",
+          "textOutside": 0,
+          "footOverflow": 0,
+          "sumrow": null,
+          "button": {
+            "top": 1295.64,
+            "left": 598.36,
+            "width": 406,
+            "height": 50
+          },
+          "rail": {
+            "left": 38,
+            "width": 540
+          },
+          "radius": "14px",
+          "padding": "16px",
+          "marginTop": "34px"
+        },
+        "gapAboveFbt": null,
+        "blockAboveFbt": null,
+        "buyColumnBottomVsPhotoBottom": 291
+      },
+      "sameAsIntegratorStylesheet": true,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+      "scrollWidth": 1280
+    },
+    "1440": {
+      "rects": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "blocks": {
+          "crumb": "hidden",
+          "pdp": {
+            "top": 93.5,
+            "left": 22,
+            "width": 1396,
+            "height": 1041.48
+          },
+          "gallery": {
+            "top": 115.5,
+            "left": 22,
+            "width": 693.5,
+            "height": 773.5
+          },
+          "buybox": {
+            "top": 115.5,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 969.48
+          },
+          "title": {
+            "top": 115.5,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 65
+          },
+          "price": {
+            "top": 190.5,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 37.5
+          },
+          "short": {
+            "top": 248,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 110.61
+          },
+          "paylater": {
+            "top": 374.61,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 38
+          },
+          "bundles": {
+            "top": 432.61,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 201.75
+          },
+          "ready": {
+            "top": 654.36,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 70
+          },
+          "delivery": {
+            "top": 740.36,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 72.13
+          },
+          "cart": {
+            "top": 828.48,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 54
+          },
+          "auth": {
+            "top": 882.48,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 44.5
+          },
+          "trust": {
+            "top": 948.98,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 98.25
+          },
+          "paychips": {
+            "top": 1059.23,
+            "left": 757.5,
+            "width": 660.48,
+            "height": 25.75
+          },
+          "fbt": {
+            "top": 1168.98,
+            "left": 22,
+            "width": 1396,
+            "height": 239.75
+          },
+          "details": {
+            "top": 1408.73,
+            "left": 22,
+            "width": 1396,
+            "height": 227.94
+          },
+          "reviews": {
+            "top": 1670.67,
+            "left": 270,
+            "width": 900,
+            "height": 781.22
+          },
+          "related": {
+            "top": 2507.89,
+            "left": 22,
+            "width": 1396,
+            "height": 592.25
+          }
+        },
+        "fbtParent": "pdp-page",
+        "fbtCount": 1,
+        "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+        "inside": {
+          "h2": {
+            "fontSize": "17px",
+            "height": 26
+          },
+          "cards": 4,
+          "cardWidths": [
+            116.08,
+            116.08,
+            116.08,
+            116.08
+          ],
+          "cardsFullyInRail": 4,
+          "nameFont": "10.5px",
+          "priceFont": "11.5px",
+          "textOutside": 0,
+          "footOverflow": 0,
+          "sumrow": null,
+          "button": {
+            "top": 1282.61,
+            "left": 598.36,
+            "width": 406,
+            "height": 50
+          },
+          "rail": {
+            "left": 38,
+            "width": 540
+          },
+          "radius": "14px",
+          "padding": "16px",
+          "marginTop": "34px"
+        },
+        "gapAboveFbt": null,
+        "blockAboveFbt": null,
+        "buyColumnBottomVsPhotoBottom": 196
+      },
+      "sameAsIntegratorStylesheet": true,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+      "scrollWidth": 1440
+    },
+    "1920": {
+      "rects": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "blocks": {
+          "crumb": "hidden",
+          "pdp": {
+            "top": 93.5,
+            "left": 142,
+            "width": 1636,
+            "height": 1041.48
+          },
+          "gallery": {
+            "top": 115.5,
+            "left": 142,
+            "width": 816.44,
+            "height": 896.44
+          },
+          "buybox": {
+            "top": 115.5,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 969.48
+          },
+          "title": {
+            "top": 115.5,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 65
+          },
+          "price": {
+            "top": 190.5,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 37.5
+          },
+          "short": {
+            "top": 248,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 110.61
+          },
+          "paylater": {
+            "top": 374.61,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 38
+          },
+          "bundles": {
+            "top": 432.61,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 201.75
+          },
+          "ready": {
+            "top": 654.36,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 70
+          },
+          "delivery": {
+            "top": 740.36,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 72.13
+          },
+          "cart": {
+            "top": 828.48,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 54
+          },
+          "auth": {
+            "top": 882.48,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 44.5
+          },
+          "trust": {
+            "top": 948.98,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 98.25
+          },
+          "paychips": {
+            "top": 1059.23,
+            "left": 1000.44,
+            "width": 777.55,
+            "height": 25.75
+          },
+          "fbt": {
+            "top": 1168.98,
+            "left": 142,
+            "width": 1636,
+            "height": 239.75
+          },
+          "details": {
+            "top": 1408.73,
+            "left": 142,
+            "width": 1636,
+            "height": 227.94
+          },
+          "reviews": {
+            "top": 1670.67,
+            "left": 510,
+            "width": 900,
+            "height": 781.22
+          },
+          "related": {
+            "top": 2507.89,
+            "left": 142,
+            "width": 1636,
+            "height": 640.25
+          }
+        },
+        "fbtParent": "pdp-page",
+        "fbtCount": 1,
+        "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+        "inside": {
+          "h2": {
+            "fontSize": "17px",
+            "height": 26
+          },
+          "cards": 4,
+          "cardWidths": [
+            116.08,
+            116.08,
+            116.08,
+            116.08
+          ],
+          "cardsFullyInRail": 4,
+          "nameFont": "10.5px",
+          "priceFont": "11.5px",
+          "textOutside": 0,
+          "footOverflow": 0,
+          "sumrow": null,
+          "button": {
+            "top": 1282.61,
+            "left": 718.36,
+            "width": 406,
+            "height": 50
+          },
+          "rail": {
+            "left": 158,
+            "width": 540
+          },
+          "radius": "14px",
+          "padding": "16px",
+          "marginTop": "34px"
+        },
+        "gapAboveFbt": null,
+        "blockAboveFbt": null,
+        "buyColumnBottomVsPhotoBottom": 73
+      },
+      "sameAsIntegratorStylesheet": true,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside",
+      "scrollWidth": 1920
+    }
+  },
+  "right-under-auth": {
+    "390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": "hidden",
+        "gallery": {
+          "top": 127,
+          "left": 0,
+          "width": 390,
+          "height": 458
+        },
+        "buybox": "hidden",
+        "title": {
+          "top": 603,
+          "left": 22,
+          "width": 346,
+          "height": 77.66
+        },
+        "price": {
+          "top": 799.27,
+          "left": 22,
+          "width": 346,
+          "height": 37.5
+        },
+        "short": {
+          "top": 690.66,
+          "left": 22,
+          "width": 346,
+          "height": 90.61
+        },
+        "paylater": {
+          "top": 854.77,
+          "left": 22,
+          "width": 346,
+          "height": 82.06
+        },
+        "bundles": {
+          "top": 954.83,
+          "left": 22,
+          "width": 346,
+          "height": 180.75
+        },
+        "ready": {
+          "top": 1153.58,
+          "left": 22,
+          "width": 346,
+          "height": 49
+        },
+        "delivery": {
+          "top": 1286.58,
+          "left": 22,
+          "width": 346,
+          "height": 85.67
+        },
+        "cart": {
+          "top": 1214.58,
+          "left": 22,
+          "width": 346,
+          "height": 54
+        },
+        "auth": {
+          "top": 1390.25,
+          "left": 22,
+          "width": 346,
+          "height": 32.5
+        },
+        "trust": "hidden",
+        "paychips": {
+          "top": 1440.75,
+          "left": 22,
+          "width": 346,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 1484.5,
+          "left": 0,
+          "width": 390,
+          "height": 270.03
+        },
+        "details": {
+          "top": 1772.53,
+          "left": 22,
+          "width": 346,
+          "height": 253
+        },
+        "reviews": {
+          "top": 2043.53,
+          "left": 22,
+          "width": 346,
+          "height": 1086.33
+        },
+        "related": {
+          "top": 3147.86,
+          "left": 22,
+          "width": 346,
+          "height": 495.45
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "14px",
+          "height": 21
+        },
+        "cards": 4,
+        "cardWidths": [
+          78.5,
+          78.5,
+          78.5,
+          78.5
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "9.555px",
+        "priceFont": "9.975px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 1691.53,
+          "left": 14,
+          "width": 362,
+          "height": 48
+        },
+        "rail": {
+          "left": 0,
+          "width": 390
+        },
+        "radius": "0px",
+        "padding": "13px 0px 15px",
+        "marginTop": "0px"
+      },
+      "gapAboveFbt": 18,
+      "blockAboveFbt": " paychips pm-sec pm-paychips",
+      "buyColumnBottomVsPhotoBottom": -585
+    },
+    "1000": {
+      "scrollWidth": 1000,
+      "clientWidth": 1000,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 47,
+          "left": 22,
+          "width": 956,
+          "height": 1406.02
+        },
+        "gallery": {
+          "top": 84,
+          "left": 22,
+          "width": 468.14,
+          "height": 548.14
+        },
+        "buybox": {
+          "top": 69,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 1334.02
+        },
+        "title": {
+          "top": 69,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 100.38
+        },
+        "price": {
+          "top": 179.38,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 37.5
+        },
+        "short": {
+          "top": 236.88,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 363.48,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 51.03
+        },
+        "bundles": {
+          "top": 434.52,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 656.27,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 70
+        },
+        "delivery": {
+          "top": 742.27,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 830.39,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 54
+        },
+        "auth": {
+          "top": 884.39,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1267.02,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1377.27,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 948.89,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 296.13
+        },
+        "details": {
+          "top": 1453.02,
+          "left": 22,
+          "width": 956,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1714.95,
+          "left": 50,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2552.17,
+          "left": 22,
+          "width": 956,
+          "height": 504.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          92.45,
+          92.45,
+          92.45,
+          92.45
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 1181.02,
+          "left": 546.14,
+          "width": 417.86,
+          "height": 48
+        },
+        "rail": {
+          "left": 532,
+          "width": 446
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pts-stack",
+      "buyColumnBottomVsPhotoBottom": 771
+    },
+    "1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 93.5,
+          "left": 22,
+          "width": 1236,
+          "height": 1381.3
+        },
+        "gallery": {
+          "top": 115.5,
+          "left": 22,
+          "width": 611.55,
+          "height": 691.55
+        },
+        "buybox": {
+          "top": 115.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 1309.3
+        },
+        "title": {
+          "top": 115.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 65
+        },
+        "price": {
+          "top": 190.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 37.5
+        },
+        "short": {
+          "top": 248,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 374.61,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 51.03
+        },
+        "bundles": {
+          "top": 445.64,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 667.39,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 70
+        },
+        "delivery": {
+          "top": 753.39,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 841.52,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 54
+        },
+        "auth": {
+          "top": 895.52,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1288.8,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1399.05,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 960.02,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 306.78
+        },
+        "details": {
+          "top": 1474.8,
+          "left": 22,
+          "width": 1236,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1736.73,
+          "left": 190,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2573.95,
+          "left": 22,
+          "width": 1236,
+          "height": 560.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          126.61,
+          126.61,
+          126.61,
+          126.61
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 1200.8,
+          "left": 689.55,
+          "width": 554.45,
+          "height": 50
+        },
+        "rail": {
+          "left": 676,
+          "width": 582
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pts-stack",
+      "buyColumnBottomVsPhotoBottom": 618,
+      "shot": "docs/ri-shots/after-right-under-auth-1280.png"
+    },
+    "1440": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 93.5,
+          "left": 22,
+          "width": 1396,
+          "height": 1387.77
+        },
+        "gallery": {
+          "top": 115.5,
+          "left": 22,
+          "width": 693.5,
+          "height": 773.5
+        },
+        "buybox": {
+          "top": 115.5,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 1315.77
+        },
+        "title": {
+          "top": 115.5,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 65
+        },
+        "price": {
+          "top": 190.5,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 37.5
+        },
+        "short": {
+          "top": 248,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 374.61,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 38
+        },
+        "bundles": {
+          "top": 432.61,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 654.36,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 70
+        },
+        "delivery": {
+          "top": 740.36,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 828.48,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 54
+        },
+        "auth": {
+          "top": 882.48,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1295.27,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1405.52,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 946.98,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 326.28
+        },
+        "details": {
+          "top": 1481.27,
+          "left": 22,
+          "width": 1396,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1743.2,
+          "left": 270,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2580.42,
+          "left": 22,
+          "width": 1396,
+          "height": 592.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          146.11,
+          146.11,
+          146.11,
+          146.11
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 1207.27,
+          "left": 771.5,
+          "width": 632.48,
+          "height": 50
+        },
+        "rail": {
+          "left": 758,
+          "width": 660
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pts-stack",
+      "buyColumnBottomVsPhotoBottom": 542,
+      "shot": "docs/ri-shots/after-right-under-auth-1440.png"
+    },
+    "1920": {
+      "scrollWidth": 1920,
+      "clientWidth": 1920,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 93.5,
+          "left": 142,
+          "width": 1636,
+          "height": 1417.03
+        },
+        "gallery": {
+          "top": 115.5,
+          "left": 142,
+          "width": 816.44,
+          "height": 896.44
+        },
+        "buybox": {
+          "top": 115.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 1345.03
+        },
+        "title": {
+          "top": 115.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 65
+        },
+        "price": {
+          "top": 190.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 37.5
+        },
+        "short": {
+          "top": 248,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 374.61,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 38
+        },
+        "bundles": {
+          "top": 432.61,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 654.36,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 70
+        },
+        "delivery": {
+          "top": 740.36,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 828.48,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 54
+        },
+        "auth": {
+          "top": 882.48,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1324.53,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1434.78,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 946.98,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 355.55
+        },
+        "details": {
+          "top": 1510.53,
+          "left": 142,
+          "width": 1636,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1772.47,
+          "left": 510,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2609.69,
+          "left": 142,
+          "width": 1636,
+          "height": 640.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          175.38,
+          175.38,
+          175.38,
+          175.38
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 1236.53,
+          "left": 1014.44,
+          "width": 749.55,
+          "height": 50
+        },
+        "rail": {
+          "left": 1000,
+          "width": 778
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pts-stack",
+      "buyColumnBottomVsPhotoBottom": 449,
+      "shot": "docs/ri-shots/after-right-under-auth-1920.png"
+    },
+    "save": 200
+  },
+  "right-under-price": {
+    "390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": "hidden",
+        "gallery": {
+          "top": 127,
+          "left": 0,
+          "width": 390,
+          "height": 458
+        },
+        "buybox": "hidden",
+        "title": {
+          "top": 603,
+          "left": 22,
+          "width": 346,
+          "height": 77.66
+        },
+        "price": {
+          "top": 799.27,
+          "left": 22,
+          "width": 346,
+          "height": 37.5
+        },
+        "short": {
+          "top": 690.66,
+          "left": 22,
+          "width": 346,
+          "height": 90.61
+        },
+        "paylater": {
+          "top": 854.77,
+          "left": 22,
+          "width": 346,
+          "height": 82.06
+        },
+        "bundles": {
+          "top": 954.83,
+          "left": 22,
+          "width": 346,
+          "height": 180.75
+        },
+        "ready": {
+          "top": 1153.58,
+          "left": 22,
+          "width": 346,
+          "height": 49
+        },
+        "delivery": {
+          "top": 1286.58,
+          "left": 22,
+          "width": 346,
+          "height": 85.67
+        },
+        "cart": {
+          "top": 1214.58,
+          "left": 22,
+          "width": 346,
+          "height": 54
+        },
+        "auth": {
+          "top": 1390.25,
+          "left": 22,
+          "width": 346,
+          "height": 32.5
+        },
+        "trust": "hidden",
+        "paychips": {
+          "top": 1440.75,
+          "left": 22,
+          "width": 346,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 1484.5,
+          "left": 0,
+          "width": 390,
+          "height": 270.03
+        },
+        "details": {
+          "top": 1772.53,
+          "left": 22,
+          "width": 346,
+          "height": 253
+        },
+        "reviews": {
+          "top": 2043.53,
+          "left": 22,
+          "width": 346,
+          "height": 1086.33
+        },
+        "related": {
+          "top": 3147.86,
+          "left": 22,
+          "width": 346,
+          "height": 495.45
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "14px",
+          "height": 21
+        },
+        "cards": 4,
+        "cardWidths": [
+          78.5,
+          78.5,
+          78.5,
+          78.5
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "9.555px",
+        "priceFont": "9.975px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 1691.53,
+          "left": 14,
+          "width": 362,
+          "height": 48
+        },
+        "rail": {
+          "left": 0,
+          "width": 390
+        },
+        "radius": "0px",
+        "padding": "13px 0px 15px",
+        "marginTop": "0px"
+      },
+      "gapAboveFbt": 18,
+      "blockAboveFbt": " paychips pm-sec pm-paychips",
+      "buyColumnBottomVsPhotoBottom": -585
+    },
+    "1000": {
+      "scrollWidth": 1000,
+      "clientWidth": 1000,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 47,
+          "left": 22,
+          "width": 956,
+          "height": 1406.02
+        },
+        "gallery": {
+          "top": 84,
+          "left": 22,
+          "width": 468.14,
+          "height": 548.14
+        },
+        "buybox": {
+          "top": 69,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 1334.02
+        },
+        "title": {
+          "top": 69,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 100.38
+        },
+        "price": {
+          "top": 179.38,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 37.5
+        },
+        "short": {
+          "top": 553,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 679.61,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 51.03
+        },
+        "bundles": {
+          "top": 750.64,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 972.39,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 70
+        },
+        "delivery": {
+          "top": 1058.39,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 1146.52,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 54
+        },
+        "auth": {
+          "top": 1200.52,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1267.02,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1377.27,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 236.88,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 296.13
+        },
+        "details": {
+          "top": 1453.02,
+          "left": 22,
+          "width": 956,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1714.95,
+          "left": 50,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2552.17,
+          "left": 22,
+          "width": 956,
+          "height": 504.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          92.45,
+          92.45,
+          92.45,
+          92.45
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 469,
+          "left": 546.14,
+          "width": 417.86,
+          "height": 48
+        },
+        "rail": {
+          "left": 532,
+          "width": 446
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pm-sec pm-price",
+      "buyColumnBottomVsPhotoBottom": 771
+    },
+    "1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 93.5,
+          "left": 22,
+          "width": 1236,
+          "height": 1381.3
+        },
+        "gallery": {
+          "top": 115.5,
+          "left": 22,
+          "width": 611.55,
+          "height": 691.55
+        },
+        "buybox": {
+          "top": 115.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 1309.3
+        },
+        "title": {
+          "top": 115.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 65
+        },
+        "price": {
+          "top": 190.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 37.5
+        },
+        "short": {
+          "top": 574.78,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 701.39,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 51.03
+        },
+        "bundles": {
+          "top": 772.42,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 994.17,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 70
+        },
+        "delivery": {
+          "top": 1080.17,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 1168.3,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 54
+        },
+        "auth": {
+          "top": 1222.3,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1288.8,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1399.05,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 248,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 306.78
+        },
+        "details": {
+          "top": 1474.8,
+          "left": 22,
+          "width": 1236,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1736.73,
+          "left": 190,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2573.95,
+          "left": 22,
+          "width": 1236,
+          "height": 560.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          126.61,
+          126.61,
+          126.61,
+          126.61
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 488.78,
+          "left": 689.55,
+          "width": 554.45,
+          "height": 50
+        },
+        "rail": {
+          "left": 676,
+          "width": 582
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pm-sec pm-price",
+      "buyColumnBottomVsPhotoBottom": 618,
+      "shot": "docs/ri-shots/after-right-under-price-1280.png"
+    },
+    "1440": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 93.5,
+          "left": 22,
+          "width": 1396,
+          "height": 1387.77
+        },
+        "gallery": {
+          "top": 115.5,
+          "left": 22,
+          "width": 693.5,
+          "height": 773.5
+        },
+        "buybox": {
+          "top": 115.5,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 1315.77
+        },
+        "title": {
+          "top": 115.5,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 65
+        },
+        "price": {
+          "top": 190.5,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 37.5
+        },
+        "short": {
+          "top": 594.28,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 720.89,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 38
+        },
+        "bundles": {
+          "top": 778.89,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 1000.64,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 70
+        },
+        "delivery": {
+          "top": 1086.64,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 1174.77,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 54
+        },
+        "auth": {
+          "top": 1228.77,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1295.27,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1405.52,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 248,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 326.28
+        },
+        "details": {
+          "top": 1481.27,
+          "left": 22,
+          "width": 1396,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1743.2,
+          "left": 270,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2580.42,
+          "left": 22,
+          "width": 1396,
+          "height": 592.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          146.11,
+          146.11,
+          146.11,
+          146.11
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 508.28,
+          "left": 771.5,
+          "width": 632.48,
+          "height": 50
+        },
+        "rail": {
+          "left": 758,
+          "width": 660
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pm-sec pm-price",
+      "buyColumnBottomVsPhotoBottom": 542,
+      "shot": "docs/ri-shots/after-right-under-price-1440.png"
+    },
+    "1920": {
+      "scrollWidth": 1920,
+      "clientWidth": 1920,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 93.5,
+          "left": 142,
+          "width": 1636,
+          "height": 1417.03
+        },
+        "gallery": {
+          "top": 115.5,
+          "left": 142,
+          "width": 816.44,
+          "height": 896.44
+        },
+        "buybox": {
+          "top": 115.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 1345.03
+        },
+        "title": {
+          "top": 115.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 65
+        },
+        "price": {
+          "top": 190.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 37.5
+        },
+        "short": {
+          "top": 623.55,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 750.16,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 38
+        },
+        "bundles": {
+          "top": 808.16,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 1029.91,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 70
+        },
+        "delivery": {
+          "top": 1115.91,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 1204.03,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 54
+        },
+        "auth": {
+          "top": 1258.03,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1324.53,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1434.78,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 248,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 355.55
+        },
+        "details": {
+          "top": 1510.53,
+          "left": 142,
+          "width": 1636,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1772.47,
+          "left": 510,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2609.69,
+          "left": 142,
+          "width": 1636,
+          "height": 640.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          175.38,
+          175.38,
+          175.38,
+          175.38
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 537.55,
+          "left": 1014.44,
+          "width": 749.55,
+          "height": 50
+        },
+        "rail": {
+          "left": 1000,
+          "width": 778
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pm-sec pm-price",
+      "buyColumnBottomVsPhotoBottom": 449,
+      "shot": "docs/ri-shots/after-right-under-price-1920.png"
+    },
+    "save": 200
+  },
+  "phone": {
+    "pixelDiffDefaultVsAuth": {
+      "size": [
+        390,
+        4422
+      ],
+      "differing": 0,
+      "box": null
+    },
+    "pixelDiffDefaultVsPrice": {
+      "size": [
+        390,
+        4422
+      ],
+      "differing": 0,
+      "box": null
+    },
+    "pixelDiffDefaultVsDefault": {
+      "size": [
+        390,
+        4422
+      ],
+      "differing": 0,
+      "box": null
+    },
+    "pngBytesIdenticalAuth": true,
+    "pngBytesIdenticalPrice": true,
+    "rectsIdenticalAuth": true,
+    "rectsIdenticalPrice": true,
+    "fbtParentDefault": "pdp-page",
+    "fbtParentPlaced": "buybox",
+    "fbtCount": [
+      1,
+      1,
+      1
+    ],
+    "scrollWidth": [
+      390,
+      390,
+      390
+    ],
+    "fbt": [
+      {
+        "top": 1484.5,
+        "left": 0,
+        "width": 390,
+        "height": 270.03
+      },
+      {
+        "top": 1484.5,
+        "left": 0,
+        "width": 390,
+        "height": 270.03
+      },
+      {
+        "top": 1484.5,
+        "left": 0,
+        "width": 390,
+        "height": 270.03
+      }
+    ]
+  },
+  "switches": {
+    "offSave": 200,
+    "laptopOff1280": "hidden",
+    "laptopOff390": {
+      "top": 1484.5,
+      "left": 0,
+      "width": 390,
+      "height": 270.03
+    },
+    "onSave": 200,
+    "togetherKeys": [
+      "0"
+    ]
+  },
+  "discountSave": {
+    "status": 200,
+    "error": null
+  },
+  "discountOn": {
+    "1000": {
+      "scrollWidth": 1000,
+      "clientWidth": 1000,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 47,
+          "left": 22,
+          "width": 956,
+          "height": 1439.27
+        },
+        "gallery": {
+          "top": 84,
+          "left": 22,
+          "width": 468.14,
+          "height": 548.14
+        },
+        "buybox": {
+          "top": 69,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 1367.27
+        },
+        "title": {
+          "top": 69,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 100.38
+        },
+        "price": {
+          "top": 179.38,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 37.5
+        },
+        "short": {
+          "top": 236.88,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 363.48,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 51.03
+        },
+        "bundles": {
+          "top": 434.52,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 656.27,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 70
+        },
+        "delivery": {
+          "top": 742.27,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 830.39,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 54
+        },
+        "auth": {
+          "top": 884.39,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1300.27,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1410.52,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 948.89,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 329.38
+        },
+        "details": {
+          "top": 1486.27,
+          "left": 22,
+          "width": 956,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1748.2,
+          "left": 50,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2585.42,
+          "left": 22,
+          "width": 956,
+          "height": 504.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          92.45,
+          92.45,
+          92.45,
+          92.45
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": {
+          "top": 1181.02,
+          "left": 546.14,
+          "width": 417.86,
+          "height": 23.25
+        },
+        "button": {
+          "top": 1214.27,
+          "left": 546.14,
+          "width": 417.86,
+          "height": 48
+        },
+        "rail": {
+          "left": 532,
+          "width": 446
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pts-stack",
+      "buyColumnBottomVsPhotoBottom": 804,
+      "shot": "docs/ri-shots/after-right-under-auth-discount-on-1000.png"
+    },
+    "1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 93.5,
+          "left": 22,
+          "width": 1236,
+          "height": 1416.8
+        },
+        "gallery": {
+          "top": 115.5,
+          "left": 22,
+          "width": 611.55,
+          "height": 691.55
+        },
+        "buybox": {
+          "top": 115.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 1344.8
+        },
+        "title": {
+          "top": 115.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 65
+        },
+        "price": {
+          "top": 190.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 37.5
+        },
+        "short": {
+          "top": 248,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 374.61,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 51.03
+        },
+        "bundles": {
+          "top": 445.64,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 667.39,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 70
+        },
+        "delivery": {
+          "top": 753.39,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 841.52,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 54
+        },
+        "auth": {
+          "top": 895.52,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1324.3,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1434.55,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 960.02,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 342.28
+        },
+        "details": {
+          "top": 1510.3,
+          "left": 22,
+          "width": 1236,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1772.23,
+          "left": 190,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2609.45,
+          "left": 22,
+          "width": 1236,
+          "height": 560.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          126.61,
+          126.61,
+          126.61,
+          126.61
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": {
+          "top": 1200.8,
+          "left": 689.55,
+          "width": 554.45,
+          "height": 25.5
+        },
+        "button": {
+          "top": 1236.3,
+          "left": 689.55,
+          "width": 554.45,
+          "height": 50
+        },
+        "rail": {
+          "left": 676,
+          "width": 582
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pts-stack",
+      "buyColumnBottomVsPhotoBottom": 653,
+      "shot": "docs/ri-shots/after-right-under-auth-discount-on-1280.png"
+    },
+    "1440": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 93.5,
+          "left": 22,
+          "width": 1396,
+          "height": 1423.27
+        },
+        "gallery": {
+          "top": 115.5,
+          "left": 22,
+          "width": 693.5,
+          "height": 773.5
+        },
+        "buybox": {
+          "top": 115.5,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 1351.27
+        },
+        "title": {
+          "top": 115.5,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 65
+        },
+        "price": {
+          "top": 190.5,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 37.5
+        },
+        "short": {
+          "top": 248,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 374.61,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 38
+        },
+        "bundles": {
+          "top": 432.61,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 654.36,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 70
+        },
+        "delivery": {
+          "top": 740.36,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 828.48,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 54
+        },
+        "auth": {
+          "top": 882.48,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1330.77,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1441.02,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 946.98,
+          "left": 757.5,
+          "width": 660.48,
+          "height": 361.78
+        },
+        "details": {
+          "top": 1516.77,
+          "left": 22,
+          "width": 1396,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1778.7,
+          "left": 270,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2615.92,
+          "left": 22,
+          "width": 1396,
+          "height": 592.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          146.11,
+          146.11,
+          146.11,
+          146.11
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": {
+          "top": 1207.27,
+          "left": 771.5,
+          "width": 632.48,
+          "height": 25.5
+        },
+        "button": {
+          "top": 1242.77,
+          "left": 771.5,
+          "width": 632.48,
+          "height": 50
+        },
+        "rail": {
+          "left": 758,
+          "width": 660
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pts-stack",
+      "buyColumnBottomVsPhotoBottom": 578,
+      "shot": "docs/ri-shots/after-right-under-auth-discount-on-1440.png"
+    },
+    "1920": {
+      "scrollWidth": 1920,
+      "clientWidth": 1920,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 93.5,
+          "left": 142,
+          "width": 1636,
+          "height": 1452.53
+        },
+        "gallery": {
+          "top": 115.5,
+          "left": 142,
+          "width": 816.44,
+          "height": 896.44
+        },
+        "buybox": {
+          "top": 115.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 1380.53
+        },
+        "title": {
+          "top": 115.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 65
+        },
+        "price": {
+          "top": 190.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 37.5
+        },
+        "short": {
+          "top": 248,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 374.61,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 38
+        },
+        "bundles": {
+          "top": 432.61,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 654.36,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 70
+        },
+        "delivery": {
+          "top": 740.36,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 828.48,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 54
+        },
+        "auth": {
+          "top": 882.48,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1360.03,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1470.28,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 946.98,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 391.05
+        },
+        "details": {
+          "top": 1546.03,
+          "left": 142,
+          "width": 1636,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1807.97,
+          "left": 510,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2645.19,
+          "left": 142,
+          "width": 1636,
+          "height": 640.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 4,
+        "cardWidths": [
+          175.38,
+          175.38,
+          175.38,
+          175.38
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": {
+          "top": 1236.53,
+          "left": 1014.44,
+          "width": 749.55,
+          "height": 25.5
+        },
+        "button": {
+          "top": 1272.03,
+          "left": 1014.44,
+          "width": 749.55,
+          "height": 50
+        },
+        "rail": {
+          "left": 1000,
+          "width": 778
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pts-stack",
+      "buyColumnBottomVsPhotoBottom": 484,
+      "shot": "docs/ri-shots/after-right-under-auth-discount-on-1920.png"
+    }
+  },
+  "discountOffSave": 200,
+  "admin": {
+    "start": {
+      "buy": [
+        "title",
+        "price",
+        "short",
+        "paylater",
+        "bundles",
+        "ready",
+        "delivery",
+        "cart",
+        "auth",
+        "trust",
+        "paychips"
+      ],
+      "under": [
+        "buytogether",
+        "details",
+        "reviews",
+        "related"
+      ]
+    },
+    "inProgress": {
+      "dragging": [
+        "buytogether"
+      ],
+      "over": [
+        "trust"
+      ],
+      "after": []
+    },
+    "afterDrop": {
+      "buy": [
+        "title",
+        "price",
+        "short",
+        "paylater",
+        "bundles",
+        "ready",
+        "delivery",
+        "cart",
+        "auth",
+        "buytogether",
+        "trust",
+        "paychips"
+      ],
+      "under": [
+        "details",
+        "reviews",
+        "related"
+      ]
+    },
+    "previewLive": {
+      "className": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "buyVars": [
+        "--pdsb-o-title: 1",
+        "--pdsb-o-price: 2",
+        "--pdsb-o-short: 3",
+        "--pdsb-o-paylater: 4",
+        "--pdsb-o-bundles: 5",
+        "--pdsb-o-ready: 6",
+        "--pdsb-o-delivery: 7",
+        "--pdsb-o-cart: 8",
+        "--pdsb-o-auth: 9",
+        "--pdsb-o-buytogether: 10",
+        "--pdsb-o-trust: 11",
+        "--pdsb-o-paychips: 12"
+      ],
+      "fbtParent": "buybox",
+      "fbtCount": 1
+    },
+    "afterArrowDown1": {
+      "buy": [
+        "title",
+        "price",
+        "short",
+        "paylater",
+        "bundles",
+        "ready",
+        "delivery",
+        "cart",
+        "auth",
+        "trust",
+        "buytogether",
+        "paychips"
+      ],
+      "under": [
+        "details",
+        "reviews",
+        "related"
+      ]
+    },
+    "afterArrowDown2": {
+      "buy": [
+        "title",
+        "price",
+        "short",
+        "paylater",
+        "bundles",
+        "ready",
+        "delivery",
+        "cart",
+        "auth",
+        "trust",
+        "paychips",
+        "buytogether"
+      ],
+      "under": [
+        "details",
+        "reviews",
+        "related"
+      ]
+    },
+    "afterArrowDown3": {
+      "buy": [
+        "title",
+        "price",
+        "short",
+        "paylater",
+        "bundles",
+        "ready",
+        "delivery",
+        "cart",
+        "auth",
+        "trust",
+        "paychips"
+      ],
+      "under": [
+        "buytogether",
+        "details",
+        "reviews",
+        "related"
+      ]
+    },
+    "afterMoveButton": {
+      "buy": [
+        "title",
+        "price",
+        "short",
+        "paylater",
+        "bundles",
+        "ready",
+        "delivery",
+        "cart",
+        "auth",
+        "buytogether",
+        "trust",
+        "paychips"
+      ],
+      "under": [
+        "details",
+        "reviews",
+        "related"
+      ]
+    },
+    "afterSave": {
+      "lists": {
+        "buy": [
+          "title",
+          "price",
+          "short",
+          "paylater",
+          "bundles",
+          "ready",
+          "delivery",
+          "cart",
+          "auth",
+          "buytogether",
+          "trust",
+          "paychips"
+        ],
+        "under": [
+          "details",
+          "reviews",
+          "related"
+        ]
+      },
+      "bar": "Saved 31 settings — live now"
+    },
+    "savedPayload": {
+      "list": [
+        "details",
+        "reviews",
+        "related"
+      ],
+      "buy": [
+        "title",
+        "price",
+        "short",
+        "paylater",
+        "bundles",
+        "ready",
+        "delivery",
+        "cart",
+        "auth",
+        "buytogether",
+        "trust",
+        "paychips"
+      ]
+    }
+  },
+  "sixSave": 200,
+  "six": {
+    "1000": {
+      "scrollWidth": 1000,
+      "clientWidth": 1000,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 47,
+          "left": 22,
+          "width": 956,
+          "height": 1391.03
+        },
+        "gallery": {
+          "top": 84,
+          "left": 22,
+          "width": 468.14,
+          "height": 548.14
+        },
+        "buybox": {
+          "top": 69,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 1319.03
+        },
+        "title": {
+          "top": 69,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 100.38
+        },
+        "price": {
+          "top": 179.38,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 37.5
+        },
+        "short": {
+          "top": 236.88,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 363.48,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 51.03
+        },
+        "bundles": {
+          "top": 434.52,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 656.27,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 70
+        },
+        "delivery": {
+          "top": 742.27,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 830.39,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 54
+        },
+        "auth": {
+          "top": 884.39,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1252.03,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1362.28,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 948.89,
+          "left": 532.14,
+          "width": 445.86,
+          "height": 281.14
+        },
+        "details": {
+          "top": 1438.03,
+          "left": 22,
+          "width": 956,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1699.97,
+          "left": 50,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2537.19,
+          "left": 22,
+          "width": 956,
+          "height": 504.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 6,
+        "cardWidths": [
+          80.41,
+          80.41,
+          80.41,
+          80.41,
+          80.41,
+          80.41
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "10.2609px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 1166.03,
+          "left": 546.14,
+          "width": 417.86,
+          "height": 48
+        },
+        "rail": {
+          "left": 532,
+          "width": 446
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pts-stack",
+      "buyColumnBottomVsPhotoBottom": 756,
+      "shot": "docs/ri-shots/after-right-six-cards-1000.png",
+      "railScroll": null
+    },
+    "1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 93.5,
+          "left": 22,
+          "width": 1236,
+          "height": 1378.58
+        },
+        "gallery": {
+          "top": 115.5,
+          "left": 22,
+          "width": 611.55,
+          "height": 691.55
+        },
+        "buybox": {
+          "top": 115.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 1306.58
+        },
+        "title": {
+          "top": 115.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 65
+        },
+        "price": {
+          "top": 190.5,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 37.5
+        },
+        "short": {
+          "top": 248,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 374.61,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 51.03
+        },
+        "bundles": {
+          "top": 445.64,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 667.39,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 70
+        },
+        "delivery": {
+          "top": 753.39,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 841.52,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 54
+        },
+        "auth": {
+          "top": 895.52,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1286.08,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1396.33,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 960.02,
+          "left": 675.55,
+          "width": 582.45,
+          "height": 304.06
+        },
+        "details": {
+          "top": 1472.08,
+          "left": 22,
+          "width": 1236,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1734.02,
+          "left": 190,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2571.23,
+          "left": 22,
+          "width": 1236,
+          "height": 560.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 6,
+        "cardWidths": [
+          110.77,
+          110.77,
+          110.77,
+          110.77,
+          110.77,
+          110.77
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 1198.08,
+          "left": 689.55,
+          "width": 554.45,
+          "height": 50
+        },
+        "rail": {
+          "left": 676,
+          "width": 582
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pts-stack",
+      "buyColumnBottomVsPhotoBottom": 615,
+      "shot": "docs/ri-shots/after-right-six-cards-1280.png",
+      "railScroll": null
+    },
+    "1920": {
+      "scrollWidth": 1920,
+      "clientWidth": 1920,
+      "blocks": {
+        "crumb": "hidden",
+        "pdp": {
+          "top": 93.5,
+          "left": 142,
+          "width": 1636,
+          "height": 1395.77
+        },
+        "gallery": {
+          "top": 115.5,
+          "left": 142,
+          "width": 816.44,
+          "height": 896.44
+        },
+        "buybox": {
+          "top": 115.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 1323.77
+        },
+        "title": {
+          "top": 115.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 65
+        },
+        "price": {
+          "top": 190.5,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 37.5
+        },
+        "short": {
+          "top": 248,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 110.61
+        },
+        "paylater": {
+          "top": 374.61,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 38
+        },
+        "bundles": {
+          "top": 432.61,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 201.75
+        },
+        "ready": {
+          "top": 654.36,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 70
+        },
+        "delivery": {
+          "top": 740.36,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 72.13
+        },
+        "cart": {
+          "top": 828.48,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 54
+        },
+        "auth": {
+          "top": 882.48,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 44.5
+        },
+        "trust": {
+          "top": 1303.27,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 98.25
+        },
+        "paychips": {
+          "top": 1413.52,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 25.75
+        },
+        "fbt": {
+          "top": 946.98,
+          "left": 1000.44,
+          "width": 777.55,
+          "height": 334.28
+        },
+        "details": {
+          "top": 1489.27,
+          "left": 142,
+          "width": 1636,
+          "height": 227.94
+        },
+        "reviews": {
+          "top": 1751.2,
+          "left": 510,
+          "width": 900,
+          "height": 781.22
+        },
+        "related": {
+          "top": 2588.42,
+          "left": 142,
+          "width": 1636,
+          "height": 640.25
+        }
+      },
+      "fbtParent": "buybox",
+      "fbtCount": 1,
+      "wrapper": "wrap pdp-page pm-off-trust pm-rate-m-beside pd-rate-d-beside pdsb-on pdsb-f-title",
+      "inside": {
+        "h2": {
+          "fontSize": "16px",
+          "height": 24
+        },
+        "cards": 6,
+        "cardWidths": [
+          154.11,
+          154.11,
+          154.11,
+          154.11,
+          154.11,
+          154.11
+        ],
+        "cardsFullyInRail": 4,
+        "nameFont": "10.5px",
+        "priceFont": "11.5px",
+        "textOutside": 0,
+        "footOverflow": 0,
+        "sumrow": null,
+        "button": {
+          "top": 1215.27,
+          "left": 1014.44,
+          "width": 749.55,
+          "height": 50
+        },
+        "rail": {
+          "left": 1000,
+          "width": 778
+        },
+        "radius": "14px",
+        "padding": "14px 0px 16px",
+        "marginTop": "20px"
+      },
+      "gapAboveFbt": 20,
+      "blockAboveFbt": "pts-stack",
+      "buyColumnBottomVsPhotoBottom": 427,
+      "shot": "docs/ri-shots/after-right-six-cards-1920.png",
+      "railScroll": null
+    },
+    "peek": {
+      "cls": "kbb-fbt bt bt-more is-peek",
+      "firstCardMarginStart": "-65.2969px",
+      "railScrollWidth": 802,
+      "railClientWidth": 582,
+      "pageScrollWidth": 1280
+    }
+  },
+  "sixRestore": 200
+}

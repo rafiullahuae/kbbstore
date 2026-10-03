@@ -52,6 +52,27 @@
     exactly as the server prints nothing then. The phone frame carries them
     too and ignores them: the stylesheet reads them at 881px and up only.
 
+    (Lane RI) BUY THESE TOGETHER CROSSES BETWEEN THE TWO LISTS.
+      "ONLY IN DESKTOP: allow me option to bring the buy together section to
+       the right collumn, by drag n drop."
+      · Its row alone may be dropped into the other list, onto any row, by
+        the rule the lists already use: a block moved UP lands above the row
+        it is dropped on (the pink line on that row's top edge), a block moved
+        DOWN lands below it (the line on its bottom edge). The Buy column is
+        drawn above the full-width list, so dragging it in from below lands it
+        above the row, and dragging it back out lands it below the row.
+      · ↑ / ↓ walk it through both lists as one sequence — up from the top of
+        the full-width list lands it last in the Buy column, down from the
+        bottom of the Buy column lands it first under the columns.
+      · "Move to right column" puts it under the Authenticity row (where his
+        screenshot has the empty space); "Move below the columns" puts it back
+        first under them, where it ships.
+      · The preview frames MOVE the one `.kbb-fbt` node — into `.buybox`, or
+        back after `.pdp` — exactly where the template draws it, then set the
+        classes and properties as before. A DOM move, never a measurement.
+    The server checks it sits in one list only (ProductDesktopSections::
+    validatePlacement()).
+
     ── RULE 5 ─────────────────────────────────────────────────────────────────
 
     Every string reaches the DOM through escHtml/escAttr. A key must be one the
@@ -89,8 +110,15 @@
 .pds-sub b{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#7b8697}
 .pds-same{font-style:normal;color:#a3acb9}
 .pds-arrows .ectog{margin-inline-end:8px;align-self:center}
+/* (Lane RI) Buy these together's own button, under its description. */
+.pds-move{align-self:flex-start;margin-block-start:6px;block-size:28px;padding:0 10px;border:1px solid #f3c2d1;background:#fdf2f6;color:#b8335c;
+  border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap}
+.pds-move:hover{background:#fbe3ec}
+.pds-move:focus-visible{outline:2px solid #E0567B;outline-offset:1px}
+.pds-row.pds-mv{background:#fffafb}
 @media (max-width:600px){
   .pds-row{grid-template-columns:30px minmax(0,1fr) auto;padding-inline:6px 10px}
+  .pds-move{padding-inline:8px;font-size:11.5px}
   .pds-num{display:none}
 }
 </style>
@@ -113,7 +141,10 @@
      page at all" — an existence check, never a measurement. */
   var BLOCK = { buytogether: '.kbb-fbt', details: '.pm-details', reviews: '.sr', related: '.ymal' };
   var BUYSEL = { title: '.pm-title', price: '.pm-price', short: '.pm-short:not(.pm-short-set)', paylater: '.pm-paylater', bundles: '.pm-bundles',
-    ready: '.pm-ready', delivery: '.kbb-cart-form > .pts-del', cart: '.pm-cart', auth: '.kbb-cart-form > .pts-stack', trust: '.pm-trust', paychips: '.pm-paychips' };
+    ready: '.pm-ready', delivery: '.kbb-cart-form > .pts-del', cart: '.pm-cart', auth: '.kbb-cart-form > .pts-stack', trust: '.pm-trust', paychips: '.pm-paychips',
+    buytogether: '.buybox > .kbb-fbt' };
+  /* (Lane RI) The one block allowed in both lists. */
+  var MOVABLE = 'buytogether';
 
   function data() { return (typeof PP !== 'undefined' && PP && PP.dsections) ? PP.dsections : null; }
 
@@ -153,6 +184,14 @@
     return list.filter(function (k) { return ROWS && !!ROWS[k] && listOf(k) === name; });
   }
 
+  /** (Lane RI) Both lists as they ship — Buy these together under the columns. */
+  function shipped() {
+    var d = data(), keep = function (k) { return !!(ROWS && ROWS[k]); };
+    var under = (d && Array.isArray(d.defaults) ? d.defaults : []).filter(keep);
+    var buy = (d && Array.isArray(d.buy_defaults) ? d.buy_defaults : []).filter(function (k) { return keep(k) && under.indexOf(k) < 0; });
+    return { buy: buy, under: under };
+  }
+
   function isDefault(name) { return LISTS !== null && LISTS[name].join(',') === defaults(name).join(','); }
 
   /* ── what the server would print, computed here for the preview ────────── */
@@ -182,6 +221,10 @@
       try { doc = fr.contentDocument; } catch (e) { doc = null; }
       var page = doc && doc.querySelector('.pdp-page');
       if (!page) return;
+      /* (Lane RI) The one `.kbb-fbt` goes where the template would draw it. */
+      var bt = page.querySelector('.kbb-fbt'), pdp = page.querySelector(':scope > .pdp'), box = pdp && pdp.querySelector(':scope > .buybox');
+      if (bt && box && listOf(MOVABLE) === 'buy') { if (bt.parentNode !== box) box.appendChild(bt); }
+      else if (bt && pdp && bt.parentNode !== page) pdp.after(bt);
       Array.prototype.slice.call(page.classList).forEach(function (cl) { if (/^(pds|pdsb|pd-off)-/.test(cl)) page.classList.remove(cl); });
       Object.keys(BLOCK).forEach(function (k) { page.style.removeProperty('--pds-o-' + k); });
       Object.keys(BUYSEL).forEach(function (k) { page.style.removeProperty('--pdsb-o-' + k); });
@@ -211,14 +254,17 @@
   /* ── drawing ───────────────────────────────────────────────────────────── */
 
   function row(k, i, all) {
-    var r = ROWS[k], n = all.length, o = on(k);
-    return '<li class="pds-row' + (o ? '' : ' off') + '" data-pds-row="' + escAttr(k) + '">'
+    var r = ROWS[k], n = all.length, o = on(k), mv = k === MOVABLE, inBuy = listOf(k) === 'buy';
+    /* (Lane RI) Buy these together walks both lists as one sequence. */
+    var upOff = mv ? (inBuy && i === 0) : i === 0, downOff = mv ? (!inBuy && i === n - 1) : i === n - 1;
+    var move = mv ? '<button type="button" class="pds-move" data-pds-move="' + escAttr(k) + '">' + (inBuy ? 'Move below the columns' : 'Move to right column') + '</button>' : '';
+    return '<li class="pds-row' + (o ? '' : ' off') + (mv ? ' pds-mv' : '') + '" data-pds-row="' + escAttr(k) + '">'
       + '<button type="button" class="pds-handle" draggable="true" data-pds-handle="' + escAttr(k) + '" aria-label="' + escAttr('Move ' + r.label + ' — drag, or use the arrow keys') + '" title="Drag to move">⠿</button>'
       + '<span class="pds-num">' + (i + 1) + '</span>'
-      + '<div class="pds-main"><b>' + escHtml(r.label) + '</b><span>' + escHtml(r.description) + (r.module ? ' <em class="pds-same">Same switch as the Sections tab’s Desktop column.</em>' : '') + '</span></div>'
+      + '<div class="pds-main"><b>' + escHtml(r.label) + '</b><span>' + escHtml(r.description) + (r.module ? ' <em class="pds-same">Same switch as the Sections tab’s Desktop column.</em>' : '') + (mv ? ' <em class="pds-same">Drag it between the two lists — laptops only; phones follow Mobile sections.</em>' : '') + '</span>' + move + '</div>'
       + '<span class="pds-arrows"><span class="ectog' + (o ? ' on' : '') + '" data-pds-sw="' + escAttr(k) + '" role="switch" aria-checked="' + (o ? 'true' : 'false') + '" tabindex="0" aria-label="' + escAttr(r.label + ' on laptops') + '" title="Show on laptops"></span>'
-      + '<button type="button" class="pds-arrow" data-pds-up="' + escAttr(k) + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="' + escAttr('Move ' + r.label + ' up') + '">↑</button>'
-      + '<button type="button" class="pds-arrow" data-pds-down="' + escAttr(k) + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="' + escAttr('Move ' + r.label + ' down') + '">↓</button></span>'
+      + '<button type="button" class="pds-arrow" data-pds-up="' + escAttr(k) + '"' + (upOff ? ' disabled' : '') + ' aria-label="' + escAttr('Move ' + r.label + ' up') + '">↑</button>'
+      + '<button type="button" class="pds-arrow" data-pds-down="' + escAttr(k) + '"' + (downOff ? ' disabled' : '') + ' aria-label="' + escAttr('Move ' + r.label + ' down') + '">↓</button></span>'
       + '</li>';
   }
 
@@ -231,7 +277,7 @@
       + '<div class="pds-fixed"><b>Photo</b><span>The gallery, the page’s left column.</span><i>Always shown</i></div>'
       + '<div class="pds-fixed pds-sub"><b>Buy column</b><span>Beside the photo. Moving a block here gives each one the space above it that its own slider sets (Spacing · Buy column, Trust · Spacing).</span></div>'
       + '<ol class="pds-list" id="pdsBuy" data-pds-list="buy">' + rows('buy') + '</ol>'
-      + '<div class="pds-fixed pds-sub"><b>Under the two columns</b><span>The full-width blocks.</span></div>'
+      + '<div class="pds-fixed pds-sub"><b>Under the two columns</b><span>The full-width blocks. Buy these together can be dragged up into the Buy column (laptops only).</span></div>'
       + '<ol class="pds-list" id="pdsList" data-pds-list="under">' + rows('under') + '</ol></div></div>';
   }
 
@@ -295,13 +341,47 @@
     markDirty();
   }
 
+  /** (Lane RI) Into list `name` at `index`, out of whichever list held it. */
+  function place(key, name, index) {
+    if (key !== MOVABLE || !LISTS[name]) return;
+    ['buy', 'under'].forEach(function (n) { var at = LISTS[n].indexOf(key); if (at >= 0) LISTS[n].splice(at, 1); });
+    LISTS[name].splice(Math.max(0, Math.min(LISTS[name].length, index)), 0, key);
+    markDirty();
+  }
+
+  /** (Lane RI) ↑ / ↓ for Buy these together: both lists are one sequence. */
+  function step(key, delta) {
+    var name = listOf(key), L = name && LISTS[name], at = L ? L.indexOf(key) : -1;
+    if (at < 0) return;
+    if (key === MOVABLE && name === 'under' && delta < 0 && at === 0) return place(key, 'buy', LISTS.buy.length);
+    if (key === MOVABLE && name === 'buy' && delta > 0 && at === L.length - 1) return place(key, 'under', 0);
+    moveTo(key, at + delta);
+  }
+
+  /** (Lane RI) The button: under Authenticity, or back to first under the columns. */
+  function toggleSide(key) {
+    if (listOf(key) === 'buy') return place(key, 'under', 0);
+    var a = LISTS.buy.indexOf('auth');
+    place(key, 'buy', a < 0 ? LISTS.buy.length : a + 1);
+  }
+
   function dropOn(key, target) {
     if (!key || !target || key === target) return;
     var name = listOf(key);
-    if (!name || listOf(target) !== name) return;
-    moveTo(key, LISTS[name].indexOf(target));
+    if (!name) return;
+    if (listOf(target) !== name) {
+      // Only Buy these together crosses. Up into the Buy column: above the
+      // row. Down out of it: below the row — the in-list rule, see markOver().
+      var into = listOf(target);
+      if (key !== MOVABLE || !into) return;
+      place(key, into, LISTS[into].indexOf(target) + (into === 'under' ? 1 : 0));
+    } else {
+      moveTo(key, LISTS[name].indexOf(target));
+    }
     repaintList('[data-pds-handle="' + key + '"]');
   }
+
+
 
   function clearMarks() {
     document.querySelectorAll('.pds-row.over,.pds-row.dragging').forEach(function (r) { r.classList.remove('over', 'after', 'dragging'); });
@@ -311,10 +391,21 @@
     document.querySelectorAll('.pds-row.over').forEach(function (r) { if (r !== rowEl) r.classList.remove('over', 'after'); });
     if (!rowEl || !DRAG) return;
     var k = rowEl.getAttribute('data-pds-row'), name = listOf(DRAG);
-    if (k === DRAG || listOf(k) !== name) return;
+    if (k === DRAG) return;
+    if (listOf(k) !== name) {
+      // (Lane RI) Only Buy these together crosses: the line shows where it lands.
+      if (DRAG !== MOVABLE || !listOf(k)) return;
+      rowEl.classList.add('over');
+      rowEl.classList.toggle('after', listOf(k) === 'under');
+      return;
+    }
     rowEl.classList.add('over');
     rowEl.classList.toggle('after', LISTS[name].indexOf(k) > LISTS[name].indexOf(DRAG));
   }
+
+  /** The row under a point / event target. */
+  function targetOf(el) { return el && el.closest ? el.closest('.pds-row') : null; }
+  function dropAt(k, t) { if (t) dropOn(k, t.getAttribute('data-pds-row')); }
 
   // mouse: HTML5 drag and drop, started from the handle
   document.addEventListener('dragstart', function (e) {
@@ -326,17 +417,17 @@
   });
   document.addEventListener('dragover', function (e) {
     if (!DRAG) return;
-    var r = e.target.closest && e.target.closest('.pds-row');
+    var r = targetOf(e.target);
     if (!r) return;
     e.preventDefault();
     markOver(r);
   });
   document.addEventListener('drop', function (e) {
     if (!DRAG) return;
-    var r = e.target.closest && e.target.closest('.pds-row');
+    var r = targetOf(e.target);
     e.preventDefault();
     var k = DRAG; DRAG = null; clearMarks();
-    if (r) dropOn(k, r.getAttribute('data-pds-row'));
+    dropAt(k, r);
   });
   document.addEventListener('dragend', function () { if (DRAG) { DRAG = null; clearMarks(); } });
 
@@ -353,15 +444,13 @@
   });
   document.addEventListener('pointermove', function (e) {
     if (PTR === null || e.pointerId !== PTR || !DRAG) return;
-    var hit = document.elementFromPoint(e.clientX, e.clientY);
-    markOver(hit && hit.closest ? hit.closest('.pds-row') : null);
+    markOver(targetOf(document.elementFromPoint(e.clientX, e.clientY)));
   });
   function endPointer(e, commit) {
     if (PTR === null || e.pointerId !== PTR) return;
-    var k = DRAG, target = null;
-    if (commit) { var hit = document.elementFromPoint(e.clientX, e.clientY); var r = hit && hit.closest ? hit.closest('.pds-row') : null; target = r ? r.getAttribute('data-pds-row') : null; }
+    var k = DRAG, target = commit ? targetOf(document.elementFromPoint(e.clientX, e.clientY)) : null;
     PTR = null; DRAG = null; clearMarks();
-    if (target) dropOn(k, target);
+    dropAt(k, target);
   }
   document.addEventListener('pointerup', function (e) { endPointer(e, true); });
   document.addEventListener('pointercancel', function (e) { endPointer(e, false); });
@@ -373,9 +462,9 @@
     var h = e.target.closest && e.target.closest('[data-pds-handle]');
     if (!h || !LISTS || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
     e.preventDefault();
-    var k = h.getAttribute('data-pds-handle'), name = listOf(k);
-    if (!name) return;
-    moveTo(k, LISTS[name].indexOf(k) + (e.key === 'ArrowUp' ? -1 : 1));
+    var k = h.getAttribute('data-pds-handle');
+    if (!listOf(k)) return;
+    step(k, e.key === 'ArrowUp' ? -1 : 1);
     repaintList('[data-pds-handle="' + k + '"]');
   });
 
@@ -406,10 +495,18 @@
 
     var up = t.closest && t.closest('[data-pds-up]'), dn = t.closest && t.closest('[data-pds-down]');
     if (up || dn) {
-      var key = (up || dn).getAttribute(up ? 'data-pds-up' : 'data-pds-down'), name = listOf(key);
-      if (!name) return;
-      moveTo(key, LISTS[name].indexOf(key) + (up ? -1 : 1));
+      var key = (up || dn).getAttribute(up ? 'data-pds-up' : 'data-pds-down');
+      if (!listOf(key)) return;
+      step(key, up ? -1 : 1);
       repaintList('[data-pds-' + (up ? 'up' : 'down') + '="' + key + '"]:not([disabled])');
+      return;
+    }
+    var mvb = t.closest && t.closest('[data-pds-move]');
+    if (mvb) {
+      var mk = mvb.getAttribute('data-pds-move');
+      if (mk !== MOVABLE || !listOf(mk)) return;
+      toggleSide(mk);
+      repaintList('[data-pds-move="' + mk + '"]');
       return;
     }
     if (t.id === 'pdsReset') {
@@ -418,7 +515,7 @@
          data-kbb-sure-pass — the same contract Mobile sections' Reset keeps.
          A buffer change, not a save. Both ORDERS go back; the switches stay. */
       if (t.getAttribute('data-kbb-sure-pass') !== '1') return;
-      LISTS = { buy: defaults('buy'), under: defaults('under') };
+      LISTS = shipped();
       markDirty(); window.paintProductPage(); return;
     }
     if (t.id === 'pdsDiscard' || t.id === 'pmsDiscard' || t.id === 'ppDiscard' || t.id === 'ptsDiscard') {
