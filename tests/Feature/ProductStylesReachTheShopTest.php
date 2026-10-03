@@ -164,6 +164,8 @@ function psOffDefault(): array
         'hover_phone' => true,
         'card_pad_m' => 8, 'card_pad_d' => 24,
         'card_gap_img_m' => 6, 'card_gap_img_d' => 24,
+        'card_gap_brand_m' => 9, 'card_gap_brand_d' => 14, // 2.60.371
+        'card_gap_rate_m' => 2, 'card_gap_rate_d' => 16,
         'card_gap_price_m' => 4, 'card_gap_price_d' => 20,
         'card_gap_cart_m' => 4, 'card_gap_cart_d' => 20,
         'card_fs_title_m' => '12px', 'card_fs_title_d' => '16px',
