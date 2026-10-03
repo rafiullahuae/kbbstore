@@ -156,7 +156,87 @@ final class ArabicInterfaceDrafts
             self::js(),
             self::email(),
             self::invoice(),
+            self::laneRlOrderEmails(),
         );
+    }
+
+    /**
+     * Lane RL — the new order emails, the tracking line and the "Complete your
+     * order" page. Drafts, like everything in this class: the owner reviews
+     * them under Translation → Strings. Emoji and placeholders kept as in the
+     * English.
+     *
+     * @return array<string, string>
+     */
+    private static function laneRlOrderEmails(): array
+    {
+        return [
+            'email.confirmation.subject' => 'طلبك :number من :store 🎉',
+            'email.order_status.processing_subject' => 'طلبك :number من :store قيد التجهيز',
+            'email.order_status.processing_heading' => 'نجهّز طلبك الآن',
+            'email.order_status.processing_body' => 'تم تأكيد طلبك ونعمل على تجهيزه. سنراسلك مجددًا عندما يكون في طريقه إليك.',
+            'email.order_status.onhold_subject' => 'طلبك :number من :store معلّق مؤقتًا',
+            'email.order_status.onhold_heading' => 'أوقفنا طلبك مؤقتًا',
+            'email.order_status.onhold_body' => 'لا مشكلة في منتجاتك — نحتاج فقط إلى تأكيد تفصيل واحد قبل الشحن. ردّ على هذه الرسالة أو راسلنا عبر واتساب وسنكمل فورًا.',
+            'email.order_status.onhold_need' => 'ما نحتاجه:',
+            'email.order_status.completed_subject' => 'تم توصيل طلبك :number من :store ✨',
+            'email.order_status.completed_heading' => 'استمتعي بروتينك الجديد ✨',
+            'email.order_status.completed_body' => 'اكتمل طلبك. نتمنى أن ينال إعجابك — وإن لم يكن شيء على ما يرام، ردّي على هذه الرسالة وسنساعدك.',
+            'email.order_status.refunded_subject' => 'تم استرداد مبلغ طلبك :number من :store',
+            'email.order_status.refunded_heading' => 'تم استرداد مبلغ طلبك',
+            'email.order_status.refunded_body' => 'تم استرداد مبلغ هذا الطلب. إذا أُعيد المبلغ إلى بطاقة أو حساب دفع، فقد يستغرق ظهوره لدى البنك بضعة أيام عمل.',
+            'email.order_status.failed_subject' => 'لم يكتمل الدفع لطلب :number من :store 😔',
+            'email.order_status.failed_heading' => 'لم يكتمل الدفع 😔',
+            'email.order_status.failed_body' => 'الطلب لم يُؤكَّد بعد. لقد حفظناه — يمكنك إكماله بأي طريقة دفع نوفّرها.',
+            'email.order_status.tracking_number' => 'رقم التتبع هو رقم طلبك: :number.',
+            'email.order_status.tracking_where' => 'تابعيه على موقعنا — أي حالة نضعها (تم الشحن، تم التوصيل) تظهر هناك فورًا.',
+            'email.order_status.track_button' => 'تتبّع طلبك',
+            'email.order_status.track_note' => 'يفتح على أي هاتف أو كمبيوتر — دون تسجيل دخول. تعرض الصفحة دائمًا أحدث حالة.',
+            'email.reminder.first_subject' => 'أكملي طلبك :number من :store 🛍️',
+            'email.reminder.first_heading' => 'خطوة واحدة فقط 🛍️',
+            'email.reminder.first_body' => 'حفظنا طلبك :number، لكن الدفع لم يكتمل، لذلك لم يُؤكَّد بعد. كل شيء موجود أدناه — أكمليه بنقرة واحدة.',
+            'email.reminder.first_closing' => 'هل دفعتِ بالفعل؟ تجاهلي هذه الرسالة — تأكيد طلبك في الطريق.',
+            'email.reminder.second_subject' => 'طلبك :number من :store ما زال بانتظارك ⏳',
+            'email.reminder.second_heading' => 'طلبك ما زال بانتظارك ⏳',
+            'email.reminder.second_body' => 'الطلب :number محفوظ لكنه غير مدفوع، لذلك لا يمكننا شحنه بعد. المنتجات الرائجة تنفد بسرعة، ولا نستطيع ضمان توفرها لاحقًا.',
+            'email.reminder.second_closing' => 'هذا آخر تذكير بخصوص هذا الطلب.',
+            'email.reminder.not_paid' => 'لم يُدفع بعد',
+            'email.reminder.button' => 'أكملي طلبك',
+            'email.reminder.button_note' => 'يفتح طلبك المحفوظ على أي جهاز. تفضّلين طريقة دفع أخرى؟ راسلينا عبر واتساب وسنساعدك.',
+            'email.reminder.why_heading' => 'لماذا تتسوقين معنا',
+            'email.reminder.why_fast' => 'توصيل سريع',
+            'email.reminder.why_fast_note' => 'من 1 إلى 3 أيام، في جميع أنحاء الإمارات',
+            'email.reminder.why_original' => 'أصلية 100%',
+            'email.reminder.why_original_note' => 'مباشرة من العلامة التجارية',
+            'email.reminder.why_samples' => 'عيّنات مجانية',
+            'email.reminder.why_samples_note' => 'عيّنات كورية عشوائية مع كل طلب',
+            'email.feedback.subject' => 'كيف إشراقتك؟ 💌',
+            'email.feedback.subject_named' => 'كيف إشراقتك يا :name؟ 💌',
+            'email.feedback.heading' => 'كيف إشراقتك؟ 💌',
+            'email.feedback.heading_named' => 'كيف إشراقتك يا :name؟ 💌',
+            'email.feedback.body' => 'لا بد أن طلبك :number قد وصل. تقييم واحد لكل منتج يخبرنا — ويخبر المتسوقين في الإمارات — بما يستحق التجربة.',
+            'email.feedback.items_heading' => 'قيّمي ما اشتريتِ',
+            'email.feedback.button' => 'اكتبي تقييمًا',
+            'email.feedback.button_note' => 'كل زر يفتح صفحة المنتج عند قسم التقييمات.',
+            'email.feedback.closing' => 'هل هناك شيء ليس على ما يرام؟ ردّي على هذه الرسالة أو راسلينا عبر واتساب — سيساعدك شخص حقيقي.',
+            'store.order_pay.page_title' => 'أكملي طلبك',
+            'store.order_pay.heading' => 'أكملي طلبك',
+            'store.order_pay.lead' => 'الطلب :number محفوظ لكنه لم يُدفع بعد. اختاري طريقة الدفع وينتهي الأمر.',
+            'store.order_pay.not_found' => 'انتهت صلاحية هذا الرابط أو أنه غير صالح. ابحثي عن طلبك برقمه وبريدك الإلكتروني، أو راسلينا وسنساعدك.',
+            'store.order_pay.find_order' => 'ابحثي عن طلبي',
+            'store.order_pay.your_items' => 'منتجاتك',
+            'store.order_pay.qty' => 'الكمية :qty',
+            'store.order_pay.total' => 'المبلغ المستحق',
+            'store.order_pay.how_to_pay' => 'كيف تودّين الدفع؟',
+            'store.order_pay.pay_button' => 'ادفعي وأكملي طلبي',
+            'store.order_pay.working' => 'جارٍ التنفيذ…',
+            'store.order_pay.no_methods' => 'لا تتوفر حاليًا طريقة دفع إلكترونية لهذا الطلب. راسلينا وسنساعدك على إكماله.',
+            'store.order_pay.method_unavailable' => 'طريقة الدفع هذه غير متاحة لهذا الطلب. يرجى اختيار طريقة أخرى.',
+            'store.order_pay.cannot_reopen' => 'بعض منتجات هذا الطلب لم تعد متوفرة، لذا لا يمكن إكماله هنا. راسلينا وسنساعدك.',
+            'store.order_pay.start_failed' => 'تعذّر بدء عملية الدفع. يرجى المحاولة مجددًا أو اختيار طريقة أخرى.',
+            'store.order_pay.needs_javascript' => 'الدفع بالبطاقة يتطلب تفعيل JavaScript في متصفحك. يرجى تفعيله أو اختيار طريقة دفع أخرى.',
+            'store.order_pay.generic_error' => 'حدث خطأ ما. يرجى المحاولة مجددًا.',
+        ];
     }
 
     /** @return array<string, string> */
@@ -1415,9 +1495,9 @@ final class ArabicInterfaceDrafts
             'email.totals.vat_at_rate' => 'ضريبة القيمة المضافة :rate%',
             'email.totals.total' => 'الإجمالي',
 
-            'email.order_status.shipped_subject' => 'طلبك :number لدى :store في طريقه إليك',
+            'email.order_status.shipped_subject' => 'طلبك :number لدى :store في طريقه إليك 🚚💨',
             'email.order_status.cancelled_subject' => 'تم إلغاء طلبك :number لدى :store',
-            'email.order_status.shipped_heading' => 'طلبك في طريقه إليك',
+            'email.order_status.shipped_heading' => 'طلبك في طريقه إليك 🚚💨',
             'email.order_status.shipped_body' => 'غادر طلبك مستودعنا وهو الآن مع شركة الشحن. ويستغرق التوصيل داخل الإمارات عادةً من يوم إلى ثلاثة أيام عمل من تاريخ الشحن.',
             'email.order_status.cancelled_heading' => 'تم إلغاء طلبك',
             'email.order_status.cancelled_body' => 'أُلغي هذا الطلب ولن يُرسل شيء بعد ذلك.',
@@ -1435,8 +1515,8 @@ final class ArabicInterfaceDrafts
             'email.delivery.note_heading' => 'ملاحظة الطلب',
             'email.delivery.not_recorded' => 'غير مسجّل',
 
-            'email.confirmation.greeting' => 'شكرًا لك ✨',
-            'email.confirmation.greeting_named' => 'شكرًا لك، :name ✨',
+            'email.confirmation.greeting' => 'شكرًا لك 🎉',
+            'email.confirmation.greeting_named' => 'شكرًا لك، :name 🎉',
             'email.confirmation.lead' => 'وصلنا طلبك ونجهّزه بعناية. وكل ما اخترته مدرج أدناه كما كان وقت الطلب تمامًا — احتفظ بهذه الرسالة، فهي فاتورتك.',
             'email.confirmation.placed_on' => 'أُنشئ في :date',
             'email.confirmation.track_button' => 'تتبع طلبك',

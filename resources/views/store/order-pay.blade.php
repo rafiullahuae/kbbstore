@@ -84,15 +84,15 @@
                     </label>
                     @if ($m['id'] === 'stripe' && $stripeKey !== '')
                         <div class="kbbop-card-fields" id="kbbopCard">
-                            <div class="kbbop-f"><span>{{ __('store.order_pay.card_number') }}</span><div class="kbbop-box" id="kbbopNumber"></div></div>
+                            <div class="kbbop-f"><span>{{ __('store.checkout.card_number_label') }}</span><div class="kbbop-box" id="kbbopNumber"></div></div>
                             <div class="kbbop-2">
-                                <div class="kbbop-f"><span>{{ __('store.order_pay.card_expiry') }}</span><div class="kbbop-box" id="kbbopExpiry"></div></div>
-                                <div class="kbbop-f"><span>{{ __('store.order_pay.card_cvc') }}</span><div class="kbbop-box" id="kbbopCvc"></div></div>
+                                <div class="kbbop-f"><span>{{ __('store.checkout.card_expiry_label') }}</span><div class="kbbop-box" id="kbbopExpiry"></div></div>
+                                <div class="kbbop-f"><span>{{ __('store.checkout.card_cvc_label') }}</span><div class="kbbop-box" id="kbbopCvc"></div></div>
                             </div>
                         </div>
                     @endif
                 @empty
-                    <div class="kbbop-row"><span>{{ __('store.order_pay.no_methods') }}</span></div>
+                    <p class="kbbop-row" style="margin:0">{{ __('store.order_pay.no_methods') }}</p>
                 @endforelse
             </div>
 

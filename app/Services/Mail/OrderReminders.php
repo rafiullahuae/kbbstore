@@ -112,6 +112,7 @@ class OrderReminders
                     ->where('order_emails.kind', $kind);
             })
             ->orderBy('orders.created_at')
+            ->orderBy('orders.id')
             ->limit(max(0, $limit))
             ->get();
     }
@@ -177,6 +178,7 @@ class OrderReminders
                     ->where('order_emails.kind', 'feedback');
             })
             ->orderBy('delivered.sent_at')
+            ->orderBy('orders.id')
             ->limit(max(0, $limit))
             ->get();
     }

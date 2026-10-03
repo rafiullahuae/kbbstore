@@ -118,7 +118,7 @@ class OrderPayController extends Controller
 
         if ((string) $order->status === 'failed') {
             try {
-                app(\App\Services\Orders\OrderStatus::class)->moveTo(
+                $reopened = app(\App\Services\Orders\OrderStatus::class)->moveTo(
                     $order,
                     'pending',
                     by: 'system',
@@ -131,7 +131,10 @@ class OrderPayController extends Controller
 
             $order->refresh();
 
-            if ((string) $order->status !== 'pending' || $order->paid_at !== null) {
+            // null: the precondition did not hold -- something else moved the
+            // order (a late payment confirmation, an operator) between the
+            // read above and the lock. Show its status rather than charge it.
+            if ($reopened === null || (string) $order->status !== 'pending' || $order->paid_at !== null) {
                 return $this->answer($request, ['ok' => true, 'action' => 'redirect', 'url' => OrderLinks::trackUrl($order)]);
             }
         }

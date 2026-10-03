@@ -214,7 +214,11 @@ it('names a real console location in every module row that names one at all', fu
     // own screen" (which this test does not check) to an `elsewhere` row naming
     // 'Appearance → Product page' — the screen where "Buy these together", its
     // replacement, is switched. Advanced for that, and $wrong is still empty.
-    expect($checked)->toBe(40);
+    // 45 with Lane RL: five new order-status email rows (processing, on hold,
+    // completed, marked refunded, payment failed) name 'Store → Mail', where
+    // Order status emails lists them. The reminder and feedback rows name no
+    // screen. Advanced for that, and $wrong is still empty.
+    expect($checked)->toBe(45);
     expect($wrong)->toBe([]);
 });
 
