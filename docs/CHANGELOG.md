@@ -13,7 +13,7 @@ migration (a cache clear).
 | "the you're saving calculate only the discounted price which is set for this buy together section only!" | The saving is this section's discount alone (it also counted each product's own sale before); the struck total is the products' own prices, so struck − total = saving. With no tier set: no struck total, no pill |
 | "the discount and price line should come in one row" | The saving pill and the total share one row: measured at 320, 360, 390, 1280 and 1440 |
 
-Files (5): resources/views/partials/fbt.blade.php, resources/js/kbb/fbt.js,
+Files (7): resources/views/partials/fbt.blade.php, resources/js/kbb/fbt.js,
 resources/css/kbb/kbb-product.css,
 database/migrations/2027_07_18_000980_clear_caches_buy_together_saving.php,
 public/build (manifest, app bundle, product css).
