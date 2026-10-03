@@ -12,6 +12,7 @@
     $kitPreheader = __('email.kit.pre_basket');
     $kitWhy = __('email.kit.why_basket');
     $kitUnsubscribe = $unsubscribeUrl;
+    $kitLead = new \Illuminate\Support\HtmlString(nl2br(e($body)));
     $kitFound = \App\Services\Mail\Kit\KitProducts::forSlugs(array_map(static fn (array $i) => (string) ($i['slug'] ?? ''), $items));
     $kitLines = array_map(static function (array $i) use ($kitFound) {
         $qty = (int) ($i['quantity'] ?? 0);
@@ -26,7 +27,7 @@
 @endphp
 
 @section('kit_inner')
-@include('emails.kit.hero', ['icon' => 'bag', 'tone' => 'pink', 'eyebrow' => __('email.kit.eyebrow_basket'), 'title' => __('email.kit.basket_title'), 'lead' => new \Illuminate\Support\HtmlString(nl2br(e($body)))])
+@include('emails.kit.hero', ['icon' => 'bag', 'tone' => 'pink', 'eyebrow' => __('email.kit.eyebrow_basket'), 'title' => __('email.kit.basket_title'), 'lead' => $kitLead])
 @if ($kitLines !== [])
 @include('emails.kit.items', ['lines' => $kitLines, 'showPrice' => true])
 @endif

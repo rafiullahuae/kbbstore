@@ -139,23 +139,23 @@ it('prints quantity as its own column in the customer receipt', function () {
 
     $html = (string) (new OrderConfirmation($order))->render();
 
-    // A Qty heading, so the column is labelled and not merely present.
-    expect($html)->toContain('>Qty<')
-        ->and($html)->toContain('>Item<')
-        ->and($html)->toContain('>Total<');
-
-    // Both quantities, in their own cells. Matched with the styling that makes
-    // the cell a cell, so a "3" that happened to appear inside a price would
-    // not satisfy this.
-    expect($html)->toMatch('/font-weight:700;color:#C13E63;line-height:1\.35;">3</')
-        ->and($html)->toMatch('/font-weight:700;color:#C13E63;line-height:1\.35;">1</');
+    /*
+     * THE APPROVED LOOK A (Lane EM): the quantity is the labelled "Qty N" under
+     * each line's name, the line total on the right -- the owner's preview,
+     * docs/rj-email-previews/after/01-order-confirmation.html, rather than the
+     * old four-column table. What this test exists for is unchanged: the
+     * quantity is printed and labelled, and the unit price is labelled "each"
+     * so it cannot be read as a line total.
+     */
+    expect($html)->toContain('Qty 3 &middot; ')
+        ->and($html)->toContain('Qty 1');
 
     // Nothing was lost on the way: unit price, line total and order total, at
     // the currency's real precision rather than the storefront's rounding.
-    expect($html)->toContain(OrderEmailPresenter::html(19900, Money::receiptDecimals(19900)))
-        ->and($html)->toContain(OrderEmailPresenter::html(59700, Money::receiptDecimals(59700)))
-        ->and($html)->toContain(OrderEmailPresenter::html(6500, Money::receiptDecimals(6500)))
-        ->and($html)->toContain(OrderEmailPresenter::html(68200, Money::receiptDecimals(68200)))
+    expect($html)->toContain(OrderEmailPresenter::plain(19900, Money::receiptDecimals(19900)))
+        ->and($html)->toContain(OrderEmailPresenter::plain(59700, Money::receiptDecimals(59700)))
+        ->and($html)->toContain(OrderEmailPresenter::plain(6500, Money::receiptDecimals(6500)))
+        ->and($html)->toContain(OrderEmailPresenter::plain(68200, Money::receiptDecimals(68200)))
         // And the unit price is labelled, so it cannot be read as a line total.
         ->and($html)->toContain('each')
         // The old shape is gone.
@@ -166,10 +166,9 @@ it('prints quantity as its own column in the merchant alert', function () {
     // This is the one the packing team reads, and the reason the column exists.
     $html = (string) (new NewOrderAlert(brandingOrder()))->render();
 
-    expect($html)->toContain('>Qty<')
-        ->and($html)->toMatch('/font-weight:700;color:#C13E63;line-height:1\.35;">3</')
-        ->and($html)->toContain(OrderEmailPresenter::html(19900, Money::receiptDecimals(19900)))
-        ->and($html)->toContain(OrderEmailPresenter::html(59700, Money::receiptDecimals(59700)));
+    expect($html)->toContain('Qty 3 &middot; ')
+        ->and($html)->toContain(OrderEmailPresenter::plain(19900, Money::receiptDecimals(19900)) . ' each')
+        ->and($html)->toContain(OrderEmailPresenter::plain(59700, Money::receiptDecimals(59700)));
 });
 
 it('names all three figures in the plain-text part too', function () {
@@ -191,7 +190,8 @@ it('builds the support block from settings', function () {
 
     $html = (string) (new OrderConfirmation(brandingOrder()))->render();
 
-    expect($html)->toContain('We are here if you need us')
+    // Look A's help box (Lane EM): "Questions? A real person answers."
+    expect($html)->toContain('Questions? A real person answers.')
         // The number as typed, and a wa.me link built from its digits.
         ->and($html)->toContain('+971 58 505 2611')
         ->and($html)->toContain('https://wa.me/971585052611')
@@ -254,10 +254,10 @@ it('shows no support block at all when nothing is configured anywhere', function
 
     $html = (string) (new OrderConfirmation(brandingOrder()))->render();
 
-    expect($html)->not->toContain('We are here if you need us')
+    expect($html)->not->toContain('Questions? A real person answers.')
         // ...and the rest of the receipt is untouched.
         ->and($html)->toContain('KBB-BRAND-1')
-        ->and($html)->toContain(OrderEmailPresenter::html(68200, Money::receiptDecimals(68200)));
+        ->and($html)->toContain(OrderEmailPresenter::plain(68200, Money::receiptDecimals(68200)));
 });
 
 it('keeps the support block out of the merchant alert', function () {
@@ -267,7 +267,7 @@ it('keeps the support block out of the merchant alert', function () {
 
     // The store does not need to be told how to contact itself, and the bottom
     // of this email is where something the packing team needs will one day go.
-    expect($html)->not->toContain('We are here if you need us')
+    expect($html)->not->toContain('Questions? A real person answers.')
         ->and($html)->not->toContain('wa.me/')
         // Nor a sign-off addressed to the person who wrote it.
         ->and($html)->not->toContain('With love');
@@ -340,6 +340,12 @@ it('uses the store logo the site already keeps, and no second upload', function 
     $html = (string) (new OrderConfirmation(brandingOrder()))->render();
 
     expect($html)->toContain('<img src="https://cdn.kbeautybliss.com/logo.png"');
+
+    /*
+     * MUTATION (Lane EM): restore `return null;` for a logo whose size cannot
+     * be read in MailKit::logo() and this is red -- an https logo on another
+     * host was silently replaced by the wordmark in every look-A email.
+     */
 });
 
 it('makes a site-relative logo absolute, because a mail client has no origin', function () {
@@ -453,23 +459,25 @@ it('takes its colours from the storefront stylesheet rather than inventing them'
     }
 });
 
-it('puts no stylesheet, media query or flexbox in a message body', function () {
+it('lays the email out in tables and inline styles, with the <style> only as an enhancement', function () {
     brandingSupport();
 
     $html = (string) (new OrderConfirmation(brandingOrder()))->render();
 
     /*
-     * Gmail's web client strips <style> out of a message body, Outlook renders
-     * with Word and supports neither flex nor grid, and without a <style> block
-     * there is nowhere for a media query to live. Everything here has to work at
-     * one width with inline styles, so these are the things that must not appear.
+     * Gmail's web client strips <style> out of a message body and Outlook
+     * renders with Word, which supports neither flex nor grid. The approved
+     * look A (tools/rj-email-kit.cjs, Lane EM) is a full document WITH a
+     * <style> block -- but every element carries its own inline style, so a
+     * client that strips the block loses only the phone padding tweak and the
+     * dark-mode colours, never the layout. What must still never appear is a
+     * layout that depends on CSS a mail client does not run.
      */
-    expect($html)->not->toContain('<style')
-        ->and($html)->not->toContain('@media')
-        ->and($html)->not->toContain('display:flex')
+    expect($html)->not->toContain('display:flex')
         ->and($html)->not->toContain('display:grid')
-        ->and($html)->not->toContain('<html')
-        ->and($html)->not->toContain('<body')
+        ->and($html)->not->toMatch('/<link[^>]+stylesheet/i')
+        // Every row of the card carries its own padding inline.
+        ->and($html)->toContain('<td class="px" style="padding:')
         // And the layout really is tables, with the attributes Word reads.
         ->and($html)->toContain('cellpadding="0"')
         ->and($html)->toContain('bgcolor=');

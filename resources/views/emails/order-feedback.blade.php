@@ -17,6 +17,7 @@
     $kitWhy = __('email.kit.why_order', ['site' => $k['site']]);
     $kitImages = \App\Services\Mail\Kit\KitProducts::imagesForIds(array_column($products, 'productId'));
     $kitInsta = collect($k['support'])->firstWhere('kind', 'instagram');
+    $kitShare = $kitInsta === null ? null : new \Illuminate\Support\HtmlString('<b>' . e(__('email.feedback.share_heading')) . '</b> &mdash; ' . str_replace(':handle', '<b>' . e($kitInsta['value']) . '</b>', e(__('email.feedback.share_body'))));
     $kitSign = $k['signature'];
     $kitSignoff = [__('email.kit.signoff_thanks'), $kitSign !== [] ? end($kitSign) : $k['storeName']];
 @endphp
@@ -27,7 +28,7 @@
 @include('emails.kit.rate-rows', ['rates' => array_map(fn (array $p) => ['img' => $kitImages[(int) ($p['productId'] ?? 0)] ?? null, 'brand' => $p['brand'], 'name' => $p['name'], 'href' => $p['url']], $products)])
 @include('emails.kit.para', ['html' => __('email.feedback.stars_note'), 'pad' => '12px 32px 0', 'size' => 12.5, 'center' => true])
 @if ($kitInsta !== null)
-@include('emails.kit.notice', ['tone' => 'pink', 'html' => new \Illuminate\Support\HtmlString('<b>' . e(__('email.feedback.share_heading')) . '</b> &mdash; ' . str_replace(':handle', '<b>' . e($kitInsta['value']) . '</b>', e(__('email.feedback.share_body'))))])
+@include('emails.kit.notice', ['tone' => 'pink', 'html' => $kitShare])
 @endif
 @if ($products !== [])
 @include('emails.kit.button', ['label' => __('email.feedback.button'), 'href' => $products[0]['url']])

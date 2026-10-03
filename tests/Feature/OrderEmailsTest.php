@@ -231,10 +231,11 @@ it('emails the customer a receipt when an order is placed', function () {
     expect($body)->toContain($order->order_number)
         // Rendered at the currency's real precision, not the storefront's
         // rounded whole-dirham display. AED 235.00, from 23500 fils exactly.
-        ->and($body)->toContain(OrderEmailPresenter::html(23500, Money::receiptDecimals(23500)))
-        ->and($body)->toContain(OrderEmailPresenter::html(20000, Money::receiptDecimals(20000)))
-        ->and($body)->toContain(OrderEmailPresenter::html(2000, Money::receiptDecimals(2000)))
-        ->and($body)->toContain(OrderEmailPresenter::html(1500, Money::receiptDecimals(1500)))
+        // Look A (Lane EM) prints every figure as the plain amount, escaped by {{ }}.
+        ->and($body)->toContain(OrderEmailPresenter::plain(23500, Money::receiptDecimals(23500)))
+        ->and($body)->toContain(OrderEmailPresenter::plain(20000, Money::receiptDecimals(20000)))
+        ->and($body)->toContain(OrderEmailPresenter::plain(2000, Money::receiptDecimals(2000)))
+        ->and($body)->toContain(OrderEmailPresenter::plain(1500, Money::receiptDecimals(1500)))
         // The snapshot line, the address, the delivery method.
         ->and($body)->toContain('Rice Toner')
         ->and($body)->toContain('12 Marina Walk')
@@ -315,7 +316,7 @@ it('tells the store an order has come in, at the configured address', function (
     $body = orderMailBody(NewOrderAlert::class);
 
     expect($body)->toContain('buyer@example.com')
-        ->and($body)->toContain(OrderEmailPresenter::html(23500, Money::receiptDecimals(23500)));
+        ->and($body)->toContain(OrderEmailPresenter::plain(23500, Money::receiptDecimals(23500)));
 });
 
 it('falls back to the From address when no alert address is set', function () {
@@ -458,7 +459,7 @@ it('emails the customer when an order is marked shipped', function () {
 
     expect($body)->toContain('on its way')
         ->and($body)->toContain($order->order_number)
-        ->and($body)->toContain(OrderEmailPresenter::html(23500, Money::receiptDecimals(23500)));
+        ->and($body)->toContain(OrderEmailPresenter::plain(23500, Money::receiptDecimals(23500)));
 });
 
 it('emails the customer when an order is cancelled', function () {
@@ -527,7 +528,7 @@ it('emails the customer when a refund actually settles', function () {
         && $mail->isPartial === false);
 
     expect(orderMailBody(OrderRefunded::class))
-        ->toContain(OrderEmailPresenter::html(23500, Money::receiptDecimals(23500)))
+        ->toContain(OrderEmailPresenter::plain(23500, Money::receiptDecimals(23500)))
         ->toContain($order->order_number);
 });
 
@@ -544,8 +545,8 @@ it('says a partial refund is partial, in the refunded amount not the order total
     // AED 50.00 refunded against an AED 235.00 order — both printed, neither
     // mistaken for the other.
     expect(orderMailBody(OrderRefunded::class))
-        ->toContain(OrderEmailPresenter::html(5000, Money::receiptDecimals(5000)))
-        ->toContain(OrderEmailPresenter::html(23500, Money::receiptDecimals(23500)));
+        ->toContain(OrderEmailPresenter::plain(5000, Money::receiptDecimals(5000)))
+        ->toContain(OrderEmailPresenter::plain(23500, Money::receiptDecimals(23500)));
 });
 
 it('sends nothing for a refund that failed at the gateway', function () {

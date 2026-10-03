@@ -444,9 +444,10 @@ it('prints the Dubai and Korea addresses at the foot of a customer email, escape
     $text = rkText(new OrderConfirmation($order));
     $alert = (string) (new NewOrderAlert($order))->render();
 
-    expect($html)->toContain('Office 12, Business Bay<br>Dubai, UAE')
-        ->and($html)->toContain('>Korea</span>')
-        ->and($html)->toContain('&lt;script&gt;alert(1)&lt;/script&gt;<br>Seoul')
+    // Look A's footer (Lane EM): a pin, the place in small caps, the lines.
+    expect($html)->toMatch('/Office 12, Business Bay<br>\s*Dubai, UAE/')
+        ->and($html)->toContain('>Korea</div>')
+        ->and($html)->toMatch('/&lt;script&gt;alert\(1\)&lt;\/script&gt;<br>\s*Seoul/')
         ->and($html)->not->toContain('<script>alert(1)')
         ->and($text)->toContain("Dubai\nOffice 12, Business Bay\nDubai, UAE")
         ->and($text)->toContain("Korea\n<script>alert(1)</script>\nSeoul")   // text/plain: no markup context
@@ -490,12 +491,12 @@ it('hides each footer address while its own box is empty, and never borrows one 
     ]);
 });
 
-it('leaves an order email byte-identical when no address is saved anywhere', function () {
+it('draws no address row at all when no address is saved anywhere', function () {
     $html = (string) (new OrderConfirmation(rkOrder()))->render();
 
-    // The footer sentence ends its own line, exactly as before this package.
-    expect($html)->toMatch('/using this email address\.\n\s*<\/td>/')
-        ->and($html)->not->toContain('>Dubai</span>');
+    // Neither the pin nor a place name: an empty footer row is not printed.
+    expect($html)->not->toContain('&#128205;')
+        ->and($html)->not->toContain('>Dubai</div>');
 });
 
 /* ===================================================================== wiring */
@@ -637,10 +638,17 @@ it('keeps phone and email out of the bottom footer data: addresses, legal pages 
     }
 });
 
-it('changes no email yet: the stored look is for the Look A restyle', function () {
+it('draws every email in Outfit, from the kit fixed font address', function () {
+    /*
+     * Lane RK stored the look for "the Look A restyle"; Lane EM is that
+     * restyle. The shop's Outfit is the default and every email asks for it
+     * at the route routes/mail-kit.php serves.
+     */
     $html = (string) (new OrderConfirmation(rkOrder()))->render();
 
-    expect($html)->not->toContain('Outfit')->and($html)->not->toContain('@font-face');
+    expect($html)->toContain("font-family:'Outfit'")
+        ->and($html)->toContain('@font-face')
+        ->and($html)->toContain('/mail/font/outfit-latin.woff2');
 });
 
 /* ============================================= the approved mocks' extra fields */

@@ -263,8 +263,11 @@ it('names no product and quotes no price, because the page it describes names no
             ->toBeFalse('An invented product reached the plan email.');
         expect(str_contains($rendered, '15%'))
             ->toBeFalse('An invented saving reached the plan email.');
-        expect(str_contains($rendered, '199'))
-            ->toBeFalse('A price nobody set reached the plan email.');
+        // Not the preheader's padding: look A (Lane EM) fills the hidden
+        // inbox-preview line with &#8199; (figure space) entities, which
+        // contain the digits and are not a price.
+        expect(preg_match('/(?<!&#8)199/', $rendered))
+            ->toBe(0, 'A price nobody set reached the plan email.');
 
         return true;
     });

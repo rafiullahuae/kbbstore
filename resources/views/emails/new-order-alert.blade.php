@@ -33,6 +33,7 @@
 @include('emails.kit.items', ['lines' => \App\Services\Mail\Kit\KitOrder::lines($order), 'showPrice' => true])
 @include('emails.kit.totals', ['rows' => \App\Services\Mail\Kit\KitOrder::rows($order), 'grand' => [__('email.totals.total'), $order['totalPlain'], '']])
 @include('emails.kit.info-pair', ['left' => [__('email.kit.ship_to'), $kitInfo['left'][1]], 'right' => [__('email.kit.customer'), $kitCustomer, __('email.totals.delivery'), $order['deliveryMethod']]])
+@include('emails.kit.order-notes')
 @include('emails.kit.gap', ['h' => 28])
 @include('emails.kit.card-close')
 @include('emails.kit.footer', ['why' => __('email.kit.why_alert'), 'unsubscribeUrl' => null])

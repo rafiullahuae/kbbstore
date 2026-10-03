@@ -221,13 +221,14 @@ it('renders the same figures the printable invoice does, to the fil', function (
         ->and($html)->toContain($order->order_number)
         // 47350 fils at the currency's real precision, not the storefront's
         // rounded "AED 474".
-        ->and($html)->toContain(InvoiceDocument::money(47350))
+        // Look A (Lane EM) prints money as the plain figure the kit escapes.
+        ->and($html)->toContain(InvoiceDocument::moneyPlain(47350))
         ->and($html)->toContain('473.50')
         ->and($html)->not->toContain('474')
         ->and($html)->toContain('Cash on delivery')
         ->and($html)->toContain('GLOW10')
         ->and($html)->toContain('Includes VAT at 5%')
-        ->and($html)->toContain(InvoiceDocument::money(2110));
+        ->and($html)->toContain(InvoiceDocument::moneyPlain(2110));
 });
 
 it('puts the invoice number in the subject and no money in it', function () {

@@ -262,7 +262,7 @@ final class MailKit
      * Without a logo the header prints the store's wordmark in text, which is
      * the approved look and shows even with images off.
      *
-     * @return array{0:string,1:int,2:int}|null
+     * @return array{0:string,1:int,2:int|null}|null
      */
     private static function logo(mixed $logoUrl): ?array
     {
@@ -278,8 +278,15 @@ final class MailKit
             $size = null;
         }
 
+        /*
+         * A logo whose proportions cannot be read (an https URL on another
+         * host, the shape EmailLook and org_logo both accept) is still the
+         * owner's logo: it prints at 170px wide with no declared height.
+         * Dropping it -- what this did until Lane EM -- printed the wordmark
+         * instead of a logo the owner had set, with nothing saying why.
+         */
         if (! is_array($size) || (int) ($size[0] ?? 0) < 1 || (int) ($size[1] ?? 0) < 1) {
-            return null;
+            return [$url, 170, null];
         }
 
         return [$url, 170, max(1, (int) round(170 * (int) $size[1] / (int) $size[0]))];

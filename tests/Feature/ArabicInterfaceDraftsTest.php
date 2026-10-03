@@ -585,8 +585,14 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * the "Complete your order" page (email.order_status.*, email.reminder.*,
      * email.feedback.*, email.confirmation.subject, store.order_pay.*), seeded
      * by 2027_07_25_000300_seed_order_email_arabic_drafts. Read off the run.
+     *
+     * ── 1,183 -> 1,277: THE EMAIL KIT'S NINETY-FOUR (Lane EM) ─────────────
+     * The approved look-A design's own words: header links, help box,
+     * tracker steps, footer, and each email's eyebrow, preheader and "why"
+     * line (email.kit.*, email.feedback.stars_note/share_*), seeded by
+     * 2027_07_27_000100_seed_email_kit_arabic_drafts. Read off the run.
      */
-    expect($ui['drafts'])->toBe(1183, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1277, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

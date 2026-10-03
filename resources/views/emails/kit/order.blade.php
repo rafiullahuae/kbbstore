@@ -46,6 +46,7 @@
 @if ($kitShowInfo ?? true)
 @php $kitInfo = \App\Services\Mail\Kit\KitOrder::info($order); @endphp
 @include('emails.kit.info-pair', ['left' => $kitInfo['left'], 'right' => $kitInfo['right']])
+@include('emails.kit.order-notes')
 @endif
 @if (($kitCta ?? null) !== null)
 @include('emails.kit.button', ['label' => $kitCta[0], 'href' => $kitCta[1]])
