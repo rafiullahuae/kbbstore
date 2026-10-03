@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.366
+**Product page: Buy these together can sit in the right column on laptops.**
+Apply after .365. No plugin change. Runs one migration (a cache clear).
+
+| Your report | Now |
+|---|---|
+| "ONLY IN DESKTOP: allow me option to bring the buy together section to the right collumn, by drag n drop." | Appearance → Product page → Desktop sections: drag "Buy these together" into the Buy column list at any position (or "Move to right column" / "Move below the columns"); arrows and arrow keys too. Compact 4-across in the column, measured 1000–1920 with no sideways scroll. Gap above it: Layout → Spacing · Buy column → "Space above Buy these together · right column" (20px). Phones unchanged (0 differing pixels at 390). Nothing moves until you drag it |
+
+Files (9): app/Http/Controllers/Admin/ProductPageApiController.php, app/Services/ProductDesktopSections.php, app/Services/ProductLayout.php, database/migrations/2027_07_24_000100_clear_caches_buy_together_right_column.php, public/build/assets/kbb-product-0n-Q6kzh.css, public/build/manifest.json, resources/css/kbb/kbb-product.css, resources/views/admin/partials/product-desktop-sections-screen.blade.php, resources/views/store/product.blade.php.
+
 ## 2.60.365
 **Share: the link preview card, template C, with every part of it in the
 admin.** Apply after .364. No plugin change. Runs two migrations (Arabic drafts
