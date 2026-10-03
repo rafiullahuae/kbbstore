@@ -431,6 +431,100 @@ final class RichText
      * end of a description is the author's and stays. A body with nothing to
      * trim comes back as the same string, byte for byte.
      */
+    /**
+     * The pictures in a tab body that cannot be shown, taken out, with the
+     * paragraph each one leaves empty.                    (Integrator, 2.60.364)
+     *
+     * THE DEFECT, ON THE LIVE SHOP (3 October 2026). With "Space under the
+     * detail tab row · laptop" at 0px, the owner still saw ~65px above
+     * "Benefits:" on Shiseido Fino, and ~150px above "About brand". The
+     * importer rewrites a description's pictures to this shop's own
+     * /wp-content/uploads/... (MediaRewrite), and a picture whose file was
+     * never copied across is a 404 -- drawn by the browser as an empty box of
+     * its width x height, invisible but holding the space. trimLeadingBlank()
+     * rightly keeps an <img> (it is something to look at), so the gap stayed.
+     *
+     * A picture goes when it names THIS shop (a root-relative path or one of
+     * its own hosts) and ImageVariants::isLocal() finds no file for it, or
+     * when LostPictures has recorded it as one the migration could not bring.
+     * A picture on another site that is not known lost is left alone -- this
+     * server cannot see it and must not guess. Stored copy is untouched; a
+     * body with nothing to drop comes back byte for byte.
+     */
+    public static function dropMissingPictures(string $html): string
+    {
+        if (stripos($html, '<img') === false) {
+            return $html;
+        }
+
+        $document = new DOMDocument('1.0', 'UTF-8');
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML(
+            '<?xml encoding="UTF-8"><div id="kbb-richtext-root">' . $html . '</div>',
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET
+        );
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $root = $document->getElementById('kbb-richtext-root');
+
+        if (! $root instanceof DOMElement) {
+            return $html;
+        }
+
+        $changed = false;
+
+        foreach (iterator_to_array($root->getElementsByTagName('img')) as $img) {
+            if (! self::pictureMissing((string) $img->getAttribute('src'))) {
+                continue;
+            }
+
+            $parent = $img->parentNode;
+            $img->parentNode?->removeChild($img);
+            $changed = true;
+
+            // The wrappers it leaves with nothing in them go too -- the <p>,
+            // the <a>, the <figure> -- up to the body itself.
+            while ($parent instanceof DOMElement && $parent !== $root && self::isBlankElement($parent)) {
+                $up = $parent->parentNode;
+                $parent->parentNode?->removeChild($parent);
+                $parent = $up;
+            }
+        }
+
+        if (! $changed) {
+            return $html;
+        }
+
+        $out = '';
+
+        foreach (iterator_to_array($root->childNodes) as $child) {
+            $out .= $document->saveHTML($child);
+        }
+
+        return trim($out);
+    }
+
+    private static function pictureMissing(string $src): bool
+    {
+        $src = trim($src);
+
+        if ($src === '' || str_starts_with($src, 'data:')) {
+            return $src === '';
+        }
+
+        if (LostPictures::isLost($src)) {
+            return true;
+        }
+
+        $host = parse_url($src, PHP_URL_HOST);
+        $ours = ! is_string($host) || $host === ''
+            ? str_starts_with($src, '/') && ! str_starts_with($src, '//')
+            : (new \App\Services\Import\MediaAudit)->isOwnHost($host);
+
+        return $ours && ! ImageVariants::isLocal($src);
+    }
+
     public static function trimLeadingBlank(string $html): string
     {
         return self::trimBlank($html, false);

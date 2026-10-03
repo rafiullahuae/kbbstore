@@ -753,7 +753,10 @@ class ProductController extends Controller
            nothing BUT blank lines keeps them (the drop rule in forProduct()
            already decided that tab is drawn). */
         foreach ($tabs as $i => $tab) {
-            $trimmed = \App\Support\RichText::trimLeadingBlank($tab['body']);
+            // 2.60.364: a picture that cannot be shown (its file never
+            // copied across) goes first, with the paragraph it leaves empty --
+            // it held the space above "Benefits:" with the slider at 0px.
+            $trimmed = \App\Support\RichText::trimLeadingBlank(\App\Support\RichText::dropMissingPictures($tab['body']));
 
             if ($trimmed !== '') {
                 $tabs[$i]['body'] = $trimmed;
