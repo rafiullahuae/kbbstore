@@ -103,6 +103,12 @@
 .hpc-in{width:100%;box-sizing:border-box;padding:8px 10px;font:inherit;font-size:13px;
         border:1px solid var(--border,#e6e6e6);border-radius:9px;background:var(--surface,#fff);color:inherit}
 textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
+/* Row 55 (Lane HA): picked records as chips, and the media button. */
+.hpc-ids{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.hpc-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid #E7D9DF;border-radius:99px;padding:3px 4px 3px 12px;background:#fff;font-size:12.5px;max-width:100%}
+.hpc-chip b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.hpc-chip .hpc-btn{padding:2px 8px;min-width:0;line-height:1.3}
+.hpc-thumb{width:64px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #E7D9DF}
 .hpc-in:focus-visible{outline:2px solid var(--accent,#15a85a);outline-offset:1px}
 .hpc-in.is-bad{border-color:#b4443c}
 
@@ -351,6 +357,54 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
              + esc(s.label) + '</option>';
       }).join('');
       ctl = '<select class="hpc-in' + badCls + '" id="' + id + '" data-hpc-set="' + esc(onsetName) + '">' + sopts + '</select>';
+    } else if (f.type === 'ids' && f.options && f.options.of) {
+      /*
+       * A LIST OF RECORDS PICKED BY NAME, IN ORDER (Row 55, Lane HA).
+       *
+       * The value is ModuleSchema's `ids` type -- a comma list of ids, cast
+       * server-side to positive integers and capped -- and the names come from
+       * the payload's `picks`, under the list the field's own `options.of`
+       * names. So the owner picks "COSRX", never types 14. One chip per pick
+       * with ↑ ↓ ×; a field whose cap is 1 is a plain select.
+       */
+      var list = (data.picks && data.picks[f.options.of]) || [];
+      var names = {};
+      list.forEach(function(r){ names[String(r.id)] = r.name; });
+      var cap = +(f.options.cap || 24);
+      var chosen = String(v || '').split(',').filter(function(x){ return /^[0-9]+$/.test(x); });
+
+      if (cap === 1) {
+        ctl = '<select class="hpc-in' + badCls + '" id="' + id + '" data-hpc-set="' + esc(onsetName) + '">'
+            + '<option value="">— none —</option>'
+            + list.map(function(r){
+                return '<option value="' + r.id + '"' + (String(r.id) === chosen[0] ? ' selected' : '') + '>' + esc(r.name) + '</option>';
+              }).join('')
+            + '</select>';
+      } else {
+        ctl = '<div class="hpc-ids">'
+            + (chosen.length ? chosen.map(function(x, i){
+                return '<span class="hpc-chip"><b>' + esc(names[x] || ('#' + x + ' — no longer listed')) + '</b>'
+                  + '<button type="button" class="hpc-btn" data-hpc-ids="' + esc(onsetName) + '|' + i + '|-1"' + (i === 0 ? ' disabled' : '') + ' aria-label="Move up">↑</button>'
+                  + '<button type="button" class="hpc-btn" data-hpc-ids="' + esc(onsetName) + '|' + i + '|1"' + (i === chosen.length - 1 ? ' disabled' : '') + ' aria-label="Move down">↓</button>'
+                  + '<button type="button" class="hpc-btn" data-hpc-ids="' + esc(onsetName) + '|' + i + '|x" aria-label="Remove">×</button></span>';
+              }).join('') : '<span class="hpc-sub">Nothing picked.</span>')
+            + (chosen.length < cap
+                ? '<select class="hpc-in" id="' + id + '" data-hpc-ids-add="' + esc(onsetName) + '"><option value="">+ Add…</option>'
+                  + list.filter(function(r){ return chosen.indexOf(String(r.id)) < 0; }).map(function(r){
+                      return '<option value="' + r.id + '">' + esc(r.name) + '</option>';
+                    }).join('') + '</select>'
+                : '<span class="hpc-sub">' + cap + ' is the most this row shows.</span>')
+            + '</div>';
+      }
+    } else if (f.options && f.options.picker === 'media') {
+      /* A picture chosen from the Media Library (Row 55, Lane HA): the box
+         holds its address, the button opens the shop's own picker, and the
+         server scheme-checks whatever lands here before it is drawn. */
+      ctl = '<div class="hpc-ids"><input type="text" class="hpc-in' + badCls + '" id="' + id + '" value="' + esc(v) + '"'
+          + ' data-hpc-set="' + esc(onsetName) + '">'
+          + '<button type="button" class="hpc-btn" data-hpc-media="' + esc(onsetName) + '" data-hpc-media-label="' + esc(f.label) + '">Choose from Media Library</button>'
+          + (v ? '<img class="hpc-thumb" src="' + esc(v) + '" alt="">' : '')
+          + '</div>';
     } else if (f.type === 'textarea') {
       ctl = '<textarea class="hpc-in' + badCls + '" id="' + id + '" data-hpc-set="' + esc(onsetName) + '">'
           + esc(v) + '</textarea>';
@@ -1127,6 +1181,45 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
         /* The preview follows the keystroke -- that is the "live" in live
            editing -- and the box being typed into is not touched. */
         if (slide !== null) refreshPreview(slide);
+      };
+    });
+
+    /* Row 55 (Lane HA): the picked-records control and the media button. Each
+       rewrites the comma list through setValue() -- the one way a value moves
+       on this screen -- and repaints, since the chips ARE the value. */
+    function idsOf(name){
+      var cur = name.indexOf('copy.') === 0 ? copy[name.slice(5)] : '';
+      return String(cur || '').split(',').filter(function(x){ return /^[0-9]+$/.test(x); });
+    }
+    el.querySelectorAll('[data-hpc-ids]').forEach(function(b){
+      b.onclick = function(){
+        var parts = b.dataset.hpcIds.split('|');
+        var list = idsOf(parts[0]), i = +parts[1];
+        if (parts[2] === 'x') { list.splice(i, 1); }
+        else {
+          var j = i + (+parts[2]);
+          if (j < 0 || j >= list.length) return;
+          var t = list[i]; list[i] = list[j]; list[j] = t;
+        }
+        setValue(parts[0], list.join(','));
+        render();
+      };
+    });
+    el.querySelectorAll('[data-hpc-ids-add]').forEach(function(sel){
+      sel.onchange = function(){
+        if (!sel.value) return;
+        var name = sel.dataset.hpcIdsAdd, list = idsOf(name);
+        if (list.indexOf(sel.value) < 0) list.push(sel.value);
+        setValue(name, list.join(','));
+        render();
+      };
+    });
+    el.querySelectorAll('[data-hpc-media]').forEach(function(b){
+      b.onclick = function(){
+        if (typeof window.kbbPickMedia !== 'function') return;
+        var name = b.dataset.hpcMedia;
+        window.kbbPickMedia({ title: b.dataset.hpcMediaLabel || 'Photo', note: 'The photo for this homepage panel.', folder: 'appearance',
+          onPick: function(urls){ if (!urls || !urls[0]) return; setValue(name, String(urls[0])); render(); } });
       };
     });
 

@@ -206,8 +206,13 @@ final class HomepageContent
             'label' => 'About us paragraph',
             'default' => '',
             'store' => 'setting',
-            'help' => 'The paragraph in the About us band. Clear it and the paragraph is dropped; the heading, the counted figures and the link stay.',
+            'help' => 'The About us text, last on the homepage. A blank line starts a new paragraph. Clear it and the paragraphs are dropped; the heading stays.',
         ],
+        /* ── Row 55 (Lane HA): About us — the owner's four paragraphs are
+           App\Support\HomeSections::ABOUT_DEFAULT, and these are the rest of
+           the section. Spread HERE, directly after about_text, because the
+           live editor's WORDS map claims SCHEMA keys in order. ──────────── */
+        ...\App\Support\HomeSections::ABOUT_SCHEMA,
         /* ── Big savings bundles (2.60.370) — see TABS['bundles'] ───────── */
         'home_hb_layout_d' => ['type' => 'select', 'label' => 'Layout · laptop', 'default' => 'carousel', 'store' => 'setting',
             'options' => ['carousel' => 'Carousel with arrows', 'grid' => 'Grid — all at once'], 'help' => 'Carousel, as asked; Grid puts the sets back in rows.'],
@@ -239,6 +244,9 @@ final class HomepageContent
         'home_hb_head_gap_m' => ['type' => 'select', 'label' => 'Space under the heading · phone', 'default' => '12', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
         'home_hb_btn_gap_d' => ['type' => 'select', 'label' => 'Space above the button under the carousel · laptop', 'default' => '24', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
         'home_hb_btn_gap_m' => ['type' => 'select', 'label' => 'Space above the button under the carousel · phone', 'default' => '16', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
+        /* ── Row 55 (Lane HA): sections 2, 3 and 5–8, in page order. The
+           shapes, defaults and reasoning are App\Support\HomeSections'. ── */
+        ...\App\Support\HomeSections::SCHEMA,
     ];
 
     /**
@@ -252,7 +260,7 @@ final class HomepageContent
      * thing that is not true about it.
      */
     public const TABS = [
-        'copy' => ['Other wording', 'Sentences elsewhere on the homepage that had no screen.', ['home_ticker', 'about_text']],
+        'copy' => ['Other wording', 'Sentences elsewhere on the homepage that had no screen.', ['home_ticker']],
         /* (2.60.370) The owner: "on homepage, i need the bundle section to be
            carousel with proper beautiful arrows, give controls of everything
            for desktop mobile both. center the heading, redesign the All Sets
@@ -267,6 +275,9 @@ final class HomepageContent
             'home_hb_pad_d', 'home_hb_pad_m', 'home_hb_head_gap_d', 'home_hb_head_gap_m',
             'home_hb_btn_gap_d', 'home_hb_btn_gap_m',
         ]],
+        /* Row 55 (Lane HA): one tab per new section, in page order, then About
+           us — which now owns `about_text` with its heading and spacing. */
+        ...\App\Support\HomeSections::TABS,
     ];
 
     /**
@@ -468,8 +479,11 @@ final class HomepageContent
     {
         $saved = $this->settings->get('about_text', null);
 
+        // Row 55 (Lane HA): the owner's four paragraphs, verbatim, are the
+        // default now — "his four paragraphs verbatim" — in place of the
+        // one-paragraph interface string the old About band shipped with.
         return $saved === null
-            ? (string) __('store.home.about_body')
+            ? \App\Support\HomeSections::ABOUT_DEFAULT
             : trim((string) $saved);
     }
 
@@ -505,6 +519,9 @@ final class HomepageContent
             // and trust claims on the same page currently say — those already
             // have a home and this screen must not grow a second box for them.
             'claims_elsewhere' => TrustClaims::CLAIMS['home_brands_note'],
+            // Row 55 (Lane HA): what an `ids` control picks from — the field's
+            // own `options.of` names the list. See HomeSections::pickOptions().
+            'picks' => \App\Support\HomeSections::pickOptions(),
         ];
     }
 

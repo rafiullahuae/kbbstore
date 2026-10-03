@@ -45,9 +45,11 @@ class HomepageLayouts
                  * presets are orders the owner picks and are left as he picks
                  * them.
                  */
-                'cards_banner', 'hero', 'delivery', 'ticker', 'categories', 'bundles', 'recommended',
-                'routine', 'quiz', 'brands', 'spotted', 'videos', 'instagram', 'bestsellers', 'flash',
-                'blog', 'about', 'reviews', 'trust', 'newsletter',
+                'cards_banner', 'hero', 'delivery', 'ticker', 'categories', 'bundles', 'bestselling', 'recommended',
+                'routine', 'quiz', 'brands', 'spotted', 'videos', 'instagram', 'trending', 'bestsellers', 'flash',
+                'blog', 'under54', 'feature', 'about', 'reviews', 'trust', 'newsletter',
+                // Row 55 (Lane HA): the four new sections, at their REGISTRY
+                // positions, for the reason above.
             ],
             'skins' => ['bundles' => 'classic', 'recommended' => 'soft', 'bestsellers' => 'luxe', 'flash' => 'ribbon'],
             'off' => [],

@@ -264,10 +264,19 @@ class HomepageApiController extends Controller
     public const WORDS = [
         'hero' => ['tab' => 'hero', 'key' => null, 'label' => 'the slides, their colours and their links'],
         'ticker' => ['tab' => 'copy', 'key' => 'home_ticker', 'label' => 'the chip it scrolls'],
-        'about' => ['tab' => 'copy', 'key' => 'about_text', 'label' => 'the paragraph'],
+        // Row 55 (Lane HA): About us owns its own tab now — the paragraphs,
+        // the heading and the spacing.
+        'about' => ['tab' => 'about', 'key' => 'about_text', 'label' => 'the heading and the paragraphs', 'whole_tab' => true],
         // (2.60.370) The whole "Big savings bundles" tab is this section's: the
         // carousel, the heading and the All sets button, laptop and phone.
         'bundles' => ['tab' => 'bundles', 'key' => 'home_hb_title', 'label' => 'the carousel, the heading and the All sets button', 'whole_tab' => true],
+        // Row 55 (Lane HA): each new section owns its tab, in page order.
+        'bestselling' => ['tab' => 'bestselling', 'key' => 'home_bs_title', 'label' => 'the heading, the products, the button and the spacing', 'whole_tab' => true],
+        'brands' => ['tab' => 'brands', 'key' => 'home_br_title', 'label' => 'which brands, the heading and the button', 'whole_tab' => true],
+        'trending' => ['tab' => 'trending', 'key' => 'home_tr_title', 'label' => 'the heading, the products and the spacing', 'whole_tab' => true],
+        'blog' => ['tab' => 'blog', 'key' => 'home_bl_title', 'label' => 'which articles and the heading', 'whole_tab' => true],
+        'under54' => ['tab' => 'under54', 'key' => 'home_u54_title', 'label' => 'the price ceiling, the products and the heading', 'whole_tab' => true],
+        'feature' => ['tab' => 'feature', 'key' => 'home_ft_l_title', 'label' => 'the two photos, titles, texts and links', 'whole_tab' => true],
     ];
 
     /**

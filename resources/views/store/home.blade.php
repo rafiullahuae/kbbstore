@@ -578,6 +578,13 @@
   <div class="bndl-foot"><a class="bndl-all bndl-all-bottom" href="{{ $bndlUrl }}">{{ $bndlLabel }}<i>{!! $bndlArrow !!}</i></a></div>
 </div></section>
 @endunless
+{{-- BEST SELLERS, SECTION 2 OF ROW 55 (Lane HA). App\Support\HomeSections
+     carries the reasoning; Appearance → Homepage content → Best Sellers the
+     controls. A rail with no products draws nothing. --}}@unless ($sections->hidden('bestselling'))
+@if ($home['bestselling']->isNotEmpty())
+@include('partials.home.hs-rail', ['key' => 'bestselling', 'r' => \App\Support\HomeSections::rail($homeSettings, 'bestselling'), 'items' => $home['bestselling']])
+@endif
+@endunless
 
 {{-- RECOMMENDED --}}
 @unless ($sections->hidden('recommended'))
@@ -640,55 +647,22 @@
 </div></section>
 @endunless
 
-{{-- BRANDS --}}
-{{-- TWO GATES, AND THEY ASK DIFFERENT QUESTIONS — Lane EH.
-
-     `$sections->hidden('brands')` is the HomepageSections entry: "do I want
-     this strip on my home page", edited on Appearance → Homepage, and it has
-     governed this section all along.
-
-     `moduleEnabled('brands')` is the module on Store → Modules: "does this shop
-     have brands at all", which also decides whether the directory at
-     /brands/ and the per-brand landing pages answer. A module
-     switched off has to leave NO trace on the storefront, and a brand strip
-     still sitting on the home page — every tile linking to a page that now
-     404s — is the loudest trace there is.
-
-     Not folded into one: the homepage section must stay independently
-     removable, or turning the strip off would be the only way to keep the
-     brand pages and would take them with it. --}}
-@unless ($sections->hidden('brands') || ! $settings->moduleEnabled('brands', true))
-<section class="sec tinted {{ $sections->classFor('brands') }}" style="padding-top:0"><div class="wrap">
-  {{-- The COUNT is counted and the CLAIM is the owner's — Lane DR.
-
-       "{n} brands" is read off the catalogue and stays that way; "Korean
-       brands, all sourced direct" is a statement about how the shop buys, it
-       was a literal in this file, and it is a setting now with this wording as
-       its default. Cleared, the line disappears and the heading stands alone. --}}
-  {{-- BLOCK FORM, NOT @php(...) — this file's own headers, thirty and
-       seventy lines from the top, record why: Blade pairs @php/@endphp
-       with one non-greedy regex over the whole template, so an inline
-       @php(...) above the newsletter section's block borrows THAT
-       block's @endphp and swallows every directive in between. Written
-       inline, this exact line killed the home page with "unexpected
-       token class" two hundred lines below itself. --}}
-  @php
-    $brandsNote = \App\Support\TrustClaims::text($settings, 'home_brands_note');
-  @endphp
-  <div class="sh"><div><h2>{{ __('store.home.brands_heading') }} <span class="cnt">{{ trans_choice('store.home.brands_count', (int) $brandTotal) }}</span></h2>
-    @if ($brandsNote !== null)<p>{{ $brandsNote }}</p>@endif</div>
-    <a class="lnk" href="{{ Url::to('/brands/') }}">{{ __('store.home.brands_link') }}</a></div>
-  <div class="brands">
-    @foreach ($brands as $b)
-      {{-- As with the category tiles above: no tally for a stand-in brand. --}}
-      <a class="bd" href="{{ $b->url() }}"><div class="bname"><span class="bn">{{ $b->t('name') }}</span>@if ((int) $b->products_count > 0)<span class="bc">{{ $b->products_count }}</span>@endif</div></a>
-    @endforeach
-  </div>
-</div></section>
+{{-- BRANDS, SECTION 3 OF ROW 55 (Lane HA) — design A on a laptop, logos on a
+     phone, one list of links. The two gates are Lane EH's and unchanged: the
+     homepage row (Appearance → Homepage) and the brands module (Store →
+     Modules), which also decides whether /brands/ answers. --}}@unless ($sections->hidden('brands') || ! $settings->moduleEnabled('brands', true))
+@if ($home['brands']->isNotEmpty())
+@include('partials.home.hs-brands', ['b' => \App\Support\HomeSections::brands($homeSettings), 'brandRows' => $home['brands']])
+@endif
 @endunless
 
-{{-- SPOTTED --}}
-@unless ($sections->hidden('spotted'))
+{{-- SPOTTED, SECTION 4 OF ROW 55. Lane HB builds partials/home/spotted (the
+     Instagram carousel, design B); it is included HERE, at section 4, and it
+     gates itself. Until it exists the old product-photo strip below keeps the
+     slot, so the `spotted` row on Appearance → Homepage never points at
+     nothing; once it exists the old strip stands down, so the page never
+     draws two Spotted sections. (Lane HA) --}}@includeIf('partials.home.spotted')
+@unless ($sections->hidden('spotted') || view()->exists('partials.home.spotted'))
 <section class="sec {{ $sections->classFor('spotted') }}" style="padding-top:0"><div class="wrap">
   <div class="sh"><div><h2>{{ __('store.home.spotted_heading') }} <span class="cnt">{{ __('store.home.spotted_badge') }}</span></h2>
     <p>{{ __('store.home.spotted_subtitle') }}</p></div>
@@ -835,6 +809,13 @@
 <section class="sec {{ $sections->classFor('instagram') }}"><div class="wrap">{!! $igSection !!}</div></section>
 @endif
 @endunless
+{{-- TRENDING, SECTION 5 OF ROW 55 (Lane HA). What "trending" counts is
+     GridSections::trendingScores(); the controls are Appearance → Homepage
+     content → Trending. --}}@unless ($sections->hidden('trending'))
+@if ($home['trending']->isNotEmpty())
+@include('partials.home.hs-rail', ['key' => 'trending', 'r' => \App\Support\HomeSections::rail($homeSettings, 'trending'), 'items' => $home['trending']])
+@endif
+@endunless
 
 {{-- BEST SELLERS --}}
 @unless ($sections->hidden('bestsellers'))
@@ -856,97 +837,33 @@
 </div></section>
 @endunless
 
-{{-- BLOG --}}
-@unless ($sections->hidden('blog'))
-@if ($posts->isNotEmpty())
-<section class="sec tinted {{ $sections->classFor('blog') }}" style="padding-top:0"><div class="wrap">
-  <div class="sh"><div><h2>{{ __('store.home.journal_heading') }} <span class="cnt">{{ __('store.home.journal_badge') }}</span></h2><p>{{ __('store.home.journal_subtitle') }}</p></div>
-    <a class="lnk" href="{{ Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.home.journal_link') }}</a></div>
-  <div class="blog">
-    @foreach ($posts as $post)
-      <a class="bl" href="{{ Url::to(\App\Support\UrlScheme::article($post->slug)) }}">
-        {{-- `cover`, not `image`. There is no posts.image column — see the
-             Post::saved hook in AppServiceProvider, which says so for the same
-             reason — and Eloquent returns null for a missing attribute instead
-             of failing, so this rail has been drawing the gradient placeholder
-             for every article no matter what photograph the post carried.
-             Converting the background to an <img> without correcting the column
-             would have shipped an <img> that is never emitted. --}}
-        @php
-          $postCover = \App\Support\CoverImage::src($post->cover);
-        @endphp
-        <div class="im" style="background:{{ $postCover ? '#fff' : Gradient::for($post->title) }}">
-          @if ($postCover)
-            <img src="{{ $postCover }}" alt="{{ $post->t('title') }}" width="640" height="400" loading="lazy">
-          @endif
-          {{-- `tag`, `body` and readMinutes(): the same correction as `cover`
-               above, for the three fields that were missed when it was made.
-               There is no posts.category, no posts.content and no
-               posts.read_minutes, so the chip never drew, an article with no
-               excerpt printed an empty paragraph, and `?? 5` was not a
-               fallback but the only branch -- every article on this page
-               claimed five minutes whatever its length. --}}
-          @if ($post->tag)<span class="chip">{{ $post->tag }}</span>@endif</div>
-        <h3>{{ $post->t('title') }}</h3>
-        <p>{{ \Illuminate\Support\Str::limit(strip_tags((string) ($post->t('excerpt') ?: $post->t('body'))), 110) }}</p>
-        <span class="meta">{{ trans_choice('store.home.read_minutes', $post->readMinutes()) }} · {{ $post->published_at?->format('j M') }}</span>
-      </a>
-    @endforeach
-  </div>
-</div></section>
+{{-- BLOG, SECTION 6 OF ROW 55 (Lane HA): three equal cards on a laptop, a
+     column on a phone. Appearance → Homepage content → Blog. --}}@unless ($sections->hidden('blog'))
+@php
+    $hsBlog = \App\Support\HomeSections::blog($homeSettings);
+    // "The latest three" is the journal row this page has always read
+    // ($posts: cached, translated, demo-filled); a manual pick is HomeSections'.
+    $hsPosts = $hsBlog['source'] === 'manual' && $home['posts']->isNotEmpty() ? $home['posts'] : $posts;
+@endphp
+@if ($hsPosts->isNotEmpty())
+@include('partials.home.hs-blog', ['bl' => $hsBlog, 'postRows' => $hsPosts])
 @endif
 @endunless
-
-{{-- ABOUT --}}
-@unless ($sections->hidden('about'))
-<section class="sec {{ $sections->classFor('about') }}" style="padding-top:0"><div class="wrap">
-  <div class="about">
-    <div class="im"></div>
-    <div>
-      <h2>{{ __('store.home.about_heading') }}</h2>
-      {{-- CLEARED MEANS SAY NOTHING — Lane FO, the rule TrustClaims already
-           applies three sections down. `about_text` was read here and written
-           by nothing in this application, so the shipped paragraph was the only
-           paragraph any shop could have. It has a box now (Appearance →
-           Homepage content), and a box the owner can fill is a box the owner
-           can empty: emptied, the paragraph is dropped rather than printed
-           blank, and the heading, the three counted figures and the link stay.
-           The value arrives from HomeController already resolved, so this
-           template needs no raw-PHP block of its own. That is not tidiness:
-           this file's own headers, thirty and seventy lines from the top,
-           record that Blade compiles STATEMENTS BEFORE COMMENTS, so naming a
-           directive in prose here is the same as writing one. --}}
-      @if ($aboutText !== '')<p>{{ $aboutText }}</p>@endif
-      <div class="astats">
-        <div><b>{{ number_format($catalogueCount) }}</b><span>{{ __('store.home.about_stat_products') }}</span></div>
-        <div><b>{{ $brandTotal }}</b><span>{{ __('store.home.about_stat_brands') }}</span></div>
-        <div><b>{{ $reviews['total'] > 999 ? __('store.home.count_thousands_plus', ['count' => round($reviews['total'] / 1000, 1)]) : $reviews['total'] }}</b><span>{{ __('store.home.about_stat_reviews') }}</span></div>
-        {{-- A DELIVERY WINDOW WAS THE FOURTH STAT HERE, AND IT IS GONE.
-
-             The other three are counted from the database — products stocked,
-             brands carried, reviews approved. This one was two digits typed
-             into a template: a transit time, presented in the same row and the
-             same weight as three measured figures, to every visitor on earth.
-             It named no country, which made it worse rather than better, since
-             the number it quoted describes exactly one.
-
-             It is REMOVED rather than made per-country, because there is
-             nothing to make it out of. A stat tile wants a NUMBER, and the only
-             record this shop keeps of delivery anywhere is a SENTENCE the owner
-             writes on Store → Delivery & Shipping → Delivery lines. Deriving
-             "1–3" from a row that reads "Delivered across Saudi Arabia" would
-             be inventing the very figure this refuses to invent — the
-             alternative ProductPagePromisesTest already pins by name for the
-             product page's arrival date.
-
-             The delivery promise still has three places to appear, all of them
-             fed by that one sentence. It does not need a fourth wearing a
-             number's clothes. --}}
-      </div>
-      <a class="lnk" style="display:inline-block;margin-top:18px" href="{{ Url::to('/about/') }}">{{ __('store.home.about_link') }}</a>
-    </div>
-  </div>
-</div></section>
+{{-- UNDER AED 54, SECTION 7 OF ROW 55 (Lane HA). The ceiling is the price
+     the shopper pays — GridSections::fetchPool() says how. --}}@unless ($sections->hidden('under54'))
+@if ($home['under54']->isNotEmpty())
+@include('partials.home.hs-rail', ['key' => 'under54', 'r' => \App\Support\HomeSections::rail($homeSettings, 'under54'), 'items' => $home['under54']])
+@endif
+@endunless
+{{-- THE TWO-COLUMN FEATURE, SECTION 8 OF ROW 55 (Lane HA). --}}@unless ($sections->hidden('feature'))
+@include('partials.home.hs-feature', ['ft' => \App\Support\HomeSections::feature($homeSettings, $home['sunscreens'])])
+@endunless
+{{-- ABOUT US, SECTION 9 OF ROW 55 — LAST ON THE PAGE (Lane HA). The words
+     are the owner's four paragraphs (HomeSections::ABOUT_DEFAULT), edited on
+     Appearance → Homepage content → About us; cleared, the heading stands
+     alone. The old band's counted figures and link are not part of his
+     section and are gone with it. --}}@unless ($sections->hidden('about'))
+@include('partials.home.hs-about', ['ab' => \App\Support\HomeSections::about($homeSettings, $aboutText)])
 @endunless
 
 {{-- REVIEWS --}}

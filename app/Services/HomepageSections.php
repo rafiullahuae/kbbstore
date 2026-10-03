@@ -87,10 +87,25 @@ class HomepageSections
         'ticker'      => ['Promo ticker', 'The scrolling discount-code line.', false, null],
         'categories'  => ['Category circles', 'Shop by category, scrollable.', false, null],
         'bundles'     => ['Big savings bundles', 'Skincare sets and routines.', true, GridSkins::DEFAULT],
+        /*
+         * ── ROW 55 (Lane HA): THE OWNER'S NEW HOMEPAGE, SECTIONS 2–9 ────────
+         *
+         * "In this order": bundles, Best Sellers, Brands, #KBeautyBliss
+         * Spotted, Trending, Blog, Under AED 54, a two-column feature, About
+         * us. The four new keys sit where the template draws them, so with the
+         * sections OFF_BY_DEFAULT lists switched off the visible sequence IS
+         * that order without moving one existing key — `brands`, `spotted`,
+         * `blog` and `about` already ran in that order. Each new row is
+         * `false` for a grid: the card is the shop's own, at the shop's own
+         * skin ("the grid cards design must not be changed"), so this screen
+         * offers no picker for it. Their words, products, columns, background
+         * and spacing are Appearance → Homepage content → the section's tab.
+         */
+        'bestselling' => ['Best Sellers', 'Best-selling grid: 8 on a laptop, 6 on a phone, with the Shop best sellers button. Words, products and spacing: Homepage content → Best Sellers.', false, null],
         'recommended' => ['Recommended for you', 'Handpicked essentials.', true, GridSkins::DEFAULT],
         'routine'     => ['Build your routine', 'The six-step routine.', false, null],
         'quiz'        => ['Skin quiz', 'The two-minute routine finder.', false, null],
-        'brands'      => ['Top brands', 'Brand tiles with product counts.', false, null],
+        'brands'      => ['Top brands', 'Brand photo cards on a laptop, logos on a phone. Which brands: Homepage content → Brands.', false, null],
         'spotted'     => ['#KBeautyBliss spotted', 'Shoppable community photos.', false, null],
         /*
          * ── TWO ROWS ADDED BY LANE IG, AND BOTH DRAW NOTHING ON APPLY ───────
@@ -127,10 +142,13 @@ class HomepageSections
          */
         'videos'      => ['Video rail', 'A shoppable video rail. Pick which section in Content → Shoppable video → Appearance → Homepage; nothing shows until you do.', false, null],
         'instagram'   => ['Instagram Profile', 'Recent posts and reels from our own Instagram, with the profile box. Connect it in Content → Instagram; nothing shows until you do.', false, null],
+        'trending'    => ['Trending', 'What is moving this week: 8 on a laptop, 6 on a phone. Words, products and spacing: Homepage content → Trending.', false, null],
         'bestsellers' => ['Best sellers', 'Ranked by sales this month.', true, GridSkins::DEFAULT],
         'flash'       => ['Flash sale', 'Discounted, with stock remaining.', true, GridSkins::DEFAULT],
-        'blog'        => ['Skincare guide', 'Latest journal articles.', false, null],
-        'about'       => ['About us', 'Story and proof numbers.', false, null],
+        'blog'        => ['Skincare guide', 'Three journal articles. Words and which articles: Homepage content → Blog.', false, null],
+        'under54'     => ['Under AED 54', '10 on a laptop, 6 on a phone, at or under the price ceiling. Homepage content → Under AED 54.', false, null],
+        'feature'     => ['Two-column feature', 'Two photo panels — Sunscreens and best sellers. Photos, words and links: Homepage content → Two-column feature.', false, null],
+        'about'       => ['About us', 'The About us text, last on the page. Homepage content → About us.', false, null],
         'reviews'     => ['Customer reviews', 'Score summary and review cards.', false, null],
         'trust'       => ['Trust row', 'Shipping, payments, authenticity, support.', false, null],
         'newsletter'  => ['Newsletter', 'Ten percent off the first order.', false, null],
@@ -337,6 +355,30 @@ class HomepageSections
      * @var array<string, string>
      */
     public const WIDTH_DEFAULTS = ['cards_banner' => 'bleed'];
+
+    /**
+     * THE SECTIONS THAT SHIP SWITCHED OFF, on both devices.      (Row 55, Lane HA)
+     *
+     * The owner, 3 October: "don't include anything from our existing homepage
+     * on extreabeauty, except banner. we need the sections which i described
+     * ... don't include reoutine builder etc, that's not finished yet". Every
+     * section of the old page that is not one of his nine is listed here. NONE
+     * IS DELETED: each keeps its code, its row on Appearance → Homepage and its
+     * Desktop/Mobile switches, so any of them comes back with one click. The
+     * hero stays on because it is the banner's fallback — it draws only when
+     * the picture banner has nothing to show.
+     *
+     * A shop that has SAVED its homepage keeps what it saved, the way every
+     * default in this class works — which is why
+     * 2027_07_27_000100_clear_caches_home_row55_sections writes the same
+     * answer into a saved payload: what he asked for ships on.
+     *
+     * @var list<string>
+     */
+    public const OFF_BY_DEFAULT = [
+        'delivery', 'ticker', 'categories', 'recommended', 'routine', 'quiz',
+        'videos', 'instagram', 'bestsellers', 'flash', 'reviews', 'trust', 'newsletter',
+    ];
 
     /**
      * The three controls a section row carries, as ModuleSchema fields.
@@ -1116,7 +1158,7 @@ class HomepageSections
          * other, and neither errors.
          */
         return ModuleSchema::normalised(
-            self::class.':'.$defaultSkin.':'.self::widthDefault($key),
+            self::class.':'.$defaultSkin.':'.self::widthDefault($key).(in_array($key, self::OFF_BY_DEFAULT, true) ? ':off' : ''),
             self::SECTION_SCHEMA,
             self::SECTION_POLICY,
             self::overridesFor($key),
@@ -1144,7 +1186,10 @@ class HomepageSections
             ],
             // The banner's `bleed`, and `normal` for every other section.
             'width' => ['default' => self::widthDefault($key)],
-        ];
+        ] + (in_array($key, self::OFF_BY_DEFAULT, true)
+            // Row 55: off on both devices until the owner switches it back.
+            ? ['desktop' => ['default' => false], 'mobile' => ['default' => false]]
+            : []);
     }
 
     /**

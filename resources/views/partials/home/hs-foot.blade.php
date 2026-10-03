@@ -1,0 +1,1 @@
+@if (($h['btn'] ?? '') !== '' && ($h['url'] ?? '') !== '')<div class="hs-foot"><a class="bndl-all hs-btn hs-btn-bottom" href="{{ $h['url'] }}">{{ $h['btn'] }}<i>{!! \App\Support\HomeSections::ARROW !!}</i></a></div>@endif
