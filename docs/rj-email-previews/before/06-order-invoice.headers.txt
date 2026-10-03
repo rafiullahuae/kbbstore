@@ -1,0 +1,7 @@
+From: K Beauty Bliss <hello@extrabeauty.ae>
+Reply-To: K Beauty Bliss <care@extrabeauty.ae>
+To: aisha.khan@example.com
+Subject: Invoice 01000 for your K Beauty Bliss order KBB-10427
+MIME-Version: 1.0
+Date: Sat, 03 Oct 2026 10:57:52 +0000
+Message-ID: <bfb7773f52eba3743ec2d96f0502b00a@extrabeauty.ae>

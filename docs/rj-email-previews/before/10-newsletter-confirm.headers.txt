@@ -1,0 +1,8 @@
+From: K Beauty Bliss <hello@extrabeauty.ae>
+Reply-To: K Beauty Bliss <care@extrabeauty.ae>
+To: aisha.khan@example.com
+Subject: Please confirm your K Beauty Bliss subscription
+List-Unsubscribe: <http://127.0.0.1:9940/newsletter/unsubscribe/1?expires=0&signature=PREVIEW>
+MIME-Version: 1.0
+Date: Sat, 03 Oct 2026 10:57:52 +0000
+Message-ID: <e70e4a15d1f911f18ee598a94485daef@extrabeauty.ae>

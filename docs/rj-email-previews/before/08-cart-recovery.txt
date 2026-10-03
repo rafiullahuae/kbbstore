@@ -1,0 +1,19 @@
+Hello,
+
+Your basket is still waiting for you.
+Everything is saved — pick up where you left off.
+
+Your basket:
+- Heartleaf 77% Soothing Toner 250ml x 1  AED 89
+- Glow Deep Serum Rice + Alpha-Arbutin 30ml x 2  AED 230
+
+View your basket:
+http://127.0.0.1:9940/cart
+
+You asked us to remind you about this basket when you left your email address
+with us. If you have since placed your order, thank you - please ignore this.
+
+- K Beauty Bliss
+
+Don't want these reminders? Unsubscribe here and we will stop, for good:
+http://127.0.0.1:9940/mail-preferences/cart/1?expires=0&amp;signature=PREVIEW

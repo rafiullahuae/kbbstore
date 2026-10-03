@@ -1,0 +1,7 @@
+From: K Beauty Bliss <hello@extrabeauty.ae>
+Reply-To: K Beauty Bliss <care@extrabeauty.ae>
+To: aisha.khan@example.com
+Subject: Your K Beauty Bliss order KBB-10427
+MIME-Version: 1.0
+Date: Sat, 03 Oct 2026 10:57:52 +0000
+Message-ID: <298b108673944f6cbcd350151a8f0ad9@extrabeauty.ae>

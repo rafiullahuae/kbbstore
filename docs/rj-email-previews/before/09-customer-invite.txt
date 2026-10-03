@@ -1,0 +1,17 @@
+Hi Aisha,
+
+Thank you for shopping with K Beauty Bliss. Our shop has moved to a new website, and we have set up an account for you with this email address (aisha.khan@example.com), so you can see your orders and check out faster next time.
+
+Your account is ready. All you need to do is choose a password:
+
+http://127.0.0.1:9940/account/invite/PREVIEW
+
+This link is just for you and works once. It expires on 10 October 2026. After that you can still use "Forgot password" on the sign-in page.
+
+If you did not shop with us, you can ignore this email. Nothing happens unless the link is used.
+
+- K Beauty Bliss
+
+You are receiving this because you placed an order with K Beauty Bliss using
+this email address. If that was not you, ignore this email: nothing happens
+unless the link is used.

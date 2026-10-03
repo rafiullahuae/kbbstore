@@ -1,0 +1,53 @@
+Thank you, Aisha Khan
+
+Your order is in and we are packing it with care. Everything you chose is
+listed below, exactly as it was when you ordered — keep this email, it is
+your receipt.
+
+Order KBB-10427 — placed 2 October 2026
+
+WHAT YOU ORDERED
+- Heartleaf 77% Soothing Toner 250ml (Anua)
+  SKU AN-HL-250
+  QTY 2  ·  AED 89.00 each  ·  line total AED 178.00
+- Glow Deep Serum Rice + Alpha-Arbutin 30ml (Beauty of Joseon)
+  SKU BOJ-GD-30
+  QTY 1  ·  AED 115.00 each  ·  line total AED 115.00
+- Low pH Good Morning Gel Cleanser (COSRX)
+  150ml
+  SKU CX-LPH-150
+  QTY 1  ·  AED 62.50 each  ·  line total AED 62.50
+
+TOTALS
+Subtotal: AED 355.50
+Discount (GLOW10): AED -35.55
+Delivery: AED 0.00
+Total: AED 319.95
+
+DELIVERY ADDRESS
+Aisha Khan
+Apartment 1204, Marina Heights Tower
+Al Marsa Street, Dubai Marina
+Dubai Dubai
+AE
++971 50 123 4567
+
+Delivery method: Free UAE delivery (1–3 working days)
+Payment method: Tabby — pay in 4, interest-free
+
+TRACK YOUR ORDER
+http://127.0.0.1:9940/checkout/success?order=KBB-10427
+
+That link opens on the device you ordered from. Anywhere else, sign in to your
+account and your orders are all listed there under KBB-10427:
+http://127.0.0.1:9940/my-account/orders
+
+WE ARE HERE IF YOU NEED US
+A real person answers. Ask us anything — a question about your order, or
+about what to use it with.
+WhatsApp: +971 58 505 2611 (https://wa.me/971585052611)
+Email us: care@extrabeauty.ae (mailto:care@extrabeauty.ae)
+Instagram: @kbeauty.bliss (https://www.instagram.com/kbeauty.bliss/)
+
+With love,
+the K Beauty Bliss team
