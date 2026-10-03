@@ -345,6 +345,24 @@
   .drop a .di{font-size:15px;width:20px;text-align:center;flex:none}
   .mega{inset-inline-start:0;transform:translateY(8px);width:min(calc(220px * var(--mega-cols, 4)), 92vw);padding:20px;display:flex;align-items:flex-start;gap:18px}
   .navitem:hover>.mega{opacity:1;visibility:visible;transform:translateY(0)}
+  /* (2.60.369) "in DESKTOP above 1000px width, there's right side horizontal
+     scroll space coming." Read off his live page in Chrome: page 1425 / window
+     1414, and the one element ending at 1425 was DIV.drop.mega — the closed
+     two-column dropdown of the LAST item (Skincare), 440px wide, opening
+     rightward from the word. Hidden menus are opacity/visibility, so their
+     box still widens the page. Reproduced with a menu of his shape: 1100 →
+     247px too wide, 1280 → 122, 1414 → 30, 1440 → 12; fine at 1000, 1650,
+     1920.
+     · The bar clips sideways at its own edges, which are the window's: a
+       dropdown can never widen the page again. `clip`, not `hidden`, so
+       overflow-y stays visible — the dropdowns still hang below the bar.
+     · Up to 1599px the last two items open their dropdown from the item's
+       right edge, so Brands and Skincare open whole on screen. From 1600 up
+       they open as they always have. */
+  .mbar{overflow-x:clip}
+  @media (max-width:1599.98px){
+    .mbar .navitem:nth-last-child(-n+2) > .drop{inset-inline-start:auto;inset-inline-end:0}
+  }
   .mega .mcol-group{flex:1;min-width:0}
   .mega .mcol-group + .mcol-group{border-inline-start:1px solid #F0E4E9;padding-inline-start:18px}
   .mega .colh{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink-deep);margin:0 0 5px}
