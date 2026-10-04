@@ -112,6 +112,7 @@ final class InterfaceStrings
                 self::storeInstagram(),
                 self::storeNewsletter(),
                 self::storeMarketingUnsubscribe(),
+                self::storeWhatsApp(),
                 self::storeJs(),
             ),
             'email' => array_merge(
@@ -2754,6 +2755,30 @@ final class InterfaceStrings
      *
      * @return array<string, string>
      */
+    /**
+     * The floating WhatsApp button (Lane WA), on every storefront page.
+     *
+     * The first four are the STANDARD wording behind the owner's boxes on
+     * Appearance -> WhatsApp button: his English box is printed as typed on the
+     * English shop, and on the Arabic shop an empty Arabic box falls back to
+     * these keys -- so this is where the Arabic is reviewed and approved. The
+     * last two have no box at all: the link's accessible name (the button is
+     * an icon) and the bubble's close control.
+     *
+     * @return array<string, string>
+     */
+    private static function storeWhatsApp(): array
+    {
+        return [
+            'whatsapp.welcome' => 'Hi there 👋 Welcome to K-Beauty Bliss',
+            'whatsapp.support' => 'Need help choosing? Our beauty team is on WhatsApp, 24/7.',
+            'whatsapp.capsule_title' => 'Chat with us',
+            'whatsapp.capsule_note' => 'Available 24/7',
+            'whatsapp.open_label' => 'Chat with us on WhatsApp',
+            'whatsapp.close_label' => 'Close',
+        ];
+    }
+
     private static function storeMarketingUnsubscribe(): array
     {
         return [

@@ -386,5 +386,6 @@
     ]) !!}</p>
   </section>
 </div>
+@include('partials.whatsapp-button')
 </body>
 </html>

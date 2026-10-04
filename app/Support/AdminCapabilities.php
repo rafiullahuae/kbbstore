@@ -422,6 +422,12 @@ final class AdminCapabilities
         // a switch the owner has not yet said yes to. (Lane BG)
         'pagewash.manage' => ['owner', 'manager', 'editor'],
 
+        // The floating WhatsApp button: its design, size, position, link and
+        // wording, printed on every page of the shop -- and the link becomes
+        // an href there. Storefront appearance, so the same three roles as the
+        // five above, and its own capability for the same reason. (Lane WA)
+        'wabutton.manage' => ['owner', 'manager', 'editor'],
+
         /*
          * THE STOREFRONT'S OWN ADMIN LAYER (Lane RA): the thin bar across the
          * top of every shop page and the pencil on a category or brand header.
@@ -1502,6 +1508,8 @@ final class AdminCapabilities
         ['*', 'admin-api/site-layout', 'sitelayout.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint either.
         ['*', 'admin-api/page-wash', 'pagewash.manage'],
+        // One line and no '/**' sibling: no sub-endpoint here either. (Lane WA)
+        ['*', 'admin-api/whatsapp-button', 'wabutton.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.

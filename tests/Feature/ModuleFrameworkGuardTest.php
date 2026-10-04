@@ -677,6 +677,18 @@ function ehSchemaModules(): array
          */
         'kbb_spotted' => ['schema' => \App\Services\SpottedSettings::SCHEMA, 'tabs' => \App\Services\SpottedSettings::TABS, 'policy' => \App\Services\SpottedSettings::POLICY],
         'site_footer' => ['schema' => \App\Services\SiteFooter::SCHEMA, 'tabs' => \App\Services\SiteFooter::TABS, 'policy' => \App\Services\SiteFooter::POLICY],
+
+        /*
+         * ── LANE WA: Appearance → WhatsApp button ───────────────────────────
+         *
+         * Enrolled in the round it shipped. Every field is `store: setting`
+         * under a `waf_` alias, written by the module's own endpoint, so
+         * missingRules() has nothing to find. The design and speed selects
+         * pick CSS out of constants and the link becomes an href on every
+         * page, so "a select stores one of its own options" and the two
+         * module-local rules (cleanOffset, cleanLink) are the checks here.
+         */
+        'whatsapp_button' => ['schema' => \App\Services\WhatsAppButton::SCHEMA, 'tabs' => \App\Services\WhatsAppButton::TABS, 'policy' => \App\Services\WhatsAppButton::POLICY, 'overrides' => \App\Services\WhatsAppButton::overrides()],
     ];
 }
 

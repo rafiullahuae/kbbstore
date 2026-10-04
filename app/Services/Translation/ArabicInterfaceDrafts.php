@@ -159,7 +159,28 @@ final class ArabicInterfaceDrafts
             self::laneRlOrderEmails(),
             self::laneEmEmailKit(),
             self::laneMkMarketingEmails(),
+            self::laneWaWhatsAppButton(),
         );
+    }
+
+    /**
+     * Lane WA — the floating WhatsApp button (InterfaceStrings::
+     * storeWhatsApp()): the standard welcome and support lines, the capsule's
+     * two lines, the link's label and the bubble's close. Drafts, reviewed
+     * under Translation → Strings; the 👋 and "24/7" kept as they are.
+     *
+     * @return array<string, string>
+     */
+    private static function laneWaWhatsAppButton(): array
+    {
+        return [
+            'store.whatsapp.welcome' => 'أهلًا 👋 مرحبًا بك في K-Beauty Bliss',
+            'store.whatsapp.support' => 'هل تحتاج إلى مساعدة في الاختيار؟ فريق الجمال لدينا متاح على واتساب 24/7.',
+            'store.whatsapp.capsule_title' => 'تحدّث معنا',
+            'store.whatsapp.capsule_note' => 'متاحون على مدار الساعة',
+            'store.whatsapp.open_label' => 'تحدّث معنا على واتساب',
+            'store.whatsapp.close_label' => 'إغلاق',
+        ];
     }
 
     /**

@@ -2021,6 +2021,37 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * THE FLOATING WHATSAPP BUTTON, ON EVERY STOREFRONT PAGE. (Lane WA)
+             *
+             * The owner: "i need a floating whatsapp icon with outer layers
+             * animation type circle continues. on the bottom right side" — and
+             * he picked design G, "Orbit team", off the preview. It ships ON
+             * (rule 1 since 30 September: what he asked for is the shop's new
+             * state), so every page that draws the store layout, plus the
+             * journal, an article, the review wall and the skin quiz, gains
+             * ONE block: the button's <style>, the button, and the bubble's
+             * one-line script. Nothing else on any page moves.
+             *
+             * THE PATTERN NAMES THE SHIPPED DEFAULTS — design G, 60px (--k:1),
+             * phone 16 from the right and 20 from the bottom, desktop 24 and
+             * 24, the calm 14s orbit, the bubble on — so a default that moves
+             * without this walk being told is red here and not only in
+             * WhatsAppButtonTest. `[^<]*` for the stylesheet: it carries no `<`
+             * (it is a constant of App\Services\WhatsAppButton), so the match
+             * cannot run past its own close.
+             */
+            'the floating WhatsApp button (Lane WA)' => [
+                'pattern' => '#<style id="kbb-wa">[^<]*</style>\n'
+                    .'<div class="kbw kbw-G" style="--k:1;--mt:auto;--mr:16px;--mb:20px;--ml:auto;--dt:auto;--dr:24px;--db:24px;--dl:auto;--spd:14s" id="kbbWa">'
+                    .'.*?</div></div>\n'
+                    .'<script>\(function\(\)\{var b=document\.getElementById\(\'kbbWaB\'\)[^<]*</script>\n#s',
+                // 37: every storefront document the walk renders — the same
+                // set the Outfit faces reach (Lane PLC's 37): the 33 that draw
+                // the store layout and the four that carry their own <html>.
+                'hits' => 37,
+            ],
+
+            /*
              * ROW 55 — THE OWNER'S NEW HOMEPAGE, SECTIONS 2, 3 AND 5–9. (Lane HA)
              *
              * The owner, 3 October: the banner, then Big savings bundles, Best

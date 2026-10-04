@@ -514,6 +514,7 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
 
 @include('partials.mobile-chrome')
 @include('partials.drawers')
+@include('partials.whatsapp-button')
 
 @php
     // Every route the front-end needs, already prefixed for this environment.

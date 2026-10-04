@@ -333,6 +333,7 @@ input,textarea{font-family:inherit}
      promising something the page does not do. --}}
 <script>window.KBB_CONCERN_PAGES = @json($kbbQuizConcernPages);</script>
 @endif
+@include('partials.whatsapp-button')
 @verbatim
 
 <script>

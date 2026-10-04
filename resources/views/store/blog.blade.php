@@ -285,6 +285,7 @@
      same way it reaches every other front-end string. */
   window.KBB_BLOG_ALL_LABEL = @json(__('store.js.blog_tag_all'));
 </script>
+@include('partials.whatsapp-button')
 @verbatim
 <script>
   /* Tag filter — client-side show/hide over the server-rendered cards above,

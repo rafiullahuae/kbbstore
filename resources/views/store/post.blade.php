@@ -322,7 +322,8 @@
 <footer><div class="wrap fin">
   <div>{{ __('store.journal.footer_line') }}</div>
   <div><a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a> · <a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a> · <a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.journal.nav_journal') }}</a></div>
-</div></footer>@verbatim
+</div></footer>@include('partials.whatsapp-button')
+@verbatim
 </body>
 </html>
 
