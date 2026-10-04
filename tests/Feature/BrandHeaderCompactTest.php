@@ -332,16 +332,20 @@ describe('the ring', function () {
          * bug must not become CSS. MUTATION: print $brand->logo_color raw in
          * the partial and this is red.
          */
+        // Seven characters each: the columns are VARCHAR(7), and MySQL's strict
+        // mode refuses anything longer before the page is ever asked -- these
+        // are what a hand-written row can actually hold there.
         $brand = bhBrand([
-            'logo_color' => '#fff;background:url(//evil.example/x)',
-            'ring_color' => 'red" onmouseover="alert(1)',
+            'logo_color' => '"><b>xx',
+            'ring_color' => 'red;x:y',
         ]);
         bhProduct($brand);
 
         $html = $this->get('/brands/aurabh/')->getContent();
 
-        expect($html)->not->toContain('evil.example')
-            ->and($html)->not->toContain('onmouseover')
+        expect($html)->not->toContain('"><b>xx')
+            ->and($html)->not->toContain('red;x:y')
+            ->and($html)->not->toContain('--brw-ring:')
             // No colour at all: the ring class, no style -- the shop pink.
             ->and($html)->toContain('<span class="brw-logo brw-logo--lg brw-logo--ring"><span class="brw-initial">A</span></span>');
     });

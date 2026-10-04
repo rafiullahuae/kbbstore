@@ -245,6 +245,11 @@ it('costs one query for the holder, two for anybody else, and one on any other s
         return $n;
     };
 
+    // A beat is 15 seconds after the last one. MySQL counts an UPDATE that
+    // writes the value already there as 0 rows changed, so a second beat in
+    // the SAME second takes the slower (still correct) path -- travel a
+    // second, as the real interval always does.
+    test()->travel(1)->seconds();
     expect($count(fn () => EditPresence::beat($a, 'product', '42', $token)))->toBe(1)
         ->and($count(fn () => EditPresence::beat($b, 'product', '42', null)))->toBe(2)
         ->and($count(fn () => EditPresence::beat($b, null, null, null)))->toBe(1);

@@ -160,6 +160,11 @@ final class EntityCatalog
                 ->where('products.status', 'publish')
                 ->groupBy('products.brand_id', 'categories.name')
                 ->orderByDesc(DB::raw('count(*)'))
+                // A tie in the count must come back the same way on every
+                // engine and every run, or a brand's keywords change between
+                // a sync done in steps and one done at once (MySQL: "cosrx
+                // toner" one run, "cosrx mask" the next).
+                ->orderBy('categories.name')
                 ->get(['products.brand_id', 'categories.name', DB::raw('count(*) as n')]);
             foreach ($rows as $r) {
                 $mix[(int) $r->brand_id][] = (string) $r->name;
