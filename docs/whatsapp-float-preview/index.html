@@ -110,7 +110,7 @@ code{background:var(--pink-soft);padding:1px 6px;border-radius:6px;font-size:12.
 <body>
 <div class="wrap">
 <h1>Floating WhatsApp button: pick a letter</h1>
-<p class="lede"><b>New: G · Orbit team.</b> Your Orbit with five faces on the ring (two women, three men) and a "Chat with us · Available 24/7" capsule. Drag <b>Overall size</b> to resize it, and drag the width bar or the preview’s right edge to see narrower screens. The other six are below.  each with its circles animating on a loop, sitting at the bottom right. Try them in the playground first: change the design, set the space from all four sides for phone and desktop, edit the welcome lines, or paste your own link. Every control here becomes a setting in the admin.</p>
+<p class="lede"><b>New: G · Orbit team.</b> Your Orbit with five faces on the ring (two women, three men) and a "Chat with us · Available 24/7" capsule. Drag <b>Overall size</b> (30 to 110px) to resize it, and drag the width bar or the preview’s right edge to see narrower screens. The other six are below. In the playground you can change the design, set the space from all four sides for phone and desktop, edit the welcome lines, or paste your own link. Every control here becomes a setting in the admin.</p>
 
 <section class="play" aria-label="Playground">
   <div class="stage" id="pStage">
@@ -119,7 +119,7 @@ code{background:var(--pink-soft);padding:1px 6px;border-radius:6px;font-size:12.
   <div class="ctl">
     <h3>Playground</h3>
     <div class="seg" id="pDesign" role="group" aria-label="Design"></div>
-    <label for="wSize">Overall size <span class="rangeval" id="wSizeV">60px</span><input id="wSize" type="range" min="40" max="110" step="1" value="60"></label>
+    <label for="wSize">Overall size <span class="rangeval" id="wSizeV">60px</span><input id="wSize" type="range" min="30" max="110" step="1" value="60"></label>
     <label for="wStage">Preview width (or drag the preview's right edge) <span class="rangeval" id="wStageV">full</span><input id="wStage" type="range" min="320" max="1280" step="10" value="1280"></label>
     <div class="two" id="gOnly">
       <label for="wF">Women on the ring<select id="wF"><option>0</option><option>1</option><option selected>2</option><option>3</option></select></label>
@@ -141,10 +141,10 @@ code{background:var(--pink-soft);padding:1px 6px;border-radius:6px;font-size:12.
     </div>
     <p class="note">Leave Top and Left empty to keep it at the bottom right. Fill Left and empty Right to move it to the left side.</p>
     <label for="wLink">Link<input id="wLink" type="text" value="" placeholder="Empty = our WhatsApp, +971 58 505 2611"></label>
-    <label for="wHead">Welcome line<input id="wHead" type="text" value="Hi there 👋 Welcome to K-Beauty Bliss"></label>
-    <label for="wBody">Support line<textarea id="wBody">Need help choosing? Our beauty team is on WhatsApp, 24/7.</textarea></label>
+    <label for="wHead">Welcome line (also the first line of the message sent to us)<input id="wHead" type="text" value="Hi there 👋 Welcome to K-Beauty Bliss"></label>
+    <label for="wBody">Support line (also the second line of the message)<textarea id="wBody">Need help choosing? Our beauty team is on WhatsApp, 24/7.</textarea></label>
     <label for="wShow">Welcome bubble<select id="wShow"><option value="on">Show once, then stay closed</option><option value="off">Do not show</option></select></label>
-    <p class="note">Opens: <code id="pHref"></code></p>
+    <p class="note">Tapping the button opens WhatsApp to our number with this message already typed, ready to send:</p><pre id="pMsg" style="margin:0;white-space:pre-wrap;font:inherit;font-size:13.5px;background:var(--pink-soft);border-radius:10px;padding:10px 12px"></pre><p class="note">Opens: <code id="pHref"></code></p>
   </div>
 </section>
 
@@ -176,7 +176,9 @@ const D=[
 ];
 const PHONE='971585052611';
 const href=()=>{const v=document.getElementById('wLink').value.trim();if(/^https:\/\//i.test(v))return v;
-  return 'https://wa.me/'+PHONE+'?text='+encodeURIComponent('Hi K-Beauty Bliss, I need help choosing.');};
+  // The two welcome lines ride along as the message the shopper sends us.
+  return 'https://wa.me/'+PHONE+'?text='+encodeURIComponent(msg());};
+const msg=()=>[document.getElementById('wHead').value.trim(),document.getElementById('wBody').value.trim()].filter(Boolean).join('\n');
 const btn=(k,extra)=>`<div class="waf ${k}">${extra===null?'<span class="ring"></span>'+team(+$('wF').value,+$('wM').value)+capsule():extra}<a href="#" aria-label="Chat with us on WhatsApp">${ICON}</a></div>`;
 const bubble=()=>`<div class="bubble" role="status"><button type="button" aria-label="Close">×</button><strong>${esc(wHead.value)}</strong><span>${esc(wBody.value)}</span></div>`;
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -200,7 +202,7 @@ function draw(){
   const sw=+$('wStage').value;if(dev==='m'){st.style.width='min(390px,100%)';st.style.margin='0 auto';$('wStageV').textContent='390px (phone)';}
   else{st.style.width=sw>=1280?'100%':'min('+sw+'px,100%)';st.style.margin='';$('wStageV').textContent=sw>=1280?'full':sw+'px';}
   $('gOnly').style.display=cur==='G'?'':'none';
-  document.getElementById('pHref').textContent=href();
+  document.getElementById('pHref').textContent=href();document.getElementById('pMsg').textContent=/^https:\/\//i.test(document.getElementById('wLink').value.trim())?'(your own link: no message is added)':msg();
   st.querySelector('.bubble button')?.addEventListener('click',e=>e.target.parentNode.remove());
 }
 function load(){for(const s in ids)document.getElementById(ids[s]).value=off[dev][s];}
