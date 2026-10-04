@@ -483,7 +483,14 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // the green help strip" → "Show the help strip"), `site_help_sub`'s label
     // and help (it said "(laptop only)"; phones now have their own switch) and
     // `site_motion`'s help ("The green strip" → "The pink strip").
-    expect($compared)->toBe(665, 'the number of controls drawn changed');
+    //
+    // 667 IN THE SAME LANE, a round later: the owner narrowed the colours to
+    // "only our pinkish, red and orange and grey". The strip drifts through
+    // four colours now, so "· colours & effects" gained `site_c_2` and
+    // `site_c_3`, inserted after `site_c_from` where TABS puts them; the
+    // defaults of `site_c_from` / `site_c_to` and the `site_name_tone` options
+    // moved with the brief (all in this lane's own, unshipped, controls).
+    expect($compared)->toBe(667, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

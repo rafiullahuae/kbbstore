@@ -4532,21 +4532,41 @@
             "key": "site_c_from",
             "name": "site_c_from",
             "type": "colour",
-            "label": "Help strip · first colour",
-            "help": "The strip drifts between this and the second colour, through the shades between them. Shipped: the shop’s deep pink.",
+            "label": "Help strip · colour 1",
+            "help": "The strip drifts through its four colours and back. Shipped: the shop’s pink. Keep all four pink, red or orange, and dark enough for white writing.",
+            "options": null,
+            "default": "#E0567B",
+            "value": "#E0567B"
+          },
+          {
+            "key": "site_c_2",
+            "name": "site_c_2",
+            "type": "colour",
+            "label": "Help strip · colour 2",
+            "help": "Shipped: the shop’s deep pink.",
             "options": null,
             "default": "#C13E63",
             "value": "#C13E63"
           },
           {
+            "key": "site_c_3",
+            "name": "site_c_3",
+            "type": "colour",
+            "label": "Help strip · colour 3",
+            "help": "Shipped: the shop’s sale red.",
+            "options": null,
+            "default": "#E23A4E",
+            "value": "#E23A4E"
+          },
+          {
             "key": "site_c_to",
             "name": "site_c_to",
             "type": "colour",
-            "label": "Help strip · second colour",
-            "help": "Shipped: the shop’s pink. Keep both dark enough for white writing.",
+            "label": "Help strip · colour 4",
+            "help": "Shipped: a warm orange, deep enough for the white headline.",
             "options": null,
-            "default": "#E0567B",
-            "value": "#E0567B"
+            "default": "#D9603B",
+            "value": "#D9603B"
           },
           {
             "key": "site_c_bg",
@@ -4583,7 +4603,7 @@
             "name": "site_motion",
             "type": "bool",
             "label": "Colours drift slowly",
-            "help": "The pink strip and the big name move gently through their colours. Never for a visitor whose device asks for reduced motion.",
+            "help": "The strip and the big name move gently through their colours. Never for a visitor whose device asks for reduced motion.",
             "options": null,
             "default": true,
             "value": true
@@ -4607,13 +4627,13 @@
             "name": "site_name_tone",
             "type": "select",
             "label": "The big name’s colours",
-            "help": "",
+            "help": "Light and bright, drifting slowly. Both stay in the shop’s pink, red, orange and grey — the owner: “no any other colors”.",
             "options": {
-              "pastel": "Pastels — pink, peach, lilac and mint (as approved 3 October)",
+              "warm": "Warm — light pink, rose, coral, peach and a soft grey",
               "pink": "Pinks only"
             },
-            "default": "pastel",
-            "value": "pastel"
+            "default": "warm",
+            "value": "warm"
           },
           {
             "key": "site_sheen",

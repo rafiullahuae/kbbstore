@@ -37,10 +37,16 @@ declare(strict_types=1);
  *   · put the "Discover" column back in SiteFooter::columns() → RED (case 2).
  *   · change /my-account/edit-address/ to /my-account/addresses/ (a POST-only
  *     path) → RED (case 2: no GET route answers it).
- *   · put #25D366 back in `.kft-help` → RED (case 3).
+ *   · put #25D366 back in `.kft-help` → RED (case 3 and the colour-family case).
  *   · delete the `[dir="rtl"] … {animation-name:kft-sheen-rtl}` rule → RED (case 4).
  *   · return true from SiteFooter::safeAddress() → RED (case 5).
- *   · return the stored colour unchecked from presentation()'s $hex → RED (case 6).
+ *   · SiteFooter::POLICY 'hex' => 'repair' instead of 'expand' → RED (case 6:
+ *     `#abc` reaches the page as the default rather than #AABBCC). (Emptying
+ *     presentation()'s own hex check stays green: all() has already cast
+ *     every stored colour, so that check is a second wall, not the first.)
+ *   · put #C9B8FF back into `.kft-name` → RED (the colour-family case).
+ *   · ship `site_c_to` as #E8734A → RED (contrast under the 3.6 floor).
+ *   · move `.kft-bc-d .kft-brand{…}` out of the laptop media block → RED (case 1).
  */
 
 use App\Models\AdminUser;
@@ -124,6 +130,21 @@ it('takes the logo off phones and centres the brand block and the help strip the
         ->toContain('.kft-hc-m .kft-help-in{justify-content:center;text-align:center}')
         ->toContain('.kft-hc-m .kft-help-tx{flex:1 1 100%}');
 
+    /*
+     * FOUND ON THE PREVIEW, not by reading: "Centred" on the laptop tab was a
+     * bare `.kft-bc-d .kft-brand{text-align:center}`, so with Layout mobile set
+     * back to "Lined up at the start" the phone's logo and description still
+     * sat in the middle. The laptop's alignment rules live in the laptop's own
+     * media block and nowhere else.
+     * MUTATION, RUN: move `.kft-bc-d .kft-brand{text-align:center}` back out
+     * of the min-width:901px block → RED.
+     */
+    $laptop = hfMedia(hfCss(), 'min-width:901px', '.kft-xd-logo .kft-logo');
+    expect($laptop)->toContain('.kft-bc-d .kft-brand{text-align:center}')
+        ->toContain('.kft-hc-d .kft-help-tx{text-align:center}')
+        ->and(substr_count(hfCss(), '.kft-bc-d .kft-brand{'))->toBe(1)
+        ->and(substr_count(hfCss(), '.kft-hc-d .kft-help-tx{'))->toBe(1);
+
     // And he can put the logo back, or line the block up again, from the console.
     hfSave(['site_m_logo' => true, 'site_m_brand_align' => 'start', 'site_m_help_align' => 'start']);
     expect(hfClasses(hfFooter($this)))->not->toContain('kft-xm-logo')->not->toContain('kft-bc-m')->not->toContain('kft-hc-m');
@@ -163,26 +184,112 @@ it('makes the third column Account, with links to real pages, and loses none of 
         ->and($help[0])->toContain('<a href="/about/">About us</a>');
 });
 
-it('uses the shop\'s own pinks for the strip, drifting within them, and no green anywhere in the footer', function () {
+it('uses the shop\'s own pinks, red and orange for the strip, drifting within them, and no green anywhere in the footer', function () {
     $css = hfCss();
 
     foreach (['#128C7E', '#12A37A', '#1EBE5D', '#25D366', '#063F37', '37,211,102', '6,63,55'] as $green) {
         expect(stripos($css, $green))->toBeFalse("the WhatsApp green {$green} is still in the site footer's rules");
     }
 
-    expect($css)->toContain('.kft-help{color:#fff;background:linear-gradient(110deg,var(--kft-from,#C13E63),')
-        ->toContain('color-mix(in srgb,var(--kft-to,#E0567B) 90%,#FCE0E8)')
+    expect($css)->toContain('.kft-help{color:#fff;background:linear-gradient(110deg,var(--kft-from,#E0567B),var(--kft-c2,#C13E63),var(--kft-c3,#E23A4E),var(--kft-to,#D9603B),var(--kft-c3,#E23A4E),var(--kft-c2,#C13E63),var(--kft-from,#E0567B));')
         ->toContain('.kft-motion .kft-help{animation:kft-drift var(--kft-dr,14s) ease-in-out infinite alternate}')
         // The WhatsApp button is still a white pill, and its words are not white.
         ->toContain('.kft-bt-p{background:#fff;color:var(--kft-accent,#C13E63);')
         ->and($css)->toContain("@media (prefers-reduced-motion:reduce){\n  .kft-motion .kft-help,.kft-motion .kft-name{animation:none}");
 
-    // The tokens the defaults are: the shop's --pink-deep and --pink.
+    // Three of the four defaults are the shop's own tokens: --pink, --pink-deep, --sale.
     $root = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
-    expect($root)->toContain('--pink:#E0567B; --pink-deep:#C13E63;');
+    expect($root)->toContain('--pink:#E0567B; --pink-deep:#C13E63;')->toContain('--sale:#E23A4E;');
 
     $style = (string) (preg_match('#<footer class="[^"]*" style="([^"]*)"#', hfFooter($this), $m) ? $m[1] : '');
-    expect($style)->toStartWith('--kft-from:#C13E63;--kft-to:#E0567B;');
+    expect($style)->toStartWith('--kft-from:#E0567B;--kft-c2:#C13E63;--kft-c3:#E23A4E;--kft-to:#D9603B;');
+});
+
+/** [hue 0–360, saturation 0–1, lightness 0–1] of a #RRGGBB. */
+function hfHsl(string $hex): array
+{
+    [$r, $g, $b] = array_map(static fn ($h) => hexdec($h) / 255, str_split(ltrim($hex, '#'), 2));
+    $max = max($r, $g, $b);
+    $min = min($r, $g, $b);
+    $l = ($max + $min) / 2;
+    $d = $max - $min;
+
+    if ($d == 0) {
+        return [0.0, 0.0, $l];
+    }
+
+    $s = $d / (1 - abs(2 * $l - 1));
+    $h = match ($max) {
+        $r => fmod(($g - $b) / $d + 6, 6),
+        $g => ($b - $r) / $d + 2,
+        default => ($r - $g) / $d + 4,
+    } * 60;
+
+    return [$h, $s, $l];
+}
+
+/** WCAG contrast of white writing on a #RRGGBB. */
+function hfWhiteContrast(string $hex): float
+{
+    $lin = array_map(static function ($h) {
+        $c = hexdec($h) / 255;
+
+        return $c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
+    }, str_split(ltrim($hex, '#'), 2));
+
+    return 1.05 / (0.2126 * $lin[0] + 0.7152 * $lin[1] + 0.0722 * $lin[2] + 0.05);
+}
+
+it('keeps every colour the strip and the big name drift through in the pink, red, orange and grey family', function () {
+    /*
+     * THE OWNER SAW LILAC, BLUE AND MINT IN THE BIG NAME. 4 October, with a
+     * screenshot of "K-Beauty Bliss" in #C9B8FF and #A8E6CF: "the logo changing
+     * color and the support bar colors. i need only our pinkish, red and orange
+     * and grey combination effect. no any other colors."
+     *
+     * So every stop the footer's CSS prints for the strip and for the name —
+     * both name palettes, and the strip's four defaults as SiteFooter::SCHEMA
+     * ships them — must be hue 330–360° or 0–35°, or a grey (saturation under
+     * 0.2). And every strip stop must carry its white headline: 3:1 at least,
+     * the large-text floor; the lowest is the shop's --pink at 3.63:1.
+     *
+     * MUTATION, RUN: put #C9B8FF back into the `.kft-name` gradient → RED.
+     * MUTATION, RUN: ship `site_c_to` as #E8734A (a lighter orange) → RED on
+     * the contrast floor (3.01 is under the 3.6 the shipped set holds).
+     */
+    $css = hfCss();
+    $stops = [];
+
+    foreach (['.kft-name{', '.kft-name-pink .kft-name{', '.kft-help{'] as $rule) {
+        $at = strpos($css, $rule);
+        expect($at)->not->toBeFalse("{$rule} is gone from the footer's rules");
+        $body = substr($css, $at, strpos($css, '}', $at) - $at);
+        preg_match_all('/#[0-9A-Fa-f]{6}\b/', $body, $m);
+        expect($m[0])->not->toBeEmpty("{$rule} prints no colour stop");
+        $stops = array_merge($stops, $m[0]);
+    }
+
+    $strip = array_map(static fn ($k) => SiteFooter::SCHEMA[$k]['default'], ['site_c_from', 'site_c_2', 'site_c_3', 'site_c_to']);
+    $stops = array_unique(array_map('strtoupper', array_merge($stops, $strip)));
+
+    $outside = [];
+
+    foreach ($stops as $hex) {
+        [$h, $s] = hfHsl($hex);
+
+        if ($s >= 0.2 && ! ($h >= 330 || $h <= 35)) {
+            $outside[] = sprintf('%s (hue %d°)', $hex, round($h));
+        }
+    }
+
+    expect($outside)->toBe([], 'colours outside pink / red / orange / grey: '.implode(', ', $outside));
+
+    $lowest = min(array_map('hfWhiteContrast', $strip));
+    expect(round($lowest, 2))->toBeGreaterThanOrEqual(3.6)
+        ->and(round(hfWhiteContrast('#E0567B'), 2))->toBe(3.63);
+
+    // The select offers nothing outside the family either.
+    expect(array_keys(SiteFooter::SCHEMA['site_name_tone']['options']))->toBe(['warm', 'pink']);
 });
 
 it('sweeps a shine across the bottom bar, left to right in English and right to left in Arabic, with CSS alone', function () {
@@ -268,8 +375,8 @@ it('prints nothing into the footer\'s attributes but checked colours, clamped nu
     $footer = hfFooter($this);
     preg_match('#^<footer class="([^"]*)" style="([^"]*)">#', $footer, $m);
 
-    expect($m[2] ?? '')->toMatch('/^(--kft-[a-z-]+:(#[0-9A-F]{6}|\d+(px|s)?))(;--kft-[a-z-]+:(#[0-9A-F]{6}|\d+(px|s)?))*$/')
-        ->toContain('--kft-from:#C13E63;')      // refused → the default
+    expect($m[2] ?? '')->toMatch('/^(--kft-[a-z0-9-]+:(#[0-9A-F]{6}|\d+(px|s)?))(;--kft-[a-z0-9-]+:(#[0-9A-F]{6}|\d+(px|s)?))*$/')
+        ->toContain('--kft-from:#E0567B;')      // refused → the default
         ->toContain('--kft-to:#AABBCC;')        // a short hex, made whole
         ->toContain('--kft-pt-d:80px;')         // clamped to the slider's top
         ->toContain('--kft-gap-m:8px;')         // and to its bottom

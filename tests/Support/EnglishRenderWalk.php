@@ -3303,7 +3303,7 @@ final class EnglishRenderWalk
     private static function laneHbFooter(): string
     {
         return <<<'KBB_HB_FOOTER'
-<footer class="kft kft-motion kft-sheen-bar kft-xm-help-sub kft-xm-logo kft-bc-m kft-hc-m" style="--kft-from:#C13E63;--kft-to:#E0567B;--kft-bg:#FFFFFF;--kft-text:#5E545A;--kft-accent:#C13E63;--kft-dr:14s;--kft-drn:12s;--kft-sh:5s;--kft-pt-d:30px;--kft-pb-d:0px;--kft-gap-d:28px;--kft-fh-d:22px;--kft-fl-d:14px;--kft-fn-d:100;--kft-pt-m:20px;--kft-pb-m:0px;--kft-gap-m:12px;--kft-fh-m:17px;--kft-fl-m:13px;--kft-fn-m:100">
+<footer class="kft kft-motion kft-sheen-bar kft-xm-help-sub kft-xm-logo kft-bc-m kft-hc-m" style="--kft-from:#E0567B;--kft-c2:#C13E63;--kft-c3:#E23A4E;--kft-to:#D9603B;--kft-bg:#FFFFFF;--kft-text:#5E545A;--kft-accent:#C13E63;--kft-dr:14s;--kft-drn:12s;--kft-sh:5s;--kft-pt-d:30px;--kft-pb-d:0px;--kft-gap-d:28px;--kft-fh-d:22px;--kft-fl-d:14px;--kft-fn-d:100;--kft-pt-m:20px;--kft-pb-m:0px;--kft-gap-m:12px;--kft-fh-m:17px;--kft-fl-m:13px;--kft-fn-m:100">
   <div class="kft-help"><div class="kft-wrap kft-help-in">
     <span class="kft-help-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-1.9-1-1 .9a3.6 3.6 0 0 1-2.4-2.4l.9-1-1-1.9Z" fill="#fff" stroke="none"/></svg></span>
     <div class="kft-help-tx">
