@@ -88,6 +88,12 @@
   display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:14px;
   box-shadow:0 24px 60px -18px rgba(16,23,41,.35),0 6px 18px -8px rgba(16,23,41,.18);overflow:hidden}
 .ksr-pop[hidden]{display:none}
+/* The owner: "the search results on backend coming under the pages. plz make
+   it on top on every page." .side's backdrop-filter makes it a stacking
+   context painted before .main, so the results (which spill past the sidebar)
+   went under every screen's cards. Raised only while they are open. */
+@media(min-width:881px){.side.ksr-up{position:relative;z-index:200}}
+@media(max-width:880px){.side.ksr-up{z-index:200}}
 .ksr-list{overflow-y:auto;overscroll-behavior:contain;padding:6px;flex:1 1 auto;min-height:0}
 .ksr-it{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;align-items:start;padding:8px 10px;
   border-radius:10px;cursor:pointer;color:var(--ink)}
@@ -407,6 +413,10 @@
 
   function show(on) {
     pop.hidden = !on;
+    // Lift the whole sidebar above the page while the results are open: its
+    // blur makes it its own layer, so the page painted over the results.
+    var side = pop.closest('.side');
+    if (side) side.classList.toggle('ksr-up', on);
     input.setAttribute('aria-expanded', on ? 'true' : 'false');
     if (!on) input.removeAttribute('aria-activedescendant');
   }

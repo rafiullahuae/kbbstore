@@ -545,3 +545,20 @@ it('glows in brand pink, and holds still for reduced motion', function () {
         ->and(srScript())->toContain("behavior: 'auto'")
         ->and(srScript())->not->toContain("'smooth'");
 });
+
+it('lifts the sidebar above the page while the results are open', function () {
+    /*
+     * The owner, with a screenshot of Appearance → WhatsApp button: "the
+     * search results on backend coming under the pages. plz make it on top on
+     * every page." .side's backdrop-filter makes it a stacking context painted
+     * before .main, so the results spilling past the sidebar went under each
+     * screen's cards (measured in Chromium: elementFromPoint inside the panel
+     * returned the page, 3 of 3 points). MUTATION: delete the classList.toggle
+     * line and the second expectation is red; drop the min-width rule and the
+     * first is.
+     */
+    $src = (string) file_get_contents(resource_path('views/admin/partials/admin-search.blade.php'));
+
+    expect($src)->toContain('@media(min-width:881px){.side.ksr-up{position:relative;z-index:200}}')
+        ->and($src)->toContain("if (side) side.classList.toggle('ksr-up', on);");
+});
