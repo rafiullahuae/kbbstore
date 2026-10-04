@@ -14,6 +14,14 @@ $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $root = $_SERVER['DOCUMENT_ROOT'] ?? __DIR__;
 $file = $root.$path;
 
+// A form post answers with a redirect whose headers PHP has already sized;
+// compressing it closed the connection mid-login. Only GETs are timed.
+// The admin is not timed either, and its 1 MB screen came back as a gzip
+// header over a body Chrome refused (ERR_CONNECTION_CLOSED).
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET' || str_starts_with($path, '/admin')) {
+    ini_set('zlib.output_compression', '0');
+}
+
 if ($path === '/' || str_contains($path, '..') || ! is_file($file)) {
     return require __DIR__.'/m1-router.php';
 }
