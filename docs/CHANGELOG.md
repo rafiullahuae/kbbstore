@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.385
+**Centred homepage headings without the dot; buttons on #KBeautyBliss Spotted
+and Under AED 54.** Apply after .384. Runs 1 migration (sets the Under AED 54
+button on a shop that saved the old empty default, then clears caches). Hard
+refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "remove this dot, due to this heading is not center aligned in mobile" | No dot beside the centred headings (Big savings bundles, Spotted); they sit exactly on the centre line (0px off at 390 and 1280). Left-aligned headings keep theirs |
+| "i need the button also on this section" (Spotted) | "See every #KBeautyBliss look" right of the heading on a laptop, under the pictures on a phone. Appearance → #KBeautyBliss Spotted → Button place · laptop |
+| "on this section too on homepage" (Under AED 54) | "Shop all under AED 54" → /everything-under-54-aed, right of the centred heading on a laptop, under the products on a phone. Appearance → Homepage content → Under AED 54 → Button text / Button link (empty text: no button) |
+
+Files: see the package's update.json.
+
 ## 2.60.384
 **Closing a Homepage content editor no longer leaves the page dimmed.** Apply
 after .383. Runs 1 migration (a cache clear).
