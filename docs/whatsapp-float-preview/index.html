@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Floating WhatsApp Designs</title>
+<style>
+@font-face{font-family:'Outfit';src:url(outfit-latin.woff2) format('woff2');font-weight:300 800;font-display:swap}
+:root{--ink:#2A2228;--muted:#8C828A;--line:#F1E3E8;--pink:#E0567B;--pink-deep:#C13E63;--pink-soft:#FFF0F4;--orange:#F28C5B;--grey:#B9AFB5;--wa:#25D366;--wa-deep:#128C7E;--bg:#FBF7F8;--card:#FFFFFF}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'Outfit',system-ui,sans-serif;padding:24px 16px 80px}
+.wrap{max-width:1180px;margin:0 auto}
+h1{font-size:28px;margin:0 0 4px;text-wrap:balance}
+.lede{color:var(--muted);margin:0 0 24px;max-width:70ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.card h2{font-size:17px;margin:0;display:flex;gap:10px;align-items:baseline}
+.card h2 b{color:var(--pink);font-size:20px}
+.card p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.meta{padding:14px 16px 16px;border-top:1px solid var(--line)}
+.stage{position:relative;height:300px;background:linear-gradient(180deg,#fff 0,#FFF6F8 100%);overflow:hidden}
+.stage .fake{position:absolute;inset:18px 18px auto 18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stage .fake i{display:block;height:110px;border-radius:10px;background:#F7EEF1}
+.stage .fake i:nth-child(n+4){height:14px;border-radius:6px}
+/* the button lives at the four offsets the admin sets */
+.waf{position:absolute;right:var(--r,20px);bottom:var(--b,20px);top:var(--t,auto);left:var(--l,auto);width:60px;height:60px;z-index:5}
+.waf a{position:relative;z-index:2;display:grid;place-items:center;width:100%;height:100%;border-radius:50%;color:#fff;background:var(--wa);box-shadow:0 8px 22px rgba(18,140,126,.35);text-decoration:none;transition:transform .2s}
+.waf a:hover,.waf a:focus-visible{transform:scale(1.07)}
+.waf a:focus-visible{outline:3px solid var(--pink);outline-offset:3px}
+.waf svg{width:32px;height:32px}
+.waf .ring{position:absolute;inset:0;border-radius:50%;pointer-events:none}
+/* A · Pulse */
+.A .ring{background:var(--wa);opacity:.45;animation:pulse 2.4s cubic-bezier(.2,.6,.3,1) infinite}
+.A .ring:nth-of-type(2){animation-delay:1.2s}
+@keyframes pulse{0%{transform:scale(1);opacity:.45}100%{transform:scale(1.9);opacity:0}}
+/* B · Brand rings */
+.B a{background:linear-gradient(135deg,#2BDB70,#128C7E)}
+.B .ring{border:2px solid var(--pink);animation:ripple 3s ease-out infinite}
+.B .ring:nth-of-type(2){border-color:var(--orange);animation-delay:1s}
+.B .ring:nth-of-type(3){border-color:var(--grey);animation-delay:2s}
+@keyframes ripple{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.1);opacity:0}}
+/* C · Ripple outline (WhatsApp) */
+.C .ring{border:1.5px solid var(--wa);animation:ripple 2.7s linear infinite}
+.C .ring:nth-of-type(2){animation-delay:.9s}
+.C .ring:nth-of-type(3){animation-delay:1.8s}
+/* D · Halo */
+.D .halo{position:absolute;inset:-7px;border-radius:50%;background:conic-gradient(from 0deg,var(--pink),var(--orange),#FFD1B3,var(--pink-deep),var(--pink));animation:spin 4s linear infinite;filter:blur(.3px)}
+.D .halo::after{content:"";position:absolute;inset:4px;border-radius:50%;background:#fff}
+.D .ring{background:radial-gradient(circle,rgba(224,86,123,.35),transparent 70%);animation:breathe 2.8s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(1turn)}}
+@keyframes breathe{0%,100%{transform:scale(1.15);opacity:.5}50%{transform:scale(1.7);opacity:.15}}
+/* E · Sonar + label */
+.E{width:auto}
+.E a{width:60px;height:60px}
+.E .ring{width:60px;height:60px;right:0;left:auto;bottom:0;top:auto;background:var(--wa);opacity:.35;animation:pulse 2s ease-out infinite}
+.E .tag{position:absolute;right:68px;bottom:14px;white-space:nowrap;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;box-shadow:0 6px 18px rgba(42,34,40,.12);animation:nudge 3.2s ease-in-out infinite}
+.E .tag::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--wa);margin-right:7px;vertical-align:1px;box-shadow:0 0 0 3px rgba(37,211,102,.2)}
+@keyframes nudge{0%,80%,100%{transform:translateX(0)}88%{transform:translateX(-4px)}}
+/* F · Orbit */
+.F .orbit{position:absolute;inset:-12px;border-radius:50%;border:2px dashed rgba(224,86,123,.55);animation:spin 9s linear infinite}
+.F .orbit::before,.F .orbit::after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:var(--pink);top:-5px;left:calc(50% - 4.5px);box-shadow:0 0 8px var(--pink)}
+.F .orbit::after{background:var(--orange);top:auto;bottom:-5px;box-shadow:0 0 8px var(--orange)}
+.F .ring{background:var(--wa);opacity:.3;animation:pulse 2.6s ease-out infinite}
+/* G · Orbit team: avatars ride the ring, capsule says who is there */
+.waf{transform:scale(var(--k,1));transform-origin:var(--ox,100%) 100%}
+.G .orbit{position:absolute;inset:-16px;border-radius:50%;border:2px dashed rgba(224,86,123,.5);animation:spin var(--spd,14s) linear infinite}
+.G .orbit::before,.G .orbit::after{content:none}
+/* the offsets measure from the outer edge of the faces, not from the green button */
+.waf.G{margin:calc(28px * var(--k,1))}
+.G .av{position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px;transform:rotate(var(--a)) translateY(-46px) rotate(calc(var(--a) * -1))}
+.G .av i{display:block;width:100%;height:100%;border-radius:50%;overflow:hidden;border:2px solid #fff;box-shadow:0 2px 8px rgba(42,34,40,.22);animation:spin var(--spd,14s) linear infinite reverse;background:#fff}
+.G .av svg{display:block;width:100%;height:100%}
+.G .ring{background:var(--wa);opacity:.28;animation:pulse 2.6s ease-out infinite}
+.cap{position:absolute;right:calc(100% + 26px);bottom:8px;display:flex;align-items:center;gap:9px;white-space:nowrap;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 16px 7px 12px;box-shadow:0 8px 22px rgba(42,34,40,.13);animation:nudge 3.6s ease-in-out infinite;color:var(--ink)}
+.cap .dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--wa);box-shadow:0 0 0 3px rgba(37,211,102,.22);animation:blink 1.6s ease-in-out infinite}
+.cap b{display:block;font-size:13.5px;line-height:1.15}
+.cap small{display:block;font-size:11.5px;color:var(--wa-deep);font-weight:600;line-height:1.2}
+.left .cap{right:auto;left:calc(100% + 26px)}
+@keyframes blink{50%{box-shadow:0 0 0 6px rgba(37,211,102,0)}}
+.ctl input[type=range]{width:100%;accent-color:var(--pink)}
+.rangeval{font-variant-numeric:tabular-nums;color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600}
+.play .stage{resize:horizontal;min-width:300px;max-width:100%}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.play>*,.ctl>*{min-width:0}
+/* welcome bubble (all designs) */
+.bubble{position:absolute;right:calc(var(--r,20px));bottom:calc(var(--b,20px) + 74px);width:min(260px,calc(100% - 32px));background:#fff;border:1px solid var(--line);border-radius:16px 16px 4px 16px;padding:12px 14px;box-shadow:0 12px 30px rgba(42,34,40,.14);font-size:13.5px;z-index:6;transform-origin:100% 100%;animation:pop .5s 1s both}
+.bubble strong{display:block;font-size:14.5px;margin-bottom:2px}
+.bubble span{color:var(--muted)}
+.bubble button{position:absolute;top:6px;right:8px;border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer;line-height:1}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.stage.nobubble .bubble{display:none}
+/* playground */
+.play{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:0 0 28px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:22px}
+.play .stage{width:100%;height:380px;border:1px solid var(--line);border-radius:12px}
+.ctl{display:grid;gap:14px;align-content:start}
+.ctl h3{margin:0;font-size:16px}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ctl label{display:grid;gap:4px;font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.ctl input[type=number],.ctl input[type=text],.ctl select,.ctl textarea{font:inherit;font-size:14px;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;width:100%;text-transform:none;letter-spacing:0}
+.ctl textarea{min-height:58px;resize:vertical}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{font:inherit;font-size:13.5px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--pink);border-color:var(--pink);color:#fff}
+.note{font-size:13px;color:var(--muted);margin:0}
+code{background:var(--pink-soft);padding:1px 6px;border-radius:6px;font-size:12.5px;word-break:break-all}
+@media (max-width:760px){.play{grid-template-columns:1fr}.row{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){.waf *,.bubble,.tag,.cap{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Floating WhatsApp button: pick a letter</h1>
+<p class="lede"><b>New: G · Orbit team.</b> Your Orbit with five faces on the ring (two women, three men) and a "Chat with us · Available 24/7" capsule. Drag <b>Overall size</b> to resize it, and drag the width bar or the preview’s right edge to see narrower screens. The other six are below.  each with its circles animating on a loop, sitting at the bottom right. Try them in the playground first: change the design, set the space from all four sides for phone and desktop, edit the welcome lines, or paste your own link. Every control here becomes a setting in the admin.</p>
+
+<section class="play" aria-label="Playground">
+  <div class="stage" id="pStage">
+    <div class="fake"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <div class="ctl">
+    <h3>Playground</h3>
+    <div class="seg" id="pDesign" role="group" aria-label="Design"></div>
+    <label for="wSize">Overall size <span class="rangeval" id="wSizeV">60px</span><input id="wSize" type="range" min="40" max="110" step="1" value="60"></label>
+    <label for="wStage">Preview width (or drag the preview's right edge) <span class="rangeval" id="wStageV">full</span><input id="wStage" type="range" min="320" max="1280" step="10" value="1280"></label>
+    <div class="two" id="gOnly">
+      <label for="wF">Women on the ring<select id="wF"><option>0</option><option>1</option><option selected>2</option><option>3</option></select></label>
+      <label for="wM">Men on the ring<select id="wM"><option>0</option><option>1</option><option>2</option><option selected>3</option></select></label>
+      <label for="wCap">Capsule<select id="wCap"><option value="on">Show</option><option value="off">Hide</option></select></label>
+      <label for="wSpd">Orbit speed<select id="wSpd"><option value="20s">Slow</option><option value="14s" selected>Calm</option><option value="8s">Lively</option></select></label>
+      <label for="wCap1">Capsule line 1<input id="wCap1" type="text" value="Chat with us"></label>
+      <label for="wCap2">Capsule line 2<input id="wCap2" type="text" value="Available 24/7"></label>
+    </div>
+    <div class="seg" id="pDev" role="group" aria-label="Device">
+      <button type="button" data-d="m" aria-pressed="true">Phone</button>
+      <button type="button" data-d="d" aria-pressed="false">Desktop</button>
+    </div>
+    <div class="row">
+      <label for="oT">Top px<input id="oT" type="number" placeholder="auto" min="0" max="400"></label>
+      <label for="oR">Right px<input id="oR" type="number" value="16" min="0" max="400"></label>
+      <label for="oB">Bottom px<input id="oB" type="number" value="20" min="0" max="400"></label>
+      <label for="oL">Left px<input id="oL" type="number" placeholder="auto" min="0" max="400"></label>
+    </div>
+    <p class="note">Leave Top and Left empty to keep it at the bottom right. Fill Left and empty Right to move it to the left side.</p>
+    <label for="wLink">Link<input id="wLink" type="text" value="" placeholder="Empty = our WhatsApp, +971 58 505 2611"></label>
+    <label for="wHead">Welcome line<input id="wHead" type="text" value="Hi there 👋 Welcome to K-Beauty Bliss"></label>
+    <label for="wBody">Support line<textarea id="wBody">Need help choosing? Our beauty team is on WhatsApp, 24/7.</textarea></label>
+    <label for="wShow">Welcome bubble<select id="wShow"><option value="on">Show once, then stay closed</option><option value="off">Do not show</option></select></label>
+    <p class="note">Opens: <code id="pHref"></code></p>
+  </div>
+</section>
+
+<div class="grid" id="grid"></div>
+</div>
+
+<script>
+const ICON='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2.5a9.4 9.4 0 0 0-8.1 14.2L2.5 21.5l4.9-1.4a9.4 9.4 0 1 0 4.64-17.6zm0 17.1a7.7 7.7 0 0 1-3.94-1.08l-.28-.17-2.9.82.83-2.83-.18-.29a7.7 7.7 0 1 1 6.47 3.55zm4.23-5.77c-.23-.12-1.37-.68-1.58-.75-.21-.08-.37-.12-.52.11-.15.24-.6.76-.73.91-.14.15-.27.17-.5.06-.23-.12-.98-.36-1.86-1.15a7 7 0 0 1-1.29-1.6c-.13-.24 0-.36.1-.48.1-.1.23-.27.35-.4.11-.14.15-.24.23-.4.07-.15.04-.29-.02-.4-.06-.12-.52-1.26-.72-1.72-.19-.45-.38-.39-.52-.4h-.45a.86.86 0 0 0-.62.3c-.21.22-.82.8-.82 1.95s.84 2.27.96 2.42c.11.15 1.65 2.52 4 3.53.56.24 1 .39 1.34.5.56.18 1.07.15 1.48.09.45-.07 1.37-.56 1.57-1.1.19-.54.19-1 .13-1.1-.06-.1-.21-.16-.44-.27z"/></svg>';
+const SK=['#F3CFB3','#E2AE8A','#C68E6B','#F0C5A2','#D29C78','#EBC0A0'],HR=['#2B1B17','#5A3825','#1C1C1C','#7A4B2E','#3B2A20','#4A2C1E'],BG=['#FCE0E8','#FFE3D3','#E7F6EE','#EDE7F6','#FFF1D6','#E3F0FB'],SH=['#E0567B','#F28C5B','#8C828A','#C13E63','#B9AFB5','#F5A3B8'];
+function face(g,i){const k=SK[i%6],h=HR[(i+2)%6],b=BG[i%6],t=SH[i%6];
+ return '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="'+b+'"/>'
+ +(g==='f'?'<path d="M9 24c0-10 5-15 11-15s11 5 11 15v10H9z" fill="'+h+'"/>':'')
+ +'<rect x="16.5" y="24" width="7" height="7" fill="'+k+'"/><path d="M6 42c1-8 7-12 14-12s13 4 14 12z" fill="'+t+'"/><ellipse cx="20" cy="19" rx="7" ry="8" fill="'+k+'"/>'
+ +(g==='f'?'<path d="M12.6 18c.6-5.6 3.8-8.2 7.4-8.2s6.9 2.6 7.4 8.2c-3-.8-6-2.8-7.4-5-1.4 2.2-4.4 4.2-7.4 5z" fill="'+h+'"/>':'<path d="M12.8 17.5c0-5 3.2-8.2 7.2-8.2s7.2 3.2 7.2 8.2c-1.2-2.4-3.6-3.4-7.2-3.4s-6 1-7.2 3.4z" fill="'+h+'"/>')
+ +'<circle cx="17.4" cy="19.6" r=".9" fill="#2A2228"/><circle cx="22.6" cy="19.6" r=".9" fill="#2A2228"/><path d="M18 23.2q2 1.6 4 0" stroke="#B5475F" stroke-width=".9" fill="none" stroke-linecap="round"/></svg>';}
+function team(f,m){const a=[],b=[];for(let i=0;i<f;i++)a.push('f');for(let i=0;i<m;i++)b.push('m');
+ const out=[];while(a.length||b.length){if(b.length)out.push(b.shift());if(a.length)out.push(a.shift());}
+ return '<span class="orbit">'+out.map((g,i)=>'<span class="av" style="--a:'+(i*360/out.length)+'deg"><i>'+face(g,i)+'</i></span>').join('')+'</span>';}
+function capsule(){return $('wCap').value==='on'?'<span class="cap"><span class="dot"></span><span><b>'+esc($('wCap1').value)+'</b><small>'+esc($('wCap2').value)+'</small></span></span>':'';}
+const $=id=>document.getElementById(id);
+const D=[
+ ['A','Pulse','Two soft green circles swell out of the button and fade, one after the other. The classic, quiet choice.','<span class="ring"></span><span class="ring"></span>'],
+ ['B','Brand rings','Pink, orange and grey outlines ripple out in turn: our colours around the WhatsApp green.','<span class="ring"></span><span class="ring"></span><span class="ring"></span>'],
+ ['C','Ripple','Three thin green outlines move out like water, evenly spaced. Light and calm.','<span class="ring"></span><span class="ring"></span><span class="ring"></span>'],
+ ['D','Halo','A pink-to-orange halo turns slowly round the button, with a breathing glow behind it.','<span class="ring"></span><span class="halo" style="z-index:1"></span>'],
+ ['E','Sonar + label','A green pulse plus a small "Chat with us" tag that nudges every few seconds.','<span class="ring"></span><span class="tag">Chat with us</span>'],
+ ['F','Orbit','A dashed pink circle turns round the button with two glowing dots on it, over a soft pulse.','<span class="ring"></span><span class="orbit"></span>'],
+ ['G','Orbit team','Your Orbit with faces instead of dots: two women and three men ride the ring and stay upright, and the capsule says “Chat with us · Available 24/7”.',null],
+];
+const PHONE='971585052611';
+const href=()=>{const v=document.getElementById('wLink').value.trim();if(/^https:\/\//i.test(v))return v;
+  return 'https://wa.me/'+PHONE+'?text='+encodeURIComponent('Hi K-Beauty Bliss, I need help choosing.');};
+const btn=(k,extra)=>`<div class="waf ${k}">${extra===null?'<span class="ring"></span>'+team(+$('wF').value,+$('wM').value)+capsule():extra}<a href="#" aria-label="Chat with us on WhatsApp">${ICON}</a></div>`;
+const bubble=()=>`<div class="bubble" role="status"><button type="button" aria-label="Close">×</button><strong>${esc(wHead.value)}</strong><span>${esc(wBody.value)}</span></div>`;
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const grid=document.getElementById('grid');
+grid.innerHTML=D.map(([k,n,t,x])=>`<article class="card"><div class="stage" data-k="${k}"><div class="fake"><i></i><i></i><i></i><i></i><i></i><i></i></div>${btn(k,x)}</div><div class="meta"><h2><b>${k}</b>${n}</h2><p>${t}</p></div></article>`).join('');
+let cur='G',dev='m';const off={m:{t:'',r:16,b:20,l:''},d:{t:'',r:24,b:24,l:''}};
+const seg=document.getElementById('pDesign');
+seg.innerHTML=D.map(([k,n])=>`<button type="button" data-k="${k}" aria-pressed="${k===cur}">${k} · ${n}</button>`).join('');
+const ids={t:'oT',r:'oR',b:'oB',l:'oL'};
+function draw(){
+  const st=document.getElementById('pStage');const d=D.find(x=>x[0]===cur);
+  st.querySelectorAll('.waf,.bubble').forEach(e=>e.remove());
+  st.insertAdjacentHTML('beforeend',btn(cur,d[3])+(wShow.value==='on'?bubble():''));
+  const o=off[dev];const px=v=>v===''||v===null?'auto':Math.max(0,Math.min(400,+v))+'px';
+  st.style.setProperty('--t',px(o.t));st.style.setProperty('--l',px(o.l));
+  st.style.setProperty('--r',o.l!==''&&o.r===''?'auto':px(o.r));st.style.setProperty('--b',o.t!==''&&o.b===''?'auto':px(o.b));
+  const sz=+$('wSize').value,k=sz/60;$('wSizeV').textContent=sz+'px';
+  const leftSide=o.l!==''&&o.r==='';st.style.setProperty('--k',k);st.style.setProperty('--ox',leftSide?'0%':'100%');
+  st.querySelector('.waf').classList.toggle('left',leftSide);st.style.setProperty('--spd',$('wSpd').value);
+  const bub=st.querySelector('.bubble');if(bub){bub.style.bottom='calc('+(o.b===''?'20px':px(o.b))+' + '+Math.round(cur==='G'?116*k+10:74*k)+'px)';if(leftSide){bub.style.right='auto';bub.style.left=px(o.l);}}
+  const sw=+$('wStage').value;if(dev==='m'){st.style.width='min(390px,100%)';st.style.margin='0 auto';$('wStageV').textContent='390px (phone)';}
+  else{st.style.width=sw>=1280?'100%':'min('+sw+'px,100%)';st.style.margin='';$('wStageV').textContent=sw>=1280?'full':sw+'px';}
+  $('gOnly').style.display=cur==='G'?'':'none';
+  document.getElementById('pHref').textContent=href();
+  st.querySelector('.bubble button')?.addEventListener('click',e=>e.target.parentNode.remove());
+}
+function load(){for(const s in ids)document.getElementById(ids[s]).value=off[dev][s];}
+seg.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cur=b.dataset.k;seg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw();});
+document.getElementById('pDev').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;dev=b.dataset.d;e.currentTarget.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));load();draw();});
+for(const s in ids)document.getElementById(ids[s]).addEventListener('input',e=>{off[dev][s]=e.target.value;draw();});
+['wLink','wHead','wBody','wShow','wSize','wStage','wF','wM','wCap','wSpd','wCap1','wCap2'].forEach(i=>document.getElementById(i).addEventListener('input',draw));
+load();draw();
+</script>
+</body>
+</html>
