@@ -153,7 +153,7 @@ final class MediaUsage
         }
 
         if ($type === null || $type === 'brand') {
-            $q = Brand::query()->select(['id', 'name', 'logo', 'header_image']);
+            $q = Brand::query()->select(self::withHeaderImage('brands', ['id', 'name', 'logo']));
 
             if ($owner !== null) {
                 SearchTerms::whereLike($q, 'name', $owner);
@@ -205,7 +205,7 @@ final class MediaUsage
         }
 
         if ($type === null || $type === 'category') {
-            $q = Category::query()->select(['id', 'name', 'image', 'header_image']);
+            $q = Category::query()->select(self::withHeaderImage('categories', ['id', 'name', 'image']));
 
             if ($owner !== null) {
                 SearchTerms::whereLike($q, 'name', $owner);
@@ -248,6 +248,33 @@ final class MediaUsage
      *
      * @param  array<string, list<array<string, mixed>>>  $out
      */
+    /**
+     * The columns to read, with `header_image` only when the table has it.
+     *
+     * The column arrives in 2027_07_12_000100. Migrations dated before it --
+     * 2026_10_10_000001_backfill_media_usages and the media backfills after
+     * it -- run THIS code on a database built from nothing, and an unknown
+     * column there failed every MySQL test run ("Unknown column
+     * 'header_image' in brands") and would fail any fresh install. One
+     * schema check per full catalogue walk; not memoised, because the answer
+     * changes in the middle of a migration run.             (2.60.374)
+     *
+     * @param  list<string>  $columns
+     * @return list<string>
+     */
+    private static function withHeaderImage(string $table, array $columns): array
+    {
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'header_image')) {
+                $columns[] = 'header_image';
+            }
+        } catch (\Throwable) {
+            // No schema to ask: read what every version has.
+        }
+
+        return $columns;
+    }
+
     private static function collect(array &$out, string $kind, object $row): void
     {
         $id = (int) $row->id;
