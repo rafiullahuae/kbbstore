@@ -1024,8 +1024,8 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
 .kbb-home .hs-bg-lilac{background:linear-gradient(160deg,#FCEFF5 0%,#F3ECFF 100%)}
 .kbb-home .hs-head{text-align:center;max-width:760px;margin-inline:auto}
 .kbb-home .hs-eyebrow{display:inline-block;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--pink-deep);font-weight:700;margin-bottom:10px}
-.kbb-home .hs-head h2{margin:0;font-size:clamp(23px,2.6vw,34px);line-height:1.15;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
-.kbb-home .hs-head p{margin:10px auto 0;color:var(--ink-2);font-size:clamp(14px,1.15vw,16px);line-height:1.55;max-width:58ch}
+.kbb-home .hs-head h2{margin:0;letter-spacing:-.02em;color:var(--ink)}
+.kbb-home .hs-head p{margin:0 auto;color:var(--ink-2);max-width:58ch}
 .kbb-home .hs-head.hs-split{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;text-align:start;max-width:none}
 .kbb-home .hs-head.hs-split p{margin-inline:0}
 .kbb-home .hs-foot{display:flex;justify-content:center;margin-top:clamp(20px,2.4vw,32px)}
@@ -1099,8 +1099,6 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
   .kbb-home .hs-head.hs-split{display:block;text-align:center}
   .kbb-home .hs-head.hs-split p{margin-inline:auto}
   .kbb-home .hs-btn-top{display:none}
-  .kbb-home .hs-head h2{font-size:clamp(21px,6vw,25px)}
-  .kbb-home .hs-head p{font-size:13.5px;margin-top:8px}
   .kbb-home .hs-eyebrow{font-size:10.5px;margin-bottom:7px}
   .kbb-home .hs-rail .hs-grid>*{grid-template-columns:repeat(var(--hs-cols-m),minmax(0,1fr));gap:12px}
   .kbb-home .hs-brandlist{grid-template-columns:repeat(var(--hs-cols-m),minmax(0,1fr));gap:10px}
@@ -4333,7 +4331,11 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .kbb-home .sec.spt-lilac{background:linear-gradient(160deg,#FCEFF5 0%,#F3ECFF 100%)}
 .kbb-home .spt .spt-head{justify-content:center;text-align:center;margin-bottom:var(--spt-hg-d,24px)}
 .kbb-home .spt .spt-head :is(h1,h2){justify-content:center}
-.kbb-home .spt .spt-head p{margin-inline:auto;color:var(--ink-2);font-size:14.5px;max-width:58ch}
+.kbb-home .spt .spt-head p{margin-inline:auto;color:var(--ink-2);max-width:58ch}
+/* The /kbeautybliss-spotted/ page's intro keeps its own size (Lane PF): the
+   homepage section's description is sized with every other section's, in the
+   "Section headings" block after this one. */
+.kbb-home .spt-page-sec .spt-head p{font-size:14.5px}
 .kbb-home .spt-stage{position:relative}
 .kbb-home .spt-track{display:grid;grid-auto-flow:column;gap:var(--spt-gap);list-style:none;margin:0;
   grid-auto-columns:calc((100% - (var(--spt-per) - 1) * var(--spt-gap)) / var(--spt-per));
@@ -4383,7 +4385,7 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 @media (max-width:900px){
   .kbb-home .sec.spt{--spt-gap:12px;--spt-per:var(--spt-per-m,1.5);padding-top:var(--spt-pt-m,8px);padding-bottom:var(--spt-pb-m,8px)}
   .kbb-home .spt .spt-head{margin-bottom:var(--spt-hg-m,16px)}
-  .kbb-home .spt .spt-head p{font-size:13.5px}
+  .kbb-home .spt-page-sec .spt-head p{font-size:13.5px}
   .kbb-home .spt-foot{margin-top:var(--spt-bg-m,16px)}
   .kbb-home .spt-arr{width:36px;height:36px;top:calc(50% - 18px)}
   .kbb-home .spt-arr svg{width:17px;height:17px}
@@ -4401,6 +4403,44 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 }
 @media (prefers-reduced-motion:reduce){
   .kbb-home .spt-card{transition:none}
+}
+
+/* ══ SECTION HEADINGS: ONE SIZE PER DEVICE ══════════════════════ Lane PF ══
+   The owner, 4 October, ticking the Best Sellers heading and description: "i
+   think the sections headings and descriptions should have the same font
+   size. in desktop and mobile both". Every homepage section head — row 55's
+   `.hs-head`, the bundles' `.bndl-head` and the homepage Spotted `.spt-head` —
+   takes its heading and its description from these four properties and from
+   nothing else; no section keeps a font-size of its own for either
+   (HomeSectionHeadingsTest reads this sheet and fails on one).
+
+   The defaults are the Best Sellers style he ticked — 34px is its clamp's
+   ceiling on a laptop, 24px what it measured on his phone — with the line
+   under the heading at 16px on both devices: the smallest a phone reads
+   without zooming. Appearance → Homepage content → Section headings changes
+   them; App\Support\HomeHeadings::style() prints only a changed value, as one
+   `.kbb-home{…}` rule after this sheet, from a select's own option keys.
+
+   Each section keeps its own ALIGNMENT (the bundles are centred because he
+   asked for that; Best Sellers sits beside its button on a laptop). Only the
+   size, weight, line-height and the heading→description gap are shared. The
+   bundles' and Spotted's descriptions are SHOWN on a phone now — `.sh p` hid
+   them under 900px, which made "the same size on mobile" a size of nothing.
+
+   The two-column feature's panel titles (`.hs-fp h2`) are card titles, two
+   side by side over their photos, and keep their own size. The Spotted PAGE's
+   <h1> and intro are not homepage sections and are not matched: the heading
+   rule names h2, the description rule excludes `.spt-page-sec`. */
+.kbb-home{--hs-h2-d:34px;--hs-h2-m:24px;--hs-sub-d:16px;--hs-sub-m:16px}
+.kbb-home :is(.hs-head,.bndl-head,.spt-head) h2{line-height:1.15;font-weight:700}
+.kbb-home :is(.hs-head,.bndl-head,.spt:not(.spt-page-sec) .spt-head) p{display:block;line-height:1.55}
+@media (min-width:901px){
+  .kbb-home :is(.hs-head,.bndl-head,.spt-head) h2{font-size:var(--hs-h2-d)}
+  .kbb-home :is(.hs-head,.bndl-head,.spt:not(.spt-page-sec) .spt-head) p{font-size:var(--hs-sub-d);margin-top:10px}
+}
+@media (max-width:900px){
+  .kbb-home :is(.hs-head,.bndl-head,.spt-head) h2{font-size:var(--hs-h2-m)}
+  .kbb-home :is(.hs-head,.bndl-head,.spt:not(.spt-page-sec) .spt-head) p{font-size:var(--hs-sub-m);margin-top:8px}
 }
 
 /* ══ THE SITE FOOTER — the approved design (docs/home-preview/footer-final.html) ══

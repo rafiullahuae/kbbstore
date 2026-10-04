@@ -31,7 +31,7 @@ final class HomeBundles
     public const DEFAULT_URL = '/shop/?cat=skincare-sets';
 
     /**
-     * @return array{classes: string, style: string, auto: int, title: string, sub: string, label: string, url: string}
+     * @return array{classes: string, style: string, auto: int, title: string, sub: string, label: string, url: string, count: bool}
      */
     public static function config(): array
     {
@@ -90,6 +90,9 @@ final class HomeBundles
             'sub' => $text('home_hb_sub'),
             'label' => $text('home_hb_btn_text'),
             'url' => $ok ? $url : self::DEFAULT_URL,
+            // (Lane PF) The "8 sets" badge beside the heading. The owner crossed
+            // it out, 4 October; `home_hb_count` brings it back.
+            'count' => (bool) ($c['home_hb_count'] ?? false),
         ];
     }
 }
