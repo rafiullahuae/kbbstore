@@ -211,6 +211,9 @@ final class StaticMemos
         MailConfigurator::class => 'registered is a WeakMap keyed on the mailer instance. Entries '
             .'disappear with the mailer they describe, which is what it was changed to a WeakMap FOR '
             .'-- keyed on spl_object_id it leaked between tests, because PHP reuses object ids.',
+        \App\Support\AdminSearchIndex::class => 'built is derived from class constants only (CURATED and '
+            .'the SCHEMA/TABS of the SCHEMA_SCREENS classes) -- no database, no settings, no request -- so '
+            .'no test can make it differ from what a fresh process would build.',
     ];
 
     /** Clear every registered memo. Called from tests/Pest.php before each test. */
