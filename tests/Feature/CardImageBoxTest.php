@@ -80,9 +80,8 @@ it('reads the attributes and the frame off one map, so they cannot disagree', fu
      * frame's -- harmless to layout (CSS width and height win) but a lie to
      * the browser about the picture.
      *
-     * MUTATION, run: change 'tall' to '1/1.3' in IMAGE_RATIOS without touching
-     * imageBox() -- it follows, and this stays green; change imageBox()'s base
-     * so it rounds 1.02 to 1 and the portrait row is red.
+     * MUTATION: make imageBox() answer [400, 400] whatever the shape and the
+     * tall, landscape and portrait rows are red here (and in the first test).
      */
     foreach (ProductStyles::IMAGE_RATIOS as $shape => $css) {
         [$a, $b] = array_map('floatval', explode('/', $css));

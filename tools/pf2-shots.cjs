@@ -1,6 +1,6 @@
 // Lane PF2: full-page screenshots for the pixel comparison.
 //
-//   node tools/pf2-shots.cjs <base> <outdir> <tag>
+//   node tools/pf2-shots.cjs <base> <outdir> <tag> [page]
 //
 // Every page at 390 and 1280, DPR 1, reduced motion and CSS animations frozen
 // (the banner's autoplay, the ticker and the footer shine would otherwise put
@@ -13,12 +13,19 @@ const fs = require('fs');
   fs.mkdirSync(out, { recursive: true });
   const pages = { home: '/', shop: '/shop/', category: '/collections/sunscreens/', product: '/product/relief-sun-rice-probiotics-spf50/' };
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const only = process.argv[5];
   for (const [name, path] of Object.entries(pages)) {
+    if (only && only !== name) continue;
     for (const w of [390, 1280]) {
       const ctx = await b.newContext({ viewport: { width: w, height: w > 500 ? 900 : 844 }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
       const p = await ctx.newPage();
       await p.goto(base + path, { waitUntil: 'load' });
       await p.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+      // Every picture fetched, not just the ones the scroll happened to bring
+      // near the viewport in time: a lazy <img> still loading when the shot is
+      // taken is a blank tile on one side of the diff and a photograph on the
+      // other. Same on both trees, so it cannot hide a difference.
+      await p.evaluate(() => document.querySelectorAll('img[loading="lazy"]').forEach(i => { i.loading = 'eager'; }));
       await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 300) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 80)); } window.scrollTo(0, 0); });
       await p.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
       // Only pictures that are actually drawn: a lazy <img> inside a card a
@@ -26,6 +33,7 @@ const fs = require('fs');
       await p.evaluate(() => Promise.race([new Promise(r => setTimeout(r, 8000)), Promise.all([...document.images]
         .filter(i => i.getClientRects().length && getComputedStyle(i).visibility !== 'hidden')
         .map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })))]));
+      await p.evaluate(() => Promise.race([new Promise(r => setTimeout(r, 8000)), Promise.all([...document.images].map(i => i.decode().catch(() => 0)))]));
       await p.waitForTimeout(800);
       const m = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, h: document.documentElement.scrollHeight,
         cards: [...document.querySelectorAll('img.kbb-card-img')].length,

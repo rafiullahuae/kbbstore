@@ -368,7 +368,7 @@ final class ImageVariants
      * burst of homepage views costs ONE encode. It is ShareImage's pattern,
      * for the same reason: a shop has three to five banner pictures, not a
      * catalogue, so the first homepage view after this ships makes them and
-     * the second one offers them. Measured: ~180 ms of encode for a 1920 x 800
+     * the second one offers them. Measured: 179-199 ms and 26 MB peak for a 1920 x 800
      * JPEG into all three widths, none of which a shopper waits for.
      *
      * The original's width is already in hand — reading it is what decides

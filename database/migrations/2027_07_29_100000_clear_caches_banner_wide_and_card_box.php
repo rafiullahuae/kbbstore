@@ -16,7 +16,7 @@ use Illuminate\Database\Migrations\Migration;
  *
  * THE OWNER HAS NOTHING TO PRESS. The banner copies are made after the
  * response by the first homepage view that finds them missing (a shop has
- * three to five banner pictures; ~180 ms each, which no shopper waits for), so
+ * three to five banner pictures; 180-200 ms each, which no shopper waits for), so
  * the second view after this package serves them.
  */
 return new class extends Migration

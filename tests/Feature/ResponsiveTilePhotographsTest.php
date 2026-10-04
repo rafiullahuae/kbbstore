@@ -322,7 +322,8 @@ it('states the FRAME\'s shape, never the file\'s, so it still cannot move anythi
     // photograph's. So this photograph is deliberately NOT square: a card that
     // printed the file's own 1000x800 here is red.
     //
-    // MUTATION: print getimagesize()'s numbers on the <img> and this is red.
+    // MUTATION, run: delete the attributes from the card and this is red; print
+    // the file's own 1000x800 instead and it is red too.
     writePhoto('uploads/products/shot.jpg', 1000, 800);
     ImageVariants::generate('/uploads/products/shot.jpg');
     seedCatalogueWithPhoto('/uploads/products/shot.jpg');
