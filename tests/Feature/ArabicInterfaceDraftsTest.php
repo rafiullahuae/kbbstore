@@ -609,7 +609,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * line and a coupon's end date (email.mkt.*, five), seeded by
      * 2027_07_28_501000_seed_marketing_emails_arabic_drafts. Read off the run.
      */
-    expect($ui['drafts'])->toBe(1327, 'the shipped Arabic is not showing as drafts to review')
+    // 1327 -> 1338 (2.60.376): the eleven payment-method strings of the
+    // payment-failed and refund emails, seeded by
+    // 2027_07_30_100000_seed_payment_method_email_arabic_drafts.
+    expect($ui['drafts'])->toBe(1338, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

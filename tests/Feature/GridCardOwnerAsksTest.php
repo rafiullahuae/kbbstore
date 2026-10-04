@@ -56,6 +56,16 @@ function prSeed(int $n = 30): array
     return [$cat, $brand];
 }
 
+/*
+ * 2.60.376: a brand page lists every product at once ("Show every product of
+ * the brand on one page", on because the owner asked). This file is about the
+ * pager and the loader, so it runs with that switch off, which is the brand
+ * page as it was; BrandPageOwnerAsksTest covers the switch on.
+ */
+beforeEach(function () {
+    app(SiteLayout::class)->save(['brand_all' => false]);
+});
+
 function prFresh(): void
 {
     SettingsService::forgetMemo();

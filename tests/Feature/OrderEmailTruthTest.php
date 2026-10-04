@@ -522,6 +522,9 @@ it('still promises a card refund when the gateway really did send one', function
 
     expect(str_contains($html, 'card statement'))
         ->toBeTrue('a real card refund stopped saying when the money would appear')
-        ->and(str_contains($html, 'back to the payment method you used'))
+        // 2.60.376: a card refund names the card ("back to the card you paid
+        // with"); the general "payment method you used" is for an order whose
+        // method is not card, Tabby or Tamara.
+        ->and(str_contains($html, 'back to the card you paid with'))
         ->toBeTrue('a real card refund stopped saying where the money went');
 });

@@ -298,7 +298,14 @@ class MailConfigurator
                 'username' => $this->settings->gmailUsername(),
                 'password' => $this->settings->gmailPassword(),
                 'require_tls' => true,
-                'local_domain' => parse_url((string) config('app.url'), PHP_URL_HOST) ?: null,
+                /*
+                 * The name the shop greets Google with (EHLO) is the FROM
+                 * domain, not the shop's own host. 2.60.376, the owner: "all
+                 * are going to spam". The shop runs on extrabeauty.ae and mails
+                 * as info@kbeautybliss.com; greeting as extrabeauty.ae wrote a
+                 * second, unrelated domain into every message's Received line.
+                 */
+                'local_domain' => $this->fromDomain() ?? (parse_url((string) config('app.url'), PHP_URL_HOST) ?: null),
                 'timeout' => $timeout > 0 ? $timeout : 20,
             ];
         }
@@ -352,5 +359,15 @@ class MailConfigurator
         $config['timeout'] = $timeout > 0 ? $timeout : 20;
 
         return $config;
+    }
+
+    /** The From address's domain, or null when there is no valid one. */
+    private function fromDomain(): ?string
+    {
+        $from = $this->settings->fromAddress();
+        $at = strrpos($from, '@');
+        $domain = $at === false ? '' : strtolower(substr($from, $at + 1));
+
+        return preg_match('/^[a-z0-9.-]+\.[a-z]{2,}$/', $domain) === 1 ? $domain : null;
     }
 }

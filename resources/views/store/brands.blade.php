@@ -67,26 +67,28 @@
             <div class="brw-hero-txt">
                 @unless (($banner ?? null) || ($titleHeader ?? null))
                     <h1 class="brw-h1">{{ $brand->t('name') }}</h1>
-                    @if ($brand->description)
-                        <p class="brw-sub">{{ strip_tags($brand->t('description')) }}</p>
-                    @endif
                 @endunless
+                {{-- The description under the name: TitleHeader::brandDescription(), RichText-allowlisted HTML. Not when a title header already prints it. (2.60.376) --}}
+                @if (! ($titleHeader ?? null) && ($brandDescription ?? '') !== '')
+                    <div class="brw-sub brw-desc">{!! $brandDescription !!}</div>
+                @endif
                 {{--
                     The LISTING, not a second archive, and not this page.
                     Brand::filterUrl() -- /shop/?filter_brands={slug}, URL
-                    Contract U-05 -- because Brand::url() is now this landing
-                    page itself and linking a page to itself is a dead button.
-                    One place to change, still.
+                    Contract U-05. Off as shipped (Appearance → Page layout →
+                    Brand page); the owner asked for it gone.
                 --}}
+                @if ($brandCta ?? false)
                 <a class="brw-cta" href="{{ $brand->filterUrl() }}">{{ __('store.brands.shop_all', ['brand' => $brand->t('name')]) }}</a>
+                @endif
             </div>
         </div>
 
         @if ($products->isEmpty())
             <p class="brw-empty">{{ __('store.brands.brand_empty') }}</p>
         @else
-            <x-product-grid :products="$products" :heading="__('store.brands.popular_heading')"
-                            :more-url="$brand->filterUrl()" :more-label="__('store.product_grid.view_all')" grid-id="brandGrid" />
+            <x-product-grid :products="$products" :heading="($brandPopular ?? false) ? __('store.brands.popular_heading') : null"
+                            :more-url="($brandPopular ?? false) ? $brand->filterUrl() : null" :more-label="__('store.product_grid.view_all')" grid-id="brandGrid" />
 {{-- The rest of the brand, a batch at a time (Lane PR). Draws nothing when the brand fits on one page. At column 0 because StorefrontEnglishUnchangedTest byte-pins this page and an indented line leaves its indent behind. --}}@include('partials.listing-pager', ['page' => $page, 'lastPage' => $lastPage, 'urlFor' => $pageUrl, 'grid' => '#brandGrid'])
         @endif
     @else
@@ -195,6 +197,7 @@
 .brw-hero{display:flex;align-items:center;gap:20px;margin-bottom:28px}
 .brw-hero .brw-h1{margin-bottom:7px}
 .brw-hero .brw-sub{margin-bottom:14px;max-width:62ch}
+.brw-desc p{margin:0 0 6px}.brw-desc p:last-child{margin-bottom:0}
 .brw-cta{display:inline-block;padding:10px 20px;border-radius:999px;background:var(--pink);
   color:#fff;font-size:13px;text-decoration:none}
 .brw-cta:hover{filter:brightness(.94)}

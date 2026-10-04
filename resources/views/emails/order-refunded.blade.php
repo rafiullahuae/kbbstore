@@ -16,7 +16,7 @@
     $k = \App\Services\Mail\Kit\MailKit::for($brand ?? []);
     $kitBold = static fn (string $key, array $replace) => str_replace('%%AMOUNT%%', '<b>' . e($amountPlain) . '</b>', e(__($key, ['amount' => '%%AMOUNT%%'] + $replace)));
     $kitLead = $settledByGateway
-        ? $kitBold('email.refunded.sent_body', ['number' => $order['number']])
+        ? $kitBold(match ($refundMethod ?? null) { 'card' => 'email.refunded.sent_body_card', 'tabby' => 'email.refunded.sent_body_tabby', 'tamara' => 'email.refunded.sent_body_tamara', default => 'email.refunded.sent_body' }, ['number' => $order['number']])
         : $kitBold('email.refunded.approved_body', ['number' => $order['number']]);
     if ($isPartial) {
         $kitLead .= ' ' . e(__('email.refunded.partial_note'));

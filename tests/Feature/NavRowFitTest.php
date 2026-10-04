@@ -131,7 +131,8 @@ it('holds the text between the smallest and largest size, whatever the script as
      */
     expect(nvCss())->toContain('.mbar.nav-fill .navlink{font-size:clamp(var(--nav-min), calc(var(--nav-f0) * var(--nav-scale)), var(--nav-max))}');
 
-    app(HeaderSettings::class)->save(['nav_fit_min' => '12', 'nav_fit_max' => '15']);
+    // The Largest size applies in "Bigger text"; 2.60.376 made "Spread the items" the default.
+    app(HeaderSettings::class)->save(['nav_fit_mode' => 'text', 'nav_fit_min' => '12', 'nav_fit_max' => '15']);
     expect(nvBar(12))->toContain(';--nav-min:12px;--nav-max:15px"');
 
     // Every option of the smallest size is below every option of the largest,
@@ -155,7 +156,8 @@ it('prints only integers and px integers, and refuses a value that is not one of
     $style = NavRowFit::style(nvMenu(12), true, app(HeaderSettings::class)->all());
 
     expect($style)->toMatch('/^(--nav-[a-z0-9]+:\d+(px)?;)+--nav-max:\d+px$/')
-        ->and($style)->toContain('--nav-min:10px;--nav-max:18px');
+        // 2.60.376: by default the text stops at Navigation → Text size (14px).
+        ->and($style)->toContain('--nav-min:10px;--nav-max:14px');
 
     // A label is never printed into the style, only counted.
     $evil = nvMenu(12);
@@ -287,4 +289,31 @@ it('measures layout only where it already did, and nav-fit.js grows no observer'
     expect($nav)->toContain('for(let pass = 0; pass < 3 && needed > available && scale > FLOOR; pass++){');
     expect($nav)->toContain("if(mbar.classList.contains('nav-fill')){")
         ->and($nav)->toContain('const CEILING = 2;');
+});
+
+it('keeps the owner\'s Text size by default and fills the row with space, and grows the text only when asked', function () {
+    /*
+     * 2.60.376. The owner, on 2.60.375's fitted menu: "give control to set menu
+     * font size upon expanding. because it coming too big, i want to keep the
+     * font size control but the space will auto adjust as per the number of
+     * parents items in the main". 2.60.375 grew the text to 18px at 1600 and
+     * up. The default now holds it at Navigation → Text size, so a wide screen
+     * gets the room as space between the items (space-between and the padding
+     * nav-fit.js scales once the text is at its ceiling), and it still shrinks
+     * below that when the row is too full.
+     *
+     * MUTATION (RUN): drop the nav_fit_mode branch in NavRowFit::style() and the
+     * first expectation is red (18px again).
+     */
+    expect(NavRowFit::style(nvMenu(12), true, app(HeaderSettings::class)->all()))->toContain('--nav-max:14px');
+
+    app(HeaderSettings::class)->save(['nav_size' => '16']);
+    expect(NavRowFit::style(nvMenu(12), true, app(HeaderSettings::class)->all()))->toContain('--nav-max:16px');
+
+    app(HeaderSettings::class)->save(['nav_fit_mode' => 'text']);
+    expect(NavRowFit::style(nvMenu(12), true, app(HeaderSettings::class)->all()))->toContain('--nav-max:18px');
+
+    // A select stores one of its own options or the default.
+    app(HeaderSettings::class)->save(['nav_fit_mode' => 'bogus']);
+    expect(app(HeaderSettings::class)->all()['nav_fit_mode'])->toBe('space');
 });

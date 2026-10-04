@@ -146,7 +146,7 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
      * not CSS on :root either (it is an attribute on <html>), so "sending
      * nothing" below is unchanged by it. PressFeedbackTest covers the tab.
      */
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize', 'press']);
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize', 'brandpage', 'press']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
@@ -161,7 +161,8 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // 80 since 2.60.353: the random light box switch and its five-style mix.
     // 81 since Lane RD: `press`, the press-feedback select. 83 since 2.60.358:
     // `show_count` (Product grid) and `cat_header_phone_whole` (Category header).
-    expect($keys)->toHaveCount(83);
+    // 86 since 2.60.376: the Brand page tab's three switches.
+    expect($keys)->toHaveCount(86);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

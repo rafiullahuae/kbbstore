@@ -77,6 +77,25 @@ final class CustomerEmails
         ['Shopping reminders', 'cart_recovery', 'Basket reminder', '', 'Basket left with an email', 'switch', 'abandoned_cart', ['cart.recovery']],
     ];
 
+    /**
+     * template => "Group · Name", for Emails → Sending & delivery → Send a test
+     * → "Which email". The owner, 4 October: "i need here all the emails,
+     * pending order, and in failed order" — the list was five hand-picked rows;
+     * it is now every email this screen knows, from the same rows. (2.60.376)
+     *
+     * @return array<string, string>
+     */
+    public static function testChoices(): array
+    {
+        $out = [];
+
+        foreach (self::ROWS as [$group, $template, $name]) {
+            $out[$template] = $group . ' · ' . $name;
+        }
+
+        return $out;
+    }
+
     public function __construct(private SettingsService $settings) {}
 
     /** @return list<array<string, mixed>> */

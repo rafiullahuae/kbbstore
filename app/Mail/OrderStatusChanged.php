@@ -347,12 +347,19 @@ class OrderStatusChanged extends OrderMail
 
     public string $ctaLabel = '';
 
+    /** 'card' | 'tabby' | 'tamara' | null — App\Support\PaymentMethodWords. */
+    private ?string $payMethod = null;
+
     public function __construct(Order $order, string $status, string $note = '')
     {
         parent::__construct($order);
 
         $this->status = $status;
         $this->note = mb_substr(trim(str_replace(["\r\n", "\r"], "\n", $note)), 0, 500);
+
+        // 2.60.376: a failed payment names its method — "Your Tabby payment did
+        // not go through" — see App\Support\PaymentMethodWords.
+        $this->payMethod = \App\Support\PaymentMethodWords::key((string) $order->payment_method);
 
         if ($status === 'cancelled') {
             $this->refundSentence = $this->refundSentenceFor($order);
@@ -553,7 +560,9 @@ class OrderStatusChanged extends OrderMail
             'onhold' => __('email.order_status.onhold_subject', $replace),
             'completed' => __('email.order_status.completed_subject', $replace),
             'refunded' => __('email.order_status.refunded_subject', $replace),
-            'failed' => __('email.order_status.failed_subject', $replace),
+            'failed' => $this->payMethod !== null
+                ? __('email.order_status.failed_subject_method', ['method' => \App\Support\PaymentMethodWords::name($this->payMethod)])
+                : __('email.order_status.failed_subject', $replace),
             default => sprintf($subject, $this->brandName(), $this->orderNumber()),
         };
     }
@@ -590,7 +599,12 @@ class OrderStatusChanged extends OrderMail
             'onhold' => [__('email.order_status.onhold_heading'), __('email.order_status.onhold_body')],
             'completed' => [__('email.order_status.completed_heading'), __('email.order_status.completed_body')],
             'refunded' => [__('email.order_status.refunded_heading'), __('email.order_status.refunded_body')],
-            'failed' => [__('email.order_status.failed_heading'), __('email.order_status.failed_body')],
+            'failed' => match ($this->payMethod) {
+                'card' => [__('email.order_status.failed_heading_method', ['method' => \App\Support\PaymentMethodWords::name('card')]), __('email.order_status.failed_body_card')],
+                'tabby' => [__('email.order_status.failed_heading_method', ['method' => \App\Support\PaymentMethodWords::name('tabby')]), __('email.order_status.failed_body_tabby')],
+                'tamara' => [__('email.order_status.failed_heading_method', ['method' => \App\Support\PaymentMethodWords::name('tamara')]), __('email.order_status.failed_body_tamara')],
+                default => [__('email.order_status.failed_heading'), __('email.order_status.failed_body')],
+            },
             default => [$heading, $body],
         };
     }
