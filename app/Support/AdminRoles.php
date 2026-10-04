@@ -194,6 +194,7 @@ final class AdminRoles
             'sitelayout.manage' => 'Site width and columns',
             'pagewash.manage' => 'Page background',
             'wabutton.manage' => 'WhatsApp button',
+            'pagebanners.manage' => 'Page banners and the Super Sale products',
         ]],
         ['storefront', 'Storefront tools', [
             'storefront.adminbar' => 'See the admin bar on the shop',

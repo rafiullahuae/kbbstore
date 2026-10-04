@@ -2144,6 +2144,37 @@ KBB_BH_CSS;
     {
         return [
             /*
+             * THE SUPER SALE STRIP, ON /super-sale/ ONLY. (Lane SS)
+             *
+             * The owner: "i need a custom banner including image and thin strip
+             * with content … such custom banners we will need for custom
+             * pages." It ships ON for /super-sale/ (rule 1 since 30 September:
+             * what he asked for is the shop's new state) with his two lines and
+             * NO picture — nobody has uploaded one, and an empty slot draws no
+             * <img>. So the one page gains ONE block: the banner's <style>, and
+             * the strip of two ticks. Nothing else on any page moves; every
+             * other custom page is unassigned and adds not one byte.
+             *
+             * The pattern names the shipped strip — the deep rose, white text,
+             * 44/36px tall, 15/12px type — so a default that moves without this
+             * walk being told is red here and not only in PageBannersTest. `~`
+             * as the delimiter because the colours carry `#`. `[^<]*` for the
+             * stylesheet: it is PageBanners::CSS, a constant with no `<` in it.
+             *
+             * The product grid beneath it does not move in this walk: the seed
+             * has no category slugged super-sale, so the page falls back to the
+             * reduced-products listing it drew before (SuperSaleOrderTest).
+             */
+            'the Super Sale page banner strip (Lane SS)' => [
+                'pattern' => '~<style id="kbb-pb-css">[^<]*</style>\n'
+                    .'<div class="kbb-pb" style="--pb-bg:#C8336A;--pb-ink:#FFFFFF;--pb-ic:#FFFFFF;--pb-hd:44px;--pb-hm:36px;--pb-fd:15px;--pb-fm:12px;--pb-id:18px;--pb-im:15px" data-banner="super-sale">\n'
+                    .'<ul class="kbb-pb-strip"><li><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>100% Authentic Products</span></li>'
+                    .'<li><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>Express Delivery all over UAE</span></li></ul>\n'
+                    .'</div>\n~s',
+                'hits' => 1,
+            ],
+
+            /*
              * THE FLOATING WHATSAPP BUTTON, ON EVERY STOREFRONT PAGE. (Lane WA)
              *
              * The owner: "i need a floating whatsapp icon with outer layers

@@ -1003,6 +1003,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          * four such rows, published, and all four 404.
          */
         require __DIR__.'/page-editor-admin.php';
+        require __DIR__.'/page-banners-admin.php';   // Pages → Page banners (Lane SS)
 
         // Core Updates panel (JSON). Sits alongside the standalone page, which
         // stays as the fallback for when the admin bundle itself is broken.

@@ -476,6 +476,13 @@ final class AdminCapabilities
         // five above, and its own capability for the same reason. (Lane WA)
         'wabutton.manage' => ['owner', 'manager', 'editor'],
 
+        // Pages → Page banners: the promo picture and strip on the custom pages
+        // (/super-sale/ and the content pages), which page shows which, and
+        // which products /super-sale/ lists. Storefront content printed on
+        // public pages, a link that becomes an href, and the campaign's product
+        // list -- so its own capability, the same three roles. (Lane SS)
+        'pagebanners.manage' => ['owner', 'manager', 'editor'],
+
         /*
          * THE STOREFRONT'S OWN ADMIN LAYER (Lane RA): the thin bar across the
          * top of every shop page and the pencil on a category or brand header.
@@ -1617,6 +1624,8 @@ final class AdminCapabilities
         ['*', 'admin-api/page-wash', 'pagewash.manage'],
         // One line and no '/**' sibling: no sub-endpoint here either. (Lane WA)
         ['*', 'admin-api/whatsapp-button', 'wabutton.manage'],
+        // One line and no '/**' sibling: no sub-endpoint. (Lane SS)
+        ['*', 'admin-api/page-banners', 'pagebanners.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.
