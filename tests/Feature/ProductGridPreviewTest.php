@@ -183,7 +183,11 @@ it('shows a grid of cards on the right, sized by CSS and never by measurement', 
     expect($region)->toContain('id="pgPrev"')
         ->and($region)->toContain('class="skinprev pgprev"')
         ->and($region)->toContain('host.innerHTML = skinCard(skin)')
-        ->and($region)->toContain('card.cloneNode(true)');
+        // 2.60.374: ONE card, at a shop card's width (the owner: "please give
+        // me only one card preview on backend"). The grid's own column count
+        // is pinned to 1 on the preview grid; the clones are gone.
+        ->and($region)->toContain("grid.style.setProperty('--pg-cols', '1');")
+        ->and($region)->not->toContain('card.cloneNode(true)');
 
     /*
      * A GRID, NOT ONE CARD. `.skinprev` collapses its grid to `display:block`
