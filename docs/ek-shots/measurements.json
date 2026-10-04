@@ -1,0 +1,323 @@
+{
+  "e3-customer-emails-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [
+      {
+        "group": "ek-customer",
+        "tabs": [
+          "All emails 21",
+          "Orders 13",
+          "To you 1",
+          "Account & sign-up 5",
+          "Shopping reminders 2"
+        ]
+      }
+    ],
+    "title": "Customer emails"
+  },
+  "emails-overview-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [
+      {
+        "group": "eml-overview",
+        "tabs": [
+          "At a glance",
+          "Where things are",
+          "Every email 13"
+        ]
+      }
+    ],
+    "title": "Emails"
+  },
+  "emails-sending-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [
+      {
+        "group": "eml-sending",
+        "tabs": [
+          "Send using",
+          "Who it is from",
+          "Send a test",
+          "Domain check"
+        ]
+      }
+    ],
+    "title": "Sending & delivery"
+  },
+  "emails-branding-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [
+      {
+        "group": "eml-branding",
+        "tabs": [
+          "Look",
+          "Colours & fonts",
+          "Footer of every email",
+          "Preview"
+        ]
+      }
+    ],
+    "title": "Design & branding"
+  },
+  "emails-sent-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [
+      {
+        "group": "eml-sent",
+        "tabs": [
+          "Sent",
+          "Failed",
+          "Orders",
+          "Account",
+          "Waiting to go out"
+        ]
+      }
+    ],
+    "title": "Sent mail"
+  },
+  "mail-all-settings-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [
+      {
+        "group": "mail",
+        "tabs": [
+          "Sending method",
+          "Mail server (SMTP)",
+          "Sender & alerts",
+          "Footer details",
+          "Other settings",
+          "Order status emails",
+          "Send a test",
+          "Waiting to go out",
+          "Sent mail"
+        ]
+      }
+    ],
+    "title": "Mail"
+  },
+  "mail-keyboard-1280": {
+    "selected": "Sender & alerts",
+    "focused": "Sender & alerts"
+  },
+  "e4-editor-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [
+      {
+        "group": "ek-editor",
+        "tabs": [
+          "Sections",
+          "Wording · English",
+          "Wording · العربية"
+        ]
+      }
+    ],
+    "title": "Order shipped"
+  },
+  "dnd-before-1280": [
+    "hero",
+    "tracker",
+    "chip",
+    "before",
+    "items",
+    "totals",
+    "promises",
+    "info",
+    "button",
+    "help",
+    "signoff"
+  ],
+  "dnd-after-1280": [
+    "hero",
+    "tracker",
+    "items",
+    "chip",
+    "before",
+    "totals",
+    "promises",
+    "info",
+    "button",
+    "help",
+    "signoff"
+  ],
+  "kbd-after-1280": [
+    "hero",
+    "tracker",
+    "items",
+    "chip",
+    "before",
+    "totals",
+    "promises",
+    "info",
+    "help",
+    "button",
+    "signoff"
+  ],
+  "e3-customer-emails-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [
+      {
+        "group": "ek-customer",
+        "tabs": [
+          "All emails 21",
+          "Orders 13",
+          "To you 1",
+          "Account & sign-up 5",
+          "Shopping reminders 2"
+        ]
+      }
+    ],
+    "title": "Customer emails"
+  },
+  "emails-overview-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [
+      {
+        "group": "eml-overview",
+        "tabs": [
+          "At a glance",
+          "Where things are",
+          "Every email 13"
+        ]
+      }
+    ],
+    "title": "Emails"
+  },
+  "emails-sending-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [
+      {
+        "group": "eml-sending",
+        "tabs": [
+          "Send using",
+          "Who it is from",
+          "Send a test",
+          "Domain check"
+        ]
+      }
+    ],
+    "title": "Sending & delivery"
+  },
+  "emails-branding-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [
+      {
+        "group": "eml-branding",
+        "tabs": [
+          "Look",
+          "Colours & fonts",
+          "Footer of every email",
+          "Preview"
+        ]
+      }
+    ],
+    "title": "Design & branding"
+  },
+  "emails-sent-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [
+      {
+        "group": "eml-sent",
+        "tabs": [
+          "Sent",
+          "Failed",
+          "Orders",
+          "Account",
+          "Waiting to go out"
+        ]
+      }
+    ],
+    "title": "Sent mail"
+  },
+  "mail-all-settings-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [
+      {
+        "group": "mail",
+        "tabs": [
+          "Sending method",
+          "Mail server (SMTP)",
+          "Sender & alerts",
+          "Footer details",
+          "Other settings",
+          "Order status emails",
+          "Send a test",
+          "Waiting to go out",
+          "Sent mail"
+        ]
+      }
+    ],
+    "title": "Mail"
+  },
+  "mail-keyboard-390": {
+    "selected": "Sender & alerts",
+    "focused": "Sender & alerts"
+  },
+  "e4-editor-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [
+      {
+        "group": "ek-editor",
+        "tabs": [
+          "Sections",
+          "Wording · English",
+          "Wording · العربية",
+          "Preview"
+        ]
+      }
+    ],
+    "title": "Order shipped"
+  },
+  "dnd-before-390": [
+    "hero",
+    "tracker",
+    "chip",
+    "before",
+    "items",
+    "totals",
+    "promises",
+    "info",
+    "button",
+    "help",
+    "signoff"
+  ],
+  "dnd-after-390": [
+    "hero",
+    "tracker",
+    "items",
+    "chip",
+    "before",
+    "totals",
+    "promises",
+    "info",
+    "button",
+    "help",
+    "signoff"
+  ],
+  "kbd-after-390": [
+    "hero",
+    "tracker",
+    "items",
+    "chip",
+    "before",
+    "totals",
+    "promises",
+    "info",
+    "help",
+    "button",
+    "signoff"
+  ]
+}

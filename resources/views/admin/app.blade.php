@@ -12656,7 +12656,7 @@ const MAIL_SECTIONS=[
     rows:[['mail_from_address','mail_from_name'],
           ['mail_merchant_address']] },
 
-  { title:'What customers see at the foot', tab:'Footer details',
+  { title:'What customers see at the foot', tab:'Footer',
     desc:'Printed under every order email. Leave any of them blank and the storefront’s own details are used instead.',
     rows:[['mail_support_email','mail_support_whatsapp'],
           ['mail_support_instagram','mail_signature']] },
@@ -12723,7 +12723,7 @@ function mailSectionList(fields){
      missing from the form is a setting the next Save blanks. */
   const rest=fields.filter(f=>!used[f.key]);
   if(rest.length){
-    out.push({title:'Other settings', html:`<section class="mlf-sec">
+    out.push({title:'More settings', html:`<section class="mlf-sec">
       <div class="mlf-sec-h"><div class="mlf-sec-t">Other settings</div>
         <div class="mlf-sec-d">Added to this store after this screen was laid out. They save exactly like the rest.</div></div>
       ${rest.map(f=>`<div class="mlf-grid">${mailField(f,true)}</div>`).join('')}
@@ -12762,7 +12762,7 @@ function paintMail(){
      collect()s every field, exactly as it always has. The tab this browser
      last used (or ?tab=) opens first. */
   const bands=mailSectionList(MAILCFG.fields);
-  const mlTabs=bands.map((b,i)=>['b'+i,b.title]).concat([['status','Order status emails'],['test','Send a test'],['waiting','Waiting to go out'],['sent','Sent mail']]);
+  const mlTabs=bands.map((b,i)=>['b'+i,b.title]).concat([['status','Status emails'],['test','Send a test'],['waiting','Waiting to go out'],['sent','Sent mail']]);
   let mlCur=mlTabs[0][0];
   try{
     const q=new URLSearchParams(window.location.search).get('tab'), m=localStorage.getItem('kbbtab:mail');
