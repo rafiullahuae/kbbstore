@@ -506,3 +506,16 @@ it('shades every other row so the carts read apart', function () {
         ->and(strpos($css, 'tr:nth-child(even)'))->toBeLessThan(strpos($css, '.ctk-t tbody tr:hover'))
         ->and(strpos($css, 'tr:nth-child(even)'))->toBeLessThan(strpos($css, '.ctk-t tbody tr.sel'));
 });
+
+it('draws a 1px line between columns, on the table and not on the phone cards', function () {
+    /*
+     * The owner: "i need columns line to 1px to differentiate the columns".
+     * MUTATION: drop the min-width wrapper and the phone cards get a line down
+     * their middle -- the second expectation is red; drop the rule and the
+     * first is.
+     */
+    $css = (string) file_get_contents(resource_path('views/admin/partials/cart-tracking-screen.blade.php'));
+
+    expect($css)->toContain('.ctk-t th+th,.ctk-t td+td{border-left:1px solid #dfe4ef}')
+        ->and($css)->toContain('@media (min-width:761px){.ctk-t th+th,.ctk-t td+td{border-left:1px solid #dfe4ef}}');
+});

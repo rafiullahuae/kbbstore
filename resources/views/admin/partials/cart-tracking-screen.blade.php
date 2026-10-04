@@ -82,6 +82,10 @@
 .ctk-t tbody tr:nth-child(even){background:#eff3fa}
 .ctk-t tbody tr:hover{background:#e3e9f6}
 .ctk-t tbody tr.sel{background:#dce8ff}
+/* A 1px line between columns (the owner: "i need columns line to 1px to
+   differentiate the columns"). Only where the table is a table: under 761px
+   each row is a card and its cells are a grid, not columns. */
+@media (min-width:761px){.ctk-t th+th,.ctk-t td+td{border-left:1px solid #dfe4ef}}
 .ctk-t .sortable{cursor:pointer;user-select:none}
 .ctk-t .sortable:hover{color:var(--ink,#101729)}
 .ctk-t .sortable.on{color:var(--ink,#101729)}
