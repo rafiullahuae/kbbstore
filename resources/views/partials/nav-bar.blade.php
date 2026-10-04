@@ -49,12 +49,22 @@
      * dropdowns the moment the package applied.
      */
     $kbbMega = app(\App\Services\SettingsService::class)->moduleEnabled('mega_menu', true);
+
+    /*
+     * Lane NV — Appearance → Header → Navigation → "Fit the menu to the row".
+     * NavRowFit answers null for a menu shorter than the threshold (9 by
+     * default) or with the switch off, and then this bar prints EXACTLY what it
+     * printed before: `<div class="mbar">`, the pill's `padding:4px 10px`, and
+     * nothing else. Every value it does print is an integer or a px integer
+     * from a select of fixed options.
+     */
+    $kbbNavFit = \App\Support\NavRowFit::style($kbbNav, $kbbMega, app(\App\Services\HeaderSettings::class)->all());
 @endphp
-<div class="mbar"><div class="wrap">
+<div class="mbar{{ $kbbNavFit !== null ? ' nav-fill' : '' }}"@if ($kbbNavFit !== null) style="{{ $kbbNavFit }}"@endif><div class="wrap">
     @foreach ($kbbNav as $item)
         <div class="navitem">
             <a class="navlink" href="{{ Url::to($item['url'] ?? '/') }}"
-                @if (! empty($item['highlight_color'])) style="background:{{ $item['highlight_color'] }};color:#fff;border-radius:8px;padding:4px 10px" @endif
+                @if (! empty($item['highlight_color'])) style="background:{{ $item['highlight_color'] }};color:#fff;border-radius:8px;padding:4px {{ $kbbNavFit !== null ? 'calc(10px * var(--nav-scale))' : '10px' }}" @endif
                 @if (! empty($item['new_tab'])) target="_blank" rel="noopener" @endif>
                 {{ $item['label'] }}
                 @if (! empty($item['badge']))

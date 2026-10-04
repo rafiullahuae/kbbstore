@@ -121,6 +121,17 @@ function fitNavBar(){
   const available = rowSpace(wrap);
   let needed = rowNeeded(wrap);
 
+  /*
+   * Lane NV — a FITTED bar (`.mbar.nav-fill`, nine or more items with
+   * Appearance → Header → Navigation → "Fit the menu to the row" on) is sized
+   * in BOTH directions: up into spare room as well as down out of overflow.
+   * Any other bar keeps the shrink-only behaviour below, unchanged.
+   */
+  if(mbar.classList.contains('nav-fill')){
+    fillNavBar(wrap, mbar, available, needed);
+    return;
+  }
+
   if(needed <= available) return;
 
   // A shrink this large means the menu genuinely doesn't belong on a
@@ -146,6 +157,46 @@ function fitNavBar(){
   needed = rowNeeded(wrap);
   if(needed > available){
     scale = Math.max(MIN_SCALE, scale * (available / needed) * 0.985);
+    mbar.style.setProperty('--nav-scale', scale.toFixed(3));
+  }
+}
+
+/**
+ * The fitted bar: one scale that makes the row exactly as wide as its room.
+ *
+ * At --nav-scale 1 the stylesheet has already painted the bar at an estimate of
+ * the right size (`.mbar.nav-fill` in kbb.css), so the ratio here is close to 1
+ * and the change after first paint is small. The font is clamped in CSS between
+ * the owner's smallest and largest size, so a scale that asks for more than the
+ * clamp allows is simply held there, and `space-between` shares whatever room
+ * is left evenly between the items.
+ *
+ * NO LOOP AND NO JITTER: two measurements at most, both inside this one
+ * synchronous call, and it only runs on load, on a debounced resize and when
+ * the webfont lands — never in response to its own change (there is no
+ * observer to re-trigger it). Only horizontal values follow the scale, so the
+ * bar is the same height before and after (GridPhotoLoadingTest).
+ */
+function fillNavBar(wrap, mbar, available, needed){
+  if(!(needed > 0) || !(available > 0)) return;
+
+  // Ends for the multiplier itself. The FONT's ends are the owner's, in CSS;
+  // these only stop padding running away on a very short menu at 1920.
+  const FLOOR = 0.5;
+  const CEILING = 2;
+
+  // The same hair under a perfect fit as the shrink path below, for the same
+  // reason: sub-pixel rounding differs between browsers. space-between turns
+  // the hair into evenly shared gaps, so it is not left as a strip at the end.
+  let scale = Math.min(CEILING, Math.max(FLOOR, (available / needed) * 0.985));
+  mbar.style.setProperty('--nav-scale', scale.toFixed(3));
+
+  // One correction, downward only: a font held at the clamp, or text whose
+  // kerning moved, can leave the first answer a little wide. Never upward, so
+  // the two passes cannot argue with each other.
+  needed = rowNeeded(wrap);
+  if(needed > available){
+    scale = Math.max(FLOOR, scale * (available / needed) * 0.985);
     mbar.style.setProperty('--nav-scale', scale.toFixed(3));
   }
 }
