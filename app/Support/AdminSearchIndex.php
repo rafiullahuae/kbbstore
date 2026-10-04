@@ -99,6 +99,7 @@ final class AdminSearchIndex
         'productpage'  => [ProductLayout::class],
         'slimfooter'   => [SiteFooter::class, SlimFooter::class],
         'hpcontent'    => [HomepageContent::class],
+        'wabutton'     => [\App\Services\WhatsAppButton::class],
     ];
 
     /**

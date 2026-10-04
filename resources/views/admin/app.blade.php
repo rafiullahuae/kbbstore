@@ -2823,6 +2823,9 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
       <div class="logo">K</div>
       <div><b>K-Beauty Bliss</b><small>Admin Console</small></div>
     </div>
+@endverbatim
+@include('admin.partials.admin-search')
+@verbatim
     <nav class="nav" id="nav"></nav>
     <div class="side-pin"><button class="nav-item" data-go="console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h8M16 6h4M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="14" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg><span>Console</span></button></div>
     <div class="side-foot">v0.1.0 · Foundation<br>Aurora admin · KBB platform</div>
