@@ -3,6 +3,28 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.386
+**K-Beauty Bliss everywhere + brand search; Fonts & size on every homepage
+section; product description columns and videos; Super Sale campaign page and
+custom page banners.** Apply after .385. Runs 6 migrations (the brand rename,
+5 cache clears). Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "replace the word Extra Beauty > K-Beauty Bliss everywhere" | Stored settings, page/menu/email/marketing text and SEO boxes rewritten (orders, customers, reviews, product names and legal entity names untouched). Store → SEO Keywords → Brand name shows a dry-run and a Replace button for anything typed later |
+| "fight for this keyword … kbeauty / k beauty / k-beauty" | Home title "K-Beauty Bliss — Korean Skincare & K-Beauty Store in UAE", brand JSON-LD with alternate spellings, one natural k-beauty phrase per page in SEO Keywords (after one Sync). Switches on Store → SEO Keywords → Brand name |
+| "another tab on every edit popup … Fonts & Size" | Appearance → Homepage content → a section → Edit content → Fonts & size: heading font, letter case, sizes and spacing per device, live sample. Site-wide body/heading font at Appearance → Site layout → Fonts. 29 self-hosted fonts; a page loads only the ones it uses |
+| "the html blocks … headings … should come in line … 3 columns in mobile" | Ingredient headings on one line (14px laptop, 13.6px phone); three columns stay side by side on a phone (block 303px tall, was 1300). Switch: Store → Modules → This app only → HTML Block columns on phones |
+| "custom section of 2 videos … not showing at all" | Video addresses in a description play as players, side by side, no autoplay. Switch: Store → Modules → This app only → Videos in product descriptions |
+| "/super-sale … same products sorting … ready this category 'Super Sale'" | /super-sale/ lists the Super Sale category in its arranged order (Catalog → Catalog → Reorder). Source: Pages → Page banners → Super Sale products |
+| "custom banner including image and thin strip … for custom pages" | Pages → Page banners → Banners (desktop/phone picture, link, strip items, colours, sizes) and → Where they show. /super-sale/ ships with the strip; upload the picture to show it |
+
+After applying: Store → SEO Keywords → Sync → Run once. Before the domain
+cutover, over SSH: `php artisan kbb:fetch-description-videos --plan`, then
+without `--plan`.
+
+Files: see the package's update.json.
+
 ## 2.60.385
 **Centred homepage headings without the dot; buttons on #KBeautyBliss Spotted
 and Under AED 54.** Apply after .384. Runs 1 migration (sets the Under AED 54
