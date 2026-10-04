@@ -7,6 +7,11 @@ use Illuminate\Support\Facades\DB;
 use Tests\Support\MarketingEmailsRoutes;
 use Tests\Support\MarketingFixtures as F;
 
+beforeEach(function () {
+    // Every campaign carries a postal address (CampaignSender::hasPostalAddress()).
+    app(App\Services\SettingsService::class)->set('mail_address_dubai', 'Office 1, Dubai');
+});
+
 /**
  * Marketing Emails — every admin endpoint has its own capability and fails
  * closed (CLAUDE.md rule 5; docs/EMAILS-PLAN.md §6; the owner's D11).

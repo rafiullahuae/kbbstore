@@ -122,7 +122,7 @@ final class CampaignReport
             ->where('l.campaign_id', $id)
             ->groupBy('l.id', 'l.n', 'l.label', 'l.url')
             ->selectRaw('l.n as n, l.label as label, l.url as url, COUNT(k.id) as clicks')
-            ->orderByDesc('clicks')->orderBy('l.n')
+            ->orderByDesc('clicks')->orderBy('l.n')->orderBy('l.id')
             ->limit(20)->get()
             ->map(fn ($r) => ['n' => (int) $r->n, 'label' => (string) ($r->label ?: $r->url), 'url' => (string) $r->url, 'clicks' => (int) $r->clicks])
             ->all();

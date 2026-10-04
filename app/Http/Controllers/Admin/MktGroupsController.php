@@ -33,7 +33,7 @@ final class MktGroupsController extends Controller
 
     public function index(): JsonResponse
     {
-        $rows = DB::table('mkt_segments')->orderByDesc('preset')->orderBy('name')->limit(self::LIST_MAX)->get();
+        $rows = DB::table('mkt_segments')->orderByDesc('preset')->orderBy('name')->orderBy('id')->limit(self::LIST_MAX)->get();
 
         $totals = $this->audience->totals();
 

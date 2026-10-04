@@ -315,6 +315,11 @@ it('answers the live count and the people list over the admin API, and saves a g
     $list = $this->getJson('/admin-api/email-marketing/groups')->assertOk()->json('groups');
     $saved = collect($list)->firstWhere('id', $id);
 
-    expect($saved['name'])->toBe('Mostly bought Medicube · Dubai')->and($saved['emailable'])->toBe(1)
-        ->and(collect($list)->where('preset', true)->pluck('name')->all())->toContain('Never ordered', 'Repeat buyers (2+ orders)', 'VIP (spent AED 1,000+)', 'Lapsed 90 days', 'All confirmed subscribers');
+    expect($saved['name'])->toBe('Mostly bought Medicube · Dubai')->and($saved['emailable'])->toBe(1);
+
+    $presets = collect($list)->where('preset', true)->pluck('name')->all();
+
+    foreach (['Never ordered', 'One order only', 'Repeat buyers (2+ orders)', 'VIP (spent AED 1,000+)', 'Lapsed 90 days', 'All confirmed subscribers'] as $preset) {
+        expect(in_array($preset, $presets, true))->toBeTrue("the preset group {$preset} is missing");
+    }
 });

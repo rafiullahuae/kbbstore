@@ -958,7 +958,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
 
     var checks = [];
     checks.push((ck.unsubscribe ? '✅' : '❌') + ' Unsubscribe link and one-click unsubscribe');
-    checks.push((ck.addresses.length === 2 ? '✅' : '⚠️') + (ck.addresses.length === 2 ? ' Dubai and Korea addresses in the footer' : ' ' + (ck.addresses.length ? 'Only the ' + esc(ck.addresses.join(' and ')) + ' address' : 'No address') + ' in the footer — fill both in Emails → Design &amp; branding'));
+    checks.push((ck.addresses.length === 2 ? '✅' : ck.addresses.length ? '⚠️' : '❌') + (ck.addresses.length === 2 ? ' Dubai and Korea addresses in the footer' : ' ' + (ck.addresses.length ? 'Only the ' + esc(ck.addresses.join(' and ')) + ' address' : 'No postal address — it cannot be sent until one is') + ' in the footer — fill both in Emails → Design &amp; branding'));
     checks.push(ck.test ? '✅ Test sent to ' + esc(ck.test.to) + ' at ' + esc(clock(ck.test.at)) : '⚠️ No test sent yet');
     (ck.fills || []).forEach(function (f) {
       if (f.kind === 'products') checks.push((f.count ? '✅' : '⚠️') + ' Products filled: ' + (d.top_brand && f.fill === 'group_top_brand' ? esc(d.top_brand.name) + ', ' : '') + num(f.count) + ' in stock' + (f.count < f.wanted ? ' (of ' + num(f.wanted) + ' wanted)' : ''));
@@ -968,7 +968,7 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
     if (!ck.subject) checks.push('❌ Write a subject line');
     (ck.errors || []).forEach(function (e) { checks.push('❌ ' + esc(e)); });
 
-    var canGo = d.can_send && d.group && n && n.emailable > 0 && ck.subject && ck.size_ok && !(ck.errors || []).length;
+    var canGo = d.can_send && d.group && n && n.emailable > 0 && ck.subject && ck.size_ok && ck.addresses.length > 0 && !(ck.errors || []).length;
     var schedLabel = 'Schedule for ' + (function () { try { var x = new Date(dateV + 'T' + timeV); return x.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ', ' + timeV; } catch (e) { return ''; } })();
     var primary = R.when === 'schedule' ? schedLabel : 'Send now to ' + (n ? num(n.emailable) : '…');
     var progress = R.progress;

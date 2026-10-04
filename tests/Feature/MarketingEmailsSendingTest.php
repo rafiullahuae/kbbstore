@@ -25,6 +25,8 @@ use Tests\Support\MarketingFixtures as F;
  */
 
 beforeEach(function () {
+    // Every campaign carries a postal address (CampaignSender::hasPostalAddress()).
+    app(App\Services\SettingsService::class)->set('mail_address_dubai', 'Office 1, Dubai');
     @unlink(CampaignTick::markerPath());
     SettingsService::forgetMemo();
 });
@@ -387,4 +389,35 @@ it('drives a send from the admin\'s open tab: typed count, then steps with progr
 
     expect($r['status'])->toBe('sent')->and($r['sent'])->toBe(3);
     Mail::assertSent(CampaignMail::class, 3);
+});
+
+it('refuses to start a campaign with no postal address in the footer, and the sent email prints it', function () {
+    /*
+     * The kit leaves an unfilled address out rather than print a placeholder,
+     * so without this guard a campaign goes out with no postal address — which
+     * every marketing email must carry beside its unsubscribe link (plan §4).
+     *
+     * MUTATION: delete the hasPostalAddress() check in CampaignSender::start()
+     * and the first start() is allowed.
+     */
+    Mail::fake();
+    mkCustomers(1, 'addr');
+    $id = mkAllCustomersCampaign();
+    app(SettingsService::class)->set('mail_address_dubai', '');
+    app(SettingsService::class)->set('mail_address_korea', '');
+    SettingsService::forgetMemo();
+
+    [$ok, $why] = app(CampaignSender::class)->start($id);
+    expect($ok)->toBeFalse()->and($why)->toBe(CampaignSender::NO_ADDRESS);
+
+    app(SettingsService::class)->set('mail_address_dubai', 'Office 7, Business Bay, Dubai');
+    SettingsService::forgetMemo();
+    expect(app(CampaignSender::class)->start($id)[0])->toBeTrue();
+    mkRunToEnd($id);
+
+    Mail::assertSent(CampaignMail::class, function ($m) {
+        $html = $m->render();
+
+        return str_contains($html, 'Office 7, Business Bay, Dubai') && str_contains($html, '/email/u/');
+    });
 });

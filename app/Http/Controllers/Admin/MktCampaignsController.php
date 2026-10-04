@@ -614,12 +614,12 @@ final class MktCampaignsController extends Controller
             'art' => array_map(fn ($a, $k) => ['key' => $k, 'alt' => $a['alt'], 'url' => \App\Support\Url::external('/email/art/' . $k . '.jpg')], Blocks::ART, array_keys(Blocks::ART)),
             'icons' => array_keys(\App\Services\Mail\Kit\MailKit::ICONS),
             'tones' => array_keys(\App\Services\Mail\Kit\MailKit::TONES),
-            'brands' => DB::table('brands')->orderBy('name')->limit(1000)->get(['id', 'name'])->map(fn ($b) => ['id' => (int) $b->id, 'name' => (string) $b->name])->all(),
-            'categories' => DB::table('categories')->orderBy('name')->limit(1000)->get(['id', 'name'])->map(fn ($b) => ['id' => (int) $b->id, 'name' => (string) $b->name])->all(),
+            'brands' => DB::table('brands')->orderBy('name')->orderBy('id')->limit(1000)->get(['id', 'name'])->map(fn ($b) => ['id' => (int) $b->id, 'name' => (string) $b->name])->all(),
+            'categories' => DB::table('categories')->orderBy('name')->orderBy('id')->limit(1000)->get(['id', 'name'])->map(fn ($b) => ['id' => (int) $b->id, 'name' => (string) $b->name])->all(),
             'coupons' => DB::table('coupons')->orderByDesc('id')->limit(300)->get()
                 ->map(fn ($c) => ['id' => (int) $c->id, 'code' => mb_strtoupper((string) $c->code), 'live' => CampaignRenderer::couponLive($c)])->all(),
             'order_brands' => DB::table('order_items')->whereNotNull('brand')->where('brand', '<>', '')
-                ->groupBy(DB::raw('LOWER(TRIM(brand))'))->selectRaw('MIN(brand) as brand')->orderBy('brand')->limit(500)->pluck('brand')->all(),
+                ->groupBy(DB::raw('LOWER(TRIM(brand))'))->selectRaw('MIN(brand) as brand')->pluck('brand')->sort(SORT_NATURAL | SORT_FLAG_CASE)->take(500)->values()->all(),
             'emirates' => array_map(fn ($e, $k) => ['key' => $k, 'name' => $e[0]], Audience::EMIRATES, array_keys(Audience::EMIRATES)),
             'fields' => array_map(fn ($f, $k) => ['key' => $k, 'label' => $f[0], 'audience' => $f[1], 'ops' => array_map(fn ($kind, $op) => ['op' => $op, 'label' => Audience::OPS[$op], 'kind' => $kind], $f[2], array_keys($f[2]))], Audience::FIELDS, array_keys(Audience::FIELDS)),
             'max_bytes' => CampaignRenderer::MAX_BYTES,
@@ -640,9 +640,9 @@ final class MktCampaignsController extends Controller
             // ESCAPE '!' on both engines, as Store -> Customers does: a % or _
             // typed into the search is a character, not a wildcard.
             $like = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $q) . '%';
-            $query->whereRaw("name like ? escape '!'", [$like])->orderByDesc('total_sales')->limit(20);
+            $query->whereRaw("name like ? escape '!'", [$like])->orderByDesc('total_sales')->orderBy('id')->limit(20);
         } else {
-            $query->orderByDesc('total_sales')->limit(20);
+            $query->orderByDesc('total_sales')->orderBy('id')->limit(20);
         }
 
         return response()->json(['products' => $query->get()->map(fn ($p) => [

@@ -21,6 +21,8 @@ use Tests\Support\MarketingFixtures as F;
  */
 
 beforeEach(function () {
+    // Every campaign carries a postal address (CampaignSender::hasPostalAddress()).
+    app(App\Services\SettingsService::class)->set('mail_address_dubai', 'Office 1, Dubai');
     MarketingEmailsRoutes::wire(app());
 });
 

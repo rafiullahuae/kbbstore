@@ -65,6 +65,8 @@ final class CampaignSender
 
     public const MAIL_KIND = 'campaign';
 
+    public const NO_ADDRESS = 'Fill in the Dubai or Korea address in Emails → Design & branding first: every marketing email carries the shop\'s postal address beside its unsubscribe link.';
+
     public function __construct(
         private Audience $audience,
         private CampaignRenderer $renderer,
@@ -96,6 +98,10 @@ final class CampaignSender
 
         if (trim((string) $c->subject) === '') {
             return [false, 'Write a subject line first.'];
+        }
+
+        if (! self::hasPostalAddress()) {
+            return [false, self::NO_ADDRESS];
         }
 
         $segment = $c->segment_id ? DB::table('mkt_segments')->where('id', $c->segment_id)->first() : null;
@@ -168,6 +174,26 @@ final class CampaignSender
             'top_brand' => (string) ($top['name'] ?? ''),
             'top_brand_url' => Url::external($slug !== '' ? '/brands/' . rawurlencode($slug) . '/' : '/brands/'),
         ];
+    }
+
+    /**
+     * Does the footer have an address to print? The kit leaves an unfilled
+     * one out rather than print a placeholder to a customer, so without
+     * this check a campaign would go out with no postal address at all —
+     * which a marketing email must carry (plan §4, D9). A test send is
+     * still allowed: it is how the owner sees the footer before filling it.
+     */
+    public static function hasPostalAddress(): bool
+    {
+        $brand = \App\Services\Mail\EmailBranding::forMailable(true, CampaignMail::class);
+
+        foreach ((array) ($brand['addresses'] ?? []) as $a) {
+            if (array_filter(array_map('trim', (array) ($a['lines'] ?? []))) !== []) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @param list<array{type:string, props:array<string,mixed>}> $blocks */
