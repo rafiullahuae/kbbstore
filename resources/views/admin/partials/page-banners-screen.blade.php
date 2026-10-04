@@ -309,7 +309,7 @@
       + '<div class="pbs-three">' + colours + '</div>'
       + '<div class="pbs-two">' + ranges + '</div>'
       + '</div>'
-      + '<div class="pbs-actions" style="margin-top:12px"><button type="button" class="pbs-btn" data-pbs-reset>Strip back to defaults</button>'
+      + '<div class="pbs-actions" style="margin-top:12px"><button type="button" class="pbs-btn" data-pbs-reset>Reset the strip to defaults</button>'
       + '<button type="button" class="pbs-btn is-danger" data-pbs-remove>Delete this banner</button></div>';
   }
 

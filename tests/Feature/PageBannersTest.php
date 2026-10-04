@@ -84,7 +84,7 @@ it('adds nothing at all to a page with no banner', function () {
 
     foreach (['/new-in', '/best-sellers', '/everything-under-54-aed', '/about', '/shop/'] as $path) {
         $html = $this->followingRedirects()->get($path)->assertOk()->getContent();
-        expect($html)->not->toContain('kbb-pb', $path);
+        expect(str_contains($html, 'kbb-pb'))->toBeFalse($path);
     }
 });
 
