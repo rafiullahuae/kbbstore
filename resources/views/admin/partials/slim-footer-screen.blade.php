@@ -68,6 +68,9 @@
 .sfs-f input[type=range]{width:100%;accent-color:var(--accent,#15a85a);margin:0;min-width:0}
 .sfs-f input[type=text],.sfs-f select{width:100%;min-width:0;padding:8px 10px;font:inherit;font-size:13px;
   border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
+.sfs-f textarea{width:100%;min-width:0;padding:8px 10px;font:inherit;font-size:13px;line-height:1.5;resize:vertical;
+  border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit;font-family:ui-monospace,Menlo,Consolas,monospace}
+.sfs-f input.sfs-colour{width:64px;height:34px;padding:2px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;cursor:pointer}
 .sfs-check{display:flex;gap:10px;align-items:flex-start;min-width:0}
 .sfs-check input{margin-top:3px;flex:none;width:16px;height:16px}
 .sfs-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;min-width:0}
@@ -353,6 +356,24 @@
         + help + '</div>';
     }
 
+    /* (Lane HF) The site footer's colours and its three link lists. A colour
+       is a picker beside the hex it holds -- the server stores `#` and six hex
+       digits or the default, whatever arrives. A list is a box with one link
+       per line; the server keeps only lines that are safe to print. */
+    if (f.type === 'colour') {
+      var hex = /^#[0-9a-fA-F]{6}$/.test(String(values[f.key])) ? String(values[f.key]) : String(f['default']);
+      return '<div class="sfs-f"><div class="sfs-fh"><label for="' + id + '">' + esc(f.label) + '</label>'
+        + '<span class="sfs-val" data-sfs-val="' + esc(f.key) + '">' + esc(hex.toUpperCase()) + '</span></div>'
+        + '<input type="color" class="sfs-colour" id="' + id + '" data-sfs-key="' + esc(f.key) + '" value="' + esc(hex.toLowerCase()) + '">'
+        + help + '</div>';
+    }
+
+    if (f.type === 'textarea') {
+      return '<div class="sfs-f"><div class="sfs-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
+        + '<textarea id="' + id + '" data-sfs-key="' + esc(f.key) + '" rows="6" spellcheck="false">'
+        + esc(values[f.key]) + '</textarea>' + help + '</div>';
+    }
+
     return '<div class="sfs-f"><div class="sfs-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
       + '<input type="text" id="' + id + '" data-sfs-key="' + esc(f.key) + '" value="'
       + esc(values[f.key]) + '" autocomplete="off">' + help + '</div>';
@@ -382,7 +403,7 @@
     }).join('');
 
     var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
-    /* (Lane HB) The three "Site footer" tabs are the footer on every storefront
+    /* (Lane HB) The "Site footer" tabs (seven since Lane HF) are the footer on every storefront
        page (App\Services\SiteFooter); the rest are the slim bar. Their keys
        start `site_`, the tab keys `site`. The bar's preview and its squeeze
        preset mean nothing for the site footer, so neither is drawn there. */
@@ -393,8 +414,8 @@
           + esc(banner) + '</div>' : '')
       + (site
           ? '<div class="sfs-note">The <b>site footer</b> \u2014 the one at the bottom of every storefront page. '
-            + 'The tabs after these three are the slim bar on the checkout and the cart page.</div>'
-          : '<div class="sfs-note">This is <b>not</b> the site footer (that is the three “Site footer” tabs). The checkout and the cart page have '
+            + 'Laptop and phone each have their own layout tab. The tabs after the “Site footer” ones are the slim bar on the checkout and the cart page.</div>'
+          : '<div class="sfs-note">This is <b>not</b> the site footer (that is the “Site footer” tabs). The checkout and the cart page have '
             + 'never drawn that one, and still do not — this is a separate bar with its own words, and the '
             + 'switches on its first tab decide which of the two pages carries it.</div>')
       + '<div class="sfs-card">'
@@ -548,6 +569,7 @@
     if (el.type === 'checkbox' || el.tagName === 'SELECT') { render(); return; }
 
     var out = document.querySelector('[data-sfs-val="' + key + '"]');
+    if (out && el.type === 'color') { out.textContent = String(el.value).toUpperCase(); paintPreview(); return; }
     if (out) {
       var f = null;
       tabs.forEach(function (t) { t.fields.forEach(function (x) { if (x.key === key) f = x; }); });
