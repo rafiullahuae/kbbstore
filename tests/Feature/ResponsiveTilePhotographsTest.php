@@ -308,19 +308,32 @@ it('never makes a copy larger than the photograph it came from', function () {
     expect(ImageVariants::srcsetFor('/uploads/products/tiny.jpg'))->toBe('');
 });
 
-it('does not move anything, because the tile still states no dimensions', function () {
-    // CLS on this grid is zero and stays zero because .pc .ph is a fixed 180px
-    // box and the <img> is out of flow inside it. Stating width and height here
-    // would be stating the FILE's ratio for a box that does not have it, and it
-    // is srcset that makes that tempting -- the copies are 400x400 and 800x800
-    // and it looks safe to say so.
-    writePhoto('uploads/products/shot.jpg', 1000);
+it('states the FRAME\'s shape, never the file\'s, so it still cannot move anything', function () {
+    // CLS on this grid is zero and stays zero because `.kbb-card-thumb` is a
+    // box reserved by `aspect-ratio` and the <img> is `width:100%;height:100%`
+    // inside it. This used to pin NO width/height at all, for a reason that
+    // still holds: stating the FILE's ratio for a box that does not have it
+    // would be a lie, and srcset makes it tempting -- the copies are 400x400
+    // and 800x800 and it looks safe to say so.
+    //
+    // (Lane PF2) The attributes are here now, for anything that reads the
+    // markup without the stylesheet, and they state the FRAME's
+    // ratio -- Appearance -> Product styles -> Image shape -- never the
+    // photograph's. So this photograph is deliberately NOT square: a card that
+    // printed the file's own 1000x800 here is red.
+    //
+    // MUTATION, run: delete the attributes from the card and this is red; print
+    // the file's own 1000x800 instead and it is red too.
+    writePhoto('uploads/products/shot.jpg', 1000, 800);
     ImageVariants::generate('/uploads/products/shot.jpg');
     seedCatalogueWithPhoto('/uploads/products/shot.jpg');
 
-    foreach (tilePhotos((string) test()->get('/shop')->getContent()) as $tag) {
-        expect(tagAttribute($tag, 'width'))->toBeNull('the tile photograph states a width: '.$tag);
-        expect(tagAttribute($tag, 'height'))->toBeNull('the tile photograph states a height: '.$tag);
+    $photos = tilePhotos((string) test()->get('/shop')->getContent());
+    expect($photos)->not->toBeEmpty();
+
+    foreach ($photos as $tag) {
+        expect(tagAttribute($tag, 'width'))->toBe('400', 'the tile photograph does not state the square frame\'s width: '.$tag);
+        expect(tagAttribute($tag, 'height'))->toBe('400', 'the tile photograph does not state the square frame\'s height: '.$tag);
     }
 });
 

@@ -407,17 +407,55 @@ class ProductStyles
         $this->resolved = null;
     }
 
+    /**
+     * Image shape → the `--kbb-ratio` the card's photo frame is drawn at.
+     *
+     * ONE MAP, read by cssVariables() for the frame and by imageBox() for the
+     * <img>'s width/height attributes (Lane PF2), so the two cannot disagree.
+     * It was a match() inside cssVariables(); the values are unchanged.
+     */
+    public const IMAGE_RATIOS = [
+        'square' => '1/1',
+        'tall' => '1/1.25',
+        'landscape' => '1.2/1',
+        'portrait' => '1/1.02',
+    ];
+
+    /**
+     * The intrinsic width and height a card photograph declares, at the shape
+     * Appearance → Product styles → Image shape draws its frame.  (Lane PF2)
+     *
+     * ── WHAT THIS IS FOR, AND WHAT IT CANNOT DO ─────────────────────────────
+     *
+     * The card <img> carried no width or height attribute. Lighthouse 12.8.2
+     * does not actually flag it -- its unsized-images audit accepts CSS
+     * `width:100%;height:100%`, measured 0 flagged before and after -- but
+     * other audits and parsers read the attributes. The FRAME never moved — `.kbb-card-thumb`
+     * reserves it with `aspect-ratio` and the <img> is `width:100%;
+     * height:100%` inside it — so these attributes change no layout: CSS
+     * width and height both beat the presentational hint, and the mapped
+     * `aspect-ratio: auto w / h` only applies to a box with an auto side,
+     * which this one does not have. They tell a browser (and an audit) the
+     * picture's shape before a byte of it arrives, and that is all.
+     *
+     * The shorter side is 400 — the 400w copy every card asks for first — so
+     * every shape is exact in integers: 400x400, 400x500, 480x400, 400x408.
+     *
+     * @return array{0: int, 1: int}
+     */
+    public static function imageBox(?string $shape): array
+    {
+        [$w, $h] = array_map('floatval', explode('/', self::IMAGE_RATIOS[$shape ?? ''] ?? self::IMAGE_RATIOS['square']));
+        $short = min($w, $h);
+
+        return [(int) round(400 * $w / $short), (int) round(400 * $h / $short)];
+    }
+
     public function cssVariables(): string
     {
         $c = $this->all();
 
-        $ratio = match ($c['image_ratio']) {
-            'square' => '1/1',
-            'tall' => '1/1.25',
-            'landscape' => '1.2/1',
-            'portrait' => '1/1.02',
-            default => '1/1',
-        };
+        $ratio = self::IMAGE_RATIOS[$c['image_ratio']] ?? self::IMAGE_RATIOS['square'];
 
         return implode(';', [
             /*

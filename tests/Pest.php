@@ -78,6 +78,16 @@ pest()->extend(Tests\TestCase::class)
 
 
         /*
+         * (Lane PF2) And the banner tier. A homepage request that renders a
+         * banner wider than 1280 schedules its 1280/1440/1600 copies after the
+         * response, into the REAL public/img-cache, and a fixture that is not
+         * forget()-ed would leave them there for the next test's srcset to
+         * find -- a string pinned in one test changing because another ran
+         * first. Held off here; WideBannerSrcsetTest releases it.
+         */
+        config(['kbb.image_wide_after_response' => false]);
+
+        /*
          * And the third thing that outlives a test: PHP's own execution clock.
          *
          * App\Http\Controllers\Admin\ImportApiController::step() calls
