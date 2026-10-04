@@ -27,7 +27,10 @@ block 2. The capability (`pagebanners.manage`: owner, manager, editor) and its
 Checked with the edits applied: AdminNavAndIdsTest, AdminSidebarIsCompleteAtBuildTest,
 AdminDeepLinkTest, GridSectionConsoleReachTest, TranslationConsoleTest,
 WhatsAppButtonScreenTest, PageWashScreenTest, MarketingEmailsScreenTest,
-ContentPageEditorTest, AdminRolesTest, AdminMediaPickerEverywhereTest: 192 passed.
+ContentPageEditorTest, AdminRolesTest, AdminMediaPickerEverywhereTest: 192 passed;
+and EverythingIsMountedOnceTest, AdminConsoleControlsAreLiveTest, AdminResetGuardTest
+and this lane's tests. **Those first two are red until `tools/ss-wire.php` runs**
+(they count the require and the include), which is the signal they exist for.
 
 ## What /super-sale/ was, and is now
 
