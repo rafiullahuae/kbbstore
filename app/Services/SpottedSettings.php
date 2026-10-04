@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\SpottedPost;
+use App\Support\HomeSections;
 use App\Support\Locale;
 use App\Support\RichText;
+use App\Support\Url;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -56,12 +58,29 @@ final class SpottedSettings
 
     private const TTL = 3600;
 
+    /** (Lane HS) How many pictures the homepage's static grid draws. */
+    public const GRID = 6;
+
+    /**
+     * (Lane HS) The placeholder a grid card draws until the owner picks its
+     * picture: a camera outline, the shop's deep pink. A constant, so printing
+     * it raw is safe; no request is made for it.
+     */
+    public const CAMERA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.4-2h5.8l1.4 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>';
+
     private const PX = ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px', '56' => '56px', '64' => '64px'];
 
     public const SCHEMA = [
         /* ── Homepage section ─────────────────────────────────────────────── */
         'home_on' => ['type' => 'bool', 'label' => 'Show the section on the homepage', 'default' => true,
             'help' => 'It also stays hidden while no post is ticked “Homepage” in the list above.'],
+        /* (Lane HS) The owner, 4 October: "for now homepage, there will be 6
+           static images, and upon click on any image, it will take the user to
+           the actual page". The grid is the default AT HIS REQUEST; the
+           carousel stays one choice away. */
+        'home_layout' => ['type' => 'select', 'label' => 'Homepage layout', 'default' => 'grid',
+            'options' => ['grid' => 'Static grid — 6 pictures, each a link', 'carousel' => 'Carousel — the posts ticked “Homepage” above'],
+            'help' => 'The grid’s pictures and links are on the Homepage grid tab.'],
         'home_title' => ['type' => 'text', 'label' => 'Heading', 'default' => '',
             'help' => 'Empty: “#KBeautyBliss — Seen on Instagram”.'],
         'home_sub' => ['type' => 'text', 'label' => 'Line under the heading', 'default' => '',
@@ -72,6 +91,47 @@ final class SpottedSettings
         'bg' => ['type' => 'select', 'label' => 'Background', 'default' => 'lilac',
             'options' => ['lilac' => 'Lilac — blush into lavender', 'plain' => 'None — the page shows through'],
             'help' => 'Lilac is the colour from the approved homepage preview.'],
+
+        /* ── Homepage grid (Lane HS) ───────────────────────────────────── */
+        'grid_cols_d' => ['type' => 'select', 'label' => 'Grid · laptop', 'default' => '3',
+            'options' => ['3' => '3 per row — two rows of three', '6' => '6 in one row'],
+            'help' => 'A phone always shows three per row.'],
+        'grid_1_img' => ['type' => 'text', 'label' => 'Picture 1', 'default' => '', 'max' => 1000, 'options' => ['picker' => 'media'],
+            'help' => 'Choose it from the Media Library. Empty: a soft pink placeholder.'],
+        'grid_1_url' => ['type' => 'text', 'label' => 'Picture 1 · link', 'default' => '', 'max' => 1000,
+            'help' => 'A path on this shop (/…) or a full https:// address. Empty or anything else: the Spotted page.'],
+        'grid_1_alt' => ['type' => 'text', 'label' => 'Picture 1 · description (alt text)', 'default' => '',
+            'help' => 'For Google and screen readers. Empty: “#KBeautyBliss Spotted photo 1”.'],
+        'grid_2_img' => ['type' => 'text', 'label' => 'Picture 2', 'default' => '', 'max' => 1000, 'options' => ['picker' => 'media'],
+            'help' => 'Choose it from the Media Library. Empty: a soft pink placeholder.'],
+        'grid_2_url' => ['type' => 'text', 'label' => 'Picture 2 · link', 'default' => '', 'max' => 1000,
+            'help' => 'A path on this shop (/…) or a full https:// address. Empty or anything else: the Spotted page.'],
+        'grid_2_alt' => ['type' => 'text', 'label' => 'Picture 2 · description (alt text)', 'default' => '',
+            'help' => 'For Google and screen readers. Empty: “#KBeautyBliss Spotted photo 2”.'],
+        'grid_3_img' => ['type' => 'text', 'label' => 'Picture 3', 'default' => '', 'max' => 1000, 'options' => ['picker' => 'media'],
+            'help' => 'Choose it from the Media Library. Empty: a soft pink placeholder.'],
+        'grid_3_url' => ['type' => 'text', 'label' => 'Picture 3 · link', 'default' => '', 'max' => 1000,
+            'help' => 'A path on this shop (/…) or a full https:// address. Empty or anything else: the Spotted page.'],
+        'grid_3_alt' => ['type' => 'text', 'label' => 'Picture 3 · description (alt text)', 'default' => '',
+            'help' => 'For Google and screen readers. Empty: “#KBeautyBliss Spotted photo 3”.'],
+        'grid_4_img' => ['type' => 'text', 'label' => 'Picture 4', 'default' => '', 'max' => 1000, 'options' => ['picker' => 'media'],
+            'help' => 'Choose it from the Media Library. Empty: a soft pink placeholder.'],
+        'grid_4_url' => ['type' => 'text', 'label' => 'Picture 4 · link', 'default' => '', 'max' => 1000,
+            'help' => 'A path on this shop (/…) or a full https:// address. Empty or anything else: the Spotted page.'],
+        'grid_4_alt' => ['type' => 'text', 'label' => 'Picture 4 · description (alt text)', 'default' => '',
+            'help' => 'For Google and screen readers. Empty: “#KBeautyBliss Spotted photo 4”.'],
+        'grid_5_img' => ['type' => 'text', 'label' => 'Picture 5', 'default' => '', 'max' => 1000, 'options' => ['picker' => 'media'],
+            'help' => 'Choose it from the Media Library. Empty: a soft pink placeholder.'],
+        'grid_5_url' => ['type' => 'text', 'label' => 'Picture 5 · link', 'default' => '', 'max' => 1000,
+            'help' => 'A path on this shop (/…) or a full https:// address. Empty or anything else: the Spotted page.'],
+        'grid_5_alt' => ['type' => 'text', 'label' => 'Picture 5 · description (alt text)', 'default' => '',
+            'help' => 'For Google and screen readers. Empty: “#KBeautyBliss Spotted photo 5”.'],
+        'grid_6_img' => ['type' => 'text', 'label' => 'Picture 6', 'default' => '', 'max' => 1000, 'options' => ['picker' => 'media'],
+            'help' => 'Choose it from the Media Library. Empty: a soft pink placeholder.'],
+        'grid_6_url' => ['type' => 'text', 'label' => 'Picture 6 · link', 'default' => '', 'max' => 1000,
+            'help' => 'A path on this shop (/…) or a full https:// address. Empty or anything else: the Spotted page.'],
+        'grid_6_alt' => ['type' => 'text', 'label' => 'Picture 6 · description (alt text)', 'default' => '',
+            'help' => 'For Google and screen readers. Empty: “#KBeautyBliss Spotted photo 6”.'],
 
         /* ── Carousel ─────────────────────────────────────────────────────── */
         'per_d' => ['type' => 'select', 'label' => 'Cards in view · laptop', 'default' => '5',
@@ -123,8 +183,10 @@ final class SpottedSettings
     ];
 
     public const TABS = [
-        'home' => ['Homepage section', 'The carousel between Brands and Trending Now. It draws nothing at all while no post is ticked “Homepage”.',
-            ['home_on', 'home_title', 'home_sub', 'home_max', 'bg']],
+        'home' => ['Homepage section', 'The section between Brands and Trending Now: a static grid of six pictures, or the carousel — which draws nothing at all while no post is ticked “Homepage”.',
+            ['home_on', 'home_layout', 'home_title', 'home_sub', 'home_max', 'bg']],
+        'grid' => ['Homepage grid', 'The six pictures of the static grid, in order — each opens its link. Use ↑ ↓ to reorder, then Save settings.',
+            ['grid_cols_d', 'grid_1_img', 'grid_1_url', 'grid_1_alt', 'grid_2_img', 'grid_2_url', 'grid_2_alt', 'grid_3_img', 'grid_3_url', 'grid_3_alt', 'grid_4_img', 'grid_4_url', 'grid_4_alt', 'grid_5_img', 'grid_5_url', 'grid_5_alt', 'grid_6_img', 'grid_6_url', 'grid_6_alt']],
         'carousel' => ['Carousel', 'Cards in view, arrows and autoplay — separately for a laptop and a phone (900px and narrower).',
             ['per_d', 'per_m', 'arrows_d', 'arrows_m', 'auto', 'tilt']],
         'button' => ['Button', 'The button under the carousel that opens the Spotted page.',
@@ -201,7 +263,7 @@ final class SpottedSettings
     /**
      * Everything the homepage partial prints, already reduced to literals.
      *
-     * @return array{classes:string, style:string, auto:int, title:string, sub:string, button:bool, label:string, show:bool, max:int}
+     * @return array{classes:string, style:string, auto:int, title:string, sub:string, button:bool, label:string, show:bool, max:int, layout:string, g6:bool}
      */
     public function section(): array
     {
@@ -246,7 +308,43 @@ final class SpottedSettings
             'label' => self::text($c, 'btn_text'),
             'show' => (bool) ($c['home_on'] ?? true),
             'max' => (int) self::pick($c, 'home_max', ['4', '6', '8', '10', '12', '16', '20', '24'], '12'),
+            // (Lane HS) Which of the two the homepage draws, and the grid's
+            // laptop row — option keys only.
+            'layout' => self::pick($c, 'home_layout', ['grid', 'carousel'], 'grid'),
+            'g6' => self::pick($c, 'grid_cols_d', ['3', '6'], '3') === '6',
         ];
+    }
+
+    /**
+     * (Lane HS) The homepage's static grid: six cards, in the owner's order.
+     * Settings only — the map every storefront page has already loaded — so
+     * it costs no query and no cache read. A card with no picture is drawn as
+     * a placeholder; a link that is not a path on this shop or an http(s)
+     * address falls back to the Spotted page.
+     *
+     * @return list<array{src:string, alt:string, href:string, external:bool}>
+     */
+    public function grid(): array
+    {
+        $c = $this->all();
+        $page = Url::to(self::URL);
+        $host = strtolower((string) request()->getHost());
+        $out = [];
+
+        for ($n = 1; $n <= self::GRID; $n++) {
+            $href = HomeSections::url((string) ($c["grid_{$n}_url"] ?? ''), $page);
+            $alt = self::text($c, "grid_{$n}_alt");
+
+            $out[] = [
+                'src' => SpottedPost::imageUrl((string) ($c["grid_{$n}_img"] ?? '')) ?? '',
+                'alt' => $alt !== '' ? $alt : (string) __('store.spotted.grid_photo', ['n' => $n]),
+                'href' => $href,
+                'external' => preg_match('#^https?://#i', $href) === 1
+                    && strtolower((string) parse_url($href, PHP_URL_HOST)) !== $host,
+            ];
+        }
+
+        return $out;
     }
 
     /**

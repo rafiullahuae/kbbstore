@@ -55,6 +55,12 @@ beforeEach(function () {
     // Demo content substitutes for empty sections; these cases are about real
     // rows, so it is switched off except where a test says otherwise.
     app(SettingsService::class)->set('demo_content', false);
+    // (Lane HS) The chip and the reading time are behind two switches on
+    // Appearance → Homepage content → Blog, OFF since the owner asked for them
+    // gone. What this file pins is what they print WHEN drawn, so it turns
+    // them on; HomeBlogCardMetaTest pins the shipped OFF.
+    app(SettingsService::class)->set('home_bl_tag', true);
+    app(SettingsService::class)->set('home_bl_read', true);
 });
 
 function journalPost(array $overrides = []): Post

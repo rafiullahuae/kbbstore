@@ -63,6 +63,15 @@ function sptSave(array $values): void
     SettingsService::forgetMemo();
 }
 
+/*
+ * (Lane HS) Since 4 October the homepage section ships as the owner's STATIC
+ * GRID (SpottedStaticGridTest). Every case here is about the carousel, which
+ * is the other layout and unchanged, so each starts on it.
+ */
+beforeEach(function () {
+    sptSave(['home_layout' => 'carousel']);
+});
+
 it('renders nothing at all until a post is ticked for the homepage', function () {
     // The day the package is applied: an empty table.
     expect(trim(sptHome()))->toBe('');

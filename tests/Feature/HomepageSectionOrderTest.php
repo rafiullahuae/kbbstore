@@ -267,7 +267,10 @@ it('pairs the class on the section with the rule in the style, for the whole ord
     // 2.60.372: 17 → 16. The old product-photo Spotted strip stepped aside for
     // Lane HB's section, which draws nothing on this fixture (no post is
     // ticked Homepage) — the same rule as the Blog above it.
-    expect($paired)->toBe(16);
+    // 16 → 17 (Lane HS): Spotted ships as the static grid, which draws on
+    // this fixture, and now carries its row's order class like every other
+    // section (it carried none before — the defect Lane HC found).
+    expect($paired)->toBe(17);
 });
 
 it('gives the hero a later position than the newsletter once it has been moved down', function () {

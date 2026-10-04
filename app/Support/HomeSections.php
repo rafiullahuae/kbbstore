@@ -177,6 +177,11 @@ final class HomeSections
         'home_bl_source' => ['type' => 'select', 'label' => 'Which articles', 'default' => 'latest', 'store' => 'setting', 'options' => ['latest' => 'The latest three', 'manual' => 'Three I pick myself'], 'help' => ''],
         'home_bl_picks' => ['type' => 'ids', 'label' => 'Articles, in order (when “Three I pick myself”)', 'default' => '', 'store' => 'setting', 'options' => ['cap' => '3', 'of' => 'posts'], 'help' => ''],
         'home_bl_count_m' => ['type' => 'select', 'label' => 'How many · phone', 'default' => '2', 'store' => 'setting', 'options' => ['1' => '1', '2' => '2', '3' => '3'], 'help' => 'Stacked in one column.'],
+        // (Lane HS) The owner, 4 October: "turn off the 6 min read, tag on blog
+        // section on homepage". Both OFF, AT HIS REQUEST; the /blog/ page is
+        // not this section and keeps both.
+        'home_bl_read' => ['type' => 'bool', 'label' => 'Reading time', 'default' => false, 'store' => 'setting', 'help' => 'The “6 min read” line on each homepage card.'],
+        'home_bl_tag' => ['type' => 'bool', 'label' => 'Category tag', 'default' => false, 'store' => 'setting', 'help' => 'The article’s category above its title on each homepage card. The blog page is not affected.'],
         'home_bl_more' => ['type' => 'text', 'label' => 'Link under each article', 'default' => 'Read the article', 'store' => 'setting', 'help' => 'Empty draws none; the whole card is still a link.'],
         'home_bl_btn' => ['type' => 'text', 'label' => 'Button text', 'default' => '', 'store' => 'setting', 'help' => 'Empty: no button.'],
         'home_bl_url' => ['type' => 'text', 'label' => 'Button link', 'default' => '/blog/', 'store' => 'setting', 'help' => 'A path on this shop (/…) or a full https:// address; anything else is ignored.'],
@@ -232,7 +237,7 @@ final class HomeSections
         'bestselling' => ['Best Sellers', 'Section 2: the best-sellers grid — 8 on a laptop (4 × 2), 6 on a phone (2 × 3) — its heading, button, products, background and spacing. Show or hide it per device on Appearance → Homepage.', ['home_bs_eyebrow', 'home_bs_title', 'home_bs_sub', 'home_bs_source', 'home_bs_cat', 'home_bs_brand', 'home_bs_picks', 'home_bs_max', 'home_bs_count_d', 'home_bs_count_m', 'home_bs_cols_d', 'home_bs_cols_m', 'home_bs_btn', 'home_bs_url', 'home_bs_bg', 'home_bs_pt_d', 'home_bs_pt_m', 'home_bs_pb_d', 'home_bs_pb_m', 'home_bs_hg_d', 'home_bs_hg_m']],
         'brands' => ['Brands', 'Section 3: brand photo cards on a laptop, a logo grid on a phone — ONE list of links, styled per device. Which brands, how many, and the Shop all brands button.', ['home_br_eyebrow', 'home_br_title', 'home_br_sub', 'home_br_picks', 'home_br_count_d', 'home_br_count_m', 'home_br_cols_d', 'home_br_cols_m', 'home_br_th_m', 'home_br_btn', 'home_br_url', 'home_br_bg', 'home_br_pt_d', 'home_br_pt_m', 'home_br_pb_d', 'home_br_pb_m', 'home_br_hg_d', 'home_br_hg_m']],
         'trending' => ['Trending', 'Section 5: what is moving this week — 8 on a laptop, 6 on a phone, no button.', ['home_tr_eyebrow', 'home_tr_title', 'home_tr_sub', 'home_tr_source', 'home_tr_cat', 'home_tr_brand', 'home_tr_picks', 'home_tr_max', 'home_tr_count_d', 'home_tr_count_m', 'home_tr_cols_d', 'home_tr_cols_m', 'home_tr_btn', 'home_tr_url', 'home_tr_bg', 'home_tr_pt_d', 'home_tr_pt_m', 'home_tr_pb_d', 'home_tr_pb_m', 'home_tr_hg_d', 'home_tr_hg_m']],
-        'blog' => ['Blog', 'Section 6: three articles side by side on a laptop, stacked on a phone.', ['home_bl_eyebrow', 'home_bl_title', 'home_bl_sub', 'home_bl_source', 'home_bl_picks', 'home_bl_count_m', 'home_bl_more', 'home_bl_btn', 'home_bl_url', 'home_bl_bg', 'home_bl_pt_d', 'home_bl_pt_m', 'home_bl_pb_d', 'home_bl_pb_m', 'home_bl_hg_d', 'home_bl_hg_m']],
+        'blog' => ['Blog', 'Section 6: three articles side by side on a laptop, stacked on a phone.', ['home_bl_eyebrow', 'home_bl_title', 'home_bl_sub', 'home_bl_source', 'home_bl_picks', 'home_bl_count_m', 'home_bl_read', 'home_bl_tag', 'home_bl_more', 'home_bl_btn', 'home_bl_url', 'home_bl_bg', 'home_bl_pt_d', 'home_bl_pt_m', 'home_bl_pb_d', 'home_bl_pb_m', 'home_bl_hg_d', 'home_bl_hg_m']],
         'under54' => ['Under AED 54', 'Section 7: 10 on a laptop (5 per row), 6 on a phone (2 per row), at or under the price ceiling.', ['home_u54_eyebrow', 'home_u54_title', 'home_u54_sub', 'home_u54_source', 'home_u54_cat', 'home_u54_brand', 'home_u54_picks', 'home_u54_max', 'home_u54_count_d', 'home_u54_count_m', 'home_u54_cols_d', 'home_u54_cols_m', 'home_u54_btn', 'home_u54_url', 'home_u54_bg', 'home_u54_pt_d', 'home_u54_pt_m', 'home_u54_pb_d', 'home_u54_pb_m', 'home_u54_hg_d', 'home_u54_hg_m']],
         'feature' => ['Two-column feature', 'Section 8: two photo panels with a title, a thin rule, a line of text and SHOP NOW ▸ — Sunscreens on the left, best sellers on the right.', ['home_ft_l_img', 'home_ft_l_alt', 'home_ft_l_title', 'home_ft_l_text', 'home_ft_l_btn', 'home_ft_l_url', 'home_ft_r_img', 'home_ft_r_alt', 'home_ft_r_title', 'home_ft_r_text', 'home_ft_r_btn', 'home_ft_r_url', 'home_ft_bg', 'home_ft_pt_d', 'home_ft_pt_m', 'home_ft_pb_d', 'home_ft_pb_m']],
         'about' => ['About us', 'Section 9, last on the page: the heading and the paragraphs, as real text search engines read. A blank line starts a new paragraph.', ['about_text', 'home_ab_eyebrow', 'home_ab_title', 'home_ab_more', 'home_ab_clamp_d', 'home_ab_clamp_m', 'home_ab_bg', 'home_ab_pt_d', 'home_ab_pt_m', 'home_ab_pb_d', 'home_ab_pb_m']],
@@ -402,6 +407,9 @@ final class HomeSections
             'title' => self::text($c, 'home_bl_title'),
             'sub' => self::text($c, 'home_bl_sub'),
             'more' => self::text($c, 'home_bl_more'),
+            // (Lane HS) The two card details, off unless switched on.
+            'read' => (bool) ($c['home_bl_read'] ?? false),
+            'tag' => (bool) ($c['home_bl_tag'] ?? false),
             'btn' => self::text($c, 'home_bl_btn'),
             'url' => self::url((string) ($c['home_bl_url'] ?? ''), Url::to(UrlScheme::blogIndex())),
         ];

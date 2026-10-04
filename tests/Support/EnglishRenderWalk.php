@@ -2755,6 +2755,29 @@ KBB_BH_CSS;
                 'hits' => 1,
                 'perPage' => 1,
             ],
+
+            /*
+             * THE HOMEPAGE #KBEAUTYBLISS SPOTTED STATIC GRID.          (Lane HS)
+             *
+             * The owner, 4 October: "for now homepage, there will be 6 static
+             * images, and upon click on any image, it will take the user to the
+             * actual page ... for now just put demo cards on homepage". The
+             * carousel drew nothing in this walk (no post is ticked Homepage);
+             * the grid is the new default and draws from settings alone, so the
+             * homepage gains one section. The pattern NAMES THE SHIPPED STATE —
+             * his heading, no line under it, and exactly six placeholder cards
+             * linking to the Spotted page — so a default that moves, or a
+             * seventh card, is red here.
+             */
+            'the homepage Spotted static grid, six placeholders (Lane HS)' => [
+                'pattern' => '#<section class="sec spt spt-lilac spt-tilt spt-noarr-m spt-peek-m spt-sg dv" style="[^"<>]*" aria-labelledby="spt-h"><div class="wrap">\n'
+                    .'  <div class="sh spt-head"><div><h2 id="spt-h">\#KBEAUTYBLISS Spotted</h2></div></div>\n'
+                    .'  <ul class="spt-sgl">\n'
+                    .'(?:    <li><a class="spt-sgc" href="/kbeautybliss-spotted/" aria-label="\#KBeautyBliss Spotted photo [1-6]"><span class="spt-sgph"><svg [^<>]*><path [^<>]*/><circle [^<>]*/></svg></span></a></li>\n){6}'
+                    .'  </ul>\n</div></section>#',
+                'hits' => 1,
+                'perPage' => 1,
+            ],
         ];
     }
 
