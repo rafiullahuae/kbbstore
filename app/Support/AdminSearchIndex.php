@@ -635,7 +635,7 @@ final class AdminSearchIndex
             'Type · Sections & tabs' => [],
             'You may also like' => [
                 'Show “You may also like”', 'What to show', 'Brand : category mix', 'Top up when short',
-                'Hide out-of-stock products', 'Cards in view on a laptop', 'Cards in view on a phone',
+                'Hide out-of-stock products', 'Cards in view on a laptop', 'Cards in view on a phone', 'Arrows on a phone',
                 'Move on its own', 'Seconds between moves', 'Heading', 'Heading — Arabic',
                 'Small line above the heading', 'Small line — Arabic',
             ],
@@ -703,7 +703,7 @@ final class AdminSearchIndex
                 'Stars and review count', 'Was price', 'Spacing', 'Gap between cards', 'Smallest card',
                 'Space inside each card', 'Inside the card', 'Photo → first line', 'Brand → name',
                 'Name → stars', 'Above the price', 'Price → Add to cart',
-                'Price text size', 'Cut price',
+                'Price text size', 'Cut price', 'Sold-out label',
             ],
         ],
         'sitelayout' => [
@@ -783,7 +783,9 @@ final class AdminSearchIndex
                 'Rating display', 'Count wording',
             ],
         ],
-        'rev-settings' => [],
+        'rev-settings' => [
+            '' => ['Compact summary'],
+        ],
         'shopfilters' => [],
         'updates' => [
             '' => [

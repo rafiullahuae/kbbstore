@@ -274,6 +274,35 @@
     $kbbCanAdd = $product->isDirectlyBuyable();
 
     /*
+     * SOLD OUT, AND SAID SO.                                       (Lane PX)
+     *
+     * The owner, with a phone screenshot of a sold-out CeraVe card whose only
+     * clue was "View product": "the sold out product should have proper sold
+     * out label somewhere on the grid." That button was ALSO what every
+     * variable product draws, so the grid could not tell "pick a size" from
+     * "gone". `stock_status` is a column of the row this tile already has —
+     * no query — and it is the same test store/product.blade.php's `$out`
+     * starts from, so the card and the page agree. A variable product whose
+     * parent row is in stock is NOT sold out here, whatever one of its sizes
+     * says; the page is where the sizes are.
+     *
+     * Appearance → Product styles → Card content → "Sold-out label", on
+     * because he asked. Off, $kbbSoldPill is '' and the button is the
+     * "View product" link that shipped before, byte for byte.
+     *
+     * Built HERE, as a string printed at the START of an existing line, for
+     * the byte-for-byte reason the price cell below gives: a Blade line of its
+     * own would print its indentation on every card on the shop, and an echo
+     * at the END of a line keeps the newline after it (Blade doubles it so
+     * PHP's swallow leaves one) — which is what the first attempt printed on
+     * every card of every grid.
+     */
+    $kbbSoldOut = ! $kbbCanAdd && $kbbShows['show_soldout'] && $product->stock_status !== 'instock';
+    $kbbSoldPill = $kbbSoldOut
+        ? '<span class="kbb-soldout">' . e(__('store.product_card.sold_out')) . '</span>'
+        : '';
+
+    /*
      * A VARIABLE PRODUCT'S PRICE IS ON ITS VARIATIONS.
      *
      * App\Services\VariantPricing reads the range where this tile reads: ONE
@@ -397,7 +426,7 @@
             <a class="kbb-card-shot" href="{{ $link }}" tabindex="-1"><span class="kbb-card-ph" style="background:{{ \App\Support\Gradient::for($seed) }}">{{ \App\Support\Gradient::initials($brand ?: $name) }}</span></a>
         @endif
         @if ($kbbStart !== null){!! $kbbStart !!}@endif
-        @if ($kbbEnd !== null){!! $kbbEnd !!}@endif
+        {!! $kbbSoldPill !!}@if ($kbbEnd !== null){!! $kbbEnd !!}@endif
         @if ($kbbQuickView)<button class="qv-btn" type="button" aria-label="{{ __('store.product_card.quick_view') }}" data-kbb-qv="{{ $product->id }}">{{ __('store.product_card.quick_view') }}</button>@endif
         @if ($kbbWishlist)<button class="heart" type="button" aria-label="{{ __('store.product_card.save_label') }}" data-kbb-wish="{{ $product->id }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg></button>@endif
     </div>
@@ -443,6 +472,11 @@
                  instead; the WooCommerce classes are the theme's and are what
                  the imported markup expects. --}}
             <a class="kbb-card-cart add_to_cart_button ajax_add_to_cart" href="?add-to-cart={{ $product->publicId() }}" data-quantity="1" data-product_id="{{ $product->id }}" data-kbb-add="{{ $product->id }}" data-price="{{ number_format($product->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $name }}" rel="nofollow">{{ __('store.product_card.add_to_cart') }}</a>
+        @elseif ($kbbSoldOut)
+            {{-- (Lane PX) Still a link — a sold-out product can be read about
+                 and wished for — but it says what it is, in a muted colour
+                 rather than the pink that means "buy". --}}
+            <a class="kbb-card-cart kbb-card-soldout" href="{{ $link }}">{{ __('store.product_card.sold_out') }}</a>
         @else
             {{-- No data-kbb-add and no data-price: this product is bought by its
                  variation, so the tile sends the shopper to the page where the

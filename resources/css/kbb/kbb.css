@@ -4397,6 +4397,37 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .kbb-tile .heart.on{color:var(--pink)}
 .kbb-tile .heart.on svg{fill:var(--pink)}
 
+/* ── SOLD OUT ON THE CARD ─────────────────────────────────────── Lane PX ──
+   The owner boxed the photo's bottom-right corner of a sold-out card: "proper
+   sold out label somewhere on the grid". Ink at 86% with white type, so it
+   reads on a white bottle, a pink one and a dark photograph alike; it is
+   drawn only on a product that is out of stock (components/product-card,
+   `$kbbSoldOut`). Bottom-END, so Arabic mirrors it. When the wishlist heart
+   holds that corner the pill steps in beside it rather than under it. On the
+   two skins whose photo is a circle or a blob it sits bottom-centre, where
+   the frame does not clip it (both insets 0 and auto margins: logical, so
+   RtlReadinessTest has no physical `left` to object to). Appearance → Product styles → Card content →
+   Sold-out label turns both this and the button below off. */
+.kbb-tile .kbb-soldout{position:absolute;bottom:9px;inset-inline-end:9px;z-index:2;padding:4px 9px;border-radius:99px;background:rgba(42,34,40,.86);color:#fff;font:700 10px/1.2 'Outfit',sans-serif;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;pointer-events:none}
+.kbb-tile .kbb-card-thumb:has(> .heart) > .kbb-soldout{inset-inline-end:51px}
+.kbb-pgrid:is([data-skin="round"],[data-skin="petal"]) .kbb-tile .kbb-soldout{inset-inline:0;margin-inline:auto;width:fit-content}
+/* Showcase dissolves the thumb into the card's grid (`display:contents`), so
+   the pill names the photograph's area the way the badges do; and its heart
+   lives on the button's line, so it does not need to step aside. */
+.kbb-pgrid[data-skin^="showcase"] .kbb-soldout{grid-area:scphoto}
+.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-thumb:has(> .heart) > .kbb-soldout{inset-inline-end:9px}
+/* Three skins lay the name, price and button OVER the photograph's foot, and
+   fab floats its round button on the photo's bottom-end corner: on those the
+   corner is taken, so the pill goes to the top (under the -% pill when that is
+   drawn) or, on fab, to the bottom-start. */
+.kbb-pgrid:is([data-skin="overlay"],[data-skin="glass"],[data-skin="reveal"]) .kbb-tile .kbb-soldout{bottom:auto;top:9px}
+.kbb-pgrid:is([data-skin="overlay"],[data-skin="glass"],[data-skin="reveal"]) .kbb-tile .kbb-card-thumb:has(> .kbb-badge-sale) > .kbb-soldout{top:38px}
+.kbb-pgrid[data-skin="fab"] .kbb-tile .kbb-soldout{inset-inline-end:auto;inset-inline-start:9px}
+/* The button keeps its link and its shape and loses the "buy" colour. The
+   !important is the state winning over twenty-eight skins' button colours,
+   some at five classes of specificity (showcase-airy's hover). */
+.kbb-tile .kbb-card-cart.kbb-card-soldout{background:#EFE7E9!important;color:#6E6166!important;box-shadow:none!important}
+
 /* (Lane HB) Placed above the flag bar, not at the end of the sheet: three
    guards read from a marker to the END of this file (the flag bar's
    logical-properties check, and the showcase family's two copies), and a

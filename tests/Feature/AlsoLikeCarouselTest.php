@@ -336,7 +336,7 @@ it('draws the shop\'s own cards in one scrolling row, with arrows and a reserved
     expect(substr_count($html, 'data-ymal '))->toBe(1)
         ->and($html)->toContain('class="rel kbb-pgrid ymal-track" data-skin="')
         ->and($html)->toContain('id="related" data-ymal-track tabindex="0" role="region"')
-        ->and($html)->toContain('style="--ymal-d:5;--ymal-m:2"')
+        ->and($html)->toContain('style="--ymal-d:5;--ymal-m:2.3"') // Lane PX: 2.3 on a phone, as the owner asked
         ->and($html)->toContain('aria-label="Previous products" disabled')
         ->and($html)->toContain('aria-label="More products"')
         ->and($html)->toContain('<h2 id="ymal-h">You may also like</h2>');
@@ -415,7 +415,7 @@ it('serves and saves the carousel tab as its own half', function () {
     // A select stores one of its own options or the default.
     $this->postJson('/admin-api/product-page', ['also' => ['rule' => 'everything', 'per_phone' => '7']])->assertOk();
     $c = app(AlsoLikeSettings::class)->all();
-    expect([$c['rule'], $c['per_phone']])->toBe(['mix', '2']);
+    expect([$c['rule'], $c['per_phone']])->toBe(['mix', '2.3']); // Lane PX: the default is 2.3
 
     // Markup in a heading is wording, not markup.
     $this->postJson('/admin-api/product-page', ['also' => ['title' => '<script>x</script>Pairs well']])->assertOk();
@@ -434,10 +434,11 @@ it('refuses an unknown carousel key and writes nothing at all', function () {
     expect(app(AlsoLikeSettings::class)->all())->toBe(AlsoLikeSettings::defaults());
 });
 
-it('ships the carousel on, mixed, twelve, five and two, and autoplay off', function () {
+it('ships the carousel on, mixed, twelve, five and 2.3, and autoplay off', function () {
     expect(AlsoLikeSettings::defaults())->toMatchArray([
         'enabled' => true, 'rule' => 'mix', 'mix' => '1:1', 'fill' => true, 'count' => 12,
-        'hide_oos' => true, 'per_desktop' => '5', 'per_phone' => '2', 'autoplay' => false,
+        // Lane PX: per_phone 2 -> 2.3 and arrows_m off, both the owner's ask.
+        'hide_oos' => true, 'per_desktop' => '5', 'per_phone' => '2.3', 'arrows_m' => false, 'autoplay' => false,
         'title' => '', 'title_ar' => '',
     ]);
 });

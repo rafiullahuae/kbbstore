@@ -687,6 +687,8 @@ final class InterfaceStrings
             'product_card.save_label' => 'Save',
             'product_card.add_to_cart' => 'Add to cart',
             'product_card.view_product' => 'View product',
+            // (Lane PX) The pill on a sold-out product's photo and its button.
+            'product_card.sold_out' => 'Sold out',
             // '1.2k' — the abbreviation is a word, and it is not 'k' in Arabic.
             'product_card.count_thousands' => ':countk',
             /*

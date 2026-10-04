@@ -75,7 +75,10 @@ it('answers every recorded settings call exactly as it did before the shared sch
 
     // A guard on the guard: an emptied fixture makes the loop pass by doing
     // nothing. 345 when recorded, across three classes and twenty-one keys.
-    expect(count($recorded))->toBe(345, 'the recorded corpus changed size');
+    // 366 (Lane PX): + sr_compact's 21 rows, copied from sr_show_stars' —
+    // the same bool, the same default, the same dialect — and placed after
+    // them, where SettingsCorpus::rows() walks the schema.
+    expect(count($recorded))->toBe(366, 'the recorded corpus changed size');
 });
 
 it('keeps the third boolean dialect a dialect rather than folding it', function () {

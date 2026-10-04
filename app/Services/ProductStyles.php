@@ -142,6 +142,20 @@ class ProductStyles
          */
         'show_discount'      => ['bool',   'Discount badge', false, 'The -N% pill on the photograph. Off by default, as you asked; the struck-through was-price still shows a markdown.'],
         'show_new'           => ['bool',   'New badge', false, 'The NEW pill on products added in the last 30 days. Off by default, as you asked.'],
+        /*
+         * ── SOLD OUT, SAID ON THE CARD ─────────────────────────── Lane PX ──
+         *
+         * "the sold out product should have proper sold out label somewhere on
+         *  the grid." A product that is out of stock drew exactly what a
+         * variable product draws — "View product" and nothing on the photo — so
+         * the grid could not tell a shopper which was which. On: a "Sold out"
+         * pill sits on the photo's bottom corner and the button says "Sold
+         * out" (still a link to the product, in a muted colour). ON BY DEFAULT
+         * because he asked for it (CLAUDE.md rule 1, 30 September); off puts
+         * back exactly the card that shipped before. A variable product that is
+         * in stock is not sold out and is never labelled.
+         */
+        'show_soldout'       => ['bool',   'Sold-out label', true, 'A “Sold out” pill on the photo of a product that is out of stock, and “Sold out” on its button instead of “View product”. On, as you asked.'],
         'show_cart'          => ['bool',   'Add to cart button', true, ''],
         'name_lines'         => ['range',  'Product name lines', 0, 'Zero shows the whole name, however long. One to four trims it.', ['min' => 0, 'max' => 4, 'step' => 1, 'unit' => '']],
 
@@ -276,7 +290,7 @@ class ProductStyles
         'layout'  => ['Layout', 'Card shape, corners, and hover on a phone.',
                       ['grid_skin', 'card_radius', 'image_ratio', 'hover_phone']],
         'content' => ['Card content', 'What each card shows.',
-                      ['show_brand', 'show_category', 'show_rating', 'show_was_price', 'show_discount', 'show_new', 'show_cart', 'name_lines']],
+                      ['show_brand', 'show_category', 'show_rating', 'show_was_price', 'show_discount', 'show_new', 'show_soldout', 'show_cart', 'name_lines']],
         'spacing' => ['Spacing & type', 'The space between the photo, the name, the price and the button, and the size and weight of each — a phone and a desktop set apart. Every value starts at what the shop shows today, so nothing moves until you move it.',
                       ['card_pad_m', 'card_pad_d', 'card_gap_img_m', 'card_gap_img_d',
                        'card_gap_brand_m', 'card_gap_brand_d', 'card_gap_rate_m', 'card_gap_rate_d',

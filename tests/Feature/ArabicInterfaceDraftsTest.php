@@ -618,7 +618,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 1344 -> 1353 (Lane CT, merged after WA): the nine strings of the page a blocked address
     // or a scripted client is shown (store.blocked.*), seeded by
     // 2027_07_30_200800_seed_cart_tracking_arabic_drafts.
-    expect($ui['drafts'])->toBe(1353, 'the shipped Arabic is not showing as drafts to review')
+    // 1353 -> 1354 (Lane PX): store.product_card.sold_out, the grid card's
+    // "Sold out" pill and button, seeded by
+    // 2027_08_06_100000_seed_sold_out_label_arabic_draft.
+    expect($ui['drafts'])->toBe(1354, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

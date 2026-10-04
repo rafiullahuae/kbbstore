@@ -30,6 +30,22 @@
 .sr-bar{flex:1;height:8px;background:var(--sr-track);border-radius:6px;overflow:hidden}
 .sr-bf{display:block;height:100%;background:linear-gradient(90deg,var(--sr-accent-soft),var(--sr-accent));border-radius:6px}
 .sr-bc{font-size:12px;color:var(--soft);width:20px;text-align:end}
+/* COMPACT SUMMARY (Lane PX). The owner: "The review header box i need less
+   heighted, almost less to half. and keep the same design and elements
+   positions." Same box, same order — score, stars and count on the left, the
+   five bars on the right — with the padding, the score and the bar pitch
+   taken down: 156px -> 78px at 390, 156px -> 87px at 1280 (measured, Chromium).
+   `sr-compact` is on the section while Store → Reviews → Review Settings →
+   Compact summary is on, which it is by default because he asked. */
+.sr-compact .sr-summary{gap:16px;padding:8px 16px;border-radius:16px}
+.sr-compact .sr-score{flex-basis:92px}
+.sr-compact .sr-avg{font-size:30px}
+.sr-compact .sr-avg-stars{font-size:12px;line-height:1.2;margin-top:2px}
+.sr-compact .sr-count{font-size:11px;line-height:1.2;margin-top:1px}
+.sr-compact .sr-bar-row{margin:0;gap:8px}
+.sr-compact .sr-bl,.sr-compact .sr-bc{font-size:11px;line-height:12px}
+.sr-compact .sr-bar{height:6px}
+@media(min-width:761px){.sr-compact .sr-summary{gap:24px;padding:10px 24px}.sr-compact .sr-avg{font-size:34px}.sr-compact .sr-bar-row{margin:.5px 0}}
 .sr-write{display:flex;margin:16px auto 0;align-items:center;gap:6px;background:var(--ink);color:var(--c);border:none;border-radius:28px;padding:13px 24px;font-size:14px;font-weight:600;cursor:pointer}
 .sr-filters{display:flex;gap:8px;margin:22px 0 14px;flex-wrap:wrap}
 .sr-chip{background:var(--w);border:1px solid var(--ln);border-radius:20px;padding:7px 15px;font-size:13px;font-weight:600;color:var(--soft);cursor:pointer}

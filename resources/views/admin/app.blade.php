@@ -3853,7 +3853,7 @@ let PGSKIN = '', PGCOLS = 4;
 let PGDIRTY = { layout: false, styles: false, space: false };
 let PGBOUND = false;
 
-/* The seven Product-styles keys this screen surfaces, and the class each one
+/* The eight Product-styles keys this screen surfaces, and the class each one
    turns into. Same pairs as psPreview(); same keys as ProductStyles::SCHEMA. */
 const PG_CONTENT = [
   ['show_new',       'New badge',              'On products with no reviews yet.'],
@@ -3862,12 +3862,16 @@ const PG_CONTENT = [
   ['show_brand',     'Brand name',             'The line above the product name.'],
   ['show_rating',    'Stars and review count', ''],
   ['show_was_price', 'Was price',              'The struck-through original.'],
+  ['show_soldout',   'Sold-out label',         'A “Sold out” pill on the photo of an out-of-stock product, and “Sold out” on its button.'],
   ['show_cart',      'Add to cart button',     ''],
 ];
 const PG_NOCLASS = {
   show_brand: 'pc-nobrand', show_category: 'pc-nocat', show_rating: 'pc-norate',
   show_was_price: 'pc-nowas', show_discount: 'pc-nodisc', show_new: 'pc-nonew',
   show_cart: 'pc-nocart',
+  /* (Lane PX) No rule reads this class: the preview card is never sold out.
+     It is here because this map is also the list of switches the panel saves. */
+  show_soldout: 'pc-nosoldout',
 };
 /* key, label, min, max, step, unit — the same bounds SiteLayout::SCHEMA sets,
    so a value this screen offers is one that endpoint will store. */

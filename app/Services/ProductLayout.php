@@ -146,6 +146,11 @@ class ProductLayout
         'rule_pad_d' => '--pl-rule-pad-d',
         'brand_s' => '--pl-brand-s',
 
+        /* Lane PX — the brand line's light capsule. */
+        'brand_cap' => '--pl-brand-cap',
+        'brand_bg' => '--pl-brand-bg',
+        'brand_r' => '--pl-brand-r',
+
         /* Lane RG — the tab row's laptop gap, and Tabby & Tamara on a laptop. */
         'tab_body_gap_d' => '--pl-tab-body-gap-d',
         'paylater_gap_d' => '--pl-paylater-gap-d',
@@ -307,6 +312,25 @@ class ProductLayout
         'brand_s' => ['range', 'Brand name', 120, 'The small capitals above the product name.',
             ['min' => 90, 'max' => 200, 'step' => 5, 'unit' => 'px', 'scale' => self::TENTH]],
 
+        /*
+         * (Lane PX) The owner, arrow on "SKIN 1004": "The bran name should have
+         * light background color like capsule with less border radius. but make
+         * less height, just put background light color." So the brand line gets
+         * a pale tint sized to its words, a small radius and 2px of padding top
+         * and bottom — on by default because he asked. kbb-product.css draws it
+         * from these three with the same values as fallbacks, so the page
+         * carries the capsule with no <style> at all; "Off" multiplies the tint
+         * and the padding by zero and the line is the plain text it was.
+         */
+        'brand_cap' => ['select', 'Brand name background', '1',
+            'A light capsule behind the brand name above the title. Off leaves the plain text.',
+            ['1' => 'On — light capsule', '0' => 'Off — plain text']],
+        'brand_bg' => ['colour', 'Brand name background colour', '#FCE8EE',
+            'The capsule’s tint. Keep it light; the brand name stays its own pink.'],
+        'brand_r' => ['range', 'Brand name corner radius', 5,
+            'The capsule’s corners. Small is what was asked for.',
+            ['min' => 0, 'max' => 12, 'step' => 1, 'unit' => 'px']],
+
         // .pdp .bb-title{font-size:19px;font-weight:500} — round 2, option B.
         'title_m' => ['range', 'Product name · phone', 190,
             'The size he asked about: “in mobile you have used big bold font, whichi dont’ want”. 19px is what round 2 settled on.',
@@ -450,7 +474,7 @@ class ProductLayout
                 'trust_gap', 'trust_line_gap', 'chips_gap', 'bt_gap_d']],
         'ty_buy' => ['Type · Buy column',
             'Font sizes and weights for the top of the page. The product name has a phone size and a laptop size because those are the two numbers the page really draws.',
-            ['brand_s', 'title_m', 'title_d', 'title_w', 'price_s', 'price_w', 'was_s', 'off_s',
+            ['brand_s', 'brand_cap', 'brand_bg', 'brand_r', 'title_m', 'title_d', 'title_w', 'price_s', 'price_w', 'was_s', 'off_s',
                 'vat_s', 'rate_s', 'desc_s', 'desc_lh', 'trust_s']],
         'ty_sec' => ['Type · Sections & tabs',
             'The headings under the buy column, and the detail tabs.',
@@ -715,6 +739,10 @@ class ProductLayout
             '--pl-opt-gap-d:'.$n('opt_gap_d').'px',
             '--pl-rule-pad-d:'.$n('rule_pad_d').'px',
             '--pl-brand-s:'.self::px($n('brand_s')),
+            /* Lane PX — the brand capsule. A 0/1 multiplier, as thumb_over. */
+            '--pl-brand-cap:'.(($c['brand_cap'] ?? '1') === '0' ? '0' : '1'),
+            '--pl-brand-bg:'.self::hex($c['brand_bg'] ?? null, '#FCE8EE'),
+            '--pl-brand-r:'.$n('brand_r').'px',
 
             /* Lane RG */
             '--pl-tab-body-gap-d:'.$n('tab_body_gap_d').'px',

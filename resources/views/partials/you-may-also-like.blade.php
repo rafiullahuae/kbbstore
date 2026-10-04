@@ -19,8 +19,8 @@
   ── NO JAVASCRIPT DECIDES ANY SIZE ─────────────────────────────────────────
 
   A card is `(100% − gaps) ÷ cards-in-view` wide, in CSS (kbb-product.css,
-  `.ymal-track`), from two custom properties printed here as INTEGERS the
-  settings class has already held to its own option list. The page paints
+  `.ymal-track`), from two custom properties printed here — the phone one may
+  be fractional, 2.3 by default (Lane PX) — each held to its own option list. The page paints
   at its final size before any script runs, so nothing shifts — rule 4.
   resources/js/kbb/ymal.js only scrolls, and reads no element geometry to
   decide a size.
@@ -41,10 +41,15 @@
 @php
     // Integers, from a select that only stores its own options (ModuleSchema).
     $ymalD = max(1, min(6, (int) ($ymalC['per_desktop'] ?? 5)));
-    $ymalM = max(1, min(3, (int) ($ymalC['per_phone'] ?? 2)));
+    /* (Lane PX) A phone count may be fractional now (2.3 is the default). It
+       is printed into a style attribute, so it is checked for MEMBERSHIP of
+       the schema's own options rather than cast — anything else is 2.3. */
+    $ymalM = (string) ($ymalC['per_phone'] ?? '2.3');
+    $ymalM = in_array($ymalM, array_map('strval', array_keys(\App\Services\AlsoLikeSettings::SCHEMA['per_phone'][4])), true) ? $ymalM : '2.3';
+    $ymalArrM = ! empty($ymalC['arrows_m']) ? ' ymal-arr-m' : '';
     $ymalAuto = ! empty($ymalC['autoplay']) ? max(3, min(15, (int) ($ymalC['autoplay_s'] ?? 5))) : 0;
 @endphp
-  <section class="sec ymal {{ $modules->classFor('related') }}" data-ymal data-ymal-auto="{{ $ymalAuto }}" aria-labelledby="ymal-h" style="--ymal-d:{{ $ymalD }};--ymal-m:{{ $ymalM }}">
+  <section class="sec ymal{{ $ymalArrM }} {{ $modules->classFor('related') }}" data-ymal data-ymal-auto="{{ $ymalAuto }}" aria-labelledby="ymal-h" style="--ymal-d:{{ $ymalD }};--ymal-m:{{ $ymalM }}">
     <div class="eyebrow">{{ $ymal['wording']['eyebrow'] }}</div>
     <h2 id="ymal-h">{{ $ymal['wording']['title'] }}</h2>
     <div class="ymal-nav">

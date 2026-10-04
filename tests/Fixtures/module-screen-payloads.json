@@ -3231,6 +3231,15 @@
             "options": null
           },
           {
+            "key": "show_soldout",
+            "type": "bool",
+            "label": "Sold-out label",
+            "help": "A “Sold out” pill on the photo of a product that is out of stock, and “Sold out” on its button instead of “View product”. On, as you asked.",
+            "default": true,
+            "value": true,
+            "options": null
+          },
+          {
             "key": "show_cart",
             "type": "bool",
             "label": "Add to cart button",
@@ -9622,6 +9631,7 @@
   "review-settings": {
     "settings": {
       "sr_show_stars": true,
+      "sr_compact": true,
       "sr_show_tabs": true,
       "sr_show_date": true,
       "sr_grid_cols": 4,

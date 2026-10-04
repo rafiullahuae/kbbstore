@@ -200,6 +200,23 @@ const KBB_ONLY_IN_KBB_CSS = [
     '|.kbb-tile>.cb>.cp',
     '|.kbb-tile>.kbb-card-thumb',
     /*
+     * Lane PX — the "Sold out" pill on a sold-out card's photo and its muted
+     * button. In kbb.css ONLY, deliberately, for the reason the quick-view
+     * pair above gives: the card is on every page and so is kbb.css, and the
+     * owner's "proper sold out label somewhere on the grid" is every grid.
+     * SoldOutCardTest pins them; docs/lane-px-shots/after-soldout-skins-390.png
+     * is the pill on all 32 skins.
+     */
+    '|.kbb-tile .kbb-soldout',
+    '|.kbb-tile .kbb-card-thumb:has(>.heart)>.kbb-soldout',
+    '|.kbb-pgrid:is([data-skin="round"],[data-skin="petal"]) .kbb-tile .kbb-soldout',
+    '|.kbb-pgrid[data-skin^="showcase"] .kbb-soldout',
+    '|.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-thumb:has(>.heart)>.kbb-soldout',
+    '|.kbb-pgrid:is([data-skin="overlay"],[data-skin="glass"],[data-skin="reveal"]) .kbb-tile .kbb-soldout',
+    '|.kbb-pgrid:is([data-skin="overlay"],[data-skin="glass"],[data-skin="reveal"]) .kbb-tile .kbb-card-thumb:has(>.kbb-badge-sale)>.kbb-soldout',
+    '|.kbb-pgrid[data-skin="fab"] .kbb-tile .kbb-soldout',
+    '|.kbb-tile .kbb-card-cart.kbb-card-soldout',
+    /*
      * Lane PR — the phone-hover block. In kbb.css ONLY, deliberately: kbb.css
      * is on every page, so the owner's "no card hover on a phone" reaches
      * /shop/, every category, every brand page and the product page's related
