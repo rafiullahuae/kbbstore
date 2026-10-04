@@ -577,7 +577,7 @@ it('emits exactly the moved values, each in its own device query', function () {
     expect($css)->toBe(
         '@media (max-width:700px){.kbb-pgrid.kbb-pgrid[data-skin]{--sc-pad:10px}'
         .'.kbb-pgrid[data-skin] .kbb-tile .cb{padding-inline:10px;padding-bottom:10px}}'
-        .'@media (min-width:701px){.kbb-pgrid[data-skin] .kbb-tile .kbb-card-cart{margin-top:20px}'
+        .'@media (min-width:701px){.kbb-pgrid[data-skin^="showcase"] .kbb-tile .kbb-card-cart{margin-top:20px}.kbb-pgrid[data-skin]:not([data-skin^="showcase"]) .kbb-tile .cp{margin-bottom:20px}.kbb-pgrid[data-skin]:not([data-skin^="showcase"]) .kbb-tile .kbb-card-cart{margin-top:0}'
         .'.kbb-pgrid.kbb-pgrid[data-skin]{--sc-name-slot:calc(17px * var(--sc-name-lh,1.32) * var(--sc-name-lines,2))}'
         .'.kbb-pgrid[data-skin] .kbb-tile .kbb-card-nm{font-size:17px}}'
         .'.kbb-pgrid[data-skin] .kbb-tile .kbb-card-price{font-weight:500}'

@@ -3964,10 +3964,13 @@ function pgPaint(){
   el.textContent = '';
   if (!grid || !card) return;
 
-  /* Two rows, so the gap DOWN the grid is visible and not just the gap across
-     it — several of the 32 skins are about how cards sit beside each other. */
-  const want = Math.max(2, pgNum(PGCOLS, 1, 6, 4) * 2);
-  for (let i = 1; i < want; i++) grid.appendChild(card.cloneNode(true));
+  /* ONE CARD, AT A REAL CARD'S WIDTH (2.60.374). The owner: "please give me
+     only one card preview on backend". A grid of eight 120px thumbnails made a
+     4px move in a gap impossible to see; one card at shop size makes it plain.
+     `--pg-cols:1` on the grid, and the frame capped at a shop card's width. */
+  grid.style.setProperty('--pg-cols', '1');
+  grid.style.maxWidth = '300px';
+  grid.style.margin = '0 auto';
   el.appendChild(grid);
 
   /* Space inside each card, at the DESKTOP values — the same declarations
@@ -3981,8 +3984,12 @@ function pgPaint(){
   if (img !== null) r.push(`${T} .cb{padding-top:${img}px}`);
   if (br !== null) r.push(`${T} .kbb-card-brand{margin-bottom:${br}px}`);
   if (rt !== null) r.push(`${T} .kbb-card-rate{margin-top:${rt}px}`);
-  if (pr !== null) r.push(`${T} .cp{padding-top:${pr}px;margin-top:0}`);
-  if (ca !== null) r.push(`${T} .kbb-card-cart{margin-top:${ca}px}`);
+  /* The same split ProductStyles::cardCss() makes: SPACE above the price and
+     below it (margins), never padding inside a price capsule; the Showcase
+     family keeps its padding and the button's top margin. */
+  const SC = '#pgPrev .kbb-pgrid[data-skin^="showcase"] .kbb-tile', NS = '#pgPrev .kbb-pgrid:not([data-skin^="showcase"]) .kbb-tile';
+  if (pr !== null) r.push(`${SC} .cp{padding-top:${pr}px;margin-top:0}${NS} .cp{margin-top:${pr}px}`);
+  if (ca !== null) r.push(`${SC} .kbb-card-cart{margin-top:${ca}px}${NS} .cp{margin-bottom:${ca}px}${NS} .kbb-card-cart{margin-top:0}`);
   if (r.length) { const st = document.createElement('style'); st.textContent = r.join(''); el.appendChild(st); }
 }
 
@@ -5656,8 +5663,9 @@ function psSpaceCss(){
   const pad=num('card_pad_d'), img=num('card_gap_img_d'), pr=num('card_gap_price_d'), ca=num('card_gap_cart_d');
   if(pad!==null) r.push(`${T} .cb{padding-inline:${pad}px;padding-bottom:${pad}px}`);
   if(img!==null) r.push(`${T} .cb{padding-top:${img}px}`);
-  if(pr!==null) r.push(`${T} .cp{padding-top:${pr}px;margin-top:0}`);
-  if(ca!==null) r.push(`${T} .kbb-card-cart{margin-top:${ca}px}`);
+  const SC='#psPrev .kbb-pgrid[data-skin^="showcase"] .kbb-tile', NS='#psPrev .kbb-pgrid:not([data-skin^="showcase"]) .kbb-tile';
+  if(pr!==null) r.push(`${SC} .cp{padding-top:${pr}px;margin-top:0}${NS} .cp{margin-top:${pr}px}`);
+  if(ca!==null) r.push(`${SC} .kbb-card-cart{margin-top:${ca}px}${NS} .cp{margin-bottom:${ca}px}${NS} .kbb-card-cart{margin-top:0}`);
   const br=num('card_gap_brand_d'), rt=num('card_gap_rate_d');
   if(br!==null) r.push(`${T} .kbb-card-brand{margin-bottom:${br}px}`);
   if(rt!==null) r.push(`${T} .kbb-card-rate{margin-top:${rt}px}`);
