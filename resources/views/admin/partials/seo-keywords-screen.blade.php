@@ -6,8 +6,9 @@
     have own keywords + product focused + industry focused + skincare focused
     ... must be optimized, very light, secure, not spamming."
 
-    Five tabs over routes/seo-keywords-admin.php: Overview, Sources, Keyword
-    bank, Pages, Sync. One request per tab open, per filter change or per page;
+    Six tabs over routes/seo-keywords-admin.php: Overview, Sources, Keyword
+    bank, Pages, Sync, and Brand name (Lane BR — /admin-api/seo-brand, the
+    "Extra Beauty" check and the three brand switches). One request per tab open, per filter change or per page;
     the bank's search box is debounced. Sync is the only loop, and it is a loop
     of AWAITED requests — the next step is sent when the last one answers, it
     stops when the run is done or the owner presses Stop, and there is no timer.
@@ -81,11 +82,11 @@
   'use strict';
 
   var SCREEN = 'seokeywords';
-  var TABS = [['overview', 'Overview'], ['sources', 'Sources'], ['bank', 'Keyword bank'], ['pages', 'Pages'], ['sync', 'Sync']];
+  var TABS = [['overview', 'Overview'], ['sources', 'Sources'], ['bank', 'Keyword bank'], ['pages', 'Pages'], ['sync', 'Sync'], ['brand', 'Brand name']];
   var LAYERS = [['own', 'Own'], ['product', 'Product'], ['industry', 'Industry'], ['skincare', 'Skincare']];
   var st = { tab: 'overview', ov: null, err: '', bank: { q: '', source: 'all', locale: 'en', page: 1, data: null },
     pages: { type: 'all', locale: 'en', filter: 'all', q: '', page: 1, data: null, edit: null },
-    sync: { types: null, run: null, going: false, stop: false } };
+    sync: { types: null, run: null, going: false, stop: false }, brand: null };
   var typing = null;
 
   function esc(s) {
@@ -216,6 +217,56 @@
       + '<details><summary>Concerns</summary>' + list(lx.concerns) + '</details>'
       + '<details><summary>Industry phrasing</summary>' + list(lx.industry) + '</details>'
       + '<details><summary>UAE intent</summary>' + list((lx.uae && lx.uae.en || []).concat(lx.uae && lx.uae.ar || [])) + '</details></div>');
+  }
+
+  /* ---------------------------------------------------------------- Brand name (Lane BR)
+     Its own endpoint, /admin-api/seo-brand, read once when the tab opens. The
+     replace button carries the dry-run count it was drawn with; the server
+     refuses if the count has moved since. */
+  async function brandApi(method, path, body) {
+    var r = await fetch(base() + '/admin-api/seo-brand' + path, {
+      method: method,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') },
+      credentials: 'same-origin',
+      body: body ? JSON.stringify(body) : undefined
+    });
+    var data = null;
+    try { data = await r.json(); } catch (e) { data = null; }
+    if (r.status === 409 && data && data.scan) { st.brand = data; }
+    if (!r.ok) {
+      var err = new Error((data && data.message) || (r.status === 403 ? 'Your role cannot do this here.' : 'Something went wrong (' + r.status + ').')); err.status = r.status; throw err;
+    }
+    return data;
+  }
+  async function loadBrand() {
+    try { st.brand = await brandApi('GET', ''); st.err = ''; } catch (e) { st.err = e.message; }
+  }
+  function drawBrand() {
+    var b = st.brand;
+    if (!b) return paint('<div class="skw-card"><div class="skw-empty">Loading…</div></div>');
+    var sc = b.scan || {}, sw = b.switches || {}, u = b.in_use || {};
+    function box(id, on, title, help) {
+      return '<label class="skw-sw"><input type="checkbox" id="' + id + '"' + (on ? ' checked' : '') + '><span><b>' + title + '</b><small>' + help + '</small></span></label>';
+    }
+    var names = [['Store name', u.store_name], ['SEO site name', u.seo_site_name], ['Organization name', u.org_name], ['Email From name', u.mail_from_name]];
+    var html = '<div class="skw-card"><h3>Brand name check</h3>'
+      + '<p>Finds the old name “Extra Beauty” (any spelling, and the Arabic) still stored in the shop’s own text — settings, footer and banner copy, menus, pages, email and marketing templates, SEO boxes and keyword sets — and replaces it with <b>' + esc(b.name) + '</b>. Orders, customers, payments, reviews and product descriptions are never read. Web addresses and emails (extrabeauty.ae) are left alone: the domain moves at the cutover.</p>'
+      + '<div class="skw-wrap"><table class="skw-t"><tbody>' + names.map(function (n) { return '<tr><td>' + esc(n[0]) + '</td><td class="term">' + (n[1] ? esc(n[1]) : '<span class="skw-note">not set — ' + esc(b.name) + ' is used</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>'
+      + (b.app_name_stale ? '<div class="skw-warn"><b>APP_NAME in the server’s .env still names the old shop.</b> The shop already ignores it and uses ' + esc(b.name) + '; change it to <code>APP_NAME="' + esc(b.name) + '"</code> over SSH when convenient.</div>' : '')
+      + (sc.total ? '<div class="skw-warn"><b>' + num(sc.total) + '</b> place' + (sc.total === 1 ? '' : 's') + ' still say “Extra Beauty”. This is a dry run — nothing has changed yet.</div>'
+          + '<div class="skw-wrap"><table class="skw-t"><thead><tr><th>Where</th><th>Now</th><th>After</th></tr></thead><tbody>'
+          + (sc.rows || []).map(function (r) { return '<tr><td class="term">' + esc(r.label) + '<div class="skw-note">' + esc(r.table + ' · ' + r.column) + '</div></td><td class="term">' + esc(r.before) + '</td><td class="term">' + esc(r.after) + '</td></tr>'; }).join('')
+          + '</tbody></table></div><div class="skw-row"><button type="button" class="skw-btn pri" data-skw-act="brand-replace" data-n="' + esc(sc.total) + '">Replace with K-Beauty Bliss</button><button type="button" class="skw-btn" data-skw-act="brand-check">Check again</button></div>'
+        : '<div class="skw-ok"><b>Nothing to replace.</b> The shop’s stored text says ' + esc(b.name) + ' everywhere it names itself.</div><div class="skw-row"><button type="button" class="skw-btn" data-skw-act="brand-check">Check again</button></div>')
+      + ((sc.left || []).length ? '<details><summary>Left on purpose (' + (sc.left || []).length + ')</summary><div class="skw-wrap"><table class="skw-t"><tbody>' + sc.left.map(function (r) { return '<tr><td class="term">' + esc(r.label) + '</td><td class="term">' + esc(r.sample || '—') + '<div class="skw-note">' + esc(r.why) + '</div></td></tr>'; }).join('') + '</tbody></table></div></details>' : '')
+      + ((sc.errors || []).length ? '<div class="skw-warn">' + sc.errors.map(esc).join('<br>') + '</div>' : '')
+      + '</div>';
+    html += '<div class="skw-card"><h3>Brand in search results</h3><p>Each is on. Untick and save to put that piece back as it was.</p>'
+      + box('skwBrTitles', sw.titles, 'Brand name in titles', 'When no home title or description is typed under SEO &amp; Meta, the home page’s title is “' + esc(b.home_title && b.home_title[0]) + '” and its description names ' + esc(b.name) + ' once. Arabic pages get the Arabic version. Typed titles always win.')
+      + box('skwBrAlt', sw.alternates, 'Brand alternate names', 'Tells Google the shop is also searched as ' + (b.alternates || []).map(esc).join(', ') + ' — in the structured data only (WebSite and Organization <code>alternateName</code>), never as text on the page.')
+      + box('skwBrOne', sw.kbeauty_one, 'One k-beauty phrase per page', 'Each page’s keywords carry exactly one natural phrase with “k-beauty”, “k beauty” or “kbeauty” about that page (“anua toner k-beauty uae”), the spelling rotating across pages and never stacked. The home page’s is “k-beauty bliss”. Takes effect at the next sync (Sync tab).')
+      + '<div class="skw-row"><button type="button" class="skw-btn pri" data-skw-act="brand-save">Save</button></div></div>';
+    paint(html);
   }
 
   /* ---------------------------------------------------------------- Bank */
@@ -351,9 +402,10 @@
 
   async function show(tab) {
     st.tab = tab;
-    var draw = { overview: drawOverview, sources: drawSources, bank: drawBank, pages: drawPages, sync: drawSync }[tab] || drawOverview;
+    var draw = { overview: drawOverview, sources: drawSources, bank: drawBank, pages: drawPages, sync: drawSync, brand: drawBrand }[tab] || drawOverview;
     draw();
-    if (tab === 'bank') { await loadBank(); }
+    if (tab === 'brand') { await loadBrand(); }
+    else if (tab === 'bank') { await loadBank(); }
     else if (tab === 'pages') { if (!st.ov) await loadOverview(); await loadPages(); }
     else { await loadOverview(); }
     if (st.tab === tab) draw();
@@ -397,6 +449,17 @@
         var f = t.getAttribute('data-f');
         await api('POST', '/apply', { type: row.type, id: +row.id, fields: f === 'both' ? ['title', 'desc'] : [f] });
         say(f === 'desc' ? 'Description applied.' : (f === 'title' ? 'Title applied.' : 'Title and description applied.'));
+      } else if (act === 'brand-check') {
+        await loadBrand(); drawBrand();
+      } else if (act === 'brand-replace') {
+        var n = +t.getAttribute('data-n');
+        if (!confirm('Replace “Extra Beauty” with K-Beauty Bliss in ' + n + ' place' + (n === 1 ? '' : 's') + '?')) return;
+        t.disabled = true;
+        st.brand = await brandApi('POST', '/replace', { expect: n });
+        say('Replaced in ' + st.brand.replaced + ' place' + (st.brand.replaced === 1 ? '' : 's') + '.'); drawBrand();
+      } else if (act === 'brand-save') {
+        st.brand = await brandApi('PUT', '/switches', { titles: q('#skwBrTitles').checked, alternates: q('#skwBrAlt').checked, kbeauty_one: q('#skwBrOne').checked });
+        say('Saved.'); drawBrand();
       } else if (act === 'all-types') {
         st.sync.types = Object.keys((st.ov && st.ov.types) || {}); drawSync();
       } else if (act === 'dry' || act === 'run') {

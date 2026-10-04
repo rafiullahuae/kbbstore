@@ -140,7 +140,7 @@ class EmailBranding
                 ]
             );
 
-            $name = (string) config('app.name', 'K Beauty Bliss');
+            $name = \App\Support\BrandName::appName();
 
             return [
                 'customerFacing' => $customerFacing,
@@ -207,7 +207,7 @@ class EmailBranding
     {
         $name = trim((string) ($this->settings->get('store_name', '') ?? ''));
 
-        return $name !== '' ? $name : (string) config('app.name', 'K Beauty Bliss');
+        return $name !== '' ? $name : \App\Support\BrandName::appName();
     }
 
     /**

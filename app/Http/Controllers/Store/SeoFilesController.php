@@ -1093,7 +1093,7 @@ class SeoFilesController extends Controller
         $name = SeoSettings::firstFilled(
             $s['seo_site_name'] ?? null,
             $s['store_name'] ?? null,
-            (string) config('app.name'),
+            \App\Support\BrandName::appName(),
             'K-Beauty Bliss'
         );
         $desc = SeoSettings::from($s, 'seo_default_description', '');

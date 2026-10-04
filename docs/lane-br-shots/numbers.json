@@ -1,0 +1,100 @@
+{
+ "before-home-extra-beauty-count": 4,
+ "before-product-extra-beauty-count": 5,
+ "before-home-head-390.png": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "before-product-head-390.png": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "before-footer-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "before-email-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "before-email-extra-beauty-count": 3,
+ "before-home-head-1280.png": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280
+ },
+ "before-product-head-1280.png": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280
+ },
+ "before-footer-1280": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280
+ },
+ "before-email-1280": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280
+ },
+ "tool-dry-run-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "tool-dry-run-1280": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280
+ },
+ "tool-after-replace-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "after-home-extra-beauty-count": 0,
+ "after-product-extra-beauty-count": 0,
+ "after-home-head-390.png": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "after-product-head-390.png": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "after-footer-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "after-email-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "after-email-extra-beauty-count": 0,
+ "after-home-head-1280.png": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280
+ },
+ "after-product-head-1280.png": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280
+ },
+ "after-footer-1280": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280
+ },
+ "after-email-1280": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280
+ },
+ "after-sync-home-head-390.png": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "after-sync-product-head-390.png": {
+  "scrollWidth": 390,
+  "clientWidth": 390
+ },
+ "after-sync-home-head-1280.png": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280
+ },
+ "after-sync-product-head-1280.png": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280
+ }
+}

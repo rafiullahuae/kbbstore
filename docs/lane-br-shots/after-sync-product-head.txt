@@ -1,0 +1,8 @@
+<title>Anua Heartleaf 77% Soothing Toner 250ml · K-Beauty Bliss</title>
+<meta name="description" content="A gentle daily toner built around 77% heartleaf extract, formulated for skin that reacts to everything. It calms redness, loosens what has settled in the pores overnight and leaves the barrier where it found it — no alcohol, no added fragrance and no essential oils. Use it morning and night on da…">
+<meta name="keywords" content="anua heartleaf 77% soothing toner, anua heartleaf 77% soothing toner 250ml, heartleaf 77% soothing toner, heartleaf toner, centella toner, hydrating toner, korean toner, anua toner k beauty dubai, toner for sensitive skin, toner for dry skin">
+<meta property="og:site_name" content="K-Beauty Bliss">
+<meta property="og:title" content="Heartleaf 77% Soothing Toner 250ml">
+JSON-LD { "@type": "OnlineStore", "name": "K-Beauty Bliss", "alternateName": [ "KBeauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE" ] }
+JSON-LD { "@type": "WebSite", "name": "K-Beauty Bliss", "alternateName": [ "KBeauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE" ] }
+JSON-LD Product keywords: anua heartleaf 77% soothing toner, anua heartleaf 77% soothing toner 250ml, heartleaf 77% soothing toner, heartleaf toner, centella toner, hydrating toner, korean toner, anua toner k beauty dubai, toner for sensitive skin, toner for dry skin

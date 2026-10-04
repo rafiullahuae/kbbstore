@@ -730,9 +730,11 @@ it('leaves no mailable spelling the shop’s name out in code', function () {
     // toContain, which is why the rest of this file avoids that matcher.
     expect($offenders)->toBe([], 'A mailable still spells the shop’s name out: ' . implode('; ', $offenders));
 
-    // The allowance was used exactly once, so it cannot quietly cover a second
-    // literal that appears in that file later.
-    expect($allowed)->toBe(1);
+    // ▲ ADVANCED BY LANE BR (4 October): BrandedSubject's last-resort literal
+    // moved to App\Support\BrandName::NAME (BrandName::appName()), the one
+    // place the name lives now, so the allowance is used ZERO times — and any
+    // literal that comes back to a mailable is an offender above.
+    expect($allowed)->toBe(0);
 });
 
 it('leaves no storefront partial carrying the shop’s phone number', function () {

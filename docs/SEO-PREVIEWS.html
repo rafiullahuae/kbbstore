@@ -124,6 +124,12 @@ footer p{margin-top:7px;max-width:74ch}
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;Store&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
     &quot;logo&quot;: &quot;https://kbeautybliss.test/logo.png&quot;,
     &quot;sameAs&quot;: [
@@ -160,11 +166,23 @@ footer p{margin-top:7px;max-width:74ch}
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;OnlineStore&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
 } — @type OnlineStore, and no address, telephone, geo or opening hours, because he has given none and asked to enter the address later. &quot;Enter it later&quot; is genuinely supported: BusinessAddress refuses to publish a partial address, and nothing nags him for one — SeoAudit&#039;s business_type_mismatch and the Overview screen&#039;s localbusiness_address task both fire only on a PLACE type with no address, and OnlineStore is not one. Set the type to Store or Local business and BOTH start asking for the address, which is correct: that is a shopfront claim with nothing behind it.</p><p class="where"><code>app/Services/Seo/SeoSettings.php:43</code></p></div></div><div class="mrow" data-v="VERIFIED"><div class="mv vVERIFIED">VERIFIED</div><div class="mc"><p class="claim">WebSite + SearchAction, with the urlTemplate pointing at the parameter the shop actually filters on.</p><p class="doc"><b>The documents say:</b> SEO-GAP §3 — Have</p><p class="obs"><b>Driven today:</b> {
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;WebSite&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
     &quot;inLanguage&quot;: &quot;en&quot;,
     &quot;potentialAction&quot;: {
@@ -277,26 +295,38 @@ footer p{margin-top:7px;max-width:74ch}
   <div class="sec-n">2 &mdash; the pages</div>
   <h2>What each page shape tells a search engine</h2>
   <p class="lede">The exact <code>&lt;title&gt;</code>, meta description, canonical, Open Graph, Twitter and hreflang tags, and the whole JSON-LD graph formatted so it can be read. These are the bytes, in document order.</p>
-  <div class="card"><div class="card-hd"><span class="tag">The home page</span><h3><code>/</code> <span class="st stok">200</span></h3></div><div class="card-bd"><div class="pre-label">What a crawler reads in the &lt;head&gt;</div><pre>&lt;title&gt;K-Beauty Bliss · Authentic Korean skincare in the UAE&lt;/title&gt;
-&lt;meta name=&quot;description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+  <div class="card"><div class="card-hd"><span class="tag">The home page</span><h3><code>/</code> <span class="st stok">200</span></h3></div><div class="card-bd"><div class="pre-label">What a crawler reads in the &lt;head&gt;</div><pre>&lt;title&gt;K-Beauty Bliss — Korean Skincare &amp;amp; K-Beauty Store in UAE&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;K-Beauty Bliss is the UAE online store for authentic Korean skincare: original K-beauty serums, toners, sunscreens and more from the top Korean brands, delivered across the Emirates.&quot;&gt;
 &lt;meta name=&quot;robots&quot; content=&quot;index, follow&quot;&gt;
 &lt;link rel=&quot;canonical&quot; href=&quot;https://kbeautybliss.test/&quot;&gt;
 &lt;meta property=&quot;og:type&quot; content=&quot;website&quot;&gt;
 &lt;meta property=&quot;og:site_name&quot; content=&quot;K-Beauty Bliss&quot;&gt;
-&lt;meta property=&quot;og:title&quot; content=&quot;K-Beauty Bliss · Authentic Korean skincare in the UAE&quot;&gt;
-&lt;meta property=&quot;og:description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;
+&lt;meta property=&quot;og:title&quot; content=&quot;K-Beauty Bliss — Korean Skincare &amp;amp; K-Beauty Store in UAE&quot;&gt;
+&lt;meta property=&quot;og:description&quot; content=&quot;K-Beauty Bliss is the UAE online store for authentic Korean skincare: original K-beauty serums, toners, sunscreens and more from the top Korean brands, delivered across the Emirates.&quot;&gt;
 &lt;meta property=&quot;og:url&quot; content=&quot;https://kbeautybliss.test/&quot;&gt;
 &lt;meta name=&quot;twitter:card&quot; content=&quot;summary&quot;&gt;
-&lt;meta name=&quot;twitter:title&quot; content=&quot;K-Beauty Bliss · Authentic Korean skincare in the UAE&quot;&gt;
-&lt;meta name=&quot;twitter:description&quot; content=&quot;Authentic Korean skincare, delivered across the UAE.&quot;&gt;</pre><div class="pre-label">The JSON-LD graph, 6 nodes</div><div class="node"><b>OnlineStore</b><pre>{
+&lt;meta name=&quot;twitter:title&quot; content=&quot;K-Beauty Bliss — Korean Skincare &amp;amp; K-Beauty Store in UAE&quot;&gt;
+&lt;meta name=&quot;twitter:description&quot; content=&quot;K-Beauty Bliss is the UAE online store for authentic Korean skincare: original K-beauty serums, toners, sunscreens and more from the top Korean brands, delivered across the Emirates.&quot;&gt;</pre><div class="pre-label">The JSON-LD graph, 6 nodes</div><div class="node"><b>OnlineStore</b><pre>{
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;OnlineStore&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
 }</pre></div><div class="node"><b>WebSite</b><pre>{
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;WebSite&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
     &quot;inLanguage&quot;: &quot;en&quot;,
     &quot;potentialAction&quot;: {
@@ -470,11 +500,23 @@ footer p{margin-top:7px;max-width:74ch}
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;OnlineStore&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
 }</pre></div><div class="node"><b>WebSite</b><pre>{
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;WebSite&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
     &quot;inLanguage&quot;: &quot;en&quot;,
     &quot;potentialAction&quot;: {
@@ -566,11 +608,23 @@ footer p{margin-top:7px;max-width:74ch}
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;OnlineStore&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
 }</pre></div><div class="node"><b>WebSite</b><pre>{
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;WebSite&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
     &quot;inLanguage&quot;: &quot;en&quot;,
     &quot;potentialAction&quot;: {
@@ -717,11 +771,23 @@ footer p{margin-top:7px;max-width:74ch}
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;OnlineStore&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
 }</pre></div><div class="node"><b>WebSite</b><pre>{
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;WebSite&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
     &quot;inLanguage&quot;: &quot;en&quot;,
     &quot;potentialAction&quot;: {
@@ -786,11 +852,23 @@ footer p{margin-top:7px;max-width:74ch}
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;OnlineStore&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
 }</pre></div><div class="node"><b>WebSite</b><pre>{
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;WebSite&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
     &quot;inLanguage&quot;: &quot;en&quot;,
     &quot;potentialAction&quot;: {
@@ -937,11 +1015,23 @@ footer p{margin-top:7px;max-width:74ch}
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;OnlineStore&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
 }</pre></div><div class="node"><b>WebSite</b><pre>{
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;WebSite&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
     &quot;inLanguage&quot;: &quot;en&quot;,
     &quot;potentialAction&quot;: {
@@ -1120,12 +1210,24 @@ seo.noindex   true
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;OnlineStore&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;
 }</pre></div>
     <div><h4>Address, hours and coordinates filled in, org type = Store</h4><pre>{
     &quot;@context&quot;: &quot;https://schema.org&quot;,
     &quot;@type&quot;: &quot;Store&quot;,
     &quot;name&quot;: &quot;K-Beauty Bliss&quot;,
+    &quot;alternateName&quot;: [
+        &quot;KBeauty Bliss&quot;,
+        &quot;K Beauty Bliss&quot;,
+        &quot;Kbeautybliss&quot;,
+        &quot;K-Beauty Bliss UAE&quot;
+    ],
     &quot;url&quot;: &quot;https://kbeautybliss.test&quot;,
     &quot;logo&quot;: &quot;https://kbeautybliss.test/logo.png&quot;,
     &quot;sameAs&quot;: [

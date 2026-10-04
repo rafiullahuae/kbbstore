@@ -55,7 +55,7 @@ final class KeywordComposer
      * @param  array<string, string>  $owners  primary keyword => "type:id" of the page that owns it
      * @return array{layers: array<string, list<string>>, keywords: list<string>, primary: ?string, clash: ?string, suggest: array{title: string, desc: string}}
      */
-    public static function compose(array $p, array $bank, array $owners, string $siteName): array
+    public static function compose(array $p, array $bank, array $owners, string $siteName, bool $kbeautyOne = true): array
     {
         $ar = ($p['locale'] ?? 'en') === 'ar';
         $self = $p['type'].':'.$p['id'];
@@ -90,6 +90,29 @@ final class KeywordComposer
         // Search Console said Google already shows THIS page for these.
         foreach ($bank['pages'][rtrim((string) $p['path'], '/').'/'] ?? [] as $term) {
             $add(self::classify($term, $anchors, 'own'), $term, ($bank['terms'][$term][0] ?? 600) + 200);
+        }
+
+        /*
+         * ONE K-BEAUTY PHRASE PER PAGE (Lane BR, Store → SEO Keywords → Brand →
+         * "One k-beauty phrase per page"). The owner wants "kbeauty / k beauty /
+         * k-beauty" in every corner, to win the search a competitor holds. The
+         * Google-safe way to do that is breadth, not density: every page carries
+         * exactly one natural phrase about ITSELF with the trade word in it —
+         * "anua toner k-beauty uae", "k beauty sunscreen dubai" — the spelling
+         * rotating across pages, and every other k-variant candidate dropped so
+         * nothing is ever stacked. The home page's one is the brand itself.
+         */
+        if ($kbeautyOne) {
+            $one = self::kbeautyPhrase($p, $siteName);
+            foreach (array_keys($cands) as $k) {
+                if ($k !== $one && self::isKbeauty($k)) {
+                    unset($cands[$k], $pinned[$k]);
+                }
+            }
+            if ($one !== null && ! isset($cands[$one])) {
+                // Above every other industry candidate, below the pinned identity.
+                $cands[$one] = ['industry', self::T_OWN2 + 5];
+            }
         }
 
         // Select: per-layer quota, then fill, dedupe by word set.
@@ -375,6 +398,82 @@ final class KeywordComposer
         }
 
         return $o;
+    }
+
+    /* ------------------------------------------------------------ k-beauty */
+
+    /** Does this phrase use the trade word, in any spelling or in Arabic? */
+    public static function isKbeauty(string $phrase): bool
+    {
+        $n = KeywordText::norm($phrase);
+
+        return (bool) preg_match('/(^|\s)(k beauty|kbeauty)/u', $n) || str_contains($n, 'كي بيوتي');
+    }
+
+    /**
+     * This page's one k-beauty phrase. The home page and the content pages use
+     * the brand ("k-beauty bliss", "k-beauty bliss about us") when the shop is
+     * K-Beauty Bliss; everything else gets a phrase built from its own facts,
+     * the spelling and the place picked by a hash of the page so neighbouring
+     * pages differ and a re-sync does not reshuffle them.
+     */
+    public static function kbeautyPhrase(array $p, string $site): ?string
+    {
+        $ar = ($p['locale'] ?? 'en') === 'ar';
+        $siteK = KeywordText::clean($site);
+        $ours = $siteK !== null && self::isKbeauty($siteK);
+        $type = (string) ($p['type'] ?? '');
+        // The same spelling the page's own templates use, so the brand phrase
+        // they already built is recognised as this page's one rather than doubled.
+        $n = $ar ? KeywordText::norm((string) ($p['name'] ?? '')) : (string) ($p['core'] ?? $p['name'] ?? '');
+        $b = KeywordText::norm((string) ($p['brand'] ?? ''));
+        $k = $p['kind'] ?? null;
+        $h = crc32($type.':'.($p['id'] ?? ''));
+
+        if ($type === 'page') {
+            if ($ours) {
+                if (($p['id'] ?? '') === 'home') {
+                    return $ar ? KeywordText::clean(KeywordText::norm($site)) : $siteK;
+                }
+
+                return $ar ? $siteK : (KeywordText::clean($site.' '.$n) ?? $siteK);
+            }
+            if (($p['id'] ?? '') === 'home') {
+                return $ar ? 'متجر كي بيوتي في الامارات' : 'k-beauty store uae';
+            }
+        }
+
+        if ($ar) {
+            $v = 'كي بيوتي';
+            $place = ['الامارات', 'دبي'][$h % 2];
+            $kAr = Lexicon::typeAr($k);
+            $tries = match ($type) {
+                'product' => [$kAr ? $kAr.' '.$v : null, $b !== '' ? $b.' '.$v : null],
+                'brand' => [$b.' '.$v],
+                default => [$kAr ? $kAr.' '.$v.' '.$place : null, $n !== '' ? $n.' '.$v : null],
+            };
+            $tries[] = $v.' '.$place;
+        } else {
+            $v = Lexicon::KBEAUTY[$h % 3];
+            $place = ['uae', 'dubai', 'uae'][intdiv($h, 3) % 3];
+            $tries = match ($type) {
+                'product' => [$b !== '' && $k ? $b.' '.$k.' '.$v.' '.$place : null, $k ? $v.' '.$k.' '.$place : null, $b !== '' ? $b.' '.$v.' '.$place : null],
+                'category' => [$k ? $v.' '.$k.' '.$place : null, $n !== '' ? $v.' '.$n.' '.$place : null],
+                'brand' => [$b !== '' ? $b.' '.$v.' '.$place : null],
+                'collection' => [$n !== '' ? $v.' '.$n.' '.$place : null],
+                'post' => [$v.' '.($k ?: 'skincare').' guide'],
+                default => [],
+            };
+            $tries[] = $v.' skincare '.$place;
+        }
+
+        foreach ($tries as $t) {
+            if ($t !== null && ($c = KeywordText::clean($t)) !== null) {
+                return $c;
+            }
+        }
+
+        return null;
     }
 
     /* ------------------------------------------------------------ the bank */

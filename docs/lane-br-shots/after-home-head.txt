@@ -1,0 +1,6 @@
+<title>K-Beauty Bliss — Korean Skincare &amp; K-Beauty Store in UAE</title>
+<meta name="description" content="K-Beauty Bliss is the UAE online store for authentic Korean skincare: original K-beauty serums, toners, sunscreens and more from the top Korean brands, delivered across the Emirates.">
+<meta property="og:site_name" content="K-Beauty Bliss">
+<meta property="og:title" content="K-Beauty Bliss — Korean Skincare &amp; K-Beauty Store in UAE">
+JSON-LD { "@type": "OnlineStore", "name": "K-Beauty Bliss", "alternateName": [ "KBeauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE" ] }
+JSON-LD { "@type": "WebSite", "name": "K-Beauty Bliss", "alternateName": [ "KBeauty Bliss", "K Beauty Bliss", "Kbeautybliss", "K-Beauty Bliss UAE" ] }
