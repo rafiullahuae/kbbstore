@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Schema;
  *
  * A BLANK FIELD IS THE BUILT-IN WORDING, and the built-in wording is the
  * interface string the email has always printed (`email.order_status.
- * shipped_subject` …). So the override sits in FRONT of __(): EmailWordingLoader
- * lays the stored words over the translation group as it loads, and an email
+ * shipped_subject` …). So the override sits in FRONT of __(): DatabaseTranslationLoader
+ * lays the stored words over the `email` group as it loads (its layer 4), and an email
  * nobody edited asks __() exactly what it asked before.
  *
  * LANGUAGE: Arabic uses the Arabic row, then the English row, then the code

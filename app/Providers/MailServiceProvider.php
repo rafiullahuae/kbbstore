@@ -43,15 +43,6 @@ class MailServiceProvider extends ServiceProvider
          * it. Same reasoning AppServiceProvider gives for CartService, and the
          * same trap CLAUDE.md records against Setting::map().
          */
-        /*
-         * The template builder's words (Lane EK): an email's own subject,
-         * preview line, headline and message from `email_templates`, laid
-         * over the interface strings as the `email` group loads. Wraps the
-         * loader AppServiceProvider already wraps, so the owner's per-email
-         * words win over Translation → Strings, which wins over the code.
-         */
-        $this->app->extend('translation.loader', static fn ($loader) => new \App\Services\Mail\Kit\EmailWordingLoader($loader));
-
         $this->app->scoped(MailCredentials::class);
         $this->app->scoped(MailSettings::class);
         $this->app->scoped(MailConfigurator::class);

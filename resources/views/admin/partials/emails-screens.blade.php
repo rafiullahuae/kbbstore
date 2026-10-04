@@ -392,7 +392,7 @@
     var samples = d.samples || { plain: 'A plain test message' };
     var lastTo = (d.last_test && d.last_test.to) || '';
 
-    var saveRow = '<div class="eml-save"><span class="eml-dirty" data-eml-dirty style="visibility:' + (state.dirty ? 'visible' : 'hidden') + '">Unsaved changes</span><button class="btn primary" type="button" id="emlSaveSending">Save changes</button></div>';
+    var saveRow = function (id) { return '<div class="eml-save"><span class="eml-dirty" data-eml-dirty style="visibility:' + (state.dirty ? 'visible' : 'hidden') + '">Unsaved changes</span><button class="btn primary" type="button" id="' + id + '">Save changes</button></div>'; };
     var testCard = '<div class="eml-card"><div><h3 class="eml-h">Send a test</h3><p class="eml-d">Sends through whichever option is picked, and shows what the mail server answered.</p></div>'
       + '<div class="mlf-field"><label class="mlf-label" for="emlTo">Send a test to</label><input class="mlf-input" type="email" id="emlTo" placeholder="you@example.com" value="' + esc(state.to || lastTo) + '"></div>'
       + '<div class="mlf-field"><label class="mlf-label" for="emlWhich">Which email</label><select class="mlf-input" id="emlWhich">'
@@ -401,10 +401,10 @@
       + '<div class="eml-testrow"><button class="btn primary" type="button" id="emlTest">Send test</button><span id="emlTestPill">' + testPill(d.last_test) + '</span></div>'
       + '<div id="emlTestResult">' + testDetail(d.last_test) + '</div></div>';
     var sd = tabbed('eml-sending', [
-      ['method', 'Send using', '<div class="eml-card"><div><h3 class="eml-h">Send using</h3><p class="eml-d">Pick one. You can switch at any time; press Send test after switching.</p></div>' + choices + gmail + saveRow + '</div>'],
+      ['method', 'Send using', '<div class="eml-card"><div><h3 class="eml-h">Send using</h3><p class="eml-d">Pick one. You can switch at any time; press Send test after switching.</p></div>' + choices + gmail + saveRow('emlSaveSending') + '</div>'],
       ['from', 'Who it is from', '<div class="eml-card"><div class="mlf-grid">' + field(v, 'mail_from_name', 'From name', '') + field(v, 'mail_from_address', 'From address', fromHelp, 'email') + '</div>'
         + '<div class="mlf-grid">' + field(v, 'mail_reply_to', 'Replies go to', '', 'email') + field(v, 'mail_merchant_address', 'New-order alerts to', '', 'email') + '</div>'
-        + saveRow.replace('id="emlSaveSending"', 'id="emlSaveSending2" data-eml-save-sending') + '</div>'],
+        + saveRow('emlSaveSending2') + '</div>'],
       ['test', 'Send a test', testCard],
       ['dns', 'Domain check', '<div class="eml-card"><div><h3 class="eml-h">Will inboxes trust the domain?</h3><p class="eml-d">A read-only DNS check for the From domain. It never changes anything.</p></div><div id="emlDnsBox">' + dnsRows(d.dns) + '</div></div>']
     ], 'method', 'Sending & delivery');

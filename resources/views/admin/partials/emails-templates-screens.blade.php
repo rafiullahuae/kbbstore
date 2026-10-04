@@ -28,9 +28,10 @@
     Wiring (the integrator): ONE include at the foot of admin/app.blade.php,
     beside the emails-screens include —
         @include('admin.partials.emails-templates-screens')
-    the screen ids 'emails-customer' and 'emails-edit' in LATE_RENDERED, and
-    'emails-customer' in NAV's Emails group after 'emails-sending' (this
-    partial also registers it, a no-op once NAV declares it).
+    the screen ids 'emails-customer' and 'emails-edit' in LATE_RENDERED and
+    TITLES, and 'emails-customer' in NAV's Emails group after
+    'emails-sending' (this partial also registers it, a no-op once NAV
+    declares it). tools/ek-wire.py applies exactly these lines.
 --}}
 @verbatim
 <style>
@@ -588,10 +589,13 @@ button.tog.lock{cursor:not-allowed}
     return undefined;
   };
 
+  /* The row is declared in NAV's Emails group beside its siblings (the
+     integrator's line), exactly as emails-screens.blade.php's four are, so it
+     exists at buildNav(); this registration is the same no-op theirs is. */
+  var NAV_ROWS = [['emails-customer', 'Customer emails', ['emails-sending', 'emails']]];
   function addNav() {
-    if (typeof window.kbbAddNavEntry === 'function') {
-      window.kbbAddNavEntry({ screen: 'emails-customer', label: 'Customer emails', icon: ICON, group: GROUP, after: ['emails-sending', 'emails'] });
-    }
+    if (typeof window.kbbAddNavEntry !== 'function') return;
+    NAV_ROWS.forEach(function (r) { window.kbbAddNavEntry({ screen: r[0], label: r[1], icon: ICON, group: GROUP, after: r[2] }); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addNav); else addNav();
 })();

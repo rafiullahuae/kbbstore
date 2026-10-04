@@ -103,6 +103,21 @@ final class DatabaseTranslationLoader implements Loader
             }
         }
 
+        /*
+         * 4. An email's OWN words (Lane EK, Emails → Customer emails → Edit):
+         *    the subject, preview line, headline and message the owner typed
+         *    for one email, in `email_templates`. Laid over the `email` group
+         *    only, and only for keys a single email uses — see
+         *    App\Services\Mail\Kit\EmailWording::overlay(). No row, no change.
+         */
+        if ($group === 'email') {
+            try {
+                $merged = array_replace($merged, \App\Services\Mail\Kit\EmailWording::overlay((string) $locale, 'email'));
+            } catch (\Throwable) {
+                // An email never fails over its overrides; it goes out in the built-in words.
+            }
+        }
+
         return $merged;
     }
 

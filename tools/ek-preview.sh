@@ -30,6 +30,7 @@ KBBPORTPY
 rm -rf "$DIR"
 mkdir -p "$ROOT" "$DIR/compiled" "$ROOT/uploads" "$COPY"
 rsync -a --link-dest="$APP" --exclude storage --exclude .git "$APP/" "$COPY/"
+cp -r "$APP/public/build" "$COPY/public/" 2>/dev/null || true
 mkdir -p "$COPY/storage/framework/views" "$COPY/storage/framework/cache/data" "$COPY/storage/framework/sessions" "$COPY/storage/logs" "$COPY/storage/app/public"
 if [ -n "$EK_BEFORE" ]; then
   # BEFORE: the two screens as they were at this lane's base (7e09c7b), for
@@ -67,9 +68,9 @@ php -S 127.0.0.1:"$PORT" -t "$ROOT" "$ROOT/router.php" >"$DIR/server.log" 2>&1 &
 echo $! > "$DIR/server.pid"
 sleep 2
 
-nonce=$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')
-printf '%s' "$nonce" > "$ROOT/kbb-preview-id.txt"
-if [ "$(curl -s "http://127.0.0.1:$PORT/kbb-preview-id.txt" || true)" != "$nonce" ]; then
+kbbnonce=$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')
+printf '%s' "$kbbnonce" > "$ROOT/kbb-preview-id.txt"
+if [ "$(curl -s "http://127.0.0.1:$PORT/kbb-preview-id.txt" || true)" != "$kbbnonce" ]; then
   echo "REFUSING: 127.0.0.1:$PORT is not the server this script started." >&2
   kill "$(cat "$DIR/server.pid")" 2>/dev/null || true
   exit 4

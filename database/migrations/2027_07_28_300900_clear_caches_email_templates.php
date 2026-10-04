@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Cache;
 /**
  * Lane EK: Emails → Customer emails and the template builder add routes
  * (routes/emails-templates-admin.php, inside the admin-api group), a Blade
- * directive pair every kit email now uses (@kitsections / @kitsec), a wrapped
- * translation loader, and re-written email views. None of that takes effect on
+ * directive pair every kit email now uses (@kitsections / @kitsec), a new layer in
+ * the translation loader, and re-written email views. None of that takes effect on
  * the server until the compiled route cache and the compiled views are dropped
  * -- CLAUDE.md's convention for every package that adds a route.
  */

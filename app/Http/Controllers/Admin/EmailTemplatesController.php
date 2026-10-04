@@ -144,9 +144,9 @@ class EmailTemplatesController extends Controller
             // The approved order, for "Start from a ready template".
             'defaults' => array_keys($def['sections']),
             // What an added block may name — ids, read again at send time.
-            'coupons' => \App\Models\Coupon::query()->orderBy('code')->limit(200)->get(['id', 'code'])->toArray(),
-            'brands' => \App\Models\Brand::query()->orderBy('name')->get(['id', 'name'])->toArray(),
-            'categories' => \App\Models\Category::query()->orderBy('name')->limit(300)->get(['id', 'name'])->toArray(),
+            'coupons' => \App\Models\Coupon::query()->orderBy('code')->orderBy('id')->limit(200)->get(['id', 'code'])->toArray(),
+            'brands' => \App\Models\Brand::query()->orderBy('name')->orderBy('id')->get(['id', 'name'])->toArray(),
+            'categories' => \App\Models\Category::query()->orderBy('name')->orderBy('id')->limit(300)->get(['id', 'name'])->toArray(),
         ];
     }
 
