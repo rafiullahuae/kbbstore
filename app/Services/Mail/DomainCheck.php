@@ -67,6 +67,19 @@ class DomainCheck
                 : 'Add one TXT record starting v=spf1 that includes this server\'s IP (ip4:…).'),
             count($spf) > 1 => $this->row('SPF', $domain, 'problem', implode(' | ', $spf), 'There must be exactly ONE v=spf1 record; merge them into one.'),
             $google && stripos($spf[0], '_spf.google.com') === false => $this->row('SPF', $domain, 'problem', $spf[0], 'Google Workspace is chosen but the record does not include _spf.google.com.'),
+            /*
+             * THE SPAM-FOLDER CASE. (2.60.376)
+             *
+             * The owner: "emails are sending fine. but all are going to spam."
+             * kbeautybliss.com's SPF is `v=spf1 include:_spf.google.com ~all`:
+             * only Google may send for it. Mail this server sends with that
+             * From address therefore fails SPF (softfail), and Gmail files it
+             * as spam -- yet this row said "ok", because it only checked that a
+             * record existed. A record that lets only Google send is a problem
+             * the moment the shop sends through anything but Google.
+             */
+            $this->sendsThroughServer() && self::onlyGoogle($spf[0])
+                => $this->row('SPF', $domain, 'problem', $spf[0], 'Only Google may send email for '.$domain.', but the shop is sending through this server, so inboxes treat it as not really from you and put it in spam. Fix: Sending using → Google Workspace (Gmail SMTP), with an App Password.'),
             default => $this->row('SPF', $domain, 'ok', $spf[0], ''),
         };
 
@@ -85,7 +98,7 @@ class DomainCheck
         $host = '_dmarc.' . $domain;
         $dmarc = array_values(array_filter($this->txt($host), static fn (string $t) => stripos($t, 'v=DMARC1') === 0));
         $records[] = $dmarc === []
-            ? $this->row('DMARC', $host, 'missing', null, 'Add a TXT record on _dmarc: v=DMARC1; p=none; rua=mailto:info@kbeautybliss.com')
+            ? $this->row('DMARC', $host, 'missing', null, 'Add a TXT record on _dmarc: v=DMARC1; p=none; rua=mailto:'.$this->mail->fromAddress())
             : $this->row('DMARC', $host, 'ok', $dmarc[0], '');
 
         $result = ['domain' => $domain, 'at' => now()->toIso8601String(), 'records' => $records];
@@ -133,6 +146,46 @@ class DomainCheck
         }
 
         return $out;
+    }
+
+    /**
+     * Does mail actually leave through this server's own mail?
+     *
+     * Either because that is the option chosen, or because Google Workspace is
+     * chosen but its username or App Password is missing -- MailConfigurator
+     * then falls back to this server's mail so orders still email, and every
+     * one of those messages fails a Google-only SPF and goes to spam.
+     */
+    private function sendsThroughServer(): bool
+    {
+        $t = $this->mail->transport();
+
+        return $t === MailSettings::TRANSPORT_SERVER
+            || ($t === MailSettings::TRANSPORT_GMAIL && ! $this->mail->configured());
+    }
+
+    /**
+     * True when an SPF record authorises Google and nothing else: no ip4/ip6,
+     * no a/mx, no other include, no redirect. Such a record fails every
+     * message that does not leave through Google's servers.
+     */
+    public static function onlyGoogle(string $spf): bool
+    {
+        if (stripos($spf, 'include:_spf.google.com') === false) {
+            return false;
+        }
+
+        foreach (preg_split('/\s+/', trim($spf)) ?: [] as $term) {
+            $t = strtolower(ltrim($term, '+~?-'));
+
+            if ($t === '' || $t === 'v=spf1' || $t === 'all' || $t === 'include:_spf.google.com') {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     private function row(string $record, string $host, string $status, ?string $found, string $hint): array
