@@ -656,6 +656,14 @@ class ModuleRegistry
         'address_book' => ['extra', 'Address book', 'The saved-addresses screen at /my-account/edit-address: add, edit, delete and set a default per type. Turning this off hides the dashboard card and makes the page itself 404, not just the link.', true, 'Appearance → Login / Register panel → Links', 'acctpanel', 'site', 'all', 'The Addresses screen inside a signed-in customer account.', 'live'],
         'quantity_bundles' => ['extra', 'Quantity bundles', 'Buy-more-save-more tiers on the product page, generated from the price rather than authored.', true, 'Appearance → Quantity bundles', 'bundles', 'product', 'mid', 'The bundle tiles under the price on the product page.', 'live'],
         'dispatch_cutoff' => ['extra', 'Dispatch cutoff', 'The “order within X for dispatch today” line, counting down to your cutoff time.', true, 'Store → Ecommerce', 'ecommerce', 'product', 'mid', 'A line under the Add to cart button on the product page.', 'live'],
+        /*
+         * Lane PD, both ON: the owner asked for each in as many words (CLAUDE.md
+         * rule 1 as reversed on 30 September), and each is a switch because it
+         * is a design choice he may want back. Neither costs a query on a
+         * product whose copy names no video and no HTML block.
+         */
+        'desc_videos' => ['extra', 'Videos in product descriptions', 'A video file address (.mp4, .webm, .mov, .m4v) or a [video] shortcode on a line of its own in a product description or an HTML Block plays as a video player, two side by side, as on the old site. Only this shop\'s own addresses and kbeautybliss.com are played; anything else stays text. Off: the address is printed as text, as before.', true, '', '', 'product', 'bottom', 'Inside the Description tab of a product whose copy names a video.', 'live'],
+        'eblock_phone_columns' => ['extra', 'HTML Block columns on phones', 'An HTML Block laid out in three columns (the old site\'s ingredient rows) keeps its three columns side by side on a phone, as on the old site, with each picture above its name. Off: a phone stacks the columns one under another.', true, 'Content → HTML Blocks', 'htmlblocks', 'product', 'bottom', 'Inside the Description tab, on a phone, wherever an HTML Block has three columns.', 'live'],
 
         // ── SEO ──
         /*

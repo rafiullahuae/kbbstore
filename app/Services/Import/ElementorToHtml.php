@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Import;
 
+use App\Support\DescriptionVideos;
 use App\Support\GlobalSections;
 use App\Support\RichText;
 
@@ -315,6 +316,7 @@ final class ElementorToHtml
             'divider' => '<hr class="kbb-eblock__rule">',
             'spacer' => '',
             'shortcode' => $this->shortcodeWidget($s),
+            'video' => $this->video($s),
             default => $this->unknownWidget($type),
         };
     }
@@ -405,6 +407,32 @@ final class ElementorToHtml
             . self::linked(self::img($url, $alt, $dims[0], $dims[1], 'kbb-eblock__pic'), $link)
             . (RichText::isBlank($caption) ? '' : '<figcaption>' . $caption . '</figcaption>')
             . '</figure>';
+    }
+
+    /**
+     * Elementor's Video widget, when it plays a FILE (Lane PD): the address on
+     * a paragraph of its own, which the storefront draws as a player
+     * (App\Support\DescriptionVideos) -- the same shape a description's bare
+     * video address takes. A YouTube or Vimeo widget is an iframe, which this
+     * shop does not print, so it is still reported as a widget the converter
+     * cannot draw.
+     *
+     * @param  array<string, mixed>  $s
+     */
+    private function video(array $s): string
+    {
+        if (($s['video_type'] ?? '') !== 'hosted') {
+            return $this->unknownWidget('video');
+        }
+
+        $pick = ($s['insert_url'] ?? '') === 'yes' ? ($s['external_url'] ?? null) : ($s['hosted_url'] ?? null);
+        $url = is_array($pick) && is_string($pick['url'] ?? null) ? trim($pick['url']) : '';
+
+        if (DescriptionVideos::addresses($url) === []) {
+            return $this->unknownWidget('video');
+        }
+
+        return '<div class="kbb-eblock__copy"><p>' . e($url) . '</p></div>';
     }
 
     /** @param array<string, mixed> $s */

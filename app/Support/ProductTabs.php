@@ -839,7 +839,10 @@ final class ProductTabs
              * copy out, so the block is never inside wpautop()'s surgery. A
              * body that names no section is returned untouched, byte for byte.
              */
-            $body = GlobalSections::expand(self::translated($entry, 'body'));
+            // And a video address on a line of its own -- the owner's "2 videos
+            // ... not showing at all" -- drawn as a player (Lane PD). Copy
+            // naming no video is returned untouched, with no query.
+            $body = DescriptionVideos::expand(GlobalSections::expand(self::translated($entry, 'body')));
 
             /*
              * THE DROP RULE, UNCHANGED. `trim(strip_tags($body)) !== ''` and

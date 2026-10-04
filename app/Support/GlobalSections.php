@@ -134,7 +134,29 @@ final class GlobalSections
      */
     public static function expand(?string $html): string
     {
-        return self::expandWithin((string) $html, []);
+        $html = (string) $html;
+
+        if (! self::present($html)) {
+            return $html;
+        }
+
+        $out = self::expandWithin($html, []);
+
+        /*
+         * THE PHONE'S THREE COLUMNS ARE A SWITCH (Lane PD). The owner asked for
+         * an ingredient row to stay three across on a phone, as on the old
+         * site, and that ships ON with no markup change -- it is kbb-product.css
+         * alone. Store → Modules → "HTML Block columns on phones" OFF marks
+         * each drawn block `kbb-eblock--stack`, which the stylesheet stacks
+         * one column per line, the way it did before. Asked only when a block
+         * was actually drawn, so no other page pays for the lookup.
+         */
+        if ($out !== $html && str_contains($out, 'class="kbb-eblock')
+            && ! app(\App\Services\SettingsService::class)->moduleEnabled('eblock_phone_columns', true)) {
+            $out = (string) preg_replace('/class="kbb-eblock(?=[ "])/', 'class="kbb-eblock kbb-eblock--stack', $out);
+        }
+
+        return $out;
     }
 
     /**
