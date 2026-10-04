@@ -75,7 +75,7 @@ export KBB_PUBLIC_PATH="$ROOT" APP_ENV=local APP_DEBUG=true \
   APP_PACKAGES_CACHE="$DIR/compiled/packages.php"
 
 php "$APP/artisan" migrate --force >"$DIR/migrate.log" 2>&1 || { tail -30 "$DIR/migrate.log"; exit 1; }
-php "$APP/artisan" tinker --execute="require '/home/user/lane-kw/storage/kw-prev/seed.php';" >>"$DIR/migrate.log" 2>&1 \
+php "$APP/artisan" tinker --execute="require '$APP/tools/kw-seed.php';" >>"$DIR/migrate.log" 2>&1 \
   || { tail -30 "$DIR/migrate.log"; exit 1; }
 tail -6 "$DIR/migrate.log"
 
