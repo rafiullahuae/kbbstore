@@ -268,9 +268,9 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
         if (!E || E.key !== key) return;
         E.loading = false;
         E.extra = j;
-        var want = s.editor.tabs || null;
+        var want = s.editor.tabs || null, skip = s.editor.skip || [];
         (j.tabs || []).forEach(function(t){
-          if (want && want.indexOf(t.key) < 0) return;
+          if ((want && want.indexOf(t.key) < 0) || skip.indexOf(t.key) >= 0) return;
           t.fields.forEach(function(f){ E.values[f.key] = f.value; E.orig[f.key] = f.value; });
           E.tabs.push({key: 'r-' + t.key, label: t.label, help: t.description, fields: t.fields, products: E.kind === 'grid' && t.key === 'products'});
         });

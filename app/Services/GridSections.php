@@ -303,7 +303,16 @@ class GridSections
         'mobile_layout' => ['type' => 'select', 'label' => 'Mobile layout', 'default' => 'carousel',
             'options' => GridSection::LAYOUTS],
         'mobile_cols' => ['type' => 'select', 'label' => 'Mobile columns', 'default' => '2',
-            'options' => GridSection::MOBILE_COLS],
+            'options' => GridSection::MOBILE_COLS,
+            'help' => 'For a phone grid. A phone carousel is sized by Cards in view · phone.'],
+        /* Lane HC — "give this option on any carousel products section we
+           create". Read only while that device's layout is a carousel. */
+        'per_d' => ['type' => 'select', 'label' => 'Cards in view · laptop', 'default' => '',
+            'options' => GridSection::PER_D, 'help' => 'When the laptop layout is a carousel. A half shows part of the next card.'],
+        'per_m' => ['type' => 'select', 'label' => 'Cards in view · phone', 'default' => '2.3',
+            'options' => GridSection::PER_M, 'help' => 'When the phone layout is a carousel. A part card at the edge tells a thumb there is more.'],
+        'arrows_d' => ['type' => 'bool', 'label' => 'Arrows · laptop', 'default' => true, 'help' => 'Round arrows at either side of a laptop carousel.'],
+        'arrows_m' => ['type' => 'bool', 'label' => 'Arrows · phone', 'default' => false, 'help' => 'Off: the peeking card and a swipe do the job.'],
 
         'skin' => ['type' => 'skin', 'label' => 'Card template', 'default' => '',
             'options' => ['' => 'Use the shop’s own grid style'],
@@ -327,7 +336,7 @@ class GridSections
         'products' => ['Which products', 'Where this grid’s products come from, and how many.',
             ['source', 'source_brand_id', 'source_category_id', 'include_children', 'count', 'mobile_count']],
         'layout' => ['Layout', 'Desktop and mobile are set separately.',
-            ['desktop_layout', 'desktop_cols', 'mobile_layout', 'mobile_cols', 'skin', 'card_label', 'show_rank']],
+            ['desktop_layout', 'desktop_cols', 'mobile_layout', 'mobile_cols', 'per_d', 'per_m', 'arrows_d', 'arrows_m', 'skin', 'card_label', 'show_rank']],
         'viewall' => ['“View all” button', 'The button under the grid.',
             ['show_view_all', 'view_all_label', 'view_all_url']],
     ];
@@ -1119,8 +1128,8 @@ class GridSections
                  * already divides every product grid by.
                  */
                 .'.kbb-gsec .gs-grid.gs-car-m>*{scroll-snap-align:start;'
-                    .'flex:0 0 calc((100% - (var(--gs-m,2) - 1 + var(--gs-peek,.28)) * var(--kbb-gap,14px))'
-                    .' / (var(--gs-m,2) + var(--gs-peek,.28)))}'
+                    .'flex:0 0 calc((100% - (var(--gs-m,2) - 1 + var(--gs-peek-m,var(--gs-peek,.28))) * var(--kbb-gap,14px))'
+                    .' / (var(--gs-m,2) + var(--gs-peek-m,var(--gs-peek,.28))))}'
             .'}'
             .'@media (min-width:901px){'
                 .'.kbb-gsec .gs-grid{grid-template-columns:repeat(var(--gs-d,4),minmax(0,1fr))}'
@@ -1130,9 +1139,22 @@ class GridSections
                 .'.kbb-gsec .gs-grid.gs-car-d::-webkit-scrollbar{height:6px}'
                 .'.kbb-gsec .gs-grid.gs-car-d::-webkit-scrollbar-thumb{background:var(--line-2,#EFE3E8);border-radius:999px}'
                 .'.kbb-gsec .gs-grid.gs-car-d>*{scroll-snap-align:start;'
-                    .'flex:0 0 calc((100% - (var(--gs-d,4) - 1 + var(--gs-peek,.28)) * var(--kbb-gap,14px))'
-                    .' / (var(--gs-d,4) + var(--gs-peek,.28)))}'
+                    .'flex:0 0 calc((100% - (var(--gs-d,4) - 1 + var(--gs-peek-d,var(--gs-peek,.28))) * var(--kbb-gap,14px))'
+                    .' / (var(--gs-d,4) + var(--gs-peek-d,var(--gs-peek,.28))))}'
+                .'.kbb-gsec .gs-noarr-d .gs-arr{display:none}'
             .'}'
+            /*
+             * Lane HC: the arrows, for a carousel that has them switched on.
+             * The scrolling is resources/js/kbb/ymal.js — the same module the
+             * bundles and Spotted carousels use — and this section ships no
+             * script of its own. Hidden per device by a class the partial sets.
+             */
+            .'.kbb-gsec .gs-stage{position:relative}'
+            .'.kbb-gsec .gs-arr{position:absolute;top:38%;z-index:2;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-2,#EFE3E8);'
+                .'background:#fff;color:#2A2228;box-shadow:0 6px 18px rgba(42,34,40,.14);display:grid;place-items:center;cursor:pointer;padding:0}'
+            .'.kbb-gsec .gs-arr svg{width:18px;height:18px}.kbb-gsec .gs-arr:disabled{opacity:.35;cursor:default}'
+            .'.kbb-gsec .gs-prev{inset-inline-start:-10px}.kbb-gsec .gs-next{inset-inline-end:-10px}'
+            .'@media (max-width:900px){.kbb-gsec .gs-noarr-m .gs-arr{display:none}.kbb-gsec .gs-arr{width:34px;height:34px;inset-inline-start:auto}.kbb-gsec .gs-prev{inset-inline-start:2px}.kbb-gsec .gs-next{inset-inline-end:2px}}'
             /*
              * `scroll-behavior` is the only motion this section has, and it is
              * the browser's own. Under reduced motion it is switched off
@@ -1233,6 +1255,10 @@ class GridSections
             'desktop_cols' => (string) $section->desktop_cols,
             'mobile_layout' => (string) $section->mobile_layout,
             'mobile_cols' => (string) $section->mobile_cols,
+            'per_d' => (string) ($section->per_d ?? ''),
+            'per_m' => (string) ($section->per_m ?? '2.3'),
+            'arrows_d' => (bool) ($section->arrows_d ?? true),
+            'arrows_m' => (bool) ($section->arrows_m ?? false),
             'skin' => (string) $section->skin,
             'card_label' => (string) $section->card_label,
             'show_rank' => (bool) $section->show_rank,

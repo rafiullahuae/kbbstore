@@ -1,0 +1,14 @@
+{
+  "width": 390,
+  "scrollWidth": 390,
+  "carousel": {
+    "track": 410,
+    "card": 150,
+    "inView": 2.73,
+    "style": "--gs-d:4;--gs-m:2;--gs-peek-m:0.3",
+    "arrows": [
+      "none",
+      "none"
+    ]
+  }
+}

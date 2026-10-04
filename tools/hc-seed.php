@@ -51,5 +51,14 @@ if (! \App\Models\ShippingMethod::query()->where('type', 'free_shipping')->exist
     \App\Models\ShippingMethod::create(['shipping_zone_id' => $uae->id, 'type' => 'flat_rate', 'title' => 'Delivery Charges', 'cost' => 2000, 'enabled' => true, 'position' => 0]);
     \App\Models\ShippingMethod::create(['shipping_zone_id' => $uae->id, 'type' => 'free_shipping', 'title' => 'Free delivery', 'cost' => 0, 'min_amount' => 19900, 'enabled' => true, 'position' => 1]);
 }
+// A published article with a tag (the homepage blog cards) and a grid section
+// that is a carousel on both widths (Cards in view, arrows).
+\App\Models\Post::updateOrCreate(['slug' => 'hc-routine-guide'], ['title' => 'The 7-step Korean routine, simplified', 'status' => 'published',
+    'published_at' => now()->subDay(), 'tag' => 'Routines', 'excerpt' => 'Which steps matter, and which you can skip.', 'body' => str_repeat('Skincare words. ', 400)]);
+\App\Models\GridSection::updateOrCreate(['slug' => 'hc-new-in'], ['name' => 'New in', 'status' => 'publish', 'position' => 1,
+    'show_heading' => true, 'heading' => 'New in this week', 'subheading' => 'Fresh from Seoul.', 'source' => 'newest', 'include_children' => false,
+    'count' => 10, 'mobile_count' => 8, 'desktop_layout' => 'carousel', 'desktop_cols' => 4, 'mobile_layout' => 'carousel', 'mobile_cols' => 2,
+    'skin' => '', 'card_label' => '', 'show_rank' => false, 'show_view_all' => false, 'view_all_label' => '', 'view_all_url' => '']);
+\App\Services\GridSections::flush();
 \App\Http\Controllers\Store\HomeController::flushCache();
 echo "hc seed done: {$n} products\n";

@@ -569,6 +569,12 @@ it('puts both strips on Homepage content with full edits, and the countries stri
         ->and($by['countries']['editor']['get'])->toBe('header')
         ->and($by['countries']['desktop'])->toBeFalse()->and($by['countries']['mobile'])->toBeTrue();
 
+    // Spotted's editor is the Spotted screen's own tabs, all but the page's —
+    // a skip list, not an allow list, so a tab added to SpottedSettings::TABS
+    // reaches this editor with no change here.
+    expect($by['spotted']['editor'])->toHaveKey('skip')->not->toHaveKey('tabs')
+        ->and($by['spotted']['editor']['skip'])->toBe(['page']);
+
     $header = test()->getJson('/admin-api/header')->assertOk()->json();
     expect(array_column($header['tabs'], 'key'))->toContain(...$by['countries']['editor']['tabs']);
 });
@@ -591,4 +597,46 @@ it('draws the shipped line whole — the threshold from Delivery & Shipping, wit
     $free->delete();
 
     expect(hcHome())->toMatch('#<div class="kts d-off" style="[^"]*"><span>1-3 Days Delivery all over UAE</span></div>#');
+});
+
+/* ═══ 8. THE OWNER'S THREE FOLLOW-UPS ═══════════════════════════════════════ */
+
+it('gives a grid-section carousel cards in view and arrows, 2.3 on a phone by default', function () {
+    /*
+     * "give this option on any carousel products section we create". A phone
+     * carousel ships 2.3 cards in view (his choice for the homepage carousels),
+     * whole cards and peek as the two numbers the calc() takes; arrows ride the
+     * shop's ymal.js. MUTATION: drop the per_m arm in grid-section.blade.php →
+     * `--gs-m:2;--gs-peek-m:0.3` is gone, red; drop the $gsOpen echo → no arrows.
+     */
+    hcProduct('Carousel One');
+    $grid = GridSection::create(['name' => 'HC car', 'slug' => 'hc-car', 'status' => 'publish', 'position' => 1,
+        'show_heading' => true, 'heading' => 'Car', 'subheading' => '', 'source' => 'bestsellers', 'include_children' => false,
+        'count' => 4, 'mobile_count' => 4, 'desktop_layout' => 'carousel', 'desktop_cols' => 4, 'mobile_layout' => 'carousel',
+        'mobile_cols' => 2, 'skin' => '', 'card_label' => '', 'show_rank' => false, 'show_view_all' => false,
+        'view_all_label' => '', 'view_all_url' => '']);
+    GridSections::flush();
+
+    expect($grid->fresh()->per_m)->toBe('2.3');
+
+    $html = hcHome();
+    expect($html)->toContain('style="--gs-d:4;--gs-m:2;--gs-peek-m:0.3" data-ymal-track>')
+        ->and($html)->toContain('<div class="gs-stage gs-noarr-m"><button type="button" class="gs-arr gs-prev" data-ymal-prev');
+
+    hcWire();
+    test()->actingAs(hcAdmin(), 'admin')->putJson('/admin-api/grid-sections/'.$grid->id, ['values' => [
+        'per_m' => '1.5', 'per_d' => '4.5', 'arrows_m' => true, 'arrows_d' => false,
+    ]])->assertOk();
+    GridSections::flush();
+
+    $html = hcHome();
+    expect($html)->toContain('style="--gs-d:4;--gs-m:1;--gs-peek-m:0.5;--gs-peek-d:0.5" data-ymal-track>')
+        ->and($html)->toContain('<div class="gs-stage gs-noarr-d">');
+
+    // A phone GRID with no arrows prints exactly what it printed before.
+    test()->putJson('/admin-api/grid-sections/'.$grid->id, ['values' => ['mobile_layout' => 'grid', 'desktop_layout' => 'grid', 'per_m' => '9']])->assertOk();
+    GridSections::flush();
+    $plain = hcHome();
+    expect($plain)->toMatch('#  <div class="kbb-pgrid gs-grid" data-skin="[a-z]*" style="--gs-d:4;--gs-m:2">\n#');
+    expect($plain)->not->toContain('<div class="gs-stage');
 });

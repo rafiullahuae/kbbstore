@@ -28,7 +28,10 @@ use App\Support\ProductSource;
  *   content  a tab of HomepageContent::SCHEMA — fields sent here, saved by
  *            POST /admin-api/homepage/content, the endpoint the tabs use;
  *   remote   another screen's schema endpoint (Banners, Spotted, Video rail,
- *            Instagram) — the editor GETs its tabs and POSTs its `settings`;
+ *            Instagram) — the editor GETs its tabs and POSTs its `settings`.
+ *            `tabs` names the ones to show, or `skip` the ones not to, so a
+ *            tab another lane adds to that screen's TABS (Spotted's, for one)
+ *            appears here with no change to this class;
  *   grid     a Grid section — GET/PUT /admin-api/grid-sections/{id};
  *   hero     the slide repeater on this same screen's Hero slider tab;
  *   none     nothing of its own to edit (it is derived), with the sentence
@@ -62,7 +65,7 @@ final class HomepageHub
         'routine' => ['kind' => 'none', 'note' => 'Each step shows the best seller of its category (oil cleanser, toner, serum…), chosen automatically.', 'also' => ['routines', 'Catalog → Build my routine']],
         'quiz' => ['kind' => 'none', 'note' => 'The two-minute skin quiz. Its questions are fixed; turn it on or off for each device here.'],
         'brands' => ['kind' => 'content', 'tab' => 'brands'],
-        'spotted' => ['kind' => 'remote', 'get' => 'spotted', 'save' => 'spotted/settings', 'tabs' => ['home', 'carousel', 'button', 'spacing'], 'also' => ['spotted', 'Appearance → #KBeautyBliss Spotted'], 'note' => 'Which posts appear is ticked per post on Appearance → #KBeautyBliss Spotted.'],
+        'spotted' => ['kind' => 'remote', 'get' => 'spotted', 'save' => 'spotted/settings', 'skip' => ['page'], 'also' => ['spotted', 'Appearance → #KBeautyBliss Spotted'], 'note' => 'Which posts appear is ticked per post on Appearance → #KBeautyBliss Spotted.'],
         'videos' => ['kind' => 'remote', 'get' => 'ugc-appearance', 'save' => 'ugc-appearance', 'tabs' => ['home'], 'also' => ['ugcstyle', 'Appearance → Video rail'], 'note' => 'The clips are uploaded and grouped under Content → Shoppable video.'],
         'instagram' => ['kind' => 'remote', 'get' => 'instagram', 'save' => 'instagram', 'tabs' => ['look', 'tile'], 'also' => ['instagram', 'Content → Instagram'], 'note' => 'Connecting the account is done on Content → Instagram.'],
         'trending' => ['kind' => 'content', 'tab' => 'trending', 'source' => 'tr'],

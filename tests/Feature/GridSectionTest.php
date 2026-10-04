@@ -398,7 +398,8 @@ it('writes the two column counts as custom properties and nothing else into CSS'
      * expectation goes red on any heading with a `{`, `<` or `"` in it. Run,
      * red, put back. (Checked with a heading of `</style><script>x</script>`.)
      */
-    gsSection(['desktop_cols' => 5, 'mobile_cols' => 3, 'heading' => '</style><b>x']);
+    // ▲ Lane HC: phone grid — a phone carousel reads Cards in view instead.
+    gsSection(['desktop_cols' => 5, 'mobile_cols' => 3, 'mobile_layout' => 'grid', 'heading' => '</style><b>x']);
 
     $html = gsBody();
 
@@ -411,7 +412,7 @@ it('clamps a column count a hand-edited row put out of range', function () {
     // The cast clamps on the way in. This is the LAST point before the numbers
     // become CSS, and a row edited straight in the database has never been
     // through the cast at all.
-    gsSection(['desktop_cols' => 99, 'mobile_cols' => 0]);
+    gsSection(['desktop_cols' => 99, 'mobile_cols' => 0, 'mobile_layout' => 'grid']);
 
     expect(gsBody())->toContain('--gs-d:6;--gs-m:1');
 });

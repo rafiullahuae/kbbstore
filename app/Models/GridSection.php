@@ -79,12 +79,19 @@ class GridSection extends Model
     public const MOBILE_COLS = ['1' => '1', '2' => '2', '3' => '3'];
 
     /** publish draws on the shop; draft is listed in the console and draws nothing. */
+    /** Lane HC: cards in view on a phone carousel — whole or part cards. */
+    public const PER_M = ['1.5' => '1½ — the next one peeks', '2' => '2', '2.2' => '2.2 — a sliver of the next one', '2.3' => '2.3 — the next one peeks (recommended)', '2.5' => '2½', '3' => '3'];
+
+    /** Lane HC: cards in view on a laptop carousel; '' keeps Desktop columns. */
+    public const PER_D = ['' => 'Same as Desktop columns', '3' => '3', '3.5' => '3½', '4' => '4', '4.5' => '4½', '5' => '5', '5.5' => '5½', '6' => '6'];
+
     public const STATUSES = ['publish' => 'Published', 'draft' => 'Draft — will not show'];
 
     protected $fillable = [
         'name', 'slug', 'status', 'position',
         'show_heading', 'heading', 'subheading',
         'source', 'source_brand_id', 'source_category_id', 'include_children', 'manual_ids', 'source_query',
+        'per_m', 'per_d', 'arrows_m', 'arrows_d',
         'count', 'mobile_count',
         'desktop_layout', 'desktop_cols', 'mobile_layout', 'mobile_cols',
         'skin', 'card_label', 'show_rank',
@@ -98,6 +105,8 @@ class GridSection extends Model
         'show_rank' => 'boolean',
         'manual_ids' => 'array',
         'source_query' => 'array',
+        'arrows_m' => 'boolean',
+        'arrows_d' => 'boolean',
         'position' => 'integer',
         'count' => 'integer',
         'mobile_count' => 'integer',

@@ -193,7 +193,9 @@ it('puts no byte of any setting inside the style element', function () {
 });
 
 it('emits exactly two integers into the section’s style attribute and nothing else', function () {
-    $html = gssRender(['desktop_cols' => 5, 'mobile_cols' => 3]);
+    // ▲ Lane HC: a phone GRID. A phone carousel is sized by "Cards in view ·
+    // phone" now (2.3 by default, the owner's), which HomepageHubTest pins.
+    $html = gssRender(['desktop_cols' => 5, 'mobile_cols' => 3, 'mobile_layout' => 'grid']);
 
     preg_match('#<section class="sec kbb-gsec[^>]*>#', $html, $m);
 
@@ -201,7 +203,9 @@ it('emits exactly two integers into the section’s style attribute and nothing 
 
     // The section wrapper's own style is the shop's existing padding rule; the
     // custom properties live on the grid.
-    preg_match('#<div class="[^"]*gs-grid[^"]*" data-skin="[^"]*" style="([^"]*)">#', $html, $g);
+    // ▲ Lane HC: `[^>]*` — a laptop carousel with arrows on (the default)
+    // carries `data-ymal-track` after the style; still no value from a setting.
+    preg_match('#<div class="[^"]*gs-grid[^"]*" data-skin="[^"]*" style="([^"]*)"[^>]*>#', $html, $g);
 
     expect($g[1] ?? '')->toBe('--gs-d:5;--gs-m:3');
 });
