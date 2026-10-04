@@ -1,0 +1,200 @@
+[
+ {
+  "shot": "super-sale-shipped-390",
+  "viewport": 390,
+  "scrollWidth": 390,
+  "bannerBlocks": 1,
+  "imgSrc": null,
+  "imgW": null,
+  "imgH": null,
+  "stripW": 390,
+  "stripH": 36,
+  "stripFont": 12,
+  "stripBg": "rgb(200, 51, 106)",
+  "stripRows": 1,
+  "tickPx": 15,
+  "items": [
+   "100% Authentic Products",
+   "Express Delivery all over UAE"
+  ],
+  "firstProducts": [
+   "house-of-hur-moist-ampoule-blusher",
+   "medicube-pdrn-glow-booster-set-pink-edition",
+   "medicube-pdrn-glow-booster-set-black-edition",
+   "shark-cryoglow-under-eye-cooling-led-anti-aging-red-light-and-skin-clearing-mask",
+   "medicube-age-r-booster-pro-x2-pink",
+   "medicube-collagen-booster-set-pink-edition"
+  ]
+ },
+ {
+  "shot": "super-sale-shipped-1280",
+  "viewport": 1280,
+  "scrollWidth": 1280,
+  "bannerBlocks": 1,
+  "imgSrc": null,
+  "imgW": null,
+  "imgH": null,
+  "stripW": 1280,
+  "stripH": 44,
+  "stripFont": 15,
+  "stripBg": "rgb(200, 51, 106)",
+  "stripRows": 1,
+  "tickPx": 18,
+  "items": [
+   "100% Authentic Products",
+   "Express Delivery all over UAE"
+  ],
+  "firstProducts": [
+   "house-of-hur-moist-ampoule-blusher",
+   "medicube-pdrn-glow-booster-set-pink-edition",
+   "medicube-pdrn-glow-booster-set-black-edition",
+   "shark-cryoglow-under-eye-cooling-led-anti-aging-red-light-and-skin-clearing-mask",
+   "medicube-age-r-booster-pro-x2-pink",
+   "medicube-collagen-booster-set-pink-edition"
+  ]
+ },
+ {
+  "shot": "admin-banners-before-1280",
+  "viewport": 1280,
+  "scrollWidth": 1280,
+  "crumb": "Pages",
+  "title": "Page banners",
+  "sidebarRows": 1,
+  "openTab": "Banners",
+  "stageStripH": 42
+ },
+ {
+  "shot": "admin-banners-before-390",
+  "viewport": 390,
+  "scrollWidth": 390,
+  "crumb": "Pages",
+  "title": "Page banners",
+  "sidebarRows": 1,
+  "openTab": "Banners",
+  "stageStripH": 42
+ },
+ {
+  "shot": "admin-banners-after-phone-preview-1280",
+  "viewport": 1280,
+  "scrollWidth": 1280,
+  "crumb": "Pages",
+  "title": "Page banners",
+  "sidebarRows": 1,
+  "openTab": "Banners",
+  "stageStripH": 42
+ },
+ {
+  "shot": "admin-banners-after-desktop-preview-1280",
+  "viewport": 1280,
+  "scrollWidth": 1280,
+  "crumb": "Pages",
+  "title": "Page banners",
+  "sidebarRows": 1,
+  "openTab": "Banners",
+  "stageStripH": 49.5
+ },
+ {
+  "shot": "admin-banners-after-390",
+  "viewport": 390,
+  "scrollWidth": 390,
+  "crumb": "Pages",
+  "title": "Page banners",
+  "sidebarRows": 1,
+  "openTab": "Banners",
+  "stageStripH": 42
+ },
+ {
+  "shot": "admin-where-they-show-1280",
+  "viewport": 1280,
+  "scrollWidth": 1280,
+  "crumb": "Pages",
+  "title": "Page banners",
+  "sidebarRows": 1,
+  "openTab": "Where they show",
+  "stageStripH": 49.5
+ },
+ {
+  "shot": "admin-where-they-show-390",
+  "viewport": 390,
+  "scrollWidth": 390,
+  "crumb": "Pages",
+  "title": "Page banners",
+  "sidebarRows": 1,
+  "openTab": "Where they show",
+  "stageStripH": 42
+ },
+ {
+  "shot": "admin-super-sale-products-1280",
+  "viewport": 1280,
+  "scrollWidth": 1280,
+  "crumb": "Pages",
+  "title": "Page banners",
+  "sidebarRows": 1,
+  "openTab": "Super Sale products",
+  "stageStripH": 49.5
+ },
+ {
+  "shot": "admin-super-sale-products-390",
+  "viewport": 390,
+  "scrollWidth": 390,
+  "crumb": "Pages",
+  "title": "Page banners",
+  "sidebarRows": 1,
+  "openTab": "Super Sale products",
+  "stageStripH": 42
+ },
+ {
+  "shot": "super-sale-with-banner-390",
+  "viewport": 390,
+  "scrollWidth": 390,
+  "bannerBlocks": 1,
+  "imgSrc": "/uploads/ss/placeholder-m.png",
+  "imgW": 390,
+  "imgH": 260,
+  "stripW": 390,
+  "stripH": 36,
+  "stripFont": 12,
+  "stripBg": "rgb(200, 51, 106)",
+  "stripRows": 1,
+  "tickPx": 15,
+  "items": [
+   "100% Authentic Products",
+   "Express Delivery all over UAE"
+  ],
+  "firstProducts": [
+   "house-of-hur-moist-ampoule-blusher",
+   "medicube-pdrn-glow-booster-set-pink-edition",
+   "medicube-pdrn-glow-booster-set-black-edition",
+   "shark-cryoglow-under-eye-cooling-led-anti-aging-red-light-and-skin-clearing-mask",
+   "medicube-age-r-booster-pro-x2-pink",
+   "medicube-collagen-booster-set-pink-edition"
+  ]
+ },
+ {
+  "shot": "super-sale-with-banner-1280",
+  "viewport": 1280,
+  "scrollWidth": 1280,
+  "bannerBlocks": 1,
+  "imgSrc": "/uploads/ss/placeholder-d.png",
+  "imgW": 1280,
+  "imgH": 400,
+  "stripW": 1280,
+  "stripH": 44,
+  "stripFont": 15,
+  "stripBg": "rgb(200, 51, 106)",
+  "stripRows": 1,
+  "tickPx": 18,
+  "items": [
+   "100% Authentic Products",
+   "Express Delivery all over UAE"
+  ],
+  "firstProducts": [
+   "house-of-hur-moist-ampoule-blusher",
+   "medicube-pdrn-glow-booster-set-pink-edition",
+   "medicube-pdrn-glow-booster-set-black-edition",
+   "shark-cryoglow-under-eye-cooling-led-anti-aging-red-light-and-skin-clearing-mask",
+   "medicube-age-r-booster-pro-x2-pink",
+   "medicube-collagen-booster-set-pink-edition"
+  ]
+ }
+]

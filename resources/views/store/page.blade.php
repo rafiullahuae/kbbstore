@@ -5,6 +5,7 @@
 
 @section('content')
 <div class="kbb-home">
+@include('partials.page-banner', ['pageBanner' => $pageBanner ?? null])
 <section class="sec"><div class="wrap">
     <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{!! $page->t('title') !!}</span></nav>
 
