@@ -12640,23 +12640,23 @@ async function renderMail(){
    from f.help; it is not duplicated here and cannot drift out of step with it.
 --------------------------------------------------------------------------- */
 const MAIL_SECTIONS=[
-  { title:'How email leaves this store',
+  { title:'How email leaves this store', tab:'Sending method',
     /* Description comes from mail_transport's own help — see above. */
     descFrom:'mail_transport',
     rows:[['mail_transport']] },
 
-  { title:'Mail server',
+  { title:'Mail server', tab:'Mail server (SMTP)',
     desc:'Only needed if you picked the dedicated-SMTP option above. Every value here comes from your hosting control panel.',
     rows:[['mail_host','mail_port'],
           ['mail_username','mail_password'],
           ['mail_encryption','mail_timeout']] },
 
-  { title:'Who the message comes from',
+  { title:'Who the message comes from', tab:'Sender & alerts',
     desc:'The name and address customers see on everything the shop sends, and the inbox your own new-order alerts go to.',
     rows:[['mail_from_address','mail_from_name'],
           ['mail_merchant_address']] },
 
-  { title:'What customers see at the foot',
+  { title:'What customers see at the foot', tab:'Footer details',
     desc:'Printed under every order email. Leave any of them blank and the storefront’s own details are used instead.',
     rows:[['mail_support_email','mail_support_whatsapp'],
           ['mail_support_instagram','mail_signature']] },
@@ -12684,7 +12684,15 @@ function mailField(f,showHelp){
   </div>`;
 }
 
+/* Lane EK — the bands as a list, [{title, html}], so paintMail() can put each
+   in its own tab (the owner, 4 Oct: "proper tabs not just throw the
+   content"). mailSections() is still the same joined HTML: every key drawn,
+   once, including the catch-all band (MailScreenDesignTest runs it). */
 function mailSections(fields){
+  return mailSectionList(fields).map(b=>b.html).join('');
+}
+
+function mailSectionList(fields){
   const byKey={}; fields.forEach(f=>{ byKey[f.key]=f; });
   const used={};
   const out=[];
@@ -12704,25 +12712,25 @@ function mailSections(fields){
       ? byKey[sec.descFrom].help
       : (sec.desc||'');
 
-    out.push(`<section class="mlf-sec">
+    out.push({title:sec.tab||sec.title, html:`<section class="mlf-sec">
       <div class="mlf-sec-h"><div class="mlf-sec-t">${escHtml(sec.title)}</div>${
         desc?`<div class="mlf-sec-d">${escHtml(desc)}</div>`:''}</div>
       ${rows.join('')}
-    </section>`);
+    </section>`});
   });
 
   /* Anything SCHEMA declares that no group above names. Never dropped: a field
      missing from the form is a setting the next Save blanks. */
   const rest=fields.filter(f=>!used[f.key]);
   if(rest.length){
-    out.push(`<section class="mlf-sec">
+    out.push({title:'Other settings', html:`<section class="mlf-sec">
       <div class="mlf-sec-h"><div class="mlf-sec-t">Other settings</div>
         <div class="mlf-sec-d">Added to this store after this screen was laid out. They save exactly like the rest.</div></div>
       ${rest.map(f=>`<div class="mlf-grid">${mailField(f,true)}</div>`).join('')}
-    </section>`);
+    </section>`});
   }
 
-  return out.join('');
+  return out;
 }
 
 /* The outcome of the last test, kept server-side so it outlives the tab that
@@ -12747,25 +12755,41 @@ function paintMail(){
     ? `<div class="banner" style="margin-bottom:14px"><div><b>Nothing is being sent.</b> Mail is going to the Laravel log. Set <b>Send using</b> to <code>smtp</code> for real delivery.</div></div>`
     : '';
 
+  /* Lane EK — TABS. One tab per settings band, then the four panels that were
+     stacked under them. Markup only: the shared tab component
+     (admin/partials/kbb-tabs) supplies the clicks and the arrow keys, and every
+     panel stays in the page, hidden or not — so the one Save below still
+     collect()s every field, exactly as it always has. The tab this browser
+     last used (or ?tab=) opens first. */
+  const bands=mailSectionList(MAILCFG.fields);
+  const mlTabs=bands.map((b,i)=>['b'+i,b.title]).concat([['status','Order status emails'],['test','Send a test'],['waiting','Waiting to go out'],['sent','Sent mail']]);
+  let mlCur=mlTabs[0][0];
+  try{
+    const q=new URLSearchParams(window.location.search).get('tab'), m=localStorage.getItem('kbbtab:mail');
+    const want=q||m; if(want && mlTabs.some(t=>t[0]===want)) mlCur=want;
+  }catch(e){}
+  const mlPanel=(id,inner)=>`<div class="kbb-tabpanel kbt-panel" role="tabpanel" data-kbt-panel="mail" data-kbt-id="${id}" id="kbtp_mail_${id}" aria-labelledby="kbt_mail_${id}" tabindex="0"${id===mlCur?'':' hidden'}>${inner}</div>`;
+  const mlSave=`<div class="ecsave">
+      <span class="ecdirty" id="mlDirty" style="visibility:hidden">Unsaved changes</span>
+      <button class="btn primary" id="mlSave">Save changes</button>
+    </div>`;
+
   $('#content').innerHTML=`<div class="wrap mlf-wrap">
     <div class="page-head"><h2>Mail</h2><p>The mailbox this store sends from. Settings come from the hosting control panel; the password is stored encrypted and is never shown again.</p></div>
     ${warn}${logNote}
-    <div class="card mlf-card">${mailSections(MAILCFG.fields)}</div>
-    <div class="ecsave">
-      <span class="ecdirty" id="mlDirty" style="visibility:hidden">Unsaved changes</span>
-      <button class="btn primary" id="mlSave">Save changes</button>
-    </div>
+    <div class="ectabs kbb-tabs kbt" role="tablist" data-kbt="mail" aria-label="Mail settings">${mlTabs.map(t=>`<button type="button" class="ectab kbb-tab kbt-tab${t[0]===mlCur?' on':''}" role="tab" id="kbt_mail_${t[0]}" data-kbt-tab="${t[0]}" aria-controls="kbtp_mail_${t[0]}" aria-selected="${t[0]===mlCur?'true':'false'}" tabindex="${t[0]===mlCur?'0':'-1'}">${escHtml(t[1])}</button>`).join('')}</div>
 
-    <div class="sec-title">Order status emails</div>
-    <div class="card mlf-card">
+    ${bands.map((b,i)=>mlPanel('b'+i,`<div class="card mlf-card">${b.html}</div>${mlSave.replace('id="mlDirty"',i?'data-ml-dirty':'id="mlDirty" data-ml-dirty').replace('id="mlSave"',i?'data-ml-save':'id="mlSave" data-ml-save')}`)).join('')}
+
+    ${mlPanel('status',`<div class="card mlf-card">
       <div class="mlf-sec-h" style="margin-bottom:10px">
+        <div class="mlf-sec-t">Order status emails</div>
         <div class="mlf-sec-d">Which status changes email the customer automatically. You can still override this on any single order, from the order&rsquo;s own page.</div>
       </div>
       <div id="mlStatusEmails"><p class="mlf-muted">Loading…</p></div>
-    </div>
+    </div>`)}
 
-    <div class="sec-title">Send a test</div>
-    <div class="card mlf-card">
+    ${mlPanel('test',`<div class="card mlf-card">
       <div class="mlf-grid">
         <div class="mlf-field">
           <label class="mlf-label" for="mlTo">Send a test message to</label>
@@ -12775,18 +12799,16 @@ function paintMail(){
       </div>
       <div style="margin-top:12px"><button class="btn primary" id="mlTest">Send test message</button></div>
       <div id="mlResult" style="margin-top:14px">${mailLastTest()}</div>
-    </div>
+    </div>`)}
 
-    <div class="sec-title">Waiting to go out</div>
-    <div class="card mlf-card">
+    ${mlPanel('waiting',`<div class="card mlf-card">
       <div class="mlf-sec-h" style="margin-bottom:10px">
         <div class="mlf-sec-d">Back-in-stock alerts and basket reminders that this store owes somebody. The two features are off until you switch them on, and this panel says which of the things they need is still missing rather than showing you an empty list that looks healthy.</div>
       </div>
       <div id="mlBacklog"><p class="mlf-muted">Loading…</p></div>
-    </div>
+    </div>`)}
 
-    <div class="sec-title">Sent mail</div>
-    <div class="card mlf-card">
+    ${mlPanel('sent',`<div class="card mlf-card">
       <div class="mlf-sec-h" style="margin-bottom:10px">
         <div class="mlf-sec-d">Every message this store has tried to send, and what the mail server said back. When a customer says an email never arrived, this is where the answer is. Bodies are never stored — a reset or confirmation message carries a live link.</div>
       </div>
@@ -12801,9 +12823,13 @@ function paintMail(){
         </div>
       </div>
       <div id="mlLog"><p class="mlf-muted">Loading…</p></div>
-    </div>
+    </div>`)}
   </div>`;
   bindMail();
+  /* Every settings tab carries the same Save (it saves every field, as the one
+     button always has) and the same "Unsaved changes" note. */
+  $$('#content [data-ml-save]').forEach(b=>{ if(b.id!=='mlSave') b.onclick=()=>{ const m=$('#mlSave'); if(m) m.click(); }; });
+  $$('#content [data-mail]').forEach(el=>el.addEventListener('input',()=>$$('#content [data-ml-dirty]').forEach(d=>{ d.style.visibility='visible'; })));
   loadStatusEmails();
   loadMailLog();
   loadOutboundBacklog();

@@ -130,11 +130,29 @@ final class CustomerEmails
                 // this email's own.
                 'switchable' => $state === 'switch',
                 'last_sent' => $at,
-                'customised' => KitSections::customised($template),
+                'customised' => KitSections::customised($template) || \App\Services\Mail\Kit\EmailWording::updatedAt($template) !== null,
+                'edited_at' => \App\Services\Mail\Kit\EmailWording::updatedAt($template),
+                // The subject this email goes out with, in the owner's words if
+                // he wrote one ({tags} as he typed them), else the built-in.
+                'subject' => self::subject($template),
             ];
         }
 
         return $out;
+    }
+
+    private static function subject(string $template): string
+    {
+        $key = KitSections::TEMPLATES[$template]['words']['subject'] ?? null;
+
+        if ($key === null) {
+            return '';
+        }
+
+        $own = \App\Services\Mail\Kit\EmailWording::value($template, 'subject', 'en');
+        $english = (string) (\App\Services\Translation\InterfaceStrings::english($key) ?? '');
+
+        return $own ?? \App\Services\Mail\Kit\EmailWording::toTags($english, \App\Services\Mail\Kit\EmailWording::tags($english));
     }
 
     /** Flip one email's own switch. False when the row has no switch of its own. */

@@ -59,7 +59,7 @@ use Illuminate\Support\Facades\Schema;
  */
 final class KitSections
 {
-    public const TABLE = 'email_template_layouts';
+    public const TABLE = 'email_templates';
 
     private const OPEN = "\x00KS:";
     private const CLOSE = "\x00KE\x00";
@@ -109,12 +109,9 @@ final class KitSections
                 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Subject' => 'email.confirmation.subject',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_confirmed',
-                'Headline' => 'email.confirmation.greeting_named',
-                'Headline (no first name known)' => 'email.confirmation.greeting',
-                'Message (paid)' => 'email.confirmation.lead_paid',
-                'Message (cash on delivery)' => 'email.confirmation.lead',
+                'subject' => 'email.confirmation.subject',
+                'preheader' => 'email.kit.pre_confirmed',
+                'heading' => 'email.confirmation.greeting_named',
             ],
         ],
         'order_reminder_1' => [
@@ -126,11 +123,10 @@ final class KitSections
                 'after' => ['Closing line', true], 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Subject' => 'email.reminder.first_subject',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_reminder_first',
-                'Headline' => 'email.reminder.first_heading',
-                'Message' => 'email.reminder.first_body',
-                'Closing line' => 'email.reminder.first_closing',
+                'subject' => 'email.reminder.first_subject',
+                'preheader' => 'email.kit.pre_reminder_first',
+                'heading' => 'email.reminder.first_heading',
+                'body' => 'email.reminder.first_body',
             ],
         ],
         'order_reminder_2' => [
@@ -142,11 +138,10 @@ final class KitSections
                 'after' => ['Closing line', true], 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Subject' => 'email.reminder.second_subject',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_reminder_second',
-                'Headline' => 'email.reminder.second_heading',
-                'Message' => 'email.reminder.second_body',
-                'Closing line' => 'email.reminder.second_closing',
+                'subject' => 'email.reminder.second_subject',
+                'preheader' => 'email.kit.pre_reminder_second',
+                'heading' => 'email.reminder.second_heading',
+                'body' => 'email.reminder.second_body',
             ],
         ],
         'order_status_processing' => [
@@ -158,10 +153,10 @@ final class KitSections
                 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Subject' => 'email.order_status.processing_subject',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_status',
-                'Headline' => 'email.order_status.processing_heading',
-                'Message' => 'email.order_status.processing_body',
+                'subject' => 'email.order_status.processing_subject',
+                'preheader' => 'email.kit.pre_status',
+                'heading' => 'email.order_status.processing_heading',
+                'body' => 'email.order_status.processing_body',
             ],
         ],
         'order_status_onhold' => [
@@ -174,11 +169,10 @@ final class KitSections
                 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Subject' => 'email.order_status.onhold_subject',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_status',
-                'Headline' => 'email.order_status.onhold_heading',
-                'Message' => 'email.order_status.onhold_body',
-                'Line after your reason' => 'email.order_status.onhold_reply',
+                'subject' => 'email.order_status.onhold_subject',
+                'preheader' => 'email.kit.pre_status',
+                'heading' => 'email.order_status.onhold_heading',
+                'body' => 'email.order_status.onhold_body',
             ],
         ],
         'order_status_shipped' => [
@@ -191,11 +185,10 @@ final class KitSections
                 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Subject' => 'email.order_status.shipped_subject',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_status',
-                'Headline' => 'email.order_status.shipped_heading',
-                'Message' => 'email.order_status.shipped_body',
-                'Tracking number note' => 'email.order_status.tracking_number',
+                'subject' => 'email.order_status.shipped_subject',
+                'preheader' => 'email.kit.pre_status',
+                'heading' => 'email.order_status.shipped_heading',
+                'body' => 'email.order_status.shipped_body',
             ],
         ],
         'order_status_completed' => [
@@ -208,10 +201,10 @@ final class KitSections
                 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Subject' => 'email.order_status.completed_subject',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_status',
-                'Headline' => 'email.order_status.completed_heading',
-                'Message' => 'email.order_status.completed_body',
+                'subject' => 'email.order_status.completed_subject',
+                'preheader' => 'email.kit.pre_status',
+                'heading' => 'email.order_status.completed_heading',
+                'body' => 'email.order_status.completed_body',
             ],
         ],
         'order_status_cancelled' => [
@@ -224,10 +217,10 @@ final class KitSections
                 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Subject' => 'email.order_status.cancelled_subject',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_status',
-                'Headline' => 'email.order_status.cancelled_heading',
-                'Message' => 'email.order_status.cancelled_body',
+                'subject' => 'email.order_status.cancelled_subject',
+                'preheader' => 'email.kit.pre_status',
+                'heading' => 'email.order_status.cancelled_heading',
+                'body' => 'email.order_status.cancelled_body',
             ],
         ],
         'order_status_refunded' => [
@@ -240,10 +233,10 @@ final class KitSections
                 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Subject' => 'email.order_status.refunded_subject',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_status',
-                'Headline' => 'email.order_status.refunded_heading',
-                'Message' => 'email.order_status.refunded_body',
+                'subject' => 'email.order_status.refunded_subject',
+                'preheader' => 'email.kit.pre_status',
+                'heading' => 'email.order_status.refunded_heading',
+                'body' => 'email.order_status.refunded_body',
             ],
         ],
         'order_status_failed' => [
@@ -256,10 +249,10 @@ final class KitSections
                 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Subject' => 'email.order_status.failed_subject',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_status',
-                'Headline' => 'email.order_status.failed_heading',
-                'Message' => 'email.order_status.failed_body',
+                'subject' => 'email.order_status.failed_subject',
+                'preheader' => 'email.kit.pre_status',
+                'heading' => 'email.order_status.failed_heading',
+                'body' => 'email.order_status.failed_body',
             ],
         ],
         'order_refunded' => [
@@ -271,10 +264,9 @@ final class KitSections
                 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_refunded',
-                'Headline' => 'email.refunded.heading_sent',
-                'Message' => 'email.refunded.sent_body',
-                'Statement note' => 'email.refunded.statement_note',
+                'preheader' => 'email.kit.pre_refunded',
+                'heading' => 'email.refunded.heading_sent',
+                'body' => 'email.refunded.sent_body',
             ],
         ],
         'order_feedback' => [
@@ -285,12 +277,10 @@ final class KitSections
                 'closing' => ['Closing line', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Subject' => 'email.feedback.subject_named',
-                'Subject (no first name known)' => 'email.feedback.subject',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_feedback',
-                'Headline' => 'email.feedback.heading_named',
-                'Message' => 'email.feedback.body',
-                'Closing line' => 'email.feedback.closing',
+                'subject' => 'email.feedback.subject_named',
+                'preheader' => 'email.kit.pre_feedback',
+                'heading' => 'email.feedback.heading_named',
+                'body' => 'email.feedback.body',
             ],
         ],
         'order_invoice' => [
@@ -301,8 +291,8 @@ final class KitSections
                 'help' => ['Help box (WhatsApp · email · Instagram)', true], 'signoff' => ['Signature', true],
             ],
             'words' => [
-                'Headline' => 'email.kit.invoice_title',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.invoice_lead',
+                'heading' => 'email.kit.invoice_title',
+                'preheader' => 'email.kit.invoice_lead',
             ],
         ],
         'new_order_alert' => [
@@ -312,8 +302,7 @@ final class KitSections
                 'totals' => ['Totals', true], 'info' => ['Ship to · Customer', true],
             ],
             'words' => [
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_alert',
-                'What to do next' => 'email.alert.next_step',
+                'preheader' => 'email.kit.pre_alert',
             ],
         ],
         'password_reset' => [
@@ -323,10 +312,8 @@ final class KitSections
                 'notice' => ['“Not you?” box', true],
             ],
             'words' => [
-                'Headline' => 'email.kit.reset_title',
-                'Message' => 'email.reset.lead',
-                'Button' => 'email.reset.button',
-                '“Not you?” box' => 'email.reset.not_you',
+                'heading' => 'email.kit.reset_title',
+                'body' => 'email.reset.lead',
             ],
         ],
         'verify_email' => [
@@ -335,9 +322,8 @@ final class KitSections
                 'hero' => ['Headline', true], 'button' => ['Button · Confirm my email', true],
             ],
             'words' => [
-                'Headline' => 'email.kit.verify_title',
-                'Message' => 'email.verify.lead',
-                'Button' => 'email.verify.button',
+                'heading' => 'email.kit.verify_title',
+                'body' => 'email.verify.lead',
             ],
         ],
         'customer_invite' => [
@@ -346,8 +332,7 @@ final class KitSections
                 'hero' => ['Headline + your message', true], 'button' => ['Button · Set your password', true], 'note' => ['Message after the button', true],
             ],
             'words' => [
-                'Headline' => 'email.kit.invite_title',
-                'Button' => 'email.customer_invite.button',
+                'heading' => 'email.kit.invite_title',
             ],
             'note' => 'The subject and the message are written under Store → Customers → Send account invite.',
         ],
@@ -357,9 +342,8 @@ final class KitSections
                 'hero' => ['Headline', true], 'button' => ['Button · Confirm', true], 'note' => ['Small print', true],
             ],
             'words' => [
-                'Headline' => 'email.kit.newsletter_title',
-                'Preview line (shown after the subject in the inbox)' => 'email.kit.pre_newsletter',
-                'Small print' => 'email.newsletter.do_nothing',
+                'heading' => 'email.kit.newsletter_title',
+                'preheader' => 'email.kit.pre_newsletter',
             ],
         ],
         'quiz_plan' => [
@@ -368,10 +352,9 @@ final class KitSections
                 'hero' => ['Headline', true], 'routines' => ['Morning and evening routines', true], 'button' => ['Button', true], 'note' => ['Small print', true],
             ],
             'words' => [
-                'Subject' => 'email.quiz_plan.subject',
-                'Headline' => 'email.quiz_plan.greeting_named',
-                'Message' => 'email.quiz_plan.lead',
-                'Small print' => 'email.quiz_plan.steps_note',
+                'subject' => 'email.quiz_plan.subject',
+                'heading' => 'email.quiz_plan.greeting_named',
+                'body' => 'email.quiz_plan.lead',
             ],
         ],
         'back_in_stock' => [
@@ -380,9 +363,7 @@ final class KitSections
                 'hero' => ['Headline + your message', true], 'product' => ['The product', true], 'note' => ['Small print', true],
             ],
             'words' => [
-                'Headline' => 'email.kit.stock_title',
-                'Button' => 'email.kit.stock_cta',
-                'Small print' => 'email.kit.stock_once',
+                'heading' => 'email.kit.stock_title',
             ],
             'note' => 'The subject and the message are written under Store → Ecommerce → Product page → Back in stock.',
         ],
@@ -392,9 +373,7 @@ final class KitSections
                 'hero' => ['Headline + your message', true], 'items' => ['Items with pictures', true], 'button' => ['Button · Return to my basket', true], 'note' => ['Small print', true],
             ],
             'words' => [
-                'Headline' => 'email.kit.basket_title',
-                'Button' => 'email.kit.basket_button',
-                'Small print' => 'email.cart_recovery.why',
+                'heading' => 'email.kit.basket_title',
             ],
             'note' => 'The subject and the message are written under Store → Ecommerce → Cart → Basket reminders.',
         ],
@@ -605,7 +584,7 @@ final class KitSections
      * keys, each at most once, and blocks KitBlocks::clean() accepts. Returns
      * the layout as stored.
      */
-    public static function save(string $template, array $layout, ?string $by = null): array
+    public static function save(string $template, array $layout, ?int $by = null): array
     {
         if (! isset(self::TEMPLATES[$template])) {
             throw new \InvalidArgumentException('Unknown email.');
@@ -614,8 +593,8 @@ final class KitSections
         $clean = self::clean($template, $layout);
 
         DB::table(self::TABLE)->updateOrInsert(
-            ['template' => $template],
-            ['layout' => json_encode($clean, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 'updated_by' => $by, 'updated_at' => now(), 'created_at' => now()],
+            ['key' => $template, 'locale' => 'en'],
+            ['blocks' => json_encode($clean, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 'updated_by' => $by, 'updated_at' => now(), 'created_at' => now()],
         );
 
         self::forget();
@@ -626,7 +605,7 @@ final class KitSections
     /** "Reset to default": the row goes, and the email is the code's again. */
     public static function reset(string $template): void
     {
-        DB::table(self::TABLE)->where('template', $template)->delete();
+        DB::table(self::TABLE)->where('key', $template)->update(['blocks' => null, 'updated_at' => now()]);
         self::forget();
     }
 
@@ -766,14 +745,14 @@ final class KitSections
                 return self::$stored;
             }
 
-            foreach (DB::table(self::TABLE)->get(['template', 'layout']) as $row) {
-                $template = (string) $row->template;
+            foreach (DB::table(self::TABLE)->where('locale', 'en')->whereNotNull('blocks')->get(['key', 'blocks']) as $row) {
+                $template = (string) $row->key;
 
                 if (! isset(self::TEMPLATES[$template])) {
                     continue;
                 }
 
-                $decoded = json_decode((string) $row->layout, true);
+                $decoded = json_decode((string) $row->blocks, true);
                 self::$stored[$template] = self::clean($template, is_array($decoded) ? $decoded : []);
             }
         } catch (\Throwable $e) {

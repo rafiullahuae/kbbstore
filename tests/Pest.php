@@ -76,18 +76,6 @@ pest()->extend(Tests\TestCase::class)
          */
         @touch(\App\Services\Mail\OrderReminderTick::markerPath());
 
-        /*
-         * And its twin, Email Marketing's heartbeat (Lane EK).
-         *
-         * App\Services\Marketing\CampaignTick sends a campaign's next batch at
-         * the end of whichever request finds ITS marker older than twenty
-         * seconds -- the same wall-clock lottery as the reminder sweep above,
-         * with the same cost to every test that counts queries (one indexed
-         * query when nothing is sending, a cache lock and a batch when
-         * something is). Held off the same way; the tests about the heartbeat
-         * unlink the marker in their own body.
-         */
-        @touch(\App\Services\Marketing\CampaignTick::markerPath());
 
         /*
          * And the third thing that outlives a test: PHP's own execution clock.

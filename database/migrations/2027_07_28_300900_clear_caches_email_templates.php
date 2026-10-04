@@ -6,13 +6,12 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Lane EK: the template editor, Customer emails and Email Marketing add routes
- * (routes/emails-marketing-admin.php inside the admin-api group,
- * routes/emails-marketing-public.php for the open pixel, the tracked click and
- * the one-click unsubscribe), a Blade directive pair the kit's views now use
- * (@kitsections / @kitsec), and re-written email views. None of that takes
- * effect on the server until the compiled route cache and the compiled views
- * are dropped -- CLAUDE.md's convention for every package that adds a route.
+ * Lane EK: Emails → Customer emails and the template builder add routes
+ * (routes/emails-templates-admin.php, inside the admin-api group), a Blade
+ * directive pair every kit email now uses (@kitsections / @kitsec), a wrapped
+ * translation loader, and re-written email views. None of that takes effect on
+ * the server until the compiled route cache and the compiled views are dropped
+ * -- CLAUDE.md's convention for every package that adds a route.
  */
 return new class extends Migration
 {
@@ -47,7 +46,7 @@ return new class extends Migration
         }
 
         if (app()->runningInConsole()) {
-            echo "Cleared {$cleared} compiled files (Lane EK: template editor and email marketing routes).\n";
+            echo "Cleared {$cleared} compiled files (Lane EK: Customer emails and the template builder).\n";
         }
     }
 

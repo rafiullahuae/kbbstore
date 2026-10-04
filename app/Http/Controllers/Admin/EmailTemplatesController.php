@@ -9,7 +9,7 @@ use App\Services\Mail\CustomerEmails;
 use App\Services\Mail\Kit\KitBlocks;
 use App\Services\Mail\Kit\KitSamples;
 use App\Services\Mail\Kit\KitSections;
-use App\Services\Mail\Kit\KitWords;
+use App\Services\Mail\Kit\EmailWording;
 use App\Services\Mail\MailTester;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,8 +17,9 @@ use Illuminate\Http\Request;
 /**
  * Emails → Customer emails (e3) and its template editor (e4) — Lane EK.
  *
- * Every route here is `emails.templates` (owner only, like everything else
- * under Emails). Nothing here sends to a customer: "Test" goes to the signed-in
+ * Capabilities (docs/EMAILS-PLAN.md §6): reading is emails.view (owner,
+ * manager), a test to yourself emails.test (owner, manager), every change
+ * emails.manage (owner). Nothing here sends to a customer: "Test" goes to the signed-in
  * admin's own address, and the preview is drawn, never sent.
  *
  *   GET  customer                 the list, with each email's switch and last send
@@ -76,13 +77,19 @@ class EmailTemplatesController extends Controller
             'words.ar' => ['sometimes', 'array'],
         ]);
 
+        // Words first: a refused word (a line break in a subject) saves
+        // nothing, so the owner never ends up with half an edit.
+        $refused = EmailWording::save($template, (array) ($data['words'] ?? []), $this->who($request));
+
+        if ($refused !== []) {
+            return response()->json(['ok' => false, 'refused' => $refused, 'error' => reset($refused)] + $this->state($template), 422);
+        }
+
         if (isset($data['sections'])) {
             KitSections::save($template, ['sections' => $data['sections']], $this->who($request));
         }
 
-        $refused = KitWords::save($template, (array) ($data['words'] ?? []));
-
-        return response()->json(['ok' => $refused === [], 'refused' => $refused] + $this->state($template), $refused === [] ? 200 : 422);
+        return response()->json(['ok' => true, 'refused' => []] + $this->state($template));
     }
 
     public function reset(string $template): JsonResponse
@@ -91,8 +98,8 @@ class EmailTemplatesController extends Controller
             return response()->json(['message' => 'No such email.'], 404);
         }
 
-        KitSections::reset($template);
-        KitWords::resetEnglish($template);
+        EmailWording::reset($template);
+        KitSections::forget();
 
         return response()->json(['ok' => true] + $this->state($template));
     }
@@ -131,15 +138,22 @@ class EmailTemplatesController extends Controller
             'note' => $def['note'] ?? null,
             'customised' => KitSections::customised($template),
             'sections' => KitSections::forEditor($template),
-            'words' => KitWords::fields($template),
-            'add' => array_map(static fn (string $t) => ['type' => $t, 'label' => KitBlocks::TYPES[$t]], KitBlocks::SECTION_TYPES),
+            'words' => EmailWording::fields($template),
+            'edited_at' => EmailWording::updatedAt($template),
+            'add' => array_map(static fn (string $t) => ['type' => $t, 'label' => $t === 'image' ? 'Image' : KitBlocks::TYPES[$t]], KitBlocks::SECTION_TYPES),
+            // The approved order, for "Start from a ready template".
+            'defaults' => array_keys($def['sections']),
+            // What an added block may name — ids, read again at send time.
+            'coupons' => \App\Models\Coupon::query()->orderBy('code')->limit(200)->get(['id', 'code'])->toArray(),
+            'brands' => \App\Models\Brand::query()->orderBy('name')->get(['id', 'name'])->toArray(),
+            'categories' => \App\Models\Category::query()->orderBy('name')->limit(300)->get(['id', 'name'])->toArray(),
         ];
     }
 
-    private function who(Request $request): ?string
+    private function who(Request $request): ?int
     {
-        $admin = $request->user('admin');
+        $id = $request->user('admin')?->getKey();
 
-        return $admin === null ? null : mb_substr((string) ($admin->email ?? $admin->name ?? ''), 0, 191);
+        return $id === null ? null : (int) $id;
     }
 }

@@ -327,7 +327,7 @@ class EmailsApiController extends Controller
         if ($template !== '' && isset(\App\Services\Mail\Kit\KitSections::TEMPLATES[$template])) {
             $sections = $request->isMethod('post') && is_array($request->input('sections')) ? ['sections' => $request->input('sections')] : null;
             $words = $request->isMethod('post') && is_array($request->input('words')) ? $request->input('words') : [];
-            $render = static fn (): string => \App\Services\Mail\Kit\KitWords::withDraft($template, $words, static fn (): string => \App\Services\Mail\Kit\KitSamples::html($template));
+            $render = static fn (): string => \App\Services\Mail\Kit\EmailWording::withDraft($template, $words, static fn (): string => \App\Services\Mail\Kit\KitSamples::html($template));
             // The editor's English | العربية switch: the same email, in Arabic.
             $locale = app()->getLocale();
 

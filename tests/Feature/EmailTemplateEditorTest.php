@@ -23,7 +23,7 @@ use App\Services\Mail\CustomerEmails;
 use App\Services\Mail\Kit\KitBlocks;
 use App\Services\Mail\Kit\KitSamples;
 use App\Services\Mail\Kit\KitSections;
-use App\Services\Mail\Kit\KitWords;
+use App\Services\Mail\Kit\EmailWording;
 use App\Services\SettingsService;
 use App\Support\AdminCapabilities;
 use Illuminate\Support\Facades\DB;
@@ -223,30 +223,81 @@ it('draws an added section from the kit\'s own blocks: text escaped, a hostile l
 
 /* ================================================================== words */
 
-it('edits an email\'s words in the translations table, with {tags}, and blank goes back to the built-in wording', function () {
+it('stores an email\'s words in email_templates with {tags}, and blank goes back to the built-in wording byte for byte', function () {
     /*
-     * NO SECOND COPY: the words are the interface strings Translation →
-     * Strings edits. THE DEFECT: a Words card that saved into a table nothing
-     * reads, or that broke a placeholder — "{order_number}" left in a subject
-     * because the tag was never turned back into :number. MUTATION: skip
-     * fromTags() in KitWords::save() and the subject prints "{number}".
+     * docs/EMAILS-PLAN.md §2.1. THE DEFECT: a Words card that saved into a
+     * table nothing reads, or that broke a placeholder — "{number}" left in a
+     * subject because the tag was never turned back into :number.
+     * MUTATION: skip fromTags() in EmailWording::overlay() and the subject
+     * prints "{number}".
      */
     $order = ekOrder();
+    $builtin = (string) (new Mail\OrderStatusChanged($order, 'shipped'))->render();
+    $builtinSubject = (new Mail\OrderStatusChanged($order, 'shipped'))->envelope()->subject;
 
-    expect(KitWords::save('order_status_shipped', ['en' => ['email.order_status.shipped_subject' => 'On its way: {number}!']]))->toBe([]);
+    expect(EmailWording::save('order_status_shipped', ['en' => ['subject' => 'On its way: {number}!', 'heading' => 'Packed and gone']]))->toBe([]);
 
-    $subject = (new Mail\OrderStatusChanged($order, 'shipped'))->envelope()->subject;
-    expect($subject)->toContain('On its way: KBB-EK-1!');
+    $mail = new Mail\OrderStatusChanged($order, 'shipped');
+    expect($mail->envelope()->subject)->toBe('On its way: KBB-EK-1!')
+        ->and((string) $mail->render())->toContain('Packed and gone')
+        ->and(DB::table('email_templates')->where('key', 'order_status_shipped')->where('locale', 'en')->value('subject'))->toBe('On its way: {number}!');
 
-    // The row is the ordinary published UI translation, readable by Translation → Strings.
-    expect(Translation::query()->where('locale', 'en')->where('field', 'email.order_status.shipped_subject')->value('status'))->toBe(Translation::STATUS_PUBLISHED);
+    // Only that email: the cancelled email's subject is its own.
+    expect((new Mail\OrderStatusChanged($order, 'cancelled'))->envelope()->subject)->not->toContain('On its way');
 
-    // Blank: the row goes, and the built-in English is back.
-    KitWords::save('order_status_shipped', ['en' => ['email.order_status.shipped_subject' => '']]);
-    expect((new Mail\OrderStatusChanged($order, 'shipped'))->envelope()->subject)->not->toContain('On its way: KBB');
+    // Blank: the built-in again, byte for byte.
+    EmailWording::save('order_status_shipped', ['en' => ['subject' => '', 'heading' => '']]);
+    expect((new Mail\OrderStatusChanged($order, 'shipped'))->envelope()->subject)->toBe($builtinSubject)
+        // (the browser-copy token is random per render; nothing else may differ)
+        ->and(preg_replace('~/mail/view/[\w-]{43}~', '', (string) (new Mail\OrderStatusChanged($order, 'shipped'))->render()))->toBe(preg_replace('~/mail/view/[\w-]{43}~', '', $builtin));
+});
 
-    // Another email's key is refused, not written.
-    expect(KitWords::save('order_status_shipped', ['en' => ['email.confirmation.subject' => 'x']]))->toHaveKey('email.confirmation.subject');
+it('words a shared line for one email only: the status emails\' preview line', function () {
+    /*
+     * The seven status emails share email.kit.pre_status. Overlaying it would
+     * reword all seven when the owner edited one. MUTATION: drop the
+     * `!== 1` share check in EmailWording::overlay() and the cancelled email
+     * carries the shipped email's preview line.
+     */
+    $order = ekOrder();
+    EmailWording::save('order_status_shipped', ['en' => ['preheader' => 'Order {number} has left us']]);
+
+    expect((string) (new Mail\OrderStatusChanged($order, 'shipped'))->render())->toContain('Order KBB-EK-1 has left us')
+        ->and((string) (new Mail\OrderStatusChanged($order, 'cancelled'))->render())->not->toContain('has left us');
+});
+
+it('refuses a line break in a subject, and anything that is not one of the email\'s own fields', function () {
+    /*
+     * CRLF in a subject is a header injection. MUTATION: drop the [\r\n]
+     * check in EmailWording::problem() and the Bcc line is stored.
+     */
+    expect(EmailWording::save('order_status_shipped', ['en' => ['subject' => "Hi\r\nBcc: everyone@example.com"]]))->toHaveKey('en.subject')
+        ->and(EmailWording::save('order_status_shipped', ['en' => ['heading' => "Two\nlines"]]))->toHaveKey('en.heading')
+        ->and(EmailWording::save('order_status_shipped', ['en' => ['footer_html' => '<b>x</b>']]))->toHaveKey('en.footer_html')
+        ->and(EmailWording::save('order_status_shipped', ['en' => ['subject' => str_repeat('x', 201)]]))->toHaveKey('en.subject')
+        // A message may have paragraphs.
+        ->and(EmailWording::save('order_status_shipped', ['en' => ['body' => "One.\n\nTwo."]]))->toBe([])
+        ->and(DB::table('email_templates')->where('key', 'order_status_shipped')->value('subject'))->toBeNull();
+});
+
+it('falls back in Arabic to the Arabic words, then the English override, then the code', function () {
+    $order = ekOrder();
+    $ar = static function () use ($order): string {
+        app()->setLocale('ar');
+
+        try {
+            return (new Mail\OrderStatusChanged($order, 'shipped'))->envelope()->subject;
+        } finally {
+            app()->setLocale('en');
+        }
+    };
+
+    EmailWording::save('order_status_shipped', ['en' => ['subject' => 'English words {number}']]);
+    expect($ar())->toBe('English words KBB-EK-1');
+
+    EmailWording::save('order_status_shipped', ['ar' => ['subject' => 'طلبك {number} في الطريق']]);
+    expect($ar())->toBe('طلبك KBB-EK-1 في الطريق')
+        ->and((new Mail\OrderStatusChanged($order, 'shipped'))->envelope()->subject)->toBe('English words KBB-EK-1');
 });
 
 /* ============================================================== endpoints */
@@ -263,11 +314,11 @@ it('saves, previews unsaved changes without storing them, resets, and sends a te
     $draft = array_map(static fn ($k) => ['key' => $k], ['help', 'hero', 'tracker', 'chip', 'before', 'items', 'totals', 'promises', 'info', 'button', 'signoff']);
     $html = $this->post('/admin-api/emails/preview?template=order_status_shipped', ['sections' => $draft])->assertOk()->getContent();
     expect(strpos($html, __('email.kit.help_heading')))->toBeLessThan(strpos($html, __('email.kit.step_placed')))
-        ->and(DB::table('email_template_layouts')->count())->toBe(0);
+        ->and(DB::table('email_templates')->count())->toBe(0);
 
     // Save, then reset.
     $this->postJson('/admin-api/emails/templates/order_status_shipped', ['sections' => $draft])->assertOk()->assertJsonPath('customised', true);
-    expect(DB::table('email_template_layouts')->where('template', 'order_status_shipped')->exists())->toBeTrue();
+    expect(DB::table('email_templates')->where('key', 'order_status_shipped')->whereNotNull('blocks')->exists())->toBeTrue();
     $this->postJson('/admin-api/emails/templates/order_status_shipped/reset')->assertOk()->assertJsonPath('customised', false);
 
     // Design & branding's own preview is untouched by all this.
@@ -280,20 +331,47 @@ it('saves, previews unsaved changes without storing them, resets, and sends a te
     \Illuminate\Support\Facades\Mail::assertSentCount(1);
 });
 
-it('fails closed: Customer emails and the editor are the owner\'s, and an unknown email is a 404', function () {
+it('fails closed: reading is owner and manager, a test is owner and manager, changing is the owner\'s', function () {
     /*
-     * MUTATION: delete the three emails.templates lines from
-     * AdminCapabilities::RULES — the routes fall to the emails.manage
-     * wildcard and the capability assertions are red.
+     * docs/EMAILS-PLAN.md §6. MUTATION: delete the Lane EK lines above the
+     * emails wildcard in AdminCapabilities::RULES — every route falls to
+     * emails.manage and the manager can no longer read or test.
      */
-    expect(AdminCapabilities::forPath('GET', 'admin-api/emails/customer'))->toBe('emails.templates')
-        ->and(AdminCapabilities::forPath('POST', 'admin-api/emails/customer/switch'))->toBe('emails.templates')
-        ->and(AdminCapabilities::forPath('POST', 'admin-api/emails/templates/{template}/test'))->toBe('emails.templates')
-        ->and(AdminCapabilities::CAPABILITIES['emails.templates'])->toBe(['owner']);
+    expect(AdminCapabilities::forPath('GET', 'admin-api/emails/customer'))->toBe('emails.view')
+        ->and(AdminCapabilities::forPath('GET', 'admin-api/emails/templates/{template}'))->toBe('emails.view')
+        ->and(AdminCapabilities::forPath('POST', 'admin-api/emails/templates/{template}/test'))->toBe('emails.test')
+        ->and(AdminCapabilities::forPath('POST', 'admin-api/emails/templates/{template}'))->toBe('emails.manage')
+        ->and(AdminCapabilities::forPath('POST', 'admin-api/emails/templates/{template}/reset'))->toBe('emails.manage')
+        ->and(AdminCapabilities::forPath('POST', 'admin-api/emails/customer/switch'))->toBe('emails.manage')
+        ->and(AdminCapabilities::forPath('POST', 'admin-api/emails/preview'))->toBe('emails.manage')
+        ->and(AdminCapabilities::CAPABILITIES['emails.view'])->toBe(['owner', 'manager'])
+        ->and(AdminCapabilities::CAPABILITIES['emails.test'])->toBe(['owner', 'manager'])
+        ->and(AdminCapabilities::CAPABILITIES['emails.manage'])->toBe(['owner']);
 
-    foreach (['manager', 'support', 'editor'] as $role) {
+    // Route walk: every route in the file has a rule, none is under api/.
+    EmailMarketingRoutes::wire(app());
+    $mine = collect(\Illuminate\Support\Facades\Route::getRoutes()->getRoutes())
+        ->filter(fn ($r) => str_contains((string) ($r->getActionName()), 'EmailTemplatesController') || ($r->uri() === 'admin-api/emails/preview' && in_array('POST', $r->methods(), true)));
+    expect($mine->count())->toBe(7);
+    foreach ($mine as $route) {
+        expect(AdminCapabilities::for($route))->not->toBeNull()
+            ->and(str_starts_with($route->uri(), 'api/'))->toBeFalse();
+    }
+
+    ekOrder();
+    \Illuminate\Support\Facades\Mail::fake();
+    ekAs('manager');
+    $this->getJson('/admin-api/emails/customer')->assertOk();
+    $this->getJson('/admin-api/emails/templates/order_status_shipped')->assertOk();
+    $this->postJson('/admin-api/emails/templates/order_status_shipped/test')->assertOk();
+    $this->postJson('/admin-api/emails/templates/order_status_shipped', ['sections' => []])->assertForbidden();
+    $this->postJson('/admin-api/emails/customer/switch', ['template' => 'order_status_shipped', 'on' => false])->assertForbidden();
+
+    foreach (['support', 'editor'] as $role) {
         ekAs($role);
         $this->getJson('/admin-api/emails/customer')->assertForbidden();
+        $this->getJson('/admin-api/emails/templates/order_status_shipped')->assertForbidden();
+        $this->postJson('/admin-api/emails/templates/order_status_shipped/test')->assertForbidden();
         $this->postJson('/admin-api/emails/templates/order_status_shipped', ['sections' => []])->assertForbidden();
         $this->post('/admin-api/emails/preview?template=order_status_shipped')->assertForbidden();
     }
@@ -338,7 +416,7 @@ it('builds the screens with no layout-measuring JavaScript and every server stri
      * events on the rows themselves — never from geometry. MUTATION: use
      * getBoundingClientRect() to find the drop row and red.
      */
-    $screen = (string) file_get_contents(resource_path('views/admin/partials/emails-marketing-screens.blade.php'));
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/emails-templates-screens.blade.php'));
 
     foreach (['getBoundingClientRect', 'offsetWidth', 'offsetHeight', 'offsetTop', 'clientWidth', 'clientHeight', 'getComputedStyle', 'scrollHeight', 'elementFromPoint'] as $api) {
         expect($screen)->not->toContain($api);
@@ -346,8 +424,8 @@ it('builds the screens with no layout-measuring JavaScript and every server stri
 
     expect($screen)->toContain('pointerdown')
         ->and($screen)->toContain('releasePointerCapture')
-        // Both previews are framed with no script, no forms, no origin.
-        ->and(preg_match_all('/<iframe[^>]*sandbox=""/', $screen))->toBeGreaterThanOrEqual(2)
+        // The preview is framed with no script, no forms, no origin.
+        ->and(preg_match_all('/<iframe[^>]*sandbox=""/', $screen))->toBeGreaterThanOrEqual(1)
         ->and($screen)->not->toMatch('/<iframe(?![^>]*sandbox="")/');
 });
 
@@ -361,20 +439,83 @@ it('is wired into the console exactly once (once the integrator adds the lines)'
     $web = (string) file_get_contents(base_path('routes/web.php'));
     $app = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
     $counts = [
-        substr_count($web, "require __DIR__.'/emails-marketing-admin.php';"),
-        substr_count($web, "require __DIR__.'/emails-marketing-public.php';"),
-        substr_count($app, "@include('admin.partials.emails-marketing-screens')"),
+        substr_count($web, "require __DIR__.'/emails-templates-admin.php';"),
+        substr_count($app, "@include('admin.partials.emails-templates-screens')"),
     ];
 
     expect(max($counts))->toBeLessThanOrEqual(1);
 
     if (min($counts) === 0) {
-        $this->markTestSkipped('Not wired yet: the integrator adds the three lines from routes/emails-marketing-admin.php, routes/emails-marketing-public.php and the screen partial header.');
+        $this->markTestSkipped('Not wired yet: the integrator adds the two lines from routes/emails-templates-admin.php and the screen partial header.');
     }
 
-    expect($counts)->toBe([1, 1, 1]);
+    expect($counts)->toBe([1, 1]);
 });
 
 it('ships a cache-clearing migration with its routes', function () {
-    expect(glob(base_path('database/migrations/*_clear_caches_email_marketing.php')))->toHaveCount(1);
+    expect(glob(base_path('database/migrations/*_clear_caches_email_templates.php')))->toHaveCount(1);
+});
+
+/* =================================================================== tabs */
+
+it('draws every Emails screen in tabs from the ONE shared component', function () {
+    /*
+     * The owner, 4 Oct: "proper tabs not just throw the content, follow this
+     * also for all emails pages". THE DEFECT: a long stacked page; or a second
+     * home-made tab bar that looks and behaves differently. MUTATION: put
+     * Design & branding back as one stacked page (drop its tabbed() call) and
+     * the eml-branding pin is red; drop role="tablist" from renderMail() and
+     * the mail pin is.
+     */
+    $screens = (string) file_get_contents(resource_path('views/admin/partials/emails-screens.blade.php'));
+    $mine = (string) file_get_contents(resource_path('views/admin/partials/emails-templates-screens.blade.php'));
+    $tabs = (string) file_get_contents(resource_path('views/admin/partials/kbb-tabs.blade.php'));
+    $app = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+
+    // One component, included once, by the first Emails partial.
+    expect(substr_count($screens, "@include('admin.partials.kbb-tabs')"))->toBe(1)
+        ->and(substr_count($mine, "@include('admin.partials.kbb-tabs')"))->toBe(0)
+        ->and($tabs)->toContain('role="tablist"')
+        ->and($tabs)->toContain("'ArrowRight'")
+        ->and($tabs)->toContain("'Home'")
+        ->and($tabs)->toContain('kbbtab:');
+
+    // Every Emails screen: Overview, Sending & delivery, Design & branding, Sent mail …
+    foreach (["tabbed('eml-overview'", "tabbed('eml-sending'", "tabbed('eml-branding'", "kbbTabs.bar('eml-sent'"] as $needle) {
+        expect($screens)->toContain($needle);
+    }
+
+    // … Customer emails and the editor …
+    expect($mine)->toContain("bar('ek-customer'")->and($mine)->toContain("bar('ek-editor'");
+
+    // … and All mail settings, whose markup is written by renderMail() itself.
+    $mail = substr($app, (int) strpos($app, 'LANE J · Store · Mail — BEGIN'), 20000);
+    expect($mail)->toContain('role="tablist" data-kbt="mail"')
+        ->and($mail)->toContain('role="tabpanel" data-kbt-panel="mail"');
+});
+
+it('builds a tablist a screen reader can use, by running the component', function () {
+    $node = trim((string) shell_exec('command -v node 2>/dev/null'));
+
+    if ($node === '') {
+        $this->markTestSkipped('node is not available');
+    }
+
+    $src = (string) file_get_contents(resource_path('views/admin/partials/kbb-tabs.blade.php'));
+    preg_match('~<script>(.*?)</script>~s', $src, $m);
+    $js = "var window={};var document={addEventListener:function(){}};var localStorage={getItem:function(){return null},setItem:function(){}};\n"
+        . $m[1]
+        . "\nprocess.stdout.write(JSON.stringify({bar: window.kbbTabs.bar('g', [['a','One'],['b','Two',3]], 'b', 'Test'), p: window.kbbTabs.panel('g','a','b')}));";
+    $tmp = tempnam(sys_get_temp_dir(), 'ektabs') . '.js';
+    file_put_contents($tmp, $js);
+    $out = json_decode((string) shell_exec(escapeshellcmd($node) . ' ' . escapeshellarg($tmp) . ' 2>&1'), true);
+    @unlink($tmp);
+
+    expect($out)->toBeArray()
+        ->and($out['bar'])->toContain('role="tablist" data-kbt="g" aria-label="Test"')
+        ->and($out['bar'])->toContain('role="tab" id="kbt_g_b" data-kbt-tab="b" aria-controls="kbtp_g_b" aria-selected="true" tabindex="0"')
+        ->and($out['bar'])->toContain('aria-selected="false" tabindex="-1"')
+        ->and($out['p'])->toContain('role="tabpanel"')
+        ->and($out['p'])->toContain('aria-labelledby="kbt_g_a"')
+        ->and($out['p'])->toEndWith(' hidden');
 });

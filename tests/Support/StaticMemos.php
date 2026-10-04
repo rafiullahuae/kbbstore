@@ -182,6 +182,13 @@ final class StaticMemos
              * a test that migrates the table away keeps being told it exists.
              */
             \App\Services\Mail\Kit\WebCopy::class => static fn () => \App\Services\Mail\Kit\WebCopy::reset(),
+            /*
+             * Lane EK: the template builder's stored section orders and words,
+             * read once per process. Without the reset a test that reorders
+             * "Order shipped" leaves the next test's shipped email reordered.
+             */
+            \App\Services\Mail\Kit\KitSections::class => static fn () => \App\Services\Mail\Kit\KitSections::forget(),
+            \App\Services\Mail\Kit\EmailWording::class => static fn () => \App\Services\Mail\Kit\EmailWording::forget(),
             // Public and written from the transport itself; there is no forget()
             // to call, so this is the assignment.
             ServerMailTransport::class => static function (): void {

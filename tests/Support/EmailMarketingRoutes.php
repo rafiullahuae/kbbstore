@@ -9,9 +9,9 @@ use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 /**
- * Lane EK: mounts routes/emails-marketing-admin.php (inside the admin-api
- * stack, as routes/web.php will) and routes/emails-marketing-public.php (in
- * the web group) for a test, the way EmailsAdminRoutes does for Lane RK's file
+ * Lane EK: mounts routes/emails-templates-admin.php and routes/marketing-
+ * emails-admin.php (inside the admin-api stack, as routes/web.php will) and
+ * routes/marketing-public.php (in the web group) for a test, the way EmailsAdminRoutes does for Lane RK's file
  * — a no-op once the integrator has wired them, so the same tests run before
  * and after the wiring (CLAUDE.md: pin the finished state, never the absence).
  */
@@ -28,10 +28,11 @@ final class EmailMarketingRoutes
             $have[$existing->uri()] = true;
         }
 
-        $admin = ! isset($have['admin-api/email-marketing/overview']);
-        $public = ! isset($have['m/u/{token}']);
+        $templates = ! isset($have['admin-api/emails/customer']);
+        $admin = ! isset($have['admin-api/email-marketing/overview']) && is_file(base_path('routes/marketing-emails-admin.php'));
+        $public = ! isset($have['email/u/{token}']) && is_file(base_path('routes/marketing-public.php'));
 
-        if (! $admin && ! $public) {
+        if (! $templates && ! $admin && ! $public) {
             return;
         }
 
@@ -43,12 +44,16 @@ final class EmailMarketingRoutes
 
         $router->setRoutes($kept);
 
+        if ($templates) {
+            RouteFacade::middleware(EmailsAdminRoutes::STACK)->prefix('admin-api')->group(base_path('routes/emails-templates-admin.php'));
+        }
+
         if ($admin) {
-            RouteFacade::middleware(EmailsAdminRoutes::STACK)->prefix('admin-api')->group(base_path('routes/emails-marketing-admin.php'));
+            RouteFacade::middleware(EmailsAdminRoutes::STACK)->prefix('admin-api')->group(base_path('routes/marketing-emails-admin.php'));
         }
 
         if ($public) {
-            RouteFacade::middleware('web')->group(base_path('routes/emails-marketing-public.php'));
+            RouteFacade::middleware('web')->group(base_path('routes/marketing-public.php'));
         }
 
         $router->getRoutes()->refreshNameLookups();

@@ -105,4 +105,3 @@ public/wp-content/
 # /storage/pdp-logs/ entry Lane PDP added for itself — same intent, every lane.
 /storage/*-logs/
 /storage/framework/kbb-order-reminders.tick
-/storage/framework/kbb-campaigns.tick

@@ -564,39 +564,15 @@ final class AdminCapabilities
          *                  settings, the Google app password, the test-send
          *                  and the contact details printed in every email.
          */
-        'emails.view' => ['owner'],
+        // Lane EK (plan §6, set by the integrator 4 Oct): owner AND manager may
+        // read Overview, Customer emails and Sent mail; changing is the owner's.
+        'emails.view' => ['owner', 'manager'],
         'emails.manage' => ['owner'],
         /*
-         * Emails → Customer emails and its template editor (Lane EK): every
-         * email's switch, its section order and its words. Owner alone, like
-         * the rest of Emails — these are the messages every customer receives.
-         *
-         *   emails.templates  admin-api/emails/customer, …/customer/switch,
-         *                     admin-api/emails/templates/** (read, save, reset,
-         *                     send a test to the signed-in admin)
+         * Lane EK, docs/EMAILS-PLAN.md §6: test sends of any customer email
+         * to the signed-in admin's own address (throttled). Owner and manager.
          */
-        'emails.templates' => ['owner'],
-        /*
-         * Growth & Marketing → Email Marketing (Lane EK). THREE, because the
-         * owner drew the line between them (master plan rows 53 and 54):
-         * "campaign Send for Owner and Administrator only". The code's roles
-         * are owner/manager/support/editor and nothing yet names an
-         * "administrator", so Administrator is `manager` until the user-roles
-         * module (row 53) names roles — revisit there.
-         *
-         *   campaign.view    the lists, groups and live counts, previews, reports
-         *   campaign.manage  create and edit campaigns and groups, send a test
-         *                    to yourself
-         *   campaign.send    Send now / Schedule / Cancel, the page's own
-         *                    sending pump and the daily cap — the buttons that
-         *                    reach customers' inboxes
-         *
-         * Support and editor have none of the three: a marketing list is real
-         * customers' addresses and what they bought.
-         */
-        'campaign.view' => ['owner', 'manager'],
-        'campaign.manage' => ['owner', 'manager'],
-        'campaign.send' => ['owner', 'manager'],
+        'emails.test' => ['owner', 'manager'],
     ];
 
     /**
@@ -855,14 +831,17 @@ final class AdminCapabilities
          */
         ['GET', 'admin-api/emails/overview', 'emails.view'],
         /*
-         * Lane EK, ABOVE the emails wildcard (first match wins): Customer
-         * emails and the template editor are their own capability. The
-         * preview they use stays the wildcard's — it is Design & branding's
-         * endpoint, and both are owner-only.
+         * Lane EK, ABOVE the emails wildcard (first match wins), plan §6:
+         * reading Customer emails and an email's editor is emails.view (owner
+         * and manager); a test send to yourself is emails.test; switching,
+         * saving and resetting are emails.manage (owner). The editor's live
+         * preview is Design & branding's endpoint and stays emails.manage.
          */
-        ['*', 'admin-api/emails/customer', 'emails.templates'],
-        ['*', 'admin-api/emails/customer/**', 'emails.templates'],
-        ['*', 'admin-api/emails/templates/**', 'emails.templates'],
+        ['GET', 'admin-api/emails/customer', 'emails.view'],
+        ['POST', 'admin-api/emails/templates/*/test', 'emails.test'],
+        ['GET', 'admin-api/emails/templates/*', 'emails.view'],
+        ['*', 'admin-api/emails/customer/**', 'emails.manage'],
+        ['*', 'admin-api/emails/templates/**', 'emails.manage'],
         ['*', 'admin-api/emails', 'emails.manage'],
         ['*', 'admin-api/emails/**', 'emails.manage'],
         ['*', 'admin-api/shipping', 'store.shipping'],
@@ -1598,22 +1577,6 @@ final class AdminCapabilities
         ['GET', 'admin-api/newsletter/export', 'marketing.export'],
         ['*', 'admin-api/newsletter', 'marketing.manage'],
         ['*', 'admin-api/marketing-pixels', 'marketing.manage'],
-        /*
-         * Email Marketing (Lane EK). Writes before reads, the sending buttons
-         * first: campaign.send is the narrow one and every line under it is
-         * wider, so it must be matched before them. Then the two POSTs that
-         * only READ (the live preview and the live group count), then every
-         * other write, then every read. A route added here later that matches
-         * none of these falls to null — owner-only — which is the closed side.
-         */
-        ['POST', 'admin-api/email-marketing/campaigns/*/send', 'campaign.send'],
-        ['POST', 'admin-api/email-marketing/campaigns/*/cancel', 'campaign.send'],
-        ['POST', 'admin-api/email-marketing/pump', 'campaign.send'],
-        ['POST', 'admin-api/email-marketing/settings', 'campaign.send'],
-        ['POST', 'admin-api/email-marketing/campaigns/*/preview', 'campaign.view'],
-        ['POST', 'admin-api/email-marketing/groups/count', 'campaign.view'],
-        ['POST', 'admin-api/email-marketing/**', 'campaign.manage'],
-        ['GET', 'admin-api/email-marketing/**', 'campaign.view'],
         /*
          * Reading a coupon, its usage report and the product/category lookup
          * the editor searches with are all marketing.view. WRITING one is
