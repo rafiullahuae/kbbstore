@@ -748,6 +748,11 @@ final class AdminSearchIndex
             'Pages' => [],
             'Sync' => [],
         ],
+        'pagebanners' => [
+            'Banners' => ['Desktop picture', 'Phone picture', 'Alt text', 'Show the strip', 'Strip colour', 'Strip height', 'Text size', 'Tick size'],
+            'Where they show' => [],
+            'Super Sale products' => ['Products on /super-sale/'],
+        ],
         'carttracking' => [
             'Carts' => ['Bot', 'Countries'],
             'Added products' => [],
