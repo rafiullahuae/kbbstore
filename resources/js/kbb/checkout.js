@@ -494,6 +494,7 @@ export function initCheckout() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': window.KBB.csrf,
                 Accept: 'application/json',
+                'X-KBB-Hm': String(Math.round(performance.now())), // (Lane CT) see cart.js
             },
             body: JSON.stringify({
                 item_id: itemId,
@@ -616,6 +617,7 @@ export function initCheckout() {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': window.KBB.csrf,
                     Accept: 'application/json',
+                    'X-KBB-Hm': String(Math.round(performance.now())), // (Lane CT) see cart.js
                 },
                 body: JSON.stringify({
                     product_id: id,
@@ -659,6 +661,7 @@ export function initCheckout() {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': window.KBB.csrf,
                     Accept: 'application/json',
+                    'X-KBB-Hm': String(Math.round(performance.now())), // (Lane CT) see cart.js
                 },
                 body: JSON.stringify(body),
             });

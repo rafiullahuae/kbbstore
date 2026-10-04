@@ -51,6 +51,10 @@ const send = async (path, body) => {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': window.KBB.csrf,
                 Accept: 'application/json',
+                // (Lane CT) How long this page has been open, in ms. Cart
+                // Tracking reads it as "a real browser ran the shop's script"
+                // and, when it is implausibly small, as a bot's speed.
+                'X-KBB-Hm': String(Math.round(performance.now())),
             },
             body: JSON.stringify(body),
         });
