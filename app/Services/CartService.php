@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Cart;
 use App\Services\BundleService;
+use App\Services\CartTracking\CartTracker;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\Product;
@@ -404,6 +405,10 @@ class CartService
                 ->where('product_variant_id', $variant?->id)
                 ->first();
 
+            // (Lane CT) What the line was worth before, for the tracked value.
+            $before = $item ? (int) $item->quantity * (int) $item->unit_price : 0;
+            $beforeQty = $item ? (int) $item->quantity : 0;
+
             if ($item) {
                 $item->quantity = min(99, $item->quantity + $quantity);
                 // The bundle rate depends on the FINAL quantity, so adding a
@@ -419,6 +424,14 @@ class CartService
                 ]);
             }
 
+            // (Lane CT) One event row; the cart's tracked summary rides on the
+            // save just below. See App\Services\CartTracking\CartTracker.
+            $this->tracker()->record(
+                $cart, CartTracker::ADD, (int) $product->id, $variant?->id,
+                (int) $item->quantity - $beforeQty, (int) $item->quantity, (int) $item->unit_price,
+                (int) $item->quantity * (int) $item->unit_price - $before,
+            );
+
             $cart->forceFill(['last_activity_at' => now()])->save();
 
             return $item;
@@ -433,11 +446,21 @@ class CartService
             return;
         }
 
+        // (Lane CT) The line as it was, for the event and the tracked value.
+        $beforeQty = (int) $item->quantity;
+        $before = $beforeQty * (int) $item->unit_price;
+
         if ($quantity <= 0) {
             // Zero is removing it, and removing one member of a "Buy these
             // together" bundle dissolves the bundle (Lane RE).
             $this->dissolve($cart, $item->bt_group ?? null);
             $item->delete();
+
+            $this->tracker()->record(
+                $cart, CartTracker::REMOVE, $item->product_id !== null ? (int) $item->product_id : null,
+                $item->product_variant_id !== null ? (int) $item->product_variant_id : null,
+                -$beforeQty, 0, (int) $item->unit_price, -$before,
+            );
         } else {
             $qty = min(99, $quantity);
 
@@ -447,6 +470,14 @@ class CartService
                 'quantity' => $qty,
                 'unit_price' => $this->unitPriceFor($item->product, $item->variant, $qty),
             ]);
+
+            if ($qty !== $beforeQty) {
+                $this->tracker()->record(
+                    $cart, CartTracker::QTY, $item->product_id !== null ? (int) $item->product_id : null,
+                    $item->product_variant_id !== null ? (int) $item->product_variant_id : null,
+                    $qty - $beforeQty, $qty, (int) $item->unit_price, $qty * (int) $item->unit_price - $before,
+                );
+            }
         }
 
         $cart->forceFill(['last_activity_at' => now()])->save();
@@ -455,9 +486,30 @@ class CartService
     public function remove(Cart $cart, int $itemId): void
     {
         $this->displayLoaded = false;
-        $this->dissolve($cart, $cart->items()->whereKey($itemId)->value('bt_group'));
+
+        // (Lane CT) The row rather than value('bt_group'): the same one query,
+        // and it is what tells Cart Tracking WHICH product left the cart.
+        $line = $cart->items()->whereKey($itemId)
+            ->first(['id', 'product_id', 'product_variant_id', 'quantity', 'unit_price', 'bt_group']);
+
+        $this->dissolve($cart, $line?->bt_group);
         $cart->items()->where('id', $itemId)->delete();
+
+        if ($line !== null) {
+            $this->tracker()->record(
+                $cart, CartTracker::REMOVE, $line->product_id !== null ? (int) $line->product_id : null,
+                $line->product_variant_id !== null ? (int) $line->product_variant_id : null,
+                -(int) $line->quantity, 0, (int) $line->unit_price, -(int) $line->quantity * (int) $line->unit_price,
+            );
+        }
+
         $cart->forceFill(['last_activity_at' => now()])->save();
+    }
+
+    /** (Lane CT) Resolved on first use, so carts that never change never build it. */
+    private function tracker(): CartTracker
+    {
+        return app(CartTracker::class);
     }
 
     /**
@@ -680,7 +732,11 @@ class CartService
             }
 
             $guest->items()->delete();
+            // (Lane CT) The lines moved: the guest basket is worth nothing now
+            // and the account's is worth what its lines total.
+            $this->tracker()->revalue($guest, 0);
             $guest->update(['status' => 'merged']);
+            $this->tracker()->revalue($target);
             $target->forceFill(['last_activity_at' => now()])->save();
 
             $this->rememberCookie($target->token);

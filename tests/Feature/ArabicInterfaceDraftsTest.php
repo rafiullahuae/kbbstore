@@ -615,7 +615,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 1338 -> 1344 (Lane WA): the floating WhatsApp button's six
     // (store.whatsapp.*), seeded by
     // 2027_07_31_200100_seed_whatsapp_button_arabic_drafts.
-    expect($ui['drafts'])->toBe(1344, 'the shipped Arabic is not showing as drafts to review')
+    // 1344 -> 1353 (Lane CT, merged after WA): the nine strings of the page a blocked address
+    // or a scripted client is shown (store.blocked.*), seeded by
+    // 2027_07_30_200800_seed_cart_tracking_arabic_drafts.
+    expect($ui['drafts'])->toBe(1353, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

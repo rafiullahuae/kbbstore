@@ -146,7 +146,12 @@ it('has nothing that outlives a single request', function () {
     // Marketing Emails. It starts due scheduled campaigns and sends a step's
     // worth of mail inline, holding nothing between runs; there is NO page
     // heartbeat for it (marketing never runs on a shopper's request).
-    expect(substr_count($console, 'Schedule::command('))->toBe(4, 'the set of scheduled commands has changed');
+    // 5 with Lane CT: `kbb:cart-tracking-prune`, daily at 03:17 -- Cart
+    // Tracking's retention sweep. It deletes cart events past the owner's
+    // "Keep cart events for", in chunks, and holds nothing between runs; the
+    // page heartbeat (CartTrackingTick) does the same at most every six hours
+    // when no cron line is installed.
+    expect(substr_count($console, 'Schedule::command('))->toBe(5, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

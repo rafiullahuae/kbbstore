@@ -76,6 +76,12 @@ pest()->extend(Tests\TestCase::class)
          */
         @touch(\App\Services\Mail\OrderReminderTick::markerPath());
 
+        // (Lane CT) And Cart Tracking's retention heartbeat, for the same
+        // reason: a sweep on a random request in a random test would add its
+        // queries to whatever that test counts. CartTrackingRetentionTest
+        // unlinks it where the heartbeat is the subject.
+        @touch(\App\Services\CartTracking\CartTrackingTick::markerPath());
+
 
         /*
          * (Lane PF2) And the banner tier. A homepage request that renders a

@@ -231,6 +231,20 @@ it('has an authorization layer reading the role column', function () {
 
     expect($middleware)->toBe([
         /*
+         * Lane CT (Growth & Marketing -> Cart Tracking), and I have come and
+         * read this file as instructed.
+         *
+         * BlockGate authorises no admin and reads no role. It answers 403 to an
+         * address on the shop's IP block list -- on cart and checkout and any
+         * write by default, on the whole storefront if the owner widens it --
+         * and asks a scripted client to leave the cart. It NEVER refuses the
+         * back office: BlockGate::isAdminArea() is the same test
+         * EnforceAdminCapability uses, and the block list refuses to hold the
+         * admin's own address. tests/Feature/CartTrackingBlockTest.php pins
+         * "never blocks the admin" on the console and on /admin-api.
+         */
+        'BlockGate',
+        /*
          * Lane FQ, and I have come and read this file as instructed.
          *
          * CacheHeaders authorises nothing and reads no role. It sets one

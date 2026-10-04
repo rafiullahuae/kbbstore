@@ -129,6 +129,16 @@ final class AdminCapabilities
         // own capability so it can be granted apart from revenue figures.
         'search_terms.view' => ['owner', 'manager'],
 
+        // Growth & Marketing -> Cart Tracking (Lane CT). Every cart with the
+        // shopper's IP address, country and browser, and the shop's block
+        // list. `view` reads (and exports) it; `block` changes anything:
+        // block / unblock, bulk actions, deleting carts, the settings —
+        // including "Ask bots to leave" and what a blocked address may do.
+        // Owner and manager, the owner's own call: "we received a lot of fake
+        // COD orders, so we need to block those users".
+        'carttracking.view' => ['owner', 'manager'],
+        'carttracking.block' => ['owner', 'manager'],
+
         // Orders. Split four ways because reading an order, editing one,
         // moving money and destroying one are genuinely different acts.
         'orders.view' => ['owner', 'manager', 'support'],
@@ -1739,6 +1749,12 @@ final class AdminCapabilities
         ['GET', 'admin-api/stats', 'dashboard.view'],
         ['GET', 'admin-api/analytics', 'analytics.view'],
         ['GET', 'admin-api/search-terms', 'search_terms.view'],
+
+        // (Lane CT) Cart Tracking. Every GET reads; every other verb writes.
+        // The '**' rule cannot reach anything outside cart-tracking/.
+        ['GET', 'admin-api/cart-tracking', 'carttracking.view'],
+        ['GET', 'admin-api/cart-tracking/**', 'carttracking.view'],
+        ['*', 'admin-api/cart-tracking/**', 'carttracking.block'],
     ];
 
     /**
