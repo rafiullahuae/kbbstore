@@ -562,3 +562,18 @@ it('lifts the sidebar above the page while the results are open', function () {
     expect($src)->toContain('@media(min-width:881px){.side.ksr-up{position:relative;z-index:200}}')
         ->and($src)->toContain("if (side) side.classList.toggle('ksr-up', on);");
 });
+
+it('styles the search box before drawing it, so a cold load never paints a giant icon', function () {
+    /*
+     * The owner, 2.60.383: "on hard refresh the admin panel, a giant search
+     * icon appears and instantly fixed". The <style> block came AFTER the
+     * markup, so the first paint drew the icon with no size -- an SVG with no
+     * width is 300x150. MUTATION: move the style block back below the markup
+     * and the first expectation is red; drop width="16" and the second is.
+     */
+    $src = (string) file_get_contents(resource_path('views/admin/partials/admin-search.blade.php'));
+
+    expect(strpos($src, '.ksr-ic{width:16px'))->toBeLessThan(strpos($src, '<svg class="ksr-ic"'))
+        ->and($src)->toContain('<svg class="ksr-ic" width="16" height="16"')
+        ->and($src)->toContain('hidden><svg width="14" height="14"');
+});

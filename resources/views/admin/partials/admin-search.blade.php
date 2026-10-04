@@ -46,21 +46,11 @@
     and found by its text; nothing reads a size or a position.
     AdminSidebarSearchTest pins all of the above.
 --}}
-<div class="ksr" id="ksr" role="search">
-  <div class="ksr-field">
-    <svg class="ksr-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <input id="ksrIn" class="ksr-in" type="text" inputmode="search" enterkeyhint="go" placeholder="Search settings, pages…"
-           autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80"
-           role="combobox" aria-expanded="false" aria-controls="ksrList" aria-autocomplete="list" aria-label="Search the admin">
-    <kbd class="ksr-kbd" id="ksrKbd" aria-hidden="true">Ctrl K</kbd>
-    <button class="ksr-x" id="ksrX" type="button" aria-label="Clear search" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </div>
-  <div class="ksr-pop" id="ksrPop" hidden>
-    <div class="ksr-list" id="ksrList" role="listbox" aria-label="Search results"></div>
-    <div class="ksr-foot" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> clear</span></div>
-  </div>
-</div>
-<script type="application/json" id="ksrIndex">{!! \App\Support\AdminSearchIndex::json() !!}</script>
+{{-- THE STYLES COME FIRST (2.60.383). The owner: "on hard refresh the admin
+     panel, a giant search icon appears and instantly fixed". This block sat
+     after the markup, so on a cold load the browser painted the icon before
+     it had read a size for it -- an SVG with none is 300x150. Styles first,
+     and the two SVGs carry width/height of their own as well. --}}
 @verbatim
 <style>
 /* ---------- Lane SR · sidebar search ---------- */
@@ -132,6 +122,23 @@
   .ksr-field{transition:none}
 }
 </style>
+@endverbatim
+<div class="ksr" id="ksr" role="search">
+  <div class="ksr-field">
+    <svg class="ksr-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="ksrIn" class="ksr-in" type="text" inputmode="search" enterkeyhint="go" placeholder="Search settings, pages…"
+           autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80"
+           role="combobox" aria-expanded="false" aria-controls="ksrList" aria-autocomplete="list" aria-label="Search the admin">
+    <kbd class="ksr-kbd" id="ksrKbd" aria-hidden="true">Ctrl K</kbd>
+    <button class="ksr-x" id="ksrX" type="button" aria-label="Clear search" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="ksr-pop" id="ksrPop" hidden>
+    <div class="ksr-list" id="ksrList" role="listbox" aria-label="Search results"></div>
+    <div class="ksr-foot" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> clear</span></div>
+  </div>
+</div>
+<script type="application/json" id="ksrIndex">{!! \App\Support\AdminSearchIndex::json() !!}</script>
+@verbatim
 <script>
 /* Lane SR · sidebar search. See the note at the top of this partial. */
 (function () {
