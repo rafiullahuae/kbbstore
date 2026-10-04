@@ -132,3 +132,18 @@ Schedule::command('kbb:order-reminders')
 Schedule::command('kbb:campaigns-step')
     ->everyMinute()
     ->withoutOverlapping(5);
+
+/*
+|--------------------------------------------------------------------------
+| Cart Tracking retention (Lane CT)
+|--------------------------------------------------------------------------
+|
+| Deletes cart events older than Growth & Marketing → Cart Tracking →
+| Settings → "Keep cart events for" (default 180 days), counting them into the
+| all-time product totals first. Carts themselves are kept. Without a cron
+| line, App\Services\CartTracking\CartTrackingTick does the same after an
+| ordinary response at most every six hours; both touch one marker.
+*/
+Schedule::command('kbb:cart-tracking-prune')
+    ->dailyAt('03:17')
+    ->withoutOverlapping(30);

@@ -189,6 +189,12 @@ final class StaticMemos
              */
             \App\Services\Mail\Kit\KitSections::class => static fn () => \App\Services\Mail\Kit\KitSections::forget(),
             \App\Services\Mail\Kit\EmailWording::class => static fn () => \App\Services\Mail\Kit\EmailWording::forget(),
+            // (Lane CT) The compiled block list: a per-process FILE as well as a
+            // memo, so a block written by one test would otherwise be enforced
+            // in the next. Reset to "empty, ready, default settings" -- which is
+            // exactly what a freshly migrated test database holds -- without a
+            // query, so no test's first request pays a rebuild.
+            \App\Services\Security\IpBlockList::class => static fn () => \App\Services\Security\IpBlockList::seedEmpty(),
             // Public and written from the transport itself; there is no forget()
             // to call, so this is the assignment.
             ServerMailTransport::class => static function (): void {
@@ -206,6 +212,9 @@ final class StaticMemos
      * @var array<class-string, string>
      */
     public const EXEMPT = [
+        \App\Services\CartTracking\HostingNetworks::class => 'packed is the decoded copy of a shipped, read-only '
+            .'data file (resources/data/hosting-networks.php). Nothing writes it but data(), and it holds the same '
+            .'bytes in every test, so keeping it across tests is a cache of a constant, not state.',
         Shortcodes::class => 'stack is a re-entrancy guard, not a memo: block() pushes a slug and pops '
             .'it in a finally, so it is empty again however the render ends, exception included.',
         MailConfigurator::class => 'registered is a WeakMap keyed on the mailer instance. Entries '

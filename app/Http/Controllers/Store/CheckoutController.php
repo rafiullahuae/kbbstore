@@ -738,6 +738,11 @@ class CheckoutController extends Controller
                     );
                 }
 
+                // (Lane CT) Growth & Marketing → Cart Tracking: which order
+                // this cart became. Staged on the model and written by the save
+                // on the next line — no query of its own.
+                app(\App\Services\CartTracking\CartTracker::class)->converted($cart, $order);
+
                 $cart->forceFill(['status' => 'converted', 'converted_at' => now()])->save();
 
                 return $order;

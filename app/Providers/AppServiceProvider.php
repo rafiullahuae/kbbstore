@@ -446,6 +446,14 @@ class AppServiceProvider extends ServiceProvider
         }
 
         /*
+         * Growth & Marketing → Cart Tracking (Lane CT): the block-list gate at
+         * the front of `web` and `api`, the retention heartbeat, and the hook
+         * that recompiles the gate's file when its settings change. One call;
+         * see App\Services\CartTracking\CartTrackingHooks for each.
+         */
+        \App\Services\CartTracking\CartTrackingHooks::register($kernel);
+
+        /*
          * `media_usages` — which image belongs to which product, brand or
          * category. One call, because the hooks themselves live with the
          * writer rather than being spelled out here: this file is shared by
