@@ -1924,6 +1924,34 @@ final class EnglishRenderWalk
                     .\App\Services\SiteLayout::PRESS_ATTR[\App\Services\SiteLayout::SCHEMA['press'][2]].'>$1',
                 'hits' => 33,
             ],
+
+            /*
+             * THE BRAND PAGE. (2.60.376)
+             *
+             * The owner, 4 October: "for Brand Page, remove the Shop all
+             * button, and keep Name, along with description ... remove also
+             * popular right now, and view all." He asked, so it ships that way;
+             * Appearance → Site layout → Brand page puts each back. Three
+             * changes and nothing else: the button goes from the hero (its
+             * blank lines move with the new @if), the grid's heading row goes,
+             * and one CSS line spaces a description's paragraphs on both brand
+             * views. BrandPageOwnerAsksTest pins the behaviour.
+             */
+            'the brand page: no Shop all button (2.60.376)' => [
+                'pattern' => '#<h1 class="brw-h1">([^<]*)</h1>\n {52}\n {16}<a class="brw-cta" href="[^"]*">[^<]*</a>\n {12}</div>#',
+                'with' => '<h1 class="brw-h1">$1</h1>'."\n".str_repeat(' ', 32)."\n".str_repeat(' ', 32)."\n".str_repeat(' ', 28).'</div>',
+                'hits' => 1,
+            ],
+            'the brand page: no Popular right now / View all (2.60.376)' => [
+                'pattern' => '#\n {20}<div class="kbb-gridhead">\n {8}<div>\n {12}<h2>Popular right now</h2> {20}</div>\n {8}<a class="lnk" href="[^"]*">View all</a> {4}</div>\n\n<div class="kbb-pgrid"#',
+                'with' => "\n".str_repeat(' ', 20).'<div class="kbb-pgrid"',
+                'hits' => 1,
+            ],
+            'the brand page: a description\'s paragraphs are spaced (2.60.376)' => [
+                'pattern' => '#(\.brw-hero \.brw-sub\{margin-bottom:14px;max-width:62ch\}\n)(\.brw-cta\{)#',
+                'with' => '$1.brw-desc p{margin:0 0 6px}.brw-desc p:last-child{margin-bottom:0}'."\n".'$2',
+                'hits' => 2,
+            ],
         ];
     }
 

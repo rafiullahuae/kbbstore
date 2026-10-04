@@ -194,6 +194,15 @@ raises it deliberately or finds another way. No JavaScript that measures layout
 element-measuring APIs by name. Prefer a rendered-once CSS answer to a scripted
 one.
 
+**Super light, on the admin side as much as the shop.** The owner says it on
+every brief — "secure, optimized, super light and bugs free" — so it is a rule,
+not a mood. Concretely: no new dependency; no request per keystroke, no polling
+loop and no timer that never stops; nothing the browser can build once from data
+the page already has goes back to the server; and a page's cost stays FLAT as
+the catalogue grows. Prove the last one the way `BrandPageOwnerAsksTest` does —
+render with three rows, render with forty, and assert the query count is the
+same — rather than saying it.
+
 **5. Secure by construction, not by intention.** `/api/*` is unauthenticated:
 allowlist what a model returns, never the model. Anything printed unescaped is
 a constant, never a setting. A select stores one of its own options or the

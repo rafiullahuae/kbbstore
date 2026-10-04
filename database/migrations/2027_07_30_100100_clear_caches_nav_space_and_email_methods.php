@@ -14,6 +14,10 @@ use Illuminate\Database\Migrations\Migration;
  * the cached config/services and opcache go. No data is written and no route
  * is added: the new select reads its default ("Spread the items (keep my text
  * size)", which the owner asked for) until the Header screen is saved.
+ *
+ * The brand page (SiteLayout's new Brand page tab: every product on one page,
+ * no Shop all button, no Popular right now / View all, and the description
+ * typed on the page itself now printed) reads its three defaults the same way.
  */
 return new class extends Migration
 {
@@ -40,7 +44,7 @@ return new class extends Migration
 
         if (app()->runningInConsole()) {
             echo "Cleared {$cleared} compiled files.\n";
-            echo "The desktop menu now fills its row when it has nine or more items (Appearance → Header → Navigation).\n";
+            echo "The menu keeps its text size and spreads its items (Appearance → Header → Navigation → How it fills the row); brand pages show the name, the description and every product (Appearance → Site layout → Brand page).\n";
         }
     }
 

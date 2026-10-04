@@ -393,7 +393,10 @@ class BrandController extends Controller
         $brand = Brand::query()->where('slug', $slug)->firstOrFail();
 
         $request = request();
-        $perPage = app(\App\Services\SiteLayout::class)->perPage(self::PREVIEW_LIMIT);
+        $layout = app(\App\Services\SiteLayout::class);
+        // Every product at once unless the owner turns "Show every product of
+        // the brand on one page" off (Appearance → Site layout → Brand page).
+        $perPage = $layout->brandPerPage(self::PREVIEW_LIMIT);
         $page = \App\Support\Facets::page();
 
         $products = Product::query()
@@ -486,6 +489,14 @@ class BrandController extends Controller
             'lastPage' => $lastPage,
             'pageUrl' => $pageUrl,
             'brand' => $brand,
+            // The brand page's two switches, both off as shipped (2.60.376).
+            'brandCta' => (bool) $layout->get('brand_cta'),
+            'brandPopular' => (bool) $layout->get('brand_popular'),
+            // What the page says under the brand's name: the description typed
+            // on the brand page itself (quick edit → Description) wins in
+            // English, as it does in the title header; otherwise the brand's
+            // own, translated. Through RichText's allowlist either way.
+            'brandDescription' => \App\Support\TitleHeader::brandDescription($brand),
             'brands' => collect(),
             'products' => $products,
             'stocked' => 0,
