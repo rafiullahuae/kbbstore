@@ -689,6 +689,9 @@ it('ships every setting at the value the page already had, except the ones the o
         'brand_hero' => 'compact',
         'brand_ring' => true,
         'press' => 'c',
+        // Lane FS: Appearance → Site layout → Fonts, at the shop's own Outfit.
+        'font_body' => 'outfit',
+        'font_heading' => 'outfit',
     ];
 
     expect(array_keys($fields))->toEqual(array_keys($expected));

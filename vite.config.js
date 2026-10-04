@@ -1,5 +1,19 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
+import { readdirSync } from 'node:fs';
+
+/*
+ * The font library (Lane FS, App\Support\FontLibrary): every woff2 under
+ * resources/fonts/lib/, as INPUTS for the reason the Outfit note below gives —
+ * `npx vite build` empties public/build, so a font copied there by hand
+ * survives exactly until the next build. Read from the directory rather than
+ * listed, so a family added by tools/fs-fetch-fonts.py is built without a
+ * second list to forget; FontLibraryTest holds the table to the manifest.
+ */
+const fontLibrary = readdirSync('resources/fonts/lib', { recursive: true })
+    .filter((f) => String(f).endsWith('.woff2'))
+    .sort()
+    .map((f) => 'resources/fonts/lib/' + String(f).split('\\').join('/'));
 
 /**
  * Assets are built off-server and the compiled output uploaded, because shared
@@ -62,6 +76,7 @@ export default defineConfig({
                 'resources/fonts/cairo/cairo-latin.woff2',
                 'resources/fonts/cairo/cairo-latin-ext.woff2',
                 'resources/js/kbb/app.js',
+                ...fontLibrary,
             ],
             refresh: true,
         }),

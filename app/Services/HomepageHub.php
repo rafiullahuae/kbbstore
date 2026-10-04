@@ -80,7 +80,11 @@ final class HomepageHub
         'newsletter' => ['kind' => 'none', 'note' => 'The sign-up box. Its offer and wording are the newsletter module’s.', 'also' => ['newsletter', 'Marketing → Newsletter']],
     ];
 
-    /** The four groups a section's fields are dealt into, in tab order. */
+    /**
+     * The four groups a section's fields are dealt into, in tab order. A fifth,
+     * `type`, is the Fonts & size tab; the editor draws it LAST, after Show &
+     * frame, together with SectionType's controls (Lane FS).
+     */
     public const GROUPS = ['content' => 'Content', 'products' => 'Products', 'layout' => 'Layout', 'style' => 'Style'];
 
     public function __construct(
@@ -97,7 +101,11 @@ final class HomepageHub
     {
         return match (true) {
             (bool) preg_match('/_(src|source|brand|cat|brands|cats|picks|sort|stock|limit|max|count_[dm])$/', $key) => 'products',
-            (bool) preg_match('/_(bg|ink|size|h|pt_[dm]|pb_[dm]|hg_[dm]|pad_[dm]|head_gap_[dm]|btn_gap_[dm])$/', $key) => 'style',
+            // Lane FS: spacing and text size are the Fonts & size tab's, so a
+            // section's OWN space-above / space-below / under-the-heading keys
+            // move there instead of being offered twice (SectionType::OWNED).
+            (bool) preg_match('/_(size|pt_[dm]|pb_[dm]|hg_[dm]|pad_[dm]|head_gap_[dm]|btn_gap_[dm])$/', $key) => 'type',
+            (bool) preg_match('/_(bg|ink|h)$/', $key) => 'style',
             (bool) preg_match('/_(cols_[dm]|layout_[dm]|per_[dm]|arrows_[dm]|auto|align|btn_[dm]|th_m|clamp_[dm]|count)$/', $key) => 'layout',
             default => 'content',
         };
@@ -118,6 +126,7 @@ final class HomepageHub
         }
 
         $grids = $this->grids($rows);
+        $type = \App\Support\SectionType::read($this->settings->all());
         $vocab = $this->vocab($flat);
         $productIds = [];
 
@@ -143,6 +152,9 @@ final class HomepageHub
             $item = $row + [
                 'editor' => $editor,
                 'section_tabs' => HomepageSections::sectionTabs($key, $row),
+                // Lane FS: the Fonts & size tab's own controls ([] for the hero,
+                // whose slides are edited on the Hero slider tab).
+                'type_fields' => \App\Support\SectionType::fields($key, $type[$key] ?? [], $flat),
             ];
 
             if ($editor['kind'] === 'content' && isset($tabs[$editor['tab']])) {

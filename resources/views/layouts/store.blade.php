@@ -167,7 +167,7 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
 
      THE FILES ARE GOOGLE'S OWN, unchanged, all twelve faces css2 returns. The
      same codepoint resolves to the same face; only the host changed. --}}
-{!! \App\Support\WebFonts::preloadTags(\App\Support\WebFonts::OUTFIT) !!}<style id="kbb-outfit">{!! \App\Support\WebFonts::faceCss(\App\Support\WebFonts::OUTFIT) !!}</style>
+{!! \App\Support\SiteFonts::preloadTags() !!}<style id="kbb-outfit">{!! \App\Support\WebFonts::faceCss(\App\Support\WebFonts::OUTFIT) !!}</style>
 {{--
     POPPINS CARRIES NO ARABIC GLYPHS. Not "renders Arabic badly" — it has none
     of the letters, so every Arabic word falls back to whatever the device

@@ -502,7 +502,11 @@
           + '>' + esc(f.options[k]) + '</option>';
       }).join('');
       return '<div class="sls-f"><div class="sls-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
-        + '<select id="' + id + '" data-sls-key="' + esc(f.key) + '">' + opts + '</select>' + help + '</div>';
+        + '<select id="' + id + '" data-sls-key="' + esc(f.key) + '"'
+        /* Lane FS: the Fonts tab's two selects become the font picker, which
+           shows each family in its own face (admin/partials/font-picker). */
+        + (/^font_(body|heading)$/.test(f.key) ? ' data-sls-font="' + (f.key === 'font_heading' ? 'heading' : 'body') + '"' : '')
+        + '>' + opts + '</select>' + help + '</div>';
     }
 
     if (f.type === 'range') {
@@ -974,6 +978,7 @@
          move, so it is not drawn there. (Lane PI-B) */
       + extraHTML(current.key)
       + '</div>';
+    if (current.key === 'fonts' && window.kbbFontPicker) window.kbbFontPicker.enhance(host, 'data-sls-font');
   }
 
   /*

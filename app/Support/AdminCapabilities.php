@@ -371,6 +371,10 @@ final class AdminCapabilities
         // capability, so neither of these can write anything.
         'homepagehub.view' => ['owner', 'manager', 'editor'],
         'homepagehub.search' => ['owner', 'manager', 'editor'],
+        // Lane FS: a section's Fonts & size tab — the hub's one WRITE. The
+        // same three roles content.manage carries, because it is the same
+        // kind of change as the words beside it: how a homepage section looks.
+        'homepagehub.type' => ['owner', 'manager', 'editor'],
 
         // Writing an article into the Journal (Lane J). The same three roles
         // content.manage carries, and its own capability for the reason the
@@ -1487,6 +1491,7 @@ final class AdminCapabilities
         ['GET', 'admin-api/grid-sections/**', 'gridsections.view'],
         // Lane HC. Exact paths, no wildcard: three reads, and a fourth path
         // added under this prefix without a line here is owner-only.
+        ['POST', 'admin-api/homepage-hub/type', 'homepagehub.type'],
         ['GET', 'admin-api/homepage-hub/products', 'homepagehub.search'],
         ['POST', 'admin-api/homepage-hub/preview', 'homepagehub.search'],
         ['GET', 'admin-api/homepage-hub', 'homepagehub.view'],

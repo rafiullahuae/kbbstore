@@ -496,6 +496,15 @@ final class AdminSearchIndex
             'All sections' => [
                 'Edit content', 'Find a section', 'Which products', 'Automatic', 'Manual — I pick them',
                 'As shipped', 'In stock only', 'Products, in order', 'Shows now', 'Show & frame', 'Save section',
+                // Lane FS: the Fonts & size tab every section's editor carries.
+                'Fonts & size', 'Heading font', 'Text font', 'Heading letter case',
+                'Heading size · laptop', 'Heading size · phone',
+                'Eyebrow size · laptop', 'Eyebrow size · phone',
+                'Subheading size · laptop', 'Subheading size · phone',
+                'Body & card text size · laptop', 'Body & card text size · phone',
+                'Space above the section · laptop', 'Space above the section · phone',
+                'Space below the section · laptop', 'Space below the section · phone',
+                'Space under the heading · laptop', 'Space under the heading · phone',
             ],
             'Hero slider' => [
                 'Eyebrow', 'Headline', 'Supporting line', 'Button wording', 'Where the slide links',
@@ -704,6 +713,7 @@ final class AdminSearchIndex
             'Category header' => [],
             'Category header · sizes & spacing' => [],
             'Press feedback' => [],
+            'Fonts' => [],
         ],
         'pages-store' => [
             '' => [

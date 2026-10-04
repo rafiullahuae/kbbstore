@@ -182,6 +182,7 @@ final class AdminRoles
             'gridsections.manage' => 'Edit grid sections',
             'homepagehub.view' => 'See the homepage section list (Homepage content → All sections)',
             'homepagehub.search' => 'Search products for a homepage section',
+            'homepagehub.type' => 'Change a homepage section’s fonts, sizes and spacing (Fonts & size tab)',
             'cartpage.manage' => 'Cart page appearance',
             'checkoutpage.manage' => 'Checkout page appearance',
             'setappearance.manage' => 'Set box appearance',

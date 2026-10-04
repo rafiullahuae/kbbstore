@@ -60,7 +60,7 @@
      THE SECTION-HEADING SIZES RIDE THE SAME LINE, FOR THE SAME REASON (Lane
      PF). HomeHeadings::style() is '' while Appearance → Homepage content →
      Section headings holds its defaults — kbb.css already says them — so a
-     shop that never opens the tab emits not one byte more. --}}    @vite('resources/css/kbb/kbb-grid-skins.css'){!! $sections->orderStyle() !!}{!! \App\Support\HomeHeadings::style($homeSettings) !!}@endpush
+     shop that never opens the tab emits not one byte more. --}}    @vite('resources/css/kbb/kbb-grid-skins.css'){!! $sections->orderStyle() !!}{!! \App\Support\HomeHeadings::style($homeSettings) !!}{{-- Lane FS: Homepage content → a section → Fonts & size. '' until a value there moves; one <style> for every section, App\Support\SectionType has the rule-5 note. --}}{!! \App\Support\SectionType::style($sections->typeMap(), \App\Support\SiteFonts::families(), \App\Support\Locale::current() !== \App\Support\Locale::DEFAULT) !!}@endpush
 
 @section('content')
 <div class="kbb-home">
