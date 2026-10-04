@@ -69,7 +69,8 @@ class HomepageLayouts
                  * presets are orders the owner picks and are left as he picks
                  * them.
                  */
-                'cards_banner', 'hero', 'delivery', 'ticker', 'categories', 'bundles', 'bestselling', 'recommended',
+                // Lane HC: the two phone-only strips, at their REGISTRY positions.
+                'topstrip', 'cards_banner', 'countries', 'hero', 'delivery', 'ticker', 'categories', 'bundles', 'bestselling', 'recommended',
                 'routine', 'quiz', 'brands', 'spotted', 'videos', 'instagram', 'trending', 'bestsellers', 'flash',
                 'blog', 'under54', 'feature', 'about', 'reviews', 'trust', 'newsletter',
                 // Row 55 (Lane HA): the four new sections, at their REGISTRY
@@ -197,16 +198,35 @@ class HomepageLayouts
         $out = [];
         $order = 0;
 
-        foreach ($layout['sections'] as $section) {
+        /*
+         * Lane HC: the two strips belong at the TOP of every preset — the top
+         * strip under the header, the countries strip under the banner — and
+         * phones only. Inserted here rather than into four lists, so a preset
+         * written tomorrow gets them too; a preset that names one keeps its own
+         * position for it.
+         */
+        $list = $layout['sections'];
+
+        if (! in_array('countries', $list, true)) {
+            $at = array_search('cards_banner', $list, true);
+            array_splice($list, $at === false ? 0 : $at + 1, 0, ['countries']);
+        }
+
+        if (! in_array('topstrip', $list, true)) {
+            array_unshift($list, 'topstrip');
+        }
+
+        foreach ($list as $section) {
             if (! isset(HomepageSections::registry()[$section])) {
                 continue;
             }
 
             $on = ! in_array($section, $layout['off'], true);
             $hasGrid = HomepageSections::registry()[$section][2];
+            $phoneOnly = in_array($section, HomepageSections::MOBILE_ONLY_BY_DEFAULT, true);
 
             $out[$section] = [
-                'desktop' => $on,
+                'desktop' => $on && ! $phoneOnly,
                 'mobile' => $on,
                 'order' => $order++,
                 'skin' => $hasGrid

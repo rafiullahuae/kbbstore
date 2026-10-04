@@ -454,6 +454,8 @@ final class ArabicInterfaceDrafts
             'store.flagbar.text' => 'متجر الإمارات للجمال الكوري الأصلي',
             'store.flagbar.uae' => 'علم الإمارات العربية المتحدة',
             'store.flagbar.korea' => 'علم كوريا الجنوبية',
+            'store.topstrip.text' => 'توصيل خلال 1-3 أيام في جميع أنحاء الإمارات',
+            'store.topstrip.free_over' => 'توصيل مجاني للطلبات فوق :amount',
             'store.footer.tagline' => 'جمال كوري أصلي، مختار لدولة الإمارات.',
             'store.footer.whatsapp_cta' => 'تواصل عبر WhatsApp',
             'store.footer.shop_heading' => 'التسوق',

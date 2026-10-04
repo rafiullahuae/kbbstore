@@ -64,6 +64,7 @@
 
 @section('content')
 <div class="kbb-home">
+@unless ($sections->hidden('topstrip'))@include('partials.home.top-strip', ['cls' => $sections->classFor('topstrip'), 'ts' => \App\Support\HomeStrips::top($homeSettings)])@endunless
 
 {{-- The home page rendered no <h1> at all. The first hero slide's headline is
      the right one to promote — it is the largest, first thing on the page and
@@ -227,14 +228,16 @@
  * banner off would silently take the strip with it, which he did not ask for
  * and would read as a second bug.
  *
- * Gated on flagBarOn() exactly as the layout's copy is, so a shop that
- * switches the strip off on both widths adds no bytes here either. It ships ON
- * for both now -- "apply this on desktop and mobile both" -- so on a shipped
- * shop this include is the one that draws and the layout's is the one that does
- * not.
+ * ▲ (Lane HC) Gated on the `countries` SECTION now, not on flagBarOn(): on
+ * this page the strip is a homepage section, movable and switched per device
+ * on its Homepage row (phones only by default, as the owner asked), with the
+ * Flag bar's words, colours and sizes. Other pages still read flagBarOn().
+ * Off on both devices, it adds no bytes here.
  */
+$kfbRow = $sections->all()['countries'] ?? ['mobile' => false, 'desktop' => false];
+$kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((bool) $kfbRow['mobile'], (bool) $kfbRow['desktop']).' '.$sections->classFor('countries'));
 @endphp
-@if (app(\App\Services\HeaderSettings::class)->flagBarOn())@include('partials.flag-bar')@endif
+@unless ($sections->hidden('countries'))@include('partials.flag-bar', ['kfbClass' => $kfbHomeClass])@endunless
 {{-- `?:` AND NOT get()'s SECOND ARGUMENT — Lane FW.
 
      `site_title` has a box now (Store → Business Details → Store identity;

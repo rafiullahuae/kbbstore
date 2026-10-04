@@ -168,6 +168,10 @@ final class InterfaceStrings
             'flagbar.text' => "UAE's Authentic K-Beauty Store",
             'flagbar.uae' => 'Flag of the United Arab Emirates',
             'flagbar.korea' => 'Flag of South Korea',
+            // Lane HC: the homepage Top strip's shipped line, in two halves so
+            // each can be dropped when it is not true for this shopper.
+            'topstrip.text' => '1-3 Days Delivery all over UAE',
+            'topstrip.free_over' => 'Free Delivery over :amount',
             'footer.tagline' => 'Authentic Korean beauty, curated for the UAE.',
             'footer.whatsapp_cta' => 'Chat on WhatsApp',
             'footer.shop_heading' => 'Shop',

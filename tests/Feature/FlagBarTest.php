@@ -107,12 +107,23 @@ it('ships OFF for phones AND for desktop, because he asked for it off entirely',
     expect($c['fb_desktop'])->toBeFalse('the countries bar is still on for desktop');
     expect(app(HeaderSettings::class)->flagBarOn())->toBeFalse();
 
-    foreach (['/', '/shop/'] as $path) {
+    foreach (['/shop/'] as $path) {
         $html = test()->get($path)->assertOk()->getContent();
 
         expect(str_contains($html, '<div class="kfb '))->toBeFalse("{$path} still draws the countries bar");
         expect(fbElement($html))->toBeNull();
     }
+
+    /*
+     * ▲ (Lane HC) AND THE HOMEPAGE IS NO LONGER ONE OF THEM, at his word: "ONLY
+     * FOR MOBILE: turn this off in laptop by default ... below the main banner,
+     * i need that countries strip". On `/` the strip is the `countries` homepage
+     * section, shown by its own Homepage row — phones on, laptops off — so it
+     * is there with `kfb-m` and `d-off` and without `kfb-d`, while every other
+     * page still follows the two switches above. HomepageHubTest pins the rest.
+     */
+    $home = (string) fbElement(fbHome());
+    expect($home)->toContain('kfb-m')->toContain('d-off')->not->toContain('kfb-d');
 });
 
 it('draws the UAE flag, then the words, then the Korean flag — in that source order', function () {
@@ -197,12 +208,14 @@ it('draws nothing at all when both switches are off', function () {
      * this is red — the markup is there with neither class on it, invisible at
      * every width and present in every page. Ran it.
      */
-    $before = fbHome();
+    // ▲ (Lane HC) Read on /shop/: on the homepage the strip is the `countries`
+    // section and its Homepage row, not these two switches, decides.
+    $before = test()->get('/shop/')->assertOk()->getContent();
     expect($before)->toContain('kfb');
 
     fbSet(['fb_mobile' => false, 'fb_desktop' => false]);
 
-    $after = fbHome();
+    $after = test()->get('/shop/')->assertOk()->getContent();
 
     expect($after)->not->toContain('kfb');
     expect($after)->not->toContain('Flag of South Korea');
@@ -237,7 +250,10 @@ it('is a pure insertion: take the strip out again and the page is byte-identical
      * red at the byte before `<div class="kfb`. Ran it; that is exactly the
      * defect it caught while this was being written.
      */
-    $paths = ['/', '/shop/', '/cart/', '/my-wishlist/'];
+    // ▲ (Lane HC) `/` left the list: there the strip is the `countries` homepage
+    // section, which these switches do not take off. HomepageHubTest cuts it
+    // out of the homepage the same way.
+    $paths = ['/shop/', '/cart/', '/my-wishlist/'];
 
     $with = [];
 
@@ -323,7 +339,8 @@ it('cannot be made to write anything but a hex colour into the style attribute',
     expect($el)->not->toContain('onload')
         ->and($el)->not->toContain('javascript:')
         ->and($el)->toContain('--kfb-bg:#FDEFF4')
-        ->and($el)->toContain('--kfb-ink:#E0567B');
+        // ▲ (Lane HC) the default ink is the old shop's dark text now.
+        ->and($el)->toContain('--kfb-ink:#3B2730');
 });
 
 it('prints only a constant unescaped, and the constant interpolates nothing', function () {
@@ -660,7 +677,9 @@ it('saves from that screen and moves the shop', function () {
         ]])
         ->assertOk();
 
-    $el = (string) fbElement(fbHome());
+    // ▲ (Lane HC) /shop/: `fb_desktop` is the switch for every page but the
+    // homepage, where the `countries` section's own row decides.
+    $el = (string) fbElement(test()->get('/shop/')->assertOk()->getContent());
 
     expect($el)->toContain('--kfb-h:44px')
         ->and($el)->toContain('kfb-d')

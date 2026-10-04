@@ -1,0 +1,14 @@
+{
+  "width": 1280,
+  "scrollWidth": 1280,
+  "carousel": {
+    "track": 1205,
+    "card": 269,
+    "inView": 4.47,
+    "style": "--gs-d:4;--gs-m:2;--gs-peek-m:0.3",
+    "arrows": [
+      "grid",
+      "grid"
+    ]
+  }
+}

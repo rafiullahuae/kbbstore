@@ -11,6 +11,7 @@ use App\Services\GridSections;
 use App\Services\HomepageSections;
 use App\Services\ModuleSchema;
 use App\Support\GridSkins;
+use App\Support\ProductSource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -91,6 +92,7 @@ class GridSectionApiController extends Controller
             'section' => self::summary($grid),
             'tabs' => GridSections::tabsFor($grid),
             'manual' => self::manualProducts($grid),
+            'source_query' => ProductSource::clean($grid->source_query ?? []),
         ] + self::optionSets());
     }
 
@@ -206,6 +208,8 @@ class GridSectionApiController extends Controller
             'values' => ['sometimes', 'array'],
             'manual_ids' => ['sometimes', 'array'],
             'manual_ids.*' => ['integer'],
+            // Lane HC: "Brands and categories, mixed" — see applyQuery().
+            'source_query' => ['sometimes', 'array'],
         ]);
 
         $values = (array) ($data['values'] ?? []);
@@ -220,6 +224,8 @@ class GridSectionApiController extends Controller
             $grid->manual_ids = self::cleanManualIds((array) $data['manual_ids']);
         }
 
+        self::applyQuery($grid, $data);
+
         $grid->save();
         GridSections::flush();
 
@@ -228,6 +234,7 @@ class GridSectionApiController extends Controller
             'section' => self::summary($grid),
             'tabs' => GridSections::tabsFor($grid),
             'manual' => self::manualProducts($grid),
+            'source_query' => ProductSource::clean($grid->source_query ?? []),
         ] + self::optionSets());
     }
 
@@ -336,6 +343,8 @@ class GridSectionApiController extends Controller
             'values' => ['sometimes', 'array'],
             'manual_ids' => ['sometimes', 'array'],
             'manual_ids.*' => ['integer'],
+            // Lane HC: "Brands and categories, mixed" — see applyQuery().
+            'source_query' => ['sometimes', 'array'],
         ]);
 
         self::apply($grid, (array) ($data['values'] ?? []));
@@ -343,6 +352,8 @@ class GridSectionApiController extends Controller
         if (array_key_exists('manual_ids', $data)) {
             $grid->manual_ids = self::cleanManualIds((array) $data['manual_ids']);
         }
+
+        self::applyQuery($grid, $data);
 
         return self::draw($grid);
     }
@@ -616,6 +627,23 @@ class GridSectionApiController extends Controller
      *
      * @return list<array<string, mixed>>
      */
+    /**
+     * Lane HC: the "Brands and categories, mixed" values, cleaned by
+     * ProductSource and with every brand and category id checked against a
+     * real row — two primary-key SELECTs, only when the caller sent them.
+     */
+    private static function applyQuery(GridSection $grid, array $data): void
+    {
+        if (! array_key_exists('source_query', $data)) {
+            return;
+        }
+
+        $q = ProductSource::clean($data['source_query']);
+        $q['brands'] = ProductSource::existing('brands', $q['brands']);
+        $q['cats'] = ProductSource::existing('categories', $q['cats']);
+        $grid->source_query = $q;
+    }
+
     private static function manualProducts(GridSection $section): array
     {
         $ids = array_map('intval', (array) ($section->manual_ids ?? []));

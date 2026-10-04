@@ -168,7 +168,9 @@ it('places the claim and the include exactly once each in the templates', functi
     expect(substr_count($layout, "View::hasSection('flagbar-placed')"))->toBe(1)
         ->and(substr_count($layout, "@include('partials.flag-bar')"))->toBe(1)
         ->and(substr_count($home, "@section('flagbar-placed', '1')"))->toBe(1)
-        ->and(substr_count($home, "@include('partials.flag-bar')"))->toBe(1);
+        // ▲ (Lane HC) the home page's include now carries the `countries`
+        // section's class, so it is matched up to its argument list.
+        ->and(substr_count($home, "@include('partials.flag-bar'"))->toBe(1);
 });
 
 it('still hides the strip on both widths when the owner switches it off', function () {
@@ -184,6 +186,18 @@ it('still hides the strip on both widths when the owner switches it off', functi
     app(HeaderSettings::class)->save(['fb_mobile' => false, 'fb_desktop' => false]);
 
     expect(app(HeaderSettings::class)->flagBarOn())->toBeFalse();
+
+    /*
+     * ▲ (Lane HC) On the home page the strip is the `countries` SECTION, and
+     * its off switch is that section's Homepage row — both devices off draws
+     * nothing there. The two Flag bar switches still govern every other page.
+     * MUTATION: drop the `@unless` around the home page's include → 1, not 0.
+     */
+    $rows = app(\App\Services\HomepageSections::class)->all();
+    $rows['countries']['desktop'] = false;
+    $rows['countries']['mobile'] = false;
+    app(\App\Services\HomepageSections::class)->save($rows);
+    \App\Services\SettingsService::forgetMemo();
 
     expect(fbubFind('/')['count'])->toBe(0, 'the home page drew a strip the owner switched off');
     expect(fbubFind('/shop/')['count'])->toBe(0, 'the shop drew a strip the owner switched off');

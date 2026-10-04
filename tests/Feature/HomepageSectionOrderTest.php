@@ -254,7 +254,14 @@ it('pairs the class on the section with the rule in the style, for the whole ord
         // … and where the section IS drawn, the class is on it. A class with no
         // rule and a rule with no class are both silent no-ops, which is the
         // failure mode this whole lane exists to stop shipping.
-        expect($tag)->toStartWith('<section class="sec ');
+        // ▲ Lane HC: the two strips are a <div> each — the top strip `kts`,
+        // the countries strip the Flag bar's own `kfb` — and are ordered by the
+        // same class as every <section>.
+        expect($tag)->toStartWith(match ($key) {
+            'topstrip' => '<div class="kts ',
+            'countries' => '<div class="kfb ',
+            default => '<section class="sec ',
+        });
         expect($tag)->toMatch('/\bkbb-ord-' . $n . '\b/');
 
         $paired++;
@@ -267,7 +274,9 @@ it('pairs the class on the section with the rule in the style, for the whole ord
     // 2.60.372: 17 → 16. The old product-photo Spotted strip stepped aside for
     // Lane HB's section, which draws nothing on this fixture (no post is
     // ticked Homepage) — the same rule as the Blog above it.
-    expect($paired)->toBe(16);
+    // ▲ Lane HC: 16 → 18 — the Top strip and the Countries strip, both
+    // drawn (phones only, so in the document) and both carrying the class.
+    expect($paired)->toBe(18);
 });
 
 it('gives the hero a later position than the newsletter once it has been moved down', function () {
@@ -419,8 +428,10 @@ it('refuses to show a nested section anywhere the page will not draw it', functi
      * settles back to the position immediately behind its host, wherever that
      * host now is.
      */
-    expect(array_slice($keys, 0, 5))->toBe(['newsletter', 'trust', 'cards_banner', 'hero', 'delivery']);
-    expect($keys[5])->toBe('ticker');
+    // ▲ Lane HC: the two strips are registry keys too — `topstrip` first,
+    // `countries` under the banner — and fall in registry order like the rest.
+    expect(array_slice($keys, 0, 7))->toBe(['newsletter', 'trust', 'topstrip', 'cards_banner', 'countries', 'hero', 'delivery']);
+    expect($keys[7])->toBe('ticker');
 
     // Renumbered to the effective position, so the console posting this list
     // straight back is a no-op rather than a second, different order.

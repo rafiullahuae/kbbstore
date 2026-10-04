@@ -400,7 +400,11 @@ it('keeps the homepage section list in the order the template draws it', functio
     $keys = array_keys(HomepageSections::REGISTRY);
     $home = (string) file_get_contents(base_path('resources/views/store/home.blade.php'));
 
-    expect(array_slice($keys, 0, 5))->toBe(['cards_banner', 'hero', 'delivery', 'ticker', 'categories'])
+    // ▲ Lane HC: the Top strip sits above the banner (directly under the
+    // header) and the Countries strip directly under it — in the registry as in
+    // the template. The banner still comes before the hero band.
+    expect(array_slice($keys, 0, 7))->toBe(['topstrip', 'cards_banner', 'countries', 'hero', 'delivery', 'ticker', 'categories'])
+        ->and(strpos($home, "hidden('topstrip')"))->toBeLessThan((int) strpos($home, "hidden('cards_banner')"))
         ->and(strpos($home, "hidden('cards_banner')"))->toBeLessThan((int) strpos($home, "hidden('categories')"))
         ->and(strpos($home, "hidden('cards_banner')"))->toBeLessThan((int) strpos($home, "bandHidden('hero')"));
 

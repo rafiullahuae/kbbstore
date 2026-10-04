@@ -1,0 +1,69 @@
+{
+  "width": 1280,
+  "list": {
+    "cards": 26,
+    "editButtons": 26,
+    "scrollWidth": 1280
+  },
+  "popup": {
+    "w": 940,
+    "h": 525,
+    "x": 170,
+    "y": 188
+  },
+  "popupScrollWidth": 1280,
+  "tabs": [
+    "Content",
+    "Products",
+    "Layout",
+    "Style",
+    "Show & frame"
+  ],
+  "autoPreview": 8,
+  "autoSaved": "Saved. The homepage shows it now.",
+  "storeAutoCards": 8,
+  "storeScrollWidth": 1280,
+  "typeaheadRows": 10,
+  "manualBefore": [
+    "COSRX Heartleaf Toner",
+    "COSRX Relief Sun SPF50",
+    "COSRX Dive-In Serum"
+  ],
+  "manualAfter": [
+    "COSRX Heartleaf Toner",
+    "COSRX Dive-In Serum",
+    "COSRX Relief Sun SPF50"
+  ],
+  "storeManualOrder": [
+    "COSRX Heartleaf Toner",
+    "COSRX Dive-In Serum",
+    "COSRX Relief Sun SPF50"
+  ],
+  "guard": "Discard your unsaved changes to Best Sellers?",
+  "strips": {
+    "top": {
+      "display": "none",
+      "h": 0,
+      "w": 0,
+      "font": "13px",
+      "bg": "rgb(233, 145, 174)",
+      "color": "rgb(255, 255, 255)"
+    },
+    "countries": {
+      "display": "none",
+      "h": 0,
+      "w": 0,
+      "font": "14px",
+      "bg": "rgb(253, 239, 244)",
+      "color": "rgb(42, 34, 40)"
+    },
+    "pill": {
+      "display": "none",
+      "h": 0,
+      "w": 0,
+      "font": "14px",
+      "bg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(59, 39, 48)"
+    }
+  }
+}

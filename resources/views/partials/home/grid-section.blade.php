@@ -105,10 +105,31 @@
         . ($section->desktop_layout === 'carousel' ? ' gs-car-d' : '')
         . ($section->mobile_layout === 'carousel' ? ' gs-car-m' : '');
 
+    /*
+     * Lane HC: cards in view, whole and part, as the two numbers the calc()
+     * above already takes — the whole cards (--gs-m / --gs-d) and the peek of
+     * the next one (--gs-peek-m / -d). From a select's own option list or not
+     * at all, so nothing typed reaches the style attribute. Only for a device
+     * whose layout IS a carousel; a grid is left exactly as it was.
+     */
+    $gsPerM = $section->mobile_layout === 'carousel' && isset(\App\Models\GridSection::PER_M[(string) $section->per_m]) ? (float) $section->per_m : null;
+    $gsPerD = $section->desktop_layout === 'carousel' && (string) $section->per_d !== '' && isset(\App\Models\GridSection::PER_D[(string) $section->per_d]) ? (float) $section->per_d : null;
+    $gsStyle = '--gs-d:'.($gsPerD !== null ? (int) floor($gsPerD) : $gsD).';--gs-m:'.($gsPerM !== null ? (int) floor($gsPerM) : $gsM)
+        .($gsPerM !== null ? ';--gs-peek-m:'.round($gsPerM - floor($gsPerM), 2) : '')
+        .($gsPerD !== null ? ';--gs-peek-d:'.round($gsPerD - floor($gsPerD), 2) : '');
+    $gsArrM = $section->mobile_layout === 'carousel' && (bool) $section->arrows_m;
+    $gsArrD = $section->desktop_layout === 'carousel' && (bool) ($section->arrows_d ?? true);
+    $gsArrows = $gsArrM || $gsArrD;
+    // Built here and echoed, so a section without arrows prints exactly the
+    // bytes it printed before (an @if at the start of a line would leave its
+    // indent, and one at the end would eat the newline). Labels through e().
+    $gsOpen = $gsArrows ? '<div class="gs-stage'.($gsArrM ? '' : ' gs-noarr-m').($gsArrD ? '' : ' gs-noarr-d').'"><button type="button" class="gs-arr gs-prev" data-ymal-prev aria-label="'.e(__('store.product.related_prev')).'" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>' : '';
+    $gsClose = $gsArrows ? '<button type="button" class="gs-arr gs-next" data-ymal-next aria-label="'.e(__('store.product.related_next')).'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button></div>' : '';
+
     $gsLabel = trim((string) $section->view_all_label);
     $gsCardLabel = trim((string) $section->card_label);
 @endphp
-<section class="sec kbb-gsec {{ $sections->classFor($gsKey) }}" style="padding-top:0"><div class="wrap">
+<section class="sec kbb-gsec {{ $sections->classFor($gsKey) }}" style="padding-top:0"{!! $gsArrows ? ' data-ymal' : '' !!}><div class="wrap">
   @if ($gsShowHead)
   <div class="gs-head"><div>
     @if ($gsHeading !== '')<h2>{{ $gsHeading }}</h2>@endif
@@ -119,11 +140,11 @@
        they are integers clamped twice, and they arrive through `{{ }}` in an
        attribute rather than inside the stylesheet — which is what keeps every
        byte of GridSections::css() a constant (rule 5). --}}
-  <div class="{{ $gsClass }}" data-skin="{{ $gsSkin }}" style="--gs-d:{{ $gsD }};--gs-m:{{ $gsM }}">
+  {!! $gsOpen !!}<div class="{{ $gsClass }}" data-skin="{{ $gsSkin }}" style="{{ $gsStyle }}"{!! $gsArrows ? ' data-ymal-track' : '' !!}>
     @foreach ($items as $gsI => $gsProduct)
       <div class="gs-cell{{ $gsI >= $gsDCount ? ' gs-m-only' : '' }}{{ $gsI >= $gsMCount ? ' gs-d-only' : '' }}"><x-product-card :product="$gsProduct" :cat-label="$gsCardLabel !== '' ? $gsCardLabel : null" :rank="$section->show_rank ? $gsI + 1 : null" /></div>
     @endforeach
-  </div>
+  </div>{!! $gsClose !!}
   @if ($gsHref !== '')
   {{-- The href has already been through App\Support\SafeUrl::href() with ''
        as its refusal, so reaching this line means the scheme was one this shop

@@ -99,11 +99,16 @@ it('puts the delivery strip second in the two presets that asked for it elsewher
      * eight visible keys gain `under54` and lose `bestsellers` off the end.
      * The first three, which are this case's claim, do not move.
      */
+    /*
+     * ▲ ADVANCED BY LANE HC. Every preset gains the Top strip first and the
+     * Countries strip under the banner; the claim — the delivery strip right
+     * behind the hero, ahead of the ticker — is unchanged, one place along.
+     */
     expect(fwPreviewKeys('conversion'))->toBe([
-        'hero', 'delivery', 'ticker', 'cards_banner', 'flash', 'under54', 'bundles', 'categories',
+        'topstrip', 'hero', 'delivery', 'ticker', 'cards_banner', 'countries', 'flash', 'under54',
     ]);
 
-    expect(array_slice(fwPreviewKeys('boutique'), 0, 3))->toBe(['hero', 'delivery', 'categories']);
+    expect(array_slice(fwPreviewKeys('boutique'), 0, 4))->toBe(['topstrip', 'hero', 'delivery', 'categories']);
 });
 
 it('leaves the preset definitions alone — only the picture of them changed', function () {
@@ -159,7 +164,9 @@ it('counts the same sections it always did, and names the same ones off', functi
      * The `off` comparison in the loop below is unchanged and still pins that
      * the SET is exactly what each preset's `off` says.
      */
-    $expected = ['signature' => 11, 'conversion' => 20, 'editorial' => 20, 'boutique' => 12];
+    // ▲ Lane HC: +2 each — the Top strip and the Countries strip join every
+    // preset, phones only, so each preset draws two more sections on a phone.
+    $expected = ['signature' => 13, 'conversion' => 22, 'editorial' => 22, 'boutique' => 14];
 
     foreach (app(HomepageLayouts::class)->summaries() as $summary) {
         expect($summary['count'])->toBe($expected[$summary['key']], $summary['key'] . ' changed its section count');
