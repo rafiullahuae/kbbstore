@@ -4517,6 +4517,25 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 @media (prefers-reduced-motion:reduce){
   .kbb-home .spt-card{transition:none}
 }
+/* (Lane HS) The homepage's static grid — the owner's reference,
+   docs/hs-owner-spotted.png: six portrait pictures (5:6), small gaps, three to
+   a row on a phone too. The box is aspect-ratio, so nothing shifts while a
+   lazy picture arrives; a card with no picture is a soft pink placeholder. */
+.kbb-home .spt-sgl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;list-style:none;margin:0 auto;padding:0;max-width:780px}
+.kbb-home .spt-g6 .spt-sgl{grid-template-columns:repeat(6,minmax(0,1fr));max-width:none}
+.kbb-home .spt-sgl li{min-width:0}
+.kbb-home .spt-sgc{position:relative;display:block;aspect-ratio:5/6;border-radius:6px;overflow:hidden;background:var(--blush)}
+.kbb-home .spt-sgc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s var(--ease)}
+.kbb-home .spt-sgc:hover img{transform:scale(1.03)}
+.kbb-home .spt-sgc:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px}
+.kbb-home .spt-sgph{position:absolute;inset:0;display:grid;place-items:center;color:var(--pink-deep);background:linear-gradient(160deg,var(--pink-soft),var(--blush))}
+.kbb-home .spt-sgph svg{width:clamp(24px,24%,48px);height:auto;opacity:.65}
+@media (max-width:900px){
+  .kbb-home .spt-sgl{gap:6px}
+}
+@media (prefers-reduced-motion:reduce){
+  .kbb-home .spt-sgc img{transition:none}
+}
 
 /* ══ SECTION HEADINGS: ONE SIZE PER DEVICE ══════════════════════ Lane PF ══
    The owner, 4 October, ticking the Best Sellers heading and description: "i

@@ -1042,6 +1042,11 @@ final class InterfaceStrings
             'spotted.seo_desc' => 'Real Korean skincare routines, unboxings and results shared by K-Beauty Bliss customers across the UAE. See their posts and shop the products they love.',
             'spotted.breadcrumb_label' => 'Breadcrumb',
             'spotted.empty' => 'New posts are on their way — check back soon.',
+            // (Lane HS) The homepage's static grid: its heading, in the owner's
+            // own casing from his reference, and each picture's description
+            // until he types one.
+            'spotted.grid_heading' => '#KBEAUTYBLISS Spotted',
+            'spotted.grid_photo' => '#KBeautyBliss Spotted photo :n',
             'home.bestsellers_heading' => 'Best sellers',
             'home.bestsellers_badge' => 'This month',
             'home.bestsellers_subtitle' => 'The products customers keep coming back for.',

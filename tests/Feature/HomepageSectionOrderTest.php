@@ -276,7 +276,10 @@ it('pairs the class on the section with the rule in the style, for the whole ord
     // ticked Homepage) — the same rule as the Blog above it.
     // ▲ Lane HC: 16 → 18 — the Top strip and the Countries strip, both
     // drawn (phones only, so in the document) and both carrying the class.
-    expect($paired)->toBe(18);
+    // 18 → 19 (Lane HS, merged after HC): Spotted ships as the static grid, which draws on
+    // this fixture, and now carries its row's order class like every other
+    // section (it carried none before — the defect Lane HC found).
+    expect($paired)->toBe(19);
 });
 
 it('gives the hero a later position than the newsletter once it has been moved down', function () {

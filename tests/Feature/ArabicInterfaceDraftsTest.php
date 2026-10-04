@@ -623,7 +623,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 2027_08_06_100000_seed_sold_out_label_arabic_draft.
     // 1354 -> 1356 (Lane HC, merged after PX): the homepage Top strip's two
     // (store.topstrip.*), seeded by 2027_08_04_100200_seed_top_strip_arabic_drafts.
-    expect($ui['drafts'])->toBe(1356, 'the shipped Arabic is not showing as drafts to review')
+    // 1356 -> 1358 (Lane HS, merged after HC): the homepage Spotted grid's heading and picture
+    // description (store.spotted.grid_*), seeded by
+    // 2027_08_07_140100_seed_spotted_grid_arabic_drafts.
+    expect($ui['drafts'])->toBe(1358, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

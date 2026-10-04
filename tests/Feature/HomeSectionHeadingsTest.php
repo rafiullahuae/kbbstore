@@ -206,7 +206,9 @@ it('puts every section heading on the page under one of the three heads the rule
 
     expect($section)->toBe([
         'Big savings bundles', 'Best-Selling Korean Skincare in the UAE', 'Shop Top Korean Beauty Brands',
-        '#KBeautyBliss — Seen on Instagram', 'Trending K-Beauty This Week', 'Korean Skincare Tips & Guides',
+        // (Lane HS) The Spotted section ships as the owner's static grid,
+        // under his own heading from docs/hs-owner-spotted.png.
+        '#KBEAUTYBLISS Spotted', 'Trending K-Beauty This Week', 'Korean Skincare Tips & Guides',
         'K-Beauty Under AED 54', 'About K-Beauty Bliss UAE',
     ]);
 });

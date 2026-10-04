@@ -518,6 +518,7 @@ final class AdminSearchIndex
         ],
         'spotted' => [
             'Homepage section' => [],
+            'Homepage grid' => [],
             'Carousel' => [],
             'Button' => [],
             'Spacing' => [],

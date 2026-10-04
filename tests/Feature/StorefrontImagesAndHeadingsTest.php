@@ -198,6 +198,10 @@ it('renders journal and product photographs as img elements', function () {
      * and nothing at all until one is ticked Homepage. So one is, here, and the
      * question is asked of the new section's stage instead.
      */
+    // (Lane HS) The carousel is the second layout since the static grid
+    // became the default; this case asks the carousel's stage.
+    app(\App\Services\SpottedSettings::class)->save(['home_layout' => 'carousel']);
+    \App\Services\SettingsService::forgetMemo();
     \App\Models\SpottedPost::create([
         'image' => '/uploads/spotted/look-1.jpg', 'ig_url' => 'https://www.instagram.com/p/ImgTest1/',
         'handle' => 'lina.skin', 'caption' => 'Anua Toner', 'sort' => 1, 'on_home' => true, 'on_page' => true,

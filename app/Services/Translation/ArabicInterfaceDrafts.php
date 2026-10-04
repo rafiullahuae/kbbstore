@@ -822,6 +822,8 @@ final class ArabicInterfaceDrafts
             'store.spotted.seo_desc' => 'روتينات حقيقية للعناية الكورية بالبشرة وفتح علب ونتائج يشاركها عملاء K-Beauty Bliss في الإمارات. شاهدي منشوراتهم وتسوقي المنتجات التي يحبونها.',
             'store.spotted.breadcrumb_label' => 'مسار التنقل',
             'store.spotted.empty' => 'منشورات جديدة في الطريق — عودي قريبًا.',
+            'store.spotted.grid_heading' => '#KBEAUTYBLISS من مجتمعنا',
+            'store.spotted.grid_photo' => 'صورة :n من #KBeautyBliss',
             'store.home.bestsellers_heading' => 'الأكثر مبيعًا',
             'store.home.bestsellers_badge' => 'هذا الشهر',
             'store.home.bestsellers_subtitle' => 'المنتجات التي يعود إليها العملاء دائمًا.',

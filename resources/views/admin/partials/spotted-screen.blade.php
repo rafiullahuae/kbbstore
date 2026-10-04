@@ -11,7 +11,11 @@
     manually selected IG grid". So: a list of hand-picked posts (picture from
     the media library, Instagram link, handle, caption, an optional product, an
     optional heart count, and two ticks — Homepage and Spotted page), in the
-    order he arranges, and below it the section's settings in five tabs.
+    order he arranges, and below it the section's settings in six tabs.
+
+    (Lane HS) The Homepage grid tab draws the static grid's six pictures as
+    cards — media library picker, link, description, ↑ ↓ — through
+    gridHTML(); every other tab is still drawn straight from the schema.
 
     Endpoints: routes/spotted-admin.php, capability spotted.manage.
 
@@ -69,6 +73,10 @@
 .spa-tab{padding:8px 12px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
 .spa-tab[aria-selected="true"]{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
 .spa-fields{display:grid;gap:14px;margin-top:14px;min-width:0}
+.spa-gcard{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:12px;align-items:start;border:1px solid var(--border,#e6e6e6);border-radius:11px;padding:10px;min-width:0}
+.spa-gcard .spa-th{width:72px;height:86px}
+.spa-gbody{display:grid;gap:10px;min-width:0}
+.spa-gbody .spa-actions{margin-top:0}
 .spa-empty{padding:22px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px;border:1px dashed var(--border,#e6e6e6);border-radius:11px;margin-top:12px}
 @media (max-width:640px){
   .spa-card{padding:13px}
@@ -76,6 +84,8 @@
   .spa-row{grid-template-columns:48px minmax(0,1fr)}
   .spa-row .spa-th{width:48px;height:60px}
   .spa-rbt{grid-column:1 / -1;justify-content:flex-start}
+  .spa-gcard{grid-template-columns:56px minmax(0,1fr)}
+  .spa-gcard .spa-th{width:56px;height:67px}
 }
 </style>
 
@@ -280,6 +290,52 @@
     return '<div class="spa-f"><label for="' + id + '">' + esc(f.label) + '</label><input type="text" id="' + id + '" data-spa-key="' + esc(f.key) + '" value="' + esc(values[f.key]) + '" autocomplete="off">' + help + '</div>';
   }
 
+  /* ------------------------------------------------ the homepage grid (Lane HS)
+     The six pictures of the static grid, one card each: the picture from the
+     media library, its link and its description, and ↑ ↓ to reorder. Moving
+     a card swaps its three values with its neighbour's in `values`; nothing
+     is sent until Save settings, like every other tab. */
+  var GRID_RE = /^grid_(\d+)_(img|url|alt)$/;
+
+  function gridHTML(t) {
+    var byKey = {};
+    t.fields.forEach(function (f) { byKey[f.key] = f; });
+    var out = t.fields.filter(function (f) { return !GRID_RE.test(f.key); }).map(fieldHTML).join('');
+    var n = gridCount();
+    for (var i = 1; i <= n; i++) {
+      var src = safeSrc(values['grid_' + i + '_img']);
+      out += '<div class="spa-gcard">'
+        + '<span class="spa-th">' + (src ? '<img src="' + esc(src) + '" alt="" loading="lazy">' : '') + '</span>'
+        + '<div class="spa-gbody"><b>Picture ' + i + '</b><div class="spa-actions">'
+        + '<button type="button" class="spa-btn" data-spa-gpick="' + i + '">' + (src ? 'Change picture' : 'Choose from the media library') + '</button>'
+        + (src ? '<button type="button" class="spa-btn is-danger" data-spa-gclear="' + i + '">Remove picture</button>' : '')
+        + '</div>'
+        + (byKey['grid_' + i + '_url'] ? fieldHTML(byKey['grid_' + i + '_url']) : '')
+        + (byKey['grid_' + i + '_alt'] ? fieldHTML(byKey['grid_' + i + '_alt']) : '')
+        + '</div><div class="spa-rbt">'
+        + '<button type="button" class="spa-btn" data-spa-gmove="' + i + ':-1" aria-label="Move picture ' + i + ' up"' + (i === 1 ? ' disabled' : '') + '>↑</button>'
+        + '<button type="button" class="spa-btn" data-spa-gmove="' + i + ':1" aria-label="Move picture ' + i + ' down"' + (i === n ? ' disabled' : '') + '>↓</button>'
+        + '</div></div>';
+    }
+    return out;
+  }
+
+  function gridCount() {
+    var n = 0;
+    while (Object.prototype.hasOwnProperty.call(values, 'grid_' + (n + 1) + '_img')) n++;
+    return n;
+  }
+
+  function gridMove(i, d) {
+    var j = i + d;
+    if (j < 1 || j > gridCount()) return;
+    ['img', 'url', 'alt'].forEach(function (part) {
+      var a = 'grid_' + i + '_' + part, b = 'grid_' + j + '_' + part;
+      var tmp = values[a]; values[a] = values[b]; values[b] = tmp;
+    });
+    render();
+  }
+
   function render() {
     var host = document.querySelector('#content');
     if (!host || !here()) return;
@@ -305,7 +361,7 @@
       + '<a class="spa-btn" href="' + esc(data.page_url) + '" target="_blank" rel="noopener">View the Spotted page ↗</a>'
       + '<button class="spa-btn is-primary" data-spa-add>+ Add a post</button></span></div>'
       + '<p class="spa-sub">Hand-picked, in this order. <b>' + homeCount + '</b> on the homepage carousel, <b>' + pageCount + '</b> on the Spotted page. '
-      + 'The homepage section stays hidden until at least one post is ticked “Homepage”.</p>'
+      + 'With the Carousel layout, the homepage section stays hidden until at least one post is ticked “Homepage”.</p>'
       + (posts.length
           ? '<div class="spa-list">' + posts.map(function (p, i) { return rowHTML(p, i, posts.length); }).join('') + '</div>'
           : '<div class="spa-empty">No posts yet. Add the first one — a picture from the media library and its Instagram link.</div>')
@@ -317,7 +373,7 @@
                 return '<button type="button" class="spa-tab" data-spa-tab="' + esc(t.key) + '" aria-selected="' + (t.key === current.key ? 'true' : 'false') + '">' + esc(t.label) + '</button>';
               }).join('') + '</div>'
             + '<p class="spa-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
-            + '<div class="spa-fields">' + current.fields.map(fieldHTML).join('') + '</div>'
+            + '<div class="spa-fields">' + (current.key === 'grid' ? gridHTML(current) : current.fields.map(fieldHTML).join('')) + '</div>'
             + '<div class="spa-actions"><button class="spa-btn is-primary" data-spa-savesettings' + (busy ? ' disabled' : '') + '>' + (busy ? 'Saving…' : 'Save settings') + '</button>'
             + '<button class="spa-btn" data-spa-reload' + (busy ? ' disabled' : '') + '>Reload</button></div></div>'
           : '')
@@ -430,6 +486,24 @@
   document.addEventListener('click', function (e) {
     if (!here()) return;
     var t;
+    if ((t = e.target.closest('[data-spa-gmove]'))) {
+      var gm = t.getAttribute('data-spa-gmove').split(':');
+      gridMove(Number(gm[0]), Number(gm[1]));
+      return;
+    }
+    if ((t = e.target.closest('[data-spa-gclear]'))) { values['grid_' + Number(t.getAttribute('data-spa-gclear')) + '_img'] = ''; render(); return; }
+    if ((t = e.target.closest('[data-spa-gpick]'))) {
+      var gi = Number(t.getAttribute('data-spa-gpick'));
+      if (typeof window.kbbPickMedia !== 'function') { say('The media library is not available on this page.'); return; }
+      window.kbbPickMedia({
+        title: 'Choose picture ' + gi + ' of the homepage grid',
+        note: 'Shown 5:6 (portrait), cropped to fill.',
+        onPick: function (urls) {
+          if (urls && urls[0]) { values['grid_' + gi + '_img'] = String(urls[0]); render(); }
+        }
+      });
+      return;
+    }
     if ((t = e.target.closest('[data-spa-tab]'))) { open = t.getAttribute('data-spa-tab'); render(); return; }
     if (e.target.closest('[data-spa-savesettings]')) { saveSettings(); return; }
     if (e.target.closest('[data-spa-reload]')) { load(); return; }
