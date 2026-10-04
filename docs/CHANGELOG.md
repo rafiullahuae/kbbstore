@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.375
+**The desktop menu fills its row.** Apply after .374. No plugin change. Runs 1
+migration (a cache clear). Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "the top desktop menu items font size should auto adjust if empty area there … enlarge, and if more items, then reduce … only if the menu has at least 9 items. less than that it will display as it is" | With 9 or more top items the row fills edge to edge on one line: your 12 items at 1280 go from 13px with 166px empty to 15.25px with 0 empty; 16.8px at 1440; 18px (the largest) at 1600 and 1920, with the remaining room shared evenly. More items shrink to fit (16 items: 11px, one row). Fewer than 9: unchanged, pixel for pixel. Arabic fills the same way. The Super Sale pill and the ▾ arrows grow with the text; the dropdowns still open whole on screen. No layout shift (CLS 0). Controls: Appearance → Header → Navigation → Fit the menu to the row (on) · Fit it from (9 items) · Smallest text size (10px) · Largest text size (18px) |
+
+Files (9): see the package's update.json.
+
 ## 2.60.374
 **The email builder, Marketing Emails, the card spacing that now really applies,
 and a lighter banner.** Apply after .373. No plugin change. **Runs 14
