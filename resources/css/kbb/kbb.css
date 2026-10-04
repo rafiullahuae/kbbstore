@@ -4404,46 +4404,72 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 }
 
 /* ══ THE SITE FOOTER — the approved design (docs/home-preview/footer-final.html) ══
-   (Lane HB, master plan row 55.) WhatsApp-green help strip drifting slowly
-   within the green range, a white main block with a blush wash, a very big
-   centred name in light colours that slowly change, and a slim bottom bar.
+   (Lane HB, master plan row 55; reworked by Lane HF, 4 October.) A help strip
+   in the shop's own pinks drifting slowly within that range, a white main
+   block with a blush wash, a very big centred name in light colours that
+   slowly change, a slim bottom bar with a shine sweeping across it.
    `footer.kft` out-specifies the old dark `footer{}` rule above without
    editing it, so Appearance → Footer → "Previous" still draws exactly as it
    did. All motion is CSS and stops under prefers-reduced-motion. The big
    name's size is its length (--kft-n, an integer the server prints): no
-   script measures anything. */
-footer.kft{background:#fff;color:var(--ink);padding:0;margin:0;overflow:hidden;font-size:14px;line-height:1.5}
+   script measures anything.
+
+   ── LANE HF: EVERY NUMBER IS A --kft-* PROPERTY THE SERVER PRINTS ──────────
+   App\Services\SiteFooter::presentation() puts them on the <footer>'s style
+   attribute — checked hex colours, clamped integers — and every var() below
+   carries the shipped value as its own fallback. `-d` is read above 900px and
+   `-m` at 900px and under: the phone line this stylesheet already uses.
+
+   SHOW / HIDE PER DEVICE is a class per hidden part — kft-xd-<part> on a
+   laptop, kft-xm-<part> on a phone — and nothing else; the markup is the same
+   on both. The columns are FLEX with the grid's own fr weights as flex-grow
+   (basis 0, min-width 0, the same gap), which lays them out exactly as the
+   five-track grid did and lets the rest close up when one is hidden.
+
+   THE SHINE sweeps left → right; under [dir="rtl"] it runs its mirror-image
+   keyframes, so the Arabic shop's sweeps right → left. No JavaScript. */
+footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;overflow:hidden;font-size:14px;line-height:1.5}
 .kft a{text-decoration:none}
 .kft-wrap{max-width:var(--site-max,1320px);margin-inline:auto;padding-inline:var(--site-gutter,16px)}
-.kft-help{color:#fff;background:linear-gradient(110deg,#128C7E,#12A37A,#1EBE5D,#25D366,#1EBE5D,#12A37A,#128C7E);background-size:300% 100%;background-position:0% 50%}
+.kft-help{color:#fff;background:linear-gradient(110deg,var(--kft-from,#C13E63),var(--kft-to,#E0567B),var(--kft-from,#C13E63));
+  background:linear-gradient(110deg,var(--kft-from,#C13E63),color-mix(in srgb,var(--kft-from,#C13E63),var(--kft-to,#E0567B)),var(--kft-to,#E0567B),color-mix(in srgb,var(--kft-to,#E0567B) 90%,#FCE0E8),var(--kft-to,#E0567B),color-mix(in srgb,var(--kft-from,#C13E63),var(--kft-to,#E0567B)),var(--kft-from,#C13E63));
+  background-size:300% 100%;background-position:0% 50%}
 .kft-help-in{display:flex;align-items:center;gap:18px;padding-block:18px}
 .kft-help-ic{flex:none;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);display:grid;place-items:center}
 .kft-help-ic svg{width:24px;height:24px}
 .kft-help-tx{min-width:0;flex:1}
-.kft-help-h{margin:0;font-size:22px;line-height:1.2;font-weight:700;letter-spacing:-.01em;text-wrap:balance;color:#fff}
-.kft-avail{display:inline-flex;align-items:center;gap:6px;margin-inline-start:8px;vertical-align:3px;background:#fff;color:#063F37;border-radius:99px;padding:3px 11px;font-size:12.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
-.kft-avail::before{content:'';width:7px;height:7px;border-radius:50%;background:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.25)}
+.kft-help-h{margin:0;font-size:var(--kft-fh-d,22px);line-height:1.2;font-weight:700;letter-spacing:-.01em;text-wrap:balance;color:#fff}
+.kft-avail{display:inline-flex;align-items:center;gap:6px;margin-inline-start:8px;vertical-align:3px;background:#fff;color:var(--kft-accent,#C13E63);border-radius:99px;padding:3px 11px;font-size:12.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.kft-avail::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--kft-to,#E0567B);box-shadow:0 0 0 3px rgba(224,86,123,.25)}
 .kft-help-p{margin:3px 0 0;font-size:14px;opacity:.92}
 .kft-help-bt{display:flex;gap:10px;flex:none}
 .kft-help-bt a{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:99px;font-weight:700;font-size:14px;white-space:nowrap}
-.kft-bt-p{background:#fff;color:#063F37;box-shadow:0 8px 18px -10px rgba(6,63,55,.6)}
+.kft-bt-p{background:#fff;color:var(--kft-accent,#C13E63);box-shadow:0 8px 18px -10px rgba(120,24,56,.6)}
 .kft-bt-o{border:1.5px solid rgba(255,255,255,.75);color:#fff}
 .kft-help-bt a:hover{filter:brightness(1.05);transform:translateY(-1px)}
-.kft-main{background:radial-gradient(60% 120% at 0% 0%,#FFF4F7 0%,#fff 60%),#fff;padding-top:30px}
-.kft-grid{display:grid;grid-template-columns:1.35fr .8fr .9fr .8fr 1.25fr;gap:28px}
-.kft-grid.kft-grid-4{grid-template-columns:1.35fr 1fr 1fr 1fr}
+.kft-hc-d .kft-help-tx{text-align:center}
+.kft-main{background:radial-gradient(60% 120% at 0% 0%,#FFF4F7 0%,var(--kft-bg,#fff) 60%),var(--kft-bg,#fff);padding-top:var(--kft-pt-d,30px);padding-bottom:var(--kft-pb-d,0px)}
+.kft-grid{display:flex;gap:var(--kft-gap-d,28px)}
 .kft-grid>*{min-width:0}
+.kft-brand{flex:1.35 1 0}
+.kft-col{flex:.8 1 0}
+.kft-col2{flex-grow:.9}
+.kft-contact{flex:1.25 1 0}
+.kft-grid.kft-grid-4 .kft-col{flex-grow:1}
 .kft-logo{display:inline-block;font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
 .kft-logo b{color:var(--pink)}
-.kft-tag{margin:6px 0 12px;color:var(--ink-2);font-size:13.5px;max-width:32ch}
+.kft-tag{margin:6px 0 12px;color:var(--kft-text,#5E545A);font-size:13.5px;max-width:32ch}
 .kft-soc{display:flex;gap:8px;flex-wrap:wrap}
-.kft-soc a{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--pink-soft);color:var(--pink-deep);border:1px solid #F7DCE4;transition:background .2s,color .2s}
+.kft-soc a{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--pink-soft);color:var(--kft-accent,#C13E63);border:1px solid #F7DCE4;transition:background .2s,color .2s}
 .kft-soc a:hover{background:var(--pink);color:#fff}
 .kft-soc svg{width:16px;height:16px}
-.kft-ch{margin:0 0 10px;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--pink-deep);font-weight:700}
-.kft-col ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:14px;color:var(--ink-2)}
-.kft-col a:hover{color:var(--pink-deep)}
-.kft-visit{display:grid;gap:8px;font-size:13px;color:var(--ink-2)}
+.kft-bc-d .kft-brand{text-align:center}
+.kft-bc-d .kft-tag{margin-inline:auto}
+.kft-bc-d .kft-soc{justify-content:center}
+.kft-ch{margin:0 0 10px;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--kft-accent,#C13E63);font-weight:700}
+.kft-col ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:var(--kft-fl-d,14px);color:var(--kft-text,#5E545A)}
+.kft-col a:hover{color:var(--kft-accent,#C13E63)}
+.kft-visit{display:grid;gap:8px;font-size:13px;color:var(--kft-text,#5E545A)}
 .kft-visit>div{display:flex;gap:8px;min-width:0}
 .kft-visit b{color:var(--ink);display:block;font-size:13.5px}
 .kft-visit svg{flex:none;width:14px;height:14px;margin-top:2px;color:var(--pink)}
@@ -4452,48 +4478,92 @@ footer.kft{background:#fff;color:var(--ink);padding:0;margin:0;overflow:hidden;f
 .kft-news input:focus{outline:2px solid var(--pink);outline-offset:1px}
 .kft-news button{flex:none;height:40px;padding:0 16px;border:0;border-radius:99px;background:var(--pink);color:#fff;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
 .kft-name{margin:18px 0 0;text-align:center;font-weight:800;letter-spacing:-.045em;line-height:.86;white-space:nowrap;overflow:hidden;user-select:none;
-  font-size:min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14)));padding-bottom:.06em;
+  font-size:calc(min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14))) * var(--kft-fn-d, 100) / 100);padding-bottom:.06em;
   background:linear-gradient(90deg,#FFB3C8,#FFD1B3,#F8B4E4,#C9B8FF,#A8E6CF,#FFB3C8);background-size:300% 100%;background-position:0% 50%;
   -webkit-background-clip:text;background-clip:text;color:transparent}
-.kft-bot{border-top:1px solid #F1E3E8;font-size:12.5px;color:var(--muted);background:#fff}
+.kft-name-pink .kft-name{background-image:linear-gradient(90deg,#FFB3C8,#FCE0E8,#F7A8BF,#FFD3DF,#F4A0B8,#FFB3C8)}
+.kft-bot{border-top:1px solid #F1E3E8;font-size:12.5px;color:var(--muted);background:var(--kft-bg,#fff)}
 .kft-bot-in{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
 .kft-legal{display:flex;gap:14px}
-.kft-legal a:hover{color:var(--pink-deep)}
+.kft-legal a:hover{color:var(--kft-accent,#C13E63)}
 .kft-pay{display:flex;gap:6px;flex-wrap:wrap}
 .kft-pay span{border:1px solid #EADDE2;border-radius:99px;padding:2px 10px;font-weight:700;font-size:11px;color:var(--ink);background:#fff}
-.kft-motion .kft-help{animation:kft-drift 14s ease-in-out infinite alternate}
-.kft-motion .kft-name{animation:kft-drift 12s linear infinite alternate}
+.kft-motion .kft-help{animation:kft-drift var(--kft-dr,14s) ease-in-out infinite alternate}
+.kft-motion .kft-name{animation:kft-drift var(--kft-drn,12s) linear infinite alternate}
 @keyframes kft-drift{from{background-position:0% 50%}to{background-position:100% 50%}}
+/* The shine. A soft blush band behind the bottom bar's words (z-index -1 in
+   the bar's own stacking context, so it never sits on the text) with a bright
+   pink glint along its top edge; or, on the big name, a white glint laid over
+   the letters by a copy of the name clipped to them. Both run the same sweep:
+   across in the first 60% of the loop, then a rest. */
+.kft-sheen-bar .kft-bot{position:relative;isolation:isolate;overflow:hidden}
+.kft-sheen-bar .kft-bot::before,.kft-sheen-bar .kft-bot::after{content:'';position:absolute;inset-block:0;left:0;width:100%;z-index:-1;pointer-events:none;transform:translateX(-100%);animation:kft-sheen var(--kft-sh,5s) ease-in-out infinite}
+.kft-sheen-bar .kft-bot::before{background:linear-gradient(100deg,transparent 20%,rgba(252,224,232,.95) 38%,rgba(240,140,168,.5) 47%,rgba(255,255,255,.9) 50%,rgba(240,140,168,.5) 53%,rgba(252,224,232,.95) 62%,transparent 80%)}
+.kft-sheen-bar .kft-bot::after{inset-block:0 auto;height:2px;background:linear-gradient(90deg,transparent 25%,var(--kft-to,#E0567B) 50%,transparent 75%)}
+@keyframes kft-sheen{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+.kft-sheen-name .kft-name{position:relative}
+.kft-sheen-name .kft-name::after{content:attr(data-kft-text);position:absolute;inset:0;padding-bottom:.06em;pointer-events:none;
+  background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.95) 50%,transparent 60%);background-size:300% 100%;background-position:100% 50%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:kft-sheen-text var(--kft-sh,5s) ease-in-out infinite}
+@keyframes kft-sheen-text{0%{background-position:100% 50%}60%,100%{background-position:0% 50%}}
+@keyframes kft-sheen-rtl{0%{transform:translateX(100%)}60%,100%{transform:translateX(-100%)}}
+@keyframes kft-sheen-text-rtl{0%{background-position:0% 50%}60%,100%{background-position:100% 50%}}
+[dir="rtl"] .kft-sheen-bar .kft-bot::before,[dir="rtl"] .kft-sheen-bar .kft-bot::after{animation-name:kft-sheen-rtl}
+[dir="rtl"] .kft-sheen-name .kft-name::after{animation-name:kft-sheen-text-rtl}
 @media (prefers-reduced-motion:reduce){
   .kft-motion .kft-help,.kft-motion .kft-name{animation:none}
   .kft-help-bt a:hover{transform:none}
+  .kft-sheen-bar .kft-bot::before,.kft-sheen-bar .kft-bot::after,.kft-sheen-name .kft-name::after{animation:none;display:none}
+}
+/* What shows, per device. One rule per part; a part's own display is never
+   restated, only taken away. */
+@media (min-width:901px){
+  .kft-xd-help .kft-help,.kft-xd-help-sub .kft-help-p,.kft-xd-logo .kft-logo,.kft-xd-tag .kft-tag,.kft-xd-soc .kft-soc,
+  .kft-xd-col1 .kft-col1,.kft-xd-col2 .kft-col2,.kft-xd-col3 .kft-col3,
+  .kft-xd-visit .kft-contact>.kft-ch,.kft-xd-visit .kft-visit,.kft-xd-news .kft-news,.kft-xd-name .kft-name,.kft-xd-bot .kft-bot,.kft-xd-pay .kft-pay,
+  .kft-xd-logo.kft-xd-tag.kft-xd-soc .kft-brand,.kft-xd-visit.kft-xd-news .kft-contact{display:none}
 }
 /* Phones: the same footer, much shorter — the owner: "reduce the height on mobile". */
 @media (max-width:900px){
   .kft-help-in{flex-wrap:wrap;gap:10px 12px;padding-block:14px}
   .kft-help-ic{width:38px;height:38px}
   .kft-help-ic svg{width:20px;height:20px}
-  .kft-help-h{font-size:17px}
+  .kft-help-h{font-size:var(--kft-fh-m,17px)}
   .kft-avail{font-size:11.5px;padding:2px 9px;margin-inline-start:6px}
-  .kft-help-p{display:none}
   .kft-help-bt{width:100%}
   .kft-help-bt a{flex:1;height:40px;padding:0 12px;font-size:13.5px}
-  .kft-main{padding-top:20px}
-  .kft-grid,.kft-grid.kft-grid-4{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 12px}
-  .kft-brand{grid-column:1 / -1;display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px}
+  .kft-main{padding-top:var(--kft-pt-m,20px);padding-bottom:var(--kft-pb-m,0px)}
+  .kft-grid{flex-wrap:wrap;gap:16px var(--kft-gap-m,12px)}
+  .kft-grid>.kft-brand,.kft-grid>.kft-contact{flex:1 1 100%}
+  .kft-grid>.kft-col,.kft-grid.kft-grid-4>.kft-col{flex:1 1 0}
+  .kft-brand{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px}
   .kft-tag{margin:0;grid-column:1 / -1;grid-row:2;font-size:13px;max-width:none}
   .kft-brand .kft-soc{grid-column:2;grid-row:1}
   .kft-ch{margin-bottom:7px;font-size:10.5px}
-  .kft-col ul{gap:4px;font-size:13px}
-  .kft-contact{grid-column:1 / -1}
+  .kft-col ul{gap:4px;font-size:var(--kft-fl-m,13px)}
   .kft-visit{grid-template-columns:1fr 1fr;gap:10px;font-size:12px}
   .kft-news{max-width:none;margin-top:12px}
-  .kft-name{margin-top:14px}
+  .kft-name{margin-top:14px;font-size:calc(min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14))) * var(--kft-fn-m, 100) / 100)}
   .kft-bot-in{justify-content:center;text-align:center;padding-block:10px;gap:8px}
+  /* Centred (the owner, 4 October: "center the social media icons, and
+     description text … also center the support text"). The brand block
+     stacks — description, then the icons — and the strip puts its icon above
+     the words, so every line is centred on the page and not beside a badge. */
+  .kft-bc-m .kft-brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+  .kft-bc-m .kft-tag{max-width:40ch}
+  .kft-bc-m .kft-brand .kft-soc{justify-content:center}
+  .kft-hc-m .kft-help-in{justify-content:center;text-align:center}
+  .kft-hc-m .kft-help-ic{width:34px;height:34px}
+  .kft-hc-m .kft-help-ic svg{width:18px;height:18px}
+  .kft-hc-m .kft-help-tx{flex:1 1 100%}
+  .kft-xm-help .kft-help,.kft-xm-help-sub .kft-help-p,.kft-xm-logo .kft-logo,.kft-xm-tag .kft-tag,.kft-xm-soc .kft-soc,
+  .kft-xm-col1 .kft-col1,.kft-xm-col2 .kft-col2,.kft-xm-col3 .kft-col3,
+  .kft-xm-visit .kft-contact>.kft-ch,.kft-xm-visit .kft-visit,.kft-xm-news .kft-news,.kft-xm-name .kft-name,.kft-xm-bot .kft-bot,.kft-xm-pay .kft-pay,
+  .kft-xm-logo.kft-xm-tag.kft-xm-soc .kft-brand,.kft-xm-visit.kft-xm-news .kft-contact{display:none}
 }
 @media (max-width:380px){
   .kft-brand .kft-soc a{width:30px;height:30px}
-  .kft-col ul{font-size:12.5px}
+  .kft-col ul{font-size:calc(var(--kft-fl-m, 13px) - .5px)}
 }
 
 /* ── THE FLAG BAR ──────────────────────────────────────────────── Lane FB ──

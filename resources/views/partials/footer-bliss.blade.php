@@ -6,7 +6,7 @@
     drifting within the green range, 'Find your perfect K-beauty match' + '24/7
     available', no word 'return' anywhere, shorter on both devices … and a very
     big centred 'K-Beauty Bliss' in light, slowly changing colours at the
-    bottom". Controls: Appearance → Footer → the three "Site footer" tabs.
+    bottom". Controls: Appearance → Footer → the seven "Site footer" tabs.
 
     Every value comes from App\Services\SiteFooter::view(): the wordmark from
     Appearance → Header, WhatsApp from SupportContact, the profiles from the
@@ -17,6 +17,15 @@
     The motion is CSS only (kbb.css, .kft-*), and stops for a visitor who asks
     for reduced motion. The big name is sized from its LENGTH, printed as an
     integer into --kft-n, so it fits one line without any script measuring it.
+
+    LANE HF, 4 October (the owner: "in mobile footer, remove the top logo …
+    third column will be Account … i don't like the green … shiny bar going
+    from left to right and on arabic right to left, also give control for
+    complete footer, for desktop and mobile"). The <footer> carries its
+    classes and --kft-* properties from SiteFooter::presentation() — literals,
+    checked hex colours and clamped integers only — and the three link columns
+    come from SiteFooter::columns(), the third one "Account". What shows on
+    each device is a kft-xd-* / kft-xm-* class; the markup is the same on both.
 
     Every class is kft- and nothing else on the shop uses that prefix. The
     <footer> element keeps its role; `footer.kft` out-specifies the old dark
@@ -36,7 +45,7 @@
     $kftVisit = $kft['dubai'] !== '' || $kft['korea'] !== '';
     $kftContact = $kftVisit || $kft['news'];
 @endphp
-<footer class="kft{{ $kft['motion'] ? ' kft-motion' : '' }}">
+<footer class="{{ $kft['classes'] }}" style="{{ $kft['style'] }}">
 @if ($kft['help_on'])
   <div class="kft-help"><div class="kft-wrap kft-help-in">
     <span class="kft-help-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-1.9-1-1 .9a3.6 3.6 0 0 1-2.4-2.4l.9-1-1-1.9Z" fill="#fff" stroke="none"/></svg></span>
@@ -58,25 +67,13 @@
         <div class="kft-soc" aria-label="{{ __('store.footer.follow_label') }}">@foreach ($kft['socials'] as [$kftKey, $kftName, $kftUrl])<a href="{{ $kftUrl }}" aria-label="{{ $kftName }}" target="_blank" rel="noopener">{!! $kftIcons[$kftKey] !!}</a>@endforeach</div>
 @endif
       </div>
-      <nav class="kft-col" aria-labelledby="kft-shop"><h2 id="kft-shop" class="kft-ch">{{ __('store.footer.shop_heading') }}</h2><ul>
-        <li><a href="{{ Url::to('/new-in/') }}">{{ __('store.footer.link_new_in') }}</a></li>
-        <li><a href="{{ Url::to('/best-sellers/') }}">{{ __('store.footer.link_best_sellers') }}</a></li>
-@if ($kft['brands'])
-        <li><a href="{{ Url::to('/brands/') }}">{{ __('store.footer.link_brands') }}</a></li>
-@endif
-        <li><a href="{{ Url::to('/super-sale/') }}">{{ __('store.footer.link_super_sale') }}</a></li>
-      </ul></nav>
-      <nav class="kft-col" aria-labelledby="kft-help"><h2 id="kft-help" class="kft-ch">{{ __('store.footer.help_heading') }}</h2><ul>
-@foreach ($kft['help_links'] as $kftLink)
+@foreach ($kft['columns'] as $kftCol)
+      <nav class="kft-col kft-{{ $kftCol['part'] }}" aria-labelledby="kft-{{ $kftCol['id'] }}"><h2 id="kft-{{ $kftCol['id'] }}" class="kft-ch">{{ $kftCol['title'] }}</h2><ul>
+@foreach ($kftCol['links'] as $kftLink)
         <li><a href="{{ $kftLink['url'] }}">{{ $kftLink['label'] }}</a></li>
 @endforeach
       </ul></nav>
-      <nav class="kft-col" aria-labelledby="kft-disc"><h2 id="kft-disc" class="kft-ch">{{ __('store.footer.discover_heading') }}</h2><ul>
-        <li><a href="{{ Url::to('/about/') }}">{{ __('store.footer.link_about') }}</a></li>
-        <li><a href="{{ Url::to('/blog/') }}">{{ __('store.footer.link_journal') }}</a></li>
-        <li><a href="{{ Url::to(\App\Services\SpottedSettings::URL) }}">{{ __('store.footer.link_spotted') }}</a></li>
-        <li><a href="{{ Url::to('/my-account/') }}">{{ __('store.footer.link_my_account') }}</a></li>
-      </ul></nav>
+@endforeach
 @if ($kftContact)
       <div class="kft-contact">
 @if ($kftVisit)
@@ -97,7 +94,7 @@
 @endif
     </div>
 @if ($kft['name'] !== '')
-    <p class="kft-name" aria-hidden="true" style="--kft-n:{{ max(8, mb_strlen($kft['name'])) }}">{{ $kft['name'] }}</p>
+    <p class="kft-name" aria-hidden="true" style="--kft-n:{{ max(8, mb_strlen($kft['name'])) }}"@if ($kft['name_sheen']) data-kft-text="{{ $kft['name'] }}"@endif>{{ $kft['name'] }}</p>
 @endif
   </div></div>
   <div class="kft-bot"><div class="kft-wrap kft-bot-in">
