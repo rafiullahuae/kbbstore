@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Models\AdminUser;
 use App\Support\AdminCapabilities;
+use App\Support\AdminRoles;
+use App\Support\EditPresence;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -80,18 +83,35 @@ class EnforceAdminCapability
          * site. It is deliberately ahead of every lookup: no array access, no
          * pattern match and no null check stands between an owner and the
          * admin panel.
+         *
+         * (Lane RL) Still the column alone. A Full Admin is `role = owner`, and
+         * nothing in `admin_roles` -- no row, no cache, no edit -- is consulted
+         * before this line.
+         *
+         * (Lane RL) Then the edit lock, for the owner as for everybody: it is
+         * not a permission but "somebody else has this record open", and the
+         * owner's stale tab must not overwrite a Sub Admin's work either. It is
+         * one isset() unless this request is one of EditPresence::GUARDED's
+         * saves, and it fails open if its table is not there yet.
          */
         if ($role === 'owner') {
-            return $next($request);
+            return ($admin instanceof AdminUser ? EditPresence::refuseSave($request, $admin) : null) ?? $next($request);
         }
 
         $capability = AdminCapabilities::for($route);
 
-        if (AdminCapabilities::roleCan($role, $capability)) {
-            return $next($request);
+        /*
+         * The account's ROLE, not its legacy column: App\Support\AdminRoles
+         * resolves role_id (or the preset the legacy role maps to) plus that
+         * person's own grants and revokes, once per request.
+         */
+        if ($admin instanceof AdminUser && AdminRoles::can($admin, $capability)) {
+            return EditPresence::refuseSave($request, $admin) ?? $next($request);
         }
 
-        return $this->deny($request, $role, $capability);
+        $named = $admin instanceof AdminUser ? (AdminRoles::roleOf($admin)['name'] ?? null) : null;
+
+        return $this->deny($request, $role, $capability, $named);
     }
 
     /**
@@ -135,12 +155,17 @@ class EnforceAdminCapability
      * privilege ladder, and it is of no use to the person who needs to ask an
      * owner anyway.
      */
-    private function deny(Request $request, ?string $role, ?string $capability): Response
+    private function deny(Request $request, ?string $role, ?string $capability, ?string $named = null): Response
     {
         $label = $role ?? 'unknown';
+        // (Lane RL) The sentence names the role as Users & Roles shows it
+        // ("SEO Manager"), and the permission in words as well as by key; the
+        // `role` field below stays the legacy value callers already read.
+        $who = $named ?? $label;
+        $what = $capability === null ? null : (AdminRoles::labels()[$capability] ?? null);
         $message = $capability === null
-            ? "Your role ({$label}) cannot use this part of the admin."
-            : "Your role ({$label}) does not have the \"{$capability}\" permission.";
+            ? "Your role ({$who}) cannot use this part of the admin."
+            : "Your role ({$who}) does not have the \"".($what !== null ? "{$what}\" permission ({$capability})." : "{$capability}\" permission.");
 
         if ($request->is('admin-api/*') || $request->expectsJson()) {
             return response()->json([

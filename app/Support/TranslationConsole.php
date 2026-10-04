@@ -269,23 +269,21 @@ final class TranslationConsole
      */
     public static function capabilities(): array
     {
-        $role = AdminCapabilities::canonicalRole(Auth::guard('admin')->user()?->role ?? null);
+        $admin = Auth::guard('admin')->user();
+        $admin = $admin instanceof \App\Models\AdminUser ? $admin : null;
 
         return [
-            'settings' => self::can($role, 'POST', 'admin-api/translations/settings'),
-            'machine_run' => self::can($role, 'POST', 'admin-api/translations/machine/run'),
-            'strings' => self::can($role, 'POST', 'admin-api/translations'),
-            'machine_field' => self::can($role, 'POST', 'admin-api/translations/machine/field'),
+            'settings' => self::can($admin, 'POST', 'admin-api/translations/settings'),
+            'machine_run' => self::can($admin, 'POST', 'admin-api/translations/machine/run'),
+            'strings' => self::can($admin, 'POST', 'admin-api/translations'),
+            'machine_field' => self::can($admin, 'POST', 'admin-api/translations/machine/field'),
         ];
     }
 
-    private static function can(?string $role, string $method, string $uri): bool
+    /** Lane RL: the account's role, not its legacy column; owner first, as before. */
+    private static function can(?\App\Models\AdminUser $admin, string $method, string $uri): bool
     {
-        if ($role === 'owner') {
-            return true;
-        }
-
-        return AdminCapabilities::roleCan($role, AdminCapabilities::forPath($method, $uri));
+        return AdminRoles::can($admin, AdminCapabilities::forPath($method, $uri));
     }
 
     /**

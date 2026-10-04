@@ -32,6 +32,33 @@ class AdminUser extends Authenticatable
     protected $attributes = ['role' => 'owner'];
     protected function casts(): array
     {
-        return ['password' => 'hashed'];
+        return ['password' => 'hashed', 'grants' => 'array', 'revokes' => 'array'];
+    }
+
+    /**
+     * Two rules that keep `role` and `role_id` saying the same thing (Lane RL,
+     * App\Support\AdminRoles).
+     *
+     * 1. Setting the legacy `role` on its own — `kbb:admin --role=support`, or
+     *    PUT /admin-api/users/{id} with role=manager — puts the account back on
+     *    the preset that role names, by clearing role_id. Otherwise an old
+     *    role_id would outrank the role somebody just chose.
+     *
+     *    Only when the row ALREADY HAS the column: an account loaded before the
+     *    roles migration ran carries no role_id attribute, and writing one then
+     *    would be an unknown-column error on every save of every account.
+     *
+     * 2. Any save flushes that account's memoised permissions, so a check later
+     *    in the same request reads the new access.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (AdminUser $u): void {
+            if ($u->isDirty('role') && ! $u->isDirty('role_id') && array_key_exists('role_id', $u->getAttributes())) {
+                $u->setAttribute('role_id', null);
+            }
+        });
+        static::saved(fn (AdminUser $u) => \App\Support\AdminRoles::flush((int) $u->getKey()));
+        static::deleted(fn (AdminUser $u) => \App\Support\AdminRoles::flush((int) $u->getKey()));
     }
 }

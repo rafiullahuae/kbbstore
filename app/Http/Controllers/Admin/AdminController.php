@@ -1549,6 +1549,9 @@ class AdminController extends Controller
             'password' => 'required|string|min:8|max:255',
             'role'     => 'required|string|in:owner,manager,support,editor',
         ]);
+        // Lane RL: roles are grantable now, so whoever holds users.manage may
+        // still only create an account inside their own access.
+        if ($refused = $this->legacyRoleRefusal(null, $data['role'])) return $refused;
         $u = \App\Models\AdminUser::create($data);  // password hashed by model cast
         return response()->json(['ok' => true, 'id' => $u->id]);
     }
@@ -1571,6 +1574,8 @@ class AdminController extends Controller
             return response()->json(['error' => 'last_owner', 'message' => 'You cannot demote the only owner.'], 422);
         }
 
+        if ($refused = $this->legacyRoleRefusal($u, $data['role'] ?? null)) return $refused;
+
         if (isset($data['name'])) $u->name = $data['name'];
         if (isset($data['role'])) $u->role = $data['role'];
         if (!empty($data['password'])) $u->password = $data['password'];  // hashed by cast
@@ -1589,8 +1594,43 @@ class AdminController extends Controller
         if ($u->role === 'owner' && \App\Models\AdminUser::where('role', 'owner')->count() <= 1) {
             return response()->json(['error' => 'last_owner', 'message' => 'You cannot delete the only owner.'], 422);
         }
+        if ($refused = $this->legacyRoleRefusal($u, null, true)) return $refused;
         $u->delete();
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * The escalation rules of Platform → Users & Roles (App\Support\AdminRoles::
+     * refusal()), applied to the three older account endpoints above, which
+     * take a legacy role name rather than a role id. (Lane RL)
+     *
+     * Before roles were editable only an owner held users.manage, so these
+     * needed nothing more than the last-owner guard. Now a Full Admin can hand
+     * users.manage to a Sub Admin, and without this that Sub Admin could PUT
+     * somebody — themselves included — to role=owner. Null means allowed.
+     */
+    private function legacyRoleRefusal(?\App\Models\AdminUser $target, ?string $role, bool $deleting = false): ?\Illuminate\Http\JsonResponse
+    {
+        $actor = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+        if (! $actor instanceof \App\Models\AdminUser) {
+            return response()->json(['error' => 'forbidden', 'message' => 'Sign in again.'], 403);
+        }
+
+        $after = null;
+        $changes = false;
+        if (! $deleting) {
+            $probe = $target ? clone $target : new \App\Models\AdminUser();
+            if ($role !== null) {
+                $probe->forceFill(['role' => $role, 'role_id' => null]);
+                $changes = $target === null || $role !== $target->role || $target->getAttribute('role_id') !== null;
+            }
+            $after = ['full' => \App\Support\AdminRoles::isFull($probe), 'caps' => \App\Support\AdminRoles::resolve($probe)];
+        }
+
+        $refused = \App\Support\AdminRoles::refusal($actor, $target, $after, $deleting || $changes);
+
+        return $refused === null ? null
+            : response()->json(['error' => $refused[1], 'message' => $refused[2]], $refused[0]);
     }
 
     /**

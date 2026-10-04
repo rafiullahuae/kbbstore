@@ -204,7 +204,12 @@ it('maps both routes to a capability on purpose rather than by the closed defaul
     }
 
     expect(AdminCapabilities::forPath('POST', 'admin-api/seo-preview'))->toBe('store.settings');
-    expect(AdminCapabilities::forPath('GET', 'admin-api/seo-tasks'))->toBe('system.diagnostics');
+    // Lane RL advanced this pin on purpose: the overview moved from
+    // system.diagnostics to its own `seo.audit`, still owner-only by default
+    // (AdminCapabilities::CAPABILITIES), so an SEO Manager can hold it without
+    // the raw error log. Who can reach it today did not change.
+    expect(AdminCapabilities::forPath('GET', 'admin-api/seo-tasks'))->toBe('seo.audit')
+        ->and(AdminCapabilities::CAPABILITIES['seo.audit'])->toBe(['owner']);
 });
 
 it('refuses both routes to a signed-out browser', function () {

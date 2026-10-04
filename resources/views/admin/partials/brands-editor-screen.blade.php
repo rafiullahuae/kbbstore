@@ -445,6 +445,8 @@
   function closeModal(){
     if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
     modal = null;
+    /* Lane RL: the dialog is the record; closing it frees the edit lock. */
+    if (window.kbbPresence) window.kbbPresence.close('brand');
   }
 
   function val(id){
@@ -755,6 +757,10 @@
   /* -------------------------------------------------------- brand editor */
   function editor(brand){
     var isNew = !brand;
+    /* Lane RL: "X is editing this brand" and Take over. One record, one
+       dialog. After this tick, so openModal()'s own closeModal() of any
+       previous dialog cannot release the lock this one is about to take. */
+    if (!isNew && window.kbbPresence) { var lockId = brand.id; setTimeout(function(){ window.kbbPresence.open('brand', lockId); }, 0); }
     brand = brand || {name:'', slug:'', logo:'', description:'', position:0, seo:null, banner:null};
     var seo = brand.seo || {};
 

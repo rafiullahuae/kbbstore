@@ -15,7 +15,6 @@ use App\Services\Marketing\CampaignSender;
 use App\Services\Marketing\CampaignTick;
 use App\Services\Marketing\SendLimits;
 use App\Services\SettingsService;
-use App\Support\AdminCapabilities;
 use App\Support\Money;
 use App\Support\StoreTime;
 use Carbon\CarbonImmutable;
@@ -155,9 +154,9 @@ final class MktCampaignsController extends Controller
 
     private function canSend(Request $request): bool
     {
-        $role = (string) ($request->user('admin')->role ?? '');
+        $admin = $request->user('admin');
 
-        return AdminCapabilities::canonicalRole($role) === 'owner' || AdminCapabilities::roleCan($role, 'marketing.email.send');
+        return $admin instanceof \App\Models\AdminUser && \App\Support\AdminRoles::can($admin, 'marketing.email.send');
     }
 
     /* -------------------------------------------------------------- drafts */

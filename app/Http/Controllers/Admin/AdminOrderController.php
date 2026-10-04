@@ -411,9 +411,9 @@ class AdminOrderController extends Controller
     /** @return array<string, bool> */
     private static function abilities(): array
     {
-        $role = auth('admin')->user()?->role;
-        $can = fn (string $capability) => \App\Support\AdminCapabilities::canonicalRole($role) === 'owner'
-            || \App\Support\AdminCapabilities::roleCan($role, $capability);
+        $admin = auth('admin')->user();
+        $can = fn (string $capability) => $admin instanceof \App\Models\AdminUser
+            && \App\Support\AdminRoles::can($admin, $capability);
 
         return [
             'edit' => $can('orders.edit'),
