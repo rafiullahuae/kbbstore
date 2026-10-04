@@ -76,8 +76,12 @@
 .ctk-t td{padding:12px 8px;border-bottom:1px solid var(--border-2,#eef0f6);vertical-align:top}
 .ctk-t th{padding-left:8px;padding-right:8px}
 .ctk-t tbody tr{cursor:pointer;transition:background .12s}
-.ctk-t tbody tr:hover{background:var(--surface-2,#f7f8fc)}
-.ctk-t tbody tr.sel{background:#f0f7ff}
+/* Alternate rows (the owner: "each row should slight background color to
+   differentiate from each other ... use alternative light shade colors").
+   Before hover and .sel, which must still win on an even row. */
+.ctk-t tbody tr:nth-child(even){background:#eff3fa}
+.ctk-t tbody tr:hover{background:#e3e9f6}
+.ctk-t tbody tr.sel{background:#dce8ff}
 .ctk-t .sortable{cursor:pointer;user-select:none}
 .ctk-t .sortable:hover{color:var(--ink,#101729)}
 .ctk-t .sortable.on{color:var(--ink,#101729)}

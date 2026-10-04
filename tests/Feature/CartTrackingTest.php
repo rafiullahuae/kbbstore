@@ -491,3 +491,18 @@ it('searches a range for exactly the addresses inside it', function () {
         ->and($ids('94.200.80.7/32'))->toBe([$low])
         ->and($ids('0.0.0.0/0'))->toBe([$ten, $hundred, $in20, $out20, $low, $high]);
 });
+
+it('shades every other row so the carts read apart', function () {
+    /*
+     * The owner, 4 October, with a screenshot of the Carts tab: "each row
+     * should slight background color to differentiate from each other,
+     * because now it's like mixing and can't readable clearly". Every row was
+     * white until hovered. MUTATION: delete the nth-child(even) rule and this
+     * is red; move it below the hover rule and the second expectation is.
+     */
+    $css = (string) file_get_contents(resource_path('views/admin/partials/cart-tracking-screen.blade.php'));
+
+    expect($css)->toContain('.ctk-t tbody tr:nth-child(even){background:#eff3fa}')
+        ->and(strpos($css, 'tr:nth-child(even)'))->toBeLessThan(strpos($css, '.ctk-t tbody tr:hover'))
+        ->and(strpos($css, 'tr:nth-child(even)'))->toBeLessThan(strpos($css, '.ctk-t tbody tr.sel'));
+});
