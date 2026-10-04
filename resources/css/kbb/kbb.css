@@ -388,6 +388,15 @@
      still 13px, so the bar is 46.5px tall at every font size this can pick and
      nothing below it moves when the script runs (GridPhotoLoadingTest).
 
+     ONE ROW UNTIL MEASURED. A fitted bar does not wrap on first paint: if the
+     estimate were ever a hair too large, a wrapped second row would make the
+     bar 46px taller and move the page when the script corrected it — a layout
+     shift. Unwrapped, an overrun is clipped sideways by `.mbar{overflow-x:clip}`
+     for the instant before nav-fit.js shrinks it, and nothing moves vertically.
+     Only when the script finds the row cannot fit even at the smallest size
+     does it add `nav-wrap`, and the bar wraps exactly as an unfitted one does
+     (NavBarContainsItsOwnOverflowTest) rather than hide an item.
+
      WHATEVER IS LEFT OVER IS SHARED EVENLY. `space-between` puts the first
      item at the start of the row and the last at its end, so the safety margin
      the script leaves, and any room past the largest font, becomes equal gaps
@@ -401,7 +410,8 @@
      screen too, and its panel opening rightward would run past the bar's
      clipped edge (MenuBarNoSidewaysScrollTest). */
   .mbar.nav-fill{--nav-f0:calc((var(--hd-room, 960px) - var(--nav-np) * 2 * var(--nav-pad-x, 13px) - var(--nav-hl) * 20px - (var(--nav-n) - 1) * 2px - var(--nav-gx) * var(--nav-item-gap, 6px) - var(--nav-bx) * 10px) * 100 / var(--nav-w))}
-  .mbar.nav-fill .wrap{justify-content:space-between}
+  .mbar.nav-fill .wrap{justify-content:space-between;flex-wrap:nowrap}
+  .mbar.nav-fill .wrap.nav-wrap{flex-wrap:wrap}
   .mbar.nav-fill .navlink{font-size:clamp(var(--nav-min), calc(var(--nav-f0) * var(--nav-scale)), var(--nav-max))}
   .mbar.nav-fill .navlink .ind{font-size:.615em}
   .mbar.nav-fill .navlink .npill{font-size:.654em;line-height:1.25}

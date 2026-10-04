@@ -50,11 +50,15 @@ console.table(out);
 
 const drops = [];
 for (const w of [1920, 1280]) {
-  await size(w);
+  // A fresh page per width: a screenshot drops a CDP metrics override.
+  const hp = await (await b.newContext({ viewport: { width: w, height: 900 } })).newPage();
+  await hp.goto(BASE + PATH, { waitUntil: 'networkidle' });
+  await hp.evaluate(() => document.fonts.ready);
+  await hp.waitForTimeout(300);
   for (const nth of [2, 1]) {
-    const item = p.locator(`.mbar .wrap > .navitem:nth-last-child(${nth})`);
+    const item = hp.locator(`.mbar .wrap > .navitem:nth-last-child(${nth})`);
     await item.hover();
-    await p.waitForTimeout(300);
+    await hp.waitForTimeout(300);
     drops.push(await item.evaluate((el, w) => {
       const d = el.querySelector('.drop');
       const r = d.getBoundingClientRect();
@@ -64,7 +68,7 @@ for (const w of [1920, 1280]) {
         visible: getComputedStyle(d).visibility, wholeOnScreen: r.left >= 0 && r.right <= innerWidth,
         scrollWidth: document.documentElement.scrollWidth };
     }, w));
-    if (process.env.KBB_NV_OUT) await p.screenshot({ path: `${process.env.KBB_NV_OUT}/after-12-hover-${nth === 1 ? 'last' : 'second-last'}-${w}.png`, clip: { x: 0, y: 0, width: w, height: 560 } });
+    if (process.env.KBB_NV_OUT) await hp.screenshot({ path: `${process.env.KBB_NV_OUT}/after-12-hover-${nth === 1 ? 'last' : 'second-last'}-${w}${PATH === '/' ? '' : '-ar'}.png`, clip: { x: 0, y: 0, width: w, height: 560 } });
   }
 }
 console.table(drops);

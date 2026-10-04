@@ -34,7 +34,8 @@ for (const width of WIDTHS) {
   await p.evaluate(() => document.fonts.ready);
   await p.waitForTimeout(400);
 
-  const cls = await p.evaluate(() => new Promise((done) => {
+  // With scripts off, page timers do not run, so CLS is only read with them on.
+  const cls = process.env.KBB_NV_NOJS === '1' ? null : await p.evaluate(() => new Promise((done) => {
     let sum = 0;
     try {
       new PerformanceObserver((list) => { for (const e of list.getEntries()) if (!e.hadRecentInput) sum += e.value; })

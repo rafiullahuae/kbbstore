@@ -1,8 +1,9 @@
 [
   {
     "width": 1001,
-    "file": "storage/nv-logs/shots/firstpaint-12-1001.png",
+    "file": "docs/lane-nv-shots/firstpaint-12-1001.png",
     "errors": [],
+    "cls": null,
     "items": 12,
     "rtl": false,
     "font": "11.87",
@@ -20,8 +21,9 @@
   },
   {
     "width": 1100,
-    "file": "storage/nv-logs/shots/firstpaint-12-1100.png",
+    "file": "docs/lane-nv-shots/firstpaint-12-1100.png",
     "errors": [],
+    "cls": null,
     "items": 12,
     "rtl": false,
     "font": "12.94",
@@ -39,8 +41,9 @@
   },
   {
     "width": 1280,
-    "file": "storage/nv-logs/shots/firstpaint-12-1280.png",
+    "file": "docs/lane-nv-shots/firstpaint-12-1280.png",
     "errors": [],
+    "cls": null,
     "items": 12,
     "rtl": false,
     "font": "14.65",
@@ -58,8 +61,9 @@
   },
   {
     "width": 1440,
-    "file": "storage/nv-logs/shots/firstpaint-12-1440.png",
+    "file": "docs/lane-nv-shots/firstpaint-12-1440.png",
     "errors": [],
+    "cls": null,
     "items": 12,
     "rtl": false,
     "font": "16.17",
@@ -77,8 +81,9 @@
   },
   {
     "width": 1600,
-    "file": "storage/nv-logs/shots/firstpaint-12-1600.png",
+    "file": "docs/lane-nv-shots/firstpaint-12-1600.png",
     "errors": [],
+    "cls": null,
     "items": 12,
     "rtl": false,
     "font": "18.00",
@@ -96,8 +101,9 @@
   },
   {
     "width": 1920,
-    "file": "storage/nv-logs/shots/firstpaint-12-1920.png",
+    "file": "docs/lane-nv-shots/firstpaint-12-1920.png",
     "errors": [],
+    "cls": null,
     "items": 12,
     "rtl": false,
     "font": "18.00",

@@ -1,27 +1,7 @@
 [
   {
-    "width": 1000,
-    "file": "storage/nv-logs/shots/after-12-1000.png",
-    "errors": [],
-    "cls": 0,
-    "items": 12,
-    "rtl": false,
-    "font": "11.85",
-    "padX": "6.00",
-    "pillPadX": "10.00",
-    "indFont": "7.29",
-    "emptyEnd": -22,
-    "emptyStart": -22,
-    "rowsUsed": 1,
-    "barHeight": 0,
-    "scale": "1",
-    "scrollWidth": 1000,
-    "clientWidth": 1000,
-    "mbarTop": 0
-  },
-  {
     "width": 1001,
-    "file": "storage/nv-logs/shots/after-12-1001.png",
+    "file": "docs/lane-nv-shots/after-12-1001.png",
     "errors": [],
     "cls": 0,
     "items": 12,
@@ -41,7 +21,7 @@
   },
   {
     "width": 1280,
-    "file": "storage/nv-logs/shots/after-12-1280.png",
+    "file": "docs/lane-nv-shots/after-12-1280.png",
     "errors": [],
     "cls": 0,
     "items": 12,
@@ -61,7 +41,7 @@
   },
   {
     "width": 1440,
-    "file": "storage/nv-logs/shots/after-12-1440.png",
+    "file": "docs/lane-nv-shots/after-12-1440.png",
     "errors": [],
     "cls": 0,
     "items": 12,
@@ -81,7 +61,7 @@
   },
   {
     "width": 1600,
-    "file": "storage/nv-logs/shots/after-12-1600.png",
+    "file": "docs/lane-nv-shots/after-12-1600.png",
     "errors": [],
     "cls": 0,
     "items": 12,
@@ -101,7 +81,7 @@
   },
   {
     "width": 1920,
-    "file": "storage/nv-logs/shots/after-12-1920.png",
+    "file": "docs/lane-nv-shots/after-12-1920.png",
     "errors": [],
     "cls": 0,
     "items": 12,

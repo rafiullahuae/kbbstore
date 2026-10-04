@@ -209,7 +209,8 @@ it('changes nothing vertical, shares the leftover evenly, and opens the last two
     preg_match_all('/\.mbar\.nav-fill \.navlink\{([^}]*)\}/', $css, $m);
     expect($m[1])->toBe(['font-size:clamp(var(--nav-min), calc(var(--nav-f0) * var(--nav-scale)), var(--nav-max))']);
 
-    expect($css)->toContain('.mbar.nav-fill .wrap{justify-content:space-between}')
+    expect($css)->toContain('.mbar.nav-fill .wrap{justify-content:space-between;flex-wrap:nowrap}')
+        ->and($css)->toContain('.mbar.nav-fill .wrap.nav-wrap{flex-wrap:wrap}')
         ->and($css)->toContain('.mbar.nav-fill .navlink .ind{font-size:.615em}');
 
     $leftward = '.mbar.nav-fill .navitem:nth-last-child(-n+2) > .drop{inset-inline-start:auto;inset-inline-end:0}';
@@ -265,6 +266,25 @@ it('measures layout only where it already did, and nav-fit.js grows no observer'
     foreach (['ResizeObserver', 'MutationObserver', 'requestAnimationFrame', 'setInterval'] as $loop) {
         expect(str_contains($nav, $loop))->toBeFalse('nav-fit.js uses '.$loop);
     }
+    /*
+     * And the one-row-until-measured rule has its way back: a fitted bar that
+     * cannot fit at the smallest size wraps instead of clipping an item.
+     * MUTATION: delete the toggle. Red here, and a 16-item menu at 1001px
+     * loses Skincare off the end of the bar instead of wrapping it. RUN.
+     */
+    expect($nav)->toContain("wrap.classList.toggle('nav-wrap', needed > available + 0.5);");
+
+    /*
+     * THE DEFECT A SINGLE CORRECTION LEFT: once the font is held at the
+     * smallest size, only the padding still follows the scale, so one
+     * proportional step undershoots. A sixteen-item menu at 1001px wrapped to
+     * two rows at 10px (bar 94px) where the old shrink-only bar fitted it on
+     * one. The corrections are a bounded secant: at most three passes.
+     * MUTATION: set the bound to `pass < 1`. The source assertion is red; in
+     * the browser 16 items at 1001 go back to two rows
+     * (tests/browser/nv-nav-fill.mjs, rowsUsed 2). RUN.
+     */
+    expect($nav)->toContain('for(let pass = 0; pass < 3 && needed > available && scale > FLOOR; pass++){');
     expect($nav)->toContain("if(mbar.classList.contains('nav-fill')){")
         ->and($nav)->toContain('const CEILING = 2;');
 });

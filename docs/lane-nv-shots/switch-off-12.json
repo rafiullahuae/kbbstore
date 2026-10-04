@@ -1,7 +1,7 @@
 [
   {
     "width": 1280,
-    "file": "storage/nv-logs/shots/switch-off-12-1280.png",
+    "file": "docs/lane-nv-shots/switch-off-12-1280.png",
     "errors": [],
     "cls": 0,
     "items": 12,
@@ -21,7 +21,7 @@
   },
   {
     "width": 1920,
-    "file": "storage/nv-logs/shots/switch-off-12-1920.png",
+    "file": "docs/lane-nv-shots/switch-off-12-1920.png",
     "errors": [],
     "cls": 0,
     "items": 12,

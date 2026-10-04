@@ -183,7 +183,7 @@ function fitNavBar(){
  * clamp allows is simply held there, and `space-between` shares whatever room
  * is left evenly between the items.
  *
- * NO LOOP AND NO JITTER: two measurements at most, both inside this one
+ * NO LOOP AND NO JITTER: five measurements at most, all inside this one
  * synchronous call, and it only runs on load, on a debounced resize and when
  * the webfont lands — never in response to its own change (there is no
  * observer to re-trigger it). Only horizontal values follow the scale, so the
@@ -200,17 +200,40 @@ function fillNavBar(wrap, mbar, available, needed){
   // The same hair under a perfect fit as the shrink path below, for the same
   // reason: sub-pixel rounding differs between browsers. space-between turns
   // the hair into evenly shared gaps, so it is not left as a strip at the end.
+  let prevScale = 1;
+  let prevNeeded = needed;
   let scale = Math.min(CEILING, Math.max(FLOOR, (available / needed) * 0.985));
   mbar.style.setProperty('--nav-scale', scale.toFixed(3));
-
-  // One correction, downward only: a font held at the clamp, or text whose
-  // kerning moved, can leave the first answer a little wide. Never upward, so
-  // the two passes cannot argue with each other.
   needed = rowNeeded(wrap);
-  if(needed > available){
-    scale = Math.max(FLOOR, scale * (available / needed) * 0.985);
+
+  /*
+   * Corrections, DOWNWARD ONLY and at most three. The first answer assumes the
+   * whole row follows the scale, which stops being true once the font is held
+   * at the owner's smallest size: from there only the padding still moves, so
+   * a proportional step undershoots and a sixteen-item menu at 1001px wrapped
+   * at 10px while the old shrink-only bar fitted it on one row. Each pass
+   * draws a straight line through the last two measurements and steps to
+   * where it meets the room — the row's width IS linear in the scale between
+   * clamp points — so it lands in one or two passes. Never upward, so the
+   * passes cannot argue with each other, and bounded, so it cannot loop.
+   */
+  for(let pass = 0; pass < 3 && needed > available && scale > FLOOR; pass++){
+    const slope = (prevNeeded - needed) / (prevScale - scale);
+    let next = slope > 0 && Number.isFinite(slope)
+      ? scale - (needed - available * 0.985) / slope
+      : scale * (available / needed) * 0.985;
+    next = Math.max(FLOOR, Math.min(scale * 0.999, next));
+    prevScale = scale;
+    prevNeeded = needed;
+    scale = next;
     mbar.style.setProperty('--nav-scale', scale.toFixed(3));
+    needed = rowNeeded(wrap);
   }
+
+  // A fitted bar is one row until measured (kbb.css). If even the smallest
+  // size cannot fit it, let it wrap like an unfitted bar rather than clip an
+  // item off the end; otherwise make sure it is back to one row.
+  wrap.classList.toggle('nav-wrap', needed > available + 0.5);
 }
 
 let navFitTimer;
