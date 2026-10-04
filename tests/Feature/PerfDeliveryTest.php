@@ -782,7 +782,8 @@ it('keeps the footer column headings saying what they said', function () {
      */
     preg_match_all('#<h2 (?:id="[^"]*" )?class="kft-ch">([^<]*)</h2>#', $html, $m);
 
-    expect($m[1])->toBe(['Shop', 'Help', 'Discover']);
+    // (Lane HF) The third column is "Account" now — the owner, 4 October.
+    expect($m[1])->toBe(['Shop', 'Help', 'Account']);
 
     app(\App\Services\SiteFooter::class)->save(['site_design' => 'classic']);
     \App\Services\SettingsService::forgetMemo();

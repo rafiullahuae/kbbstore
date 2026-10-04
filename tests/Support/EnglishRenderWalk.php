@@ -1621,6 +1621,16 @@ final class EnglishRenderWalk
              * before. The replacement is the new footer exactly as the walk's
              * seed renders it (CSRF token masked), so a change to it is a change
              * somebody has to approve here. SiteFooterTest pins its behaviour.
+             *
+             * ▲ ADVANCED BY LANE HF (4 October), INSIDE THE BLOCK ONLY: the
+             * <footer> now carries the owner's settings as classes and --kft-*
+             * properties (logo off and the brand block and strip centred on
+             * phones, the shine on the bottom bar, the pink strip), and the
+             * third column is "Account" — My account, My orders, Wishlist,
+             * Addresses — with the old "Discover" links moved: #KBeautyBliss and
+             * Journal to Shop, About us to Help. The pattern and the 29 hits are
+             * unchanged, so still nothing outside the footer may move.
+             * SiteFooterControlsTest pins the new behaviour.
              */
             'the site footer: the approved new design (Lane HB)' => [
                 'pattern' => '#<footer><div class="wrap">\n    <div class="fcols">.*?</div></footer>#s',
@@ -3293,7 +3303,7 @@ final class EnglishRenderWalk
     private static function laneHbFooter(): string
     {
         return <<<'KBB_HB_FOOTER'
-<footer class="kft kft-motion">
+<footer class="kft kft-motion kft-sheen-bar kft-xm-help-sub kft-xm-logo kft-bc-m kft-hc-m" style="--kft-from:#C13E63;--kft-to:#E0567B;--kft-bg:#FFFFFF;--kft-text:#5E545A;--kft-accent:#C13E63;--kft-dr:14s;--kft-drn:12s;--kft-sh:5s;--kft-pt-d:30px;--kft-pb-d:0px;--kft-gap-d:28px;--kft-fh-d:22px;--kft-fl-d:14px;--kft-fn-d:100;--kft-pt-m:20px;--kft-pb-m:0px;--kft-gap-m:12px;--kft-fh-m:17px;--kft-fl-m:13px;--kft-fn-m:100">
   <div class="kft-help"><div class="kft-wrap kft-help-in">
     <span class="kft-help-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-1.9-1-1 .9a3.6 3.6 0 0 1-2.4-2.4l.9-1-1-1.9Z" fill="#fff" stroke="none"/></svg></span>
     <div class="kft-help-tx">
@@ -3309,23 +3319,26 @@ final class EnglishRenderWalk
         <p class="kft-tag">Authentic Korean beauty, curated for the UAE.</p>
         <div class="kft-soc" aria-label="Follow us"><a href="https://www.instagram.com/kbeauty.bliss/" aria-label="Instagram" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a><a href="https://www.tiktok.com/@kbeauty.bliss" aria-label="TikTok" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 3h3a4.5 4.5 0 0 0 4 4v3a7.4 7.4 0 0 1-4-1.3V15a6 6 0 1 1-6-6v3.1A3 3 0 1 0 14 15Z"/></svg></a><a href="https://www.facebook.com/kbeautyblissuae" aria-label="Facebook" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.5H16l.5-3h-3V8.6c0-.9.3-1.6 1.6-1.6h1.6V4.3A21 21 0 0 0 14.3 4C12 4 10.5 5.4 10.5 8v2.5H8v3h2.5V21Z"/></svg></a></div>
       </div>
-      <nav class="kft-col" aria-labelledby="kft-shop"><h2 id="kft-shop" class="kft-ch">Shop</h2><ul>
+      <nav class="kft-col kft-col1" aria-labelledby="kft-shop"><h2 id="kft-shop" class="kft-ch">Shop</h2><ul>
         <li><a href="/new-in/">New in</a></li>
         <li><a href="/best-sellers/">Best sellers</a></li>
         <li><a href="/brands/">Brands</a></li>
         <li><a href="/super-sale/">Super sale</a></li>
+        <li><a href="/kbeautybliss-spotted/">#KBeautyBliss</a></li>
+        <li><a href="/blog/">Journal</a></li>
       </ul></nav>
-      <nav class="kft-col" aria-labelledby="kft-help"><h2 id="kft-help" class="kft-ch">Help</h2><ul>
+      <nav class="kft-col kft-col2" aria-labelledby="kft-help"><h2 id="kft-help" class="kft-ch">Help</h2><ul>
         <li><a href="/track-my-order/">Track my order</a></li>
         <li><a href="/delivery/">Shipping &amp; Delivery</a></li>
         <li><a href="/faqs/">FAQs</a></li>
         <li><a href="/contact-us/">Contact us</a></li>
-      </ul></nav>
-      <nav class="kft-col" aria-labelledby="kft-disc"><h2 id="kft-disc" class="kft-ch">Discover</h2><ul>
         <li><a href="/about/">About us</a></li>
-        <li><a href="/blog/">Journal</a></li>
-        <li><a href="/kbeautybliss-spotted/">#KBeautyBliss</a></li>
-        <li><a href="/my-account/">My Account</a></li>
+      </ul></nav>
+      <nav class="kft-col kft-col3" aria-labelledby="kft-acct"><h2 id="kft-acct" class="kft-ch">Account</h2><ul>
+        <li><a href="/my-account/">My account</a></li>
+        <li><a href="/my-account/orders/">My orders</a></li>
+        <li><a href="/my-wishlist/">Wishlist</a></li>
+        <li><a href="/my-account/edit-address/">Addresses</a></li>
       </ul></nav>
       <div class="kft-contact">
         <form class="kft-news" method="post" action="/api/subscribe" data-kbb-subscribe><input type="hidden" name="_token" value="TOKEN" autocomplete="off"><input type="email" name="email" required placeholder="Your email for offers" aria-label="Your email" autocomplete="email"><button type="submit">Join</button></form>
