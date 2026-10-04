@@ -68,7 +68,9 @@
 <tr><td align="center" style="padding:22px 10px 30px;">
 <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse;">
+@kitsections($kitTemplate ?? null, $k)
 @yield('kit')
+@endkitsections
 </table>
 <!--[if mso]></td></tr></table><![endif]-->
 </td></tr></table>

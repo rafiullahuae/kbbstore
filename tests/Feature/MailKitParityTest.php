@@ -370,3 +370,52 @@ it('draws every email in the fonts and colours chosen under Emails → Design & 
         // Neither font is Outfit, so no web font is requested.
         ->and($html)->not->toContain('@font-face');
 });
+
+/*
+ * Lane EK — the template editor stores a section order per email, and the kit
+ * renders in that order. The owner was promised that nothing in any inbox
+ * changes until he moves something, so every one of the nineteen emails is
+ * compared BYTE FOR BYTE with what this branch rendered before the editor
+ * existed: tests/Fixtures/mail-kit-golden/*.html, written from the tree at
+ * 7e09c7b (Lane EK's base) with EK_WRITE_GOLDEN=1, and never since.
+ *
+ * Normalised, and only these: the browser-copy token (random per render) and a
+ * signed link's expires/signature pair (time and key). Every other byte -- the
+ * whitespace between blocks included -- has to match.
+ *
+ * THE DEFECT THIS GUARDS: a section loop that re-joins the captured blocks with
+ * a newline, or drops one when its condition is false, changes the HTML every
+ * customer receives on the day the package is applied, before the owner has
+ * touched the editor. MUTATION: in KitSections::flush() join the parts with
+ * "\n" instead of '' and all nineteen go red.
+ */
+function emkNormalise(string $html): string
+{
+    $html = (string) preg_replace('~/mail/view/[A-Za-z0-9_-]{43}~', '/mail/view/TOKEN', $html);
+    $html = (string) preg_replace('~(expires=)\d+~', '$1N', $html);
+
+    return (string) preg_replace('~(signature=)[A-Za-z0-9_-]+~', '$1S', $html);
+}
+
+it('renders all nineteen emails byte for byte as they were before the template editor, until a section is moved', function () {
+    \Illuminate\Support\Carbon::setTestNow(\Illuminate\Support\Carbon::parse('2026-10-02 09:41:00', 'UTC'));
+
+    $order = emkOrder();
+    $dir = base_path('tests/Fixtures/mail-kit-golden');
+
+    foreach (emkEmails($order) as $name => $render) {
+        $html = emkNormalise((string) $render());
+
+        if (getenv('EK_WRITE_GOLDEN') === '1') {
+            @mkdir($dir, 0777, true);
+            file_put_contents("{$dir}/{$name}.html", $html);
+
+            continue;
+        }
+
+        expect(is_file("{$dir}/{$name}.html"))->toBeTrue("{$name}: no golden file")
+            ->and($html)->toBe((string) file_get_contents("{$dir}/{$name}.html"), "{$name} changed although no section was moved");
+    }
+
+    \Illuminate\Support\Carbon::setTestNow();
+});

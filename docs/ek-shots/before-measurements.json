@@ -1,0 +1,62 @@
+{
+  "emails-overview-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [],
+    "title": "Emails"
+  },
+  "emails-sending-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [],
+    "title": "Sending & delivery"
+  },
+  "emails-branding-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [],
+    "title": "Design & branding"
+  },
+  "emails-sent-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [],
+    "title": "Sent mail"
+  },
+  "mail-all-settings-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "tablists": [],
+    "title": "Mail"
+  },
+  "emails-overview-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [],
+    "title": "Emails"
+  },
+  "emails-sending-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [],
+    "title": "Sending & delivery"
+  },
+  "emails-branding-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [],
+    "title": "Design & branding"
+  },
+  "emails-sent-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [],
+    "title": "Sent mail"
+  },
+  "mail-all-settings-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tablists": [],
+    "title": "Mail"
+  }
+}

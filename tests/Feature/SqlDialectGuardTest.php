@@ -1074,6 +1074,10 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         // argument for driving these two rather than excusing them.
         'admin-api/grid-sections/{grid}' => '/admin-api/grid-sections/' . $gridSection->id,
         'admin-api/grid-sections/{grid}/preview' => '/admin-api/grid-sections/' . $gridSection->id . '/preview',
+
+        // Emails → Customer emails → Edit (Lane EK): an email's editor. Reads
+        // email_templates, coupons, brands and categories — driven, not excused.
+        'admin-api/emails/templates/{template}' => '/admin-api/emails/templates/order_status_shipped',
     ];
 
     /** Route URI => why driving it here would prove nothing. */

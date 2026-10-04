@@ -21,7 +21,8 @@
 @extends('emails.kit.order')
 @php
     $k = \App\Services\Mail\Kit\MailKit::for($brand ?? []);
-    $kitPreheader = __('email.kit.pre_status', ['number' => $order['number']]);
+    // The status emails share one preview line; the builder words it per email (Lane EK).
+    $kitPreheader = \App\Services\Mail\Kit\EmailWording::line('order_status_' . $status, 'preheader', ['number' => $order['number']]) ?? __('email.kit.pre_status', ['number' => $order['number']]);
     $kitWhy = __('email.kit.why_order', ['site' => $k['site']]);
     $kitTrack = [__('email.order_status.track_button'), $ctaUrl, __('email.order_status.track_note')];
 
@@ -48,6 +49,7 @@
     }
 
     $kitTitle = $kitTitle ?? $heading;
+    $kitTemplate = 'order_status_' . $status;
     $kitHero = [$kitShape[0], $kitShape[1], $kitShape[2], $heading,
         $status === 'cancelled' ? __('email.order_status.cancelled_body') : $body];
     $kitTracker = $kitShape[3];

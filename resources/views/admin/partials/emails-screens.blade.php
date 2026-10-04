@@ -25,7 +25,13 @@
     Pulled into app.blade.php at the end, like the screens beside it: it wraps
     window.go for its four ids and registers its sidebar rows (a no-op once the
     integrator has declared them in NAV).
+
+    TABS (Lane EK, the owner 4 Oct: "proper tabs not just throw the content,
+    follow this also for all emails pages"): every screen here is split into
+    tabs drawn by the one shared component, admin/partials/kbb-tabs, which
+    this file includes (it is the first Emails partial in the document).
 --}}
+@include('admin.partials.kbb-tabs')
 @verbatim
 <style>
 .eml{display:grid;gap:0;min-width:0}
@@ -215,6 +221,18 @@
 
   function host() { return document.getElementById('content'); }
 
+  /* Lane EK: every Emails screen in tabs, drawn by the ONE shared component. */
+  function tabbed(group, list, fallback, label) {
+    var ids = list.map(function (t) { return t[0]; });
+    var T = window.kbbTabs;
+    var cur = T ? T.pick(group, ids, fallback) : fallback;
+    return {
+      bar: T ? T.bar(group, list.map(function (t) { return [t[0], t[1], t[3]]; }), cur, label) : '',
+      panels: list.map(function (t) { return '<div' + (T ? T.panel(group, t[0], cur) : (t[0] === cur ? '' : ' hidden')) + '>' + t[2] + '</div>'; }).join(''),
+      cur: cur
+    };
+  }
+
   function shell(title, lead, inner) {
     return '<div class="wrap eml" data-eml="' + esc(state.screen) + '"><div class="page-head"><h2>' + esc(title) + '</h2><p>' + lead + '</p></div>' + inner + '</div>';
   }
@@ -228,7 +246,7 @@
 
   function markDirty() {
     state.dirty = true;
-    var d = document.querySelector('[data-eml-dirty]'); if (d) d.style.visibility = 'visible';
+    document.querySelectorAll('[data-eml-dirty]').forEach(function (d) { d.style.visibility = 'visible'; });
   }
 
   var TRANSPORT_NAMES = { server: 'Server mail', gmail: 'Google Workspace', smtp: 'Dedicated SMTP', log: 'Not sending' };
@@ -266,7 +284,7 @@
     }
     var cards = '<div class="eml-cards">'
       + card('emails-sending', 'Sending & delivery', 'Server mail or Google Workspace, From and Reply-To, new-order alerts, the domain check (SPF / DKIM / DMARC) and Send a test. <b>Moved here from Store → Mail.</b>', true)
-      + card('mail', 'Customer emails', 'One row per email and per order status — Processing, On hold, Shipped, Delivered, Cancelled, Refunded, Payment failed… On/off, edit wording, preview, send a test. <b>Until that screen arrives, Open goes to the order-status switches in All mail settings.</b>', true)
+      + card('emails-customer', 'Customer emails', 'One row per email and per order status — Processing, On hold, Shipped, Delivered, Cancelled, Refunded, Payment failed… On/off, edit the words and the order of the sections, preview, send a test.', true)
       + card('emails-branding', 'Design & branding', 'Logo, colours, footer, social links and the business address — once, for every email.', false)
       + card('emails-sent', 'Sent mail', 'Every message and what the mail server answered, plus back-in-stock and basket reminders still waiting to go. <b>Moved here from Store → Mail.</b>', false)
       + '</div>';
@@ -279,14 +297,18 @@
             + '<span class="c-state"><span class="eml-pill ' + st[0] + '">' + esc(st[1]) + '</span></span><span class="c-where soft">' + esc(m.where) + '</span></div>';
         }).join('') + '</div>';
 
+    var ov = tabbed('eml-overview', [
+      ['glance', 'At a glance', fallback + tiles],
+      ['where', 'Where things are', cards
+        + '<div class="sec-title">Marketing email lives in Growth &amp; Marketing</div>'
+        + '<div class="eml-card"><p>Campaigns, the drag-and-drop builder, ready templates and customer groups are under <b>Growth &amp; Marketing → Marketing Emails</b>, so a newsletter can never be confused with an order email — and so marketing permissions stay separate from store settings.</p></div>'],
+      ['all', 'Every email', '<div class="eml-card"><details open><summary>' + emails.length + ' emails, and whether each is on (read-only here)</summary>' + rows + '</details></div>', emails.length]
+    ], 'glance', 'Emails overview');
     host().innerHTML = shell('Emails',
       'Everything the shop sends, in one place: how it is sent, what customers receive at every order status, how it looks, and what went out.',
-      fallback + tiles + '<div class="sec-title">Where things are</div>' + cards
-      + '<div class="sec-title">Marketing email lives in Growth &amp; Marketing</div>'
-      + '<div class="eml-card"><p>Campaigns, the drag-and-drop builder and customer groups will be under <b>Growth &amp; Marketing → Email Marketing</b>, so a newsletter can never be confused with an order email — and so marketing permissions stay separate from store settings. They arrive with the marketing package.</p></div>'
-      + '<div class="sec-title">Every email the shop sends</div>'
-      + '<div class="eml-card"><details><summary>' + emails.length + ' emails, and whether each is on (read-only here)</summary>' + rows + '</details></div>');
+      ov.bar + ov.panels);
   }
+
 
   /* ----------------------------------------------------------------- sending */
 
@@ -370,26 +392,27 @@
     var samples = d.samples || { plain: 'A plain test message' };
     var lastTo = (d.last_test && d.last_test.to) || '';
 
-    host().innerHTML = shell('Sending & delivery',
-      'How email leaves the shop and who it is from. Two ways, both already yours.',
-      notes + '<div class="eml-two"><div class="eml-stack">'
-      + '<div class="eml-card"><div><h3 class="eml-h">Send using</h3><p class="eml-d">Pick one. You can switch at any time; press Send test after switching.</p></div>' + choices + gmail + '</div>'
-      + '<div class="sec-title" style="margin:12px 0 0">Who it is from</div>'
-      + '<div class="eml-card"><div class="mlf-grid">' + field(v, 'mail_from_name', 'From name', '') + field(v, 'mail_from_address', 'From address', fromHelp, 'email') + '</div>'
-      + '<div class="mlf-grid">' + field(v, 'mail_reply_to', 'Replies go to', '', 'email') + field(v, 'mail_merchant_address', 'New-order alerts to', '', 'email') + '</div>'
-      + '<div class="eml-save"><span class="eml-dirty" data-eml-dirty style="visibility:' + (state.dirty ? 'visible' : 'hidden') + '">Unsaved changes</span><button class="btn primary" type="button" id="emlSaveSending">Save changes</button></div></div>'
-      + '</div><div class="eml-stack">'
-      + '<div class="eml-card"><div><h3 class="eml-h">Send a test</h3><p class="eml-d">Sends through whichever option is picked, and shows what the mail server answered.</p></div>'
+    var saveRow = function (id) { return '<div class="eml-save"><span class="eml-dirty" data-eml-dirty style="visibility:' + (state.dirty ? 'visible' : 'hidden') + '">Unsaved changes</span><button class="btn primary" type="button" id="' + id + '">Save changes</button></div>'; };
+    var testCard = '<div class="eml-card"><div><h3 class="eml-h">Send a test</h3><p class="eml-d">Sends through whichever option is picked, and shows what the mail server answered.</p></div>'
       + '<div class="mlf-field"><label class="mlf-label" for="emlTo">Send a test to</label><input class="mlf-input" type="email" id="emlTo" placeholder="you@example.com" value="' + esc(state.to || lastTo) + '"></div>'
       + '<div class="mlf-field"><label class="mlf-label" for="emlWhich">Which email</label><select class="mlf-input" id="emlWhich">'
       + Object.keys(samples).map(function (k) { return '<option value="' + esc(k) + '"' + (k === sel ? ' selected' : '') + ((k !== 'plain' && !d.has_order) ? ' disabled' : '') + '>' + esc(samples[k]) + '</option>'; }).join('')
       + '</select></div>'
       + '<div class="eml-testrow"><button class="btn primary" type="button" id="emlTest">Send test</button><span id="emlTestPill">' + testPill(d.last_test) + '</span></div>'
-      + '<div id="emlTestResult">' + testDetail(d.last_test) + '</div></div>'
-      + '<div class="sec-title" style="margin:12px 0 0">Will inboxes trust the domain?</div>'
-      + '<div class="eml-card"><p class="eml-d" style="margin:0">A read-only DNS check for the From domain. It never changes anything.</p><div id="emlDnsBox">' + dnsRows(d.dns) + '</div></div>'
-      + '</div></div>');
+      + '<div id="emlTestResult">' + testDetail(d.last_test) + '</div></div>';
+    var sd = tabbed('eml-sending', [
+      ['method', 'Send using', '<div class="eml-card"><div><h3 class="eml-h">Send using</h3><p class="eml-d">Pick one. You can switch at any time; press Send test after switching.</p></div>' + choices + gmail + saveRow('emlSaveSending') + '</div>'],
+      ['from', 'Who it is from', '<div class="eml-card"><div class="mlf-grid">' + field(v, 'mail_from_name', 'From name', '') + field(v, 'mail_from_address', 'From address', fromHelp, 'email') + '</div>'
+        + '<div class="mlf-grid">' + field(v, 'mail_reply_to', 'Replies go to', '', 'email') + field(v, 'mail_merchant_address', 'New-order alerts to', '', 'email') + '</div>'
+        + saveRow('emlSaveSending2') + '</div>'],
+      ['test', 'Send a test', testCard],
+      ['dns', 'Domain check', '<div class="eml-card"><div><h3 class="eml-h">Will inboxes trust the domain?</h3><p class="eml-d">A read-only DNS check for the From domain. It never changes anything.</p></div><div id="emlDnsBox">' + dnsRows(d.dns) + '</div></div>']
+    ], 'method', 'Sending & delivery');
+    host().innerHTML = shell('Sending & delivery',
+      'How email leaves the shop and who it is from. Two ways, both already yours.',
+      notes + sd.bar + sd.panels);
   }
+
 
   async function sending() {
     loading('Sending & delivery');
@@ -505,21 +528,25 @@
       + '<button type="button" class="eml-upload" id="emlLogo">⬆ ' + (logo ? 'Change' : 'Upload PNG or JPG') + ' · at least 340×80</button>'
       + '<input type="hidden" id="eml_email_logo" data-eml-key="email_logo" value="' + esc(logo) + '">'
       + '<div class="mlf-help">Blank: the “K-Beauty Bliss” wordmark prints in text, which shows even when pictures are blocked.</div></div>'
+      + '</div>';
+    var colours = '<div class="eml-card"><div><h3 class="eml-h">Colours &amp; fonts</h3><p class="eml-d">Used by every email; the preview tab shows them once saved.</p></div>'
       + '<div class="mlf-field"><span class="mlf-label">Colours</span><div class="eml-swatches">'
       + swatch('email_accent', 'Accent') + swatch('email_button', 'Buttons') + swatch('email_background', 'Background') + swatch('email_text', 'Text') + '</div></div>'
       + '<div class="mlf-grid">' + fontSelect('email_font_heading', 'Heading font') + fontSelect('email_font_body', 'Body font') + '</div>'
       + '<div class="mlf-help">Fonts ship as the shop’s own Outfit. Gmail does not load web fonts and shows a close system font instead.</div>'
       + '</div>';
 
-    var foot = '<div class="sec-title" style="margin:12px 0 0">Footer of every email</div><div class="eml-card">'
+    var foot = '<div class="eml-card"><div><h3 class="eml-h">Footer of every email</h3></div>'
       + area('mail_address_dubai', 'Dubai address', 'One line per line. Left blank, the Dubai address is not printed at all.', '')
       + area('mail_address_korea', 'Korea address', 'One line per line. Left blank, the Korea address is not printed at all.', '')
       + '<div class="mlf-grid">' + input('mail_support_whatsapp', 'WhatsApp', '') + input('mail_support_email', 'Email', '', 'email') + '</div>'
       + input('mail_support_instagram', 'Instagram', '')
       + input('mail_signature', 'Signature', '')
-      + '<div class="eml-save"><span class="eml-dirty" data-eml-dirty style="visibility:' + (state.dirty ? 'visible' : 'hidden') + '">Unsaved changes</span>'
+      + '</div>';
+    // One Save for all four tabs: it saves every field, as it always has.
+    var saveRow = '<div class="eml-save"><span class="eml-dirty" data-eml-dirty style="visibility:' + (state.dirty ? 'visible' : 'hidden') + '">Unsaved changes</span>'
       + '<button class="btn ghost" type="button" id="emlBrandTest">Send test</button><button class="btn primary" type="button" id="emlSaveBranding">Save</button></div>'
-      + '<div id="emlBrandTestResult"></div></div>';
+      + '<div id="emlBrandTestResult"></div>';
 
     var prev = '<div class="eml-prev-h"><h3 class="eml-h">Preview</h3><div class="eml-seg" role="group" aria-label="Preview width">'
       + '<button type="button" data-eml-device="desktop" class="' + (state.device === 'desktop' ? 'on' : '') + '">Desktop</button>'
@@ -529,7 +556,10 @@
 
     host().innerHTML = shell('Design & branding',
       'Set once; every customer email and every campaign uses it. Change any of it at any time.',
-      '<div class="eml-two wide-right"><div class="eml-stack">' + look + foot + '</div><div>' + prev + '</div></div>');
+      (function () {
+        var br = tabbed('eml-branding', [['look', 'Look', look], ['colours', 'Colours & fonts', colours], ['footer', 'Footer of every email', foot], ['preview', 'Preview', '<div class="eml-card">' + prev + '</div>']], 'look', 'Design & branding');
+        return br.bar + br.panels + saveRow;
+      })());
   }
 
   async function branding() {
@@ -565,7 +595,10 @@
 
   /* ---------------------------------------------------------------- sent mail */
 
-  var CHIPS = [['all', 'Everything'], ['failed', 'Failed'], ['orders', 'Orders'], ['account', 'Account'], ['campaigns', 'Campaigns'], ['waiting', 'Waiting to go out']];
+  /* No Campaigns tab (Lane EK): the owner, 4 Oct — the Emails module is
+     transactional only, "NO marketing emails". Campaign sends are reported
+     under Growth & Marketing → Marketing Emails → Reports and left out here. */
+  var CHIPS = [['all', 'Sent'], ['failed', 'Failed'], ['orders', 'Orders'], ['account', 'Account'], ['waiting', 'Waiting to go out']];
   var KIND_NAMES = {
     'order.confirmation': 'Order confirmed', 'order.merchant': 'New order alert', 'order.status': 'Order status', 'order.refunded': 'Refund sent', 'order.invoice': 'Invoice',
     'account.password_reset': 'Password reset', 'account.verify_email': 'Verify email', 'test': 'Test message',
@@ -574,6 +607,7 @@
 
   function inChip(e, chip) {
     var k = String(e.kind || '');
+    if (k.indexOf('campaign.') === 0) return false;
     if (chip === 'failed') return e.status !== 'sent';
     if (chip === 'orders') return k.indexOf('order.') === 0 || k.indexOf('test.order') === 0 || k === 'test.new_order_alert';
     if (chip === 'account') return k.indexOf('account.') === 0 || k.indexOf('customer') === 0;
@@ -609,9 +643,13 @@
     state.log = null;
     host().innerHTML = shell('Sent mail',
       'Every message the shop tried to send and what the mail server said. Bodies are never stored.',
-      '<div class="eml-chips" role="group" aria-label="Show">' + CHIPS.map(function (c) {
-        return '<button type="button" data-eml-chip="' + c[0] + '" class="' + (state.chip === c[0] ? 'on' : '') + '">' + esc(c[1]) + '</button>';
-      }).join('') + '</div><div id="emlLogBox"></div>'
+      (function () {
+        var ids = CHIPS.map(function (c) { return c[0]; });
+        if (window.kbbTabs) state.chip = window.kbbTabs.pick('eml-sent', ids, ids.indexOf(state.chip) === -1 ? 'all' : state.chip);
+        if (ids.indexOf(state.chip) === -1) state.chip = 'all';
+        return (window.kbbTabs ? window.kbbTabs.bar('eml-sent', CHIPS, state.chip, 'Sent mail') : '')
+          + '<div id="emlLogBox" role="tabpanel" tabindex="0" aria-label="Messages"></div>';
+      })()
       + '<p class="mlf-help" style="margin-top:10px">“Accepted” means the mail server took it; whether it reached the inbox or spam is decided later by the receiver.</p>');
     paintLog();
     try {
@@ -641,7 +679,7 @@
       var f = document.querySelector('.eml-frame'); if (f) f.className = 'eml-frame ' + state.device;
       return;
     }
-    if (t.id === 'emlSaveSending') return saveSending(t);
+    if (t.id === 'emlSaveSending' || t.id === 'emlSaveSending2') return saveSending(t);
     if (t.id === 'emlTest') return testFromSending(t);
     if (t.id === 'emlDns') return checkDns(t);
     if (t.id === 'emlSaveBranding') return saveBranding(t);
@@ -660,6 +698,12 @@
         }
       });
     }
+  });
+
+  document.addEventListener('kbb:tab', function (e) {
+    if (!e.detail || e.detail.group !== 'eml-sent') return;
+    state.chip = e.detail.id;
+    paintLog();
   });
 
   document.addEventListener('change', function (e) {

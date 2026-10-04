@@ -310,6 +310,13 @@ const TABBED_SCREENS = [
     'paintSiteSearch' => 'paintSiteSearch',
     'shTabs' => 'shTabs',
     'payTabBar' => 'renderPayments',
+    /*
+     * Lane EK. Emails → All mail settings grew a strip (the owner, 4 Oct:
+     * "proper tabs not just throw the content"): one tab per settings band and
+     * one for each panel that used to be stacked under them. Its page-head
+     * says what the screen is for.
+     */
+    'paintMail' => 'paintMail',
 ];
 
 /* ──────────────────────────────── the parsing ──────────────────────────────── */

@@ -15,6 +15,7 @@
     $kitTitle = $kitTitle ?? $heading;
     $kitPreheader = __('email.kit.pre_feedback');
     $kitWhy = __('email.kit.why_order', ['site' => $k['site']]);
+    $kitTemplate = 'order_feedback';
     $kitImages = \App\Services\Mail\Kit\KitProducts::imagesForIds(array_column($products, 'productId'));
     $kitInsta = collect($k['support'])->firstWhere('kind', 'instagram');
     $kitShare = $kitInsta === null ? null : new \Illuminate\Support\HtmlString('<b>' . e(__('email.feedback.share_heading')) . '</b> &mdash; ' . str_replace(':handle', '<b>' . e($kitInsta['value']) . '</b>', e(__('email.feedback.share_body'))));
@@ -23,16 +24,32 @@
 @endphp
 
 @section('kit_inner')
+@kitsec('hero')
 @include('emails.kit.hero', ['icon' => 'star', 'tone' => 'pink', 'eyebrow' => __('email.kit.eyebrow_feedback'), 'title' => $heading, 'lead' => $body])
+@endkitsec
+@kitsec('title')
 @include('emails.kit.section-title', ['text' => __('email.feedback.items_heading')])
+@endkitsec
+@kitsec('rates')
 @include('emails.kit.rate-rows', ['rates' => array_map(fn (array $p) => ['img' => $kitImages[(int) ($p['productId'] ?? 0)] ?? null, 'brand' => $p['brand'], 'name' => $p['name'], 'href' => $p['url']], $products)])
+@endkitsec
+@kitsec('stars')
 @include('emails.kit.para', ['html' => __('email.feedback.stars_note'), 'pad' => '12px 32px 0', 'size' => 12.5, 'center' => true])
+@endkitsec
+@kitsec('share')
 @if ($kitInsta !== null)
 @include('emails.kit.notice', ['tone' => 'pink', 'html' => $kitShare])
 @endif
+@endkitsec
+@kitsec('button')
 @if ($products !== [])
 @include('emails.kit.button', ['label' => __('email.feedback.button'), 'href' => $products[0]['url']])
 @endif
+@endkitsec
+@kitsec('closing')
 @include('emails.kit.para', ['html' => __('email.feedback.closing'), 'pad' => '14px 32px 0', 'size' => 13, 'center' => true])
+@endkitsec
+@kitsec('signoff')
 @include('emails.kit.signoff', ['signoff' => $kitSignoff])
+@endkitsec
 @endsection

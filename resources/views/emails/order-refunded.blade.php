@@ -35,6 +35,7 @@
     $kitShowInfo = false;
     $kitCta = null;
     $kitWhy = __('email.kit.why_order', ['site' => $k['site']]);
+    $kitTemplate = 'order_refunded';
 @endphp
 
 @section('kit_before')

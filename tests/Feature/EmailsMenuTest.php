@@ -379,19 +379,25 @@ it('maps every Emails endpoint to an owner-only capability, and refuses the othe
     EmailsAdminRoutes::wire(app());
 
     $routes = EmailsAdminRoutes::registered();
-    expect($routes)->toHaveCount(9);
+    // Nine from routes/emails-admin.php; Lane EK's Customer emails and
+    // template editor (routes/emails-templates-admin.php) add theirs under
+    // the same prefix once wired, each mapped below like these.
+    expect(count($routes))->toBeGreaterThanOrEqual(9);
 
     foreach ($routes as $route) {
         $cap = AdminCapabilities::for($route);
 
-        expect($cap)->toBeIn(['emails.view', 'emails.manage'], $route->uri() . ' has no Emails capability')
+        expect($cap)->toBeIn(['emails.view', 'emails.manage', 'emails.test'], $route->uri() . ' has no Emails capability')
             // Nothing in this file is under the unauthenticated /api/*.
             ->and(str_starts_with($route->uri(), 'admin-api/emails/'))->toBeTrue();
     }
 
     expect(AdminCapabilities::forPath('GET', 'admin-api/emails/overview'))->toBe('emails.view')
         ->and(AdminCapabilities::forPath('POST', 'admin-api/emails/test'))->toBe('emails.manage')
-        ->and(AdminCapabilities::CAPABILITIES['emails.view'])->toBe(['owner'])
+        // docs/EMAILS-PLAN.md §6, as the integrator set it (Lane EK): a
+        // manager may READ the overview, the customer-email list and sent
+        // mail; changing anything stays the owner's.
+        ->and(AdminCapabilities::CAPABILITIES['emails.view'])->toBe(['owner', 'manager'])
         ->and(AdminCapabilities::CAPABILITIES['emails.manage'])->toBe(['owner'])
         // The same people who could always reach Store → Mail.
         ->and(AdminCapabilities::CAPABILITIES['store.settings'])->toBe(['owner']);
@@ -399,7 +405,7 @@ it('maps every Emails endpoint to an owner-only capability, and refuses the othe
     foreach (['manager', 'support', 'editor'] as $role) {
         $this->actingAs(rkAdmin($role), 'admin');
 
-        $this->getJson('/admin-api/emails/overview')->assertForbidden();
+        $this->getJson('/admin-api/emails/overview')->assertStatus($role === 'manager' ? 200 : 403);
         $this->getJson('/admin-api/emails/sending')->assertForbidden();
         $this->postJson('/admin-api/emails/sending', ['transport' => 'gmail'])->assertForbidden();
         $this->postJson('/admin-api/emails/test', ['to' => 'x@example.com'])->assertForbidden();

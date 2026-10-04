@@ -564,8 +564,15 @@ final class AdminCapabilities
          *                  settings, the Google app password, the test-send
          *                  and the contact details printed in every email.
          */
-        'emails.view' => ['owner'],
+        // Lane EK (plan §6, set by the integrator 4 Oct): owner AND manager may
+        // read Overview, Customer emails and Sent mail; changing is the owner's.
+        'emails.view' => ['owner', 'manager'],
         'emails.manage' => ['owner'],
+        /*
+         * Lane EK, docs/EMAILS-PLAN.md §6: test sends of any customer email
+         * to the signed-in admin's own address (throttled). Owner and manager.
+         */
+        'emails.test' => ['owner', 'manager'],
     ];
 
     /**
@@ -823,6 +830,18 @@ final class AdminCapabilities
          * narrower role should reach without the writing half.
          */
         ['GET', 'admin-api/emails/overview', 'emails.view'],
+        /*
+         * Lane EK, ABOVE the emails wildcard (first match wins), plan §6:
+         * reading Customer emails and an email's editor is emails.view (owner
+         * and manager); a test send to yourself is emails.test; switching,
+         * saving and resetting are emails.manage (owner). The editor's live
+         * preview is Design & branding's endpoint and stays emails.manage.
+         */
+        ['GET', 'admin-api/emails/customer', 'emails.view'],
+        ['POST', 'admin-api/emails/templates/*/test', 'emails.test'],
+        ['GET', 'admin-api/emails/templates/*', 'emails.view'],
+        ['*', 'admin-api/emails/customer/**', 'emails.manage'],
+        ['*', 'admin-api/emails/templates/**', 'emails.manage'],
         ['*', 'admin-api/emails', 'emails.manage'],
         ['*', 'admin-api/emails/**', 'emails.manage'],
         ['*', 'admin-api/shipping', 'store.shipping'],

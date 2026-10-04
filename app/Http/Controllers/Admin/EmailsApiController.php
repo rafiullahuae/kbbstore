@@ -312,14 +312,41 @@ class EmailsApiController extends Controller
      * latest order, for the Design & branding preview. Served as a document
      * the screen puts in a sandboxed iframe. Customer data stays
      * behind the owner-only capability, like the order screens themselves.
+     *
+     * Lane EK: `?template=<key>` (any email of KitSections::TEMPLATES) renders
+     * that email instead — the template editor's live preview — and a POST
+     * carries the editor's UNSAVED sections and words, laid over the saved
+     * ones for this one render and never stored. With no `template` the
+     * answer is exactly what it was before (Design & branding's preview).
      */
-    public function preview(): \Illuminate\Http\Response
+    public function preview(?Request $request = null): \Illuminate\Http\Response
     {
-        $order = Order::query()->with('items')->orderByDesc('id')->first();
+        $request ??= request();
+        $template = (string) $request->query('template', '');
 
-        $html = $order === null
-            ? '<p style="font-family:sans-serif;color:#626c80;padding:24px">The preview fills itself from the shop\'s latest order, and there is no order yet.</p>'
-            : (string) (new OrderConfirmation($order))->render();
+        if ($template !== '' && isset(\App\Services\Mail\Kit\KitSections::TEMPLATES[$template])) {
+            $sections = $request->isMethod('post') && is_array($request->input('sections')) ? ['sections' => $request->input('sections')] : null;
+            $words = $request->isMethod('post') && is_array($request->input('words')) ? $request->input('words') : [];
+            $render = static fn (): string => \App\Services\Mail\Kit\EmailWording::withDraft($template, $words, static fn (): string => \App\Services\Mail\Kit\KitSamples::html($template));
+            // The editor's English | العربية switch: the same email, in Arabic.
+            $locale = app()->getLocale();
+
+            if ($request->query('locale') === 'ar') {
+                app()->setLocale('ar');
+            }
+
+            try {
+                $html = $sections === null ? $render() : \App\Services\Mail\Kit\KitSections::withDraft($template, $sections, $render);
+            } finally {
+                app()->setLocale($locale);
+            }
+        } else {
+            $order = Order::query()->with('items')->orderByDesc('id')->first();
+
+            $html = $order === null
+                ? '<p style="font-family:sans-serif;color:#626c80;padding:24px">The preview fills itself from the shop\'s latest order, and there is no order yet.</p>'
+                : (string) (new OrderConfirmation($order))->render();
+        }
 
         return response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0">' . $html, 200, [
             'Content-Type' => 'text/html; charset=UTF-8',

@@ -11,6 +11,7 @@
     $kitTitle = $kitTitle ?? __('email.kit.quiz_title');
     $kitPreheader = __('email.kit.pre_quiz');
     $kitWhy = __('email.kit.why_quiz');
+    $kitTemplate = 'quiz_plan';
     $kbbConcernUrl = $concernUrl ?? null;
     $kbbCtaUrl = $routineUrl ?? $kbbConcernUrl ?? $shopUrl;
     $kbbCtaLabel = $routineUrl !== null
@@ -31,10 +32,18 @@
 @endphp
 
 @section('kit_inner')
+@kitsec('hero')
 @include('emails.kit.hero', ['icon' => 'spark', 'tone' => 'pink', 'eyebrow' => __('email.kit.eyebrow_quiz'), 'title' => trim($name) !== '' ? __('email.quiz_plan.greeting_named', ['name' => $name]) : __('email.quiz_plan.greeting'), 'lead' => $kitLead])
+@endkitsec
+@kitsec('routines')
 @foreach ($kitPairs as $kitPair)
 @include('emails.kit.info-pair', ['left' => $kitPair[0], 'right' => $kitPair[1] ?? ['', '']])
 @endforeach
+@endkitsec
+@kitsec('button')
 @include('emails.kit.button', ['label' => $kbbCtaLabel, 'href' => $kbbCtaUrl])
+@endkitsec
+@kitsec('note')
 @include('emails.kit.para', ['html' => __('email.quiz_plan.steps_note'), 'pad' => '14px 32px 28px', 'size' => 13, 'center' => true])
+@endkitsec
 @endsection

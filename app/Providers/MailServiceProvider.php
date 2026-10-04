@@ -138,6 +138,19 @@ class MailServiceProvider extends ServiceProvider
         OrderMailObserver::register();
 
         /*
+         * The template editor's sections (Lane EK). emails/kit/doc.blade.php
+         * wraps every email in @kitsections … @endkitsections and each
+         * movable block is @kitsec('key') … @endkitsec; KitSections's header
+         * is the long version. Directives compile once into the cached view, so
+         * registering them costs a page that sends no mail nothing.
+         */
+        \Illuminate\Support\Facades\Blade::directive('kitsections', static fn (string $args): string => '<?php \App\Services\Mail\Kit\KitSections::open(' . $args . '); ?>');
+        \Illuminate\Support\Facades\Blade::directive('endkitsections', static fn (): string => '<?php echo \App\Services\Mail\Kit\KitSections::close(); ?>');
+        \Illuminate\Support\Facades\Blade::directive('kitsec', static fn (string $args): string => '<?php echo \App\Services\Mail\Kit\KitSections::start(' . $args . '); ?>');
+        \Illuminate\Support\Facades\Blade::directive('endkitsec', static fn (): string => '<?php echo \App\Services\Mail\Kit\KitSections::end(); ?>');
+
+
+        /*
          * The delivery record.
          *
          * Hooked to the framework's own mail events rather than to the senders,

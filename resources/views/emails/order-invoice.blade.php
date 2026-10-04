@@ -39,22 +39,39 @@
     $kitGrandNote = trim($kitPayLine . ($doc['vatNote'] !== null ? ' · ' . $doc['vatNote']['label'] . ': ' . $doc['vatNote']['plain'] : ''));
 @endphp
 
+@php $kitTemplate = 'order_invoice'; @endphp
 @section('kit')
 @include('emails.kit.topbar')
 @include('emails.kit.card-open')
 @include('emails.kit.header')
+@kitsec('hero')
 @include('emails.kit.hero', ['icon' => 'mail', 'tone' => 'ink', 'eyebrow' => $doc['docType'], 'title' => __('email.kit.invoice_title'), 'lead' => new \Illuminate\Support\HtmlString($kitLead)])
+@endkitsec
+@kitsec('chip')
 @include('emails.kit.order-chip', ['chipNumber' => $doc['orderNumber'], 'chipPlaced' => $doc['placedAt'], 'chipTotal' => $doc['totalPlain'], 'chipExtra' => $kitChipExtra])
+@endkitsec
+@kitsec('items')
 @include('emails.kit.section-title', ['text' => __('email.kit.your_items')])
 @include('emails.kit.items', ['lines' => $kitLines, 'showPrice' => true])
+@endkitsec
+@kitsec('totals')
 @include('emails.kit.totals', ['rows' => \App\Services\Mail\Kit\KitOrder::rows($doc), 'grand' => [__('email.totals.total'), $doc['totalPlain'], $kitGrandNote]])
+@endkitsec
+@kitsec('info')
 @include('emails.kit.info-pair', ['left' => [__('email.invoice.bill_to'), $kitJoin($doc['billTo'])], 'right' => [__('email.invoice.deliver_to'), $doc['sameAddress'] ? __('email.invoice.same_as_billing') : $kitJoin($doc['shipTo']), __('email.totals.delivery'), $doc['deliveryMethod']]])
+@endkitsec
+@kitsec('seller')
 @include('emails.kit.para', ['html' => $kitJoin($kitSeller), 'pad' => '22px 32px 0', 'size' => 12.5])
 @if ($doc['seller']['footer'] !== '')
 @include('emails.kit.para', ['html' => $kitJoin(preg_split('/\R/', $doc['seller']['footer']) ?: []), 'pad' => '10px 32px 0', 'size' => 12.5])
 @endif
+@endkitsec
+@kitsec('help')
 @include('emails.kit.help')
+@endkitsec
+@kitsec('signoff')
 @include('emails.kit.signoff')
+@endkitsec
 @include('emails.kit.card-close')
 @include('emails.kit.footer', ['why' => __('email.kit.why_order', ['site' => $k['site']]), 'unsubscribeUrl' => null])
 @endsection
