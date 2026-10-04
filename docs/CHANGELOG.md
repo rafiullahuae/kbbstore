@@ -12,7 +12,7 @@ refresh after applying.
 | Your request | Now |
 |---|---|
 | "remove this dot, due to this heading is not center aligned in mobile" | No dot beside the centred headings (Big savings bundles, Spotted); they sit exactly on the centre line (0px off at 390 and 1280). Left-aligned headings keep theirs |
-| "i need the button also on this section" (Spotted) | "See every #KBeautyBliss look" right of the heading on a laptop, under the pictures on a phone. Appearance → #KBeautyBliss Spotted → Button place · laptop |
+| "i need the button also on this section" (Spotted) | "See every #KBeautyBliss look" right of the heading on a laptop, under the pictures on a phone. Appearance → #KBeautyBliss Spotted → Button tab → Button place · laptop |
 | "on this section too on homepage" (Under AED 54) | "Shop all under AED 54" → /everything-under-54-aed, right of the centred heading on a laptop, under the products on a phone. Appearance → Homepage content → Under AED 54 → Button text / Button link (empty text: no button) |
 
 Files: see the package's update.json.
