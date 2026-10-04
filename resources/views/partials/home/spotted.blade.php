@@ -44,14 +44,21 @@
 @if ($sptGrid)
 @php
     $sptTitle = $spt['title'] !== '' ? $spt['title'] : __('store.spotted.grid_heading');
+    // (2.60.385) The button to the Spotted page, which the grid never had. Two
+    // copies as Big savings bundles does — beside the heading for a laptop,
+    // under the pictures for a phone — and the CSS shows one of them.
+    $sptBtn = $spt['button'] ? '<a class="bndl-all spt-all" href="'.e(\App\Support\Url::to(\App\Services\SpottedSettings::URL)).'">'.e($spt['label'] !== '' ? $spt['label'] : __('store.spotted.button')).'<i>'.\App\Services\SpottedSettings::ARROW.'</i></a>' : '';
 @endphp
-<section class="sec {{ $spt['classes'] }} spt-sg{{ $spt['g6'] ? ' spt-g6' : '' }}{{ $sptRow }}" style="{{ $spt['style'] }}" aria-labelledby="spt-h"><div class="wrap">
-  <div class="sh spt-head"><div><h2 id="spt-h">{{ $sptTitle }}</h2>@if ($spt['sub'] !== '')<p>{{ $spt['sub'] }}</p>@endif</div></div>
+<section class="sec {{ $spt['classes'] }} spt-sg{{ $spt['g6'] ? ' spt-g6' : '' }}{{ $sptBtn !== '' && $spt['btn_top'] ? ' spt-btn-d-top' : '' }}{{ $sptRow }}" style="{{ $spt['style'] }}" aria-labelledby="spt-h"><div class="wrap">
+  <div class="sh spt-head"><div><h2 id="spt-h">{{ $sptTitle }}</h2>@if ($spt['sub'] !== '')<p>{{ $spt['sub'] }}</p>@endif</div>@if ($sptBtn !== '')<span class="spt-hbtn">{!! $sptBtn !!}</span>@endif</div>
   <ul class="spt-sgl">
 @foreach ($sptSvc->grid() as $g)
     <li><a class="spt-sgc" href="{{ $g['href'] }}" aria-label="{{ $g['alt'] }}"@if ($g['external']) target="_blank" rel="noopener"@endif>@if ($g['src'] !== '')<img src="{{ $g['src'] }}" alt="{{ $g['alt'] }}" width="500" height="600" loading="lazy" decoding="async">@else<span class="spt-sgph">{!! \App\Services\SpottedSettings::CAMERA !!}</span>@endif</a></li>
 @endforeach
   </ul>
+@if ($sptBtn !== '')
+  <div class="spt-foot spt-sg-foot">{!! $sptBtn !!}</div>
+@endif
 </div></section>
 @endif
 @if ($sptCards !== [])

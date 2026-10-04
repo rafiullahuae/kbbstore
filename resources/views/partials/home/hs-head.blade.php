@@ -13,6 +13,6 @@
 */
 @endphp
 @php $hsTop = ($h['place'] ?? 'bottom') === 'top' && ($h['btn'] ?? '') !== '' && ($h['url'] ?? '') !== ''; @endphp
-<div class="hs-head{{ $hsTop ? ' hs-split' : '' }}"><div class="hs-ht">@if (($h['eyebrow'] ?? '') !== '')<span class="hs-eyebrow">{{ $h['eyebrow'] }}</span>@endif
+<div class="hs-head{{ $hsTop ? ' hs-split' : '' }}{{ $hsTop && ($h['center'] ?? false) ? ' hs-split-c' : '' }}"><div class="hs-ht">@if (($h['eyebrow'] ?? '') !== '')<span class="hs-eyebrow">{{ $h['eyebrow'] }}</span>@endif
 @if ($h['title'] !== '')<h2 id="{{ $hid }}">{{ $h['title'] }}</h2>@endif
 @if (($h['sub'] ?? '') !== '')<p>{{ $h['sub'] }}</p>@endif</div>@if ($hsTop)<a class="bndl-all hs-btn hs-btn-top" href="{{ $h['url'] }}">{{ $h['btn'] }}<i>{!! \App\Support\HomeSections::ARROW !!}</i></a>@endif</div>

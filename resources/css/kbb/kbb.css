@@ -1082,6 +1082,15 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
 .kbb-home .hs-head.hs-split{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;text-align:start;max-width:none}
 .kbb-home .hs-head.hs-split p{margin-inline:0}
 .kbb-home .hs-foot{display:flex;justify-content:center;margin-top:clamp(20px,2.4vw,32px)}
+/* (2.60.385) Under AED 54: the heading stays CENTRED and the button sits out
+   to the right, the Big savings bundles way. Room is reserved on BOTH sides so
+   the centre line is the section's, not the space left beside the button. A
+   phone takes the .hs-split rules below: heading centred, button underneath. */
+@media (min-width:901px){
+  .kbb-home .hs-head.hs-split.hs-split-c{display:block;position:relative;text-align:center;padding-inline:220px}
+  .kbb-home .hs-head.hs-split.hs-split-c p{margin-inline:auto}
+  .kbb-home .hs-split-c .hs-btn-top{position:absolute;inset-inline-end:0;top:50%;transform:translateY(-50%)}
+}
 [dir="rtl"] .kbb-home .hs-btn svg{transform:scaleX(-1)}
 .kbb-home .hs-rail .hs-grid>*{gap:var(--kbb-gap,16px)}
 
@@ -2195,6 +2204,12 @@ body::after{z-index:-1;opacity:0;background:var(--kbb-page-gradient-c)}
 .kbb-home .sh :is(h1,h2)::before{content:'';display:inline-block;width:18px;height:18px;margin-inline-end:2px;
   background-image:var(--bg-corner);background-size:190px;background-position:-92px -66px;
   border-radius:50%;vertical-align:-3px;opacity:.85}
+/* No dot on a CENTRED heading (2.60.385). It sits inside the h2, so it is
+   counted when the line is centred and shoves the words right by its own 20px:
+   "remove this dot, due to this heading is not center aligned in mobile"
+   (the owner, of Big savings bundles). Spotted is centred the same way.
+   Left-aligned headings keep it, where it reads as a bullet. */
+.kbb-home :is(.bndl.bndl-center .bndl-head,.spt .spt-head) :is(h1,h2)::before{content:none}
 /* The tint is a BACKGROUND too, so it comes off with the rest of them and
    comes back with `panel` — which is why BACKGROUNDS has two tokens and not
    three: `panel` means "the background this section always had", and the
@@ -4445,6 +4460,15 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .kbb-home .spt .spt-head{justify-content:center;text-align:center;margin-bottom:var(--spt-hg-d,24px)}
 .kbb-home .spt .spt-head :is(h1,h2){justify-content:center}
 .kbb-home .spt .spt-head p{margin-inline:auto;color:var(--ink-2);max-width:58ch}
+/* (2.60.385) The 6-picture grid's button to the Spotted page: under the
+   pictures by default (every phone), or right of the centred heading on a
+   laptop — reserved on both sides so the heading stays on the centre line. */
+.kbb-home .spt-hbtn{display:none}
+@media (min-width:901px){
+  .kbb-home .spt-sg.spt-btn-d-top .spt-head{position:relative;padding-inline:220px}
+  .kbb-home .spt-sg.spt-btn-d-top .spt-hbtn{display:block;position:absolute;inset-inline-start:auto;inset-inline-end:0;top:50%;transform:translateY(-50%)}
+  .kbb-home .spt-sg.spt-btn-d-top .spt-sg-foot{display:none}
+}
 /* The /kbeautybliss-spotted/ page's intro keeps its own size (Lane PF): the
    homepage section's description is sized with every other section's, in the
    "Section headings" block after this one. */

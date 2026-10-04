@@ -78,3 +78,14 @@ it('draws the carousel on the homepage with the shared arrows and the button in 
     // The tab the owner edits it on.
     expect(HomepageContent::TABS['bundles'][0])->toBe('Big savings bundles');
 });
+
+it('draws no dot before a centred heading, so the words sit on the centre line', function () {
+    // The owner, of a phone screenshot (2.60.385): "remove this dot, due to this
+    // heading is not center aligned in mobile". The 18px dot is an ::before INSIDE
+    // the h2, so centring counted it and "Big savings bundles" sat ~10px right of
+    // centre. Delete the rule below and the dot is back on both centred headings.
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
+    expect(substr_count($css, '.kbb-home :is(.bndl.bndl-center .bndl-head,.spt .spt-head) :is(h1,h2)::before{content:none}'))->toBe(1)
+        // Left-aligned headings keep it: the rule that draws it is untouched.
+        ->and(substr_count($css, '.kbb-home .sh :is(h1,h2)::before{content:\'\';display:inline-block;width:18px;height:18px;'))->toBe(1);
+});

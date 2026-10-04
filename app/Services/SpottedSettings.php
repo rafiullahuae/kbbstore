@@ -66,6 +66,9 @@ final class SpottedSettings
      * picture: a camera outline, the shop's deep pink. A constant, so printing
      * it raw is safe; no request is made for it.
      */
+    /** The button's arrow, the same path the carousel's button draws. A constant: printed unescaped. */
+    public const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
     public const CAMERA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.4-2h5.8l1.4 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>';
 
     private const PX = ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px', '56' => '56px', '64' => '64px'];
@@ -153,7 +156,13 @@ final class SpottedSettings
 
         /* ── Button ───────────────────────────────────────────────────────── */
         'btn_on' => ['type' => 'bool', 'label' => 'Button to the Spotted page', 'default' => true,
-            'help' => 'Under the carousel, in the shop’s button style.'],
+            'help' => 'Under the carousel, in the shop’s button style. On the 6-picture grid too (2.60.385).'],
+        // (2.60.385) The owner, of the 6-picture grid: "i need the button also
+        // on this section", arrowing the space right of the heading. A phone
+        // has no room beside the heading, so there it always sits underneath.
+        'btn_pos_d' => ['type' => 'select', 'label' => 'Button place · laptop', 'default' => 'top',
+            'options' => ['top' => 'Right of the heading', 'bottom' => 'Under the pictures'],
+            'help' => 'On a phone it sits under the pictures.'],
         'btn_text' => ['type' => 'text', 'label' => 'Button text', 'default' => '',
             'help' => 'Empty: “See every #KBeautyBliss look”.'],
 
@@ -306,6 +315,9 @@ final class SpottedSettings
             'sub' => self::text($c, 'home_sub'),
             'button' => (bool) ($c['btn_on'] ?? true),
             'label' => self::text($c, 'btn_text'),
+            // (2.60.385) The 6-picture grid's button: right of the heading on
+            // a laptop, or under the pictures. A phone always has it under.
+            'btn_top' => self::pick($c, 'btn_pos_d', ['top', 'bottom'], 'top') === 'top',
             'show' => (bool) ($c['home_on'] ?? true),
             'max' => (int) self::pick($c, 'home_max', ['4', '6', '8', '10', '12', '16', '20', '24'], '12'),
             // (Lane HS) Which of the two the homepage draws, and the grid's

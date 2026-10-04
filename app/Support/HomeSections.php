@@ -60,6 +60,11 @@ final class HomeSections
     /** Section key (HomepageSections::REGISTRY) => setting prefix, for the three product rails. */
     public const RAILS = ['bestselling' => 'bs', 'trending' => 'tr', 'under54' => 'u54'];
 
+    /** Under AED 54's button (2.60.385): the shop's own budget collection. */
+    public const U54_BTN = 'Shop all under AED 54';
+
+    public const U54_URL = '/everything-under-54-aed';
+
     /** The four bands home.html offered; a select's own keys, so a class name can only be one of these. */
     public const BACKGROUNDS = ['none', 'blush', 'cream', 'lilac'];
 
@@ -216,8 +221,11 @@ final class HomeSections
         'home_u54_count_m' => ['type' => 'select', 'label' => 'How many · phone', 'default' => '6', 'store' => 'setting', 'options' => ['2' => '2', '3' => '3', '4' => '4', '5' => '5', '6' => '6', '7' => '7', '8' => '8', '9' => '9', '10' => '10', '12' => '12', '15' => '15', '16' => '16', '20' => '20'], 'help' => ''],
         'home_u54_cols_d' => ['type' => 'select', 'label' => 'Per row · laptop', 'default' => '5', 'store' => 'setting', 'options' => ['2' => '2', '3' => '3', '4' => '4', '5' => '5', '6' => '6'], 'help' => ''],
         'home_u54_cols_m' => ['type' => 'select', 'label' => 'Per row · phone', 'default' => '2', 'store' => 'setting', 'options' => ['1' => '1', '2' => '2', '3' => '3'], 'help' => ''],
-        'home_u54_btn' => ['type' => 'text', 'label' => 'Button text', 'default' => '', 'store' => 'setting', 'help' => 'Empty: no button.'],
-        'home_u54_url' => ['type' => 'text', 'label' => 'Button link', 'default' => '', 'store' => 'setting', 'help' => 'A path on this shop (/…) or a full https:// address; anything else is ignored.'],
+        // (2.60.385) ON, at the owner's request: "on this section too on
+        // homepage" — the button beside the centred heading. Empty either and
+        // the button goes, as before.
+        'home_u54_btn' => ['type' => 'text', 'label' => 'Button text', 'default' => self::U54_BTN, 'store' => 'setting', 'help' => 'Empty: no button.'],
+        'home_u54_url' => ['type' => 'text', 'label' => 'Button link', 'default' => self::U54_URL, 'store' => 'setting', 'help' => 'A path on this shop (/…) or a full https:// address; anything else is ignored.'],
         'home_u54_bg' => ['type' => 'select', 'label' => 'Section background', 'default' => 'blush', 'store' => 'setting', 'options' => ['none' => 'None — the page shows through', 'blush' => 'Blush — soft pink band', 'cream' => 'Cream — warm white band', 'lilac' => 'Lilac — pink-to-lilac band'], 'help' => ''],
         'home_u54_pt_d' => ['type' => 'select', 'label' => 'Space above · laptop', 'default' => '40', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px', '56' => '56px', '64' => '64px', '72' => '72px', '80' => '80px', '96' => '96px'], 'help' => ''],
         'home_u54_pt_m' => ['type' => 'select', 'label' => 'Space above · phone', 'default' => '28', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px', '56' => '56px', '64' => '64px', '72' => '72px', '80' => '80px', '96' => '96px'], 'help' => ''],
@@ -383,10 +391,15 @@ final class HomeSections
             'title' => self::text($c, "home_{$p}_title"),
             'sub' => self::text($c, "home_{$p}_sub"),
             'btn' => self::text($c, "home_{$p}_btn"),
-            'url' => self::url((string) ($c["home_{$p}_url"] ?? ''), ''),
+            // A missing key reads its default, as text() does for the label.
+            'url' => self::url((string) ($c["home_{$p}_url"] ?? HomepageContent::SCHEMA["home_{$p}_url"]['default'] ?? ''), ''),
             // Beside the heading on a laptop, under the grid on a phone — the
             // Best Sellers layout home.html shows.
             'place' => 'top',
+            // (2.60.385) Under AED 54 keeps its CENTRED heading with the
+            // button out to the right, as Big savings bundles does; Best
+            // Sellers keeps its left heading.
+            'center' => $section === 'under54',
         ];
     }
 

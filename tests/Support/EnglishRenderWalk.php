@@ -2859,11 +2859,16 @@ KBB_BH_CSS;
              * seventh card, is red here.
              */
             'the homepage Spotted static grid, six placeholders (Lane HS)' => [
-                'pattern' => '#<section class="sec spt spt-lilac spt-tilt spt-noarr-m spt-peek-m spt-sg dv" style="[^"<>]*" aria-labelledby="spt-h"><div class="wrap">\n'
-                    .'  <div class="sh spt-head"><div><h2 id="spt-h">\#KBEAUTYBLISS Spotted</h2></div></div>\n'
+                // 2.60.385: the button to the Spotted page, the owner's "i need
+                // the button also on this section" — right of the heading on a
+                // laptop (`spt-hbtn`), under the pictures on a phone (`spt-sg-foot`).
+                'pattern' => '#<section class="sec spt spt-lilac spt-tilt spt-noarr-m spt-peek-m spt-sg spt-btn-d-top dv" style="[^"<>]*" aria-labelledby="spt-h"><div class="wrap">\n'
+                    .'  <div class="sh spt-head"><div><h2 id="spt-h">\#KBEAUTYBLISS Spotted</h2></div><span class="spt-hbtn"><a class="bndl-all spt-all" href="/kbeautybliss-spotted/">See every \#KBeautyBliss look<i><svg [^<>]*><path [^<>]*/></svg></i></a></span></div>\n'
                     .'  <ul class="spt-sgl">\n'
                     .'(?:    <li><a class="spt-sgc" href="/kbeautybliss-spotted/" aria-label="\#KBeautyBliss Spotted photo [1-6]"><span class="spt-sgph"><svg [^<>]*><path [^<>]*/><circle [^<>]*/></svg></span></a></li>\n){6}'
-                    .'  </ul>\n</div></section>#',
+                    .'  </ul>\n'
+                    .'  <div class="spt-foot spt-sg-foot"><a class="bndl-all spt-all" href="/kbeautybliss-spotted/">See every \#KBeautyBliss look<i><svg [^<>]*><path [^<>]*/></svg></i></a></div>\n'
+                    .'</div></section>#',
                 'hits' => 1,
                 'perPage' => 1,
             ],
