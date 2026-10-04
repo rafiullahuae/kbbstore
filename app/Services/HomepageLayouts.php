@@ -21,10 +21,34 @@ class HomepageLayouts
      * new section later does not silently disappear from every preset.
      */
     public const LAYOUTS = [
+        /*
+         * ── SIGNATURE IS THE OWNER'S HOMEPAGE NOW — Lane PF ─────────────────
+         *
+         * It read "The full store. Every section on, in the order the site
+         * uses today" with an empty `off`, and that was true until row 55. On
+         * 3 October the owner replaced the page — "don't include anything from
+         * our existing homepage on extreabeauty, except banner" — and
+         * HomepageSections::OFF_BY_DEFAULT switched the old sections off. This
+         * preset kept switching them ALL back on: it is the default `current()`
+         * and the first card on Appearance → Homepage → Layouts, so one press
+         * of "Re-apply" on it would have put the routine builder, the quiz,
+         * the old rails, the ticker, flash sale, reviews, trust and newsletter
+         * back on his page and undone the homepage he had just approved.
+         *
+         * So Signature means the page he has: the picture banner and the nine
+         * sections, everything else off. `off` IS OFF_BY_DEFAULT — the same
+         * constant the shipped defaults and the row-55 migration use — so the
+         * two cannot drift: a section he later switches off by default is off
+         * in Signature too. `sections` stays array_keys(REGISTRY), so
+         * orderIsDefault() still holds and "put it back" still puts back the
+         * shipped ORDER as well as the shipped switches. The hero stays on for
+         * the reason OFF_BY_DEFAULT gives: it is the banner's fallback and
+         * draws only when the picture banner has nothing to show.
+         */
         'signature' => [
             'name' => 'Signature',
-            'blurb' => 'The full store. Every section on, in the order the site uses today.',
-            'suits' => 'A broad catalogue where discovery matters more than a single message.',
+            'blurb' => 'Your homepage: the picture banner, then Big savings bundles, Best Sellers, Brands, #KBeautyBliss Spotted, Trending, the Blog, Under AED 54, the two-column feature and About us. Every other section off.',
+            'suits' => 'The page as approved on 3 October 2026 (master plan row 55). Re-applying it puts that page back.',
             'sections' => [
                 /*
                  * `cards_banner` sits where the REGISTRY puts it and where
@@ -52,41 +76,73 @@ class HomepageLayouts
                 // positions, for the reason above.
             ],
             'skins' => ['bundles' => 'classic', 'recommended' => 'soft', 'bestsellers' => 'luxe', 'flash' => 'ribbon'],
-            'off' => [],
+            'off' => HomepageSections::OFF_BY_DEFAULT,
         ],
+        /*
+         * ── THE OTHER THREE KEEP THEIR CHARACTER, AND STOP CONTRADICTING ROW 55
+         *                                                          (Lane PF)
+         * They are alternative pages and bringing back sections is what they
+         * are for, so their orders and their own `off` choices are kept. Three
+         * things in each of them disagreed with what the owner decided on 3
+         * October, and only those moved:
+         *
+         *   1. `routine` and `quiz` are OFF in all three. "don't include
+         *      reoutine builder etc, that's not finished yet" — a preset must
+         *      not put an unfinished section in front of shoppers. Still listed,
+         *      at their old positions, so switching one on later lands it where
+         *      the preset always put it.
+         *   2. ONE best-sellers rail. The new `bestselling` takes the old
+         *      `bestsellers` rail's place in the order and the old rail is off
+         *      (listed last). Before, every preset drew both — two "best
+         *      sellers" sections on one page, against "i dont want to repeat
+         *      anything".
+         *   3. The four row-55 sections the presets never mentioned —
+         *      `bestselling`, `trending`, `under54`, `feature` — are PLACED
+         *      rather than falling through payloadFor()'s "anything not
+         *      mentioned, placed last" loop, which put them after the
+         *      newsletter. Trending follows Best Sellers, Under AED 54 follows
+         *      the flash sale (both are price-led), and the feature sits
+         *      before About us.
+         *
+         * Boutique turns Under AED 54 off with the flash sale, for the reason
+         * it gives for that one: fewer, calmer sections, no price-led rails.
+         */
         'conversion' => [
             'name' => 'Conversion',
-            'blurb' => 'Offers first. Flash sale and bundles above the fold, editorial pushed down.',
+            'blurb' => 'Offers first. Flash sale, Under AED 54 and bundles above the fold, editorial pushed down.',
             'suits' => 'Sale periods and paid traffic, where the visit has one job.',
             'sections' => [
-                'hero', 'ticker', 'delivery', 'cards_banner', 'flash', 'bundles', 'categories',
-                'bestsellers', 'recommended', 'quiz', 'reviews', 'trust',
-                'brands', 'routine', 'spotted', 'videos', 'instagram', 'newsletter', 'about', 'blog',
+                'hero', 'ticker', 'delivery', 'cards_banner', 'flash', 'under54', 'bundles', 'categories',
+                'bestselling', 'trending', 'recommended', 'quiz', 'reviews', 'trust',
+                'brands', 'routine', 'spotted', 'videos', 'instagram', 'newsletter', 'feature', 'about', 'blog',
+                'bestsellers',
             ],
             'skins' => ['flash' => 'ribbon', 'bundles' => 'pricetag', 'bestsellers' => 'bold', 'recommended' => 'actions'],
-            'off' => ['blog'],
+            'off' => ['blog', 'routine', 'quiz', 'bestsellers'],
         ],
         'editorial' => [
             'name' => 'Editorial',
-            'blurb' => 'Content leads. Routine, quiz and journal early; products follow the story.',
+            'blurb' => 'Content leads. The journal and the brands early; products follow the story.',
             'suits' => 'Building trust with visitors who are researching rather than buying today.',
             'sections' => [
-                'hero', 'delivery', 'cards_banner', 'routine', 'quiz', 'categories', 'bestsellers',
-                'blog', 'brands', 'bundles', 'reviews', 'spotted', 'videos', 'instagram', 'about',
-                'recommended', 'flash', 'trust', 'newsletter', 'ticker',
+                'hero', 'delivery', 'cards_banner', 'routine', 'quiz', 'categories', 'bestselling', 'trending',
+                'blog', 'brands', 'bundles', 'reviews', 'spotted', 'videos', 'instagram', 'feature', 'about',
+                'recommended', 'flash', 'under54', 'trust', 'newsletter', 'ticker',
+                'bestsellers',
             ],
             'skins' => ['bundles' => 'editorial', 'recommended' => 'magazine', 'bestsellers' => 'minimal', 'flash' => 'outline'],
-            'off' => ['ticker'],
+            'off' => ['ticker', 'routine', 'quiz', 'bestsellers'],
         ],
         'boutique' => [
             'name' => 'Boutique',
             'blurb' => 'Fewer, calmer sections. Generous spacing, no ticker, no flash sale.',
             'suits' => 'A curated range where restraint reads as quality.',
             'sections' => [
-                'hero', 'categories', 'bestsellers', 'routine', 'brands',
-                'reviews', 'about', 'trust', 'newsletter',
+                'hero', 'categories', 'bestselling', 'trending', 'routine', 'brands',
+                'reviews', 'feature', 'about', 'trust', 'newsletter',
                 'delivery', 'bundles', 'recommended', 'quiz', 'spotted', 'videos', 'instagram',
-                'flash', 'blog', 'ticker', 'cards_banner',
+                'flash', 'under54', 'blog', 'ticker', 'cards_banner',
+                'bestsellers',
             ],
             'skins' => ['bestsellers' => 'luxe', 'bundles' => 'frame', 'recommended' => 'soft', 'flash' => 'minimal'],
             /*
@@ -113,7 +169,9 @@ class HomepageLayouts
              * the reason the note above gives — a section missing from a preset
              * is a section whose order that preset does not decide.
              */
-            'off' => ['ticker', 'flash', 'spotted', 'videos', 'instagram', 'bundles', 'recommended', 'cards_banner'],
+            'off' => ['ticker', 'flash', 'spotted', 'videos', 'instagram', 'bundles', 'recommended', 'cards_banner',
+                // Lane PF: see the note above Conversion.
+                'routine', 'quiz', 'bestsellers', 'under54'],
         ],
     ];
 
