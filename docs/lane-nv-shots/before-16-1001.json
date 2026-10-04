@@ -1,0 +1,22 @@
+[
+  {
+    "width": 1001,
+    "file": "storage/nv-logs/shots/before-16-1001-1001.png",
+    "errors": [],
+    "cls": 0,
+    "items": 16,
+    "rtl": false,
+    "font": "10.05",
+    "padX": "4.64",
+    "pillPadX": "10.00",
+    "indFont": "8.00",
+    "emptyEnd": 2.5,
+    "emptyStart": 0,
+    "rowsUsed": 1,
+    "barHeight": 46.5,
+    "scale": "0.773",
+    "scrollWidth": 1001,
+    "clientWidth": 1001,
+    "mbarTop": 46
+  }
+]

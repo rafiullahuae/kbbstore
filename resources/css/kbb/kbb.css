@@ -363,6 +363,59 @@
   @media (max-width:1599.98px){
     .mbar .navitem:nth-last-child(-n+2) > .drop{inset-inline-start:auto;inset-inline-end:0}
   }
+  /* ── FIT THE MENU TO THE ROW (Lane NV) ─────────────────────────────────
+     The owner, 4 October: grow the menu's text into the empty end of the row,
+     shrink it when there are more items, and only once the menu has nine or
+     more top-level items. Appearance → Header → Navigation → "Fit the menu to
+     the row" (ON), with its threshold and its smallest/largest size.
+
+     Nothing below matches unless partials/nav-bar.blade.php printed
+     `nav-fill`, which App\Support\NavRowFit only allows for a menu at or past
+     the threshold. A shorter menu gets `<div class="mbar">` byte for byte, and
+     none of these rules can reach it.
+
+     FIRST PAINT, NO SCRIPT. The bar's content width (--hd-room, declared on
+     <header> below) less every fixed pixel in the row — side padding, the
+     pills' own 10px, the 2px between items, the gaps beside ▾ and badges —
+     divided by the labels' estimated width in hundredths of an em (--nav-w,
+     an integer the server prints). A length over a number: one calc(), one
+     render. The estimate is deliberately a few per cent generous, so the
+     first paint is a touch SMALL rather than a touch too big to fit.
+
+     THE EXACT FIT IS STILL nav-fit.js's, which measures the real boxes and
+     moves --nav-scale up or down; the clamp holds the ends whatever it asks
+     for. The line box is still the fixed 19.5px and the vertical padding
+     still 13px, so the bar is 46.5px tall at every font size this can pick and
+     nothing below it moves when the script runs (GridPhotoLoadingTest).
+
+     ONE ROW UNTIL MEASURED. A fitted bar does not wrap on first paint: if the
+     estimate were ever a hair too large, a wrapped second row would make the
+     bar 46px taller and move the page when the script corrected it — a layout
+     shift. Unwrapped, an overrun is clipped sideways by `.mbar{overflow-x:clip}`
+     for the instant before nav-fit.js shrinks it, and nothing moves vertically.
+     Only when the script finds the row cannot fit even at the smallest size
+     does it add `nav-wrap`, and the bar wraps exactly as an unfitted one does
+     (NavBarContainsItsOwnOverflowTest) rather than hide an item.
+
+     WHATEVER IS LEFT OVER IS SHARED EVENLY. `space-between` puts the first
+     item at the start of the row and the last at its end, so the safety margin
+     the script leaves, and any room past the largest font, becomes equal gaps
+     between the items rather than an empty block at one end.
+
+     ▾ AND BADGES follow the text in em (8/13 and 8.5/13, the sizes they had
+     beside 13px type), so at the estimate's own 13px they are exactly as before.
+
+     THE LAST TWO DROPDOWNS OPEN LEFTWARD AT EVERY WIDTH here, not only up to
+     1599px: a filled row puts the last item at the row's end on the widest
+     screen too, and its panel opening rightward would run past the bar's
+     clipped edge (MenuBarNoSidewaysScrollTest). */
+  .mbar.nav-fill{--nav-f0:calc((var(--hd-room, 960px) - var(--nav-np) * 2 * var(--nav-pad-x, 13px) - var(--nav-hl) * 20px - (var(--nav-n) - 1) * 2px - var(--nav-gx) * var(--nav-item-gap, 6px) - var(--nav-bx) * 10px) * 100 / var(--nav-w))}
+  .mbar.nav-fill .wrap{justify-content:space-between;flex-wrap:nowrap}
+  .mbar.nav-fill .wrap.nav-wrap{flex-wrap:wrap}
+  .mbar.nav-fill .navlink{font-size:clamp(var(--nav-min), calc(var(--nav-f0) * var(--nav-scale)), var(--nav-max))}
+  .mbar.nav-fill .navlink .ind{font-size:.615em}
+  .mbar.nav-fill .navlink .npill{font-size:.654em;line-height:1.25}
+  .mbar.nav-fill .navitem:nth-last-child(-n+2) > .drop{inset-inline-start:auto;inset-inline-end:0}
   .mega .mcol-group{flex:1;min-width:0}
   .mega .mcol-group + .mcol-group{border-inline-start:1px solid #F0E4E9;padding-inline-start:18px}
   .mega .colh{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink-deep);margin:0 0 5px}

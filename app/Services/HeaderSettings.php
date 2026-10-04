@@ -148,6 +148,43 @@ class HeaderSettings
         'nav_gap'         => ['range',  'Spacing', 26, '', ['min' => 12, 'max' => 48, 'step' => 2, 'unit' => 'px']],
         'nav_hot_colour'  => ['colour', 'Sale item colour', '#E23B57', 'Applied to items marked as a sale.'],
 
+        /*
+         * ── FIT THE MENU TO THE ROW ───────────────────────────────── Lane NV ──
+         *
+         * The owner, 4 October, over a screenshot of the twelve-entry desktop
+         * menu with a wide empty stretch at the end of the row: "the top desktop
+         * menu items font size should auto adjust if empty area there. i mean
+         * enlarge, and if more items, then reduce the font size itself to adjust
+         * all the parents menus items ... this formula will apply only if the
+         * menu item has at least 9 menu items. less than that it will display
+         * as it is."
+         *
+         * ▲ `nav_fit` SHIPS ON, WHICH IS A MOVED DEFAULT AND HIS (CLAUDE.md,
+         *   the 30-September reversal). The switch is here so he can put the
+         *   row back exactly as it was in one press.
+         *
+         * A menu with fewer top-level items than `nav_fit_from` renders byte for
+         * byte as it did before this lane; App\Support\NavRowFit decides, and
+         * partials/nav-bar.blade.php prints nothing new when it says no.
+         *
+         * All three sizes are SELECTS of fixed integers, so every value that
+         * reaches the `style` attribute is one of this file's own option keys
+         * (rule 5) and the smallest option of `nav_fit_max` is above the largest
+         * of `nav_fit_min` — the clamp can never be inverted by a save.
+         */
+        'nav_fit'         => ['bool',   'Fit the menu to the row', true,
+                              'Desktop only. With enough items in the menu, the text grows to fill the empty space at the end of the row, or shrinks so every item stays on one line. Off shows the menu at its normal size.'],
+        'nav_fit_from'    => ['select', 'Fit it from', '9',
+                              'How many top-level items the menu needs before it is fitted. A shorter menu shows exactly as it always has.',
+                              ['6' => '6 items', '7' => '7 items', '8' => '8 items', '9' => '9 items', '10' => '10 items',
+                               '11' => '11 items', '12' => '12 items', '14' => '14 items', '16' => '16 items']],
+        'nav_fit_min'     => ['select', 'Smallest text size', '10',
+                              'The text never shrinks below this, however many items there are.',
+                              ['9' => '9px', '10' => '10px', '11' => '11px', '12' => '12px', '13' => '13px']],
+        'nav_fit_max'     => ['select', 'Largest text size', '18',
+                              'The text never grows past this. Any room left over is shared out evenly between the items.',
+                              ['14' => '14px', '15' => '15px', '16' => '16px', '17' => '17px', '18' => '18px', '19' => '19px', '20' => '20px']],
+
         // ── Support ──
         'support_show'    => ['bool',   'Support block', true, 'The 24/7 WhatsApp block on the right.'],
         'support_label'   => ['text',   'Wording', '24/7 support', ''],
@@ -374,7 +411,7 @@ class HeaderSettings
         'menu'    => ['Menu icon', 'The control that opens the mobile menu.',
                       ['menu_icon', 'menu_icon_speed', 'menu_icon_size', 'menu_icon_c1', 'menu_icon_c2', 'menu_icon_c3']],
         'nav'     => ['Navigation', 'The category bar.',
-                      ['nav_show', 'nav_uppercase', 'nav_size', 'nav_gap', 'nav_hot_colour']],
+                      ['nav_show', 'nav_uppercase', 'nav_size', 'nav_gap', 'nav_hot_colour', 'nav_fit', 'nav_fit_from', 'nav_fit_min', 'nav_fit_max']],
         'support' => ['Support', 'The WhatsApp block.',
                       ['support_show', 'support_label', 'support_icon_bg', 'support_icon_fg']],
         'flagbar' => ['Flag bar', 'The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. Off on phones and on desktop for now — switch either one on to bring it back, with the wording on phones only.',

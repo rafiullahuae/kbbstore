@@ -1,0 +1,42 @@
+[
+  {
+    "width": 1001,
+    "file": "docs/lane-nv-shots/after-16-1001.png",
+    "errors": [],
+    "cls": 0,
+    "items": 16,
+    "rtl": false,
+    "font": "10.00",
+    "padX": "4.57",
+    "pillPadX": "7.61",
+    "indFont": "6.15",
+    "emptyEnd": 0.1,
+    "emptyStart": 0,
+    "rowsUsed": 1,
+    "barHeight": 46.5,
+    "scale": "0.761",
+    "scrollWidth": 1001,
+    "clientWidth": 1001,
+    "mbarTop": 46
+  },
+  {
+    "width": 1280,
+    "file": "docs/lane-nv-shots/after-16-1280.png",
+    "errors": [],
+    "cls": 0,
+    "items": 16,
+    "rtl": false,
+    "font": "11.09",
+    "padX": "10.59",
+    "pillPadX": "10.27",
+    "indFont": "6.82",
+    "emptyEnd": 0.2,
+    "emptyStart": 0,
+    "rowsUsed": 1,
+    "barHeight": 46.5,
+    "scale": "1.027",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "mbarTop": 46
+  }
+]

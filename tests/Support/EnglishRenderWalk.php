@@ -1739,6 +1739,35 @@ final class EnglishRenderWalk
                 'hits' => 2,
             ],
 
+            /*
+             * THE DESKTOP MENU FILLS ITS ROW. (Lane NV)
+             *
+             * The owner, 4 October: "the top desktop menu items font size
+             * should auto adjust if empty area there ... this formula will
+             * apply only if the menu item has at least 9 menu items." The
+             * walk's seeded primary menu is his twelve-entry one, so it is
+             * fitted: `.mbar` gains the class `nav-fill` and a style of integer
+             * custom properties (App\Support\NavRowFit), and the "Super Sale"
+             * pill's side padding follows the scale. Appearance → Header →
+             * Navigation → "Fit the menu to the row" ships ON because he asked;
+             * off puts both bytes back. A menu under nine items is untouched,
+             * which NavRowFitTest pins byte for byte.
+             *
+             * TWO ATTRIBUTES, NOTHING ELSE: the bar's opening tag and the
+             * pill's padding, once each on every page that draws the header —
+             * 31 of the walk's pages, counted, not predicted.
+             */
+            'the desktop menu fills its row: the bar (Lane NV)' => [
+                'pattern' => '#<div class="mbar"><div class="wrap">#',
+                'with' => '<div class="mbar nav-fill" style="--nav-n:12;--nav-np:11;--nav-hl:1;--nav-gx:2;--nav-bx:0;--nav-w:6530;--nav-min:10px;--nav-max:18px"><div class="wrap">',
+                'hits' => 31,
+            ],
+            'the desktop menu fills its row: the pill\'s padding (Lane NV)' => [
+                'pattern' => '#(<a class="navlink" href="[^"]*"\s+style="background:\#[0-9A-Fa-f]{6};color:\#fff;border-radius:8px;padding:4px) 10px"#',
+                'with' => '$1 calc(10px * var(--nav-scale))"',
+                'hits' => 31,
+            ],
+
             'the shipped card style, which the owner asked to change' => [
                 'pattern' => '#<div class="kbb-pgrid" data-skin="classic">#',
                 'with' => '<div class="kbb-pgrid" data-skin="'.\App\Support\GridSkins::DEFAULT.'">',
