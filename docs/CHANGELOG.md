@@ -3,6 +3,26 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.377
+**Cart Tracking, Users & Roles with live edit locks, admin menu search, the
+floating WhatsApp button, the compact brand header with logo ring, and SEO
+Keywords.** Apply after .376. No plugin change. **Runs 16 migrations** (4 new
+tables for keywords, 3 for carts and blocks, roles + edit locks, 2 brand
+columns, 2 Arabic seeds, 5 cache clears). Hard refresh after applying. The
+existing `schedule:run` cron also prunes old cart events nightly.
+
+| Your request | Now |
+|---|---|
+| Cart tracking: every cart, countries, products, Bot column, block/unblock IP ranges, 7 days / all time, most added / removed, cart history, the user's cart and order | Growth & Marketing → **Cart Tracking**: Carts · Added products · Removed products · Blocked · Settings. Block an IP or its range from any cart; blocked visitors get a polite refusal at cart, checkout and forms (whole shop optional). Admin, payment webhooks and search engines are never blocked. Owner and Store Manager |
+| Proper user roles: Store Manager, SEO Manager, Sub Admin, Full Admin, Inventory Manager…, editable, custom roles, per-person changes | Platform → **Users & Roles** → Members · Roles. 8 presets, 17 sections, custom names and per-person grants/revokes. Every existing account keeps exactly today's access (checked rule by rule) |
+| "if any user is editing … notify … take control … real time, super light" | Opening a record someone has open shows "Sara is editing this product · since 2 min" with View only / Take over. The other person is told within ~12s, keeps their text, and their save is refused (409) — nothing is overwritten. Beats every 15s only while the tab is visible |
+| A search at the top of the admin menu that finds anything and highlights it | Top of the left menu (and the phone drawer), Ctrl/Cmd+K or "/". 1,941 entries — every screen, tab and setting; the target glows for ~1s. No server request while typing |
+| Floating WhatsApp button, design G with faces, capsule "Available 24/7", size from 30px, four-side positions, the welcome lines as the message sent to us | Appearance → **WhatsApp button**: Design · Position · Message · Capsule & bubble, live preview. Ships ON (G, 60px, bottom-right; bottom-left on /ar/), lifts above the phone Add-to-cart bar. 3 KB gzipped per page, 0 queries |
+| Brand page: logo + name in one row, description below, same on mobile; logo upload; ring in the brand's colour from the logo | Compact header (Appearance → Site layout → Brand page → Brand header style; Classic brings back the old one). Logo field in the brand page's Edit pill; ring colour taken from the logo, override in Catalog → Brands → Edit → Ring colour. Phone hero 258px → 154px |
+| SEO module: collect ranked keywords, mix and match per page, hidden keywords everywhere, sync from the backend, Google-friendly | Store → **SEO Keywords**: Overview · Sources · Keyword bank · Pages · Sync (dry run, batches, undo). Four layers per page, one primary per page, in JSON-LD `keywords` and a ≤10-term meta keywords tag — never as hidden body text (Google penalises that). Suggested titles/descriptions apply in one click. Sources: the catalogue, site search, Google suggestions (UAE, en/ar), Search Console (optional). Nothing on the shop changes until the first sync |
+
+Files (107): see the package's update.json.
+
 ## 2.60.376
 **The menu keeps its text size, every email in Send a test, Tabby / Tamara / card
 in the failed and refund emails, the brand page, and the spam-folder check.**
