@@ -107,7 +107,7 @@ final class AdminRoles
             'marketing.view', 'marketing.manage', 'marketing.export',
             'marketing.email.view', 'marketing.email.manage', 'emails.view', 'emails.test',
             'banners.view', 'banners.manage', 'gridsections.view', 'gridsections.manage',
-            'spotted.manage', 'instagram.view', 'ugc.view', 'ugc.manage',
+            'spotted.manage', 'instagram.view', 'ugc.view', 'ugc.manage', 'wabutton.manage',
         ],
     ];
 
@@ -184,6 +184,7 @@ final class AdminRoles
             'spotted.manage' => '#KBeautyBliss Spotted',
             'sitelayout.manage' => 'Site width and columns',
             'pagewash.manage' => 'Page background',
+            'wabutton.manage' => 'WhatsApp button',
         ]],
         ['storefront', 'Storefront tools', [
             'storefront.adminbar' => 'See the admin bar on the shop',
