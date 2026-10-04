@@ -7,20 +7,17 @@ use App\Services\ProductStyles;
 use App\Services\SettingsService;
 
 /**
- * Lane PF2 -- the product card's <img> states its frame's shape, and the first
- * rail on the homepage is not lazy.
+ * Lane PF2 -- the product card's <img> states its frame's shape.
  *
  * WHAT IT LOOKED LIKE. Lighthouse listed every card photograph under "Image
  * elements do not have explicit width and height", on /shop, every category
- * archive, the homepage rails and the product page's related row. And on a
- * phone the first rail sits straight under the banner, inside the first
- * screen, with every one of its photographs `loading="lazy"` -- not requested
- * until layout had proved it visible.
+ * archive, the homepage rails and the product page's related row.
  *
  * THE OWNER: "the grid cards design must not be changed". So nothing here may
  * move a pixel: the attributes state the shape the frame ALREADY has
  * (Appearance -> Product styles -> Image shape, through the map that writes
- * `--kbb-ratio`), and `eager` is the prop /shop already passes its first card.
+ * `--kbb-ratio`). The last case records why the homepage's first rail was NOT
+ * made eager.
  */
 
 /** @return list<string> every card <img> tag, in document order */
@@ -100,54 +97,33 @@ it('reads the attributes and the frame off one map, so they cannot disagree', fu
     expect(app(ProductStyles::class)->cssVariables())->toContain('--kbb-ratio:1.2/1;');
 });
 
-it('loads the first two cards of the first rail eagerly, and no other card', function () {
+it('leaves every homepage card lazy, because an eager first rail cost the banner its LCP', function () {
     /*
-     * MUTATION, run: drop `'eagerFirst' => $eagerFor('bundles')` from the
-     * bundles include in store/home.blade.php and no card is eager; pass 99
-     * and the third card is.
+     * TRIED AND MEASURED, NOT SHIPPED (Lane PF2). The first rail's first two
+     * cards were given the card's own `eager` prop -- the one /shop passes its
+     * first card -- so a phone would not wait for layout before requesting
+     * them. Lighthouse 12.8.2, mobile, eight runs a side on the same catalogue:
+     *
+     *   before            LCP median 1,805 ms
+     *   eager first two   LCP median 1,959 ms   (+154 ms, every run but one)
+     *   the same, undone  LCP median 1,809 ms
+     *
+     * Bytes were identical (208 KiB): the lazy cards inside the first screen
+     * were fetched anyway. What `eager` added is `fetchpriority="high"`, and
+     * two card photographs at high priority split the connection with the
+     * banner picture, which IS the LCP element on a phone. So the shipped
+     * state is every homepage card lazy, and this pins it.
+     *
+     * MUTATION, run: pass `:eager="$loop->index < 2"` in partials/home/grid
+     * and this is red.
      */
     cibCatalogue();
 
     $cards = cibCards((string) test()->get('/')->assertOk()->getContent());
     expect(count($cards))->toBeGreaterThan(2);
 
-    $eager = array_values(array_filter($cards, fn ($t) => cibAttr($t, 'loading') === 'eager'));
-
-    expect($eager)->toBe([$cards[0], $cards[1]])
-        ->and(cibAttr($cards[2], 'loading'))->toBe('lazy')
-        ->and(cibAttr($cards[2], 'fetchpriority'))->toBeNull();
-});
-
-it('follows the saved order, not the template, to find the first rail', function () {
-    /*
-     * The owner can move a rail up in Appearance -> Homepage, and the page
-     * then draws it first by CSS `order` while it is still written further
-     * down. The eager pair has to go where the shopper sees the first rail.
-     *
-     * MUTATION, run: pick the first rail by document order (the first grid
-     * include) and the eager pair stays in the bundles rail.
-     */
-    cibCatalogue();
-
-    $sections = app(\App\Services\HomepageSections::class);
-    $keys = array_keys($sections->all());
-    $keys = array_values(array_diff($keys, ['bestselling']));
-    array_splice($keys, array_search('bundles', $keys, true), 0, ['bestselling']);
-    $all = $sections->all();
-    $payload = [];
-    foreach ($keys as $i => $k) {
-        $payload[$k] = ['order' => $i] + $all[$k];
+    foreach ($cards as $tag) {
+        expect(cibAttr($tag, 'loading'))->toBe('lazy', $tag)
+            ->and(cibAttr($tag, 'fetchpriority'))->toBeNull($tag);
     }
-    $sections->save($payload);
-    \App\Services\SettingsService::forgetMemo();
-    app()->forgetScopedInstances();
-
-    $html = (string) test()->get('/')->assertOk()->getContent();
-    preg_match('#<section class="sec hs hs-rail hs-bestselling.*?</section>#s', $html, $rail);
-    expect($rail)->not->toBeEmpty('the Best Sellers rail did not draw');
-
-    $inRail = cibCards($rail[0]);
-    expect(count(array_filter(cibCards($html), fn ($t) => cibAttr($t, 'loading') === 'eager')))->toBe(2)
-        ->and(cibAttr($inRail[0], 'loading'))->toBe('eager')
-        ->and(cibAttr($inRail[1], 'loading'))->toBe('eager');
 });

@@ -49,14 +49,9 @@
 
      (2.60.370) $trackLabel makes this grid a carousel track for ymal.js — the
      homepage's Big savings bundles. Absent everywhere else, so every other
-     grid prints exactly what it did.
-
-     (Lane PF2) $eagerFirst: how many cards at the head of this grid load
-     eagerly. store/home.blade.php passes 2 to the first rail in the saved
-     order and 0 to every other; absent everywhere else, so every other grid
-     prints exactly what it did. --}}
+     grid prints exactly what it did. --}}
 <div class="kbb-pgrid{{ isset($trackLabel) ? ' bndl-track' : '' }}" data-skin="{{ \App\Support\GridSkins::resolve($skin ?? null) }}"@isset($trackLabel) id="bndl-track" data-ymal-track tabindex="0" role="region" aria-label="{{ $trackLabel }}"@endisset>
     @foreach ($items as $i => $p)
-        <x-product-card :product="$p" :eager="$loop->index < ($eagerFirst ?? 0)" :cat-label="$catLabel ?? null" :rank="($rank ?? false) ? $i + 1 : null" />
+        <x-product-card :product="$p" :cat-label="$catLabel ?? null" :rank="($rank ?? false) ? $i + 1 : null" />
     @endforeach
 </div>

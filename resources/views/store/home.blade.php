@@ -147,39 +147,6 @@
   // space that appeared from a word that changed.
   $heroOwnVis = $sections->deviceClassFor('hero');
   $heroSliderClass = $heroOwnVis === '' ? 'slider' : 'slider ' . $heroOwnVis;
-
-  /*
-   * ── THE FIRST PRODUCT RAIL'S FIRST TWO PHOTOGRAPHS ARE NOT LAZY ─────────
-   *                                                              (Lane PF2)
-   * Every card is `loading="lazy"`, which is right for a page of rails — and
-   * wrong for the first one: on a phone it sits straight under the banner,
-   * inside the first screen, and a lazy image is not even requested until
-   * layout has proved it visible. So the first two cards of the first rail
-   * THE SHOPPER SEES take the card's own `eager` prop, the one /shop already
-   * passes to its first card. Two, because a phone shows 2.3 cards of a rail.
-   *
-   * "First" is the SAVED ORDER (Appearance → Homepage → sections), not the
-   * order of this template: the owner can move a rail up, and the CSS `order`
-   * then draws it first while it is still written further down. A rail that
-   * is switched off, or has nothing to draw, is skipped.
-   */
-  $homeEagerRail = null;
-  foreach ($sections->all() as $eagerKey => $eagerRow) {
-      $eagerItems = match ($eagerKey) {
-          'bundles' => $rails['bundles'] ?? null,
-          'recommended' => $rails['recommended'] ?? null,
-          'bestsellers' => $rails['best1'] ?? null,
-          'flash' => $rails['flash'] ?? null,
-          'bestselling', 'trending', 'under54' => $home[$eagerKey] ?? null,
-          default => false,
-      };
-      if ($eagerItems === false || $sections->hidden($eagerKey) || $eagerItems === null || $eagerItems->isEmpty()) {
-          continue;
-      }
-      $homeEagerRail = $eagerKey;
-      break;
-  }
-  $eagerFor = static fn (string $key): int => $homeEagerRail === $key ? 2 : 0;
 @endphp
 {{--
 
@@ -610,7 +577,7 @@
     <a class="bndl-all bndl-all-top" href="{{ $bndlUrl }}">{{ $bndlLabel }}<i>{!! $bndlArrow !!}</i></a></div>
   <div class="bndl-stage">
     <button type="button" class="bndl-arr bndl-prev" data-ymal-prev aria-controls="bndl-track" aria-label="{{ __('store.product.related_prev') }}" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
-  @include('partials.home.grid', ['items' => $rails['bundles'], 'skin' => $sections->skinFor('bundles'), 'catLabel' => __('store.home.bundles_grid_label'), 'trackLabel' => $bndlTitle, 'eagerFirst' => $eagerFor('bundles')])
+  @include('partials.home.grid', ['items' => $rails['bundles'], 'skin' => $sections->skinFor('bundles'), 'catLabel' => __('store.home.bundles_grid_label'), 'trackLabel' => $bndlTitle])
     <button type="button" class="bndl-arr bndl-next" data-ymal-next aria-controls="bndl-track" aria-label="{{ __('store.product.related_next') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>
   </div>
   <div class="bndl-foot"><a class="bndl-all bndl-all-bottom" href="{{ $bndlUrl }}">{{ $bndlLabel }}<i>{!! $bndlArrow !!}</i></a></div>
@@ -620,7 +587,7 @@
      carries the reasoning; Appearance → Homepage content → Best Sellers the
      controls. A rail with no products draws nothing. --}}@unless ($sections->hidden('bestselling'))
 @if ($home['bestselling']->isNotEmpty())
-@include('partials.home.hs-rail', ['key' => 'bestselling', 'cls' => $sections->classFor('bestselling'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'bestselling'), 'items' => $home['bestselling'], 'eagerFirst' => $eagerFor('bestselling')])
+@include('partials.home.hs-rail', ['key' => 'bestselling', 'cls' => $sections->classFor('bestselling'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'bestselling'), 'items' => $home['bestselling']])
 @endif
 @endunless
 
@@ -630,7 +597,7 @@
   <div class="sh"><div><h2>{{ __('store.home.recommended_heading') }} <span class="cnt">{{ __('store.home.recommended_badge') }}</span></h2>
     <p>{{ __('store.home.recommended_subtitle') }}</p></div>
     <a class="lnk" href="{{ Url::to('/shop/') }}">{{ __('store.home.recommended_link') }}</a></div>
-  @include('partials.home.grid', ['items' => $rails['recommended'], 'skin' => $sections->skinFor('recommended'), 'catLabel' => __('store.home.recommended_grid_label'), 'eagerFirst' => $eagerFor('recommended')])
+  @include('partials.home.grid', ['items' => $rails['recommended'], 'skin' => $sections->skinFor('recommended'), 'catLabel' => __('store.home.recommended_grid_label')])
 </div></section>
 @endunless
 
@@ -851,7 +818,7 @@
      GridSections::trendingScores(); the controls are Appearance → Homepage
      content → Trending. --}}@unless ($sections->hidden('trending'))
 @if ($home['trending']->isNotEmpty())
-@include('partials.home.hs-rail', ['key' => 'trending', 'cls' => $sections->classFor('trending'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'trending'), 'items' => $home['trending'], 'eagerFirst' => $eagerFor('trending')])
+@include('partials.home.hs-rail', ['key' => 'trending', 'cls' => $sections->classFor('trending'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'trending'), 'items' => $home['trending']])
 @endif
 @endunless
 
@@ -861,7 +828,7 @@
   <div class="sh"><div><h2>{{ __('store.home.bestsellers_heading') }} <span class="cnt">{{ __('store.home.bestsellers_badge') }}</span></h2>
     <p>{{ __('store.home.bestsellers_subtitle') }}</p></div>
     <a class="lnk" href="{{ Url::to('/shop/?orderby=popularity') }}">{{ __('store.home.bestsellers_link') }}</a></div>
-  @include('partials.home.grid', ['items' => $rails['best1'], 'skin' => $sections->skinFor('bestsellers'), 'catLabel' => __('store.home.bestsellers_grid_label'), 'rank' => true, 'eagerFirst' => $eagerFor('bestsellers')])
+  @include('partials.home.grid', ['items' => $rails['best1'], 'skin' => $sections->skinFor('bestsellers'), 'catLabel' => __('store.home.bestsellers_grid_label'), 'rank' => true])
 </div></section>
 @endunless
 
@@ -871,7 +838,7 @@
   <div class="sh"><div><h2>{{ __('store.home.flash_heading') }} <span class="cnt">{{ __('store.home.flash_badge') }}</span></h2>
     <p>{{ __('store.home.flash_subtitle') }}</p></div>
     <a class="lnk" href="{{ Url::to('/shop/?on_sale=1') }}">{{ __('store.home.flash_link') }}</a></div>
-  @include('partials.home.grid', ['items' => $rails['flash'], 'skin' => $sections->skinFor('flash'), 'catLabel' => __('store.home.flash_grid_label'), 'eagerFirst' => $eagerFor('flash')])
+  @include('partials.home.grid', ['items' => $rails['flash'], 'skin' => $sections->skinFor('flash'), 'catLabel' => __('store.home.flash_grid_label')])
 </div></section>
 @endunless
 
@@ -890,7 +857,7 @@
 {{-- UNDER AED 54, SECTION 7 OF ROW 55 (Lane HA). The ceiling is the price
      the shopper pays — GridSections::fetchPool() says how. --}}@unless ($sections->hidden('under54'))
 @if ($home['under54']->isNotEmpty())
-@include('partials.home.hs-rail', ['key' => 'under54', 'cls' => $sections->classFor('under54'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'under54'), 'items' => $home['under54'], 'eagerFirst' => $eagerFor('under54')])
+@include('partials.home.hs-rail', ['key' => 'under54', 'cls' => $sections->classFor('under54'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'under54'), 'items' => $home['under54']])
 @endif
 @endunless
 {{-- THE TWO-COLUMN FEATURE, SECTION 8 OF ROW 55 (Lane HA). --}}@unless ($sections->hidden('feature'))

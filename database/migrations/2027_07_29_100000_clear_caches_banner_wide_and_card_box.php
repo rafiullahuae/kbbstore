@@ -6,12 +6,12 @@ use Illuminate\Database\Migrations\Migration;
 
 /**
  * Clear the caches for Lane PF2: the homepage banner's srcset gains its
- * 1280/1440/1600 copies, the product card's <img> states its frame's width and
- * height, and the first homepage rail's first two cards load eagerly.
+ * 1280/1440/1600 copies and the product card's <img> states its frame's width
+ * and height.
  *
- * components/product-card.blade.php, partials/home/{grid,hs-rail,
- * slider-banner,single-banner}.blade.php and store/home.blade.php changed, so
- * compiled Blade and opcache go. Nothing visible moves, no data is written, no
+ * components/product-card.blade.php and partials/home/{slider-banner,
+ * single-banner}.blade.php changed, and ImageVariants and ProductStyles gained
+ * methods those views call, so compiled Blade and opcache go. Nothing visible moves, no data is written, no
  * route is added and no asset is rebuilt.
  *
  * THE OWNER HAS NOTHING TO PRESS. The banner copies are made after the
