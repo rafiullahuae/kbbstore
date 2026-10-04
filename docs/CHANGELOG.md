@@ -3,6 +3,31 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.373
+**Footer v2, one heading size on the homepage, About us Read more, phone
+carousels that peek.** Apply after .372. No plugin change. Runs 4 migrations
+(Arabic drafts, cache clears, and moving saved phone-carousel values to the new
+defaults). Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| Phone footer: no top logo; socials, description and support text centred; third column Account | Done, phones only. Account = My account, My orders, Wishlist, Addresses (a guest is sent to sign in and back). The old Discover links moved, not dropped: About us → Help, #KBeautyBliss and Journal → Shop |
+| No green; our pink/red/orange/grey only, shading within that range | Strip drifts #E0567B → #C13E63 → #E23A4E → #D9603B (white text ≥ 3.6:1 on every stop); the big name drifts light pink, rose, coral, peach, warm grey. A test refuses any other hue |
+| Shiny bar across the bottom, left→right, right→left in Arabic | On the bottom bar by default; can move to the big name or off. CSS only; off for reduced motion |
+| Control for the complete footer, desktop and mobile | Appearance → Footer → Site footer · link columns / · colours & effects / · layout desktop / · layout mobile (show/hide 13 parts, alignment, spacing, sizes) |
+| Section headings and descriptions the same size, desktop and mobile | Every homepage section: heading 34px laptop / 24px phone, description 16px both (the Best Sellers style you ticked). Appearance → Homepage content → Section headings |
+| Remove "8 sets" | Off; switch on Appearance → Homepage content → Big savings bundles |
+| About us: faded Read more, desktop and mobile | The product page's own clamp and toggle; full text stays in the page for Google. Appearance → Homepage content → About us |
+| Shorter brand boxes on phones | 74 → 54px. Appearance → Homepage content → Brands → Tile height · phone |
+| Phone carousels showing 2.2 / 2.3 / 2.5, arrows off on phones | 2.3 cards in view and no arrows by default, for Big savings bundles and #KBeautyBliss Spotted; measured at 360/390/414 |
+
+Also: switched-off homepage sections are no longer built (cold homepage 57 → 33
+queries); the "Signature" preset now means your current homepage, so pressing it
+can no longer bring the old sections back. Lighthouse: mobile 99 / desktop 100,
+CLS 0, before and after.
+
+Files (24): see the package's update.json.
+
 ## 2.60.372
 **The new homepage, the new footer, #KBeautyBliss Spotted, and every email in the
 approved design.** Apply after .371. No plugin change. **Runs 12 migrations**
