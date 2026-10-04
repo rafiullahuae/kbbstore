@@ -42,7 +42,7 @@
     ));
 @endphp
 
-<section class="sr{{ $showStars ? '' : ' sr-nostars' }}" id="sr" style="--sr-cols:{{ $cols }}" data-product="{{ $product->id }}">
+<section class="sr{{ $showStars ? '' : ' sr-nostars' }}{{ $sr['sr_compact'] ? ' sr-compact' : '' }}" id="sr" style="--sr-cols:{{ $cols }}" data-product="{{ $product->id }}">
     <div class="sr-head"><div class="sr-eyebrow">{{ __('store.reviews.eyebrow') }}</div><h2 class="sr-title">{{ __('store.reviews.heading') }}</h2></div>
 
     <div class="sr-summary">

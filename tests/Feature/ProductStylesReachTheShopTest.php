@@ -80,7 +80,8 @@ function psShopSeed(): void
             // One markdown, so "Discount badge" has a pill to draw (Lane PR:
             // it is a markup switch now, not a <body> class).
             'sale_price' => $i === 2 ? 4000 : null,
-            'stock_status' => 'instock',
+            // One sold out, so "Sold-out label" has a card to draw (Lane PX).
+            'stock_status' => $i === 3 ? 'outofstock' : 'instock',
             'type' => 'simple',
             'rating' => 4.0,
             'review_count' => 3,
@@ -139,6 +140,9 @@ function psOffDefault(): array
            2 October 2026, so switching them back ON is the move. */
         'show_discount' => true,
         'show_new' => true,
+        // Lane PX: on by default (the owner asked), so OFF is the move — and it
+        // reaches the shop only through a sold-out card: psShopSeed's third.
+        'show_soldout' => false,
         'show_cart' => false,
         'name_lines' => 3,
         'sale_colour' => '#123456',

@@ -646,6 +646,7 @@ final class ArabicInterfaceDrafts
             'store.product_card.save_label' => 'وفّر',
             'store.product_card.add_to_cart' => 'أضف إلى السلة',
             'store.product_card.view_product' => 'عرض المنتج',
+            'store.product_card.sold_out' => 'نفدت الكمية',
             // :countk is a compact figure like "12k" — a number and its unit,
             // and the unit is read the same way here.
             'store.product_card.count_thousands' => ':countk',

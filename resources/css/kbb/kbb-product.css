@@ -502,7 +502,8 @@ a{color:inherit;text-decoration:none}
 
    A CARD IS SIZED HERE AND NOWHERE ELSE: the row's width, less the gaps
    between the cards in view, shared between them. --ymal-d / --ymal-m are
-   the "cards in view" settings, printed as integers on the section. Their
+   the "cards in view" settings, printed on the section (--ymal-m may be
+   fractional since Lane PX: 2.3 by default, so the third card peeks). Their
    shipped values, 5 and 2, reproduce the card the grid already drew —
    232.8px at 1280 and 168px at 390, measured before and after — so applying
    this changes how the cards move and not how big they are.
@@ -557,6 +558,14 @@ a{color:inherit;text-decoration:none}
   }
   .ymal-nav{display:flex;gap:8px;position:absolute;inset-inline-end:0;top:calc(var(--pl-sec-pad,34px) + 4px)}
   .ymal h2{padding-inline-end:96px}
+}
+/* (Lane PX) Appearance → Product page → You may also like → Arrows on a
+   phone. Off by default, as on the homepage carousels; on puts the same two
+   arrows beside the heading below 901px too. */
+@media(max-width:900px){
+  .ymal-arr-m .ymal-nav{display:flex;gap:6px;position:absolute;inset-inline-end:0;top:calc(var(--pl-sec-pad,34px) + 2px)}
+  .ymal-arr-m .ymal-btn{width:32px;height:32px}
+  .ymal-arr-m h2{padding-inline-end:80px}
 }
 @media(prefers-reduced-motion:reduce){.rel.ymal-track{scroll-behavior:auto}}
 .pc{background:#fff;border:1px solid var(--line-2);border-radius:var(--r-m);overflow:hidden;transition:.18s var(--ease);display:flex;flex-direction:column}
@@ -829,6 +838,17 @@ a{color:inherit;text-decoration:none}
    of those is an edit to the two declarations below and to nothing else. */
 .pdp .bb-title{font-size:var(--pl-title-m,19px);font-weight:var(--pl-title-w,500);line-height:1.36;letter-spacing:-.005em}
 .pdp .bb-brand{font-size:var(--pl-brand-s,12px)}
+/* THE BRAND CAPSULE (Lane PX). "The bran name should have light background
+   color like capsule with less border radius. but make less height, just put
+   background light color." A pale tint sized to the words (fit-content keeps
+   the <div> a block, so nothing beside it moves), a small radius and 2px top
+   and bottom: the line is 22px where it was 18px. On by default because he
+   asked; Appearance → Product page → Type · Buy column → Brand name background
+   / colour / corner radius. The fallbacks ARE the shipped values, so the page
+   needs no <style> for them. Off sets --pl-brand-cap to 0, which zeroes the
+   padding and paints the tint at 0% size — a colour cannot be multiplied, a
+   background-size can — and the line is the plain text it was. */
+.pdp .bb-brand{width:fit-content;max-width:100%;padding:calc(var(--pl-brand-cap,1) * 2px) calc(var(--pl-brand-cap,1) * 7px);border-radius:var(--pl-brand-r,5px);background:linear-gradient(var(--pl-brand-bg,#FCE8EE),var(--pl-brand-bg,#FCE8EE)) 0 0/calc(var(--pl-brand-cap,1) * 100%) 100% no-repeat}
 .pdp .bb-head .bb-price{display:block;text-align:end;white-space:nowrap;line-height:1.15;margin:0}
 .pdp .bb-head .bb-price s{display:block;font-size:var(--pl-was-s,12.5px);font-weight:500;color:var(--muted);opacity:1}
 .pdp .bb-head .bb-price .now{display:block;font-size:var(--pl-price-s,22px);font-weight:var(--pl-price-w,800);letter-spacing:-.02em}

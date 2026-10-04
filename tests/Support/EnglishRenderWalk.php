@@ -1980,6 +1980,71 @@ final class EnglishRenderWalk
                 'with' => '$1'.self::laneBhBrandCss()."\n".'$2',
                 'hits' => 2,
             ],
+
+            /*
+             * SOLD OUT, SAID ON THE CARD.                             (Lane PX)
+             *
+             * The owner: "the sold out product should have proper sold out
+             * label somewhere on the grid." He asked, so it ships on; Appearance
+             * → Product styles → Card content → Sold-out label (also on
+             * Appearance → Product grid) puts the old card back. Only a sold-out
+             * card moves, and only in two places: a `.kbb-soldout` pill printed
+             * in the photo frame just before the quick-view button, and its
+             * button — "View product" before — saying "Sold out" with the
+             * `kbb-card-soldout` class. Every other card, and every other byte
+             * of these pages, is still compared.
+             *
+             * WHY THE IDS ARE NAMED. DemoCatalogueSeeder marks every ninth
+             * product `outofstock` ($i % 9 === 0, so ids 1, 10 and 19) and this
+             * walk seeds no variable product (see the Lane note above on
+             * Product::isDirectlyBuyable()), so those three are the only cards
+             * that can carry the label; the hit counts are every place one of
+             * them is drawn. A variable product, in stock, keeps "View product"
+             * and no pill — SoldOutCardTest pins that half.
+             */
+            'a sold-out card: the Sold out pill on the photo (Lane PX)' => [
+                'pattern' => '#( {8})( {8}<button class="qv-btn" type="button" aria-label="Quick view" data-kbb-qv="(?:1|10|19)">)#',
+                'with' => '$1<span class="kbb-soldout">Sold out</span>$2',
+                'hits' => 13,
+            ],
+            'a sold-out card: the button says Sold out (Lane PX)' => [
+                'pattern' => '#(data-kbb-qv="(?:1|10|19)">(?:(?!kbb-card-cart).)*?<a class="kbb-card-cart)(" href="[^"]*">)View product</a>#s',
+                'with' => '$1 kbb-card-soldout$2Sold out</a>',
+                'hits' => 13,
+            ],
+
+            /*
+             * THE REVIEW SCORE BOX AT HALF HEIGHT.                    (Lane PX)
+             *
+             * "The review header box i need less heighted, almost less to half.
+             * and keep the same design and elements positions." The markup is
+             * the same box; the section gains `sr-compact`, which
+             * sorina-reviews.css reads (156px -> 78px at 390). Store → Reviews →
+             * Review Settings → Compact summary, on because he asked.
+             */
+            /*
+             * YOU MAY ALSO LIKE: 2.3 CARDS ON A PHONE.                (Lane PX)
+             *
+             * "on product page, i want the same 2.3 cards to display by
+             * default" — the homepage carousels' treatment. One value in one
+             * style attribute: the phone count the calc() divides by. The
+             * laptop count (--ymal-d:5) and every card are unchanged, so the
+             * desktop page draws exactly what it drew. Appearance → Product
+             * page → You may also like → Cards in view on a phone (2.3) and
+             * Arrows on a phone (off) are the controls.
+             */
+            'you may also like: 2.3 cards on a phone (Lane PX)' => [
+                'pattern' => '#aria-labelledby="ymal-h" style="--ymal-d:5;--ymal-m:2">#',
+                'with' => 'aria-labelledby="ymal-h" style="--ymal-d:5;--ymal-m:2.3">',
+                'hits' => 1,
+            ],
+            'the review section: compact summary (Lane PX)' => [
+                // `style=` because the review wall's own <section class="sr"
+                // id="sr"> is a different page and does not move.
+                'pattern' => '#<section class="sr" id="sr" style=#',
+                'with' => '<section class="sr sr-compact" id="sr" style=',
+                'hits' => 1,
+            ],
         ];
     }
 

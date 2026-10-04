@@ -503,7 +503,11 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // tab — `m_brand_size`, "Brand size on a phone", the phone's twin of
     // `brand_size`, appended after `m_font` where SlimFooter::TABS puts it. It
     // follows the desktop brand size until moved, so its value is 100 here.
-    expect($compared)->toBe(675, 'the number of controls drawn changed');
+    // 676 (Lane PX, merged after FT): Product styles → Card content → Sold-out label.
+    // Spliced into the fixture as one new field before show_cart, read off
+    // the live payload; review-settings' `settings` gained sr_compact beside
+    // sr_show_stars. Nothing else in the file moved.
+    expect($compared)->toBe(676, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

@@ -1,0 +1,302 @@
+{
+ "after-grid-390": {
+  "cards": [
+   {
+    "name": "Advanced Snail 96 Mucin Power ",
+    "height": 357,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Azelaic Acid 10 Serum 30ml",
+    "height": 357,
+    "pill": {
+     "text": "Sold out",
+     "w": 73,
+     "h": 20,
+     "font": "10px"
+    },
+    "button": {
+     "text": "Sold out",
+     "bg": "rgb(239, 231, 233)",
+     "fg": "rgb(110, 97, 102)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Ginseng Essence Water 150ml",
+    "height": 357,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Niacinamide 10% + Zinc Ampoule",
+    "height": 357,
+    "pill": null,
+    "button": {
+     "text": "View product",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   }
+  ],
+  "scrollWidth": 390
+ },
+ "after-pdp-390": {
+  "brand": {
+   "h": 22,
+   "w": 51,
+   "bg": "linear-gradient(rgb(252, 232, 238), rgb(252, 232, 238))",
+   "size": "100% 100%",
+   "radius": "5px",
+   "padding": "2px 7px",
+   "fg": "rgb(193, 62, 99)",
+   "font": "12px",
+   "titleTopMinusBrandTop": 30
+  },
+  "summary": {
+   "h": 78.6,
+   "w": 346,
+   "padding": "8px 16px",
+   "avgFont": "30px",
+   "rowPitch": 12
+  },
+  "scrollWidth": 390
+ },
+ "after-grid-1280": {
+  "cards": [
+   {
+    "name": "Advanced Snail 96 Mucin Power ",
+    "height": 416.8,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Azelaic Acid 10 Serum 30ml",
+    "height": 416.8,
+    "pill": {
+     "text": "Sold out",
+     "w": 73,
+     "h": 20,
+     "font": "10px"
+    },
+    "button": {
+     "text": "Sold out",
+     "bg": "rgb(239, 231, 233)",
+     "fg": "rgb(110, 97, 102)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Ginseng Essence Water 150ml",
+    "height": 416.8,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Niacinamide 10% + Zinc Ampoule",
+    "height": 416.8,
+    "pill": null,
+    "button": {
+     "text": "View product",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   }
+  ],
+  "scrollWidth": 1280
+ },
+ "after-pdp-1280": {
+  "brand": {
+   "h": 22,
+   "w": 51,
+   "bg": "linear-gradient(rgb(252, 232, 238), rgb(252, 232, 238))",
+   "size": "100% 100%",
+   "radius": "5px",
+   "padding": "2px 7px",
+   "fg": "rgb(193, 62, 99)",
+   "font": "12px",
+   "titleTopMinusBrandTop": 30
+  },
+  "summary": {
+   "h": 86.6,
+   "w": 868,
+   "padding": "10px 24px",
+   "avgFont": "34px",
+   "rowPitch": 12.5
+  },
+  "scrollWidth": 1280
+ },
+ "after-ar-grid-390": {
+  "cards": [
+   {
+    "name": "Advanced Snail 96 Mucin Power ",
+    "height": 357,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Azelaic Acid 10 Serum 30ml",
+    "height": 357,
+    "pill": {
+     "text": "نفدت الكمية",
+     "w": 68,
+     "h": 20,
+     "font": "10px"
+    },
+    "button": {
+     "text": "نفدت الكمية",
+     "bg": "rgb(239, 231, 233)",
+     "fg": "rgb(110, 97, 102)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Ginseng Essence Water 150ml",
+    "height": 357,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Niacinamide 10% + Zinc Ampoule",
+    "height": 357,
+    "pill": null,
+    "button": {
+     "text": "View product",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   }
+  ],
+  "scrollWidth": 390
+ },
+ "after-ar-pdp-390": {
+  "brand": {
+   "h": 22,
+   "w": 51,
+   "bg": "linear-gradient(rgb(252, 232, 238), rgb(252, 232, 238))",
+   "size": "100% 100%",
+   "radius": "5px",
+   "padding": "2px 7px",
+   "fg": "rgb(193, 62, 99)",
+   "font": "12px",
+   "titleTopMinusBrandTop": 30
+  },
+  "summary": {
+   "h": 78.6,
+   "w": 346,
+   "padding": "8px 16px",
+   "avgFont": "30px",
+   "rowPitch": 12
+  },
+  "scrollWidth": 390
+ },
+ "after-ar-grid-1280": {
+  "cards": [
+   {
+    "name": "Advanced Snail 96 Mucin Power ",
+    "height": 416.8,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Azelaic Acid 10 Serum 30ml",
+    "height": 416.8,
+    "pill": {
+     "text": "نفدت الكمية",
+     "w": 68,
+     "h": 20,
+     "font": "10px"
+    },
+    "button": {
+     "text": "نفدت الكمية",
+     "bg": "rgb(239, 231, 233)",
+     "fg": "rgb(110, 97, 102)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Ginseng Essence Water 150ml",
+    "height": 416.8,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Niacinamide 10% + Zinc Ampoule",
+    "height": 416.8,
+    "pill": null,
+    "button": {
+     "text": "View product",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   }
+  ],
+  "scrollWidth": 1280
+ },
+ "after-ar-pdp-1280": {
+  "brand": {
+   "h": 22,
+   "w": 51,
+   "bg": "linear-gradient(rgb(252, 232, 238), rgb(252, 232, 238))",
+   "size": "100% 100%",
+   "radius": "5px",
+   "padding": "2px 7px",
+   "fg": "rgb(193, 62, 99)",
+   "font": "12px",
+   "titleTopMinusBrandTop": 30
+  },
+  "summary": {
+   "h": 86.6,
+   "w": 868,
+   "padding": "10px 24px",
+   "avgFont": "34px",
+   "rowPitch": 12.5
+  },
+  "scrollWidth": 1280
+ }
+}

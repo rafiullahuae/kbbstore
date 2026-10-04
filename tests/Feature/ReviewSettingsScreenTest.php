@@ -309,7 +309,8 @@ it('sr_show_stars removes the score summary from the product page', function () 
     $html = bbPage($product);
 
     expect($html)->not->toContain('<div class="sr-bars">')
-        ->and($html)->toContain('class="sr sr-nostars"');
+        // (Lane PX) `sr-compact` follows: Compact summary ships on.
+        ->and($html)->toContain('class="sr sr-nostars sr-compact"');
 });
 
 it('sr_show_tabs removes the filter chips from the product page', function () {

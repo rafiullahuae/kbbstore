@@ -19,6 +19,27 @@ review_settings|sr_show_stars|bool|"yes"|true
 review_settings|sr_show_stars|bool|"2"|true
 review_settings|sr_show_stars|bool|0|false
 review_settings|sr_show_stars|bool|"0.0"|true
+review_settings|sr_compact|bool|true|true
+review_settings|sr_compact|bool|false|false
+review_settings|sr_compact|bool|"1"|true
+review_settings|sr_compact|bool|"0"|false
+review_settings|sr_compact|bool|""|false
+review_settings|sr_compact|bool|"on"|true
+review_settings|sr_compact|bool|"off"|false
+review_settings|sr_compact|bool|"no"|false
+review_settings|sr_compact|bool|1|true
+review_settings|sr_compact|bool|0|false
+review_settings|sr_compact|bool|null|false
+review_settings|sr_compact|bool|"null"|false
+review_settings|sr_compact|bool|"NULL"|false
+review_settings|sr_compact|bool|"true"|true
+review_settings|sr_compact|bool|"false"|false
+review_settings|sr_compact|bool|"FALSE"|false
+review_settings|sr_compact|bool|"  off "|false
+review_settings|sr_compact|bool|"yes"|true
+review_settings|sr_compact|bool|"2"|true
+review_settings|sr_compact|bool|0|false
+review_settings|sr_compact|bool|"0.0"|true
 review_settings|sr_show_tabs|bool|true|true
 review_settings|sr_show_tabs|bool|false|false
 review_settings|sr_show_tabs|bool|"1"|true

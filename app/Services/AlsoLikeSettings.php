@@ -97,9 +97,26 @@ class AlsoLikeSettings
             'How many cards fit across before the arrows take over. 5 is the size the cards already were.',
             ['3' => '3', '4' => '4', '5' => '5', '6' => '6']],
 
-        'per_phone' => ['select', 'Cards in view on a phone', '2',
-            'How many cards fit across a phone before a swipe. The next card peeks in at the edge.',
-            ['1' => '1', '2' => '2', '3' => '3']],
+        /*
+         * ▲ 2 -> 2.3, AND THE OWNER ASKED FOR IT.                  (Lane PX)
+         *
+         * "on product page, i want the same 2.3 cards to display by default" —
+         * the treatment the homepage carousels got in 2.60.373. The options
+         * are HomepageContent's `home_hb_per_m` set, so the two screens offer
+         * the same choices, plus the '3' this control always had (a shop that
+         * saved 3 keeps it). A fractional count is printed into the same
+         * `--ymal-m` the calc() already divides by; nothing measures anything.
+         * Laptop is untouched: per_desktop still 5, the same card.
+         */
+        'per_phone' => ['select', 'Cards in view on a phone', '2.3',
+            'How many cards fit across a phone before a swipe. A part-visible card at the screen edge tells a thumb there is more to swipe.',
+            ['1' => '1', '1.5' => '1½ — the next one peeks', '2' => '2', '2.2' => '2.2 — a sliver of the next one',
+                '2.3' => '2.3 — the next one peeks (recommended)', '2.5' => '2½ — the next one peeks', '3' => '3']],
+
+        // (Lane PX) Off, as on the homepage carousels: on a phone the peeking
+        // card says there is more and a swipe moves it.
+        'arrows_m' => ['bool', 'Arrows on a phone', false,
+            'Off: the peeking card shows there is more, and a swipe moves it. On: the two round arrows show on a phone too, beside the heading.'],
 
         'autoplay' => ['bool', 'Move on its own', false,
             'Advance the carousel every few seconds. It stops while the shopper hovers, touches or tabs into it, and never runs for a visitor who has asked for reduced motion.'],
@@ -125,7 +142,7 @@ class AlsoLikeSettings
     public const TABS = [
         'ymal' => ['You may also like',
             'The carousel at the foot of every product page: where its products come from, how many, and how it moves.',
-            ['enabled', 'rule', 'mix', 'fill', 'count', 'hide_oos', 'per_desktop', 'per_phone',
+            ['enabled', 'rule', 'mix', 'fill', 'count', 'hide_oos', 'per_desktop', 'per_phone', 'arrows_m',
                 'autoplay', 'autoplay_s', 'title', 'title_ar', 'eyebrow', 'eyebrow_ar']],
     ];
 

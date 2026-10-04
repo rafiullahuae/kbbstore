@@ -1,0 +1,142 @@
+{
+ "before-grid-390": {
+  "cards": [
+   {
+    "name": "Advanced Snail 96 Mucin Power ",
+    "height": 357,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Azelaic Acid 10 Serum 30ml",
+    "height": 357,
+    "pill": null,
+    "button": {
+     "text": "View product",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Ginseng Essence Water 150ml",
+    "height": 357,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Niacinamide 10% + Zinc Ampoule",
+    "height": 357,
+    "pill": null,
+    "button": {
+     "text": "View product",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   }
+  ],
+  "scrollWidth": 390
+ },
+ "before-pdp-390": {
+  "brand": {
+   "h": 18,
+   "w": 346,
+   "bg": "rgba(0, 0, 0, 0)",
+   "size": "auto",
+   "radius": "0px",
+   "padding": "0px",
+   "fg": "rgb(193, 62, 99)",
+   "font": "12px",
+   "titleTopMinusBrandTop": 26
+  },
+  "summary": {
+   "h": 156,
+   "w": 346,
+   "padding": "20px",
+   "avgFont": "46px",
+   "rowPitch": 22
+  },
+  "scrollWidth": 390
+ },
+ "before-grid-1280": {
+  "cards": [
+   {
+    "name": "Advanced Snail 96 Mucin Power ",
+    "height": 416.8,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Azelaic Acid 10 Serum 30ml",
+    "height": 416.8,
+    "pill": null,
+    "button": {
+     "text": "View product",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Ginseng Essence Water 150ml",
+    "height": 416.8,
+    "pill": null,
+    "button": {
+     "text": "Add to cart",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   },
+   {
+    "name": "Niacinamide 10% + Zinc Ampoule",
+    "height": 416.8,
+    "pill": null,
+    "button": {
+     "text": "View product",
+     "bg": "rgb(224, 86, 123)",
+     "fg": "rgb(255, 255, 255)",
+     "h": 44
+    }
+   }
+  ],
+  "scrollWidth": 1280
+ },
+ "before-pdp-1280": {
+  "brand": {
+   "h": 18,
+   "w": 582,
+   "bg": "rgba(0, 0, 0, 0)",
+   "size": "auto",
+   "radius": "0px",
+   "padding": "0px",
+   "fg": "rgb(193, 62, 99)",
+   "font": "12px",
+   "titleTopMinusBrandTop": 26
+  },
+  "summary": {
+   "h": 156,
+   "w": 868,
+   "padding": "20px",
+   "avgFont": "46px",
+   "rowPitch": 22
+  },
+  "scrollWidth": 1280
+ }
+}

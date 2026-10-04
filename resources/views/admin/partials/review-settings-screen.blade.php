@@ -145,6 +145,7 @@
    code path consults. The inventory, and where each is obeyed:
 
      sr_show_stars    partials/reviews.blade.php  the score summary + bars
+     sr_compact       partials/reviews.blade.php  `sr-compact`: that box at ~half height (Lane PX)
      sr_show_tabs     partials/reviews.blade.php  the All/5/4/photos chips
      sr_show_date     partials/reviews.blade.php  the date on each card
      sr_grid_cols     partials/reviews.blade.php  the --sr-cols custom property
@@ -390,6 +391,7 @@
         '<p class="rvs-legend">On the product page</p>' +
         '<p class="rvs-legend-sub">The review section itself — what it shows and how it is laid out.</p>' +
         row('sr_show_stars', 'Score summary', 'The big average, the star row and the 5-to-1 distribution bars above the reviews. Off leaves just the review count.', sw('sr_show_stars')) +
+        row('sr_compact', 'Compact summary', 'The score box at about half its height — the same score, stars, count and bars in the same places, with less space around them. Off draws the taller box.', sw('sr_compact')) +
         row('sr_show_tabs', 'Filter chips', 'The All / 5★ / 4★ / With Photos buttons above the grid.', sw('sr_show_tabs')) +
         row('sr_show_date', 'Dates on reviews', 'The date under each review. Off hides it on every card.', sw('sr_show_date')) +
         row('sr_grid_cols', 'Columns', 'How many review cards sit side by side on a wide screen. Phones always show one.', num('sr_grid_cols', 1, 6)) +

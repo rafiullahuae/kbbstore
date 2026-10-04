@@ -124,6 +124,15 @@ final class ReviewSettings
      */
     public const SCHEMA = [
         'sr_show_stars' => ['type' => 'bool', 'label' => 'Score summary', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
+        /*
+         * (Lane PX) The owner, with a phone screenshot of the score box: "The
+         * review header box i need less heighted, almost less to half. and keep
+         * the same design and elements positions." On draws the same box —
+         * score, stars and count on the left, the five bars on the right — at
+         * about half the height (156px → 78px at 390, measured); off is the
+         * box that shipped before. On by default because he asked for it.
+         */
+        'sr_compact' => ['type' => 'bool', 'label' => 'Compact summary', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
         'sr_show_tabs' => ['type' => 'bool', 'label' => 'Filter chips', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
         'sr_show_date' => ['type' => 'bool', 'label' => 'Dates on reviews', 'default' => true, 'store' => ModuleSchema::STORE_SETTING],
         'sr_grid_cols' => ['type' => 'int', 'label' => 'Columns', 'default' => 4, 'options' => ['min' => 1, 'max' => 6], 'store' => ModuleSchema::STORE_SETTING],
@@ -164,7 +173,7 @@ final class ReviewSettings
     public const TABS = [
         'page' => ['On the product page',
                    'The review section itself — what it shows and how it is laid out.',
-                   ['sr_show_stars', 'sr_show_tabs', 'sr_show_date', 'sr_grid_cols', 'sr_sort', 'sr_max_reviews']],
+                   ['sr_show_stars', 'sr_compact', 'sr_show_tabs', 'sr_show_date', 'sr_grid_cols', 'sr_sort', 'sr_max_reviews']],
         'empty' => ['When a product has no reviews',
                     'Printed in place of the grid. Plain text — any markup is stripped when it is saved.',
                     ['sr_empty_text']],
