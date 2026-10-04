@@ -105,3 +105,9 @@ public/wp-content/
 # /storage/pdp-logs/ entry Lane PDP added for itself — same intent, every lane.
 /storage/*-logs/
 /storage/framework/kbb-order-reminders.tick
+# (Lane CT) Cart Tracking's runtime files: the retention heartbeat and the
+# compiled block list (per test process: kbb-ip-blocks-test-<pid>.php). Both
+# are rebuilt from the database; neither is source.
+/storage/framework/kbb-cart-tracking.tick
+/storage/framework/kbb-ip-blocks*.php
+/storage/framework/kbb-ip-blocks*.tmp
