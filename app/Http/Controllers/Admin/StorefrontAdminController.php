@@ -12,6 +12,7 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
 use App\Services\AdminPathService;
+use App\Support\BrandLogo;
 use App\Support\CategoryPath;
 use App\Support\Locale;
 use App\Support\PageBanner;
@@ -80,8 +81,12 @@ class StorefrontAdminController extends Controller
     /** What the pencil may change on a category. */
     public const CATEGORY_KEYS = ['header_image', 'header_title', 'header_subtitle', 'header_description', 'focus'];
 
-    /** And on a brand, which has no style column and so no phone crop. */
-    public const BRAND_KEYS = ['header_image', 'header_title', 'header_subtitle', 'header_description'];
+    /**
+     * And on a brand, which has no style column and so no phone crop -- but
+     * does have a logo (Lane BH: "provide facility to upload the brand logo",
+     * from the page where he types the brand's description).
+     */
+    public const BRAND_KEYS = ['header_image', 'header_title', 'header_subtitle', 'header_description', 'logo'];
 
     /** Keys that ride along with every write and are not fields. */
     private const ENVELOPE = ['_token', 'path'];
@@ -395,7 +400,7 @@ class StorefrontAdminController extends Controller
                 'header_subtitle' => (string) ($banner['subheading'] ?? ''),
                 'header_description' => (string) ($model->getAttribute('header_description') ?? ''),
                 'focus' => '',
-            ];
+            ] + ($isBrand ? ['logo' => (string) ($model->getAttribute('logo') ?? '')] : []);
         }
 
         $style = $isBrand ? [] : TitleHeader::sanitizeStyle($model->getAttribute('header_style'));
@@ -406,7 +411,7 @@ class StorefrontAdminController extends Controller
             'header_subtitle' => (string) ($model->getAttribute('header_subtitle') ?? ''),
             'header_description' => (string) ($model->getAttribute('header_description') ?? ''),
             'focus' => (string) ($style['focus'] ?? ''),
-        ];
+        ] + ($isBrand ? ['logo' => (string) ($model->getAttribute('logo') ?? '')] : []);
     }
 
     private function descriptionHint(Model $model): string
@@ -463,7 +468,17 @@ class StorefrontAdminController extends Controller
             $rules['header_style.focus'] = TitleHeaderInput::rules()['header_style.focus'];
         }
 
+        if ($isBrand) {
+            $rules['logo'] = ['nullable', 'string', 'max:2048'];
+        }
+
         $data = Validator::make($shaped, $rules)->validate();
+
+        // The logo: Catalog → Brands' own check, so the two editors refuse the
+        // same addresses (`data:`, `javascript:`, a protocol-relative host).
+        if ($isBrand && array_key_exists('logo', $data)) {
+            $data['logo'] = BrandLogo::safeUrl($data['logo']);
+        }
 
         if (array_key_exists('header_style', $data)) {
             /*
@@ -507,6 +522,13 @@ class StorefrontAdminController extends Controller
         foreach ($data as $key => $value) {
             $model->setAttribute($key, $value);
         }
+
+        // A new logo is a new colour for its ring, read from the file here
+        // (never fetched) -- for the preview's unsaved copy as well, so the
+        // pop-up shows the ring the page will get.
+        if ($isBrand && array_key_exists('logo', $data) && BrandLogo::columnsReady()) {
+            $model->setAttribute('logo_color', BrandLogo::colourOf($data['logo']));
+        }
     }
 
     private function bannerRaw(Model $model): array
@@ -529,6 +551,34 @@ class StorefrontAdminController extends Controller
      * @return array{html:string, kind:string, note:string}
      */
     private function rendered(Model $model, bool $isBrand): array
+    {
+        return $this->header($model, $isBrand) + ($isBrand && $model instanceof Brand ? ['hero' => $this->brandHero($model)] : []);
+    }
+
+    /**
+     * The brand page's logo circle and description, as the page draws them
+     * (Lane BH), so the pop-up can preview the ring and Save can put both on
+     * the page without a reload. The same partial and the same inputs as
+     * Store\BrandController::show().
+     *
+     * @return array{logo:string, desc:string}
+     */
+    private function brandHero(Brand $brand): array
+    {
+        $layout = app(\App\Services\SiteLayout::class);
+
+        return [
+            'logo' => trim(view('store.partials.brand-logo', [
+                'brand' => $brand,
+                'ring' => (bool) $layout->get('brand_ring'),
+                'ringHex' => BrandLogo::ring($brand),
+            ])->render()),
+            'desc' => TitleHeader::brandDescription($brand),
+        ];
+    }
+
+    /** @return array{html:string, kind:string, note:string} */
+    private function header(Model $model, bool $isBrand): array
     {
         $title = (string) (method_exists($model, 't') ? $model->t('name') : $model->getAttribute('name'));
         $banner = PageBanner::forModel($model, $title);

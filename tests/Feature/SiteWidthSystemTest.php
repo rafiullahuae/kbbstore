@@ -685,6 +685,9 @@ it('ships every setting at the value the page already had, except the ones the o
         'brand_all' => true,
         'brand_cta' => false,
         'brand_popular' => false,
+        // Lane BH, as the owner asked: the compact header and the logo ring.
+        'brand_hero' => 'compact',
+        'brand_ring' => true,
         'press' => 'c',
     ];
 

@@ -618,6 +618,13 @@
     };
   }
 
+  /* A colour input only takes #rrggbb; anything else shows the shop pink. */
+  function ringHex(v){
+    v = String(v || '').trim().toLowerCase();
+    if (/^#[0-9a-f]{3}$/.test(v)) v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+    return /^#[0-9a-f]{6}$/.test(v) ? v : '#e0567b';
+  }
+
   function hex(v){
     v = String(v || '').trim().toLowerCase();
     return /^#([0-9a-f]{3}|[0-9a-f]{6})$/.test(v) ? v : '#e0567b';
@@ -806,6 +813,18 @@
         + libraryField('bz-logo-lib', 'bz-logo', 'bz-logo-thumb',
             'Shown beside the brand in the shop filter and on its page.')
         + '</div>'
+      /* Lane BH — the ring round the logo on the brand's page. Blank means
+         the colour App\Support\BrandLogo took from the logo file itself
+         (shown as the placeholder); the server accepts #rgb / #rrggbb only. */
+      + '<div class="bz-fld"><label for="bz-ring">Ring colour (blank = from the logo)</label>'
+        + '<div style="display:flex;gap:8px;align-items:center;min-width:0">'
+        + '<input type="color" id="bz-ring-pick" value="' + esc(ringHex(brand.ring_color || brand.logo_color)) + '" aria-label="Pick the ring colour" style="width:42px;height:34px;padding:2px;flex:none">'
+        + '<input type="text" id="bz-ring" maxlength="7" value="' + esc(brand.ring_color || '') + '" placeholder="' + esc(brand.logo_color || 'from the logo') + '" style="max-width:150px">'
+        + '<button type="button" class="bz-btn" id="bz-ring-clear">Use the logo\u2019s colour</button></div>'
+        + '<p class="bz-note">' + (brand.logo_color
+            ? 'Taken from the logo: <b>' + esc(brand.logo_color) + '</b>. '
+            : 'No colour could be taken from this logo, so the ring is the shop pink. ')
+        + 'Type or pick a colour to use your own instead.</p></div>'
       + '<div class="bz-fld"><label for="bz-desc">Description</label>'
         + '<textarea id="bz-desc" rows="3" maxlength="5000">' + esc(brand.description || '') + '</textarea>'
         + '<p class="bz-note">Shown under the heading on the brand’s page.</p>'
@@ -860,6 +879,16 @@
     wireLibrary('bz-logo-lib', 'bz-logo', 'bz-logo-thumb', 'brands',
       'Choose the brand logo', brand.logo);
 
+    /* The picker and the box are one value: picking writes the box, typing a
+       valid colour moves the picker, Clear empties the box (= from the logo). */
+    var ringBox = document.getElementById('bz-ring');
+    var ringPick = document.getElementById('bz-ring-pick');
+    if (ringBox && ringPick) {
+      ringPick.oninput = function(){ ringBox.value = ringPick.value; };
+      ringBox.oninput = function(){ if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(ringBox.value.trim())) ringPick.value = ringHex(ringBox.value); };
+      document.getElementById('bz-ring-clear').onclick = function(){ ringBox.value = ''; ringPick.value = ringHex(brand.logo_color); };
+    }
+
     var nameEl = document.getElementById('bz-name');
     if (nameEl) nameEl.oninput = function(){ drawPreview(nameEl.value); };
 
@@ -892,6 +921,7 @@
         name: val('bz-name'),
         slug: val('bz-slug'),
         logo: val('bz-logo'),
+        ring_color: val('bz-ring'),
         description: val('bz-desc'),
         position: parseInt(val('bz-pos'), 10) || 0,
         /* Every box is sent on every save, including an unchecked checkbox as

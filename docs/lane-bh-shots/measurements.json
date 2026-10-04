@@ -1,0 +1,136 @@
+{
+ "before": {
+  "before-brands-anua-390.png": {
+   "heroHeight": 258.6,
+   "logo": 72,
+   "logoTop": 149,
+   "h1Top": 235,
+   "h1Font": "26px",
+   "ring": "none",
+   "firstProductTop": 436,
+   "scrollWidth": 390
+  },
+  "before-brands-anua-1280.png": {
+   "heroHeight": 131,
+   "logo": 96,
+   "logoTop": 133,
+   "h1Top": 116,
+   "h1Font": "26px",
+   "ring": "none",
+   "firstProductTop": 274,
+   "scrollWidth": 1280
+  }
+ },
+ "after": {
+  "after-brands-anua-390.png": {
+   "heroHeight": 153.8,
+   "logo": 44,
+   "logoTop": 149,
+   "h1Top": 159,
+   "h1Font": "20px",
+   "ring": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(66, 157, 94) 0px 0px 0px 5px",
+   "firstProductTop": 317,
+   "scrollWidth": 390
+  },
+  "after-brands-anua-1280.png": {
+   "heroHeight": 114.3,
+   "logo": 56,
+   "logoTop": 116,
+   "h1Top": 129,
+   "h1Font": "24px",
+   "ring": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(66, 157, 94) 0px 0px 0px 5px",
+   "firstProductTop": 248,
+   "scrollWidth": 1280
+  },
+  "after-brands-cosrx-390.png": {
+   "heroHeight": 91.5,
+   "logo": 44,
+   "logoTop": 149,
+   "h1Top": 159,
+   "h1Font": "20px",
+   "ring": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(48, 102, 201) 0px 0px 0px 5px",
+   "firstProductTop": 255,
+   "scrollWidth": 390
+  },
+  "after-brands-cosrx-1280.png": {
+   "heroHeight": 88.1,
+   "logo": 56,
+   "logoTop": 116,
+   "h1Top": 129,
+   "h1Font": "24px",
+   "ring": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(48, 102, 201) 0px 0px 0px 5px",
+   "firstProductTop": 222,
+   "scrollWidth": 1280
+  },
+  "after-brands-round-lab-390.png": {
+   "heroHeight": 91.5,
+   "logo": 44,
+   "logoTop": 149,
+   "h1Top": 159,
+   "h1Font": "20px",
+   "ring": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(224, 86, 123) 0px 0px 0px 5px",
+   "firstProductTop": 255,
+   "scrollWidth": 390
+  },
+  "after-brands-round-lab-1280.png": {
+   "heroHeight": 88.1,
+   "logo": 56,
+   "logoTop": 116,
+   "h1Top": 129,
+   "h1Font": "24px",
+   "ring": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(224, 86, 123) 0px 0px 0px 5px",
+   "firstProductTop": 222,
+   "scrollWidth": 1280
+  },
+  "after-ar-brands-anua-390.png": {
+   "heroHeight": 153.8,
+   "logo": 44,
+   "logoTop": 149,
+   "h1Top": 159,
+   "h1Font": "20px",
+   "ring": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(66, 157, 94) 0px 0px 0px 5px",
+   "firstProductTop": 317,
+   "scrollWidth": 390
+  },
+  "after-ar-brands-anua-1280.png": {
+   "heroHeight": 114.3,
+   "logo": 56,
+   "logoTop": 116,
+   "h1Top": 129,
+   "h1Font": "24px",
+   "ring": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(66, 157, 94) 0px 0px 0px 5px",
+   "firstProductTop": 248,
+   "scrollWidth": 1280
+  }
+ },
+ "admin": {
+  "qeLogoPreview": {
+   "html": "<span class=\"brw-logo brw-logo--lg brw-logo--ring\" style=\"--brw-ring:#ea7f33\"><img src=\"http://127.0.0.1:9960/uploads/brands/20261004-141542-6oCDJrYB.png\" alt=\"Round Lab\" decoding=\"async\"></span>"
+  },
+  "afterSave": {
+   "heroHeight": 88.1,
+   "logo": 56,
+   "logoTop": 148,
+   "h1Top": 161,
+   "h1Font": "24px",
+   "ring": "rgb(255, 255, 255) 0px 0px 0px 2px, rgb(234, 127, 51) 0px 0px 0px 5px",
+   "firstProductTop": 254,
+   "scrollWidth": 1280
+  },
+  "afterSaveLogo": "<span class=\"brw-logo brw-logo--lg brw-logo--ring\" style=\"--brw-ring:#ea7f33\"><img src=\"http://127.0.0.1:9960/uploads/brands/20261004-141542-6oCDJrYB.png\" alt=\"Round Lab\" decoding=\"async\"></span>",
+  "adminRing1280": {
+   "placeholder": "#429d5e",
+   "picker": "#429d5e",
+   "note": "Taken from the logo: #429d5e. Type or pick a colour to use your own instead.",
+   "contentScrollWidth": 1032,
+   "contentWidth": 1032
+  },
+  "adminRing390": {
+   "placeholder": "#429d5e",
+   "picker": "#429d5e",
+   "note": "Taken from the logo: #429d5e. Type or pick a colour to use your own instead.",
+   "contentScrollWidth": 390,
+   "contentWidth": 390
+  }
+ }
+}
