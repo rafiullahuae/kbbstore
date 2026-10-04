@@ -225,6 +225,30 @@ final class EditPresence
         return null;
     }
 
+    /**
+     * Who, other than $me, holds a live lock on this record -- or null.
+     *
+     * For a write that is not one of GUARDED's routes but still changes a
+     * record somebody may have open: SEO Keywords' "Use title / Use
+     * description" writes the same `seo` column the product editor saves, so
+     * applying it under an open editor would be silently undone by that
+     * editor's next Save. Absent table = nothing held, as in refuseSave().
+     */
+    public static function heldByOther(string $type, string $id, AdminUser $me): ?string
+    {
+        try {
+            $row = self::row($type, $id);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($row === null || self::expired($row, now()) || (int) $row->admin_id === (int) $me->id) {
+            return null;
+        }
+
+        return $row->holder_name ?? 'Another admin';
+    }
+
     /* ======================================================== online now */
 
     /**

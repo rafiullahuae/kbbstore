@@ -260,6 +260,15 @@ class SeoKeywordsApiController extends Controller
             return response()->json(['message' => 'That page no longer exists.'], 404);
         }
 
+        // Someone has this record open in its editor: their next Save would
+        // put the old title back, so refuse and say who (EditPresence).
+        $me = $request->user('admin');
+        $holder = $me ? \App\Support\EditPresence::heldByOther($d['type'], (string) $d['id'], $me) : null;
+        if ($holder !== null) {
+            return response()->json(['error' => 'edit_locked', 'holder' => $holder,
+                'message' => "{$holder} is editing this page right now, so the suggestion was not applied. Try again when they have finished."], 409);
+        }
+
         $seo = is_array($model->seo) ? $model->seo : [];
         foreach (array_unique($d['fields']) as $f) {
             $v = trim(strip_tags((string) ($suggest[$f] ?? '')));

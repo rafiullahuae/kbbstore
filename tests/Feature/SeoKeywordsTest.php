@@ -514,19 +514,30 @@ it('drives a sync, a hand edit and a one-click title through the admin API', fun
     while ($run['status'] === 'running') {
         $run = $this->actingAs($owner, 'admin')->postJson('/admin-api/seo-keywords/sync/'.$run['id'].'/step')->assertOk()->json();
     }
-    $pages = $this->actingAs($owner, 'admin')->getJson('/admin-api/seo-keywords/pages?type=product')->assertOk()->json();
+    $pages = $this->actingAs($owner, 'admin')->getJson('/admin-api/seo-keywords/entities?type=product')->assertOk()->json();
     expect($pages['total'])->toBe(Product::query()->visible()->count());
 
     $taken = DB::table('seo_page_keywords')->where('entity_id', (string) $c['nia']->id)->value('primary_kw');
-    $this->actingAs($owner, 'admin')->putJson('/admin-api/seo-keywords/pages', [
+    $this->actingAs($owner, 'admin')->putJson('/admin-api/seo-keywords/entities', [
         'type' => 'product', 'id' => (string) $c['snail']->id, 'locale' => 'en', 'keywords' => ['x y z'], 'primary' => $taken, 'locked' => true,
     ])->assertStatus(422);
-    $this->actingAs($owner, 'admin')->putJson('/admin-api/seo-keywords/pages', [
+    $this->actingAs($owner, 'admin')->putJson('/admin-api/seo-keywords/entities', [
         'type' => 'product', 'id' => (string) $c['snail']->id, 'locale' => 'en', 'keywords' => ['<b>snail</b> serum', 'snail serum'], 'primary' => 'snail serum', 'locked' => true,
     ])->assertOk()->assertJsonPath('keywords', ['snail serum']);
 
     $this->actingAs($owner, 'admin')->postJson('/admin-api/seo-keywords/apply', ['type' => 'product', 'id' => $c['nia']->id, 'fields' => ['title']])->assertOk();
     expect($c['nia']->fresh()->seo['title'] ?? '')->toContain('COSRX');
+    /*
+     * Integrator, 2.60.377: with somebody else editing that product, the
+     * one-click title is refused with their name -- their editor's next Save
+     * would otherwise put the old title back without anyone noticing.
+     * MUTATION: drop the EditPresence::heldByOther() check in apply() and
+     * this is 200.
+     */
+    $other = kwAdmin('manager');
+    \App\Support\EditPresence::beat($other, 'product', (string) $c['nia']->id, null);
+    $this->actingAs($owner, 'admin')->postJson('/admin-api/seo-keywords/apply', ['type' => 'product', 'id' => $c['nia']->id, 'fields' => ['title']])
+        ->assertStatus(409)->assertJsonPath('error', 'edit_locked')->assertJsonPath('holder', 'KW manager');
 });
 
 it('composes four layers within their quotas from the page\'s own facts', function () {

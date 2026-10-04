@@ -346,7 +346,7 @@
   }
   async function loadPages() {
     var p = st.pages;
-    try { p.data = await api('GET', '/pages?' + new URLSearchParams({ type: p.type, locale: p.locale, filter: p.filter, q: p.q, page: String(p.page) })); st.err = ''; } catch (e) { st.err = e.message; p.data = { rows: [], total: 0, page: 1, pages: 1 }; }
+    try { p.data = await api('GET', '/entities?' + new URLSearchParams({ type: p.type, locale: p.locale, filter: p.filter, q: p.q, page: String(p.page) })); st.err = ''; } catch (e) { st.err = e.message; p.data = { rows: [], total: 0, page: 1, pages: 1 }; }
   }
 
   async function show(tab) {
@@ -390,7 +390,7 @@
       else if (act === 'cancel-edit') { st.pages.edit = null; drawPages(); }
       else if (act === 'save-page') {
         var kws = q('#skwEdKw').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 10);
-        var out = await api('PUT', '/pages', { type: row.type, id: row.id, locale: row.locale, keywords: kws, primary: q('#skwEdPri').value.trim() || null, locked: q('#skwEdLock').checked });
+        var out = await api('PUT', '/entities', { type: row.type, id: row.id, locale: row.locale, keywords: kws, primary: q('#skwEdPri').value.trim() || null, locked: q('#skwEdLock').checked });
         row.keywords = out.keywords; row.primary = out.primary; row.locked = out.locked; row.clash = null;
         row.layers = { own: out.keywords }; st.pages.edit = null; say('Saved.'); drawPages();
       } else if (act === 'apply') {
