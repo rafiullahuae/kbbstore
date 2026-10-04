@@ -3110,7 +3110,8 @@ const LATE_NAV=[
   {screen:'pagewash',label:'Page background',group:'Appearance',after:['dividers','prodstyles','homepage','layout'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 14c4-3 7 1 10-1s5-2 8 0"/>'},
   {screen:'searchterms',label:'Search Terms',group:'Growth & Marketing',after:['pixels','meta','labels','newsletter'],icon:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/><path d="M8 11h6"/><path d="M11 8v6"/>'},
   {screen:'wabutton',label:'WhatsApp button',group:'Appearance',after:['pagewash','dividers','prodstyles','homepage'],icon:'<path d="M4.5 19.5 6 15.6A8 8 0 1 1 9 18.6z"/><path d="M9.5 9.5c.4 2.2 2.3 4.4 5 5"/>'},
-  {screen:'carttracking',label:'Cart Tracking',group:'Growth & Marketing',after:['searchterms','pixels','meta','labels','newsletter'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/><path d="m11 10 2 2 3-3"/>'}
+  {screen:'carttracking',label:'Cart Tracking',group:'Growth & Marketing',after:['searchterms','pixels','meta','labels','newsletter'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/><path d="m11 10 2 2 3-3"/>'},
+  {screen:'seokeywords',label:'SEO Keywords',group:'Store',after:['seo','search'],icon:'<path d="M4 7h9M4 12h6M4 17h4"/><circle cx="16.5" cy="13.5" r="4.5"/><path d="m20 17 2 2"/>'}
 ];
 
 /* The ids above, for the click guard below. */
@@ -3378,7 +3379,7 @@ const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overv
    opened the dashboard. Same fix, same condition, and the strings are copied
    from what each partial's own go() writes so the heading cannot depend on how
    the screen was reached. */
-'spotted':['Appearance','#KBeautyBliss Spotted'],'wabutton':['Appearance','WhatsApp button'],'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Growth & Marketing','Cart Tracking']};
+'spotted':['Appearance','#KBeautyBliss Spotted'],'wabutton':['Appearance','WhatsApp button'],'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Growth & Marketing','Cart Tracking'],'seokeywords':['Store','SEO Keywords']};
 let cur='dash';
 /* `sub` is an optional sub-tab within the screen — only Catalog has them, and
    only the Modules screen passes one (product_sorting links to the Reorder
@@ -8717,7 +8718,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','emails','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','emails','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -24432,6 +24433,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
      in this console needed and only the product editor had, and
      window.kbbSeoOverview(), the Overview subtab. --}}
 @include('admin.partials.seo-back-office')
+@include('admin.partials.seo-keywords-screen')
 
 {{-- LANE V3 · the shoppable-video rail.
 

@@ -126,7 +126,7 @@ appending lengthens it. §6 lengthens the record in the same commit.
 **Replacement:**
 
 ```
-'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Growth & Marketing','Cart Tracking']};
+'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Growth & Marketing','Cart Tracking'],'seokeywords':['Store','SEO Keywords']};
 ```
 
 ---
@@ -191,7 +191,7 @@ lane's and is not part of the anchor/replacement pair, so a later lane can
 lengthen the line without disturbing it):
 
 ```
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','emails','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','emails','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
 ```
 
 > **THIS ONE LINE MOVES, AND IT MOVED ONCE WHILE THIS LANE WAS OPEN.** The

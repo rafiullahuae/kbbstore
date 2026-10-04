@@ -577,6 +577,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          * for four times, and which the lane's own test caught it getting wrong.
          */
         require __DIR__.'/seo-back-office.php';
+        require __DIR__.'/seo-keywords-admin.php';
 
         // Brand CRUD and the directory display mode. Same group: it writes
         // catalogue records and accepts an uploaded logo path.

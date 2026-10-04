@@ -97,6 +97,7 @@ final class AdminRoles
             'admin.access', 'dashboard.view', 'presence.view', 'analytics.view', 'search_terms.view', 'seo.audit',
             'catalog.view', 'catalog.manage', 'catalog.export', 'producttabs.view', 'producttabs.manage',
             'shareimages.make', 'content.manage', 'posts.manage', 'pages.manage', 'reviews.view',
+            'seo_keywords.view', 'seo_keywords.sync',
         ],
         'inventory-manager' => [
             'admin.access', 'dashboard.view', 'presence.view', 'catalog.view', 'catalog.manage', 'catalog.export',
@@ -171,6 +172,8 @@ final class AdminRoles
         ]],
         ['seo', 'SEO', [
             'seo.audit' => 'SEO overview and audit',
+            'seo_keywords.view' => 'See SEO keywords',
+            'seo_keywords.sync' => 'Sync, edit and undo SEO keywords',
         ]],
         ['appearance', 'Appearance', [
             'banners.view' => 'See banners',

@@ -749,6 +749,13 @@ final class AdminSearchIndex
             ],
         ],
         'searchterms' => [],
+        'seokeywords' => [
+            'Overview' => [],
+            'Sources' => [],
+            'Keyword bank' => [],
+            'Pages' => [],
+            'Sync' => [],
+        ],
         'carttracking' => [
             'Carts' => ['Bot', 'Countries'],
             'Added products' => [],

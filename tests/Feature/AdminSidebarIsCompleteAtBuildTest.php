@@ -389,7 +389,7 @@ it('keeps LATE_NAV in the order the sidebar is built in', function () {
         'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'cache'],
         'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'routines', 'category-tree', 'brands-manager'],
         'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'import', 'orders',
-            'order-new', 'coupon-editor', 'payments', 'paygw', 'security', 'analytics', 'search', 'seo',
+            'order-new', 'coupon-editor', 'payments', 'paygw', 'security', 'analytics', 'search', 'seo', 'seokeywords',
             'mail', 'store-settings', 'customers', 'quiz-leads'],
         'Content' => ['posts', 'htmlblocks', 'media', 'ugcsections', 'instagram'],
         // 'pagewash' — Appearance → Page background (Lane BG), one insertion,
