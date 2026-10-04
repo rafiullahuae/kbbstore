@@ -295,6 +295,10 @@ it('keeps every colour the strip and the big name drift through in the pink, red
 it('sweeps a shine across the bottom bar, left to right in English and right to left in Arabic, with CSS alone', function () {
     $css = hfCss();
 
+    // (Lane FT) It ships OFF now — the owner, 4 October: "remove the effect
+    // from the very last row of the footer" — so the bar is switched on here.
+    hfSave(['site_sheen' => 'bar']);
+
     expect(hfClasses(hfFooter($this)))->toContain('kft-sheen-bar')
         ->and($css)->toContain('@keyframes kft-sheen{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}')
         ->and($css)->toContain('@keyframes kft-sheen-rtl{0%{transform:translateX(100%)}60%,100%{transform:translateX(-100%)}}')
@@ -319,9 +323,10 @@ it('sweeps a shine across the bottom bar, left to right in English and right to 
     expect(implode(' ', hfClasses($footer)))->not->toContain('kft-sheen')
         ->and($footer)->not->toContain('data-kft-text');
 
-    // A value that is not one of the select's own options is the shipped one.
+    // A value that is not one of the select's own options is the shipped one,
+    // which is Off since Lane FT.
     hfSave(['site_sheen' => 'everywhere']);
-    expect(hfClasses(hfFooter($this)))->toContain('kft-sheen-bar');
+    expect(implode(' ', hfClasses(hfFooter($this))))->not->toContain('kft-sheen');
 });
 
 it('keeps only safe addresses and no word about returns in the owner\'s own link lists', function () {
@@ -437,7 +442,7 @@ it('draws the Arabic footer with the same controls, its titles through the trans
     $footer = hfFooter($this, '/ar/');
 
     expect($footer)->not->toBe('')
-        ->and(hfClasses($footer))->toContain('kft-sheen-bar')->toContain('kft-xm-logo')
+        ->and(hfClasses($footer))->toContain('kft-motion')->toContain('kft-xm-logo')
         // Drafts are not served until he approves them; the keys resolve.
         ->and($footer)->toContain('class="kft-ch">'.__('store.footer.account_title').'</h2>');
 });

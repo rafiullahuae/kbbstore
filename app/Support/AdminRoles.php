@@ -184,6 +184,7 @@ final class AdminRoles
             'checkoutpage.manage' => 'Checkout page appearance',
             'setappearance.manage' => 'Set box appearance',
             'slimfooter.manage' => 'Footer bar',
+            'footer.preview' => 'Footer previews',
             'spotted.manage' => '#KBeautyBliss Spotted',
             'sitelayout.manage' => 'Site width and columns',
             'pagewash.manage' => 'Page background',

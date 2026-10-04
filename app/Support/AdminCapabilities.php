@@ -426,6 +426,12 @@ final class AdminCapabilities
         // two above.
         'slimfooter.manage' => ['owner', 'manager', 'editor'],
 
+        // Appearance → Footer's live preview (Lane FT): renders one footer page
+        // from unsaved values and writes nothing. The same three roles as the
+        // screen it serves, and its own name so narrowing either never
+        // silently narrows the other.
+        'footer.preview' => ['owner', 'manager', 'editor'],
+
         // Appearance → #KBeautyBliss Spotted (Lane HB, routes/spotted-admin.php):
         // the hand-picked Instagram posts on the homepage carousel and on
         // /kbeautybliss-spotted/, and the section's look. Storefront appearance,
@@ -1571,6 +1577,10 @@ final class AdminCapabilities
          */
         ['*', 'admin-api/set-appearance', 'setappearance.manage'],
         ['*', 'admin-api/set-appearance/**', 'setappearance.manage'],
+        // The preview BEFORE the screen's own line, and as an exact path: the
+        // line below it matches 'admin-api/slim-footer' and nothing under it,
+        // so without this the preview would be off the map. (Lane FT)
+        ['*', 'admin-api/slim-footer/preview', 'footer.preview'],
         ['*', 'admin-api/slim-footer', 'slimfooter.manage'],
         // Appearance → #KBeautyBliss Spotted (Lane HB). Both lines: the screen's
         // read is the bare path and every write is under it, and a write left

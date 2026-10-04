@@ -499,7 +499,11 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // 672 IN 2.60.376: "How it fills the row" (`nav_fit_mode`) on the nav tab,
     // spliced in after `nav_fit`; `nav_fit` and `nav_fit_max` changed help text only.
     // 674 since 2.60.380: Cut price size, phone and desktop.
-    expect($compared)->toBe(674, 'the number of controls drawn changed');
+    // 675 (Lane FT): + 1 on Appearance → Footer → the slim bar's "On a phone"
+    // tab — `m_brand_size`, "Brand size on a phone", the phone's twin of
+    // `brand_size`, appended after `m_font` where SlimFooter::TABS puts it. It
+    // follows the desktop brand size until moved, so its value is 100 here.
+    expect($compared)->toBe(675, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

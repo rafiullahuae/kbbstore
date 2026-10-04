@@ -1,51 +1,53 @@
 {{--
-    Appearance → Footer. (Lane: slim-footer)
+    Appearance → Footer — FOUR PAGES, each with its own live preview. (Lane FT)
 
-    Pulled into resources/views/admin/app.blade.php at the very end, after that
-    file closes its raw block, so this runs once the console's own script has
-    defined window.go, window.kbbAddNavEntry and toast(). It registers its own
-    sidebar entry and wraps window.go, exactly as the screens beside it do, so
-    that one include is the whole of the change to that file.
+    THE OWNER, 4 October: "The footer page is completely messed up. I want
+    total 4 pages in footer. Desktop, Mobile. Cart-Checkout Footer for Desktop
+    and Mobile. and also i need previews on each page. make it super easy to
+    use. and complete controls."
 
-    ── WHAT THIS SCREEN IS FOR ──────────────────────────────────────────────
+    So the thirteen tabs that mixed two different footers are gone. The screen
+    is ONE sidebar entry, Appearance → Footer, opening on four big page tabs:
 
-    "i need a seperate footer as attached, something like that stunning with
-    same text (can be change from backend), set the checkout footer under
-    Appearance > Footer / Checkout Footer / Cart Footer, also give control to
-    control and to hide unhide the footer on cart and checkout separately ...
-    overall height of the new footer i want very less, like a bar type. give
-    some options to choose from."
+        Site footer · Desktop              Site footer · Mobile
+        Cart & Checkout footer · Desktop   Cart & Checkout footer · Mobile
 
-    So: one bar, three shapes, every word a setting, and two switches — the
-    cart's ships OFF, because that page was not to be disturbed.
+    One entry with four page tabs rather than four sidebar rows: the owner
+    already looks for "Appearance → Footer", the four pages share one set of
+    values (a word typed on the Desktop page is the same word on the Mobile
+    page, so switching pages must not lose it), and one entry keeps the
+    unsaved-changes record and the preview in one place.
+
+    Which control sits on which page is App\Support\FooterPages — a map over the
+    two services' existing SCHEMA keys, served with the fields by
+    GET admin-api/slim-footer. A control both devices read is drawn on both
+    device pages, writes the SAME key, and carries a "Desktop + mobile" tag.
+
+    THE PREVIEW is the shop's own partial — partials/footer or
+    partials/slim-footer — rendered by POST admin-api/slim-footer/preview from
+    the values on this screen, saved or not, into a sandboxed iframe framed at
+    the page's width (1280 for a desktop page, 390 for a phone) and scaled to
+    fit with CSS alone. It is asked for once per pause in typing (350ms), never
+    on a timer, and a newer answer always replaces an older one.
 
     ── NOTHING BELOW MAY NAME BLADE'S RAW-BLOCK DIRECTIVES ──────────────────
 
     Not in the code and not in this comment either. Blade pairs the first such
     opening directive it finds anywhere in the file -- inside a comment
-    included -- with the next closing one, so writing the word in prose
-    swallows everything between them and serves the whole docblock to the
-    browser as visible text.
+    included -- with the next closing one.
 
     ── THE LAYOUT RULE ──────────────────────────────────────────────────────
 
     Nothing here may be wider than its column at 390px: the owner reviews on a
     phone. Every grid and flex child that can hold something wide carries
-    min-width:0, because a grid item's default min-width is auto.
+    min-width:0. Nothing measures layout: the 1280px frame is scaled with
+    tan(atan2(100cqw, 1280px)), which is the frame's width over 1280 as a
+    plain number, worked out by the browser's own CSS.
 
-    EVERY CLASS IS PREFIXED sfs- OR sfv- AND APPEARS NOWHERE ELSE IN THE
-    CONSOLE, and so is every data- attribute anything clicks: app.blade.php
-    binds delegated listeners to `document` itself, each claiming a bare
-    attribute name, and a click on any element carrying one is handled by that
-    listener whichever screen it belongs to.
+    EVERY CLASS IS PREFIXED sfs- AND APPEARS NOWHERE ELSE IN THE CONSOLE, and
+    so is every data- attribute anything clicks: app.blade.php binds delegated
+    listeners to `document` itself.
 --}}
-{{-- The shop's own payment artwork, handed to the preview below.
-
-     UP HERE AND NOT DOWN THERE because the script is inside this file's raw
-     region, where interpolation ships as literal text rather than running. One
-     source, App\Support\PaymentMarkArt -- a preview that drew its own chips
-     would be a preview that disagrees with the bar. --}}
-<script>window.SFV_PAY = @json(\App\Support\PaymentMarkArt::marks());</script>
 @verbatim
 <style>
 .sfs-wrap{display:grid;gap:14px;min-width:0}
@@ -53,132 +55,97 @@
 .sfs-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
           border-radius:var(--r,12px);padding:16px;min-width:0}
 .sfs-title{font-weight:650;font-size:15px}
-.sfs-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.55;margin-top:3px;max-width:68ch}
-.sfs-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
-.sfs-tab{padding:8px 12px;border:1px solid var(--border,#e6e6e6);border-radius:9px;
-         background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
-.sfs-tab[aria-selected="true"]{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
-.sfs-fields{display:grid;gap:14px;margin-top:14px;min-width:0}
-.sfs-f{display:grid;gap:5px;min-width:0}
-.sfs-fh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}
-.sfs-fh label{font-size:12.5px;font-weight:650;min-width:0;overflow-wrap:anywhere}
-.sfs-val{font-size:11.5px;font-weight:650;color:var(--accent,#15a85a);white-space:nowrap;
-         font-variant-numeric:tabular-nums}
-.sfs-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5;margin:0;max-width:68ch}
-.sfs-f input[type=range]{width:100%;accent-color:var(--accent,#15a85a);margin:0;min-width:0}
-.sfs-f input[type=text],.sfs-f select{width:100%;min-width:0;padding:8px 10px;font:inherit;font-size:13px;
-  border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
-.sfs-f textarea{width:100%;min-width:0;padding:8px 10px;font:inherit;font-size:13px;line-height:1.5;resize:vertical;
-  border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit;font-family:ui-monospace,Menlo,Consolas,monospace}
-.sfs-f input.sfs-colour{width:64px;height:34px;padding:2px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;cursor:pointer}
-.sfs-check{display:flex;gap:10px;align-items:flex-start;min-width:0}
-.sfs-check input{margin-top:3px;flex:none;width:16px;height:16px}
-.sfs-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;min-width:0}
+.sfs-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.55;margin:3px 0 0;max-width:68ch}
+.sfs-note{border:1px dashed var(--border,#e6e6e6);border-radius:10px;padding:10px 12px;
+          font-size:12.5px;line-height:1.5;color:var(--ink-soft,#6b7280);min-width:0}
+.sfs-note.is-bad{border-style:solid;border-color:#b4443c;color:#b4443c}
+.sfs-empty{padding:22px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
+
+/* ── the four pages ─────────────────────────────────────────────────────── */
+.sfs-pages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;min-width:0}
+.sfs-ptab{display:flex;align-items:center;gap:10px;min-width:0;padding:12px 13px;text-align:start;
+  border:1px solid var(--border,#e6e6e6);border-radius:12px;background:var(--surface,#fff);
+  color:inherit;font:inherit;cursor:pointer}
+.sfs-ptab svg{flex:none;width:22px;height:22px;color:var(--ink-soft,#6b7280)}
+.sfs-ptab span{display:grid;gap:1px;min-width:0}
+.sfs-ptab b{font-size:13.5px;font-weight:650;line-height:1.25;overflow-wrap:anywhere}
+.sfs-ptab small{font-size:11.5px;color:var(--ink-soft,#6b7280)}
+.sfs-ptab i{font-style:normal;color:#d97706;font-weight:800;margin-inline-start:2px}
+.sfs-ptab[aria-selected="true"]{border-color:var(--accent,#15a85a);box-shadow:0 0 0 1px var(--accent,#15a85a) inset}
+.sfs-ptab[aria-selected="true"] svg,.sfs-ptab[aria-selected="true"] b{color:var(--accent,#15a85a)}
+@media (max-width:900px){ .sfs-pages{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
+/* ── page body: controls beside a sticky preview on a wide console ─────── */
+.sfs-body{display:grid;gap:14px;min-width:0;align-items:start}
+.sfs-body > *{min-width:0}
+@media (min-width:1180px){
+  .sfs-body{grid-template-columns:minmax(340px,.8fr) minmax(0,1.25fr)}
+  .sfs-body.is-m{grid-template-columns:minmax(0,1.4fr) minmax(300px,.9fr)}
+  .sfs-pv{position:sticky;top:0;order:2}
+}
+.sfs-ctl{display:grid;gap:12px;min-width:0}
+.sfs-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}
 .sfs-btn{padding:8px 13px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;
          color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
-.sfs-btn.is-primary{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.sfs-btn.is-primary{background:var(--accent,#15a85a);border-color:var(--accent,#15a85a);color:#fff;font-weight:650}
 .sfs-btn[disabled]{opacity:.45;cursor:default}
-.sfs-note{border:1px dashed var(--border,#e6e6e6);border-radius:10px;padding:11px 12px;
-          font-size:12.5px;line-height:1.55;color:var(--ink-soft,#6b7280);min-width:0}
-.sfs-empty{padding:22px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
+.sfs-state{font-size:12px;color:var(--ink-soft,#6b7280);margin-inline-start:auto}
+.sfs-state.is-dirty{color:#d97706;font-weight:650}
+.sfs-state.is-ok{color:var(--accent,#15a85a);font-weight:650}
+.sfs-state.is-bad{color:#b4443c;font-weight:650}
+.sfs-jump{display:flex;flex-wrap:wrap;gap:6px;min-width:0;margin-top:10px}
+.sfs-jump a{font-size:12px;padding:4px 9px;border-radius:99px;border:1px solid var(--border,#e6e6e6);
+  color:inherit;text-decoration:none}
+
+.sfs-sec{scroll-margin-top:12px}
+.sfs-sec h3{margin:0;font-size:14.5px;font-weight:700}
+.sfs-sec > p{margin:2px 0 12px;font-size:12px;color:var(--ink-soft,#6b7280)}
+.sfs-fields{display:grid;gap:13px;min-width:0}
+.sfs-f{display:grid;gap:5px;min-width:0}
+.sfs-f.is-off{opacity:.45}
+.sfs-fh{display:flex;align-items:center;gap:8px;min-width:0}
+.sfs-fh label{font-size:12.5px;font-weight:650;min-width:0;overflow-wrap:anywhere}
+.sfs-fh .sfs-val{margin-inline-start:auto}
+.sfs-val{font-size:11.5px;font-weight:650;color:var(--accent,#15a85a);white-space:nowrap;font-variant-numeric:tabular-nums}
+.sfs-tag{flex:none;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:99px;
+  background:#eef2ff;color:#4338ca;white-space:nowrap}
+.sfs-tag.is-dev{background:#f1f5f9;color:#475569}
+.sfs-dot{flex:none;width:7px;height:7px;border-radius:50%;background:#d97706}
+.sfs-more{font-size:11.5px;color:var(--ink-soft,#6b7280);min-width:0}
+.sfs-more summary{cursor:pointer;width:max-content;list-style:none;font-size:11px;color:var(--ink-soft,#6b7280)}
+.sfs-more summary::-webkit-details-marker{display:none}
+.sfs-more p{margin:4px 0 0;line-height:1.5;max-width:68ch}
+.sfs-f input[type=range]{width:100%;accent-color:var(--accent,#15a85a);margin:0;min-width:0}
+.sfs-f input[type=text],.sfs-f select,.sfs-f textarea{width:100%;min-width:0;padding:8px 10px;font:inherit;font-size:13px;
+  border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit;box-sizing:border-box}
+.sfs-f textarea{line-height:1.5;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace}
+.sfs-colrow{display:flex;align-items:center;gap:10px;min-width:0}
+.sfs-f input.sfs-colour{width:52px;height:34px;padding:2px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;cursor:pointer;flex:none}
+.sfs-sw-row{display:flex;align-items:center;gap:10px;min-width:0}
+.sfs-sw-row label{font-size:12.5px;font-weight:650;min-width:0;overflow-wrap:anywhere;cursor:pointer}
+.sfs-sw{appearance:none;-webkit-appearance:none;flex:none;width:38px;height:22px;border-radius:11px;margin:0;
+  background:#cfd3da;position:relative;cursor:pointer;transition:background .15s}
+.sfs-sw::before{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.sfs-sw:checked{background:var(--accent,#15a85a)}
+.sfs-sw:checked::before{transform:translateX(16px)}
+.sfs-sw:focus-visible{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
+
+/* ── the preview ────────────────────────────────────────────────────────── */
+.sfs-pvh{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px;min-width:0}
+.sfs-pvh b{font-size:14.5px}
+.sfs-pvh span{font-size:11.5px;color:var(--ink-soft,#6b7280)}
+.sfs-pvh em{font-style:normal;font-size:11.5px;margin-inline-start:auto;color:var(--ink-soft,#6b7280)}
+.sfs-stage{container-type:inline-size;min-width:0;border:1px solid var(--border,#e6e6e6);border-radius:10px;
+  overflow:hidden;background:#f6f7f9}
+.sfs-stage.is-m{max-width:390px;margin:0 auto;border:9px solid #1f2328;border-radius:26px;background:#1f2328}
+.sfs-fit{--fw:1280;--fh:720;position:relative;overflow:hidden;width:100%;
+  height:calc(100cqw * var(--fh) / var(--fw));background:#fff}
+.sfs-fit iframe{position:absolute;top:0;left:0;border:0;display:block;background:#fff;
+  width:calc(var(--fw) * 1px);height:calc(var(--fh) * 1px);transform-origin:0 0;
+  transform:scale(.4);transform:scale(tan(atan2(100cqw, calc(var(--fw) * 1px))))}
+.sfs-pvf{font-size:11.5px;color:var(--ink-soft,#6b7280);margin-top:8px;text-align:center}
 @media (max-width:640px){ .sfs-card{padding:13px} }
-
-/* ── the preview ──────────────────────────────────────────────────────────
-   The bar is the whole product, so the mock is the bar at its real size on a
-   mock page rather than a miniature of one. What it stands for is the foot of
-   the checkout, so it is drawn as the bottom of a window. */
-.sfv-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:4px 0 10px}
-.sfv-h b{font-size:15px;font-weight:700}
-.sfv-h span{font-size:11px;color:var(--ink-soft,#6b7280)}
-.sfv-win{border:1px solid var(--border,#e6e6e6);border-radius:12px;overflow:hidden;
-  background:#fbf5f4;box-shadow:0 8px 26px -18px rgba(0,0,0,.4)}
-.sfv-win.is-phone{width:340px;max-width:100%;margin:0 auto;border-radius:18px}
-.sfv-bar{display:flex;align-items:center;gap:6px;padding:7px 11px;background:#f6f7f9;
-  border-bottom:1px solid var(--border,#e6e6e6);font-size:10px;color:#6b7280}
-.sfv-bar i{width:6px;height:6px;border-radius:50%;background:#d8dbe0;display:block}
-.sfv-page{padding:18px 16px 10px;display:grid;gap:7px}
-.sfv-ghost{height:9px;border-radius:5px;background:#eee7ea}
-.sfv-ghost.w70{width:70%}.sfv-ghost.w45{width:45%}.sfv-ghost.w88{width:88%}
-.sfv-rulers{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 8px;
-  padding:7px 11px;margin-top:8px;background:#f6f7f9;border:1px solid var(--border,#e6e6e6);
-  border-radius:8px;font-size:11px;color:#6b7280;text-align:center}
-.sfv-rulers b{font-weight:700;color:var(--ink,#16181d);font-variant-numeric:tabular-nums}
-
-/* The bar itself, drawn from the same numbers the shop reads. Its rules are a
-   deliberate copy of the storefront's rather than a reuse: the storefront
-   stylesheet is not loaded in the console, and a preview that guessed at the
-   shape would be the one thing a preview must never be -- different from the
-   page. */
-.sfv-foot{--f:1;--bf:1;--pady:12px;--padx:20px;--gap:18px;--max:1040px;--r:0px;--lw:1px;
-  --ink:#17181C;--ink2:#5E545A;--line:#EBE3E6;--bg:#FBF5F4;
-  background:var(--bg);color:var(--ink2);border-top:var(--lw) solid var(--line);
-  border-radius:var(--r) var(--r) 0 0;
-  font-size:calc(12px * var(--f));line-height:1.45}
-.sfv-foot.noline{border-top:0}
-.sfv-foot.t-white{--bg:#FFFFFF}
-.sfv-foot.t-ink{--bg:#17181C;--ink:#FFFFFF;--ink2:#C9C1C5;--line:#2C2A2E}
-.sfv-foot.t-pink{--bg:#FFF1F5;--line:#F3DCE4}
-.sfv-foot.t-clear{--bg:transparent}
-.sfv-foot.lift{box-shadow:0 -8px 24px -16px rgba(23,24,28,.45)}
-.sfv-foot.nocaps .sfv-brand b{text-transform:none;letter-spacing:0}
-.sfv-foot.noic .sfv-c svg{display:none}
-.sfv-copy{flex-basis:100%;font-size:calc(10.5px * var(--f));opacity:.8}
-.sfv-pay{display:flex;align-items:center;flex-wrap:wrap;gap:calc(var(--gap) * .4);
-  font-size:calc(6.5px * var(--f))}
-/* A WHITE CHIP UNDER EVERY MARK, ON EVERY TONE.
-   The drawings are scheme artwork in scheme colours, made for a light ground:
-   Apple Pay's wordmark is currentColor and Google Pay's is #5F6368, so on the
-   dark tone both went nearly invisible -- checked in Chromium. A chip is also
-   how a real acceptance row is drawn, so this is the conventional answer
-   rather than a patch for one tone. */
-.sfv-mk{display:block;line-height:0;background:#fff;border-radius:3px;
-  padding:0.45em 0.5em;box-shadow:0 0 0 1px rgba(23,24,28,.08) inset}
-.sfv-foot.a-center .sfv-in{justify-content:center;text-align:center}
-.sfv-foot.a-end .sfv-in{justify-content:flex-end}
-.sfv-foot.a-between .sfv-in{justify-content:space-between}
-.sfv-foot:is(.a-center,.a-end,.a-between) .sfv-top{margin-inline-start:0}
-.sfv-foot.a-center .sfv-con,.sfv-foot.a-center .sfv-links,.sfv-foot.a-center .sfv-pay{justify-content:center}
-.sfv-foot:is(.v-bar,.v-split) .sfv-in > *:not(:last-child):not(.sfv-top)::after{
-  margin-inline-start:calc(var(--gap) * .5);opacity:.45;font-weight:400}
-.sfv-foot:is(.v-bar,.v-split).sep-dot .sfv-in > *:not(:last-child):not(.sfv-top)::after{content:"·"}
-.sfv-foot:is(.v-bar,.v-split).sep-pipe .sfv-in > *:not(:last-child):not(.sfv-top)::after{content:"|"}
-.sfv-foot:is(.v-bar,.v-split).sep-slash .sfv-in > *:not(:last-child):not(.sfv-top)::after{content:"/"}
-.sfv-foot.top-solid .sfv-top{background:var(--ink);border-color:var(--ink);color:var(--bg)}
-.sfv-foot.top-plain .sfv-top{border-color:transparent;width:auto;height:auto}
-.sfv-foot.v-rows .sfv-in{flex-direction:column;align-items:stretch;gap:0}
-.sfv-foot.v-rows .sfv-in > * + *{border-top:1px solid var(--line);
-  padding-top:calc(var(--gap) * .5);margin-top:calc(var(--gap) * .5)}
-.sfv-foot.v-rows .sfv-top{margin-inline-start:0;align-self:flex-end}
-.sfv-foot.v-rows.a-center .sfv-in{align-items:center}
-.sfv-foot.v-rows.a-end .sfv-in{align-items:flex-end}
-/* The same 1040px cap the storefront bar has. Without it the mock keeps
-   everything on one line at a width the real page never gives it, and the
-   preview says "one line" where the shop wraps to two. */
-.sfv-in{max-width:var(--max);margin:0 auto;padding:var(--pady) var(--padx);display:flex;align-items:center;flex-wrap:wrap;
-  gap:calc(var(--gap) * .55) var(--gap);min-width:0}
-.sfv-in > *{min-width:0}
-.sfv-foot b{color:var(--ink);font-weight:700}
-.sfv-brand b{display:block;font-size:calc(14px * var(--bf));font-weight:800;letter-spacing:.02em;
-  text-transform:uppercase;line-height:1.15}
-.sfv-brand i{display:block;font-style:normal;font-size:calc(10.5px * var(--f));opacity:.85}
-.sfv-help{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
-.sfv-con{display:flex;align-items:center;flex-wrap:wrap;gap:calc(var(--gap) * .5) var(--gap)}
-.sfv-c{display:inline-flex;align-items:center;gap:6px;min-width:0}
-.sfv-c svg{flex:none;width:calc(15px * var(--f));height:calc(15px * var(--f));color:var(--ink)}
-.sfv-c span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sfv-links{display:flex;flex-wrap:wrap;gap:calc(var(--gap) * .5) var(--gap)}
-.sfv-links span{text-decoration:underline;text-underline-offset:2px}
-.sfv-top{margin-inline-start:auto;flex:none;width:calc(30px * var(--f));height:calc(30px * var(--f));
-  display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);color:var(--ink)}
-.sfv-top svg{width:calc(15px * var(--f));height:calc(15px * var(--f))}
-.sfv-foot.v-bar .sfv-brand b{display:inline}
-.sfv-foot.v-bar .sfv-brand i{display:inline;margin-inline-start:6px}
-.sfv-foot.v-split .sfv-in{align-items:flex-start}
-.sfv-foot.v-split .sfv-brand{margin-inline-end:auto}
-.sfv-foot.v-split .sfv-help,.sfv-foot.v-split .sfv-con,.sfv-foot.v-split .sfv-links{align-self:center}
-.sfv-foot.v-stack .sfv-in{flex-direction:column;align-items:flex-start}
-.sfv-foot.v-stack .sfv-top{margin-inline-start:0;align-self:flex-end}
-.sfv-foot.v-stack .sfv-help{flex-direction:column;align-items:flex-start;gap:1px}
 </style>
 
 <script>
@@ -187,29 +154,43 @@
 
   var SCREEN = 'slimfooter';
 
+  /* The frame each page is drawn in: the shop's own width, and a viewport tall
+     enough for the whole footer on a desktop; a phone's own height, scrolled
+     inside, on a phone. */
+  var FRAME = {
+    'site-d': { w: 1280, h: 620 }, 'site-m': { w: 390, h: 760 },
+    'bar-d': { w: 1280, h: 380 }, 'bar-m': { w: 390, h: 520 }
+  };
+  var ICON = {
+    d: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>',
+    m: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg>'
+  };
+
+  var tabs = null, fields = {}, pages = [], shared = {}, saved = {}, values = {};
+  var open = null, banner = null, busy = false, seq = 0, state = '', stateKind = '';
+  var squeezeKeys = [];  // which controls "Squeeze this page" drives to their minimum
+  var draftView = null;  // what kbbDrafts reads as "saved" for one call after a page save
+  var pvTimer = null, pvSeq = 0, pvCtl = null, pvNote = '';
+
   /* UNFINISHED CHANGES (Lane PM). Leaving this screen with edits in `values`
-     used to throw them away without a word. They are kept in Unfinished in
-     the top bar instead (partials/unfinished-drafts.blade.php), and come back
-     into `values` when the screen is next opened. */
+     keeps them in Unfinished in the top bar; they come back on the next visit. */
   if (window.kbbDrafts) window.kbbDrafts.track({
     id: SCREEN, screen: SCREEN, label: 'Appearance → Footer',
-    values: function () { return tabs ? values : null; },
+    values: function () { return tabs ? (draftView || values) : null; },
     set: function (k, v) { if (Object.prototype.hasOwnProperty.call(values, k)) values[k] = v; },
-    render: function () { render(); },
+    render: function () { render(); preview(0); },
     save: function () { save(); }
   });
-
-  var tabs = null, values = {}, open = null, banner = null, busy = false, seq = 0;
-  var squeezeKeys = [];  // which controls "Squeeze the bar" drives to their minimum
 
   function cookie(n) {
     var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
     return m ? decodeURIComponent(m.pop()) : '';
   }
 
-  async function api(path, body) {
+  async function api(path, body, signal) {
     var opts = { headers: { Accept: 'application/json' }, credentials: 'same-origin' };
     opts.headers['X-XSRF-TOKEN'] = cookie('XSRF-TOKEN');
+    if (signal) opts.signal = signal;
 
     if (body !== undefined) {
       opts.method = 'POST';
@@ -235,13 +216,27 @@
     });
   }
 
-  function say(msg) { try { window.toast(msg); } catch (e) {} }
+  function say(msg, kind) { try { window.toast(msg, kind); } catch (e) {} }
 
   function explain(e, fallback) {
-    return e && e.status === 404
-      ? 'The Footer endpoints are not in this server\'s compiled route table yet. Clear the route cache and reload.'
-      : ((e && e.body && e.body.error) ? e.body.error : fallback);
+    if (e && e.status === 404) return 'The Footer endpoints are not in this server\'s compiled route table yet. Clear the route cache and reload.';
+    if (e && e.status === 403) return 'Your role cannot change or preview the footer.';
+    return (e && e.body && e.body.error) ? e.body.error : fallback;
   }
+
+  function norm(v) { return v === true ? '1' : (v === false || v == null ? '0' : String(v)); }
+  function isDirty(k) { return norm(values[k]) !== norm(saved[k]); }
+  function page() { return pages.filter(function (p) { return p.key === open; })[0] || pages[0]; }
+  function pageKeys(p) {
+    var out = [];
+    (p ? p.sections : []).forEach(function (s) { s.keys.forEach(function (k) { if (fields[k]) out.push(k); }); });
+    return out;
+  }
+  function dirtyOn(p) { return pageKeys(p).filter(isDirty); }
+  function anyDirty() { return Object.keys(values).some(isDirty); }
+
+  function remember(key) { try { window.localStorage.setItem('kbb.footer.page', key); } catch (e) {} }
+  function recalled() { try { return window.localStorage.getItem('kbb.footer.page') || ''; } catch (e) { return ''; } }
 
   function addNavEntry() {
     window.kbbAddNavEntry({
@@ -277,6 +272,30 @@
     return undefined;
   };
 
+  function onScreen() { return (document.querySelector('#ptitle') || {}).textContent === 'Footer'; }
+
+  /* NO beforeunload PROMPT — the owner asked for that popup to go console-wide
+     (partials/unfinished-drafts). An unsaved change here is kept in
+     Unfinished in the top bar instead, and the page tab carries a dot. */
+
+  function absorb(body, keepDirty) {
+    tabs = body.tabs || [];
+    squeezeKeys = body.squeeze || [];
+    pages = body.pages || [];
+    shared = {};
+    (body.shared || []).forEach(function (k) { shared[k] = true; });
+    var was = values, wasSaved = saved;
+    fields = {}; values = {}; saved = {};
+    tabs.forEach(function (t) {
+      t.fields.forEach(function (f) {
+        fields[f.key] = f;
+        var keep = keepDirty && Object.prototype.hasOwnProperty.call(was, f.key) && norm(was[f.key]) !== norm(wasSaved[f.key]);
+        saved[f.key] = f.value;
+        values[f.key] = keep ? was[f.key] : f.value;
+      });
+    });
+  }
+
   async function load() {
     var mine = ++seq;
     busy = true; banner = null;
@@ -285,57 +304,90 @@
     try {
       var body = await api('/slim-footer');
       if (mine !== seq) return;
-
-      tabs = body.tabs || [];
-      squeezeKeys = body.squeeze || [];
-      values = {};
-      tabs.forEach(function (t) { t.fields.forEach(function (f) { values[f.key] = f.value; }); });
-      if (!open || !tabs.some(function (t) { return t.key === open; })) {
-        open = tabs.length ? tabs[0].key : null;
+      absorb(body, false);
+      if (!pages.some(function (p) { return p.key === open; })) {
+        var r = recalled();
+        open = pages.some(function (p) { return p.key === r; }) ? r : (pages.length ? pages[0].key : null);
       }
     } catch (e) {
       if (mine !== seq) return;
+      tabs = null;
       banner = explain(e, 'The Footer settings could not be read.');
     } finally {
       if (mine === seq) {
-        busy = false; render();
+        busy = false; state = ''; render();
         if (tabs && !banner && window.kbbDrafts) window.kbbDrafts.ready(SCREEN);
       }
     }
   }
 
+  /* SAVE WRITES THIS PAGE, AND ONLY WHAT CHANGED ON IT. A shared word changed
+     here is on this page, so it goes; a phone-only slider changed on the
+     Mobile page stays unsaved until that page is saved. Sending only what
+     moved is also what keeps a "follows the desktop" control following. */
   async function save() {
-    if (busy) return;
-    busy = true; render();
+    if (busy || !tabs) return;
+    var p = page();
+    var keys = dirtyOn(p);
+    if (!keys.length) { state = 'Nothing to save on this page.'; stateKind = ''; paintState(); return; }
 
     var payload = {};
-    Object.keys(values).forEach(function (k) { payload[k] = values[k]; });
+    keys.forEach(function (k) { payload[k] = values[k]; });
+
+    busy = true; state = 'Saving…'; stateKind = ''; paintState();
 
     try {
       await api('/slim-footer', { settings: payload });
+      absorb(await api('/slim-footer'), true);
+      /* kbbDrafts compares against what it was told was saved. Told the
+         server's values for one call, then handed the live buffer back, so the
+         other pages' unsaved changes stay in Unfinished. */
+      draftView = {};
+      Object.keys(saved).forEach(function (k) { draftView[k] = saved[k]; });
       if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
-      say('Footer saved.');
+      draftView = null;
+      state = 'Saved ' + keys.length + (keys.length === 1 ? ' change.' : ' changes.'); stateKind = 'is-ok';
+      say(p.label + ' saved.');
     } catch (e) {
-      banner = explain(e, 'That could not be saved.');
+      state = explain(e, 'That could not be saved.'); stateKind = 'is-bad';
+      say(state, 'bad');
     } finally {
-      busy = false; render();
+      busy = false; render(); preview(0);
     }
   }
 
+  /* ------------------------------------------------------------ drawing */
   function shown(f) {
     return String(values[f.key]) + ((f.options || {}).unit || '');
   }
 
-  function fieldHTML(f) {
+  /* Every control says whom it reaches: both devices (a word, a colour, a
+     link — the same setting on both pages) or this page's device only. */
+  function marks(f) {
+    var dev = page().device === 'm' ? 'Phone only' : 'Desktop only';
+    return (shared[f.key] ? '<span class="sfs-tag" title="applies to desktop and mobile">Desktop + mobile</span>'
+      : '<span class="sfs-tag is-dev" title="this page’s device only">' + dev + '</span>')
+      + (isDirty(f.key) ? '<span class="sfs-dot" title="Not saved yet"></span>' : '');
+  }
+
+  function head(f, id, extra) {
+    return '<div class="sfs-fh"><label for="' + id + '">' + esc(f.label) + '</label>' + marks(f) + (extra || '') + '</div>';
+  }
+
+  function more(f) {
+    return f.help ? '<details class="sfs-more"><summary>ⓘ More</summary><p>' + esc(f.help) + '</p></details>' : '';
+  }
+
+  function fieldHTML(f, off) {
     var id = 'sfs-' + f.key;
-    var help = f.help ? '<p class="sfs-help">' + esc(f.help) + '</p>' : '';
+    var cls = 'sfs-f' + (off ? ' is-off' : '');
 
     if (f.type === 'bool') {
-      return '<div class="sfs-f"><div class="sfs-check">'
-        + '<input type="checkbox" id="' + id + '" data-sfs-key="' + esc(f.key) + '"'
+      return '<div class="' + cls + '"><div class="sfs-sw-row">'
+        + '<input type="checkbox" role="switch" class="sfs-sw" id="' + id + '" data-sfs-key="' + esc(f.key) + '"'
         + (values[f.key] ? ' checked' : '') + '>'
-        + '<div><label for="' + id + '">' + esc(f.label) + '</label>' + help + '</div>'
-        + '</div></div>';
+        + '<label for="' + id + '">' + esc(f.label) + '</label>' + marks(f)
+        + '</div>' + more(f) + '</div>';
     }
 
     if (f.type === 'select') {
@@ -343,277 +395,285 @@
         return '<option value="' + esc(k) + '"' + (String(values[f.key]) === k ? ' selected' : '')
           + '>' + esc(f.options[k]) + '</option>';
       }).join('');
-      return '<div class="sfs-f"><div class="sfs-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
-        + '<select id="' + id + '" data-sfs-key="' + esc(f.key) + '">' + opts + '</select>' + help + '</div>';
+      return '<div class="' + cls + '">' + head(f, id)
+        + '<select id="' + id + '" data-sfs-key="' + esc(f.key) + '">' + opts + '</select>' + more(f) + '</div>';
     }
 
     if (f.type === 'range') {
       var o = f.options || {};
-      return '<div class="sfs-f"><div class="sfs-fh"><label for="' + id + '">' + esc(f.label) + '</label>'
-        + '<span class="sfs-val" data-sfs-val="' + esc(f.key) + '">' + esc(shown(f)) + '</span></div>'
+      return '<div class="' + cls + '">'
+        + head(f, id, '<span class="sfs-val" data-sfs-val="' + esc(f.key) + '">' + esc(shown(f)) + '</span>')
         + '<input type="range" id="' + id + '" data-sfs-key="' + esc(f.key) + '"'
-        + ' min="' + o.min + '" max="' + o.max + '" step="' + o.step + '" value="' + esc(values[f.key]) + '">'
-        + help + '</div>';
+        + ' min="' + esc(o.min) + '" max="' + esc(o.max) + '" step="' + esc(o.step) + '" value="' + esc(values[f.key]) + '">'
+        + more(f) + '</div>';
     }
 
-    /* (Lane HF) The site footer's colours and its three link lists. A colour
-       is a picker beside the hex it holds -- the server stores `#` and six hex
-       digits or the default, whatever arrives. A list is a box with one link
-       per line; the server keeps only lines that are safe to print. */
+    /* A colour is a picker beside the hex it holds; the server stores `#` and
+       six hex digits or the default, whatever arrives. */
     if (f.type === 'colour') {
       var hex = /^#[0-9a-fA-F]{6}$/.test(String(values[f.key])) ? String(values[f.key]) : String(f['default']);
-      return '<div class="sfs-f"><div class="sfs-fh"><label for="' + id + '">' + esc(f.label) + '</label>'
+      return '<div class="' + cls + '">' + head(f, id)
+        + '<div class="sfs-colrow"><input type="color" class="sfs-colour" id="' + id + '" data-sfs-key="' + esc(f.key) + '" value="' + esc(hex.toLowerCase()) + '">'
         + '<span class="sfs-val" data-sfs-val="' + esc(f.key) + '">' + esc(hex.toUpperCase()) + '</span></div>'
-        + '<input type="color" class="sfs-colour" id="' + id + '" data-sfs-key="' + esc(f.key) + '" value="' + esc(hex.toLowerCase()) + '">'
-        + help + '</div>';
+        + more(f) + '</div>';
     }
 
+    /* A list is a box with one link per line; the server keeps only lines
+       that are safe to print. */
     if (f.type === 'textarea') {
-      return '<div class="sfs-f"><div class="sfs-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
-        + '<textarea id="' + id + '" data-sfs-key="' + esc(f.key) + '" rows="6" spellcheck="false">'
-        + esc(values[f.key]) + '</textarea>' + help + '</div>';
+      return '<div class="' + cls + '">' + head(f, id)
+        + '<textarea id="' + id + '" data-sfs-key="' + esc(f.key) + '" rows="5" spellcheck="false">'
+        + esc(values[f.key]) + '</textarea>' + more(f) + '</div>';
     }
 
-    return '<div class="sfs-f"><div class="sfs-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
+    return '<div class="' + cls + '">' + head(f, id)
       + '<input type="text" id="' + id + '" data-sfs-key="' + esc(f.key) + '" value="'
-      + esc(values[f.key]) + '" autocomplete="off">' + help + '</div>';
+      + esc(values[f.key]) + '" autocomplete="off">' + more(f) + '</div>';
+  }
+
+  /* Phone-only bar controls are read only while the phone has its own shape. */
+  function isOff(p, k) {
+    return p.key === 'bar-m' && k !== 'mobile_on' && !shared[k] && !values.mobile_on;
+  }
+
+  function sectionHTML(p, s, i) {
+    var note = '';
+    if (p.footer === 'site' && s.keys.indexOf('site_design') !== -1 && String(values.site_design) === 'classic') {
+      note = '<div class="sfs-note" style="margin-bottom:10px">The previous footer is on. The controls below style the new design and show once it is back on.</div>';
+    }
+    if (p.key === 'bar-m' && s.keys.indexOf('mobile_on') !== -1 && !values.mobile_on) {
+      note = '<div class="sfs-note" style="margin-bottom:10px">Off: phones use the Desktop page’s shape and sizes. The phone-only controls below wait until this is on.</div>';
+    }
+    return '<section class="sfs-card sfs-sec" id="sfs-sec-' + i + '"><h3>' + esc(s.title) + '</h3><p>' + esc(s.hint) + '</p>'
+      + note + '<div class="sfs-fields">'
+      + s.keys.filter(function (k) { return fields[k]; }).map(function (k) { return fieldHTML(fields[k], isOff(p, k)); }).join('')
+      + '</div></section>';
+  }
+
+  function pagesHTML() {
+    return '<div class="sfs-pages" role="tablist" aria-label="Footer pages">' + pages.map(function (p) {
+      var on = p.key === open;
+      return '<button type="button" class="sfs-ptab" role="tab" data-sfs-page="' + esc(p.key) + '" aria-selected="' + (on ? 'true' : 'false') + '">'
+        + ICON[p.device === 'm' ? 'm' : 'd']
+        + '<span><b>' + esc(p.label) + (dirtyOn(p).length ? '<i title="Unsaved changes"> •</i>' : '') + '</b>'
+        + '<small>' + (p.footer === 'site' ? 'Every shop page' : 'Cart & checkout') + '</small></span></button>';
+    }).join('') + '</div>';
+  }
+
+  function stateHTML() {
+    var n = dirtyOn(page()).length;
+    var text = state || (n ? n + ' unsaved ' + (n === 1 ? 'change' : 'changes') + ' on this page' : 'All saved');
+    var kind = state ? stateKind : (n ? 'is-dirty' : '');
+    return '<span class="sfs-state ' + kind + '" data-sfs-state>' + esc(text) + '</span>';
+  }
+
+  function controlsHTML(p) {
+    var bar = p.footer === 'bar';
+    return '<div class="sfs-card"><div class="sfs-title">' + esc(p.label) + '</div><p class="sfs-sub">' + esc(p.hint) + '</p>'
+      + '<div class="sfs-bar" style="margin-top:12px">'
+      + '<button class="sfs-btn is-primary" data-sfs-save' + (busy ? ' disabled' : '') + '>Save this page</button>'
+      + '<button class="sfs-btn" data-sfs-discard' + (busy ? ' disabled' : '') + '>Discard changes</button>'
+      + '<button class="sfs-btn" data-sfs-defaults' + (busy ? ' disabled' : '') + '>Reset this page to defaults</button>'
+      + (bar ? '<button class="sfs-btn" data-sfs-squeeze' + (busy ? ' disabled' : '') + '>Squeeze this page</button>' : '')
+      + stateHTML() + '</div>'
+      + '<p class="sfs-sub" style="margin-top:8px">Reset and Squeeze move only the controls on <b>this page</b>; nothing is stored until you press Save. Controls tagged <b>Desktop + mobile</b> change on both pages.</p>'
+      + '<nav class="sfs-jump" aria-label="Sections">' + p.sections.map(function (s, i) {
+          return '<a href="#sfs-sec-' + i + '" data-sfs-jump="' + i + '">' + esc(s.title) + '</a>';
+        }).join('') + '</nav></div>'
+      + p.sections.map(function (s, i) { return sectionHTML(p, s, i); }).join('');
+  }
+
+  function whereHTML(p) {
+    return p.footer === 'bar'
+      ? 'Shows on the checkout: <b>' + (values.co_on ? 'yes' : 'no') + '</b> · on the cart page: <b>' + (values.cart_on ? 'yes' : 'no') + '</b>'
+      : 'The real footer, as the shop draws it.';
+  }
+
+  function previewHTML(p) {
+    var fr = FRAME[p.key] || FRAME['site-d'];
+    return '<div class="sfs-card sfs-pv" data-sfs-pv>'
+      + '<div class="sfs-pvh"><b>Preview</b><span>' + (p.device === 'm' ? 'Phone · 390px' : 'Desktop · 1280px, scaled to fit') + '</span>'
+      + '<em data-sfs-pvstate>' + esc(pvNote) + '</em></div>'
+      + '<div class="sfs-stage' + (p.device === 'm' ? ' is-m' : '') + '"><div class="sfs-fit" style="--fw:' + fr.w + ';--fh:' + fr.h + '">'
+      + '<iframe title="' + esc(p.label) + ' preview" sandbox="allow-same-origin" data-sfs-frame></iframe>'
+      + '</div></div><div class="sfs-pvf" data-sfs-where>' + whereHTML(p) + '</div></div>';
   }
 
   function render() {
     var host = document.querySelector('#content');
-    if (!host || (document.querySelector('#ptitle') || {}).textContent !== 'Footer') return;
+    if (!host || !onScreen()) return;
 
     if (busy && !tabs) {
       host.innerHTML = '<div class="sfs-wrap"><div class="sfs-card"><div class="sfs-empty">Loading…</div></div></div>';
       return;
     }
 
-    if (!tabs) {
+    if (!tabs || !pages.length) {
       host.innerHTML = '<div class="sfs-wrap"><div class="sfs-card">'
         + '<div class="sfs-title">Footer</div>'
         + '<p class="sfs-sub">' + esc(banner || 'Nothing to show yet.') + '</p>'
-        + '<div class="sfs-actions"><button class="sfs-btn" data-sfs-reload>Retry</button></div>'
+        + '<div class="sfs-bar" style="margin-top:12px"><button class="sfs-btn" data-sfs-reload>Retry</button></div>'
         + '</div></div>';
       return;
     }
 
-    var strip = tabs.map(function (t) {
-      return '<button type="button" class="sfs-tab" data-sfs-tab="' + esc(t.key) + '"'
-        + ' aria-selected="' + (t.key === open ? 'true' : 'false') + '">' + esc(t.label) + '</button>';
-    }).join('');
-
-    var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
-    /* (Lane HB) The "Site footer" tabs (seven since Lane HF) are the footer on every storefront
-       page (App\Services\SiteFooter); the rest are the slim bar. Their keys
-       start `site_`, the tab keys `site`. The bar's preview and its squeeze
-       preset mean nothing for the site footer, so neither is drawn there. */
-    var site = String(current.key).indexOf('site') === 0;
+    var p = page();
+    var frame = host.querySelector('[data-sfs-pv]');
+    var keep = frame && frame.getAttribute('data-page') === p.key ? frame : null;
 
     host.innerHTML = '<div class="sfs-wrap">'
-      + (banner ? '<div class="sfs-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
-          + esc(banner) + '</div>' : '')
-      + (site
-          ? '<div class="sfs-note">The <b>site footer</b> \u2014 the one at the bottom of every storefront page. '
-            + 'Laptop and phone each have their own layout tab. The tabs after the “Site footer” ones are the slim bar on the checkout and the cart page.</div>'
-          : '<div class="sfs-note">This is <b>not</b> the site footer (that is the “Site footer” tabs). The checkout and the cart page have '
-            + 'never drawn that one, and still do not — this is a separate bar with its own words, and the '
-            + 'switches on its first tab decide which of the two pages carries it.</div>')
-      + '<div class="sfs-card">'
-      + '<div class="sfs-tabs">' + strip + '</div>'
-      + '<p class="sfs-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
-      + '<div class="sfs-fields">' + current.fields.map(fieldHTML).join('') + '</div>'
-      + '<div class="sfs-actions">'
-      + '<button class="sfs-btn is-primary" data-sfs-save' + (busy ? ' disabled' : '') + '>'
-      + (busy ? 'Saving…' : 'Save') + '</button>'
-      + '<button class="sfs-btn" data-sfs-reload' + (busy ? ' disabled' : '') + '>Reload</button>'
-      /* BOTH PRESETS WRITE THE SLIDERS AND NOTHING ELSE -- they move the values
-         in front of you, nothing is stored until Save, and Reload undoes
-         either. A stored "squeezed" mode would leave every slider on this
-         screen showing a number the bar was not using. */
-      + (site ? '' : '<button class="sfs-btn" data-sfs-squeeze' + (busy ? ' disabled' : '') + '>Squeeze this tab</button>')
-      + '<button class="sfs-btn" data-sfs-defaults' + (busy ? ' disabled' : '') + '>Back to defaults</button>'
-      + '</div>'
-      + '<p class="sfs-help" style="margin-top:8px">Both presets move only the sliders on '
-      + '<b>this tab</b> \u2014 the other tabs are left exactly as you set them. Nothing is stored until '
-      + 'you press Save.</p>'
-      + '</div>'
-      + (site ? '' : previewHTML())
-      + '</div>';
+      + (banner ? '<div class="sfs-note is-bad">' + esc(banner) + '</div>' : '')
+      + pagesHTML()
+      + '<div class="sfs-body' + (p.device === 'm' ? ' is-m' : '') + '">'
+      + '<div data-sfs-pvslot></div>'
+      + '<div class="sfs-ctl">' + controlsHTML(p) + '</div>'
+      + '</div></div>';
+
+    /* THE PREVIEW SURVIVES A REDRAW OF THE CONTROLS. Rebuilding the iframe on
+       every switch would blank it and ask the server again for nothing. */
+    var slot = host.querySelector('[data-sfs-pvslot]');
+    if (keep) {
+      slot.replaceWith(keep);
+      var where = keep.querySelector('[data-sfs-where]');
+      if (where) where.innerHTML = whereHTML(p);
+    } else {
+      var holder = document.createElement('div');
+      holder.innerHTML = previewHTML(p);
+      var node = holder.firstChild;
+      node.setAttribute('data-page', p.key);
+      slot.replaceWith(node);
+      preview(0);
+    }
   }
 
-  /* -------------------------------------------------------------- preview */
-  function v(key, fallback) {
-    var x = values[key];
-    return (x === undefined || x === null) ? fallback : x;
-  }
-  function num(key, fallback) {
-    var n = Number(values[key]);
-    return isFinite(n) ? n : fallback;
-  }
-  function on(key) { return values[key] === true || values[key] === 1 || values[key] === '1'; }
-
-  var WA = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.7 15l-1.2 4.3a.6.6 0'
-    + ' 0 0 .7.7L7.2 20.8A10 10 0 1 0 12 2Zm0 1.8a8.2 8.2 0 1 1-4.2 15.2.9.9 0 0 0-.7-.1l-2.7.8.8-2.6a.9.9 0'
-    + ' 0 0-.1-.8A8.2 8.2 0 0 1 12 3.8Z"/></svg>';
-  var MAIL = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H3a1'
-    + ' 1 0 0 1-1-1v-11a1 1 0 0 1 1-1Zm1.6 1.8L12 12.4l7.4-5.1H4.6Z"/></svg>';
-  var UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"'
-    + ' stroke-linejoin="round"><path d="M12 19V5"/><path d="m5.5 11.5 6.5-6.5 6.5 6.5"/></svg>';
-
-  /* The bar, from the same values the page reads. Anything empty draws no
-     element at all, exactly as the storefront partial does — which is the part
-     of this design a preview most needs to show, because it is how the bar is
-     made short. */
-  function barHTML() {
-    var cls = 'sfv-foot v-' + esc(v('variant', 'bar')) + ' t-' + esc(v('tone', 'cream'))
-      + (String(v('align', 'start')) === 'start' ? '' : ' a-' + esc(v('align', 'start')))
-      + (String(v('sep', 'none')) === 'none' ? '' : ' sep-' + esc(v('sep', 'none')))
-      + (String(v('top_style', 'ring')) === 'ring' ? '' : ' top-' + esc(v('top_style', 'ring')))
-      + (on('divider') ? '' : ' noline')
-      + (on('shadow') ? ' lift' : '')
-      + (on('upper') ? '' : ' nocaps')
-      + (on('icons_on') ? '' : ' noic');
-
-    var style = '--pady:' + num('pad_y', 12) + 'px;--padx:' + num('pad_x', 20) + 'px'
-      + ';--gap:' + num('gap', 18) + 'px;--max:' + num('max_w', 1040) + 'px'
-      + ';--r:' + num('radius', 0) + 'px;--lw:' + num('line_w', 1) + 'px'
-      + ';--f:' + (num('font', 100) / 100) + ';--bf:' + (num('brand_size', 100) / 100);
-
-    var brand = String(v('brand', '')), byline = String(v('byline', ''));
-    var ht = String(v('help_title', '')), hs = String(v('help_sub', ''));
-    var ph = String(v('phone', '')), em = String(v('email', ''));
-    var l1 = String(v('l1_text', '')), l2 = String(v('l2_text', ''));
-    var l3 = String(v('l3_text', '')), copy = String(v('copy', ''));
-
-    /* The six drawings, from App\Support\PaymentMarkArt by way of the one
-       line above this raw region. Printed as they come, exactly as the shop
-       prints them: they are a hardcoded constant and nothing typed on this
-       screen reaches their markup. */
-    var marks = '';
-    if (on('pay_on')) {
-      Object.keys(window.SFV_PAY || {}).forEach(function (k) {
-        if (on(k)) marks += '<span class="sfv-mk">' + window.SFV_PAY[k] + '</span>';
-      });
-    }
-
-    var html = '<footer class="' + cls + '" style="' + style + '"><div class="sfv-in">';
-
-    if (brand || byline) {
-      html += '<div class="sfv-brand">' + (brand ? '<b>' + esc(brand) + '</b>' : '')
-        + (byline ? '<i>' + esc(byline) + '</i>' : '') + '</div>';
-    }
-    if (ht || hs) {
-      html += '<div class="sfv-help">' + (ht ? '<b>' + esc(ht) + '</b>' : '')
-        + (hs ? '<span>' + esc(hs) + '</span>' : '') + '</div>';
-    }
-    if (ph || em) {
-      html += '<div class="sfv-con">'
-        + (ph ? '<span class="sfv-c">' + WA + '<span>' + esc(ph) + '</span></span>' : '')
-        + (em ? '<span class="sfv-c">' + MAIL + '<span>' + esc(em) + '</span></span>' : '')
-        + '</div>';
-    }
-    if (l1 || l2 || l3) {
-      html += '<div class="sfv-links">' + (l1 ? '<span>' + esc(l1) + '</span>' : '')
-        + (l2 ? '<span>' + esc(l2) + '</span>' : '')
-        + (l3 ? '<span>' + esc(l3) + '</span>' : '') + '</div>';
-    }
-    if (marks) html += '<div class="sfv-pay">' + marks + '</div>';
-    if (copy) html += '<div class="sfv-copy">' + esc(copy) + '</div>';
-    if (on('top_on')) html += '<span class="sfv-top">' + UP + '</span>';
-
-    return html + '</div></footer>';
-  }
-
-  function previewHTML() {
-    var ghosts = '<div class="sfv-page"><div class="sfv-ghost w70"></div>'
-      + '<div class="sfv-ghost w88"></div><div class="sfv-ghost w45"></div></div>';
-
-    /* Both widths, always. The bar's whole job is to be short, and the one
-       place it stops being short is a phone, where five blocks wrap. Showing
-       only a desktop would hide the case worth looking at. */
-    return '<div class="sfs-card" data-sfs-preview>'
-      + '<div class="sfv-h"><b>Preview</b><span>Redraws as you type. A drawing, not the live page.</span></div>'
-      + '<div class="sfv-win"><div class="sfv-bar"><i></i><i></i><i></i><span>Desktop</span></div>'
-      + ghosts + barHTML() + '</div>'
-      + '<div class="sfv-win is-phone" style="margin-top:16px"><div class="sfv-bar"><i></i><i></i><i></i>'
-      + '<span>Phone · 340px</span></div>' + ghosts + barHTML() + '</div>'
-      + '<div class="sfv-rulers">Height is mostly <b>' + num('pad_y', 12) + 'px</b> top and bottom'
-      + '<span>·</span>content stops at <b>' + num('max_w', 1040) + 'px</b>'
-      + '<span>·</span>shows on the checkout <b>' + (on('co_on') ? 'yes' : 'no') + '</b>'
-      + '<span>·</span>on the cart page <b>' + (on('cart_on') ? 'yes' : 'no') + '</b></div>'
-      + '</div>';
-  }
-
-  function paintPreview() {
-    var node = document.querySelector('[data-sfs-preview]');
-    if (!node) return;
+  function paintState() {
+    var el = document.querySelector('[data-sfs-state]');
+    if (!el) return;
     var holder = document.createElement('div');
-    holder.innerHTML = previewHTML();
-    node.replaceWith(holder.firstChild);
+    holder.innerHTML = stateHTML();
+    el.replaceWith(holder.firstChild);
+    var tab = document.querySelector('[data-sfs-page="' + open + '"] b');
+    if (tab) {
+      var dot = tab.querySelector('i');
+      var n = dirtyOn(page()).length;
+      if (n && !dot) { var i = document.createElement('i'); i.title = 'Unsaved changes'; i.textContent = ' •'; tab.appendChild(i); }
+      if (!n && dot) dot.remove();
+    }
+  }
+
+  /* ------------------------------------------------------------ preview */
+  /* Only what differs from the saved values travels: the server already has
+     the rest, and a slider still following another one keeps following. */
+  function unsaved() {
+    var out = {};
+    Object.keys(values).forEach(function (k) { if (isDirty(k)) out[k] = values[k]; });
+    return out;
+  }
+
+  /* ONE REQUEST PER PAUSE. Each call cancels the one before it, so a drag
+     across a slider asks once, when the hand stops — never on a timer. */
+  function preview(delay) {
+    if (pvTimer) { clearTimeout(pvTimer); pvTimer = null; }
+    pvTimer = setTimeout(function () { pvTimer = null; drawPreview(); }, delay);
+  }
+
+  async function drawPreview() {
+    var p = page();
+    if (!p || !document.querySelector('[data-sfs-frame]')) return;
+
+    var mine = ++pvSeq;
+    if (pvCtl) { try { pvCtl.abort(); } catch (e) {} }
+    pvCtl = ('AbortController' in window) ? new AbortController() : null;
+    setPvNote('Updating…');
+
+    try {
+      var body = await api('/slim-footer/preview', { page: p.key, settings: unsaved() }, pvCtl ? pvCtl.signal : undefined);
+      if (mine !== pvSeq) return;
+      var f = document.querySelector('[data-sfs-frame]');
+      if (f) f.srcdoc = String(body.html || '');
+      setPvNote(anyDirty() ? 'Showing unsaved changes' : 'Showing what the shop shows');
+    } catch (e) {
+      if (mine !== pvSeq || (e && e.name === 'AbortError')) return;
+      setPvNote(explain(e, 'The preview could not be drawn.'));
+    }
+  }
+
+  function setPvNote(t) {
+    pvNote = t;
+    var el = document.querySelector('[data-sfs-pvstate]');
+    if (el) el.textContent = t;
   }
 
   /* --------------------------------------------------------------- events */
   document.addEventListener('input', function (e) {
-    var el = e.target.closest('[data-sfs-key]');
-    if (!el) return;
+    var el = e.target.closest ? e.target.closest('[data-sfs-key]') : null;
+    if (!el || !tabs) return;
 
     var key = el.getAttribute('data-sfs-key');
     if (el.type === 'checkbox') values[key] = el.checked;
     else if (el.type === 'range') values[key] = Number(el.value);
     else values[key] = el.value;
+    state = '';
 
-    /* A checkbox or a select can change what belongs on the screen, and both
-       are single clicks nobody is dragging, so they redraw. A range and a text
-       box repaint only the preview: rebuilding the controls mid-drag drops the
-       pointer capture, and mid-word it moves the caret. */
-    if (el.type === 'checkbox' || el.tagName === 'SELECT') { render(); return; }
+    /* A switch or a select can change what belongs on the page, and both are
+       single clicks nobody is dragging, so they redraw the controls (the
+       preview frame is kept). A range and a text box only update their own
+       readout: rebuilding mid-drag drops the pointer, mid-word the caret. */
+    if (el.type === 'checkbox' || el.tagName === 'SELECT') { render(); preview(150); return; }
 
     var out = document.querySelector('[data-sfs-val="' + key + '"]');
-    if (out && el.type === 'color') { out.textContent = String(el.value).toUpperCase(); paintPreview(); return; }
-    if (out) {
-      var f = null;
-      tabs.forEach(function (t) { t.fields.forEach(function (x) { if (x.key === key) f = x; }); });
-      if (f) out.textContent = shown(f);
-    }
-    paintPreview();
+    if (out && el.type === 'color') out.textContent = String(el.value).toUpperCase();
+    else if (out && fields[key]) out.textContent = shown(fields[key]);
+    paintState();
+    preview(350);
   });
 
   document.addEventListener('click', function (e) {
-    var tab = e.target.closest('[data-sfs-tab]');
-    if (tab) { open = tab.getAttribute('data-sfs-tab'); render(); return; }
+    if (!e.target.closest || !e.target.closest('.sfs-wrap')) return;
+    var pg = e.target.closest('[data-sfs-page]');
+    if (pg) { open = pg.getAttribute('data-sfs-page'); remember(open); state = ''; render(); return; }
+    var jump = e.target.closest('[data-sfs-jump]');
+    if (jump) {
+      e.preventDefault();
+      var sec = document.getElementById('sfs-sec-' + jump.getAttribute('data-sfs-jump'));
+      if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     if (e.target.closest('[data-sfs-save]')) { save(); return; }
     if (e.target.closest('[data-sfs-reload]')) { load(); return; }
+    if (e.target.closest('[data-sfs-discard]')) { preset('saved'); return; }
     if (e.target.closest('[data-sfs-squeeze]')) { preset('min'); return; }
     if (e.target.closest('[data-sfs-defaults]')) { preset('default'); return; }
   });
 
   /*
-   * The two presets, and why "Back to defaults" exists beside "Squeeze".
-   *
-   * A preset with no way out is a trap: pressing Squeeze has to be undoable
-   * without remembering twelve numbers. Reload undoes it before a Save and
-   * Back to defaults undoes it after one, and either can be nudged afterwards
-   * because both only WRITE THE SLIDERS.
+   * The three page buttons. THE PAGE YOU ARE LOOKING AT, never the others: a
+   * preset that reaches past the page changes numbers nobody can see. Each
+   * only writes the controls in front of you; nothing is stored until Save,
+   * and Discard puts back what was saved.
    */
-  /* THE TAB YOU ARE LOOKING AT, for the reason the checkout screen states: a
-     preset that reaches past the screen changes numbers nobody can see. Fixed
-     here in the same round rather than waiting for the same report twice. */
   function preset(which) {
     if (!tabs) return;
 
-    var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
+    var current = page();
 
-    current.fields.forEach(function (f) {
-      if (which === 'default') { values[f.key] = f['default']; return; }
+    pageKeys(current).forEach(function (k) {
+      var f = fields[k];
+      if (which === 'saved') { values[k] = saved[k]; return; }
+      if (which === 'default') { values[k] = f['default']; return; }
       if (f.type !== 'range') return;
       if (squeezeKeys.indexOf(f.key) === -1) return;
       values[f.key] = Number((f.options || {}).min);
     });
 
+    state = '';
     render();
+    preview(0);
     say(which === 'min'
-      ? 'Squeezed \u2014 ' + current.label + ' only. Nothing is saved until you press Save.'
-      : current.label + ' is back to its shipped values. Nothing is saved until you press Save.');
+      ? 'Squeezed — ' + current.label + ' only. Nothing is saved until you press Save.'
+      : (which === 'saved'
+        ? current.label + ' is back to what was saved.'
+        : current.label + ' is back to its shipped values. Nothing is saved until you press Save.'));
   }
 
   if (document.readyState === 'loading') {

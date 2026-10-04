@@ -3094,6 +3094,15 @@ slim_footer|m_row_h|range|"abc"|0
 slim_footer|m_row_h|range|""|0
 slim_footer|m_row_h|range|null|0
 slim_footer|m_row_h|range|"3.7"|3
+slim_footer|m_brand_size|range|5|70
+slim_footer|m_brand_size|range|"5"|70
+slim_footer|m_brand_size|range|0|70
+slim_footer|m_brand_size|range|-10|70
+slim_footer|m_brand_size|range|99999|190
+slim_footer|m_brand_size|range|"abc"|70
+slim_footer|m_brand_size|range|""|70
+slim_footer|m_brand_size|range|null|70
+slim_footer|m_brand_size|range|"3.7"|70
 slim_footer|brand_style|select|"wordmark"|'wordmark'
 slim_footer|brand_style|select|"nope"|'wordmark'
 slim_footer|brand_style|select|""|'wordmark'

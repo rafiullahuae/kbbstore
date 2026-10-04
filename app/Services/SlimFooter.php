@@ -301,6 +301,19 @@ class SlimFooter
         'm_row_h'    => ['range', 'Smallest row height on a phone', 0,
                          'A floor under each ruled row. 44 is the touch-target minimum if you want every row tappable.',
                          ['min' => 0, 'max' => 60, 'step' => 2, 'unit' => 'px']],
+        /*
+         * THE PHONE'S COUNTERPART TO `brand_size` (Lane FT). Every other size
+         * on the desktop side had an `m_` twin; the wordmark did not, so the
+         * Cart & Checkout footer · Mobile page could not size it. It FOLLOWS
+         * `brand_size` until it has a row of its own -- all() mirrors it the
+         * way it mirrors pad_top from pad_y, and cssVariables() emits nothing
+         * for it until then -- so applying the package moves no byte on the
+         * cart or the checkout. Read only while `mobile_on` is on, like every
+         * key in this block.
+         */
+        'm_brand_size' => ['range', 'Brand size on a phone', 100,
+                           'The wordmark alone, at 900px and below. Follows the desktop brand size until you move it.',
+                           ['min' => 70, 'max' => 190, 'step' => 5, 'unit' => '%']],
 
         // ── Content ──
         /*
@@ -387,7 +400,7 @@ class SlimFooter
         'phone'   => ['On a phone', 'The same bar at 900px and below, with its own shape. Ruled rows is what ships here and spread-to-both-edges is what ships on a desktop, which is the pair the owner chose; the switch at the top hands the phone back to the desktop\'s settings.',
                       ['mobile_on', 'm_variant', 'm_align', 'm_space_above', 'm_pad_y',
                        'm_pad_top', 'm_pad_bottom',
-                       'm_row_pad', 'm_row_h', 'm_pad_x', 'm_gap', 'm_font']],
+                       'm_row_pad', 'm_row_h', 'm_pad_x', 'm_gap', 'm_font', 'm_brand_size']],
         'layout'  => ['Shape & size', 'Four structures and four alignments, which is sixteen looks from two controls. "One line" left-aligned is the shortest, and is what ships.',
                       ['variant', 'align', 'tone', 'divider', 'line_w', 'radius', 'shadow',
                        'space_above', 'pad_y', 'pad_top', 'pad_bottom', 'row_pad', 'row_h', 'pad_x',
@@ -402,7 +415,7 @@ class SlimFooter
                       ['pay_on', 'pay_visa', 'pay_mc', 'pay_apple', 'pay_google', 'pay_tabby', 'pay_tamara']],
     ];
 
-    private const PREFIX = 'slimfooter_';
+    public const PREFIX = 'slimfooter_';
 
     /** key => the custom property it is emitted as, in px. */
     private const VARS = [
@@ -517,7 +530,23 @@ class SlimFooter
             }
         }
 
+        // The phone's brand size follows the desktop's until it has a row of
+        // its own -- the same rule, for the same reason. (Lane FT)
+        if (! $this->phoneBrandSizeOwn()) {
+            $out['m_brand_size'] = $out['brand_size'];
+        }
+
         return $out;
+    }
+
+    /**
+     * True once `m_brand_size` has a row of its own -- the only state in which
+     * the phone's wordmark is sized apart from the desktop's, and the only one
+     * in which the partial prints the rule that reads `--sf-m-bf`. (Lane FT)
+     */
+    public function phoneBrandSizeOwn(): bool
+    {
+        return $this->settings->get(self::PREFIX.'m_brand_size', null) !== null;
     }
 
     public function get(string $key): mixed
@@ -731,6 +760,13 @@ class SlimFooter
             if ($c[$key] !== self::SCHEMA[$key][2]) {
                 $out[] = $prop.':'.rtrim(rtrim(number_format((int) $c[$key] / 100, 2, '.', ''), '0'), '.');
             }
+        }
+
+        /* The phone's own brand size: emitted only once it has a row, and only
+           while the phone has its own shape -- the rule that reads it is gated
+           on both, so a property here otherwise would be one nothing consults. */
+        if ($c['mobile_on'] && $this->phoneBrandSizeOwn()) {
+            $out[] = '--sf-m-bf:'.rtrim(rtrim(number_format((int) $c['m_brand_size'] / 100, 2, '.', ''), '0'), '.');
         }
 
         /*

@@ -487,6 +487,12 @@
   .kbb-slimfoot.sf-bar .sf-brand i{display:block;margin-inline-start:0}
 }
 </style>
+@if ($sfC['mobile_on'] && $sf->phoneBrandSizeOwn())
+{{-- Appearance → Footer → Cart & Checkout footer · Mobile → "Brand size on a
+     phone" (Lane FT). Printed only once that slider has a row of its own, so a
+     shop that never moved it is served the same bytes it was. --}}
+<style>@media (max-width:900px){.kbb-slimfoot.sf-msplit .sf-brand b{font-size:calc(14px * var(--sf-m-bf))}}</style>
+@endif
 @endpush
 @push('scripts')
 <script>
