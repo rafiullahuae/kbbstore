@@ -8,6 +8,7 @@ use App\Support\ExportProbe;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Support\CustomerAggregates;
 use App\Support\DemoSeed;
 use App\Support\Money;
 use App\Support\StoreTime;
@@ -112,7 +113,7 @@ class CustomersApiController extends Controller
      * same way it sorts chronologically, so this works as a string on SQLite
      * and as a datetime on MySQL.
      */
-    private const NEVER = '1970-01-01 00:00:00';
+    private const NEVER = CustomerAggregates::NEVER;
 
     /* ------------------------------------------------------------------ list */
 
@@ -558,141 +559,21 @@ class CustomersApiController extends Controller
     /**
      * `customers` with every aggregate this screen needs already joined on.
      *
-     * Three grouped derived tables and one plain join, evaluated once for the
-     * whole page rather than once per row:
-     *
-     *   oa  orders, conditionally aggregated so the paid figures (spend, last
-     *       order) and the all-statuses count come out of a single pass.
-     *   ca  carts, for last-seen activity from someone who has never ordered.
-     *   ap  addresses, reduced to one chosen address id per customer — the
-     *       default if there is one, otherwise the oldest. COALESCE over two
-     *       aggregates rather than a window function, because the production
-     *       host is MySQL and ROW_NUMBER() is not safe to assume there.
+     * The definition lives in App\Support\CustomerAggregates (moved there by
+     * Lane MK), because Marketing Emails → Customer groups must count "spent
+     * AED 500+" with exactly the number this screen shows. Read that class for
+     * why spend is net of refunds, which statuses count, and why demo orders
+     * and the unmaintained customers columns are left out.
      */
     private function rowQuery(?Builder $from = null): Builder
     {
-        $real = Order::REAL_STATUSES;
-        $marks = implode(',', array_fill(0, count($real), '?'));
-
-        /*
-         * SPEND IS NET OF REFUNDS.
-         *
-         * The comment above this method already explains why spend counts only
-         * REAL_STATUSES: a cancelled order is money the store never took. A
-         * partial refund is the same fact wearing a different hat, and it was
-         * being missed. PaymentRefunder moves an order to 'refunded' only once
-         * the refunds cover the whole captured amount — see the comment on its
-         * status update, which says so in as many words — so a customer given
-         * AED 400 back on a AED 1,000 order kept the whole AED 1,000 here, in
-         * the sort-by-value order, in the summary strip and in the CSV export.
-         *
-         * That figure is what the owner uses to decide who their best customers
-         * are, so being wrong in the generous direction is not harmless: it
-         * promotes whoever returned the most.
-         *
-         * WHICH REFUND ROWS: PaymentRefunder::COUNTED — settled, or in flight
-         * and reserved, and NOT the failed attempts, which exist precisely so
-         * the merchant can see that no money moved. Same definition the order
-         * screen's `refunded_total_aed` uses and the same one the dashboard and
-         * Analytics use, so no two screens can describe one order differently.
-         */
-        $refunded = DB::table('refunds')
-            ->whereIn('status', \App\Services\Payments\PaymentRefunder::COUNTED)
-            ->groupBy('order_id')
-            ->selectRaw('order_id, COALESCE(SUM(amount), 0) as refunded_fils');
-
-        /*
-         * Demo orders are not spend. Store -> Demo Content seeds eight of them
-         * and logs each in `demo_seed_log`; without this they counted towards
-         * a customer's lifetime value, the store-wide average order value and
-         * every band filter on this screen, so turning demo content on moved
-         * figures the owner reads as real money. Same definition of "demo" as
-         * the Dashboard and Analytics use -- see App\Support\DemoSeed.
-         */
-        $orders = DemoSeed::excludeQuery(DB::table('orders'), Order::class, 'orders.id')
-            ->leftJoinSub($refunded, 'rf', 'rf.order_id', '=', 'orders.id')
-            ->whereNull('orders.deleted_at')
-            ->whereNotNull('orders.customer_id')
-            ->groupBy('orders.customer_id')
-            /*
-             * The CASE around the subtraction floors a line at zero rather than
-             * letting it go negative. It cannot through this application —
-             * PaymentRefunder refuses a refund beyond what was captured, and a
-             * full one takes the order out of REAL_STATUSES — but an imported
-             * WooCommerce refund never passed through that check, and one bad
-             * row must not be able to drag a customer's lifetime value below
-             * what they actually paid. Written as CASE rather than MAX()/
-             * GREATEST(), which do not mean the same thing on both engines.
-             */
-            ->selectRaw(
-                "orders.customer_id as customer_id,
-                 SUM(CASE WHEN orders.status IN ($marks) THEN 1 ELSE 0 END) as paid_orders,
-                 COALESCE(SUM(CASE WHEN orders.status IN ($marks)
-                     THEN (CASE WHEN orders.total - COALESCE(rf.refunded_fils, 0) > 0
-                                THEN orders.total - COALESCE(rf.refunded_fils, 0) ELSE 0 END)
-                     ELSE 0 END), 0) as spend_fils,
-                 MAX(CASE WHEN orders.status IN ($marks) THEN orders.created_at END) as paid_last_at,
-                 COUNT(*) as all_orders",
-                array_merge($real, $real, $real)
-            );
-
-        $carts = DB::table('carts')
-            ->whereNotNull('customer_id')
-            ->groupBy('customer_id')
-            ->selectRaw('customer_id, MAX(last_activity_at) as cart_last_at');
-
-        $address = DB::table('addresses')
-            ->groupBy('customer_id')
-            ->selectRaw('customer_id, COALESCE(MIN(CASE WHEN is_default = 1 THEN id END), MIN(id)) as addr_id');
-
-        $never = self::NEVER;
-
-        return ($from ?? Customer::query())
-            ->leftJoinSub($orders, 'oa', 'oa.customer_id', '=', 'customers.id')
-            ->leftJoinSub($carts, 'ca', 'ca.customer_id', '=', 'customers.id')
-            ->leftJoinSub($address, 'ap', 'ap.customer_id', '=', 'customers.id')
-            ->leftJoin('addresses as ad', 'ad.id', '=', 'ap.addr_id')
-            ->select([
-                // An explicit allowlist. `customers` also carries password,
-                // legacy_password and remember_token; a screen that selected
-                // the whole row would hand all three to anything that could
-                // reach this endpoint.
-                'customers.id',
-                'customers.wp_user_id',
-                'customers.name',
-                'customers.first_name',
-                'customers.last_name',
-                'customers.email',
-                'customers.phone',
-                'customers.email_verified_at',
-                'customers.whatsapp_optin',
-                'customers.notes',
-                'customers.created_at',
-                'customers.deleted_at',
-                // Store -> Customers -> Send account invite (Lane PQ). The
-                // dates and the count only; the token hash never leaves the row.
-                'customers.invited_at',
-                'customers.invite_count',
-                'customers.invite_accepted_at',
-                DB::raw('(CASE WHEN customers.password IS NOT NULL OR customers.legacy_password IS NOT NULL THEN 1 ELSE 0 END) as has_login'),
-                DB::raw('COALESCE(oa.paid_orders, 0) as paid_orders'),
-                DB::raw('COALESCE(oa.spend_fils, 0) as spend_fils'),
-                DB::raw('COALESCE(oa.all_orders, 0) as all_orders'),
-                DB::raw('oa.paid_last_at as paid_last_at'),
-                DB::raw('ca.cart_last_at as cart_last_at'),
-                DB::raw($this->lastActiveExpression() . ' as last_active_at'),
-                DB::raw('ad.city as addr_city'),
-                DB::raw('ad.state as addr_state'),
-                DB::raw('ad.country as addr_country'),
-            ])
-            ->addBinding([$never, $never, $never, $never], 'select');
+        return CustomerAggregates::query($from);
     }
 
     /** The later of "last paid order" and "last cart activity". */
     private function lastActiveExpression(): string
     {
-        return '(CASE WHEN COALESCE(ca.cart_last_at, ?) > COALESCE(oa.paid_last_at, ?)'
-            . ' THEN COALESCE(ca.cart_last_at, ?) ELSE COALESCE(oa.paid_last_at, ?) END)';
+        return CustomerAggregates::lastActiveExpression();
     }
 
     /** Everything the operator typed, except the chip. */

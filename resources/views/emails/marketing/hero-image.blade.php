@@ -1,0 +1,2 @@
+{{-- Hero image (Lane MK): tools/rj-email-kit.cjs heroImage(), full width under the header. $img['src'] / ['href'] already checked; ['h'] the declared height at 600 wide or null. --}}
+<tr><td style="padding:0;">@if ($img['href'] !== null)<a href="{{ $img['href'] }}" style="display:block;">@endif<img src="{{ $img['src'] }}" width="600"@if ($img['h'] !== null) height="{{ $img['h'] }}"@endif alt="{{ $img['alt'] }}" style="display:block;width:100%;max-width:600px;height:auto;">@if ($img['href'] !== null)</a>@endif</td></tr>

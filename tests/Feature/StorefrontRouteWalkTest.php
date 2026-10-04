@@ -466,6 +466,20 @@ function walkExpectations(array $seed): array
          */
         'routines'                 => ['status' => 404],
         'routines/{concern}'       => ['params' => ['concern' => 'hydration'], 'status' => 404],
+    ] : []) + (Route::has('marketing.unsubscribe') ? [
+        /*
+         * Marketing Emails' public end (Lane MK, routes/marketing-public.php),
+         * keyed off the route NAME for the reason the routines pair above gives:
+         * this walk fails both ways, and the require is the integrator's line.
+         *
+         * The unsubscribe page renders for ANY token (judged on submit, so the
+         * page is not a "is this link live?" oracle); a click with an unknown
+         * token goes to the home page, never anywhere the URL names; the
+         * bundled banner is a picture; an unknown one is a 404.
+         */
+        'email/u/{token}'          => ['params' => ['token' => '1-' . str_repeat('0', 32)], 'status' => 200],
+        'email/c/{token}/{n}'      => ['params' => ['token' => str_repeat('0', 40), 'n' => '1'], 'status' => 302],
+        'email/art/{name}.jpg'     => ['params' => ['name' => 'autumn-glow'], 'status' => 200],
     ] : []);
 }
 

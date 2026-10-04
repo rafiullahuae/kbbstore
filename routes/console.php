@@ -111,3 +111,24 @@ Schedule::command('payments:tamara-capture')
 Schedule::command('kbb:order-reminders')
     ->everyMinute()
     ->withoutOverlapping(5);
+
+/*
+| ── MARKETING EMAILS: SCHEDULED SENDS (Lane MK) ─────────────────────────────
+|
+| Growth & Marketing → Marketing Emails. Starts every scheduled campaign that
+| has come due — once, because CampaignSender::start() flips the status with a
+| conditional UPDATE — and sends the next batch of every campaign that is
+| sending, within the per-minute rate and the daily cap. Costs two indexed
+| queries a minute when nothing is due.
+|
+| Driver A (the admin's open tab on Review & send) does the same steps without
+| this line; with it, a campaign keeps going after the tab is closed, and a
+| scheduled one starts on time. The Campaigns screen notices when no tick has
+| been seen for ten minutes and shows the cron line above.
+|
+| NEVER on a shopper's request: unlike the reminders above there is no
+| page-view fallback, by design (docs/EMAILS-PLAN.md §4.5).
+*/
+Schedule::command('kbb:campaigns-step')
+    ->everyMinute()
+    ->withoutOverlapping(5);

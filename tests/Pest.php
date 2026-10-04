@@ -88,6 +88,20 @@ pest()->extend(Tests\TestCase::class)
         config(['kbb.image_wide_after_response' => false]);
 
         /*
+         * And Marketing Emails' scheduler heartbeat (Lane MK) -- which is NOT a
+         * request heartbeat, and that is the point of writing it down here.
+         * Campaigns are never sent on the tail of a page view (plan §4.5), so
+         * there is nothing for a test's requests to trigger and nothing to
+         * hold off. What the marker does carry is "a scheduler tick was seen
+         * in the last ten minutes", which the Campaigns screen reads to decide
+         * whether to show the cron line; a tick run by one test would make the
+         * next test's screen say the scheduler is alive. Removing it gives
+         * every test the honest default -- no tick seen -- and a test about
+         * the scheduler runs the tick itself.
+         */
+        @unlink(\App\Services\Marketing\CampaignTick::markerPath());
+
+        /*
          * And the third thing that outlives a test: PHP's own execution clock.
          *
          * App\Http\Controllers\Admin\ImportApiController::step() calls

@@ -158,7 +158,33 @@ final class ArabicInterfaceDrafts
             self::invoice(),
             self::laneRlOrderEmails(),
             self::laneEmEmailKit(),
+            self::laneMkMarketingEmails(),
         );
+    }
+
+    /**
+     * Lane MK — Marketing Emails: the campaign unsubscribe page and the
+     * footer's why-lines (InterfaceStrings::storeMarketingUnsubscribe(),
+     * emailMarketing()). Drafts, reviewed under Translation → Strings.
+     *
+     * @return array<string, string>
+     */
+    private static function laneMkMarketingEmails(): array
+    {
+        return [
+            'store.mkt_unsub.title' => 'إلغاء الاشتراك',
+            'store.mkt_unsub.lead' => 'هل تريد إيقاف إرسال عروضنا وأخبارنا إلى هذا العنوان؟',
+            'store.mkt_unsub.button' => 'نعم، ألغِ اشتراكي',
+            'store.mkt_unsub.keeps' => 'ستستمر رسائل تأكيد الطلب وتحديثات التوصيل والإيصالات — فهي تخص شيئًا اشتريته، وليست تسويقًا.',
+            'store.mkt_unsub.done_title' => 'تم إلغاء اشتراكك',
+            'store.mkt_unsub.done_lead' => 'تم. لن نرسل عروضًا أو أخبارًا إلى هذا العنوان مرة أخرى.',
+            'store.mkt_unsub.bad_note' => 'جرّب فتحه مرة أخرى من الرسالة مباشرة. وإن لم يعمل، ردّ على أي رسالة منا وسنحذف العنوان يدويًا.',
+            'email.mkt.why_customers' => 'تصلك هذه الرسالة لأنك اشتريت من :store من قبل.',
+            'email.mkt.why_subscribers' => 'تصلك هذه الرسالة لأنك اشتركت في رسائل :store.',
+            'email.mkt.why_account' => 'تصلك هذه الرسالة لأن لديك حسابًا لدى :store.',
+            'email.mkt.text_unsubscribe' => 'لإيقاف هذه الرسائل، افتح:',
+            'email.mkt.coupon_ends' => 'ينتهي في :date',
+        ];
     }
 
     /**

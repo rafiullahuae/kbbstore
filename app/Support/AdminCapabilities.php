@@ -453,6 +453,29 @@ final class AdminCapabilities
         'marketing.view' => ['owner', 'manager'],
         'marketing.manage' => ['owner', 'manager'],
         'marketing.export' => ['owner', 'manager'],
+        /*
+         * Growth & Marketing -> Marketing Emails (Lane MK, docs/EMAILS-PLAN.md
+         * §6). Three, because reading a report, building an email and pressing
+         * Send are three different acts:
+         *
+         *   marketing.email.view    Campaigns, Templates, Customer groups and
+         *                           Reports, read; the live group count.
+         *   marketing.email.manage  build templates and groups, draft
+         *                           campaigns, the builder's preview, test sends.
+         *   marketing.email.send    send, schedule, pause, resume or cancel a
+         *                           campaign, step it (Driver A), and the
+         *                           sending limits. OWNER AND MANAGER: the
+         *                           owner's D11, "campaign Send for Owner and
+         *                           Administrator" (row 53 maps Administrator
+         *                           to manager until the roles module names it).
+         *
+         * Support and editor hold none of them. Downloading a group as CSV is
+         * the existing marketing.export, because it is the same act as the
+         * newsletter export: taking the shop's list away.
+         */
+        'marketing.email.view' => ['owner', 'manager'],
+        'marketing.email.manage' => ['owner', 'manager'],
+        'marketing.email.send' => ['owner', 'manager'],
 
         // Delivery rates and the pay/ship rules: a manager's job, not a
         // configuration change.
@@ -1572,6 +1595,28 @@ final class AdminCapabilities
          * export beside it is separated out for. Whoever can read it can take
          * the shop's marketing list with them.
          */
+        /*
+         * Marketing Emails (Lane MK), every route in routes/marketing-emails-
+         * admin.php. SEND FIRST, then the export, then the two POSTs that only
+         * read (the live count and "See the N" carry the rules in the body),
+         * then every GET as a read, then everything else as manage. First match
+         * wins, so each narrower rule sits above the wildcard that would
+         * otherwise claim it — the outbound/sweep lesson below.
+         * MarketingEmailsCapabilityTest walks the routes and holds each one.
+         */
+        ['POST', 'admin-api/email-marketing/campaigns/*/send', 'marketing.email.send'],
+        ['POST', 'admin-api/email-marketing/campaigns/*/schedule', 'marketing.email.send'],
+        ['POST', 'admin-api/email-marketing/campaigns/*/unschedule', 'marketing.email.send'],
+        ['POST', 'admin-api/email-marketing/campaigns/*/step', 'marketing.email.send'],
+        ['POST', 'admin-api/email-marketing/campaigns/*/pause', 'marketing.email.send'],
+        ['POST', 'admin-api/email-marketing/campaigns/*/resume', 'marketing.email.send'],
+        ['POST', 'admin-api/email-marketing/campaigns/*/cancel', 'marketing.email.send'],
+        ['POST', 'admin-api/email-marketing/limits', 'marketing.email.send'],
+        ['GET', 'admin-api/email-marketing/groups/*/export', 'marketing.export'],
+        ['POST', 'admin-api/email-marketing/groups/count', 'marketing.email.view'],
+        ['POST', 'admin-api/email-marketing/groups/people', 'marketing.email.view'],
+        ['GET', 'admin-api/email-marketing/**', 'marketing.email.view'],
+        ['*', 'admin-api/email-marketing/**', 'marketing.email.manage'],
         ['POST', 'admin-api/outbound/sweep', 'marketing.manage'],
         ['GET', 'admin-api/outbound/**', 'marketing.view'],
         ['GET', 'admin-api/newsletter/export', 'marketing.export'],
