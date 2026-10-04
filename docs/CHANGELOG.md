@@ -3,6 +3,24 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.381
+**Footer in four pages with previews; sold-out label; compact reviews box;
+brand tint; 2.3 cards on the product page; admin search on top.** Apply after
+.380. Runs 4 migrations (2 cache clears, 1 Arabic draft, 1 footer setting).
+Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "I want total 4 pages in footer. Desktop, Mobile. Cart-Checkout Footer for Desktop and Mobile … previews on each page" | Appearance → Footer: Site footer · Desktop / · Mobile, Cart & Checkout footer · Desktop / · Mobile — each with only its controls, tagged Desktop + mobile / Desktop only / Phone only, a live preview of the real footer, Save this page, Discard, Reset this page |
+| "remove the effect from the very last row of the footer. animation not from the logo" | The bottom bar's moving shine is off (Bottom bar → "Effect on the last row"); the logo and big name keep theirs |
+| "the sold out product should have proper sold out label" | "Sold out" pill on the photo + a grey "Sold out" button (still opens the product); in-stock products with options untouched. Appearance → Product styles → Card content → Sold-out label |
+| "The review header box i need less heighted, almost less to half" | 156 → 79px on a phone, 156 → 87px on a laptop, same layout. Store → Reviews → Review Settings → Compact summary |
+| "The brand name should have light background color like capsule with less border radius" | #FCE8EE tint, 5px corners, 22px tall. Appearance → Product page → Type · Buy column |
+| "on product page, i want the same 2.3 cards" | You may also like: 2.3 cards on a phone, arrows off; laptop unchanged. Appearance → Product page → You may also like |
+| "the search results on backend coming under the pages" | The admin search results now open above every screen |
+
+Files (35): see the package's update.json.
+
 ## 2.60.380
 **Prices line up with or without stars; Price and Cut price sizes on the
 Product grid page.** Apply after .379. Runs 1 migration (a cache clear).
