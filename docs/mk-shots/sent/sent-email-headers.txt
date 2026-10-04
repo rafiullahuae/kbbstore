@@ -4,4 +4,4 @@ Subject: Welcome to K-Beauty Bliss
 List-Unsubscribe: <http://127.0.0.1:9884/email/u/14-c0107838678191066ceb2e57635989ce>
 List-Unsubscribe-Post: List-Unsubscribe=One-Click
 Precedence: bulk
-Content-Type: multipart/alternative; boundary="-6fp9i5J"
+Content-Type: multipart/alternative; boundary="E2_WpfHp"

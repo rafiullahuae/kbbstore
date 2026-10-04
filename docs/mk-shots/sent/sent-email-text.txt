@@ -9,18 +9,18 @@ Free samples · random K-beauty samples in every order
 
 START WITH OUR BEST SELLERS
 - Round Lab Birch Juice Moisturizing Sunscreen 50ml — AED 79
-  http://127.0.0.1:9884/email/c/eae241dc2d0408a9071c3d255e35dea3df38557f/1
+  http://127.0.0.1:9884/email/c/5b8f513fe423898be3314379e2677ea2132489fb/1
 - SKIN1004 Madagascar Centella Ampoule 55ml — AED 72
-  http://127.0.0.1:9884/email/c/eae241dc2d0408a9071c3d255e35dea3df38557f/2
+  http://127.0.0.1:9884/email/c/5b8f513fe423898be3314379e2677ea2132489fb/2
 - Laneige Lip Sleeping Mask Berry 20g — AED 85
-  http://127.0.0.1:9884/email/c/eae241dc2d0408a9071c3d255e35dea3df38557f/3
+  http://127.0.0.1:9884/email/c/5b8f513fe423898be3314379e2677ea2132489fb/3
 - Beauty of Joseon Glow Deep Serum Rice + Alpha-Arbutin 30ml — AED 115
-  http://127.0.0.1:9884/email/c/eae241dc2d0408a9071c3d255e35dea3df38557f/4
+  http://127.0.0.1:9884/email/c/5b8f513fe423898be3314379e2677ea2132489fb/4
 
-Start shopping: http://127.0.0.1:9884/email/c/eae241dc2d0408a9071c3d255e35dea3df38557f/5
+Start shopping: http://127.0.0.1:9884/email/c/5b8f513fe423898be3314379e2677ea2132489fb/5
 
 — KBB
 
-You are receiving this because you bought from KBB before.
+You are receiving this because you have an account with KBB.
 To stop these emails, open:
 http://127.0.0.1:9884/email/u/14-c0107838678191066ceb2e57635989ce
