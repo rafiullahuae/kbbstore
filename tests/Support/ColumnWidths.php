@@ -270,6 +270,12 @@ final class ColumnWidths
             'model' => 255,
             'type' => 255,
         ],
+        // Lane MK — Marketing Emails (plan §2.2): the widths its migrations declare.
+        'email_suppressions' => [
+            'email' => 191,
+            'reason' => 12,
+            'source' => 40,
+        ],
         'failed_jobs' => [
             'uuid' => 255,
         ],
@@ -380,6 +386,40 @@ final class ColumnWidths
         ],
         'migrations' => [
             'migration' => 255,
+        ],
+        'mkt_campaigns' => [
+            'audience' => 20,
+            'from_name' => 120,
+            'name' => 120,
+            'preheader' => 200,
+            'status' => 12,
+            'subject' => 200,
+            'test_sent_to' => 191,
+        ],
+        'mkt_links' => [
+            'label' => 160,
+            'url' => 500,
+        ],
+        'mkt_segments' => [
+            'audience' => 20,
+            'key' => 60,
+            'match' => 3,
+            'name' => 120,
+        ],
+        'mkt_sends' => [
+            'email' => 191,
+            'error' => 300,
+            'first_name' => 120,
+            'status' => 10,
+            'token' => 40,
+        ],
+        'mkt_templates' => [
+            'category' => 40,
+            'description' => 300,
+            'key' => 60,
+            'name' => 120,
+            'preheader' => 200,
+            'subject' => 200,
         ],
         'module_settings' => [
             'key' => 255,

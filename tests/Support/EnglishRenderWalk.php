@@ -1204,6 +1204,19 @@ final class EnglishRenderWalk
              * pre-conversion template to compare it against. SpottedPageTest
              * pins its title, H1, canonical, breadcrumb and cards.
              */
+            /*
+             * Marketing Emails' public end (Lane MK), listed exactly when the
+             * router has it (the integrator's require), like Spotted below.
+             * Not rendered: the pages were added after BASE_COMMIT, so there is
+             * no pre-conversion template to compare against; their words are
+             * keyed (store.mkt_unsub.*) and MarketingEmailsPublicTest pins them.
+             */
+            ...(Route::has('marketing.unsubscribe') ? [
+                'email/u/{token}' => ['render' => false, 'why' => 'added after BASE_COMMIT (Lane MK): the campaign unsubscribe page; MarketingEmailsPublicTest pins it'],
+                'email/c/{token}/{n}' => ['render' => false, 'why' => 'a redirect (Lane MK): to that campaign\'s own link n, or the home page'],
+                'email/art/{name}.jpg' => ['render' => false, 'why' => 'a JPEG that ships with the shop (Lane MK), no interface strings'],
+            ] : []),
+
             ...(Route::has('spotted.page') ? ['kbeautybliss-spotted' => [
                 'render' => false,
                 'why' => 'added after BASE_COMMIT (Lane HB), so there is no pre-conversion template to compare against; SpottedPageTest pins it',

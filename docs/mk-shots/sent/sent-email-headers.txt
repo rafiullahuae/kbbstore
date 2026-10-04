@@ -1,0 +1,7 @@
+From: KBB <no-reply@127.0.0.1>
+To: fatima.1@example.com
+Subject: Welcome to K-Beauty Bliss
+List-Unsubscribe: <http://127.0.0.1:9888/email/u/14-c0107838678191066ceb2e57635989ce>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+Precedence: bulk
+Content-Type: multipart/alternative; boundary="d1L2sOLy"

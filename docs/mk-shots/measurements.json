@@ -1,0 +1,289 @@
+{
+  "m1-campaigns-1280": {
+    "scrollWidth": 1280,
+    "height": 1292
+  },
+  "m2-builder-1280": {
+    "scrollWidth": 1280,
+    "height": 1932
+  },
+  "m3-groups-1280": {
+    "scrollWidth": 1280,
+    "height": 2070
+  },
+  "m4-review-send-1280": {
+    "scrollWidth": 1280,
+    "height": 2732
+  },
+  "m5-report-1280": {
+    "scrollWidth": 1280,
+    "height": 1100
+  },
+  "templates-library-1280": {
+    "scrollWidth": 1280,
+    "height": 2704
+  },
+  "m1-campaigns-390": {
+    "scrollWidth": 390,
+    "height": 2073
+  },
+  "m2-builder-390": {
+    "scrollWidth": 390,
+    "height": 3728
+  },
+  "m3-groups-390": {
+    "scrollWidth": 390,
+    "height": 3350
+  },
+  "m4-review-send-390": {
+    "scrollWidth": 390,
+    "height": 4003
+  },
+  "m5-report-390": {
+    "scrollWidth": 390,
+    "height": 1031
+  },
+  "templates-library-390": {
+    "scrollWidth": 390,
+    "height": 6537
+  },
+  "template-new-arrivals-600": {
+    "scrollWidth": 600,
+    "height": 1601,
+    "bytes": 16208
+  },
+  "template-new-arrivals-390": {
+    "scrollWidth": 390,
+    "height": 1562,
+    "bytes": 16208
+  },
+  "template-weekly-special-600": {
+    "scrollWidth": 600,
+    "height": 1601,
+    "bytes": 16516
+  },
+  "template-weekly-special-390": {
+    "scrollWidth": 390,
+    "height": 1556,
+    "bytes": 16516
+  },
+  "template-best-sellers-600": {
+    "scrollWidth": 600,
+    "height": 1576,
+    "bytes": 16184
+  },
+  "template-best-sellers-390": {
+    "scrollWidth": 390,
+    "height": 1556,
+    "bytes": 16184
+  },
+  "template-under-54-600": {
+    "scrollWidth": 600,
+    "height": 1202,
+    "bytes": 11936
+  },
+  "template-under-54-390": {
+    "scrollWidth": 390,
+    "height": 1285,
+    "bytes": 11936
+  },
+  "template-super-sale-600": {
+    "scrollWidth": 600,
+    "height": 1576,
+    "bytes": 16514
+  },
+  "template-super-sale-390": {
+    "scrollWidth": 390,
+    "height": 1556,
+    "bytes": 16514
+  },
+  "template-bundles-sets-600": {
+    "scrollWidth": 600,
+    "height": 900,
+    "bytes": 10139
+  },
+  "template-bundles-sets-390": {
+    "scrollWidth": 390,
+    "height": 909,
+    "bytes": 10139
+  },
+  "template-brand-spotlight-600": {
+    "scrollWidth": 600,
+    "height": 900,
+    "bytes": 10140
+  },
+  "template-brand-spotlight-390": {
+    "scrollWidth": 390,
+    "height": 909,
+    "bytes": 10140
+  },
+  "template-we-miss-you-600": {
+    "scrollWidth": 600,
+    "height": 1267,
+    "bytes": 13696
+  },
+  "template-we-miss-you-390": {
+    "scrollWidth": 390,
+    "height": 1276,
+    "bytes": 13696
+  },
+  "template-brand-fans-600": {
+    "scrollWidth": 600,
+    "height": 1601,
+    "bytes": 16237
+  },
+  "template-brand-fans-390": {
+    "scrollWidth": 390,
+    "height": 1587,
+    "bytes": 16237
+  },
+  "template-autumn-glow-600": {
+    "scrollWidth": 600,
+    "height": 1784,
+    "bytes": 16017
+  },
+  "template-autumn-glow-390": {
+    "scrollWidth": 390,
+    "height": 1687,
+    "bytes": 16017
+  },
+  "template-welcome-600": {
+    "scrollWidth": 600,
+    "height": 1707,
+    "bytes": 16944
+  },
+  "template-welcome-390": {
+    "scrollWidth": 390,
+    "height": 1742,
+    "bytes": 16944
+  },
+  "template-skincare-tips-600": {
+    "scrollWidth": 600,
+    "height": 1458,
+    "bytes": 17280
+  },
+  "template-skincare-tips-390": {
+    "scrollWidth": 390,
+    "height": 1717,
+    "bytes": 17280
+  },
+  "builder-drag": {
+    "before": [
+      "mini_header",
+      "heading",
+      "product_grid",
+      "coupon",
+      "button",
+      "footer"
+    ],
+    "after": [
+      "mini_header",
+      "heading",
+      "coupon",
+      "product_grid",
+      "button",
+      "footer"
+    ],
+    "restored_with_down_button": [
+      "mini_header",
+      "heading",
+      "product_grid",
+      "coupon",
+      "button",
+      "footer"
+    ]
+  },
+  "group-count": [
+    {
+      "rules": [],
+      "matched": 40,
+      "emailable": 37,
+      "reasons": {
+        "invalid": 0,
+        "bounced": 1,
+        "unsubscribed": 1,
+        "pending": 1
+      }
+    },
+    {
+      "rules": [
+        "orders gte 1"
+      ],
+      "matched": 30,
+      "emailable": 28,
+      "reasons": {
+        "invalid": 0,
+        "bounced": 0,
+        "unsubscribed": 1,
+        "pending": 1
+      }
+    },
+    {
+      "rules": [
+        "orders gte 1",
+        "emirate any_of [\"dubai\",\"abu_dhabi\",\"sharjah\"]"
+      ],
+      "matched": 17,
+      "emailable": 16,
+      "reasons": {
+        "invalid": 0,
+        "bounced": 0,
+        "unsubscribed": 1,
+        "pending": 0
+      }
+    },
+    {
+      "rules": [
+        "orders gte 1",
+        "emirate any_of [\"dubai\",\"abu_dhabi\",\"sharjah\"]",
+        "brand mostly \"Medicube\""
+      ],
+      "matched": 10,
+      "emailable": 9,
+      "reasons": {
+        "invalid": 0,
+        "bounced": 0,
+        "unsubscribed": 1,
+        "pending": 0
+      }
+    },
+    {
+      "rules": [
+        "orders gte 1",
+        "emirate any_of [\"dubai\",\"abu_dhabi\",\"sharjah\"]",
+        "brand mostly \"Medicube\"",
+        "spent gte 300"
+      ],
+      "matched": 9,
+      "emailable": 8,
+      "reasons": {
+        "invalid": 0,
+        "bounced": 0,
+        "unsubscribed": 1,
+        "pending": 0
+      }
+    }
+  ],
+  "send": {
+    "id": 4,
+    "status": "sent",
+    "building": false,
+    "recipients": 9,
+    "sent": 9,
+    "failed": 0,
+    "skipped": 0,
+    "pending": 0,
+    "done": true,
+    "room": {
+      "allowed": 25,
+      "minute_left": 60,
+      "day_left": 496
+    }
+  },
+  "unsubscribe-page-390": {
+    "scrollWidth": 390
+  },
+  "unsubscribe-page-1280": {
+    "scrollWidth": 1280
+  }
+}

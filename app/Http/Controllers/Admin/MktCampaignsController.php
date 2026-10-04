@@ -77,6 +77,8 @@ final class MktCampaignsController extends Controller
                 'c.id', 'c.name', 'c.subject', 'c.status', 'c.scheduled_at', 'c.started_at', 'c.finished_at',
                 'c.recipients', 'c.sent', 'c.failed', 'c.skipped', 'c.clicks', 'c.orders', 'c.revenue_fils',
                 'c.rules_snapshot', 'c.audience', 'g.name as group_name', 'c.updated_at',
+                // One statement: the click rate's numerator rides the list.
+                DB::raw('(select count(*) from mkt_sends s where s.campaign_id = c.id and s.first_click_at is not null) as clickers'),
             ])
             ->map(function ($c) {
                 $snap = json_decode((string) $c->rules_snapshot, true) ?: [];
@@ -94,6 +96,7 @@ final class MktCampaignsController extends Controller
                     'sent' => (int) $c->sent,
                     'failed' => (int) $c->failed,
                     'clicks' => (int) $c->clicks,
+                    'clickers' => (int) $c->clickers,
                     'orders' => (int) $c->orders,
                     'revenue' => Money::plain((int) $c->revenue_fils),
                     'updated_at' => StoreTime::iso($c->updated_at),
