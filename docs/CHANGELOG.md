@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.378
+**Cart Tracking rows are shaded alternately.** Apply after .377. Runs 1
+migration (a cache clear).
+
+| Your request | Now |
+|---|---|
+| "each row should slight background color to differentiate from each other … use alternative light shade colors" | Growth & Marketing → Cart Tracking: every other row is light blue-grey (#eff3fa), hover and selected rows a step darker; on phones the cards alternate the same way |
+
+Files (2): see the package's update.json.
+
 ## 2.60.377
 **Cart Tracking, Users & Roles with live edit locks, admin menu search, the
 floating WhatsApp button, the compact brand header with logo ring, and SEO
