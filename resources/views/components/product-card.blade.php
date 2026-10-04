@@ -336,6 +336,13 @@
      * to fall back to. See App\Support\ImageVariants.
      */
     $kbbSrcset = $img ? \App\Support\ImageVariants::srcsetFor($img) : '';
+
+    /*
+     * (Lane PF2) The photograph's intrinsic width and height, at the shape the
+     * frame is drawn at — Appearance → Product styles → Image shape, through
+     * the same map that writes `--kbb-ratio`. See the note on the <img>.
+     */
+    [$kbbImgW, $kbbImgH] = \App\Services\ProductStyles::imageBox($kbbShows['image_ratio'] ?? null);
 @endphp
 
 {{-- `kbb-tile` AS WELL AS `kbb-card`, and the second class is load-bearing.
@@ -357,13 +364,22 @@
              /shop page. It keeps its alt, so it is still a described image for
              a screen reader and still indexable by Google Images. --}}
         @if ($img)
-            {{-- NO width/height ATTRIBUTES, and that is not an omission.
-                 `.kbb-card-thumb` is the CSS-sized box — `aspect-ratio:1` — and
-                 the <img> is `position:absolute;inset:0` inside it, so it is out
-                 of flow: layout never asks the file how big it is, which is why
-                 the frame is reserved before a byte of the photograph arrives
-                 and why srcset cannot move anything either. An intrinsic ratio
-                 stated here could only disagree with the frame.
+            {{-- width/height ATTRIBUTES THAT MOVE NOTHING (Lane PF2).
+                 `.kbb-card-thumb` is the CSS-sized box — `aspect-ratio` from
+                 Image shape — and the <img> is `width:100%;height:100%` inside
+                 it, so layout never asks the file how big it is: the frame is
+                 reserved before a byte of the photograph arrives, and srcset
+                 cannot move anything either. That is why these were left off.
+
+                 They are here now for the audit and the parser, not the layout:
+                 Lighthouse lists every card under "Image elements do not have
+                 explicit width and height", and a browser knows the picture's
+                 shape before it is fetched. They are taken from the SAME map as
+                 the frame's `--kbb-ratio` (ProductStyles::imageBox), so the
+                 intrinsic ratio cannot disagree with the frame on the shop's
+                 own setting; CSS width and height beat the attributes either
+                 way. Pixel-compared on /shop, a category, the homepage rails
+                 and the related row at 390 and 1280: identical.
 
                  `eager` is passed by the page that knows this card is the first
                  one in its grid, which is the LCP candidate at both widths.
@@ -371,7 +387,7 @@
                  that is already inside the viewport, so the cards beside this
                  one are not delayed — what lazy buys is the rest of the page,
                  which is most of it. --}}
-            <a class="kbb-card-shot" href="{{ $link }}" tabindex="-1"><img class="kbb-card-img" src="{{ $img }}" alt="{{ $product->altFor($img) }}"
+            <a class="kbb-card-shot" href="{{ $link }}" tabindex="-1"><img class="kbb-card-img" src="{{ $img }}" alt="{{ $product->altFor($img) }}" width="{{ $kbbImgW }}" height="{{ $kbbImgH }}"
                  @if ($kbbSrcset !== '') srcset="{{ $kbbSrcset }}" sizes="{{ \App\Support\ImageVariants::tileSizesAttribute() }}" @endif
                  @if ($eager) loading="eager" fetchpriority="high" @else loading="lazy" @endif
                  decoding="async"></a>
