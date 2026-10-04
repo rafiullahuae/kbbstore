@@ -56,8 +56,11 @@ php "$APP/artisan" tinker --execute="require '$HERE/pf-seed.php';" >>"$DIR/migra
 tail -3 "$DIR/migrate.log"
 rm -f "$DIR/compiled/routes.php"
 
-cp "$HERE/m1-router.php" "$ROOT/router.php"
-php -S 127.0.0.1:"$PORT" -t "$ROOT" "$ROOT/router.php" >"$DIR/server.log" 2>&1 &
+cp "$HERE/m1-router.php" "$ROOT/m1-router.php"
+cp "$HERE/pf-router.php" "$ROOT/router.php"
+# Gzip, as the live box serves it: documents by zlib.output_compression, the
+# text assets by pf-router.php through the same setting.
+php -d zlib.output_compression=On -S 127.0.0.1:"$PORT" -t "$ROOT" "$ROOT/router.php" >"$DIR/server.log" 2>&1 &
 echo $! > "$DIR/server.pid"
 sleep 2
 
