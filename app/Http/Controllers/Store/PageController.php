@@ -292,6 +292,8 @@ class PageController extends Controller
         return view('store.page', [
             'page' => $page,
             'settings' => $this->settings,
+            // Pages → Page banners (Lane SS): null on a page with none.
+            'pageBanner' => app(\App\Services\PageBanners::class)->forPage('page:' . $slug),
             // The layout reads `$seoCtx` and merges it over its own defaults;
             // see resources/views/layouts/store.blade.php. An empty array is the
             // no-override case and merges to nothing.
