@@ -97,7 +97,6 @@ final class AdminSearchIndex
         'pagewash'     => [PageWash::class],
         'instagram'    => [InstagramSettings::class],
         'productpage'  => [ProductLayout::class],
-        'slimfooter'   => [SiteFooter::class, SlimFooter::class],
         'hpcontent'    => [HomepageContent::class],
         'wabutton'     => [\App\Services\WhatsAppButton::class],
     ];
@@ -581,20 +580,6 @@ final class AdminSearchIndex
             'Trust & reviews' => [],
             'Fields & attention' => [],
         ],
-        'slimfooter' => [
-            'Site footer · design' => [],
-            'Site footer · help strip' => [],
-            'Site footer · Visit us & name' => [],
-            'Site footer · link columns' => [],
-            'Site footer · colours & effects' => [],
-            'Site footer · layout desktop' => [],
-            'Site footer · layout mobile' => [],
-            'Where it shows' => [],
-            'On a phone' => [],
-            'Shape & size' => [],
-            'Content' => [],
-            'Payment marks' => [],
-        ],
         'acctpanel' => [
             'Welcome' => [],
             'Panel' => [],
@@ -812,6 +797,22 @@ final class AdminSearchIndex
     public const CACHE_KEY = 'kbb.admin.search-index';
 
     /** @var array<string, array{0: list<string>, 1: list<array{0: int, 1: string}>}>|null */
+    /**
+     * Screen id => a class whose pages() answers [key, label, sections[title,
+     * keys]] over SCHEMA keys of the services it names. (Lane FT)
+     *
+     * Appearance → Footer is drawn as four PAGES of sections, not as its two
+     * services' TABS, so reading it from SCHEMA_SCREENS would offer the owner
+     * tab names the screen no longer has. Its index is built from the same map
+     * the screen draws from, so a section or a control moved there is found
+     * here with nobody touching this file.
+     *
+     * @var array<string, class-string>
+     */
+    public const PAGE_SCREENS = [
+        'slimfooter' => \App\Support\FooterPages::class,
+    ];
+
     private static ?array $built = null;
 
     /**
@@ -850,6 +851,28 @@ final class AdminSearchIndex
 
                     foreach ($labels as $label) {
                         self::add($out, $screen, $tab, $label);
+                    }
+                }
+            }
+        }
+
+        foreach (self::PAGE_SCREENS as $screen => $class) {
+            $labels = [];
+
+            foreach ([SiteFooter::SCHEMA, SlimFooter::SCHEMA] as $schema) {
+                foreach ($schema as $key => $def) {
+                    $labels[$key] = trim((string) ($def['label'] ?? $def[1] ?? ''));
+                }
+            }
+
+            foreach ($class::pages() as $page) {
+                self::add($out, $screen, $page['label'], null);
+
+                foreach ($page['sections'] as $section) {
+                    self::add($out, $screen, $page['label'], $section['title']);
+
+                    foreach ($section['keys'] as $key) {
+                        self::add($out, $screen, $page['label'], $labels[$key] ?? '');
                     }
                 }
             }
@@ -933,6 +956,14 @@ final class AdminSearchIndex
     public static function signature(): string
     {
         $parts = [(string) @filemtime(__FILE__)];
+
+        foreach (self::PAGE_SCREENS as $class) {
+            $parts[] = $class.'@'.(string) @filemtime(app_path(str_replace('\\', '/', substr($class, 4)).'.php'));
+        }
+
+        foreach ([SiteFooter::class, SlimFooter::class] as $class) {
+            $parts[] = $class.'@'.(string) @filemtime(app_path(str_replace('\\', '/', substr($class, 4)).'.php'));
+        }
 
         foreach (self::SCHEMA_SCREENS as $classes) {
             foreach ($classes as $class) {

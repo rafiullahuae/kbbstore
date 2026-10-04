@@ -498,7 +498,12 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // entry, not regenerated: four objects inserted, none changed.
     // 672 IN 2.60.376: "How it fills the row" (`nav_fit_mode`) on the nav tab,
     // spliced in after `nav_fit`; `nav_fit` and `nav_fit_max` changed help text only.
-    expect($compared)->toBe(672, 'the number of controls drawn changed');
+    // 673 (Lane FT): + 1 on Appearance → Footer → the slim bar's "On a phone"
+    // tab — `m_brand_size`, "Brand size on a phone", the phone's twin of
+    // `brand_size`, appended after `m_font` where SlimFooter::TABS puts it. It
+    // follows the desktop brand size until moved, so its value is 100 here.
+    // Spliced into the fixture's slim-footer entry: one object inserted, none changed.
+    expect($compared)->toBe(673, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

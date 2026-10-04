@@ -4716,15 +4716,15 @@
             "key": "site_sheen",
             "name": "site_sheen",
             "type": "select",
-            "label": "The shine",
-            "help": "A light that sweeps across, left to right in English and right to left in Arabic. Never for a visitor whose device asks for reduced motion.",
+            "label": "Effect on the last row (the shine)",
+            "help": "A light that sweeps across, left to right in English and right to left in Arabic. Off, as the owner asked on 4 October; the big name keeps its slow colour drift either way. Never for a visitor whose device asks for reduced motion.",
             "options": {
-              "bar": "Across the bottom bar",
-              "name": "Across the big name",
-              "off": "Off"
+              "bar": "A shine sweeping across the last row",
+              "name": "A shine across the big name instead",
+              "off": "Off — the last row stays still"
             },
-            "default": "bar",
-            "value": "bar"
+            "default": "off",
+            "value": "off"
           },
           {
             "key": "site_sheen_speed",
@@ -5437,6 +5437,20 @@
             "options": {
               "min": 70,
               "max": 140,
+              "step": 5,
+              "unit": "%"
+            }
+          },
+          {
+            "key": "m_brand_size",
+            "type": "range",
+            "label": "Brand size on a phone",
+            "help": "The wordmark alone, at 900px and below. Follows the desktop brand size until you move it.",
+            "default": 100,
+            "value": 100,
+            "options": {
+              "min": 70,
+              "max": 190,
               "step": 5,
               "unit": "%"
             }

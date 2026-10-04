@@ -40,3 +40,16 @@ Route::get('/slim-footer', [SlimFooterApiController::class, 'show'])
 Route::post('/slim-footer', [SlimFooterApiController::class, 'save'])
     ->middleware('throttle:60,1')
     ->name('admin.slim-footer.save');
+
+/*
+ * Appearance → Footer's live preview (Lane FT): one of the four Footer pages,
+ * drawn by the shop's own partial from the values on the screen. It writes
+ * nothing, and it has its own capability, `footer.preview`, mapped in
+ * AdminCapabilities — the exact line for 'admin-api/slim-footer' does not match
+ * this path, and a path left off the map is owner-only rather than open.
+ * Throttled like its siblings; the screen asks at most once per pause in
+ * typing, never on a timer.
+ */
+Route::post('/slim-footer/preview', [SlimFooterApiController::class, 'preview'])
+    ->middleware('throttle:120,1')
+    ->name('admin.slim-footer.preview');

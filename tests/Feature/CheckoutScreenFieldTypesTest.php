@@ -220,9 +220,16 @@ it('squeezes the tab you are looking at and leaves the other eight alone', funct
 it('scopes the footer screen\'s presets the same way, without waiting for the same report twice', function () {
     $screen = (string) file_get_contents(resource_path('views/admin/partials/slim-footer-screen.blade.php'));
 
-    expect($screen)->toContain("var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];")
-        ->and($screen)->toContain('>Squeeze this tab<')
-        ->and($screen)->toContain('<b>this tab</b>');
+    /*
+     * (Lane FT) The footer screen is four PAGES now, not thirteen tabs, and
+     * the presets are scoped to the page in front of you: `pageKeys(current)`
+     * is the keys drawn on that one page. MUTATION: walk every field in
+     * `fields` instead and the first assertion is red.
+     */
+    expect($screen)->toContain('var current = page();')
+        ->and($screen)->toContain('pageKeys(current).forEach(function (k) {')
+        ->and($screen)->toContain('>Squeeze this page<')
+        ->and($screen)->toContain('<b>this page</b>');
 });
 
 /* ------------------------------------------------------------------------

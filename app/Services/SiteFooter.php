@@ -185,9 +185,18 @@ final class SiteFooter
         'site_name_tone' => ['type' => 'select', 'label' => 'The big name’s colours', 'default' => 'warm',
             'options' => ['warm' => 'Warm — light pink, rose, coral, peach and a soft grey', 'pink' => 'Pinks only'],
             'help' => 'Light and bright, drifting slowly. Both stay in the shop’s pink, red, orange and grey — the owner: “no any other colors”.'],
-        'site_sheen' => ['type' => 'select', 'label' => 'The shine', 'default' => 'bar',
-            'options' => ['bar' => 'Across the bottom bar', 'name' => 'Across the big name', 'off' => 'Off'],
-            'help' => 'A light that sweeps across, left to right in English and right to left in Arabic. Never for a visitor whose device asks for reduced motion.'],
+        /*
+         * SHIPS OFF (Lane FT). The owner, 4 October: "also remove the effect
+         * from the very last row of the footer. animation not from the logo."
+         * The last row is the bottom bar (© · Privacy · Terms · payment marks),
+         * and its effect was this shine sweeping across it. The big name's
+         * slow colour drift and the help strip's drift are `site_motion` and
+         * are untouched. The switch stays, so he can have it back.
+         * Migration 2027_08_05_100100 turns a stored 'bar' off as well.
+         */
+        'site_sheen' => ['type' => 'select', 'label' => 'Effect on the last row (the shine)', 'default' => 'off',
+            'options' => ['bar' => 'A shine sweeping across the last row', 'name' => 'A shine across the big name instead', 'off' => 'Off — the last row stays still'],
+            'help' => 'A light that sweeps across, left to right in English and right to left in Arabic. Off, as the owner asked on 4 October; the big name keeps its slow colour drift either way. Never for a visitor whose device asks for reduced motion.'],
         'site_sheen_speed' => ['type' => 'select', 'label' => 'Shine speed', 'default' => '5',
             'options' => self::SHEEN_SPEED, 'help' => ''],
 

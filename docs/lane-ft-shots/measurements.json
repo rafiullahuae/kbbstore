@@ -1,0 +1,274 @@
+[
+ {
+  "page": "site-d",
+  "width": 1280,
+  "moved": "site_c_bg -> #fff1f5",
+  "state": "1 unsaved change on this page",
+  "before": {
+   "scrollWidth": 1280,
+   "clientWidth": 1280,
+   "frameShownWidth": 563,
+   "frameShownHeight": 273,
+   "frameScale": 0.44,
+   "frameInnerWidth": 1280,
+   "footerHeight": 511,
+   "docHeight": 620,
+   "probe": "rgb(255, 255, 255)"
+  },
+  "after": {
+   "scrollWidth": 1280,
+   "clientWidth": 1280,
+   "frameShownWidth": 563,
+   "frameShownHeight": 273,
+   "frameScale": 0.44,
+   "frameInnerWidth": 1280,
+   "footerHeight": 511,
+   "docHeight": 620,
+   "probe": "rgb(255, 241, 245)"
+  }
+ },
+ {
+  "page": "site-m",
+  "width": 1280,
+  "moved": "site_m_logo -> true",
+  "state": "1 unsaved change on this page",
+  "before": {
+   "scrollWidth": 1280,
+   "clientWidth": 1280,
+   "frameShownWidth": 332,
+   "frameShownHeight": 648,
+   "frameScale": 0.852,
+   "frameInnerWidth": 390,
+   "footerHeight": 619,
+   "docHeight": 769,
+   "probe": "none"
+  },
+  "after": {
+   "scrollWidth": 1280,
+   "clientWidth": 1280,
+   "frameShownWidth": 332,
+   "frameShownHeight": 648,
+   "frameScale": 0.852,
+   "frameInnerWidth": 390,
+   "footerHeight": 662,
+   "docHeight": 812,
+   "probe": "block"
+  }
+ },
+ {
+  "page": "bar-d",
+  "width": 1280,
+  "moved": "tone -> ink",
+  "state": "1 unsaved change on this page",
+  "before": {
+   "scrollWidth": 1280,
+   "clientWidth": 1280,
+   "frameShownWidth": 563,
+   "frameShownHeight": 167,
+   "frameScale": 0.44,
+   "frameInnerWidth": 1280,
+   "footerHeight": 84,
+   "docHeight": 380,
+   "probe": "rgb(251, 245, 244)"
+  },
+  "after": {
+   "scrollWidth": 1280,
+   "clientWidth": 1280,
+   "frameShownWidth": 563,
+   "frameShownHeight": 167,
+   "frameScale": 0.44,
+   "frameInnerWidth": 1280,
+   "footerHeight": 84,
+   "docHeight": 380,
+   "probe": "rgb(23, 24, 28)"
+  }
+ },
+ {
+  "page": "bar-m",
+  "width": 1280,
+  "moved": "m_brand_size -> 160",
+  "state": "1 unsaved change on this page",
+  "before": {
+   "scrollWidth": 1280,
+   "clientWidth": 1280,
+   "frameShownWidth": 332,
+   "frameShownHeight": 443,
+   "frameScale": 0.852,
+   "frameInnerWidth": 390,
+   "footerHeight": 164,
+   "docHeight": 520,
+   "probe": "14px"
+  },
+  "after": {
+   "scrollWidth": 1280,
+   "clientWidth": 1280,
+   "frameShownWidth": 332,
+   "frameShownHeight": 443,
+   "frameScale": 0.852,
+   "frameInnerWidth": 390,
+   "footerHeight": 174,
+   "docHeight": 520,
+   "probe": "22.4px"
+  }
+ },
+ {
+  "page": "site-d",
+  "width": 390,
+  "moved": "site_c_bg -> #fff1f5",
+  "state": "1 unsaved change on this page",
+  "before": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "frameShownWidth": 332,
+   "frameShownHeight": 161,
+   "frameScale": 0.259,
+   "frameInnerWidth": 1280,
+   "footerHeight": 511,
+   "docHeight": 620,
+   "probe": "rgb(255, 255, 255)"
+  },
+  "after": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "frameShownWidth": 332,
+   "frameShownHeight": 161,
+   "frameScale": 0.259,
+   "frameInnerWidth": 1280,
+   "footerHeight": 511,
+   "docHeight": 620,
+   "probe": "rgb(255, 241, 245)"
+  }
+ },
+ {
+  "page": "site-m",
+  "width": 390,
+  "moved": "site_m_logo -> true",
+  "state": "1 unsaved change on this page",
+  "before": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "frameShownWidth": 316,
+   "frameShownHeight": 616,
+   "frameScale": 0.81,
+   "frameInnerWidth": 390,
+   "footerHeight": 619,
+   "docHeight": 769,
+   "probe": "none"
+  },
+  "after": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "frameShownWidth": 316,
+   "frameShownHeight": 616,
+   "frameScale": 0.81,
+   "frameInnerWidth": 390,
+   "footerHeight": 662,
+   "docHeight": 812,
+   "probe": "block"
+  }
+ },
+ {
+  "page": "bar-d",
+  "width": 390,
+  "moved": "tone -> ink",
+  "state": "1 unsaved change on this page",
+  "before": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "frameShownWidth": 332,
+   "frameShownHeight": 99,
+   "frameScale": 0.259,
+   "frameInnerWidth": 1280,
+   "footerHeight": 84,
+   "docHeight": 380,
+   "probe": "rgb(251, 245, 244)"
+  },
+  "after": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "frameShownWidth": 332,
+   "frameShownHeight": 99,
+   "frameScale": 0.259,
+   "frameInnerWidth": 1280,
+   "footerHeight": 84,
+   "docHeight": 380,
+   "probe": "rgb(23, 24, 28)"
+  }
+ },
+ {
+  "page": "bar-m",
+  "width": 390,
+  "moved": "m_brand_size -> 160",
+  "state": "1 unsaved change on this page",
+  "before": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "frameShownWidth": 316,
+   "frameShownHeight": 421,
+   "frameScale": 0.81,
+   "frameInnerWidth": 390,
+   "footerHeight": 164,
+   "docHeight": 520,
+   "probe": "14px"
+  },
+  "after": {
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "frameShownWidth": 316,
+   "frameShownHeight": 421,
+   "frameScale": 0.81,
+   "frameInnerWidth": 390,
+   "footerHeight": 174,
+   "docHeight": 520,
+   "probe": "22.4px"
+  }
+ },
+ {
+  "width": 1280,
+  "label": "before",
+  "site_sheen": "bar",
+  "save": 200,
+  "footerClass": "kft kft-motion kft-sheen-bar kft-xm-help-sub kft-xm-logo kft-bc-m kft-hc-m",
+  "lastRowEffect": "kft-sheen",
+  "lastRowEffectContent": "\"\"",
+  "bigNameAnimation": "kft-drift",
+  "lastRowHeight": 48,
+  "scrollWidth": 1280
+ },
+ {
+  "width": 1280,
+  "label": "after",
+  "site_sheen": "off",
+  "save": 200,
+  "footerClass": "kft kft-motion kft-xm-help-sub kft-xm-logo kft-bc-m kft-hc-m",
+  "lastRowEffect": "none",
+  "lastRowEffectContent": "none",
+  "bigNameAnimation": "kft-drift",
+  "lastRowHeight": 48,
+  "scrollWidth": 1280
+ },
+ {
+  "width": 390,
+  "label": "before",
+  "site_sheen": "bar",
+  "save": 200,
+  "footerClass": "kft kft-motion kft-sheen-bar kft-xm-help-sub kft-xm-logo kft-bc-m kft-hc-m",
+  "lastRowEffect": "kft-sheen",
+  "lastRowEffectContent": "\"\"",
+  "bigNameAnimation": "kft-drift",
+  "lastRowHeight": 70,
+  "scrollWidth": 390
+ },
+ {
+  "width": 390,
+  "label": "after",
+  "site_sheen": "off",
+  "save": 200,
+  "footerClass": "kft kft-motion kft-xm-help-sub kft-xm-logo kft-bc-m kft-hc-m",
+  "lastRowEffect": "none",
+  "lastRowEffectContent": "none",
+  "bigNameAnimation": "kft-drift",
+  "lastRowHeight": 70,
+  "scrollWidth": 390
+ }
+]
