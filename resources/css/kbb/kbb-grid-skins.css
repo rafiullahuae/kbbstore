@@ -486,6 +486,20 @@
 /* The price row sits directly above the button and does not stretch. */
 .kbb-pgrid .cp,.kbb-pgrid .kbb-card-rate{flex:none}
 
+/* THE PRICE ROW KEEPS ITS PLACE WITH OR WITHOUT STARS. (2.60.380)
+   The owner, with the homepage bundles on a phone: "i want the price row must
+   be same position, even if reviews are there or not. i need semetry." An
+   unreviewed product prints no star row (by design), so its price rode up 19px
+   beside a reviewed one -- whenever the "Above the price" spacing replaced the
+   price's auto margin, and always in a carousel. The name now keeps the star
+   row's footprint below it when no stars follow, and the star row has a fixed
+   height, so the two match exactly. The Showcase family already reserves this
+   with --sc-rate-slot; the four skins that do not stack the card, and Price
+   tag (its price floats), are left as they were; "Stars" switched off
+   (body.pc-norate) reserves nothing. */
+body:not(.pc-norate) .kbb-pgrid:not([data-skin="horizontal"]):not([data-skin="overlay"]):not([data-skin="glass"]):not([data-skin="reveal"]):not([data-skin="pricetag"]):not([data-skin^="showcase"]) .kbb-tile .cn:has(+ .cp){margin-bottom:calc(19px + var(--sc-rate-mt,4px))}
+.kbb-pgrid:not([data-skin="horizontal"]):not([data-skin="overlay"]):not([data-skin="glass"]):not([data-skin="reveal"]):not([data-skin="pricetag"]):not([data-skin^="showcase"]) .kbb-tile .kbb-card-rate{height:19px}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    THE SHOWCASE FAMILY — four treatments of one card                Lane PG2
 

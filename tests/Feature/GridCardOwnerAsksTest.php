@@ -609,7 +609,7 @@ it('reaches every Spacing & type control through to a selector, and none of them
         'card_pad_m' => 4, 'card_pad_d' => 30, 'card_gap_img_m' => 2, 'card_gap_img_d' => 30,
         'card_gap_brand_m' => 11, 'card_gap_brand_d' => 17, 'card_gap_rate_m' => 1, 'card_gap_rate_d' => 19,
         'card_gap_price_m' => 0, 'card_gap_price_d' => 30, 'card_gap_cart_m' => 0, 'card_gap_cart_d' => 30,
-        'card_fs_title_m' => '12px', 'card_fs_title_d' => '18px', 'card_fs_price_m' => '16px', 'card_fs_price_d' => '20px',
+        'card_fs_title_m' => '12px', 'card_fs_title_d' => '18px', 'card_fs_price_m' => '16px', 'card_fs_price_d' => '20px', 'card_fs_reg_m' => '10px', 'card_fs_reg_d' => '15px',
         'card_fs_btn_m' => '13px', 'card_fs_btn_d' => '14px', 'card_fs_brand_m' => '9px', 'card_fs_brand_d' => '12px',
         'card_fw_title' => '400', 'card_fw_price' => '400', 'card_fw_sale' => '500', 'card_fw_btn' => '500', 'card_fw_brand' => '400',
     ];
@@ -706,7 +706,7 @@ it('offers the new controls on Appearance → Product styles, in their own tab',
     $tabs = collect(test()->actingAs($owner, 'admin')->getJson('/admin-api/product-styles')->assertOk()->json('tabs'))->keyBy('key');
 
     expect($tabs['spacing']['label'])->toBe('Spacing & type')
-        ->and($tabs['spacing']['fields'])->toHaveCount(25) // 21 + brand → name and name → stars, phone and desktop (2.60.371)
+        ->and($tabs['spacing']['fields'])->toHaveCount(27) // 21 + brand → name and name → stars (2.60.371) + cut price size (2.60.380), phone and desktop
         ->and(collect($tabs['layout']['fields'])->firstWhere('key', 'hover_phone')['value'])->toBeFalse()
         ->and(collect($tabs['content']['fields'])->firstWhere('key', 'show_new')['value'])->toBeFalse()
         ->and(collect($tabs['content']['fields'])->firstWhere('key', 'show_discount')['value'])->toBeFalse();

@@ -703,6 +703,7 @@ final class AdminSearchIndex
                 'Stars and review count', 'Was price', 'Spacing', 'Gap between cards', 'Smallest card',
                 'Space inside each card', 'Inside the card', 'Photo → first line', 'Brand → name',
                 'Name → stars', 'Above the price', 'Price → Add to cart',
+                'Price text size', 'Cut price',
             ],
         ],
         'sitelayout' => [

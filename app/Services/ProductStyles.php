@@ -210,6 +210,10 @@ class ProductStyles
         'card_fs_title_d'    => ['select', 'Product name size · desktop', '14px', '', self::FONT_SIZES],
         'card_fs_price_m'    => ['select', 'Price size · phone', '13.5px', 'The price and the sale price.', self::FONT_SIZES],
         'card_fs_price_d'    => ['select', 'Price size · desktop', '15px', '', self::FONT_SIZES],
+        // 2.60.380, the owner: "give control to set the pricing font size, and
+        // cut price also ... separate controls for desktop and mobile".
+        'card_fs_reg_m'      => ['select', 'Cut price size · phone', '12px', 'The struck-through old price beside a sale price.', self::FONT_SIZES],
+        'card_fs_reg_d'      => ['select', 'Cut price size · desktop', '12px', '', self::FONT_SIZES],
         'card_fs_btn_m'      => ['select', 'Button text size · phone', '11px', '', self::FONT_SIZES],
         'card_fs_btn_d'      => ['select', 'Button text size · desktop', '12px', '', self::FONT_SIZES],
         'card_fs_brand_m'    => ['select', 'Brand name size · phone', '10.5px', 'Only shows when Card content → Brand name is on.', self::FONT_SIZES],
@@ -277,7 +281,7 @@ class ProductStyles
                       ['card_pad_m', 'card_pad_d', 'card_gap_img_m', 'card_gap_img_d',
                        'card_gap_brand_m', 'card_gap_brand_d', 'card_gap_rate_m', 'card_gap_rate_d',
                        'card_gap_price_m', 'card_gap_price_d', 'card_gap_cart_m', 'card_gap_cart_d',
-                       'card_fs_title_m', 'card_fs_title_d', 'card_fs_price_m', 'card_fs_price_d',
+                       'card_fs_title_m', 'card_fs_title_d', 'card_fs_price_m', 'card_fs_price_d', 'card_fs_reg_m', 'card_fs_reg_d',
                        'card_fs_btn_m', 'card_fs_btn_d', 'card_fs_brand_m', 'card_fs_brand_d',
                        'card_fw_title', 'card_fw_price', 'card_fw_sale', 'card_fw_btn', 'card_fw_brand']],
         'colour'  => ['Colour', 'Badges, price and the button.',
@@ -675,6 +679,12 @@ class ProductStyles
 
             if ($moved("card_fs_price_{$dev}") && ($v = $size("card_fs_price_{$dev}")) !== null) {
                 $rules["{$tile} .kbb-card-price"][] = "font-size:{$v}";
+            }
+
+            // Doubled class: the Showcase family shrinks the cut price on a
+            // narrow phone with a :has() rule worth five classes.
+            if ($moved("card_fs_reg_{$dev}") && ($v = $size("card_fs_reg_{$dev}")) !== null) {
+                $rules[".kbb-pgrid.kbb-pgrid[data-skin] .kbb-tile .cp .kbb-card-reg"][] = "font-size:{$v}";
             }
 
             if ($moved("card_fs_btn_{$dev}") && ($v = $size("card_fs_btn_{$dev}")) !== null) {

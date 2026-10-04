@@ -170,6 +170,7 @@ function psOffDefault(): array
         'card_gap_cart_m' => 4, 'card_gap_cart_d' => 20,
         'card_fs_title_m' => '12px', 'card_fs_title_d' => '16px',
         'card_fs_price_m' => '15px', 'card_fs_price_d' => '18px',
+        'card_fs_reg_m' => '10px', 'card_fs_reg_d' => '14px', // 2.60.380
         'card_fs_btn_m' => '12px', 'card_fs_btn_d' => '13px',
         'card_fs_brand_m' => '9px', 'card_fs_brand_d' => '12px',
         'card_fw_title' => '500', 'card_fw_price' => '500', 'card_fw_sale' => '600',

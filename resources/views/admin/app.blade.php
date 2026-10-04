@@ -3898,6 +3898,15 @@ const PG_CARD_SPACE = [
   ['card_gap_cart_m',  'card_gap_cart_d',  'Price → Add to cart',      'Between the price and the button.'],
 ];
 let PGSDEF = {};     /* ProductStyles range fields, by key: {min,max,step,def} */
+/* 2.60.380, the owner: "give control to set the pricing font size, and cut
+   price also ... separate controls for desktop and mobile". The same
+   ProductStyles selects as Product styles → Spacing & type, surfaced here the
+   way PG_CARD_SPACE surfaces the gaps. [phone key, desktop key, label, help] */
+const PG_CARD_TYPE = [
+  ['card_fs_price_m', 'card_fs_price_d', 'Price', 'The price, and the sale price beside a cut one.'],
+  ['card_fs_reg_m',   'card_fs_reg_d',   'Cut price', 'The struck-through old price.'],
+];
+let PGSSEL = {};     /* ProductStyles select fields, by key: {opts:[value...], def} */
 function pgSpaceDef(k){
   const f = PGSDEF[k];
   return f && Number.isFinite(f.min) && Number.isFinite(f.max) ? f : null;
@@ -3996,6 +4005,12 @@ function pgPaint(){
   const SC = '#pgPrev .kbb-pgrid[data-skin^="showcase"] .kbb-tile', NS = '#pgPrev .kbb-pgrid:not([data-skin^="showcase"]) .kbb-tile';
   if (pr !== null) r.push(`${SC} .cp{padding-top:${pr}px;margin-top:0}${NS} .cp{margin-top:${pr}px}`);
   if (ca !== null) r.push(`${SC} .kbb-card-cart{margin-top:${ca}px}${NS} .cp{margin-bottom:${ca}px}${NS} .kbb-card-cart{margin-top:0}`);
+  /* Price sizes, desktop: like cardCss(), only a MOVED value is printed, and
+     only one of the select's own options. */
+  const fs = k => { const f = PGSSEL[k]; const v = f ? String(PGS[k] ?? f.def) : ''; return f && v !== f.def && f.opts.includes(v) && /^\d+(\.\d+)?px$/.test(v) ? v : null; };
+  const fp = fs('card_fs_price_d'), fr = fs('card_fs_reg_d');
+  if (fp) r.push(`${T} .kbb-card-price{font-size:${fp}}`);
+  if (fr) r.push(`#pgPrev .kbb-pgrid.kbb-pgrid[data-skin] .kbb-tile .cp .kbb-card-reg{font-size:${fr}}`);
   if (r.length) { const st = document.createElement('style'); st.textContent = r.join(''); el.appendChild(st); }
 }
 
@@ -4025,9 +4040,11 @@ async function renderLayout(){
   PGL = d;
   PGS = psd ? pgFlat(psd.tabs) : {};
   PGSDEF = {};
+  PGSSEL = {};
   (psd && psd.tabs || []).forEach(t => (t.fields || []).forEach(f => {
     const o = f.options || {};
     if (f.type === 'range') PGSDEF[f.key] = { min: +o.min, max: +o.max, step: +o.step || 1, def: +f.default };
+    if (f.type === 'select') PGSSEL[f.key] = { opts: Array.isArray(o) ? o.map(x => (x && typeof x === 'object') ? String(x.value) : String(x)) : Object.keys(o), def: String(f.default) };
   }));
   PGSL = sld ? pgFlat(sld.tabs) : {};
   PGS0 = Object.assign({}, PGS);
@@ -4069,6 +4086,13 @@ async function renderLayout(){
         <div class="pgdevs">${one(m, 'Phone')}${one(d, 'Desktop')}</div></div>`;
     }).join('') : '';
 
+  const pgSel = k => { const f = PGSSEL[k]; if (!f) return null; const v = String(PGS[k] ?? f.def); return f.opts.includes(v) ? v : f.def; };
+  const cardTypeRows = psd ? PG_CARD_TYPE.filter(([m, d]) => PGSSEL[m] && PGSSEL[d]).map(([m, d, label, help]) => {
+      const one = (k, dev) => `<label class="pgdev"><em>${dev}</em><select data-pgct="${escAttr(k)}" aria-label="${escAttr(label + ' size · ' + dev)}" style="padding:5px 8px;border:1px solid #dbe3ec;border-radius:7px">${PGSSEL[k].opts.map(o => `<option value="${escAttr(o)}"${o === pgSel(k) ? ' selected' : ''}>${escHtml(o)}</option>`).join('')}</select></label>`;
+      return `<div class="pgrow pgrow-cs"><div class="pgrow-l"><b>${escHtml(label)}</b><span>${escHtml(help)}</span></div>
+        <div class="pgdevs">${one(m, 'Phone')}${one(d, 'Desktop')}</div></div>`;
+    }).join('') : '';
+
   $('#content').innerHTML = `<div class="wrap">
     <div class="page-head"><h2>Product grid</h2><p>Pick the card template used across the shop, category pages and every <code>[kbb_products]</code> shortcode. The panel on the right is the design you have picked, with the settings below applied.</p></div>
 
@@ -4099,6 +4123,11 @@ async function renderLayout(){
           <b style="font-size:13px;display:block;margin-bottom:4px">Space inside each card</b>
           <p class="pgwhere">Photo, brand, name, stars, price and Add to cart — a phone and a desktop set apart. The same settings as <b>Appearance → Product styles → Spacing &amp; type</b>, shown in both places, not a second copy. Every product grid on the shop uses them. The preview shows the desktop values.</p>
           ${cardSpaceRows}</div>` : ''}
+
+        ${cardTypeRows ? `<div class="card" style="padding:18px;margin-top:16px" id="pgCardType">
+          <b style="font-size:13px;display:block;margin-bottom:4px">Price text size</b>
+          <p class="pgwhere">The price and the cut (struck-through) price, a phone and a desktop set apart. The same settings as <b>Appearance → Product styles → Spacing &amp; type</b>. The preview shows the desktop sizes.</p>
+          ${cardTypeRows}</div>` : ''}
 
         <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="btn primary" id="saveLayout">Save</button>
@@ -4179,6 +4208,14 @@ function pgBind(){
     if (tg && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); tg.click(); }
   });
 
+  content.addEventListener('change', (e) => {
+    const ct = e.target.closest('[data-pgct]');
+    if (!ct || !PGSSEL[ct.dataset.pgct]) return;
+    if (!PGSSEL[ct.dataset.pgct].opts.includes(ct.value)) return;
+    PGS[ct.dataset.pgct] = ct.value;
+    pgPaint(); pgDirty('styles');
+  });
+
   content.addEventListener('input', (e) => {
     const cs = e.target.closest('[data-pgcs]');
     if (cs) {
@@ -4238,6 +4275,11 @@ async function pgSave(){
         if (!f || !(k in PGS)) return;
         const v = pgNum(PGS[k], f.min, f.max, f.def);
         if (v !== pgNum(PGS0[k], f.min, f.max, f.def)) s[k] = v;
+      }));
+      PG_CARD_TYPE.forEach(([m, d]) => [m, d].forEach(k => {
+        const f = PGSSEL[k];
+        if (!f || !(k in PGS) || !f.opts.includes(String(PGS[k]))) return;
+        if (String(PGS[k]) !== String(PGS0[k] ?? f.def)) s[k] = String(PGS[k]);
       }));
       if (Object.keys(s).length) {
         const j = await post(root + '/admin-api/product-styles', { settings: s });

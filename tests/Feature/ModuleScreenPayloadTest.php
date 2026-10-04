@@ -498,7 +498,8 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // entry, not regenerated: four objects inserted, none changed.
     // 672 IN 2.60.376: "How it fills the row" (`nav_fit_mode`) on the nav tab,
     // spliced in after `nav_fit`; `nav_fit` and `nav_fit_max` changed help text only.
-    expect($compared)->toBe(672, 'the number of controls drawn changed');
+    // 674 since 2.60.380: Cut price size, phone and desktop.
+    expect($compared)->toBe(674, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
