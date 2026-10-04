@@ -64,6 +64,10 @@
 
 /* The editor: a popup on a laptop, the whole screen on a phone. */
 .hph-ov{position:fixed;inset:0;z-index:880;background:rgba(17,20,28,.48);display:flex;align-items:center;justify-content:center;padding:24px}
+/* `display:flex` above outranks the `hidden` attribute, so close() left an
+   empty, dimmed full-screen layer catching every click (the owner: "the page
+   still fade and i can't do anything further except refresh"). */
+.hph-ov[hidden]{display:none}
 .hph-dlg{width:min(940px,100%);max-height:88vh;display:flex;flex-direction:column;background:var(--surface,#fff);color:var(--ink,#1f2430);border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.28);min-width:0;overflow:hidden}
 @media (max-width:640px){.hph-ov{padding:0}.hph-dlg{width:100%;height:100%;max-height:none;border-radius:0}}
 .hph-dh{display:flex;align-items:flex-start;gap:12px;padding:16px 18px 10px;border-bottom:1px solid var(--border,#e6e6e6)}

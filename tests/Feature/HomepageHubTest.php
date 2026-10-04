@@ -640,3 +640,20 @@ it('gives a grid-section carousel cards in view and arrows, 2.3 on a phone by de
     expect($plain)->toMatch('#  <div class="kbb-pgrid gs-grid" data-skin="[a-z]*" style="--gs-d:4;--gs-m:2">\n#');
     expect($plain)->not->toContain('<div class="gs-stage');
 });
+
+it('hides the editor backdrop when the popup closes, so the page is usable again', function () {
+    /*
+     * The owner: "upon closing the popup without clicking on save button, or
+     * just open then i close with cross icon. then the page still fade and i
+     * can't do anything further except refresh the page". close() sets
+     * `hidden` on #hph-ov, but `.hph-ov{display:flex}` outranks the hidden
+     * attribute, so an empty dimmed layer stayed over the screen. Measured in
+     * Chromium after the fix: display none and the page under the pointer, for
+     * the ×, Close, Esc and a backdrop click. MUTATION: delete the [hidden]
+     * rule and this is red.
+     */
+    $src = (string) file_get_contents(resource_path('views/admin/partials/homepage-hub.blade.php'));
+
+    expect($src)->toContain('.hph-ov[hidden]{display:none}')
+        ->and($src)->toContain("if (ov) { ov.hidden = true; ov.innerHTML = ''; }");
+});
