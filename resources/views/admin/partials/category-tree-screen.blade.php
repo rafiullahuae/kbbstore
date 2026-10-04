@@ -684,6 +684,8 @@
   function closeModal(){
     if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
     modal = null;
+    /* Lane RL: the dialog is the record; closing it frees the edit lock. */
+    if (window.kbbPresence) window.kbbPresence.close('category');
   }
 
   function val(id){
@@ -1118,6 +1120,10 @@
   /* -------------------------------------------------------------- editor */
   function editor(cat){
     var isNew = !cat;
+    /* Lane RL: "X is editing this category" and Take over. One record, one
+       dialog. After this tick, so openModal()'s own closeModal() of any
+       previous dialog cannot release the lock this one is about to take. */
+    if (!isNew && window.kbbPresence) { var lockId = cat.id; setTimeout(function(){ window.kbbPresence.open('category', lockId); }, 0); }
     cat = cat || {name:'', slug:'', parent_id:null, description:'', image:'', position:0, seo:null};
     var seo = cat.seo || {};
     var banned = isNew ? [] : subtreeIds(Number(cat.id));

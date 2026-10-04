@@ -1,0 +1,88 @@
+{
+  "viewer-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "bar": {
+      "text": "Sara Ahmed is editing this product · since just now View only Take over",
+      "height": 60,
+      "width": 640,
+      "fontSize": "13.5px"
+    }
+  },
+  "took-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "bar": {
+      "text": "You have control of this product. Reload to start from the last saved version. Dismiss Reload",
+      "height": 65,
+      "width": 640,
+      "fontSize": "13.5px"
+    }
+  },
+  "taken-over-1280": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "bar": {
+      "text": "Rafi (Owner) took over editing. You are now view-only — copy your unsaved changes, then reload to see theirs. Got it Reload",
+      "height": 65,
+      "width": 640,
+      "fontSize": "13.5px"
+    },
+    "msAfterTakeOver": 12157,
+    "unsavedStillOnScreen": true
+  },
+  "save-refused-1280": {
+    "status": 409,
+    "body": {
+      "error": "taken_over",
+      "holder": "Rafi (Owner)",
+      "message": "Rafi (Owner) took over editing this product, so your changes were not saved. Copy anything you need, then reload to see theirs."
+    },
+    "lockHeader": true
+  },
+  "hidden-beats-16s-1280": 0,
+  "errors-1280": [],
+  "viewer-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "bar": {
+      "text": "Sara Ahmed is editing this product · since just now View only Take over",
+      "height": 88,
+      "width": 366,
+      "fontSize": "13.5px"
+    }
+  },
+  "took-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "bar": {
+      "text": "You have control of this product. Reload to start from the last saved version. Dismiss Reload",
+      "height": 107,
+      "width": 366,
+      "fontSize": "13.5px"
+    }
+  },
+  "taken-over-390": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "bar": {
+      "text": "Rafi (Owner) took over editing. You are now view-only — copy your unsaved changes, then reload to see theirs. Got it Reload",
+      "height": 127,
+      "width": 366,
+      "fontSize": "13.5px"
+    },
+    "msAfterTakeOver": 11744,
+    "unsavedStillOnScreen": true
+  },
+  "save-refused-390": {
+    "status": 409,
+    "body": {
+      "error": "taken_over",
+      "holder": "Rafi (Owner)",
+      "message": "Rafi (Owner) took over editing this product, so your changes were not saved. Copy anything you need, then reload to see theirs."
+    },
+    "lockHeader": true
+  },
+  "hidden-beats-16s-390": 0,
+  "errors-390": []
+}

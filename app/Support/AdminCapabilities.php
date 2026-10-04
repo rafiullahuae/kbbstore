@@ -34,6 +34,15 @@ use Illuminate\Routing\Route;
  * editable, this file is the thing that grows a database backing — until then it is the whole
  * feature, readable in one screen, and diffable in a package.
  *
+ * ▲ THAT DAY CAME (Lane RL, plan row 53). Roles are now editable from Platform
+ * → Users & Roles, and App\Support\AdminRoles is the database backing. This
+ * file did not change shape for it: CAPABILITIES is still the list of every
+ * capability and the CODE DEFAULT of the four original roles (which are now
+ * the presets Full Admin, Store Manager, Customer Support and Content Editor,
+ * and follow this map for as long as nobody edits them), RULES is still the
+ * whole route map, and `owner` still short-circuits. What an account actually
+ * holds is AdminRoles::can(), which every check in the console now asks.
+ *
  * ---------------------------------------------------------------------------
  * HOW IT FAILS
  * ---------------------------------------------------------------------------
@@ -553,9 +562,36 @@ final class AdminCapabilities
         'security.integrity' => ['owner'],
         'payments.manage' => ['owner'],
         'users.manage' => ['owner'],
+        /*
+         * Platform -> Users & Roles -> Roles (Lane RL): create, rename, re-tick,
+         * restore and delete roles. ITS OWN CAPABILITY AND NOT users.manage,
+         * because deciding what a role may do and deciding who is on it are two
+         * acts the owner may want to hand to two people. Owner-only, like the
+         * account list it sits beside; and even a holder can never tick a box
+         * they do not hold themselves (AdminRoles::refusal()).
+         */
+        'roles.manage' => ['owner'],
+        /*
+         * Edit presence (Lane RL): "X is editing this product" and Take over.
+         * presence.view is the heartbeat itself -- every role that can sign in
+         * holds it, because seeing that somebody else has a record open gives
+         * nothing away and protects the work of both. presence.takeover is
+         * owner-only in the map; the Sub Admin preset adds it
+         * (AdminRoles::SUB_ADMIN_EXTRA). A save is refused while somebody else
+         * holds the record whatever either person holds (App\Support\EditPresence).
+         */
+        'presence.view' => ['owner', 'manager', 'support', 'editor'],
+        'presence.takeover' => ['owner'],
         'updates.manage' => ['owner'],
         'system.diagnostics' => ['owner'],
         'data.import' => ['owner'],
+        /*
+         * Store -> SEO -> Overview and the SEO audit (Lane RL). Split out of
+         * system.diagnostics so an SEO Manager can be given the audit without
+         * the raw error log. OWNER-ONLY AS IT SHIPS, exactly what the two routes
+         * were before, so no existing account gains or loses anything.
+         */
+        'seo.audit' => ['owner'],
         /*
          * Store -> Import -> "Clean up before the migration". OWNER ALONE, and
          * a capability of its own rather than a reuse of `data.import` beside
@@ -658,6 +694,24 @@ final class AdminCapabilities
         // role=owner is the single reach this whole layer was built for.
         ['*', 'admin-api/users', 'users.manage'],
         ['*', 'admin-api/users/*', 'users.manage'],
+
+        /*
+         * Platform -> Users & Roles (Lane RL, routes/admin-roles.php). The
+         * Members tab is the account list, so it is users.manage like the two
+         * lines above; everything else under /roles is roles.manage. MEMBERS
+         * FIRST: 'admin-api/roles/*' would otherwise match
+         * 'admin-api/roles/members' and hand the account list out on the roles
+         * capability.
+         */
+        ['*', 'admin-api/roles/members', 'users.manage'],
+        ['*', 'admin-api/roles/members/*', 'users.manage'],
+        ['*', 'admin-api/roles', 'roles.manage'],
+        ['*', 'admin-api/roles/*', 'roles.manage'],
+        ['*', 'admin-api/roles/*/restore', 'roles.manage'],
+        // Edit presence (Lane RL). TAKE FIRST: 'admin-api/presence/*' would match it.
+        ['POST', 'admin-api/presence/take', 'presence.takeover'],
+        ['POST', 'admin-api/presence/beat', 'presence.view'],
+        ['POST', 'admin-api/presence/release', 'presence.view'],
 
         // ------------------------------------------------------ gateways & money
         ['*', 'admin-api/payments', 'payments.manage'],
@@ -920,8 +974,12 @@ final class AdminCapabilities
          * another host. Read together that is an inventory of where this shop
          * is weakest in search, which is exactly what a competitor would want
          * and what an editor account has no need for.
+         *
+         * ▲ (Lane RL) Now `seo.audit`, still owner-only by default: the same
+         * people reach it, but it can be handed to an SEO Manager without the
+         * error log that system.diagnostics also opens.
          */
-        ['GET', 'admin-api/seo-audit', 'system.diagnostics'],
+        ['GET', 'admin-api/seo-audit', 'seo.audit'],
         /*
          * The SEO Overview — routes/seo-back-office.php, Lane S7.
          *
@@ -934,7 +992,7 @@ final class AdminCapabilities
          * A read. Nothing under this prefix writes, so there is no write rule
          * that has to sort above it.
          */
-        ['GET', 'admin-api/seo-tasks', 'system.diagnostics'],
+        ['GET', 'admin-api/seo-tasks', 'seo.audit'],
         /*
          * The storefront health check — routes/health-admin.php.
          *

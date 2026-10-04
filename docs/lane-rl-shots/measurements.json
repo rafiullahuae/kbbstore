@@ -1,0 +1,244 @@
+{
+ "deeplink-1280": {
+  "title": "Users & Roles",
+  "members": 6,
+  "tabs": [
+   "Members · 6",
+   "Roles · 9"
+  ]
+ },
+ "shot:members-tab-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280
+ },
+ "member-editor-before-1280": {
+  "summary": "16 of 77 permissions· 16 from SEO Manager, +1 added, −1 removed for this person",
+  "added": [
+   "banners.manage"
+  ],
+  "removed": [
+   "catalog.export"
+  ],
+  "title": "Head of SEO",
+  "checkboxFont": "12.5px"
+ },
+ "shot:member-tweak-before-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280
+ },
+ "member-editor-after-1280": {
+  "summary": "17 of 77 permissions· 16 from SEO Manager, +2 added, −1 removed for this person",
+  "focused": "orders.view"
+ },
+ "shot:member-tweak-after-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280
+ },
+ "member-saved-1280": "Saved — Sara Ahmed’s access is updated.",
+ "shot:member-saved-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280
+ },
+ "roles-tab-1280": {
+  "roles": [
+   "Full Admin",
+   "Sub Admin",
+   "Store Manager",
+   "SEO Manager",
+   "Inventory Manager",
+   "Growth Manager",
+   "Customer Support",
+   "Content Editor",
+   "Weekend lead"
+  ],
+  "members": [
+   "1 member · all 77 permissions",
+   "0 members · 66 of 77 permissions",
+   "1 member · 58 of 77 permissions",
+   "1 member · 16 of 77 permissions",
+   "1 member · 11 of 77 permissions",
+   "0 members · 21 of 77 permissions",
+   "1 member · 10 of 77 permissions",
+   "0 members · 30 of 77 permissions",
+   "1 member · 9 of 77 permissions"
+  ]
+ },
+ "shot:roles-tab-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280
+ },
+ "role-editor-1280": {
+  "sections": [
+   "Dashboard & reports4/4",
+   "Orders0/10",
+   "Customers0/4",
+   "Products & catalogue6/8",
+   "Inventory0/1",
+   "Reviews1/4",
+   "Content & media3/7",
+   "SEO1/1",
+   "Appearance0/11",
+   "Storefront tools0/2",
+   "Marketing0/6",
+   "Emails0/3",
+   "Shipping & payments0/2",
+   "Settings & platform0/5",
+   "Security0/2",
+   "Data & import0/3",
+   "Users & Roles1/4"
+  ],
+  "indeterminate": 4
+ },
+ "shot:role-editor-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280
+ },
+ "role-editor-selectall-1280": "10/10",
+ "role-editor-filter-1280": [
+  "orders.export",
+  "customers.export",
+  "catalog.export",
+  "reviews.export",
+  "marketing.export"
+ ],
+ "shot:role-editor-filtered-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280
+ },
+ "shot:role-new-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280
+ },
+ "role-created-1280": {
+  "flash": "“<img src=x onerror=\"window.__rlxss=1\">” created. Assign it from the Members tab.",
+  "xss": null,
+  "lastCard": "<img src=x onerror=\"window.__rlxss=1\">"
+ },
+ "shot:role-created-1280": {
+  "scrollWidth": 1280,
+  "innerWidth": 1280
+ },
+ "errors-1280": [],
+ "deeplink-390": {
+  "title": "Users & Roles",
+  "members": 6,
+  "tabs": [
+   "Members · 6",
+   "Roles · 10"
+  ]
+ },
+ "shot:members-tab-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390
+ },
+ "member-editor-before-390": {
+  "summary": "16 of 77 permissions· 16 from SEO Manager, +1 added, −1 removed for this person",
+  "added": [
+   "banners.manage"
+  ],
+  "removed": [
+   "catalog.export"
+  ],
+  "title": "Head of SEO",
+  "checkboxFont": "12.5px"
+ },
+ "shot:member-tweak-before-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390
+ },
+ "member-editor-after-390": {
+  "summary": "17 of 77 permissions· 16 from SEO Manager, +2 added, −1 removed for this person",
+  "focused": "orders.view"
+ },
+ "shot:member-tweak-after-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390
+ },
+ "member-saved-390": "Saved — Sara Ahmed’s access is updated.",
+ "shot:member-saved-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390
+ },
+ "roles-tab-390": {
+  "roles": [
+   "Full Admin",
+   "Sub Admin",
+   "Store Manager",
+   "SEO Manager",
+   "Inventory Manager",
+   "Growth Manager",
+   "Customer Support",
+   "Content Editor",
+   "Weekend lead",
+   "<img src=x onerror=\"window.__rlxss=1\">"
+  ],
+  "members": [
+   "1 member · all 77 permissions",
+   "0 members · 66 of 77 permissions",
+   "1 member · 58 of 77 permissions",
+   "1 member · 16 of 77 permissions",
+   "1 member · 11 of 77 permissions",
+   "0 members · 21 of 77 permissions",
+   "1 member · 10 of 77 permissions",
+   "0 members · 30 of 77 permissions",
+   "1 member · 9 of 77 permissions",
+   "0 members · 10 of 77 permissions"
+  ]
+ },
+ "shot:roles-tab-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390
+ },
+ "role-editor-390": {
+  "sections": [
+   "Dashboard & reports4/4",
+   "Orders0/10",
+   "Customers0/4",
+   "Products & catalogue6/8",
+   "Inventory0/1",
+   "Reviews1/4",
+   "Content & media3/7",
+   "SEO1/1",
+   "Appearance0/11",
+   "Storefront tools0/2",
+   "Marketing0/6",
+   "Emails0/3",
+   "Shipping & payments0/2",
+   "Settings & platform0/5",
+   "Security0/2",
+   "Data & import0/3",
+   "Users & Roles1/4"
+  ],
+  "indeterminate": 4
+ },
+ "shot:role-editor-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390
+ },
+ "role-editor-selectall-390": "10/10",
+ "role-editor-filter-390": [
+  "orders.export",
+  "customers.export",
+  "catalog.export",
+  "reviews.export",
+  "marketing.export"
+ ],
+ "shot:role-editor-filtered-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390
+ },
+ "shot:role-new-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390
+ },
+ "role-created-390": {
+  "flash": "“Night shift” created. Assign it from the Members tab.",
+  "xss": null,
+  "lastCard": "Night shift"
+ },
+ "shot:role-created-390": {
+  "scrollWidth": 390,
+  "innerWidth": 390
+ },
+ "errors-390": []
+}

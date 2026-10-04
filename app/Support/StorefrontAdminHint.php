@@ -79,9 +79,8 @@ final class StorefrontAdminHint
     /** One account, one capability, with the owner short-circuit EnforceAdminCapability uses. */
     public static function can(AdminUser $admin, string $capability): bool
     {
-        $role = AdminCapabilities::canonicalRole($admin->role ?? null);
-
-        return $role === 'owner' || AdminCapabilities::roleCan($role, $capability);
+        // Lane RL: the account's role and its own tweaks, owner first.
+        return AdminRoles::can($admin, $capability);
     }
 
     /** The hint, for a sign-in that will last $remember ? a long time : one session. */
