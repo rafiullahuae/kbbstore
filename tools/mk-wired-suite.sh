@@ -19,6 +19,15 @@ cp -r "$APP/tests" "$SH/tests"
 # does not descend into a symlinked directory, and two tests walk them.
 rm -rf "$SH/resources" "$SH/routes" "$SH/app" "$SH/database" "$SH/config"
 cp -r "$APP/resources" "$APP/routes" "$APP/app" "$APP/database" "$APP/config" "$SH/"
-python3 "$APP/tools/mk-wire.py" "$SH/routes/web.php" "$SH/resources/views/admin/app.blade.php" >/dev/null
+# docs/ as a real directory of links, with COPIES of the two handover
+# documents whose LATE_RENDERED line the wiring moves.
+rm "$SH/docs" && mkdir "$SH/docs"
+for f in "$APP"/docs/*; do ln -s "$f" "$SH/docs/"; done
+for d in GS-ADMIN-APP-BLOCKS.md T1B-ADMIN-APP-BLOCKS.md; do rm "$SH/docs/$d"; cp "$APP/docs/$d" "$SH/docs/$d"; done
+python3 "$APP/tools/mk-wire.py" "$SH/routes/web.php" "$SH/resources/views/admin/app.blade.php" "$SH/docs/GS-ADMIN-APP-BLOCKS.md" "$SH/docs/T1B-ADMIN-APP-BLOCKS.md" >/dev/null
+# The dotfiles (.git, .gitignore …) and the checked-in catalogue snapshot:
+# several tests read them through base_path().
+for e in "$APP"/.[!.]*; do n=$(basename "$e"); [ -e "$SH/$n" ] || ln -s "$e" "$SH/$n"; done
+[ -e "$APP/storage/catalog" ] && ln -s "$APP/storage/catalog" "$SH/storage/catalog"
 cd "$SH"
 KBB_WP_DB=${KBB_WP_DB:-kbb_wp_mk} vendor/bin/pest "$@"

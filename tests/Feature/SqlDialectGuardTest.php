@@ -1076,6 +1076,34 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'admin-api/grid-sections/{grid}/preview' => '/admin-api/grid-sections/' . $gridSection->id . '/preview',
     ];
 
+    /*
+     * Marketing Emails (Lane MK). A campaign aimed at a group with brand and
+     * emirate rules, so the review read compiles the derived aggregates, the
+     * JSON address extraction and the "mostly bought" subquery — the SQL most
+     * likely to read differently on the two engines — and the report runs its
+     * grouped link counts. Driven only once routes/web.php mounts the file.
+     */
+    $mktSegment = (int) \Illuminate\Support\Facades\DB::table('mkt_segments')->insertGetId([
+        'name' => 'Guard group', 'audience' => 'customers', 'match' => 'all', 'preset' => false,
+        'rules' => json_encode([['field' => 'brand', 'op' => 'mostly', 'value' => 'Anua'], ['field' => 'emirate', 'op' => 'any_of', 'value' => ['dubai']], ['field' => 'spent', 'op' => 'gte', 'value' => 1]]),
+        'created_at' => now(), 'updated_at' => now(),
+    ]);
+    $mktTemplate = (int) \Illuminate\Support\Facades\DB::table('mkt_templates')->where('key', 'brand-fans')->value('id');
+    $mktCampaign = (int) \Illuminate\Support\Facades\DB::table('mkt_campaigns')->insertGetId([
+        'name' => 'Guard campaign', 'template_id' => $mktTemplate, 'segment_id' => $mktSegment, 'status' => 'draft',
+        'blocks' => (string) \Illuminate\Support\Facades\DB::table('mkt_templates')->where('id', $mktTemplate)->value('blocks'),
+        'subject' => 'Guard', 'preheader' => '', 'created_at' => now(), 'updated_at' => now(),
+    ]);
+    $driven += [
+        'admin-api/email-marketing/campaigns/{id}' => '/admin-api/email-marketing/campaigns/' . $mktCampaign,
+        'admin-api/email-marketing/campaigns/{id}/review' => '/admin-api/email-marketing/campaigns/' . $mktCampaign . '/review',
+        'admin-api/email-marketing/campaigns/{id}/progress' => '/admin-api/email-marketing/campaigns/' . $mktCampaign . '/progress',
+        'admin-api/email-marketing/reports/{id}' => '/admin-api/email-marketing/reports/' . $mktCampaign,
+        'admin-api/email-marketing/templates/{id}' => '/admin-api/email-marketing/templates/' . $mktTemplate,
+        'admin-api/email-marketing/templates/{id}/preview' => '/admin-api/email-marketing/templates/' . $mktTemplate . '/preview',
+        'admin-api/email-marketing/groups/{id}/export' => '/admin-api/email-marketing/groups/' . $mktSegment . '/export',
+    ];
+
     /** Route URI => why driving it here would prove nothing. */
     $excused = [
         // Serves a zip from disk. Touches no query and cannot carry a dialect

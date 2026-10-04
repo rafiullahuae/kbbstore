@@ -42,12 +42,15 @@ it('is included in the console exactly once, with one sidebar row under Growth &
     $app = (string) file_get_contents(base_path('resources/views/admin/app.blade.php'));
 
     expect(substr_count($app, "@include('admin.partials.marketing-emails-screens')"))->toBe(1)
-        ->and(substr_count($app, "['mkt-email','Marketing Emails',"))->toBe(1);
+        // First in Growth & Marketing, tagged "new" (the approved m0 mock).
+        ->and(substr_count($app, "{sec:'Growth & Marketing',items:[['mkt-email','Marketing Emails',"))->toBe(1)
+        ->and(substr_count($app, "'mkt-email':['Growth & Marketing','Marketing Emails']"))->toBe(1)
+        ->and(substr_count($app, "'emails-sent','spotted','mkt-email']);"))->toBe(1);
 
-    // The partial joins the group rather than inventing one, and is a no-op
-    // once NAV declares the row (kbbAddNavEntry returns the existing row).
+    // The row is NAV's alone: a second registration from the partial is two
+    // rows for one screen (AdminNavAndIdsTest).
     expect(mkPartial())->toContain("var GROUP = 'Growth & Marketing';")
-        ->and(substr_count(mkPartial(), 'window.kbbAddNavEntry({'))->toBe(1);
+        ->and(mkPartial())->not->toContain('kbbAddNavEntry(');
 });
 
 it('measures nothing: no layout API anywhere in the screen', function () {

@@ -35,8 +35,11 @@
     list, and the frame scrolls if the email is longer.
 
     Pulled into app.blade.php once, beside emails-screens: it wraps window.go
-    for 'mkt-email' and registers its sidebar row under Growth & Marketing (a
-    no-op once the integrator has declared it in NAV).
+    for 'mkt-email'. Its sidebar row is NOT registered from here: the approved
+    m0 mock puts "Marketing Emails" FIRST in Growth & Marketing with a "new"
+    tag, which only a NAV row can do (kbbAddNavEntry places after an anchor
+    and carries no tag), and a row in NAV plus one from here is the duplicate
+    AdminNavAndIdsTest refuses.
 --}}
 @verbatim
 <style>
@@ -175,7 +178,6 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   var SCREEN = 'mkt-email';
   var LABEL = 'Marketing Emails';
   var GROUP = 'Growth & Marketing';
-  var ICON = '<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/><path d="M17 3.5l1 1.8 2 .4-1.4 1.4.3 2-1.9-.9-1.9.9.3-2L14 5.7l2-.4z"/>';
 
   /* The block palette: the m2 mock's order, glyphs and words. */
   var PALETTE = [
@@ -1234,11 +1236,6 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
 
   /* ---------------------------------------------------------------- wiring */
 
-  function addNavEntry() {
-    if (typeof window.kbbAddNavEntry !== 'function') return;
-    window.kbbAddNavEntry({ screen: SCREEN, label: LABEL, icon: ICON, group: GROUP, after: [] });
-  }
-
   var previousGo = window.go;
   window.go = function (id) {
     if (id !== SCREEN) return previousGo.apply(this, arguments);
@@ -1261,8 +1258,6 @@ select.mke-in{appearance:none;-webkit-appearance:none;padding-right:28px;backgro
   }
   window.kbbMarketingEmails = { openBuilder: openBuilder, openReview: openReview, openReport: openReport, setGroup: setGroup, people: people, state: S };
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addNavEntry);
-  else addNavEntry();
 })();
 </script>
 @endverbatim

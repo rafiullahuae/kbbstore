@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Lane MK -- apply the integrator's wiring lines for Marketing Emails to a COPY.
 
-    python3 tools/mk-wire.py <web.php> <app.blade.php>
+    python3 tools/mk-wire.py <web.php> <app.blade.php> [<GS-ADMIN-APP-BLOCKS.md> <T1B-ADMIN-APP-BLOCKS.md>]
 
 Edits the two files it is given, in place. It is only ever pointed at the
 copies inside a preview's shadow tree (tools/mk-preview.sh); the lane never
@@ -33,20 +33,33 @@ if NAV not in app:
     anchor = "{sec:'Growth & Marketing',items:[['newsletter'"
     assert anchor in app, 'Growth & Marketing NAV not found'
     app = app.replace(anchor, "{sec:'Growth & Marketing',items:[['mkt-email','Marketing Emails','<path d=\"M3 6h18v12H3z\"/><path d=\"m3 7 9 6 9-6\"/><path d=\"M17 3.5l1 1.8 2 .4-1.4 1.4.3 2-1.9-.9-1.9.9.3-2L14 5.7l2-.4z\"/>','new'],['newsletter'", 1)
-TITLE = "'mkt-email':['Growth & Marketing','Marketing Emails']"
+# TITLES and LATE_RENDERED are joined WITHOUT touching their last lines:
+# docs/GS-ADMIN-APP-BLOCKS.md and docs/T1B-ADMIN-APP-BLOCKS.md pin those lines
+# byte for byte (GridSectionConsoleReachTest, TranslationConsoleTest).
+TITLE = "'mkt-email':['Growth & Marketing','Marketing Emails'],"
 if TITLE not in app:
-    anchor = "'searchterms':['Growth & Marketing','Search Terms']};"
-    assert anchor in app, 'TITLES end not found'
-    app = app.replace(anchor, "'searchterms':['Growth & Marketing','Search Terms']," + TITLE + "};", 1)
-LATE = "'spotted','mkt-email']);"
-if LATE not in app:
-    anchor = "'emails-sent','spotted']);"
-    assert anchor in app, 'LATE_RENDERED end not found'
-    app = app.replace(anchor, LATE, 1)
+    anchor = "const TITLES={dash:"
+    assert anchor in app, 'TITLES start not found'
+    app = app.replace(anchor, "const TITLES={" + TITLE + "dash:", 1)
+# LATE_RENDERED is a literal the audit parses (AdminNavAndIdsTest), so the id
+# joins the literal's end, as every screen before it did -- and the two
+# handover documents that pin that line byte for byte move with it (pass them
+# as the 3rd and 4th arguments).
+OLD_LATE = "'emails-sent','spotted']);"
+NEW_LATE = "'emails-sent','spotted','mkt-email']);"
+if NEW_LATE not in app:
+    assert OLD_LATE in app, 'LATE_RENDERED end not found'
+    app = app.replace(OLD_LATE, NEW_LATE, 1)
+for doc in sys.argv[3:5]:
+    d = open(doc).read()
+    if NEW_LATE not in d:
+        assert d.count(OLD_LATE) >= 1, doc + ': LATE_RENDERED line not found'
+        d = d.replace(OLD_LATE, NEW_LATE)
+        open(doc, 'w').write(d)
 INC = "@include('admin.partials.marketing-emails-screens')"
 if INC not in app:
     anchor = "@include('admin.partials.emails-screens')\n"
     assert anchor in app, 'emails-screens include not found'
-    app = app.replace(anchor, anchor + "{{-- Growth & Marketing → Marketing Emails (Lane MK, E3 + E4): Campaigns,\n     Templates, Customer groups, Reports, the builder and Review & send. Wraps\n     window.go for 'mkt-email'; its row is declared in NAV above. --}}\n" + INC + "\n", 1)
+    app = app.replace(anchor, anchor + "{{-- Growth & Marketing → Marketing Emails (Lane MK, E3 + E4): Campaigns,\n     Templates, Customer groups, Reports, the builder and Review & send. Wraps\n     window.go for 'mkt-email'; its row is declared in NAV above (first in the\n     group, tagged \"new\", as the approved m0 mock has it). --}}\n" + INC + "\n", 1)
 open(app_path, 'w').write(app)
 print('wired')
