@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.379
+**Cart Tracking: a 1px line between columns.** Apply after .378. Runs 1
+migration (a cache clear).
+
+| Your request | Now |
+|---|---|
+| "i need columns line to 1px to differentiate the columns" | Growth & Marketing → Cart Tracking: a 1px light line (#dfe4ef) between every column, header included, from 761px wide up. Phone cards unchanged |
+
+Files (2): see the package's update.json.
+
 ## 2.60.378
 **Cart Tracking rows are shaded alternately.** Apply after .377. Runs 1
 migration (a cache clear).
