@@ -32,7 +32,16 @@
     the request it waits for; no polling.
 
     Every string drawn here goes through esc(). Nothing is printed raw.
+
+    FONTS & SIZE (Lane FS) is the editor's last tab, on every section but the
+    hero: SectionType's controls, saved by POST /admin-api/homepage-hub/type,
+    plus the section's OWN spacing and text-size fields moved in from Style
+    (content sections) or from their screen's tab (Spotted) — still saved by
+    the endpoint that owns them, so nothing is offered twice. Its sample at
+    the top is drawn in the chosen face at the chosen sizes; the face comes
+    from the font picker, which loads a file only when its option is shown.
 --}}
+@include('admin.partials.font-picker')
 @verbatim
 <style>
 .hph{display:grid;gap:12px;min-width:0}
@@ -114,6 +123,20 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
 .hph-pv img,.hph-pv .hph-th{width:100%;height:auto;aspect-ratio:1;border-radius:8px}
 .hph-pv figcaption{font-size:11px;line-height:1.3;margin-top:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .hph-h{font-size:13px;font-weight:700;margin:0}
+/* Lane FS: the Fonts & size tab. */
+.hph-px{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center}
+.hph-px input[type=range]{width:100%;min-width:0;accent-color:var(--accent,#15a85a)}
+.hph-px output{font:600 12.5px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hph-px output i{font-style:normal;font-weight:400;color:var(--ink-soft,#6b7280)}
+.hph-px .hph-btn{grid-column:2;justify-self:end}
+.hph-px .hph-btn[hidden]{display:none}
+.hph-tys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.hph-tys{grid-template-columns:minmax(0,1fr)}}
+.hph-ty{border:1px solid var(--border,#e6e6e6);border-radius:12px;padding:12px 14px;min-width:0;overflow:hidden;background:rgba(127,127,127,.03)}
+.hph-ty>small{display:block;font:600 11px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft,#6b7280);margin-bottom:8px}
+.hph-ty b{display:block;font-weight:700;line-height:1.15;overflow-wrap:anywhere}
+.hph-ty span{display:block;margin-top:6px;line-height:1.45;color:var(--ink-soft,#6b7280);overflow-wrap:anywhere}
+.hph-sub{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft,#6b7280);margin:6px 0 0}
 </style>
 <script>
 (function(){
@@ -259,6 +282,8 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
          src: null, cards: {}, preview: null, previewSeq: 0, busy: false, msg: null, loading: false, extra: {}};
     ['desktop', 'mobile', 'skin', 'background', 'width'].forEach(function(k){ E.row[k] = s[k]; E.rowOrig[k] = s[k]; });
     (S.data.products || []).forEach(function(p){ E.cards[p.id] = p; });
+    initType();
+    E.typeOwn = (s.fields || []).filter(function(f){ return f.group === 'type'; });
 
     if (E.kind === 'content') {
       (s.fields || []).forEach(function(f){ E.values[f.key] = f.value; E.orig[f.key] = f.value; });
@@ -276,7 +301,13 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
         (j.tabs || []).forEach(function(t){
           if ((want && want.indexOf(t.key) < 0) || skip.indexOf(t.key) >= 0) return;
           t.fields.forEach(function(f){ E.values[f.key] = f.value; E.orig[f.key] = f.value; });
-          E.tabs.push({key: 'r-' + t.key, label: t.label, help: t.description, fields: t.fields, products: E.kind === 'grid' && t.key === 'products'});
+          var keep = t.fields;
+          if (E.kind === 'remote') {
+            keep = t.fields.filter(function(f){ return !OWN_TYPE.test(f.key); });
+            E.typeOwn = E.typeOwn.concat(t.fields.filter(function(f){ return OWN_TYPE.test(f.key); }));
+          }
+          if (!keep.length) return;
+          E.tabs.push({key: 'r-' + t.key, label: t.label, help: t.description, fields: keep, products: E.kind === 'grid' && t.key === 'products'});
         });
         if (E.kind === 'grid') initGridSource(j);
         addRowTab();
@@ -307,6 +338,119 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
     var fields = [];
     (E.sec.section_tabs || []).forEach(function(t){ fields = fields.concat(t.fields); });
     E.tabs.push({key: 'row', label: 'Show & frame', fields: fields, row: true});
+    addTypeTab();
+  }
+
+  /* ------------------------------------------------ Fonts & size (Lane FS) */
+  /*
+   * A section's OWN spacing keys — Spotted's pad_top_d, a content section's
+   * home_bs_pt_d — leave the tab they came in on and are drawn here, still
+   * saved by their own endpoint. SectionType::OWNED is the server's half.
+   */
+  var OWN_TYPE = /(^|_)(pt|pb|hg|pad|pad_top|pad_bot|head_gap|btn_gap)_[dm]$/;
+
+  function addTypeTab(){
+    var own = E.typeOwn || [], ty = E.sec.type_fields || [];
+    if (!own.length && !ty.length) return;
+    E.tabs.push({key: 'type', label: 'Fonts & size', type: true, own: own, fields: ty});
+  }
+
+  function initType(){
+    E.ty = {}; E.tyOrig = {};
+    (E.sec.type_fields || []).forEach(function(f){ E.ty[f.key] = f.value; E.tyOrig[f.key] = f.value; });
+  }
+
+  function tyField(key){
+    var out = null;
+    (E.sec.type_fields || []).forEach(function(f){ if (f.key === key) out = f; });
+    return out;
+  }
+
+  /** A px control's current number: the moved value, or what the page draws today. */
+  function tyPx(key){
+    var f = tyField(key);
+    if (!f) return null;
+    return E.ty[key] === '' || E.ty[key] === undefined ? +f.options.today : +E.ty[key];
+  }
+
+  function typeFieldHTML(f){
+    var id = 'hph-t-' + f.key, v = E.ty[f.key];
+    if (f.type === 'font') {
+      return '<div class="hph-row"><div><span class="hph-l">' + esc(f.label) + '</span><small>' + esc(f.help) + '</small></div><div data-hph-font="' + esc(f.key) + '"></div></div>';
+    }
+    if (f.type === 'px') {
+      var set = v !== '' && v !== undefined, n = set ? +v : +f.options.today;
+      return '<div class="hph-row"><div><label for="' + id + '">' + esc(f.label) + '</label></div><div class="hph-px">'
+        + '<input type="range" id="' + id + '" min="' + (+f.options.min) + '" max="' + (+f.options.max) + '" step="1" value="' + n + '" data-hph-t="' + esc(f.key) + '">'
+        + '<output for="' + id + '" data-hph-out="' + esc(f.key) + '">' + n + 'px' + (set ? '' : ' <i>· as designed</i>') + '</output>'
+        + '<button type="button" class="hph-btn sm" data-hph-reset="' + esc(f.key) + '"' + (set ? '' : ' hidden') + '>Reset to ' + (+f.options.today) + 'px</button></div></div>';
+    }
+    var opts = f.options || {};
+    return '<div class="hph-row"><div><label for="' + id + '">' + esc(f.label) + '</label></div><div><select class="hph-in" id="' + id + '" data-hph-t="' + esc(f.key) + '">'
+      + Object.keys(opts).map(function(k){ return '<option value="' + esc(k) + '"' + (String(k) === String(v) ? ' selected' : '') + '>' + esc(opts[k]) + '</option>'; }).join('')
+      + '</select></div></div>';
+  }
+
+  /** The sample: the section's own name, set as the shop would set it. */
+  function sampleHTML(){
+    var fp = window.kbbFontPicker, font = E.ty.font, heading = !!tyField('h_d');
+    var fam = fp ? fp.family(font || '', heading) : 'inherit';
+    var tt = {upper: 'uppercase', lower: 'lowercase', capitalize: 'capitalize', none: 'none'}[E.ty['case']] || 'none';
+    function one(dev, label){
+      var h = tyPx('h_' + dev), sub = tyPx('sub_' + dev), body = tyPx('body_' + dev);
+      return '<div class="hph-ty"><small>' + label + '</small>'
+        + (heading ? '<b style="font-family:' + esc(fam) + ';font-size:' + h + 'px;text-transform:' + tt + '">' + esc(E.sec.label) + '</b>' : '')
+        + (sub ? '<span style="font-size:' + sub + 'px">The line under the heading, at ' + sub + 'px.</span>' : '')
+        + (body ? '<span style="font-size:' + body + 'px' + (heading ? '' : ';font-family:' + esc(fam)) + '">Card and body text, at ' + body + 'px.</span>' : '')
+        + (!heading && !body ? '<span style="font-family:' + esc(fam) + '">' + esc(E.sec.label) + '</span>' : '')
+        + '</div>';
+    }
+    return '<div class="hph-tys" id="hph-tys">' + one('d', 'Laptop') + one('m', 'Phone') + '</div>';
+  }
+
+  function typeTabHTML(t){
+    var h = '<p class="hph-note">Fonts, text sizes and spacing for this section only. Each control starts where the page is today; nothing changes on the shop until you move it and press Save section.</p>';
+    if (t.fields.length) h += sampleHTML();
+    if (t.fields.length) h += '<div>' + t.fields.map(typeFieldHTML).join('') + '</div>';
+    if (t.own.length) h += '<p class="hph-sub">This section’s own spacing</p><div>' + t.own.map(function(f){ return fieldHTML(f, E.values[f.key]); }).join('') + '</div>';
+    return h;
+  }
+
+  function setTy(key, value){
+    E.ty[key] = value;
+    E.msg = null;
+    var msg = document.getElementById('hph-msg');
+    if (msg) msg.innerHTML = msgHTML();
+    var s = document.getElementById('hph-tys');
+    if (s) s.outerHTML = sampleHTML();
+  }
+
+  function bindType(bd){
+    bd.querySelectorAll('[data-hph-t]').forEach(function(el){
+      var k = el.dataset.hphT;
+      el.oninput = el.onchange = function(){
+        var f = tyField(k);
+        if (f && f.type === 'px') {
+          setTy(k, +el.value);
+          var o = bd.querySelector('[data-hph-out="' + k + '"]'); if (o) o.textContent = el.value + 'px';
+          var r = bd.querySelector('[data-hph-reset="' + k + '"]'); if (r) r.hidden = false;
+        } else setTy(k, el.value);
+      };
+    });
+    bd.querySelectorAll('[data-hph-reset]').forEach(function(b){
+      b.onclick = function(){ setTy(b.dataset.hphReset, ''); redrawBody(); };
+    });
+    bd.querySelectorAll('[data-hph-font]').forEach(function(host){
+      var f = tyField(host.dataset.hphFont);
+      if (!f || !window.kbbFontPicker) return;
+      window.kbbFontPicker.mount(host, {value: E.ty[f.key], labels: f.options, heading: !!tyField('h_d'),
+        onChange: function(v){ setTy(f.key, v); }});
+    });
+  }
+
+  function typeDirty(){
+    for (var k in E.ty) if (String(E.ty[k]) !== String(E.tyOrig[k])) return true;
+    return false;
   }
 
   /* ------------------------------------------------------ source picker */
@@ -529,6 +673,7 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
     if (!E) return false;
     for (var k in E.values) if (String(E.values[k]) !== String(E.orig[k])) return true;
     for (var r in E.row) if (String(E.row[r]) !== String(E.rowOrig[r])) return true;
+    if (typeDirty()) return true;
     if (E.src && E.src.style === 'grid' && (E.src.picks.join(',') !== E.src.origPicks || gridQueryChanged())) return true;
     return false;
   }
@@ -590,7 +735,9 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
     else {
       if (t.help) h += '<p class="hph-note">' + esc(t.help) + '</p>';
       if (t.row && E.sec.editor.note) h += '<p class="hph-note">' + esc(E.sec.editor.note) + '</p>';
-      if (t.products && E.src) {
+      if (t.type) {
+        h += typeTabHTML(t);
+      } else if (t.products && E.src) {
         h += sourceHTML();
         h += '<div>' + t.fields.filter(function(f){ return !srcConsumes(f.key); }).map(function(f){ return fieldHTML(f, E.values[f.key]); }).join('') + '</div>';
       } else if (t.row) {
@@ -623,6 +770,7 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
 
   function bindBody(bd, t){
     var isRow = !!(t && t.row);
+    if (t && t.type) bindType(bd);
     bd.querySelectorAll('[data-hph-k]').forEach(function(el){
       var k = el.dataset.hphK;
       var fire = function(){
@@ -743,6 +891,11 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
       if (Object.keys(body).length) jobs.push(function(){ return req('PUT', 'grid-sections/' + s.editor.id, body); });
     }
     if (rowDirty) jobs.push(function(){ return saveRows(rowsWith(key, E.row)); });
+    if (typeDirty()) {
+      var ty = {};
+      for (var tk in E.ty) if (String(E.ty[tk]) !== String(E.tyOrig[tk])) ty[tk] = E.ty[tk];
+      jobs.push(function(){ return req('POST', 'homepage-hub/type', {key: key, values: ty}); });
+    }
 
     if (!jobs.length) { E.msg = {text: 'Nothing has changed.'}; redrawBody(); return; }
 
@@ -759,6 +912,8 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
       E.busy = false;
       E.sec = fresh || E.sec;
       ['desktop', 'mobile', 'skin', 'background', 'width'].forEach(function(k){ E.row[k] = E.sec[k]; E.rowOrig[k] = E.sec[k]; });
+      initType();
+      E.tabs.forEach(function(t){ if (t.type) t.fields = E.sec.type_fields || []; });
       for (var k in E.values) E.orig[k] = E.values[k];
       if (E.kind === 'content') (E.sec.fields || []).forEach(function(f){ E.values[f.key] = f.value; E.orig[f.key] = f.value; });
       if (E.src && E.src.style === 'grid') { E.src.origPicks = E.src.picks.join(','); E.src.origQuery = JSON.stringify({brands: E.src.brands, cats: E.src.cats, sort: E.src.sort, stock: E.src.stock}); }

@@ -83,10 +83,14 @@
     // value there moves, so this is no element at all on a shop that has not
     // touched it. ProductStyles::cardCss() has the rule-5 note.
     $kbbCardCss = app(\App\Services\ProductStyles::class)->cardCss();
+    // Appearance → Site layout → Fonts (Lane FS). '' while both are Outfit.
+    $kbbSiteFontCss = \App\Support\SiteFonts::css();
 @endphp
 @if ($kbbAccentCss !== '')<style id="kbb-brand-accent">{!! $kbbAccentCss !!}</style>
 @endif
 @if ($kbbLayoutCss !== '')<style id="kbb-layout">{!! $kbbLayoutCss !!}</style>
 @endif
 @if ($kbbCardCss !== '')<style id="kbb-card-type">{!! $kbbCardCss !!}</style>
+@endif
+@if ($kbbSiteFontCss !== '')<style id="kbb-site-fonts">{!! $kbbSiteFontCss !!}</style>
 @endif

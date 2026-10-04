@@ -47,6 +47,15 @@ Route::post('/homepage-hub/preview', [HomepageHubController::class, 'preview'])
     ->middleware('throttle:120,1')
     ->name('admin.homepagehub.preview');
 
+/*
+ * Lane FS: a section's Fonts & size tab. The one WRITE on this file, and the
+ * one writer of `homepage_section_type`; capability `homepagehub.type`.
+ * ROUTE CACHE: 2027_08_10_100100_clear_caches_section_fonts.php.
+ */
+Route::post('/homepage-hub/type', [\App\Http\Controllers\Admin\HomepageTypeController::class, 'save'])
+    ->middleware('throttle:60,1')
+    ->name('admin.homepagehub.type');
+
 Route::get('/homepage-hub', [HomepageHubController::class, 'show'])
     ->middleware('throttle:60,1')
     ->name('admin.homepagehub');

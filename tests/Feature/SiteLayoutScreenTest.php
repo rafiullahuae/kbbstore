@@ -146,7 +146,9 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
      * not CSS on :root either (it is an attribute on <html>), so "sending
      * nothing" below is unchanged by it. PressFeedbackTest covers the tab.
      */
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize', 'brandpage', 'press']);
+    // ▲ `fonts` (Lane FS): the owner's font library, Body font and Headings
+    // font — both at Outfit, so the page is unchanged until one moves.
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize', 'brandpage', 'press', 'fonts']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
@@ -163,7 +165,8 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // `show_count` (Product grid) and `cat_header_phone_whole` (Category header).
     // 86 since 2.60.376: the Brand page tab's three switches. 88 since Lane BH:
     // `brand_hero` (Compact / Classic) and `brand_ring`, on the same tab.
-    expect($keys)->toHaveCount(88);
+    // 90 since Lane FS: `font_body` and `font_heading` on the Fonts tab.
+    expect($keys)->toHaveCount(90);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

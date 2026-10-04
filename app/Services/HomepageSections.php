@@ -1136,6 +1136,12 @@ class HomepageSections
 
         $class = trim($ord . $panel . $width . ($desktop ? '' : 'd-off ') . ($mobile ? '' : 'm-off ') . $mark);
 
+        // Lane FS: the Fonts & size tab's hook, LAST and only on a section with
+        // a moved value — SectionType::classFor() answers '' otherwise, so an
+        // untouched shop's class strings are the bytes they were.
+        $ty = \App\Support\SectionType::classFor($key, $this->typeMap());
+        $class = $ty === '' ? $class : trim($class . ' ' . $ty);
+
         /*
          * THE SELECTION HOOK, AND ONLY ON AN ANNOTATING PROPOSAL (Lane HL).
          *
@@ -1152,6 +1158,20 @@ class HomepageSections
         return $this->annotate
             ? trim($class . ' ' . self::SELECT_CLASS . ' ' . self::SELECT_CLASS . '-' . $key)
             : $class;
+    }
+
+    /** @var array<string, array<string, string|int>>|null */
+    private ?array $type = null;
+
+    /**
+     * The Fonts & size map (Lane FS), read once per reader from the settings
+     * map the page has already loaded — no query of its own.
+     *
+     * @return array<string, array<string, string|int>>
+     */
+    public function typeMap(): array
+    {
+        return $this->type ??= \App\Support\SectionType::read($this->settings->all());
     }
 
     public function skinFor(string $key): ?string

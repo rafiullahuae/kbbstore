@@ -66,6 +66,166 @@
     "file": "assets/cairo-latin-PfPtmrPZ.woff2",
     "src": "resources/fonts/cairo/cairo-latin.woff2"
   },
+  "resources/fonts/lib/allura/allura-latin-400.woff2": {
+    "file": "assets/allura-latin-400-4sUZKTf1.woff2",
+    "src": "resources/fonts/lib/allura/allura-latin-400.woff2"
+  },
+  "resources/fonts/lib/almarai/almarai-arabic-400.woff2": {
+    "file": "assets/almarai-arabic-400-BFOw1b4Z.woff2",
+    "src": "resources/fonts/lib/almarai/almarai-arabic-400.woff2"
+  },
+  "resources/fonts/lib/almarai/almarai-arabic-700.woff2": {
+    "file": "assets/almarai-arabic-700-RufW5IrK.woff2",
+    "src": "resources/fonts/lib/almarai/almarai-arabic-700.woff2"
+  },
+  "resources/fonts/lib/almarai/almarai-latin-400.woff2": {
+    "file": "assets/almarai-latin-400-vHk6bQw7.woff2",
+    "src": "resources/fonts/lib/almarai/almarai-latin-400.woff2"
+  },
+  "resources/fonts/lib/almarai/almarai-latin-700.woff2": {
+    "file": "assets/almarai-latin-700-CmEa8QLc.woff2",
+    "src": "resources/fonts/lib/almarai/almarai-latin-700.woff2"
+  },
+  "resources/fonts/lib/bodoni-moda/bodoni-moda-latin.woff2": {
+    "file": "assets/bodoni-moda-latin-BIFT5Qnz.woff2",
+    "src": "resources/fonts/lib/bodoni-moda/bodoni-moda-latin.woff2"
+  },
+  "resources/fonts/lib/cormorant-garamond/cormorant-garamond-latin.woff2": {
+    "file": "assets/cormorant-garamond-latin-CUoBjw-S.woff2",
+    "src": "resources/fonts/lib/cormorant-garamond/cormorant-garamond-latin.woff2"
+  },
+  "resources/fonts/lib/dancing-script/dancing-script-latin.woff2": {
+    "file": "assets/dancing-script-latin-CyISZbeS.woff2",
+    "src": "resources/fonts/lib/dancing-script/dancing-script-latin.woff2"
+  },
+  "resources/fonts/lib/dm-sans/dm-sans-latin.woff2": {
+    "file": "assets/dm-sans-latin-Xz1IZZA0.woff2",
+    "src": "resources/fonts/lib/dm-sans/dm-sans-latin.woff2"
+  },
+  "resources/fonts/lib/dm-serif-display/dm-serif-display-latin-400.woff2": {
+    "file": "assets/dm-serif-display-latin-400-C5_t9oOD.woff2",
+    "src": "resources/fonts/lib/dm-serif-display/dm-serif-display-latin-400.woff2"
+  },
+  "resources/fonts/lib/eb-garamond/eb-garamond-latin.woff2": {
+    "file": "assets/eb-garamond-latin-CRpggXlh.woff2",
+    "src": "resources/fonts/lib/eb-garamond/eb-garamond-latin.woff2"
+  },
+  "resources/fonts/lib/figtree/figtree-latin.woff2": {
+    "file": "assets/figtree-latin-D_ZTVpCC.woff2",
+    "src": "resources/fonts/lib/figtree/figtree-latin.woff2"
+  },
+  "resources/fonts/lib/fraunces/fraunces-latin.woff2": {
+    "file": "assets/fraunces-latin-ukD16Tqj.woff2",
+    "src": "resources/fonts/lib/fraunces/fraunces-latin.woff2"
+  },
+  "resources/fonts/lib/great-vibes/great-vibes-latin-400.woff2": {
+    "file": "assets/great-vibes-latin-400-q5-78SH_.woff2",
+    "src": "resources/fonts/lib/great-vibes/great-vibes-latin-400.woff2"
+  },
+  "resources/fonts/lib/ibm-plex-sans-arabic/ibm-plex-sans-arabic-arabic-400.woff2": {
+    "file": "assets/ibm-plex-sans-arabic-arabic-400-CyU-ddYS.woff2",
+    "src": "resources/fonts/lib/ibm-plex-sans-arabic/ibm-plex-sans-arabic-arabic-400.woff2"
+  },
+  "resources/fonts/lib/ibm-plex-sans-arabic/ibm-plex-sans-arabic-arabic-700.woff2": {
+    "file": "assets/ibm-plex-sans-arabic-arabic-700-DrtBj6UE.woff2",
+    "src": "resources/fonts/lib/ibm-plex-sans-arabic/ibm-plex-sans-arabic-arabic-700.woff2"
+  },
+  "resources/fonts/lib/ibm-plex-sans-arabic/ibm-plex-sans-arabic-latin-400.woff2": {
+    "file": "assets/ibm-plex-sans-arabic-latin-400-Bo5KPYvw.woff2",
+    "src": "resources/fonts/lib/ibm-plex-sans-arabic/ibm-plex-sans-arabic-latin-400.woff2"
+  },
+  "resources/fonts/lib/ibm-plex-sans-arabic/ibm-plex-sans-arabic-latin-700.woff2": {
+    "file": "assets/ibm-plex-sans-arabic-latin-700-BzSf6GNr.woff2",
+    "src": "resources/fonts/lib/ibm-plex-sans-arabic/ibm-plex-sans-arabic-latin-700.woff2"
+  },
+  "resources/fonts/lib/inter/inter-latin.woff2": {
+    "file": "assets/inter-latin-Dx4kXJAl.woff2",
+    "src": "resources/fonts/lib/inter/inter-latin.woff2"
+  },
+  "resources/fonts/lib/libre-baskerville/libre-baskerville-latin.woff2": {
+    "file": "assets/libre-baskerville-latin-kU5d48Ec.woff2",
+    "src": "resources/fonts/lib/libre-baskerville/libre-baskerville-latin.woff2"
+  },
+  "resources/fonts/lib/lora/lora-latin.woff2": {
+    "file": "assets/lora-latin-BiLcIKcI.woff2",
+    "src": "resources/fonts/lib/lora/lora-latin.woff2"
+  },
+  "resources/fonts/lib/manrope/manrope-latin.woff2": {
+    "file": "assets/manrope-latin-DHIcAJRg.woff2",
+    "src": "resources/fonts/lib/manrope/manrope-latin.woff2"
+  },
+  "resources/fonts/lib/marcellus/marcellus-latin-400.woff2": {
+    "file": "assets/marcellus-latin-400-86dSXJnk.woff2",
+    "src": "resources/fonts/lib/marcellus/marcellus-latin-400.woff2"
+  },
+  "resources/fonts/lib/montserrat/montserrat-latin.woff2": {
+    "file": "assets/montserrat-latin-l_AIctKy.woff2",
+    "src": "resources/fonts/lib/montserrat/montserrat-latin.woff2"
+  },
+  "resources/fonts/lib/noto-kufi-arabic/noto-kufi-arabic-arabic.woff2": {
+    "file": "assets/noto-kufi-arabic-arabic-DGgC7XND.woff2",
+    "src": "resources/fonts/lib/noto-kufi-arabic/noto-kufi-arabic-arabic.woff2"
+  },
+  "resources/fonts/lib/noto-kufi-arabic/noto-kufi-arabic-latin.woff2": {
+    "file": "assets/noto-kufi-arabic-latin-BFPo14U7.woff2",
+    "src": "resources/fonts/lib/noto-kufi-arabic/noto-kufi-arabic-latin.woff2"
+  },
+  "resources/fonts/lib/nunito-sans/nunito-sans-latin.woff2": {
+    "file": "assets/nunito-sans-latin-BWQ3gi2K.woff2",
+    "src": "resources/fonts/lib/nunito-sans/nunito-sans-latin.woff2"
+  },
+  "resources/fonts/lib/playfair-display/playfair-display-latin.woff2": {
+    "file": "assets/playfair-display-latin-BOwq7MWX.woff2",
+    "src": "resources/fonts/lib/playfair-display/playfair-display-latin.woff2"
+  },
+  "resources/fonts/lib/plus-jakarta-sans/plus-jakarta-sans-latin.woff2": {
+    "file": "assets/plus-jakarta-sans-latin-eXO_dkmS.woff2",
+    "src": "resources/fonts/lib/plus-jakarta-sans/plus-jakarta-sans-latin.woff2"
+  },
+  "resources/fonts/lib/poppins/poppins-latin-400.woff2": {
+    "file": "assets/poppins-latin-400-cpxAROuN.woff2",
+    "src": "resources/fonts/lib/poppins/poppins-latin-400.woff2"
+  },
+  "resources/fonts/lib/poppins/poppins-latin-600.woff2": {
+    "file": "assets/poppins-latin-600-zEkxB9Mr.woff2",
+    "src": "resources/fonts/lib/poppins/poppins-latin-600.woff2"
+  },
+  "resources/fonts/lib/poppins/poppins-latin-700.woff2": {
+    "file": "assets/poppins-latin-700-Qrb0O0WB.woff2",
+    "src": "resources/fonts/lib/poppins/poppins-latin-700.woff2"
+  },
+  "resources/fonts/lib/raleway/raleway-latin.woff2": {
+    "file": "assets/raleway-latin-CSF1BaNN.woff2",
+    "src": "resources/fonts/lib/raleway/raleway-latin.woff2"
+  },
+  "resources/fonts/lib/readex-pro/readex-pro-arabic.woff2": {
+    "file": "assets/readex-pro-arabic-DiwT_uOQ.woff2",
+    "src": "resources/fonts/lib/readex-pro/readex-pro-arabic.woff2"
+  },
+  "resources/fonts/lib/readex-pro/readex-pro-latin.woff2": {
+    "file": "assets/readex-pro-latin--ekFhJJC.woff2",
+    "src": "resources/fonts/lib/readex-pro/readex-pro-latin.woff2"
+  },
+  "resources/fonts/lib/tajawal/tajawal-arabic-400.woff2": {
+    "file": "assets/tajawal-arabic-400-CyCXRvzh.woff2",
+    "src": "resources/fonts/lib/tajawal/tajawal-arabic-400.woff2"
+  },
+  "resources/fonts/lib/tajawal/tajawal-arabic-700.woff2": {
+    "file": "assets/tajawal-arabic-700-D2-eand5.woff2",
+    "src": "resources/fonts/lib/tajawal/tajawal-arabic-700.woff2"
+  },
+  "resources/fonts/lib/tajawal/tajawal-latin-400.woff2": {
+    "file": "assets/tajawal-latin-400-BVNSOH3d.woff2",
+    "src": "resources/fonts/lib/tajawal/tajawal-latin-400.woff2"
+  },
+  "resources/fonts/lib/tajawal/tajawal-latin-700.woff2": {
+    "file": "assets/tajawal-latin-700-BypgxfGb.woff2",
+    "src": "resources/fonts/lib/tajawal/tajawal-latin-700.woff2"
+  },
+  "resources/fonts/lib/work-sans/work-sans-latin.woff2": {
+    "file": "assets/work-sans-latin-Bl-S9Xys.woff2",
+    "src": "resources/fonts/lib/work-sans/work-sans-latin.woff2"
+  },
   "resources/fonts/outfit/outfit-latin-ext.woff2": {
     "file": "assets/outfit-latin-ext-DdQaqQDo.woff2",
     "src": "resources/fonts/outfit/outfit-latin-ext.woff2"

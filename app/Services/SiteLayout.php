@@ -571,6 +571,23 @@ class SiteLayout
         'press' => ['select', 'When a shopper taps a button or icon', 'c',
             'Every choice except Off removes the grey box the phone draws over whatever was tapped. They differ only in what the button itself does: the header icons, the menu, the search box, every Add to cart, the heart, the pills and tabs, the − / + buttons, the arrows and the share sheet.',
             self::PRESS_OPTIONS],
+
+        /*
+         * ── FONTS (Lane FS) ─────────────────────────────────────────────────
+         *
+         * The owner: "prepare a full list of fonts to include in our app, so
+         * we can use as per need". Both ship at 'outfit', which is the shop
+         * today, so applying the package moves nothing; App\Support\SiteFonts
+         * prints nothing and the layout's Outfit preload is the bytes it was.
+         * The option set IS App\Support\FontLibrary::LABELS, so the cast
+         * refuses a family the library does not carry (rule 5).
+         */
+        'font_body' => ['select', 'Body font', 'outfit',
+            'Every paragraph, price, button and product name in the shop. This is the one font the shop preloads, so the first words paint in it.',
+            \App\Support\FontLibrary::LABELS],
+        'font_heading' => ['select', 'Headings font', 'outfit',
+            'Every heading — page titles, section headings, card titles. A homepage section can still pick its own on its Fonts & size tab.',
+            \App\Support\FontLibrary::LABELS],
     ];
 
     /**
@@ -605,6 +622,9 @@ class SiteLayout
 
     /** Not CSS on :root: skipped by isDefault(), never in css(). (Lane RD) */
     private const PRESS_KEYS = ['press'];
+
+    /** Lane FS: read by App\Support\SiteFonts, not by css() — see isDefault(). */
+    public const FONT_KEYS = ['font_body', 'font_heading'];
 
     /** The bounds a typed batch size is held to, server-side. */
     public const BATCH_MIN = 4;
@@ -767,6 +787,9 @@ class SiteLayout
         'press' => ['Press feedback',
             'What every button and icon in the shop does under a finger or a click. Tap the samples below to feel each one before you save; nothing changes on the shop until you press Save.',
             self::PRESS_KEYS],
+        'fonts' => ['Fonts',
+            'The shop\'s typefaces, from its own font library — twenty-nine families served from this shop, never from Google. Only the fonts you pick are loaded, and only the body font is preloaded.',
+            self::FONT_KEYS],
     ];
 
     /** Every key lives in `settings`, written by this module's own endpoint. */
@@ -1053,7 +1076,8 @@ class SiteLayout
 
         foreach (self::normalised() as $key => $field) {
             if (in_array($key, self::LOAD_KEYS, true) || in_array($key, self::HEADER_KEYS, true)
-                || in_array($key, self::PRESS_KEYS, true) || in_array($key, self::BRAND_KEYS, true)) {
+                || in_array($key, self::PRESS_KEYS, true) || in_array($key, self::BRAND_KEYS, true)
+                || in_array($key, self::FONT_KEYS, true)) {
                 continue;
             }
 
