@@ -3,6 +3,22 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.382
+**One page for the whole homepage, product source picker, phone strips, carousel
+controls, blog cards without meta, Spotted 6-image grid.** Apply after .381.
+Runs 6 migrations (2 grid-section columns, 2 Arabic seeds, 2 cache clears).
+Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "a proper detailed popup with all controls, including data queries to choose brand, category or mixed categories, or manual section with search … every section edit on homepage content … Edit content button" | Appearance → Homepage content → **All sections**: every section in order with Laptop/Phone switches and Edit content (popup on a laptop, full screen on a phone; Content · Products · Layout · Style · Show & frame). Products: Automatic (brands, mixed categories, sort, in stock, how many) or Manual (search, drag to order, up to 24). Same homepage cost with 3 or 40 products |
+| "ONLY FOR MOBILE … the top bar strip … and below the main banner … that countries strip … also give controls" | Pink top strip "1-3 Days Delivery all over UAE – Free Delivery over AED 199" (Homepage content → Top strip) and the UAE / Korea strip under the banner (Header → Flag bar), phones only |
+| "give this option on any carousel products section" | Cards in view · phone (2.3) / laptop and Arrows · phone / laptop on every carousel section |
+| "turn off the 6 min read, tag on blog section on homepage" | Homepage blog cards: Reading time and Category tag off (Homepage content → Blog); /blog/ unchanged |
+| "#KBEAUTYBLISS Spotted … 6 static images … I will upload each card image manually" | 3×2 grid with 6 placeholder cards; Appearance → #KBeautyBliss Spotted → Homepage grid: picture, link (default the Spotted page), alt, reorder. The section now honours its Laptop/Phone switches and order |
+
+Files (42): see the package's update.json.
+
 ## 2.60.381
 **Footer in four pages with previews; sold-out label; compact reviews box;
 brand tint; 2.3 cards on the product page; admin search on top.** Apply after
