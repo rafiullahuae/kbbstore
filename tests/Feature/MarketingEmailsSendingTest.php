@@ -421,3 +421,30 @@ it('refuses to start a campaign with no postal address in the footer, and the se
         return str_contains($html, 'Office 7, Business Bay, Dubai') && str_contains($html, '/email/u/');
     });
 });
+
+it('tells each recipient the true reason in the footer: bought before, or has an account', function () {
+    /*
+     * The defect: the "Never ordered" group (customers with an account and no
+     * order) was told "you are receiving this because you bought from us
+     * before" — a false statement in the one line that explains consent.
+     *
+     * MUTATION: pass $snap['audience'] instead of $snap['who'] to the renderer
+     * in CampaignSender::sendOne() and the account holder is told they bought.
+     */
+    Mail::fake();
+    F::customer('account-only@example.com');
+    $buyer = F::customer('buyer-why@example.com');
+    F::order($buyer, [['Anua', 5000]]);
+    F::product('Toner', 60, ['total_sales' => 3]);
+    $id = F::campaign('best-sellers', F::group('Everyone', []));
+
+    app(CampaignSender::class)->start($id);
+    mkRunToEnd($id);
+
+    $bought = __('email.mkt.why_customers', ['store' => config('app.name')]);
+    $account = __('email.mkt.why_account', ['store' => config('app.name')]);
+
+    Mail::assertSent(CampaignMail::class, fn ($m) => $m->hasTo('account-only@example.com') && str_contains($m->render(), e(explode(':store', __('email.mkt.why_account'))[0])) && ! str_contains($m->render(), e(explode(':store', __('email.mkt.why_customers'))[0])));
+    Mail::assertSent(CampaignMail::class, fn ($m) => $m->hasTo('buyer-why@example.com') && str_contains($m->render(), e(explode(':store', __('email.mkt.why_customers'))[0])));
+    expect($bought)->not->toBe($account);
+});

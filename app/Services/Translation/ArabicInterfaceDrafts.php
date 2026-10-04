@@ -181,6 +181,7 @@ final class ArabicInterfaceDrafts
             'store.mkt_unsub.bad_note' => 'جرّب فتحه مرة أخرى من الرسالة مباشرة. وإن لم يعمل، ردّ على أي رسالة منا وسنحذف العنوان يدويًا.',
             'email.mkt.why_customers' => 'تصلك هذه الرسالة لأنك اشتريت من :store من قبل.',
             'email.mkt.why_subscribers' => 'تصلك هذه الرسالة لأنك اشتركت في رسائل :store.',
+            'email.mkt.why_account' => 'تصلك هذه الرسالة لأن لديك حسابًا لدى :store.',
             'email.mkt.text_unsubscribe' => 'لإيقاف هذه الرسائل، افتح:',
             'email.mkt.coupon_ends' => 'ينتهي في :date',
         ];

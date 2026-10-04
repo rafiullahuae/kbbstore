@@ -321,6 +321,12 @@ final class CampaignSender
         $links = DB::table('mkt_links')->where('campaign_id', $c->id)->pluck('n', 'url')->all();
         $data = $this->renderer->data($blocks);
 
+        // Which of these customers have bought (one query): the footer says
+        // "you bought from us before" only to someone who did.
+        $buyers = array_flip(DB::table('orders')->whereIn('customer_id', $rows->pluck('customer_id')->filter()->all())
+            ->whereIn('status', \App\Models\Order::REAL_STATUSES)->whereNull('deleted_at')
+            ->distinct()->pluck('customer_id')->map(fn ($v) => (int) $v)->all());
+
         foreach ($rows as $row) {
             if ((hrtime(true) - $started) / 1e9 > SendLimits::STEP_SECONDS) {
                 // Out of time: hand the rest back untouched.
@@ -338,7 +344,9 @@ final class CampaignSender
                 continue;
             }
 
-            $this->sendOne($c, $row, $blocks, $snap, $links, $data);
+            $who = ($snap['audience'] ?? 'customers') === 'subscribers' ? 'subscribers'
+                : ($row->customer_id !== null && ! isset($buyers[(int) $row->customer_id]) ? 'account' : 'customers');
+            $this->sendOne($c, $row, $blocks, $snap + ['who' => $who], $links, $data);
         }
     }
 
@@ -353,7 +361,7 @@ final class CampaignSender
         try {
             $out = $this->renderer->render($blocks, self::brandVars($snap['top_brand'] ?? null) + [
                 'data' => $data,
-                'audience' => $snap['audience'] ?? 'customers',
+                'audience' => $snap['who'] ?? ($snap['audience'] ?? 'customers'),
                 'first_name' => (string) ($row->first_name ?? ''),
                 'subject' => $c->subject,
                 'preheader' => $c->preheader,

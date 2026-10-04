@@ -2767,6 +2767,7 @@ final class InterfaceStrings
         return [
             'mkt.why_customers' => 'You are receiving this because you bought from :store before.',
             'mkt.why_subscribers' => 'You are receiving this because you subscribed to :store emails.',
+            'mkt.why_account' => 'You are receiving this because you have an account with :store.',
             'mkt.text_unsubscribe' => 'To stop these emails, open:',
             'mkt.coupon_ends' => 'Ends :date',
         ];

@@ -21,8 +21,11 @@ os.makedirs(out, exist_ok=True)
 with open(os.path.join(out, 'sent-email-headers.txt'), 'w') as f:
     for h in ['From', 'To', 'Subject', 'List-Unsubscribe', 'List-Unsubscribe-Post', 'Precedence', 'Content-Type']:
         f.write('%s: %s\n' % (h, msg[h]))
-text = msg.get_body(preferencelist=('plain',)).get_content()
-html = msg.get_body(preferencelist=('html',)).get_content()
-open(os.path.join(out, 'sent-email-text.txt'), 'w').write(text)
-open(os.path.join(out, 'sent-email.html'), 'w').write(html)
+# Laravel's log transport writes the parts as the mailer built them, before
+# the transfer encoding is applied (the header says quoted-printable, the
+# bytes are plain UTF-8), so the payload is taken as it stands.
+text = msg.get_body(preferencelist=('plain',)).get_payload(decode=False)
+html = msg.get_body(preferencelist=('html',)).get_payload(decode=False)
+open(os.path.join(out, 'sent-email-text.txt'), 'w', encoding='utf-8').write(text)
+open(os.path.join(out, 'sent-email.html'), 'w', encoding='utf-8').write(html)
 print('to', msg['To'], '| html', len(html.encode()), 'bytes | text', len(text.encode()), 'bytes')

@@ -603,13 +603,13 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * seeded by 2027_07_28_100100_seed_site_footer_account_arabic_drafts.
      * Measured on the preview: 1,315 draft rows after migrate.
      *
-     * ── 1,315 -> 1,326: LANE MK'S ELEVEN ─────────────────────────────────
+     * ── 1,315 -> 1,327: LANE MK'S TWELVE ─────────────────────────────────
      * Marketing Emails: the campaign unsubscribe page (store.mkt_unsub.*,
-     * seven) and the footer's why-lines, the text part's unsubscribe line and
-     * a coupon's end date (email.mkt.*, four), seeded by
+     * seven) and the footer's three why-lines, the text part's unsubscribe
+     * line and a coupon's end date (email.mkt.*, five), seeded by
      * 2027_07_28_501000_seed_marketing_emails_arabic_drafts. Read off the run.
      */
-    expect($ui['drafts'])->toBe(1326, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1327, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

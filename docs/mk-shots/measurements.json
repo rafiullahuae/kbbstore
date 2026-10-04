@@ -9,7 +9,7 @@
   },
   "m3-groups-1280": {
     "scrollWidth": 1280,
-    "height": 2070
+    "height": 1982
   },
   "m4-review-send-1280": {
     "scrollWidth": 1280,
@@ -33,7 +33,7 @@
   },
   "m3-groups-390": {
     "scrollWidth": 390,
-    "height": 3350
+    "height": 3289
   },
   "m4-review-send-390": {
     "scrollWidth": 390,
@@ -45,7 +45,7 @@
   },
   "templates-library-390": {
     "scrollWidth": 390,
-    "height": 6537
+    "height": 6579
   },
   "template-new-arrivals-600": {
     "scrollWidth": 600,
@@ -285,5 +285,12 @@
   },
   "unsubscribe-page-1280": {
     "scrollWidth": 1280
+  },
+  "sent-email": "to fatima.1@example.com | html 17060 bytes | text 1099 bytes",
+  "sent-email-600": {
+    "scrollWidth": 600
+  },
+  "sent-email-390": {
+    "scrollWidth": 390
   }
 }

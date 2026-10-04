@@ -30,6 +30,7 @@ return new class extends Migration
         'store.mkt_unsub.bad_note',
         'email.mkt.why_customers',
         'email.mkt.why_subscribers',
+        'email.mkt.why_account',
         'email.mkt.text_unsubscribe',
         'email.mkt.coupon_ends',
     ];

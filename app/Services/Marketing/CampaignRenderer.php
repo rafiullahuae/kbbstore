@@ -364,9 +364,18 @@ final class CampaignRenderer
                 case 'footer':
                     $footer = $i;
                     $audience = ($p['why'] ?? 'auto') === 'auto' ? (string) ($ctx['audience'] ?? 'customers') : (string) $p['why'];
-                    $why = $audience === 'subscribers'
-                        ? __('email.mkt.why_subscribers', ['store' => $k['storeName']])
-                        : __('email.mkt.why_customers', ['store' => $k['storeName']]);
+                    /*
+                     * Why this arrived, true for THIS recipient: a subscriber
+                     * subscribed; a customer bought before — or, for one who
+                     * has an account and never ordered (the "Never ordered"
+                     * group), has an account. CampaignSender passes 'account'
+                     * per recipient.
+                     */
+                    $why = match ($audience) {
+                        'subscribers' => __('email.mkt.why_subscribers', ['store' => $k['storeName']]),
+                        'account' => __('email.mkt.why_account', ['store' => $k['storeName']]),
+                        default => __('email.mkt.why_customers', ['store' => $k['storeName']]),
+                    };
                     break;
             }
         }
