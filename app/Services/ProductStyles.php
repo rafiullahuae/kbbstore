@@ -427,8 +427,10 @@ class ProductStyles
      *
      * ── WHAT THIS IS FOR, AND WHAT IT CANNOT DO ─────────────────────────────
      *
-     * Lighthouse lists every card <img> under "Image elements do not have
-     * explicit width and height". The FRAME never moved — `.kbb-card-thumb`
+     * The card <img> carried no width or height attribute. Lighthouse 12.8.2
+     * does not actually flag it -- its unsized-images audit accepts CSS
+     * `width:100%;height:100%`, measured 0 flagged before and after -- but
+     * other audits and parsers read the attributes. The FRAME never moved — `.kbb-card-thumb`
      * reserves it with `aspect-ratio` and the <img> is `width:100%;
      * height:100%` inside it — so these attributes change no layout: CSS
      * width and height both beat the presentational hint, and the mapped

@@ -9,9 +9,11 @@ use App\Services\SettingsService;
 /**
  * Lane PF2 -- the product card's <img> states its frame's shape.
  *
- * WHAT IT LOOKED LIKE. Lighthouse listed every card photograph under "Image
- * elements do not have explicit width and height", on /shop, every category
- * archive, the homepage rails and the product page's related row.
+ * WHAT IT LOOKED LIKE. Every card photograph -- /shop, every category
+ * archive, the homepage rails and the product page's related row -- was an
+ * <img> with no width or height attribute, so anything reading the markup
+ * alone could not know its shape. (Lighthouse 12.8.2 itself accepts the CSS
+ * sizing and flagged 0 before and after; the attributes are for the rest.)
  *
  * THE OWNER: "the grid cards design must not be changed". So nothing here may
  * move a pixel: the attributes state the shape the frame ALREADY has

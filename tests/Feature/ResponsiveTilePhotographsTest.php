@@ -316,8 +316,8 @@ it('states the FRAME\'s shape, never the file\'s, so it still cannot move anythi
     // would be a lie, and srcset makes it tempting -- the copies are 400x400
     // and 800x800 and it looks safe to say so.
     //
-    // (Lane PF2) The attributes are here now, for Lighthouse's "Image elements
-    // do not have explicit width and height", and they state the FRAME's
+    // (Lane PF2) The attributes are here now, for anything that reads the
+    // markup without the stylesheet, and they state the FRAME's
     // ratio -- Appearance -> Product styles -> Image shape -- never the
     // photograph's. So this photograph is deliberately NOT square: a card that
     // printed the file's own 1000x800 here is red.

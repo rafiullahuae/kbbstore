@@ -371,10 +371,10 @@
                  reserved before a byte of the photograph arrives, and srcset
                  cannot move anything either. That is why these were left off.
 
-                 They are here now for the audit and the parser, not the layout:
-                 Lighthouse lists every card under "Image elements do not have
-                 explicit width and height", and a browser knows the picture's
-                 shape before it is fetched. They are taken from the SAME map as
+                 They are here now for parsers and audits that read only the
+                 attributes, not for the layout: a browser knows the picture's
+                 shape before it is fetched. (Lighthouse 12.8.2 already accepted
+                 the CSS sizing -- 0 unsized images before and after.) They are taken from the SAME map as
                  the frame's `--kbb-ratio` (ProductStyles::imageBox), so the
                  intrinsic ratio cannot disagree with the frame on the shop's
                  own setting; CSS width and height beat the attributes either
