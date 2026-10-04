@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.380
+**Prices line up with or without stars; Price and Cut price sizes on the
+Product grid page.** Apply after .379. Runs 1 migration (a cache clear).
+Hard refresh after applying (the stylesheet changed).
+
+| Your request | Now |
+|---|---|
+| "i want the price row must be same position, even if reviews are there or not. i need semetry" | An unreviewed card keeps the stars' space, so its price sits exactly where a reviewed card's does — measured 19px apart before in the bundles carousel (every stacking card design, phone and laptop), one line after. Showcase unchanged; nothing reserved when stars are switched off |
+| "give control to set the pricing font size, and cut price also. on the same product grid backend setting page … desktop and mobile" | Appearance → Product grid → **Price text size**: Price (phone / desktop — the same setting as Product styles) and Cut price (phone / desktop, new, 12px default, changes nothing until moved), live in the preview |
+
+Files (9): see the package's update.json.
+
 ## 2.60.379
 **Cart Tracking: a 1px line between columns.** Apply after .378. Runs 1
 migration (a cache clear).
