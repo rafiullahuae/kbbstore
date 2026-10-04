@@ -100,10 +100,32 @@ class CollectionController extends Controller
             $intro = \App\Support\RepeatPurchase::intro();
         }
 
-        $query = Product::query()
-            ->select(self::CARD_COLUMNS)
-            ->visible()
-            ->with('brand:id,name,slug');
+        $page = max(1, (int) $request->query('page', 1));
+
+        /*
+         * /super-sale/ IS THE CAMPAIGN CATEGORY FIRST. (Lane SS)
+         *
+         * The owner asked for the old site's products in the old site's
+         * places; App\Support\SuperSale says what that page was and why this
+         * is it. When the category is missing or empty the page falls through
+         * to the reduced-products listing below, exactly as it was.
+         */
+        $campaign = $key === 'super-sale' ? \App\Support\SuperSale::campaign($this->settings) : null;
+
+        if ($campaign !== null) {
+            $products = \App\Support\SuperSale::apply($this->cardQuery(), $campaign)
+                ->paginate($this->perPage(), ['*'], 'page', $page)->withQueryString();
+
+            if ($products->total() > 0) {
+                // "Every product currently reduced" is not true of a campaign
+                // list, which can hold a product at full price.
+                $intro = '';
+            } else {
+                $campaign = null;
+            }
+        }
+
+        $query = $this->cardQuery();
 
         /*
          * EVERY ONE OF THESE ENDS IN `id`, BECAUSE ALL FOUR ARE PAGINATED.
@@ -169,11 +191,12 @@ class CollectionController extends Controller
          * request() inside a view). The resolver goes on reading the discarded
          * app's request, so it answers page 1 for every URL -- which is
          * precisely the thing this method now has to be right about. Reading
-         * $request, which is the request the router matched, cannot go stale.
+         * $request, which is the request the router matched, cannot go stale. (Read above, before the campaign query, since
+         * Lane SS.)
          */
-        $page = max(1, (int) $request->query('page', 1));
-
-        $products = $query->paginate($this->perPage(), ['*'], 'page', $page)->withQueryString();
+        if ($campaign === null) {
+            $products = $query->paginate($this->perPage(), ['*'], 'page', $page)->withQueryString();
+        }
 
         /*
          * ONE STATEMENT FOR EVERY SET ON THIS PAGE, OR NONE AT ALL. (Lane SG)
@@ -208,6 +231,8 @@ class CollectionController extends Controller
             'intro' => $intro,
             'products' => $products,
             'settings' => $this->settings,
+            // Pages → Page banners (Lane SS): null on a listing with none.
+            'pageBanner' => app(\App\Services\PageBanners::class)->forPage('collection:' . $key),
             // SEO → Keywords (Lane KW): which listing's keywords these are.
             'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page, $products) + ['seo_entity' => 'collection:' . $key],
         ]);
@@ -354,6 +379,15 @@ class CollectionController extends Controller
      *
      * @return array{0:string,1:string}  [title, intro]
      */
+    /** The listing's base query: the narrow card select, visible rows, brand eager-loaded. */
+    private function cardQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return Product::query()
+            ->select(self::CARD_COLUMNS)
+            ->visible()
+            ->with('brand:id,name,slug');
+    }
+
     /**
      * Products per page: the 24 these listings have always used, unless
      * Appearance → Site layout → Loading more products says otherwise.
@@ -436,8 +470,8 @@ class CollectionController extends Controller
          * rows.
          */
         $description = $total > 0
-            ? "{$intro} {$total} authentic Korean skincare products at K-Beauty Bliss."
-            : "{$intro} Authentic Korean skincare at K-Beauty Bliss.";
+            ? ltrim("{$intro} {$total}") . " authentic Korean skincare products at K-Beauty Bliss."
+            : ltrim("{$intro} Authentic") . " Korean skincare at K-Beauty Bliss.";
 
         // SeoSettings, not Setting::map(): the latter memoises in a
         // process-level static as well as the cache, and a page rendered
