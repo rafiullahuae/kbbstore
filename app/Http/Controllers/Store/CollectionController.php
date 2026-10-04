@@ -208,7 +208,8 @@ class CollectionController extends Controller
             'intro' => $intro,
             'products' => $products,
             'settings' => $this->settings,
-            'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page, $products),
+            // SEO → Keywords (Lane KW): which listing's keywords these are.
+            'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page, $products) + ['seo_entity' => 'collection:' . $key],
         ]);
     }
 
@@ -307,7 +308,7 @@ class CollectionController extends Controller
             'intro' => $intro,
             'products' => $products,
             'settings' => $this->settings,
-            'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page, $products),
+            'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page, $products) + ['seo_entity' => 'collection:concern-' . $concern],
         ]);
     }
 

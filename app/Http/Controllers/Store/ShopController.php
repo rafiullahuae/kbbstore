@@ -429,6 +429,9 @@ class ShopController extends Controller
                  */
                 'noindex' => ! empty($catSeo['noindex']) ?: null,
                 'breadcrumb' => $this->breadcrumbTrail($category),
+                // SEO → Keywords (Lane KW): which page's keywords this is. Only
+                // the unfiltered listing; a filtered view is a different page.
+                'seo_entity' => $selfCanonical ? ($category ? 'category:' . $category->id : 'collection:shop') : null,
             ], static fn ($v) => $v !== null),
             'sub' => $sub,
             'crumb' => $crumb,

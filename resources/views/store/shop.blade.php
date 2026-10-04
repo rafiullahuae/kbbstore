@@ -273,6 +273,7 @@
             'urlFor' => static fn (int $n): string => Facets::pageUrl($n),
             'grid' => '#grid',
         ])
+{{-- SEO → Keywords: Popular searches (Lane KW). Off unless the owner turns it on; prints nothing when off. Column 0 so the page stays byte-identical. --}}@include('partials.popular-searches', ['seoEntity' => ($category ?? null) ? 'category:' . $category->id : null])
     </main>
 </div>
 @endsection

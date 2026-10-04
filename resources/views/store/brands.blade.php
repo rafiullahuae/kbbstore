@@ -102,6 +102,7 @@
             <x-product-grid :products="$products" :heading="($brandPopular ?? false) ? __('store.brands.popular_heading') : null"
                             :more-url="($brandPopular ?? false) ? $brand->filterUrl() : null" :more-label="__('store.product_grid.view_all')" grid-id="brandGrid" />
 {{-- The rest of the brand, a batch at a time (Lane PR). Draws nothing when the brand fits on one page. At column 0 because StorefrontEnglishUnchangedTest byte-pins this page and an indented line leaves its indent behind. --}}@include('partials.listing-pager', ['page' => $page, 'lastPage' => $lastPage, 'urlFor' => $pageUrl, 'grid' => '#brandGrid'])
+{{-- SEO → Keywords: Popular searches (Lane KW). Off unless the owner turns it on; prints nothing when off. Column 0 so the page stays byte-identical. --}}@include('partials.popular-searches', ['seoEntity' => 'brand:' . $brand->id])
         @endif
     @else
         <nav class="brw-crumb" aria-label="{{ __('store.breadcrumb.label') }}">

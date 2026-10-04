@@ -243,6 +243,8 @@ class ProductController extends Controller
 
                 $ctx = [
                     'type' => 'product',
+                    // SEO → Keywords (Lane KW): this page's keywords, by id.
+                    'seo_entity' => 'product:' . $product->id,
                     // The chain itself lives in App\Support\ProductSeo now, so the
                     // admin's snippet preview can ask what this page will publish
                     // instead of inventing a sentence. Same order, same result.

@@ -1,0 +1,16 @@
+1280 overview {"scrollW":1280,"innerW":1280,"contentH":1236,"cards":4,"tabFont":"13px"}
+1280 sources {"scrollW":1280,"innerW":1280,"contentH":1370,"cards":3,"tabFont":"13px"}
+1280 bank {"scrollW":1280,"innerW":1280,"contentH":2314,"cards":1,"tabFont":"13px"}
+1280 pages {"scrollW":1280,"innerW":1280,"contentH":9578,"cards":1,"tabFont":"13px"}
+1280 sync {"scrollW":1280,"innerW":1280,"contentH":1009,"cards":3,"tabFont":"13px"}
+popular on: 200
+1280 brand popular-searches {"scrollW":1280,"links":6,"height":74,"linkFont":"13px"}
+390 brand popular-searches {"scrollW":390,"links":6,"height":196,"linkFont":"13px"}
+popular off: 200
+1280 Store menu: modules megamenu ecommerce tax payship shipping import orders order-new coupon-editor payments paygw security analytics search seo seokeywords store-settings customers quiz-leads
+390 overview {"scrollW":390,"innerW":390,"contentH":1796,"cards":4,"tabFont":"13px"}
+390 sources {"scrollW":390,"innerW":390,"contentH":1879,"cards":3,"tabFont":"13px"}
+390 bank {"scrollW":390,"innerW":390,"contentH":3292,"cards":1,"tabFont":"13px"}
+390 pages {"scrollW":390,"innerW":390,"contentH":14326,"cards":1,"tabFont":"13px"}
+390 sync {"scrollW":390,"innerW":390,"contentH":808,"cards":2,"tabFont":"13px"}
+390 Store menu: modules megamenu ecommerce tax payship shipping import orders order-new coupon-editor payments paygw security analytics search seo seokeywords store-settings customers quiz-leads

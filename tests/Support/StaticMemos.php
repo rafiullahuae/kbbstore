@@ -202,6 +202,9 @@ final class StaticMemos
             ServerMailTransport::class => static function (): void {
                 ServerMailTransport::$lastTestDelivery = null;
             },
+            // Lane KW: the sync's step budget and chunk size, which a test
+            // shrinks to force a run across many steps.
+            \App\Services\Seo\Keywords\KeywordSync::class => static fn () => \App\Services\Seo\Keywords\KeywordSync::resetTuning(),
         ];
     }
 
