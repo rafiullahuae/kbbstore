@@ -3,6 +3,30 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.374
+**The email builder, Marketing Emails, the card spacing that now really applies,
+and a lighter banner.** Apply after .373. No plugin change. **Runs 14
+migrations** (email templates; the marketing tables, ready templates and preset
+groups; Arabic drafts; cache clears). Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "two emails modules … Email (order status etc, NO marketing) … both will have builder and pre-ready templates" | **Emails → Customer emails**: every email (21) with its on/off, subject, last sent/edited, Edit and Send test. **Edit** is the builder: drag the sections (or ↑/↓), hide/show, add text/image/button/coupon/products/divider/spacer, wording in English and العربية, live desktop/phone preview, Reset to default, Send test. Nothing changes in any email until you edit it |
+| "Marketing Emails under Growth & Marketing … pre-marketing templates for new arrivals, this week special, best sellers etc … editable easily" | **Growth & Marketing → Marketing Emails**: Campaigns · Templates · Customer groups · Reports. 12 ready templates (New arrivals, This week's special, Best sellers, Under AED 54, Super Sale, Bundles & sets, Brand spotlight, We miss you, Brand fans, Autumn glow, Welcome, Skincare tips) whose products fill themselves when the email is sent; Duplicate to edit. Builder with drag-and-drop blocks, preview, undo, and a size meter. Groups: customers and subscribers separate; spent, orders, emirate, dates, brands bought; live count. Send now or schedule; only Owner and Administrator can send; one-click unsubscribe in every email; reports with clicks, unsubscribes, orders and revenue |
+| "proper tabs … for all emails pages" | Every Emails page is in tabs, All mail settings included (Sending method · Mail server · Sender & alerts · Footer · More settings · Status emails · Send a test · Waiting to go out · Sent mail). Settings unchanged |
+| "the spacing between the elements inside grid card is absolutely not applying … not padding … only one card preview" | Fixed on every card design: above the price and price → Add to cart are real space now (the pink capsule keeps its size), measured exact at 13/24/20px. Appearance → Product grid previews one card at shop size |
+| (speed) | The desktop banner downloads a right-sized picture: homepage desktop 530 → 316 KB, first picture shown 0.70 → 0.53 s. Product photos carry their sizes; cards look identical (pixel-checked) |
+
+**Scheduled campaigns need one cron line** (Cloudways → Application → Cron Job
+Management), shown on the Marketing Emails screen: `* * * * * cd
+/home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app && php artisan
+schedule:run >> /dev/null 2>&1`. "Send now" works without it.
+
+Also: a database built from nothing now migrates on MySQL (the media index read
+a column before it existed); the live shop was never affected.
+
+Files (94): see the package's update.json.
+
 ## 2.60.373
 **Footer v2, one heading size on the homepage, About us Read more, phone
 carousels that peek.** Apply after .372. No plugin change. Runs 4 migrations
