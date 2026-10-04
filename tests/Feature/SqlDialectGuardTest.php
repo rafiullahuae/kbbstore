@@ -1108,6 +1108,33 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'admin-api/email-marketing/groups/{id}/export' => '/admin-api/email-marketing/groups/' . $mktSegment . '/export',
     ];
 
+    /*
+     * Growth & Marketing -> Cart Tracking (Lane CT). One tracked cart with a
+     * line, an add, a quantity change and a country, so the history read
+     * compiles its timeline join, the customer/order lookups (empty) and the
+     * same-address count. Driven only once routes/web.php mounts the file.
+     */
+    $ctProduct = (int) \Illuminate\Support\Facades\DB::table('products')->insertGetId([
+        'slug' => 'ct-guard-'.uniqid(), 'name' => 'Guard Serum', 'status' => 'publish', 'is_visible' => true,
+        'price' => 5000, 'stock_status' => 'instock', 'created_at' => now(), 'updated_at' => now(),
+    ]);
+    $ctCart = (int) \Illuminate\Support\Facades\DB::table('carts')->insertGetId([
+        'token' => 'ct-guard-'.uniqid(), 'currency' => 'AED', 'status' => 'active', 'last_activity_at' => now(),
+        'ct_ip' => '94.200.10.20', 'ct_net' => '94.200.10.0/24', 'ct_country' => 'AE',
+        'created_at' => now(), 'updated_at' => now(),
+    ]);
+    \Illuminate\Support\Facades\DB::table('cart_items')->insert([
+        'cart_id' => $ctCart, 'product_id' => $ctProduct, 'quantity' => 1, 'unit_price' => 5000,
+        'created_at' => now(), 'updated_at' => now(),
+    ]);
+    \Illuminate\Support\Facades\DB::table('cart_events')->insert([
+        ['cart_id' => $ctCart, 'type' => 1, 'product_id' => $ctProduct, 'qty' => 2, 'qty_after' => 2, 'unit_price' => 5000, 'created_at' => now()],
+        ['cart_id' => $ctCart, 'type' => 3, 'product_id' => $ctProduct, 'qty' => -1, 'qty_after' => 1, 'unit_price' => 5000, 'created_at' => now()],
+    ]);
+    $driven += [
+        'admin-api/cart-tracking/carts/{id}' => '/admin-api/cart-tracking/carts/' . $ctCart,
+    ];
+
     /** Route URI => why driving it here would prove nothing. */
     $excused = [
         // Serves a zip from disk. Touches no query and cannot carry a dialect

@@ -254,6 +254,10 @@ it('leaves no navigation in the console unaccounted for', function () {
         // prevents the default, asks, and then performs the same navigation --
         // and FAILS OPEN, so only a confirmed dead session stops it. A button
         // that does nothing is the failure that screen is most careful about.
+        // Growth & Marketing -> Cart Tracking -> CSV (Lane CT). GATED BEFORE:
+        // `if (!(await kbbDownloadOk(u))) return;` is the line above it, and
+        // the export answers ?probe=1 through ExportProbe before any query.
+        'cart-tracking-screen  window.location.href = u;',
         'instagram-screen  window.location.href = url;',
         // The popup itself, told after the fact because window.open has to
         // happen inside the click. It is the one navigation in the console that

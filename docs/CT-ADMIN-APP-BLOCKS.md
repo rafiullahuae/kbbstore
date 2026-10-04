@@ -53,11 +53,22 @@ Anchor: `'searchterms':['Growth & Marketing','Search Terms']};`
 
 Replacement: `'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Growth & Marketing','Cart Tracking']};`
 
+**And the same substitution where `docs/GS-ADMIN-APP-BLOCKS.md` and
+`docs/BG-ADMIN-APP-BLOCKS.md` quote that tail** (`GridSectionConsoleReachTest`
+reads GS's quote back out of app.blade.php). `tools/ct-wiring.py apply` does it.
+
 ## 4 · app.blade.php — `LATE_RENDERED`, so `?go=carttracking` opens the screen
 
 Anchor: `'gridsections','pagewash','searchterms','emails'`
 
 Replacement: `'gridsections','pagewash','searchterms','carttracking','emails'`
+
+**And the same substitution in the three handover docs that quote the whole
+line** — `docs/GS-ADMIN-APP-BLOCKS.md` (twice), `docs/T1B-ADMIN-APP-BLOCKS.md`
+and `docs/BG-ADMIN-APP-BLOCKS.md`. `GridSectionConsoleReachTest` and
+`TranslationConsoleTest` assert each quoted line is in app.blade.php exactly
+once, so block 4 without this is two red tests. `tools/ct-wiring.py apply` does
+it.
 
 ## 5 · app.blade.php — the include
 

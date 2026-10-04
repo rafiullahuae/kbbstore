@@ -337,6 +337,7 @@ final class CartTrackingReport
                 ->selectRaw('c.ct_country AS code, COUNT(*) AS n')
                 ->groupBy('c.ct_country')
                 ->orderByDesc('n')
+                ->orderBy('c.ct_country')
                 ->limit(12)
                 ->get();
 
@@ -595,6 +596,7 @@ final class CartTrackingReport
                 }
             })
             ->orderByDesc('c.ct_last_at')
+            ->orderByDesc('c.id')
             ->limit(20)
             ->get(['c.id', 'c.customer_id', 'c.ct_ip', 'c.ct_value', 'c.ct_last_at', 'c.ct_order_id', 'c.ct_bot_score', 'c.status']);
 

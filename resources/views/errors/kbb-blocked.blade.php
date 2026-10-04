@@ -15,11 +15,12 @@
     somewhere does not publish it.
 --}}
 @php
-    $kbbRtl = app()->getLocale() === 'ar';
+    $kbbLang = app()->getLocale();
+    $kbbRtl = $kbbLang === 'ar';
     $kbbStore = (string) app(\App\Services\SettingsService::class)->get('store_name', 'K-Beauty Bliss');
 @endphp
 <!doctype html>
-<html lang="{{ app()->getLocale() }}" dir="{{ $kbbRtl ? 'rtl' : 'ltr' }}">
+<html lang="{{ $kbbLang }}" dir="{{ $kbbRtl ? 'rtl' : 'ltr' }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

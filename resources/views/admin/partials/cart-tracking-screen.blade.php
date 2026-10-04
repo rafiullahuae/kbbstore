@@ -270,8 +270,7 @@
     data: null, err: '', busy: false, seq: 0,
     sel: {}, allMatching: false,
     prod: { added: { period: '7d', data: null }, removed: { period: '7d', data: null } },
-    blocks: null, settings: null, blockedCount: null,
-    typing: null
+    blocks: null, settings: null, blockedCount: null
   };
 
   /* ───────────────────────────────────────────── helpers ── */
@@ -343,6 +342,19 @@
       throw err;
     }
     return body;
+  }
+  /* Before the CSV navigation: is the session alive and the role allowed?
+     Never throws; says why on this screen when the answer is no. */
+  async function downloadOk(query) {
+    try {
+      await api('/export?' + query + '&probe=1');
+      return true;
+    } catch (e) {
+      toast(e && (e.status === 401 || e.status === 419)
+        ? 'Your session has ended, so the download was not started. Sign in again; this screen keeps its filters.'
+        : failText(e) + ' Nothing was downloaded.', true);
+      return false;
+    }
   }
   function failText(e) {
     if (e && e.status === 403) return 'Your role cannot use Cart Tracking. An owner or manager can.';
@@ -481,11 +493,11 @@
 
     html += '<div class="ctk-card">'
       + '<div class="ctk-row">'
-      + '<div class="ctk-search">' + icon(I.search, 15) + '<input type="search" class="ctk-in" id="ctkFind" placeholder="Product, IP, country, email or order #" value="' + esc(q.q) + '" aria-label="Search carts"></div>'
+      + '<div class="ctk-search">' + icon(I.search, 15) + '<input type="search" class="ctk-in" id="ctkFind" enterkeyhint="search" placeholder="Product, IP, country, email or order #" value="' + esc(q.q) + '" aria-label="Search carts"></div>'
       + sel('bot', q.bot, [['', 'Bot: any'], ['yes', 'Bot: yes'], ['no', 'Bot: no']], 'Bot')
       + sel('bought', q.bought, [['', 'Orders: any'], ['yes', 'Purchased'], ['no', 'Not purchased']], 'Purchased')
       + sel('country', q.country, countryOpts, 'Country')
-      + '<a class="ctk-btn" href="' + esc(base() + '/admin-api/cart-tracking/export?' + qs(Object.assign({}, q, { page: '' }))) + '">' + icon(I.dl, 15) + ' CSV</a>'
+      + '<button type="button" class="ctk-btn" data-ctk-csv>' + icon(I.dl, 15) + ' CSV</button>'
       + '</div>';
 
     var n = selectedIds().length;
@@ -615,12 +627,21 @@
 
   function selectedIds() { return Object.keys(st.sel).filter(function (k) { return st.sel[k]; }).map(Number); }
 
+  /* The one CSV navigation (the file streams with the session cookie), and it
+     is gated: downloadOk() asks the export first (?probe=1, answered before any
+     query), so a dead session is said on this screen instead of the console
+     being replaced by a login page. */
+  async function exportCsv(query) {
+    if (!(await downloadOk(query))) return;
+    var u = base() + '/admin-api/cart-tracking/export?' + query;
+    window.location.href = u;
+  }
+
   async function bulk(action) {
     var ids = selectedIds();
     if (action === 'clear') { st.sel = {}; st.allMatching = false; paintCarts(); return; }
     if (action === 'export') {
-      var u = base() + '/admin-api/cart-tracking/export?' + (st.allMatching ? qs(Object.assign({}, st.q, { page: '' })) : 'ids=' + ids.join(','));
-      window.location.href = u;
+      await exportCsv(st.allMatching ? qs(Object.assign({}, st.q, { page: '' })) : 'ids=' + ids.join(','));
       return;
     }
     var count = st.allMatching ? (st.data ? st.data.total : 0) : ids.length;
@@ -1007,7 +1028,7 @@
       if (document.getElementById('ctkPop') && document.getElementById('ctkPop').classList.contains('on') && !(e.target.closest && e.target.closest('[data-ctk-shield]'))) closePop();
       return;
     }
-    var t = e.target.closest('[data-ctk-period],[data-ctk-pp],[data-ctk-sort],[data-ctk-page],[data-ctk-country],[data-ctk-selall],[data-ctk-sel],[data-ctk-allmatch],[data-ctk-bulk],[data-ctk-shield],[data-ctk-unblock],[data-ctk-doblock],[data-ctk-popclose],[data-ctk-close],[data-ctk-add],[data-ctk-save],[data-ctk-open-cart],#ctkScrim,[data-ctk-open]');
+    var t = e.target.closest('[data-ctk-period],[data-ctk-pp],[data-ctk-sort],[data-ctk-page],[data-ctk-country],[data-ctk-selall],[data-ctk-sel],[data-ctk-allmatch],[data-ctk-bulk],[data-ctk-shield],[data-ctk-unblock],[data-ctk-doblock],[data-ctk-popclose],[data-ctk-close],[data-ctk-add],[data-ctk-save],[data-ctk-csv],[data-ctk-open-cart],#ctkScrim,[data-ctk-open]');
     if (!t) return;
     if (t.disabled) return;
 
@@ -1027,6 +1048,7 @@
     if (t.hasAttribute('data-ctk-close') || t.id === 'ctkScrim') { closeCart(); return; }
     if (t.hasAttribute('data-ctk-add')) { addBlock(t); return; }
     if (t.hasAttribute('data-ctk-save')) { saveSettings(t); return; }
+    if (t.hasAttribute('data-ctk-csv')) { exportCsv(qs(Object.assign({}, st.q, { page: '' }))); return; }
     if (t.hasAttribute('data-ctk-open-cart')) { openCart(Number(t.getAttribute('data-ctk-open-cart'))); return; }
     if (t.hasAttribute('data-ctk-open')) {
       if (e.target.closest('a,button,input,[data-stop],[data-ctk-stop],.ctk-bot')) return;
@@ -1036,17 +1058,24 @@
 
   document.addEventListener('input', function (e) {
     if (!e.target) return;
-    if (e.target.id === 'ctkFind') {
-      clearTimeout(st.typing);
-      st.typing = setTimeout(function () { st.q.q = e.target.value.trim(); st.q.page = 1; st.sel = {}; st.allMatching = false; loadCarts(); }, 320);
-    }
+    // Clearing the box (its x, or deleting the last letter) brings the full
+    // list back at once; every other search waits for Enter — one request per
+    // search, never one per keystroke.
+    if (e.target.id === 'ctkFind' && e.target.value === '') find('');
     if (e.target.matches && e.target.matches('input[type=range][data-ctk-set]')) {
       var o = document.getElementById(e.target.id + '_o');
       if (o) o.textContent = e.target.value + (e.target.getAttribute('data-unit') || '');
     }
   });
 
+  function find(v) {
+    v = v.trim();
+    if (v === st.q.q) return;
+    st.q.q = v; st.q.page = 1; st.sel = {}; st.allMatching = false; loadCarts();
+  }
+
   document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'ctkFind') { find(e.target.value); return; }
     if (!e.target || !e.target.matches || !e.target.matches('[data-ctk-f]')) return;
     var f = e.target.getAttribute('data-ctk-f');
     st.q[f] = e.target.value;

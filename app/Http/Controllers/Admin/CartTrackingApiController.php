@@ -10,6 +10,7 @@ use App\Services\CartTracking\CartTrackingSettings;
 use App\Services\CartTracking\HostingNetworks;
 use App\Services\Security\IpBlockList;
 use App\Services\SecurityModule;
+use App\Support\ExportProbe;
 use App\Support\IpRange;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -200,8 +201,15 @@ class CartTrackingApiController extends Controller
     }
 
     /** GET cart-tracking/export — the current filter (or ?ids=1,2,3) as CSV. */
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request): StreamedResponse|JsonResponse
     {
+        // The console's download gate asks first (?probe=1): answered before a
+        // query runs, so a dead session is told on the screen rather than
+        // replacing the console with a login page.
+        if ($probe = ExportProbe::answer($request)) {
+            return $probe;
+        }
+
         $p = $this->filters($request);
         $only = array_values(array_filter(array_map('intval', explode(',', (string) $request->query('ids', '')))));
         $only = array_slice($only, 0, 5000);

@@ -501,6 +501,11 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
         // by it. Same terms as RepeatPurchase above.
         ['Services/GridSections.php', "orderBy('oi.product_id')"],
         ['Services/GridSections.php', "orderBy('product_id')"],
+        // Lane CT: Cart Tracking's "Top countries" tile, grouped by
+        // c.ct_country and ending on it — the GROUP BY key, one row per
+        // country, so total by construction; the real tie (COUNT(*), two
+        // countries with the same number of carts) is broken by it.
+        ['Services/CartTracking/CartTrackingReport.php', "orderBy('c.ct_country')"],
     ];
 
     $root = app_path();

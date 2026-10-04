@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply (or revert) Lane CT's five integrator blocks — docs/CT-ADMIN-APP-BLOCKS.md.
+"""Apply (or check) Lane CT's five integrator blocks (+ the quoted line in three docs) — docs/CT-ADMIN-APP-BLOCKS.md.
 
     python3 tools/ct-wiring.py apply    # edits routes/web.php and app.blade.php
     python3 tools/ct-wiring.py check    # says whether each block is present once
@@ -39,8 +39,41 @@ BLOCKS = [
 ]
 
 
-def main(mode):
+# Blocks 3 and 4 have an edit that is easy to leave out: three other lanes'
+# handover documents QUOTE the TITLES tail and the whole LATE_RENDERED line, and
+# GridSectionConsoleReachTest / TranslationConsoleTest assert each quoted line
+# is present in app.blade.php exactly once. So the quote moves with the line.
+# The same holds for block 3: GS and BG quote the TITLES line's tail.
+SYNC = [
+    ("'gridsections','pagewash','searchterms','emails'",
+     "'gridsections','pagewash','searchterms','carttracking','emails'"),
+    ("'searchterms':['Growth & Marketing','Search Terms']};",
+     "'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Growth & Marketing','Cart Tracking']};"),
+]
+DOC_SYNC = [os.path.join(ROOT, 'docs', d) for d in
+            ('GS-ADMIN-APP-BLOCKS.md', 'T1B-ADMIN-APP-BLOCKS.md', 'BG-ADMIN-APP-BLOCKS.md')]
+
+
+def sync_docs(mode):
     ok = True
+    for path in DOC_SYNC:
+        src = open(path, encoding='utf-8').read()
+        for anchor, repl in SYNC:
+            if src.count(anchor) == 0 and src.count(repl) == 0:
+                continue  # this doc does not quote that line
+            done = src.count(anchor) == 0
+            if mode == 'check':
+                print(('present ' if done else 'MISSING ') + os.path.relpath(path, ROOT) + ': quoted ' + anchor[:40])
+                ok = ok and done
+            elif not done:
+                src = src.replace(anchor, repl)
+        if mode != 'check':
+            open(path, 'w', encoding='utf-8').write(src)
+    return ok
+
+
+def main(mode):
+    ok = sync_docs(mode)
     for path, anchor, repl in BLOCKS:
         src = open(path, encoding='utf-8').read()
         done = src.count(repl) == 1

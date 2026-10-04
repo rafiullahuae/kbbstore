@@ -25,6 +25,7 @@ use App\Services\CartTracking\CartTrackingSettings;
 use App\Services\Security\IpBlockList;
 use App\Support\AdminCapabilities;
 use App\Support\IpRange;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\Support\CartTrackingRoutes;
 
@@ -369,6 +370,11 @@ it('serves the Carts tab, one cart, bulk blocks, deletes and a CSV a spreadsheet
     $csv = $admin()->get('/admin-api/cart-tracking/export?period=today')->assertOk()->streamedContent();
     expect($csv)->toContain("'=HYPERLINK")->not->toContain(',=HYPERLINK');
 
+    // The console's CSV button asks first (?probe=1) and only then navigates,
+    // so a dead session is told on the screen. MUTATION: drop the
+    // ExportProbe::answer() line from export() and this is a CSV, not JSON.
+    $admin()->getJson('/admin-api/cart-tracking/export?period=today&probe=1')->assertOk()->assertExactJson(['ok' => true]);
+
     $admin()->postJson('/admin-api/cart-tracking/bulk', ['action' => 'block_range', 'ids' => $ids])
         ->assertOk()->assertJsonPath('blocked', 1);
     expect(IpBlock::query()->pluck('cidr')->all())->toBe(['94.200.30.0/24']);
@@ -399,4 +405,81 @@ it('is wired exactly once: the routes in web.php and the screen in the console',
     expect(substr_count($web, "require __DIR__.'/cart-tracking-admin.php';"))->toBe(1)
         ->and(substr_count($app, "@include('admin.partials.cart-tracking-screen')"))->toBe(1)
         ->and(substr_count($app, "{screen:'carttracking',label:'Cart Tracking',group:'Growth & Marketing'"))->toBe(1);
+});
+
+it('costs the same number of queries with forty carts as with three, on every tab', function () {
+    /*
+     * DEFECT: the screen's cost grows with the shop — a query per cart row for
+     * its customer, order or line items, or per product row for its name —
+     * so the Carts tab that opens in 30 ms on a test shop takes seconds on a
+     * busy week. "Super light" means FLAT. MUTATION: resolve a row's product
+     * names or customer with a lookup inside the row loop of
+     * CartTrackingReport::carts() and the forty-cart count is ~40 higher.
+     */
+    $owner = ctbAdmin();
+    $seed = function (int $from, int $to): void {
+        foreach (range($from, $to) as $i) {
+            $a = ctbProduct();
+            $b = ctbProduct();
+            $ip = '94.'.(10 + $i).'.7.9';
+            ctbVisitor($ip)->postJson('/api/cart/add', ['product_id' => $a->id])->assertOk();
+            $cart = Cart::query()->latest('id')->firstOrFail();
+            ctbVisitor($ip, CTB_UA, $cart->token)->postJson('/api/cart/add', ['product_id' => $b->id])->assertOk();
+
+            if ($i % 2 === 0) {
+                $line = $cart->items()->where('product_id', $b->id)->firstOrFail();
+                ctbVisitor($ip, CTB_UA, $cart->token)->postJson('/api/cart/remove', ['item_id' => $line->id])->assertOk();
+            }
+        }
+    };
+
+    $count = function () use ($owner): array {
+        $last = Cart::query()->latest('id')->value('id');
+        $out = [];
+
+        foreach ([
+            'carts' => '/admin-api/cart-tracking?period=all&sort=value&dir=desc',
+            'cart' => '/admin-api/cart-tracking/carts/'.$last,
+            'added' => '/admin-api/cart-tracking/products?kind=added&period=all',
+            'removed' => '/admin-api/cart-tracking/products?kind=removed&period=all',
+            'blocks' => '/admin-api/cart-tracking/blocks',
+        ] as $tab => $url) {
+            \Illuminate\Support\Facades\Cache::flush();   // the cold, uncached cost
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            test()->actingAs($owner, 'admin')->withServerVariables(['REMOTE_ADDR' => '94.200.200.200'])->getJson($url)->assertOk();
+            $out[$tab] = count(DB::getQueryLog());
+            DB::disableQueryLog();
+        }
+
+        return $out;
+    };
+
+    $seed(1, 3);
+    $three = $count();
+    $seed(4, 40);
+    $forty = $count();
+
+    fwrite(STDERR, "\n[ct] queries per tab, 3 carts → 40 carts: ".json_encode(['3' => $three, '40' => $forty])."\n");
+
+    expect(Cart::query()->count())->toBe(40)
+        ->and($forty)->toBe($three);
+});
+
+it('searches on Enter, never per keystroke, and runs no timer of its own', function () {
+    /*
+     * DEFECT: the search box fired a request 320 ms after every pause in
+     * typing — "Propolis" typed slowly was eight report queries. The rule is
+     * one request per search. MUTATION: put a setTimeout(… loadCarts …) back
+     * on the box's input event and this is red.
+     */
+    $js = (string) file_get_contents(resource_path('views/admin/partials/cart-tracking-screen.blade.php'));
+    $input = substr($js, (int) strpos($js, "document.addEventListener('input'"), 600);
+
+    expect($js)->not->toContain('setInterval')
+        ->and($input)->toContain("e.target.id === 'ctkFind' && e.target.value === ''")
+        ->and($input)->not->toContain('loadCarts')
+        ->and($input)->not->toContain('setTimeout')
+        ->and($js)->toContain("if (e.target && e.target.id === 'ctkFind') { find(e.target.value); return; }")
+        ->and($js)->toContain('enterkeyhint="search"');
 });

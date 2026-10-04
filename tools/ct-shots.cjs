@@ -40,7 +40,8 @@ async function measure(page) {
   const browser = await chromium.launch({ executablePath: CHROME });
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
   const page = await ctx.newPage();
-  page.on('console', (m) => { if (m.type() === 'error') console.log(JSON.stringify({ consoleError: m.text() })); });
+  page.on('console', (m) => { if (m.type() === 'error') console.log(JSON.stringify({ consoleError: m.text(), at: m.location()?.url })); });
+  page.on('response', (r) => { if (r.status() >= 400) console.log(JSON.stringify({ httpError: r.status(), url: r.url() })); });
   page.on('pageerror', (e) => console.log(JSON.stringify({ pageError: String(e) })));
 
   await page.goto(`${BASE}/admin/login`, { waitUntil: 'networkidle' });
@@ -105,6 +106,21 @@ async function measure(page) {
       await shot('5-block-popover', w, false);
       await page.click('[data-ctk-popclose]');
     }
+
+    // One search = one request: type a range, nothing is fetched until Enter.
+    let fetches = 0;
+    const count = (r) => { if (r.url().includes('/cart-tracking?')) fetches++; };
+    page.on('request', count);
+    await page.fill('#ctkFind', '94.200.0.0/16');
+    await page.waitForTimeout(700);
+    const beforeEnter = fetches;
+    await page.press('#ctkFind', 'Enter');
+    await page.waitForTimeout(900);
+    console.log(JSON.stringify({ search: '94.200.0.0/16', requestsWhileTyping: beforeEnter, requestsAfterEnter: fetches - beforeEnter, w }));
+    page.off('request', count);
+    await shot('10-search-range', w);
+    await page.fill('#ctkFind', '');
+    await page.waitForTimeout(800);
 
     for (const [tab, name] of [['added', '6-added'], ['removed', '7-removed'], ['blocked', '8-blocked'], ['settings', '9-settings']]) {
       await page.click(`[data-kbt-tab="${tab}"]`);
