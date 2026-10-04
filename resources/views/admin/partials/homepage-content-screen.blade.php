@@ -249,7 +249,12 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
   var data = null;      // the last payload from the server
   var slides = null;    // list of {key: value}
   var copy = null;      // flat key => value
-  var tab = 'hero';
+  /* (Lane HC) `all` — the All sections list — is the tab this screen opens
+     on: every homepage section in render order, each with Edit content. It
+     is drawn by admin/partials/homepage-hub.blade.php and needs nothing from
+     this screen's payload, so the wording tabs' payload is fetched only when
+     one of them is opened. */
+  var tab = 'all';
   var dirty = false;
   var banner = null;    // {kind, title, lines}
   var loading = false;
@@ -1025,9 +1030,41 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
     + 'depending on which box you touched last.</div>');
   }
 
+  /* (Lane HC) The tab bar. Before this screen's payload has loaded — the
+     All sections tab does not need it — the wording tabs are one button that
+     loads it. */
+  function tabsHTML(){
+    var on = function(k){ return tab === k ? ' on' : ''; };
+    return '<div class="hpc-tabs">'
+      + '<button class="hpc-tab' + on('all') + '" data-hpc-tab="all">All sections</button>'
+      + '<button class="hpc-tab' + on('hero') + '" data-hpc-tab="hero">Hero slider</button>'
+      + (data ? data.tabs.map(function(t){
+          return '<button class="hpc-tab' + on(t.key) + '" data-hpc-tab="' + esc(t.key) + '">' + esc(t.label) + '</button>';
+        }).join('') : '<button class="hpc-tab" data-hpc-tab="copy">Wording tabs&hellip;</button>')
+      + '<button class="hpc-tab' + on('live') + '" data-hpc-tab="live">Live preview</button>'
+      + '</div>';
+  }
+
   function render(){
     var el = document.querySelector('#content');
     if (!el) return;
+
+    if (tab === 'all' && window.kbbHomeHub) {
+      el.innerHTML = '<div class="wrap"><div class="hpc-wrap">'
+        + '<div class="hpc-card"><p class="hpc-h">Homepage content</p>'
+        + '<p class="hpc-sub">Everything on the homepage, on one page. <b>All sections</b> lists every section the shop draws, in its order, '
+        + 'with its on/off switches and an <b>Edit content</b> button for all of its controls. The tabs beside it are the same controls grouped by section.</p></div>'
+        + tabsHTML() + '<div id="hph-root"></div></div></div>';
+      bind();
+      window.kbbHomeHub.mount(document.getElementById('hph-root'), {
+        openHero: function(){ tab = 'hero'; if (data) { render(); } else { load(); } },
+        // A save there makes this screen's copy stale: drop it, so the next
+        // wording tab opened reads what was saved rather than writing back
+        // what it held before.
+        stale: function(){ if (!dirty) { data = null; } }
+      });
+      return;
+    }
 
     if (loading) {
       el.innerHTML = '<div class="wrap"><div class="page-head"><h2>Homepage content</h2><p>Loading&hellip;</p></div></div>';
@@ -1049,13 +1086,7 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
       + '<p class="hpc-sub">Everything here starts as the wording the shop shipped with, so leaving it alone changes nothing. '
       + 'Clearing a box means <b>say nothing</b>: the line is dropped rather than printed empty.</p></div>'
       + bannerHTML()
-      + '<div class="hpc-tabs">'
-      +   '<button class="hpc-tab' + (tab === 'hero' ? ' on' : '') + '" data-hpc-tab="hero">Hero slider</button>'
-      +   data.tabs.map(function(t){
-            return '<button class="hpc-tab' + (tab === t.key ? ' on' : '') + '" data-hpc-tab="' + esc(t.key) + '">' + esc(t.label) + '</button>';
-          }).join('')
-      +   '<button class="hpc-tab' + (tab === 'live' ? ' on' : '') + '" data-hpc-tab="live">Live preview</button>'
-      + '</div>'
+      + tabsHTML()
       + (tab === 'hero' ? heroTab() : tab === 'live' ? liveTab() : copyTab())
       /* The live tab carries its OWN save bar, beside the controls it saves and
          posting to the endpoint that owns those three values. Drawing this one
@@ -1159,6 +1190,14 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
     el.querySelectorAll('[data-hpc-tab]').forEach(function(b){
       b.onclick = function(){
         tab = b.dataset.hpcTab;
+
+        // (Lane HC) The wording tabs need this screen's payload; All sections does not.
+        if (tab !== 'all' && !data) {
+          load();
+          if (tab === 'live' && !live.loaded && !live.loading) { loadLive(); }
+          return;
+        }
+
         render();
 
         /* The picture is fetched the first time the tab is opened and not
@@ -1441,7 +1480,7 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
        LATE_RENDERED requires: the deep-link replay reads a marker inside
        #content that any real render destroys, so a screen that awaited before
        painting would be drawn twice. */
-    if (data) { render(); } else { load(); }
+    if (data || (tab === 'all' && window.kbbHomeHub)) { render(); } else { load(); }
 
     return undefined;
   };

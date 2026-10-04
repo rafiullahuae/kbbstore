@@ -250,9 +250,18 @@ final class HomepageContent
         'home_hb_head_gap_m' => ['type' => 'select', 'label' => 'Space under the heading · phone', 'default' => '12', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
         'home_hb_btn_gap_d' => ['type' => 'select', 'label' => 'Space above the button under the carousel · laptop', 'default' => '24', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
         'home_hb_btn_gap_m' => ['type' => 'select', 'label' => 'Space above the button under the carousel · phone', 'default' => '16', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px'], 'help' => ''],
+        /* ── Lane HC: where the bundles come from — As shipped, brands and
+           categories mixed, or a hand-picked list. App\Support\HomeSources. */
+        ...\App\Support\HomeSources::SCHEMA_BUNDLES,
         /* ── Row 55 (Lane HA): sections 2, 3 and 5–8, in page order. The
            shapes, defaults and reasoning are App\Support\HomeSections'. ── */
         ...\App\Support\HomeSections::SCHEMA,
+        /* ── Lane HC: the three older product rows' sources (Recommended,
+           Best sellers ranked, Flash sale). After the Row 55 block because
+           HomepageApiController::WORDS claims them after it. ─────────── */
+        ...\App\Support\HomeSources::SCHEMA,
+        /* ── Lane HC: the Top strip under the header (phones only by default). */
+        ...\App\Support\HomeStrips::SCHEMA,
         /* ── (Lane PF) Section headings: one size per device for every
            section heading and description. App\Support\HomeHeadings. Last,
            because it belongs to no one section — see PAGE_TABS. ──────── */
@@ -296,10 +305,15 @@ final class HomepageContent
             'home_hb_btn_d', 'home_hb_btn_m', 'home_hb_btn_text', 'home_hb_btn_url',
             'home_hb_pad_d', 'home_hb_pad_m', 'home_hb_head_gap_d', 'home_hb_head_gap_m',
             'home_hb_btn_gap_d', 'home_hb_btn_gap_m',
+            ...\App\Support\HomeSources::BUNDLE_KEYS,
         ]],
         /* Row 55 (Lane HA): one tab per new section, in page order, then About
            us — which now owns `about_text` with its heading and spacing. */
         ...\App\Support\HomeSections::TABS,
+        /* Lane HC: Recommended for you, Best sellers (ranked), Flash sale. */
+        ...\App\Support\HomeSources::TABS,
+        /* Lane HC: the Top strip. */
+        ...\App\Support\HomeStrips::TABS,
     ];
 
     /**
@@ -618,13 +632,40 @@ final class HomepageContent
         $fields = ModuleSchema::normalise(self::SCHEMA);
         $clean = [];
 
+        $missing = [];
+
         foreach ($values as $key => $value) {
             $clean[$key] = isset($fields[$key])
                 ? self::emptyIsEmpty($fields[$key], $value)
                 : $value;
+
+            /*
+             * Lane HC: A PICKED ID MUST NAME A REAL ROW. The `ids` cast keeps
+             * any positive integer, so a hand-rolled POST — or a product deleted
+             * while the editor was open — stored an id that drew nothing and
+             * that no screen could name. Checked here, on the one save path both
+             * Homepage content screens use: one primary-key SELECT per list
+             * posted, nothing for a list left alone. The real ones are kept in
+             * order; the rest are named back in `rejected`.
+             */
+            $of = (string) ($fields[$key]['options']['of'] ?? '');
+
+            if (($fields[$key]['type'] ?? '') === 'ids' && $of !== '') {
+                $asked = \App\Support\ProductSource::ids($clean[$key], (int) ($fields[$key]['options']['cap'] ?? 24));
+                $real = \App\Support\ProductSource::existing($of, $asked);
+
+                if (count($real) !== count($asked)) {
+                    $missing[$key] = $fields[$key]['label'].' — not found: #'.implode(', #', array_diff($asked, $real));
+                }
+
+                $clean[$key] = implode(',', $real);
+            }
         }
 
-        return ModuleSchema::write($this->settings, 'homepage_content', self::SCHEMA, $clean);
+        $result = ModuleSchema::write($this->settings, 'homepage_content', self::SCHEMA, $clean);
+        $result['rejected'] = $missing + ($result['rejected'] ?? []);
+
+        return $result;
     }
 
     /**

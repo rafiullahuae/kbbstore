@@ -341,14 +341,22 @@ class HeaderSettings
                               'Off, so the desktop strip is the two flags and nothing between them — you asked for the line to come off there. Phones are not affected either way; the wording above is what they show.'],
         'fb_flags'        => ['bool',   'Show the two flags', true,
                               'The UAE flag at the reading start and the Korean flag at the end. On an Arabic page the pair swaps sides with the text.'],
-        'fb_height'       => ['range',  'Bar height', 30,
+        /*
+         * ▲ (Lane HC) 30→46px, 12→14px text, 14→20px flags and dark words in
+         *   place of rose: the owner's screenshot of the old shop's countries
+         *   strip — "same design, same height, same text" — which is now the
+         *   homepage's `countries` section, phones only. The strip stays OFF on
+         *   every other page (fb_mobile / fb_desktop above are unchanged), so
+         *   these sizes reach a shopper only where he asked for them.
+         */
+        'fb_height'       => ['range',  'Bar height', 46,
                               'Reserved in the stylesheet, so the strip takes up its own height before anything has loaded and the header below it never jumps.',
                               ['min' => 22, 'max' => 56, 'step' => 1, 'unit' => 'px']],
-        'fb_size'         => ['range',  'Text size', 12, '', ['min' => 9, 'max' => 18, 'step' => 1, 'unit' => 'px']],
-        'fb_flag_h'       => ['range',  'Flag height', 14, 'The width follows: both flags are drawn 3:2, which is their official ratio.',
+        'fb_size'         => ['range',  'Text size', 14, '', ['min' => 9, 'max' => 18, 'step' => 1, 'unit' => 'px']],
+        'fb_flag_h'       => ['range',  'Flag height', 20, 'The width follows: both flags are drawn 3:2, which is their official ratio.',
                               ['min' => 8, 'max' => 28, 'step' => 1, 'unit' => 'px']],
         'fb_bg'           => ['colour', 'Background', '#FDEFF4', ''],
-        'fb_ink'          => ['colour', 'Text colour', '#E0567B', ''],
+        'fb_ink'          => ['colour', 'Text colour', '#3B2730', ''],
         'fb_pill'         => ['bool',   'Outline around the words', true,
                               'The rounded border the words sit inside. Off leaves the line bare on the strip.'],
         'fb_border'       => ['colour', 'Outline colour', '#F0B6C9', ''],
@@ -646,13 +654,19 @@ class HeaderSettings
      * turns it on at all, so a strip with neither class is invisible at every
      * width — which is why flagBarOn() above refuses to render one.
      */
-    public function flagBarClass(): string
+    public function flagBarClass(?bool $mobile = null, ?bool $desktop = null): string
     {
         $c = $this->all();
 
+        /*
+         * Lane HC: the HOMEPAGE passes its own two switches — the strip is the
+         * `countries` section there, shown per device by its Homepage row like
+         * every other section — and every other page passes none and reads the
+         * Flag bar's own `fb_mobile` / `fb_desktop`, exactly as before.
+         */
         return trim(implode(' ', array_filter([
-            $c['fb_mobile'] ? 'kfb-m' : '',
-            $c['fb_desktop'] ? 'kfb-d' : '',
+            ($mobile ?? $c['fb_mobile']) ? 'kfb-m' : '',
+            ($desktop ?? $c['fb_desktop']) ? 'kfb-d' : '',
             $c['fb_pill'] ? 'kfb-pill' : '',
             /*
              * ── EMITTED FOR THE OFF STATE, WHICH IS THE ONE THAT SHIPS ──

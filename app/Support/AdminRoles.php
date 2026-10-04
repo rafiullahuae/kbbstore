@@ -180,6 +180,8 @@ final class AdminRoles
             'banners.manage' => 'Edit banners',
             'gridsections.view' => 'See grid sections',
             'gridsections.manage' => 'Edit grid sections',
+            'homepagehub.view' => 'See the homepage section list (Homepage content → All sections)',
+            'homepagehub.search' => 'Search products for a homepage section',
             'cartpage.manage' => 'Cart page appearance',
             'checkoutpage.manage' => 'Checkout page appearance',
             'setappearance.manage' => 'Set box appearance',

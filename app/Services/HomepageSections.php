@@ -81,7 +81,25 @@ class HomepageSections
          * Its Desktop and Mobile switches still work: the @unless on the
          * template is kept as well, and it short-circuits before any read.
          */
+        /*
+         * ── TWO STRIPS, PHONES ONLY BY DEFAULT (Lane HC) ─────────────────────
+         *
+         * The owner, of the old shop on a phone: "ONLY FOR MOBILE: turn this off
+         * in laptop by default. i need the the top bar strip, same color, same
+         * text and size etc. and below the main banner, i need that countries
+         * strip ... these will come as sections on homepage content".
+         *
+         * `topstrip` is FIRST because it sits directly under the header and
+         * search. `countries` is the shop's existing flag bar (Appearance →
+         * Header → Flag bar keeps its words, colours and sizes — one copy), and
+         * it sits where store/home.blade.php has drawn that bar since Lane SEC:
+         * under the picture banner. Both ship ON for phones and OFF for laptops
+         * (MOBILE_ONLY_BY_DEFAULT), hidden on a laptop by the stylesheet rather
+         * than by printing a different document — the page has one HTML.
+         */
+        'topstrip'    => ['Top strip', 'The thin coloured line under the header: delivery and the free-delivery threshold. Phones only by default. Words, colours, size and link: Homepage content → Top strip.', false, null],
         'cards_banner' => ['Banners', 'The picture banner at the top of the page: one image per slide, sliding when there is more than one. Build the sets in Appearance → Banners and pick which one shows; nothing shows until you do.', false, null],
+        'countries'   => ['Countries strip', 'The UAE flag, “UAE’s Authentic K-Beauty Store” and the Korean flag, under the banner. Phones only by default. Its words, colours and sizes are the Flag bar’s: Appearance → Header → Flag bar.', false, null],
         'hero'        => ['Hero slider', 'The rotating coloured panels with a headline and a button. Drawn only when the Banners section above has no pictures to show — a shop with a picture banner has one banner, not two.', false, null],
         'delivery'    => ['Delivery strip', '1-3 days delivery, free over AED 199.', false, null],
         'ticker'      => ['Promo ticker', 'The scrolling discount-code line.', false, null],
@@ -375,6 +393,16 @@ class HomepageSections
      *
      * @var list<string>
      */
+    /**
+     * Shown on phones and hidden on laptops until the owner says otherwise —
+     * his words for both (Lane HC). Hidden by `d-off`, which the stylesheet
+     * applies from 901px, so a laptop is sent the same document.
+     */
+    public const MOBILE_ONLY_BY_DEFAULT = ['topstrip', 'countries'];
+
+    /** Thin strips: never "the first section", never given a divider. */
+    public const STRIPS = ['topstrip', 'countries'];
+
     public const OFF_BY_DEFAULT = [
         'delivery', 'ticker', 'categories', 'recommended', 'routine', 'quiz',
         'videos', 'instagram', 'bestsellers', 'flash', 'reviews', 'trust', 'newsletter',
@@ -1010,6 +1038,12 @@ class HomepageSections
     private function firstDrawnKey(array $all): ?string
     {
         foreach ($all as $key => $_) {
+            // Lane HC: a strip is not "the first section" — the hero under it
+            // keeps exactly the divider it had before the strips existed.
+            if (in_array($key, self::STRIPS, true)) {
+                continue;
+            }
+
             if (! in_array($key, self::MAY_BE_ABSENT, true) || isset($this->present[$key])) {
                 return $key;
             }
@@ -1056,7 +1090,7 @@ class HomepageSections
         // the marks off, so the walk rendered `dv` on neither side. Two blind
         // spots in one round — this and approvedInsertions() cutting the
         // countries strip — and both were found by a narrower test.
-        $mark = $key === $this->firstDrawnKey($all) && ! $divider->showAboveFirst()
+        $mark = in_array($key, self::STRIPS, true) || ($key === $this->firstDrawnKey($all) && ! $divider->showAboveFirst())
             ? ''
             : $divider->classFor($key);
 
@@ -1158,7 +1192,7 @@ class HomepageSections
          * other, and neither errors.
          */
         return ModuleSchema::normalised(
-            self::class.':'.$defaultSkin.':'.self::widthDefault($key).(in_array($key, self::OFF_BY_DEFAULT, true) ? ':off' : ''),
+            self::class.':'.$defaultSkin.':'.self::widthDefault($key).(in_array($key, self::OFF_BY_DEFAULT, true) ? ':off' : '').(in_array($key, self::MOBILE_ONLY_BY_DEFAULT, true) ? ':mob' : ''),
             self::SECTION_SCHEMA,
             self::SECTION_POLICY,
             self::overridesFor($key),
@@ -1189,7 +1223,9 @@ class HomepageSections
         ] + (in_array($key, self::OFF_BY_DEFAULT, true)
             // Row 55: off on both devices until the owner switches it back.
             ? ['desktop' => ['default' => false], 'mobile' => ['default' => false]]
-            : []);
+            : (in_array($key, self::MOBILE_ONLY_BY_DEFAULT, true)
+                ? ['desktop' => ['default' => false], 'mobile' => ['default' => true]]
+                : []));
     }
 
     /**

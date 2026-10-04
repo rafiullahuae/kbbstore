@@ -49,7 +49,7 @@
        operator-typed string on this shop makes. */
     $kfbText = $kfbC['fb_text'] !== '' ? $kfbC['fb_text'] : __('store.flagbar.text');
 @endphp
-<div class="kfb {{ $kfb->flagBarClass() }}" style="{{ $kfb->flagBarStyle() }}">
+<div class="kfb {{ $kfbClass ?? $kfb->flagBarClass() }}" style="{{ $kfb->flagBarStyle() }}">
   <div class="kfb-in">
 @if ($kfbC['fb_flags'])<span class="kfb-fl" role="img" aria-label="{{ __('store.flagbar.uae') }}">{!! \App\Support\FlagArt::UAE !!}</span>@endif
     <span class="kfb-tx">{{ $kfbText }}</span>

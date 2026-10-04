@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\GridSection;
 use App\Models\Product;
 use App\Support\GridSkins;
+use App\Support\ProductSource;
 use App\Support\SafeUrl;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -593,7 +594,7 @@ class GridSections
             $section->source === 'manual'
                 ? implode(',', array_map('intval', (array) ($section->manual_ids ?? [])))
                 : '',
-        ]);
+        ]).($section->source === 'query' ? '|'.ProductSource::spec((array) ($section->source_query ?? [])) : '');
     }
 
     /**
@@ -608,7 +609,7 @@ class GridSections
      */
     private function fetchPool(string $spec, int $limit, ?int $maxFils = null): Collection
     {
-        [$source, $brandId, $categoryId, $children, $manual] = array_pad(explode('|', $spec, 5), 5, '');
+        [$source, $brandId, $categoryId, $children, $manual, $query] = array_pad(explode('|', $spec, 6), 6, '');
 
         $base = Product::query()
             ->select(self::CARD_COLUMNS)
@@ -647,21 +648,7 @@ class GridSections
              * 0 and falls through to best sellers, so a quiet week still draws
              * a full row rather than an empty one.
              */
-            'trending' => (function () use ($base, $limit) {
-                $scores = self::trendingScores();
-
-                if ($scores !== []) {
-                    $case = 'CASE products.id';
-
-                    foreach ($scores as $id => $score) {
-                        $case .= ' WHEN '.(int) $id.' THEN '.(int) $score;
-                    }
-
-                    $base->orderByRaw($case.' ELSE 0 END DESC');
-                }
-
-                return $base->orderByDesc('total_sales')->orderByDesc('id')->limit($limit)->get();
-            })(),
+            'trending' => self::orderTrending($base)->orderByDesc('total_sales')->orderByDesc('id')->limit($limit)->get(),
 
             /*
              * `products_created_at_index`
@@ -730,8 +717,75 @@ class GridSections
                     ->values();
             })(),
 
+            /*
+             * Brands and categories, mixed (Lane HC). App\Support\ProductSource
+             * carries the shape; this is the one place it becomes SQL, on the
+             * same base — visible(), CARD_COLUMNS, the brand eager load — so it
+             * is one SELECT whatever the catalogue holds. Brands are ANY-OF and
+             * categories are ANY-OF; naming both narrows to products in one of
+             * those brands AND one of those categories.
+             */
+            'query' => $this->applyQuery($base, ProductSource::parse($query), $children === '1')->limit($limit)->get(),
+
             default => collect(),
         };
+    }
+
+    /**
+     * The `query` source's filters and order, on a base fetchPool() built.
+     * Every order ends in `id DESC`, for the reason fetchPool() gives.
+     */
+    private function applyQuery($base, array $q, bool $children)
+    {
+        if ($q['brands'] !== []) {
+            $base->whereIn('brand_id', $q['brands']);
+        }
+
+        if ($q['cats'] !== []) {
+            $ids = $q['cats'];
+
+            if ($children) {
+                $ids = array_values(array_unique(array_merge(...array_map(fn (int $c) => $this->categoryAndDescendants($c), $ids))));
+            }
+
+            $base->whereHas('categories', fn ($c) => $c->whereIn('categories.id', $ids));
+        }
+
+        if ($q['stock']) {
+            $base->inStock();
+        }
+
+        return match ($q['sort']) {
+            'trending' => self::orderTrending($base)->orderByDesc('total_sales')->orderByDesc('id'),
+            'newest' => $base->latest('created_at')->orderByDesc('id'),
+            'price_asc' => \App\Support\EffectivePrice::orderBy($base, 'asc')->orderByDesc('id'),
+            'price_desc' => \App\Support\EffectivePrice::orderBy($base, 'desc')->orderByDesc('id'),
+            'onsale' => $base->whereNotNull('sale_price')->whereColumn('sale_price', '<', 'price')
+                ->orderByDesc('total_sales')->orderByDesc('id'),
+            'featured' => $base->where('featured', true)->orderByDesc('total_sales')->orderByDesc('id'),
+            // Integer arithmetic, so MySQL and SQLite shuffle identically and
+            // the order holds for the day. The seed is an int this class made.
+            'random' => $base->orderByRaw('((products.id * 7919 + '.ProductSource::daySeed().') % 10007)')->orderByDesc('id'),
+            default => $base->orderByDesc('total_sales')->orderByDesc('id'),
+        };
+    }
+
+    /** Trending's scored products first; the caller adds the tie-breaks. */
+    private static function orderTrending($base)
+    {
+        $scores = self::trendingScores();
+
+        if ($scores !== []) {
+            $case = 'CASE products.id';
+
+            foreach ($scores as $id => $score) {
+                $case .= ' WHEN '.(int) $id.' THEN '.(int) $score;
+            }
+
+            $base->orderByRaw($case.' ELSE 0 END DESC');
+        }
+
+        return $base;
     }
 
     /**
@@ -743,19 +797,27 @@ class GridSections
      *
      * @param  list<int>  $manualIds
      */
-    public function pool(string $source, int $brandId, int $categoryId, array $manualIds, int $limit, ?int $maxFils = null, bool $children = false): Collection
+    public function pool(string $source, int $brandId, int $categoryId, array $manualIds, int $limit, ?int $maxFils = null, bool $children = false, array $query = []): Collection
     {
         if (! array_key_exists($source, GridSection::SOURCES)) {
             $source = 'bestsellers';
         }
 
-        $spec = implode('|', [
+        $parts = [
             $source,
             (string) max(0, $brandId),
             (string) max(0, $categoryId),
             $children ? '1' : '0',
             $source === 'manual' ? implode(',', array_map('intval', $manualIds)) : '',
-        ]);
+        ];
+
+        // The sixth part only for `query`, so every other spec — and the
+        // cache entry it names — is the string it always was.
+        if ($source === 'query') {
+            $parts[] = ProductSource::spec($query);
+        }
+
+        $spec = implode('|', $parts);
 
         return $this->fetchPool($spec, max(1, min(48, $limit)), $maxFils);
     }

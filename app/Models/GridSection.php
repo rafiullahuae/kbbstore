@@ -50,6 +50,10 @@ class GridSection extends Model
         'brand' => 'One brand',
         'category' => 'One category',
         'manual' => 'A list I pick myself, in my own order',
+        /* Lane HC: brands and categories, several of each, with a sort and an
+           in-stock switch. Its four values live in `source_query` and are set
+           on Appearance → Homepage content → the section's Products tab. */
+        'query' => 'Brands and categories, mixed — set on Homepage content',
     ];
 
     /** Grid or carousel, chosen separately for desktop and for mobile. */
@@ -80,7 +84,7 @@ class GridSection extends Model
     protected $fillable = [
         'name', 'slug', 'status', 'position',
         'show_heading', 'heading', 'subheading',
-        'source', 'source_brand_id', 'source_category_id', 'include_children', 'manual_ids',
+        'source', 'source_brand_id', 'source_category_id', 'include_children', 'manual_ids', 'source_query',
         'count', 'mobile_count',
         'desktop_layout', 'desktop_cols', 'mobile_layout', 'mobile_cols',
         'skin', 'card_label', 'show_rank',
@@ -93,6 +97,7 @@ class GridSection extends Model
         'show_view_all' => 'boolean',
         'show_rank' => 'boolean',
         'manual_ids' => 'array',
+        'source_query' => 'array',
         'position' => 'integer',
         'count' => 'integer',
         'mobile_count' => 'integer',

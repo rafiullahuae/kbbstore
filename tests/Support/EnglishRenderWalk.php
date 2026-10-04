@@ -2348,9 +2348,33 @@ KBB_BH_CSS;
              * a default that flips back on by accident puts the strip on 31
              * pages and this is red at 31, naming the strip.
              */
+            /*
+             * ▲ 0 -> 1, ON PURPOSE.                                (Lane HC)
+             *
+             * "ONLY FOR MOBILE: turn this off in laptop by default ... below
+             * the main banner, i need that countries strip". The homepage — and
+             * ONLY the homepage — draws it again, as the `countries` section:
+             * phones on, laptops off by `d-off` in ONE document. Every other
+             * page still follows the two Flag bar switches, still off, so the
+             * count is the homepage's one strip and a default that put it back
+             * above the header everywhere is red at 31.
+             */
             'the flag bar above the header (Lane FB)' => [
                 'pattern' => '#<div class="kfb [^>]*>\s*<div class="kfb-in">.*?</div>\s*</div>\n#s',
-                'hits' => 0,
+                'hits' => 1,
+            ],
+
+            /*
+             * THE TOP STRIP — Appearance → Homepage content → Top strip. (Lane HC)
+             *
+             * The owner's "top bar strip, same color, same text and size",
+             * phones only: one constant <style id="kbb-kts"> and one element,
+             * directly inside .kbb-home, hidden from 901px by `d-off`. Homepage
+             * only, so exactly one hit; cut whole with the newline after it.
+             */
+            'the homepage Top strip (Lane HC)' => [
+                'pattern' => '#<style id="kbb-kts">[^<]*</style><(div|a) class="kts[^"]*"[^>]*>.*?</(div|a)>\n#s',
+                'hits' => 1,
             ],
 
             /*

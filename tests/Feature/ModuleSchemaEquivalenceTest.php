@@ -266,6 +266,17 @@ function mAllowedRepairs(): array
  * Read before it was advanced, and advanced for that change and nothing else:
  * those two rows are the whole diff of this fixture on this branch.
  */
+/*
+ * ── SIX MORE ROWS MOVED ON PURPOSE ─────────────────────────────── Lane HC ──
+ *
+ *     header_settings|fb_ink|colour|<not a colour>|'#E0567B'   ->   '#3B2730'
+ *
+ * The fall-back arm again, printing the shipped default: the Flag bar's words
+ * are the old shop's dark ink now — the owner's countries strip, "same design,
+ * same height, same text" — and fb_height / fb_size / fb_flag_h moved with it
+ * (ranges, whose garbage lands on the minimum, so no row of theirs moved). The
+ * cast is untouched; a valid colour is still stored as itself.
+ */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);
     $now = mEquivRows();

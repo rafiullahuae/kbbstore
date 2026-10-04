@@ -1842,8 +1842,8 @@
               "step": 1,
               "unit": "px"
             },
-            "default": 30,
-            "value": 30
+            "default": 46,
+            "value": 46
           },
           {
             "key": "fb_size",
@@ -1857,8 +1857,8 @@
               "step": 1,
               "unit": "px"
             },
-            "default": 12,
-            "value": 12
+            "default": 14,
+            "value": 14
           },
           {
             "key": "fb_flag_h",
@@ -1872,8 +1872,8 @@
               "step": 1,
               "unit": "px"
             },
-            "default": 14,
-            "value": 14
+            "default": 20,
+            "value": 20
           },
           {
             "key": "fb_bg",
@@ -1892,8 +1892,8 @@
             "label": "Text colour",
             "help": "",
             "options": null,
-            "default": "#E0567B",
-            "value": "#E0567B"
+            "default": "#3B2730",
+            "value": "#3B2730"
           },
           {
             "key": "fb_pill",
@@ -4299,8 +4299,16 @@
     ],
     "sections": [
       {
+        "key": "topstrip",
+        "label": "Top strip"
+      },
+      {
         "key": "cards_banner",
         "label": "Banners"
+      },
+      {
+        "key": "countries",
+        "label": "Countries strip"
       },
       {
         "key": "hero",

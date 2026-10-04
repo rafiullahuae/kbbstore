@@ -493,6 +493,11 @@ final class AdminSearchIndex
             ],
         ],
         'hpcontent' => [
+            // Lane HC: the one page for the whole homepage, and its editor.
+            'All sections' => [
+                'Edit content', 'Find a section', 'Which products', 'Automatic', 'Manual — I pick them',
+                'As shipped', 'In stock only', 'Products, in order', 'Shows now', 'Show & frame', 'Save section',
+            ],
             'Hero slider' => [
                 'Eyebrow', 'Headline', 'Supporting line', 'Button wording', 'Where the slide links',
                 'Background · from', 'Background · middle', 'Background · to', 'Inset panel · from',

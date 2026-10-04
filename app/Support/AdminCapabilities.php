@@ -364,6 +364,14 @@ final class AdminCapabilities
         'gridsections.view' => ['owner', 'manager', 'editor'],
         'gridsections.manage' => ['owner', 'manager', 'editor'],
 
+        // Appearance → Homepage content → All sections (Lane HC,
+        // routes/homepage-hub-admin.php). Both READ: the section list, and the
+        // catalogue search behind a manual list and the source preview. Every
+        // save goes to the endpoint that owns the value, under its own
+        // capability, so neither of these can write anything.
+        'homepagehub.view' => ['owner', 'manager', 'editor'],
+        'homepagehub.search' => ['owner', 'manager', 'editor'],
+
         // Writing an article into the Journal (Lane J). The same three roles
         // content.manage carries, and its own capability for the reason the
         // three below give: an article is published at the SITE ROOT of this
@@ -1471,6 +1479,11 @@ final class AdminCapabilities
         ['DELETE', 'admin-api/grid-sections/**', 'gridsections.manage'],
         ['GET', 'admin-api/grid-sections', 'gridsections.view'],
         ['GET', 'admin-api/grid-sections/**', 'gridsections.view'],
+        // Lane HC. Exact paths, no wildcard: three reads, and a fourth path
+        // added under this prefix without a line here is owner-only.
+        ['GET', 'admin-api/homepage-hub/products', 'homepagehub.search'],
+        ['POST', 'admin-api/homepage-hub/preview', 'homepagehub.search'],
+        ['GET', 'admin-api/homepage-hub', 'homepagehub.view'],
 
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],

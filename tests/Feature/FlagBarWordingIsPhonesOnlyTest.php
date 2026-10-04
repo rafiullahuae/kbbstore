@@ -48,7 +48,10 @@ function fbwHome(): string
 {
     SettingsService::forgetMemo();
 
-    return test()->get('/')->assertOk()->getContent();
+    // ▲ (Lane HC) /shop/ and not /: on the homepage the strip is the
+    // `countries` section, shown per device by its Homepage row, while this
+    // file is about the Flag bar's own switches — which every other page reads.
+    return test()->get('/shop/')->assertOk()->getContent();
 }
 
 /** The `<div class="kfb …">` element with everything inside it, or null. */
@@ -222,7 +225,8 @@ it('leaves the bar itself, its flags and its height exactly where they were', fu
     expect($c['fb_flags'])->toBeTrue('the flags are the half of the bar he kept')
         // The height is reserved in the stylesheet, so the header below the
         // strip cannot jump — taking the words out must not change it.
-        ->and($c['fb_height'])->toBe(30);
+        // ▲ (Lane HC) 46px: the old shop's countries strip, his screenshot.
+        ->and($c['fb_height'])->toBe(46);
 
     expect(str_contains((string) fbwElement(fbwHome()), 'kfb-d'))->toBeTrue('the desktop strip went with the words');
 

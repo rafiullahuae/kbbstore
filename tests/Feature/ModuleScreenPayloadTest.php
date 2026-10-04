@@ -181,6 +181,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
 
     test()->actingAs($owner, 'admin');
 
+    // ▲ Lane HC advanced the fixture for two things and nothing else: the
+    // Flag bar's four defaults (46px, 14px text, 20px flags, dark ink — the
+    // owner's countries strip) and Section dividers' section list, which gained
+    // the Top strip and the Countries strip from HomepageSections::REGISTRY.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();

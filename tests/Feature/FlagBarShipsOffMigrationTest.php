@@ -79,7 +79,10 @@ it('turns a stored ON off for phones and for desktop, and nothing else in the ro
 
     expect(app(HeaderSettings::class)->flagBarOn())->toBeFalse();
 
-    foreach (['/', '/shop/'] as $path) {
+    // ▲ (Lane HC) `/` left the list: there the strip is the `countries`
+    // homepage section, phones only, which the owner asked for after this
+    // migration — "below the main banner, i need that countries strip".
+    foreach (['/shop/'] as $path) {
         expect(str_contains(test()->get($path)->assertOk()->getContent(), '<div class="kfb '))
             ->toBeFalse("{$path} still draws the countries bar after the migration");
     }

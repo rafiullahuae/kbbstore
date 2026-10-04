@@ -114,7 +114,9 @@ it('answers every value on read exactly as the hand-written coercion did', funct
                 // existing homepage ... except banner". A present value is
                 // still read exactly as it always was.
                 $shipsOn = ! in_array($key, HomepageSections::OFF_BY_DEFAULT, true);
-                $wasDesktop = (bool) ($row['desktop'] ?? $shipsOn);
+                // ▲ Lane HC: the two strips ship phones-only — the owner's
+                // "ONLY FOR MOBILE: turn this off in laptop by default".
+                $wasDesktop = (bool) ($row['desktop'] ?? ($shipsOn && ! in_array($key, HomepageSections::MOBILE_ONLY_BY_DEFAULT, true)));
                 $wasMobile = (bool) ($row['mobile'] ?? $shipsOn);
                 $rawSkin = (string) ($row['skin'] ?? '');
                 $wasSkin = $hasGrid ? (GridSkins::exists($rawSkin) ? $rawSkin : $defaultSkin) : null;
@@ -203,7 +205,8 @@ it('stores every value on write exactly as the hand-written save did', function 
                 $expected[$key] = [
                     // Row 55 (Lane HA): null means the section's own default —
                     // off for HomepageSections::OFF_BY_DEFAULT. See above.
-                    'desktop' => (bool) ($row['desktop'] ?? ! in_array($key, HomepageSections::OFF_BY_DEFAULT, true)),
+                    // Lane HC: and off on laptops for the two phones-only strips.
+                    'desktop' => (bool) ($row['desktop'] ?? (! in_array($key, HomepageSections::OFF_BY_DEFAULT, true) && ! in_array($key, HomepageSections::MOBILE_ONLY_BY_DEFAULT, true))),
                     'mobile' => (bool) ($row['mobile'] ?? ! in_array($key, HomepageSections::OFF_BY_DEFAULT, true)),
                     'order' => (int) ($row['order'] ?? $order),
                     'skin' => $hasGrid ? (GridSkins::exists($raw) ? $raw : $defaultSkin) : null,

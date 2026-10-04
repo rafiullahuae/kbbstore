@@ -277,6 +277,11 @@ class HomepageApiController extends Controller
         'blog' => ['tab' => 'blog', 'key' => 'home_bl_title', 'label' => 'which articles and the heading', 'whole_tab' => true],
         'under54' => ['tab' => 'under54', 'key' => 'home_u54_title', 'label' => 'the price ceiling, the products and the heading', 'whole_tab' => true],
         'feature' => ['tab' => 'feature', 'key' => 'home_ft_l_title', 'label' => 'the two photos, titles, texts and links', 'whole_tab' => true],
+        // Lane HC: the three older product rows own a tab each — which products and how many.
+        'recommended' => ['tab' => 'recommended', 'key' => 'home_rc_src', 'label' => 'which products and how many', 'whole_tab' => true],
+        'bestsellers' => ['tab' => 'bestsellers', 'key' => 'home_bsl_src', 'label' => 'which products and how many', 'whole_tab' => true],
+        'flash' => ['tab' => 'flash', 'key' => 'home_fl_src', 'label' => 'which products and how many', 'whole_tab' => true],
+        'topstrip' => ['tab' => 'topstrip', 'key' => 'home_ts_text', 'label' => 'the wording, link, size and colours', 'whole_tab' => true],
     ];
 
     /**
@@ -462,12 +467,14 @@ class HomepageApiController extends Controller
     public function saveContent(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'slides' => ['present', 'array', 'max:' . HomepageContent::MAX_SLIDES],
+            // Lane HC: `sometimes`, so one section's editor can save its own
+            // fields without re-sending — and so rewriting — the hero's slides.
+            'slides' => ['sometimes', 'array', 'max:' . HomepageContent::MAX_SLIDES],
             'slides.*' => ['array'],
             'copy' => ['sometimes', 'array'],
         ]);
 
-        $rejected = $this->content->saveSlides($data['slides']);
+        $rejected = array_key_exists('slides', $data) ? $this->content->saveSlides($data['slides']) : [];
 
         $copy = $this->content->saveCopy($data['copy'] ?? []);
 

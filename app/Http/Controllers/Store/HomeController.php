@@ -103,10 +103,24 @@ class HomeController extends Controller
         $need = array_merge([], ...array_map(fn ($k) => $railKeys[$k], $wantRails));
         $rails = Cache::get('kbb.home.rails');
 
-        if (! is_array($rails) || array_diff($need, array_keys($rails)) !== []) {
-            $rails = $this->rails($wantRails);
-            Cache::put('kbb.home.rails', $rails, 600);
+        /*
+         * Lane HC: the four rows' product SOURCES are settings now
+         * (App\Support\HomeSources), so the entry carries the signature of
+         * the ones it was built from and is rebuilt when they differ — a
+         * setting written by any path, not only the save that also forgets
+         * this key, reaches the page on the next request. Read from the
+         * settings array HomeSections::settings() builds anyway: array work,
+         * not a query.
+         */
+        $homeSettings = \App\Support\HomeSections::settings();
+        $srcSig = \App\Support\HomeSources::signature($homeSettings);
+
+        if (! is_array($rails) || array_diff($need, array_keys($rails)) !== [] || ($rails['__src'] ?? null) !== $srcSig) {
+            $rails = $this->rails($wantRails, $homeSettings);
+            Cache::put('kbb.home.rails', $rails + ['__src' => $srcSig], 600);
         }
+
+        unset($rails['__src']);
 
         foreach (['recommended', 'best1', 'best2', 'flash', 'bundles'] as $key) {
             $rails[$key] ??= collect();
@@ -361,7 +375,6 @@ class HomeController extends Controller
          * build costs. Primed with the rails below so a rule-priced set in any
          * of the new grids is priced by the same single statement.
          */
-        $homeSettings = \App\Support\HomeSections::settings();
         $home = \App\Support\HomeSections::data($homeSettings);
 
         \App\Support\SetPricing::prime(
@@ -484,14 +497,21 @@ class HomeController extends Controller
      * @param  list<string>  $want
      * @return array<string, \Illuminate\Support\Collection>
      */
-    private function rails(array $want): array
+    private function rails(array $want, array $c = []): array
     {
         $base = fn () => Product::query()->select(self::CARD_COLUMNS)->visible()->with('brand:id,name,slug');
         $out = [];
 
+        /*
+         * Lane HC: each row's own choice first — null while it is "As shipped",
+         * and then the query below runs exactly as it always has, at the
+         * number HomeSources ships (5, 4, 4, 8): the same SQL, the same rows.
+         */
+        $limit = fn (string $k): int => \App\Support\HomeSources::read($c, $k)['limit'];
+
         if (in_array('recommended', $want, true)) {
-            $out['recommended'] = $base()->where('featured', true)
-                ->orderByDesc('total_sales')->orderByDesc('id')->limit(5)->get();
+            $out['recommended'] = \App\Support\HomeSources::chosen($c, 'recommended') ?? $base()->where('featured', true)
+                ->orderByDesc('total_sales')->orderByDesc('id')->limit($limit('recommended'))->get();
         }
 
         if (in_array('best', $want, true)) {
@@ -534,35 +554,41 @@ class HomeController extends Controller
              * membership changes on each rebuild with no data behind the
              * change is the same defect one layer up.
              */
-            $best = $base()->orderByDesc('total_sales')->orderByDesc('id')->limit(8)->get();
+            $picked = \App\Support\HomeSources::chosen($c, 'bestsellers');
+            $n = $limit('bestsellers');
+            $best = $picked ?? $base()->orderByDesc('total_sales')->orderByDesc('id')->limit(max(8, $n))->get();
 
-            $out['best1'] = $best->take(4)->values();
-            $out['best2'] = $best->slice(4)->values();
+            $out['best1'] = $best->take($n)->values();
+            $out['best2'] = $picked === null ? $best->slice($n)->values() : collect();
         }
 
         if (in_array('flash', $want, true)) {
-            $onSale = $base()
+            $picked = \App\Support\HomeSources::chosen($c, 'flash');
+            $n = $limit('flash');
+            $onSale = $picked ?? $base()
                 ->whereNotNull('sale_price')
                 ->whereColumn('sale_price', '<', 'price')
                 ->orderByDesc('total_sales')
                 ->orderByDesc('id')
-                ->limit(4)
+                ->limit($n)
                 ->get();
 
             // Falls back to newest when nothing is discounted, so the row is
             // never an empty gap.
-            $out['flash'] = $onSale->isNotEmpty() ? $onSale : $base()->latest('id')->limit(4)->get();
+            $out['flash'] = ($picked !== null || $onSale->isNotEmpty()) ? $onSale : $base()->latest('id')->limit($n)->get();
         }
 
         if (in_array('bundles', $want, true)) {
             // Sets and routines. Falls back to the priciest products when
             // nothing is categorised as a set, so the row is never empty.
-            $sets = $base()->whereHas('categories', fn ($c) => $c->where('slug', 'like', '%set%'))
-                ->orderByDesc('total_sales')->orderByDesc('id')->limit(8)->get();
+            $picked = \App\Support\HomeSources::chosen($c, 'bundles');
+            $n = $limit('bundles');
+            $sets = $picked ?? $base()->whereHas('categories', fn ($q) => $q->where('slug', 'like', '%set%'))
+                ->orderByDesc('total_sales')->orderByDesc('id')->limit($n)->get();
 
-            $out['bundles'] = $sets->isNotEmpty()
+            $out['bundles'] = ($picked !== null || $sets->isNotEmpty())
                 ? $sets
-                : $base()->orderByDesc('price')->orderByDesc('id')->limit(8)->get();
+                : $base()->orderByDesc('price')->orderByDesc('id')->limit($n)->get();
         }
 
         return $out;

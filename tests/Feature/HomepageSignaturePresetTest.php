@@ -54,7 +54,8 @@ it('puts back the shipped row-55 page when Signature is re-applied, not every se
         expect($after->hidden($key))->toBeTrue($key.' came back on with Signature');
     }
 
-    expect($shipped)->toBe(['cards_banner', 'hero', 'bundles', 'bestselling', 'brands', 'spotted',
+    // ▲ Lane HC: the two phones-only strips are visible sections too.
+    expect($shipped)->toBe(['topstrip', 'cards_banner', 'countries', 'hero', 'bundles', 'bestselling', 'brands', 'spotted',
         'trending', 'blog', 'under54', 'feature', 'about']);
 });
 

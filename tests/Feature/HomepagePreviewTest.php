@@ -76,7 +76,8 @@ function p1Rows(array $first = [], array $tweak = []): array
     // homepage's sections off (HomepageSections::OFF_BY_DEFAULT).
     return array_map(fn ($key) => ($tweak[$key] ?? []) + [
         'key' => $key,
-        'desktop' => ! in_array($key, HomepageSections::OFF_BY_DEFAULT, true),
+        // Lane HC: the two strips ship phones-only.
+        'desktop' => ! in_array($key, HomepageSections::OFF_BY_DEFAULT, true) && ! in_array($key, HomepageSections::MOBILE_ONLY_BY_DEFAULT, true),
         'mobile' => ! in_array($key, HomepageSections::OFF_BY_DEFAULT, true),
         'skin' => HomepageSections::REGISTRY[$key][3],
     ], $keys);
