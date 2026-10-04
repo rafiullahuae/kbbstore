@@ -209,6 +209,14 @@ final class InterfaceStrings
             'footer.news_placeholder' => 'Your email for offers',
             'footer.news_label' => 'Your email',
             'footer.news_button' => 'Join',
+            // The third column, "Account" (Lane HF, the owner on 4 October: "on
+            // third column will be Account and related links to access their
+            // account, orders etc."). Sentence case, like the other footer links.
+            'footer.account_title' => 'Account',
+            'footer.link_account_home' => 'My account',
+            'footer.link_my_orders' => 'My orders',
+            'footer.link_wishlist' => 'Wishlist',
+            'footer.link_addresses' => 'Addresses',
             // The shop's free-delivery line, printed in three places: the announcement
             // strip, the home page's delivery band and the home page's ticker. One key,
             // because it is one sentence; the amount arrives already formatted (and,
