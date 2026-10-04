@@ -57,16 +57,17 @@ function pfSwitchOn(array $keys): void
 /** The fingerprints of the six reads that feed only switched-off sections. */
 function pfOldReads(array $q): array
 {
-    $sql = implode("\n", $q);
+    // Both engines' quoting: SqlShape::portable() turns MySQL's backticks into
+    // the double quotes the needles below are written with (SqlNeedleDialectGuardTest).
+    $sql = \Tests\Support\SqlShape::portable(implode("\n", $q));
 
     return array_keys(array_filter([
         'recommended rail' => str_contains($sql, '"featured" = ?'),
         'flash sale rail' => str_contains($sql, '"sale_price" < "price"'),
-        'review wall' => str_contains($sql, 'from "reviews"'),
-        'routine steps' => preg_match('/select "slug" from "categories" where "slug" in/', $sql) === 1,
+        'review wall' => preg_match('/from [`"]reviews[`"]/', $sql) === 1,
+        'routine steps' => preg_match('/select [`"]slug[`"] from [`"]categories[`"] where [`"]slug[`"] in/', $sql) === 1,
         'category circles' => str_contains($sql, 'select "id", "name", "slug", "path", (select count(*)'),
-        'quiz figure' => preg_match('/select count\(\*\) as aggregate from "products" where "status" = \?/', $sql) === 1
-            && substr_count($sql, 'select count(*) as aggregate from "products"') > 1,
+        'quiz figure' => preg_match_all('/select count\(\*\) as aggregate from [`"]products[`"]/', $sql) > 1,
     ]));
 }
 
