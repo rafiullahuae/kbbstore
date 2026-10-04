@@ -120,6 +120,13 @@ final class AdminCapabilities
         // own capability so it can be granted apart from revenue figures.
         'search_terms.view' => ['owner', 'manager'],
 
+        // Store -> SEO Keywords (Lane KW). Reading the keyword bank and each
+        // page's keywords is a manager's job as much as the owner's; changing
+        // what the storefront publishes -- a sync, an undo, a hand edit, the
+        // Search Console key -- is the owner's alone.
+        'seo_keywords.view' => ['owner', 'manager'],
+        'seo_keywords.sync' => ['owner'],
+
         // Orders. Split four ways because reading an order, editing one,
         // moving money and destroying one are genuinely different acts.
         'orders.view' => ['owner', 'manager', 'support'],
@@ -1673,6 +1680,15 @@ final class AdminCapabilities
         ['GET', 'admin-api/stats', 'dashboard.view'],
         ['GET', 'admin-api/analytics', 'analytics.view'],
         ['GET', 'admin-api/search-terms', 'search_terms.view'],
+
+        /*
+         * Store -> SEO Keywords -- routes/seo-keywords-admin.php, Lane KW.
+         * Reads first, then every other verb on the same prefix: the order is
+         * the rule, because the first match wins.
+         */
+        ['GET', 'admin-api/seo-keywords', 'seo_keywords.view'],
+        ['GET', 'admin-api/seo-keywords/**', 'seo_keywords.view'],
+        ['*', 'admin-api/seo-keywords/**', 'seo_keywords.sync'],
     ];
 
     /**

@@ -721,6 +721,8 @@ class BrandController extends Controller
 
         $ctx = array_filter([
             'type' => 'collection',
+            // SEO → Keywords (Lane KW): this brand page's keywords, by id.
+            'seo_entity' => 'brand:' . $brand->id,
             'collection' => $collection,
             'description' => $description !== '' ? $description : null,
             'image' => $image !== '' ? $image : null,

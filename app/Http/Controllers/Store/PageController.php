@@ -287,6 +287,7 @@ class PageController extends Controller
          */
         $seoCtx['type'] = 'page';
         $seoCtx['page_body'] = (string) $page->content;
+        $seoCtx['seo_entity'] = 'page:' . $page->id; // SEO → Keywords (Lane KW)
 
         return view('store.page', [
             'page' => $page,
@@ -598,6 +599,7 @@ class PageController extends Controller
 
         $seo = Seo::render([
             'type' => 'article',
+            'seo_entity' => 'post:' . $post->id, // SEO → Keywords (Lane KW)
             // t() throughout: an Arabic article whose <title> and
             // <meta description> are English advertises itself as untranslated
             // in the one place a shopper decides whether to click.

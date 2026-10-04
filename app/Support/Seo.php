@@ -212,6 +212,21 @@ class Seo
         $out = [];
         $out[] = '<title>' . $e($title) . '</title>';
         if ($desc)  $out[] = '<meta name="description" content="' . $e($desc) . '">';
+        /*
+         * SEO → Keywords (Lane KW). This page's keywords — from the last
+         * applied sync, or none at all on a shop that has never run one, in
+         * which case this costs nothing and prints nothing. They are published
+         * ONLY where a shopper never sees them and a search engine is invited
+         * to read them: this tag (a switch, at most ten, which Google ignores
+         * and Bing and Yandex still read) and schema.org `keywords` in the
+         * JSON-LD below. Never as text in the page body — hidden text is the
+         * one thing Google's spam policy names outright.
+         */
+        $kbbKeywords = \App\Services\Seo\Keywords\PageKeywords::for(\App\Services\Seo\Keywords\PageKeywords::entityOf($ctx), $s)['k'];
+        $ctx['_seo_keywords'] = $kbbKeywords;
+        if ($kbbKeywords !== [] && \App\Services\Seo\Keywords\KeywordConfig::metaOn($s)) {
+            $out[] = '<meta name="keywords" content="' . $e(implode(', ', array_slice($kbbKeywords, 0, 10))) . '">';
+        }
         $out[] = '<meta name="robots" content="' . $e($robots) . '">';
         if ($url)   $out[] = '<link rel="canonical" href="' . $e($url) . '">';
 
@@ -1231,6 +1246,11 @@ class Seo
     private static function jsonLd(array $ctx, array $s, string $siteName, string $base, string $title, string $desc, ?string $url, ?string $image): array
     {
         $nodes = [];
+        // SEO → Keywords: render() has already looked them up; inspect() has not.
+        $kbbKw = is_array($ctx['_seo_keywords'] ?? null)
+            ? $ctx['_seo_keywords']
+            : \App\Services\Seo\Keywords\PageKeywords::for(\App\Services\Seo\Keywords\PageKeywords::entityOf($ctx), $s)['k'];
+        $kbbKwString = $kbbKw !== [] ? implode(', ', $kbbKw) : null;
 
         // Organization + WebSite (sitewide)
         $org = [
@@ -1536,6 +1556,24 @@ class Seo
                 static fn ($k) => $k !== ''
             ));
 
+            /*
+             * And the synced keywords after them (Lane KW): the set's own tags
+             * keep their place, each phrase appears once whatever its case, and
+             * the list stops at ten unless the tags alone are longer.
+             */
+            $seenKw = [];
+            $tagCount = count($keywords);
+            foreach ($keywords as $k) {
+                $seenKw[mb_strtolower($k)] = true;
+            }
+            foreach ($kbbKw as $k) {
+                if (! isset($seenKw[mb_strtolower($k)])) {
+                    $seenKw[mb_strtolower($k)] = true;
+                    $keywords[] = $k;
+                }
+            }
+            $keywords = array_slice($keywords, 0, max(10, $tagCount));
+
             if ($keywords !== []) {
                 $node['keywords'] = implode(', ', $keywords);
             }
@@ -1752,6 +1790,7 @@ class Seo
                 'inLanguage' => Locale::current(),
                 'author' => ['@type' => 'Organization', 'name' => $siteName],
                 'publisher' => ['@type' => 'Organization', 'name' => $siteName],
+                'keywords' => $kbbKwString,
             ]);
         }
 
@@ -1831,6 +1870,7 @@ class Seo
                 // above is this page's own localised address — so the language
                 // stated here is this document's, exactly as on Article.
                 'inLanguage' => Locale::current(),
+                'keywords' => $kbbKwString,
             ], static fn ($v) => $v !== null);
 
             $rows = is_array($c['items'] ?? null) ? array_values($c['items']) : [];
@@ -1946,6 +1986,23 @@ class Seo
             && \App\Services\Seo\FaqSchema::enabled($s)
             && ($faq = \App\Services\Seo\FaqSchema::node((string) ($ctx['page_body'] ?? ''), $url)) !== null) {
             $nodes[] = $faq;
+        }
+
+        /*
+         * WebPage, for a page that has keywords and no node above to carry them
+         * — the home page and the content pages (Lane KW). Only ever emitted
+         * when a sync gave the page keywords, so a shop that has not run one
+         * publishes exactly the graph it did before.
+         */
+        if ($kbbKwString !== null && in_array($ctx['type'] ?? 'website', ['home', 'page', 'website'], true)) {
+            $nodes[] = array_filter([
+                '@context' => 'https://schema.org',
+                '@type' => 'WebPage',
+                'name' => $title,
+                'url' => $url,
+                'inLanguage' => Locale::current(),
+                'keywords' => $kbbKwString,
+            ], static fn ($v) => $v !== null);
         }
 
         // Breadcrumbs

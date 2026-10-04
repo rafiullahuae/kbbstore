@@ -1,0 +1,11 @@
+GET /product/pdp-heartleaf-toner/  (head excerpt)
+
+<title>Anua Heartleaf 77% Soothing Toner 250ml · K-Beauty Bliss | KBB</title>
+<meta name="description" content="A gentle daily toner built around 77% heartleaf extract, formulated for skin that reacts to everything. It calms redness, loosens what has settled in the pores overnight and leaves the barrier where it found it — no alcohol, no added fragrance and no essential oils. Use it morning and night on da…">
+<meta name="keywords" content="anua heartleaf 77% soothing toner, anua heartleaf 77% soothing toner 250ml, heartleaf 77% soothing toner, heartleaf toner, centella toner, hydrating toner, korean toner, anua korean skincare, toner for sensitive skin, toner for dry skin">
+<script type="application/ld+json"> … Product node … </script>
+
+JSON-LD nodes carrying keywords:
+  @type=Product  keywords: anua heartleaf 77% soothing toner, anua heartleaf 77% soothing toner 250ml, heartleaf 77% soothing toner, heartleaf toner, centella toner, hydrating toner, korean toner, anua korean skincare, toner for sensitive skin, toner for dry skin
+
+body contains the keywords tag? false
