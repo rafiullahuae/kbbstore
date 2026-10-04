@@ -335,7 +335,8 @@ const KBB_ELEMENT_ANCHORED_R6 = [
     'tests/Feature/BrandUrlTest.php' => [
         ['<h1 class="brw-h1">', 3],
         ['<span class="kbb-card-nm">', 3],
-        ['<p class="brw-sub">', 1],
+        // 2.60.376: the description is a block now (it can carry paragraphs).
+        ['<div class="brw-sub brw-desc">', 1],
     ],
     'tests/Feature/UrlSchemeTest.php' => [
         ['<h1 class="brw-h1">Round Lab</h1>', 1],

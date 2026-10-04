@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.376
+**The menu keeps its text size, every email in Send a test, Tabby / Tamara / card
+in the failed and refund emails, the brand page, and the spam-folder check.**
+Apply after .375. No plugin change. Runs 2 migrations (11 Arabic drafts, a cache
+clear). Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "give control to set menu font size upon expanding … keep the font size control but the space will auto adjust as per the number of parents items" | New: Appearance → Header → Navigation → **How it fills the row**, shipped at "Spread the items (keep my text size)". Your 12 items stay at Text size (14px); the room goes into the gaps — 10px at 1280, 32px at 1920. "Bigger text" is the 2.60.375 behaviour |
+| "i need here all the emails, pending order, and in failed order, the reason … tabby … tamara, Card payment" + "also for refund" | Emails → Sending & delivery → Send a test lists all 22 emails. Payment failed: "Your Tabby / Tamara / card payment did not go through" with the reason for that method. Refund: "back to your Tabby account / Tamara account / the card you paid with". Unknown method: the general wording |
+| "for Brand Page, remove the Shop all button, and keep Name, along with description … remove also popular right now, and view all … full results without any pagination" | Name + description (the one typed on the brand page now shows — it was dropped when the brand had no header picture), no Shop all, no Popular right now / View all, every product on one page (to 500). Old ?paged=2 links 301 to the brand page. Switches: Appearance → Site layout → **Brand page** |
+| "emails are sending fine. but all are going to spam" | The cause is DNS: kbeautybliss.com has no DKIM and no DMARC (steps sent). In the shop: Emails → Domain check now flags SPF when mail actually leaves through this server (server mail chosen, or Google Workspace chosen but unfinished), and Google is greeted as kbeautybliss.com instead of extrabeauty.ae |
+
+Files (19): see the package's update.json.
+
 ## 2.60.375
 **The desktop menu fills its row.** Apply after .374. No plugin change. Runs 1
 migration (a cache clear). Hard refresh after applying.

@@ -54,7 +54,8 @@ it('serves a single brand page', function () {
         ->assertSee('<h1 class="brw-h1">T Beauty of Joseon</h1>', escape: false)
         // The standfirst the page prints, not the <meta description> and the
         // JSON-LD carrying the same sentence in the same document.
-        ->assertSee('<p class="brw-sub">Hanbang formulas, modern textures.</p>', escape: false);
+        // 2.60.376: through RichText's allowlist, in a block that can hold paragraphs.
+        ->assertSee('<div class="brw-sub brw-desc">Hanbang formulas, modern textures.</div>', escape: false);
 });
 
 it('links each directory tile at the brand page, not the old address', function () {
@@ -68,6 +69,17 @@ it('keeps the brand product listing on /shop per URL contract U-05', function ()
     // reimplement it. Brand::filterUrl() is that contract and is unchanged --
     // U-05 kept the query string exactly where it was. What moved is
     // Brand::url(), which is now this landing page rather than the listing.
+    // 2.60.376: the owner asked for the "Shop all" button gone, so the link is
+    // there only with Appearance → Site layout → Brand page → "Show the Shop
+    // all button" on -- and when it is, it is still the U-05 address.
+    $this->get('/brands/t-beauty-of-joseon/')
+        ->assertOk()
+        ->assertDontSee('class="brw-cta"', escape: false);
+
+    app(\App\Services\SiteLayout::class)->save(['brand_cta' => true]);
+    \App\Models\Setting::flushMap();
+    \App\Services\SettingsService::forgetMemo();
+
     $this->get('/brands/t-beauty-of-joseon/')
         ->assertOk()
         ->assertSee('/shop/?filter_brands=t-beauty-of-joseon', escape: false);

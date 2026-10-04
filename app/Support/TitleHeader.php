@@ -262,11 +262,7 @@ final class TitleHeader
          * header description wins in English; otherwise the category's own,
          * translated. Through the same allowlist either way.
          */
-        $custom = $english ? $model->getAttribute('header_description') : null;
-        $raw = is_string($custom) && ! RichText::isBlank($custom)
-            ? $custom
-            : (method_exists($model, 't') ? $model->t('description') : $model->getAttribute('description'));
-        $description = RichText::isBlank(is_string($raw) ? $raw : '') ? '' : RichText::forDisplay((string) $raw);
+        $description = self::descriptionOf($model, $english);
 
         /*
          * "if no description set from backend, then generic line should come.
@@ -460,6 +456,40 @@ final class TitleHeader
             'own' => $ownColours,
             'drawn' => $drawnColours,
         ];
+    }
+
+    /**
+     * The description a category or brand page prints, as display-safe HTML,
+     * or '' when there is none.
+     *
+     * The custom header description (typed on the page itself, quick edit →
+     * Description) wins in English; otherwise the model's own, translated.
+     * Through RichText's allowlist either way.
+     */
+    public static function descriptionOf(Model $model, ?bool $english = null): string
+    {
+        $english ??= Locale::segment() === '';
+        $custom = $english ? $model->getAttribute('header_description') : null;
+        $raw = is_string($custom) && ! RichText::isBlank($custom)
+            ? $custom
+            : (method_exists($model, 't') ? $model->t('description') : $model->getAttribute('description'));
+
+        return RichText::isBlank(is_string($raw) ? $raw : '') ? '' : RichText::forDisplay((string) $raw);
+    }
+
+    /**
+     * A brand page's description when no title header draws it. (2.60.376)
+     *
+     * THE DEFECT: the brand hero printed only `brands.description`, so a
+     * description typed on the brand page itself (quick edit → Description,
+     * stored in `header_description`) showed only when the brand's page also
+     * had a title header -- a brand with no header picture dropped it. The
+     * owner: "we have option to add description but that text is not showing
+     * under the brand name". Same rule as the title header now, one method.
+     */
+    public static function brandDescription(Model $brand): string
+    {
+        return self::descriptionOf($brand);
     }
 
     /** Values the old theme used as SWITCHES, never as words to print. */

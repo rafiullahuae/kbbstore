@@ -508,6 +508,23 @@ class SiteLayout
             ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
 
         /*
+         * THE BRAND PAGE. (2.60.376)
+         *
+         * The owner, 4 October: "for Brand Page, remove the Shop all button,
+         * and keep Name, along with description ... remove also popular right
+         * now, and view all. as the brand page visit will give full results
+         * without any pagination etc." He asked, so all three ship at what he
+         * asked for; each switch puts the old page back. Not CSS: isDefault()
+         * and css() skip them (BRAND_KEYS).
+         */
+        'brand_all' => ['bool', 'Show every product of the brand on one page', true,
+            'On: a brand page lists all of the brand\'s products at once, with no pages and no "load more" (up to '.self::BRAND_ALL_CAP.'; past that the arrows take over). Off: the brand page loads more the way "How more products load" says.'],
+        'brand_cta' => ['bool', 'Show the "Shop all" button under the brand name', false,
+            'Off, as you asked: the brand page shows the logo, the name and the description. On: the "Shop all <brand>" button comes back, linking to the shop filtered to this brand.'],
+        'brand_popular' => ['bool', 'Show "Popular right now" and "View all" above the products', false,
+            'Off, as you asked: the products start straight under the brand. On: the heading and the "View all" link come back.'],
+
+        /*
          * ── PRESS FEEDBACK ──────────────────────────────────────── Lane RD ──
          *
          * "when u click on any button or icon. it leaves gray square /
@@ -586,6 +603,16 @@ class SiteLayout
      * listing past it simply keeps the arrows for what is left.
      */
     public const LOAD_ALL_CAP = 200;
+
+    /**
+     * The most products a brand page draws at once when "Show every product of
+     * the brand on one page" is on. Far above the largest brand; past it the
+     * arrows carry the rest, so no brand can become one enormous page.
+     */
+    public const BRAND_ALL_CAP = 500;
+
+    /** The brand page's three switches: not CSS, skipped by isDefault(). */
+    public const BRAND_KEYS = ['brand_all', 'brand_cta', 'brand_popular'];
 
     /** The keys that are not CSS: skipped by isDefault(), never in css(). */
     private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom'];
@@ -716,6 +743,9 @@ class SiteLayout
         'catheadersize' => ['Category header · sizes & spacing',
             'Title and description sizes, the header\'s height, the space inside and around it, and its corners -- for phones and for laptops (900px and wider) separately.',
             self::HEADER_SIZE_KEYS],
+        'brandpage' => ['Brand page',
+            'What a brand\'s own page shows above its products, and whether it lists them all at once.',
+            self::BRAND_KEYS],
         'press' => ['Press feedback',
             'What every button and icon in the shop does under a finger or a click. Tap the samples below to feel each one before you save; nothing changes on the shop until you press Save.',
             self::PRESS_KEYS],
@@ -1005,7 +1035,7 @@ class SiteLayout
 
         foreach (self::normalised() as $key => $field) {
             if (in_array($key, self::LOAD_KEYS, true) || in_array($key, self::HEADER_KEYS, true)
-                || in_array($key, self::PRESS_KEYS, true)) {
+                || in_array($key, self::PRESS_KEYS, true) || in_array($key, self::BRAND_KEYS, true)) {
                 continue;
             }
 
@@ -1053,6 +1083,16 @@ class SiteLayout
             'all' => self::LOAD_ALL_CAP,
             default => max(1, $arrows),
         };
+    }
+
+    /**
+     * How many products a brand page asks for: everything (to BRAND_ALL_CAP)
+     * when "Show every product of the brand on one page" is on, otherwise what
+     * perPage() gives every other listing.
+     */
+    public function brandPerPage(int $arrows): int
+    {
+        return $this->get('brand_all') ? self::BRAND_ALL_CAP : $this->perPage($arrows);
     }
 
     /**

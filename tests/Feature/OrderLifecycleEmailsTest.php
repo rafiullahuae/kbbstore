@@ -912,10 +912,12 @@ it('carries the owner\'s emoji in subjects, encoded as UTF-8 in the header, and 
     }
 
     // Payment failed: the approved preview's title carries no emoji; its
-    // heading does ("The payment did not go through 😔").
+    // heading does. 2.60.376: both name the method the order used (the owner:
+    // "if it is failed through tabby, then mention clearly") -- this fixture
+    // paid by card. The general wording stays for a method with no name.
     $failed = new OrderStatusChanged($order, 'failed');
-    expect($failed->envelope()->subject)->toBe('Payment did not go through')
-        ->and((string) $failed->render())->toContain('The payment did not go through 😔');
+    expect($failed->envelope()->subject)->toBe('Your card payment did not go through')
+        ->and((string) $failed->render())->toContain('Your card payment did not go through 😔');
 });
 
 it('uses the owner-approved preview wording, word for word', function () {
@@ -950,7 +952,7 @@ it('uses the owner-approved preview wording, word for word', function () {
         ->toContain('Your order is complete. Open it, try it, and enjoy the little extras we tucked in.');
 
     $failed = new OrderStatusChanged($order, 'failed');
-    expect($render($failed))->toContain('Nothing was charged and the order is not confirmed. Your order is saved — try again or choose another way to pay.');
+    expect($render($failed))->toContain('Your card payment was not approved or was not finished, so nothing was charged and the order is not confirmed. Your order is saved — try the card again, use another card, or choose another way to pay.');
 
     $receipt = new OrderConfirmation($order);
     // The first name, as the owner's approved preview greets her (Lane EM).
@@ -973,4 +975,45 @@ it('puts the three reasons to shop in both reminders', function () {
             expect($html)->toContain($line)->and($text)->toContain($line);
         }
     }
+});
+
+it('names the payment method in the payment-failed and refund emails, and stays general for any other', function () {
+    /*
+     * 2.60.376. The owner: "in failed order, the reason should be there, if it
+     * is failed through tabby, then mention clearly, if with tamara, Card
+     * payment vice versa" -- "also for refund."
+     *
+     * The gateways send the shopper back without a reason, so the email names
+     * the METHOD and says "not approved or not finished" -- never "declined"
+     * (CheckoutReturnController::reason() records why). A method the helper
+     * does not know keeps the general wording, so no raw gateway id reaches a
+     * customer.
+     *
+     * MUTATION (RUN): drop the 'tabby' arm in OrderStatusChanged::displayWording()
+     * and the Tabby body expectation is red; drop the refund blade's match and
+     * the Tamara refund expectation is.
+     */
+    $render = fn ($mail) => html_entity_decode(strip_tags((string) $mail->render()), ENT_QUOTES);
+
+    $tabby = new OrderStatusChanged(rlOrder(['payment_method' => 'tabby']), 'failed');
+    expect($tabby->envelope()->subject)->toBe('Your Tabby payment did not go through')
+        ->and($render($tabby))->toContain('Your Tabby payment did not go through 😔')
+        ->and($render($tabby))->toContain('Tabby did not approve the payment, or it was not finished');
+
+    $tamara = new OrderStatusChanged(rlOrder(['payment_method' => 'tamara']), 'failed');
+    expect($tamara->envelope()->subject)->toBe('Your Tamara payment did not go through')
+        ->and($render($tamara))->toContain('Tamara did not approve the payment, or it was not finished');
+
+    $other = new OrderStatusChanged(rlOrder(['payment_method' => 'something_new']), 'failed');
+    expect($other->envelope()->subject)->toBe('Payment did not go through')
+        ->and($render($other))->toContain('Nothing was charged and the order is not confirmed.');
+
+    $tamaraOrder = rlOrder(['payment_method' => 'tamara', 'status' => 'processing']);
+    $refund = new \App\Models\Refund(['amount' => 5000, 'status' => 'succeeded', 'provider_ref' => 'tm_ref_1']);
+    $refundMail = new \App\Mail\OrderRefunded($tamaraOrder, $refund);
+    expect($render($refundMail))->toContain('back to your Tamara account for order')
+        ->and((string) $refundMail->render())->not->toContain('back to the payment method you used');
+
+    $cardRefund = new \App\Mail\OrderRefunded(rlOrder(['status' => 'processing']), new \App\Models\Refund(['amount' => 5000, 'status' => 'succeeded', 'provider_ref' => 're_1']));
+    expect($render($cardRefund))->toContain('back to the card you paid with for order');
 });

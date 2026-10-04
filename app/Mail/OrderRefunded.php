@@ -94,6 +94,9 @@ class OrderRefunded extends OrderMail
      */
     public bool $settledByGateway;
 
+    /** 'card' | 'tabby' | 'tamara' | null — App\Support\PaymentMethodWords. */
+    public ?string $refundMethod = null;
+
     public function __construct(Order $order, Refund $refund)
     {
         parent::__construct($order);
@@ -160,6 +163,9 @@ class OrderRefunded extends OrderMail
         $this->isPartial = $refunder->refundedFils($order) < $ceiling;
 
         $this->settledByGateway = trim((string) $refund->provider_ref) !== '';
+
+        // 2.60.376: say where the money went — the card, Tabby or Tamara.
+        $this->refundMethod = \App\Support\PaymentMethodWords::key((string) $order->payment_method);
     }
 
     public function envelope(): Envelope

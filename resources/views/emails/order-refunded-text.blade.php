@@ -11,7 +11,7 @@
 
 {{-- Wrapped at 72 columns: a text/plain part does not reflow, so an unwrapped
      sentence is one long line in any client that does not soft-wrap. The
-     closing tag sits on this line so the comment leaves no blank one. --}}{!! wordwrap(__('email.refunded.sent_body', ['amount' => $amountPlain, 'number' => $order['number']]) . ($isPartial ? ' ' . __('email.refunded.partial_note') : ''), 72) !!}
+     closing tag sits on this line so the comment leaves no blank one. --}}{!! wordwrap(__(match ($refundMethod ?? null) { 'card' => 'email.refunded.sent_body_card', 'tabby' => 'email.refunded.sent_body_tabby', 'tamara' => 'email.refunded.sent_body_tamara', default => 'email.refunded.sent_body' }, ['amount' => $amountPlain, 'number' => $order['number']]) . ($isPartial ? ' ' . __('email.refunded.partial_note') : ''), 72) !!}
 
 {!! wordwrap(__('email.refunded.statement_note'), 78) !!}
 @else
