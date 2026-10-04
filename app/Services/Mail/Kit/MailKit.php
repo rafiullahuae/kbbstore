@@ -112,7 +112,7 @@ final class MailKit
         [$ink, $accent] = is_array($brand['wordmark'] ?? null) ? array_values($brand['wordmark']) + ['', ''] : ['', ''];
 
         $store = trim((string) ($brand['storeName'] ?? ''));
-        $store = $store !== '' ? $store : (string) config('app.name', 'K Beauty Bliss');
+        $store = $store !== '' ? $store : \App\Support\BrandName::appName();
 
         if (trim((string) $ink) === '' && trim((string) $accent) === '') {
             [$ink, $accent] = [$store, ''];

@@ -1,0 +1,6 @@
+<title>K-Beauty Bliss · Authentic Korean skincare in the UAE</title>
+<meta name="description" content="Shop Korean skincare in the UAE — serums, creams, moisturisers and beauty devices from Korean beauty brands.">
+<meta property="og:site_name" content="Extra Beauty">
+<meta property="og:title" content="K-Beauty Bliss · Authentic Korean skincare in the UAE">
+JSON-LD { "@type": "OnlineStore", "name": "Extra Beauty" }
+JSON-LD { "@type": "WebSite", "name": "Extra Beauty" }

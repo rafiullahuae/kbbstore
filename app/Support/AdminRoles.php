@@ -174,6 +174,8 @@ final class AdminRoles
             'seo.audit' => 'SEO overview and audit',
             'seo_keywords.view' => 'See SEO keywords',
             'seo_keywords.sync' => 'Sync, edit and undo SEO keywords',
+            'seo_brand.view' => 'See the brand name check',
+            'seo_brand.manage' => 'Replace the old shop name and change the brand switches',
         ]],
         ['appearance', 'Appearance', [
             'banners.view' => 'See banners',

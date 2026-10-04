@@ -1534,7 +1534,7 @@ function paneShop(errs,probe){
         +(probe&&probe.orders?' with '+probe.orders+' orders':'')+'. Nothing in it will be overwritten — '
         +'only missing tables are added. Because of that it needs its original security key.</div>'
       :'<p class="hint">This is the account you will sign in with. You can change any of it later.</p>')
-    +'<label for="sn">Shop name</label><input id="sn" placeholder="ExtraBeauty">'
+    +'<label for="sn">Shop name</label><input id="sn" placeholder="K-Beauty Bliss">'
     +(e.shop_name?'<div class="err">'+esc(e.shop_name)+'</div>':'')
     +'<label for="an">Your name</label><input id="an" autocomplete="name">'
     +(e.admin_name?'<div class="err">'+esc(e.admin_name)+'</div>':'')

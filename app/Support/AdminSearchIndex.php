@@ -757,6 +757,7 @@ final class AdminSearchIndex
             'Keyword bank' => [],
             'Pages' => [],
             'Sync' => [],
+            'Brand name' => ['Brand name check', 'Replace with K-Beauty Bliss', 'Brand name in titles', 'Brand alternate names', 'One k-beauty phrase per page'],
         ],
         'carttracking' => [
             'Carts' => ['Bot', 'Countries'],

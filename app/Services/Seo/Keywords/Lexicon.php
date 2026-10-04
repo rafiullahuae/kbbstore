@@ -115,6 +115,22 @@ final class Lexicon
     ];
 
     /**
+     * THE SHOP'S OWN NAME, as shoppers spell it (Lane BR). The owner: people
+     * search "kbeauty" / "k beauty" / "k-beauty" to find this shop and land on
+     * a competitor. The home page's primary keyword is the first of these; the
+     * spellings themselves are published as WebSite/Organization
+     * alternateName (App\Support\BrandName), never stacked as keywords.
+     */
+    public const BRAND = ['k-beauty bliss', 'kbeauty bliss', 'k beauty bliss', 'kbeautybliss'];
+
+    /**
+     * The three ways the trade word is typed. Each page carries exactly ONE
+     * phrase built on one of them, the spelling rotating from page to page
+     * (KeywordComposer::kbeautyPhrase()).
+     */
+    public const KBEAUTY = ['k-beauty', 'k beauty', 'kbeauty'];
+
+    /**
      * UAE intent modifiers. "near me" is deliberately absent: this is an
      * online shop, and a page claiming a "near me" intent it cannot serve is
      * exactly the mismatch Google demotes.
@@ -131,6 +147,7 @@ final class Lexicon
             'korean sunscreen', 'korean serum', 'korean toner', 'korean cleanser', 'korean moisturizer',
             'korean skincare for acne', 'korean skincare for dry skin', 'korean skincare for oily skin',
             'korean skincare routine', 'best korean skincare',
+            'k beauty bliss', 'kbeauty uae', 'k beauty dubai',
         ],
         'ar' => [
             'منتجات كورية للبشرة', 'العناية بالبشرة الكورية', 'واقي شمس كوري', 'سيروم كوري',

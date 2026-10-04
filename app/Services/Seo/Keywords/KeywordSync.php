@@ -301,6 +301,11 @@ final class KeywordSync
     {
         $locales = $cur['locales'] ?? ['en'];
         $site = SeoSettings::firstFilled(SeoSettings::get('seo_site_name', ''), SeoSettings::get('store_name', ''), 'K-Beauty Bliss');
+        // Never the old name, even on a shop whose settings still carry it (Lane BR).
+        if (\App\Support\BrandName::anyCount($site) > 0) {
+            $site = \App\Support\BrandName::NAME;
+        }
+        $kbeautyOne = \App\Support\BrandName::on(SeoSettings::map(), \App\Support\BrandName::KBEAUTY_ONE);
         $bank = null;
         $owners = null;
         $bankLocale = null;
@@ -344,7 +349,7 @@ final class KeywordSync
                     continue;
                 }
 
-                $r = KeywordComposer::compose($p, $bank, $owners, $site);
+                $r = KeywordComposer::compose($p, $bank, $owners, $site, $kbeautyOne);
                 $links = in_array($type, ['category', 'brand'], true) ? self::links($type, (int) $p['id'], $locale) : [];
 
                 if ($r['clash'] !== null) {

@@ -55,4 +55,4 @@
 
 {!! wordwrap(__('email.quiz_plan.why_text'), 78) !!}
 
-- {{ $brand['storeName'] ?? config('app.name') }}
+- {{ $brand['storeName'] ?? \App\Support\BrandName::appName() }}

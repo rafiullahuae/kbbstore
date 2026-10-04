@@ -144,6 +144,11 @@ final class AdminCapabilities
         // Search Console key -- is the owner's alone.
         'seo_keywords.view' => ['owner', 'manager'],
         'seo_keywords.sync' => ['owner'],
+        // Store -> SEO Keywords -> Brand (Lane BR). Seeing where the old name
+        // "Extra Beauty" is still stored is a manager's job too; replacing it
+        // across the shop's stored text, and the brand switches, are the owner's.
+        'seo_brand.view' => ['owner', 'manager'],
+        'seo_brand.manage' => ['owner'],
 
         // Orders. Split four ways because reading an order, editing one,
         // moving money and destroying one are genuinely different acts.
@@ -1797,6 +1802,9 @@ final class AdminCapabilities
         ['GET', 'admin-api/seo-keywords', 'seo_keywords.view'],
         ['GET', 'admin-api/seo-keywords/**', 'seo_keywords.view'],
         ['*', 'admin-api/seo-keywords/**', 'seo_keywords.sync'],
+        // Store -> SEO Keywords -> Brand (Lane BR). One read, every other verb writes.
+        ['GET', 'admin-api/seo-brand', 'seo_brand.view'],
+        ['*', 'admin-api/seo-brand/**', 'seo_brand.manage'],
     ];
 
     /**

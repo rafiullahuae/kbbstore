@@ -135,7 +135,7 @@ class Seo
         if ($title === '') {
             $title = SeoSettings::firstFilled(
                 $s['store_name'] ?? null,
-                (string) config('app.name'),
+                \App\Support\BrandName::appName(),
                 'K-Beauty Bliss'
             );
         }
@@ -171,7 +171,7 @@ class Seo
         $siteName = SeoSettings::firstFilled(
             $s['seo_site_name'] ?? null,
             $s['store_name'] ?? null,
-            (string) config('app.name'),
+            \App\Support\BrandName::appName(),
             'K-Beauty Bliss'
         );
         $sep      = SeoSettings::from($s, 'seo_separator');
@@ -458,7 +458,7 @@ class Seo
         $siteName = SeoSettings::firstFilled(
             $s['seo_site_name'] ?? null,
             $s['store_name'] ?? null,
-            (string) config('app.name'),
+            \App\Support\BrandName::appName(),
             'K-Beauty Bliss'
         );
         $sep = SeoSettings::from($s, 'seo_separator');
@@ -497,6 +497,19 @@ class Seo
             $homeTitle = array_key_exists('home_title', $ctx)
                 ? trim((string) $ctx['home_title'])
                 : SeoSettings::from($s, 'seo_home_title', '');
+            /*
+             * THE BRAND FIRST, WHEN THE OWNER HAS TYPED NO HOME TITLE (Lane BR).
+             * "K-Beauty Bliss — Korean Skincare & K-Beauty Store in UAE": the
+             * name a shopper searches, then what the shop is, inside Google's
+             * ~60 characters. Only for this brand (a renamed shop keeps the
+             * page's own title) and only behind Store → SEO Keywords → Brand →
+             * "Brand name in titles"; off, the page's own title is used as
+             * before. A typed seo_home_title always wins.
+             */
+            if ($homeTitle === '' && \App\Support\BrandName::on($s, \App\Support\BrandName::TITLES)
+                && \App\Support\BrandName::isOurs($siteName)) {
+                $homeTitle = \App\Support\BrandName::homeTitle(Locale::current());
+            }
             $title = TitleTemplate::render(
                 $homeTitle !== '' ? $homeTitle : ($rawTitle !== '' ? $rawTitle : $siteName),
                 $tokens,
@@ -615,12 +628,23 @@ class Seo
         $tokens ??= self::tokens($ctx, $sep, SeoSettings::firstFilled(
             $s['seo_site_name'] ?? null,
             $s['store_name'] ?? null,
-            (string) config('app.name'),
+            \App\Support\BrandName::appName(),
             'K-Beauty Bliss'
         ));
 
+        /*
+         * The home page's own sentence naming the brand once, when the owner
+         * has typed no home description (Lane BR, same switch as the title).
+         * It outranks the sitewide default description on the home page only:
+         * that one is written for every page, this one is the brand's.
+         */
+        $brandHome = null;
+        if (($ctx['type'] ?? null) === 'home' && \App\Support\BrandName::on($s, \App\Support\BrandName::TITLES)
+            && \App\Support\BrandName::isOurs((string) ($tokens['sitename'] ?? ''))) {
+            $brandHome = \App\Support\BrandName::homeDescription(Locale::current());
+        }
         $desc = $ctx['description']
-            ?? ((($ctx['type'] ?? null) === 'home') ? ($s['seo_home_description'] ?? null) : null)
+            ?? ((($ctx['type'] ?? null) === 'home') ? ($s['seo_home_description'] ?? $brandHome) : null)
             ?? ($s['seo_default_description'] ?? null)
             ?? '';
         $desc = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) $desc)));
@@ -1078,7 +1102,7 @@ class Seo
         $siteName = SeoSettings::firstFilled(
             $s['seo_site_name'] ?? null,
             $s['store_name'] ?? null,
-            (string) config('app.name'),
+            \App\Support\BrandName::appName(),
             'K-Beauty Bliss'
         );
         $base = rtrim(SeoSettings::firstFilled($s['site_url'] ?? null, (string) config('app.url')), '/');
@@ -1258,6 +1282,19 @@ class Seo
             '@type' => SeoSettings::from($s, 'org_type'),
             'name' => SeoSettings::from($s, 'org_name', $siteName),
         ];
+        /*
+         * alternateName — the spellings a shopper types for THIS shop
+         * ("kbeauty bliss", "k beauty bliss", "kbeautybliss"). Google's site
+         * name system reads it from the WebSite node and Knowledge Graph from
+         * this one, so a search for any of them resolves to K-Beauty Bliss and
+         * not to whoever ranks for the generic word. Only when the node is
+         * named K-Beauty Bliss, and behind Store → SEO Keywords → Brand →
+         * "Brand alternate names". Lane BR.
+         */
+        $kbbAlt = \App\Support\BrandName::on($s, \App\Support\BrandName::ALTERNATES_KEY);
+        if ($kbbAlt && ($alt = \App\Support\BrandName::alternatesFor((string) $org['name'])) !== []) {
+            $org['alternateName'] = $alt;
+        }
         if ($base) $org['url'] = $base;
         // Absolute for the same reason og:image is: Google rejects a relative
         // logo on an Organization outright.
@@ -1322,7 +1359,9 @@ class Seo
         if ($base) {
             $nodes[] = [
                 '@context' => 'https://schema.org', '@type' => 'WebSite',
-                'name' => $siteName, 'url' => $base,
+                'name' => $siteName,
+            ] + ($kbbAlt && ($alt = \App\Support\BrandName::alternatesFor($siteName)) !== [] ? ['alternateName' => $alt] : []) + [
+                'url' => $base,
                 /*
                  * THE SITELINKS SEARCHBOX HAS TO SEARCH THIS SHOP.
                  *

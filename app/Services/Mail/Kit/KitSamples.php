@@ -133,7 +133,7 @@ final class KitSamples
     private static function invite(\Closure $url): Mailable
     {
         $current = app(InviteTemplate::class)->current();
-        $shop = (string) (app(SettingsService::class)->get('store_name', '') ?: config('app.name', 'K Beauty Bliss'));
+        $shop = (string) (app(SettingsService::class)->get('store_name', '') ?: \App\Support\BrandName::appName());
         $link = $url('/account/invite/preview/');
         $values = ['first_name' => 'Aisha', 'name' => 'Aisha Khan', 'email' => 'aisha@example.com', 'shop_name' => $shop,
             'set_password_link' => $link, 'link_expires' => now()->addDays((int) ($current['expiry_days'] ?? 7))->format('j F Y')];

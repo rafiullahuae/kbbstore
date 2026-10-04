@@ -148,7 +148,11 @@ it('moves nothing else on the node, and publishes no address it was not given', 
 
     $node = soOrgNode();
 
-    expect(array_keys($node))->toBe(['@context', '@type', 'name', 'url']);
+    // ▲ ADVANCED BY LANE BR (4 October): `alternateName` — the spellings a
+    // shopper types for K-Beauty Bliss, which the owner asked for (Store → SEO
+    // Keywords → Brand name → "Brand alternate names" takes it off). Still no
+    // address, phone, geo or hours.
+    expect(array_keys($node))->toBe(['@context', '@type', 'name', 'alternateName', 'url']);
 
     foreach (['address', 'telephone', 'geo', 'openingHoursSpecification'] as $absent) {
         expect(array_key_exists($absent, $node))->toBeFalse();

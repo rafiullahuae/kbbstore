@@ -43,6 +43,6 @@ trait BrandedSubject
     {
         $name = trim((string) ($this->brand['storeName'] ?? ''));
 
-        return $name !== '' ? $name : (string) config('app.name', 'K Beauty Bliss');
+        return $name !== '' ? $name : \App\Support\BrandName::appName();
     }
 }

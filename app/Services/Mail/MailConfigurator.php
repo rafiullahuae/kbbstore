@@ -89,7 +89,7 @@ class MailConfigurator
         if ($from !== '') {
             config([
                 'mail.from.address' => $from,
-                'mail.from.name' => $this->settings->get('mail_from_name') ?: config('app.name'),
+                'mail.from.name' => $this->settings->get('mail_from_name') ?: \App\Support\BrandName::appName(),
             ]);
         }
 
@@ -124,7 +124,7 @@ class MailConfigurator
                     // The From name, because it is the same shop answering. A
                     // second name box would be a second thing to keep in step
                     // with the one the customer already sees as the sender.
-                    'name' => $this->settings->get('mail_from_name') ?: config('app.name'),
+                    'name' => $this->settings->get('mail_from_name') ?: \App\Support\BrandName::appName(),
                 ],
             ]);
         }
