@@ -24457,6 +24457,16 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
      that says so. --}}
 @include('admin.partials.page-editor-screen')
 
+{{-- LANE RL · Platform → Users & Roles: Members and Roles, editable roles
+     (plan row 53). Rebinds window.renderUsers, the way the line above
+     rebinds renderUserPages; the sidebar row, TITLES entry and go() dispatch
+     entry for 'users' already exist, so this one line is the whole change. --}}
+@include('admin.partials.admin-roles-screen')
+
+{{-- LANE RL · Edit presence: "X is editing this product" and Take over, on
+     every record editor (one fetch hook; App\Support\EditPresence is the guard). --}}
+@include('admin.partials.edit-presence')
+
 {{-- LANE IG · Content → Instagram.
 
      The grid of our own recent posts, the profile box, five layouts, and the

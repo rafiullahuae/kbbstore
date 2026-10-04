@@ -1018,6 +1018,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         Route::post('/users',                [AdminController::class, 'createUser']);
         Route::put('/users/{id}',            [AdminController::class, 'updateUser']);
         Route::delete('/users/{id}',         [AdminController::class, 'deleteUser']);
+        require __DIR__.'/admin-roles.php';   // Platform → Users & Roles → Roles / Members (Lane RL)
         Route::get('/settings',              [AdminController::class, 'settings']);
         Route::put('/settings',              [AdminController::class, 'updateSettings']);
         Route::get('/reviews',               [AdminController::class, 'reviews']);
