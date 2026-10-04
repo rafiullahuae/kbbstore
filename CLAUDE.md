@@ -218,6 +218,12 @@ back and this is red" — is the shortest way to prove a test asserts anything.
 of it is blocked, finish everything else and say exactly what is left and why.
 `docs/LANE-BRIEFS.md` carries the current assignments.
 
+**8. Smart, not expensive.** The owner, 4 October: "work smart without
+assumptions, and use minimal tokens whenever possible. but the code i need super
+light, secure, optimized and bugs free." Read the code before deciding anything
+about it; grep for the line you need instead of reading a 3,000-line file; keep
+reports short. Spend on the code, not on the conversation.
+
 ## Landmines, each one already paid for
 
 - **Packages 2.60.102–.106 were withdrawn** for being built against a stale
