@@ -175,11 +175,16 @@
      * render — once by the <link rel="preload"> above the markup and once by
      * its own slide — before counting a set where the owner has picked the
      * same photograph on two slides.
+     *
+     * (Lane PF2) bannerSrcsetFor() and not detailSrcsetFor(): the same list
+     * plus the 1280/1440/1600 banner copies that are on disk, so a laptop is
+     * no longer handed the 1920 original because the next copy down was 800.
+     * Byte-identical while those copies do not exist.
      */
     $bsSizes = ImageVariants::bannerSliderSizesAttribute();
     $bsSrcsets = [];
     $bsSrcsetFor = static function (string $image) use (&$bsSrcsets): string {
-        return $bsSrcsets[$image] ??= ImageVariants::detailSrcsetFor(ImageVariants::rootRelative($image));
+        return $bsSrcsets[$image] ??= ImageVariants::bannerSrcsetFor(ImageVariants::rootRelative($image));
     };
 
     /*

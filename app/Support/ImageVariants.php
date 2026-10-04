@@ -172,6 +172,54 @@ final class ImageVariants
      */
     public const WIDTHS = [200, 400, 800];
 
+    /**
+     * THE BANNER TIER: widths only a full-width banner picture is copied at.
+     *                                                               (Lane PF2)
+     *
+     * ── THE DEFECT ──────────────────────────────────────────────────────────
+     *
+     * The homepage banner is the full width of the screen (measured in
+     * Chromium: a 1280 frame at 1280, 1440 at 1440, 1920 at 1920), and its
+     * srcset went 200w, 400w, 800w and then the 1920w ORIGINAL. A laptop needs
+     * 1280 or 1440 device pixels, 800 is too few, so every desktop downloaded
+     * the whole original — Lighthouse's "properly size images" put the waste
+     * at ~189 KiB on the homepage, on the LCP element.
+     *
+     * ── WHY THESE THREE ─────────────────────────────────────────────────────
+     *
+     * Chosen off the slot widths at device-pixel-ratio 1, since at ratio 2
+     * every desktop slot (2560, 2880, 3840) is wider than a 1920 original and
+     * nothing smaller can be honest there:
+     *
+     *   1280   the 1280 laptop, exactly; also a 390 phone at ratio 3 (1170)
+     *   1440   the 1440 screen, exactly; also the 1366 laptop
+     *   1600   1536 and 1600 screens (a 1920 panel at Windows' 125%)
+     *
+     * A 1920 screen at ratio 1 takes the original, which is what it needs.
+     *
+     * ── WHY A SEPARATE LIST AND NOT THREE MORE ENTRIES IN WIDTHS ────────────
+     *
+     * WIDTHS is every product photograph in the shop, and isComplete() asks
+     * for all of it: three more entries there would put the whole catalogue
+     * back in Media Library → Image Sizes' backlog, for a width no tile can
+     * ask for (the widest tile is 399 CSS pixels). These are written only for
+     * a picture a banner shows, under the same `img-cache/<width>/` mirror, by
+     * the same encoder, and offered by the same filesystem test: a width with
+     * no file on disk is not in the srcset, so a shop with no GD, or before
+     * the copies exist, renders exactly the markup it rendered before.
+     *
+     * isComplete() does NOT look at these, on purpose — see bannerSrcsetFor()
+     * for how they come to exist without anybody pressing anything.
+     */
+    public const WIDE_WIDTHS = [1280, 1440, 1600];
+
+    /**
+     * Held off in the test suite (tests/Pest.php), so a request that renders a
+     * wide banner fixture does not leave copies behind for the next test's
+     * srcset to find. The tests that are about the wide copies release it.
+     */
+    public static bool $holdWide = false;
+
     /** The web-root directory the copies live under. */
     public const DIR = 'img-cache';
 
@@ -294,6 +342,110 @@ final class ImageVariants
      */
     public static function detailSrcsetFor(string $image): string
     {
+        return self::srcsetWithOriginal($image, self::WIDTHS);
+    }
+
+    /**
+     * THE BANNER'S srcset: detailSrcsetFor() plus the WIDE_WIDTHS copies that
+     * are on disk, and — when one the original is wide enough for is not —
+     * those copies are made AFTER the response.                   (Lane PF2)
+     *
+     * ── THE MARKUP IS STILL BUILT FROM THE DISK, AND ONLY FROM IT ───────────
+     *
+     * A wide copy that is not there is not named. With none of them on disk
+     * this returns detailSrcsetFor()'s string byte for byte, and with no GD,
+     * no variants at all or an unreadable original it returns '' exactly as
+     * that method does. So the page is never worse than it was, and never
+     * names a file that could 404.
+     *
+     * ── HOW THE COPIES COME TO EXIST, WITH NOBODY PRESSING ANYTHING ─────────
+     *
+     * The class header says copies are made on the way in, not on the way
+     * out, because a decode in front of a shopper is too dear. That still
+     * holds: nothing here decodes inside the request. A missing copy is handed
+     * to `defer()` — after the response has been sent (fastcgi_finish_request
+     * on the live PHP-FPM), named per picture, and behind a cache lock so a
+     * burst of homepage views costs ONE encode. It is ShareImage's pattern,
+     * for the same reason: a shop has three to five banner pictures, not a
+     * catalogue, so the first homepage view after this ships makes them and
+     * the second one offers them. Measured: ~180 ms of encode for a 1920 x 800
+     * JPEG into all three widths, none of which a shopper waits for.
+     *
+     * The original's width is already in hand — reading it is what decides
+     * whether the original is listed at all — so "is a copy missing?" costs
+     * no extra file read: only widths narrower than the original are wanted,
+     * because generate() never upscales.
+     */
+    public static function bannerSrcsetFor(string $image): string
+    {
+        $originalWidth = 0;
+        $srcset = self::srcsetWithOriginal($image, array_merge(self::WIDTHS, self::WIDE_WIDTHS), $originalWidth, $present);
+
+        if ($srcset === '' || $originalWidth < 1) {
+            return $srcset;
+        }
+
+        foreach (self::WIDE_WIDTHS as $width) {
+            if ($originalWidth > $width && ! in_array($width, $present, true)) {
+                self::wideAfterResponse($image);
+
+                break;
+            }
+        }
+
+        return $srcset;
+    }
+
+    /**
+     * Schedule the WIDE_WIDTHS copies of one picture for after the response,
+     * at most once per lock window across every PHP process on the box.
+     */
+    public static function wideAfterResponse(string $image): void
+    {
+        if (self::$holdWide || ! self::available()) {
+            return;
+        }
+
+        try {
+            if (! \Illuminate\Support\Facades\Cache::add('kbb.img-wide.'.sha1($image), 1, 600)) {
+                return;
+            }
+
+            defer(static function () use ($image): void {
+                try {
+                    self::generateWide($image);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }, 'kbb-img-wide-'.sha1($image));
+        } catch (\Throwable $e) {
+            // A cache that cannot take the lock is a page without the wide
+            // copies this time, which is the page as it was. Never a 500.
+            report($e);
+        }
+    }
+
+    /**
+     * Make the missing WIDE_WIDTHS copies of one picture. Same contract as
+     * generate(): idempotent, never upscales, one decode for every width.
+     *
+     * @return array{made: int, skipped: int, reason: ?string}
+     */
+    public static function generateWide(string $image): array
+    {
+        return self::generateAt($image, self::WIDE_WIDTHS);
+    }
+
+    /**
+     * detailSrcsetFor()'s body, over a given list of widths.
+     *
+     * @param  list<int>  $widths  smallest first
+     * @param  int  $originalWidth  set to the original's width when it was read
+     * @param  list<int>|null  $present  set to the widths found on disk
+     */
+    private static function srcsetWithOriginal(string $image, array $widths, int &$originalWidth = 0, ?array &$present = null): string
+    {
+        $present = [];
         $parts = self::split($image);
 
         if ($parts === null) {
@@ -313,10 +465,11 @@ final class ImageVariants
         $candidates = [];
         $widest = 0;
 
-        foreach (self::WIDTHS as $width) {
+        foreach ($widths as $width) {
             if (is_file(public_path(self::DIR.'/'.$width.'/'.$fsRel))) {
                 $candidates[] = $prefix.'/'.self::DIR.'/'.$width.'/'.$rel.' '.$width.'w';
                 $widest = $width;
+                $present[] = $width;
             }
         }
 
@@ -1052,6 +1205,18 @@ final class ImageVariants
      */
     public static function generate(string $image): array
     {
+        return self::generateAt($image, self::WIDTHS);
+    }
+
+    /**
+     * generate()'s body, over a given list of widths (WIDTHS, or the banner
+     * tier). Every promise above holds for both lists.
+     *
+     * @param  list<int>  $widths
+     * @return array{made: int, skipped: int, reason: ?string}
+     */
+    private static function generateAt(string $image, array $widths): array
+    {
         if (! self::available()) {
             return ['made' => 0, 'skipped' => 0, 'reason' => 'no image library'];
         }
@@ -1085,7 +1250,7 @@ final class ImageVariants
         $made = $skipped = 0;
         $wanted = [];
 
-        foreach (self::WIDTHS as $width) {
+        foreach ($widths as $width) {
             // Never upscale. A 300px original has no 400px version that is not
             // a lie about how much detail is in it, and a srcset candidate
             // whose width descriptor overstates the pixels behind it is how a
@@ -1485,7 +1650,10 @@ final class ImageVariants
          */
         $roots = [];
 
-        foreach (self::WIDTHS as $width) {
+        // (Lane PF2) The banner tier lives under the same mirror and goes with
+        // its original for the same reason: a replaced banner must not keep
+        // serving the old picture to every laptop.
+        foreach (array_merge(self::WIDTHS, self::WIDE_WIDTHS) as $width) {
             $roots[] = self::DIR.'/'.$width;
         }
 

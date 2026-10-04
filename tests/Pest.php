@@ -77,6 +77,16 @@ pest()->extend(Tests\TestCase::class)
         @touch(\App\Services\Mail\OrderReminderTick::markerPath());
 
         /*
+         * (Lane PF2) And the banner tier. A homepage request that renders a
+         * banner wider than 1280 schedules its 1280/1440/1600 copies after the
+         * response, into the REAL public/img-cache, and a fixture that is not
+         * forget()-ed would leave them there for the next test's srcset to
+         * find -- a string pinned in one test changing because another ran
+         * first. Held off here; WideBannerSrcsetTest releases it.
+         */
+        \App\Support\ImageVariants::$holdWide = true;
+
+        /*
          * And the third thing that outlives a test: PHP's own execution clock.
          *
          * App\Http\Controllers\Admin\ImportApiController::step() calls

@@ -55,8 +55,9 @@
     $biDesk = $biCard->naturalSize();
     $biPhone = $biCard->phoneNaturalSize();
     $biHasPhone = $biCard->hasPhonePicture();
-    $biSrcset = ImageVariants::detailSrcsetFor(ImageVariants::rootRelative((string) $biCard->image));
-    $biPhoneSrcset = $biHasPhone ? ImageVariants::detailSrcsetFor(ImageVariants::rootRelative((string) $biCard->image_m)) : '';
+    // (Lane PF2) The banner tier: the slider's own srcset method, for the slider's reason.
+    $biSrcset = ImageVariants::bannerSrcsetFor(ImageVariants::rootRelative((string) $biCard->image));
+    $biPhoneSrcset = $biHasPhone ? ImageVariants::bannerSrcsetFor(ImageVariants::rootRelative((string) $biCard->image_m)) : '';
     $biBgMode = $set->bgMode();
     $biBgVars = Banners::sectionVariables($set);
     $biVars = Banners::singleVariables($set);
