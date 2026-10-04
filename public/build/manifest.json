@@ -45,7 +45,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb.css": {
-    "file": "assets/kbb-CG1kXMPg.css",
+    "file": "assets/kbb-CHztCJaG.css",
     "src": "resources/css/kbb/kbb.css",
     "isEntry": true
   },
@@ -81,7 +81,7 @@
     "isDynamicEntry": true
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-DdUcJADX.js",
+    "file": "assets/app-B0N53zep.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,

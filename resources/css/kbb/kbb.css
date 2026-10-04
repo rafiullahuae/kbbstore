@@ -1077,6 +1077,18 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
 .kbb-home .hs-aboutin .hs-head{margin-bottom:20px}
 .kbb-home .hs-aboutin p{margin:0 0 14px;color:var(--ink-2);font-size:15.5px;line-height:1.7}
 .kbb-home .hs-aboutin p:last-child{margin-bottom:0}
+/* Read more (Lane PF) — the product description's toggle (kbb-product.css
+   `.dcontent.clamp` + `.readmore`, tabs.js toggleReadMore()) on the homepage,
+   which does not load kbb-product.css. The fade is a MASK rather than the
+   product page's white overlay, so it fades into whichever band the owner
+   gives the section. Heights are --hs-ab-cl-d/-m from Appearance → Homepage
+   content → About us; the whole text stays in the page. */
+.kbb-home .hs-abtext{position:relative}
+.kbb-home .hs-abtext.clamp{max-height:var(--hs-ab-cl-d,140px);overflow:hidden;
+  -webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 64px),transparent);mask-image:linear-gradient(180deg,#000 calc(100% - 64px),transparent)}
+.kbb-home .hs-abmore{margin-top:11px;padding:6px 4px;color:var(--pink-deep);font-weight:600;font-size:13px;background:none;border:0;cursor:pointer}
+.kbb-home .hs-abmore:hover{text-decoration:underline}
+.kbb-home .hs-abmore:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px;border-radius:6px}
 
 @media (hover:hover){
   .kbb-home .hs-brand:hover,.kbb-home .hs-post:hover{transform:translateY(-3px);box-shadow:0 18px 36px -22px rgba(193,62,99,.45)}
@@ -1102,9 +1114,11 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
   .kbb-home .hs-eyebrow{font-size:10.5px;margin-bottom:7px}
   .kbb-home .hs-rail .hs-grid>*{grid-template-columns:repeat(var(--hs-cols-m),minmax(0,1fr));gap:12px}
   .kbb-home .hs-brandlist{grid-template-columns:repeat(var(--hs-cols-m),minmax(0,1fr));gap:10px}
-  .kbb-home .hs-brand{display:grid;place-items:center;height:74px;padding:10px 14px;border-radius:14px;border:1px solid #F1E4E9;box-shadow:none}
+  /* Height: Appearance → Homepage content → Brands → Tile height · phone
+     (Lane PF; 74px before, 54px as the owner asked). */
+  .kbb-home .hs-brand{display:grid;place-items:center;height:var(--hs-br-th-m,54px);padding:6px 12px;border-radius:14px;border:1px solid #F1E4E9;box-shadow:none}
   .kbb-home .hs-bph{display:none}
-  .kbb-home .hs-brand.has-logo .hs-blogo{display:block;width:auto;height:auto;max-width:100%;max-height:52px;object-fit:contain}
+  .kbb-home .hs-brand.has-logo .hs-blogo{display:block;width:auto;height:auto;max-width:100%;max-height:calc(var(--hs-br-th-m,54px) - 14px);object-fit:contain}
   .kbb-home .hs-brand.has-logo .hs-blb{display:none}
   .kbb-home .hs-blb{position:static;inset:auto;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0;border-radius:0}
   .kbb-home .hs-blb b{font-size:16px;font-weight:600;letter-spacing:.02em;white-space:normal;line-height:1.2}
@@ -1113,6 +1127,7 @@ body{margin:0;color:var(--ink);font:400 14px/1.6 Outfit,system-ui,sans-serif;-we
   .kbb-home .hs-pcb{padding:14px 16px 18px}
   .kbb-home .hs-feat{grid-template-columns:minmax(0,1fr);gap:34px}
   .kbb-home .hs-aboutin p{font-size:14.5px}
+  .kbb-home .hs-abtext.clamp{max-height:var(--hs-ab-cl-m,200px)}
   .kbb-home .hs-mc-2 .hs-grid>*>:nth-child(n+3),.kbb-home .hs-mc-2 .hs-brandlist>:nth-child(n+3),.kbb-home .hs-mc-3 .hs-grid>*>:nth-child(n+4),.kbb-home .hs-mc-3 .hs-brandlist>:nth-child(n+4),.kbb-home .hs-mc-4 .hs-grid>*>:nth-child(n+5),.kbb-home .hs-mc-4 .hs-brandlist>:nth-child(n+5),.kbb-home .hs-mc-5 .hs-grid>*>:nth-child(n+6),.kbb-home .hs-mc-5 .hs-brandlist>:nth-child(n+6),.kbb-home .hs-mc-6 .hs-grid>*>:nth-child(n+7),.kbb-home .hs-mc-6 .hs-brandlist>:nth-child(n+7),.kbb-home .hs-mc-7 .hs-grid>*>:nth-child(n+8),.kbb-home .hs-mc-7 .hs-brandlist>:nth-child(n+8),.kbb-home .hs-mc-8 .hs-grid>*>:nth-child(n+9),.kbb-home .hs-mc-8 .hs-brandlist>:nth-child(n+9),.kbb-home .hs-mc-9 .hs-grid>*>:nth-child(n+10),.kbb-home .hs-mc-9 .hs-brandlist>:nth-child(n+10),.kbb-home .hs-mc-10 .hs-grid>*>:nth-child(n+11),.kbb-home .hs-mc-10 .hs-brandlist>:nth-child(n+11),.kbb-home .hs-mc-12 .hs-grid>*>:nth-child(n+13),.kbb-home .hs-mc-12 .hs-brandlist>:nth-child(n+13),.kbb-home .hs-mc-14 .hs-grid>*>:nth-child(n+15),.kbb-home .hs-mc-14 .hs-brandlist>:nth-child(n+15),.kbb-home .hs-mc-15 .hs-grid>*>:nth-child(n+16),.kbb-home .hs-mc-15 .hs-brandlist>:nth-child(n+16),.kbb-home .hs-mc-16 .hs-grid>*>:nth-child(n+17),.kbb-home .hs-mc-16 .hs-brandlist>:nth-child(n+17),.kbb-home .hs-mc-18 .hs-grid>*>:nth-child(n+19),.kbb-home .hs-mc-18 .hs-brandlist>:nth-child(n+19),.kbb-home .hs-mc-20 .hs-grid>*>:nth-child(n+21),.kbb-home .hs-mc-20 .hs-brandlist>:nth-child(n+21),.kbb-home .hs-mc-21 .hs-grid>*>:nth-child(n+22),.kbb-home .hs-mc-21 .hs-brandlist>:nth-child(n+22),.kbb-home .hs-mc-24 .hs-grid>*>:nth-child(n+25),.kbb-home .hs-mc-24 .hs-brandlist>:nth-child(n+25){display:none}
   .kbb-home .hs-blog.hs-mc-1 .hs-posts>:nth-child(n+2),.kbb-home .hs-blog.hs-mc-2 .hs-posts>:nth-child(n+3){display:none}
 }
@@ -4383,7 +4398,7 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .kbb-home .spt-grid{display:grid;grid-template-columns:repeat(var(--spt-cols-d,4),minmax(0,1fr));gap:28px 22px;list-style:none;margin:0;padding:8px 6px 10px}
 .kbb-home .spt-empty{text-align:center;color:var(--ink-2);padding:30px 0}
 @media (max-width:900px){
-  .kbb-home .sec.spt{--spt-gap:12px;--spt-per:var(--spt-per-m,1.5);padding-top:var(--spt-pt-m,8px);padding-bottom:var(--spt-pb-m,8px)}
+  .kbb-home .sec.spt{--spt-gap:12px;--spt-per:var(--spt-per-m,2.3);padding-top:var(--spt-pt-m,8px);padding-bottom:var(--spt-pb-m,8px)}
   .kbb-home .spt .spt-head{margin-bottom:var(--spt-hg-m,16px)}
   .kbb-home .spt-page-sec .spt-head p{font-size:13.5px}
   .kbb-home .spt-foot{margin-top:var(--spt-bg-m,16px)}
@@ -4441,6 +4456,41 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 @media (max-width:900px){
   .kbb-home :is(.hs-head,.bndl-head,.spt-head) h2{font-size:var(--hs-h2-m)}
   .kbb-home :is(.hs-head,.bndl-head,.spt:not(.spt-page-sec) .spt-head) p{font-size:var(--hs-sub-m);margin-top:8px}
+}
+
+/* ══ PHONE CAROUSELS: THE NEXT CARD PEEKS AT THE SCREEN EDGE ═══ Lane PF ══
+   The owner, 4 October: "show 2.2, 2.3 2.5 etc products … so the user will
+   know that there's more products in scroll … keep [the arrows] off in
+   mobile". Big savings bundles and the homepage Spotted carousel, phones only.
+
+   `.bndl-peek-m` / `.spt-peek-m` are printed by HomeBundles / SpottedSettings
+   for a FRACTIONAL cards-in-view (an integer keeps the old box, cut at the
+   gutter). The track then runs through the wrap's inline-end padding to its
+   edge — the SCREEN edge under 680px, where the wrap is full width — and
+   carries the same padding back as its own, so the last card still stops a
+   gutter short. The first card stays on the gutter: nothing moves at the
+   start, so scroll-snap still lands each card where the first one was.
+
+   One card is   (visible width - gaps before the part card) / cards in view
+   where the visible width is the track's content box plus the bleed, and
+   "gaps before the part card" is ceil(cards in view) - 1: at 2.3 that is two
+   whole cards, two gaps and three tenths of a card, to the pixel. round() is
+   CSS (Chrome 125, Safari 15.4, Firefox 118); the declaration before it is the
+   old formula for a browser without it. No script measures anything; the
+   arrows and the swipe are still ymal.js. */
+@media (max-width:900px){
+  .kbb-home{--hs-peek-bleed:clamp(18px,2vw,28px)}
+  .kbb-home .bndl.bndl-car-m.bndl-peek-m .bndl-track{margin-inline-end:calc(-1 * var(--hs-peek-bleed));padding-inline-end:var(--hs-peek-bleed);
+    grid-auto-columns:calc((100% + var(--hs-peek-bleed) - (var(--bndl-per-m) - 1) * var(--kbb-gap)) / var(--bndl-per-m));
+    grid-auto-columns:calc((100% + var(--hs-peek-bleed) - (round(up, var(--bndl-per-m), 1) - 1) * var(--kbb-gap)) / var(--bndl-per-m))}
+  .kbb-home .sec.spt.spt-peek-m .spt-track{margin-inline-end:calc(-1 * var(--hs-peek-bleed));padding-inline-end:calc(var(--hs-peek-bleed) + 6px);
+    grid-auto-columns:calc((100% + var(--hs-peek-bleed) + 6px - (var(--spt-per) - 1) * var(--spt-gap)) / var(--spt-per));
+    grid-auto-columns:calc((100% + var(--hs-peek-bleed) + 6px - (round(up, var(--spt-per), 1) - 1) * var(--spt-gap)) / var(--spt-per))}
+  /* One card per swipe, however hard the flick. */
+  .kbb-home .bndl.bndl-car-m .bndl-track>*,.kbb-home .sec.spt .spt-track>.spt-cell{scroll-snap-stop:always}
+}
+@media (max-width:680px){
+  .kbb-home{--hs-peek-bleed:12px}
 }
 
 /* ══ THE SITE FOOTER — the approved design (docs/home-preview/footer-final.html) ══

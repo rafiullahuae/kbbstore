@@ -54,12 +54,18 @@ final class HomeBundles
         $btnD = $pick('home_hb_btn_d', ['top', 'bottom', 'off'], 'top');
         $btnM = $pick('home_hb_btn_m', ['top', 'bottom', 'off'], 'bottom');
 
+        $perM = $pick('home_hb_per_m', ['1', '1.5', '2', '2.2', '2.3', '2.5'], '2.3');
+
         $classes = [
             'bndl',
             $layoutD === 'carousel' ? 'bndl-car-d' : 'bndl-grid-d',
             $layoutM === 'carousel' ? 'bndl-car-m' : 'bndl-grid-m',
+            // (Lane PF) A fractional count on a phone carousel runs the track
+            // to the screen edge, so the part card is cut by the screen and
+            // not by the gutter — "so the user will know that there's more".
+            $layoutM === 'carousel' && ! ctype_digit($perM) ? 'bndl-peek-m' : '',
             ($c['home_hb_arrows_d'] ?? true) ? '' : 'bndl-noarr-d',
-            ($c['home_hb_arrows_m'] ?? true) ? '' : 'bndl-noarr-m',
+            ($c['home_hb_arrows_m'] ?? false) ? '' : 'bndl-noarr-m',
             'bndl-'.$pick('home_hb_align', ['center', 'start'], 'center'),
             'bndl-btn-d-'.$btnD,
             'bndl-btn-m-'.$btnM,
@@ -67,7 +73,7 @@ final class HomeBundles
 
         $style = implode(';', [
             '--bndl-per-d:'.$pick('home_hb_per_d', ['3', '4', '5', '6'], '4'),
-            '--bndl-per-m:'.$pick('home_hb_per_m', ['1', '1.5', '2', '2.5'], '2'),
+            '--bndl-per-m:'.$perM,
             '--bndl-pad-d:'.$pick('home_hb_pad_d', $px, '8').'px',
             '--bndl-pad-m:'.$pick('home_hb_pad_m', $px, '8').'px',
             '--bndl-hg-d:'.$pick('home_hb_head_gap_d', $px, '24').'px',

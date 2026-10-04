@@ -77,7 +77,8 @@ it('renders nothing at all until a post is ticked for the homepage', function ()
     expect(trim(sptHome()))->toBe('');
 
     sptSave(['home_on' => true]);
-    expect(sptHome())->toContain('<section class="sec spt spt-lilac spt-tilt"');
+    // ▲ Lane PF: no phone arrows and a peeking 2.3 by default (owner, 4 Oct).
+    expect(sptHome())->toContain('<section class="sec spt spt-lilac spt-tilt spt-noarr-m spt-peek-m"');
 });
 
 it('draws only the ticked posts, in the owner\'s order, up to the number he chose', function () {
@@ -188,7 +189,8 @@ it('is a carousel on the shop\'s shared, measure-nothing script with a button to
         ->toContain('id="spt-track" data-ymal-track')
         ->toContain('<h2 id="spt-h">#KBeautyBliss — Seen on Instagram</h2>')
         ->toContain('class="bndl-all spt-all" href="/kbeautybliss-spotted/"')
-        ->toContain('style="--spt-per-d:5;--spt-per-m:1.5;');
+        // ▲ Lane PF: 2.3 on a phone, as the owner asked on 4 October.
+        ->toContain('style="--spt-per-d:5;--spt-per-m:2.3;');
 
     sptSave(['btn_on' => false]);
     expect(sptHome())->not->toContain('spt-all');
@@ -210,5 +212,5 @@ it('stores only a select\'s own options, so nothing typed reaches the style attr
     expect($s['style'])->toContain('--spt-per-d:5;')->toContain('--spt-pt-d:8px')->not->toContain('evil')
         ->and($s['auto'])->toBe(5)
         ->and($s['title'])->toBe('Our community')
-        ->and($s['classes'])->toBe('spt spt-tilt');
+        ->and($s['classes'])->toBe('spt spt-tilt spt-noarr-m spt-peek-m'); // ▲ Lane PF: the phone defaults
 });

@@ -32,6 +32,43 @@ function bringBackIntoView(el) {
     el.scrollIntoView({ block: 'nearest', behavior: still ? 'auto' : 'smooth' });
 }
 
+/**
+ * The Read more ↓ / Read less ↑ toggle. (Lane PF: shared, not copied.)
+ *
+ * The product description's own toggle, lifted out of initProductTabs() so
+ * the homepage About us can use the SAME one — the owner: "a read more faded
+ * functionality which we have on product page … need the same". `more` is the
+ * `.readmore` button; the text it opens is the element straight before it.
+ * Flips `clamp`/`open` on the text and aria-expanded on the button, and
+ * nothing else: the height and the fade are CSS, and nothing is measured.
+ * After "Read less", `root` is brought back into view as before.
+ */
+export function toggleReadMore(more, root) {
+    const content = more.previousElementSibling;
+    if (!content) return;
+    const open = content.classList.toggle('open');
+    content.classList.toggle('clamp', !open);
+    more.setAttribute('aria-expanded', open ? 'true' : 'false');
+    more.textContent = open
+        ? t('store.js.read_less', 'Read less ↑')
+        : t('store.product.read_more', 'Read more ↓');
+    if (!open) bringBackIntoView(root);
+}
+
+/**
+ * Every other `[data-readmore]` block on the page — the homepage About us
+ * (partials/home/hs-about). One listener per block; the product details keep
+ * theirs in initProductTabs().
+ */
+export function initReadMore() {
+    document.querySelectorAll('[data-readmore]').forEach((root) => {
+        root.addEventListener('click', (event) => {
+            const more = event.target.closest('.readmore');
+            if (more && root.contains(more)) toggleReadMore(more, root);
+        });
+    });
+}
+
 export function initProductTabs() {
     const root = document.getElementById('details');
     if (!root) return;
@@ -60,13 +97,7 @@ export function initProductTabs() {
 
         const more = event.target.closest('.readmore');
         if (more) {
-            const content = more.previousElementSibling;
-            const open = content.classList.toggle('open');
-            content.classList.toggle('clamp', !open);
-            more.textContent = open
-                ? t('store.js.read_less', 'Read less ↑')
-                : t('store.product.read_more', 'Read more ↓');
-            if (!open) bringBackIntoView(root);
+            toggleReadMore(more, root);
             return;
         }
 

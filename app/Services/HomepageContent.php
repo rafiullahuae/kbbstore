@@ -220,10 +220,13 @@ final class HomepageContent
             'options' => ['carousel' => 'Carousel — swipe', 'grid' => 'Grid — all at once'], 'help' => ''],
         'home_hb_per_d' => ['type' => 'select', 'label' => 'Cards in view · laptop', 'default' => '4', 'store' => 'setting',
             'options' => ['3' => '3', '4' => '4', '5' => '5', '6' => '6'], 'help' => 'How many sets fit across before the arrows take over.'],
-        'home_hb_per_m' => ['type' => 'select', 'label' => 'Cards in view · phone', 'default' => '2', 'store' => 'setting',
-            'options' => ['1' => '1', '1.5' => '1½ — the next one peeks', '2' => '2', '2.5' => '2½ — the next one peeks'], 'help' => ''],
+        /* (Lane PF) The owner, 4 October: "show 2.2, 2.3 2.5 etc products … so the
+           user will know that there's more products in scroll" and the phone
+           arrows "keep off in mobile". Both defaults moved AT HIS REQUEST. */
+        'home_hb_per_m' => ['type' => 'select', 'label' => 'Cards in view · phone', 'default' => '2.3', 'store' => 'setting',
+            'options' => ['1' => '1', '1.5' => '1½ — the next one peeks', '2' => '2', '2.2' => '2.2 — a sliver of the next one', '2.3' => '2.3 — the next one peeks (recommended)', '2.5' => '2½ — the next one peeks'], 'help' => 'A part-visible card at the screen edge tells a thumb there is more to swipe.'],
         'home_hb_arrows_d' => ['type' => 'bool', 'label' => 'Arrows · laptop', 'default' => true, 'store' => 'setting', 'help' => 'Round arrows at either side of the carousel.'],
-        'home_hb_arrows_m' => ['type' => 'bool', 'label' => 'Arrows · phone', 'default' => true, 'store' => 'setting', 'help' => 'Smaller arrows over the cards; a swipe always works too.'],
+        'home_hb_arrows_m' => ['type' => 'bool', 'label' => 'Arrows · phone', 'default' => false, 'store' => 'setting', 'help' => 'Off: the peeking card shows there is more, and a swipe moves it. On: smaller arrows over the cards.'],
         'home_hb_auto' => ['type' => 'select', 'label' => 'Move on its own', 'default' => '0', 'store' => 'setting',
             'options' => ['0' => 'Off', '3' => 'Every 3 seconds', '5' => 'Every 5 seconds', '7' => 'Every 7 seconds', '10' => 'Every 10 seconds'],
             'help' => 'Stops while the shopper hovers, touches or tabs into it, and never runs for a visitor who has asked for reduced motion.'],

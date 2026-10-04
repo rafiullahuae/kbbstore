@@ -76,11 +76,14 @@ final class SpottedSettings
         /* ── Carousel ─────────────────────────────────────────────────────── */
         'per_d' => ['type' => 'select', 'label' => 'Cards in view · laptop', 'default' => '5',
             'options' => ['3' => '3', '4' => '4', '5' => '5', '6' => '6'], 'help' => 'How many fit across before the arrows take over.'],
-        'per_m' => ['type' => 'select', 'label' => 'Cards in view · phone', 'default' => '1.5',
-            'options' => ['1' => '1', '1.5' => '1½ — the next one peeks', '2' => '2', '2.5' => '2½ — the next one peeks'],
-            'help' => 'A peeking card tells a thumb there is more to swipe.'],
+        /* (Lane PF) The owner, 4 October: 2.2 / 2.3 / 2.5 on a phone so a shopper
+           sees there is more, and the phone arrows off. Both defaults moved AT
+           HIS REQUEST; the old options stay. */
+        'per_m' => ['type' => 'select', 'label' => 'Cards in view · phone', 'default' => '2.3',
+            'options' => ['1' => '1', '1.5' => '1½ — the next one peeks', '2' => '2', '2.2' => '2.2 — a sliver of the next one', '2.3' => '2.3 — the next one peeks (recommended)', '2.5' => '2½ — the next one peeks'],
+            'help' => 'A part-visible card at the screen edge tells a thumb there is more to swipe.'],
         'arrows_d' => ['type' => 'bool', 'label' => 'Arrows · laptop', 'default' => true, 'help' => 'Round arrows at either side.'],
-        'arrows_m' => ['type' => 'bool', 'label' => 'Arrows · phone', 'default' => true, 'help' => 'Smaller arrows over the cards; a swipe always works too.'],
+        'arrows_m' => ['type' => 'bool', 'label' => 'Arrows · phone', 'default' => false, 'help' => 'Off: the peeking card shows there is more, and a swipe moves it. On: smaller arrows over the cards.'],
         'auto' => ['type' => 'select', 'label' => 'Move on its own', 'default' => '0',
             'options' => ['0' => 'Off', '3' => 'Every 3 seconds', '5' => 'Every 5 seconds', '7' => 'Every 7 seconds', '10' => 'Every 10 seconds'],
             'help' => 'Stops while the shopper hovers, touches or tabs into it, and never runs for a visitor who has asked for reduced motion.'],
@@ -204,12 +207,17 @@ final class SpottedSettings
     {
         $c = $this->all();
 
+        $perM = self::pick($c, 'per_m', ['1', '1.5', '2', '2.2', '2.3', '2.5'], '2.3');
+
         $classes = [
             'spt',
             self::pick($c, 'bg', ['lilac', 'plain'], 'lilac') === 'lilac' ? 'spt-lilac' : '',
             self::pick($c, 'tilt', ['tilt', 'straight'], 'tilt') === 'tilt' ? 'spt-tilt' : '',
             ($c['arrows_d'] ?? true) ? '' : 'spt-noarr-d',
-            ($c['arrows_m'] ?? true) ? '' : 'spt-noarr-m',
+            ($c['arrows_m'] ?? false) ? '' : 'spt-noarr-m',
+            // (Lane PF) A fractional count runs the phone track to the screen
+            // edge, so the part card is cut by the screen, not the gutter.
+            ctype_digit($perM) ? '' : 'spt-peek-m',
         ];
 
         $px = array_keys(self::PX);
@@ -217,7 +225,7 @@ final class SpottedSettings
 
         $style = implode(';', [
             '--spt-per-d:'.self::pick($c, 'per_d', ['3', '4', '5', '6'], '5'),
-            '--spt-per-m:'.self::pick($c, 'per_m', ['1', '1.5', '2', '2.5'], '1.5'),
+            '--spt-per-m:'.$perM,
             '--spt-pt-d:'.self::pick($c, 'pad_top_d', $px, '8').'px',
             '--spt-pt-m:'.self::pick($c, 'pad_top_m', $px, '8').'px',
             '--spt-pb-d:'.self::pick($c, 'pad_bot_d', $px, '8').'px',

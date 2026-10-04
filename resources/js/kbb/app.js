@@ -50,7 +50,7 @@ import { initCart } from './cart.js';
 import { initPdp, initGallery } from './pdp.js';
 import { initCheckout } from './checkout.js';
 import { initHome, initAccountPanel, initAccountPage, initReveal, initPasswordMeter } from './home.js';
-import { initProductTabs } from './tabs.js';
+import { initProductTabs, initReadMore } from './tabs.js';
 import { initShop } from './shop.js';
 import { initListingLoad } from './listing-load.js';
 import { initFbt } from './fbt.js';
@@ -80,6 +80,8 @@ import { initPress } from './press.js';
  * by NAME -- so the next report says which one, rather than "the menu is
  * broken" -- and the other twenty carry on. The order is unchanged.
  */
+// Lane PF: initReadMore, LAST, is the homepage About us's Read more — the
+// product description's toggle (tabs.js toggleReadMore), shared, not copied.
 const STEPS = [
     initOverlay,
     initToast,
@@ -106,6 +108,7 @@ const STEPS = [
     initAlsoLike,
     initAdminLayer,
     initPress,
+    initReadMore,
 ];
 
 const boot = () => {
