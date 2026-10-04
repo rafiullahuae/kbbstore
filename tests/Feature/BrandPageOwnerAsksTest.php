@@ -152,3 +152,15 @@ it('puts the three switches on their own tab, saved by the screen that owns the 
         ->and(SiteLayout::SCHEMA['brand_cta'][2])->toBeFalse()
         ->and(SiteLayout::SCHEMA['brand_popular'][2])->toBeFalse();
 });
+
+it('sends an old ?paged=2 address to page 1 for good, instead of a 404', function () {
+    /*
+     * Every product is on page 1 now, so /brands/x/?paged=2 has nothing on it.
+     * Crawlers and bookmarks hold those addresses; a 404 throws them away.
+     * MUTATION: drop the redirect in BrandController::show() and this is 404.
+     */
+    $brand = bpBrand();
+    bpProducts($brand, 30);
+
+    $this->get('/brands/glowtest/?paged=2')->assertStatus(301)->assertRedirect('/brands/glowtest/');
+});

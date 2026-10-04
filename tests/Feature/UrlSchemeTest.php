@@ -315,6 +315,11 @@ it('publishes the brand page as a brand url rather than a shop filter', function
     // U-05 is untouched: the filterable LISTING is still the query string, and
     // the landing page links onward to it.
     expect($this->brand->filterUrl())->toBe('/shop/?filter_brands=round-lab');
+    // 2.60.376: the link is the "Shop all" button, which ships off because the
+    // owner asked; with it on, it is still the U-05 listing.
+    app(\App\Services\SiteLayout::class)->save(['brand_cta' => true]);
+    \App\Models\Setting::flushMap();
+    \App\Services\SettingsService::forgetMemo();
     expect(str_contains($this->get('/brands/round-lab/')->getContent(), '/shop/?filter_brands=round-lab'))
         ->toBeTrue('the brand page no longer links on to its filterable listing');
 });

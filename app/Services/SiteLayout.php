@@ -227,23 +227,6 @@ class SiteLayout
             ['min' => self::BATCH_MIN, 'max' => self::BATCH_MAX, 'step' => 1, 'unit' => '']],
 
         /*
-         * THE BRAND PAGE. (2.60.376)
-         *
-         * The owner, 4 October: "for Brand Page, remove the Shop all button,
-         * and keep Name, along with description ... remove also popular right
-         * now, and view all. as the brand page visit will give full results
-         * without any pagination etc." He asked, so all three ship at what he
-         * asked for; each switch puts the old page back. Not CSS: isDefault()
-         * and css() skip them (BRAND_KEYS).
-         */
-        'brand_all' => ['bool', 'Show every product of the brand on one page', true,
-            'On: a brand page lists all of the brand\'s products at once, with no pages and no "load more" (up to '.self::BRAND_ALL_CAP.'; past that the arrows take over). Off: the brand page loads more the way "How more products load" says.'],
-        'brand_cta' => ['bool', 'Show the "Shop all" button under the brand name', false,
-            'Off, as you asked: the brand page shows the logo, the name and the description. On: the "Shop all <brand>" button comes back, linking to the shop filtered to this brand.'],
-        'brand_popular' => ['bool', 'Show "Popular right now" and "View all" above the products', false,
-            'Off, as you asked: the products start straight under the brand. On: the heading and the "View all" link come back.'],
-
-        /*
          * ── THE CATEGORY TITLE HEADER ───────────────────────────────── Lane PT ──
          *
          * The owner: "We have a banner image on each category on the old site.
@@ -523,6 +506,23 @@ class SiteLayout
         'cat_header_mb_desktop' => ['range', 'Space below · laptop', 26,
             '',
             ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
+
+        /*
+         * THE BRAND PAGE. (2.60.376)
+         *
+         * The owner, 4 October: "for Brand Page, remove the Shop all button,
+         * and keep Name, along with description ... remove also popular right
+         * now, and view all. as the brand page visit will give full results
+         * without any pagination etc." He asked, so all three ship at what he
+         * asked for; each switch puts the old page back. Not CSS: isDefault()
+         * and css() skip them (BRAND_KEYS).
+         */
+        'brand_all' => ['bool', 'Show every product of the brand on one page', true,
+            'On: a brand page lists all of the brand\'s products at once, with no pages and no "load more" (up to '.self::BRAND_ALL_CAP.'; past that the arrows take over). Off: the brand page loads more the way "How more products load" says.'],
+        'brand_cta' => ['bool', 'Show the "Shop all" button under the brand name', false,
+            'Off, as you asked: the brand page shows the logo, the name and the description. On: the "Shop all <brand>" button comes back, linking to the shop filtered to this brand.'],
+        'brand_popular' => ['bool', 'Show "Popular right now" and "View all" above the products', false,
+            'Off, as you asked: the products start straight under the brand. On: the heading and the "View all" link come back.'],
 
         /*
          * ── PRESS FEEDBACK ──────────────────────────────────────── Lane RD ──

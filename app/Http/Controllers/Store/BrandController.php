@@ -388,7 +388,7 @@ class BrandController extends Controller
      * page, the next one and › — every product still reachable, one page at
      * a time.
      */
-    public function show(string $slug): View|JsonResponse
+    public function show(string $slug): View|JsonResponse|RedirectResponse
     {
         $brand = Brand::query()->where('slug', $slug)->firstOrFail();
 
@@ -398,6 +398,17 @@ class BrandController extends Controller
         // the brand on one page" off (Appearance → Site layout → Brand page).
         $perPage = $layout->brandPerPage(self::PREVIEW_LIMIT);
         $page = \App\Support\Facets::page();
+
+        /*
+         * Every product is on page 1 now, so an old ?paged=N address -- in a
+         * crawler's index, a bookmark, a shared link -- goes there for good
+         * rather than to a 404. Only within BRAND_ALL_CAP: a brand bigger than
+         * that still has real later pages.
+         */
+        if ($page > 1 && $layout->get('brand_all')
+            && Product::query()->visible()->where('brand_id', $brand->id)->count() <= \App\Services\SiteLayout::BRAND_ALL_CAP) {
+            return redirect()->to(Url::to(UrlScheme::brand((string) $brand->slug)), 301);
+        }
 
         $products = Product::query()
             ->visible()

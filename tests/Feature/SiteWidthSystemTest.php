@@ -681,6 +681,10 @@ it('ships every setting at the value the page already had, except the ones the o
         // Lane RD: press feedback ships at C · Ripple, which the owner chose in
         // as many words -- "set C · Ripple by default, and give other as
         // options to set from backend". Not CSS on :root; an attribute on <html>.
+        // 2.60.376, the brand page, each as the owner asked.
+        'brand_all' => true,
+        'brand_cta' => false,
+        'brand_popular' => false,
         'press' => 'c',
     ];
 
