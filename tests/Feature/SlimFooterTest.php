@@ -185,7 +185,9 @@ it('hands the screen every field, grouped into the three tabs', function () {
     // (Lane HB) The site footer's three tabs come first: Appearance → Footer is
     // where the owner looks for the footer on every page. Their keys are all
     // `site_`, so the one payload still splits without ambiguity.
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['site', 'site_help', 'site_visit', 'pages', 'phone', 'layout', 'content', 'marks']);
+    // (Lane HF) Seven of them since 4 October: link columns, colours &
+    // effects, and a layout tab per device, still all before the slim bar's.
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['site', 'site_help', 'site_visit', 'site_cols', 'site_fx', 'site_d', 'site_m', 'pages', 'phone', 'layout', 'content', 'marks']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 

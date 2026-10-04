@@ -468,7 +468,29 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // FIRST in the slim-footer payload, as SlimFooterApiController now serves
     // them. The five slim-bar tabs after them are unchanged.
     // 608 with both: 592 + 4 (card spacing) + 12 (site footer).
-    expect($compared)->toBe(608, 'the number of controls drawn changed');
+    //
+    // 665 (Lane HF): + 57 site-footer controls, the owner on 4 October —
+    // "give control for complete footer, for desktop and mobile". Four tabs
+    // INSERTED after the three Site footer tabs and before the slim bar's, at
+    // the position SiteFooter::TABS puts them: "· link columns" (6), "· colours
+    // & effects" (9 new + `site_motion`, MOVED there from "· design", which is
+    // the one cut and the reason the design tab now holds one field), "· layout
+    // desktop" (21) and "· layout mobile" (21). Spliced into the fixture's
+    // slim-footer entry, not regenerated: every other screen's bytes are
+    // untouched. Changed leaves, all of them the word "green" or a phone rule
+    // that became a switch: the help strip tab's description ("The WhatsApp-
+    // green strip" → "The pink strip"), `site_help_on`'s label and help ("Show
+    // the green help strip" → "Show the help strip"), `site_help_sub`'s label
+    // and help (it said "(laptop only)"; phones now have their own switch) and
+    // `site_motion`'s help ("The green strip" → "The pink strip").
+    //
+    // 667 IN THE SAME LANE, a round later: the owner narrowed the colours to
+    // "only our pinkish, red and orange and grey". The strip drifts through
+    // four colours now, so "· colours & effects" gained `site_c_2` and
+    // `site_c_3`, inserted after `site_c_from` where TABS puts them; the
+    // defaults of `site_c_from` / `site_c_to` and the `site_name_tone` options
+    // moved with the brief (all in this lane's own, unshipped, controls).
+    expect($compared)->toBe(667, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

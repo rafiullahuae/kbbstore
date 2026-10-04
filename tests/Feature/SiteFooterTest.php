@@ -44,7 +44,7 @@ function kftSave(array $values): void
 
 function kftBlock(string $html): string
 {
-    return preg_match('#<footer class="kft[^"]*">.*?</footer>#s', $html, $m) ? $m[0] : '';
+    return preg_match('#<footer class="kft[^"]*"[^>]*>.*?</footer>#s', $html, $m) ? $m[0] : '';
 }
 
 it('ships the new footer on every page, with no word about returns anywhere in it', function () {
@@ -128,17 +128,19 @@ it('moves with CSS only, and never for a visitor who asked for reduced motion', 
         ->and($block)->toContain('@keyframes kft-drift{from{background-position:0% 50%}to{background-position:100% 50%}}')
         ->and($block)->toContain("@media (prefers-reduced-motion:reduce){\n  .kft-motion .kft-help,.kft-motion .kft-name{animation:none}")
         // The big name's size is its length, printed by the server: nothing measures it.
-        ->and($block)->toContain('font-size:min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14)))')
+        // (Lane HF) times the owner's size slider, 100 = the size that fits.
+        ->and($block)->toContain('font-size:calc(min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14))) * var(--kft-fn-d, 100) / 100)')
         // `footer.kft` out-specifies the old dark rule without editing it.
         ->and($css)->toContain('  footer{background:#241C20;color:#CDBFC6;padding:52px 0 26px}')
-        ->and($block)->toContain('footer.kft{background:#fff;')
+        ->and($block)->toContain('footer.kft{background:var(--kft-bg,#fff);')
         // Found on the preview: `.kft a{color:inherit}` (0,1,1) outranked
         // `.kft-bt-p{color:#063F37}` (0,1,0), and "Chat on WhatsApp" was white
         // on a white pill — an empty button. No colour on the bare-link rule.
         ->and($block)->not->toMatch('/\.kft a\{[^}]*color/');
 
     kftSave(['site_motion' => false]);
-    expect($this->get('/')->getContent())->toContain('<footer class="kft">');
+    $open = preg_match('#<footer class="(kft[^"]*)"#', $this->get('/')->getContent(), $m) ? $m[1] : '';
+    expect($open)->toStartWith('kft ')->not->toContain('kft-motion');
 });
 
 it('is on Appearance → Footer, first, under the existing capability', function () {

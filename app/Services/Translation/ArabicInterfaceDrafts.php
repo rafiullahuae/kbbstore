@@ -417,6 +417,12 @@ final class ArabicInterfaceDrafts
             'store.footer.news_placeholder' => 'بريدك الإلكتروني للعروض',
             'store.footer.news_label' => 'بريدك الإلكتروني لتلقي العروض',
             'store.footer.news_button' => 'اشتركي',
+            // The footer's Account column (Lane HF). Drafts: served only once approved.
+            'store.footer.account_title' => 'الحساب',
+            'store.footer.link_account_home' => 'حسابي',
+            'store.footer.link_my_orders' => 'طلباتي',
+            'store.footer.link_wishlist' => 'المفضلة',
+            'store.footer.link_addresses' => 'العناوين',
             'store.delivery.free_over' => 'توصيل مجاني للطلبات فوق :amount',
             'store.announcement.pay_later' => 'ادفع لاحقًا مع Tabby و Tamara',
             'store.mobile_menu.open_label' => 'القائمة',

@@ -4339,30 +4339,20 @@
             },
             "default": "bliss",
             "value": "bliss"
-          },
-          {
-            "key": "site_motion",
-            "name": "site_motion",
-            "type": "bool",
-            "label": "Colours drift slowly",
-            "help": "The green strip and the big name move gently through their colours. Never for a visitor whose device asks for reduced motion.",
-            "options": null,
-            "default": true,
-            "value": true
           }
         ]
       },
       {
         "key": "site_help",
         "label": "Site footer · help strip",
-        "description": "The WhatsApp-green strip across the top of the footer.",
+        "description": "The pink strip across the top of the footer.",
         "fields": [
           {
             "key": "site_help_on",
             "name": "site_help_on",
             "type": "bool",
-            "label": "Show the green help strip",
-            "help": "",
+            "label": "Show the help strip",
+            "help": "Off: the strip is not drawn on any device. To hide it on one device only, use the two layout tabs.",
             "options": null,
             "default": true,
             "value": true
@@ -4391,8 +4381,8 @@
             "key": "site_help_sub",
             "name": "site_help_sub",
             "type": "text",
-            "label": "Line under the headline (laptop only)",
-            "help": "Empty: “Ask us anything about your skin, a product or your order — we reply on WhatsApp.”",
+            "label": "Line under the headline",
+            "help": "Empty: “Ask us anything about your skin, a product or your order — we reply on WhatsApp.” Shown on laptops; on phones only when “Site footer · layout mobile” says so.",
             "options": null,
             "default": "",
             "value": ""
@@ -4463,6 +4453,721 @@
             "options": null,
             "default": "K-Beauty Bliss",
             "value": "K-Beauty Bliss"
+          }
+        ]
+      },
+      {
+        "key": "site_cols",
+        "label": "Site footer · link columns",
+        "description": "The three columns of links, on laptops and phones. Leave a box empty for the shipped titles and links, which the Arabic shop shows in Arabic.",
+        "fields": [
+          {
+            "key": "site_col1_title",
+            "name": "site_col1_title",
+            "type": "text",
+            "label": "First column · title",
+            "help": "Empty: “Shop”, in Arabic on the Arabic shop.",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_col1_links",
+            "name": "site_col1_links",
+            "type": "textarea",
+            "label": "First column · links",
+            "help": "One link per line, written  Label | /address  — an address on this shop starting with /, or a full https:// address. Empty: New in, Best sellers, Brands, Super sale, #KBeautyBliss, Journal. A line that is not a safe address, or that mentions returns or refunds, is dropped.",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_col2_title",
+            "name": "site_col2_title",
+            "type": "text",
+            "label": "Second column · title",
+            "help": "Empty: “Help”.",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_col2_links",
+            "name": "site_col2_links",
+            "type": "textarea",
+            "label": "Second column · links",
+            "help": "Same format. Empty: the footer menu when one has been built, otherwise Track my order, Shipping & Delivery, FAQs, Contact us — then About us.",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_col3_title",
+            "name": "site_col3_title",
+            "type": "text",
+            "label": "Third column · title",
+            "help": "Empty: “Account”.",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_col3_links",
+            "name": "site_col3_links",
+            "type": "textarea",
+            "label": "Third column · links",
+            "help": "Same format. Empty: My account, My orders, Wishlist, Addresses. A shopper who is not signed in is asked to sign in first and then lands on the page.",
+            "options": null,
+            "default": "",
+            "value": ""
+          }
+        ]
+      },
+      {
+        "key": "site_fx",
+        "label": "Site footer · colours & effects",
+        "description": "The strip’s colours and its drift, the footer’s colours, and the shine across the bottom.",
+        "fields": [
+          {
+            "key": "site_c_from",
+            "name": "site_c_from",
+            "type": "colour",
+            "label": "Help strip · colour 1",
+            "help": "The strip drifts through its four colours and back. Shipped: the shop’s pink. Keep all four pink, red or orange, and dark enough for white writing.",
+            "options": null,
+            "default": "#E0567B",
+            "value": "#E0567B"
+          },
+          {
+            "key": "site_c_2",
+            "name": "site_c_2",
+            "type": "colour",
+            "label": "Help strip · colour 2",
+            "help": "Shipped: the shop’s deep pink.",
+            "options": null,
+            "default": "#C13E63",
+            "value": "#C13E63"
+          },
+          {
+            "key": "site_c_3",
+            "name": "site_c_3",
+            "type": "colour",
+            "label": "Help strip · colour 3",
+            "help": "Shipped: the shop’s sale red.",
+            "options": null,
+            "default": "#E23A4E",
+            "value": "#E23A4E"
+          },
+          {
+            "key": "site_c_to",
+            "name": "site_c_to",
+            "type": "colour",
+            "label": "Help strip · colour 4",
+            "help": "Shipped: a warm orange, deep enough for the white headline.",
+            "options": null,
+            "default": "#D9603B",
+            "value": "#D9603B"
+          },
+          {
+            "key": "site_c_bg",
+            "name": "site_c_bg",
+            "type": "colour",
+            "label": "Footer background",
+            "help": "Behind the columns and the bottom bar. The faint blush in the top corner stays.",
+            "options": null,
+            "default": "#FFFFFF",
+            "value": "#FFFFFF"
+          },
+          {
+            "key": "site_c_text",
+            "name": "site_c_text",
+            "type": "colour",
+            "label": "Link and description text",
+            "help": "",
+            "options": null,
+            "default": "#5E545A",
+            "value": "#5E545A"
+          },
+          {
+            "key": "site_c_accent",
+            "name": "site_c_accent",
+            "type": "colour",
+            "label": "Accent",
+            "help": "Column titles, the social icons, the words on the white WhatsApp button and the chip.",
+            "options": null,
+            "default": "#C13E63",
+            "value": "#C13E63"
+          },
+          {
+            "key": "site_motion",
+            "name": "site_motion",
+            "type": "bool",
+            "label": "Colours drift slowly",
+            "help": "The strip and the big name move gently through their colours. Never for a visitor whose device asks for reduced motion.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_drift_speed",
+            "name": "site_drift_speed",
+            "type": "select",
+            "label": "Drift speed",
+            "help": "How long the strip takes to drift across its colours once.",
+            "options": {
+              "8": "Quicker — 8 seconds",
+              "14": "Gentle — 14 seconds (as shipped)",
+              "24": "Very slow — 24 seconds"
+            },
+            "default": "14",
+            "value": "14"
+          },
+          {
+            "key": "site_name_tone",
+            "name": "site_name_tone",
+            "type": "select",
+            "label": "The big name’s colours",
+            "help": "Light and bright, drifting slowly. Both stay in the shop’s pink, red, orange and grey — the owner: “no any other colors”.",
+            "options": {
+              "warm": "Warm — light pink, rose, coral, peach and a soft grey",
+              "pink": "Pinks only"
+            },
+            "default": "warm",
+            "value": "warm"
+          },
+          {
+            "key": "site_sheen",
+            "name": "site_sheen",
+            "type": "select",
+            "label": "The shine",
+            "help": "A light that sweeps across, left to right in English and right to left in Arabic. Never for a visitor whose device asks for reduced motion.",
+            "options": {
+              "bar": "Across the bottom bar",
+              "name": "Across the big name",
+              "off": "Off"
+            },
+            "default": "bar",
+            "value": "bar"
+          },
+          {
+            "key": "site_sheen_speed",
+            "name": "site_sheen_speed",
+            "type": "select",
+            "label": "Shine speed",
+            "help": "",
+            "options": {
+              "3": "Quick — every 3 seconds",
+              "5": "Gentle — every 5 seconds",
+              "8": "Slow — every 8 seconds"
+            },
+            "default": "5",
+            "value": "5"
+          }
+        ]
+      },
+      {
+        "key": "site_d",
+        "label": "Site footer · layout desktop",
+        "description": "Laptops and anything wider than 900px: what shows, how it lines up, the spacing and the type sizes.",
+        "fields": [
+          {
+            "key": "site_d_help",
+            "name": "site_d_help",
+            "type": "bool",
+            "label": "Show: The help strip",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_help_sub",
+            "name": "site_d_help_sub",
+            "type": "bool",
+            "label": "Show: The line under the strip’s headline",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_logo",
+            "name": "site_d_logo",
+            "type": "bool",
+            "label": "Show: The logo (the K-BeautyBliss wordmark)",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_tag",
+            "name": "site_d_tag",
+            "type": "bool",
+            "label": "Show: The description under the logo",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_soc",
+            "name": "site_d_soc",
+            "type": "bool",
+            "label": "Show: The social icons",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_col1",
+            "name": "site_d_col1",
+            "type": "bool",
+            "label": "Show: First link column (Shop)",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_col2",
+            "name": "site_d_col2",
+            "type": "bool",
+            "label": "Show: Second link column (Help)",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_col3",
+            "name": "site_d_col3",
+            "type": "bool",
+            "label": "Show: Third link column (Account)",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_visit",
+            "name": "site_d_visit",
+            "type": "bool",
+            "label": "Show: Visit us (the addresses)",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_news",
+            "name": "site_d_news",
+            "type": "bool",
+            "label": "Show: The offers sign-up box",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_name",
+            "name": "site_d_name",
+            "type": "bool",
+            "label": "Show: The big name",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_bot",
+            "name": "site_d_bot",
+            "type": "bool",
+            "label": "Show: The bottom bar (© · Privacy · Terms · payment marks)",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_pay",
+            "name": "site_d_pay",
+            "type": "bool",
+            "label": "Show: The payment marks in the bottom bar",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_d_brand_align",
+            "name": "site_d_brand_align",
+            "type": "select",
+            "label": "The logo, description and social icons line up",
+            "help": "",
+            "options": {
+              "start": "Lined up at the start (left in English, right in Arabic)",
+              "center": "Centred"
+            },
+            "default": "start",
+            "value": "start"
+          },
+          {
+            "key": "site_d_help_align",
+            "name": "site_d_help_align",
+            "type": "select",
+            "label": "The help strip’s words line up",
+            "help": "",
+            "options": {
+              "start": "Lined up at the start (left in English, right in Arabic)",
+              "center": "Centred"
+            },
+            "default": "start",
+            "value": "start"
+          },
+          {
+            "key": "site_d_pt",
+            "name": "site_d_pt",
+            "type": "range",
+            "label": "Space above the columns",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 80,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 30,
+            "value": 30
+          },
+          {
+            "key": "site_d_pb",
+            "name": "site_d_pb",
+            "type": "range",
+            "label": "Space below the big name",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 80,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "site_d_gap",
+            "name": "site_d_gap",
+            "type": "range",
+            "label": "Space between the columns",
+            "help": "",
+            "options": {
+              "min": 8,
+              "max": 64,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 28,
+            "value": 28
+          },
+          {
+            "key": "site_d_fs_head",
+            "name": "site_d_fs_head",
+            "type": "range",
+            "label": "Strip headline size",
+            "help": "",
+            "options": {
+              "min": 14,
+              "max": 32,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 22,
+            "value": 22
+          },
+          {
+            "key": "site_d_fs_link",
+            "name": "site_d_fs_link",
+            "type": "range",
+            "label": "Link size",
+            "help": "",
+            "options": {
+              "min": 11,
+              "max": 18,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 14,
+            "value": 14
+          },
+          {
+            "key": "site_d_fs_name",
+            "name": "site_d_fs_name",
+            "type": "range",
+            "label": "The big name’s size",
+            "help": "100% is the size that fits the name on one line.",
+            "options": {
+              "min": 50,
+              "max": 120,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
+          }
+        ]
+      },
+      {
+        "key": "site_m",
+        "label": "Site footer · layout mobile",
+        "description": "Phones (900px and narrower): what shows, how it lines up, the spacing and the type sizes.",
+        "fields": [
+          {
+            "key": "site_m_help",
+            "name": "site_m_help",
+            "type": "bool",
+            "label": "Show: The help strip",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_m_help_sub",
+            "name": "site_m_help_sub",
+            "type": "bool",
+            "label": "Show: The line under the strip’s headline",
+            "help": "Off on phones, as it has always been: it makes the strip much taller.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "site_m_logo",
+            "name": "site_m_logo",
+            "type": "bool",
+            "label": "Show: The logo (the K-BeautyBliss wordmark)",
+            "help": "Off on phones, as the owner asked on 4 October.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "site_m_tag",
+            "name": "site_m_tag",
+            "type": "bool",
+            "label": "Show: The description under the logo",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_m_soc",
+            "name": "site_m_soc",
+            "type": "bool",
+            "label": "Show: The social icons",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_m_col1",
+            "name": "site_m_col1",
+            "type": "bool",
+            "label": "Show: First link column (Shop)",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_m_col2",
+            "name": "site_m_col2",
+            "type": "bool",
+            "label": "Show: Second link column (Help)",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_m_col3",
+            "name": "site_m_col3",
+            "type": "bool",
+            "label": "Show: Third link column (Account)",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_m_visit",
+            "name": "site_m_visit",
+            "type": "bool",
+            "label": "Show: Visit us (the addresses)",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_m_news",
+            "name": "site_m_news",
+            "type": "bool",
+            "label": "Show: The offers sign-up box",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_m_name",
+            "name": "site_m_name",
+            "type": "bool",
+            "label": "Show: The big name",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_m_bot",
+            "name": "site_m_bot",
+            "type": "bool",
+            "label": "Show: The bottom bar (© · Privacy · Terms · payment marks)",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_m_pay",
+            "name": "site_m_pay",
+            "type": "bool",
+            "label": "Show: The payment marks in the bottom bar",
+            "help": "",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_m_brand_align",
+            "name": "site_m_brand_align",
+            "type": "select",
+            "label": "The logo, description and social icons line up",
+            "help": "Centred on phones, as the owner asked on 4 October.",
+            "options": {
+              "start": "Lined up at the start (left in English, right in Arabic)",
+              "center": "Centred"
+            },
+            "default": "center",
+            "value": "center"
+          },
+          {
+            "key": "site_m_help_align",
+            "name": "site_m_help_align",
+            "type": "select",
+            "label": "The help strip’s words line up",
+            "help": "Centred on phones, as the owner asked on 4 October.",
+            "options": {
+              "start": "Lined up at the start (left in English, right in Arabic)",
+              "center": "Centred"
+            },
+            "default": "center",
+            "value": "center"
+          },
+          {
+            "key": "site_m_pt",
+            "name": "site_m_pt",
+            "type": "range",
+            "label": "Space above the columns",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 80,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 20,
+            "value": 20
+          },
+          {
+            "key": "site_m_pb",
+            "name": "site_m_pb",
+            "type": "range",
+            "label": "Space below the big name",
+            "help": "",
+            "options": {
+              "min": 0,
+              "max": 80,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "site_m_gap",
+            "name": "site_m_gap",
+            "type": "range",
+            "label": "Space between the columns",
+            "help": "",
+            "options": {
+              "min": 8,
+              "max": 64,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 12,
+            "value": 12
+          },
+          {
+            "key": "site_m_fs_head",
+            "name": "site_m_fs_head",
+            "type": "range",
+            "label": "Strip headline size",
+            "help": "",
+            "options": {
+              "min": 14,
+              "max": 32,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 17,
+            "value": 17
+          },
+          {
+            "key": "site_m_fs_link",
+            "name": "site_m_fs_link",
+            "type": "range",
+            "label": "Link size",
+            "help": "",
+            "options": {
+              "min": 11,
+              "max": 18,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 13,
+            "value": 13
+          },
+          {
+            "key": "site_m_fs_name",
+            "name": "site_m_fs_name",
+            "type": "range",
+            "label": "The big name’s size",
+            "help": "100% is the size that fits the name on one line.",
+            "options": {
+              "min": 50,
+              "max": 120,
+              "step": 5,
+              "unit": "%"
+            },
+            "default": 100,
+            "value": 100
           }
         ]
       },

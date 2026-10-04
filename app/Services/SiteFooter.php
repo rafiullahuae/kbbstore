@@ -40,6 +40,25 @@ use App\Support\Url;
  * helpLinks() drops any footer-menu row whose label or address mentions a
  * return or a refund, and the shipped defaults carry none. The old footer's
  * "Returns Information" link (/refund_returns/) is not drawn by the new design.
+ * The owner's own link lists (Lane HF) go through the same BANNED test.
+ *
+ * ── LANE HF, 4 OCTOBER: THE OWNER'S REWORK AND "CONTROL FOR COMPLETE FOOTER" ─
+ *
+ * "in mobile footer, remove the top logo, and center the social media icons,
+ * and description text. and on third column will be Account and related links
+ * to access their account, orders etc. also center the support text. i don't
+ * like the green, i want to use our color, and it will continue shade within
+ * the our color range. also the bottom should be with effects something like
+ * shiny bar going from left to right and on arabic right to left, also give
+ * control for complete footer, for desktop and mobile."
+ *
+ * He asked for each of these, so each SHIPS ON: the defaults below ARE the
+ * brief (CLAUDE.md, "What every lane owes" — what he asked for is the shop's
+ * new state). Four tabs were added on Appearance → Footer: "Site footer · link
+ * columns", "· colours & effects", "· layout desktop" and "· layout mobile".
+ * Everything the Blade prints from them comes out of presentation() and
+ * columns() as constants, checked colours, clamped integers, option keys,
+ * escaped text and scheme-checked addresses.
  */
 final class SiteFooter
 {
@@ -57,6 +76,41 @@ final class SiteFooter
     /** What a footer-menu row may not mention, in the new design. */
     public const BANNED = '/return|refund/i';
 
+    /** A whole-pixel slider, 0–80. */
+    private const PAD = ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px'];
+
+    /** The gap between the columns. */
+    private const GAP = ['min' => 8, 'max' => 64, 'step' => 2, 'unit' => 'px'];
+
+    private const HEAD_PX = ['min' => 14, 'max' => 32, 'step' => 1, 'unit' => 'px'];
+
+    private const LINK_PX = ['min' => 11, 'max' => 18, 'step' => 1, 'unit' => 'px'];
+
+    /** The big name, as a share of the size that fits it on one line. */
+    private const NAME_SCALE = ['min' => 50, 'max' => 120, 'step' => 5, 'unit' => '%'];
+
+    /** Start / centre, for the brand block and the help strip. */
+    private const ALIGN = ['start' => 'Lined up at the start (left in English, right in Arabic)', 'center' => 'Centred'];
+
+    /**
+     * The parts that can be shown or hidden per device, in the order the
+     * layout tabs draw them. Each is `site_d_<part>` and `site_m_<part>` in
+     * SCHEMA, and each hidden one is a `kft-xd-<part>` / `kft-xm-<part>` class
+     * on the <footer> — a constant, never the stored value.
+     *
+     * Shipped hidden: `site_m_logo` — the owner, 4 October: "in mobile footer,
+     * remove the top logo" — and `site_m_help_sub`, the line under the strip's
+     * headline, which phones have never drawn (it was `display:none` in the
+     * phone rules until it became a switch). Everything else ships showing.
+     */
+    public const PARTS = ['help', 'help_sub', 'logo', 'tag', 'soc', 'col1', 'col2', 'col3', 'visit', 'news', 'name', 'bot', 'pay'];
+
+    /** How fast the strip and the big name drift: key => [strip s, name s]. */
+    public const DRIFT = ['8' => [8, 7], '14' => [14, 12], '24' => [24, 20]];
+
+    /** One sweep of the shine, in seconds; the key is the number. */
+    public const SHEEN_SPEED = ['3' => 'Quick — every 3 seconds', '5' => 'Gentle — every 5 seconds', '8' => 'Slow — every 8 seconds'];
+
     public const SCHEMA = [
         'site_design' => ['type' => 'select', 'label' => 'Footer design', 'default' => 'bliss',
             'options' => [
@@ -65,14 +119,15 @@ final class SiteFooter
             ],
             'help' => 'Every storefront page. Choose Previous to go back to the footer the shop had before.'],
         'site_motion' => ['type' => 'bool', 'label' => 'Colours drift slowly', 'default' => true,
-            'help' => 'The green strip and the big name move gently through their colours. Never for a visitor whose device asks for reduced motion.'],
-        'site_help_on' => ['type' => 'bool', 'label' => 'Show the green help strip', 'default' => true, 'help' => ''],
+            'help' => 'The strip and the big name move gently through their colours. Never for a visitor whose device asks for reduced motion.'],
+        'site_help_on' => ['type' => 'bool', 'label' => 'Show the help strip', 'default' => true,
+            'help' => 'Off: the strip is not drawn on any device. To hide it on one device only, use the two layout tabs.'],
         'site_help_title' => ['type' => 'text', 'label' => 'Strip headline', 'default' => '',
             'help' => 'Empty: “Find your perfect K-beauty match”.'],
         'site_help_chip' => ['type' => 'text', 'label' => 'The white chip', 'default' => '',
             'help' => 'Empty: “24/7 available”.'],
-        'site_help_sub' => ['type' => 'text', 'label' => 'Line under the headline (laptop only)', 'default' => '',
-            'help' => 'Empty: “Ask us anything about your skin, a product or your order — we reply on WhatsApp.”'],
+        'site_help_sub' => ['type' => 'text', 'label' => 'Line under the headline', 'default' => '',
+            'help' => 'Empty: “Ask us anything about your skin, a product or your order — we reply on WhatsApp.” Shown on laptops; on phones only when “Site footer · layout mobile” says so.'],
         'site_track_on' => ['type' => 'bool', 'label' => '“Track my order” button in the strip', 'default' => true,
             'help' => 'Beside “Chat on WhatsApp”, which dials the WhatsApp number on Store → Settings.'],
         'site_addr_dubai' => ['type' => 'text', 'label' => 'Dubai address', 'default' => '',
@@ -84,15 +139,133 @@ final class SiteFooter
         'site_name_on' => ['type' => 'bool', 'label' => 'The big name at the bottom', 'default' => true, 'help' => ''],
         'site_name_text' => ['type' => 'text', 'label' => 'The big name', 'default' => 'K-Beauty Bliss',
             'help' => 'Centred, very large, in light colours that slowly change. Keep it short: it is sized to fit one line.'],
+
+        /* ── The three link columns (Lane HF) ─────────────────────────────── */
+        'site_col1_title' => ['type' => 'text', 'label' => 'First column · title', 'default' => '',
+            'help' => 'Empty: “Shop”, in Arabic on the Arabic shop.'],
+        'site_col1_links' => ['type' => 'textarea', 'label' => 'First column · links', 'default' => '',
+            'rule' => [self::class, 'cleanLinks'],
+            'help' => 'One link per line, written  Label | /address  — an address on this shop starting with /, or a full https:// address. Empty: New in, Best sellers, Brands, Super sale, #KBeautyBliss, Journal. A line that is not a safe address, or that mentions returns or refunds, is dropped.'],
+        'site_col2_title' => ['type' => 'text', 'label' => 'Second column · title', 'default' => '',
+            'help' => 'Empty: “Help”.'],
+        'site_col2_links' => ['type' => 'textarea', 'label' => 'Second column · links', 'default' => '',
+            'rule' => [self::class, 'cleanLinks'],
+            'help' => 'Same format. Empty: the footer menu when one has been built, otherwise Track my order, Shipping & Delivery, FAQs, Contact us — then About us.'],
+        'site_col3_title' => ['type' => 'text', 'label' => 'Third column · title', 'default' => '',
+            'help' => 'Empty: “Account”.'],
+        'site_col3_links' => ['type' => 'textarea', 'label' => 'Third column · links', 'default' => '',
+            'rule' => [self::class, 'cleanLinks'],
+            'help' => 'Same format. Empty: My account, My orders, Wishlist, Addresses. A shopper who is not signed in is asked to sign in first and then lands on the page.'],
+
+        /* ── Colours & effects (Lane HF) ──────────────────────────────────── */
+        /*
+         * THE STRIP'S FOUR COLOURS. The owner, 4 October, after seeing the
+         * first draft: "i need only our pinkish, red and orange and grey
+         * combination effect. no any other colors." So the strip drifts pink →
+         * deep pink → red → orange and back, every stop dark enough for its
+         * white headline: the lowest contrast anywhere on the shipped gradient
+         * is 3.63:1, at the pink (#E0567B, the shop's --pink).
+         */
+        'site_c_from' => ['type' => 'colour', 'label' => 'Help strip · colour 1', 'default' => '#E0567B',
+            'help' => 'The strip drifts through its four colours and back. Shipped: the shop’s pink. Keep all four pink, red or orange, and dark enough for white writing.'],
+        'site_c_2' => ['type' => 'colour', 'label' => 'Help strip · colour 2', 'default' => '#C13E63',
+            'help' => 'Shipped: the shop’s deep pink.'],
+        'site_c_3' => ['type' => 'colour', 'label' => 'Help strip · colour 3', 'default' => '#E23A4E',
+            'help' => 'Shipped: the shop’s sale red.'],
+        'site_c_to' => ['type' => 'colour', 'label' => 'Help strip · colour 4', 'default' => '#D9603B',
+            'help' => 'Shipped: a warm orange, deep enough for the white headline.'],
+        'site_c_bg' => ['type' => 'colour', 'label' => 'Footer background', 'default' => '#FFFFFF',
+            'help' => 'Behind the columns and the bottom bar. The faint blush in the top corner stays.'],
+        'site_c_text' => ['type' => 'colour', 'label' => 'Link and description text', 'default' => '#5E545A', 'help' => ''],
+        'site_c_accent' => ['type' => 'colour', 'label' => 'Accent', 'default' => '#C13E63',
+            'help' => 'Column titles, the social icons, the words on the white WhatsApp button and the chip.'],
+        'site_drift_speed' => ['type' => 'select', 'label' => 'Drift speed', 'default' => '14',
+            'options' => ['8' => 'Quicker — 8 seconds', '14' => 'Gentle — 14 seconds (as shipped)', '24' => 'Very slow — 24 seconds'],
+            'help' => 'How long the strip takes to drift across its colours once.'],
+        'site_name_tone' => ['type' => 'select', 'label' => 'The big name’s colours', 'default' => 'warm',
+            'options' => ['warm' => 'Warm — light pink, rose, coral, peach and a soft grey', 'pink' => 'Pinks only'],
+            'help' => 'Light and bright, drifting slowly. Both stay in the shop’s pink, red, orange and grey — the owner: “no any other colors”.'],
+        'site_sheen' => ['type' => 'select', 'label' => 'The shine', 'default' => 'bar',
+            'options' => ['bar' => 'Across the bottom bar', 'name' => 'Across the big name', 'off' => 'Off'],
+            'help' => 'A light that sweeps across, left to right in English and right to left in Arabic. Never for a visitor whose device asks for reduced motion.'],
+        'site_sheen_speed' => ['type' => 'select', 'label' => 'Shine speed', 'default' => '5',
+            'options' => self::SHEEN_SPEED, 'help' => ''],
+
+        /* ── Layout · desktop (Lane HF) ─────────────────────────────────────── */
+        'site_d_help' => ['type' => 'bool', 'label' => 'Show: The help strip', 'default' => true, 'help' => ''],
+        'site_d_help_sub' => ['type' => 'bool', 'label' => 'Show: The line under the strip’s headline', 'default' => true, 'help' => ''],
+        'site_d_logo' => ['type' => 'bool', 'label' => 'Show: The logo (the K-BeautyBliss wordmark)', 'default' => true, 'help' => ''],
+        'site_d_tag' => ['type' => 'bool', 'label' => 'Show: The description under the logo', 'default' => true, 'help' => ''],
+        'site_d_soc' => ['type' => 'bool', 'label' => 'Show: The social icons', 'default' => true, 'help' => ''],
+        'site_d_col1' => ['type' => 'bool', 'label' => 'Show: First link column (Shop)', 'default' => true, 'help' => ''],
+        'site_d_col2' => ['type' => 'bool', 'label' => 'Show: Second link column (Help)', 'default' => true, 'help' => ''],
+        'site_d_col3' => ['type' => 'bool', 'label' => 'Show: Third link column (Account)', 'default' => true, 'help' => ''],
+        'site_d_visit' => ['type' => 'bool', 'label' => 'Show: Visit us (the addresses)', 'default' => true, 'help' => ''],
+        'site_d_news' => ['type' => 'bool', 'label' => 'Show: The offers sign-up box', 'default' => true, 'help' => ''],
+        'site_d_name' => ['type' => 'bool', 'label' => 'Show: The big name', 'default' => true, 'help' => ''],
+        'site_d_bot' => ['type' => 'bool', 'label' => 'Show: The bottom bar (© · Privacy · Terms · payment marks)', 'default' => true, 'help' => ''],
+        'site_d_pay' => ['type' => 'bool', 'label' => 'Show: The payment marks in the bottom bar', 'default' => true, 'help' => ''],
+        'site_d_brand_align' => ['type' => 'select', 'label' => 'The logo, description and social icons line up', 'default' => 'start', 'options' => self::ALIGN, 'help' => ''],
+        'site_d_help_align' => ['type' => 'select', 'label' => 'The help strip’s words line up', 'default' => 'start', 'options' => self::ALIGN, 'help' => ''],
+        'site_d_pt' => ['type' => 'range', 'label' => 'Space above the columns', 'default' => 30, 'options' => self::PAD, 'help' => ''],
+        'site_d_pb' => ['type' => 'range', 'label' => 'Space below the big name', 'default' => 0, 'options' => self::PAD, 'help' => ''],
+        'site_d_gap' => ['type' => 'range', 'label' => 'Space between the columns', 'default' => 28, 'options' => self::GAP, 'help' => ''],
+        'site_d_fs_head' => ['type' => 'range', 'label' => 'Strip headline size', 'default' => 22, 'options' => self::HEAD_PX, 'help' => ''],
+        'site_d_fs_link' => ['type' => 'range', 'label' => 'Link size', 'default' => 14, 'options' => self::LINK_PX, 'help' => ''],
+        'site_d_fs_name' => ['type' => 'range', 'label' => 'The big name’s size', 'default' => 100, 'options' => self::NAME_SCALE, 'help' => '100% is the size that fits the name on one line.'],
+
+        /* ── Layout · mobile (Lane HF) ─────────────────────────────────────── */
+        'site_m_help' => ['type' => 'bool', 'label' => 'Show: The help strip', 'default' => true, 'help' => ''],
+        'site_m_help_sub' => ['type' => 'bool', 'label' => 'Show: The line under the strip’s headline', 'default' => false, 'help' => 'Off on phones, as it has always been: it makes the strip much taller.'],
+        'site_m_logo' => ['type' => 'bool', 'label' => 'Show: The logo (the K-BeautyBliss wordmark)', 'default' => false, 'help' => 'Off on phones, as the owner asked on 4 October.'],
+        'site_m_tag' => ['type' => 'bool', 'label' => 'Show: The description under the logo', 'default' => true, 'help' => ''],
+        'site_m_soc' => ['type' => 'bool', 'label' => 'Show: The social icons', 'default' => true, 'help' => ''],
+        'site_m_col1' => ['type' => 'bool', 'label' => 'Show: First link column (Shop)', 'default' => true, 'help' => ''],
+        'site_m_col2' => ['type' => 'bool', 'label' => 'Show: Second link column (Help)', 'default' => true, 'help' => ''],
+        'site_m_col3' => ['type' => 'bool', 'label' => 'Show: Third link column (Account)', 'default' => true, 'help' => ''],
+        'site_m_visit' => ['type' => 'bool', 'label' => 'Show: Visit us (the addresses)', 'default' => true, 'help' => ''],
+        'site_m_news' => ['type' => 'bool', 'label' => 'Show: The offers sign-up box', 'default' => true, 'help' => ''],
+        'site_m_name' => ['type' => 'bool', 'label' => 'Show: The big name', 'default' => true, 'help' => ''],
+        'site_m_bot' => ['type' => 'bool', 'label' => 'Show: The bottom bar (© · Privacy · Terms · payment marks)', 'default' => true, 'help' => ''],
+        'site_m_pay' => ['type' => 'bool', 'label' => 'Show: The payment marks in the bottom bar', 'default' => true, 'help' => ''],
+        'site_m_brand_align' => ['type' => 'select', 'label' => 'The logo, description and social icons line up', 'default' => 'center', 'options' => self::ALIGN, 'help' => 'Centred on phones, as the owner asked on 4 October.'],
+        'site_m_help_align' => ['type' => 'select', 'label' => 'The help strip’s words line up', 'default' => 'center', 'options' => self::ALIGN, 'help' => 'Centred on phones, as the owner asked on 4 October.'],
+        'site_m_pt' => ['type' => 'range', 'label' => 'Space above the columns', 'default' => 20, 'options' => self::PAD, 'help' => ''],
+        'site_m_pb' => ['type' => 'range', 'label' => 'Space below the big name', 'default' => 0, 'options' => self::PAD, 'help' => ''],
+        'site_m_gap' => ['type' => 'range', 'label' => 'Space between the columns', 'default' => 12, 'options' => self::GAP, 'help' => ''],
+        'site_m_fs_head' => ['type' => 'range', 'label' => 'Strip headline size', 'default' => 17, 'options' => self::HEAD_PX, 'help' => ''],
+        'site_m_fs_link' => ['type' => 'range', 'label' => 'Link size', 'default' => 13, 'options' => self::LINK_PX, 'help' => ''],
+        'site_m_fs_name' => ['type' => 'range', 'label' => 'The big name’s size', 'default' => 100, 'options' => self::NAME_SCALE, 'help' => '100% is the size that fits the name on one line.'],
     ];
 
     public const TABS = [
         'site' => ['Site footer · design', 'The footer at the bottom of every storefront page. The new design is on, as the owner asked; Previous puts the old footer back.',
-            ['site_design', 'site_motion']],
-        'site_help' => ['Site footer · help strip', 'The WhatsApp-green strip across the top of the footer.',
+            ['site_design']],
+        'site_help' => ['Site footer · help strip', 'The pink strip across the top of the footer.',
             ['site_help_on', 'site_help_title', 'site_help_chip', 'site_help_sub', 'site_track_on']],
         'site_visit' => ['Site footer · Visit us & name', 'The addresses, the offers box and the big name. An empty address is not drawn — nothing is made up.',
             ['site_addr_dubai', 'site_addr_korea', 'site_news_on', 'site_name_on', 'site_name_text']],
+        'site_cols' => ['Site footer · link columns', 'The three columns of links, on laptops and phones. Leave a box empty for the shipped titles and links, which the Arabic shop shows in Arabic.',
+            ['site_col1_title', 'site_col1_links', 'site_col2_title', 'site_col2_links', 'site_col3_title', 'site_col3_links']],
+        'site_fx' => ['Site footer · colours & effects', 'The strip’s colours and its drift, the footer’s colours, and the shine across the bottom.',
+            ['site_c_from', 'site_c_2', 'site_c_3', 'site_c_to', 'site_c_bg', 'site_c_text', 'site_c_accent', 'site_motion', 'site_drift_speed', 'site_name_tone', 'site_sheen', 'site_sheen_speed']],
+        'site_d' => ['Site footer · layout desktop', 'Laptops and anything wider than 900px: what shows, how it lines up, the spacing and the type sizes.',
+            self::DEVICE_KEYS_D],
+        'site_m' => ['Site footer · layout mobile', 'Phones (900px and narrower): what shows, how it lines up, the spacing and the type sizes.',
+            self::DEVICE_KEYS_M],
+    ];
+
+    /** The layout tabs' keys, in the order they draw. */
+    private const DEVICE_KEYS_D = [
+        'site_d_help', 'site_d_help_sub', 'site_d_logo', 'site_d_tag', 'site_d_soc', 'site_d_col1', 'site_d_col2', 'site_d_col3',
+        'site_d_visit', 'site_d_news', 'site_d_name', 'site_d_bot', 'site_d_pay',
+        'site_d_brand_align', 'site_d_help_align', 'site_d_pt', 'site_d_pb', 'site_d_gap', 'site_d_fs_head', 'site_d_fs_link', 'site_d_fs_name',
+    ];
+
+    private const DEVICE_KEYS_M = [
+        'site_m_help', 'site_m_help_sub', 'site_m_logo', 'site_m_tag', 'site_m_soc', 'site_m_col1', 'site_m_col2', 'site_m_col3',
+        'site_m_visit', 'site_m_news', 'site_m_name', 'site_m_bot', 'site_m_pay',
+        'site_m_brand_align', 'site_m_help_align', 'site_m_pt', 'site_m_pb', 'site_m_gap', 'site_m_fs_head', 'site_m_fs_link', 'site_m_fs_name',
     ];
 
     public const POLICY = [
@@ -101,6 +274,10 @@ final class SiteFooter
         'invalid' => 'default',
         'clamp' => true,
         'bool' => 'cast',
+        // (Lane HF) A colour is `#` and six hex digits or the default: `#abc`
+        // is widened to `#AABBCC`, a value with no `#` is refused. Nothing
+        // shorter or longer can reach the style attribute it is printed into.
+        'hex' => 'expand',
     ];
 
     public function __construct(private SettingsService $settings) {}
@@ -188,6 +365,254 @@ final class SiteFooter
         ];
     }
 
+    /** At most this many links in one column; the rest of a pasted list is dropped. */
+    public const MAX_LINKS = 12;
+
+    /**
+     * The rule behind the three "links" boxes: one `Label | /address` per line,
+     * cleaned to lines that are safe to print. (Lane HF)
+     *
+     * It REPLACES the text cast (ModuleSchema::rule()), so it is the whole
+     * boundary for those fields, and it runs again on every read — all() casts
+     * the stored value — so a row written some other way is cleaned too.
+     *
+     *  - The address is this shop's own (`/` then anything but a second `/` or
+     *    a backslash, which a browser would read as another host) or a full
+     *    `https://` address with a host. Nothing else: no `javascript:`, no
+     *    `http:`, no `//evil.example`, no `mailto:`.
+     *  - A line whose label or address mentions a return or a refund is
+     *    dropped, exactly as the footer menu's rows are (BANNED) — the shop
+     *    offers no returns and the owner asked for no such word.
+     *  - The label is plain text: tags are stripped, it is capped at 60
+     *    characters, and Blade escapes it again where it is printed.
+     *
+     * Never null, so the box can never be refused: an emptied box is '' and
+     * means "the shipped links".
+     */
+    public static function cleanLinks(mixed $raw, array $field = []): string
+    {
+        return implode("\n", array_map(
+            static fn (array $l): string => $l['label'].' | '.$l['url'],
+            self::parseLinks($raw),
+        ));
+    }
+
+    /**
+     * @return list<array{label: string, url: string}> the address as typed (not yet through Url::to)
+     */
+    public static function parseLinks(mixed $raw): array
+    {
+        if (! is_string($raw) || trim($raw) === '') {
+            return [];
+        }
+
+        $out = [];
+
+        foreach (preg_split('/\R/u', $raw) ?: [] as $line) {
+            $cut = strrpos($line, '|');
+
+            if ($cut === false) {
+                continue;
+            }
+
+            $label = mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tags(substr($line, 0, $cut))) ?? ''), 0, 60);
+            $url = trim(substr($line, $cut + 1));
+
+            if ($label === '' || ! self::safeAddress($url) || preg_match(self::BANNED, $label.' '.$url) === 1) {
+                continue;
+            }
+
+            $out[] = ['label' => $label, 'url' => $url];
+
+            if (count($out) === self::MAX_LINKS) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /** This shop's own path, or an https:// address with a host. Nothing else. */
+    public static function safeAddress(string $url): bool
+    {
+        if (strlen($url) > 300 || preg_match('/[\s<>"\'`\x00-\x1F\x7F]/', $url) === 1) {
+            return false;
+        }
+
+        if (preg_match('#^/(?![/\\\\])#', $url) === 1 || $url === '/') {
+            return true;
+        }
+
+        return preg_match('#^https://[^/\\\\?\#@]+#i', $url) === 1
+            && (string) parse_url($url, PHP_URL_HOST) !== '';
+    }
+
+    /**
+     * The three link columns: [id, title, links]. An empty title or list is
+     * the shipped one, through __() so the Arabic shop prints its own.
+     *
+     * THE THIRD COLUMN IS "ACCOUNT" (the owner, 4 October: "on third column
+     * will be Account and related links to access their account, orders
+     * etc."). Every link is a route that exists: /my-account/ answers a guest
+     * with the sign-in form, and the three behind `auth:customer` send a guest
+     * to it through GuestRedirect with the address remembered. The "Discover"
+     * column it replaced kept four links, and none of them is lost: About us
+     * is the last Help link, #KBeautyBliss and Journal the last two Shop links,
+     * and My account is here.
+     *
+     * @param  iterable<array<string, mixed>>  $nav
+     * @return list<array{id: string, part: string, title: string, links: list<array{label: string, url: string}>}>
+     */
+    public function columns(array $c, iterable $nav, bool $brands): array
+    {
+        $own = static function (string $key) use ($c): array {
+            return array_map(
+                static fn (array $l): array => ['label' => $l['label'], 'url' => str_starts_with($l['url'], '/') ? Url::to($l['url']) : $l['url']],
+                self::parseLinks($c[$key] ?? ''),
+            );
+        };
+        $title = static function (string $key, string $fallback) use ($c): string {
+            $t = trim(\App\Support\RichText::toText((string) ($c[$key] ?? '')));
+
+            return $t !== '' ? $t : __($fallback);
+        };
+
+        $shop = $own('site_col1_links');
+
+        if ($shop === []) {
+            $shop = array_values(array_filter([
+                ['label' => __('store.footer.link_new_in'), 'url' => Url::to('/new-in/')],
+                ['label' => __('store.footer.link_best_sellers'), 'url' => Url::to('/best-sellers/')],
+                // The Brands link follows the brands module, exactly as the
+                // header's does (NavigationService): off, /brands/ is a 404 and
+                // no chrome may link to it.
+                $brands ? ['label' => __('store.footer.link_brands'), 'url' => Url::to('/brands/')] : null,
+                ['label' => __('store.footer.link_super_sale'), 'url' => Url::to('/super-sale/')],
+                ['label' => __('store.footer.link_spotted'), 'url' => Url::to(SpottedSettings::URL)],
+                ['label' => __('store.footer.link_journal'), 'url' => Url::to('/blog/')],
+            ]));
+        }
+
+        $help = $own('site_col2_links');
+
+        if ($help === []) {
+            $help = self::helpLinks($nav);
+            $about = Url::to('/about/');
+
+            if (! in_array($about, array_column($help, 'url'), true)) {
+                $help[] = ['label' => __('store.footer.link_about'), 'url' => $about];
+            }
+        }
+
+        $account = $own('site_col3_links');
+
+        if ($account === []) {
+            $account = [
+                ['label' => __('store.footer.link_account_home'), 'url' => Url::to('/my-account/')],
+                ['label' => __('store.footer.link_my_orders'), 'url' => Url::to('/my-account/orders/')],
+                ['label' => __('store.footer.link_wishlist'), 'url' => Url::to('/my-wishlist/')],
+                ['label' => __('store.footer.link_addresses'), 'url' => Url::to('/my-account/edit-address/')],
+            ];
+        }
+
+        return [
+            ['id' => 'shop', 'part' => 'col1', 'title' => $title('site_col1_title', 'store.footer.shop_heading'), 'links' => $shop],
+            ['id' => 'help', 'part' => 'col2', 'title' => $title('site_col2_title', 'store.footer.help_heading'), 'links' => $help],
+            ['id' => 'acct', 'part' => 'col3', 'title' => $title('site_col3_title', 'store.footer.account_title'), 'links' => $account],
+        ];
+    }
+
+    /**
+     * The <footer>'s classes and its custom properties. (Lane HF)
+     *
+     * EVERY BYTE IS A CONSTANT OR A CHECKED VALUE. Classes are literals chosen
+     * by a stored bool or by a select's own key; the style attribute is
+     * `--kft-*:` followed by a colour that ModuleSchema's colour cast has
+     * already reduced to `#` and hex digits (and is checked again here), or an
+     * integer clamped into its slider's range, or a number looked up in a
+     * constant table by a select's key. Nothing typed in the console reaches
+     * either attribute as text.
+     *
+     * @return array{classes: string, style: string, sheen: string}
+     */
+    public function presentation(array $c): array
+    {
+        $fields = ModuleSchema::normalised(self::class, self::SCHEMA, self::POLICY);
+        $pick = static function (string $key) use ($c, $fields): string {
+            $options = (array) ($fields[$key]['options'] ?? []);
+            $v = (string) ($c[$key] ?? '');
+
+            return array_key_exists($v, $options) ? $v : (string) $fields[$key]['default'];
+        };
+        $int = static function (string $key) use ($c, $fields): int {
+            $o = (array) $fields[$key]['options'];
+
+            return max((int) $o['min'], min((int) $o['max'], (int) ($c[$key] ?? $fields[$key]['default'])));
+        };
+        $hex = static function (string $key) use ($c, $fields): string {
+            $v = (string) ($c[$key] ?? '');
+
+            return preg_match('/^#[0-9A-Fa-f]{6}$/', $v) === 1 ? strtoupper($v) : (string) $fields[$key]['default'];
+        };
+
+        $sheen = $pick('site_sheen');
+        $classes = ['kft'];
+
+        if ((bool) ($c['site_motion'] ?? true)) {
+            $classes[] = 'kft-motion';
+        }
+
+        if ($sheen !== 'off') {
+            $classes[] = $sheen === 'name' ? 'kft-sheen-name' : 'kft-sheen-bar';
+        }
+
+        if ($pick('site_name_tone') === 'pink') {
+            $classes[] = 'kft-name-pink';
+        }
+
+        foreach (['d', 'm'] as $dev) {
+            foreach (self::PARTS as $part) {
+                if (! (bool) ($c["site_{$dev}_{$part}"] ?? true)) {
+                    $classes[] = "kft-x{$dev}-".str_replace('_', '-', $part);
+                }
+            }
+
+            if ($pick("site_{$dev}_brand_align") === 'center') {
+                $classes[] = "kft-bc-{$dev}";
+            }
+
+            if ($pick("site_{$dev}_help_align") === 'center') {
+                $classes[] = "kft-hc-{$dev}";
+            }
+        }
+
+        [$drift, $driftName] = self::DRIFT[$pick('site_drift_speed')] ?? self::DRIFT['14'];
+
+        $style = [
+            '--kft-from:'.$hex('site_c_from'),
+            '--kft-c2:'.$hex('site_c_2'),
+            '--kft-c3:'.$hex('site_c_3'),
+            '--kft-to:'.$hex('site_c_to'),
+            '--kft-bg:'.$hex('site_c_bg'),
+            '--kft-text:'.$hex('site_c_text'),
+            '--kft-accent:'.$hex('site_c_accent'),
+            '--kft-dr:'.$drift.'s',
+            '--kft-drn:'.$driftName.'s',
+            '--kft-sh:'.(int) $pick('site_sheen_speed').'s',
+        ];
+
+        foreach (['d', 'm'] as $dev) {
+            $style[] = "--kft-pt-{$dev}:".$int("site_{$dev}_pt").'px';
+            $style[] = "--kft-pb-{$dev}:".$int("site_{$dev}_pb").'px';
+            $style[] = "--kft-gap-{$dev}:".$int("site_{$dev}_gap").'px';
+            $style[] = "--kft-fh-{$dev}:".$int("site_{$dev}_fs_head").'px';
+            $style[] = "--kft-fl-{$dev}:".$int("site_{$dev}_fs_link").'px';
+            $style[] = "--kft-fn-{$dev}:".$int("site_{$dev}_fs_name");
+        }
+
+        return ['classes' => implode(' ', $classes), 'style' => implode(';', $style), 'sheen' => $sheen];
+    }
+
     /**
      * Everything the new footer prints, reduced to checked values.
      *
@@ -217,8 +642,12 @@ final class SiteFooter
             ['youtube', 'YouTube', SafeUrl::href((string) $s->get('social_youtube', ''), '')],
         ], static fn (array $row): bool => $row[2] !== '' && $row[2] !== '#'));
 
+        $look = $this->presentation($c);
+        $name = (bool) ($c['site_name_on'] ?? true) ? $text('site_name_text') : '';
+
         return [
-            'motion' => (bool) ($c['site_motion'] ?? true),
+            'classes' => $look['classes'],
+            'style' => $look['style'],
             'logo' => [(string) $header->get('logo_text'), (string) $header->get('logo_accent')],
             'help_on' => (bool) ($c['site_help_on'] ?? true),
             'help_title' => $text('site_help_title') !== '' ? $text('site_help_title') : __('store.footer.help_headline'),
@@ -227,15 +656,15 @@ final class SiteFooter
             'wa' => $wa !== '' ? 'https://wa.me/'.$wa : '',
             'track' => (bool) ($c['site_track_on'] ?? true) ? Url::to('/track-my-order/') : '',
             'socials' => $socials,
-            // The Brands link follows the brands module, exactly as the header's
-            // does (NavigationService): off, /brands/ is a 404 and no chrome
-            // may link to it.
-            'brands' => $s->moduleEnabled('brands', true),
-            'help_links' => self::helpLinks($nav),
+            'columns' => $this->columns($c, $nav, $s->moduleEnabled('brands', true)),
             'dubai' => $text('site_addr_dubai'),
             'korea' => $text('site_addr_korea'),
             'news' => (bool) ($c['site_news_on'] ?? true),
-            'name' => (bool) ($c['site_name_on'] ?? true) ? $text('site_name_text') : '',
+            'name' => $name,
+            // The shine on the big name is a copy of the name laid over it
+            // (kbb.css, .kft-sheen-name), so the text travels in an attribute —
+            // escaped by Blade — only when that is where the shine is.
+            'name_sheen' => $look['sheen'] === 'name' && $name !== '',
         ];
     }
 }

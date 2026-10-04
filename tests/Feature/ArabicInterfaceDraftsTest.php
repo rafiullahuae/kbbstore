@@ -596,8 +596,14 @@ it('counts them as drafts awaiting review and not as work already done', functio
      * tracker steps, footer, and each email's eyebrow, preheader and "why"
      * line (email.kit.*, email.feedback.stars_note/share_*), seeded by
      * 2027_07_27_000100_seed_email_kit_arabic_drafts. Read off the run.
+     *
+     * ── 1,310 -> 1,315: LANE HF'S FIVE ───────────────────────────────────
+     * The site footer's third column, "Account" (store.footer.account_title,
+     * link_account_home, link_my_orders, link_wishlist, link_addresses),
+     * seeded by 2027_07_28_100100_seed_site_footer_account_arabic_drafts.
+     * Measured on the preview: 1,315 draft rows after migrate.
      */
-    expect($ui['drafts'])->toBe(1310, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1315, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });
@@ -915,7 +921,10 @@ it('never labels two controls on one screen with the same Arabic', function () {
         ['email.invoice.col_unit', 'invoice.invoice.col_unit_price'],
         ['email.invoice.deliver_to', 'store.order_received.address_heading'],
         ['email.items.col_qty', 'invoice.delivery_note.col_quantity'],
-        ['store.account.dashboard_title', 'store.account_panel.default_name', 'store.account_panel.link_account', 'store.footer.account_heading', 'store.footer.link_my_account', 'store.header.account_label', 'store.mobile_menu.link_account'],
+        // (Lane HF) + store.footer.link_account_home, "My account" in the
+        // site footer's Account column: the same words as "My Account" in
+        // sentence case, so the same Arabic is right.
+        ['store.account.dashboard_title', 'store.account_panel.default_name', 'store.account_panel.link_account', 'store.footer.account_heading', 'store.footer.link_account_home', 'store.footer.link_my_account', 'store.header.account_label', 'store.mobile_menu.link_account'],
         ['store.account.orders_empty', 'store.collection.empty'],
         ['store.account.register_title', 'store.account_panel.register_button', 'store.account_panel.tab_register', 'store.mobile_menu.link_register'],
         ['store.account_panel.field_email', 'store.checkout.field_email', 'store.quiz.js_label_email', 'store.reviews.field_email'],
