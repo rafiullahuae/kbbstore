@@ -195,7 +195,15 @@ final class CartTrackingReport
 
             if ($range !== null && str_contains($term, '/')) {
                 $exact = IpRange::RANGE_PREFIX[$range['family']] === $range['prefix'];
-                $exact ? $q->where('c.ct_net', $range['cidr']) : $q->where('c.ct_ip', 'like', $this->like(rtrim(explode('/', $range['cidr'])[0], '0.:')).'%');
+                if ($exact) {
+                    $q->where('c.ct_net', $range['cidr']);
+                } elseif ($range['family'] === 4) {
+                    $this->ipv4Range($q, explode('/', $range['cidr'])[0], $range['prefix']);
+                } else {
+                    // An IPv6 prefix other than /64: the hextets as typed, closed
+                    // with a colon so "2001:db8" cannot also match "2001:db81:".
+                    $q->where('c.ct_ip', 'like', $this->like(rtrim(explode('/', $term)[0], ':').':').'%');
+                }
             } elseif ($range !== null) {
                 $q->where('c.ct_ip', IpRange::normalise($term));
             } else {
@@ -252,6 +260,55 @@ final class CartTrackingReport
         $q->where(function (Builder $w) use ($productIds) {
             $w->whereIn('c.id', DB::table('cart_events')->select('cart_id')->whereIn('product_id', $productIds))
                 ->orWhereIn('c.id', DB::table('cart_items')->select('cart_id')->whereIn('product_id', $productIds));
+        });
+    }
+
+    /**
+     * Exactly the IPv4 addresses inside $network/$prefix, as indexable prefix
+     * matches on the stored dotted form. The whole octets the prefix fixes
+     * become "203.0." and a partly fixed octet is enumerated — /20 is sixteen
+     * third-octet values — so 10.0.0.0/8 can never match "1.2.3.4" or
+     * "100.1.1.1", and /20 does not widen to the /16 around it. At most 128
+     * alternatives (/1, /9, /17, /25); /0 is every IPv4 cart.
+     */
+    private function ipv4Range(Builder $q, string $network, int $prefix): void
+    {
+        $octets = array_map('intval', explode('.', $network));
+
+        if ($prefix === 32) {
+            $q->where('c.ct_ip', $network);
+
+            return;
+        }
+
+        if ($prefix === 0) {
+            $q->where('c.ct_ip', 'not like', '%:%');
+
+            return;
+        }
+
+        $whole = intdiv($prefix, 8);
+        $head = $whole > 0 ? implode('.', array_slice($octets, 0, $whole)).'.' : '';
+        $spare = $prefix % 8;
+
+        if ($spare === 0) {
+            $q->where('c.ct_ip', 'like', $head.'%');
+
+            return;
+        }
+
+        $values = range($octets[$whole], $octets[$whole] + (1 << (8 - $spare)) - 1);
+
+        if ($whole === 3) {
+            $q->whereIn('c.ct_ip', array_map(fn (int $v) => $head.$v, $values));
+
+            return;
+        }
+
+        $q->where(function (Builder $w) use ($head, $values) {
+            foreach ($values as $v) {
+                $w->orWhere('c.ct_ip', 'like', $head.$v.'.%');
+            }
         });
     }
 

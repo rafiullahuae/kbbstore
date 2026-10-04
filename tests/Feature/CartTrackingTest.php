@@ -424,3 +424,70 @@ it('adds no query to a page view, and exactly one to an add-to-cart', function (
     expect($with)->toBe($without)
         ->and(DB::table('cart_events')->count())->toBe(0);
 });
+
+it('finds carts by product, address, range, email, order number and country from one box', function () {
+    /*
+     * DEFECT: the owner pastes the address from a fake COD order into the
+     * search and gets nothing, so he cannot find the carts to block. MUTATION:
+     * drop the IP branch of CartTrackingReport::search() and "94.200.80."
+     * falls through to the product search and matches nothing.
+     */
+    ctCodSetup();
+    $serum = ctProduct('Propolis Glow Serum', 9000);
+    $mask = ctProduct('Clay Pore Mask', 4000);
+
+    ctShopper('94.200.80.7')->postJson('/api/cart/add', ['product_id' => $serum->id])->assertOk();
+    $a = Cart::query()->latest('id')->firstOrFail();
+    ctShopper('94.200.80.7', $a->token)->post('/checkout/place', ctCodForm())->assertRedirect();
+    $order = Order::query()->latest('id')->firstOrFail();
+
+    ctShopper('37.106.5.9')->postJson('/api/cart/add', ['product_id' => $mask->id])->assertOk();
+    $b = Cart::query()->latest('id')->firstOrFail();
+
+    $ids = fn (string $q) => collect(app(CartTrackingReport::class)->carts(['period' => 'all', 'q' => $q])['rows'])->pluck('id')->all();
+
+    expect($ids('Propolis'))->toBe([$a->id])
+        ->and($ids('94.200.80.'))->toBe([$a->id])
+        ->and($ids('94.200.80.7'))->toBe([$a->id])
+        ->and($ids('94.200.80.0/24'))->toBe([$a->id])
+        ->and($ids('37.106.0.0/16'))->toBe([$b->id])
+        ->and($ids('aisha@example'))->toBe([$a->id])
+        ->and($ids($order->order_number))->toBe([$a->id])
+        ->and($ids((string) $b->id))->toBe([$b->id])
+        ->and($ids('nothing-like-this'))->toBe([]);
+});
+
+it('searches a range for exactly the addresses inside it', function () {
+    /*
+     * DEFECT: the range search trimmed the network address with
+     * rtrim('10.0.0.0', '0.:') → "1", so 10.0.0.0/8 listed every cart from
+     * 1.x, 100.x and 172.x as well, and 94.200.80.0/25 became "94.2" — the
+     * owner searching the range he was about to block saw carts from
+     * networks that block would never touch. MUTATION: put the rtrim back
+     * (or widen /20 to its whole octets) and the 100.4.4.4 / 37.106.5.9 rows
+     * appear below.
+     */
+    $p = ctProduct('Range Probe', 1000);
+    $cart = function (string $ip) use ($p): int {
+        ctShopper($ip)->postJson('/api/cart/add', ['product_id' => $p->id])->assertOk();
+
+        return Cart::query()->latest('id')->firstOrFail()->id;
+    };
+
+    $ten = $cart('10.4.4.4');
+    $hundred = $cart('100.4.4.4');
+    $in20 = $cart('37.106.20.9');
+    $out20 = $cart('37.106.5.9');
+    $low = $cart('94.200.80.7');
+    $high = $cart('94.200.80.200');
+
+    $ids = fn (string $q) => collect(app(CartTrackingReport::class)->carts(['period' => 'all', 'q' => $q])['rows'])->pluck('id')->sort()->values()->all();
+
+    expect($ids('10.0.0.0/8'))->toBe([$ten])
+        ->and($ids('37.106.16.0/20'))->toBe([$in20])
+        ->and($ids('37.106.0.0/16'))->toBe([$in20, $out20])
+        ->and($ids('94.200.80.0/25'))->toBe([$low])
+        ->and($ids('94.200.80.128/25'))->toBe([$high])
+        ->and($ids('94.200.80.7/32'))->toBe([$low])
+        ->and($ids('0.0.0.0/0'))->toBe([$ten, $hundred, $in20, $out20, $low, $high]);
+});
