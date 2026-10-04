@@ -89,6 +89,13 @@ final class HomeSections
     public const ABOUT_SCHEMA = [
         'home_ab_eyebrow' => ['type' => 'text', 'label' => 'Small line above the heading', 'default' => 'Our story', 'store' => 'setting', 'help' => 'Empty draws none.'],
         'home_ab_title' => ['type' => 'text', 'label' => 'Heading (H2)', 'default' => 'About K-Beauty Bliss UAE', 'store' => 'setting', 'help' => 'Empty hides the heading.'],
+        // (Lane PF) The owner, 4 October: "i want a read more faded functionality
+        // which we have on product page on short and long description need the
+        // same. also in mobile." On, AT HIS REQUEST; the whole text stays in the
+        // page for search engines — only its height is clamped.
+        'home_ab_more' => ['type' => 'bool', 'label' => 'Read more', 'default' => true, 'store' => 'setting', 'help' => 'Shows the first lines, fading out, with “Read more ↓” — the product page’s description toggle. Off: the whole text, always open.'],
+        'home_ab_clamp_d' => ['type' => 'select', 'label' => 'Text shown before Read more · laptop', 'default' => '140', 'store' => 'setting', 'options' => ['90' => '90px', '104' => '104px', '120' => '120px', '140' => '140px', '160' => '160px', '180' => '180px', '200' => '200px', '240' => '240px'], 'help' => 'The height of the text shown closed. 140px is about five lines.'],
+        'home_ab_clamp_m' => ['type' => 'select', 'label' => 'Text shown before Read more · phone', 'default' => '200', 'store' => 'setting', 'options' => ['104' => '104px', '120' => '120px', '140' => '140px', '160' => '160px', '180' => '180px', '200' => '200px', '240' => '240px', '280' => '280px'], 'help' => '900px and narrower. 200px is about eight lines.'],
         'home_ab_bg' => ['type' => 'select', 'label' => 'Section background', 'default' => 'none', 'store' => 'setting', 'options' => ['none' => 'None — the page shows through', 'blush' => 'Blush — soft pink band', 'cream' => 'Cream — warm white band', 'lilac' => 'Lilac — pink-to-lilac band'], 'help' => ''],
         'home_ab_pt_d' => ['type' => 'select', 'label' => 'Space above · laptop', 'default' => '40', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px', '56' => '56px', '64' => '64px', '72' => '72px', '80' => '80px', '96' => '96px'], 'help' => ''],
         'home_ab_pt_m' => ['type' => 'select', 'label' => 'Space above · phone', 'default' => '28', 'store' => 'setting', 'options' => ['0' => '0px', '4' => '4px', '8' => '8px', '12' => '12px', '16' => '16px', '20' => '20px', '24' => '24px', '28' => '28px', '32' => '32px', '40' => '40px', '48' => '48px', '56' => '56px', '64' => '64px', '72' => '72px', '80' => '80px', '96' => '96px'], 'help' => ''],
@@ -131,6 +138,9 @@ final class HomeSections
         'home_br_count_m' => ['type' => 'select', 'label' => 'How many · phone', 'default' => '10', 'store' => 'setting', 'options' => ['4' => '4', '5' => '5', '6' => '6', '7' => '7', '8' => '8', '9' => '9', '10' => '10', '12' => '12', '14' => '14', '15' => '15', '16' => '16', '18' => '18', '20' => '20', '21' => '21', '24' => '24'], 'help' => ''],
         'home_br_cols_d' => ['type' => 'select', 'label' => 'Per row · laptop', 'default' => '7', 'store' => 'setting', 'options' => ['4' => '4', '5' => '5', '6' => '6', '7' => '7', '8' => '8'], 'help' => 'Photo cards with the name on a frosted label.'],
         'home_br_cols_m' => ['type' => 'select', 'label' => 'Per row · phone', 'default' => '2', 'store' => 'setting', 'options' => ['2' => '2', '3' => '3', '4' => '4'], 'help' => 'Logo tiles; a brand with no logo shows its name.'],
+        // (Lane PF) The owner, 4 October: "the brands boxes need to be little bit
+        // squeezed, reduce the height" — 74px to 54px, AT HIS REQUEST.
+        'home_br_th_m' => ['type' => 'select', 'label' => 'Tile height · phone', 'default' => '54', 'store' => 'setting', 'options' => ['44' => '44px', '48' => '48px', '52' => '52px', '54' => '54px', '56' => '56px', '60' => '60px', '64' => '64px', '70' => '70px', '74' => '74px — the previous height'], 'help' => 'The logo tiles on a phone. The logo or name stays centred.'],
         'home_br_btn' => ['type' => 'text', 'label' => 'Button text', 'default' => 'Shop all brands', 'store' => 'setting', 'help' => 'Empty: no button.'],
         'home_br_url' => ['type' => 'text', 'label' => 'Button link', 'default' => '/brands/', 'store' => 'setting', 'help' => 'A path on this shop (/…) or a full https:// address; anything else is ignored.'],
         'home_br_bg' => ['type' => 'select', 'label' => 'Section background', 'default' => 'cream', 'store' => 'setting', 'options' => ['none' => 'None — the page shows through', 'blush' => 'Blush — soft pink band', 'cream' => 'Cream — warm white band', 'lilac' => 'Lilac — pink-to-lilac band'], 'help' => ''],
@@ -220,12 +230,12 @@ final class HomeSections
     /** tab => [label, description, keys] — spread into HomepageContent::TABS. */
     public const TABS = [
         'bestselling' => ['Best Sellers', 'Section 2: the best-sellers grid — 8 on a laptop (4 × 2), 6 on a phone (2 × 3) — its heading, button, products, background and spacing. Show or hide it per device on Appearance → Homepage.', ['home_bs_eyebrow', 'home_bs_title', 'home_bs_sub', 'home_bs_source', 'home_bs_cat', 'home_bs_brand', 'home_bs_picks', 'home_bs_max', 'home_bs_count_d', 'home_bs_count_m', 'home_bs_cols_d', 'home_bs_cols_m', 'home_bs_btn', 'home_bs_url', 'home_bs_bg', 'home_bs_pt_d', 'home_bs_pt_m', 'home_bs_pb_d', 'home_bs_pb_m', 'home_bs_hg_d', 'home_bs_hg_m']],
-        'brands' => ['Brands', 'Section 3: brand photo cards on a laptop, a logo grid on a phone — ONE list of links, styled per device. Which brands, how many, and the Shop all brands button.', ['home_br_eyebrow', 'home_br_title', 'home_br_sub', 'home_br_picks', 'home_br_count_d', 'home_br_count_m', 'home_br_cols_d', 'home_br_cols_m', 'home_br_btn', 'home_br_url', 'home_br_bg', 'home_br_pt_d', 'home_br_pt_m', 'home_br_pb_d', 'home_br_pb_m', 'home_br_hg_d', 'home_br_hg_m']],
+        'brands' => ['Brands', 'Section 3: brand photo cards on a laptop, a logo grid on a phone — ONE list of links, styled per device. Which brands, how many, and the Shop all brands button.', ['home_br_eyebrow', 'home_br_title', 'home_br_sub', 'home_br_picks', 'home_br_count_d', 'home_br_count_m', 'home_br_cols_d', 'home_br_cols_m', 'home_br_th_m', 'home_br_btn', 'home_br_url', 'home_br_bg', 'home_br_pt_d', 'home_br_pt_m', 'home_br_pb_d', 'home_br_pb_m', 'home_br_hg_d', 'home_br_hg_m']],
         'trending' => ['Trending', 'Section 5: what is moving this week — 8 on a laptop, 6 on a phone, no button.', ['home_tr_eyebrow', 'home_tr_title', 'home_tr_sub', 'home_tr_source', 'home_tr_cat', 'home_tr_brand', 'home_tr_picks', 'home_tr_max', 'home_tr_count_d', 'home_tr_count_m', 'home_tr_cols_d', 'home_tr_cols_m', 'home_tr_btn', 'home_tr_url', 'home_tr_bg', 'home_tr_pt_d', 'home_tr_pt_m', 'home_tr_pb_d', 'home_tr_pb_m', 'home_tr_hg_d', 'home_tr_hg_m']],
         'blog' => ['Blog', 'Section 6: three articles side by side on a laptop, stacked on a phone.', ['home_bl_eyebrow', 'home_bl_title', 'home_bl_sub', 'home_bl_source', 'home_bl_picks', 'home_bl_count_m', 'home_bl_more', 'home_bl_btn', 'home_bl_url', 'home_bl_bg', 'home_bl_pt_d', 'home_bl_pt_m', 'home_bl_pb_d', 'home_bl_pb_m', 'home_bl_hg_d', 'home_bl_hg_m']],
         'under54' => ['Under AED 54', 'Section 7: 10 on a laptop (5 per row), 6 on a phone (2 per row), at or under the price ceiling.', ['home_u54_eyebrow', 'home_u54_title', 'home_u54_sub', 'home_u54_source', 'home_u54_cat', 'home_u54_brand', 'home_u54_picks', 'home_u54_max', 'home_u54_count_d', 'home_u54_count_m', 'home_u54_cols_d', 'home_u54_cols_m', 'home_u54_btn', 'home_u54_url', 'home_u54_bg', 'home_u54_pt_d', 'home_u54_pt_m', 'home_u54_pb_d', 'home_u54_pb_m', 'home_u54_hg_d', 'home_u54_hg_m']],
         'feature' => ['Two-column feature', 'Section 8: two photo panels with a title, a thin rule, a line of text and SHOP NOW ▸ — Sunscreens on the left, best sellers on the right.', ['home_ft_l_img', 'home_ft_l_alt', 'home_ft_l_title', 'home_ft_l_text', 'home_ft_l_btn', 'home_ft_l_url', 'home_ft_r_img', 'home_ft_r_alt', 'home_ft_r_title', 'home_ft_r_text', 'home_ft_r_btn', 'home_ft_r_url', 'home_ft_bg', 'home_ft_pt_d', 'home_ft_pt_m', 'home_ft_pb_d', 'home_ft_pb_m']],
-        'about' => ['About us', 'Section 9, last on the page: the heading and the paragraphs, as real text search engines read. A blank line starts a new paragraph.', ['about_text', 'home_ab_eyebrow', 'home_ab_title', 'home_ab_bg', 'home_ab_pt_d', 'home_ab_pt_m', 'home_ab_pb_d', 'home_ab_pb_m']],
+        'about' => ['About us', 'Section 9, last on the page: the heading and the paragraphs, as real text search engines read. A blank line starts a new paragraph.', ['about_text', 'home_ab_eyebrow', 'home_ab_title', 'home_ab_more', 'home_ab_clamp_d', 'home_ab_clamp_m', 'home_ab_bg', 'home_ab_pt_d', 'home_ab_pt_m', 'home_ab_pb_d', 'home_ab_pb_m']],
     ];
 
     /**
@@ -368,7 +378,7 @@ final class HomeSections
             'count_m' => $m,
             'fetch' => max($d, $m),
             'classes' => 'hs hs-brands '.$frame['bg'].' hs-dc-'.$d.' hs-mc-'.$m,
-            'style' => $frame['style'].';--hs-cols-d:'.self::pick($c, 'home_br_cols_d').';--hs-cols-m:'.self::pick($c, 'home_br_cols_m'),
+            'style' => $frame['style'].';--hs-cols-d:'.self::pick($c, 'home_br_cols_d').';--hs-cols-m:'.self::pick($c, 'home_br_cols_m').';--hs-br-th-m:'.self::pick($c, 'home_br_th_m').'px',
             'eyebrow' => self::text($c, 'home_br_eyebrow'),
             'title' => self::text($c, 'home_br_title'),
             'sub' => self::text($c, 'home_br_sub'),
@@ -437,9 +447,14 @@ final class HomeSections
             static fn (string $p): bool => $p !== ''
         ));
 
+        // (Lane PF) Read more: the clamp heights ride the section's own style,
+        // integers from the selects' own option keys.
+        $more = (bool) ($c['home_ab_more'] ?? true);
+
         return [
             'classes' => 'hs hs-about '.$frame['bg'],
-            'style' => $frame['style'],
+            'style' => $frame['style'].($more ? ';--hs-ab-cl-d:'.self::pick($c, 'home_ab_clamp_d').'px;--hs-ab-cl-m:'.self::pick($c, 'home_ab_clamp_m').'px' : ''),
+            'more' => $more,
             'eyebrow' => self::text($c, 'home_ab_eyebrow'),
             'title' => self::text($c, 'home_ab_title'),
             // A single newline inside a paragraph stays a space; the owner's

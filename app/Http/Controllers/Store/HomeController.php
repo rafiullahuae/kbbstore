@@ -52,81 +52,65 @@ class HomeController extends Controller
 
     public function __invoke(): View
     {
-        // Four rails, one query each, cached together: this is the most-hit URL
-        // on the site and none of it changes per visitor.
-        $rails = Cache::remember('kbb.home.rails', 600, function () {
-            $base = fn () => Product::query()->select(self::CARD_COLUMNS)->visible()->with('brand:id,name,slug');
+        /*
+         * ── A SWITCHED-OFF SECTION COSTS NOTHING TO BUILD — Lane PF ─────────
+         *
+         * Row 55 switched thirteen of the old sections off (HomepageSections::
+         * OFF_BY_DEFAULT) and left their reads running: a cold homepage built
+         * the Recommended, old Best sellers and Flash sale rails, the routine
+         * builder's six steps, the review wall and the category circles for a
+         * page that draws none of them — 61 queries on the Lane PF fixture, of
+         * which 25 fed nothing. Each read below now asks the SAME question the
+         * template asks before drawing its section, `hidden()`, on the SAME
+         * instance the template is handed (a live-preview proposal is bound in
+         * the container for exactly one render, so a section switched on in
+         * the preview gets its rows). A section that is off gets an empty value
+         * of the right shape; a section that is on gets exactly what it got.
+         *
+         * KEPT, deliberately: the old brand strip's read and the catalogue
+         * figures. The strip's section key is `brands`, which is ON (the new
+         * Brands section answers to it), and StorefrontEnglishUnchangedTest
+         * renders the PREVIOUS template — old strip included — over this
+         * controller, so its rows must keep arriving for that comparison to
+         * mean anything. Both are one cached query.
+         *
+         * A warm page was already one query (StorefrontQueryBudgetTest); this
+         * is the cold build after every catalogue write and every ten minutes.
+         * HomeColdBuildTest holds the figure.
+         */
+        $sections = app(HomepageSections::class);
+        $draws = fn (string $key): bool => ! $sections->hidden($key);
 
-            $onSale = $base()
-                ->whereNotNull('sale_price')
-                ->whereColumn('sale_price', '<', 'price')
-                ->orderByDesc('total_sales')
-                ->orderByDesc('id')
-                ->limit(4)
-                ->get();
+        $wantRails = array_keys(array_filter([
+            'recommended' => $draws('recommended'),
+            // The old Best sellers rail, and the old product-photo Spotted
+            // strip that drew from it until Lane HB's section replaced it.
+            'best' => $draws('bestsellers') || ($draws('spotted') && ! view()->exists('partials.home.spotted')),
+            'flash' => $draws('flash'),
+            'bundles' => $draws('bundles'),
+        ]));
 
-            /*
-             * THE BEST-SELLER RAILS ARE ONE QUERY AND ONE SPLIT, NOT TWO
-             * QUERIES AND AN OFFSET.
-             *
-             * This was:
-             *
-             *     'best1' => ...orderByDesc('total_sales')->limit(4)
-             *     'best2' => ...orderByDesc('total_sales')->offset(4)->limit(4)
-             *
-             * -- two separate queries meant to partition one list, over a sort
-             * key that ties constantly. `total_sales` is a counter and most of
-             * this catalogue shares a handful of values; `review_count`, the
-             * other candidate, is 0 nearly everywhere. Where rank 4 and rank 5
-             * tie, LIMIT 4 and LIMIT 4 OFFSET 4 are each free to pick either
-             * row, and nothing carries the first query's choice into the
-             * second. The same product lands in both rails, and the one it
-             * displaced lands in neither.
-             *
-             * That is not a theoretical freedom. `products_total_sales_index`
-             * (2026_10_11_000000_clear_caches_storefront_speed) gives the
-             * planner a choice between walking that index backwards and
-             * sorting, and over a tied group those two return the tied rows in
-             * OPPOSITE orders -- measured on this project's own SQLite, and
-             * the same choice exists on MySQL between an index scan and a
-             * filesort. Which one it picks is a costing decision, and the cost
-             * of `LIMIT 4` is not the cost of `LIMIT 4 OFFSET 4`.
-             *
-             * Fetching eight once and slicing in PHP makes the duplicate
-             * STRUCTURALLY IMPOSSIBLE rather than merely unlikely: one query
-             * returns one list, and two halves of one list cannot overlap
-             * however the database broke the ties inside it. It is also one
-             * query instead of two on the most-hit URL on the site.
-             *
-             * `orderByDesc('id')` is still appended, because the split is not
-             * the only thing that wants a stable answer: this block is cached
-             * for ten minutes and re-run on every eviction, and a rail whose
-             * membership changes on each rebuild with no data behind the
-             * change is the same defect one layer up.
-             */
-            $best = $base()->orderByDesc('total_sales')->orderByDesc('id')->limit(8)->get();
+        /*
+         * Four rails, one query each, cached together: this is the most-hit
+         * URL on the site and none of it changes per visitor.
+         *
+         * ONE KEY STILL, holding only the rails that are drawn. An entry that
+         * lacks one now wanted (a section switched on, or a preview that shows
+         * it) is rebuilt with the new set rather than served short; every
+         * writer that forgot `kbb.home.rails` still forgets all of it.
+         */
+        $railKeys = ['recommended' => ['recommended'], 'best' => ['best1', 'best2'], 'flash' => ['flash'], 'bundles' => ['bundles']];
+        $need = array_merge([], ...array_map(fn ($k) => $railKeys[$k], $wantRails));
+        $rails = Cache::get('kbb.home.rails');
 
-            return [
-                'recommended' => $base()->where('featured', true)
-                    ->orderByDesc('total_sales')->orderByDesc('id')->limit(5)->get(),
-                'best1' => $best->take(4)->values(),
-                'best2' => $best->slice(4)->values(),
-                // Falls back to newest when nothing is discounted, so the row is
-                // never an empty gap.
-                'flash' => $onSale->isNotEmpty() ? $onSale : $base()->latest('id')->limit(4)->get(),
+        if (! is_array($rails) || array_diff($need, array_keys($rails)) !== []) {
+            $rails = $this->rails($wantRails);
+            Cache::put('kbb.home.rails', $rails, 600);
+        }
 
-                // Sets and routines. Falls back to the priciest products when
-                // nothing is categorised as a set, so the row is never empty.
-                'bundles' => (function () use ($base) {
-                    $sets = $base()->whereHas('categories', fn ($c) => $c->where('slug', 'like', '%set%'))
-                        ->orderByDesc('total_sales')->orderByDesc('id')->limit(8)->get();
-
-                    return $sets->isNotEmpty()
-                        ? $sets
-                        : $base()->orderByDesc('price')->orderByDesc('id')->limit(8)->get();
-                })(),
-            ];
-        });
+        foreach (['recommended', 'best1', 'best2', 'flash', 'bundles'] as $key) {
+            $rails[$key] ??= collect();
+        }
 
         $brands = Cache::remember('kbb.home.brands', 900, fn () => Brand::query()
             ->select('id', 'name', 'slug')
@@ -141,7 +125,7 @@ class HomeController extends Controller
             ->get());
 
         // Category tiles, cached alongside the rails.
-        $categories = Cache::remember('kbb.home.cats', 900, fn () => Category::query()
+        $categories = $draws('categories') ? Cache::remember('kbb.home.cats', 900, fn () => Category::query()
             /*
              * ▲ `path` IS SELECTED, AND IT COSTS NOTHING TO SELECT IT.
              *
@@ -184,7 +168,7 @@ class HomeController extends Controller
             ->orderBy('name')
             ->orderBy('categories.id')
             ->limit(10)
-            ->get());
+            ->get()) : collect();
 
         // Journal posts, if the blog has any.
         $posts = Cache::remember('kbb.home.posts', 900, fn () => Post::query()
@@ -197,7 +181,7 @@ class HomeController extends Controller
             ->get());
 
         // Review wall: a summary, the star distribution and a few reviews.
-        $reviews = Cache::remember('kbb.home.reviews', 900, function () {
+        $reviews = $draws('reviews') ? Cache::remember('kbb.home.reviews', 900, function () {
             $agg = Review::query()->approved()->real()->selectRaw('COUNT(*) c, AVG(rating) a')->first();
             $total = (int) ($agg->c ?? 0);
 
@@ -250,7 +234,7 @@ class HomeController extends Controller
                 'average' => round((float) ($agg->a ?? 0), 1),
                 'bars' => $bars,
             ];
-        });
+        }) : ['items' => collect(), 'total' => 0, 'average' => 0.0, 'bars' => [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0]];
 
         /*
          * Hero banners — Lane FO, Phase 15.
@@ -298,7 +282,7 @@ class HomeController extends Controller
          * A step whose categories all turn out to be absent links to /shop/
          * rather than to a category archive that 404s.
          */
-        $routine = Cache::remember('kbb.home.routine', 900, function () {
+        $routine = $draws('routine') ? Cache::remember('kbb.home.routine', 900, function () {
             $steps = [
                 ['n' => '01', 'title' => 'Oil cleanser',   'note' => 'Melts SPF and makeup',   'slugs' => ['cleansing-oils', 'cleansers', 'cleansing']],
                 ['n' => '02', 'title' => 'Water cleanser', 'note' => 'The second cleanse',     'slugs' => ['face-washes', 'cleansers', 'cleansing']],
@@ -340,7 +324,7 @@ class HomeController extends Controller
             }
 
             return $steps;
-        });
+        }) : [];
 
         /*
          * The link is derived OUTSIDE the cache, from the slug inside it. That
@@ -388,7 +372,7 @@ class HomeController extends Controller
         $routineTotal = collect($routine)->sum(fn ($s) => $s['pick']?->effectivePrice() ?? 0);
 
         // Totals used in the copy, so the page never states a made-up number.
-        $catalogueCount = Cache::remember('kbb.home.count', 900, fn () => Product::query()->visible()->count());
+        $catalogueCount = $draws('quiz') ? Cache::remember('kbb.home.count', 900, fn () => Product::query()->visible()->count()) : 0;
         // ONE READER for this figure, not two. The hero's eyebrow quotes it
         // through HomepageContent's {brands} token, and the brand strip's own
         // tally is this variable; a second COUNT(*) here would be two answers
@@ -430,10 +414,16 @@ class HomeController extends Controller
 
         if ($demo->enabled()) {
             foreach (['bundles' => 8, 'recommended' => 4, 'best1' => 4, 'flash' => 4] as $key => $want) {
-                $rails[$key] = $demo->fill($rails[$key], 'products', $want);
+                // Only a rail that is drawn is topped up (Lane PF).
+                if (in_array($key, $need, true)) {
+                    $rails[$key] = $demo->fill($rails[$key], 'products', $want);
+                }
             }
 
-            $categories = $demo->fill($categories, 'categories', 8);
+            if ($draws('categories')) {
+                $categories = $demo->fill($categories, 'categories', 8);
+            }
+
             $brands = $demo->fill($brands, 'brands', 12);
             $posts = $demo->fill($posts, 'posts', 3);
 
@@ -462,7 +452,7 @@ class HomeController extends Controller
 
         return view('store.home', [
             // Section visibility, order and grid skins.
-            'sections' => app(HomepageSections::class),
+            'sections' => $sections,
             'settings' => $this->settings,
             'rails' => $rails,
             'brands' => $brands,
@@ -481,6 +471,101 @@ class HomeController extends Controller
             'home' => $home,
             'homeSettings' => $homeSettings,
         ]);
+    }
+
+    /**
+     * The homepage's old rails — only the ones `$want` names.        (Lane PF)
+     *
+     * The queries are the ones the cached closure in __invoke() ran, word for
+     * word, each now behind the question of whether its section is drawn:
+     * `recommended`, `best` (the old Best sellers rail; best1 + best2),
+     * `flash` and `bundles`.
+     *
+     * @param  list<string>  $want
+     * @return array<string, \Illuminate\Support\Collection>
+     */
+    private function rails(array $want): array
+    {
+        $base = fn () => Product::query()->select(self::CARD_COLUMNS)->visible()->with('brand:id,name,slug');
+        $out = [];
+
+        if (in_array('recommended', $want, true)) {
+            $out['recommended'] = $base()->where('featured', true)
+                ->orderByDesc('total_sales')->orderByDesc('id')->limit(5)->get();
+        }
+
+        if (in_array('best', $want, true)) {
+            /*
+             * THE BEST-SELLER RAILS ARE ONE QUERY AND ONE SPLIT, NOT TWO
+             * QUERIES AND AN OFFSET.
+             *
+             * This was:
+             *
+             *     'best1' => ...orderByDesc('total_sales')->limit(4)
+             *     'best2' => ...orderByDesc('total_sales')->offset(4)->limit(4)
+             *
+             * -- two separate queries meant to partition one list, over a sort
+             * key that ties constantly. `total_sales` is a counter and most of
+             * this catalogue shares a handful of values; `review_count`, the
+             * other candidate, is 0 nearly everywhere. Where rank 4 and rank 5
+             * tie, LIMIT 4 and LIMIT 4 OFFSET 4 are each free to pick either
+             * row, and nothing carries the first query's choice into the
+             * second. The same product lands in both rails, and the one it
+             * displaced lands in neither.
+             *
+             * That is not a theoretical freedom. `products_total_sales_index`
+             * (2026_10_11_000000_clear_caches_storefront_speed) gives the
+             * planner a choice between walking that index backwards and
+             * sorting, and over a tied group those two return the tied rows in
+             * OPPOSITE orders -- measured on this project's own SQLite, and
+             * the same choice exists on MySQL between an index scan and a
+             * filesort. Which one it picks is a costing decision, and the cost
+             * of `LIMIT 4` is not the cost of `LIMIT 4 OFFSET 4`.
+             *
+             * Fetching eight once and slicing in PHP makes the duplicate
+             * STRUCTURALLY IMPOSSIBLE rather than merely unlikely: one query
+             * returns one list, and two halves of one list cannot overlap
+             * however the database broke the ties inside it. It is also one
+             * query instead of two on the most-hit URL on the site.
+             *
+             * `orderByDesc('id')` is still appended, because the split is not
+             * the only thing that wants a stable answer: this block is cached
+             * for ten minutes and re-run on every eviction, and a rail whose
+             * membership changes on each rebuild with no data behind the
+             * change is the same defect one layer up.
+             */
+            $best = $base()->orderByDesc('total_sales')->orderByDesc('id')->limit(8)->get();
+
+            $out['best1'] = $best->take(4)->values();
+            $out['best2'] = $best->slice(4)->values();
+        }
+
+        if (in_array('flash', $want, true)) {
+            $onSale = $base()
+                ->whereNotNull('sale_price')
+                ->whereColumn('sale_price', '<', 'price')
+                ->orderByDesc('total_sales')
+                ->orderByDesc('id')
+                ->limit(4)
+                ->get();
+
+            // Falls back to newest when nothing is discounted, so the row is
+            // never an empty gap.
+            $out['flash'] = $onSale->isNotEmpty() ? $onSale : $base()->latest('id')->limit(4)->get();
+        }
+
+        if (in_array('bundles', $want, true)) {
+            // Sets and routines. Falls back to the priciest products when
+            // nothing is categorised as a set, so the row is never empty.
+            $sets = $base()->whereHas('categories', fn ($c) => $c->where('slug', 'like', '%set%'))
+                ->orderByDesc('total_sales')->orderByDesc('id')->limit(8)->get();
+
+            $out['bundles'] = $sets->isNotEmpty()
+                ? $sets
+                : $base()->orderByDesc('price')->orderByDesc('id')->limit(8)->get();
+        }
+
+        return $out;
     }
 
     /** Call after a catalogue change so the rails do not sit stale for 10 minutes. */

@@ -92,8 +92,15 @@ it('puts the delivery strip second in the two presets that asked for it elsewher
      * the strip is drawn SECOND, where the preset's stored sequence asks for it
      * third, because settle() puts a nested section back behind its host.
      */
+    /*
+     * ADVANCED BY LANE PF. Conversion now places Under AED 54 straight after
+     * the flash sale (both price-led) and its old Best sellers rail is off —
+     * the new one, `bestselling`, took its place further down — so the first
+     * eight visible keys gain `under54` and lose `bestsellers` off the end.
+     * The first three, which are this case's claim, do not move.
+     */
     expect(fwPreviewKeys('conversion'))->toBe([
-        'hero', 'delivery', 'ticker', 'cards_banner', 'flash', 'bundles', 'categories', 'bestsellers',
+        'hero', 'delivery', 'ticker', 'cards_banner', 'flash', 'under54', 'bundles', 'categories',
     ]);
 
     expect(array_slice(fwPreviewKeys('boutique'), 0, 3))->toBe(['hero', 'delivery', 'categories']);
@@ -136,7 +143,23 @@ it('counts the same sections it always did, and names the same ones off', functi
      * keeps a section a preset does not mention at its default — ON — placed
      * last. No preset's `off` list moved, which the loop below still pins.
      */
-    $expected = ['signature' => 24, 'conversion' => 23, 'editorial' => 23, 'boutique' => 16];
+    /*
+     * MOVED BY LANE PF, from 24/23/23/16, and every number is accounted for:
+     *
+     *   signature  24 -> 11  `off` is HomepageSections::OFF_BY_DEFAULT (13
+     *                        sections): Signature is the owner's row-55 page —
+     *                        the banner, the hero as its fallback, and the
+     *                        nine — instead of "every section on".
+     *   conversion 23 -> 20  routine, quiz (unfinished, owner 3 Oct) and the
+     *   editorial  23 -> 20  old best-sellers rail (the new one replaces it)
+     *                        join `off`: three fewer each.
+     *   boutique   16 -> 12  the same three, plus Under AED 54, off beside
+     *                        the flash sale it already turned off.
+     *
+     * The `off` comparison in the loop below is unchanged and still pins that
+     * the SET is exactly what each preset's `off` says.
+     */
+    $expected = ['signature' => 11, 'conversion' => 20, 'editorial' => 20, 'boutique' => 12];
 
     foreach (app(HomepageLayouts::class)->summaries() as $summary) {
         expect($summary['count'])->toBe($expected[$summary['key']], $summary['key'] . ' changed its section count');

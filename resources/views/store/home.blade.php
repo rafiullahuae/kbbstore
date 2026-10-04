@@ -55,7 +55,12 @@
 
      Directive names inside this comment are safe, incidentally, and were
      checked rather than assumed: BladeCompiler strips comments before it
-     tokenises, so the statements pass never sees them. --}}    @vite('resources/css/kbb/kbb-grid-skins.css'){!! $sections->orderStyle() !!}@endpush
+     tokenises, so the statements pass never sees them.
+
+     THE SECTION-HEADING SIZES RIDE THE SAME LINE, FOR THE SAME REASON (Lane
+     PF). HomeHeadings::style() is '' while Appearance → Homepage content →
+     Section headings holds its defaults — kbb.css already says them — so a
+     shop that never opens the tab emits not one byte more. --}}    @vite('resources/css/kbb/kbb-grid-skins.css'){!! $sections->orderStyle() !!}{!! \App\Support\HomeHeadings::style($homeSettings) !!}@endpush
 
 @section('content')
 <div class="kbb-home">
@@ -567,7 +572,7 @@
     $bndlArrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 @endphp
 <section class="sec {{ $bndl['classes'] }} {{ $sections->classFor('bundles') }}" style="{{ $bndl['style'] }}" data-ymal data-ymal-auto="{{ $bndl['auto'] }}" aria-labelledby="bndl-h"><div class="wrap">
-  <div class="sh bndl-head"><div><h2 id="bndl-h">{{ $bndlTitle }} <span class="cnt">{{ trans_choice('store.home.bundles_count', $rails['bundles']->count()) }}</span></h2>
+  <div class="sh bndl-head"><div><h2 id="bndl-h">{{ $bndlTitle }}@if ($bndl['count']) <span class="cnt">{{ trans_choice('store.home.bundles_count', $rails['bundles']->count()) }}</span>@endif</h2>
     <p>{{ $bndl['sub'] !== '' ? $bndl['sub'] : __('store.home.bundles_subtitle') }}</p></div>
     <a class="bndl-all bndl-all-top" href="{{ $bndlUrl }}">{{ $bndlLabel }}<i>{!! $bndlArrow !!}</i></a></div>
   <div class="bndl-stage">

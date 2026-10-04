@@ -107,7 +107,9 @@ it('still wires the mobile menu, and in the same position', function () {
     // 25 since Lane RD added initPress (press feedback: classes only, and an
     // immediate return when the owner chose Off) after initAdminLayer, so no
     // step before it moved either.
-    expect($steps)->toHaveCount(25);
+    // 26 since Lane PF added initReadMore (the homepage About us's Read more,
+    // the product description's own toggle) LAST, so no step before it moved.
+    expect($steps)->toHaveCount(26);
     expect($steps[0])->toBe('initOverlay');
     expect($steps[8])->toBe('initHome');   // wires the mobile menu
     expect($steps[16])->toBe('initListingLoad');

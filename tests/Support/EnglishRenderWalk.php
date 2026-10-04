@@ -1650,10 +1650,24 @@ final class EnglishRenderWalk
              * button is the new pill, the grid becomes the carousel track
              * between two arrows, and a bottom button follows. The cards in
              * between are byte-identical -- partials/home/grid prints them.
+             *
+             * ▲ AND THE "8 sets" BADGE GOES (Lane PF). The owner crossed it out
+             * on his screenshot, 4 October; Appearance → Homepage content → Big
+             * savings bundles → "Show how many sets beside the heading" ships
+             * off and brings it back. So the badge and the space before it are
+             * matched OUTSIDE the group and not put back: the heading closes
+             * straight after its words. Everything else in this rule is as it
+             * was.
+             *
+             * ▲ AND THE PHONE CAROUSEL PEEKS (Lane PF). The owner, 4 October:
+             * "show 2.2, 2.3 2.5 etc products … keep [the arrows] off in
+             * mobile". So the section's classes gain `bndl-peek-m` (a
+             * fractional count runs the phone track to the screen edge) and
+             * `bndl-noarr-m`, and --bndl-per-m is 2.3 where it was 2.
              */
             'Big savings bundles: the section head and the carousel track (2.60.370)' => [
-                'pattern' => '#<section class="sec dv" style="padding-top:8px"><div class="wrap">\n  <div class="sh"><div><h2>Big savings bundles (<span class="cnt">8 sets</span></h2>\n    <p>Complete routines, priced below the sum of their parts\.</p></div>)\n    <a class="lnk" href="/shop/\?cat=skincare-sets">All sets</a></div>\n  <div class="kbb-pgrid" data-skin="showcase">#',
-                'with' => '<section class="sec bndl bndl-car-d bndl-car-m bndl-center bndl-btn-d-top bndl-btn-m-bottom dv" style="--bndl-per-d:4;--bndl-per-m:2;--bndl-pad-d:8px;--bndl-pad-m:8px;--bndl-hg-d:24px;--bndl-hg-m:12px;--bndl-bg-d:24px;--bndl-bg-m:16px" data-ymal data-ymal-auto="0" aria-labelledby="bndl-h"><div class="wrap">'."\n".'  <div class="sh bndl-head"><div><h2 id="bndl-h">Big savings bundles $1'."\n".'    <a class="bndl-all bndl-all-top" href="/shop/?cat=skincare-sets">All sets<i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i></a></div>'."\n".'  <div class="bndl-stage">'."\n".'    <button type="button" class="bndl-arr bndl-prev" data-ymal-prev aria-controls="bndl-track" aria-label="Previous products" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>'."\n".'  <div class="kbb-pgrid bndl-track" data-skin="showcase" id="bndl-track" data-ymal-track tabindex="0" role="region" aria-label="Big savings bundles">',
+                'pattern' => '#<section class="sec dv" style="padding-top:8px"><div class="wrap">\n  <div class="sh"><div><h2>Big savings bundles <span class="cnt">8 sets</span>(</h2>\n    <p>Complete routines, priced below the sum of their parts\.</p></div>)\n    <a class="lnk" href="/shop/\?cat=skincare-sets">All sets</a></div>\n  <div class="kbb-pgrid" data-skin="showcase">#',
+                'with' => '<section class="sec bndl bndl-car-d bndl-car-m bndl-peek-m bndl-noarr-m bndl-center bndl-btn-d-top bndl-btn-m-bottom dv" style="--bndl-per-d:4;--bndl-per-m:2.3;--bndl-pad-d:8px;--bndl-pad-m:8px;--bndl-hg-d:24px;--bndl-hg-m:12px;--bndl-bg-d:24px;--bndl-bg-m:16px" data-ymal data-ymal-auto="0" aria-labelledby="bndl-h"><div class="wrap">'."\n".'  <div class="sh bndl-head"><div><h2 id="bndl-h">Big savings bundles$1'."\n".'    <a class="bndl-all bndl-all-top" href="/shop/?cat=skincare-sets">All sets<i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i></a></div>'."\n".'  <div class="bndl-stage">'."\n".'    <button type="button" class="bndl-arr bndl-prev" data-ymal-prev aria-controls="bndl-track" aria-label="Previous products" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>'."\n".'  <div class="kbb-pgrid bndl-track" data-skin="showcase" id="bndl-track" data-ymal-track tabindex="0" role="region" aria-label="Big savings bundles">',
                 'hits' => 1,
             ],
             'Big savings bundles: the second arrow and the bottom button (2.60.370)' => [

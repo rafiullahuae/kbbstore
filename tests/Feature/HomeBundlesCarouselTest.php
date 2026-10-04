@@ -36,8 +36,12 @@ function bndlRules(): string
 it('ships the owner\'s defaults: carousel on both, heading centred, button beside the heading on a laptop and under the carousel on a phone', function () {
     $c = HomeBundles::config();
 
-    expect($c['classes'])->toBe('bndl bndl-car-d bndl-car-m bndl-center bndl-btn-d-top bndl-btn-m-bottom')
-        ->and($c['style'])->toBe('--bndl-per-d:4;--bndl-per-m:2;--bndl-pad-d:8px;--bndl-pad-m:8px;--bndl-hg-d:24px;--bndl-hg-m:12px;--bndl-bg-d:24px;--bndl-bg-m:16px')
+    // ▲ Lane PF: on a phone 2.3 cards in view (the next one peeks at the
+    // screen edge, `bndl-peek-m`) and no arrows (`bndl-noarr-m`) — the
+    // owner's request of 4 October; HomeSectionHeadingsTest's sibling
+    // HomePhoneCarouselPeekTest carries the reasoning.
+    expect($c['classes'])->toBe('bndl bndl-car-d bndl-car-m bndl-peek-m bndl-noarr-m bndl-center bndl-btn-d-top bndl-btn-m-bottom')
+        ->and($c['style'])->toBe('--bndl-per-d:4;--bndl-per-m:2.3;--bndl-pad-d:8px;--bndl-pad-m:8px;--bndl-hg-d:24px;--bndl-hg-m:12px;--bndl-bg-d:24px;--bndl-bg-m:16px')
         ->and($c['url'])->toBe('/shop/?cat=skincare-sets')
         ->and($c['auto'])->toBe(0);
 
@@ -54,7 +58,7 @@ it('stores only its own options and refuses a link that is not this shop or http
     SettingsService::forgetMemo();
 
     $c = HomeBundles::config();
-    expect($c['classes'])->toBe('bndl bndl-grid-d bndl-car-m bndl-noarr-d bndl-center bndl-btn-d-top bndl-btn-m-off')
+    expect($c['classes'])->toBe('bndl bndl-grid-d bndl-car-m bndl-peek-m bndl-noarr-d bndl-noarr-m bndl-center bndl-btn-d-top bndl-btn-m-off')
         ->and($c['style'])->toContain('--bndl-per-m:1.5')->toContain('--bndl-pad-d:8px')
         ->and($c['url'])->toBe(HomeBundles::DEFAULT_URL)
         ->and($c['label'])->toBe('See every set');

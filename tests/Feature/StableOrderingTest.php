@@ -247,8 +247,24 @@ it('gives Best Sellers two pages that partition the catalogue exactly', function
     expect(array_merge($one, $two))->toBe(soShippedOrder('desc', 48, 0));
 });
 
+/*
+ * ▲ Lane PF: the old Best sellers rail is switched off since row 55, and
+ * HomeController no longer builds a rail whose section is off (HomeColdBuildTest).
+ * These two cases are about how that rail is built WHEN it is drawn, so they
+ * switch it back on first — which is also the only state in which a shopper
+ * can see the defect they guard against.
+ */
+function soOldBestSellersOn(): void
+{
+    $rows = app(\App\Services\HomepageSections::class)->all();
+    $rows['bestsellers']['desktop'] = $rows['bestsellers']['mobile'] = true;
+    app(\App\Services\HomepageSections::class)->save($rows);
+    \App\Services\SettingsService::forgetMemo();
+}
+
 it('splits the home page best-seller rails without repeating or dropping a product', function () {
     soCatalogue();
+    soOldBestSellersOn();
 
     $rails = test()->get('/')->assertOk()->viewData('rails');
 
@@ -273,6 +289,7 @@ it('splits the home page best-seller rails without repeating or dropping a produ
 
 it('builds the two home rails with one query rather than two', function () {
     soCatalogue();
+    soOldBestSellersOn();
     Cache::flush();
 
     $railQueries = 0;

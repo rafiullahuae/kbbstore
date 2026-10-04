@@ -437,6 +437,19 @@ it('joins a section to its wording without growing a second box for it', functio
         }
     }
 
+    /*
+     * (Lane PF) …or by the PAGE: a tab named in HomepageContent::PAGE_TABS
+     * holds settings for every section at once (Section headings: one heading
+     * size and one description size for all of them), so no one section can
+     * claim it. Its keys are claimed here, after the sections', which is where
+     * HomepageContent::SCHEMA spreads them. MUTATION: drop 'headings' from
+     * PAGE_TABS, or spread HomeHeadings::SCHEMA anywhere but last, and this is
+     * red.
+     */
+    foreach (HomepageContent::PAGE_TABS as $tab) {
+        array_push($claimed, ...HomepageContent::TABS[$tab][2]);
+    }
+
     // Every flat setting this screen owns is claimed by exactly one section.
     expect(array_values(array_unique($claimed)))->toBe($claimed)
         ->and(array_keys(HomepageContent::SCHEMA))->toBe($claimed);

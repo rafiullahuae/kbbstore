@@ -220,17 +220,23 @@ final class HomepageContent
             'options' => ['carousel' => 'Carousel — swipe', 'grid' => 'Grid — all at once'], 'help' => ''],
         'home_hb_per_d' => ['type' => 'select', 'label' => 'Cards in view · laptop', 'default' => '4', 'store' => 'setting',
             'options' => ['3' => '3', '4' => '4', '5' => '5', '6' => '6'], 'help' => 'How many sets fit across before the arrows take over.'],
-        'home_hb_per_m' => ['type' => 'select', 'label' => 'Cards in view · phone', 'default' => '2', 'store' => 'setting',
-            'options' => ['1' => '1', '1.5' => '1½ — the next one peeks', '2' => '2', '2.5' => '2½ — the next one peeks'], 'help' => ''],
+        /* (Lane PF) The owner, 4 October: "show 2.2, 2.3 2.5 etc products … so the
+           user will know that there's more products in scroll" and the phone
+           arrows "keep off in mobile". Both defaults moved AT HIS REQUEST. */
+        'home_hb_per_m' => ['type' => 'select', 'label' => 'Cards in view · phone', 'default' => '2.3', 'store' => 'setting',
+            'options' => ['1' => '1', '1.5' => '1½ — the next one peeks', '2' => '2', '2.2' => '2.2 — a sliver of the next one', '2.3' => '2.3 — the next one peeks (recommended)', '2.5' => '2½ — the next one peeks'], 'help' => 'A part-visible card at the screen edge tells a thumb there is more to swipe.'],
         'home_hb_arrows_d' => ['type' => 'bool', 'label' => 'Arrows · laptop', 'default' => true, 'store' => 'setting', 'help' => 'Round arrows at either side of the carousel.'],
-        'home_hb_arrows_m' => ['type' => 'bool', 'label' => 'Arrows · phone', 'default' => true, 'store' => 'setting', 'help' => 'Smaller arrows over the cards; a swipe always works too.'],
+        'home_hb_arrows_m' => ['type' => 'bool', 'label' => 'Arrows · phone', 'default' => false, 'store' => 'setting', 'help' => 'Off: the peeking card shows there is more, and a swipe moves it. On: smaller arrows over the cards.'],
         'home_hb_auto' => ['type' => 'select', 'label' => 'Move on its own', 'default' => '0', 'store' => 'setting',
             'options' => ['0' => 'Off', '3' => 'Every 3 seconds', '5' => 'Every 5 seconds', '7' => 'Every 7 seconds', '10' => 'Every 10 seconds'],
             'help' => 'Stops while the shopper hovers, touches or tabs into it, and never runs for a visitor who has asked for reduced motion.'],
         'home_hb_align' => ['type' => 'select', 'label' => 'Heading position', 'default' => 'center', 'store' => 'setting',
             'options' => ['center' => 'Centred', 'start' => 'Left'], 'help' => 'Both devices.'],
         'home_hb_title' => ['type' => 'text', 'label' => 'Heading', 'default' => '', 'store' => 'setting', 'help' => 'Empty: “Big savings bundles”.'],
-        'home_hb_sub' => ['type' => 'text', 'label' => 'Line under the heading (laptop)', 'default' => '', 'store' => 'setting', 'help' => 'Empty: “Complete routines, priced below the sum of their parts.”'],
+        'home_hb_sub' => ['type' => 'text', 'label' => 'Line under the heading', 'default' => '', 'store' => 'setting', 'help' => 'Empty: “Complete routines, priced below the sum of their parts.” Shown on a phone too, at the size Section headings sets.'],
+        /* (Lane PF) The owner crossed out "8 sets" beside the heading, 4 October.
+           Off, as he asked; the switch brings it back. */
+        'home_hb_count' => ['type' => 'bool', 'label' => 'Show how many sets beside the heading', 'default' => false, 'store' => 'setting', 'help' => 'The small “8 sets” badge. Off by default.'],
         'home_hb_btn_d' => ['type' => 'select', 'label' => 'All sets button · laptop', 'default' => 'top', 'store' => 'setting',
             'options' => ['top' => 'Beside the heading', 'bottom' => 'Under the carousel', 'off' => 'Hidden'], 'help' => ''],
         'home_hb_btn_m' => ['type' => 'select', 'label' => 'All sets button · phone', 'default' => 'bottom', 'store' => 'setting',
@@ -247,7 +253,20 @@ final class HomepageContent
         /* ── Row 55 (Lane HA): sections 2, 3 and 5–8, in page order. The
            shapes, defaults and reasoning are App\Support\HomeSections'. ── */
         ...\App\Support\HomeSections::SCHEMA,
+        /* ── (Lane PF) Section headings: one size per device for every
+           section heading and description. App\Support\HomeHeadings. Last,
+           because it belongs to no one section — see PAGE_TABS. ──────── */
+        ...\App\Support\HomeHeadings::SCHEMA,
     ];
+
+    /**
+     * Tabs whose settings belong to the whole page rather than to one section
+     * (Lane PF). HomepageApiController::WORDS maps each SECTION to the tab its
+     * words are on and claims those keys; a page-wide tab has no section to
+     * claim it, so it is named here instead and HomepageLiveEditTest counts it
+     * as claimed by the page.
+     */
+    public const PAGE_TABS = ['headings'];
 
     /**
      * tab => [label, description, keys] — the shape ModuleSchema::tabs() reads.
@@ -261,6 +280,9 @@ final class HomepageContent
      */
     public const TABS = [
         'copy' => ['Other wording', 'Sentences elsewhere on the homepage that had no screen.', ['home_ticker']],
+        /* (Lane PF) "the sections headings and descriptions should have the
+           same font size. in desktop and mobile both" — one place for it. */
+        ...\App\Support\HomeHeadings::TABS,
         /* (2.60.370) The owner: "on homepage, i need the bundle section to be
            carousel with proper beautiful arrows, give controls of everything
            for desktop mobile both. center the heading, redesign the All Sets
@@ -270,7 +292,7 @@ final class HomepageContent
         'bundles' => ['Big savings bundles', 'The sets row on the homepage: carousel or grid, cards in view, arrows, the heading and the All sets button — separately for a laptop and a phone (900px and narrower).', [
             'home_hb_layout_d', 'home_hb_layout_m', 'home_hb_per_d', 'home_hb_per_m',
             'home_hb_arrows_d', 'home_hb_arrows_m', 'home_hb_auto', 'home_hb_align',
-            'home_hb_title', 'home_hb_sub',
+            'home_hb_title', 'home_hb_sub', 'home_hb_count',
             'home_hb_btn_d', 'home_hb_btn_m', 'home_hb_btn_text', 'home_hb_btn_url',
             'home_hb_pad_d', 'home_hb_pad_m', 'home_hb_head_gap_d', 'home_hb_head_gap_m',
             'home_hb_btn_gap_d', 'home_hb_btn_gap_m',
