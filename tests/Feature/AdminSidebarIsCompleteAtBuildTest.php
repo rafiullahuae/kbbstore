@@ -397,8 +397,11 @@ it('keeps LATE_NAV in the order the sidebar is built in', function () {
         // lands after 'dividers' because that is the first anchor its
         // kbbAddNavEntry() call names, and the LATE_NAV row the integrator adds
         // names the same four in the same order.
+        //
+        // 'wabutton' — Appearance → WhatsApp button (Lane WA), one insertion:
+        // its first anchor is 'pagewash', so it lands directly after it.
         'Appearance' => ['homepage', 'hpcontent', 'banners', 'gridsections', 'prodstyles', 'mobilehdr',
-            'dividers', 'pagewash', 'cartpanel', 'cartpage', 'checkoutpage', 'slimfooter', 'acctpanel',
+            'dividers', 'pagewash', 'wabutton', 'cartpanel', 'cartpage', 'checkoutpage', 'slimfooter', 'acctpanel',
             'header', 'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout'],
     ];
 

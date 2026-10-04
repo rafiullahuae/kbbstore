@@ -541,6 +541,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/site-layout-admin.php';
         require __DIR__.'/page-wash-admin.php';
+        require __DIR__.'/whatsapp-button-admin.php';
 
         /*
          * Store → Security. Lane C. Inside this group for the reason the
