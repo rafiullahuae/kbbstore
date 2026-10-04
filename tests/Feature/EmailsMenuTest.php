@@ -712,7 +712,8 @@ it('runs the domain check read-only from public DNS, and keeps the last answer',
         }
     });
 
-    rkSave(['mail_transport' => 'gmail', 'mail_from_address' => 'info@kbeautybliss.com']);
+    // A finished Google Workspace setup: unfinished, the mail leaves through this server instead.
+    rkSave(['mail_transport' => 'gmail', 'mail_from_address' => 'info@kbeautybliss.com', 'mail_gmail_username' => 'info@kbeautybliss.com', 'mail_gmail_password' => 'abcd efgh ijkl mnop']);
     rkAs('owner');
 
     $r = $this->postJson('/admin-api/emails/dns')->assertOk();
@@ -753,4 +754,84 @@ it('serves the preview as the real order email, sandboxed, to the owner only', f
     $this->get('/admin-api/emails/preview')->assertForbidden();
     $this->getJson('/admin-api/emails/dns')->assertForbidden();
     $this->postJson('/admin-api/emails/dns')->assertForbidden();
+});
+
+it('says SPF is a problem when the shop sends through this server but the domain lets only Google send', function () {
+    /*
+     * THE DEFECT (2.60.376): "emails are sending fine. but all are going to
+     * spam." kbeautybliss.com's SPF lets only Google send for it, the shop was
+     * sending through this server's mail, so every message failed SPF and went
+     * to spam -- and the Domain check said SPF "ok", because it only checked
+     * that a record existed. MUTATION: delete the onlyGoogle() arm in
+     * DomainCheck::run() and the first expectation is red.
+     */
+    app()->bind(App\Services\Mail\DomainCheck::class, fn () => new class(app(MailSettings::class), app(SettingsService::class)) extends App\Services\Mail\DomainCheck {
+        protected function txt(string $host): array
+        {
+            return ['kbeautybliss.com' => ['v=spf1 include:_spf.google.com ~all']][$host] ?? [];
+        }
+    });
+
+    rkSave(['mail_transport' => 'server', 'mail_from_address' => 'info@kbeautybliss.com']);
+    rkAs('owner');
+
+    $spf = collect($this->postJson('/admin-api/emails/dns')->assertOk()->json('last.records'))->keyBy('record')['SPF'];
+
+    expect($spf['status'])->toBe('problem')
+        ->and($spf['hint'])->toContain('Google Workspace (Gmail SMTP)');
+
+    // The same record is right for Google Workspace, and says so.
+    rkSave(['mail_transport' => 'gmail', 'mail_gmail_username' => 'info@kbeautybliss.com', 'mail_gmail_password' => 'abcd efgh ijkl mnop']);
+    $spf = collect($this->postJson('/admin-api/emails/dns')->assertOk()->json('last.records'))->keyBy('record')['SPF'];
+    expect($spf['status'])->toBe('ok');
+});
+
+it('knows an SPF record that lets only Google send from one that also lets this server send', function () {
+    expect(App\Services\Mail\DomainCheck::onlyGoogle('v=spf1 include:_spf.google.com ~all'))->toBeTrue()
+        ->and(App\Services\Mail\DomainCheck::onlyGoogle('v=spf1 include:_spf.google.com -all'))->toBeTrue()
+        ->and(App\Services\Mail\DomainCheck::onlyGoogle('v=spf1 ip4:134.209.147.13 include:_spf.google.com ~all'))->toBeFalse()
+        ->and(App\Services\Mail\DomainCheck::onlyGoogle('v=spf1 a mx include:_spf.google.com ~all'))->toBeFalse()
+        ->and(App\Services\Mail\DomainCheck::onlyGoogle('v=spf1 include:spf.protection.outlook.com ~all'))->toBeFalse();
+});
+
+it('greets Google as the From domain, not as the shop host', function () {
+    /*
+     * 2.60.376, "all are going to spam": the shop runs on extrabeauty.ae and
+     * mails as info@kbeautybliss.com, and the EHLO name was the shop host, so
+     * every message carried a second, unrelated domain in its Received line.
+     * MUTATION: put parse_url(config('app.url')) back as local_domain and this
+     * is red.
+     */
+    config(['app.url' => 'https://extrabeauty.ae']);
+    rkSave([
+        'mail_transport' => MailSettings::TRANSPORT_GMAIL,
+        'mail_gmail_username' => 'info@kbeautybliss.com',
+        'mail_gmail_password' => 'abcd efgh ijkl mnop',
+        'mail_from_address' => 'info@kbeautybliss.com',
+    ]);
+
+    expect(app(MailConfigurator::class)->mailerConfig()['local_domain'])->toBe('kbeautybliss.com');
+});
+
+it('flags SPF when Google Workspace is chosen but unfinished, because the mail then leaves through this server', function () {
+    /*
+     * MailConfigurator falls back to this server's mail when the Google
+     * username or App Password is missing, so orders still email -- and every
+     * one of those fails a Google-only SPF. The check must say so rather than
+     * "ok". MUTATION: make sendsThroughServer() look at transport() alone and
+     * this is red.
+     */
+    app()->bind(App\Services\Mail\DomainCheck::class, fn () => new class(app(MailSettings::class), app(SettingsService::class)) extends App\Services\Mail\DomainCheck {
+        protected function txt(string $host): array
+        {
+            return ['kbeautybliss.com' => ['v=spf1 include:_spf.google.com ~all']][$host] ?? [];
+        }
+    });
+
+    rkSave(['mail_transport' => 'gmail', 'mail_gmail_username' => 'info@kbeautybliss.com', 'mail_from_address' => 'info@kbeautybliss.com']);
+    rkAs('owner');
+
+    $spf = collect($this->postJson('/admin-api/emails/dns')->assertOk()->json('last.records'))->keyBy('record')['SPF'];
+
+    expect($spf['status'])->toBe('problem');
 });
