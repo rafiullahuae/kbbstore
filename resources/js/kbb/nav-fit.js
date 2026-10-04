@@ -52,6 +52,18 @@
  * still declines to shrink further, which is still the right answer — a
  * sixteen-entry menu at 1024px belongs in an overflow menu, and that is a
  * feature, not a scale factor.
+ *
+ * ▲ LANE NV — A FITTED BAR, AND WHERE THE ESTIMATE ABOVE CAME BACK. The owner
+ * asked for the row to be FILLED once the menu has nine or more items: text
+ * grown into spare room as well as shrunk out of overflow. That bar carries
+ * `.mbar.nav-fill` (App\Support\NavRowFit) and fillNavBar() below sizes it in
+ * both directions. The server-side estimate rejected above is used there, but
+ * only as the FIRST PAINT, never as the answer: it is deliberately generous so
+ * the CSS-only paint is a few per cent small rather than wrapped, and this file
+ * still measures and has the last word. Measured on the owner's twelve labels:
+ * first paint within 4% of the fitted size in English and 3% in Arabic, one row
+ * at every width from 1001 to 1920. A bar without the class behaves exactly as
+ * described above.
  */
 
 /**

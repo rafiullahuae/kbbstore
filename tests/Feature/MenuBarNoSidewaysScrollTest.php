@@ -44,6 +44,11 @@ it('opens the last two menus leftward on windows up to 1599px, and leaves wider 
 
     // The items are the bar's only children, so "the last two" are the last two menu items.
     $bar = (string) file_get_contents(resource_path('views/partials/nav-bar.blade.php'));
-    expect($bar)->toContain('<div class="mbar"><div class="wrap">')
+    /*
+     * ▲ Lane NV: a fitted bar (nine or more items) prints `nav-fill` and a
+     * style on `.mbar` itself; the wrap is still its only child and the items
+     * still the wrap's only children, which is what "the last two" relies on.
+     */
+    expect($bar)->toContain('<div class="mbar{{ $kbbNavFit !== null ? \' nav-fill\' : \'\' }}"@if ($kbbNavFit !== null) style="{{ $kbbNavFit }}"@endif><div class="wrap">')
         ->and($bar)->toMatch('#@endforeach\s*</div></div>\s*$#');
 });
