@@ -119,7 +119,7 @@ final class SiteFooter
             ],
             'help' => 'Every storefront page. Choose Previous to go back to the footer the shop had before.'],
         'site_motion' => ['type' => 'bool', 'label' => 'Colours drift slowly', 'default' => true,
-            'help' => 'The pink strip and the big name move gently through their colours. Never for a visitor whose device asks for reduced motion.'],
+            'help' => 'The strip and the big name move gently through their colours. Never for a visitor whose device asks for reduced motion.'],
         'site_help_on' => ['type' => 'bool', 'label' => 'Show the help strip', 'default' => true,
             'help' => 'Off: the strip is not drawn on any device. To hide it on one device only, use the two layout tabs.'],
         'site_help_title' => ['type' => 'text', 'label' => 'Strip headline', 'default' => '',
@@ -158,10 +158,22 @@ final class SiteFooter
             'help' => 'Same format. Empty: My account, My orders, Wishlist, Addresses. A shopper who is not signed in is asked to sign in first and then lands on the page.'],
 
         /* ── Colours & effects (Lane HF) ──────────────────────────────────── */
-        'site_c_from' => ['type' => 'colour', 'label' => 'Help strip · first colour', 'default' => '#C13E63',
-            'help' => 'The strip drifts between this and the second colour, through the shades between them. Shipped: the shop’s deep pink.'],
-        'site_c_to' => ['type' => 'colour', 'label' => 'Help strip · second colour', 'default' => '#E0567B',
-            'help' => 'Shipped: the shop’s pink. Keep both dark enough for white writing.'],
+        /*
+         * THE STRIP'S FOUR COLOURS. The owner, 4 October, after seeing the
+         * first draft: "i need only our pinkish, red and orange and grey
+         * combination effect. no any other colors." So the strip drifts pink →
+         * deep pink → red → orange and back, every stop dark enough for its
+         * white headline: the lowest contrast anywhere on the shipped gradient
+         * is 3.63:1, at the pink (#E0567B, the shop's --pink).
+         */
+        'site_c_from' => ['type' => 'colour', 'label' => 'Help strip · colour 1', 'default' => '#E0567B',
+            'help' => 'The strip drifts through its four colours and back. Shipped: the shop’s pink. Keep all four pink, red or orange, and dark enough for white writing.'],
+        'site_c_2' => ['type' => 'colour', 'label' => 'Help strip · colour 2', 'default' => '#C13E63',
+            'help' => 'Shipped: the shop’s deep pink.'],
+        'site_c_3' => ['type' => 'colour', 'label' => 'Help strip · colour 3', 'default' => '#E23A4E',
+            'help' => 'Shipped: the shop’s sale red.'],
+        'site_c_to' => ['type' => 'colour', 'label' => 'Help strip · colour 4', 'default' => '#D9603B',
+            'help' => 'Shipped: a warm orange, deep enough for the white headline.'],
         'site_c_bg' => ['type' => 'colour', 'label' => 'Footer background', 'default' => '#FFFFFF',
             'help' => 'Behind the columns and the bottom bar. The faint blush in the top corner stays.'],
         'site_c_text' => ['type' => 'colour', 'label' => 'Link and description text', 'default' => '#5E545A', 'help' => ''],
@@ -170,9 +182,9 @@ final class SiteFooter
         'site_drift_speed' => ['type' => 'select', 'label' => 'Drift speed', 'default' => '14',
             'options' => ['8' => 'Quicker — 8 seconds', '14' => 'Gentle — 14 seconds (as shipped)', '24' => 'Very slow — 24 seconds'],
             'help' => 'How long the strip takes to drift across its colours once.'],
-        'site_name_tone' => ['type' => 'select', 'label' => 'The big name’s colours', 'default' => 'pastel',
-            'options' => ['pastel' => 'Pastels — pink, peach, lilac and mint (as approved 3 October)', 'pink' => 'Pinks only'],
-            'help' => ''],
+        'site_name_tone' => ['type' => 'select', 'label' => 'The big name’s colours', 'default' => 'warm',
+            'options' => ['warm' => 'Warm — light pink, rose, coral, peach and a soft grey', 'pink' => 'Pinks only'],
+            'help' => 'Light and bright, drifting slowly. Both stay in the shop’s pink, red, orange and grey — the owner: “no any other colors”.'],
         'site_sheen' => ['type' => 'select', 'label' => 'The shine', 'default' => 'bar',
             'options' => ['bar' => 'Across the bottom bar', 'name' => 'Across the big name', 'off' => 'Off'],
             'help' => 'A light that sweeps across, left to right in English and right to left in Arabic. Never for a visitor whose device asks for reduced motion.'],
@@ -236,7 +248,7 @@ final class SiteFooter
         'site_cols' => ['Site footer · link columns', 'The three columns of links, on laptops and phones. Leave a box empty for the shipped titles and links, which the Arabic shop shows in Arabic.',
             ['site_col1_title', 'site_col1_links', 'site_col2_title', 'site_col2_links', 'site_col3_title', 'site_col3_links']],
         'site_fx' => ['Site footer · colours & effects', 'The strip’s colours and its drift, the footer’s colours, and the shine across the bottom.',
-            ['site_c_from', 'site_c_to', 'site_c_bg', 'site_c_text', 'site_c_accent', 'site_motion', 'site_drift_speed', 'site_name_tone', 'site_sheen', 'site_sheen_speed']],
+            ['site_c_from', 'site_c_2', 'site_c_3', 'site_c_to', 'site_c_bg', 'site_c_text', 'site_c_accent', 'site_motion', 'site_drift_speed', 'site_name_tone', 'site_sheen', 'site_sheen_speed']],
         'site_d' => ['Site footer · layout desktop', 'Laptops and anything wider than 900px: what shows, how it lines up, the spacing and the type sizes.',
             self::DEVICE_KEYS_D],
         'site_m' => ['Site footer · layout mobile', 'Phones (900px and narrower): what shows, how it lines up, the spacing and the type sizes.',
@@ -578,6 +590,8 @@ final class SiteFooter
 
         $style = [
             '--kft-from:'.$hex('site_c_from'),
+            '--kft-c2:'.$hex('site_c_2'),
+            '--kft-c3:'.$hex('site_c_3'),
             '--kft-to:'.$hex('site_c_to'),
             '--kft-bg:'.$hex('site_c_bg'),
             '--kft-text:'.$hex('site_c_text'),

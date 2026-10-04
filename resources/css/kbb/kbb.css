@@ -4405,9 +4405,11 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 
 /* ══ THE SITE FOOTER — the approved design (docs/home-preview/footer-final.html) ══
    (Lane HB, master plan row 55; reworked by Lane HF, 4 October.) A help strip
-   in the shop's own pinks drifting slowly within that range, a white main
-   block with a blush wash, a very big centred name in light colours that
-   slowly change, a slim bottom bar with a shine sweeping across it.
+   drifting through the shop's pink, red and orange, a white main block with a
+   blush wash, a very big centred name in light pinks, coral, peach and a soft
+   grey that slowly change — the owner: "only our pinkish, red and orange and
+   grey combination effect. no any other colors" — and a slim bottom bar with
+   a shine sweeping across it.
    `footer.kft` out-specifies the old dark `footer{}` rule above without
    editing it, so Appearance → Footer → "Previous" still draws exactly as it
    did. All motion is CSS and stops under prefers-reduced-motion. The big
@@ -4431,8 +4433,7 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;overflow:hidden;font-size:14px;line-height:1.5}
 .kft a{text-decoration:none}
 .kft-wrap{max-width:var(--site-max,1320px);margin-inline:auto;padding-inline:var(--site-gutter,16px)}
-.kft-help{color:#fff;background:linear-gradient(110deg,var(--kft-from,#C13E63),var(--kft-to,#E0567B),var(--kft-from,#C13E63));
-  background:linear-gradient(110deg,var(--kft-from,#C13E63),color-mix(in srgb,var(--kft-from,#C13E63),var(--kft-to,#E0567B)),var(--kft-to,#E0567B),color-mix(in srgb,var(--kft-to,#E0567B) 90%,#FCE0E8),var(--kft-to,#E0567B),color-mix(in srgb,var(--kft-from,#C13E63),var(--kft-to,#E0567B)),var(--kft-from,#C13E63));
+.kft-help{color:#fff;background:linear-gradient(110deg,var(--kft-from,#E0567B),var(--kft-c2,#C13E63),var(--kft-c3,#E23A4E),var(--kft-to,#D9603B),var(--kft-c3,#E23A4E),var(--kft-c2,#C13E63),var(--kft-from,#E0567B));
   background-size:300% 100%;background-position:0% 50%}
 .kft-help-in{display:flex;align-items:center;gap:18px;padding-block:18px}
 .kft-help-ic{flex:none;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);display:grid;place-items:center}
@@ -4440,14 +4441,13 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 .kft-help-tx{min-width:0;flex:1}
 .kft-help-h{margin:0;font-size:var(--kft-fh-d,22px);line-height:1.2;font-weight:700;letter-spacing:-.01em;text-wrap:balance;color:#fff}
 .kft-avail{display:inline-flex;align-items:center;gap:6px;margin-inline-start:8px;vertical-align:3px;background:#fff;color:var(--kft-accent,#C13E63);border-radius:99px;padding:3px 11px;font-size:12.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
-.kft-avail::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--kft-to,#E0567B);box-shadow:0 0 0 3px rgba(224,86,123,.25)}
+.kft-avail::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--kft-from,#E0567B);box-shadow:0 0 0 3px rgba(224,86,123,.25)}
 .kft-help-p{margin:3px 0 0;font-size:14px;opacity:.92}
 .kft-help-bt{display:flex;gap:10px;flex:none}
 .kft-help-bt a{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:99px;font-weight:700;font-size:14px;white-space:nowrap}
 .kft-bt-p{background:#fff;color:var(--kft-accent,#C13E63);box-shadow:0 8px 18px -10px rgba(120,24,56,.6)}
 .kft-bt-o{border:1.5px solid rgba(255,255,255,.75);color:#fff}
 .kft-help-bt a:hover{filter:brightness(1.05);transform:translateY(-1px)}
-.kft-hc-d .kft-help-tx{text-align:center}
 .kft-main{background:radial-gradient(60% 120% at 0% 0%,#FFF4F7 0%,var(--kft-bg,#fff) 60%),var(--kft-bg,#fff);padding-top:var(--kft-pt-d,30px);padding-bottom:var(--kft-pb-d,0px)}
 .kft-grid{display:flex;gap:var(--kft-gap-d,28px)}
 .kft-grid>*{min-width:0}
@@ -4463,9 +4463,6 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 .kft-soc a{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--pink-soft);color:var(--kft-accent,#C13E63);border:1px solid #F7DCE4;transition:background .2s,color .2s}
 .kft-soc a:hover{background:var(--pink);color:#fff}
 .kft-soc svg{width:16px;height:16px}
-.kft-bc-d .kft-brand{text-align:center}
-.kft-bc-d .kft-tag{margin-inline:auto}
-.kft-bc-d .kft-soc{justify-content:center}
 .kft-ch{margin:0 0 10px;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--kft-accent,#C13E63);font-weight:700}
 .kft-col ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:var(--kft-fl-d,14px);color:var(--kft-text,#5E545A)}
 .kft-col a:hover{color:var(--kft-accent,#C13E63)}
@@ -4479,7 +4476,7 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 .kft-news button{flex:none;height:40px;padding:0 16px;border:0;border-radius:99px;background:var(--pink);color:#fff;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
 .kft-name{margin:18px 0 0;text-align:center;font-weight:800;letter-spacing:-.045em;line-height:.86;white-space:nowrap;overflow:hidden;user-select:none;
   font-size:calc(min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14))) * var(--kft-fn-d, 100) / 100);padding-bottom:.06em;
-  background:linear-gradient(90deg,#FFB3C8,#FFD1B3,#F8B4E4,#C9B8FF,#A8E6CF,#FFB3C8);background-size:300% 100%;background-position:0% 50%;
+  background:linear-gradient(90deg,#FFB3C8,#F7A1B5,#F59A9A,#FFC49B,#D9CFD3,#FFB3C8);background-size:300% 100%;background-position:0% 50%;
   -webkit-background-clip:text;background-clip:text;color:transparent}
 .kft-name-pink .kft-name{background-image:linear-gradient(90deg,#FFB3C8,#FCE0E8,#F7A8BF,#FFD3DF,#F4A0B8,#FFB3C8)}
 .kft-bot{border-top:1px solid #F1E3E8;font-size:12.5px;color:var(--muted);background:var(--kft-bg,#fff)}
@@ -4497,9 +4494,9 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
    the letters by a copy of the name clipped to them. Both run the same sweep:
    across in the first 60% of the loop, then a rest. */
 .kft-sheen-bar .kft-bot{position:relative;isolation:isolate;overflow:hidden}
-.kft-sheen-bar .kft-bot::before,.kft-sheen-bar .kft-bot::after{content:'';position:absolute;inset-block:0;left:0;width:100%;z-index:-1;pointer-events:none;transform:translateX(-100%);animation:kft-sheen var(--kft-sh,5s) ease-in-out infinite}
+.kft-sheen-bar .kft-bot::before,.kft-sheen-bar .kft-bot::after{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;transform:translateX(-100%);animation:kft-sheen var(--kft-sh,5s) ease-in-out infinite}
 .kft-sheen-bar .kft-bot::before{background:linear-gradient(100deg,transparent 20%,rgba(252,224,232,.95) 38%,rgba(240,140,168,.5) 47%,rgba(255,255,255,.9) 50%,rgba(240,140,168,.5) 53%,rgba(252,224,232,.95) 62%,transparent 80%)}
-.kft-sheen-bar .kft-bot::after{inset-block:0 auto;height:2px;background:linear-gradient(90deg,transparent 25%,var(--kft-to,#E0567B) 50%,transparent 75%)}
+.kft-sheen-bar .kft-bot::after{bottom:auto;height:2px;background:linear-gradient(90deg,transparent 25%,var(--kft-from,#E0567B) 50%,transparent 75%)}
 @keyframes kft-sheen{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
 .kft-sheen-name .kft-name{position:relative}
 .kft-sheen-name .kft-name::after{content:attr(data-kft-text);position:absolute;inset:0;padding-bottom:.06em;pointer-events:none;
@@ -4516,8 +4513,13 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
   .kft-sheen-bar .kft-bot::before,.kft-sheen-bar .kft-bot::after,.kft-sheen-name .kft-name::after{animation:none;display:none}
 }
 /* What shows, per device. One rule per part; a part's own display is never
-   restated, only taken away. */
+   restated, only taken away. The laptop's "Centred" lives in here too, so it
+   cannot leak onto a phone set to line up at the start. */
 @media (min-width:901px){
+  .kft-hc-d .kft-help-tx{text-align:center}
+  .kft-bc-d .kft-brand{text-align:center}
+  .kft-bc-d .kft-tag{margin-inline:auto}
+  .kft-bc-d .kft-soc{justify-content:center}
   .kft-xd-help .kft-help,.kft-xd-help-sub .kft-help-p,.kft-xd-logo .kft-logo,.kft-xd-tag .kft-tag,.kft-xd-soc .kft-soc,
   .kft-xd-col1 .kft-col1,.kft-xd-col2 .kft-col2,.kft-xd-col3 .kft-col3,
   .kft-xd-visit .kft-contact>.kft-ch,.kft-xd-visit .kft-visit,.kft-xd-news .kft-news,.kft-xd-name .kft-name,.kft-xd-bot .kft-bot,.kft-xd-pay .kft-pay,
