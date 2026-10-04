@@ -1,0 +1,288 @@
+{
+  "before-columns-390": {
+    "blockWidth": 346,
+    "columnsPerRow": "3 stacked into 3 rows",
+    "gridTemplateColumns": "346px",
+    "columnWidths": [
+      346,
+      346,
+      346
+    ],
+    "pictureWidths": [
+      300,
+      300,
+      300
+    ],
+    "headings": [
+      {
+        "text": "QUERCETINOL",
+        "fontSize": "17px",
+        "lineHeight": "22.1px",
+        "height": 22.1,
+        "width": 346,
+        "lines": 1
+      },
+      {
+        "text": "ANTI-SEBUM P",
+        "fontSize": "17px",
+        "lineHeight": "22.1px",
+        "height": 22.1,
+        "width": 346,
+        "lines": 1
+      },
+      {
+        "text": "0.5% BHA",
+        "fontSize": "17px",
+        "lineHeight": "22.1px",
+        "height": 22.1,
+        "width": 346,
+        "lines": 1
+      }
+    ],
+    "blockHeight": 1300.4,
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "before-videos-390": {
+    "players": 0,
+    "addressesPrintedAsText": [
+      "http://kbeautybliss.com/wp-content/uploads/2024/11/qfeoq0zeznudldm76nvl-1.webmhttp://kbeautybliss.com/wp-content/uploads/2024/11/wafopbfejfivqjxml2ky-1.webm"
+    ],
+    "scrollWidth": 390
+  },
+  "before-columns-1280": {
+    "blockWidth": 820,
+    "columnsPerRow": 3,
+    "gridTemplateColumns": "258.656px 258.672px 258.656px",
+    "columnWidths": [
+      258.7,
+      258.7,
+      258.7
+    ],
+    "pictureWidths": [
+      118.3,
+      118.3,
+      118.3
+    ],
+    "headings": [
+      {
+        "text": "QUERCETINOL",
+        "fontSize": "17px",
+        "lineHeight": "22.1px",
+        "height": 22.1,
+        "width": 118.3,
+        "lines": 1
+      },
+      {
+        "text": "ANTI-SEBUM P",
+        "fontSize": "17px",
+        "lineHeight": "22.1px",
+        "height": 44.2,
+        "width": 118.3,
+        "lines": 2
+      },
+      {
+        "text": "0.5% BHA",
+        "fontSize": "17px",
+        "lineHeight": "22.1px",
+        "height": 22.1,
+        "width": 118.3,
+        "lines": 1
+      }
+    ],
+    "blockHeight": 221.9,
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "before-videos-1280": {
+    "players": 0,
+    "addressesPrintedAsText": [
+      "http://kbeautybliss.com/wp-content/uploads/2024/11/qfeoq0zeznudldm76nvl-1.webmhttp://kbeautybliss.com/wp-content/uploads/2024/11/wafopbfejfivqjxml2ky-1.webm"
+    ],
+    "scrollWidth": 1280
+  },
+  "after-columns-390": {
+    "blockWidth": 346,
+    "columnsPerRow": 3,
+    "gridTemplateColumns": "108.656px 108.672px 108.656px",
+    "columnWidths": [
+      108.7,
+      108.7,
+      108.7
+    ],
+    "pictureWidths": [
+      108.7,
+      108.7,
+      108.7
+    ],
+    "headings": [
+      {
+        "text": "QUERCETINOL",
+        "fontSize": "13.582px",
+        "lineHeight": "17.6566px",
+        "height": 17.6,
+        "width": 108.7,
+        "lines": 1
+      },
+      {
+        "text": "ANTI-SEBUM P",
+        "fontSize": "13.584px",
+        "lineHeight": "17.6592px",
+        "height": 17.6,
+        "width": 108.7,
+        "lines": 1
+      },
+      {
+        "text": "0.5% BHA",
+        "fontSize": "13.582px",
+        "lineHeight": "17.6566px",
+        "height": 17.6,
+        "width": 108.7,
+        "lines": 1
+      }
+    ],
+    "blockHeight": 303.4,
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "after-videos-390": {
+    "players": 2,
+    "boxes": [
+      {
+        "width": 167,
+        "height": 296.9
+      },
+      {
+        "width": 167,
+        "height": 296.9
+      }
+    ],
+    "sameRow": true,
+    "attributes": [
+      {
+        "controls": true,
+        "autoplay": false,
+        "preload": "metadata",
+        "playsInline": true,
+        "src": "/wp-content/uploads/2024/11/qfeoq0zeznudldm76nvl-1.webm"
+      },
+      {
+        "controls": true,
+        "autoplay": false,
+        "preload": "metadata",
+        "playsInline": true,
+        "src": "/wp-content/uploads/2024/11/wafopbfejfivqjxml2ky-1.webm"
+      }
+    ],
+    "metadata": [
+      {
+        "readyState": 4,
+        "videoWidth": 360,
+        "videoHeight": 640,
+        "duration": 3
+      },
+      {
+        "readyState": 4,
+        "videoWidth": 360,
+        "videoHeight": 640,
+        "duration": 3
+      }
+    ],
+    "addressesPrintedAsText": [],
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "playedTo": 1.200042
+  },
+  "after-columns-1280": {
+    "blockWidth": 820,
+    "columnsPerRow": 3,
+    "gridTemplateColumns": "258.656px 258.672px 258.656px",
+    "columnWidths": [
+      258.7,
+      258.7,
+      258.7
+    ],
+    "pictureWidths": [
+      118.3,
+      118.3,
+      118.3
+    ],
+    "headings": [
+      {
+        "text": "QUERCETINOL",
+        "fontSize": "14px",
+        "lineHeight": "18.2px",
+        "height": 18.2,
+        "width": 118.3,
+        "lines": 1
+      },
+      {
+        "text": "ANTI-SEBUM P",
+        "fontSize": "14px",
+        "lineHeight": "18.2px",
+        "height": 18.2,
+        "width": 118.3,
+        "lines": 1
+      },
+      {
+        "text": "0.5% BHA",
+        "fontSize": "14px",
+        "lineHeight": "18.2px",
+        "height": 18.2,
+        "width": 118.3,
+        "lines": 1
+      }
+    ],
+    "blockHeight": 169.3,
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "after-videos-1280": {
+    "players": 2,
+    "boxes": [
+      {
+        "width": 404,
+        "height": 480
+      },
+      {
+        "width": 404,
+        "height": 480
+      }
+    ],
+    "sameRow": true,
+    "attributes": [
+      {
+        "controls": true,
+        "autoplay": false,
+        "preload": "metadata",
+        "playsInline": true,
+        "src": "/wp-content/uploads/2024/11/qfeoq0zeznudldm76nvl-1.webm"
+      },
+      {
+        "controls": true,
+        "autoplay": false,
+        "preload": "metadata",
+        "playsInline": true,
+        "src": "/wp-content/uploads/2024/11/wafopbfejfivqjxml2ky-1.webm"
+      }
+    ],
+    "metadata": [
+      {
+        "readyState": 4,
+        "videoWidth": 360,
+        "videoHeight": 640,
+        "duration": 3
+      },
+      {
+        "readyState": 4,
+        "videoWidth": 360,
+        "videoHeight": 640,
+        "duration": 3
+      }
+    ],
+    "addressesPrintedAsText": [],
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "playedTo": 1.200822
+  }
+}

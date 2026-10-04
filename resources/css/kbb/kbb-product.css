@@ -1452,7 +1452,7 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
    rule. Specificity: the panel's own `.details .dcontent :is(h2,h3,h4)` margin
    rule is (0,2,1); the heading and title rules below are written at the same
    weight and win by coming after it. */
-.kbb-eblock{container-type:inline-size;display:block;margin-block:0 1.1em;color:var(--ink-2)}
+.kbb-eblock{container:kbb-eb/inline-size;display:block;margin-block:0 1.1em;color:var(--ink-2)}
 .kbb-eblock > * + *{margin-block-start:18px}
 .kbb-eblock :is(h2,h3,h4).kbb-eblock__heading{margin:0;font-size:17px;font-weight:650;line-height:1.3;color:var(--ink)}
 .kbb-eblock--center{text-align:center}
@@ -1462,8 +1462,8 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
 .kbb-eblock__row--4{--kbb-eb-cols:4}
 .kbb-eblock__row--5{--kbb-eb-cols:5}
 .kbb-eblock__row--6{--kbb-eb-cols:6}
-@container (max-width:599px){.kbb-eblock__row{grid-template-columns:minmax(0,1fr)}}
-.kbb-eblock__col{min-width:0}
+@container kbb-eb (max-width:599px){.kbb-eblock__row{grid-template-columns:minmax(0,1fr)}}
+.kbb-eblock__col{min-width:0;container:kbb-eb-col/inline-size}
 .kbb-eblock__col > * + *{margin-block-start:12px}
 .kbb-eblock__item{display:flex;gap:14px;align-items:center;text-align:start}
 .kbb-eblock__item--top{flex-direction:column;align-items:flex-start}
@@ -1479,6 +1479,58 @@ html[data-press] .kbb-fbt .bt-cb.kbb-pressed{opacity:0}
 .kbb-eblock__figure figcaption{margin-block-start:6px;font-size:12px;color:var(--muted)}
 .kbb-eblock__list{margin-block:0;margin-inline:18px 0}
 .kbb-eblock__rule{border:0;border-block-start:1px solid var(--line);margin:0}
+
+/* ── THE OLD SHOP'S COLUMNS, ON ONE LINE AND THREE ACROSS. (Lane PD) ─────────
+   The owner, with a screenshot of "Gentle Yet Effective Ingredients":
+     "the html blocks has font size issue, it should come in line, the
+      headings. also in mobile also it should come in one row the 3 columns
+      [...] in original site it's in 3 columns."
+
+   1. A HEADING INSIDE A COLUMN IS SIZED BY ITS COLUMN. It was the block's
+      17px heading (or the 13px item title) whatever the column measured, and
+      in the 118px text column beside each picture "ANTI-SEBUM P" broke after
+      "ANTI-SEBUM". Every column is now a size container of its own, and the
+      heading is a share of the column's width (cqi), clamped 10-14px, so an
+      ingredient name sits on one line at 390px and at 1280px. Measured, not
+      assumed: docs/lane-pd-shots/. text-wrap:balance is the fallback for a
+      name too long for any size -- two even lines, never a clipped word.
+      (The block's own heading, outside the columns, keeps its 17px.)
+
+   2. THREE COLUMNS STAY THREE ON A PHONE. Under 600px every row used to
+      stack one per line, which is the "one row" he saw. A three-column row
+      now keeps its three columns, and a column too narrow to hold a picture
+      beside its words (under 180px, i.e. a phone) puts the picture above
+      them -- the old site's phone layout. Rows of two, four or more keep
+      the phone stack they had. Store -> Modules -> "HTML Block columns on
+      phones" OFF marks the block --stack and restores the old stack.
+
+   Container queries, so nothing is measured in script and the same block in
+   a wider or narrower panel answers for its own width. */
+.kbb-eblock__col :is(h2,h3,h4).kbb-eblock__heading,
+.kbb-eblock__col h4.kbb-eblock__title{font-size:clamp(10px,12.5cqi,14px);letter-spacing:.02em;line-height:1.3;text-wrap:balance}
+@container kbb-eb (max-width:599px){
+  .kbb-eblock .kbb-eblock__row--3{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 10px}
+  .kbb-eblock--stack .kbb-eblock__row--3{grid-template-columns:minmax(0,1fr);gap:18px 22px}
+}
+@container kbb-eb-col (max-width:179px){
+  .kbb-eblock__col .kbb-eblock__row{grid-template-columns:minmax(0,1fr);gap:8px}
+  .kbb-eblock__item{flex-direction:column;align-items:flex-start;gap:8px}
+  .kbb-eblock__item > :is(img,a){flex-basis:auto;width:100%}
+  .kbb-eblock__col :is(.kbb-eblock__copy,.kbb-eblock__text){font-size:12px;line-height:1.5}
+}
+
+/* ── A VIDEO IN THE COPY, PLAYED. (Lane PD) ─────────────────────────────────
+   "we added a custom section of 2 videos [...] but it's not showing at all."
+   App\Support\DescriptionVideos draws a video address on a line of its own
+   as <video controls playsinline preload="metadata">; two or more sit side by
+   side at every width, as a pair of phone clips did on the old site. The box
+   is reserved here -- 9:16, capped at 480px tall -- so the page does not jump
+   when the metadata arrives, and object-fit keeps a wide clip whole inside
+   it. No autoplay, no sound, no script. */
+.kbb-dvid{display:grid;gap:12px;grid-template-columns:minmax(0,1fr);margin-block:0 1.1em;max-width:820px}
+.kbb-dvid--2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.kbb-dvid__v{display:block;width:100%;height:auto;aspect-ratio:9/16;max-height:480px;object-fit:contain;background:#111;border-radius:10px}
+.kbb-dvid--1 .kbb-dvid__v{max-width:360px}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    THE PRICE ROW, THE SHARE BUTTON, TABBY & TAMARA, AND THE PHONE PAGE AS

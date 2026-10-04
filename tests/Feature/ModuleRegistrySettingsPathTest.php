@@ -218,7 +218,10 @@ it('names a real console location in every module row that names one at all', fu
     // completed, marked refunded, payment failed) name 'Store → Mail', where
     // Order status emails lists them. The reminder and feedback rows name no
     // screen. Advanced for that, and $wrong is still empty.
-    expect($checked)->toBe(45);
+    // 46 with Lane PD: `eblock_phone_columns` names 'Content → HTML Blocks',
+    // where the blocks it lays out are edited; `desc_videos` names no screen.
+    // Advanced for that, and $wrong is still empty.
+    expect($checked)->toBe(46);
     expect($wrong)->toBe([]);
 });
 

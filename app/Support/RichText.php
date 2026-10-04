@@ -202,6 +202,18 @@ final class RichText
         }
 
         /*
+         * A `<video>` KEEPS ITS ADDRESS (Lane PD). It is on DROP_WHOLE, and a
+         * pasted or imported player vanished whole -- the owner's "section of
+         * 2 videos ... not showing at all". Its http(s) address now stays
+         * behind as text on a paragraph of its own, which the storefront draws
+         * as a player (App\Support\DescriptionVideos). The tag still goes and
+         * every attribute with it; copy with no `<video` is not touched.
+         */
+        if (stripos($html, '<video') !== false) {
+            $html = DescriptionVideos::unwrapTags($html);
+        }
+
+        /*
          * Parsed as a fragment inside a wrapper whose own tag is discarded
          * afterwards. libxml would otherwise supply <html><body> itself, and
          * the wrapper makes the node to walk unambiguous.
@@ -360,7 +372,8 @@ final class RichText
      */
     public static function forStorefront(?string $html): string
     {
-        return GlobalSections::expand(self::forDisplay($html));
+        // ...and a video address on a line of its own drawn as a player (Lane PD).
+        return DescriptionVideos::expand(GlobalSections::expand(self::forDisplay($html)));
     }
 
     /**
