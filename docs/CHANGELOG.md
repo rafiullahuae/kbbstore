@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.384
+**Closing a Homepage content editor no longer leaves the page dimmed.** Apply
+after .383. Runs 1 migration (a cache clear).
+
+| Your request | Now |
+|---|---|
+| "upon closing the popup without clicking on save button ... the page still fade and i can't do anything further except refresh" | The backdrop disappears on ×, Close, Esc and a click outside; the page is usable straight away |
+
+Files (2): see the package's update.json.
+
 ## 2.60.383
 **No giant search icon on a hard refresh of the admin.** Apply after .382.
 Runs 1 migration (a cache clear).
