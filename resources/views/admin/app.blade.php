@@ -24314,6 +24314,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
      absent, and absent is what makes HomepageContent fall through to the three
      slides the shop has been rendering all along. --}}
 @include('admin.partials.homepage-content-screen')
+@include('admin.partials.homepage-hub')
 
 {{-- Catalog → Build my routine (Lane FM). The role each product plays, which
      products are still untagged, the eight routines and the module's two
