@@ -1652,6 +1652,70 @@
             "default": "#E23B57",
             "value": "#E23B57",
             "options": null
+          },
+          {
+            "key": "nav_fit",
+            "name": "nav_fit",
+            "type": "bool",
+            "label": "Fit the menu to the row",
+            "help": "Desktop only. With enough items in the menu, the text grows to fill the empty space at the end of the row, or shrinks so every item stays on one line. Off shows the menu at its normal size.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "nav_fit_from",
+            "name": "nav_fit_from",
+            "type": "select",
+            "label": "Fit it from",
+            "help": "How many top-level items the menu needs before it is fitted. A shorter menu shows exactly as it always has.",
+            "options": {
+              "6": "6 items",
+              "7": "7 items",
+              "8": "8 items",
+              "9": "9 items",
+              "10": "10 items",
+              "11": "11 items",
+              "12": "12 items",
+              "14": "14 items",
+              "16": "16 items"
+            },
+            "default": "9",
+            "value": "9"
+          },
+          {
+            "key": "nav_fit_min",
+            "name": "nav_fit_min",
+            "type": "select",
+            "label": "Smallest text size",
+            "help": "The text never shrinks below this, however many items there are.",
+            "options": {
+              "9": "9px",
+              "10": "10px",
+              "11": "11px",
+              "12": "12px",
+              "13": "13px"
+            },
+            "default": "10",
+            "value": "10"
+          },
+          {
+            "key": "nav_fit_max",
+            "name": "nav_fit_max",
+            "type": "select",
+            "label": "Largest text size",
+            "help": "The text never grows past this. Any room left over is shared out evenly between the items.",
+            "options": {
+              "14": "14px",
+              "15": "15px",
+              "16": "16px",
+              "17": "17px",
+              "18": "18px",
+              "19": "19px",
+              "20": "20px"
+            },
+            "default": "18",
+            "value": "18"
           }
         ]
       },

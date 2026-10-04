@@ -131,6 +131,13 @@
  *   0 MODIFIED, 0 REMOVED. `count|range|"abc"|4` and
  *   `rule|select|"nope"|'mix'` are this module's dialect: a range clamps
  *   garbage to its minimum and a select stores its default.
+
+ *   Lane NV added FOUR to HeaderSettings (Appearance → Header → Navigation →
+ *   "Fit the menu to the row"): `nav_fit` (bool, 11 rows) and three selects,
+ *   `nav_fit_from`, `nav_fit_min`, `nav_fit_max` (4 rows each) — 23 LINES
+ *   INSERTED after `nav_hot_colour`'s, 0 MODIFIED, 0 REMOVED, by the same
+ *   merge. `nav_fit|bool|"off"|true` is this screen's plain `(bool)` dialect,
+ *   as for the flag-bar keys; each select's `"nope"` answers its default.
  */
 
 use App\Services\ModuleSchema;
