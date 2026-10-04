@@ -25,15 +25,26 @@
     $kitCustomer = new \Illuminate\Support\HtmlString(implode('<br>', array_map('e', array_values(array_filter([$order['email'], $order['phone']], static fn ($v) => trim((string) $v) !== '')))));
 @endphp
 
+@php $kitTemplate = 'new_order_alert'; @endphp
 @section('kit')
 @include('emails.kit.card-open')
+@kitsec('alert')
 <tr><td class="px" style="padding:26px 32px 0;font-family:{!! $k['sans'] !!};"><div style="font-family:{!! $k['sans'] !!};"><div style="font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:#2E9E6B;font-weight:800;">&#9679; {{ __('email.kit.eyebrow_alert') }}</div><div class="ink" style="margin-top:6px;font-size:26px;font-weight:800;color:{{ $k['text'] }};">{{ $order['number'] }} &middot; {{ $order['totalPlain'] }}</div><div class="ink2" style="margin-top:4px;font-size:14px;color:#5E545A;">{{ $kitWho }}</div></div></td></tr>
+@endkitsec
+@kitsec('next')
 @include('emails.kit.para', ['html' => __('email.alert.next_step', ['number' => $order['number']]), 'pad' => '18px 32px 0', 'size' => 14])
+@endkitsec
+@kitsec('items')
 @include('emails.kit.section-title', ['text' => __('email.alert.items_heading')])
 @include('emails.kit.items', ['lines' => \App\Services\Mail\Kit\KitOrder::lines($order), 'showPrice' => true])
+@endkitsec
+@kitsec('totals')
 @include('emails.kit.totals', ['rows' => \App\Services\Mail\Kit\KitOrder::rows($order), 'grand' => [__('email.totals.total'), $order['totalPlain'], '']])
+@endkitsec
+@kitsec('info')
 @include('emails.kit.info-pair', ['left' => [__('email.kit.ship_to'), $kitInfo['left'][1]], 'right' => [__('email.kit.customer'), $kitCustomer, __('email.totals.delivery'), $order['deliveryMethod']]])
 @include('emails.kit.order-notes')
+@endkitsec
 @include('emails.kit.gap', ['h' => 28])
 @include('emails.kit.card-close')
 @include('emails.kit.footer', ['why' => __('email.kit.why_alert'), 'unsubscribeUrl' => null])

@@ -48,6 +48,7 @@
     }
 
     $kitTitle = $kitTitle ?? $heading;
+    $kitTemplate = 'order_status_' . $status;
     $kitHero = [$kitShape[0], $kitShape[1], $kitShape[2], $heading,
         $status === 'cancelled' ? __('email.order_status.cancelled_body') : $body];
     $kitTracker = $kitShape[3];

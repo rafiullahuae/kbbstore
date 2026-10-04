@@ -23,15 +23,10 @@
     $kitShowInfo = false;
     $kitCta = [__('email.reminder.button'), $payUrl, __('email.reminder.button_note')];
     $kitWhy = __('email.kit.why_order', ['site' => $k['site']]);
+    $kitTemplate = $kitSecond ? 'order_reminder_2' : 'order_reminder_1';
+    $kitPromises = true;
 @endphp
 
-@section('kit_mid')
-@include('emails.kit.promises', ['promises' => [
-    ['truck', __('email.reminder.why_fast'), __('email.reminder.why_fast_note')],
-    ['tick', __('email.reminder.why_original'), __('email.reminder.why_original_note')],
-    ['gift', __('email.reminder.why_samples'), __('email.reminder.why_samples_note')],
-]])
-@endsection
 
 @section('kit_after')
 @include('emails.kit.para', ['html' => $closing, 'pad' => '10px 32px 0', 'size' => 12.5, 'center' => true])

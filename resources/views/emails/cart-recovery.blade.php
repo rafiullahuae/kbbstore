@@ -12,6 +12,7 @@
     $kitPreheader = __('email.kit.pre_basket');
     $kitWhy = __('email.kit.why_basket');
     $kitUnsubscribe = $unsubscribeUrl;
+    $kitTemplate = 'cart_recovery';
     $kitLead = new \Illuminate\Support\HtmlString(nl2br(e($body)));
     $kitFound = \App\Services\Mail\Kit\KitProducts::forSlugs(array_map(static fn (array $i) => (string) ($i['slug'] ?? ''), $items));
     $kitLines = array_map(static function (array $i) use ($kitFound) {
@@ -32,10 +33,18 @@
 @endphp
 
 @section('kit_inner')
+@kitsec('hero')
 @include('emails.kit.hero', ['icon' => 'bag', 'tone' => 'pink', 'eyebrow' => __('email.kit.eyebrow_basket'), 'title' => __('email.kit.basket_title'), 'lead' => $kitLead])
+@endkitsec
+@kitsec('items')
 @if ($kitLines !== [])
 @include('emails.kit.items', ['lines' => $kitLines, 'showPrice' => true])
 @endif
+@endkitsec
+@kitsec('button')
 @include('emails.kit.button', ['label' => __('email.kit.basket_button'), 'href' => $cartUrl])
+@endkitsec
+@kitsec('note')
 @include('emails.kit.para', ['html' => __('email.cart_recovery.why'), 'pad' => '18px 32px 28px', 'size' => 13])
+@endkitsec
 @endsection

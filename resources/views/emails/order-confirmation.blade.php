@@ -22,4 +22,5 @@
     $kitPaid = $paid;
     $kitCta = [__('email.confirmation.track_button'), $trackSignedUrl, __('email.order_status.track_note')];
     $kitWhy = __('email.kit.why_order', ['site' => $k['site']]);
+    $kitTemplate = 'order_confirmation';
 @endphp

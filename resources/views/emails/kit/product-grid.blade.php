@@ -4,10 +4,10 @@
     $products  list of ['img' => URL|null, 'h' => declared height at 200 wide,
                'brand', 'name' plain, 'price', 'was' (plain or money HtmlString,
                'was' may be null), 'href' => a URL the caller built]
-    $cols      1 or 2;  $cta  the button label (plain)
+    $cols      1, 2 or 3 (3: the builder's product row);  $cta  the button label (plain)
 --}}
 @php
-    $pgCols = max(1, min(2, (int) ($cols ?? 2)));
+    $pgCols = max(1, min(3, (int) ($cols ?? 2)));
     $pgW = intdiv(100, $pgCols);
 @endphp
 <tr><td class="px" style="padding:8px 24px 0;font-family:{!! $k['sans'] !!};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">@foreach (array_chunk($products, $pgCols) as $pgRow)<tr>@foreach ($pgRow as $p)<td class="gpad" width="{{ $pgW }}%" valign="top" style="width:{{ $pgW }}%;padding:8px;font-family:{!! $k['sans'] !!};">

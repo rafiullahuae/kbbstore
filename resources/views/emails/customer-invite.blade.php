@@ -10,6 +10,7 @@
     $kitTitle = $kitTitle ?? __('email.kit.invite_title');
     $kitPreheader = __('email.kit.pre_invite');
     $kitWhy = __('email.customer_invite.why', ['shop' => $shopName]);
+    $kitTemplate = 'customer_invite';
     $kitBefore = [];
     $kitAfter = [];
     $kitSeen = false;
@@ -22,7 +23,13 @@
 @endphp
 
 @section('kit_inner')
+@kitsec('hero')
 @include('emails.kit.hero', ['icon' => 'key', 'tone' => 'pink', 'eyebrow' => __('email.kit.eyebrow_invite'), 'title' => __('email.kit.invite_title'), 'lead' => $kitPara($kitBefore)])
+@endkitsec
+@kitsec('button')
 @include('emails.kit.button', ['label' => __('email.customer_invite.button'), 'href' => $link])
+@endkitsec
+@kitsec('note')
 @include('emails.kit.para', ['html' => $kitAfter === [] ? '' : $kitPara($kitAfter), 'pad' => '12px 32px 28px', 'size' => 13, 'center' => true])
+@endkitsec
 @endsection
