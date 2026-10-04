@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.383
+**No giant search icon on a hard refresh of the admin.** Apply after .382.
+Runs 1 migration (a cache clear).
+
+| Your request | Now |
+|---|---|
+| "on hard refresh the admin panel, a giant search icon appears and instantly fixed" | The sidebar search's styles load before its markup and its icons carry their own size; the icon is 16×16 from the first paint |
+
+Files (2): see the package's update.json.
+
 ## 2.60.382
 **One page for the whole homepage, product source picker, phone strips, carousel
 controls, blog cards without meta, Spotted 6-image grid.** Apply after .381.
