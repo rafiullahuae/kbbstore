@@ -681,12 +681,35 @@ final class KitSections
             $out[] = $entry;
         }
 
-        // Every catalogue section is in a stored list, in its default place
-        // when the request left it out.
-        foreach (array_keys($catalogue) as $i => $key) {
-            if (! isset($seen[$key])) {
-                array_splice($out, min($i, count($out)), 0, [['key' => $key]]);
+        // Every catalogue section is in a stored list. One the request left
+        // out goes back after its neighbour from the catalogue — and after any
+        // block the owner added straight after that neighbour, so a block
+        // stays with the section it was put under.
+        $keys = array_keys($catalogue);
+
+        foreach ($keys as $i => $key) {
+            if (isset($seen[$key])) {
+                continue;
             }
+
+            $at = 0;
+
+            for ($p = $i - 1; $p >= 0; $p--) {
+                $found = array_search($keys[$p], array_column($out, 'key'), true);
+
+                if ($found !== false) {
+                    $at = $found + 1;
+
+                    while (isset($out[$at]['block'])) {
+                        $at++;
+                    }
+
+                    break;
+                }
+            }
+
+            array_splice($out, $at, 0, [['key' => $key]]);
+            $seen[$key] = true;
         }
 
         return ['sections' => $out];
