@@ -104,6 +104,11 @@ class PageController extends Controller
         // /mail/font/… the font they all ask for. A post called "mail" would
         // otherwise sit at an address the inbox depends on.
         'mail',
+        // Marketing Emails (Lane MK): /email/u/{token} is the unsubscribe link
+        // at the foot of every campaign, /email/c/{token}/{n} every click in
+        // one. An article published at "email" must never sit at an address
+        // an inbox depends on.
+        'email',
         // #KBeautyBliss Spotted (Lane HB, 2.60.372).
         'kbeautybliss-spotted',
         'about', 'delivery', 'faqs', 'contact-us',

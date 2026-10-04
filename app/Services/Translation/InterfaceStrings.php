@@ -111,12 +111,14 @@ final class InterfaceStrings
                 self::storeUgc(),
                 self::storeInstagram(),
                 self::storeNewsletter(),
+                self::storeMarketingUnsubscribe(),
                 self::storeJs(),
             ),
             'email' => array_merge(
                 self::emailMessages(),
                 self::emailText(),
                 self::emailKit(),
+                self::emailMarketing(),
             ),
             'invoice' => array_merge(
                 self::invoiceDocuments(),
@@ -2730,6 +2732,43 @@ final class InterfaceStrings
             'label.cod_collect' => 'Cash on delivery — collect',
             'document.barcode_label' => 'Barcode of :value',
             'label.from' => 'From: :name',
+        ];
+    }
+
+    /**
+     * Marketing Emails — the campaign unsubscribe page (Lane MK). The page at
+     * /email/u/{token}; the bad-link words are the newsletter's own.
+     *
+     * @return array<string, string>
+     */
+    private static function storeMarketingUnsubscribe(): array
+    {
+        return [
+            'mkt_unsub.title' => 'Unsubscribe',
+            'mkt_unsub.lead' => 'Stop sending our offers and news to this address?',
+            'mkt_unsub.button' => 'Yes, unsubscribe me',
+            'mkt_unsub.keeps' => 'Order confirmations, delivery updates and receipts still arrive — they are about something you bought, not marketing.',
+            'mkt_unsub.done_title' => 'You are unsubscribed',
+            'mkt_unsub.done_lead' => 'Done. We will not send offers or news to this address again.',
+            'mkt_unsub.bad_note' => 'Try opening it again straight from the email. If it still does not work, reply to any message from us and we will take the address off by hand.',
+        ];
+    }
+
+    /**
+     * Marketing Emails — the words every campaign carries that are not the
+     * owner's own (Lane MK): the footer's why-line for each list, the text
+     * part's unsubscribe line, and a coupon's end date. Everything else in a
+     * campaign is the owner's, typed in the builder.
+     *
+     * @return array<string, string>
+     */
+    private static function emailMarketing(): array
+    {
+        return [
+            'mkt.why_customers' => 'You are receiving this because you bought from :store before.',
+            'mkt.why_subscribers' => 'You are receiving this because you subscribed to :store emails.',
+            'mkt.text_unsubscribe' => 'To stop these emails, open:',
+            'mkt.coupon_ends' => 'Ends :date',
         ];
     }
 

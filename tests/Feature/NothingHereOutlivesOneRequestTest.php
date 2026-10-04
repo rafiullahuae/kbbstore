@@ -142,7 +142,11 @@ it('has nothing that outlives a single request', function () {
     // for the "Complete your order" reminders and the feedback request. It
     // sends mail inline and holds nothing between runs; the page heartbeat
     // (OrderReminderTick) does the same work when no cron line is installed.
-    expect(substr_count($console, 'Schedule::command('))->toBe(3, 'the set of scheduled commands has changed');
+    // 4 with Lane MK: `kbb:campaigns-step`, every minute -- Driver B of
+    // Marketing Emails. It starts due scheduled campaigns and sends a step's
+    // worth of mail inline, holding nothing between runs; there is NO page
+    // heartbeat for it (marketing never runs on a shopper's request).
+    expect(substr_count($console, 'Schedule::command('))->toBe(4, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {
