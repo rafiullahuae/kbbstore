@@ -197,6 +197,8 @@ final class AdminRoles
             'marketing.email.view' => 'See marketing emails and reports',
             'marketing.email.manage' => 'Build marketing emails and send tests',
             'marketing.email.send' => 'Send and schedule campaigns',
+            'carttracking.view' => 'See Cart Tracking',
+            'carttracking.block' => 'Block and unblock IP addresses',
         ]],
         ['emails', 'Emails', [
             'emails.view' => 'See email settings and sent mail',

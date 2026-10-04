@@ -749,6 +749,13 @@ final class AdminSearchIndex
             ],
         ],
         'searchterms' => [],
+        'carttracking' => [
+            'Carts' => ['Bot', 'Countries'],
+            'Added products' => [],
+            'Removed products' => [],
+            'Blocked' => ['Block this address or its range'],
+            'Settings' => [],
+        ],
         'rev-all' => [],
         'rev-add' => [
             'Add reviews' => [

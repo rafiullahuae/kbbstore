@@ -555,6 +555,11 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/security-admin.php';
 
+        // Growth & Marketing → Cart Tracking (Lane CT). Same group and the
+        // same reason as Security: every row carries a shopper's IP address.
+        // carttracking.view / carttracking.block, owner and manager.
+        require __DIR__.'/cart-tracking-admin.php';
+
         /*
          * Store → SEO & Meta → SEO Audit. Lane S. Same group, same reason.
          * Its rows are four hand-built keys and never a model: the tables it

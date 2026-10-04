@@ -149,7 +149,7 @@ Anchor (occurs once):
 Replacement:
 
 ```
-'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms']};
+'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Growth & Marketing','Cart Tracking']};
 ```
 
 ## Block 4 · arm the deep-link replay
@@ -170,7 +170,7 @@ Anchor (occurs once):
 Replacement:
 
 ```
-'paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','emails','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
+'paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','emails','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
 ```
 
 > **Block 3's replacement above also carries `,'pagewash':['Appearance','Page
@@ -205,7 +205,7 @@ Anchor (occurs once, in `docs/T1B-ADMIN-APP-BLOCKS.md`):
 Replacement:
 
 ```
-'paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','emails','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
+'paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','emails','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
 ```
 
 ---
