@@ -112,6 +112,7 @@ final class InterfaceStrings
                 self::storeInstagram(),
                 self::storeNewsletter(),
                 self::storeMarketingUnsubscribe(),
+                self::storeBlocked(),
                 self::storeJs(),
             ),
             'email' => array_merge(
@@ -2751,6 +2752,28 @@ final class InterfaceStrings
             'mkt_unsub.done_title' => 'You are unsubscribed',
             'mkt_unsub.done_lead' => 'Done. We will not send offers or news to this address again.',
             'mkt_unsub.bad_note' => 'Try opening it again straight from the email. If it still does not work, reply to any message from us and we will take the address off by hand.',
+        ];
+    }
+
+    /**
+     * The refusal a blocked address or a bot sees (Lane CT) — the standalone
+     * page errors/kbb-blocked and the JSON the cart drawer shows. Never names
+     * the visitor's address; :code is a block reference the owner can look up.
+     *
+     * @return array<string, string>
+     */
+    private static function storeBlocked(): array
+    {
+        return [
+            'blocked.title' => 'We can\'t take orders from this connection',
+            'blocked.lead' => 'Orders, the cart and forms are switched off for the network you are using right now.',
+            'blocked.bot_title' => 'This looks like an automated request',
+            'blocked.bot_lead' => 'The cart and checkout only answer a web browser. Please open the shop in Chrome, Safari, Firefox or Edge.',
+            'blocked.contact' => 'If you are a customer and this is a mistake, contact us and quote the reference below — we will sort it out.',
+            'blocked.reference' => 'Reference: :code',
+            'blocked.home' => 'Back to the shop',
+            'blocked.json' => 'Orders from this connection are switched off. If this is a mistake, please contact us.',
+            'blocked.bot_json' => 'The cart only answers a web browser. Please use Chrome, Safari, Firefox or Edge.',
         ];
     }
 

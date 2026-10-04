@@ -159,7 +159,30 @@ final class ArabicInterfaceDrafts
             self::laneRlOrderEmails(),
             self::laneEmEmailKit(),
             self::laneMkMarketingEmails(),
+            self::laneCtBlocked(),
         );
+    }
+
+    /**
+     * Lane CT — the refusal a blocked address or a bot sees
+     * (InterfaceStrings::storeBlocked()). Drafts, reviewed under
+     * Translation → Strings.
+     *
+     * @return array<string, string>
+     */
+    private static function laneCtBlocked(): array
+    {
+        return [
+            'store.blocked.title' => 'لا يمكننا استقبال الطلبات من هذا الاتصال',
+            'store.blocked.lead' => 'الطلبات وسلة التسوق والنماذج متوقفة للشبكة التي تستخدمها الآن.',
+            'store.blocked.bot_title' => 'يبدو أن هذا طلب آلي',
+            'store.blocked.bot_lead' => 'سلة التسوق وإتمام الطلب يعملان مع متصفح الويب فقط. يُرجى فتح المتجر في Chrome أو Safari أو Firefox أو Edge.',
+            'store.blocked.contact' => 'إذا كنت عميلًا وحدث هذا عن طريق الخطأ، تواصل معنا واذكر الرقم المرجعي أدناه وسنحل الأمر.',
+            'store.blocked.reference' => 'الرقم المرجعي: :code',
+            'store.blocked.home' => 'العودة إلى المتجر',
+            'store.blocked.json' => 'الطلبات من هذا الاتصال متوقفة. إذا كان هذا خطأ، يُرجى التواصل معنا.',
+            'store.blocked.bot_json' => 'سلة التسوق تعمل مع متصفح الويب فقط. يُرجى استخدام Chrome أو Safari أو Firefox أو Edge.',
+        ];
     }
 
     /**
