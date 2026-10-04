@@ -147,7 +147,7 @@ function bpProducts2(Brand $brand, int $n): void
 }
 
 it('puts the three switches on their own tab, saved by the screen that owns the schema', function () {
-    expect(SiteLayout::TABS['brandpage'][2])->toBe(['brand_all', 'brand_cta', 'brand_popular'])
+    expect(SiteLayout::TABS['brandpage'][2])->toBe(['brand_all', 'brand_cta', 'brand_popular', 'brand_hero', 'brand_ring'])
         ->and(SiteLayout::SCHEMA['brand_all'][2])->toBeTrue()
         ->and(SiteLayout::SCHEMA['brand_cta'][2])->toBeFalse()
         ->and(SiteLayout::SCHEMA['brand_popular'][2])->toBeFalse();

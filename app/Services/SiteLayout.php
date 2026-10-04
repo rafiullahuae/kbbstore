@@ -523,6 +523,24 @@ class SiteLayout
             'Off, as you asked: the brand page shows the logo, the name and the description. On: the "Shop all <brand>" button comes back, linking to the shop filtered to this brand.'],
         'brand_popular' => ['bool', 'Show "Popular right now" and "View all" above the products', false,
             'Off, as you asked: the products start straight under the brand. On: the heading and the "View all" link come back.'],
+        /*
+         * THE BRAND HEADER'S SHAPE, AND THE RING ROUND THE LOGO.     (Lane BH)
+         *
+         * The owner: "i don't like the heighted banner for brand, the content
+         * should be sqeezed. logo + name in one row, then description in
+         * another, that's it. need same less heighted banner in mobile as like
+         * on desktop ... it will be auto circled with outer brand color
+         * border." He asked, so both ship ON; Classic and the switch put the
+         * old page back. Not CSS: in BRAND_KEYS, so isDefault()/css() skip them.
+         */
+        'brand_hero' => ['select', 'Brand header style', 'compact',
+            'Compact, as you asked: a small round logo and the brand name in one row, the description under them -- the same short band on phones and on laptops. Classic: the large logo beside the name, stacking into a tall column on phones, as before.',
+            [
+                'compact' => 'Compact -- logo and name in one row',
+                'classic' => 'Classic -- as before',
+            ]],
+        'brand_ring' => ['bool', 'Ring round the brand logo, in the brand\'s colour', true,
+            'On, as you asked: the logo sits in a circle with a ring in the brand\'s own colour, taken from the logo itself (change it per brand in Catalog → Brands → Edit → Ring colour). A brand with no colour gets the shop pink. Off: the plain circle, as before.'],
 
         /*
          * ── PRESS FEEDBACK ──────────────────────────────────────── Lane RD ──
@@ -611,8 +629,8 @@ class SiteLayout
      */
     public const BRAND_ALL_CAP = 500;
 
-    /** The brand page's three switches: not CSS, skipped by isDefault(). */
-    public const BRAND_KEYS = ['brand_all', 'brand_cta', 'brand_popular'];
+    /** The brand page's switches: not CSS, skipped by isDefault(). */
+    public const BRAND_KEYS = ['brand_all', 'brand_cta', 'brand_popular', 'brand_hero', 'brand_ring'];
 
     /** The keys that are not CSS: skipped by isDefault(), never in css(). */
     private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom'];

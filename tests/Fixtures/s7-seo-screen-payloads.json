@@ -293,6 +293,8 @@
                 "position": 0,
                 "seo": null,
                 "banner": null,
+                "logo_color": null,
+                "ring_color": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -321,6 +323,8 @@
                 "position": 1,
                 "seo": null,
                 "banner": null,
+                "logo_color": null,
+                "ring_color": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -349,6 +353,8 @@
                 "position": 2,
                 "seo": null,
                 "banner": null,
+                "logo_color": null,
+                "ring_color": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -377,6 +383,8 @@
                 "position": 3,
                 "seo": null,
                 "banner": null,
+                "logo_color": null,
+                "ring_color": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -405,6 +413,8 @@
                 "position": 4,
                 "seo": null,
                 "banner": null,
+                "logo_color": null,
+                "ring_color": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -433,6 +443,8 @@
                 "position": 5,
                 "seo": null,
                 "banner": null,
+                "logo_color": null,
+                "ring_color": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -461,6 +473,8 @@
                 "position": 6,
                 "seo": null,
                 "banner": null,
+                "logo_color": null,
+                "ring_color": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -489,6 +503,8 @@
                 "position": 7,
                 "seo": null,
                 "banner": null,
+                "logo_color": null,
+                "ring_color": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {

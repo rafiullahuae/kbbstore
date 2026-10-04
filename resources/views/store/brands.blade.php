@@ -56,14 +56,25 @@
 <x-kbb-title-header :header="$titleHeader" :contained="false" />
 @endif
 
+{{-- COMPACT, the default (Lane BH): "logo + name in one row, then description in another, that's it", the same short band on a phone as on a laptop -- no column. Appearance → Site layout → Brand page → Brand header style puts Classic back. --}}
+@if (($brandHero ?? 'classic') === 'compact')
+        <div class="brw-hero brw-hero--compact">
+            <div class="brw-hero-row">
+@include('store.partials.brand-logo', ['brand' => $brand, 'ring' => $brandRing ?? false, 'ringHex' => $brandRingHex ?? null])
+@unless (($banner ?? null) || ($titleHeader ?? null))
+                <h1 class="brw-h1">{{ $brand->t('name') }}</h1>
+@endunless
+            </div>
+@if (! ($titleHeader ?? null) && ($brandDescription ?? '') !== '')
+            <div class="brw-sub brw-desc">{!! $brandDescription !!}</div>
+@endif
+@if ($brandCta ?? false)
+            <a class="brw-cta" href="{{ $brand->filterUrl() }}">{{ __('store.brands.shop_all', ['brand' => $brand->t('name')]) }}</a>
+@endif
+        </div>
+@else
         <div class="brw-hero">
-            <span class="brw-logo brw-logo--lg">
-                @if ($brand->logo)
-                    <img src="{{ $brand->logo }}" alt="{{ $brand->t('name') }}" decoding="async">
-                @else
-                    <span class="brw-initial">{{ mb_strtoupper(mb_substr($brand->t('name'), 0, 1)) }}</span>
-                @endif
-            </span>
+@include('store.partials.brand-logo', ['brand' => $brand, 'ring' => $brandRing ?? false, 'ringHex' => $brandRingHex ?? null])
             <div class="brw-hero-txt">
                 @unless (($banner ?? null) || ($titleHeader ?? null))
                     <h1 class="brw-h1">{{ $brand->t('name') }}</h1>
@@ -84,6 +95,7 @@
             </div>
         </div>
 
+@endif
         @if ($products->isEmpty())
             <p class="brw-empty">{{ __('store.brands.brand_empty') }}</p>
         @else
@@ -210,6 +222,29 @@
   .brw-logo{width:52px;height:52px}
   .brw-logo--lg{width:72px;height:72px}
   .brw-hero{flex-direction:column;align-items:flex-start;gap:14px}
+}
+/* The ring (Lane BH): a white gap, then 3px of the brand's colour, drawn with
+   box-shadow so the circle keeps its size and nothing around it moves. The
+   colour is --brw-ring from the logo's own style attribute, or the shop pink. */
+.brw-logo--ring{box-shadow:0 0 0 2px #fff,0 0 0 5px var(--brw-ring,var(--pink));margin:0 5px}
+/* Compact (Lane BH): row 1 the logo and the name, row 2 the description. A
+   block, not a flex column, at every width -- there is no stacking rule. */
+.brw-hero--compact{display:block;margin-bottom:18px}
+.brw-hero-row{display:flex;align-items:center;gap:12px;min-width:0}
+.brw-hero--compact .brw-logo--lg{width:56px;height:56px}
+.brw-hero--compact .brw-logo--lg .brw-initial{font-size:22px}
+.brw-hero--compact .brw-logo img{padding:5px}
+.brw-hero--compact .brw-h1{margin:0;font-size:24px;line-height:1.2;min-width:0;overflow-wrap:anywhere}
+.brw-hero--compact .brw-sub{margin:12px 0 0;max-width:none;line-height:1.55}
+.brw-hero--compact .brw-cta{margin-top:12px}
+@media (max-width:520px){
+  .brw-hero--compact{margin-bottom:14px}
+  .brw-hero-row{gap:10px}
+  .brw-hero--compact .brw-logo--lg{width:44px;height:44px}
+  .brw-hero--compact .brw-logo--lg .brw-initial{font-size:18px}
+  .brw-hero--compact .brw-logo img{padding:4px}
+  .brw-hero--compact .brw-h1{font-size:20px}
+  .brw-hero--compact .brw-sub{margin-top:10px;font-size:12.5px;line-height:1.5}
 }
 </style>
 @endpush

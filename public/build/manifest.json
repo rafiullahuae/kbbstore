@@ -75,13 +75,13 @@
     "src": "resources/fonts/outfit/outfit-latin.woff2"
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-BXCV-xLJ.js",
+    "file": "assets/storefront-admin-DXaWUdxN.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app--kO0el_5.js",
+    "file": "assets/app-BRjdEuKd.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,

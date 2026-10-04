@@ -195,6 +195,11 @@ textarea.kbb-qe__in{height:auto;min-height:84px;padding:10px 12px;resize:vertica
 .kbb-qe__thumb{width:96px;height:54px;border-radius:9px;background:#f1e8ec center/cover no-repeat;flex:none;display:grid;place-items:center;color:#c8a3b2}
 .kbb-qe__thumb svg{width:22px;height:22px}
 .kbb-qe__drop-txt{min-width:0;flex:1}
+/* Lane BH: the logo field draws the page's own circle and ring at 48px. */
+.kbb-qe__logo-pv{width:58px;height:58px;flex:none;display:grid;place-items:center}
+.kbb-qe__logo-pv .brw-logo{width:48px;height:48px;margin:0}
+.kbb-qe__logo-pv .brw-logo img{padding:4px}
+.kbb-qe__logo-pv .brw-initial{font-size:19px}
 .kbb-qe__drop-txt b{display:block;font-size:13.5px;margin-bottom:2px}
 .kbb-qe__drop-txt span{display:block;font-size:12px;color:#8a7d84}
 .kbb-qe__bar{height:6px;border-radius:6px;background:#f1e8ec;overflow:hidden;margin-top:8px;display:none}

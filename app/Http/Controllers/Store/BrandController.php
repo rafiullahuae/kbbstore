@@ -503,6 +503,13 @@ class BrandController extends Controller
             // The brand page's two switches, both off as shipped (2.60.376).
             'brandCta' => (bool) $layout->get('brand_cta'),
             'brandPopular' => (bool) $layout->get('brand_popular'),
+            // Lane BH: the header's shape (compact unless the owner picks
+            // Classic) and the ring round the logo, in the brand's colour --
+            // owner's choice, else taken from the logo, else the shop pink.
+            // Read off the row already loaded: no query.
+            'brandHero' => $layout->get('brand_hero') === 'classic' ? 'classic' : 'compact',
+            'brandRing' => (bool) $layout->get('brand_ring'),
+            'brandRingHex' => \App\Support\BrandLogo::ring($brand),
             // What the page says under the brand's name: the description typed
             // on the brand page itself (quick edit → Description) wins in
             // English, as it does in the title header; otherwise the brand's

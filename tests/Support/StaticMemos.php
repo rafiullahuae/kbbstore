@@ -73,6 +73,8 @@ final class StaticMemos
             IndexNow::class => static fn () => IndexNow::forgetKey(),
             InstalledVersion::class => static fn () => InstalledVersion::forget(),
             Facets::class => static fn () => Facets::reset(),
+            // Lane BH: whether brands.logo_color / ring_color exist yet.
+            \App\Support\BrandLogo::class => static fn () => \App\Support\BrandLogo::forgetColumns(),
             /*
              * The authored product tabs, BOTH layers (Lane PT).
              *

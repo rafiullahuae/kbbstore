@@ -1952,7 +1952,65 @@ final class EnglishRenderWalk
                 'with' => '$1.brw-desc p{margin:0 0 6px}.brw-desc p:last-child{margin-bottom:0}'."\n".'$2',
                 'hits' => 2,
             ],
+
+            /*
+             * THE COMPACT BRAND HEADER AND THE LOGO RING.              (Lane BH)
+             *
+             * The owner: "logo + name in one row, then description in another,
+             * that's it. need same less heighted banner in mobile as like on
+             * desktop ... it will be auto circled with outer brand color
+             * border." He asked, so it ships on; Appearance → Site layout →
+             * Brand page → Brand header style (Classic) and "Ring round the
+             * brand logo" put the old page back. Two changes: the brand page's
+             * hero becomes row (logo + name) then description, the logo carrying
+             * the ring class; and the shared stylesheet gains the ring and
+             * compact rules on BOTH brand views (the directory's tiles do not
+             * use either class, so they draw as before). BrandHeaderCompactTest
+             * pins the behaviour.
+             */
+            'the brand page: compact header, logo and name in one row (Lane BH)' => [
+                'pattern' => '#\n {8}<div class="brw-hero">\n {12}<span class="brw-logo brw-logo--lg">\n {36}<span class="brw-initial">([^<]*)</span>\n {28}</span>\n {12}<div class="brw-hero-txt">\n {36}<h1 class="brw-h1">([^<]*)</h1>\n {32}\n {32}\n {28}</div>\n {8}</div>\n\n#',
+                'with' => "\n\n".str_repeat(' ', 8).'<div class="brw-hero brw-hero--compact">'."\n".str_repeat(' ', 12).'<div class="brw-hero-row">'
+                    ."\n".'<span class="brw-logo brw-logo--lg brw-logo--ring"><span class="brw-initial">$1</span></span>'
+                    ."\n".str_repeat(' ', 16).'<h1 class="brw-h1">$2</h1>'."\n".str_repeat(' ', 12).'</div>'."\n".str_repeat(' ', 8).'</div>'."\n",
+                'hits' => 1,
+            ],
+            'the brand pages: the ring and compact header rules (Lane BH)' => [
+                'pattern' => '#(  \.brw-hero\{flex-direction:column;align-items:flex-start;gap:14px\}\n\}\n)(</style>)#',
+                'with' => '$1'.self::laneBhBrandCss()."\n".'$2',
+                'hits' => 2,
+            ],
         ];
+    }
+
+    /** The stylesheet lines Lane BH adds to both brand views, verbatim. */
+    private static function laneBhBrandCss(): string
+    {
+        return <<<'KBB_BH_CSS'
+/* The ring (Lane BH): a white gap, then 3px of the brand's colour, drawn with
+   box-shadow so the circle keeps its size and nothing around it moves. The
+   colour is --brw-ring from the logo's own style attribute, or the shop pink. */
+.brw-logo--ring{box-shadow:0 0 0 2px #fff,0 0 0 5px var(--brw-ring,var(--pink));margin:0 5px}
+/* Compact (Lane BH): row 1 the logo and the name, row 2 the description. A
+   block, not a flex column, at every width -- there is no stacking rule. */
+.brw-hero--compact{display:block;margin-bottom:18px}
+.brw-hero-row{display:flex;align-items:center;gap:12px;min-width:0}
+.brw-hero--compact .brw-logo--lg{width:56px;height:56px}
+.brw-hero--compact .brw-logo--lg .brw-initial{font-size:22px}
+.brw-hero--compact .brw-logo img{padding:5px}
+.brw-hero--compact .brw-h1{margin:0;font-size:24px;line-height:1.2;min-width:0;overflow-wrap:anywhere}
+.brw-hero--compact .brw-sub{margin:12px 0 0;max-width:none;line-height:1.55}
+.brw-hero--compact .brw-cta{margin-top:12px}
+@media (max-width:520px){
+  .brw-hero--compact{margin-bottom:14px}
+  .brw-hero-row{gap:10px}
+  .brw-hero--compact .brw-logo--lg{width:44px;height:44px}
+  .brw-hero--compact .brw-logo--lg .brw-initial{font-size:18px}
+  .brw-hero--compact .brw-logo img{padding:4px}
+  .brw-hero--compact .brw-h1{font-size:20px}
+  .brw-hero--compact .brw-sub{margin-top:10px;font-size:12.5px;line-height:1.5}
+}
+KBB_BH_CSS;
     }
 
     public static function approvedReflows(): array

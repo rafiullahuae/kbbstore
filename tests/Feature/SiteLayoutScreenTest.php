@@ -161,8 +161,9 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // 80 since 2.60.353: the random light box switch and its five-style mix.
     // 81 since Lane RD: `press`, the press-feedback select. 83 since 2.60.358:
     // `show_count` (Product grid) and `cat_header_phone_whole` (Category header).
-    // 86 since 2.60.376: the Brand page tab's three switches.
-    expect($keys)->toHaveCount(86);
+    // 86 since 2.60.376: the Brand page tab's three switches. 88 since Lane BH:
+    // `brand_hero` (Compact / Classic) and `brand_ring`, on the same tab.
+    expect($keys)->toHaveCount(88);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

@@ -383,6 +383,21 @@ function openEditor(edit, opener) {
     const removeBtn = h('button', { type: 'button', class: 'kbb-qe__link', text: 'Remove picture' });
     const picRow = h('div', { class: 'kbb-qe__pic-row' }, removeBtn);
 
+    /* -- the brand's logo (Lane BH): the same drop/click upload, into the
+       media library's own endpoint, drawn in the page's own ring. */
+    const hasLogo = (edit.keys || []).includes('logo');
+    const logoIn = h('input', { type: 'file', accept: (edit.upload.types || []).join(','), hidden: true, tabindex: '-1' });
+    const logoThumb = h('div', { class: 'kbb-qe__logo-pv', 'aria-hidden': 'true' });
+    const logoTitle = h('b', { text: 'Drop the logo here or click to choose' });
+    const logoFill = h('i');
+    const logoDrop = h('div', {
+        class: 'kbb-qe__drop kbb-qe__drop--logo', role: 'button', tabindex: '0',
+        'aria-label': 'Brand logo: drop a file here or press Enter to choose one',
+    }, logoThumb, h('div', { class: 'kbb-qe__drop-txt' }, logoTitle,
+        h('span', { text: 'Square works best. It sits in a circle, ringed in a colour taken from the logo itself.' }),
+        h('div', { class: 'kbb-qe__bar' }, logoFill)), logoIn);
+    const logoRemove = h('button', { type: 'button', class: 'kbb-qe__link', text: 'Remove logo' });
+
     /* -- the words */
     const fld = (id, label, input, hint) => h('div', { class: 'kbb-qe__fld' },
         h('label', { class: 'kbb-qe__label', for: id, text: label }), input,
@@ -428,6 +443,9 @@ function openEditor(edit, opener) {
     const body = h('div', { class: 'kbb-qe__body' },
         err,
         pv,
+        hasLogo ? h('div', { class: 'kbb-qe__fld' },
+            h('span', { class: 'kbb-qe__label', text: 'Logo' }), logoDrop,
+            h('div', { class: 'kbb-qe__pic-row' }, logoRemove)) : null,
         h('div', { class: 'kbb-qe__fld' },
             h('span', { class: 'kbb-qe__label', text: 'Banner picture' }), drop, picRow),
         fld('kbb-qe-title', 'Title', titleIn, `Blank shows the ${noun} name.`),
@@ -457,6 +475,8 @@ function openEditor(edit, opener) {
         thumb.firstChild && (thumb.firstChild.style.display = url ? 'none' : '');
         removeBtn.hidden = !values.header_image;
         dropTitle.textContent = values.header_image ? 'Drop a new banner here or click to replace it' : 'Drop the banner here or click to choose';
+        logoRemove.hidden = !values.logo;
+        logoTitle.textContent = values.logo ? 'Drop a new logo here or click to replace it' : 'Drop the logo here or click to choose';
     }
 
     function showError(text) {
@@ -474,6 +494,7 @@ function openEditor(edit, opener) {
         };
         if (!isBanner) p.header_description = descIn.value;
         if (hasFocus) p.focus = values.focus || '';
+        if (hasLogo) p.logo = values.logo || '';
         return p;
     }
 
@@ -482,7 +503,8 @@ function openEditor(edit, opener) {
             || titleIn.value !== (original.header_title || '')
             || subIn.value !== (original.header_subtitle || '')
             || (!isBanner && descIn.value !== (original.header_description || ''))
-            || (hasFocus && (values.focus || '') !== (original.focus || ''));
+            || (hasFocus && (values.focus || '') !== (original.focus || ''))
+            || (hasLogo && (values.logo || '') !== (original.logo || ''));
     }
 
     function stageScale() {
@@ -523,6 +545,7 @@ function openEditor(edit, opener) {
                 pvStage.appendChild(h('div', { class: 'kbb-qe__pv-note', text: messageOf(res, 'The preview could not be drawn.') }));
                 return;
             }
+            if (hasLogo) adopt(res.body.hero && res.body.hero.logo, logoThumb);
             ensureCss(res.body.kind);
             const el = adopt(res.body.html, pvStage);
             if (el) {
@@ -551,7 +574,8 @@ function openEditor(edit, opener) {
     }
 
     /* -- upload: the media library's own endpoint, with progress */
-    function upload(file) {
+    function upload(file, slot) {
+        const into = slot || { key: 'header_image', drop, fill: barFill, title: dropTitle };
         showError('');
         const types = edit.upload.types || [];
         if (!file || (types.length && !types.includes(file.type))) {
@@ -568,10 +592,10 @@ function openEditor(edit, opener) {
         form.append('file', file);
         form.append('folder', edit.upload.folder);
 
-        drop.classList.add('is-up');
-        barFill.style.width = '2%';
+        into.drop.classList.add('is-up');
+        into.fill.style.width = '2%';
         saveBtn.disabled = true;
-        dropTitle.textContent = 'Uploading…';
+        into.title.textContent = 'Uploading…';
 
         const req = new XMLHttpRequest();
         xhr = req;
@@ -582,13 +606,13 @@ function openEditor(edit, opener) {
         req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         req.setRequestHeader('X-CSRF-TOKEN', state.ctx.csrf);
         req.upload.onprogress = (e) => {
-            if (e.lengthComputable) barFill.style.width = `${Math.max(2, Math.round((e.loaded / e.total) * 100))}%`;
+            if (e.lengthComputable) into.fill.style.width = `${Math.max(2, Math.round((e.loaded / e.total) * 100))}%`;
         };
         const done = (text) => {
             if (xhr !== req) return;
             xhr = null;
-            drop.classList.remove('is-up');
-            barFill.style.width = '0';
+            into.drop.classList.remove('is-up');
+            into.fill.style.width = '0';
             saveBtn.disabled = busy;
             setThumb();
             if (text) showError(text);
@@ -598,7 +622,7 @@ function openEditor(edit, opener) {
             try { body = JSON.parse(req.responseText); } catch (e) { body = null; }
             const url = body && body.ok && typeof body.url === 'string' ? body.url : '';
             if (req.status >= 200 && req.status < 300 && url) {
-                values.header_image = url;
+                values[into.key] = url;
                 done('');
                 schedulePreview();
             } else {
@@ -632,6 +656,7 @@ function openEditor(edit, opener) {
             }
             edit.fields = { ...res.body.fields };
             const swapped = swapHeader(res.body);
+            swapHero(res.body.hero);
             close(true);
             toast(res.body.message || 'Saved');
             if (swapped === 'reload') window.location.reload();
@@ -679,6 +704,22 @@ function openEditor(edit, opener) {
     });
     fileIn.addEventListener('change', () => { if (fileIn.files && fileIn.files[0]) upload(fileIn.files[0]); fileIn.value = ''; });
 
+    if (hasLogo) {
+        const logoSlot = { key: 'logo', drop: logoDrop, fill: logoFill, title: logoTitle };
+        logoRemove.addEventListener('click', () => { values.logo = ''; setThumb(); schedulePreview(); });
+        logoDrop.addEventListener('click', () => logoIn.click());
+        logoDrop.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); logoIn.click(); }
+        });
+        logoIn.addEventListener('change', () => { if (logoIn.files && logoIn.files[0]) upload(logoIn.files[0], logoSlot); logoIn.value = ''; });
+        logoDrop.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer && (e.dataTransfer.dropEffect = 'copy'); });
+        logoDrop.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if (f) upload(f, logoSlot);
+        });
+    }
+
     let depth = 0;
     drop.addEventListener('dragenter', (e) => { e.preventDefault(); depth++; drop.classList.add('is-over'); });
     drop.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer && (e.dataTransfer.dropEffect = 'copy'); });
@@ -693,7 +734,7 @@ function openEditor(edit, opener) {
 
     // A file dropped anywhere else while the pop-up is open must not make the
     // browser navigate away to it and lose the owner's edits.
-    const swallow = (e) => { if (!drop.contains(e.target)) e.preventDefault(); };
+    const swallow = (e) => { if (!drop.contains(e.target) && !logoDrop.contains(e.target)) e.preventDefault(); };
     listen(window, 'dragover', swallow);
     listen(window, 'drop', swallow);
 
@@ -751,4 +792,25 @@ function swapHeader(result) {
     old.replaceWith(el);
     setTimeout(() => el.classList.remove('kbb-qe-swapped'), 1300);
     return 'swapped';
+}
+
+/**
+ * The brand page's logo circle and description, put back in place after a
+ * save (Lane BH). Both are the server's own rendering of the page's partial
+ * and the description's allowlist -- the same bytes the page prints -- parsed
+ * with DOMParser and adopted, as the header is. A page without them (the
+ * description printed inside a title header) is left alone.
+ */
+function swapHero(hero) {
+    if (!hero) return;
+    const logo = document.querySelector('.brw-hero .brw-logo--lg');
+    if (logo && hero.logo) {
+        const fresh = new DOMParser().parseFromString(String(hero.logo), 'text/html').body.firstElementChild;
+        if (fresh) logo.replaceWith(document.importNode(fresh, true));
+    }
+    const desc = document.querySelector('.brw-hero .brw-desc');
+    if (desc && typeof hero.desc === 'string' && hero.desc !== '') {
+        const doc = new DOMParser().parseFromString(`<div>${hero.desc}</div>`, 'text/html');
+        desc.replaceChildren(...[...doc.body.firstElementChild.childNodes].map((n) => document.importNode(n, true)));
+    }
 }

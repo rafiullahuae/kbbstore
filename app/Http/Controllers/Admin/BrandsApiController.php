@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Product;
+use App\Support\BrandLogo;
 use App\Support\ImageVariants;
 use App\Support\PageBanner;
 use App\Support\ProductSeo;
@@ -16,7 +17,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Brand CRUD for the admin — Catalog → Brands.
@@ -46,16 +46,22 @@ class BrandsApiController extends Controller
      */
     public function index(): JsonResponse
     {
+        // Lane BH: the two ring colours, once their migration has run.
+        $columns = ['brands.id', 'brands.slug', 'brands.name', 'brands.logo', 'brands.description',
+            'brands.position', 'brands.seo', 'brands.banner'];
+
+        if (BrandLogo::columnsReady()) {
+            array_push($columns, 'brands.logo_color', 'brands.ring_color');
+        }
+
         $brands = Brand::query()
-            ->select('brands.id', 'brands.slug', 'brands.name', 'brands.logo', 'brands.description',
-                'brands.position', 'brands.seo', 'brands.banner')
+            ->select($columns)
             ->selectRaw('COUNT(products.id) as products_count')
             ->leftJoin('products', function ($join) {
                 $join->on('products.brand_id', '=', 'brands.id')
                     ->whereNull('products.deleted_at');
             })
-            ->groupBy('brands.id', 'brands.slug', 'brands.name', 'brands.logo', 'brands.description',
-                'brands.position', 'brands.seo', 'brands.banner')
+            ->groupBy($columns)
             ->orderBy('brands.position')
             ->orderBy('brands.name')
             ->get();
@@ -263,6 +269,9 @@ class BrandsApiController extends Controller
             // definition of what a banner is rather than a validation rule
             // here and a renderer somewhere else that disagree.
             'banner' => ['nullable', 'array'],
+            // Lane BH: "Ring colour (blank = from the logo)". #rgb or #rrggbb
+            // only -- it is printed into a style attribute.
+            'ring_color' => ['nullable', 'string', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
         ];
 
         /*
@@ -278,9 +287,28 @@ class BrandsApiController extends Controller
             'slug.unique' => 'Another brand already uses that slug.',
             'slug.required' => 'A brand needs a name it can make a slug from.',
             'seo.canonical.url' => 'The canonical URL must be a full address, including https://.',
+            'ring_color.regex' => 'The ring colour must be a colour like #e0567b, or blank to take it from the logo.',
         ]);
 
-        $data['logo'] = $this->safeLogoUrl($data['logo'] ?? null);
+        $data['logo'] = BrandLogo::safeUrl($data['logo'] ?? null);
+
+        /*
+         * Lane BH: the ring. The colour is taken from the logo FILE on every
+         * save (bounded, local files only -- BrandLogo never fetches a URL),
+         * and the owner's own colour is kept apart from it, so changing the
+         * logo later re-reads the logo without overwriting his choice. A
+         * request that does not send ring_color leaves it alone. Neither is
+         * written before the migration that adds them has run.
+         */
+        if (BrandLogo::columnsReady()) {
+            $data['logo_color'] = BrandLogo::colourOf($data['logo']);
+
+            if (array_key_exists('ring_color', $data)) {
+                $data['ring_color'] = BrandLogo::clean($data['ring_color']);
+            }
+        } else {
+            unset($data['ring_color']);
+        }
         $data['position'] = (int) ($data['position'] ?? $brand?->position ?? 0);
 
         /*
@@ -305,38 +333,5 @@ class BrandsApiController extends Controller
         $data['banner'] = PageBanner::sanitize($data['banner'] ?? null);
 
         return $data;
-    }
-
-    /**
-     * Keep the logo to something that is safe as an <img src>.
-     *
-     * The value normally arrives straight from MediaUploadController, but the
-     * field is a plain string and the screen also lets an operator paste a URL
-     * by hand. `javascript:` in an `src` is inert, but `data:` is not — a
-     * data: URL of type image/svg+xml renders as a document and can carry
-     * script, which is the same stored-XSS shape MediaUploadController already
-     * refuses for uploaded SVG. Only http(s) and site-relative paths are kept.
-     */
-    private function safeLogoUrl(?string $logo): ?string
-    {
-        $logo = trim((string) $logo);
-
-        if ($logo === '') {
-            return null;
-        }
-
-        if (preg_match('#^https?://#i', $logo) === 1) {
-            return $logo;
-        }
-
-        // A site-relative path: one leading slash, and no "..", so a stored
-        // value cannot be walked outside the web root by whatever consumes it.
-        if (str_starts_with($logo, '/') && ! str_contains($logo, '..')) {
-            return $logo;
-        }
-
-        throw ValidationException::withMessages([
-            'logo' => 'The logo must be an uploaded image or an http(s) URL.',
-        ]);
     }
 }
