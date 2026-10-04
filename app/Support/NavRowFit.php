@@ -107,6 +107,14 @@ final class NavRowFit
         $min = (int) ($settings['nav_fit_min'] ?? 10);
         $max = (int) ($settings['nav_fit_max'] ?? 18);
 
+        // "Spread the items" (the default since 2.60.376): the text is held at
+        // the owner's own Text size, so once it reaches that size the room left
+        // goes into the space between the items (space-between and the padding
+        // nav-fit.js scales), and it still shrinks when the row is too full.
+        if (($settings['nav_fit_mode'] ?? 'space') !== 'text') {
+            $max = (int) ($settings['nav_size'] ?? 14);
+        }
+
         return implode(';', [
             '--nav-n:'.$n,
             '--nav-np:'.($n - $hl),

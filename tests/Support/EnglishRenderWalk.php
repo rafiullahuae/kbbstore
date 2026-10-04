@@ -1756,10 +1756,15 @@ final class EnglishRenderWalk
              * TWO ATTRIBUTES, NOTHING ELSE: the bar's opening tag and the
              * pill's padding, once each on every page that draws the header —
              * 31 of the walk's pages, counted, not predicted.
+             *
+             * 2.60.376 — "How it fills the row" ships at "Spread the items (keep
+             * my text size)" because he asked for it ("i want to keep the font
+             * size control but the space will auto adjust"): the ceiling is now
+             * the Menu text size, 14px, instead of 18px.
              */
             'the desktop menu fills its row: the bar (Lane NV)' => [
                 'pattern' => '#<div class="mbar"><div class="wrap">#',
-                'with' => '<div class="mbar nav-fill" style="--nav-n:12;--nav-np:11;--nav-hl:1;--nav-gx:2;--nav-bx:0;--nav-w:6530;--nav-min:10px;--nav-max:18px"><div class="wrap">',
+                'with' => '<div class="mbar nav-fill" style="--nav-n:12;--nav-np:11;--nav-hl:1;--nav-gx:2;--nav-bx:0;--nav-w:6530;--nav-min:10px;--nav-max:14px"><div class="wrap">',
                 'hits' => 31,
             ],
             'the desktop menu fills its row: the pill\'s padding (Lane NV)' => [

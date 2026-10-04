@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Mail\NewOrderAlert;
 use App\Mail\OrderConfirmation;
-use App\Mail\OrderStatusChanged;
 use App\Models\Order;
 use App\Services\Mail\DomainCheck;
 use App\Services\Mail\EmailBranding;
@@ -75,17 +73,21 @@ class EmailsApiController extends Controller
         'mail_signature',
     ];
 
+    /** The two pre-2.60.376 keys, still accepted, mapped to the kit's own names. */
+    private const ALIASES = ['order_shipped' => 'order_status_shipped', 'order_cancelled' => 'order_status_cancelled'];
+
     /**
-     * "Which email" on the test-send: the plain test message, or a real
-     * customer email filled with the shop's latest order. key => label.
+     * Every email, for "Which email" (2.60.376) — the owner: "i need here all
+     * the emails, pending order, and in failed order". Order emails are filled
+     * with the latest order, the others with the shop's own sample data, by
+     * the same App\Services\Mail\Kit\KitSamples the template editor previews.
+     *
+     * @return array<string, string>
      */
-    public const SAMPLES = [
-        'plain' => 'A plain test message',
-        'order_confirmation' => 'Order confirmed — filled with your latest order',
-        'order_shipped' => 'Order shipped — filled with your latest order',
-        'order_cancelled' => 'Order cancelled — filled with your latest order',
-        'new_order_alert' => 'New-order alert — filled with your latest order',
-    ];
+    public static function samples(): array
+    {
+        return ['plain' => 'A plain test message'] + \App\Services\Mail\CustomerEmails::testChoices();
+    }
 
     /** The two the owner chose between, in his order. */
     public const OFFERED = [MailSettings::TRANSPORT_SERVER, MailSettings::TRANSPORT_GMAIL];
@@ -256,39 +258,32 @@ class EmailsApiController extends Controller
         $data = $request->validate([
             'to' => ['required', 'string', 'max:255', new \App\Rules\StorefrontEmail],
             // A select stores (here: sends) one of its own options.
-            'which' => ['sometimes', 'string', 'in:' . implode(',', array_keys(self::SAMPLES))],
+            'which' => ['sometimes', 'string', 'in:' . implode(',', array_merge(array_keys(self::samples()), array_keys(self::ALIASES)))],
         ]);
 
         $which = (string) ($data['which'] ?? 'plain');
         $sample = null;
 
         if ($which !== 'plain') {
-            $order = Order::query()->with('items')->orderByDesc('id')->first();
+            $which = self::ALIASES[$which] ?? $which;
 
-            if ($order === null) {
+            try {
+                $sample = \App\Services\Mail\Kit\KitSamples::mailable($which);
+            } catch (\Throwable $e) {
+                return response()->json(['ok' => false, 'error' => 'That email could not be filled for a test: ' . class_basename($e) . '.'], 422);
+            }
+
+            if ($sample === null) {
                 return response()->json([
                     'ok' => false,
                     'error' => 'There is no order yet to fill that email with. Send the plain test message instead.',
                 ], 422);
             }
-
-            $sample = $this->sample($which, $order);
         }
 
         // 200 either way: a refused send is the answer the owner asked for,
         // carrying the transport's own words, not a broken request.
         return response()->json($this->tester->send($data['to'], $sample, 'test.' . $which));
-    }
-
-    /** The Mailable for a "Which email" choice. Never addressed to the order's customer. */
-    private function sample(string $which, Order $order): \Illuminate\Mail\Mailable
-    {
-        return match ($which) {
-            'order_shipped' => new OrderStatusChanged($order, 'shipped'),
-            'order_cancelled' => new OrderStatusChanged($order, 'cancelled'),
-            'new_order_alert' => new NewOrderAlert($order),
-            default => new OrderConfirmation($order),
-        };
     }
 
     // ----------------------------------------------------------- domain check
@@ -395,7 +390,7 @@ class EmailsApiController extends Controller
             'effective_from' => $this->settings->fromAddress(),
             'active' => $this->configurator->activeTransport(),
             'last_test' => $this->settings->lastTest(),
-            'samples' => self::SAMPLES,
+            'samples' => self::samples(),
             'has_order' => Order::query()->exists(),
             'dns' => app(DomainCheck::class)->last(),
             'domain' => app(DomainCheck::class)->domain(),

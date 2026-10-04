@@ -1658,10 +1658,23 @@
             "name": "nav_fit",
             "type": "bool",
             "label": "Fit the menu to the row",
-            "help": "Desktop only. With enough items in the menu, the text grows to fill the empty space at the end of the row, or shrinks so every item stays on one line. Off shows the menu at its normal size.",
+            "help": "Desktop only. With enough items in the menu, the row is filled edge to edge (see How it fills the row), and the text shrinks if needed so every item stays on one line. Off shows the menu at its normal size.",
             "options": null,
             "default": true,
             "value": true
+          },
+          {
+            "key": "nav_fit_mode",
+            "name": "nav_fit_mode",
+            "type": "select",
+            "label": "How it fills the row",
+            "help": "Spread the items: the text stays at Text size above and the space between the items grows to fill the row. Bigger text: the text grows up to Largest text size. Either way the text gets smaller if the items would not fit on one line.",
+            "options": {
+              "space": "Spread the items (keep my text size)",
+              "text": "Bigger text"
+            },
+            "default": "space",
+            "value": "space"
           },
           {
             "key": "nav_fit_from",
@@ -1704,7 +1717,7 @@
             "name": "nav_fit_max",
             "type": "select",
             "label": "Largest text size",
-            "help": "The text never grows past this. Any room left over is shared out evenly between the items.",
+            "help": "Used when How it fills the row is Bigger text: the text never grows past this, and any room left over is shared out evenly between the items.",
             "options": {
               "14": "14px",
               "15": "15px",

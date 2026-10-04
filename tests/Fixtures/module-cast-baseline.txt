@@ -619,6 +619,10 @@ header_settings|nav_fit|bool|"no"|true
 header_settings|nav_fit|bool|1|true
 header_settings|nav_fit|bool|0|false
 header_settings|nav_fit|bool|null|false
+header_settings|nav_fit_mode|select|"space"|'space'
+header_settings|nav_fit_mode|select|"nope"|'space'
+header_settings|nav_fit_mode|select|""|'space'
+header_settings|nav_fit_mode|select|null|'space'
 header_settings|nav_fit_from|select|"6"|'6'
 header_settings|nav_fit_from|select|"nope"|'9'
 header_settings|nav_fit_from|select|""|'9'

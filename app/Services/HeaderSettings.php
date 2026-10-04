@@ -173,7 +173,19 @@ class HeaderSettings
          * of `nav_fit_min` — the clamp can never be inverted by a save.
          */
         'nav_fit'         => ['bool',   'Fit the menu to the row', true,
-                              'Desktop only. With enough items in the menu, the text grows to fill the empty space at the end of the row, or shrinks so every item stays on one line. Off shows the menu at its normal size.'],
+                              'Desktop only. With enough items in the menu, the row is filled edge to edge (see How it fills the row), and the text shrinks if needed so every item stays on one line. Off shows the menu at its normal size.'],
+        /*
+         * 2.60.376. The owner, on 2.60.375's fitted menu: "give control to set
+         * menu font size upon expanding. because it coming too big, i want to
+         * keep the font size control but the space will auto adjust as per the
+         * number of parents items." So by default the text stays at Navigation
+         * → Text size (`nav_size`) and the row is filled with space between the
+         * items; growing the text is the other choice. It still SHRINKS when the
+         * items cannot fit at that size, so the menu never wraps.
+         */
+        'nav_fit_mode'    => ['select', 'How it fills the row', 'space',
+                              'Spread the items: the text stays at Text size above and the space between the items grows to fill the row. Bigger text: the text grows up to Largest text size. Either way the text gets smaller if the items would not fit on one line.',
+                              ['space' => 'Spread the items (keep my text size)', 'text' => 'Bigger text']],
         'nav_fit_from'    => ['select', 'Fit it from', '9',
                               'How many top-level items the menu needs before it is fitted. A shorter menu shows exactly as it always has.',
                               ['6' => '6 items', '7' => '7 items', '8' => '8 items', '9' => '9 items', '10' => '10 items',
@@ -182,7 +194,7 @@ class HeaderSettings
                               'The text never shrinks below this, however many items there are.',
                               ['9' => '9px', '10' => '10px', '11' => '11px', '12' => '12px', '13' => '13px']],
         'nav_fit_max'     => ['select', 'Largest text size', '18',
-                              'The text never grows past this. Any room left over is shared out evenly between the items.',
+                              'Used when How it fills the row is Bigger text: the text never grows past this, and any room left over is shared out evenly between the items.',
                               ['14' => '14px', '15' => '15px', '16' => '16px', '17' => '17px', '18' => '18px', '19' => '19px', '20' => '20px']],
 
         // ── Support ──
@@ -411,7 +423,7 @@ class HeaderSettings
         'menu'    => ['Menu icon', 'The control that opens the mobile menu.',
                       ['menu_icon', 'menu_icon_speed', 'menu_icon_size', 'menu_icon_c1', 'menu_icon_c2', 'menu_icon_c3']],
         'nav'     => ['Navigation', 'The category bar.',
-                      ['nav_show', 'nav_uppercase', 'nav_size', 'nav_gap', 'nav_hot_colour', 'nav_fit', 'nav_fit_from', 'nav_fit_min', 'nav_fit_max']],
+                      ['nav_show', 'nav_uppercase', 'nav_size', 'nav_gap', 'nav_hot_colour', 'nav_fit', 'nav_fit_mode', 'nav_fit_from', 'nav_fit_min', 'nav_fit_max']],
         'support' => ['Support', 'The WhatsApp block.',
                       ['support_show', 'support_label', 'support_icon_bg', 'support_icon_fg']],
         'flagbar' => ['Flag bar', 'The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. Off on phones and on desktop for now — switch either one on to bring it back, with the wording on phones only.',
