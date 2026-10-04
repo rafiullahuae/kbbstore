@@ -1,0 +1,3 @@
+Lighthouse 12.8.2, desktop, http://127.0.0.1:9892/ (twelve-item menu, fitted)
+CLS 0
+performance 0.99

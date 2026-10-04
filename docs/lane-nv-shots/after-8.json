@@ -1,0 +1,21 @@
+[
+  {
+    "width": 1280,
+    "file": "storage/nv-logs/shots/after-8-1280.png",
+    "errors": [],
+    "items": 8,
+    "rtl": false,
+    "font": "13.00",
+    "padX": "10.31",
+    "pillPadX": "10.00",
+    "indFont": "8.00",
+    "emptyEnd": 483.3,
+    "emptyStart": 0,
+    "rowsUsed": 1,
+    "barHeight": 46.5,
+    "scale": "1",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "mbarTop": 46
+  }
+]
