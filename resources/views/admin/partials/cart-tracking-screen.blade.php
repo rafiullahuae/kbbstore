@@ -28,7 +28,8 @@
 --}}
 @verbatim
 <style>
-.ctk{display:grid;gap:14px;min-width:0}
+.ctk{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-width:0}
+.ctk > [data-ctk-panel]{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-width:0}
 .ctk *{box-sizing:border-box}
 .ctk-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);border-radius:16px;padding:16px;min-width:0;box-shadow:var(--sh-s,none)}
 .ctk-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -72,7 +73,8 @@
 .ctk-t th{position:sticky;top:0;background:var(--surface,#fff);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft,#626c80);font-weight:700;text-align:left;padding:10px 10px;border-bottom:1px solid var(--border,#e6e9f2);white-space:nowrap}
 .ctk-t th:first-child,.ctk-t td:first-child{padding-left:16px}
 .ctk-t th:last-child,.ctk-t td:last-child{padding-right:16px}
-.ctk-t td{padding:12px 10px;border-bottom:1px solid var(--border-2,#eef0f6);vertical-align:top}
+.ctk-t td{padding:12px 8px;border-bottom:1px solid var(--border-2,#eef0f6);vertical-align:top}
+.ctk-t th{padding-left:8px;padding-right:8px}
 .ctk-t tbody tr{cursor:pointer;transition:background .12s}
 .ctk-t tbody tr:hover{background:var(--surface-2,#f7f8fc)}
 .ctk-t tbody tr.sel{background:#f0f7ff}
@@ -83,15 +85,16 @@
 .ctk-id{font-weight:750;color:var(--ink,#101729);white-space:nowrap}
 .ctk-when{white-space:nowrap}
 .ctk-when small,.ctk-sub{display:block;font-size:11.5px;color:var(--ink-soft,#626c80);margin-top:2px}
-.ctk-prods{display:flex;flex-direction:column;gap:3px;min-width:180px;max-width:320px}
+.ctk-prods{display:flex;flex-direction:column;gap:3px;min-width:130px;max-width:260px}
 .ctk-prods a,.ctk-prods span{color:var(--ink,#101729);text-decoration:none;overflow-wrap:anywhere;line-height:1.35}
 .ctk-prods a:hover{text-decoration:underline}
 .ctk-qty{font-weight:700;color:var(--ink-soft,#626c80);white-space:nowrap}
 .ctk-more{font-size:11.5px;color:var(--ink-soft,#626c80)}
 .ctk-rem a,.ctk-rem span{color:#9a3b33}
-.ctk-who{min-width:170px}
+.ctk-who{min-width:150px;max-width:230px}
 .ctk-who .nm{font-weight:650;color:var(--ink,#101729);overflow-wrap:anywhere}
 .ctk-ipline{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap}
+.ctk-ipline .ctk-ip{flex:1 1 auto;min-width:0}
 .ctk-ip{font:600 12px var(--mono,ui-monospace,monospace);color:var(--ink-2,#3c465c);overflow-wrap:anywhere}
 .ctk-cc{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--ink-2,#3c465c);background:var(--surface-2,#f2f4fb);border-radius:6px;padding:1px 6px}
 .ctk-cc .fl{font-size:13px;line-height:1}
@@ -132,7 +135,8 @@
 .ctk-rk.rm{grid-template-columns:34px minmax(0,1fr) 92px 92px}
 .ctk-rk .n{color:var(--ink-faint,#97a0b2);font-weight:700;text-align:right}
 .ctk-rk .nm{min-width:0}
-.ctk-rk .nm a,.ctk-rk .nm span{color:var(--ink,#101729);font-weight:600;text-decoration:none;overflow-wrap:anywhere}
+.ctk-rk .nm > a,.ctk-rk .nm > span:first-child{color:var(--ink,#101729);font-weight:600;text-decoration:none;overflow-wrap:anywhere}
+.ctk-rk .nm .ctk-sub{font-weight:500}
 .ctk-rk .nm a:hover{text-decoration:underline}
 .ctk-bar{height:6px;border-radius:99px;background:var(--surface-3,#eef1f9);margin-top:6px;overflow:hidden}
 .ctk-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#15a85a,#3fc98a)}
@@ -193,6 +197,8 @@
 .ctk-dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;position:relative;z-index:1}
 .ctk-dot.add{background:var(--green,#15a85a)}.ctk-dot.remove{background:var(--red,#e3493f)}.ctk-dot.qty{background:var(--blue,#3f6fe0)}.ctk-dot.order{background:var(--violet,#7b6cf0)}
 .ctk-tl .t{font-size:13px;line-height:1.4;min-width:0;overflow-wrap:anywhere}
+.ctk-tl .t a{color:var(--ink,#101729);font-weight:650;text-decoration:none;border-bottom:1px solid var(--border,#e6e9f2)}
+.ctk-tl .t a:hover{border-bottom-color:currentColor}
 .ctk-tl .t small{display:block;color:var(--ink-soft,#626c80);font-size:11.5px;margin-top:1px}
 .ctk-list{display:grid;gap:6px}
 .ctk-li{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);border-radius:10px;padding:8px 11px;font-size:12.5px;min-width:0}
@@ -469,7 +475,7 @@
       + tile('Bots', num(s.bots), s.bot_share + '% of carts', '#e3493f')
       + '<div class="ctk-tile" style="--tile:#7b6cf0"><span class="k">Top countries</span>'
       + '<div class="ctk-flags">' + ((s.countries || []).slice(0, 6).map(function (c) {
-          return '<button type="button" class="ctk-flagchip" data-ctk-country="' + esc(c.code || '--') + '" title="Show only ' + esc(c.name) + '">' + (c.code ? flag(c.code) + ' ' + esc(c.code) : '?') + ' <span style="color:var(--ink-soft)">' + num(c.n) + '</span></button>';
+          return '<button type="button" class="ctk-flagchip" data-ctk-country="' + esc(c.code || '--') + '" title="Show only ' + esc(c.name) + '">' + (c.code ? flag(c.code) + ' ' + esc(c.code) : 'Unknown') + ' <span style="color:var(--ink-soft)">' + num(c.n) + '</span></button>';
         }).join('') || '<span class="s">No carts yet</span>') + '</div></div>'
       + '</div>';
 
