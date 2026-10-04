@@ -626,12 +626,46 @@ class ProductStyles
                 $rules["{$tile} .kbb-card-rate"][] = "margin-top:{$g}px";
             }
 
+            /*
+             * ── SPACE, NOT PADDING; AND A RULE THAT CAN WIN ───────── 2.60.374 ──
+             * The owner, 4 October, with a screenshot of Price → Add to cart at
+             * 24px and the pink price capsule touching the button: "the spacing
+             * between the elements inside grid card, is absolutely not applying
+             * on front-end, also the price row above space is actually increase
+             * the height of row pink capsule. i needed the spacing, not padding."
+             *
+             * Two defects, measured on the Spotlight card:
+             *  1. "Above the price" was `padding-top` on `.cp`. On every design
+             *     where `.cp` is a capsule (Spotlight, Split, Pastel…) padding is
+             *     INSIDE the pink, so the capsule grew instead of moving. It is
+             *     `margin-top` now. The Showcase family draws `.cp` with no
+             *     background and reserves its rows from padding, so it keeps it.
+             *  2. "Price → Add to cart" was `margin-top` on the button, and on
+             *     every design but Showcase kbb-grid-skins.css holds the button
+             *     at `margin-top:auto` (it lines the buttons up across a row)
+             *     with five `:not([data-skin=…])` — specificity (0,7,0) against
+             *     this rule's (0,4,0). The owner's 24px never reached the page.
+             *     The gap is now the price row's `margin-bottom`: the auto margin
+             *     still lines the buttons up, and the smallest gap is his number.
+             */
+            $notSc = '.kbb-pgrid[data-skin]:not([data-skin^="showcase"]) .kbb-tile';
+            $sc = '.kbb-pgrid[data-skin^="showcase"] .kbb-tile';
+
             if ($moved("card_gap_price_{$dev}")) {
-                $rules["{$tile} .cp"][] = 'padding-top:'.(int) $c["card_gap_price_{$dev}"].'px';
+                $g = (int) $c["card_gap_price_{$dev}"];
+                $rules["{$sc} .cp"][] = "padding-top:{$g}px";
+                $rules["{$notSc} .cp"][] = "margin-top:{$g}px";
             }
 
             if ($moved("card_gap_cart_{$dev}")) {
-                $rules["{$tile} .kbb-card-cart"][] = 'margin-top:'.(int) $c["card_gap_cart_{$dev}"].'px';
+                $g = (int) $c["card_gap_cart_{$dev}"];
+                $rules["{$sc} .kbb-card-cart"][] = "margin-top:{$g}px";
+                $rules["{$notSc} .cp"][] = "margin-bottom:{$g}px";
+                // The button's own 8px (kbb-grid-skins.css `.kbb-card-cart`) would
+                // otherwise sit on top of his number: 24 measured 32. (0,5,0) loses
+                // to the (0,7,0) `margin-top:auto` that lines the buttons up, so
+                // where that rule applies the alignment is kept.
+                $rules["{$notSc} .kbb-card-cart"][] = 'margin-top:0';
             }
 
             if ($moved("card_fs_title_{$dev}") && ($v = $size("card_fs_title_{$dev}")) !== null) {
