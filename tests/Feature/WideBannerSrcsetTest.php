@@ -75,14 +75,13 @@ beforeEach(function () {
     }
 
     // tests/Pest.php holds the after-response copies off for every other test.
-    ImageVariants::$holdWide = false;
+    config(['kbb.image_wide_after_response' => true]);
     $this->wbsRel = 'uploads/banners/wbs-'.uniqid().'.jpg';
 });
 
 afterEach(function () {
     ImageVariants::forget('/'.$this->wbsRel);
     @unlink(public_path($this->wbsRel));
-    ImageVariants::$holdWide = true;
 });
 
 it('offers the 1280, 1440 and 1600 copies between 800w and the original once they exist', function () {
@@ -126,7 +125,7 @@ it('prints exactly the old srcset while the wide copies do not exist', function 
      * MUTATION, run: list WIDE_WIDTHS without the is_file() test and this is
      * red (three candidates that would 404).
      */
-    ImageVariants::$holdWide = true;
+    config(['kbb.image_wide_after_response' => false]);
     wbsPicture($this->wbsRel, 1920, 800);
     ImageVariants::generate('/'.$this->wbsRel);
 

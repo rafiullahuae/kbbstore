@@ -213,13 +213,6 @@ final class ImageVariants
      */
     public const WIDE_WIDTHS = [1280, 1440, 1600];
 
-    /**
-     * Held off in the test suite (tests/Pest.php), so a request that renders a
-     * wide banner fixture does not leave copies behind for the next test's
-     * srcset to find. The tests that are about the wide copies release it.
-     */
-    public static bool $holdWide = false;
-
     /** The web-root directory the copies live under. */
     public const DIR = 'img-cache';
 
@@ -402,7 +395,15 @@ final class ImageVariants
      */
     public static function wideAfterResponse(string $image): void
     {
-        if (self::$holdWide || ! self::available()) {
+        /*
+         * `kbb.image_wide_after_response` is unset in production and reads
+         * true. tests/Pest.php sets it false for every test, so a request that
+         * renders a wide banner fixture does not leave copies behind for the
+         * next test's srcset to find; WideBannerSrcsetTest turns it back on.
+         * Config rather than a static, because config dies with the test's
+         * application and a static would outlive it.
+         */
+        if (! config('kbb.image_wide_after_response', true) || ! self::available()) {
             return;
         }
 

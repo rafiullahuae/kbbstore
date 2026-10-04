@@ -84,7 +84,7 @@ pest()->extend(Tests\TestCase::class)
          * find -- a string pinned in one test changing because another ran
          * first. Held off here; WideBannerSrcsetTest releases it.
          */
-        \App\Support\ImageVariants::$holdWide = true;
+        config(['kbb.image_wide_after_response' => false]);
 
         /*
          * And the third thing that outlives a test: PHP's own execution clock.

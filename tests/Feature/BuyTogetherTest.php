@@ -541,6 +541,24 @@ it('leaves the cart page\'s Recommended rail and the shared product card exactly
             continue;
         }
 
+        /*
+         * (Lane PF2) The SHARED CARD is every product grid in the shop, and a
+         * later lane briefed to change it (width/height on its <img>) turned
+         * this byte-for-byte pin red in its own worktree -- the "pin that
+         * nobody else may finish their work" shape CLAUDE.md warns about. What
+         * this section actually promised about the card is that it borrowed
+         * nothing from it and added nothing to it, so that is what is pinned
+         * for this one file: none of this section's markup in it. The rendered
+         * rail above still holds the cart page itself.
+         *
+         * MUTATION: add `bt-card` to the card's root class and this is red.
+         */
+        if (str_ends_with($file, 'product-card.blade.php')) {
+            expect($now)->not->toMatch('/bt-(card|cb|tick|plus)/', "{$file} carries the buy-together section's markup");
+
+            continue;
+        }
+
         expect($now)->toBe($then, "{$file} changed on this branch");
     }
 });
