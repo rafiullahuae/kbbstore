@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.406
+**Homepage brand photos load about 12x lighter.** Apply after .405. No
+migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "the browser loading bar is taking little bit longer to finish" | The Top brands photo cards were sent at full size (Anua 903 KiB into a 158x198 frame). They now use the shop's resized copies: 8,046 KiB -> 677 KiB, all brand photos shown 6.8 s -> 1.1 s on a laptop (measured). The first visit after applying makes the copies; every visit after gets them. |
+
+Files: see the package's update.json.
+
 ## 2.60.405
 **Every category and brand keeps its own product order; filters and links
 to the shop off; the address no longer changes while products load; your
