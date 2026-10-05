@@ -28,7 +28,7 @@ it('applies cleanly: every anchor is present exactly once, and the result carrie
 
     expect(substr_count($files['routes/web.php'], "require __DIR__.'/owner-app.php';"))->toBe(1)
         ->and(substr_count($files['routes/web.php'], "require __DIR__.'/owner-app-admin.php';"))->toBe(1)
-        ->and(substr_count($files['bootstrap/providers.php'], 'App\\Providers\\OwnerAppServiceProvider::class'))->toBe(1);
+        ->and($files)->not->toHaveKey('bootstrap/providers.php');
 
     // The admin file lands INSIDE the admin-api group: after its opening line.
     $web = $files['routes/web.php'];
@@ -42,10 +42,21 @@ it('is wired: routes/web.php requires both owner-app route files exactly once', 
         ->and(substr_count($web, "require __DIR__.'/owner-app-admin.php';"))->toBe(1, "Run: php tools/mac-wire.php");
 });
 
-it('is wired: the provider that records orders and stock is registered exactly once', function () {
+it('is wired: the provider that records orders and stock is registered exactly once, from a file a package can carry', function () {
+    /*
+     * DEFECT THIS CATCHES (2.60.400, caught before shipping): the provider was
+     * listed in bootstrap/providers.php, which UpdateGuard forbids to every
+     * package -- `kbb:package` silently left it out, so on the live server the
+     * app's order, stock and password-change hooks would never have run.
+     * MUTATION: delete the register() line from AppServiceProvider -> the
+     * loaded check is red; put it back in bootstrap/providers.php -> red.
+     */
+    $app = (string) file_get_contents(base_path('app/Providers/AppServiceProvider.php'));
     $providers = (string) file_get_contents(base_path('bootstrap/providers.php'));
 
-    expect(substr_count($providers, 'App\\Providers\\OwnerAppServiceProvider::class'))->toBe(1, "Run: php tools/mac-wire.php");
+    expect(substr_count($app, '$this->app->register(OwnerAppServiceProvider::class);'))->toBe(1)
+        ->and($providers)->not->toContain('OwnerAppServiceProvider')
+        ->and(app()->getProviders(\App\Providers\OwnerAppServiceProvider::class))->toHaveCount(1);
 });
 
 it('ships the migration that clears the compiled routes, config and views', function () {

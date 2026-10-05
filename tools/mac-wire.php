@@ -15,7 +15,8 @@ declare(strict_types=1);
  *                           directly above the admin login route;
  *   2. routes/web.php       require routes/owner-app-admin.php inside the
  *                           admin-api group, directly under admin-roles.php;
- *   3. bootstrap/providers.php   App\Providers\OwnerAppServiceProvider.
+ *   (The provider is registered from AppServiceProvider::register(), not
+ *   bootstrap/providers.php: UpdateGuard forbids bootstrap/ to a package.)
  *
  * A block whose replacement is already present is skipped, so running it twice
  * is harmless. tests/Feature/OwnerAppWiringTest.php pins the finished state

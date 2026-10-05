@@ -19,6 +19,15 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         /*
+         * The owner app's hooks (new orders, status changes, stock crossing the
+         * low line, an admin's password change ending their app sessions).
+         * Registered HERE, not in bootstrap/providers.php: UpdateGuard forbids
+         * bootstrap/ to a package, so a provider listed there never reaches the
+         * live server and the hooks would silently not run. (2.60.400)
+         */
+        $this->app->register(OwnerAppServiceProvider::class);
+
+        /*
          * Update services need filesystem paths, and Laravel cannot guess a
          * string constructor argument — asking the container for BackupService
          * without these throws "Unresolvable dependency". That was the 500 on
