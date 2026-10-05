@@ -11,6 +11,7 @@
 
 @section('bare', '1')
 @section('title', __('store.checkout.page_title'))
+@section('kbb-wa-tab', '1')
 
 @push('styles')
     @vite('resources/css/kbb/kbb-checkout.css')

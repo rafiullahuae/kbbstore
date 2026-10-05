@@ -626,7 +626,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 1356 -> 1358 (Lane HS, merged after HC): the homepage Spotted grid's heading and picture
     // description (store.spotted.grid_*), seeded by
     // 2027_08_07_140100_seed_spotted_grid_arabic_drafts.
-    expect($ui['drafts'])->toBe(1358, 'the shipped Arabic is not showing as drafts to review')
+    // 1358 -> 1359 (Lane WS): the WhatsApp side tab's label
+    // (store.whatsapp.tab_label), seeded by
+    // 2027_08_17_100100_seed_whatsapp_tab_arabic_draft.
+    expect($ui['drafts'])->toBe(1359, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });
