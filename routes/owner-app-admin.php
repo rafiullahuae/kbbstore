@@ -21,6 +21,10 @@ declare(strict_types=1);
 |     POST   /admin-api/owner-app/devices/{id}/revoke      sign a phone out for good
 |     PUT    /admin-api/owner-app/settings                 idle time, low-stock line
 |     POST   /admin-api/owner-app/address                  a new secret address (the old one dies)
+|     PUT    /admin-api/owner-app/security                 own host, lock-screen text (Lane SEC; Full Admin)
+|
+| "Unlock now" (both PIN ladders, including the admin-only lock) is
+| PUT members/{id} with {unlock: true}.
 */
 
 use App\Http\Controllers\Admin\OwnerAppAdminController;
@@ -31,3 +35,4 @@ Route::put('/owner-app/members/{id}', [OwnerAppAdminController::class, 'member']
 Route::post('/owner-app/devices/{id}/revoke', [OwnerAppAdminController::class, 'revoke'])->whereNumber('id');
 Route::put('/owner-app/settings', [OwnerAppAdminController::class, 'settings']);
 Route::post('/owner-app/address', [OwnerAppAdminController::class, 'address'])->middleware('throttle:10,1,oa-admin-address');
+Route::put('/owner-app/security', [OwnerAppAdminController::class, 'security'])->middleware('throttle:10,1,oa-admin-security');

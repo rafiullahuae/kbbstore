@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\DB;
  *
  * Resolution order, the same as AdminPathService and for the same reason:
  *
- *   1. KBB_OWNER_APP_PATH in .env — always wins, the escape hatch;
+ *   1. KBB_OWNER_APP_PATH in .env — always wins, the escape hatch. Read
+ *      through config('owner_app.path') so `config:cache` keeps it;
  *   2. the `owner_app_path` settings row, written by the migration with a
  *      fresh random value and re-rollable from Users & Roles → Owner app;
  *   3. NOTHING. Unlike the admin, there is no fallback word: an app with no
@@ -37,6 +38,13 @@ final class OwnerAppPath
 
     private const CACHE_KEY = 'kbb.owner_app_path';
 
+    public const HOST_SETTING = 'owner_app_host';
+
+    private const HOST_CACHE_KEY = 'kbb.owner_app_host';
+
+    /** @var string|false|null false = no host configured */
+    private static string|false|null $hostMemo = null;
+
     /** @var string|false|null false = resolved to "not configured" */
     private static string|false|null $memo = null;
 
@@ -52,11 +60,26 @@ final class OwnerAppPath
     public static function forgetMemo(): void
     {
         self::$memo = null;
+        self::$hostMemo = null;
+    }
+
+    /**
+     * Is this request path (relative, as Request::path() gives it) the app or
+     * under it? Decoded and case-folded first: /ABC_DEF or /%61bc_def is a
+     * miss the router answers with the shop's 404, and it spells the secret
+     * just as well.
+     */
+    public static function covers(string $path): bool
+    {
+        $app = self::current();
+        $path = strtolower(trim(rawurldecode($path), '/'));
+
+        return $app !== null && ($path === $app || str_starts_with($path, $app.'/'));
     }
 
     public static function isLockedByEnv(): bool
     {
-        return trim((string) env('KBB_OWNER_APP_PATH', ''), '/') !== '';
+        return self::fromEnv() !== '';
     }
 
     /** 12–64 characters, lowercase letters, digits, - and _, at least one _. */
@@ -133,9 +156,74 @@ final class OwnerAppPath
         return $path;
     }
 
+    private static function fromEnv(): string
+    {
+        return trim((string) config('owner_app.path', ''), '/');
+    }
+
+    /* ---------------------------------------------------- its own host */
+
+    /**
+     * OPTIONAL: the one host the app answers on, e.g. owner.extrabeauty.ae.
+     * Empty (the default) keeps the app on the shop's own host at its secret
+     * path. When set, routes/owner-app.php registers the group with
+     * ->domain(host) ONLY, so the path on the shop's host is not mounted at
+     * all, and the app's host-only cookies belong to that host alone: no
+     * script on any page of the shop runs on the app's origin.
+     */
+    public static function host(): ?string
+    {
+        if (self::$hostMemo === null) {
+            try {
+                $stored = Cache::rememberForever(self::HOST_CACHE_KEY, static function (): string {
+                    return (string) DB::table('settings')->where('key', self::HOST_SETTING)->value('value');
+                });
+            } catch (\Throwable) {
+                $stored = '';
+            }
+            $stored = is_string($stored) ? strtolower(trim($stored)) : '';
+            self::$hostMemo = self::validHost($stored) ? $stored : false;
+        }
+
+        return self::$hostMemo === false ? null : self::$hostMemo;
+    }
+
+    /** A bare DNS name: no scheme, port, path, IP literal or trailing dot; at least two labels. */
+    public static function validHost(string $host): bool
+    {
+        return strlen($host) <= 253
+            && (bool) preg_match('/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/D', $host);
+    }
+
+    /** Write the host ('' clears it). The compiled route table is dropped, as set() does. */
+    public static function setHost(string $host): bool
+    {
+        $host = strtolower(trim($host));
+
+        if ($host !== '' && ! self::validHost($host)) {
+            return false;
+        }
+
+        DB::table('settings')->updateOrInsert(
+            ['key' => self::HOST_SETTING],
+            ['value' => $host, 'autoload' => false, 'updated_at' => now(), 'created_at' => now()],
+        );
+
+        Cache::forget(self::HOST_CACHE_KEY);
+        Cache::forget('kbb.settings');
+        \App\Models\Setting::flushMap();
+        self::$hostMemo = null;
+
+        foreach (glob(base_path('bootstrap/cache/routes*.php')) ?: [] as $file) {
+            @unlink($file);
+        }
+
+        return true;
+    }
+
     private static function resolve(): ?string
     {
-        $fromEnv = trim((string) env('KBB_OWNER_APP_PATH', ''), '/');
+        $fromEnv = self::fromEnv();
 
         if ($fromEnv !== '') {
             return self::valid($fromEnv) ? $fromEnv : null;

@@ -28,25 +28,25 @@ it('stores the PIN the owner sets only as a hash, and never sends it back', func
     $owner = OA::admin();
     $staff = OA::admin('support', 'sara@example.com', 'Sara Support');
 
-    $r = $this->actingAs($owner, 'admin')->putJson('/admin-api/owner-app/members/'.$staff->id, ['enabled' => true, 'pin' => '7391']);
+    $r = $this->actingAs($owner, 'admin')->putJson('/admin-api/owner-app/members/'.$staff->id, ['enabled' => true, 'pin' => '739104']);
     $r->assertOk();
 
     $hash = (string) DB::table('owner_app_members')->where('admin_user_id', $staff->id)->value('pin_hash');
-    expect($hash)->not->toBe('7391')->and($hash)->not->toContain('7391')
-        ->and(Hash::check('7391', $hash))->toBeTrue()
-        ->and($r->getContent())->not->toContain('7391');
+    expect($hash)->not->toBe('739104')->and($hash)->not->toContain('739104')
+        ->and(Hash::check('739104', $hash))->toBeTrue()
+        ->and($r->getContent())->not->toContain('739104');
 
     $list = $this->actingAs($owner, 'admin')->getJson('/admin-api/owner-app')->assertOk();
-    expect($list->getContent())->not->toContain($hash)->not->toContain('pin_hash')->not->toContain('7391')
+    expect($list->getContent())->not->toContain($hash)->not->toContain('pin_hash')->not->toContain('739104')
         ->and($list->json('members.1.has_pin'))->toBeTrue();
 });
 
-it('refuses a PIN that is not 4–8 digits, or is 1111 or 1234', function (string $pin) {
+it('refuses a PIN that is not 6–8 digits, or is 111111 or 123456', function (string $pin) {
     $owner = OA::admin();
     $this->actingAs($owner, 'admin')->putJson('/admin-api/owner-app/members/'.$owner->id, ['enabled' => true, 'pin' => $pin])
         ->assertStatus(422);
     expect(DB::table('owner_app_members')->count())->toBe(0);
-})->with(['123', '123456789', '12a4', '1111', '1234', '9876']);
+})->with(['1234', '12345', '123456789', '12a456', '111111', '123456', '987654']);
 
 it('will not switch the app on for a member who has no PIN', function () {
     $owner = OA::admin();
@@ -60,7 +60,7 @@ it('enrols a device into HttpOnly, Secure, SameSite=Strict cookies scoped to the
     $owner = OA::admin();
     OA::member($owner);
 
-    $r = $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'OWNER@example.com', 'pin' => '4826'])->assertOk();
+    $r = $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'OWNER@example.com', 'pin' => '482613'])->assertOk();
 
     $cookies = collect($r->headers->getCookies())->keyBy(fn ($c) => $c->getName());
     foreach ([OwnerAppAuth::DEVICE_COOKIE, OwnerAppAuth::SESSION_COOKIE] as $name) {
@@ -85,11 +85,11 @@ it('answers an unknown email, a member without access and a wrong PIN with the s
     $owner = OA::admin();
     OA::member($owner);
     $off = OA::admin('manager', 'off@example.com', 'Off');
-    OA::member($off, '4826', false);
+    OA::member($off, '482613', false);
 
-    $a = $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'nobody@example.com', 'pin' => '4826']);
-    $b = $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'owner@example.com', 'pin' => '0000']);
-    $c = $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'off@example.com', 'pin' => '4826']);
+    $a = $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'nobody@example.com', 'pin' => '482613']);
+    $b = $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'owner@example.com', 'pin' => '000001']);
+    $c = $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'off@example.com', 'pin' => '482613']);
 
     expect($a->status())->toBe(422)->and($b->status())->toBe(422)->and($c->status())->toBe(422)
         ->and($a->json())->toBe($b->json())->and($b->json())->toBe($c->json());
@@ -102,13 +102,13 @@ it('locks a member for 15 minutes after 5 wrong PINs, on the right PIN too', fun
     [$cookies] = OA::enrol($this);
 
     for ($i = 1; $i <= 4; $i++) {
-        OA::post($this, 'unlock', ['pin' => '1357'], $cookies, null)->assertStatus(422)->assertJsonPath('left', 5 - $i);
+        OA::post($this, 'unlock', ['pin' => '135790'], $cookies, null)->assertStatus(422)->assertJsonPath('left', 5 - $i);
     }
-    OA::post($this, 'unlock', ['pin' => '1357'], $cookies, null)->assertStatus(423)->assertJsonPath('code', 'locked');
-    OA::post($this, 'unlock', ['pin' => '4826'], $cookies, null)->assertStatus(423);
+    OA::post($this, 'unlock', ['pin' => '135790'], $cookies, null)->assertStatus(423)->assertJsonPath('code', 'locked');
+    OA::post($this, 'unlock', ['pin' => '482613'], $cookies, null)->assertStatus(423);
 
     $this->travel(16)->minutes();
-    OA::post($this, 'unlock', ['pin' => '4826'], $cookies, null)->assertOk()->assertJsonPath('ok', true);
+    OA::post($this, 'unlock', ['pin' => '482613'], $cookies, null)->assertOk()->assertJsonPath('ok', true);
 });
 
 it('revokes a device after a long run of wrong PINs, so the email is needed again', function () {
@@ -120,13 +120,13 @@ it('revokes a device after a long run of wrong PINs, so the email is needed agai
 
     for ($i = 0; $i < OwnerAppAuth::DEVICE_REVOKE_AFTER - 1; $i++) {
         DB::table('owner_app_members')->update(['locked_until' => null]);
-        OA::post($this, 'unlock', ['pin' => '1357'], $cookies, null);
+        OA::post($this, 'unlock', ['pin' => '135790'], $cookies, null);
     }
     DB::table('owner_app_members')->update(['locked_until' => null]);
-    OA::post($this, 'unlock', ['pin' => '1357'], $cookies, null)->assertStatus(403)->assertJsonPath('code', 'no_device');
+    OA::post($this, 'unlock', ['pin' => '135790'], $cookies, null)->assertStatus(403)->assertJsonPath('code', 'no_device');
 
     expect(DB::table('owner_app_devices')->value('revoked_reason'))->toBe('too_many_wrong_pins');
-    OA::post($this, 'unlock', ['pin' => '4826'], $cookies, null)->assertStatus(403);
+    OA::post($this, 'unlock', ['pin' => '482613'], $cookies, null)->assertStatus(403);
 });
 
 it('lets the owner revoke a device from the admin, which ends it and its push subscription', function () {
@@ -167,19 +167,19 @@ it('ends every session when the owner sets a new PIN or switches access off', fu
     [$cookies] = OA::enrol($this);
     OA::get($this, 'orders', $cookies)->assertOk();
 
-    $this->actingAs($owner, 'admin')->putJson('/admin-api/owner-app/members/'.$owner->id, ['pin' => '2580'])->assertOk();
+    $this->actingAs($owner, 'admin')->putJson('/admin-api/owner-app/members/'.$owner->id, ['pin' => '258013'])->assertOk();
     OA::get($this, 'orders', $cookies)->assertStatus(401)->assertJsonPath('code', 'locked');
 
     $this->actingAs($owner, 'admin')->putJson('/admin-api/owner-app/members/'.$owner->id, ['enabled' => false])->assertOk();
-    OA::post($this, 'unlock', ['pin' => '2580'], $cookies, null)->assertStatus(403)->assertJsonPath('code', 'disabled');
+    OA::post($this, 'unlock', ['pin' => '258013'], $cookies, null)->assertStatus(403)->assertJsonPath('code', 'disabled');
 });
 
 it('writes every attempt to the sign-in log, right or wrong', function () {
     $owner = OA::admin();
     OA::member($owner);
-    $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'owner@example.com', 'pin' => '9999']);
+    $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'owner@example.com', 'pin' => '999990']);
     [$cookies] = OA::enrol($this);
-    OA::post($this, 'unlock', ['pin' => '4826'], $cookies, null)->assertOk();
+    OA::post($this, 'unlock', ['pin' => '482613'], $cookies, null)->assertOk();
 
     $rows = DB::table('owner_app_logins')->orderBy('id')->get(['kind', 'success', 'reason']);
     expect($rows->map(fn ($r) => $r->kind.':'.(int) $r->success.':'.$r->reason)->all())
@@ -190,9 +190,9 @@ it('refuses a connection that keeps guessing with 429, before any PIN is checked
     $owner = OA::admin();
     OA::member($owner);
     for ($i = 0; $i < OwnerAppAuth::IP_MAX_ENROL_FAILS; $i++) {
-        $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'x'.$i.'@example.com', 'pin' => '4826']);
+        $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'x'.$i.'@example.com', 'pin' => '482613']);
     }
-    $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'owner@example.com', 'pin' => '4826'])->assertStatus(429);
+    $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'owner@example.com', 'pin' => '482613'])->assertStatus(429);
 });
 
 it('lives at an address with an underscore that no article slug can ever take', function () {

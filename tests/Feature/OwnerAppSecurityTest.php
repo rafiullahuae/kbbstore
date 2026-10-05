@@ -97,7 +97,8 @@ it('refuses a write without the CSRF header, with a wrong one, cross-site, or wi
     [$cookies, $csrf] = OA::enrol($this);
     $id = (int) Order::query()->value('id');
 
-    OA::post($this, 'orders/'.$id.'/status', ['status' => 'completed'], $cookies, null)->assertStatus(419);
+    // No header at all is the PIN pad (Lane SEC protocol); a wrong one is 419.
+    OA::post($this, 'orders/'.$id.'/status', ['status' => 'completed'], $cookies, null)->assertStatus(401)->assertJsonPath('code', 'pin');
     OA::post($this, 'orders/'.$id.'/status', ['status' => 'completed'], $cookies, str_repeat('a', 64))->assertStatus(419);
     $this->withCredentials()->withUnencryptedCookies($cookies)->withHeaders(['X-OA' => '1', 'X-OA-CSRF' => $csrf, 'Origin' => 'https://evil.example'])
         ->postJson(OA::base().'/api/orders/'.$id.'/status', ['status' => 'completed'])->assertStatus(403);
@@ -199,7 +200,7 @@ it('maps every admin endpoint to ownerapp.manage, which only a Full Admin holds'
 
     $manager = OA::admin('manager', 'm@example.com', 'Max Manager');
     $this->actingAs($manager, 'admin')->getJson('/admin-api/owner-app')->assertStatus(403);
-    $this->actingAs($manager, 'admin')->putJson('/admin-api/owner-app/members/'.$manager->id, ['enabled' => true, 'pin' => '7391'])->assertStatus(403);
+    $this->actingAs($manager, 'admin')->putJson('/admin-api/owner-app/members/'.$manager->id, ['enabled' => true, 'pin' => '739104'])->assertStatus(403);
     expect(DB::table('owner_app_members')->count())->toBe(0);
 });
 

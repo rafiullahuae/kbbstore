@@ -218,6 +218,7 @@ final class OwnerAppEvents
 
         $payloads = [];
         $targets = [];
+        $generic = OwnerAppPushText::generic();
         foreach ($subs as $s) {
             $user = $users[(int) $s->admin_user_id] ?? null;
             $groups = self::groupsFrom($s->notify);
@@ -228,11 +229,40 @@ final class OwnerAppEvents
                 continue;
             }
 
-            $payloads[(int) $s->id] = self::payload($mine);
+            $payloads[(int) $s->id] = self::payload($mine, $generic);
             $targets[] = $s;
         }
 
         return WebPush::send($targets, $payloads);
+    }
+
+    /**
+     * A member's choice of groups as it ARRIVES in a request: a flat list of
+     * strings, of which only known group names are kept. Null for anything
+     * else — a nested array used to reach array_intersect(), which converts
+     * every element to a string and threw "Array to string conversion": a 500
+     * where a 422 belonged (Lane SEC).
+     *
+     * @return list<string>|null
+     */
+    public static function groupsFromInput(mixed $input): ?array
+    {
+        if ($input === null || $input === '') {
+            return [];
+        }
+        if (is_string($input)) {
+            $input = [$input];
+        }
+        if (! is_array($input) || count($input) > 20) {
+            return null;
+        }
+        foreach ($input as $v) {
+            if (! is_string($v)) {
+                return null;
+            }
+        }
+
+        return array_values(array_intersect(array_keys(self::GROUPS), $input));
     }
 
     /** @return list<string> */
@@ -250,10 +280,25 @@ final class OwnerAppEvents
     }
 
     /** @param non-empty-list<array{id:int,type:string,ref:?int,title:string,body:?string}> $events */
-    private static function payload(array $events): string
+    private static function payload(array $events, bool $generic = false): string
     {
         $last = $events[count($events) - 1];
         $n = count($events);
+
+        if ($generic) {
+            // Users & Roles → Owner app → Lock-screen notification text:
+            // Generic. No name, amount, number or product leaves the server.
+            $new = count(array_filter($events, static fn ($e) => $e['type'] === 'order.new'));
+            $title = $n === 1 ? OwnerAppPushText::genericTitle($last['type'])
+                : ($new > 0 ? "{$new} new order".($new === 1 ? '' : 's').($n > $new ? ' and '.($n - $new).' more updates' : '') : "{$n} shop updates");
+
+            return (string) json_encode([
+                't' => $title,
+                'b' => 'Open the app to see it.',
+                'u' => $n === 1 ? (str_starts_with($last['type'], 'stock.') ? '#/products/'.(int) $last['ref'] : '#/orders/'.(int) $last['ref']) : '#/notifications',
+                'g' => $n === 1 ? $last['type'].':'.(int) $last['ref'] : 'batch',
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        }
 
         if ($n === 1) {
             $title = $last['title'];

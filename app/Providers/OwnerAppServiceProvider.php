@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\AdminUser;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\OwnerApp\OwnerAppAuth;
 use App\Services\OwnerApp\OwnerAppEvents;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -20,6 +22,12 @@ use Illuminate\Support\ServiceProvider;
  *                                                 event
  *   a product's stock column is saved          -> "Low stock" / "Out of stock"
  *                                                 when it crosses the line
+ *
+ *   an admin account's password changes       -> every owner-app session of
+ *                                                 that member ends (Lane SEC):
+ *                                                 a password reset after a
+ *                                                 suspected compromise must
+ *                                                 not leave an unlocked phone
  *
  * Every hook defers to DB::afterCommit, so a rolled-back checkout leaves no
  * event behind, and every hook is wrapped: an owner-app fault must never be
@@ -41,6 +49,18 @@ final class OwnerAppServiceProvider extends ServiceProvider
             $from = $order->getOriginal('status');
             $to = (string) $order->status;
             self::later(static fn () => OwnerAppEvents::orderMoved($order, is_string($from) ? $from : null, $to));
+        });
+
+        AdminUser::updated(static function (AdminUser $admin): void {
+            if (! $admin->wasChanged('password')) {
+                return;
+            }
+            $id = (int) $admin->getKey();
+            self::later(static function () use ($id): void {
+                foreach (DB::table('owner_app_members')->where('admin_user_id', $id)->pluck('id') as $memberId) {
+                    OwnerAppAuth::endSessions((int) $memberId);
+                }
+            });
         });
 
         Product::updated(static function (Product $product): void {

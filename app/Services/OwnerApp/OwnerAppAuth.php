@@ -10,7 +10,6 @@ use App\Models\OwnerAppMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Cookie;
 
 /**
@@ -33,25 +32,43 @@ use Symfony\Component\HttpFoundation\Cookie;
  * (owner_app_devices.token_hash / session_hash): a copy of the database does
  * not unlock a single phone.
  *
- * ── GUESSING THE PIN ───────────────────────────────────────────────────────
+ * ── GUESSING THE PIN (Lane SEC) ────────────────────────────────────────────
  *
- *   per member   5 wrong PINs in a row lock the member for 15 minutes, on
- *                every device.
- *   per device   10 wrong PINs in a row (two lockouts) REVOKE the device: it
- *                must be enrolled again with the email as well.
- *   per address  30 wrong attempts from one IP in 15 minutes -> 429, and 10
- *                failed enrolments -> 429.
+ * Every attempt is RESERVED before bcrypt runs, by a single conditional
+ * UPDATE (reserveMember(), reserveDevice(), OwnerAppThrottle::reserve()):
  *
- * A 4-digit PIN is 10,000 guesses; at five per fifteen minutes that is over
- * three weeks of continuous guessing on one device, which is revoked after ten.
- * Every attempt, right or wrong, is a row in owner_app_logins.
+ *   UPDATE owner_app_members SET failed_count = failed_count + 1
+ *    WHERE id = ? AND lock_level < 4 AND failed_count < 5
+ *      AND (locked_until IS NULL OR locked_until <= now)
  *
- * ── CSRF ───────────────────────────────────────────────────────────────────
+ * Zero rows changed = locked, refused without a hash check. The old shape —
+ * read the counter, check the PIN, write read+1 — let fifty guesses sent at
+ * once all read 0 and all write 1: a lockout that counted a burst as one.
  *
- * Every write carries X-OA-CSRF, an HMAC of the session token under the app
- * key. The page is given it in a JSON body that only a same-origin script can
- * read; a forged cross-site request has neither the header nor, under
- * SameSite=Strict, the cookie.
+ *   enrolled phone   5 wrong PINs lock the member on every phone: 15 min,
+ *                    then 1 h, then 24 h, then until a Full Admin unlocks them
+ *                    (Users & Roles → Owner app → Unlock now). A good PIN
+ *                    resets the ladder.
+ *   per device       10 wrong PINs REVOKE the device: email + PIN again.
+ *   email + PIN      the same ladder on counters of its OWN (enrol_*), so a
+ *                    stranger guessing at the sign-in form can never lock the
+ *                    owner out of the phones he already has.
+ *   per connection   30 wrong unlocks / 10 failed enrolments per 15 minutes
+ *                    from one IPv4 address or IPv6 /64 -> 429.
+ *
+ * A PIN is 6 to 8 digits. The Full Admins are emailed when a member reaches
+ * the 24-hour or the admin-only lock, and when a phone is revoked.
+ *
+ * ── CSRF, AND WHY GETS NEED IT TOO ─────────────────────────────────────────
+ *
+ * The cookies are path-scoped and HttpOnly, but any script running on a shop
+ * page (an XSS, a third-party tag) is SAME-ORIGIN: it can fetch() the app's
+ * path and the browser attaches the cookies. So the session cookie alone opens
+ * nothing. Every request behind the PIN, GETs included, carries X-OA-CSRF, an
+ * HMAC of the session token under the app key, which the server hands out in
+ * exactly two places: the JSON answer to a good PIN (enrol, unlock). Nothing a
+ * script can GET returns it. The app keeps it in memory; a fresh launch asks
+ * for the PIN again, and /api/unlock rotates the session.
  */
 final class OwnerAppAuth
 {
@@ -71,9 +88,24 @@ final class OwnerAppAuth
 
     public const MAX_DEVICES = 10;
 
-    public const PIN_RULE = '/^\d{4,8}$/D';
+    public const PIN_RULE = '/^\d{6,8}$/D';
 
-    /** A hash of nothing anybody can type, so a miss costs what a hit costs. Made once per process. */
+    /** Minutes for lock levels 1, 2 and 3. Level 4 waits for a Full Admin. */
+    public const LADDER = [1 => 15, 2 => 60, 3 => 1440];
+
+    public const ADMIN_LEVEL = 4;
+
+    /** Lock levels at or above this email the Full Admins. */
+    public const ALERT_LEVEL = 3;
+
+    public const ENROL_LOCK_AFTER = 5;
+
+    /** The member's two counters: unlocking an enrolled phone, and enrolling a new one. */
+    private const UNLOCK = ['failed_count', 'locked_until', 'lock_level', self::MEMBER_LOCK_AFTER];
+
+    private const ENROL = ['enrol_failed_count', 'enrol_locked_until', 'enrol_lock_level', self::ENROL_LOCK_AFTER];
+
+    /** A hash of nothing anybody can type, so a miss costs what a hit costs. */
     private static ?string $dummy = null;
 
     /* ------------------------------------------------------------- reading */
@@ -140,13 +172,17 @@ final class OwnerAppAuth
     /* ---------------------------------------------------------- unlocking */
 
     /**
+     * A PIN on an enrolled phone. Also the way back in for a phone whose
+     * session is still live but whose app lost its in-memory CSRF value (a
+     * fresh launch): the session is rotated and a fresh value returned.
+     *
      * @return array{status:int, body:array<string,mixed>, session?:string}
      */
     public static function unlock(Request $request, OwnerAppDevice $device, string $pin): array
     {
-        $ipKey = 'owner-app-pin:'.$request->ip();
+        $ipKey = OwnerAppThrottle::bucket('pin', $request->ip());
 
-        if (RateLimiter::tooManyAttempts($ipKey, self::IP_MAX_FAILS)) {
+        if (! OwnerAppThrottle::reserve($ipKey, self::IP_MAX_FAILS, self::LOCK_MINUTES * 60)) {
             self::log($request, 'unlock', false, 'ip_limited', $device->member_id, $device->id);
 
             return ['status' => 429, 'body' => ['ok' => false, 'code' => 'ip_limited', 'message' => 'Too many attempts from this connection. Try again in a few minutes.']];
@@ -162,17 +198,30 @@ final class OwnerAppAuth
 
         $member = $device->member;
 
-        if ($member->locked_until !== null && $member->locked_until->isFuture()) {
+        // The member's attempt first: a locked member's phone is refused
+        // without its device counter moving, as before.
+        if (! self::reserve((int) $member->id, self::UNLOCK)) {
+            self::escalate((int) $member->id, self::UNLOCK, 'unlock', $request);
             self::log($request, 'unlock', false, 'locked', $member->id, $device->id);
 
-            return ['status' => 423, 'body' => self::lockedBody($member)];
+            return ['status' => 423, 'body' => self::lockedBody((int) $member->id, self::UNLOCK)];
+        }
+
+        if (! self::reserveDevice((int) $device->id)) {
+            self::unreserve((int) $member->id, self::UNLOCK);
+            self::revokeForPins($request, (int) $device->id);
+            self::log($request, 'unlock', false, 'revoked', $member->id, $device->id);
+
+            return self::revokedAnswer();
         }
 
         if (! preg_match(self::PIN_RULE, $pin) || ! Hash::check($pin, (string) $member->pin_hash)) {
-            return self::wrongPin($request, $member, $device, 'unlock', $ipKey);
+            return self::wrongPin($request, $member, $device);
         }
 
-        self::cleared($member, $device);
+        OwnerAppThrottle::release($ipKey);
+        self::cleared((int) $member->id, self::UNLOCK);
+        DB::table('owner_app_devices')->where('id', $device->id)->update(['failed_count' => 0]);
         $session = self::startSession($request, $device);
         self::log($request, 'unlock', true, 'ok', $member->id, $device->id);
 
@@ -184,47 +233,63 @@ final class OwnerAppAuth
      * unknown email, a member without access, a wrong PIN and a locked member
      * all read the same, so the form cannot be used to find out who is staff.
      *
+     * And they COST the same. A malformed PIN is refused before the email is
+     * looked up at all; every other refusal runs exactly one bcrypt check of
+     * the configured cost (against a dummy hash when there is no real one) and
+     * the same one-row UPDATE, so the time an answer takes says nothing about
+     * whether the email belongs to a member.
+     *
      * @return array{status:int, body:array<string,mixed>, session?:string, device?:string, device_id?:int}
      */
     public static function enrol(Request $request, string $email, string $pin, string $name): array
     {
-        $ipKey = 'owner-app-enrol:'.$request->ip();
+        $ipKey = OwnerAppThrottle::bucket('enrol', $request->ip());
         $generic = ['status' => 422, 'body' => ['ok' => false, 'code' => 'not_recognised',
-            'message' => 'That email and PIN were not recognised. After several tries the account is paused for 15 minutes.']];
+            'message' => 'That email and PIN were not recognised. After several tries the account is paused.']];
 
-        if (RateLimiter::tooManyAttempts($ipKey, self::IP_MAX_ENROL_FAILS)) {
+        if (! OwnerAppThrottle::reserve($ipKey, self::IP_MAX_ENROL_FAILS, self::LOCK_MINUTES * 60)) {
             self::log($request, 'enrol', false, 'ip_limited', null, null);
 
             return ['status' => 429, 'body' => ['ok' => false, 'code' => 'ip_limited', 'message' => 'Too many attempts from this connection. Try again in a few minutes.']];
         }
 
+        if (! preg_match(self::PIN_RULE, $pin)) {
+            self::log($request, 'enrol', false, 'bad_pin', null, null);
+
+            return $generic;
+        }
+
         $email = mb_strtolower(trim($email));
-        $admin = $email === '' ? null : AdminUser::query()->whereRaw('LOWER(email) = ?', [$email])->first();
-        $member = $admin === null ? null : OwnerAppMember::query()->where('admin_user_id', $admin->id)->first();
+        $member = $email === '' ? null : OwnerAppMember::query()
+            ->whereIn('admin_user_id', AdminUser::query()->select('id')->whereRaw('LOWER(email) = ?', [$email]))
+            ->first();
 
         if ($member === null || ! $member->enabled || $member->pin_hash === null) {
-            Hash::check($pin, self::$dummy ??= Hash::make(random_bytes(16)));
-            RateLimiter::hit($ipKey, self::LOCK_MINUTES * 60);
+            // The same two statements a member's refusal runs, against no row.
+            self::reserve(0, self::ENROL);
+            self::escalate(0, self::ENROL, 'enrol', $request);
+            Hash::check($pin, self::dummyHash());
             self::log($request, 'enrol', false, $member === null ? 'unknown' : 'disabled', $member?->id, null);
 
             return $generic;
         }
 
-        if ($member->locked_until !== null && $member->locked_until->isFuture()) {
-            Hash::check($pin, self::$dummy ??= Hash::make(random_bytes(16)));
-            RateLimiter::hit($ipKey, self::LOCK_MINUTES * 60);
+        if (! self::reserve((int) $member->id, self::ENROL)) {
+            Hash::check($pin, self::dummyHash());
+            self::escalate((int) $member->id, self::ENROL, 'enrol', $request);
             self::log($request, 'enrol', false, 'locked', $member->id, null);
 
             return $generic;
         }
 
-        if (! preg_match(self::PIN_RULE, $pin) || ! Hash::check($pin, (string) $member->pin_hash)) {
-            RateLimiter::hit($ipKey, self::LOCK_MINUTES * 60);
-            self::countFailure($member);
+        if (! Hash::check($pin, (string) $member->pin_hash)) {
+            self::escalate((int) $member->id, self::ENROL, 'enrol', $request);
             self::log($request, 'enrol', false, 'bad_pin', $member->id, null);
 
             return $generic;
         }
+
+        OwnerAppThrottle::release($ipKey);
 
         $token = self::token();
         $device = OwnerAppDevice::query()->create([
@@ -237,12 +302,40 @@ final class OwnerAppAuth
         ]);
 
         self::trimDevices($member);
-        self::cleared($member, $device);
+        self::cleared((int) $member->id, self::ENROL);
         $session = self::startSession($request, $device);
         self::log($request, 'enrol', true, 'ok', $member->id, $device->id);
 
         return ['status' => 200, 'body' => ['ok' => true, 'csrf' => self::csrfFor($session)], 'session' => $session, 'device' => $token, 'device_id' => (int) $device->id];
     }
+
+    /** Does this request carry the CSRF value for its own session cookie? */
+    public static function csrfMatches(Request $request): bool
+    {
+        $sent = (string) $request->headers->get('X-OA-CSRF', '');
+        $session = (string) $request->cookies->get(self::SESSION_COOKIE, '');
+
+        return $sent !== '' && $session !== '' && hash_equals(self::csrfFor($session), $sent);
+    }
+
+    /** Is the member locked out of the PIN pad, the sign-in form, or both? For the admin screen. */
+    public static function lockState(object $m): array
+    {
+        $now = now();
+        $pad = (int) ($m->lock_level ?? 0) >= self::ADMIN_LEVEL || ($m->locked_until !== null && $now->lt($m->locked_until));
+        $form = (int) ($m->enrol_lock_level ?? 0) >= self::ADMIN_LEVEL || (($m->enrol_locked_until ?? null) !== null && $now->lt($m->enrol_locked_until));
+
+        return [
+            'locked' => $pad || $form,
+            'admin_only' => (int) ($m->lock_level ?? 0) >= self::ADMIN_LEVEL || (int) ($m->enrol_lock_level ?? 0) >= self::ADMIN_LEVEL,
+        ];
+    }
+
+    /** What a Full Admin's "Unlock now" clears: both ladders, every counter. */
+    public const UNLOCKED = [
+        'failed_count' => 0, 'locked_until' => null, 'lock_level' => 0,
+        'enrol_failed_count' => 0, 'enrol_locked_until' => null, 'enrol_lock_level' => 0,
+    ];
 
     public static function lock(OwnerAppDevice $device): void
     {
@@ -296,11 +389,11 @@ final class OwnerAppAuth
         );
     }
 
-    /** Is this a PIN we will accept? Four to eight digits, not 1111 and not 1234. */
+    /** Is this a PIN we will accept? Six to eight digits, not 111111 and not 123456. */
     public static function pinProblem(string $pin): ?string
     {
         if (! preg_match(self::PIN_RULE, $pin)) {
-            return 'A PIN is 4 to 8 digits.';
+            return 'A PIN is 6 to 8 digits.';
         }
         if (count(array_unique(str_split($pin))) === 1) {
             return 'Choose a PIN that is not one digit repeated.';
@@ -315,67 +408,193 @@ final class OwnerAppAuth
     /* ------------------------------------------------------------ private */
 
     /** @return array{status:int, body:array<string,mixed>} */
-    private static function wrongPin(Request $request, OwnerAppMember $member, OwnerAppDevice $device, string $kind, string $ipKey): array
+    private static function wrongPin(Request $request, OwnerAppMember $member, OwnerAppDevice $device): array
     {
-        RateLimiter::hit($ipKey, self::LOCK_MINUTES * 60);
-        $locked = self::countFailure($member);
+        $memberId = (int) $member->id;
+        $locked = self::escalate($memberId, self::UNLOCK, 'unlock', $request);
 
-        $deviceFails = (int) $device->failed_count + 1;
-        DB::table('owner_app_devices')->where('id', $device->id)->update(['failed_count' => $deviceFails]);
+        if ((int) DB::table('owner_app_devices')->where('id', $device->id)->value('failed_count') >= self::DEVICE_REVOKE_AFTER) {
+            self::revokeForPins($request, (int) $device->id);
+            self::log($request, 'unlock', false, 'revoked', $memberId, $device->id);
 
-        if ($deviceFails >= self::DEVICE_REVOKE_AFTER) {
-            self::revoke((int) $device->id, 'too_many_wrong_pins');
-            self::log($request, $kind, false, 'revoked', $member->id, $device->id);
-
-            return ['status' => 403, 'body' => ['ok' => false, 'code' => 'no_device',
-                'message' => 'Too many wrong PINs. This device has been signed out; sign in again with your email and PIN.']];
+            return self::revokedAnswer();
         }
 
-        self::log($request, $kind, false, 'bad_pin', $member->id, $device->id);
+        self::log($request, 'unlock', false, 'bad_pin', $memberId, $device->id);
 
-        if ($locked) {
-            return ['status' => 423, 'body' => self::lockedBody($member->refresh())];
+        $row = DB::table('owner_app_members')->where('id', $memberId)->first(['failed_count', 'locked_until', 'lock_level']);
+
+        if ($locked !== null || self::isLocked($row, self::UNLOCK)) {
+            return ['status' => 423, 'body' => self::lockedBody($memberId, self::UNLOCK)];
         }
 
-        $left = self::MEMBER_LOCK_AFTER - (int) $member->failed_count;
+        $left = max(1, self::MEMBER_LOCK_AFTER - (int) $row->failed_count);
+        $nextLevel = (int) $row->lock_level + 1;
+        $then = $nextLevel >= self::ADMIN_LEVEL
+            ? 'before the app is locked until a Full Admin unlocks it'
+            : 'before a '.[1 => '15-minute', 2 => 'one-hour', 3 => '24-hour'][$nextLevel].' pause';
 
         return ['status' => 422, 'body' => ['ok' => false, 'code' => 'bad_pin', 'left' => $left,
-            'message' => 'Wrong PIN. '.$left.' '.($left === 1 ? 'try' : 'tries').' left before a 15-minute pause.']];
+            'message' => 'Wrong PIN. '.$left.' '.($left === 1 ? 'try' : 'tries').' left '.$then.'.']];
     }
 
-    /** One more wrong PIN for the member. True when it has just locked them. */
-    private static function countFailure(OwnerAppMember $member): bool
+    /** @return array{status:int, body:array<string,mixed>} */
+    private static function revokedAnswer(): array
     {
-        $fails = (int) $member->failed_count + 1;
+        return ['status' => 403, 'body' => ['ok' => false, 'code' => 'no_device',
+            'message' => 'Too many wrong PINs. This device has been signed out; sign in again with your email and PIN.']];
+    }
 
-        if ($fails >= self::MEMBER_LOCK_AFTER) {
-            DB::table('owner_app_members')->where('id', $member->id)->update([
-                'failed_count' => 0, 'locked_until' => now()->addMinutes(self::LOCK_MINUTES),
-            ]);
-            $member->failed_count = 0;
+    private static function revokeForPins(Request $request, int $deviceId): void
+    {
+        $was = DB::table('owner_app_devices')->where('id', $deviceId)->whereNull('revoked_at')->exists();
+        self::revoke($deviceId, 'too_many_wrong_pins');
 
-            return true;
+        if ($was) {
+            OwnerAppAlerts::deviceRevoked($deviceId, (string) $request->ip());
+        }
+    }
+
+    /**
+     * Take one attempt from a member's ladder, atomically. False = locked
+     * (or the counter is already full and its lock is being applied).
+     *
+     * @param array{0:string,1:string,2:string,3:int} $c
+     */
+    private static function reserve(int $memberId, array $c): bool
+    {
+        [$count, $until, $level, $max] = $c;
+
+        return DB::table('owner_app_members')
+            ->where('id', $memberId)
+            ->where($level, '<', self::ADMIN_LEVEL)
+            ->where($count, '<', $max)
+            ->where(fn ($q) => $q->whereNull($until)->orWhere($until, '<=', now()))
+            ->increment($count) === 1;
+    }
+
+    /** @param array{0:string,1:string,2:string,3:int} $c */
+    private static function unreserve(int $memberId, array $c): void
+    {
+        DB::table('owner_app_members')->where('id', $memberId)->where($c[0], '>', 0)->decrement($c[0]);
+    }
+
+    private static function reserveDevice(int $deviceId): bool
+    {
+        return DB::table('owner_app_devices')
+            ->where('id', $deviceId)
+            ->whereNull('revoked_at')
+            ->where('failed_count', '<', self::DEVICE_REVOKE_AFTER)
+            ->increment('failed_count') === 1;
+    }
+
+    /**
+     * When the counter is full, step the ladder ONCE: a compare-and-set on the
+     * level, so of every request that saw it full exactly one applies the
+     * lock. Also the repair path — a counter left full by a request that died
+     * between its reservation and this call is locked by the next attempt.
+     * Returns the new level when this call applied it.
+     *
+     * @param array{0:string,1:string,2:string,3:int} $c
+     */
+    private static function escalate(int $memberId, array $c, string $kind, Request $request): ?int
+    {
+        [$count, $until, $level, $max] = $c;
+        $row = DB::table('owner_app_members')->where('id', $memberId)->first([$count, $level]);
+
+        if ($row === null || (int) $row->{$count} < $max || (int) $row->{$level} >= self::ADMIN_LEVEL) {
+            return null;
         }
 
-        DB::table('owner_app_members')->where('id', $member->id)->update(['failed_count' => $fails]);
-        $member->failed_count = $fails;
+        $was = (int) $row->{$level};
+        $now = $was + 1;
+        $changed = DB::table('owner_app_members')->where('id', $memberId)->where($level, $was)->where($count, '>=', $max)->update([
+            $count => 0,
+            $level => $now,
+            $until => $now >= self::ADMIN_LEVEL ? null : now()->addMinutes(self::LADDER[$now]),
+        ]);
 
-        return false;
+        if ($changed !== 1) {
+            return null;
+        }
+
+        if ($now >= self::ALERT_LEVEL) {
+            OwnerAppAlerts::memberLocked($memberId, $now, $kind, (string) $request->ip());
+        }
+
+        return $now;
     }
 
-    /** @return array<string,mixed> */
-    private static function lockedBody(OwnerAppMember $member): array
+    /** @param array{0:string,1:string,2:string,3:int} $c */
+    private static function isLocked(?object $row, array $c): bool
     {
-        $minutes = max(1, (int) ceil(now()->diffInSeconds($member->locked_until, false) / 60));
+        [, $until, $level] = $c;
+
+        return $row !== null && ((int) $row->{$level} >= self::ADMIN_LEVEL
+            || ($row->{$until} !== null && now()->lt(\Illuminate\Support\Carbon::parse($row->{$until}))));
+    }
+
+    /**
+     * @param array{0:string,1:string,2:string,3:int} $c
+     * @return array<string,mixed>
+     */
+    private static function lockedBody(int $memberId, array $c): array
+    {
+        [, $until, $level] = $c;
+        $row = DB::table('owner_app_members')->where('id', $memberId)->first([$until, $level]);
+
+        if ($row === null || (int) $row->{$level} >= self::ADMIN_LEVEL || $row->{$until} === null) {
+            return ['ok' => false, 'code' => 'locked', 'admin_unlock' => true,
+                'message' => 'Too many wrong PINs. The app is locked until a Full Admin unlocks it in Users & Roles → Owner app.'];
+        }
+
+        $minutes = max(1, (int) ceil(now()->diffInSeconds(\Illuminate\Support\Carbon::parse($row->{$until}), false) / 60));
 
         return ['ok' => false, 'code' => 'locked', 'retry_minutes' => $minutes,
-            'message' => 'Too many wrong PINs. The app is paused for '.$minutes.' minute'.($minutes === 1 ? '' : 's').'.'];
+            'message' => 'Too many wrong PINs. The app is paused for '.self::duration($minutes).'.'];
     }
 
-    private static function cleared(OwnerAppMember $member, OwnerAppDevice $device): void
+    private static function duration(int $minutes): string
     {
-        DB::table('owner_app_members')->where('id', $member->id)->update(['failed_count' => 0, 'locked_until' => null]);
-        DB::table('owner_app_devices')->where('id', $device->id)->update(['failed_count' => 0]);
+        if ($minutes >= 120 && $minutes % 60 === 0) {
+            return ($minutes / 60).' hours';
+        }
+        if ($minutes === 60) {
+            return '1 hour';
+        }
+
+        return $minutes.' minute'.($minutes === 1 ? '' : 's');
+    }
+
+    /** @param array{0:string,1:string,2:string,3:int} $c */
+    private static function cleared(int $memberId, array $c): void
+    {
+        DB::table('owner_app_members')->where('id', $memberId)->update([$c[0] => 0, $c[1] => null, $c[2] => 0]);
+    }
+
+    /**
+     * A bcrypt hash of random bytes AT THE CONFIGURED COST, kept in the cache.
+     * Made with Hash::make() on every request instead, an unknown email would
+     * cost a make() AND a check() — twice a member's time, the very oracle
+     * this exists to close. Remade when the cost setting changes.
+     */
+    private static function dummyHash(): string
+    {
+        if (self::$dummy !== null && ! Hash::needsRehash(self::$dummy)) {
+            return self::$dummy;
+        }
+
+        try {
+            $hash = \Illuminate\Support\Facades\Cache::get('kbb.owner_app.dummy_hash');
+            if (! is_string($hash) || $hash === '' || Hash::needsRehash($hash)) {
+                $hash = Hash::make(bin2hex(random_bytes(16)));
+                \Illuminate\Support\Facades\Cache::forever('kbb.owner_app.dummy_hash', $hash);
+            }
+        } catch (\Throwable) {
+            $hash = Hash::make(bin2hex(random_bytes(16)));
+        }
+
+        return self::$dummy = $hash;
     }
 
     private static function startSession(Request $request, OwnerAppDevice $device): string

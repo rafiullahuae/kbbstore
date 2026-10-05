@@ -81,7 +81,7 @@ final class OwnerAppRoutes
         return AdminUser::query()->create(['name' => $name, 'email' => $email, 'password' => 'secret-password', 'role' => $role]);
     }
 
-    public static function member(AdminUser $admin, string $pin = '4826', bool $enabled = true): int
+    public static function member(AdminUser $admin, string $pin = '482613', bool $enabled = true): int
     {
         return (int) DB::table('owner_app_members')->insertGetId([
             'admin_user_id' => $admin->id, 'enabled' => $enabled, 'pin_hash' => Hash::make($pin), 'pin_length' => strlen($pin),
@@ -108,7 +108,7 @@ final class OwnerAppRoutes
      *
      * @return array{0: array<string,string>, 1: string}
      */
-    public static function enrol($test, string $email = 'owner@example.com', string $pin = '4826'): array
+    public static function enrol($test, string $email = 'owner@example.com', string $pin = '482613'): array
     {
         $r = $test->withHeaders(['X-OA' => '1'])->postJson(self::base().'/api/enrol', ['email' => $email, 'pin' => $pin]);
         $r->assertOk();
@@ -116,9 +116,21 @@ final class OwnerAppRoutes
         return [self::cookies($r), (string) $r->json('csrf')];
     }
 
-    public static function get($test, string $path, array $cookies): TestResponse
+    /**
+     * A GET the way the running app sends it: with the X-OA-CSRF value it
+     * holds in memory since its last good PIN, which is derived from the
+     * session cookie (Lane SEC: every request behind the PIN carries it).
+     * Pass $csrf = '' to send none, as a same-origin script would.
+     */
+    public static function get($test, string $path, array $cookies, ?string $csrf = null, array $headers = []): TestResponse
     {
-        return $test->withCredentials()->withUnencryptedCookies($cookies)->withHeaders(['X-OA' => '1'])->getJson(self::base().'/api/'.$path);
+        $csrf ??= isset($cookies[OwnerAppAuth::SESSION_COOKIE]) ? OwnerAppAuth::csrfFor($cookies[OwnerAppAuth::SESSION_COOKIE]) : '';
+        $h = ['X-OA' => '1'] + $headers;
+        if ($csrf !== '') {
+            $h['X-OA-CSRF'] = $csrf;
+        }
+
+        return $test->flushHeaders()->withCredentials()->withUnencryptedCookies($cookies)->withHeaders($h)->getJson(self::base().'/api/'.$path);
     }
 
     public static function post($test, string $path, array $data, array $cookies, ?string $csrf): TestResponse
@@ -128,7 +140,7 @@ final class OwnerAppRoutes
             $headers['X-OA-CSRF'] = $csrf;
         }
 
-        return $test->withCredentials()->withUnencryptedCookies($cookies)->withHeaders($headers)->postJson(self::base().'/api/'.$path, $data);
+        return $test->flushHeaders()->withCredentials()->withUnencryptedCookies($cookies)->withHeaders($headers)->postJson(self::base().'/api/'.$path, $data);
     }
 
     public static function deviceToken(array $cookies): string
