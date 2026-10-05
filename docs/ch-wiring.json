@@ -1,0 +1,10 @@
+[
+ {
+  "n": 1,
+  "what": "mount the two endpoints inside the guarded admin-api group, under Page header",
+  "file": "routes/web.php",
+  "anchor": "        require __DIR__.'/page-header-admin.php';    // Pages → Page header (Lane PH)\n",
+  "count": 1,
+  "replacement": "        require __DIR__.'/page-header-admin.php';    // Pages → Page header (Lane PH)\n        require __DIR__.'/category-header-admin.php'; // Category \"Edit header\" panel (Lane CH)\n"
+ }
+]

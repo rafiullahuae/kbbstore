@@ -125,6 +125,10 @@ it('names every admin-api address the server builds and hands out as data', func
     expect(array_keys(serverBuiltAdminUrls()))->toBe([
         'BulkDocumentController.php /admin-api/orders-bulk-documents',
         'BulkDocumentController.php /admin-api/orders/',
+        // Lane CH: the category panel's fetch() endpoints, handed out in its context.
+        'CategoryHeaderApiController.php /admin-api/category-header/',
+        'CategoryHeaderApiController.php /admin-api/media',
+        'CategoryHeaderApiController.php /admin-api/media/upload',
         'InstagramAuth.php /admin-api/instagram/callback',
         'InstagramController.php /admin-api/instagram/callback',
         'InstagramController.php /admin-api/instagram/start',

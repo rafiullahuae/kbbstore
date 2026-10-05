@@ -45,7 +45,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-title-header.css": {
-    "file": "assets/kbb-title-header-c46xfwRa.css",
+    "file": "assets/kbb-title-header-LUB6DnL-.css",
     "src": "resources/css/kbb/kbb-title-header.css",
     "isEntry": true
   },
@@ -239,15 +239,24 @@
     "file": "assets/outfit-latin-Bc-8i84L.woff2",
     "src": "resources/fonts/outfit/outfit-latin.woff2"
   },
+  "resources/js/kbb/admin/category-header-editor.js": {
+    "file": "assets/category-header-editor-DA2xrMBh.js",
+    "name": "category-header-editor",
+    "src": "resources/js/kbb/admin/category-header-editor.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/kbb/admin/page-header-editor.js"
+    ]
+  },
   "resources/js/kbb/admin/page-header-editor.js": {
-    "file": "assets/page-header-editor-0wmimuoe.js",
+    "file": "assets/page-header-editor-_fp2j17a.js",
     "name": "page-header-editor",
     "src": "resources/js/kbb/admin/page-header-editor.js",
     "isEntry": true,
     "isDynamicEntry": true
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-_kEXiiBj.js",
+    "file": "assets/storefront-admin-nqzvNMRC.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -255,11 +264,12 @@
       "resources/js/kbb/app.js"
     ],
     "dynamicImports": [
-      "resources/js/kbb/admin/page-header-editor.js"
+      "resources/js/kbb/admin/page-header-editor.js",
+      "resources/js/kbb/admin/category-header-editor.js"
     ]
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-C7mzcBKE.js",
+    "file": "assets/app-Bz8VYEor.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,

@@ -188,6 +188,19 @@ class ShopController extends Controller
             : \App\Support\TitleHeader::forModel($this->listingBrand, $this->listingBrand?->t('name') ?? $title, $banner, true);
 
         /*
+         * THE CUSTOM HEADER AREA (Lane CH): the Super Sale page's header and
+         * banner, on a category whose "Edit header" panel switched it on. It
+         * replaces the title header and the plain heading block. Null for
+         * every other category -- read from the row already loaded, and from
+         * a setting the request has already loaded only when it is on.
+         */
+        $categoryHeader = $category ? app(\App\Services\CategoryHeaders::class)->forCategory($category, $title) : null;
+
+        if ($categoryHeader !== null) {
+            $titleHeader = null;
+        }
+
+        /*
          * A ONE-BRAND LISTING IS NAMED FOR ITS BRAND.              (2.60.346)
          *
          * The owner, on /shop/?filter_brands=celimax: "it showin one default
@@ -303,6 +316,7 @@ class ShopController extends Controller
         return view('store.shop', [
             'banner' => $banner,
             'titleHeader' => $titleHeader,
+            'categoryHeader' => $categoryHeader,
             /*
              * THE ARCHIVE'S CATEGORY, FOR THE TILE'S EYEBROW.          Lane PG
              *

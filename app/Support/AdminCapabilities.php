@@ -496,6 +496,12 @@ final class AdminCapabilities
         // pages, so its own capability, the same three roles. (Lane PH)
         'pageheader.manage' => ['owner', 'manager', 'editor'],
 
+        // The category page's "Edit header" panel on the shop: the title
+        // header's name, description, pictures, sizes and spacing, and the
+        // switch to a custom header area with its own banner and strip. Printed
+        // on public pages, so its own capability, the same three roles. (Lane CH)
+        'categoryheader.manage' => ['owner', 'manager', 'editor'],
+
         /*
          * THE STOREFRONT'S OWN ADMIN LAYER (Lane RA): the thin bar across the
          * top of every shop page and the pencil on a category or brand header.
@@ -1647,6 +1653,8 @@ final class AdminCapabilities
         // The screen's read and save, and the storefront panel's apply. (Lane PH)
         ['*', 'admin-api/page-header', 'pageheader.manage'],
         ['*', 'admin-api/page-header/**', 'pageheader.manage'],
+        // The category page's "Edit header" panel: preview and save. (Lane CH)
+        ['*', 'admin-api/category-header/**', 'categoryheader.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.

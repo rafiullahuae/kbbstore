@@ -422,6 +422,18 @@
   .kbb-th--fx-right .kbb-th__img{object-position:100% 50%}
 }
 
+/* ── Where a laptop cuts it, and a phone picture of its own (Lane CH) ───────
+
+   The shop's "Edit header" panel → Header area → Picture position · laptop.
+   Centre writes no class. A category with a phone picture prints its <img>
+   inside a <picture>; display:contents keeps that <img> laid out exactly as
+   the bare one is, and the two whole-picture rules below name it too. */
+@media (min-width:900px){
+  .kbb-th--fxd-left .kbb-th__img{object-position:0% 50%}
+  .kbb-th--fxd-right .kbb-th__img{object-position:100% 50%}
+}
+.kbb-th__pic{display:contents}
+
 /* ── The whole picture on a phone (2.60.358) ────────────────────────────────
 
    The owner: "the background banner image in mobile should display full, not
@@ -443,6 +455,8 @@
   .kbb-th--pw > .kbb-th__img,
   .kbb-th--pw > .kbb-th__inner{grid-area:1 / 1}
   .kbb-th--pw > .kbb-th__img{position:relative;inset:auto;align-self:stretch;width:100%;height:100%;object-fit:contain}
+  /* The same picture inside a phone-picture <picture> (Lane CH). */
+  .kbb-th--pw > .kbb-th__pic > .kbb-th__img{grid-area:1 / 1;position:relative;inset:auto;align-self:stretch;width:100%;height:100%;object-fit:contain}
   /* The room above and below a whole picture is the same picture again, the
      same file (nothing more downloaded), softly blurred -- not flat bands. */
   .kbb-th--pw > .kbb-th__fill{display:block;position:absolute;inset:-24px;z-index:0;width:calc(100% + 48px);height:calc(100% + 48px);object-fit:cover;filter:blur(18px) saturate(1.05)}

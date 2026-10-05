@@ -129,8 +129,10 @@ class StorefrontAdminController extends Controller
         // Pages → Page header's "Edit header" panel (Lane PH): owner, manager
         // and editor, so a manager or editor gets the panel without the bar.
         $header = StorefrontAdminHint::can($admin, 'pageheader.manage');
+        // A category page's "Edit header" panel (Lane CH): the same three roles.
+        $catHeader = StorefrontAdminHint::can($admin, 'categoryheader.manage');
 
-        if (! $bar && ! $edit && ! $header) {
+        if (! $bar && ! $edit && ! $header && ! $catHeader) {
             return response()->json([
                 'ok' => false,
                 'error' => 'forbidden',
@@ -150,6 +152,9 @@ class StorefrontAdminController extends Controller
             'bar' => $bar ? $this->bar($admin, $page) : null,
             'edit' => $edit ? $this->editable($page) : null,
             'pageheader' => $header ? $this->headerEditable($page) : null,
+            'categoryheader' => $catHeader && $page['kind'] === 'category' && $page['model'] instanceof Category
+                ? CategoryHeaderApiController::editorContext($page['model'])
+                : null,
         ])->withCookie(StorefrontAdminHint::refresh($request));
     }
 

@@ -30,10 +30,20 @@
 @if ($header)
 <section class="{{ $header['class'] }}{{ $contained ? '' : ' kbb-th--flush' }}" style="{{ $header['style'] }}" data-kbb-title-header aria-labelledby="kbb-th-title">
 @if ($header['image'] !== null)
+{{-- A phone picture of its own (Lane CH, the shop's "Edit header" panel): a
+     <picture> whose <source> the browser takes under 900px, so a phone
+     downloads only its own file. Only when one is set -- a category without
+     one prints the single <img> above exactly as before. --}}@if (($header['image_phone'] ?? null) !== null)
+@if ($header['whole'] ?? false)
+    <img class="kbb-th__fill" src="{{ $header['image_phone'] }}" alt="" aria-hidden="true" decoding="async">
+@endif
+    <picture class="kbb-th__pic"><source media="(max-width: 899.98px)" srcset="{{ $header['image_phone'] }}"><img class="kbb-th__img" src="{{ $header['image'] }}" alt="" width="{{ \App\Support\TitleHeader::IMG_WIDTH }}" height="{{ \App\Support\TitleHeader::IMG_HEIGHT }}" decoding="async" fetchpriority="high"></picture>
+@else
 @if ($header['whole'] ?? false)
     <img class="kbb-th__fill" src="{{ $header['image'] }}" alt="" aria-hidden="true" decoding="async">
 @endif
     <img class="kbb-th__img" src="{{ $header['image'] }}" alt="" width="{{ \App\Support\TitleHeader::IMG_WIDTH }}" height="{{ \App\Support\TitleHeader::IMG_HEIGHT }}" decoding="async" fetchpriority="high">
+@endif
 @elseif ($header['icons'])
     <div class="kbb-th__icons" aria-hidden="true"></div>
 @endif
