@@ -157,7 +157,9 @@ function tick() {
 export function bannerEl(banner, spec) {
     const d = safeSrc(banner.img_d);
     const m = safeSrc(banner.img_m);
-    const items = banner.strip ? (banner.items || []).filter((it) => String(it.en || '').trim() !== '') : [];
+    const sd = banner.strip_d !== false;
+    const sm = banner.strip_m !== false;
+    const items = banner.strip && (sd || sm) ? (banner.items || []).filter((it) => String(it.en || '').trim() !== '') : [];
     if (!d && !m && !items.length) return null;
 
     const n = (k) => Math.round(Number(banner[k]) || 0);
@@ -171,7 +173,8 @@ export function bannerEl(banner, spec) {
         el.appendChild(h('div', { class: 'kbb-pb-img' }, pic));
     }
     if (items.length) {
-        el.appendChild(h('ul', { class: 'kbb-pb-strip' }, items.map((it) => h('li', { class: it.dev === 'd' ? 'kbb-pb-d' : (it.dev === 'm' ? 'kbb-pb-m' : null) }, tick(), h('span', { text: String(it.en) })))));
+        // (2.60.396) The whole strip off on one device, as PageBanners::view().
+        el.appendChild(h('ul', { class: 'kbb-pb-strip' + (sd === sm ? '' : (sd ? ' kbb-pb-xm' : ' kbb-pb-xd')) }, items.map((it) => h('li', { class: it.dev === 'd' ? 'kbb-pb-d' : (it.dev === 'm' ? 'kbb-pb-m' : null) }, tick(), h('span', { text: String(it.en) })))));
     }
     return el;
 }
@@ -565,7 +568,9 @@ export function openPanel(ctx, csrf, opener, toast) {
                 h('p', { class: 'kbb-phe-h', text: 'Banner and strip' }),
                 h('div', { class: 'kbb-phe-tog' },
                     h('label', {}, h('input', { type: 'checkbox', checked: c.banner_on ? true : null, onchange: (e) => { c.banner_on = e.currentTarget.checked; redrawBanner(); } }), h('span', { text: 'Show the banner' })),
-                    h('label', {}, h('input', { type: 'checkbox', checked: b.strip ? true : null, onchange: (e) => { b.strip = e.currentTarget.checked; redrawBanner(); } }), h('span', { text: 'Show the strip' }))),
+                    h('label', {}, h('input', { type: 'checkbox', checked: b.strip ? true : null, onchange: (e) => { b.strip = e.currentTarget.checked; redrawBanner(); } }), h('span', { text: 'Show the strip' })),
+                    h('label', {}, h('input', { type: 'checkbox', checked: b.strip_d !== false ? true : null, onchange: (e) => { b.strip_d = e.currentTarget.checked; redrawBanner(); } }), h('span', { text: 'Strip on desktop' })),
+                    h('label', {}, h('input', { type: 'checkbox', checked: b.strip_m !== false ? true : null, onchange: (e) => { b.strip_m = e.currentTarget.checked; redrawBanner(); } }), h('span', { text: 'Strip on mobile' }))),
                 h('div', { class: 'kbb-phe-sel' }, h('span', { text: 'Position' }),
                     h('div', { class: 'kbb-phe-seg', role: 'group', 'aria-label': 'Banner position' }, ctx.spec.banner_at.map((o) => h('button', {
                         type: 'button', 'aria-pressed': String(c.banner_at === o.value), onclick: () => { c.banner_at = o.value; redrawBanner(); },

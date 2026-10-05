@@ -21,7 +21,7 @@
 
 @endif
 @if ($pageBanner['items'] !== [])
-<ul class="kbb-pb-strip">@foreach ($pageBanner['items'] as $pbN => $pbItem)<li{{ ['d' => ' class=kbb-pb-d', 'm' => ' class=kbb-pb-m'][$pageBanner['devs'][$pbN] ?? 'both'] ?? '' }}>{!! \App\Services\PageBanners::ICON !!}<span>{{ $pbItem }}</span></li>@endforeach</ul>
+<ul class="kbb-pb-strip{{ $pageBanner['strip_cls'] ?? '' }}">@foreach ($pageBanner['items'] as $pbN => $pbItem)<li{{ ['d' => ' class=kbb-pb-d', 'm' => ' class=kbb-pb-m'][$pageBanner['devs'][$pbN] ?? 'both'] ?? '' }}>{!! \App\Services\PageBanners::ICON !!}<span>{{ $pbItem }}</span></li>@endforeach</ul>
 @endif
 </div>
 @endif

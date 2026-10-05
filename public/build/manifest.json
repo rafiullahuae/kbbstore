@@ -240,7 +240,7 @@
     "src": "resources/fonts/outfit/outfit-latin.woff2"
   },
   "resources/js/kbb/admin/category-header-editor.js": {
-    "file": "assets/category-header-editor-DA2xrMBh.js",
+    "file": "assets/category-header-editor-7LYSxoc6.js",
     "name": "category-header-editor",
     "src": "resources/js/kbb/admin/category-header-editor.js",
     "isDynamicEntry": true,
@@ -249,14 +249,14 @@
     ]
   },
   "resources/js/kbb/admin/page-header-editor.js": {
-    "file": "assets/page-header-editor-_fp2j17a.js",
+    "file": "assets/page-header-editor-DicRpfm-.js",
     "name": "page-header-editor",
     "src": "resources/js/kbb/admin/page-header-editor.js",
     "isEntry": true,
     "isDynamicEntry": true
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-nqzvNMRC.js",
+    "file": "assets/storefront-admin-BOcUwUkR.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -269,7 +269,7 @@
     ]
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-Bz8VYEor.js",
+    "file": "assets/app-BnFRG5jN.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,

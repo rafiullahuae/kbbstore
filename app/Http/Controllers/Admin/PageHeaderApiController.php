@@ -70,10 +70,19 @@ class PageHeaderApiController extends Controller
             // (Lane SP3) "Show the strip": a banner id, or '' for off. Absent
             // means "not touched", and nothing about the strip is written.
             'strip' => ['sometimes', 'nullable', 'string', 'max:60'],
+            // (2.60.396) The strip on a laptop / on a phone. Only with a strip.
+            'strip_dev' => ['sometimes', 'array:d,m'],
+            'strip_dev.d' => ['required_with:strip_dev', 'boolean'],
+            'strip_dev.m' => ['required_with:strip_dev', 'boolean'],
         ]);
 
         $banners = app(PageBanners::class);
         $strip = $request->exists('strip') ? (string) ($data['strip'] ?? '') : null;
+        $devices = isset($data['strip_dev']) ? ['d' => (bool) $data['strip_dev']['d'], 'm' => (bool) $data['strip_dev']['m']] : null;
+        if ($devices !== null && $strip === null) {
+            // Devices without a strip would have nothing to apply to.
+            return $this->refused(['strip_dev' => 'Show the strip']);
+        }
 
         if ($strip !== null) {
             // It writes banner data, so it needs the banners' own capability
@@ -91,7 +100,7 @@ class PageHeaderApiController extends Controller
         $rejected = $this->headers->apply($data['key'], $data['scope'], $data['bag'] ?? null);
 
         if ($rejected === [] && $strip !== null) {
-            $rejected = $banners->setPage($data['key'], $strip);
+            $rejected = $banners->setPage($data['key'], $strip, $devices);
         }
 
         if ($rejected !== []) {
@@ -164,7 +173,7 @@ class PageHeaderApiController extends Controller
         $list = [];
 
         foreach ($all['banners'] as $b) {
-            $list[] = ['id' => $b['id'], 'name' => $b['name'], 'view' => PageBanners::view($b, $arabic)];
+            $list[] = ['id' => $b['id'], 'name' => $b['name'], 'd' => (bool) $b['strip_d'], 'm' => (bool) $b['strip_m'], 'view' => PageBanners::view(['strip_d' => true, 'strip_m' => true] + $b, $arabic)];
         }
 
         return [

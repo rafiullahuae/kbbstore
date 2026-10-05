@@ -575,6 +575,8 @@ export function openPanel(ctx, csrf, opener, toast) {
     const st = {
         scope: ctx.own ? 'page' : 'global',
         strip: strip ? strip.on : '',
+        // (2.60.396) The strip on a laptop / on a phone, per strip.
+        sdev: strip ? Object.fromEntries(strip.banners.map((b) => [b.id, { d: b.d !== false, m: b.m !== false }])) : {},
         bag: clone(ctx.bag),
         dev: window.matchMedia(`(max-width: ${ctx.spec.breakpoint}px)`).matches ? 'm' : 'd',
         dirty: false,
@@ -596,6 +598,9 @@ export function openPanel(ctx, csrf, opener, toast) {
             }
             el = stripEls[st.strip];
             if (el) ensureStyle('kbb-pb-css', strip.css);
+            const ul = el ? el.querySelector('.kbb-pb-strip') : null;
+            const dv = st.sdev[st.strip];
+            if (ul && dv) { ul.classList.toggle('kbb-pb-xd', !dv.d); ul.classList.toggle('kbb-pb-xm', !dv.m); }
         }
         for (const e of Object.values(stripEls)) if (e && e !== el) e.remove();
         for (const k of el ? bag.blocks : ['header']) top.pt.appendChild(k === 'strip' ? el : top.holder);
@@ -658,6 +663,11 @@ export function openPanel(ctx, csrf, opener, toast) {
             st.strip && usable.length > 1 ? h('label', { class: 'kbb-phe-sel' }, h('span', { text: 'Which strip' }),
                 h('select', { onchange: (e) => { if (usable.some((b) => b.id === e.currentTarget.value)) set(e.currentTarget.value); } },
                     usable.map((b) => h('option', { value: b.id, selected: b.id === st.strip ? true : null }, b.name)))) : null,
+            st.strip && st.sdev[st.strip] ? h('div', { class: 'kbb-phe-tog' }, ['d', 'm'].map((k) => h('label', {},
+                h('input', {
+                    type: 'checkbox', checked: st.sdev[st.strip][k] ? true : null, disabled: !strip.can ? true : null,
+                    onchange: (e) => { st.sdev[st.strip][k] = e.currentTarget.checked; st.dirty = true; ui.redraw(); live(); },
+                }), h('span', { text: k === 'd' ? 'On desktop' : 'On mobile' })))) : null,
             h('p', { class: 'kbb-phe-help', text: !strip.can
                 ? 'Your role cannot switch the strip. An owner, manager or editor can.'
                 : (usable.length ? 'For this page only, whatever “Apply to” says. Off on every page unless you switch it on here.' : 'There is no strip with any lines in it yet.') }),
@@ -758,6 +768,12 @@ export function openPanel(ctx, csrf, opener, toast) {
         const which = scope || st.scope;
         const payload = { key: ctx.key, scope: which, bag: which === 'inherit' ? null : st.bag };
         if (strip && st.strip !== strip.on) payload.strip = st.strip;
+        const was = strip && st.strip ? strip.banners.find((b) => b.id === st.strip) : null;
+        const dv = was ? st.sdev[st.strip] : null;
+        if (dv && (dv.d !== (was.d !== false) || dv.m !== (was.m !== false))) {
+            payload.strip = st.strip;
+            payload.strip_dev = { d: dv.d, m: dv.m };
+        }
         const res = await send(ctx.endpoints.apply, csrf, payload);
         st.busy = false;
         saveBtn.disabled = false;
@@ -771,6 +787,7 @@ export function openPanel(ctx, csrf, opener, toast) {
         ctx.global = res.body.global;
         st.bag = clone(ctx.bag);
         if (strip) { strip.on = String(res.body.strip || ''); st.strip = strip.on; }
+        if (was && dv && payload.strip_dev) { was.d = dv.d; was.m = dv.m; }
         st.scope = ctx.own ? 'page' : 'global';
         st.dirty = false;
         if (toast) toast(String(res.body.message || 'Saved'));
@@ -791,6 +808,12 @@ export function openPanel(ctx, csrf, opener, toast) {
         panel.remove();
         open = null;
         if (revert) {
+            // The page's own strip element had its device classes moved by the
+            // preview; put them back before it goes back on the page.
+            const own = strip && strip.on ? stripEls[strip.on] : null;
+            const ul = own ? own.querySelector('.kbb-pb-strip') : null;
+            const b = ul ? strip.banners.find((x) => x.id === strip.on) : null;
+            if (b) { ul.classList.toggle('kbb-pb-xd', b.d === false); ul.classList.toggle('kbb-pb-xm', b.m === false); }
             top.restore();
             taken.restore();
         } else {

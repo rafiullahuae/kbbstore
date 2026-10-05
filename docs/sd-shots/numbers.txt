@@ -1,0 +1,12 @@
+2.60.396 -- the strip on desktop / on mobile, apart. /super-sale/, measured in Chromium (Playwright).
+strip = .kbb-pb-strip computed display; h = its height; sw = documentElement.scrollWidth.
+
+1280 1-on-both       shown  44px  class "kbb-pb-strip"            sw 1280
+1280 2-panel-preview hidden  0px  class "kbb-pb-strip kbb-pb-xd"  sw 1280  (On desktop unticked, before Save, no request)
+1280 3-desktop-off   hidden  0px  class "kbb-pb-strip kbb-pb-xd"  sw 1280  (shopper, after Save)
+1280 4-mobile-off    shown  44px  class "kbb-pb-strip kbb-pb-xm"  sw 1280
+ 390 1-on-both       shown  36px  class "kbb-pb-strip"            sw 390
+ 390 2-panel-preview shown  36px  class "kbb-pb-strip kbb-pb-xd"  sw 390
+ 390 3-desktop-off   shown  36px  class "kbb-pb-strip kbb-pb-xd"  sw 390
+ 390 4-mobile-off    hidden  0px  class "kbb-pb-strip kbb-pb-xm"  sw 390
+Console errors: none at either width.
