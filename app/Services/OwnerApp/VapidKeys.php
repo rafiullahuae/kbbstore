@@ -87,10 +87,13 @@ final class VapidKeys
         }
 
         // A subscription is bound to the key it was made with; under a new key
-        // every push to it is refused. The app re-subscribes on its next open.
-        try {
-            DB::table('owner_app_push_subscriptions')->delete();
-        } catch (\Throwable) {
+        // every push to it is refused. Each app re-subscribes on its next open.
+        // The shop app's subscriptions (Lane NT) were made with the same key.
+        foreach (['owner_app_push_subscriptions', 'site_app_push_subscriptions'] as $table) {
+            try {
+                DB::table($table)->delete();
+            } catch (\Throwable) {
+            }
         }
 
         return self::$memo = ['public' => $public, 'pem' => $pem];

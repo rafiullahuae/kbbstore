@@ -1346,6 +1346,7 @@ require __DIR__.'/buy-together.php';
  * reachable without a login AND carry CSRF, which only this group gives.
  */
 require __DIR__.'/newsletter-public.php';
+require __DIR__.'/site-app-push.php';   // App → Site App: the shop app's notification ask (Lane NT); web group for the session and CSRF
 
 /*
  * Back-in-stock alerts, basket reminders, and the one page that turns any of

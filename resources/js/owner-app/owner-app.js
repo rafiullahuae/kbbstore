@@ -43,6 +43,7 @@ import { renderDashboard, dashboardClick, renderNotifications, notificationsClic
 import { renderOrders, ordersClick, ordersState, clearSelection, refreshOrdersList, fetchOrders, fetchOrder } from './orders.js';
 import { renderProducts, renderProduct, productsClick, productClick, setProductFilter, refreshProductsList, fetchProducts, fetchProduct } from './products.js';
 import { renderCustomers, renderCustomer, customersClick, fetchCustomers, fetchCustomer } from './customers.js';
+import { offerPush } from './ask.js';
 
 /* The live check: 25 s unless Customise app sets 15–120 s, or switches it off (Lane OA4). */
 const pollMs = () => Math.max(15, Math.min(120, +(S.ui && S.ui.live_seconds) || 25)) * 1000;
@@ -192,6 +193,8 @@ function onIn(data) {
   unlocked(data);
   opened();
   syncPush();
+  // Installed, permission undecided, setting on: offer "Allow notifications" (ask.js, Lane NT).
+  offerPush(syncPush);
 }
 
 function unlocked(d) {
@@ -199,6 +202,7 @@ function unlocked(d) {
   S.stage = 'app';
   S.me = d.me || S.me;
   S.vapid = d.vapid;
+  S.askPush = d.ask_push === true;
   S.idle = d.idle_hours || S.idle;
   S.staleMs = (d.stale_minutes || Math.round(S.staleMs / 60000)) * 60000;
   if (typeof d.store === 'string' && d.store) S.store = d.store;

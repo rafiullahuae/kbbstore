@@ -632,7 +632,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 1359 -> 1361 (Lane BR4): the brand page's Read more / Read less
     // (store.brands.read_more, store.brands.read_less), seeded by
     // 2027_08_27_100100_seed_brand_read_more_arabic_drafts.
-    expect($ui['drafts'])->toBe(1361, 'the shipped Arabic is not showing as drafts to review')
+    // 1361 -> 1365 (Lane NT): the installed shop app's "Allow notifications"
+    // sheet (store.site_app.push_title, _body, _allow, _later), seeded by
+    // 2027_08_28_130100_seed_site_app_push_arabic_drafts.
+    expect($ui['drafts'])->toBe(1365, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

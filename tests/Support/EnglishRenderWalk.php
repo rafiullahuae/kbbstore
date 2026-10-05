@@ -1211,6 +1211,9 @@ final class EnglishRenderWalk
              * no pre-conversion template to compare against; their words are
              * keyed (store.mkt_unsub.*) and MarketingEmailsPublicTest pins them.
              */
+            // App → Site App (Lane NT): whether the installed shop app asks for
+            // notifications, the VAPID key and four strings. SiteAppPushTest pins it.
+            'api/site-app/push' => $json,
             ...(Route::has('marketing.unsubscribe') ? [
                 'email/u/{token}' => ['render' => false, 'why' => 'added after BASE_COMMIT (Lane MK): the campaign unsubscribe page; MarketingEmailsPublicTest pins it'],
                 'email/c/{token}/{n}' => ['render' => false, 'why' => 'a redirect (Lane MK): to that campaign\'s own link n, or the home page'],

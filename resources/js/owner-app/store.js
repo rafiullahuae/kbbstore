@@ -327,15 +327,19 @@ async function currentSub() {
   return reg.pushManager.getSubscription();
 }
 
-/** On each unlock: if this phone said yes before, make sure the server has its subscription. Never asks by itself. */
+/**
+ * On each unlock: if this phone said yes before, make sure the server has its
+ * subscription. Never asks by itself. Resolves true when the server took it
+ * (the "Allow notifications" sheet, ask.js, says so in its toast).
+ */
 export async function syncPush() {
   try {
-    if (!pushable() || Notification.permission !== 'granted' || !S.vapid) return;
+    if (!pushable() || Notification.permission !== 'granted' || !S.vapid) return false;
     let sub = await currentSub();
     if (sub && !sameKey(sub)) { await sub.unsubscribe(); sub = null; }
     if (!sub) sub = await (await navigator.serviceWorker.ready).pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(S.vapid) });
-    await api('POST', 'push', sub.toJSON());
-  } catch (e) { /* the switch on More shows the truth */ }
+    return (await api('POST', 'push', sub.toJSON())).ok === true;
+  } catch (e) { return false; /* the switch on More shows the truth */ }
 }
 
 export async function renderMore(view) {

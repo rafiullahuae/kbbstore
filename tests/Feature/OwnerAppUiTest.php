@@ -42,14 +42,15 @@ it('ships a shell with no inline script or style, the font preloaded from this o
     expect(oaJs())->not->toMatch('/style="/');
 });
 
-it('keeps three convenience keys in browser storage and nothing else, never the PIN or the CSRF value', function () {
+it('keeps four convenience keys in browser storage and nothing else, never the PIN or the CSRF value', function () {
     // MUTATION: store S.csrf with store.set('oa.csrf', …) and the key list
     // check fails; write localStorage directly anywhere but core.js and the
     // second check fails.
     $core = (string) file_get_contents(resource_path('js/owner-app/core.js'));
     preg_match("/const KEYS = \\[([^\\]]*)\\]/", $core, $m);
 
-    expect(trim($m[1] ?? ''))->toBe("'oa.a2', 'oa.fs', 'oa.seen'");
+    // oa.np (Lane NT): when "Not now" was tapped on the notifications sheet.
+    expect(trim($m[1] ?? ''))->toBe("'oa.a2', 'oa.fs', 'oa.seen', 'oa.np'");
 
     foreach (glob(resource_path('js/owner-app/*.js')) as $f) {
         $code = (string) preg_replace(['#/\*.*?\*/#s', '#(^|\s)//[^\n]*#'], ['', '$1'], (string) file_get_contents($f));

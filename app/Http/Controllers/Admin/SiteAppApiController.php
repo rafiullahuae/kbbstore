@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\SiteApp;
+use App\Services\SiteAppPush;
 use App\Support\Url;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ use Illuminate\Http\Request;
  */
 final class SiteAppApiController extends Controller
 {
-    public function __construct(private SiteApp $app) {}
+    public function __construct(private SiteApp $app, private SiteAppPush $push) {}
 
     public function show(): JsonResponse
     {
@@ -31,9 +32,25 @@ final class SiteAppApiController extends Controller
             return response()->json(['ok' => false, 'error' => 'Nothing to save.'] + $this->payload(), 422);
         }
 
-        $r = $this->app->save($in);
-        if (! $r['ok']) {
-            return response()->json(['ok' => false, 'error' => $r['error']] + $this->payload(), 422);
+        // "Ask shoppers for notifications when the app opens" (Lane NT) is
+        // SiteAppPush's own setting; on/name stay SiteApp's. A boolean or refused.
+        $ask = null;
+        if (array_key_exists('ask_push', $in)) {
+            if (! is_bool($in['ask_push'])) {
+                return response()->json(['ok' => false, 'error' => 'Ask for notifications must be true or false.'] + $this->payload(), 422);
+            }
+            $ask = $in['ask_push'];
+            unset($in['ask_push']);
+        }
+
+        if ($in !== []) {
+            $r = $this->app->save($in);
+            if (! $r['ok']) {
+                return response()->json(['ok' => false, 'error' => $r['error']] + $this->payload(), 422);
+            }
+        }
+        if ($ask !== null) {
+            $this->push->setAsk($ask);
         }
 
         return response()->json(['ok' => true] + $this->payload());
@@ -49,6 +66,7 @@ final class SiteAppApiController extends Controller
 
         return [
             'values' => $this->app->all(),
+            'ask_push' => $this->push->ask(),
             'name_max' => SiteApp::NAME_MAX,
             'icons' => $icons,
             'links' => [
