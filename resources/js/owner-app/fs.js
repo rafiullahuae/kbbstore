@@ -9,11 +9,11 @@
  * screen, so the icon is hidden there; from the home screen the app is
  * already full screen (standalone) and needs none.
  *
- * WHEN. Browsers allow full screen only from a user gesture, so the first tap
- * anywhere — the first PIN key counts — asks for it. If he leaves with the
- * icon, that is remembered (localStorage 'oa.fs', a convenience flag) and it
- * is not forced again until he taps the icon. If the system took it away
- * (back gesture, app switch), the next tap after returning asks again.
+ * WHEN. ONLY when he taps the icon (2.60.401). The first build asked on the
+ * first tap anywhere; the owner: "upon clicking anywhere in the owner app, it
+ * keeps enabling auto the full screen mode, which is very annoying ... click
+ * anywhere should not perform any full screen". The icon sits beside "Sync
+ * now" in every header (fsIcon()), and on the PIN screens in their own bar.
  *
  * SMOOTH. The click handler's FIRST statement is requestFullscreen() or
  * exitFullscreen(): no await, no work, no re-render before it. Both glyphs are
@@ -22,15 +22,13 @@
  * is no resize listener and nothing measures. A refused request is caught and
  * the class simply stays as it was. Full screen never triggers a refresh.
  */
-import { store, standalone } from './core.js';
+import { standalone } from './core.js';
 
 const root = document.documentElement;
 const phone = window.matchMedia('(pointer: coarse) and (max-width: 600px)');
 const can = !!(root.requestFullscreen && document.fullscreenEnabled);
-let armed = true;
 
 const eligible = () => can && phone.matches && !standalone();
-const wanted = () => store.get('oa.fs') !== 'off';
 const opts = { navigationUI: 'hide' };
 
 export const fsButton = () =>
@@ -55,28 +53,12 @@ export function initFullscreen() {
   document.addEventListener('click', (e) => {
     const icon = e.target.closest && e.target.closest('[data-fs]');
     if (icon) {
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-        store.set('oa.fs', 'off');
-      } else {
-        root.requestFullscreen(opts).catch(() => {});
-        store.set('oa.fs', 'on');
-      }
-      armed = false;
-      return;
-    }
-    if (armed && !document.fullscreenElement && eligible() && wanted()) {
-      armed = false;
-      root.requestFullscreen(opts).catch(() => {});
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      else root.requestFullscreen(opts).catch(() => {});
     }
   }, true);
 
-  document.addEventListener('fullscreenchange', () => {
-    sync();
-    // Left by the system rather than the icon: ask again on the next tap.
-    if (!document.fullscreenElement && wanted()) armed = true;
-  });
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && wanted()) armed = true; });
+  document.addEventListener('fullscreenchange', sync);
   phone.addEventListener('change', sync);
 }
 

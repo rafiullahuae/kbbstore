@@ -70,12 +70,11 @@ it('offers full screen to phones only, with labelled YouTube-style glyphs and th
         ->toContain("'Exit full screen'")
         ->toContain("{ navigationUI: 'hide' }")
         ->toContain('class="i g-out"')->toContain('class="i g-in"')
-        ->toContain("store.get('oa.fs') !== 'off'")
         ->toContain('standalone()');
 
     // Inside the icon branch the request comes before anything else, with no await.
-    preg_match('/if \(icon\) \{(.*?)return;/s', $fs, $branch);
-    expect($branch[1] ?? '')->toMatch('/^\s*if \(document\.fullscreenElement\) \{\s*document\.exitFullscreen\(\)/')
+    preg_match('/if \(icon\) \{(.*?)\n    \}/s', $fs, $branch);
+    expect($branch[1] ?? '')->toMatch('/^\s*if \(document\.fullscreenElement\) document\.exitFullscreen\(\)/')
         ->and($branch[1] ?? '')->toContain('root.requestFullscreen(opts)')
         ->and($branch[1] ?? '')->not->toContain('await');
 
@@ -84,10 +83,28 @@ it('offers full screen to phones only, with labelled YouTube-style glyphs and th
     expect($sync[1] ?? '')->toContain("classList.toggle('is-fs'")->not->toContain('innerHTML');
 
     $css = (string) file_get_contents(resource_path('css/owner-app/owner-app.css'));
-    expect($css)->toContain('.is-fs .fs .g-in { display: block; }')->toContain('.can-fs .fsbar { display: flex; }');
+    expect($css)->toContain('.is-fs .fs .g-in { display: block; }')->toContain('.can-fs .fsbar { display: flex; }')->toContain('.can-fs .ib.fs { display: grid; }');
 
     $m = $this->get(OA::base().'/manifest.webmanifest')->assertOk()->json();
     expect($m['display'])->toBe('standalone')->and($m['display_override'])->toBe(['fullscreen', 'standalone']);
+});
+
+it('enters full screen ONLY from its icon, which sits beside Sync now in every header', function () {
+    // The owner, 2.60.401: "upon clicking anywhere in the owner app, it keeps
+    // enabling auto the full screen mode, which is very annoying ... beside the
+    // refresh icons make a icon of enlarge ... click anywhere should not
+    // perform any full screen". DEFECT: the first tap anywhere asked for full
+    // screen. MUTATION: put back an `armed` request outside the icon branch ->
+    // two requestFullscreen calls, red; drop fsIcon() from syncBtn -> red.
+    $fs = (string) file_get_contents(resource_path('js/owner-app/fs.js'));
+    $core = (string) file_get_contents(resource_path('js/owner-app/core.js'));
+    $app = (string) file_get_contents(resource_path('js/owner-app/owner-app.js'));
+
+    expect(substr_count($fs, 'root.requestFullscreen('))->toBe(1)
+        ->and($fs)->not->toContain('armed')
+        ->and($core)->toMatch("/export const syncBtn = .*\\+ fsIcon\\(\\);/")
+        ->and($core)->toContain('class="ib fs" data-fs')
+        ->and($app)->not->toContain("'<div class=\"main\">' + fsButton()");
 });
 
 it('gives sign-in its own throttle, so ordinary app traffic can never lock a second phone out of enrolling', function () {
@@ -135,4 +152,20 @@ it('answers the address from the settings row, not from a cache that outlived it
 
     expect($path)->not->toBe('stale0cache_address00')
         ->and(DB::table('settings')->where('key', \App\Services\OwnerApp\OwnerAppPath::SETTING)->value('value'))->toBe($path);
+});
+
+it('titles My store with the store name, K-Beauty Bliss by default, in a compact header', function () {
+    // The owner, 2.60.401: "the header bar is too heighted, i need to reduce
+    // atleast 50%, make the KBB icon small" and "reduce the store name ... it
+    // should fit any store name, keep for now my store name K-Beauty Bliss".
+    // Measured at 390: the title block 84px -> 44px. MUTATION: drop 'store'
+    // from me() -> the key is missing, red; remove the ellipsis rule -> red.
+    $src = (string) file_get_contents(app_path('Http/Controllers/OwnerApp/AppController.php'));
+    $css = (string) file_get_contents(resource_path('css/owner-app/owner-app.css'));
+    $js = (string) file_get_contents(resource_path('js/owner-app/store.js'));
+
+    expect($src)->toContain("'store' => self::storeName(),")->toContain("'K-Beauty Bliss'")
+        ->and($css)->toContain('.lt-dash h2 { margin: 0; font-size: 18px;')->toContain('text-overflow: ellipsis; white-space: nowrap; }')
+        ->and($css)->toContain('.lt-dash .logo.sm { width: 32px; height: 32px;')
+        ->and($js)->toContain('<div class="lt lt-dash">')->toContain("esc(S.store || 'My store')");
 });

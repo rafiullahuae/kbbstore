@@ -64,9 +64,9 @@ function dashSkel() {
 
 function header() {
   const d = D.data;
-  return '<div class="lt"><div class="lt-row"><div><p class="kick">' + (d ? esc(d.date_label) : S.me.can.orders ? ln(0, 'k-sm k-date') : '') + '</p><h2>My store</h2></div>'
+  return '<div class="lt lt-dash"><div class="lt-row"><div><p class="kick">' + (d ? esc(d.date_label) : S.me.can.orders ? ln(0, 'k-sm k-date') : '') + '</p><h2 title="' + esc(S.store || 'My store') + '">' + esc(S.store || 'My store') + '</h2></div>'
     + '<div class="hdr-acts">' + syncBtn() + '<a class="ib" href="#/notifications" aria-label="Notifications' + (S.unread ? ', ' + S.unread + ' unread' : '') + '">' + ic('bell') + (S.unread ? '<i class="dot"></i>' : '') + '</a>'
-    + logo('k-sm') + '</div></div></div>';
+    + logo('k-sm sm') + '</div></div></div>';
 }
 
 function bars(d) {
@@ -189,7 +189,7 @@ export async function renderNotifications(view) {
 }
 
 const unreadIn = () => N.rows.filter((e) => e.id > S.seen).length;
-const nTop = () => top('Notifications', N.rows.length ? (unreadIn() ? unreadIn() + ' unread' : 'All caught up') : '', back('#/more'), '<button class="tbtn" type="button" data-readall>Mark all read</button>');
+const nTop = () => top('Notifications', N.rows.length ? (unreadIn() ? unreadIn() + ' unread' : 'All caught up') : '', back('#/more'), '<button class="ib" type="button" data-readall aria-label="Mark all read" title="Mark all read">' + ic('check') + '</button>');
 
 export function eventRow(e) {
   const [tone, icon] = TONE[e.type] || ['acc', 'bell'];
