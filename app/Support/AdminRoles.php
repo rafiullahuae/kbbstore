@@ -163,6 +163,7 @@ final class AdminRoles
         ]],
         ['content', 'Content & media', [
             'content.manage' => 'Media, menus, categories copy, redirects and translations',
+            'media.optimize' => 'Convert images to WebP across the shop, undo it and remove originals',
             'posts.manage' => 'Write Journal articles',
             'pages.manage' => 'Edit content pages (terms, privacy, FAQ…)',
             'ugc.view' => 'See the shoppable-video library',

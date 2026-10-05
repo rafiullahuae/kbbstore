@@ -540,6 +540,9 @@
       + '<button class="mlib-btn" id="mlib-rescan"' + (busy ? ' disabled' : '') + '>Rescan folder</button>'
       + '<button class="mlib-btn" id="mlib-sizes"' + (sizing ? ' disabled' : '') + '>'
       + (sizing ? 'Making copies…' : 'Make phone-sized copies') + '</button>'
+      /* Lane WP: Content -> Media Library -> WebP images, drawn by
+         admin/partials/webp-screen. Offered only when that partial loaded. */
+      + (window.kbbWebpOpen ? '<button class="mlib-btn" id="mlib-webp">WebP images</button>' : '')
       + '</div>'
       + '<div class="mlib-stats" style="margin-top:14px">'
       + '<div class="mlib-stat"><b>' + esc(String(total)) + '</b><span>'
@@ -920,6 +923,7 @@
 
     on('mlib-rescan', 'click', rescan);
     on('mlib-sizes', 'click', makeSizes);
+    on('mlib-webp', 'click', function(){ if (window.kbbWebpOpen) window.kbbWebpOpen(); });
 
     on('mlib-more', 'click', function(){ extraOpen = !extraOpen; render(); });
 
@@ -1161,3 +1165,6 @@
 })();
 </script>
 @endverbatim
+{{-- Lane WP: the WebP images panel, opened from the button above. Its own file
+     and its own prefix (wpx-); it registers no sidebar row and no screen id. --}}
+@include('admin.partials.webp-screen')

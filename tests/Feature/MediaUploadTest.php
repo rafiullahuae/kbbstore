@@ -148,6 +148,10 @@ it('has exactly one image upload endpoint in the whole application', function ()
 });
 
 it('accepts a real image and stores it under the extension its bytes say it is', function () {
+    // WebP conversion off (Lane WP): this pins what the endpoint decides
+    // BEFORE conversion — the type the bytes earn. WebpImagesTest pins the
+    // conversion itself, which is on as shipped.
+    \App\Services\Media\WebpSettings::save(['enabled' => false]);
     asMuAdmin();
 
     muUploads(true);

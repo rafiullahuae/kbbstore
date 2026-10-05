@@ -7,6 +7,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Media;
 use App\Services\Media\UploadFault;
+use App\Services\Media\WebpBulk;
+use App\Services\Media\WebpConverter;
+use App\Services\Media\WebpSettings;
 use App\Support\ImageVariants;
 use App\Support\MediaRegistrar;
 use Illuminate\Http\JsonResponse;
@@ -128,6 +131,25 @@ class MediaUploadController extends Controller
             ], 422);
         }
 
+        /*
+         * A DECOMPRESSION BOMB IS REFUSED BEFORE IT IS WRITTEN (Lane WP). With
+         * WebP conversion on, this endpoint decodes every JPEG/PNG it keeps, so
+         * a 5MB file whose header claims 30000x30000 would ask GD for gigabytes.
+         * The header is read without decoding and the file turned away with the
+         * number in the sentence. With conversion off nothing here decodes on
+         * the way in, and the upload behaves exactly as it did before.
+         */
+        if (($ext === 'jpg' || $ext === 'png') && WebpSettings::convertsUploads()
+            && ($dims = WebpConverter::dimensions($file->getRealPath())) !== null
+            && WebpConverter::isBomb($dims[0], $dims[1])) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'That image is ' . $dims[0] . ' × ' . $dims[1] . ' pixels ('
+                    . round($dims[0] * $dims[1] / 1_000_000) . ' megapixels). The limit is '
+                    . (WebpConverter::MAX_PIXELS / 1_000_000) . ' megapixels — resize it and try again.',
+            ], 422);
+        }
+
         $filename = date('Ymd-His') . '-' . Str::random(8) . '.' . $ext;
         $dir = public_path('uploads/' . $folder);
 
@@ -188,6 +210,22 @@ class MediaUploadController extends Controller
 
         $path = 'uploads/' . $folder . '/' . $filename;
 
+        /*
+         * JPEG AND PNG BECOME WEBP HERE (Lane WP) — Content -> Media Library ->
+         * WebP images, on as it ships because the owner asked for it. Only when
+         * the WebP is smaller; otherwise the file stays exactly as uploaded and
+         * `webp.reason` says why. Null when it does not apply at all (switched
+         * off, no WebP in this PHP, a GIF/SVG/WebP), and then nothing below
+         * changes.
+         */
+        $webp = WebpBulk::onUpload($path);
+
+        if ($webp !== null && $webp['converted']) {
+            $path = $webp['path'];
+            $filename = basename($path);
+            $detected = 'image/webp';
+        }
+
         // Same double base-path bug already caught and fixed in the
         // IndexNow submission hook: site_url already includes any
         // subfolder the app lives under (e.g. /kbb-upgrade), so combining
@@ -224,7 +262,7 @@ class MediaUploadController extends Controller
              * photograph, and the Media Library's batch will pick it up.
              */
             'sized' => $this->sizeCopies($path),
-        ]);
+        ] + ($webp === null ? [] : ['webp' => $webp]));
     }
 
     /**

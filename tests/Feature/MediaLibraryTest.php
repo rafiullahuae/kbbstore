@@ -215,6 +215,10 @@ it('keeps the media library out of the public /api namespace entirely', function
 /* ─────────────────────── the upload records a row ──────────────────────── */
 
 it('records an upload in the library instead of only writing the file', function () {
+    // WebP conversion off (Lane WP): this pins what the endpoint decides
+    // BEFORE conversion — the type the bytes earn. WebpImagesTest pins the
+    // conversion itself, which is on as shipped.
+    \App\Services\Media\WebpSettings::save(['enabled' => false]);
     asMlAdmin();
     mlClearUploads();
 
@@ -355,6 +359,10 @@ it('searches by name and escapes LIKE wildcards instead of honouring them', func
 });
 
 it('finds an upload by the name the operator gave it, not only the generated one', function () {
+    // WebP conversion off (Lane WP): this pins what the endpoint decides
+    // BEFORE conversion — the type the bytes earn. WebpImagesTest pins the
+    // conversion itself, which is on as shipped.
+    \App\Services\Media\WebpSettings::save(['enabled' => false]);
     asMlAdmin();
     mlClearUploads();
 
@@ -405,6 +413,10 @@ it('finds an upload by the name the operator gave it, not only the generated one
 });
 
 it('never lets the operator-supplied name decide anything but search', function () {
+    // WebP conversion off (Lane WP): this pins what the endpoint decides
+    // BEFORE conversion — the type the bytes earn. WebpImagesTest pins the
+    // conversion itself, which is on as shipped.
+    \App\Services\Media\WebpSettings::save(['enabled' => false]);
     asMlAdmin();
     mlClearUploads();
 

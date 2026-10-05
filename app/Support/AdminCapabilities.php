@@ -266,6 +266,13 @@ final class AdminCapabilities
 
         'content.manage' => ['owner', 'manager', 'editor'],
 
+        // Content -> Media Library -> WebP images (Lane WP). Its own capability
+        // and NOT content.manage: the bulk run rewrites image addresses across
+        // the catalogue, pages and settings, and "Remove originals" deletes
+        // files. Owner and manager; an editor uploads (and gets WebP) but does
+        // not run the shop-wide conversion.
+        'media.optimize' => ['owner', 'manager'],
+
         /*
          * Content -> Shoppable video (Lane V2, Phase 20). The UGC library: the
          * clips, who made them, whether they said yes, and which products are
@@ -1508,6 +1515,9 @@ final class AdminCapabilities
         ['POST', 'admin-api/homepage-hub/preview', 'homepagehub.search'],
         ['GET', 'admin-api/homepage-hub', 'homepagehub.view'],
 
+        // Lane WP. ABOVE the media/** line, or that line would claim them.
+        ['*', 'admin-api/media/webp', 'media.optimize'],
+        ['*', 'admin-api/media/webp/**', 'media.optimize'],
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],
         ['*', 'admin-api/blocks', 'content.manage'],
