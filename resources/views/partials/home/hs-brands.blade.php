@@ -37,8 +37,13 @@
     $hsPhoto = $hsOwn !== '' ? ['src' => $hsOwn, 'alt' => ''] : \App\Support\HomeSections::brandPhoto($brand);
     $hsPanelLogo = $hsPhoto['src'] === '' && $b['look_d'] === 'image_logo' ? \App\Support\HomeSections::image((string) data_get($brand, 'logo')) : '';
     $hsPic = $hsPhoto['src'] !== '' ? $hsPhoto['src'] : $hsPanelLogo;
+    // Right-sized copies, as every other photograph on the shop has: a brand
+    // photo uploaded at full size (903 KiB for one, PageSpeed 6 Oct) was sent
+    // whole into a 400x500 frame. '' until copies exist; srcsetFor() makes
+    // them after the response, so the next view gets them.
+    $hsSet = $hsPic !== '' ? \App\Support\ImageVariants::srcsetFor($hsPic) : '';
 @endphp
-<a class="hs-brand{{ $hsPic !== '' ? ' has-img' : '' }}{{ $hsLogo !== '' ? ' has-logo' : '' }}" href="{{ $brand->url() }}"><span class="hs-bph" style="background:{{ \App\Support\Gradient::for($hsName) }}">@if ($hsPic !== '')<picture>@if ($hsLook === 'text')<source media="(max-width:900px)" srcset="{{ \App\Support\HomeSections::BLANK }}">@endif<img src="{{ $hsPic }}"@if ($hsPhoto['src'] === '') class="hs-bph-logo"@endif alt="{{ $hsPhoto['alt'] !== '' ? $hsPhoto['alt'] : $hsName }}" width="400" height="500" loading="lazy" decoding="async"></picture>@endif</span>@if ($hsLogo !== '')<picture class="hs-blogo"><source media="(min-width:901px)" srcset="{{ \App\Support\HomeSections::BLANK }}"><img src="{{ $hsLogo }}" alt="{{ $hsName }}" width="160" height="80" loading="lazy" decoding="async"></picture>@endif<span class="hs-blb"><b>{{ $hsName }}</b></span></a>
+<a class="hs-brand{{ $hsPic !== '' ? ' has-img' : '' }}{{ $hsLogo !== '' ? ' has-logo' : '' }}" href="{{ $brand->url() }}"><span class="hs-bph" style="background:{{ \App\Support\Gradient::for($hsName) }}">@if ($hsPic !== '')<picture>@if ($hsLook === 'text')<source media="(max-width:900px)" srcset="{{ \App\Support\HomeSections::BLANK }}">@endif<img src="{{ $hsPic }}"@if ($hsSet !== '') srcset="{{ $hsSet }}" sizes="{{ \App\Support\ImageVariants::homeBrandSizesAttribute() }}"@endif{!! $hsPhoto['src'] === '' ? ' class="hs-bph-logo"' : '' !!} alt="{{ $hsPhoto['alt'] !== '' ? $hsPhoto['alt'] : $hsName }}" width="400" height="500" loading="lazy" decoding="async"></picture>@endif</span>@if ($hsLogo !== '')<picture class="hs-blogo"><source media="(min-width:901px)" srcset="{{ \App\Support\HomeSections::BLANK }}"><img src="{{ $hsLogo }}" alt="{{ $hsName }}" width="160" height="80" loading="lazy" decoding="async"></picture>@endif<span class="hs-blb"><b>{{ $hsName }}</b></span></a>
 @endforeach
 </div>
 @include('partials.home.hs-foot', ['h' => $b])

@@ -707,6 +707,20 @@ final class ImageVariants
     }
 
     /**
+     * The homepage Top brands photo cards (6 Oct: a full-size brand photo was
+     * sent whole into each 400x500 frame).
+     */
+    public static function homeBrandSizesAttribute(): string
+    {
+        // The homepage Top brands photo cards: 4 to 8 per row on a laptop
+        // (Appearance -> Homepage content -> Top brands -> Per row), so never
+        // wider than a quarter of the screen, capped by the page width; two or
+        // three per row on a phone when a look with photos is chosen there.
+        // Declared a shade above the frame, the direction that cannot go soft.
+        return '(max-width: 900px) 50vw, (max-width: 1440px) 25vw, 360px';
+    }
+
+    /**
      * THE PRODUCT TILE. One shape, because there is one card.          Lane PG
      *
      * There were two of these — `sizesAttribute()` for `.pc` on /shop and this
