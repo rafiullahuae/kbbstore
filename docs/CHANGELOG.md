@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.402
+**Reorder works on the shop: your order wins, Save is always in view, and
+brand pages stay on the brand.** Apply after .401. Runs 1 migration. Hard
+refresh after applying.
+
+| Your report | Cause, and now |
+|---|---|
+| "on front-end the same old sorting is showing ... two products showing on top" | Featured products were sorted BEFORE your Reorder order on the shop, category and Shop-all-brand listings. Now your order comes first everywhere; featured only breaks ties between products you have not ordered |
+| "there must be SAVE button. should not apply the order/sorting directly" | Save sat under the whole list and its pager, easy to miss, and a number for another page saved at once. Now a Save bar stays pinned to the bottom while anything is unsaved (Discard / Save order), and a move to another page waits for Save |
+| "every brand have shop all etc button ... it should be stick to that brand only" | Shop all {brand} and Popular right now · View all switched off (Appearance → Site layout → Brand page keeps both switches) |
+
+Catalog → Reorder: choose Categories or Brands, reorder, press **Save order**.
+
+Files: see the package's update.json.
+
 ## 2.60.401
 **Owner app: a header half the height with your store name, and full screen
 only when you tap its icon.** Apply after .400. Hard refresh the app.
