@@ -314,10 +314,12 @@ it('runs one timer, only while the page is visible, and measures no layout', fun
     // CLAUDE.md rule 4. MUTATION: replace the setTimeout chain with
     // setInterval, or drop the visibilityState check in startPolling().
     // Code only: the comments say "never in localStorage", which is the point.
+    // sessionStorage holds the CSRF key alone, in core.js alone
+    // (OwnerAppSyncTest pins that).
     $js = collect(glob(resource_path('js/owner-app/*.js')))->map(fn ($f) => file_get_contents($f))->implode("\n");
     $js = (string) preg_replace(['#/\*.*?\*/#s', '#(^|\s)//[^\n]*#'], ['', '$1'], $js);
 
-    foreach (['getBoundingClientRect', 'offsetWidth', 'offsetHeight', 'clientWidth', 'clientHeight', 'scrollWidth', 'scrollHeight', 'getComputedStyle', 'ResizeObserver', 'setInterval', 'sessionStorage', 'indexedDB'] as $api) {
+    foreach (['getBoundingClientRect', 'offsetWidth', 'offsetHeight', 'clientWidth', 'clientHeight', 'scrollWidth', 'scrollHeight', 'getComputedStyle', 'ResizeObserver', 'setInterval', 'indexedDB'] as $api) {
         expect(str_contains($js, $api))->toBeFalse("owner app JS uses {$api}");
     }
 
@@ -326,7 +328,9 @@ it('runs one timer, only while the page is visible, and measures no layout', fun
         ->toContain("if (document.visibilityState === 'hidden') { stopPolling(); return; }");
 
     $css = (string) file_get_contents(resource_path('css/owner-app/owner-app.css'));
-    expect($app)->toContain('Refreshing the app')
-        ->and($css)->toContain('backdrop-filter: blur(')
+    // The blurred "Refreshing the app" card is gone (Lane OA2: grey bars
+    // only when stale, silent otherwise — OwnerAppSyncTest).
+    expect($app)->not->toContain('Refreshing the app')
+        ->and($css)->not->toContain('backdrop-filter: blur(')
         ->and($css)->toContain('prefers-reduced-motion: reduce');
 });

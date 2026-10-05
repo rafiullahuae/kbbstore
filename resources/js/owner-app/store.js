@@ -2,34 +2,71 @@
  * My store (screen 04), Notifications (05), More & settings (06) and the
  * add-to-home sheet (03) — Petal.
  */
-import { S, esc, api, $, $$, ic, logo, top, back, toast, sheet, paint, busy, tgl, ago, th, errorBox, skel, store, standalone, isIOS, dateKey, time, isTablet } from './core.js';
+import { S, esc, api, $, $$, ic, logo, top, back, toast, sheet, busy, tgl, ago, th, errorBox, store, standalone, isIOS, dateKey, time, isTablet,
+  syncBtn, screen, onScreen, once, landed, isFresh, onReset, ln, blk, times, skChips, skNote } from './core.js';
 import { ordersState } from './orders.js';
 
 /* ---------------------------------------------------------- my store */
 
 const D = { view: 'total', data: null };
+onReset(() => { D.data = null; N.rows = []; N.held = false; });
+
+/**
+ * The dashboard's one request. Joins one already in the air; when it lands,
+ * redraws the dashboard in place if it is on screen. Failure keeps what is
+ * held (grey bars become an error card; real figures stay).
+ */
+export function fetchDashboard(passive) {
+  return once('dash', async () => {
+    const g = S.gen;
+    const r = await api('GET', 'dashboard', undefined, passive);
+    if (g !== S.gen) return false;
+    const host = onScreen('dash');
+    if (!r.ok) {
+      if (host && host.hasAttribute('data-sk')) screen(host, 'dash', 0, header(), errorBox(r.data.message));
+      return false;
+    }
+    D.data = r.data;
+    landed('dash');
+    if (!ordersState().loaded) ordersState().counts.processing = r.data.counts.processing || 0;
+    document.dispatchEvent(new CustomEvent('oa:badge'));
+    if (host) { screen(host, 'dash', 0, header(), body(D.data)); offerInstall(); }
+    return true;
+  });
+}
 
 export async function renderDashboard(view) {
   view.className = 'view single';
   if (!S.me.can.orders) {
-    paint(view, header() + '<div class="body"><div class="card empty">Your role does not include orders. Products and customers are in the tabs below.</div></div>');
+    screen(view, 'dash-none', 0, header(), '<div class="card empty">Your role does not include orders. Products and customers are in the tabs below.</div>');
     return;
   }
-  if (!D.data) paint(view, header() + '<div class="body">' + skel(1, true) + skel(3) + '</div>');
-  const r = await api('GET', 'dashboard');
-  if (!r.ok) { paint(view, header() + '<div class="body">' + errorBox(r.data.message) + '</div>'); return; }
-  D.data = r.data;
-  if (!ordersState().loaded) ordersState().counts.processing = r.data.counts.processing || 0;
-  document.dispatchEvent(new CustomEvent('oa:badge'));
-  paint(view, header() + '<div class="body" data-dash>' + body(r.data) + '</div>');
-  offerInstall();
+  if (D.data && isFresh('dash')) { screen(view, 'dash', 0, header(), body(D.data)); offerInstall(); }
+  else screen(view, 'dash', 0, header(), dashSkel(), true);
+  await fetchDashboard();
+}
+
+/* Grey bars in the dashboard's exact shape: hero (figure, three numbers,
+   seven-day chart), "Needs you", two tiles, top performers. */
+function dashSkel() {
+  const met = '<div>' + ln(45, 'k-num') + ln(75, 'k-sm') + '</div>';
+  const need = () => '<div class="row">' + blk('tone') + '<div class="rm">' + ln(55) + ln(80, 'k-sm') + '</div></div>';
+  const tile = '<div class="card">' + ln(70, 'k-sm') + ln(55, 'k-tile') + '</div>';
+  const perf = () => '<div class="row">' + blk('k-rk') + blk('th sm') + '<div class="rm">' + ln(65) + ln(40, 'k-sm') + blk('k-bar') + '</div><div class="re">' + ln(0, 'k-amt') + ln(0, 'k-sm k-short') + '</div></div>';
+  return skNote + '<section class="card sk-hero"><div class="hero-top">' + ln(20, 'k-kick') + blk('k-seg') + '</div>'
+    + '<div class="fig">' + ln(55, 'k-fig') + '</div><div class="mets">' + met + met + met + '</div>'
+    + '<div class="chart"><div class="sk-chart">' + times(7, () => blk('k-col')) + '</div><div class="axis bars">' + times(7, () => '<span>' + ln(55, 'k-ax') + '</span>') + '</div></div>'
+    + '<div class="upd">' + ln(35, 'k-sm') + ln(20, 'k-sm') + '</div></section>'
+    + '<section class="card att"><h4 class="sh">' + ln(25, 'k-h') + '</h4>' + need() + need() + '</section>'
+    + '<div class="tiles">' + tile + tile + '</div>'
+    + '<section class="card tp"><h4 class="sh">' + ln(45, 'k-h') + '</h4>' + times(3, perf) + '</section>';
 }
 
 function header() {
   const d = D.data;
-  return '<div class="lt"><div class="lt-row"><div><p class="kick">' + esc(d ? d.date_label : '') + '</p><h2>My store</h2></div>'
-    + '<div class="hdr-acts"><a class="ib" href="#/notifications" aria-label="Notifications' + (S.unread ? ', ' + S.unread + ' unread' : '') + '">' + ic('bell') + (S.unread ? '<i class="dot"></i>' : '') + '</a>'
-    + logo('sm') + '</div></div></div>';
+  return '<div class="lt"><div class="lt-row"><div><p class="kick">' + (d ? esc(d.date_label) : S.me.can.orders ? ln(0, 'k-sm k-date') : '') + '</p><h2>My store</h2></div>'
+    + '<div class="hdr-acts">' + syncBtn() + '<a class="ib" href="#/notifications" aria-label="Notifications' + (S.unread ? ', ' + S.unread + ' unread' : '') + '">' + ic('bell') + (S.unread ? '<i class="dot"></i>' : '') + '</a>'
+    + logo('k-sm') + '</div></div></div>';
 }
 
 function bars(d) {
@@ -64,7 +101,7 @@ function body(d) {
     + '<div class="card"><small>Returning customers</small><b>' + (d.tiles.returning_pct === null ? '—' : d.tiles.returning_pct + '%') + '</b></div></div>';
 
   const tp = '<section class="card tp"><h4 class="sh">Top performers · ' + esc(d.month_label) + '</h4>'
-    + (d.top.length ? d.top.map((t, i) => '<a class="row" href="' + (t.id ? '#/products/' + t.id : '#/products') + '"><span class="rk">' + (i + 1) + '</span>' + th(t.thumb, 'sm')
+    + (d.top.length ? d.top.map((t, i) => '<a class="row" href="' + (t.id ? '#/products/' + t.id : '#/products') + '"><span class="rk">' + (i + 1) + '</span>' + th(t.thumb, 'k-sm')
       + '<div class="rm"><b>' + esc(t.name) + '</b>' + (t.sales_display ? '<small>Net sales ' + esc(t.sales_display) + '</small>' : '') + '<div class="bar"><i data-sx="' + (t.pct / 100).toFixed(2) + '"></i></div></div>'
       + '<div class="re"><b>' + t.qty + '</b><small class="muted">sold</small></div></a>').join('') : '<p class="empty">No sales yet this month.</p>') + '</section>';
 
@@ -117,13 +154,38 @@ const N = { filter: 'all', rows: [] };
 const KIND = { orders: ['order.new', 'order.status'], stock: ['stock.low', 'stock.out'], payments: ['order.failed', 'order.refunded'] };
 const TONE = { 'order.new': ['acc', 'receipt'], 'order.status': ['info', 'refresh'], 'order.failed': ['bad', 'alert'], 'order.refunded': ['acc', 'undo'], 'stock.low': ['warn', 'stack'], 'stock.out': ['bad', 'box'] };
 
+export function fetchNotifications(passive) {
+  return once('notes', async () => {
+    const g = S.gen;
+    const r = await api('GET', 'notifications', undefined, passive);
+    if (g !== S.gen) return false;
+    const host = onScreen('notes');
+    if (!r.ok) {
+      if (host && host.hasAttribute('data-sk')) screen(host, 'notes', 0, nTop(), errorBox(r.data.message));
+      return false;
+    }
+    N.rows = r.data.events;
+    N.held = true;
+    landed('notes');
+    recount();
+    if (host) paintN(host);
+    return true;
+  });
+}
+
+/** Unread = held events newer than the last one he saw. */
+export function recount() {
+  if (!N.held) return;
+  S.unread = S.seen ? N.rows.filter((e) => e.id > S.seen).length : 0;
+  document.dispatchEvent(new CustomEvent('oa:badge'));
+}
+
 export async function renderNotifications(view) {
   view.className = 'view single';
-  paint(view, nTop() + '<div class="body">' + skel(4) + '</div>');
-  const r = await api('GET', 'notifications');
-  if (!r.ok) { paint(view, nTop() + '<div class="body">' + errorBox(r.data.message) + '</div>'); return; }
-  N.rows = r.data.events;
-  paintN(view);
+  if (N.held && isFresh('notes')) paintN(view);
+  else screen(view, 'notes', 0, nTop(), skNote + '<div class="chips" aria-hidden="true">' + skChips(4) + '</div><div class="og"><div class="gh">' + ln(20, 'k-h') + '</div><div class="list">'
+    + times(5, () => '<div class="row nt">' + blk('tone') + '<div class="rm">' + ln(75) + ln(90, 'k-sm') + '</div>' + ln(0, 'k-tm') + '</div>') + '</div></div>', true);
+  await fetchNotifications();
 }
 
 const unreadIn = () => N.rows.filter((e) => e.id > S.seen).length;
@@ -144,10 +206,10 @@ function paintN(view) {
     if (!groups.length || groups[groups.length - 1][0] !== g) groups.push([g, []]);
     groups[groups.length - 1][1].push(e);
   });
-  paint(view, nTop() + '<div class="body"><div class="chips" role="group" aria-label="Filter notifications">'
+  screen(view, 'notes', 0, nTop(), '<div class="chips" role="group" aria-label="Filter notifications">'
     + [['all', 'All'], ['orders', 'Orders'], ['stock', 'Stock'], ['payments', 'Payments']].map(([k, l]) => '<button type="button" data-nf="' + k + '"' + (N.filter === k ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>'
     + (groups.length ? groups.map(([g, l]) => '<div class="og"><div class="gh"><span>' + g + '</span></div><div class="list">' + l.map(eventRow).join('') + '</div></div>').join('')
-      : '<div class="card empty">Nothing yet. New orders, status changes, payment problems and stock alerts will appear here.</div>') + '</div>');
+      : '<div class="card empty">Nothing yet. New orders, status changes, payment problems and stock alerts will appear here.</div>'));
 }
 
 export function notificationsClick(e, view) {
@@ -207,7 +269,7 @@ export async function renderMore(view) {
   const r = (icon, t, right, sub, attrs) => '<' + (attrs && attrs.indexOf('href') === 0 ? 'a ' + attrs : 'div') + ' class="row"><span class="ico">' + ic(icon) + '</span><div class="rm"><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>' + right + '</' + (attrs && attrs.indexOf('href') === 0 ? 'a' : 'div') + '>';
   const ch = ic('chev', 'chev s');
   const g = (k, icon, label) => r(icon, esc(label), tgl(me.notify.indexOf(k) !== -1, label, 'data-group="' + k + '"' + (on ? '' : ' disabled')));
-  paint(view, top('More', '') + '<div class="body">'
+  screen(view, 'more', 0, top('More', ''), ''
     + '<section class="card"><div class="prof">' + logo() + '<div><b>' + esc(me.name) + ' · K-Beauty Bliss</b><small>' + esc(location.hostname) + ' · ' + esc(me.role || '') + '</small></div></div></section>'
     + '<section class="card set plain-list">'
     + (me.can.customers ? r('users', 'Customers', ch, '', 'href="#/customers"') : '')
@@ -216,7 +278,7 @@ export async function renderMore(view) {
     + '<div class="gh"><span>App</span></div><section class="card set plain-list">'
     + r('homeadd', 'Add to home screen', standalone() ? '<span class="muted">Installed</span>' : '<button type="button" class="tbtn" data-a2>Install</button>', standalone() ? 'Opens full screen from your home screen' : 'Not installed on this phone')
     + r('lock', 'Unlock with PIN', '<span class="muted">Always</span>', 'Locks after ' + S.idle + ' hours away')
-    + r('refresh', 'Refresh on every open', '<span class="muted">Always</span>') + '</section>'
+    + r('refresh', 'Sync on open', '<span class="muted">Silent</span>', 'Loading bars after ' + esc(Math.round(S.staleMs / 60000)) + ' min away') + '</section>'
     + '<div class="gh"><span>Notifications</span>' + (on ? '<button type="button" data-test>Send a test</button>' : '') + '</div><section class="card set plain-list">'
     + r('device', 'On this phone', tgl(on, 'Notifications on this phone', 'data-push'), pushable() ? (isIOS && !standalone() ? 'On iPhone, add the app to your home screen first' : '') : 'This browser cannot receive notifications')
     + g('orders', 'receipt', 'New orders') + g('status', 'edit', 'Status changes') + g('stock', 'stack', 'Low and out of stock') + g('payments', 'alert', 'Failed payments and refunds') + '</section>'
@@ -224,7 +286,7 @@ export async function renderMore(view) {
     + r('device', esc(me.device), '<span class="muted">Current</span>', 'Signed in as ' + esc(me.name))
     + '<button type="button" class="row" data-lock><span class="ico">' + ic('lock') + '</span><div class="rm"><b>Lock now</b></div></button>'
     + '<button type="button" class="row" data-forget><span class="ico">' + ic('logout') + '</span><div class="rm"><b class="danger">Log out of this phone</b></div></button></section>'
-    + '<p class="ver">Owner app 1.0 · ' + esc(location.hostname) + '</p></div>');
+    + '<p class="ver">Owner app 1.0 · ' + esc(location.hostname) + '</p>');
 }
 
 export async function moreClick(e, view, gate) {

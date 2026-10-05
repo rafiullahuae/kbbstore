@@ -96,15 +96,8 @@ const closeSheets = async (page) => { await page.keyboard.press('Escape'); await
     await page.waitForSelector('.rf', { state: 'detached', timeout: 5000 }).catch(() => {});
     await shot(page, dev, '04-dashboard', results);
 
-    // The refresh overlay, held open by a slow /changes so it can be seen.
-    await page.route('**/api/changes**', async (r) => { await new Promise((ok) => setTimeout(ok, 2500)); await r.continue().catch(() => {}); });
-    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
-    await page.waitForSelector('.rf');
-    await page.waitForTimeout(700);
-    await shot(page, dev, '02-refreshing', results);
-    await page.waitForSelector('.rf', { state: 'detached', timeout: 8000 }).catch(() => {});
-    await page.unroute('**/api/changes**');
-    await page.waitForSelector('.rf', { state: 'detached', timeout: 8000 }).catch(() => {});
+    // The "Refreshing the app" overlay is gone (Lane OA2): the grey loading
+    // bars and the silent refresh are photographed by tools/oa2-shots.cjs.
 
     await go(page, '#/notifications'); await shot(page, dev, '05-notifications', results);
     await go(page, '#/more'); await shot(page, dev, '06-more', results);

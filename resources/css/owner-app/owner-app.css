@@ -42,7 +42,7 @@
   --r-search: 999px; --search-sh: 0 6px 20px -12px rgba(150,60,85,.35);
   --bulk-bg: #2E1A22; --r-bulk: 26px; --r-btn: 999px; --seg-bg: #FBEFF2;
   --r-tone: 14px; --key-bg: #fff; --key-sh: 0 6px 18px -10px rgba(150,60,85,.35); --r-logo: 22px;
-  --rf-tint: rgba(251,226,234,.4); --tgl-off: #E5D3D9; --toast-bg: #2E1A22; --inp-bg: #FBF0F2;
+  --sk: #E9E4E6; --sk-hi: rgba(255,255,255,.7); --tgl-off: #E5D3D9; --toast-bg: #2E1A22; --inp-bg: #FBF0F2;
   --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
   --nav-h: 66px;
@@ -202,9 +202,6 @@ button.pill { cursor: pointer; }
 .tiles b { display: block; font: 600 20px/1.1 var(--font); margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tiles small { font-size: 12px; color: var(--ink3); }
 .empty { padding: 28px 12px; text-align: center; color: var(--ink3); font-size: 14px; }
-.skel { height: 70px; border-radius: 20px; margin-bottom: 8px; background: #fff; opacity: .6; animation: pulse 1.2s ease-in-out infinite alternate; }
-.skel.tall { height: 240px; }
-@keyframes pulse { to { opacity: .25; } }
 
 /* ------------------------------------------------------------------- bulk */
 .selhdr { display: none; }
@@ -297,31 +294,84 @@ textarea.ta { width: 100%; min-height: 120px; resize: none; border: 0; border-ra
 .alert { padding: 10px 12px; border-radius: 14px; background: #FDE4E1; color: #8A1C12; font-size: 13.5px; margin: 0 0 14px; }
 @media (max-height: 700px) { .pin { padding-top: 12px; } .pin .kick { margin-top: 10px; } .pin-h { margin-bottom: 12px; } .pad { gap: 10px 24px; margin: 16px 0 10px; grid-template-columns: repeat(3, 68px); } .pad button { width: 68px; height: 68px; font-size: 27px; } }
 
-/* ----------------------------------------------------- refresh overlay */
-.rf { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; padding: 28px; background: var(--rf-tint);
-  -webkit-backdrop-filter: blur(16px) saturate(130%); backdrop-filter: blur(16px) saturate(130%); animation: fade .2s ease-out both; transition: opacity .28s; }
-.rf.out { opacity: 0; pointer-events: none; }
-.rf-card { width: 100%; max-width: 300px; padding: 26px 22px 20px; border-radius: 28px; background: var(--surface); box-shadow: 0 30px 60px -24px rgba(20,10,30,.45); text-align: center; }
-.rf-logo { position: relative; width: 84px; height: 84px; margin: 0 auto 16px; display: grid; place-items: center; }
-.rf-ring { position: absolute; inset: 0; width: 84px; height: 84px; animation: spin 1s linear infinite; }
-.rf-ring circle { fill: none; stroke-width: 3; stroke-linecap: round; }
-.rf-ring .bg { stroke: var(--line); }
-.rf-ring .fg { stroke: var(--acc); stroke-dasharray: 60 200; }
-.rf-t { display: grid; }
-.rf-t > * { grid-area: 1 / 1; transition: opacity .25s; }
-.rf-t h4 { margin: 0; font: var(--w-t) 20px/1.2 var(--font-d); letter-spacing: var(--ls-h); }
-.rf-t .b { opacity: 0; }
-.rf.done .rf-t .a { opacity: 0; }
-.rf.done .rf-t .b { opacity: 1; }
-.rf-card p { margin: 6px 0 16px; font-size: 13px; color: var(--ink3); overflow-wrap: anywhere; }
-.rf-bar { height: 6px; border-radius: 3px; background: var(--surface2); overflow: hidden; margin-bottom: 14px; }
-.rf-bar i { display: block; height: 100%; background: var(--acc-grad); transform-origin: left; transform: scaleX(.08); transition: transform .35s cubic-bezier(.4,.1,.2,1); }
-.rf-steps { list-style: none; margin: 0; padding: 0; text-align: left; }
-.rf-steps li { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13.5px; font-weight: 500; opacity: .45; transition: opacity .25s; }
-.rf-steps li.ok { opacity: 1; }
-.rf-steps li .i { width: 18px; height: 18px; padding: 2px; border-radius: 50%; background: var(--good); color: #fff; stroke-width: 3; transform: scale(0); transition: transform .3s; }
-.rf-steps li.ok .i { transform: none; }
-.rf-steps li span { margin-left: auto; font-size: 12.5px; color: var(--ink3); }
+/* ------------------------------------------- grey loading bars (Lane OA2) */
+/*
+ * The owner: "i would prefer to grey bars type". Shown only when what is on
+ * screen is older than "Show loading bars after (minutes)" or not held yet;
+ * every bar sits inside the REAL row / card / tile classes, so the shape and
+ * height match the content that replaces it and nothing jumps when it lands.
+ * The shimmer is a transform on a pseudo-element; reduced motion stills it.
+ */
+.sk { position: relative; display: block; flex: none; overflow: hidden; background: var(--sk); border-radius: 7px; }
+.sk::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--sk-hi), transparent); transform: translateX(-100%); animation: shim 1.4s ease-in-out infinite; }
+@keyframes shim { to { transform: translateX(100%); } }
+/* A text line: the bar, with transparent top/bottom borders making up the
+   line box it stands for (borders, unlike margins, never collapse, so a
+   stack of bars is exactly as tall as the stack of lines). */
+.sk.sl { box-sizing: content-box; height: 12px; border: solid transparent; border-width: 4px 0; background-clip: padding-box; border-radius: 10px / 6px; }
+.rm .sk.sl { height: 12.3px; border-width: 4px 0; }                         /* .rm b: 20.3 */
+.sk.sl.k-sm, .rm .sk.sl.k-sm { height: 10.5px; border-width: 6px 0 3px; }        /* .rm small: 2 + 17.5 */
+.sk.w15 { width: 15%; } .sk.w20 { width: 20%; } .sk.w25 { width: 25%; } .sk.w30 { width: 30%; } .sk.w35 { width: 35%; } .sk.w40 { width: 40%; }
+.sk.w45 { width: 45%; } .sk.w50 { width: 50%; } .sk.w55 { width: 55%; } .sk.w60 { width: 60%; } .sk.w65 { width: 65%; } .sk.w70 { width: 70%; }
+.sk.w75 { width: 75%; } .sk.w80 { width: 80%; } .sk.w90 { width: 90%; }
+.sk.k-amt { width: 72px; } .sk.k-short { width: 48px; }
+.sk.sl.k-tm { width: 26px; height: 10px; border-width: 4px 0 2px; }
+.sk.sl.k-h { height: 11px; border-width: 2px 0; }                                /* .sh: 15 */
+.gh .sk.sl.k-h { height: 9px; border-width: 2px 0; }                             /* .gh: 13 */
+.sk.k-pill { width: 78px; height: 23px; border-radius: 999px; }
+.sk.k-chip { width: 74px; height: 34px; border-radius: 999px; }
+.sk.k-chip:nth-child(2n) { width: 96px; } .sk.k-chip:first-child { width: 58px; }
+.sk.k-rk { width: 10px; height: 12px; margin: 0 3px; }
+.sk.k-bar { box-sizing: content-box; height: 5px; border: solid transparent; border-width: 7px 0 0; background-clip: padding-box; border-radius: 3px; }
+.sk.k-ico { width: 36px; height: 36px; border-radius: var(--r-tone); }
+.sk.sl.k-nm { height: 20px; border-width: 3px 0 4px; border-radius: 12px / 9px; }  /* 22px heading */
+.sk.k-mid { margin-left: auto; margin-right: auto; }
+.sk.k-act { height: 57px; border-radius: var(--r-sm); }
+.sk.k-fill { position: absolute; inset: 0; border-radius: 0; }
+.sk.k-date { width: 112px; }
+.tiles .sk.sl.k-sm { height: 10px; border-width: 6px 0 5px; }                                  /* the 21px line small sits in */
+.sk.sl.k-tile { height: 18.8px; border-width: 8px 0 2px; }                         /* 6 + 22 */
+.re .sk.sl.k-sm { height: 10.5px; border-width: 4px 0 3px; }                   /* .re small: 17.5 */
+.nt .rm .sk.sl:first-child { height: 11.2px; border-width: 3px 0 4px; }          /* .nt b: 18.2 */
+.nt .rm .sk.sl.k-sm { height: 10.5px; border-width: 7px 0 3px; }                 /* .nt small: 3 + 17.5 */
+.rm .sk.sl.k-l2 { height: 12.85px; border-width: 3px 0; }                        /* a .cl2 name's line: 18.85 */
+.rm .sk.sl.k-l2 + .sk.sl.k-l2 { display: none; }
+@media (max-width: 767px) { .rm .sk.sl.k-l2 + .sk.sl.k-l2 { display: block; } } /* long names wrap to two lines on a phone */
+.od-sum .sk.sl.k-nm { height: 19.4px; border-width: 3px 0 12px; }                /* 26.4 heading + its 8px */
+.sk.sl.k-axw { width: 24px; }
+.sk.av { border-radius: 50%; } .sk.th { border-radius: var(--r-th); } .sk.tone { border-radius: var(--r-tone); }
+.ccats .sk.k-chip { height: 36px; }
+/* dashboard */
+.sk.sl.k-kick { height: 11px; border-width: 3px 0; }
+.sk.k-seg { width: 136px; height: 32px; border-radius: 999px; }
+.sk.sl.k-fig { height: 36px; border-width: 4px 0; border-radius: 14px / 12px; }
+.sk.sl.k-num { height: 15.8px; border-width: 2px 0; }                            /* .mets b: 19.8 */
+.mets .sk.sl.k-sm { height: 10.8px; border-width: 6px 0 3px; }                               /* 3 + 16.8 */
+.sk-chart { display: flex; align-items: flex-end; justify-content: space-between; aspect-ratio: 320 / 132; padding-top: 14px; }
+@media (min-width: 768px) { .sk-chart { aspect-ratio: 620 / 132; } }
+.sk-chart .sk { width: 9.4%; height: 100%; border-radius: 10px; transform-origin: bottom; }
+.sk-chart .sk:nth-child(1) { transform: scaleY(.55); } .sk-chart .sk:nth-child(2) { transform: scaleY(.38); } .sk-chart .sk:nth-child(3) { transform: scaleY(.72); }
+.sk-chart .sk:nth-child(4) { transform: scaleY(.5); } .sk-chart .sk:nth-child(5) { transform: scaleY(.86); } .sk-chart .sk:nth-child(6) { transform: scaleY(.44); }
+.sk-chart .sk:nth-child(7) { transform: scaleY(1); }
+.axis .sk.sl.k-ax { height: 7.5px; border-width: 1px 0 2px; margin: 0 auto; }
+.upd .sk.sl { height: 10.8px; border-width: 3px 0; }
+.spark .sk.k-col { flex: 1; height: 100%; background: var(--sk); border-radius: 4px 4px 2px 2px; transform-origin: bottom; }
+.spark .sk:nth-child(odd) { transform: scaleY(.55); } .spark .sk:nth-child(3n) { transform: scaleY(.8); }
+
+/* --------------------------------------------------- "Sync now" (Lane OA2) */
+/* A header that also carries a text button (Notifications' "Mark all read")
+   gives up a little padding below 375px, so the title still fits beside
+   back, the button and Sync now. */
+@media (max-width: 374px) {
+  .top:has(> .tbtn) { gap: 2px; padding-left: 6px; padding-right: 6px; }
+  .top > .tbtn { padding: 10px 4px; }
+}
+/* In every header. 40px to see like its neighbours, 44px to touch (the
+   ::before reaches 2px past each edge). Spins only while a sync he asked for
+   runs; under reduced motion it holds still and turns the accent colour. */
+.ib.sync::before { content: ""; position: absolute; inset: -2px; border-radius: inherit; }
+.ib.sync.on { color: var(--acc); }
+.ib.sync.on .i { animation: spin .9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fade { from { opacity: 0; } }
 

@@ -14,7 +14,6 @@ use App\Support\AdminRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Vite;
 
 /**
@@ -143,28 +142,7 @@ final class AppController extends Controller
 
         OwnerAppAuth::touch($device);
 
-        return response()->json(['ok' => true, 'stage' => 'app'] + self::me($request, $device) + ['pulse' => self::pulse($device)]);
-    }
-
-    /**
-     * The four numbers the "Refreshing the app" card ticks off as it lands:
-     * three small COUNTs, each only for a member allowed to see it.
-     *
-     * @return array<string,int|null>
-     */
-    private static function pulse(\App\Models\OwnerAppDevice $device): array
-    {
-        $admin = $device->member->admin;
-        $day = \App\Support\StoreTime::startOfDayUtc();
-
-        return [
-            'orders_today' => AdminRoles::can($admin, 'orders.view')
-                ? DB::table('orders')->whereNull('deleted_at')->where('created_at', '>=', $day)->whereIn('status', \App\Models\Order::REAL_STATUSES)->count() : null,
-            'low_stock' => AdminRoles::can($admin, 'catalog.view')
-                ? DB::table('products')->whereNull('deleted_at')->where('manage_stock', true)->where('stock', '>', 0)->where('stock', '<=', OwnerAppSettings::lowStock())->count() : null,
-            'customers_today' => AdminRoles::can($admin, 'customers.view')
-                ? DB::table('customers')->whereNull('deleted_at')->where('created_at', '>=', $day)->count() : null,
-        ];
+        return response()->json(['ok' => true, 'stage' => 'app'] + self::me($request, $device));
     }
 
     public function enrol(Request $request): JsonResponse
@@ -259,6 +237,7 @@ final class AppController extends Controller
             ],
             'notify_groups' => OwnerAppEvents::GROUP_LABELS,
             'idle_hours' => OwnerAppSettings::idleHours(),
+            'stale_minutes' => OwnerAppSettings::staleMinutes(),
             'tz' => \App\Support\StoreTime::zone(),
             'vapid' => VapidKeys::publicKey(),
             'csrf' => $session !== '' && $device->session_hash !== null ? OwnerAppAuth::csrfFor($session) : null,

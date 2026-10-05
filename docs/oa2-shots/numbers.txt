@@ -1,0 +1,52 @@
+Lane OA2 — owner app refresh, measured by tools/oa2-shots.cjs (2026-10-05T16:27:31.330Z)
+
+== phone-390 (390x844, iPhone Safari UA)
+  01 first open: requests fired state@390ms, dashboard@396ms, changes@397ms, notifications@398ms, orders@398ms, products@398ms, customers@398ms (all within 398ms: parallel)
+     dashboard .body children heights, bars [1,370.7,178.6,77.8] vs data [370.7,361,77.8,356.2]
+     X-OA-CSRF on every GET but state: true
+  03 reopen after 1 min: real hero on screen at 150ms: true; grey bars ever shown: false; requests {"state":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1}; every one X-OA-Passive: true
+  phone-390--04-reopen-after-40-min-bars: 58 grey bars; .body > * heights bars [1,370.7,178.6,77.8] vs data [370.7,361,77.8,356.2]; scrollWidth 390/390; requests {"state":1,"dashboard":1,"changes":1,"notifications":1,"orders":1,"products":1,"customers":1} [state dashboard changes notifications orders products customers], passive 0
+  05/06 Sync now: 40x40px icon at (214,6), label "Sync now", 2px outside its edge still hits it (44px target): true
+     3 taps in 0.6s -> requests {"state":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1}; spinning true (spin, aria-busy true), overlay false; stopped after: true; passive 0
+  07 Sync now with /api/dashboard down: toast "Could not sync everything. Showing what you had."; dashboard figures kept: true
+  phone-390--08-orders-bars: 36 grey bars; .list .row heights bars [73,73,73,73] vs data [73.3,73.3,73.3,73.3]; scrollWidth 390/390; requests {"state":1,"orders":1,"changes":1,"notifications":1,"dashboard":1,"products":1,"customers":1} [state orders changes notifications dashboard products customers], passive 0
+  phone-390--09-order-bars: 21 grey bars; .body > * heights bars [1,73.4,195,185] vs data [73.4,46,217.4,382.8]; scrollWidth 390/390; requests {"state":1,"orders/:id":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1} [state orders/:id changes notifications dashboard orders products customers], passive 0
+  phone-390--10-products-bars: 39 grey bars; .list .row heights bars [81.2,81.2,81.2,81.2] vs data [81.9,81.9,81.9,81.9]; scrollWidth 390/390; requests {"state":1,"products":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"customers":1} [state products changes notifications dashboard orders customers], passive 0
+  phone-390--11-product-bars: 28 grey bars; .body > * heights bars [1,220,27,23] vs data [220,26.8,23,77.8]; scrollWidth 390/390; requests {"state":1,"products/:id":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1} [state products/:id changes notifications dashboard orders products customers], passive 0
+  phone-390--12-customers-bars: 39 grey bars; .list .row heights bars [67.5,67.5,67.5,67.5] vs data [67.8,67.8,67.8,67.8]; scrollWidth 390/390; requests {"state":1,"customers":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1} [state customers changes notifications dashboard orders products], passive 0
+  phone-390--13-customer-bars: 27 grey bars; .body > * heights bars [1,219.5,165.6,137.5] vs data [236.6,165.6,137.5,182.6]; scrollWidth 390/390; requests {"state":1,"customers/:id":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1} [state customers/:id changes notifications dashboard orders products customers], passive 0
+  phone-390--14-notifications-bars: 25 grey bars; .list .row heights bars [62.7,62.7,62.7,62.7] vs data [62.7,80.9,62.7,62.7]; scrollWidth 390/390; requests {"state":1,"notifications":1,"changes":1,"dashboard":1,"orders":1,"products":1,"customers":1} [state notifications changes dashboard orders products customers], passive 0
+  tab to Products (held, fresh): 30 rows on screen within 60ms, bars shown 0 times
+
+== tablet-820 (820x1180, Android tablet Chrome UA)
+  01 first open: requests fired state@324ms, dashboard@324ms, changes@324ms, notifications@324ms, orders@324ms, products@324ms, customers@324ms (all within 324ms: parallel)
+     dashboard .body children heights, bars [1,374.3,178.6,77.8] vs data [374.3,361,77.8,356.2]
+     X-OA-CSRF on every GET but state: true
+  03 reopen after 1 min: real hero on screen at 150ms: true; grey bars ever shown: false; requests {"state":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1}; every one X-OA-Passive: true
+  tablet-820--04-reopen-after-40-min-bars: 58 grey bars; .body > * heights bars [1,374.3,178.6,77.8] vs data [374.3,361,77.8,356.2]; scrollWidth 820/820; requests {"state":1,"dashboard":1,"changes":1,"notifications":1,"orders":1,"products":1,"customers":1} [state dashboard changes notifications orders products customers], passive 0
+  05/06 Sync now: 40x40px icon at (644,6), label "Sync now", 2px outside its edge still hits it (44px target): true
+     3 taps in 0.6s -> requests {"state":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1}; spinning true (spin, aria-busy true), overlay false; stopped after: true; passive 0
+  07 Sync now with /api/dashboard down: toast "Could not sync everything. Showing what you had."; dashboard figures kept: true
+  tablet-820--08-orders-split-bars: 57 grey bars; .pane-l .list .row heights bars [73,73,73,73] vs data [73.3,73.3,73.3,73.3]; scrollWidth 820/820; requests {"state":1,"orders":1,"changes":1,"notifications":1,"dashboard":1,"products":1,"customers":1,"orders/:id":1} [state orders changes notifications dashboard products customers orders/:id], passive 0
+  tablet-820--10-products-bars: 39 grey bars; .list .row heights bars [70,70,70,70] vs data [70,70,70,70]; scrollWidth 820/820; requests {"state":1,"products":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"customers":1} [state products changes notifications dashboard orders customers], passive 0
+  tablet-820--11-product-bars: 28 grey bars; .body > * heights bars [1,220,27,23] vs data [220,26.8,23,77.8]; scrollWidth 820/820; requests {"state":1,"products/:id":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1} [state products/:id changes notifications dashboard orders products customers], passive 0
+  tablet-820--12-customers-bars: 39 grey bars; .list .row heights bars [67.5,67.5,67.5,67.5] vs data [67.8,67.8,67.8,67.8]; scrollWidth 820/820; requests {"state":1,"customers":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1} [state customers changes notifications dashboard orders products], passive 0
+  tablet-820--13-customer-bars: 27 grey bars; .body > * heights bars [1,219.5,165.6,137.5] vs data [236.6,165.6,137.5,182.6]; scrollWidth 820/820; requests {"state":1,"customers/:id":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1} [state customers/:id changes notifications dashboard orders products customers], passive 0
+  tablet-820--14-notifications-bars: 25 grey bars; .list .row heights bars [62.7,62.7,62.7,62.7] vs data [62.7,62.7,62.7,62.7]; scrollWidth 820/820; requests {"state":1,"notifications":1,"changes":1,"dashboard":1,"orders":1,"products":1,"customers":1} [state notifications changes dashboard orders products customers], passive 0
+  tab to Products (held, fresh): 30 rows on screen within 60ms, bars shown 0 times
+
+== header with "Sync now", per width (top header height, title box, sync icon, document scrollWidth)
+  360: #/ h84 title156 sync40@224 x1 sw360 | #/orders h58 title282 sync40@348 x1 sw360 | #/products h58 title282 sync40@348 x1 sw360 | #/customers h58 title236 sync40@348 x1 sw360 | #/notifications h58 title162 sync40@354 x1 sw360 | #/more h54 title282 sync40@348 x1 sw360
+  390: #/ h84 title186 sync40@254 x1 sw390 | #/orders h58 title312 sync40@378 x1 sw390 | #/products h58 title312 sync40@378 x1 sw390 | #/customers h58 title266 sync40@378 x1 sw390 | #/notifications h58 title160 sync40@378 x1 sw390 | #/more h54 title312 sync40@378 x1 sw390
+  412: #/ h84 title208 sync40@276 x1 sw412 | #/orders h58 title334 sync40@400 x1 sw412 | #/products h58 title334 sync40@400 x1 sw412 | #/customers h58 title288 sync40@400 x1 sw412 | #/notifications h58 title182 sync40@400 x1 sw412 | #/more h54 title334 sync40@400 x1 sw412
+  430: #/ h84 title226 sync40@294 x1 sw430 | #/orders h58 title352 sync40@418 x1 sw430 | #/products h58 title352 sync40@418 x1 sw430 | #/customers h58 title306 sync40@418 x1 sw430 | #/notifications h58 title200 sync40@418 x1 sw430 | #/more h54 title352 sync40@418 x1 sw430
+  768: #/ h84 title472 sync40@632 x1 sw768 | #/orders h58 title261 sync40@419 x1 sw768 | #/products h58 title598 sync40@756 x1 sw768 | #/customers h58 title552 sync40@756 x1 sw768 | #/notifications h58 title446 sync40@756 x1 sw768 | #/more h54 title598 sync40@756 x1 sw768
+  820: #/ h84 title524 sync40@684 x1 sw820 | #/orders h58 title261 sync40@419 x1 sw820 | #/products h58 title650 sync40@808 x1 sw820 | #/customers h58 title604 sync40@808 x1 sw820 | #/notifications h58 title498 sync40@808 x1 sw820 | #/more h54 title650 sync40@808 x1 sw820
+  1180: #/ h84 title556 sync40@880 x1 sw1180 | #/orders h58 title321 sync40@479 x1 sw1180 | #/products h58 title682 sync40@1004 x1 sw1180 | #/customers h58 title636 sync40@1004 x1 sw1180 | #/notifications h58 title530 sync40@1004 x1 sw1180 | #/more h54 title682 sync40@1004 x1 sw1180
+
+== prefers-reduced-motion: shimmer animation none; spinning icon animation none, colour rgb(168, 71, 92), on true
+
+== admin: Platform → Users & Roles → Owner app → Settings
+  390px: label "Show loading bars after (minutes)" (193px wide, same row as "Lock after": false); as found 30; 4 refused with: Discard | The Show loading bars after (minutes) field must be at least 5.; saved 45; scrollWidth 390/390
+  1280px: label "Show loading bars after (minutes)" (193px wide, same row as "Lock after": true); as found 45; 4 refused with: Discard | The Show loading bars after (minutes) field must be at least 5.; saved 30; scrollWidth 1280/1280
+  delivered: PUT stale_minutes 45 -> 200; enrol response stale_minutes 45; More shows "Sync on openLoading bars after 45 min awaySilent"

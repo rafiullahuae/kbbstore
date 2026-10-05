@@ -9,10 +9,12 @@
  * Every write goes to the server, which runs the ADMIN's own action — the
  * same emails, the same stock, the same order notes.
  */
-import { S, esc, api, $, $$, ic, av, th, pill, stWord, top, back, toast, sheet, busy, debounce, paint, errorBox, skel, day, time, when, year, isTablet } from './core.js';
+import { S, esc, api, $, $$, ic, av, th, pill, stWord, top, back, toast, sheet, busy, debounce, paint, errorBox, day, time, when, year, isTablet,
+  screen, onScreen, mark, once, landed, isFresh, onReset, merge, ln, blk, times, skChips, skNote } from './core.js';
 
-const L = { q: '', status: '', from: '', to: '', payment: '', rows: [], next: null, counts: {}, payments: [], today: '', yesterday: '', sel: new Set(), loaded: false, at: null };
+const L = { q: '', status: '', from: '', to: '', payment: '', rows: [], next: null, counts: {}, payments: [], today: '', yesterday: '', sel: new Set(), loaded: false, at: null, paged: false, lastQ: '', cur: 0 };
 let O = null;
+onReset(() => { Object.assign(L, { rows: [], next: null, counts: {}, payments: [], loaded: false, at: null, paged: false, lastQ: '', cur: 0 }); L.sel.clear(); O = null; });
 const SETTABLE = ['pending', 'processing', 'onhold', 'shipped', 'completed', 'cancelled'];
 const appEl = () => document.getElementById('oa-app');
 
@@ -28,33 +30,52 @@ function query(extra) {
 
 /* --------------------------------------------------------------- routing */
 
+/*
+ * Held and fresh: the list (and the open order) are drawn at once from
+ * memory and refreshed silently. Otherwise grey bars in their shape until the
+ * request lands. Either way one request per list and per order.
+ */
 export async function renderOrders(view, id) {
+  const held = L.loaded && isFresh('orders');
   if (isTablet()) {
     const pd = $('[data-pd]', view);
-    if (pd && L.loaded) {                         // the split is up: only the right pane changes
+    if (pd && L.loaded && held) {                 // the split is up and fresh: only the right pane changes
       markCur(view, id);
       if (id) await loadDetail(pd, id, true);
       return;
     }
     view.className = 'view';
-    paint(view, '<div class="split"><div class="pane-l" data-pl>' + listShell() + '</div><div class="pane-d" data-pd>' + top('Order', '') + '<div class="body">' + skel(1, true) + '</div></div></div>');
+    paint(view, '<div class="split"><div class="pane-l" data-pl>' + listShell(held) + '</div><div class="pane-d" data-pd></div></div>');
+    mark(view, 'orders', 0, !held);
     wireSearch(view);
-    await loadList(view);
-    const first = id || (L.rows[0] && L.rows[0].id);
-    markCur(view, first);
-    if (first) await loadDetail($('[data-pd]', view), first, true);
-    else paint($('[data-pd]', view), top('Orders', '') + '<div class="body"><div class="card empty">No orders yet.</div></div>');
+    const pane = $('[data-pd]', view);
+    if (held) paintList(view);
+    const first = id || (held && L.rows[0] && L.rows[0].id);
+    if (first) {
+      markCur(view, first);
+      await Promise.all([fetchOrders(), loadDetail(pane, first, true)]);
+      return;
+    }
+    screen(pane, 'order', 0, top('Order', '', '', '', 'nosync'), orderSkel(), true);
+    await fetchOrders();
+    const f = L.rows[0] && L.rows[0].id;
+    markCur(view, f);
+    if (f) await loadDetail(pane, f, true);
+    else screen(pane, 'order', 0, top('Orders', '', '', '', 'nosync'), '<div class="card empty">No orders yet.</div>');
     return;
   }
   view.className = 'view single';
   if (id) { await loadDetail(view, id, false); return; }
-  paint(view, listShell());
+  paint(view, listShell(held));
+  mark(view, 'orders', 0, !held);
   wireSearch(view);
-  await loadList(view);
+  if (held) paintList(view);
+  await fetchOrders();
 }
 
 function markCur(view, id) {
-  $$('.row.ord', view).forEach((r) => r.classList.toggle('cur', +r.getAttribute('data-o') === +id));
+  L.cur = +id || 0;
+  $$('.row.ord', view).forEach((r) => r.classList.toggle('cur', +r.getAttribute('data-o') === L.cur));
 }
 
 /* ------------------------------------------------------------------ list */
@@ -64,11 +85,21 @@ const bulkBar = () => '<div class="bulk" role="region" aria-label="Bulk actions"
   + '<button type="button" data-act="bulk" data-v="processing">' + ic('refresh') + 'Processing</button><button type="button" data-act="bulk" data-v="completed">' + ic('check') + 'Complete</button>'
   + '<button type="button" data-act="bulk" data-v="onhold">' + ic('clock') + 'On hold</button><button type="button" data-act="bulk-more">' + ic('dots') + 'More</button></div></div>';
 
-function listShell() {
-  return selHdr() + top('Orders', '<span data-sub>Updated ' + esc(time(new Date().toISOString())) + '</span>', '', '', 'norm')
+function listShell(held) {
+  return selHdr() + top('Orders', '<span data-sub>' + (held ? '' : 'Syncing…') + '</span>', '', '', 'norm')
     + '<div class="body"><label class="search">' + ic('search', 's') + '<input type="search" data-search placeholder="Search orders, names, products" aria-label="Search orders" value="' + esc(L.q) + '" enterkeyhint="search"><kbd>/</kbd></label>'
-    + '<div class="chips" role="group" aria-label="Filter by status" data-chips></div><div data-list>' + skel(5) + '</div></div>' + bulkBar();
+    + '<div class="chips" role="group" aria-label="Filter by status" data-chips>' + (held ? '' : skChips(5)) + '</div><div data-list>' + (held ? '' : listSkel()) + '</div></div>' + bulkBar();
 }
+
+/* Grey bars shaped like the list: a day heading and order rows (initials,
+   number and name, date line, total and status pill). */
+const listSkel = () => skNote + '<div class="og"><div class="gh">' + ln(15, 'k-h') + '</div><div class="list">'
+  + times(6, () => '<div class="row ord">' + blk('av') + '<div class="rm">' + ln(55) + ln(40, 'k-sm') + '</div><div class="re">' + ln(0, 'k-amt') + blk('k-pill') + '</div></div>') + '</div></div>';
+
+/* …and the order: name and status, products, payment. */
+const orderSkel = () => skNote + '<div class="od-sum">' + ln(55, 'k-nm') + '<div class="ln">' + blk('k-pill') + ln(35, 'k-sm') + '</div></div>'
+  + '<section class="card"><h4 class="sh">' + ln(25, 'k-h') + '</h4>' + times(2, () => '<div class="row">' + blk('th') + '<div class="rm">' + ln(70) + ln(45, 'k-sm') + '</div><div class="re">' + ln(0, 'k-amt') + '</div></div>') + '</section>'
+  + '<section class="card"><h4 class="sh">' + ln(20, 'k-h') + '</h4>' + times(4, () => '<div class="kv">' + ln(30) + ln(0, 'k-amt') + '</div>') + '</section>';
 
 function wireSearch(view) {
   const input = $('[data-search]', view);
@@ -76,18 +107,47 @@ function wireSearch(view) {
   input.addEventListener('input', debounce(() => { L.q = input.value.trim(); loadList(view); }, 300));
 }
 
+/**
+ * The list's one request for the current filters. Joins one already in the
+ * air for the same filters; `force` starts afresh (after a write or a new
+ * filter). Lands into the list if it is on screen — never under a finger
+ * mid-selection. A newer first page keeps the pages he had already opened.
+ */
+export function fetchOrders(passive, force) {
+  const q = query();
+  return once('orders?' + q, async () => {
+    const g = S.gen;
+    const r = await api('GET', q, undefined, passive);
+    if (g !== S.gen || q !== query()) return false;    // locked, or the filters moved on
+    const host = onScreen('orders');
+    if (!r.ok) {
+      const list = host && $('[data-list]', host);
+      if (list && host.hasAttribute('data-sk')) { paint(list, errorBox(r.data.message)); mark(host, 'orders', 0, false); }
+      return false;
+    }
+    const keep = q === L.lastQ && L.paged;
+    L.rows = merge(r.data.orders, L.rows, keep);
+    if (!keep) { L.next = r.data.next; L.paged = false; }
+    L.lastQ = q;
+    if (r.data.counts) { L.counts = r.data.counts; L.payments = r.data.payments || []; }
+    L.today = r.data.today || L.today; L.yesterday = r.data.yesterday || L.yesterday;
+    L.loaded = true;
+    L.at = new Date().toISOString();
+    landed('orders');
+    if (host && !L.sel.size) { paintList(host); mark(host, 'orders', 0, false); }
+    document.dispatchEvent(new CustomEvent('oa:badge'));
+    return true;
+  }, force);
+}
+
 async function loadList(view, more) {
-  const r = await api('GET', query(more ? { before: L.next } : null));
-  const list = $('[data-list]', view);
-  if (!list) return;
-  if (!r.ok) { paint(list, errorBox(r.data.message)); return; }
-  L.rows = more ? L.rows.concat(r.data.orders) : r.data.orders;
+  if (!more) { await fetchOrders(false, true); return; }
+  const r = await api('GET', query({ before: L.next }));
+  if (!r.ok) { toast(r.data.message || 'Could not load more.', true); return; }
+  L.rows = L.rows.concat(r.data.orders);
   L.next = r.data.next;
-  if (r.data.counts) { L.counts = r.data.counts; L.payments = r.data.payments || []; }
-  L.today = r.data.today || L.today; L.yesterday = r.data.yesterday || L.yesterday;
-  L.loaded = true;
-  L.at = new Date().toISOString();
-  paintList(view);
+  L.paged = true;
+  if ($('[data-list]', view)) paintList(view);
 }
 
 function paintList(view) {
@@ -113,7 +173,7 @@ function paintList(view) {
 }
 
 export function row(o) {
-  return '<div class="row ord' + (L.sel.has(o.id) ? ' on' : '') + '" data-o="' + o.id + '"><button type="button" class="sel" data-act="sel" aria-label="Select order ' + esc(o.number) + '">' + av(o.name) + ic('check') + '</button>'
+  return '<div class="row ord' + (L.sel.has(o.id) ? ' on' : '') + (o.id === L.cur ? ' cur' : '') + '" data-o="' + o.id + '"><button type="button" class="sel" data-act="sel" aria-label="Select order ' + esc(o.number) + '">' + av(o.name) + ic('check') + '</button>'
     + '<a class="rm" href="#/orders/' + o.id + '"><b>#' + esc(o.number) + ' <span>' + esc(o.name) + '</span></b><small>' + esc(day(o.created_at)) + ' · ' + esc(time(o.created_at))
     + (o.items !== null && o.items !== undefined ? ' · ' + o.items + ' item' + (o.items === 1 ? '' : 's') : '') + '</small></a>'
     + '<a class="re" href="#/orders/' + o.id + '" tabindex="-1"><b>' + esc(o.total_display) + '</b>' + pill(o.status) + '</a></div>';
@@ -139,12 +199,29 @@ export function clearSelection() {
 /* ---------------------------------------------------------------- detail */
 
 async function loadDetail(host, id, pane) {
-  if (!pane) paint(host, top('Order', '', back('#/orders', 'Back to orders')) + '<div class="body">' + skel(1, true) + skel(2) + '</div>');
-  const r = await api('GET', 'orders/' + id);
-  if (!r.ok) { paint(host, top('Order', '', pane ? '' : back('#/orders')) + '<div class="body">' + errorBox(r.data.message || 'This order could not be opened.') + '</div>'); return; }
-  O = r.data.order;
-  O.pane = pane;
-  paintDetail(host);
+  if (O && O.id === +id && isFresh('order:' + id)) { O.pane = pane; paintDetail(host); }
+  else screen(host, 'order', id, top('Order', '', pane ? '' : back('#/orders', 'Back to orders'), '', pane ? 'nosync' : ''), orderSkel(), true);
+  await fetchOrder(id);
+}
+
+/** One order's request; lands into whichever pane or screen shows it. */
+export function fetchOrder(id, passive, force) {
+  return once('order:' + id, async () => {
+    const g = S.gen;
+    const r = await api('GET', 'orders/' + id, undefined, passive);
+    if (g !== S.gen) return false;
+    const host = onScreen('order', id);
+    const pane = !!host && host.hasAttribute('data-pd');
+    if (!r.ok) {
+      if (host && host.hasAttribute('data-sk')) screen(host, 'order', id, top('Order', '', pane ? '' : back('#/orders'), '', pane ? 'nosync' : ''), errorBox(r.data.message || 'This order could not be opened.'));
+      return false;
+    }
+    O = r.data.order;
+    O.pane = pane;
+    landed('order:' + id);
+    if (host) paintDetail(host);
+    return true;
+  }, force);
 }
 
 function payBlock(o) {
@@ -171,8 +248,7 @@ function paintDetail(host) {
   const primary = o.can.paid ? '<button type="button" class="btn pri" data-act="paid">' + ic('card', 's') + 'Mark as paid</button>'
     : (o.can.status && ['processing', 'onhold', 'shipped'].indexOf(o.status) !== -1 ? '<button type="button" class="btn pri" data-act="setst" data-v="completed">' + ic('check', 's') + 'Mark complete</button>' : '');
   const phone = o.phone || (o.shipping && o.shipping.phone) || '';
-  paint(host, top('Order #' + esc(o.number), esc(day(o.created_at)) + ' · ' + esc(t.total), O.pane ? '' : back('#/orders', 'Back to orders'), right)
-    + '<div class="body">'
+  screen(host, 'order', o.id, top('Order #' + esc(o.number), esc(day(o.created_at)) + ' · ' + esc(t.total), O.pane ? '' : back('#/orders', 'Back to orders'), right, O.pane ? 'nosync' : ''), ''
     + '<div class="od-sum"><p class="nm">' + esc(o.customer.name || o.email) + '</p><div class="ln">'
     + (o.can.status ? '<button type="button" class="pill" data-s="' + esc(pillCode(o.status)) + '" data-act="status" aria-label="Change status, now ' + esc(stWord(o.status)) + '">' + esc(stWord(o.status)) + ' ' + ic('edit') + '</button>' : pill(o.status))
     + '<span>' + esc(when(o.created_at)) + '</span></div></div>'
@@ -194,7 +270,7 @@ function paintDetail(host) {
     + (o.customer_note ? '<div class="kv"><span>Customer note</span><span>' + esc(o.customer_note) + '</span></div>' : '') + '</section>'
     + (o.origin ? '<section class="card"><h4 class="sh">Attribution</h4><div class="kv"><span>Origin</span><span>' + esc(o.origin) + '</span></div></section>' : '')
     + '<section class="card"><h4 class="sh">Order notes' + (o.can.note ? ' <button type="button" class="tbtn" data-act="note">+ Add a note</button>' : '') + '</h4><ul class="tl" data-tl>'
-    + o.notes.map(noteLi).join('') + '</ul></section></div>');
+    + o.notes.map(noteLi).join('') + '</ul></section>');
 }
 
 const noteLi = (n, fresh) => '<li class="' + (n.customer ? 'c ' : '') + esc(n.tone || '') + (fresh ? ' new' : '') + '">' + esc(n.content) + '<small>' + esc(when(n.at)) + (n.author ? ' · ' + esc(n.author) : '') + '</small></li>';
@@ -249,7 +325,7 @@ async function setStatus(host, status) {
   if (!r.ok) { toast(r.data.message || 'Not changed.', true); return; }
   const was = O.status;
   toast('#' + O.number + ' is now ' + stWord(r.data.status));
-  await loadDetail(host, O.id, O.pane);
+  await fetchOrder(O.id, false, true);
   const lr = L.rows.find((x) => x.id === O.id);
   if (lr) { lr.status = r.data.status; const el = document.querySelector('.row.ord[data-o="' + O.id + '"] .pill'); if (el) { el.setAttribute('data-s', pillCode(r.data.status)); el.textContent = stWord(r.data.status); } }
   if (was !== r.data.status) { L.counts[was] = Math.max(0, (L.counts[was] || 1) - 1); L.counts[r.data.status] = (L.counts[r.data.status] || 0) + 1; }
@@ -273,7 +349,7 @@ async function bulk(view, status, btn) {
     toast(r.data.changed + ' order' + (r.data.changed === 1 ? '' : 's') + ' marked ' + stWord(status) + (refused.length ? ' · ' + refused.length + ' refused: ' + refused[0].reason : ''), refused.length > 0);
     L.sel.clear();
     await loadList(view);
-    if (O && ids.indexOf(O.id) !== -1) { const pd = $('[data-pd]', view); if (pd) await loadDetail(pd, O.id, true); }
+    if (O && ids.indexOf(O.id) !== -1) await fetchOrder(O.id, false, true);
   });
 }
 
@@ -340,14 +416,14 @@ function paidSheet(host) {
         if (!r.ok) { const er = $('[data-err]', panel); er.hidden = false; er.textContent = r.data.message || 'Not saved.'; return; }
         close();
         toast(r.data.message || 'Marked as paid');
-        await loadDetail(host, O.id, O.pane);
+        await fetchOrder(O.id, false, true);
       });
     });
   });
 }
 
 /** Refresh the list quietly (the live poll found changes). */
-export async function refreshOrdersList(view) {
-  if (L.sel.size || !$('[data-list]', view)) return;
-  await loadList(view);
+export async function refreshOrdersList() {
+  if (L.sel.size || !onScreen('orders')) return;
+  await fetchOrders(true);
 }

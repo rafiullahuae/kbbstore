@@ -7,7 +7,7 @@ namespace App\Services\OwnerApp;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The owner app's two knobs, both under Platform → Users & Roles → Owner app.
+ * The owner app's three knobs, all under Platform → Users & Roles → Owner app.
  *
  *   owner_app_idle_hours   how long an unlocked app stays unlocked with nobody
  *                          using it before it asks for the PIN again (1–168,
@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\DB;
  *   owner_app_low_stock    a product at or below this many units is "low
  *                          stock" in the app and in its notifications (0–999,
  *                          default 5 — the shop's own low_stock_at default).
+ *   owner_app_stale_minutes  how old the app's last sync may be before opening
+ *                          it shows grey loading bars instead of refreshing
+ *                          silently (5–240, default 30 — the owner: "after 1
+ *                          minute ... silently refreshed", "after 40 minutes
+ *                          or 1 hour, it should give loading bars").
  *
  * One query per request, read straight from `settings`: Setting::map() is a
  * process-level memo (CLAUDE.md, landmines) and these are written by an admin
@@ -26,9 +31,11 @@ final class OwnerAppSettings
 
     public const LOW_STOCK = 'owner_app_low_stock';
 
-    public const DEFAULTS = [self::IDLE => 12, self::LOW_STOCK => 5];
+    public const STALE = 'owner_app_stale_minutes';
 
-    public const BOUNDS = [self::IDLE => [1, 168], self::LOW_STOCK => [0, 999]];
+    public const DEFAULTS = [self::IDLE => 12, self::LOW_STOCK => 5, self::STALE => 30];
+
+    public const BOUNDS = [self::IDLE => [1, 168], self::LOW_STOCK => [0, 999], self::STALE => [5, 240]];
 
     /** @var array<string,int>|null */
     private static ?array $memo = null;
@@ -61,6 +68,17 @@ final class OwnerAppSettings
     public static function lowStock(): int
     {
         return self::all()[self::LOW_STOCK];
+    }
+
+    public static function staleMinutes(): int
+    {
+        return self::all()[self::STALE];
+    }
+
+    /** What the admin screen reads and writes, under the names its inputs use. */
+    public static function forAdmin(): array
+    {
+        return ['idle_hours' => self::idleHours(), 'low_stock' => self::lowStock(), 'stale_minutes' => self::staleMinutes()];
     }
 
     /** @param array<string,mixed> $values */

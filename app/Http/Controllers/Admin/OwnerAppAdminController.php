@@ -61,7 +61,7 @@ final class OwnerAppAdminController extends Controller
             'url' => $request->getSchemeAndHttpHost().rtrim($request->getBasePath(), '/').'/'.$path.'/',
             'path_from_env' => OwnerAppPath::isLockedByEnv(),
             'push_ready' => VapidKeys::publicKey() !== null,
-            'settings' => ['idle_hours' => OwnerAppSettings::idleHours(), 'low_stock' => OwnerAppSettings::lowStock()],
+            'settings' => OwnerAppSettings::forAdmin(),
             'groups' => OwnerAppEvents::GROUP_LABELS,
             'members' => $users->map(function (AdminUser $u) use ($members, $devices, $pushing) {
                 $m = $members[$u->id] ?? null;
@@ -175,14 +175,16 @@ final class OwnerAppAdminController extends Controller
         $data = $request->validate([
             'idle_hours' => ['sometimes', 'integer', 'min:1', 'max:168'],
             'low_stock' => ['sometimes', 'integer', 'min:0', 'max:999'],
-        ]);
+            'stale_minutes' => ['sometimes', 'integer', 'min:5', 'max:240'],
+        ], [], ['idle_hours' => 'Lock after (hours unused)', 'low_stock' => 'Low stock at (units)', 'stale_minutes' => 'Show loading bars after (minutes)']);
 
         OwnerAppSettings::put([
             OwnerAppSettings::IDLE => $data['idle_hours'] ?? OwnerAppSettings::idleHours(),
             OwnerAppSettings::LOW_STOCK => $data['low_stock'] ?? OwnerAppSettings::lowStock(),
+            OwnerAppSettings::STALE => $data['stale_minutes'] ?? OwnerAppSettings::staleMinutes(),
         ]);
 
-        return response()->json(['ok' => true, 'settings' => ['idle_hours' => OwnerAppSettings::idleHours(), 'low_stock' => OwnerAppSettings::lowStock()]]);
+        return response()->json(['ok' => true, 'settings' => OwnerAppSettings::forAdmin()]);
     }
 
     /** A new secret address. The old one stops answering and every phone signs in again at the new one. */
