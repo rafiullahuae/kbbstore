@@ -191,6 +191,13 @@ const CLC_COVERED = [
      * batch is JSON and the render case counts tiles in HTML.
      */
     'resources/views/partials/listing-batch.blade.php' => '/shop?kbbbatch=1, the scroll batch',
+    /*
+     * Lane NF. The shop's 404 page draws a "Trending now" strip through
+     * partials/home/grid from NotFoundPage::trending(), one cached query with
+     * `with('brand:id,name,slug')`. Covered by its own render below, at its
+     * real 404 status, cold.
+     */
+    'resources/views/store/not-found.blade.php' => '/clc-no-such-page/, the 404 page',
 ];
 
 /* ══════════════════════════ reading the source ═══════════════════════════ */
@@ -354,19 +361,19 @@ function clcWatch(callable $fn): array
 }
 
 /** One page, rendered with the guard on. */
-function clcPage(string $path, array $cookies = []): array
+function clcPage(string $path, array $cookies = [], int $status = 200): array
 {
     SettingsService::forgetMemo();
     app()->forgetScopedInstances();
 
     $html = '';
 
-    $violations = clcWatch(function () use ($path, $cookies, &$html): void {
+    $violations = clcWatch(function () use ($path, $cookies, $status, &$html): void {
         $html = test()
             ->withUnencryptedCookies($cookies)
             ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
             ->get($path)
-            ->assertOk()
+            ->assertStatus($status)
             ->getContent();
     });
 
@@ -745,6 +752,18 @@ it('renders every page that calls a contracted template without one lazy load', 
         if ($result['violations'] !== []) {
             $offenders[] = clcFailure($path, $result['violations']);
         }
+    }
+
+    // The 404 page (Lane NF), cold, so its trending strip runs its query here.
+    Cache::flush();
+    $missing = clcPage('/clc-no-such-page/', [], 404);
+
+    if ($missing['tiles'] < 3) {
+        $thin[] = '/clc-no-such-page/ rendered ' . $missing['tiles'] . ' tiles';
+    }
+
+    if ($missing['violations'] !== []) {
+        $offenders[] = clcFailure('/clc-no-such-page/', $missing['violations']);
     }
 
     // The homepage last, and cold, because Cache::flush() would otherwise throw

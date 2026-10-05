@@ -2215,6 +2215,12 @@ KBB_BH_CSS;
     public static function approvedInsertions(): array
     {
         return [
+            // The shop's 404 page in its place (Lane NF): see the removal of
+            // the same name. The whole '(404)' document, design B, once.
+            'the bare framework 404 page (Lane NF)' => [
+                'pattern' => '#\A.*?<div class="nf nf-b"[^>]* data-nf="b">.*\z#s',
+                'hits' => 1,
+            ],
             // 2.60.393: the phone's 1 / 2 column buttons, beside Sort, on the
             // shop and category listing (hidden on a laptop).
             'the phone 1 / 2 column buttons (2.60.393)' => [
@@ -3069,6 +3075,21 @@ KBB_BH_CSS;
     public static function approvedRemovals(): array
     {
         return [
+            /*
+             * THE BARE FRAMEWORK 404 GOES (Lane NF). The owner: "i want 404 page
+             * for my site so nothing can give not found error page". The
+             * before side of '(404)' is Laravel's own "404 | Not Found"
+             * document, which has no header, footer or shop markup to compare,
+             * so it is cut whole; its replacement — the shop's 404 page — is
+             * cut whole from the after side by the insertion of the same name.
+             * The chrome that page DOES carry is pinned against /new-in/ byte
+             * for byte by NotFoundPageTest, so nothing escapes comparison.
+             * Exactly one document, the 404.
+             */
+            'the bare framework 404 page (Lane NF)' => [
+                'pattern' => '#\A<!DOCTYPE html>\n<html lang="en">.*?<title>Not Found</title>.*\z#s',
+                'hits' => 1,
+            ],
             /*
              * ROW 55 — THE THREE OLD SECTIONS THE NEW ONES REPLACE. (Lane HA)
              *

@@ -23,7 +23,7 @@ class CollectionController extends Controller
     private const PER_PAGE = 24;
 
     /** Same narrow select the shop uses; ShopController keeps its copy private. */
-    private const CARD_COLUMNS = [
+    public const CARD_COLUMNS = [
         'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image',
         'rating', 'review_count', 'featured', 'position', 'type', 'total_sales',
