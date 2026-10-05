@@ -3367,7 +3367,7 @@ window.kbbNavClick = kbbNavClick;
    `modules` used to be declared twice in this object: once as ['Platform',…]
    and again, later, as ['Store',…]. The second silently won, so anyone editing
    the first saw nothing change. One declaration now. */
-const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],siteaddr:['Platform','Site address'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language settings'],'tr-progress':['Translation','Progress'],'tr-strings':['Translation','Strings'],'tr-machine':['Translation','Machine translation'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Tools'],'rev-likes':['Reviews','Bulk Tools'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],/* 'rev-capsule' has no sidebar row of its own any more — it and 'rev-badge'
+const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],siteaddr:['Platform','Site address'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],'notfoundpage':['Safety','404 page'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language settings'],'tr-progress':['Translation','Progress'],'tr-strings':['Translation','Strings'],'tr-machine':['Translation','Machine translation'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Tools'],'rev-likes':['Reviews','Bulk Tools'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],/* 'rev-capsule' has no sidebar row of its own any more — it and 'rev-badge'
    open the same screen, whose two tabs are the two questions those screens used
    to ask of one set of seven settings. The id stays routable for #rev-capsule
    and ?go=rev-capsule, and it names the screen it actually opens rather than a
@@ -8518,7 +8518,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','pagination','ownerapp','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','pagination','ownerapp','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email','notfoundpage']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -24334,6 +24334,8 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 @include('admin.partials.pagination-screen')
 {{-- App -> Owner App (Lane OA4): mounts Users & Roles' owner-app panels and Customise app on their own screen; that tab becomes a pointer. --}}
 @include('admin.partials.owner-app-screen')
+{{-- Safety -> 404 page (Lane NF): the design, the words, the links and the per-device sizes of the shop's 404 page. It wraps window.go for 'notfoundpage'; its sidebar row is the LATE_NAV entry. --}}
+@include('admin.partials.not-found-page-screen')
 @include('admin.partials.banners-screen')
 {{-- Appearance -> Set -> Desktop / Mobile (Lane SA). Late-rendered for the same
      reason the four above it are: it runs after this file's own script has

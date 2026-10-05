@@ -47,7 +47,8 @@ it('can apply the handover, every anchor exactly as often as it says', function 
     /* MUTATION: change any anchor in docs/nf-wiring.json by one character -> red, naming the block. */
     $w = nfWired();
 
-    expect(array_column($w['edits'], 'n'))->toBe([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    // Block 3 (the LATE_NAV row) retired at integration: the row is in AdminNav.
+    expect(array_column($w['edits'], 'n'))->toBe([1, 2, 4, 5, 6, 7, 8, 9])
         ->and($w['problems'])->toBe([], implode("\n", $w['problems']));
 });
 
@@ -64,7 +65,8 @@ it('puts the screen in the console exactly once: include, title, sidebar row and
 
     expect(substr_count($app, "@include('admin.partials.not-found-page-screen')"))->toBe(1)
         ->and(substr_count($app, "'notfoundpage':['Safety','404 page']"))->toBe(1)
-        ->and(substr_count($app, "{screen:'notfoundpage',"))->toBe(1);
+        // The row itself lives in App\Support\AdminNav since lane AP (2.60.404).
+        ->and(substr_count((string) file_get_contents(app_path('Support/AdminNav.php')), "['id' => 'notfoundpage', 'label' => '404 page', 'cap' => 'notfoundpage.manage'"))->toBe(1);
 
     expect(preg_match('/const LATE_RENDERED=new Set\(\[(.*?)\]\);/s', $app, $m))->toBe(1)
         ->and(substr_count($m[1], "'notfoundpage'"))->toBe(1);
@@ -74,17 +76,17 @@ it('puts the screen in the console exactly once: include, title, sidebar row and
 });
 
 it('declares the same sidebar row the partial registers, so the build-time copy cannot drift', function () {
-    $app = nfWired()['files']['resources/views/admin/app.blade.php'];
+    // AdminNav (lane AP) is the sidebar's single definition; the partial's own
+    // kbbAddNavEntry call must name the same label, icon and group.
+    $nav = (string) file_get_contents(app_path('Support/AdminNav.php'));
     $partial = (string) file_get_contents(resource_path('views/admin/partials/not-found-page-screen.blade.php'));
 
-    preg_match("/\{screen:'notfoundpage',label:'([^']+)',group:'([^']+)',after:\[([^\]]*)\],icon:'([^']+)'\}/", $app, $row);
-    preg_match("/label: '([^']+)',\s*icon: '([^']+)',\s*group: '([^']+)',\s*after: \[([^\]]*)\]/", $partial, $call);
+    preg_match("/\['id' => 'notfoundpage', 'label' => '([^']+)', 'cap' => '[^']+', 'late' => true, 'icon' => '([^']+)'\]/", $nav, $row);
+    preg_match("/label: '([^']+)',\s*icon: '([^']+)',\s*group: '([^']+)'/", $partial, $call);
 
     expect($row)->not->toBe([])->and($call)->not->toBe([])
         ->and($row[1])->toBe($call[1])
-        ->and($row[2])->toBe($call[3])
-        ->and(str_replace(' ', '', $row[3]))->toBe(str_replace(' ', '', $call[4]))
-        ->and($row[4])->toBe($call[2])
+        ->and($row[2])->toBe($call[2])
         ->and($call[3])->toBe('Safety');
 });
 
@@ -103,6 +105,9 @@ it('keeps every other lane’s wiring record applicable after this one', functio
         }
         foreach (json_decode((string) file_get_contents($f), true) as $e) {
             if (! isset($wired[$e['file']])) {
+                continue;
+            }
+            if (\Tests\Support\RetiredNavLiterals::superseded($e['file'], $e['replacement'])) {
                 continue;
             }
             $src = $wired[$e['file']];

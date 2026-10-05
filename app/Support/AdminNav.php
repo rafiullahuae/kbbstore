@@ -131,6 +131,7 @@ final class AdminNav
             ['id' => 'debug', 'label' => 'Debug & Monitor', 'cap' => 'system.diagnostics', 'icon' => self::I['debug']],
             ['id' => 'sandbox', 'label' => 'Sandbox & Deploy', 'cap' => 'updates.manage', 'icon' => self::I['sandbox']],
             ['id' => 'democontent', 'label' => 'Demo Content', 'read' => 'admin-api/demo-content', 'icon' => '<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],
+            ['id' => 'notfoundpage', 'label' => '404 page', 'cap' => 'notfoundpage.manage', 'late' => true, 'icon' => '<circle cx="12" cy="12" r="9"/><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M8.5 16c1.2-1 2.3-1 3.5 0s2.3 1 3.5 0"/><path d="M13 3l-2 4 2 2-1 3"/>'],
         ]],
         ['sec' => 'Catalog', 'rows' => [
             ['id' => 'catalog', 'label' => 'Catalog', 'read' => 'admin-api/catalog-products-list', 'icon' => self::I['catalog']],

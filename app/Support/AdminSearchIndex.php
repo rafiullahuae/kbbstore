@@ -141,6 +141,10 @@ final class AdminSearchIndex
             ],
         ],
         'sandbox' => [],
+        // App → Owner App (Lane OA4): access, PINs, phones, the address, security and Customise app.
+        'ownerapp' => [
+            '' => ['Owner app', 'Access & security', 'Set PIN', 'Custom address', 'Customise app', 'Show Gross and Net revenue', 'Lock-screen notification text'],
+        ],
         // Safety → 404 page (Lane NF): the design, the words and the per-device sizes.
         'notfoundpage' => [
             '' => ['Design', 'Global', 'Desktop', 'Mobile', 'Trending now', 'Accent colour', 'Reset to defaults'],

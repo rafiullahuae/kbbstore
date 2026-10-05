@@ -29,7 +29,7 @@
   "file": "resources/views/admin/app.blade.php",
   "anchor": "'sets','product-tabs','banners',",
   "count": 1,
-  "replacement": "'sets','product-tabs','pagination','banners',"
+  "replacement": "'sets','product-tabs','pagination','ownerapp','banners',"
  },
  {
   "n": 5,
@@ -53,7 +53,7 @@
   "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
   "anchor": "'sets','product-tabs','banners',",
   "count": 1,
-  "replacement": "'sets','product-tabs','pagination','banners',"
+  "replacement": "'sets','product-tabs','pagination','ownerapp','banners',"
  },
  {
   "n": 8,
@@ -61,6 +61,6 @@
   "file": "docs/BG-ADMIN-APP-BLOCKS.md",
   "anchor": "'sets','product-tabs','banners',",
   "count": 2,
-  "replacement": "'sets','product-tabs','pagination','banners',"
+  "replacement": "'sets','product-tabs','pagination','ownerapp','banners',"
  }
 ]

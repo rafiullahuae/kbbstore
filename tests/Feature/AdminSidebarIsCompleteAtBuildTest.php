@@ -362,7 +362,8 @@ it('renders the sidebar the console settled on, group by group and row by row', 
         'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'cache'],
         // App: added after the capture, at the owner's request (5 October).
         'App' => ['siteapp', 'ownerapp'],
-        'Safety' => ['debug', 'sandbox', 'democontent'],
+        // 'notfoundpage' — Safety → 404 page (Lane NF), after Demo Content.
+        'Safety' => ['debug', 'sandbox', 'democontent', 'notfoundpage'],
         'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'routines', 'category-tree', 'brands-manager', 'pagination'],
         'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'import', 'orders',
             'order-new', 'coupon-editor', 'payments', 'paygw', 'security', 'analytics', 'search', 'seo', 'seokeywords',

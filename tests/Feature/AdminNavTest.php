@@ -96,7 +96,7 @@ it('maps every row to a capability the route map knows, through a read that is a
     }
 
     expect($bad)->toBe([]);
-    expect(count(AdminNav::rows()))->toBe(95);
+    expect(count(AdminNav::rows()))->toBe(96); // + Safety → 404 page (lane NF, 2.60.404)
 });
 
 it('fails closed: an unknown read, an unknown role and no account see nothing they cannot open', function () {

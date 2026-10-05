@@ -170,7 +170,7 @@ Anchor (occurs once):
 Replacement:
 
 ```
-'paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
+'paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email','notfoundpage']);
 ```
 
 > **Block 3's replacement above also carries `,'pagewash':['Appearance','Page
@@ -205,7 +205,7 @@ Anchor (occurs once, in `docs/T1B-ADMIN-APP-BLOCKS.md`):
 Replacement:
 
 ```
-'paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
+'paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email','notfoundpage']);
 ```
 
 ---
