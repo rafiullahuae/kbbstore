@@ -8,7 +8,7 @@ declare(strict_types=1);
  * held against it. Run through tools/mac-preview.sh; never against a real
  * database.
  *
- *   owner@example.com / PIN 4826   Full Admin (Rafi)
+ *   owner@example.com / PIN 482615   Full Admin (Rafi)
  *   ayesha@example.com / PIN 7391  Customer Support (Ayesha)
  */
 
@@ -159,7 +159,7 @@ foreach ([
 // Owner-app people.
 $owner = DB::table('admin_users')->insertGetId(['name' => 'Rafi Ullah', 'email' => 'owner@example.com', 'password' => Hash::make('preview-password'), 'role' => 'owner', 'created_at' => now(), 'updated_at' => now()]);
 $staff = DB::table('admin_users')->insertGetId(['name' => 'Ayesha Malik', 'email' => 'ayesha@example.com', 'password' => Hash::make('preview-password'), 'role' => 'support', 'created_at' => now(), 'updated_at' => now()]);
-foreach ([[$owner, '4826'], [$staff, '7391']] as [$u, $pin]) {
+foreach ([[$owner, '482615'], [$staff, '739152']] as [$u, $pin]) {
     DB::table('owner_app_members')->insert(['admin_user_id' => $u, 'enabled' => true, 'pin_hash' => Hash::make($pin), 'pin_length' => strlen($pin),
         'pin_set_at' => now(), 'notify' => json_encode(['orders', 'status', 'payments', 'stock']), 'created_at' => now(), 'updated_at' => now()]);
 }
@@ -181,4 +181,4 @@ for ($c = 0; $c < 120; $c++) {
     DB::table('carts')->insert(['token' => (string) \Illuminate\Support\Str::uuid(), 'created_at' => now()->subMinutes($c * 3), 'updated_at' => now()]);
 }
 
-echo 'Owner app at /'.OwnerAppPath::current()."/  (owner@example.com / 4826)\n";
+echo 'Owner app at /'.OwnerAppPath::current()."/  (owner@example.com / 482615)\n";

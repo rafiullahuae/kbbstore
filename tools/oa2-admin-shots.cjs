@@ -76,7 +76,7 @@ const say = (s) => { lines.push(s); process.stdout.write(s + '\n'); };
   });
   await page.goto(BASE + APP + '/', { waitUntil: 'networkidle' });
   await page.fill('input[name=email]', 'owner@example.com');
-  await page.fill('input[name=pin]', '4826');
+  await page.fill('input[name=pin]', '482615');
   const enrol = page.waitForResponse((r) => r.url().endsWith('/api/enrol'));
   await page.click('[data-enrol] button[type=submit]');
   const body = await (await enrol).json();

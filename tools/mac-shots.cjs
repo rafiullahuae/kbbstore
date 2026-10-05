@@ -85,7 +85,7 @@ const closeSheets = async (page) => { await page.keyboard.press('Escape'); await
     await page.waitForSelector('[data-enrol]');
     await shot(page, dev, '00-sign-in', results);
     await page.fill('input[name=email]', 'owner@example.com');
-    await page.fill('input[name=pin]', '4826');
+    await page.fill('input[name=pin]', '482615');
     await page.fill('input[name=device_name]', dev);
     await page.click('[data-enrol] button[type=submit]');
     await page.waitForSelector('.rf', { timeout: 5000 }).catch(() => {});

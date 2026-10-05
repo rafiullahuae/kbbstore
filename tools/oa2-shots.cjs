@@ -104,7 +104,7 @@ async function bars(page, net, name, hash, rowSel) {
     await page.goto(BASE + APP + '/', { waitUntil: 'networkidle' });
     await page.waitForSelector('[data-enrol]');
     await page.fill('input[name=email]', 'owner@example.com');
-    await page.fill('input[name=pin]', '4826');
+    await page.fill('input[name=pin]', '482615');
     await page.fill('input[name=device_name]', 'oa2-' + dev);
 
     // 1. First open after sign-in: nothing held, so grey bars, every section at once.
@@ -210,7 +210,7 @@ async function bars(page, net, name, hash, rowSel) {
   const { ctx, page } = await newPage(browser, { w: 360, h: 800, ua: ANDROID, dpr: 1 });
   await page.goto(BASE + APP + '/', { waitUntil: 'networkidle' });
   await page.fill('input[name=email]', 'owner@example.com');
-  await page.fill('input[name=pin]', '4826');
+  await page.fill('input[name=pin]', '482615');
   await page.click('[data-enrol] button[type=submit]');
   await idle(page);
   await page.waitForSelector('.sheet.a2.open', { timeout: 2500 }).catch(() => {});
@@ -237,7 +237,7 @@ async function bars(page, net, name, hash, rowSel) {
   const rm = await newPage(browser, DEVICES['phone-390'], { reducedMotion: 'reduce' });
   await rm.page.goto(BASE + APP + '/', { waitUntil: 'networkidle' });
   await rm.page.fill('input[name=email]', 'owner@example.com');
-  await rm.page.fill('input[name=pin]', '4826');
+  await rm.page.fill('input[name=pin]', '482615');
   rm.net.delay = 1500;
   await rm.page.click('[data-enrol] button[type=submit]');
   await rm.page.waitForSelector('[data-sk]');
