@@ -3,6 +3,27 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.404
+**The admin menu loads complete at once (and hides); a new App menu with Site
+App and Owner App; your website installs as an app; a beautiful 404 page;
+and the shop is much lighter and faster.** Apply after .403. Runs its
+migrations. Hard refresh the admin and the shop.
+
+| Your request | Now |
+|---|---|
+| "upon hard refresh some menu items ... keeps missing ... delayed" | The whole left menu arrives with the page: ~6 s → under 1 s on a slow connection; later visits download 82 KB instead of 1.35 MB. Each role sees only what it can open |
+| "left panel ... close and open icon" | The panel icon at the far left of the top bar hides and shows the menu, remembered |
+| "keep controls under App (Main menu) > Site App / Owner App" | App → Site App and App → Owner App, under Platform |
+| "build the app for the site ... one icon to test" | The shop installs to the Home Screen (white KB on pink, "K-Beauty Bliss"); App → Site App switches it on/off. No install button on the site yet, as you said |
+| 404 page, option B, all four selectable, full controls | Safety → 404 page: design A/B/C/D (B default), words EN/AR, links, trending, colours, desktop / mobile sizes, live preview |
+| "increase the speed ... fix all issues the google specifies" | Right-sized photos everywhere: mobile LCP 4.4–12.1 s → 2.3–3.0 s, pages 1.2–4 MB → 0.17–0.5 MB; first product image loads first; CSS minified; two accessibility fixes |
+
+Install on a phone: Android Chrome ⋮ → Install app; iPhone Safari Share →
+Add to Home Screen → Add. Then place one test order each with Tabby, Tamara
+and card from inside the installed app.
+
+Files: see the package's update.json.
+
 ## 2.60.403
 **Menu editor in columns with drag-anywhere; brand pages on the panel design
 everywhere; owner-app sales figures fixed with date ranges; your own app
