@@ -631,6 +631,13 @@ final class AdminCapabilities
          */
         'roles.manage' => ['owner'],
         /*
+         * Platform -> Users & Roles -> Owner app (Lane MAC): who may open the
+         * PIN-unlocked phone app, their PIN, their phones, and the app's secret
+         * address. Its own capability, owner-only, failing closed: handing out
+         * a PIN is handing out a way in.
+         */
+        'ownerapp.manage' => ['owner'],
+        /*
          * Edit presence (Lane RL): "X is editing this product" and Take over.
          * presence.view is the heartbeat itself -- every role that can sign in
          * holds it, because seeing that somebody else has a record open gives
@@ -767,6 +774,8 @@ final class AdminCapabilities
         ['*', 'admin-api/roles', 'roles.manage'],
         ['*', 'admin-api/roles/*', 'roles.manage'],
         ['*', 'admin-api/roles/*/restore', 'roles.manage'],
+        ['*', 'admin-api/owner-app', 'ownerapp.manage'],
+        ['*', 'admin-api/owner-app/**', 'ownerapp.manage'],
         // Edit presence (Lane RL). TAKE FIRST: 'admin-api/presence/*' would match it.
         ['POST', 'admin-api/presence/take', 'presence.takeover'],
         ['POST', 'admin-api/presence/beat', 'presence.view'],

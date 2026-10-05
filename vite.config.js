@@ -81,6 +81,17 @@ export default defineConfig({
                 // can import the same module by its manifest address. Never
                 // linked by a storefront page.
                 'resources/js/kbb/admin/page-header-editor.js',
+                // The owner app (Lane MAC): its one script and one stylesheet,
+                // and the icons its manifest and service worker name. Loaded
+                // only by the app's own shell at its secret address; no
+                // storefront page and no admin page references any of them.
+                'resources/js/owner-app/owner-app.js',
+                'resources/css/owner-app/owner-app.css',
+                'resources/owner-app/icons/icon-192.png',
+                'resources/owner-app/icons/icon-512.png',
+                'resources/owner-app/icons/maskable-512.png',
+                'resources/owner-app/icons/apple-180.png',
+                'resources/owner-app/icons/badge-96.png',
                 ...fontLibrary,
             ],
             refresh: true,
