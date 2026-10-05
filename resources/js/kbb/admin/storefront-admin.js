@@ -189,8 +189,13 @@ export async function start() {
     document.head.appendChild(style);
 
     if (state.ctx.bar) drawBar(state.ctx);
-    if (state.ctx.edit) drawPencil(state.ctx.edit);
+    // A category's "Edit header" panel (Lane CH) does everything the pencil
+    // did there and more, so a category gets one button, not two -- except
+    // under a Catalog banner, which only the pencil edits.
+    const ch = state.ctx.categoryheader;
+    if (state.ctx.edit && !(ch && state.ctx.edit.type === 'category' && !ch.legacy_banner)) drawPencil(state.ctx.edit);
     if (state.ctx.pageheader) drawHeaderPill(state.ctx.pageheader);
+    if (ch) drawCategoryPill(ch);
 
     return state;
 }
@@ -364,6 +369,37 @@ function drawHeaderPill(ph) {
 
     host.classList.add('kbb-qe-host');
     host.appendChild(pill);
+}
+
+/* ---------------------------------------------- category header (Lane CH) */
+
+/**
+ * "Edit header" on a category page. The panel is its own chunk, fetched on
+ * the first press, as the page header's is.
+ */
+function drawCategoryPill(ch) {
+    const pill = h('button', {
+        type: 'button',
+        class: 'kbb-qe-pill',
+        'aria-haspopup': 'dialog',
+        'aria-label': `Edit the header of ${String(ch.name || 'this category')}`,
+        onclick: () => {
+            import('./category-header-editor.js')
+                .then((m) => m.openPanel(ch, state.ctx.csrf, pill, toast))
+                .catch(() => toast('The header editor could not load. Reload the page and try again.'));
+        },
+    }, svg(ICON.pencil), h('span', { text: 'Edit header' }));
+
+    const host = ch.legacy_banner ? null : (document.querySelector('[data-kbb-ch]') || document.querySelector('[data-kbb-title-header]'));
+    if (host) {
+        host.classList.add('kbb-qe-host');
+        host.appendChild(pill);
+        return;
+    }
+    const heading = document.querySelector('#content h1, main h1');
+    if (!heading) return;
+    pill.classList.add('kbb-qe-pill--plain');
+    heading.insertAdjacentElement('afterend', pill);
 }
 
 /* ------------------------------------------------------------------- editor */

@@ -197,6 +197,7 @@ final class AdminRoles
             'wabutton.manage' => 'WhatsApp button',
             'pagebanners.manage' => 'Page banners and the Super Sale products',
             'pageheader.manage' => 'Page header of the custom pages, and its “Edit header” panel on the shop',
+            'categoryheader.manage' => 'A category page’s “Edit header” panel on the shop, and its custom header area',
         ]],
         ['storefront', 'Storefront tools', [
             'storefront.adminbar' => 'See the admin bar on the shop',
