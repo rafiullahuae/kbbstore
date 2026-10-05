@@ -269,10 +269,15 @@ JS);
 
 /* -------------------------------------------- the CSRF protocol, client side */
 
-it('sends the key on every request but state, enrol and unlock, and keeps it in this tab only', function () {
+it('sends the key on every request but enrol and unlock, and keeps it in this tab only', function () {
     // (a) and (b) of the security review. DEFECT: a GET without the key (the
     // server now refuses it), the key sent to state/enrol/unlock, or the key
-    // in localStorage where it outlives the tab. MUTATION: restore
+    // in localStorage where it outlives the tab. STATE CARRIES IT (2.60.400):
+    // the server answers "unlocked" to state only with a valid key, so a key
+    // held back from state put every reload of the same tab on the PIN pad --
+    // found in the integrator's screenshot run, the first time the two lanes'
+    // halves ran together. MUTATION: put 'state' back in NO_KEY -> `state` is
+    // null, red. MUTATION: restore
     // `if (method !== 'GET' && S.csrf)` in api() and the orders GET loses its
     // header; write the key with store.set and `local` is not empty.
     $out = oa2Node(<<<'JS'
@@ -291,7 +296,7 @@ JS);
 
     expect($out)->toBe([
         'startKey' => 'from-tab',
-        'orders' => 'from-tab', 'write' => 'from-tab', 'state' => null, 'unlock' => null, 'enrol' => null,
+        'orders' => 'from-tab', 'write' => 'from-tab', 'state' => 'from-tab', 'unlock' => null, 'enrol' => null,
         'kept' => ['session' => ['oa.k' => 'fresh-key'], 'local' => []],
         'cleared' => null, 'mem' => null,
     ]);

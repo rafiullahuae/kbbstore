@@ -5,7 +5,9 @@
  * CSRF value comes only from POST enrol / unlock and lives in this module's
  * memory plus sessionStorage 'oa.k' (so a reload of the same tab keeps it;
  * never localStorage), and setKey(null) drops both on lock, forget and
- * sign-out. It rides on EVERY /api request except state, enrol and unlock.
+ * sign-out. It rides on EVERY /api request except enrol and unlock -- state
+ * included: the server reports a live session to state only when the key
+ * comes with it, so a reload of the same tab stays unlocked. (2.60.400)
  * The device and session tokens are HttpOnly cookies this code cannot read.
  * The PIN is never stored anywhere. localStorage holds three conveniences and
  * nothing else (see `store` below): whether the install sheet was offered,
@@ -53,7 +55,7 @@ export class AuthError extends Error { constructor(code) { super(code); this.cod
 let onAuth = () => {};
 export function onAuthLost(fn) { onAuth = fn; }
 
-const NO_KEY = ['state', 'enrol', 'unlock'];
+const NO_KEY = ['enrol', 'unlock'];
 
 /**
  * `passive` marks a GET nobody asked for — the 25 s changes poll and the

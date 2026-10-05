@@ -127,7 +127,7 @@ async function bars(page, net, name, hash, rowSel) {
     await shot(page, dev + '--02-dashboard-landed');
     say('  01 first open: requests fired ' + spread.join(', ') + ' (all within ' + Math.max(...net.log.map((x) => x.t - t0)) + 'ms: parallel)');
     say('     dashboard .body children heights, bars ' + JSON.stringify(skHero) + ' vs data ' + JSON.stringify(realHero));
-    say('     X-OA-CSRF on every GET but state: ' + net.log.filter((x) => x.method === 'GET').every((x) => x.key === (x.ep !== 'state')));
+    say('     X-OA-CSRF on every GET, state included once the key is held: ' + net.log.filter((x) => x.method === 'GET' && x.ep !== 'state').every((x) => x.key));
 
     // 2. Back after one minute: no bars, values swap in place, passive.
     net.delay = 1800;
