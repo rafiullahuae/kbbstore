@@ -506,6 +506,15 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
         // country, so total by construction; the real tie (COUNT(*), two
         // countries with the same number of carts) is broken by it.
         ['Services/CartTracking/CartTrackingReport.php', "orderBy('c.ct_country')"],
+        // Lane MAC (the owner app): three maps grouped by (product_id, name,
+        // image) and ending on name then product_id — the group key, image
+        // being a function of product_id, so total by construction; the real
+        // tie (SUM of quantity) is broken by them. And the payment-method
+        // filter list, grouped by payment_method and ordered by it, the same
+        // terms as the customer filter's country list above.
+        ['OwnerApp/CustomersController.php', "orderBy('i.product_id')"],
+        ['OwnerApp/DashboardController.php', "orderBy('i.product_id')"],
+        ['OwnerApp/OrdersController.php', "orderBy('payment_method')"],
     ];
 
     $root = app_path();

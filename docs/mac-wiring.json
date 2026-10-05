@@ -1,0 +1,26 @@
+[
+  {
+    "n": 1,
+    "file": "routes/web.php",
+    "count": 1,
+    "what": "the owner app's own routes, top level, above the admin login",
+    "anchor": "Route::get('/' . $adminPath . '/login',  [AdminAuthController::class, 'showLogin'])->name('admin.login');",
+    "replacement": "require __DIR__.'/owner-app.php';   // the owner app at its secret address (Lane MAC)\n\nRoute::get('/' . $adminPath . '/login',  [AdminAuthController::class, 'showLogin'])->name('admin.login');"
+  },
+  {
+    "n": 2,
+    "file": "routes/web.php",
+    "count": 1,
+    "what": "Users & Roles → Owner app endpoints, inside the admin-api group",
+    "anchor": "require __DIR__.'/admin-roles.php';   // Platform → Users & Roles → Roles / Members (Lane RL)",
+    "replacement": "require __DIR__.'/admin-roles.php';   // Platform → Users & Roles → Roles / Members (Lane RL)\n        require __DIR__.'/owner-app-admin.php';   // Users & Roles → Owner app: access, PINs, devices (Lane MAC)"
+  },
+  {
+    "n": 3,
+    "file": "bootstrap/providers.php",
+    "count": 1,
+    "what": "the owner app's order/stock hooks",
+    "anchor": "    App\\Providers\\MailServiceProvider::class,\n",
+    "replacement": "    App\\Providers\\MailServiceProvider::class,\n    // The owner app's three hooks: new orders, status changes, stock crossing\n    // the low line (Lane MAC). See the provider's own comment.\n    App\\Providers\\OwnerAppServiceProvider::class,\n"
+  }
+]

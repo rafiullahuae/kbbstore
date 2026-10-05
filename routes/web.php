@@ -223,6 +223,8 @@ use App\Http\Controllers\Admin\PageController as AdminPage;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
 
+require __DIR__.'/owner-app.php';   // the owner app at its secret address (Lane MAC)
+
 Route::get('/' . $adminPath . '/login',  [AdminAuthController::class, 'showLogin'])->name('admin.login');
 Route::post('/' . $adminPath . '/login', [AdminAuthController::class, 'login'])->name('admin.login.post');
 Route::post('/' . $adminPath . '/logout',[AdminAuthController::class, 'logout'])->name('admin.logout');
@@ -1035,6 +1037,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         Route::put('/users/{id}',            [AdminController::class, 'updateUser']);
         Route::delete('/users/{id}',         [AdminController::class, 'deleteUser']);
         require __DIR__.'/admin-roles.php';   // Platform → Users & Roles → Roles / Members (Lane RL)
+        require __DIR__.'/owner-app-admin.php';   // Users & Roles → Owner app: access, PINs, devices (Lane MAC)
         Route::get('/settings',              [AdminController::class, 'settings']);
         Route::put('/settings',              [AdminController::class, 'updateSettings']);
         Route::get('/reviews',               [AdminController::class, 'reviews']);

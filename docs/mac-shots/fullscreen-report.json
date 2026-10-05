@@ -1,0 +1,39 @@
+{
+ "before": {
+  "fs": false,
+  "cls": "can-fs",
+  "label": "Full screen"
+ },
+ "afterFirstTap": {
+  "fs": true,
+  "cls": "can-fs is-fs",
+  "label": "Exit full screen"
+ },
+ "exitMs": 66,
+ "layoutReadsDuringToggle": 0,
+ "layoutCountDelta": 2,
+ "afterIconExit": {
+  "fs": false,
+  "cls": "can-fs",
+  "label": "Full screen"
+ },
+ "afterNextTapWhileOff": {
+  "fs": false,
+  "cls": "can-fs",
+  "label": "Full screen"
+ },
+ "storedPreference": "off",
+ "afterIconEnter": {
+  "fs": true,
+  "cls": "can-fs is-fs",
+  "label": "Exit full screen"
+ },
+ "iphone": {
+  "cls": "",
+  "iconVisible": false
+ },
+ "tablet": {
+  "fs": false,
+  "cls": ""
+ }
+}

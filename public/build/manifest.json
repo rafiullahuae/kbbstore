@@ -64,6 +64,11 @@
     "src": "resources/css/kbb/sorina-reviews.css",
     "isEntry": true
   },
+  "resources/css/owner-app/owner-app.css": {
+    "file": "assets/owner-app-D9eIamkj.css",
+    "src": "resources/css/owner-app/owner-app.css",
+    "isEntry": true
+  },
   "resources/fonts/cairo/cairo-arabic.woff2": {
     "file": "assets/cairo-arabic-CJWMIGCx.woff2",
     "src": "resources/fonts/cairo/cairo-arabic.woff2"
@@ -289,5 +294,31 @@
     "name": "pdp-trust",
     "src": "resources/js/kbb/pdp-trust.js",
     "isEntry": true
+  },
+  "resources/js/owner-app/owner-app.js": {
+    "file": "assets/owner-app-Btyo-RYK.js",
+    "name": "owner-app",
+    "src": "resources/js/owner-app/owner-app.js",
+    "isEntry": true
+  },
+  "resources/owner-app/icons/apple-180.png": {
+    "file": "assets/apple-180-BP4CzRX-.png",
+    "src": "resources/owner-app/icons/apple-180.png"
+  },
+  "resources/owner-app/icons/badge-96.png": {
+    "file": "assets/badge-96-UTIu0G96.png",
+    "src": "resources/owner-app/icons/badge-96.png"
+  },
+  "resources/owner-app/icons/icon-192.png": {
+    "file": "assets/icon-192-mGtlCRQV.png",
+    "src": "resources/owner-app/icons/icon-192.png"
+  },
+  "resources/owner-app/icons/icon-512.png": {
+    "file": "assets/icon-512-DtR_Ie5e.png",
+    "src": "resources/owner-app/icons/icon-512.png"
+  },
+  "resources/owner-app/icons/maskable-512.png": {
+    "file": "assets/maskable-512-9G1BJhm8.png",
+    "src": "resources/owner-app/icons/maskable-512.png"
   }
 }

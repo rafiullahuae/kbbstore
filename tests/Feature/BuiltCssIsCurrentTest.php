@@ -57,7 +57,8 @@ function cssDeclaredProps(array $files): array
 }
 
 it('serves a bundle built from the stylesheets in this commit', function () {
-    $sources = glob(base_path('resources/css/kbb/*.css')) ?: [];
+    // The owner app's stylesheet (Lane MAC) is a Vite source like the shop's.
+    $sources = array_merge(glob(base_path('resources/css/kbb/*.css')) ?: [], glob(base_path('resources/css/owner-app/*.css')) ?: []);
     $bundles = glob(base_path('public/build/assets/*.css')) ?: [];
 
     expect($sources)->not->toBeEmpty('the kbb stylesheet sources have moved; re-point this test');

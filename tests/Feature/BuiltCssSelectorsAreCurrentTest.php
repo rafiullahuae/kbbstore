@@ -64,7 +64,9 @@ function qaViteCssEntries(): array
 {
     $config = (string) file_get_contents(base_path('vite.config.js'));
 
-    preg_match_all("#'(resources/css/kbb/[a-z0-9-]+\.css)'#", $config, $m);
+    // The owner app's one stylesheet (Lane MAC) is an entry too, and is held
+    // to the same rule: what is served is what is in the commit.
+    preg_match_all("#'(resources/css/(?:kbb|owner-app)/[a-z0-9-]+\.css)'#", $config, $m);
 
     return array_map(static fn (string $p): string => base_path($p), array_unique($m[1]));
 }

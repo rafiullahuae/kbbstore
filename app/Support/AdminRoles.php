@@ -242,6 +242,7 @@ final class AdminRoles
         ['users', 'Users & Roles', [
             'users.manage' => 'Add, edit and remove staff accounts',
             'roles.manage' => 'Create and edit roles',
+            'ownerapp.manage' => 'Owner app: give access, set PINs, sign phones out',
             'presence.view' => 'See who else is editing a record',
             'presence.takeover' => 'Take over a record someone else is editing',
         ]],

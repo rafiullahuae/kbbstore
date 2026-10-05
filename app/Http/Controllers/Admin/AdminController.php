@@ -1693,6 +1693,20 @@ class AdminController extends Controller
          * Additive: the shell reads `d.settings` and is unaffected by a second
          * top-level key until it chooses to render this one.
          */
+        /*
+         * The owner app's own rows (Lane MAC) — its secret address, its VAPID
+         * pair (the private half encrypted, but still not a thing a browser
+         * should be handed), its idle and low-stock numbers — are managed on
+         * Users & Roles → Owner app under ownerapp.manage, which only a Full
+         * Admin holds. This screen is store.settings, which a Sub Admin holds,
+         * so they are never sent from here.
+         */
+        foreach (array_keys($map) as $settingKey) {
+            if (str_starts_with((string) $settingKey, 'owner_app_')) {
+                unset($map[$settingKey]);
+            }
+        }
+
         return response()->json([
             'settings' => $map,
             'title_template_basis' => self::titleTemplateBasis(),
