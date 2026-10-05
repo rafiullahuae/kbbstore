@@ -71,6 +71,20 @@ h1{font-size:24px;margin:0 0 4px;text-wrap:balance}
 .li[aria-current="true"]{border-color:var(--rose);box-shadow:inset 3px 0 0 var(--rose)}
 .pane{background:var(--slot);border:1px solid var(--line);border-radius:12px;padding:12px}
 @media (max-width:760px){.split{grid-template-columns:1fr}}
+
+/* A, compact (the owner: "thin rows and small stuff, so maximum columns can be visible") */
+#opt-a .board{gap:8px;padding:2px 0 8px}
+#opt-a .col{flex:0 0 156px;width:156px;min-width:0;padding:6px;gap:5px;border-radius:9px}
+#opt-a .colhead{gap:3px}
+#opt-a .colhead b{min-width:0;font-size:12.5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#opt-a .num{width:24px;height:20px;border-radius:5px;font-size:11px;padding:0}
+#opt-a .ib{width:18px;height:20px;border-radius:5px;font-size:10px}
+#opt-a .grp{padding:5px;border-radius:7px}
+#opt-a .grp h4{font-size:10px;margin:0 0 4px;gap:3px}
+#opt-a .link span{min-width:0}#opt-a .grp h4 em{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#opt-a .link{padding:1px 2px 1px 3px;gap:3px;border-radius:5px;font-size:12px;min-height:22px}
+#opt-a .link + .link{margin-top:2px}
+#opt-a .add{padding:3px 6px;font-size:11.5px;border-radius:6px;border-width:1px}
+#opt-a .frame{padding:8px}
 </style>
 </head>
 <body>
@@ -84,10 +98,10 @@ h1{font-size:24px;margin:0 0 4px;text-wrap:balance}
 </div>
 
 <section class="opt on" id="opt-a">
-  <div class="head"><span class="letter">A</span><h2>Columns: every main menu item is a column</h2><span class="tag">as you described</span></div>
+  <div class="head"><span class="letter">A</span><h2>Columns: every main menu item is a column</h2><span class="tag">as you described · compact</span></div>
   <p class="why">Every top-level item is a column side by side, like cards on a board; scroll sideways for more. Inside each column are its sub-menus and their links. Change a column's number or press ← → to move it. Change a link's number or press ↑ ↓ to move it.</p>
   <div class="frame"><div class="board" id="board"></div></div>
-  <p class="note">Best for seeing everything at once. With 12 columns, you scroll sideways a lot.</p>
+  <p class="note">Compact: rows 24px tall, columns 156px wide. A 1280px screen shows 7 columns, a 1920px screen 11, a phone 2. Hover a cut-off name to see it in full.</p>
 </section>
 
 <section class="opt" id="opt-b">
@@ -143,7 +157,7 @@ function links(m, mi, c, ci){
 }
 function drawA(){
   document.getElementById('board').innerHTML = menu.map((m, mi) => `<div class="col${fl(`t:${mi}`)}">
-    <div class="colhead">${numBox('t', mi, m.n)}<b>${esc(m.n)}</b>${arrows('t', mi, menu.length, m.n, true)}</div>
+    <div class="colhead">${numBox('t', mi, m.n)}<b title="${esc(m.n)}">${esc(m.n)}</b>${arrows('t', mi, menu.length, m.n, true)}</div>
     ${m.cols.map((c, ci) => `<div class="grp${fl(`c:${mi}:${ci}`)}"><h4>${numBox(`c:${mi}`, ci, c.t)}<em>${esc(c.t)}</em>${arrows(`c:${mi}`, ci, m.cols.length, c.t)}</h4>${links(m, mi, c, ci)}</div>`).join('')}
     <button class="add" data-add="c:${mi}">+ Add a sub-menu</button></div>`).join('');
 }
