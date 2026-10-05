@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.396
+**Category pages: an Edit header button on the page. The strip can be
+turned off on desktop or on mobile. A long title keeps its dot and count on
+its own lines.** Apply after .395. Runs 1 migration. Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| Category: "background image, centeralized title and description text ... controls for desktop and mobile both on the front-end" | Category page → Edit header: name, description, picture (and phone picture), picture position, height, spacing, text look. Desktop and phone set apart with the Laptop / Phone switch |
+| "i need the strip display control also, to turn off for desktop / mobile" | Page → Edit header → Strip → On desktop / On mobile, and Pages → Page banners → Strip beneath the picture. Both on until you untick one |
+| (seen in the shots) a long title on a phone put the dot and the count on rows of their own | They now sit on the title's first and last lines: 248px → 187px at 390 |
+
+Files: see the package's update.json.
+
 ## 2.60.395
 **Brand pages: the frosted panel on the banner, logo and name together, the
 description below the banner on phones.** Apply after .394. Runs 2 migrations.
