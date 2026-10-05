@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.389
+**Cart and checkout on a phone: the WhatsApp button becomes a slim left-edge
+"24/7 Support" tab.** Apply after .388. Runs 2 migrations (cache clear, Arabic
+label draft). Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "on cart and checkout mobile pages ... whatsapp floating to move to the left side ... stiky type vertical bar ... 24/7 Support + whatsapp animated icon ... size dragger ... gradient changing, light colors ... text black and icon green" | A 26px tab on the left edge, vertically centred, green pulsing icon, "24/7 Support" in black on a slowly drifting light gradient. The page moves aside so nothing is covered. Appearance → WhatsApp button → Cart & checkout · phone (on/off, size 22–44px with live preview, position, label, Blush/Sky/Lilac/Lemon or your own two light colours, animation). Laptop and every other page unchanged |
+
+Files: see the package's update.json.
+
 ## 2.60.388
 **WebP on every upload; Super Sale in the old site's order; page header
 controls with front-end editing; homepage brand images.** Apply after .387.
