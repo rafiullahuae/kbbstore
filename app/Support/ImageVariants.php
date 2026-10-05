@@ -288,14 +288,154 @@ final class ImageVariants
         }
 
         $candidates = [];
+        $widest = 0;
 
         foreach (self::WIDTHS as $width) {
             if (is_file(public_path(self::DIR.'/'.$width.'/'.$fsRel))) {
                 $candidates[] = $prefix.'/'.self::DIR.'/'.$width.'/'.$rel.' '.$width.'w';
+                $widest = $width;
+            }
+        }
+
+        if ($candidates === []) {
+            self::tileAfterResponse($image, $fsRel);
+
+            return '';
+        }
+
+        /*
+         * ── AN ORIGINAL NARROWER THAN 800 IS LISTED, OR THE TILE GOES SOFT ──
+         *                                                            (Lane PS)
+         *
+         * generate() never upscales, so a 700 px original gets 200w and 400w
+         * and no 800w -- and this list used to stop there. A phone drawing a
+         * homepage rail tile at 186 CSS px with device-pixel-ratio 2.75 wants
+         * 512 real pixels; offered nothing above 400w it takes the 400w copy and
+         * stretches it, where the page with no srcset at all served the 700 px
+         * original. A srcset that makes the photograph worse than no srcset is
+         * a regression, and it stayed latent only because the live shop had no
+         * copies for its tiles (PageSpeed, 5 Oct: every tile `src` only).
+         *
+         * So when the 800w copy is absent the original is the widest honest
+         * candidate, named at its real width. That costs one header read and
+         * ONLY in this case: with the 800w copy on disk (every 1000 px product
+         * shot) nothing is read and the string is exactly what it was.
+         */
+        if ($widest < 800) {
+            $source = self::insidePublicRoot($fsRel);
+            $info = $source === null ? false : @getimagesize($source);
+            $originalWidth = is_array($info) ? (int) $info[0] : 0;
+
+            if ($originalWidth > $widest) {
+                $candidates[] = $prefix.'/'.$rel.' '.$originalWidth.'w';
             }
         }
 
         return implode(', ', $candidates);
+    }
+
+    /**
+     * How many photographs ONE response may size in tileAfterResponse()'s
+     * deferred work, and for how long.                              (Lane PS)
+     *
+     * About 140 ms of CPU per 1000 px photograph (measured, class header), so
+     * eight is ~1.1 s of one PHP worker spent AFTER the shopper has the page.
+     * A homepage of ~40 cold tiles is sized in five views. The time ceiling
+     * stops a run of 4000 px originals turning one response's tail into ten
+     * seconds.
+     */
+    private const TILE_AFTER_RESPONSE_MAX = 8;
+
+    private const TILE_AFTER_RESPONSE_SECONDS = 3.0;
+
+    /**
+     * Make a tile photograph's missing phone-sized copies AFTER the response.
+     *                                                               (Lane PS)
+     *
+     * ── WHAT GOOGLE REPORTED ────────────────────────────────────────────────
+     *
+     * PageSpeed Insights, extrabeauty.ae, 5 October 2026, "Improve image
+     * delivery — Est savings of 3,434 KiB" (desktop 3,583 KiB): every product
+     * tile on the homepage was `<img class="kbb-card-img"
+     * src="/wp-content/uploads/…">` with NO srcset, a 1000-1100 px original
+     * (100-660 KB) painted into a ~186 CSS px box. The card emits a srcset
+     * only for copies on disk, and for the imported catalogue there were none:
+     * copies are made on upload and by Content → Media Library → "Make
+     * phone-sized copies", and the WordPress photographs arrived by neither.
+     * The same report's 7.7 s mobile Speed Index is those files arriving
+     * after the hero.
+     *
+     * ── WHY NOTHING IS DECODED IN FRONT OF A SHOPPER ────────────────────────
+     *
+     * The class header's rule holds: no resize inside a request. This only
+     * NOTES the photograph (an array on the request, no I/O) and one deferred
+     * callback per response does the work after it has been sent
+     * (fastcgi_finish_request on PHP-FPM) -- bannerSrcsetFor()'s pattern for
+     * the wide copies, applied to the tile widths. The page that noticed the
+     * gap renders exactly what it rendered before (no srcset, the original);
+     * the next view of it is served the copies.
+     *
+     * Bounded three ways: at most TILE_AFTER_RESPONSE_MAX attempts and
+     * TILE_AFTER_RESPONSE_SECONDS per response; a cache lock per photograph
+     * for a day, so concurrent views and a photograph that CANNOT be sized
+     * (too small, unreadable, missing) cost one cache read after the response,
+     * not a decode; and generate() itself, idempotent and never upscaling.
+     *
+     * `kbb.image_tile_after_response` is unset in production and reads true;
+     * tests/Pest.php turns it off so a fixture does not leave copies in the
+     * real public/img-cache for the next test's srcset to find.
+     */
+    public static function tileAfterResponse(string $image, ?string $fsRel = null): void
+    {
+        if (! config('kbb.image_tile_after_response', true) || ! self::available() || ! app()->bound('request')) {
+            return;
+        }
+
+        if ($fsRel !== null && ! in_array(strtolower(pathinfo($fsRel, PATHINFO_EXTENSION)), self::RESIZABLE, true)) {
+            return;
+        }
+
+        try {
+            $attributes = request()->attributes;
+            $pending = $attributes->get('kbb.img-tile-pending', []);
+
+            if (isset($pending[$image])) {
+                return;
+            }
+
+            $pending[$image] = true;
+            $attributes->set('kbb.img-tile-pending', $pending);
+
+            if (count($pending) > 1) {
+                return; // this response's callback is already registered and reads the list when it runs
+            }
+
+            defer(static function () use ($attributes): void {
+                $started = microtime(true);
+                $attempts = 0;
+
+                foreach (array_keys($attributes->get('kbb.img-tile-pending', [])) as $one) {
+                    if ($attempts >= self::TILE_AFTER_RESPONSE_MAX
+                        || microtime(true) - $started > self::TILE_AFTER_RESPONSE_SECONDS) {
+                        break;
+                    }
+
+                    try {
+                        if (! \Illuminate\Support\Facades\Cache::add('kbb.img-tile.'.sha1($one), 1, 86400)) {
+                            continue;
+                        }
+
+                        $attempts++;
+                        self::generate($one);
+                    } catch (\Throwable $e) {
+                        report($e);
+                    }
+                }
+            }, 'kbb-img-tiles-'.spl_object_id($attributes));
+        } catch (\Throwable $e) {
+            // Nothing scheduled is the page as it was. Never a 500.
+            report($e);
+        }
     }
 
     /**

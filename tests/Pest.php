@@ -94,6 +94,15 @@ pest()->extend(Tests\TestCase::class)
         config(['kbb.image_wide_after_response' => false]);
 
         /*
+         * (Lane PS) And the tile tier: a page that renders a product tile with
+         * no copies on disk hands the photograph to ImageVariants::
+         * tileAfterResponse(), which sizes it after the response into the REAL
+         * public/img-cache. Held off for the same reason as the line above;
+         * TileCopiesAfterResponseTest releases it.
+         */
+        config(['kbb.image_tile_after_response' => false]);
+
+        /*
          * And Marketing Emails' scheduler heartbeat (Lane MK) -- which is NOT a
          * request heartbeat, and that is the point of writing it down here.
          * Campaigns are never sent on the tail of a page view (plan §4.5), so
