@@ -226,6 +226,11 @@ it('recompiles the list on every change — no stale block, no stale unblock', f
     expect(IpBlockList::settings()['block_scope'])->toBe('site');
 
     // And a block that has expired stops matching without anyone touching it.
+    // The clock is frozen first: with a live clock, a loaded machine spent
+    // the one second between the write and the first match, and the block
+    // had already expired when the test asserted it still matched (full
+    // suite, 5 Oct; green alone). MUTATION: drop freezeTime() and this races.
+    $this->freezeTime();
     $b = ctbBlock('198.51.100.77');
     IpBlock::query()->whereKey($b['block']['id'])->update(['expires_at' => now()->addSecond()]);
     IpBlockList::rebuild();

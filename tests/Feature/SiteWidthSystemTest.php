@@ -592,6 +592,9 @@ it('ships every setting at the value the page already had, except the ones the o
         'load_mode' => 'scroll',
         'load_batch' => '12',
         'load_batch_custom' => 24,
+        // 2.60.405: the address stays put while products load. OFF — the
+        // owner: "i want the url must not change, only the more products loads".
+        'load_url' => false,
         // Lane PT: the old shop's category banner behind the title. NOT CSS.
         // The main switch is ON because the owner asked for it in as many
         // words ("need to bring that on the category pages as title
