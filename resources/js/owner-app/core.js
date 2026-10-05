@@ -78,8 +78,8 @@ export const $ = (s, r) => (r || document).querySelector(s);
 export const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 export const ic = (n, c) => '<svg class="i ' + (c || '') + '" aria-hidden="true"><use href="#i-' + n + '"/></svg>';
 
-/* The three conveniences, and only these keys, ever. */
-const KEYS = ['oa.a2', 'oa.fs', 'oa.seen'];
+/* The four conveniences, and only these keys, ever. oa.np: when "Not now" was tapped on the notifications sheet (Lane NT). */
+const KEYS = ['oa.a2', 'oa.fs', 'oa.seen', 'oa.np'];
 export const store = {
   get(k) { if (KEYS.indexOf(k) === -1) return null; try { return window.localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { if (KEYS.indexOf(k) === -1) return; try { window.localStorage.setItem(k, String(v)); } catch (e) { /* private mode */ } },

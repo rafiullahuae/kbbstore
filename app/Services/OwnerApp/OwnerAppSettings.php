@@ -7,7 +7,7 @@ namespace App\Services\OwnerApp;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The owner app's three knobs, all under Platform → Users & Roles → Owner app.
+ * The owner app's four knobs, all under Platform → Users & Roles → Owner app.
  *
  *   owner_app_idle_hours   how long an unlocked app stays unlocked with nobody
  *                          using it before it asks for the PIN again (1–168,
@@ -20,6 +20,12 @@ use Illuminate\Support\Facades\DB;
  *                          silently (5–240, default 30 — the owner: "after 1
  *                          minute ... silently refreshed", "after 40 minutes
  *                          or 1 hour, it should give loading bars").
+ *   owner_app_ask_push     1 = an installed app, on its first unlock with the
+ *                          browser's permission still undecided, offers its
+ *                          own "Allow notifications" sheet (Lane NT). 0 = it
+ *                          never offers; the switch on More still works.
+ *                          Default 1 — the owner asked for it: "apps should
+ *                          ask by default about to allow notifications".
  *
  * One query per request, read straight from `settings`: Setting::map() is a
  * process-level memo (CLAUDE.md, landmines) and these are written by an admin
@@ -33,9 +39,11 @@ final class OwnerAppSettings
 
     public const STALE = 'owner_app_stale_minutes';
 
-    public const DEFAULTS = [self::IDLE => 12, self::LOW_STOCK => 5, self::STALE => 30];
+    public const ASK_PUSH = 'owner_app_ask_push';
 
-    public const BOUNDS = [self::IDLE => [1, 168], self::LOW_STOCK => [0, 999], self::STALE => [5, 240]];
+    public const DEFAULTS = [self::IDLE => 12, self::LOW_STOCK => 5, self::STALE => 30, self::ASK_PUSH => 1];
+
+    public const BOUNDS = [self::IDLE => [1, 168], self::LOW_STOCK => [0, 999], self::STALE => [5, 240], self::ASK_PUSH => [0, 1]];
 
     /** @var array<string,int>|null */
     private static ?array $memo = null;
@@ -75,10 +83,15 @@ final class OwnerAppSettings
         return self::all()[self::STALE];
     }
 
+    public static function askPush(): bool
+    {
+        return self::all()[self::ASK_PUSH] === 1;
+    }
+
     /** What the admin screen reads and writes, under the names its inputs use. */
     public static function forAdmin(): array
     {
-        return ['idle_hours' => self::idleHours(), 'low_stock' => self::lowStock(), 'stale_minutes' => self::staleMinutes()];
+        return ['idle_hours' => self::idleHours(), 'low_stock' => self::lowStock(), 'stale_minutes' => self::staleMinutes(), 'ask_push' => self::askPush()];
     }
 
     /** @param array<string,mixed> $values */
@@ -106,7 +119,7 @@ final class OwnerAppSettings
     private static function clamp(string $key, mixed $value): int
     {
         [$min, $max] = self::BOUNDS[$key];
-        $n = is_numeric($value) ? (int) $value : self::DEFAULTS[$key];
+        $n = is_bool($value) ? (int) $value : (is_numeric($value) ? (int) $value : self::DEFAULTS[$key]);
 
         return max($min, min($max, $n));
     }

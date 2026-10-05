@@ -265,6 +265,7 @@ final class AppController extends Controller
             // Look, screens and functions (Customise app, Lane OA4): one memoised read, ~0.4 KB.
             'ui' => OwnerAppUi::forApp(),
             'vapid' => VapidKeys::publicKey(),
+            'ask_push' => OwnerAppSettings::askPush(),   // Lane NT: offer "Allow notifications" on unlock
         ];
     }
 

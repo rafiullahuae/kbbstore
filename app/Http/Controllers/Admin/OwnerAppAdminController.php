@@ -267,12 +267,14 @@ final class OwnerAppAdminController extends Controller
             'idle_hours' => ['sometimes', 'integer', 'min:1', 'max:168'],
             'low_stock' => ['sometimes', 'integer', 'min:0', 'max:999'],
             'stale_minutes' => ['sometimes', 'integer', 'min:5', 'max:240'],
-        ], [], ['idle_hours' => 'Lock after (hours unused)', 'low_stock' => 'Low stock at (units)', 'stale_minutes' => 'Show loading bars after (minutes)']);
+            'ask_push' => ['sometimes', 'boolean'],
+        ], [], ['idle_hours' => 'Lock after (hours unused)', 'low_stock' => 'Low stock at (units)', 'stale_minutes' => 'Show loading bars after (minutes)', 'ask_push' => 'Ask for notifications when the app opens']);
 
         OwnerAppSettings::put([
             OwnerAppSettings::IDLE => $data['idle_hours'] ?? OwnerAppSettings::idleHours(),
             OwnerAppSettings::LOW_STOCK => $data['low_stock'] ?? OwnerAppSettings::lowStock(),
             OwnerAppSettings::STALE => $data['stale_minutes'] ?? OwnerAppSettings::staleMinutes(),
+            OwnerAppSettings::ASK_PUSH => (bool) ($data['ask_push'] ?? OwnerAppSettings::askPush()),
         ]);
 
         return response()->json(['ok' => true, 'settings' => OwnerAppSettings::forAdmin()]);
