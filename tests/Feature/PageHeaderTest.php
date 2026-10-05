@@ -575,3 +575,20 @@ it('answers the console with the global look, every page and the controls', func
         ->and(array_column($body['spec']['elements'], 'key'))->toBe(array_keys(PageHeaders::ELEMENTS))
         ->and(PageHeaderApiController::spec()['breakpoint'])->toBe(900);
 });
+
+it('opens the Media Library under the picture row that asked for it, in view', function () {
+    /*
+     * THE OWNER, 5 October, of the Edit header panel on a laptop: "these two
+     * upload functions are still not wotking". They worked -- the picker opened
+     * in a host at the TOP of the panel's scroll, far above the Choose button
+     * he had scrolled down to, so on a laptop nothing seemed to happen.
+     * Measured after the fix at 1280: the picker heading 450px and 339px from
+     * the top of the window, both in view, and both uploads land.
+     * MUTATION: put back `pickerHost.replaceChildren(box)` alone -> red.
+     */
+    $js = (string) file_get_contents(resource_path('js/kbb/admin/page-header-editor.js'));
+
+    expect($js)->toContain("e.currentTarget.closest('.kbb-phe-pic')")
+        ->and($js)->toContain('if (at && at.parentNode) at.after(box); else pickerHost.replaceChildren(box);')
+        ->and($js)->toContain("box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });");
+});

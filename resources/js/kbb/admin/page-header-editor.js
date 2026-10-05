@@ -228,7 +228,7 @@ export function controls(host, opts) {
                     h('span', { text: title, style: 'width:100%;font-weight:600;font-size:12px' }),
                     h('button', {
                         type: 'button', class: 'kbb-phe-btn',
-                        onclick: () => opts.pick((url) => { if (safeSrc(url)) { opts.bag[key] = url; changed(true); } }, key),
+                        onclick: (e) => opts.pick((url) => { if (safeSrc(url)) { opts.bag[key] = url; changed(true); } }, e.currentTarget.closest('.kbb-phe-pic')),
                     }, v ? 'Change' : 'Choose'),
                     v ? h('button', { type: 'button', class: 'kbb-phe-btn', onclick: () => { opts.bag[key] = ''; changed(true); } }, 'Remove') : null));
         };
@@ -449,11 +449,16 @@ export function openPanel(ctx, csrf, opener, toast) {
         set dev(v) { st.dev = v; },
         onDevice: () => live(),
         onChange: () => { st.dirty = true; live(); },
-        pick: (done) => picker(done),
+        pick: (done, at) => picker(done, at),
     });
 
-    /* -- the Media Library, in the panel: one page of 24 at a time */
-    function picker(done) {
+    /* -- the Media Library, in the panel: one page of 24 at a time.
+       (2.60.392) It opens UNDER the picture row whose Choose was pressed and is
+       scrolled into view. It used to open in a host at the top of the panel,
+       above where the owner was looking, so on a laptop "Choose" seemed to do
+       nothing at all. */
+    let openBox = null;
+    function picker(done, at) {
         let page = 1;
         const grid = h('div', { class: 'kbb-phe-grid' });
         const note = h('p', { class: 'kbb-phe-help', text: 'Loading the Media Library…' });
@@ -463,10 +468,14 @@ export function openPanel(ctx, csrf, opener, toast) {
             h('p', { class: 'kbb-phe-h', text: 'Choose a picture' }), note, grid,
             h('div', { class: 'kbb-phe-row' }, more,
                 h('button', { type: 'button', class: 'kbb-phe-btn', onclick: () => file.click() }, 'Upload new'), file,
-                h('button', { type: 'button', class: 'kbb-phe-btn', onclick: () => pickerHost.replaceChildren() }, 'Cancel')));
-        pickerHost.replaceChildren(box);
+                h('button', { type: 'button', class: 'kbb-phe-btn', onclick: () => close() }, 'Cancel')));
+        const close = () => { box.remove(); if (openBox === box) openBox = null; };
+        if (openBox) openBox.remove();
+        if (at && at.parentNode) at.after(box); else pickerHost.replaceChildren(box);
+        openBox = box;
+        box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 
-        const choose = (url) => { pickerHost.replaceChildren(); done(url); };
+        const choose = (url) => { close(); done(url); };
 
         async function load() {
             more.hidden = true;
