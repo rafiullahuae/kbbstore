@@ -58,6 +58,14 @@
                  the four listings render byte-for-byte what they rendered
                  before this line existed. --}}
             'catLabel' => $cardLabel ?? $title,
+            {{-- THE FIRST TILE IS THE LCP PICTURE, SO IT IS NOT LAZY (Lane PS).
+                 Lighthouse on /super-sale/ (the 5 Oct PageSpeed work): "LCP
+                 resources should not use loading=lazy" and "fetchpriority=high
+                 should be applied", both naming the first .kbb-card-img. /shop
+                 already does this for its first card. Not when the page's own
+                 banner picture is drawn above the grid -- that picture is the
+                 LCP and already carries fetchpriority=high. Attributes only. --}}
+            'eagerFirst' => ! (! empty($pageTop) && ! empty($pageTop['banner']['img'] ?? null) && in_array('strip', $pageTop['order'] ?? [], true)),
         ])
 
         {{-- Was `$products->links()`: Laravel's Tailwind pager on a shop with
