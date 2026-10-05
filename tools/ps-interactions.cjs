@@ -56,11 +56,34 @@ const pixelCalls = () => ({
 
   await run('search-1280', 1280, async p => {
     await go(p, '/');
-    await p.fill('form.sbox input[name="s"]', 'serum'); await p.waitForTimeout(700);
-    const suggestions = await p.locator('form.sbox a:visible, .sx a:visible, [data-kbb-search] a:visible').count();
+    // The suggestion panel fills from a debounced request; it is read until two
+    // reads 600 ms apart agree, three times over, so a count is the settled
+    // state and not wherever the request happened to be.
+    const settledCounts = [];
+    for (const q of ['serum', 'toner', 'serum']) {
+      await p.fill('form.sbox input[name="s"]', ''); await p.waitForTimeout(300);
+      await p.fill('form.sbox input[name="s"]', q);
+      let last = -1, cur = -2;
+      for (let k = 0; k < 20 && cur !== last; k++) { last = cur; await p.waitForTimeout(600); cur = await p.locator('form.sbox a:visible').count(); }
+      settledCounts.push(q + ':' + cur);
+    }
     await Promise.all([p.waitForLoadState('load'), p.press('form.sbox input[name="s"]', 'Enter')]);
     await p.waitForTimeout(500);
-    return { url: p.url().replace(BASE, ''), suggestionsVisible: suggestions, results: await p.locator('#grid img.kbb-card-img').count() };
+    return { url: p.url().replace(BASE, ''), settledSuggestions: settledCounts, results: await p.locator('#grid img.kbb-card-img').count() };
+  });
+
+  await run('filters-390', 390, async p => {
+    await go(p, '/shop/');
+    // The phone opener (.mobi-filter) is display:none in this fixture on BOTH
+    // trees; its own onclick is what opens the drawer, so that is run instead.
+    const openerVisible = await p.locator('.mobi-filter').isVisible();
+    if (openerVisible) await p.click('.mobi-filter'); else await p.evaluate(() => document.body.classList.add('filters-open'));
+    await p.waitForTimeout(500);
+    const opened = await p.evaluate(() => document.body.classList.contains('filters-open'));
+    const opt = p.locator('#filters a.fopt').first();
+    const href = await opt.getAttribute('href');
+    await Promise.all([p.waitForLoadState('load'), opt.click()]); await p.waitForTimeout(800);
+    return { openerVisible, drawerOpened: opened, href, url: p.url().replace(BASE, ''), tilesAfter: await p.locator('#grid img.kbb-card-img').count() };
   });
 
   await run('slider-1280', 1280, async p => {
@@ -120,7 +143,8 @@ const pixelCalls = () => ({
     const before = await p.locator('#grid img.kbb-card-img').count();
     const href = await p.locator('#filters a.fopt').first().getAttribute('href');
     const visible = await p.locator('#filters a.fopt').first().isVisible();
-    if (!visible) { const t = p.locator('[onclick*="filters-open"], .fshow, [data-kbb-filters]').first(); if (await t.count()) await t.click({ force: true }); await p.waitForTimeout(400); }
+    // On a laptop the panel ships closed (body.filters-hidden); "Show filters" (#showFilters) opens it.
+    if (!visible) { await p.click('#showFilters'); await p.waitForTimeout(400); }
     await Promise.all([p.waitForLoadState('load'), p.locator('#filters a.fopt').first().click({ force: true })]); await p.waitForTimeout(800);
     return { href, linkVisibleBeforeOpening: visible, url: p.url().replace(BASE, ''), tilesBefore: before, tilesAfter: await p.locator('#grid img.kbb-card-img').count() };
   });
