@@ -1,0 +1,66 @@
+[
+ {
+  "n": 1,
+  "what": "mount the three endpoints inside the guarded admin-api group, under Page banners",
+  "file": "routes/web.php",
+  "anchor": "        require __DIR__.'/page-banners-admin.php';   // Pages → Page banners (Lane SS)\n",
+  "count": 1,
+  "replacement": "        require __DIR__.'/page-banners-admin.php';   // Pages → Page banners (Lane SS)\n        require __DIR__.'/page-header-admin.php';    // Pages → Page header (Lane PH)\n"
+ },
+ {
+  "n": 2,
+  "what": "the sidebar row, in the Pages group after Page banners",
+  "file": "resources/views/admin/app.blade.php",
+  "anchor": "['pagebanners','Page banners','<rect x=\"3\" y=\"4\" width=\"18\" height=\"11\" rx=\"2\"/><path d=\"M3 19h18\"/><path d=\"m7 9 2.5 2.5L14 7\"/>']]}",
+  "count": 1,
+  "replacement": "['pagebanners','Page banners','<rect x=\"3\" y=\"4\" width=\"18\" height=\"11\" rx=\"2\"/><path d=\"M3 19h18\"/><path d=\"m7 9 2.5 2.5L14 7\"/>'],['pageheader','Page header','<path d=\"M3 5h18\"/><path d=\"M3 10h11\"/><rect x=\"3\" y=\"14\" width=\"18\" height=\"6\" rx=\"1.5\"/>']]}"
+ },
+ {
+  "n": 3,
+  "what": "the breadcrumb and the page title",
+  "file": "resources/views/admin/app.blade.php",
+  "anchor": "'pagebanners':['Pages','Page banners'],",
+  "count": 1,
+  "replacement": "'pagebanners':['Pages','Page banners'],'pageheader':['Pages','Page header'],"
+ },
+ {
+  "n": 4,
+  "what": "arm the deep-link replay (#pageheader on a cold load, and the bar's 'Page header' link)",
+  "file": "resources/views/admin/app.blade.php",
+  "anchor": "'seokeywords','pagebanners','emails',",
+  "count": 1,
+  "replacement": "'seokeywords','pagebanners','pageheader','emails',"
+ },
+ {
+  "n": 5,
+  "what": "load the screen",
+  "file": "resources/views/admin/app.blade.php",
+  "anchor": "@include('admin.partials.page-banners-screen')\n",
+  "count": 1,
+  "replacement": "@include('admin.partials.page-banners-screen')\n\n{{-- Pages -> Page header (Lane PH): the custom pages' title block -- what shows,\n     in what order, its picture -- for desktop and phone, globally and per page.\n     It wraps window.go for 'pageheader'; its sidebar row is the static NAV entry\n     in the Pages group. --}}\n@include('admin.partials.page-header-screen')\n"
+ },
+ {
+  "n": 6,
+  "what": "keep Lane GS's handover record in step with block 4",
+  "file": "docs/GS-ADMIN-APP-BLOCKS.md",
+  "anchor": "'seokeywords','pagebanners','emails',",
+  "count": 2,
+  "replacement": "'seokeywords','pagebanners','pageheader','emails',"
+ },
+ {
+  "n": 7,
+  "what": "keep Lane BG's handover record in step with block 4",
+  "file": "docs/BG-ADMIN-APP-BLOCKS.md",
+  "anchor": "'seokeywords','pagebanners','emails',",
+  "count": 1,
+  "replacement": "'seokeywords','pagebanners','pageheader','emails',"
+ },
+ {
+  "n": 8,
+  "what": "keep Lane T1B's handover record in step with block 4",
+  "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
+  "anchor": "'seokeywords','pagebanners','emails',",
+  "count": 1,
+  "replacement": "'seokeywords','pagebanners','pageheader','emails',"
+ }
+]

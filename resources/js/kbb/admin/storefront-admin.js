@@ -190,6 +190,7 @@ export async function start() {
 
     if (state.ctx.bar) drawBar(state.ctx);
     if (state.ctx.edit) drawPencil(state.ctx.edit);
+    if (state.ctx.pageheader) drawHeaderPill(state.ctx.pageheader);
 
     return state;
 }
@@ -336,6 +337,33 @@ function drawPencil(edit) {
         heading.insertAdjacentElement('afterend', pill);
     }
     state.pill = pill;
+}
+
+/* ------------------------------------------------------- page header (PH) */
+
+/**
+ * "Edit header" on a custom page (Lane PH). The panel is its own chunk,
+ * fetched on the first press -- an admin who never presses it never
+ * downloads it, and a shopper never reaches this line at all.
+ */
+function drawHeaderPill(ph) {
+    const host = document.querySelector('.kbb-home .sec > .wrap');
+    if (!host || !(host.querySelector(':scope > nav.crumb') || host.querySelector('[data-kbb-ph]'))) return;
+
+    const pill = h('button', {
+        type: 'button',
+        class: 'kbb-qe-pill',
+        'aria-haspopup': 'dialog',
+        'aria-label': `Edit the header of ${String(ph.label || 'this page')}`,
+        onclick: () => {
+            import('./page-header-editor.js')
+                .then((m) => m.openPanel(ph, state.ctx.csrf, pill, toast))
+                .catch(() => toast('The header editor could not load. Reload the page and try again.'));
+        },
+    }, svg(ICON.pencil), h('span', { text: 'Edit header' }));
+
+    host.classList.add('kbb-qe-host');
+    host.appendChild(pill);
 }
 
 /* ------------------------------------------------------------------- editor */

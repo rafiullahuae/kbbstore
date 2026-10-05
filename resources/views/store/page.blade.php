@@ -7,10 +7,16 @@
 <div class="kbb-home">
 @include('partials.page-banner', ['pageBanner' => $pageBanner ?? null])
 <section class="sec"><div class="wrap">
+{{-- Pages → Page header (Lane PH): with a configured header the breadcrumb moves into it, inside the article. --}}@if (empty($pageHeader))
     <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{!! $page->t('title') !!}</span></nav>
+@endif
 
     <article class="policy">
+{{-- Null = the original <h1> below, byte for byte. The title is the admin's own HTML, printed raw as it always was. --}}@if (! empty($pageHeader))
+@include('partials.page-header', ['ph' => ['home' => Url::to('/'), 'crumb' => new \Illuminate\Support\HtmlString($page->t('title')), 'title' => new \Illuminate\Support\HtmlString($page->t('title'))]])
+@else
         <h1>{!! $page->t('title') !!}</h1>
+@endif
         {{-- Content is authored in the admin, so it is trusted HTML.
 
              @shortcodes, not {!! !!}. AppServiceProvider has registered this

@@ -69,7 +69,7 @@
 .pbs-pic{display:grid;gap:8px;border:1px dashed var(--border,#d9d9d9);border-radius:11px;padding:10px;min-width:0}
 .pbs-thumb{display:flex;align-items:center;justify-content:center;min-height:70px;background:rgba(127,127,127,.07);border-radius:8px;font-size:12px;color:var(--ink-soft,#6b7280);text-align:center;padding:6px;overflow:hidden}
 .pbs-thumb img{display:block;max-width:100%;max-height:120px;height:auto}
-.pbs-item{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;gap:6px;align-items:center;min-width:0}
+.pbs-item{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,.9fr) auto;gap:6px;align-items:center;min-width:0}
 .pbs-item .pbs-mini{display:flex;gap:4px}
 .pbs-mini button{padding:6px 8px;border:1px solid var(--border,#e6e6e6);border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:12px;cursor:pointer}
 .pbs-colour{display:flex;gap:6px;align-items:center;min-width:0}
@@ -229,7 +229,9 @@
     var img = src && picOk(src)
       ? '<div class="kbb-pb-img"><img src="' + esc(src) + '" alt="' + esc(x.alt) + '"></div>'
       : '<div class="pbs-slot">No ' + (m ? 'phone' : 'desktop') + ' picture yet — the shop draws no picture here, only the strip. Choose one under Banners → Picture.</div>';
-    var items = x.strip ? (x.items || []).filter(function (i) { return String(i.en || '').trim() !== ''; }) : [];
+    /* An item for one device only is left out of the other's preview, as the
+       shop's .kbb-pb-d / .kbb-pb-m rules leave it out. (Lane PH) */
+    var items = x.strip ? (x.items || []).filter(function (i) { return String(i.en || '').trim() !== '' && (i.dev || 'both') !== (m ? 'd' : 'm'); }) : [];
     var strip = items.length ? '<ul class="kbb-pb-strip">' + items.map(function (i) {
       return '<li>' + (data.icon || '') + '<span>' + esc(i.en) + '</span></li>';
     }).join('') + '</ul>' : '';
@@ -275,6 +277,9 @@
       return '<div class="pbs-item">'
         + '<input class="pbs-in" data-pbs-item="' + i + '" data-pbs-lang="en" maxlength="' + data.limits.text + '" value="' + esc(it.en) + '" aria-label="Item ' + (i + 1) + ' text">'
         + '<input class="pbs-in" dir="rtl" lang="ar" data-pbs-item="' + i + '" data-pbs-lang="ar" maxlength="' + data.limits.text + '" value="' + esc(it.ar) + '" placeholder="Arabic (optional)" aria-label="Item ' + (i + 1) + ' Arabic">'
+        + '<select class="pbs-in" data-pbs-idev="' + i + '" aria-label="Item ' + (i + 1) + ' shows on">' + (data.devices || []).map(function (d) {
+          return '<option value="' + esc(d.value) + '"' + ((it.dev || 'both') === d.value ? ' selected' : '') + '>' + esc(d.label) + '</option>';
+        }).join('') + '</select>'
         + '<span class="pbs-mini"><button type="button" data-pbs-move="-1" data-pbs-i="' + i + '" aria-label="Move up"' + (i === 0 ? ' disabled' : '') + '>↑</button>'
         + '<button type="button" data-pbs-move="1" data-pbs-i="' + i + '" aria-label="Move down"' + (i === x.items.length - 1 ? ' disabled' : '') + '>↓</button>'
         + '<button type="button" data-pbs-del="' + i + '" aria-label="Remove item">✕</button></span></div>';
@@ -305,7 +310,7 @@
       + '<label class="pbs-f" style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-pbs-strip' + (x.strip ? ' checked' : '') + '> <span class="pbs-lbl">Show the strip</span></label>'
       + items
       + '<div class="pbs-bar" style="margin-top:0"><button type="button" class="pbs-btn" data-pbs-additem' + ((x.items || []).length >= data.limits.items ? ' disabled' : '') + '>+ Add an item</button></div>'
-      + '<p class="pbs-help">Each item is a tick and a line of text, spread evenly across the strip. Up to ' + data.limits.items + '. The Arabic line is used on the Arabic shop; empty = the English line.</p>'
+      + '<p class="pbs-help">Each item is a tick and a line of text, spread evenly across the strip. Up to ' + data.limits.items + '. The Arabic line is used on the Arabic shop; empty = the English line. <b>Shows on</b> puts an item on desktop only or phone only — for example a third line on desktop while a phone keeps two.</p>'
       + '<div class="pbs-three">' + colours + '</div>'
       + '<div class="pbs-two">' + ranges + '</div>'
       + '</div>'
@@ -412,7 +417,8 @@
     var el;
     if ((el = e.target.closest('[data-pbs-assign]'))) { data.assign[el.getAttribute('data-pbs-assign')] = el.value; return; }
     if ((el = e.target.closest('[data-pbs-source]'))) { data.super_sale.source = el.value; return; }
-    if ((el = e.target.closest('[data-pbs-strip]')) && b()) { b().strip = el.checked; drawStage(); }
+    if ((el = e.target.closest('[data-pbs-strip]')) && b()) { b().strip = el.checked; drawStage(); return; }
+    if ((el = e.target.closest('[data-pbs-idev]')) && b()) { b().items[Number(el.getAttribute('data-pbs-idev'))].dev = el.value; drawStage(); }
   });
 
   function newId() {
@@ -447,7 +453,7 @@
       return;
     }
     if ((el = e.target.closest('[data-pbs-unpick]'))) { x[el.getAttribute('data-pbs-unpick')] = ''; render(); return; }
-    if (e.target.closest('[data-pbs-additem]')) { if (x.items.length < data.limits.items) { x.items.push({ en: '', ar: '' }); render(); } return; }
+    if (e.target.closest('[data-pbs-additem]')) { if (x.items.length < data.limits.items) { x.items.push({ en: '', ar: '', dev: 'both' }); render(); } return; }
     if ((el = e.target.closest('[data-pbs-del]'))) { x.items.splice(Number(el.getAttribute('data-pbs-del')), 1); render(); return; }
     if ((el = e.target.closest('[data-pbs-move]'))) {
       var i = Number(el.getAttribute('data-pbs-i')), j = i + Number(el.getAttribute('data-pbs-move'));

@@ -1,0 +1,59 @@
+/*
+ * Pages → Page header: the "Edit header" panel on a custom page, and the same
+ * controls inside the console. (Lane PH)
+ *
+ * NEVER LOADED FOR A SHOPPER: page-header-editor.js imports this as a string
+ * and that module is fetched only when an admin who holds pageheader.manage
+ * presses "Edit header" (or opens Pages → Page header in the console).
+ * Everything is namespaced .kbb-phe-*.
+ */
+.kbb-phe{position:fixed;z-index:130;inset-inline-end:14px;top:calc(var(--kbb-adm-h,0px) + 12px);width:min(370px,calc(100vw - 28px));
+  max-height:calc(100vh - var(--kbb-adm-h,0px) - 24px);overflow:auto;overscroll-behavior:contain;box-sizing:border-box;
+  background:#fff;color:#241d21;border:1px solid #eadfe3;border-radius:16px;box-shadow:0 18px 50px -12px rgba(40,10,25,.35);
+  font:500 13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;text-align:start}
+.kbb-phe *,.kbb-phe *::before,.kbb-phe *::after{box-sizing:border-box}
+.kbb-phe-in{display:grid;gap:12px;padding:14px}
+.kbb-phe--inline{position:static;width:auto;max-height:none;box-shadow:none;border-radius:12px}
+.kbb-phe-head{display:flex;align-items:center;gap:8px;position:sticky;top:-14px;margin:-14px -14px 0;padding:12px 14px;background:#fff;border-bottom:1px solid #f1e8eb;z-index:1}
+.kbb-phe-head b{font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kbb-phe-x{border:0;background:transparent;font:inherit;font-size:20px;line-height:1;cursor:pointer;color:#6b5a62;padding:4px 6px;border-radius:8px}
+.kbb-phe-sec{display:grid;gap:8px;border-top:1px solid #f1e8eb;padding-top:10px}
+.kbb-phe-sec:first-child{border-top:0;padding-top:0}
+.kbb-phe-h{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#8a6f78;margin:0}
+.kbb-phe-help{font-size:11.5px;color:#7a6870;margin:0;line-height:1.5}
+.kbb-phe-seg{display:flex;flex-wrap:wrap;gap:4px;padding:3px;border:1px solid #eadfe3;border-radius:11px;background:#faf6f7}
+.kbb-phe-seg button{flex:1 1 auto;min-height:32px;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:12.5px;cursor:pointer;padding:4px 10px}
+.kbb-phe-seg button[aria-pressed="true"]{background:#fff;color:#b8325f;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.kbb-phe-tog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.kbb-phe-tog label{display:flex;align-items:center;gap:7px;min-height:34px;padding:4px 8px;border:1px solid #eadfe3;border-radius:9px;cursor:pointer;font-size:12.5px}
+.kbb-phe-tog input{accent-color:#c8336a;width:16px;height:16px;margin:0;flex:none}
+.kbb-phe-ord{display:grid;gap:4px;margin:0;padding:0;list-style:none}
+.kbb-phe-ord li{display:flex;align-items:center;gap:6px;min-height:34px;padding:3px 4px 3px 10px;border:1px solid #eadfe3;border-radius:9px;font-size:12.5px}
+.kbb-phe-ord li span{flex:1;min-width:0}
+.kbb-phe-ord li.is-off span{color:#a8979e;text-decoration:line-through}
+.kbb-phe-ord button,.kbb-phe-btn{min-height:30px;min-width:30px;border:1px solid #eadfe3;border-radius:8px;background:#fff;color:inherit;font:inherit;font-size:12.5px;cursor:pointer;padding:3px 10px}
+.kbb-phe-ord button{padding:0}
+.kbb-phe-ord button[disabled],.kbb-phe-btn[disabled]{opacity:.4;cursor:default}
+.kbb-phe-btn.is-primary{background:#c8336a;border-color:#c8336a;color:#fff;font-weight:700}
+.kbb-phe-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.kbb-phe-rng{display:grid;gap:2px}
+.kbb-phe-rng div{display:flex;justify-content:space-between;font-size:12px;font-weight:600}
+.kbb-phe-rng output{color:#b8325f;font-variant-numeric:tabular-nums}
+.kbb-phe-rng input{width:100%;margin:0;accent-color:#c8336a}
+.kbb-phe-sel{display:grid;gap:3px;font-size:12px;font-weight:600}
+.kbb-phe-pic{display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px;align-items:center}
+.kbb-phe-thumb{width:72px;height:54px;border-radius:8px;background:#f6eef1;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:10.5px;color:#9a8790;text-align:center}
+.kbb-phe-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.kbb-phe-in input[type=text]{width:100%;min-height:34px;padding:6px 9px;border:1px solid #eadfe3;border-radius:9px;font:inherit;font-size:12.5px;color:inherit;background:#fff}
+.kbb-phe-foot{position:sticky;bottom:-14px;margin:0 -14px -14px;padding:10px 14px;background:#fff;border-top:1px solid #f1e8eb;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.kbb-phe-foot a{font-size:12px;color:#8a6f78;margin-inline-start:auto}
+.kbb-phe-err{color:#b4443c;font-size:12px;margin:0}
+.kbb-phe-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:260px;overflow:auto}
+.kbb-phe-grid button{padding:0;border:2px solid transparent;border-radius:8px;background:#f6eef1;aspect-ratio:1;overflow:hidden;cursor:pointer}
+.kbb-phe-grid button:focus-visible,.kbb-phe-grid button:hover{border-color:#c8336a}
+.kbb-phe-grid img{width:100%;height:100%;object-fit:cover;display:block}
+.kbb-phe-live{outline:2px dashed rgba(200,51,106,.55);outline-offset:6px;border-radius:4px}
+.kbb-phe-pill{position:static;margin:0 0 8px;background:#1f1a1d}
+@media (max-width:640px){
+  .kbb-phe{inset-inline:0;top:auto;bottom:0;width:auto;max-height:64vh;border-radius:16px 16px 0 0}
+}

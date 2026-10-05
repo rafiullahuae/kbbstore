@@ -82,8 +82,18 @@ final class PageBanners
         'icon' => ['#FFFFFF', 'Tick colour'],
     ];
 
-    /** The strip's two lines as the owner wrote them. */
-    public const DEFAULT_ITEMS = ['100% Authentic Products', 'Express Delivery all over UAE'];
+    /** The strip's lines as the owner wrote them. */
+    public const DEFAULT_ITEMS = ['100% Authentic Products', 'Express Delivery all over UAE', 'Free skincare consultation'];
+
+    /**
+     * Which device each default line shows on. The owner: "also include in the
+     * strip for desktop only 'Free skincare consultation', in mobile two lines
+     * are fine." (Lane PH)
+     */
+    public const DEFAULT_DEVICES = ['both', 'both', 'd'];
+
+    /** A strip item's device choice: [value => label]. The first is the default. */
+    public const DEVICES = ['both' => 'Desktop and phone', 'd' => 'Desktop only', 'm' => 'Phone only'];
 
     /** The listings a banner can sit on, by CollectionController key. */
     public const COLLECTIONS = [
@@ -108,6 +118,10 @@ final class PageBanners
      * The strip is a flex row spread evenly; if a phone is too narrow for the
      * items they wrap onto a second line rather than overflow — min-height,
      * not height, is what the control sets. No script measures anything.
+     *
+     * An item for one device only carries .kbb-pb-d or .kbb-pb-m and the last
+     * two rules hide it on the other; an item for both carries no class, so a
+     * strip of such items prints exactly what it printed before. (Lane PH)
      */
     public const CSS = '.kbb-pb{display:block;margin:0 0 4px}'
         .'.kbb-pb-img{display:block;line-height:0}'
@@ -116,7 +130,8 @@ final class PageBanners
         .'background:var(--pb-bg);color:var(--pb-ink);min-height:var(--pb-hm);font-size:var(--pb-fm);line-height:1.25;font-weight:600;box-sizing:border-box}'
         .'.kbb-pb-strip li{display:inline-flex;align-items:center;gap:.45em;margin:0;padding:0;min-width:0}'
         .'.kbb-pb-ic{flex:none;width:var(--pb-im);height:var(--pb-im);color:var(--pb-ic)}'
-        .'@media (min-width:901px){.kbb-pb-strip{min-height:var(--pb-hd);font-size:var(--pb-fd);gap:4px 40px}.kbb-pb-ic{width:var(--pb-id);height:var(--pb-id)}}';
+        .'@media (min-width:901px){.kbb-pb-strip{min-height:var(--pb-hd);font-size:var(--pb-fd);gap:4px 40px}.kbb-pb-ic{width:var(--pb-id);height:var(--pb-id)}}'
+        .'@media (max-width:900px){.kbb-pb-strip .kbb-pb-d{display:none}}@media (min-width:901px){.kbb-pb-strip .kbb-pb-m{display:none}}';
 
     private ?array $memo = null;
 
@@ -142,7 +157,7 @@ final class PageBanners
             'alt' => '',
             'link' => '',
             'strip' => true,
-            'items' => array_map(static fn (string $t): array => ['en' => $t, 'ar' => ''], self::DEFAULT_ITEMS),
+            'items' => array_map(static fn (string $t, string $dev): array => ['en' => $t, 'ar' => '', 'dev' => $dev], self::DEFAULT_ITEMS, self::DEFAULT_DEVICES),
         ];
 
         foreach (self::COLOURS as $k => [$default]) {
@@ -255,11 +270,13 @@ final class PageBanners
         }
 
         $items = [];
+        $devs = [];
         if ($b['strip']) {
             foreach ($b['items'] as $item) {
                 $t = $arabic && $item['ar'] !== '' ? $item['ar'] : $item['en'];
                 if ($t !== '') {
                     $items[] = $t;
+                    $devs[] = isset(self::DEVICES[$item['dev'] ?? '']) ? $item['dev'] : 'both';
                 }
             }
         }
@@ -277,6 +294,8 @@ final class PageBanners
             'id' => $b['id'],
             'img' => $img,
             'items' => $items,
+            // Parallel to items: 'both', 'd' or 'm'. (Lane PH)
+            'devs' => $devs,
             'style' => $style,
             'media' => '(max-width: '.self::BREAKPOINT.'px)',
         ];
@@ -397,7 +416,14 @@ final class PageBanners
                 if ($en === '' && $ar === '') {
                     continue;
                 }
-                $items[] = ['en' => $en !== '' ? $en : $ar, 'ar' => $ar];
+                $dev = is_array($item) && is_string($item['dev'] ?? null) ? $item['dev'] : 'both';
+                if (! isset(self::DEVICES[$dev])) {
+                    if ($strict) {
+                        $rejected["banners.$n.items"] = 'Strip item device';
+                    }
+                    $dev = 'both';
+                }
+                $items[] = ['en' => $en !== '' ? $en : $ar, 'ar' => $ar, 'dev' => $dev];
             }
             if (count($items) > self::MAX_ITEMS) {
                 $rejected["banners.$n.items"] = 'At most '.self::MAX_ITEMS.' strip items';

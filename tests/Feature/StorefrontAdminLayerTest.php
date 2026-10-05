@@ -165,22 +165,31 @@ describe('the context endpoint', function () {
             ->and($forged->getContent())->not->toContain('Rafi');
     });
 
-    it('answers 403 to every role but the owner today, and clears their hint', function () {
+    it('keeps the bar and the pencil owner-only, answers 403 to a role with no storefront tool, and clears its hint', function () {
         /*
          * "now for me only". MUTATION, RUN: add 'manager' to
-         * storefront.adminbar in AdminCapabilities and the manager row is 200.
+         * storefront.adminbar in AdminCapabilities and the manager's bar is
+         * not null.
+         *
+         * Lane PH: a manager and an editor hold pageheader.manage, the custom
+         * pages' "Edit header" panel, so they are answered 200 -- with no bar,
+         * no pencil, and on '/' (not a custom page) no panel either. Support
+         * holds none of the three and is still refused.
          */
         foreach (['manager', 'support', 'editor'] as $role) {
             $this->actingAs(raAdmin($role, "ra-{$role}@example.test"), 'admin');
 
             $r = raContext($this, '/');
 
-            expect($r->status())->toBe(403, "{$role} reached the storefront tools")
+            expect($r->status())->toBe($role === 'support' ? 403 : 200, "{$role} reached the storefront tools")
                 ->and($r->json('bar'))->toBeNull()
-                ->and($r->json('edit'))->toBeNull();
+                ->and($r->json('edit'))->toBeNull()
+                ->and($r->json('pageheader'))->toBeNull();
 
-            $hint = collect($r->headers->getCookies())->first(fn ($c) => $c->getName() === StorefrontAdminHint::COOKIE);
-            expect($hint?->getExpiresTime())->toBeLessThan(time());
+            if ($role === 'support') {
+                $hint = collect($r->headers->getCookies())->first(fn ($c) => $c->getName() === StorefrontAdminHint::COOKIE);
+                expect($hint?->getExpiresTime())->toBeLessThan(time());
+            }
         }
     });
 
@@ -199,7 +208,7 @@ describe('the context endpoint', function () {
         $r = raContext($this, '/collections/ra-sunscreens/')->assertOk();
 
         expect(strtolower((string) $r->headers->get('Cache-Control')))->toContain('no-store')
-            ->and(array_keys($r->json()))->toBe(['ok', 'csrf', 'admin', 'bar', 'edit'])
+            ->and(array_keys($r->json()))->toBe(['ok', 'csrf', 'admin', 'bar', 'edit', 'pageheader'])
             ->and(array_keys($r->json('admin')))->toBe(['name', 'initials'])
             ->and($r->json('admin.name'))->toBe('Rafi Owner')
             ->and($r->json('admin.initials'))->toBe('RO')

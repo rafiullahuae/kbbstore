@@ -2165,11 +2165,35 @@ KBB_BH_CSS;
              * has no category slugged super-sale, so the page falls back to the
              * reduced-products listing it drew before (SuperSaleOrderTest).
              */
+            /*
+             * THE SUPER SALE TITLE BLOCK, CONFIGURED (Lane PH). Paired with
+             * the removal of the same name in approvedRemovals(). The pattern
+             * names the shipped state: no dot on either device (kbb-ph-nod,
+             * -nom), the count and the "All products" button hidden on both
+             * (kbb-ph-hd kbb-ph-hm), the intro hidden on a phone as it always
+             * was, the title SHOWN — he asked for the
+             * control to hide it, not for a page without a visible heading.
+             * `[^<]*` for the stylesheet: PageHeaders::CSS has no `<`.
+             */
+            'the Super Sale title block, configured (Lane PH)' => [
+                'pattern' => '#<style id="kbb-ph-css">[^<]*</style>\n'
+                    .'<div class="sh kbb-ph kbb-ph-nod kbb-ph-nom" style="[^"]*" data-kbb-ph="collection:super-sale">\n'
+                    .'<nav class="crumb kbb-ph-c kbb-ph-hd kbb-ph-hm"><a href="[^"]*">Home</a> / <span>Super Sale</span></nav>\n'   // Breadcrumbs ship off
+                    .'<h1 class="kbb-ph-t">Super Sale <span class="cnt kbb-ph-hd kbb-ph-hm">[^<]*</span></h1>\n'
+                    .'<p class="kbb-ph-p kbb-ph-hm">[^<]*</p>\n'   // hidden on a phone, as .sh p always was
+                    .'<a class="lnk kbb-ph-b kbb-ph-hd kbb-ph-hm" href="[^"]*">All products</a>\n'
+                    .'</div>\n#',
+                'hits' => 1,
+            ],
+
             'the Super Sale page banner strip (Lane SS)' => [
                 'pattern' => '~<style id="kbb-pb-css">[^<]*</style>\n'
                     .'<div class="kbb-pb" style="--pb-bg:#C8336A;--pb-ink:#FFFFFF;--pb-ic:#FFFFFF;--pb-hd:44px;--pb-hm:36px;--pb-fd:15px;--pb-fm:12px;--pb-id:18px;--pb-im:15px" data-banner="super-sale">\n'
                     .'<ul class="kbb-pb-strip"><li><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>100% Authentic Products</span></li>'
-                    .'<li><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>Express Delivery all over UAE</span></li></ul>\n'
+                    .'<li><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>Express Delivery all over UAE</span></li>'
+                    // Lane PH: "include in the strip for desktop only 'Free
+                    // skincare consultation', in mobile two lines are fine."
+                    .'<li class="kbb-pb-d"><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>Free skincare consultation</span></li></ul>\n'
                     .'</div>\n~s',
                 'hits' => 1,
             ],
@@ -3250,6 +3274,19 @@ KBB_BH_CSS;
             'the NEW pill on every product tile (Lane PR)' => [
                 'pattern' => '#<span class="kbb-badge kbb-badge-new">New</span>#',
                 'hits' => 31,
+            ],
+            /*
+             * THE SUPER SALE TITLE BLOCK, REPLACED (Lane PH). The owner, of
+             * /super-sale/: "hide the all products button, count etc." — and
+             * the dot, which his screenshot shows. The page's breadcrumb and
+             * `.sh` block come out of the BEFORE side here; the configured
+             * header that replaces them is cut from the AFTER side by the
+             * paired rule in approvedInsertions(). One page: every other
+             * custom page keeps its original markup byte for byte.
+             */
+            'the Super Sale title block, before Pages → Page header (Lane PH)' => [
+                'pattern' => '#    <nav class="crumb"><a href="[^"]*">Home</a> / <span>Super Sale</span></nav>\n\n    <div class="sh">\n.*?<a class="lnk" href="[^"]*">All products</a>\n    </div>\n#s',
+                'hits' => 1,
             ],
             'the -N% pill on every product tile (Lane PR)' => [
                 'pattern' => '#<span class="kbb-badge kbb-badge-sale">-\d+%</span>#',
