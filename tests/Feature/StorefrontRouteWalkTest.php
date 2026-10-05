@@ -421,6 +421,9 @@ function walkExpectations(array $seed): array
         'api/search'               => ['query' => ['q' => 'serum'], 'status' => 200],
         'api/search/starter'       => ['status' => 200],
         'api/human-check'          => ['status' => 200],
+        // App → Site App (Lane NT): ask-or-not, the VAPID key and four strings.
+        // The Site App ships on, so a shopper's GET answers 200.
+        'api/site-app/push'        => ['status' => 200],
         'reviews/captcha'          => ['status' => 200],
 
         // --- Public API (api.php) ---------------------------------------
