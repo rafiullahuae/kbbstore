@@ -480,6 +480,18 @@ function walkExpectations(array $seed): array
         'email/u/{token}'          => ['params' => ['token' => '1-' . str_repeat('0', 32)], 'status' => 200],
         'email/c/{token}/{n}'      => ['params' => ['token' => str_repeat('0', 40), 'n' => '1'], 'status' => 302],
         'email/art/{name}.jpg'     => ['params' => ['name' => 'autumn-glow'], 'status' => 200],
+    ] : []) + (Route::has('site-app.manifest') ? [
+        /*
+         * The shop as a Home Screen app (Lane PW, routes/site-app.php), keyed
+         * off the route NAME for the reason the routines pair above gives. The
+         * app ships ON, so each answers 200; an icon name outside the four is a
+         * 404 (SiteAppTest walks the rest of the allowlist).
+         */
+        'manifest.webmanifest'      => ['status' => 200],
+        'sw.js'                     => ['status' => 200],
+        'site-app.js'               => ['status' => 200],
+        'site-app/icons/{name}.png' => ['params' => ['name' => 'icon-192'], 'status' => 200],
+        'offline'                   => ['status' => 200],
     ] : []);
 }
 

@@ -716,6 +716,12 @@ it('finds every document that carries its own head, and everything in the layout
         'kbb-outfit' => 'the self-hosted Latin webfont',
         'kbb-arabic-face' => 'the Arabic face',
         'kbb-cairo' => 'the Arabic face files',
+        // Lane PW: the Home Screen app's tags. The journal, the article, the
+        // review wall and the quiz include the partial themselves, so the app
+        // can be installed from any shopper page; the admin-only App Preview
+        // (store/app.blade.php) is not one. StorefrontEnglishUnchangedTest
+        // counts the block on all 37 pages.
+        'site-app-head' => 'the Home Screen app: manifest, apple-touch-icon and the worker registration',
     ];
 
     $layoutOnly = [

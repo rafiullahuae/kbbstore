@@ -49,7 +49,10 @@ it('is included in the console exactly once, with one sidebar row under Growth &
         ->and(substr_count($app, "'mkt-email':['Growth & Marketing','Marketing Emails']"))->toBe(1)
         // Integrated beside Lane EK's two ids ('emails-customer','emails-edit'),
         // so the pin names the end of the list rather than its neighbour.
-        ->and(substr_count($app, "'spotted','mkt-email']);"))->toBe(1);
+        // In LATE_RENDERED exactly once (later lanes append after it: Lane NF's
+        // 'notfoundpage', 2.60.404).
+        ->and(preg_match('/const LATE_RENDERED=new Set\(\[([^\]]*)\]\);/', $app, $lr))->toBe(1)
+        ->and(substr_count($lr[1], "'mkt-email'"))->toBe(1);
 
     // The row is NAV's alone: a second registration from the partial is two
     // rows for one screen (AdminNavAndIdsTest).

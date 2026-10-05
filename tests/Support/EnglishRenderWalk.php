@@ -1217,6 +1217,20 @@ final class EnglishRenderWalk
                 'email/art/{name}.jpg' => ['render' => false, 'why' => 'a JPEG that ships with the shop (Lane MK), no interface strings'],
             ] : []),
 
+            /*
+             * The shop as a Home Screen app (Lane PW), listed exactly when the
+             * router has it (the integrator's require of routes/site-app.php),
+             * like Spotted below. Machine-facing files, plus the offline page,
+             * which was added after BASE_COMMIT and is pinned by SiteAppTest.
+             */
+            ...(Route::has('site-app.manifest') ? [
+                'manifest.webmanifest' => $file,
+                'sw.js' => $file,
+                'site-app.js' => $file,
+                'site-app/icons/{name}.png' => $file,
+                'offline' => ['render' => false, 'why' => 'added after BASE_COMMIT (Lane PW): the offline page the service worker shows; SiteAppTest pins it'],
+            ] : []),
+
             ...(Route::has('spotted.page') ? ['kbeautybliss-spotted' => [
                 'render' => false,
                 'why' => 'added after BASE_COMMIT (Lane HB), so there is no pre-conversion template to compare against; SpottedPageTest pins it',
@@ -2220,6 +2234,26 @@ KBB_BH_CSS;
             'the bare framework 404 page (Lane NF)' => [
                 'pattern' => '#\A.*?<div class="nf nf-b"[^>]* data-nf="b">.*\z#s',
                 'hits' => 1,
+            ],
+            /*
+             * The shop as a Home Screen app (Lane PW, App -> Site App): the
+             * owner asked for it ("just build the app for the site"), so it
+             * ships ON. Seven tags in the head of every storefront page -- the
+             * layout's 33 and the four standalone documents (blog, article,
+             * review wall, skin quiz), 37 in all: the manifest, the apple-touch-icon, the two
+             * "capable" metas, the iOS status bar and title, and the deferred
+             * script that registers the worker after load. Nothing else on the
+             * page moves; everything around it is still compared byte for byte.
+             */
+            'the Home Screen app head tags (Lane PW)' => [
+                'pattern' => '#<link rel="manifest" href="/manifest\.webmanifest">\n'
+                    .'<link rel="apple-touch-icon" href="/site-app/icons/apple-180\.png\?v=[0-9a-f]{10}">\n'
+                    .'<meta name="mobile-web-app-capable" content="yes">\n'
+                    .'<meta name="apple-mobile-web-app-capable" content="yes">\n'
+                    .'<meta name="apple-mobile-web-app-status-bar-style" content="default">\n'
+                    .'<meta name="apple-mobile-web-app-title" content="K-Beauty Bliss">\n'
+                    .'<script src="/site-app\.js\?v=[0-9a-f]{10}" data-sw="/sw\.js" data-scope="/" defer></script>\n#',
+                'hits' => 37,
             ],
             // 2.60.393: the phone's 1 / 2 column buttons, beside Sort, on the
             // shop and category listing (hidden on a laptop).

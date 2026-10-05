@@ -243,7 +243,11 @@ it('names neither secret in robots.txt, the sitemaps, llms.txt, the key file or 
 
         foreach ($seen as $url => $body) {
             $lower = strtolower((string) $body);
-            foreach ([$app, $admin, $ownerHost, 'webmanifest', 'rel="manifest"'] as $needle) {
+            // The shop now links its OWN manifest (App -> Site App, 2.60.404),
+            // /manifest.webmanifest; what must never appear is the OWNER APP's,
+            // which lives under its secret path -- covered by $app itself and
+            // named here so the intent stays explicit.
+            foreach ([$app, $admin, $ownerHost, $app.'/manifest.webmanifest'] as $needle) {
                 expect(str_contains($lower, $needle))->toBeFalse($url.' names '.$needle);
             }
         }

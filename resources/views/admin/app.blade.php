@@ -3375,7 +3375,7 @@ const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overv
 'rev-badge':['Reviews','Rating Badge'],'rev-capsule':['Reviews','Rating Badge'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],tax:['Store','Tax'],customers:['Store','Customers'],mail:['Emails','All mail settings'],'emails':['Emails','Overview'],'emails-sending':['Emails','Sending & delivery'],'emails-customer':['Emails','Customer emails'],'emails-edit':['Emails','Customer emails'],'emails-branding':['Emails','Design & branding'],'emails-sent':['Emails','Sent mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
    and 'posts' open the same screen. The id stays routable for #blog and
    ?go=blog, and it names that screen honestly rather than a second one. */
-'blog':['Content','Blog Posts'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'hpcontent':['Appearance','Homepage content'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'pagebanners':['Pages','Page banners'],'pageheader':['Pages','Page header'],'posts':['Content','Blog Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library'],
+'blog':['Content','Blog Posts'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'hpcontent':['Appearance','Homepage content'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'pagebanners':['Pages','Page banners'],'pageheader':['Pages','Page header'],'siteapp':['App','Site App'],'posts':['Content','Blog Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library'],
 /* Shoppable video and Instagram (Lanes V2/V3/V4/IG). Absent from this map
    entirely until now, which is why ?go=ugcvideo and #ugcvideo opened the
    dashboard: an id that is not in TITLES does not route at all. Each of the four
@@ -8518,7 +8518,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','pagination','ownerapp','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email','notfoundpage']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','pagination','ownerapp','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','notfoundpage']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -24429,6 +24429,11 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      It wraps window.go for 'pageheader'; its sidebar row is the static NAV entry
      in the Pages group. --}}
 @include('admin.partials.page-header-screen')
+
+{{-- App -> Site App (Lane PW): the shop as a Home Screen app -- on/off, its
+     name, a read-only look at the icon. It wraps window.go for 'siteapp'; its sidebar row
+     is the static NAV entry in the App group. --}}
+@include('admin.partials.site-app-screen')
 
 @verbatim
 <script>

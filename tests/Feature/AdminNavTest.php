@@ -239,7 +239,10 @@ it('carries the App group after Platform, each row only for an account that may 
         ->and(AdminNav::capability(AdminNav::rows()['ownerapp']))->toBe('ownerapp.manage');
 
     expect(apNavIds(apConsole('owner')))->toContain('siteapp', 'ownerapp');
-    foreach (['manager', 'support', 'editor'] as $role) {
+    // siteapp.manage (lane PW, 2.60.404) is owner + manager, like Catalog → Pagination;
+    // the owner app stays Full-Admin only.
+    expect(apNavIds(apConsole('manager')))->toContain('siteapp')->not->toContain('ownerapp');
+    foreach (['support', 'editor'] as $role) {
         expect(apNavIds(apConsole($role)))->not->toContain('siteapp')->not->toContain('ownerapp');
     }
 });

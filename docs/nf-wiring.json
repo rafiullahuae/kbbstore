@@ -33,11 +33,11 @@
   },
   {
     "n": 6,
-    "what": "pin the Safety menu in the settled sidebar: one insertion, 'notfoundpage' after 'democontent', its first anchor",
+    "what": "pin the Safety menu in the settled sidebar: one insertion, 'notfoundpage' after 'democontent', its first anchor (integrator: re-anchored on the Safety line, after the App group, 2.60.404)",
     "file": "tests/Feature/AdminSidebarIsCompleteAtBuildTest.php",
-    "anchor": "        'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'cache'],\n",
+    "anchor": "        'Safety' => ['debug', 'sandbox', 'democontent'],\n",
     "count": 1,
-    "replacement": "        'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'cache'],\n        // 'notfoundpage' — Safety → 404 page (Lane NF), one insertion after its first anchor.\n        'Safety' => ['debug', 'sandbox', 'democontent', 'notfoundpage'],\n"
+    "replacement": "        // 'notfoundpage' — Safety → 404 page (Lane NF), after Demo Content.\n        'Safety' => ['debug', 'sandbox', 'democontent', 'notfoundpage'],\n"
   },
   {
     "n": 7,

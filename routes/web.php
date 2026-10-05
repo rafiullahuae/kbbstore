@@ -49,6 +49,11 @@ Route::withoutMiddleware(SeoFilesController::STATELESS)->group(function () {
      * verification is one GET of this path.
      */
     require __DIR__.'/wallet-domain.php';
+
+    // The shop as a Home Screen app (Lane PW): manifest, service worker,
+    // icons and offline page. Stateless for the same reason as the files
+    // above: public, identical for everybody, never a Set-Cookie.
+    require __DIR__.'/site-app.php';
 });
 Route::get('/{key}.txt', [SeoFilesController::class, 'indexNowKeyFile'])
     ->where('key', '[a-zA-Z0-9\-]{8,128}');
@@ -544,6 +549,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/site-layout-admin.php';
         require __DIR__.'/page-wash-admin.php';
         require __DIR__.'/whatsapp-button-admin.php';
+        require __DIR__.'/site-app-admin.php';   // App -> Site App (Lane PW)
 
         /*
          * Store → Security. Lane C. Inside this group for the reason the

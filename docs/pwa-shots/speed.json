@@ -1,0 +1,40 @@
+{
+ "app_on": {
+  "cold": {
+   "fcp": 2988,
+   "lcp": 2988,
+   "load": 3030,
+   "requests": 8,
+   "kb": 455,
+   "fromSW": 0
+  },
+  "warm": {
+   "fcp": 708,
+   "lcp": 708,
+   "load": 1089,
+   "requests": 7,
+   "kb": 101,
+   "fromSW": 6
+  },
+  "runs": 7
+ },
+ "app_off": {
+  "cold": {
+   "fcp": 3076,
+   "lcp": 3076,
+   "load": 3107,
+   "requests": 7,
+   "kb": 453,
+   "fromSW": 0
+  },
+  "warm": {
+   "fcp": 2940,
+   "lcp": 2940,
+   "load": 2807,
+   "requests": 6,
+   "kb": 452,
+   "fromSW": 0
+  },
+  "runs": 7
+ }
+}
