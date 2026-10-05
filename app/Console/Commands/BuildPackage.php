@@ -47,6 +47,11 @@ class BuildPackage extends Command
         'CLAUDE.md', 'README.md', 'KBB-Master-Plan.md', 'KBB-Progress-Dashboard.html',
         'env.staging.txt', 'package.json', 'package-lock.json', 'composer.lock',
         'public-web-root/', 'vendor/', 'node_modules/', '.env',
+        // Build-time only: the Vite plugin that turns the console's static
+        // blocks into cached files (lane AP). The server never runs Vite --
+        // it receives the built public/build -- and UpdateGuard refuses a
+        // root-level .mjs ("Path outside the permitted areas").
+        'vite-admin-console-assets.mjs',
         // WordPress code, not shop code. App\Services\Update\UpdateGuard
         // already refuses it -- `wordpress-plugin/` is not an allowed prefix,
         // so checkPath() answers "Path outside the permitted areas" and the
