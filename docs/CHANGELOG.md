@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.392
+**Edit header: "Choose" opens the picture picker right under the button.**
+Apply after .391. Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "these two upload functions are still not wotking" (Picture / Phone picture → Choose) | The Media Library opened at the top of the panel, out of sight above the button. It now opens under the button you pressed, scrolled into view; Upload new and picking from the library both set the picture |
+
+Files: see the package's update.json.
+
 ## 2.60.391
 **Uploads keep your file name (only the extension changes); the cart/checkout
 WhatsApp tab floats with no side space.** Apply after .390. Hard refresh after
