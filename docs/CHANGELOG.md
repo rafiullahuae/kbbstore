@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.391
+**Uploads keep your file name (only the extension changes); the cart/checkout
+WhatsApp tab floats with no side space.** Apply after .390. Hard refresh after
+applying.
+
+| Your request | Now |
+|---|---|
+| "i don't want to change the file name at all ... only the file extension need to be changed" | `Anua PDRN Glow Set-Banner.jpg` is saved as `anua-pdrn-glow-set-banner.webp` (lower case, spaces become hyphens). A name already in use gets -2. Pictures uploaded before keep their old names, because pages already point at them |
+| "i don't want a dedicated left side space ... the support vatical bar will float on the left side ... on mobile checckout page too" | The tab floats over the left edge on the cart and the checkout; nothing moves. Appearance → WhatsApp button → Cart & checkout · phone → Make room beside the tab (off) brings the space back |
+
+Files: see the package's update.json.
+
 ## 2.60.390
 **Filters panel on phones: tap outside to close, × always visible, width
 control; tap highlight on small icons only; "&amp;" in category and brand names
