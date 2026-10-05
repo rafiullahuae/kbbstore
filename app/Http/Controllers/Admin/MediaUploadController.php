@@ -243,7 +243,12 @@ class MediaUploadController extends Controller
             'filename' => $filename,
             // Whether the file also became a row in the library. Reported
             // rather than assumed — see record().
-            'recorded' => $this->record($path, $filename, $detected, $destination, $file->getClientOriginalName()),
+            // A converted upload is listed under its real name: the owner saw
+            // "…banner.jpg" on a WebP and took it for unconverted (2.60.388).
+            'recorded' => $this->record($path, $filename, $detected, $destination,
+                $webp !== null && $webp['converted']
+                    ? (string) preg_replace('/\.(jpe?g|png)$/i', '.webp', $file->getClientOriginalName())
+                    : $file->getClientOriginalName()),
             /*
              * How many phone-sized copies this upload now has.
              *
@@ -262,7 +267,10 @@ class MediaUploadController extends Controller
              * photograph, and the Media Library's batch will pick it up.
              */
             'sized' => $this->sizeCopies($path),
-        ] + ($webp === null ? [] : ['webp' => $webp]));
+        ] + ($webp === null ? [] : ['webp' => $webp])
+          // Said out loud when a JPEG/PNG stayed as it was (2.60.388).
+          + ($webp === null && in_array($ext, ['jpg', 'jpeg', 'png'], true)
+              ? ['webp_note' => WebpBulk::whyNot() ?? 'the saved file could not be read back from the uploads folder.'] : []));
     }
 
     /**

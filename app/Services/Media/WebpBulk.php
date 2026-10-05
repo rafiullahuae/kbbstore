@@ -335,7 +335,7 @@ final class WebpBulk
      *
      * @return array{status: string, reason: ?string, to: ?string, bytes_before: int, bytes_after: int, width: int, height: int}
      */
-    private static function convertOne(string $relative, string $origin, array $settings): array
+    private static function convertOne(string $relative, string $origin, array $settings, bool $always = false): array
     {
         $absolute = self::absolute($relative);
         $now = now();
@@ -358,7 +358,7 @@ final class WebpBulk
             return ['status' => 'failed', 'reason' => 'no_free_name', 'to' => null, 'bytes_before' => 0, 'bytes_after' => 0, 'width' => 0, 'height' => 0];
         }
 
-        $result = WebpConverter::convert($absolute, $reserved, $settings['quality'], $settings['max_width']);
+        $result = WebpConverter::convert($absolute, $reserved, $settings['quality'], $settings['max_width'], $always);
 
         $status = $result['ok'] ? 'converted' : (in_array($result['reason'], self::SKIP_REASONS, true) ? 'skipped' : 'failed');
 
@@ -406,7 +406,8 @@ final class WebpBulk
         }
 
         try {
-            $result = self::convertOne($relative, 'upload', $settings);
+            // Uploads always end as WebP (2.60.388, the owner: "must converted").
+            $result = self::convertOne($relative, 'upload', $settings, true);
         } catch (\Throwable $e) {
             report($e);
 
@@ -427,6 +428,29 @@ final class WebpBulk
 
         return ['converted' => true, 'path' => (string) $result['to'], 'reason' => null,
             'bytes_before' => $result['bytes_before'], 'bytes_after' => $result['bytes_after']];
+    }
+
+    /**
+     * Why an upload of a JPEG or PNG did NOT become WebP, in the owner's words,
+     * or null when it would have. (2.60.388) The upload answered nothing at all
+     * when it skipped, so a switch left off and a server without WebP looked
+     * the same as a conversion that never ran.
+     */
+    public static function whyNot(): ?string
+    {
+        if (! WebpSettings::all()['enabled']) {
+            return 'WebP conversion is switched off (Content → Media Library → WebP images).';
+        }
+
+        if (($reason = WebpConverter::unavailableReason()) !== null) {
+            return $reason;
+        }
+
+        if (! self::ready()) {
+            return 'The WebP update has not finished installing: run php artisan migrate --force.';
+        }
+
+        return null;
     }
 
     /* --------------------------------------------------------- restore */
@@ -598,6 +622,14 @@ final class WebpBulk
 
         foreach (self::ROOTS as $root) {
             if (str_starts_with($file, $public.'/'.$root)) {
+                return $file;
+            }
+
+            // (2.60.388) An uploads folder that is itself a link (a hosting
+            // panel's shared storage) resolves outside the web root; inside
+            // that folder's own real path is still inside the uploads.
+            $real = realpath(public_path(rtrim($root, '/')));
+            if ($real !== false && str_starts_with($file, rtrim(str_replace('\\', '/', $real), '/').'/')) {
                 return $file;
             }
         }

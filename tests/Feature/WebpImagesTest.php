@@ -634,3 +634,88 @@ it('is wired exactly once: the route file and the screen partial', function () {
         ->and(substr_count($media, "@include('admin.partials.webp-screen')"))->toBe(1)
         ->and(substr_count($media, 'id="mlib-webp"'))->toBe(1);
 });
+
+/* ------------------------------------------- 2.60.388: "must converted" */
+
+/*
+ * THE OWNER, 5 October, after 2.60.387: "i enabled the setting to convert the
+ * media auto to webp upon upload, but as i can see it's not converting auto
+ * and i'm getting still jpg image in media" and "from anywhere i upload any
+ * image, it should be must converted to webp".
+ *
+ * What he saw: the library and every picker caption the ORIGINAL file name
+ * ("…banner.jpg") even on a converted upload, and an upload that was not
+ * converted said nothing at all about why.
+ */
+
+it('lists a converted upload under its real .webp name, not the .jpg it was sent as', function () {
+    wpRoot();
+    test()->actingAs(wpAdmin(), 'admin');
+
+    $res = test()->post('/admin-api/media/upload', ['file' => wpUploadFile('Glow Set Banner.jpg', wpJpeg()), 'folder' => 'banners'])->assertOk();
+
+    expect(Media::query()->where('filename', $res->json('filename'))->value('original_name'))->toBe('Glow Set Banner.webp');
+    // Mutation: pass getClientOriginalName() unchanged to record() -> 'Glow Set Banner.jpg'.
+});
+
+it('makes every upload WebP even when the first WebP is not smaller, trying lossless for a PNG', function () {
+    wpRoot();
+    $bytes = wpCheckerPng();
+    $src = wpPut('uploads/products/pattern.png', $bytes);
+
+    // The bulk rule is unchanged: only when smaller.
+    expect(WebpConverter::convert($src, WebpConverter::reserveName($src), 82, 0)['reason'])->toBe('webp_not_smaller');
+
+    // An upload always ends as WebP, the smallest one tried.
+    $dest = WebpConverter::reserveName($src);
+    $r = WebpConverter::convert($src, $dest, 82, 0, true);
+
+    expect($r['ok'])->toBeTrue()
+        ->and(WebpConverter::sniff($dest))->toBe(WebpConverter::TYPE_WEBP)
+        ->and(glob(dirname($dest).'/.*.part'))->toBe([]);   // no temporary left behind
+    // Mutation: drop `$always &&` handling (the `! $always &&` guard back to plain) -> reason webp_not_smaller.
+});
+
+it('says why an upload stayed JPG, so a switch left off is never mistaken for a broken converter', function () {
+    wpRoot();
+    test()->actingAs(wpAdmin(), 'admin');
+    WebpSettings::save(['enabled' => false]);
+
+    $res = test()->post('/admin-api/media/upload', ['file' => wpUploadFile('a.jpg', wpJpeg()), 'folder' => 'products'])->assertOk();
+
+    expect($res->json('webp_note'))->toContain('switched off');
+
+    // Every uploader shows it: the shared kit says the outcome after each upload.
+    $kit = (string) file_get_contents(resource_path('views/admin/partials/upload-kit.blade.php'));
+    expect(substr_count($kit, "stage('done');\n        webpSay(body);"))->toBe(1)
+        ->and($kit)->toContain("'Saved as WebP · '")->toContain("'Not converted to WebP: '");
+});
+
+it('converts an upload whose uploads folder is a link to elsewhere on the server', function () {
+    $root = wpRoot();
+    $elsewhere = kbbTempDir().'/wp-shared-'.bin2hex(random_bytes(4));
+    mkdir($elsewhere.'/products', 0777, true);
+    symlink($elsewhere, $root.'/uploads');
+    file_put_contents($elsewhere.'/products/linked.jpg', wpJpeg());
+
+    try {
+        expect(WebpBulk::absolute('uploads/products/linked.jpg'))->not->toBeNull()
+            ->and(WebpBulk::absolute('uploads/../../etc/passwd'))->toBeNull();
+    } finally {
+        @unlink($root.'/uploads');
+        wpRemoveTree($elsewhere);
+    }
+    // Mutation: remove the realpath(public_path($root)) branch in absolute() -> null, and the upload is silently not converted.
+});
+
+it('renames the captions of pictures converted before 2.60.388, and only those', function () {
+    $id = DB::table('media')->insertGetId(['path' => 'uploads/banners/x.webp', 'filename' => 'x.webp', 'original_name' => 'Glow Banner.jpg', 'mime' => 'image/webp', 'created_at' => now(), 'updated_at' => now()]);
+    $keep = DB::table('media')->insertGetId(['path' => 'uploads/banners/y.jpg', 'filename' => 'y.jpg', 'original_name' => 'Kept.jpg', 'mime' => 'image/jpeg', 'created_at' => now(), 'updated_at' => now()]);
+
+    ob_start();
+    (require database_path('migrations/2027_08_18_100100_webp_names_and_caches.php'))->up();
+    ob_end_clean();
+
+    expect(DB::table('media')->where('id', $id)->value('original_name'))->toBe('Glow Banner.webp')
+        ->and(DB::table('media')->where('id', $keep)->value('original_name'))->toBe('Kept.jpg');
+});

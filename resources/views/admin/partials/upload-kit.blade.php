@@ -423,6 +423,20 @@
    * upload-progress event on it, so a fetch-based uploader can only ever show a
    * spinner — which is how the screens this replaces came to have no bar at all.
    */
+  /* (2.60.388) Every upload says what became of it as WebP: converted, with
+     the bytes saved, or why it stayed JPG/PNG. One place, so every screen that
+     uploads -- Media page, brands, categories, banners, products -- says it. */
+  function webpSay(body) {
+    if (!body || typeof window.toast !== 'function') return;
+    try {
+      var w = body.webp;
+      var kb = function (n) { return Math.max(1, Math.round((Number(n) || 0) / 1024)) + ' KB'; };
+      if (w && w.converted) window.toast('Saved as WebP · ' + kb(w.bytes_before) + ' → ' + kb(w.bytes_after));
+      else if (w && w.reason) window.toast('Kept as uploaded: ' + String(w.reason).replace(/_/g, ' '));
+      else if (body.webp_note) window.toast('Not converted to WebP: ' + String(body.webp_note));
+    } catch (e) {}
+  }
+
   function kbbUpload(o) {
     o = o || {};
 
@@ -567,6 +581,7 @@
         t.over = true;
         stopTick();
         stage('done');
+        webpSay(body);
         if (typeof o.onDone === 'function') o.onDone(body, t.snapshot());
         return;
       }

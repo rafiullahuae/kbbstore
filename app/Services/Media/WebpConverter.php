@@ -148,7 +148,14 @@ final class WebpConverter
      *
      * @return array{ok: bool, reason: ?string, type: ?string, bytes_before: int, bytes_after: int, width: int, height: int, resized: bool}
      */
-    public static function convert(string $source, ?string $destination, int $quality = 82, int $maxWidth = 0): array
+    /**
+     * $always (uploads, 2.60.388): the owner, "from anywhere i upload any image,
+     * it should be must converted to webp". When the first WebP is not smaller,
+     * a lower quality (a photo) and lossless WebP (a PNG graphic) are tried, and
+     * the smallest WebP is kept even if it is still not smaller than the file
+     * uploaded. The bulk run leaves $always off: there "only when smaller" holds.
+     */
+    public static function convert(string $source, ?string $destination, int $quality = 82, int $maxWidth = 0, bool $always = false): array
     {
         $out = ['ok' => false, 'reason' => null, 'type' => null, 'bytes_before' => (int) @filesize($source),
             'bytes_after' => 0, 'width' => 0, 'height' => 0, 'resized' => false];
@@ -225,7 +232,31 @@ final class WebpConverter
                 clearstatcache(true, $temporary);
                 $out['bytes_after'] = (int) filesize($temporary);
 
-                if ($out['bytes_after'] >= $out['bytes_before']) {
+                if ($always && $out['bytes_after'] >= $out['bytes_before']) {
+                    $tries = $out['type'] === self::TYPE_PNG && defined('IMG_WEBP_LOSSLESS')
+                        ? [IMG_WEBP_LOSSLESS, max(50, $quality - 12)]
+                        : [max(50, $quality - 12), max(50, $quality - 24)];
+
+                    foreach (array_unique($tries) as $q) {
+                        $alt = dirname($destination).'/.'.bin2hex(random_bytes(6)).'.webp.part';
+
+                        if (@imagewebp($image, $alt, $q) && is_file($alt)) {
+                            clearstatcache(true, $alt);
+                            $size = (int) filesize($alt);
+
+                            if ($size > 0 && $size < $out['bytes_after']) {
+                                @unlink($temporary);
+                                $temporary = $alt;
+                                $out['bytes_after'] = $size;
+                                continue;
+                            }
+                        }
+
+                        @unlink($alt);
+                    }
+                }
+
+                if (! $always && $out['bytes_after'] >= $out['bytes_before']) {
                     @unlink($temporary);
 
                     return ['reason' => 'webp_not_smaller'] + $out;
