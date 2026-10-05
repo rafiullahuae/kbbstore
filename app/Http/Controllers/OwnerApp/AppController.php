@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\OwnerApp;
 
 use App\Http\Controllers\Controller;
+use App\Services\AppIcons;
+use App\Services\SiteApp;
 use App\Services\OwnerApp\OwnerAppAuth;
 use App\Services\OwnerApp\OwnerAppEvents;
 use App\Services\OwnerApp\OwnerAppPath;
@@ -16,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Vite;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * The owner app's shell, its PWA files and its front door (Lane MAC).
@@ -47,12 +50,39 @@ final class AppController extends Controller
         return rtrim($request->getBasePath(), '/').'/'.OwnerAppPath::current();
     }
 
-    /** @return array<string,string> */
-    private static function assets(): array
+    /**
+     * The shell's asset addresses. An icon the owner uploaded under App →
+     * Owner App → App icon (Lane IC) is served from the app's own address
+     * (icon() below); every other icon is the shipped one from the build.
+     *
+     * @return array<string,string>
+     */
+    private static function assets(string $base): array
     {
         $out = ['js' => Vite::asset(self::JS), 'css' => Vite::asset(self::CSS), 'font' => Vite::asset(self::FONT)];
         foreach (self::ICONS as $k => $path) {
-            $out[$k] = Vite::asset($path);
+            $up = AppIcons::file('owner', $k);
+            $out[$k] = $up !== null ? $base.'/icons/'.$k.'.png?v='.SiteApp::fileHash($up) : Vite::asset($path);
+        }
+
+        return $out;
+    }
+
+    /**
+     * The tab icon tags once an icon is uploaded (Lane IC), else [] and the
+     * shell keeps its one shipped rel=icon line.
+     *
+     * @return list<array{sizes: string, href: string}>
+     */
+    private static function favicons(string $base): array
+    {
+        $out = [];
+        foreach (AppIcons::FAVICON_SET as $k => [$size]) {
+            $up = AppIcons::file('owner', $k);
+            if ($up === null) {
+                return [];
+            }
+            $out[] = ['sizes' => $size.'x'.$size, 'href' => $base.'/icons/'.$k.'.png?v='.SiteApp::fileHash($up)];
         }
 
         return $out;
@@ -62,32 +92,60 @@ final class AppController extends Controller
     {
         // System font (Customise app, Lane OA4): no preload, and a class on
         // <html> that names no web font, so the file is never requested.
-        return response()->view('owner-app.shell', ['base' => self::base($request), 'a' => self::assets(), 'sysFont' => OwnerAppUi::systemFont()]);
+        $base = self::base($request);
+
+        return response()->view('owner-app.shell', ['base' => $base, 'a' => self::assets($base), 'fav' => self::favicons($base), 'sysFont' => OwnerAppUi::systemFont(),
+            // Top of the screen (Lane IC): the bar takes the app's own top colour.
+            'top' => OwnerAppUi::topColour(), 'fullscreen' => OwnerAppUi::fullscreen()]);
+    }
+
+    /**
+     * The owner's uploaded icon or favicon (Lane IC), by allowlisted name.
+     * Only uploads: the shipped icons come from the build. Anything else is
+     * the app's own 404, never a file read from the name.
+     */
+    public function icon(string $oa_icon): BinaryFileResponse|JsonResponse
+    {
+        $path = (isset(AppIcons::APP_SET[$oa_icon]) || isset(AppIcons::FAVICON_SET[$oa_icon])) ? AppIcons::file('owner', $oa_icon) : null;
+        if ($path === null) {
+            return $this->missing();
+        }
+
+        return response()->file($path, ['Content-Type' => 'image/png', 'X-Content-Type-Options' => 'nosniff']);
     }
 
     public function manifest(Request $request): JsonResponse
     {
         $base = self::base($request);
-        $a = self::assets();
+        $a = self::assets($base);
 
-        return response()->json([
+        $m = [
             'name' => 'K-Beauty Bliss Owner',
             'short_name' => 'KBB Owner',
             'id' => $base.'/',
             'start_url' => $base.'/',
             'scope' => $base.'/',
             'display' => 'standalone',
-            // An installed Android app opens full screen; anything that cannot, standalone.
-            'display_override' => ['fullscreen', 'standalone'],
             'orientation' => 'any',
             'background_color' => '#ffffff',
-            'theme_color' => '#FBE3EA',
+            // The status bar continues the app's own top colour (Lane IC).
+            'theme_color' => OwnerAppUi::topColour(),
             'icons' => [
                 ['src' => $a['icon-192'], 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
                 ['src' => $a['icon-512'], 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
                 ['src' => $a['maskable-512'], 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
             ],
-        ], 200, ['Content-Type' => 'application/manifest+json'], JSON_UNESCAPED_SLASHES);
+        ];
+        /*
+         * Full screen on Android only when chosen under Customise app -> Top of
+         * the screen (Lane IC). It hides the clock and Android letterboxes the
+         * camera cutout in black: the band the owner asked to be rid of.
+         */
+        if (OwnerAppUi::fullscreen()) {
+            $m = array_slice($m, 0, 6, true) + ['display_override' => ['fullscreen', 'standalone']] + array_slice($m, 6, null, true);
+        }
+
+        return response()->json($m, 200, ['Content-Type' => 'application/manifest+json'], JSON_UNESCAPED_SLASHES);
     }
 
     /**
@@ -98,7 +156,7 @@ final class AppController extends Controller
     public function worker(Request $request): Response
     {
         $base = self::base($request);
-        $a = self::assets();
+        $a = self::assets($base);
         $shell = array_values(array_filter([$base.'/', $a['js'], $a['css'], OwnerAppUi::systemFont() ? null : $a['font'], $a['icon-192'], $a['badge-96']]));
 
         $src = (string) file_get_contents(resource_path('owner-app/sw.js'));

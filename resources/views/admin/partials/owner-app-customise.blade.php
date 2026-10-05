@@ -141,6 +141,7 @@
     density: { comfortable: 'Comfortable (default)', compact: 'Compact' },
     corners: { soft: 'Soft (default)', medium: 'Medium', square: 'Square' },
     header: { compact: 'Compact (default)', standard: 'Standard (large logo and title)' },
+    statusbar: { color: 'Colour to the top (default)', fullscreen: 'Full screen, no clock' },
   };
   function sel(k, label) {
     return '<label>' + esc(label) + '<select class="rl-in" data-k="' + k + '">' + D.options.choices[k].map(function (v) {
@@ -173,7 +174,8 @@
         '<p class="oac-ct' + (bad ? ' bad' : '') + '" data-ct>' + (hexOk(st.accent) ? 'White text on ' + esc(st.accent.toUpperCase()) + ' reads at ' + ratio.toFixed(1) + ':1' + (bad ? ' — below 4.5:1, so Save refuses it. Choose a darker colour.' : ' ✓') : 'Enter a colour like #A8475C.') + '</p></div>' +
 
       '<div class="rl-card"><p class="oac-h">Type</p><div class="oac-g">' + sel('font', 'Font') + sel('text', 'Text size') + sel('title', 'Title size') + sel('figure', 'Dashboard big numbers') + '</div></div>' +
-      '<div class="rl-card"><p class="oac-h">Layout</p><div class="oac-g">' + sel('density', 'Density') + sel('corners', 'Corner roundness') + sel('header', 'My store header') + '</div></div>' +
+      '<div class="rl-card"><p class="oac-h">Layout</p><div class="oac-g">' + sel('density', 'Density') + sel('corners', 'Corner roundness') + sel('header', 'My store header') + sel('statusbar', 'Top of the screen') + '</div>' +
+        '<p class="rl-note">Top of the screen: "Colour to the top" runs the app\'s colour up behind the clock and the camera, and the header stays where it is; "Full screen, no clock" is the old look (Android hides the clock and shows a black band at the camera). A phone that already added the app picks this up when it is added to the Home Screen again.</p></div>' +
 
       '<div class="rl-card"><p class="oac-h">Screens</p><div class="oac-sws">' + Object.keys(o.screens).map(function (k) { return sw('screens', k, o.screens[k]); }).join('') +
         '<label class="oac-sw"><input type="checkbox" checked disabled> More (always on: lock and sign-out)</label></div>' +

@@ -1135,6 +1135,11 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'admin-api/cart-tracking/carts/{id}' => '/admin-api/cart-tracking/carts/' . $ctCart,
     ];
 
+    // Lane IC: the Owner App's icon preview; with nothing uploaded it is the shipped PNG.
+    $driven += [
+        'admin-api/owner-app/icon/{name}.png' => '/admin-api/owner-app/icon/icon-192.png',
+    ];
+
     /** Route URI => why driving it here would prove nothing. */
     $excused = [
         // Serves a zip from disk. Touches no query and cannot carry a dialect

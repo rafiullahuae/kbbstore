@@ -66,6 +66,9 @@ it('defaults to today\'s app in every key, and still reads the store name saved 
         'store_name' => 'K-Beauty Bliss', 'initials' => 'KB', 'accent' => '#A8475C',
         'font' => 'jakarta', 'text' => 'm', 'title' => 'm', 'figure' => 'm',
         'density' => 'comfortable', 'corners' => 'soft', 'header' => 'compact',
+        // Lane IC, the one default the owner chose: "extend the background
+        // color to the top end" (the old look is 'fullscreen').
+        'statusbar' => 'color',
         'screens' => ['store' => true, 'orders' => true, 'products' => true, 'customers' => true, 'notifications' => true],
         'sections' => ['hero', 'needs', 'avg', 'returning', 'top'], 'sections_off' => [],
         'functions' => ['bulk' => true, 'mark_paid' => true, 'order_notes' => true, 'edit_price' => true, 'edit_stock' => true,

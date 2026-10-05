@@ -31,6 +31,7 @@ declare(strict_types=1);
 |     GET  /{app}                         the shell (no data in it)
 |     GET  /{app}/manifest.webmanifest    PWA manifest, scope = /{app}/
 |     GET  /{app}/sw.js                   service worker, scope = /{app}/
+|     GET  /{app}/icons/{name}.png        the owner's uploaded icon (Lane IC)
 |     GET  /{app}/api/state               not enrolled / PIN / unlocked
 |     POST /{app}/api/enrol               email + PIN, first use on a device
 |     POST /{app}/api/unlock              PIN on an enrolled device
@@ -97,6 +98,9 @@ if ($ownerAppPath !== null) {
             Route::get('/', [AppController::class, 'shell'])->name('shell');
             Route::get('/manifest.webmanifest', [AppController::class, 'manifest'])->defaults('oa_revalidate', true)->name('manifest');
             Route::get('/sw.js', [AppController::class, 'worker'])->defaults('oa_revalidate', true)->name('worker');
+            // The owner's uploaded icon and favicon (Lane IC): under the app's own
+            // address, so they answer on its own host too. Allowlisted names.
+            Route::get('/icons/{oa_icon}.png', [AppController::class, 'icon'])->where('oa_icon', '[a-z0-9-]{1,20}')->defaults('oa_revalidate', true)->name('icon');
 
             Route::get('/api/state', [AppController::class, 'state'])->middleware('throttle:120,1,oa-state')->name('state');
             Route::post('/api/enrol', [AppController::class, 'enrol'])->middleware('throttle:20,1,oa-enrol')->name('enrol');

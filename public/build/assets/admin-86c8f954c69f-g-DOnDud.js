@@ -136,11 +136,14 @@
       el('div', { class: 'sap-actions' }, [saveBtn, el('span', { text: dirty() ? 'Unsaved changes' : 'Saved' })])
     ]));
 
-    wrap.appendChild(card('Icon', 'One icon for testing: KB in white on the shop\'s pink. Other designs, and how the shop offers the install, are decided later.', [
-      el('div', { class: 'sap-icons' }, data.icons.map(function (i) {
-        return el('figure', {}, [el('img', { src: i.url, alt: '', class: i.purpose === 'maskable' ? 'sap-round' : null, width: 64, height: 64 }), el('figcaption', { text: i.size + ' px · ' + i.purpose })]);
-      }))
-    ]));
+    // App icon and favicon (Lane IC): upload, preview, guide. A save reloads
+    // this screen once, so the Home Screen preview above shows the new icon.
+    var iconHost = el('div', { 'data-sap-icon': '' });
+    wrap.appendChild(iconHost);
+    if (data.icon) {
+      data.icon.name = draft.name.trim() || data.values.name;
+      window.kbbAppIconCard(iconHost, { path: '/admin-api/site-app/icon', state: data.icon, intro: 'The picture on a shopper\'s Home Screen when they add the shop, and the shop\'s icon in the browser tab.', onSaved: function () { load(); } });
+    }
 
     var L = data.links || {};
     wrap.appendChild(card('Add it to a phone', 'From the shop in the phone\'s browser:', [

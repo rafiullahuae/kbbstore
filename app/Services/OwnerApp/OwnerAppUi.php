@@ -52,6 +52,9 @@ final class OwnerAppUi
 
     public const ACCENT_DEFAULT = '#A8475C';
 
+    /** The top of --appbg with the default accent (owner-app.css :root). */
+    public const TOP_DEFAULT = '#FBE3EA';
+
     /** Petal presets, every one readable under white text (OwnerAppUiTest pins ≥ 4.5:1). */
     public const PRESETS = [
         '#A8475C' => 'Petal rose (default)',
@@ -97,6 +100,18 @@ final class OwnerAppUi
         'density' => ['comfortable', 'compact'],
         'corners' => ['soft', 'medium', 'square'],
         'header' => ['compact', 'standard'],
+        /*
+         * The top of the screen (Lane IC). The one choice whose first option is
+         * NOT the old look: the owner, 5 October, "our app is not covering the
+         * notch. fix this ... don't take the header up, just extend the
+         * background color to the top end". 'color': standalone on Android with
+         * the status bar in the app's own top colour, black-translucent on
+         * iPhone so the app's background runs under the clock (the header keeps
+         * its place: .app is padded by env(safe-area-inset-top)). 'fullscreen'
+         * is the way back: Android full screen (clock hidden, the cutout
+         * letterboxed black) and the plain iPhone bar.
+         */
+        'statusbar' => ['color', 'fullscreen'],
     ];
 
     public const LIVE_BOUNDS = [15, 120];
@@ -169,6 +184,25 @@ final class OwnerAppUi
     public static function sectionOn(string $section): bool
     {
         return ! in_array($section, self::all()['sections_off'], true);
+    }
+
+    /** The app's top colour: .app's --appbg at 0 px, computed here as owner-app.css computes it. */
+    public static function topColour(): string
+    {
+        $acc = (string) self::all()['accent'];
+        if ($acc === self::ACCENT_DEFAULT) {
+            return self::TOP_DEFAULT;
+        }
+        // color-mix(in srgb, var(--acc) 14%, #fff), as html.oa-acc sets --appbg.
+        $mix = array_map(static fn (string $h) => (int) round(hexdec($h) * 0.14 + 255 * 0.86), str_split(substr($acc, 1), 2));
+
+        return sprintf('#%02X%02X%02X', ...$mix);
+    }
+
+    /** Full screen on Android (the old behaviour), or the app's colour to the top edge. */
+    public static function fullscreen(): bool
+    {
+        return self::all()['statusbar'] === 'fullscreen';
     }
 
     public static function systemFont(): bool

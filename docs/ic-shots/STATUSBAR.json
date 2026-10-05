@@ -1,0 +1,87 @@
+{
+  "ownerApp": {
+    "manifest": {
+      "display": "standalone",
+      "display_override": null,
+      "theme_color": "#FBE3EA"
+    },
+    "shell": {
+      "themeColor": "#FBE3EA",
+      "iosStyle": "black-translucent"
+    }
+  },
+  "ownerBefore": {
+    "sat": "0px",
+    "header": "DIV.",
+    "headerTop": 50,
+    "headerHeight": 34,
+    "appPaddingTop": "0px",
+    "appBackground": "linear-gradient(rgb(251, 227, 234) 0px, rgb(251, 242, 244) 300px)",
+    "scrollWidth": 390
+  },
+  "ownerAfterAndroid": {
+    "sat": "0px",
+    "header": "DIV.",
+    "headerTop": 50,
+    "headerHeight": 34,
+    "appPaddingTop": "0px",
+    "appBackground": "linear-gradient(rgb(251, 227, 234) 0px, rgb(251, 242, 244) 300px)",
+    "scrollWidth": 390
+  },
+  "ownerIphoneNoInset": {
+    "sat": "0px",
+    "header": "DIV.",
+    "headerTop": 3,
+    "headerHeight": 34,
+    "appPaddingTop": "0px",
+    "appBackground": "linear-gradient(rgb(251, 227, 234) 0px, rgb(251, 242, 244) 300px)",
+    "scrollWidth": 390
+  },
+  "ownerAfterIphone": {
+    "sat": "47px",
+    "header": "DIV.",
+    "headerTop": 50,
+    "headerHeight": 34,
+    "appPaddingTop": "47px",
+    "appBackground": "linear-gradient(rgb(251, 227, 234) 0px, rgb(251, 242, 244) 300px)",
+    "scrollWidth": 390
+  },
+  "shop-default": {
+    "manifestTheme": "#FFFFFF",
+    "meta": "<meta name=\"theme-color\" media=\"(display-mode: standalone)\" content=\"#FFFFFF\">",
+    "topElement": {
+      "tag": "HEADER",
+      "cls": "hd-sticky hd-border hd-shadow hd-trendhi",
+      "bg": "rgb(255, 255, 255)",
+      "top": 0
+    },
+    "label": "default header",
+    "scrollWidth": 390
+  },
+  "control-1280": {
+    "options": [
+      "Colour to the top (default) [selected]",
+      "Full screen, no clock"
+    ],
+    "scrollWidth": 1280
+  },
+  "control-390": {
+    "options": [
+      "Colour to the top (default) [selected]",
+      "Full screen, no clock"
+    ],
+    "scrollWidth": 390
+  },
+  "shop-flagstrip": {
+    "manifestTheme": "#FFFFFF",
+    "meta": "<meta name=\"theme-color\" media=\"(display-mode: standalone)\" content=\"#FFFFFF\">",
+    "topElement": {
+      "tag": "HEADER",
+      "cls": "hd-sticky hd-border hd-shadow hd-trendhi",
+      "bg": "rgb(255, 255, 255)",
+      "top": 0
+    },
+    "label": "flag strip on for phones",
+    "scrollWidth": 390
+  }
+}

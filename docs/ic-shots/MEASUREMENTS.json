@@ -1,0 +1,382 @@
+{
+  "siteapp-before-1280": {
+    "screen": "siteapp",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "card": {
+      "width": 980,
+      "height": 604
+    },
+    "guideFont": "12.5px",
+    "previews": [
+      {
+        "src": "/site-app/icons/apple-180.png?v=8f961d7835",
+        "w": 60,
+        "natural": 180
+      },
+      {
+        "src": "/site-app/icons/maskable-512.png?v=02592ec403",
+        "w": 60,
+        "natural": 512
+      },
+      {
+        "src": "/site-app/icons/maskable-512.png?v=02592ec403",
+        "w": 118,
+        "natural": 512
+      }
+    ],
+    "note": null
+  },
+  "ownerapp-before-1280": {
+    "screen": "ownerapp",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "card": {
+      "width": 996,
+      "height": 585
+    },
+    "guideFont": "12.5px",
+    "previews": [
+      {
+        "src": "/admin-api/owner-app/icon/apple-180.png?v=65b89e41b0",
+        "w": 60,
+        "natural": 180
+      },
+      {
+        "src": "/admin-api/owner-app/icon/maskable-512.png?v=58fa625cde",
+        "w": 60,
+        "natural": 512
+      },
+      {
+        "src": "/admin-api/owner-app/icon/maskable-512.png?v=58fa625cde",
+        "w": 118,
+        "natural": 512
+      },
+      {
+        "src": "/admin-api/owner-app/icon/icon-192.png?v=2307594c40",
+        "w": 16,
+        "natural": 192
+      }
+    ],
+    "note": null
+  },
+  "siteapp-before-390": {
+    "screen": "siteapp",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "card": {
+      "width": 362,
+      "height": 1221
+    },
+    "guideFont": "12.5px",
+    "previews": [
+      {
+        "src": "/site-app/icons/apple-180.png?v=8f961d7835",
+        "w": 60,
+        "natural": 180
+      },
+      {
+        "src": "/site-app/icons/maskable-512.png?v=02592ec403",
+        "w": 60,
+        "natural": 512
+      },
+      {
+        "src": "/site-app/icons/maskable-512.png?v=02592ec403",
+        "w": 118,
+        "natural": 512
+      }
+    ],
+    "note": null
+  },
+  "ownerapp-before-390": {
+    "screen": "ownerapp",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "card": {
+      "width": 362,
+      "height": 1128
+    },
+    "guideFont": "12.5px",
+    "previews": [
+      {
+        "src": "/admin-api/owner-app/icon/apple-180.png?v=65b89e41b0",
+        "w": 60,
+        "natural": 180
+      },
+      {
+        "src": "/admin-api/owner-app/icon/maskable-512.png?v=58fa625cde",
+        "w": 60,
+        "natural": 512
+      },
+      {
+        "src": "/admin-api/owner-app/icon/maskable-512.png?v=58fa625cde",
+        "w": 118,
+        "natural": 512
+      },
+      {
+        "src": "/admin-api/owner-app/icon/icon-192.png?v=2307594c40",
+        "w": 16,
+        "natural": 192
+      }
+    ],
+    "note": null
+  },
+  "shopBefore": {
+    "icons": 0,
+    "apple": "/site-app/icons/apple-180.png?v=8f961d7835",
+    "scrollWidth": 1280
+  },
+  "siteapp-chosen-1280": {
+    "screen": "siteapp",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "card": {
+      "width": 980,
+      "height": 604
+    },
+    "guideFont": "12.5px",
+    "previews": [
+      {
+        "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABBoAAAQaCAIAAA",
+        "w": 60,
+        "natural": 1050
+      },
+      {
+        "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABBoAAAQaCAIAAA",
+        "w": 48,
+        "natural": 1050
+      },
+      {
+        "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABBoAAAQaCAIAAA",
+        "w": 94,
+        "natural": 1050
+      },
+      {
+        "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABBoAAAQaCAIAAA",
+        "w": 16,
+        "natural": 1050
+      }
+    ],
+    "note": "Preview of ic-lotus-1050.png (1050 × 1050, 18 KB). Not live yet: press Upload."
+  },
+  "siteapp-after-1280": {
+    "screen": "siteapp",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "card": {
+      "width": 980,
+      "height": 585
+    },
+    "guideFont": "12.5px",
+    "previews": [
+      {
+        "src": "/site-app/icons/apple-180.png?v=da5573cb2c",
+        "w": 60,
+        "natural": 180
+      },
+      {
+        "src": "/site-app/icons/maskable-512.png?v=a7271ca438",
+        "w": 60,
+        "natural": 512
+      },
+      {
+        "src": "/site-app/icons/maskable-512.png?v=a7271ca438",
+        "w": 118,
+        "natural": 512
+      },
+      {
+        "src": "/site-app/icons/favicon-48.png?v=8d39ea308a",
+        "w": 16,
+        "natural": 48
+      }
+    ],
+    "note": null
+  },
+  "siteapp-refused-1280": {
+    "screen": "siteapp",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "card": {
+      "width": 980,
+      "height": 585
+    },
+    "guideFont": "12.5px",
+    "previews": [
+      {
+        "src": "/site-app/icons/apple-180.png?v=da5573cb2c",
+        "w": 60,
+        "natural": 180
+      },
+      {
+        "src": "/site-app/icons/maskable-512.png?v=a7271ca438",
+        "w": 60,
+        "natural": 512
+      },
+      {
+        "src": "/site-app/icons/maskable-512.png?v=a7271ca438",
+        "w": 118,
+        "natural": 512
+      },
+      {
+        "src": "/site-app/icons/favicon-48.png?v=8d39ea308a",
+        "w": 16,
+        "natural": 48
+      }
+    ],
+    "note": "192 × 192 is too small: at least 512 × 512, and 1024 × 1024 is best."
+  },
+  "ownerapp-after-1280": {
+    "screen": "ownerapp",
+    "viewport": 1280,
+    "scrollWidth": 1280,
+    "card": {
+      "width": 996,
+      "height": 585
+    },
+    "guideFont": "12.5px",
+    "previews": [
+      {
+        "src": "/admin-api/owner-app/icon/apple-180.png?v=da5573cb2c",
+        "w": 60,
+        "natural": 180
+      },
+      {
+        "src": "/admin-api/owner-app/icon/maskable-512.png?v=a7271ca438",
+        "w": 60,
+        "natural": 512
+      },
+      {
+        "src": "/admin-api/owner-app/icon/maskable-512.png?v=a7271ca438",
+        "w": 118,
+        "natural": 512
+      },
+      {
+        "src": "/admin-api/owner-app/icon/favicon-48.png?v=8d39ea308a",
+        "w": 16,
+        "natural": 48
+      }
+    ],
+    "note": "Your icon is live: 7 sizes made from one 1050 × 1050 image, on #FFFFFF."
+  },
+  "siteapp-after-390": {
+    "screen": "siteapp",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "card": {
+      "width": 362,
+      "height": 1268
+    },
+    "guideFont": "12.5px",
+    "previews": [
+      {
+        "src": "/site-app/icons/apple-180.png?v=da5573cb2c",
+        "w": 60,
+        "natural": 180
+      },
+      {
+        "src": "/site-app/icons/maskable-512.png?v=a7271ca438",
+        "w": 60,
+        "natural": 512
+      },
+      {
+        "src": "/site-app/icons/maskable-512.png?v=a7271ca438",
+        "w": 118,
+        "natural": 512
+      },
+      {
+        "src": "/site-app/icons/favicon-48.png?v=8d39ea308a",
+        "w": 16,
+        "natural": 48
+      }
+    ],
+    "note": null
+  },
+  "ownerapp-after-390": {
+    "screen": "ownerapp",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "card": {
+      "width": 362,
+      "height": 1176
+    },
+    "guideFont": "12.5px",
+    "previews": [
+      {
+        "src": "/admin-api/owner-app/icon/apple-180.png?v=da5573cb2c",
+        "w": 60,
+        "natural": 180
+      },
+      {
+        "src": "/admin-api/owner-app/icon/maskable-512.png?v=a7271ca438",
+        "w": 60,
+        "natural": 512
+      },
+      {
+        "src": "/admin-api/owner-app/icon/maskable-512.png?v=a7271ca438",
+        "w": 118,
+        "natural": 512
+      },
+      {
+        "src": "/admin-api/owner-app/icon/favicon-48.png?v=8d39ea308a",
+        "w": 16,
+        "natural": 48
+      }
+    ],
+    "note": null
+  },
+  "shopAfter": {
+    "tags": [
+      {
+        "rel": "apple-touch-icon",
+        "sizes": null,
+        "href": "/site-app/icons/apple-180.png?v=da5573cb2c",
+        "bytes": 4163,
+        "px": "180x180",
+        "type": "image/png",
+        "cache": "immutable, max-age=31536000, public"
+      },
+      {
+        "rel": "icon",
+        "sizes": "48x48",
+        "href": "/site-app/icons/favicon-48.png?v=8d39ea308a",
+        "bytes": 1135,
+        "px": "48x48",
+        "type": "image/png",
+        "cache": "immutable, max-age=31536000, public"
+      },
+      {
+        "rel": "icon",
+        "sizes": "96x96",
+        "href": "/site-app/icons/favicon-96.png?v=15f39d2ff2",
+        "bytes": 2326,
+        "px": "96x96",
+        "type": "image/png",
+        "cache": "immutable, max-age=31536000, public"
+      },
+      {
+        "rel": "icon",
+        "sizes": "192x192",
+        "href": "/site-app/icons/favicon-192.png?v=7d896e51ed",
+        "bytes": 4812,
+        "px": "192x192",
+        "type": "image/png",
+        "cache": "immutable, max-age=31536000, public"
+      }
+    ],
+    "scrollWidth": 1280,
+    "head": [
+      "<link rel=\"apple-touch-icon\" href=\"/site-app/icons/apple-180.png?v=da5573cb2c\">",
+      "<link rel=\"icon\" type=\"image/png\" sizes=\"48x48\" href=\"/site-app/icons/favicon-48.png?v=8d39ea308a\">",
+      "<link rel=\"icon\" type=\"image/png\" sizes=\"96x96\" href=\"/site-app/icons/favicon-96.png?v=15f39d2ff2\">",
+      "<link rel=\"icon\" type=\"image/png\" sizes=\"192x192\" href=\"/site-app/icons/favicon-192.png?v=7d896e51ed\">"
+    ]
+  },
+  "shop-1280": {
+    "scrollWidth": 1280,
+    "icons": 3
+  },
+  "shop-390": {
+    "scrollWidth": 390,
+    "icons": 3
+  }
+}
