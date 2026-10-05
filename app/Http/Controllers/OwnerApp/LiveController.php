@@ -132,7 +132,10 @@ final class LiveController extends Controller
 
     public function notify(Request $request): JsonResponse
     {
-        $groups = array_values(array_intersect(array_keys(OwnerAppEvents::GROUPS), (array) $request->input('groups', [])));
+        $groups = OwnerAppEvents::groupsFromInput($request->input('groups', []));
+        if ($groups === null) {
+            return response()->json(['ok' => false, 'message' => 'Choose from the listed notification groups.'], 422);
+        }
         $member = $request->attributes->get('oa.member');
 
         DB::table('owner_app_members')->where('id', $member->id)->update(['notify' => json_encode($groups), 'updated_at' => now()]);

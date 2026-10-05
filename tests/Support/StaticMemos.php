@@ -74,6 +74,7 @@ final class StaticMemos
             \App\Services\OwnerApp\OwnerAppSettings::class => static fn () => \App\Services\OwnerApp\OwnerAppSettings::forget(),
             \App\Services\OwnerApp\VapidKeys::class => static fn () => \App\Services\OwnerApp\VapidKeys::forget(),
             \App\Services\OwnerApp\OwnerAppEvents::class => static fn () => \App\Services\OwnerApp\OwnerAppEvents::forget(),
+            \App\Services\OwnerApp\OwnerAppAlerts::class => static fn () => \App\Services\OwnerApp\OwnerAppAlerts::forget(),
             IndexNow::class => static fn () => IndexNow::forgetKey(),
             InstalledVersion::class => static fn () => InstalledVersion::forget(),
             Facets::class => static fn () => Facets::reset(),

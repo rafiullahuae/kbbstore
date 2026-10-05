@@ -7,7 +7,7 @@
     touches app.blade.php, the sidebar or the dispatch table.
 
     What the owner does here: switch the phone app on for a member, give them
-    a PIN (4–8 digits; it is hashed on the server and never shown again), see
+    a PIN (6–8 digits; it is hashed on the server and never shown again), see
     and sign out their phones, read the sign-in log, set the idle lock and the
     low-stock line, and copy — or replace — the app's secret address.
 
@@ -37,6 +37,7 @@
 .oaa-set .rl-in{width:120px}
 .oaa-devs{margin-top:10px}
 .oaa-mt{margin:6px 0 0}
+.oaa-set .rl-in.oaa-host{width:260px;max-width:100%}
 @media (max-width:760px){.oaa-mem{grid-template-columns:minmax(0,1fr)}}
 </style>
 <script>
@@ -83,11 +84,11 @@
       return '<div class="rl-card"><div class="oaa-mem"><div><div class="rl-name">' + esc(x.name || x.email) + '</div><div class="rl-sub">' + esc(x.email) + ' · ' + esc(x.role) + '</div>' +
         '<div class="rl-tags">' + (x.enabled ? '<span class="rl-chip live">App on</span>' : '<span class="rl-chip">App off</span>') +
         (x.has_pin ? '<span class="rl-chip">PIN set ' + esc(when(x.pin_set_at)) + '</span>' : '<span class="rl-chip minus">No PIN</span>') +
-        (x.locked_until ? '<span class="rl-chip minus">Locked until ' + esc(when(x.locked_until)) + '</span>' : '') + '</div></div>' +
+        (x.admin_locked ? '<span class="rl-chip minus">Locked — needs a Full Admin</span>' : x.locked_until ? '<span class="rl-chip minus">Locked until ' + esc(when(x.locked_until)) + '</span>' : x.locked ? '<span class="rl-chip minus">Sign-in paused</span>' : '') + '</div></div>' +
         '<label class="oaa-sw"><input type="checkbox" data-oa="enable" data-id="' + x.admin_user_id + '"' + (x.enabled ? ' checked' : '') + '> Owner app access</label></div>' +
-        '<div class="oaa-row"><input class="rl-in" type="password" inputmode="numeric" autocomplete="new-password" maxlength="8" placeholder="New PIN (4–8 digits)" data-pin="' + x.admin_user_id + '" aria-label="New PIN for ' + esc(x.name || x.email) + '">' +
+        '<div class="oaa-row"><input class="rl-in" type="password" inputmode="numeric" autocomplete="new-password" maxlength="8" placeholder="New PIN (6–8 digits)" data-pin="' + x.admin_user_id + '" aria-label="New PIN for ' + esc(x.name || x.email) + '">' +
         '<button type="button" class="btn sm" data-oa="pin" data-id="' + x.admin_user_id + '">' + (x.has_pin ? 'Change PIN' : 'Set PIN') + '</button>' +
-        (x.locked_until ? '<button type="button" class="btn ghost sm" data-oa="unlock" data-id="' + x.admin_user_id + '">Unlock now</button>' : '') + '</div>' +
+        (x.locked || x.locked_until ? '<button type="button" class="btn ghost sm" data-oa="unlock" data-id="' + x.admin_user_id + '">Unlock now</button>' : '') + '</div>' +
         (devs ? '<div class="oaa-devs">' + devs + '</div>' : '') + '</div>';
     }).join('');
 
@@ -105,6 +106,37 @@
       '<p class="oaa-h oaa-mt">Members</p>' + m +
       '<div class="rl-card"><p class="oaa-h">Recent sign-ins</p>' + log + '</div></div>';
     flash = '';
+    security();
+  }
+
+  /*
+   * Lane SEC: Users & Roles → Owner app → Security. Its own card, appended
+   * after the rest is painted, with its own data-oas buttons and listener.
+   */
+  function security() {
+    var box = host && host.querySelector('.oaa'), S = D && D.security;
+    if (!box || !S) return;
+    var card = document.createElement('div');
+    card.className = 'rl-card';
+    var opts = Object.keys(S.push_text_options || {}).map(function (k) {
+      return '<option value="' + esc(k) + '"' + (k === S.push_text ? ' selected' : '') + '>' + esc(S.push_text_options[k]) + '</option>';
+    }).join('');
+    card.innerHTML = '<p class="oaa-h">Security</p><div class="oaa-set">' +
+      '<label>Own host (optional)<input class="rl-in oaa-host" type="text" inputmode="url" autocomplete="off" spellcheck="false" maxlength="253" placeholder="owner.extrabeauty.ae" data-sec="host" value="' + esc(S.host) + '"></label>' +
+      '<label>Lock-screen notification text<select class="rl-in" data-sec="push_text">' + opts + '</select></label>' +
+      '<button type="button" class="btn sm" data-oas="save">Save</button></div>' +
+      '<p class="rl-note oaa-mt">Serve the app only from its own subdomain, e.g. owner.extrabeauty.ae — the strongest isolation; needs the subdomain pointed at this server first. Changing it signs every phone out. Leave it empty to keep the app at the address above.</p>' +
+      '<p class="rl-note oaa-mt">Generic notifications say only “New order” or “Low stock” on the lock screen — no customer name, amount or product.</p>';
+    box.appendChild(card);
+  }
+
+  async function saveSecurity() {
+    var body = {};
+    host.querySelectorAll('[data-sec]').forEach(function (i) { body[i.getAttribute('data-sec')] = String(i.value || '').trim(); });
+    if (body.host !== (D.security.host || '') && !window.confirm(body.host ? 'Serve the owner app only from ' + body.host + '? Every phone is signed out and signs in again there.' : 'Serve the owner app from the shop’s own address again? Every phone is signed out.')) return;
+    var r = await api('PUT', '/security', body);
+    if (!r.ok) { toastMsg(why(r), true); return; }
+    D = r.data; flash = 'Security settings saved.'; paint();
   }
 
   async function act(b) {
@@ -148,6 +180,7 @@
   document.addEventListener('click', function (e) {
     if (!host || !host.contains(e.target)) return;
     var b = e.target.closest('button[data-oa]'); if (b) act(b);
+    if (e.target.closest('button[data-oas]')) saveSecurity();
   });
   document.addEventListener('change', function (e) {
     if (!host || !host.contains(e.target)) return;

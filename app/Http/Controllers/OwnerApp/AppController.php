@@ -121,6 +121,11 @@ final class AppController extends Controller
     /**
      * Where this phone stands: not enrolled, enrolled but locked, or unlocked.
      * Answers for a stranger too — with nothing but "not enrolled".
+     *
+     * NEVER the CSRF value (Lane SEC). "Unlocked" also needs the request to
+     * carry it already: a live session cookie alone is what any same-origin
+     * script on the shop holds too, so without the header the answer is the
+     * PIN pad, and the PIN (/api/unlock) is what hands the value out.
      */
     public function state(Request $request): JsonResponse
     {
@@ -131,7 +136,7 @@ final class AppController extends Controller
             return response()->json(['ok' => true, 'stage' => $why === 'disabled' ? 'disabled' : 'enrol']);
         }
 
-        if (! OwnerAppAuth::sessionValid($request, $device)) {
+        if (! OwnerAppAuth::sessionValid($request, $device) || ! OwnerAppAuth::csrfMatches($request)) {
             return response()->json([
                 'ok' => true,
                 'stage' => 'pin',
@@ -141,7 +146,9 @@ final class AppController extends Controller
             ]);
         }
 
-        OwnerAppAuth::touch($device);
+        if (! \App\Http\Middleware\OwnerAppSession::passive($request)) {
+            OwnerAppAuth::touch($device);
+        }
 
         return response()->json(['ok' => true, 'stage' => 'app'] + self::me($request, $device) + ['pulse' => self::pulse($device)]);
     }
@@ -229,8 +236,8 @@ final class AppController extends Controller
 
     /**
      * The member as the app needs them — an allowlist. No email, no PIN, no
-     * hash, no token: the CSRF value is derived from the session cookie and
-     * is only ever returned to a request that already holds that cookie.
+     * hash, no token, and no CSRF value: that travels only in the answer to a
+     * good PIN (enrol, unlock), which sets it on the body itself.
      *
      * @return array<string,mixed>
      */
@@ -238,8 +245,6 @@ final class AppController extends Controller
     {
         $admin = $device->member->admin;
         $can = static fn (string $c) => AdminRoles::can($admin, $c);
-        $session = (string) $request->cookies->get(OwnerAppAuth::SESSION_COOKIE, '');
-
         return [
             'me' => [
                 'name' => (string) $admin->name,
@@ -261,8 +266,18 @@ final class AppController extends Controller
             'idle_hours' => OwnerAppSettings::idleHours(),
             'tz' => \App\Support\StoreTime::zone(),
             'vapid' => VapidKeys::publicKey(),
-            'csrf' => $session !== '' && $device->session_hash !== null ? OwnerAppAuth::csrfFor($session) : null,
         ];
+    }
+
+    /**
+     * Anything under the app's address that no route above matched. Answered
+     * HERE, inside the group, so it carries OwnerAppHeaders (noindex,
+     * no-store) and never reaches the shop's 404 handler, which would write
+     * the secret address into not_found_log for every manager to read.
+     */
+    public function missing(): JsonResponse
+    {
+        return response()->json(['ok' => false, 'code' => 'not_found'], 404);
     }
 
     private static function firstName(string $name): string

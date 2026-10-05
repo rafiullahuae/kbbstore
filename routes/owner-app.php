@@ -55,6 +55,14 @@ declare(strict_types=1);
 |     POST /{app}/api/push, /api/push/off, /api/push/test -
 |     POST /{app}/api/notify                              -
 |
+|     ANY  /{app}/{anything else}         404 JSON, with the app's headers
+|
+| OWN HOST (Lane SEC, optional). With `owner_app_host` set under Users & Roles
+| → Owner app, the group below is registered with ->domain(host) ONLY: the
+| secret path on the shop's own host answers nothing at all, and the app's
+| host-only cookies belong to that host alone. Empty (the default) changes
+| nothing.
+|
 | Shipped with 2027_08_25_100200_clear_caches_owner_app.php: a route added to a
 | cached route table does not exist until the cache is cleared.
 */
@@ -72,8 +80,14 @@ use Illuminate\Support\Facades\Route;
 
 $ownerAppPath = OwnerAppPath::current();
 
+$ownerAppHost = OwnerAppPath::host();
+
 if ($ownerAppPath !== null) {
-    Route::prefix($ownerAppPath)
+    $ownerAppGroup = Route::prefix($ownerAppPath);
+    if ($ownerAppHost !== null) {
+        $ownerAppGroup->domain($ownerAppHost);
+    }
+    $ownerAppGroup
         ->withoutMiddleware(\App\Http\Controllers\Store\SeoFilesController::STATELESS)
         ->middleware(OwnerAppHeaders::class)
         ->name('owner-app.')
@@ -114,5 +128,8 @@ if ($ownerAppPath !== null) {
                 Route::post('/push/test', [LiveController::class, 'test'])->middleware('throttle:6,1,oa-push-test')->name('push.test');
                 Route::post('/notify', [LiveController::class, 'notify'])->name('notify');
             });
+
+            // LAST: everything else under the secret address (Lane SEC).
+            Route::any('/{oa_rest}', [AppController::class, 'missing'])->where('oa_rest', '.*')->name('missing');
         });
 }

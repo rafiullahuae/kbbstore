@@ -103,7 +103,7 @@ it('gives sign-in its own throttle, so ordinary app traffic can never lock a sec
     }
 
     $this->flushHeaders();
-    $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'owner@example.com', 'pin' => '4826'])->assertOk();
+    $this->withHeaders(['X-OA' => '1'])->postJson(OA::base().'/api/enrol', ['email' => 'owner@example.com', 'pin' => '482613'])->assertOk();
 
     $routes = (string) file_get_contents(base_path('routes/owner-app.php'));
     preg_match_all("/throttle:\\d+,\\d+(,[a-z\\-]+)?/", $routes, $all);

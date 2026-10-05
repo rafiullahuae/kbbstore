@@ -9,6 +9,7 @@ use App\Models\AdminUser;
 use App\Services\OwnerApp\OwnerAppAuth;
 use App\Services\OwnerApp\OwnerAppEvents;
 use App\Services\OwnerApp\OwnerAppPath;
+use App\Services\OwnerApp\OwnerAppPushText;
 use App\Services\OwnerApp\OwnerAppSettings;
 use App\Services\OwnerApp\VapidKeys;
 use App\Support\AdminRoles;
@@ -25,7 +26,7 @@ use Illuminate\Support\Facades\Hash;
  * address, idle time and low-stock line. Capability `ownerapp.manage`, Full
  * Admin only by default (AdminCapabilities::RULES maps every path here).
  *
- * The PIN arrives once, is checked (4–8 digits, not 1111, not 1234), hashed
+ * The PIN arrives once, is checked (6–8 digits, not 111111, not 123456), hashed
  * with Hash::make and never stored, logged or returned. The screen learns only
  * "has a PIN, set on <date>". Setting a new PIN, or switching access off, ends
  * every session that member holds; switching access off also stops their push
@@ -42,7 +43,7 @@ final class OwnerAppAdminController extends Controller
         VapidKeys::pair();
 
         $users = AdminUser::query()->orderBy('id')->get();
-        $members = DB::table('owner_app_members')->get(['id', 'admin_user_id', 'enabled', 'pin_hash', 'pin_set_at', 'locked_until', 'notify'])
+        $members = DB::table('owner_app_members')->get(['id', 'admin_user_id', 'enabled', 'pin_hash', 'pin_set_at', 'locked_until', 'lock_level', 'enrol_locked_until', 'enrol_lock_level', 'notify'])
             ->keyBy('admin_user_id');
         $devices = DB::table('owner_app_devices')->orderByDesc('last_seen_at')->orderByDesc('id')
             ->get(['id', 'member_id', 'name', 'ip', 'created_at', 'last_seen_at', 'revoked_at', 'revoked_reason'])
@@ -58,7 +59,7 @@ final class OwnerAppAdminController extends Controller
 
         return response()->json([
             'ok' => true,
-            'url' => $request->getSchemeAndHttpHost().rtrim($request->getBasePath(), '/').'/'.$path.'/',
+            'url' => (($host = OwnerAppPath::host()) !== null ? 'https://'.$host : $request->getSchemeAndHttpHost().rtrim($request->getBasePath(), '/')).'/'.$path.'/',
             'path_from_env' => OwnerAppPath::isLockedByEnv(),
             'push_ready' => VapidKeys::publicKey() !== null,
             'settings' => ['idle_hours' => OwnerAppSettings::idleHours(), 'low_stock' => OwnerAppSettings::lowStock()],
@@ -76,6 +77,10 @@ final class OwnerAppAdminController extends Controller
                     'has_pin' => $m !== null && $m->pin_hash !== null,
                     'pin_set_at' => $m === null ? null : StoreTime::iso($m->pin_set_at),
                     'locked_until' => $m !== null && $m->locked_until !== null && now()->lt($m->locked_until) ? StoreTime::iso($m->locked_until) : null,
+                    // Lane SEC: either ladder (PIN pad or sign-in form) locked,
+                    // and whether only a Full Admin can lift it.
+                    'locked' => $m !== null && OwnerAppAuth::lockState($m)['locked'],
+                    'admin_locked' => $m !== null && OwnerAppAuth::lockState($m)['admin_only'],
                     'notify' => OwnerAppEvents::groupsFrom($m->notify ?? null),
                     'devices' => $m === null ? [] : ($devices[$m->id] ?? collect())->map(fn ($d) => [
                         'id' => (int) $d->id,
@@ -98,6 +103,12 @@ final class OwnerAppAdminController extends Controller
                 'device' => (string) ($l->device ?? ''),
                 'at' => StoreTime::iso($l->created_at),
             ])->values(),
+            // Lane SEC: Users & Roles → Owner app → Security.
+            'security' => [
+                'host' => OwnerAppPath::host() ?? '',
+                'push_text' => OwnerAppPushText::current(),
+                'push_text_options' => OwnerAppPushText::OPTIONS,
+            ],
         ]);
     }
 
@@ -133,13 +144,19 @@ final class OwnerAppAdminController extends Controller
 
         $write = ['enabled' => $enabled, 'updated_at' => now()];
         if ($pin !== null) {
-            $write += ['pin_hash' => Hash::make($pin), 'pin_length' => strlen($pin), 'pin_set_at' => now(), 'failed_count' => 0, 'locked_until' => null];
+            $write += ['pin_hash' => Hash::make($pin), 'pin_length' => strlen($pin), 'pin_set_at' => now()];
         }
         if ($request->has('notify')) {
-            $write['notify'] = json_encode(array_values(array_intersect(array_keys(OwnerAppEvents::GROUPS), (array) $request->input('notify', []))));
+            $groups = OwnerAppEvents::groupsFromInput($request->input('notify'));
+            if ($groups === null) {
+                return response()->json(['ok' => false, 'message' => 'Choose from the listed notification groups.', 'errors' => ['notify' => ['Invalid.']]], 422);
+            }
+            $write['notify'] = json_encode($groups);
         }
-        if ($request->boolean('unlock')) {
-            $write += ['failed_count' => 0, 'locked_until' => null];
+        if ($pin !== null || $request->boolean('unlock')) {
+            // Both ladders, every level — including the lock only a Full
+            // Admin can lift (Lane SEC).
+            $write = array_merge($write, OwnerAppAuth::UNLOCKED);
         }
 
         if ($row === null) {
@@ -159,15 +176,82 @@ final class OwnerAppAdminController extends Controller
         return response()->json(['ok' => true, 'enabled' => $enabled, 'has_pin' => $pin !== null || ($row->pin_hash ?? null) !== null]);
     }
 
-    public function revoke(int $id): JsonResponse
+    /**
+     * Sign one phone out for good. The same escalation rule as member(): a
+     * phone belongs to an admin account, and nobody signs out the phone of an
+     * account that can do things they cannot (Lane SEC — this used to skip
+     * AdminRoles::refusal() entirely).
+     */
+    public function revoke(Request $request, int $id): JsonResponse
     {
-        if (! DB::table('owner_app_devices')->where('id', $id)->exists()) {
+        $device = DB::table('owner_app_devices as d')->leftJoin('owner_app_members as m', 'm.id', '=', 'd.member_id')
+            ->where('d.id', $id)->first(['d.id', 'm.admin_user_id']);
+
+        if ($device === null) {
             return response()->json(['ok' => false, 'message' => 'That device is not on the list any more.'], 404);
+        }
+
+        $actor = auth('admin')->user();
+        $target = $device->admin_user_id === null ? null : AdminUser::query()->find((int) $device->admin_user_id);
+
+        if (! $actor instanceof AdminUser) {
+            return response()->json(['ok' => false, 'message' => 'Sign in again.'], 401);
+        }
+
+        if ($target !== null && ($why = AdminRoles::refusal($actor, $target, ['full' => AdminRoles::isFull($target), 'caps' => AdminRoles::resolve($target)], false))) {
+            return response()->json(['ok' => false, 'error' => $why[1], 'message' => $why[2]], $why[0]);
         }
 
         OwnerAppAuth::revoke($id, 'revoked_by_admin');
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Users & Roles → Owner app → Security (Lane SEC): the app's own host and
+     * the lock-screen notification text. Full Admin only — the whole file is
+     * `ownerapp.manage` — and checked again here, because a custom role that
+     * was handed ownerapp.manage must still not move the app to a host.
+     */
+    public function security(Request $request): JsonResponse
+    {
+        if (! AdminRoles::isFull(auth('admin')->user())) {
+            return response()->json(['ok' => false, 'message' => 'Only a Full Admin changes the owner app’s security settings.'], 403);
+        }
+
+        $out = [];
+
+        if ($request->has('host')) {
+            // '' arrives as null (ConvertEmptyStringsToNull): both clear it.
+            $raw = $request->input('host') ?? '';
+            $host = is_string($raw) ? strtolower(trim($raw)) : null;
+
+            if ($host === null || ($host !== '' && ! OwnerAppPath::validHost($host))) {
+                return response()->json(['ok' => false, 'message' => 'Enter a host name only, like owner.extrabeauty.ae — no https://, no slash, no port.',
+                    'errors' => ['host' => ['Invalid.']]], 422);
+            }
+
+            if ($host !== (OwnerAppPath::host() ?? '')) {
+                OwnerAppPath::setHost($host);
+
+                // Every phone's cookies belong to the host it enrolled on and
+                // its service worker lives there: sign them out, as a new
+                // address does, rather than list them as live.
+                foreach (DB::table('owner_app_devices')->whereNull('revoked_at')->pluck('id') as $deviceId) {
+                    OwnerAppAuth::revoke((int) $deviceId, 'host_changed');
+                }
+            }
+        }
+
+        if ($request->has('push_text')) {
+            $raw = $request->input('push_text');
+            if (! is_string($raw) || ! array_key_exists($raw, OwnerAppPushText::OPTIONS)) {
+                return response()->json(['ok' => false, 'message' => 'Choose Detailed or Generic.', 'errors' => ['push_text' => ['Invalid.']]], 422);
+            }
+            OwnerAppPushText::put($raw);
+        }
+
+        return $this->index($request);
     }
 
     public function settings(Request $request): JsonResponse

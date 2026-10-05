@@ -32,6 +32,15 @@ class NotFoundLogger
             return;
         }
 
+        // The owner app's secret address is never written into a table that
+        // every manager can read (Lane SEC). Its own catch-all answers most
+        // misses under it; this covers the rest — an abort(404) in a
+        // controller, or the address requested on the shop's host while the
+        // app is served from a host of its own.
+        if (\App\Services\OwnerApp\OwnerAppPath::covers($bare)) {
+            return;
+        }
+
         foreach (self::NOISE_PREFIX as $prefix) {
             if (str_starts_with($bare, $prefix)) {
                 return;
