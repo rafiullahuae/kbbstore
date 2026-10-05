@@ -38,9 +38,9 @@ final class ProductsController extends Controller
 
     public const PER_PAGE = 30;
 
-    public const FILTERS = ['all', 'low', 'out', 'instock', 'hidden'];
+    public const FILTERS = ['all', 'low', 'out', 'instock', 'draft', 'hidden'];
 
-    public const EDITABLE = ['price_aed', 'sale_aed', 'stock', 'stock_status', 'manage_stock', 'status', 'is_visible'];
+    public const EDITABLE = ['price_aed', 'sale_aed', 'stock', 'stock_status', 'manage_stock', 'status', 'is_visible', 'category_ids'];
 
     private const LIKE_ESCAPE = '!';
 
@@ -72,6 +72,7 @@ final class ProductsController extends Controller
             'low' => $q->where('p.manage_stock', true)->where('p.stock', '>', 0)->where('p.stock', '<=', $at),
             'out' => $q->where('p.stock_status', 'outofstock'),
             'instock' => $q->where('p.stock_status', 'instock'),
+            'draft' => $q->where('p.status', '!=', 'publish'),
             'hidden' => $q->where(fn (Builder $w) => $w->where('p.status', '!=', 'publish')->orWhere('p.is_visible', false)),
             default => null,
         };
@@ -82,8 +83,9 @@ final class ProductsController extends Controller
             $counts = (clone $q)->selectRaw(
                 'COUNT(*) as all_n,
                  SUM(CASE WHEN p.manage_stock = 1 AND p.stock > 0 AND p.stock <= ? THEN 1 ELSE 0 END) as low_n,
-                 SUM(CASE WHEN p.stock_status = ? THEN 1 ELSE 0 END) as out_n',
-                [$at, 'outofstock'],
+                 SUM(CASE WHEN p.stock_status = ? THEN 1 ELSE 0 END) as out_n,
+                 SUM(CASE WHEN p.status <> ? THEN 1 ELSE 0 END) as draft_n',
+                [$at, 'outofstock', 'publish'],
             )->first();
         }
 
@@ -105,7 +107,7 @@ final class ProductsController extends Controller
             'low_at' => $at,
         ];
         if ($counts !== null) {
-            $out['counts'] = ['all' => (int) $counts->all_n, 'low' => (int) $counts->low_n, 'out' => (int) $counts->out_n];
+            $out['counts'] = ['all' => (int) $counts->all_n, 'low' => (int) $counts->low_n, 'out' => (int) $counts->out_n, 'draft' => (int) $counts->draft_n];
         }
 
         return response()->json($out);
@@ -144,7 +146,7 @@ final class ProductsController extends Controller
             ->first([
                 'p.id', 'p.name', 'p.slug', 'p.sku', 'p.image', 'p.images', 'p.type', 'p.status', 'p.is_visible',
                 'p.price', 'p.sale_price', 'p.sale_starts_at', 'p.sale_ends_at', 'p.manage_stock', 'p.stock',
-                'p.stock_status', 'p.short_description', 'b.name as brand', 'p.updated_at',
+                'p.stock_status', 'p.short_description', 'p.description', 'b.name as brand', 'p.updated_at',
             ]);
 
         if ($p === null) {
@@ -161,9 +163,13 @@ final class ProductsController extends Controller
             ->get(['pv.product_variant_id', 'av.name'])
             ->groupBy('product_variant_id');
 
-        $sold30 = (int) DB::table('order_items as i')->join('orders as o', 'o.id', '=', 'i.order_id')
-            ->where('i.product_id', $id)->whereIn('o.status', \App\Models\Order::REAL_STATUSES)
-            ->where('o.created_at', '>=', now()->subDays(30))->sum('i.quantity');
+        $sold = DB::table('order_items as i')->join('orders as o', 'o.id', '=', 'i.order_id')
+            ->where('i.product_id', $id)->whereIn('o.status', \App\Models\Order::REAL_STATUSES)->whereNull('o.deleted_at')
+            ->where('o.created_at', '>=', now()->subDays(30))
+            ->selectRaw('COALESCE(SUM(i.quantity), 0) as q, COALESCE(SUM(i.total), 0) as t')->first();
+        $sold30 = (int) $sold->q;
+
+        $mine = DB::table('category_product')->where('product_id', $id)->pluck('category_id')->map(fn ($v) => (int) $v)->all();
 
         $images = array_values(array_filter(array_merge([(string) $p->image], (array) (json_decode((string) $p->images, true) ?: [])), 'strlen'));
 
@@ -176,8 +182,13 @@ final class ProductsController extends Controller
                 'price' => self::major($p->price),
                 'sale' => self::major($p->sale_price),
                 'sale_window' => $p->sale_starts_at || $p->sale_ends_at,
-                'short_description' => mb_substr(trim(strip_tags((string) $p->short_description)), 0, 400),
+                'short_description' => mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tags((string) $p->short_description)) ?? ''), 0, 400),
                 'sold_30d' => $sold30,
+                'revenue_30d' => $this->may($request, 'analytics.view') ? Money::plain((int) $sold->t) : null,
+                'type_label' => match ((string) $p->type) { 'variable' => 'Variable · options', 'set' => 'Set · bundle', default => 'Simple · physical' },
+                'category_ids' => $mine,
+                'category_names' => $mine === [] ? [] : DB::table('categories')->whereIn('id', $mine)->orderBy('name')->pluck('name')->all(),
+                'description' => mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tags((string) $p->description)) ?? ''), 0, 1200),
                 'variants' => $variants->map(fn ($v) => [
                     'id' => (int) $v->id,
                     'label' => ($labels[$v->id] ?? collect())->pluck('name')->implode(' · ') ?: ('#'.$v->id),
@@ -189,6 +200,20 @@ final class ProductsController extends Controller
                 'can_edit' => $this->may($request, 'catalog.manage'),
                 'updated_at' => self::iso($p->updated_at),
             ],
+        ]);
+    }
+
+    /** The category picker's list, fetched only when the sheet opens. */
+    public function categories(Request $request): JsonResponse
+    {
+        if ($r = $this->refuse($request, 'catalog.view')) {
+            return $r;
+        }
+
+        return response()->json([
+            'ok' => true,
+            'categories' => DB::table('categories')->orderBy('depth')->orderBy('position')->orderBy('name')->limit(400)
+                ->get(['id', 'name'])->map(fn ($c) => ['id' => (int) $c->id, 'name' => (string) $c->name])->values(),
         ]);
     }
 

@@ -80,6 +80,7 @@ final class OrdersController extends Controller
             ->get([
                 'o.id', 'o.order_number', 'o.status', 'o.total', 'o.created_at', 'o.payment_method',
                 'o.payment_method_title', 'o.billing_address', 'c.name as c_name',
+                DB::raw('(SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) as items_n'),
             ]);
 
         $more = $rows->count() > self::PER_PAGE;
@@ -192,6 +193,7 @@ final class OrdersController extends Controller
             'payment_title' => (string) ($o->payment_method_title ?: ''),
             'created_at' => StoreTime::iso($o->created_at),
             'day' => StoreTime::dayKey($o->created_at),
+            'items' => isset($o->items_n) ? (int) $o->items_n : null,
         ];
     }
 
@@ -265,11 +267,7 @@ final class OrdersController extends Controller
                 'billing' => self::address($order->billing_address),
                 'shipping' => self::address($order->shipping_address),
                 'shipping_method' => (string) ($order->shipping_method ?? ''),
-                'payment' => [
-                    'kind' => self::paymentKind((string) $order->payment_method),
-                    'title' => $order->paymentLabel(),
-                    'paid' => in_array((string) $order->status, OrderPaymentPanel::PAID_STATUSES, true) || $order->paid_at !== null,
-                ],
+                'payment' => self::payment($order),
                 'items' => $order->items->map(fn ($i) => [
                     'name' => (string) $i->name,
                     'sku' => (string) ($i->sku ?? ''),
@@ -298,13 +296,7 @@ final class OrdersController extends Controller
                     'orders' => (int) ($history->n ?? 0),
                     'spent_display' => Money::plain((int) ($history->spent ?? 0)),
                 ],
-                'notes' => $order->notes->map(fn ($n) => [
-                    'id' => (int) $n->id,
-                    'author' => (string) ($n->author ?? ''),
-                    'customer' => (bool) $n->is_customer_note,
-                    'content' => (string) $n->content,
-                    'at' => self::iso($n->created_at),
-                ])->values(),
+                'notes' => $order->notes->map(fn ($n) => self::noteRow($n))->values(),
                 'prev_id' => $prev === null ? null : (int) $prev,
                 'next_id' => $next === null ? null : (int) $next,
                 'can' => [
@@ -382,6 +374,7 @@ final class OrdersController extends Controller
             'author' => (string) ($d['note']['author'] ?? ''),
             'customer' => false,
             'content' => (string) ($d['note']['content'] ?? ''),
+            'tone' => '',
             'at' => $d['note']['created_at'] ?? null,
         ]]);
     }
@@ -460,6 +453,58 @@ final class OrdersController extends Controller
         return response()->json(['ok' => true] + $shape($d));
     }
 
+    /**
+     * How the order was paid, for the Payment card. Tabby splits a purchase in
+     * four and Tamara in three (their standard plans); the shop is paid in full
+     * by the provider at checkout, and the card says so. The instalment dates
+     * are a month apart from the day it was paid.
+     *
+     * @return array<string,mixed>
+     */
+    private static function payment(Order $order): array
+    {
+        $kind = self::paymentKind((string) $order->payment_method);
+        $paid = in_array((string) $order->status, OrderPaymentPanel::PAID_STATUSES, true) || $order->paid_at !== null;
+        $out = ['kind' => $kind, 'title' => $order->paymentLabel(), 'paid' => $paid, 'paid_at' => self::iso($order->paid_at), 'instalments' => null];
+
+        if ($kind === 'tabby' || $kind === 'tamara') {
+            $n = $kind === 'tabby' ? 4 : 3;
+            $each = intdiv((int) $order->total, $n);
+            $start = StoreTime::display($order->paid_at ?? $order->created_at) ?? StoreTime::now();
+            $out['instalments'] = [
+                'plan' => $kind === 'tabby' ? 'Pay in 4' : 'Split in 3',
+                'each_display' => Money::plain($each),
+                'parts' => array_map(fn ($i) => [
+                    'amount' => Money::plain($i === $n - 1 ? (int) $order->total - $each * ($n - 1) : $each),
+                    'date' => $start->addMonthsNoOverflow($i)->format('j M'),
+                    'done' => $paid && $i === 0,
+                ], range(0, $n - 1)),
+            ];
+        }
+
+        return $out;
+    }
+
+    /** One timeline entry. `tone` marks money taken (g) and things that went wrong (w). */
+    private static function noteRow(object $n): array
+    {
+        $text = (string) $n->content;
+        $tone = match (true) {
+            (bool) preg_match('/fail|declin|error|refused|timeout|could not|cancel/i', $text) => 'w',
+            (bool) preg_match('/captur|paid|payment (received|complete)|marked as paid/i', $text) => 'g',
+            default => '',
+        };
+
+        return [
+            'id' => (int) $n->id,
+            'author' => (string) ($n->author ?? ''),
+            'customer' => (bool) $n->is_customer_note,
+            'content' => $text,
+            'tone' => $tone,
+            'at' => self::iso($n->created_at),
+        ];
+    }
+
     /** @return array<string,string>|null */
     private static function address(mixed $a): ?array
     {
@@ -475,7 +520,7 @@ final class OrdersController extends Controller
             'line2' => $pick('line2') ?: $pick('address_2'),
             'city' => $pick('city'),
             'state' => $pick('state'),
-            'country' => $pick('country'),
+            'country' => \App\Support\Countries::NAMES[strtoupper($pick('country'))] ?? $pick('country'),
             'phone' => $pick('phone'),
         ];
     }

@@ -84,7 +84,7 @@ final class OwnerAppRoutes
     public static function member(AdminUser $admin, string $pin = '4826', bool $enabled = true): int
     {
         return (int) DB::table('owner_app_members')->insertGetId([
-            'admin_user_id' => $admin->id, 'enabled' => $enabled, 'pin_hash' => Hash::make($pin),
+            'admin_user_id' => $admin->id, 'enabled' => $enabled, 'pin_hash' => Hash::make($pin), 'pin_length' => strlen($pin),
             'pin_set_at' => now(), 'created_at' => now(), 'updated_at' => now(),
         ]);
     }

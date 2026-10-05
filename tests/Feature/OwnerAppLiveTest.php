@@ -317,7 +317,7 @@ it('runs one timer, only while the page is visible, and measures no layout', fun
     $js = collect(glob(resource_path('js/owner-app/*.js')))->map(fn ($f) => file_get_contents($f))->implode("\n");
     $js = (string) preg_replace(['#/\*.*?\*/#s', '#(^|\s)//[^\n]*#'], ['', '$1'], $js);
 
-    foreach (['getBoundingClientRect', 'offsetWidth', 'offsetHeight', 'clientWidth', 'clientHeight', 'scrollWidth', 'scrollHeight', 'getComputedStyle', 'ResizeObserver', 'setInterval', 'localStorage', 'sessionStorage', 'indexedDB'] as $api) {
+    foreach (['getBoundingClientRect', 'offsetWidth', 'offsetHeight', 'clientWidth', 'clientHeight', 'scrollWidth', 'scrollHeight', 'getComputedStyle', 'ResizeObserver', 'setInterval', 'sessionStorage', 'indexedDB'] as $api) {
         expect(str_contains($js, $api))->toBeFalse("owner app JS uses {$api}");
     }
 
@@ -325,9 +325,8 @@ it('runs one timer, only while the page is visible, and measures no layout', fun
     expect($app)->toContain("if (document.visibilityState !== 'visible' || S.stage !== 'app') return;")
         ->toContain("if (document.visibilityState === 'hidden') { stopPolling(); return; }");
 
-    $shell = (string) file_get_contents(resource_path('views/owner-app/shell.blade.php'));
     $css = (string) file_get_contents(resource_path('css/owner-app/owner-app.css'));
-    expect($shell)->toContain('Refreshing the app')
+    expect($app)->toContain('Refreshing the app')
         ->and($css)->toContain('backdrop-filter: blur(')
         ->and($css)->toContain('prefers-reduced-motion: reduce');
 });

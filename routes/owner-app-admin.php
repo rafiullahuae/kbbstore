@@ -27,7 +27,7 @@ use App\Http\Controllers\Admin\OwnerAppAdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/owner-app', [OwnerAppAdminController::class, 'index']);
-Route::put('/owner-app/members/{id}', [OwnerAppAdminController::class, 'member'])->whereNumber('id')->middleware('throttle:30,1');
+Route::put('/owner-app/members/{id}', [OwnerAppAdminController::class, 'member'])->whereNumber('id')->middleware('throttle:30,1,oa-admin-pin');
 Route::post('/owner-app/devices/{id}/revoke', [OwnerAppAdminController::class, 'revoke'])->whereNumber('id');
 Route::put('/owner-app/settings', [OwnerAppAdminController::class, 'settings']);
-Route::post('/owner-app/address', [OwnerAppAdminController::class, 'address'])->middleware('throttle:10,1');
+Route::post('/owner-app/address', [OwnerAppAdminController::class, 'address'])->middleware('throttle:10,1,oa-admin-address');

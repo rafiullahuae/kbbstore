@@ -47,6 +47,7 @@ declare(strict_types=1);
 |     GET  /{app}/api/products                            catalog.view
 |     GET  /{app}/api/products/{id}                       catalog.view
 |     POST /{app}/api/products/{id}                       catalog.manage
+|     GET  /{app}/api/categories                          catalog.view
 |     GET  /{app}/api/customers                           customers.view
 |     GET  /{app}/api/customers/{id}                      customers.view
 |     GET  /{app}/api/changes                             (filtered per capability)
@@ -81,11 +82,11 @@ if ($ownerAppPath !== null) {
             Route::get('/manifest.webmanifest', [AppController::class, 'manifest'])->defaults('oa_revalidate', true)->name('manifest');
             Route::get('/sw.js', [AppController::class, 'worker'])->defaults('oa_revalidate', true)->name('worker');
 
-            Route::get('/api/state', [AppController::class, 'state'])->middleware('throttle:120,1')->name('state');
-            Route::post('/api/enrol', [AppController::class, 'enrol'])->middleware('throttle:20,1')->name('enrol');
-            Route::post('/api/unlock', [AppController::class, 'unlock'])->middleware('throttle:30,1')->name('unlock');
+            Route::get('/api/state', [AppController::class, 'state'])->middleware('throttle:120,1,oa-state')->name('state');
+            Route::post('/api/enrol', [AppController::class, 'enrol'])->middleware('throttle:20,1,oa-enrol')->name('enrol');
+            Route::post('/api/unlock', [AppController::class, 'unlock'])->middleware('throttle:30,1,oa-unlock')->name('unlock');
 
-            Route::prefix('api')->middleware([OwnerAppSession::class, 'throttle:300,1'])->group(function () {
+            Route::prefix('api')->middleware([OwnerAppSession::class, 'throttle:300,1,oa-api'])->group(function () {
                 Route::post('/lock', [AppController::class, 'lock'])->name('lock');
                 Route::post('/forget', [AppController::class, 'forget'])->name('forget');
 
@@ -99,6 +100,7 @@ if ($ownerAppPath !== null) {
                 Route::post('/orders/{id}/mark-paid', [OrdersController::class, 'markPaid'])->whereNumber('id')->name('order.paid');
 
                 Route::get('/products', [ProductsController::class, 'index'])->name('products');
+                Route::get('/categories', [ProductsController::class, 'categories'])->name('categories');
                 Route::get('/products/{id}', [ProductsController::class, 'show'])->whereNumber('id')->name('product');
                 Route::post('/products/{id}', [ProductsController::class, 'update'])->whereNumber('id')->name('product.update');
 
@@ -109,7 +111,7 @@ if ($ownerAppPath !== null) {
                 Route::get('/notifications', [LiveController::class, 'notifications'])->name('notifications');
                 Route::post('/push', [LiveController::class, 'subscribe'])->name('push');
                 Route::post('/push/off', [LiveController::class, 'unsubscribe'])->name('push.off');
-                Route::post('/push/test', [LiveController::class, 'test'])->middleware('throttle:6,1')->name('push.test');
+                Route::post('/push/test', [LiveController::class, 'test'])->middleware('throttle:6,1,oa-push-test')->name('push.test');
                 Route::post('/notify', [LiveController::class, 'notify'])->name('notify');
             });
         });

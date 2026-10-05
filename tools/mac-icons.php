@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /*
  * Lane MAC: draw the owner app's icons from the shop's logo — the "KB" of the
- * K-Beauty Bliss wordmark, white on the shop's pink (#E0567B), the same mark
+ * K-Beauty Bliss wordmark, white on the Petal rose (#A8475C), the same mark
  * the app's sign-in screen shows. The shop's logo is set in type, not an
  * image, so the icon is set in type too.
  *
@@ -28,7 +28,7 @@ function oa_icon(string $file, int $size, string $font, bool $maskable, bool $ba
     $clear = imagecolorallocatealpha($im, 0, 0, 0, 127);
     imagefill($im, 0, 0, $clear);
 
-    $pink = imagecolorallocate($im, 0xE0, 0x56, 0x7B);
+    $pink = imagecolorallocate($im, 0xA8, 0x47, 0x5C);   // Petal rose (--acc)
     $white = imagecolorallocate($im, 255, 255, 255);
 
     if ($badge) {

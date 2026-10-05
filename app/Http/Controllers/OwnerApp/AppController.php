@@ -14,6 +14,7 @@ use App\Support\AdminRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Vite;
 
 /**
@@ -29,6 +30,9 @@ final class AppController extends Controller
     public const JS = 'resources/js/owner-app/owner-app.js';
 
     public const CSS = 'resources/css/owner-app/owner-app.css';
+
+    /** Plus Jakarta Sans, Latin, variable 200–800: the Petal face, self-hosted (already a library font). */
+    public const FONT = 'resources/fonts/lib/plus-jakarta-sans/plus-jakarta-sans-latin.woff2';
 
     public const ICONS = [
         'icon-192' => 'resources/owner-app/icons/icon-192.png',
@@ -46,7 +50,7 @@ final class AppController extends Controller
     /** @return array<string,string> */
     private static function assets(): array
     {
-        $out = ['js' => Vite::asset(self::JS), 'css' => Vite::asset(self::CSS)];
+        $out = ['js' => Vite::asset(self::JS), 'css' => Vite::asset(self::CSS), 'font' => Vite::asset(self::FONT)];
         foreach (self::ICONS as $k => $path) {
             $out[$k] = Vite::asset($path);
         }
@@ -71,9 +75,11 @@ final class AppController extends Controller
             'start_url' => $base.'/',
             'scope' => $base.'/',
             'display' => 'standalone',
+            // An installed Android app opens full screen; anything that cannot, standalone.
+            'display_override' => ['fullscreen', 'standalone'],
             'orientation' => 'any',
             'background_color' => '#ffffff',
-            'theme_color' => '#E0567B',
+            'theme_color' => '#FBE3EA',
             'icons' => [
                 ['src' => $a['icon-192'], 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
                 ['src' => $a['icon-512'], 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
@@ -91,7 +97,7 @@ final class AppController extends Controller
     {
         $base = self::base($request);
         $a = self::assets();
-        $shell = [$base.'/', $a['js'], $a['css'], $a['icon-192'], $a['badge-96']];
+        $shell = [$base.'/', $a['js'], $a['css'], $a['font'], $a['icon-192'], $a['badge-96']];
 
         $src = (string) file_get_contents(resource_path('owner-app/sw.js'));
         $src = str_replace(
@@ -126,12 +132,39 @@ final class AppController extends Controller
         }
 
         if (! OwnerAppAuth::sessionValid($request, $device)) {
-            return response()->json(['ok' => true, 'stage' => 'pin', 'name' => self::firstName((string) $device->member->admin->name)]);
+            return response()->json([
+                'ok' => true,
+                'stage' => 'pin',
+                'name' => self::firstName((string) $device->member->admin->name),
+                'pin_length' => (int) ($device->member->pin_length ?? 0) ?: null,
+                'idle_hours' => OwnerAppSettings::idleHours(),
+            ]);
         }
 
         OwnerAppAuth::touch($device);
 
-        return response()->json(['ok' => true, 'stage' => 'app'] + self::me($request, $device));
+        return response()->json(['ok' => true, 'stage' => 'app'] + self::me($request, $device) + ['pulse' => self::pulse($device)]);
+    }
+
+    /**
+     * The four numbers the "Refreshing the app" card ticks off as it lands:
+     * three small COUNTs, each only for a member allowed to see it.
+     *
+     * @return array<string,int|null>
+     */
+    private static function pulse(\App\Models\OwnerAppDevice $device): array
+    {
+        $admin = $device->member->admin;
+        $day = \App\Support\StoreTime::startOfDayUtc();
+
+        return [
+            'orders_today' => AdminRoles::can($admin, 'orders.view')
+                ? DB::table('orders')->whereNull('deleted_at')->where('created_at', '>=', $day)->whereIn('status', \App\Models\Order::REAL_STATUSES)->count() : null,
+            'low_stock' => AdminRoles::can($admin, 'catalog.view')
+                ? DB::table('products')->whereNull('deleted_at')->where('manage_stock', true)->where('stock', '>', 0)->where('stock', '<=', OwnerAppSettings::lowStock())->count() : null,
+            'customers_today' => AdminRoles::can($admin, 'customers.view')
+                ? DB::table('customers')->whereNull('deleted_at')->where('created_at', '>=', $day)->count() : null,
+        ];
     }
 
     public function enrol(Request $request): JsonResponse
@@ -212,6 +245,7 @@ final class AppController extends Controller
                 'name' => (string) $admin->name,
                 'first' => self::firstName((string) $admin->name),
                 'device' => (string) $device->name,
+                'role' => AdminRoles::isFull($admin) ? 'Full access' : (string) (AdminRoles::roleOf($admin)['name'] ?? ''),
                 'can' => [
                     'orders' => $can('orders.view'),
                     'orders_manage' => $can('orders.manage'),
@@ -225,6 +259,7 @@ final class AppController extends Controller
             ],
             'notify_groups' => OwnerAppEvents::GROUP_LABELS,
             'idle_hours' => OwnerAppSettings::idleHours(),
+            'tz' => \App\Support\StoreTime::zone(),
             'vapid' => VapidKeys::publicKey(),
             'csrf' => $session !== '' && $device->session_hash !== null ? OwnerAppAuth::csrfFor($session) : null,
         ];

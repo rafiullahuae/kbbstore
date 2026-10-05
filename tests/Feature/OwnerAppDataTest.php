@@ -196,25 +196,48 @@ it('shows a customer with lifetime value and purchase history', function () {
     $x = OA::get($this, 'customers/'.$cid, $c)->assertOk()->json('customer');
     expect($x['orders'])->toBe(2)->and($x['paid_orders'])->toBe(2)
         ->and(count($x['history']))->toBe(2)
-        ->and($x['spent_display'])->toContain('350');
+        ->and($x['spent_display'])->toContain('350')
+        ->and($x['tags'])->toContain('Repeat buyer')
+        ->and(count($x['months']))->toBe(8)
+        ->and($x['months'][7]['fils'])->toBe(35001);
+
+    expect(count(OA::get($this, 'customers?filter=repeat', $c)->json('customers')))->toBe(1)
+        ->and(count(OA::get($this, 'customers?filter=vip', $c)->json('customers')))->toBe(0)
+        ->and(OA::get($this, 'customers', $c)->json('total'))->toBe(2);
 
     expect(count(OA::get($this, 'customers?q=c2%40example', $c)->json('customers')))->toBe(1)
         ->and(count(OA::get($this, 'customers?q=%2B971500000001', $c)->json('customers')))->toBe(1);
 });
 
-it('gives a dashboard with sales, counts, low stock, latest orders and top performers', function () {
+it('gives a dashboard with today’s figures, seven bars, what needs attention, tiles and top performers', function () {
     $shop = oaShop(3);
     Product::query()->whereKey($shop['products'][0])->update(['stock' => 2]);
+    Order::query()->create(['order_number' => '48888', 'email' => 'x@example.com', 'status' => 'failed', 'total' => 115000, 'payment_method' => 'tamara', 'payment_method_title' => 'Tamara']);
     [$c] = OA::enrol($this);
 
     $d = OA::get($this, 'dashboard', $c)->assertOk()->json();
     expect($d['paid_orders'])->toBe(3)
         ->and($d['money'])->toBeTrue()
+        ->and($d['figs']['total'])->toBe('300.06')
         ->and($d['counts']['processing'])->toBe(3)
-        ->and($d['stock']['low'])->toBeGreaterThanOrEqual(1)
-        ->and(count($d['latest']))->toBe(3)
-        ->and(count($d['chart']['labels']))->toBe(24)
-        ->and($d['top'])->not->toBe([]);
+        ->and(count($d['bars']))->toBe(7)
+        ->and($d['bars'][6]['today'])->toBeTrue()
+        ->and(collect($d['needs'])->pluck('icon')->all())->toContain('alert', 'stack')
+        ->and($d['tiles']['avg_order'])->not->toBeNull()
+        ->and($d['top'])->not->toBe([])
+        ->and($d['top'][0]['pct'])->toBe(100);
+});
 
-    expect(count(OA::get($this, 'dashboard?range=month', $c)->json('chart.labels')))->toBe(now(\App\Support\StoreTime::zone())->day);
+it('hides every money figure from a member without analytics.view', function () {
+    oaShop(2);
+    $sup = OA::admin('support', 'sue@example.com', 'Sue');
+    OA::member($sup);
+    [$c] = OA::enrol($this, 'sue@example.com');
+
+    $d = OA::get($this, 'dashboard', $c)->assertOk()->json();
+    expect($d['figs'])->toBeNull()->and($d['delta_pct'])->toBeNull()
+        ->and(collect($d['bars'])->pluck('value')->filter()->all())->toBe([])
+        ->and($d['tiles']['avg_order'])->toBeNull()
+        ->and(collect($d['top'])->pluck('sales_display')->filter()->all())->toBe([])
+        ->and(collect($d['needs'])->pluck('icon')->all())->not->toContain('stack');   // no catalogue access either
 });

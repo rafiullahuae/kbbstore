@@ -109,10 +109,22 @@ final class OwnerAppPath
     /** The address, creating one if the migration could not. */
     public static function ensure(): string
     {
-        $current = self::current();
-
-        if ($current !== null) {
+        if (self::isLockedByEnv() && ($current = self::current()) !== null) {
             return $current;
+        }
+
+        // The ROW decides, never the cache: a cache that outlived its database
+        // (a restored backup, a shared cache directory) would otherwise answer
+        // with an address no row backs, and nothing would ever be written.
+        $stored = trim((string) DB::table('settings')->where('key', self::SETTING)->value('value'), '/');
+
+        if (self::valid($stored)) {
+            if (self::current() !== $stored) {
+                Cache::forget(self::CACHE_KEY);
+                self::$memo = null;
+            }
+
+            return $stored;
         }
 
         $path = self::generate();

@@ -34,6 +34,11 @@ return new class extends Migration
                 $t->foreignId('admin_user_id')->unique()->constrained('admin_users')->cascadeOnDelete();
                 $t->boolean('enabled')->default(false);
                 $t->string('pin_hash')->nullable();
+                // How many digits, so the PIN pad can unlock as the last one
+                // is typed (as a phone's own lock screen does). Not secret
+                // from the phone already enrolled, which is the only thing it
+                // is ever shown to; never the digits themselves.
+                $t->unsignedTinyInteger('pin_length')->nullable();
                 $t->timestamp('pin_set_at')->nullable();
                 $t->unsignedSmallInteger('failed_count')->default(0);
                 $t->timestamp('locked_until')->nullable();

@@ -30,6 +30,11 @@ final class CustomersController extends Controller
 
     public const PER_PAGE = 30;
 
+    /** Lifetime paid spend, in fils, that makes a customer "VIP" in the app's filter. */
+    public const VIP_FILS = 200000;
+
+    public const FILTERS = ['all', 'vip', 'repeat', 'new'];
+
     private const LIKE_ESCAPE = '!';
 
     public function index(Request $request): JsonResponse
@@ -51,6 +56,24 @@ final class CustomersController extends Controller
             });
         }
 
+        $filter = in_array($request->query('filter'), self::FILTERS, true) ? (string) $request->query('filter') : 'all';
+        if ($filter === 'new') {
+            $q->where('c.created_at', '>=', StoreTime::now()->startOfMonth()->utc());
+        } elseif ($filter === 'vip' || $filter === 'repeat') {
+            $real = Order::REAL_STATUSES;
+            $q->whereIn('c.id', DB::table('orders')->whereNull('deleted_at')->whereNotNull('customer_id')->whereIn('status', $real)
+                ->groupBy('customer_id')
+                ->havingRaw($filter === 'vip' ? 'SUM(total) >= ?' : 'COUNT(*) >= ?', [$filter === 'vip' ? self::VIP_FILS : 2])
+                ->select('customer_id'));
+        }
+
+        $head = null;
+        if ($before === 0 && $term === '' && $filter === 'all') {
+            $head = DB::table('customers')->whereNull('deleted_at')
+                ->selectRaw('COUNT(*) as n, SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as fresh', [StoreTime::now()->startOfMonth()->utc()])
+                ->first();
+        }
+
         $rows = $q->when($before > 0, fn (Builder $w) => $w->where('c.id', '<', $before))
             ->orderByDesc('c.id')->limit(self::PER_PAGE + 1)
             ->get(['c.id', 'c.name', 'c.first_name', 'c.last_name', 'c.email', 'c.phone', 'c.created_at']);
@@ -63,6 +86,8 @@ final class CustomersController extends Controller
             'ok' => true,
             'customers' => $rows->map(fn ($c) => self::row($c, $agg[(int) $c->id] ?? null))->values(),
             'next' => $more ? (int) $rows->last()->id : null,
+            'total' => $head ? (int) $head->n : null,
+            'new_this_month' => $head ? (int) $head->fresh : null,
         ]);
     }
 
@@ -87,12 +112,29 @@ final class CustomersController extends Controller
             ->get(['o.id', 'o.order_number', 'o.status', 'o.total', 'o.created_at', 'o.payment_method', 'o.payment_method_title', 'o.billing_address', DB::raw("'' as c_name")]);
 
         $address = DB::table('addresses')->where('customer_id', $id)->orderByDesc('is_default')->orderBy('id')
-            ->first(['city', 'state', 'country']);
+            ->first(['line1', 'line2', 'city', 'state', 'country']);
 
         $top = DB::table('order_items as i')->join('orders as o', 'o.id', '=', 'i.order_id')
+            ->leftJoin('products as p', 'p.id', '=', 'i.product_id')
             ->where('o.customer_id', $id)->whereIn('o.status', Order::REAL_STATUSES)->whereNull('o.deleted_at')
-            ->groupBy('i.name')->orderByRaw('SUM(i.quantity) DESC')->limit(5)
-            ->selectRaw('i.name as name, SUM(i.quantity) as qty')->get();
+            ->groupBy('i.product_id', 'i.name', 'p.image')->orderByRaw('SUM(i.quantity) DESC')->limit(5)
+            ->selectRaw('i.product_id as id, i.name as name, p.image as image, SUM(i.quantity) as qty')->get();
+
+        // Spend by month, the last eight, from the paid orders already loaded
+        // below plus nothing else: one more query would buy nothing.
+        $months = [];
+        $m0 = StoreTime::now()->startOfMonth();
+        for ($i = 7; $i >= 0; $i--) {
+            $months[$m0->subMonthsNoOverflow($i)->format('Y-m')] = 0;
+        }
+        $spend = DB::table('orders')->whereNull('deleted_at')->where('customer_id', $id)->whereIn('status', Order::REAL_STATUSES)
+            ->where('created_at', '>=', $m0->subMonthsNoOverflow(7)->utc())->get(['created_at', 'total']);
+        foreach ($spend as $o) {
+            $k = StoreTime::display($o->created_at)?->format('Y-m');
+            if ($k !== null && isset($months[$k])) {
+                $months[$k] += (int) $o->total;
+            }
+        }
 
         $paid = (int) ($agg->paid ?? 0);
         $spent = (int) ($agg->spent ?? 0);
@@ -102,10 +144,20 @@ final class CustomersController extends Controller
             'customer' => self::row($c, $agg) + [
                 'whatsapp' => (bool) $c->whatsapp_optin,
                 'since' => StoreTime::iso($c->created_at),
-                'place' => $address ? trim(implode(', ', array_filter([(string) $address->city, (string) $address->state, (string) $address->country]))) : '',
+                'place' => $address ? trim(implode(', ', array_filter([(string) $address->city, (string) $address->state]))) : '',
+                'address' => $address ? array_values(array_filter([(string) $address->line1, (string) $address->line2,
+                    trim(implode(', ', array_filter([(string) $address->city, (string) $address->state]))), (string) $address->country])) : [],
+                'tags' => array_values(array_filter([
+                    $paid >= 2 ? 'Repeat buyer' : null,
+                    $spent >= self::VIP_FILS ? 'VIP' : null,
+                    (bool) $c->whatsapp_optin ? 'WhatsApp' : null,
+                ])),
+                'months' => array_map(fn ($k, $v) => ['label' => \Carbon\CarbonImmutable::createFromFormat('Y-m-d', $k.'-01')->format('M'), 'fils' => $v],
+                    array_keys($months), array_values($months)),
                 'first_order_at' => StoreTime::iso($agg->first_at ?? null),
                 'average_display' => $paid > 0 ? Money::plain((int) round($spent / $paid)) : null,
-                'top_products' => $top->map(fn ($t) => ['name' => (string) $t->name, 'qty' => (int) $t->qty])->values(),
+                'top_products' => $top->map(fn ($t) => ['id' => $t->id === null ? null : (int) $t->id, 'name' => (string) $t->name,
+                    'qty' => (int) $t->qty, 'thumb' => OrdersController::thumb($t->image)])->values(),
                 'history' => $orders->map(fn ($o) => OrdersController::row($o))->values(),
             ],
         ]);

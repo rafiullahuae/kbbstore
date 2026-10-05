@@ -133,7 +133,7 @@ final class OwnerAppAdminController extends Controller
 
         $write = ['enabled' => $enabled, 'updated_at' => now()];
         if ($pin !== null) {
-            $write += ['pin_hash' => Hash::make($pin), 'pin_set_at' => now(), 'failed_count' => 0, 'locked_until' => null];
+            $write += ['pin_hash' => Hash::make($pin), 'pin_length' => strlen($pin), 'pin_set_at' => now(), 'failed_count' => 0, 'locked_until' => null];
         }
         if ($request->has('notify')) {
             $write['notify'] = json_encode(array_values(array_intersect(array_keys(OwnerAppEvents::GROUPS), (array) $request->input('notify', []))));
