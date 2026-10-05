@@ -107,7 +107,7 @@ class AdminController extends Controller
      *
      * @return \Illuminate\Database\Query\Builder
      */
-    private static function countedRefunds()
+    public static function countedRefunds()
     {
         $q = \Illuminate\Support\Facades\DB::table('refunds')
             ->join('orders', 'orders.id', '=', 'refunds.order_id')

@@ -6,10 +6,13 @@
     and one script from the build. The icons are an inline SVG sprite — markup,
     not script — the Petal set from docs/owner-app-preview. The one font, Plus
     Jakarta Sans (Latin, variable, self-hosted), is preloaded: nothing is asked
-    of Google, and the app opens offline once installed.
+    of Google, and the app opens offline once installed. With "System font"
+    chosen under Owner app → Customise app (Lane OA4) there is no preload and
+    <html> carries oa-sys, whose --font names no web font: the file is never
+    requested.
 --}}
 <!doctype html>
-<html lang="{{ \App\Support\Locale::htmlLang() }}" dir="{{ \App\Support\Locale::direction() }}">
+<html lang="{{ \App\Support\Locale::htmlLang() }}" dir="{{ \App\Support\Locale::direction() }}"@if($sysFont ?? false) class="oa-sys"@endif>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
@@ -26,7 +29,9 @@
 <link rel="manifest" href="{{ $base }}/manifest.webmanifest">
 <link rel="icon" type="image/png" href="{{ $a['icon-192'] }}">
 <link rel="apple-touch-icon" href="{{ $a['apple-180'] }}">
+@unless($sysFont ?? false)
 <link rel="preload" href="{{ $a['font'] }}" as="font" type="font/woff2" crossorigin>
+@endunless
 <link rel="stylesheet" href="{{ $a['css'] }}">
 <script type="module" src="{{ $a['js'] }}"></script>
 </head>

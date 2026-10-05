@@ -513,7 +513,9 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
         // filter list, grouped by payment_method and ordered by it, the same
         // terms as the customer filter's country list above.
         ['OwnerApp/CustomersController.php', "orderBy('i.product_id')"],
-        ['OwnerApp/DashboardController.php', "orderBy('i.product_id')"],
+        // Lane OA4 moved the dashboard's top-sellers map, unchanged in its
+        // ordering, into OwnerAppSales::top() (7 days | this month).
+        ['Services/OwnerApp/OwnerAppSales.php', "orderBy('i.product_id')"],
         ['OwnerApp/OrdersController.php', "orderBy('payment_method')"],
     ];
 

@@ -164,7 +164,9 @@ it('titles My store with the store name, K-Beauty Bliss by default, in a compact
     $css = (string) file_get_contents(resource_path('css/owner-app/owner-app.css'));
     $js = (string) file_get_contents(resource_path('js/owner-app/store.js'));
 
-    expect($src)->toContain("'store' => self::storeName(),")->toContain("'K-Beauty Bliss'")
+    // The name now lives in Customise app → Branding (Lane OA4), same default.
+    expect($src)->toContain("'store' => self::storeName(),")->toContain('OwnerAppUi::storeName()')
+        ->and((string) file_get_contents(app_path('Services/OwnerApp/OwnerAppUi.php')))->toContain("STORE_DEFAULT = 'K-Beauty Bliss'")
         ->and($css)->toContain('.lt-dash h2 { margin: 0; font-size: 18px;')->toContain('text-overflow: ellipsis; white-space: nowrap; }')
         ->and($css)->toContain('.lt-dash .logo.sm { width: 32px; height: 32px;')
         ->and($js)->toContain('<div class="lt lt-dash">')->toContain("esc(S.store || 'My store')");

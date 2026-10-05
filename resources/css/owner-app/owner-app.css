@@ -528,3 +528,92 @@ details summary::-webkit-details-marker { display: none; }
 .od-act { margin-bottom: 14px; }
 .re.re-row { flex-direction: row; align-items: center; gap: 10px; }
 .enrol .inp { background: #fff; box-shadow: var(--search-sh); }
+
+/* My store's period (Lane OA4, the owner asked for it): the range button on the
+   hero and the 7 days | This month switch on Top performers. */
+.rng { display: inline-flex; align-items: center; gap: 4px; font: 600 12.5px/1 var(--font); color: #fff; background: rgba(255,255,255,.16); padding: 7px 9px 7px 12px; border-radius: var(--r-pill); }
+.rng .i { width: 15px; height: 15px; stroke-width: 2.2; }
+.seg.sm button { font-size: 11.5px; padding: 6px 9px; }
+.hero.busy, .tp.busy { opacity: .6; transition: opacity .15s; }
+
+/* ---------------------------------------------- Customise app (Lane OA4)
+ * Users & Roles → Owner app → Customise app. Every rule below hangs off a
+ * class the app puts on <html> (core.js applyUi) — or, for the font, the
+ * shell itself — ONLY when a setting differs from today's look. At the
+ * defaults no class is set and nothing here matches, so the app is pixel-
+ * identical to the build before this card. Rendered once; nothing measures.
+ */
+.tiles.solo { grid-template-columns: 1fr; }
+
+/* Type: System font names no web font, so Plus Jakarta Sans is never fetched. */
+html.oa-sys { --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+
+/* Text size S / L: one step either side of today's 15px body. */
+html.oa-tx-s { --tx: -1px; } html.oa-tx-l { --tx: 1px; }
+:is(html.oa-tx-s, html.oa-tx-l) body { font-size: calc(15px + var(--tx)); }
+:is(html.oa-tx-s, html.oa-tx-l) :is(.rm b, .re b, .btn) { font-size: calc(14.5px + var(--tx)); }
+:is(html.oa-tx-s, html.oa-tx-l) :is(.kv, .empty, .nt .rm b) { font-size: calc(14px + var(--tx)); }
+:is(html.oa-tx-s, html.oa-tx-l) .kv.tot { font-size: calc(16px + var(--tx)); }
+:is(html.oa-tx-s, html.oa-tx-l) :is(.gh, .chips button, .hint, .ed .rv, .cu-h p) { font-size: calc(13px + var(--tx)); }
+:is(html.oa-tx-s, html.oa-tx-l) :is(.rm small, .top p, .sh, .kick, .fld > span, .prof small) { font-size: calc(12.5px + var(--tx)); }
+:is(html.oa-tx-s, html.oa-tx-l) :is(.mets span, .tiles small, .ver, .cu-act a, .cu-act span) { font-size: calc(12px + var(--tx)); }
+:is(html.oa-tx-s, html.oa-tx-l) :is(.pill, .nt time) { font-size: calc(11.5px + var(--tx)); }
+:is(html.oa-tx-s, html.oa-tx-l) :is(.nav a, .lt-dash .kick) { font-size: calc(11px + var(--tx)); }
+
+/* Title size S / L: screen titles (23px), big titles (32px), My store's compact title (18px). */
+html.oa-tt-s { --fs-t: 20px; --fs-h: 28px; --fs-dh: 16px; --fs-nm: 19px; }
+html.oa-tt-l { --fs-t: 26px; --fs-h: 36px; --fs-dh: 21px; --fs-nm: 25px; }
+:is(html.oa-tt-s, html.oa-tt-l) .lt-dash h2 { font-size: var(--fs-dh); }
+:is(html.oa-tt-s, html.oa-tt-l) :is(.pname, .cu-h h4) { font-size: var(--fs-nm); }
+
+/* Dashboard numbers S / L: today's figure (44px), the three below it (18px), the tiles (20px). */
+html.oa-fg-s .fig b { font-size: 36px; } html.oa-fg-s .mets b { font-size: 16px; } html.oa-fg-s .tiles b { font-size: 18px; }
+html.oa-fg-l .fig b { font-size: 52px; } html.oa-fg-l .mets b { font-size: 20px; } html.oa-fg-l .tiles b { font-size: 23px; }
+
+/* Density: Compact tightens rows, cards and controls; Comfortable is today. */
+html.oa-compact .row { padding-top: 7px; padding-bottom: 7px; }
+html.oa-compact .list .row { padding-top: 8px; padding-bottom: 8px; margin-bottom: 6px; }
+html.oa-compact .card { padding: 12px; margin-bottom: 9px; }
+html.oa-compact .tiles { gap: 8px; margin-bottom: 9px; }
+html.oa-compact .tiles .card { padding: 11px; margin: 0; }
+html.oa-compact .top { min-height: 46px; padding-bottom: 4px; }
+html.oa-compact .chips button { height: 30px; }
+html.oa-compact .search { height: 40px; margin-bottom: 9px; }
+html.oa-compact .btn { height: 42px; }
+
+/* Corners: Medium and Square; Soft is today. */
+html.oa-rd-m { --r: 16px; --r-sm: 12px; --r-th: 10px; --r-ib: 12px; --r-search: 14px; --r-bulk: 18px; --r-btn: 14px; --r-tone: 10px; --r-logo: 14px; }
+html.oa-rd-sq { --r: 6px; --r-sm: 6px; --r-th: 4px; --r-ib: 8px; --r-search: 8px; --r-bulk: 8px; --r-btn: 8px; --r-tone: 6px; --r-logo: 8px; --r-pill: 6px; }
+html.oa-rd-m .list .row { border-radius: 14px; } html.oa-rd-sq .list .row { border-radius: 6px; }
+html.oa-rd-m .chips button { border-radius: 12px; } html.oa-rd-sq .chips button { border-radius: 6px; }
+html.oa-rd-m .nav .nw { border-radius: 10px; } html.oa-rd-sq .nav .nw { border-radius: 6px; }
+html.oa-rd-m .logo.sm { border-radius: 9px; } html.oa-rd-sq .logo.sm { border-radius: 6px; }
+html.oa-rd-sq :is(.seg, .seg button, .sheet) { border-radius: 6px; }
+
+/* Header: Standard is My store's header before 2.60.401 (64px logo, 32px title). */
+html.oa-hd-std .lt-dash { padding: 6px 20px 14px; }
+html.oa-hd-std .lt-dash .lt-row { align-items: flex-end; }
+html.oa-hd-std .lt-dash .kick { font-size: 12.5px; line-height: 1.4; }
+html.oa-hd-std .lt-dash h2 { margin: 4px 0 0; font-size: var(--fs-h); line-height: 1.04; letter-spacing: var(--ls-h); white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+html.oa-hd-std .lt-dash .ib { width: 40px; height: 40px; }
+html.oa-hd-std .lt-dash .logo.sm { width: 64px; height: 64px; font-size: 22px; border-radius: var(--r-logo); }
+
+/* Accent: --acc is set on <html> through the CSSOM; the rest follows it. */
+html.oa-acc {
+  --acc-grad: linear-gradient(135deg, color-mix(in srgb, var(--acc) 92%, #000), color-mix(in srgb, var(--acc) 88%, #fff));
+  --acc-soft: color-mix(in srgb, var(--acc) 12%, #fff); --acc-ink: color-mix(in srgb, var(--acc) 84%, #000); --chip-on-bg: var(--acc);
+  --bg: color-mix(in srgb, var(--acc) 6%, #fff); --appbg: linear-gradient(180deg, color-mix(in srgb, var(--acc) 14%, #fff) 0, var(--bg) 300px);
+  --surface2: color-mix(in srgb, var(--acc) 6%, #fff); --seg-bg: var(--surface2); --inp-bg: var(--surface2);
+  --line: color-mix(in srgb, var(--acc) 11%, #fff); --tgl-off: color-mix(in srgb, var(--acc) 22%, #fff);
+}
+html.oa-acc .hero { background: linear-gradient(155deg, color-mix(in srgb, var(--acc) 84%, #000), color-mix(in srgb, var(--acc) 96%, #fff)); --seg-on-ink: var(--acc-ink); }
+html.oa-acc .nav a.on { color: var(--acc-ink); }
+html.oa-acc .nav .nw::before { background: var(--acc-soft); }
+html.oa-acc .list .row.ord:is(.on, .cur) { background: var(--acc-soft); }
+
+/* Functions switched off that have no request of their own: hidden. */
+html.oa-nofs :is(.ib.fs, .fsbar) { display: none !important; }
+html.oa-nosync .ib.sync { display: none; }
+html.oa-nocontact .cu-act { display: none; }
+html.oa-nobulk :is([data-act="selall"], .bulk) { display: none; }
+html.oa-nobulk .sel { pointer-events: none; }

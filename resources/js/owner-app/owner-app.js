@@ -26,7 +26,8 @@
  * over the data he already had.
  *
  * ── THE ONE TIMER ──────────────────────────────────────────────────────────
- * While the app is open AND visible it asks every 25 seconds what changed
+ * While the app is open AND visible it asks every 25 seconds (Customise app:
+ * 15–120 s, or off — Lane OA4) what changed
  * since the last event it saw (GET /api/changes?after=N: one indexed range
  * query, an empty list most of the time). It is the only timer in the app,
  * justified only because the owner asked for the open app to notice new
@@ -35,7 +36,7 @@
  * requests; it stops the moment the page is hidden and never runs while
  * hidden. When the app is closed, Web Push carries the news instead.
  */
-import { S, esc, api, $, $$, ic, logo, toast, onAuthLost, AuthError, store, paint, setKey, setSpin, resetData, isFresh, once } from './core.js';
+import { S, esc, api, $, $$, ic, logo, toast, onAuthLost, AuthError, store, paint, setKey, setSpin, resetData, isFresh, once, applyUi, scr, fn } from './core.js';
 import { initFullscreen, fsButton, syncFullscreen } from './fs.js';
 import { renderPin, renderEnrol } from './auth.js';
 import { renderDashboard, dashboardClick, renderNotifications, notificationsClick, renderMore, moreClick, syncPush, fetchDashboard, fetchNotifications, recount } from './store.js';
@@ -43,7 +44,8 @@ import { renderOrders, ordersClick, ordersState, clearSelection, refreshOrdersLi
 import { renderProducts, renderProduct, productsClick, productClick, setProductFilter, refreshProductsList, fetchProducts, fetchProduct } from './products.js';
 import { renderCustomers, renderCustomer, customersClick, fetchCustomers, fetchCustomer } from './customers.js';
 
-const POLL_MS = 25000;
+/* The live check: 25 s unless Customise app sets 15–120 s, or switches it off (Lane OA4). */
+const pollMs = () => Math.max(15, Math.min(120, +(S.ui && S.ui.live_seconds) || 25)) * 1000;
 const root = document.getElementById('oa-app');
 let view = null, pollT = 0, route = { name: '', id: 0 }, booting = false, syncing = null;
 
@@ -134,15 +136,17 @@ function sync(manual, passive) {
       unlocked(r.data);
       return true;
     }),
-    catchUp(true, quiet),
-    fetchNotifications(quiet),
   ];
-  if (can.orders) jobs.push(fetchDashboard(quiet), fetchOrders(quiet));
-  if (can.products) jobs.push(fetchProducts(quiet));
-  if (can.customers) jobs.push(fetchCustomers(quiet));
-  if (id && route.name === 'orders' && can.orders) jobs.push(fetchOrder(id, quiet));
-  if (id && route.name === 'products' && can.products) jobs.push(fetchProduct(id, quiet));
-  if (id && route.name === 'customers' && can.customers) jobs.push(fetchCustomer(id, quiet));
+  // A screen or function switched off is never asked for: the server would refuse it.
+  if (fn('live')) jobs.push(catchUp(true, quiet));
+  if (scr('notifications')) jobs.push(fetchNotifications(quiet));
+  if (can.orders && scr('store')) jobs.push(fetchDashboard(quiet));
+  if (can.orders && scr('orders')) jobs.push(fetchOrders(quiet));
+  if (can.products && scr('products')) jobs.push(fetchProducts(quiet));
+  if (can.customers && scr('customers')) jobs.push(fetchCustomers(quiet));
+  if (id && route.name === 'orders' && can.orders && scr('orders')) jobs.push(fetchOrder(id, quiet));
+  if (id && route.name === 'products' && can.products && scr('products')) jobs.push(fetchProduct(id, quiet));
+  if (id && route.name === 'customers' && can.customers && scr('customers')) jobs.push(fetchCustomer(id, quiet));
   syncing = Promise.allSettled(jobs).then((res) => {
     const failed = res.some((x) => (x.status === 'rejected' && !(x.reason instanceof AuthError)) || x.value === false);
     if (failed && S.stage === 'app' && (manual || S.spinning)) toast('Could not sync everything. Showing what you had.', true);
@@ -200,18 +204,28 @@ function unlocked(d) {
   if (typeof d.store === 'string' && d.store) S.store = d.store;
   S.tz = d.tz || S.tz;
   S.groups = d.notify_groups || S.groups;
-  if (first) frame();
+  // Customise app (Lane OA4): classes on <html> before the frame is drawn; a
+  // change to the screens redraws the frame on the next sync.
+  const tabs = navKey();
+  if (d.ui) applyUi(d.ui);
+  if (first || tabs !== navKey()) { frame(); if (!first) show().catch(() => {}); }
+  if (!first && !pollT && fn('live')) startPolling();   // switched back on while open
 }
 
 /* ---------------------------------------------------------------- frame */
 
 const TABS = [['', 'My store', 'chart'], ['orders', 'Orders', 'receipt'], ['products', 'Products', 'box'], ['more', 'More', 'grid']];
+/* The tabs this member sees: role first, then Customise app. More is always there. */
+const tabsOn = () => TABS.filter(([k]) => (k !== '' || scr('store')) && (k !== 'orders' || (S.me.can.orders && scr('orders'))) && (k !== 'products' || (S.me.can.products && scr('products'))));
+const navKey = () => (S.me ? tabsOn().map(([k]) => k).join() : '');
+/* A screen that is switched off, by name: the address falls through to the first tab still on. */
+const SCR = { '': 'store', orders: 'orders', products: 'products', customers: 'customers', notifications: 'notifications' };
+const offHere = (n) => SCR[n] !== undefined && !scr(SCR[n]);
 
 function frame() {
   root.className = 'app';
-  const can = S.me.can;
   paint(root, '<div class="main"><div class="view" id="oa-view"></div></div><nav class="nav" aria-label="App sections">'
-    + TABS.filter(([k]) => (k !== 'orders' || can.orders) && (k !== 'products' || can.products)).map(([k, l, i]) => '<a href="#/' + k + '" data-tab="' + k + '" aria-label="' + l + '"><em class="nw">' + ic(i) + (k === 'orders' ? '<b class="bdg" data-bdg="orders" hidden></b>' : k === 'more' ? '<b class="bdg" data-bdg="more" hidden></b>' : '') + '</em><span>' + l + '</span></a>').join('')
+    + tabsOn().map(([k, l, i]) => '<a href="#/' + k + '" data-tab="' + k + '" aria-label="' + l + '"><em class="nw">' + ic(i) + (k === 'orders' ? '<b class="bdg" data-bdg="orders" hidden></b>' : k === 'more' ? '<b class="bdg" data-bdg="more" hidden></b>' : '') + '</em><span>' + l + '</span></a>').join('')
     + '</nav>');
   view = document.getElementById('oa-view');
   syncFullscreen();
@@ -227,6 +241,7 @@ async function show() {
   if (S.stage !== 'app' || !view) return;
   const prev = route.name;
   route = parse();
+  if (offHere(route.name)) { const t = tabsOn()[0][0]; route = { name: t, id: 0, q: '' }; history.replaceState(null, '', '#/' + t); }
   const tab = ['customers', 'notifications'].indexOf(route.name) !== -1 ? 'more' : route.name;
   $$('[data-tab]', root).forEach((t) => {
     const on = t.getAttribute('data-tab') === tab;
@@ -308,12 +323,12 @@ function catchUp(initial, passive) {
 
 function startPolling() {
   stopPolling();
-  if (document.visibilityState !== 'visible' || S.stage !== 'app') return;
+  if (document.visibilityState !== 'visible' || S.stage !== 'app' || !fn('live')) return;
   pollT = setTimeout(async () => {
     pollT = 0;
     try { await catchUp(false, true); } catch (e) { return; }
     startPolling();
-  }, POLL_MS);
+  }, pollMs());
 }
 
 function stopPolling() {
@@ -330,7 +345,7 @@ window.addEventListener('pageshow', (e) => { if (e.persisted && S.stage === 'app
 
 function badges() {
   const more = $('[data-bdg="more"]', root), ord = $('[data-bdg="orders"]', root);
-  if (more) { more.hidden = S.unread < 1; more.textContent = S.unread > 99 ? '99+' : String(S.unread); }
+  if (more) { more.hidden = S.unread < 1 || !scr('notifications'); more.textContent = S.unread > 99 ? '99+' : String(S.unread); }
   const proc = ordersState().counts.processing;
   if (ord) { ord.hidden = !proc; ord.textContent = proc > 999 ? '999+' : String(proc || ''); }
 }

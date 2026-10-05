@@ -220,8 +220,9 @@ it('gives a dashboard with today’s figures, seven bars, what needs attention, 
         ->and($d['money'])->toBeTrue()
         ->and($d['figs']['total'])->toBe('300.06')
         ->and($d['counts']['processing'])->toBe(3)
-        ->and(count($d['bars']))->toBe(7)
-        ->and($d['bars'][6]['today'])->toBeTrue()
+        // Lane OA4: Today is drawn by the hour (OwnerAppSalesTest pins the ranges).
+        ->and(count($d['bars']))->toBe(24)
+        ->and($d['range'])->toBe('today')
         ->and(collect($d['needs'])->pluck('icon')->all())->toContain('alert', 'stack')
         ->and($d['tiles']['avg_order'])->not->toBeNull()
         ->and($d['top'])->not->toBe([])
@@ -235,8 +236,8 @@ it('hides every money figure from a member without analytics.view', function () 
     [$c] = OA::enrol($this, 'sue@example.com');
 
     $d = OA::get($this, 'dashboard', $c)->assertOk()->json();
-    expect($d['figs'])->toBeNull()->and($d['delta_pct'])->toBeNull()
-        ->and(collect($d['bars'])->pluck('value')->filter()->all())->toBe([])
+    expect($d['figs'])->toBeNull()->and($d['delta'])->toBeNull()
+        ->and(collect($d['bars'])->pluck('total')->filter()->all())->toBe([])
         ->and($d['tiles']['avg_order'])->toBeNull()
         ->and(collect($d['top'])->pluck('sales_display')->filter()->all())->toBe([])
         ->and(collect($d['needs'])->pluck('icon')->all())->not->toContain('stack');   // no catalogue access either

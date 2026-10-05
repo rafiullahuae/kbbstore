@@ -34,7 +34,9 @@ declare(strict_types=1);
 |     GET  /{app}/api/state               not enrolled / PIN / unlocked
 |     POST /{app}/api/enrol               email + PIN, first use on a device
 |     POST /{app}/api/unlock              PIN on an enrolled device
-|   behind the PIN (OwnerAppSession), capability per action:
+|   behind the PIN (OwnerAppSession), then the Customise-app switches
+|   (OwnerAppUiGate: a screen or function switched off is 403 `off`, Lane OA4),
+|   then the capability per action:
 |     POST /{app}/api/lock                                -
 |     POST /{app}/api/forget                              -
 |     GET  /{app}/api/dashboard                           orders.view (+ analytics.view for money)
@@ -100,7 +102,7 @@ if ($ownerAppPath !== null) {
             Route::post('/api/enrol', [AppController::class, 'enrol'])->middleware('throttle:20,1,oa-enrol')->name('enrol');
             Route::post('/api/unlock', [AppController::class, 'unlock'])->middleware('throttle:30,1,oa-unlock')->name('unlock');
 
-            Route::prefix('api')->middleware([OwnerAppSession::class, 'throttle:300,1,oa-api'])->group(function () {
+            Route::prefix('api')->middleware([OwnerAppSession::class, \App\Http\Middleware\OwnerAppUiGate::class, 'throttle:300,1,oa-api'])->group(function () {
                 Route::post('/lock', [AppController::class, 'lock'])->name('lock');
                 Route::post('/forget', [AppController::class, 'forget'])->name('forget');
 

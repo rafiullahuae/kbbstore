@@ -3,12 +3,14 @@
  * add-to-home sheet (03) — Petal.
  */
 import { S, esc, api, $, $$, ic, logo, top, back, toast, sheet, busy, tgl, ago, th, errorBox, store, standalone, isIOS, dateKey, time, isTablet,
-  syncBtn, screen, onScreen, once, landed, isFresh, onReset, ln, blk, times, skChips, skNote } from './core.js';
+  scr, fn, vars, syncBtn, screen, onScreen, once, landed, isFresh, onReset, ln, blk, times, skChips, skNote } from './core.js';
 import { ordersState } from './orders.js';
 
 /* ---------------------------------------------------------- my store */
 
-const D = { view: 'total', data: null };
+/* view: the hero's measure; range: its period; top: the top sellers' period (Lane OA4). */
+const D = { view: 'total', data: null, range: 'today', top: 'month' };
+const RANGES = [['today', 'Today'], ['yesterday', 'Yesterday'], ['7d', 'Last 7 days'], ['month', 'This month'], ['last_month', 'Last month']];
 onReset(() => { D.data = null; N.rows = []; N.held = false; });
 
 /**
@@ -19,7 +21,7 @@ onReset(() => { D.data = null; N.rows = []; N.held = false; });
 export function fetchDashboard(passive) {
   return once('dash', async () => {
     const g = S.gen;
-    const r = await api('GET', 'dashboard', undefined, passive);
+    const r = await api('GET', 'dashboard?range=' + D.range + '&top=' + D.top, undefined, passive);
     if (g !== S.gen) return false;
     const host = onScreen('dash');
     if (!r.ok) {
@@ -27,6 +29,7 @@ export function fetchDashboard(passive) {
       return false;
     }
     D.data = r.data;
+    if (!(D.data.figs && D.data.figs[D.view] !== undefined)) D.view = 'total';   // Gross/Net switched off meanwhile
     landed('dash');
     if (!ordersState().loaded) ordersState().counts.processing = r.data.counts.processing || 0;
     document.dispatchEvent(new CustomEvent('oa:badge'));
@@ -53,69 +56,143 @@ function dashSkel() {
   const need = () => '<div class="row">' + blk('tone') + '<div class="rm">' + ln(55) + ln(80, 'k-sm') + '</div></div>';
   const tile = '<div class="card">' + ln(70, 'k-sm') + ln(55, 'k-tile') + '</div>';
   const perf = () => '<div class="row">' + blk('k-rk') + blk('th sm') + '<div class="rm">' + ln(65) + ln(40, 'k-sm') + blk('k-bar') + '</div><div class="re">' + ln(0, 'k-amt') + ln(0, 'k-sm k-short') + '</div></div>';
-  return skNote + '<section class="card sk-hero"><div class="hero-top">' + ln(20, 'k-kick') + blk('k-seg') + '</div>'
-    + '<div class="fig">' + ln(55, 'k-fig') + '</div><div class="mets">' + met + met + met + '</div>'
-    + '<div class="chart"><div class="sk-chart">' + times(7, () => blk('k-col')) + '</div><div class="axis bars">' + times(7, () => '<span>' + ln(55, 'k-ax') + '</span>') + '</div></div>'
-    + '<div class="upd">' + ln(35, 'k-sm') + ln(20, 'k-sm') + '</div></section>'
-    + '<section class="card att"><h4 class="sh">' + ln(25, 'k-h') + '</h4>' + need() + need() + '</section>'
-    + '<div class="tiles">' + tile + tile + '</div>'
-    + '<section class="card tp"><h4 class="sh">' + ln(45, 'k-h') + '</h4>' + times(3, perf) + '</section>';
+  return skNote + arrange({
+    hero: '<section class="card sk-hero"><div class="hero-top">' + ln(20, 'k-kick') + blk('k-seg') + '</div>'
+      + '<div class="fig">' + ln(55, 'k-fig') + '</div><div class="mets">' + met + met + met + '</div>'
+      + '<div class="chart"><div class="sk-chart">' + times(7, () => blk('k-col')) + '</div><div class="axis bars">' + times(7, () => '<span>' + ln(55, 'k-ax') + '</span>') + '</div></div>'
+      + '<div class="upd">' + ln(35, 'k-sm') + ln(20, 'k-sm') + '</div></section>',
+    needs: '<section class="card att"><h4 class="sh">' + ln(25, 'k-h') + '</h4>' + need() + need() + '</section>',
+    avg: tile, returning: tile,
+    top: '<section class="card tp"><h4 class="sh">' + ln(45, 'k-h') + '</h4>' + times(3, perf) + '</section>',
+  });
+}
+
+/*
+ * The dashboard's sections in the order Customise app gives (Lane OA4), the
+ * ones switched off left out. Two tiles side by side share one row, as
+ * today; a tile on its own takes the full width.
+ */
+/* A dashboard link into a screen switched off is plain text, not a dead end. */
+const goes = (href) => { const m = /^#\/(orders|products|customers|notifications)/.exec(href || ''); return !m || scr(m[1]); };
+const SECTIONS = ['hero', 'needs', 'avg', 'returning', 'top'];
+const isTile = (k) => k === 'avg' || k === 'returning';
+function arrange(p) {
+  const u = S.ui || {}, off = u.sections_off || [];
+  const keys = (u.sections || SECTIONS).filter((k) => off.indexOf(k) === -1 && p[k] !== undefined);
+  let out = '';
+  for (let i = 0; i < keys.length; i++) {
+    if (!isTile(keys[i])) { out += p[keys[i]]; continue; }
+    const pair = isTile(keys[i + 1]);
+    out += '<div class="tiles' + (pair ? '' : ' solo') + '">' + p[keys[i]] + (pair ? p[keys[++i]] : '') + '</div>';
+  }
+  return out;
 }
 
 function header() {
   const d = D.data;
   return '<div class="lt lt-dash"><div class="lt-row"><div><p class="kick">' + (d ? esc(d.date_label) : S.me.can.orders ? ln(0, 'k-sm k-date') : '') + '</p><h2 title="' + esc(S.store || 'My store') + '">' + esc(S.store || 'My store') + '</h2></div>'
-    + '<div class="hdr-acts">' + syncBtn() + '<a class="ib" href="#/notifications" aria-label="Notifications' + (S.unread ? ', ' + S.unread + ' unread' : '') + '">' + ic('bell') + (S.unread ? '<i class="dot"></i>' : '') + '</a>'
+    + '<div class="hdr-acts">' + syncBtn() + (scr('notifications') ? '<a class="ib" href="#/notifications" aria-label="Notifications' + (S.unread ? ', ' + S.unread + ' unread' : '') + '">' + ic('bell') + (S.unread ? '<i class="dot"></i>' : '') + '</a>' : '')
     + logo('k-sm sm') + '</div></div></div>';
 }
 
+/*
+ * The range's bars in the chosen measure: hourly for a day, daily beyond.
+ * The bar we are in now (else the best one) is white and carries its figure;
+ * a bar still to come is not drawn. Labels thin out so they never collide.
+ */
 function bars(d) {
-  if (!d.bars || d.bars[0].value === null) return '';
-  // A wider canvas on a tablet keeps the bars the height they are on a phone.
-  const W = isTablet() ? 620 : 320, bw = 30, gap = (W - bw * 7) / 6;
-  const max = Math.max(1, ...d.bars.map((b) => b.value));
+  const m = d.bars && d.bars.length && d.bars[0][D.view] !== undefined ? D.view : 'total';
+  if (!d.bars || !d.bars.length || d.bars[0][m] === undefined) return '';
+  const n = d.bars.length, W = isTablet() ? 620 : 320, gap = n > 10 ? 3 : (W - 30 * n) / (n - 1 || 1), bw = n > 10 ? (W - gap * (n - 1)) / n : 30;
+  const max = Math.max(1, ...d.bars.map((b) => b[m]));
+  const every = n <= 7 ? 1 : n <= 24 ? 6 : 7;
   const rects = d.bars.map((b, i) => {
-    const h = Math.max(6, (b.value / max) * 104), x = +(i * (bw + gap)).toFixed(1), y = (118 - h).toFixed(1);
-    return '<rect x="' + x + '" y="' + y + '" width="' + bw + '" height="' + h.toFixed(1) + '" rx="10" fill="' + (b.today ? '#fff' : 'rgba(255,255,255,.28)') + '"/>'
-      + (b.today ? '<text x="' + (x + bw / 2) + '" y="' + (110 - h).toFixed(1) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">' + esc(Math.round(b.value).toLocaleString('en-US')) + '</text>' : '');
+    if (b.future) return '';
+    const on = i === d.mark, h = Math.max(n > 10 ? 3 : 6, (b[m] / max) * 104), x = +(i * (bw + gap)).toFixed(1), y = (118 - h).toFixed(1);
+    return '<rect x="' + x + '" y="' + y + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="' + Math.min(10, bw / 3).toFixed(1) + '" fill="' + (on ? '#fff' : 'rgba(255,255,255,.28)') + '"/>'
+      + (on ? '<text x="' + Math.min(W - 14, Math.max(14, x + bw / 2)).toFixed(1) + '" y="' + (110 - h).toFixed(1) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">' + esc(Math.round(b[m]).toLocaleString('en-US')) + '</text>' : '');
   }).join('');
-  return '<div class="chart"><svg viewBox="0 0 ' + W + ' 132" role="img" aria-label="Sales for the last 7 days">' + rects + '</svg>'
-    + '<div class="axis bars">' + d.bars.map((b) => '<span>' + esc(b.label) + '</span>').join('') + '</div></div>';
+  return '<div class="chart"><svg viewBox="0 0 ' + W + ' 132" role="img" aria-label="Sales, ' + esc(d.range_label) + '">' + rects + '</svg>'
+    + '<div class="axis bars">' + d.bars.map((b, i) => '<span>' + (i % every === 0 || n <= 7 ? esc(b.label) : '') + '</span>').join('') + '</div></div>';
+}
+
+/* The hero alone: redrawn in place when the range or the measure changes. */
+function hero(d) {
+  const fig = d.figs ? d.figs[D.view] : null;
+  const dp = d.delta ? d.delta[D.view] : null;
+  const delta = dp === null || dp === undefined ? ''
+    : '<div class="delta-row"><span class="delta' + (dp < 0 ? ' dn' : '') + '">' + ic(dp < 0 ? 'down' : 'up-r') + Math.abs(dp) + '% ' + esc(d.vs) + '</span></div>';
+  const label = (RANGES.find(([k]) => k === d.range) || RANGES[0])[1];
+  return '<section class="card hero" data-hero><div class="hero-top">'
+    + (fn('range') ? '<button type="button" class="rng" data-range aria-label="Sales period: ' + esc(label) + '">' + esc(label) + ic('down', 's') + '</button>' : '<p class="kick">Today</p>')
+    + (d.figs && d.figs.gross !== undefined ? '<div class="seg" role="group" aria-label="Sales measure">' + [['total', 'Total'], ['gross', 'Gross'], ['net', 'Net']].map(([k, l]) => '<button type="button" data-dview="' + k + '"' + (D.view === k ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>' : '') + '</div>'
+    + (fig !== null && fig !== undefined ? '<div class="fig"><small>' + esc(d.currency) + '</small><b data-fig>' + esc(fig) + '</b></div>' + delta : '<p class="kick">Sales figures need the “See revenue and analytics” permission.</p>')
+    + '<div class="mets"><div><b>' + d.paid_orders + '</b><span>Paid orders</span></div><div><b>' + d.product_views + '</b><span>Product views</span></div><div><b>' + (d.conversion === null ? '—' : d.conversion + '%') + '</b><span>Conversion</span></div></div>'
+    + bars(d) + '<div class="upd"><span class="live">Live · updated ' + esc(time(d.updated_at)) + '</span><span>' + esc(d.figs ? d.span_label : '') + '</span></div></section>';
+}
+
+/* Top sellers, with the 7 days | This month switch where the month used to be. */
+function topCard(d) {
+  return '<section class="card tp" data-top><h4 class="sh">' + (fn('top_period')
+    ? 'Top performers<div class="seg sm" role="group" aria-label="Top sellers period">' + [['7d', '7 days'], ['month', 'This month']].map(([k, l]) => '<button type="button" data-tp="' + k + '"' + (d.top_period === k ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>'
+    : 'Top performers · ' + esc(d.month_label)) + '</h4>'
+    + (d.top.length ? d.top.map((t, i) => (scr('products') ? '<a class="row" href="' + (t.id ? '#/products/' + t.id : '#/products') + '">' : '<div class="row">') + '<span class="rk">' + (i + 1) + '</span>' + th(t.thumb, 'k-sm')
+      + '<div class="rm"><b>' + esc(t.name) + '</b>' + (t.sales_display ? '<small>Net sales ' + esc(t.sales_display) + '</small>' : '') + '<div class="bar"><i data-sx="' + (t.pct / 100).toFixed(2) + '"></i></div></div>'
+      + '<div class="re"><b>' + t.qty + '</b><small class="muted">sold</small></div>' + (scr('products') ? '</a>' : '</div>')).join('') : '<p class="empty">' + (d.top_period === '7d' ? 'No sales in the last 7 days.' : 'No sales yet this month.') + '</p>') + '</section>';
 }
 
 function body(d) {
-  const fig = d.figs ? d.figs[D.view] : null;
-  const delta = d.delta_pct === null || d.delta_pct === undefined ? ''
-    : '<div class="delta-row"><span class="delta' + (d.delta_pct < 0 ? ' dn' : '') + '">' + ic(d.delta_pct < 0 ? 'down' : 'up-r') + Math.abs(d.delta_pct) + '% vs last ' + esc(d.date_label.split(',')[0]) + '</span></div>';
-  const hero = '<section class="card hero"><div class="hero-top"><p class="kick">Today</p>'
-    + (d.figs ? '<div class="seg" role="group" aria-label="Sales measure">' + [['total', 'Total'], ['gross', 'Gross'], ['net', 'Net']].map(([k, l]) => '<button type="button" data-dview="' + k + '"' + (D.view === k ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</div>' : '') + '</div>'
-    + (fig !== null ? '<div class="fig"><small>' + esc(d.currency) + '</small><b data-fig>' + esc(fig) + '</b></div>' + delta : '<p class="kick">Sales figures need the “See revenue and analytics” permission.</p>')
-    + '<div class="mets"><div><b>' + d.paid_orders + '</b><span>Paid orders</span></div><div><b>' + d.product_views + '</b><span>Product views</span></div><div><b>' + (d.conversion === null ? '—' : d.conversion + '%') + '</b><span>Conversion</span></div></div>'
-    + bars(d) + '<div class="upd"><span class="live">Live · updated ' + esc(time(d.updated_at)) + '</span><span>' + (d.bars && d.bars[0].value !== null ? 'Last 7 days' : '') + '</span></div></section>';
-
   const needs = d.needs.length ? '<section class="card att"><h4 class="sh">Needs you <span class="muted">' + d.needs.length + '</span></h4>'
-    + d.needs.map((n) => '<a class="row" href="' + esc(n.href) + '"><span class="tone t-' + esc(n.tone) + '">' + ic(n.icon) + '</span><div class="rm"><b>' + esc(n.title) + '</b><small>' + esc(n.sub) + '</small></div>' + ic('chev', 'chev s') + '</a>').join('') + '</section>'
+    + d.needs.map((n) => (goes(n.href) ? '<a class="row" href="' + esc(n.href) + '">' : '<div class="row">') + '<span class="tone t-' + esc(n.tone) + '">' + ic(n.icon) + '</span><div class="rm"><b>' + esc(n.title) + '</b><small>' + esc(n.sub) + '</small></div>' + (goes(n.href) ? ic('chev', 'chev s') + '</a>' : '</div>')).join('') + '</section>'
     : '<section class="card att"><h4 class="sh">Needs you</h4><div class="row"><span class="tone t-good">' + ic('check') + '</span><div class="rm"><b>All clear</b><small>No failed payments, nothing waiting, no empty shelves.</small></div></div></section>';
 
-  const tiles = '<div class="tiles"><div class="card"><small>Avg. order · ' + esc(d.month_label) + '</small><b>' + esc(d.tiles.avg_order || '—') + '</b></div>'
-    + '<div class="card"><small>Returning customers</small><b>' + (d.tiles.returning_pct === null ? '—' : d.tiles.returning_pct + '%') + '</b></div></div>';
+  const avg = '<div class="card"><small>Avg. order · ' + esc(d.month_label) + '</small><b>' + esc(d.tiles.avg_order || '—') + '</b></div>';
+  const returning = '<div class="card"><small>Returning customers</small><b>' + (d.tiles.returning_pct === null ? '—' : d.tiles.returning_pct + '%') + '</b></div>';
 
-  const tp = '<section class="card tp"><h4 class="sh">Top performers · ' + esc(d.month_label) + '</h4>'
-    + (d.top.length ? d.top.map((t, i) => '<a class="row" href="' + (t.id ? '#/products/' + t.id : '#/products') + '"><span class="rk">' + (i + 1) + '</span>' + th(t.thumb, 'k-sm')
-      + '<div class="rm"><b>' + esc(t.name) + '</b>' + (t.sales_display ? '<small>Net sales ' + esc(t.sales_display) + '</small>' : '') + '<div class="bar"><i data-sx="' + (t.pct / 100).toFixed(2) + '"></i></div></div>'
-      + '<div class="re"><b>' + t.qty + '</b><small class="muted">sold</small></div></a>').join('') : '<p class="empty">No sales yet this month.</p>') + '</section>';
-
-  return hero + needs + tiles + tp;
+  return arrange({ hero: hero(d), needs, avg, returning, top: topCard(d) });
 }
 
 export function dashboardClick(e, view) {
-  const b = e.target.closest('[data-dview]');
-  if (!b || !D.data) return false;
-  D.view = b.getAttribute('data-dview');
-  $$('[data-dview]', view).forEach((x) => x.classList.toggle('on', x === b));
-  const f = $('[data-fig]', view);
-  if (f && D.data.figs) f.textContent = D.data.figs[D.view];
+  if (!D.data) return false;
+  const b = e.target.closest('[data-dview],[data-range],[data-tp]');
+  if (!b) return false;
+  if (b.hasAttribute('data-dview')) { D.view = b.getAttribute('data-dview'); swap(view, '[data-hero]', hero(D.data)); return true; }
+  if (b.hasAttribute('data-range')) {
+    sheet('Sales period', '<div class="stlist">' + RANGES.map(([k, l]) => '<button type="button" data-rk="' + k + '"' + (D.range === k ? ' class="cur"' : '') + '><b>' + l + '</b>' + ic('check') + '</button>').join('') + '</div>', (panel, close) => {
+      panel.addEventListener('click', (ev) => {
+        const r = ev.target.closest('[data-rk]');
+        if (!r) return;
+        close();
+        if (r.getAttribute('data-rk') !== D.range) { D.range = r.getAttribute('data-rk'); part(view, 'sales', '[data-hero]'); }
+      });
+    });
+    return true;
+  }
+  if (b.getAttribute('data-tp') !== D.top) { D.top = b.getAttribute('data-tp'); part(view, 'top', '[data-top]'); }
   return true;
+}
+
+/* One element of the dashboard replaced in place; nothing else redrawn. */
+function swap(view, sel, html) {
+  const el = $(sel, view);
+  if (!el) return;
+  el.insertAdjacentHTML('afterend', html);
+  const fresh = el.nextElementSibling;
+  el.remove();
+  vars(fresh.parentNode);
+}
+
+/* A range or period change: one request for that part alone (`part=`), the rest kept. */
+async function part(view, which, sel) {
+  const el = $(sel, view);
+  if (el) el.classList.add('busy');
+  const g = S.gen;
+  const r = await api('GET', which === 'sales' ? 'dashboard?part=sales&range=' + D.range : 'dashboard?part=top&top=' + D.top);
+  if (g !== S.gen || !D.data) return;
+  if (!r.ok) { if (el) el.classList.remove('busy'); toast(r.data.message || 'Could not load that period.', true); return; }
+  Object.assign(D.data, r.data);
+  if (which === 'sales' && !(D.data.figs && D.data.figs[D.view] !== undefined)) D.view = 'total';
+  if (onScreen('dash')) swap(view, sel, which === 'sales' ? hero(D.data) : topCard(D.data));
 }
 
 /* ----------------------------------------------------- add to home */
@@ -268,13 +345,14 @@ export async function renderMore(view) {
   try { on = !!(await currentSub()) && Notification.permission === 'granted'; } catch (e) { on = false; }
   const r = (icon, t, right, sub, attrs) => '<' + (attrs && attrs.indexOf('href') === 0 ? 'a ' + attrs : 'div') + ' class="row"><span class="ico">' + ic(icon) + '</span><div class="rm"><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>' + right + '</' + (attrs && attrs.indexOf('href') === 0 ? 'a' : 'div') + '>';
   const ch = ic('chev', 'chev s');
+  // Screens switched off under Customise app (Lane OA4) leave More's list.
+  const go = (me.can.customers && scr('customers') ? r('users', 'Customers', ch, '', 'href="#/customers"') : '')
+    + (scr('notifications') ? r('bell', 'Notifications', ch, S.unread ? S.unread + ' unread' : 'All caught up', 'href="#/notifications"') : '')
+    + (me.can.products && scr('products') ? r('stack', 'Low stock', ch, '', 'href="#/products?low"') : '');
   const g = (k, icon, label) => r(icon, esc(label), tgl(me.notify.indexOf(k) !== -1, label, 'data-group="' + k + '"' + (on ? '' : ' disabled')));
   screen(view, 'more', 0, top('More', ''), ''
-    + '<section class="card"><div class="prof">' + logo() + '<div><b>' + esc(me.name) + ' · K-Beauty Bliss</b><small>' + esc(location.hostname) + ' · ' + esc(me.role || '') + '</small></div></div></section>'
-    + '<section class="card set plain-list">'
-    + (me.can.customers ? r('users', 'Customers', ch, '', 'href="#/customers"') : '')
-    + r('bell', 'Notifications', ch, S.unread ? S.unread + ' unread' : 'All caught up', 'href="#/notifications"')
-    + (me.can.products ? r('stack', 'Low stock', ch, '', 'href="#/products?low"') : '') + '</section>'
+    + '<section class="card"><div class="prof">' + logo() + '<div><b>' + esc(me.name) + ' · ' + esc(S.store || 'K-Beauty Bliss') + '</b><small>' + esc(location.hostname) + ' · ' + esc(me.role || '') + '</small></div></div></section>'
+    + (go ? '<section class="card set plain-list">' + go + '</section>' : '')
     + '<div class="gh"><span>App</span></div><section class="card set plain-list">'
     + r('homeadd', 'Add to home screen', standalone() ? '<span class="muted">Installed</span>' : '<button type="button" class="tbtn" data-a2>Install</button>', standalone() ? 'Opens full screen from your home screen' : 'Not installed on this phone')
     + r('lock', 'Unlock with PIN', '<span class="muted">Always</span>', 'Locks after ' + S.idle + ' hours away')

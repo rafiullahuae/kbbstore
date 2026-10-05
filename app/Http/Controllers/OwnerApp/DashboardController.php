@@ -6,7 +6,9 @@ namespace App\Http\Controllers\OwnerApp;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\OwnerApp\OwnerAppSales;
 use App\Services\OwnerApp\OwnerAppSettings;
+use App\Services\OwnerApp\OwnerAppUi;
 use App\Support\Money;
 use App\Support\StoreTime;
 use Illuminate\Http\JsonResponse;
@@ -14,11 +16,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * "My store" (Lane MAC, Petal design): today at a glance.
+ * "My store" (Lane MAC, Petal design): the shop at a glance.
  *
- *   Total   what customers paid today: orders.total over paid orders
- *   Gross   product sales before discounts: orders.subtotal
- *   Net     Total less shipping, fees, VAT and today's refunds
+ * The sales hero — Total, Gross, Net, the bars, the comparison, over Today,
+ * Yesterday, Last 7 days, This month or Last month — is OwnerAppSales (Lane
+ * OA4): Store → Analytics' own definitions for the same period, cached
+ * briefly. Its docblock carries the defect it replaced (Gross was
+ * orders.subtotal and read below Total; Net took off today's refunds).
+ * Gross and Net are only computed when Owner App → Customise app → "Show
+ * Gross and Net revenue" is on (off by default: the owner asked for Total).
  *
  * Paid orders are Order::REAL_STATUSES, the definition every revenue figure in
  * the admin uses. Money is shown only to a member holding analytics.view (the
@@ -38,8 +44,6 @@ final class DashboardController extends Controller
 {
     use Concerns;
 
-    private const BARS = 7;
-
     public function __invoke(Request $request): JsonResponse
     {
         if ($r = $this->refuse($request, 'orders.view')) {
@@ -49,47 +53,26 @@ final class DashboardController extends Controller
         $money = $this->may($request, 'analytics.view');
         $catalog = $this->may($request, 'catalog.view');
         $now = StoreTime::now();
-        $today = $now->startOfDay();
-        $since = $today->subDays(self::BARS)->utc();       // 8 days: the 7 bars and last week's same day
 
-        $paid = DB::table('orders')->whereNull('deleted_at')->whereIn('status', Order::REAL_STATUSES)
-            ->where('created_at', '>=', $since)
-            ->get(['created_at', 'total', 'subtotal', 'shipping_total', 'fee_total', 'tax_total']);
+        // The hero's range and the top sellers' period (Lane OA4). Each switch
+        // off under Owner App → Customise app pins its default, whatever is asked.
+        $range = OwnerAppUi::functionOn('range') ? OwnerAppSales::rangeKey($request->query('range')) : 'today';
+        $topKey = OwnerAppUi::functionOn('top_period') ? OwnerAppSales::topKey($request->query('top')) : 'month';
+        $part = (string) $request->query('part', '');
 
-        $todayRows = $paid->filter(fn ($o) => StoreTime::display($o->created_at)?->gte($today));
-        $refunded = (int) DB::table('refunds')->where('created_at', '>=', $today->utc())
-            ->whereIn('status', \App\Services\Payments\PaymentRefunder::COUNTED)->sum('amount');
-
-        $total = (int) $todayRows->sum('total');
-        $gross = (int) $todayRows->sum('subtotal');
-        $net = max(0, $total - (int) $todayRows->sum('shipping_total') - (int) $todayRows->sum('fee_total') - (int) $todayRows->sum('tax_total') - $refunded);
-
-        // Same weekday last week, up to this minute.
-        $lastStart = $today->subDays(7);
-        $lastEnd = $now->subDays(7);
-        $lastWeek = (int) $paid->filter(function ($o) use ($lastStart, $lastEnd) {
-            $at = StoreTime::display($o->created_at);
-
-            return $at !== null && $at->gte($lastStart) && $at->lte($lastEnd);
-        })->sum('total');
-
-        $bars = [];
-        for ($i = self::BARS - 1; $i >= 0; $i--) {
-            $d = $today->subDays($i);
-            $bars[$d->format('Y-m-d')] = ['label' => $i === 0 ? 'Today' : $d->format('D'), 'fils' => 0, 'today' => $i === 0];
+        // One light answer per tap: the top sellers alone, or the hero alone.
+        if ($part === 'top') {
+            return response()->json(['ok' => true, 'top_period' => $topKey, 'top_label' => OwnerAppSales::TOP_PERIODS[$topKey],
+                'top' => OwnerAppUi::sectionOn('top') ? OwnerAppSales::top($topKey, $money) : []]);
         }
-        foreach ($paid as $o) {
-            $key = StoreTime::display($o->created_at)?->format('Y-m-d');
-            if ($key !== null && isset($bars[$key])) {
-                $bars[$key]['fils'] += (int) $o->total;
-            }
+
+        $sales = $this->sales($range, $money, $now);
+        if ($part === 'sales') {
+            return response()->json(['ok' => true, 'updated_at' => $now->toIso8601String(), 'money' => $money, 'currency' => Money::currency()] + $sales);
         }
 
         $statusCounts = DB::table('orders')->whereNull('deleted_at')->whereIn('status', ['pending', 'processing', 'onhold'])
             ->groupBy('status')->selectRaw('status as s, COUNT(*) as n')->pluck('n', 's')->map(fn ($n) => (int) $n);
-
-        $views = (int) DB::table('product_view_days')->where('day', '>=', $today->utc()->toDateString())->sum('views');
-        $carts = (int) DB::table('carts')->where('created_at', '>=', $today->utc())->count();
         $monthStart = $now->startOfMonth()->utc();
 
         return response()->json([
@@ -99,21 +82,41 @@ final class DashboardController extends Controller
             'month_label' => $now->format('F'),
             'money' => $money,
             'currency' => Money::currency(),
-            'figs' => $money ? ['total' => self::fig($total), 'gross' => self::fig($gross), 'net' => self::fig($net)] : null,
-            'delta_pct' => $money && $lastWeek > 0 ? (int) round(($total - $lastWeek) / $lastWeek * 100) : null,
-            'paid_orders' => $todayRows->count(),
-            'product_views' => $views,
-            'conversion' => $carts > 0 ? round($todayRows->count() / $carts * 100, 1) : null,
-            'bars' => array_values(array_map(fn ($b) => [
-                'label' => $b['label'],
-                'today' => $b['today'],
-                'value' => $money ? round(Money::toMajor($b['fils']), 2) : null,
-            ], $bars)),
+        ] + $sales + [
             'counts' => $statusCounts,
             'needs' => $this->needs($statusCounts->all(), $catalog),
-            'tiles' => $this->tiles($monthStart, $money),
-            'top' => $this->top($monthStart, $money),
+            // A section switched off under Customise app (Lane OA4) is not computed:
+            // the returning-customers EXISTS and the top-sellers GROUP BY are the
+            // two heaviest queries here.
+            'tiles' => OwnerAppUi::sectionOn('avg') || OwnerAppUi::sectionOn('returning') ? $this->tiles($monthStart, $money) : ['avg_order' => null, 'returning_pct' => null],
+            'top_period' => $topKey,
+            'top_label' => OwnerAppSales::TOP_PERIODS[$topKey],
+            'top' => OwnerAppUi::sectionOn('top') ? OwnerAppSales::top($topKey, $money) : [],
         ]);
+    }
+
+    /**
+     * The hero for one range: Store → Analytics' own figures (OwnerAppSales),
+     * plus product views and conversion over the same days. Gross and Net are
+     * computed only when Customise app → "Show Gross and Net revenue" is on.
+     *
+     * @return array<string,mixed>
+     */
+    private function sales(string $range, bool $money, $now): array
+    {
+        $s = OwnerAppSales::sales($range, $money, OwnerAppUi::functionOn('gross_net'));
+        $tz = \App\Support\AnalyticsRange::timezone();
+        $from = \Carbon\CarbonImmutable::createFromFormat('Y-m-d', (string) $s['views_from'], $tz)->startOfDay();
+        $to = \Carbon\CarbonImmutable::createFromFormat('Y-m-d', (string) $s['views_to'], $tz)->startOfDay()->addDay();
+        // product_view_days.day is the UTC date (ProductViews): every UTC day the range touches.
+        $views = (int) DB::table('product_view_days')->where('day', '>=', $from->utc()->toDateString())->where('day', '<=', $to->subSecond()->utc()->toDateString())->sum('views');
+        $carts = (int) DB::table('carts')->where('created_at', '>=', $from->utc())->where('created_at', '<', $to->utc())->count();
+        unset($s['views_from'], $s['views_to']);
+
+        return $s + [
+            'product_views' => $views,
+            'conversion' => $carts > 0 ? round($s['paid_orders'] / $carts * 100, 1) : null,
+        ];
     }
 
     /** @return list<array<string,mixed>> */
@@ -188,36 +191,6 @@ final class DashboardController extends Controller
             'avg_order' => $money && $n > 0 ? Money::plain((int) round(((int) $m->t) / $n)) : null,
             'returning_pct' => $n > 0 ? (int) round(((int) $m->back) / $n * 100) : null,
         ];
-    }
-
-    /** @return list<array<string,mixed>> */
-    private function top($monthStart, bool $money): array
-    {
-        $rows = DB::table('order_items as i')->join('orders as o', 'o.id', '=', 'i.order_id')
-            ->leftJoin('products as p', 'p.id', '=', 'i.product_id')
-            ->whereNull('o.deleted_at')->whereIn('o.status', Order::REAL_STATUSES)->where('o.created_at', '>=', $monthStart)
-            ->groupBy('i.product_id', 'i.name', 'p.image')
-            ->orderByRaw('SUM(i.quantity) DESC')->orderBy('i.name')->orderBy('i.product_id')->limit(4)
-            ->selectRaw('i.product_id as id, i.name as name, p.image as image, SUM(i.quantity) as qty, SUM(i.total) as sales')
-            ->get();
-        $max = max(1, (int) $rows->max('qty'));
-
-        return $rows->map(fn ($t) => [
-            'id' => $t->id === null ? null : (int) $t->id,
-            'name' => (string) $t->name,
-            'thumb' => OrdersController::thumb($t->image),
-            'qty' => (int) $t->qty,
-            'pct' => (int) round(((int) $t->qty) / $max * 100),
-            'sales_display' => $money ? Money::plain((int) $t->sales) : null,
-        ])->values()->all();
-    }
-
-    /** "1,284" — the hero figure without its currency, which the design prints small beside it. */
-    private static function fig(int $fils): string
-    {
-        $major = Money::toMajor($fils);
-
-        return number_format($major, fmod($major, 1.0) === 0.0 ? 0 : 2);
     }
 
     private static function short(string $name, int $max = 22): string

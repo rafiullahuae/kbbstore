@@ -9,6 +9,7 @@ use App\Services\OwnerApp\OwnerAppAuth;
 use App\Services\OwnerApp\OwnerAppEvents;
 use App\Services\OwnerApp\OwnerAppPath;
 use App\Services\OwnerApp\OwnerAppSettings;
+use App\Services\OwnerApp\OwnerAppUi;
 use App\Services\OwnerApp\VapidKeys;
 use App\Support\AdminRoles;
 use Illuminate\Http\JsonResponse;
@@ -59,7 +60,9 @@ final class AppController extends Controller
 
     public function shell(Request $request): Response
     {
-        return response()->view('owner-app.shell', ['base' => self::base($request), 'a' => self::assets()]);
+        // System font (Customise app, Lane OA4): no preload, and a class on
+        // <html> that names no web font, so the file is never requested.
+        return response()->view('owner-app.shell', ['base' => self::base($request), 'a' => self::assets(), 'sysFont' => OwnerAppUi::systemFont()]);
     }
 
     public function manifest(Request $request): JsonResponse
@@ -96,7 +99,7 @@ final class AppController extends Controller
     {
         $base = self::base($request);
         $a = self::assets();
-        $shell = [$base.'/', $a['js'], $a['css'], $a['font'], $a['icon-192'], $a['badge-96']];
+        $shell = array_values(array_filter([$base.'/', $a['js'], $a['css'], OwnerAppUi::systemFont() ? null : $a['font'], $a['icon-192'], $a['badge-96']]));
 
         $src = (string) file_get_contents(resource_path('owner-app/sw.js'));
         $src = str_replace(
@@ -226,9 +229,9 @@ final class AppController extends Controller
      */
     private static function storeName(): string
     {
-        $name = trim(strip_tags((string) app(\App\Services\SettingsService::class)->get('owner_app_store_name', '')));
-
-        return $name !== '' ? mb_substr($name, 0, 60) : 'K-Beauty Bliss';
+        // Edited under Owner app → Customise app → Branding (Lane OA4); the
+        // old owner_app_store_name row is still read until that card saves.
+        return OwnerAppUi::storeName();
     }
 
     private static function me(Request $request, \App\Models\OwnerAppDevice $device): array
@@ -259,6 +262,8 @@ final class AppController extends Controller
             // settings and the shop already resolve it, so it follows a rename.
             'store' => self::storeName(),
             'tz' => \App\Support\StoreTime::zone(),
+            // Look, screens and functions (Customise app, Lane OA4): one memoised read, ~0.4 KB.
+            'ui' => OwnerAppUi::forApp(),
             'vapid' => VapidKeys::publicKey(),
         ];
     }

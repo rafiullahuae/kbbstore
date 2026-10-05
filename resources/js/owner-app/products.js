@@ -3,7 +3,7 @@
  * column of rows that each open their own editor. Saves go to the server,
  * which hands them to the admin product editor's own rules.
  */
-import { S, esc, api, $, $$, ic, th, top, back, toast, sheet, busy, debounce, paint, errorBox, tgl,
+import { S, fn, esc, api, $, $$, ic, th, top, back, toast, sheet, busy, debounce, paint, errorBox, tgl,
   screen, onScreen, mark, once, landed, isFresh, onReset, merge, ln, blk, times, skChips, skNote } from './core.js';
 
 const L = { q: '', filter: 'all', rows: [], next: null, counts: {}, lowAt: 5, loaded: false, paged: false, lastQ: '' };
@@ -128,11 +128,14 @@ export function fetchProduct(id, passive, force) {
   }, force);
 }
 
+const EDIT_FN = { price: 'edit_price', inv: 'edit_stock', cat: 'edit_catalogue', vis: 'edit_catalogue' };
 const STATUS = { publish: ['pub', 'Published'], draft: ['draft', 'Draft'], private: ['draft', 'Private'], scheduled: ['hold', 'Scheduled'] };
 
 function paintProduct(view) {
   const p = P, can = p.can_edit;
-  const row = (k, icon, t, v) => '<button type="button" class="row" data-ed="' + k + '"' + (can || k === 'desc' || k === 'short' ? '' : ' aria-disabled="true"') + '><span class="ico">' + ic(icon) + '</span><div class="rm"><b>' + t + '</b><span class="rv">' + v + '</span></div>' + (can || k === 'desc' || k === 'short' ? ic('chev', 'chev s') : '') + '</button>';
+  // Role first, then Customise app's switch for that field (Lane OA4); the server refuses the same.
+  const open = (k) => k === 'desc' || k === 'short' || (can && fn(EDIT_FN[k]));
+  const row = (k, icon, t, v) => '<button type="button" class="row" data-ed="' + k + '"' + (open(k) ? '' : ' aria-disabled="true"') + '><span class="ico">' + ic(icon) + '</span><div class="rm"><b>' + t + '</b><span class="rv">' + v + '</span></div>' + (open(k) ? ic('chev', 'chev s') : '') + '</button>';
   const imgs = p.images.slice(0, 3);
   const gal = imgs.length ? '<div class="gal' + (imgs.length === 1 ? ' one' : '') + '">' + imgs.map((src, i) => '<div>' + th(src, 'lg') + (i === 0 ? '<span class="cv">COVER</span>' : '') + '</div>').join('') + '</div>' : '';
   const st = STATUS[p.status] || ['pend', p.status];

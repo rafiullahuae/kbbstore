@@ -38,6 +38,14 @@ final class OwnerAppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        // My store's cached sales and top sellers (Lane OA4, OwnerAppSales):
+        // any order write starts a new cache generation, so a sale is never
+        // hidden behind the 30-second cache; a refund likewise. A row written
+        // through the query builder relies on that 30 s.
+        Order::saved(static fn () => \App\Services\OwnerApp\OwnerAppSales::bump());
+        Order::deleted(static fn () => \App\Services\OwnerApp\OwnerAppSales::bump());
+        \App\Models\Refund::saved(static fn () => \App\Services\OwnerApp\OwnerAppSales::bump());
+
         Order::created(static function (Order $order): void {
             self::later(static fn () => OwnerAppEvents::orderCreated($order));
         });

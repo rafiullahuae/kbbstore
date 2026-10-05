@@ -216,7 +216,7 @@ it('decides silent-or-bars from the age of the last sync when the page comes bac
         ->and($app)->toContain("document.addEventListener('visibilitychange', () => {")
         ->toContain("window.addEventListener('pageshow', (e) => { if (e.persisted && S.stage === 'app') resume(); });")
         ->and(substr_count($app, 'setTimeout('))->toBe(2)                // the poll, and the spin's one-turn minimum
-        ->and($app)->toContain('}, POLL_MS);')
+        ->and($app)->toContain('}, pollMs());')                        // 25 s, or Customise app's 15–120 s (Lane OA4)
         ->and(collect(glob(resource_path('js/owner-app/*.js')))->map(fn ($f) => oa2Code(basename($f)))->implode("\n"))->not->toContain('setInterval');
 
     expect(oa2Code('core.js'))->toContain('export const isFresh = (k) => !!AT[k] && Date.now() - AT[k] < S.staleMs;');
