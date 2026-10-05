@@ -763,11 +763,20 @@ class ShopController extends Controller
      */
     private function applyDefaultSort($query)
     {
-        $query->orderByDesc('products.featured');
-
-        if ($this->settings->moduleEnabled('product_sorting', false)) {
+        /*
+         * YOUR ORDER FIRST, "featured" only as a tie-break (2.60.402). The
+         * owner: "the re-order ... on front-end the same old sorting is
+         * showing ... there's two products showing on front-end on top of the
+         * list, but in the backend that's not #1 and #2". Featured came FIRST,
+         * so every featured product jumped the curated order on every shop,
+         * category and Shop-all-brand listing. Featured still decides between
+         * products the owner has not ordered (position ties at 0).
+         */
+        if ($this->settings->moduleEnabled('product_sorting', true)) {
             $query->orderBy('products.position');
         }
+
+        $query->orderByDesc('products.featured');
 
         return $query->orderBy('products.name');
     }
