@@ -8,8 +8,9 @@
     every word and address the owner typed goes through the escaping echo, and
     the style attribute carries colours and pixel sizes PageBanners has already
     validated. A strip item for one device only gets one of two constant
-    classes, kbb-pb-d or kbb-pb-m (raw PHP tags, because Blade does not see an
-    @if glued to a tag name); an item for both gets none. (Lane PH) No picture stored means no <img> — never a broken icon.
+    classes, kbb-pb-d or kbb-pb-m, as an UNQUOTED attribute so the escaping
+    echo prints it unchanged (an @if glued to the tag name is not seen by
+    Blade); an item for both gets none, and prints as it always did. (Lane PH) No picture stored means no <img> — never a broken icon.
 --}}
 @if (! empty($pageBanner))
 <style id="kbb-pb-css">{!! \App\Services\PageBanners::CSS !!}</style>
@@ -20,7 +21,7 @@
 
 @endif
 @if ($pageBanner['items'] !== [])
-<ul class="kbb-pb-strip">@foreach ($pageBanner['items'] as $pbN => $pbItem)<li<?php if (($pageBanner['devs'][$pbN] ?? 'both') !== 'both'): ?> class="<?php echo $pageBanner['devs'][$pbN] === 'd' ? 'kbb-pb-d' : 'kbb-pb-m'; ?>"<?php endif; ?>>{!! \App\Services\PageBanners::ICON !!}<span>{{ $pbItem }}</span></li>@endforeach</ul>
+<ul class="kbb-pb-strip">@foreach ($pageBanner['items'] as $pbN => $pbItem)<li{{ ['d' => ' class=kbb-pb-d', 'm' => ' class=kbb-pb-m'][$pageBanner['devs'][$pbN] ?? 'both'] ?? '' }}>{!! \App\Services\PageBanners::ICON !!}<span>{{ $pbItem }}</span></li>@endforeach</ul>
 @endif
 </div>
 @endif

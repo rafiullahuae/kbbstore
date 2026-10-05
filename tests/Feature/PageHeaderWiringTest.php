@@ -48,7 +48,7 @@ it('can apply every edit of the handover, each anchor exactly as often as it say
     /* MUTATION: change block 3's anchor in docs/ph-wiring.json by one character -> red, naming it. */
     $w = phWired();
 
-    expect(array_column($w['edits'], 'n'))->toBe(range(1, 8))
+    expect(array_column($w['edits'], 'n'))->toBe(range(1, 9))
         ->and($w['problems'])->toBe([], implode("\n", $w['problems']));
 });
 

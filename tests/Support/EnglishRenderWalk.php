@@ -2193,7 +2193,7 @@ KBB_BH_CSS;
                     .'<li><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>Express Delivery all over UAE</span></li>'
                     // Lane PH: "include in the strip for desktop only 'Free
                     // skincare consultation', in mobile two lines are fine."
-                    .'<li class="kbb-pb-d"><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>Free skincare consultation</span></li></ul>\n'
+                    .'<li class=kbb-pb-d><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>Free skincare consultation</span></li></ul>\n'
                     .'</div>\n~s',
                 'hits' => 1,
             ],

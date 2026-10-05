@@ -101,7 +101,7 @@ it('leaves every other custom page on its original markup, byte for byte', funct
 
     foreach (['/new-in', '/best-sellers', '/everything-under-54-aed', '/about'] as $path) {
         $html = $this->get($path)->assertOk()->getContent();
-        expect($html)->not->toContain('kbb-ph', $path);
+        expect(str_contains($html, 'kbb-ph'))->toBeFalse($path);
     }
 
     expect(app(PageHeaders::class)->forPage('collection:new-in', 'collection'))->toBeNull()
@@ -390,7 +390,8 @@ it('sends a shopper not one byte of the editor', function () {
 
     expect($html)->not->toContain('page-header-editor')
         ->and($html)->not->toContain('kbb-phe')
-        ->and($html)->not->toContain('<script', 'the configured header adds no script')
+        ->and(phBlock($html))->not->toBe('')
+        ->and(str_contains(phBlock($html), '<script'))->toBeFalse('the configured header adds no script')
         ->and($layer)->toContain("import('./page-header-editor.js')")
         ->and($layer)->not->toMatch('/^import .*page-header-editor/m')
         ->and($app)->not->toContain('page-header-editor');

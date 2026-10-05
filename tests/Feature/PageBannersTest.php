@@ -74,7 +74,7 @@ it('ships the strip on /super-sale/ with his two lines, and no picture until one
         ->and($html)->toContain('<span>100% Authentic Products</span>')
         ->and($html)->toContain('<span>Express Delivery all over UAE</span>')
         // Lane PH: the third line, desktop only ("in mobile two lines are fine").
-        ->and($html)->toContain('<li class="kbb-pb-d"><svg class="kbb-pb-ic"')
+        ->and($html)->toContain('<li class=kbb-pb-d><svg class="kbb-pb-ic"')
         ->and($html)->toContain('<span>Free skincare consultation</span>')
         ->and(substr_count($html, 'class="kbb-pb-ic"'))->toBe(3)
         ->and(pbBlock($html))->not->toContain('<img')

@@ -190,7 +190,7 @@ export function controls(host, opts) {
                     type: 'checkbox', checked: half[s.key] ? true : null,
                     onchange: (e) => { half[s.key] = e.currentTarget.checked; changed(true); },
                 }), h('span', { text: s.label })))),
-            h('p', { class: 'kbb-phe-help', text: 'A hidden title is hidden from view only: it stays in the page as its heading (H1), so search engines and screen readers still read it. The breadcrumb also follows Appearance → Header → Breadcrumbs, which can hide it on every page.' })));
+            h('p', { class: 'kbb-phe-help', text: 'A hidden title is hidden from view only: it stays in the page as its heading (H1), so search engines and screen readers still read it. The breadcrumb also follows Appearance › Header › Breadcrumbs, which can hide it on every page.' })));
 
         // Position
         const order = half.order.filter((k) => opts.kind === 'collection' || ['crumb', 'image', 'title'].includes(k));
@@ -422,7 +422,7 @@ export function openPanel(ctx, csrf, opener, toast) {
             scopeHost, pickerHost, body, err,
             h('div', { class: 'kbb-phe-foot' }, saveBtn,
                 h('button', { type: 'button', class: 'kbb-phe-btn', onclick: () => close() }, 'Cancel'),
-                safePath(ctx.console) ? h('a', { href: safePath(ctx.console) }, 'Pages → Page header') : null)));
+                safePath(ctx.console) ? h('a', { href: safePath(ctx.console) }, 'Pages › Page header') : null)));
 
     function drawScope() {
         scopeHost.replaceChildren(h('div', { class: 'kbb-phe-sec' },

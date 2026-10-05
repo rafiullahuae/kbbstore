@@ -7,7 +7,7 @@
 # needs them wired. It does NOT edit the integrator's files itself -- run
 #     php tools/ph-wire.php
 # first, take the shots, then
-#     git checkout -- routes/web.php resources/views/admin/app.blade.php docs/GS-ADMIN-APP-BLOCKS.md docs/BG-ADMIN-APP-BLOCKS.md docs/T1B-ADMIN-APP-BLOCKS.md
+#     git checkout -- routes/web.php resources/views/admin/app.blade.php docs/GS-ADMIN-APP-BLOCKS.md docs/BG-ADMIN-APP-BLOCKS.md docs/T1B-ADMIN-APP-BLOCKS.md docs/ss-wiring.json
 # It refuses to start when the wiring is absent, rather than photographing a
 # shop whose "Edit header" button answers 404.
 #
