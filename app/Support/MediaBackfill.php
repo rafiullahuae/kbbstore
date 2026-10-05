@@ -222,7 +222,9 @@ final class MediaBackfill
         foreach (array_chunk($found, 500) as $chunk) {
             $paths = array_column($chunk, 'path');
             $known = Media::query()->whereIn('path', $paths)->pluck('path')->all();
-            $known = array_flip($known);
+            // An original the WebP converter is keeping for rollback is not a
+            // new picture: its WebP already has the row. (Lane WP)
+            $known = array_flip($known) + \App\Services\Media\WebpBulk::keptOriginals($paths);
 
             $rows = [];
             $now = now();
