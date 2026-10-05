@@ -32,12 +32,18 @@ use App\Support\Url;
  *
  * ── WHAT SHIPS ──────────────────────────────────────────────────────────────
  *
- * With nothing stored, DEFAULT applies: one banner, "Super Sale", on
- * /super-sale/ only, with the strip the owner described ("100% Authentic
- * Products" / "Express Delivery all over UAE") and NO picture, because nobody
- * has uploaded one. No picture means no <img> at all — never a broken icon —
- * so the page gains the strip and an empty slot in the admin waiting for the
- * upload. Every other page is unassigned and renders byte-identical.
+ * With nothing stored, DEFAULT applies: one banner, "Super Sale", with the
+ * strip the owner described ("100% Authentic Products" / "Express Delivery all
+ * over UAE") and NO picture, because nobody has uploaded one. No picture means
+ * no <img> at all — never a broken icon.
+ *
+ * (Lane SP3) AND ON NO PAGE. The owner: "turned off the strip by default on
+ * all pages, and allow to turn ON on any page from the edit panel on the
+ * front-end". The assignment IS the page's "show the strip" switch — one
+ * model, so this screen and the storefront panel cannot disagree — and it
+ * ships empty. The banner itself stays in the library, ready to be switched on
+ * (setPage()). Migration 2027_08_21_100000 empties a stored assignment the
+ * same way and keeps every banner.
  *
  * ── RULE 5 ──────────────────────────────────────────────────────────────────
  *
@@ -137,12 +143,13 @@ final class PageBanners
 
     public function __construct(private SettingsService $settings) {}
 
-    /** The shape that ships: one banner, on /super-sale/ only. */
+    /** The shape that ships: one banner, on no page until he switches it on. */
     public static function defaults(): array
     {
         return [
             'banners' => [self::blank('super-sale', 'Super Sale')],
-            'assign' => ['collection:super-sale' => 'super-sale'],
+            // Off on every page (Lane SP3): he asked for it.
+            'assign' => [],
         ];
     }
 
@@ -503,6 +510,34 @@ final class PageBanners
     }
 
     /** One line of plain text: no tags, no control characters, clipped. */
+    /**
+     * (Lane SP3) Switch one page's strip on with a banner, or off with ''.
+     * The storefront panel's "Show the strip". Only the assignment of this one
+     * page moves; the library and every other page are written back exactly
+     * as they were read, through the same all-or-nothing save().
+     *
+     * @return array<string,string> what was refused; empty means written
+     */
+    public function setPage(string $pageKey, string $bannerId): array
+    {
+        if (! isset(self::pageKeys()[$pageKey])) {
+            return ['key' => 'Unknown page'];
+        }
+
+        $this->memo = null;
+        $all = $this->all();
+
+        if ($bannerId === '') {
+            unset($all['assign'][$pageKey]);
+        } elseif (in_array($bannerId, array_column($all['banners'], 'id'), true)) {
+            $all['assign'][$pageKey] = $bannerId;
+        } else {
+            return ['strip' => 'Which strip'];
+        }
+
+        return $this->save($all);
+    }
+
     private static function text(mixed $v, int $max): string
     {
         $v = is_scalar($v) ? (string) $v : '';

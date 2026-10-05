@@ -71,3 +71,23 @@ export function compile(bag, kind, has) {
 
     return { wrap, style: style.join(';'), cls };
 }
+
+/**
+ * App\Services\PageHeaders::topStyle(), in JavaScript. (Lane SP3)
+ * The top area's spacing as custom properties: above the first block,
+ * between the header area and the strip, and below the last. PageHeaderTest
+ * runs both on the same bags and compares.
+ *
+ * @param {object} bag
+ * @returns {string}
+ */
+export function topStyle(bag) {
+    const out = [];
+    for (const dev of ['d', 'm']) {
+        const h = bag[dev];
+        out.push(`--pt-t${dev}:${Math.trunc(Number(h.top) || 0)}px`);
+        out.push(`--pt-g${dev}:${Math.trunc(Number(h.mid) || 0)}px`);
+        out.push(`--pt-b${dev}:${Math.trunc(Number(h.space) || 0)}px`);
+    }
+    return out.join(';');
+}

@@ -5,16 +5,16 @@
 
 @section('content')
 <div class="kbb-home">
-@include('partials.page-banner', ['pageBanner' => $pageBanner ?? null])
+{{-- The top of the page (Lane SP3): the header area and the strip in the owner's order; the breadcrumb is inside the header. Null = the original markup below, byte for byte. The title is the admin's own HTML, printed raw as it always was. --}}@if (! empty($pageTop))
+@include('partials.page-top', ['ph' => ['home' => Url::to('/'), 'crumb' => new \Illuminate\Support\HtmlString($page->t('title')), 'title' => new \Illuminate\Support\HtmlString($page->t('title'))]])
+@endif
 <section class="sec"><div class="wrap">
-{{-- Pages → Page header (Lane PH): with a configured header the breadcrumb moves into it, inside the article. --}}@if (empty($pageHeader))
+@if (empty($pageTop))
     <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{!! $page->t('title') !!}</span></nav>
 @endif
 
     <article class="policy">
-{{-- Null = the original <h1> below, byte for byte. The title is the admin's own HTML, printed raw as it always was. --}}@if (! empty($pageHeader))
-@include('partials.page-header', ['ph' => ['home' => Url::to('/'), 'crumb' => new \Illuminate\Support\HtmlString($page->t('title')), 'title' => new \Illuminate\Support\HtmlString($page->t('title'))]])
-@else
+@if (empty($pageTop))
         <h1>{!! $page->t('title') !!}</h1>
 @endif
         {{-- Content is authored in the admin, so it is trusted HTML.

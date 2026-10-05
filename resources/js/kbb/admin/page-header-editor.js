@@ -18,9 +18,13 @@
  *    function as PageHeaders::compile() -- from data the page already has.
  *    No request until Save. Nothing measures an element.
  *  - Every listener added to the document is removed when the panel closes.
+ *  - (Lane SP3) The header area and the strip are ordered by drag and drop:
+ *    the HTML5 drag API for a mouse, pointer events from the grip for a finger
+ *    or a pen, and ↑ ↓ buttons for the keyboard. A row swaps when the drag
+ *    ENTERS the other row -- an event on an element, so nothing is measured.
  */
 import css from './page-header-editor.css?inline';
-import { compile } from './page-header-compile.js';
+import { compile, topStyle } from './page-header-compile.js';
 
 const TIMEOUT = 20000;
 const UPLOAD_TIMEOUT = 90000;
@@ -182,6 +186,9 @@ export function controls(host, opts) {
                 onclick: () => { opts.bag[dev === 'd' ? 'm' : 'd'] = clone(half); changed(true); },
             }, dev === 'd' ? 'Copy these settings to phone' : 'Copy these settings to desktop'))));
 
+        // (Lane SP3) The order of the two blocks at the top of the page.
+        out.push(blocksSection());
+
         // Show / hide
         out.push(h('div', { class: 'kbb-phe-sec' },
             h('p', { class: 'kbb-phe-h', text: 'Show' }),
@@ -248,20 +255,113 @@ export function controls(host, opts) {
                 }, o.label)))) : null,
             h('p', { class: 'kbb-phe-help', text: 'From the Media Library. “Fill” crops the picture to the height you set; “Whole picture” shows all of it inside that height.' })));
 
-        // Sizes
+        // Sizes, then (Lane SP3) the top area's spacing for this device:
+        // above the header, below it, and between it and the strip.
+        const spacing = (spec.spacing || []).map((k) => spec.numbers.find((n) => n.key === k)).filter(Boolean);
         out.push(h('div', { class: 'kbb-phe-sec' },
             h('p', { class: 'kbb-phe-h', text: dev === 'd' ? 'Sizes · desktop' : 'Sizes · phone' }),
-            spec.numbers.map((n) => {
-                const outEl = h('output', { text: `${half[n.key]}px` });
-                return h('label', { class: 'kbb-phe-rng' },
-                    h('div', {}, h('span', { text: n.label }), outEl),
-                    h('input', {
-                        type: 'range', min: n.min, max: n.max, step: '1', value: half[n.key],
-                        oninput: (e) => { half[n.key] = Number(e.currentTarget.value); outEl.textContent = `${half[n.key]}px`; opts.onChange(); },
-                    }));
-            })));
+            spec.numbers.filter((n) => !(spec.spacing || []).includes(n.key)).map((n) => range(half, n)),
+            spacing.length ? h('div', { class: 'kbb-phe-space', style: 'display:grid;gap:8px' },
+                spacing.map((n) => range(half, n)),
+                h('p', { class: 'kbb-phe-help', text: 'Above: from the site header to the first block (the header, or the strip when it is on top); 0 is flush. Below: from the last block to the products or the page text. Between: from the header to the strip, when the strip is on.' })) : null));
 
         return out;
+    }
+
+    function range(half, n) {
+        const outEl = h('output', { text: `${half[n.key]}px` });
+        return h('label', { class: 'kbb-phe-rng' },
+            h('div', {}, h('span', { text: n.label }), outEl),
+            h('input', {
+                type: 'range', min: n.min, max: n.max, step: '1', value: half[n.key], 'data-k': n.key,
+                oninput: (e) => { half[n.key] = Number(e.currentTarget.value); outEl.textContent = `${half[n.key]}px`; opts.onChange(); },
+            }));
+    }
+
+    /*
+     * (Lane SP3) "give facilty to sort header area and strip. by drag n drop
+     * up down." One order for both devices, kept on the bag beside the
+     * picture, so it follows "Apply to" like every other setting here.
+     */
+    function blocksSection() {
+        if (!Array.isArray(opts.bag.blocks)) opts.bag.blocks = (spec.blocks || []).map((b) => b.key);
+        const blocks = opts.bag.blocks;
+        const label = (k) => ((spec.blocks || []).find((b) => b.key === k) || { label: k }).label;
+        const list = h('ol', { class: 'kbb-phe-ord kbb-phe-blocks', 'aria-label': 'Order of the header area and the strip' });
+        const rows = {};
+        let dragging = null;
+        // 'mouse' (the browser's drag and drop) or 'touch' (pointer events).
+        // Kept apart because Chromium fires pointercancel the moment a native
+        // drag starts, and that must not end the drag it is part of.
+        let mode = null;
+
+        const moveTo = (k, to) => {
+            const from = blocks.indexOf(k);
+            if (from < 0 || to < 0 || to >= blocks.length || from === to) return false;
+            blocks.splice(from, 1);
+            blocks.splice(to, 0, k);
+            return true;
+        };
+        // A drag ENTERED another row: take its place. The dragged row is moved,
+        // not redrawn, so the drag in progress keeps its source element.
+        const enter = (k) => {
+            if (!dragging || dragging === k || !moveTo(dragging, blocks.indexOf(k))) return;
+            for (const key of blocks) list.appendChild(rows[key]);
+            opts.onChange();
+        };
+        const end = (how) => {
+            if (!dragging || mode !== how) return;
+            dragging = null;
+            mode = null;
+            changed(true);
+        };
+
+        blocks.forEach((k, i) => {
+            const grip = h('span', { class: 'kbb-phe-grip', 'aria-hidden': 'true', text: '⠿' });
+            const li = h('li', {
+                'data-block': k, draggable: 'true',
+                class: k === 'strip' && opts.stripOn === false ? 'is-off' : null,
+            }, grip, h('span', { text: label(k) }),
+            h('button', { type: 'button', 'aria-label': `Move ${label(k)} up`, disabled: i === 0 ? true : null, onclick: () => { if (moveTo(k, i - 1)) changed(true); } }, '↑'),
+            h('button', { type: 'button', 'aria-label': `Move ${label(k)} down`, disabled: i === blocks.length - 1 ? true : null, onclick: () => { if (moveTo(k, i + 1)) changed(true); } }, '↓'));
+            // A mouse: the browser's own drag and drop.
+            li.addEventListener('dragstart', (e) => {
+                dragging = k;
+                mode = 'mouse';
+                li.classList.add('is-drag');
+                if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', k); }
+            });
+            li.addEventListener('dragenter', (e) => { if (mode === 'mouse') { e.preventDefault(); enter(k); } });
+            li.addEventListener('dragover', (e) => { if (dragging) e.preventDefault(); });
+            li.addEventListener('drop', (e) => e.preventDefault());
+            li.addEventListener('dragend', () => end('mouse'));
+            // A finger or a pen, from the grip: a touch is captured to the
+            // element it started on, so the capture is released (below) and
+            // the row under the finger hears pointerenter.
+            grip.addEventListener('pointerdown', (e) => {
+                if (e.pointerType === 'mouse') return;
+                e.preventDefault();
+                dragging = k;
+                mode = 'touch';
+                li.classList.add('is-drag');
+            });
+            // The browser captures a touch to the grip AFTER pointerdown has
+            // run, so the capture is let go here, when it actually arrives.
+            grip.addEventListener('gotpointercapture', (e) => { if (mode === 'touch') grip.releasePointerCapture(e.pointerId); });
+            li.addEventListener('pointerenter', (e) => { if (mode === 'touch' && e.pointerType !== 'mouse') enter(k); });
+            rows[k] = li;
+            list.appendChild(li);
+        });
+        list.addEventListener('pointerup', () => end('touch'));
+        list.addEventListener('pointercancel', () => end('touch'));
+        list.addEventListener('pointerleave', (e) => { if (e.pointerType !== 'mouse') end('touch'); });
+
+        return h('div', { class: 'kbb-phe-sec' },
+            h('p', { class: 'kbb-phe-h', text: 'Order · header area and strip' }),
+            list,
+            h('p', { class: 'kbb-phe-help', text: opts.stripOn === undefined
+                ? 'Drag a row, or use ↑ ↓. The strip shows only on a page where it is switched on: that page’s Edit header panel, or Pages › Page banners.'
+                : 'Drag a row, or use ↑ ↓. The strip is shown only when “Show the strip” above is on.' }));
     }
 
     redraw();
@@ -380,6 +480,78 @@ function partsOf(wrap) {
     };
 }
 
+const SVG = 'http://www.w3.org/2000/svg';
+
+/** App\Services\PageBanners::ICON, built as nodes. */
+function tick() {
+    const svg = document.createElementNS(SVG, 'svg');
+    svg.setAttribute('class', 'kbb-pb-ic');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    const c = document.createElementNS(SVG, 'circle');
+    for (const [k, v] of [['cx', '12'], ['cy', '12'], ['r', '10'], ['fill', 'none'], ['stroke', 'currentColor'], ['stroke-width', '2']]) c.setAttribute(k, v);
+    const p = document.createElementNS(SVG, 'path');
+    for (const [k, v] of [['d', 'm7.5 12.3 3 3 6-6.4'], ['fill', 'none'], ['stroke', 'currentColor'], ['stroke-width', '2.2'], ['stroke-linecap', 'round'], ['stroke-linejoin', 'round']]) p.setAttribute(k, v);
+    svg.append(c, p);
+    return svg;
+}
+
+/**
+ * (Lane SP3) A banner as partials/page-banner.blade.php draws it, from the
+ * view PageBanners::view() already resolved on the server. Words go in as
+ * text; the picture only if safeSrc() passes it; the preview's picture is not
+ * a link, so nothing in the panel navigates away.
+ */
+export function bannerEl(v) {
+    if (!v) return null;
+    const box = h('div', { class: 'kbb-pb', style: String(v.style || ''), 'data-banner': String(v.id || '') });
+    const d = v.img ? safeSrc(v.img.d) : '';
+    if (d) {
+        const m = safeSrc(v.img.m);
+        box.appendChild(h('div', { class: 'kbb-pb-img' }, h('picture', {},
+            v.img.two && m ? h('source', { media: String(v.media || ''), srcset: m }) : null,
+            h('img', { src: d, alt: String(v.img.alt || ''), decoding: 'async' }))));
+    }
+    const items = Array.isArray(v.items) ? v.items : [];
+    if (items.length) {
+        box.appendChild(h('ul', { class: 'kbb-pb-strip' }, items.map((t, i) => h('li', { class: { d: 'kbb-pb-d', m: 'kbb-pb-m' }[(v.devs || [])[i]] || null },
+            tick(), h('span', { text: String(t) })))));
+    }
+    return box;
+}
+
+/**
+ * (Lane SP3) The top area this page draws, or the one the panel builds for
+ * the preview: <div class="kbb-pt"> holding the strip and the header area's
+ * <div class="sec kbb-pt-s">, exactly as partials/page-top.blade.php prints
+ * them. Returns {pt, holder, strip, restore()}.
+ */
+function takeTop(parts, ctx) {
+    const home = parts.wrap.closest('.kbb-home') || document.querySelector('.kbb-home');
+    const pt = home ? home.querySelector(':scope > .kbb-pt') : null;
+    if (pt) {
+        const style = pt.getAttribute('style');
+        const kids = [...pt.childNodes];
+        return {
+            pt,
+            holder: pt.querySelector(':scope > .kbb-pt-s'),
+            strip: pt.querySelector(':scope > .kbb-pb'),
+            restore: () => { pt.setAttribute('style', style || ''); pt.replaceChildren(...kids); },
+        };
+    }
+    ensureStyle('kbb-pt-css', ctx.spec.top_css || '');
+    const mark = document.createComment('kbb-pt');
+    parts.wrap.before(mark);
+    const inner = ctx.kind === 'page' ? h('div', { class: 'policy' }) : null;
+    const wrapEl = h('div', { class: 'wrap' }, inner);
+    (inner || wrapEl).appendChild(parts.wrap);
+    const holder = h('div', { class: 'sec kbb-pt-s' }, wrapEl);
+    const built = h('div', { class: 'kbb-pt', 'data-kbb-pt': ctx.key }, holder);
+    home.insertBefore(built, home.firstChild);
+    return { pt: built, holder, strip: null, restore: () => { mark.replaceWith(parts.wrap); built.remove(); } };
+}
+
 /** The storefront panel. Called by storefront-admin.js with the context's `pageheader`. */
 export function openPanel(ctx, csrf, opener, toast) {
     if (open) { open.focus(); return; }
@@ -394,8 +566,15 @@ export function openPanel(ctx, csrf, opener, toast) {
     const { parts } = taken;
     parts.wrap.classList.add('kbb-phe-live');
 
+    const strip = ctx.strip || null;
+    const top = takeTop(parts, ctx);
+    // One element per banner, built once and reused as the switch moves.
+    const stripEls = {};
+    if (top.strip && strip && strip.on) stripEls[strip.on] = top.strip;
+
     const st = {
         scope: ctx.own ? 'page' : 'global',
+        strip: strip ? strip.on : '',
         bag: clone(ctx.bag),
         dev: window.matchMedia(`(max-width: ${ctx.spec.breakpoint}px)`).matches ? 'm' : 'd',
         dirty: false,
@@ -405,21 +584,40 @@ export function openPanel(ctx, csrf, opener, toast) {
     // Previewing one device's look at the other's width: that device's
     // breadcrumb switch goes with it.
     const crumbFor = (dev) => (dev === 'd' || dev === 'm' ? { d: ctx.spec.crumb[dev], m: ctx.spec.crumb[dev] } : ctx.spec.crumb);
+    // (Lane SP3) The top area: the strip on or off, the two blocks in order,
+    // the spacing as the style attribute. Moves elements; measures nothing.
+    const drawTop = (bag) => {
+        top.pt.setAttribute('style', topStyle(bag));
+        let el = null;
+        if (st.strip && strip) {
+            if (!(st.strip in stripEls)) {
+                const b = strip.banners.find((x) => x.id === st.strip);
+                stripEls[st.strip] = bannerEl(b ? b.view : null);
+            }
+            el = stripEls[st.strip];
+            if (el) ensureStyle('kbb-pb-css', strip.css);
+        }
+        for (const e of Object.values(stripEls)) if (e && e !== el) e.remove();
+        for (const k of el ? bag.blocks : ['header']) top.pt.appendChild(k === 'strip' ? el : top.holder);
+    };
     const live = () => {
         const same = (st.dev === 'm') === atPhone();
-        restyle(parts, same ? st.bag : asDevice(st.bag, st.dev), ctx.kind, ctx.spec.breakpoint, same ? ctx.spec.crumb : crumbFor(st.dev));
+        const bag = same ? st.bag : asDevice(st.bag, st.dev);
+        restyle(parts, bag, ctx.kind, ctx.spec.breakpoint, same ? ctx.spec.crumb : crumbFor(st.dev));
+        drawTop(bag);
     };
 
     const err = h('p', { class: 'kbb-phe-err', role: 'alert' });
     const body = h('div', {});
     const scopeHost = h('div', {});
+    const stripHost = h('div', {});
     const saveBtn = h('button', { type: 'button', class: 'kbb-phe-btn is-primary', onclick: () => save() }, 'Save');
     const pickerHost = h('div', {});
     const panel = h('div', { class: 'kbb-phe', role: 'dialog', 'aria-label': `Edit the header of ${ctx.label}`, tabindex: '-1' },
         h('div', { class: 'kbb-phe-in' },
             h('div', { class: 'kbb-phe-head' }, h('b', { text: `Page header · ${ctx.label}` }),
                 h('button', { type: 'button', class: 'kbb-phe-x', 'aria-label': 'Close', onclick: () => close() }, '×')),
-            scopeHost, pickerHost, body, err,
+            scopeHost, stripHost, pickerHost, body, err,
             h('div', { class: 'kbb-phe-foot' }, saveBtn,
                 h('button', { type: 'button', class: 'kbb-phe-btn', onclick: () => close() }, 'Cancel'),
                 safePath(ctx.console) ? h('a', { href: safePath(ctx.console) }, 'Pages › Page header') : null)));
@@ -441,7 +639,33 @@ export function openPanel(ctx, csrf, opener, toast) {
             }, 'Use the global look on this page')) : null));
     }
 
+    /*
+     * (Lane SP3) "allow to turn ON on any page from the edit panel on the
+     * front-end". This page's own switch, whatever "Apply to" says: the
+     * assignment in Pages → Page banners, written by the same Save.
+     */
+    function drawStrip() {
+        if (!strip) { stripHost.replaceChildren(); return; }
+        const usable = strip.banners.filter((b) => b.view);
+        const set = (id) => { st.strip = id; st.dirty = true; drawStrip(); ui.redraw(); live(); };
+        stripHost.replaceChildren(h('div', { class: 'kbb-phe-sec kbb-phe-strip' },
+            h('p', { class: 'kbb-phe-h', text: 'Strip' }),
+            h('div', { class: 'kbb-phe-tog' }, h('label', { style: 'grid-column:1/-1' },
+                h('input', {
+                    type: 'checkbox', checked: st.strip ? true : null, disabled: !strip.can || !usable.length ? true : null,
+                    onchange: (e) => set(e.currentTarget.checked ? (usable.some((b) => b.id === strip.on) ? strip.on : usable[0].id) : ''),
+                }), h('span', { text: 'Show the strip on this page' }))),
+            st.strip && usable.length > 1 ? h('label', { class: 'kbb-phe-sel' }, h('span', { text: 'Which strip' }),
+                h('select', { onchange: (e) => { if (usable.some((b) => b.id === e.currentTarget.value)) set(e.currentTarget.value); } },
+                    usable.map((b) => h('option', { value: b.id, selected: b.id === st.strip ? true : null }, b.name)))) : null,
+            h('p', { class: 'kbb-phe-help', text: !strip.can
+                ? 'Your role cannot switch the strip. An owner, manager or editor can.'
+                : (usable.length ? 'For this page only, whatever “Apply to” says. Off on every page unless you switch it on here.' : 'There is no strip with any lines in it yet.') }),
+            safePath(strip.console) ? h('a', { href: safePath(strip.console), class: 'kbb-phe-help' }, 'Its lines, colours and sizes: Pages › Page banners') : null));
+    }
+
     const ui = controls(body, {
+        get stripOn() { return strip ? st.strip !== '' : undefined; },
         get bag() { return st.bag; },
         spec: ctx.spec,
         kind: ctx.kind,
@@ -532,7 +756,9 @@ export function openPanel(ctx, csrf, opener, toast) {
         saveBtn.textContent = 'Saving…';
         err.textContent = '';
         const which = scope || st.scope;
-        const res = await send(ctx.endpoints.apply, csrf, { key: ctx.key, scope: which, bag: which === 'inherit' ? null : st.bag });
+        const payload = { key: ctx.key, scope: which, bag: which === 'inherit' ? null : st.bag };
+        if (strip && st.strip !== strip.on) payload.strip = st.strip;
+        const res = await send(ctx.endpoints.apply, csrf, payload);
         st.busy = false;
         saveBtn.disabled = false;
         saveBtn.textContent = 'Save';
@@ -544,6 +770,7 @@ export function openPanel(ctx, csrf, opener, toast) {
         ctx.bag = res.body.bag;
         ctx.global = res.body.global;
         st.bag = clone(ctx.bag);
+        if (strip) { strip.on = String(res.body.strip || ''); st.strip = strip.on; }
         st.scope = ctx.own ? 'page' : 'global';
         st.dirty = false;
         if (toast) toast(String(res.body.message || 'Saved'));
@@ -563,15 +790,19 @@ export function openPanel(ctx, csrf, opener, toast) {
         document.removeEventListener('keydown', onKey);
         panel.remove();
         open = null;
-        if (revert) taken.restore();
-        else {
+        if (revert) {
+            top.restore();
+            taken.restore();
+        } else {
             parts.wrap.classList.remove('kbb-phe-live');
             restyle(parts, ctx.bag, ctx.kind, ctx.spec.breakpoint, ctx.spec.crumb);
+            drawTop(ctx.bag);
         }
         if (opener && opener.isConnected) opener.focus({ preventScroll: true });
     }
 
     drawScope();
+    drawStrip();
     document.addEventListener('keydown', onKey);
     document.body.appendChild(panel);
     open = panel;
