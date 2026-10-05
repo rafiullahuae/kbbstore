@@ -2015,6 +2015,16 @@ final class EnglishRenderWalk
              * (this walk's brand has no banner, no colour and no description,
              * so it is the no-picture ground in the shop pink's shades).
              * BrandPanelHeaderTest pins the behaviour.
+             *
+             * LANE BR4 takes the logo OUT of it, as the owner asked: "i want to
+             * turn off the logo by default". The panel holds the SAME name and
+             * nothing where the logo was -- no empty circle -- so the logo's span
+             * is matched below and no longer written back. The <section>'s
+             * classes do not move: off, centred and Bottom centre are each the
+             * stylesheet's own layout and print nothing, and this walk's brand
+             * has no description, so no Read more. Appearance → Site layout →
+             * Brand page → "Panel · laptop · show the brand logo" puts it back.
+             * BrandPanelEveryBrandTest pins the behaviour.
              */
             'the brand page: the Panel header\'s stylesheet (Lane BR2)' => [
                 'pattern' => '#(<link rel="canonical" href="[^"]*/brands/[^"/]+/">.*?src="/build/assets/app-[^"]+\.js"></script> {4}\n {4})(\n)#s',
@@ -2026,7 +2036,7 @@ final class EnglishRenderWalk
                 'with' => "\n".'<div class="brw-phw" data-kbb-brand-header>'
                     ."\n".'<section class="brw-ph brw-ph--frost brw-ph--pill-capsule brw-ph--logo-circle brw-ph--pos-center brw-ph--noimg" style="--brw-ph-w:100%;--brw-ph-h:270px;--brw-ph-hm:165px;--brw-ph-cw:60%;--brw-ph-dk:#431a25;--brw-ph-lt:#fceef2" aria-labelledby="brw-ph-title">'
                     ."\n".'<div class="brw-ph__media">'."\n".'</div>'."\n".'<div class="brw-ph__panel">'."\n".'<div class="brw-ph__id">'
-                    ."\n".'$1'."\n".'<h1 class="brw-ph__name" id="brw-ph-title">$2</h1>'
+                    ."\n".'<h1 class="brw-ph__name" id="brw-ph-title">$2</h1>'
                     ."\n".'</div>'."\n".'</div>'."\n".'</section>'."\n".'</div>'."\n",
                 'hits' => 1,
             ],

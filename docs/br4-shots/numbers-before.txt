@@ -1,0 +1,5 @@
+BEFORE -- this branch's HEAD (461ad1ce), same seed:
+before-anua-banner-390 | h1 1 (Anua) | .kbb-banner 1 title-header 0 | old row brw-hero brw-hero--compact 346x167 banner 346x234 | sw 390
+before-anua-banner-1280 | h1 1 (Anua) | .kbb-banner 1 title-header 0 | old row brw-hero brw-hero--compact 1236x108 banner 1236x351 | sw 1280
+before-plain-390 | h1 1 (Plainbr4) | .kbb-banner 0 title-header 0 | hdr 346x359 capsule 179x64 at L12 T89 R155 B12 | logo 52x52 | name 22px align start name-centre-off 31 | desc 14px align start h182 lh 21.7px | toggle none | img /uploads/brands/anua-banner.webp | sw 390
+before-plain-1280 | h1 1 (Plainbr4) | .kbb-banner 0 title-header 0 | hdr 1236x270 panel 742x200 at L36 T35 R458 B35 | logo 72x72 | name 34px align start name-centre-off -181 | desc 15px align start h72 lh 24px | toggle none | img /uploads/brands/anua-banner.webp | sw 1280

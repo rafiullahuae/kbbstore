@@ -54,7 +54,40 @@ final class BrandPanel
     public const PANEL_Y = ['middle', 'top', 'bottom'];
 
     /** Lane BR3: where the phone's capsule sits on the banner. */
-    public const PILL_AT = ['bottom-left', 'bottom-center', 'bottom-right', 'top-left', 'top-center', 'top-right'];
+    /** Lane BR4: Bottom centre first -- "centered align" -- so it prints no class. */
+    public const PILL_AT = ['bottom-center', 'bottom-left', 'bottom-right', 'top-left', 'top-center', 'top-right'];
+
+    /**
+     * Lane BR4: the name's and the description's alignment. CENTRE FIRST, so
+     * the owner's "centered align" is the stylesheet's own layout and prints
+     * no class; Left and Right print `brw-ph--na-left` and the like.
+     */
+    public const ALIGNS = ['center', 'left', 'right'];
+
+    /**
+     * Lane BR4: "Show the brand logo", per device. OFF FIRST: off is the
+     * owner's default and the stylesheet's own layout, so it prints no class,
+     * and On prints `brw-ph--lg-on` / `brw-ph--lgm-on`. The shop's value is a
+     * switch (SiteLayout `bool`); shop() says it in these words.
+     */
+    public const LOGO_SHOWS = ['off', 'on'];
+
+    /** The choices whose shop setting is a switch: true is 'on', false 'off'. */
+    public const SWITCHES = ['logo_show', 'logo_show_m'];
+
+    /**
+     * Lane BR4: about how many characters of the description fill one line of
+     * the panel at its shipped type size and width -- laptop at 15px in a 60%
+     * panel, phone at 14px in the card on a 360-390px screen. A description
+     * longer than its lines' worth is cut there by CSS and gets "Read more";
+     * a shorter one is printed whole with no button. COUNTED HERE, ON THE
+     * SERVER, from the text: nothing on the page is measured. Scaled by the
+     * type size and (laptop) the panel width actually chosen, so a bigger font
+     * reaches the button sooner. An estimate errs the safe way: text that is
+     * not cut never hides anything, so a slightly long two-line description
+     * shows as three lines rather than losing its end with no way to open it.
+     */
+    public const LINE_CHARS = ['laptop' => 80, 'phone' => 44];
 
     /**
      * own key => [shop setting, min, max, CSS property, unit]. The shop's
@@ -82,6 +115,9 @@ final class BrandPanel
         'name_m' => ['brand_name_fs_m', 14, 36, '--brw-ph-fnm', 'px'],
         'desc_m' => ['brand_desc_fs_m', 12, 20, '--brw-ph-fdm', 'px'],
         'logo_size_m' => ['brand_logo_size_m', 28, 80, '--brw-ph-lgm', 'px'],
+        // Lane BR4: how many lines of the description show before "Read more".
+        'lines' => ['brand_desc_lines', 1, 6, '--brw-ph-dl', ''],
+        'lines_m' => ['brand_desc_lines_m', 1, 6, '--brw-ph-dlm', ''],
     ];
 
     /**
@@ -97,6 +133,7 @@ final class BrandPanel
     public const QUIET = [
         'pad' => 26, 'inset' => 36, 'gap' => 12, 'name' => 34, 'desc' => 15, 'logo_size' => 72,
         'inset_m' => 12, 'gap_m' => 12, 'card_pad_m' => 14, 'name_m' => 22, 'desc_m' => 14, 'logo_size_m' => 52,
+        'lines' => 2, 'lines_m' => 2,
     ];
 
     /**
@@ -105,7 +142,9 @@ final class BrandPanel
      *
      * @var array<string, string>
      */
-    public const QUIET_CHOICES = ['panel_x' => 'px', 'panel_y' => 'py', 'pill_at' => 'at'];
+    public const QUIET_CHOICES = ['panel_x' => 'px', 'panel_y' => 'py', 'pill_at' => 'at',
+        // Lane BR4: the logo switches, and the alignments (centre first).
+        'logo_show' => 'lg', 'logo_show_m' => 'lgm', 'name_align' => 'na', 'desc_align' => 'da', 'desc_align_m' => 'dam'];
 
     /**
      * own key => [shop setting, allowed values].
@@ -120,6 +159,11 @@ final class BrandPanel
         'panel_x' => ['brand_panel_x', self::PANEL_X],
         'panel_y' => ['brand_panel_y', self::PANEL_Y],
         'pill_at' => ['brand_pill_at', self::PILL_AT],
+        'logo_show' => ['brand_logo_show', self::LOGO_SHOWS],
+        'logo_show_m' => ['brand_logo_show_m', self::LOGO_SHOWS],
+        'name_align' => ['brand_name_align', self::ALIGNS],
+        'desc_align' => ['brand_desc_align', self::ALIGNS],
+        'desc_align_m' => ['brand_desc_align_m', self::ALIGNS],
     ];
 
     /** Used when a brand has no colour of its own: the shop pink. */
@@ -200,6 +244,14 @@ final class BrandPanel
 
         foreach (self::CHOICES as $key => [$setting, $allowed]) {
             $v = $layout[$setting] ?? null;
+
+            if (in_array($key, self::SWITCHES, true)) {
+                // A switch on Site layout; absent is its shipped Off.
+                $out[$key] = $v === true || $v === 1 || $v === '1' ? 'on' : 'off';
+
+                continue;
+            }
+
             $out[$key] = is_string($v) && in_array($v, $allowed, true) ? $v : $allowed[0];
         }
 
@@ -213,13 +265,44 @@ final class BrandPanel
     /**
      * The header for one brand, resolved for drawing.
      *
+     * ── LANE BR4: EVERY BRAND, BANNER OR NOT ────────────────────────────────
+     *
+     * $banner is PageBanner::forModel()'s answer for this brand. Until BR4 a
+     * brand with the owner's own page banner never reached here at all
+     * (BrandController::hero() kept it on the Compact row under the banner),
+     * which is every brand he had given a banner -- the live Anua among them.
+     * Now the Panel draws for it too, and the banner contributes its PICTURE:
+     *
+     *   picture      the page banner's picture when it has one, else the
+     *                brand's header_image (the imported title-header picture),
+     *                else the no-picture ground in the brand's own shades. The
+     *                banner wins because it is the one the owner chose, and
+     *                the one the pencil's "Banner picture" changes on such a
+     *                brand (StorefrontAdminController::mode()), so an upload
+     *                there is what the page shows. A brand has no phone-only
+     *                picture (the banner has no such field; header_style's
+     *                img_phone is a category's), so laptop and phone draw the
+     *                same picture, the phone cropping it to cover.
+     *   heading      not the banner's: the page's one <h1> is the brand name.
+     *   description  the brand's own (TitleHeader::brandDescription); only when
+     *                it has none, the banner's line under its heading, escaped
+     *                -- printed once, here, and never by the banner as well.
+     *
      * @param  array<string, mixed>  $layout  SiteLayout::all()
-     * @return array{image:?string, class:string, style:string, description:string}
+     * @param  array<string, mixed>|null  $banner  PageBanner::forModel()
+     * @return array{image:?string, class:string, style:string, description:string, logo:bool, more:bool}
      */
-    public static function forBrand(Brand $brand, array $layout): array
+    public static function forBrand(Brand $brand, array $layout, ?array $banner = null): array
     {
         $v = self::sanitize($brand->getAttribute('header_layout')) + self::shop($layout);
-        $image = TitleHeader::safeImage($brand->getAttribute('header_image'));
+        $image = TitleHeader::safeImage($banner['image'] ?? null)
+            ?? TitleHeader::safeImage($brand->getAttribute('header_image'));
+
+        $description = TitleHeader::brandDescription($brand);
+
+        if ($description === '' && is_string($banner['subheading'] ?? null) && trim($banner['subheading']) !== '') {
+            $description = e(trim($banner['subheading']));
+        }
 
         $class = 'brw-ph brw-ph--'.$v['panel'].' brw-ph--pill-'.$v['pill'].' brw-ph--logo-'.$v['logo']
             .' brw-ph--pos-'.$v['position'].($image === null ? ' brw-ph--noimg' : '');
@@ -228,6 +311,25 @@ final class BrandPanel
             if ($v[$key] !== self::CHOICES[$key][1][0]) {
                 $class .= ' brw-ph--'.$prefix.'-'.$v[$key];
             }
+        }
+
+        /*
+         * Lane BR4: "Read more" per device, from the text's length against the
+         * lines that device shows (see LINE_CHARS). `brw-ph--more-l` / `-p`
+         * turn the cut and the button on for that device; neither, and the
+         * description is printed whole with no button at all.
+         */
+        $more = ['l' => false, 'p' => false];
+
+        if ($description !== '') {
+            $length = mb_strlen(trim(RichText::toText($description)));
+            $laptop = (int) floor(self::LINE_CHARS['laptop'] * self::QUIET['desc'] / max(1, (int) $v['desc']) * (int) $v['content'] / 60);
+            $phone = (int) floor(self::LINE_CHARS['phone'] * self::QUIET['desc_m'] / max(1, (int) $v['desc_m']));
+            $more = ['l' => $length > $laptop * (int) $v['lines'], 'p' => $length > $phone * (int) $v['lines_m']];
+        }
+
+        foreach ($more as $device => $on) {
+            $class .= $on ? ' brw-ph--more-'.$device : '';
         }
 
         $style = [];
@@ -246,7 +348,11 @@ final class BrandPanel
             'image' => $image,
             'class' => $class,
             'style' => implode(';', $style),
-            'description' => TitleHeader::brandDescription($brand),
+            'description' => $description,
+            // No logo markup at all when it is off on both devices: no empty
+            // circle, no gap. On one device only, the class hides it on the other.
+            'logo' => $v['logo_show'] === 'on' || $v['logo_show_m'] === 'on',
+            'more' => $more['l'] || $more['p'],
         ];
     }
 

@@ -719,13 +719,23 @@ it('ships every setting at the value the page already had, except the ones the o
         'brand_name_fs' => 34,
         'brand_desc_fs' => 15,
         'brand_logo_size' => 72,
-        'brand_pill_at' => 'bottom-left',
+        // Lane BR4: Bottom centre, as the owner asked ("centered align").
+        'brand_pill_at' => 'bottom-center',
         'brand_pill_inset_m' => 12,
         'brand_card_gap_m' => 12,
         'brand_card_pad_m' => 14,
         'brand_name_fs_m' => 22,
         'brand_desc_fs_m' => 14,
         'brand_logo_size_m' => 52,
+        // Lane BR4, as the owner asked: the logo off, the name and the
+        // description centred, the description cut at two lines.
+        'brand_logo_show' => false,
+        'brand_logo_show_m' => false,
+        'brand_name_align' => 'center',
+        'brand_desc_align' => 'center',
+        'brand_desc_align_m' => 'center',
+        'brand_desc_lines' => 2,
+        'brand_desc_lines_m' => 2,
         'press' => 'c',
         // Lane FP, as the owner asked: "it's good only for small things like
         // icons etc." -- a default he chose, not the old behaviour.

@@ -668,6 +668,14 @@ class StorefrontAdminController extends Controller
         $title = (string) (method_exists($model, 't') ? $model->t('name') : $model->getAttribute('name'));
         $banner = PageBanner::forModel($model, $title);
 
+        // Lane BR4: the Panel first, banner or not -- as the brand page itself
+        // now draws it (Store\BrandController::hero()), the banner's picture
+        // as its background.
+        if ($isBrand && $model instanceof Brand
+            && \App\Http\Controllers\Store\BrandController::hero(app(\App\Services\SiteLayout::class)->get('brand_hero')) === 'panel') {
+            return ['kind' => 'panel', 'html' => $this->panelHtml($model, $banner), 'note' => ''];
+        }
+
         if ($banner !== null) {
             return [
                 'kind' => 'banner',
@@ -677,11 +685,6 @@ class StorefrontAdminController extends Controller
                 ])),
                 'note' => '',
             ];
-        }
-
-        if ($isBrand && $model instanceof Brand
-            && \App\Http\Controllers\Store\BrandController::hero(app(\App\Services\SiteLayout::class)->get('brand_hero'), null) === 'panel') {
-            return ['kind' => 'panel', 'html' => $this->panelHtml($model), 'note' => ''];
         }
 
         $header = TitleHeader::forModel($model, $title, null, $isBrand);
@@ -710,14 +713,14 @@ class StorefrontAdminController extends Controller
      * The Panel header as Store\BrandController::show() draws it: the same
      * partial, the same inputs. (Lane BR2)
      */
-    private function panelHtml(Brand $brand): string
+    private function panelHtml(Brand $brand, ?array $banner = null): string
     {
         $layout = app(\App\Services\SiteLayout::class);
         $all = $layout->all();
 
         return trim(view('store.partials.brand-panel', [
             'brand' => $brand,
-            'panel' => BrandPanel::forBrand($brand, $all),
+            'panel' => BrandPanel::forBrand($brand, $all, $banner),
             'ring' => (bool) $all['brand_ring'],
             'ringHex' => BrandLogo::ring($brand),
             'cta' => (bool) $all['brand_cta'],
@@ -740,7 +743,7 @@ class StorefrontAdminController extends Controller
         }
 
         return [
-            'on' => \App\Http\Controllers\Store\BrandController::hero($all['brand_hero'] ?? null, PageBanner::forModel($model, (string) $model->getAttribute('name'))) === 'panel',
+            'on' => \App\Http\Controllers\Store\BrandController::hero($all['brand_hero'] ?? null) === 'panel',
             'shop' => BrandPanel::shop($all),
             'ranges' => $ranges,
             // Lane BR3: the sizes the stylesheet draws on its own, which the

@@ -493,17 +493,21 @@ class BrandController extends Controller
         // `banner` and is not translatable yet — see the note in
         // docs/fn-translation-at-scale.md, which is a decision for the SEO lane.
         $banner = \App\Support\PageBanner::forModel($brand, $brand->t('name'));
-        $hero = self::hero($layout->get('brand_hero'), $banner);
+        $hero = self::hero($layout->get('brand_hero'));
 
         return view('store.brands', [
-            'banner' => $banner,
+            // Lane BR4: under the Panel the banner is not drawn on its own --
+            // its picture is the panel's background (BrandPanel::forBrand), so
+            // there is one header, one <h1> and no second banner.
+            'banner' => $hero === 'panel' ? null : $banner,
             // The old shop's title header for this brand, when its import
             // carried a banner and the owner's own banner is off. (Lane PT)
             // Not under the Panel header, which draws the banner itself.
             'titleHeader' => $hero === 'panel' ? null : \App\Support\TitleHeader::forModel($brand, (string) $brand->t('name'), $banner, true),
             // Lane BR2: the Panel header, resolved off the row already loaded
-            // and the settings map -- no query.
-            'brandPanel' => $hero === 'panel' ? \App\Support\BrandPanel::forBrand($brand, $layout->all()) : null,
+            // and the settings map -- no query. Lane BR4: with the page
+            // banner, whose picture it draws when the brand has one.
+            'brandPanel' => $hero === 'panel' ? \App\Support\BrandPanel::forBrand($brand, $layout->all(), $banner) : null,
             'seoCtx' => $this->seoCtx($brand, $banner, $products, $page, $perPage),
             // The pager under the grid (Lane PR). See partials/listing-pager.
             'page' => $page,
@@ -544,19 +548,24 @@ class BrandController extends Controller
 
     /**
      * Which brand header the page draws: Panel (Lane BR2, the default), Compact
-     * or Classic. The owner's own page banner owns the page's <h1> and its
-     * picture, so a brand with one keeps the Compact row under it rather than
-     * a second banner.
+     * or Classic -- on EVERY brand page.
      *
-     * @param  array<string, mixed>|null  $banner
+     * ▲ LANE BR4: THIS USED TO SAY "a brand with its own banner keeps the
+     * Compact row under it", and returned Panel only when the brand had NO page
+     * banner. Every brand the owner had given a banner -- the live Anua among
+     * them -- therefore never drew the Panel or any of its controls: the banner
+     * with its centred words on top and the round logo alone under it, the
+     * page he sent back. BR2's and BR3's screenshots were of brands without a
+     * banner, so none of them showed it. The banner now becomes the Panel's
+     * picture instead (BrandPanel::forBrand), and the setting alone decides.
      */
-    public static function hero(mixed $setting, ?array $banner): string
+    public static function hero(mixed $setting): string
     {
-        if ($setting === 'classic') {
-            return 'classic';
-        }
-
-        return $setting === 'panel' && $banner === null ? 'panel' : 'compact';
+        return match ($setting) {
+            'panel' => 'panel',
+            'classic' => 'classic',
+            default => 'compact',
+        };
     }
 
     /**

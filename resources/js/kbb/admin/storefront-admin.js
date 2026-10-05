@@ -421,16 +421,30 @@ const FOCUS_CHOICES = [['', 'Shop setting'], ['left', 'Left'], ['center', 'Centr
  * lists in `panel.quiet` is removed (not set) at that value, exactly as
  * App\Support\BrandPanel prints the page, so the preview cannot differ from it.
  */
+/*
+ * Lane BR4: "Show the brand logo", the name's and the description's alignment
+ * (laptop and phone apart; on a phone the name's place is the capsule's, "Name
+ * position") and the lines before "Read more". The logo switches and the lines
+ * also redraw the preview from the server (REDRAW), because they decide what
+ * markup there is -- a logo or none, a Read more button or none -- and not only
+ * a class: one request per press, debounced like the text boxes.
+ */
 const PANEL_CHOICES = [
     ['logo', 'Logo shape', 'brw-ph--logo-', [['circle', 'Circle'], ['rect', 'Rectangle']], 'both'],
     ['panel', 'Content background', 'brw-ph--', [['frost', 'Frosted white'], ['brand', 'Brand colour']], 'both'],
     ['position', 'Picture position', 'brw-ph--pos-', [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']], 'both'],
+    ['logo_show', 'Show the brand logo', 'brw-ph--lg-', [['off', 'Off'], ['on', 'On']], 'laptop', true],
+    ['name_align', 'Brand name alignment', 'brw-ph--na-', [['center', 'Centre'], ['left', 'Left'], ['right', 'Right']], 'laptop', true],
+    ['desc_align', 'Description alignment', 'brw-ph--da-', [['center', 'Centre'], ['left', 'Left'], ['right', 'Right']], 'laptop', true],
     ['panel_x', 'Panel across the banner', 'brw-ph--px-', [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']], 'laptop', true],
     ['panel_y', 'Panel up and down', 'brw-ph--py-', [['middle', 'Middle'], ['top', 'Top'], ['bottom', 'Bottom']], 'laptop', true],
-    ['pill', 'Logo and name shape', 'brw-ph--pill-', [['capsule', 'Capsule'], ['rect', 'Rectangle']], 'phone'],
-    ['pill_at', 'Logo and name position', 'brw-ph--at-', [['bottom-left', 'Bottom left'], ['bottom-center', 'Bottom centre'], ['bottom-right', 'Bottom right'],
+    ['logo_show_m', 'Show the brand logo', 'brw-ph--lgm-', [['off', 'Off'], ['on', 'On']], 'phone', true],
+    ['pill_at', 'Name position (with the logo, when it shows)', 'brw-ph--at-', [['bottom-center', 'Bottom centre'], ['bottom-left', 'Bottom left'], ['bottom-right', 'Bottom right'],
         ['top-left', 'Top left'], ['top-center', 'Top centre'], ['top-right', 'Top right']], 'phone', true],
+    ['desc_align_m', 'Description alignment', 'brw-ph--dam-', [['center', 'Centre'], ['left', 'Left'], ['right', 'Right']], 'phone', true],
+    ['pill', 'Logo and name shape', 'brw-ph--pill-', [['capsule', 'Capsule'], ['rect', 'Rectangle']], 'phone'],
 ];
+const REDRAW = ['logo_show', 'logo_show_m', 'lines', 'lines_m'];
 const PANEL_BARS = [
     ['height', 'Header height (the whole header: the banner, with the panel on it)', '--brw-ph-h', 'laptop'],
     ['width', 'Header width', '--brw-ph-w', 'laptop'],
@@ -441,6 +455,7 @@ const PANEL_BARS = [
     ['name', 'Brand name size', '--brw-ph-fn', 'laptop'],
     ['desc', 'Description size', '--brw-ph-fd', 'laptop'],
     ['logo_size', 'Logo size', '--brw-ph-lg', 'laptop'],
+    ['lines', 'Description lines before "Read more"', '--brw-ph-dl', 'laptop'],
     ['height_m', 'Banner height (the description card comes below it)', '--brw-ph-hm', 'phone'],
     ['inset_m', 'Logo and name distance from the banner edge', '--brw-ph-im', 'phone'],
     ['gap_m', 'Gap between the banner and the description', '--brw-ph-gm', 'phone'],
@@ -448,6 +463,7 @@ const PANEL_BARS = [
     ['name_m', 'Brand name size', '--brw-ph-fnm', 'phone'],
     ['desc_m', 'Description size', '--brw-ph-fdm', 'phone'],
     ['logo_size_m', 'Logo size', '--brw-ph-lgm', 'phone'],
+    ['lines_m', 'Description lines before "Read more"', '--brw-ph-dlm', 'phone'],
 ];
 
 function openEditor(edit, opener) {
@@ -506,7 +522,7 @@ function openEditor(edit, opener) {
         class: 'kbb-qe__drop kbb-qe__drop--logo', role: 'button', tabindex: '0',
         'aria-label': 'Brand logo: drop a file here or press Enter to choose one',
     }, logoThumb, h('div', { class: 'kbb-qe__drop-txt' }, logoTitle,
-        h('span', { text: panel ? 'It sits in a circle or a rectangle (Logo shape, below), ringed in a colour taken from the logo itself.' : 'Square works best. It sits in a circle, ringed in a colour taken from the logo itself.' }),
+        h('span', { text: panel ? 'Shown when "Show the brand logo" is on (below). It sits in a circle or a rectangle (Logo shape), ringed in a colour taken from the logo itself.' : 'Square works best. It sits in a circle, ringed in a colour taken from the logo itself.' }),
         h('div', { class: 'kbb-qe__bar' }, logoFill)), logoIn);
     const logoRemove = h('button', { type: 'button', class: 'kbb-qe__link', text: 'Remove logo' });
 
@@ -576,6 +592,7 @@ function openEditor(edit, opener) {
                 input.addEventListener('change', () => {
                     if (v === '') delete values.layout[key]; else values.layout[key] = v;
                     paintLayout();
+                    if (REDRAW.includes(key)) schedulePreview();
                 });
                 seg.appendChild(h('label', null, input, h('span', { text })));
             });
@@ -587,7 +604,11 @@ function openEditor(edit, opener) {
             const id = `kbb-qe-ly-${key}`;
             const input = h('input', { type: 'range', id, class: 'kbb-qe__range', min: String(r.min), max: String(r.max), step: '1' });
             const out = h('output', { for: id });
-            input.addEventListener('input', () => { values.layout[key] = Number(input.value); paintLayout(); });
+            input.addEventListener('input', () => {
+                values.layout[key] = Number(input.value);
+                paintLayout();
+                if (REDRAW.includes(key)) schedulePreview();
+            });
             layoutBars.push([key, input, out, r.unit]);
             groups[group].appendChild(h('div', { class: 'kbb-qe__fld kbb-qe__bar-fld' },
                 h('label', { class: 'kbb-qe__label', for: id }, label, out), input));
@@ -661,13 +682,15 @@ function openEditor(edit, opener) {
             h('span', { class: 'kbb-qe__label', text: 'Banner picture' }), drop, picRow),
         panel ? null : fld('kbb-qe-title', 'Title', titleIn, `Blank shows the ${noun} name.`),
         panel ? null : fld('kbb-qe-sub', 'Line under the title', subIn),
-        isBanner ? null : fld('kbb-qe-desc', 'Description', descIn,
+        isBanner && !panel ? null : fld('kbb-qe-desc', 'Description', descIn,
             `Blank shows the ${noun}'s own description.`),
         hasFocus ? h('div', { class: 'kbb-qe__fld' },
             h('span', { class: 'kbb-qe__label', text: 'On a phone, keep this part of the picture' }), seg) : null,
         hasLayout ? h('div', { class: 'kbb-qe__fld' }, h('span', { class: 'kbb-qe__label kbb-qe__label--h', text: 'Header layout' }),
             h('p', { class: 'kbb-qe__hint', text: String(panel.hint || '') }), layoutBox) : null,
-        isBanner ? h('p', { class: 'kbb-qe__hint', text: `This ${noun} shows its own Banner, so these change the banner's picture, heading and line.` }) : null);
+        isBanner ? h('p', { class: 'kbb-qe__hint', text: panel
+            ? `This ${noun} has its own Banner switched on: its picture is this header's background, and the picture above changes it. The heading is the ${noun} name.`
+            : `This ${noun} shows its own Banner, so these change the banner's picture, heading and line.` }) : null);
 
     const box = h('div', { class: 'kbb-qe__box', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'kbb-qe-h' },
         h('div', { class: 'kbb-qe__head' }, heading, closeX),
@@ -705,7 +728,7 @@ function openEditor(edit, opener) {
             header_subtitle: subIn.value,
             path: window.location.pathname,
         };
-        if (!isBanner) p.header_description = descIn.value;
+        if (!isBanner || panel) p.header_description = descIn.value;
         if (hasFocus) p.focus = values.focus || '';
         if (hasLogo) p.logo = values.logo || '';
         if (hasLayout) p.layout = ownLayout(values.layout);
@@ -716,7 +739,7 @@ function openEditor(edit, opener) {
         return (values.header_image || '') !== (original.header_image || '')
             || titleIn.value !== (original.header_title || '')
             || subIn.value !== (original.header_subtitle || '')
-            || (!isBanner && descIn.value !== (original.header_description || ''))
+            || ((!isBanner || panel) && descIn.value !== (original.header_description || ''))
             || (hasFocus && (values.focus || '') !== (original.focus || ''))
             || (hasLogo && (values.logo || '') !== (original.logo || ''))
             || (hasLayout && JSON.stringify(ownLayout(values.layout)) !== JSON.stringify(ownLayout(original.layout)));

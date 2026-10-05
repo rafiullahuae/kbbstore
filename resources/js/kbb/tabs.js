@@ -67,6 +67,25 @@ export function initReadMore() {
             if (more && root.contains(more)) toggleReadMore(more, root);
         });
     });
+
+    /*
+     * Lane BR4: the brand Panel's description (store/partials/brand-panel).
+     * The button carries both labels and the stylesheet shows one by its
+     * aria-expanded, and the cut at two lines is CSS -- so this flips that
+     * attribute and one class, and measures nothing. Listened for on the
+     * header's parent, so a header the quick editor swaps in after a save
+     * still opens. A page without the header pays one querySelector.
+     */
+    const panel = document.querySelector('[data-kbb-brand-header]');
+    if (!panel || !panel.parentElement) return;
+    panel.parentElement.addEventListener('click', (event) => {
+        const btn = event.target.closest('[data-brw-more]');
+        const text = btn && document.getElementById(btn.getAttribute('aria-controls') || '');
+        if (!text) return;
+        const open = btn.getAttribute('aria-expanded') !== 'true';
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        text.classList.toggle('is-open', open);
+    });
 }
 
 export function initProductTabs() {
