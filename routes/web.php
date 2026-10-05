@@ -1011,6 +1011,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/page-banners-admin.php';   // Pages → Page banners (Lane SS)
         require __DIR__.'/page-header-admin.php';    // Pages → Page header (Lane PH)
         require __DIR__.'/category-header-admin.php'; // Category "Edit header" panel (Lane CH)
+        require __DIR__.'/pagination-admin.php';      // Catalog → Pagination (Lane PG)
 
         // Core Updates panel (JSON). Sits alongside the standalone page, which
         // stays as the fallback for when the admin bundle itself is broken.

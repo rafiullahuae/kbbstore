@@ -3105,6 +3105,7 @@ const LATE_NAV=[
   {screen:'paygw',label:'Gateway webhooks',group:'Store',after:['payments','orders'],icon:'<path d="M12 3a4 4 0 0 1 3.4 6.1l2.8 4.6"/><path d="M8.2 20a4 4 0 0 1-1.4-7.1L9.6 8"/><path d="M18 20a4 4 0 0 0 1-7.9H13"/>'},
   {screen:'sets',label:'Sets',group:'Catalog',after:['catalog'],icon:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18"/><path d="M12 7V4"/><path d="M8 4h8"/>'},
   {screen:'product-tabs',label:'Product tabs',group:'Catalog',after:['catalog','sets'],icon:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18"/><path d="M8 7V4"/><path d="M14 7V4"/>'},
+  {screen:'pagination',label:'Pagination',group:'Catalog',after:['brands-manager','category-tree','catalog'],icon:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M7 20h2"/><path d="M11 20h2"/><path d="M15 20h2"/>'},
   {screen:'banners',label:'Banners',group:'Appearance',after:['hpcontent','homepage'],icon:'<rect x="3" y="4" width="7" height="16" rx="2"/><rect x="14" y="4" width="7" height="16" rx="2"/>'},
   {screen:'gridsections',label:'Grid sections',group:'Appearance',after:['banners','hpcontent','homepage'],icon:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'},
   {screen:'pagewash',label:'Page background',group:'Appearance',after:['dividers','prodstyles','homepage','layout'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 14c4-3 7 1 10-1s5-2 8 0"/>'},
@@ -3373,7 +3374,7 @@ const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overv
    safe. Breadcrumbs match what each partial's own go() writes into #crumb and
    #ptitle, because two answers for one screen is how a heading ends up
    disagreeing with the page under it. */
-'ugcsections':['Content','Shoppable video'],'ugcvideo':['Content','All clips'],'ugcstyle':['Appearance','Video rail'],'instagram':['Content','Instagram'],'sets':['Catalog','Sets'],'product-tabs':['Catalog','Product tabs'],'banners':['Appearance','Banners'],'setap':['Appearance','Set'],
+'ugcsections':['Content','Shoppable video'],'ugcvideo':['Content','All clips'],'ugcstyle':['Appearance','Video rail'],'instagram':['Content','Instagram'],'sets':['Catalog','Sets'],'product-tabs':['Catalog','Product tabs'],'pagination':['Catalog','Pagination'],'banners':['Appearance','Banners'],'setap':['Appearance','Set'],
 /* And the seven the new guard found alongside them, every one with a sidebar row
    the owner clicks every day and no deep link at all: a link to any of these
    opened the dashboard. Same fix, same condition, and the strings are copied
@@ -8764,7 +8765,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
+const LATE_RENDERED=new Set(['cartpanel','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','pagination','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','spotted','mkt-email']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -24542,6 +24543,8 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
 @include('admin.partials.instagram-screen')
 @include('admin.partials.sets-screen')
 @include('admin.partials.product-tabs-screen')
+{{-- Catalog -> Pagination (Lane PG): the global switch and the per-listing overrides. It wraps window.go for 'pagination'; its sidebar row is the LATE_NAV entry. --}}
+@include('admin.partials.pagination-screen')
 @include('admin.partials.banners-screen')
 {{-- Appearance -> Set -> Desktop / Mobile (Lane SA). Late-rendered for the same
      reason the four above it are: it runs after this file's own script has
