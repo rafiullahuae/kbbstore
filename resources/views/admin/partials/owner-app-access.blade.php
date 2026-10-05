@@ -9,7 +9,8 @@
     What the owner does here: switch the phone app on for a member, give them
     a PIN (6–8 digits; it is hashed on the server and never shown again), see
     and sign out their phones, read the sign-in log, set the idle lock, the
-    low-stock line and when the app shows loading bars, and copy — or replace — the app's secret address.
+    low-stock line and when the app shows loading bars, and copy — or replace — the app's secret address,
+    with a random one (New address) or one he types (Custom address, Lane OA3).
 
     SAFETY. Every server string goes through esc() before innerHTML. Writes carry
     X-XSRF-TOKEN like the rest of the console. The PIN field is cleared the
@@ -38,6 +39,14 @@
 .oaa-devs{margin-top:10px}
 .oaa-mt{margin:6px 0 0}
 .oaa-set .rl-in.oaa-host{width:260px;max-width:100%}
+.oaa-cust{margin-top:12px;display:grid;gap:6px;min-width:0}
+.oaa-cust label{font-size:12px;font-weight:600;color:var(--ink-2)}
+.oaa-cust-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}
+.oaa-pre{font-family:var(--mono);font-size:12.5px;color:var(--ink-2);overflow-wrap:anywhere;min-width:0}
+.oaa-cust-row .rl-in{flex:1 1 200px;min-width:0;max-width:340px;font-family:var(--mono)}
+.oaa-err{margin:0;color:#b8362d;font-size:12.5px;font-weight:600}
+.oaa-warn{margin:0;color:#8a5a00;font-size:12.5px}
+.oaa-warn:empty{display:none}
 @media (max-width:760px){.oaa-mem{grid-template-columns:minmax(0,1fr)}}
 </style>
 <script>
@@ -99,7 +108,7 @@
     host.innerHTML = '<div class="oaa">' + (flash ? '<div class="rl-ok" role="status">' + esc(flash) + '</div>' : '') +
       '<div class="rl-card"><p class="oaa-h">The app’s secret address</p><p class="rl-note">Open it on the phone, sign in with the email of the admin account and the PIN set below. Only people you switch on here can use it. It is never linked from the shop and search engines are told not to index it.</p>' +
       '<div class="oaa-url"><code data-url>' + esc(D.url) + '</code><button type="button" class="btn sm" data-oa="copy">Copy link</button>' +
-      (D.path_from_env ? '' : '<button type="button" class="btn ghost sm" data-oa="address">New address</button>') + '</div>' +
+      (D.path_from_env ? '' : '<button type="button" class="btn ghost sm" data-oa="address">New address</button>') + '</div>' + custom() +
       (D.push_ready ? '' : '<p class="rl-note">Push notifications are not available on this server (openssl has no P-256); the app works without them.</p>') + '</div>' +
       '<div class="rl-card"><p class="oaa-h">Settings</p><div class="oaa-set"><label>Lock after (hours unused)<input class="rl-in" type="number" min="1" max="168" data-set="idle_hours" value="' + esc(D.settings.idle_hours) + '"></label>' +
       '<label>Low stock at (units)<input class="rl-in" type="number" min="0" max="999" data-set="low_stock" value="' + esc(D.settings.low_stock) + '"></label>' +
@@ -109,6 +118,46 @@
       '<div class="rl-card"><p class="oaa-h">Recent sign-ins</p>' + log + '</div></div>';
     flash = '';
     security();
+  }
+
+  /*
+   * Lane OA3: Users & Roles → Owner app → the address card → Custom address.
+   * The owner types the address himself. Every rule is the server's (one
+   * request, on Save); the browser only warns about a weak one as it is typed,
+   * from the word list the screen already loaded — no request per keystroke.
+   */
+  var custErr = '', custVal = '';
+  function custom() {
+    var C = D.custom;
+    if (D.path_from_env || !C || !C.full) return '';
+    var prefix = String(D.url).replace(/[^\/]+\/$/, '');
+    return '<div class="oaa-cust"><label for="oaa-cust-in">Custom address</label>' +
+      '<div class="oaa-cust-row"><span class="oaa-pre">' + esc(prefix) + '</span>' +
+      '<input id="oaa-cust-in" class="rl-in" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="' + C.max + '" placeholder="e.g. rafi_store-2027" data-cust value="' + esc(custVal) + '" aria-describedby="oaa-cust-h"' + (custErr ? ' aria-invalid="true"' : '') + '>' +
+      '<button type="button" class="btn sm" data-oa="custom">Use this address</button></div>' +
+      (custErr ? '<p class="oaa-err" role="alert">' + esc(custErr) + '</p>' : '') +
+      '<p class="oaa-warn" data-cust-hint role="status">' + esc(weak(custVal)) + '</p>' +
+      '<p class="rl-note" id="oaa-cust-h">' + C.min + '–' + C.max + ' characters: lowercase letters, digits, - and _, with at least one underscore. Shop pages and articles can never have an underscore in their address, so nothing you publish later can take over this link. Saving signs every phone out, as New address does.</p></div>';
+  }
+  function weak(v) {
+    var C = D && D.custom; v = String(v || '').trim().toLowerCase().replace(/^\/+|\/+$/g, '');
+    if (!C || !v) return '';
+    var w = [], words = C.words.slice();
+    D.members.forEach(function (m) { String(m.name || '').toLowerCase().split(/[^a-z]+/).forEach(function (t) { if (t.length >= 2) words.push(t); }); });
+    if (v.length < C.strong) w.push('it is short — ' + C.strong + ' or more characters is much harder to guess');
+    var parts = v.split(/[^a-z]+/).filter(Boolean);
+    if (parts.length && parts.every(function (p) { return words.indexOf(p) !== -1; })) w.push('it is made of ordinary words, names and numbers, which scanners try first');
+    return w.length ? 'Weak: ' + w.join(', and ') + '.' : '';
+  }
+  async function saveCustom() {
+    var i = host.querySelector('[data-cust]'), v = i ? String(i.value || '').trim().toLowerCase() : '';
+    custVal = v;
+    var to = String(D.url).replace(/[^\/]+\/$/, '') + v + '/';
+    if (v && !window.confirm('Move the owner app to ' + to + ' ?\n\nThe current link stops working at once. Every phone is signed out and its notifications stop; each person signs in again at the new link.')) return;
+    var r = await api('POST', '/address', { path: v });
+    if (!r.ok) { custErr = why(r); paint(); var j = host.querySelector('[data-cust]'); if (j) j.focus(); return; }
+    custErr = ''; custVal = '';
+    D = r.data; flash = 'Address changed to ' + D.url + ' — send the new link to your team.' + (D.hint ? ' ' + D.hint : ''); paint();
   }
 
   /*
@@ -144,6 +193,7 @@
   async function act(b) {
     var a = b.getAttribute('data-oa'), id = b.getAttribute('data-id'), r;
     if (a === 'copy') { try { await navigator.clipboard.writeText(D.url); toastMsg('Link copied'); } catch (e) { toastMsg('Select the address and copy it', true); } return; }
+    if (a === 'custom') { saveCustom(); return; }
     if (a === 'address') {
       if (!window.confirm('Make a new secret address? The current link stops working at once and every phone signs in again at the new one.')) return;
       r = await api('POST', '/address');
@@ -183,6 +233,13 @@
     if (!host || !host.contains(e.target)) return;
     var b = e.target.closest('button[data-oa]'); if (b) act(b);
     if (e.target.closest('button[data-oas]')) saveSecurity();
+  });
+  document.addEventListener('input', function (e) {
+    if (!host || !host.contains(e.target) || !e.target.matches('[data-cust]')) return;
+    var h = host.querySelector('[data-cust-hint]'); if (h) h.textContent = weak(e.target.value);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && host && host.contains(e.target) && e.target.matches('[data-cust]')) { e.preventDefault(); saveCustom(); }
   });
   document.addEventListener('change', function (e) {
     if (!host || !host.contains(e.target)) return;

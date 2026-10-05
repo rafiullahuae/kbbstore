@@ -121,7 +121,8 @@ $webDoorOpen = strlen($webToken) >= 24;
 
 if (! $isCli) {
     header('Content-Type: text/plain; charset=utf-8');
-    header('X-Robots-Tag: noindex, nofollow');
+    header('X-Robots-Tag: noindex, nofollow, noarchive');
+    header('Referrer-Policy: no-referrer');
 
     // Constant-time, and a deliberate pause, so the token cannot be recovered
     // by timing or walked by brute force.

@@ -1211,6 +1211,10 @@ class SeoFilesController extends Controller
         $s = SeoSettings::map();
         $custom = SeoSettings::from($s, 'robots_txt', '');
         if ($custom !== '') {
+            // Lane OA3: a line naming the owner app, its host or a moved admin
+            // path would publish the secret to every scanner; it is dropped.
+            // A file with no such line is served byte for byte.
+            $custom = \App\Support\PrivateSurfaces::scrubRobots($custom);
             return $this->publiclyCacheable(
                 $request,
                 response($custom, 200)->header('Content-Type', 'text/plain; charset=UTF-8')
