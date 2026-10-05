@@ -1,0 +1,120 @@
+Lane CT — approved contrast colours + phone footer tap areas. Measured 5 Oct 2026 on the
+fixture (tools/perf-preview.sh + share-db: before = HEAD cb8a8d45, after = this branch, ONE database).
+Chromium 1194 (Playwright), deviceScaleFactor 1, reduced motion, animations frozen, --disable-lcd-text.
+
+== axe-core 4.x (from the Lighthouse npx cache) — violations, nodes per page ==
+page               color-contrast  before -> after   target-size  before -> after   scrollWidth
+home-390                       30 -> 2                 2 -> 0        390/390
+shop-390                       23 -> 1                 2 -> 0        390/390
+category-390                   14 -> 1                 2 -> 0        390/390
+product-390                    51 -> 17                2 -> 0        390/390
+cart-390                        4 -> 0                 0 -> 0        390/390
+super-sale-390                 23 -> 1                 2 -> 0        390/390
+home-1280                      43 -> 2                 0 -> 0        1280/1280
+shop-1280                      42 -> 2                 0 -> 0        1280/1280
+category-1280                  16 -> 2                 0 -> 0        1280/1280
+product-1280                   53 -> 19                0 -> 0        1280/1280
+cart-1280                       6 -> 2                 0 -> 0        1280/1280
+super-sale-1280                25 -> 2                 0 -> 0        1280/1280
+
+== what is LEFT failing after (none of it is in the approved table) ==
+  color-contrast #128c7e on #ffffff 4.13 :: small  [home-390,shop-390,category-390,super-sale-390,home-1280,shop-1280,category-1280,cart-1280,super-sale-1280]
+  color-contrast #128c7e on #ffffff 4.13 :: span > small  [product-390,product-1280]
+  color-contrast #2e9e6b on #e6f6ee 3.01 :: div[data-qty="2"] > .vtag  [product-390,product-1280]
+  color-contrast #2e9e6b on #e6f6ee 3.01 :: div[data-qty="3"] > .vtag  [product-390,product-1280]
+  color-contrast #a07f77 on #fdeff3 3.24 :: .sr-empty  [product-390,product-1280]
+  color-contrast #a07f77 on #fffaf7 3.49 :: .sr-bar-row > .sr-bl  [product-390,product-1280]
+  color-contrast #a07f77 on #fffaf7 3.49 :: .sr-count  [product-390,product-1280]
+  color-contrast #a07f77 on #fffaf7 3.49 :: button[data-f="4"]  [product-390,product-1280]
+  color-contrast #a07f77 on #fffaf7 3.49 :: button[data-f="5"]  [product-390,product-1280]
+  color-contrast #a07f77 on #fffaf7 3.49 :: button[data-f="photos"]  [product-390,product-1280]
+  color-contrast #ada1a6 on #fdeff3 2.23 :: .dtab[data-i="1"][type="button"]  [product-390,product-1280]
+  color-contrast #ada1a6 on #fdeff3 2.23 :: .dtab[data-i="2"][type="button"]  [product-390,product-1280]
+  color-contrast #d97f6f on #fdeff3 2.6 :: .sr-eyebrow  [product-390,product-1280]
+  color-contrast #e23a4e on #fdeff3 3.8 :: .stockline  [product-390,product-1280]
+  color-contrast #ffffff on #e23a4e 4.24 :: .navlink[href$="super-sale/"]  [home-1280,shop-1280,category-1280,product-1280,cart-1280,super-sale-1280]
+  color-contrast #ffffff on #e23a4e 4.24 :: .off  [product-1280]
+  color-contrast #ffffff on #e991ae 2.3 :: .kts > span  [home-390]
+
+== phone footer links (home-390): top / height, px ==
+  before  New in 7503.5/16 | Best sellers 7527/16 | Brands 7550.5/16 | Super sale 7574/16
+  after   New in 7502.5/27.5 | Best sellers 7530/27.5 | Brands 7557.5/27.5 | Super sale 7585/27.5
+  desktop page heights unchanged (1280: before = after on all six pages); phone pages +28px (the four link rows).
+
+== pixel diff: every changed pixel, attributed (tools/ctc-pixdiff.cjs) ==
+  solid = before pixel IS the old colour and after IS the approved one (±4); edge = anti-aliased/
+  translucent pixel whose change is one approved change scaled by its coverage.
+  cart-1280        changed    2308  solid     598  edge   1710  unattributed      0
+  cart-390         changed    1957  solid     565  edge   1392  unattributed      0
+  category-1280    changed   45253  solid   39953  edge   5300  unattributed      0
+  category-390     changed   95281  solid   24255  edge   6755  unattributed  64271
+  home-1280        changed  212462  solid  196922  edge  15540  unattributed      0
+  home-390         changed   93940  solid   79428  edge  14512  unattributed      0
+  product-1280     changed   70711  solid   59397  edge  10476  unattributed    838
+  product-390      changed   34051  solid   25540  edge   8499  unattributed     12
+  shop-1280        changed  193300  solid  180883  edge  12417  unattributed      0
+  shop-390         changed   67803  solid   59518  edge   8274  unattributed     11
+  super-sale-1280  changed   49392  solid   43556  edge   5836  unattributed      0
+  super-sale-390   changed   38392  solid   31706  edge   6679  unattributed      7
+
+== Lighthouse 12.8.2, accessibility only (tools/ctc-lh.sh), fresh profile (so the cart is empty) ==
+  after-cart-desktop           score 95  color-contrast FAIL(2)  target-size pass
+  after-cart-mobile            score 100  color-contrast pass  target-size pass
+  after-category-desktop       score 96  color-contrast FAIL(2)  target-size pass
+  after-category-mobile        score 94  color-contrast FAIL(1)  target-size pass
+  after-home-desktop           score 92  color-contrast FAIL(2)  target-size pass
+  after-home-mobile            score 92  color-contrast FAIL(2)  target-size pass
+  after-product-desktop        score 96  color-contrast FAIL(19)  target-size pass
+  after-product-mobile         score 96  color-contrast FAIL(13)  target-size pass
+  after-shop-desktop           score 96  color-contrast FAIL(2)  target-size pass
+  after-shop-mobile            score 94  color-contrast FAIL(1)  target-size pass
+  after-super-sale-desktop     score 96  color-contrast FAIL(2)  target-size pass
+  after-super-sale-mobile      score 96  color-contrast FAIL(1)  target-size pass
+  before-cart-desktop          score 95  color-contrast FAIL(6)  target-size pass
+  before-cart-mobile           score 95  color-contrast FAIL(3)  target-size pass
+  before-category-desktop      score 96  color-contrast FAIL(17)  target-size pass
+  before-category-mobile       score 91  color-contrast FAIL(13)  target-size FAIL(2)
+  before-home-desktop          score 92  color-contrast FAIL(44)  target-size pass
+  before-home-mobile           score 89  color-contrast FAIL(30)  target-size FAIL(2)
+  before-product-desktop       score 96  color-contrast FAIL(53)  target-size pass
+  before-product-mobile        score 92  color-contrast FAIL(40)  target-size FAIL(2)
+  before-shop-desktop          score 96  color-contrast FAIL(43)  target-size pass
+  before-shop-mobile           score 91  color-contrast FAIL(21)  target-size FAIL(2)
+  before-super-sale-desktop    score 96  color-contrast FAIL(26)  target-size pass
+  before-super-sale-mobile     score 92  color-contrast FAIL(24)  target-size FAIL(2)
+  target-size: FAIL(2) on every phone page before -> pass everywhere after.
+  color-contrast stays FAIL where an element OUTSIDE the approved table still fails (listed above:
+  the floating WhatsApp widget's #128C7E (4.13), the super-sale menu item's stored #E23A4E (4.24),
+  the ticker's stored #E991AE (2.30), and on the product page the review block, tabs, stock line).
+
+== interactions (tools/ctc-interact.cjs), identical before and after ==
+  before {"390":{"cartBadge":["0","1"],"miniCartOpened":true,"menuOpened":true,"searchResults":4,"jsErrors":0},"1280":{"cartBadge":["0","1"],"miniCartOpened":true,"menuOpened":null,"searchResults":4,"jsErrors":0}}
+  after  {"390":{"cartBadge":["0","1"],"miniCartOpened":true,"menuOpened":true,"searchResults":4,"jsErrors":0},"1280":{"cartBadge":["0","1"],"miniCartOpened":true,"menuOpened":null,"searchResults":4,"jsErrors":0}}
+  cartBadge 0 -> 1 after Add to cart; mini cart opens; phone menu opens (desktop nav is hover, n/a);
+  search for "serum" shows 4 matching suggestions; 0 JS errors.
+
+== every colour changed: old -> new, WCAG 2.1 ratio against what it is drawn on ==
+  --muted (secondary text)   #8C828A -> #756C74   5.06 #FFF, 4.58 #FFF0F4, 4.97 #FFFDF8, 4.81 #FFF8F5,
+                                                  4.53 the page #FDEFF3  (proposal's #766D75 is 4.46 there)
+  showcase --sc-muted        #9A8D94 -> var(--muted)
+  PDP struck price           --muted at opacity .75 (2.34 on #FDEFF3) -> --muted, opacity 1 (4.53)
+  --pink (brand)             #E0567B -> #C6395F   white on it 5.06; on #FDEFF4 4.54; on #FDEFF3 4.53
+  Add to cart (cart_bg)      #E0567B -> #C6395F   5.06 with #FFF
+  sale badge (sale_colour)   #E23B57 -> #D22B47   5.03 with #FFF
+  green badge (new_colour,
+    PDP badge_bg)            #1F9D55 -> #1A7F45   5.04 with #FFF
+  crossed-out price          #B3AAB0 / showcase #A2959B -> #796C75   4.98 #FFF, 4.51 #FFF0F4, 4.90 #FFFDF8
+  savings line               #2E9E6B -> #1F7A50   4.77 on #E9F6EF
+  classic footer WhatsApp    #2E9E6B button, #CDBFC6 label (1.91) -> #27865B, #FFFFFF label (4.52)
+  header search text/icon,
+    count badge, search accent,
+    header wordmark accent   #E0567B -> #C6395F (setting defaults; the slim footer's wordmark
+                             fallback follows it — changed after these shots, cart/checkout only)
+  gold (luxe) skin           untouched, byte for byte
+  Caveat measured, not hidden: the page gradient's darkest corner #FCE7F1 gives 4.29 (muted) and
+  4.30 (pink); Lighthouse/axe read #FDEFF3 under page text, where both pass.
+
+== shots ==
+  <page>-<width>-before.jpg / -after.jpg   full page, JPEG q82 (the PNGs the diff ran on are not committed)
+  card-row-<w>-before/after.png            first card row on /shop, 2x
+  footer-links-390-before/after.png        phone footer columns, tap areas outlined in blue

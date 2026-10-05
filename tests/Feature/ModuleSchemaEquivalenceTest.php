@@ -138,6 +138,18 @@
  *   INSERTED after `nav_hot_colour`'s, 0 MODIFIED, 0 REMOVED, by the same
  *   merge. `nav_fit|bool|"off"|true` is this screen's plain `(bool)` dialect,
  *   as for the flag-bar keys; each select's `"nope"` answers its default.
+ *
+ *   Lane CT added FOUR colours to product_styles (Appearance → Product styles
+ *   → Colour: secondary text, crossed-out price, savings line, footer WhatsApp
+ *   button) — 32 LINES INSERTED (4 × 8 colour rows) by the same merge — and
+ *   MOVED EIGHT DEFAULTS the owner approved for contrast (sale_colour,
+ *   new_colour, cart_bg, header badge_bg, search_style_accent and
+ *   logo_accent_col, mobile header search_icon and search_text). 42 LINES
+ *   MODIFIED, and every one of
+ *   them is a row whose answer IS the default (an empty, invalid or null
+ *   input): the old default replaced by the new one, '#E0567B' -> '#C6395F',
+ *   '#E23B57' -> '#D22B47', '#1F9D55' -> '#1A7F45', and nothing else. The
+ *   32 pre-fix `E23A4E` lines were kept, not regenerated.
  */
 
 use App\Services\ModuleSchema;

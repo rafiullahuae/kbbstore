@@ -74,8 +74,8 @@
 ])
 @verbatim
 <style>
-  :root{--bg:#fff;--cream:#FFF8F5;--pink-soft:#FFF0F4;--blush:#FCE0E8;--pink:#E0567B;--pink-deep:#C13E63;
-    --ink:#2A2228;--ink-2:#5E545A;--muted:#8C828A;--line:rgba(42,34,40,.10);--line-2:rgba(42,34,40,.06);
+  :root{--bg:#fff;--cream:#FFF8F5;--pink-soft:#FFF0F4;--blush:#FCE0E8;--pink:#C6395F;--pink-deep:#C13E63;
+    --ink:#2A2228;--ink-2:#5E545A;--muted:#756C74;--line:rgba(42,34,40,.10);--line-2:rgba(42,34,40,.06);
     --r-m:14px;--r-l:20px;--sh-m:0 6px 20px rgba(42,34,40,.08);--sans:'Outfit',system-ui,sans-serif;--ease:cubic-bezier(.22,.61,.36,1)}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--sans);color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5}

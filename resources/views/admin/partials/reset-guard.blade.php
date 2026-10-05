@@ -127,3 +127,6 @@
 })();
 </script>
 @endverbatim
+{{-- Lane CT: the readability warning beside the colour controls rides on this
+     include, so mounting it needs no edit to admin/app.blade.php. --}}
+@include('admin.partials.colour-contrast-guard')

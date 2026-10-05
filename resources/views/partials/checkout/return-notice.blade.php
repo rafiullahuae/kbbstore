@@ -65,7 +65,7 @@
    [dir] selector anywhere — shot on /ar with the mirrored layout on. */
 .kbb-cartpage .co-note form{margin-block-start:10px}
 .kbb-cartpage .co-restore{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;
-  background:#E0567B;color:#fff;border-radius:99px;padding:11px 20px;font-family:inherit;
+  background:#C6395F;color:#fff;border-radius:99px;padding:11px 20px;font-family:inherit;
   font-size:13px;font-weight:700;line-height:1.2}
 .kbb-cartpage .co-restore:hover{background:#C13E63}
 .kbb-cartpage .co-restore svg{width:16px;height:16px;flex-shrink:0}

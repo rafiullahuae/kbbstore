@@ -122,8 +122,8 @@
 <style>
   :root{
     /* KBB real tokens (never Sorina/Fraunces) */
-    --cream:#FFF8F5; --pink-soft:#FFF0F4; --blush:#FCE0E8; --pink:#E0567B; --pink-deep:#C13E63; --pink-ink:#A82F53;
-    --ink:#2A2228; --ink-2:#5E545A; --muted:#8C828A; --gold:#BE8E2E; --green:#2E9E6B; --line:rgba(42,34,40,.12); --card:#fff;
+    --cream:#FFF8F5; --pink-soft:#FFF0F4; --blush:#FCE0E8; --pink:#C6395F; --pink-deep:#C13E63; --pink-ink:#A82F53;
+    --ink:#2A2228; --ink-2:#5E545A; --muted:#756C74; --gold:#BE8E2E; --green:#2E9E6B; --line:rgba(42,34,40,.12); --card:#fff;
     --ease:cubic-bezier(.22,.61,.36,1);
     /* plugin-style review vars (KBB-toned) */
     --sr-accent:var(--pink); --sr-bg:var(--cream); --sr-card:#fff; --sr-ink:var(--ink); --sr-soft:var(--muted);

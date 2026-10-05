@@ -1412,8 +1412,8 @@
             "type": "colour",
             "label": "Accent colour",
             "help": "",
-            "default": "#E0567B",
-            "value": "#E0567B",
+            "default": "#C6395F",
+            "value": "#C6395F",
             "options": null
           }
         ]
@@ -1505,8 +1505,8 @@
             "type": "colour",
             "label": "Count badge",
             "help": "",
-            "default": "#E0567B",
-            "value": "#E0567B",
+            "default": "#C6395F",
+            "value": "#C6395F",
             "options": null
           }
         ]
@@ -2349,8 +2349,8 @@
             "type": "colour",
             "label": "Magnifier colour",
             "help": "",
-            "default": "#E0567B",
-            "value": "#E0567B",
+            "default": "#C6395F",
+            "value": "#C6395F",
             "options": null
           },
           {
@@ -2358,8 +2358,8 @@
             "type": "colour",
             "label": "Typed text colour",
             "help": "",
-            "default": "#E0567B",
-            "value": "#E0567B",
+            "default": "#C6395F",
+            "value": "#C6395F",
             "options": null
           },
           {
@@ -3842,15 +3842,15 @@
       {
         "key": "colour",
         "label": "Colour",
-        "description": "Badges, price and the button.",
+        "description": "Badges, prices, the button and the shop’s secondary text.",
         "fields": [
           {
             "key": "sale_colour",
             "type": "colour",
             "label": "Sale badge",
             "help": "",
-            "default": "#E23B57",
-            "value": "#E23B57",
+            "default": "#D22B47",
+            "value": "#D22B47",
             "options": null
           },
           {
@@ -3858,8 +3858,8 @@
             "type": "colour",
             "label": "New badge",
             "help": "",
-            "default": "#1F9D55",
-            "value": "#1F9D55",
+            "default": "#1A7F45",
+            "value": "#1A7F45",
             "options": null
           },
           {
@@ -3885,8 +3885,8 @@
             "type": "colour",
             "label": "Button background",
             "help": "",
-            "default": "#E0567B",
-            "value": "#E0567B",
+            "default": "#C6395F",
+            "value": "#C6395F",
             "options": null
           },
           {
@@ -3896,6 +3896,42 @@
             "help": "",
             "default": "#FFFFFF",
             "value": "#FFFFFF",
+            "options": null
+          },
+          {
+            "key": "muted_colour",
+            "type": "colour",
+            "label": "Secondary text",
+            "help": "Category and brand lines, review counts, notes under headings, the footer’s small print.",
+            "default": "#756C74",
+            "value": "#756C74",
+            "options": null
+          },
+          {
+            "key": "was_colour",
+            "type": "colour",
+            "label": "Crossed-out price",
+            "help": "The original price beside a sale price, on a product card.",
+            "default": "#796C75",
+            "value": "#796C75",
+            "options": null
+          },
+          {
+            "key": "save_colour",
+            "type": "colour",
+            "label": "Savings line",
+            "help": "The “Save AED … on this set” line on the home page.",
+            "default": "#1F7A50",
+            "value": "#1F7A50",
+            "options": null
+          },
+          {
+            "key": "wa_foot_colour",
+            "type": "colour",
+            "label": "Footer WhatsApp button",
+            "help": "The green button in the classic footer. Its label is white.",
+            "default": "#27865B",
+            "value": "#27865B",
             "options": null
           }
         ]

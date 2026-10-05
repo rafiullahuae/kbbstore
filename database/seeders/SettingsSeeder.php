@@ -29,7 +29,7 @@ class SettingsSeeder extends Seeder
             'store_timezone' => 'Asia/Dubai',
             'support_email' => 'info@kbeautybliss.com',
             'brand_whatsapp' => '+971585052611',
-            'brand_accent' => '#E0567B',
+            'brand_accent' => '#C6395F',
 
             // VAT — display only (D-64). Never alters a total.
             'vat_enabled' => '1',

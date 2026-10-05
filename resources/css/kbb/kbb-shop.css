@@ -1,8 +1,8 @@
 /* Shop + category archive — lifted from locked kbb-shop.html */
 :root{
   --bg:#ffffff; --cream:#FFF8F5; --pink-soft:#FFF0F4; --blush:#FCE0E8;
-  --pink:#E0567B; --pink-deep:#C13E63; --pink-ink:#A82F53;
-  --ink:#2A2228; --ink-2:#5E545A; --muted:#8C828A;
+  --pink:#C6395F; --pink-deep:#C13E63; --pink-ink:#A82F53;
+  --ink:#2A2228; --ink-2:#5E545A; --muted:#756C74;
   --line:rgba(42,34,40,.10); --line-2:rgba(42,34,40,.06);
   --sale:#E23A4E; --gold:#BE8E2E; --green:#2E9E6B;
   --r-s:8px; --r-m:14px; --r-l:20px;

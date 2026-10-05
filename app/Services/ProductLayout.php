@@ -441,10 +441,10 @@ class ProductLayout
          * NO background at all: partials/product-gallery.blade.php printed it
          * with a position and no colour, and `.lbl` in kbb-product.css sets
          * white text and a shadow but no background — so on a white photo it
-         * was a white box with white text. #1F9D55 is the shop's own green, the
+         * was a white box with white text. #1A7F45 is the shop's own green, the
          * default of Appearance → Product styles' “New” badge.
          */
-        'badge_bg' => ['colour', 'Discount badge colour', '#1F9D55',
+        'badge_bg' => ['colour', 'Discount badge colour', '#1A7F45',
             'The “-16%” on the photograph of a product on sale. A badge from Growth & Marketing → Product Labels keeps the colour set there.'],
         'badge_fg' => ['colour', 'Discount badge text colour', '#FFFFFF', ''],
     ];
@@ -726,7 +726,7 @@ class ProductLayout
             '--pl-gal-top-d:'.$n('gal_top_d').'px',
             // A number the stylesheet multiplies by, and only ever 0 or 1.
             '--pl-thumb-over:'.(($c['thumb_over'] ?? '0') === '1' ? '1' : '0'),
-            '--pl-badge-bg:'.self::hex($c['badge_bg'] ?? null, '#1F9D55'),
+            '--pl-badge-bg:'.self::hex($c['badge_bg'] ?? null, '#1A7F45'),
             '--pl-badge-fg:'.self::hex($c['badge_fg'] ?? null, '#FFFFFF'),
             '--pl-buybox-gap-d:'.$n('buybox_gap_d').'px',
             '--pl-head-gap-d:'.$n('head_gap_d').'px',

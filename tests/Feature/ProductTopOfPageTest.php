@@ -186,8 +186,8 @@ it('paints the photo\'s discount badge green with white text', function () {
     expect($html)->toMatch('#<span class="[^"]*\blbl lbl-off" style="top:14px;left:14px">-16%</span>#');
 
     foreach (pvSheets() as $where => $css) {
-        expect(str_contains($css, '.gmain.lbl-off{background:var(--pl-badge-bg,#1F9D55);color:var(--pl-badge-fg,#FFFFFF)}')
-            || str_contains($css, '.gmain .lbl-off{background:var(--pl-badge-bg,#1F9D55);color:var(--pl-badge-fg,#FFFFFF)}'))
+        expect(str_contains($css, '.gmain.lbl-off{background:var(--pl-badge-bg,#1A7F45);color:var(--pl-badge-fg,#FFFFFF)}')
+            || str_contains($css, '.gmain .lbl-off{background:var(--pl-badge-bg,#1A7F45);color:var(--pl-badge-fg,#FFFFFF)}'))
             ->toBeTrue("the discount badge has no colour in the {$where}");
     }
 });
@@ -212,7 +212,7 @@ it('refuses anything but a hex colour on its way into the stylesheet', function 
         'badge_bg' => 'red;}body{display:none', 'badge_fg' => 'url(javascript:1)',
     ]));
 
-    expect($vars['--pl-badge-bg'])->toBe('#1F9D55');
+    expect($vars['--pl-badge-bg'])->toBe('#1A7F45');   // Lane CT: the approved contrast green
     expect($vars['--pl-badge-fg'])->toBe('#FFFFFF');
 
     app(ProductLayout::class)->save(['badge_bg' => '#c13e63']);

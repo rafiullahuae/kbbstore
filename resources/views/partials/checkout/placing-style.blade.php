@@ -82,10 +82,10 @@
 @keyframes kbbp-ping{0%{opacity:.55;transform:scale(.7)}100%{opacity:0;transform:scale(1.5)}}
 /* ── the words ────────────────────────────────────────────────────────────── */
 .kbb-placing-title{margin:0;font-size:16px;font-weight:800;color:#2A2228;line-height:1.35}
-.kbb-placing-note{margin:7px 0 0;font-size:12.5px;font-weight:500;color:#8C828A;line-height:1.5}
+.kbb-placing-note{margin:7px 0 0;font-size:12.5px;font-weight:500;color:#756C74;line-height:1.5}
 .kbb-placing-note:empty{display:none}
 .kbb-placing-out{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:11px 18px;
-  border-radius:99px;background:#E0567B;color:#fff;font-size:13px;font-weight:700;text-decoration:none}
+  border-radius:99px;background:#C6395F;color:#fff;font-size:13px;font-weight:700;text-decoration:none}
 .kbb-placing-out:hover{background:#C13E63;color:#fff}
 .kbb-placing-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}

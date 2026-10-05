@@ -151,6 +151,11 @@ function psOffDefault(): array
         'star_colour' => '#456789',
         'cart_bg' => '#56789A',
         'cart_fg' => '#6789AB',
+        // Lane CT's four text colours: emitted on <body> only once moved.
+        'muted_colour' => '#3A3A3A',
+        'was_colour' => '#4B4B4B',
+        'save_colour' => '#0B5A3A',
+        'wa_foot_colour' => '#1D6B48',
         'sticky_show' => true,
         'sticky_devices' => 'all',
         'sticky_trigger' => 'offset',
@@ -323,11 +328,13 @@ it('ships every wired control at the value the stylesheet was already falling ba
     $expected = [
         '--kbb-radius' => '14px',
         '--kbb-ratio' => '1/1',
-        '--kbb-sale' => '#E23B57',
-        '--kbb-new' => '#1F9D55',
+        // Lane CT: the three colours the owner approved for contrast moved,
+        // in the sheet's fallbacks and the schema together.
+        '--kbb-sale' => '#D22B47',
+        '--kbb-new' => '#1A7F45',
         '--kbb-price' => '#2A2228',
         '--kbb-star' => '#E8A33D',
-        '--kbb-cart-bg' => '#E0567B',
+        '--kbb-cart-bg' => '#C6395F',
     ];
 
     foreach ($expected as $property => $fallback) {
@@ -341,11 +348,11 @@ it('ships every wired control at the value the stylesheet was already falling ba
 
     expect($values['card_radius'])->toBe(14)
         ->and($values['image_ratio'])->toBe('square')          // -> 1/1
-        ->and($values['sale_colour'])->toBe('#E23B57')
-        ->and($values['new_colour'])->toBe('#1F9D55')
+        ->and($values['sale_colour'])->toBe('#D22B47')
+        ->and($values['new_colour'])->toBe('#1A7F45')
         ->and($values['price_colour'])->toBe('#2A2228')
         ->and($values['star_colour'])->toBe('#E8A33D')
-        ->and($values['cart_bg'])->toBe('#E0567B');
+        ->and($values['cart_bg'])->toBe('#C6395F');
 
     /*
      * FIVE OF THE SEVEN TOGGLES SHIP ON, AND TWO SHIP OFF.        (Lane CARD)

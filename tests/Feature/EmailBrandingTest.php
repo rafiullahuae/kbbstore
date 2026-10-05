@@ -454,9 +454,20 @@ it('bounds the signature, since nothing else does', function () {
 it('takes its colours from the storefront stylesheet rather than inventing them', function () {
     $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
 
-    foreach (['pink' => '--pink:', 'pinkDeep' => '--pink-deep:', 'ink' => '--ink:', 'cream' => '--cream:'] as $key => $var) {
+    foreach (['pinkDeep' => '--pink-deep:', 'ink' => '--ink:', 'cream' => '--cream:'] as $key => $var) {
         expect(strtoupper($css))->toContain(strtoupper($var . EmailBranding::PALETTE[$key]));
     }
+
+    /*
+     * ▲ THE PINK PARTED COMPANY ON PURPOSE (Lane CT, 5 October). The owner
+     * approved a darker storefront pink, #C6395F, for Google's contrast audit
+     * of the SHOP; the emails were not part of that approval, and nineteen
+     * golden emails pin their bytes. So the email keeps the pink the shop had
+     * until then. Moving it is one constant and a regenerated golden set, the
+     * day he asks for it.
+     */
+    expect(EmailBranding::PALETTE['pink'])->toBe('#E0567B')
+        ->and(strtoupper($css))->toContain('--PINK:#C6395F');
 });
 
 it('lays the email out in tables and inline styles, with the <style> only as an enhancement', function () {

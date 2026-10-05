@@ -1057,7 +1057,7 @@ class GridSections
             /* The band. `sec`'s own padding is kept; only the inner parts are new. */
             .'.kbb-gsec .gs-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}'
             .'.kbb-gsec .gs-head h2{font-size:clamp(19px,2.2vw,26px);line-height:1.15;margin:0}'
-            .'.kbb-gsec .gs-head p{margin:6px 0 0;font-size:13.5px;color:#8C828A;max-width:52ch}'
+            .'.kbb-gsec .gs-head p{margin:6px 0 0;font-size:13.5px;color:var(--muted,#756C74);max-width:52ch}'
             .'.kbb-gsec .gs-foot{display:flex;justify-content:center;margin-top:18px}'
             .'.kbb-gsec .gs-all{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2,#EFE3E8);'
                 .'border-radius:999px;padding:11px 26px;font-size:13.5px;font-weight:600;color:var(--ink,#2A2228);'

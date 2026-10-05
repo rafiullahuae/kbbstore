@@ -465,8 +465,8 @@ class WhatsAppButton
      */
     private const CSS_BUBBLE = '.kbw-b{position:absolute;right:0;bottom:calc(100% + 12px);width:min(260px,calc(100vw - 32px));box-sizing:border-box;background:#fff;color:#2A2228;border:1px solid #F1E3E8;border-radius:16px 16px 4px 16px;padding:12px 14px;padding-inline-end:30px;box-shadow:0 12px 30px rgba(42,34,40,.14);font-size:13.5px;line-height:1.5;text-align:start;pointer-events:auto;transform-origin:100% 100%;animation:kbwO .5s 1s both}'
         .'.kbw-b strong{display:block;font-size:14.5px;margin-bottom:2px}'
-        .'.kbw-b span{display:block;color:#8C828A}'
-        .'.kbw-x{position:absolute;top:6px;inset-inline-end:8px;border:0;background:none;color:#8C828A;font:inherit;font-size:18px;line-height:1;padding:2px 4px;cursor:pointer}'
+        .'.kbw-b span{display:block;color:var(--muted,#756C74)}'
+        .'.kbw-x{position:absolute;top:6px;inset-inline-end:8px;border:0;background:none;color:var(--muted,#756C74);font:inherit;font-size:18px;line-height:1;padding:2px 4px;cursor:pointer}'
         .'@keyframes kbwO{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}';
 
     /**

@@ -57,7 +57,7 @@ class HeaderSettings
         'logo_accent'     => ['text',   'Accent word', 'Bliss', 'The second half, in the accent colour.'],
         'logo_size'       => ['range',  'Wordmark size', 22, '', ['min' => 16, 'max' => 34, 'step' => 1, 'unit' => 'px']],
         'logo_colour'     => ['colour', 'Wordmark colour', '#2A2228', ''],
-        'logo_accent_col' => ['colour', 'Accent colour', '#E0567B', ''],
+        'logo_accent_col' => ['colour', 'Accent colour', '#C6395F', ''],
 
         // ── Search ──
         'search_show'     => ['bool',   'Search box', true, ''],
@@ -112,7 +112,7 @@ class HeaderSettings
                                 ['random' => 'A different one each search', 'best' => 'Always the best-selling set']],
 
         // ── Search: styles & colours ──
-        'search_style_accent'      => ['colour', 'Accent colour', '#E0567B', 'Prices, the view-all button, active states.'],
+        'search_style_accent'      => ['colour', 'Accent colour', '#C6395F', 'Prices, the view-all button, active states.'],
         'search_style_accent_deep' => ['colour', 'Accent colour · hover', '#C13E63', 'Used on hover and for emphasis.'],
         'search_style_chip_bg'     => ['colour', 'Chip background', '#F3EEEF', 'Trending words and brand pills, at rest.'],
         'search_style_chip_text'   => ['colour', 'Chip text', '#5E545A', ''],
@@ -127,7 +127,7 @@ class HeaderSettings
         'icon_wishlist'   => ['bool',   'Wishlist', true, ''],
         'icon_cart'       => ['bool',   'Cart', true, ''],
         'icon_size'       => ['range',  'Icon size', 21, '', ['min' => 16, 'max' => 28, 'step' => 1, 'unit' => 'px']],
-        'badge_bg'        => ['colour', 'Count badge', '#E0567B', ''],
+        'badge_bg'        => ['colour', 'Count badge', '#C6395F', ''],
 
         // ── Menu icon ──
         'menu_icon'       => ['select', 'Icon', 'tiles', 'The control that opens the mobile menu.',
