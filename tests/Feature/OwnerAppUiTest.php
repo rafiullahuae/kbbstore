@@ -54,7 +54,7 @@ it('keeps three convenience keys in browser storage and nothing else, never the 
     foreach (glob(resource_path('js/owner-app/*.js')) as $f) {
         $code = (string) preg_replace(['#/\*.*?\*/#s', '#(^|\s)//[^\n]*#'], ['', '$1'], (string) file_get_contents($f));
         if (basename($f) !== 'core.js') {
-            expect($code)->not->toContain('localStorage', basename($f).' touches localStorage directly');
+            expect(str_contains($code, 'localStorage'))->toBeFalse(basename($f).' touches localStorage directly');
         }
         expect($code)->not->toMatch('/store\.set\(\s*[\'"]oa\.(pin|csrf|token)/');
     }

@@ -117,7 +117,7 @@ final class CustomersController extends Controller
         $top = DB::table('order_items as i')->join('orders as o', 'o.id', '=', 'i.order_id')
             ->leftJoin('products as p', 'p.id', '=', 'i.product_id')
             ->where('o.customer_id', $id)->whereIn('o.status', Order::REAL_STATUSES)->whereNull('o.deleted_at')
-            ->groupBy('i.product_id', 'i.name', 'p.image')->orderByRaw('SUM(i.quantity) DESC')->limit(5)
+            ->groupBy('i.product_id', 'i.name', 'p.image')->orderByRaw('SUM(i.quantity) DESC')->orderBy('i.name')->orderBy('i.product_id')->limit(5)
             ->selectRaw('i.product_id as id, i.name as name, p.image as image, SUM(i.quantity) as qty')->get();
 
         // Spend by month, the last eight, from the paid orders already loaded

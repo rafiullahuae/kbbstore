@@ -226,6 +226,9 @@ final class StaticMemos
      * @var array<class-string, string>
      */
     public const EXEMPT = [
+        \App\Services\OwnerApp\OwnerAppAuth::class => 'dummy is a hash of random bytes, made once so an unknown email '
+            .'costs a sign-in what a known one does. No test reads it and no value of it can change what any other '
+            .'test sees: it only ever answers false.',
         \App\Services\CartTracking\HostingNetworks::class => 'packed is the decoded copy of a shipped, read-only '
             .'data file (resources/data/hosting-networks.php). Nothing writes it but data(), and it holds the same '
             .'bytes in every test, so keeping it across tests is a cache of a constant, not state.',

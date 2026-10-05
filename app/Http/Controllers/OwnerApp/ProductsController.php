@@ -212,7 +212,7 @@ final class ProductsController extends Controller
 
         return response()->json([
             'ok' => true,
-            'categories' => DB::table('categories')->orderBy('depth')->orderBy('position')->orderBy('name')->limit(400)
+            'categories' => DB::table('categories')->orderBy('depth')->orderBy('position')->orderBy('name')->orderBy('id')->limit(400)
                 ->get(['id', 'name'])->map(fn ($c) => ['id' => (int) $c->id, 'name' => (string) $c->name])->values(),
         ]);
     }

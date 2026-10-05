@@ -44,6 +44,8 @@ function keyedExcludedFiles(): array
     return [
         'welcome.blade.php'
             => "Laravel's own install page. No route renders it — checked against routes/*.php — and it talks about Laracasts.",
+        'owner-app/shell.blade.php'
+            => 'The owner app (Lane MAC): a PIN-locked back-office app at a secret address, read only by the owner and his staff, never by a shopper and never served under /ar. Like the admin console beside it, it is English by the owner\'s choice (the back office is T8, deferred).',
         'store/app.blade.php'
             => '/app, served to an authenticated admin and 404 to everybody else (PublicPagesQuoteRealPricesTest pins both halves). It is a second, invented storefront with invented prices; translating it would be translating a fixture.',
         'invoices/partials/page-dispatch-label.blade.php'

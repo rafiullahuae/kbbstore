@@ -155,7 +155,23 @@ it('cannot emit the enforcing header, because the name is not in the tree', func
 
     expect(count($files))->toBeGreaterThan(200);
 
+    /*
+     * ONE NAMED EXCEPTION, and it is not the storefront (Lane MAC). The owner
+     * app at its secret address is a separate document set — one stylesheet,
+     * one module script, no inline script, no inline handler, no third party —
+     * so the breakage this test stands for cannot happen there, and the owner
+     * asked for it to be locked down ("script-src 'self' only"). Its
+     * middleware is attached to the owner-app routes alone, and
+     * OwnerAppUiTest pins that its policy carries no 'unsafe-inline'. Any
+     * OTHER file naming the enforcing header is still red.
+     */
+    $enforcingAllowed = [app_path('Http/Middleware/OwnerAppHeaders.php')];
+
     foreach ($files as $file) {
+        if (in_array($file, $enforcingAllowed, true)) {
+            continue;
+        }
+
         /*
          * `Content-Security-Policy` NOT followed by `-Report-Only`. The
          * report-only name contains the enforcing one as a prefix, so a plain

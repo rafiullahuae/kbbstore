@@ -62,7 +62,9 @@ it('sends noindex, no-store and no-referrer on every kind of answer the app give
     expect($r->headers->get('X-Robots-Tag'))->toBe(OwnerAppHeaders::ROBOTS)
         ->and($r->headers->get('Referrer-Policy'))->toBe('no-referrer')
         ->and((string) $r->headers->get('Cache-Control'))->toContain('no-')
-        ->and($r->headers->has('Set-Cookie') ? collect($r->headers->getCookies())->pluck('name')->all() : [])->not->toContain('laravel_session', 'XSRF-TOKEN');
+        // No session and no XSRF cookie: the app shares no cookie with the shop
+        // or the admin, and none of these answers sets one of its own.
+        ->and(collect($r->headers->getCookies())->map(fn ($c) => $c->getName())->all())->toBe([]);
 })->with(['shell', 'manifest', 'worker', 'state', 'refused', 'cross-site']);
 
 it('serves a shell with no member, order or token in it, robots meta included', function () {

@@ -309,6 +309,19 @@ it('has an authorization layer reading the role column', function () {
         'NoIndexStaging',
         'NoStoreAdminApi',
         /*
+         * Lane MAC (the owner app), and I have come and read this file as
+         * instructed. Neither touches the admin console or reads the role
+         * COLUMN. OwnerAppHeaders sets headers and refuses cross-site writes on
+         * the owner-app routes. OwnerAppSession is the owner app's own guard —
+         * an enrolled device, a PIN-unlocked session, an HMAC CSRF header — and
+         * after it the member's capabilities are asked of AdminRoles::can(), the
+         * same question every admin screen asks, per action, failing closed
+         * (OwnerAppSecurityTest pins every refusal). Neither is on any admin
+         * route; both are on routes/owner-app.php only.
+         */
+        'OwnerAppHeaders',
+        'OwnerAppSession',
+        /*
          * Lane S5, and I have come and read this file as instructed.
          *
          * ResolveLocaleSlugs authorises nothing and reads no role. It does what

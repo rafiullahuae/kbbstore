@@ -9,7 +9,7 @@
     of Google, and the app opens offline once installed.
 --}}
 <!doctype html>
-<html lang="en">
+<html lang="{{ \App\Support\Locale::htmlLang() }}" dir="{{ \App\Support\Locale::direction() }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">

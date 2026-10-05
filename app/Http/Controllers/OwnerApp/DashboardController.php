@@ -151,7 +151,7 @@ final class DashboardController extends Controller
         if ($catalog) {
             $at = OwnerAppSettings::lowStock();
             $low = DB::table('products')->whereNull('deleted_at')->where('manage_stock', true)
-                ->where('stock', '>', 0)->where('stock', '<=', $at)->orderBy('stock')->limit(3)->get(['id', 'name', 'stock']);
+                ->where('stock', '>', 0)->where('stock', '<=', $at)->orderBy('stock')->orderBy('id')->limit(3)->get(['id', 'name', 'stock']);
             if ($low->isNotEmpty()) {
                 $n = DB::table('products')->whereNull('deleted_at')->where('manage_stock', true)->where('stock', '>', 0)->where('stock', '<=', $at)->count();
                 $out[] = ['tone' => 'warn', 'icon' => 'stack', 'href' => '#/products?low',
@@ -160,7 +160,7 @@ final class DashboardController extends Controller
             }
 
             $out_ = DB::table('products')->whereNull('deleted_at')->where('status', 'publish')->where('stock_status', 'outofstock')
-                ->orderByDesc('updated_at')->limit(2)->get(['name']);
+                ->orderByDesc('updated_at')->orderByDesc('id')->limit(2)->get(['name']);
             if ($out_->isNotEmpty()) {
                 $n = DB::table('products')->whereNull('deleted_at')->where('status', 'publish')->where('stock_status', 'outofstock')->count();
                 $out[] = ['tone' => 'acc', 'icon' => 'box', 'href' => '#/products?out',
@@ -197,7 +197,7 @@ final class DashboardController extends Controller
             ->leftJoin('products as p', 'p.id', '=', 'i.product_id')
             ->whereNull('o.deleted_at')->whereIn('o.status', Order::REAL_STATUSES)->where('o.created_at', '>=', $monthStart)
             ->groupBy('i.product_id', 'i.name', 'p.image')
-            ->orderByRaw('SUM(i.quantity) DESC')->limit(4)
+            ->orderByRaw('SUM(i.quantity) DESC')->orderBy('i.name')->orderBy('i.product_id')->limit(4)
             ->selectRaw('i.product_id as id, i.name as name, p.image as image, SUM(i.quantity) as qty, SUM(i.total) as sales')
             ->get();
         $max = max(1, (int) $rows->max('qty'));

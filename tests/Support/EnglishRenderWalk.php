@@ -1516,6 +1516,13 @@ final class EnglishRenderWalk
                 continue;
             }
 
+            // The owner app (Lane MAC) is back office at a secret, generated
+            // address — PIN-locked, noindex, never linked — and not a page a
+            // shopper reads. Its own tests (OwnerApp*Test) cover every route.
+            if (str_starts_with((string) $route->getName(), 'owner-app.')) {
+                continue;
+            }
+
             $uris[] = $uri;
         }
 
