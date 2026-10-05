@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.393
+**Phone category pages: no Filters button, 1 / 2 column buttons, smaller sort,
+the header picture covers the header, less space under it.** Apply after .392.
+Runs 1 migration. Hard refresh after applying.
+
+| Your request | Now (measured at 390) |
+|---|---|
+| "turn off the filters for now" | Filters button gone on phones. Appearance → Site layout → Product grid → Filters button · phone |
+| "make number of columns to select 1 or 2, max" | 1 / 2 buttons beside Sort. … → Column buttons (1 or 2) · phone |
+| "reduce the capsule size of sort" | 44px → 34px, rounded (text stays 16px so iPhones do not zoom) |
+| "the background image on mobile should cover the whole area by middle and center" | The picture fills the header, centred. Appearance → Site layout → Category header → Show the whole picture on phones (now off) |
+| "reduce spacing between header area and sort etc row" | 44px → 22px |
+
+Files: see the package's update.json.
+
 ## 2.60.392
 **Edit header: "Choose" opens the picture picker right under the button.**
 Apply after .391. Hard refresh after applying.
