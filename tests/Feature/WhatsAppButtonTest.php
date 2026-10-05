@@ -247,18 +247,24 @@ it('prints every line the owner types escaped, never as markup', function () {
 
 it('prints raw only the constants of WhatsAppButton', function () {
     /*
-     * The partial's unescaped echoes, counted and named. A fourth one is a new
+     * The partial's unescaped echoes, counted and named. A fifth one is a new
      * raw print site that has to be argued for here.
+     *
+     * The fourth (Lane WS) is the bubble script's guard: '' on every page but
+     * the cart and the checkout, and WhatsAppButton::TAB_BUBBLE_GUARD there —
+     * a constant either way.
      */
     $src = (string) file_get_contents(resource_path('views/partials/whatsapp-button.blade.php'));
     preg_match_all('/\{!!\s*(.*?)\s*!!\}/', $src, $raw);
 
-    expect($raw[1])->toBe(["\$kbbWa['css']", "\$kbbWa['symbols']", "\$kbbWa['icon']"]);
+    expect($raw[1])->toBe(["\$kbbWa['css']", "\$kbbWa['symbols']", "\$kbbWa['icon']", "\$kbbWa['icon']", "\$kbbWa['guard']"]);
 
     $v = app(WhatsAppButton::class)->view();
     expect($v['css'])->toBe(WhatsAppButton::css('G'))
         ->and($v['icon'])->toBe(WhatsAppButton::ICON)
-        ->and($v['symbols'])->toBe(WhatsAppButton::SYMBOLS['M'].WhatsAppButton::SYMBOLS['W']);
+        ->and($v['symbols'])->toBe(WhatsAppButton::SYMBOLS['M'].WhatsAppButton::SYMBOLS['W'])
+        ->and($v['guard'])->toBe('')
+        ->and(app(WhatsAppButton::class)->view(null, null, true)['guard'])->toBe(WhatsAppButton::TAB_BUBBLE_GUARD);
 });
 
 /* ═══════════════════════════════════════════════ off, and per device ═══ */
@@ -554,13 +560,14 @@ it('refuses both verbs to an account without the capability, and writes nothing'
     expect(app(WhatsAppButton::class)->all()['enabled'])->toBeTrue();
 });
 
-it('answers the screen with four tabs, every field, and what the preview is built from', function () {
+it('answers the screen with five tabs, every field, and what the preview is built from', function () {
+    // Lane WS added the fifth, "Cart & checkout · phone" (the side tab).
     $this->actingAs(waAdmin(), 'admin');
 
     $body = $this->getJson('/admin-api/whatsapp-button')->assertOk()->json();
 
-    expect(array_column($body['tabs'], 'key'))->toBe(['design', 'position', 'message', 'capsule'])
-        ->and(array_column($body['tabs'], 'label'))->toBe(['Design', 'Position', 'Message', 'Capsule & bubble']);
+    expect(array_column($body['tabs'], 'key'))->toBe(['design', 'position', 'message', 'capsule', 'tab'])
+        ->and(array_column($body['tabs'], 'label'))->toBe(['Design', 'Position', 'Message', 'Capsule & bubble', 'Cart & checkout · phone']);
 
     $keys = [];
     foreach ($body['tabs'] as $tab) {
@@ -590,6 +597,9 @@ it('saves and reads back every field it drew', function () {
         'ar_side' => 'same', 'link' => 'https://wa.me/971500000000',
         'welcome' => 'Hello', 'welcome_ar' => 'مرحبا', 'support' => 'Ask us', 'support_ar' => 'اسألنا',
         'capsule' => false, 'cap1' => 'Talk', 'cap1_ar' => 'تحدث', 'cap2' => '', 'cap2_ar' => '', 'bubble' => 'off',
+        // Lane WS: the side tab.
+        'tab_on' => false, 'tab_size' => 34, 'tab_y' => 30, 'tab_label' => 'Help', 'tab_label_ar' => 'مساعدة',
+        'tab_palette' => 'custom', 'tab_c1' => '#FFF6C7', 'tab_c2' => '#DDF3FF', 'tab_anim' => false,
     ];
 
     $this->postJson('/admin-api/whatsapp-button', ['settings' => $values])->assertOk()->assertJsonPath('saved', count($values));

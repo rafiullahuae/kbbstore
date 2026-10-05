@@ -2788,6 +2788,8 @@ final class InterfaceStrings
             'whatsapp.capsule_note' => 'Available 24/7',
             'whatsapp.open_label' => 'Chat with us on WhatsApp',
             'whatsapp.close_label' => 'Close',
+            // Lane WS: the side tab on the phone cart and checkout.
+            'whatsapp.tab_label' => '24/7 Support',
         ];
     }
 

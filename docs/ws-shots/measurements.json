@@ -1,0 +1,766 @@
+{
+  "ws-cart-390-before.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": null,
+    "roundButton": {
+      "x": 286,
+      "y": 630,
+      "w": 60,
+      "h": 60,
+      "right": 346,
+      "bottom": 690
+    }
+  },
+  "ws-checkout-390-before.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": null,
+    "roundButton": {
+      "x": 286,
+      "y": 736,
+      "w": 60,
+      "h": 60,
+      "right": 346,
+      "bottom": 796
+    }
+  },
+  "ws-cart-390-after.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 378,
+      "w": 26,
+      "h": 116,
+      "right": 26,
+      "bottom": 494
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "11px",
+      "icon": {
+        "x": 3,
+        "y": 385,
+        "w": 20,
+        "h": 20,
+        "right": 23,
+        "bottom": 405
+      }
+    },
+    "gapToContent": 14,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": {
+      "x": 0,
+      "y": 742,
+      "w": 390,
+      "h": 102,
+      "right": 390,
+      "bottom": 844
+    },
+    "clearanceAboveBar": 248,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 127,
+      "right": 390,
+      "bottom": 127
+    },
+    "clearanceBelowHeader": 251,
+    "firstLineItem": {
+      "x": 41,
+      "y": 254,
+      "w": 334,
+      "h": 96,
+      "right": 375,
+      "bottom": 350
+    },
+    "stepper": {
+      "x": 137,
+      "y": 308,
+      "w": 120,
+      "h": 29,
+      "right": 257,
+      "bottom": 337
+    }
+  },
+  "ws-checkout-390-after.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 378,
+      "w": 26,
+      "h": 116,
+      "right": 26,
+      "bottom": 494
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "11px",
+      "icon": {
+        "x": 3,
+        "y": 385,
+        "w": 20,
+        "h": 20,
+        "right": 23,
+        "bottom": 405
+      }
+    },
+    "gapToContent": 20,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": null,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 58,
+      "right": 390,
+      "bottom": 58
+    },
+    "clearanceBelowHeader": 320,
+    "firstLineItem": {
+      "x": 61,
+      "y": 169,
+      "w": 294,
+      "h": 79,
+      "right": 355,
+      "bottom": 248
+    },
+    "stepper": null
+  },
+  "ws-cart-390-after-scrolled.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 378,
+      "w": 26,
+      "h": 116,
+      "right": 26,
+      "bottom": 494
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "11px",
+      "icon": {
+        "x": 3,
+        "y": 385,
+        "w": 20,
+        "h": 20,
+        "right": 23,
+        "bottom": 405
+      }
+    },
+    "gapToContent": 14,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": {
+      "x": 0,
+      "y": 742,
+      "w": 390,
+      "h": 102,
+      "right": 390,
+      "bottom": 844
+    },
+    "clearanceAboveBar": 248,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 127,
+      "right": 390,
+      "bottom": 127
+    },
+    "clearanceBelowHeader": 251,
+    "firstLineItem": {
+      "x": 41,
+      "y": -166,
+      "w": 334,
+      "h": 96,
+      "right": 375,
+      "bottom": -70
+    },
+    "stepper": {
+      "x": 137,
+      "y": -112,
+      "w": 120,
+      "h": 29,
+      "right": 257,
+      "bottom": -83
+    }
+  },
+  "ws-checkout-390-after-scrolled.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 378,
+      "w": 26,
+      "h": 116,
+      "right": 26,
+      "bottom": 494
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "11px",
+      "icon": {
+        "x": 3,
+        "y": 385,
+        "w": 20,
+        "h": 20,
+        "right": 23,
+        "bottom": 405
+      }
+    },
+    "gapToContent": 20,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": null,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 58,
+      "right": 390,
+      "bottom": 58
+    },
+    "clearanceBelowHeader": 320,
+    "firstLineItem": {
+      "x": 61,
+      "y": -251,
+      "w": 294,
+      "h": 79,
+      "right": 355,
+      "bottom": -172
+    },
+    "stepper": null
+  },
+  "ws-cart-390-min22.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 387,
+      "w": 22,
+      "h": 99,
+      "right": 22,
+      "bottom": 485
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "9.3082px",
+      "icon": {
+        "x": 2,
+        "y": 393,
+        "w": 17,
+        "h": 17,
+        "right": 19,
+        "bottom": 410
+      }
+    },
+    "gapToContent": 14,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": {
+      "x": 0,
+      "y": 742,
+      "w": 390,
+      "h": 102,
+      "right": 390,
+      "bottom": 844
+    },
+    "clearanceAboveBar": 257,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 127,
+      "right": 390,
+      "bottom": 127
+    },
+    "clearanceBelowHeader": 260,
+    "firstLineItem": {
+      "x": 37,
+      "y": 254,
+      "w": 338,
+      "h": 96,
+      "right": 375,
+      "bottom": 350
+    },
+    "stepper": {
+      "x": 133,
+      "y": 308,
+      "w": 120,
+      "h": 29,
+      "right": 253,
+      "bottom": 337
+    }
+  },
+  "ws-checkout-390-min22.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 387,
+      "w": 22,
+      "h": 99,
+      "right": 22,
+      "bottom": 485
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "9.3082px",
+      "icon": {
+        "x": 2,
+        "y": 393,
+        "w": 17,
+        "h": 17,
+        "right": 19,
+        "bottom": 410
+      }
+    },
+    "gapToContent": 20,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": null,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 58,
+      "right": 390,
+      "bottom": 58
+    },
+    "clearanceBelowHeader": 329,
+    "firstLineItem": {
+      "x": 57,
+      "y": 169,
+      "w": 298,
+      "h": 79,
+      "right": 355,
+      "bottom": 248
+    },
+    "stepper": null
+  },
+  "ws-cart-390-max44.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 338,
+      "w": 44,
+      "h": 195,
+      "right": 44,
+      "bottom": 534
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "18.6153px",
+      "icon": {
+        "x": 5,
+        "y": 350,
+        "w": 34,
+        "h": 34,
+        "right": 38,
+        "bottom": 383
+      }
+    },
+    "gapToContent": 14,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": {
+      "x": 0,
+      "y": 742,
+      "w": 390,
+      "h": 102,
+      "right": 390,
+      "bottom": 844
+    },
+    "clearanceAboveBar": 208,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 127,
+      "right": 390,
+      "bottom": 127
+    },
+    "clearanceBelowHeader": 211,
+    "firstLineItem": {
+      "x": 59,
+      "y": 254,
+      "w": 316,
+      "h": 96,
+      "right": 375,
+      "bottom": 350
+    },
+    "stepper": {
+      "x": 155,
+      "y": 308,
+      "w": 120,
+      "h": 29,
+      "right": 275,
+      "bottom": 337
+    }
+  },
+  "ws-checkout-390-max44.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 338,
+      "w": 44,
+      "h": 195,
+      "right": 44,
+      "bottom": 534
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "18.6153px",
+      "icon": {
+        "x": 5,
+        "y": 350,
+        "w": 34,
+        "h": 34,
+        "right": 38,
+        "bottom": 383
+      }
+    },
+    "gapToContent": 20,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": null,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 58,
+      "right": 390,
+      "bottom": 58
+    },
+    "clearanceBelowHeader": 280,
+    "firstLineItem": {
+      "x": 79,
+      "y": 169,
+      "w": 276,
+      "h": 79,
+      "right": 355,
+      "bottom": 248
+    },
+    "stepper": null
+  },
+  "ws-cart-390-max44-low.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 537,
+      "w": 44,
+      "h": 195,
+      "right": 44,
+      "bottom": 732
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "18.6153px",
+      "icon": {
+        "x": 5,
+        "y": 548,
+        "w": 34,
+        "h": 34,
+        "right": 38,
+        "bottom": 582
+      }
+    },
+    "gapToContent": 14,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": {
+      "x": 0,
+      "y": 742,
+      "w": 390,
+      "h": 102,
+      "right": 390,
+      "bottom": 844
+    },
+    "clearanceAboveBar": 10,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 127,
+      "right": 390,
+      "bottom": 127
+    },
+    "clearanceBelowHeader": 410,
+    "firstLineItem": {
+      "x": 59,
+      "y": 254,
+      "w": 316,
+      "h": 96,
+      "right": 375,
+      "bottom": 350
+    },
+    "stepper": {
+      "x": 155,
+      "y": 308,
+      "w": 120,
+      "h": 29,
+      "right": 275,
+      "bottom": 337
+    }
+  },
+  "ws-checkout-390-max44-low.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 537,
+      "w": 44,
+      "h": 195,
+      "right": 44,
+      "bottom": 732
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "18.6153px",
+      "icon": {
+        "x": 5,
+        "y": 548,
+        "w": 34,
+        "h": 34,
+        "right": 38,
+        "bottom": 582
+      }
+    },
+    "gapToContent": 20,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": null,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 58,
+      "right": 390,
+      "bottom": 58
+    },
+    "clearanceBelowHeader": 479,
+    "firstLineItem": {
+      "x": 79,
+      "y": 169,
+      "w": 276,
+      "h": 79,
+      "right": 355,
+      "bottom": 248
+    },
+    "stepper": null
+  },
+  "ws-cart-390-lilac.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 283,
+      "w": 26,
+      "h": 116,
+      "right": 26,
+      "bottom": 399
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "11px",
+      "icon": {
+        "x": 3,
+        "y": 290,
+        "w": 20,
+        "h": 20,
+        "right": 23,
+        "bottom": 310
+      }
+    },
+    "gapToContent": 14,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": {
+      "x": 0,
+      "y": 742,
+      "w": 390,
+      "h": 102,
+      "right": 390,
+      "bottom": 844
+    },
+    "clearanceAboveBar": 343,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 127,
+      "right": 390,
+      "bottom": 127
+    },
+    "clearanceBelowHeader": 156,
+    "firstLineItem": {
+      "x": 41,
+      "y": 254,
+      "w": 334,
+      "h": 96,
+      "right": 375,
+      "bottom": 350
+    },
+    "stepper": {
+      "x": 137,
+      "y": 308,
+      "w": 120,
+      "h": 29,
+      "right": 257,
+      "bottom": 337
+    }
+  },
+  "ws-checkout-390-lilac.png": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "tab": {
+      "x": 0,
+      "y": 283,
+      "w": 26,
+      "h": 116,
+      "right": 26,
+      "bottom": 399
+    },
+    "roundButton": null,
+    "label": {
+      "fontSize": "11px",
+      "icon": {
+        "x": 3,
+        "y": 290,
+        "w": 20,
+        "h": 20,
+        "right": 23,
+        "bottom": 310
+      }
+    },
+    "gapToContent": 20,
+    "nearest": "div.",
+    "covered": [],
+    "bottomBar": null,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 58,
+      "right": 390,
+      "bottom": 58
+    },
+    "clearanceBelowHeader": 225,
+    "firstLineItem": {
+      "x": 61,
+      "y": 169,
+      "w": 294,
+      "h": 79,
+      "right": 355,
+      "bottom": 248
+    },
+    "stepper": null
+  },
+  "ws-cart-1280-before.png": {
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "tab": null,
+    "roundButton": {
+      "x": 1168,
+      "y": 788,
+      "w": 60,
+      "h": 60,
+      "right": 1228,
+      "bottom": 848
+    }
+  },
+  "ws-checkout-1280-before.png": {
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "tab": null,
+    "roundButton": {
+      "x": 1168,
+      "y": 788,
+      "w": 60,
+      "h": 60,
+      "right": 1228,
+      "bottom": 848
+    }
+  },
+  "ws-cart-1280-after.png": {
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "tab": null,
+    "roundButton": {
+      "x": 1168,
+      "y": 788,
+      "w": 60,
+      "h": 60,
+      "right": 1228,
+      "bottom": 848
+    }
+  },
+  "ws-checkout-1280-after.png": {
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "tab": null,
+    "roundButton": {
+      "x": 1168,
+      "y": 788,
+      "w": 60,
+      "h": 60,
+      "right": 1228,
+      "bottom": 848
+    }
+  },
+  "ws-cart-1280 layout identical": {
+    "identical": true,
+    "elements": 701
+  },
+  "ws-checkout-1280 layout identical": {
+    "identical": true,
+    "elements": 749
+  },
+  "ws-tab-closeup-min22.png": {
+    "w": 22,
+    "h": 99
+  },
+  "ws-tab-closeup-default26.png": {
+    "w": 26,
+    "h": 116
+  },
+  "ws-tab-closeup-max44.png": {
+    "w": 44,
+    "h": 195
+  },
+  "ws-admin-1280-dragged22.png": {
+    "w": 22,
+    "h": 99,
+    "sizeLabel": "22px",
+    "scrollWidth": 1280
+  },
+  "ws-admin-1280-dragged44.png": {
+    "w": 44,
+    "h": 196,
+    "sizeLabel": "44px",
+    "scrollWidth": 1280
+  },
+  "ws-admin-390-dragged22.png": {
+    "w": 22,
+    "h": 99,
+    "sizeLabel": "22px",
+    "scrollWidth": 390
+  },
+  "ws-admin-390-dragged44.png": {
+    "w": 44,
+    "h": 196,
+    "sizeLabel": "44px",
+    "scrollWidth": 390
+  }
+}

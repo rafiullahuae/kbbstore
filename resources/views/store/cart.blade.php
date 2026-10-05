@@ -55,6 +55,7 @@
 @endunless
 
 @section('title', __('store.cart.page_title'))
+@section('kbb-wa-tab', '1')
 
 @push('styles')
     {{-- THE COMMENT'S CLOSING BRACE TOUCHES @vite, AND @include TOUCHES ITS
