@@ -143,7 +143,10 @@ it('draws the phone brand tiles 54px tall, from a select on the Brands tab', fun
 
     $css = pfpCss();
     expect($css)->toContain('.kbb-home .hs-brand{display:grid;place-items:center;height:var(--hs-br-th-m,54px);')
-        ->and($css)->toContain('max-height:calc(var(--hs-br-th-m,54px) - 14px)')
+        // (Lane BS) The logo tile's max-height went with the logo tiles: on a
+        // phone the tiles are names (Text only, the owner's default), and the
+        // logo now sits on an image card's label (Logo + image).
+        ->and($css)->not->toContain('max-height:calc(var(--hs-br-th-m,54px) - 14px)')
         ->and($css)->not->toContain('place-items:center;height:74px');
 
     pfpWrite(['home_br_th_m' => '48']);

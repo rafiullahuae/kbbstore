@@ -1,0 +1,32 @@
+Lane BS — homepage Brands, measured in Chromium (/opt/pw-browsers/chromium) by
+tools/bs-shots.cjs against storage/bs-logs/bs-preview.sh. "pictures" = requests
+for brand pictures (/uploads/bs/*) after the section is scrolled into view.
+
+BEFORE (d77a88a, no brands picked: the 14 with the most products)
+  390   logo tiles   10 cards 178x54            scrollWidth 390    pictures 10 (10 logos)
+  1280  photo cards  14 cards 158x198, 14.5px    scrollWidth 1280   pictures 14 (6 banners + 8 logos on the panel)
+
+AFTER, same shop, shipped defaults (Look · laptop Image + name — no logo; Look · phone Text only)
+  390   name tiles   10 cards 178x54, 16px       scrollWidth 390    pictures 0
+  1280  image cards  14 cards 158x198, 14.5px    scrollWidth 1280   pictures 6 (6 banners, no logos)
+
+AFTER, 8 brands picked in the popup, 4 with their own image (Brands tab)
+  Look · phone   width  cards            scrollWidth  pictures
+  Text only      390    8 x 178x54, 16px   390          0
+  Text only      1280   8 x 158x198        1280         6 (4 own images + 2 banners)
+  Image only     390    8 x 178x223        390          6 (4 own + 2 banners; 2 brands with none show their name)
+  Image only     1280   8 x 158x198        1280         6
+  Logo + image   390    8 x 178x223        390          14 (4 own + 2 banners + 8 logos)
+  Logo + image   1280   8 x 158x198        1280         6 (no logo: the laptop gets the blank source)
+
+POPUP (Appearance → Homepage content → Top brands → Edit content), 1280
+  opening the popup:         0 requests (everything is in GET /admin-api/homepage-hub, already loaded)
+  each Choose image:         1 request, the Media Library's own GET /admin-api/media list
+  Save section:              POST /admin-api/homepage/content + the hub's existing GET /admin-api/homepage-hub refresh
+  scrollWidth 1280; at 390 the popup is full screen, 390 wide, scrollWidth 390.
+
+QUERIES (HomeBrandLooksTest): GET / with 3 brand images and with 40 — the same count.
+
+Files: before-390/1280, after-default-390/1280, phone-text-390/1280,
+phone-image-390/1280, phone-logo_image-390/1280, popup-images-1280,
+popup-images-390, popup-layout-1280.
