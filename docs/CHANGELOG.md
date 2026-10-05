@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.401
+**Owner app: a header half the height with your store name, and full screen
+only when you tap its icon.** Apply after .400. Hard refresh the app.
+
+| Your request | Now |
+|---|---|
+| "the header bar is too heighted, i need to reduce atleast 50%, make the KBB icon small" | My store header 84px → 44px (and the 22px strip above it is gone); KB logo 64px → 32px |
+| "reduce the store name ... keep for now my store name K-Beauty Bliss" | The title reads K-Beauty Bliss at 18px; a long name ends in "…" |
+| "click anywhere should not perform any full screen ... beside the refresh icons make a icon of enlarge" | Full screen only from the enlarge/shrink icon beside Sync now; no other tap does it |
+
+Notifications' "Mark all read" is now a ✓ icon, so the title still fits beside
+the new icon on small phones.
+
+Files: see the package's update.json.
+
 ## 2.60.400
 **The owner app: K-Beauty Bliss Owner, design B "Petal", at a secret address,
 PIN-unlocked, for the owner and the team members you choose.** Apply after
