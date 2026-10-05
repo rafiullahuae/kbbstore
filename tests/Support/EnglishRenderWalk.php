@@ -2144,6 +2144,19 @@ KBB_BH_CSS;
     {
         return [
             /*
+             * THE FILTERS DRAWER'S BACKDROP (Lane FP). The owner: "when clicked
+             * on empty area, the filter panel must be need to hide auto." One
+             * empty element after the filter rail on every listing that draws
+             * it -- /shop/ and a collection in this walk -- hidden on a laptop
+             * and dimmed beside the open drawer on a phone. Nothing else in the
+             * markup moves; the rest of the patch is stylesheet and script.
+             */
+            'the Filters drawer backdrop (Lane FP)' => [
+                'pattern' => '#    <div class="fscrim" data-kbb-close></div>\n#',
+                'hits' => 2,
+            ],
+
+            /*
              * THE SUPER SALE STRIP, ON /super-sale/ ONLY. (Lane SS)
              *
              * The owner: "i need a custom banner including image and thin strip

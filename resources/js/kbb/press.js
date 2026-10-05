@@ -48,6 +48,20 @@
 const CONTROL = 'a[href], button, [role="button"], summary, label, select, '
     + 'input[type="submit"], input[type="button"], input[type="checkbox"], input[type="radio"], .search-in';
 
+/* ── ONLY SMALL THINGS, UNLESS THE OWNER WIDENED IT ───────────── Lane FP ──
+   "it's good only for small things like icons etc." -- not the mobile menu,
+   not the search box, not "other big stuff". So by default a press is looked
+   for among the ICON controls only: exactly the ICONS list kbb.css styles
+   (PressFeedbackScopeTest holds the two equal). An allowlist, so a big block
+   added tomorrow gets nothing rather than a ripple nobody chose. The menu rows,
+   the search box, filter rows, cards and big buttons are never marked, so no
+   rule for them can match; the grey box stays gone for them all the same.
+   `data-press-all` on <html> (Appearance → Site layout → Press feedback →
+   Which controls respond → Every button and row) restores CONTROL above. */
+const SMALL = '.ib, .kbbmi, .heart, .gwish, .pdp-share-btn, .pdp-share-x, .sarr, .ymal-btn, '
+    + '.qty button, .kc-qty button, .co-q, .mm-x, .x, .kc-x, .fclose, .kc-rm, .co-rm, .cpg-x, '
+    + '.pts-auth-x, .colsel button, .trail';
+
 /* The shortest a press is shown for, in ms. */
 const HOLD = 180;
 
@@ -59,6 +73,8 @@ const swap = (el, a, b) => {
 
 export function initPress() {
     if (!document.documentElement.hasAttribute('data-press')) return;
+
+    const reach = document.documentElement.hasAttribute('data-press-all') ? CONTROL : SMALL;
 
     let held = null;
     let since = 0;
@@ -93,7 +109,7 @@ export function initPress() {
     };
 
     const controlOf = (target) => {
-        const el = target && target.closest ? target.closest(CONTROL) : null;
+        const el = target && target.closest ? target.closest(reach) : null;
         if (!el || el.disabled || el.getAttribute('aria-disabled') === 'true') return null;
         return el;
     };

@@ -579,6 +579,10 @@ it('ships every setting at the value the page already had, except the ones the o
         'pin' => 'auto',
         // 2.60.358: "turn hide by default the products count".
         'show_count' => false,
+        // Lane FP: the Filters drawer on a phone, at the min(90vw, 300px) it
+        // always had -- nothing moves until the owner drags one.
+        'filter_w' => 90,
+        'filter_max' => 300,
         // Lane PI-B: Loading more products. NOT CSS — these decide how many
         // products a listing page holds. Shipped at "Arrows" while the owner
         // had not chosen; ships at "Load more on scroll" since he did, on
@@ -691,6 +695,9 @@ it('ships every setting at the value the page already had, except the ones the o
         // 2.60.387, the owner asked: the brand banner covers the phone header.
         'brand_phone_cover' => true,
         'press' => 'c',
+        // Lane FP, as the owner asked: "it's good only for small things like
+        // icons etc." -- a default he chose, not the old behaviour.
+        'press_scope' => 'icons',
         // Lane FS: Appearance → Site layout → Fonts, at the shop's own Outfit.
         'font_body' => 'outfit',
         'font_heading' => 'outfit',

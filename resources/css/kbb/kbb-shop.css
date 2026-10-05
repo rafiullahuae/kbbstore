@@ -172,6 +172,7 @@ img{max-width:100%}
 .fhide{margin-inline-start:auto;font-size:12px;font-weight:600;color:var(--pink-deep);background:#fff;border:1px solid rgba(224,86,123,.25);border-radius:99px;padding:6px 13px;transition:.14s}
 .fhide:hover{background:var(--pink);color:#fff;border-color:transparent}
 .fclose{display:none;margin-inline-start:auto;width:34px;height:34px;border-radius:9px;place-items:center;color:var(--pink-deep);font-size:16px}
+.fscrim{display:none}
 .catdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.8)}
 .achips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
 .achip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--pink-deep);background:var(--pink-soft);border-radius:99px;padding:6px 8px 6px 12px}
@@ -360,10 +361,26 @@ img{max-width:100%}
   .shop{grid-template-columns:1fr}
   /* Off-canvas filter panel: logical inset, transform flipped under [dir="rtl"],
      above the .filters-open rule for the cascade reason given on .dw. */
-  .filtercol{position:fixed;top:0;inset-inline-start:0;height:100%;width:300px;max-width:90vw;z-index:95;transform:translateX(-100%);transition:.3s var(--ease);overflow-y:auto}
+  /* Width (Lane FP): Appearance → Site layout → Product grid → "Filters drawer
+     width · phone" and "Filters drawer · never wider than". The fallbacks are
+     the 300px / 90vw the drawer always had, so with nothing saved it is
+     min(90vw, 300px) exactly as before. overscroll-behavior keeps a fling at
+     the end of the list from scrolling the shop underneath. */
+  .filtercol{position:fixed;top:0;inset-inline-start:0;height:100%;width:calc(var(--kbb-fdrawer-w,90) * 1vw);max-width:var(--kbb-fdrawer-max,300px);z-index:95;transform:translateX(-100%);transition:.3s var(--ease);overflow-y:auto;overscroll-behavior:contain}
   [dir="rtl"] .filtercol{transform:translateX(100%)}
   .filters-open .filtercol{transform:none}
   .fpanel{border-radius:0;border:0;box-shadow:none;min-height:100%;padding:2px 16px 28px}
+  /* The FILTERS title and its × stay at the top of the drawer while the list
+     scrolls under them: sticky inside the drawer's own scroll box, on a solid
+     ground so no row shows through. (Lane FP) */
+  .fhead{position:sticky;top:0;z-index:1;background:#fff}
+  /* The dimmed shop beside the open drawer. A tap on it closes the drawer
+     (data-kbb-close, resources/js/kbb/overlay.js, which Esc also reaches);
+     the drawer sits above it, so a tap inside never lands here. Light, and the
+     page under it does not scroll while the drawer is open. (Lane FP) */
+  .fscrim{display:block;position:fixed;inset:0;z-index:94;background:rgba(42,34,40,.28);opacity:0;pointer-events:none;transition:opacity .3s}
+  .filters-open .fscrim{opacity:1;pointer-events:auto}
+  body.filters-open{overflow:hidden}
   .fhide{display:none}
   .fclose{display:grid}
   .mobi-filter{display:inline-flex}

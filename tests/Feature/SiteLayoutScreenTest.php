@@ -167,7 +167,9 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // `brand_hero` (Compact / Classic) and `brand_ring`, on the same tab.
     // 90 since Lane FS: `font_body` and `font_heading` on the Fonts tab.
     // 91 since 2.60.387: `brand_phone_cover` on the Brand page tab.
-    expect($keys)->toHaveCount(91);
+    // 94 since Lane FP: `filter_w` and `filter_max` (Product grid, the phone's
+    // Filters drawer width) and `press_scope` (Press feedback, small icons only).
+    expect($keys)->toHaveCount(94);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

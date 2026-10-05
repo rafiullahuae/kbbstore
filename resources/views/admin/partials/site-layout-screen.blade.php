@@ -848,12 +848,16 @@
     var f = fieldOf('press');
     var v = String(values.press);
     if (!f || !Object.prototype.hasOwnProperty.call(f.options || {}, v)) v = f ? String(f['default']) : 'c';
+    /* Lane FP: which controls respond. Checked against its own options too. */
+    var sf = fieldOf('press_scope');
+    var sv = String(values.press_scope);
+    if (!sf || !Object.prototype.hasOwnProperty.call(sf.options || {}, sv)) sv = sf ? String(sf['default']) : 'icons';
 
     return '<div class="sls-card">'
       + '<div class="sls-title">Try it</div>'
-      + '<p class="sls-sub">Tap or click the samples. They show the choice above as it is now, before you save; '
-      + 'on the shop it applies to every button and icon.</p>'
-      + '<div class="slp" data-sls-press="' + esc(v) + '" data-sls-press-box>'
+      + '<p class="sls-sub">Tap or click the samples. They show the choices above as they are now, before you save; '
+      + (sv === 'all' ? 'on the shop it applies to every button and icon.' : 'on the shop only the icons respond — Add to cart and All sets show nothing.') + '</p>'
+      + '<div class="slp" data-sls-press="' + esc(v) + '" data-sls-scope="' + esc(sv) + '" data-sls-press-box>'
       + '<button type="button" class="slp-t slp-i" aria-label="Account">' + PRESS_ICONS.account + '</button>'
       + '<button type="button" class="slp-t slp-i" aria-label="Wishlist">' + PRESS_ICONS.heart + '</button>'
       + '<button type="button" class="slp-t slp-i" aria-label="Cart">' + PRESS_ICONS.cart + '</button>'
@@ -870,6 +874,8 @@
   document.addEventListener('pointerdown', function (e) {
     var t = e.target.closest ? e.target.closest('.slp .slp-t') : null;
     if (!t) return;
+    /* "Small icons only" (Lane FP): the button and the pill stay still, as on the shop. */
+    if (!t.classList.contains('slp-i') && !t.closest('[data-sls-scope="all"]')) return;
     slpHeld = t; slpAt = Date.now();
     t.classList.add('is-p');
     var r = t.classList.contains('is-r') ? 'is-r2' : 'is-r';

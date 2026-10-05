@@ -6,6 +6,9 @@ export const closeAll = () => {
     document.querySelectorAll('.drawer.on, .mnav.on, .msub.on').forEach((el) => el.classList.remove(OPEN_CLASS));
     document.getElementById('ov')?.classList.remove(OPEN_CLASS);
     document.body.classList.remove('kbb-locked');
+    // The shop's Filters drawer on a phone (Lane FP): its dimmed backdrop
+    // carries data-kbb-close, and Esc lands here too.
+    document.body.classList.remove('filters-open');
 };
 
 export const open = (id) => {
