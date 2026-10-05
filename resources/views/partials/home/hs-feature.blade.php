@@ -12,7 +12,14 @@
 @endphp
 <section class="sec {{ $ft['classes'] }} {{ $cls }}" style="{{ $ft['style'] }}"><div class="wrap"><div class="hs-feat">
 @foreach ($ft['panels'] as $panel)
-<div class="hs-fp"><a class="hs-fim" href="{{ $panel['url'] }}" tabindex="-1" style="background:{{ \App\Support\Gradient::for($panel['title'] !== '' ? $panel['title'] : $panel['side']) }}">@if ($panel['image'] !== '')<img src="{{ $panel['image'] }}" alt="{{ $panel['alt'] }}" width="800" height="450" loading="lazy" decoding="async">@endif</a>
+{{-- A NAME FOR THE PICTURE LINK WHEN THE PICTURE GIVES IT NONE (Lane PS).
+     PageSpeed, 5 Oct 2026, Accessibility: "Links do not have a discernible
+     name" and "Accessibility tree is not well-formed", both naming
+     `div.hs-fp > a.hs-fim` -- the panel with no photo chosen is an empty link
+     painted with a gradient. It is named by the panel's own title (or its
+     button's words), which sit right under it; with neither it leaves the
+     accessibility tree, since it is out of the tab order already. An
+     attribute, so nothing on the page moves. --}}<div class="hs-fp"><a class="hs-fim" href="{{ $panel['url'] }}" tabindex="-1"@if (($fimName = $panel['image'] !== '' && $panel['alt'] !== '' ? null : ($panel['title'] !== '' ? $panel['title'] : $panel['btn'])) === null)@elseif ($fimName !== '') aria-label="{{ $fimName }}"@else aria-hidden="true"@endif style="background:{{ \App\Support\Gradient::for($panel['title'] !== '' ? $panel['title'] : $panel['side']) }}">@if ($panel['image'] !== '')<img src="{{ $panel['image'] }}" alt="{{ $panel['alt'] }}" width="800" height="450" loading="lazy" decoding="async">@endif</a>
 @if ($panel['title'] !== '')<h2>{{ $panel['title'] }}</h2>@endif
 @if ($panel['text'] !== '')<p>{{ $panel['text'] }}</p>@endif
 @if ($panel['btn'] !== '')<a class="hs-go" href="{{ $panel['url'] }}">{{ $panel['btn'] }} <b aria-hidden="true">▸</b></a>@endif</div>

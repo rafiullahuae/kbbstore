@@ -47,6 +47,9 @@
     // "Load more on scroll" lands (the brand page, Lane PR). A constant from
     // the caller, never a setting. Ignored when a caller's pin needs the id.
     'gridId' => null,
+    // (Lane PS) The first tile is the page's LCP picture when nothing is drawn
+    // above the grid; the caller that knows says so. False everywhere else.
+    'eagerFirst' => false,
 ])
 
 @php
@@ -136,6 +139,6 @@
              above); /shop's do not, and making the card read the relation would
              have put one more query on /shop, on every category archive, on the
              product page and on /routines. --}}
-        <x-product-card :product="$p" :cat-label="$p->categories->first()?->t('name')" />
+        <x-product-card :product="$p" :eager="$eagerFirst && $loop->first" :cat-label="$p->categories->first()?->t('name')" />
     @endforeach
 </div>

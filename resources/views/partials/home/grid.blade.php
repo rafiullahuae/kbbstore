@@ -52,6 +52,6 @@
      grid prints exactly what it did. --}}
 <div class="kbb-pgrid{{ isset($trackLabel) ? ' bndl-track' : '' }}" data-skin="{{ \App\Support\GridSkins::resolve($skin ?? null) }}"@isset($trackLabel) id="bndl-track" data-ymal-track tabindex="0" role="region" aria-label="{{ $trackLabel }}"@endisset>
     @foreach ($items as $i => $p)
-        <x-product-card :product="$p" :cat-label="$catLabel ?? null" :rank="($rank ?? false) ? $i + 1 : null" />
+        <x-product-card :product="$p" :eager="($eagerFirst ?? false) && $loop->first" :cat-label="$catLabel ?? null" :rank="($rank ?? false) ? $i + 1 : null" />
     @endforeach
 </div>

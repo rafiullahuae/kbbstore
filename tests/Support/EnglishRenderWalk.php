@@ -2119,6 +2119,21 @@ final class EnglishRenderWalk
                 'with' => '<section class="sr sr-compact" id="sr" style=',
                 'hits' => 1,
             ],
+            /*
+             * THE FILTER PANEL'S FACET TITLES ANNOUNCE LEVEL 2.        (Lane PS)
+             *
+             * Lighthouse heading-order on /collections/sunscreens/ while the 5 Oct
+             * PageSpeed report was reproduced across the shop: an <h4> straight
+             * after the page's <h1>. One attribute on each facet title; the tag,
+             * its CSS (.fgroup h4) and every word are unchanged, so nothing
+             * moves. ShopFacetHeadingLevelTest pins it.
+             */
+            'the shop facet titles: aria-level 2 (Lane PS)' => [
+                'pattern' => '#<div class="fgroup"><h4>#',
+                // /shop and the category page, four facet titles each.
+                'with' => '<div class="fgroup"><h4 aria-level="2">',
+                'hits' => 8,
+            ],
         ];
     }
 
