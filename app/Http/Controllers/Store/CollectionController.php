@@ -114,7 +114,7 @@ class CollectionController extends Controller
 
         if ($campaign !== null) {
             $products = \App\Support\SuperSale::apply($this->cardQuery(), $campaign, \App\Support\SuperSaleOrder::ids($this->settings))
-                ->paginate($this->perPage(), ['*'], 'page', $page)->withQueryString();
+                ->paginate($this->perPage($key), ['*'], 'page', $page)->withQueryString();
 
             if ($products->total() > 0) {
                 // "Every product currently reduced" is not true of a campaign
@@ -195,7 +195,7 @@ class CollectionController extends Controller
          * Lane SS.)
          */
         if ($campaign === null) {
-            $products = $query->paginate($this->perPage(), ['*'], 'page', $page)->withQueryString();
+            $products = $query->paginate($this->perPage($key), ['*'], 'page', $page)->withQueryString();
         }
 
         /*
@@ -211,6 +211,12 @@ class CollectionController extends Controller
          * card. See prime()'s docblock for the two alternatives and why not.
          */
         \App\Support\SetPricing::prime($products);
+
+        // Pagination off (Catalog → Pagination, Lane PG): page one holds every
+        // product, so ?page=N goes there for good. See allOnPageOne().
+        if ($this->allOnPageOne($key, $page, $products)) {
+            return \App\Support\ListingPagination::toPageOne(\App\Support\Url::to(rtrim($request->getPathInfo(), '/').'/'));
+        }
 
         // Same rule as ShopController: a page number past the end is not a
         // page. Here it answers 200 with an empty grid rather than a copy of
@@ -297,7 +303,7 @@ class CollectionController extends Controller
 
         $page = max(1, (int) $request->query('page', 1));
 
-        $products = $query->paginate($this->perPage(), ['*'], 'page', $page)->withQueryString();
+        $products = $query->paginate($this->perPage('concern-'.$concern), ['*'], 'page', $page)->withQueryString();
 
         /*
          * ONE STATEMENT FOR EVERY SET ON THIS PAGE, OR NONE AT ALL. (Lane SG)
@@ -312,6 +318,10 @@ class CollectionController extends Controller
          * card. See prime()'s docblock for the two alternatives and why not.
          */
         \App\Support\SetPricing::prime($products);
+
+        if ($this->allOnPageOne('concern-'.$concern, $page, $products)) {
+            return \App\Support\ListingPagination::toPageOne(\App\Support\Url::to(rtrim($request->getPathInfo(), '/').'/'));
+        }
 
         if ($page > 1 && $page > $products->lastPage()) {
             abort(404);
@@ -393,11 +403,26 @@ class CollectionController extends Controller
     /**
      * Products per page: the 24 these listings have always used, unless
      * Appearance → Site layout → Loading more products says otherwise.
-     * (Lane PI-B)
+     * (Lane PI-B) Catalog → Pagination off makes it ListingPagination::CAP —
+     * every product on one page. (Lane PG)
      */
-    private function perPage(): int
+    private function perPage(string $key): int
     {
-        return app(\App\Services\SiteLayout::class)->perPage(self::PER_PAGE);
+        return \App\Support\ListingPagination::perPage('page', $key, self::PER_PAGE);
+    }
+
+    /**
+     * True for ?page=N (N > 1) on a listing whose pagination is off and whose
+     * products all fit on page one: the address 301s to the listing itself,
+     * the rule the brand page has had since "Show every product of the brand
+     * on one page". Past the cap the later pages are real and stay. The
+     * paginator has already counted, so this costs no query.
+     */
+    private function allOnPageOne(string $key, int $page, \Illuminate\Pagination\LengthAwarePaginator $products): bool
+    {
+        return $page > 1
+            && $products->total() <= \App\Support\ListingPagination::CAP
+            && \App\Support\ListingPagination::showsAll('page', $key);
     }
 
     /**

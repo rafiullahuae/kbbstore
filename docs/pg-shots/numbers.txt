@@ -1,0 +1,14 @@
+pg-category-on-390.png  HTTP 200  /collections/serums/  products(server)=12 products(settled)=12 pageLinks=2 pager=scroll relNext=true scrollWidth=390 (viewport 390) docHeight=3328 canonical=http://127.0.0.1:10461/collections/serums/
+pg-category-off-390.png  HTTP 200  /collections/toners/  products(server)=34 products(settled)=34 pageLinks=0 pager=none relNext=false scrollWidth=390 (viewport 390) docHeight=7378 canonical=http://127.0.0.1:10461/collections/toners/
+pg-category-on-links-390.png  (no JS)  products=12 pageLinks=2 pagerShown=true scrollWidth=390
+  /collections/toners/?paged=2 -> http://127.0.0.1:10461/collections/toners/ (redirect chain status 301)
+pg-category-on-1280.png  HTTP 200  /collections/serums/  products(server)=12 products(settled)=24 pageLinks=2 pager=scroll relNext=true scrollWidth=1280 (viewport 1280) docHeight=3239 canonical=http://127.0.0.1:10461/collections/serums/
+pg-category-off-1280.png  HTTP 200  /collections/toners/  products(server)=34 products(settled)=34 pageLinks=0 pager=none relNext=false scrollWidth=1280 (viewport 1280) docHeight=4100 canonical=http://127.0.0.1:10461/collections/toners/
+pg-category-on-links-1280.png  (no JS)  products=12 pageLinks=2 pagerShown=true scrollWidth=1280
+  /collections/toners/?paged=2 -> http://127.0.0.1:10461/collections/toners/ (redirect chain status 301)
+pg-admin-1280.png  crumb="Catalog / Pagination" sidebarRow=true catalogOrder=[catalog,product-tabs,sets,product-editor,routines,category-tree,brands-manager,pagination] listingPageRows=13 overrideRows=1 scrollWidth=1280 (viewport 1280)
+pg-admin-search-1280.png  typed "serum": rows=1 admin-api requests while typing=0
+pg-admin-saved-1280.png  Serums set to "Pagination off", badge now "All at once", saved; overrides listed=2
+  /collections/serums/ after save: products=34 pageLinks=0 pager=none
+pg-admin-390.png  crumb="Catalog / Pagination" sidebarRow=true catalogOrder=[catalog,product-tabs,sets,product-editor,routines,category-tree,brands-manager,pagination] listingPageRows=13 overrideRows=1 scrollWidth=390 (viewport 390)
+pg-admin-search-390.png  typed "serum": rows=1 admin-api requests while typing=0

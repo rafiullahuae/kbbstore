@@ -396,7 +396,12 @@ class BrandController extends Controller
         $layout = app(\App\Services\SiteLayout::class);
         // Every product at once unless the owner turns "Show every product of
         // the brand on one page" off (Appearance → Site layout → Brand page).
-        $perPage = $layout->brandPerPage(self::PREVIEW_LIMIT);
+        // Catalog → Pagination (Lane PG) can turn this brand's pagination on
+        // or off outright, or turn it off for every listing; "follow" with
+        // pagination on — the shipped state — is that switch, exactly as
+        // before. See App\Support\ListingPagination::showsAll().
+        $showsAll = \App\Support\ListingPagination::showsAll('brand', (int) $brand->id);
+        $perPage = $showsAll ? \App\Services\SiteLayout::BRAND_ALL_CAP : $layout->perPage(self::PREVIEW_LIMIT);
         $page = \App\Support\Facets::page();
 
         /*
@@ -405,7 +410,7 @@ class BrandController extends Controller
          * rather than to a 404. Only within BRAND_ALL_CAP: a brand bigger than
          * that still has real later pages.
          */
-        if ($page > 1 && $layout->get('brand_all')
+        if ($page > 1 && $showsAll
             && Product::query()->visible()->where('brand_id', $brand->id)->count() <= \App\Services\SiteLayout::BRAND_ALL_CAP) {
             return redirect()->to(Url::to(UrlScheme::brand((string) $brand->slug)), 301);
         }
