@@ -75,11 +75,20 @@ it('declares its sidebar row where the sidebar is built, not where the partial i
      * the partial runs. That guard compares both directions and names the id;
      * this one is the finished-state count.
      */
-    $app = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+    // ▲ Lane AP: the sidebar is server-rendered from App\Support\AdminNav, so
+    // the row must be declared there, once, in Appearance, after Section
+    // dividers -- the first anchor its partial names.
+    $ids = [];
+    foreach (\App\Support\AdminNav::GROUPS as $g) {
+        foreach ($g['rows'] as $r) {
+            $ids[] = $g['sec'].'/'.$r['id'];
+        }
+    }
 
-    expect(substr_count($app, "{screen:'pagewash',label:'Page background',group:'Appearance',"
-        ."after:['dividers','prodstyles','homepage','layout'],"))
-        ->toBe(1, 'pagewash has no LATE_NAV row, so its sidebar entry does not exist until the partial is parsed');
+    expect(count(array_keys($ids, 'Appearance/pagewash', true)))
+        ->toBe(1, 'pagewash has no AdminNav row, so its sidebar entry does not exist until the partial is parsed');
+    expect($ids[array_search('Appearance/pagewash', $ids, true) - 1])->toBe('Appearance/dividers');
+    expect(\App\Support\AdminNav::rows()['pagewash']['label'])->toBe('Page background');
 });
 
 it('reaches every storefront document, each exactly once', function () {

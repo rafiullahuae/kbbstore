@@ -1,0 +1,599 @@
+
+(function(){
+  'use strict';
+
+  /* The console builds its sidebar and its router before this runs. NAV,
+     TITLES and ADMIN_BASE are const inside that script's own scope, so neither
+     can be read from here -- the router is wrapped instead, which is the
+     surface the console already exposes for exactly this. */
+
+  var SCREEN = 'htmlblocks';
+  var BASE = window.location.pathname.replace(/\/+$/, '');
+
+  /* ---------------------------------------------------------------- state */
+  var list = null;        // the block list payload, or null before it loads
+  var editing = null;     // {id|null, name, slug, status, content, used_in}
+  var slugTouched = false;// has the owner typed a handle of their own?
+  var query = '';
+  var statusFilter = '';
+  var banner = null;      // {kind:'ok'|'bad', text}
+  var fieldErrors = {};
+  var busy = false;
+  var seq = 0;            // guards against an older response landing last
+  var mounted = null;     // the `editing` object the mounted editor belongs to
+
+  /* ------------------------------------------------------------- plumbing */
+  function cookie(n){
+    var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
+    return m ? decodeURIComponent(m.pop()) : '';
+  }
+
+  /* Same shape as the sibling lane screens: the admin panel is served from a
+     secret path, so /admin-api is resolved relative to the current one rather
+     than hard-coded. */
+  async function api(path, method, body){
+    var opts = {
+      method: method || 'GET',
+      headers: {'Accept':'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN')},
+      credentials: 'same-origin'
+    };
+
+    if (body !== undefined) {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
+
+    var r = await fetch(BASE.replace(/\/[^\/]*$/, '') + '/admin-api' + path, opts);
+    var payload = null;
+    try { payload = await r.json(); } catch (e) { payload = null; }
+
+    if (!r.ok) {
+      var err = new Error('api ' + path + ' -> ' + r.status);
+      err.status = r.status;
+      err.body = payload;
+      throw err;
+    }
+
+    return payload;
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function icon(d){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
+           'stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">' + d + '</svg>';
+  }
+
+  function say(msg){ try { window.toast(msg); } catch (e) {} }
+
+  /* The handle rule, mirrored from the server's regex so the field can say no
+     before a round trip. The SERVER is still the authority -- it runs
+     Str::slug() and the same pattern -- this only saves the owner a refusal
+     they can see coming. */
+  function slugify(s){
+    return String(s || '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function shortcodeFor(slug){ return '[kbb_block slug="' + slug + '"]'; }
+
+  function when(iso){
+    if (!iso) return '—';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'});
+  }
+
+  async function copy(text){
+    try { await navigator.clipboard.writeText(text); say('Shortcode copied'); return; }
+    catch (e) {}
+    // Clipboard API needs a secure context; this path is the fallback for the
+    // times it is not there, not decoration.
+    var t = document.createElement('textarea');
+    t.value = text;
+    t.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(t);
+    t.select();
+    try { document.execCommand('copy'); say('Shortcode copied'); } catch (e2) { say('Copy failed'); }
+    document.body.removeChild(t);
+  }
+
+  /* ------------------------------------------------------------ the route */
+  var previousGo = window.go;
+
+  window.go = function(id){
+    /* previousGo runs FIRST, for every id including this one: it is what sets
+       the crumb, the page title and the active sidebar row from TITLES, and
+       for this id it now stops at LIVE_RENDERED without touching the network.
+       Then this screen draws over the placeholder it left. */
+    var out = previousGo.apply(this, arguments);
+
+    if (id !== SCREEN) return out;
+
+    editing = null;
+    banner = null;
+    fieldErrors = {};
+    render();
+    load();
+
+    return undefined;
+  };
+
+  /* ----------------------------------------------------------------- data */
+  async function load(){
+    var mine = ++seq;
+
+    try {
+      var payload = await api('/blocks');
+      if (mine !== seq) return;
+      list = payload;
+    } catch (e) {
+      if (mine !== seq) return;
+      list = {blocks: [], failed: true, status: e.status || 0};
+    }
+
+    /* A list refresh must never redraw an open editor.
+       CAUGHT IN CHROMIUM, not reasoned about: leave() calls render() and then
+       load(), and at 390px the list response landed AFTER the owner had opened
+       "New block" and typed a name. render() then rebuilt the editor from the
+       `editing` object, which still held the empty strings it was created
+       with, so the name and the derived handle were silently wiped and the
+       save came back 422. At 1920 and 1280 the same response happened to land
+       first and it looked fine -- an intermittent data-loss bug, which is the
+       worst kind to leave in a screen someone types into. */
+    if (editing) return;
+
+    render();
+  }
+
+  /* Read the mounted editor's fields back into the object it was rendered for,
+     so that a re-render for any other reason cannot discard typed work. Only
+     ever called when the mounted editor really does belong to `editing` --
+     otherwise open() would copy the previous block's fields onto the new one. */
+  function captureEditor(){
+    if (!mounted || mounted !== editing) return;
+
+    var name = document.querySelector('#hb-f-name');
+    var slug = document.querySelector('#hb-f-slug');
+    var status = document.querySelector('#hb-f-status');
+    var content = document.querySelector('#hb-f-content');
+
+    if (!name || !slug || !status || !content) return;
+
+    editing.name = name.value;
+    editing.slug = slug.value;
+    editing.status = status.value;
+    editing.content = content.value;
+  }
+
+  /* ---------------------------------------------------------------- views */
+  function render(){
+    var box = document.querySelector('#content');
+    if (!box) return;
+
+    captureEditor();
+
+    box.innerHTML = '<div class="wrap"><div class="hb-wrap" id="hb-root"></div></div>';
+    var root = document.querySelector('#hb-root');
+
+    root.innerHTML = editing ? editorHTML() : listHTML();
+
+    mounted = editing;
+
+    if (editing) bindEditor(); else bindList();
+
+    box.scrollTop = 0;
+  }
+
+  function bannerHTML(){
+    if (!banner) return '';
+    return '<div class="hb-banner ' + (banner.kind === 'bad' ? 'bad' : 'ok') + '">' + esc(banner.text) + '</div>';
+  }
+
+  function visibleBlocks(){
+    var rows = (list && list.blocks) || [];
+    var q = query.trim().toLowerCase();
+
+    return rows.filter(function(b){
+      if (statusFilter && b.status !== statusFilter) return false;
+      if (!q) return true;
+      return (b.name || '').toLowerCase().indexOf(q) >= 0
+          || (b.slug || '').toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
+  function listHTML(){
+    if (!list) {
+      return '<div class="hb-card"><div class="hb-sub">Loading blocks…</div></div>';
+    }
+
+    if (list.failed) {
+      /* The honest version. A 404 here means one specific thing and it is
+         worth naming, because it is the state this whole package is shipped
+         to leave behind: the routes exist in the tree but the server is still
+         serving a compiled route table that predates them. */
+      return '<div class="hb-card"><div class="hb-empty">' +
+        '<b>Blocks could not be loaded</b>' +
+        (list.status === 404
+          ? 'The /admin-api/blocks endpoint answered 404. That is what a stale compiled route cache looks like — run the update package’s migrations, which clear it.'
+          : 'The server answered ' + esc(String(list.status || 'nothing')) + '. Reload the page; if it keeps happening the admin API is not reachable.') +
+        '</div></div>';
+    }
+
+    var rows = visibleBlocks();
+    var total = (list.blocks || []).length;
+
+    var head =
+      '<div class="hb-card">' +
+        '<div class="hb-head">' +
+          '<div>' +
+            '<div class="hb-title">Reusable HTML blocks</div>' +
+            '<div class="hb-sub">Write a snippet once, then place it in any page or post by pasting its shortcode. Editing the block updates every page that uses it.</div>' +
+          '</div>' +
+          '<button class="btn" id="hb-new">' + icon('<path d="M12 5v14M5 12h14"/>') + ' New block</button>' +
+        '</div>' +
+        (total ? '<div class="hb-tools" style="margin-top:14px">' +
+          '<input id="hb-q" type="search" placeholder="Search name or handle" value="' + esc(query) + '">' +
+          '<select id="hb-status">' +
+            '<option value="">All statuses</option>' +
+            '<option value="published"' + (statusFilter === 'published' ? ' selected' : '') + '>Published</option>' +
+            '<option value="draft"' + (statusFilter === 'draft' ? ' selected' : '') + '>Draft</option>' +
+          '</select>' +
+        '</div>' : '') +
+      '</div>';
+
+    if (!total) {
+      return bannerHTML() + head +
+        '<div class="hb-card"><div class="hb-empty">' +
+          '<b>No blocks yet</b>' +
+          'A block is a piece of HTML you want in more than one place — a delivery note, a payment-logo strip, a seasonal banner. ' +
+          'Create one and it gets a shortcode you can paste into any page or post.' +
+        '</div></div>';
+    }
+
+    if (!rows.length) {
+      return bannerHTML() + head +
+        '<div class="hb-card"><div class="hb-empty"><b>Nothing matches</b>' +
+        'No block matches that search and filter.</div></div>';
+    }
+
+    var body = rows.map(function(b){
+      return '<tr data-hb-open="' + b.id + '">' +
+        '<td class="hb-name">' + esc(b.name) +
+          (b.imported ? ' <span class="hb-imp" title="Imported from your WordPress shop. Edit it here and every product that names it changes.">From WordPress</span>' : '') +
+        '</td>' +
+        '<td><span class="hb-code">' + esc(b.shortcode) + '</span></td>' +
+        '<td><span class="hb-pill ' + (b.status === 'published' ? 'live' : 'draft') + '">' +
+          (b.status === 'published' ? 'Published' : 'Draft') + '</span></td>' +
+        '<td>' + (b.used_in ? b.used_in + (b.used_in === 1 ? ' place' : ' places') : '—') + '</td>' +
+        '<td>' + esc(when(b.updated_at)) + '</td>' +
+        '<td><button class="btn ghost sm" data-copy="' + esc(b.shortcode) + '">Copy</button></td>' +
+      '</tr>';
+    }).join('');
+
+    return bannerHTML() + head +
+      '<div class="hb-card"><div class="hb-scroll"><table class="hb-table">' +
+        '<thead><tr><th>Name</th><th>Shortcode</th><th>Status</th><th>Used in</th><th>Updated</th><th></th></tr></thead>' +
+        '<tbody>' + body + '</tbody>' +
+      '</table></div></div>';
+  }
+
+  function editorHTML(){
+    var b = editing;
+    var isNew = !b.id;
+    var slug = b.slug || slugify(b.name);
+
+    var used = (b.used_in || []).map(function(u){
+      return '<span class="u">' + esc(u.title) + ' <span style="color:var(--ink-faint,#97a0b2)">· ' +
+             esc(u.type) + ' · ' + esc(u.status) + '</span></span>';
+    }).join('');
+
+    return bannerHTML() +
+      '<div class="hb-card">' +
+        '<div class="hb-head">' +
+          '<div>' +
+            '<div class="hb-title">' + (isNew ? 'New block' : esc(b.name)) + '</div>' +
+            '<div class="hb-sub">' + (isNew
+              ? 'Give it a name, write the HTML, then place it with the shortcode below.'
+              : 'Changes take effect on every page that places this block.') + '</div>' +
+          '</div>' +
+          '<button class="btn ghost" id="hb-back">' + icon('<path d="m15 18-6-6 6-6"/>') + ' All blocks</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="hb-card"><div class="hb-form">' +
+        '<div class="hb-row two">' +
+          '<div class="hb-field">' +
+            '<label for="hb-f-name">Name</label>' +
+            '<input id="hb-f-name" type="text" maxlength="120" value="' + esc(b.name) + '"' +
+              (fieldErrors.name ? ' class="bad"' : '') + '>' +
+            '<div class="hint">Only you see this. It is how the block is listed and searched.</div>' +
+            '<div class="hb-err">' + esc(fieldErrors.name || '') + '</div>' +
+          '</div>' +
+          '<div class="hb-field">' +
+            '<label for="hb-f-slug">Handle</label>' +
+            '<input id="hb-f-slug" type="text" maxlength="120" value="' + esc(slug) + '"' +
+              (fieldErrors.slug ? ' class="bad"' : '') + '>' +
+            '<div class="hint">The name the shortcode uses. Lowercase letters, numbers and dashes.</div>' +
+            '<div class="hb-err">' + esc(fieldErrors.slug || '') + '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="hb-row two">' +
+          '<div class="hb-field">' +
+            '<label for="hb-f-status">Status</label>' +
+            '<select id="hb-f-status">' +
+              '<option value="published"' + (b.status === 'published' ? ' selected' : '') + '>Published — renders on the storefront</option>' +
+              '<option value="draft"' + (b.status !== 'published' ? ' selected' : '') + '>Draft — renders nothing, anywhere</option>' +
+            '</select>' +
+            '<div class="hint">Draft is the off switch: the shortcode stays in your pages and simply renders nothing until you publish again.</div>' +
+          '</div>' +
+          '<div class="hb-field">' +
+            '<label>Shortcode</label>' +
+            '<div class="hb-actions">' +
+              '<span class="hb-code" id="hb-sc">' + esc(b.imported && b.shortcode ? b.shortcode : shortcodeFor(slug)) + '</span>' +
+              '<button class="btn ghost sm" id="hb-copy" type="button">Copy</button>' +
+            '</div>' +
+            '<div class="hint">' + (b.imported
+              ? 'Imported from your WordPress shop. Your product descriptions already carry this shortcode, so editing this block changes every product that names it.'
+              : 'Paste this into a page or post. It updates as you change the handle.') + '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="hb-field">' +
+          '<label for="hb-f-content">HTML</label>' +
+          '<textarea id="hb-f-content" spellcheck="false">' + esc(b.content || '') + '</textarea>' +
+          '<div class="hb-err">' + esc(fieldErrors.content || '') + '</div>' +
+        '</div>' +
+
+        '<div class="hb-field">' +
+          '<label>Preview</label>' +
+          '<div class="hb-preview"><iframe id="hb-prev" sandbox title="Block preview"></iframe></div>' +
+          '<div class="hint">Your HTML, on its own, with scripts disabled. It is not the storefront: the theme’s styles are not loaded here, and a [kbb_products] or [kbb_block] shortcode inside this block is expanded when the page is served, not in this box.</div>' +
+        '</div>' +
+
+        '<div class="hb-actions">' +
+          '<button class="btn" id="hb-save"' + (busy ? ' disabled' : '') + '>' + (busy ? 'Saving…' : 'Save block') + '</button>' +
+          '<button class="btn ghost" id="hb-cancel" type="button">Cancel</button>' +
+          '<span class="spacer"></span>' +
+          (isNew ? '' : '<button class="btn danger" id="hb-del" type="button">Delete</button>') +
+        '</div>' +
+      '</div></div>' +
+
+      (isNew ? '' :
+      '<div class="hb-card">' +
+        '<div class="hb-title" style="margin-bottom:4px">Used in</div>' +
+        (used
+          ? '<div class="hb-sub" style="margin-bottom:10px">Pages, posts and products whose content places this block.</div><div class="hb-used">' + used + '</div>'
+          : '<div class="hb-sub">Nothing places this block yet. Copy the shortcode above into a page or post.</div>') +
+      '</div>') +
+
+      '<div class="hb-note">' +
+        'Blocks are rendered into the page on the server, so their HTML is in the source a search engine sees. ' +
+        'Where a block is placed is decided by the page, not here — the same block can appear in as many pages and posts as you paste the shortcode into.' +
+      '</div>';
+  }
+
+  /* ------------------------------------------------------------- bindings */
+  function bindList(){
+    var neu = document.querySelector('#hb-new');
+    if (neu) neu.onclick = function(){
+      editing = {id:null, name:'', slug:'', status:'published', content:'', used_in:[]};
+      slugTouched = false;
+      fieldErrors = {};
+      banner = null;
+      render();
+    };
+
+    var q = document.querySelector('#hb-q');
+    if (q) q.oninput = function(){
+      query = q.value;
+      var at = q.selectionStart;
+      render();
+      var again = document.querySelector('#hb-q');
+      if (again) { again.focus(); try { again.setSelectionRange(at, at); } catch (e) {} }
+    };
+
+    var st = document.querySelector('#hb-status');
+    if (st) st.onchange = function(){ statusFilter = st.value; render(); };
+
+    document.querySelectorAll('#hb-root [data-copy]').forEach(function(btn){
+      btn.onclick = function(e){ e.stopPropagation(); copy(btn.dataset.copy); };
+    });
+
+    /* data-hb-open, NOT data-open. app.blade.php installs a document-level
+       click handler for the Homepage skin pickers that claims `data-open`
+       globally: it reads the attribute, looks up [data-pop="<value>"] and
+       calls pop.classList.toggle() with no null check. A row carrying a plain
+       data-open therefore threw "Cannot read properties of null (reading
+       'classList')" on every click — caught here as a real pageerror in
+       Chromium, not reasoned about. The prefixed name sidesteps it entirely.
+       The unguarded handler itself is still there and is reported upward;
+       it is in another lane's region of that file. */
+    document.querySelectorAll('#hb-root tr[data-hb-open]').forEach(function(tr){
+      tr.onclick = function(){ open(parseInt(tr.dataset.hbOpen, 10)); };
+    });
+  }
+
+  async function open(id){
+    var mine = ++seq;
+
+    try {
+      var payload = await api('/blocks/' + id);
+      if (mine !== seq) return;
+      editing = payload.block;
+      editing.used_in = payload.used_in || [];
+      slugTouched = true;   // an existing block's handle is already its own
+      fieldErrors = {};
+      banner = null;
+      render();
+    } catch (e) {
+      banner = {kind:'bad', text:'That block could not be opened (' + (e.status || 'no response') + ').'};
+      render();
+    }
+  }
+
+  function bindEditor(){
+    var name = document.querySelector('#hb-f-name');
+    var slug = document.querySelector('#hb-f-slug');
+    var status = document.querySelector('#hb-f-status');
+    var content = document.querySelector('#hb-f-content');
+    var sc = document.querySelector('#hb-sc');
+
+    function syncShortcode(){
+      // An imported section is placed by its WordPress id, which no handle edit moves.
+      if (sc && !(editing && editing.imported)) sc.textContent = shortcodeFor(slug ? slug.value : '');
+    }
+
+    /* Field values are read out of the DOM on save rather than mirrored into
+       `editing` on every keystroke, so typing never re-renders the textarea
+       and never moves the caret. `editing` is only refreshed where a redraw
+       is about to happen anyway. */
+    if (name) name.oninput = function(){
+      if (!slugTouched && slug) { slug.value = slugify(name.value); syncShortcode(); }
+    };
+
+    if (slug) slug.oninput = function(){ slugTouched = true; syncShortcode(); };
+
+    var copyBtn = document.querySelector('#hb-copy');
+    if (copyBtn) copyBtn.onclick = function(){ copy(sc ? sc.textContent : shortcodeFor(slug ? slug.value : '')); };
+
+    /* srcdoc + sandbox with no allow-scripts: the block's own markup is shown,
+       and any script inside it cannot run in the admin document. The owner
+       writes this HTML themselves, so this is not a trust boundary against
+       them -- it is so a half-typed <script> or a stray onerror cannot take
+       the console down while they are still writing it. */
+    var prev = document.querySelector('#hb-prev');
+    function paint(){
+      if (!prev) return;
+      prev.srcdoc = '<!doctype html><meta charset="utf-8">' +
+        '<style>body{margin:12px;font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#101729}' +
+        'img{max-width:100%;height:auto}</style>' + (content ? content.value : '');
+    }
+    paint();
+
+    if (content) {
+      var timer = null;
+      content.oninput = function(){ clearTimeout(timer); timer = setTimeout(paint, 250); };
+    }
+
+    var back = document.querySelector('#hb-back');
+    var cancel = document.querySelector('#hb-cancel');
+    function leave(){ editing = null; fieldErrors = {}; banner = null; render(); load(); }
+    if (back) back.onclick = leave;
+    if (cancel) cancel.onclick = leave;
+
+    var save = document.querySelector('#hb-save');
+    if (save) save.onclick = function(){
+      submit({
+        name: name ? name.value.trim() : '',
+        slug: slug ? slug.value.trim() : '',
+        status: status ? status.value : 'draft',
+        content: content ? content.value : ''
+      });
+    };
+
+    var del = document.querySelector('#hb-del');
+    if (del) del.onclick = function(){ remove(false); };
+  }
+
+  async function submit(values){
+    if (busy) return;
+
+    // Hold what was typed, so a validation failure redraws the form with the
+    // owner's own words in it rather than with whatever was last saved.
+    editing.name = values.name;
+    editing.slug = values.slug;
+    editing.status = values.status;
+    editing.content = values.content;
+
+    busy = true;
+    fieldErrors = {};
+    banner = null;
+    render();
+
+    try {
+      var payload = editing.id
+        ? await api('/blocks/' + editing.id, 'PUT', values)
+        : await api('/blocks', 'POST', values);
+
+      busy = false;
+      say(editing.id ? 'Block saved' : 'Block created');
+      editing = null;
+      banner = {kind:'ok', text:'“' + payload.block.name + '” saved. ' + (payload.block.wc_id
+        ? 'Every product that names it shows the change now.'
+        : 'Place it with ' + shortcodeFor(payload.block.slug) + '.')};
+      render();
+      load();
+    } catch (e) {
+      busy = false;
+
+      if (e.status === 422 && e.body && e.body.errors) {
+        Object.keys(e.body.errors).forEach(function(k){ fieldErrors[k] = e.body.errors[k][0]; });
+        banner = {kind:'bad', text:'That could not be saved — see the fields below.'};
+      } else {
+        banner = {kind:'bad', text:'Saving failed (' + (e.status || 'no response') + '). Nothing was changed.'};
+      }
+
+      render();
+    }
+  }
+
+  async function remove(force){
+    if (busy || !editing || !editing.id) return;
+
+    busy = true;
+    render();
+
+    try {
+      await api('/blocks/' + editing.id + (force ? '?force=1' : ''), 'DELETE');
+      busy = false;
+      say('Block deleted');
+      editing = null;
+      banner = {kind:'ok', text:'Block deleted.'};
+      render();
+      load();
+    } catch (e) {
+      busy = false;
+
+      /* The in-use refusal is a question, not a failure. The server counts
+         the pages that place this block and declines; the owner is shown the
+         count and can mean it. */
+      if (e.status === 422 && e.body && e.body.error === 'block_in_use') {
+        var used = (e.body.used_in || []).map(function(u){ return '• ' + u.title + ' (' + u.type + ')'; }).join('\n');
+        var ok = window.confirm(e.body.message + '\n\n' + used + '\n\nDelete it anyway?');
+        if (ok) return remove(true);
+        render();
+        return;
+      }
+
+      banner = {kind:'bad', text:'Deleting failed (' + (e.status || 'no response') + '). Nothing was changed.'};
+      render();
+    }
+  }
+
+  /* ------------------------------------------------------------------ init
+     The console's boot block resolves ?go= and #hash against TITLES and calls
+     go() at parse time -- BEFORE this file runs, because this is included
+     after it. 'htmlblocks' is in TITLES, so a bookmark straight to this screen
+     lands on the placeholder mountFrame left and stops there. Re-dispatching
+     once, and only when this really is the screen being asked for, is what
+     makes that bookmark work. */
+  function bootIfCurrent(){
+    var q = new URLSearchParams(window.location.search).get('go');
+    var h = (window.location.hash || '').replace('#', '');
+
+    if ((q || h) === SCREEN) window.go(SCREEN);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootIfCurrent);
+  } else {
+    bootIfCurrent();
+  }
+})();

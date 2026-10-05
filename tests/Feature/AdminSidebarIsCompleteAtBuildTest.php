@@ -51,7 +51,36 @@ use App\Models\AdminUser;
  *      order rows arrive in decides where they land; sorting the array would
  *      silently move rows.
  *
- * MUTATION NOTES, each one run:
+ * ── ▲ LANE AP: THE SIDEBAR IS NOW IN THE FIRST BYTES, NOT AT buildNav() ──
+ *
+ * The owner again: "upon hard refresh some menu items from the left panel
+ * keeps missing ... must load everything instantly with all menu items."
+ * buildNav() itself ran at 1.36 s on a throttled cold load (4x CPU, 2 Mbit/s),
+ * with nothing in the sidebar before it, and #KBeautyBliss Spotted -- in
+ * neither NAV nor LATE_NAV, because this file's reader could not see a partial
+ * whose label is a variable -- arrived with its partial at 5.96 s.
+ *
+ * NAV and LATE_NAV are gone. App\Support\AdminNav is the one definition and
+ * the server renders #nav from it, complete, before any script: measured on
+ * the same profile, every row is in the frame at 578 ms and in the first
+ * paint. The guarantees below are the old ones moved onto that source:
+ *
+ *   1. Every row a partial registers is declared in AdminNav, with its label
+ *      and group, and every `late` row is one a partial registers.
+ *   2. Every row is in the served document BEFORE the console's first script,
+ *      inside the server-rendered <nav>.
+ *   3. The rendered sidebar is the settled sidebar captured from Chromium,
+ *      group by group, row by row.
+ *
+ * MUTATION NOTES (Lane AP), each one run:
+ *   - delete the `spotted` row from AdminNav::GROUPS
+ *        -> 'declares the same row the partial does' fails naming spotted.
+ *   - print `<nav class="nav" id="nav"></nav>` instead of AdminNav::html()
+ *        -> 'renders every row into the first bytes' fails.
+ *   - swap 'setap' and 'productpage' in AdminNav::GROUPS
+ *        -> 'renders the sidebar the console settled on' fails on Appearance.
+ *
+ * MUTATION NOTES from the LATE_NAV lane, kept for the history:
  *   - delete the `LATE_NAV.forEach(r=>kbbAddNavEntry(r));` line
  *        -> 'the rows a partial contributes are still only registered by the
  *            partial' fails, naming all 21 rows and their byte offsets.
@@ -93,28 +122,14 @@ function navSidebarRendered(): string
     return $html = test()->actingAs($admin, 'admin')->get('/admin')->assertOk()->getContent();
 }
 
-/** LATE_NAV, read from the literal, in declaration order. */
+/** Every AdminNav row by id, with the section it is drawn in. */
 function navSidebarLateNav(): array
 {
-    $src = navSidebarSrc();
-    $at = strpos($src, 'const LATE_NAV=[');
-
-    expect($at)->not->toBeFalse('LATE_NAV is no longer a literal array, so this file cannot read it');
-
-    $end = strpos($src, "\n];", (int) $at);
-    $block = substr($src, (int) $at, (int) $end - (int) $at);
-
-    preg_match_all(
-        "/\{screen:'([^']+)',label:'([^']*)',group:'([^']*)',after:\[([^\]]*)\],icon:'([^']*)'\}/",
-        $block,
-        $m,
-        PREG_SET_ORDER
-    );
-
     $out = [];
-    foreach ($m as $hit) {
-        preg_match_all("/'([^']+)'/", $hit[4], $a);
-        $out[$hit[1]] = ['label' => $hit[2], 'group' => $hit[3], 'after' => $a[1], 'icon' => $hit[5]];
+    foreach (\App\Support\AdminNav::GROUPS as $g) {
+        foreach ($g['rows'] as $r) {
+            $out[$r['id']] = ['label' => $r['label'], 'group' => $g['sec'], 'late' => ! empty($r['late'])];
+        }
     }
 
     return $out;
@@ -145,6 +160,13 @@ function navSidebarPartialRows(): array
                 return preg_match("/{$key}:\s*'((?:[^'\\\\]|\\\\.)*)'/", $chunk, $m) ? $m[1] : null;
             };
             $label = $g('label');
+            // ▲ Lane AP: a label passed as the partial's own LABEL variable
+            // (spotted-screen does this) was read as "no call here", which is
+            // how that row escaped LATE_NAV and arrived at DOMContentLoaded.
+            if ($label === null && preg_match("/label:\s*LABEL\b/", $chunk)
+                && preg_match("/(?:var|const)\s+LABEL\s*=\s*'((?:[^'\\\\]|\\\\.)*)'/", $body, $lm)) {
+                $label = $lm[1];
+            }
             if ($label === null) {
                 continue;   // the shared docblock in app.blade.php, not a call
             }
@@ -206,29 +228,32 @@ function navSidebarPartialRows(): array
 
 it('declares the same row the partial does, in both directions', function () {
     /*
-     * The anti-drift guard. LATE_NAV is a COPY of each partial's own call, and
-     * a copy drifts. Compared both ways: a partial whose row is missing here
-     * is a row that goes back to arriving at 98.9% of the document, and a row
-     * here that no partial claims is a sidebar entry with no renderer behind
-     * it.
+     * The anti-drift guard, moved onto App\Support\AdminNav (Lane AP). The
+     * server draws every row from AdminNav, so a partial's own kbbAddNavEntry()
+     * is a no-op that returns the row already there -- unless AdminNav does not
+     * declare it, in which case the row is back to arriving with its partial,
+     * at the end of the document. Compared both ways: a partial row AdminNav
+     * lacks is that defect; an AdminNav `late` row no partial registers is a
+     * sidebar entry with no renderer behind it.
      *
-     * The label, the group and the anchors are compared, because those are
-     * what decide where the row lands and what it says. The New Order screen
-     * is the one hand-rolled chain left and it names no group, so only its
-     * label and anchor are comparable.
+     * Label and group are compared, because those are what the owner reads and
+     * where the row sits. The `after` anchors no longer decide anything: the
+     * position is the row's place in AdminNav::GROUPS, pinned by the settled-
+     * order case below.
      */
     $declared = navSidebarLateNav();
     $registered = navSidebarPartialRows();
 
-    expect($declared)->not->toBeEmpty('LATE_NAV is empty')
-        ->and($registered)->not->toBeEmpty('no partial registers a sidebar row any more, so this guard asserts nothing');
+    expect($declared)->not->toBeEmpty('AdminNav declares no rows')
+        ->and($registered)->not->toBeEmpty('no partial registers a sidebar row any more, so this guard asserts nothing')
+        ->and($registered)->toHaveKey('spotted');
 
     $why = [];
 
     foreach ($registered as $id => $r) {
         if (! isset($declared[$id])) {
             $why[] = sprintf(
-                '  %-16s is registered by %s and is NOT in LATE_NAV, so its row does not exist until that'
+                '  %-16s is registered by %s and is NOT in AdminNav, so its row does not exist until that'
                 ."\n                   partial has been parsed -- the defect this file exists for.",
                 $id, $r['file']
             );
@@ -238,23 +263,22 @@ it('declares the same row the partial does, in both directions', function () {
 
         $d = $declared[$id];
         if ($d['label'] !== $r['label']) {
-            $why[] = sprintf('  %-16s LATE_NAV says label "%s", %s says "%s"', $id, $d['label'], $r['file'], $r['label']);
+            $why[] = sprintf('  %-16s AdminNav says label "%s", %s says "%s"', $id, $d['label'], $r['file'], $r['label']);
         }
         if ($r['group'] !== null && $d['group'] !== $r['group']) {
-            $why[] = sprintf('  %-16s LATE_NAV says group "%s", %s says "%s"', $id, $d['group'], $r['file'], $r['group']);
+            $why[] = sprintf('  %-16s AdminNav says group "%s", %s says "%s"', $id, $d['group'], $r['file'], $r['group']);
         }
-        if ($r['after'] !== [] && $d['after'] !== $r['after']) {
-            $why[] = sprintf(
-                '  %-16s LATE_NAV anchors on [%s], %s anchors on [%s] -- the row would sit somewhere else',
-                $id, implode(', ', $d['after']), $r['file'], implode(', ', $r['after'])
-            );
+        if (! $d['late']) {
+            $why[] = sprintf('  %-16s is registered by %s but is not marked `late` in AdminNav, so a click before'
+                .' its partial arrives is not replayed', $id, $r['file']);
         }
     }
 
-    foreach (array_keys($declared) as $id) {
-        if (! isset($registered[$id])) {
+    foreach ($declared as $id => $d) {
+        // A `pending` row's partial has not merged yet (AdminNav says whose).
+        if ($d['late'] && ! isset($registered[$id]) && empty(\App\Support\AdminNav::rows()[$id]['pending'])) {
             $why[] = sprintf(
-                '  %-16s is declared in LATE_NAV but no partial registers it, so the sidebar carries a row'
+                '  %-16s is a `late` row in AdminNav but no partial registers it, so the sidebar carries a row'
                 ."\n                   whose screen nothing draws.",
                 $id
             );
@@ -266,172 +290,129 @@ it('declares the same row the partial does, in both directions', function () {
     );
 });
 
-it('registers the rows a partial contributes before the partials are parsed', function () {
+it('renders every row into the first bytes of the console, before any of its scripts', function () {
     /*
-     * THE MEASUREMENT, AS AN ASSERTION. This is the test that is red on the
-     * code this lane replaced.
-     *
-     * For each row, find every byte offset in the RENDERED console at which
-     * something registers it, and take the earliest. Before this lane, the
-     * earliest was the partial's own call -- 44.2% to 98.9% of the document,
-     * depending on the row. It must now be the declaration beside buildNav(),
-     * which is in the first script block.
-     *
-     * The threshold is the FIRST partial's own registration, derived rather
-     * than written as a percentage: every row must be registered before the
-     * point at which partial-contributed rows used to start appearing. That
-     * is what "the sidebar is complete when it is first drawn" means, and it
-     * cannot drift as the document grows.
+     * THE MEASUREMENT, AS AN ASSERTION (Lane AP). Every row the account may
+     * open is inside the server-rendered <nav id="nav">, exactly once, and that
+     * <nav> closes before the console's first script block -- the 650 KB one
+     * buildNav() used to wait for. Nothing is left for a script to add.
      */
     $html = navSidebarRendered();
     $total = strlen($html);
 
-    $buildNav = strpos($html, "\nbuildNav();");
-    expect($buildNav)->not->toBeFalse('buildNav() is no longer called, so the sidebar is built somewhere this file cannot find');
+    $open = strpos($html, '<nav class="nav" id="nav"');
+    $close = strpos($html, '</nav>', (int) $open);
+    $script = strpos($html, 'const $=(s,r=document)=>r.querySelector(s);');
 
-    $registerAt = strpos($html, 'LATE_NAV.forEach(r=>kbbAddNavEntry(r));');
-    expect($registerAt)->not->toBeFalse(
-        'nothing registers LATE_NAV in the rendered console, so every partial-contributed row is back to '
-        .'appearing only when its own script runs -- which on this document is up to 98.9% of the way through it'
-    );
+    expect($open)->not->toBeFalse('the console no longer prints a server-rendered <nav id="nav">')
+        ->and($script)->not->toBeFalse('the console script\'s first line moved; this file cannot find it')
+        ->and($close)->toBeLessThan($script, 'the sidebar closes after the console script starts');
 
-    // Where the partials' own registrations begin: the first kbbAddNavEntry
-    // call that carries a label, which only a real call site does.
-    preg_match_all("/kbbAddNavEntry\(\{[\s\S]{0,600}?label:\s*'([^']*)'/", $html, $m, PREG_OFFSET_CAPTURE);
-    $partialOffsets = array_map(fn ($hit) => $hit[1], $m[0]);
+    $nav = substr($html, (int) $open, (int) $close - (int) $open);
+    $missing = [];
+    foreach (array_keys(navSidebarLateNav()) as $id) {
+        if (substr_count($nav, 'data-go="'.$id.'"') !== 1) {
+            $missing[] = $id;
+        }
+    }
 
-    expect($partialOffsets)->not->toBeEmpty('no partial registers a row in the rendered console any more');
-
-    $firstPartial = min($partialOffsets);
-    $lastPartial = max($partialOffsets);
-
-    expect($registerAt)->toBeLessThan($firstPartial, sprintf(
-        "the declared rows are registered at byte %d (%.1f%%) of a %d-byte document, which is AFTER the first\n"
-        ."partial registers its own row at byte %d (%.1f%%). The last partial registers at byte %d (%.1f%%), and\n"
-        ."every row between those two points is missing from the owner's sidebar until it is reached.",
-        $registerAt, 100 * $registerAt / $total, $total,
-        $firstPartial, 100 * $firstPartial / $total,
-        $lastPartial, 100 * $lastPartial / $total
-    ));
-
-    // And it happens as part of building the sidebar, not somewhere else.
-    expect($registerAt - $buildNav)->toBeLessThan(600, sprintf(
-        'the declared rows are registered %d bytes after buildNav(), not immediately after it',
-        $registerAt - $buildNav
+    expect($missing)->toBe([], 'rows missing from (or doubled in) the server-rendered sidebar: '.implode(', ', $missing));
+    expect(100 * $close / $total)->toBeLessThan(15.0, sprintf(
+        'the sidebar ends at byte %d of %d (%.1f%%) -- it belongs in the first bytes', $close, $total, 100 * $close / $total
     ));
 });
 
-it('registers them before the first navigation, so a deep link sees a complete sidebar', function () {
+it('marks the deep-linked row and opens its group in the markup itself', function () {
     /*
-     * go() sets the sidebar highlight and opens the group the screen is in. If
-     * the rows were registered after the deep-link boot, ?go=setap would paint
-     * the screen with nothing marked in the menu.
+     * go() sets the highlight and opens the screen's group, but go() is in the
+     * console script. The server knows ?go= and draws the mark itself, so a
+     * deep link paints the right row lit before any script runs; the inline
+     * script after the <nav> does the same for a #hash, which never reaches
+     * the server.
      */
-    $src = navSidebarSrc();
-    $register = strpos($src, 'LATE_NAV.forEach(r=>kbbAddNavEntry(r));');
-    $deepLink = strpos($src, 'LANE DA · deep links · BEGIN');
+    $admin = AdminUser::create([
+        'name' => 'Deep Link Owner', 'email' => 'deep-link-owner@example.test',
+        'password' => 'password-long-enough', 'role' => 'owner',
+    ]);
+    $html = $this->actingAs($admin, 'admin')->get('/admin?go=setap')->assertOk()->getContent();
 
-    expect($register)->not->toBeFalse('LATE_NAV is not registered in app.blade.php at all')
-        ->and($deepLink)->not->toBeFalse('the deep-link boot region was renamed or removed')
-        ->and($register)->toBeLessThan(
-            $deepLink,
-            'the partial-contributed rows are registered AFTER the deep-link boot navigates, so ?go= to one of '
-            .'them opens its screen with no sidebar row marked and its group shut'
-        );
+    expect($html)->toContain('<div class="nav-group open" data-sec="Appearance">')
+        ->and($html)->toContain('<button class="nav-item on" data-go="setap">')
+        ->and(substr_count($html, 'class="nav-item on'))->toBe(1)
+        ->and(substr_count($html, 'class="nav-group open"'))->toBe(1);
+
+    // An address naming no row falls back to Dashboard, which is what the boot
+    // opens for it. The value is compared, never printed.
+    $html = $this->get('/admin?go=%22%3E%3Cscript%3Ealert(1)%3C%2Fscript%3E')->assertOk()->getContent();
+    expect($html)->toContain('<button class="nav-item on" data-go="dash">')
+        ->and($html)->not->toContain('"><script>alert(1)</script>');
 });
 
-it('keeps LATE_NAV in the order the sidebar is built in', function () {
+it('renders the sidebar the console settled on, group by group and row by row', function () {
     /*
-     * kbbAddNavEntry inserts a row directly after the first of its `after`
-     * anchors that is ALREADY in the claimed group, so the order rows arrive
-     * in decides where they land. Sorting LATE_NAV -- the obvious tidy-up --
-     * moves rows silently.
-     *
-     * The expectation below is the sidebar captured from Chromium before this
-     * lane changed anything: 13 groups, 77 rows. `setap` is the one that
-     * proves the point. It names 'cartpanel' first, but it registers before
-     * cart-panel does, so it has always landed after 'productpage'; an
-     * alphabetical LATE_NAV puts it after cartpanel instead and the Set row
-     * moves four places up the Appearance menu.
+     * Captured from Chromium on the code before Lane AP (tools/ap-settled.cjs
+     * -> storage/ap-logs/settled-before-owner.json): what #nav held once
+     * buildNav(), LATE_NAV and every partial had run. The server now renders
+     * exactly this, so a cold load and a settled console are the same sidebar.
+     * The JSON comparison in that harness also matched every row's icon markup
+     * and classes byte for byte.
      */
-    $base = [
-        'Platform' => ['theme', 'users', 'settings', 'siteaddr'],
-        'Safety' => ['debug', 'sandbox', 'democontent'],
-        'Catalog' => ['catalog'],
-        'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'import', 'orders',
-            'payments', 'analytics', 'search', 'seo', 'mail', 'store-settings', 'customers', 'quiz-leads'],
-        'Content' => ['posts', 'htmlblocks', 'media'],
-        'Translation' => ['tr-settings', 'tr-progress', 'tr-strings', 'tr-machine'],
-        'Appearance' => ['homepage', 'prodstyles', 'mobilehdr', 'dividers', 'acctpanel', 'header',
-            'mobilemenu', 'productpage', 'bundles', 'layout'],
-        'Pages' => ['pages-store', 'pages-user'],
-        'Growth & Marketing' => ['newsletter', 'labels', 'meta', 'pixels'],
-        'Reviews' => ['rev-all', 'rev-add', 'rev-assign', 'rev-io', 'rev-badge', 'rev-settings'],
-    ];
-
-    // Captured from the browser on the code this lane started from.
-    //
-    // ▲ ADVANCED, 29 September: 'gridsections' after 'banners' in Appearance.
-    //   Lane GS added Appearance → Grid sections, whose partial anchors on
-    //   [banners, hpcontent, homepage], so kbbAddNavEntry places it after the
-    //   FIRST of those already present — banners. Nothing else in the list
-    //   moved, which is the check: this pin exists so that adding a row cannot
-    //   quietly reorder the rows around it, and the diff is one insertion.
-    //
-    //   It also caught two real mistakes of mine while wiring that screen. The
-    //   @include went in before banners-screen, so the anchor named a row that
-    //   had not registered yet and read as dead weight; and the LATE_NAV row
-    //   named [banners, homepage] while the partial named
-    //   [banners, hpcontent, homepage], which would have put the row in one
-    //   place on a cold load and another once the partial ran. Both were
-    //   reported by name.
     $settled = [
+        '' => ['dash'],
         'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'cache'],
+        // App: added after the capture, at the owner's request (5 October).
+        'App' => ['siteapp', 'ownerapp'],
+        'Safety' => ['debug', 'sandbox', 'democontent'],
         'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'routines', 'category-tree', 'brands-manager', 'pagination'],
         'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'import', 'orders',
             'order-new', 'coupon-editor', 'payments', 'paygw', 'security', 'analytics', 'search', 'seo', 'seokeywords',
-            'mail', 'store-settings', 'customers', 'quiz-leads'],
+            'store-settings', 'customers', 'quiz-leads'],
+        'Emails' => ['emails', 'emails-sending', 'emails-customer', 'emails-branding', 'emails-sent', 'mail'],
         'Content' => ['posts', 'htmlblocks', 'media', 'ugcsections', 'instagram'],
-        // 'pagewash' — Appearance → Page background (Lane BG), one insertion,
-        // which is what the note above says a new row should cost this pin. It
-        // lands after 'dividers' because that is the first anchor its
-        // kbbAddNavEntry() call names, and the LATE_NAV row the integrator adds
-        // names the same four in the same order.
-        //
-        // 'wabutton' — Appearance → WhatsApp button (Lane WA), one insertion:
-        // its first anchor is 'pagewash', so it lands directly after it.
-        'Appearance' => ['homepage', 'hpcontent', 'banners', 'gridsections', 'prodstyles', 'mobilehdr',
+        'Translation' => ['tr-settings', 'tr-progress', 'tr-strings', 'tr-machine'],
+        'Appearance' => ['homepage', 'hpcontent', 'spotted', 'banners', 'gridsections', 'prodstyles', 'mobilehdr',
             'dividers', 'pagewash', 'wabutton', 'cartpanel', 'cartpage', 'checkoutpage', 'slimfooter', 'acctpanel',
             'header', 'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout'],
+        'Pages' => ['pages-store', 'pages-user', 'pagebanners', 'pageheader'],
+        'Growth & Marketing' => ['mkt-email', 'newsletter', 'labels', 'meta', 'pixels', 'searchterms', 'carttracking'],
+        'Reviews' => ['rev-all', 'rev-add', 'rev-assign', 'rev-io', 'rev-badge', 'rev-settings'],
+        '/flat' => ['shopfilters', 'updates'],
     ];
 
-    // kbbAddNavEntry's placement, steps 1 and 2. Steps 3 and 4 are its loud
-    // failure paths and cannot be reached here: every group named exists.
-    $nav = $base;
-    foreach (navSidebarLateNav() as $id => $row) {
-        $group = $row['group'];
-        expect(isset($nav[$group]))->toBeTrue("LATE_NAV puts '{$id}' in a group NAV does not have: '{$group}'");
+    // Read back out of the RENDERED markup, so the assertion is about what
+    // the browser receives rather than about the PHP array.
+    $html = navSidebarRendered();
+    $open = (int) strpos($html, '<nav class="nav" id="nav"');
+    $nav = substr($html, $open, (int) strpos($html, '</nav>', $open) - $open);
 
-        $placed = false;
-        foreach ($row['after'] as $anchor) {
-            $i = array_search($anchor, $nav[$group], true);
-            if ($i !== false) {
-                array_splice($nav[$group], $i + 1, 0, [$id]);
-                $placed = true;
-                break;
+    $dom = new DOMDocument;
+    @$dom->loadHTML('<?xml encoding="utf-8"?>'.$nav.'</nav>');
+    $got = [];
+    $flat = 0;
+    foreach ($dom->getElementsByTagName('nav')->item(0)->childNodes as $el) {
+        if (! $el instanceof DOMElement) {
+            continue;
+        }
+        if (str_contains($el->getAttribute('class'), 'nav-group')) {
+            foreach ((new DOMXPath($dom))->query('.//button[@data-go]', $el) as $b) {
+                $got[$el->getAttribute('data-sec')][] = $b->getAttribute('data-go');
             }
+
+            continue;
         }
-        if (! $placed) {
-            $nav[$group][] = $id;
-        }
+        $got[$flat++ === 0 ? '' : '/flat'][] = $el->getAttribute('data-go');
     }
 
-    foreach ($settled as $group => $expected) {
-        expect($nav[$group])->toBe($expected, sprintf(
-            "the %s menu would not settle where it does today.\n  want %s\n  got  %s",
-            $group, implode(' ', $expected), implode(' ', $nav[$group])
+    expect(array_keys($got))->toBe(array_keys($settled));
+    foreach ($settled as $group => $rows) {
+        expect($got[$group])->toBe($rows, sprintf(
+            "the %s menu is not the one the console settled on.\n  want %s\n  got  %s",
+            $group === '' ? 'top' : $group, implode(' ', $rows), implode(' ', $got[$group])
         ));
     }
+
+    // Core Updates is pinned to the foot, above Console.
+    expect($nav)->toContain('<button class="nav-item nav-pinned" data-go="updates">');
 });
 
 it('can tell the dashboard fallback from a screen that drew itself', function () {

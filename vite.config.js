@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import { readdirSync } from 'node:fs';
+import adminConsoleAssets from './vite-admin-console-assets.mjs';
 
 /*
  * The font library (Lane FS, App\Support\FontLibrary): every woff2 under
@@ -99,6 +100,13 @@ export default defineConfig({
             ],
             refresh: true,
         }),
+        /*
+         * (Lane AP) The admin console's large static <script>/<style> blocks,
+         * built as cacheable files keyed by the sha1 of their bytes. The server
+         * (App\Support\AdminConsoleAssets) swaps a block for its file only when
+         * what it rendered hashes to a key here; anything else stays inline.
+         */
+        adminConsoleAssets(),
     ],
     build: {
         rollupOptions: {

@@ -1,0 +1,147 @@
+
+/* ---------------------------------------------------------------------------
+   Brands + banner editor. Every rule is prefixed bz- and appears nowhere else
+   in the console, so this file cannot restyle another screen by accident.
+
+   THE LAYOUT RULE: min-width:0 on every grid and flex child that can contain
+   something wide. A grid item's default min-width is `auto` -- "at least as
+   wide as my content" -- so one long brand name or one long URL refuses to
+   shrink, the scroller's overflow-x never gets a chance, and the whole screen
+   is stretched. That shipped on the Coupons screen once already.
+
+   And why it is invisible in testing: this admin sets body{overflow-x:hidden}
+   and scrolls inside #content, so documentElement.scrollWidth reads a
+   comforting zero however over-wide the screen is. #content is the element
+   that has to be measured.
+--------------------------------------------------------------------------- */
+.bz-wrap{display:grid;gap:16px;min-width:0}
+.bz-wrap > *{min-width:0}
+
+.bz-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+         border-radius:var(--r,12px);padding:16px;min-width:0}
+.bz-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;min-width:0}
+.bz-head > *{min-width:0}
+.bz-title{font-weight:650;font-size:15px}
+.bz-sub{color:var(--ink-soft,#6b7280);font-size:12.5px}
+
+.bz-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;min-width:0}
+.bz-stats > *{min-width:0}
+.bz-stat{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+         border-radius:var(--r,12px);padding:12px 14px;min-width:0}
+.bz-stat b{display:block;font-size:20px;line-height:1.3;font-variant-numeric:tabular-nums}
+.bz-stat span{color:var(--ink-soft,#6b7280);font-size:12px}
+
+.bz-list{display:grid;gap:6px;min-width:0}
+.bz-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
+        border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:9px 11px;
+        background:var(--surface,#fff);min-width:0}
+.bz-row > *{min-width:0}
+
+.bz-logo{width:34px;height:34px;border-radius:8px;object-fit:contain;background:var(--chip,#f3f4f6);
+         border:1px solid var(--border,#e6e6e6);flex:0 0 auto}
+.bz-initial{width:34px;height:34px;border-radius:8px;background:var(--chip,#f3f4f6);
+            border:1px solid var(--border,#e6e6e6);display:grid;place-items:center;
+            font-weight:700;font-size:14px;color:var(--ink-soft,#6b7280);flex:0 0 auto}
+
+.bz-main{display:flex;flex-wrap:wrap;gap:4px 9px;align-items:baseline;min-width:0}
+.bz-main > *{min-width:0}
+.bz-name{font-weight:600;font-size:13.5px;overflow-wrap:anywhere}
+/* The URL is the longest thing on the row and the most likely to blow the
+   layout out. It wraps anywhere and gets its own line on a phone. */
+.bz-path{font-family:var(--mono,ui-monospace,monospace);font-size:11px;
+         color:var(--ink-soft,#6b7280);overflow-wrap:anywhere;min-width:0}
+
+.bz-acts{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;min-width:0}
+.bz-btn{border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);
+        border-radius:8px;padding:5px 9px;font:inherit;font-size:11.5px;cursor:pointer;
+        color:var(--ink-2,#374151)}
+.bz-btn:hover{border-color:var(--ink,#111)}
+.bz-btn.is-danger{color:var(--danger,#d6455a)}
+.bz-btn.is-primary{background:var(--ink,#111);color:#fff;border-color:var(--ink,#111)}
+
+.bz-pill{display:inline-block;border-radius:999px;padding:2px 8px;font-size:10.5px;
+         background:var(--chip,#f3f4f6);color:var(--ink-soft,#6b7280);white-space:nowrap}
+.bz-pill.is-zero{background:#fee2e2;color:#991b1b}
+.bz-pill.is-on{background:#dcfce7;color:#166534}
+
+.bz-empty{padding:26px 12px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
+
+/* ------------------------------------------------------------------- modal */
+/* z-index 900, NOT higher, and that is the whole reason it is written down.
+   The Media Library popup (admin/partials/media-picker.blade.php, .mp-back)
+   is also 900, and it is appended to <body> after this dialog, so equal
+   stacking plus source order puts it in front — which is what has to happen
+   when the operator clicks "Choose from Media Library" from inside here. At
+   9000 this dialog covered the picker it had just opened, and the picker was
+   visible around the edges but unusable. .ct-modal on the neighbouring screen
+   is 900 for the same reason. */
+.bz-modal{position:fixed;inset:0;background:rgba(15,15,20,.45);z-index:900;
+          display:flex;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto}
+.bz-modal-box{background:var(--surface,#fff);border-radius:14px;padding:18px;width:min(620px,100%);
+              box-shadow:0 24px 70px rgba(0,0,0,.28);min-width:0}
+.bz-modal-h{display:flex;align-items:center;justify-content:space-between;gap:10px;
+            margin-bottom:12px;font-size:15px;min-width:0}
+.bz-x{border:none;background:none;font-size:17px;line-height:1;cursor:pointer;color:var(--ink-soft,#6b7280)}
+.bz-modal-f{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:16px;min-width:0}
+
+.bz-fld{margin:0 0 12px;min-width:0}
+.bz-fld label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;color:var(--ink-2,#374151)}
+.bz-fld input[type=text],.bz-fld input[type=number],.bz-fld input[type=url],
+.bz-fld select,.bz-fld textarea{
+  width:100%;box-sizing:border-box;min-width:0;border:1px solid var(--border,#e6e6e6);
+  border-radius:9px;padding:8px 10px;font:inherit;font-size:13px;background:var(--surface,#fff);
+  color:var(--ink,#111)}
+.bz-fld textarea{resize:vertical}
+.bz-note{font-size:11.5px;color:var(--ink-soft,#6b7280);margin-top:5px;line-height:1.45}
+.bz-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:0 12px;min-width:0}
+.bz-grid2 > *{min-width:0}
+
+.bz-warn{background:#fef3c7;color:#7c2d12;border-radius:10px;padding:10px 12px;
+         font-size:12.5px;line-height:1.5;margin-bottom:12px}
+.bz-danger{background:#fee2e2;color:#7f1d1d;border-radius:10px;padding:10px 12px;
+           font-size:12.5px;line-height:1.5;margin-bottom:12px}
+.bz-warn code,.bz-danger code{font-family:var(--mono,ui-monospace,monospace);font-size:11.5px}
+
+.bz-thumb{width:52px;height:52px;border-radius:9px;object-fit:cover;flex:0 0 auto;
+          background:var(--chip,#f3f4f6);border:1px solid var(--border,#e6e6e6)}
+
+/* The banner block is folded away until the switch is on: off is the default
+   and eight fields for something switched off is noise. */
+.bz-switch{display:flex;gap:9px;align-items:flex-start;min-width:0;
+           border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:11px 12px;
+           background:var(--chip,#f9fafb)}
+.bz-switch input{margin:2px 0 0;flex:0 0 auto}
+.bz-switch b{font-size:12.5px}
+.bz-body{margin-top:12px}
+.bz-body[hidden]{display:none}
+
+/* ----------------------------------------------------------------- preview
+   A miniature of the real thing so the owner can see the three styles rather
+   than read three names. It is NOT the storefront stylesheet -- it is forty
+   lines that approximate it, because loading the shop's CSS into the admin
+   would restyle the console. */
+.bz-prev{border:1px solid var(--border,#e6e6e6);border-radius:11px;overflow:hidden;
+         min-width:0;position:relative;isolation:isolate;background:#f4eef0}
+.bz-prev-in{position:relative;z-index:2;display:flex;align-items:flex-end;padding:14px 16px;
+            aspect-ratio:5 / 2;min-height:118px;min-width:0}
+.bz-prev-h{font-size:19px;font-weight:700;line-height:1.1;letter-spacing:-.02em;overflow-wrap:anywhere}
+.bz-prev-s{font-size:11.5px;margin-top:5px;line-height:1.4;overflow-wrap:anywhere}
+.bz-prev-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.bz-prev-scrim{position:absolute;inset:0;z-index:1}
+.bz-prev.is-light .bz-prev-h{color:#fff}
+.bz-prev.is-light .bz-prev-s{color:rgba(255,255,255,.9)}
+.bz-prev.is-dark .bz-prev-h{color:#111}
+.bz-prev.is-dark .bz-prev-s{color:#4b5563}
+.bz-prev-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-width:0}
+.bz-prev-split > *{min-width:0}
+.bz-prev-half{position:relative;aspect-ratio:4 / 3;background:#f4eef0}
+.bz-prev-half img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bz-prev-panel{display:flex;align-items:center;padding:14px 16px;min-width:0}
+
+@media (max-width:560px){
+  /* Action buttons move under the name rather than competing with it for the
+     row's width. Without this the three-column grid keeps a column for them at
+     every width and the name is squeezed to nothing. */
+  .bz-row{grid-template-columns:auto 1fr}
+  .bz-acts{grid-column:1 / -1;justify-content:flex-start}
+}

@@ -43,7 +43,9 @@ it('is included in the console exactly once, with one sidebar row under Growth &
 
     expect(substr_count($app, "@include('admin.partials.marketing-emails-screens')"))->toBe(1)
         // First in Growth & Marketing, tagged "new" (the approved m0 mock).
-        ->and(substr_count($app, "{sec:'Growth & Marketing',items:[['mkt-email','Marketing Emails',"))->toBe(1)
+        // Lane AP: the sidebar is App\Support\AdminNav's (server-rendered), not a NAV literal.
+        ->and(array_values(array_filter(\App\Support\AdminNav::GROUPS, fn ($g) => $g['sec'] === 'Growth & Marketing'))[0]['rows'][0])
+        ->toMatchArray(['id' => 'mkt-email', 'label' => 'Marketing Emails', 'tag' => 'new'])
         ->and(substr_count($app, "'mkt-email':['Growth & Marketing','Marketing Emails']"))->toBe(1)
         // Integrated beside Lane EK's two ids ('emails-customer','emails-edit'),
         // so the pin names the end of the list rather than its neighbour.

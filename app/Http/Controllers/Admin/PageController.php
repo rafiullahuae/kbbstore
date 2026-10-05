@@ -15,11 +15,23 @@ class PageController extends Controller
         // menu after an update has already been applied. That is indistinguishable
         // from the update having failed, and cost a round of chasing when a new
         // screen did not appear.
-        $response = response()
-            ->view('admin.app')
+        //
+        // (Lane AP) The large static <script>/<style> blocks inside it are a
+        // different matter: they are swapped for cached files from the build,
+        // and only where the build holds the exact bytes this render produced.
+        // See App\Support\AdminConsoleAssets.
+        [$html, $assetsCookie] = \App\Support\AdminConsoleAssets::serve(view('admin.app')->render(), request());
+        $response = response($html)
+            ->header('Content-Type', 'text/html; charset=UTF-8')
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');
+
+        // (Lane AP) "this browser now holds the files": set on the inline load
+        // that prefetches them. See AdminConsoleAssets::serve().
+        if ($assetsCookie !== null) {
+            $response->withCookie($assetsCookie);
+        }
 
         /*
          * The storefront admin hint, refreshed every time the console opens

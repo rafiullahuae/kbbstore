@@ -1,0 +1,156 @@
+
+.rtn-wrap{display:grid;gap:16px;min-width:0}
+.rtn-wrap > *{min-width:0}
+.rtn-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+          border-radius:var(--r,12px);padding:16px;min-width:0}
+.rtn-head{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;justify-content:space-between}
+.rtn-title{font-weight:650;font-size:15px}
+.rtn-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.5;margin-top:3px}
+.rtn-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:12px;min-width:0}
+.rtn-stat{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+          border-radius:var(--r,12px);padding:13px 15px}
+.rtn-stat span{display:block;color:var(--ink-soft,#6b7280);font-size:11px;font-weight:650;
+               text-transform:uppercase;letter-spacing:.05em}
+.rtn-stat b{display:block;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums;margin-top:3px}
+.rtn-stat.is-gap b{color:#b4443c}
+.rtn-roles{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.rtn-rolecount{border:1px solid var(--border,#e6e6e6);border-radius:999px;padding:4px 11px;font-size:12px;
+               color:var(--ink-soft,#6b7280)}
+.rtn-rolecount b{color:inherit;font-variant-numeric:tabular-nums}
+.rtn-rolecount.is-gap{border-color:#b4443c;color:#b4443c}
+/* The concern-page countdown (Lane Q). Sized entirely with grid and calc(): no
+   script measures anything here, which two tests forbid by name. The row is a
+   two-column grid at any width -- name and progress -- with the name column
+   allowed to shrink (min-width:0) so a long label wraps instead of pushing the
+   bar off a 390px screen. */
+/* ── THE TAB STRIP (Lane Q, round 2) ────────────────────────────────────────
+   Deliberately the same shape as .chp-tabs / .chp-tab on
+   admin/partials/checkout-page-screen.blade.php, because the owner chose this
+   pattern by name: "the same as Appearance -> Checkout page, which I use
+   daily". Same 8px/12px padding, same 9px radius, same accent border and
+   weight on the selected one, and the same `aria-selected` attribute doing the
+   selecting rather than a second class.
+
+   FLEX-WRAP IS THE WHOLE MOBILE ANSWER. Eight tabs do not fit on a 390px
+   phone and must not become a horizontally scrolling strip -- a strip that
+   scrolls hides tabs behind an edge with nothing to say they are there, which
+   on this screen means hiding the empty step he is looking for. They wrap onto
+   as many rows as they need. Nothing measures anything: wrapping is the
+   browser's, and `min-width:0` on the strip and `max-width:100%` on a tab stop
+   a long label from forcing the card wider than its column. */
+/* The live search status. A row that is always the same height whether it is
+   counting or searching, so the list below does not jump by a line on every
+   keystroke -- a list that nudges while you type reads as instability. */
+.rtn-note-warn{border-color:#b4443c;color:#b4443c}
+.rtn-next-demo{border-left-color:#B4881F}
+.rtn-status{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;min-width:0;
+            margin:10px 0 2px;font-size:12px;color:var(--ink-soft,#6b7280);min-height:18px}
+.rtn-status.is-busy{color:var(--accent,#15a85a)}
+.rtn-warnline{color:#b4443c}
+.rtn-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.rtn-tab{padding:8px 12px;border:1px solid var(--border,#e6e6e6);border-radius:9px;
+         background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;
+         max-width:100%;display:inline-flex;align-items:baseline;gap:6px}
+.rtn-tab[aria-selected="true"]{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+/* The count and the verdict. `b` is the number, always; the tick is added only
+   when the step is genuinely finished, so the glyph is never decoration. */
+.rtn-tab b{font-weight:650;font-variant-numeric:tabular-nums}
+.rtn-tab.is-gap b{color:#b4443c}
+.rtn-tab.is-done b{color:#2f7d5d}
+.rtn-tab .rtn-tick{color:#2f7d5d;font-weight:700}
+.rtn-tabnote{font-size:12.5px;color:var(--ink-soft,#6b7280);line-height:1.55;margin-top:12px;max-width:68ch}
+/* The one-click "put this product in the open step" button on a row. */
+.rtn-use{padding:6px 11px;border:1px solid var(--accent,#15a85a);border-radius:8px;
+         background:transparent;color:var(--accent,#15a85a);font:inherit;font-size:12.5px;
+         font-weight:650;cursor:pointer;max-width:100%}
+.rtn-use[disabled]{border-color:var(--border,#e6e6e6);color:var(--ink-soft,#6b7280);cursor:default;font-weight:400}
+.rtn-rowacts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}
+/* The "what to do next" line above the strip, on a shop with nothing tagged. */
+.rtn-next{border:1px solid var(--border,#e6e6e6);border-left:3px solid #b4443c;border-radius:10px;
+          padding:11px 13px;font-size:12.5px;line-height:1.55;min-width:0}
+.rtn-cp{display:grid;gap:10px;margin-top:12px;min-width:0}
+.rtn-cprow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:baseline;min-width:0}
+.rtn-cpname{font-size:13px;font-weight:600;min-width:0}
+.rtn-cpnum{font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-soft,#6b7280);white-space:nowrap}
+.rtn-cpbar{grid-column:1/-1;height:6px;border-radius:99px;background:var(--border,#e6e6e6);overflow:hidden}
+.rtn-cpfill{display:block;height:100%;border-radius:99px;background:#b4443c}
+.rtn-cprow.is-live .rtn-cpfill{background:#2f7d5d}
+.rtn-cprow.is-live .rtn-cpnum{color:#2f7d5d}
+.rtn-cpnote{grid-column:1/-1;font-size:11.5px;line-height:1.5;color:var(--ink-soft,#6b7280)}
+.rtn-cpnote code{font-size:11px;word-break:break-all}
+.rtn-filters{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.rtn-filters input{flex:1 1 170px;min-width:0;padding:8px 10px;font:inherit;
+                   border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
+.rtn-filters select,.rtn-row select{padding:7px 9px;font:inherit;border:1px solid var(--border,#e6e6e6);
+                                    border-radius:9px;background:transparent;color:inherit;max-width:100%}
+.rtn-list{display:grid;gap:10px;min-width:0}
+.rtn-row{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:11px 12px;display:grid;gap:8px;min-width:0}
+.rtn-row.is-untagged{border-left:3px solid #b4443c}
+.rtn-row > *{min-width:0}
+.rtn-name{font-size:13.5px;font-weight:600;overflow-wrap:anywhere}
+.rtn-meta{color:var(--ink-soft,#6b7280);font-size:11.5px;overflow-wrap:anywhere}
+.rtn-off{color:#b4443c}
+.rtn-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rtn-chip{border:1px solid var(--border,#e6e6e6);border-radius:999px;padding:4px 10px;font-size:11.5px;
+          background:transparent;color:var(--ink-soft,#6b7280);cursor:pointer;font-family:inherit}
+.rtn-chip.on{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.rtn-chip[disabled]{opacity:.45;cursor:default}
+.rtn-empty{padding:24px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
+.rtn-pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;font-size:12.5px;margin-top:10px}
+.rtn-pager button,.rtn-btn{padding:6px 12px;border:1px solid var(--border,#e6e6e6);border-radius:8px;
+                           background:transparent;color:inherit;font:inherit;cursor:pointer}
+.rtn-btn.is-primary{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.rtn-pager button[disabled]{opacity:.4;cursor:default}
+.rtn-fields{display:grid;gap:10px;min-width:0}
+.rtn-field{display:grid;gap:4px;min-width:0}
+.rtn-field label{font-size:11.5px;font-weight:650;color:var(--ink-soft,#6b7280);
+                 text-transform:uppercase;letter-spacing:.04em}
+.rtn-field input[type=text],.rtn-field input[type=number],.rtn-field select{padding:8px 10px;font:inherit;
+        border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit;
+        max-width:100%;min-width:0}
+.rtn-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5}
+.rtn-warn{color:#b4443c;font-size:11.5px;line-height:1.5}
+.rtn-banner{border:1px solid #b4443c;color:#b4443c;border-radius:var(--r,12px);padding:12px 14px;font-size:13px}
+.rtn-note{border:1px dashed var(--border,#e6e6e6);border-radius:10px;padding:11px 12px;font-size:12.5px;
+          color:var(--ink-soft,#6b7280);line-height:1.55}
+/* ── BULK TAGGING (Lane Q4) ─────────────────────────────────────────────────
+   Sized entirely with grid, flex and calc(). Nothing below is measured in
+   script -- two tests forbid the element-measuring APIs by name, and this
+   screen's header states the 390px rule the whole file is built to.
+
+   THE ROW BECOMES A TWO-COLUMN GRID: a fixed tick column and everything else.
+   `minmax(0,1fr)` on the second track and min-width:0 on its children, because
+   a grid item's default min-width is auto and that exact defect shipped on the
+   Coupons screen -- a long product name would otherwise push the row wider than
+   the phone instead of wrapping inside it. */
+.rtn-row.is-pickable{grid-template-columns:20px minmax(0,1fr);column-gap:10px}
+.rtn-row.is-pickable > *{grid-column:2}
+.rtn-row.is-pickable > .rtn-pick{grid-column:1;grid-row:1;align-self:start;margin:1px 0 0}
+.rtn-row.is-picked{border-color:var(--accent,#15a85a);box-shadow:inset 0 0 0 1px var(--accent,#15a85a)}
+.rtn-pick{width:17px;height:17px;accent-color:var(--accent,#15a85a);cursor:pointer}
+.rtn-bulkhead{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;
+              margin:2px 0 10px;font-size:12.5px;min-width:0}
+.rtn-pickall{display:flex;gap:8px;align-items:center;cursor:pointer;font-weight:600}
+.rtn-bulkscope{color:var(--ink-soft,#6b7280);line-height:1.5;min-width:0}
+/* The bar itself. STICKY, so a selection made at the top of twenty-five rows is
+   still actionable at the bottom of them without scrolling back -- the admin
+   scrolls inside #content, so `top:0` sticks to that scroller. */
+.rtn-bulkbar{position:sticky;top:0;z-index:3;display:grid;gap:9px;min-width:0;
+             border:1px solid var(--accent,#15a85a);border-radius:10px;padding:11px 12px;
+             margin-bottom:10px;background:var(--surface,#fff)}
+.rtn-bulkbar > *{min-width:0}
+.rtn-bulktop{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
+.rtn-bulkcount{font-size:13px;font-weight:650}
+.rtn-bulkacts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rtn-bulklabel{font-size:11.5px;font-weight:650;color:var(--ink-soft,#6b7280);
+               text-transform:uppercase;letter-spacing:.04em}
+.rtn-bulkbar[aria-busy=true]{opacity:.6}
+.rtn-bulkbar[aria-busy=true] button{cursor:default}
+/* The undo bar. Not a toast: a toast for a twenty-five-row write is a three
+   second window on the only control that can take it back. */
+.rtn-undo{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;min-width:0;
+          border:1px solid var(--border,#e6e6e6);border-left:3px solid var(--accent,#15a85a);
+          border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12.5px}
+.rtn-undo .rtn-undowhat{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.rtn-undonote{color:var(--ink-soft,#6b7280);font-size:11.5px;line-height:1.5}
+@media (max-width:640px){ .rtn-card{padding:13px} }

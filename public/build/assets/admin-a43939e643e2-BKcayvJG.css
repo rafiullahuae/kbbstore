@@ -1,0 +1,158 @@
+
+/* Controls, then the preview under them. */
+.cpp-wrap{display:grid;gap:14px;min-width:0}
+.cpp-wrap > *{min-width:0}
+
+/* ── THE MOBILE TAB PUTS THE PREVIEW BESIDE THE CONTROLS ──────────────────
+   Only the mobile one, and that is not a preference. The phone mock is a
+   narrow frame and sits happily in a side column; the desktop panel stands for
+   380px of real width and drawn inside a 372px rail it is the same drawing at
+   the wrong scale, next to controls too narrow to read. Below 1180px it folds
+   back to one column, for the reason the checkout screen folds at the same
+   width: a 300px control column beside a phone is two things nobody can use. */
+.cpp-wrap.cpp-side{grid-template-columns:minmax(0,1fr) 372px;align-items:start}
+.cpp-wrap.cpp-side > .cpp-col{display:grid;gap:14px;min-width:0}
+.cpp-wrap.cpp-side [data-cpp-preview]{position:sticky;top:16px}
+@media (max-width:1180px){
+  .cpp-wrap.cpp-side{grid-template-columns:minmax(0,1fr)}
+  .cpp-wrap.cpp-side [data-cpp-preview]{position:static}
+}
+
+.cpp-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+          border-radius:var(--r,12px);padding:16px;min-width:0}
+.cpp-title{font-weight:650;font-size:15px}
+.cpp-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.55;margin-top:3px;max-width:68ch}
+.cpp-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.cpp-tab{padding:8px 12px;border:1px solid var(--border,#e6e6e6);border-radius:9px;
+         background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
+.cpp-tab[aria-selected="true"]{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.cpp-fields{display:grid;gap:14px;margin-top:14px;min-width:0}
+.cpp-f{display:grid;gap:5px;min-width:0}
+.cpp-fh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}
+.cpp-fh label{font-size:12.5px;font-weight:650;min-width:0;overflow-wrap:anywhere}
+.cpp-val{font-size:11.5px;font-weight:650;color:var(--accent,#15a85a);white-space:nowrap;
+         font-variant-numeric:tabular-nums}
+.cpp-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5;margin:0;max-width:68ch}
+.cpp-f input[type=range]{width:100%;accent-color:var(--accent,#15a85a);margin:0;min-width:0}
+.cpp-f select.cpp-sel,.cpp-f input.cpp-text{
+  width:100%;min-width:0;box-sizing:border-box;font:inherit;font-size:13px;
+  padding:7px 9px;border:1px solid var(--line,#e5e7eb);border-radius:7px;
+  background:var(--card,#fff);color:inherit
+}
+.cpp-f select.cpp-sel:focus-visible,.cpp-f input.cpp-text:focus-visible{
+  outline:2px solid var(--accent,#15a85a);outline-offset:1px;border-color:transparent
+}
+.cpp-f input.cpp-text::placeholder{color:var(--ink-soft,#6b7280);opacity:.7}
+.cpp-swatch{display:flex;align-items:center;gap:9px;min-width:0}
+.cpp-swatch input[type=color]{flex:none;width:44px;height:30px;padding:0;border:1px solid var(--line,#e5e7eb);
+  border-radius:7px;background:var(--card,#fff);cursor:pointer}
+.cpp-swatch code{font-size:11.5px;color:var(--ink-soft,#6b7280);font-variant-numeric:tabular-nums}
+.cpp-check{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.cpp-check input{margin-top:3px;flex:none;width:16px;height:16px}
+.cpp-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;min-width:0}
+.cpp-btn{padding:8px 13px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;
+         color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
+.cpp-btn.is-primary{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.cpp-btn[disabled]{opacity:.45;cursor:default}
+.cpp-note{border:1px dashed var(--border,#e6e6e6);border-radius:10px;padding:11px 12px;
+          font-size:12.5px;line-height:1.55;color:var(--ink-soft,#6b7280);min-width:0}
+.cpp-empty{padding:22px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
+@media (max-width:640px){ .cpp-card{padding:13px} }
+
+/* ── THE TOUCH-TARGET WARNING ─────────────────────────────────────────────
+   Four values on the Mobile tab are not spacing, they are TAP TARGETS: the
+   per-line ✕, the panel's close button, the two footer buttons and the tab
+   strip. 44px is the smallest box a finger hits reliably and the shop's
+   @media(max-width:900px) block exists solely to raise them to it.
+
+   The owner asked to squeeze exactly these, so the slider goes below 44 — it is
+   his shop. It does NOT clamp: a slider that stops where nobody asked it to
+   stop reads as a bug and gets reported as one. What happens instead is this
+   line, which turns warm and says what the cost is, at the point of the
+   decision rather than in a dialog. */
+.cpp-warn{font-size:11.5px;line-height:1.5;margin:0;max-width:68ch;
+          color:#8a5a12;background:#fff8e6;border:1px solid #f0dfb0;border-radius:8px;padding:7px 9px}
+
+/* ── the preview ────────────────────────────────────────────────────────── */
+.cpv-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:4px 0 10px}
+.cpv-h b{font-size:15px;font-weight:700}
+.cpv-h span{font-size:11px;color:var(--ink-soft,#6b7280)}
+
+/* THE FRAME IS THE PAGE THE PANEL SLIDES OVER, so the panel's share of the
+   screen — which is the whole of what panel_width_m sets — is something the
+   owner can see rather than a number they have to imagine. */
+.cpv-frame{position:relative;border:1px solid var(--border,#e6e6e6);border-radius:12px;overflow:hidden;
+  background:#fbf5f4;box-shadow:0 8px 26px -18px rgba(0,0,0,.4)}
+.cpv-frame.is-phone{width:320px;max-width:100%;margin:0 auto;border-radius:20px}
+.cpv-bar{display:flex;align-items:center;gap:6px;padding:7px 11px;background:#f6f7f9;
+  border-bottom:1px solid var(--border,#e6e6e6);font-size:10px;color:#6b7280}
+.cpv-bar i{width:6px;height:6px;border-radius:50%;background:#d8dbe0;display:block;flex:none}
+.cpv-bar span{margin-inline-start:auto;white-space:nowrap}
+.cpv-stage{position:relative;display:flex;justify-content:flex-end;min-height:var(--cpv-stage,300px);
+  background:repeating-linear-gradient(135deg,#fff,#fff 9px,#fdf7f9 9px,#fdf7f9 18px)}
+
+/* The panel itself. Every measurement below is a custom property this screen
+   writes, named for the storefront property it stands for, so the drawing and
+   the shop cannot disagree about what a number means. */
+.cpv-panel{width:var(--cpv-w,62%);background:#fff;border-inline-start:1px solid #e6e9ef;
+  display:flex;flex-direction:column;min-width:0;box-shadow:-10px 0 28px -22px rgba(60,20,40,.5)}
+.cpv-tabs{display:flex;align-items:center;border-bottom:1px solid #eef1f6;padding:0 var(--cpv-tabpad,10px);flex:none}
+.cpv-tabs b,.cpv-tabs i{flex:1;text-align:center;font-size:var(--cpv-tabf,11px);font-weight:700;
+  padding:0 4px;min-height:var(--cpv-tabh,30px);display:flex;align-items:center;justify-content:center;gap:5px;
+  border-bottom:2px solid transparent;margin-bottom:-1px;font-style:normal}
+.cpv-tabs b{font-weight:800}
+.cpv-tabs i{color:#9aa3b0}
+.cpv-tabs em{font-style:normal;background:#f7dbe5;border-radius:10px;padding:0 6px;font-size:9px}
+/* The panel's own close button — .kc-x on the shop. A BOX and a GLYPH, set
+   apart, because the shop sets them apart: 28x28 with a 13px ✕ on the desktop
+   and 44x44 on a phone. */
+.cpv-x{flex:none;display:grid;place-items:center;background:#f4eef1;border-radius:8px;color:#5c6675;
+  width:var(--cpv-x,28px);height:var(--cpv-x,28px);font-size:var(--cpv-xg,13px);
+  margin-inline-start:6px;align-self:center}
+.cpv-ship{padding:8px var(--cpv-pad,16px);border-bottom:1px solid #eef1f6;font-size:10.5px;color:#5c6675}
+.cpv-bar2{height:5px;border-radius:5px;background:#f0e2e8;overflow:hidden;margin-top:5px}
+.cpv-bar2 div{height:100%;width:100%}
+/* SCROLLS, because the panel it is drawing scrolls: .dbody is
+   `flex:1;overflow:auto;min-height:0` on the shop and the list is taller than
+   any box this preview can be given. Clipping it instead drew half a product
+   line under the promotion strip, which reads as a fault in the panel rather
+   than as a list with more in it. */
+.cpv-body{padding:6px var(--cpv-pad,16px);flex:1;overflow:auto;min-height:0}
+.cpv-item{display:flex;gap:8px;align-items:center;padding:var(--cpv-rowpad,9px) 0;border-bottom:1px solid #f2f4f8}
+.cpv-item:last-child{border-bottom:0}
+.cpv-th{width:var(--cpv-thumb,42px);height:var(--cpv-thumb,42px);border-radius:8px;flex:none;
+  display:grid;place-items:center;color:#fff;font-weight:700;font-size:9px}
+.cpv-mid{flex:1;min-width:0}
+.cpv-nm{font-size:var(--cpv-nm,13px);font-weight:600;line-height:1.25;margin-bottom:4px;
+  display:-webkit-box;-webkit-line-clamp:var(--cpv-lines,2);-webkit-box-orient:vertical;overflow:hidden}
+/* The stepper takes its measurement on the BOX AND THE NUMBER BETWEEN THEM,
+   which is what kbb.css does: --cp-step sizes .kc-qty button and the min-width
+   of the span, so one slider moves three boxes. Scaling one of the three would
+   draw a control the shop never renders. */
+.cpv-qty{display:inline-flex;align-items:center;border:1px solid #e6e9ef;border-radius:7px;overflow:hidden}
+.cpv-qty span,.cpv-qty b{width:var(--cpv-step,22px);height:var(--cpv-step,22px);display:grid;place-items:center;
+  font-size:10.5px;font-weight:600}
+.cpv-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none}
+/* The per-line ✕ — .kc-rm. Its GLYPH is a font size on both surfaces; its BOX
+   exists only on a phone, where the shop gives it 44x44. */
+.cpv-rm{color:#c3b3bb;font-size:var(--cpv-rm,13px);line-height:1;display:grid;place-items:center;
+  width:var(--cpv-rmbox,auto);height:var(--cpv-rmbox,auto)}
+.cpv-pr{font-size:var(--cpv-prf,12.5px);font-weight:800;color:var(--cpv-acc,#C13E63)}
+.cpv-promo{padding:7px var(--cpv-pad,16px);background:#fff0f4;font-size:10px;color:#5e545a}
+.cpv-foot{border-top:1px solid #eef1f6;padding:10px var(--cpv-pad,16px);flex:none}
+.cpv-sum{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:8px}
+.cpv-btns{display:grid;grid-template-columns:1fr 1fr;gap:var(--cpv-btngap,8px)}
+.cpv-btns.is-stack{grid-template-columns:1fr}
+.cpv-btns a{display:flex;align-items:center;justify-content:center;text-align:center;
+  padding:var(--cpv-btnpad,12px) 8px;min-height:var(--cpv-btnh,0px);
+  border-radius:var(--cpv-btnr,99px);font-size:var(--cpv-btnf,13.5px);font-weight:700;
+  border:1px solid #e6e9ef;color:#1d2430;white-space:nowrap}
+/* The measured numbers, stated on the frame. A number on the drawing is the
+   quickest way for the owner to check that what they are looking at is what
+   they set — the complaint that started this screen was about sizes, and an
+   impression cannot answer it. */
+.cpv-ruler{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 8px;
+  padding:7px 11px;margin-top:8px;background:#f6f7f9;border:1px solid var(--border,#e6e6e6);
+  border-radius:8px;font-size:11px;color:#6b7280;text-align:center}
+.cpv-ruler b{font-weight:700;color:var(--ink,#16181d);font-variant-numeric:tabular-nums}
+.cpv-ruler s{text-decoration:none;color:#b4443c;font-weight:700}

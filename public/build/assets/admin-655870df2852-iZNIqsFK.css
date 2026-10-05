@@ -1,0 +1,536 @@
+
+/* ---------------------------------------------------------------------------
+   Product editor. Prefix peo-, used nowhere else in the console.
+--------------------------------------------------------------------------- */
+.peo-wrap{display:grid;gap:16px;min-width:0}
+.peo-wrap > *{min-width:0}
+
+/* The save bar. Sticky to the top of the scroller so Save is reachable from
+   anywhere in a long form -- the owner should never have to scroll back up to
+   find out whether their work is saved. */
+.peo-bar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;
+         flex-wrap:wrap;min-width:0;
+         background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+         border-radius:var(--r,12px);padding:11px 13px;
+         box-shadow:0 1px 2px rgba(18,21,31,.04),0 6px 18px rgba(18,21,31,.05)}
+.peo-bar .peo-grow{flex:1 1 auto;min-width:0}
+.peo-bar h2{margin:0;font-size:15px;font-weight:650;line-height:1.3;
+            overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peo-bar .peo-sub{font-size:11.5px;color:var(--ink-soft,#6b7280);
+                  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.peo-btn{font:inherit;font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:9px;
+         border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);color:inherit;
+         cursor:pointer;white-space:nowrap}
+.peo-btn:hover{background:rgba(127,127,127,.07)}
+.peo-btn.peo-primary{background:#1f7d52;border-color:#1f7d52;color:#fff}
+.peo-btn.peo-primary:hover{background:#1a6b46}
+.peo-btn[disabled]{opacity:.5;cursor:default}
+.peo-btn.peo-danger{color:#b4443c;border-color:#e3c3c0}
+/* The Visit link wears the button's clothes (Lane PK). An anchor element
+   because it IS a link -- middle-click, "open in new window" and the
+   status-bar address all work -- and the disabled state is a real disabled
+   button element, never an anchor without an href, so "Not live yet" cannot
+   be tabbed to and pressed. (No literal tags in this comment:
+   AdminResetGuardTest scans the source for tag-shaped text, and a comment
+   that looks like a tag swallows the CSS after it as a "label".) */
+a.peo-btn{display:inline-block;text-decoration:none}
+
+/* ON A PHONE, VISIT GOES UP BESIDE THE NAME, and that is a measured decision.
+   The bar wraps at 390px into two rows, 106px tall: ← Products and the name,
+   then Stripes · Arrange · status · Save. Appended to the second row, Visit
+   made it 338 + 52px wide in a 338px row, Save fell to a THIRD row and the
+   sticky bar grew to 152px -- 46px more of every phone screen gone for one
+   link. Moved up to the name's row it fits: the name keeps at least 120px and
+   ellipsises, as it already did for a long name, and the bar stays 106px.
+   Ordered here rather than in the markup so the desk keeps the order the owner
+   described (… Published · Visit · Save). (Lane PK) */
+@media(max-width:640px){
+  .peo-bar #peo-back,.peo-bar .peo-grow{order:-2}
+  .peo-bar #peo-visit{order:-1}
+  .peo-bar .peo-grow{flex:1 1 120px}
+}
+
+/* Two columns on a desk, one on a phone. minmax(0,…) on BOTH tracks, not
+   1fr/320px: a bare 1fr is minmax(auto,1fr), and auto is the same refusal to
+   shrink that stretched the Coupons screen. */
+.peo-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,320px);gap:16px;min-width:0}
+.peo-grid > *{min-width:0}
+@media(max-width:900px){.peo-grid{grid-template-columns:minmax(0,1fr)}}
+
+.peo-col{display:grid;gap:16px;align-content:start;min-width:0}
+.peo-col > *{min-width:0}
+
+.peo-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+          border-radius:var(--r,12px);padding:15px;min-width:0}
+.peo-card h3{margin:0 0 3px;font-size:12px;font-weight:700;letter-spacing:.04em;
+             text-transform:uppercase;color:var(--ink-soft,#6b7280)}
+.peo-card .peo-hint{font-size:11.5px;color:var(--ink-soft,#6b7280);margin:0 0 12px;line-height:1.45}
+
+.peo-fld{margin-bottom:13px;min-width:0}
+.peo-fld:last-child{margin-bottom:0}
+.peo-fld label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;color:var(--ink-2,#374151)}
+.peo-fld .peo-note{font-size:11px;color:var(--ink-soft,#6b7280);margin-top:5px;line-height:1.45}
+
+.peo-in,.peo-sel,.peo-ta{width:100%;max-width:100%;box-sizing:border-box;min-width:0;
+    font:inherit;font-size:13px;padding:9px 10px;border-radius:9px;
+    border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);color:inherit}
+.peo-ta{min-height:70px;resize:vertical}
+.peo-in:focus,.peo-sel:focus,.peo-ta:focus{outline:0;border-color:#1f7d52;box-shadow:0 0 0 3px rgba(31,125,82,.14)}
+
+.peo-row{display:flex;gap:10px;flex-wrap:wrap;min-width:0}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE SET PANEL. (Lane SP)
+
+   Every colour, radius and shadow below is one of this editor's own tokens --
+   --surface, --surface-2, --border, --ink/-2/-soft, --accent -- because this is
+   the SAME SCREEN as the rest of the product editor and must not become a
+   second design language. Nothing here names a font.
+
+   ▲ AND NOTHING HERE IS MEASURED. Two tiles across on a phone and three above
+     it, by auto-fit and min(); every track is minmax(0,1fr) because a grid
+     item's default min-width is auto and one long product name otherwise
+     widens its track past its share and pushes the page sideways at 390.
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* Tags. (Lane SP) */
+.peo-tags{display:flex;flex-wrap:wrap;gap:6px;min-width:0;margin-bottom:11px}
+.peo-tag{display:inline-flex;align-items:center;gap:5px;max-width:100%;overflow-wrap:anywhere;
+         background:var(--surface-2,#f6f7fb);border:1px solid var(--border,#e6e6e6);border-radius:99px;
+         padding:3px 5px 3px 10px;font-size:12px;color:var(--ink-2,#374151)}
+.peo-tag button{border:0;background:none;cursor:pointer;color:var(--ink-soft,#6b7280);font:inherit;
+                font-size:11px;line-height:1;padding:2px 4px}
+.peo-tag button:hover{color:#b8362d}
+
+.peo-settiles{display:grid;gap:9px;min-width:0;margin-bottom:14px;
+              grid-template-columns:repeat(auto-fit,minmax(min(100%,132px),1fr))}
+.peo-settile{background:var(--surface-2,#f6f7fb);border:1px solid var(--border,#e6e6e6);
+             border-radius:11px;padding:9px 11px;min-width:0;display:grid;gap:3px}
+.peo-settile .k{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+                color:var(--ink-soft,#6b7280)}
+.peo-settile .v{font-size:15px;font-weight:700;color:var(--ink,#111827);overflow-wrap:anywhere}
+.peo-settile.is-live{border-color:var(--accent,#15a85a)}
+.peo-settile.is-save .v{color:#15803d}
+
+/* The working-out under a hand-typed set price. (Lane SP2)
+
+   A GRID OF TWO COLUMNS THAT COLLAPSES TO ONE, sized in `ch` and `fr`, with no
+   fixed heights and nothing measured in JavaScript: at 390px the label sits
+   above its figure and the card never exceeds the viewport, which is what the
+   `minmax(0,1fr)` and the `overflow-wrap` are for. */
+.peo-setwork{display:grid;gap:6px;margin:0 0 2px;min-width:0}
+.peo-setwork>div{display:grid;gap:2px 10px;min-width:0;align-items:baseline;
+                 grid-template-columns:minmax(0,1fr) auto;
+                 padding:6px 10px;border-radius:9px;background:var(--surface-2,#f6f7fb);
+                 border:1px solid var(--border,#e6e6e6)}
+.peo-setwork .k{font-size:11px;font-weight:650;color:var(--ink-soft,#6b7280);min-width:0;
+                overflow-wrap:anywhere}
+.peo-setwork .v{font-size:13.5px;font-weight:700;color:var(--ink,#111827);text-align:right;
+                overflow-wrap:anywhere}
+.peo-setwork .v i{display:block;font-style:normal;font-size:10.5px;font-weight:600;
+                  color:var(--ink-soft,#6b7280)}
+.peo-setwork>div.is-cut .v{color:#b8362d}
+.peo-setwork>div.is-now{border-color:var(--accent,#15a85a)}
+.peo-setwork>div.is-now .v{color:#15803d}
+@media (max-width:460px){.peo-setwork>div{grid-template-columns:minmax(0,1fr)}
+                         .peo-setwork .v{text-align:left}}
+
+/* The share image's state line. The thumbnail is a background image on a fixed
+   box, so a 3000px photograph cannot widen the card. (Lane SP2) */
+.peo-ogstate{display:flex;align-items:flex-start;gap:9px;min-width:0}
+.peo-ogstate>span{min-width:0}
+.peo-ogth{flex:none;width:38px;height:38px;border-radius:8px;background-size:cover;
+          background-position:center;background-color:var(--surface-3,#eef0f6);
+          border:1px solid var(--border,#e6e6e6)}
+.peo-ogstate.is-auto{color:var(--ink-2,#374151)}
+.peo-ogstate.is-hand .peo-ogth{border-color:var(--accent,#15a85a)}
+
+.peo-setlist{display:grid;gap:7px;min-width:0;max-height:340px;overflow:auto}
+.peo-setm{display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap;
+          background:var(--surface-2,#f6f7fb);border:1px solid var(--border,#e6e6e6);
+          border-radius:11px;padding:8px 10px}
+.peo-setm.is-find{background:var(--surface,#fff)}
+.peo-setm.is-drag{opacity:.45}
+/* The drop marker is a BORDER on the row the pointer is over -- never a
+   measured position. Where the row is, is the browser's business. */
+.peo-setm.is-over{border-color:var(--accent,#15a85a);box-shadow:0 0 0 3px rgba(21,168,90,.16)}
+.peo-grip{flex:none;width:16px;text-align:center;cursor:grab;user-select:none;
+          color:var(--ink-soft,#6b7280);font-size:13px;line-height:1}
+.peo-setth{flex:none;width:42px;height:42px;border-radius:9px;background-size:cover;
+           background-position:center;background-color:var(--surface-3,#eef0f6);
+           border:1px solid var(--border,#e6e6e6)}
+.peo-setmid{flex:1 1 140px;min-width:0;display:grid;gap:2px}
+.peo-setmid b{font-size:12.5px;font-weight:650;color:var(--ink,#111827);line-height:1.3;
+              overflow-wrap:anywhere}
+.peo-setmid i{font-style:normal;font-size:11px;color:var(--ink-soft,#6b7280);line-height:1.35;
+              overflow-wrap:anywhere}
+.peo-setq{flex:none;width:58px;padding:6px 8px;text-align:center}
+.peo-setvar{flex:none;max-width:130px}
+.peo-mini{flex:none;font:inherit;font-size:11.5px;font-weight:600;padding:5px 9px;border-radius:8px;
+          border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);
+          color:var(--ink-2,#374151);cursor:pointer}
+.peo-mini:hover:not(:disabled){background:var(--surface-2,#f6f7fb)}
+.peo-mini:disabled{opacity:.4;cursor:default}
+.peo-mini.is-bad{color:#b8362d}
+.peo-row > *{flex:1 1 140px;min-width:0}
+
+.peo-check{display:flex;align-items:flex-start;gap:9px;font-size:13px;cursor:pointer;
+           padding:7px 0;min-width:0}
+.peo-check input{margin:2px 0 0;flex:none}
+.peo-check span{min-width:0;overflow-wrap:anywhere}
+
+/* ---- rich text ---- */
+.peo-rte{border:1px solid var(--border,#e6e6e6);border-radius:10px;overflow:hidden;min-width:0}
+.peo-rte-bar{display:flex;flex-wrap:wrap;gap:3px;padding:6px;background:var(--surface-2,#f7f8fa);
+             border-bottom:1px solid var(--border,#e6e6e6);min-width:0}
+.peo-rte-bar button{font:inherit;font-size:11.5px;font-weight:700;color:var(--ink-2,#374151);
+                    padding:5px 8px;border-radius:6px;background:none;border:1px solid transparent;cursor:pointer;
+                    min-width:28px}
+.peo-rte-bar button:hover{background:var(--surface,#fff);border-color:var(--border,#e6e6e6)}
+.peo-rte-bar .peo-sep{width:1px;background:var(--border,#e6e6e6);margin:3px 3px}
+.peo-rte-area{padding:12px;font-size:13.5px;line-height:1.6;min-height:150px;
+              background:var(--surface,#fff);color:inherit;outline:0;overflow-wrap:anywhere;min-width:0}
+.peo-rte-area:empty:before{content:attr(data-ph);color:var(--ink-faint,#9ca3af)}
+.peo-rte-area p{margin:0 0 .7em}
+.peo-rte-area ul,.peo-rte-area ol{margin:0 0 .7em;padding-left:1.4em}
+.peo-rte-area h2{font-size:16px;margin:.6em 0 .35em}
+.peo-rte-area h3{font-size:14.5px;margin:.6em 0 .35em}
+.peo-rte-area img{max-width:100%;height:auto}
+.peo-rte-area table{border-collapse:collapse;max-width:100%}
+.peo-rte-area td,.peo-rte-area th{border:1px solid var(--border,#e6e6e6);padding:5px 7px}
+.peo-rte-foot{font-size:11px;color:var(--ink-soft,#6b7280);padding:6px 11px;
+              border-top:1px solid var(--border,#e6e6e6);background:var(--surface-2,#f7f8fa);
+              display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;min-width:0}
+
+/* ---- images ---- */
+/* Capped rather than full-bleed. The media card lives in the main column now,
+   which is ~660px at 1280 and ~1300px at 1920, and a square preview allowed to
+   fill that is a photograph the size of a window for a field whose job is
+   "yes, that is the right picture". The cap is a max-width, not a width, so it
+   still shrinks to the column at 390px. */
+.peo-main-img{border:1px solid var(--border,#e6e6e6);border-radius:11px;overflow:hidden;
+              min-width:0;max-width:260px}
+.peo-main-img .peo-ph{aspect-ratio:1;background:var(--surface-2,#f7f8fa);display:grid;place-items:center;
+                      color:var(--ink-faint,#9ca3af);font-size:12px;text-align:center;padding:12px}
+.peo-main-img img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.peo-main-cap{display:flex;gap:8px;padding:8px 10px;border-top:1px solid var(--border,#e6e6e6);flex-wrap:wrap}
+
+/* Main image and gallery SIDE BY SIDE inside one Images panel.
+
+   A viewport media query is the wrong instrument here and was tried first. The
+   panel's width is not a function of the viewport alone: it depends on which
+   column the operator has dragged it into, and .peo-grid keeps a 320px sidebar
+   from 901px up. At a 901px viewport the main column is about 473px, which a
+   `min-width:901px` rule would have declared wide enough -- and the gallery
+   half would have been 195px, leaving each alt-text box about 27px. That is
+   the same defect the comment above this one is about, reintroduced from the
+   other direction.
+
+   So the question asked is the one that actually matters: how wide is THIS
+   PANEL. Container queries answer it whichever column the panel sits in.
+
+   The single-column rule is the BASE, and the two-column rule is what the
+   query adds. A browser that does not understand @container therefore renders
+   exactly what this screen rendered before -- stacked -- rather than a broken
+   two-column grid. Degrading to today's layout is the whole reason the
+   fallback is arranged this way round.
+
+   620px is where the split starts paying. Below it the gallery half takes the
+   alt-text inputs under the 130px that makes a sentence typeable; above it the
+   main column at 1280 (~650px here) splits to a 260px preview and a ~370px
+   list, and at 1920 (~1290px) the list gets over 1000px. */
+.peo-rte-code{display:block;width:100%;box-sizing:border-box;border:0;outline:0;resize:vertical;
+              padding:12px;min-height:160px;background:var(--surface,#fff);color:inherit;
+              font:400 12.5px/1.65 var(--mono,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace);
+              white-space:pre;overflow:auto;min-width:0}
+.peo-rte-code[hidden]{display:none}
+.peo-rte-bar button.on{background:var(--surface,#fff);border-color:#1f7d52;color:#1f7d52}
+.peo-rte-bar button[disabled]{opacity:.35;cursor:default}
+.peo-rte-bar button[disabled]:hover{background:none;border-color:transparent}
+
+/* ---- upload progress ---- */
+.peo-ups{display:grid;gap:8px;margin-top:11px;min-width:0}
+.peo-up-head{font-size:11.5px;font-weight:600;color:var(--ink-soft,#6b7280)}
+.peo-up{display:grid;gap:5px;min-width:0}
+.peo-up-top{display:flex;gap:10px;align-items:baseline;justify-content:space-between;min-width:0}
+.peo-up-name{font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peo-up-pct{font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink-soft,#6b7280);flex:none}
+.peo-up-track{height:6px;border-radius:999px;background:var(--surface-2,#f2f4fb);overflow:hidden}
+/* Width is set inline by paintUploads(); the transition keeps a jump from one
+   progress event to the next from reading as a glitch. */
+.peo-up-track > i{display:block;height:100%;width:0;border-radius:999px;
+                  background:var(--accent,#15a85a);transition:width .18s linear}
+.peo-up.is-done .peo-up-pct{color:var(--accent-ink,#0b6e3a)}
+.peo-up.is-bad .peo-up-track > i{background:#b4443c}
+.peo-up.is-bad .peo-up-pct{color:#b4443c}
+/* Every byte is sent and the answer has not come back. Its own state rather than
+   a bar parked at 99%: the server is writing the file, recording the library row
+   and making the phone-sized copies, which on a 4000x4000 JPEG is about half a
+   second of real work. Striped by a keyframe on background-position, so nothing
+   is measured and no JavaScript runs per frame. */
+.peo-up.is-server .peo-up-track > i{width:100% !important;
+  background-image:linear-gradient(110deg,rgba(255,255,255,.45) 25%,transparent 25%,
+    transparent 50%,rgba(255,255,255,.45) 50%,rgba(255,255,255,.45) 75%,transparent 75%);
+  background-size:14px 14px;animation:peo-stripe .7s linear infinite}
+@keyframes peo-stripe{from{background-position:0 0}to{background-position:14px 0}}
+.peo-up.is-gone .peo-up-track > i{background:var(--ink-soft,#6b7280)}
+.peo-up.is-gone .peo-up-pct{color:var(--ink-soft,#6b7280)}
+/* Stop sits on the ROW. A batch of six photographs has six things that might
+   need stopping and only one of them is the one in flight. */
+.peo-up-x{font:inherit;font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;flex:none;
+          border:1px solid var(--border,#e6e6e6);background:none;color:var(--ink-soft,#6b7280);cursor:pointer}
+.peo-up-x:hover{border-color:#b4443c;color:#b4443c}
+.peo-up-x[hidden]{display:none}
+.peo-up-headrow{display:flex;gap:10px;align-items:baseline;justify-content:space-between;min-width:0}
+.peo-up-stop{font:inherit;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;flex:none;
+             border:1px solid var(--border,#e6e6e6);background:none;color:inherit;cursor:pointer}
+.peo-up-stop[hidden]{display:none}
+@media (prefers-reduced-motion: reduce){.peo-up-track > i{transition:none}
+  .peo-up.is-server .peo-up-track > i{animation:none}}
+
+/* ---- category search ---- */
+.peo-catq{margin:0 0 9px}
+.peo-catlist{max-height:240px;overflow:auto;min-width:0;
+             border:1px solid var(--border,#e6e6e6);border-radius:9px;padding:7px 9px}
+.peo-catlist .peo-check[hidden]{display:none}
+
+.peo-mediawrap{container-type:inline-size;min-width:0}
+.peo-media{display:grid;gap:16px;align-items:start;min-width:0}
+.peo-media > *{min-width:0}
+@container (min-width:620px){
+  /* Fixed left track, not a fraction: the preview is capped at 260px by
+     .peo-main-img anyway, so a fractional track would only ever add dead space
+     between the two halves at wide widths. */
+  .peo-media{grid-template-columns:260px minmax(0,1fr)}
+}
+
+/* The gallery is a LIST, not a grid of thumbnails, and that is a decision
+   about alt text rather than about looks. Every shot carries its own alt, the
+   alt is a sentence, and a sentence needs a full-width box to be typed into --
+   in a 3-across grid at 390px each input would be 104px wide. A row also makes
+   the reorder controls reachable with a thumb and gives the drag handle
+   somewhere obvious to live. */
+.peo-gal{display:grid;gap:8px;min-width:0}
+.peo-gal > *{min-width:0}
+.peo-tile{display:flex;align-items:center;gap:10px;padding:8px;min-width:0;
+          border:1px solid var(--border,#e6e6e6);border-radius:10px;
+          background:var(--surface,#fff)}
+.peo-tile img{display:block;width:56px;height:56px;border-radius:8px;object-fit:cover;
+              flex:none;pointer-events:none;background:var(--surface-2,#f7f8fa)}
+.peo-tile.peo-drag{opacity:.35}
+.peo-tile.peo-over{outline:2px dashed #1f7d52;outline-offset:-2px}
+.peo-tile .peo-grip{flex:none;cursor:grab;color:var(--ink-faint,#9ca3af);font-size:15px;
+                    line-height:1;padding:4px 2px;user-select:none}
+.peo-tile .peo-body{flex:1 1 auto;min-width:0}
+.peo-tile .peo-ord{font-size:10.5px;font-weight:700;color:var(--ink-soft,#6b7280);
+                   display:block;margin-bottom:4px}
+.peo-tile .peo-alt{width:100%;max-width:100%;box-sizing:border-box;min-width:0;font:inherit;
+                   font-size:12.5px;padding:6px 8px;border-radius:7px;
+                   border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);color:inherit}
+.peo-tile .peo-alt:focus{outline:0;border-color:#1f7d52;box-shadow:0 0 0 3px rgba(31,125,82,.14)}
+.peo-tile .peo-acts{flex:none;display:flex;gap:3px}
+.peo-tile .peo-acts button{background:var(--surface-2,#f7f8fa);border:1px solid var(--border,#e6e6e6);
+                           color:inherit;width:26px;height:26px;border-radius:7px;font-size:12px;
+                           line-height:1;cursor:pointer;padding:0}
+.peo-tile .peo-acts button[disabled]{opacity:.35;cursor:default}
+.peo-tile .peo-acts button.peo-rm{color:#b4443c}
+@media(max-width:420px){
+  .peo-tile{flex-wrap:wrap}
+  .peo-tile .peo-body{flex:1 1 100%;order:3}
+}
+
+.peo-drop{border:1.5px dashed var(--border,#e6e6e6);border-radius:10px;padding:18px 12px;text-align:center;
+          font-size:12.5px;color:var(--ink-soft,#6b7280);cursor:pointer;min-width:0;background:none;
+          display:block;width:100%;font-family:inherit}
+.peo-drop:hover,.peo-drop:focus-visible,.peo-drop.peo-over{border-color:#1f7d52;color:#1f7d52;background:rgba(31,125,82,.04)}
+.peo-drop b{display:block;font-size:13px;color:inherit;margin-bottom:3px}
+/* The ceiling, read from this server. Its own line under the zone's headline so
+   the number is beside the target rather than in a paragraph above it. */
+.peo-drop .peo-cap{display:block;margin-top:4px;font-size:11.5px;overflow-wrap:anywhere}
+
+/* ---- file drop zones ----
+   THE WHOLE CARD IS THE TARGET, not the dashed box inside it. A photograph let
+   go two pixels outside a 140px box did nothing before -- and worse than
+   nothing, because the console prevents no default drop anywhere else, so the
+   browser NAVIGATED AWAY to the file and took the half-filled form with it.
+   is-drag is set on the card while the pointer carries files over any part of
+   it, and the dashed box inside is what lights up, so the highlight names the
+   thing that will happen rather than the pixel under the cursor. */
+.peo-media-main.is-drag,.peo-media-gal.is-drag,.peo-ogzone.is-drag{outline:2px solid #1f7d52;outline-offset:2px}
+.peo-media-main.is-drag .peo-main-img,.peo-ogzone.is-drag .peo-drop,
+.peo-media-gal.is-drag .peo-drop{border-color:#1f7d52;color:#1f7d52;background:rgba(31,125,82,.06)}
+/* The main image box IS the drop target for the main image: drop a photograph on
+   the picture to replace it. Nothing about the box itself changes -- its border
+   and radius are the ones set above, untouched -- only the highlight is new. */
+.peo-dhint{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.45;margin-top:8px;overflow-wrap:anywhere}
+
+/* ---- empty states ---- */
+.peo-empty{padding:22px 12px;text-align:center;color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.5}
+.peo-empty b{display:block;font-size:13.5px;color:var(--ink,#111827);margin-bottom:4px}
+
+/* ---- SEO preview ---- */
+.peo-snip{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:13px;
+          background:var(--surface-2,#f7f8fa);min-width:0;overflow-wrap:anywhere}
+.peo-snip .u{font-size:11.5px;color:#0b6b2f}
+.peo-snip .t{color:#1a0dab;font-size:16px;margin:3px 0;font-weight:500;line-height:1.3}
+.peo-snip .d{font-size:12.5px;color:#4d5156;line-height:1.5}
+.peo-count{float:right;font-size:11px;font-weight:600;color:var(--ink-soft,#6b7280)}
+.peo-count.peo-warn{color:#b7791f}
+.peo-count.peo-bad{color:#b4443c}
+
+/* ---- status pill ---- */
+.peo-pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;
+          border:1px solid var(--border,#e6e6e6);color:var(--ink-soft,#6b7280);white-space:nowrap}
+.peo-pill.is-publish{border-color:#1f7d52;color:#1f7d52;background:rgba(31,125,82,.07)}
+.peo-pill.is-draft{border-color:#9ca3af;color:#6b7280}
+.peo-pill.is-private{border-color:#7b5cf0;color:#7b5cf0;background:rgba(123,92,240,.07)}
+.peo-pill.is-scheduled{border-color:#b7791f;color:#b7791f;background:rgba(183,121,31,.08)}
+
+/* ---- the picker list ---- */
+.peo-list{display:grid;gap:8px;min-width:0}
+.peo-item{display:flex;align-items:center;gap:11px;padding:9px 11px;min-width:0;
+          border:1px solid var(--border,#e6e6e6);border-radius:10px;background:var(--surface,#fff);
+          cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.peo-item:hover{background:rgba(127,127,127,.05)}
+.peo-item img,.peo-item .peo-noimg{width:38px;height:38px;border-radius:8px;object-fit:cover;flex:none;
+                                   background:var(--surface-2,#f7f8fa)}
+.peo-item .peo-meta{flex:1 1 auto;min-width:0}
+.peo-item b{display:block;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peo-item .peo-m2{font-size:11.5px;color:var(--ink-soft,#6b7280);overflow:hidden;
+                  text-overflow:ellipsis;white-space:nowrap}
+
+.peo-banner{border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.5;min-width:0;
+            overflow-wrap:anywhere}
+.peo-banner.is-bad{border:1px solid #e3c3c0;background:#fdf3f2;color:#8f3229}
+.peo-banner.is-good{border:1px solid #bfe0cd;background:#f2faf5;color:#1a6b46}
+
+/* ---------------------------------------------------------------------------
+   Panel arrangement. (Lane AS)
+
+   Every panel is wrapped in a .peo-panel rather than having its own view
+   function changed. The wrapper is what carries the arrange toolbar, the drop
+   target and the panel key, so this feature adds nothing at all to the inside
+   of a card -- no field moves, no id changes, and the save payload is
+   untouched. It also means a panel added later is arrangeable the moment it is
+   listed in the registry, without anybody remembering to add markup to it.
+
+   min-width:0 on the wrapper AND on its children, for the reason the docblock
+   at the top of this file gives: a grid item defaults to min-width:auto, which
+   is a refusal to shrink below its content, and inserting a new grid level
+   between .peo-col and .peo-card is exactly where that defect gets
+   reintroduced. The gallery's own alt-text inputs and the RTE panes are wide
+   enough to stretch the whole console if this line is dropped.
+--------------------------------------------------------------------------- */
+.peo-panel{display:grid;gap:6px;min-width:0;align-content:start}
+
+/* ---- colour ----------------------------------------------------------------
+   A hue per panel, set on the wrapper that already carries the panel key and
+   read by the card inside it, so the two Images cards pick up one hue without
+   either of them naming it.
+
+   Restraint is the point: the hue appears as a 3px rail down the left of the
+   card, the heading, and a wash under the header that is a few percent of the
+   colour. The card stays white, the inputs stay untouched, and nothing changes
+   the meaning of the green the save button and the toggles already use. A
+   product editor is a screen an operator stares at all day; the colour is there
+   to tell the panels apart at a glance, not to decorate.
+
+   Every value goes through the hue token, so re-hueing a panel is one line and
+   cannot leave a heading one colour and its rail another. color-mix is declared
+   AFTER a solid fallback, so a browser without it gets the plain card rather
+   than a transparent one. */
+.peo-panel{--peo-hue:#6366f1}
+.peo-panel[data-peo-panel="basics"]{--peo-hue:#2563eb}
+.peo-panel[data-peo-panel="images"]{--peo-hue:#7c3aed}
+.peo-panel[data-peo-panel="short_description"]{--peo-hue:#0891b2}
+.peo-panel[data-peo-panel="description"]{--peo-hue:#0891b2}
+.peo-panel[data-peo-panel="ingredients"]{--peo-hue:#0d9488}
+.peo-panel[data-peo-panel="how_to_use"]{--peo-hue:#0d9488}
+.peo-panel[data-peo-panel="seo"]{--peo-hue:#b45309}
+.peo-panel[data-peo-panel="publish"]{--peo-hue:#15803d}
+.peo-panel[data-peo-panel="categories"]{--peo-hue:#c026d3}
+.peo-panel[data-peo-panel="brand"]{--peo-hue:#c026d3}
+.peo-panel[data-peo-panel="pricing"]{--peo-hue:#b45309}
+.peo-panel[data-peo-panel="stock"]{--peo-hue:#0369a1}
+.peo-panel[data-peo-panel="alsolike"]{--peo-hue:#db2777}
+
+.peo-card{position:relative;overflow:hidden}
+
+/* The vertical rail is OFF by default — the owner asked for it out — and can be
+   switched back on per browser from the editor's toolbar. It is gated on an
+   attribute on the editor's own wrapper rather than a body class, so nothing
+   outside this screen can be affected by it either way.
+
+   Off is the base state and on is what the attribute adds, so a browser that
+   cannot read the stored preference gets the layout the owner asked for rather
+   than the one they rejected. */
+.peo-wrap[data-peo-rails="1"] .peo-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--peo-hue,#6366f1);opacity:.85}
+.peo-wrap[data-peo-rails="1"] .peo-card{padding-left:18px}
+
+.peo-card::after{content:'';position:absolute;left:0;right:0;top:0;height:74px;
+                 pointer-events:none;z-index:0;
+                 background:transparent;
+                 background:linear-gradient(180deg,
+                   color-mix(in srgb, var(--peo-hue,#6366f1) 7%, transparent),
+                   transparent)}
+.peo-card > *{position:relative;z-index:1}
+.peo-card h3{color:var(--peo-hue,#6b7280)}
+.peo-panel > *{min-width:0}
+
+/* The per-panel arrange toolbar. It is also the drag handle -- see the note in
+   bindArrange() for why the handle is the bar and not the whole panel. */
+.peo-arrbar{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:nowrap;
+            padding:5px 7px;border-radius:9px;
+            border:1px solid var(--border,#e6e6e6);background:var(--surface-2,#f7f8fa)}
+.peo-arrbar .peo-grip{flex:none;cursor:grab;color:var(--ink-faint,#9ca3af);font-size:15px;
+                      line-height:1;padding:2px;user-select:none}
+.peo-arrbar .peo-arrname{flex:1 1 auto;min-width:0;font-size:11.5px;font-weight:700;
+                         letter-spacing:.03em;text-transform:uppercase;
+                         color:var(--ink-soft,#6b7280);
+                         overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peo-arrbar .peo-arracts{flex:none;display:flex;gap:3px}
+
+/* 30px, not 26px like the gallery's. These are the touch targets for the whole
+   feature on a phone, where drag never fires at all, so they are the larger of
+   the two precedents this screen already sets. */
+.peo-arrbar .peo-arracts button{background:var(--surface,#fff);
+                                border:1px solid var(--border,#e6e6e6);color:inherit;
+                                min-width:30px;height:30px;border-radius:8px;font-size:13px;
+                                line-height:1;cursor:pointer;padding:0 6px}
+.peo-arrbar .peo-arracts button:hover:not([disabled]){background:rgba(31,125,82,.07);border-color:#1f7d52;color:#1f7d52}
+.peo-arrbar .peo-arracts button:focus-visible{outline:0;border-color:#1f7d52;box-shadow:0 0 0 3px rgba(31,125,82,.18)}
+.peo-arrbar .peo-arracts button[disabled]{opacity:.35;cursor:default}
+
+.peo-panel.peo-pdrag{opacity:.4}
+.peo-panel.peo-pover > .peo-card,
+.peo-panel.peo-pover > .peo-arrbar{outline:2px dashed #1f7d52;outline-offset:-2px}
+.peo-panel.peo-arranging > .peo-card{border-style:dashed}
+
+/* A column emptied of every panel still needs to be a drop target, or a layout
+   that moved everything into one column could never be undone by dragging --
+   only by Reset. */
+.peo-slot{border:1.5px dashed var(--border,#e6e6e6);border-radius:10px;padding:18px 12px;
+          text-align:center;font-size:12px;color:var(--ink-soft,#6b7280);min-width:0}
+.peo-slot.peo-pover{border-color:#1f7d52;color:#1f7d52;background:rgba(31,125,82,.04)}
+
+.peo-arrnote{border:1px solid #bfe0cd;background:#f2faf5;color:#1a6b46;
+             border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.5;
+             min-width:0;overflow-wrap:anywhere}
+
+/* Below the grid's own breakpoint the two columns are one stack, so "the other
+   column" is not a thing the operator can see and the button that does it is
+   removed rather than left to do something invisible. Up and down take over
+   the job there -- they step through the whole stack, across the boundary.
+   Hidden in CSS as well as skipped in the markup so a resize with the screen
+   already open cannot leave a live control behind. */
+@media(max-width:900px){
+  .peo-arrbar .peo-arracts button[data-peo-col]{display:none}
+}
+
+@media(max-width:640px){
+  .peo-card{padding:13px}
+  .peo-bar{padding:10px 11px}
+  .peo-bar h2{font-size:14px}
+}

@@ -27,7 +27,10 @@ it('registers the mail screen in the nav, the titles and the router', function (
     // menu as "All mail settings"; the screen itself is unchanged. These two
     // pin that finished state, so they read red until the integrator has made
     // the move and green after.
-    expect($source)->toContain("['mail','All mail settings'")    // sidebar entry
+    // Lane AP: the sidebar is App\Support\AdminNav's (server-rendered), not a NAV literal.
+    expect(\App\Support\AdminNav::rows()['mail']['label'] ?? null)->toBe('All mail settings');
+    expect(\App\Support\AdminNav::rows()['mail']['sec'])->toBe('Emails');
+    expect($source)
         ->and($source)->toContain("mail:['Emails','All mail settings']")   // breadcrumb + go() gate
         ->and($source)->toContain('mail:renderMail')             // the router
         ->and($source)->toContain('function renderMail(');       // and the function it names

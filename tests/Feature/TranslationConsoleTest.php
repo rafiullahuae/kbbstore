@@ -579,6 +579,10 @@ it('keeps the handover document and the applied console in step', function () {
          */
         expect(trim($replacement))->not->toBe('', 'block '.($i + 1).' has an empty replacement');
 
+        if (\Tests\Support\RetiredNavLiterals::superseded('resources/views/admin/app.blade.php', $replacement)) {
+            continue;   // the NAV literal is retired; the group is AdminNav's (asserted below)
+        }
+
         expect(substr_count($app, $replacement))->toBe(
             1,
             'block '.($i + 1).' is not applied to app.blade.php exactly once'
@@ -593,8 +597,10 @@ it('keeps the handover document and the applied console in step', function () {
      * rows that open the dashboard under their own heading — which is what
      * AdminNavAndIdsTest checks once the integrator has applied them.
      */
-    expect($app)->toContain("{sec:'Translation',items:[")
-        ->and($app)->toContain("@include('admin.partials.translation-screens')");
+    // Lane AP: the sidebar group is App\Support\AdminNav's.
+    expect(array_column(array_values(array_filter(\App\Support\AdminNav::GROUPS, fn ($g) => $g['sec'] === 'Translation'))[0]['rows'] ?? [], 'id'))
+        ->toBe(['tr-settings', 'tr-progress', 'tr-strings', 'tr-machine']);
+    expect($app)->toContain("@include('admin.partials.translation-screens')");
 
     foreach (['tr-settings', 'tr-progress', 'tr-strings', 'tr-machine'] as $id) {
         expect(substr_count($app, "'".$id."':['Translation',"))->toBe(1, $id.' has no TITLES entry');
@@ -648,7 +654,8 @@ it('wires all four halves of the Translation console, not three', function () {
      * another needle — the file was being required to contain the words "the
      * sidebar group is missing". expect(bool) takes the message properly.
      */
-    expect(str_contains($app, "sec:'Translation'"))
+    // Lane AP: the sidebar is App\Support\AdminNav's, server-rendered.
+    expect(in_array('Translation', array_column(\App\Support\AdminNav::GROUPS, 'sec'), true))
         ->toBeTrue('the sidebar group is missing');
 
     expect(str_contains($app, 'translation-screens'))

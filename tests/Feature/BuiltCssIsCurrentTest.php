@@ -59,7 +59,14 @@ function cssDeclaredProps(array $files): array
 it('serves a bundle built from the stylesheets in this commit', function () {
     // The owner app's stylesheet (Lane MAC) is a Vite source like the shop's.
     $sources = array_merge(glob(base_path('resources/css/kbb/*.css')) ?: [], glob(base_path('resources/css/owner-app/*.css')) ?: []);
-    $bundles = glob(base_path('public/build/assets/*.css')) ?: [];
+    // Lane AP: the admin console's own stylesheet blocks are built as files
+    // too (vite-admin-console-assets.mjs, named admin-<sha1 prefix>-<hash>.css).
+    // Their source is admin/app.blade.php, not resources/css, and the server
+    // serves one only when its bytes match the template exactly.
+    $bundles = array_values(array_filter(
+        glob(base_path('public/build/assets/*.css')) ?: [],
+        fn ($f) => ! preg_match('/^admin-[0-9a-f]{12}-/', basename($f))
+    ));
 
     expect($sources)->not->toBeEmpty('the kbb stylesheet sources have moved; re-point this test');
     expect($bundles)->not->toBeEmpty(

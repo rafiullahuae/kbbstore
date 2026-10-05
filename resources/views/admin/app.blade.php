@@ -5,6 +5,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>K-Beauty Bliss — Admin · Phase 0 Foundation</title>
+<!-- LANE AP. The sidebar's hidden/shown state, applied BEFORE the first paint
+     so a console left with its menu hidden never flashes it open. A per-browser
+     convenience: a blocked or empty localStorage simply means "shown". -->
+<script>try{if(localStorage.getItem('kbb.admin.side')==='closed')document.documentElement.classList.add('side-closed')}catch(e){}</script>
 <style>
 :root{
   --bg:#f6f7fb;--surface:#fff;--surface-2:#f2f4fb;--surface-3:#eef1f9;--border:#e6e9f2;--border-2:#eef0f6;
@@ -2811,6 +2815,44 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   .ppv-pane[data-ppv="mobile"]{--ppv-s:.4;--ppv-win:300}
 }
 </style>
+<style>
+/* ---------- LANE AP · hide / show the sidebar ----------------------------
+   The owner: "the main left panel of the admin section close and open icon
+   ... must be smooth". One button at the sidebar's edge (the top bar's first
+   control) hides the panel completely and gives the content its width; the
+   same button brings it back.
+
+   HIDDEN, NOT AN ICON RAIL. The sidebar is ~90 rows in 11 collapsible groups
+   whose headers carry no icon; a rail would be a column of unlabelled glyphs
+   with the group structure gone. Hidden is one decision the owner can see.
+
+   TRANSFORM ONLY. The panel slides with transform; the content does not
+   animate its width. The grid switches once, at the toggle, and .main plays a
+   transform from where it WAS to where it now is (the sidebar's width is the
+   constant 248px of .app's grid, so nothing is measured). One layout, then
+   compositor-only frames. visibility follows the slide out so a hidden panel
+   takes no focus. Desktop only: at 880px and below the panel is already an
+   off-canvas drawer behind the existing menu button, unchanged. */
+.sidetog{display:grid}
+.sidetog .sidetog-chev{transition:transform .26s var(--ease);transform-origin:12px 12px}
+html.side-closed .sidetog .sidetog-chev{transform:rotate(180deg)}
+/* The sidebar is painted whole or not at all: AdminNav prints data-wait and
+   the script after </nav> removes it once every row has been parsed. */
+#nav[data-wait]{visibility:hidden}
+@media(min-width:881px){
+  .side{transition:transform .26s var(--ease),visibility 0s linear 0s}
+  html.side-closed .app{grid-template-columns:1fr}
+  html.side-closed .side{position:fixed;top:0;bottom:0;left:max(0px,calc((100vw - 1920px) / 2));width:248px;z-index:60;
+    transform:translateX(-100%);visibility:hidden;transition:transform .26s var(--ease),visibility 0s linear .26s}
+  html.side-anim .app{overflow-x:clip}
+  html.side-anim .main{animation:kbbMainOpen .26s var(--ease)}
+  html.side-anim.side-closed .main{animation-name:kbbMainClose}
+}
+@keyframes kbbMainClose{from{transform:translateX(248px)}to{transform:none}}
+@keyframes kbbMainOpen{from{transform:translateX(-248px)}to{transform:none}}
+@media(max-width:880px){.sidetog{display:none}}
+@media(prefers-reduced-motion:reduce){.side,.sidetog .sidetog-chev{transition:none!important}html.side-anim .main{animation:none!important}}
+</style>
 </head>
 <body data-env="live">
 <div class="mesh"></div>
@@ -2825,8 +2867,75 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
     </div>
 @endverbatim
 @include('admin.partials.admin-search')
+{{-- LANE AP. The complete sidebar, server-rendered: every group and every row
+     this account may open, in its settled order, painted with the shell
+     instead of 1.4 s later by buildNav(). App\Support\AdminNav is the one
+     definition; see its docblock. The script after it is the only script the
+     sidebar needs before the console's own has arrived. --}}
+@php($kbbNavUser = auth('admin')->user())
+    {!! \App\Support\AdminNav::html($kbbNavUser, is_string(request()->query('go')) ? request()->query('go') : null) !!}
+    <script>document.getElementById('nav').removeAttribute('data-wait');window.KBB_NAV=@json(\App\Support\AdminNav::forScript($kbbNavUser));</script>
 @verbatim
-    <nav class="nav" id="nav"></nav>
+<script>
+/* LANE AP · the sidebar before the console's script has arrived.
+   1. A #hash deep link never reaches the server, so AdminNav marked Dashboard.
+      Move the mark to the hashed row now, before the first paint, exactly as
+      go() will when the boot reads the same hash (?go= wins there too).
+   2. A row clicked in the seconds before go() exists is not dropped: it is
+      written to the address as #id and marked, and the boot's deep-link code
+      -- which already replays a screen whose renderer is still to come --
+      opens it. Once kbbNavClick exists this listener stands aside: buildNav()
+      has bound every row in the same task that defined it. */
+/* 3. Hide / show the sidebar (desktop). The class on <html> is the state; the
+      head script applied a remembered one before the first paint. side-anim
+      is on only for the one slide, so a page that LOADS hidden does not play
+      it. The timer runs once per click and stops. */
+(function(){
+  var KEY='kbb.admin.side', root=document.documentElement, t=0;
+  window.kbbSideSync=function(){
+    var b=document.getElementById('sideTog'); if(!b) return;
+    var shut=root.classList.contains('side-closed'), say=shut?'Show menu':'Hide menu';
+    b.setAttribute('aria-expanded',shut?'false':'true'); b.setAttribute('aria-label',say); b.title=say;
+  };
+  window.kbbSideToggle=function(open){
+    var shut=open===undefined?!root.classList.contains('side-closed'):!open;
+    if(shut===root.classList.contains('side-closed')) return;
+    root.classList.add('side-anim'); root.classList.toggle('side-closed',shut);
+    clearTimeout(t); t=setTimeout(function(){root.classList.remove('side-anim');},320);
+    try{localStorage.setItem(KEY,shut?'closed':'open');}catch(e){}
+    window.kbbSideSync();
+  };
+  /* Ctrl/Cmd+K focuses the sidebar search, which a hidden sidebar cannot
+     take: show the panel first. Capture phase, so it runs before the search's
+     own handler. */
+  window.addEventListener('keydown',function(e){
+    if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.shiftKey&&String(e.key).toLowerCase()==='k'&&root.classList.contains('side-closed')) window.kbbSideToggle(true);
+  },true);
+})();
+(function(){
+  var nav=document.getElementById('nav'); if(!nav) return;
+  function mark(id){
+    var b=nav.querySelector('.nav-item[data-go="'+id+'"]'); if(!b) return false;
+    nav.querySelectorAll('.nav-item.on').forEach(function(x){x.classList.remove('on');});
+    nav.querySelectorAll('.nav-group.open').forEach(function(x){x.classList.remove('open');});
+    b.classList.add('on'); var g=b.closest('.nav-group'); if(g) g.classList.add('open');
+    return true;
+  }
+  try{
+    if(!new URLSearchParams(location.search).get('go')){
+      var h=(location.hash||'').replace('#','').split('/')[0];
+      if(/^[a-z0-9-]+$/.test(h)) mark(h);
+    }
+  }catch(e){}
+  nav.addEventListener('click',function(ev){
+    if(typeof window.kbbNavClick==='function') return;
+    var gh=ev.target.closest('.nav-gh');
+    if(gh){ gh.closest('.nav-group').classList.toggle('open'); return; }
+    var b=ev.target.closest('.nav-item'); if(!b) return;
+    if(mark(b.dataset.go)){ try{ history.replaceState(null,'',location.pathname+'#'+b.dataset.go); }catch(e){} }
+  });
+})();
+</script>
     <div class="side-pin"><button class="nav-item" data-go="console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h8M16 6h4M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="14" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg><span>Console</span></button></div>
     <div class="side-foot">v0.1.0 · Foundation<br>Aurora admin · KBB platform</div>
   </aside>
@@ -2834,6 +2943,7 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   <!-- MAIN -->
   <div class="main">
     <div class="top">
+      <button class="iconbtn sidetog" id="sideTog" type="button" aria-controls="side" aria-expanded="true" aria-label="Hide menu" title="Hide menu" onclick="kbbSideToggle()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path class="sidetog-chev" d="m16 10-2 2 2 2"/></svg></button><script>kbbSideSync()</script>
       <button class="iconbtn menubtn" onclick="document.getElementById('side').classList.toggle('open')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
       <div><div class="crumb" id="crumb">Platform</div><h1 id="ptitle">Dashboard</h1></div>
       <div class="sp"></div>
@@ -2893,6 +3003,37 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 <div class="drawer" id="drawer"></div>
 <div class="toast" id="toast"></div>
 
+<script>
+/* LANE AP · the console script's server data, in a block of its own.
+   These three were @json islands inside the console's first script block; as
+   long as they were, that block rendered differently from its source and had
+   to be sent inline on every load. Declared here, a block earlier, they exist
+   before anything reads them (they did not, for MHICONS -- see its note). */
+/* The full country list, from App\Support\Countries \u2014 the same table the
+   checkout's own picker and the Extended tab are built from, so a code chosen
+   here is one the storefront can name. Emitted rather than fetched because
+   /admin-api/extended-delivery deliberately REMOVES the zone countries from its
+   list, and the zone countries (the UAE and the Gulf) are precisely the ones
+   this screen exists to write a line for. */
+@endverbatim
+var KBB_COUNTRY_NAMES = @json(\App\Support\Countries::NAMES);
+
+/* The account, wishlist and cart marks the storefront draws, from
+   App\Support\HeaderIcons. Read by MHICONS (Appearance → Mobile Header)
+   and by hdPreview() (Appearance → Header), so neither preview can drift from
+   the shop. */
+var KBB_HEADER_ICONS = @json(\App\Support\HeaderIcons::forPreview());
+
+/* The registered preset groups, from App\Support\CountryPresets. One key per
+   per-country table in this console; only 'delivery' exists today. The Tax tab
+   adds its group to that PHP class and appears here without touching a line of
+   the JavaScript below. */
+var KBB_PRESETS = @json([
+    \App\Support\CountryPresets::DELIVERY => \App\Support\CountryPresets::forConsole(\App\Support\CountryPresets::DELIVERY),
+    \App\Support\CountryPresets::TAX => \App\Support\CountryPresets::forConsole(\App\Support\CountryPresets::TAX),
+]);
+@verbatim
+</script>
 <script>
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -2972,187 +3113,30 @@ window.__kbbStatsFirst = (function(){
   }catch(e){ return null; }
 })();
 
-/* ---------- nav ---------- */
-const NAV=[
-  {sec:'Overview',items:[['dash','Dashboard',I.dash]]},
-  {sec:'Platform',items:[['theme','K-Beauty Bliss Theme',I.theme],['users','Users & Roles',I.users],['settings','Settings',I.settings],['siteaddr','Site address','<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/>']]},
-  {sec:'Safety',items:[['debug','Debug & Monitor',I.debug],['sandbox','Sandbox & Deploy',I.sandbox],['democontent','Demo Content','<path d=\"M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\"1.3\"/>']]},
-  /* Catalog is its own group, and `group:true` keeps it one even while it holds
-     a single built-in entry.
+/* ---------- nav ----------
+   LANE AP. THE SIDEBAR IS SERVER-RENDERED, and this is the half that binds it.
 
-     Two screens inject themselves in here at include time — the product editor
-     and Categories & Brands — and both already set the breadcrumb to 'Catalog'
-     and try to open `.nav-group[data-sec="Catalog"]`. That group had never
-     existed, so the breadcrumb named a group the sidebar did not have and the
-     expand was a no-op. It exists now. Without `group:true` buildNav would
-     render a one-item section as a bare top-level link with no .nav-group
-     wrapper at all, and the two injected entries would land outside any group. */
-  {sec:'Catalog',group:true,items:[['catalog','Catalog',I.catalog]]},
-  {sec:'Store',items:[['modules','Modules','<path d="M4 7h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M13 13h7v7h-7z"/>'],['megamenu','Mega Menu','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],['ecommerce','Ecommerce','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],['tax','Tax','<path d="M4 4h12l4 4v12H4z"/><path d="M8 10h8M8 14h5"/>'],['payship','Payment & Shipping Rules','<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],['shipping','Delivery & Shipping','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],['import','Store Import / Export',I.sandbox],['orders','Orders',I.orders],['payments','Payments','<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],['analytics','Analytics','<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],['search','Site Search','<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],['seo','SEO & Meta','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],['store-settings','Business Details',I.settings],['customers','Customers',I.cust],['quiz-leads','Quiz Leads','<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>']]},
-  /* Content. These three sat in Store while every one of them set its
-     breadcrumb to 'Content' — the sidebar said one thing and the page said
-     another, and the rest of the repo already calls them "Content → Media
-     Library" and "Content → HTML Blocks". The group the code always meant now
-     exists, so the two agree.
+   NAV and LATE_NAV used to live here as literals, and buildNav() drew #nav from
+   them -- which it could only do once this 650 KB script block had arrived, so
+   on a throttled cold load the sidebar was empty for its first 1.4 s and one
+   row (#KBeautyBliss Spotted, in neither list) arrived at DOMContentLoaded.
 
-     'blog' is gone from here on purpose. It and 'posts' were two rows that
-     opened the same screen: go() routes both to renderPosts() and FRAME_SRC
-     mapped both to kbb-admin-blog.html. Clicking "Blog" landed on a page
-     headed "Posts", which is how an owner concludes the blog screen was never
-     built. One row now. The 'blog' id still routes — TITLES and the live
-     wiring keep it — so #blog and ?go=blog reach the same screen as before. */
-  /* Emails (Lane RK, package E1) — the owner: "put all these settings etc
-     under a new parent menu Emails". The four screens are drawn by
-     admin/partials/emails-screens.blade.php; 'mail' is the old Store → Mail
-     screen, unchanged, moved here as "All mail settings" until E2's Customer
-     emails takes over its order-status switches. */
-  {sec:'Emails',items:[['emails','Overview','<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'],['emails-sending','Sending & delivery','<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>'],['emails-customer','Customer emails','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'],['emails-branding','Design & branding','<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4A5.6 5.6 0 0 0 22 9.8C22 5.5 17.5 2 12 2z"/>'],['emails-sent','Sent mail','<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>'],['mail','All mail settings','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>']]},
-  {sec:'Content',items:[['posts','Blog Posts','<path d="M4 4h11l5 5v11H4z"/><path d="M14 4v5h5"/><path d="M8 13h6"/>'],['htmlblocks','HTML Blocks','<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'],['media','Media Library','<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L6 21"/>']]},
-  /* Translation (T1b, Lane FC). A parent menu of its own, beside Store and
-     Content, which is the owner's own requirement: the switches that publish a
-     second language are not settings to be scattered across other screens.
+   App\Support\AdminNav is now the ONE definition. It prints the complete
+   <nav id="nav"> into the shell, filtered to what this account may open, and
+   prints window.KBB_NAV beside it: the ids whose renderer ships late (for
+   kbbNavClick's replay) and the ids withheld from this account (so a partial's
+   own kbbAddNavEntry() cannot put one back). Nothing about a row -- its label,
+   icon, group or position -- is restated here, so the two cannot drift.
 
-     Four rows and not one screen with four tabs. They are four different
-     questions asked at four different times — is Arabic on, how far along is
-     it, what does this one string say, and what would the machine cost — and
-     the one the owner opens most is the strings list, which he will sit in for
-     hours. A tab strip would make him pass through the switch that publishes
-     the language to reach it.
-
-     Every one of these rows is drawn by admin/partials/translation-screens
-     .blade.php, which is included at the foot of this file (block 4) and wraps
-     window.go. They are in LATE_RENDERED (block 3) as well, without which a
-     deep link to any of them lands on the dashboard under its own heading.
-
-     NO `group:true` is needed: the section carries four items, so buildNav
-     renders it as a real .nav-group without being asked. Nothing injects rows
-     into this group, so it will never be a one-item section. */
-  {sec:'Translation',items:[['tr-settings','Language settings','<path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/><circle cx="9" cy="5" r="2.2"/><circle cx="15" cy="12" r="2.2"/><circle cx="8" cy="19" r="2.2"/>'],['tr-progress','Progress','<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/>'],['tr-strings','Strings','<path d="M4 7V5h16v2"/><path d="M9 19h6"/><path d="M12 5v14"/>'],['tr-machine','Machine translation','<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>']]},
-  {sec:'Appearance',items:[['homepage','Homepage','<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'],['prodstyles','Product styles','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>'],['mobilehdr','Mobile Header','<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 9h10"/>'],['dividers','Section dividers','<path d="M4 12h5"/><path d="M15 12h5"/><circle cx="12" cy="12" r="1.6"/>'],['acctpanel','Login / Register panel','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12h8M8 15h5"/>'],['header','Header','<path d="M3 5h18v5H3z"/><path d="M3 14h10"/>'],['mobilemenu','Mobile menu','<path d="M7 2h10v20H7z"/><path d="M10 18h4"/>'],['productpage','Product page','<path d="M3 12V4h8l9 9-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'],['bundles','Quantity bundles','<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],['layout','Product grid','<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>']]},
-  {sec:'Pages',items:[['pages-store','Store pages','<path d="M3 9h18M3 15h18M9 3v18"/><rect x="3" y="3" width="18" height="18" rx="2"/>'],['pages-user','User pages','<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/>'],['pagebanners','Page banners','<rect x="3" y="4" width="18" height="11" rx="2"/><path d="M3 19h18"/><path d="m7 9 2.5 2.5L14 7"/>'],['pageheader','Page header','<path d="M3 5h18"/><path d="M3 10h11"/><rect x="3" y="14" width="18" height="6" rx="1.5"/>']]},
-  {sec:'Growth & Marketing',items:[['mkt-email','Marketing Emails','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/><path d="M17 3.5l1 1.8 2 .4-1.4 1.4.3 2-1.9-.9-1.9.9.3-2L14 5.7l2-.4z"/>','new'],['newsletter','Newsletter','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['labels','Product Labels','<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],['meta','Meta & Facebook','<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>','lock'],['pixels','Marketing Pixels','<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>']]},
-  /* One row for the Rating Badge, not two. 'rev-capsule' had a row of its own
-     and edited the SAME seven settings as 'rev-badge'; each screen carried a
-     note telling the owner the other one held them too, which is a screen
-     apologising for the menu. The id stays routable — see TITLES below. */
-  {sec:'Reviews',items:[['rev-all','All Reviews','<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 21l1.1-6.5L2.6 9.8l6.5-.9z"/>'],['rev-add','Bulk Tools','<path d="M12 5v14M5 12h14"/>'],['rev-assign','Assign / Duplicate',I.copy],['rev-io','Review Import / Export','<path d="M8 7h11l-3-3M16 17H5l3 3"/>'],['rev-badge','Rating Badge','<path d="M12 2l4 4-4 4-4-4z"/><path d="M4 12l8 8 8-8"/>'],['rev-settings','Review Settings',I.settings]]},
-  {sec:'Storefront',items:[['shopfilters','Shop Filters','<path d="M4 5h16l-6 7v5l-4 2v-7z"/>']]},
-  {sec:'Core Updates',items:[['updates','Core Updates','<path d=\"M21 12a9 9 0 1 1-3-6.7\"/><path d=\"M21 3v6h-6\"/><path d=\"M12 8v5l3 2\"/>']]}
-];
-
-/* ---------- LANE NAV · the rows that ship inside a partial ----------------
-   THE COMPLAINT THIS EXISTS FOR, and the measurement behind it.
-
-   Reported with a screenshot of the console part-way through loading: the
-   sidebar showed Appearance holding ten rows and not the eleven others that
-   belong in it, and some parent menus were short of children entirely. It was
-   not a rendering fault. It was the clock.
-
-   Twenty-one of this console's sidebar rows do not come from NAV above. They
-   are contributed by screen partials, each of which registers its own row when
-   its script runs -- and every one of those scripts is at the END of this
-   document, because a partial cannot call window.kbbAddNavEntry before the
-   block that defines it. Measured on the applied console: buildNav() runs at
-   byte 731,657 of a 3,425,404-byte document, which is 21.4 per cent of the way
-   through it, and the last of the twenty-one registers at byte 3,388,358 --
-   98.9 per cent. Between those two points the sidebar is genuinely incomplete,
-   and on a throttled load (2 Mbit/s, CPU at one quarter) that gap measured
-   10.8 seconds: Appearance held ten rows from 4.3s to 15.1s, then eighteen.
-   Appearance -> Set registers last of all, which is exactly the row the
-   owner's screenshot is missing.
-
-   So the rows are declared HERE, where the server renders them, and registered
-   immediately after buildNav(). A partial's own kbbAddNavEntry() call is then
-   a no-op -- it is keyed on the screen id and returns the row that is already
-   there -- so nothing in any partial changes and nothing registers twice. What
-   a partial still contributes is the only thing it alone can: its renderer.
-
-   THE ORDER OF THIS ARRAY IS THE SIDEBAR'S ORDER AND IS NOT ALPHABETICAL.
-   kbbAddNavEntry() inserts each row directly after the first of its `after`
-   anchors that is already in the group, so the order rows arrive in decides
-   where they land. This array is in the order the console registers them in
-   today -- the three that register while the document is still parsing first,
-   then the eighteen that wait for DOMContentLoaded, each of those in the order
-   this file includes them. The one place that matters is 'setap': it names
-   'cartpanel' first, but it registers before cart-panel does, so it has always
-   landed after 'productpage' instead. Sorting this array would silently move
-   that row. The settled sidebar was captured from the browser before and after
-   this change and is byte-identical; AdminSidebarIsCompleteAtBuildTest pins
-   both the order and the anchors.
-
-   EACH ROW'S label, group AND after ARE COPIES OF THE PARTIAL'S OWN CALL, and
-   a copy can drift. That is what the guard test compares, in both directions:
-   a partial that registers a row missing from here, or a row here that no
-   partial registers, fails the suite rather than the sidebar. */
-const LATE_NAV=[
-  {screen:'ugcsections',label:'Shoppable video',group:'Content',after:['media','htmlblocks','posts'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="m9 14 4 2-4 2z"/>'},
-  {screen:'instagram',label:'Instagram',group:'Content',after:['ugcsections','media','htmlblocks','posts'],icon:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/>'},
-  {screen:'setap',label:'Set',group:'Appearance',after:['cartpanel','productpage'],icon:'<circle cx="8.5" cy="12" r="4.2"/><circle cx="14" cy="12" r="4.2"/><circle cx="19" cy="12" r="1.6"/>'},
-  {screen:'order-new',label:'New Order',group:'Store',after:['orders'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'},
-  {screen:'coupon-editor',label:'Coupons',group:'Store',after:['order-new','orders'],icon:'<path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6z"/><path d="M12 9v6"/><path d="M9 12h6"/>'},
-  {screen:'category-tree',label:'Categories',group:'Catalog',after:['catalog'],icon:'<path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H3z"/><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2"/>'},
-  {screen:'brands-manager',label:'Brands',group:'Catalog',after:['category-tree','catalog'],icon:'<path d="M20.6 13.4 12 22l-8.6-8.6a5 5 0 0 1 0-7.1 5 5 0 0 1 7.1 0L12 7.8l1.5-1.5a5 5 0 0 1 7.1 7.1Z"/>'},
-  {screen:'product-editor',label:'Product editor',group:'Catalog',after:['catalog'],icon:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'},
-  {screen:'hpcontent',label:'Homepage content',group:'Appearance',after:['homepage'],icon:'<path d="M3 5h18v6H3z"/><path d="M3 15h9"/><path d="M3 19h6"/>'},
-  {screen:'routines',label:'Build my routine',group:'Catalog',after:['product-editor','catalog'],icon:'<path d="M4 6h10"/><path d="M4 12h16"/><path d="M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="15" cy="18" r="2"/>'},
-  {screen:'cache',label:'Cache',group:'Platform',after:['siteaddr','settings'],icon:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>'},
-  {screen:'cartpanel',label:'Cart panel',group:'Appearance',after:['dividers','mobilehdr','prodstyles'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>'},
-  {screen:'cartpage',label:'Cart page',group:'Appearance',after:['cartpanel','dividers'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M9.5 9.5h7"/>'},
-  {screen:'checkoutpage',label:'Checkout page',group:'Appearance',after:['cartpage','cartpanel','dividers'],icon:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>'},
-  {screen:'slimfooter',label:'Footer',group:'Appearance',after:['checkoutpage','cartpage','dividers'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15h18"/><path d="M7 18h5"/>'},
-  {screen:'sitelayout',label:'Site layout',group:'Appearance',after:['layout','prodstyles','header','dividers'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 4v16"/>'},
-  {screen:'security',label:'Security',group:'Store',after:['payments','modules','analytics'],icon:'<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="m9 12 2 2 4-4"/>'},
-  {screen:'paygw',label:'Gateway webhooks',group:'Store',after:['payments','orders'],icon:'<path d="M12 3a4 4 0 0 1 3.4 6.1l2.8 4.6"/><path d="M8.2 20a4 4 0 0 1-1.4-7.1L9.6 8"/><path d="M18 20a4 4 0 0 0 1-7.9H13"/>'},
-  {screen:'sets',label:'Sets',group:'Catalog',after:['catalog'],icon:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18"/><path d="M12 7V4"/><path d="M8 4h8"/>'},
-  {screen:'product-tabs',label:'Product tabs',group:'Catalog',after:['catalog','sets'],icon:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18"/><path d="M8 7V4"/><path d="M14 7V4"/>'},
-  {screen:'pagination',label:'Pagination',group:'Catalog',after:['brands-manager','category-tree','catalog'],icon:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M7 20h2"/><path d="M11 20h2"/><path d="M15 20h2"/>'},
-  {screen:'banners',label:'Banners',group:'Appearance',after:['hpcontent','homepage'],icon:'<rect x="3" y="4" width="7" height="16" rx="2"/><rect x="14" y="4" width="7" height="16" rx="2"/>'},
-  {screen:'gridsections',label:'Grid sections',group:'Appearance',after:['banners','hpcontent','homepage'],icon:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'},
-  {screen:'pagewash',label:'Page background',group:'Appearance',after:['dividers','prodstyles','homepage','layout'],icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 14c4-3 7 1 10-1s5-2 8 0"/>'},
-  {screen:'searchterms',label:'Search Terms',group:'Growth & Marketing',after:['pixels','meta','labels','newsletter'],icon:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/><path d="M8 11h6"/><path d="M11 8v6"/>'},
-  {screen:'wabutton',label:'WhatsApp button',group:'Appearance',after:['pagewash','dividers','prodstyles','homepage'],icon:'<path d="M4.5 19.5 6 15.6A8 8 0 1 1 9 18.6z"/><path d="M9.5 9.5c.4 2.2 2.3 4.4 5 5"/>'},
-  {screen:'carttracking',label:'Cart Tracking',group:'Growth & Marketing',after:['searchterms','pixels','meta','labels','newsletter'],icon:'<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/><path d="m11 10 2 2 3-3"/>'},
-  {screen:'seokeywords',label:'SEO Keywords',group:'Store',after:['seo','search'],icon:'<path d="M4 7h9M4 12h6M4 17h4"/><circle cx="16.5" cy="13.5" r="4.5"/><path d="m20 17 2 2"/>'}
-];
-
-/* The ids above, for the click guard below. */
-const LATE_NAV_IDS=new Set(LATE_NAV.map(r=>r.screen));
-/* LANE DH - the 'live' tag and its badge are gone.
-   Debug & Monitor was the only NAV row that carried it, and the branch it
-   selected rendered a literal <span class="cnt">3</span>. Not a count of
-   anything: three, always, on every install, beside a screen whose three
-   errors were themselves typed in. An owner who cleared them would have seen
-   the same 3. A tag that can only ever print one number is not a tag, so the
-   branch went with the row that used it; 'lock' and the free-text tags below
-   are untouched and still work. buildNav()'s group badge sums only tags that
-   are entirely digits, so no group badge changes either. */
-function navItemHTML([id,name,icon,tag]){
-  let extra='';if(tag==='lock')extra=`<span class="tag">soon</span>`;else if(tag)extra=`<span class="tag">${tag}</span>`;
-  return `<button class="nav-item${tag==='lock'?' locked':''}" data-go="${id}">${ic(icon)}<span>${name}</span>${extra}</button>`;
-}
+   buildNav() keeps its name and its job of wiring the rows; it no longer draws
+   them. A #nav that arrives empty is a server fault and says so. */
+const KBB_NAV_DATA=window.KBB_NAV||{late:[],hidden:[]};
+const LATE_NAV_IDS=new Set(KBB_NAV_DATA.late);
+const NAV_HIDDEN=new Set(KBB_NAV_DATA.hidden);
 function buildNav(){
-  $('#nav').innerHTML=NAV.map((g,gi)=>{
-    if(g.items.length===1 && !g.group){
-      // Single-item groups render as a plain top-level link, unless the section
-      // asks to stay a group with `group:true` — which Catalog does, because
-      // partials insert their own entries into it after this runs and a bare
-      // link has no .nav-group for them to land in.
-      // The last one is
-      // tagged so CSS can pin it to the bottom of the sidebar — a selector on
-      // .nav-group would never match, because no .nav-group is created here.
-      const html = navItemHTML(g.items[0]);
-      return gi === NAV.length - 1
-        ? html.replace('class="nav-item', 'class="nav-item nav-pinned')
-        : html;
-    }
-    const sum=g.items.reduce((s,it)=>s+(/^\d+$/.test(it[3]||'')?parseInt(it[3]):0),0);
-    const badge=sum>0?`<span class="gh-badge">${sum}</span>`:'';
-    const chev='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 6 6 6-6 6"/></svg>';
-    return `<div class="nav-group" data-sec="${g.sec}"><button class="nav-gh"><span class="gh-name">${g.sec}</span>${badge}${chev}</button><div class="nav-sub">${g.items.map(navItemHTML).join('')}</div></div>`;
-  }).join('');
+  if(!$('#nav .nav-item')) console.error('buildNav: the server sent an empty #nav, so the sidebar has no rows. App\\Support\\AdminNav::html() renders it; check the console view still prints it.');
   $$('#nav .nav-item').forEach(b=>b.onclick=()=>kbbNavClick(b.dataset.go));
   $$('#nav .nav-gh').forEach(h=>h.onclick=()=>h.closest('.nav-group').classList.toggle('open'));
-  syncNavOpen(cur);
 }
 function syncNavOpen(id){
   $$('#nav .nav-group').forEach(g=>{
@@ -3219,6 +3203,11 @@ function kbbAddNavEntry(opts){
     console.error('kbbAddNavEntry: called with no screen id, so no sidebar row was added.', o);
     return null;
   }
+
+  // Withheld from this account on purpose: App\Support\AdminNav left the row
+  // out because the role cannot open the screen. Not a failure, so no report
+  // and no row -- false, not null, which stays "something went wrong".
+  if (NAV_HIDDEN.has(screen)) return false;
 
   const nav = $('#nav');
   if (!nav) {
@@ -3310,11 +3299,29 @@ window.kbbAddNavEntry = kbbAddNavEntry;
    call is one Set lookup and a readyState test. */
 let kbbNavReplay=null;
 let kbbNavReplayArmed=false;
+/* LANE AP · a sidebar row whose screen is not in this console.
+   App\Support\AdminNav can carry a row before the partial that draws it has
+   merged (`pending`: Site App, Owner App). go() has no renderer for it and
+   ends `||renderDash` -- the dashboard under the row's name, the silent
+   failure this file keeps meeting. Once every partial has run, a row that
+   still drew the dashboard is told so, in the row's own words. Read from the
+   DOM row (label, group), written with textContent: nothing from data. */
+function kbbNoScreen(id){
+  if(id==='dash' || !$('#kbbDashWrap')) return;
+  const row=$('#nav .nav-item[data-go="'+id+'"]'); if(!row) return;
+  const label=(row.querySelector('span')||row).textContent;
+  const g=row.closest('.nav-group'); const grp=g?g.dataset.sec:'';
+  $('#crumb').textContent=grp; $('#ptitle').textContent=label;
+  const wrap=document.createElement('div'); wrap.className='wrap';
+  wrap.innerHTML='<div class="ph"><div class="pic">'+ic(I.modules)+'</div><h3></h3><p>The menu entry is in place; the screen arrives with its update package. Nothing is broken and nothing needs doing.</p></div>';
+  wrap.querySelector('h3').textContent=label+' is not installed yet';
+  const c=$('#content'); c.innerHTML=''; c.appendChild(wrap);
+}
 function kbbNavClick(id){
   kbbNavReplay=null;
   if(typeof window.go!=='function') return;
   window.go(id);
-  if(document.readyState!=='loading') return;      /* every partial has run */
+  if(document.readyState!=='loading'){ kbbNoScreen(id); return; }   /* every partial has run */
   if(id==='dash') return;
   /* The arming set is the deep link's, plus the rows declared above. Both
      answer the same question -- can the go() that exists right now draw this
@@ -3342,6 +3349,7 @@ function kbbNavClick(id){
       if(cur!==want) return;                       /* the owner has moved on */
       if(!$('#kbbDashWrap') && !$('#kbbFrameStartup')) return;   /* something drew it after all */
       try{ window.go(want); }catch(e){}
+      kbbNoScreen(want);
     },0);
   });
 }
@@ -6345,12 +6353,14 @@ const MH_PAGE_INSET=12;
    TWO REASONS IT IS NOT ALIASED TO A `const` HERE, both found by rendering the
    screen rather than by reading it.
 
-   Everything from the top of this file to about line 8890 is inside
-   @verbatim, where Blade compiles nothing: an @json() written here is emitted
+   Everything from the top of this file to about line 8890 is inside a
+   verbatim region, where Blade compiles nothing: an @json() written here is emitted
    as the literal characters `@json(...)`, which is not a wrong value but a
    syntax error, and it takes the whole admin script down rather than this one
-   screen. So the data has to be declared in one of the gaps between
-   @endverbatim and @verbatim, the way KBB_COUNTRY_NAMES and KBB_PRESETS are.
+   screen. So the data has to be declared outside the verbatim regions, the
+   way KBB_COUNTRY_NAMES and KBB_PRESETS are -- since Lane AP, in their own
+   small script just before this block, which keeps this block byte-for-byte
+   static so it can be served as a cached file (App\Support\AdminConsoleAssets).
 
    And a `const MHICONS = KBB_HEADER_ICONS` at this point in the file would
    read it before the line that assigns it has run — `var` hoists the name, not
@@ -11012,30 +11022,9 @@ async function paintGift(){
  */
 function dlBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/settings'; }
 
-/* The full country list, from App\Support\Countries \u2014 the same table the
-   checkout's own picker and the Extended tab are built from, so a code chosen
-   here is one the storefront can name. Emitted rather than fetched because
-   /admin-api/extended-delivery deliberately REMOVES the zone countries from its
-   list, and the zone countries (the UAE and the Gulf) are precisely the ones
-   this screen exists to write a line for. */
-@endverbatim
-var KBB_COUNTRY_NAMES = @json(\App\Support\Countries::NAMES);
-
-/* The account, wishlist and cart marks the storefront draws, from
-   App\Support\HeaderIcons. Read by MHICONS above (Appearance → Mobile Header)
-   and by hdPreview() (Appearance → Header), so neither preview can drift from
-   the shop. */
-var KBB_HEADER_ICONS = @json(\App\Support\HeaderIcons::forPreview());
-
-/* The registered preset groups, from App\Support\CountryPresets. One key per
-   per-country table in this console; only 'delivery' exists today. The Tax tab
-   adds its group to that PHP class and appears here without touching a line of
-   the JavaScript below. */
-var KBB_PRESETS = @json([
-    \App\Support\CountryPresets::DELIVERY => \App\Support\CountryPresets::forConsole(\App\Support\CountryPresets::DELIVERY),
-    \App\Support\CountryPresets::TAX => \App\Support\CountryPresets::forConsole(\App\Support\CountryPresets::TAX),
-]);
-@verbatim
+/* KBB_COUNTRY_NAMES, KBB_HEADER_ICONS and KBB_PRESETS are declared in the
+   small script just before this block (Lane AP): they are the only Blade output
+   this block had, and without them it is static, cacheable bytes. */
 
 /* ---------- One-click presets for a per-country table (Lane CY) -----------
  *
@@ -13214,11 +13203,10 @@ function bindMail(){
 
 $('.side-pin .nav-item').onclick=()=>go('console');
 buildNav();
-/* The twenty-one partial-contributed rows, registered HERE rather than
-   2.7 MB further down this document. kbbAddNavEntry() is keyed on the screen
-   id, so each partial's own call further down returns this row and adds
-   nothing -- one row, one position, whichever runs first. */
-LATE_NAV.forEach(r=>kbbAddNavEntry(r));
+/* Every row -- the partial-contributed ones included -- is already in #nav:
+   App\Support\AdminNav rendered it into the shell. kbbAddNavEntry() is keyed
+   on the screen id, so each partial's own call further down returns that row
+   and adds nothing. */
 
 /* ===== LANE DA · deep links · BEGIN ========================================
    Deep link: /{admin}?go=updates or /{admin}#updates opens that panel directly.
@@ -13644,6 +13632,23 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
   });
 })();
 /* ===== LANE CR · Admin · the words beside a tick box work it — END ========== */
+</script>
+<script>
+/* LANE AP · the second script block's server data, in a block of its own, so
+   that block is static bytes the browser can cache. Were `var`s inside its
+   IIFE; globals now, under names nothing else uses. */
+/* The currency table, rendered from app/Support/Currencies.php so a symbol or
+   a decimal count is never restated here. Curated, not all ~135 Stripe
+   currencies — see the comment in that file. */
+@endverbatim
+var KBB_CURRENCIES = @json(\App\Support\Currencies::forSelect());
+
+/* Country code -> name, from App\Support\Countries so the console never
+   restates a country list of its own. The VAT table shows NAMES; the codes
+   exist only on the wire. */
+var KBB_VAT_COUNTRIES = @json(\App\Support\Countries::NAMES);
+var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
+@verbatim
 </script>
 <script>
 /* ============================================================================
@@ -18638,18 +18643,8 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
   var TITLE_BASIS={};
   async function loadSettings(){ try{ var d=await api('/admin-api/settings'); SETTINGS=d.settings||{}; TITLE_BASIS=d.title_template_basis||{}; }catch(e){ SETTINGS={}; TITLE_BASIS={}; } return SETTINGS; }
 
-  /* The currency table, rendered from app/Support/Currencies.php so a symbol or
-     a decimal count is never restated here. Curated, not all ~135 Stripe
-     currencies — see the comment in that file. */
-@endverbatim
-  var KBB_CURRENCIES = @json(\App\Support\Currencies::forSelect());
-
-  /* Country code -> name, from App\Support\Countries so the console never
-     restates a country list of its own. The VAT table shows NAMES; the codes
-     exist only on the wire. */
-  var KBB_VAT_COUNTRIES = @json(\App\Support\Countries::NAMES);
-  var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
-@verbatim
+  /* KBB_CURRENCIES, KBB_VAT_COUNTRIES and KBB_VAT_GCC are declared in the
+     small script just before this block (Lane AP), so this block is static. */
 
   /* SUGGESTIONS, NOT VALUES — and DERIVED, not restated.
 

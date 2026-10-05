@@ -1,0 +1,164 @@
+
+/* ---------------------------------------------------------------------------
+   The Translation screens. Every rule is prefixed tr- and every id is tr-, so
+   this file can never restyle or collide with another screen in the console.
+   The console is one document: an unprefixed .card or #save here would reach
+   into whatever else is mounted.
+
+   Same layout rule as every screen beside it: nothing may be wider than its
+   column at 390px, because the owner reviews on a phone. min-width:0 on the
+   grid AND on its children is load-bearing rather than tidiness -- a grid
+   item's default min-width is auto, "at least as wide as my content", so a card
+   refuses to shrink below its widest child and drags the whole column past the
+   viewport with no way to scroll back.
+--------------------------------------------------------------------------- */
+.tr-wrap{display:grid;gap:16px;min-width:0;max-width:1100px}
+.tr-wrap > *{min-width:0}
+.tr-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+         border-radius:var(--r,12px);padding:16px;min-width:0}
+.tr-h{font-weight:650;font-size:15px;margin:0 0 4px}
+.tr-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.55;margin:0}
+.tr-sub + .tr-sub{margin-top:7px}
+
+/* A row that is a switch and its explanation. The explanation is never
+   truncated: it is the reason the switch is safe to press. */
+.tr-row{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;
+        padding:13px 0;border-bottom:1px solid var(--border,#e6e6e6);min-width:0}
+.tr-row:last-child{border-bottom:0;padding-bottom:0}
+.tr-row:first-of-type{padding-top:0}
+.tr-row-t{min-width:0;flex:1 1 auto}
+.tr-row-t b{display:block;font-weight:600;font-size:13.5px;margin-bottom:3px}
+.tr-row-c{flex:0 0 auto;padding-top:2px}
+
+/* The switch. Its own markup rather than the console's .ectog, so a change to
+   that class on another screen cannot silently restyle the two levers that
+   publish a language and spend money. */
+.tr-tog{display:inline-block;width:42px;height:24px;border-radius:999px;border:0;padding:0;
+        background:rgba(127,127,127,.32);position:relative;cursor:pointer;transition:background .15s}
+.tr-tog::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:18px;height:18px;
+               border-radius:50%;background:#fff;transition:transform .15s}
+.tr-tog.on{background:var(--accent,#15a85a)}
+.tr-tog.on::after{transform:translateX(18px)}
+.tr-tog[disabled]{opacity:.45;cursor:not-allowed}
+.tr-tog:focus-visible{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
+
+/* A value the screen shows and does not let you change, with the reason beside
+   it. Visibly not a control, so nobody hunts for the dropdown. */
+.tr-fixed{display:inline-block;padding:3px 10px;border-radius:8px;font-size:13px;font-weight:600;
+          border:1px solid var(--border,#e6e6e6);background:rgba(127,127,127,.07)}
+
+/* The three notices. Colour is never the only signal -- each carries a word. */
+.tr-note{border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.6;
+         border:1px solid var(--border,#e6e6e6);background:rgba(127,127,127,.06)}
+.tr-note b{display:block;margin-bottom:3px;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.tr-note.is-warn{border-color:#b7791f;color:#8a5b12;background:rgba(183,121,31,.08)}
+.tr-note.is-bad{border-color:#b4443c;color:#8f332d;background:rgba(180,68,60,.08)}
+
+.tr-btn{padding:8px 14px;border:1px solid var(--border,#e6e6e6);border-radius:9px;
+        background:transparent;color:inherit;font:inherit;font-weight:600;cursor:pointer}
+.tr-btn:hover:not([disabled]){background:rgba(127,127,127,.08)}
+.tr-btn.is-primary{background:var(--accent,#15a85a);border-color:var(--accent,#15a85a);color:#fff}
+/* AFTER the hover rule above and more specific than it. `.tr-btn:hover` is
+   three simple selectors to `.tr-btn.is-primary`'s two, so without this the
+   grey hover fill wins on the primary buttons and "Yes — translate 1,250
+   characters" goes white-on-white under the cursor that is about to press it.
+   Caught in the screenshots, not by reading. */
+.tr-btn.is-primary:hover:not([disabled]){background:var(--accent,#15a85a);filter:brightness(.93)}
+.tr-btn.is-danger{border-color:#b4443c;color:#b4443c}
+.tr-btn[disabled]{opacity:.45;cursor:not-allowed}
+.tr-acts{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:14px}
+
+.tr-field{display:block;margin-top:12px}
+
+/* ── How to get a key ──────────────────────────────────────────────────────
+   A <details>, so the guide is one line when a key is already saved and a full
+   page when it is not. The summary keeps a real focus ring: this is the only
+   control in the card a keyboard user can reach that is not a button, and the
+   browser's default outline is what tells them where they are. */
+.tr-guide{margin-top:18px;border-top:1px solid var(--line-2,var(--border,#e6e8eb));padding-top:14px}
+.tr-guide > summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink,#111827);list-style:none;display:flex;align-items:center;gap:7px}
+.tr-guide > summary::-webkit-details-marker{display:none}
+.tr-guide > summary::before{content:'';width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .15s ease;flex:none}
+.tr-guide[open] > summary::before{transform:rotate(90deg)}
+@media (prefers-reduced-motion:reduce){.tr-guide > summary::before{transition:none}}
+.tr-steps{margin:12px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:13px}
+.tr-steps li{font-size:12.5px;line-height:1.55;color:var(--ink-soft,#6b7280)}
+.tr-steps li b{display:block;color:var(--ink,#111827);font-weight:600;margin-bottom:2px}
+.tr-steps li a{display:inline-block;margin-top:5px;color:var(--brand,#0f7b4f);text-decoration:none;font-weight:600;word-break:break-word}
+.tr-steps li a:hover,.tr-steps li a:focus-visible{text-decoration:underline}
+.tr-guide .tr-sub{margin-top:14px}
+.tr-field span{display:block;font-size:11.5px;font-weight:650;text-transform:uppercase;
+               letter-spacing:.05em;color:var(--ink-soft,#6b7280);margin-bottom:5px}
+.tr-field input,.tr-field select,.tr-field textarea{width:100%;box-sizing:border-box;padding:8px 10px;font:inherit;
+        border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
+.tr-field textarea{min-height:66px;resize:vertical;line-height:1.5}
+
+/* ---- progress -------------------------------------------------------- */
+.tr-bar{position:relative;height:7px;border-radius:999px;background:rgba(127,127,127,.18);overflow:hidden}
+.tr-bar i{position:absolute;inset-block:0;inset-inline-start:0;border-radius:999px;background:#1f7d52;display:block}
+.tr-bar i.is-part{background:#b7791f}
+.tr-bar i.is-none{background:transparent}
+
+/* THE PILL IS GREEN ONLY AT 100, and 100 now means every field. The server
+   reserves it: see TranslationEstimate::percent(). Before that fix
+   (int) round(751/752*100) was 100 and this pill went green on a locale that
+   was one interface string short -- on the screen whose only job is answering
+   "is this finished?". */
+.tr-pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:650;
+         border:1px solid var(--border,#e6e6e6);color:var(--ink-soft,#6b7280);white-space:nowrap}
+.tr-pill.is-done{border-color:#1f7d52;color:#1f7d52;background:rgba(31,125,82,.09)}
+.tr-pill.is-part{border-color:#b7791f;color:#8a5b12;background:rgba(183,121,31,.09)}
+.tr-pill.is-draft{border-color:#5b6bb4;color:#4a58a0;background:rgba(91,107,180,.09)}
+
+.tr-areas{display:grid;gap:13px;margin-top:4px}
+.tr-area{display:grid;gap:7px;min-width:0}
+.tr-area-h{display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.tr-area-h b{font-weight:600;font-size:13.5px}
+.tr-area-n{font-size:12px;color:var(--ink-soft,#6b7280);font-variant-numeric:tabular-nums}
+
+.tr-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;min-width:0}
+.tr-stat{border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);padding:13px 15px;min-width:0}
+.tr-stat span{display:block;color:var(--ink-soft,#6b7280);font-size:11px;font-weight:650;
+              text-transform:uppercase;letter-spacing:.05em}
+.tr-stat b{display:block;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums;margin-top:3px}
+.tr-stat em{display:block;font-style:normal;font-size:11.5px;color:var(--ink-soft,#6b7280);margin-top:4px}
+
+/* ---- the string list ------------------------------------------------- */
+/* The filter bar sticks, because the owner will spend real hours on this screen
+   and scrolling 752 rows back to the top to change one filter is the difference
+   between a tool and a wall. */
+.tr-filters{position:sticky;top:0;z-index:3;background:var(--surface,#fff);
+            border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);padding:12px;
+            display:grid;gap:9px;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));min-width:0}
+.tr-filters label{margin:0}
+.tr-check{display:flex;gap:8px;align-items:center;font-size:13px;align-self:end;padding-bottom:9px}
+.tr-check input{width:auto}
+
+.tr-list{display:grid;gap:10px;min-width:0}
+.tr-item{border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);padding:12px;
+         display:grid;gap:8px;min-width:0}
+.tr-item.is-saving{opacity:.6}
+.tr-item-h{display:flex;gap:9px;align-items:baseline;justify-content:space-between;flex-wrap:wrap;min-width:0}
+.tr-key{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+        color:var(--ink-soft,#6b7280);word-break:break-all}
+.tr-en{font-size:13.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+/* The Arabic box reads right-to-left whatever the console's own direction is:
+   it holds Arabic, and typing Arabic into a left-to-right box puts the
+   punctuation on the wrong end. */
+.tr-ar{direction:rtl;text-align:right;font-size:14px}
+.tr-more{display:flex;justify-content:center;padding:6px 0}
+.tr-empty{padding:26px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
+
+.tr-table{width:100%;border-collapse:collapse;font-size:13px}
+.tr-table th,.tr-table td{text-align:start;padding:8px 10px;border-bottom:1px solid var(--border,#e6e6e6);
+                          vertical-align:middle}
+.tr-table th{font-weight:600;color:var(--ink-soft,#6b7280);font-size:11.5px;
+             text-transform:uppercase;letter-spacing:.04em}
+.tr-table td.tr-num,.tr-table th.tr-num{text-align:end;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tr-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0;max-width:100%}
+
+@media (max-width:640px){
+  .tr-card,.tr-filters{padding:13px}
+  .tr-row{flex-direction:column;gap:9px}
+  .tr-row-c{padding-top:0}
+}

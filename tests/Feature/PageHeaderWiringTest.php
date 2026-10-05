@@ -28,6 +28,10 @@ function phWired(): array
         $files[$e['file']] ??= (string) file_get_contents(base_path($e['file']));
         $src = $files[$e['file']];
 
+        if (\Tests\Support\RetiredNavLiterals::superseded($e['file'], $e['replacement'])) {
+            continue;   // edited the retired NAV/LATE_NAV literals; the row is AdminNav's now (Lane AP)
+        }
+
         if (str_contains($src, $e['replacement'])) {
             continue;   // the integrator has applied it
         }
@@ -63,7 +67,8 @@ it('includes the screen, its sidebar row, its title and its deep link exactly on
     $app = phWired()['files']['resources/views/admin/app.blade.php'];
 
     expect(substr_count($app, "@include('admin.partials.page-header-screen')"))->toBe(1)
-        ->and(substr_count($app, "['pageheader','Page header',"))->toBe(1)
+        // Lane AP: the row is App\Support\AdminNav's.
+        ->and(\App\Support\AdminNav::rows()['pageheader']['label'] ?? null)->toBe('Page header')
         ->and(substr_count($app, "'pageheader':['Pages','Page header']"))->toBe(1);
 
     preg_match('/const LATE_RENDERED\s*=\s*new Set\(\[([^\]]*)\]\);/', $app, $m);

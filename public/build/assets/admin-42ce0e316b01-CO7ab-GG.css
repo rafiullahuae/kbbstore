@@ -1,0 +1,215 @@
+
+/* ---------------------------------------------------------------------------
+   Media Library. Every rule is prefixed mlib- and appears nowhere else in the
+   console, so this file can never restyle another screen by accident. The same
+   goes for every id and every data- attribute below: a lane on this project
+   found its rows firing another screen's handler because both used a bare
+   `data-open`.
+
+   THE LAYOUT RULE, and it is the one that has already cost this project a
+   shipped bug. min-width:0 on every grid and flex child that can contain
+   something wide. A grid or flex item's default min-width is `auto`, meaning
+   "at least as wide as my content" -- so a card refuses to shrink below the
+   width of a long filename inside it, the tile's own wrapping never gets the
+   chance to apply, and the whole screen is stretched to that filename's natural
+   width. A media library is ALL long filenames.
+
+   And the reason it is invisible in testing: this admin sets
+   body{overflow-x:hidden} and scrolls inside #content, so
+   document.documentElement.scrollWidth reads a comforting zero no matter how
+   over-wide the screen is. #content is the element that has to be measured.
+--------------------------------------------------------------------------- */
+.mlib-wrap{display:grid;gap:16px;min-width:0}
+.mlib-wrap > *{min-width:0}
+
+.mlib-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);
+           border-radius:var(--r,12px);padding:16px;min-width:0}
+
+.mlib-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;min-width:0}
+.mlib-head > *{min-width:0}
+.mlib-title{font-weight:650;font-size:15px}
+.mlib-sub{color:var(--ink-soft,#626c80);font-size:12.5px;overflow-wrap:anywhere}
+
+.mlib-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;min-width:0}
+.mlib-stats > *{min-width:0}
+.mlib-stat{background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);
+           border-radius:var(--r,12px);padding:12px 14px;min-width:0}
+.mlib-stat b{display:block;font-size:20px;line-height:1.3;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.mlib-stat span{color:var(--ink-soft,#626c80);font-size:12px}
+
+/* The filter bar. auto-fit rather than a fixed column count so it collapses to
+   one field per row on a phone without a second breakpoint to keep in step. */
+.mlib-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(190px,100%),1fr));
+              gap:10px;min-width:0;align-items:end}
+.mlib-filters > *{min-width:0}
+.mlib-field{display:grid;gap:4px;min-width:0}
+.mlib-field label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft,#626c80)}
+.mlib-field input,.mlib-field select{width:100%;min-width:0;box-sizing:border-box;
+    border:1px solid var(--border,#e6e9f2);border-radius:9px;padding:8px 10px;
+    font:inherit;font-size:13px;background:var(--surface,#fff);color:var(--ink,#101729)}
+.mlib-field input:focus,.mlib-field select:focus{outline:2px solid var(--accent,#15a85a);outline-offset:1px}
+
+.mlib-btn{border:1px solid var(--border,#e6e9f2);background:var(--surface,#fff);
+          border-radius:9px;padding:8px 12px;font:inherit;font-size:12.5px;cursor:pointer;
+          color:var(--ink-2,#3c465c);white-space:nowrap}
+.mlib-btn:hover{border-color:var(--ink,#101729)}
+.mlib-btn:disabled{opacity:.5;cursor:default}
+
+/* The secondary filters fold away on a phone.
+   Measured, not guessed: at 390px the five fields stacked one per row filled
+   the entire first screen, so the owner scrolled past a full page of empty
+   inputs before reaching a single image — on the one screen whose whole job is
+   showing images. The search box stays out in the open because it is the one
+   people use; the rest are one tap away. Above 700px there is room for all of
+   them at once, so the toggle disappears and the panel is simply always there —
+   one code path, no second markup. */
+.mlib-extra{display:none;gap:10px;min-width:0}
+.mlib-extra.is-open{display:grid}
+.mlib-extra > *{min-width:0}
+@media (min-width:700px){
+  /* display:contents dissolves the wrapper so its fields become items of the
+     SAME grid as the search box, and all six align on one row as though the
+     phone's fold had never been added. A second markup path for wide screens
+     would be two layouts to keep in step; this is one. */
+  .mlib-extra,.mlib-extra.is-open{display:contents}
+  .mlib-toggle{display:none}
+}
+.mlib-btn.is-primary{background:var(--ink,#101729);color:#fff;border-color:var(--ink,#101729)}
+.mlib-btn.is-danger{color:var(--danger,#d6455a);border-color:var(--danger,#d6455a)}
+.mlib-btn.is-danger:hover{background:var(--danger,#d6455a);color:#fff}
+
+/* ── the grid ──────────────────────────────────────────────────────────────
+   minmax(min(150px,100%),1fr): the min() is what stops a 150px track from
+   being wider than the container on a 390px phone with the console's own
+   padding already taken out. Without it the grid forces a horizontal scroll
+   that #content cannot hide. */
+.mlib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr));
+           gap:12px;min-width:0}
+/* An explicit column count, set inline by the chooser. Auto — no property at
+   all — keeps the auto-fill behaviour this grid has always had, which is also
+   what a browser that never receives the property falls back to. */
+.mlib-grid[style*="--mlib-cols"]{grid-template-columns:repeat(var(--mlib-cols),minmax(0,1fr))}
+ /* colpick, NOT cols — .mlib-cols is already taken further down this file for
+   the detail dialog's two-column layout, and reusing it would have made every
+   column button a two-column grid and the dialog a row of buttons. */
+.mlib-colpick{display:flex;gap:4px;align-items:center;flex:none}
+.mlib-colpick button{font:inherit;font-size:12px;font-weight:600;min-width:30px;padding:6px 7px;
+                     border-radius:7px;border:1px solid var(--border,#e6e9f2);
+                     background:var(--surface,#fff);color:var(--ink-soft,#626c80);cursor:pointer}
+.mlib-colpick button.on{border-color:var(--accent,#15a85a);color:var(--accent-ink,#0b6e3a);
+                        background:var(--accent-soft,#e7f7ee)}
+.mlib-grid > *{min-width:0}
+
+.mlib-tile{border:1px solid var(--border,#e6e9f2);border-radius:11px;overflow:hidden;
+           background:var(--surface,#fff);text-align:left;padding:0;font:inherit;color:inherit;
+           cursor:pointer;display:grid;grid-template-rows:auto 1fr;min-width:0}
+.mlib-tile:hover{border-color:var(--ink,#101729)}
+.mlib-tile:focus-visible{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
+
+/* A fixed aspect box, so a portrait shot and a landscape one do not make a
+   ragged grid, and so the tile has a height before the image has loaded. */
+.mlib-thumb{position:relative;aspect-ratio:4 / 3;background:var(--surface-2,#f2f4fb);
+            display:grid;place-items:center;overflow:hidden;min-width:0}
+.mlib-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.mlib-thumb .mlib-noimg{font-size:11px;color:var(--ink-faint,#97a0b2);padding:8px;text-align:center;overflow-wrap:anywhere}
+
+.mlib-badge{position:absolute;top:6px;left:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:calc(100% - 12px)}
+.mlib-pill{display:inline-block;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:600;
+           background:rgba(16,23,41,.72);color:#fff;white-space:nowrap}
+.mlib-pill.is-free{background:rgba(98,108,128,.72)}
+/* A VIDEO'S TILE. Green rather than grey, so a page holding both reads as two
+   kinds at a glance and not as one kind with a label on some of them. */
+.mlib-pill.is-video{background:var(--accent,#15a85a)}
+
+/* ── WHAT A VIDEO LOOKS LIKE IN THE GRID ──────────────────────────────────
+   A film strip and the container name, drawn in CSS and one inline SVG, and
+   deliberately NOT a <video> element.
+
+   WHY NOT A <video>. A page of this grid is 24 tiles. `preload="metadata"` on
+   each is 24 extra range requests per page view, on a shared plan, to paint a
+   frame the owner does not need: the tile's title is the name he uploaded the
+   file under -- "anua mist spray 2.mp4" -- which is what he recognises it by,
+   and the badge says it is a video. `preload="none"` would fetch nothing and
+   paint an empty black box, which is worse than a drawn placeholder because it
+   looks like a failure. The real, playable preview is one click away on the
+   detail panel, where it is ONE video and the operator asked for it.
+
+   Sized with aspect-ratio and calc() from the tile it sits in. Nothing here is
+   measured in script -- rule 4. */
+.mlib-film{display:grid;gap:6px;justify-items:center;align-content:center;
+           color:var(--ink-faint,#97a0b2);padding:8px;min-width:0}
+.mlib-film svg{width:clamp(22px,18%,34px);height:auto;display:block;
+               stroke:currentColor;fill:none;stroke-width:1.4}
+.mlib-film b{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+
+/* The playable preview on the detail panel, capped the same way its <img>
+   sibling is so opening a 1080x1920 phone clip cannot push the facts off the
+   dialog. */
+.mlib-preview video{max-width:100%;max-height:300px;display:block;border-radius:8px;background:#000}
+
+.mlib-meta{padding:9px 10px;display:grid;gap:2px;min-width:0}
+/* overflow-wrap:anywhere, not ellipsis: a media filename is the only way to
+   tell two shots of the same product apart, and truncating it to
+   "20260916-101…" makes the grid unusable for the one job it has. */
+.mlib-name{font-size:12px;font-weight:600;overflow-wrap:anywhere;line-height:1.35}
+.mlib-dim{font-size:11px;color:var(--ink-soft,#626c80);overflow-wrap:anywhere}
+/* The "used by" line carries more weight than the dimensions beside it — it is
+   the one an owner scans for — so it takes the body ink rather than the muted
+   grey, while keeping the same size and the same wrapping. */
+.mlib-used{color:var(--ink-2,#3c465c);font-weight:500}
+
+.mlib-empty{padding:30px 16px;text-align:center;color:var(--ink-soft,#626c80);font-size:13px;
+            display:grid;gap:8px;justify-items:center;min-width:0}
+.mlib-empty b{font-size:14px;color:var(--ink,#101729)}
+.mlib-empty p{margin:0;max-width:52ch;overflow-wrap:anywhere}
+
+.mlib-pager{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;min-width:0}
+.mlib-pager span{font-size:12.5px;color:var(--ink-soft,#626c80);font-variant-numeric:tabular-nums}
+
+/* ── the detail dialog ─────────────────────────────────────────────────── */
+.mlib-back{position:fixed;inset:0;background:rgba(10,14,25,.55);z-index:120;
+           display:grid;place-items:center;padding:16px;overflow:auto}
+.mlib-modal{background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);border-radius:14px;
+            width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto;
+            padding:18px;display:grid;gap:14px;min-width:0}
+.mlib-modal > *{min-width:0}
+.mlib-modal h3{margin:0;font-size:15px;overflow-wrap:anywhere}
+
+/* Two columns on a wide dialog, stacked on a phone. Both children carry
+   min-width:0 or the preview's intrinsic width wins and the dialog overflows
+   its own max-width. */
+.mlib-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;min-width:0}
+.mlib-cols > *{min-width:0}
+@media (max-width:640px){.mlib-cols{grid-template-columns:minmax(0,1fr)}}
+
+.mlib-preview{background:var(--surface-2,#f2f4fb);border-radius:10px;display:grid;place-items:center;
+              padding:10px;min-height:150px;min-width:0}
+.mlib-preview img{max-width:100%;max-height:300px;object-fit:contain;display:block}
+
+.mlib-facts{display:grid;gap:6px;font-size:12.5px;min-width:0}
+.mlib-fact{display:grid;grid-template-columns:minmax(0,88px) minmax(0,1fr);gap:8px;min-width:0}
+.mlib-fact > *{min-width:0}
+.mlib-fact dt{color:var(--ink-soft,#626c80)}
+.mlib-fact dd{margin:0;overflow-wrap:anywhere}
+.mlib-fact code{font-family:var(--mono,ui-monospace,monospace);font-size:11px;overflow-wrap:anywhere}
+
+.mlib-uses{display:grid;gap:6px;min-width:0}
+.mlib-use{border:1px solid var(--border,#e6e9f2);border-radius:9px;padding:7px 10px;font-size:12px;
+          display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;min-width:0}
+.mlib-use > *{min-width:0}
+.mlib-use b{overflow-wrap:anywhere}
+.mlib-use span{color:var(--ink-soft,#626c80);font-size:11.5px}
+
+.mlib-warn{border:1px solid #f0c9a0;background:#fdf3e6;color:#8a5216;border-radius:10px;
+           padding:10px 12px;font-size:12.5px;overflow-wrap:anywhere}
+.mlib-ok{border:1px solid var(--border,#e6e9f2);background:var(--surface-2,#f2f4fb);
+         color:var(--ink-soft,#626c80);border-radius:10px;padding:10px 12px;font-size:12.5px}
+
+.mlib-acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;min-width:0}
+@media (max-width:420px){
+  /* Stacked, full width. Three buttons side by side at 390px each end up
+     narrower than their own labels, which is how a Delete button ends up
+     reading "Del…" next to a Cancel the operator meant to press. */
+  .mlib-acts{justify-content:stretch}
+  .mlib-acts .mlib-btn{flex:1 1 100%}
+}

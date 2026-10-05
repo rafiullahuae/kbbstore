@@ -47,9 +47,8 @@ function srScript(): string
 }
 
 /**
- * Every screen the console can route to, read from app.blade.php itself: the
- * ids in `const NAV=[...]`, the `screen:` ids in `const LATE_NAV=[...]`, the
- * pinned Console row and the keys of `const TITLES={...}`. Derived, not listed, so a lane that adds a screen
+ * Every screen the console can route to: every sidebar row in
+ * App\Support\AdminNav, the pinned Console row and the keys of `const TITLES={...}`. Derived, not listed, so a lane that adds a screen
  * cannot forget this test exists.
  *
  * @return list<string>
@@ -58,15 +57,11 @@ function srSidebarIds(): array
 {
     $src = srApp();
 
-    $navAt = strpos($src, 'const NAV=[');
-    $navEnd = strpos($src, "\n];", (int) $navAt);
-    expect($navAt)->not->toBeFalse()->and($navEnd)->not->toBeFalse();
-    preg_match_all("/\\[\\s*'([a-z0-9][a-z0-9-]*)'\\s*,\\s*'/", substr($src, $navAt, $navEnd - $navAt), $nav);
-
-    $lateAt = strpos($src, 'const LATE_NAV=[');
-    $lateEnd = strpos($src, "\n];", (int) $lateAt);
-    expect($lateAt)->not->toBeFalse()->and($lateEnd)->not->toBeFalse();
-    preg_match_all("/screen:'([a-z0-9][a-z0-9-]*)'/", substr($src, $lateAt, $lateEnd - $lateAt), $late);
+    // The sidebar's rows: App\Support\AdminNav (Lane AP), the one definition
+    // the server renders #nav from -- the old NAV and LATE_NAV literals both.
+    // A `pending` row's screen (and its search entry) arrives with its lane.
+    $nav = [1 => array_keys(array_filter(\App\Support\AdminNav::rows(), fn ($r) => empty($r['pending'])))];
+    $late = [1 => []];
 
     preg_match_all('/class="side-pin"><button class="nav-item" data-go="([a-z0-9-]+)"/', $src, $pin);
 
@@ -149,14 +144,17 @@ it('includes the search partial exactly once, inside the sidebar above the menu'
 
     $at = strpos($app, $inc);
     $side = strpos($app, '<aside class="side" id="side">');
-    $nav = strpos($app, '<nav class="nav" id="nav"></nav>');
+    // The sidebar itself is server-rendered by App\Support\AdminNav (Lane AP).
+    $nav = strpos($app, '\App\Support\AdminNav::html(');
+    $after = substr($app, $at + strlen($inc), (int) strpos($app, "\n@verbatim", $at) - $at - strlen($inc));
 
     expect($side)->toBeLessThan($at)
         ->and($at)->toBeLessThan($nav)
-        // The sidebar is inside the console's raw region: without these two
-        // lines around it the @include is printed to the page as text.
+        // The sidebar is inside the console's raw region: without @endverbatim
+        // before it, and no @verbatim reopened before it, the @include is
+        // printed to the page as text.
         ->and(substr($app, $at - 13, 13))->toBe("@endverbatim\n")
-        ->and(substr($app, $at + strlen($inc), 10))->toBe("\n@verbatim");
+        ->and($after)->not->toContain('@verbatim');
 });
 
 it('renders the box, the results list and the index into the real console, once', function () {
@@ -198,7 +196,7 @@ it('puts the box in the sidebar of the console as served', function () {
 
     $side = strpos($html, '<aside class="side" id="side">');
     $box = strpos($html, 'id="ksr"');
-    $nav = strpos($html, '<nav class="nav" id="nav">');
+    $nav = strpos($html, '<nav class="nav" id="nav"');
 
     expect(substr_count($html, 'id="ksrIn"'))->toBe(1)
         ->and($side)->toBeLessThan($box)

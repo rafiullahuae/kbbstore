@@ -229,6 +229,9 @@ final class StaticMemos
      * @var array<class-string, string>
      */
     public const EXEMPT = [
+        \App\Support\AdminConsoleAssets::class => 'manifest and buildId are keyed on public/build/manifest.json\'s '
+            .'mtime and size, so a new build is a new key and nothing a test does can make it answer stale; '
+            .'they are a read cache of a shipped file, not state.',
         \App\Services\OwnerApp\OwnerAppAuth::class => 'dummy is a hash of random bytes, made once so an unknown email '
             .'costs a sign-in what a known one does. No test reads it and no value of it can change what any other '
             .'test sees: it only ever answers false.',

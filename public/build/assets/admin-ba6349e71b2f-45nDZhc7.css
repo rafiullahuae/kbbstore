@@ -1,0 +1,171 @@
+
+/* ---------------------------------------------------------------------------
+   Rating Badge. Every rule is prefixed rbt- and every id is rbt-, so this file
+   can never restyle or collide with another screen in the console.
+
+   The layout vocabulary is the Coupons screen's, deliberately: titled bands
+   separated by a hairline rather than a stack of bordered cards, one line of
+   help under a control instead of a paragraph, and paired fields sharing a row
+   and a width. Two screens in this console that do the same kind of job should
+   not look like two different products.
+
+   The preview rules are a deliberate copy of the storefront's rather than a
+   reuse of it: the console does not load the storefront stylesheet, so
+   .sr-capbar here would be an unstyled row of spans.
+
+   min-width:0 on the grid AND on its children is load-bearing: a grid item's
+   default min-width is auto, so a card refuses to shrink below its widest child
+   and drags the whole column past the viewport with no way to scroll back.
+--------------------------------------------------------------------------- */
+.rbt-wrap{display:grid;gap:16px;min-width:0;max-width:1100px}
+.rbt-wrap > *{min-width:0}
+
+.rbt-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+          border-radius:var(--r,12px);padding:18px;min-width:0}
+
+/* ---- tabs ----
+   Shaped after .ce-tabs on the Coupons screen so the two read as one console.
+   The caption under the strip is `ectabs-hint`, which app.blade.php already
+   defines and which the Ecommerce, Delivery and SEO screens already use. */
+.rbt-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--border,#e6e6e6);
+          margin:0;min-width:0}
+.rbt-tabs > *{min-width:0}
+.rbt-tab{padding:9px 13px;font:inherit;font-size:13px;border:0;background:transparent;
+         color:var(--ink-soft,#6b7280);cursor:pointer;border-bottom:2px solid transparent;
+         margin-bottom:-1px;white-space:nowrap}
+.rbt-tab.on{color:inherit;font-weight:650;border-bottom-color:var(--accent,#15a85a)}
+
+/* ---- sections ----
+   Each band says what it decides (the heading), when you would touch it (one
+   line under that), and then shows its fields. A hairline separates the bands,
+   so the groups are visible without a box around each one -- and without a
+   full-width bordered card at the top repeating the title the console has
+   already put in the bar above #content. */
+.rbt-sec{display:grid;gap:13px;min-width:0}
+.rbt-sec > *{min-width:0}
+.rbt-sec + .rbt-sec{margin-top:22px;padding-top:20px;border-top:1px solid var(--border,#e6e6e6)}
+.rbt-sec-h{display:grid;gap:3px;min-width:0}
+.rbt-sec-t{font-size:13.5px;font-weight:650}
+.rbt-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft,#6b7280);max-width:78ch}
+
+/* ---- fields ----
+   auto-fit with a min() floor rather than a fixed minmax: repeat(auto-fit,
+   minmax(240px,1fr)) cannot go below 240px per track, so two fields plus the
+   gap demand more than a 390px phone has and the row overflows instead of
+   stacking. */
+.rbt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));
+          gap:14px;min-width:0}
+.rbt-grid > *{min-width:0}
+.rbt-field{display:grid;gap:5px;min-width:0}
+.rbt-field > *{min-width:0}
+.rbt-label{font-size:12.5px;font-weight:600}
+/* Help is secondary and it stays secondary: smaller, lighter, and capped at a
+   readable measure so it can never spread into a paragraph the eye has to
+   cross before it finds the next label. Anything longer belongs in the section
+   description. */
+.rbt-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.45;max-width:62ch}
+
+.rbt-input,.rbt-select{width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+        padding:8px 10px;font:inherit;font-size:13px;border:1px solid var(--border,#e6e6e6);
+        border-radius:9px;background:transparent;color:inherit}
+/* A select's intrinsic width is its widest OPTION, which sets a floor no media
+   query can reach. Pinned so "Capsule and inline" cannot widen the form. */
+.rbt-select{text-overflow:ellipsis}
+
+/* A switch and the one line that explains it, as one quiet row. The whole row
+   is the <label>, so the text is part of the tap target -- which is why the
+   switch itself is a <span> here and not a second nested <label>. */
+.rbt-opt{display:flex;gap:11px;align-items:flex-start;min-width:0;padding:11px 13px;
+         border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);
+         background:rgba(127,127,127,.03);cursor:pointer}
+.rbt-opt > *{min-width:0}
+.rbt-opt-x{display:block;min-width:0}
+.rbt-opt-t{display:block;font-size:12.5px;font-weight:600}
+.rbt-opt .rbt-help{display:block;margin-top:3px}
+
+.rbt-sw{position:relative;display:inline-block;width:42px;height:24px;flex:0 0 auto;margin-top:1px}
+.rbt-sw input{position:absolute;inset:0;opacity:0;margin:0;width:100%;height:100%;cursor:pointer}
+.rbt-sw i{position:absolute;inset:0;border-radius:999px;background:rgba(127,127,127,.32);
+          transition:background .16s ease;pointer-events:none;display:block}
+.rbt-sw i::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+                 background:#fff;transition:transform .16s ease;box-shadow:0 1px 3px rgba(0,0,0,.28)}
+.rbt-sw input:checked + i{background:var(--accent,#15a85a)}
+.rbt-sw input:checked + i::after{transform:translateX(18px)}
+.rbt-sw input:focus-visible + i{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
+
+/* The colour swatch and its hex box are one control, so they sit on one line
+   and shrink together rather than the hex box dropping under the swatch. */
+.rbt-colourbox{display:flex;gap:8px;align-items:stretch;min-width:0}
+.rbt-colour{width:46px;flex:0 0 auto;padding:0;border:1px solid var(--border,#e6e6e6);
+            border-radius:9px;background:transparent;cursor:pointer}
+.rbt-hex{flex:1 1 auto;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+         text-transform:uppercase}
+
+.rbt-btn{appearance:none;border:1px solid var(--accent,#15a85a);background:var(--accent,#15a85a);color:#fff;
+         font:inherit;font-weight:600;font-size:13px;padding:9px 16px;border-radius:10px;cursor:pointer}
+.rbt-btn[disabled]{opacity:.55;cursor:default}
+.rbt-ghost{background:transparent;color:inherit;border-color:var(--border,#e6e6e6)}
+.rbt-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;min-width:0;
+             margin-top:20px;padding-top:16px;border-top:1px solid var(--border,#e6e6e6)}
+.rbt-actions > *{min-width:0}
+
+.rbt-banner{border:1px solid #d9534f;border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.5;
+            color:#b3312c;background:rgba(217,83,79,.07)}
+.rbt-banner.rbt-ok{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);background:rgba(21,168,90,.07)}
+
+.rbt-note{color:var(--ink-soft,#6b7280);font-size:12px;line-height:1.5;max-width:78ch}
+/* The "two places write these rows" warning. A hairline flag, not a callout:
+   it is a thing to know, not a thing that has gone wrong. */
+.rbt-warn{border-left:3px solid #d9a13d;padding-left:11px}
+
+/* The theme cards. auto-fit rather than a fixed column count, so they reflow to
+   one column on a phone instead of overflowing. */
+.rbt-themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:12px;min-width:0}
+.rbt-theme{border:1px solid var(--border,#e6e6e6);border-radius:12px;padding:13px;min-width:0;
+           display:grid;gap:8px;text-align:left;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.rbt-theme:hover{border-color:var(--accent,#15a85a)}
+.rbt-theme.rbt-on{border-color:var(--accent,#15a85a);box-shadow:inset 0 0 0 1px var(--accent,#15a85a)}
+.rbt-theme h4{margin:0;font-size:13.5px;font-weight:650;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.rbt-theme p{margin:0;color:var(--ink-soft,#6b7280);font-size:12px;line-height:1.45}
+.rbt-badge{font-size:11px;font-weight:650;color:var(--accent,#15a85a);border:1px solid var(--accent,#15a85a);
+           border-radius:999px;padding:1px 7px}
+
+/* ---- the preview, in the shape the buy box draws it ---- */
+.rbt-stage{border:1px dashed var(--border,#e6e6e6);border-radius:12px;padding:18px 16px;min-width:0;
+           display:grid;gap:9px;justify-items:start;overflow-x:auto}
+.rbt-prodname{font-weight:650;font-size:16px}
+/* ── PINNED BY ReviewBadgeParityTest ─────────────────────────────────────────
+   The next four rules are the SHOP's capsule, drawn here. line-height is
+   explicit so the preview is the shop's real height, not the admin console's:
+   without it this box inherited `normal` and drew 3px shorter than the badge
+   the shopper actually sees, and a preview that is close is a preview you
+   cannot trust. Change these only together with the three storefront copies
+   listed in capsuleSources(). ─────────────────────────────────────────────── */
+.rbt-cap{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border,#e6e6e6);
+         border-radius:999px;padding:5px 12px;font-size:13px;white-space:nowrap;line-height:1.4}
+.rbt-heart{color:#e8607f}
+.rbt-stars{letter-spacing:1px}
+.rbt-avg{font-weight:650}
+/* ── end of the pinned block ─────────────────────────────────────────────── */
+.rbt-count{color:var(--ink-soft,#6b7280)}
+.rbt-inline{font-size:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rbt-sold{color:var(--accent,#15a85a);font-weight:600}
+.rbt-price{font-size:22px;font-weight:700;margin-top:2px}
+.rbt-empty{color:var(--ink-soft,#6b7280);font-size:12.5px;font-style:italic}
+
+/* Wraps rather than clips. With white-space:nowrap and overflow:hidden the
+   longest preset caption ("Loved by 126 shoppers") was cut off mid-word inside
+   its card at 1280 — a theme picker whose swatch you cannot read is not a
+   picker. Wrapping lets the card grow by a line instead. */
+.rbt-mini{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border,#e6e6e6);
+          border-radius:14px;padding:3px 9px;font-size:11.5px;max-width:100%;flex-wrap:wrap;
+          row-gap:2px;overflow-wrap:anywhere}
+
+@media (max-width:640px){
+  .rbt-card{padding:14px}
+  /* Tighter bands on a phone: the hairline is doing the separating, so the
+     space around it does not have to be as generous as on a laptop. */
+  .rbt-sec + .rbt-sec{margin-top:18px;padding-top:16px}
+  .rbt-btn{width:100%;text-align:center}
+  .rbt-actions > .rbt-note{text-align:center}
+}

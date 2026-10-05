@@ -60,5 +60,8 @@
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="MAIL_MAILER" value="array" force="true"/>
         <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <!-- Lane AP: the suite reads the console with every block inline, as
+             written; AdminConsoleAssetsTest turns the swap on where it tests it. -->
+        <env name="KBB_ADMIN_EXTERNAL_ASSETS" value="false" force="true"/>
     </php>
 </phpunit>

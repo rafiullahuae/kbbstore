@@ -387,27 +387,26 @@ function navAuditEntries(): array
 
     $out = [];
 
-    $nav = navAuditBlock(navAuditSrc(), strpos(navAuditSrc(), 'const NAV='), '[', ']');
-
-    // `[^\[]*` rather than a bare comma: a section may carry `group:true`
-    // between its name and its items.
-    preg_match_all("/\{sec:'([^']+)'([^\[]*)items:\[(.*?)\]\},?\s*(?=\/\*|\{sec:|\]\s*;)/s", $nav, $secs, PREG_SET_ORDER);
-
-    foreach ($secs as $sec) {
-        preg_match_all("/\['([a-z0-9-]+)','((?:[^'\\\\]|\\\\.)*)'/i", $sec[3], $items, PREG_SET_ORDER);
-
-        // buildNav renders a one-item section as a bare top-level link with no
-        // .nav-group wrapper, unless it asks for `group:true`. A flat row shows
-        // no group name, so there is nothing for a breadcrumb to contradict.
-        $visibleGroup = count($items) > 1 || str_contains($sec[2], 'group:true');
-
-        foreach ($items as $it) {
+    /*
+     * The built-in rows, read from App\Support\AdminNav (Lane AP) -- the one
+     * definition the server renders the sidebar from. The rows marked `late`
+     * are the ones a partial also registers; they are read from the partials
+     * below, as they always were, so each row is counted once.
+     *
+     * A `flat` section is a bare top-level link with no .nav-group wrapper and
+     * no group name, so there is nothing for a breadcrumb to contradict.
+     */
+    foreach (\App\Support\AdminNav::GROUPS as $g) {
+        foreach ($g['rows'] as $r) {
+            if (! empty($r['late'])) {
+                continue;
+            }
             $out[] = [
-                'id' => $it[1],
-                'label' => html_entity_decode($it[2], ENT_QUOTES | ENT_HTML5),
-                'group' => $sec[1],
-                'source' => 'NAV in app.blade.php',
-                'visible_group' => $visibleGroup,
+                'id' => $r['id'],
+                'label' => $r['label'],
+                'group' => $g['sec'],
+                'source' => 'NAV in app.blade.php',   // the label the checks below key a built-in row on
+                'visible_group' => empty($g['flat']),
                 'anchors' => [],
             ];
         }
@@ -1051,13 +1050,15 @@ it('gives the Catalog group a real .nav-group for the two screens that inject in
      * a one-item section as a bare link with no .nav-group at all, and the two
      * injected rows would land outside any group.
      */
-    $nav = navAuditBlock(navAuditSrc(), strpos(navAuditSrc(), 'const NAV='), '[', ']');
+    // App\Support\AdminNav (Lane AP) renders the sidebar now; a `flat` section
+    // is the bare-link shape this test exists to keep Catalog out of.
+    $catalog = array_values(array_filter(\App\Support\AdminNav::GROUPS, fn ($g) => $g['sec'] === 'Catalog'));
 
-    expect(str_contains($nav, "{sec:'Catalog',group:true,"))
-        ->toBeTrue("the Catalog section lost `group:true`, so buildNav will flatten it and the injected Catalog rows will have no group to land in");
-
-    expect(str_contains(navAuditFn('buildNav'), 'g.items.length===1 && !g.group'))
-        ->toBeTrue('buildNav no longer honours `group:true`, so a one-item section renders flat however it is declared');
+    expect($catalog)->toHaveCount(1, 'the sidebar has no Catalog section');
+    expect(empty($catalog[0]['flat']))
+        ->toBeTrue('the Catalog section is `flat`, so the server draws it as a bare link and the injected Catalog rows have no group to land in');
+    expect(\App\Support\AdminNav::html(new \App\Models\AdminUser(['role' => 'owner'])))
+        ->toContain('<div class="nav-group" data-sec="Catalog">');
 
     $groups = [];
     foreach (navAuditEntries() as $e) {
@@ -1527,10 +1528,12 @@ it('draws exactly one sidebar row, one tab strip and one explanation for the pai
     $p = navAuditPartialSrc('review-badges-screen');
 
     // One NAV row across the two ids, and it is rev-badge's.
-    expect(preg_match_all("/\['rev-badge',/", $console))
+    // The sidebar is App\Support\AdminNav's (Lane AP).
+    $navIds = array_keys(\App\Support\AdminNav::rows());
+    expect(count(array_keys($navIds, 'rev-badge', true)))
         ->toBe(1, 'rev-badge has gained or lost its NAV row');
-    expect(preg_match_all("/\['rev-capsule',/", $console))
-        ->toBe(0, 'the Rating Capsule sidebar row is back — that is two rows for one screen, which is the bug this merge removed');
+    expect(count(array_keys($navIds, 'rev-capsule', true)))
+        ->toBe(0,'the Rating Capsule sidebar row is back — that is two rows for one screen, which is the bug this merge removed');
 
     // The strip is mapped from TABS rather than hand-written, so the buttons
     // and the id→tab map cannot disagree about which tabs exist.

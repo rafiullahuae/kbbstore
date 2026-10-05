@@ -785,7 +785,8 @@ it('leaves no dead end where the VAT rate used to be', function () {
 it('gives the sidebar a Tax row that opens the same screen', function () {
     $html = view('admin.app')->render();
 
-    expect(str_contains($html, "['tax','Tax'"))
+    // Lane AP: the sidebar is App\Support\AdminNav's (server-rendered), not a NAV literal.
+    expect((\App\Support\AdminNav::rows()['tax']['label'] ?? null) === 'Tax')
         ->toBeTrue('the sidebar has no Tax entry, so the word he is scanning for is not in the list');
 
     expect(str_contains($html, "if(id==='tax'){ _go(id); return renderStoreSettings('tax'); }"))

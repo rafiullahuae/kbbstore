@@ -282,10 +282,12 @@ it('never prints a review count that was typed in by hand', function () {
      * shop with none waiting at all. A number in a menu is a promise that it is
      * the number.
      */
-    preg_match("/\['rev-all','All Reviews',('(?:[^'\\\\]|\\\\.)*')(,'([^']*)')?\]/", $console, $m);
+    // The row is App\Support\AdminNav's now (Lane AP); its `tag` is what
+    // the server prints as the chip and sums into the group badge.
+    $row = \App\Support\AdminNav::rows()['rev-all'] ?? null;
 
-    expect($m)->not->toBeEmpty('the All Reviews NAV row has changed shape — recheck this guard');
-    expect($m[3] ?? null)->toBeNull('the All Reviews row carries a hard-coded count chip again');
+    expect($row)->not->toBeNull('the All Reviews sidebar row has gone — recheck this guard');
+    expect($row['tag'] ?? null)->toBeNull('the All Reviews row carries a hard-coded count chip again');
 
     // And the real one is fetched.
     $badge = rsrPartial('review-queue-badge');

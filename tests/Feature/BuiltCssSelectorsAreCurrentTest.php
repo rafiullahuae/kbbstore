@@ -115,7 +115,14 @@ function qaSelectors(array $files): array
 
 it('serves a bundle whose rules are the rules in this commit', function () {
     $sources = qaViteCssEntries();
-    $bundles = glob(base_path('public/build/assets/*.css')) ?: [];
+    // Lane AP: the admin console's own stylesheet blocks are built as files
+    // too (vite-admin-console-assets.mjs, named admin-<sha1 prefix>-<hash>.css).
+    // Their source is admin/app.blade.php, not resources/css, and the server
+    // serves one only when its bytes match the template exactly.
+    $bundles = array_values(array_filter(
+        glob(base_path('public/build/assets/*.css')) ?: [],
+        fn ($f) => ! preg_match('/^admin-[0-9a-f]{12}-/', basename($f))
+    ));
 
     expect($sources)->not->toBe([], 'vite.config.js names no stylesheet entries, so this check is blind');
     expect($bundles)->not->toBe([], 'public/build/assets holds no CSS, so this check is blind');

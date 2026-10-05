@@ -23,6 +23,10 @@ function pgWired(): array
         $files[$e['file']] ??= (string) file_get_contents(base_path($e['file']));
         $src = $files[$e['file']];
 
+        if (\Tests\Support\RetiredNavLiterals::superseded($e['file'], $e['replacement'])) {
+            continue;   // edited the retired NAV/LATE_NAV literals; the row is AdminNav's now (Lane AP)
+        }
+
         if (substr_count($src, $e['replacement']) >= $e['count']) {
             continue;   // the integrator has applied it
         }
@@ -65,7 +69,8 @@ it('puts the screen in the console exactly once: include, title, sidebar row and
 
     expect(substr_count($app, "@include('admin.partials.pagination-screen')"))->toBe(1)
         ->and(substr_count($app, "'pagination':['Catalog','Pagination']"))->toBe(1)
-        ->and(substr_count($app, "{screen:'pagination',"))->toBe(1);
+        // Lane AP: the row is App\Support\AdminNav's.
+        ->and(\App\Support\AdminNav::rows()['pagination']['sec'] ?? null)->toBe('Catalog');
 
     expect(preg_match('/const LATE_RENDERED=new Set\(\[(.*?)\]\);/s', $app, $m))->toBe(1)
         ->and(substr_count($m[1], "'pagination'"))->toBe(1);
@@ -85,13 +90,19 @@ it('declares the same sidebar row the partial registers, so the build-time copy 
     $app = pgWired()['files']['resources/views/admin/app.blade.php'];
     $partial = (string) file_get_contents(resource_path('views/admin/partials/pagination-screen.blade.php'));
 
-    preg_match("/\{screen:'pagination',label:'([^']+)',group:'([^']+)',after:\[([^\]]*)\],icon:'([^']+)'\}/", $app, $row);
+    // Lane AP: the declaration is App\Support\AdminNav's; `after` no longer
+    // decides anything (the row's place in AdminNav does), so the partial's
+    // first anchor is compared with the row the server draws it after.
+    $nav = \App\Support\AdminNav::rows()['pagination'];
+    $ids = array_keys(\App\Support\AdminNav::rows());
+    $before = $ids[array_search('pagination', $ids, true) - 1];
+    $row = [null, $nav['label'], $nav['sec'], "'".$before."'", $nav['icon']];
     preg_match("/label: '([^']+)',\s*icon: '([^']+)',\s*group: '([^']+)',\s*after: \[([^\]]*)\]/", $partial, $call);
 
     expect($row)->not->toBe([])->and($call)->not->toBe([])
         ->and($row[1])->toBe($call[1])
         ->and($row[2])->toBe($call[3])
-        ->and(str_replace(' ', '', $row[3]))->toBe(str_replace(' ', '', $call[4]))
+        ->and(str_replace(' ', '', $call[4]))->toStartWith(str_replace(' ', '', $row[3]))
         ->and($row[4])->toBe($call[2])
         ->and($call[3])->toBe('Catalog');
 });

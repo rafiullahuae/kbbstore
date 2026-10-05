@@ -347,6 +347,9 @@
   /* -------------------------------------------------------- sidebar entry */
   function addNavEntry(){
     if (document.querySelector('[data-go="' + SCREEN + '"]')) return;
+    // (Lane AP) The server drew the sidebar for this account's role and left
+    // this row out on purpose: the role cannot open New Order. Do not put it back.
+    if (window.KBB_NAV && (window.KBB_NAV.hidden || []).indexOf(SCREEN) !== -1) return;
 
     var orders = document.querySelector('#nav [data-go="orders"]');
     if (!orders) return;

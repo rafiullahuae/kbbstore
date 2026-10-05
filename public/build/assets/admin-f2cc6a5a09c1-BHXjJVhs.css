@@ -1,0 +1,177 @@
+
+/* ---------------------------------------------------------------------------
+   Every rule is prefixed hpc- and every id is hpc-, so this file can never
+   restyle or collide with another screen in the console. The console is one
+   document: an unprefixed .card or #save here would reach into whatever else
+   is mounted.
+
+   Same layout rule as every screen beside it: nothing may be wider than its
+   column at 390px, because the owner reviews on a phone. min-width:0 on the
+   grid AND on its children is load-bearing rather than tidiness -- a grid
+   item's default min-width is auto, "at least as wide as my content", so a
+   card refuses to shrink below its widest child and drags the whole column
+   past the viewport with no way to scroll back.
+--------------------------------------------------------------------------- */
+.hpc-wrap{display:grid;gap:16px;min-width:0;max-width:1180px}
+.hpc-wrap > *{min-width:0}
+.hpc-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+          border-radius:var(--r,12px);padding:16px;min-width:0}
+.hpc-h{font-weight:650;font-size:15px;margin:0 0 4px}
+.hpc-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.55;margin:0}
+.hpc-sub + .hpc-sub{margin-top:7px}
+
+.hpc-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.hpc-tab{padding:8px 14px;border:1px solid var(--border,#e6e6e6);border-radius:9px;
+         background:transparent;color:inherit;font:inherit;font-weight:600;cursor:pointer;font-size:13px}
+.hpc-tab.on{background:rgba(127,127,127,.10);border-color:rgba(127,127,127,.4)}
+
+/* A slide: its controls on the left, the preview of the same slide beside it.
+   They collapse to one column below 900px, preview FIRST, because on a phone
+   the thing being described should be above the boxes describing it. */
+.hpc-slide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,300px);gap:16px;min-width:0}
+@media (max-width:900px){
+  .hpc-slide{grid-template-columns:minmax(0,1fr)}
+  .hpc-slide .hpc-pv{order:-1}
+}
+.hpc-slide > *{min-width:0}
+
+.hpc-row{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;
+         padding:11px 0;border-bottom:1px solid var(--border,#e6e6e6);min-width:0;flex-wrap:wrap}
+.hpc-row:last-child{border-bottom:0;padding-bottom:0}
+.hpc-row-t{min-width:0;flex:1 1 190px}
+.hpc-row-t b{display:block;font-weight:600;font-size:13.5px;margin-bottom:3px}
+.hpc-row-t span{display:block;color:var(--ink-soft,#6b7280);font-size:12px;line-height:1.5}
+.hpc-row-c{flex:1 1 210px;min-width:0}
+
+.hpc-in{width:100%;box-sizing:border-box;padding:8px 10px;font:inherit;font-size:13px;
+        border:1px solid var(--border,#e6e6e6);border-radius:9px;background:var(--surface,#fff);color:inherit}
+textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
+/* Row 55 (Lane HA): picked records as chips, and the media button. */
+.hpc-ids{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.hpc-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid #E7D9DF;border-radius:99px;padding:3px 4px 3px 12px;background:#fff;font-size:12.5px;max-width:100%}
+.hpc-chip b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.hpc-chip .hpc-btn{padding:2px 8px;min-width:0;line-height:1.3}
+.hpc-thumb{width:64px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #E7D9DF}
+.hpc-in:focus-visible{outline:2px solid var(--accent,#15a85a);outline-offset:1px}
+.hpc-in.is-bad{border-color:#b4443c}
+
+/* Colour: the swatch and the value it is, because a colour input on its own
+   tells a reviewer nothing they can read back to somebody. */
+.hpc-col{display:flex;align-items:center;gap:9px}
+.hpc-col input{width:42px;height:32px;padding:0;border:1px solid var(--border,#e6e6e6);
+               border-radius:8px;background:transparent;cursor:pointer}
+.hpc-col code{font-size:12px;color:var(--ink-soft,#6b7280)}
+
+/* ── THE PREVIEW ────────────────────────────────────────────────────────────
+   The two gradients are NOT restyled here. They are the exact strings the
+   server will print into the storefront's style attribute, rebuilt from the
+   same five colours by the same template -- so what this box shows is what
+   that attribute will hold, and a change to the shape has one place to happen.
+   The type scale is the console's, not the shop's: this is a preview of the
+   WORDS, the COLOURS and the ORDER at console size, and the note under it says
+   so rather than claiming to be the page. */
+.hpc-pv{position:sticky;top:12px;align-self:start}
+.hpc-pv-in{border-radius:14px;overflow:hidden;border:1px solid var(--border,#e6e6e6)}
+.hpc-sl{display:flex;min-height:150px}
+.hpc-sl-t{flex:1 1 auto;padding:16px;color:#fff;display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0}
+.hpc-sl-k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;opacity:.92;font-weight:600}
+.hpc-sl-h{font-size:19px;font-weight:700;line-height:1.16;letter-spacing:-.02em;margin:0;overflow-wrap:anywhere}
+.hpc-sl-p{font-size:11.5px;line-height:1.5;opacity:.93;margin:0;overflow-wrap:anywhere}
+.hpc-sl-b{display:inline-block;align-self:flex-start;margin-top:4px;background:#fff;color:#2A2228;
+          border-radius:999px;padding:6px 13px;font-size:11.5px;font-weight:650}
+.hpc-sl-i{flex:0 0 34%}
+.hpc-pv-note{margin:7px 0 0;color:var(--ink-soft,#6b7280);font-size:11.5px;line-height:1.5}
+.hpc-h1tag{display:inline-block;margin-inline-start:6px;padding:1px 6px;border-radius:6px;font-size:10px;
+           font-weight:700;letter-spacing:.04em;border:1px solid var(--border,#e6e6e6);
+           background:rgba(127,127,127,.08);color:var(--ink-soft,#6b7280);vertical-align:middle}
+
+.hpc-slidehd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.hpc-slidehd b{font-size:14px;font-weight:650;margin-inline-end:auto}
+
+.hpc-btn{padding:7px 12px;border:1px solid var(--border,#e6e6e6);border-radius:9px;
+         background:transparent;color:inherit;font:inherit;font-weight:600;cursor:pointer;font-size:12.5px}
+.hpc-btn:hover:not([disabled]){background:rgba(127,127,127,.08)}
+.hpc-btn[disabled]{opacity:.45;cursor:not-allowed}
+.hpc-btn.is-primary{background:var(--accent,#15a85a);border-color:transparent;color:#fff}
+.hpc-btn.is-bad{border-color:#b4443c;color:#8f332d}
+
+.hpc-note{border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.6;
+          border:1px solid var(--border,#e6e6e6);background:rgba(127,127,127,.06)}
+/* The note's own HEADING, and only that one. Written as `> b:first-child`
+   because a bold word inside the sentence underneath inherited the block
+   display and the uppercasing, and broke the sentence across three lines with
+   a comma stranded at the start of one. */
+.hpc-note > b:first-child{display:block;margin-bottom:3px;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.hpc-note.is-warn{border-color:#b7791f;color:#8a5b12;background:rgba(183,121,31,.08)}
+.hpc-note.is-bad{border-color:#b4443c;color:#8f332d;background:rgba(180,68,60,.08)}
+.hpc-note ul{margin:6px 0 0;padding-inline-start:18px}
+
+/* ── THE LIVE PREVIEW (Lane HL, Phase 15) ───────────────────────────────────
+   The storefront's own homepage, rendered from the controls on this screen,
+   with every section in it selectable. Everything is prefixed hpe- so it
+   cannot reach another screen in this one-document console.
+
+   SIZED WITH calc() AND A DECLARED SCALE, NOT BY MEASURING. Rule 4 forbids
+   JavaScript that measures layout and two tests sweep for the element-measuring
+   APIs by name, so nothing here asks how wide the column is. `--hpe-s` is a
+   literal per breakpoint and the frame's height is calc()'d FROM it, so the
+   stage and the page inside it cannot come to disagree the way two hand-kept
+   numbers would. The steps leave the frame narrower than its column at every
+   width; overflow:hidden is the guard, not the plan.
+
+   The page inside is laid out at 1280px in Desktop and at 390px in Mobile,
+   which is the point: `d-off` and `m-off` are media queries in the STOREFRONT's
+   own stylesheet, so the only honest way to show what a Desktop or Mobile
+   switch does is to give the document a viewport of that width and let its own
+   CSS answer.
+
+   ONE COLUMN UNTIL 1040px, picture first. On a phone the thing being described
+   belongs above the boxes describing it — the same rule .hpc-slide above
+   already follows for a slide and its preview. */
+.hpe{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;min-width:0}
+.hpe > *{min-width:0}
+@media (min-width:1040px){.hpe{grid-template-columns:minmax(0,1fr) minmax(0,340px)}}
+
+.hpe-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.hpe-hd b{font-size:14px;font-weight:650;margin-inline-end:auto}
+.hpe-dev{display:inline-flex;border:1px solid var(--border,#e6e6e6);border-radius:10px;overflow:hidden}
+.hpe-dev button{border:0;background:transparent;font:inherit;font-size:12px;font-weight:600;
+                padding:7px 12px;cursor:pointer;color:inherit}
+.hpe-dev button.on{background:rgba(127,127,127,.14)}
+
+.hpe-stage{--hpe-s:.24;position:relative;overflow:hidden;height:520px;border:1px solid var(--border,#e6e6e6);
+           border-radius:12px;background:#fff;min-width:0}
+.hpe-frame{width:1280px;height:calc(520px / var(--hpe-s));border:0;display:block;
+           transform:scale(var(--hpe-s));transform-origin:top left}
+@media(min-width:760px){.hpe-stage{--hpe-s:.40}}
+@media(min-width:1040px){.hpe-stage{--hpe-s:.40}}
+@media(min-width:1280px){.hpe-stage{--hpe-s:.48}}
+@media(min-width:1440px){.hpe-stage{--hpe-s:.58}}
+/* Mobile is drawn at its true size — 390px needs no reduction at any console
+   width, so the one view an owner reviews on a phone is the one that is exact. */
+.hpe-stage.is-mob{--hpe-s:1}
+.hpe-stage.is-mob .hpe-frame{width:390px;margin:0 auto}
+.hpe-empty{display:grid;place-items:center;height:100%;font-size:12.5px;
+           color:var(--ink-soft,#6b7280);text-align:center;padding:0 18px}
+
+.hpe-note{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5;margin:9px 0 0}
+.hpe-note.is-bad{color:#8f332d}
+
+/* The same nineteen sections as buttons. The picture is the fast way to
+   choose one; this is the way that works with a keyboard, and the way to
+   reach a section that is switched off and therefore not in the picture. */
+.hpe-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.hpe-pick{padding:6px 10px;border:1px solid var(--border,#e6e6e6);border-radius:8px;background:transparent;
+          color:inherit;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.hpe-pick.on{background:rgba(127,127,127,.14);border-color:rgba(127,127,127,.45)}
+.hpe-pick.off{opacity:.6}
+.hpe-pick.off::after{content:' · off';color:var(--ink-soft,#6b7280);font-weight:500}
+.hpe-pick:focus-visible{outline:2px solid var(--accent,#15a85a);outline-offset:1px}
+
+.hpe-panel{align-self:start}
+@media (min-width:1040px){.hpe-panel{position:sticky;top:12px}}
+.hpe-sel{display:block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+         color:var(--ink-soft,#6b7280)}
+
+.hpc-save{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.hpc-dirty{color:var(--ink-soft,#6b7280);font-size:12.5px;margin-inline-end:auto}

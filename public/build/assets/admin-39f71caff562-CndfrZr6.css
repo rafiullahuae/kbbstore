@@ -1,0 +1,273 @@
+
+/* Controls, then the preview under them. One column at every width: the
+   preview is a page mock and a page mock in a side rail shows nothing. */
+.chp-wrap{display:grid;gap:14px;min-width:0}
+.chp-wrap > *{min-width:0}
+
+/* ── THE MOBILE TABS PUT THE PREVIEW BESIDE THE CONTROLS ──────────────────
+   "in all mobile tabs for checkout page, i want the preview on the right
+   side, only in the mobile tabs."
+
+   ONLY THE MOBILE ONES, and that is not a preference. The phone mock is a
+   320px frame, which sits happily in a side column; the desktop mock stands
+   for a 1040px page with two columns in it, and drawn 380px wide its tracks
+   are a few dozen pixels each and show the owner nothing they can judge. So
+   the desktop tabs -- and Fields & attention, which previews the desktop page
+   -- keep the full-width preview below the controls.
+
+   Below 1180px it folds back to one column: a 300px control column beside a
+   320px phone is two things nobody can use, which is the same reason the cart
+   page's screen folds at 1100. */
+.chp-wrap.chp-side{grid-template-columns:minmax(0,1fr) 372px;align-items:start}
+.chp-wrap.chp-side > .chp-col{display:grid;gap:14px;min-width:0}
+/* The controls are the long column, so the preview follows the scroll rather
+   than scrolling off the top while a slider is still being dragged. */
+.chp-wrap.chp-side [data-chp-preview]{position:sticky;top:16px}
+.chp-wrap.chp-side .chv-h{margin-top:0}
+@media (max-width:1180px){
+  .chp-wrap.chp-side{grid-template-columns:minmax(0,1fr)}
+  .chp-wrap.chp-side [data-chp-preview]{position:static}
+}
+
+.chp-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+          border-radius:var(--r,12px);padding:16px;min-width:0}
+.chp-title{font-weight:650;font-size:15px}
+.chp-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.55;margin-top:3px;max-width:68ch}
+.chp-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.chp-tab{padding:8px 12px;border:1px solid var(--border,#e6e6e6);border-radius:9px;
+         background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
+.chp-tab[aria-selected="true"]{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.chp-fields{display:grid;gap:14px;margin-top:14px;min-width:0}
+.chp-f{display:grid;gap:5px;min-width:0}
+.chp-fh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}
+.chp-fh label{font-size:12.5px;font-weight:650;min-width:0;overflow-wrap:anywhere}
+.chp-val{font-size:11.5px;font-weight:650;color:var(--accent,#15a85a);white-space:nowrap;
+         font-variant-numeric:tabular-nums}
+.chp-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5;margin:0;max-width:68ch}
+.chp-f input[type=range]{width:100%;accent-color:var(--accent,#15a85a);margin:0;min-width:0}
+/* A select and a text box on this screen, because until now there were none
+   and three selects had already shipped rendering as sliders. Sized off the
+   same 13px the rest of the card uses, and full width so a long option label
+   is not cut off at 372px in the side-by-side Mobile tabs. */
+.chp-f select.chp-sel,.chp-f input.chp-text{
+  width:100%;min-width:0;box-sizing:border-box;font:inherit;font-size:13px;
+  padding:7px 9px;border:1px solid var(--line,#e5e7eb);border-radius:7px;
+  background:var(--card,#fff);color:inherit
+}
+.chp-f select.chp-sel:focus-visible,.chp-f input.chp-text:focus-visible{
+  outline:2px solid var(--accent,#15a85a);outline-offset:1px;border-color:transparent
+}
+.chp-f input.chp-text::placeholder{color:var(--ink-soft,#6b7280);opacity:.7}
+.chp-check{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.chp-check input{margin-top:3px;flex:none;width:16px;height:16px}
+.chp-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;min-width:0}
+.chp-btn{padding:8px 13px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;
+         color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
+.chp-btn.is-primary{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.chp-btn[disabled]{opacity:.45;cursor:default}
+.chp-note{border:1px dashed var(--border,#e6e6e6);border-radius:10px;padding:11px 12px;
+          font-size:12.5px;line-height:1.55;color:var(--ink-soft,#6b7280);min-width:0}
+.chp-empty{padding:22px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
+@media (max-width:640px){ .chp-card{padding:13px} }
+
+/* ── the preview ────────────────────────────────────────────────────────── */
+.chv-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:4px 0 10px}
+.chv-h b{font-size:15px;font-weight:700}
+.chv-h span{font-size:11px;color:var(--ink-soft,#6b7280)}
+
+/* The desktop mock stands for a window wider than 900px. The proportions are
+   what matter, not the pixels, so every measurement below is a share of the
+   owner's own page width — drag "Page width" and the two tracks re-proportion
+   exactly as the shop's would. */
+.chv-desk{border:1px solid var(--border,#e6e6e6);border-radius:12px;overflow:hidden;
+  background:#fbf5f4;box-shadow:0 8px 26px -18px rgba(0,0,0,.4)}
+.chv-bar{display:flex;align-items:center;gap:6px;padding:7px 11px;background:#f6f7f9;
+  border-bottom:1px solid var(--border,#e6e6e6);font-size:10px;color:#6b7280}
+.chv-bar i{width:6px;height:6px;border-radius:50%;background:#d8dbe0;display:block}
+.chv-page{background:#fff;border-bottom:1px solid #ebe3e6;
+  padding:var(--chv-headpady,7px) var(--chv-headpadx,10px);
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:var(--chv-headbadge,9px);color:#1f7a4d;font-weight:600}
+.chv-page b{font-size:var(--chv-headlogo,11px);color:#c13a5e;font-weight:800}
+/* The bar's width is its own control, so the mock draws the band rather than
+   letting it fill -- that is the whole of what the slider does. */
+.chv-page > span{display:flex;align-items:center;gap:5px}
+.chv-headband{max-width:var(--chv-headmax,100%);margin:0 auto;width:100%;
+  display:flex;align-items:center;justify-content:space-between}
+.chv-pin{font-size:7.5px;color:#94a3b8;font-weight:500;padding:2px 11px;background:#f6f7f9;
+  border-bottom:1px solid #ebe3e6}
+.chv-cols{display:grid;grid-template-columns:minmax(0,1fr) var(--chv-aside,31%);
+  column-gap:var(--chv-gap,2%);align-items:start;
+  padding:var(--chv-pady,2%) var(--chv-padx,2%) 4%}
+.chv-cols > div{min-width:0}
+
+/* The phone mock. Drawn at real proportions too: the script scales every
+   stored pixel by the frame's width over 390, so a 16px section reads here at
+   the size it reads on the owner's own phone. */
+.chv-phone{width:320px;max-width:100%;margin:0 auto;border:1px solid var(--border,#e6e6e6);
+  border-radius:20px;overflow:hidden;background:#fbf5f4;box-shadow:0 8px 26px -18px rgba(0,0,0,.4)}
+.chv-stack{display:grid;gap:var(--chv-mgap,11px);padding:var(--chv-pady,17px) var(--chv-padx,16px) 18px}
+.chv-stack > *{min-width:0}
+
+/* Shared pieces. Both mocks draw the same checkout; only the frame differs. */
+.chv-lead{margin:0 0 var(--chv-block,13px)}
+.chv-lead b{display:block;font-size:calc(13px * var(--chv-ttitle,1));font-weight:800;color:#17181c}
+.chv-lead i{display:block;font-style:normal;font-size:calc(9px * var(--chv-tlead,1));
+  color:#6b7280;margin-top:1px}
+.chv-coupon{background:linear-gradient(135deg,#eef8f1,#fff);border:1.4px dashed #bfe0cd;
+  border-radius:10px;padding:8px 9px;margin-bottom:var(--chv-block,13px);font-size:9px;
+  font-weight:700;color:#1f7d52}
+.chv-coupon u{display:block;text-decoration:none;background:#fff;border:1.2px solid #c9e7d5;
+  border-radius:6px;margin-top:5px;padding:5px 6px;color:#9aa0aa;font-weight:500}
+.chv-box{background:#fff;border:1px solid #ebe3e6;border-radius:10px;overflow:hidden}
+/* A numbered section. Its padding is the owner's slider; the heading bar's
+   negative margin is the SAME number, which is what pulls the bar out to the
+   card edge — exactly the arithmetic kbb-checkout.css performs, so the drawing
+   cannot disagree with the page. */
+.chv-sec{padding:var(--chv-secpad,16px);border-bottom:1px solid #ebe3e6}
+.chv-sec:last-child{border-bottom:0}
+.chv-sec > h6{margin:calc(var(--chv-secpad,16px) * -1) calc(var(--chv-secpad,16px) * -1) 9px;
+  padding:6px var(--chv-secpad,16px) 6px calc(var(--chv-secpad,16px) - 3px);
+  background:#fbf5f4;border-bottom:1px solid #f0eaec;border-inline-start:3px solid #c13a5e;
+  display:flex;align-items:center;gap:6px;font-size:calc(9.5px * var(--chv-th2,1));
+  font-weight:700;color:#17181c}
+.chv-sec > h6 em{flex:0 0 auto;width:calc(14px * var(--chv-th2,1));height:calc(14px * var(--chv-th2,1));
+  border-radius:50%;background:#c13a5e;color:#fff;
+  font-style:normal;font-size:calc(8px * var(--chv-th2,1));font-weight:800;display:grid;place-items:center}
+/* The mock's field text is a placeholder, so it takes BOTH factors -- the
+   field size and the placeholder share of it -- exactly as the page does. */
+.chv-fi{border:1px solid #ebe3e6;border-radius:6px;padding:5px 6px;
+  font-size:calc(9px * var(--chv-tinput,1) * var(--chv-tph,1));
+  font-weight:var(--chv-phw,400);font-style:var(--chv-phi,normal);color:var(--chv-phc,#9aa0aa);
+  background:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chv-lb{display:block;font-size:calc(7.5px * var(--chv-tlabel,1));font-weight:600;
+  color:#6b7280;margin-bottom:2px}
+.chv-fg{display:grid;gap:5px}
+.chv-fg.two{grid-template-columns:1fr 1fr}
+.chv-ad{display:flex;align-items:center;gap:6px;border:1px solid #1e9e5a;background:#f4fbf7;
+  border-radius:8px;padding:6px 7px}
+.chv-ad .ic{flex:0 0 auto;width:18px;height:18px;border-radius:6px;background:#dff1e7;color:#1f7a4d;
+  display:grid;place-items:center;font-size:9px}
+.chv-ad .tx{flex:1;min-width:0}
+.chv-ad .tx b{display:block;font-size:9.5px;font-weight:700;color:#17181c}
+.chv-ad .tx i{display:block;font-style:normal;font-size:8.5px;color:#6b7280;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.chv-ad .go{flex:0 0 auto;font-size:8.5px;font-weight:700;color:#1f7a4d}
+.chv-pick{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  border:1px solid #1e9e5a;background:#f4fbf7;border-radius:8px;padding:6px 7px;
+  font-size:9.5px;font-weight:700;color:#17181c}
+
+/* The summary column. --chv-asidepad is its own slider, separate from the
+   sections', because it is its own card on both surfaces. */
+.chv-sum{background:#fff;border:1px solid #ebe3e6;border-radius:10px;padding:var(--chv-asidepad,17px);
+  font-size:9.5px}
+.chv-sum .sr{display:flex;justify-content:space-between;gap:8px;padding:2px 0;color:#3c3a40}
+.chv-sum .tot{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#e6f5ed;
+  border-radius:7px;padding:6px 8px;margin-top:6px;font-weight:800;font-size:11px}
+.chv-sum .go{display:grid;place-items:center;background:#c13a5e;color:#fff;border-radius:99px;
+  padding:7px;margin-top:7px;font-size:10px;font-weight:700}
+/* The order-summary lines. Drawn at the SAME px the owner is choosing on the
+   Desktop tab, because that tab's frame stands for a 1040px-plus page and is
+   about that wide; scaled by the phone frame's 320/390 on the Mobile tab, for
+   the same reason everything else in that frame is. Both are stated on the
+   ruler under the mock so neither can be misread. */
+.chv-ci{display:flex;align-items:flex-start;gap:var(--chv-rowgap,11px);
+  padding:var(--chv-rowp-t,10px) var(--chv-rowp-r,0px) var(--chv-rowp-b,10px) var(--chv-rowp-l,0px);
+  border-bottom:1px solid #f0eaec}
+.chv-ci:first-child{padding-top:0}
+.chv-ci:last-child{border-bottom:0}
+.chv-ci .th{flex:0 0 auto;position:relative;width:var(--chv-rowh,54px);aspect-ratio:1;
+  border-radius:calc(var(--chv-rowh,54px) * .2)}
+.chv-ci .th i{position:absolute;top:-5px;inset-inline-end:-5px;min-width:14px;height:14px;
+  border-radius:50%;background:#17181c;color:#fff;font-style:normal;font-size:8px;font-weight:700;
+  display:grid;place-items:center;border:1.5px solid #fff}
+.chv-ci .info{flex:1;min-width:0}
+.chv-ci .info b{display:block;font-size:calc(10px * var(--chv-rowf,1));
+  font-weight:var(--chv-rowb,600);line-height:1.3;margin:1px 0 4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* The stepper takes the multiplier on its BOX AND ITS GLYPH together, which is
+   what the shop's own rule does. Scaling one of the two would draw a control
+   the page never renders. */
+.chv-ci .qty{display:inline-flex;align-items:center;border:1px solid #ebe3e6;border-radius:6px;
+  overflow:hidden}
+.chv-ci .qty u{text-decoration:none;display:grid;place-items:center;color:#6b7280;
+  width:calc(17px * var(--chv-qtys,1));height:calc(17px * var(--chv-qtys,1));
+  font-size:calc(10px * var(--chv-qtys,1));line-height:1}
+.chv-ci .qty em{font-style:normal;text-align:center;min-width:calc(16px * var(--chv-qtys,1));
+  font-size:calc(9px * var(--chv-rowf,1));font-weight:var(--chv-rowb,600)}
+.chv-ci .pr{flex:0 0 auto;margin-inline-start:auto;white-space:nowrap;
+  font-size:calc(9.5px * var(--chv-rowf,1));font-weight:var(--chv-rowpb,700)}
+.chv-items{margin-bottom:6px}
+
+/* The trust block under Payment, and the tick that is the point of it. Same
+   keyframe shape as the shop's -- the stroke is DRAWN from its own length to
+   zero and the shield fills behind it -- so what the owner times here is what
+   they get. */
+.chv-trust{background:#fff;border:1px solid #ebe3e6;border-radius:10px;
+  padding:var(--chv-secpad,16px);margin-top:var(--chv-block,13px);
+  display:flex;flex-direction:column;gap:6px}
+.chv-tl{display:flex;align-items:center;gap:7px;font-size:calc(9px * var(--chv-ttrust,1));
+  font-weight:600;color:#5b6472}
+.chv-tl svg{flex:none;width:calc(12px * var(--chv-ttrust,1));height:calc(12px * var(--chv-ttrust,1));
+  color:#1e9e5a}
+.chv-tl .st{color:#f4b740;letter-spacing:.5px}
+.chv-tick{stroke-dasharray:9;stroke-dashoffset:0;
+  animation:chvTick calc(3.2s * var(--chv-tickt,1)) ease-in-out infinite}
+.chv-shield{animation:chvShield calc(3.2s * var(--chv-tickt,1)) ease-in-out infinite}
+@keyframes chvTick{0%,6%{stroke-dashoffset:9}26%,80%{stroke-dashoffset:0}94%,100%{stroke-dashoffset:9}}
+@keyframes chvShield{0%,6%{fill:rgba(30,158,90,0)}30%,80%{fill:rgba(30,158,90,.15)}96%,100%{fill:rgba(30,158,90,0)}}
+.chv-notick .chv-tick,.chv-notick .chv-shield{animation:none}
+
+/* The address cue, at the mock's scale and on the mock's own timings -- the
+   same three parts and the same two numbers driving them. */
+.chv-cue{display:flex;align-items:center;gap:7px;border:1px solid #ebe3e6;border-radius:8px;
+  padding:7px 8px;background:#fff}
+.chv-cueic{position:relative;flex:none;
+  width:calc(26px * var(--chv-cues,1));height:calc(22px * var(--chv-cues,1))}
+.chv-cueic i{position:absolute;display:grid;place-items:center;border-radius:50%;
+  width:calc(16px * var(--chv-cues,1));height:calc(16px * var(--chv-cues,1));
+  border:1.2px solid #fff;background:#edf1f5;color:#5b6472}
+.chv-cueic svg{width:calc(8px * var(--chv-cues,1));height:calc(8px * var(--chv-cues,1))}
+.chv-cueic .o{right:0;bottom:0}
+.chv-cueic .h{left:0;top:0;z-index:2;background:#dff1e7;color:#1f7a4d;
+  animation:chvBob calc(3.4s * var(--chv-cuet,1)) ease-in-out infinite}
+@keyframes chvBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.chv-cue .pr{flex:1;min-width:0;font-size:calc(9px * var(--chv-tinput,1));color:#6b7280;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chv-ar{flex:none;display:flex;align-items:center;gap:1px;color:#1f7a4d;
+  width:calc(22px * var(--chv-cues,1));
+  animation:chvNudge calc(1.5s * var(--chv-cuet,1)) ease-in-out infinite}
+.chv-ar em{flex:1;height:1.6px;border-radius:2px;
+  background:linear-gradient(90deg,rgba(31,122,77,0),currentColor)}
+.chv-ar svg{flex:none;width:calc(10px * var(--chv-cues,1));height:calc(10px * var(--chv-cues,1))}
+@keyframes chvNudge{0%,100%{transform:translateX(0);opacity:.5}50%{transform:translateX(4px);opacity:1}}
+.chv-cta{position:relative;flex:none;font-size:calc(8.5px * var(--chv-tinput,1));font-weight:700;
+  color:#1f7a4d;white-space:nowrap}
+.chv-cta::before{content:"";position:absolute;inset:-4px -7px;border-radius:99px;
+  border:1.3px solid #1f7a4d;opacity:0;
+  animation:chvPulse calc(3s * var(--chv-cuet,1)) ease-out infinite}
+@keyframes chvPulse{0%{transform:scale(.88);opacity:.5}60%{transform:scale(1.14);opacity:0}100%{opacity:0}}
+.chv-nocue .chv-cueic,.chv-nocue .chv-ar{display:none}
+.chv-nocue .chv-cta::before{content:none}
+.chv-nocue-ic .chv-cueic{display:none}
+.chv-nocue-ar .chv-ar{display:none}
+.chv-nocue-pu .chv-cta::before{content:none}
+@media (prefers-reduced-motion:reduce){
+  .chv-cueic .h,.chv-ar,.chv-tick,.chv-shield{animation:none}
+  .chv-ar{opacity:1}
+  .chv-cta::before{animation:none;opacity:0}
+}
+.chv-stick{border:1px dashed #cbd5e1;border-radius:10px;padding:4px;position:relative}
+.chv-stick::after{content:'follows the scroll';position:absolute;top:-7px;right:6px;background:#fff;
+  padding:0 4px;font-size:7.5px;color:#94a3b8}
+.chv-mob-order{background:#fff;border:1px solid #ebe3e6;border-radius:10px;
+  padding:var(--chv-secpad,16px);margin-top:var(--chv-block,13px)}
+.chv-mob-order .go{display:grid;place-items:center;background:#c13a5e;color:#fff;border-radius:99px;
+  padding:8px;margin-top:8px;font-size:10px;font-weight:700}
+/* The measured width of the phone mock, stated on it. The owner's report was
+   "few sections are showing wide, and few not" — a number on the frame is the
+   quickest way to see that they are not, any more. */
+.chv-ruler{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 8px;
+  padding:7px 11px;margin-top:8px;background:#f6f7f9;border:1px solid var(--border,#e6e6e6);
+  border-radius:8px;font-size:11px;color:#6b7280;text-align:center}
+.chv-ruler b{font-weight:700;color:var(--ink,#16181d);font-variant-numeric:tabular-nums}

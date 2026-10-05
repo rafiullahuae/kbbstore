@@ -1,0 +1,689 @@
+
+(function () {
+  'use strict';
+
+  var SCREEN = 'checkoutpage';
+
+  /* UNFINISHED CHANGES (Lane PM). Leaving this screen with edits in `values`
+     used to throw them away without a word. They are kept in Unfinished in
+     the top bar instead (partials/unfinished-drafts.blade.php), and come back
+     into `values` when the screen is next opened. */
+  if (window.kbbDrafts) window.kbbDrafts.track({
+    id: SCREEN, screen: SCREEN, label: 'Appearance → Checkout page',
+    values: function () { return tabs ? values : null; },
+    set: function (k, v) { if (Object.prototype.hasOwnProperty.call(values, k)) values[k] = v; },
+    render: function () { render(); },
+    save: function () { save(); }
+  });
+
+  /* ---------------------------------------------------------------- state */
+  var tabs = null;        // GET /admin-api/checkout-page -> tabs
+  var values = {};        // key -> current value, edited in place
+  var mobileMax = 900;
+  var squeezeKeys = [];  // which controls "Squeeze everything" drives to their minimum
+  var open = null;        // which tab is showing
+  var banner = null;
+  var busy = false;
+  var seq = 0;
+
+  /* ------------------------------------------------------------- plumbing */
+  function cookie(n) {
+    var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
+    return m ? decodeURIComponent(m.pop()) : '';
+  }
+
+  async function api(path, body) {
+    var opts = { headers: { Accept: 'application/json' }, credentials: 'same-origin' };
+    opts.headers['X-XSRF-TOKEN'] = cookie('XSRF-TOKEN');
+
+    if (body !== undefined) {
+      opts.method = 'POST';
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
+
+    var base = window.location.pathname.replace(/\/+$/, '').replace(/\/[^\/]*$/, '');
+    var r = await fetch(base + '/admin-api' + path, opts);
+    var payload = null;
+    try { payload = await r.json(); } catch (e) { payload = null; }
+    if (!r.ok) {
+      var err = new Error('api ' + path + ' -> ' + r.status);
+      err.status = r.status;
+      err.body = payload;
+      throw err;
+    }
+    return payload;
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function say(msg) { try { window.toast(msg); } catch (e) {} }
+
+  /* A 404 from these endpoints almost always means the package shipped without
+     its clear_caches migration having run, so the compiled route table does not
+     know these paths. Said plainly rather than drawing an empty screen. */
+  function explain(e, fallback) {
+    return e && e.status === 404
+      ? 'The Checkout page endpoints are not in this server\'s compiled route table yet. Clear the route cache and reload.'
+      : ((e && e.body && e.body.error) ? e.body.error : fallback);
+  }
+
+  /* -------------------------------------------------------- sidebar entry */
+  function addNavEntry() {
+    window.kbbAddNavEntry({
+      screen: SCREEN,
+      label: 'Checkout page',
+      icon: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>',
+      group: 'Appearance',
+      after: ['cartpage', 'cartpanel', 'dividers']
+    });
+  }
+
+  /* ------------------------------------------------------------ the route */
+  var previousGo = window.go;
+
+  window.go = function (id) {
+    if (id !== SCREEN) return previousGo.apply(this, arguments);
+
+    document.querySelectorAll('.side .nav-item').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.go === SCREEN);
+    });
+    var group = document.querySelector('#nav .nav-group[data-sec="Appearance"]');
+    if (group) group.classList.add('open');
+
+    var crumb = document.querySelector('#crumb');
+    var title = document.querySelector('#ptitle');
+    if (crumb) crumb.textContent = 'Appearance';
+    if (title) title.textContent = 'Checkout page';
+
+    var side = document.querySelector('#side');
+    if (side) side.classList.remove('open');
+
+    render();
+    load();
+    return undefined;
+  };
+
+  /* ----------------------------------------------------------------- data */
+  async function load() {
+    var mine = ++seq;
+    busy = true;
+    banner = null;
+    render();
+
+    try {
+      var body = await api('/checkout-page');
+      if (mine !== seq) return;
+
+      tabs = body.tabs || [];
+      mobileMax = body.mobileMax || 900;
+      squeezeKeys = body.squeeze || [];
+      values = {};
+      tabs.forEach(function (t) {
+        t.fields.forEach(function (f) { values[f.key] = f.value; });
+      });
+      if (!open || !tabs.some(function (t) { return t.key === open; })) {
+        open = tabs.length ? tabs[0].key : null;
+      }
+    } catch (e) {
+      if (mine !== seq) return;
+      banner = explain(e, 'The Checkout page settings could not be read.');
+    } finally {
+      if (mine === seq) {
+        busy = false; render();
+        if (tabs && !banner && window.kbbDrafts) window.kbbDrafts.ready(SCREEN);
+      }
+    }
+  }
+
+  async function save() {
+    if (busy) return;
+    busy = true;
+    render();
+
+    var payload = {};
+    Object.keys(values).forEach(function (k) { payload[k] = values[k]; });
+
+    try {
+      await api('/checkout-page', { settings: payload });
+      if (window.kbbDrafts) window.kbbDrafts.saved(SCREEN);
+      say('Checkout page saved.');
+    } catch (e) {
+      banner = explain(e, 'That could not be saved.');
+    } finally {
+      busy = false;
+      render();
+    }
+  }
+
+  /* ------------------------------------------------------------- controls */
+  function shown(f) {
+    var o = f.options || {};
+    return String(values[f.key]) + (o.unit || '');
+  }
+
+  /* `d_sticky_top` is read only while `d_sticky` is on, so it leaves the
+     screen when the switch is off rather than sitting there doing nothing. */
+  function hidden(f) {
+    if (f.key === 'd_sticky_top') return !pvOn('d_sticky');
+    /* Both only mean anything while the line above them is drawn at all. */
+    if (f.key === 'rating_text' || f.key === 'rating_min') return !pvOn('rating_on');
+    /* NOT HIDDEN ANY MORE. It was, on the grounds that "lined up with the page"
+       mode read the page's side padding and this slider would move nothing. The
+       reasoning was fine and the outcome was not: it left no way to set the
+       header's side padding at all in the mode that ships. The stylesheet now
+       reads `var(--cop-m-headpadx, var(--cop-padx))`, so leaving this where it
+       is follows the page and moving it wins. */
+
+    return false;
+  }
+
+  /** The schema row for a key, across every tab. */
+  function fieldFor(key) {
+    var out = null;
+
+    (tabs || []).forEach(function (t) {
+      t.fields.forEach(function (f) { if (f.key === key) out = f; });
+    });
+
+    return out;
+  }
+
+  function fieldHTML(f) {
+    if (hidden(f)) return '';
+
+    var id = 'chp-' + f.key;
+    var help = f.help ? '<p class="chp-help">' + esc(f.help) + '</p>' : '';
+
+    if (f.type === 'bool') {
+      return '<div class="chp-f"><div class="chp-check">'
+        + '<input type="checkbox" id="' + id + '" data-chp-key="' + esc(f.key) + '"'
+        + (values[f.key] ? ' checked' : '') + '>'
+        + '<div><label for="' + id + '">' + esc(f.label) + '</label>' + help + '</div>'
+        + '</div></div>';
+    }
+
+    /*
+     * SELECT AND TEXT, AND WHY THEY ARE HERE RATHER THAN NOT.
+     *
+     * Everything that was not a checkbox used to fall through to the range
+     * branch below. `ph_tone` and `ph_weight` shipped in 2.60.252 and `m_float`
+     * in 2.60.253, all three of them selects, and every one of them rendered as
+     * `<input type="range" min="undefined" max="undefined" value="muted">` — a
+     * slider with no scale showing a value it cannot represent — and then saved
+     * as NaN, because the input handler read `Number(el.value)`. A control that
+     * cannot be read and cannot be stored is worse than a missing one: the
+     * screen said the setting existed.
+     *
+     * The handler now branches on the field's own type rather than on the DOM
+     * element's, which is what made a select indistinguishable from a range in
+     * the first place.
+     */
+    if (f.type === 'select') {
+      var opts = Object.keys(f.options || {}).map(function (k) {
+        return '<option value="' + esc(k) + '"' + (String(values[f.key]) === k ? ' selected' : '') + '>'
+          + esc(f.options[k]) + '</option>';
+      }).join('');
+
+      return '<div class="chp-f"><div class="chp-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
+        + '<select class="chp-sel" id="' + id + '" data-chp-key="' + esc(f.key) + '">' + opts + '</select>'
+        + help + '</div>';
+    }
+
+    if (f.type === 'text') {
+      return '<div class="chp-f"><div class="chp-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
+        + '<input class="chp-text" type="text" id="' + id + '" data-chp-key="' + esc(f.key) + '"'
+        + ' value="' + esc(values[f.key] == null ? '' : values[f.key]) + '"'
+        + ' placeholder="' + esc(f['default'] == null ? '' : f['default']) + '">'
+        + help + '</div>';
+    }
+
+    var o = f.options || {};
+    return '<div class="chp-f"><div class="chp-fh"><label for="' + id + '">' + esc(f.label) + '</label>'
+      + '<span class="chp-val" data-chp-val="' + esc(f.key) + '">' + esc(shown(f)) + '</span></div>'
+      + '<input type="range" id="' + id + '" data-chp-key="' + esc(f.key) + '"'
+      + ' min="' + o.min + '" max="' + o.max + '" step="' + o.step + '" value="' + esc(values[f.key]) + '">'
+      + help + '</div>';
+  }
+
+  function render() {
+    var host = document.querySelector('#content');
+    if (!host || (document.querySelector('#ptitle') || {}).textContent !== 'Checkout page') return;
+
+    if (busy && !tabs) {
+      host.innerHTML = '<div class="chp-wrap"><div class="chp-card"><div class="chp-empty">Loading…</div></div></div>';
+      return;
+    }
+
+    if (!tabs) {
+      host.innerHTML = '<div class="chp-wrap"><div class="chp-card">'
+        + '<div class="chp-title">Checkout page</div>'
+        + '<p class="chp-sub">' + esc(banner || 'Nothing to show yet.') + '</p>'
+        + '<div class="chp-actions"><button class="chp-btn" data-chp-reload>Retry</button></div>'
+        + '</div></div>';
+      return;
+    }
+
+    var strip = tabs.map(function (t) {
+      return '<button type="button" class="chp-tab" data-chp-tab="' + esc(t.key) + '"'
+        + ' aria-selected="' + (t.key === open ? 'true' : 'false') + '">' + esc(t.label) + '</button>';
+    }).join('');
+
+    var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
+
+    /* Two columns on the mobile tabs, one everywhere else. The controls and
+       the notes go in a column of their own so grid auto-placement cannot put
+       a note beside the preview and the card under it. */
+    var side = /^mobile/.test(String(open));
+
+    host.innerHTML = '<div class="chp-wrap' + (side ? ' chp-side' : '') + '">'
+      + (side ? '<div class="chp-col">' : '')
+      + (banner ? '<div class="chp-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
+          + esc(banner) + '</div>' : '')
+      + '<div class="chp-note">Spacing only. Nothing on this screen adds, removes or reorders a '
+      + 'section — the checkout has the same four numbered sections at every value of every '
+      + 'control below, and the words in them are translated copy that lives in the language files.</div>'
+      + '<div class="chp-card">'
+      + '<div class="chp-tabs">' + strip + '</div>'
+      + '<p class="chp-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
+      + '<div class="chp-fields">' + current.fields.map(fieldHTML).join('') + '</div>'
+      + '<div class="chp-actions">'
+      + '<button class="chp-btn is-primary" data-chp-save' + (busy ? ' disabled' : '') + '>'
+      + (busy ? 'Saving…' : 'Save') + '</button>'
+      + '<button class="chp-btn" data-chp-reload' + (busy ? ' disabled' : '') + '>Reload</button>'
+      /* THE PRESETS WRITE THE SLIDERS AND NOTHING ELSE. They move the values
+         on screen; nothing is stored until Save, so both are undone by
+         Reload and either can be nudged afterwards. A stored "squeezed" mode
+         would leave every slider showing a number the page was not using. */
+      + '<button class="chp-btn" data-chp-squeeze' + (busy ? ' disabled' : '') + '>Squeeze this tab</button>'
+      + '<button class="chp-btn" data-chp-defaults' + (busy ? ' disabled' : '') + '>Back to defaults</button>'
+      + '</div>'
+      + '<p class="chp-help" style="margin-top:9px">Both presets move only the sliders on '
+      + '<b>this tab</b> \u2014 the other tabs are left exactly as you set them. Nothing is stored until '
+      + 'you press Save, and Reload puts them back.</p>'
+      + '</div>'
+      + (side ? '</div>' : '')
+      + previewHTML()
+      + '</div>';
+  }
+
+  /* --------------------------------------------------------------- presets */
+  /*
+   * `min` drives the keys the server named to the bottom of their own range;
+   * `default` puts EVERY key back to the value the schema ships. The two are
+   * deliberately not symmetrical: squeezing is a look, applied to the controls
+   * that make a page denser, while "back to defaults" has to be able to undo
+   * anything at all or it is not a way out.
+   */
+  /*
+   * THE TAB YOU ARE LOOKING AT, AND NOT THE OTHER EIGHT.
+   *
+   * This used to walk every tab. The owner's report: "when i click squeezed, it
+   * applies on all tabs all checkout page settings, which is not correct". He
+   * is right, and the reason is worth writing down rather than just fixing: a
+   * preset that reaches past the screen changes numbers the person cannot see,
+   * so the only way to find out what it did is to visit nine tabs. A button
+   * whose effect is off screen is a button nobody can use with confidence.
+   *
+   * Both presets are now scoped to the open tab. That also makes them
+   * recoverable in the small: squeeze the rows, dislike it, press Back to
+   * defaults, and the header and the type sizes you had already tuned are
+   * exactly where you left them.
+   */
+  function preset(which) {
+    if (!tabs) return;
+
+    var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
+
+    current.fields.forEach(function (f) {
+      if (which === 'default') { values[f.key] = f['default']; return; }
+      if (f.type !== 'range') return;
+      if (squeezeKeys.indexOf(f.key) === -1) return;
+      values[f.key] = Number((f.options || {}).min);
+    });
+
+    render();
+    say(which === 'min'
+      ? 'Squeezed \u2014 ' + current.label + ' only. Nothing is saved until you press Save.'
+      : current.label + ' is back to its shipped values. Nothing is saved until you press Save.');
+  }
+
+  /* -------------------------------------------------------------- preview */
+  function pvNum(key, fallback) {
+    var v = Number(values[key]);
+    return isFinite(v) ? v : fallback;
+  }
+  function pvOn(key) { return values[key] === true || values[key] === 1 || values[key] === '1'; }
+
+  /* A desktop measurement as a share of the owner's own page width, so the
+     mock holds the shop's proportions whatever size it is drawn at. Clamped:
+     `d_max` cannot be zero from the schema, but a settings row hand-edited to
+     0 would divide by it, and a preview that throws is a blank screen where
+     the controls used to be. */
+  function pvPct(key, fallback) {
+    var max = pvNum('d_max', 1040) || 1040;
+    return ((pvNum(key, fallback) / max) * 100).toFixed(2) + '%';
+  }
+
+  /* The phone mock is 320px of frame standing for a 390px screen, so every
+     stored pixel is drawn at this share of itself. Rounded to one decimal:
+     the point of the preview is proportion, and a 0.05px difference is not
+     one the owner can see. */
+  var PHONE = 320, PHONE_REAL = 390;
+  function pvPx(key, fallback) {
+    return (pvNum(key, fallback) * (PHONE / PHONE_REAL)).toFixed(1) + 'px';
+  }
+
+  /* The four sections, drawn once and used by both mocks. Section 2 is the
+     address box, because that is what replaced Shipping address. */
+  function pvSections() {
+    return '<div class="chv-box">'
+      + '<div class="chv-sec"><h6><em>1</em>Contact</h6>'
+      + '<div class="chv-fg"><span><b class="chv-lb">Full name</b>'
+      + '<span class="chv-fi" style="display:block">First and last name</span></span>'
+      /* Phone then email, which is the order the page posts them in. */
+      + '<span class="chv-fg two" style="display:grid">'
+      + '<span><b class="chv-lb">Phone</b><span class="chv-fi" style="display:block">+971 5x xxx xxxx</span></span>'
+      + '<span><b class="chv-lb">Email address</b><span class="chv-fi" style="display:block">you@email.com</span></span>'
+      + '</span>'
+      + (pvOn('optin_on')
+          ? '<span style="display:flex;gap:6px;align-items:center;margin-top:2px">'
+            + '<span style="flex:none;width:11px;height:11px;border-radius:3px;border:1.4px solid '
+            + (pvOn('optin_checked') ? '#c13a5e;background:#c13a5e' : '#cbd5e1') + '"></span>'
+            + '<span class="chv-lb" style="margin:0">Send me order updates and new offers</span></span>'
+          : '')
+      + '</div></div>'
+      + '<div class="chv-sec"><h6><em>2</em>Shipping address</h6>' + pvAddress() + '</div>'
+      + '<div class="chv-sec"><h6><em>3</em>Delivery</h6>'
+      + '<div class="chv-pick"><span>Standard</span><span>AED 20</span></div>'
+      + (pvOn('notes_on')
+          ? '<div style="margin-top:6px"><b class="chv-lb">Delivery notes</b>'
+            + '<span class="chv-fi" style="display:block">Delivery instructions, a landmark</span></div>'
+          : '')
+      + '</div>'
+      + '<div class="chv-sec"><h6><em>4</em>Payment</h6>'
+      + '<div class="chv-pick"><span>Cash on delivery</span><span>&#9673;</span></div></div>'
+      + '</div>'
+      + pvTrust();
+  }
+
+  /* THE ADDRESS SECTION HAS TWO STATES AND THE CUE LIVES ON ONLY ONE OF THEM.
+     The Attention & trust tab is the tab where that state is what is being
+     set, so it is the one that draws it. Every other tab draws the chosen row,
+     which is what a shopper sees for the rest of the page's life. */
+  function pvAddress() {
+    if (open !== 'cues') {
+      return '<div class="chv-ad"><span class="ic">&#9750;</span>'
+        + '<span class="tx"><b>Home</b><i>Al-Thumama - area 46, street 912 - Doha</i></span>'
+        + '<span class="go">Change</span></div>';
+    }
+
+    var home = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+      + ' stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5 12 3.5l8.5 7"/>'
+      + '<path d="M5.5 9.7V20h13V9.7"/><path d="M10 20v-5.2h4V20"/></svg>';
+    var office = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+      + ' stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="18" height="12" rx="2"/>'
+      + '<path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5"/><path d="M3 12.5h18"/></svg>';
+
+    return '<div class="chv-cue">'
+      + '<span class="chv-cueic"><i class="h">' + home + '</i><i class="o">' + office + '</i></span>'
+      + '<span class="pr">Please choose your delivery address</span>'
+      + '<span class="chv-ar"><em></em><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+      + ' stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>'
+      + '<span class="chv-cta">+ Address</span>'
+      + '</div>';
+  }
+
+  /* The block under Payment. Drawn on every tab, because the tick is the thing
+     the owner is timing and a preview that hides it on seven tabs out of nine
+     is a preview of the wrong page. */
+  function pvTrust() {
+    return '<div class="chv-trust">'
+      + '<div class="chv-tl"><span class="st">&#9733;&#9733;&#9733;&#9733;&#9733;</span>'
+      + '<span>4.8 · loved by UAE customers</span></div>'
+      + '<div class="chv-tl">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+      + ' stroke-linecap="round" stroke-linejoin="round">'
+      + '<path class="chv-shield" d="M12 3l7 3v6c0 4-3 7-7 8-4-1-7-4-7-8V6z"/>'
+      + '<path class="chv-tick" d="M9 12l2 2 4-4"/></svg>'
+      + '<span>100% authentic K-beauty</span></div>'
+      + '</div>';
+  }
+
+  function pvLead() {
+    return '<div class="chv-lead"><b>Checkout</b><i>Almost glowing — just a few details.</i></div>'
+      + '<div class="chv-coupon">&#127873; Have a discount code?<u>Enter promo code</u></div>';
+  }
+
+  /* Three lines, because two hides what the row spacing does to a list and
+     four does not fit the phone frame's peek. The names are long enough to
+     reach the ellipsis, which is the state the owner has to be able to see. */
+  var PV_ITEMS = [
+    {n: 'Hyaluronic Acid Watery Sun Gel', q: 1, p: 'AED 221', c: '#f6c98a,#efab72'},
+    {n: 'Barrier Repair Cream', q: 2, p: 'AED 182', c: '#f5a8b8,#e98598'},
+    {n: 'Collagen Night Mask', q: 1, p: 'AED 40', c: '#bfa6f2,#a387e8'}
+  ];
+
+  function pvRows() {
+    return '<div class="chv-items">' + PV_ITEMS.map(function (it) {
+      return '<div class="chv-ci">'
+        + '<span class="th" style="background:linear-gradient(135deg,' + it.c + ')"><i>' + it.q + '</i></span>'
+        + '<span class="info"><b>' + esc(it.n) + '</b>'
+        + '<span class="qty"><u>&minus;</u><em>' + it.q + '</em><u>+</u></span></span>'
+        + '<span class="pr">' + esc(it.p) + '</span>'
+        + '</div>';
+    }).join('') + '</div>';
+  }
+
+  function pvSummary() {
+    return '<div class="chv-sum">'
+      + pvRows()
+      + '<div class="sr"><span>Subtotal</span><span>AED 443</span></div>'
+      + '<div class="sr"><span>Delivery</span><span>AED 20</span></div>'
+      + '<div class="tot"><span>Total</span><span>AED 463</span></div>'
+      + '<div class="go">Place order</div>'
+      + '</div>';
+  }
+
+  /* The header and the six type factors, for whichever surface is showing.
+     `px` is the scaler the surface uses -- 1:1 on the desktop mock, the phone
+     frame's 320/390 on the other -- so one function serves both. */
+  function pvChrome(p, px) {
+    return ';--chv-headpady:' + px(p + 'head_pad_y', 14)
+      + ';--chv-headpadx:' + px(p + 'head_pad_x', 20)
+      + ';--chv-headlogo:' + px(p + 'head_logo', 20)
+      + ';--chv-headbadge:' + px(p + 'head_badge', 12)
+      + ';--chv-ttitle:' + (pvNum(p + 't_title', 100) / 100)
+      + ';--chv-tlead:' + (pvNum(p + 't_lead', 100) / 100)
+      + ';--chv-th2:' + (pvNum(p + 't_h2', 100) / 100)
+      + ';--chv-tlabel:' + (pvNum(p + 't_label', 100) / 100)
+      + ';--chv-tinput:' + (pvNum(p + 't_input', 100) / 100)
+      + ';--chv-tph:' + (pvNum(p + 't_ph', 100) / 100)
+      /* The placeholder's look is SHARED, so it is read without the surface
+         prefix -- the same one value on both mocks, which is what the page
+         does. */
+      + ';--chv-phw:' + esc(String(values.ph_weight || 400))
+      + ';--chv-phc:' + ({muted:'#9aa0aa',faint:'#bdb6ba',ink:'#6b6469',pink:'#d4789a'}[String(values.ph_tone || 'muted')] || '#9aa0aa')
+      + ';--chv-phi:' + (pvOn('ph_italic') ? 'italic' : 'normal')
+      + ';--chv-ttrust:' + (pvNum(p + 't_trust', 100) / 100)
+      + ';--chv-cues:' + (pvNum('addr_cue_size', 100) / 100)
+      /* Speed inverted into a duration, exactly as CheckoutPage::inverse()
+         does it, so the preview and the page cannot disagree about which way
+         the slider runs. */
+      + ';--chv-cuet:' + (100 / Math.max(1, pvNum('addr_cue_speed', 100))).toFixed(3)
+      + ';--chv-tickt:' + (100 / Math.max(1, pvNum('trust_tick_speed', 100))).toFixed(3);
+  }
+
+  /* The cue's off switches, as classes on the mock -- same names, same shape
+     as the storefront's, so one reads as the other. */
+  function pvCueClass() {
+    return (pvOn('addr_cue') ? '' : ' chv-nocue')
+      + (pvOn('addr_cue_icons') ? '' : ' chv-nocue-ic')
+      + (pvOn('addr_cue_arrow') ? '' : ' chv-nocue-ar')
+      + (pvOn('addr_cue_pulse') ? '' : ' chv-nocue-pu')
+      + (pvOn('trust_tick') ? '' : ' chv-notick');
+  }
+
+  function previewDesktop() {
+    var vars = '--chv-aside:' + pvPct('d_aside', 380)
+      + ';--chv-gap:' + pvPct('d_gap', 26)
+      + ';--chv-padx:' + pvPct('d_pad_x', 20)
+      + ';--chv-pady:' + pvPct('d_pad_y', 22)
+      + ';--chv-block:' + pvPct('d_block_gap', 16)
+      + ';--chv-secpad:' + pvPct('d_sec_pad', 16)
+      + ';--chv-asidepad:' + pvPct('d_aside_pad', 17)
+      // The rows, at the size they are actually set to -- see the note by
+      // .chv-ci. A percentage would be wrong here whatever it said: these boxes
+      // sit inside the summary column, so a percentage resolves against THAT
+      // and not against the page the rest of the mock is proportioned to.
+      + ';--chv-rowh:' + pvNum('d_row_h', 54) + 'px'
+      + ';--chv-rowp-t:' + pvNum('d_row_pt', 10) + 'px'
+      + ';--chv-rowp-r:' + pvNum('d_row_pr', 0) + 'px'
+      + ';--chv-rowp-b:' + pvNum('d_row_pb', 10) + 'px'
+      + ';--chv-rowp-l:' + pvNum('d_row_pl', 0) + 'px'
+      + ';--chv-rowgap:' + pvNum('d_row_gap', 11) + 'px'
+      + ';--chv-rowf:' + (pvNum('d_row_font', 100) / 100)
+      + ';--chv-qtys:' + (pvNum('d_qty_size', 100) / 100)
+      + ';--chv-rowb:' + (pvOn('d_row_bold') ? 600 : 400)
+      + ';--chv-rowpb:' + (pvOn('d_row_bold') ? 700 : 500)
+      + ';--chv-headmax:' + pvPct('d_head_max', 1040)
+      + pvChrome('d_', function (k, d) { return pvNum(k, d) + 'px'; });
+
+    var side = pvOn('d_sticky')
+      ? '<div class="chv-stick">' + pvSummary() + '</div>'
+      : pvSummary();
+
+    return '<div class="chv-desk' + pvCueClass() + '" style="' + vars + '">'
+      + '<div class="chv-bar"><i></i><i></i><i></i><span>Wider than ' + mobileMax + 'px</span></div>'
+      + '<div class="chv-page"><span class="chv-headband"><b>K-BeautyBliss</b>'
+      + '<span>&#128274; Secure checkout</span></span></div>'
+      + (pvOn('d_head_sticky') ? '<div class="chv-pin">stays at the top while scrolling</div>' : '')
+      + '<div class="chv-cols"><div>' + pvLead() + pvSections() + '</div><div>' + side + '</div></div>'
+      + '</div>'
+      + '<div class="chv-ruler">Page width <b>' + pvNum('d_max', 1040) + 'px</b>'
+      + '<span>·</span>summary column <b>' + pvNum('d_aside', 380) + 'px</b>'
+      + '<span>·</span>the form takes what is left'
+      + '<span>·</span>header and summary rows drawn at <b>1:1</b></div>';
+  }
+
+  function previewMobile() {
+    var vars = '--chv-padx:' + pvPx('m_pad_x', 20)
+      + ';--chv-pady:' + pvPx('m_pad_y', 22)
+      + ';--chv-mgap:' + pvPx('m_gap', 14)
+      + ';--chv-block:' + pvPx('m_block_gap', 16)
+      + ';--chv-secpad:' + pvPx('m_sec_pad', 16)
+      + ';--chv-asidepad:' + pvPx('m_aside_pad', 14)
+      + ';--chv-rowh:' + pvPx('m_row_h', 54)
+      + ';--chv-rowp-t:' + pvPx('m_row_pt', 10)
+      + ';--chv-rowp-r:' + pvPx('m_row_pr', 0)
+      + ';--chv-rowp-b:' + pvPx('m_row_pb', 10)
+      + ';--chv-rowp-l:' + pvPx('m_row_pl', 0)
+      + ';--chv-rowgap:' + pvPx('m_row_gap', 11)
+      + ';--chv-rowf:' + (pvNum('m_row_font', 100) / 100)
+      + ';--chv-qtys:' + (pvNum('m_qty_size', 100) / 100)
+      + ';--chv-rowb:' + (pvOn('m_row_bold') ? 600 : 400)
+      + ';--chv-rowpb:' + (pvOn('m_row_bold') ? 700 : 500)
+      + ';--chv-headmax:100%'
+      + pvChrome('m_', pvPx);
+
+    /* The summary sits FIRST on a phone — it is `order:-1` in the stylesheet —
+       and the Place order box is a block of its own at the foot. Drawn in that
+       order here so the mock is the page and not a rearrangement of it. */
+    return '<div class="chv-phone' + pvCueClass() + '" style="' + vars + '">'
+      + '<div class="chv-bar"><i></i><i></i><i></i><span>' + mobileMax + 'px and below</span></div>'
+      + '<div class="chv-page"><span class="chv-headband"><b>K-BeautyBliss</b>'
+      + '<span>&#128274;</span></span></div>'
+      + (pvOn('m_head_sticky') ? '<div class="chv-pin">stays at the top while scrolling</div>' : '')
+      + '<div class="chv-stack">'
+      + pvSummary()
+      + '<div>' + pvLead() + pvSections()
+      + '<div class="chv-mob-order"><div class="sr" style="display:flex;justify-content:space-between;'
+      + 'font-size:9.5px"><span>Total</span><b>AED 463</b></div><div class="go">Place order</div></div>'
+      + '</div>'
+      + '</div>'
+      + '</div>'
+      /* Outside the frame. Inside a 320px one this line wrapped to four
+         ragged rows and read as a layout fault in the thing it is measuring. */
+      + '<div class="chv-ruler">Drawn at <b>' + PHONE + 'px</b> for a <b>' + PHONE_REAL + 'px</b> phone'
+      + '<span>·</span>page padding <b>' + pvNum('m_pad_x', 20) + 'px</b> each side'
+      + '<span>·</span>section padding <b>' + pvNum('m_sec_pad', 16) + 'px</b>'
+      + '<span>·</span>header and summary rows scaled to match the frame</div>';
+  }
+
+  function previewHTML() {
+    /* Two of the four tabs are the phone. Matched on the prefix rather than
+       listed, so a tab added later previews the surface its name claims
+       instead of silently falling through to the desktop mock. */
+    var body = /^mobile/.test(String(open)) ? previewMobile() : previewDesktop();
+
+    return '<div class="chp-card" data-chp-preview>'
+      + '<div class="chv-h"><b>Preview</b><span>Redraws as you drag. A drawing, not the live page.</span></div>'
+      + body + '</div>';
+  }
+
+  /* Repaint without rebuilding the controls — rebuilding them mid-drag drops
+     the pointer capture and the slider stops following the finger. */
+  function paintPreview() {
+    var node = document.querySelector('[data-chp-preview]');
+    if (!node) return;
+    var holder = document.createElement('div');
+    holder.innerHTML = previewHTML();
+    node.replaceWith(holder.firstChild);
+  }
+
+  /* --------------------------------------------------------------- events */
+  document.addEventListener('input', function (e) {
+    var el = e.target.closest('[data-chp-key]');
+    if (!el) return;
+
+    var key = el.getAttribute('data-chp-key');
+    var fld = fieldFor(key);
+    var kind = fld ? fld.type : (el.type === 'checkbox' ? 'bool' : 'range');
+
+    /* BY THE FIELD'S TYPE, NOT THE ELEMENT'S. `Number(el.value)` on a select
+       stored NaN for every select on this screen — see fieldHTML. */
+    if (kind === 'bool') values[key] = el.checked;
+    else if (kind === 'select' || kind === 'text') values[key] = String(el.value);
+    else values[key] = Number(el.value);
+
+    /* A checkbox can decide whether another control belongs on the screen --
+       `d_sticky` does -- so a checkbox redraws rather than only repainting.
+       The two bold switches do not need it, but paying a full redraw on a
+       click nobody is dragging costs nothing and one rule is one rule. */
+    /* A checkbox or a select can decide whether another control belongs on the
+       screen, so both redraw rather than only repainting. A text field must
+       NOT: a redraw on every keystroke would take the caret to the end of the
+       line on the second character. */
+    if (el.type === 'checkbox' || el.tagName === 'SELECT') { render(); return; }
+
+    var out = document.querySelector('[data-chp-val="' + key + '"]');
+    if (out) {
+      var f = null;
+      tabs.forEach(function (t) {
+        t.fields.forEach(function (x) { if (x.key === key) f = x; });
+      });
+      if (f) out.textContent = shown(f);
+    }
+    paintPreview();
+  });
+
+  document.addEventListener('click', function (e) {
+    var tab = e.target.closest('[data-chp-tab]');
+    if (tab) { open = tab.getAttribute('data-chp-tab'); render(); return; }
+
+    if (e.target.closest('[data-chp-squeeze]')) { preset('min'); return; }
+    if (e.target.closest('[data-chp-defaults]')) { preset('default'); return; }
+    if (e.target.closest('[data-chp-save]')) { save(); return; }
+    if (e.target.closest('[data-chp-reload]')) { load(); return; }
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addNavEntry);
+  } else {
+    addNavEntry();
+  }
+})();
