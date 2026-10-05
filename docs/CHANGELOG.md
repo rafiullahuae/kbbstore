@@ -3,6 +3,23 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.395
+**Brand pages: the frosted panel on the banner, logo and name together, the
+description below the banner on phones.** Apply after .394. Runs 2 migrations.
+Hard refresh after applying.
+
+| Your request | Now (measured) |
+|---|---|
+| "logo will be on the background image, beside logo, brand name, and downside brand description" | A frosted panel on the banner: logo 72px + name on one row, description beneath (1280) |
+| "content should not full width, almost 60% of the page width" | Panel 60% of the header (742px of 1236 at 1280) |
+| "in mobile the description will come under banner" | Phone: logo + name in a capsule on the banner, description 12px below it |
+| "logo to display in circle or rectangle" | Brand page → Edit pencil → Edit brand header → Header layout → Logo shape |
+| "adjust the width and height ... with drag width and height size bar" | Same popup: width, laptop height, phone height, content width, picture position |
+
+Shop-wide defaults: Appearance → Site layout → Brand page.
+
+Files: see the package's update.json.
+
 ## 2.60.394
 **Custom pages: the strip is off everywhere, turned on per page from the
 front-end Edit panel; header and strip drag into either order; no gap under
