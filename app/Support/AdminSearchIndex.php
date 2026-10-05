@@ -157,6 +157,10 @@ final class AdminSearchIndex
             'Reorder' => [],
         ],
         'product-tabs' => [],
+        // Catalog → Pagination (Lane PG): the switch and the two override lists.
+        'pagination' => [
+            '' => ['Pagination on the shop', 'Listing pages', 'Categories and brands'],
+        ],
         'sets' => [],
         'product-editor' => [],
         'routines' => [

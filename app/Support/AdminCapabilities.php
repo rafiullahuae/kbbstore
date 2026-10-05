@@ -502,6 +502,12 @@ final class AdminCapabilities
         // on public pages, so its own capability, the same three roles. (Lane CH)
         'categoryheader.manage' => ['owner', 'manager', 'editor'],
 
+        // Catalog → Pagination: whether /shop/, a category, a brand or a
+        // listing page pages at all, or shows every product at once. Changes
+        // what every listing on the shop draws, so its own capability, the
+        // same three roles as Site layout's "How more products load". (Lane PG)
+        'pagination.manage' => ['owner', 'manager', 'editor'],
+
         /*
          * THE STOREFRONT'S OWN ADMIN LAYER (Lane RA): the thin bar across the
          * top of every shop page and the pencil on a category or brand header.
@@ -1655,6 +1661,9 @@ final class AdminCapabilities
         ['*', 'admin-api/page-header/**', 'pageheader.manage'],
         // The category page's "Edit header" panel: preview and save. (Lane CH)
         ['*', 'admin-api/category-header/**', 'categoryheader.manage'],
+        // Catalog → Pagination: the read and the save. One line and no '/**'
+        // sibling: the screen has no sub-endpoint. (Lane PG)
+        ['*', 'admin-api/pagination', 'pagination.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.

@@ -64,7 +64,7 @@ class ShopController extends Controller
      * fixture, 9 with it passed. Still optional, and still resolved from the
      * slug when it is not supplied, so any other caller is unaffected.
      */
-    public function index(Request $request, ?string $categorySlug = null, ?Category $category = null): View|JsonResponse
+    public function index(Request $request, ?string $categorySlug = null, ?Category $category = null): View|JsonResponse|\Illuminate\Http\RedirectResponse
     {
         // Facets::active() memoises in a process-level static. Under PHP-FPM
         // that is one request and harmless; in the test suite, a queue worker
@@ -78,8 +78,11 @@ class ShopController extends Controller
          * the shipped "Arrows" this is `products_per_page`, exactly as it was;
          * "Load more on scroll" makes a page one batch, "Load all" makes it
          * SiteLayout::LOAD_ALL_CAP.
+         *
+         * Catalog → Pagination (Lane PG) decides first, below, once the
+         * category is known: pagination off makes the page ListingPagination::
+         * CAP. With pagination on — the shipped state — it is this same call.
          */
-        $perPage = app(\App\Services\SiteLayout::class)->perPage((int) $this->settings->get('products_per_page', 24));
 
         /*
          * EVERY CARD COLUMN QUALIFIED WITH ITS TABLE.
@@ -102,6 +105,11 @@ class ShopController extends Controller
             ->with('brand:id,name,slug');
 
         $category ??= $categorySlug ? Category::where('slug', $categorySlug)->first() : null;
+
+        // /shop/ and search are the 'shop' page; a category archive is its own.
+        $pgKind = $category ? 'category' : 'page';
+        $pgId = $category ? (int) $category->id : 'shop';
+        $perPage = \App\Support\ListingPagination::perPage($pgKind, $pgId, (int) $this->settings->get('products_per_page', 24));
 
         if ($category) {
             $query->whereHas('categories', fn ($q) => $q->where('categories.id', $category->id));
@@ -134,6 +142,19 @@ class ShopController extends Controller
          * page that really exists, are untouched, so the self-referencing
          * canonical on a genuine /shop/?paged=2 still stands.
          */
+        /*
+         * Pagination off (Catalog → Pagination, Lane PG): every product is on
+         * page one, so an old ?paged=N address -- a crawler's index, a bookmark
+         * -- goes there for good, filters and sort kept, rather than to a 404.
+         * Only while the listing fits in the cap; past it the later pages are
+         * real. The brand page's own rule, BrandController::show(). $total is
+         * already counted, so this costs nothing.
+         */
+        if ($page > 1 && $total <= \App\Support\ListingPagination::CAP
+            && \App\Support\ListingPagination::showsAll($pgKind, $pgId)) {
+            return \App\Support\ListingPagination::toPageOne(Facets::pageUrl(1));
+        }
+
         if ($page > 1 && $page > $lastPage) {
             abort(404);
         }
