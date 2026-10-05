@@ -3,6 +3,26 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.403
+**Menu editor in columns with drag-anywhere; brand pages on the panel design
+everywhere; owner-app sales figures fixed with date ranges; your own app
+address; search engines kept off every private page; four Reorder arrows;
+Store → Analytics draws again.** Apply after .402. Runs its migrations. Hard
+refresh the admin, the shop and the owner app.
+
+| Your request / report | Now |
+|---|---|
+| Menu: "drag n drop ... super annoying", columns, add in each column | Store → Mega Menu: every top-level item is a column; drag any item anywhere (rows slide aside, no thin line), number box, ↑↓ ←→, "+ Add a sub-menu" / "+ Add item" inline, a floating + |
+| Brand pages "not loading as per these previews", logo off, name position, read more after two lines, centred | The panel shows on every brand (it skipped brands with a banner); logo off by default; name and description centred; 2 lines + Read more / Read less. Brand page → Edit pencil → Edit brand header → Header layout, and Appearance → Site layout → Brand page |
+| Owner app: analytics "not working", date range, Total only, top sellers 7 days / month | Gross/Net/Total now match Store → Analytics exactly; Today / Yesterday / 7 days / This month / Last month; Total only by default; Top performers 7 days \| This month |
+| Control the owner app from the admin | Platform → Users & Roles → Owner app → Customise app (branding, fonts, sizes, layout, screens and functions on/off, live preview) |
+| "change the back login url for the app owner" | Owner app → The app's secret address → Custom address |
+| "sync etc must be OFF for any search engine" | noindex header on the app, admin, admin API, password-reset pages; robots.txt and sitemaps never name either secret address |
+| Reorder: "should be 4, 2 grey and 2 red" | Grey: one place; red: top / bottom of the whole list; all wait for Save order |
+| (found) Store → Analytics drew nothing | Fixed |
+
+Files: see the package's update.json.
+
 ## 2.60.402
 **Reorder works on the shop: your order wins, Save is always in view, and
 brand pages stay on the brand.** Apply after .401. Runs 1 migration. Hard
