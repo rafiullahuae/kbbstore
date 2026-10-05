@@ -1,0 +1,1331 @@
+{
+ "android-360": {
+  "viewport": "360x800",
+  "ua": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36",
+  "screens": {
+   "00-sign-in": {
+    "file": "android-360--00-sign-in.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "03-add-to-home": {
+    "file": "android-360--03-add-to-home.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "04-dashboard": {
+    "file": "android-360--04-dashboard.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "02-refreshing": {
+    "file": "android-360--02-refreshing.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "05-notifications": {
+    "file": "android-360--05-notifications.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "06-more": {
+    "file": "android-360--06-more.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "07-orders": {
+    "file": "android-360--07-orders.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "08-orders-bulk": {
+    "file": "android-360--08-orders-bulk.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "09-order-detail": {
+    "file": "android-360--09-order-detail.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "09b-order-payment": {
+    "file": "android-360--09b-order-payment.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "09c-order-notes": {
+    "file": "android-360--09c-order-notes.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "09d-status-sheet": {
+    "file": "android-360--09d-status-sheet.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "10-products": {
+    "file": "android-360--10-products.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "11-product-detail": {
+    "file": "android-360--11-product-detail.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "12-product-inventory": {
+    "file": "android-360--12-product-inventory.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "12b-product-price": {
+    "file": "android-360--12b-product-price.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "12c-product-categories": {
+    "file": "android-360--12c-product-categories.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "12d-product-description": {
+    "file": "android-360--12d-product-description.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "13-customers": {
+    "file": "android-360--13-customers.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "14-customer-detail": {
+    "file": "android-360--14-customer-detail.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "14b-customer-history": {
+    "file": "android-360--14b-customer-history.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "01-pin": {
+    "file": "android-360--01-pin.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "01b-pin-typing": {
+    "file": "android-360--01b-pin-typing.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   },
+   "01c-after-unlock": {
+    "file": "android-360--01c-after-unlock.jpg",
+    "vw": 360,
+    "scrollWidth": 360,
+    "ok": true,
+    "inner": []
+   }
+  }
+ },
+ "android-412": {
+  "viewport": "412x915",
+  "ua": "Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/122.0.0.0 Mobile Safari/537.36",
+  "screens": {
+   "00-sign-in": {
+    "file": "android-412--00-sign-in.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "03-add-to-home": {
+    "file": "android-412--03-add-to-home.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "04-dashboard": {
+    "file": "android-412--04-dashboard.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "02-refreshing": {
+    "file": "android-412--02-refreshing.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "05-notifications": {
+    "file": "android-412--05-notifications.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "06-more": {
+    "file": "android-412--06-more.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "07-orders": {
+    "file": "android-412--07-orders.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "08-orders-bulk": {
+    "file": "android-412--08-orders-bulk.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "09-order-detail": {
+    "file": "android-412--09-order-detail.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "09b-order-payment": {
+    "file": "android-412--09b-order-payment.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "09c-order-notes": {
+    "file": "android-412--09c-order-notes.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "09d-status-sheet": {
+    "file": "android-412--09d-status-sheet.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "10-products": {
+    "file": "android-412--10-products.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "11-product-detail": {
+    "file": "android-412--11-product-detail.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "12-product-inventory": {
+    "file": "android-412--12-product-inventory.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "12b-product-price": {
+    "file": "android-412--12b-product-price.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "12c-product-categories": {
+    "file": "android-412--12c-product-categories.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "12d-product-description": {
+    "file": "android-412--12d-product-description.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "13-customers": {
+    "file": "android-412--13-customers.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "14-customer-detail": {
+    "file": "android-412--14-customer-detail.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "14b-customer-history": {
+    "file": "android-412--14b-customer-history.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "01-pin": {
+    "file": "android-412--01-pin.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "01b-pin-typing": {
+    "file": "android-412--01b-pin-typing.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   },
+   "01c-after-unlock": {
+    "file": "android-412--01c-after-unlock.jpg",
+    "vw": 412,
+    "scrollWidth": 412,
+    "ok": true,
+    "inner": []
+   }
+  }
+ },
+ "iphone-se-375": {
+  "viewport": "375x667",
+  "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1",
+  "screens": {
+   "00-sign-in": {
+    "file": "iphone-se-375--00-sign-in.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "03-add-to-home": {
+    "file": "iphone-se-375--03-add-to-home.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "04-dashboard": {
+    "file": "iphone-se-375--04-dashboard.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "02-refreshing": {
+    "file": "iphone-se-375--02-refreshing.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "05-notifications": {
+    "file": "iphone-se-375--05-notifications.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "06-more": {
+    "file": "iphone-se-375--06-more.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "07-orders": {
+    "file": "iphone-se-375--07-orders.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "08-orders-bulk": {
+    "file": "iphone-se-375--08-orders-bulk.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "09-order-detail": {
+    "file": "iphone-se-375--09-order-detail.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "09b-order-payment": {
+    "file": "iphone-se-375--09b-order-payment.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "09c-order-notes": {
+    "file": "iphone-se-375--09c-order-notes.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "09d-status-sheet": {
+    "file": "iphone-se-375--09d-status-sheet.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "10-products": {
+    "file": "iphone-se-375--10-products.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "11-product-detail": {
+    "file": "iphone-se-375--11-product-detail.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "12-product-inventory": {
+    "file": "iphone-se-375--12-product-inventory.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "12b-product-price": {
+    "file": "iphone-se-375--12b-product-price.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "12c-product-categories": {
+    "file": "iphone-se-375--12c-product-categories.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "12d-product-description": {
+    "file": "iphone-se-375--12d-product-description.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "13-customers": {
+    "file": "iphone-se-375--13-customers.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "14-customer-detail": {
+    "file": "iphone-se-375--14-customer-detail.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "14b-customer-history": {
+    "file": "iphone-se-375--14b-customer-history.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "01-pin": {
+    "file": "iphone-se-375--01-pin.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "01b-pin-typing": {
+    "file": "iphone-se-375--01b-pin-typing.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   },
+   "01c-after-unlock": {
+    "file": "iphone-se-375--01c-after-unlock.jpg",
+    "vw": 375,
+    "scrollWidth": 375,
+    "ok": true,
+    "inner": []
+   }
+  }
+ },
+ "iphone-15-390": {
+  "viewport": "390x844",
+  "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1",
+  "screens": {
+   "00-sign-in": {
+    "file": "iphone-15-390--00-sign-in.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "03-add-to-home": {
+    "file": "iphone-15-390--03-add-to-home.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "04-dashboard": {
+    "file": "iphone-15-390--04-dashboard.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "02-refreshing": {
+    "file": "iphone-15-390--02-refreshing.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "05-notifications": {
+    "file": "iphone-15-390--05-notifications.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "06-more": {
+    "file": "iphone-15-390--06-more.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "07-orders": {
+    "file": "iphone-15-390--07-orders.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "08-orders-bulk": {
+    "file": "iphone-15-390--08-orders-bulk.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "09-order-detail": {
+    "file": "iphone-15-390--09-order-detail.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "09b-order-payment": {
+    "file": "iphone-15-390--09b-order-payment.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "09c-order-notes": {
+    "file": "iphone-15-390--09c-order-notes.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "09d-status-sheet": {
+    "file": "iphone-15-390--09d-status-sheet.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "10-products": {
+    "file": "iphone-15-390--10-products.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "11-product-detail": {
+    "file": "iphone-15-390--11-product-detail.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "12-product-inventory": {
+    "file": "iphone-15-390--12-product-inventory.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "12b-product-price": {
+    "file": "iphone-15-390--12b-product-price.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "12c-product-categories": {
+    "file": "iphone-15-390--12c-product-categories.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "12d-product-description": {
+    "file": "iphone-15-390--12d-product-description.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "13-customers": {
+    "file": "iphone-15-390--13-customers.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "14-customer-detail": {
+    "file": "iphone-15-390--14-customer-detail.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "14b-customer-history": {
+    "file": "iphone-15-390--14b-customer-history.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "01-pin": {
+    "file": "iphone-15-390--01-pin.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "01b-pin-typing": {
+    "file": "iphone-15-390--01b-pin-typing.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   },
+   "01c-after-unlock": {
+    "file": "iphone-15-390--01c-after-unlock.jpg",
+    "vw": 390,
+    "scrollWidth": 390,
+    "ok": true,
+    "inner": []
+   }
+  }
+ },
+ "iphone-promax-430": {
+  "viewport": "430x932",
+  "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1",
+  "screens": {
+   "00-sign-in": {
+    "file": "iphone-promax-430--00-sign-in.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "03-add-to-home": {
+    "file": "iphone-promax-430--03-add-to-home.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "04-dashboard": {
+    "file": "iphone-promax-430--04-dashboard.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "02-refreshing": {
+    "file": "iphone-promax-430--02-refreshing.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "05-notifications": {
+    "file": "iphone-promax-430--05-notifications.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "06-more": {
+    "file": "iphone-promax-430--06-more.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "07-orders": {
+    "file": "iphone-promax-430--07-orders.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "08-orders-bulk": {
+    "file": "iphone-promax-430--08-orders-bulk.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "09-order-detail": {
+    "file": "iphone-promax-430--09-order-detail.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "09b-order-payment": {
+    "file": "iphone-promax-430--09b-order-payment.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "09c-order-notes": {
+    "file": "iphone-promax-430--09c-order-notes.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "09d-status-sheet": {
+    "file": "iphone-promax-430--09d-status-sheet.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "10-products": {
+    "file": "iphone-promax-430--10-products.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "11-product-detail": {
+    "file": "iphone-promax-430--11-product-detail.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "12-product-inventory": {
+    "file": "iphone-promax-430--12-product-inventory.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "12b-product-price": {
+    "file": "iphone-promax-430--12b-product-price.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "12c-product-categories": {
+    "file": "iphone-promax-430--12c-product-categories.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "12d-product-description": {
+    "file": "iphone-promax-430--12d-product-description.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "13-customers": {
+    "file": "iphone-promax-430--13-customers.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "14-customer-detail": {
+    "file": "iphone-promax-430--14-customer-detail.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "14b-customer-history": {
+    "file": "iphone-promax-430--14b-customer-history.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "01-pin": {
+    "file": "iphone-promax-430--01-pin.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "01b-pin-typing": {
+    "file": "iphone-promax-430--01b-pin-typing.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   },
+   "01c-after-unlock": {
+    "file": "iphone-promax-430--01c-after-unlock.jpg",
+    "vw": 430,
+    "scrollWidth": 430,
+    "ok": true,
+    "inner": []
+   }
+  }
+ },
+ "tablet-768": {
+  "viewport": "768x1024",
+  "ua": "Mozilla/5.0 (iPad; CPU OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1",
+  "screens": {
+   "00-sign-in": {
+    "file": "tablet-768--00-sign-in.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "03-add-to-home": {
+    "file": "tablet-768--03-add-to-home.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "04-dashboard": {
+    "file": "tablet-768--04-dashboard.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "02-refreshing": {
+    "file": "tablet-768--02-refreshing.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "05-notifications": {
+    "file": "tablet-768--05-notifications.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "06-more": {
+    "file": "tablet-768--06-more.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "15-tablet-split": {
+    "file": "tablet-768--15-tablet-split.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "15b-tablet-bulk": {
+    "file": "tablet-768--15b-tablet-bulk.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "15c-tablet-status-sheet": {
+    "file": "tablet-768--15c-tablet-status-sheet.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "10-products": {
+    "file": "tablet-768--10-products.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "11-product-detail": {
+    "file": "tablet-768--11-product-detail.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "12-product-inventory": {
+    "file": "tablet-768--12-product-inventory.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "12b-product-price": {
+    "file": "tablet-768--12b-product-price.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "12c-product-categories": {
+    "file": "tablet-768--12c-product-categories.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "12d-product-description": {
+    "file": "tablet-768--12d-product-description.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "13-customers": {
+    "file": "tablet-768--13-customers.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "14-customer-detail": {
+    "file": "tablet-768--14-customer-detail.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "14b-customer-history": {
+    "file": "tablet-768--14b-customer-history.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "01-pin": {
+    "file": "tablet-768--01-pin.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "01b-pin-typing": {
+    "file": "tablet-768--01b-pin-typing.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   },
+   "01c-after-unlock": {
+    "file": "tablet-768--01c-after-unlock.jpg",
+    "vw": 768,
+    "scrollWidth": 768,
+    "ok": true,
+    "inner": []
+   }
+  }
+ },
+ "tablet-820": {
+  "viewport": "820x1180",
+  "ua": "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+  "screens": {
+   "00-sign-in": {
+    "file": "tablet-820--00-sign-in.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "03-add-to-home": {
+    "file": "tablet-820--03-add-to-home.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "04-dashboard": {
+    "file": "tablet-820--04-dashboard.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "02-refreshing": {
+    "file": "tablet-820--02-refreshing.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "05-notifications": {
+    "file": "tablet-820--05-notifications.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "06-more": {
+    "file": "tablet-820--06-more.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "15-tablet-split": {
+    "file": "tablet-820--15-tablet-split.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "15b-tablet-bulk": {
+    "file": "tablet-820--15b-tablet-bulk.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "15c-tablet-status-sheet": {
+    "file": "tablet-820--15c-tablet-status-sheet.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "10-products": {
+    "file": "tablet-820--10-products.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "11-product-detail": {
+    "file": "tablet-820--11-product-detail.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "12-product-inventory": {
+    "file": "tablet-820--12-product-inventory.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "12b-product-price": {
+    "file": "tablet-820--12b-product-price.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "12c-product-categories": {
+    "file": "tablet-820--12c-product-categories.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "12d-product-description": {
+    "file": "tablet-820--12d-product-description.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "13-customers": {
+    "file": "tablet-820--13-customers.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "14-customer-detail": {
+    "file": "tablet-820--14-customer-detail.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "14b-customer-history": {
+    "file": "tablet-820--14b-customer-history.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "01-pin": {
+    "file": "tablet-820--01-pin.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "01b-pin-typing": {
+    "file": "tablet-820--01b-pin-typing.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   },
+   "01c-after-unlock": {
+    "file": "tablet-820--01c-after-unlock.jpg",
+    "vw": 820,
+    "scrollWidth": 820,
+    "ok": true,
+    "inner": []
+   }
+  }
+ },
+ "tablet-1180-landscape": {
+  "viewport": "1180x820",
+  "ua": "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+  "screens": {
+   "00-sign-in": {
+    "file": "tablet-1180-landscape--00-sign-in.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "03-add-to-home": {
+    "file": "tablet-1180-landscape--03-add-to-home.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "04-dashboard": {
+    "file": "tablet-1180-landscape--04-dashboard.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "02-refreshing": {
+    "file": "tablet-1180-landscape--02-refreshing.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "05-notifications": {
+    "file": "tablet-1180-landscape--05-notifications.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "06-more": {
+    "file": "tablet-1180-landscape--06-more.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "15-tablet-split": {
+    "file": "tablet-1180-landscape--15-tablet-split.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "15b-tablet-bulk": {
+    "file": "tablet-1180-landscape--15b-tablet-bulk.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "15c-tablet-status-sheet": {
+    "file": "tablet-1180-landscape--15c-tablet-status-sheet.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "10-products": {
+    "file": "tablet-1180-landscape--10-products.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "11-product-detail": {
+    "file": "tablet-1180-landscape--11-product-detail.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "12-product-inventory": {
+    "file": "tablet-1180-landscape--12-product-inventory.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "12b-product-price": {
+    "file": "tablet-1180-landscape--12b-product-price.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "12c-product-categories": {
+    "file": "tablet-1180-landscape--12c-product-categories.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "12d-product-description": {
+    "file": "tablet-1180-landscape--12d-product-description.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "13-customers": {
+    "file": "tablet-1180-landscape--13-customers.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "14-customer-detail": {
+    "file": "tablet-1180-landscape--14-customer-detail.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "14b-customer-history": {
+    "file": "tablet-1180-landscape--14b-customer-history.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "01-pin": {
+    "file": "tablet-1180-landscape--01-pin.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "01b-pin-typing": {
+    "file": "tablet-1180-landscape--01b-pin-typing.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   },
+   "01c-after-unlock": {
+    "file": "tablet-1180-landscape--01c-after-unlock.jpg",
+    "vw": 1180,
+    "scrollWidth": 1180,
+    "ok": true,
+    "inner": []
+   }
+  }
+ }
+}

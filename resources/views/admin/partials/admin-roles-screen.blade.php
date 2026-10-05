@@ -181,6 +181,8 @@
 
   function tabs() {
     var t = [['members', 'Members', S.members ? S.members.length : null], ['roles', 'Roles', S.data && !S.rolesErr ? roles().length : null]];
+    /* Lane MAC: the owner app's tab, drawn by owner-app-access.blade.php. */
+    if (window.kbbOwnerAppAdmin) t.push(['ownerapp', 'Owner app', null]);
     return '<div class="rl-tabs" role="tablist" aria-label="Users and roles">' + t.map(function (x) {
       var on = x[0] === S.tab;
       return '<button type="button" role="tab" class="rl-tab' + (on ? ' on' : '') + '" id="rlt_' + x[0] + '" data-rl-tab="' + x[0] + '" aria-controls="rlp" aria-selected="' + on + '" tabindex="' + (on ? '0' : '-1') + '">' +
@@ -193,9 +195,11 @@
     var body;
     if (S.view === 'member') body = memberEditor();
     else if (S.view === 'role') body = roleEditor();
-    else body = tabs() + '<div role="tabpanel" id="rlp" aria-labelledby="rlt_' + S.tab + '" tabindex="0">' + (S.tab === 'members' ? membersTab() : rolesTab()) + '</div>';
+    else body = tabs() + '<div role="tabpanel" id="rlp" aria-labelledby="rlt_' + S.tab + '" tabindex="0">' + (S.tab === 'members' ? membersTab() : S.tab === 'ownerapp' ? '<div data-oa-admin></div>' : rolesTab()) + '</div>';
     h.querySelector('[data-rl-screen]').innerHTML = header() + (S.flash ? '<div class="rl-ok" role="status">' + esc(S.flash) + '</div>' : '') + body;
     S.flash = '';
+    var oa = h.querySelector('[data-oa-admin]');
+    if (oa && window.kbbOwnerAppAdmin) window.kbbOwnerAppAdmin.mount(oa);
     syncSectionBoxes();
   }
 
@@ -428,9 +432,10 @@
 
   document.addEventListener('keydown', function (ev) {
     var t = ev.target; if (!t || !t.matches || !t.matches('[data-rl-tab]')) return;
-    var order = ['members', 'roles'], i = order.indexOf(t.getAttribute('data-rl-tab')), n = -1;
-    if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') n = 1 - i;   /* two tabs: either arrow is the other one */
-    else if (ev.key === 'Home') n = 0; else if (ev.key === 'End') n = 1;
+    var order = window.kbbOwnerAppAdmin ? ['members', 'roles', 'ownerapp'] : ['members', 'roles'], i = order.indexOf(t.getAttribute('data-rl-tab')), n = -1;
+    if (ev.key === 'ArrowRight') n = (i + 1) % order.length;
+    else if (ev.key === 'ArrowLeft') n = (i + order.length - 1) % order.length;
+    else if (ev.key === 'Home') n = 0; else if (ev.key === 'End') n = order.length - 1;
     if (n < 0) return;
     ev.preventDefault(); S.tab = order[n]; paint(); var b = document.getElementById('rlt_' + S.tab); if (b) b.focus();
   });
@@ -480,3 +485,6 @@
 })();
 </script>
 @endverbatim
+
+{{-- Lane MAC: Users & Roles → Owner app, the third tab above. Included once, here. --}}
+@include('admin.partials.owner-app-access')
