@@ -60,6 +60,13 @@ final class OwnerAppServiceProvider extends ServiceProvider
 
         Order::created(static function (Order $order): void {
             self::later(static fn () => OwnerAppEvents::orderCreated($order));
+            // Lane NT: an order from a phone holding a shop-app subscription
+            // links that row to the shopper and its location to the address.
+            // Nothing at all unless the phone's kbb_push cookie is present.
+            try {
+                \App\Services\SiteAppPush::orderPlaced($order);
+            } catch (\Throwable) {
+            }
         });
 
         Order::updated(static function (Order $order): void {

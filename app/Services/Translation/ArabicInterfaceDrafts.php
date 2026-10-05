@@ -161,7 +161,25 @@ final class ArabicInterfaceDrafts
             self::laneMkMarketingEmails(),
             self::laneWaWhatsAppButton(),
             self::laneCtBlocked(),
+            self::laneNtSiteAppPush(),
         );
+    }
+
+    /**
+     * Lane NT — the installed shop app's "Allow notifications" sheet
+     * (InterfaceStrings::storeSiteAppPush()). Drafts, reviewed under
+     * Translation → Strings; the brand name kept as it is.
+     *
+     * @return array<string, string>
+     */
+    private static function laneNtSiteAppPush(): array
+    {
+        return [
+            'store.site_app.push_title' => 'تفعيل الإشعارات؟',
+            'store.site_app.push_body' => 'اسمح بالإشعارات لتصلك أخبار K-Beauty Bliss على هذا الهاتف. يمكنك إيقافها في أي وقت من إعدادات هاتفك.',
+            'store.site_app.push_allow' => 'السماح بالإشعارات',
+            'store.site_app.push_later' => 'ليس الآن',
+        ];
     }
 
     /**

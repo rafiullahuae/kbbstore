@@ -114,6 +114,7 @@ final class InterfaceStrings
                 self::storeMarketingUnsubscribe(),
                 self::storeWhatsApp(),
                 self::storeBlocked(),
+                self::storeSiteAppPush(),
                 self::storeJs(),
             ),
             'email' => array_merge(
@@ -2816,6 +2817,24 @@ final class InterfaceStrings
      *
      * @return array<string, string>
      */
+    /**
+     * Lane NT — the installed shop app's own "Allow notifications" sheet
+     * (resources/site-app/site-app.js), fetched from GET /api/site-app/push
+     * only when the app runs from the Home Screen. Says nothing about what is
+     * sent: that is still the owner's decision.
+     *
+     * @return array<string, string>
+     */
+    private static function storeSiteAppPush(): array
+    {
+        return [
+            'site_app.push_title' => 'Turn on notifications?',
+            'site_app.push_body' => 'Allow notifications to hear from K-Beauty Bliss on this phone. You can turn them off any time in your phone\'s settings.',
+            'site_app.push_allow' => 'Allow notifications',
+            'site_app.push_later' => 'Not now',
+        ];
+    }
+
     private static function storeBlocked(): array
     {
         return [

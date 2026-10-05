@@ -61,8 +61,10 @@
       (D.push_ready ? '' : '<p class="rl-note">Push notifications are not available on this server (openssl has no P-256); the app works without them.</p>') + '</div>' +
       '<div class="rl-card"><p class="oaa-h">Settings</p><div class="oaa-set"><label>Lock after (hours unused)<input class="rl-in" type="number" min="1" max="168" data-set="idle_hours" value="' + esc(D.settings.idle_hours) + '"></label>' +
       '<label>Low stock at (units)<input class="rl-in" type="number" min="0" max="999" data-set="low_stock" value="' + esc(D.settings.low_stock) + '"></label>' +
-      '<label>Show loading bars after (minutes)<input class="rl-in" type="number" min="5" max="240" data-set="stale_minutes" value="' + esc(D.settings.stale_minutes) + '" aria-describedby="oaa-stale-h"></label><button type="button" class="btn sm" data-oa="settings">Save</button></div>' +
-      '<p class="rl-note" id="oaa-stale-h">Opening the app within this many minutes of its last sync refreshes silently; after longer, it shows grey loading bars while it syncs everything.</p></div>' +
+      '<label>Show loading bars after (minutes)<input class="rl-in" type="number" min="5" max="240" data-set="stale_minutes" value="' + esc(D.settings.stale_minutes) + '" aria-describedby="oaa-stale-h"></label>' +
+      '<label class="oaa-sw"><input type="checkbox" data-set="ask_push" aria-describedby="oaa-ask-h"' + (D.settings.ask_push ? ' checked' : '') + '> Ask for notifications when the app opens</label><button type="button" class="btn sm" data-oa="settings">Save</button></div>' +
+      '<p class="rl-note" id="oaa-stale-h">Opening the app within this many minutes of its last sync refreshes silently; after longer, it shows grey loading bars while it syncs everything.</p>' +
+      '<p class="rl-note" id="oaa-ask-h">Ask for notifications: on a phone where the app is installed and notifications are neither allowed nor blocked yet, unlocking it offers “Allow notifications”. “Not now” asks again some days later; a phone that blocked them is never asked.</p></div>' +
       team() + m +
       '<div class="rl-card"><p class="oaa-h">Recent sign-ins</p>' + log + '</div></div>';
     flash = '';
@@ -211,7 +213,7 @@
       D = r.data; flash = 'New address made. Send the new link to your team.'; paint(); return;
     }
     if (a === 'settings') {
-      var body = {}; host.querySelectorAll('[data-set]').forEach(function (i) { body[i.getAttribute('data-set')] = parseInt(i.value, 10); });
+      var body = {}; host.querySelectorAll('[data-set]').forEach(function (i) { body[i.getAttribute('data-set')] = i.type === 'checkbox' ? i.checked : parseInt(i.value, 10); });
       r = await api('PUT', '/settings', body);
       if (!r.ok) { toastMsg(why(r), true); return; }
       flash = 'Settings saved.'; await load(); return;

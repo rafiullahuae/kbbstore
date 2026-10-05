@@ -1,67 +1,4 @@
-{{--
-    App → Site App.                                                    Lane PW
 
-    The shop as a Home Screen app: one switch for the whole thing, the name
-    under the icon, and a read-only look at the icon. The owner, 5 October:
-    "just build the app for the site ... give me just one icon to test it".
-    How the shop OFFERS the install (a menu row, a sheet after an order, a
-    button) is decided later — docs/pw-preview/PLAN.md — so nothing here
-    draws or configures one.
-
-    Pulled into resources/views/admin/app.blade.php below the Page header
-    screen (tools/pwa-wire.php writes the line), so window.go and toast()
-    exist. It wraps window.go for one id, 'siteapp'. Its sidebar row is a
-    STATIC entry in NAV's new "App" group, so this file registers no row of
-    its own: a group whose only rows were registered by partials would give
-    them no NAV anchor to land after (AdminNavAndIdsTest, section 5), and with
-    Site App in NAV the Owner App row can register after 'siteapp'.
-
-    LIGHT: one GET when the screen opens, one POST on Save, nothing else. No
-    timer, no request per keystroke; the label preview is drawn from the
-    field's own value. Everything the server sent is set with textContent or
-    as an attribute, never as markup.
---}}
-@verbatim
-<style>
-.sap-wrap{display:grid;gap:14px;min-width:0;grid-template-columns:minmax(0,1fr);max-width:980px}
-.sap-wrap > *{min-width:0}
-.sap-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);padding:16px;min-width:0}
-.sap-title{font-weight:650;font-size:15px;margin:0}
-.sap-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.55;margin:4px 0 0;max-width:80ch}
-.sap-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:14px}
-.sap-sw{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font:inherit;font-size:13.5px;font-weight:600;background:none;border:0;padding:0;color:inherit}
-.sap-sw i{position:relative;width:40px;height:22px;border-radius:999px;background:var(--border,#d9d9d9);transition:background .15s;flex:none}
-.sap-sw i::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
-.sap-sw span{text-align:start}
-.sap-sw[aria-checked="true"] i{background:var(--accent,#15a85a)}
-.sap-sw[aria-checked="true"] i::after{transform:translateX(18px)}
-[dir="rtl"] .sap-sw[aria-checked="true"] i::after{transform:translateX(-18px)}
-.sap-field{display:grid;gap:6px;min-width:0;flex:1 1 260px;max-width:360px}
-.sap-field label{font-size:12.5px;font-weight:600}
-.sap-field input{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--border,#d9d9d9);border-radius:9px;background:transparent;color:inherit;min-width:0;width:100%;box-sizing:border-box}
-.sap-field small{color:var(--ink-soft,#6b7280);font-size:12px}
-.sap-home{display:flex;flex-direction:column;align-items:center;gap:6px;width:92px;padding:12px 6px;border-radius:14px;background:linear-gradient(160deg,#C9B8E8,#F5C6D3 60%,#FBE4D3)}
-.sap-home img{width:60px;height:60px;border-radius:14px;display:block}
-.sap-home span{font:500 11px/1.2 system-ui,-apple-system,sans-serif;color:#1d1d1f;max-width:76px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
-.sap-icons{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-top:12px}
-.sap-icons figure{margin:0;text-align:center;font-size:11.5px;color:var(--ink-soft,#6b7280);display:grid;gap:6px;justify-items:center}
-.sap-icons img{display:block;width:64px;height:64px;border-radius:12px;border:1px solid var(--border,#e6e6e6);background:repeating-conic-gradient(#f1f1f1 0 25%,#fff 0 50%) 0 0/12px 12px}
-.sap-icons img.sap-round{border-radius:50%}
-.sap-btn{padding:8px 14px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}
-.sap-btn.is-primary{border-color:var(--accent,#15a85a);background:var(--accent,#15a85a);color:#fff;font-weight:650}
-.sap-btn[disabled]{opacity:.45;cursor:default}
-.sap-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
-.sap-actions span{font-size:12.5px;color:var(--ink-soft,#6b7280)}
-.sap-steps{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));margin-top:12px}
-.sap-steps div{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:12px}
-.sap-steps b{font-size:13px}
-.sap-steps ol{margin:6px 0 0;padding-inline-start:18px;font-size:12.5px;line-height:1.6}
-.sap-links{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12.5px}
-.sap-note{border:1px solid #b4443c;color:#b4443c;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5}
-.sap-empty{padding:22px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
-</style>
-
-<script>
 (function () {
   'use strict';
 
@@ -220,5 +157,3 @@
     ]));
   }
 })();
-</script>
-@endverbatim

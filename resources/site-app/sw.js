@@ -22,6 +22,10 @@
  *      (shown from cache, refreshed in the background), each with a cap.
  *   5. It names no secret. The admin and owner-app addresses are not in this
  *      file and never will be; it does not need them, because of rule 2.
+ *   6. A push message (Lane NT) becomes one notification built from three
+ *      strings in it, title / body / url, and tapping it opens that url ONLY
+ *      if it is on this shop; anything else opens the shop's home page.
+ *      Nothing sends yet: a later lane only has to send.
  */
 'use strict';
 
@@ -145,4 +149,43 @@ self.addEventListener('fetch', (event) => {
     })());
   }
   // Anything else: not ours. The browser handles it.
+});
+
+/* ------------------------------------------------------- push (rule 6) */
+
+/** An address on this shop, or the home page. Never another origin, never javascript:. */
+function shopUrl(u) {
+  const home = self.location.origin + BASE + '/';
+  try {
+    const url = new URL(typeof u === 'string' && u ? u : home, self.location.origin);
+    return url.origin === self.location.origin ? url.href : home;
+  } catch (e) {
+    return home;
+  }
+}
+
+self.addEventListener('push', (event) => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (e) { d = {}; }
+  if (!d || typeof d !== 'object') d = {};
+  const title = typeof d.t === 'string' && d.t ? d.t.slice(0, 120) : 'K-Beauty Bliss';
+  event.waitUntil(self.registration.showNotification(title, {
+    body: typeof d.b === 'string' ? d.b.slice(0, 300) : '',
+    icon: ICON,
+    tag: typeof d.g === 'string' && d.g ? d.g.slice(0, 40) : 'kbb',
+    data: { url: shopUrl(d.u) },
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = shopUrl(event.notification.data && event.notification.data.url);
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    for (const c of list) {
+      if (new URL(c.url).origin === self.location.origin && typeof c.navigate === 'function') {
+        return c.focus().then(() => c.navigate(url)).catch(() => self.clients.openWindow(url));
+      }
+    }
+    return self.clients.openWindow(url);
+  }));
 });
