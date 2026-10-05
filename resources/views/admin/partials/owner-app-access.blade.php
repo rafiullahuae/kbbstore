@@ -38,6 +38,12 @@
 .oaa-set .rl-in{width:120px}
 .oaa-devs{margin-top:10px}
 .oaa-mt{margin:6px 0 0}
+.oaa-team{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:6px 0 0}
+.oaa-team .oaa-h{margin:0}
+.oaa-team small{font-weight:500;color:var(--ink-2)}
+.oaa-add{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px 12px}
+.oaa-add label{display:grid;gap:5px;font-size:12px;font-weight:600;color:var(--ink-2);min-width:0}
+.oaa-add .rl-in{width:100%;box-sizing:border-box}
 .oaa-set .rl-in.oaa-host{width:260px;max-width:100%}
 .oaa-cust{margin-top:12px;display:grid;gap:6px;min-width:0}
 .oaa-cust label{font-size:12px;font-weight:600;color:var(--ink-2)}
@@ -63,7 +69,7 @@
   async function api(method, path, body) {
     var o = { method: method, credentials: 'same-origin', headers: { Accept: 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') } };
     if (body !== undefined) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(body); }
-    var r; try { r = await fetch(root() + '/admin-api/owner-app' + path, o); } catch (e) { return { ok: false, status: 0, data: {} }; }
+    var r; try { r = await fetch(root() + (path.charAt(0) === '!' ? '/admin-api' + path.slice(1) : '/admin-api/owner-app' + path), o); } catch (e) { return { ok: false, status: 0, data: {} }; }
     var d = {}; try { d = await r.json(); } catch (e) { d = {}; }
     return { ok: r.ok && d.ok !== false, status: r.status, data: d };
   }
@@ -114,10 +120,68 @@
       '<label>Low stock at (units)<input class="rl-in" type="number" min="0" max="999" data-set="low_stock" value="' + esc(D.settings.low_stock) + '"></label>' +
       '<label>Show loading bars after (minutes)<input class="rl-in" type="number" min="5" max="240" data-set="stale_minutes" value="' + esc(D.settings.stale_minutes) + '" aria-describedby="oaa-stale-h"></label><button type="button" class="btn sm" data-oa="settings">Save</button></div>' +
       '<p class="rl-note" id="oaa-stale-h">Opening the app within this many minutes of its last sync refreshes silently; after longer, it shows grey loading bars while it syncs everything.</p></div>' +
-      '<p class="oaa-h oaa-mt">Members</p>' + m +
+      team() + m +
       '<div class="rl-card"><p class="oaa-h">Recent sign-ins</p>' + log + '</div></div>';
     flash = '';
     security();
+  }
+
+  /*
+   * ADD A PERSON FROM HERE (owner, 6 Oct: "there i can not see the users list,
+   * neither i can assign or create new user access ... there should come all
+   * users list, and add new too"). Every back-office account is already listed
+   * below with its own switch; this adds the missing half. It is the two
+   * endpoints that already exist, in order, each with its own capability and
+   * its own refusal: POST /admin-api/roles/members (users.manage) makes the
+   * account, then PUT /admin-api/owner-app/members/{id} (ownerapp.manage)
+   * gives it a PIN and switches the app on. The roles list is fetched once,
+   * when the form is first opened, never on load.
+   */
+  var adding = false, ROLES = null, addVals = {};
+  function team() {
+    var on = D.members.filter(function (x) { return x.enabled; }).length;
+    var head = '<div class="oaa-team"><p class="oaa-h">Team <small>· ' + D.members.length + (D.members.length === 1 ? ' person' : ' people') + ', ' + on + ' on the app</small></p>' +
+      (adding ? '' : '<button type="button" class="btn sm" data-oa="add">+ Add person</button>') + '</div>';
+    if (!adding) return head + '<p class="rl-note">Everyone with a back-office account is listed here. Tick <b>Owner app access</b> and set a PIN to let them in. Passwords and roles: <b>Platform → Users &amp; Roles</b>.</p>';
+    var v = function (k) { return esc(addVals[k] || ''); };
+    var roles = ROLES === null ? '<option value="">Loading…</option>' : '<option value="">Choose a role</option>' + ROLES.map(function (r) {
+      return '<option value="' + esc(r.id) + '"' + (String(addVals.role_id || '') === String(r.id) ? ' selected' : '') + '>' + esc(r.name) + '</option>';
+    }).join('');
+    return head + '<div class="rl-card" data-oa-addform><p class="oaa-h">Add a person</p>' +
+      '<p class="rl-note">Makes their back-office account and switches the owner app on for them. They sign in on the phone with this email and PIN.</p>' +
+      '<div class="oaa-add">' +
+      '<label for="oaa-add-name">Name<input id="oaa-add-name" class="rl-in" type="text" maxlength="255" autocomplete="off" data-add="name" value="' + v('name') + '"></label>' +
+      '<label for="oaa-add-email">Email<input id="oaa-add-email" class="rl-in" type="email" maxlength="255" autocomplete="off" data-add="email" value="' + v('email') + '"></label>' +
+      '<label for="oaa-add-pass">Back-office password<input id="oaa-add-pass" class="rl-in" type="password" minlength="8" maxlength="255" autocomplete="new-password" data-add="password" placeholder="8 characters or more"></label>' +
+      '<label for="oaa-add-role">Role<select id="oaa-add-role" class="rl-in" data-add="role_id">' + roles + '</select></label>' +
+      '<label for="oaa-add-pin">Owner app PIN<input id="oaa-add-pin" class="rl-in" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password" data-add="pin" placeholder="6–8 digits"></label>' +
+      '</div><div class="oaa-row"><button type="button" class="btn sm" data-oa="addsave">Add and switch the app on</button><button type="button" class="btn ghost sm" data-oa="addcancel">Cancel</button></div></div>';
+  }
+  async function openAdd() {
+    adding = true; paint();
+    if (ROLES !== null) return;
+    var r = await api('GET', '!/roles');
+    if (!r.ok) { adding = false; paint(); toastMsg(r.status === 403 ? 'Only someone who manages Users & Roles can add a person.' : why(r), true); return; }
+    // Full Admin last; the form opens on "Choose a role", never on a default.
+    ROLES = (r.data.roles || []).slice().sort(function (a, b) { return (a.locked ? 1 : 0) - (b.locked ? 1 : 0); });
+    if (adding) paint();
+  }
+  var addBusy = false;
+  async function saveAdd() {
+    if (addBusy) return;
+    var f = {}; host.querySelectorAll('[data-add]').forEach(function (i) { f[i.getAttribute('data-add')] = i.value.trim(); });
+    if (!/^\d{6,8}$/.test(f.pin)) { toastMsg('The owner app PIN is 6 to 8 digits.', true); return; }
+    if (!f.role_id) { toastMsg('Choose a role.', true); return; }
+    addBusy = true;
+    try {
+      var r = await api('POST', '!/roles/members', { name: f.name, email: f.email, password: f.password, role_id: parseInt(f.role_id, 10) });
+      if (!r.ok) { toastMsg(r.status === 403 ? 'Only someone who manages Users & Roles can add a person.' : why(r), true); return; }
+      var p = await api('PUT', '/members/' + r.data.id, { enabled: true, pin: f.pin });
+      adding = false; addVals = {};
+      flash = p.ok ? (f.name || f.email) + ' added, with the owner app on. Send them the link above.'
+        : (f.name || f.email) + ' was added, but the app is not on yet: ' + why(p);
+      await load();
+    } finally { addBusy = false; }
   }
 
   /*
@@ -194,6 +258,9 @@
     var a = b.getAttribute('data-oa'), id = b.getAttribute('data-id'), r;
     if (a === 'copy') { try { await navigator.clipboard.writeText(D.url); toastMsg('Link copied'); } catch (e) { toastMsg('Select the address and copy it', true); } return; }
     if (a === 'custom') { saveCustom(); return; }
+    if (a === 'add') { openAdd(); return; }
+    if (a === 'addcancel') { adding = false; addVals = {}; paint(); return; }
+    if (a === 'addsave') { saveAdd(); return; }
     if (a === 'address') {
       if (!window.confirm('Make a new secret address? The current link stops working at once and every phone signs in again at the new one.')) return;
       r = await api('POST', '/address');
@@ -235,6 +302,8 @@
     if (e.target.closest('button[data-oas]')) saveSecurity();
   });
   document.addEventListener('input', function (e) {
+    // Name, email and role survive a repaint; the password and PIN never sit in a variable.
+    if (host && host.contains(e.target) && e.target.matches('[data-add="name"],[data-add="email"],[data-add="role_id"]')) addVals[e.target.getAttribute('data-add')] = e.target.value;
     if (!host || !host.contains(e.target) || !e.target.matches('[data-cust]')) return;
     var h = host.querySelector('[data-cust-hint]'); if (h) h.textContent = weak(e.target.value);
   });
