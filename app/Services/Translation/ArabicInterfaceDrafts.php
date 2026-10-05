@@ -181,6 +181,7 @@ final class ArabicInterfaceDrafts
             'store.whatsapp.capsule_note' => 'متاحون على مدار الساعة',
             'store.whatsapp.open_label' => 'تحدّث معنا على واتساب',
             'store.whatsapp.close_label' => 'إغلاق',
+            'store.whatsapp.tab_label' => 'دعم 24/7',
         ];
     }
 

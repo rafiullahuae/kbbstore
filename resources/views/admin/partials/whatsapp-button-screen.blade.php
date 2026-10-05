@@ -92,6 +92,21 @@
 .wab-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;min-width:0}
 .wab-note{border:1px solid #b4443c;color:#b4443c;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5}
 .wab-empty{padding:22px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
+/* Cart & checkout · phone: the side tab on a 390px phone cart. The shop's
+   own TAB_CSS (in cssAll) draws the tab; only its column is pinned to the stage
+   instead of the window, and the fake page moves over by --kbtw as #content
+   does on the shop. */
+.wab-stage .kbt-z{position:absolute;display:flex;top:64px;bottom:76px}
+.wab-cart{position:absolute;inset:0 0 auto 0;padding:12px 14px 0 calc(var(--kbtw,26px) + 14px);display:grid;gap:8px;pointer-events:none}
+.wab-cart i{display:grid;grid-template-columns:44px 1fr 46px;gap:10px;align-items:center;height:62px;padding:0 10px;border-radius:10px;background:#fff;border:1px solid #F1E3E8}
+.wab-cart i b{height:44px;border-radius:8px;background:#F7EEF1}
+.wab-cart i u,.wab-cart i s{display:block;height:10px;border-radius:5px;background:#EADDE2;text-decoration:none}
+.wab-cart i u{box-shadow:0 18px 0 -2px #F3E9EC}
+.wab-cart em{display:block;height:20px;width:44%;border-radius:6px;background:#EADDE2;margin-bottom:2px}
+.wab-dock{position:absolute;inset:auto 0 0 0;height:64px;background:#fff;border-top:1px solid #F1E3E8;display:flex;align-items:center;justify-content:flex-end;padding:0 14px}
+.wab-dock span{width:150px;height:40px;border-radius:12px;background:#3E9B6B}
+.wab-pair{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center}
+.wab-pair input[type=color]{width:44px;height:36px;padding:2px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent}
 @media (max-width:640px){.wab-card{padding:13px}.wab-four{grid-template-columns:repeat(2,minmax(0,1fr))}.wab-stage{height:400px}}
 </style>
 
@@ -356,6 +371,64 @@
     return { html: '<div class="' + cls + '" style="' + esc(style) + '" data-wab-btn>' + symbols + '<div class="kbw-f">' + inner + link + '</div>' + bubble + '</div>', lines: l, href: href(l) };
   }
 
+  /* ── THE SIDE TAB: partials/whatsapp-button.blade.php's tab, built here ── */
+
+  /* WhatsAppButton::cleanLight()'s test, for the field's red outline only;
+     the server refuses a dark colour on save whatever this says. */
+  function light(hex) {
+    if (!/^#[0-9a-f]{6}$/i.test(String(hex || ''))) return false;
+    var ch = function (i) { var c = parseInt(hex.substr(i, 2), 16) / 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+    return 0.2126 * ch(1) + 0.7152 * ch(3) + 0.0722 * ch(5) >= (((preview || {}).tab || {}).lightMin || 0.6);
+  }
+
+  function tabSize() {
+    var t = (preview || {}).tab || {};
+    return Math.max(t.min || 22, Math.min(t.max || 44, Number(values.tab_size) || t.base || 26));
+  }
+
+  function tabQ() { return Math.round(tabSize() / (((preview || {}).tab || {}).base || 26) * 10000) / 10000; }
+
+  /* WhatsAppButton::tabLabel(). */
+  function tabLabel() {
+    var en = String(values.tab_label == null ? '' : values.tab_label).trim();
+    if (lang !== 'ar' || en === '') return en;
+    var own = String(values.tab_label_ar == null ? '' : values.tab_label_ar).trim();
+    return own !== '' ? own : String((((preview || {}).standard || {}).ar || {}).tab_label || '').trim();
+  }
+
+  /* WhatsAppButton::tab(): the same classes and custom properties. */
+  function buildTab() {
+    var t = (preview || {}).tab || {};
+    var pal = t.palettes || {};
+    var stops = values.tab_palette === 'custom'
+      ? [light(values.tab_c1) ? values.tab_c1 : '#FFE1EA', light(values.tab_c2) ? values.tab_c2 : '#E2F6EA']
+      : (pal[values.tab_palette] || pal.blush || ['#FFE1EA', '#FFF0D9', '#E2F6EA']);
+    if (stops.length === 2) stops = [stops[0], stops[1], stops[0]];
+    var y = Math.max(0, Math.min(100, Math.round(Number(values.tab_y)) || 0));
+    var mirror = lang === 'ar' && values.ar_side === 'mirror' && !!(preview || {}).rtl;
+    var label = tabLabel();
+    var style = '--q:' + tabQ() + ';--y:' + y + ';--c1:' + stops[0] + ';--c2:' + stops[1] + ';--c3:' + stops[2];
+    return '<div class="kbt-z' + (mirror ? ' kbt-rt' : '') + (values.tab_anim ? '' : ' kbt-still') + '" style="' + esc(style) + '" data-wab-tabel>'
+      + '<a class="kbt" href="' + esc(build().href) + '" target="_blank" rel="noopener" aria-label="' + esc(label === '' ? 'WhatsApp' : label) + '">'
+      + '<span class="kbt-i">' + ((preview || {}).icon || '') + '</span>'
+      + (label !== '' ? '<span class="kbt-l">' + esc(label) + '</span>' : '')
+      + '</a></div>';
+  }
+
+  function tabStageHTML() {
+    var note = !values.enabled ? 'The WhatsApp button is switched off (Design), so the shop prints neither the button nor the tab.'
+      : !values.show_phone ? 'Hidden on phones (Design → Show on phones), so the tab is not shown either.'
+      : !values.tab_on ? 'The side tab is off: the cart and checkout show the round button on phones, as every other page does.' : '';
+    var mirror = lang === 'ar' && values.ar_side === 'mirror' && !!(preview || {}).rtl;
+    var rows = '';
+    for (var i = 0; i < 5; i++) rows += '<i><b></b><span><u></u></span><s></s></i>';
+    return '<div class="wab-stage" data-wab-stage data-wab-dev="m" style="--kbtw:' + (note ? 0 : tabSize()) + 'px"' + (lang === 'ar' ? ' dir="rtl" lang="ar"' : '') + '>'
+      + '<div class="wab-cart"' + (mirror ? ' style="padding:12px calc(var(--kbtw,26px) + 14px) 0 14px"' : '') + '><em></em>' + rows + '</div>'
+      + '<div class="wab-dock"><span></span></div>'
+      + (note ? '<p class="wab-off" style="bottom:80px">' + esc(note) + '</p>' : buildTab())
+      + '</div>';
+  }
+
   function stageNote() {
     if (!values.enabled) return 'The button is switched off, so the shop prints nothing at all. Switch it on under Design to see it here.';
     if (dev === 'm' && !values.show_phone) return 'Hidden on phones (Design → Show on phones).';
@@ -364,6 +437,14 @@
   }
 
   function previewHTML() {
+    if (open === 'tab') {
+      return '<div class="wab-card wab-prev"><div class="wab-title">Live preview · phone cart</div>'
+        + '<p class="wab-sub">A 390px phone on the cart page, with the shop’s own stylesheet. The page moves over by the tab’s width, as it does on the shop, so the tab never covers a product, a quantity button or the checkout bar. Laptops keep the round button. Nothing reaches the shop until you press Save.</p>'
+        + '<div class="wab-bar" role="group" aria-label="Language">'
+        + '<button type="button" class="wab-btn" data-wab-lang="en" aria-pressed="' + (lang === 'en') + '">English</button>'
+        + '<button type="button" class="wab-btn" data-wab-lang="ar" aria-pressed="' + (lang === 'ar') + '">العربية</button>'
+        + '</div>' + tabStageHTML() + '</div>';
+    }
     var note = stageNote();
     var b = note ? null : build();
     var custom = String(values.link || '').trim();
@@ -399,6 +480,9 @@
 
   function isOffset(k) { return /^[md]_(top|right|bottom|left)$/.test(k); }
 
+  /* The side tab's two own colours: a picker and the hex box, side by side. */
+  function isColour(k) { return /^tab_c[12]$/.test(k); }
+
   function help(f) { return f.help ? '<p class="wab-help">' + esc(f.help) + '</p>' : ''; }
 
   function fieldHTML(f) {
@@ -431,6 +515,14 @@
     if (f.type === 'textarea') {
       return '<div class="' + cls + '"><div class="wab-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
         + '<textarea id="' + id + '" data-wab-key="' + esc(f.key) + '"' + rtl + ' maxlength="200">' + esc(values[f.key]) + '</textarea>' + help(f) + '</div>';
+    }
+
+    if (isColour(f.key)) {
+      var hex = String(values[f.key] || '');
+      return '<div class="' + cls.replace(' is-bad', '') + (bad[f.key] || !light(hex) ? ' is-bad' : '') + '"><div class="wab-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
+        + '<div class="wab-pair"><input type="color" data-wab-key="' + esc(f.key) + '" value="' + esc(/^#[0-9a-f]{6}$/i.test(hex) ? hex.toLowerCase() : '#ffffff') + '" aria-label="' + esc(f.label) + '">'
+        + '<input type="text" id="' + id + '" data-wab-key="' + esc(f.key) + '" value="' + esc(hex) + '" maxlength="7" autocomplete="off" spellcheck="false"></div>'
+        + help(f) + '</div>';
     }
 
     var ph = '';
@@ -494,7 +586,8 @@
     /* Women, men and the orbit speed only mean something on design G, so they
        are not drawn for the other six -- as on the preview page he chose from. */
     var rest = current.fields.filter(function (f) {
-      return !isOffset(f.key) && (values.design === 'G' || ['women', 'men', 'speed'].indexOf(f.key) === -1);
+      return !isOffset(f.key) && (values.design === 'G' || ['women', 'men', 'speed'].indexOf(f.key) === -1)
+        && (values.tab_palette === 'custom' || !isColour(f.key));
     });
 
     host.innerHTML = '<div class="wab-wrap">'
@@ -521,6 +614,27 @@
     var key = el.dataset.wabKey;
     values[key] = el.type === 'checkbox' ? el.checked : el.value;
 
+    if (key === 'tab_size' || key === 'tab_y') {
+      /* The tab's drag bars move custom properties on the drawn tab, as the
+         size bar does for the button: no rebuild, no request. */
+      var tv = document.querySelector('[data-wab-val="' + key + '"]');
+      if (tv) tv.textContent = el.value + (key === 'tab_y' ? '%' : 'px');
+      var tabEl = document.querySelector('[data-wab-tabel]');
+      var stage = document.querySelector('[data-wab-stage]');
+      if (tabEl && stage) {
+        if (key === 'tab_size') { tabEl.style.setProperty('--q', String(tabQ())); stage.style.setProperty('--kbtw', tabSize() + 'px'); }
+        else tabEl.style.setProperty('--y', String(Math.max(0, Math.min(100, Math.round(Number(el.value)) || 0))));
+        return;
+      }
+    }
+    if (isColour(key)) {
+      /* Picker and box mirror each other; the field outline says "too dark". */
+      document.querySelectorAll('[data-wab-key="' + key + '"]').forEach(function (x) {
+        if (x !== el) x.value = x.type === 'color' ? (/^#[0-9a-f]{6}$/i.test(el.value) ? el.value.toLowerCase() : x.value) : el.value.toUpperCase();
+      });
+      var wrap = el.closest('.wab-f');
+      if (wrap) wrap.classList.toggle('is-bad', !light(el.value));
+    }
     if (key === 'size') {
       /* The drag bar moves ONE custom property; the stage is not rebuilt, so
          the orbit keeps turning smoothly under the pointer. */
@@ -536,7 +650,7 @@
     var el = e.target.closest ? e.target.closest('[data-wab-key]') : null;
     if (!el) return;
     values[el.dataset.wabKey] = el.type === 'checkbox' ? el.checked : el.value;
-    if (el.dataset.wabKey === 'design') { render(); return; }
+    if (el.dataset.wabKey === 'design' || el.dataset.wabKey === 'tab_palette') { render(); return; }
     drawStage();
   });
 

@@ -98,6 +98,138 @@ class WhatsAppButton
     /** The size every number in the stylesheet is written at; --k = size / 60. */
     private const BASE = 60;
 
+    /*
+     * ── THE SIDE TAB: CART & CHECKOUT, PHONES ONLY (Lane WS) ────────────────
+     *
+     * The owner, with a picture of his phone's cart and the round button
+     * sitting on the line items: "on cart and checkout mobile pages, i want the
+     * whatsapp floating to move to the left side of the screen, stiky type
+     * vertical bar, having 24/7 Support + whatsapp animated icon. must be size
+     * adjustable of overall bar with size dragger bar, must be unique with
+     * background colors grandient changing, but with light colors, as the text
+     * will be black and icon will be green."
+     *
+     * WHERE IT APPEARS. Only on a page whose template declares the section
+     * TAB_SECTION — store/cart and store/checkout, nothing else — and only below
+     * PHONE_MAX, where it replaces the round button. On a laptop the cart and
+     * the checkout keep the round button; on every other page view() returns
+     * exactly what it returned before, so they gain not one byte.
+     *
+     * NOTHING UNDERNEATH IT. The tab is fixed to the left edge, so on those two
+     * pages the content moves over by the tab's width (TAB_PHONE). The width is the one number a stylesheet cannot know, so
+     * the partial sets it as --kbtw from an integer, through the escaping echo.
+     * Vertically it lives in a fixed column that starts below the sticky header
+     * (TAB_TOP) and ends above the cart's docked checkout bar and the
+     * checkout's Place order bar (TAB_BOTTOM); the owner's position splits the
+     * free space of that column, so no setting and no screen height can put the
+     * tab on either bar — and no script measures anything to get there.
+     */
+
+    /** Section name the cart and checkout templates declare. */
+    public const TAB_SECTION = 'kbb-wa-tab';
+
+    /** The tab's width, in px: the size bar's ends and its shipped value. */
+    public const TAB_MIN = 22;
+
+    public const TAB_MAX = 44;
+
+    public const TAB_BASE = 26;
+
+    /** Below the sticky header (the cart's, with its search, is 127px at 390). */
+    public const TAB_TOP = 140;
+
+    /** Above the cart's docked bar (102px at 390) and the checkout's (70px). */
+    public const TAB_BOTTOM = 112;
+
+    public const TAB_LABEL_MAX = 24;
+
+    /**
+     * The light palettes, three stops each. Black text stays above 15:1 on
+     * every stop; the icon sits on a white disc, so its green is measured
+     * against white. WhatsAppButtonTabTest computes both.
+     */
+    public const TAB_PALETTES = [
+        'blush' => ['#FFE1EA', '#FFF0D9', '#E2F6EA'],
+        'sky' => ['#D9F5E6', '#DDF3FF', '#ECE4FF'],
+        'lilac' => ['#ECE4FF', '#FFE6F2', '#FFF0D9'],
+        'lemon' => ['#FFF6C7', '#E2F6EA', '#DDF3FF'],
+    ];
+
+    /** The text and the icon's green; contrast is pinned by the test. */
+    public const TAB_INK = '#111111';
+
+    public const TAB_GREEN = '#0B7A3E';
+
+    /**
+     * The darkest a custom colour may be, as WCAG relative luminance. At 0.6
+     * the black text is still above 11:1, so "light colours only" is a rule,
+     * not a hope.
+     */
+    public const TAB_LIGHT_MIN = 0.6;
+
+    /**
+     * The tab's rules. CONSTANT — printed raw by the partial, and sent to the
+     * admin preview as they are. Hidden (`display:none` on the column) until
+     * TAB_PHONE switches it on inside the phone media query.
+     *
+     * GPU-cheap motion only: the gradient is a pseudo-element three times the
+     * tab's height sliding by `transform`, and the icon's ring is CSS_BASE's
+     * kbwP (transform + opacity). Neither repaints the page.
+     */
+    public const TAB_CSS = '.kbt-z{position:fixed;z-index:85;left:0;top:'.self::TAB_TOP.'px;bottom:'.self::TAB_BOTTOM.'px;display:none;flex-direction:column;pointer-events:none}'
+        .'.kbt-z::before{content:"";flex:var(--y,50) 1 0}'
+        .'.kbt-z::after{content:"";flex:calc(100 - var(--y,50)) 1 0}'
+        .'.kbt-z.kbt-rt{left:auto;right:0}'
+        .'.kbt{position:relative;isolation:isolate;overflow:hidden;flex:none;display:flex;flex-direction:column;align-items:center;gap:calc(7px*var(--q,1));width:calc(26px*var(--q,1));padding:calc(6px*var(--q,1)) 0 calc(10px*var(--q,1));box-sizing:border-box;border:1px solid rgba(42,34,40,.08);border-left:0;border-radius:0 calc(13px*var(--q,1)) calc(13px*var(--q,1)) 0;background:var(--c1);box-shadow:0 6px 18px rgba(42,34,40,.14);color:'.self::TAB_INK.';text-decoration:none;font-size:16px;pointer-events:auto;-webkit-tap-highlight-color:transparent}'
+        .'.kbt-rt .kbt{border-left:1px solid rgba(42,34,40,.08);border-right:0;border-radius:calc(13px*var(--q,1)) 0 0 calc(13px*var(--q,1))}'
+        .'.kbt::before{content:"";position:absolute;z-index:-1;left:0;right:0;top:0;height:300%;background:linear-gradient(180deg,var(--c1),var(--c2),var(--c3),var(--c1));animation:kbtG 9s ease-in-out infinite alternate}'
+        .'.kbt:focus-visible{outline:3px solid #E0567B;outline-offset:2px}'
+        .'.kbt-i{position:relative;flex:none;display:grid;place-items:center;width:calc(20px*var(--q,1));height:calc(20px*var(--q,1));border-radius:50%;background:#fff;color:'.self::TAB_GREEN.';box-shadow:0 1px 4px rgba(11,122,62,.28)}'
+        .'.kbt-i::before{content:"";position:absolute;z-index:-1;inset:0;border-radius:50%;background:#25D366;animation:kbwP 2.4s ease-out infinite}'
+        .'.kbt .kbw-i{width:64%;height:64%}'
+        .'.kbt-l{writing-mode:vertical-rl;transform:rotate(180deg);font-size:calc(11px*var(--q,1));font-weight:700;line-height:1;letter-spacing:.04em;white-space:nowrap}'
+        .'.kbt-still .kbt::before,.kbt-still .kbt-i::before{animation:none}'
+        .'.kbt-still .kbt-i::before{opacity:0}'
+        .'@keyframes kbtG{to{transform:translateY(-66.6667%)}}'
+        .'@media (prefers-reduced-motion:reduce){.kbt::before,.kbt-i::before{animation:none!important}.kbt-i::before{opacity:0}}'
+        .'@media print{.kbt-z{display:none!important}}';
+
+    /**
+     * The phone half, printed only on the two pages: the tab appears, the round
+     * button goes, and the page's content moves over by the tab's width — on
+     * the side the tab is on — so nothing scrolls underneath it.
+     *
+     * #content and not the containers inside it, because those disagree: the
+     * cart's column sits 14px in, its "Recommended" rail 9px, the checkout's
+     * grid 20px, its thumbnail strip 17px and its slim footer 20px. Moving the
+     * one element that holds them all keeps every one of those gutters as the
+     * gap between the tab and what is beside it, including blocks that are not
+     * on the page today. The checkout's sticky header lives inside #content
+     * too and sits above the tab's column (TAB_TOP), so it is pulled back out
+     * to full width. Fixed bars and sheets ignore the padding. `%1$s` is
+     * `left` or `right`, from a ternary in view().
+     */
+    private const TAB_PHONE = '@media (max-width:'.self::PHONE_MAX.'px){.kbt-z{display:flex}.kbw{display:none}'
+        .'#content{padding-%1$s:var(--kbtw)}.kbb-checkout .co-head{margin-%1$s:calc(var(--kbtw)*-1)}}';
+
+    /**
+     * The squeezed cart's "Recommended" rail is FULL BLEED by `calc(50% -
+     * 50vw)` and `100vw`, which measure from the viewport and not from
+     * #content — so once #content moves over, the rail would start 13px from
+     * the edge, under the tab, and run off the other side. Half the tab's
+     * width on each side puts it back edge to edge of the space beside the
+     * tab. Printed only while the squeezed cart is on, like LIFT_CART: on the
+     * classic shop no page names the squeezed furniture at all.
+     */
+    private const TAB_SQUEEZE = '@media (max-width:'.self::PHONE_MAX.'px){.kbb-cartpage.cpg-squeeze .cpg-rec{margin-inline:calc(50% - 50vw + var(--kbtw)/2);width:calc(100vw - var(--kbtw));max-width:calc(100vw - var(--kbtw))}}';
+
+    /**
+     * On the two pages the round button (and its bubble) is hidden on a phone,
+     * so the bubble's "show once" must not spend itself there unseen. Printed
+     * into the bubble script only on those pages; '' everywhere else.
+     */
+    public const TAB_BUBBLE_GUARD = "if(matchMedia('(max-width:".self::PHONE_MAX."px)').matches)return;";
+
     public const SCHEMA = [
         /* ── Design ─────────────────────────────────────────────────────── */
         'enabled' => ['bool', 'Show the WhatsApp button', true,
@@ -169,6 +301,29 @@ class WhatsAppButton
         'bubble' => ['select', 'Welcome bubble', 'once',
             'The speech bubble above the button with your welcome and support lines. “Show once” shows it on a visitor’s first page and then never again on that browser; closing it hides it at once.',
             ['once' => 'Show once, then stay closed', 'off' => 'Do not show']],
+
+        /* ── Cart & checkout · phone — the side tab (Lane WS) ─────────────── */
+        'tab_on' => ['bool', 'Side tab on the cart and checkout', true,
+            'On is how this ships, because you asked for it. On phones, the cart and the checkout show a slim “24/7 Support” tab stuck to the left edge instead of the round button, so nothing covers the products, the quantity buttons or the checkout bar. Laptops, and every other page, keep the round button exactly as it is. Off puts the round button back on those two pages.'],
+        'tab_size' => ['range', 'Overall size', self::TAB_BASE,
+            'Drag to make the whole tab bigger or smaller: its width, the icon, the text and its height all follow. The page moves over by the same amount, so the tab never sits on top of anything.',
+            ['min' => self::TAB_MIN, 'max' => self::TAB_MAX, 'step' => 1, 'unit' => 'px']],
+        'tab_y' => ['range', 'Vertical position', 50,
+            '0 puts the tab as high as it goes (just under the header), 50 in the middle, 100 as low as it goes — always above the checkout bar at the bottom of the screen.',
+            ['min' => 0, 'max' => 100, 'step' => 1, 'unit' => '%']],
+        'tab_label' => ['type' => 'text', 'label' => 'Label', 'default' => '24/7 Support', 'max' => self::TAB_LABEL_MAX,
+            'help' => 'Black, set sideways. Up to 24 letters. Empty shows the icon alone.'],
+        'tab_label_ar' => ['type' => 'text', 'label' => 'Label — Arabic', 'default' => '', 'max' => self::TAB_LABEL_MAX,
+            'help' => 'Leave empty for the standard Arabic (“store.whatsapp.tab_label”).'],
+        'tab_palette' => ['select', 'Background colours', 'blush',
+            'Light colours that drift slowly from one to the next, so the black text and the green icon stay easy to read. “My own two colours” uses the two boxes below.',
+            ['blush' => 'Blush, peach & mint', 'sky' => 'Mint, sky & lilac', 'lilac' => 'Lilac, rose & cream', 'lemon' => 'Lemon, mint & sky', 'custom' => 'My own two colours']],
+        'tab_c1' => ['type' => 'text', 'label' => 'Own colour 1', 'default' => '#FFE1EA', 'rule' => [self::class, 'cleanLight'],
+            'help' => 'Used with “My own two colours”. Light colours only — one too dark for black text is refused.'],
+        'tab_c2' => ['type' => 'text', 'label' => 'Own colour 2', 'default' => '#E2F6EA', 'rule' => [self::class, 'cleanLight'],
+            'help' => 'Used with “My own two colours”.'],
+        'tab_anim' => ['bool', 'Animate', true,
+            'The colours drift slowly and the icon pulses gently. Off keeps both still. Phones set to reduce motion always see it still.'],
     ];
 
     public const TABS = [
@@ -184,6 +339,9 @@ class WhatsAppButton
         'capsule' => ['Capsule & bubble',
             'The pill beside the button and the welcome bubble above it.',
             ['capsule', 'cap1', 'cap1_ar', 'cap2', 'cap2_ar', 'bubble']],
+        'tab' => ['Cart & checkout · phone',
+            'On phones only, the cart and the checkout swap the round button for a slim tab on the left edge — the WhatsApp icon and “24/7 Support” on a slowly shifting light background. It opens the same chat, with the same message or your own link, as the round button. Laptops and every other page are not touched.',
+            ['tab_on', 'tab_size', 'tab_y', 'tab_label', 'tab_label_ar', 'tab_palette', 'tab_c1', 'tab_c2', 'tab_anim']],
     ];
 
     /**
@@ -226,6 +384,7 @@ class WhatsAppButton
         'cap2' => 'store.whatsapp.capsule_note',
         'open' => 'store.whatsapp.open_label',
         'close' => 'store.whatsapp.close_label',
+        'tab_label' => 'store.whatsapp.tab_label',
     ];
 
     /**
@@ -558,6 +717,35 @@ class WhatsAppButton
             && filter_var($value, FILTER_VALIDATE_URL) !== false;
     }
 
+    /**
+     * A custom tab colour: `#` and six hex digits, and LIGHT — relative
+     * luminance at or above TAB_LIGHT_MIN — because the tab's text is black.
+     * Anything else is refused and named back to the owner. Upper-cased, so a
+     * stored colour is one spelling.
+     */
+    public static function cleanLight(mixed $raw, array $field = []): ?string
+    {
+        if (! is_string($raw) || preg_match('/^#[0-9a-fA-F]{6}$/', trim($raw)) !== 1) {
+            return null;
+        }
+
+        $hex = strtoupper(trim($raw));
+
+        return self::luminance($hex) >= self::TAB_LIGHT_MIN ? $hex : null;
+    }
+
+    /** WCAG 2 relative luminance of a `#RRGGBB` colour. */
+    public static function luminance(string $hex): float
+    {
+        $channel = static function (string $pair): float {
+            $c = hexdec($pair) / 255;
+
+            return $c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
+        };
+
+        return 0.2126 * $channel(substr($hex, 1, 2)) + 0.7152 * $channel(substr($hex, 3, 2)) + 0.0722 * $channel(substr($hex, 5, 2));
+    }
+
     /* ═══════════════════════════════════════════════════════ rendering ═══ */
 
     /**
@@ -659,7 +847,7 @@ class WhatsAppButton
      */
     public static function cssAll(): string
     {
-        return self::CSS_BASE.self::CSS_BUBBLE.implode('', self::CSS_DESIGNS).self::sideCss().self::CSS_TAIL;
+        return self::CSS_BASE.self::CSS_BUBBLE.implode('', self::CSS_DESIGNS).self::sideCss().self::CSS_TAIL.self::TAB_CSS;
     }
 
     /**
@@ -757,6 +945,70 @@ class WhatsAppButton
     }
 
     /**
+     * The side tab's label for this page's language — lines()'s rule, for one
+     * more line: an emptied English box hides it on both shops.
+     */
+    public function tabLabel(?array $c = null, ?bool $arabic = null): string
+    {
+        $c ??= $this->all();
+        $arabic ??= self::arabic();
+        $english = trim((string) ($c['tab_label'] ?? ''));
+
+        if (! $arabic || $english === '') {
+            return $english;
+        }
+
+        $own = trim((string) ($c['tab_label_ar'] ?? ''));
+
+        return $own !== '' ? $own : trim((string) __(self::KEYS['tab_label']));
+    }
+
+    /**
+     * The side tab, for a page that asked for it, or null when it is off.
+     *
+     * The tab is a phone-only replacement for the round button, so it follows
+     * the button's own phone switch as well as its own: off on phones means no
+     * WhatsApp on a phone at all. Every number is clamped and every word comes
+     * from a map here, again, whatever the row holds — the style attribute and
+     * --kbtw carry nothing else.
+     *
+     * @return array{class:string, style:string, w:int, right:bool, label:string, aria:string, href:string}|null
+     */
+    public function tab(array $c, bool $arabic, bool $mirror, string $href): ?array
+    {
+        if (! ($c['tab_on'] ?? true) || ! ($c['show_phone'] ?? true)) {
+            return null;
+        }
+
+        $w = max(self::TAB_MIN, min(self::TAB_MAX, (int) ($c['tab_size'] ?? self::TAB_BASE)));
+        $y = max(0, min(100, (int) ($c['tab_y'] ?? 50)));
+        $palette = (string) ($c['tab_palette'] ?? 'blush');
+
+        if ($palette === 'custom') {
+            $one = self::cleanLight($c['tab_c1'] ?? null) ?? self::SCHEMA['tab_c1']['default'];
+            $two = self::cleanLight($c['tab_c2'] ?? null) ?? self::SCHEMA['tab_c2']['default'];
+            $stops = [$one, $two, $one];
+        } else {
+            $stops = self::TAB_PALETTES[$palette] ?? self::TAB_PALETTES['blush'];
+        }
+
+        $label = $this->tabLabel($c, $arabic);
+        $open = (string) __(self::KEYS['open']);
+
+        return [
+            'class' => 'kbt-z'.($mirror ? ' kbt-rt' : '').(($c['tab_anim'] ?? true) ? '' : ' kbt-still'),
+            'style' => '--q:'.rtrim(rtrim(number_format($w / self::TAB_BASE, 4, '.', ''), '0'), '.')
+                .';--y:'.$y.';--c1:'.$stops[0].';--c2:'.$stops[1].';--c3:'.$stops[2],
+            'w' => $w,
+            'right' => $mirror,
+            'label' => $label,
+            // The visible words first, so the accessible name contains them.
+            'aria' => $label === '' ? $open : $label.' · '.$open,
+            'href' => $href,
+        ];
+    }
+
+    /**
      * Everything the partial prints, or null when nothing is to be printed.
      *
      * Null — and therefore not one byte on the page — when the button is off,
@@ -764,7 +1016,7 @@ class WhatsAppButton
      *
      * @return array<string, mixed>|null
      */
-    public function view(?array $c = null, ?bool $arabic = null): ?array
+    public function view(?array $c = null, ?bool $arabic = null, bool $tabPage = false): ?array
     {
         $c ??= $this->all();
         $arabic ??= self::arabic();
@@ -810,9 +1062,15 @@ class WhatsAppButton
         }
 
         $bubble = ($c['bubble'] ?? 'once') === 'once' && ($lines['welcome'] !== '' || $lines['support'] !== '');
+        $href = $this->link($c, $lines);
+        $tab = $tabPage ? $this->tab($c, $arabic, $mirror, $href) : null;
+        $squeezed = app(CartPage::class)->squeezed();
 
         return [
-            'css' => self::css($design, $bubble, app(CartPage::class)->squeezed()),
+            'css' => self::css($design, $bubble, $squeezed)
+                .($tab === null ? '' : self::TAB_CSS.sprintf(self::TAB_PHONE, $tab['right'] ? 'right' : 'left').($squeezed ? self::TAB_SQUEEZE : '')),
+            'tab' => $tab,
+            'guard' => $tab === null ? '' : self::TAB_BUBBLE_GUARD,
             'class' => $class,
             'style' => $style,
             'design' => $design,
@@ -820,7 +1078,7 @@ class WhatsAppButton
             'faces' => $faces,
             'symbols' => $symbols,
             'icon' => self::ICON,
-            'href' => $this->link($c, $lines),
+            'href' => $href,
             'label' => (string) __(self::KEYS['open']),
             'close' => (string) __(self::KEYS['close']),
             // The capsule is G's; E draws its own label from line 1.

@@ -2175,6 +2175,37 @@ KBB_BH_CSS;
             ],
 
             /*
+             * THE SIDE TAB ON THE CART AND THE CHECKOUT, PHONES ONLY. (Lane WS)
+             *
+             * The owner: "on cart and checkout mobile pages, i want the
+             * whatsapp floating to move to the left side of the screen, stiky
+             * type vertical bar, having 24/7 Support + whatsapp animated icon".
+             * It ships ON (rule 1 since 30 September), so the two pages that
+             * declare WhatsAppButton::TAB_SECTION gain ONE element, cut here:
+             * the tab, between the round button and its script. Its stylesheet
+             * and the bubble's one-statement guard land inside the <style> and
+             * <script> the rule below already cuts whole (both carry no `<`),
+             * and WhatsAppButtonTabTest pins those bytes.
+             *
+             * MUST STAY ABOVE THE WHATSAPP RULE: that pattern expects the
+             * button's </div> to be followed by its <script>, and on these two
+             * pages it is not until this element is gone.
+             *
+             * THE PATTERN NAMES THE SHIPPED DEFAULTS — 26px (--q:1), centred
+             * (--y:50), the blush palette, animated, "24/7 Support" — so a
+             * default that moves without this walk being told is red here.
+             * 3: the cart with a basket, the empty cart (still the cart page,
+             * so still the tab), and the checkout with a basket. Every other
+             * page in the walk carries none of it.
+             */
+            'the WhatsApp side tab on the cart and checkout (Lane WS)' => [
+                'pattern' => '~<div class="kbt-z" style="--q:1;--y:50;--c1:#FFE1EA;--c2:#FFF0D9;--c3:#E2F6EA">'
+                    .'<a class="kbt" href="[^"]*" target="_blank" rel="noopener" aria-label="24/7 Support · Chat with us on WhatsApp">'
+                    .'<span class="kbt-i"><svg class="kbw-i"[^>]*>.*?</svg></span><span class="kbt-l">24/7 Support</span></a></div>\n~s',
+                'hits' => 3,
+            ],
+
+            /*
              * THE FLOATING WHATSAPP BUTTON, ON EVERY STOREFRONT PAGE. (Lane WA)
              *
              * The owner: "i need a floating whatsapp icon with outer layers

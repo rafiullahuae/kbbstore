@@ -89,6 +89,15 @@ class WhatsAppButtonApiController extends Controller
                 'icon' => WhatsAppButton::ICON,
                 'symbols' => implode('', WhatsAppButton::SYMBOLS),
                 'speeds' => WhatsAppButton::SPEEDS,
+                // Cart & checkout · phone: what the side tab's preview is
+                // built from, so dragging and switching palette ask nothing.
+                'tab' => [
+                    'palettes' => WhatsAppButton::TAB_PALETTES,
+                    'min' => WhatsAppButton::TAB_MIN,
+                    'max' => WhatsAppButton::TAB_MAX,
+                    'base' => WhatsAppButton::TAB_BASE,
+                    'lightMin' => WhatsAppButton::TAB_LIGHT_MIN,
+                ],
                 'phone' => SupportContact::whatsapp(),
                 'digits' => SupportContact::whatsappDigits(),
                 'rtl' => Locale::rtlEnabled(),
