@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.387
+**Brand banner covers the phone header; automatic WebP on upload and in
+bulk.** Apply after .386. Runs the WebP migrations. Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "in mobile brand page ... the background image should cover the whole header area, instead of repeating" | The brand banner fills the phone header edge to edge (346×190 at 390, was an 85px strip with a blurred copy around it). Appearance → Site layout → Brand page → Picture covers the header on phones (on). Categories unchanged |
+| "whenever we upload jpg or png images ... conver auto into webp" | Uploads in the Media Library become WebP when smaller (upright, transparency kept, location data stripped, max 2400px wide, oversized files refused). Content → Media Library → WebP images |
+| "look for jpg ... convert auto in bulk, and also replace them where the images are actually used" | Same screen, or over SSH: `php artisan kbb:webp --plan -v`, then `php artisan kbb:webp`. Every use is repointed; orders, customers and reviews never touched. Originals kept until "Remove originals" (`--remove-originals`); Undo (`--restore`) until then |
+
+Files: see the package's update.json.
+
 ## 2.60.386
 **K-Beauty Bliss everywhere + brand search; Fonts & size on every homepage
 section; product description columns and videos; Super Sale campaign page and
