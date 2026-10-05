@@ -508,6 +508,12 @@ final class AdminCapabilities
         // same three roles as Site layout's "How more products load". (Lane PG)
         'pagination.manage' => ['owner', 'manager', 'editor'],
 
+        // Safety → 404 page: which of the four 404 designs the shop shows, its
+        // words in both languages, its links and its per-device sizes. Every
+        // shopper who mistypes an address sees it, so its own capability; the
+        // two roles that run the shop, not the editor. (Lane NF)
+        'notfoundpage.manage' => ['owner', 'manager'],
+
         /*
          * THE STOREFRONT'S OWN ADMIN LAYER (Lane RA): the thin bar across the
          * top of every shop page and the pencil on a category or brand header.
@@ -1673,6 +1679,9 @@ final class AdminCapabilities
         // Catalog → Pagination: the read and the save. One line and no '/**'
         // sibling: the screen has no sub-endpoint. (Lane PG)
         ['*', 'admin-api/pagination', 'pagination.manage'],
+        // Safety → 404 page: the read and the save. One line and no '/**'
+        // sibling: the screen has no sub-endpoint. (Lane NF)
+        ['*', 'admin-api/not-found-page', 'notfoundpage.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.

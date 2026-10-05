@@ -1,5 +1,15 @@
 # Lane NF — 404 page, Phase 2 plan (after the owner picks A/B/C/D)
 
+> **Built, 5 October.** The owner picked B and asked for all four to stay
+> selectable with full controls under Safety → 404 page (Desktop / Mobile +
+> Global). As planned below, plus: `App\Support\NotFoundPage` holds the
+> settings (one row, `not_found_page`), `resources/css/kbb/kbb-404.css` is the
+> one sheet the shop and the admin preview share, the four illustrations are
+> `resources/views/store/not-found/art-{a,b,c,d}.blade.php`, the admin screen is
+> `resources/views/admin/partials/not-found-page-screen.blade.php` behind
+> `notfoundpage.manage` (owner, manager), wired by `php tools/nf-wire.php`
+> (docs/nf-wiring.json). Screenshots and numbers: docs/nf-shots/.
+
 ## Ground truth (read, not assumed)
 
 - There is no `resources/views/errors/`404 view. `AppServiceProvider` (~l.587)

@@ -151,6 +151,7 @@ final class AdminRoles
             'producttabs.view' => 'See product tabs',
             'producttabs.manage' => 'Write product tabs',
             'pagination.manage' => 'Turn pagination on or off for the shop, a category, a brand or a listing page',
+            'notfoundpage.manage' => 'Choose and edit the shop’s 404 page (Safety → 404 page)',
             'shareimages.make' => 'Make link-preview pictures',
         ]],
         ['inventory', 'Inventory', [

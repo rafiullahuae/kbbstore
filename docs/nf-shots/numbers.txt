@@ -1,0 +1,27 @@
+design a: save -> HTTP 200
+404-a-en-390.jpg  HTTP 404 /no-such-page-a/ design=a dir=ltr robots="noindex, nofollow" scrollWidth=390/390 h1=29px art=300px 5127B trend cols=2 header=true footer=true CLS=0
+404-a-en-1280.jpg  HTTP 404 /no-such-page-a/ design=a dir=ltr robots="noindex, nofollow" scrollWidth=1280/1280 h1=50px art=290px 5127B trend cols=4 header=true footer=true CLS=0
+404-a-ar-390.jpg  HTTP 404 /ar/no-such-page-a/ design=a dir=rtl robots="noindex, nofollow" scrollWidth=390/390 h1=29px art=300px 5120B trend cols=2 header=true footer=true CLS=0
+404-a-ar-1280.jpg  HTTP 404 /ar/no-such-page-a/ design=a dir=rtl robots="noindex, nofollow" scrollWidth=1280/1280 h1=50px art=290px 5120B trend cols=4 header=true footer=true CLS=0
+design b: save -> HTTP 200
+404-b-en-390.jpg  HTTP 404 /no-such-page-b/ design=b dir=ltr robots="noindex, nofollow" scrollWidth=390/390 h1=29px art=320px 4665B trend cols=2 header=true footer=true CLS=0
+404-b-en-1280.jpg  HTTP 404 /no-such-page-b/ design=b dir=ltr robots="noindex, nofollow" scrollWidth=1280/1280 h1=50px art=440px 4665B trend cols=4 header=true footer=true CLS=0
+404-b-ar-390.jpg  HTTP 404 /ar/no-such-page-b/ design=b dir=rtl robots="noindex, nofollow" scrollWidth=390/390 h1=29px art=320px 4660B trend cols=2 header=true footer=true CLS=0
+404-b-ar-1280.jpg  HTTP 404 /ar/no-such-page-b/ design=b dir=rtl robots="noindex, nofollow" scrollWidth=1280/1280 h1=50px art=440px 4660B trend cols=4 header=true footer=true CLS=0
+design c: save -> HTTP 200
+404-c-en-390.jpg  HTTP 404 /no-such-page-c/ design=c dir=ltr robots="noindex, nofollow" scrollWidth=390/390 h1=31.9px art=347px 3808B trend cols=2 header=true footer=true CLS=0
+404-c-en-1280.jpg  HTTP 404 /no-such-page-c/ design=c dir=ltr robots="noindex, nofollow" scrollWidth=1280/1280 h1=55px art=620px 3808B trend cols=4 header=true footer=true CLS=0
+404-c-ar-390.jpg  HTTP 404 /ar/no-such-page-c/ design=c dir=rtl robots="noindex, nofollow" scrollWidth=390/390 h1=31.9px art=346px 3781B trend cols=2 header=true footer=true CLS=0
+404-c-ar-1280.jpg  HTTP 404 /ar/no-such-page-c/ design=c dir=rtl robots="noindex, nofollow" scrollWidth=1280/1280 h1=55px art=620px 3781B trend cols=4 header=true footer=true CLS=0
+design d: save -> HTTP 200
+404-d-en-390.jpg  HTTP 404 /no-such-page-d/ design=d dir=ltr robots="noindex, nofollow" scrollWidth=390/390 h1=29px art=359px 4794B trend cols=2 header=true footer=true CLS=0
+404-d-en-1280.jpg  HTTP 404 /no-such-page-d/ design=d dir=ltr robots="noindex, nofollow" scrollWidth=1280/1280 h1=50px art=570px 4794B trend cols=4 header=true footer=true CLS=0
+404-d-ar-390.jpg  HTTP 404 /ar/no-such-page-d/ design=d dir=rtl robots="noindex, nofollow" scrollWidth=390/390 h1=29px art=359px 4780B trend cols=2 header=true footer=true CLS=0
+404-d-ar-1280.jpg  HTTP 404 /ar/no-such-page-d/ design=d dir=rtl robots="noindex, nofollow" scrollWidth=1280/1280 h1=50px art=570px 4780B trend cols=4 header=true footer=true CLS=0
+back to defaults: HTTP 200
+admin-1280-desktop.png  crumb=Safety → 404 page scrollWidth=1280/1280 GETs on open=1
+admin-1280-mobile.png  cards: Design | Mobile 900px and narrower | Global Desktop and mobile
+admin-1280-edited.png  preview h1="Oh honey, wrong aisle" size=60px class="nf nf-a"  admin-api requests while editing=0
+admin-1280-arabic.png / admin-1280-reset.png  (reset is local until Save)
+admin-390-desktop.png  crumb=Safety → 404 page scrollWidth=390/390 GETs on open=1
+admin-390-mobile.png  cards: Design | Mobile 900px and narrower | Global Desktop and mobile

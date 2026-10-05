@@ -617,7 +617,10 @@ class AppServiceProvider extends ServiceProvider
                     \App\Support\NotFoundLogger::record($request->path(), $request->header('referer'));
                 }
 
-                return null;
+                // The shop's own 404 page for a shopper's page request (Lane
+                // NF), still a 404; null for everything else — the admin, the
+                // APIs, the owner app, JSON — which keeps Laravel's default.
+                return \App\Support\NotFoundPage::respond($request);
             }
         );
 

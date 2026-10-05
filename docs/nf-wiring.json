@@ -1,0 +1,74 @@
+[
+ {
+  "n": 1,
+  "what": "mount the two endpoints inside the guarded admin-api group, under the Catalog → Pagination require",
+  "file": "routes/web.php",
+  "anchor": "        require __DIR__.'/pagination-admin.php';      // Catalog → Pagination (Lane PG)\n",
+  "count": 1,
+  "replacement": "        require __DIR__.'/pagination-admin.php';      // Catalog → Pagination (Lane PG)\n        require __DIR__.'/not-found-page-admin.php';  // Safety → 404 page (Lane NF)\n"
+ },
+ {
+  "n": 2,
+  "what": "the breadcrumb and the page title",
+  "file": "resources/views/admin/app.blade.php",
+  "anchor": "democontent:['Safety','Demo Content'],",
+  "count": 1,
+  "replacement": "democontent:['Safety','Demo Content'],'notfoundpage':['Safety','404 page'],"
+ },
+ {
+  "n": 3,
+  "what": "the sidebar row at build time (LATE_NAV), the copy of the partial's own kbbAddNavEntry call; Safety, after Demo Content",
+  "file": "resources/views/admin/app.blade.php",
+  "anchor": "  {screen:'pagination',label:'Pagination',group:'Catalog',after:['brands-manager','category-tree','catalog'],icon:'<rect x=\"3\" y=\"4\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M7 20h2\"/><path d=\"M11 20h2\"/><path d=\"M15 20h2\"/>'},\n",
+  "count": 1,
+  "replacement": "  {screen:'pagination',label:'Pagination',group:'Catalog',after:['brands-manager','category-tree','catalog'],icon:'<rect x=\"3\" y=\"4\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M7 20h2\"/><path d=\"M11 20h2\"/><path d=\"M15 20h2\"/>'},\n  {screen:'notfoundpage',label:'404 page',group:'Safety',after:['democontent','sandbox','debug'],icon:'<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M9 10h.01\"/><path d=\"M15 10h.01\"/><path d=\"M8.5 16c1.2-1 2.3-1 3.5 0s2.3 1 3.5 0\"/><path d=\"M13 3l-2 4 2 2-1 3\"/>'},\n"
+ },
+ {
+  "n": 4,
+  "what": "arm the deep-link replay (#notfoundpage on a cold load); appended at the END of LATE_RENDERED, a spot no other lane's record quotes",
+  "file": "resources/views/admin/app.blade.php",
+  "anchor": "'spotted','mkt-email']);",
+  "count": 1,
+  "replacement": "'spotted','mkt-email','notfoundpage']);"
+ },
+ {
+  "n": 5,
+  "what": "load the screen, directly after Pagination",
+  "file": "resources/views/admin/app.blade.php",
+  "anchor": "@include('admin.partials.pagination-screen')\n",
+  "count": 1,
+  "replacement": "@include('admin.partials.pagination-screen')\n{{-- Safety -> 404 page (Lane NF): the design, the words, the links and the per-device sizes of the shop's 404 page. It wraps window.go for 'notfoundpage'; its sidebar row is the LATE_NAV entry. --}}\n@include('admin.partials.not-found-page-screen')\n"
+ },
+ {
+  "n": 6,
+  "what": "pin the Safety menu in the settled sidebar: one insertion, 'notfoundpage' after 'democontent', its first anchor",
+  "file": "tests/Feature/AdminSidebarIsCompleteAtBuildTest.php",
+  "anchor": "        'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'cache'],\n",
+  "count": 1,
+  "replacement": "        'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'cache'],\n        // 'notfoundpage' — Safety → 404 page (Lane NF), one insertion after its first anchor.\n        'Safety' => ['debug', 'sandbox', 'democontent', 'notfoundpage'],\n"
+ },
+ {
+  "n": 7,
+  "what": "keep Lane T1B's handover record in step with block 4 (TranslationConsoleTest reads it against the console)",
+  "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
+  "anchor": "'spotted','mkt-email']);",
+  "count": 1,
+  "replacement": "'spotted','mkt-email','notfoundpage']);"
+ },
+ {
+  "n": 8,
+  "what": "keep Lane BG's handover record in step with block 4",
+  "file": "docs/BG-ADMIN-APP-BLOCKS.md",
+  "anchor": "'spotted','mkt-email']);",
+  "count": 1,
+  "replacement": "'spotted','mkt-email','notfoundpage']);"
+ },
+ {
+  "n": 9,
+  "what": "keep Lane GS's handover record in step with block 4 (GridSectionConsoleReachTest reads its replacement against the console; its anchor quotes the line too)",
+  "file": "docs/GS-ADMIN-APP-BLOCKS.md",
+  "anchor": "'spotted','mkt-email']);",
+  "count": 2,
+  "replacement": "'spotted','mkt-email','notfoundpage']);"
+ }
+]

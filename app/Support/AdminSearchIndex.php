@@ -141,6 +141,10 @@ final class AdminSearchIndex
             ],
         ],
         'sandbox' => [],
+        // Safety → 404 page (Lane NF): the design, the words and the per-device sizes.
+        'notfoundpage' => [
+            '' => ['Design', 'Global', 'Desktop', 'Mobile', 'Trending now', 'Accent colour', 'Reset to defaults'],
+        ],
         'democontent' => [
             '' => [
                 'This is sample data, clearly separate from anything real', 'Create a sample order',
