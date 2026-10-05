@@ -56,10 +56,12 @@ it('keeps a featured product in the place Reorder gave it, on the shop, a catego
     $cat = \App\Models\Category::create(['name' => 'MCT Cat', 'slug' => 'mct-cat']);
     foreach ($ids as $i => $id) {
         Product::whereKey($id)->update(['position' => 10 + $i]);
-        $cat->products()->attach($id);
+        // The category's own number too (Lane SO): its page reads that one.
+        $cat->products()->attach($id, ['category_position' => 10 + $i]);
     }
     // Product 01 is first by position already; make 04 featured and last.
     Product::whereKey($ids[3])->update(['featured' => true, 'position' => 99]);
+    $cat->products()->updateExistingPivot($ids[3], ['category_position' => 99]);
     \App\Services\SettingsService::forgetMemo();
 
     foreach (['/shop/?filter_brands=medicubetest', '/collections/mct-cat/'] as $url) {

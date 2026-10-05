@@ -579,6 +579,10 @@ it('ships every setting at the value the page already had, except the ones the o
         'pin' => 'auto',
         // 2.60.358: "turn hide by default the products count".
         'show_count' => false,
+        // Lane SO: "remove the filter at all" and no link away from a category
+        // page -- both off, as he asked.
+        'filters_d' => false,
+        'shop_links' => false,
         // Lane FP: the Filters drawer on a phone, at the min(90vw, 300px) it
         // always had -- nothing moves until the owner drags one.
         'filter_w' => 90,

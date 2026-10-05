@@ -82,12 +82,21 @@ it('ships /super-sale/ with no dot, no count and no All products button, and the
     expect($block)->not->toBe('')
         ->and($block)->toContain('<div class="sh kbb-ph kbb-ph-nod kbb-ph-nom" ')
         ->and($block)->toContain('<h1 class="kbb-ph-t">Super Sale <span class="cnt kbb-ph-hd kbb-ph-hm">')
-        ->and($block)->toContain('<a class="lnk kbb-ph-b kbb-ph-hd kbb-ph-hm" href=')
+        // Lane SO: the "All products" link to /shop/ is not sent at all now
+        // (it was hidden by class); the owner: no link off a category's page.
+        ->and($block)->not->toContain('<a class="lnk kbb-ph-b')
         // Appearance → Header → Breadcrumbs ships off on both devices, so the
         // trail takes no row and carries the hidden classes.
         ->and($block)->toContain('<nav class="crumb kbb-ph-c kbb-ph-hd kbb-ph-hm">')
         ->and($block)->toContain('--ph-am:&quot;t t&quot;;')
         ->and($block)->toContain('data-kbb-ph="collection:super-sale"');
+
+    // Site layout → Product grid → "Links to the whole shop ..." brings the
+    // button back, with the hidden-on-both classes it always shipped with.
+    app(SettingsService::class)->set('layout_shop_links', '1');
+    SettingsService::forgetMemo();
+    expect(phBlock($this->get('/super-sale')->assertOk()->getContent()))
+        ->toContain('<a class="lnk kbb-ph-b kbb-ph-hd kbb-ph-hm" href=');
 });
 
 it('leaves every other custom page on its original markup, byte for byte', function () {

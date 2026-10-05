@@ -54,6 +54,11 @@ function syncProduct(string $slug, Category $cat): Product
 }
 
 it('shows a newly created category on the storefront without waiting for a cache to expire', function () {
+    // Lane SO: the filter rail is drawn only while Appearance → Site layout →
+    // Product grid → "Filters · laptop" is on; it ships off, as the owner asked
+    // ("remove the filter at all"). This test is about the rail, so it turns it on.
+    app(\App\Services\SettingsService::class)->set('layout_filters_d', '1');
+    \App\Services\SettingsService::forgetMemo();
     CategoryLaneRoutes::wire($this->app);
     CategoryLaneRoutes::wireStorefront($this->app);
 
@@ -84,6 +89,11 @@ it('shows a newly created category on the storefront without waiting for a cache
 });
 
 it('changes the order the shop sidebar shows when categories are reordered', function () {
+    // Lane SO: the filter rail is drawn only while Appearance → Site layout →
+    // Product grid → "Filters · laptop" is on; it ships off, as the owner asked
+    // ("remove the filter at all"). This test is about the rail, so it turns it on.
+    app(\App\Services\SettingsService::class)->set('layout_filters_d', '1');
+    \App\Services\SettingsService::forgetMemo();
     CategoryLaneRoutes::wire($this->app);
 
     // Deliberately unequal sizes, and deliberately the WRONG way round for a
@@ -116,6 +126,11 @@ it('changes the order the shop sidebar shows when categories are reordered', fun
 });
 
 it('changes the order the shop sidebar shows when brands are reordered', function () {
+    // Lane SO: the filter rail is drawn only while Appearance → Site layout →
+    // Product grid → "Filters · laptop" is on; it ships off, as the owner asked
+    // ("remove the filter at all"). This test is about the rail, so it turns it on.
+    app(\App\Services\SettingsService::class)->set('layout_filters_d', '1');
+    \App\Services\SettingsService::forgetMemo();
     CategoryLaneRoutes::wire($this->app);
 
     $a = Brand::create(['slug' => 'aq-brand-alpha', 'name' => 'AQ Brand Alpha', 'position' => 0]);

@@ -173,6 +173,23 @@ class SiteLayout
             'Off: the "44 products" line beside the Filters button is not shown on the shop, category and brand pages. On: it is.'],
 
         /*
+         * ── NO FILTERS, AND NO WAY OFF THE PAGE ───────────────────── Lane SO ──
+         *
+         * The owner, 5 October: "i want the if user come to any category or
+         * brand, the app should not display any external link or shop filter
+         * etc. so that user can stick to that page which she actually visited",
+         * and of the filters: "remove the filter at all. i mean keep turned off
+         * completely on all pages by default." Both ship OFF, as he asked; each
+         * switch puts the old page back. Off means NOT RENDERED -- no filter
+         * column, no Show filters button, no /shop/?brand= link in the HTML --
+         * rather than hidden by CSS. Not CSS, so css() never sees them.
+         */
+        'filters_d' => ['bool', 'Filters · laptop', false,
+            'Off, as you asked: no filter column and no "Show filters" button on the shop and category pages -- just the products. On: the filter column comes back, closed until the shopper opens it, as before. Phones have their own switch below.'],
+        'shop_links' => ['bool', 'Links to the whole shop on category and campaign pages', false,
+            'Off, as you asked: a category page, /super-sale/ and the skin-concern pages show no "All products" link to the shop, so a shopper stays on the page she came to. The site menu and footer are not affected. On: the links come back.'],
+
+        /*
          * ── THE FILTERS DRAWER ON A PHONE ─────────────────────────── Lane FP ──
          *
          * The owner, on his phone's Filters drawer: "i want the filters panel
@@ -200,7 +217,7 @@ class SiteLayout
          * the capsule size of sort." Both as he asked. (2.60.393)
          */
         'filters_m' => ['bool', 'Filters button · phone', false,
-            'Off, as you asked: phones show no Filters button above the products. Laptops keep their filter column either way.'],
+            'Off, as you asked: phones show no Filters button above the products, and no filter drawer is sent to them. Laptops follow "Filters · laptop" above.'],
         'cols_m' => ['bool', 'Column buttons (1 or 2) · phone', true,
             'On, as you asked: phones get two small buttons beside Sort to show one product per row or two.'],
 
@@ -1045,7 +1062,7 @@ class SiteLayout
             ['max', 'gutter', 'gutter_wide', 'header_follows']],
         'grid' => ['Product grid',
             'The column count is not set here — it is worked out from the smallest card and the width each grid actually has, so a grid beside the shop filters gets the right answer rather than the window\'s answer.',
-            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count', 'filter_w', 'filter_max', 'filters_m', 'cols_m']],
+            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count', 'filters_d', 'shop_links', 'filter_w', 'filter_max', 'filters_m', 'cols_m']],
         'loading' => ['Loading more products',
             'How /shop, every category, every brand page and the curated listings bring in more products: more on scroll, numbered arrows, or everything at once. Shoppers without JavaScript always get the arrows.',
             ['load_mode', 'load_batch', 'load_batch_custom', 'load_url']],

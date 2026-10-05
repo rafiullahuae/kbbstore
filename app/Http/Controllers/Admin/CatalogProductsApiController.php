@@ -730,7 +730,14 @@ class CatalogProductsApiController extends Controller
 
         DB::transaction(function () use ($mode, $productIds, $categoryIds, &$attached, &$detached) {
             if ($mode === 'replace') {
-                $detached += DB::table('category_product')->whereIn('product_id', $productIds)->delete();
+                // Only the categories being dropped. A category the product
+                // stays in keeps its row, and with it the product's place in
+                // that category's own order (Lane SO) -- deleting and
+                // re-inserting it would send the product to the end there.
+                $detached += DB::table('category_product')
+                    ->whereIn('product_id', $productIds)
+                    ->whereNotIn('category_id', $categoryIds)
+                    ->delete();
             }
 
             if ($mode === 'remove') {

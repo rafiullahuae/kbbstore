@@ -93,6 +93,11 @@ it('says the sort options in the shopper\'s language', function () {
 });
 
 it('says the price bands in the shopper\'s language', function () {
+    // Lane SO: the filter rail is drawn only while Appearance → Site layout →
+    // Product grid → "Filters · laptop" is on; it ships off, as the owner asked
+    // ("remove the filter at all"). This test is about the rail, so it turns it on.
+    app(\App\Services\SettingsService::class)->set('layout_filters_d', '1');
+    \App\Services\SettingsService::forgetMemo();
     fbArabicOn();
 
     fbArabic('store.shop.price_u54', 'أقل من ٥٤');

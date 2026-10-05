@@ -1,0 +1,747 @@
+{
+ "pages": {
+  "before": {
+   "category@390": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-b",
+     "medicube-product-g",
+     "anua-product-y",
+     "medicube-product-f",
+     "anua-product-z"
+    ],
+    "scrollWidth": 390,
+    "height": 2951,
+    "filterRail": 1,
+    "filterButtons": 2,
+    "awayLinks": [
+     "/shop/?cat=super-sale",
+     "/shop/?cat=cleansers",
+     "/shop/?cat=toners",
+     "/shop/?cat=serums",
+     "/shop/?cat=moisturisers",
+     "/shop/?cat=sunscreens",
+     "/shop/?cat=masks",
+     "/shop/?brand=beauty-of-joseon",
+     "/shop/?brand=cosrx",
+     "/shop/?brand=anua",
+     "/shop/?brand=medicube",
+     "/shop/?brand=round-lab",
+     "/shop/?brand=torriden",
+     "/shop/?brand=isntree",
+     "/shop/?brand=skin1004",
+     "/shop/?price=u54",
+     "/shop/?price=54-150",
+     "/shop/?price=150-300",
+     "/shop/?price=300p",
+     "/shop/?sale=1",
+     "/shop/?instock=1"
+    ],
+    "file": "docs/so-shots/before-category-390.png"
+   },
+   "category@1280": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-b",
+     "medicube-product-g",
+     "anua-product-y",
+     "medicube-product-f",
+     "anua-product-z"
+    ],
+    "scrollWidth": 1280,
+    "height": 1926,
+    "filterRail": 1,
+    "filterButtons": 2,
+    "awayLinks": [
+     "/shop/?cat=super-sale",
+     "/shop/?cat=cleansers",
+     "/shop/?cat=toners",
+     "/shop/?cat=serums",
+     "/shop/?cat=moisturisers",
+     "/shop/?cat=sunscreens",
+     "/shop/?cat=masks",
+     "/shop/?brand=beauty-of-joseon",
+     "/shop/?brand=cosrx",
+     "/shop/?brand=anua",
+     "/shop/?brand=medicube",
+     "/shop/?brand=round-lab",
+     "/shop/?brand=torriden",
+     "/shop/?brand=isntree",
+     "/shop/?brand=skin1004",
+     "/shop/?price=u54",
+     "/shop/?price=54-150",
+     "/shop/?price=150-300",
+     "/shop/?price=300p",
+     "/shop/?sale=1",
+     "/shop/?instock=1"
+    ],
+    "file": "docs/so-shots/before-category-1280.png"
+   },
+   "brand@390": {
+    "status": 200,
+    "order": [
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-g",
+     "medicube-product-h",
+     "medicube-product-a",
+     "medicube-product-f",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 390,
+    "height": 3298,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [],
+    "file": "docs/so-shots/before-brand-390.png"
+   },
+   "brand@1280": {
+    "status": 200,
+    "order": [
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-g",
+     "medicube-product-h",
+     "medicube-product-a",
+     "medicube-product-f",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 1280,
+    "height": 2266,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [],
+    "file": "docs/so-shots/before-brand-1280.png"
+   },
+   "supersale@390": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-a",
+     "anua-product-y",
+     "anua-product-z",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 390,
+    "height": 2338,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [
+     "/shop/"
+    ],
+    "file": "docs/so-shots/before-supersale-390.png"
+   },
+   "supersale@1280": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-a",
+     "anua-product-y",
+     "anua-product-z",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 1280,
+    "height": 1562,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [
+     "/shop/"
+    ],
+    "file": "docs/so-shots/before-supersale-1280.png"
+   }
+  },
+  "after": {
+   "category@390": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-b",
+     "medicube-product-g",
+     "anua-product-y",
+     "medicube-product-f",
+     "anua-product-z"
+    ],
+    "scrollWidth": 390,
+    "height": 2951,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [],
+    "file": "docs/so-shots/after-category-390.png"
+   },
+   "category@1280": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-b",
+     "medicube-product-g",
+     "anua-product-y",
+     "medicube-product-f",
+     "anua-product-z"
+    ],
+    "scrollWidth": 1280,
+    "height": 1926,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [],
+    "file": "docs/so-shots/after-category-1280.png"
+   },
+   "brand@390": {
+    "status": 200,
+    "order": [
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-g",
+     "medicube-product-h",
+     "medicube-product-a",
+     "medicube-product-f",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 390,
+    "height": 3298,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [],
+    "file": "docs/so-shots/after-brand-390.png"
+   },
+   "brand@1280": {
+    "status": 200,
+    "order": [
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-g",
+     "medicube-product-h",
+     "medicube-product-a",
+     "medicube-product-f",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 1280,
+    "height": 2266,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [],
+    "file": "docs/so-shots/after-brand-1280.png"
+   },
+   "supersale@390": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-a",
+     "anua-product-y",
+     "anua-product-z",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 390,
+    "height": 2338,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [],
+    "file": "docs/so-shots/after-supersale-390.png"
+   },
+   "supersale@1280": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-a",
+     "anua-product-y",
+     "anua-product-z",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 1280,
+    "height": 1562,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [],
+    "file": "docs/so-shots/after-supersale-1280.png"
+   }
+  },
+  "control": {
+   "category@390": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-b",
+     "medicube-product-g",
+     "anua-product-y",
+     "medicube-product-f",
+     "anua-product-z"
+    ],
+    "scrollWidth": 390,
+    "height": 2951,
+    "filterRail": 1,
+    "filterButtons": 2,
+    "awayLinks": [
+     "/shop/?cat=super-sale",
+     "/shop/?cat=cleansers",
+     "/shop/?cat=toners",
+     "/shop/?cat=serums",
+     "/shop/?cat=moisturisers",
+     "/shop/?cat=sunscreens",
+     "/shop/?cat=masks",
+     "/shop/?brand=beauty-of-joseon",
+     "/shop/?brand=cosrx",
+     "/shop/?brand=anua",
+     "/shop/?brand=medicube",
+     "/shop/?brand=round-lab",
+     "/shop/?brand=torriden",
+     "/shop/?brand=isntree",
+     "/shop/?brand=skin1004",
+     "/shop/?price=u54",
+     "/shop/?price=54-150",
+     "/shop/?price=150-300",
+     "/shop/?price=300p",
+     "/shop/?sale=1",
+     "/shop/?instock=1"
+    ],
+    "file": "docs/so-shots/control-category-390.png"
+   },
+   "category@1280": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-b",
+     "medicube-product-g",
+     "anua-product-y",
+     "medicube-product-f",
+     "anua-product-z"
+    ],
+    "scrollWidth": 1280,
+    "height": 1926,
+    "filterRail": 1,
+    "filterButtons": 2,
+    "awayLinks": [
+     "/shop/?cat=super-sale",
+     "/shop/?cat=cleansers",
+     "/shop/?cat=toners",
+     "/shop/?cat=serums",
+     "/shop/?cat=moisturisers",
+     "/shop/?cat=sunscreens",
+     "/shop/?cat=masks",
+     "/shop/?brand=beauty-of-joseon",
+     "/shop/?brand=cosrx",
+     "/shop/?brand=anua",
+     "/shop/?brand=medicube",
+     "/shop/?brand=round-lab",
+     "/shop/?brand=torriden",
+     "/shop/?brand=isntree",
+     "/shop/?brand=skin1004",
+     "/shop/?price=u54",
+     "/shop/?price=54-150",
+     "/shop/?price=150-300",
+     "/shop/?price=300p",
+     "/shop/?sale=1",
+     "/shop/?instock=1"
+    ],
+    "file": "docs/so-shots/control-category-1280.png"
+   },
+   "brand@390": {
+    "status": 200,
+    "order": [
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-g",
+     "medicube-product-h",
+     "medicube-product-a",
+     "medicube-product-f",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 390,
+    "height": 3298,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [],
+    "file": "docs/so-shots/control-brand-390.png"
+   },
+   "brand@1280": {
+    "status": 200,
+    "order": [
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-g",
+     "medicube-product-h",
+     "medicube-product-a",
+     "medicube-product-f",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 1280,
+    "height": 2266,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [],
+    "file": "docs/so-shots/control-brand-1280.png"
+   },
+   "supersale@390": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-a",
+     "anua-product-y",
+     "anua-product-z",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 390,
+    "height": 2338,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [
+     "/shop/"
+    ],
+    "file": "docs/so-shots/control-supersale-390.png"
+   },
+   "supersale@1280": {
+    "status": 200,
+    "order": [
+     "anua-product-x",
+     "medicube-product-e",
+     "medicube-product-b",
+     "medicube-product-c",
+     "medicube-product-a",
+     "anua-product-y",
+     "anua-product-z",
+     "medicube-product-d"
+    ],
+    "scrollWidth": 1280,
+    "height": 1562,
+    "filterRail": 0,
+    "filterButtons": 0,
+    "awayLinks": [
+     "/shop/"
+    ],
+    "file": "docs/so-shots/control-supersale-1280.png"
+   }
+  }
+ },
+ "reorder": {
+  "brandBefore": [
+   "Medicube Product E",
+   "Medicube Product B",
+   "Medicube Product C",
+   "Low pH Good Morning Gel Cleanser",
+   "Medicube Product G",
+   "Medicube Product H",
+   "Medicube Product A",
+   "Medicube Product F",
+   "Medicube Product D",
+   "Cellmazing Fit Serum",
+   "Barrier Repair Cream"
+  ],
+  "brandSaved": [
+   "Medicube Product H",
+   "Medicube Product F",
+   "Medicube Product E",
+   "Medicube Product B",
+   "Medicube Product C",
+   "Low pH Good Morning Gel Cleanser",
+   "Medicube Product G",
+   "Medicube Product A",
+   "Medicube Product D",
+   "Cellmazing Fit Serum",
+   "Barrier Repair Cream"
+  ],
+  "saleBefore": [
+   "Anua Product X",
+   "Medicube Product E",
+   "Medicube Product B",
+   "Medicube Product C",
+   "Medicube Product A",
+   "Anua Product Y",
+   "Anua Product Z",
+   "Medicube Product D"
+  ],
+  "saleSaved": [
+   "Medicube Product C",
+   "Anua Product Z",
+   "Medicube Product D",
+   "Medicube Product A",
+   "Anua Product X",
+   "Medicube Product E",
+   "Medicube Product B",
+   "Anua Product Y"
+  ],
+  "brandPage": [
+   "medicube-product-h",
+   "medicube-product-f",
+   "medicube-product-e",
+   "medicube-product-b",
+   "medicube-product-c",
+   "medicube-product-g",
+   "medicube-product-a",
+   "medicube-product-d"
+  ],
+  "saleCategoryPage": [
+   "medicube-product-c",
+   "anua-product-z",
+   "medicube-product-d",
+   "medicube-product-a",
+   "anua-product-x",
+   "medicube-product-e",
+   "medicube-product-b",
+   "anua-product-y"
+  ],
+  "superSalePage": [
+   "medicube-product-c",
+   "anua-product-z",
+   "medicube-product-d",
+   "medicube-product-a",
+   "anua-product-x",
+   "medicube-product-e",
+   "medicube-product-b",
+   "anua-product-y"
+  ],
+  "brandPageMatchesBrandSave": true,
+  "superSaleMatchesSaleSave": true,
+  "saleCategoryMatchesSaleSave": true
+ },
+ "control": {
+  "category@390": {
+   "size": [
+    390,
+    2951,
+    390,
+    2951
+   ],
+   "differing": 64840,
+   "bands": [
+    [
+     133,
+     322
+    ]
+   ],
+   "x": [
+    22,
+    367
+   ]
+  },
+  "category@1280": {
+   "size": [
+    1280,
+    1926,
+    1280,
+    1926
+   ],
+   "differing": 368874,
+   "bands": [
+    [
+     100,
+     399
+    ]
+   ],
+   "x": [
+    22,
+    1257
+   ]
+  },
+  "brand@390": {
+   "size": [
+    390,
+    3298,
+    390,
+    3298
+   ],
+   "differing": 0,
+   "bands": [],
+   "x": null
+  },
+  "brand@1280": {
+   "size": [
+    1280,
+    2266,
+    1280,
+    2266
+   ],
+   "differing": 0,
+   "bands": [],
+   "x": null
+  },
+  "supersale@390": {
+   "size": [
+    390,
+    2338,
+    390,
+    2338
+   ],
+   "differing": 25,
+   "bands": [
+    [
+     518,
+     522
+    ],
+    [
+     547,
+     551
+    ],
+    [
+     922,
+     922
+    ],
+    [
+     924,
+     926
+    ]
+   ],
+   "x": [
+    13,
+    376
+   ]
+  },
+  "supersale@1280": {
+   "size": [
+    1280,
+    1562,
+    1280,
+    1562
+   ],
+   "differing": 0,
+   "bands": [],
+   "x": null
+  }
+ },
+ "diff": {
+  "category@390": {
+   "size": [
+    390,
+    2951,
+    390,
+    2951
+   ],
+   "differing": 64848,
+   "bands": [
+    [
+     133,
+     322
+    ],
+    [
+     393,
+     395
+    ]
+   ],
+   "x": [
+    22,
+    367
+   ],
+   "sameOrder": true
+  },
+  "category@1280": {
+   "size": [
+    1280,
+    1926,
+    1280,
+    1926
+   ],
+   "differing": 9129,
+   "bands": [
+    [
+     440,
+     503
+    ],
+    [
+     506,
+     506
+    ],
+    [
+     508,
+     509
+    ],
+    [
+     1193,
+     1193
+    ]
+   ],
+   "x": [
+    10,
+    1254
+   ],
+   "sameOrder": true
+  },
+  "brand@390": {
+   "size": [
+    390,
+    3298,
+    390,
+    3298
+   ],
+   "differing": 0,
+   "bands": [],
+   "x": null,
+   "sameOrder": true
+  },
+  "brand@1280": {
+   "size": [
+    1280,
+    2266,
+    1280,
+    2266
+   ],
+   "differing": 0,
+   "bands": [],
+   "x": null,
+   "sameOrder": true
+  },
+  "supersale@390": {
+   "size": [
+    390,
+    2338,
+    390,
+    2338
+   ],
+   "differing": 25,
+   "bands": [
+    [
+     518,
+     522
+    ],
+    [
+     547,
+     551
+    ],
+    [
+     922,
+     922
+    ],
+    [
+     924,
+     926
+    ]
+   ],
+   "x": [
+    13,
+    376
+   ],
+   "sameOrder": true
+  },
+  "supersale@1280": {
+   "size": [
+    1280,
+    1562,
+    1280,
+    1562
+   ],
+   "differing": 0,
+   "bands": [],
+   "x": null,
+   "sameOrder": true
+  }
+ }
+}

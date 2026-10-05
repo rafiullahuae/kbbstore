@@ -278,7 +278,7 @@
       }).join('') + '</select></div>'
       + '<div style="margin-top:10px">' + status + '</div>'
       + copiedHTML(s)
-      + '<p class="pbs-help" style="margin-top:10px"><b>Running the campaign.</b> Add or remove a product: <b>Catalog → Product editor → Categories</b>, tick or untick <b>Super Sale</b>. Change the order: <b>Catalog → Catalog → Reorder</b>, choose <b>Super Sale</b>, drag, Save. That order is shared with every category the product is in, exactly as on the old site.</p>';
+      + '<p class="pbs-help" style="margin-top:10px"><b>Running the campaign.</b> Add or remove a product: <b>Catalog → Product editor → Categories</b>, tick or untick <b>Super Sale</b>. Change the order: <b>Catalog → Catalog → Reorder</b>, choose <b>Super Sale</b>, drag, Save. That order is Super Sale\'s own: saving it moves no other category or brand page, and theirs never move it.</p>';
   }
 
   function render() {

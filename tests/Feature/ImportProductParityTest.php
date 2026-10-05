@@ -749,12 +749,20 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
      * owner pairs with which is his merchandising and no business of an
      * unauthenticated feed. ApiSecurityTest's "keeps a product's own 'You may
      * also like' picks off the public product api" pins the absence by name.
+     *
+     * ── AND A FOURTH (Lane SO) ─────────────────────────────────────────────
+     *
+     * `brand_position`, by 2027_08_28_100000_independent_order_per_category_
+     * and_brand: the product's place in its brand's own Reorder order. DECIDED
+     * FIRST: NOT in Product::toApi() -- the order is the owner's merchandising,
+     * and the feed's own order already says all a reader needs. ApiSecurityTest
+     * "keeps a product's place in its brand's order off the public product api".
      */
     $columns = Schema::getColumnListing('products');
     sort($columns);
 
     expect($columns)->toBe([
-        'also_like', 'brand_id', 'category_id', 'created_at', 'custom_tabs', 'deleted_at', 'description', 'featured',
+        'also_like', 'brand_id', 'brand_position', 'category_id', 'created_at', 'custom_tabs', 'deleted_at', 'description', 'featured',
         'gtin', 'how_to_use', 'id', 'image', 'image_alts', 'images', 'ingredients', 'is_visible',
         'manage_stock', 'meta_feed', 'name', 'position', 'price', 'published_at', 'rating',
         'review_count', 'routine_concerns', 'routine_role', 'sale_ends_at', 'sale_price',

@@ -16,8 +16,13 @@
         'title' => $ch['heading'],
         'count' => trans_choice('store.collection.product_count', $chTotal, ['formatted' => number_format($chTotal)]),
         'intro' => $ch['intro'],
-        'button' => ['href' => \App\Support\Url::to('/shop/'), 'label' => __('store.collection.all_products')],
     ];
+    // "All products" leaves the category for /shop/. Off unless Appearance →
+    // Site layout → Product grid → "Links to the whole shop ..." is on: the
+    // owner wants a shopper to stay on the category she came to. (Lane SO)
+    if (app(\App\Services\SiteLayout::class)->get('shop_links')) {
+        $chParts['button'] = ['href' => \App\Support\Url::to('/shop/'), 'label' => __('store.collection.all_products')];
+    }
 @endphp
 <div class="kbb-home kbb-chc" data-kbb-ch="{{ $ch['id'] }}">
 <style id="kbb-chc-css">{!! \App\Services\CategoryHeaders::CSS !!}</style>

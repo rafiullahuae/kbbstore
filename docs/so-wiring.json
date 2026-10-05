@@ -1,0 +1,10 @@
+[
+ {
+  "n": 1,
+  "what": "the Reorder screen's explanation: each category and brand has its own order now (Lane SO)",
+  "file": "resources/views/admin/app.blade.php",
+  "anchor": "    This is the product's real, global sort order — the same one the shop's default view uses — edited here one ${reorderType} at a time. A product shared across more than one moves everywhere it appears, matching how the live storefront's own \"menu order\" always worked.\n",
+  "count": 1,
+  "replacement": "    This ${reorderType}'s own order — the order its page on the shop shows. Every category and every brand keeps its own: saving this one never moves another, even where they share products. A product added to it later joins at the end.\n"
+ }
+]

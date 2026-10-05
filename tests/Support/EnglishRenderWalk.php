@@ -2132,7 +2132,11 @@ final class EnglishRenderWalk
                 'pattern' => '#<div class="fgroup"><h4>#',
                 // /shop and the category page, four facet titles each.
                 'with' => '<div class="fgroup"><h4 aria-level="2">',
-                'hits' => 8,
+                // 0 since Lane SO: with the filters off (shipped, the owner
+                // asked) no rail is drawn, and approvedRemovals' "the filter
+                // rail" cuts it from the before side first. The rule stays for
+                // the shop that turns a Filters switch back on.
+                'hits' => 0,
             ],
 
             /*
@@ -2321,9 +2325,13 @@ KBB_BH_CSS;
              * and dimmed beside the open drawer on a phone. Nothing else in the
              * markup moves; the rest of the patch is stylesheet and script.
              */
+            // Lane SO: 0. The owner, 5 October: "remove the filter at all ...
+            // keep turned off completely on all pages by default." With both
+            // Filters switches off (shipped) no drawer is drawn, so neither is
+            // its backdrop; the filter rail itself is in approvedRemovals().
             'the Filters drawer backdrop (Lane FP)' => [
                 'pattern' => '#    <div class="fscrim" data-kbb-close></div>\n#',
-                'hits' => 2,
+                'hits' => 0,
             ],
 
             /*
@@ -2349,7 +2357,10 @@ KBB_BH_CSS;
                     .'<nav class="crumb kbb-ph-c kbb-ph-hd kbb-ph-hm"><a href="[^"]*">Home</a> / <span>Super Sale</span></nav>\n'   // Breadcrumbs ship off
                     .'<h1 class="kbb-ph-t">Super Sale <span class="cnt kbb-ph-hd kbb-ph-hm">[^<]*</span></h1>\n'
                     .'<p class="kbb-ph-p kbb-ph-hm">[^<]*</p>\n'   // hidden on a phone, as .sh p always was
-                    .'<a class="lnk kbb-ph-b kbb-ph-hd kbb-ph-hm" href="[^"]*">All products</a>\n'
+                    // Lane SO: no "All products" link to /shop/ any more -- it
+                    // was hidden by CSS, now it is not sent ("the app should
+                    // not display any external link"; Site layout → Product
+                    // grid → "Links to the whole shop ..." brings it back).
                     .'</div>\n#',
                 'hits' => 1,
             ],
@@ -3221,6 +3232,29 @@ KBB_BH_CSS;
              */
             'the product count beside Show filters (2.60.358)' => [
                 'pattern' => '#\n            <span class="gcount"><b>\d+</b> products?</span>(?=\n)#',
+                'hits' => 2,
+            ],
+
+            /*
+             * THE FILTERS, GONE FROM /shop/ AND THE CATEGORY ARCHIVE. (Lane SO)
+             *
+             * The owner, 5 October: "remove the filter at all. i mean keep
+             * turned off completely on all pages by default", and of category
+             * and brand pages, "the app should not display any external link or
+             * shop filter etc." Appearance → Site layout → Product grid →
+             * "Filters · laptop" and "Filters button · phone" ship off, and off
+             * means NOT SENT: the rail with its /shop/?cat= / ?brand= / ?price=
+             * links, and the two Filters buttons above the grid (the phone's was
+             * already hidden by CSS, the laptop's "Show filters" was the way in).
+             * Exactly the two listings the walk renders. The page keeps its
+             * grid: body.filters-hidden already gave it the whole row.
+             */
+            'the filter rail (Lane SO)' => [
+                'pattern' => '#    <aside class="filtercol" id="fcol">.*?</aside>\n#s',
+                'hits' => 2,
+            ],
+            'the two Filters buttons above the grid (Lane SO)' => [
+                'pattern' => '#            <button class="mobi-filter" type="button"[^\n]*</button>\n            <button id="showFilters" type="button"[^\n]*?</button>#',
                 'hits' => 2,
             ],
 

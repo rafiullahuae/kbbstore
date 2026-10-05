@@ -89,8 +89,9 @@ final class SuperSale
 
     /**
      * Narrow a product query to the campaign category and order it as the old
-     * site did. One correlated EXISTS, so the select list, the pagination and
-     * the brand eager-load are untouched — and the query count is the same as
+     * site did. One join on the category's pivot rows (ScopeOrder::inCategory,
+     * which exposes only its own two columns), so the select list, the
+     * pagination and the brand eager-load are untouched — and the query count is the same as
      * the reduced-products listing it replaces.
      *
      * @param  array{0:string,1:string|int}  $campaign
@@ -111,20 +112,12 @@ final class SuperSale
             $query->orderByRaw($case.' ELSE '.count($order).' END');
         }
 
-        return $query
-            ->whereExists(function ($q) use ($by, $value): void {
-                $q->selectRaw('1')
-                    ->from('category_product')
-                    ->whereColumn('category_product.product_id', 'products.id');
+        // The campaign category's products and THAT CATEGORY'S OWN order (Lane
+        // SO): saving Super Sale in Reorder moves this page and nothing else,
+        // and no brand's or other category's Reorder can move it.
+        ScopeOrder::inCategory($query, $by === 'id' ? (int) $value : (string) $value);
 
-                if ($by === 'id') {
-                    $q->where('category_product.category_id', (int) $value);
-                } else {
-                    $q->join('categories', 'categories.id', '=', 'category_product.category_id')
-                        ->where('categories.slug', (string) $value);
-                }
-            })
-            ->orderBy('products.position')
+        return ScopeOrder::orderInCategory($query)
             ->orderBy('products.name')
             ->orderBy('products.id');
     }

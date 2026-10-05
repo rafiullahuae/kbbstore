@@ -62,7 +62,8 @@
 
      WRITTEN HERE, above the section that uses it, because @section inside
      @section does not nest: the inner one closes the outer. --}}
-@section('body-class', request()->cookie('kbb_filters') === 'open' ? '' : 'filters-hidden')
+{{-- Lane SO: with "Filters · laptop" off (the shipped state, as the owner asked) there is no column to open, so the class is always on and the grid takes the row exactly as it did with the column closed. --}}
+@section('body-class', ($filtersD ?? false) && request()->cookie('kbb_filters') === 'open' ? '' : 'filters-hidden')
 
 @section('content')
 @php
@@ -159,6 +160,7 @@
 @endif
 
 <div class="wrap shop">
+{{-- NOT RENDERED WHEN OFF (Lane SO). The owner: "remove the filter at all ... keep turned off completely on all pages by default." Appearance → Site layout → Product grid → "Filters · laptop" and "Filters button · phone"; with both off (shipped) the page sends no filter column, no drawer and none of its /shop/?cat= / ?brand= / ?price= links. --}}@if (($filtersD ?? false) || ($filtersM ?? false))
     <aside class="filtercol" id="fcol">
         <div class="fpanel">
             <div class="fhead">
@@ -205,13 +207,17 @@
             </div>
         </div>
     </aside>
-    <div class="fscrim" data-kbb-close></div>@php $kbbLay = app(\App\Services\SiteLayout::class); $kbbMcols = in_array((string) request()->query('mcols'), ['1', '2'], true) ? (string) request()->query('mcols') : null; @endphp
-
+    <div class="fscrim" data-kbb-close></div>
+@endif
+@php $kbbLay = app(\App\Services\SiteLayout::class); $kbbMcols = in_array((string) request()->query('mcols'), ['1', '2'], true) ? (string) request()->query('mcols') : null; @endphp
 
     <main>
         <div class="gtop{{ $kbbLay->get('filters_m') ? '' : ' kbb-nofilt-m' }}{{ $kbbLay->get('cols_m') ? ' kbb-mcols' : '' }}">
+@if ($filtersM ?? false)
             <button class="mobi-filter" type="button" onclick="document.body.classList.add('filters-open')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_heading') }}@if ($chips)<span class="fcount">{{ count($chips) }}</span>@endif</button>
-            <button id="showFilters" type="button" onclick="document.body.classList.remove('filters-hidden');document.cookie='kbb_filters=open;path=/;max-age=31536000;samesite=lax'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_show') }}@if ($chips)<span class="fcount">{{ count($chips) }}</span>@endif</button>@if (app(\App\Services\SiteLayout::class)->get('show_count')){{ "\n" }}            <span class="gcount">{!! trans_choice('store.shop.product_count', $total, ['formatted' => '<b>' . e($total) . '</b>']) !!}</span>@endif{{ '' }}
+@endif
+@if ($filtersD ?? false)
+            <button id="showFilters" type="button" onclick="document.body.classList.remove('filters-hidden');document.cookie='kbb_filters=open;path=/;max-age=31536000;samesite=lax'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_show') }}@if ($chips)<span class="fcount">{{ count($chips) }}</span>@endif</button>@endif{{ '' }}@if (app(\App\Services\SiteLayout::class)->get('show_count')){{ "\n" }}            <span class="gcount">{!! trans_choice('store.shop.product_count', $total, ['formatted' => '<b>' . e($total) . '</b>']) !!}</span>@endif{{ '' }}
             <div class="gright">
                 <div class="colsel" id="colsel">
                     <button type="button" data-c="2"@if ($colsChosen && '2' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 2) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg></button>

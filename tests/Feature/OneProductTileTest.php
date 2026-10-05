@@ -555,6 +555,11 @@ it('starts with the filter rail hidden on /shop and on every category archive', 
 });
 
 it('remembers that a shopper opened the filters, across the click that uses them', function () {
+    // Lane SO: the filter rail is drawn only while Appearance → Site layout →
+    // Product grid → "Filters · laptop" is on; it ships off, as the owner asked
+    // ("remove the filter at all"). This test is about the rail, so it turns it on.
+    app(\App\Services\SettingsService::class)->set('layout_filters_d', '1');
+    \App\Services\SettingsService::forgetMemo();
     /*
      * A preference that resets on every navigation is worse than no preference:
      * a shopper who opens the filters, ticks a brand and lands on the filtered
@@ -586,6 +591,11 @@ it('remembers that a shopper opened the filters, across the click that uses them
 });
 
 it('writes the cookie in the same click that hides or shows the rail', function () {
+    // Lane SO: the filter rail is drawn only while Appearance → Site layout →
+    // Product grid → "Filters · laptop" is on; it ships off, as the owner asked
+    // ("remove the filter at all"). This test is about the rail, so it turns it on.
+    app(\App\Services\SettingsService::class)->set('layout_filters_d', '1');
+    \App\Services\SettingsService::forgetMemo();
     /*
      * The class and the cookie have to move together or the preference is a
      * setting that never gets set. Asserted on the markup because there is no
@@ -605,6 +615,12 @@ it('writes the cookie in the same click that hides or shows the rail', function 
 });
 
 it('leaves the way back into the filters impossible to miss at both widths', function () {
+    // Lane SO: the filter rail is drawn only while Appearance → Site layout →
+    // Product grid → "Filters · laptop" is on; it ships off, as the owner asked
+    // ("remove the filter at all"). This test is about the rail, so it turns it on.
+    app(\App\Services\SettingsService::class)->set('layout_filters_d', '1');
+    app(\App\Services\SettingsService::class)->set('layout_filters_m', '1');   // and the phone's button: both entry points
+    \App\Services\SettingsService::forgetMemo();
     /*
      * The rail starts hidden, so #showFilters is the only thing on a desktop
      * page saying that filtering exists at all. It was pink text on a

@@ -8886,7 +8886,7 @@ function reorderPaint(){
     <span style="font-size:11px;color:var(--ink-soft)">10–500</span>
   </div>
   <p style="font-size:12px;color:var(--ink-soft);margin:6px 0 12px">
-    This is the product's real, global sort order — the same one the shop's default view uses — edited here one ${reorderType} at a time. A product shared across more than one moves everywhere it appears, matching how the live storefront's own "menu order" always worked.
+    This ${reorderType}'s own order — the order its page on the shop shows. Every category and every brand keeps its own: saving this one never moves another, even where they share products. A product added to it later joins at the end.
   </p>
   <div id="reBulkBar" style="${reorderSelected.size?'':'display:none'};background:var(--pink-soft,#fff0f4);border:1px solid var(--accent,#E0567B);border-radius:10px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px">
     <span style="font-size:12.5px;font-weight:600">${reorderSelected.size} selected</span>
