@@ -37,7 +37,7 @@ class Brand extends Model
      */
     protected function casts(): array
     {
-        return ['position' => 'int', 'seo' => 'array', 'banner' => 'array'];
+        return ['position' => 'int', 'seo' => 'array', 'banner' => 'array', 'header_layout' => 'array'];
     }
 
     public function products()

@@ -1,0 +1,60 @@
+/*
+ * The brand page's PANEL header (Lane BR2). Markup: store/partials/brand-panel.
+ * Loaded only by a brand page that draws it.
+ *
+ * ONE MARKUP, TWO SHAPES, CHOSEN BY THE HEADER'S OWN WIDTH. .brw-phw is a size
+ * container, so the quick editor's 390px phone preview lays out exactly as a
+ * phone does, and nothing is measured by script. Every size is a custom
+ * property BrandPanel prints as a clamped integer:
+ *
+ *   --brw-ph-w   header width (laptop)      --brw-ph-h   banner height (laptop)
+ *   --brw-ph-cw  panel width (laptop)       --brw-ph-hm  banner height (phone)
+ *   --brw-ph-dk  dark shade of the brand    --brw-ph-lt  pale tint of the brand
+ */
+.brw-phw{container-type:inline-size;margin:0 0 22px}
+.brw-ph{display:grid;grid-template-columns:minmax(0,1fr);padding:0;width:var(--brw-ph-w,100%);margin-inline:auto;border-radius:18px;position:relative;isolation:isolate;color:var(--ink,#24161c)}
+.brw-ph__media{grid-area:1/1;position:relative;min-height:var(--brw-ph-h,270px);border-radius:inherit;overflow:hidden;background:linear-gradient(120deg,var(--brw-ph-lt,#fff0f4) 0%,#fff 100%)}
+.brw-ph__img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;display:block}
+.brw-ph--pos-left .brw-ph__img{object-position:left center}
+.brw-ph--pos-right .brw-ph__img{object-position:right center}
+
+/* the panel, on the banner */
+.brw-ph__panel{grid-area:1/1;align-self:center;justify-self:start;box-sizing:border-box;width:var(--brw-ph-cw,60%);margin-block:24px;margin-inline-start:clamp(16px,3cqi,40px);padding:22px 26px;border-radius:16px;position:relative;z-index:1}
+.brw-ph__id{display:flex;align-items:center;gap:16px;min-width:0}
+.brw-ph .brw-logo--lg{width:72px;height:72px;background:#fff;flex:none;grid-template:minmax(0,1fr)/minmax(0,1fr)}
+.brw-ph .brw-logo--lg .brw-initial{font-size:28px}
+.brw-ph .brw-logo img{padding:6px}
+.brw-ph--logo-rect .brw-logo--lg{width:auto;aspect-ratio:2.3/1;border-radius:12px}
+.brw-ph__name{margin:0;font-size:clamp(24px,3cqi,34px);font-weight:700;line-height:1.1;letter-spacing:-.01em;color:inherit;min-width:0;overflow-wrap:anywhere}
+.brw-ph__desc{margin:12px 0 0;font-size:15px;line-height:1.6}
+.brw-ph__cta{margin-top:14px}
+
+/* A · frosted white */
+.brw-ph--frost .brw-ph__panel{background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 12px 32px rgba(20,10,15,.16)}
+.brw-ph--frost .brw-ph__desc{color:#3d2f35}
+
+/* B · a dark shade of the brand's own colour, white text */
+.brw-ph--brand .brw-ph__panel{background:var(--brw-ph-dk,#3a1f2b);background:color-mix(in srgb,var(--brw-ph-dk,#3a1f2b) 84%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.16);color:#fff}
+.brw-ph--brand .brw-ph__desc{color:rgba(255,255,255,.92)}
+.brw-ph--brand .brw-ph__desc a{color:#fff}
+
+/* the phone: the logo and name in a pill on the banner, the description below */
+@container (max-width:599px){
+  .brw-ph{width:100%}
+  .brw-ph__media{min-height:var(--brw-ph-hm,165px);border-radius:16px}
+  .brw-ph__panel{display:contents}
+  .brw-ph__id{grid-area:1/1;align-self:end;justify-self:start;position:relative;z-index:1;box-sizing:border-box;max-width:calc(100% - 24px);margin:0 0 12px;margin-inline-start:12px;padding:6px;padding-inline-end:16px;border-radius:999px;gap:10px}
+  .brw-ph--pill-rect .brw-ph__id{border-radius:12px}
+  .brw-ph .brw-logo--lg{width:44px;height:44px}
+  .brw-ph .brw-logo--lg .brw-initial{font-size:18px}
+  .brw-ph .brw-logo img{padding:4px}
+  .brw-ph--logo-rect .brw-logo--lg{width:auto;border-radius:8px}
+  .brw-ph__name{font-size:20px}
+  .brw-ph__desc{grid-area:2/1;margin:12px 0 0;padding:14px 16px;border-radius:14px;font-size:14px;line-height:1.55}
+  .brw-ph__cta{grid-area:3/1;justify-self:start;margin-top:12px}
+  .brw-ph--frost .brw-ph__id{background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(20,10,15,.14)}
+  .brw-ph--frost .brw-ph__desc{background:#fff;border:1px solid var(--line,#eddfe6)}
+  .brw-ph--brand .brw-ph__id{background:var(--brw-ph-dk,#3a1f2b);background:color-mix(in srgb,var(--brw-ph-dk,#3a1f2b) 88%,transparent);color:#fff;border:1px solid rgba(255,255,255,.16)}
+  .brw-ph--brand .brw-ph__desc{background:var(--brw-ph-lt,#fff0f4);border:1px solid rgba(0,0,0,.06);color:#2a1d23}
+  .brw-ph--brand .brw-ph__desc a{color:inherit}
+}

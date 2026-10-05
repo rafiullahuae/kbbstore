@@ -24,6 +24,9 @@
      own line so a brand without one gains no bytes. --}}@if ($titleHeader ?? null)
 @vite('resources/css/kbb/kbb-title-header.css')
 @endif
+@if ($brandPanel ?? null)
+@vite('resources/css/kbb/kbb-brand-header.css')
+@endif
 @endpush
 
 @section('content')
@@ -56,8 +59,10 @@
 <x-kbb-title-header :header="$titleHeader" :contained="false" />
 @endif
 
-{{-- COMPACT, the default (Lane BH): "logo + name in one row, then description in another, that's it", the same short band on a phone as on a laptop -- no column. Appearance → Site layout → Brand page → Brand header style puts Classic back. --}}
-@if (($brandHero ?? 'classic') === 'compact')
+{{-- COMPACT (Lane BH; the default until Lane BR2): "logo + name in one row, then description in another, that's it", the same short band on a phone as on a laptop -- no column. Appearance → Site layout → Brand page → Brand header style puts Classic back. --}}
+{{-- PANEL, the default (Lane BR2): the banner as the background, a panel on it with the logo, the name beside it and the description under them; on a phone the logo and name in a pill and the description below. store/partials/brand-panel. --}}@if ($brandPanel ?? null)
+@include('store.partials.brand-panel', ['brand' => $brand, 'panel' => $brandPanel, 'ring' => $brandRing ?? false, 'ringHex' => $brandRingHex ?? null, 'cta' => $brandCta ?? false])
+@elseif (($brandHero ?? 'classic') === 'compact')
         <div class="brw-hero brw-hero--compact">
             <div class="brw-hero-row">
 @include('store.partials.brand-logo', ['brand' => $brand, 'ring' => $brandRing ?? false, 'ringHex' => $brandRingHex ?? null])

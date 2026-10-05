@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Services\AdminPathService;
 use App\Support\BrandLogo;
+use App\Support\BrandPanel;
 use App\Support\CategoryPath;
 use App\Support\Locale;
 use App\Support\PageBanner;
@@ -30,6 +31,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -86,7 +88,7 @@ class StorefrontAdminController extends Controller
      * does have a logo (Lane BH: "provide facility to upload the brand logo",
      * from the page where he types the brand's description).
      */
-    public const BRAND_KEYS = ['header_image', 'header_title', 'header_subtitle', 'header_description', 'logo'];
+    public const BRAND_KEYS = ['header_image', 'header_title', 'header_subtitle', 'header_description', 'logo', 'layout'];
 
     /** Keys that ride along with every write and are not fields. */
     private const ENVELOPE = ['_token', 'path'];
@@ -384,9 +386,12 @@ class StorefrontAdminController extends Controller
                     'label' => $isBrand ? 'Catalog → Brands → Edit' : 'Catalog → Categories → Edit',
                     'href' => $console . '?kbb-open=' . $page['kind'] . ':' . $id . '#catalog/' . ($isBrand ? 'brands' : 'categories'),
                 ],
-                ['label' => 'Appearance → Site layout → Category header', 'href' => $console . '#sitelayout'],
+                ['label' => $isBrand ? 'Appearance → Site layout → Brand page' : 'Appearance → Site layout → Category header', 'href' => $console . '#sitelayout'],
             ],
-        ];
+        ]
+        // Lane BR2: the Panel header's controls, brands only. `shop` is what
+        // "Shop" means for each, so the bars start where the page is.
+        + ($isBrand ? ['panel' => $this->panelContext($model)] : []);
     }
 
     /**
@@ -442,7 +447,7 @@ class StorefrontAdminController extends Controller
                 'header_subtitle' => (string) ($banner['subheading'] ?? ''),
                 'header_description' => (string) ($model->getAttribute('header_description') ?? ''),
                 'focus' => '',
-            ] + ($isBrand ? ['logo' => (string) ($model->getAttribute('logo') ?? '')] : []);
+            ] + ($isBrand ? ['logo' => (string) ($model->getAttribute('logo') ?? ''), 'layout' => (object) BrandPanel::sanitize($model->getAttribute('header_layout'))] : []);
         }
 
         $style = $isBrand ? [] : TitleHeader::sanitizeStyle($model->getAttribute('header_style'));
@@ -453,7 +458,7 @@ class StorefrontAdminController extends Controller
             'header_subtitle' => (string) ($model->getAttribute('header_subtitle') ?? ''),
             'header_description' => (string) ($model->getAttribute('header_description') ?? ''),
             'focus' => (string) ($style['focus'] ?? ''),
-        ] + ($isBrand ? ['logo' => (string) ($model->getAttribute('logo') ?? '')] : []);
+        ] + ($isBrand ? ['logo' => (string) ($model->getAttribute('logo') ?? ''), 'layout' => (object) BrandPanel::sanitize($model->getAttribute('header_layout'))] : []);
     }
 
     private function descriptionHint(Model $model): string
@@ -512,6 +517,17 @@ class StorefrontAdminController extends Controller
 
         if ($isBrand) {
             $rules['logo'] = ['nullable', 'string', 'max:2048'];
+            // Lane BR2: the Panel header's own choices. Each is one of its
+            // options or a whole number inside its range; blank follows the shop.
+            $rules['layout'] = ['nullable', 'array'];
+
+            foreach (BrandPanel::CHOICES as $key => [, $allowed]) {
+                $rules['layout.' . $key] = ['nullable', 'string', Rule::in($allowed)];
+            }
+
+            foreach (BrandPanel::RANGES as $key => [, $min, $max]) {
+                $rules['layout.' . $key] = ['nullable', 'integer', 'between:' . $min . ',' . $max];
+            }
         }
 
         $data = Validator::make($shaped, $rules)->validate();
@@ -538,6 +554,28 @@ class StorefrontAdminController extends Controller
             }
 
             $data['header_style'] = $current;
+        }
+
+        /*
+         * Read off the INPUT, which the rules above have just checked key by
+         * key: the validator's own answer leaves out an empty `layout` (the
+         * "use the shop settings" reset) and every key it has no rule for.
+         */
+        if ($isBrand && array_key_exists('layout', $input)) {
+            $data['layout'] = is_array($input['layout']) ? $input['layout'] : [];
+            $unknown = array_diff(array_keys($data['layout']), array_keys(BrandPanel::CHOICES + BrandPanel::RANGES));
+
+            if ($unknown !== []) {
+                throw ValidationException::withMessages(['layout' => 'The header layout has no setting called "' . mb_substr((string) reset($unknown), 0, 40) . '".']);
+            }
+
+            if (! BrandPanel::columnReady()) {
+                throw ValidationException::withMessages(['layout' => 'The header layout needs this update\'s database step. Run the update again from Store → Core Updates.']);
+            }
+
+            $clean = BrandPanel::sanitize($data['layout']);
+            unset($data['layout']);
+            $data['header_layout'] = $clean === [] ? null : $clean;
         }
 
         return TitleHeaderInput::clean($data);
@@ -636,6 +674,11 @@ class StorefrontAdminController extends Controller
             ];
         }
 
+        if ($isBrand && $model instanceof Brand
+            && \App\Http\Controllers\Store\BrandController::hero(app(\App\Services\SiteLayout::class)->get('brand_hero'), null) === 'panel') {
+            return ['kind' => 'panel', 'html' => $this->panelHtml($model), 'note' => ''];
+        }
+
         $header = TitleHeader::forModel($model, $title, null, $isBrand);
 
         if ($header === null) {
@@ -658,12 +701,55 @@ class StorefrontAdminController extends Controller
         ];
     }
 
+    /**
+     * The Panel header as Store\BrandController::show() draws it: the same
+     * partial, the same inputs. (Lane BR2)
+     */
+    private function panelHtml(Brand $brand): string
+    {
+        $layout = app(\App\Services\SiteLayout::class);
+        $all = $layout->all();
+
+        return trim(view('store.partials.brand-panel', [
+            'brand' => $brand,
+            'panel' => BrandPanel::forBrand($brand, $all),
+            'ring' => (bool) $all['brand_ring'],
+            'ringHex' => BrandLogo::ring($brand),
+            'cta' => (bool) $all['brand_cta'],
+        ])->render());
+    }
+
+    /**
+     * The pop-up's Panel controls (Lane BR2): whether this brand's page draws
+     * the Panel header, the shop's value for each choice, and each bar's range.
+     *
+     * @return array<string, mixed>
+     */
+    private function panelContext(Model $model): array
+    {
+        $all = app(\App\Services\SiteLayout::class)->all();
+        $ranges = [];
+
+        foreach (BrandPanel::RANGES as $key => [, $min, $max, , $unit]) {
+            $ranges[$key] = ['min' => $min, 'max' => $max, 'unit' => $unit];
+        }
+
+        return [
+            'on' => \App\Http\Controllers\Store\BrandController::hero($all['brand_hero'] ?? null, PageBanner::forModel($model, (string) $model->getAttribute('name'))) === 'panel',
+            'shop' => BrandPanel::shop($all),
+            'ranges' => $ranges,
+            // The admin path in words, sent rather than written into the
+            // script, where DirectionalGlyphsTest keeps every arrow out.
+            'hint' => 'For this brand only. "Shop" follows Appearance → Site layout → Brand page.',
+        ];
+    }
+
     /** The two stylesheets a header needs, for a page that did not load them. */
     private function stylesheets(): array
     {
         $out = [];
 
-        foreach (['header' => 'resources/css/kbb/kbb-title-header.css', 'banner' => 'resources/css/kbb/kbb-banner.css'] as $key => $entry) {
+        foreach (['header' => 'resources/css/kbb/kbb-title-header.css', 'banner' => 'resources/css/kbb/kbb-banner.css', 'panel' => 'resources/css/kbb/kbb-brand-header.css'] as $key => $entry) {
             try {
                 $out[$key] = $this->pathOf(Vite::asset($entry));
             } catch (\Throwable) {

@@ -75,6 +75,8 @@ final class StaticMemos
             Facets::class => static fn () => Facets::reset(),
             // Lane BH: whether brands.logo_color / ring_color exist yet.
             \App\Support\BrandLogo::class => static fn () => \App\Support\BrandLogo::forgetColumns(),
+            // Lane BR2: whether brands.header_layout exists yet.
+            \App\Support\BrandPanel::class => static fn () => \App\Support\BrandPanel::forgetColumn(),
             // Lane BR: the test-only target override, so a case that narrows
             // the brand rename can never leave it narrowed for the next one.
             \App\Services\Seo\BrandRename::class => static function (): void {

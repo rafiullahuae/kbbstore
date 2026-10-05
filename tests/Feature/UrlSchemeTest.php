@@ -159,7 +159,8 @@ it('serves a category archive at its collections address', function () {
 it('serves the brand directory and a brand page at /brands/', function () {
     $this->get('/brands/')->assertOk()->assertSee('<span class="brw-name">Round Lab', escape: false);
     // The heading, not the <title> / og:title / CTA / JSON-LD copies of it.
-    $this->get('/brands/round-lab/')->assertOk()->assertSee('<h1 class="brw-h1">Round Lab</h1>', escape: false);
+    // Lane BR2: the Panel header's <h1>, the default brand header.
+    $this->get('/brands/round-lab/')->assertOk()->assertSee('<h1 class="brw-ph__name" id="brw-ph-title">Round Lab</h1>', escape: false);
 });
 
 it('serves the journal and an article under /blog/', function () {

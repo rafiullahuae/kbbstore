@@ -1,0 +1,32 @@
+Lane BR2 -- measured in Chromium (Playwright), /brands/<slug>/ on the br2 preview.
+hdr = whole header box; banner = .brw-ph__media; panel = laptop panel width; pill = logo+name row (the capsule on a phone); desc-gap = description top minus banner bottom (12 = below the banner on a phone; negative = on the banner); sw = documentElement.scrollWidth.
+
+after-1280 hdr 1236x270 banner 1236x270 panel 742 pill 690x72 logo 72x72 desc-gap -129 h1 34px pos 50% 50% sw 1280
+after-390 hdr 346x315 banner 346x165 panel 0 pill 134x56 logo 44x44 desc-gap 12 h1 20px pos 50% 50% sw 390
+brandcolour-1280 hdr 1236x270 banner 1236x270 panel 742 pill 688x72 logo 72x72 desc-gap -129 h1 34px pos 50% 50% sw 1280
+brandcolour-390 hdr 346x315 banner 346x165 panel 0 pill 136x58 logo 44x44 desc-gap 12 h1 20px pos 50% 50% sw 390
+rect-1280 hdr 1236x270 banner 1236x270 panel 742 pill 690x72 logo 166x72 desc-gap -129 h1 34px pos 50% 50% sw 1280
+rect-390 hdr 346x315 banner 346x165 panel 0 pill 191x56 logo 101x44 desc-gap 12 h1 20px pos 50% 50% sw 390
+logo-rect-square-1280 hdr 1236x270 banner 1236x270 panel 742 pill 690x72 logo 166x72 desc-gap -105 h1 34px pos 50% 50% sw 1280
+logo-rect-square-390 hdr 346x229 banner 346x165 panel 0 pill 191x56 logo 101x44 desc-gap 12 h1 20px pos 50% 50% sw 390
+pos-left-1280 hdr 1236x270 banner 1236x270 panel 742 pill 690x72 logo 72x72 desc-gap -129 h1 34px pos 0% 50% sw 1280
+pos-left-390 hdr 346x315 banner 346x165 panel 0 pill 134x56 logo 44x44 desc-gap 12 h1 20px pos 0% 50% sw 390
+pos-right-1280 hdr 1236x270 banner 1236x270 panel 742 pill 690x72 logo 72x72 desc-gap -129 h1 34px pos 100% 50% sw 1280
+pos-right-390 hdr 346x315 banner 346x165 panel 0 pill 134x56 logo 44x44 desc-gap 12 h1 20px pos 100% 50% sw 390
+pos-center-390 hdr 346x315 banner 346x165 panel 0 pill 134x56 logo 44x44 desc-gap 12 h1 20px pos 50% 50% sw 390
+size-small-1280 hdr 890x272 banner 890x272 panel 463 pill 411x72 logo 72x72 desc-gap -142 h1 34px pos 50% 50% sw 1280
+size-small-390 hdr 346x270 banner 346x120 panel 0 pill 134x56 logo 44x44 desc-gap 12 h1 20px pos 50% 50% sw 390
+size-tall-1280 hdr 1236x400 banner 1236x400 panel 890 pill 838x72 logo 72x72 desc-gap -182 h1 34px pos 50% 50% sw 1280
+size-tall-390 hdr 346x400 banner 346x250 panel 0 pill 134x56 logo 44x44 desc-gap 12 h1 20px pos 50% 50% sw 390
+nobanner-1280 hdr 1236x270 banner 1236x270 panel 742 pill 690x72 logo 72x72 desc-gap -105 h1 34px pos None sw 1280
+nobanner-390 hdr 346x250 banner 346x165 panel 0 pill 154x56 logo 44x44 desc-gap 12 h1 20px pos None sw 390
+
+before (Compact + title header, the 2.60.393 page): before-1280 banner 1236x300, logo 56x56 BELOW the banner; before-390 banner 346x190, logo 44x44 below; sw 1280 / 390.
+
+pop-up, Logo shape Rectangle + Brand colour + content 45% + laptop 330px + phone 220px, before Save (preview only, no request):
+1280 before {'cls': 'brw-ph brw-ph--frost brw-ph--pill-capsule brw-ph--logo-circle brw-ph--pos-center', 'cw': '60%', 'h': '270px'}
+1280 after (laptop, phone preview) [('brw-ph brw-ph--pill-capsule brw-ph--pos-center brw-ph--logo-rect brw-ph--brand', '45%', '330px', '220px'), ('brw-ph brw-ph--pill-capsule brw-ph--pos-center brw-ph--logo-rect brw-ph--brand', '45%', '330px', '220px')]
+1280 saved page brw-ph brw-ph--brand brw-ph--pill-capsule brw-ph--logo-rect brw-ph--pos-center | --brw-ph-w:100%;--brw-ph-h:330px;--brw-ph-hm:220px;--brw-ph-cw:45%;--brw-ph-dk:#431a25;--brw-ph-lt:#fceef2 sw 1280
+390 before {'cls': 'brw-ph brw-ph--frost brw-ph--pill-capsule brw-ph--logo-circle brw-ph--pos-center', 'cw': '60%', 'h': '270px'}
+390 after (laptop, phone preview) [('brw-ph brw-ph--pill-capsule brw-ph--pos-center brw-ph--logo-rect brw-ph--brand', '45%', '330px', '220px'), ('brw-ph brw-ph--pill-capsule brw-ph--pos-center brw-ph--logo-rect brw-ph--brand', '45%', '330px', '220px')]
+390 saved page brw-ph brw-ph--brand brw-ph--pill-capsule brw-ph--logo-rect brw-ph--pos-center | --brw-ph-w:100%;--brw-ph-h:330px;--brw-ph-hm:220px;--brw-ph-cw:45%;--brw-ph-dk:#431a25;--brw-ph-lt:#fceef2 sw 390

@@ -95,7 +95,7 @@ afterEach(function () {
 /* ================================================================ the shape */
 
 describe('the compact header', function () {
-    it('puts the logo and the name in one row and the description under them, by default', function () {
+    it('puts the logo and the name in one row and the description under them, when Compact is picked', function () {
         /*
          * THE DEFECT, in the owner's screenshot: on a phone the hero was
          * `flex-direction:column` -- a 72px circle, then the name, then the
@@ -104,10 +104,13 @@ describe('the compact header', function () {
          */
         $brand = bhBrand(['description' => 'Anua is a Korean skincare brand built around the heartleaf plant.']);
         bhProduct($brand);
+        // Compact was the default until Lane BR2 shipped the Panel header, as
+        // the owner asked; it stays one pick away and draws exactly as before.
+        bhSave(['brand_hero' => 'compact']);
 
         $html = $this->get('/brands/aurabh/')->assertOk()->getContent();
 
-        expect(SiteLayout::SCHEMA['brand_hero'][2])->toBe('compact')
+        expect(SiteLayout::SCHEMA['brand_hero'][2])->toBe('panel')
             ->and($html)->toContain('<div class="brw-hero brw-hero--compact">')
             ->and($html)->not->toContain('class="brw-hero-txt"');
 
@@ -129,6 +132,7 @@ describe('the compact header', function () {
          * this is red.
          */
         bhProduct(bhBrand());
+        bhSave(['brand_hero' => 'compact']);
         $html = $this->get('/brands/aurabh/')->assertOk()->getContent();
 
         preg_match_all('#\.brw-hero--compact[^{]*\{[^}]*\}|\.brw-hero-row\{[^}]*\}#', $html, $m);
@@ -156,7 +160,7 @@ describe('the compact header', function () {
     it('stores only one of its own options', function () {
         bhSave(['brand_hero' => 'stacked;color:red']);
 
-        expect(app(SiteLayout::class)->get('brand_hero'))->toBe('compact');
+        expect(app(SiteLayout::class)->get('brand_hero'))->toBe('panel');
     });
 
     it('keeps the logo row when a banner or title header prints the heading', function () {
@@ -166,7 +170,7 @@ describe('the compact header', function () {
          */
         $brand = bhBrand(['header_image' => '/uploads/brands/bh-header.jpg', 'header_title' => 'Aurabh']);
         bhProduct($brand);
-        bhSave(['cat_header' => true, 'cat_header_brands' => true]);
+        bhSave(['cat_header' => true, 'cat_header_brands' => true, 'brand_hero' => 'compact']);
 
         $html = $this->get('/brands/aurabh/')->assertOk()->getContent();
 
@@ -177,6 +181,7 @@ describe('the compact header', function () {
     it('mirrors in Arabic, where the row reads right to left on its own', function () {
         $brand = bhBrand();
         bhProduct($brand);
+        bhSave(['brand_hero' => 'compact']);
 
         \App\Models\Setting::query()->updateOrCreate(['key' => \App\Support\Locale::SETTING_ENABLED], ['value' => '1', 'autoload' => true]);
         \App\Models\Setting::query()->updateOrCreate(['key' => \App\Support\Locale::SETTING_RTL], ['value' => '1', 'autoload' => true]);
@@ -204,6 +209,7 @@ describe('the compact header', function () {
          */
         $brand = bhBrand(['logo' => bhRedLogo(), 'logo_color' => '#ce2030']);
         bhProduct($brand);
+        bhSave(['brand_hero' => 'compact']);
         $this->get('/brands/aurabh/')->assertOk();
 
         DB::enableQueryLog();
