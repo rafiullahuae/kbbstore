@@ -166,9 +166,9 @@
                 <button class="fhide" type="button" onclick="document.body.classList.add('filters-hidden');document.cookie='kbb_filters=hidden;path=/;max-age=31536000;samesite=lax'">{{ __('store.shop.filters_hide') }}</button>
                 <button class="fclose" type="button" onclick="document.body.classList.remove('filters-open')">✕</button>
             </div>
-            <div id="filters">
+            {{-- THE FACET HEADINGS SAY LEVEL 2 (Lane PS). Lighthouse on /collections/sunscreens/ (the 5 Oct PageSpeed work): "Heading elements are not in a sequentially-descending order", naming div#filters > div.fgroup > h4 -- an <h4> straight after the page's <h1>. aria-level corrects the level screen readers announce; the tag and therefore every rule in kbb-shop.css (.fgroup h4) is untouched, so nothing moves. --}}<div id="filters">
                 @if ($cats->isNotEmpty())
-                <div class="fgroup"><h4>{{ __('store.shop.facet_category') }}</h4>
+                <div class="fgroup"><h4 aria-level="2">{{ __('store.shop.facet_category') }}</h4>
                     @foreach ($cats as $c)
                         <a class="fopt{{ Facets::isOn('cat', $c->slug) ? ' on' : '' }}" href="{{ Facets::url('cat', $c->slug) }}">
                             <span class="cb">{!! $ck !!}</span>
@@ -180,7 +180,7 @@
                 @endif
 
                 @if ($brands->isNotEmpty())
-                <div class="fgroup"><h4>{{ __('store.shop.facet_brand') }}</h4>
+                <div class="fgroup"><h4 aria-level="2">{{ __('store.shop.facet_brand') }}</h4>
                     @foreach ($brands as $b)
                         <a class="fopt{{ Facets::isOn('brand', $b->slug) ? ' on' : '' }}" href="{{ Facets::url('brand', $b->slug) }}">
                             <span class="cb">{!! $ck !!}</span> {{ $b->t('name') }}
@@ -190,7 +190,7 @@
                 </div>
                 @endif
 
-                <div class="fgroup"><h4>{{ __('store.shop.facet_price') }}</h4>
+                <div class="fgroup"><h4 aria-level="2">{{ __('store.shop.facet_price') }}</h4>
                     <div class="pchips">
                         @foreach ($buckets as $key => $b)
                             <a class="pchip{{ request('price') === $key ? ' on' : '' }}" href="{{ Facets::url('price', request('price') === $key ? null : $key, false) }}">{{ $b[0] }}</a>
@@ -198,7 +198,7 @@
                     </div>
                 </div>
 
-                <div class="fgroup"><h4>{{ __('store.shop.facet_offers') }}</h4>
+                <div class="fgroup"><h4 aria-level="2">{{ __('store.shop.facet_offers') }}</h4>
                     <a class="ftog" href="{{ Facets::url('sale', request('sale') === '1' ? null : '1', false) }}">{{ __('store.shop.facet_on_sale_only') }}<span class="tog{{ request('sale') === '1' ? ' on' : '' }}"></span></a>
                     <a class="ftog" href="{{ Facets::url('instock', request('instock') === '1' ? null : '1', false) }}">{{ __('store.shop.facet_in_stock_only') }}<span class="tog{{ request('instock') === '1' ? ' on' : '' }}"></span></a>
                 </div>
