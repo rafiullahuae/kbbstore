@@ -157,6 +157,43 @@ class PageBannersApiController extends Controller
         ];
     }
 
+    /**
+     * Copy /super-sale/'s order from the old site, or forget the copy.
+     * Body: {"action":"copy"} or {"action":"clear"}. The URL is a constant in
+     * SuperSaleOrder; nothing in the request is fetched.
+     */
+    public function superSaleOrder(Request $request): JsonResponse
+    {
+        $action = $request->input('action');
+
+        if ($action === 'clear') {
+            \App\Support\SuperSaleOrder::clear($this->settings);
+
+            return response()->json(['ok' => true, 'super_sale' => $this->superSale()]);
+        }
+
+        if ($action !== 'copy') {
+            return response()->json(['message' => 'Unknown action.'], 422);
+        }
+
+        @set_time_limit(90);
+        $got = \App\Support\SuperSaleOrder::fetchSlugs();
+
+        if ($got['slugs'] === []) {
+            return response()->json(['message' => $got['error'] ?? 'No products were found on '.\App\Support\SuperSaleOrder::SOURCE.'.'], 422);
+        }
+
+        $stored = \App\Support\SuperSaleOrder::store($this->settings, $got['slugs']);
+
+        return response()->json([
+            'ok' => true,
+            'copied' => $stored['count'],
+            'pages' => $got['pages'],
+            'missing' => array_slice($stored['missing'], 0, 40),
+            'super_sale' => $this->superSale(),
+        ]);
+    }
+
     /** The source select, and what it resolves to on this shop right now. */
     private function superSale(): array
     {
@@ -183,6 +220,7 @@ class PageBannersApiController extends Controller
             'category_found' => $found,
             'products' => $count,
             'falls_back' => $campaign !== null && $count === 0,
+            'copied' => \App\Support\SuperSaleOrder::summary($this->settings),
         ];
     }
 }

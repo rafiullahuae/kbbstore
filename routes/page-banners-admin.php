@@ -34,3 +34,7 @@ Route::get('/page-banners', [PageBannersApiController::class, 'show'])
 Route::post('/page-banners', [PageBannersApiController::class, 'save'])
     ->middleware('throttle:60,1')
     ->name('admin.page-banners.save');
+// 2.60.388: copy /super-sale/'s order from kbeautybliss.com (a fixed URL).
+Route::post('/page-banners/super-sale-order', [PageBannersApiController::class, 'superSaleOrder'])
+    ->middleware('throttle:60,1')
+    ->name('admin.page-banners.super-sale-order');

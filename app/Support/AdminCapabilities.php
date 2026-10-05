@@ -1642,6 +1642,8 @@ final class AdminCapabilities
         ['*', 'admin-api/whatsapp-button', 'wabutton.manage'],
         // One line and no '/**' sibling: no sub-endpoint. (Lane SS)
         ['*', 'admin-api/page-banners', 'pagebanners.manage'],
+        // 2.60.388: copy /super-sale/'s order from the old site (one fixed URL).
+        ['POST', 'admin-api/page-banners/super-sale-order', 'pagebanners.manage'],
         // The screen's read and save, and the storefront panel's apply. (Lane PH)
         ['*', 'admin-api/page-header', 'pageheader.manage'],
         ['*', 'admin-api/page-header/**', 'pageheader.manage'],

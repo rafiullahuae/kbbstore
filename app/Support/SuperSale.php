@@ -94,10 +94,22 @@ final class SuperSale
      * the reduced-products listing it replaces.
      *
      * @param  array{0:string,1:string|int}  $campaign
+     * @param  list<int>  $order  the old site's order, copied (SuperSaleOrder)
      */
-    public static function apply(Builder $query, array $campaign): Builder
+    public static function apply(Builder $query, array $campaign, array $order = []): Builder
     {
         [$by, $value] = $campaign;
+
+        // (2.60.388) The copied order first, as one CASE over integer ids --
+        // every value is cast here, so nothing stored reaches the SQL as text.
+        // Products it does not name follow in the Reorder order below.
+        if ($order !== []) {
+            $case = 'CASE products.id';
+            foreach (array_values($order) as $i => $id) {
+                $case .= ' WHEN '.(int) $id.' THEN '.$i;
+            }
+            $query->orderByRaw($case.' ELSE '.count($order).' END');
+        }
 
         return $query
             ->whereExists(function ($q) use ($by, $value): void {

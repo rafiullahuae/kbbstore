@@ -332,6 +332,37 @@
       }).join('') + '</tbody></table>';
   }
 
+  // (2.60.388) The old site's exact order, copied by the server in one click.
+  function copiedHTML(s) {
+    var c = s.copied || { count: 0 };
+    var note = c.count
+      ? '<div class="pbs-ok"><b>' + esc(c.count) + '</b> products are in the old site\'s exact order' + (c.at ? ' (copied ' + esc(String(c.at).slice(0, 10)) + ')' : '') + '. Products it does not list follow after them, in the Reorder order.'
+        + (c.missing_total ? '<br>Not in this shop yet (' + esc(c.missing_total) + '): ' + c.missing.map(esc).join(', ') + (c.missing_total > c.missing.length ? '…' : '') : '') + '</div>'
+      : '<p class="pbs-help">Not copied yet: /super-sale/ uses the Reorder order.</p>';
+    return '<div class="pbs-f" style="margin-top:14px"><label>Order from the old site</label>' + note
+      + '<div class="pbs-actions" style="margin-top:8px"><button type="button" class="pbs-btn is-primary" data-pbs-copyorder' + (copying ? ' disabled' : '') + '>' + (copying ? 'Copying…' : 'Copy the order from kbeautybliss.com/super-sale/') + '</button>'
+      + (c.count ? '<button type="button" class="pbs-btn" data-pbs-clearorder' + (copying ? ' disabled' : '') + '>Use the Reorder order instead</button>' : '') + '</div>'
+      + '<p class="pbs-help">The server reads the old page and puts the same products in the same places here. Only /super-sale/ changes; every other page keeps its order.</p></div>';
+  }
+
+  var copying = false;
+  async function copyOrder(action) {
+    if (copying) return;
+    copying = true; render();
+    try {
+      var opts = { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN') }, credentials: 'same-origin', body: JSON.stringify({ action: action }) };
+      var r = await fetch(root() + '/admin-api/page-banners/super-sale-order', opts);
+      var body = null; try { body = await r.json(); } catch (e) {}
+      if (!r.ok) { say((body && body.message) || 'The order could not be copied.'); return; }
+      if (body && body.super_sale && data) data.super_sale = body.super_sale;
+      say(action === 'copy' ? 'Copied: ' + (body.copied || 0) + ' products in the old order.' : '/super-sale/ uses the Reorder order again.');
+    } catch (e) {
+      say('The order could not be copied.');
+    } finally {
+      copying = false; render();
+    }
+  }
+
   function saleTab() {
     var s = data.super_sale;
     var status = s.source === 'on_sale'
@@ -344,6 +375,7 @@
         return '<option value="' + esc(o.value) + '"' + (o.value === s.source ? ' selected' : '') + '>' + esc(o.label) + '</option>';
       }).join('') + '</select></div>'
       + '<div style="margin-top:10px">' + status + '</div>'
+      + copiedHTML(s)
       + '<p class="pbs-help" style="margin-top:10px"><b>Running the campaign.</b> Add or remove a product: <b>Catalog → Product editor → Categories</b>, tick or untick <b>Super Sale</b>. Change the order: <b>Catalog → Catalog → Reorder</b>, choose <b>Super Sale</b>, drag, Save. That order is shared with every category the product is in, exactly as on the old site.</p>';
   }
 
@@ -434,6 +466,8 @@
     if ((el = e.target.closest('button[data-pbs-dev]'))) { dev = el.getAttribute('data-pbs-dev') === 'd' ? 'd' : 'm'; render(); return; }
     if (e.target.closest('[data-pbs-save]')) { save(); return; }
     if (e.target.closest('[data-pbs-reload]')) { load(); return; }
+    if (e.target.closest('[data-pbs-copyorder]')) { copyOrder('copy'); return; }
+    if (e.target.closest('[data-pbs-clearorder]')) { copyOrder('clear'); return; }
     if (!data) return;
     var x = b();
     if ((el = e.target.closest('[data-pbs-pickb]'))) { cur = Number(el.getAttribute('data-pbs-pickb')); render(); return; }

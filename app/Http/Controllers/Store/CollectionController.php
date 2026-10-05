@@ -113,7 +113,7 @@ class CollectionController extends Controller
         $campaign = $key === 'super-sale' ? \App\Support\SuperSale::campaign($this->settings) : null;
 
         if ($campaign !== null) {
-            $products = \App\Support\SuperSale::apply($this->cardQuery(), $campaign)
+            $products = \App\Support\SuperSale::apply($this->cardQuery(), $campaign, \App\Support\SuperSaleOrder::ids($this->settings))
                 ->paginate($this->perPage(), ['*'], 'page', $page)->withQueryString();
 
             if ($products->total() > 0) {
