@@ -2,11 +2,16 @@
  * K-Beauty Bliss Owner — shared pieces (Lane MAC, Petal).
  *
  * SECURITY. Every string from the server reaches the DOM through esc(). The
- * CSRF value lives in this module's memory only. The device and session
- * tokens are HttpOnly cookies this code cannot read. The PIN is never stored
- * anywhere. Browser storage holds three conveniences and nothing else (see
- * `store` below): whether the install sheet was offered, the full-screen
- * preference, and the last notification seen.
+ * CSRF value comes only from POST enrol / unlock and lives in this module's
+ * memory plus sessionStorage 'oa.k' (so a reload of the same tab keeps it;
+ * never localStorage), and setKey(null) drops both on lock, forget and
+ * sign-out. It rides on EVERY /api request except state, enrol and unlock.
+ * The device and session tokens are HttpOnly cookies this code cannot read.
+ * The PIN is never stored anywhere. localStorage holds three conveniences and
+ * nothing else (see `store` below): whether the install sheet was offered,
+ * the full-screen preference, and the last notification seen. Shop data
+ * (orders, customers, products) is held in MEMORY only, never in any browser
+ * storage, and resetData() empties it whenever the app locks or signs out.
  *
  * NO LAYOUT MEASURING. Nothing here asks an element for its size; sizing is
  * CSS (CLAUDE.md rule 4). Animations are transform and opacity only.
@@ -15,8 +20,19 @@
 export const S = {
   base: document.body.getAttribute('data-base') || '',
   me: null, csrf: null, vapid: null, groups: {}, idle: 12, tz: null,
-  cursor: 0, seen: 0, unread: 0, stage: 'boot', pulse: null,
+  cursor: 0, seen: 0, unread: 0, stage: 'boot',
+  staleMs: 30 * 60000, spinning: false, spinAt: 0, gen: 0,
 };
+
+/* ----------------------------------------------------------- the CSRF key */
+
+export function setKey(v) {
+  S.csrf = v || null;
+  try {
+    if (S.csrf) window.sessionStorage.setItem('oa.k', S.csrf); else window.sessionStorage.removeItem('oa.k');
+  } catch (e) { /* private mode: memory only */ }
+}
+try { S.csrf = window.sessionStorage.getItem('oa.k') || null; } catch (e) { S.csrf = null; }
 
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ESC[c]);
@@ -37,10 +53,18 @@ export class AuthError extends Error { constructor(code) { super(code); this.cod
 let onAuth = () => {};
 export function onAuthLost(fn) { onAuth = fn; }
 
-export async function api(method, path, body) {
+const NO_KEY = ['state', 'enrol', 'unlock'];
+
+/**
+ * `passive` marks a GET nobody asked for — the 25 s changes poll and the
+ * silent background refresh — so the server does not count it as use and the
+ * idle lock still runs. Navigation and "Sync now" are use, and send no flag.
+ */
+export async function api(method, path, body, passive) {
   const headers = { Accept: 'application/json', 'X-OA': '1' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
-  if (method !== 'GET' && S.csrf) headers['X-OA-CSRF'] = S.csrf;
+  if (S.csrf && NO_KEY.indexOf(path.split('?')[0]) === -1) headers['X-OA-CSRF'] = S.csrf;
+  if (passive && method === 'GET') headers['X-OA-Passive'] = '1';
   let r;
   try {
     r = await fetch(S.base + '/api/' + path, { method, headers, credentials: 'same-origin', cache: 'no-store', body: body === undefined ? undefined : JSON.stringify(body) });
@@ -49,7 +73,7 @@ export async function api(method, path, body) {
   }
   let data = {};
   try { data = await r.json(); } catch (e) { data = {}; }
-  if ([401, 403, 419].indexOf(r.status) !== -1 && ['locked', 'no_device', 'disabled', 'csrf'].indexOf(data.code) !== -1 && path !== 'unlock' && path !== 'enrol') {
+  if ([401, 403, 419].indexOf(r.status) !== -1 && ['pin', 'locked', 'no_device', 'disabled', 'csrf'].indexOf(data.code) !== -1 && path !== 'unlock' && path !== 'enrol') {
     onAuth(data.code);
     throw new AuthError(data.code);
   }
@@ -106,6 +130,7 @@ export function paint(el, html) {
   return el;
 }
 export function vars(el) {
+  $$('[data-sync]', el).forEach(spinMark);
   $$('[data-h]', el).forEach((x) => x.style.setProperty('--h', x.getAttribute('data-h')));
   $$('[data-sx]', el).forEach((x) => { x.style.transform = 'scaleX(' + x.getAttribute('data-sx') + ')'; });
   $$('[data-sy]', el).forEach((x) => { x.style.transform = 'scaleY(' + x.getAttribute('data-sy') + ')'; });
@@ -115,10 +140,114 @@ export const th = (src, c) => (src
   : '<i class="th blank ' + (c || '') + '" aria-hidden="true"></i>');
 export const logo = (c) => '<i class="logo ' + (c || '') + '" aria-hidden="true">KB</i>';
 export const tgl = (on, label, attrs) => '<button type="button" class="tgl" role="switch" aria-checked="' + (on ? 'true' : 'false') + '" aria-label="' + esc(label) + '" ' + (attrs || '') + '></button>';
-export const top = (t, sub, left, right, cls) => '<header class="top ' + (cls || '') + '">' + (left || '') + '<div class="tt"><h3>' + t + '</h3>' + (sub ? '<p>' + sub + '</p>' : '') + '</div>' + (right || '') + '</header>';
+/* A screen header. Every one carries "Sync now" unless `cls` says nosync
+   (the tablet's right-hand order pane: its list pane already has one). */
+export const top = (t, sub, left, right, cls) => '<header class="top ' + (cls || '') + '">' + (left || '') + '<div class="tt"><h3>' + t + '</h3>' + (sub ? '<p>' + sub + '</p>' : '') + '</div>' + (right || '') + (/\bnosync\b/.test(cls || '') ? '' : syncBtn('plain')) + '</header>';
 export const back = (href, label) => '<a class="ib plain" href="' + href + '" aria-label="' + esc(label || 'Back') + '">' + ic('back') + '</a>';
 export const errorBox = (msg) => '<div class="card empty" role="alert">' + esc(msg || 'Something went wrong.') + '</div>';
-export const skel = (n, tall) => Array.from({ length: n || 3 }, () => '<div class="skel' + (tall ? ' tall' : '') + '"></div>').join('');
+
+/* ------------------------------------------------------------- sync now */
+
+/* The header's refresh icon. Its state is a class, never part of the markup,
+   so a header repainted mid-sync picks it up from spinMark() — and the spin
+   carries on from the same angle rather than jumping back to 0. */
+export const syncBtn = (cls) => '<button type="button" class="ib sync ' + (cls || '') + '" data-sync aria-label="Sync now" title="Sync now">' + ic('refresh') + '</button>';
+
+function spinMark(b) {
+  b.classList.toggle('on', S.spinning);
+  b.setAttribute('aria-busy', S.spinning ? 'true' : 'false');
+  const i = b.firstElementChild;
+  if (i) i.style.animationDelay = S.spinning ? -((Date.now() - S.spinAt) % 900) + 'ms' : '';
+}
+export function setSpin(on) {
+  S.spinning = !!on;
+  if (on) S.spinAt = Date.now();
+  $$('[data-sync]').forEach(spinMark);
+}
+
+/* --------------------------------------------- freshness, in memory only */
+
+/*
+ * When each section last landed (dash, orders, products, customers, notes,
+ * order:ID, product:ID, customer:ID). A screen whose section landed within
+ * S.staleMs is drawn at once from memory and refreshed silently; older, or
+ * never, and it shows grey bars until its request lands.
+ */
+const AT = {};
+export const landed = (k) => { AT[k] = Date.now(); };
+export const isFresh = (k) => !!AT[k] && Date.now() - AT[k] < S.staleMs;
+
+/* One request per key at a time: a second trigger joins the first. */
+const FLIGHT = {};
+export function once(k, fn, force) {
+  if (FLIGHT[k] && !force) return FLIGHT[k];
+  const p = Promise.resolve().then(fn).finally(() => { if (FLIGHT[k] === p) delete FLIGHT[k]; });
+  FLIGHT[k] = p;
+  return p;
+}
+
+/* Every module's held data, dropped on lock / forget / sign-out. */
+const RESETS = [];
+export const onReset = (fn) => RESETS.push(fn);
+export function resetData() {
+  S.gen++;                                    // a request still in the air lands nowhere
+  Object.keys(AT).forEach((k) => { delete AT[k]; });
+  Object.keys(FLIGHT).forEach((k) => { delete FLIGHT[k]; });
+  RESETS.forEach((fn) => fn());
+}
+
+/** A newer first page over a list he has paged further: keep his extra pages. */
+export function merge(fresh, old, paged) {
+  if (!paged) return fresh;
+  const ids = new Set(fresh.map((x) => x.id));
+  return fresh.concat(old.filter((x) => !ids.has(x.id)));
+}
+
+/* ------------------------------------------------------------- screens */
+
+/** The element now showing screen `k` (record `id` when given), if any. */
+export const onScreen = (k, id) => document.querySelector('[data-scr="' + k + '"]' + (id ? '[data-id="' + (+id) + '"]' : ''));
+
+export function mark(host, k, id, loading) {
+  host.setAttribute('data-scr', k);
+  host.setAttribute('data-id', String(+id || 0));
+  host.setAttribute('aria-busy', loading ? 'true' : 'false');
+  if (loading) host.setAttribute('data-sk', ''); else host.removeAttribute('data-sk');
+  return host;
+}
+
+/**
+ * Draw a [header][.body] screen. When the same screen is already up, the
+ * header is swapped only if it changed and the body's CONTENT is replaced in
+ * place — the scroller survives, so a silent refresh keeps his scroll
+ * position and nothing jumps.
+ */
+export function screen(host, k, id, head, body, loading) {
+  const same = host.getAttribute('data-scr') === k && host.getAttribute('data-id') === String(+id || 0);
+  const b = same ? $(':scope > .body', host) : null;
+  if (b) {
+    if (host.oaHead !== head) {
+      const h = b.previousElementSibling;
+      if (h) h.remove();
+      b.insertAdjacentHTML('beforebegin', head);
+    }
+    b.innerHTML = body;
+  } else host.innerHTML = head + '<div class="body">' + body + '</div>';
+  host.oaHead = head;
+  mark(host, k, id, loading);
+  vars(host);
+  return host;
+}
+
+/* ------------------------------------------------- grey loading bars */
+
+/* Bars and blocks shaped like the real thing; CSS (.sk) gives them their
+   size and the shimmer, which prefers-reduced-motion stills. */
+export const ln = (w, c) => '<i class="sk sl' + (w ? ' w' + w : '') + (c ? ' ' + c : '') + '"></i>';
+export const blk = (c) => '<i class="sk ' + c + '"></i>';
+export const times = (n, fn) => Array.from({ length: n }, (_, i) => fn(i)).join('');
+export const skChips = (n) => times(n, () => blk('k-chip'));
+export const skNote = '<span class="sr" role="status">Loading</span>';
 
 /* ----------------------------------------------------------------- toast */
 

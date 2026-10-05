@@ -19,7 +19,7 @@ declare(strict_types=1);
 |     GET    /admin-api/owner-app                          members, devices, sign-ins, settings, address
 |     PUT    /admin-api/owner-app/members/{adminUserId}    access on/off, set a PIN, notifications
 |     POST   /admin-api/owner-app/devices/{id}/revoke      sign a phone out for good
-|     PUT    /admin-api/owner-app/settings                 idle time, low-stock line
+|     PUT    /admin-api/owner-app/settings                 idle time, low-stock line, loading-bar minutes
 |     POST   /admin-api/owner-app/address                  a new secret address (the old one dies)
 |     PUT    /admin-api/owner-app/security                 own host, lock-screen text (Lane SEC; Full Admin)
 |

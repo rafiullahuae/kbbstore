@@ -7,15 +7,19 @@
  *
  * The pad unlocks as the last digit lands, like a phone's own lock screen:
  * the server tells an ENROLLED device how many digits its member's PIN has.
+ * A PIN is 6–8 digits (MIN_PIN); a new one is never shorter.
  */
 import { S, esc, api, $, $$, ic, logo, toast } from './core.js';
 import { fsButton } from './fs.js';
 
+const MIN_PIN = 6;
 const LET = ['', 'ABC', 'DEF', 'GHI', 'JKL', 'MNO', 'PQRS', 'TUV', 'WXYZ'];
 
 export function renderPin(root, info, done, toEnrol) {
-  const len = Math.min(8, Math.max(4, +info.pin_length || 4));
+  // The member's own length when the server says (a PIN set before the
+  // 6-digit minimum still unlocks until it is changed); otherwise the minimum.
   const auto = !!info.pin_length;
+  const len = auto ? Math.min(8, Math.max(4, +info.pin_length)) : MIN_PIN;
   let pin = '', sending = false;
 
   root.className = 'app pinapp';
@@ -33,7 +37,7 @@ export function renderPin(root, info, done, toEnrol) {
   const paintDots = () => $$('i', dots).forEach((x, i) => x.classList.toggle('f', i < pin.length));
 
   async function submit() {
-    if (sending || pin.length < 4) return;
+    if (sending || pin.length < (auto ? len : MIN_PIN)) return;
     sending = true;
     const p = pin;
     const r = await api('POST', 'unlock', { pin: p });
@@ -79,7 +83,7 @@ export function renderEnrol(root, done, note) {
     + '<form class="enrol" novalidate data-enrol>'
     + (note ? '<p class="alert" role="alert">' + esc(note) + '</p>' : '')
     + '<label class="fld"><span>Email of your admin account</span><span class="inp"><input type="email" name="email" autocomplete="username" inputmode="email" maxlength="190" required></span></label>'
-    + '<label class="fld"><span>PIN</span><span class="inp"><input type="password" name="pin" inputmode="numeric" pattern="[0-9]*" autocomplete="current-password" minlength="4" maxlength="8" required></span></label>'
+    + '<label class="fld"><span>PIN</span><span class="inp"><input type="password" name="pin" inputmode="numeric" pattern="[0-9]*" autocomplete="current-password" minlength="6" maxlength="8" required></span></label>'
     + '<label class="fld"><span>Name this phone (optional)</span><span class="inp"><input type="text" name="device_name" maxlength="60" placeholder="e.g. Rafi’s iPhone"></span></label>'
     + '<p class="alert" role="alert" data-err hidden></p>'
     + '<button type="submit" class="btn pri wide">Sign in</button>'

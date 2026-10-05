@@ -8,8 +8,8 @@
 
     What the owner does here: switch the phone app on for a member, give them
     a PIN (6–8 digits; it is hashed on the server and never shown again), see
-    and sign out their phones, read the sign-in log, set the idle lock and the
-    low-stock line, and copy — or replace — the app's secret address.
+    and sign out their phones, read the sign-in log, set the idle lock, the
+    low-stock line and when the app shows loading bars, and copy — or replace — the app's secret address.
 
     SAFETY. Every server string goes through esc() before innerHTML. Writes carry
     X-XSRF-TOKEN like the rest of the console. The PIN field is cleared the
@@ -102,7 +102,9 @@
       (D.path_from_env ? '' : '<button type="button" class="btn ghost sm" data-oa="address">New address</button>') + '</div>' +
       (D.push_ready ? '' : '<p class="rl-note">Push notifications are not available on this server (openssl has no P-256); the app works without them.</p>') + '</div>' +
       '<div class="rl-card"><p class="oaa-h">Settings</p><div class="oaa-set"><label>Lock after (hours unused)<input class="rl-in" type="number" min="1" max="168" data-set="idle_hours" value="' + esc(D.settings.idle_hours) + '"></label>' +
-      '<label>Low stock at (units)<input class="rl-in" type="number" min="0" max="999" data-set="low_stock" value="' + esc(D.settings.low_stock) + '"></label><button type="button" class="btn sm" data-oa="settings">Save</button></div></div>' +
+      '<label>Low stock at (units)<input class="rl-in" type="number" min="0" max="999" data-set="low_stock" value="' + esc(D.settings.low_stock) + '"></label>' +
+      '<label>Show loading bars after (minutes)<input class="rl-in" type="number" min="5" max="240" data-set="stale_minutes" value="' + esc(D.settings.stale_minutes) + '" aria-describedby="oaa-stale-h"></label><button type="button" class="btn sm" data-oa="settings">Save</button></div>' +
+      '<p class="rl-note" id="oaa-stale-h">Opening the app within this many minutes of its last sync refreshes silently; after longer, it shows grey loading bars while it syncs everything.</p></div>' +
       '<p class="oaa-h oaa-mt">Members</p>' + m +
       '<div class="rl-card"><p class="oaa-h">Recent sign-ins</p>' + log + '</div></div>';
     flash = '';
