@@ -743,6 +743,9 @@ class StorefrontAdminController extends Controller
             'on' => \App\Http\Controllers\Store\BrandController::hero($all['brand_hero'] ?? null, PageBanner::forModel($model, (string) $model->getAttribute('name'))) === 'panel',
             'shop' => BrandPanel::shop($all),
             'ranges' => $ranges,
+            // Lane BR3: the sizes the stylesheet draws on its own, which the
+            // preview removes rather than sets -- as BrandPanel::forBrand() does.
+            'quiet' => BrandPanel::QUIET,
             // The admin path in words, sent rather than written into the
             // script, where DirectionalGlyphsTest keeps every arrow out.
             'hint' => 'For this brand only. "Shop" follows Appearance → Site layout → Brand page.',

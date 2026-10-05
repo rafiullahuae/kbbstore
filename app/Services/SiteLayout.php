@@ -625,11 +625,11 @@ class SiteLayout
         'brand_header_w' => ['range', 'Panel · header width', 100,
             'Only for the Panel header, on laptops: how much of the page width the banner takes, centred.',
             ['min' => 60, 'max' => 100, 'step' => 1, 'unit' => '%']],
-        'brand_banner_h' => ['range', 'Panel · banner height · laptop', 270,
-            'Only for the Panel header. The banner grows past this if the description needs more room.',
+        'brand_banner_h' => ['range', 'Panel · laptop · header height', 270,
+            'Only for the Panel header: the height of the WHOLE header on a laptop -- the banner, with the panel on it. It grows past this only if the panel needs more room.',
             ['min' => 160, 'max' => 460, 'step' => 5, 'unit' => 'px']],
-        'brand_banner_h_m' => ['range', 'Panel · banner height · phone', 165,
-            'Only for the Panel header: the banner on a phone, with the logo and name on it.',
+        'brand_banner_h_m' => ['range', 'Panel · phone · banner height', 165,
+            'Only for the Panel header: the banner on a phone, with the logo and name on it. The description card comes BELOW it, so the whole phone header is this, plus the gap, plus the card.',
             ['min' => 100, 'max' => 300, 'step' => 5, 'unit' => 'px']],
         'brand_content_w' => ['range', 'Panel · content width', 60,
             'Only for the Panel header, on laptops: the panel\'s width, as a share of the banner\'s.',
@@ -641,6 +641,82 @@ class SiteLayout
                 'center' => 'Centre',
                 'right' => 'Right',
             ]],
+
+        /*
+         * THE PANEL HEADER'S BOX, POSITION AND TYPE.               (Lane BR3)
+         *
+         * The owner: "for brand i need this as you proposed. with logo circle
+         * or rectangle to choose from, and all controls options like box
+         * spacings, positioning etc and to adjust the height of overal header
+         * also, and font sizes etc. ... allow controls for desktop and mobile
+         * both on the front-end."
+         *
+         * Each brand changes these in its own "Edit brand header" pop-up; these
+         * are the shop's values. Every default is design A's own number (the
+         * Frosted glass panel he picked), and BrandPanel::QUIET holds the same
+         * numbers: a size at its default prints nothing, so an untouched brand
+         * page keeps its markup.
+         */
+        'brand_panel_x' => ['select', 'Panel · laptop · panel across the banner', 'left',
+            'Only for the Panel header, on laptops: the panel on the left of the banner (as designed), in the middle, or on the right.',
+            [
+                'left' => 'Left',
+                'center' => 'Centre',
+                'right' => 'Right',
+            ]],
+        'brand_panel_y' => ['select', 'Panel · laptop · panel up and down', 'middle',
+            'Only for the Panel header, on laptops: the panel in the middle of the banner\'s height, at its top, or at its bottom.',
+            [
+                'middle' => 'Middle',
+                'top' => 'Top',
+                'bottom' => 'Bottom',
+            ]],
+        'brand_panel_pad' => ['range', 'Panel · laptop · space inside the panel', 26,
+            'Only for the Panel header: the padding at the panel\'s sides; top and bottom are 4px less.',
+            ['min' => 8, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'brand_panel_inset' => ['range', 'Panel · laptop · panel distance from the banner edge', 36,
+            'Only for the Panel header: from the banner\'s side; from its top and bottom it is two thirds of this. At 36 it narrows on a small laptop.',
+            ['min' => 0, 'max' => 120, 'step' => 1, 'unit' => 'px']],
+        'brand_desc_gap' => ['range', 'Panel · laptop · gap between the name and the description', 12,
+            'Only for the Panel header: the space between the logo-and-name row and the description, inside the panel.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'brand_name_fs' => ['range', 'Panel · laptop · brand name size', 34,
+            'Only for the Panel header. At 34 it narrows on a small laptop; any other size is kept exactly.',
+            ['min' => 18, 'max' => 56, 'step' => 1, 'unit' => 'px']],
+        'brand_desc_fs' => ['range', 'Panel · laptop · description size', 15,
+            'Only for the Panel header: the description\'s text, inside the panel.',
+            ['min' => 12, 'max' => 22, 'step' => 1, 'unit' => 'px']],
+        'brand_logo_size' => ['range', 'Panel · laptop · logo size', 72,
+            'Only for the Panel header: the logo\'s height (a circle is as wide; a rectangle is 2.3 times as wide).',
+            ['min' => 40, 'max' => 120, 'step' => 1, 'unit' => 'px']],
+        'brand_pill_at' => ['select', 'Panel · phone · logo and name position', 'bottom-left',
+            'Only for the Panel header, on phones: where the capsule with the logo and name sits on the banner.',
+            [
+                'bottom-left' => 'Bottom left',
+                'bottom-center' => 'Bottom centre',
+                'bottom-right' => 'Bottom right',
+                'top-left' => 'Top left',
+                'top-center' => 'Top centre',
+                'top-right' => 'Top right',
+            ]],
+        'brand_pill_inset_m' => ['range', 'Panel · phone · capsule distance from the banner edge', 12,
+            'Only for the Panel header, on phones.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'brand_card_gap_m' => ['range', 'Panel · phone · gap between the banner and the description', 12,
+            'Only for the Panel header, on phones: the space above the description card.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'brand_card_pad_m' => ['range', 'Panel · phone · space inside the description card', 14,
+            'Only for the Panel header, on phones: top and bottom; the sides are 2px more.',
+            ['min' => 6, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'brand_name_fs_m' => ['range', 'Panel · phone · brand name size', 22,
+            'Only for the Panel header, on phones: the name in the capsule.',
+            ['min' => 14, 'max' => 36, 'step' => 1, 'unit' => 'px']],
+        'brand_desc_fs_m' => ['range', 'Panel · phone · description size', 14,
+            'Only for the Panel header, on phones: the text in the card below the banner.',
+            ['min' => 12, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        'brand_logo_size_m' => ['range', 'Panel · phone · logo size', 52,
+            'Only for the Panel header, on phones: the logo\'s height in the capsule.',
+            ['min' => 28, 'max' => 80, 'step' => 1, 'unit' => 'px']],
 
         /*
          * ── PRESS FEEDBACK ──────────────────────────────────────── Lane RD ──
@@ -787,7 +863,11 @@ class SiteLayout
     /** The brand page's switches: not CSS, skipped by isDefault(). */
     public const BRAND_KEYS = ['brand_all', 'brand_cta', 'brand_popular', 'brand_hero', 'brand_ring', 'brand_phone_cover',
         'brand_panel_style', 'brand_pill', 'brand_logo_shape', 'brand_header_w', 'brand_banner_h', 'brand_banner_h_m',
-        'brand_content_w', 'brand_img_pos'];
+        'brand_content_w', 'brand_img_pos',
+        // Lane BR3: the panel's box, position and type, laptop then phone.
+        'brand_panel_x', 'brand_panel_y', 'brand_panel_pad', 'brand_panel_inset', 'brand_desc_gap', 'brand_name_fs',
+        'brand_desc_fs', 'brand_logo_size', 'brand_pill_at', 'brand_pill_inset_m', 'brand_card_gap_m', 'brand_card_pad_m',
+        'brand_name_fs_m', 'brand_desc_fs_m', 'brand_logo_size_m'];
 
     /** The keys that are not CSS: skipped by isDefault(), never in css(). */
     private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom'];

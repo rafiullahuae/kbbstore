@@ -414,17 +414,40 @@ const FOCUS_CHOICES = [['', 'Shop setting'], ['left', 'Left'], ['center', 'Centr
  * nothing measured. The server draws the same classes and properties
  * (App\Support\BrandPanel) when the preview is fetched and on the page.
  */
+/*
+ * Lane BR3: every control belongs to a group -- 'both', 'laptop' or 'phone' --
+ * and the pop-up shows the group its Laptop / Phone switch is on. A choice
+ * marked QUIET prints no class at its first option, and a size the server
+ * lists in `panel.quiet` is removed (not set) at that value, exactly as
+ * App\Support\BrandPanel prints the page, so the preview cannot differ from it.
+ */
 const PANEL_CHOICES = [
-    ['logo', 'Logo shape', 'brw-ph--logo-', [['circle', 'Circle'], ['rect', 'Rectangle']]],
-    ['panel', 'Content background', 'brw-ph--', [['frost', 'Frosted white'], ['brand', 'Brand colour']]],
-    ['pill', 'Logo and name on phones', 'brw-ph--pill-', [['capsule', 'Capsule'], ['rect', 'Rectangle']]],
-    ['position', 'Picture position', 'brw-ph--pos-', [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']]],
+    ['logo', 'Logo shape', 'brw-ph--logo-', [['circle', 'Circle'], ['rect', 'Rectangle']], 'both'],
+    ['panel', 'Content background', 'brw-ph--', [['frost', 'Frosted white'], ['brand', 'Brand colour']], 'both'],
+    ['position', 'Picture position', 'brw-ph--pos-', [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']], 'both'],
+    ['panel_x', 'Panel across the banner', 'brw-ph--px-', [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']], 'laptop', true],
+    ['panel_y', 'Panel up and down', 'brw-ph--py-', [['middle', 'Middle'], ['top', 'Top'], ['bottom', 'Bottom']], 'laptop', true],
+    ['pill', 'Logo and name shape', 'brw-ph--pill-', [['capsule', 'Capsule'], ['rect', 'Rectangle']], 'phone'],
+    ['pill_at', 'Logo and name position', 'brw-ph--at-', [['bottom-left', 'Bottom left'], ['bottom-center', 'Bottom centre'], ['bottom-right', 'Bottom right'],
+        ['top-left', 'Top left'], ['top-center', 'Top centre'], ['top-right', 'Top right']], 'phone', true],
 ];
 const PANEL_BARS = [
-    ['width', 'Header width · laptop', '--brw-ph-w'],
-    ['height', 'Banner height · laptop', '--brw-ph-h'],
-    ['height_m', 'Banner height · phone', '--brw-ph-hm'],
-    ['content', 'Content width · laptop', '--brw-ph-cw'],
+    ['height', 'Header height (the whole header: the banner, with the panel on it)', '--brw-ph-h', 'laptop'],
+    ['width', 'Header width', '--brw-ph-w', 'laptop'],
+    ['content', 'Panel width', '--brw-ph-cw', 'laptop'],
+    ['pad', 'Space inside the panel', '--brw-ph-pad', 'laptop'],
+    ['inset', 'Panel distance from the banner edge', '--brw-ph-in', 'laptop'],
+    ['gap', 'Gap between the name and the description', '--brw-ph-gap', 'laptop'],
+    ['name', 'Brand name size', '--brw-ph-fn', 'laptop'],
+    ['desc', 'Description size', '--brw-ph-fd', 'laptop'],
+    ['logo_size', 'Logo size', '--brw-ph-lg', 'laptop'],
+    ['height_m', 'Banner height (the description card comes below it)', '--brw-ph-hm', 'phone'],
+    ['inset_m', 'Logo and name distance from the banner edge', '--brw-ph-im', 'phone'],
+    ['gap_m', 'Gap between the banner and the description', '--brw-ph-gm', 'phone'],
+    ['card_pad_m', 'Space inside the description card', '--brw-ph-cp', 'phone'],
+    ['name_m', 'Brand name size', '--brw-ph-fnm', 'phone'],
+    ['desc_m', 'Description size', '--brw-ph-fdm', 'phone'],
+    ['logo_size_m', 'Logo size', '--brw-ph-lgm', 'phone'],
 ];
 
 function openEditor(edit, opener) {
@@ -525,8 +548,25 @@ function openEditor(edit, opener) {
     const layoutSegs = [];
     const layoutBars = [];
     const layoutBox = hasLayout ? h('div', { class: 'kbb-qe__layout' }) : null;
+    const groups = {};
+    let device = window.innerWidth > 640 ? 'laptop' : 'phone';
     if (hasLayout) {
-        PANEL_CHOICES.forEach(([key, label, , opts]) => {
+        // Lane BR3: Laptop / Phone, each with its own controls.
+        groups.both = h('div', { class: 'kbb-qe__lygrp' });
+        groups.laptop = h('div', { class: 'kbb-qe__lygrp' });
+        groups.phone = h('div', { class: 'kbb-qe__lygrp' });
+        const devSeg = h('div', { class: 'kbb-qe__seg kbb-qe__dev', role: 'radiogroup', 'aria-label': 'Controls for' });
+        [['laptop', 'Laptop'], ['phone', 'Phone']].forEach(([v, text]) => {
+            const input = h('input', { type: 'radio', name: 'kbb-qe-ly-device', value: v });
+            input.checked = v === device;
+            input.addEventListener('change', () => { device = v; showDevice(); });
+            devSeg.appendChild(h('label', null, input, h('span', { text })));
+        });
+        layoutBox.appendChild(groups.both);
+        layoutBox.appendChild(h('div', { class: 'kbb-qe__fld' }, h('span', { class: 'kbb-qe__label', text: 'Controls for' }), devSeg));
+        layoutBox.appendChild(groups.laptop);
+        layoutBox.appendChild(groups.phone);
+        PANEL_CHOICES.forEach(([key, label, , opts, group]) => {
             const shopV = panel.shop[key];
             const shopName = (opts.find((o) => o[0] === shopV) || ['', ''])[1];
             const seg = h('div', { class: 'kbb-qe__seg', role: 'radiogroup', 'aria-label': label });
@@ -540,21 +580,30 @@ function openEditor(edit, opener) {
                 seg.appendChild(h('label', null, input, h('span', { text })));
             });
             layoutSegs.push([key, seg]);
-            layoutBox.appendChild(h('div', { class: 'kbb-qe__fld' }, h('span', { class: 'kbb-qe__label', text: label }), seg));
+            groups[group].appendChild(h('div', { class: 'kbb-qe__fld' }, h('span', { class: 'kbb-qe__label', text: label }), seg));
         });
-        PANEL_BARS.forEach(([key, label]) => {
+        PANEL_BARS.forEach(([key, label, , group]) => {
             const r = panel.ranges[key];
             const id = `kbb-qe-ly-${key}`;
             const input = h('input', { type: 'range', id, class: 'kbb-qe__range', min: String(r.min), max: String(r.max), step: '1' });
             const out = h('output', { for: id });
             input.addEventListener('input', () => { values.layout[key] = Number(input.value); paintLayout(); });
             layoutBars.push([key, input, out, r.unit]);
-            layoutBox.appendChild(h('div', { class: 'kbb-qe__fld kbb-qe__bar-fld' },
+            groups[group].appendChild(h('div', { class: 'kbb-qe__fld kbb-qe__bar-fld' },
                 h('label', { class: 'kbb-qe__label', for: id }, label, out), input));
         });
         const resetBtn = h('button', { type: 'button', class: 'kbb-qe__link', text: 'Use the shop settings for all of these' });
         resetBtn.addEventListener('click', () => { values.layout = {}; syncLayout(); paintLayout(); });
         layoutBox.appendChild(h('p', { class: 'kbb-qe__hint' }, resetBtn));
+    }
+
+    /** Show the chosen device's controls, and pin that device's preview. */
+    function showDevice() {
+        if (!hasLayout) return;
+        groups.laptop.hidden = device !== 'laptop';
+        groups.phone.hidden = device !== 'phone';
+        pv.classList.toggle('kbb-qe__pv--pin', device === 'laptop');
+        if (pvPhone) pvPhone.classList.toggle('kbb-qe__pv--pin', device === 'phone');
     }
 
     /** Put the controls at this brand's values (its own, else the shop's). */
@@ -575,10 +624,14 @@ function openEditor(edit, opener) {
         [pvStage, pvPhoneStage].forEach((stage) => {
             const el = stage.querySelector('.brw-ph');
             if (!el) return;
-            PANEL_CHOICES.forEach(([key, , prefix, opts]) => {
-                opts.forEach(([o]) => el.classList.toggle(prefix + o, o === v[key]));
+            PANEL_CHOICES.forEach(([key, , prefix, opts, , quiet]) => {
+                opts.forEach(([o], i) => el.classList.toggle(prefix + o, o === v[key] && !(quiet && i === 0)));
             });
-            PANEL_BARS.forEach(([key, , prop]) => el.style.setProperty(prop, `${Number(v[key])}${panel.ranges[key].unit}`));
+            const quiet = panel.quiet || {};
+            PANEL_BARS.forEach(([key, , prop]) => {
+                if (quiet[key] === Number(v[key])) el.style.removeProperty(prop);
+                else el.style.setProperty(prop, `${Number(v[key])}${panel.ranges[key].unit}`);
+            });
         });
     }
 
@@ -675,7 +728,9 @@ function openEditor(edit, opener) {
         // width -- and the stage is then scaled down to the pop-up. Read from
         // the window's own width: no element is measured.
         const vw = window.innerWidth || 1280;
-        const stage = vw;
+        // Lane BR3: the Panel's laptop preview is a laptop's width even when the
+        // pop-up is opened on a phone, so its laptop controls can be seen working.
+        const stage = panel ? Math.max(vw, 1280) : vw;
         const boxW = Math.min(vw < 641 ? vw : 560, vw) - 38;
         pvStage.style.setProperty('--qe-stage', `${Math.max(200, stage)}px`);
         pvStage.style.setProperty('--qe-zoom', String(Math.min(1, boxW / Math.max(200, stage))));
@@ -926,7 +981,7 @@ function openEditor(edit, opener) {
     listen(window, 'resize', stageScale);
 
     setThumb();
-    if (hasLayout) { syncLayout(); paintLayout(); }
+    if (hasLayout) { syncLayout(); paintLayout(); showDevice(); }
     stageScale();
     refreshPreview();
     setTimeout(() => (window.innerWidth > 640 && !panel ? titleIn : closeX).focus({ preventScroll: true }), 30);

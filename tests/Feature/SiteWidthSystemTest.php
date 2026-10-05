@@ -708,6 +708,24 @@ it('ships every setting at the value the page already had, except the ones the o
         'brand_banner_h_m' => 165,
         'brand_content_w' => 60,
         'brand_img_pos' => 'center',
+        // Lane BR3: the box, position and type, at design A's own numbers
+        // (the Frosted glass panel he picked). The phone logo (52) and name
+        // (22) are A's; BR2 had shipped 44 and 20.
+        'brand_panel_x' => 'left',
+        'brand_panel_y' => 'middle',
+        'brand_panel_pad' => 26,
+        'brand_panel_inset' => 36,
+        'brand_desc_gap' => 12,
+        'brand_name_fs' => 34,
+        'brand_desc_fs' => 15,
+        'brand_logo_size' => 72,
+        'brand_pill_at' => 'bottom-left',
+        'brand_pill_inset_m' => 12,
+        'brand_card_gap_m' => 12,
+        'brand_card_pad_m' => 14,
+        'brand_name_fs_m' => 22,
+        'brand_desc_fs_m' => 14,
+        'brand_logo_size_m' => 52,
         'press' => 'c',
         // Lane FP, as the owner asked: "it's good only for small things like
         // icons etc." -- a default he chose, not the old behaviour.
