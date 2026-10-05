@@ -1678,6 +1678,18 @@ final class EnglishRenderWalk
              * fractional count runs the phone track to the screen edge) and
              * `bndl-noarr-m`, and --bndl-per-m is 2.3 where it was 2.
              */
+            /*
+             * THE PHONE LISTING TOOLBAR (2.60.393). The owner: "turn off the
+             * filters for now. and make number of columns to select 1 or 2".
+             * The toolbar carries the two phone switches as classes (Appearance
+             * -> Site layout -> Product grid); laptops ignore both. Shop and
+             * category listing, once each.
+             */
+            'the phone listing toolbar: Filters off, 1 / 2 columns (2.60.393)' => [
+                'pattern' => '#<div class="gtop">#',
+                'with' => '<div class="gtop kbb-nofilt-m kbb-mcols">',
+                'hits' => 2,
+            ],
             'Big savings bundles: the section head and the carousel track (2.60.370)' => [
                 'pattern' => '#<section class="sec dv" style="padding-top:8px"><div class="wrap">\n  <div class="sh"><div><h2>Big savings bundles <span class="cnt">8 sets</span>(</h2>\n    <p>Complete routines, priced below the sum of their parts\.</p></div>)\n    <a class="lnk" href="/shop/\?cat=skincare-sets">All sets</a></div>\n  <div class="kbb-pgrid" data-skin="showcase">#',
                 'with' => '<section class="sec bndl bndl-car-d bndl-car-m bndl-peek-m bndl-noarr-m bndl-center bndl-btn-d-top bndl-btn-m-bottom dv" style="--bndl-per-d:4;--bndl-per-m:2.3;--bndl-pad-d:8px;--bndl-pad-m:8px;--bndl-hg-d:24px;--bndl-hg-m:12px;--bndl-bg-d:24px;--bndl-bg-m:16px" data-ymal data-ymal-auto="0" aria-labelledby="bndl-h"><div class="wrap">'."\n".'  <div class="sh bndl-head"><div><h2 id="bndl-h">Big savings bundles$1'."\n".'    <a class="bndl-all bndl-all-top" href="/shop/?cat=skincare-sets">All sets<i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i></a></div>'."\n".'  <div class="bndl-stage">'."\n".'    <button type="button" class="bndl-arr bndl-prev" data-ymal-prev aria-controls="bndl-track" aria-label="Previous products" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>'."\n".'  <div class="kbb-pgrid bndl-track" data-skin="showcase" id="bndl-track" data-ymal-track tabindex="0" role="region" aria-label="Big savings bundles">',
@@ -2143,6 +2155,12 @@ KBB_BH_CSS;
     public static function approvedInsertions(): array
     {
         return [
+            // 2.60.393: the phone's 1 / 2 column buttons, beside Sort, on the
+            // shop and category listing (hidden on a laptop).
+            'the phone 1 / 2 column buttons (2.60.393)' => [
+                'pattern' => '#                <div class="colsel colsel-m" id="colselm"><button type="button" data-m="1" title="1 column"><svg [^<>]*><rect [^<>]*/></svg></button><button type="button" data-m="2" class="on" title="2 columns"><svg [^<>]*><rect [^<>]*/><rect [^<>]*/></svg></button></div>\n#',
+                'hits' => 2,
+            ],
             /*
              * THE FILTERS DRAWER'S BACKDROP (Lane FP). The owner: "when clicked
              * on empty area, the filter panel must be need to hide auto." One

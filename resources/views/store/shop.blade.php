@@ -201,10 +201,10 @@
             </div>
         </div>
     </aside>
-    <div class="fscrim" data-kbb-close></div>
+    <div class="fscrim" data-kbb-close></div>@php $kbbLay = app(\App\Services\SiteLayout::class); $kbbMcols = in_array((string) request()->query('mcols'), ['1', '2'], true) ? (string) request()->query('mcols') : null; @endphp
+
 
     <main>
-        @php $kbbLay = app(\App\Services\SiteLayout::class); $kbbMcols = in_array((string) request()->query('mcols'), ['1', '2'], true) ? (string) request()->query('mcols') : null; @endphp
         <div class="gtop{{ $kbbLay->get('filters_m') ? '' : ' kbb-nofilt-m' }}{{ $kbbLay->get('cols_m') ? ' kbb-mcols' : '' }}">
             <button class="mobi-filter" type="button" onclick="document.body.classList.add('filters-open')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_heading') }}@if ($chips)<span class="fcount">{{ count($chips) }}</span>@endif</button>
             <button id="showFilters" type="button" onclick="document.body.classList.remove('filters-hidden');document.cookie='kbb_filters=open;path=/;max-age=31536000;samesite=lax'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_show') }}@if ($chips)<span class="fcount">{{ count($chips) }}</span>@endif</button>@if (app(\App\Services\SiteLayout::class)->get('show_count')){{ "\n" }}            <span class="gcount">{!! trans_choice('store.shop.product_count', $total, ['formatted' => '<b>' . e($total) . '</b>']) !!}</span>@endif{{ '' }}
@@ -215,8 +215,8 @@
                     <button type="button" data-c="4"@if ($colsChosen && '4' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 4) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2.5" y="5" width="3.4" height="14" rx="1"/><rect x="7.7" y="5" width="3.4" height="14" rx="1"/><rect x="12.9" y="5" width="3.4" height="14" rx="1"/><rect x="18.1" y="5" width="3.4" height="14" rx="1"/></svg></button>
                     <button type="button" data-c="5"@if ($colsChosen && '5' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 5) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="5" width="2.7" height="14" rx=".9"/><rect x="6.3" y="5" width="2.7" height="14" rx=".9"/><rect x="10.6" y="5" width="2.7" height="14" rx=".9"/><rect x="14.9" y="5" width="2.7" height="14" rx=".9"/><rect x="19.2" y="5" width="2.7" height="14" rx=".9"/></svg></button>
                 </div>
-                @if ($kbbLay->get('cols_m'))<div class="colsel colsel-m" id="colselm"><button type="button" data-m="1"@if ($kbbMcols === '1') class="on"@endif title="{{ trans_choice('store.shop.columns_option', 1) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="12" height="14" rx="1.8"/></svg></button><button type="button" data-m="2"@if ($kbbMcols !== '1') class="on"@endif title="{{ trans_choice('store.shop.columns_option', 2) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg></button></div>
-                @endif
+                @if ($kbbLay->get('cols_m'))<div class="colsel colsel-m" id="colselm"><button type="button" data-m="1"@if ($kbbMcols === '1') class="on"@endif title="{{ trans_choice('store.shop.columns_option', 1) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="12" height="14" rx="1.8"/></svg></button><button type="button" data-m="2"@if ($kbbMcols !== '1') class="on"@endif title="{{ trans_choice('store.shop.columns_option', 2) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg></button></div>@endif
+
                 {{-- A <label>, not a <div>, so "Sort" is the select's accessible
                      name — it had none. On the narrowest phones the word is
                      hidden VISUALLY (kbb-shop.css, .sortlbl) to keep Filters and
