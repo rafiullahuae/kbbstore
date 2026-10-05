@@ -3,6 +3,22 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.394
+**Custom pages: the strip is off everywhere, turned on per page from the
+front-end Edit panel; header and strip drag into either order; no gap under
+the site header; space sliders, including above the header.** Apply after
+.393. Runs 1 migration. Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "turned off the strip by default on all pages" | Off on every page. Your banners are kept, only unassigned |
+| "allow to turn ON on any page from the edit panel on the front-end" | Page → Edit header → Strip → Show the strip on this page (and which strip, if you have several) |
+| "sort header area and strip. by drag n drop up down" | Edit header → Order: drag the grip (mouse or finger), or the up / down arrows |
+| "remove any space between header area and main site header" | 26px → 0 at 390, 51px → 0 at 1280 |
+| "option to control to spacings" / "uper space also of header area" | Edit header → Sizes: Space above the header (0), Space between header and strip (0), Space below the header (22 / 12) — laptop and phone apart, 0–80px |
+
+Files: see the package's update.json.
+
 ## 2.60.393
 **Phone category pages: no Filters button, 1 / 2 column buttons, smaller sort,
 the header picture covers the header, less space under it.** Apply after .392.
