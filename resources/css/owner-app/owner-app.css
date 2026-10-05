@@ -84,6 +84,16 @@ a { color: inherit; text-decoration: none; }
 .lt h2 { margin: 4px 0 0; font: var(--w-h) var(--fs-h)/1.04 var(--font-d); letter-spacing: var(--ls-h); }
 .lt-row { display: flex; align-items: flex-end; gap: 8px; }
 .lt-row > div:first-child { flex: 1; min-width: 0; }
+/* My store's header, compact (2.60.401). The owner: "the header bar is too
+   heighted, i need to reduce atleast 50%, make the KBB icon small". The title
+   block was 84px: a 64px logo set the row, under a 32px title. One centred row
+   now: 36px buttons, a 32px logo, a 21px title with the date small above it. */
+.lt-dash { padding: 2px 16px 6px; }
+.lt-dash .lt-row { align-items: center; }
+.lt-dash .kick { font-size: 11px; line-height: 13px; }
+.lt-dash h2 { margin: 0; font-size: 18px; line-height: 1.15; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lt-dash .ib { width: 36px; height: 36px; }
+.lt-dash .logo.sm { width: 32px; height: 32px; font-size: 12px; border-radius: 10px; }
 .hdr-acts { display: flex; gap: 6px; flex: none; }
 .card { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 16px; margin-bottom: 12px; min-width: 0; }
 .sh { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 0 10px; font: 600 12.5px/1.2 var(--font); color: var(--ink2); }
@@ -477,6 +487,9 @@ details summary::-webkit-details-marker { display: none; }
 .fsbar { display: none; justify-content: flex-end; height: 22px; padding: 0 8px; flex: none; }
 .can-fs .fsbar { display: flex; }
 .fs { width: 30px; height: 30px; margin-top: -4px; display: grid; place-items: center; border-radius: 50%; color: var(--ink3); opacity: .62; transition: transform .1s, opacity .1s; }
+/* In a header (2.60.401): a normal header icon, shown only where full screen is offered. */
+.ib.fs { display: none; margin-top: 0; opacity: 1; color: var(--ink); border-radius: var(--r-ib); }
+.can-fs .ib.fs { display: grid; }
 .fs .i { width: 16px; height: 16px; stroke-width: 2; grid-area: 1 / 1; }
 .fs .g-in { display: none; }
 .is-fs .fs .g-in { display: block; }

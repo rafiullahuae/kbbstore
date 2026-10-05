@@ -197,6 +197,7 @@ function unlocked(d) {
   S.vapid = d.vapid;
   S.idle = d.idle_hours || S.idle;
   S.staleMs = (d.stale_minutes || Math.round(S.staleMs / 60000)) * 60000;
+  if (typeof d.store === 'string' && d.store) S.store = d.store;
   S.tz = d.tz || S.tz;
   S.groups = d.notify_groups || S.groups;
   if (first) frame();
@@ -209,7 +210,7 @@ const TABS = [['', 'My store', 'chart'], ['orders', 'Orders', 'receipt'], ['prod
 function frame() {
   root.className = 'app';
   const can = S.me.can;
-  paint(root, '<div class="main">' + fsButton() + '<div class="view" id="oa-view"></div></div><nav class="nav" aria-label="App sections">'
+  paint(root, '<div class="main"><div class="view" id="oa-view"></div></div><nav class="nav" aria-label="App sections">'
     + TABS.filter(([k]) => (k !== 'orders' || can.orders) && (k !== 'products' || can.products)).map(([k, l, i]) => '<a href="#/' + k + '" data-tab="' + k + '" aria-label="' + l + '"><em class="nw">' + ic(i) + (k === 'orders' ? '<b class="bdg" data-bdg="orders" hidden></b>' : k === 'more' ? '<b class="bdg" data-bdg="more" hidden></b>' : '') + '</em><span>' + l + '</span></a>').join('')
     + '</nav>');
   view = document.getElementById('oa-view');

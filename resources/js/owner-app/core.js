@@ -153,7 +153,15 @@ export const errorBox = (msg) => '<div class="card empty" role="alert">' + esc(m
 /* The header's refresh icon. Its state is a class, never part of the markup,
    so a header repainted mid-sync picks it up from spinMark() — and the spin
    carries on from the same angle rather than jumping back to 0. */
-export const syncBtn = (cls) => '<button type="button" class="ib sync ' + (cls || '') + '" data-sync aria-label="Sync now" title="Sync now">' + ic('refresh') + '</button>';
+/** The header's enlarge / shrink icon, beside "Sync now"; hidden where full screen is not offered. */
+export const fsIcon = () =>
+  '<button type="button" class="ib fs" data-fs aria-label="Full screen" title="Full screen">'
+  + '<svg class="i g-out" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M4 4l6 6M20 15v5h-5M20 20l-6-6"/></svg>'
+  + '<svg class="i g-in" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5v5H5M10 10L4 4M14 19v-5h5M14 14l6 6"/></svg>'
+  + '</button>';
+
+// "Sync now", with the full-screen icon beside it (2.60.401; CSS shows that one only where full screen is offered).
+export const syncBtn = (cls) => '<button type="button" class="ib sync ' + (cls || '') + '" data-sync aria-label="Sync now" title="Sync now">' + ic('refresh') + '</button>' + fsIcon();
 
 function spinMark(b) {
   b.classList.toggle('on', S.spinning);

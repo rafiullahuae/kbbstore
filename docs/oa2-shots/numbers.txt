@@ -1,12 +1,12 @@
-Lane OA2 — owner app refresh, measured by tools/oa2-shots.cjs (2026-10-05T17:16:44.560Z)
+Lane OA2 — owner app refresh, measured by tools/oa2-shots.cjs (2026-10-05T18:43:47.241Z)
 
 == phone-390 (390x844, iPhone Safari UA)
-  01 first open: requests fired state@282ms, dashboard@285ms, changes@285ms, notifications@286ms, orders@286ms, products@286ms, customers@286ms (all within 286ms: parallel)
+  01 first open: requests fired state@301ms, dashboard@302ms, changes@303ms, notifications@311ms, orders@311ms, products@311ms, customers@311ms (all within 311ms: parallel)
      dashboard .body children heights, bars [1,370.7,178.6,77.8] vs data [370.7,361,77.8,356.2]
-     X-OA-CSRF on every GET but state: false
+     X-OA-CSRF on every GET, state included once the key is held: true
   03 reopen after 1 min: real hero on screen at 150ms: true; grey bars ever shown: false; requests {"state":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1}; every one X-OA-Passive: true
   phone-390--04-reopen-after-40-min-bars: 58 grey bars; .body > * heights bars [1,370.7,178.6,77.8] vs data [370.7,361,77.8,356.2]; scrollWidth 390/390; requests {"state":1,"dashboard":1,"changes":1,"notifications":1,"orders":1,"products":1,"customers":1} [state dashboard changes notifications orders products customers], passive 0
-  05/06 Sync now: 40x40px icon at (214,6), label "Sync now", 2px outside its edge still hits it (44px target): true
+  05/06 Sync now: 36x36px icon at (258,2), label "Sync now", 2px outside its edge still hits it (44px target): true
      3 taps in 0.6s -> requests {"state":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1}; spinning true (spin, aria-busy true), overlay false; stopped after: true; passive 0
   07 Sync now with /api/dashboard down: toast "Could not sync everything. Showing what you had."; dashboard figures kept: true
   phone-390--08-orders-bars: 36 grey bars; .list .row heights bars [73,73,73,73] vs data [73.3,73.3,73.3,73.3]; scrollWidth 390/390; requests {"state":1,"orders":1,"changes":1,"notifications":1,"dashboard":1,"products":1,"customers":1} [state orders changes notifications dashboard products customers], passive 0
@@ -19,12 +19,12 @@ Lane OA2 — owner app refresh, measured by tools/oa2-shots.cjs (2026-10-05T17:1
   tab to Products (held, fresh): 30 rows on screen within 60ms, bars shown 0 times
 
 == tablet-820 (820x1180, Android tablet Chrome UA)
-  01 first open: requests fired state@329ms, dashboard@330ms, changes@330ms, notifications@332ms, orders@332ms, products@332ms, customers@333ms (all within 333ms: parallel)
+  01 first open: requests fired state@424ms, dashboard@427ms, changes@427ms, notifications@431ms, orders@435ms, products@443ms, customers@443ms (all within 443ms: parallel)
      dashboard .body children heights, bars [1,374.3,178.6,77.8] vs data [374.3,361,77.8,356.2]
-     X-OA-CSRF on every GET but state: false
+     X-OA-CSRF on every GET, state included once the key is held: true
   03 reopen after 1 min: real hero on screen at 150ms: true; grey bars ever shown: false; requests {"state":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1}; every one X-OA-Passive: true
   tablet-820--04-reopen-after-40-min-bars: 58 grey bars; .body > * heights bars [1,374.3,178.6,77.8] vs data [374.3,361,77.8,356.2]; scrollWidth 820/820; requests {"state":1,"dashboard":1,"changes":1,"notifications":1,"orders":1,"products":1,"customers":1} [state dashboard changes notifications orders products customers], passive 0
-  05/06 Sync now: 40x40px icon at (644,6), label "Sync now", 2px outside its edge still hits it (44px target): true
+  05/06 Sync now: 36x36px icon at (688,2), label "Sync now", 2px outside its edge still hits it (44px target): true
      3 taps in 0.6s -> requests {"state":1,"changes":1,"notifications":1,"dashboard":1,"orders":1,"products":1,"customers":1}; spinning true (spin, aria-busy true), overlay false; stopped after: true; passive 0
   07 Sync now with /api/dashboard down: toast "Could not sync everything. Showing what you had."; dashboard figures kept: true
   tablet-820--08-orders-split-bars: 57 grey bars; .pane-l .list .row heights bars [73,73,73,73] vs data [73.3,73.3,73.3,73.3]; scrollWidth 820/820; requests {"state":1,"orders":1,"changes":1,"notifications":1,"dashboard":1,"products":1,"customers":1,"orders/:id":1} [state orders changes notifications dashboard products customers orders/:id], passive 0
@@ -36,12 +36,12 @@ Lane OA2 — owner app refresh, measured by tools/oa2-shots.cjs (2026-10-05T17:1
   tab to Products (held, fresh): 30 rows on screen within 60ms, bars shown 0 times
 
 == header with "Sync now", per width (top header height, title box, sync icon, document scrollWidth)
-  360: #/ h84 title156 sync40@224 x1 sw360 | #/orders h58 title282 sync40@348 x1 sw360 | #/products h58 title282 sync40@348 x1 sw360 | #/customers h58 title236 sync40@348 x1 sw360 | #/notifications h58 title162 sync40@354 x1 sw360 | #/more h54 title282 sync40@348 x1 sw360
-  390: #/ h84 title186 sync40@254 x1 sw390 | #/orders h58 title312 sync40@378 x1 sw390 | #/products h58 title312 sync40@378 x1 sw390 | #/customers h58 title266 sync40@378 x1 sw390 | #/notifications h58 title160 sync40@378 x1 sw390 | #/more h54 title312 sync40@378 x1 sw390
-  412: #/ h84 title208 sync40@276 x1 sw412 | #/orders h58 title334 sync40@400 x1 sw412 | #/products h58 title334 sync40@400 x1 sw412 | #/customers h58 title288 sync40@400 x1 sw412 | #/notifications h58 title182 sync40@400 x1 sw412 | #/more h54 title334 sync40@400 x1 sw412
-  430: #/ h84 title226 sync40@294 x1 sw430 | #/orders h58 title352 sync40@418 x1 sw430 | #/products h58 title352 sync40@418 x1 sw430 | #/customers h58 title306 sync40@418 x1 sw430 | #/notifications h58 title200 sync40@418 x1 sw430 | #/more h54 title352 sync40@418 x1 sw430
-  768: #/ h84 title472 sync40@632 x1 sw768 | #/orders h58 title261 sync40@419 x1 sw768 | #/products h58 title598 sync40@756 x1 sw768 | #/customers h58 title552 sync40@756 x1 sw768 | #/notifications h58 title446 sync40@756 x1 sw768 | #/more h54 title598 sync40@756 x1 sw768
-  820: #/ h84 title524 sync40@684 x1 sw820 | #/orders h58 title261 sync40@419 x1 sw820 | #/products h58 title650 sync40@808 x1 sw820 | #/customers h58 title604 sync40@808 x1 sw820 | #/notifications h58 title498 sync40@808 x1 sw820 | #/more h54 title650 sync40@808 x1 sw820
-  1180: #/ h84 title556 sync40@880 x1 sw1180 | #/orders h58 title321 sync40@479 x1 sw1180 | #/products h58 title682 sync40@1004 x1 sw1180 | #/customers h58 title636 sync40@1004 x1 sw1180 | #/notifications h58 title530 sync40@1004 x1 sw1180 | #/more h54 title682 sync40@1004 x1 sw1180
+  360: #/ h44 title162 sync36@222 x1 sw360 | #/orders h58 title246 sync40@312 x1 sw360 | #/products h58 title246 sync40@312 x1 sw360 | #/customers h58 title200 sync40@312 x1 sw360 | #/notifications h58 title154 sync40@312 x1 sw360 | #/more h54 title246 sync40@312 x1 sw360
+  390: #/ h44 title192 sync36@252 x1 sw390 | #/orders h58 title276 sync40@342 x1 sw390 | #/products h58 title276 sync40@342 x1 sw390 | #/customers h58 title230 sync40@342 x1 sw390 | #/notifications h58 title184 sync40@342 x1 sw390 | #/more h54 title276 sync40@342 x1 sw390
+  412: #/ h44 title214 sync36@274 x1 sw412 | #/orders h58 title298 sync40@364 x1 sw412 | #/products h58 title298 sync40@364 x1 sw412 | #/customers h58 title252 sync40@364 x1 sw412 | #/notifications h58 title206 sync40@364 x1 sw412 | #/more h54 title298 sync40@364 x1 sw412
+  430: #/ h44 title232 sync36@292 x1 sw430 | #/orders h58 title316 sync40@382 x1 sw430 | #/products h58 title316 sync40@382 x1 sw430 | #/customers h58 title270 sync40@382 x1 sw430 | #/notifications h58 title224 sync40@382 x1 sw430 | #/more h54 title316 sync40@382 x1 sw430
+  768: #/ h44 title520 sync36@672 x1 sw768 | #/orders h58 title261 sync40@419 x1 sw768 | #/products h58 title598 sync40@756 x1 sw768 | #/customers h58 title552 sync40@756 x1 sw768 | #/notifications h58 title506 sync40@756 x1 sw768 | #/more h54 title598 sync40@756 x1 sw768
+  820: #/ h44 title572 sync36@724 x1 sw820 | #/orders h58 title261 sync40@419 x1 sw820 | #/products h58 title650 sync40@808 x1 sw820 | #/customers h58 title604 sync40@808 x1 sw820 | #/notifications h58 title558 sync40@808 x1 sw820 | #/more h54 title650 sync40@808 x1 sw820
+  1180: #/ h44 title604 sync36@920 x1 sw1180 | #/orders h58 title321 sync40@479 x1 sw1180 | #/products h58 title682 sync40@1004 x1 sw1180 | #/customers h58 title636 sync40@1004 x1 sw1180 | #/notifications h58 title590 sync40@1004 x1 sw1180 | #/more h54 title682 sync40@1004 x1 sw1180
 
 == prefers-reduced-motion: shimmer animation none; spinning icon animation none, colour rgb(168, 71, 92), on true

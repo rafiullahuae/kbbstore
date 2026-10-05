@@ -299,7 +299,9 @@ class CollectionController extends Controller
          * across most of this catalogue, so without a key that cannot tie a
          * product can appear on two pages or on neither.
          */
-        $query->orderByDesc('featured')->orderBy('position')->orderBy('id');
+        // The curated order first, featured as its tie-break (2.60.402; see
+        // ShopController::applyDefaultSort for the owner's report).
+        $query->orderBy('position')->orderByDesc('featured')->orderBy('id');
 
         $page = max(1, (int) $request->query('page', 1));
 

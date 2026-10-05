@@ -628,6 +628,8 @@ input.inp[type=file]{padding:6px 9px}
 .ritem .mv{display:flex;flex-direction:column;gap:2px;margin-left:auto}
 .ritem .mv button{width:24px;height:18px;border-radius:5px;border:1px solid var(--border);display:grid;place-items:center;color:var(--ink-soft);background:var(--surface)}
 .ritem .mv button:hover{color:var(--accent-ink);border-color:var(--accent)}
+.ritem .mv button.re-jump{color:#d6336c;border-color:#f3c1cf;background:#fff5f8}
+.ritem .mv button.re-jump:hover{color:#fff;background:#d6336c;border-color:#d6336c}
 .ritem .mv svg{width:12px;height:12px}
 /* ---- full product editor (WooCommerce-parity) ---- */
 .btn.block{width:100%}
@@ -9035,7 +9037,7 @@ function catInventory(){
   $$('#catBody .invq').forEach(inp=>inp.oninput=()=>{const i=+inp.dataset.i;const v=inp.value===''?0:Math.max(0,parseInt(inp.value,10)||0);invDraft[i]=v;const tr=inp.closest('tr');tr.classList.toggle('invdirty',v!==CAT_PRODUCTS[i][6]);tr.querySelector('.invstat').innerHTML=stockPill(v);renderInvSaveBar();});
   renderInvSaveBar();
 }
-let reorderType='category',reorderScopes=null,reorderScopeId=null,reorderScopeName=null,reorderData=null,reorderPage=1,reorderSearch='',reorderLocal=null,reorderDirty=false,reorderSelected=new Set(),reorderBusy=false,reorderPerPage=+(localStorage.getItem('kbb_reorder_pp')||50),reorderPpCustomMode=false;
+let reorderType='category',reorderScopes=null,reorderScopeId=null,reorderScopeName=null,reorderData=null,reorderPage=1,reorderSearch='',reorderLocal=null,reorderDirty=false,reorderPending=[],reorderSelected=new Set(),reorderBusy=false,reorderPerPage=+(localStorage.getItem('kbb_reorder_pp')||50),reorderPpCustomMode=false;
 function reorderApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/catalog/reorder'; }
 function reorderFmtMoney(n){ return n==null ? '' : 'AED '+(Math.round(n*100)/100).toLocaleString(); }
 
@@ -9148,14 +9150,11 @@ function reorderPaint(){
       <button class="btn ghost sm" style="white-space:nowrap" ${d.page>=d.last_page?'disabled':''} id="reNext">Next ›</button>
     </div>
   </div>
-  <div class="between" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
-    <span style="font-size:12.5px;color:${reorderDirty?'var(--sale)':'var(--ink-soft)'}">${reorderDirty?'Unsaved changes on this page':'No changes to save'}</span>
-    <button class="btn primary" id="reSave" ${reorderDirty?'':'disabled'}>Save changes</button>
-  </div>`;
+  ${reorderSaveBar()}`;
 
-  $('#reTypeCat').onclick=()=>{ if(reorderType==='category'||!reorderConfirmDiscard())return; reorderType='category'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
-  $('#reTypeBrand').onclick=()=>{ if(reorderType==='brand'||!reorderConfirmDiscard())return; reorderType='brand'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
-  $('#reCat').onchange=e=>{ if(!reorderConfirmDiscard()){e.target.value=reorderScopeId;return;} reorderScopeId=+e.target.value;const opt=e.target.selectedOptions[0];reorderScopeName=opt.textContent.replace(/^[\s↳]+/,'');reorderPage=1;reorderSearch='';reorderLoadProducts(); };
+  $('#reTypeCat').onclick=()=>{ if(reorderType==='category'||!reorderConfirmDiscard()||!reorderDropPending())return; reorderType='category'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
+  $('#reTypeBrand').onclick=()=>{ if(reorderType==='brand'||!reorderConfirmDiscard()||!reorderDropPending())return; reorderType='brand'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
+  $('#reCat').onchange=e=>{ if(!reorderConfirmDiscard()||!reorderDropPending()){e.target.value=reorderScopeId;return;} reorderScopeId=+e.target.value;const opt=e.target.selectedOptions[0];reorderScopeName=opt.textContent.replace(/^[\s↳]+/,'');reorderPage=1;reorderSearch='';reorderLoadProducts(); };
   let searchT;$('#reSearch').oninput=e=>{ if(!reorderConfirmDiscard()){e.target.value=reorderSearch;return;} clearTimeout(searchT);const v=e.target.value;searchT=setTimeout(()=>{reorderSearch=v;reorderPage=1;reorderLoadProducts();},300); };
   $('#reAutoSort').onchange=async e=>{
     const by=e.target.value; if(!by) return;
@@ -9190,7 +9189,38 @@ function reorderPaint(){
   const bulkTop=$('#reBulkTop'); if(bulkTop) bulkTop.onclick=reorderBulkTopOfPage;
   const bulkClear=$('#reBulkClear'); if(bulkClear) bulkClear.onclick=()=>{reorderSelected.clear();reorderPaint();};
   $('#reSave').onclick=reorderSave;
+  const disc=$('#reDiscard'); if(disc) disc.onclick=reorderDiscard;
+  $$('[data-rpend]').forEach(b=>b.onclick=()=>{ reorderPending=reorderPending.filter(m=>m.id!==+b.dataset.rpend); reorderPaint(); });
   reorderWireList();
+}
+
+/* THE SAVE BAR (2.60.402). The owner: "when re-order done, there must be SAVE
+   button. should not apply the order/sorting directly." Save sat under the
+   whole list and its pager -- below fifty rows -- so an order could be set
+   and never saved, and the shop kept the old one. The bar now stays pinned to
+   the bottom of the window while anything is unsaved, and a number typed for
+   a place on ANOTHER page waits for Save too (it used to save at once). */
+function reorderSaveBar(){
+  const n=reorderPending.length, any=reorderDirty||n>0;
+  const pend=n?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${reorderPending.map(m=>`<span style="font-size:12px;background:var(--surface-2,#f6f6f8);border:1px solid var(--border);border-radius:99px;padding:3px 4px 3px 10px;display:inline-flex;align-items:center;gap:6px">${escHtml(m.name)} → #${m.to+1}<button class="btn ghost sm" data-rpend="${m.id}" aria-label="Cancel this move" style="padding:0 6px;min-height:0">×</button></span>`).join('')}</div>`:'';
+  return `<div class="re-savebar" id="reSaveBar" style="position:sticky;bottom:0;z-index:5;margin-top:18px;padding:12px 14px;background:var(--surface,#fff);border:1px solid ${any?'var(--accent,#E0567B)':'var(--border)'};border-radius:12px;box-shadow:${any?'0 -6px 20px -12px rgba(0,0,0,.25)':'none'}">
+    <div class="between" style="gap:10px;flex-wrap:wrap">
+      <span style="font-size:13px;font-weight:600;color:${any?'var(--sale)':'var(--ink-soft)'}">${any?(reorderDirty?'Unsaved order on this page':'')+(reorderDirty&&n?' · ':'')+(n?n+' move'+(n===1?'':'s')+' to other pages':'')+' — the shop changes only when you press Save':'Saved — the shop shows this order'}</span>
+      <div class="row" style="gap:8px"><button class="btn ghost" id="reDiscard" ${any?'':'disabled'}>Discard</button><button class="btn primary" id="reSave" ${any?'':'disabled'}>Save order</button></div>
+    </div>${pend}</div>`;
+}
+
+/* Moves waiting for Save belong to one category or brand: switching away asks first. */
+function reorderDropPending(){
+  if(reorderPending.length && !confirm(reorderPending.length+' move'+(reorderPending.length===1?' is':'s are')+' waiting for Save. Discard '+(reorderPending.length===1?'it':'them')+'?')) return false;
+  reorderPending=[];
+  return true;
+}
+
+function reorderDiscard(){
+  if(reorderBusy) return;
+  reorderPending=[];
+  reorderLoadProducts();
 }
 
 function reorderRenderList(list){
@@ -9211,8 +9241,10 @@ function reorderRenderList(list){
       </div>
       <div style="text-align:right;flex:0 0 76px;font-size:11px;color:var(--ink-soft)" title="Distinct orders this product has appeared in">${p.orders_count} order${p.orders_count===1?'':'s'}</div>
       <div class="mv" style="flex:0 0 auto;flex-direction:row;gap:4px">
-        <button data-rtop="${p.id}" title="Move to top of this page">${ic('<path d="M12 19V5M5 12l7-7 7 7"/>')}</button>
-        <button data-rbottom="${p.id}" title="Move to bottom of this page">${ic('<path d="M12 5v14M5 12l7 7 7-7"/>')}</button>
+        <button data-rup="${p.id}" title="One place up" aria-label="Move ${escHtml(p.name)} up one place">${ic('<path d="M12 19V5M5 12l7-7 7 7"/>')}</button>
+        <button data-rdown="${p.id}" title="One place down" aria-label="Move ${escHtml(p.name)} down one place">${ic('<path d="M12 5v14M5 12l7 7 7-7"/>')}</button>
+        <button data-rfirst="${p.id}" class="re-jump" title="To the top of the whole list" aria-label="Move ${escHtml(p.name)} to the top of the whole list">${ic('<path d="M5 4h14M12 20V9M6 15l6-6 6 6"/>')}</button>
+        <button data-rlast="${p.id}" class="re-jump" title="To the bottom of the whole list" aria-label="Move ${escHtml(p.name)} to the bottom of the whole list">${ic('<path d="M5 20h14M12 4v11M6 9l6 6 6-6"/>')}</button>
       </div>
     </div>`).join('')}</div>`;
 }
@@ -9232,8 +9264,20 @@ function reorderWireList(){
       reorderJumpToRank(id, rank);
     };
   });
-  $$('#rlist [data-rtop]').forEach(b=>b.onclick=()=>reorderLocalMove(+b.dataset.rtop, 0));
-  $$('#rlist [data-rbottom]').forEach(b=>b.onclick=()=>reorderLocalMove(+b.dataset.rbottom, reorderLocal.length-1));
+  /* Four arrows (2.60.404). The owner: "should be 4, 2 grey and 2 red, the
+     red arrows will jump to top or bottom of the whole list. and grey will
+     work as one row down or up." Grey: one place, across a page edge too.
+     Red: rank 1 / the last rank of the WHOLE list. All of them wait for Save,
+     through the same paths as the number box (reorderJumpToRank queues a
+     move that lands on another page). */
+  const pageStart=()=>(reorderData.page-1)*reorderData.per_page+1;
+  const step=(id,d)=>{ const i=reorderLocal.findIndex(x=>x.id===id); if(i<0) return; const to=i+d;
+    if(to>=0 && to<reorderLocal.length) reorderLocalMove(id,to);
+    else { const rank=pageStart()+to; if(rank>=1 && rank<=reorderData.total) reorderJumpToRank(id,rank); } };
+  $$('#rlist [data-rup]').forEach(b=>b.onclick=()=>step(+b.dataset.rup,-1));
+  $$('#rlist [data-rdown]').forEach(b=>b.onclick=()=>step(+b.dataset.rdown,1));
+  $$('#rlist [data-rfirst]').forEach(b=>b.onclick=()=>reorderJumpToRank(+b.dataset.rfirst,1));
+  $$('#rlist [data-rlast]').forEach(b=>b.onclick=()=>reorderJumpToRank(+b.dataset.rlast,reorderData.total));
   let dragI=null;
   $$('#rlist .ritem').forEach(it=>{
     it.ondragstart=e=>{ if(e.target.closest('[data-rankinput],[data-rsel]')){e.preventDefault();return;} dragI=+it.dataset.i; };
@@ -9272,35 +9316,39 @@ async function reorderJumpToRank(productId, rank){
     reorderLocalMove(productId, rank-pageStart);
     return;
   }
-  if(reorderDirty && !confirm('Moving to a position outside this page saves immediately, including any unsaved changes already made on this page. Continue?')) {
-    reorderPaint();
-    return;
-  }
-  reorderBusy=true;
-  try{
-    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/move',{method:'POST',credentials:'same-origin',
-      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
-      body:JSON.stringify({product_id:productId, to:rank-1})});
-    const j=await r.json();
-    if(j.ok){ toast('Moved and saved'); if(window.kbbDrafts) kbbDrafts.saved('reorder'); await reorderLoadProducts(); }
-    else{ toast(j.message||'Could not move that product.', 'bad'); }
-  }catch(e){ toast('Could not save — check your connection.','bad'); }
-  reorderBusy=false;
+  // Another page: queued, applied by Save (2.60.402) -- never on its own.
+  const p=reorderLocal.find(x=>x.id===productId);
+  reorderPending=reorderPending.filter(m=>m.id!==productId).concat([{id:productId, name:p?p.name:('#'+productId), to:Math.max(0,rank-1)}]);
+  toast('Will move to #'+rank+' when you press Save');
+  reorderPaint();
 }
 
 async function reorderSave(){
-  if(reorderBusy || !reorderDirty) return;
+  if(reorderBusy || (!reorderDirty && !reorderPending.length)) return;
   reorderBusy=true;
   const btn=$('#reSave'); if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const post=(path,body)=>fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+path,{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
   try{
-    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/save-page',{method:'POST',credentials:'same-origin',
-      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
-      body:JSON.stringify({page:reorderData.page, per_page:reorderData.per_page, product_ids:reorderLocal.map(p=>p.id)})});
-    const j=await r.json();
-    if(j.ok){ toast(`Saved — ${j.updated} products`); reorderDirty=false; if(window.kbbDrafts) kbbDrafts.saved('reorder'); await reorderLoadProducts(); }
-    else{ toast(j.message||'Could not save — reload and try again.', 'bad'); }
+    // This page's order first, then each move to another page, in the order he made them.
+    if(reorderDirty){
+      const j=await post('/save-page',{page:reorderData.page, per_page:reorderData.per_page, product_ids:reorderLocal.map(p=>p.id)});
+      if(!j.ok){ toast(j.message||'Could not save — reload and try again.', 'bad'); reorderBusy=false; reorderPaint(); return; }
+      reorderDirty=false;
+    }
+    while(reorderPending.length){
+      const m=reorderPending[0];
+      const j=await post('/move',{product_id:m.id, to:m.to});
+      if(!j.ok){ toast(j.message||('Could not move '+m.name+'.'), 'bad'); break; }
+      reorderPending.shift();
+    }
+    if(!reorderPending.length){ toast('Saved — the shop now shows this order'); if(window.kbbDrafts) kbbDrafts.saved('reorder'); }
+    reorderBusy=false;
+    await reorderLoadProducts();
+    return;
   }catch(e){ toast('Could not save — check your connection.','bad'); }
   reorderBusy=false;
+  reorderPaint();
 }
 let pdTab='general',reyTab='misc',yoastTab='seo',pageTab='general',peCtx={};
 const ICO={img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',ring:'<circle cx="12" cy="12" r="9"/>'};
@@ -18155,7 +18203,7 @@ LATE_NAV.forEach(r=>kbbAddNavEntry(r));
      without the dates it covers. */
   function anCardHead(title, desc, period){
     var chip = period ? '<span class="an-chip">'+sesc(period.label)+' · '+sesc(period.range_label)+'</span>' : '';
-    return '<div class="an-sec-h">'+chip+'<div class="an-sec-t">'+sescHtml(title)+'</div>'+
+    return '<div class="an-sec-h">'+chip+'<div class="an-sec-t">'+sesc(title)+'</div>'+
       '<div class="an-sec-d">'+desc+'</div></div>';
   }
 

@@ -219,6 +219,18 @@ final class AppController extends Controller
      *
      * @return array<string,mixed>
      */
+    /**
+     * The store's name for the app header (2.60.401). The owner: "keep for now
+     * my store name K-Beauty Bliss". Its own setting, `owner_app_store_name`,
+     * so a renamed SEO title never changes the app; plain text, 60 at most.
+     */
+    private static function storeName(): string
+    {
+        $name = trim(strip_tags((string) app(\App\Services\SettingsService::class)->get('owner_app_store_name', '')));
+
+        return $name !== '' ? mb_substr($name, 0, 60) : 'K-Beauty Bliss';
+    }
+
     private static function me(Request $request, \App\Models\OwnerAppDevice $device): array
     {
         $admin = $device->member->admin;
@@ -243,6 +255,9 @@ final class AppController extends Controller
             'notify_groups' => OwnerAppEvents::GROUP_LABELS,
             'idle_hours' => OwnerAppSettings::idleHours(),
             'stale_minutes' => OwnerAppSettings::staleMinutes(),
+            // The header's title (2.60.401): the store's own name, as SEO
+            // settings and the shop already resolve it, so it follows a rename.
+            'store' => self::storeName(),
             'tz' => \App\Support\StoreTime::zone(),
             'vapid' => VapidKeys::publicKey(),
         ];

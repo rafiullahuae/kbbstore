@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contrast and Tap Targets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap">
+<style>
+:root{--ink:#2B2329;--line:#EEE7EB;--bg:#FBF8FA;--card:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Outfit,system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px 16px 64px}
+.wrap{max-width:1100px;margin:0 auto}
+h1{font-size:26px;margin:0 0 4px;text-wrap:balance}
+.lede{color:#6B6169;margin:0 0 22px;max-width:72ch}
+h2{font-size:18px;margin:30px 0 4px}
+.why{color:#6B6169;margin:0 0 12px;max-width:72ch;font-size:14px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.side{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.side h3{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6B6169;display:flex;gap:8px;align-items:center}
+.side h3 b{font-size:11px;padding:2px 8px;border-radius:99px}
+.now b{background:#FDECEF;color:#A3203F}.new b{background:#E6F4EC;color:#1B6B40}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pc{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.pc .im{height:96px;background:#FFF0F4;position:relative}
+.pc.gold .im{background:#FFFDF8}
+.badge{position:absolute;top:8px;left:8px;color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px}
+.pc .bd{padding:8px 10px 10px}
+.cat{font-size:11.5px;margin:0}
+.nm{font-size:13px;font-weight:600;margin:2px 0 6px;line-height:1.25}
+.pr{display:flex;gap:6px;align-items:baseline;font-weight:700;font-size:14px}
+.was{text-decoration:line-through;font-weight:500;font-size:12px}
+.atc{display:block;width:100%;margin-top:8px;border:0;border-radius:8px;color:#fff;font:600 13px Outfit,sans-serif;padding:9px}
+.misc{display:grid;gap:8px;margin-top:10px}
+.save{border-radius:8px;padding:7px 10px;font-size:12.5px;font-weight:600}
+.srch{border:1px solid var(--line);border-radius:99px;padding:8px 14px;font-size:13px}
+.flag{border-radius:8px;padding:7px 10px;font-size:12.5px;font-weight:600}
+.wa{display:inline-block;border-radius:99px;padding:8px 14px;font-weight:600;font-size:13px}
+.ratio{font-size:11px;color:#6B6169;margin-top:4px}
+.ratio i{font-style:normal;font-weight:700}
+.bad{color:#A3203F}.ok{color:#1B6B40}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#6B6169}
+.sw{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px;border:1px solid rgba(0,0,0,.1)}
+.tbl{overflow-x:auto}
+.foot{background:#FFF7F9;border-radius:12px;padding:12px 14px}
+.foot h4{margin:0 0 6px;font-size:13px}
+.foot ul{list-style:none;margin:0;padding:0;display:grid;font-size:13px;color:#5E545A}
+.foot.now ul{gap:4px}.foot.now a{display:inline;outline:1px dashed #E0567B;outline-offset:0}
+.foot.new ul{gap:0}.foot.new a{display:inline-block;padding:4px 0;min-height:24px;outline:1px dashed #1F9D55;outline-offset:0}
+.foot a{color:inherit;text-decoration:none}
+.note{font-size:12.5px;color:#6B6169;margin-top:8px}
+.ask{margin-top:28px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+@media (max-width:720px){.pair{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Text contrast and tap targets</h1>
+<p class="lede">These are the two Google findings left open from your PageSpeed report. Each side shows the same shop elements in your current colours (left) and in the smallest darkening of the same colour that passes Google's readability rule, a contrast ratio of 4.5 (right). Nothing changes on the shop until you say yes. You can approve all of it, or only some rows.</p>
+
+<h2>1 · Text contrast: 108 elements across the shop</h2>
+<p class="why">Google measures how readable text is against its background. Your pink, grey, gold, sale red and badge green come in just under the line. Each new colour is the same hue, only slightly deeper.</p>
+
+<div class="pair">
+  <div class="side now"><h3>Now <b>fails</b></h3>
+    <div class="cards">
+      <div class="pc"><div class="im"><span class="badge" style="background:#E23B57">−30%</span></div><div class="bd">
+        <p class="cat" style="color:#8C828A">Serums · Anua</p><p class="nm">PDRN Hyaluronic Acid Capsule Mist</p>
+        <div class="pr"><span class="was" style="color:#B3AAB0">AED 120</span><span style="color:#E0567B">AED 85</span></div>
+        <button class="atc" style="background:#E0567B">Add to cart</button></div></div>
+      <div class="pc gold"><div class="im"><span class="badge" style="background:#1F9D55">BESTSELLER</span></div><div class="bd">
+        <p class="cat" style="color:#B8942E">MEDICUBE</p><p class="nm">PDRN Pink Collagen Eye Mask</p>
+        <div class="pr" style="color:#9A7B1F">AED 59</div>
+        <button class="atc" style="background:#E0567B">Add to cart</button></div></div>
+    </div>
+    <div class="misc">
+      <div class="save" style="background:#E9F6EF;color:#2E9E6B">Save AED 35 on this set · see all</div>
+      <div class="srch" style="color:#E0567B">Search skincare, brands…</div>
+      <div class="flag" style="background:#FDEFF4;color:#E0567B">Free delivery over AED 150</div>
+      <div><span class="wa" style="background:#2E9E6B;color:#CDBFC6">WhatsApp us</span></div>
+    </div>
+  </div>
+  <div class="side new"><h3>Proposed <b>passes</b></h3>
+    <div class="cards">
+      <div class="pc"><div class="im"><span class="badge" style="background:#D22B47">−30%</span></div><div class="bd">
+        <p class="cat" style="color:#766D75">Serums · Anua</p><p class="nm">PDRN Hyaluronic Acid Capsule Mist</p>
+        <div class="pr"><span class="was" style="color:#796C75">AED 120</span><span style="color:#C6395F">AED 85</span></div>
+        <button class="atc" style="background:#C6395F">Add to cart</button></div></div>
+      <div class="pc gold"><div class="im"><span class="badge" style="background:#1A7F45">BESTSELLER</span></div><div class="bd">
+        <p class="cat" style="color:#8A6E1F">MEDICUBE</p><p class="nm">PDRN Pink Collagen Eye Mask</p>
+        <div class="pr" style="color:#8A6E1F">AED 59</div>
+        <button class="atc" style="background:#C6395F">Add to cart</button></div></div>
+    </div>
+    <div class="misc">
+      <div class="save" style="background:#E9F6EF;color:#1F7A50">Save AED 35 on this set · see all</div>
+      <div class="srch" style="color:#C6395F">Search skincare, brands…</div>
+      <div class="flag" style="background:#FDEFF4;color:#C6395F">Free delivery over AED 150</div>
+      <div><span class="wa" style="background:#27865B;color:#FFFFFF">WhatsApp us</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="tbl"><table>
+<thead><tr><th>Element</th><th>Now</th><th>Ratio</th><th>Proposed</th><th>Ratio</th></tr></thead>
+<tbody>
+<tr><td>Secondary text: category, brand, steps</td><td><span class="sw" style="background:#8C828A"></span>#8C828A</td><td class="bad">3.70</td><td><span class="sw" style="background:#766D75"></span>#766D75</td><td class="ok">4.98</td></tr>
+<tr><td>Brand pink: Add to cart, search, flag bar</td><td><span class="sw" style="background:#E0567B"></span>#E0567B</td><td class="bad">3.62</td><td><span class="sw" style="background:#C6395F"></span>#C6395F</td><td class="ok">5.06</td></tr>
+<tr><td>Sale badge (−30%)</td><td><span class="sw" style="background:#E23B57"></span>#E23B57</td><td class="bad">4.20</td><td><span class="sw" style="background:#D22B47"></span>#D22B47</td><td class="ok">5.03</td></tr>
+<tr><td>BESTSELLER badge</td><td><span class="sw" style="background:#1F9D55"></span>#1F9D55</td><td class="bad">3.49</td><td><span class="sw" style="background:#1A7F45"></span>#1A7F45</td><td class="ok">5.04</td></tr>
+<tr><td>Gold card: brand and price</td><td><span class="sw" style="background:#B8942E"></span>#B8942E</td><td class="bad">2.82</td><td><span class="sw" style="background:#8A6E1F"></span>#8A6E1F</td><td class="ok">4.77</td></tr>
+<tr><td>Old price (crossed out)</td><td><span class="sw" style="background:#B3AAB0"></span>#B3AAB0</td><td class="bad">2.25</td><td><span class="sw" style="background:#796C75"></span>#796C75</td><td class="ok">4.98</td></tr>
+<tr><td>Savings line</td><td><span class="sw" style="background:#2E9E6B"></span>#2E9E6B</td><td class="bad">3.03</td><td><span class="sw" style="background:#1F7A50"></span>#1F7A50</td><td class="ok">4.77</td></tr>
+<tr><td>Footer WhatsApp button</td><td><span class="sw" style="background:#2E9E6B"></span>label #CDBFC6</td><td class="bad">1.90</td><td><span class="sw" style="background:#27865B"></span>button #27865B, white label</td><td class="ok">4.52</td></tr>
+</tbody></table></div>
+
+<h2>2 · Tap targets: the footer's account links on phones</h2>
+<p class="why">Google asks for tap areas at least 24px tall so a thumb doesn't hit the wrong link. On a phone, your footer links are about 17px tall with 4px between them. The fix gives each link a 24px tap area and removes the gap, so the text sits in the same place and each row is about 4px taller. The dashed outlines show the tap area. Desktop is unchanged.</p>
+<div class="pair">
+  <div class="foot now"><h4>Now · phone</h4><ul><li><a href="#">My account</a></li><li><a href="#">My orders</a></li><li><a href="#">Track my order</a></li><li><a href="#">Wishlist</a></li></ul><p class="note">Tap area about 17px, 4px apart</p></div>
+  <div class="foot new"><h4>Proposed · phone</h4><ul><li><a href="#">My account</a></li><li><a href="#">My orders</a></li><li><a href="#">Track my order</a></li><li><a href="#">Wishlist</a></li></ul><p class="note">Tap area 24–25px, links touch but don't overlap</p></div>
+</div>
+
+<div class="ask"><b>Your options:</b> "yes to all", or pick rows, for example "keep my pink, do the rest". Each colour also gets a control under Appearance, so you can move it back any time. Expected result: both remaining Google findings clear. I will re-run PageSpeed after it ships and send you the real score.</div>
+</div></body></html>
