@@ -757,6 +757,23 @@ class CategoriesApiController extends Controller
         );
         $data['banner'] = \App\Support\PageBanner::sanitize($data['banner'] ?? null);
 
+        /*
+         * THE SHOP'S "EDIT HEADER" PANEL OWNS KEYS THIS SCREEN DOES NOT DRAW
+         * (Lane CH): the spacing, the phone picture, the laptop crop and the
+         * custom header area switch. This screen sends a whole header_style
+         * built from its own boxes, so without this every save here wiped
+         * them. A key the request does carry still wins.
+         */
+        if ($category !== null && is_array($data['header_style'] ?? null)) {
+            $current = \App\Support\TitleHeader::sanitizeStyle($category->getAttribute('header_style'));
+
+            foreach (\App\Support\TitleHeader::PANEL_KEYS as $key) {
+                if (! array_key_exists($key, $data['header_style']) && array_key_exists($key, $current)) {
+                    $data['header_style'][$key] = $current[$key];
+                }
+            }
+        }
+
         return $this->headerFields($data);
     }
 

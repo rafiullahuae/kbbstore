@@ -208,7 +208,7 @@ describe('the context endpoint', function () {
         $r = raContext($this, '/collections/ra-sunscreens/')->assertOk();
 
         expect(strtolower((string) $r->headers->get('Cache-Control')))->toContain('no-store')
-            ->and(array_keys($r->json()))->toBe(['ok', 'csrf', 'admin', 'bar', 'edit', 'pageheader'])
+            ->and(array_keys($r->json()))->toBe(['ok', 'csrf', 'admin', 'bar', 'edit', 'pageheader', 'categoryheader'])  // Lane CH: the category panel's context
             ->and(array_keys($r->json('admin')))->toBe(['name', 'initials'])
             ->and($r->json('admin.name'))->toBe('Rafi Owner')
             ->and($r->json('admin.initials'))->toBe('RO')

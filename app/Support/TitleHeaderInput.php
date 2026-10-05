@@ -72,6 +72,24 @@ final class TitleHeaderInput
             'header_style.focus' => ['nullable', 'string', Rule::in(TitleHeader::FOCUSES)],
             'header_style.bg' => ['nullable', 'string', 'regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/'],
             'header_style.ic' => ['nullable', 'string', 'regex:/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/'],
+            /*
+             * Lane CH -- the shop's "Edit header" panel: the space around and
+             * inside the header per device, how wide the words run, where a
+             * laptop cuts the picture, a phone picture of its own, and whether
+             * the page draws the custom header area instead.
+             */
+            'header_style.mt_phone' => ['nullable', 'integer'],
+            'header_style.mt_desktop' => ['nullable', 'integer'],
+            'header_style.mb_phone' => ['nullable', 'integer'],
+            'header_style.mb_desktop' => ['nullable', 'integer'],
+            'header_style.py_phone' => ['nullable', 'integer'],
+            'header_style.py_desktop' => ['nullable', 'integer'],
+            'header_style.px_phone' => ['nullable', 'integer'],
+            'header_style.px_desktop' => ['nullable', 'integer'],
+            'header_style.maxw' => ['nullable', 'integer'],
+            'header_style.focus_desktop' => ['nullable', 'string', Rule::in(TitleHeader::FOCUSES)],
+            'header_style.img_phone' => ['nullable', 'string', 'max:2048'],
+            'header_style.mode' => ['nullable', 'string', Rule::in(TitleHeader::MODES)],
         ];
     }
 
@@ -120,6 +138,16 @@ final class TitleHeaderInput
         }
 
         if (array_key_exists('header_style', $data)) {
+            // The phone picture is refused, not silently dropped, by the same
+            // rule and sentence as the main one. (Lane CH)
+            $phone = is_array($data['header_style']) ? trim((string) ($data['header_style']['img_phone'] ?? '')) : '';
+
+            if ($phone !== '' && TitleHeader::safeImage($phone) === null) {
+                throw ValidationException::withMessages([
+                    'header_style.img_phone' => 'The phone picture must be an uploaded file or an http(s) address.',
+                ]);
+            }
+
             $style = TitleHeader::sanitizeStyle($data['header_style']);
             $data['header_style'] = $style === [] ? null : $style;
         }

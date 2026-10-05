@@ -146,7 +146,13 @@ final class PageHeaders
         .'.kbb-home div.kbb-ph-cm{text-align:center;justify-items:center}.kbb-home .kbb-ph-cm>.kbb-ph-t{justify-content:center}'
         .'.kbb-home .kbb-ph-nom>.kbb-ph-t::before{content:none}'
         .'.kbb-ph .kbb-ph-vm{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}'
-        .'.kbb-home .kbb-ph .kbb-ph-hm{display:none}}'
+        .'.kbb-home .kbb-ph .kbb-ph-hm{display:none}'
+        // A long title on a phone: as a wrapping flex row the words took a row
+        // of their own and pushed the dot above and the count below (Lane CH's
+        // "Sunscreens for the UAE sun" at 390). As inline text the dot leads
+        // the first line and the count follows the last word.
+        .'.kbb-home .kbb-ph>.kbb-ph-t{display:block}.kbb-home .kbb-ph>.kbb-ph-t::before{margin-inline-end:12px}'
+        .'.kbb-home .kbb-ph>.kbb-ph-t>.cnt{display:inline-block;vertical-align:3px;margin-inline-start:4px;white-space:nowrap}}'
         .'@media (min-width:901px){.kbb-home div.kbb-ph{grid-template-areas:var(--ph-ad);row-gap:var(--ph-gd);margin:0 0 var(--ph-sd)}'
         .'.kbb-ph>.kbb-ph-i img{height:var(--ph-hd);object-fit:var(--ph-fd);border-radius:var(--ph-rd)}'
         .'.kbb-ph-sd>.kbb-ph-b{justify-self:end}'

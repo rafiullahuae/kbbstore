@@ -231,7 +231,7 @@
       : '<div class="pbs-slot">No ' + (m ? 'phone' : 'desktop') + ' picture yet — the shop draws no picture here, only the strip. Choose one under Banners → Picture.</div>';
     /* An item for one device only is left out of the other's preview, as the
        shop's .kbb-pb-d / .kbb-pb-m rules leave it out. (Lane PH) */
-    var items = x.strip ? (x.items || []).filter(function (i) { return String(i.en || '').trim() !== '' && (i.dev || 'both') !== (m ? 'd' : 'm'); }) : [];
+    var items = x.strip && x[m ? 'strip_m' : 'strip_d'] !== false ? (x.items || []).filter(function (i) { return String(i.en || '').trim() !== '' && (i.dev || 'both') !== (m ? 'd' : 'm'); }) : [];
     var strip = items.length ? '<ul class="kbb-pb-strip">' + items.map(function (i) {
       return '<li>' + (data.icon || '') + '<span>' + esc(i.en) + '</span></li>';
     }).join('') + '</ul>' : '';
@@ -308,6 +308,8 @@
       + '</div>'
       + '<div class="pbs-sec"><h4>Strip beneath the picture</h4>'
       + '<label class="pbs-f" style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-pbs-strip' + (x.strip ? ' checked' : '') + '> <span class="pbs-lbl">Show the strip</span></label>'
+      + '<div class="pbs-f" style="display:flex;gap:18px;align-items:center;flex-wrap:wrap"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-pbs-sdev="strip_d"' + (x.strip_d !== false ? ' checked' : '') + '> <span>On desktop</span></label>'
+      + '<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-pbs-sdev="strip_m"' + (x.strip_m !== false ? ' checked' : '') + '> <span>On mobile</span></label></div>'
       + items
       + '<div class="pbs-bar" style="margin-top:0"><button type="button" class="pbs-btn" data-pbs-additem' + ((x.items || []).length >= data.limits.items ? ' disabled' : '') + '>+ Add an item</button></div>'
       + '<p class="pbs-help">Each item is a tick and a line of text, spread evenly across the strip. Up to ' + data.limits.items + '. The Arabic line is used on the Arabic shop; empty = the English line. <b>Shows on</b> puts an item on desktop only or phone only — for example a third line on desktop while a phone keeps two.</p>'
@@ -450,6 +452,7 @@
     if ((el = e.target.closest('[data-pbs-assign]'))) { data.assign[el.getAttribute('data-pbs-assign')] = el.value; return; }
     if ((el = e.target.closest('[data-pbs-source]'))) { data.super_sale.source = el.value; return; }
     if ((el = e.target.closest('[data-pbs-strip]')) && b()) { b().strip = el.checked; drawStage(); return; }
+    if ((el = e.target.closest('[data-pbs-sdev]')) && b()) { b()[el.getAttribute('data-pbs-sdev') === 'strip_m' ? 'strip_m' : 'strip_d'] = el.checked; drawStage(); return; }
     if ((el = e.target.closest('[data-pbs-idev]')) && b()) { b().items[Number(el.getAttribute('data-pbs-idev'))].dev = el.value; drawStage(); }
   });
 
@@ -495,7 +498,7 @@
       var tmp = x.items[i]; x.items[i] = x.items[j]; x.items[j] = tmp; render(); return;
     }
     if (e.target.closest('[data-pbs-reset]')) {
-      ['strip', 'items'].concat(data.colours.map(function (c) { return c.key; }), data.numbers.map(function (n) { return n.key; })).forEach(function (k2) {
+      ['strip', 'strip_d', 'strip_m', 'items'].concat(data.colours.map(function (c) { return c.key; }), data.numbers.map(function (n) { return n.key; })).forEach(function (k2) {
         x[k2] = JSON.parse(JSON.stringify(data.blank[k2]));
       });
       render(); say('The strip is back to its shipped look. Nothing is saved until you press Save.'); return;

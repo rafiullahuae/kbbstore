@@ -135,6 +135,39 @@ final class TitleHeader
         'h_desktop' => 'cat_header_h_desktop',
     ];
 
+    /**
+     * The numbers ONLY the storefront's "Edit header" panel writes (Lane CH):
+     * the space above and below, the inner padding, per device, and how wide
+     * the words may run. Each replaces the shop setting it names and is
+     * clamped to that slider's own range, exactly as STYLE_NUMBERS are.
+     *
+     * A list of its own rather than more STYLE_NUMBERS, because Catalog ->
+     * Categories draws a box for every STYLE_NUMBERS key and does not draw
+     * these; CategoriesApiController carries them over when that screen saves
+     * (PANEL_KEYS), so a save there cannot wipe what the panel set.
+     */
+    public const PANEL_NUMBERS = [
+        'mt_phone' => 'cat_header_mt_phone',
+        'mt_desktop' => 'cat_header_mt_desktop',
+        'mb_phone' => 'cat_header_mb_phone',
+        'mb_desktop' => 'cat_header_mb_desktop',
+        'py_phone' => 'cat_header_pad_y_phone',
+        'py_desktop' => 'cat_header_pad_y_desktop',
+        'px_phone' => 'cat_header_pad_x_phone',
+        'px_desktop' => 'cat_header_pad_x_desktop',
+        'maxw' => 'cat_header_maxw',
+    ];
+
+    /** Which header a category page draws: absent is the title header; `custom` is Lane CH's custom header area. */
+    public const MODES = ['custom'];
+
+    /**
+     * Every `header_style` key the storefront panel owns and Catalog ->
+     * Categories does not send. (Lane CH)
+     */
+    public const PANEL_KEYS = ['mt_phone', 'mt_desktop', 'mb_phone', 'mb_desktop', 'py_phone', 'py_desktop',
+        'px_phone', 'px_desktop', 'maxw', 'img_phone', 'focus_desktop', 'mode'];
+
     /** The per-category CHOICES, each checked against its own list. */
     public const STYLE_CHOICES = ['align', 'treatment', 'box'];
 
@@ -154,6 +187,8 @@ final class TitleHeader
         'text_phone' => 'text', 'text_desktop' => 'text',
         'valign_phone' => 'valign', 'valign_desktop' => 'valign',
         'focus' => 'focus',
+        // Where a LAPTOP cuts the picture (Lane CH); `focus` above is the phone's.
+        'focus_desktop' => 'focus',
     ];
 
     /** A category's own box colours (Lane QC): #RRGGBB, over whichever box style it shows. */
@@ -349,6 +384,17 @@ final class TitleHeader
             $class .= ' kbb-th--fx-'.$focus;
         }
 
+        // The laptop's own crop (Lane CH): written only when set off centre.
+        $focusDesktop = self::pick($own['focus_desktop'] ?? null, self::FOCUSES);
+
+        if ($kind === 'img' && ($focusDesktop === 'left' || $focusDesktop === 'right')) {
+            $class .= ' kbb-th--fxd-'.$focusDesktop;
+        }
+
+        // A picture for phones only (Lane CH), printed as a <source> only
+        // when the category has one -- otherwise the markup is as it was.
+        $imagePhone = $kind === 'img' ? self::safeImage($own['img_phone'] ?? null) : null;
+
         // On a phone the header takes the picture's own shape, so nothing is
         // cut from its left or right (2.60.358, "should display full"). The
         // Phone crop above only matters when this is off.
@@ -371,6 +417,7 @@ final class TitleHeader
         return [
             'kind' => $kind,
             'image' => $image,
+            'image_phone' => $imagePhone !== $image ? $imagePhone : null,
             'whole' => $whole,
             'icons' => $icons,
             'box' => $phone['box'],
@@ -550,7 +597,7 @@ final class TitleHeader
             $values[$key] = (int) $settings[$key];
         }
 
-        foreach (self::STYLE_NUMBERS as $mine => $key) {
+        foreach (self::STYLE_NUMBERS + self::PANEL_NUMBERS as $mine => $key) {
             if (isset($own[$mine])) {
                 $values[$key] = (int) $own[$mine];
             }
@@ -734,7 +781,20 @@ final class TitleHeader
             }
         }
 
-        foreach (self::STYLE_NUMBERS as $key => $setting) {
+        // The panel's phone picture and its mode switch (Lane CH).
+        $phonePicture = self::safeImage($raw['img_phone'] ?? null);
+
+        if ($phonePicture !== null) {
+            $out['img_phone'] = $phonePicture;
+        }
+
+        $mode = self::pick($raw['mode'] ?? null, self::MODES);
+
+        if ($mode !== null) {
+            $out['mode'] = $mode;
+        }
+
+        foreach (self::STYLE_NUMBERS + self::PANEL_NUMBERS as $key => $setting) {
             $v = $raw[$key] ?? null;
 
             if (is_int($v) || (is_float($v) && is_finite($v))) {

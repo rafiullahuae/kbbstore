@@ -137,6 +137,9 @@
     stays above either, because it is navigation and belongs before the title
     whichever way the title is drawn.
 --}}
+@if ($categoryHeader ?? null)
+@include('partials.category-custom-header', ['ch' => $categoryHeader, 'chTotal' => $total])
+@else
 <div class="wrap">
     <div class="crumb"><b>{{ __('store.breadcrumb.home') }}</b> / {{ $crumb }}</div>
     @unless (($banner ?? null) || ($titleHeader ?? null))
@@ -152,6 +155,7 @@
 <x-kbb-banner :banner="$banner ?? null" />
 @if ($titleHeader ?? null)
 <x-kbb-title-header :header="$titleHeader" />
+@endif
 @endif
 
 <div class="wrap shop">

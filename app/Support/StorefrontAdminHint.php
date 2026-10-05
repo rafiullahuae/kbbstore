@@ -75,7 +75,9 @@ final class StorefrontAdminHint
 
         return self::can($admin, 'storefront.adminbar') || self::can($admin, 'storefront.quick_edit')
             // The custom pages' "Edit header" panel (Lane PH).
-            || self::can($admin, 'pageheader.manage');
+            || self::can($admin, 'pageheader.manage')
+            // The category pages' "Edit header" panel (Lane CH).
+            || self::can($admin, 'categoryheader.manage');
     }
 
     /** One account, one capability, with the owner short-circuit EnforceAdminCapability uses. */

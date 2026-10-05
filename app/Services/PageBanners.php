@@ -137,7 +137,10 @@ final class PageBanners
         .'.kbb-pb-strip li{display:inline-flex;align-items:center;gap:.45em;margin:0;padding:0;min-width:0}'
         .'.kbb-pb-ic{flex:none;width:var(--pb-im);height:var(--pb-im);color:var(--pb-ic)}'
         .'@media (min-width:901px){.kbb-pb-strip{min-height:var(--pb-hd);font-size:var(--pb-fd);gap:4px 40px}.kbb-pb-ic{width:var(--pb-id);height:var(--pb-id)}}'
-        .'@media (max-width:900px){.kbb-pb-strip .kbb-pb-d{display:none}}@media (min-width:901px){.kbb-pb-strip .kbb-pb-m{display:none}}';
+        .'@media (max-width:900px){.kbb-pb-strip .kbb-pb-d{display:none}}@media (min-width:901px){.kbb-pb-strip .kbb-pb-m{display:none}}'
+        // The whole strip off on one device (2.60.396): kbb-pb-xd = not on a
+        // laptop, kbb-pb-xm = not on a phone.
+        .'@media (min-width:901px){.kbb-pb-strip.kbb-pb-xd{display:none}}@media (max-width:900px){.kbb-pb-strip.kbb-pb-xm{display:none}}';
 
     private ?array $memo = null;
 
@@ -164,6 +167,9 @@ final class PageBanners
             'alt' => '',
             'link' => '',
             'strip' => true,
+            // On laptop / on phone (2.60.396). The owner: "i need the strip
+            // display control also, to turn off for desktop / mobile."
+            'strip_d' => true, 'strip_m' => true,
             'items' => array_map(static fn (string $t, string $dev): array => ['en' => $t, 'ar' => '', 'dev' => $dev], self::DEFAULT_ITEMS, self::DEFAULT_DEVICES),
         ];
 
@@ -278,7 +284,9 @@ final class PageBanners
 
         $items = [];
         $devs = [];
-        if ($b['strip']) {
+        $sd = (bool) ($b['strip_d'] ?? true);
+        $sm = (bool) ($b['strip_m'] ?? true);
+        if ($b['strip'] && ($sd || $sm)) {
             foreach ($b['items'] as $item) {
                 $t = $arabic && $item['ar'] !== '' ? $item['ar'] : $item['en'];
                 if ($t !== '') {
@@ -303,6 +311,9 @@ final class PageBanners
             'items' => $items,
             // Parallel to items: 'both', 'd' or 'm'. (Lane PH)
             'devs' => $devs,
+            // A strip for one device only: one of two constant classes, or ''
+            // so a strip shown on both prints exactly as it always did.
+            'strip_cls' => $sd === $sm ? '' : ($sd ? ' kbb-pb-xm' : ' kbb-pb-xd'),
             'style' => $style,
             'media' => '(max-width: '.self::BREAKPOINT.'px)',
         ];
@@ -415,6 +426,8 @@ final class PageBanners
             $b['link'] = $link;
 
             $b['strip'] = filter_var($row['strip'] ?? true, FILTER_VALIDATE_BOOLEAN);
+            $b['strip_d'] = filter_var($row['strip_d'] ?? true, FILTER_VALIDATE_BOOLEAN);
+            $b['strip_m'] = filter_var($row['strip_m'] ?? true, FILTER_VALIDATE_BOOLEAN);
 
             $items = [];
             foreach (is_array($row['items'] ?? null) ? array_values($row['items']) : [] as $item) {
@@ -518,7 +531,7 @@ final class PageBanners
      *
      * @return array<string,string> what was refused; empty means written
      */
-    public function setPage(string $pageKey, string $bannerId): array
+    public function setPage(string $pageKey, string $bannerId, ?array $devices = null): array
     {
         if (! isset(self::pageKeys()[$pageKey])) {
             return ['key' => 'Unknown page'];
@@ -531,6 +544,16 @@ final class PageBanners
             unset($all['assign'][$pageKey]);
         } elseif (in_array($bannerId, array_column($all['banners'], 'id'), true)) {
             $all['assign'][$pageKey] = $bannerId;
+            // (2.60.396) "On laptop" / "On phone" from the same panel. They
+            // belong to the strip, so every page showing it follows.
+            if ($devices !== null) {
+                foreach ($all['banners'] as $n => $b) {
+                    if ($b['id'] === $bannerId) {
+                        $all['banners'][$n]['strip_d'] = (bool) $devices['d'];
+                        $all['banners'][$n]['strip_m'] = (bool) $devices['m'];
+                    }
+                }
+            }
         } else {
             return ['strip' => 'Which strip'];
         }

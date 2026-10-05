@@ -496,11 +496,12 @@ describe('Catalog -> Categories -> Edit -> Category header, per device', functio
             ],
         ])->assertOk();
 
-        expect($c->fresh()->header_style)->toBe([
+        // MySQL's JSON column hands keys back in its own order; compare by key, strictly.
+        expect(collect($c->fresh()->header_style)->sortKeys()->all())->toBe(collect([
             'align_phone' => 'end', 'align_desktop' => 'center', 'treatment_desktop' => 'frost',
             'box_phone' => 'lilac', 'box_desktop' => 'lilac', 'text_phone' => 'dark', 'focus' => 'left',
             'bg' => '#FFEEFF', 'title_phone' => 30,
-        ]);
+        ])->sortKeys()->all());
 
         foreach (['align_desktop' => 'left', 'box_phone' => 'neon', 'text_desktop' => 'red', 'focus' => 'top', 'bg' => 'red', 'ic' => '#12345'] as $key => $bad) {
             $this->putJson('/admin-api/categories/'.$c->id, ['name' => 'Sunscreens', 'slug' => 'qc-sun', 'header_style' => [$key => $bad]])
