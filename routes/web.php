@@ -840,6 +840,11 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // map's existing content.manage entry covers them.
         require __DIR__.'/image-sizes-admin.php';
 
+        // Content → Media Library → WebP images (Lane WP): settings and the
+        // bulk converter. Same group as the media library; the capability map
+        // gives admin-api/media/webp/** to media.optimize, above media/**.
+        require __DIR__.'/webp-admin.php';
+
         // Content → HTML Blocks: reusable snippets placed into pages and posts
         // with [kbb_block slug="…"].
         require __DIR__.'/html-blocks-admin.php';
