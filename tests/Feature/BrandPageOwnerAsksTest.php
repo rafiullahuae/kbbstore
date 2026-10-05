@@ -158,7 +158,11 @@ it('puts the three switches on their own tab, saved by the screen that owns the 
     // picture's position, after the switches already here.
     expect(SiteLayout::TABS['brandpage'][2])->toBe(['brand_all', 'brand_cta', 'brand_popular', 'brand_hero', 'brand_ring', 'brand_phone_cover',
         'brand_panel_style', 'brand_pill', 'brand_logo_shape', 'brand_header_w', 'brand_banner_h', 'brand_banner_h_m',
-        'brand_content_w', 'brand_img_pos'])
+        'brand_content_w', 'brand_img_pos',
+        // Lane BR3: the panel's box, position and type, laptop then phone.
+        'brand_panel_x', 'brand_panel_y', 'brand_panel_pad', 'brand_panel_inset', 'brand_desc_gap', 'brand_name_fs',
+        'brand_desc_fs', 'brand_logo_size', 'brand_pill_at', 'brand_pill_inset_m', 'brand_card_gap_m', 'brand_card_pad_m',
+        'brand_name_fs_m', 'brand_desc_fs_m', 'brand_logo_size_m'])
         ->and(SiteLayout::SCHEMA['brand_all'][2])->toBeTrue()
         ->and(SiteLayout::SCHEMA['brand_cta'][2])->toBeFalse()
         ->and(SiteLayout::SCHEMA['brand_popular'][2])->toBeFalse();
