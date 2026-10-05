@@ -135,9 +135,13 @@ it('ships ON on the cart and the checkout: the slim tab, its label, the phone sw
             ->and($tab)->toContain('<span class="kbt-l">24/7 Support</span>')
             ->and($tab)->toContain('<span class="kbt-i">'.WhatsAppButton::ICON.'</span>')
             ->and($tab)->toContain('aria-label="24/7 Support · Chat with us on WhatsApp"')
-            // The phone switch-over, the width the page makes room for, and the
-            // round button still on the page for a laptop.
-            ->and($css)->toContain('@media (max-width:900px){.kbt-z{display:flex}.kbw{display:none}#content{padding-left:var(--kbtw)}')
+            // The phone switch-over, and the round button still on the page for
+            // a laptop. 2.60.390, the owner: "i don't want a dedicated left side
+            // space ... the support vatical bar will float on the left side" --
+            // the tab floats, nothing moves. MUTATION: print TAB_PHONE by
+            // default again -> the not->toContain is red.
+            ->and($css)->toContain('@media (max-width:900px){.kbt-z{display:flex}.kbw{display:none}}')
+            ->and($css)->not->toContain('#content{padding-left:var(--kbtw)}')
             ->and($css)->toEndWith(':root{--kbtw:26px}')
             ->and($html)->toContain('id="kbbWa"');
     }
@@ -352,7 +356,8 @@ it('moves the room for the squeezed cart\'s full-bleed rail only while that layo
     expect(wsStyle(wsGet('/cart')))->not->toContain('cpg-');
 
     Setting::query()->updateOrCreate(['key' => 'cartpage_layout'], ['value' => 'squeeze', 'autoload' => true]);
-    wsRaw([]);
+    // The rail rule belongs to "Make room beside the tab" (off by default, 2.60.390).
+    wsRaw(['tab_space' => '1']);
 
     expect(wsStyle(wsGet('/cart')))
         ->toContain('.kbb-cartpage.cpg-squeeze .cpg-rec{margin-inline:calc(50% - 50vw + var(--kbtw)/2);width:calc(100vw - var(--kbtw))');
@@ -404,7 +409,7 @@ it('speaks Arabic and sits on the right, with the room on the right, on the mirr
      */
     Setting::query()->updateOrCreate(['key' => Locale::SETTING_ENABLED], ['value' => '1', 'autoload' => true]);
     Setting::query()->updateOrCreate(['key' => Locale::SETTING_RTL], ['value' => '1', 'autoload' => true]);
-    wsRaw(['tab_label_ar' => 'دعم واتساب']);
+    wsRaw(['tab_label_ar' => 'دعم واتساب', 'tab_space' => '1']);
 
     $html = wsGet('/ar/cart');
 
@@ -443,7 +448,7 @@ it('draws the tab in the admin preview with the shop\'s classes and moves it wit
     $tab = collect($body['tabs'])->firstWhere('key', 'tab');
 
     expect($tab['label'])->toBe('Cart & checkout · phone')
-        ->and(array_column($tab['fields'], 'key'))->toBe(['tab_on', 'tab_size', 'tab_y', 'tab_label', 'tab_label_ar', 'tab_palette', 'tab_c1', 'tab_c2', 'tab_anim'])
+        ->and(array_column($tab['fields'], 'key'))->toBe(['tab_on', 'tab_size', 'tab_y', 'tab_label', 'tab_label_ar', 'tab_palette', 'tab_c1', 'tab_c2', 'tab_space', 'tab_anim'])
         ->and($body['preview']['tab']['palettes'])->toBe(WhatsAppButton::TAB_PALETTES)
         ->and($body['preview']['tab']['base'])->toBe(26)
         ->and($body['preview']['standard']['en']['tab_label'])->toBe('24/7 Support');

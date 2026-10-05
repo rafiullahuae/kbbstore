@@ -719,3 +719,43 @@ it('renames the captions of pictures converted before 2.60.388, and only those',
     expect(DB::table('media')->where('id', $id)->value('original_name'))->toBe('Glow Banner.webp')
         ->and(DB::table('media')->where('id', $keep)->value('original_name'))->toBe('Kept.jpg');
 });
+
+/* ------------------------------ 2.60.390: the owner's own file name */
+
+/*
+ * THE OWNER: "upon conversion of emage to webp, i don't want to change the file
+ * name at all, bcz i renamed before upload as per the product and seo, so
+ * please only the file extension need to be changed." He saw
+ * /uploads/banners/20261005-105831-ooHTOJKn.webp for a file he had named.
+ */
+
+it('keeps the uploaded file name, made safe, and changes only the extension', function () {
+    wpRoot();
+    test()->actingAs(wpAdmin(), 'admin');
+
+    $one = test()->post('/admin-api/media/upload', ['file' => wpUploadFile('Anua PDRN Glow Set-Banner.jpg', wpJpeg()), 'folder' => 'banners'])->assertOk();
+    $two = test()->post('/admin-api/media/upload', ['file' => wpUploadFile('Anua PDRN Glow Set-Banner.jpg', wpJpeg()), 'folder' => 'banners'])->assertOk();
+
+    expect($one->json('filename'))->toBe('anua-pdrn-glow-set-banner.webp')
+        // Never onto a name in use: the second takes -2, the first is untouched.
+        ->and($two->json('filename'))->toBe('anua-pdrn-glow-set-banner-2.webp')
+        ->and(is_file(public_path('uploads/banners/anua-pdrn-glow-set-banner.webp')))->toBeTrue();
+    // Mutation: put back `date('Ymd-His').'-'.Str::random(8)` as the name -> the first line is red.
+});
+
+it('never reuses a name an /img-cache/ copy still answers at, and never takes a path from the browser', function () {
+    wpRoot();
+    test()->actingAs(wpAdmin(), 'admin');
+    wpPut('img-cache/400/uploads/banners/glow.webp', 'stale');
+
+    $res = test()->post('/admin-api/media/upload', ['file' => wpUploadFile('glow.jpg', wpJpeg()), 'folder' => 'banners'])->assertOk();
+    expect($res->json('filename'))->toBe('glow-2.webp');
+
+    $evil = test()->post('/admin-api/media/upload', ['file' => wpUploadFile('../../etc/Evil Name.jpg', wpJpeg()), 'folder' => 'banners'])->assertOk();
+    expect($evil->json('filename'))->toBe('evil-name.webp');
+
+    // A name of symbols only falls back to the dated random name.
+    $sym = test()->post('/admin-api/media/upload', ['file' => wpUploadFile('###.jpg', wpJpeg()), 'folder' => 'banners'])->assertOk();
+    expect($sym->json('filename'))->toMatch('#^\d{8}-\d{6}-[A-Za-z0-9]{8}\.webp$#');
+    // Mutation: drop the img-cache glob from nameTaken() -> 'glow.webp', and the cached copy would be served for the new picture.
+});

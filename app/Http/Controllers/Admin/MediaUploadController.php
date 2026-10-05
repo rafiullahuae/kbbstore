@@ -150,7 +150,6 @@ class MediaUploadController extends Controller
             ], 422);
         }
 
-        $filename = date('Ymd-His') . '-' . Str::random(8) . '.' . $ext;
         $dir = public_path('uploads/' . $folder);
 
         /*
@@ -179,6 +178,22 @@ class MediaUploadController extends Controller
             return $this->uploadFailed(UploadFault::classify($why), 'folder', $why);
         }
 
+        /*
+         * THE OWNER'S OWN FILE NAME, ONLY THE EXTENSION CHANGES (2.60.390).
+         * "i don't want to change the file name at all, bcz i renamed before
+         * upload as per the product and seo, so please only the file extension
+         * need to be changed." It used to be Ymd-His-<random>.
+         *
+         * The name is made safe, not kept raw: Str::slug() (lower case, a-z 0-9
+         * and hyphens), so nothing the browser sends decides a path. A name is
+         * NEVER reused while anything still answers at it -- the file, its WebP
+         * twin, a /img-cache/ copy or a library row -- so a URL can never change
+         * its bytes (the precondition for long caching); a clash takes -2, -3.
+         * The slot is claimed with fopen('x'), so two uploads of the same name
+         * at the same moment cannot land on one file. A name that slugs to
+         * nothing (only symbols) falls back to the old Ymd-His-<random>.
+         */
+        $filename = $this->claimName($dir, $folder, $file->getClientOriginalName(), $ext);
         $destination = $dir . '/' . $filename;
 
         /*
@@ -201,6 +216,11 @@ class MediaUploadController extends Controller
         try {
             $file->move($dir, $filename);
         } catch (\Throwable $e) {
+            // The empty slot claimName() reserved is not left behind.
+            if (is_file($destination) && (int) @filesize($destination) === 0) {
+                @unlink($destination);
+            }
+
             return $this->uploadFailed(UploadFault::fromThrowable($e), 'file', $e->getMessage());
         }
 
@@ -355,6 +375,47 @@ class MediaUploadController extends Controller
         } finally {
             restore_error_handler();
         }
+    }
+
+    /** The upload's file name: the operator's own, made safe, never one in use. */
+    private function claimName(string $dir, string $folder, string $clientName, string $ext): string
+    {
+        $stem = trim(substr(Str::slug(pathinfo($clientName, PATHINFO_FILENAME)), 0, 100), '-');
+
+        if ($stem !== '') {
+            for ($n = 1; $n <= 200; $n++) {
+                $candidate = $stem . ($n === 1 ? '' : '-' . $n);
+
+                if ($this->nameTaken($dir, $folder, $candidate)) {
+                    continue;
+                }
+
+                $fh = @fopen($dir . '/' . $candidate . '.' . $ext, 'x');
+
+                if ($fh !== false) {
+                    fclose($fh);
+
+                    return $candidate . '.' . $ext;
+                }
+            }
+        }
+
+        return date('Ymd-His') . '-' . Str::random(8) . '.' . $ext;
+    }
+
+    /** Does anything still answer at this name, in any image extension? */
+    private function nameTaken(string $dir, string $folder, string $stem): bool
+    {
+        foreach (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'] as $e) {
+            $rel = 'uploads/' . $folder . '/' . $stem . '.' . $e;
+
+            if (file_exists($dir . '/' . $stem . '.' . $e)
+                || (glob(public_path('img-cache/*/' . $rel)) ?: []) !== []) {
+                return true;
+            }
+        }
+
+        return Media::query()->where('path', 'like', 'uploads/' . $folder . '/' . $stem . '.%')->exists();
     }
 
     private function record(string $path, string $filename, string $mime, string $destination, string $clientName): bool

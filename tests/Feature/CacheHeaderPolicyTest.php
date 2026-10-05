@@ -269,7 +269,13 @@ it('names every upload so that a variant URL can never change its bytes', functi
         $code .= is_array($token) ? $token[1] : $token;
     }
 
-    expect($code)->toContain('Ymd-His');
+    // 2.60.390: uploads keep the operator's own name (the owner renames for
+    // SEO), so the guarantee is no longer randomness but REFUSAL: a name is
+    // never reused while its file, its WebP twin, an /img-cache/ copy or a
+    // library row still answers at it. Pinned in the code, not the docs.
+    expect($code)->toContain('img-cache/*/')
+        ->and($code)->toContain("fopen(\$dir . '/' . \$candidate . '.' . \$ext, 'x')")
+        ->and($code)->toContain('Ymd-His');
 });
 
 it('states one max-age in the application and in the file that applies it', function () {

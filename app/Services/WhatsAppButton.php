@@ -213,6 +213,15 @@ class WhatsAppButton
         .'#content{padding-%1$s:var(--kbtw)}.kbb-checkout .co-head{margin-%1$s:calc(var(--kbtw)*-1)}}';
 
     /**
+     * The tab FLOATING over the page, nothing moved (2.60.390, the owner: "i
+     * don't want a dedicated left side space, please remove the space and the
+     * support vatical bar will float on the left side. do this on mobile
+     * checckout page too"). How it ships; TAB_PHONE, the reserved space, is
+     * "Make room beside the tab".
+     */
+    private const TAB_PHONE_FLOAT = '@media (max-width:'.self::PHONE_MAX.'px){.kbt-z{display:flex}.kbw{display:none}}';
+
+    /**
      * The squeezed cart's "Recommended" rail is FULL BLEED by `calc(50% -
      * 50vw)` and `100vw`, which measure from the viewport and not from
      * #content — so once #content moves over, the rail would start 13px from
@@ -304,9 +313,9 @@ class WhatsAppButton
 
         /* ── Cart & checkout · phone — the side tab (Lane WS) ─────────────── */
         'tab_on' => ['bool', 'Side tab on the cart and checkout', true,
-            'On is how this ships, because you asked for it. On phones, the cart and the checkout show a slim “24/7 Support” tab stuck to the left edge instead of the round button, so nothing covers the products, the quantity buttons or the checkout bar. Laptops, and every other page, keep the round button exactly as it is. Off puts the round button back on those two pages.'],
+            'On is how this ships, because you asked for it. On phones, the cart and the checkout show a slim “24/7 Support” tab floating on the left edge instead of the round button, above the checkout bar. Laptops, and every other page, keep the round button exactly as it is. Off puts the round button back on those two pages.'],
         'tab_size' => ['range', 'Overall size', self::TAB_BASE,
-            'Drag to make the whole tab bigger or smaller: its width, the icon, the text and its height all follow. The page moves over by the same amount, so the tab never sits on top of anything.',
+            'Drag to make the whole tab bigger or smaller: its width, the icon, the text and its height all follow.',
             ['min' => self::TAB_MIN, 'max' => self::TAB_MAX, 'step' => 1, 'unit' => 'px']],
         'tab_y' => ['range', 'Vertical position', 50,
             '0 puts the tab as high as it goes (just under the header), 50 in the middle, 100 as low as it goes — always above the checkout bar at the bottom of the screen.',
@@ -322,6 +331,8 @@ class WhatsAppButton
             'help' => 'Used with “My own two colours”. Light colours only — one too dark for black text is refused.'],
         'tab_c2' => ['type' => 'text', 'label' => 'Own colour 2', 'default' => '#E2F6EA', 'rule' => [self::class, 'cleanLight'],
             'help' => 'Used with “My own two colours”.'],
+        'tab_space' => ['bool', 'Make room beside the tab', false,
+            'Off, as you asked: the tab floats over the left edge of the page and nothing moves. On: the page moves over by the tab\'s width so the tab never sits on anything.'],
         'tab_anim' => ['bool', 'Animate', true,
             'The colours drift slowly and the icon pulses gently. Off keeps both still. Phones set to reduce motion always see it still.'],
     ];
@@ -341,7 +352,7 @@ class WhatsAppButton
             ['capsule', 'cap1', 'cap1_ar', 'cap2', 'cap2_ar', 'bubble']],
         'tab' => ['Cart & checkout · phone',
             'On phones only, the cart and the checkout swap the round button for a slim tab on the left edge — the WhatsApp icon and “24/7 Support” on a slowly shifting light background. It opens the same chat, with the same message or your own link, as the round button. Laptops and every other page are not touched.',
-            ['tab_on', 'tab_size', 'tab_y', 'tab_label', 'tab_label_ar', 'tab_palette', 'tab_c1', 'tab_c2', 'tab_anim']],
+            ['tab_on', 'tab_size', 'tab_y', 'tab_label', 'tab_label_ar', 'tab_palette', 'tab_c1', 'tab_c2', 'tab_space', 'tab_anim']],
     ];
 
     /**
@@ -1001,6 +1012,7 @@ class WhatsAppButton
                 .';--y:'.$y.';--c1:'.$stops[0].';--c2:'.$stops[1].';--c3:'.$stops[2],
             'w' => $w,
             'right' => $mirror,
+            'space' => (bool) ($c['tab_space'] ?? false),
             'label' => $label,
             // The visible words first, so the accessible name contains them.
             'aria' => $label === '' ? $open : $label.' · '.$open,
@@ -1068,7 +1080,9 @@ class WhatsAppButton
 
         return [
             'css' => self::css($design, $bubble, $squeezed)
-                .($tab === null ? '' : self::TAB_CSS.sprintf(self::TAB_PHONE, $tab['right'] ? 'right' : 'left').($squeezed ? self::TAB_SQUEEZE : '')),
+                .($tab === null ? '' : self::TAB_CSS.($tab['space']
+                    ? sprintf(self::TAB_PHONE, $tab['right'] ? 'right' : 'left').($squeezed ? self::TAB_SQUEEZE : '')
+                    : self::TAB_PHONE_FLOAT)),
             'tab' => $tab,
             'guard' => $tab === null ? '' : self::TAB_BUBBLE_GUARD,
             'class' => $class,

@@ -80,7 +80,7 @@ function mufAdmin(): void
 }
 
 /** A real file with real bytes, for the reason MediaUploadTest gives. */
-function mufPng(): \Illuminate\Http\UploadedFile
+function mufPng(string $name = 'shot.png'): \Illuminate\Http\UploadedFile
 {
     $image = imagecreatetruecolor(4, 4);
     ob_start();
@@ -90,7 +90,7 @@ function mufPng(): \Illuminate\Http\UploadedFile
     $path = tempnam(kbbTempDir(), 'mufup');
     file_put_contents($path, $bytes);
 
-    return new \Illuminate\Http\UploadedFile($path, 'shot.png', null, null, true);
+    return new \Illuminate\Http\UploadedFile($path, $name, null, null, true);
 }
 
 /* ═════════════════ 1 · the folder stage names its own fault ═════════════════ */
@@ -189,8 +189,11 @@ it('answers a throwing move with a sentence instead of a bare Server Error', fun
     }
 
     try {
+        // A name of symbols only slugs to nothing, so the upload takes the
+        // Ymd-His-<random> fallback this test blocks (2.60.390: an upload
+        // otherwise keeps the operator's own file name).
         $response = test()->post('/admin-api/media/upload', [
-            'file' => mufPng(),
+            'file' => mufPng('###.png'),
             'folder' => $folder,
         ]);
 
