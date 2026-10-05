@@ -759,6 +759,9 @@ final class AdminSearchIndex
             'Sync' => [],
             'Brand name' => ['Brand name check', 'Replace with K-Beauty Bliss', 'Brand name in titles', 'Brand alternate names', 'One k-beauty phrase per page'],
         ],
+        'pageheader' => [
+            'All custom pages' => ['Breadcrumb', 'Title', 'Product count', 'Intro', 'Dot', 'Header picture', 'Picture height', 'Position', 'Alignment'],
+        ],
         'pagebanners' => [
             'Banners' => ['Desktop picture', 'Phone picture', 'Alt text', 'Show the strip', 'Strip colour', 'Strip height', 'Text size', 'Tick size'],
             'Where they show' => [],
