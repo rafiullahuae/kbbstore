@@ -3,6 +3,22 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.390
+**Filters panel on phones: tap outside to close, × always visible, width
+control; tap highlight on small icons only; "&amp;" in category and brand names
+fixed.** Apply after .389. Runs 2 migrations (name repair, cache clear). Hard
+refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "filters panel width control" | Appearance → Site layout → Product grid → Filters drawer width · phone (60–100%) and Filters drawer · never wider than (260–600px). Ships at today's 300px |
+| "when clicked on empty area, the filter panel must ... hide auto" | A light backdrop beside the open panel closes it; Esc too; the page behind no longer scrolls |
+| "cross icon must not scroll up with the panel" | The FILTERS × row stays pinned at the top while the list scrolls |
+| "the click tap is giving some background color ... good only for small things like icons" | Only icon buttons respond. Appearance → Site layout → Press feedback → Which controls respond (Small icons only / Every button and row) |
+| (his screenshot) "Hydration &amp;amp; Glow" | Category and brand names imported with "&amp;amp;" are repaired; imports store them correctly from now on |
+
+Files: see the package's update.json.
+
 ## 2.60.389
 **Cart and checkout on a phone: the WhatsApp button becomes a slim left-edge
 "24/7 Support" tab.** Apply after .388. Runs 2 migrations (cache clear, Arabic
