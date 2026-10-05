@@ -322,6 +322,20 @@ it('has an authorization layer reading the role column', function () {
         'OwnerAppHeaders',
         'OwnerAppSession',
         /*
+         * Lane OA3, and I have come and read this file as instructed.
+         *
+         * PrivateNoIndex authorises nothing and reads no role. It runs after
+         * the response exists and only ever ADDS one header —
+         * `X-Robots-Tag: noindex, nofollow, noarchive` — to the admin, its
+         * API, the owner app and the password-email token pages, so a search
+         * engine never indexes them. It cannot refuse, redirect or alter a
+         * request. It decides by the route that answered (its name, or
+         * auth:admin among its middleware), never by who is asking. Global,
+         * pushed from OwnerAppServiceProvider, so it covers 404s and 500s and
+         * every route file; OwnerAppNoIndexTest crawls every surface.
+         */
+        'PrivateNoIndex',
+        /*
          * Lane S5, and I have come and read this file as instructed.
          *
          * ResolveLocaleSlugs authorises nothing and reads no role. It does what

@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\DB;
  *   1. KBB_OWNER_APP_PATH in .env — always wins, the escape hatch. Read
  *      through config('owner_app.path') so `config:cache` keeps it;
  *   2. the `owner_app_path` settings row, written by the migration with a
- *      fresh random value and re-rollable from Users & Roles → Owner app;
+ *      fresh random value and re-rollable from Users & Roles → Owner app —
+ *      New address for a random one, Custom address for one the owner types
+ *      (Lane OA3; customProblem() is the gate);
  *   3. NOTHING. Unlike the admin, there is no fallback word: an app with no
  *      address configured is not mounted at all. Failing closed is the point.
  *
@@ -82,10 +84,155 @@ final class OwnerAppPath
         return self::fromEnv() !== '';
     }
 
-    /** 12–64 characters, lowercase letters, digits, - and _, at least one _. */
+    /**
+     * 8–64 characters, lowercase letters, digits, - and _, at least one _,
+     * starting and ending with a letter or digit. The floor was 12 while every
+     * address was generated (23 characters); Lane OA3 lets the owner type his
+     * own, and customProblem() holds a typed one to 8–40.
+     */
     public static function valid(string $path): bool
     {
-        return (bool) preg_match('/^(?=[a-z0-9_-]*_)[a-z0-9][a-z0-9_-]{10,62}[a-z0-9]$/D', $path);
+        return (bool) preg_match('/^(?=[a-z0-9_-]*_)[a-z0-9][a-z0-9_-]{6,62}[a-z0-9]$/D', $path);
+    }
+
+    /* ------------------------------------------- an address the owner types */
+
+    public const CUSTOM_MIN = 8;
+
+    public const CUSTOM_MAX = 40;
+
+    /** Below this a typed address is accepted with a warning, never refused. */
+    public const STRONG_LENGTH = 16;
+
+    /**
+     * Words a scanner tries first. A hint, not a block: an address made only of
+     * these (and digits) is accepted, with a warning beside it.
+     */
+    public const WEAK_WORDS = ['admin', 'administrator', 'app', 'apps', 'beauty', 'backend', 'boss', 'control', 'console',
+        'dash', 'dashboard', 'extra', 'extrabeauty', 'go', 'hidden', 'k', 'kbb', 'kbeauty', 'kbeautybliss', 'login', 'manage',
+        'manager', 'me', 'mobile', 'my', 'office', 'owner', 'panel', 'pass', 'password', 'phone', 'pin', 'portal', 'private',
+        'root', 'secret', 'secure', 'shop', 'signin', 'staff', 'store', 'team', 'test', 'the', 'user', 'web', 'x'];
+
+    /**
+     * Why the owner may not use this address, or null when he may. Lowercases
+     * and trims slashes first; the caller stores normaliseCustom()'s result.
+     *
+     * The collision rules are the router's own and the slug tables', not a
+     * word list: an address that equals a first segment the shop already
+     * serves, or a page, article, category, brand, product, tag or redirect
+     * the owner has published, would be one URL with two owners.
+     */
+    public static function customProblem(string $raw): ?string
+    {
+        $path = self::normaliseCustom($raw);
+        $min = self::CUSTOM_MIN;
+        $max = self::CUSTOM_MAX;
+
+        if ($path === '') {
+            return 'Type the address you want, for example rafi_store-2027.';
+        }
+        if (strlen($path) < $min || strlen($path) > $max) {
+            return "Use {$min}–{$max} characters. This one has ".strlen($path).'.';
+        }
+        if (! preg_match('/^[a-z0-9_-]+$/D', $path)) {
+            return 'Use only lowercase letters a–z, digits 0–9, - and _. No spaces, slashes, dots or other characters.';
+        }
+        if (! str_contains($path, '_')) {
+            return 'Put at least one underscore (_) in it, e.g. rafi_store-2027. Shop pages and articles can never have an underscore in their address, so one guarantees that nothing you publish later can take over the app’s link.';
+        }
+        if (! self::valid($path)) {
+            return 'Start and end with a letter or a digit, not - or _.';
+        }
+        if ($path === self::current()) {
+            return 'That is already the app’s address.';
+        }
+
+        $admin = strtolower(trim(\App\Services\AdminPathService::current(), '/'));
+        foreach (array_unique(array_filter([$admin, 'admin', 'admin-api', 'api'])) as $taken) {
+            if ($path === $taken || str_starts_with($path, $taken)) {
+                return "It may not begin with “{$taken}”: that is the start of the admin’s or the shop’s own addresses.";
+            }
+        }
+
+        if (in_array($path, self::takenSegments(), true)) {
+            return 'The shop already uses /'.$path.'/ for one of its own pages. Choose another.';
+        }
+
+        if (($what = self::slugOwner($path)) !== null) {
+            return 'A '.$what.' on the shop already has the address /'.$path.'/. Choose another.';
+        }
+
+        return null;
+    }
+
+    public static function normaliseCustom(string $raw): string
+    {
+        return strtolower(trim(trim($raw), '/'));
+    }
+
+    /** A warning to show beside an accepted address, or null. Never a refusal. */
+    public static function weakness(string $path, array $names = []): ?string
+    {
+        $warn = [];
+        if (strlen($path) < self::STRONG_LENGTH) {
+            $warn[] = 'it is short — '.self::STRONG_LENGTH.' or more characters is much harder to guess';
+        }
+
+        $words = self::WEAK_WORDS;
+        foreach ($names as $name) {
+            foreach (preg_split('/[^a-z]+/', strtolower((string) $name)) ?: [] as $token) {
+                if (strlen($token) >= 2) {
+                    $words[] = $token;
+                }
+            }
+        }
+        $parts = array_values(array_filter(preg_split('/[^a-z]+/', $path) ?: [], 'strlen'));
+        if ($parts !== [] && array_diff($parts, $words) === []) {
+            $warn[] = 'it is made of ordinary words, names and numbers, which scanners try first';
+        }
+
+        return $warn === [] ? null : 'Accepted, but '.implode(', and ', $warn).'. The address is the first thing that keeps scanners away from the app; mixing in a few random letters makes it far stronger.';
+    }
+
+    /** The first segment of every route the shop registers, plus the reserved list. */
+    private static function takenSegments(): array
+    {
+        $out = \App\Http\Controllers\Store\PageController::RESERVED_SLUGS;
+        foreach (\Illuminate\Support\Facades\Route::getRoutes()->getRoutes() as $route) {
+            if (str_starts_with((string) $route->getName(), 'owner-app.')) {
+                continue;
+            }
+            $first = strtolower(explode('/', trim($route->uri(), '/'))[0]);
+            if ($first !== '' && ! str_contains($first, '{')) {
+                $out[] = $first;
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    /** Which published thing already answers at /{path}/, if any. One indexed lookup per table. */
+    private static function slugOwner(string $path): ?string
+    {
+        $tables = ['pages' => 'page', 'posts' => 'article', 'categories' => 'category', 'brands' => 'brand',
+            'products' => 'product', 'tags' => 'tag', 'locale_slugs' => 'translated page'];
+
+        foreach ($tables as $table => $label) {
+            if (\Illuminate\Support\Facades\Schema::hasTable($table) && DB::table($table)->where('slug', $path)->exists()) {
+                return $label;
+            }
+        }
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('redirects')
+            // `/p`, `/p/` and everything under `/p/` — a range, not LIKE: an
+            // underscore is a LIKE wildcard, and every address has one. '0'
+            // is the byte after '/', so [`/p/`, `/p0`) is exactly "under /p/".
+            && DB::table('redirects')->where(fn ($q) => $q->where('source', '/'.$path)
+                ->orWhere(fn ($r) => $r->where('source', '>=', '/'.$path.'/')->where('source', '<', '/'.$path.'0')))->exists()) {
+            return 'redirect';
+        }
+
+        return null;
     }
 
     /** About 113 bits: ten base-36 characters, an underscore, twelve more. */

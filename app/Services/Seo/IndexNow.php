@@ -116,6 +116,15 @@ class IndexNow
             return false;
         }
 
+        // Lane OA3: never name a private address to a search engine — the
+        // admin, its API, a token page, the owner app or its own host. Nothing
+        // public is dropped (PrivateSurfaces is the one list).
+        $urls = array_values(array_filter($urls, static fn ($u) => ! \App\Support\PrivateSurfaces::isPrivateUrl((string) $u)));
+
+        if ($urls === []) {
+            return false;
+        }
+
         $key = self::key();
         $host ??= self::hostFromSettings();
         $keyLocation ??= self::keyLocationUrl($host, $key);
