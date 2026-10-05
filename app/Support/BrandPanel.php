@@ -19,6 +19,13 @@ use App\Models\Brand;
  * banner, not on the banner." Then: "in mobile logo and name with capsule type
  * or rectangle background. and content will come downside the header area."
  *
+ * Lane BR3, the owner: "with logo circle or rectangle to choose from, and all
+ * controls options like box spacings, positioning etc and to adjust the height
+ * of overal header also, and font sizes etc. ... allow controls for desktop and
+ * mobile both on the front-end." So the panel's padding, inset and gap, its
+ * place on the banner, the phone capsule's place, the card below the banner,
+ * and the name, description and logo sizes -- laptop and phone apart.
+ *
  * ── WHERE EACH VALUE COMES FROM ─────────────────────────────────────────────
  *
  * The brand's own choice (`brands.header_layout`, set in the "Edit brand
@@ -41,6 +48,14 @@ final class BrandPanel
 
     public const POSITIONS = ['left', 'center', 'right'];
 
+    /** Lane BR3: where the laptop panel sits on the banner, across and up/down. */
+    public const PANEL_X = ['left', 'center', 'right'];
+
+    public const PANEL_Y = ['middle', 'top', 'bottom'];
+
+    /** Lane BR3: where the phone's capsule sits on the banner. */
+    public const PILL_AT = ['bottom-left', 'bottom-center', 'bottom-right', 'top-left', 'top-center', 'top-right'];
+
     /**
      * own key => [shop setting, min, max, CSS property, unit]. The shop's
      * setting has the same bounds (SiteLayout::SCHEMA), so a value is held to
@@ -53,7 +68,44 @@ final class BrandPanel
         'height' => ['brand_banner_h', 160, 460, '--brw-ph-h', 'px'],
         'height_m' => ['brand_banner_h_m', 100, 300, '--brw-ph-hm', 'px'],
         'content' => ['brand_content_w', 40, 85, '--brw-ph-cw', '%'],
+        // Lane BR3 -- laptop: the panel's box and type.
+        'pad' => ['brand_panel_pad', 8, 60, '--brw-ph-pad', 'px'],
+        'inset' => ['brand_panel_inset', 0, 120, '--brw-ph-in', 'px'],
+        'gap' => ['brand_desc_gap', 0, 40, '--brw-ph-gap', 'px'],
+        'name' => ['brand_name_fs', 18, 56, '--brw-ph-fn', 'px'],
+        'desc' => ['brand_desc_fs', 12, 22, '--brw-ph-fd', 'px'],
+        'logo_size' => ['brand_logo_size', 40, 120, '--brw-ph-lg', 'px'],
+        // Lane BR3 -- phone: the capsule, the card below the banner, the type.
+        'inset_m' => ['brand_pill_inset_m', 0, 40, '--brw-ph-im', 'px'],
+        'gap_m' => ['brand_card_gap_m', 0, 40, '--brw-ph-gm', 'px'],
+        'card_pad_m' => ['brand_card_pad_m', 6, 32, '--brw-ph-cp', 'px'],
+        'name_m' => ['brand_name_fs_m', 14, 36, '--brw-ph-fnm', 'px'],
+        'desc_m' => ['brand_desc_fs_m', 12, 20, '--brw-ph-fdm', 'px'],
+        'logo_size_m' => ['brand_logo_size_m', 28, 80, '--brw-ph-lgm', 'px'],
     ];
+
+    /**
+     * Lane BR3. The sizes the stylesheet already draws when its property is
+     * absent -- each `var(--x, <this>)` fallback in kbb-brand-header.css, and
+     * each the shop's shipped value (SiteLayout::SCHEMA). A size at this value
+     * is NOT printed, so a brand nobody has touched keeps its markup byte for
+     * byte, and the laptop's name and inset keep their narrow-screen clamp().
+     * BrandPanelControlsTest pins the three places to one another.
+     *
+     * @var array<string, int>
+     */
+    public const QUIET = [
+        'pad' => 26, 'inset' => 36, 'gap' => 12, 'name' => 34, 'desc' => 15, 'logo_size' => 72,
+        'inset_m' => 12, 'gap_m' => 12, 'card_pad_m' => 14, 'name_m' => 22, 'desc_m' => 14, 'logo_size_m' => 52,
+    ];
+
+    /**
+     * Lane BR3. Choices whose FIRST option is the stylesheet's own layout and
+     * prints no class; any other prints `brw-ph--<prefix>-<option>`.
+     *
+     * @var array<string, string>
+     */
+    public const QUIET_CHOICES = ['panel_x' => 'px', 'panel_y' => 'py', 'pill_at' => 'at'];
 
     /**
      * own key => [shop setting, allowed values].
@@ -65,6 +117,9 @@ final class BrandPanel
         'panel' => ['brand_panel_style', self::PANELS],
         'pill' => ['brand_pill', self::PILLS],
         'position' => ['brand_img_pos', self::POSITIONS],
+        'panel_x' => ['brand_panel_x', self::PANEL_X],
+        'panel_y' => ['brand_panel_y', self::PANEL_Y],
+        'pill_at' => ['brand_pill_at', self::PILL_AT],
     ];
 
     /** Used when a brand has no colour of its own: the shop pink. */
@@ -169,10 +224,18 @@ final class BrandPanel
         $class = 'brw-ph brw-ph--'.$v['panel'].' brw-ph--pill-'.$v['pill'].' brw-ph--logo-'.$v['logo']
             .' brw-ph--pos-'.$v['position'].($image === null ? ' brw-ph--noimg' : '');
 
+        foreach (self::QUIET_CHOICES as $key => $prefix) {
+            if ($v[$key] !== self::CHOICES[$key][1][0]) {
+                $class .= ' brw-ph--'.$prefix.'-'.$v[$key];
+            }
+        }
+
         $style = [];
 
         foreach (self::RANGES as $key => [, , , $property, $unit]) {
-            $style[] = $property.':'.(int) $v[$key].$unit;
+            if ((self::QUIET[$key] ?? null) !== (int) $v[$key]) {
+                $style[] = $property.':'.(int) $v[$key].$unit;
+            }
         }
 
         $base = BrandLogo::ring($brand) ?? self::FALLBACK_COLOUR;

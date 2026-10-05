@@ -137,12 +137,15 @@ it('lays the phone out by the header\'s own width: pill on the banner, descripti
     // "An" showing and "ua" cut off -- because the logo box's implicit grid
     // row took the picture's own height. MUTATION: drop the grid-template and
     // this is red.
-    expect($css)->toContain('.brw-ph .brw-logo--lg{width:72px;height:72px;background:#fff;flex:none;grid-template:minmax(0,1fr)/minmax(0,1fr)}')
+    // (Lane BR3: the 72px is now the fallback of the logo-size property.)
+    expect($css)->toContain('.brw-ph .brw-logo--lg{width:var(--brw-ph-lg,72px);height:var(--brw-ph-lg,72px);background:#fff;flex:none;grid-template:minmax(0,1fr)/minmax(0,1fr)}')
         ->and($css)->toContain('.brw-ph--logo-rect .brw-logo--lg{width:auto;aspect-ratio:2.3/1;border-radius:12px}');
 
     // The laptop panel: the content width and the frosted ground.
-    expect($css)->toContain('width:var(--brw-ph-cw,60%)')
-        ->and($css)->toContain('.brw-ph--frost .brw-ph__panel{background:rgba(255,255,255,.86)')
+    // (Lane BR3: never wider than the banner less its two insets.)
+    expect($css)->toContain('width:min(var(--brw-ph-cw,60%),calc(100% - 2 * var(--brw-ph-in,36px)))')
+        // Lane BR3: design A's own .84 (it was .86).
+        ->and($css)->toContain('.brw-ph--frost .brw-ph__panel{background:rgba(255,255,255,.84)')
         ->and($css)->toContain('.brw-ph--pos-left .brw-ph__img{object-position:left center}')
         ->and($css)->toContain('.brw-ph--pos-right .brw-ph__img{object-position:right center}');
 });
@@ -289,7 +292,11 @@ describe('the "Edit brand header" pop-up', function () {
             ->and($ctx->json('edit.fields.layout'))->toBe(['logo' => 'rect'])
             ->and($ctx->json('edit.panel.on'))->toBeTrue()
             ->and($ctx->json('edit.panel.shop'))->toBe(['logo' => 'circle', 'panel' => 'frost', 'pill' => 'capsule', 'position' => 'center',
-                'width' => 100, 'height' => 300, 'height_m' => 165, 'content' => 60])
+                'panel_x' => 'left', 'panel_y' => 'middle', 'pill_at' => 'bottom-left',
+                'width' => 100, 'height' => 300, 'height_m' => 165, 'content' => 60,
+                // Lane BR3's sizes, at design A's values.
+                'pad' => 26, 'inset' => 36, 'gap' => 12, 'name' => 34, 'desc' => 15, 'logo_size' => 72,
+                'inset_m' => 12, 'gap_m' => 12, 'card_pad_m' => 14, 'name_m' => 22, 'desc_m' => 14, 'logo_size_m' => 52])
             ->and($ctx->json('edit.panel.hint'))->toContain('Appearance → Site layout → Brand page')
             ->and($ctx->json('edit.panel.ranges.width'))->toBe(['min' => 60, 'max' => 100, 'unit' => '%'])
             ->and($ctx->json('edit.panel.ranges.height_m'))->toBe(['min' => 100, 'max' => 300, 'unit' => 'px'])

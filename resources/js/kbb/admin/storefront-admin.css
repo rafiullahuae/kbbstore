@@ -257,3 +257,8 @@ textarea.kbb-qe__in{height:auto;min-height:84px;padding:10px 12px;resize:vertica
 .kbb-qe__bar-fld .kbb-qe__label{display:flex;justify-content:space-between;gap:10px}
 .kbb-qe__bar-fld output{font-variant-numeric:tabular-nums;color:#b23a62;font-weight:700}
 .kbb-qe__range{width:100%;accent-color:#e0567b;margin:4px 0 0}
+/* Lane BR3: the Laptop / Phone switch over the Panel controls, and the preview
+   of the device being edited held in view while its bars move. */
+.kbb-qe__lygrp[hidden]{display:none}
+.kbb-qe__dev{margin-top:2px}
+.kbb-qe__pv--pin{position:sticky;top:-14px;z-index:3;box-shadow:0 6px 14px rgba(42,34,40,.12)}

@@ -174,7 +174,9 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // 104 since Lane BR2: the Panel header's look (panel background, phone
     // pill, logo shape), its four sizes and the picture's position, all on the
     // Brand page tab.
-    expect($keys)->toHaveCount(104);
+    // 119 since Lane BR3: the Panel header's box, position and type -- nine
+    // laptop and six phone controls, all on the Brand page tab.
+    expect($keys)->toHaveCount(119);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is
