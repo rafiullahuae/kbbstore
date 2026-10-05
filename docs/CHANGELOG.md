@@ -3,6 +3,25 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.398
+**Brand header: every control you listed, desktop and phone apart, from the
+brand page's Edit pencil.** Apply after .397. Hard refresh after applying.
+
+| Your request | Now: brand page → Edit pencil → Edit brand header → Header layout |
+|---|---|
+| "logo circle or rectangle to choose from" | Logo shape (both devices) |
+| "box spacings" | Laptop: space inside the panel, distance from the banner edge, gap between name and description. Phone: description card padding and its gap below the banner |
+| "positioning" | Laptop: panel left / centre / right and top / middle / bottom. Phone: logo-and-name capsule top or bottom × left / centre / right |
+| "adjust the height of overal header" | Laptop: header height (the whole header). Phone: banner height (the description card comes below it) |
+| "font sizes etc." | Brand name and description size, and logo size, laptop and phone apart |
+
+A Laptop | Phone switch shows one device's controls; the preview redraws as
+you drag, with no request. Shop-wide defaults: Appearance → Site layout →
+Brand page (Panel · laptop / Panel · phone). Design A is the default: phone
+logo 44 → 52px and name 20 → 22px to match the preview you picked.
+
+Files: see the package's update.json.
+
 ## 2.60.397
 **Catalog → Pagination: turn pagination off for the whole shop, or for any
 category, brand or listing page. Off shows every product at once.** Apply
