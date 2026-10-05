@@ -36,7 +36,9 @@ it('wires App → Owner App exactly once: row, title, deep link and the include'
     // MUTATION: delete block 4 from docs/oa4-wiring.json and the include count is 0.
     $app = oa4Wired('resources/views/admin/app.blade.php');
     expect(substr_count($app, "@include('admin.partials.owner-app-screen')"))->toBe(1)
-        ->and(substr_count($app, "{screen:'ownerapp',label:'Owner App',group:'App'"))->toBe(1)
+        // The sidebar row lives in App\Support\AdminNav since lane AP (2.60.404):
+        // declared once, and live (no 'pending' marker) now this screen exists.
+        ->and(substr_count((string) file_get_contents(app_path('Support/AdminNav.php')), "['id' => 'ownerapp', 'label' => 'Owner App', 'cap' => 'ownerapp.manage', 'late' => true, 'icon'"))->toBe(1)
         ->and(substr_count($app, "'ownerapp':['App','Owner App']"))->toBe(1)
         ->and(substr_count($app, "'pagination','ownerapp','banners',"))->toBe(1);
 

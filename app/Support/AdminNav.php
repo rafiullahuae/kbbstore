@@ -125,7 +125,7 @@ final class AdminNav
         // "not installed yet" rather than the dashboard (kbbNavClick).
         ['sec' => 'App', 'rows' => [
             ['id' => 'siteapp', 'label' => 'Site App', 'cap' => 'siteapp.manage', 'late' => true, 'pending' => 'Lane PW: the screen, and the siteapp.manage capability (owner-only until it exists)', 'icon' => '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/><path d="M10 6h4"/>'],
-            ['id' => 'ownerapp', 'label' => 'Owner App', 'cap' => 'ownerapp.manage', 'late' => true, 'pending' => 'Lane OA4: the screen', 'icon' => '<rect x="6" y="2" width="12" height="20" rx="2"/><circle cx="12" cy="10" r="2.5"/><path d="M8.5 16.5a3.5 3.5 0 0 1 7 0"/>'],
+            ['id' => 'ownerapp', 'label' => 'Owner App', 'cap' => 'ownerapp.manage', 'late' => true, 'icon' => '<rect x="6" y="2" width="12" height="20" rx="2"/><circle cx="12" cy="10" r="2.5"/><path d="M8.5 16.5a3.5 3.5 0 0 1 7 0"/>'],
         ]],
         ['sec' => 'Safety', 'rows' => [
             ['id' => 'debug', 'label' => 'Debug & Monitor', 'cap' => 'system.diagnostics', 'icon' => self::I['debug']],
