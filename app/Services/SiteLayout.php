@@ -689,11 +689,16 @@ class SiteLayout
         'brand_logo_size' => ['range', 'Panel · laptop · logo size', 72,
             'Only for the Panel header: the logo\'s height (a circle is as wide; a rectangle is 2.3 times as wide).',
             ['min' => 40, 'max' => 120, 'step' => 1, 'unit' => 'px']],
-        'brand_pill_at' => ['select', 'Panel · phone · logo and name position', 'bottom-left',
-            'Only for the Panel header, on phones: where the capsule with the logo and name sits on the banner.',
+        /*
+         * Lane BR4 moves this default from Bottom left to Bottom centre: the
+         * owner, "give control make name positioning ... and centered align".
+         * On a phone the name's position IS this capsule's place on the banner.
+         */
+        'brand_pill_at' => ['select', 'Panel · phone · name position (with the logo, when it shows)', 'bottom-center',
+            'Only for the Panel header, on phones: where the capsule with the brand name (and the logo, when it shows) sits on the banner. Bottom centre, as you asked.',
             [
-                'bottom-left' => 'Bottom left',
                 'bottom-center' => 'Bottom centre',
+                'bottom-left' => 'Bottom left',
                 'bottom-right' => 'Bottom right',
                 'top-left' => 'Top left',
                 'top-center' => 'Top centre',
@@ -717,6 +722,50 @@ class SiteLayout
         'brand_logo_size_m' => ['range', 'Panel · phone · logo size', 52,
             'Only for the Panel header, on phones: the logo\'s height in the capsule.',
             ['min' => 28, 'max' => 80, 'step' => 1, 'unit' => 'px']],
+
+        /*
+         * THE LOGO, THE ALIGNMENT AND "READ MORE".                 (Lane BR4)
+         *
+         * The owner, 5 October: "i want to turn off the logo by default, and
+         * give control make name positioning, and with description i want read
+         * more / read less after two lines, and centered align." He asked, so
+         * each ships at what he asked for -- logo off, name and description
+         * centred, the description cut at two lines with Read more -- and each
+         * brand can change any of them in its own "Edit brand header" pop-up
+         * (App\Support\BrandPanel). On a phone the name's place is the capsule's
+         * (brand_pill_at, above).
+         */
+        'brand_logo_show' => ['bool', 'Panel · laptop · show the brand logo', false,
+            'Off, as you asked: the panel shows the brand name and the description, with no logo and no empty space where it was. On: the logo comes back, beside the name.'],
+        'brand_logo_show_m' => ['bool', 'Panel · phone · show the brand logo', false,
+            'Off, as you asked: the capsule on the banner holds the brand name alone. On: the logo comes back, beside the name.'],
+        'brand_name_align' => ['select', 'Panel · laptop · brand name alignment', 'center',
+            'Only for the Panel header, on laptops: the brand name (with the logo, when it shows) inside the panel. Centre, as you asked.',
+            [
+                'center' => 'Centre',
+                'left' => 'Left',
+                'right' => 'Right',
+            ]],
+        'brand_desc_align' => ['select', 'Panel · laptop · description alignment', 'center',
+            'Only for the Panel header, on laptops: the description\'s lines inside the panel. Centre, as you asked.',
+            [
+                'center' => 'Centre',
+                'left' => 'Left',
+                'right' => 'Right',
+            ]],
+        'brand_desc_align_m' => ['select', 'Panel · phone · description alignment', 'center',
+            'Only for the Panel header, on phones: the description\'s lines in the card below the banner. Centre, as you asked.',
+            [
+                'center' => 'Centre',
+                'left' => 'Left',
+                'right' => 'Right',
+            ]],
+        'brand_desc_lines' => ['range', 'Panel · laptop · description lines before "Read more"', 2,
+            'Only for the Panel header, on laptops: a longer description is cut at this many lines, with "Read more" under it to open the rest in place and "Read less" to close it. Two, as you asked.',
+            ['min' => 1, 'max' => 6, 'step' => 1, 'unit' => '']],
+        'brand_desc_lines_m' => ['range', 'Panel · phone · description lines before "Read more"', 2,
+            'Only for the Panel header, on phones: the same, in the card below the banner. Two, as you asked.',
+            ['min' => 1, 'max' => 6, 'step' => 1, 'unit' => '']],
 
         /*
          * ── PRESS FEEDBACK ──────────────────────────────────────── Lane RD ──
@@ -867,7 +916,10 @@ class SiteLayout
         // Lane BR3: the panel's box, position and type, laptop then phone.
         'brand_panel_x', 'brand_panel_y', 'brand_panel_pad', 'brand_panel_inset', 'brand_desc_gap', 'brand_name_fs',
         'brand_desc_fs', 'brand_logo_size', 'brand_pill_at', 'brand_pill_inset_m', 'brand_card_gap_m', 'brand_card_pad_m',
-        'brand_name_fs_m', 'brand_desc_fs_m', 'brand_logo_size_m'];
+        'brand_name_fs_m', 'brand_desc_fs_m', 'brand_logo_size_m',
+        // Lane BR4: the logo switch, the alignment and Read more, laptop then phone.
+        'brand_logo_show', 'brand_logo_show_m', 'brand_name_align', 'brand_desc_align', 'brand_desc_align_m',
+        'brand_desc_lines', 'brand_desc_lines_m'];
 
     /** The keys that are not CSS: skipped by isDefault(), never in css(). */
     private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom'];

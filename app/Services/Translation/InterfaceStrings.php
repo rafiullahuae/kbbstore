@@ -1609,6 +1609,9 @@ final class InterfaceStrings
             'brands.popular_heading' => 'Popular right now',
             'brands.card_count' => ':count product|:count products',
             'brands.card_coming_soon' => 'Coming soon',
+            // Lane BR4: the brand Panel's description, cut at two lines.
+            'brands.read_more' => 'Read more',
+            'brands.read_less' => 'Read less',
         ];
     }
 

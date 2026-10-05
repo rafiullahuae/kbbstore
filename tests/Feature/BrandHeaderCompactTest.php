@@ -316,6 +316,10 @@ describe('the colour taken from the logo', function () {
 /* ==================================================================== ring */
 
 describe('the ring', function () {
+    // Lane BR4: the Panel shows no logo unless "Show the brand logo" is on
+    // (the owner's default). The ring is the logo's, so these turn it on.
+    beforeEach(fn () => bhSave(['brand_logo_show' => true, 'brand_logo_show_m' => true]));
+
     it('rings the logo in the colour taken from it, and in the owner\'s own colour when he sets one', function () {
         $brand = bhBrand(['logo' => bhRedLogo(), 'logo_color' => '#ce2030']);
         bhProduct($brand);

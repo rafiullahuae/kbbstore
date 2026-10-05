@@ -96,8 +96,9 @@ it('ships the Panel header: banner behind, logo + name + description in a froste
         ->and($html)->not->toContain('data-kbb-title-header')
         ->and($html)->not->toContain('<div class="brw-hero');
 
-    // Inside the panel: the logo, then the name beside it, then the description.
-    expect(preg_match('#<div class="brw-ph__panel">\s*<div class="brw-ph__id">\s*<span class="brw-logo brw-logo--lg brw-logo--ring"[^>]*>.*?</span>\s*<h1 class="brw-ph__name" id="brw-ph-title">Anuabr</h1>\s*</div>\s*<div class="brw-ph__desc brw-desc">Anuabr believes#s', $html))->toBe(1);
+    // Inside the panel: the name, then the description. (Lane BR4: no logo
+    // until "Show the brand logo" is on -- the owner's default.)
+    expect(preg_match('#<div class="brw-ph__panel">\s*<div class="brw-ph__id">\s*<h1 class="brw-ph__name" id="brw-ph-title">Anuabr</h1>\s*</div>\s*<div class="brw-ph__desc brw-desc">Anuabr believes#s', $html))->toBe(1);
 });
 
 it('prints the heading and the description once each, as real text', function () {
@@ -210,18 +211,22 @@ it('draws a brand with no banner on its own colour, with no picture and no broke
         ->and($js)->not->toContain('javascript:alert');
 });
 
-it('keeps the owner\'s own page banner, with the compact row under it, instead of a second banner', function () {
+it('draws the Panel for a brand with the owner\'s own page banner too, its picture as the background (Lane BR4)', function () {
+    // This used to pin the opposite -- "keeps the compact row under it" --
+    // which is exactly what kept the live Anua off the Panel. BrandPanelEveryBrandTest
+    // carries the owner's report and the rest.
     $brand = brpBrand(['banner' => ['enabled' => true, 'image' => '/uploads/brands/own.jpg', 'heading' => 'Own']]);
     brpProducts($brand, 1);
 
-    expect(\App\Http\Controllers\Store\BrandController::hero('panel', ['x' => 1]))->toBe('compact')
-        ->and(\App\Http\Controllers\Store\BrandController::hero('panel', null))->toBe('panel')
-        ->and(\App\Http\Controllers\Store\BrandController::hero('classic', null))->toBe('classic')
-        ->and(\App\Http\Controllers\Store\BrandController::hero('nonsense', null))->toBe('compact');
+    expect(\App\Http\Controllers\Store\BrandController::hero('panel'))->toBe('panel')
+        ->and(\App\Http\Controllers\Store\BrandController::hero('classic'))->toBe('classic')
+        ->and(\App\Http\Controllers\Store\BrandController::hero('nonsense'))->toBe('compact');
 
     expect(\App\Support\PageBanner::forModel($brand->fresh(), 'Anuabr'))->not->toBeNull();
     $html = (string) $this->get('/brands/anuabr/')->getContent();
-    expect($html)->not->toContain('brw-ph')->and($html)->toContain('brw-hero--compact');
+    expect($html)->toContain('<img class="brw-ph__img" src="/uploads/brands/own.jpg"')
+        ->and($html)->not->toContain('<div class="brw-hero')
+        ->and($html)->not->toContain('<section class="kbb-banner');
 });
 
 it('escapes the brand name, and Compact and Classic still draw exactly their own headers', function () {
@@ -292,11 +297,14 @@ describe('the "Edit brand header" pop-up', function () {
             ->and($ctx->json('edit.fields.layout'))->toBe(['logo' => 'rect'])
             ->and($ctx->json('edit.panel.on'))->toBeTrue()
             ->and($ctx->json('edit.panel.shop'))->toBe(['logo' => 'circle', 'panel' => 'frost', 'pill' => 'capsule', 'position' => 'center',
-                'panel_x' => 'left', 'panel_y' => 'middle', 'pill_at' => 'bottom-left',
+                'panel_x' => 'left', 'panel_y' => 'middle', 'pill_at' => 'bottom-center',
+                // Lane BR4: the logo off, the name and the description centred.
+                'logo_show' => 'off', 'logo_show_m' => 'off', 'name_align' => 'center', 'desc_align' => 'center', 'desc_align_m' => 'center',
                 'width' => 100, 'height' => 300, 'height_m' => 165, 'content' => 60,
                 // Lane BR3's sizes, at design A's values.
                 'pad' => 26, 'inset' => 36, 'gap' => 12, 'name' => 34, 'desc' => 15, 'logo_size' => 72,
-                'inset_m' => 12, 'gap_m' => 12, 'card_pad_m' => 14, 'name_m' => 22, 'desc_m' => 14, 'logo_size_m' => 52])
+                'inset_m' => 12, 'gap_m' => 12, 'card_pad_m' => 14, 'name_m' => 22, 'desc_m' => 14, 'logo_size_m' => 52,
+                'lines' => 2, 'lines_m' => 2])
             ->and($ctx->json('edit.panel.hint'))->toContain('Appearance → Site layout → Brand page')
             ->and($ctx->json('edit.panel.ranges.width'))->toBe(['min' => 60, 'max' => 100, 'unit' => '%'])
             ->and($ctx->json('edit.panel.ranges.height_m'))->toBe(['min' => 100, 'max' => 300, 'unit' => 'px'])

@@ -15,7 +15,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-brand-header.css": {
-    "file": "assets/kbb-brand-header-BEoZhPL8.css",
+    "file": "assets/kbb-brand-header-BZCvgM6_.css",
     "src": "resources/css/kbb/kbb-brand-header.css",
     "isEntry": true
   },
@@ -268,7 +268,7 @@
     ]
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-Ctv3m7Gf.js",
+    "file": "assets/storefront-admin-YidMA3aK.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -281,7 +281,7 @@
     ]
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-Cfk1PW2Y.js",
+    "file": "assets/app-CJvhPTvF.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,

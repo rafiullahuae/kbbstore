@@ -1203,6 +1203,8 @@ final class ArabicInterfaceDrafts
             'store.brands.popular_heading' => 'الأكثر رواجًا الآن',
             'store.brands.card_count' => 'لا منتجات|منتج واحد|منتجان|:count منتجات|:count منتجًا|:count منتج',
             'store.brands.card_coming_soon' => 'قريبًا',
+            'store.brands.read_more' => 'اقرأ المزيد',
+            'store.brands.read_less' => 'اقرأ أقل',
         ];
     }
 

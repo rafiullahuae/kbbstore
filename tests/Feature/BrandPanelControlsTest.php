@@ -116,7 +116,8 @@ it('keeps an untouched brand page byte for byte as BR2 drew it: no new property,
 });
 
 it('holds each default to one number: BrandPanel::QUIET, the shop setting and the stylesheet fallback', function () {
-    expect(array_keys(BrandPanel::QUIET))->toBe([...BR3_LAPTOP, ...BR3_PHONE]);
+    // Lane BR4 adds the lines before "Read more", laptop and phone: a count, not px.
+    expect(array_keys(BrandPanel::QUIET))->toBe([...BR3_LAPTOP, ...BR3_PHONE, 'lines', 'lines_m']);
 
     [$laptop, $phone] = br3CssParts();
 
@@ -130,10 +131,10 @@ it('holds each default to one number: BrandPanel::QUIET, the shop setting and th
             ->and($field[4]['min'])->toBe($min, "{$setting} min")
             ->and($field[4]['max'])->toBe($max, "{$setting} max")
             ->and($default)->toBeGreaterThanOrEqual($min)->toBeLessThanOrEqual($max)
-            ->and($unit)->toBe('px');
+            ->and($unit)->toBe(in_array($key, ['lines', 'lines_m'], true) ? '' : 'px');
 
-        $scope = in_array($key, BR3_PHONE, true) ? $phone : $laptop;
-        $other = in_array($key, BR3_PHONE, true) ? $laptop : $phone;
+        $scope = in_array($key, [...BR3_PHONE, 'lines_m'], true) ? $phone : $laptop;
+        $other = in_array($key, [...BR3_PHONE, 'lines_m'], true) ? $laptop : $phone;
 
         // Every fallback of this property, in the half of the sheet it belongs
         // to, is the default -- and the property is not read in the other half.
@@ -141,7 +142,7 @@ it('holds each default to one number: BrandPanel::QUIET, the shop setting and th
         expect($m[1])->not->toBeEmpty("{$property} is read by nothing in its half of the sheet");
 
         foreach ($m[1] as $fallback) {
-            expect(in_array($fallback, ["{$default}px", "clamp(24px,3cqi,{$default}px)", "clamp(16px,3cqi,{$default}px)"], true))
+            expect(in_array($fallback, [$default.$unit, "clamp(24px,3cqi,{$default}px)", "clamp(16px,3cqi,{$default}px)"], true))
                 ->toBeTrue("{$property} falls back to {$fallback}, not {$default}px");
         }
 
@@ -150,6 +151,17 @@ it('holds each default to one number: BrandPanel::QUIET, the shop setting and th
 
     foreach (BrandPanel::QUIET_CHOICES as $key => $prefix) {
         [$setting, $options] = BrandPanel::CHOICES[$key];
+
+        // Lane BR4: "Show the brand logo" is a switch on Site layout; Off is
+        // its default and the first option, so it too prints nothing.
+        if (in_array($key, BrandPanel::SWITCHES, true)) {
+            expect(SiteLayout::SCHEMA[$setting][0])->toBe('bool')
+                ->and(SiteLayout::SCHEMA[$setting][2])->toBeFalse()
+                ->and($options)->toBe(['off', 'on']);
+
+            continue;
+        }
+
         expect(SiteLayout::SCHEMA[$setting][0])->toBe('select')
             ->and(SiteLayout::SCHEMA[$setting][2])->toBe($options[0], "{$setting} ships at the stylesheet's own layout")
             ->and(array_keys(SiteLayout::SCHEMA[$setting][4]))->toBe($options);
@@ -224,7 +236,8 @@ it('lays out every position it offers, on its own device', function () {
 
     foreach (BrandPanel::PILL_AT as $i => $at) {
         if ($i === 0) {
-            expect(br3Css())->not->toContain('brw-ph--at-bottom-left');
+            // Lane BR4: Bottom centre is now first, the stylesheet's own place.
+            expect($at)->toBe('bottom-center')->and(br3Css())->not->toContain('brw-ph--at-bottom-center');
 
             continue;
         }
@@ -317,7 +330,7 @@ describe('the "Edit brand header" pop-up', function () {
         expect($ctx->json('edit.fields.layout'))->toBe(['pill_at' => 'top-left', 'name_m' => 30])
             ->and($ctx->json('edit.panel.quiet'))->toBe(BrandPanel::QUIET)
             ->and($ctx->json('edit.panel.shop.desc'))->toBe(17)
-            ->and($ctx->json('edit.panel.shop.pill_at'))->toBe('bottom-left')
+            ->and($ctx->json('edit.panel.shop.pill_at'))->toBe('bottom-center')
             ->and($ctx->json('edit.panel.ranges.logo_size'))->toBe(['min' => 40, 'max' => 120, 'unit' => 'px'])
             ->and($ctx->json('edit.panel.ranges.card_pad_m'))->toBe(['min' => 6, 'max' => 32, 'unit' => 'px']);
     });
@@ -354,7 +367,7 @@ describe('the "Edit brand header" pop-up', function () {
         // MUTATION: leave a key out of PANEL_BARS / PANEL_CHOICES and the
         // pop-up cannot set what the server accepts.
         foreach (BrandPanel::RANGES as $key => [, , , $property]) {
-            $group = in_array($key, ['height_m', ...BR3_PHONE], true) ? 'phone' : 'laptop';
+            $group = in_array($key, ['height_m', 'lines_m', ...BR3_PHONE], true) ? 'phone' : 'laptop';
             expect(preg_match("#\\['{$key}', '[^']+', '{$property}', '{$group}'\\]#", $js))->toBe(1, "bar {$key}");
         }
 

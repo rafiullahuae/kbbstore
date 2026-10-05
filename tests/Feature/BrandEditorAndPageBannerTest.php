@@ -293,8 +293,23 @@ it('renders the banner on a category page once it is switched on', function () {
 it('renders the banner on a brand page, on the listing and on the landing page', function () {
     $brand = bwBrand(bwBanner());
 
+    /*
+     * Lane BR4: on the landing page the banner is the Panel header's PICTURE
+     * (the default header style, as the owner asked), not a second header:
+     * its image behind the panel, the brand name the one <h1>. Under Compact
+     * or Classic the banner component draws as before.
+     */
+    $landing = bwBrandPageHtml($brand);
+
     expect(bwHasBanner(bwBrandListingHtml($brand)))->toBeTrue('the brand listing at /shop/?filter_brands= must render the banner')
-        ->and(bwHasBanner(bwBrandPageHtml($brand)))->toBeTrue('the brand landing page must render the banner');
+        ->and(bwHasBanner($landing))->toBeFalse('under the Panel the banner is its background, not a second header')
+        ->and($landing)->toContain('<img class="brw-ph__img" src="/media/t-banner.jpg"');
+
+    app(\App\Services\SiteLayout::class)->save(['brand_hero' => 'compact']);
+    \App\Models\Setting::flushMap();
+    \App\Services\SettingsService::forgetMemo();
+
+    expect(bwHasBanner(bwBrandPageHtml($brand)))->toBeTrue('under Compact the brand landing page must render the banner');
 });
 
 /*

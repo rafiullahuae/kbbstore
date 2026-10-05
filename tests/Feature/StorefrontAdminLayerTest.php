@@ -483,7 +483,11 @@ describe('the quick-edit save', function () {
             ->and($banner['heading'])->toBe('New heading')
             ->and($banner['style'])->toBe('full')
             ->and($brand->fresh()->header_image)->toBeNull()
-            ->and($r->json('kind'))->toBe('banner');
+            // Lane BR4: the brand page draws the Panel header for a brand with a
+            // banner too, the banner's picture as its background -- so the
+            // header handed back is the Panel, carrying the new picture.
+            ->and($r->json('kind'))->toBe('panel')
+            ->and($r->json('html'))->toContain('<img class="brw-ph__img" src="/uploads/brands/new.jpg"');
     });
 });
 
