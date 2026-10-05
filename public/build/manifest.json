@@ -234,14 +234,27 @@
     "file": "assets/outfit-latin-Bc-8i84L.woff2",
     "src": "resources/fonts/outfit/outfit-latin.woff2"
   },
-  "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-DXaWUdxN.js",
-    "name": "storefront-admin",
-    "src": "resources/js/kbb/admin/storefront-admin.js",
+  "resources/js/kbb/admin/page-header-editor.js": {
+    "file": "assets/page-header-editor-dDNXiIyl.js",
+    "name": "page-header-editor",
+    "src": "resources/js/kbb/admin/page-header-editor.js",
+    "isEntry": true,
     "isDynamicEntry": true
   },
+  "resources/js/kbb/admin/storefront-admin.js": {
+    "file": "assets/storefront-admin-DLiBEq7_.js",
+    "name": "storefront-admin",
+    "src": "resources/js/kbb/admin/storefront-admin.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/kbb/app.js"
+    ],
+    "dynamicImports": [
+      "resources/js/kbb/admin/page-header-editor.js"
+    ]
+  },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-CEneIuWO.js",
+    "file": "assets/app-Oq7cci1T.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,

@@ -11,6 +11,19 @@
 <div class="kbb-home">
 @include('partials.page-banner', ['pageBanner' => $pageBanner ?? null])
 <section class="sec"><div class="wrap">
+{{-- Pages → Page header (Lane PH): null = the original markup below, byte for byte. --}}@if (! empty($pageHeader))
+@php
+    $phParts = [
+        'home' => Url::to('/'),
+        'crumb' => $title,
+        'title' => $title,
+        'count' => trans_choice('store.collection.product_count', $products->total(), ['formatted' => number_format($products->total())]),
+        'intro' => (string) $intro,
+        'button' => ['href' => Url::to('/shop/'), 'label' => __('store.collection.all_products')],
+    ];
+@endphp
+@include('partials.page-header', ['ph' => $phParts])
+@else
     <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{{ $title }}</span></nav>
 
     <div class="sh">
@@ -25,6 +38,7 @@
         </div>
         <a class="lnk" href="{{ Url::to('/shop/') }}">{{ __('store.collection.all_products') }}</a>
     </div>
+@endif
 
     @if ($products->isEmpty())
         <p class="empty">{!! __('store.collection.empty', ['link' => '<a href="' . e(Url::to('/shop/')) . '">' . e(__('store.collection.empty_link')) . '</a>']) !!}</p>

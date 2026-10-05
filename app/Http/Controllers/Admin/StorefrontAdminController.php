@@ -124,8 +124,11 @@ class StorefrontAdminController extends Controller
 
         $bar = StorefrontAdminHint::can($admin, 'storefront.adminbar');
         $edit = StorefrontAdminHint::can($admin, 'storefront.quick_edit');
+        // Pages → Page header's "Edit header" panel (Lane PH): owner, manager
+        // and editor, so a manager or editor gets the panel without the bar.
+        $header = StorefrontAdminHint::can($admin, 'pageheader.manage');
 
-        if (! $bar && ! $edit) {
+        if (! $bar && ! $edit && ! $header) {
             return response()->json([
                 'ok' => false,
                 'error' => 'forbidden',
@@ -144,6 +147,7 @@ class StorefrontAdminController extends Controller
             ],
             'bar' => $bar ? $this->bar($admin, $page) : null,
             'edit' => $edit ? $this->editable($page) : null,
+            'pageheader' => $header ? $this->headerEditable($page) : null,
         ])->withCookie(StorefrontAdminHint::refresh($request));
     }
 
@@ -253,6 +257,13 @@ class StorefrontAdminController extends Controller
                 'model' => Brand::query()->where('slug', $param('slug'))->first(),
                 'locale' => $locale,
             ],
+            // The custom pages Pages → Page header covers (Lane PH).
+            str_ends_with($action, 'Store\CollectionController@show') => [
+                'kind' => 'collection', 'model' => null, 'locale' => $locale, 'key' => 'collection:' . $param('key'),
+            ],
+            str_ends_with($action, 'Store\PageController@show') => [
+                'kind' => 'custompage', 'model' => null, 'locale' => $locale, 'key' => 'page:' . $param('slug'),
+            ],
             str_ends_with($action, 'Store\ProductController@show') => [
                 'kind' => 'product',
                 'model' => Product::query()->select('id', 'slug', 'name')->where('slug', $param('slug'))->first(),
@@ -298,6 +309,7 @@ class StorefrontAdminController extends Controller
                 'href' => $console . '?kbb-open=product:' . (int) $model->getKey() . '#catalog/products',
             ] : null,
             'home' => ['label' => 'Homepage', 'href' => $console . '#homepage'],
+            'collection', 'custompage' => ['label' => 'Page header', 'href' => $console . '#pageheader'],
             default => null,
         };
 
@@ -375,6 +387,36 @@ class StorefrontAdminController extends Controller
                 ['label' => 'Appearance → Site layout → Category header', 'href' => $console . '#sitelayout'],
             ],
         ];
+    }
+
+    /**
+     * The "Edit header" panel's data for a custom page, or null on any other.
+     * (Lane PH) Only a key Pages → Page header knows is offered: a concern
+     * listing renders the same view but is not a custom page.
+     *
+     * @param  array{kind:string, model:?Model, locale:string, key?:string}  $page
+     */
+    private function headerEditable(array $page): ?array
+    {
+        if (! in_array($page['kind'], ['collection', 'custompage'], true)) {
+            return null;
+        }
+
+        $key = (string) ($page['key'] ?? '');
+        $known = \App\Services\PageBanners::pageKeys();
+
+        if (! isset($known[$key])) {
+            return null;
+        }
+
+        $label = $known[$key][0];
+        if ($page['kind'] === 'custompage') {
+            $title = (string) \App\Models\Page::query()->where('slug', substr($key, 5))->value('title');
+            $title = trim(html_entity_decode(strip_tags($title), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            $label = $title !== '' ? $title : $label;
+        }
+
+        return PageHeaderApiController::editorContext($key, $page['kind'] === 'collection' ? 'collection' : 'page', $label);
     }
 
     /**

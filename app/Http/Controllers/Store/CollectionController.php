@@ -233,6 +233,8 @@ class CollectionController extends Controller
             'settings' => $this->settings,
             // Pages → Page banners (Lane SS): null on a listing with none.
             'pageBanner' => app(\App\Services\PageBanners::class)->forPage('collection:' . $key),
+            // Pages → Page header (Lane PH): null = the original title block.
+            'pageHeader' => app(\App\Services\PageHeaders::class)->forPage('collection:' . $key, 'collection'),
             // SEO → Keywords (Lane KW): which listing's keywords these are.
             'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page, $products) + ['seo_entity' => 'collection:' . $key],
         ]);

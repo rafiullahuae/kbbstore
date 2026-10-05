@@ -151,6 +151,8 @@ class PageBannersApiController extends Controller
             'breakpoint' => PageBanners::BREAKPOINT,
             'css' => PageBanners::CSS,
             'icon' => PageBanners::ICON,
+            // Strip item device choice (Lane PH): value => label.
+            'devices' => array_map(static fn (string $v, string $l): array => ['value' => $v, 'label' => $l], array_keys(PageBanners::DEVICES), PageBanners::DEVICES),
             'super_sale' => $this->superSale(),
         ];
     }

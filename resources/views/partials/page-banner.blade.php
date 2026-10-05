@@ -7,7 +7,10 @@
     file emits not one byte. Raw output is the CSS and ICON constants only;
     every word and address the owner typed goes through the escaping echo, and
     the style attribute carries colours and pixel sizes PageBanners has already
-    validated. No picture stored means no <img> — never a broken icon.
+    validated. A strip item for one device only gets one of two constant
+    classes, kbb-pb-d or kbb-pb-m, as an UNQUOTED attribute so the escaping
+    echo prints it unchanged (an @if glued to the tag name is not seen by
+    Blade); an item for both gets none, and prints as it always did. (Lane PH) No picture stored means no <img> — never a broken icon.
 --}}
 @if (! empty($pageBanner))
 <style id="kbb-pb-css">{!! \App\Services\PageBanners::CSS !!}</style>
@@ -18,7 +21,7 @@
 
 @endif
 @if ($pageBanner['items'] !== [])
-<ul class="kbb-pb-strip">@foreach ($pageBanner['items'] as $pbItem)<li>{!! \App\Services\PageBanners::ICON !!}<span>{{ $pbItem }}</span></li>@endforeach</ul>
+<ul class="kbb-pb-strip">@foreach ($pageBanner['items'] as $pbN => $pbItem)<li{{ ['d' => ' class=kbb-pb-d', 'm' => ' class=kbb-pb-m'][$pageBanner['devs'][$pbN] ?? 'both'] ?? '' }}>{!! \App\Services\PageBanners::ICON !!}<span>{{ $pbItem }}</span></li>@endforeach</ul>
 @endif
 </div>
 @endif

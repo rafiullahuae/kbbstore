@@ -490,6 +490,12 @@ final class AdminCapabilities
         // list -- so its own capability, the same three roles. (Lane SS)
         'pagebanners.manage' => ['owner', 'manager', 'editor'],
 
+        // Pages → Page header: the title block of the custom pages — which of
+        // its parts show, in what order, and its picture — and the storefront's
+        // "Edit header" panel that saves the same thing. Printed on public
+        // pages, so its own capability, the same three roles. (Lane PH)
+        'pageheader.manage' => ['owner', 'manager', 'editor'],
+
         /*
          * THE STOREFRONT'S OWN ADMIN LAYER (Lane RA): the thin bar across the
          * top of every shop page and the pencil on a category or brand header.
@@ -1636,6 +1642,9 @@ final class AdminCapabilities
         ['*', 'admin-api/whatsapp-button', 'wabutton.manage'],
         // One line and no '/**' sibling: no sub-endpoint. (Lane SS)
         ['*', 'admin-api/page-banners', 'pagebanners.manage'],
+        // The screen's read and save, and the storefront panel's apply. (Lane PH)
+        ['*', 'admin-api/page-header', 'pageheader.manage'],
+        ['*', 'admin-api/page-header/**', 'pageheader.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.

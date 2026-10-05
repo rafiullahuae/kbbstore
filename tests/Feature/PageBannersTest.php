@@ -73,7 +73,10 @@ it('ships the strip on /super-sale/ with his two lines, and no picture until one
         ->and(substr_count($html, 'class="kbb-pb-strip"'))->toBe(1)
         ->and($html)->toContain('<span>100% Authentic Products</span>')
         ->and($html)->toContain('<span>Express Delivery all over UAE</span>')
-        ->and(substr_count($html, 'class="kbb-pb-ic"'))->toBe(2)
+        // Lane PH: the third line, desktop only ("in mobile two lines are fine").
+        ->and($html)->toContain('<li class=kbb-pb-d><svg class="kbb-pb-ic"')
+        ->and($html)->toContain('<span>Free skincare consultation</span>')
+        ->and(substr_count($html, 'class="kbb-pb-ic"'))->toBe(3)
         ->and(pbBlock($html))->not->toContain('<img')
         ->and($html)->toContain('--pb-bg:#C8336A;--pb-ink:#FFFFFF;--pb-ic:#FFFFFF;--pb-hd:44px;--pb-hm:36px;--pb-fd:15px;--pb-fm:12px');
 });

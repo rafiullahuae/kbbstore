@@ -76,6 +76,11 @@ export default defineConfig({
                 'resources/fonts/cairo/cairo-latin.woff2',
                 'resources/fonts/cairo/cairo-latin-ext.woff2',
                 'resources/js/kbb/app.js',
+                // Pages → Page header's panel (Lane PH). An entry as well as
+                // the storefront admin chunk's dynamic import, so the console
+                // can import the same module by its manifest address. Never
+                // linked by a storefront page.
+                'resources/js/kbb/admin/page-header-editor.js',
                 ...fontLibrary,
             ],
             refresh: true,

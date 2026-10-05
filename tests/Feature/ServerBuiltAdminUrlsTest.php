@@ -130,6 +130,10 @@ it('names every admin-api address the server builds and hands out as data', func
         'InstagramController.php /admin-api/instagram/start',
         'InvoiceController.php /admin-api/orders/',
         'PageCost.php /admin-api/stats',
+        // Lane PH: the storefront "Edit header" panel's three addresses.
+        'PageHeaderApiController.php /admin-api/media',
+        'PageHeaderApiController.php /admin-api/media/upload',
+        'PageHeaderApiController.php /admin-api/page-header/apply',
         'ProductEditorApiController.php /admin-api/media/upload',
         /*
          * Lane RA, on purpose: the storefront admin layer's context answer
