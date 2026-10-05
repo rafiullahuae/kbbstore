@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menu Editor Layouts</title>
+<style>
+:root{
+  --bg:#f2f3f7; --card:#ffffff; --ink:#22202a; --muted:#7b7686; --line:#e6e4ec;
+  --rose:#c8336a; --rose-s:#fbe9f0; --green:#3f9a5a; --green-s:#e8f5ec;
+  --slot:#faf9fc; --focus:#c8336a55;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px 16px 64px}
+h1{font-size:24px;margin:0 0 4px;text-wrap:balance}
+.lede{color:var(--muted);margin:0 0 20px;max-width:70ch}
+.picker{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px}
+.picker button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer;color:var(--ink)}
+.picker button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.opt{display:none}.opt.on{display:block}
+.head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 6px}
+.letter{width:38px;height:38px;border-radius:10px;background:var(--rose-s);color:var(--rose);display:grid;place-items:center;font-weight:800;font-size:20px}
+.head h2{margin:0;font-size:19px}
+.tag{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--rose-s);color:var(--rose);padding:3px 9px;border-radius:999px}
+.why{color:var(--muted);margin:0 0 14px;max-width:75ch}
+.frame{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.note{font-size:13px;color:var(--muted);margin:10px 2px 0}
+
+/* shared controls */
+.num{width:42px;height:32px;border:1px solid var(--line);border-radius:8px;text-align:center;font:inherit;font-weight:700;color:var(--ink);background:#fff}
+.num:focus,.ib:focus-visible,.add:focus-visible,.tab:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
+.ib{width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:var(--ink);display:grid;place-items:center}
+.ib:disabled{opacity:.35;cursor:default}
+.add{border:1.5px dashed #b9dcc4;background:var(--green-s);color:var(--green);font:inherit;font-weight:700;border-radius:10px;padding:9px 12px;cursor:pointer;width:100%;text-align:left}
+.link{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 10px;border-radius:9px;background:var(--slot);border:1px solid transparent}
+.link span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.link + .link{margin-top:6px}
+.flash{animation:fl .9s ease}
+@keyframes fl{0%{background:#fff3c4}100%{background:var(--slot)}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}}
+
+/* A · board */
+.board{display:flex;align-items:flex-start;gap:14px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x proximity}
+.col{flex:0 0 260px;background:var(--slot);border:1px solid var(--line);border-radius:14px;padding:12px;scroll-snap-align:start;display:flex;flex-direction:column;gap:10px}
+.colhead{display:flex;align-items:center;gap:6px}
+.colhead b{flex:1;font-size:15px}
+.grp{background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px}
+.grp h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);display:flex;align-items:center;gap:6px}
+.grp h4 em{flex:1;font-style:normal}
+.grp .link{background:var(--slot)}
+
+/* B · tabs + live dropdown */
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.tab{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font:inherit;font-weight:600;cursor:pointer;display:flex;gap:8px;align-items:center;color:var(--ink)}
+.tab small{font-weight:700;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--rose);color:#fff;border-color:var(--rose)}
+.tab[aria-selected="true"] small{color:#fff}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0}
+.bar b{font-size:17px;margin-right:auto}
+.mega{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.mcol{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;display:flex;flex-direction:column;gap:8px}
+.mcol header{display:flex;align-items:center;gap:6px}
+.mcol header input.t{flex:1;min-width:0;border:0;border-bottom:1px dashed var(--line);font:inherit;font-weight:800;padding:4px 2px;background:transparent;color:var(--ink)}
+.empty{color:var(--muted);font-size:14px;padding:12px;background:var(--slot);border-radius:10px}
+
+/* C · two panes */
+.split{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:14px}
+.list{display:flex;flex-direction:column;gap:6px}
+.li{display:flex;align-items:center;gap:6px;padding:6px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.li span{flex:1;font-weight:600}
+.li[aria-current="true"]{border-color:var(--rose);box-shadow:inset 3px 0 0 var(--rose)}
+.pane{background:var(--slot);border:1px solid var(--line);border-radius:12px;padding:12px}
+@media (max-width:760px){.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>Menu editor: three easier layouts</h1>
+<p class="lede">These are working previews built on your real menu: tap, type numbers, use the arrows. The sub-menu names and links inside Skincare and Brands are examples. Every layout drops the thin drop line. Each item gets a <b>position number</b> you can type, plus <b>arrow buttons</b>. Pick a letter. A is the layout you described.</p>
+
+<div class="picker" role="group" aria-label="Choose a layout">
+  <button type="button" data-o="a" aria-pressed="true">A · Columns: your description</button>
+  <button type="button" data-o="b" aria-pressed="false">B · Tabs + dropdown</button>
+  <button type="button" data-o="c" aria-pressed="false">C · Two panes</button>
+</div>
+
+<section class="opt on" id="opt-a">
+  <div class="head"><span class="letter">A</span><h2>Columns: every main menu item is a column</h2><span class="tag">as you described</span></div>
+  <p class="why">Every top-level item is a column side by side, like cards on a board; scroll sideways for more. Inside each column are its sub-menus and their links. Change a column's number or press ← → to move it. Change a link's number or press ↑ ↓ to move it.</p>
+  <div class="frame"><div class="board" id="board"></div></div>
+  <p class="note">Best for seeing everything at once. With 12 columns, you scroll sideways a lot.</p>
+</section>
+
+<section class="opt" id="opt-b">
+  <div class="head"><span class="letter">B</span><h2>Tabs, then that item's dropdown exactly as shoppers see it</h2><span class="tag">alternative</span></div>
+  <p class="why">The top row is your shop's menu bar. Tap one item, for example Skincare, and below it you work on just that item's dropdown. Its columns sit side by side the way the mega menu shows them on the site. Add a column, add links into a column, type numbers or press the arrows. You only ever look at the one column you are working on, which is what you asked for.</p>
+  <div class="frame">
+    <div class="tabs" role="tablist" aria-label="Top menu" id="tabs"></div>
+    <div class="bar" id="bbar"></div>
+    <div class="mega" id="mega"></div>
+  </div>
+  <p class="note">Why recommended: it matches the shop's own menu, so what you arrange is what shoppers get. Each screen only shows one item, so it stays light even with 17 brands. On a phone the columns stack one under another.</p>
+</section>
+
+<section class="opt" id="opt-c">
+  <div class="head"><span class="letter">C</span><h2>Two panes: the list on the left, the picked item on the right</h2></div>
+  <p class="why">A short list of the top-level items on the left, each with a number and arrows. The item you pick opens on the right with its sub-menus and links. It looks like a mail inbox.</p>
+  <div class="frame"><div class="split"><div class="list" id="clist"></div><div class="pane" id="cpane"></div></div></div>
+  <p class="note">Calm and simple. It doesn't show the dropdown's real shape.</p>
+</section>
+
+<script>
+const menu = [
+  {n:'Blog',u:'/blog/',cols:[]},
+  {n:'Everything Under 54 AED',u:'/everything-under-54-aed/',cols:[]},
+  {n:'Beauty Devices',u:'/collections/beauty-devices/',cols:[]},
+  {n:'Super Sale',u:'/super-sale/',cols:[]},
+  {n:'Skincare Sets',u:'/collections/skincare-sets/',cols:[]},
+  {n:'Hair Care',u:'/collections/hair-care/',cols:[]},
+  {n:'Lip Care',u:'/collections/lip-care/',cols:[]},
+  {n:'Toners',u:'/collections/toners/',cols:[]},
+  {n:'Moisturizers',u:'/collections/moisturizers/',cols:[]},
+  {n:'Sunscreens',u:'/collections/sunscreens/',cols:[]},
+  {n:'Brands',u:'/brands/',cols:[
+    {t:'Popular',l:['Anua','COSRX','Beauty of Joseon','Medicube','SKIN1004','Mixsoon']},
+    {t:'A – L',l:['Abib','Axis-Y','Dr. Althea','Isntree','Laneige']},
+    {t:'M – Z',l:['Round Lab','Some By Mi','Torriden','VT']}]},
+  {n:'Skincare',u:'/collections/skincare/',cols:[
+    {t:'Cleanse',l:['Cleansers','Cleansing Oils','Exfoliators']},
+    {t:'Treat',l:['Serums','Ampoules','Essences']},
+    {t:'Moisturise',l:['Moisturizers','Eye Care']},
+    {t:'Masks',l:['Sheet Masks','Wash-off Masks']}]},
+];
+let pick = 11, flashKey = '';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function move(arr, from, to){ to = Math.max(0, Math.min(arr.length - 1, to)); const [x] = arr.splice(from, 1); arr.splice(to, 0, x); return to; }
+function count(m){ return m.cols.reduce((a, c) => a + c.l.length, 0); }
+const numBox = (key, i, label) => `<input class="num" inputmode="numeric" aria-label="Position of ${esc(label)}" value="${i + 1}" data-k="${key}" data-i="${i}">`;
+const arrows = (key, i, len, label, horiz) => `<button class="ib" data-k="${key}" data-i="${i}" data-d="-1" aria-label="Move ${esc(label)} ${horiz?'left':'up'}" ${i===0?'disabled':''}>${horiz?'←':'↑'}</button><button class="ib" data-k="${key}" data-i="${i}" data-d="1" aria-label="Move ${esc(label)} ${horiz?'right':'down'}" ${i===len-1?'disabled':''}>${horiz?'→':'↓'}</button>`;
+const fl = (k) => k === flashKey ? ' flash' : '';
+function links(m, mi, c, ci){
+  return c.l.map((t, li) => `<div class="link${fl(`l:${mi}:${ci}:${li}`)}">${numBox(`l:${mi}:${ci}`, li, t)}<span>${esc(t)}</span>${arrows(`l:${mi}:${ci}`, li, c.l.length, t)}</div>`).join('')
+    + `<button class="add" data-add="l:${mi}:${ci}">+ Add a link</button>`;
+}
+function drawA(){
+  document.getElementById('board').innerHTML = menu.map((m, mi) => `<div class="col${fl(`t:${mi}`)}">
+    <div class="colhead">${numBox('t', mi, m.n)}<b>${esc(m.n)}</b>${arrows('t', mi, menu.length, m.n, true)}</div>
+    ${m.cols.map((c, ci) => `<div class="grp${fl(`c:${mi}:${ci}`)}"><h4>${numBox(`c:${mi}`, ci, c.t)}<em>${esc(c.t)}</em>${arrows(`c:${mi}`, ci, m.cols.length, c.t)}</h4>${links(m, mi, c, ci)}</div>`).join('')}
+    <button class="add" data-add="c:${mi}">+ Add a sub-menu</button></div>`).join('');
+}
+function drawB(){
+  document.getElementById('tabs').innerHTML = menu.map((m, mi) => `<button class="tab" role="tab" aria-selected="${mi===pick}" data-pick="${mi}">${esc(m.n)}${m.cols.length ? ` <small>${count(m)}</small>` : ''}</button>`).join('');
+  const m = menu[pick];
+  document.getElementById('bbar').innerHTML = `<b>${esc(m.n)}</b><span style="color:var(--muted)">Position in the menu bar</span>${numBox('t', pick, m.n)}${arrows('t', pick, menu.length, m.n, true)}`;
+  document.getElementById('mega').innerHTML = (m.cols.length ? m.cols.map((c, ci) => `<div class="mcol${fl(`c:${pick}:${ci}`)}">
+      <header>${numBox(`c:${pick}`, ci, c.t)}<input class="t" value="${esc(c.t)}" aria-label="Column title" data-title="${pick}:${ci}">${arrows(`c:${pick}`, ci, m.cols.length, c.t, true)}</header>
+      ${links(m, pick, c, ci)}</div>`).join('')
+    : `<div class="empty">${esc(m.n)} is a plain link with no dropdown. Add a column to give it one.</div>`)
+    + `<button class="add" data-add="c:${pick}" style="align-self:start">+ Add a column</button>`;
+}
+function drawC(){
+  document.getElementById('clist').innerHTML = menu.map((m, mi) => `<div class="li${fl(`t:${mi}`)}" aria-current="${mi===pick}" data-pick="${mi}">${numBox('t', mi, m.n)}<span>${esc(m.n)}</span>${arrows('t', mi, menu.length, m.n)}</div>`).join('');
+  const m = menu[pick];
+  document.getElementById('cpane').innerHTML = `<h3 style="margin:2px 0 10px">${esc(m.n)}</h3>` + (m.cols.length ? m.cols.map((c, ci) => `<div class="grp${fl(`c:${pick}:${ci}`)}" style="margin-bottom:10px"><h4>${numBox(`c:${pick}`, ci, c.t)}<em>${esc(c.t)}</em>${arrows(`c:${pick}`, ci, m.cols.length, c.t)}</h4>${links(m, pick, c, ci)}</div>`).join('') : `<div class="empty">No sub-menus yet.</div>`) + `<button class="add" data-add="c:${pick}">+ Add a sub-menu</button>`;
+}
+const draw = () => { drawA(); drawB(); drawC(); };
+function arrFor(key){
+  const p = key.split(':');
+  if (p[0] === 't') return [menu, (to) => { if (pick !== null) {} return `t:${to}`; }];
+  if (p[0] === 'c') return [menu[+p[1]].cols, (to) => `c:${p[1]}:${to}`];
+  return [menu[+p[1]].cols[+p[2]].l, (to) => `l:${p[1]}:${p[2]}:${to}`];
+}
+function doMove(key, from, to){
+  const [arr, mk] = arrFor(key);
+  const wasPicked = key === 't' && menu[pick];
+  const at = move(arr, from, to);
+  if (wasPicked) pick = menu.indexOf(wasPicked);
+  flashKey = mk(at); draw();
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.ib'); if (b && !b.disabled) { const i = +b.dataset.i; doMove(b.dataset.k, i, i + +b.dataset.d); return; }
+  const p = e.target.closest('[data-pick]'); if (p && !e.target.closest('.num,.ib')) { pick = +p.dataset.pick; flashKey = ''; draw(); return; }
+  const a = e.target.closest('[data-add]'); if (a) {
+    const q = a.dataset.add.split(':');
+    if (q[0] === 'c') { menu[+q[1]].cols.push({t:'New column', l:[]}); flashKey = `c:${q[1]}:${menu[+q[1]].cols.length - 1}`; }
+    else { const c = menu[+q[1]].cols[+q[2]]; c.l.push('New link'); flashKey = `l:${q[1]}:${q[2]}:${c.l.length - 1}`; }
+    draw(); return;
+  }
+  const o = e.target.closest('.picker button'); if (o) {
+    document.querySelectorAll('.picker button').forEach((x) => x.setAttribute('aria-pressed', String(x === o)));
+    document.querySelectorAll('.opt').forEach((s) => s.classList.toggle('on', s.id === 'opt-' + o.dataset.o));
+  }
+});
+function commit(el){
+  const v = parseInt(el.value, 10), i = +el.dataset.i;
+  if (!Number.isFinite(v)) { el.value = i + 1; return; }
+  if (v - 1 !== i) doMove(el.dataset.k, i, v - 1);
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('.num')) { e.preventDefault(); commit(e.target); } });
+document.addEventListener('change', (e) => {
+  if (e.target.matches('.num')) commit(e.target);
+  if (e.target.matches('[data-title]')) { const [mi, ci] = e.target.dataset.title.split(':'); menu[+mi].cols[+ci].t = e.target.value.slice(0, 60); draw(); }
+});
+draw();
+</script>
+</body>
+</html>
