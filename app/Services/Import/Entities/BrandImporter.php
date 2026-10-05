@@ -70,7 +70,8 @@ final class BrandImporter extends EntityImporter
         $outcome = $context->apply($brand, [
             'source_term_id' => $termId,
             'slug' => $slug,
-            'name' => $name,
+            // Plain text, not WordPress's HTML-encoded term name. (Lane FP)
+            'name' => \App\Support\TermName::plain($name),
             'description' => ($this->links ??= new OldSiteLinks)->replay('brands', $brand->id, 'description', TitleHeader::importDescription($row->text('description'))),
             'logo' => $row->text('logo', 'image', 'thumbnail'),
             'position' => $row->int((int) ($brand->position ?? 0), 'position', 'menu_order', 'order'),

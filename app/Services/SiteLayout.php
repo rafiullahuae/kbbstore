@@ -173,6 +173,28 @@ class SiteLayout
             'Off: the "44 products" line beside the Filters button is not shown on the shop, category and brand pages. On: it is.'],
 
         /*
+         * ── THE FILTERS DRAWER ON A PHONE ─────────────────────────── Lane FP ──
+         *
+         * The owner, on his phone's Filters drawer: "i want the filters panel
+         * width control". The drawer exists below 900px only -- a laptop has the
+         * rail beside the grid, which these do not touch -- so there is one pair,
+         * not a phone and a laptop pair.
+         *
+         * Two numbers because the drawer is two numbers today: `width:300px;
+         * max-width:90vw` in kbb-shop.css, i.e. min(90% of the screen, 300px).
+         * Shipped at exactly those, so nothing moves until he drags one (rule 1).
+         * Clamped integers in custom properties whose names are constants in
+         * PX_VARS / UNITLESS_VARS below; the sheet keeps the same two numbers as
+         * its fallbacks, which SiteLayoutDefaultsMatchCssTest pins.
+         */
+        'filter_w' => ['range', 'Filters drawer width · phone', 90,
+            'How much of a phone screen the Filters drawer covers when a shopper opens it, up to the limit below. Today: 90%, held to 300px — 300px on most phones, which leaves the shop showing beside it to tap and close. 100% covers the whole screen.',
+            ['min' => 60, 'max' => 100, 'step' => 1, 'unit' => '%']],
+        'filter_max' => ['range', 'Filters drawer · never wider than', 300,
+            'The widest the drawer gets, on a big phone or a tablet. To widen it on an ordinary phone, raise this as well as the width above.',
+            ['min' => 260, 'max' => 600, 'step' => 10, 'unit' => 'px']],
+
+        /*
          * ── LOADING MORE PRODUCTS ──────────────────────────────── Lane PI-B ──
          *
          * The owner asked for a choice of how a listing loads more: "Arrows"
@@ -581,8 +603,33 @@ class SiteLayout
          * keyed by that attribute -- match nothing. See pressAttribute().
          */
         'press' => ['select', 'When a shopper taps a button or icon', 'c',
-            'Every choice except Off removes the grey box the phone draws over whatever was tapped. They differ only in what the button itself does: the header icons, the menu, the search box, every Add to cart, the heart, the pills and tabs, the − / + buttons, the arrows and the share sheet.',
+            'Every choice except Off removes the grey box the phone draws over whatever was tapped. They differ only in what the button itself does. Which buttons respond is the next choice.',
             self::PRESS_OPTIONS],
+
+        /*
+         * ── AND ONLY ON SMALL THINGS ───────────────────────────────── Lane FP ──
+         *
+         * The owner, on C: "the click tap is giving some background color in
+         * area of click, that we did for header and small icons things, but i
+         * don't want in mobile menu, in search box and other big stuff. it's
+         * good only for small things like icons etc."
+         *
+         * So it SHIPS AT `icons` (he asked; CLAUDE.md, 30 September): the style
+         * above lands on the icon buttons only -- the header icons, the burger,
+         * every ×, the hearts, the − / + buttons, the arrows, the column buttons
+         * and the share button. Everything else -- the menu rows, the search box,
+         * the filter rows, product cards, Add to cart, pills, banners -- gets
+         * nothing at all, and still no grey box. `all` is the shop as Lane RD
+         * shipped it, one click away.
+         *
+         * It is an ALLOWLIST, the ICONS list kbb.css already styles, and it is
+         * applied where the press begins: resources/js/kbb/press.js only ever
+         * marks an element on that list, so no rule for a bigger control can
+         * match. PressFeedbackScopeTest holds the two lists equal.
+         */
+        'press_scope' => ['select', 'Which controls respond', 'icons',
+            'Small icons only, the default: the header icons, the menu button, every ×, the hearts, − / +, the arrows and the share button. The mobile menu, the search box, the filter rows, product cards and big buttons show nothing when tapped — and no grey box either. "Every button and row" is how it was before.',
+            self::PRESS_SCOPES],
 
         /*
          * ── FONTS (Lane FS) ─────────────────────────────────────────────────
@@ -632,8 +679,18 @@ class SiteLayout
         'e' => ' data-press="e"',
     ];
 
-    /** Not CSS on :root: skipped by isDefault(), never in css(). (Lane RD) */
-    private const PRESS_KEYS = ['press'];
+    /**
+     * Which controls the press style reaches. (Lane FP) `icons` prints nothing
+     * extra on <html>; `all` adds the constant ` data-press-all`, which
+     * press.js reads to widen what it marks. See pressAttribute().
+     */
+    public const PRESS_SCOPES = [
+        'icons' => 'Small icons only — header icons, ×, hearts, − / +, arrows',
+        'all' => 'Every button and row, the menu and the search box too (how it was)',
+    ];
+
+    /** Not CSS on :root: skipped by isDefault(), never in css(). (Lane RD, FP) */
+    private const PRESS_KEYS = ['press', 'press_scope'];
 
     /** Lane FS: read by App\Support\SiteFonts, not by css() — see isDefault(). */
     public const FONT_KEYS = ['font_body', 'font_heading'];
@@ -783,7 +840,7 @@ class SiteLayout
             ['max', 'gutter', 'gutter_wide', 'header_follows']],
         'grid' => ['Product grid',
             'The column count is not set here — it is worked out from the smallest card and the width each grid actually has, so a grid beside the shop filters gets the right answer rather than the window\'s answer.',
-            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count']],
+            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count', 'filter_w', 'filter_max']],
         'loading' => ['Loading more products',
             'How /shop, every category, every brand page and the curated listings bring in more products: more on scroll, numbered arrows, or everything at once. Shoppers without JavaScript always get the arrows.',
             ['load_mode', 'load_batch', 'load_batch_custom']],
@@ -873,12 +930,14 @@ class SiteLayout
         'tile' => '--kbb-tile',
         'tile_shop' => '--kbb-tile-shop',
         'gap' => '--kbb-gap',
+        'filter_max' => '--kbb-fdrawer-max',
     ];
 
     /** @var array<string, string> */
     private const UNITLESS_VARS = [
         'cols_floor' => '--kbb-cols-floor',
         'cols_cap' => '--kbb-cols-cap',
+        'filter_w' => '--kbb-fdrawer-w',
     ];
 
     public function __construct(private SettingsService $settings) {}
@@ -1170,7 +1229,15 @@ class SiteLayout
      */
     public function pressAttribute(): string
     {
-        return self::PRESS_ATTR[$this->press()];
+        $press = $this->press();
+
+        /*
+         * Lane FP: ` data-press-all` -- a constant -- only when the owner has
+         * chosen "Every button and row" AND a style is on. The shipped `icons`
+         * adds nothing, so the <html> tag is the bytes it was.
+         */
+        return self::PRESS_ATTR[$press]
+            .($press !== 'off' && (string) $this->get('press_scope') === 'all' ? ' data-press-all' : '');
     }
 
     /**

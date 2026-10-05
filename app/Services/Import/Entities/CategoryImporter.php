@@ -157,7 +157,10 @@ final class CategoryImporter extends EntityImporter
             throw RowRejected::because("name '".$name."' does not reduce to a usable slug");
         }
 
-        return [$termId, $name, $slug, $row->id('parent', 'parent', 'parent_id', 'parent_term_id')];
+        // Stored as the text a shopper reads: WordPress hands the name over
+        // HTML-encoded ("Hydration &amp; Glow"). The slug above is still taken
+        // from what came, so no URL moves. See App\Support\TermName. (Lane FP)
+        return [$termId, \App\Support\TermName::plain($name), $slug, $row->id('parent', 'parent', 'parent_id', 'parent_term_id')];
     }
 
     /**

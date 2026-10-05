@@ -144,7 +144,8 @@ it('sits on its own tab in Appearance → Site layout, named Press feedback', fu
 
     expect($press)->not->toBeNull()
         ->and($press['label'])->toBe('Press feedback')
-        ->and(collect($press['fields'])->pluck('key')->all())->toBe(['press'])
+        // Lane FP: and "Which controls respond" under it (PressFeedbackScopeTest).
+        ->and(collect($press['fields'])->pluck('key')->all())->toBe(['press', 'press_scope'])
         ->and($press['fields'][0]['value'])->toBe('c')
         ->and(array_keys($press['fields'][0]['options']))->toBe(['off', 'a', 'b', 'c', 'd', 'e']);
 

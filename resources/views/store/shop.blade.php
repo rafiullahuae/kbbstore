@@ -201,6 +201,7 @@
             </div>
         </div>
     </aside>
+    <div class="fscrim" data-kbb-close></div>
 
     <main>
         <div class="gtop">
