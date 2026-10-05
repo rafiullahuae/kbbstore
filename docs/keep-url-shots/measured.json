@@ -1,0 +1,103 @@
+{
+ "390": {
+  "width": 390,
+  "start": "http://127.0.0.1:10460/collections/serums/",
+  "cards0": 12,
+  "steps": [
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 24
+   },
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 34
+   },
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 34
+   },
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 34
+   },
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 34
+   },
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 34
+   }
+  ],
+  "fetched": [
+   "http://127.0.0.1:10460/collections/serums/?paged=2&kbbbatch=1",
+   "http://127.0.0.1:10460/collections/serums/?paged=3&kbbbatch=1",
+   "http://127.0.0.1:10460/collections/serums/?paged=2&kbbbatch=1",
+   "http://127.0.0.1:10460/collections/serums/?paged=3&kbbbatch=1",
+   "http://127.0.0.1:10460/collections/serums/?paged=2&kbbbatch=1"
+  ],
+  "scrollWidth": 390,
+  "yBefore": 5315,
+  "productUrl": "http://127.0.0.1:10460/product/serum-9/",
+  "afterBack": {
+   "url": "http://127.0.0.1:10460/collections/serums/",
+   "cards": 34,
+   "y": 5315
+  },
+  "afterReload": {
+   "url": "http://127.0.0.1:10460/collections/serums/",
+   "cards": 24
+  }
+ },
+ "1280": {
+  "width": 1280,
+  "start": "http://127.0.0.1:10460/collections/serums/",
+  "cards0": 24,
+  "steps": [
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 34
+   },
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 34
+   },
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 34
+   },
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 34
+   },
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 34
+   },
+   {
+    "url": "http://127.0.0.1:10460/collections/serums/",
+    "cards": 34
+   }
+  ],
+  "fetched": [
+   "http://127.0.0.1:10460/collections/serums/?paged=2&kbbbatch=1",
+   "http://127.0.0.1:10460/collections/serums/?paged=3&kbbbatch=1",
+   "http://127.0.0.1:10460/collections/serums/?paged=2&kbbbatch=1",
+   "http://127.0.0.1:10460/collections/serums/?paged=3&kbbbatch=1",
+   "http://127.0.0.1:10460/collections/serums/?paged=2&kbbbatch=1",
+   "http://127.0.0.1:10460/collections/serums/?paged=3&kbbbatch=1"
+  ],
+  "scrollWidth": 1280,
+  "yBefore": 2436,
+  "productUrl": "http://127.0.0.1:10460/product/serum-9/",
+  "afterBack": {
+   "url": "http://127.0.0.1:10460/collections/serums/",
+   "cards": 34,
+   "y": 2436
+  },
+  "afterReload": {
+   "url": "http://127.0.0.1:10460/collections/serums/",
+   "cards": 34
+  }
+ }
+}

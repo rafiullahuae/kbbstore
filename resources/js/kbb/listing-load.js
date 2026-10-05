@@ -12,9 +12,24 @@
  * comes within 600px of the viewport fetches the rel="next" page with
  * `kbbbatch=1`, which the same controller answers with that page's cards
  * (App\Support\ListingBatch). Grey placeholder cards stand in while it is in
- * flight. The address bar follows with history.replaceState(), so a reload or
- * a shared link lands on the page the shopper had reached. Any failure puts
- * the numbered links back.
+ * flight. Any failure puts the numbered links back.
+ *
+ * ── THE ADDRESS STAYS PUT (2.60.405) ───────────────────────────────────────
+ *
+ * The owner: "i don't need that the url changed from pages 1-2-3 etc. like
+ * this https://extrabeauty.ae/super-sale?page=2 i want the url must not
+ * change, only the more products loads". The address bar used to follow each
+ * batch with history.replaceState(); now it does that only when Appearance ->
+ * Site layout -> "Show the page number in the address" is switched on (the
+ * pager then carries data-url="follow"). Off by default, as he asked.
+ *
+ * Coming BACK from a product page: the browser's back-forward cache restores
+ * the page as it was -- every batch, the scroll position -- with nothing for
+ * this file to do. When a browser cannot keep the page, how many batches were
+ * showing and where the shopper was are saved on `pagehide` (sessionStorage,
+ * this tab only) and replayed on a back/forward visit: the same batches,
+ * fetched one after another, then the same scroll position. No layout is
+ * measured: scrollY is the window's own scroll offset.
  *
  * ── ONE BATCH AHEAD, ALWAYS (2.60.355) ─────────────────────────────────────
  *
@@ -96,6 +111,11 @@ export function initListingLoad() {
     // moment it lands, so "is it here yet?" is a property read, not a race.
     let ahead = null;
 
+    // Batches put on the page so far, for the back-button restore above.
+    let shown = 0;
+    const followUrl = pager.dataset.url === 'follow';
+    const memoKey = 'kbb.ll:' + window.location.pathname + window.location.search;
+
     const say = (text) => {
         if (status) status.textContent = text;
     };
@@ -142,7 +162,9 @@ export function initListingLoad() {
     };
 
     const fetchAhead = () => {
-        if (ahead || !next) return;
+        // busy: load() is already fetching `next` and calls this itself when
+        // it lands; asking now would fetch the same batch twice.
+        if (ahead || busy || !next) return;
 
         const entry = { url: next.href, data: null, promise: null };
         entry.promise = fetchBatch(next).then((data) => {
@@ -193,7 +215,8 @@ export function initListingLoad() {
 
             const here = data.url ? sameOrigin(data.url) : null;
 
-            if (here) window.history.replaceState(window.history.state, '', here.pathname + here.search);
+            if (here && followUrl) window.history.replaceState(window.history.state, '', here.pathname + here.search);
+            shown += 1;
 
             next = data.next ? sameOrigin(data.next) : null;
             say('');
@@ -227,6 +250,39 @@ export function initListingLoad() {
     }, { rootMargin: ROOT_MARGIN });
 
     pager.classList.add('is-auto');
+
+    if (!followUrl) {
+        window.addEventListener('pagehide', () => {
+            try {
+                if (shown > 0) window.sessionStorage.setItem(memoKey, JSON.stringify({ n: shown, y: Math.round(window.scrollY) }));
+                else window.sessionStorage.removeItem(memoKey);
+            } catch {
+                // Private mode or storage off: back simply starts at the top.
+            }
+        });
+    }
+
+    // A back/forward visit the cache could not keep: the same batches, then the same place.
+    let memo = null;
+    try {
+        const nav = window.performance?.getEntriesByType?.('navigation')?.[0];
+        if (!followUrl && nav && nav.type === 'back_forward') memo = JSON.parse(window.sessionStorage.getItem(memoKey) || 'null');
+        window.sessionStorage.removeItem(memoKey);
+    } catch {
+        memo = null;
+    }
+
+    if (memo && memo.n > 0) {
+        (async () => {
+            for (let i = 0; i < Math.min(memo.n, 40) && next; i++) await load();
+            window.scrollTo(0, Math.max(0, Number(memo.y) || 0));
+            observer.observe(pager);
+            whenQuiet(fetchAhead);
+        })();
+
+        return;
+    }
+
     observer.observe(pager);
     whenQuiet(fetchAhead);
 }

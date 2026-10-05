@@ -216,7 +216,7 @@ it('draws the Loading more products tab on Appearance → Site layout', function
 
     $fields = collect($tabs['loading']['fields'])->keyBy('key');
 
-    expect($fields->keys()->all())->toBe(['load_mode', 'load_batch', 'load_batch_custom'])
+    expect($fields->keys()->all())->toBe(['load_mode', 'load_batch', 'load_batch_custom', 'load_url'])
         ->and(array_keys($fields['load_mode']['options']))->toBe(['arrows', 'scroll', 'all'])
         ->and(array_map('strval', array_keys($fields['load_batch']['options'])))->toBe(['12', '15', '20', 'custom'])
         ->and($fields['load_mode']['value'])->toBe('scroll');
@@ -449,4 +449,36 @@ it('fetches the next batch ahead on page open, so the grey cards stand only for 
     $manifest = json_decode((string) file_get_contents(base_path('public/build/manifest.json')), true);
     $bundle = (string) file_get_contents(base_path('public/build/'.$manifest['resources/js/kbb/app.js']['file']));
     expect($bundle)->toContain('0px 0px 1200px 0px');
+});
+
+
+it('keeps the address as opened while batches load, unless the owner switches the page number on', function () {
+    /*
+     * The owner, 2.60.405: "i don't need that the url changed from pages 1-2-3
+     * etc. like this https://extrabeauty.ae/super-sale?page=2 i want the url
+     * must not change, only the more products loads". DEFECT: every batch ran
+     * history.replaceState(). MUTATION: drop `&& followUrl` from the
+     * replaceState line -> red; ship load_url default true -> red.
+     */
+    $category = llCategory(30);
+    llSet(['load_mode' => 'scroll', 'load_batch' => '12']);
+    $html = test()->get(llPath($category))->assertOk()->getContent();
+    expect($html)->toContain('data-load="scroll"')->not->toContain('data-url="follow"');
+
+    llSet(['load_url' => '1']);
+    $html = test()->get(llPath($category))->assertOk()->getContent();
+    expect($html)->toContain('data-url="follow"');
+
+    $code = (string) preg_replace(['#/\*.*?\*/#s', '#^\s*//.*$#m'], '', (string) file_get_contents(resource_path('js/kbb/listing-load.js')));
+    expect($code)->toContain("if (here && followUrl) window.history.replaceState(")
+        ->toContain("const followUrl = pager.dataset.url === 'follow';")
+        // Back from a product: the same batches, then the same place, this tab only.
+        ->toContain("window.addEventListener('pagehide'")
+        ->toContain("nav.type === 'back_forward'")
+        ->toContain('window.sessionStorage')
+        ->not->toContain('localStorage')
+        // Measured in Chromium: the idle prefetch fired while the first scroll
+        // was still fetching ?paged=2, so batch two was requested twice.
+        // MUTATION: drop `busy ||` and this is red.
+        ->toContain('if (ahead || busy || !next) return;');
 });

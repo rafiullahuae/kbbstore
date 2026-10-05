@@ -40,7 +40,7 @@
     @param string   $grid     CSS selector of the grid the batches append to
 --}}@php $kbbLayout = app(\App\Services\SiteLayout::class); $kbbLoad = $kbbLayout->loadMode(); @endphp
 @if ($lastPage > 1)
-<nav class="kbb-pager" aria-label="{{ __('store.shop.pages_label') }}" data-load="{{ $kbbLoad }}" data-grid="{{ $grid }}"@if ($kbbLoad === 'scroll') data-batch="{{ $kbbLayout->batchSize() }}"@endif>
+<nav class="kbb-pager" aria-label="{{ __('store.shop.pages_label') }}" data-load="{{ $kbbLoad }}" data-grid="{{ $grid }}"@if ($kbbLoad === 'scroll') data-batch="{{ $kbbLayout->batchSize() }}"{!! $kbbLayout->get('load_url') ? ' data-url="follow"' : '' !!}@endif>
 @if ($page > 1)<a class="page-numbers prev" rel="prev" href="{{ $urlFor($page - 1) }}" aria-label="{{ __('store.shop.page_prev') }}">‹</a>@endif
 @foreach (range(max(1, $page - 1), min($lastPage, $page + 1)) as $n)
 @if ($n === $page)<span class="page-numbers current" aria-current="page">{{ $n }}</span>@else<a class="page-numbers" href="{{ $urlFor($n) }}">{{ $n }}</a>@endif

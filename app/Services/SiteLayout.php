@@ -257,6 +257,11 @@ class SiteLayout
         'load_batch_custom' => ['int', 'My own number', 24,
             'Only used when "Products per batch" is "My own number". A whole number from 4 to 96; anything above or below is pulled to the nearest end, and anything that is not a number is refused.',
             ['min' => self::BATCH_MIN, 'max' => self::BATCH_MAX, 'step' => 1, 'unit' => '']],
+        // 2.60.405. The owner: "i don't need that the url changed from pages
+        // 1-2-3 etc. ... the url must not change, only the more products
+        // loads". Off: the address stays exactly as opened while batches load.
+        'load_url' => ['bool', 'Show the page number in the address', false,
+            'Only used by "Load more on scroll". Off: the address stays as the shopper opened it while more products load, and Back from a product returns to the same place with the same products showing. On: the address follows each batch (…?page=2, ?page=3).'],
 
         /*
          * ── THE CATEGORY TITLE HEADER ───────────────────────────────── Lane PT ──
@@ -922,7 +927,7 @@ class SiteLayout
         'brand_desc_lines', 'brand_desc_lines_m'];
 
     /** The keys that are not CSS: skipped by isDefault(), never in css(). */
-    private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom'];
+    private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom', 'load_url'];
 
     /** The category title header's keys (Lane PT): not CSS either, for the same reason. */
     public const HEADER_KEYS = [
@@ -1043,7 +1048,7 @@ class SiteLayout
             ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count', 'filter_w', 'filter_max', 'filters_m', 'cols_m']],
         'loading' => ['Loading more products',
             'How /shop, every category, every brand page and the curated listings bring in more products: more on scroll, numbered arrows, or everything at once. Shoppers without JavaScript always get the arrows.',
-            ['load_mode', 'load_batch', 'load_batch_custom']],
+            ['load_mode', 'load_batch', 'load_batch_custom', 'load_url']],
         'catheader' => ['Category header',
             'The top of every category page: its title and description over the category\'s picture, or in a light box when it has none. Each category can change its own picture, title, description, sizes and look in Catalog → Categories → Edit → Category header; anything left blank there follows this screen.',
             self::HEADER_LOOK_KEYS],
