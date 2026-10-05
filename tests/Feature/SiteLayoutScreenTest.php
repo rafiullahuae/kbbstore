@@ -178,7 +178,9 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // laptop and six phone controls, all on the Brand page tab.
     // 126 since Lane BR4: "Show the brand logo" (laptop, phone), the name's
     // and the description's alignment and the lines before "Read more".
-    expect($keys)->toHaveCount(126);
+    // 128 since Lane SO: "Filters · laptop" and "Links to the whole shop on
+    // category and campaign pages", both on Product grid, both shipped off.
+    expect($keys)->toHaveCount(128);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

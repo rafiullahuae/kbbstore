@@ -434,10 +434,11 @@ class BrandController extends Controller
              */
             ->with(['brand:id,name,slug', 'categories:id,name'])
             ->where('brand_id', $brand->id)
-            // `position` is 0 until the owner reorders anything and product
-            // names are not unique, so `id` finishes an order this LIMIT
-            // otherwise takes over a tie.
-            ->orderBy('position')
+            // THE BRAND'S OWN ORDER (Lane SO), never-ordered products after it:
+            // a category's Reorder cannot move it. App\Support\ScopeOrder.
+            // Product names are not unique, so `id` finishes an order this
+            // LIMIT otherwise takes over a tie.
+            ->tap(static fn ($q) => \App\Support\ScopeOrder::orderInBrand($q))
             ->orderBy('name')
             ->orderBy('id')
             ->when($page > 1, static fn ($q) => $q->offset(($page - 1) * $perPage))

@@ -52,6 +52,15 @@ class Product extends Model
         static::saved(static fn (self $p) => \App\Services\AlsoLikeRail::forget((int) $p->getKey()));
         // "Buy these together" caches its candidates the same way. (Lane RB)
         static::saved(static fn (self $p) => \App\Services\BuyTogether::forget((int) $p->getKey()));
+
+        // A product moved to another brand has no place in that brand's order
+        // yet: it joins the end of it rather than carrying the old brand's
+        // number in. (Lane SO; App\Support\ScopeOrder.)
+        static::saving(static function (self $p): void {
+            if ($p->exists && $p->isDirty('brand_id') && ! $p->isDirty(\App\Support\ScopeOrder::BRAND_COLUMN)) {
+                $p->setAttribute(\App\Support\ScopeOrder::BRAND_COLUMN, null);
+            }
+        });
     }
 
     /**

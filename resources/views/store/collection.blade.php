@@ -17,8 +17,13 @@
         'title' => $title,
         'count' => trans_choice('store.collection.product_count', $products->total(), ['formatted' => number_format($products->total())]),
         'intro' => (string) $intro,
-        'button' => ['href' => Url::to('/shop/'), 'label' => __('store.collection.all_products')],
     ];
+    // Lane SO: "All products" only where the page lets a shopper leave it --
+    // CollectionController says which (off on /super-sale/ and the concern
+    // pages unless Site layout → Product grid → "Links to the whole shop").
+    if ($shopLinks ?? true) {
+        $phParts['button'] = ['href' => Url::to('/shop/'), 'label' => __('store.collection.all_products')];
+    }
 @endphp
 @include('partials.page-top', ['ph' => $phParts])
 @endif
@@ -36,7 +41,9 @@
             <h1>{{ $title }} <span class="cnt">{{ trans_choice('store.collection.product_count', $products->total(), ['formatted' => number_format($products->total())]) }}</span></h1>
             <p>{{ $intro }}</p>
         </div>
+@if ($shopLinks ?? true)
         <a class="lnk" href="{{ Url::to('/shop/') }}">{{ __('store.collection.all_products') }}</a>
+@endif
     </div>
 @endif
 

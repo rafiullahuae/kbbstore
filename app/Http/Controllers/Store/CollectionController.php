@@ -233,6 +233,11 @@ class CollectionController extends Controller
 
         return view('store.collection', [
             'key' => $key,
+            // "All products" leaves the page for /shop/. Off on /super-sale/ --
+            // the Super Sale category's page -- unless Site layout → Product
+            // grid → "Links to the whole shop ..." is on (Lane SO); the other
+            // curated listings are not a category and keep it.
+            'shopLinks' => $key !== 'super-sale' || (bool) app(\App\Services\SiteLayout::class)->get('shop_links'),
             'title' => $title,
             'intro' => $intro,
             'products' => $products,
@@ -335,6 +340,7 @@ class CollectionController extends Controller
 
         return view('store.collection', [
             'key' => 'concern-' . $concern,
+            'shopLinks' => (bool) app(\App\Services\SiteLayout::class)->get('shop_links'),
             'title' => $title,
             /*
              * The short label for the card eyebrow, which is not the page's

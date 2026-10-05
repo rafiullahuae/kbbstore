@@ -177,7 +177,12 @@ it('draws a backdrop beside the open drawer that closes it, once, on every listi
      * Exactly once: zero is the drawer with nothing to tap; two would stack.
      *
      * MUTATION, RUN: delete the backdrop from shop.blade.php -> red.
+     *
+     * Lane SO: the drawer is drawn only while a Filters switch is on (both ship
+     * off, as the owner asked), so this turns the phone's on first.
      */
+    app(\App\Services\SettingsService::class)->set('layout_filters_m', '1');
+    \App\Services\SettingsService::forgetMemo();
     $html = (string) $this->get('/shop/')->assertOk()->getContent();
 
     expect(substr_count($html, '<div class="fscrim" data-kbb-close></div>'))->toBe(1)
@@ -209,6 +214,9 @@ it('closes on Esc and on the backdrop through the one function both reach', func
         ->and($js)->toContain("event.target.closest('[data-kbb-close]')");
 
     // The × keeps its own inline handler, which works without the bundle.
+    // (With the phone's Filters switch on: off, there is no drawer. Lane SO.)
+    app(\App\Services\SettingsService::class)->set('layout_filters_m', '1');
+    \App\Services\SettingsService::forgetMemo();
     $html = (string) $this->get('/shop/')->assertOk()->getContent();
     expect(substr_count($html, 'class="fclose" type="button" onclick="document.body.classList.remove(\'filters-open\')"'))->toBe(1);
 });

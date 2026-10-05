@@ -112,11 +112,13 @@ class ShopController extends Controller
         $perPage = \App\Support\ListingPagination::perPage($pgKind, $pgId, (int) $this->settings->get('products_per_page', 24));
 
         if ($category) {
-            $query->whereHas('categories', fn ($q) => $q->where('categories.id', $category->id));
+            // The category's products, with ITS OWN order beside them -- one
+            // join on the pivot's key in place of the EXISTS this was. (Lane SO)
+            \App\Support\ScopeOrder::inCategory($query, (int) $category->id);
         }
 
         $this->applyFacets($query, $active, (string) $request->query('s', ''));
-        $this->applySort($query, Facets::sort());
+        $this->applySort($query, Facets::sort(), $category !== null);
 
         $total = (clone $query)->count();
         $lastPage = max(1, (int) ceil($total / $perPage));
@@ -334,7 +336,17 @@ class ShopController extends Controller
          */
         $selfCanonical = $canonicalBase === '' && ! Facets::narrowed();
 
+        // Appearance → Site layout → Product grid → "Filters · laptop" and
+        // "Filters button · phone" (Lane SO). Both off, as shipped: no filter
+        // column is drawn, so its two lists are not read either.
+        $layout = app(\App\Services\SiteLayout::class);
+        $filtersD = (bool) $layout->get('filters_d');
+        $filtersM = (bool) $layout->get('filters_m');
+        $filters = $filtersD || $filtersM;
+
         return view('store.shop', [
+            'filtersD' => $filtersD,
+            'filtersM' => $filtersM,
             'banner' => $banner,
             'titleHeader' => $titleHeader,
             'categoryHeader' => $categoryHeader,
@@ -487,7 +499,7 @@ class ShopController extends Controller
             // every row and nothing has ever written it, so until the owner
             // actually reorders something, every row ties at 0 and the size
             // ordering below decides exactly as before.
-            'cats' => Cache::remember('kbb.shop.cats', 900, fn () => Category::query()
+            'cats' => ! $filters ? collect() : Cache::remember('kbb.shop.cats', 900, fn () => Category::query()
                 ->select('id', 'name', 'slug')
                 ->withCount(['products' => fn ($q) => $q->visible()])
                 ->groupBy('categories.id', 'categories.name', 'categories.slug', 'categories.position')
@@ -504,7 +516,7 @@ class ShopController extends Controller
             // existed since the original schema and nothing has ever read it,
             // so the brand reorder had nowhere to show up. Ties at 0 fall back
             // to alphabetical, which is what this did before.
-            'brands' => Cache::remember('kbb.shop.brands', 900, fn () => Brand::query()
+            'brands' => ! $filters ? collect() : Cache::remember('kbb.shop.brands', 900, fn () => Brand::query()
                 ->select('id', 'name', 'slug')
                 ->withCount(['products' => fn ($q) => $q->visible()])
                 ->groupBy('brands.id', 'brands.name', 'brands.slug', 'brands.position')
@@ -687,7 +699,7 @@ class ShopController extends Controller
         }
     }
 
-    private function applySort($query, string $orderby): void
+    private function applySort($query, string $orderby, bool $inCategory = false): void
     {
         /*
          * QUALIFIED, for the same reason the select list above is: a search
@@ -709,7 +721,7 @@ class ShopController extends Controller
             'date' => $query->orderByDesc('products.created_at'),
             'name' => $query->orderBy('products.name'),
             // "Featured" is the curated order the Sorting module maintains.
-            default => $this->applyDefaultSort($query),
+            default => $this->applyDefaultSort($query, $inCategory),
         };
 
         /*
@@ -745,8 +757,9 @@ class ShopController extends Controller
      * "Featured" — the shop's default sort, and the one surface the
      * `product_sorting` module actually governs.
      *
-     * The curated order lives in `products.position`, written by Store →
-     * Catalog → Reorder (CatalogReorderApiController). This is the plugin's
+     * The curated order: on a category page that category's own order, and
+     * on /shop/ and search `products.position` (Lane SO; ScopeOrder). Store →
+     * Catalog → Reorder (CatalogReorderApiController) writes the former. This is the plugin's
      * own idea: WordPress's `menu_order` baked into WooCommerce's "Default
      * sorting". Off, the column is simply not consulted and the default view
      * falls back to featured-first, then alphabetical — which is exactly what
@@ -761,7 +774,7 @@ class ShopController extends Controller
      * request for the curated order, not the default sort the module is about,
      * and silently ignoring an author's explicit choice is a different bug.
      */
-    private function applyDefaultSort($query)
+    private function applyDefaultSort($query, bool $inCategory = false)
     {
         /*
          * YOUR ORDER FIRST, "featured" only as a tie-break (2.60.402). The
@@ -772,8 +785,18 @@ class ShopController extends Controller
          * category and Shop-all-brand listing. Featured still decides between
          * products the owner has not ordered (position ties at 0).
          */
+        /*
+         * A CATEGORY PAGE READS ITS OWN ORDER, NOT THE SHARED ONE. (Lane SO)
+         * The owner: "when i did the sorting of Super Sale category, then it
+         * also effected the Medicube brand's sorting too ... NO ANY CATEGORY OR
+         * BRAND should disturb the sorting of each other". Each category's
+         * Reorder lives on its own pivot rows (App\Support\ScopeOrder); /shop/
+         * and search are no category and keep `products.position`.
+         */
         if ($this->settings->moduleEnabled('product_sorting', true)) {
-            $query->orderBy('products.position');
+            $inCategory
+                ? \App\Support\ScopeOrder::orderInCategory($query)
+                : $query->orderBy('products.position');
         }
 
         $query->orderByDesc('products.featured');

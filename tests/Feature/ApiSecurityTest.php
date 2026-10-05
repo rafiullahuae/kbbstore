@@ -149,6 +149,19 @@ it('serves the product api without leaking internal fields', function () {
         ->assertJsonMissing(['sku' => 'INTERNAL-SKU-1']);
 });
 
+it('keeps a product\'s place in its brand\'s order off the public product api', function () {
+    /*
+     * Lane SO added products.brand_position, the brand's own Reorder order.
+     * The owner's merchandising, not the feed's business. MUTATION, RUN: add
+     * 'brand_position' to Product::toApi() -> red.
+     */
+    $p = product(['slug' => 'ordered-serum', 'name' => 'Ordered Serum']);
+    \Illuminate\Support\Facades\DB::table('products')->where('id', $p->id)->update(['brand_position' => 4242]);
+
+    expect($this->getJson('/api/products')->assertOk()->getContent())->not->toContain('brand_position')
+        ->and($this->getJson('/api/products/ordered-serum')->assertOk()->getContent())->not->toContain('brand_position');
+});
+
 it('keeps a product\'s own "You may also like" picks off the public product api', function () {
     /*
      * Lane PS added `products.also_like` — one product's hand-picked companions

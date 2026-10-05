@@ -30,7 +30,9 @@ function ssProduct(string $slug, int $position, ?int $sale, ?Category $in = null
     ]);
 
     if ($in) {
-        $p->categories()->syncWithoutDetaching([$in->id]);
+        // The category's OWN number (Lane SO): /super-sale/ reads Super Sale's
+        // order, not products.position. The same value, as the migration seeds it.
+        $p->categories()->syncWithoutDetaching([$in->id => ['category_position' => $position]]);
     }
 
     return $p;
@@ -94,7 +96,9 @@ it('moves a product when Catalog → Reorder moves it', function () {
     $a = ssProduct('ss-a', 1, 900, $cat);
     ssProduct('ss-b', 2, 900, $cat);
 
-    $a->update(['position' => 3]);   // what CatalogReorderApiController::save() writes
+    // What CatalogReorderApiController writes for a category (Lane SO): the
+    // product's number in THAT category, not products.position.
+    DB::table('category_product')->where(['category_id' => $cat->id, 'product_id' => $a->id])->update(['category_position' => 3]);
 
     expect(ssOrder($this->get('/super-sale')->getContent(), ['ss-a', 'ss-b']))->toBe(['ss-b', 'ss-a']);
 });

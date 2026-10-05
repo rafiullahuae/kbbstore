@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\ScopeOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,19 +16,32 @@ use Illuminate\Support\Facades\DB;
 /**
  * Store → Catalog → Reorder.
  *
- * WordPress kept this in wp_rwpp_product_order and WooCommerce reads it as
- * menu_order — a single, global sort value per product, not one per
- * category or brand. The `position` column mirrors that on purpose (see
- * the comment on it in the schema migration): reordering a product while
- * looking at one category or brand also moves it everywhere else that
- * product appears, exactly like the real site.
+ * EVERY CATEGORY AND EVERY BRAND HAS ITS OWN ORDER. (Lane SO)
+ *
+ * This wrote one global `products.position`, the way WordPress's menu_order
+ * did, so reordering Super Sale renumbered the Medicube products it shares with
+ * the Medicube brand and the brand page moved. The owner: "NO ANY CATEGORY OR
+ * BRAND should disturb the sorting of each other in any case." Each scope now
+ * reads and writes only its own numbers -- `category_product.category_position`
+ * for a category, `products.brand_position` for a brand -- and App\Support\
+ * ScopeOrder says why there. `products.position` is no longer written here;
+ * /shop/ and search keep reading it as they did.
  *
  * Two scope types share this one controller rather than duplicating it —
  * Category::products() is a many-to-many (a product can sit in several
  * categories), Brand::products() is a direct hasMany (one brand per
  * product) — different relationship shapes underneath, but "the set of
- * this scope's visible products, in position order" is the same question
- * either way, so scopeQuery() is the one place that knows the difference.
+ * this scope's visible products, in its order" is the same question either
+ * way, so scopeQuery() and ordered() are the one place that knows the
+ * difference.
+ *
+ * THE ORDER THIS SCREEN SHOWS IS THE ORDER THE PAGE SHOWS. Both sort on the
+ * scope's number, never-ordered products last, then the page's own tie-break:
+ * featured, name, id for a category (ShopController::applyDefaultSort), name,
+ * id for a brand (BrandController::show). And every save renumbers the whole
+ * scope 0..n-1 in that order, writing only the rows whose number changed, so
+ * products on pages nobody touched keep their places and no tie is left for a
+ * page to break differently from this screen.
  *
  * Explicit save, not save-on-every-click: every other screen in this admin
  * has a real Save button, and reorder previously didn't — every drag,
@@ -79,18 +93,85 @@ class CatalogReorderApiController extends Controller
         return response()->json(['type' => 'category', 'scopes' => $categories]);
     }
 
-    /** The base query for "this scope's visible products" — the one place the two relationship shapes are reconciled. */
+    /**
+     * The base query for "this scope's visible products", each carrying its
+     * number in THIS scope as `scope_pos` -- the one place the two
+     * relationship shapes are reconciled. An unknown id is a 404.
+     */
     private function scopeQuery(string $type, int $id)
     {
         if ($type === 'brand') {
-            $brand = Brand::findOrFail($id);
+            abort_unless(Brand::query()->whereKey($id)->exists(), 404);
 
-            return $brand->products()->visible();
+            return Product::query()->visible()
+                ->where('products.brand_id', $id)
+                ->addSelect('products.'.ScopeOrder::BRAND_COLUMN.' as scope_pos');
         }
 
-        $category = Category::findOrFail($id);
+        abort_unless(Category::query()->whereKey($id)->exists(), 404);
 
-        return $category->products()->visible();
+        return ScopeOrder::inCategory(Product::query()->visible(), $id)
+            ->addSelect(ScopeOrder::ALIAS.'.kso_pos as scope_pos');
+    }
+
+    /** The scope's order, exactly as its storefront page sorts it. */
+    private function ordered(string $type, $query)
+    {
+        if ($type === 'brand') {
+            return ScopeOrder::orderInBrand($query)
+                ->orderBy('products.name')
+                ->orderBy('products.id');
+        }
+
+        return ScopeOrder::orderInCategory($query)
+            ->orderByDesc('products.featured')
+            ->orderBy('products.name')
+            ->orderBy('products.id');
+    }
+
+    /**
+     * The scope's ids in order, with each one's current number.
+     *
+     * @return array<int, int|null>  product id => scope_pos, in order
+     */
+    private function currentOrder(string $type, int $id): array
+    {
+        $out = [];
+
+        foreach ($this->ordered($type, $this->scopeQuery($type, $id)->addSelect('products.id'))->toBase()->get() as $row) {
+            $out[(int) $row->id] = $row->scope_pos === null ? null : (int) $row->scope_pos;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Write $ids as the scope's order 0..n-1, touching only rows whose number
+     * changes, and only rows of THIS scope: a category's pivot rows, or the
+     * brand's products. No other scope's number can be reached from here.
+     *
+     * @param  list<int>  $ids
+     * @param  array<int, int|null>  $current
+     */
+    private function writeOrder(string $type, int $id, array $ids, array $current): int
+    {
+        $written = 0;
+
+        DB::transaction(function () use ($type, $id, $ids, $current, &$written) {
+            foreach (array_values($ids) as $index => $productId) {
+                if (array_key_exists($productId, $current) && $current[$productId] === $index) {
+                    continue;
+                }
+
+                $written += $type === 'brand'
+                    ? DB::table('products')->where('id', $productId)->where('brand_id', $id)
+                        ->update(['brand_position' => $index])   // ScopeOrder::BRAND_COLUMN; a literal so the raw-write guard can read it
+                    : DB::table('category_product')->where('category_id', $id)->where('product_id', $productId)
+                        ->update(['category_position' => $index]);   // ScopeOrder::CATEGORY_COLUMN
+            }
+        });
+
+        return $written;
     }
 
     /**
@@ -119,19 +200,15 @@ class CatalogReorderApiController extends Controller
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = min($page, $lastPage);
 
-        $products = $query
-            ->select('products.id', 'products.name', 'products.brand_id', 'products.sku',
-                'products.position', 'products.price', 'products.sale_price')
+        $products = $this->ordered($type, $query
+            ->addSelect('products.id', 'products.name', 'products.brand_id', 'products.sku',
+                'products.price', 'products.sale_price')
             ->with('brand:id,name')
             ->addSelect(['orders_count' => \App\Models\OrderItem::selectRaw('COUNT(DISTINCT order_id)')
                 ->whereColumn('product_id', 'products.id')
-                ->whereHas('order', fn ($o) => $o->whereIn('status', \App\Models\Order::REAL_STATUSES))])
-            ->orderBy('products.position')
-            ->orderBy('products.name')
-            // `position` is 0 across an un-reordered catalogue and names are
-            // not unique, so this paged screen needs `id` to be a partition
-            // of the list rather than a sample of it.
-            ->orderBy('products.id')
+                ->whereHas('order', fn ($o) => $o->whereIn('status', \App\Models\Order::REAL_STATUSES))]))
+            // ordered() ends in `id`: names are not unique, so this paged
+            // screen needs a partition of the list rather than a sample of it.
             ->forPage($page, $perPage)
             ->get()
             ->map(fn ($p, $i) => [
@@ -190,9 +267,8 @@ class CatalogReorderApiController extends Controller
 
         $perPage = $this->clampPerPage($data['per_page']);
 
-        $allIds = $this->scopeQuery($type, $id)
-            ->orderBy('products.position')->orderBy('products.name')
-            ->pluck('products.id')->values()->all();
+        $current = $this->currentOrder($type, $id);
+        $allIds = array_keys($current);
 
         $offset = (int) (($data['page'] - 1) * $perPage);
         $expectedSlice = array_slice($allIds, $offset, $perPage);
@@ -209,11 +285,10 @@ class CatalogReorderApiController extends Controller
             ], 409);
         }
 
-        DB::transaction(function () use ($offset, $data) {
-            foreach ($data['product_ids'] as $i => $productId) {
-                Product::where('id', $productId)->update(['position' => $offset + $i]);
-            }
-        });
+        // The page's new order spliced into the whole scope's; written as one
+        // 0..n-1 run, so only what moved is touched. (Lane SO)
+        array_splice($allIds, $offset, count($expectedSlice), array_map('intval', array_values($data['product_ids'])));
+        $this->writeOrder($type, $id, $allIds, $current);
 
         return response()->json(['ok' => true, 'updated' => count($data['product_ids'])]);
     }
@@ -232,9 +307,8 @@ class CatalogReorderApiController extends Controller
             'to' => ['required', 'integer', 'min:0'],
         ]);
 
-        $ids = $this->scopeQuery($type, $id)
-            ->orderBy('products.position')->orderBy('products.name')
-            ->pluck('products.id')->values()->all();
+        $current = $this->currentOrder($type, $id);
+        $ids = array_keys($current);
 
         $from = array_search($data['product_id'], $ids, true);
 
@@ -247,11 +321,7 @@ class CatalogReorderApiController extends Controller
         [$moved] = array_splice($ids, $from, 1);
         array_splice($ids, $to, 0, [$moved]);
 
-        DB::transaction(function () use ($ids) {
-            foreach ($ids as $index => $productId) {
-                Product::where('id', $productId)->update(['position' => $index]);
-            }
-        });
+        $this->writeOrder($type, $id, $ids, $current);
 
         return response()->json(['ok' => true, 'from' => $from, 'to' => $to]);
     }
@@ -290,14 +360,13 @@ class CatalogReorderApiController extends Controller
             'bestselling' => $query->orderByDesc('products.total_sales')->orderByDesc('products.id'),
         };
 
-        $ids = $query->pluck('products.id')->values()->all();
+        $current = [];
+        foreach ($query->addSelect('products.id')->toBase()->get() as $row) {
+            $current[(int) $row->id] = $row->scope_pos === null ? null : (int) $row->scope_pos;
+        }
 
-        DB::transaction(function () use ($ids) {
-            foreach ($ids as $index => $productId) {
-                Product::where('id', $productId)->update(['position' => $index]);
-            }
-        });
+        $this->writeOrder($type, $id, array_keys($current), $current);
 
-        return response()->json(['ok' => true, 'sorted' => count($ids)]);
+        return response()->json(['ok' => true, 'sorted' => count($current)]);
     }
 }

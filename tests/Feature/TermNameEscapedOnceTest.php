@@ -59,6 +59,11 @@ function fptDrawer(string $html): string
 }
 
 it('draws "Hydration & Glow" in the Filters drawer, escaped exactly once', function () {
+    // Lane SO: the filter rail is drawn only while Appearance → Site layout →
+    // Product grid → "Filters · laptop" is on; it ships off, as the owner asked
+    // ("remove the filter at all"). This test is about the rail, so it turns it on.
+    app(\App\Services\SettingsService::class)->set('layout_filters_d', '1');
+    \App\Services\SettingsService::forgetMemo();
     /*
      * The defect, pinned first: the imported row prints the entity.
      * MUTATION, RUN: make TermName::plain() return $name unchanged -> red: the
@@ -87,6 +92,11 @@ it('draws "Hydration & Glow" in the Filters drawer, escaped exactly once', funct
 });
 
 it('prints a decoded < as &lt;, never raw', function () {
+    // Lane SO: the filter rail is drawn only while Appearance → Site layout →
+    // Product grid → "Filters · laptop" is on; it ships off, as the owner asked
+    // ("remove the filter at all"). This test is about the rail, so it turns it on.
+    app(\App\Services\SettingsService::class)->set('layout_filters_d', '1');
+    \App\Services\SettingsService::forgetMemo();
     /*
      * Decoding puts a real `<` in the column, which is only safe because no
      * template prints a term name unescaped. This is that promise, kept.
