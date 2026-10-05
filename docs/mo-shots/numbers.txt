@@ -1,0 +1,36 @@
+== 1280px board {"innerWidth":1280,"scrollWidth":1280,"sidebarWidth":248,"boardWidth":962,"columns":12,"columnsFullyVisible":5,"colWidth":156,"colGap":8,"rowHeight":24,"headHeight":24,"numBox":[24,20],"arrow":[18,20],"fontLink":"12px","fontHead":"12.5px","fab":[52,52,22,22]}
+top order before ["Blog","Everything Under 54 AED","Beauty Devices","Super Sale","Skincare Sets","Hair Care","Lip Care","Toners","Moisturizers","Sunscreens","Brands","Skincare"]
+  1280 POST /admin-api/mega-menu/88/move -> 200
+top order after typing 1 on Brands ["Brands","Blog","Everything Under 54 AED","Beauty Devices","Super Sale","Skincare Sets","Hair Care","Lip Care","Toners","Moisturizers","Sunscreens","Skincare"]
+  1280 POST /admin-api/mega-menu/78/move -> 200
+after typing 99 on Blog (clamps to last) ["Brands","Everything Under 54 AED","Beauty Devices","Super Sale","Skincare Sets","Hair Care","Lip Care","Toners","Moisturizers","Sunscreens","Skincare","Blog"]
+after typing abc on Skincare: box reads 11
+  1280 POST /admin-api/mega-menu/107/move -> 200
+after typing 2 on Skincare ["Brands","Skincare","Everything Under 54 AED","Beauty Devices","Super Sale","Skincare Sets","Hair Care","Lip Care","Toners","Moisturizers","Sunscreens","Blog"]
+Cleanse before ["Cleansers","Cleansing Oils","Exfoliators"]
+  1280 POST /admin-api/mega-menu/109/move -> 200
+Cleanse after ↓ on Cleansers ["Cleansing Oils","Cleansers","Exfoliators"]
+focus stays on Move Cleansers down
+mid-drag: Popular reads ["Anua","Serums","COSRX","Beauty of Joseon","Medicube","SKIN1004","Mixsoon"] lifted 1 hot column Brands fab opacity 0
+  1280 POST /admin-api/mega-menu/113/move -> 200
+after release: Popular ["Anua","Serums","COSRX","Beauty of Joseon","Medicube","SKIN1004","Mixsoon"] Treat ["Ampoules","Essences"]
+refused zone marked 1
+after Esc: Brands sub-menus ["Popular","A – L","M – Z"]
+  1280 POST /admin-api/mega-menu/81/move -> 200
+columns after dragging Super Sale left onto Everything Under 54 AED ["Brands","Skincare","Super Sale","Everything Under 54 AED","Beauty Devices","Skincare Sets","Hair Care","Lip Care","Toners","Moisturizers","Sunscreens","Blog"]
+Move to column… options for Torriden ["Move to column…","Brands","Brands › Popular","Brands › A – L","Skincare","Skincare › Cleanse","Skincare › Treat","Skincare › Moisturise","Skincare › Masks","Super Sale","Everything Under 54 AED","Beauty Devices","Skincare Sets","Hair Care","Lip Care","Toners","Moisturizers","Sunscreens","Blog"]
+Move to column… options for Cleanse (a sub-menu with links) ["Brands","Skincare","Super Sale","Everything Under 54 AED","Beauty Devices","Skincare Sets","Hair Care","Lip Care","Toners","Moisturizers","Sunscreens","Blog"]
+  1280 POST /admin-api/mega-menu/105/move -> 200
+Masks after Move to column ["Sheet Masks","Wash-off Masks","Torriden"]
+  1280 POST /admin-api/mega-menu -> 200
+Masks after inline add ["Sheet Masks","Wash-off Masks","Torriden","Sleeping Masks"]
+sheet {"expanded":"true","choices":["Add a parent menu (top-level)","Add a sub-menu to…","Add a link to… (on)"]}
+  1280 POST /admin-api/mega-menu -> 200
+M – Z after adding from the sheet ["Round Lab","Some By Mi","VT","Purito"] sheet hidden true
+server tree now [{"Brands":[{"Popular":["Anua","Serums","COSRX","Beauty of Joseon","Medicube","SKIN1004","Mixsoon"]},{"A – L":["Abib","Axis-Y","Dr. Althea","Isntree","Laneige"]},{"M – Z":["Round Lab","Some By Mi","VT","Purito"]}]},{"Skincare":[{"Cleanse":["Cleansing Oils","Cleansers","Exfoliators"]},{"Treat":["Ampoules","Essences"]},{"Moisturise":["Moisturizers","Eye Care"]},{"Masks":["Sheet Masks","Wash-off Masks","Torriden","Sleeping Masks"]}]},"Super Sale","Everything Under 54 AED","Beauty Devices","Skincare Sets","Hair Care","Lip Care","Toners","Moisturizers","Sunscreens","Blog"]
+screen columns now ["Brands","Skincare","Super Sale","Everything Under 54 AED","Beauty Devices","Skincare Sets","Hair Care","Lip Care","Toners","Moisturizers","Sunscreens","Blog"]
+== 1920px board {"innerWidth":1920,"scrollWidth":1920,"sidebarWidth":248,"boardWidth":1590,"columns":12,"columnsFullyVisible":9,"colWidth":156,"colGap":8,"rowHeight":24,"headHeight":24,"numBox":[24,20],"arrow":[18,20],"fontLink":"12px","fontHead":"12.5px","fab":[52,52,22,22]}
+== 390px board {"innerWidth":390,"scrollWidth":390,"sidebarWidth":248,"boardWidth":328,"columns":12,"columnsFullyVisible":2,"colWidth":156,"colGap":8,"rowHeight":24,"headHeight":24,"numBox":[24,20],"arrow":[18,20],"fontLink":"12px","fontHead":"12.5px","fab":[52,52,22,22]}
+390 touch: Popular before ["Anua","Serums","COSRX","Beauty of Joseon","Medicube","SKIN1004","Mixsoon"] after a swipe (must not move) ["Anua","Serums","COSRX","Beauty of Joseon","Medicube","SKIN1004","Mixsoon"] after hold + drag Anua down ["Serums","COSRX","Beauty of Joseon","Anua","Medicube","SKIN1004","Mixsoon"]
+390 after scrolling the board sideways {"scrollWidth":390,"innerWidth":390}
+page errors []
