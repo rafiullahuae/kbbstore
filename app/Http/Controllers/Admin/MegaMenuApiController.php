@@ -462,6 +462,13 @@ class MegaMenuApiController extends Controller
             // English one — derived, not restated. See App\Support\TranslationInput.
             $data = $request->validate($english + TranslationInput::rules(new MenuItem, $english));
 
+            // (Lane MO) A parent from another menu would file the item in one
+            // menu under a branch of another, where neither menu draws it.
+            if (isset($data['parent_id'])
+                && (int) MenuItem::whereKey($data['parent_id'])->value('menu_id') !== (int) $data['menu_id']) {
+                return response()->json(['ok' => false, 'errors' => ['That parent is on a different menu.']], 422);
+            }
+
             $depth = $this->depthOf($data['parent_id'] ?? null);
 
             if ($depth >= 3) {
@@ -558,6 +565,16 @@ class MegaMenuApiController extends Controller
             'ids.*' => ['integer', 'exists:menu_items,id'],
         ]);
 
+        // (Lane MO) One group, each id once. `exists` alone let a request
+        // renumber items in another menu or another branch, which interleaved
+        // two groups' positions; a reorder only ever means one sibling set.
+        $ids = array_map('intval', $data['ids']);
+        $rows = MenuItem::whereIn('id', $ids)->get(['id', 'parent_id', 'menu_id']);
+        if (count(array_unique($ids)) !== count($ids)
+            || $rows->map(fn ($r) => $r->menu_id . ':' . ($r->parent_id ?? '-'))->unique()->count() !== 1) {
+            return response()->json(['ok' => false, 'errors' => ['Those items are not one group of siblings — reload and try again.']], 422);
+        }
+
         DB::transaction(function () use ($data) {
             foreach ($data['ids'] as $position => $id) {
                 MenuItem::where('id', $id)->update(['position' => $position]);
@@ -610,6 +627,23 @@ class MegaMenuApiController extends Controller
 
         if ($targetDepth + 1 + $ownDepth > 3) {
             return response()->json(['ok' => false, 'errors' => ['That would push what\'s nested under this item past the third level, which the panel never reads.']], 422);
+        }
+
+        // (Lane MO) `ids` is the new parent's complete order: this item plus
+        // every item already under that parent in this menu, each exactly once.
+        // `exists` alone accepted any row in the table, so a move could rewrite
+        // the positions of another branch or another menu, or leave a sibling
+        // out and give two rows one position. A stale screen gets the same 422
+        // and the editor returns to the server's order.
+        $ids = array_map('intval', $data['ids']);
+        $expected = MenuItem::where('menu_id', $item->menu_id)
+            ->where('parent_id', $newParentId)
+            ->where('id', '!=', $item->id)
+            ->pluck('id')->map(fn ($id) => (int) $id)->push((int) $item->id)->sort()->values()->all();
+        $given = $ids;
+        sort($given);
+        if ($given !== $expected) {
+            return response()->json(['ok' => false, 'errors' => ['The menu changed since this page loaded — reload and try again.']], 422);
         }
 
         DB::transaction(function () use ($item, $newParentId, $data) {

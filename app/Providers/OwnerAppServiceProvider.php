@@ -38,6 +38,18 @@ final class OwnerAppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        /*
+         * Lane OA3: noindex on every private answer — the owner app on either
+         * host, the admin, its API, the token pages. Global, so it covers 404s
+         * and 500s and every route file; pushed from a provider because
+         * bootstrap/ never ships in a package. pushMiddleware() skips a class
+         * already in the stack, so a second boot registers nothing twice.
+         */
+        $kernel = $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+        if (method_exists($kernel, 'pushMiddleware')) {
+            $kernel->pushMiddleware(\App\Http\Middleware\PrivateNoIndex::class);
+        }
+
         // My store's cached sales and top sellers (Lane OA4, OwnerAppSales):
         // any order write starts a new cache generation, so a sale is never
         // hidden behind the 30-second cache; a refund likewise. A row written

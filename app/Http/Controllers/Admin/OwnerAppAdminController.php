@@ -61,6 +61,13 @@ final class OwnerAppAdminController extends Controller
             'ok' => true,
             'url' => (($host = OwnerAppPath::host()) !== null ? 'https://'.$host : $request->getSchemeAndHttpHost().rtrim($request->getBasePath(), '/')).'/'.$path.'/',
             'path_from_env' => OwnerAppPath::isLockedByEnv(),
+            // Lane OA3: what the browser needs to warn about a weak typed
+            // address as it is typed, without a request per keystroke.
+            'custom' => [
+                'min' => OwnerAppPath::CUSTOM_MIN, 'max' => OwnerAppPath::CUSTOM_MAX,
+                'strong' => OwnerAppPath::STRONG_LENGTH, 'words' => OwnerAppPath::WEAK_WORDS,
+                'full' => AdminRoles::isFull(auth('admin')->user()),
+            ],
             'push_ready' => VapidKeys::publicKey() !== null,
             'settings' => OwnerAppSettings::forAdmin(),
             'groups' => OwnerAppEvents::GROUP_LABELS,
@@ -271,14 +278,41 @@ final class OwnerAppAdminController extends Controller
         return response()->json(['ok' => true, 'settings' => OwnerAppSettings::forAdmin()]);
     }
 
-    /** A new secret address. The old one stops answering and every phone signs in again at the new one. */
+    /**
+     * A new secret address. The old one stops answering and every phone signs
+     * in again at the new one.
+     *
+     * With `path` in the body (Lane OA3) it is the address the owner typed —
+     * Full Admin only, checked again here exactly as security() is, because a
+     * custom role handed ownerapp.manage must not choose where the app lives.
+     * Everything after the write is the same as a random address: one route,
+     * one throttle (10 a minute, oa-admin-address), one sign-out.
+     */
     public function address(Request $request): JsonResponse
     {
         if (OwnerAppPath::isLockedByEnv()) {
             return response()->json(['ok' => false, 'message' => 'The address is set by KBB_OWNER_APP_PATH in .env and can only be changed there.'], 422);
         }
 
-        OwnerAppPath::set(OwnerAppPath::generate());
+        $hint = null;
+
+        if ($request->exists('path')) {
+            if (! AdminRoles::isFull(auth('admin')->user())) {
+                return response()->json(['ok' => false, 'message' => 'Only a Full Admin chooses the owner app’s address.'], 403);
+            }
+
+            $raw = $request->input('path');
+            $problem = is_string($raw) ? OwnerAppPath::customProblem($raw) : 'Type the address you want, for example rafi_store-2027.';
+            if ($problem !== null) {
+                return response()->json(['ok' => false, 'message' => $problem, 'errors' => ['path' => [$problem]]], 422);
+            }
+
+            $path = OwnerAppPath::normaliseCustom($raw);
+            $hint = OwnerAppPath::weakness($path, AdminUser::query()->pluck('name')->all());
+            OwnerAppPath::set($path);
+        } else {
+            OwnerAppPath::set(OwnerAppPath::generate());
+        }
 
         // Every enrolment cookie was scoped to the old path and every service
         // worker lives under it: those phones cannot reach the new address with
@@ -287,6 +321,11 @@ final class OwnerAppAdminController extends Controller
             OwnerAppAuth::revoke((int) $deviceId, 'address_changed');
         }
 
-        return $this->index($request);
+        $response = $this->index($request);
+        if ($hint !== null) {
+            $response->setData(['hint' => $hint] + (array) $response->getData(true));
+        }
+
+        return $response;
     }
 }

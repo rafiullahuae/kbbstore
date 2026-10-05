@@ -1,0 +1,93 @@
+LANE OA3 — Custom owner-app address + search engines OFF on every private surface
+Measured 2026-10-05 against tools/mac-preview.sh (php -S, sqlite), Chromium /opt/pw-browsers/chromium, real UAs
+(iPhone Safari 17.6 at 390 @2x, Chrome 129 Windows at 1280). Shots made by tools/oa3-admin-shots.cjs.
+
+WHERE: Platform → Users & Roles → Owner app → "The app's secret address" card → Custom address
+       (under Copy link / New address).
+
+== SHOTS
+  390-a-empty.png  1280-a-empty.png      the control as found
+  390-b-refused.png 1280-b-refused.png   a refused value with its message (390: no underscore; 1280: a route the shop serves)
+  390-c-saved.png  1280-c-saved.png      saved: flash + the new link with Copy (390: weak address, warned not blocked)
+
+== Platform → Users & Roles → Owner app → address card → Custom address
+  390px empty: input 204×40px, font 13px; button 120×28px; 95px below the Copy link row; scrollWidth 390/390; address http://127.0.0.1:10340/ah7k06p92i_2oxsx8heepeq/
+  390px refused "rafistore-2027": Put at least one underscore (_) in it, e.g. rafi_store-2027. Shop pages and articles can never have an underscore in their address, so one guarantees that nothing you publish later can take over the app’s link.  (requests while typing 14 keys: 0)
+  390px saved "rafi_store-2027": live hint while typing: Weak: it is short — 16 or more characters is much harder to guess, and it is made of ordinary words, names and numbers, which scanners try first.
+      confirm: "Move the owner app to http://127.0.0.1:10340/rafi_store-2027/ ?\n\nThe current link stops working at once. Every phone is signed out and its notifications stop; each person signs in again at the new link."
+      flash: Address changed to http://127.0.0.1:10340/rafi_store-2027/ — send the new link to your team. Accepted, but it is short — 16 or more characters is much harder to guess, and it is made of ordinary words, names and numbers, which scanners try first. The address is the first thing that keeps scanners away from the app; mixing in a few random letters makes it far stronger.
+      address now http://127.0.0.1:10340/rafi_store-2027/; scrollWidth 390/390
+  1280px empty: input 340×40px, font 13px; button 120×28px; 40px below the Copy link row; scrollWidth 1280/1280; address http://127.0.0.1:10340/rafi_store-2027/
+  1280px refused "refund_returns": The shop already uses /refund_returns/ for one of its own pages. Choose another.  (requests while typing 14 keys: 0)
+  1280px saved "q7hz_rafi-m2xw9k4p": live hint while typing: (none)
+      confirm: "Move the owner app to http://127.0.0.1:10340/q7hz_rafi-m2xw9k4p/ ?\n\nThe current link stops working at once. Every phone is signed out and its notifications stop; each person signs in again at the new link."
+      flash: Address changed to http://127.0.0.1:10340/q7hz_rafi-m2xw9k4p/ — send the new link to your team.
+      address now http://127.0.0.1:10340/q7hz_rafi-m2xw9k4p/; scrollWidth 1280/1280
+
+== HEADERS (curl -D -, preview, X-Robots-Tag and Referrer-Policy per surface)
+METHOD PATH                                         CODE X-Robots-Tag                   Referrer-Policy
+-- owner app (shop host)
+GET    /q7hz_rafi-m2xw9k4p/                         200  noindex, nofollow, noarchive   no-referrer
+GET    /q7hz_rafi-m2xw9k4p/manifest.webmanifest     200  noindex, nofollow, noarchive   no-referrer
+GET    /q7hz_rafi-m2xw9k4p/sw.js                    200  noindex, nofollow, noarchive   no-referrer
+GET    /q7hz_rafi-m2xw9k4p/api/state                200  noindex, nofollow, noarchive   no-referrer
+GET    /q7hz_rafi-m2xw9k4p/api/orders               401  noindex, nofollow, noarchive   no-referrer
+POST   /q7hz_rafi-m2xw9k4p/api/enrol                403  noindex, nofollow, noarchive   no-referrer
+GET    /q7hz_rafi-m2xw9k4p/icons/icon-192.png       404  noindex, nofollow, noarchive   no-referrer
+GET    /q7hz_rafi-m2xw9k4p/api/nope                 404  noindex, nofollow, noarchive   no-referrer
+POST   /q7hz_rafi-m2xw9k4p/sw.js                    404  noindex, nofollow, noarchive   no-referrer
+-- admin
+GET    /admin/login                                 200  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+POST   /admin/login                                 419  noindex, nofollow, noarchive   (none)
+GET    /admin                                       302  noindex, nofollow, noarchive   (none)
+GET    /admin/updates                               302  noindex, nofollow, noarchive   (none)
+GET    /admin-api/owner-app                         401  noindex, nofollow, noarchive   (none)
+GET    /admin-api/nope                              404  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+-- token pages and internal endpoints
+GET    /my-account/forgot                           200  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+GET    /my-account/reset/1/token/                   200  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+GET    /my-account/welcome/token/                   200  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+GET    /my-account/verify/1/abc/                    404  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+POST   /import-chain/continue                       404  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+GET    /_kbb-health                                 404  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+GET    /up                                          200  noindex, nofollow, noarchive   (none)
+-- public shop (must be unchanged: no header)
+GET    /                                            200  (none)                         strict-origin-when-cross-origin
+GET    /shop/                                       200  (none)                         strict-origin-when-cross-origin
+GET    /robots.txt                                  200  (none)                         strict-origin-when-cross-origin
+GET    /sitemap.xml                                 200  (none)                         strict-origin-when-cross-origin
+GET    /llms.txt                                    200  (none)                         strict-origin-when-cross-origin
+GET    /my-account/                                 200  (none)                         strict-origin-when-cross-origin
+-- the old address and a wrong spelling answer like any 404
+GET    /rafi_store-2027/                            404  (none)                         strict-origin-when-cross-origin
+GET    /Q7HZ_RAFI-M2XW9K4P/                         404  (none)                         strict-origin-when-cross-origin
+GET    /zz_never_was/                               404  (none)                         strict-origin-when-cross-origin
+
+-- dedicated host set to owner.preview.test
+GET    owner.preview.test   /q7hz_rafi-m2xw9k4p/                     200  noindex, nofollow, noarchive   no-referrer
+GET    owner.preview.test   /q7hz_rafi-m2xw9k4p/manifest.webmanifest 200  noindex, nofollow, noarchive   no-referrer
+GET    owner.preview.test   /q7hz_rafi-m2xw9k4p/sw.js                200  noindex, nofollow, noarchive   no-referrer
+GET    owner.preview.test   /q7hz_rafi-m2xw9k4p/api/state            200  noindex, nofollow, noarchive   no-referrer
+GET    owner.preview.test   /q7hz_rafi-m2xw9k4p/nope                 404  noindex, nofollow, noarchive   no-referrer
+GET    owner.preview.test   /                                        200  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+GET    owner.preview.test   /robots.txt                              200  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+GET    owner.preview.test   /shop/                                   200  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+GET    owner.preview.test   /zz-nothing/                             404  noindex, nofollow, noarchive   strict-origin-when-cross-origin
+GET    127.0.0.1:10340      /q7hz_rafi-m2xw9k4p/                     404  (none)                         strict-origin-when-cross-origin
+GET    127.0.0.1:10340      /zz_never_was/                           404  (none)                         strict-origin-when-cross-origin
+GET    127.0.0.1:10340      /                                        200  (none)                         strict-origin-when-cross-origin
+
+  Note: the owner app's icons and font are content-hashed files under /build/assets/ served by the web
+  server, not by Laravel (the same directory as the shop's own assets). Their names do not contain the
+  app's address and nothing crawlable links to them; the shell and manifest that do are noindex.
+
+== SEO FILES NAME NO SECRET (preview, app at /q7hz_rafi-m2xw9k4p/, previous address rafi_store-2027)
+/robots.txt    bytes=247     app-path=0 rafi_store=0 webmanifest=0
+/sitemap.xml   bytes=11849   app-path=0 rafi_store=0 webmanifest=0
+/llms.txt      bytes=212     app-path=0 rafi_store=0 webmanifest=0
+/              bytes=113950  app-path=0 rafi_store=0 webmanifest=0
+/shop/         bytes=102982  app-path=0 rafi_store=0 webmanifest=0
+
+== TESTS
+  default suite (KBB_WP_DB=kbb_wp_oa3): 9984 passed, 23 skipped, 2 failed -> both were this lane's (middleware pin in AdminRoleEnforcementTest advanced with its note; a two-argument not->toContain in the new test rewritten); both green on re-run with the new tests (66 passed)
+  MySQL (phpunit-mysql.xml, KBB_TEST_DB=kbb_oa3_my) tests/Feature/OwnerApp*Test.php: 155 passed (1383 assertions)

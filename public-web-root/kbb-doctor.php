@@ -65,7 +65,8 @@ if (PHP_SAPI !== 'cli') {
     // No token, no message, no hint that anything is here. See above.
     http_response_code(404);
     header('Content-Type: text/plain; charset=utf-8');
-    header('X-Robots-Tag: noindex, nofollow');
+    header('X-Robots-Tag: noindex, nofollow, noarchive');
+    header('Referrer-Policy: no-referrer');
     exit("Not found.\n");
 }
 
