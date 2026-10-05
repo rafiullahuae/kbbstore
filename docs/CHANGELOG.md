@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.397
+**Catalog → Pagination: turn pagination off for the whole shop, or for any
+category, brand or listing page. Off shows every product at once.** Apply
+after .396. Runs 1 migration. Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "option to turn off the pagination function completely for any page, any category or brand" | Catalog → Pagination: one switch for the shop, and Follow / On / Off for each listing page, category and brand (search to find one) |
+| "in case of turned off, all the products will show at once" | Off: every product on one page (up to 500), no page links, no load-more. An old /page/2 address goes to the listing in one hop |
+
+Nothing changes until you turn something off: pagination stays on everywhere.
+
+Files: see the package's update.json.
+
 ## 2.60.396
 **Category pages: an Edit header button on the page. The strip can be
 turned off on desktop or on mobile. A long title keeps its dot and count on
