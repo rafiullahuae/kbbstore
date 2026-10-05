@@ -51,11 +51,12 @@ it('serves a single brand page', function () {
         ->assertOk()
         // The brand's own heading, not its <title>, its og:title, its CTA label
         // or the JSON-LD Brand `name` — this page carries the words in all five.
-        ->assertSee('<h1 class="brw-h1">T Beauty of Joseon</h1>', escape: false)
+        // Lane BR2: the Panel header's <h1>, the default brand header.
+        ->assertSee('<h1 class="brw-ph__name" id="brw-ph-title">T Beauty of Joseon</h1>', escape: false)
         // The standfirst the page prints, not the <meta description> and the
         // JSON-LD carrying the same sentence in the same document.
         // 2.60.376: through RichText's allowlist, in a block that can hold paragraphs.
-        ->assertSee('<div class="brw-sub brw-desc">Hanbang formulas, modern textures.</div>', escape: false);
+        ->assertSee('<div class="brw-ph__desc brw-desc">Hanbang formulas, modern textures.</div>', escape: false);
 });
 
 it('links each directory tile at the brand page, not the old address', function () {

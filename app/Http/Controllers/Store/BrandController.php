@@ -488,12 +488,17 @@ class BrandController extends Controller
         // `banner` and is not translatable yet — see the note in
         // docs/fn-translation-at-scale.md, which is a decision for the SEO lane.
         $banner = \App\Support\PageBanner::forModel($brand, $brand->t('name'));
+        $hero = self::hero($layout->get('brand_hero'), $banner);
 
         return view('store.brands', [
             'banner' => $banner,
             // The old shop's title header for this brand, when its import
             // carried a banner and the owner's own banner is off. (Lane PT)
-            'titleHeader' => \App\Support\TitleHeader::forModel($brand, (string) $brand->t('name'), $banner, true),
+            // Not under the Panel header, which draws the banner itself.
+            'titleHeader' => $hero === 'panel' ? null : \App\Support\TitleHeader::forModel($brand, (string) $brand->t('name'), $banner, true),
+            // Lane BR2: the Panel header, resolved off the row already loaded
+            // and the settings map -- no query.
+            'brandPanel' => $hero === 'panel' ? \App\Support\BrandPanel::forBrand($brand, $layout->all()) : null,
             'seoCtx' => $this->seoCtx($brand, $banner, $products, $page, $perPage),
             // The pager under the grid (Lane PR). See partials/listing-pager.
             'page' => $page,
@@ -507,7 +512,7 @@ class BrandController extends Controller
             // Classic) and the ring round the logo, in the brand's colour --
             // owner's choice, else taken from the logo, else the shop pink.
             // Read off the row already loaded: no query.
-            'brandHero' => $layout->get('brand_hero') === 'classic' ? 'classic' : 'compact',
+            'brandHero' => $hero,
             'brandRing' => (bool) $layout->get('brand_ring'),
             'brandRingHex' => \App\Support\BrandLogo::ring($brand),
             // What the page says under the brand's name: the description typed
@@ -530,6 +535,23 @@ class BrandController extends Controller
             // the shared view never reads an undefined variable.
             'subtitle' => '',
         ]);
+    }
+
+    /**
+     * Which brand header the page draws: Panel (Lane BR2, the default), Compact
+     * or Classic. The owner's own page banner owns the page's <h1> and its
+     * picture, so a brand with one keeps the Compact row under it rather than
+     * a second banner.
+     *
+     * @param  array<string, mixed>|null  $banner
+     */
+    public static function hero(mixed $setting, ?array $banner): string
+    {
+        if ($setting === 'classic') {
+            return 'classic';
+        }
+
+        return $setting === 'panel' && $banner === null ? 'panel' : 'compact';
     }
 
     /**

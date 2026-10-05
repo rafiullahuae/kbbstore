@@ -312,7 +312,8 @@ async function logout(btn, url) {
 
 /** The element the page draws its header with, if any. */
 function currentHeader() {
-    return document.querySelector('[data-kbb-title-header]') || document.querySelector('main .kbb-banner, #content .kbb-banner');
+    return document.querySelector('[data-kbb-title-header]') || document.querySelector('[data-kbb-brand-header]')
+        || document.querySelector('main .kbb-banner, #content .kbb-banner');
 }
 
 function drawPencil(edit) {
@@ -370,6 +371,26 @@ function drawHeaderPill(ph) {
 
 const FOCUS_CHOICES = [['', 'Shop setting'], ['left', 'Left'], ['center', 'Centre'], ['right', 'Right']];
 
+/*
+ * The brand Panel header's own choices (Lane BR2). Each choice is a class on
+ * .brw-ph and each size a custom property on it, so moving a bar or pressing a
+ * choice redraws the preview in the browser at once -- no request per move,
+ * nothing measured. The server draws the same classes and properties
+ * (App\Support\BrandPanel) when the preview is fetched and on the page.
+ */
+const PANEL_CHOICES = [
+    ['logo', 'Logo shape', 'brw-ph--logo-', [['circle', 'Circle'], ['rect', 'Rectangle']]],
+    ['panel', 'Content background', 'brw-ph--', [['frost', 'Frosted white'], ['brand', 'Brand colour']]],
+    ['pill', 'Logo and name on phones', 'brw-ph--pill-', [['capsule', 'Capsule'], ['rect', 'Rectangle']]],
+    ['position', 'Picture position', 'brw-ph--pos-', [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']]],
+];
+const PANEL_BARS = [
+    ['width', 'Header width · laptop', '--brw-ph-w'],
+    ['height', 'Banner height · laptop', '--brw-ph-h'],
+    ['height_m', 'Banner height · phone', '--brw-ph-hm'],
+    ['content', 'Content width · laptop', '--brw-ph-cw'],
+];
+
 function openEditor(edit, opener) {
     if (state.modal) return;
 
@@ -391,8 +412,12 @@ function openEditor(edit, opener) {
 
     /* -- the preview */
     const pvStage = h('div', { class: 'kbb-qe__pv-stage' });
+    const panel = edit.panel && edit.panel.on ? edit.panel : null;
     const pv = h('div', { class: 'kbb-qe__pv', 'aria-label': 'Preview', role: 'img' },
-        pvStage, h('span', { class: 'kbb-qe__pv-tag', text: 'Preview' }), h('span', { class: 'kbb-qe__pv-busy', 'aria-hidden': 'true' }));
+        pvStage, h('span', { class: 'kbb-qe__pv-tag', text: panel ? 'Laptop' : 'Preview' }), h('span', { class: 'kbb-qe__pv-busy', 'aria-hidden': 'true' }));
+    const pvPhoneStage = h('div', { class: 'kbb-qe__pv-stage' });
+    const pvPhone = panel ? h('div', { class: 'kbb-qe__pv kbb-qe__pv--phone', 'aria-label': 'Phone preview', role: 'img' },
+        pvPhoneStage, h('span', { class: 'kbb-qe__pv-tag', text: 'Phone' })) : null;
 
     /* -- the picture */
     const fileIn = h('input', {
@@ -422,7 +447,7 @@ function openEditor(edit, opener) {
         class: 'kbb-qe__drop kbb-qe__drop--logo', role: 'button', tabindex: '0',
         'aria-label': 'Brand logo: drop a file here or press Enter to choose one',
     }, logoThumb, h('div', { class: 'kbb-qe__drop-txt' }, logoTitle,
-        h('span', { text: 'Square works best. It sits in a circle, ringed in a colour taken from the logo itself.' }),
+        h('span', { text: panel ? 'It sits in a circle or a rectangle (Logo shape, below), ringed in a colour taken from the logo itself.' : 'Square works best. It sits in a circle, ringed in a colour taken from the logo itself.' }),
         h('div', { class: 'kbb-qe__bar' }, logoFill)), logoIn);
     const logoRemove = h('button', { type: 'button', class: 'kbb-qe__link', text: 'Remove logo' });
 
@@ -453,6 +478,74 @@ function openEditor(edit, opener) {
         seg.appendChild(h('label', null, input, h('span', { text: label })));
     });
 
+    /* -- the Panel header's layout (Lane BR2) */
+    const hasLayout = !!panel && (edit.keys || []).includes('layout');
+    const ownLayout = (o) => {
+        const out = {};
+        Object.keys(o && typeof o === 'object' ? o : {}).sort().forEach((k) => { if (o[k] !== '' && o[k] !== null) out[k] = o[k]; });
+        return out;
+    };
+    values.layout = ownLayout(edit.fields.layout);
+    const layoutSegs = [];
+    const layoutBars = [];
+    const layoutBox = hasLayout ? h('div', { class: 'kbb-qe__layout' }) : null;
+    if (hasLayout) {
+        PANEL_CHOICES.forEach(([key, label, , opts]) => {
+            const shopV = panel.shop[key];
+            const shopName = (opts.find((o) => o[0] === shopV) || ['', ''])[1];
+            const seg = h('div', { class: 'kbb-qe__seg', role: 'radiogroup', 'aria-label': label });
+            [['', `Shop (${shopName})`], ...opts].forEach(([v, text]) => {
+                const input = h('input', { type: 'radio', name: `kbb-qe-ly-${key}`, value: v });
+                input.checked = (values.layout[key] || '') === v;
+                input.addEventListener('change', () => {
+                    if (v === '') delete values.layout[key]; else values.layout[key] = v;
+                    paintLayout();
+                });
+                seg.appendChild(h('label', null, input, h('span', { text })));
+            });
+            layoutSegs.push([key, seg]);
+            layoutBox.appendChild(h('div', { class: 'kbb-qe__fld' }, h('span', { class: 'kbb-qe__label', text: label }), seg));
+        });
+        PANEL_BARS.forEach(([key, label]) => {
+            const r = panel.ranges[key];
+            const id = `kbb-qe-ly-${key}`;
+            const input = h('input', { type: 'range', id, class: 'kbb-qe__range', min: String(r.min), max: String(r.max), step: '1' });
+            const out = h('output', { for: id });
+            input.addEventListener('input', () => { values.layout[key] = Number(input.value); paintLayout(); });
+            layoutBars.push([key, input, out, r.unit]);
+            layoutBox.appendChild(h('div', { class: 'kbb-qe__fld kbb-qe__bar-fld' },
+                h('label', { class: 'kbb-qe__label', for: id }, label, out), input));
+        });
+        const resetBtn = h('button', { type: 'button', class: 'kbb-qe__link', text: 'Use the shop settings for all of these' });
+        resetBtn.addEventListener('click', () => { values.layout = {}; syncLayout(); paintLayout(); });
+        layoutBox.appendChild(h('p', { class: 'kbb-qe__hint' }, resetBtn));
+    }
+
+    /** Put the controls at this brand's values (its own, else the shop's). */
+    function syncLayout() {
+        layoutSegs.forEach(([key, seg]) => {
+            seg.querySelectorAll('input').forEach((i) => { i.checked = i.value === (values.layout[key] || ''); });
+        });
+        layoutBars.forEach(([key, input]) => { input.value = String(values.layout[key] ?? panel.shop[key]); });
+    }
+
+    /** Redraw both previews from the controls: classes and properties only. */
+    function paintLayout() {
+        if (!hasLayout) return;
+        const v = { ...panel.shop, ...values.layout };
+        layoutBars.forEach(([key, , out, unit]) => {
+            out.textContent = `${v[key]}${unit}${values.layout[key] === undefined ? ' · shop' : ''}`;
+        });
+        [pvStage, pvPhoneStage].forEach((stage) => {
+            const el = stage.querySelector('.brw-ph');
+            if (!el) return;
+            PANEL_CHOICES.forEach(([key, , prefix, opts]) => {
+                opts.forEach(([o]) => el.classList.toggle(prefix + o, o === v[key]));
+            });
+            PANEL_BARS.forEach(([key, , prop]) => el.style.setProperty(prop, `${Number(v[key])}${panel.ranges[key].unit}`));
+        });
+    }
+
     const err = h('p', { class: 'kbb-qe__err', role: 'alert' });
 
     const more = h('div', { class: 'kbb-qe__more' });
@@ -471,17 +564,20 @@ function openEditor(edit, opener) {
     const body = h('div', { class: 'kbb-qe__body' },
         err,
         pv,
+        pvPhone,
         hasLogo ? h('div', { class: 'kbb-qe__fld' },
             h('span', { class: 'kbb-qe__label', text: 'Logo' }), logoDrop,
             h('div', { class: 'kbb-qe__pic-row' }, logoRemove)) : null,
         h('div', { class: 'kbb-qe__fld' },
             h('span', { class: 'kbb-qe__label', text: 'Banner picture' }), drop, picRow),
-        fld('kbb-qe-title', 'Title', titleIn, `Blank shows the ${noun} name.`),
-        fld('kbb-qe-sub', 'Line under the title', subIn),
+        panel ? null : fld('kbb-qe-title', 'Title', titleIn, `Blank shows the ${noun} name.`),
+        panel ? null : fld('kbb-qe-sub', 'Line under the title', subIn),
         isBanner ? null : fld('kbb-qe-desc', 'Description', descIn,
             `Blank shows the ${noun}'s own description.`),
         hasFocus ? h('div', { class: 'kbb-qe__fld' },
             h('span', { class: 'kbb-qe__label', text: 'On a phone, keep this part of the picture' }), seg) : null,
+        hasLayout ? h('div', { class: 'kbb-qe__fld' }, h('span', { class: 'kbb-qe__label kbb-qe__label--h', text: 'Header layout' }),
+            h('p', { class: 'kbb-qe__hint', text: String(panel.hint || '') }), layoutBox) : null,
         isBanner ? h('p', { class: 'kbb-qe__hint', text: `This ${noun} shows its own Banner, so these change the banner's picture, heading and line.` }) : null);
 
     const box = h('div', { class: 'kbb-qe__box', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'kbb-qe-h' },
@@ -523,6 +619,7 @@ function openEditor(edit, opener) {
         if (!isBanner) p.header_description = descIn.value;
         if (hasFocus) p.focus = values.focus || '';
         if (hasLogo) p.logo = values.logo || '';
+        if (hasLayout) p.layout = ownLayout(values.layout);
         return p;
     }
 
@@ -532,7 +629,8 @@ function openEditor(edit, opener) {
             || subIn.value !== (original.header_subtitle || '')
             || (!isBanner && descIn.value !== (original.header_description || ''))
             || (hasFocus && (values.focus || '') !== (original.focus || ''))
-            || (hasLogo && (values.logo || '') !== (original.logo || ''));
+            || (hasLogo && (values.logo || '') !== (original.logo || ''))
+            || (hasLayout && JSON.stringify(ownLayout(values.layout)) !== JSON.stringify(ownLayout(original.layout)));
     }
 
     function stageScale() {
@@ -545,6 +643,10 @@ function openEditor(edit, opener) {
         const boxW = Math.min(vw < 641 ? vw : 560, vw) - 38;
         pvStage.style.setProperty('--qe-stage', `${Math.max(200, stage)}px`);
         pvStage.style.setProperty('--qe-zoom', String(Math.min(1, boxW / Math.max(200, stage))));
+        // The phone preview is a phone's width, so the header takes its phone
+        // shape by the same container rule the page uses.
+        pvPhoneStage.style.setProperty('--qe-stage', '390px');
+        pvPhoneStage.style.setProperty('--qe-zoom', String(Math.min(0.7, boxW / 390)));
     }
 
     function adopt(html, into) {
@@ -576,13 +678,20 @@ function openEditor(edit, opener) {
             if (hasLogo) adopt(res.body.hero && res.body.hero.logo, logoThumb);
             ensureCss(res.body.kind);
             const el = adopt(res.body.html, pvStage);
+            const elPhone = pvPhone ? adopt(res.body.html, pvPhoneStage) : null;
             if (el) {
                 // The page already has these ids; the preview must not.
-                el.querySelectorAll('[id]').forEach((n) => n.setAttribute('id', `kbb-qe-pv-${n.id}`));
-                el.querySelectorAll('[for]').forEach((n) => n.setAttribute('for', `kbb-qe-pv-${n.getAttribute('for')}`));
-                el.removeAttribute('aria-labelledby');
-                el.removeAttribute('data-kbb-title-header');
-                el.setAttribute('aria-hidden', 'true');
+                [el, elPhone].forEach((root, n) => {
+                    if (!root) return;
+                    root.querySelectorAll('[id]').forEach((x) => x.setAttribute('id', `kbb-qe-pv${n || ''}-${x.id}`));
+                    root.querySelectorAll('[for]').forEach((x) => x.setAttribute('for', `kbb-qe-pv${n || ''}-${x.getAttribute('for')}`));
+                    root.querySelectorAll('[aria-labelledby]').forEach((x) => x.removeAttribute('aria-labelledby'));
+                    root.removeAttribute('aria-labelledby');
+                    root.removeAttribute('data-kbb-title-header');
+                    root.removeAttribute('data-kbb-brand-header');
+                    root.setAttribute('aria-hidden', 'true');
+                });
+                paintLayout();
             } else {
                 pvStage.appendChild(h('div', { class: 'kbb-qe__pv-note', text: String(res.body.note || 'Nothing is drawn here.') }));
             }
@@ -781,14 +890,16 @@ function openEditor(edit, opener) {
     listen(window, 'resize', stageScale);
 
     setThumb();
+    if (hasLayout) { syncLayout(); paintLayout(); }
     stageScale();
     refreshPreview();
-    setTimeout(() => (window.innerWidth > 640 ? titleIn : closeX).focus({ preventScroll: true }), 30);
+    setTimeout(() => (window.innerWidth > 640 && !panel ? titleIn : closeX).focus({ preventScroll: true }), 30);
 }
 
 /** The stylesheet a header needs, for a page that did not load it. */
 function ensureCss(kind) {
-    const href = safePath(state.ctx.edit && state.ctx.edit.css && state.ctx.edit.css[kind === 'banner' ? 'banner' : 'header']);
+    const css = state.ctx.edit && state.ctx.edit.css;
+    const href = safePath(css && css[kind === 'banner' || kind === 'panel' ? kind : 'header']);
     if (!href || kind === 'none') return;
     if ([...document.querySelectorAll('link[rel=stylesheet]')].some((l) => l.getAttribute('href') === href)) return;
     document.head.appendChild(h('link', { rel: 'stylesheet', href }));
@@ -805,7 +916,8 @@ function ensureCss(kind) {
  */
 function swapHeader(result) {
     const old = currentHeader();
-    const oldKind = old ? (old.hasAttribute('data-kbb-title-header') ? 'header' : 'banner') : 'none';
+    const oldKind = !old ? 'none' : old.hasAttribute('data-kbb-title-header') ? 'header'
+        : old.hasAttribute('data-kbb-brand-header') ? 'panel' : 'banner';
 
     if (result.kind === 'none' && oldKind === 'none') return 'kept';
     if (!old || result.kind !== oldKind) return 'reload';

@@ -38,6 +38,9 @@ export default defineConfig({
                 // The old shop's category title header (Lane PT), loaded only
                 // by a category or brand page that draws one.
                 'resources/css/kbb/kbb-title-header.css',
+                // The brand page's Panel header (Lane BR2), loaded only by a
+                // brand page that draws it.
+                'resources/css/kbb/kbb-brand-header.css',
                 'resources/css/kbb/kbb-product.css',
                 'resources/css/kbb/kbb-cart.css',
                 'resources/css/kbb/kbb-checkout.css',

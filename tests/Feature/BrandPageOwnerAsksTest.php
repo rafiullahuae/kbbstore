@@ -52,7 +52,8 @@ it('shows the name and the description, with no Shop all button and no Popular r
 
     $html = $this->get('/brands/glowtest/')->assertOk()->getContent();
 
-    expect($html)->toContain('<h1 class="brw-h1">Glowtest</h1>')
+    // Lane BR2: the default header is the Panel, whose <h1> is the brand name.
+    expect($html)->toContain('<h1 class="brw-ph__name" id="brw-ph-title">Glowtest</h1>')
         ->and($html)->toContain('Glowtest makes gentle cleansers.')
         ->and($html)->not->toContain('class="brw-cta"')
         ->and($html)->not->toContain(__('store.brands.popular_heading'))
@@ -73,7 +74,11 @@ it('prints the description typed on the brand page itself, which used to be drop
 
     $html = $this->get('/brands/glowtest/')->assertOk()->getContent();
 
-    expect($html)->toContain('<div class="brw-sub brw-desc"><p>Typed on the page <b>itself</b>.</p></div>');
+    // Lane BR2: printed by the Panel header (the default), and by Compact.
+    expect($html)->toContain('<div class="brw-ph__desc brw-desc"><p>Typed on the page <b>itself</b>.</p></div>');
+
+    bpSave(['brand_hero' => 'compact']);
+    expect($this->get('/brands/glowtest/')->getContent())->toContain('<div class="brw-sub brw-desc"><p>Typed on the page <b>itself</b>.</p></div>');
 });
 
 it('passes the description through the allowlist, so a script typed into it never reaches the page', function () {
@@ -110,7 +115,9 @@ it('puts each of the three back when its switch is turned the other way', functi
 
     $html = $this->get('/brands/glowtest/')->assertOk()->getContent();
 
-    expect($html)->toContain('class="brw-cta"')
+    // `class="brw-cta` without the closing quote: the Panel header (Lane BR2,
+    // the default) adds its own placement class after it.
+    expect($html)->toContain('class="brw-cta')
         ->and($html)->toContain(__('store.brands.popular_heading'))
         ->and($html)->toContain('?paged=2');
 });
@@ -147,7 +154,11 @@ function bpProducts2(Brand $brand, int $n): void
 }
 
 it('puts the three switches on their own tab, saved by the screen that owns the schema', function () {
-    expect(SiteLayout::TABS['brandpage'][2])->toBe(['brand_all', 'brand_cta', 'brand_popular', 'brand_hero', 'brand_ring', 'brand_phone_cover'])
+    // Lane BR2 adds the Panel header's eight: its look, its sizes and the
+    // picture's position, after the switches already here.
+    expect(SiteLayout::TABS['brandpage'][2])->toBe(['brand_all', 'brand_cta', 'brand_popular', 'brand_hero', 'brand_ring', 'brand_phone_cover',
+        'brand_panel_style', 'brand_pill', 'brand_logo_shape', 'brand_header_w', 'brand_banner_h', 'brand_banner_h_m',
+        'brand_content_w', 'brand_img_pos'])
         ->and(SiteLayout::SCHEMA['brand_all'][2])->toBeTrue()
         ->and(SiteLayout::SCHEMA['brand_cta'][2])->toBeFalse()
         ->and(SiteLayout::SCHEMA['brand_popular'][2])->toBeFalse();

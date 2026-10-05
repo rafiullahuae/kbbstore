@@ -247,3 +247,13 @@ textarea.kbb-qe__in{height:auto;min-height:84px;padding:10px 12px;resize:vertica
 @media (prefers-reduced-motion:reduce){
   .kbb-qe__bg,.kbb-qe__box,.kbb-qe-toast,.kbb-qe-swapped{animation:none}
 }
+/* Lane BR2: the brand Panel header's layout controls and its phone preview. */
+.kbb-qe__pv--phone{display:flex;justify-content:center;padding:10px 0;background:#f4eef1}
+.kbb-qe__pv--phone .kbb-qe__pv-stage{flex:none}
+.kbb-qe__pv-stage .brw-phw{margin:0}
+.kbb-qe__label--h{font-size:13.5px;color:#2a2228}
+.kbb-qe__layout{display:grid;gap:2px;margin-top:10px;padding:12px 14px;border:1px solid #f1e8ec;border-radius:12px;background:#fdfafb}
+.kbb-qe__layout .kbb-qe__seg{flex-wrap:wrap}
+.kbb-qe__bar-fld .kbb-qe__label{display:flex;justify-content:space-between;gap:10px}
+.kbb-qe__bar-fld output{font-variant-numeric:tabular-nums;color:#b23a62;font-weight:700}
+.kbb-qe__range{width:100%;accent-color:#e0567b;margin:4px 0 0}

@@ -333,13 +333,16 @@ const KBB_ELEMENT_ANCHORED_R6 = [
         ['<span class="kbb-card-nm">', 3],
     ],
     'tests/Feature/BrandUrlTest.php' => [
-        ['<h1 class="brw-h1">', 3],
+        ['<h1 class="brw-h1">', 2],
+        // Lane BR2: the brand page's default header is the Panel, whose <h1>
+        // and description carry their own classes.
+        ['<h1 class="brw-ph__name" id="brw-ph-title">', 1],
         ['<span class="kbb-card-nm">', 3],
         // 2.60.376: the description is a block now (it can carry paragraphs).
-        ['<div class="brw-sub brw-desc">', 1],
+        ['<div class="brw-ph__desc brw-desc">', 1],
     ],
     'tests/Feature/UrlSchemeTest.php' => [
-        ['<h1 class="brw-h1">Round Lab</h1>', 1],
+        ['<h1 class="brw-ph__name" id="brw-ph-title">Round Lab</h1>', 1],
     ],
     'tests/Feature/AccountAreaTest.php' => [
         ['<h1>Order #', 1],
