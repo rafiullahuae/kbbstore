@@ -3,6 +3,29 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.405
+**Every category and brand keeps its own product order; filters and links
+to the shop off; the address no longer changes while products load; your
+own app icon and favicon; both apps colour the top of the screen; both apps
+ask for notifications; Add person on App → Owner App; approved contrast.**
+Apply after .404. Runs its migrations. Hard refresh the admin and the shop.
+**Then re-save Medicube's order once** in Catalog → Reorder.
+
+| Your request | Now |
+|---|---|
+| "NO ANY CATEGORY OR BRAND should disturb the sorting of each other" | Catalog → Reorder saves each category and brand separately; every page opens exactly as before |
+| Filters "turned off completely on all pages"; Shop all "no where" | Filters column, drawer and buttons not rendered; no links to /shop on category, brand or Super Sale pages. Back: Appearance → Site layout → Product grid |
+| "the url must not change, only the more products loads" | The address stays put; Back returns to the same products and scroll. Back: Appearance → Site layout → Loading more products → "Show the page number in the address" |
+| "allow me to upload our own icon ... also site favicon" | App → Site App → App icon; App → Owner App → App icon; each with a favicon part and a size guide |
+| "extend the background color to the top end" | Owner app: no black band; colour to the top edge. Shop app: status bar in the header colour. Back: App → Owner App → Customise app → Layout → Top of the screen |
+| "apps should ask by default about to allow notifications" | Both installed apps ask once on opening (Not now: again after 7 days). App → Owner App → Settings; App → Site App |
+| "there should come all users list, and add new too" | App → Owner App → Team: everyone listed, "+ Add person" makes the account and switches the app on |
+| Contrast, every row but gold | The approved darker text colours and 24px phone footer taps |
+
+Remove and re-add both apps on your phones to see the new icon and top colour.
+
+Files: see the package's update.json.
+
 ## 2.60.404
 **The admin menu loads complete at once (and hides); a new App menu with Site
 App and Owner App; your website installs as an app; a beautiful 404 page;
