@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brand Header Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap">
+<style>
+/* One visual world on purpose: this page previews the shop, which is light,
+   so it stays light on any host theme and paints every colour itself. */
+:root{
+  --ink:#24161c; --muted:#6c5a63; --pink:#c8336a; --pink-soft:#f7e3ec;
+  --page:#fbf6f8; --card:#ffffff; --line:#eddfe6;
+  --brand:#1f7a35; --brand-d:#0d3b1b; --brand-soft:#e7f3ea;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font-family:Outfit,system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:16px}
+.wrap{max-width:1640px;margin:0 auto;padding-block:28px 60px}
+.intro{max-width:760px}
+.intro h1{font-size:30px;line-height:1.15;margin:0 0 10px;text-wrap:balance}
+.intro p{margin:0 0 8px;color:var(--muted);line-height:1.55}
+.intro b{color:var(--ink)}
+.key{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:99px;background:var(--pink-soft);color:var(--pink)}
+.tag.rec{background:var(--brand-soft);color:var(--brand)}
+.tag.best{background:var(--brand);color:#fff}
+
+.opt{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-top:24px}
+.opt-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.letter{font-size:30px;font-weight:700;line-height:1;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--pink-soft);color:var(--pink)}
+.opt.r .letter{background:var(--brand-soft);color:var(--brand)}
+.opt-h h2{font-size:20px;margin:0}
+.opt > p{margin:10px 0 0;color:var(--muted);line-height:1.55;max-width:900px}
+
+.frames{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:18px}
+.fl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.desk-col{flex:1 1 600px;min-width:0}
+.desk-scroll{overflow-x:auto;border-radius:14px}
+.frame{border:1px solid var(--line);border-radius:14px;background:linear-gradient(160deg,#fff6f1,#fbeef4)}
+.desk{width:1180px}
+.phone{width:390px;flex:none}
+.stage{container-type:inline-size;padding:20px 22px 24px}
+.phone .stage{padding:14px 12px 18px}
+
+/* products under the header, only to show the spacing */
+.hint{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:20px}
+.hint i{display:block;height:84px;border-radius:14px;background:#fff;border:1px solid #f0e4ea}
+
+/* ── shared header parts ─────────────────────────────────────────────── */
+.bh{display:grid;position:relative}
+.bh-img{background:#2d8f45 url(anua-banner.webp) right center/cover no-repeat;min-height:270px}
+.logo{flex:none;width:72px;height:72px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 0 0 3px var(--brand),0 6px 16px rgba(0,0,0,.18)}
+.logo svg{width:70%;height:auto;display:block}
+/* Logo shape, the setting the owner asked for: a circle for round logos,
+   a rounded rectangle for wide wordmarks. Each shape draws its own artwork. */
+.lg-r{display:none!important}
+.shape-rect .lg-c{display:none!important}
+.shape-rect .lg-r{display:block!important;width:78%}
+.shape-rect .logo{width:auto;aspect-ratio:2.3/1;border-radius:12px}
+.shape-rect .bh-d .logo{width:auto;height:96px;border-radius:16px}
+.toggle{display:inline-flex;gap:4px;padding:4px;border-radius:99px;background:#fff;border:1px solid var(--line);margin-top:16px}
+.toggle button{font:inherit;font-size:14px;font-weight:500;border:0;background:transparent;color:var(--muted);padding:8px 16px;border-radius:99px;cursor:pointer}
+.toggle button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.toggle button:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.toggle-l{font-size:13px;color:var(--muted);margin:14px 0 0}
+.bh-id{display:flex;align-items:center;gap:16px}
+.bh h3{margin:0;font-size:34px;font-weight:700;letter-spacing:-.01em;line-height:1.05}
+.bh-desc{margin:12px 0 0;font-size:15px;line-height:1.6}
+
+/* ── A · frosted panel (your brief) ──────────────────────────────────── */
+.bh-a,.bh-b,.bh-c{border-radius:16px}
+.bh-a .bh-img,.bh-b .bh-img,.bh-c .bh-img{grid-area:1/1;border-radius:16px}
+.bh-a .bh-panel,.bh-b .bh-panel,.bh-c .bh-panel{grid-area:1/1;align-self:center;width:60%;padding:22px 26px;border-radius:16px}
+.bh-a .bh-panel{margin-inline-start:36px;background:rgba(255,255,255,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 12px 32px rgba(10,40,20,.18)}
+.bh-a .bh-desc{color:#3d2f35}
+
+/* ── B · deep brand-tint panel (your brief) ──────────────────────────── */
+.bh-b .bh-panel{margin-inline-start:36px;background:rgba(9,46,20,.74);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.16);color:#fff}
+.bh-b .logo{box-shadow:0 0 0 3px #fff,0 6px 16px rgba(0,0,0,.25)}
+.bh-b .bh-desc{color:rgba(255,255,255,.9)}
+
+/* ── C · centred white card (your brief) ─────────────────────────────── */
+.bh-c .bh-panel{justify-self:center;text-align:center;background:#fff;box-shadow:0 14px 36px rgba(10,40,20,.2)}
+.bh-c .bh-id{justify-content:center}
+.bh-c .bh-desc{color:#3d2f35}
+
+/* phone: logo + name stay on the banner, the description moves under it */
+@container (max-width:600px){
+  .bh-img{min-height:165px}
+  .logo{width:52px;height:52px}
+  .bh h3{font-size:22px}
+  .bh-a .bh-panel,.bh-b .bh-panel,.bh-c .bh-panel{display:contents}
+  .bh-a .bh-id,.bh-b .bh-id,.bh-c .bh-id{grid-area:1/1;align-self:end;justify-self:start;margin:0 0 12px 12px;padding:6px 16px 6px 6px;border-radius:99px;gap:10px}
+  .bh-a .bh-id{background:rgba(255,255,255,.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .bh-b .bh-id{background:rgba(9,46,20,.78);color:#fff}
+  .bh-c .bh-id{background:#fff;justify-self:center;margin-inline:0;box-shadow:0 6px 18px rgba(0,0,0,.15)}
+  .bh-a .bh-desc,.bh-b .bh-desc,.bh-c .bh-desc{grid-area:2/1;margin-top:12px;padding:14px 16px;border-radius:14px;font-size:14px}
+  .bh-a .bh-desc{background:#fff;border:1px solid var(--line)}
+  .bh-b .bh-desc{background:var(--brand-soft);color:#1d3a24;border:1px solid #d3e8d9}
+  .bh-c .bh-desc{background:#fff;border:1px solid var(--line);text-align:center}
+  .hint{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hint i:nth-child(5){display:none}
+}
+
+/* ── D · cover and avatar (recommended) ──────────────────────────────── */
+.bh-d{grid-template-columns:auto minmax(0,1fr);column-gap:22px}
+.bh-d .bh-img{grid-column:1/-1;min-height:220px;border-radius:16px}
+.bh-d .bh-panel,.bh-d .bh-id{display:contents}
+.bh-d .logo{grid-area:2/1/4/2;width:116px;height:116px;margin:-58px 0 0 32px;box-shadow:0 0 0 5px #fff,0 0 0 8px var(--brand),0 10px 24px rgba(0,0,0,.16)}
+.bh-d h3{grid-area:2/2;padding-top:16px;font-size:36px}
+.bh-d .bh-desc{grid-area:3/2;margin-top:8px;max-width:72ch;color:#3d2f35}
+@container (max-width:600px){
+  .bh-d{grid-template-columns:minmax(0,1fr);text-align:center}
+  .bh-d .bh-img{min-height:140px}
+  .bh-d .logo{grid-area:2/1;justify-self:center;width:88px;height:88px;margin:-44px 0 0}
+  .bh-d h3{grid-area:3/1;padding-top:10px;font-size:26px}
+  .bh-d .bh-desc{grid-area:4/1;font-size:14px}
+}
+
+/* ── E · split: brand colour beside the picture ─────────────────────── */
+.bh-e{grid-template-columns:42% minmax(0,1fr);border-radius:16px;overflow:hidden;background:linear-gradient(150deg,#16602a,var(--brand-d))}
+.bh-e .bh-img{grid-area:1/2;min-height:270px}
+.bh-e .bh-panel{grid-area:1/1;align-self:center;padding:30px 34px;color:#fff}
+.bh-e .logo{box-shadow:0 0 0 3px #fff,0 6px 16px rgba(0,0,0,.25)}
+.bh-e .bh-desc{color:rgba(255,255,255,.88)}
+@container (max-width:600px){
+  .bh-e{grid-template-columns:minmax(0,1fr)}
+  .bh-e .bh-img{grid-area:1/1;min-height:140px}
+  .bh-e .bh-panel{grid-area:2/1;padding:18px 18px 20px}
+  .bh-e .bh-desc{font-size:14px}
+}
+
+/* ── F · cinematic fade, no box ──────────────────────────────────────── */
+.bh-f{border-radius:16px;overflow:hidden}
+.bh-f .bh-img{grid-area:1/1;min-height:330px}
+.bh-f .bh-panel{grid-area:1/1;align-self:end;padding:70px 40px 30px;color:#fff;background:linear-gradient(to top,rgba(6,34,15,.94) 0%,rgba(6,34,15,.72) 55%,rgba(6,34,15,0) 100%)}
+.bh-f .bh-panel > *{max-width:60%}
+.bh-f .logo{box-shadow:0 0 0 3px #fff,0 6px 16px rgba(0,0,0,.3)}
+.bh-f .bh-desc{color:rgba(255,255,255,.9)}
+@container (max-width:600px){
+  .bh-f{overflow:visible}
+  .bh-f .bh-img{min-height:190px;border-radius:16px}
+  .bh-f .bh-panel{display:contents}
+  .bh-f .bh-id{grid-area:1/1;align-self:end;padding:40px 14px 14px;border-radius:0 0 16px 16px;background:linear-gradient(to top,rgba(6,34,15,.9),rgba(6,34,15,0));max-width:none}
+  .bh-f .bh-desc{grid-area:2/1;color:#3d2f35;font-size:14px;max-width:none;margin-top:12px}
+}
+
+.foot{margin-top:28px;color:var(--muted);font-size:14px;line-height:1.55;max-width:860px}
+@media (max-width:700px){ .intro h1{font-size:24px} .opt{padding:16px} }
+@media (prefers-reduced-motion:reduce){ *{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="intro">
+  <h1>Brand page header: six options</h1>
+  <p><b>A, B and C follow your brief.</b> The logo sits on the banner with the brand name beside it and the description underneath, all inside a panel about 60% of the width so nothing merges with the picture. On a phone the logo and name stay on the banner and the description moves under it.</p>
+  <p><b>D, E and F are my own ideas.</b> They are deliberately different from your brief. <b>I recommend D.</b></p>
+  <p>Each option is shown at laptop width (scroll it sideways if your screen is narrower) and at phone width (390px).</p>
+  <p class="toggle-l">Logo shape: on the shop this is a setting in each brand's header popup. Try both here.</p>
+  <div class="toggle" role="group" aria-label="Logo shape"><button type="button" id="shape-circle" aria-pressed="true">Circle</button><button type="button" id="shape-rect" aria-pressed="false">Rectangle</button></div>
+  <div class="key"><span class="tag">Your brief</span><span class="tag rec">My idea</span><span class="tag best">Recommended</span></div>
+</div>
+
+<!--
+  Each option is drawn twice from the SAME markup: the laptop frame and the phone
+  frame differ only in width, and container queries switch the layout. That is
+  also how it would be built on the shop: one header, no duplicated text.
+-->
+<template id="anua">
+  <div class="bh-img" role="img" aria-label="Anua banner"></div>
+  <div class="bh-panel">
+    <div class="bh-id">
+      <span class="logo"><svg class="lg-c" viewBox="0 0 60 60" aria-hidden="true"><text x="30" y="27" text-anchor="middle" font-family="Outfit, sans-serif" font-weight="300" font-size="21" fill="#1a1a1a">An</text><text x="30" y="47" text-anchor="middle" font-family="Outfit, sans-serif" font-weight="300" font-size="21" fill="#1a1a1a">ua</text></svg><svg class="lg-r" viewBox="0 0 120 44" aria-hidden="true"><text x="60" y="31" text-anchor="middle" font-family="Outfit, sans-serif" font-weight="300" font-size="30" letter-spacing="1" fill="#1a1a1a">Anua</text></svg></span>
+      <h3>Anua</h3>
+    </div>
+    <p class="bh-desc">Anua believes that healthy skin does not depend solely on skin care products but also on having a relaxed mind and regulated lifestyle. The brand focuses on choosing pure, organic ingredients to maximize effectiveness.</p>
+  </div>
+</template>
+
+<section class="opt" data-k="a">
+  <div class="opt-h"><span class="letter">A</span><h2>Frosted glass panel</h2><span class="tag">Your brief</span></div>
+  <p>A soft white panel with a light blur, so the banner still shows through faintly. Dark text, easy to read on any banner colour.</p>
+</section>
+
+<section class="opt" data-k="b">
+  <div class="opt-h"><span class="letter">B</span><h2>Deep brand-tint panel</h2><span class="tag">Your brief</span></div>
+  <p>The panel takes a dark shade of the brand's own colour, with white text. It looks richer and blends with the banner without merging into it. On a phone the description sits on a pale tint of the same colour.</p>
+</section>
+
+<section class="opt" data-k="c">
+  <div class="opt-h"><span class="letter">C</span><h2>Centred white card</h2><span class="tag">Your brief</span></div>
+  <p>A solid white card centred on the banner, with logo and name on one row and the description underneath. It is the calmest of the three. It hides more of the picture's centre, so it suits banners whose subject sits at the edges.</p>
+</section>
+
+<section class="opt r" data-k="d">
+  <div class="opt-h"><span class="letter">D</span><h2>Cover and logo badge</h2><span class="tag rec">My idea</span><span class="tag best">Recommended</span></div>
+  <p>The banner stays a clean cover photo with nothing on top of it. A large logo badge overlaps its bottom edge, and the name and description sit beside it on the page, like a brand's profile page. <b>Why I recommend it:</b> no text ever sits on a photo, so it reads perfectly on every brand banner, including busy ones. The picture shows in full. It is the most compact option on a phone. A brand with no banner still looks complete, because the cover falls back to its brand colour.</p>
+</section>
+
+<section class="opt r" data-k="e">
+  <div class="opt-h"><span class="letter">E</span><h2>Split: brand colour beside the picture</h2><span class="tag rec">My idea</span></div>
+  <p>The left side is a solid block of the brand's colour, holding the logo, name and description. The banner fills the right side. No overlay at all, and every brand page gets a strong colour identity. On a phone the picture sits on top and the colour block below it.</p>
+</section>
+
+<section class="opt r" data-k="f">
+  <div class="opt-h"><span class="letter">F</span><h2>Cinematic fade</h2><span class="tag rec">My idea</span></div>
+  <p>A taller banner fades into the brand's dark colour at the bottom, with the logo, name and description in white on the fade. There is no box, so it feels like a magazine cover. It is the most dramatic option and needs banners that have room at the bottom.</p>
+</section>
+
+<p class="foot">The banner here is cut from your screenshot, with your red marks and the old text removed. On the shop your original uploaded picture is used, so it will be sharper. The description stops where your screenshot cut it off. Reply with a letter, or mix them (for example "D, but with the B colours"). Nothing changes on the shop until you pick.</p>
+
+</div>
+<script>
+// Stamp the shared Anua header into every option, once for each frame.
+(function () {
+  var tpl = document.getElementById('anua');
+  document.querySelectorAll('.opt').forEach(function (opt) {
+    var k = opt.getAttribute('data-k');
+    var frames = document.createElement('div');
+    frames.className = 'frames';
+    [['desk', 'Laptop · 1180px'], ['phone', 'Phone · 390px']].forEach(function (f) {
+      var col = document.createElement('div');
+      col.className = f[0] === 'desk' ? 'desk-col' : 'phone-col';
+      var label = document.createElement('p');
+      label.className = 'fl';
+      label.textContent = f[1];
+      var frame = document.createElement('div');
+      frame.className = 'frame ' + f[0];
+      var stage = document.createElement('div');
+      stage.className = 'stage';
+      var bh = document.createElement('div');
+      bh.className = 'bh bh-' + k;
+      bh.appendChild(tpl.content.cloneNode(true));
+      var hint = document.createElement('div');
+      hint.className = 'hint';
+      hint.innerHTML = '<i></i><i></i><i></i><i></i><i></i>';
+      stage.appendChild(bh);
+      stage.appendChild(hint);
+      frame.appendChild(stage);
+      if (f[0] === 'desk') {
+        var sc = document.createElement('div');
+        sc.className = 'desk-scroll';
+        sc.appendChild(frame);
+        col.appendChild(label);
+        col.appendChild(sc);
+      } else {
+        col.appendChild(label);
+        col.appendChild(frame);
+      }
+      frames.appendChild(col);
+    });
+    opt.appendChild(frames);
+  });
+  var c = document.getElementById('shape-circle'), r = document.getElementById('shape-rect');
+  function shape(rect) {
+    document.body.classList.toggle('shape-rect', rect);
+    c.setAttribute('aria-pressed', rect ? 'false' : 'true');
+    r.setAttribute('aria-pressed', rect ? 'true' : 'false');
+  }
+  c.addEventListener('click', function () { shape(false); });
+  r.addEventListener('click', function () { shape(true); });
+})();
+</script>
+</body>
+</html>
