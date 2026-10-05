@@ -9,9 +9,7 @@
 
 @section('content')
 <div class="kbb-home">
-@include('partials.page-banner', ['pageBanner' => $pageBanner ?? null])
-<section class="sec"><div class="wrap">
-{{-- Pages → Page header (Lane PH): null = the original markup below, byte for byte. --}}@if (! empty($pageHeader))
+{{-- The top of the page (Lane SP3): the header area and the strip in the owner's order. Null = the original markup below, byte for byte. --}}@if (! empty($pageTop))
 @php
     $phParts = [
         'home' => Url::to('/'),
@@ -22,8 +20,10 @@
         'button' => ['href' => Url::to('/shop/'), 'label' => __('store.collection.all_products')],
     ];
 @endphp
-@include('partials.page-header', ['ph' => $phParts])
-@else
+@include('partials.page-top', ['ph' => $phParts])
+@endif
+<section class="sec"><div class="wrap">
+@if (empty($pageTop))
     <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{{ $title }}</span></nav>
 
     <div class="sh">

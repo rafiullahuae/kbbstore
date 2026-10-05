@@ -2157,26 +2157,11 @@ KBB_BH_CSS;
             ],
 
             /*
-             * THE SUPER SALE STRIP, ON /super-sale/ ONLY. (Lane SS)
-             *
-             * The owner: "i need a custom banner including image and thin strip
-             * with content … such custom banners we will need for custom
-             * pages." It ships ON for /super-sale/ (rule 1 since 30 September:
-             * what he asked for is the shop's new state) with his two lines and
-             * NO picture — nobody has uploaded one, and an empty slot draws no
-             * <img>. So the one page gains ONE block: the banner's <style>, and
-             * the strip of two ticks. Nothing else on any page moves; every
-             * other custom page is unassigned and adds not one byte.
-             *
-             * The pattern names the shipped strip — the deep rose, white text,
-             * 44/36px tall, 15/12px type — so a default that moves without this
-             * walk being told is red here and not only in PageBannersTest. `~`
-             * as the delimiter because the colours carry `#`. `[^<]*` for the
-             * stylesheet: it is PageBanners::CSS, a constant with no `<` in it.
-             *
-             * The product grid beneath it does not move in this walk: the seed
-             * has no category slugged super-sale, so the page falls back to the
-             * reduced-products listing it drew before (SuperSaleOrderTest).
+             * THE SUPER SALE STRIP (Lane SS) IS NO LONGER HERE: Lane SP3 turned
+             * it off on every page, because the owner asked ("turned off the
+             * strip by default on all pages"). Its rule was removed with it;
+             * the banner stays in the library, and PageBannersTest draws it
+             * once switched on.
              */
             /*
              * THE SUPER SALE TITLE BLOCK, CONFIGURED (Lane PH). Paired with
@@ -2199,15 +2184,23 @@ KBB_BH_CSS;
                 'hits' => 1,
             ],
 
-            'the Super Sale page banner strip (Lane SS)' => [
-                'pattern' => '~<style id="kbb-pb-css">[^<]*</style>\n'
-                    .'<div class="kbb-pb" style="--pb-bg:#C8336A;--pb-ink:#FFFFFF;--pb-ic:#FFFFFF;--pb-hd:44px;--pb-hm:36px;--pb-fd:15px;--pb-fm:12px;--pb-id:18px;--pb-im:15px" data-banner="super-sale">\n'
-                    .'<ul class="kbb-pb-strip"><li><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>100% Authentic Products</span></li>'
-                    .'<li><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>Express Delivery all over UAE</span></li>'
-                    // Lane PH: "include in the strip for desktop only 'Free
-                    // skincare consultation', in mobile two lines are fine."
-                    .'<li class=kbb-pb-d><svg class="kbb-pb-ic"[^>]*>.*?</svg><span>Free skincare consultation</span></li></ul>\n'
-                    .'</div>\n~s',
+            /*
+             * THE TOP AREA OF /super-sale/ (Lane SP3). The owner: "also remove
+             * any space between header area and main site header. and give
+             * option to control to spacings." The configured title block above
+             * (cut first, by its own rule) now stands in a top area of its own
+             * before the listing's section: the area's <style>, the <div> whose
+             * style carries his spacing — 0 above and between, the header's own
+             * 22/12px below, as it was — and the header's .sec > .wrap. Only a
+             * page that draws a configured header or a strip has one; no other
+             * page in this walk does. Must stay AFTER the title block's rule.
+             */
+            'the Super Sale top area, its spacing at 0 above (Lane SP3)' => [
+                'pattern' => '#<style id="kbb-pt-css">[^<]*</style>\n'
+                    .'<div class="kbb-pt" style="--pt-td:0px;--pt-gd:0px;--pt-bd:22px;--pt-tm:0px;--pt-gm:0px;--pt-bm:12px" data-kbb-pt="collection:super-sale">\n'
+                    .'<div class="sec kbb-pt-s"><div class="wrap">\n'
+                    .'</div></div>\n'
+                    .'</div>\n#',
                 'hits' => 1,
             ],
 

@@ -33,6 +33,12 @@
 .kbb-phe-ord li.is-off span{color:#a8979e;text-decoration:line-through}
 .kbb-phe-ord button,.kbb-phe-btn{min-height:30px;min-width:30px;border:1px solid #eadfe3;border-radius:8px;background:#fff;color:inherit;font:inherit;font-size:12.5px;cursor:pointer;padding:3px 10px}
 .kbb-phe-ord button{padding:0}
+/* (Lane SP3) The header area / strip rows: drag them, or use the arrows. */
+.kbb-phe-blocks li{cursor:grab}
+.kbb-phe-blocks li.is-drag{border-color:#c8336a;background:#fdf2f6}
+.kbb-phe-grip{flex:none;padding:0 2px;color:#9a8790;font-size:15px;line-height:1;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.kbb-phe-in select{width:100%;min-height:34px;padding:6px 9px;border:1px solid #eadfe3;border-radius:9px;font:inherit;font-size:12.5px;color:inherit;background:#fff}
+a.kbb-phe-help{color:#b8325f}
 .kbb-phe-ord button[disabled],.kbb-phe-btn[disabled]{opacity:.4;cursor:default}
 .kbb-phe-btn.is-primary{background:#c8336a;border-color:#c8336a;color:#fff;font-weight:700}
 .kbb-phe-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}

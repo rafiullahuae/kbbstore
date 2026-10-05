@@ -100,8 +100,25 @@ final class PageHeaders
         'img_h' => [40, 600, 260, 160, 'Picture height (px)'],
         'radius' => [0, 40, 14, 10, 'Picture corners (px)'],
         'gap' => [0, 60, 12, 8, 'Space between rows (px)'],
+        // (Lane SP3) The three spacings of the TOP AREA — the header area and
+        // the strip together. `space` keeps its key, label and defaults, so a
+        // saved look keeps its gap before the products; in the top area it is
+        // the space after whichever block is last. `top` is the WHOLE gap
+        // under the site header — 0 is 0 (TOP_CSS zeroes everything else).
         'space' => [0, 80, 22, 12, 'Space below the header (px)'],
+        'top' => [0, 80, 0, 0, 'Space above the header (px)'],
+        'mid' => [0, 80, 0, 0, 'Space between the header and the strip (px)'],
     ];
+
+    /** (Lane SP3) The spacing keys, drawn together at the end of "Sizes", in this order. */
+    public const SPACING = ['top', 'space', 'mid'];
+
+    /**
+     * (Lane SP3) The two blocks at the top of a custom page, which the owner
+     * orders by drag and drop: [key => label]. The first order is the shipped
+     * one — the strip above the header area, as Lane SS drew it.
+     */
+    public const BLOCKS = ['strip' => 'Strip', 'header' => 'Header area'];
 
     public const MAX_PAGES = 80;
 
@@ -138,6 +155,40 @@ final class PageHeaders
         .'.kbb-ph .kbb-ph-vd{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}'
         .'.kbb-home .kbb-ph .kbb-ph-hd{display:none}}';
 
+    /**
+     * (Lane SP3) Every byte of CSS the TOP AREA prints: the header area and the
+     * strip, in the owner's order, inside one <div class="kbb-pt">. A constant
+     * (rule 5), printed only on a page that draws one of the two blocks.
+     *
+     * WHERE THE GAP CAME FROM, measured in Chromium on /super-sale/ before this
+     * existed: under the strip, .kbb-pb's own 4px margin, then the listing
+     * section's padding (6px phone, clamp(9px,1.1vw,14px) desktop), then its
+     * .wrap's padding-top (16px phone, clamp(22px,2.6vw,34px) desktop) — 26px
+     * at 390 and 51.3px at 1280 before the header picture began. With the
+     * strip off, the same 22px / 47.3px sat between the site header and the
+     * picture. Every one of them is zeroed HERE, inside .kbb-pt and on the one
+     * section after it, and the owner's three numbers take their place:
+     * --pt-t* above the first block, --pt-g* between the two, --pt-b* after the
+     * last (the header's own `space`, whose margin is zeroed so it is not
+     * counted twice). No other page carries .kbb-pt, so no other page moves.
+     *
+     * The header area sits in <div class="sec kbb-pt-s"><div class="wrap">, so
+     * every width and gutter rule the listing's own section has applies to it
+     * unchanged; a content page's sits in a .policy as well, for its heading
+     * size. The strip stays outside any .wrap: edge to edge in either order.
+     * The space between is `~`, not `+`: the strip's partial prints its own
+     * <style> before it, and in the header-first order that element stands
+     * between the two blocks.
+     */
+    public const TOP_CSS = '.kbb-home .kbb-pt{display:flow-root;padding:var(--pt-tm) 0 var(--pt-bm)}'
+        .'.kbb-home .kbb-pt>.kbb-pb,.kbb-home .kbb-pt>.kbb-pt-s{margin:0}'
+        .'.kbb-home .kbb-pt>.kbb-pb~.kbb-pt-s,.kbb-home .kbb-pt>.kbb-pt-s~.kbb-pb{margin-top:var(--pt-gm)}'
+        .'.kbb-home .sec.kbb-pt-s{padding:0}.kbb-home .sec.kbb-pt-s>.wrap{padding-top:0;padding-bottom:0}'
+        .'.kbb-home .kbb-pt .policy{padding:0}.kbb-home .kbb-pt div.kbb-ph{margin:0}'
+        .'.kbb-home .kbb-pt+.sec{padding-top:0}.kbb-home .kbb-pt+.sec>.wrap{padding-top:0}.kbb-home .kbb-pt+.sec .policy{padding-top:0}'
+        .'@media (min-width:901px){.kbb-home .kbb-pt{padding:var(--pt-td) 0 var(--pt-bd)}'
+        .'.kbb-home .kbb-pt>.kbb-pb~.kbb-pt-s,.kbb-home .kbb-pt>.kbb-pt-s~.kbb-pb{margin-top:var(--pt-gd)}}';
+
     private ?array $memo = null;
 
     public function __construct(private SettingsService $settings) {}
@@ -165,7 +216,7 @@ final class PageHeaders
     /** A whole bag at the page as it was. */
     public static function blank(): array
     {
-        return ['d' => self::device('d'), 'm' => self::device('m'), 'img' => '', 'img_m' => '', 'alt' => ''];
+        return ['d' => self::device('d'), 'm' => self::device('m'), 'img' => '', 'img_m' => '', 'alt' => '', 'blocks' => array_keys(self::BLOCKS)];
     }
 
     /** What ships: the global look unchanged, and /super-sale/ as the owner asked. */
@@ -217,16 +268,64 @@ final class PageHeaders
      *
      * @return array{key:string, kind:string, bag:array, img:?array}|null
      */
-    public function forPage(string $pageKey, string $kind): ?array
+    public function forPage(string $pageKey, string $kind, bool $force = false): ?array
     {
         $bag = $this->bagFor($pageKey);
         $img = self::picture($bag);
 
-        if ($img === null && self::project($bag, $kind) === self::project(self::blank(), $kind)) {
+        if (! $force && $img === null && self::project($bag, $kind) === self::project(self::blank(), $kind)) {
             return null;
         }
 
         return ['key' => $pageKey, 'kind' => $kind, 'bag' => $bag, 'img' => $img];
+    }
+
+    /**
+     * (Lane SP3) The top of a custom page: the header area and the strip, in
+     * the owner's order with his spacing — or null, and the view prints its
+     * original markup byte for byte.
+     *
+     * Null when the page draws neither a configured header nor a strip. A page
+     * with the strip switched on and its header untouched still gets the
+     * configured header (forced): that is the shape Lane PH drew to look like
+     * the original, and the only one that can be moved below the strip.
+     * Reads two settings SettingsService already holds: no query.
+     *
+     * @return array{key:string, order:list<string>, style:string, banner:?array, header:array}|null
+     */
+    public function top(string $pageKey, string $kind): ?array
+    {
+        $banner = app(PageBanners::class)->forPage($pageKey);
+        $header = $this->forPage($pageKey, $kind, $banner !== null);
+
+        if ($header === null) {
+            return null;
+        }
+
+        return [
+            'key' => $pageKey,
+            'order' => $banner === null ? ['header'] : $header['bag']['blocks'],
+            'style' => self::topStyle($header['bag']),
+            'banner' => $banner,
+            'header' => $header,
+        ];
+    }
+
+    /**
+     * The top area's style attribute: constant names and clamped integers.
+     * resources/js/kbb/admin/page-header-compile.js topStyle() is the same
+     * function for the live panel; PageHeaderTest compares the two.
+     */
+    public static function topStyle(array $bag): string
+    {
+        $out = [];
+        foreach (['d', 'm'] as $dev) {
+            $out[] = '--pt-t'.$dev.':'.(int) $bag[$dev]['top'].'px';
+            $out[] = '--pt-g'.$dev.':'.(int) $bag[$dev]['mid'].'px';
+            $out[] = '--pt-b'.$dev.':'.(int) $bag[$dev]['space'].'px';
+        }
+
+        return implode(';', $out);
     }
 
     /** The picture to draw, or null for none. */
@@ -269,6 +368,11 @@ final class PageHeaders
                 unset($h['button_at']);
             }
             unset($h['image'], $h['img_h'], $h['radius'], $h['fit']);
+            // (Lane SP3) The space above and between are the TOP AREA's, which
+            // a page enters by drawing a header or a strip (top()), never by
+            // holding a number: a page that draws neither has no first block
+            // to put space above, and keeps its original markup.
+            unset($h['top'], $h['mid']);
             $h['order'] = array_values(array_filter($h['order'], static fn (string $e): bool => self::draws($e, $kind)));
             ksort($h);
             $out[$dev] = $h;
@@ -491,6 +595,20 @@ final class PageHeaders
             }
 
             $out[$dev] = $h;
+        }
+
+        // (Lane SP3) The two blocks' order: a permutation of BLOCKS or refused.
+        if (array_key_exists('blocks', $raw)) {
+            $blocks = is_array($raw['blocks']) ? array_values(array_map(static fn ($e): string => is_string($e) ? $e : '', $raw['blocks'])) : [];
+            $sorted = $blocks;
+            sort($sorted);
+            $want = array_keys(self::BLOCKS);
+            sort($want);
+            if ($sorted === $want) {
+                $out['blocks'] = $blocks;
+            } else {
+                $rejected["$at.blocks"] = 'Order of the header area and the strip';
+            }
         }
 
         foreach (['img' => 'Desktop picture', 'img_m' => 'Phone picture'] as $k => $label) {

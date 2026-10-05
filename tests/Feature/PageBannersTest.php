@@ -60,13 +60,26 @@ beforeEach(function () {
 
 /* ═════════════════════════════════════ what ships, because he asked ═══ */
 
-it('ships the strip on /super-sale/ with his two lines, and no picture until one is chosen', function () {
+it('ships the Super Sale strip in the library with his lines, on no page, and draws them once switched on', function () {
     /*
-     * DEFECT THIS CATCHES: a lane shipping the slot empty "to be safe" (he
-     * applies the package and sees nothing), or one shipping a stand-in
-     * picture that the shop then draws as a broken image.
-     * MUTATION: empty defaults()['assign'] -> the first assertion is red.
+     * (Lane SP3, advanced deliberately.) Lane SS shipped this strip ON for
+     * /super-sale/. The owner, after seeing it: "turned off the strip by
+     * default on all pages, and allow to turn ON on any page from the edit
+     * panel on the front-end". So the banner ships in the library and on no
+     * page; switched on, it draws exactly what Lane SS drew.
+     *
+     * DEFECT THIS CATCHES: the strip still on the shop after the package (he
+     * asked for it off), or the banner deleted with it, so the switch has
+     * nothing to turn on.
+     * MUTATION: put 'collection:super-sale' => 'super-sale' back in
+     * defaults()['assign'] -> the first assertion is red; drop the banner
+     * from defaults()['banners'] -> the second is.
      */
+    expect($this->get('/super-sale')->assertOk()->getContent())->not->toContain('class="kbb-pb')
+        ->and(array_column(PageBanners::defaults()['banners'], 'id'))->toBe(['super-sale'])
+        ->and(PageBanners::defaults()['assign'])->toBe([]);
+
+    pbStore(['banners' => PageBanners::defaults()['banners'], 'assign' => ['collection:super-sale' => 'super-sale']]);
     $html = $this->get('/super-sale')->assertOk()->getContent();
 
     expect(substr_count($html, '<style id="kbb-pb-css">'))->toBe(1)
@@ -213,7 +226,7 @@ it('answers the screen with the shipped banner, every custom page and the Super 
     expect($body['banners'])->toHaveCount(1)
         ->and($body['banners'][0]['id'])->toBe('super-sale')
         ->and($body['banners'][0]['img_d'])->toBe('')
-        ->and($body['assign'])->toBe(['collection:super-sale' => 'super-sale'])
+        ->and($body['assign'])->toBe([])   // Lane SP3: off on every page
         ->and(array_column($body['pages'], 'key'))->toContain('collection:super-sale')
         ->and($body['css'])->toBe(PageBanners::CSS)
         ->and($body['super_sale']['source'])->toBe('auto')
@@ -240,7 +253,9 @@ it('saves a banner, its page and the source, and the shop shows them', function 
         ->and($about)->toContain('--pb-bg:#112233')
         ->and($about)->toContain('--pb-hd:50px')
         ->and($about)->toContain('width="1920" height="600"')        // read off the Media Library row on save
-        ->and($this->get('/super-sale')->getContent())->not->toContain('kbb-pb')   // no longer assigned
+        // No longer assigned. (Lane SP3) The markup, not the text: the top
+        // area's CSS on /super-sale/ names .kbb-pb in its selectors.
+        ->and($this->get('/super-sale')->getContent())->not->toContain('class="kbb-pb')
         ->and(app(SettingsService::class)->get(SuperSale::KEY))->toBe('category:'.$cat->id);
 });
 
@@ -288,7 +303,7 @@ it('costs the page no query at all, with 3 products or 40', function () {
             Product::create(['slug' => "pb-q{$n}-".($on ? 'on' : 'off')."-{$i}", 'name' => "PB {$i}", 'type' => 'simple', 'status' => 'publish',
                 'is_visible' => true, 'price' => 2000, 'sale_price' => 1000, 'stock_status' => 'instock']);
         }
-        pbStore($on ? PageBanners::defaults() : ['banners' => [], 'assign' => []]);
+        pbStore($on ? ['assign' => ['collection:super-sale' => 'super-sale']] + PageBanners::defaults() : ['banners' => [], 'assign' => []]);
         SettingsService::forgetMemo();
         $this->get('/super-sale');
 

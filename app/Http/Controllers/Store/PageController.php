@@ -292,10 +292,10 @@ class PageController extends Controller
         return view('store.page', [
             'page' => $page,
             'settings' => $this->settings,
-            // Pages → Page banners (Lane SS): null on a page with none.
-            'pageBanner' => app(\App\Services\PageBanners::class)->forPage('page:' . $slug),
-            // Pages → Page header (Lane PH): null = the original title block.
-            'pageHeader' => app(\App\Services\PageHeaders::class)->forPage('page:' . $slug, 'page'),
+            // Pages → Page header + Page banners (Lanes PH, SS, SP3): the header
+            // area and the strip in the owner's order, or null = the original
+            // title block and no strip. Two settings already loaded: no query.
+            'pageTop' => app(\App\Services\PageHeaders::class)->top('page:' . $slug, 'page'),
             // The layout reads `$seoCtx` and merges it over its own defaults;
             // see resources/views/layouts/store.blade.php. An empty array is the
             // no-override case and merges to nothing.

@@ -6,8 +6,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\PageBanners;
+use App\Models\AdminUser;
 use App\Services\PageHeaders;
+use App\Support\AdminRoles;
 use App\Support\Url;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -64,15 +67,39 @@ class PageHeaderApiController extends Controller
             'key' => ['required', 'string', 'max:80'],
             'scope' => ['required', 'string', 'in:page,global,inherit'],
             'bag' => ['nullable', 'array'],
+            // (Lane SP3) "Show the strip": a banner id, or '' for off. Absent
+            // means "not touched", and nothing about the strip is written.
+            'strip' => ['sometimes', 'nullable', 'string', 'max:60'],
         ]);
 
+        $banners = app(PageBanners::class);
+        $strip = $request->exists('strip') ? (string) ($data['strip'] ?? '') : null;
+
+        if ($strip !== null) {
+            // It writes banner data, so it needs the banners' own capability
+            // as well as this route's — checked before anything is written,
+            // so a refused strip leaves the header unsaved too. Fails closed.
+            $admin = Auth::guard('admin')->user();
+            if (! $admin instanceof AdminUser || ! AdminRoles::can($admin, 'pagebanners.manage')) {
+                return response()->json(['ok' => false, 'message' => 'Your role cannot switch the strip. Nothing was saved.'], 403);
+            }
+            if ($strip !== '' && ! in_array($strip, array_column($banners->all()['banners'], 'id'), true)) {
+                return $this->refused(['strip' => 'Which strip']);
+            }
+        }
+
         $rejected = $this->headers->apply($data['key'], $data['scope'], $data['bag'] ?? null);
+
+        if ($rejected === [] && $strip !== null) {
+            $rejected = $banners->setPage($data['key'], $strip);
+        }
 
         if ($rejected !== []) {
             return $this->refused($rejected);
         }
 
         $this->headers->forget();
+        $banners->forget();
         $all = $this->headers->all();
 
         return response()->json([
@@ -85,6 +112,7 @@ class PageHeaderApiController extends Controller
             'own' => isset($all['pages'][$data['key']]),
             'bag' => $this->headers->bagFor($data['key']),
             'global' => $all['global'],
+            'strip' => (string) ($banners->all()['assign'][$data['key']] ?? ''),
         ]);
     }
 
@@ -117,6 +145,34 @@ class PageHeaderApiController extends Controller
                 'types' => StorefrontAdminController::UPLOAD_TYPES,
             ],
             'console' => (string) (parse_url(route('admin'), PHP_URL_PATH) ?: '/').'#pageheader',
+            'strip' => self::stripContext($key),
+        ];
+    }
+
+    /**
+     * (Lane SP3) The panel's Strip section: is it on here, which banner, every
+     * banner the owner can choose drawn as the shop would draw it (so turning
+     * it on previews with no request), and whether this account may switch it
+     * at all. Admin-only, like the rest of editorContext(): a shopper's page
+     * never builds it.
+     */
+    public static function stripContext(string $key): array
+    {
+        $admin = Auth::guard('admin')->user();
+        $all = app(PageBanners::class)->all();
+        $arabic = \App\Support\Locale::current() === 'ar';
+        $list = [];
+
+        foreach ($all['banners'] as $b) {
+            $list[] = ['id' => $b['id'], 'name' => $b['name'], 'view' => PageBanners::view($b, $arabic)];
+        }
+
+        return [
+            'can' => $admin instanceof AdminUser && AdminRoles::can($admin, 'pagebanners.manage'),
+            'on' => (string) ($all['assign'][$key] ?? ''),
+            'banners' => $list,
+            'css' => PageBanners::CSS,
+            'console' => (string) (parse_url(route('admin'), PHP_URL_PATH) ?: '/').'#pagebanners',
         ];
     }
 
@@ -139,6 +195,10 @@ class PageHeaderApiController extends Controller
         foreach (PageHeaders::NUMBERS as $k => [$min, $max, $d, $m, $label]) {
             $numbers[] = ['key' => $k, 'label' => $label, 'min' => $min, 'max' => $max, 'd' => $d, 'm' => $m];
         }
+        $blocks = [];
+        foreach (PageHeaders::BLOCKS as $k => $label) {
+            $blocks[] = ['key' => $k, 'label' => $label];
+        }
         $elements = [];
         foreach (PageHeaders::ELEMENTS as $k => $_) {
             $elements[] = ['key' => $k, 'label' => self::ELEMENT_LABELS[$k]];
@@ -152,6 +212,11 @@ class PageHeaderApiController extends Controller
             'blank' => PageHeaders::blank(),
             'breakpoint' => PageHeaders::BREAKPOINT,
             'css' => PageHeaders::CSS,
+            // (Lane SP3) The top area: the two blocks, the spacing keys, and
+            // the CSS the panel injects when it builds the area live.
+            'blocks' => $blocks,
+            'spacing' => PageHeaders::SPACING,
+            'top_css' => PageHeaders::TOP_CSS,
             // Appearance → Header → Breadcrumbs, per device: a trail that
             // switch hides takes no row in the header either.
             'crumb' => PageHeaders::siteCrumb(),
