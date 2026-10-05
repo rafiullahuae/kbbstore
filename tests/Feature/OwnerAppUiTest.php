@@ -85,8 +85,12 @@ it('offers full screen to phones only, with labelled YouTube-style glyphs and th
     $css = (string) file_get_contents(resource_path('css/owner-app/owner-app.css'));
     expect($css)->toContain('.is-fs .fs .g-in { display: block; }')->toContain('.can-fs .fsbar { display: flex; }')->toContain('.can-fs .ib.fs { display: grid; }');
 
+    // Lane IC: the installed app no longer opens full screen by default (that
+    // letterboxed the camera cutout in black); Customise app -> Top of the
+    // screen -> "Full screen, hide the clock" brings it back. AppIconsTest's
+    // status-bar cases pin both.
     $m = $this->get(OA::base().'/manifest.webmanifest')->assertOk()->json();
-    expect($m['display'])->toBe('standalone')->and($m['display_override'])->toBe(['fullscreen', 'standalone']);
+    expect($m['display'])->toBe('standalone')->and($m)->not->toHaveKey('display_override');
 });
 
 it('enters full screen ONLY from its icon, which sits beside Sync now in every header', function () {

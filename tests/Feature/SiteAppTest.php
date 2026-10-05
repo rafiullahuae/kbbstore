@@ -50,10 +50,10 @@ function siteAppArabic(): void
     TranslationStore::flush();
 }
 
-/** The seven-tag block out of a rendered page. */
+/** The eight-tag block out of a rendered page (seven, plus Lane IC's theme-color). */
 function siteAppHead(string $html): string
 {
-    preg_match('#<link rel="manifest"[^\n]*\n(?:[^\n]*\n){5}<script src="[^"]*site-app\.js[^\n]*\n#', $html, $m);
+    preg_match('#<link rel="manifest"[^\n]*\n(?:[^\n]*\n){6}<script src="[^"]*site-app\.js[^\n]*\n#', $html, $m);
 
     return $m[0] ?? '';
 }
@@ -136,7 +136,7 @@ it('serves the Arabic manifest with lang, direction and an Arabic start page, as
     }
 });
 
-it('puts the seven head tags on a storefront page once, escaped, with the script deferred', function () {
+it('puts the eight head tags on a storefront page once, escaped, with the script deferred', function () {
     /* MUTATION: drop `defer` from partials/site-app-head -> red (a blocking script in the head).
        MUTATION: print the name with {!! !!} -> the escaping line is red. */
     siteAppSet(SiteApp::SETTING, ['on' => true, 'name' => 'K&B Bliss']);
@@ -150,9 +150,12 @@ it('puts the seven head tags on a storefront page once, escaped, with the script
         ->and($block)->toContain('<meta name="apple-mobile-web-app-title" content="K&amp;B Bliss">')
         ->and($block)->toContain('<meta name="apple-mobile-web-app-status-bar-style" content="default">')
         ->and($block)->toMatch('#<script src="/site-app\.js\?v=[0-9a-f]{10}" data-sw="/sw\.js" data-scope="/" defer></script>#')
-        // No theme-color on the page: it would tint the browser bar for every
-        // ordinary visitor. The colour lives in the manifest only.
-        ->and($html)->not->toContain('name="theme-color"')
+        // No theme-color for an ordinary visitor: it would tint the browser bar.
+        // Lane IC's one is for the INSTALLED app only (its status bar takes the
+        // header's colour), so it carries the standalone media query.
+        // MUTATION: drop media="(display-mode: standalone)" -> red.
+        ->and(substr_count($html, 'name="theme-color"'))->toBe(1)
+        ->and($block)->toContain('<meta name="theme-color" media="(display-mode: standalone)" content="#FFFFFF">')
         // And no install UI of any kind: that is decided later.
         ->and($html)->not->toContain('beforeinstallprompt');
 

@@ -143,7 +143,7 @@ final class SiteApp
      * What the storefront head prints, or null when the app is off. Every
      * value is printed through Blade's escaping echo (partials/site-app-head).
      *
-     * @return array{manifest: string, apple: string, name: string, js: string, sw: string, scope: string}|null
+     * @return array{manifest: string, apple: string, name: string, theme: string, js: string, sw: string, scope: string}|null
      */
     public function head(): ?array
     {
@@ -158,6 +158,7 @@ final class SiteApp
             'manifest' => Url::raw('/manifest.webmanifest').(Locale::isDefault() ? '' : '?lang='.Locale::current()),
             'apple' => self::iconUrl('apple-180'),
             'name' => $v['name'],
+            'theme' => self::topColour(),
             'js' => Url::raw('/site-app.js').'?v='.self::fileHash(self::scriptPath()),
             'sw' => Url::raw('/sw.js'),
             'scope' => Url::raw('/'),
@@ -191,11 +192,28 @@ final class SiteApp
             'start_url' => Url::raw(ltrim(Locale::withSegment('/', $locale), '/')).'?utm_source=homescreen&utm_medium=app',
             'scope' => Url::raw('/'),
             'display' => 'standalone',
-            'theme_color' => self::THEME,
+            'theme_color' => self::topColour(),
             'background_color' => self::BACKGROUND,
             'categories' => ['shopping', 'beauty'],
             'icons' => $icons,
         ];
+    }
+
+    /**
+     * The colour at the very top of a shop page on a phone (Lane IC): the
+     * header bar's background (Appearance -> Header -> Background). The flag
+     * strip is NOT above it -- measured in Chromium at 390 with the strip on
+     * for phones, it draws below the header and the delivery strip -- so it
+     * never decides this. The installed app's status bar takes the colour, so
+     * the header runs up to the top edge. Read from the settings the page has already loaded --
+     * never measured in the browser -- and checked, since it is printed into
+     * the head and the manifest.
+     */
+    public static function topColour(): string
+    {
+        $c = app(HeaderSettings::class)->all()['bar_bg'] ?? null;
+
+        return is_string($c) && preg_match('/\A#[0-9A-Fa-f]{6}\z/', $c) ? strtoupper($c) : self::THEME;
     }
 
     /** The worker, or the self-removing worker when the app is off. */

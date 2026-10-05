@@ -18,12 +18,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#FBE3EA">
+<meta name="theme-color" content="{{ $top ?? '#FBE3EA' }}">
 <meta name="color-scheme" content="light">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="KBB Owner">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="{{ ($fullscreen ?? true) ? 'default' : 'black-translucent' }}">
 <meta name="format-detection" content="telephone=no">
 <title>K-Beauty Bliss Owner</title>
 <link rel="manifest" href="{{ $base }}/manifest.webmanifest">

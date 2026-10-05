@@ -2290,7 +2290,7 @@ KBB_BH_CSS;
             /*
              * The shop as a Home Screen app (Lane PW, App -> Site App): the
              * owner asked for it ("just build the app for the site"), so it
-             * ships ON. Seven tags in the head of every storefront page -- the
+             * ships ON. Eight tags in the head of every storefront page -- the
              * layout's 33 and the four standalone documents (blog, article,
              * review wall, skin quiz), 37 in all: the manifest, the apple-touch-icon, the two
              * "capable" metas, the iOS status bar and title, and the deferred
@@ -2303,6 +2303,10 @@ KBB_BH_CSS;
                     .'<meta name="mobile-web-app-capable" content="yes">\n'
                     .'<meta name="apple-mobile-web-app-capable" content="yes">\n'
                     .'<meta name="apple-mobile-web-app-status-bar-style" content="default">\n'
+                    // Lane IC, deliberately: the installed app's status bar takes the
+                    // header's colour ("extend the background color to the top end").
+                    // Standalone only, so a shopper in the browser sees nothing new.
+                    .'<meta name="theme-color" media="\(display-mode: standalone\)" content="\#FFFFFF">\n'
                     .'<meta name="apple-mobile-web-app-title" content="K-Beauty Bliss">\n'
                     .'<script src="/site-app\.js\?v=[0-9a-f]{10}" data-sw="/sw\.js" data-scope="/" defer></script>\n#',
                 'hits' => 37,

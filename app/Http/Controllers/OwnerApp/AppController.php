@@ -94,7 +94,9 @@ final class AppController extends Controller
         // <html> that names no web font, so the file is never requested.
         $base = self::base($request);
 
-        return response()->view('owner-app.shell', ['base' => $base, 'a' => self::assets($base), 'fav' => self::favicons($base), 'sysFont' => OwnerAppUi::systemFont()]);
+        return response()->view('owner-app.shell', ['base' => $base, 'a' => self::assets($base), 'fav' => self::favicons($base), 'sysFont' => OwnerAppUi::systemFont(),
+            // Top of the screen (Lane IC): the bar takes the app's own top colour.
+            'top' => OwnerAppUi::topColour(), 'fullscreen' => OwnerAppUi::fullscreen()]);
     }
 
     /**
@@ -117,24 +119,33 @@ final class AppController extends Controller
         $base = self::base($request);
         $a = self::assets($base);
 
-        return response()->json([
+        $m = [
             'name' => 'K-Beauty Bliss Owner',
             'short_name' => 'KBB Owner',
             'id' => $base.'/',
             'start_url' => $base.'/',
             'scope' => $base.'/',
             'display' => 'standalone',
-            // An installed Android app opens full screen; anything that cannot, standalone.
-            'display_override' => ['fullscreen', 'standalone'],
             'orientation' => 'any',
             'background_color' => '#ffffff',
-            'theme_color' => '#FBE3EA',
+            // The status bar continues the app's own top colour (Lane IC).
+            'theme_color' => OwnerAppUi::topColour(),
             'icons' => [
                 ['src' => $a['icon-192'], 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
                 ['src' => $a['icon-512'], 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
                 ['src' => $a['maskable-512'], 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
             ],
-        ], 200, ['Content-Type' => 'application/manifest+json'], JSON_UNESCAPED_SLASHES);
+        ];
+        /*
+         * Full screen on Android only when chosen under Customise app -> Top of
+         * the screen (Lane IC). It hides the clock and Android letterboxes the
+         * camera cutout in black: the band the owner asked to be rid of.
+         */
+        if (OwnerAppUi::fullscreen()) {
+            $m = array_slice($m, 0, 6, true) + ['display_override' => ['fullscreen', 'standalone']] + array_slice($m, 6, null, true);
+        }
+
+        return response()->json($m, 200, ['Content-Type' => 'application/manifest+json'], JSON_UNESCAPED_SLASHES);
     }
 
     /**
