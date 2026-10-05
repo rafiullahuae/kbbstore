@@ -628,6 +628,8 @@ input.inp[type=file]{padding:6px 9px}
 .ritem .mv{display:flex;flex-direction:column;gap:2px;margin-left:auto}
 .ritem .mv button{width:24px;height:18px;border-radius:5px;border:1px solid var(--border);display:grid;place-items:center;color:var(--ink-soft);background:var(--surface)}
 .ritem .mv button:hover{color:var(--accent-ink);border-color:var(--accent)}
+.ritem .mv button.re-jump{color:#d6336c;border-color:#f3c1cf;background:#fff5f8}
+.ritem .mv button.re-jump:hover{color:#fff;background:#d6336c;border-color:#d6336c}
 .ritem .mv svg{width:12px;height:12px}
 /* ---- full product editor (WooCommerce-parity) ---- */
 .btn.block{width:100%}
@@ -9239,8 +9241,10 @@ function reorderRenderList(list){
       </div>
       <div style="text-align:right;flex:0 0 76px;font-size:11px;color:var(--ink-soft)" title="Distinct orders this product has appeared in">${p.orders_count} order${p.orders_count===1?'':'s'}</div>
       <div class="mv" style="flex:0 0 auto;flex-direction:row;gap:4px">
-        <button data-rtop="${p.id}" title="Move to top of this page">${ic('<path d="M12 19V5M5 12l7-7 7 7"/>')}</button>
-        <button data-rbottom="${p.id}" title="Move to bottom of this page">${ic('<path d="M12 5v14M5 12l7 7 7-7"/>')}</button>
+        <button data-rup="${p.id}" title="One place up" aria-label="Move ${escHtml(p.name)} up one place">${ic('<path d="M12 19V5M5 12l7-7 7 7"/>')}</button>
+        <button data-rdown="${p.id}" title="One place down" aria-label="Move ${escHtml(p.name)} down one place">${ic('<path d="M12 5v14M5 12l7 7 7-7"/>')}</button>
+        <button data-rfirst="${p.id}" class="re-jump" title="To the top of the whole list" aria-label="Move ${escHtml(p.name)} to the top of the whole list">${ic('<path d="M5 4h14M12 20V9M6 15l6-6 6 6"/>')}</button>
+        <button data-rlast="${p.id}" class="re-jump" title="To the bottom of the whole list" aria-label="Move ${escHtml(p.name)} to the bottom of the whole list">${ic('<path d="M5 20h14M12 4v11M6 9l6 6 6-6"/>')}</button>
       </div>
     </div>`).join('')}</div>`;
 }
@@ -9260,8 +9264,20 @@ function reorderWireList(){
       reorderJumpToRank(id, rank);
     };
   });
-  $$('#rlist [data-rtop]').forEach(b=>b.onclick=()=>reorderLocalMove(+b.dataset.rtop, 0));
-  $$('#rlist [data-rbottom]').forEach(b=>b.onclick=()=>reorderLocalMove(+b.dataset.rbottom, reorderLocal.length-1));
+  /* Four arrows (2.60.404). The owner: "should be 4, 2 grey and 2 red, the
+     red arrows will jump to top or bottom of the whole list. and grey will
+     work as one row down or up." Grey: one place, across a page edge too.
+     Red: rank 1 / the last rank of the WHOLE list. All of them wait for Save,
+     through the same paths as the number box (reorderJumpToRank queues a
+     move that lands on another page). */
+  const pageStart=()=>(reorderData.page-1)*reorderData.per_page+1;
+  const step=(id,d)=>{ const i=reorderLocal.findIndex(x=>x.id===id); if(i<0) return; const to=i+d;
+    if(to>=0 && to<reorderLocal.length) reorderLocalMove(id,to);
+    else { const rank=pageStart()+to; if(rank>=1 && rank<=reorderData.total) reorderJumpToRank(id,rank); } };
+  $$('#rlist [data-rup]').forEach(b=>b.onclick=()=>step(+b.dataset.rup,-1));
+  $$('#rlist [data-rdown]').forEach(b=>b.onclick=()=>step(+b.dataset.rdown,1));
+  $$('#rlist [data-rfirst]').forEach(b=>b.onclick=()=>reorderJumpToRank(+b.dataset.rfirst,1));
+  $$('#rlist [data-rlast]').forEach(b=>b.onclick=()=>reorderJumpToRank(+b.dataset.rlast,reorderData.total));
   let dragI=null;
   $$('#rlist .ritem').forEach(it=>{
     it.ondragstart=e=>{ if(e.target.closest('[data-rankinput],[data-rsel]')){e.preventDefault();return;} dragI=+it.dataset.i; };

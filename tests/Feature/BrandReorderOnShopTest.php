@@ -85,3 +85,18 @@ it('ships the migration that keeps brand pages on the brand and the curated orde
 
     expect($m)->toContain("'layout_brand_cta', 'layout_brand_popular'")->toContain("'product_sorting'")->toContain("Cache::forget(\$key)");
 });
+
+it('gives every row four arrows: grey one place, red to the top or bottom of the whole list, all waiting for Save', function () {
+    // The owner: "the arrow to bring top and down, should be 4, 2 grey and 2
+    // red, the red arrows will jump to top or bottom of the whole list. and
+    // grey will work as one row down or up." MUTATION: point data-rfirst at
+    // reorderLocalMove(id, 0) (top of this PAGE only) -> red.
+    $app = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
+
+    expect($app)->toContain('data-rup="${p.id}"')->toContain('data-rdown="${p.id}"')
+        ->toContain('data-rfirst="${p.id}" class="re-jump"')->toContain('data-rlast="${p.id}" class="re-jump"')
+        ->toContain("reorderJumpToRank(+b.dataset.rfirst,1)")
+        ->toContain("reorderJumpToRank(+b.dataset.rlast,reorderData.total)")
+        ->toContain('.ritem .mv button.re-jump{color:#d6336c;')
+        ->not->toContain('data-rtop="${p.id}"');
+});
