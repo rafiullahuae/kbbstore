@@ -225,9 +225,18 @@ it('offers only the widths that exist, not every width it could have made', func
     // this assertion is about ONE COPY BEING GONE and not about how many the
     // list has -- it went red when the 200w thumbnail tier was added, which is
     // the one change it should have been indifferent to.
-    expect(count($candidates))->toBe(count(ImageVariants::WIDTHS) - 1, 'the missing copy is still being offered: '.$tag);
+    //
+    // (Lane PS) And with the 800w copy gone, the ORIGINAL is offered at its real
+    // width. Without it the widest thing on offer is the 400w copy, and a phone
+    // drawing a rail tile at 186 CSS px x 2.75 wants 512 real pixels -- it would
+    // stretch the 400w file where a page with no srcset served the sharp
+    // original. So: the copies on disk minus the deleted one, plus the original.
+    $copies = array_values(array_filter($candidates, fn ($c) => str_contains($c[0], '/'.ImageVariants::DIR.'/')));
+    expect(count($copies))->toBe(count(ImageVariants::WIDTHS) - 1, 'the missing copy is still being offered: '.$tag);
     expect(str_contains((string) tagAttribute($tag, 'srcset'), '/800/'))
         ->toBeFalse('the deleted 800px copy is in the srcset');
+    expect(str_contains((string) tagAttribute($tag, 'srcset'), '/uploads/products/partial.jpg 1000w'))
+        ->toBeTrue('with no 800w copy the original must be offered at its real width: '.$tag);
 });
 
 it('offers nothing for a photograph on another domain', function () {
