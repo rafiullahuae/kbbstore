@@ -59,7 +59,9 @@ it('covers the phone header with the brand banner: no shrunk picture, no blurred
         ->and($html)->not->toContain('kbb-th--pw')
         ->and($html)->not->toContain('kbb-th__fill');
 
-    // The switch takes it back: the whole picture with its blurred copy.
+    // The switch takes it back: the whole picture with its blurred copy (when
+    // the category switch, off since 2.60.393, is on).
+    bpcSet('layout_cat_header_phone_whole', '1');
     bpcSet('layout_brand_phone_cover', '0');
     $back = (string) $this->get('/brands/covera/')->getContent();
     expect($back)->toMatch('#<section class="kbb-th kbb-th--img[^"]* kbb-th--pw[ "]#')
@@ -69,6 +71,10 @@ it('covers the phone header with the brand banner: no shrunk picture, no blurred
 it('leaves category headers on their own whole-picture switch', function () {
     $c = Category::query()->create(['name' => 'Sunscreens', 'slug' => 'bpc-sun', 'parent_id' => null, 'header_image' => '/uploads/bpc/cat.jpg']);
     $c->forceFill(['path' => $c->slug, 'depth' => 0])->save();
+
+    // 2.60.393: off by default -- the picture covers the category's phone header too.
+    expect((string) $this->get('/collections/bpc-sun/')->getContent())->not->toContain('kbb-th--pw');
+    bpcSet('layout_cat_header_phone_whole', '1');
 
     expect((string) $this->get('/collections/bpc-sun/')->getContent())->toContain('kbb-th--pw');
 });

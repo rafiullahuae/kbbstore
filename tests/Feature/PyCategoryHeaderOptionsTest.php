@@ -315,8 +315,8 @@ it('renders every text treatment 1 to 5 on a picture and on the box, each with a
         pyCategory(['slug' => 'py-img-'.$t, 'header_image' => '/uploads/py/x.jpg', 'header_style' => ['treatment' => $t]]);
         pyCategory(['slug' => 'py-box-'.$t, 'header_style' => ['treatment' => $t]]);
 
-        // 2.60.358: a picture header ends in kbb-th--pw (the whole picture on a phone).
-        expect(pyOpen(pyPage('/collections/py-img-'.$t.'/')))->toContain('kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-'.$t.' kbb-th--pw"')
+        // 2.60.393: the picture covers the phone header by default (no kbb-th--pw).
+        expect(pyOpen(pyPage('/collections/py-img-'.$t.'/')))->toContain('kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-'.$t.'"')
             ->and(pyOpen(pyPage('/collections/py-box-'.$t.'/')))->toContain('kbb-th--t-'.$t.' kbb-th--box-blush"');
 
         if ($t !== 'none') {

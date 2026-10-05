@@ -624,3 +624,27 @@ img{max-width:100%}
   .gtop:has(#sort option:checked:is([value="plow"],[value="phigh"])) .mobi-filter{font-size:0;gap:0}
   .gtop:has(#sort option:checked:is([value="plow"],[value="phigh"])) .mobi-filter .fcount{font-size:11px;margin-inline-start:4px}
 }
+
+/* ── PHONE LISTING, AS THE OWNER ASKED ───────────────────────── 2.60.393 ──
+   "turn off the filters for now. and make number of columns to select 1 or 2,
+   max. and reduce the capsule size of sort ... also reduce spacing between
+   header area and sort etc row." Each is a switch or a rule below; laptops are
+   untouched (every rule here sits inside the phone query).
+   - .kbb-nofilt-m: Appearance → Site layout → Product grid → Filters button · phone (off).
+   - .kbb-mcols: … → Column buttons (1 or 2) · phone (on). The pin is ?mcols=1.
+   - The sort capsule keeps 16px text: below that iOS zooms the page on tap.
+   - Under a title header the listing's own 22px top padding goes; the
+     header's "space below" setting is then the whole gap. */
+.colsel.colsel-m{display:none}
+@media (max-width:900px){
+  .gtop.kbb-nofilt-m .mobi-filter{display:none}
+  .gtop.kbb-mcols .colsel.colsel-m{display:inline-flex;flex:none}
+  .gtop.kbb-nofilt-m .gright{flex:1 1 auto;min-width:0}
+  .gtop.kbb-nofilt-m .colsel.colsel-m{margin-inline-end:auto}
+  .colsel.colsel-m button{width:34px;height:34px}
+  .colsel.colsel-m svg{width:16px;height:16px}
+  #grid[data-mcols="1"]{grid-template-columns:minmax(0,1fr)}
+  .gtop{margin-bottom:12px}
+  .gtop .sortsel select{min-height:34px;height:34px;padding:0 30px 0 12px;border-radius:999px;line-height:1.2}
+  .kbb-th + .wrap.shop{padding-top:0}
+}

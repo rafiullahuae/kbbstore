@@ -195,6 +195,16 @@ class SiteLayout
             ['min' => 260, 'max' => 600, 'step' => 10, 'unit' => 'px']],
 
         /*
+         * The owner, 5 October, of a phone category page: "turn off the filters
+         * for now. and make number of columns to select 1 or 2, max. and reduce
+         * the capsule size of sort." Both as he asked. (2.60.393)
+         */
+        'filters_m' => ['bool', 'Filters button · phone', false,
+            'Off, as you asked: phones show no Filters button above the products. Laptops keep their filter column either way.'],
+        'cols_m' => ['bool', 'Column buttons (1 or 2) · phone', true,
+            'On, as you asked: phones get two small buttons beside Sort to show one product per row or two.'],
+
+        /*
          * ── LOADING MORE PRODUCTS ──────────────────────────────── Lane PI-B ──
          *
          * The owner asked for a choice of how a listing loads more: "Arrows"
@@ -469,7 +479,10 @@ class SiteLayout
          * back the cropped frame and its Phone crop. ON, as he asked.
          * (Integrator, 2.60.358)
          */
-        'cat_header_phone_whole' => ['bool', 'Show the whole picture on phones', true,
+        // (2.60.393) Off, the owner: "the background image on mobile should
+        // cover the whole area by middle and center, doesn't matter what size
+        // the image is" -- the picture fills the phone header, centred.
+        'cat_header_phone_whole' => ['bool', 'Show the whole picture on phones', false,
             'On: on a phone the header takes the picture\'s own shape, so nothing is cut from its left or right; the words sit on it as set above. Off: the phone header keeps its own height and the picture is cropped to fill it (Catalog → Categories → Phone crop chooses which part).'],
 
         'cat_header_title_phone' => ['range', 'Title size · phone', 26,
@@ -840,7 +853,7 @@ class SiteLayout
             ['max', 'gutter', 'gutter_wide', 'header_follows']],
         'grid' => ['Product grid',
             'The column count is not set here — it is worked out from the smallest card and the width each grid actually has, so a grid beside the shop filters gets the right answer rather than the window\'s answer.',
-            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count', 'filter_w', 'filter_max']],
+            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count', 'filter_w', 'filter_max', 'filters_m', 'cols_m']],
         'loading' => ['Loading more products',
             'How /shop, every category, every brand page and the curated listings bring in more products: more on scroll, numbered arrows, or everything at once. Shoppers without JavaScript always get the arrows.',
             ['load_mode', 'load_batch', 'load_batch_custom']],

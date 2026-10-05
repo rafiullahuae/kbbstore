@@ -7,6 +7,20 @@
  */
 
 export function initShop() {
+    // (2.60.393) The phone's own 1 / 2 column buttons: a separate pin
+    // (?mcols=) so a phone choice never moves a laptop's columns.
+    const colselm = document.getElementById('colselm');
+    colselm?.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-m]');
+        if (!button) return;
+        const grid = document.getElementById('grid');
+        const url = new URL(window.location.href);
+        if (button.dataset.m === '1') { grid?.setAttribute('data-mcols', '1'); url.searchParams.set('mcols', '1'); }
+        else { grid?.removeAttribute('data-mcols'); url.searchParams.delete('mcols'); }
+        colselm.querySelectorAll('[data-m]').forEach((b) => b.classList.toggle('on', b === button));
+        window.history.replaceState({}, '', url.toString());
+    });
+
     const colsel = document.getElementById('colsel');
     if (!colsel) return;
 

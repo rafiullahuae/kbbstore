@@ -92,7 +92,7 @@ it('offers the drawer width on Appearance → Site layout → Product grid, at t
     $fields = collect($grid['fields'])->keyBy('key');
 
     expect($grid['label'])->toBe('Product grid')
-        ->and(array_slice(collect($grid['fields'])->pluck('key')->all(), -3))->toBe(['show_count', 'filter_w', 'filter_max'])
+        ->and(array_slice(collect($grid['fields'])->pluck('key')->all(), -3))->toBe(['filter_max', 'filters_m', 'cols_m'])
         ->and($fields['filter_w']['label'])->toBe('Filters drawer width · phone')
         ->and($fields['filter_w']['value'])->toBe(90)
         ->and($fields['filter_max']['value'])->toBe(300);

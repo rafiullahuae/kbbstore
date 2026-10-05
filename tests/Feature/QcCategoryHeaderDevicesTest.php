@@ -142,8 +142,8 @@ it('ships the laptop at the phone\'s defaults, and a default category page byte-
     qcCategory(['slug' => 'qc-pic', 'header_image' => '/uploads/qc/banner.jpg']);
 
     expect(qcOpen('/collections/qc-sun/'))->toBe('<section class="kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush" style="'.QC_DEFAULT_STYLE.'" data-kbb-title-header aria-labelledby="kbb-th-title">')
-        // 2.60.358: picture headers end in kbb-th--pw (the whole picture on a phone).
-        ->and(qcOpen('/collections/qc-pic/'))->toBe('<section class="kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-shadow kbb-th--pw" style="'.QC_DEFAULT_STYLE.'" data-kbb-title-header aria-labelledby="kbb-th-title">');
+        // 2.60.393: the picture covers the phone header by default (no kbb-th--pw).
+        ->and(qcOpen('/collections/qc-pic/'))->toBe('<section class="kbb-th kbb-th--img kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-shadow" style="'.QC_DEFAULT_STYLE.'" data-kbb-title-header aria-labelledby="kbb-th-title">');
 });
 
 it('gives a value saved before the split to both devices, until the laptop gets its own', function () {
@@ -190,7 +190,7 @@ it('phone and laptop render their own classes: laptop B + 3 centred, phone A + 2
     [$pic] = qcAttrs(qcOpen('/collections/qc-pic/'));
 
     expect($box)->toBe('kbb-th kbb-th--box kbb-th--split kbb-th--p-dark kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-fade kbb-th--p-box-blush kbb-th--l-dark kbb-th--l-a-center kbb-th--l-v-bottom kbb-th--l-t-frost kbb-th--l-box-cream')
-        ->and($pic)->toBe('kbb-th kbb-th--img kbb-th--split kbb-th--p-light kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-fade kbb-th--l-light kbb-th--l-a-center kbb-th--l-v-bottom kbb-th--l-t-frost kbb-th--pw')
+        ->and($pic)->toBe('kbb-th kbb-th--img kbb-th--split kbb-th--p-light kbb-th--p-a-start kbb-th--p-v-bottom kbb-th--p-t-fade kbb-th--l-light kbb-th--l-a-center kbb-th--l-v-bottom kbb-th--l-t-frost')
         // The icon layer is there for the device that has icons.
         ->and((string) $this->get('/collections/qc-sun/')->getContent())->toContain('<div class="kbb-th__icons" aria-hidden="true"></div>');
 });
@@ -306,7 +306,7 @@ it('a category\'s own colours repaint its box on both devices, and its phone cro
 
     expect($class)->toBe('kbb-th kbb-th--box kbb-th--light kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush')
         ->and($style)->toEndWith(';--kbb-th-bg:#123456;--kbb-th-ic:#ABCDEF')
-        ->and(qcAttrs(qcOpen('/collections/qc-pic/'))[0])->toEndWith(' kbb-th--fx-right kbb-th--pw')
+        ->and(qcAttrs(qcOpen('/collections/qc-pic/'))[0])->toEndWith(' kbb-th--fx-right')
         ->and(qcAttrs(qcOpen('/collections/qc-mid/'))[0])->not->toContain('fx-')
         // No picture, nothing to crop.
         ->and(qcAttrs(qcOpen('/collections/qc-box-fx/'))[0])->not->toContain('fx-');

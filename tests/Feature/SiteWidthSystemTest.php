@@ -583,6 +583,8 @@ it('ships every setting at the value the page already had, except the ones the o
         // always had -- nothing moves until the owner drags one.
         'filter_w' => 90,
         'filter_max' => 300,
+        'filters_m' => false,               // 2.60.393, he asked
+        'cols_m' => true,                   // 2.60.393, he asked
         // Lane PI-B: Loading more products. NOT CSS — these decide how many
         // products a listing page holds. Shipped at "Arrows" while the owner
         // had not chosen; ships at "Load more on scroll" since he did, on
@@ -662,7 +664,7 @@ it('ships every setting at the value the page already had, except the ones the o
         'cat_header_rand_lilac' => true,
         'cat_header_rand_plain' => false,
         // 2.60.358: "the background banner image in mobile should display full".
-        'cat_header_phone_whole' => true,
+        'cat_header_phone_whole' => false,   // 2.60.393, the owner: cover, centred
         'cat_header_title_phone' => 26,
         'cat_header_title_desktop' => 40,
         'cat_header_weight' => '700',
