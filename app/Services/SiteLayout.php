@@ -541,6 +541,18 @@ class SiteLayout
             ]],
         'brand_ring' => ['bool', 'Ring round the brand logo, in the brand\'s colour', true,
             'On, as you asked: the logo sits in a circle with a ring in the brand\'s own colour, taken from the logo itself (change it per brand in Catalog → Brands → Edit → Ring colour). A brand with no colour gets the shop pink. Off: the plain circle, as before.'],
+        /*
+         * The owner, 5 October: "in mobile brand page, also the background
+         * image should cover the whole header area, instead of repeating
+         * horizontal or vertical". Category header → "Show the whole picture on
+         * phones" shrinks the banner to fit and fills the room around it with a
+         * blurred copy of the same picture, which on a wide brand banner reads
+         * as the image repeated. ON, as he asked: on a brand page the picture
+         * covers the phone header edge to edge. Categories keep their switch.
+         * (2.60.387)
+         */
+        'brand_phone_cover' => ['bool', 'Picture covers the header on phones', true,
+            'On, as you asked: on a phone the brand banner fills the whole header, edge to edge (its sides are cropped to fit). Off: brand pages follow Category header → "Show the whole picture on phones".'],
 
         /*
          * ── PRESS FEEDBACK ──────────────────────────────────────── Lane RD ──
@@ -650,7 +662,7 @@ class SiteLayout
     public const BRAND_ALL_CAP = 500;
 
     /** The brand page's switches: not CSS, skipped by isDefault(). */
-    public const BRAND_KEYS = ['brand_all', 'brand_cta', 'brand_popular', 'brand_hero', 'brand_ring'];
+    public const BRAND_KEYS = ['brand_all', 'brand_cta', 'brand_popular', 'brand_hero', 'brand_ring', 'brand_phone_cover'];
 
     /** The keys that are not CSS: skipped by isDefault(), never in css(). */
     private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom'];

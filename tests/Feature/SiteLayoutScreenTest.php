@@ -166,7 +166,8 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // 86 since 2.60.376: the Brand page tab's three switches. 88 since Lane BH:
     // `brand_hero` (Compact / Classic) and `brand_ring`, on the same tab.
     // 90 since Lane FS: `font_body` and `font_heading` on the Fonts tab.
-    expect($keys)->toHaveCount(90);
+    // 91 since 2.60.387: `brand_phone_cover` on the Brand page tab.
+    expect($keys)->toHaveCount(91);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

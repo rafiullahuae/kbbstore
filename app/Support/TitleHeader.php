@@ -352,7 +352,11 @@ final class TitleHeader
         // On a phone the header takes the picture's own shape, so nothing is
         // cut from its left or right (2.60.358, "should display full"). The
         // Phone crop above only matters when this is off.
-        $whole = $kind === 'img' && ! empty($settings['cat_header_phone_whole']);
+        // ...except on a brand page whose banner covers its phone header
+        // (Appearance → Site layout → Brand page, 2.60.387): no blurred copy
+        // around a shrunk picture, which read as the image repeated.
+        $whole = $kind === 'img' && ! empty($settings['cat_header_phone_whole'])
+            && ! ($brand && ! empty($settings['brand_phone_cover']));
 
         if ($whole) {
             $class .= ' kbb-th--pw';
@@ -782,6 +786,9 @@ final class TitleHeader
         foreach (SiteLayout::HEADER_KEYS as $key) {
             $out[$key] = $all[$key] ?? SiteLayout::SCHEMA[$key][2] ?? null;
         }
+
+        // Brand page tab (2.60.387): the brand banner covers the phone header.
+        $out['brand_phone_cover'] = $all['brand_phone_cover'] ?? SiteLayout::SCHEMA['brand_phone_cover'][2];
 
         return $out;
     }

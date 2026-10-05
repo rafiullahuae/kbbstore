@@ -688,6 +688,8 @@ it('ships every setting at the value the page already had, except the ones the o
         // Lane BH, as the owner asked: the compact header and the logo ring.
         'brand_hero' => 'compact',
         'brand_ring' => true,
+        // 2.60.387, the owner asked: the brand banner covers the phone header.
+        'brand_phone_cover' => true,
         'press' => 'c',
         // Lane FS: Appearance → Site layout → Fonts, at the shop's own Outfit.
         'font_body' => 'outfit',
