@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.399
+**Page header picture: full width, set for desktop and phone apart. Phone is
+full width now; desktop as it was. And Pages → Page header in the console
+works again.** Apply after .398. Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "full width option for desktop and mobile in the edit panel" | Page → Edit header → Sizes · desktop / Sizes · phone → Picture width: Normal / Full width (also Pages → Page header) |
+| "by default keep full width in mobile, and on desktop normal width" | Phone 390: picture 12–378px → 0–390px, square corners. Desktop: unchanged until you switch it (full = window edge to edge, no sideways scroll) |
+| (found while building it) Pages → Page header in the console broke in .396 with "mod.controls is not a function" | Fixed: the editor module keeps its named exports |
+
+Files: see the package's update.json.
+
 ## 2.60.398
 **Brand header: every control you listed, desktop and phone apart, from the
 brand page's Edit pencil.** Apply after .397. Hard refresh after applying.
