@@ -429,12 +429,17 @@ it('ranks Trending by what was ordered and viewed in the last seven days, not by
 
 /* ═══ 6. BRANDS: ONE LIST, TWO LOOKS ══════════════════════════════════════ */
 
-it('prints each brand link once — photo card on a laptop, logo tile on a phone — with no product count', function () {
+it('prints each brand link once — photo card on a laptop, name tile on a phone — with no product count', function () {
     /*
      * THE DEFECT: two copies of every brand link (one grid per device), which
      * is content shown twice to Google; or the product count the owner turned
      * down ("design A WITHOUT the product count").
      * MUTATION: render a second, phone-only list → the href count is 2, red.
+     *
+     * (Lane BS, 5 October) ADVANCED: the phone's default is Text only and the
+     * laptop's "image + name, no logo", both as the owner asked — so no brand
+     * carries `has-logo` by default; a pictured one carries `has-img`. The
+     * three looks are pinned in HomeBrandLooksTest.
      */
     $withLogo = Brand::create(['slug' => 'r55-logo', 'name' => 'Logo Brand', 'logo' => '/uploads/r55/logo.png',
         'banner' => ['enabled' => false, 'image' => '/uploads/r55/photo.webp', 'image_alt' => 'Logo Brand serums on a shelf']]);
@@ -448,7 +453,8 @@ it('prints each brand link once — photo card on a laptop, logo tile on a phone
 
     expect(substr_count($section, 'href="'.$withLogo->url().'"'))->toBe(1)
         ->and(substr_count($section, 'href="'.$plain->url().'"'))->toBe(1)
-        ->and($section)->toContain('class="hs-brand has-logo" href="'.$withLogo->url().'"')
+        ->and($section)->toContain('class="hs-brand has-img" href="'.$withLogo->url().'"')
+        ->and($section)->not->toContain('has-logo')
         ->and($section)->toContain('class="hs-brand" href="'.$plain->url().'"')
         ->and($section)->toContain('alt="Logo Brand serums on a shelf"')
         ->and($section)->toContain('<span class="hs-blb"><b>Plain Brand</b></span>')
@@ -486,7 +492,9 @@ it('gives every new image its alt, width, height and lazy loading, and every rai
      * hs-rail → red.
      */
     r55Catalogue();
-    $b = Brand::create(['slug' => 'r55-b', 'name' => 'B Brand', 'logo' => '/uploads/r55/b.png']);
+    // (Lane BS) With a banner photo: the laptop card no longer falls back to
+    // the logo ("image + name, no logo!"), so a logo alone draws no <img>.
+    $b = Brand::create(['slug' => 'r55-b', 'name' => 'B Brand', 'logo' => '/uploads/r55/b.png', 'banner' => ['image' => '/uploads/r55/b-photo.webp']]);
     r55Product('B toner', 3000, ['brand_id' => $b->id]);
     Post::create(['slug' => 'r55-p', 'title' => 'P guide', 'status' => 'published', 'published_at' => now()->subDay(), 'cover' => '/uploads/r55/c.webp']);
     r55Write(['home_ft_l_img' => '/uploads/r55/sun.webp']);

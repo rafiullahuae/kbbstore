@@ -143,13 +143,23 @@ final class HomeSections
         'home_br_title' => ['type' => 'text', 'label' => 'Heading (H2)', 'default' => 'Shop Top Korean Beauty Brands', 'store' => 'setting', 'help' => 'Written for search. Empty hides the heading — keep one: every section should carry an H2.'],
         'home_br_sub' => ['type' => 'text', 'label' => 'Line under the heading', 'default' => 'Browse the Korean beauty brands we stock and shop each brand’s full range in one place.', 'store' => 'setting', 'help' => 'Empty draws none.'],
         'home_br_picks' => ['type' => 'ids', 'label' => 'Brands, in order', 'default' => '', 'store' => 'setting', 'options' => ['cap' => '24', 'of' => 'brands'], 'help' => 'Empty: the brands with the most products. Pick them and use ↑ ↓ to set the order.'],
+        // Lane BS: a picture of the owner's choosing per brand, one setting
+        // (a JSON map brand id → path), so the shop reads it with the rest of
+        // the homepage's settings and no extra query. Drawn on the Brands tab
+        // beside each picked brand (options.for), not as a box of its own.
+        'home_br_imgs' => ['type' => 'text', 'label' => 'Brand images', 'default' => '', 'store' => 'setting', 'options' => ['picker' => 'per-pick', 'for' => 'home_br_picks'], 'rule' => [self::class, 'cleanBrandImages'], 'help' => 'Choose from the Media Library beside each brand. The laptop card always shows it; a phone shows it when Look · phone is Logo + image or Image only. None: the brand’s banner photo, as before.'],
         'home_br_count_d' => ['type' => 'select', 'label' => 'How many · laptop', 'default' => '14', 'store' => 'setting', 'options' => ['4' => '4', '5' => '5', '6' => '6', '7' => '7', '8' => '8', '9' => '9', '10' => '10', '12' => '12', '14' => '14', '15' => '15', '16' => '16', '18' => '18', '20' => '20', '21' => '21', '24' => '24'], 'help' => ''],
         'home_br_count_m' => ['type' => 'select', 'label' => 'How many · phone', 'default' => '10', 'store' => 'setting', 'options' => ['4' => '4', '5' => '5', '6' => '6', '7' => '7', '8' => '8', '9' => '9', '10' => '10', '12' => '12', '14' => '14', '15' => '15', '16' => '16', '18' => '18', '20' => '20', '21' => '21', '24' => '24'], 'help' => ''],
         'home_br_cols_d' => ['type' => 'select', 'label' => 'Per row · laptop', 'default' => '7', 'store' => 'setting', 'options' => ['4' => '4', '5' => '5', '6' => '6', '7' => '7', '8' => '8'], 'help' => 'Photo cards with the name on a frosted label.'],
-        'home_br_cols_m' => ['type' => 'select', 'label' => 'Per row · phone', 'default' => '2', 'store' => 'setting', 'options' => ['2' => '2', '3' => '3', '4' => '4'], 'help' => 'Logo tiles; a brand with no logo shows its name.'],
+        'home_br_cols_m' => ['type' => 'select', 'label' => 'Per row · phone', 'default' => '2', 'store' => 'setting', 'options' => ['2' => '2', '3' => '3', '4' => '4'], 'help' => 'Name tiles on Look · phone Text only; image cards on Logo + image and Image only.'],
         // (Lane PF) The owner, 4 October: "the brands boxes need to be little bit
         // squeezed, reduce the height" — 74px to 54px, AT HIS REQUEST.
-        'home_br_th_m' => ['type' => 'select', 'label' => 'Tile height · phone', 'default' => '54', 'store' => 'setting', 'options' => ['44' => '44px', '48' => '48px', '52' => '52px', '54' => '54px', '56' => '56px', '60' => '60px', '64' => '64px', '70' => '70px', '74' => '74px — the previous height'], 'help' => 'The logo tiles on a phone. The logo or name stays centred.'],
+        'home_br_th_m' => ['type' => 'select', 'label' => 'Tile height · phone', 'default' => '54', 'store' => 'setting', 'options' => ['44' => '44px', '48' => '48px', '52' => '52px', '54' => '54px', '56' => '56px', '60' => '60px', '64' => '64px', '70' => '70px', '74' => '74px — the previous height'], 'help' => 'The name tiles on a phone (Look · phone: Text only). The name stays centred.'],
+        // Lane BS, 5 October — both shipped at what the owner asked for: "for
+        // desktop image + name, no logo!" and, on a phone, "keep by default
+        // only text". The options keep the previous looks one select away.
+        'home_br_layout_d' => ['type' => 'select', 'label' => 'Look · laptop', 'default' => 'image', 'store' => 'setting', 'options' => ['image' => 'Image + name — no logo', 'image_logo' => 'Image + name — a brand with no image shows its logo (the previous look)'], 'help' => 'The image is the one chosen on the Brands tab, else the brand’s banner photo, else a soft colour panel.'],
+        'home_br_layout_m' => ['type' => 'select', 'label' => 'Look · phone', 'default' => 'text', 'store' => 'setting', 'options' => ['logo_image' => 'Logo + image', 'image' => 'Image only', 'text' => 'Text only'], 'help' => 'Text only: the brand names as light tiles, and the phone downloads no brand pictures at all.'],
         'home_br_btn' => ['type' => 'text', 'label' => 'Button text', 'default' => 'Shop all brands', 'store' => 'setting', 'help' => 'Empty: no button.'],
         'home_br_url' => ['type' => 'text', 'label' => 'Button link', 'default' => '/brands/', 'store' => 'setting', 'help' => 'A path on this shop (/…) or a full https:// address; anything else is ignored.'],
         'home_br_bg' => ['type' => 'select', 'label' => 'Section background', 'default' => 'cream', 'store' => 'setting', 'options' => ['none' => 'None — the page shows through', 'blush' => 'Blush — soft pink band', 'cream' => 'Cream — warm white band', 'lilac' => 'Lilac — pink-to-lilac band'], 'help' => ''],
@@ -255,7 +265,7 @@ final class HomeSections
     /** tab => [label, description, keys] — spread into HomepageContent::TABS. */
     public const TABS = [
         'bestselling' => ['Best Sellers', 'Section 2: the best-sellers grid — 8 on a laptop (4 × 2), 6 on a phone (2 × 3) — its heading, button, products, background and spacing. Show or hide it per device on Appearance → Homepage.', ['home_bs_eyebrow', 'home_bs_title', 'home_bs_sub', 'home_bs_source', 'home_bs_cat', 'home_bs_brand', 'home_bs_picks', 'home_bs_brands', 'home_bs_cats', 'home_bs_sort', 'home_bs_stock', 'home_bs_max', 'home_bs_count_d', 'home_bs_count_m', 'home_bs_cols_d', 'home_bs_cols_m', 'home_bs_btn', 'home_bs_url', 'home_bs_bg', 'home_bs_pt_d', 'home_bs_pt_m', 'home_bs_pb_d', 'home_bs_pb_m', 'home_bs_hg_d', 'home_bs_hg_m']],
-        'brands' => ['Brands', 'Section 3: brand photo cards on a laptop, a logo grid on a phone — ONE list of links, styled per device. Which brands, how many, and the Shop all brands button.', ['home_br_eyebrow', 'home_br_title', 'home_br_sub', 'home_br_picks', 'home_br_count_d', 'home_br_count_m', 'home_br_cols_d', 'home_br_cols_m', 'home_br_th_m', 'home_br_btn', 'home_br_url', 'home_br_bg', 'home_br_pt_d', 'home_br_pt_m', 'home_br_pb_d', 'home_br_pb_m', 'home_br_hg_d', 'home_br_hg_m']],
+        'brands' => ['Brands', 'Section 3: brand image cards with the name on a laptop; on a phone the names, the images, or the images with logos — ONE list of links, styled per device. Which brands, how many, and the Shop all brands button.', ['home_br_eyebrow', 'home_br_title', 'home_br_sub', 'home_br_picks', 'home_br_imgs', 'home_br_count_d', 'home_br_count_m', 'home_br_cols_d', 'home_br_cols_m', 'home_br_th_m', 'home_br_layout_d', 'home_br_layout_m', 'home_br_btn', 'home_br_url', 'home_br_bg', 'home_br_pt_d', 'home_br_pt_m', 'home_br_pb_d', 'home_br_pb_m', 'home_br_hg_d', 'home_br_hg_m']],
         'trending' => ['Trending', 'Section 5: what is moving this week — 8 on a laptop, 6 on a phone, no button.', ['home_tr_eyebrow', 'home_tr_title', 'home_tr_sub', 'home_tr_source', 'home_tr_cat', 'home_tr_brand', 'home_tr_picks', 'home_tr_brands', 'home_tr_cats', 'home_tr_sort', 'home_tr_stock', 'home_tr_max', 'home_tr_count_d', 'home_tr_count_m', 'home_tr_cols_d', 'home_tr_cols_m', 'home_tr_btn', 'home_tr_url', 'home_tr_bg', 'home_tr_pt_d', 'home_tr_pt_m', 'home_tr_pb_d', 'home_tr_pb_m', 'home_tr_hg_d', 'home_tr_hg_m']],
         'blog' => ['Blog', 'Section 6: three articles side by side on a laptop, stacked on a phone.', ['home_bl_eyebrow', 'home_bl_title', 'home_bl_sub', 'home_bl_source', 'home_bl_picks', 'home_bl_count_m', 'home_bl_read', 'home_bl_tag', 'home_bl_more', 'home_bl_btn', 'home_bl_url', 'home_bl_bg', 'home_bl_pt_d', 'home_bl_pt_m', 'home_bl_pb_d', 'home_bl_pb_m', 'home_bl_hg_d', 'home_bl_hg_m']],
         'under54' => ['Under AED 54', 'Section 7: 10 on a laptop (5 per row), 6 on a phone (2 per row), at or under the price ceiling.', ['home_u54_eyebrow', 'home_u54_title', 'home_u54_sub', 'home_u54_source', 'home_u54_cat', 'home_u54_brand', 'home_u54_picks', 'home_u54_brands', 'home_u54_cats', 'home_u54_sort', 'home_u54_stock', 'home_u54_max', 'home_u54_count_d', 'home_u54_count_m', 'home_u54_cols_d', 'home_u54_cols_m', 'home_u54_btn', 'home_u54_url', 'home_u54_bg', 'home_u54_pt_d', 'home_u54_pt_m', 'home_u54_pb_d', 'home_u54_pb_m', 'home_u54_hg_d', 'home_u54_hg_m']],
@@ -403,6 +413,62 @@ final class HomeSections
         ];
     }
 
+    /** Look · phone → the section's class. A map, so only these three reach the page. */
+    public const LOOK_CLASS = ['text' => 'text', 'image' => 'img', 'logo_image' => 'logo'];
+
+    /**
+     * A 1×1 transparent GIF, inline. A <picture> source carrying it for a
+     * media query the picture is hidden at means the browser has nothing to
+     * fetch there: a phone on Text only downloads no brand photo, and a laptop
+     * never downloads a phone logo — whether or not the browser honours lazy
+     * loading under display:none. A constant; CSP img-src allows data:.
+     */
+    public const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+    /**
+     * At most this many brands may carry a picture. A brand taken off the list
+     * keeps its picture for the day it comes back, so the map outgrows the 24
+     * picks; 100 paths of 500 bytes still fit the 64 KB the read accepts.
+     */
+    public const IMG_CAP = 100;
+
+    /**
+     * The `home_br_imgs` rule (ModuleSchema `rule`): brand id → picture, as a
+     * JSON object. Keys are positive integers; every path passes image() —
+     * SafeUrl::src() plus no `//`, whitespace or quote — or is dropped. Takes
+     * a JSON string or an array. Runs on save AND on every read, so a row
+     * edited by hand reaches the page cleaned.
+     */
+    public static function cleanBrandImages(mixed $raw, array $field = []): string
+    {
+        $map = self::brandImages($raw);
+
+        return $map === [] ? '' : (string) json_encode($map, JSON_FORCE_OBJECT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    /** @return array<int, string>  brand id → checked picture, ids ascending */
+    public static function brandImages(mixed $raw): array
+    {
+        if (is_string($raw)) {
+            $raw = trim($raw) === '' || strlen($raw) > 64000 ? [] : json_decode($raw, true);
+        }
+
+        $out = [];
+
+        foreach (is_array($raw) ? $raw : [] as $id => $path) {
+            $id = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            $src = is_string($path) && strlen($path) <= 500 ? self::image($path) : '';
+
+            if ($id !== false && $src !== '' && ! str_starts_with($src, 'data:')) {
+                $out[$id] = $src;
+            }
+        }
+
+        ksort($out);
+
+        return array_slice($out, 0, self::IMG_CAP, true);
+    }
+
     /** @return array<string, mixed> */
     public static function brands(array $c): array
     {
@@ -410,12 +476,18 @@ final class HomeSections
         $d = (int) self::pick($c, 'home_br_count_d');
         $m = (int) self::pick($c, 'home_br_count_m');
 
+        $lookM = self::pick($c, 'home_br_layout_m');
+
         return [
             'picks' => self::ids($c['home_br_picks'] ?? ''),
             'count_d' => $d,
             'count_m' => $m,
             'fetch' => max($d, $m),
-            'classes' => 'hs hs-brands '.$frame['bg'].' hs-dc-'.$d.' hs-mc-'.$m,
+            // Lane BS. Option keys only, so nothing typed reaches the class.
+            'look_d' => self::pick($c, 'home_br_layout_d'),
+            'look_m' => $lookM,
+            'imgs' => self::brandImages($c['home_br_imgs'] ?? ''),
+            'classes' => 'hs hs-brands hs-brm-'.self::LOOK_CLASS[$lookM].' '.$frame['bg'].' hs-dc-'.$d.' hs-mc-'.$m,
             'style' => $frame['style'].';--hs-cols-d:'.self::pick($c, 'home_br_cols_d').';--hs-cols-m:'.self::pick($c, 'home_br_cols_m').';--hs-br-th-m:'.self::pick($c, 'home_br_th_m').'px',
             'eyebrow' => self::text($c, 'home_br_eyebrow'),
             'title' => self::text($c, 'home_br_title'),

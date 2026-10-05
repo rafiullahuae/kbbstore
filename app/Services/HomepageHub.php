@@ -100,7 +100,8 @@ final class HomepageHub
     public static function group(string $key): string
     {
         return match (true) {
-            (bool) preg_match('/_(src|source|brand|cat|brands|cats|picks|sort|stock|limit|max|count_[dm])$/', $key) => 'products',
+            // Lane BS: `_imgs` — a picture per picked row — sits with its picks.
+            (bool) preg_match('/_(src|source|brand|cat|brands|cats|picks|imgs|sort|stock|limit|max|count_[dm])$/', $key) => 'products',
             // Lane FS: spacing and text size are the Fonts & size tab's, so a
             // section's OWN space-above / space-below / under-the-heading keys
             // move there instead of being offered twice (SectionType::OWNED).

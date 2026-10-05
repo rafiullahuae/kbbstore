@@ -123,6 +123,11 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
 .hph-pv img,.hph-pv .hph-th{width:100%;height:auto;aspect-ratio:1;border-radius:8px}
 .hph-pv figcaption{font-size:11px;line-height:1.3;margin-top:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .hph-h{font-size:13px;font-weight:700;margin:0}
+/* Lane BS: a picked brand with its own image — chosen inline, no extra screen. */
+.hph-pick.is-img{grid-template-columns:44px minmax(0,1fr) auto}
+.hph-pick.is-img .hph-th{width:44px;height:55px}
+.hph-pact{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:640px){.hph-pick.is-img{grid-template-columns:44px minmax(0,1fr)}.hph-pact{grid-column:1/-1;justify-content:flex-start}}
 /* Lane FS: the Fonts & size tab. */
 .hph-px{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center}
 .hph-px input[type=range]{width:100%;min-width:0;accent-color:var(--accent,#15a85a)}
@@ -606,12 +611,60 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
     return Math.max(+v[m.keys.limit_d] || 8, +v[m.keys.limit_m] || 6);
   }
 
+  /* ------------------------------------------- per-pick images (Lane BS) */
+  /** The field that keeps one value per row of the `ids` field `key`, or null. */
+  function perPick(key){
+    var list = (E && E.sec && E.sec.fields) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].options && list[i].options.picker === 'per-pick' && list[i].options.for === key) return list[i];
+    return null;
+  }
+
+  /** id => path, from the JSON the server keeps. Anything else reads as none. */
+  function imgMap(k){
+    try { var m = JSON.parse(E.values[k] || '{}'); return m && typeof m === 'object' && !Array.isArray(m) ? m : {}; } catch (e) { return {}; }
+  }
+
+  function setImg(k, id, url){
+    var m = imgMap(k);
+    if (url) m[id] = String(url); else delete m[id];
+    set(k, Object.keys(m).length ? JSON.stringify(m) : '');
+    redrawBody();
+  }
+
+  /* One row per picked brand: its image, Choose / Remove, ↑ ↓ and ×. The
+     image travels with the Save section the rest of the tab uses — no request
+     of its own, and nothing is fetched to draw it but the thumbnail. */
+  function pickRowsHTML(list, chosen, f, per){
+    var m = imgMap(per.key), name = 'f:' + f.key, cap = +f.options.cap || 24;
+    var opts = (S.data.vocab[list] || []).filter(function(r){ return chosen.indexOf(r.id) < 0; });
+    return '<ol class="hph-picks">' + chosen.map(function(id, i){
+        var src = m[id] || '';
+        return '<li class="hph-pick is-img">'
+          + (src ? '<img class="hph-th" src="' + esc(src) + '" alt="" width="44" height="55" loading="lazy">' : '<span class="hph-th" title="No image chosen — the brand’s banner photo shows"></span>')
+          + '<div><b>' + esc(vocabName(list, id)) + '</b><span>' + (src ? 'Own image' : 'No image chosen') + '</span></div>'
+          + '<span class="hph-pact">'
+          +   '<button type="button" class="hph-btn sm" data-hph-pimg="' + esc(per.key) + '|' + id + '">' + (src ? 'Change' : 'Choose image') + '</button>'
+          +   (src ? '<button type="button" class="hph-btn sm" data-hph-pimgx="' + esc(per.key) + '|' + id + '">Remove</button>' : '')
+          +   '<button type="button" class="hph-btn sm" aria-label="Move up" data-hph-pmv="' + esc(name) + '|' + i + '|-1"' + (i === 0 ? ' disabled' : '') + '>↑</button>'
+          +   '<button type="button" class="hph-btn sm" aria-label="Move down" data-hph-pmv="' + esc(name) + '|' + i + '|1"' + (i === chosen.length - 1 ? ' disabled' : '') + '>↓</button>'
+          +   '<button type="button" class="hph-btn sm" aria-label="Remove ' + esc(vocabName(list, id)) + '" data-hph-chip="' + esc(name) + '|' + i + '">×</button>'
+          + '</span></li>';
+      }).join('') + '</ol>'
+      + (chosen.length < cap ? '<select class="hph-in" style="width:auto;max-width:100%;margin-top:6px" data-hph-chipadd="' + esc(name) + '"><option value="">+ Add a brand…</option>'
+        + opts.map(function(r){ return '<option value="' + r.id + '">' + esc(r.name) + '</option>'; }).join('') + '</select>' : '')
+      + '<small>' + esc(per.help) + '</small>';
+  }
+
   /* ---------------------------------------------------------- fields */
   function fieldHTML(f, value){
     var id = 'hph-f-' + String(f.key).replace(/[^a-z0-9]+/gi, '-');
     var v = value === undefined || value === null ? f.default : value;
     var ctl;
     var data = ' data-hph-k="' + esc(f.key) + '"';
+
+    // Lane BS: a per-pick value (one image per picked brand) is drawn by its
+    // pick list, beside each row — never as a box of its own.
+    if (f.options && f.options.picker === 'per-pick') return '';
 
     if (f.type === 'bool') {
       return '<div class="hph-row"><div><span class="hph-l">' + esc(f.label) + '</span>' + (f.help ? '<small>' + esc(f.help) + '</small>' : '') + '</div><div>'
@@ -637,7 +690,8 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
         ctl = '<select class="hph-in" id="' + id + '"' + data + '><option value="">— none —</option>'
           + (S.data.vocab[list] || []).map(function(r){ return '<option value="' + r.id + '"' + (r.id === chosen[0] ? ' selected' : '') + '>' + esc(r.name) + '</option>'; }).join('') + '</select>';
       } else {
-        ctl = chipsHTML(list, chosen, 'f:' + f.key);
+        var per = perPick(f.key);
+        ctl = per ? pickRowsHTML(list, chosen, f, per) : chipsHTML(list, chosen, 'f:' + f.key);
       }
     } else if (f.type === 'int' || f.type === 'range') {
       var o = f.options || {};
@@ -790,6 +844,24 @@ textarea.hph-in{min-height:84px;resize:vertical;line-height:1.5}
         var k = b.dataset.hphMedia;
         window.kbbPickMedia({title: 'Photo', note: 'The photo for this homepage section.', folder: 'appearance',
           onPick: function(urls){ if (urls && urls[0]) { set(k, String(urls[0])); redrawBody(); } }});
+      };
+    });
+
+    bd.querySelectorAll('[data-hph-pimg]').forEach(function(b){
+      b.onclick = function(){
+        if (typeof window.kbbPickMedia !== 'function') return;
+        var p = b.dataset.hphPimg.split('|');
+        window.kbbPickMedia({title: 'Brand image', note: 'The image on this brand’s homepage card.', folder: 'appearance',
+          onPick: function(urls){ if (E && urls && urls[0]) setImg(p[0], p[1], urls[0]); }});
+      };
+    });
+    bd.querySelectorAll('[data-hph-pimgx]').forEach(function(b){
+      b.onclick = function(){ var p = b.dataset.hphPimgx.split('|'); setImg(p[0], p[1], ''); };
+    });
+    bd.querySelectorAll('[data-hph-pmv]').forEach(function(b){
+      b.onclick = function(){
+        var p = b.dataset.hphPmv.split('|'), i = +p[1], j = i + (+p[2]);
+        chipEdit(p[0], function(a){ if (j >= 0 && j < a.length) { var x = a[i]; a[i] = a[j]; a[j] = x; } });
       };
     });
 
