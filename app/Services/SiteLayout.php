@@ -568,9 +568,16 @@ class SiteLayout
          * border." He asked, so both ship ON; Classic and the switch put the
          * old page back. Not CSS: in BRAND_KEYS, so isDefault()/css() skip them.
          */
-        'brand_hero' => ['select', 'Brand header style', 'compact',
-            'Compact, as you asked: a small round logo and the brand name in one row, the description under them -- the same short band on phones and on laptops. Classic: the large logo beside the name, stacking into a tall column on phones, as before.',
+        /*
+         * Lane BR2 adds PANEL and ships it, as the owner asked: "logo will be on
+         * th background image, beside logo, brand name, and downside brand
+         * description ... almost 60% of the page width, and in mobile the
+         * description will come under banner". Compact and Classic stay.
+         */
+        'brand_hero' => ['select', 'Brand header style', 'panel',
+            'Panel, as you asked: the banner is the background, and on it a panel about 60% wide holds the logo, the brand name beside it and the description under them. On a phone the logo and name sit in a capsule on the banner and the description comes below it. Compact: a small round logo and the brand name in one row, the description under them. Classic: the large logo beside the name, as before.',
             [
+                'panel' => 'Panel -- logo, name and description on the banner',
                 'compact' => 'Compact -- logo and name in one row',
                 'classic' => 'Classic -- as before',
             ]],
@@ -588,6 +595,52 @@ class SiteLayout
          */
         'brand_phone_cover' => ['bool', 'Picture covers the header on phones', true,
             'On, as you asked: on a phone the brand banner fills the whole header, edge to edge (its sides are cropped to fit). Off: brand pages follow Category header → "Show the whole picture on phones".'],
+        /*
+         * THE PANEL HEADER'S LOOK AND SIZES.                        (Lane BR2)
+         *
+         * The shop's values; each brand can change every one of them in the
+         * "Edit brand header" pop-up on its own page (stored in
+         * `brands.header_layout`, App\Support\BrandPanel). Only Panel reads
+         * them. Not CSS on :root: in BRAND_KEYS, so isDefault()/css() skip
+         * them, and BrandPanel prints each as a clamped integer or an option key.
+         */
+        'brand_panel_style' => ['select', 'Panel · background', 'frost',
+            'Only for the Panel header. Frosted white: a soft white panel with dark text, readable on any banner. Brand colour: a dark shade of the brand\'s own colour with white text.',
+            [
+                'frost' => 'Frosted white',
+                'brand' => 'Brand colour',
+            ]],
+        'brand_pill' => ['select', 'Panel · logo and name on phones', 'capsule',
+            'Only for the Panel header: the shape behind the logo and name on a phone\'s banner.',
+            [
+                'capsule' => 'Capsule',
+                'rect' => 'Rectangle',
+            ]],
+        'brand_logo_shape' => ['select', 'Panel · logo shape', 'circle',
+            'Only for the Panel header. Circle for round logos, Rectangle for wide wordmarks. Each brand can pick its own.',
+            [
+                'circle' => 'Circle',
+                'rect' => 'Rectangle',
+            ]],
+        'brand_header_w' => ['range', 'Panel · header width', 100,
+            'Only for the Panel header, on laptops: how much of the page width the banner takes, centred.',
+            ['min' => 60, 'max' => 100, 'step' => 1, 'unit' => '%']],
+        'brand_banner_h' => ['range', 'Panel · banner height · laptop', 270,
+            'Only for the Panel header. The banner grows past this if the description needs more room.',
+            ['min' => 160, 'max' => 460, 'step' => 5, 'unit' => 'px']],
+        'brand_banner_h_m' => ['range', 'Panel · banner height · phone', 165,
+            'Only for the Panel header: the banner on a phone, with the logo and name on it.',
+            ['min' => 100, 'max' => 300, 'step' => 5, 'unit' => 'px']],
+        'brand_content_w' => ['range', 'Panel · content width', 60,
+            'Only for the Panel header, on laptops: the panel\'s width, as a share of the banner\'s.',
+            ['min' => 40, 'max' => 85, 'step' => 1, 'unit' => '%']],
+        'brand_img_pos' => ['select', 'Panel · picture position', 'center',
+            'Only for the Panel header: which part of the banner stays in view when it is cropped to fit.',
+            [
+                'left' => 'Left',
+                'center' => 'Centre',
+                'right' => 'Right',
+            ]],
 
         /*
          * ── PRESS FEEDBACK ──────────────────────────────────────── Lane RD ──
@@ -732,7 +785,9 @@ class SiteLayout
     public const BRAND_ALL_CAP = 500;
 
     /** The brand page's switches: not CSS, skipped by isDefault(). */
-    public const BRAND_KEYS = ['brand_all', 'brand_cta', 'brand_popular', 'brand_hero', 'brand_ring', 'brand_phone_cover'];
+    public const BRAND_KEYS = ['brand_all', 'brand_cta', 'brand_popular', 'brand_hero', 'brand_ring', 'brand_phone_cover',
+        'brand_panel_style', 'brand_pill', 'brand_logo_shape', 'brand_header_w', 'brand_banner_h', 'brand_banner_h_m',
+        'brand_content_w', 'brand_img_pos'];
 
     /** The keys that are not CSS: skipped by isDefault(), never in css(). */
     private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom'];

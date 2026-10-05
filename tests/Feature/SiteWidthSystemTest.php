@@ -692,10 +692,22 @@ it('ships every setting at the value the page already had, except the ones the o
         'brand_cta' => false,
         'brand_popular' => false,
         // Lane BH, as the owner asked: the compact header and the logo ring.
-        'brand_hero' => 'compact',
+        // Lane BR2, as the owner asked: the Panel header ("logo will be on th
+        // background image ... almost 60% of the page width").
+        'brand_hero' => 'panel',
         'brand_ring' => true,
         // 2.60.387, the owner asked: the brand banner covers the phone header.
         'brand_phone_cover' => true,
+        // Lane BR2: the Panel header's shop values -- Frosted white and the
+        // capsule he asked for, a circle logo, the preview's sizes, centred.
+        'brand_panel_style' => 'frost',
+        'brand_pill' => 'capsule',
+        'brand_logo_shape' => 'circle',
+        'brand_header_w' => 100,
+        'brand_banner_h' => 270,
+        'brand_banner_h_m' => 165,
+        'brand_content_w' => 60,
+        'brand_img_pos' => 'center',
         'press' => 'c',
         // Lane FP, as the owner asked: "it's good only for small things like
         // icons etc." -- a default he chose, not the old behaviour.

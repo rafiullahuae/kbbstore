@@ -195,6 +195,16 @@ it('emits every numeric setting into a property named by a constant in the servi
             continue;
         }
 
+        if (in_array($key, SiteLayout::BRAND_KEYS, true)) {
+            // Lane BR2: the brand Panel header's sizes ride on the header
+            // element, written through BrandPanel::RANGES (setting => property).
+            expect(in_array($key, array_column(\App\Support\BrandPanel::RANGES, 0), true))->toBeTrue(
+                "range field '{$key}' is read by nothing that draws the brand Panel header"
+            );
+
+            continue;
+        }
+
         expect(in_array($key, $mapped, true))->toBeTrue(
             "range field '{$key}' is emitted as no custom property"
         );

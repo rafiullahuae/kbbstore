@@ -312,6 +312,11 @@ it('draws a brand\'s header on its page when the brand carries one', function ()
         'name' => 'PT Joseon', 'slug' => 'pt-joseon', 'description' => 'Hanbang skincare',
         'header_image' => 'https://kbeautybliss.com/wp-content/uploads/2020/01/boj-banner.jpg',
     ]);
+    // The title header draws a brand page under Compact and Classic; the Panel
+    // header (Lane BR2, the default) draws the banner itself.
+    app(\App\Services\SiteLayout::class)->save(['brand_hero' => 'compact']);
+    \App\Services\SettingsService::forgetMemo();
+    \App\Services\ModuleSchema::forgetNormalised();
 
     $html = ptPage('/brands/pt-joseon/');
 

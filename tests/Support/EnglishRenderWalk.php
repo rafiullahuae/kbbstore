@@ -1994,6 +1994,37 @@ final class EnglishRenderWalk
             ],
 
             /*
+             * THE PANEL BRAND HEADER.                                (Lane BR2)
+             *
+             * The owner: "logo will be on th background image, beside logo,
+             * brand name, and downside brand description. and put a nice
+             * background of the content ... almost 60% of the page width" and
+             * "in mobile logo and name with capsule type or rectangle
+             * background". He asked, so it ships on; Appearance → Site layout
+             * → Brand page → Brand header style (Compact) puts the row above
+             * back. Two changes, on the brand page alone -- the directory does
+             * not move: its own stylesheet in the <head>, and the compact row
+             * becoming the panel header around the SAME logo and the SAME name
+             * (this walk's brand has no banner, no colour and no description,
+             * so it is the no-picture ground in the shop pink's shades).
+             * BrandPanelHeaderTest pins the behaviour.
+             */
+            'the brand page: the Panel header\'s stylesheet (Lane BR2)' => [
+                'pattern' => '#(<link rel="canonical" href="[^"]*/brands/[^"/]+/">.*?src="/build/assets/app-[^"]+\.js"></script> {4}\n {4})(\n)#s',
+                'with' => '$1'.self::laneBr2Link().'$2',
+                'hits' => 1,
+            ],
+            'the brand page: the Panel header around the logo and the name (Lane BR2)' => [
+                'pattern' => '#\n {8}<div class="brw-hero brw-hero--compact">\n {12}<div class="brw-hero-row">\n(<span class="brw-logo[^\n]*</span>)\n {16}<h1 class="brw-h1">([^<]*)</h1>\n {12}</div>\n {8}</div>\n#',
+                'with' => "\n".'<div class="brw-phw" data-kbb-brand-header>'
+                    ."\n".'<section class="brw-ph brw-ph--frost brw-ph--pill-capsule brw-ph--logo-circle brw-ph--pos-center brw-ph--noimg" style="--brw-ph-w:100%;--brw-ph-h:270px;--brw-ph-hm:165px;--brw-ph-cw:60%;--brw-ph-dk:#431a25;--brw-ph-lt:#fceef2" aria-labelledby="brw-ph-title">'
+                    ."\n".'<div class="brw-ph__media">'."\n".'</div>'."\n".'<div class="brw-ph__panel">'."\n".'<div class="brw-ph__id">'
+                    ."\n".'$1'."\n".'<h1 class="brw-ph__name" id="brw-ph-title">$2</h1>'
+                    ."\n".'</div>'."\n".'</div>'."\n".'</section>'."\n".'</div>'."\n",
+                'hits' => 1,
+            ],
+
+            /*
              * SOLD OUT, SAID ON THE CARD.                             (Lane PX)
              *
              * The owner: "the sold out product should have proper sold out
@@ -2058,6 +2089,18 @@ final class EnglishRenderWalk
                 'hits' => 1,
             ],
         ];
+    }
+
+    /**
+     * The Panel header's stylesheet tags as Vite prints them (Lane BR2), named
+     * from the build manifest so a rebuilt stylesheet does not stale the rule.
+     */
+    private static function laneBr2Link(): string
+    {
+        $manifest = json_decode((string) @file_get_contents(public_path('build/manifest.json')), true);
+        $file = '/build/'.($manifest['resources/css/kbb/kbb-brand-header.css']['file'] ?? 'missing.css');
+
+        return '<link rel="preload" as="style" href="'.$file.'" /><link rel="stylesheet" href="'.$file.'" />';
     }
 
     /** The stylesheet lines Lane BH adds to both brand views, verbatim. */

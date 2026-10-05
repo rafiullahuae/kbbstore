@@ -224,7 +224,9 @@ it('leaves /shop/, a search, the brand filter and a brand page with no picture a
             ->and(str_contains($html, 'kbb-title-header'))->toBeFalse($path);
     }
 
-    pySave(['cat_header_box_brands' => true]);
+    // Compact: the title header draws a brand page under Compact and Classic,
+    // not under the Panel header (Lane BR2, the default).
+    pySave(['cat_header_box_brands' => true, 'brand_hero' => 'compact']);
 
     expect(pyOpen(pyPage('/brands/py-brand/')))->toContain('kbb-th--box kbb-th--dark')
         ->and(pyOpen(pyPage('/shop/?filter_brands=py-brand')))->toContain('kbb-th--box');

@@ -51,6 +51,9 @@ function bpcBrand(): Brand
 
 it('covers the phone header with the brand banner: no shrunk picture, no blurred copy', function () {
     bpcBrand();
+    // The title header draws a brand page under Compact and Classic; the Panel
+    // header (Lane BR2, the default) always covers -- BrandPanelHeaderTest.
+    bpcSet('layout_brand_hero', 'compact');
 
     $html = (string) $this->get('/brands/covera/')->assertOk()->getContent();
 

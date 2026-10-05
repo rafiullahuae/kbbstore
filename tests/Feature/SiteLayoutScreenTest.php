@@ -171,7 +171,10 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // Filters drawer width) and `press_scope` (Press feedback, small icons only).
     // 96 since 2.60.393: `filters_m` and `cols_m` (Product grid, the phone's
     // Filters button off and its 1 / 2 column buttons on).
-    expect($keys)->toHaveCount(96);
+    // 104 since Lane BR2: the Panel header's look (panel background, phone
+    // pill, logo shape), its four sizes and the picture's position, all on the
+    // Brand page tab.
+    expect($keys)->toHaveCount(104);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is
