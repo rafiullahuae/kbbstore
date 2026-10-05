@@ -500,6 +500,14 @@ function walkRegisteredUris(): array
             continue;
         }
 
+        // Not the shop's either: the owner app at its secret address answers
+        // only behind its PIN, and tests/Feature/OwnerApp*Test.php walk it.
+        // Matched by route name, so the random path and an optional
+        // dedicated host both stay out.
+        if (str_starts_with((string) $route->getName(), 'owner-app.')) {
+            continue;
+        }
+
         $uris[] = $uri;
     }
 
