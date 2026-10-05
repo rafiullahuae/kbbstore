@@ -4508,7 +4508,7 @@
      without the dates it covers. */
   function anCardHead(title, desc, period){
     var chip = period ? '<span class="an-chip">'+sesc(period.label)+' · '+sesc(period.range_label)+'</span>' : '';
-    return '<div class="an-sec-h">'+chip+'<div class="an-sec-t">'+sescHtml(title)+'</div>'+
+    return '<div class="an-sec-h">'+chip+'<div class="an-sec-t">'+sesc(title)+'</div>'+
       '<div class="an-sec-d">'+desc+'</div></div>';
   }
 

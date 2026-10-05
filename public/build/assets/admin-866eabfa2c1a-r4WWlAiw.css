@@ -621,6 +621,8 @@ input.inp[type=file]{padding:6px 9px}
 .ritem .mv{display:flex;flex-direction:column;gap:2px;margin-left:auto}
 .ritem .mv button{width:24px;height:18px;border-radius:5px;border:1px solid var(--border);display:grid;place-items:center;color:var(--ink-soft);background:var(--surface)}
 .ritem .mv button:hover{color:var(--accent-ink);border-color:var(--accent)}
+.ritem .mv button.re-jump{color:#d6336c;border-color:#f3c1cf;background:#fff5f8}
+.ritem .mv button.re-jump:hover{color:#fff;background:#d6336c;border-color:#d6336c}
 .ritem .mv svg{width:12px;height:12px}
 /* ---- full product editor (WooCommerce-parity) ---- */
 .btn.block{width:100%}

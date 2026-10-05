@@ -3646,8 +3646,6 @@ function paintDividers(){
 let MGM = null;
 let MGM_MENUS = [];
 let MGM_CURRENT_MENU_ID = null;
-let mgmDragId = null;       // id currently being dragged
-let mgmDragTarget = null;   // {parentId, beforeId} to insert before, or {into: id} to become a child
 
 function mgmBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/mega-menu'; }
 
@@ -3709,47 +3707,6 @@ async function renderMegaMenu(menuId){
 
 const MGM_VIS_LABEL = {always: 'Everyone', guest: 'Signed out only', auth: 'Signed in only'};
 
-let MGM_EXPANDED = new Set(); // ids the user has explicitly opened — everything else starts collapsed
-
-function mgmRow(item, depth){
-  const kids = item.children || [];
-  const childLabel = depth === 0 ? 'column' : 'link';
-  const canAddChild = depth < 2;
-  const swatch = item.highlight_color
-    ? `<span class="mgm-swatch" style="background:${escAttr(item.highlight_color)}" title="Highlighted"></span>` : '';
-  const visTag = item.visibility && item.visibility !== 'always'
-    ? `<span class="mgm-vistag">${escHtml(MGM_VIS_LABEL[item.visibility] || item.visibility)}</span>` : '';
-  const tabTag = item.new_tab ? `<span class="mgm-tabtag">↗</span>` : '';
-  const hasKids = kids.length > 0;
-  const open = hasKids && MGM_EXPANDED.has(item.id);
-
-  return `<div class="mgmrow-wrap" data-mgmid="${item.id}" data-mgmdepth="${depth}">
-    <div class="mgmdropline" data-mgmdropline="before"></div>
-    <div class="mgmitem" data-mgmitem="${item.id}" style="${item.highlight_color ? `border-left-color:${escAttr(item.highlight_color)}` : ''}">
-      <span class="mgmhandle" draggable="true" data-mgmdrag="${item.id}" title="Drag to move">⠿</span>
-      ${hasKids ? `<button type="button" class="mgmtoggle${open ? ' open' : ''}" data-mgmtoggle="${item.id}" title="${open ? 'Collapse' : 'Expand'}">▸</button>` : '<span class="mgmtoggle-sp"></span>'}
-      <div class="mgmlabel">
-        <span class="mgmlabel-top">
-          <b>${escHtml(item.label)}</b>
-          ${swatch}${item.badge ? `<span class="npill" style="background:#15a85a">${escHtml(item.badge)}</span>` : ''}${visTag}${tabTag}
-          ${hasKids ? `<span class="mgm-childcount">${kids.length}</span>` : ''}
-          ${item.url ? `<span class="mgmurl">${escHtml(item.url)}</span>` : ''}
-        </span>
-      </div>
-      <div class="mgmactions">
-        <button class="btn small" data-mgmedit="${item.id}">Edit</button>
-        <button class="btn small danger" data-mgmdel="${item.id}" data-mgmlabel="${escAttr(item.label)}">Delete</button>
-      </div>
-    </div>
-    <div class="mgmchildren${open ? '' : ' mgm-collapsed'}" data-mgmchildzone="${item.id}">
-      ${kids.map(k => mgmRow(k, depth + 1)).join('')}
-
-      <div class="mgmdropline" data-mgmdropline-end="${item.id}"></div>
-      ${canAddChild ? `<button class="btn small mgmadd-child" data-mgmaddchild="${item.id}" data-mgmparentdepth="${depth}">+ Add ${childLabel}</button>` : ''}
-    </div>
-  </div>`;
-}
-
 /* A slim, real rendering of the top bar, using the site's own classes and
    CSS (kbb.css is already loaded in the admin shell for a couple of other
    previews) so this isn't a guess at what it'll look like — it's what it
@@ -3792,7 +3749,7 @@ function paintMegaMenu(){
   $('#content').innerHTML = `<div class="wrap mgm-wrap">
     <div class="page-head">
       <h2>Mega Menu</h2>
-      <p>What shows in the header nav bar, and what drops down or opens as a mega panel underneath each item. Drag the ⠿ handle to reorder or move an item to a different column. Changes take effect immediately.</p>
+      <p>What shows in the header nav bar, and what drops down or opens as a mega panel underneath each item. Each column is a top-level item, with its sub-menus and links inside. Type a number or press the arrows to move anything, or drag any row and it slides into place. Click a name to edit it; ⋯ has Delete and Move to column. Changes take effect immediately.</p>
     </div>
 
     ${mgmMenuBar()}
@@ -3804,11 +3761,7 @@ function paintMegaMenu(){
     ${mgmPreview()}
 
     <div class="card mgm-card">
-      ${tree.length ? `<div class="mgm-treehead"><span>${tree.length} top-level item${tree.length===1?'':'s'}</span><button class="mgm-expandall" id="mgmExpandAll">Expand / collapse all</button></div>` : ''}
-      <div class="mgmtree" id="mgmTree">
-        ${tree.length ? tree.map(i => mgmRow(i, 0)).join('') : '<p class="mdesc" style="padding:8px 0">Nothing here yet — the header is showing its built-in fallback (Home, New In, Best Sellers, Shop). Add the first item below.</p>'}
-        <div class="mgmdropline" data-mgmdropline-end="root"></div>
-      </div>
+      <div class="mgmtree" id="mgmTree"></div>
       <button class="btn primary" id="mgmAddTop" style="margin-top:16px">+ Add top-level item</button>
     </div>
   </div>`;
@@ -3831,39 +3784,19 @@ function bindMegaMenu(){
   const settingsBtn = $('#mgmMenuSettings');
   if(settingsBtn) settingsBtn.onclick = () => mgmMenuSettingsForm();
 
-  $$('[data-mgmtoggle]').forEach(b => b.onclick = () => {
-    const id = Number(b.dataset.mgmtoggle);
-    if(MGM_EXPANDED.has(id)) MGM_EXPANDED.delete(id); else MGM_EXPANDED.add(id);
-    paintMegaMenu();
+  // Lane MO: the column board — sort numbers, arrows, live drag, inline add,
+  // the floating +. One move request per action; the tree changes locally.
+  if(window.KBBMenuOrder) KBBMenuOrder.mount($('#mgmTree'), {
+    tree: () => MGM.tree || [],
+    setTree: t => { MGM.tree = t; },
+    changed: () => { const pv = $('.mgmpv'); if(pv) pv.outerHTML = mgmPreview(); },
+    menuId: () => MGM_CURRENT_MENU_ID,
+    api: mgmApi,
+    toast: (m, kind) => toast(m, kind),
+    reload: () => renderMegaMenu(MGM_CURRENT_MENU_ID),
+    edit: id => { const it = mgmFind(id); if(it) mgmOpenForm(it.parent_id ?? null, it._depth, it); },
+    confirmDelete: label => mgmDeleteConfirm(label),
   });
-
-  const expandAllBtn = $('#mgmExpandAll');
-  if(expandAllBtn) expandAllBtn.onclick = () => {
-    const allWithKids = [];
-    (function walk(nodes){ nodes.forEach(n => { if((n.children||[]).length){ allWithKids.push(n.id); walk(n.children); } }); })(MGM.tree || []);
-    const allOpen = allWithKids.every(id => MGM_EXPANDED.has(id));
-    MGM_EXPANDED = allOpen ? new Set() : new Set(allWithKids);
-    paintMegaMenu();
-  };
-
-  $$('[data-mgmaddchild]').forEach(b => b.onclick = () =>
-    mgmOpenForm(Number(b.dataset.mgmaddchild), Number(b.dataset.mgmparentdepth) + 1));
-
-  $$('[data-mgmedit]').forEach(b => b.onclick = () => {
-    const item = mgmFind(Number(b.dataset.mgmedit));
-    if(item) mgmOpenForm(item.parent_id ?? null, item._depth, item);
-  });
-
-  $$('[data-mgmdel]').forEach(b => b.onclick = async () => {
-    const ok = await mgmDeleteConfirm(b.dataset.mgmlabel);
-    if(!ok) return;
-    const r = await mgmApi('/' + b.dataset.mgmdel + '/delete', {method:'POST'});
-    if(!r.ok){ toast('Could not delete that.', 'bad'); return; }
-    toast('Deleted.');
-    renderMegaMenu();
-  });
-
-  mgmBindDragDrop();
 }
 
 /* Flat lookup with parent_id and depth annotated, since the tree from the
@@ -3878,198 +3811,6 @@ function mgmFind(id, nodes, depth, parentId){
     }
   }
   return null;
-}
-
-/* Chain of real node objects (not copies) from MGM.tree down to id, inclusive. */
-function mgmPathTo(id, nodes, trail){
-  nodes = nodes || MGM.tree; trail = trail || [];
-  for(const n of nodes){
-    if(n.id === id) return trail.concat([n]);
-    if(n.children && n.children.length){
-      const hit = mgmPathTo(id, n.children, trail.concat([n]));
-      if(hit) return hit;
-    }
-  }
-  return null;
-}
-
-function mgmSiblingsAndParent(id){
-  const path = mgmPathTo(id);
-  if(!path) return null;
-  const parent = path.length > 1 ? path[path.length - 2] : null;
-  const siblings = parent ? parent.children : MGM.tree;
-  return {parent, siblings};
-}
-
-/* How many levels exist below this node — 0 for a leaf. */
-function mgmSubtreeDepth(node){
-  if(!node.children || !node.children.length) return 0;
-  return 1 + Math.max(...node.children.map(mgmSubtreeDepth));
-}
-
-/* Mirrors the server's own check (MegaMenuApiController::move) so the "drop
-   into" zone only appears where the drop would actually be accepted —
-   nothing worse than a drop zone that lights up and then bounces. */
-function mgmCanNestInto(targetId){
-  if(mgmDragId === null || targetId === mgmDragId) return false;
-  const targetPath = mgmPathTo(targetId);
-  if(!targetPath) return false;
-  if(targetPath.some(n => n.id === mgmDragId)) return false;
-  const dragged = mgmFind(mgmDragId);
-  if(!dragged) return false;
-  const targetDepth = targetPath.length;
-  const ownDepth = mgmSubtreeDepth(dragged);
-  return targetDepth + ownDepth <= 2;
-}
-
-/* ---------- Drag and drop ---------- */
-
-function mgmBindDragDrop(){
-  $$('[data-mgmdrag]').forEach(handle => {
-    handle.addEventListener('dragstart', e => {
-      mgmDragId = Number(handle.dataset.mgmdrag);
-      e.dataTransfer.effectAllowed = 'move';
-      // Firefox requires data to be set for the drag to start at all.
-      e.dataTransfer.setData('text/plain', String(mgmDragId));
-      handle.closest('[data-mgmitem]').classList.add('mgm-dragging');
-    });
-    handle.addEventListener('dragend', () => {
-      handle.closest('[data-mgmitem]')?.classList.remove('mgm-dragging');
-      mgmClearDropIndicators();
-      mgmDragId = null; mgmDragTarget = null;
-    });
-  });
-
-  $$('[data-mgmitem]').forEach(row => {
-    row.addEventListener('dragover', e => {
-      if(mgmDragId === null) return;
-      e.preventDefault();
-      // A row's own decision — reorder or nest — must win outright. Without
-      // this, the event keeps bubbling past this row into whatever outer
-      // item's children zone happens to contain it, and that ancestor's
-      // dragover handler fires afterward and silently overwrites this
-      // row's own, more specific target with its own. Confirmed directly:
-      // dropping "into" a nested row was landing in its grandparent instead.
-      e.stopPropagation();
-      const id = Number(row.dataset.mgmitem);
-      if(id === mgmDragId) return;
-      const rect = row.getBoundingClientRect();
-      const frac = (e.clientY - rect.top) / rect.height;
-      const info = mgmSiblingsAndParent(id);
-      if(!info) return;
-
-      // Middle third of the row = "drop into this item," so nesting works
-      // by dropping directly on a row instead of needing its (possibly
-      // collapsed, possibly not-yet-existing) children area to be open and
-      // visible first. Top/bottom thirds keep the existing reorder behavior.
-      if(frac >= 0.33 && frac <= 0.67 && mgmCanNestInto(id)){
-        mgmSetDropIndicator({into: id});
-        return;
-      }
-
-      const upperHalf = frac < 0.5;
-      if(upperHalf){
-        // Insert directly before this row.
-        mgmSetDropIndicator({parentId: info.parent ? info.parent.id : null, beforeId: id});
-      } else {
-        // Insert before whatever comes after this row in the same group —
-        // or at the end of the group if this is the last one.
-        const idx = info.siblings.findIndex(s => s.id === id);
-        const next = info.siblings[idx + 1];
-        mgmSetDropIndicator({parentId: info.parent ? info.parent.id : null, beforeId: next ? next.id : null, endOfGroup: !next, groupId: info.parent ? info.parent.id : 'root'});
-      }
-    });
-  });
-
-  // Dropping inside an item's own children zone (below its existing kids,
-  // above the "+ Add" button) makes the dragged item a new child of it.
-  $$('[data-mgmchildzone]').forEach(zone => {
-    zone.addEventListener('dragover', e => {
-      if(mgmDragId === null) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const id = Number(zone.dataset.mgmchildzone);
-      if(id === mgmDragId) return;
-      mgmSetDropIndicator({into: id});
-    });
-  });
-
-  $('#mgmTree').addEventListener('drop', async e => {
-    e.preventDefault();
-    if(mgmDragId === null || !mgmDragTarget) return;
-    await mgmPerformDrop(mgmDragId, mgmDragTarget);
-  });
-}
-
-function mgmClearDropIndicators(){
-  $$('.mgmdropline.on').forEach(l => l.classList.remove('on'));
-  $$('[data-mgmchildzone].mgm-into').forEach(z => z.classList.remove('mgm-into'));
-  $$('[data-mgmitem].mgm-into-row').forEach(r => r.classList.remove('mgm-into-row'));
-}
-
-/* target is either {parentId, beforeId} — insert before the row with id
-   beforeId inside parentId's group (beforeId null means end of that group,
-   parentId null means the top level) — or {into: id} to become a new child
-   of that id. Kept as one small object rather than several loose globals
-   so mgmPerformDrop reads exactly what mgmSetDropIndicator decided, with
-   nothing left to fall out of sync between them. */
-function mgmSetDropIndicator(target){
-  mgmClearDropIndicators();
-  mgmDragTarget = target;
-
-  if(target.into !== undefined){
-    $(`[data-mgmchildzone="${target.into}"]`)?.classList.add('mgm-into');
-    $(`[data-mgmitem="${target.into}"]`)?.classList.add('mgm-into-row');
-    return;
-  }
-  if(target.beforeId !== null && target.beforeId !== undefined){
-    $(`.mgmrow-wrap[data-mgmid="${target.beforeId}"] > [data-mgmdropline="before"]`)?.classList.add('on');
-    return;
-  }
-  // End of group — parentId null means the root list's own end line;
-  // otherwise the end line inside that parent's children zone.
-  const sel = target.parentId === null
-    ? '[data-mgmdropline-end="root"]'
-    : `[data-mgmchildzone="${target.parentId}"] > [data-mgmdropline-end]`;
-  $(sel)?.classList.add('on');
-}
-
-async function mgmPerformDrop(draggedId, target){
-  const dragged = mgmSiblingsAndParent(draggedId);
-  if(!dragged) return;
-  const draggedParentId = dragged.parent ? dragged.parent.id : null;
-
-  if(target.into !== undefined){
-    if(target.into === draggedId) return;
-    const targetPath = mgmPathTo(target.into);
-    const newSiblings = (targetPath[targetPath.length - 1].children || [])
-      .map(c => c.id).filter(id => id !== draggedId);
-    newSiblings.push(draggedId);
-    const r = await mgmApi('/' + draggedId + '/move', {method:'POST', body: JSON.stringify({parent_id: target.into, ids: newSiblings})});
-    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not move that.', 'bad'); return; }
-    toast('Moved.');
-    MGM_EXPANDED.add(target.into);
-    renderMegaMenu();
-    return;
-  }
-
-  const newParentId = target.parentId;
-  const newGroup = newParentId === null ? MGM.tree : (mgmPathTo(newParentId)?.slice(-1)[0]?.children || []);
-  let newIds = newGroup.map(s => s.id).filter(id => id !== draggedId);
-  const insertAt = target.beforeId === null ? newIds.length : newIds.indexOf(target.beforeId);
-  newIds.splice(insertAt < 0 ? newIds.length : insertAt, 0, draggedId);
-
-  const sameParent = draggedParentId === newParentId;
-
-  if(sameParent){
-    const r = await mgmApi('/reorder', {method:'POST', body: JSON.stringify({ids: newIds})});
-    if(!r.ok){ toast('Could not save the new order.', 'bad'); renderMegaMenu(); return; }
-  } else {
-    const r = await mgmApi('/' + draggedId + '/move', {method:'POST', body: JSON.stringify({parent_id: newParentId, ids: newIds})});
-    if(!r.ok){ toast((r.data.errors && r.data.errors[0]) || 'Could not move that.', 'bad'); renderMegaMenu(); return; }
-  }
-  toast('Moved.');
-  renderMegaMenu();
 }
 
 /* ---------- Add / edit form ---------- */
@@ -6009,7 +5750,7 @@ function catInventory(){
   $$('#catBody .invq').forEach(inp=>inp.oninput=()=>{const i=+inp.dataset.i;const v=inp.value===''?0:Math.max(0,parseInt(inp.value,10)||0);invDraft[i]=v;const tr=inp.closest('tr');tr.classList.toggle('invdirty',v!==CAT_PRODUCTS[i][6]);tr.querySelector('.invstat').innerHTML=stockPill(v);renderInvSaveBar();});
   renderInvSaveBar();
 }
-let reorderType='category',reorderScopes=null,reorderScopeId=null,reorderScopeName=null,reorderData=null,reorderPage=1,reorderSearch='',reorderLocal=null,reorderDirty=false,reorderSelected=new Set(),reorderBusy=false,reorderPerPage=+(localStorage.getItem('kbb_reorder_pp')||50),reorderPpCustomMode=false;
+let reorderType='category',reorderScopes=null,reorderScopeId=null,reorderScopeName=null,reorderData=null,reorderPage=1,reorderSearch='',reorderLocal=null,reorderDirty=false,reorderPending=[],reorderSelected=new Set(),reorderBusy=false,reorderPerPage=+(localStorage.getItem('kbb_reorder_pp')||50),reorderPpCustomMode=false;
 function reorderApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/catalog/reorder'; }
 function reorderFmtMoney(n){ return n==null ? '' : 'AED '+(Math.round(n*100)/100).toLocaleString(); }
 
@@ -6122,14 +5863,11 @@ function reorderPaint(){
       <button class="btn ghost sm" style="white-space:nowrap" ${d.page>=d.last_page?'disabled':''} id="reNext">Next ›</button>
     </div>
   </div>
-  <div class="between" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
-    <span style="font-size:12.5px;color:${reorderDirty?'var(--sale)':'var(--ink-soft)'}">${reorderDirty?'Unsaved changes on this page':'No changes to save'}</span>
-    <button class="btn primary" id="reSave" ${reorderDirty?'':'disabled'}>Save changes</button>
-  </div>`;
+  ${reorderSaveBar()}`;
 
-  $('#reTypeCat').onclick=()=>{ if(reorderType==='category'||!reorderConfirmDiscard())return; reorderType='category'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
-  $('#reTypeBrand').onclick=()=>{ if(reorderType==='brand'||!reorderConfirmDiscard())return; reorderType='brand'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
-  $('#reCat').onchange=e=>{ if(!reorderConfirmDiscard()){e.target.value=reorderScopeId;return;} reorderScopeId=+e.target.value;const opt=e.target.selectedOptions[0];reorderScopeName=opt.textContent.replace(/^[\s↳]+/,'');reorderPage=1;reorderSearch='';reorderLoadProducts(); };
+  $('#reTypeCat').onclick=()=>{ if(reorderType==='category'||!reorderConfirmDiscard()||!reorderDropPending())return; reorderType='category'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
+  $('#reTypeBrand').onclick=()=>{ if(reorderType==='brand'||!reorderConfirmDiscard()||!reorderDropPending())return; reorderType='brand'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
+  $('#reCat').onchange=e=>{ if(!reorderConfirmDiscard()||!reorderDropPending()){e.target.value=reorderScopeId;return;} reorderScopeId=+e.target.value;const opt=e.target.selectedOptions[0];reorderScopeName=opt.textContent.replace(/^[\s↳]+/,'');reorderPage=1;reorderSearch='';reorderLoadProducts(); };
   let searchT;$('#reSearch').oninput=e=>{ if(!reorderConfirmDiscard()){e.target.value=reorderSearch;return;} clearTimeout(searchT);const v=e.target.value;searchT=setTimeout(()=>{reorderSearch=v;reorderPage=1;reorderLoadProducts();},300); };
   $('#reAutoSort').onchange=async e=>{
     const by=e.target.value; if(!by) return;
@@ -6164,7 +5902,38 @@ function reorderPaint(){
   const bulkTop=$('#reBulkTop'); if(bulkTop) bulkTop.onclick=reorderBulkTopOfPage;
   const bulkClear=$('#reBulkClear'); if(bulkClear) bulkClear.onclick=()=>{reorderSelected.clear();reorderPaint();};
   $('#reSave').onclick=reorderSave;
+  const disc=$('#reDiscard'); if(disc) disc.onclick=reorderDiscard;
+  $$('[data-rpend]').forEach(b=>b.onclick=()=>{ reorderPending=reorderPending.filter(m=>m.id!==+b.dataset.rpend); reorderPaint(); });
   reorderWireList();
+}
+
+/* THE SAVE BAR (2.60.402). The owner: "when re-order done, there must be SAVE
+   button. should not apply the order/sorting directly." Save sat under the
+   whole list and its pager -- below fifty rows -- so an order could be set
+   and never saved, and the shop kept the old one. The bar now stays pinned to
+   the bottom of the window while anything is unsaved, and a number typed for
+   a place on ANOTHER page waits for Save too (it used to save at once). */
+function reorderSaveBar(){
+  const n=reorderPending.length, any=reorderDirty||n>0;
+  const pend=n?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${reorderPending.map(m=>`<span style="font-size:12px;background:var(--surface-2,#f6f6f8);border:1px solid var(--border);border-radius:99px;padding:3px 4px 3px 10px;display:inline-flex;align-items:center;gap:6px">${escHtml(m.name)} → #${m.to+1}<button class="btn ghost sm" data-rpend="${m.id}" aria-label="Cancel this move" style="padding:0 6px;min-height:0">×</button></span>`).join('')}</div>`:'';
+  return `<div class="re-savebar" id="reSaveBar" style="position:sticky;bottom:0;z-index:5;margin-top:18px;padding:12px 14px;background:var(--surface,#fff);border:1px solid ${any?'var(--accent,#E0567B)':'var(--border)'};border-radius:12px;box-shadow:${any?'0 -6px 20px -12px rgba(0,0,0,.25)':'none'}">
+    <div class="between" style="gap:10px;flex-wrap:wrap">
+      <span style="font-size:13px;font-weight:600;color:${any?'var(--sale)':'var(--ink-soft)'}">${any?(reorderDirty?'Unsaved order on this page':'')+(reorderDirty&&n?' · ':'')+(n?n+' move'+(n===1?'':'s')+' to other pages':'')+' — the shop changes only when you press Save':'Saved — the shop shows this order'}</span>
+      <div class="row" style="gap:8px"><button class="btn ghost" id="reDiscard" ${any?'':'disabled'}>Discard</button><button class="btn primary" id="reSave" ${any?'':'disabled'}>Save order</button></div>
+    </div>${pend}</div>`;
+}
+
+/* Moves waiting for Save belong to one category or brand: switching away asks first. */
+function reorderDropPending(){
+  if(reorderPending.length && !confirm(reorderPending.length+' move'+(reorderPending.length===1?' is':'s are')+' waiting for Save. Discard '+(reorderPending.length===1?'it':'them')+'?')) return false;
+  reorderPending=[];
+  return true;
+}
+
+function reorderDiscard(){
+  if(reorderBusy) return;
+  reorderPending=[];
+  reorderLoadProducts();
 }
 
 function reorderRenderList(list){
@@ -6185,8 +5954,10 @@ function reorderRenderList(list){
       </div>
       <div style="text-align:right;flex:0 0 76px;font-size:11px;color:var(--ink-soft)" title="Distinct orders this product has appeared in">${p.orders_count} order${p.orders_count===1?'':'s'}</div>
       <div class="mv" style="flex:0 0 auto;flex-direction:row;gap:4px">
-        <button data-rtop="${p.id}" title="Move to top of this page">${ic('<path d="M12 19V5M5 12l7-7 7 7"/>')}</button>
-        <button data-rbottom="${p.id}" title="Move to bottom of this page">${ic('<path d="M12 5v14M5 12l7 7 7-7"/>')}</button>
+        <button data-rup="${p.id}" title="One place up" aria-label="Move ${escHtml(p.name)} up one place">${ic('<path d="M12 19V5M5 12l7-7 7 7"/>')}</button>
+        <button data-rdown="${p.id}" title="One place down" aria-label="Move ${escHtml(p.name)} down one place">${ic('<path d="M12 5v14M5 12l7 7 7-7"/>')}</button>
+        <button data-rfirst="${p.id}" class="re-jump" title="To the top of the whole list" aria-label="Move ${escHtml(p.name)} to the top of the whole list">${ic('<path d="M5 4h14M12 20V9M6 15l6-6 6 6"/>')}</button>
+        <button data-rlast="${p.id}" class="re-jump" title="To the bottom of the whole list" aria-label="Move ${escHtml(p.name)} to the bottom of the whole list">${ic('<path d="M5 20h14M12 4v11M6 9l6 6 6-6"/>')}</button>
       </div>
     </div>`).join('')}</div>`;
 }
@@ -6206,8 +5977,20 @@ function reorderWireList(){
       reorderJumpToRank(id, rank);
     };
   });
-  $$('#rlist [data-rtop]').forEach(b=>b.onclick=()=>reorderLocalMove(+b.dataset.rtop, 0));
-  $$('#rlist [data-rbottom]').forEach(b=>b.onclick=()=>reorderLocalMove(+b.dataset.rbottom, reorderLocal.length-1));
+  /* Four arrows (2.60.404). The owner: "should be 4, 2 grey and 2 red, the
+     red arrows will jump to top or bottom of the whole list. and grey will
+     work as one row down or up." Grey: one place, across a page edge too.
+     Red: rank 1 / the last rank of the WHOLE list. All of them wait for Save,
+     through the same paths as the number box (reorderJumpToRank queues a
+     move that lands on another page). */
+  const pageStart=()=>(reorderData.page-1)*reorderData.per_page+1;
+  const step=(id,d)=>{ const i=reorderLocal.findIndex(x=>x.id===id); if(i<0) return; const to=i+d;
+    if(to>=0 && to<reorderLocal.length) reorderLocalMove(id,to);
+    else { const rank=pageStart()+to; if(rank>=1 && rank<=reorderData.total) reorderJumpToRank(id,rank); } };
+  $$('#rlist [data-rup]').forEach(b=>b.onclick=()=>step(+b.dataset.rup,-1));
+  $$('#rlist [data-rdown]').forEach(b=>b.onclick=()=>step(+b.dataset.rdown,1));
+  $$('#rlist [data-rfirst]').forEach(b=>b.onclick=()=>reorderJumpToRank(+b.dataset.rfirst,1));
+  $$('#rlist [data-rlast]').forEach(b=>b.onclick=()=>reorderJumpToRank(+b.dataset.rlast,reorderData.total));
   let dragI=null;
   $$('#rlist .ritem').forEach(it=>{
     it.ondragstart=e=>{ if(e.target.closest('[data-rankinput],[data-rsel]')){e.preventDefault();return;} dragI=+it.dataset.i; };
@@ -6246,35 +6029,39 @@ async function reorderJumpToRank(productId, rank){
     reorderLocalMove(productId, rank-pageStart);
     return;
   }
-  if(reorderDirty && !confirm('Moving to a position outside this page saves immediately, including any unsaved changes already made on this page. Continue?')) {
-    reorderPaint();
-    return;
-  }
-  reorderBusy=true;
-  try{
-    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/move',{method:'POST',credentials:'same-origin',
-      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
-      body:JSON.stringify({product_id:productId, to:rank-1})});
-    const j=await r.json();
-    if(j.ok){ toast('Moved and saved'); if(window.kbbDrafts) kbbDrafts.saved('reorder'); await reorderLoadProducts(); }
-    else{ toast(j.message||'Could not move that product.', 'bad'); }
-  }catch(e){ toast('Could not save — check your connection.','bad'); }
-  reorderBusy=false;
+  // Another page: queued, applied by Save (2.60.402) -- never on its own.
+  const p=reorderLocal.find(x=>x.id===productId);
+  reorderPending=reorderPending.filter(m=>m.id!==productId).concat([{id:productId, name:p?p.name:('#'+productId), to:Math.max(0,rank-1)}]);
+  toast('Will move to #'+rank+' when you press Save');
+  reorderPaint();
 }
 
 async function reorderSave(){
-  if(reorderBusy || !reorderDirty) return;
+  if(reorderBusy || (!reorderDirty && !reorderPending.length)) return;
   reorderBusy=true;
   const btn=$('#reSave'); if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const post=(path,body)=>fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+path,{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
   try{
-    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/save-page',{method:'POST',credentials:'same-origin',
-      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
-      body:JSON.stringify({page:reorderData.page, per_page:reorderData.per_page, product_ids:reorderLocal.map(p=>p.id)})});
-    const j=await r.json();
-    if(j.ok){ toast(`Saved — ${j.updated} products`); reorderDirty=false; if(window.kbbDrafts) kbbDrafts.saved('reorder'); await reorderLoadProducts(); }
-    else{ toast(j.message||'Could not save — reload and try again.', 'bad'); }
+    // This page's order first, then each move to another page, in the order he made them.
+    if(reorderDirty){
+      const j=await post('/save-page',{page:reorderData.page, per_page:reorderData.per_page, product_ids:reorderLocal.map(p=>p.id)});
+      if(!j.ok){ toast(j.message||'Could not save — reload and try again.', 'bad'); reorderBusy=false; reorderPaint(); return; }
+      reorderDirty=false;
+    }
+    while(reorderPending.length){
+      const m=reorderPending[0];
+      const j=await post('/move',{product_id:m.id, to:m.to});
+      if(!j.ok){ toast(j.message||('Could not move '+m.name+'.'), 'bad'); break; }
+      reorderPending.shift();
+    }
+    if(!reorderPending.length){ toast('Saved — the shop now shows this order'); if(window.kbbDrafts) kbbDrafts.saved('reorder'); }
+    reorderBusy=false;
+    await reorderLoadProducts();
+    return;
   }catch(e){ toast('Could not save — check your connection.','bad'); }
   reorderBusy=false;
+  reorderPaint();
 }
 let pdTab='general',reyTab='misc',yoastTab='seo',pageTab='general',peCtx={};
 const ICO={img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',ring:'<circle cx="12" cy="12" r="9"/>'};
