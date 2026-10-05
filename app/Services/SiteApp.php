@@ -240,9 +240,48 @@ final class SiteApp
         return substr(hash('sha256', implode('|', $parts)), 0, 12);
     }
 
+    /**
+     * The owner's uploaded icon when there is one (App → Site App → App icon,
+     * Lane IC), else the shipped KB icon. Every reader goes through here: the
+     * manifest, the apple-touch-icon, the worker's version and notification
+     * icon, the offline page and the icon route itself, so an upload moves all
+     * of them at once and "Back to the shipped icon" moves them back.
+     */
     public static function iconPath(string $key): string
     {
-        return resource_path('site-app/icons/'.$key.'.png');
+        return AppIcons::file('site', $key) ?? resource_path('site-app/icons/'.$key.'.png');
+    }
+
+    /** A favicon file, or null: there is no shipped favicon (Lane IC). */
+    public static function faviconPath(string $key): ?string
+    {
+        return isset(AppIcons::FAVICON_SET[$key]) ? AppIcons::file('site', $key) : null;
+    }
+
+    /**
+     * The favicon tags for every storefront page (Lane IC), or [] when nothing
+     * has been uploaded -- and then the page is byte for byte what it was.
+     * Independent of the app's own switch: a shop with the app off still has
+     * a tab icon. The apple-touch-icon rides here only when the app's own head
+     * block is off, so a page never names it twice.
+     *
+     * @return list<array{rel: string, sizes: ?string, href: string}>
+     */
+    public function favicon(): array
+    {
+        $out = [];
+        foreach (AppIcons::FAVICON_SET as $key => [$size]) {
+            $path = self::faviconPath($key);
+            if ($path === null) {
+                return [];
+            }
+            $out[] = ['rel' => 'icon', 'sizes' => $size.'x'.$size, 'href' => Url::raw('/site-app/icons/'.$key.'.png').'?v='.self::fileHash($path)];
+        }
+        if (AppIcons::state('site')['app'] !== null && ! $this->on()) {
+            $out[] = ['rel' => 'apple-touch-icon', 'sizes' => null, 'href' => self::iconUrl('apple-180')];
+        }
+
+        return $out;
     }
 
     public static function iconUrl(string $key): string

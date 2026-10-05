@@ -27,7 +27,11 @@
 <meta name="format-detection" content="telephone=no">
 <title>K-Beauty Bliss Owner</title>
 <link rel="manifest" href="{{ $base }}/manifest.webmanifest">
+@forelse($fav ?? [] as $f)
+<link rel="icon" type="image/png" sizes="{{ $f['sizes'] }}" href="{{ $f['href'] }}">
+@empty
 <link rel="icon" type="image/png" href="{{ $a['icon-192'] }}">
+@endforelse
 <link rel="apple-touch-icon" href="{{ $a['apple-180'] }}">
 @unless($sysFont ?? false)
 <link rel="preload" href="{{ $a['font'] }}" as="font" type="font/woff2" crossorigin>

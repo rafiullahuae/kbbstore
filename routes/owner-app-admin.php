@@ -50,3 +50,23 @@ Route::put('/owner-app/security', [OwnerAppAdminController::class, 'security'])-
 */
 Route::get('/owner-app/ui', [\App\Http\Controllers\Admin\OwnerAppUiAdminController::class, 'show']);
 Route::put('/owner-app/ui', [\App\Http\Controllers\Admin\OwnerAppUiAdminController::class, 'save'])->middleware('throttle:30,1,oa-admin-ui');
+
+/*
+|------------------------------------------------------------------------------
+| App → Owner App → App icon (Lane IC)
+|------------------------------------------------------------------------------
+|
+|     GET    /admin-api/owner-app/icon              what is uploaded; preview addresses
+|     GET    /admin-api/owner-app/icon/{name}.png   a preview (uploaded, else shipped)
+|     POST   /admin-api/owner-app/icon              multipart {kind: app|favicon, file}
+|     POST   /admin-api/owner-app/icon/reset        {kind}: back to the shipped icon
+|
+| Same capability as the rest of this file (ownerapp.manage via
+| admin-api/owner-app/**, Full Admin only). The phone gets the files from the
+| app's own address, routes/owner-app.php. Shipped with
+| 2027_08_28_100000_clear_caches_app_icons.
+*/
+Route::get('/owner-app/icon', [\App\Http\Controllers\Admin\AppIconController::class, 'ownerShow']);
+Route::get('/owner-app/icon/{name}.png', [\App\Http\Controllers\Admin\AppIconController::class, 'ownerPreview'])->where('name', '[a-z0-9-]{1,20}');
+Route::post('/owner-app/icon', [\App\Http\Controllers\Admin\AppIconController::class, 'ownerUpload'])->middleware('throttle:20,1,oa-admin-icon');
+Route::post('/owner-app/icon/reset', [\App\Http\Controllers\Admin\AppIconController::class, 'ownerReset'])->middleware('throttle:20,1,oa-admin-icon');

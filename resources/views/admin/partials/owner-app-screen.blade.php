@@ -5,6 +5,8 @@
     Its own screen (id 'ownerapp') in the sidebar's App group, holding EVERYTHING
     that was under Platform → Users & Roles → Owner app — access, PINs, phones,
     the sign-in log, the address, security, settings — and Customise app.
+    Above them, the App icon card (Lane IC, admin/partials/app-icon-card,
+    included once by the Site App screen).
     MOUNTED, NOT COPIED: it calls window.kbbOwnerAppAdmin.mount() exactly as the
     Users & Roles tab did, so owner-app-access.blade.php and
     owner-app-customise.blade.php remain the only code for any of it.
@@ -61,8 +63,11 @@
     if (side) side.classList.remove('open');
     var host = document.getElementById('content');
     if (!host) return undefined;
-    host.innerHTML = '<div class="wrap rl" data-oa-screen><div class="rl-head"><div><h2>Owner App</h2><p>Who may use the phone app and with which PIN, its address and security, and how it looks and what it may do.</p></div></div><div data-oa-admin></div></div>';
+    host.innerHTML = '<div class="wrap rl" data-oa-screen><div class="rl-head"><div><h2>Owner App</h2><p>Who may use the phone app and with which PIN, its address and security, and how it looks and what it may do.</p></div></div><div data-oa-icon></div><div data-oa-admin></div></div>';
     mount.call(base, host.querySelector('[data-oa-admin]'));
+    /* App icon and favicon (Lane IC): the card from app-icon-card.blade.php,
+       on ownerapp.manage endpoints. It GETs its own state once. */
+    if (window.kbbAppIconCard) window.kbbAppIconCard(host.querySelector('[data-oa-icon]'), { path: '/admin-api/owner-app/icon', relativePreviews: true, intro: 'The picture on your phone\'s Home Screen for KBB Owner, and its browser tab icon.', shipFavicon: 'The shipped app icon.', favIntro: 'The owner app is never in Google, so this is only the tab.' });
     return undefined;
   };
 

@@ -69,16 +69,20 @@ final class SiteAppController extends Controller
         ]);
     }
 
-    /** One of the four icons, by name from SiteApp::ICONS, nothing else. */
+    /**
+     * One of the four icons, by name from SiteApp::ICONS, or one of the three
+     * favicons once the owner has uploaded an icon (Lane IC) -- nothing else.
+     */
     public function icon(Request $request, string $name): BinaryFileResponse|Response
     {
-        if (! array_key_exists($name, SiteApp::ICONS) || ! is_file(SiteApp::iconPath($name))) {
+        $path = array_key_exists($name, SiteApp::ICONS) ? SiteApp::iconPath($name) : SiteApp::faviconPath($name);
+        if ($path === null || ! is_file($path)) {
             return $this->gone();
         }
 
-        return response()->file(SiteApp::iconPath($name), [
+        return response()->file($path, [
             'Content-Type' => 'image/png',
-            'Cache-Control' => $this->cacheFor($request, SiteApp::iconPath($name)),
+            'Cache-Control' => $this->cacheFor($request, $path),
             'X-Content-Type-Options' => 'nosniff',
         ]);
     }

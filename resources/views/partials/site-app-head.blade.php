@@ -11,4 +11,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="{{ $kbbSiteApp['name'] }}">
 <script src="{{ $kbbSiteApp['js'] }}" data-sw="{{ $kbbSiteApp['sw'] }}" data-scope="{{ $kbbSiteApp['scope'] }}" defer></script>
-@endif{{-- PW:END --}}
+@endif
+{{-- IC: the favicon (App -> Site App -> App icon, Lane IC). Nothing at all until the owner uploads an icon; then one line per tag, the same shape as above. The newline after @endif is PHP's own: one directly after a closing tag is never printed, and Blade needs a non-word character before the next directive. --}}@php($kbbFavicon = app(\App\Services\SiteApp::class)->favicon())@foreach ($kbbFavicon as $kbbFav)<link rel="{{ $kbbFav['rel'] }}"@if ($kbbFav['sizes']) type="image/png" sizes="{{ $kbbFav['sizes'] }}"@endif href="{{ $kbbFav['href'] }}">
+@endforeach{{-- PW:END --}}

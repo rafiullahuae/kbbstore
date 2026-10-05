@@ -51,6 +51,8 @@ final class SiteAppApiController extends Controller
             'values' => $this->app->all(),
             'name_max' => SiteApp::NAME_MAX,
             'icons' => $icons,
+            // The owner's own icon and favicon card (Lane IC).
+            'icon' => AppIconController::sitePayload(),
             'links' => [
                 'manifest' => Url::raw('/manifest.webmanifest'),
                 'worker' => Url::raw('/sw.js'),

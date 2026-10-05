@@ -20,7 +20,12 @@
     timer, no request per keystroke; the label preview is drawn from the
     field's own value. Everything the server sent is set with textContent or
     as an attribute, never as markup.
+
+    App icon (Lane IC): the owner's own icon and favicon. The card is
+    admin/partials/app-icon-card.blade.php, included here ONCE (so it needs no
+    line in app.blade.php) and used by App → Owner App as well.
 --}}
+@include('admin.partials.app-icon-card')
 @verbatim
 <style>
 .sap-wrap{display:grid;gap:14px;min-width:0;grid-template-columns:minmax(0,1fr);max-width:980px}
@@ -43,10 +48,6 @@
 .sap-home{display:flex;flex-direction:column;align-items:center;gap:6px;width:92px;padding:12px 6px;border-radius:14px;background:linear-gradient(160deg,#C9B8E8,#F5C6D3 60%,#FBE4D3)}
 .sap-home img{width:60px;height:60px;border-radius:14px;display:block}
 .sap-home span{font:500 11px/1.2 system-ui,-apple-system,sans-serif;color:#1d1d1f;max-width:76px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
-.sap-icons{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-top:12px}
-.sap-icons figure{margin:0;text-align:center;font-size:11.5px;color:var(--ink-soft,#6b7280);display:grid;gap:6px;justify-items:center}
-.sap-icons img{display:block;width:64px;height:64px;border-radius:12px;border:1px solid var(--border,#e6e6e6);background:repeating-conic-gradient(#f1f1f1 0 25%,#fff 0 50%) 0 0/12px 12px}
-.sap-icons img.sap-round{border-radius:50%}
 .sap-btn{padding:8px 14px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}
 .sap-btn.is-primary{border-color:var(--accent,#15a85a);background:var(--accent,#15a85a);color:#fff;font-weight:650}
 .sap-btn[disabled]{opacity:.45;cursor:default}
@@ -193,11 +194,14 @@
       el('div', { class: 'sap-actions' }, [saveBtn, el('span', { text: dirty() ? 'Unsaved changes' : 'Saved' })])
     ]));
 
-    wrap.appendChild(card('Icon', 'One icon for testing: KB in white on the shop\'s pink. Other designs, and how the shop offers the install, are decided later.', [
-      el('div', { class: 'sap-icons' }, data.icons.map(function (i) {
-        return el('figure', {}, [el('img', { src: i.url, alt: '', class: i.purpose === 'maskable' ? 'sap-round' : null, width: 64, height: 64 }), el('figcaption', { text: i.size + ' px · ' + i.purpose })]);
-      }))
-    ]));
+    // App icon and favicon (Lane IC): upload, preview, guide. A save reloads
+    // this screen once, so the Home Screen preview above shows the new icon.
+    var iconHost = el('div', { 'data-sap-icon': '' });
+    wrap.appendChild(iconHost);
+    if (data.icon) {
+      data.icon.name = draft.name.trim() || data.values.name;
+      window.kbbAppIconCard(iconHost, { path: '/admin-api/site-app/icon', state: data.icon, intro: 'The picture on a shopper\'s Home Screen when they add the shop, and the shop\'s icon in the browser tab.', onSaved: function () { load(); } });
+    }
 
     var L = data.links || {};
     wrap.appendChild(card('Add it to a phone', 'From the shop in the phone\'s browser:', [

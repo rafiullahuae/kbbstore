@@ -1674,8 +1674,9 @@ final class AdminCapabilities
         ['*', 'admin-api/page-wash', 'pagewash.manage'],
         // One line and no '/**' sibling: no sub-endpoint here either. (Lane WA)
         ['*', 'admin-api/whatsapp-button', 'wabutton.manage'],
-        // One line and no '/**' sibling: no sub-endpoint. (Lane PW)
+        // The screen's read and save (Lane PW), and its icon upload (Lane IC).
         ['*', 'admin-api/site-app', 'siteapp.manage'],
+        ['*', 'admin-api/site-app/**', 'siteapp.manage'],
         // One line and no '/**' sibling: no sub-endpoint. (Lane SS)
         ['*', 'admin-api/page-banners', 'pagebanners.manage'],
         // 2.60.388: copy /super-sale/'s order from the old site (one fixed URL).
