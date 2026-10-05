@@ -437,3 +437,15 @@ it('ships the editor as its own chunk that a shopper never fetches, and that mea
         ->and($chunk['isEntry'] ?? false)->toBeFalse()
         ->and(is_file(public_path('build/'.$chunk['file'])))->toBeTrue();
 });
+
+it('opens on the title header alone: no custom-area tab unless the category already uses one', function () {
+    /*
+     * The owner, 5 October: "FOR CATEGORIES pages ... backgroudn image,
+     * centeralized title and description text. that's it."
+     * DEFECT THIS CATCHES: the "Custom header area" tab back in front of him
+     * on every category. MUTATION: delete the early return in drawTabs() -> red.
+     */
+    $js = file_get_contents(resource_path('js/kbb/admin/category-header-editor.js'));
+
+    expect($js)->toContain("if (ctx.mode !== 'custom' && st.tab !== 'custom') { tabsHost.replaceChildren(); return; }");
+});

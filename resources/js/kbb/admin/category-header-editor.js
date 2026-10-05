@@ -417,6 +417,12 @@ export function openPanel(ctx, csrf, opener, toast) {
                 safePath(ctx.console) ? h('a', { href: safePath(ctx.console) }, 'Catalog › Categories') : null)));
 
     function drawTabs() {
+        // The owner, after seeing both tabs: "FOR CATEGORIES pages, we have
+        // already on our existing site. backgroudn image, centeralized title
+        // and description text. that's it." So the panel is the title header
+        // alone. The tabs return only for a category already saved with a
+        // custom header area, so it can be switched back.
+        if (ctx.mode !== 'custom' && st.tab !== 'custom') { tabsHost.replaceChildren(); return; }
         tabsHost.replaceChildren(
             h('div', { class: 'kbb-phe-seg', role: 'tablist', 'aria-label': 'Which header this page shows' },
                 [['title', 'Title header'], ['custom', 'Custom header area']].map(([v, l]) => h('button', {
@@ -430,7 +436,7 @@ export function openPanel(ctx, csrf, opener, toast) {
 
     function drawNote() {
         noteHost.replaceChildren();
-        if (st.tab === 'title' && ctx.legacy_banner) noteHost.appendChild(h('p', { class: 'kbb-che-note', text: 'This category shows its own banner (Catalog › Categories › Banner) in place of the title header. Turn that banner off to see these settings, or use the custom header area.' }));
+        if (st.tab === 'title' && ctx.legacy_banner) noteHost.appendChild(h('p', { class: 'kbb-che-note', text: 'This category shows its own banner (Catalog › Categories › Banner) in place of the title header. Turn that banner off to see these settings.' }));
         else if (st.tab === 'title' && st.note) noteHost.appendChild(h('p', { class: 'kbb-che-note', text: st.note }));
     }
 
