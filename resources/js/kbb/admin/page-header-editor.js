@@ -219,7 +219,7 @@ export function controls(host, opts) {
                 h('span', { text: label(k) }),
                 h('button', { type: 'button', 'aria-label': `Move ${label(k)} up`, disabled: i === 0 ? true : null, onclick: () => move(k, -1) }, '↑'),
                 h('button', { type: 'button', 'aria-label': `Move ${label(k)} down`, disabled: i === order.length - 1 ? true : null, onclick: () => move(k, 1) }, '↓')))),
-            spec.selects.filter((s) => s.key !== 'fit' && (s.key !== 'button_at' || opts.kind === 'collection')).map((s) => h('div', { class: 'kbb-phe-sel' },
+            spec.selects.filter((s) => s.key !== 'fit' && s.key !== 'width' && (s.key !== 'button_at' || opts.kind === 'collection')).map((s) => h('div', { class: 'kbb-phe-sel' },
                 h('span', { text: s.label }),
                 h('div', { class: 'kbb-phe-seg', role: 'group', 'aria-label': s.label }, s.options.map((o) => h('button', {
                     type: 'button', 'aria-pressed': String(half[s.key] === o.value),
@@ -258,8 +258,18 @@ export function controls(host, opts) {
         // Sizes, then (Lane SP3) the top area's spacing for this device:
         // above the header, below it, and between it and the strip.
         const spacing = (spec.spacing || []).map((k) => spec.numbers.find((n) => n.key === k)).filter(Boolean);
+        // (Lane FW) Picture width, for this device, beside its height and
+        // corners: Normal keeps the page's side gutters, Full width runs the
+        // picture to the screen's edges.
+        const width = spec.selects.find((s) => s.key === 'width');
         out.push(h('div', { class: 'kbb-phe-sec' },
             h('p', { class: 'kbb-phe-h', text: dev === 'd' ? 'Sizes · desktop' : 'Sizes · phone' }),
+            width ? h('div', { class: 'kbb-phe-sel' }, h('span', { text: width.label }), h('div', { class: 'kbb-phe-seg', role: 'group', 'aria-label': width.label },
+                width.options.map((o) => h('button', {
+                    type: 'button', 'aria-pressed': String(half.width === o.value),
+                    onclick: () => { half.width = o.value; changed(true); },
+                }, o.label)))) : null,
+            width ? h('p', { class: 'kbb-phe-help', text: 'Full width runs the picture to the edges of the screen on this device, with square corners; the title and buttons keep their usual margins.' }) : null,
             spec.numbers.filter((n) => !(spec.spacing || []).includes(n.key)).map((n) => range(half, n)),
             spacing.length ? h('div', { class: 'kbb-phe-space', style: 'display:grid;gap:8px' },
                 spacing.map((n) => range(half, n)),

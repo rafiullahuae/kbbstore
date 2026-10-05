@@ -60,6 +60,8 @@ export function compile(bag, kind, has) {
         if (h.align === 'center') wrap += ` kbb-ph-c${dev}`;
         if (side) wrap += ` kbb-ph-s${dev}`;
         if (isList && !h.dot) wrap += ` kbb-ph-no${dev}`;
+        // (Lane FW) Full width, only where a picture is drawn on this device.
+        if (present.image && h.width === 'full') wrap += ` kbb-ph-w${dev}`;
         if (!h.title) cls.title += ` kbb-ph-v${dev}`;
         for (const el of ['crumb', 'image', 'intro', 'button']) {
             if (!present[el]) cls[el] += ` kbb-ph-h${dev}`;

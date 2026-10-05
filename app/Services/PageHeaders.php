@@ -88,11 +88,23 @@ final class PageHeaders
         'image' => ['Header picture', ['collection', 'page']],
     ];
 
-    /** Selects: [options, label]. The first option is the default. */
+    /**
+     * Selects: [options, label, per-device defaults?]. The default is the
+     * first option, unless the optional third entry names one per device
+     * (['d' => option, 'm' => option]) — a setting whose right answer differs
+     * between a laptop and a phone says so here, once, and device() reads it.
+     */
     public const SELECTS = [
         'align' => [['start' => 'Left', 'center' => 'Centre'], 'Alignment'],
         'button_at' => [['side' => 'Beside the title', 'row' => 'On its own row'], '“All products” button'],
         'fit' => [['cover' => 'Fill (crop to the height)', 'contain' => 'Whole picture'], 'Picture fit'],
+        // (Lane FW) The owner, of /super-sale/ on his phone, 5 October: "the
+        // pages header are has left and right 12px spacing, i want it full
+        // width option for desktop and mobile in the edit panel. by default
+        // keep full width in mobile, and on desktop normal width." So the
+        // PHONE default is Full width — his request, applied (CLAUDE.md rule
+        // 1, 30 September) — and the desktop default is the page as it was.
+        'width' => [['normal' => 'Normal', 'full' => 'Full width'], 'Picture width', ['d' => 'normal', 'm' => 'full']],
     ];
 
     /** Number controls: [min, max, desktop default, phone default, label]. */
@@ -140,6 +152,15 @@ final class PageHeaders
         .'.kbb-home .kbb-ph>.kbb-ph-p{grid-area:p;margin:0;display:block}'
         .'.kbb-ph>.kbb-ph-b{grid-area:b}'
         .'.kbb-ph .kbb-ph-v{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}'
+        // (Lane FW) Full width. The box the picture bleeds to is the top area
+        // (.kbb-pt) or a category's header area (.kbb-chc): both are the full
+        // width of the page and the header sits centred in them, so
+        // calc(50% - 50cqi) on each side takes the picture from its own
+        // column to exactly their edges — past the gutters on a phone, past
+        // --site-max and a content page's .policy on a wide screen. NOT 100vw:
+        // that counts the scrollbar on a laptop and would scroll the page
+        // sideways by the scrollbar's width. Nothing is measured.
+        .'.kbb-home .kbb-pt,.kbb-home.kbb-chc{container-type:inline-size}'
         .'@media (max-width:900px){.kbb-home div.kbb-ph{grid-template-areas:var(--ph-am);row-gap:var(--ph-gm);margin:0 0 var(--ph-sm)}'
         .'.kbb-ph>.kbb-ph-i img{height:var(--ph-hm);object-fit:var(--ph-fm);border-radius:var(--ph-rm)}'
         .'.kbb-ph-sm>.kbb-ph-b{justify-self:end}'
@@ -147,6 +168,9 @@ final class PageHeaders
         .'.kbb-home .kbb-ph-nom>.kbb-ph-t::before{content:none}'
         .'.kbb-ph .kbb-ph-vm{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}'
         .'.kbb-home .kbb-ph .kbb-ph-hm{display:none}'
+        // (Lane FW) A picture that meets the screen's edges has no corners to
+        // round: a radius there reads as a notch cut out of the page.
+        .'.kbb-ph-wm>.kbb-ph-i{margin-inline:calc(50% - 50cqi)}.kbb-ph-wm>.kbb-ph-i img{border-radius:0}'
         // A long title on a phone: as a wrapping flex row the words took a row
         // of their own and pushed the dot above and the count below (Lane CH's
         // "Sunscreens for the UAE sun" at 390). As inline text the dot leads
@@ -159,7 +183,8 @@ final class PageHeaders
         .'.kbb-home div.kbb-ph-cd{text-align:center;justify-items:center}.kbb-home .kbb-ph-cd>.kbb-ph-t{justify-content:center}'
         .'.kbb-home .kbb-ph-nod>.kbb-ph-t::before{content:none}'
         .'.kbb-ph .kbb-ph-vd{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}'
-        .'.kbb-home .kbb-ph .kbb-ph-hd{display:none}}';
+        .'.kbb-home .kbb-ph .kbb-ph-hd{display:none}'
+        .'.kbb-ph-wd>.kbb-ph-i{margin-inline:calc(50% - 50cqi)}.kbb-ph-wd>.kbb-ph-i img{border-radius:0}}';
 
     /**
      * (Lane SP3) Every byte of CSS the TOP AREA prints: the header area and the
@@ -208,8 +233,8 @@ final class PageHeaders
             // 900px in kbb.css); the default is what the page already does.
             $out[$k] = ! ($k === 'intro' && $dev === 'm');
         }
-        foreach (self::SELECTS as $k => [$options]) {
-            $out[$k] = (string) array_key_first($options);
+        foreach (self::SELECTS as $k => $spec) {
+            $out[$k] = (string) ($spec[2][$dev] ?? array_key_first($spec[0]));
         }
         $out['order'] = array_keys(self::ELEMENTS);
         foreach (self::NUMBERS as $k => [, , $d, $m]) {
@@ -373,7 +398,11 @@ final class PageHeaders
             if ($kind !== 'collection') {
                 unset($h['button_at']);
             }
-            unset($h['image'], $h['img_h'], $h['radius'], $h['fit']);
+            // (Lane FW) `width` is a picture setting too: it says how wide the
+            // picture runs, and a bag that draws no picture draws nothing for
+            // it — so its phone default of Full width cannot move a page that
+            // never had a configured header out of its original markup.
+            unset($h['image'], $h['img_h'], $h['radius'], $h['fit'], $h['width']);
             // (Lane SP3) The space above and between are the TOP AREA's, which
             // a page enters by drawing a header or a strip (top()), never by
             // holding a number: a page that draws neither has no first block
@@ -463,6 +492,11 @@ final class PageHeaders
             }
             if ($isList && ! $h['dot']) {
                 $wrap .= ' kbb-ph-no'.$dev;
+            }
+            // (Lane FW) Full width: only where a picture is drawn on this
+            // device, so a header with no picture keeps its exact classes.
+            if ($present['image'] && $h['width'] === 'full') {
+                $wrap .= ' kbb-ph-w'.$dev;
             }
             if (! $h['title']) {
                 $cls['title'] .= ' kbb-ph-v'.$dev;

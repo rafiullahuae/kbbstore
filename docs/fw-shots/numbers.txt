@@ -1,0 +1,28 @@
+# Lane FW -- /super-sale/ header picture, Chromium with a REAL scrollbar (--hide-scrollbars dropped).
+# Phone contexts are isMobile (overlay scrollbar). pic* = the header <img> box; radius = its computed corner.
+before page @390: {"innerWidth":390,"clientWidth":390,"scrollWidth":390,"picLeft":12,"picRight":378,"picWidth":366,"picHeight":160,"radius":"10px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-nom"}
+before page @1280: {"innerWidth":1280,"clientWidth":1265,"scrollWidth":1265,"picLeft":37.6,"picRight":1227.4,"picWidth":1189.8,"picHeight":260,"radius":"14px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-nom"}
+before page @1920: {"innerWidth":1920,"clientWidth":1905,"scrollWidth":1905,"picLeft":140.5,"picRight":1764.5,"picWidth":1624,"picHeight":260,"radius":"14px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-nom"}
+after page @390: {"innerWidth":390,"clientWidth":390,"scrollWidth":390,"picLeft":0,"picRight":390,"picWidth":390,"picHeight":160,"radius":"0px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-nom kbb-ph-wm"}
+after page @1280: {"innerWidth":1280,"clientWidth":1265,"scrollWidth":1265,"picLeft":37.6,"picRight":1227.4,"picWidth":1189.8,"picHeight":260,"radius":"14px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-nom kbb-ph-wm"}
+after page @1920: {"innerWidth":1920,"clientWidth":1905,"scrollWidth":1905,"picLeft":140.5,"picRight":1764.5,"picWidth":1624,"picHeight":260,"radius":"14px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-nom kbb-ph-wm"}
+panel panel-default @390: {"innerWidth":390,"clientWidth":390,"scrollWidth":390,"picLeft":0,"picRight":390,"picWidth":390,"picHeight":160,"radius":"0px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-nom kbb-ph-wm kbb-phe-live"}
+panel panel-live-normal @390: {"innerWidth":390,"clientWidth":390,"scrollWidth":390,"picLeft":12,"picRight":378,"picWidth":366,"picHeight":160,"radius":"10px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-nom kbb-phe-live"}
+panel panel-default @1280: {"innerWidth":1280,"clientWidth":1265,"scrollWidth":1265,"picLeft":37.6,"picRight":1227.4,"picWidth":1189.8,"picHeight":260,"radius":"14px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-nom kbb-ph-wm kbb-phe-live"}
+panel panel-live-full-width @1280: {"innerWidth":1280,"clientWidth":1265,"scrollWidth":1265,"picLeft":0,"picRight":1265,"picWidth":1265,"picHeight":260,"radius":"0px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-wd kbb-ph-nom kbb-ph-wm kbb-phe-live"}
+panel saved-desktop-full @1280: {"innerWidth":1280,"clientWidth":1265,"scrollWidth":1265,"picLeft":0,"picRight":1265,"picWidth":1265,"picHeight":260,"radius":"0px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-wd kbb-ph-nom kbb-ph-wm"}
+panel saved-desktop-full @1920: {"innerWidth":1920,"clientWidth":1905,"scrollWidth":1905,"picLeft":0,"picRight":1905,"picWidth":1905,"picHeight":260,"radius":"0px","wrap":"sh kbb-ph kbb-ph-nod kbb-ph-wd kbb-ph-nom kbb-ph-wm"}
+
+content page /about/ (global look with a picture, desktop set to Full width), measured with a real scrollbar:
+/about/ 390 {"client":390,"scroll":390,"pic":[0,390],"h1Left":12,"radius":"0px"}
+/about/ 1280 {"client":1265,"scroll":1265,"pic":[0,1265],"h1Left":274,"radius":"0px"}
+/about/ 1920 {"client":1905,"scroll":1905,"pic":[0,1905],"h1Left":594,"radius":"0px"}
+
+console Pages -> Page header, /super-sale/ selected, Sizes · desktop (stage = the preview box, overflow hidden):
+console normal {"client":1280,"scroll":1280,"stage":[677,1235],"picVisible":[694,1218],"wrap":"sh kbb-ph kbb-ph-nod kbb-ph-nom"}
+console full {"client":1280,"scroll":1280,"stage":[677,1235],"picVisible":[677,1235],"wrap":"sh kbb-ph kbb-ph-nod kbb-ph-wd kbb-ph-nom kbb-ph-wm"}
+
+category custom header area (/collections/cleansers/, Edit header -> custom, picture; phone default Full width, desktop set to Full width):
+/collections/cleansers/ 390 {"client":390,"scroll":390,"pic":[0,390],"h1Left":22,"radius":"0px"}
+/collections/cleansers/ 1280 {"client":1265,"scroll":1265,"pic":[0,1265],"h1Left":22,"radius":"0px"}
+/collections/cleansers/ 1920 {"client":1905,"scroll":1905,"pic":[0,1905],"h1Left":135,"radius":"0px"}

@@ -89,4 +89,20 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        rollupOptions: {
+            /*
+             * (Lane FW) KEEP AN ENTRY'S EXPORT NAMES. Vite's default (false)
+             * lets Rollup rename the exports of an entry that is also a
+             * shared chunk. page-header-editor.js became one when the
+             * category panel started importing it, and the console's
+             * Pages → Page header screen -- which imports it by its manifest
+             * address and calls mod.controls / mod.stage / mod.asDevice --
+             * met `export{ae as c, ...}` and stopped with "mod.controls is
+             * not a function". 'exports-only' keeps the names of the entries
+             * that export anything, and changes nothing for those that do not.
+             */
+            preserveEntrySignatures: 'exports-only',
+        },
+    },
 });

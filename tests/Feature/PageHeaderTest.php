@@ -145,7 +145,8 @@ it('builds the positions as grid rows, per device, from constant letters', funct
 
     expect($c['style'])->toContain('--ph-ad:"i i" "t b" "p p" "c c";')
         ->and($c['style'])->toContain('--ph-am:"c c" "i i" "t t" "b b";')
-        ->and($c['wrap'])->toBe('sh kbb-ph kbb-ph-sd kbb-ph-cm')
+        // kbb-ph-wm: (Lane FW) the phone picture ships at Full width.
+        ->and($c['wrap'])->toBe('sh kbb-ph kbb-ph-sd kbb-ph-cm kbb-ph-wm')
         ->and($c['style'])->toContain('--ph-hd:260px;--ph-fd:cover;--ph-rd:14px;--ph-gd:12px;--ph-sd:22px')
         ->and($c['style'])->toContain('--ph-hm:160px;--ph-fm:cover;--ph-rm:10px;--ph-gm:8px;--ph-sm:12px');
 
