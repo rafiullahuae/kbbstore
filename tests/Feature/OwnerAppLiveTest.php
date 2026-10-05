@@ -324,7 +324,8 @@ it('runs one timer, only while the page is visible, and measures no layout', fun
     }
 
     $app = (string) file_get_contents(resource_path('js/owner-app/owner-app.js'));
-    expect($app)->toContain("if (document.visibilityState !== 'visible' || S.stage !== 'app') return;")
+    // Lane OA4: Customise app can also switch the live check off (fn('live')).
+    expect($app)->toContain("if (document.visibilityState !== 'visible' || S.stage !== 'app' || !fn('live')) return;")
         ->toContain("if (document.visibilityState === 'hidden') { stopPolling(); return; }");
 
     $css = (string) file_get_contents(resource_path('css/owner-app/owner-app.css'));

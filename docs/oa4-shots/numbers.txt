@@ -1,0 +1,53 @@
+LANE OA4 — Users & Roles → Owner app → Customise app. Measured with tools/oa4-shots.cjs
+(Chromium /opt/pw-browsers/chromium; phone-390 = iPhone Safari UA, dpr 2; tablet-820 = Android tablet Chrome UA, dpr 1).
+
+== DEFAULTS = TODAY'S APP (pixel compare)
+Two previews on ONE database (the same sqlite file copied, so the same orders, prices and times):
+  before = the build at 8e3eecad (a detached worktree, its own vendor), after = this branch.
+Every screen at both widths: My store, Orders, an order, Products, a product, Customers, a customer, More, Notifications
+(times masked grey identically in both runs).
+  before phone-390: <html class=""> style=null; font requests 1; scrollWidth 390/390; (no ui in payload)
+  before tablet-820: <html class=""> style=null; font requests 1; scrollWidth 820/820; (no ui in payload)
+  after phone-390: <html class=""> style=null; font requests 1; scrollWidth 390/390; ui payload 507 bytes
+  after tablet-820: <html class=""> style=null; font requests 1; scrollWidth 820/820; ui payload 507 bytes
+  first paired run: 18 of 18 screens, 0 pixels differ  => every screen pixel-identical
+  repeat runs: the 9 phone screens stay 0 px; the tablet shows 13–105 px of antialiasing noise in its
+  translucent rail/badges, and the OLD build shows the same noise against ITSELF (before vs before again:
+  my-store 13, orders 19, more 33, notifications 62 px) — rendering noise, not a change.
+  (Also after a saved row equal to the defaults: the same result.)
+  Shots: defaults--phone-390--01-my-store.png, --02-orders.png, defaults--tablet-820--*.png
+
+== SIZES (built, gzip -9)
+  owner-app JS  before 74,265 B (gz 23,179)  after 76,829 B (gz 24,176)  => +2,564 B, +997 B gz
+  owner-app CSS before 34,813 B (gz 8,582)   after 39,125 B (gz 9,516)   => +4,312 B, +934 B gz (every new rule behind an html.oa-* class)
+  payload: 'ui' in the state/enrol/unlock answer = 507 bytes of JSON; zero extra requests; one settings read per request
+  admin: owner-app-customise.blade.php 27,810 B (gz 9,419), inline in the admin page like its neighbours; 1 GET when the sub-tab opens, 1 PUT on Save
+
+
+== state A-teal-compact-system {"accent":"#0F766E","density":"compact","font":"system","initials":"EB","store_name":"Extra Beauty"} — saved: 200
+
+(The pixel compare above was taken before the My store sales fix. That fix changes the My store hero ON PURPOSE — the owner asked for it; dash-numbers.txt has its shots and figures. Every other screen is untouched by it.)
+
+
+== state A-teal-compact-system {"accent":"#0F766E","density":"compact","font":"system","initials":"EB","store_name":"Extra Beauty"} — saved: 200
+  phone-390: classes "oa-sys oa-compact oa-acc"; --acc #0F766E; body font system-ui, -apple-system, "Segoe UI", Ro; tabs My store, Orders, Products, More; sections hero | att | tiles | tp; header 44px; figure 44px; scrollWidth 390/390; font files requested 0
+  phone-390: order row 65.3px tall
+  tablet-820: classes "oa-sys oa-compact oa-acc"; --acc #0F766E; body font system-ui, -apple-system, "Segoe UI", Ro; tabs My store, Orders, Products, More; sections hero | att | tiles | tp; header 44px; figure 44px; scrollWidth 820/820; font files requested 0
+  tablet-820: order row 65.3px tall
+
+== state B-customers-products-off {"screens":{"customers":false,"products":false}} — saved: 200
+  phone-390: classes ""; --acc #A8475C; body font "Plus Jakarta Sans", system-ui, -apple-s; tabs My store, Orders, More; sections hero | att | tiles | tp; header 44px; figure 44px; scrollWidth 390/390; font files requested 1
+  phone-390: More rows ["Notifications","Add to home screen","Unlock with PIN","Sync on open","On this phone","New orders","Status changes","Low and out of stock","Failed payments and refunds","oa4-phone-390-B-customers-products-off","Lock now","Log out of this phone"]; #/customers lands on #/; GET /api/customers by hand → 403 off; requests the app itself made to /api/customers|products: 0
+  tablet-820: classes ""; --acc #A8475C; body font "Plus Jakarta Sans", system-ui, -apple-s; tabs My store, Orders, More; sections hero | att | tiles | tp; header 44px; figure 44px; scrollWidth 820/820; font files requested 1
+  tablet-820: More rows ["Notifications","Add to home screen","Unlock with PIN","Sync on open","On this phone","New orders","Status changes","Low and out of stock","Failed payments and refunds","oa4-tablet-820-B-customers-products-off","Lock now","Log out of this phone"]; #/customers lands on #/; GET /api/customers by hand → 403 off; requests the app itself made to /api/customers|products: 0
+
+== state C-sections-reordered {"sections":["top","avg","returning","hero","needs"],"sections_off":["needs"],"header":"standard","figure":"l","corners":"medium"} — saved: 200
+  phone-390: classes "oa-fg-l oa-rd-m oa-hd-std"; --acc #A8475C; body font "Plus Jakarta Sans", system-ui, -apple-s; tabs My store, Orders, Products, More; sections tp | tiles | hero; header 108px; figure 52px; scrollWidth 390/390; font files requested 1
+  phone-390: order row 73.3px tall
+  tablet-820: classes "oa-fg-l oa-rd-m oa-hd-std"; --acc #A8475C; body font "Plus Jakarta Sans", system-ui, -apple-s; tabs My store, Orders, Products, More; sections tp | tiles | hero; header 84px; figure 52px; scrollWidth 820/820; font files requested 1
+  tablet-820: order row 73.3px tall
+  reset to defaults: 200
+
+== admin: Platform → Users & Roles → Owner app → Customise app
+  1280px: 6 cards, phone preview 287x574px, scrollWidth 1280/1280; after 6 changes the preview has classes "oa-sys oa-compact oa-acc", --acc #0F766E, tabs My store, Orders, More, sections card hero | card att | card tp | tiles; requests during those changes: none; #F4A6B8 warns "White text on #F4A6B8 reads at 1.9:1 — below 4.5:1, so Save refuses it. Choose a darker colour."; server: 422 White text on #F4A6B8 reads at 1.9:1; it needs at least 4.5:1. Choose a darker colour.
+  390px: 6 cards, phone preview 287x574px, scrollWidth 390/390; after 6 changes the preview has classes "oa-sys oa-compact oa-acc", --acc #0F766E, tabs My store, Orders, More, sections card hero | card att | card tp | tiles; requests during those changes: none; #F4A6B8 warns "White text on #F4A6B8 reads at 1.9:1 — below 4.5:1, so Save refuses it. Choose a darker colour."; server: 422 White text on #F4A6B8 reads at 1.9:1; it needs at least 4.5:1. Choose a darker colour.

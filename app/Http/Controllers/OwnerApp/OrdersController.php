@@ -250,7 +250,10 @@ final class OrdersController extends Controller
         $prev = DB::table('orders')->whereNull('deleted_at')->where('id', '<', $order->id)->where('status', '!=', 'checkout-draft')->max('id');
         $next = DB::table('orders')->whereNull('deleted_at')->where('id', '>', $order->id)->where('status', '!=', 'checkout-draft')->min('id');
 
-        $mayPay = $this->may($request, 'orders.payment') && in_array((string) $order->status, OrderPaymentPanel::UNPAID_STATUSES, true);
+        // Customise app switches (Lane OA4) fold into `can`: the app hides what
+        // the server would refuse (OwnerAppUiGate).
+        $mayPay = $this->may($request, 'orders.payment') && \App\Services\OwnerApp\OwnerAppUi::functionOn('mark_paid')
+            && in_array((string) $order->status, OrderPaymentPanel::UNPAID_STATUSES, true);
 
         return response()->json([
             'ok' => true,
@@ -301,7 +304,7 @@ final class OrdersController extends Controller
                 'next_id' => $next === null ? null : (int) $next,
                 'can' => [
                     'status' => $this->may($request, 'orders.manage'),
-                    'note' => $this->may($request, 'orders.manage'),
+                    'note' => $this->may($request, 'orders.manage') && \App\Services\OwnerApp\OwnerAppUi::functionOn('order_notes'),
                     'paid' => $mayPay,
                 ],
                 'paid_methods' => $mayPay ? app(\App\Services\Orders\ManualPayment::class)->methodsFor($order) : [],

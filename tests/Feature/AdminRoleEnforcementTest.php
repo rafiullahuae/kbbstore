@@ -322,6 +322,15 @@ it('has an authorization layer reading the role column', function () {
         'OwnerAppHeaders',
         'OwnerAppSession',
         /*
+         * Lane OA4, and I have come and read this file as instructed.
+         * OwnerAppUiGate reads no role and grants nothing: after
+         * OwnerAppSession it REFUSES (403 `off`) an owner-app endpoint whose
+         * screen or function the Full Admin switched off under Owner App →
+         * Customise app; the capability check still runs after it, so both
+         * must allow. routes/owner-app.php only, never an admin route.
+         */
+        'OwnerAppUiGate',
+        /*
          * Lane S5, and I have come and read this file as instructed.
          *
          * ResolveLocaleSlugs authorises nothing and reads no role. It does what

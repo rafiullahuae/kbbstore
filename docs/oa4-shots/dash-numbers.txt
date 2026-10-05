@@ -1,0 +1,28 @@
+
+== phone-390 — default (Total only)
+  Today: chips []; AED 605 (Analytics: net revenue 605, gross 605, VAT 29, paid orders 3); paid 3; 24 bars; ""; "Mon 5 Oct 2026"; hero 368px; scrollWidth 390/390
+  Yesterday: chips []; AED 319 (Analytics: net revenue 319, gross 319, VAT 15, paid orders 2); paid 2; 24 bars; ""; "Sun 4 Oct 2026"; hero 368px; scrollWidth 390/390; requests: dashboard?part=sales&range=yesterday
+  Last 7 days: chips []; AED 5,211 (Analytics: net revenue 5211, gross 5211, VAT 248, paid orders 26); paid 26; 7 bars; ""; "29 Sep - 5 Oct 2026"; hero 368px; scrollWidth 390/390; requests: dashboard?part=sales&range=7d
+  This month: chips []; AED 3,703 (Analytics: net revenue 3703, gross 3703, VAT 176, paid orders 18); paid 18; 5 bars; "2200% vs September to date"; "1 - 31 Oct 2026"; hero 402px; scrollWidth 390/390; requests: dashboard?part=sales&range=month
+  Last month: chips []; AED 1,669 (Analytics: net revenue 1669, gross 1669, VAT 79, paid orders 9); paid 9; 30 bars; "937% vs August"; "1 - 30 Sep 2026"; hero 402px; scrollWidth 390/390; requests: dashboard?part=sales&range=last_month
+  Top performers · 7d: ["COSRX Advanced Snail 96 Mucin Power Essence ×23 Net sales AED 1,587","Beauty of Joseon Relief Sun: Rice + Probiotics SPF50+ ×9 Net sales AED 585","Anua Heartleaf Pore Control Cleansing Oil ×7 Net sales AED 588","Arencia Fresh Green Rice Mochi Cleanser ×7 Net sales AED 644"]; requests: dashboard?part=top&top=7d
+  Top performers · month: ["COSRX Advanced Snail 96 Mucin Power Essence ×14 Net sales AED 966","Arencia Fresh Green Rice Mochi Cleanser ×6 Net sales AED 552","Beauty of Joseon Relief Sun: Rice + Probiotics SPF50+ ×6 Net sales AED 390","Medicube Zero Pore Pad 2.0 ×5 Net sales AED 445"]; requests: dashboard?part=top&top=month
+== phone-390 — Gross and Net switched on
+  total: chips ["Total","Gross","Net"]; AED 605; ""; bars 24
+  gross: chips ["Total","Gross","Net"]; AED 605; ""; bars 24
+  net: chips ["Total","Gross","Net"]; AED 576.19; ""; bars 24
+  (Analytics today: gross 605, net revenue 605, VAT 29 -> app Net = 576)
+
+== tablet-820 — default (Total only)
+  Today: chips []; AED 605 (Analytics: net revenue 605, gross 605, VAT 29, paid orders 3); paid 3; 24 bars; ""; "Mon 5 Oct 2026"; hero 371px; scrollWidth 820/820
+  Yesterday: chips []; AED 319 (Analytics: net revenue 319, gross 319, VAT 15, paid orders 2); paid 2; 24 bars; ""; "Sun 4 Oct 2026"; hero 371px; scrollWidth 820/820; requests: dashboard?part=sales&range=yesterday
+  Last 7 days: chips []; AED 5,211 (Analytics: net revenue 5211, gross 5211, VAT 248, paid orders 26); paid 26; 7 bars; ""; "29 Sep - 5 Oct 2026"; hero 371px; scrollWidth 820/820; requests: dashboard?part=sales&range=7d
+  This month: chips []; AED 3,703 (Analytics: net revenue 3703, gross 3703, VAT 176, paid orders 18); paid 18; 5 bars; "2200% vs September to date"; "1 - 31 Oct 2026"; hero 405px; scrollWidth 820/820; requests: dashboard?part=sales&range=month
+  Last month: chips []; AED 1,669 (Analytics: net revenue 1669, gross 1669, VAT 79, paid orders 9); paid 9; 30 bars; "937% vs August"; "1 - 30 Sep 2026"; hero 405px; scrollWidth 820/820; requests: dashboard?part=sales&range=last_month
+  Top performers · 7d: ["COSRX Advanced Snail 96 Mucin Power Essence ×23 Net sales AED 1,587","Beauty of Joseon Relief Sun: Rice + Probiotics SPF50+ ×9 Net sales AED 585","Anua Heartleaf Pore Control Cleansing Oil ×7 Net sales AED 588","Arencia Fresh Green Rice Mochi Cleanser ×7 Net sales AED 644"]; requests: dashboard?part=top&top=7d
+  Top performers · month: ["COSRX Advanced Snail 96 Mucin Power Essence ×14 Net sales AED 966","Arencia Fresh Green Rice Mochi Cleanser ×6 Net sales AED 552","Beauty of Joseon Relief Sun: Rice + Probiotics SPF50+ ×6 Net sales AED 390","Medicube Zero Pore Pad 2.0 ×5 Net sales AED 445"]; requests: dashboard?part=top&top=month
+== tablet-820 — Gross and Net switched on
+  total: chips ["Total","Gross","Net"]; AED 605; ""; bars 24
+  gross: chips ["Total","Gross","Net"]; AED 605; ""; bars 24
+  net: chips ["Total","Gross","Net"]; AED 576.19; ""; bars 24
+  (Analytics today: gross 605, net revenue 605, VAT 29 -> app Net = 576)

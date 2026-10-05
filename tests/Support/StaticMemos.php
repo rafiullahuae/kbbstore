@@ -72,6 +72,7 @@ final class StaticMemos
             AdminPathService::class => static fn () => AdminPathService::forgetMemo(),
             \App\Services\OwnerApp\OwnerAppPath::class => static fn () => \App\Services\OwnerApp\OwnerAppPath::forgetMemo(),
             \App\Services\OwnerApp\OwnerAppSettings::class => static fn () => \App\Services\OwnerApp\OwnerAppSettings::forget(),
+            \App\Services\OwnerApp\OwnerAppUi::class => static fn () => \App\Services\OwnerApp\OwnerAppUi::forget(),
             \App\Services\OwnerApp\VapidKeys::class => static fn () => \App\Services\OwnerApp\VapidKeys::forget(),
             \App\Services\OwnerApp\OwnerAppEvents::class => static fn () => \App\Services\OwnerApp\OwnerAppEvents::forget(),
             \App\Services\OwnerApp\OwnerAppAlerts::class => static fn () => \App\Services\OwnerApp\OwnerAppAlerts::forget(),

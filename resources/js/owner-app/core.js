@@ -23,8 +23,44 @@ export const S = {
   base: document.body.getAttribute('data-base') || '',
   me: null, csrf: null, vapid: null, groups: {}, idle: 12, tz: null,
   cursor: 0, seen: 0, unread: 0, stage: 'boot',
-  staleMs: 30 * 60000, spinning: false, spinAt: 0, gen: 0,
+  staleMs: 30 * 60000, spinning: false, spinAt: 0, gen: 0, ui: null,
 };
+
+/* ------------------------------------------- Customise app (Lane OA4) */
+
+/*
+ * The admin's Customise-app settings arrive inside the state / enrol / unlock
+ * answer (S.ui). Before that — and when a key is missing — everything is on,
+ * which is also what the server defaults to. A switch hidden here is refused
+ * by the server too (403 `off`), so this is presentation, not the guard.
+ */
+export const scr = (k) => !S.ui || !S.ui.screens || S.ui.screens[k] !== false;
+export const fn = (k) => !S.ui || !S.ui.functions || S.ui.functions[k] !== false;
+
+/*
+ * Looks become classes and one custom property on <html>, written before the
+ * unlocked frame is drawn. Only what differs from today's look is set, so the
+ * defaults leave <html> exactly as it was. The font class is the shell's own
+ * (the server sets oa-sys so the font is never requested) and is kept as is.
+ */
+const LOOK = ['oa-tx-s', 'oa-tx-l', 'oa-tt-s', 'oa-tt-l', 'oa-fg-s', 'oa-fg-l', 'oa-compact', 'oa-rd-m', 'oa-rd-sq', 'oa-hd-std', 'oa-acc', 'oa-nofs', 'oa-nosync', 'oa-nocontact', 'oa-nobulk'];
+export function applyUi(u) {
+  S.ui = u && typeof u === 'object' ? u : null;
+  const h = document.documentElement, on = [];
+  if (S.ui) {
+    if (u.text && u.text !== 'm') on.push('oa-tx-' + u.text);
+    if (u.title && u.title !== 'm') on.push('oa-tt-' + u.title);
+    if (u.figure && u.figure !== 'm') on.push('oa-fg-' + u.figure);
+    if (u.density === 'compact') on.push('oa-compact');
+    if (u.corners === 'medium') on.push('oa-rd-m'); else if (u.corners === 'square') on.push('oa-rd-sq');
+    if (u.header === 'standard') on.push('oa-hd-std');
+    [['fullscreen', 'oa-nofs'], ['sync', 'oa-nosync'], ['contact', 'oa-nocontact'], ['bulk', 'oa-nobulk']].forEach(([k, c]) => { if (!fn(k)) on.push(c); });
+  }
+  const acc = S.ui && /^#[0-9a-f]{6}$/i.test(u.accent || '') && u.accent.toUpperCase() !== '#A8475C' ? u.accent : '';
+  if (acc) { on.push('oa-acc'); h.style.setProperty('--acc', acc); } else if (h.style.getPropertyValue('--acc')) h.style.removeProperty('--acc');
+  LOOK.forEach((c) => { if (on.indexOf(c) === -1 && h.classList.contains(c)) h.classList.remove(c); });
+  on.forEach((c) => { if (!h.classList.contains(c)) h.classList.add(c); });
+}
 
 /* ----------------------------------------------------------- the CSRF key */
 
@@ -140,7 +176,7 @@ export function vars(el) {
 export const th = (src, c) => (src
   ? '<img class="th ' + (c || '') + '" src="' + esc(src) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
   : '<i class="th blank ' + (c || '') + '" aria-hidden="true"></i>');
-export const logo = (c) => '<i class="logo ' + (c || '') + '" aria-hidden="true">KB</i>';
+export const logo = (c) => '<i class="logo ' + (c || '') + '" aria-hidden="true">' + esc((S.ui && S.ui.initials) || 'KB') + '</i>';
 export const tgl = (on, label, attrs) => '<button type="button" class="tgl" role="switch" aria-checked="' + (on ? 'true' : 'false') + '" aria-label="' + esc(label) + '" ' + (attrs || '') + '></button>';
 /* A screen header. Every one carries "Sync now" unless `cls` says nosync
    (the tablet's right-hand order pane: its list pane already has one). */

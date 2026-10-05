@@ -36,3 +36,17 @@ Route::post('/owner-app/devices/{id}/revoke', [OwnerAppAdminController::class, '
 Route::put('/owner-app/settings', [OwnerAppAdminController::class, 'settings']);
 Route::post('/owner-app/address', [OwnerAppAdminController::class, 'address'])->middleware('throttle:10,1,oa-admin-address');
 Route::put('/owner-app/security', [OwnerAppAdminController::class, 'security'])->middleware('throttle:10,1,oa-admin-security');
+
+/*
+|------------------------------------------------------------------------------
+| Users & Roles → Owner app → Customise app (Lane OA4)
+|------------------------------------------------------------------------------
+|
+|     GET    /admin-api/owner-app/ui    look, screens, functions; defaults; options
+|     PUT    /admin-api/owner-app/ui    the whole card, validated (422 on a bad accent)
+|
+| Same capability as the rest of this file (ownerapp.manage via
+| admin-api/owner-app/**). Shipped with 2027_08_25_100440_clear_caches_owner_app_ui.
+*/
+Route::get('/owner-app/ui', [\App\Http\Controllers\Admin\OwnerAppUiAdminController::class, 'show']);
+Route::put('/owner-app/ui', [\App\Http\Controllers\Admin\OwnerAppUiAdminController::class, 'save'])->middleware('throttle:30,1,oa-admin-ui');

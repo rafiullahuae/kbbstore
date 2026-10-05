@@ -9,7 +9,7 @@
  * Every write goes to the server, which runs the ADMIN's own action — the
  * same emails, the same stock, the same order notes.
  */
-import { S, esc, api, $, $$, ic, av, th, pill, stWord, top, back, toast, sheet, busy, debounce, paint, errorBox, day, time, when, year, isTablet,
+import { S, fn, esc, api, $, $$, ic, av, th, pill, stWord, top, back, toast, sheet, busy, debounce, paint, errorBox, day, time, when, year, isTablet,
   screen, onScreen, mark, once, landed, isFresh, onReset, merge, ln, blk, times, skChips, skNote } from './core.js';
 
 const L = { q: '', status: '', from: '', to: '', payment: '', rows: [], next: null, counts: {}, payments: [], today: '', yesterday: '', sel: new Set(), loaded: false, at: null, paged: false, lastQ: '', cur: 0 };
@@ -284,6 +284,8 @@ export async function ordersClick(e, view) {
   const rowEl = e.target.closest('.row.ord');
 
   if (b && b.hasAttribute('data-chip')) { L.status = b.getAttribute('data-chip'); await loadList(view); return true; }
+  // Bulk status change switched off (Customise app, Lane OA4): no selecting at all; the server refuses it too.
+  if (!fn('bulk') && ['sel', 'selall', 'selnone', 'bulk', 'bulk-more'].indexOf(act) !== -1) return true;
   if (act === 'sel' && rowEl) { e.preventDefault(); toggle(view, rowEl); return true; }
   if (rowEl && L.sel.size && !act) { e.preventDefault(); toggle(view, rowEl); return true; }
   if (act === 'selall') { L.rows.forEach((o) => L.sel.add(o.id)); $$('.row.ord', view).forEach((r) => r.classList.add('on')); syncSel(view); return true; }
