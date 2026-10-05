@@ -3,6 +3,32 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.400
+**The owner app: K-Beauty Bliss Owner, design B "Petal", at a secret address,
+PIN-unlocked, for the owner and the team members you choose.** Apply after
+.399. Runs its migrations (they create the app's address and its push keys).
+Hard refresh after applying.
+
+Set it up: Platform → Users & Roles → Owner app. Turn access on for a member,
+Set PIN (6–8 digits), copy the app address, open it on the phone, sign in once
+with email + PIN, then Add to Home Screen.
+
+| Your request | In the app |
+|---|---|
+| "accessible only from the owners and team members, with custom PIN" | Access per member, PIN set in the admin, the phone remembered; 5 wrong PINs lock it, escalating to 24 h and then to a Full Admin unlock |
+| "NOT SYNCED by google or any search" | Secret address, noindex/nofollow on every response, in no sitemap or link |
+| Orders, bulk status, order detail | Today / Yesterday / Earlier, status chips, search, bulk bar; detail with status, mark paid, notes, Tabby/Tamara, call / WhatsApp |
+| Products, inventory, quick edits | Price, stock, categories, visibility |
+| Customers with purchase history | Lifetime value, orders, spend by month, what they buy |
+| Notifications | New orders, status changes, failed payments, low and out of stock; you choose which |
+| "auto refresh ... silently ... grey bars ... refresh icon on the top header" | Back within 30 min: real figures at once, refreshed silently. Longer away: grey bars, everything synced at once. Sync now in every header. "Show loading bars after (minutes)" in the Owner app tab |
+| Full screen on phones | First tap enters it; the small arrows icon switches it off and on |
+
+Security (Platform → Users & Roles → Owner app → Security): optional own
+subdomain, lock-screen notification text Detailed / Generic, Unlock now.
+
+Files: see the package's update.json.
+
 ## 2.60.399
 **Page header picture: full width, set for desktop and phone apart. Phone is
 full width now; desktop as it was. And Pages → Page header in the console
