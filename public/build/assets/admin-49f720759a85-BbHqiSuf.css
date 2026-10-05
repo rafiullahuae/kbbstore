@@ -1,0 +1,169 @@
+
+/* Prefix mp-, used nowhere else in the console. */
+.mp-back{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:900;
+         display:flex;align-items:center;justify-content:center;padding:18px}
+.mp-back[hidden]{display:none}
+.mp-box{background:var(--surface,#fff);border-radius:var(--r,16px);width:min(1080px,100%);
+        max-height:min(860px,92vh);display:flex;flex-direction:column;min-width:0;min-height:0;
+        box-shadow:var(--sh-l,0 24px 60px -22px rgba(16,24,40,.30));overflow:hidden}
+.mp-head{display:flex;gap:12px;align-items:center;justify-content:space-between;
+         padding:15px 18px;border-bottom:1px solid var(--border,#e6e9f2);min-width:0}
+.mp-title{font-weight:650;font-size:15px;margin:0;min-width:0}
+.mp-sub{font-size:11.5px;color:var(--ink-soft,#626c80);margin:2px 0 0}
+.mp-tools{display:grid;gap:10px;padding:12px 18px;min-width:0;
+          border-bottom:1px solid var(--border,#e6e9f2)}
+/* Two rows: search and Upload new on top, the narrowing filters beneath.
+   Filters wrap into as many columns as fit rather than being forced onto one
+   line, so a 390px dialog stacks them instead of squeezing each to nothing. */
+.mp-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap;min-width:0}
+.mp-filters{display:grid;gap:9px;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));min-width:0}
+.mp-fld{display:grid;gap:3px;min-width:0}
+.mp-lab{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+        color:var(--ink-soft,#626c80)}
+.mp-q{flex:1 1 220px;min-width:0;padding:8px 10px;font:inherit;font-size:13px;
+      border:1px solid var(--border,#e6e9f2);border-radius:9px;background:var(--surface,#fff);color:inherit}
+.mp-in{width:100%;min-width:0;padding:7px 9px;font:inherit;font-size:12.5px;
+       border:1px solid var(--border,#e6e9f2);border-radius:8px;background:var(--surface,#fff);color:inherit}
+.mp-in:disabled{opacity:.5;cursor:default}
+.mp-cols{display:flex;gap:4px;align-items:center;flex:none}
+.mp-cols button{font:inherit;font-size:12px;font-weight:600;min-width:30px;padding:6px 7px;
+                border-radius:7px;border:1px solid var(--border,#e6e9f2);
+                background:var(--surface,#fff);color:var(--ink-soft,#626c80);cursor:pointer}
+.mp-cols button.on{border-color:var(--accent,#15a85a);color:var(--accent-ink,#0b6e3a);
+                   background:var(--accent-soft,#e7f7ee)}
+.mp-btn{font:inherit;font-size:12.5px;font-weight:600;padding:8px 12px;border-radius:9px;
+        border:1px solid var(--border,#e6e9f2);background:var(--surface,#fff);color:inherit;cursor:pointer}
+.mp-btn:hover{border-color:var(--accent,#15a85a);color:var(--accent-ink,#0b6e3a)}
+.mp-btn.mp-primary{background:var(--accent,#15a85a);border-color:var(--accent,#15a85a);color:#fff}
+.mp-btn.mp-primary:hover{background:var(--accent-strong,#0f8f4b);color:#fff}
+.mp-btn[disabled]{opacity:.45;cursor:default}
+.mp-btn[disabled]:hover{border-color:var(--border,#e6e9f2);color:inherit}
+.mp-body{flex:1 1 auto;overflow:auto;padding:16px 18px;min-height:0;min-width:0}
+/* auto-fill, not auto-fit: with two images in the library, auto-fit stretches
+   each tile across the whole dialog. */
+/* The column count is an inline custom property set by the chooser; the
+   fallback keeps auto-fill for a browser that never receives one. */
+.mp-grid{display:grid;gap:12px;min-width:0;
+         grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+.mp-grid[style*="--mp-cols"]{grid-template-columns:repeat(var(--mp-cols),minmax(0,1fr))}
+.mp-tile{display:flex;flex-direction:column;gap:0;text-align:left;padding:0;min-width:0;cursor:pointer;
+         background:var(--surface,#fff);border:1.5px solid var(--border,#e6e9f2);border-radius:11px;
+         overflow:hidden;color:inherit;font:inherit}
+.mp-tile:hover{border-color:var(--accent,#15a85a)}
+.mp-tile.on{border-color:var(--accent,#15a85a);box-shadow:0 0 0 3px rgba(21,168,90,.16)}
+/* ── THE SKELETON (Lane SP) ──────────────────────────────────────────────
+   The dialog used to open on one grey sentence and sit there until /media
+   answered, which on a slow connection reads as a dialog that has not loaded.
+   Now it opens on the SHAPE of the grid, so the frame, the columns and the
+   tile size are all on screen before the first byte comes back and the real
+   tiles land into a layout that is already there instead of pushing one into
+   existence.
+
+   PURE CSS, AND NO ANIMATION THAT IGNORES A PREFERENCE. The shimmer is a
+   background-position keyframe on the placeholder alone -- nothing moves, no
+   layout is measured, and prefers-reduced-motion stops it dead and leaves a
+   plain grey block, which is still the right shape. */
+.mp-skel{border:1.5px solid var(--border,#e6e9f2);border-radius:11px;overflow:hidden;
+         background:var(--surface,#fff)}
+.mp-skel i{display:block;aspect-ratio:1;background:var(--surface-2,#f2f4fb)}
+.mp-skel u{display:block;height:58px;padding:7px 9px 9px;box-sizing:border-box;text-decoration:none}
+.mp-skel u:before{content:"";display:block;height:9px;border-radius:4px;
+                  background:var(--surface-2,#f2f4fb);width:78%}
+.mp-skel u:after{content:"";display:block;height:8px;border-radius:4px;margin-top:7px;
+                 background:var(--surface-2,#f2f4fb);width:46%}
+.mp-skel i,.mp-skel u:before,.mp-skel u:after{
+  background-image:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.72) 50%,rgba(255,255,255,0) 100%);
+  background-size:240px 100%;background-repeat:no-repeat;animation:mp-sheen 1.15s linear infinite}
+@keyframes mp-sheen{from{background-position:-240px 0}to{background-position:calc(100% + 240px) 0}}
+@media (prefers-reduced-motion:reduce){
+  .mp-skel i,.mp-skel u:before,.mp-skel u:after{animation:none;background-image:none}
+}
+.mp-thumb{position:relative;aspect-ratio:1;background:var(--surface-2,#f2f4fb);display:block}
+.mp-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.mp-tick{position:absolute;top:6px;right:6px;width:21px;height:21px;border-radius:50%;
+         background:var(--accent,#15a85a);color:#fff;font-size:12px;line-height:21px;text-align:center;display:none}
+.mp-tile.on .mp-tick{display:block}
+/* EVERY TILE THE SAME HEIGHT. Captions are filenames and run from one word to
+   five, so left alone the rows came out ragged — a grid of steps rather than a
+   grid. The name is clamped to two lines and the caption height is fixed, so
+   tiles line up whatever they are called. */
+.mp-cap{padding:7px 9px 9px;min-width:0;display:grid;gap:3px;align-content:start;height:58px}
+/* -webkit-line-clamp hides the overflowing TEXT but does not shrink the box it
+   is in, so inside a fixed-height grid the third line still took its row and
+   sat on top of the dimensions underneath. The explicit height is what keeps
+   the two apart; the clamp is what stops the third line being drawn. Both are
+   needed — the screenshot of a long product name is what showed it. */
+.mp-name{font-size:11.5px;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;
+         -webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;
+         line-height:1.3;height:2.6em}
+.mp-dim{font-size:10.5px;color:var(--ink-soft,#626c80);display:block;
+        overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;
+         padding:12px 18px;border-top:1px solid var(--border,#e6e9f2);flex-wrap:wrap;min-width:0}
+.mp-count{font-size:12px;color:var(--ink-soft,#626c80);min-width:0}
+.mp-note{padding:26px 12px;text-align:center;color:var(--ink-soft,#626c80);font-size:13px}
+.mp-ups{display:grid;gap:8px;margin-bottom:14px;min-width:0}
+.mp-up{display:grid;gap:5px;min-width:0}
+.mp-up-top{display:flex;gap:10px;justify-content:space-between;align-items:baseline;min-width:0}
+.mp-up-name{font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-up-pct{font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink-soft,#626c80);flex:none}
+.mp-up-track{height:6px;border-radius:999px;background:var(--surface-2,#f2f4fb);overflow:hidden}
+.mp-up-track > i{display:block;height:100%;width:0;border-radius:999px;
+                 background:var(--accent,#15a85a);transition:width .18s linear}
+.mp-up.is-bad .mp-up-track > i{background:var(--red,#e3493f)}
+.mp-up.is-bad .mp-up-pct{color:var(--red,#e3493f)}
+/* A file whose bytes are all sent but whose answer has not arrived. The stripe
+   is what stops a bar parked at 99% reading as a stall -- that pause is the
+   server reading, resizing and recording the image, and on a 4000x4000 JPEG it
+   is half a second of real work. Animated with a background-position keyframe
+   rather than by script, so nothing measures and nothing runs per frame in JS. */
+.mp-up.is-server .mp-up-track > i{width:100% !important;
+  background-image:linear-gradient(110deg,rgba(255,255,255,.45) 25%,transparent 25%,
+    transparent 50%,rgba(255,255,255,.45) 50%,rgba(255,255,255,.45) 75%,transparent 75%);
+  background-size:14px 14px;animation:mp-stripe .7s linear infinite}
+@keyframes mp-stripe{from{background-position:0 0}to{background-position:14px 0}}
+.mp-up.is-gone .mp-up-track > i{background:var(--ink-soft,#626c80)}
+/* Cancel sits on the row, not in the footer: a batch of six photographs has six
+   things that might need stopping and only one of them is the one in flight. */
+.mp-up-x{font:inherit;font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;flex:none;
+         border:1px solid var(--border,#e6e9f2);background:var(--surface,#fff);color:var(--ink-soft,#626c80);cursor:pointer}
+.mp-up-x:hover{border-color:var(--red,#e3493f);color:var(--red,#e3493f)}
+.mp-up-x[hidden]{display:none}
+.mp-up-head{display:flex;gap:10px;align-items:baseline;justify-content:space-between;
+            font-size:11.5px;font-weight:650;color:var(--ink-soft,#626c80);min-width:0}
+.mp-up-stop{font:inherit;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;flex:none;
+            border:1px solid var(--border,#e6e9f2);background:var(--surface,#fff);color:inherit;cursor:pointer}
+
+/* ── the drop zone ────────────────────────────────────────────────────────
+   Two targets, deliberately, and they are not redundant:
+
+   .mp-drop is the one that TELLS the operator dropping is possible, and it is
+   also the click target that opens the file dialog -- so the affordance and the
+   fallback are the same control.
+
+   The whole dialog is the second, because a 1080px modal with a 140px dashed
+   box in it makes the operator aim. Dropping a photograph anywhere over the
+   picker uploads it. That also closes a real hole: nothing in this console
+   prevents the default drop, so a file let go over an ordinary part of the page
+   makes the browser NAVIGATE AWAY to it -- losing whatever was half-typed
+   behind the dialog. While the picker is open, that can no longer happen. */
+.mp-drop{display:block;width:100%;text-align:center;font:inherit;color:var(--ink-soft,#626c80);
+         border:1.5px dashed var(--border,#e6e9f2);border-radius:11px;padding:14px 12px;margin-bottom:14px;
+         background:var(--surface,#fff);cursor:pointer;min-width:0}
+.mp-drop b{display:block;font-size:13px;font-weight:650;color:inherit;margin-bottom:3px}
+.mp-drop span{display:block;font-size:11.5px;overflow-wrap:anywhere}
+.mp-drop:hover,.mp-drop:focus-visible{border-color:var(--accent,#15a85a);color:var(--accent-ink,#0b6e3a);
+        background:var(--accent-soft,#e7f7ee)}
+/* is-over is set on the ZONE while the pointer carries files anywhere over the
+   dialog, not only over the box -- the whole dialog is the target, so lighting
+   up only the box would understate where a drop will land. */
+.mp-back.is-drag .mp-drop{border-color:var(--accent,#15a85a);border-width:2px;padding:13.5px 11.5px;
+        color:var(--accent-ink,#0b6e3a);background:var(--accent-soft,#e7f7ee)}
+.mp-back.is-drag .mp-box{box-shadow:0 0 0 3px var(--accent,#15a85a),var(--sh-l,0 24px 60px -22px rgba(16,24,40,.30))}
+@media (prefers-reduced-motion: reduce){.mp-up-track > i{transition:none}
+  .mp-up.is-server .mp-up-track > i{animation:none}}
+@media (max-width:560px){
+  .mp-back{padding:0}
+  .mp-box{max-height:100vh;height:100vh;border-radius:0}
+  .mp-grid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}
+}

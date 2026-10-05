@@ -1,0 +1,350 @@
+
+/* Controls left, a phone that redraws as you drag on the right. Below 1100px
+   the preview goes under the controls rather than squeezing both: a 300px
+   control column and a 300px phone are two things nobody can use. */
+.cps-wrap{display:grid;gap:14px;min-width:0;grid-template-columns:minmax(0,1fr) 336px;align-items:start}
+.cps-wrap > *{min-width:0}
+.cps-wrap > .cps-col{display:grid;gap:14px;min-width:0}
+@media (max-width:1100px){.cps-wrap{grid-template-columns:minmax(0,1fr)}}
+
+/* THE DESKTOP TAB STACKS, and it has to. Every other tab previews a phone,
+   which is 336px wide and sits happily in a side column. This one previews a
+   1024px-plus window with two columns in it, and a two-column layout drawn
+   336px wide shows the owner nothing they can judge — the tracks are a few
+   dozen pixels each and the rail's half-card cue disappears entirely.
+   So on this tab the preview drops below the controls and takes the full
+   width of the screen. It also stops being sticky: a full-width block that
+   followed the scroll would cover the controls it belongs to. */
+.cps-wrap.cps-stack{grid-template-columns:minmax(0,1fr)}
+.cps-wrap.cps-stack .cpv{position:static}
+.cps-wrap.cps-stack .cpv-h{margin:4px 0 10px}
+.cps-wrap.cps-stack .cpv-h b{font-size:15px;font-weight:700}
+
+/* ── the preview ────────────────────────────────────────────────────────── */
+.cpv{position:sticky;top:16px;min-width:0}
+@media (max-width:1100px){.cpv{position:static}}
+.cpv-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 0 8px}
+.cpv-h b{font-size:12px;font-weight:650}
+.cpv-h span{font-size:11px;color:var(--ink-soft,#6b7280)}
+.cpv-phone{border:1px solid var(--border,#e6e6e6);border-radius:20px;overflow:hidden;
+  background:#fff;box-shadow:0 8px 26px -18px rgba(0,0,0,.4)}
+.cpv-bar{display:flex;align-items:center;gap:6px;padding:7px 11px;background:#f6f7f9;
+  border-bottom:1px solid var(--border,#e6e6e6);font-size:10px;color:#6b7280}
+.cpv-bar i{width:6px;height:6px;border-radius:50%;background:#d8dbe0;display:block}
+.cpv-body{position:relative;background:#fbf5f4;padding:10px;min-height:150px;color:#17181c}
+.cpv-note{font-size:10.5px;color:#6b7280;padding:14px 10px;text-align:center}
+/* The DESKTOP preview is a different shape, and it has to be: a two-column
+   layout drawn inside a phone-shaped frame would tell the owner nothing about
+   the thing they are adjusting. The proportions are what matter here, not the
+   pixels -- the frame stands for a 1024px-plus window, and the two tracks are
+   drawn at the real ratio between --cpv-d-aside and what is left. */
+.cpv-desk{border:1px solid var(--border,#e6e6e6);border-radius:12px;overflow:hidden;
+  background:#fff;box-shadow:0 8px 26px -18px rgba(0,0,0,.4)}
+.cpv-cols{display:grid;grid-template-columns:minmax(0,1fr) var(--cpv-d-aside,31%);
+  column-gap:var(--cpv-d-gap,2%);row-gap:var(--cpv-d-secgap,1.3%);align-items:start;
+  padding:var(--cpv-d-pady,2%) var(--cpv-d-padx,2%)}
+/* The four spacing sliders, on the mock. Each reaches the same kind of box it
+   reaches on the page -- the gap between sections, the padding inside one --
+   so dragging one moves the preview the way it moves the shop. */
+.cpv-cols .cpv-ci{padding:var(--cpv-d-secpad,1.3%)}
+.cpv-cols .cpv-rail{padding:var(--cpv-d-secpad,1.3%)}
+/* The carousel arrows on the mock. Same placement as the page: outside the
+   scroller, half in and half out of the section's edge, centred on the picture
+   rather than on the section, because the cards carry text under the image. */
+.cpv-arrwrap{position:relative;overflow:visible}
+.cpv-arr{position:absolute;top:42%;transform:translateY(-50%);z-index:2;
+  width:var(--cpv-d-arrow,2.8%);aspect-ratio:1;border-radius:50%;background:#fff;
+  border:1px solid #e4e7ec;box-shadow:0 4px 14px -6px rgba(23,24,28,.4);
+  display:grid;place-items:center;color:#5b6472;font-size:9px;line-height:1}
+.cpv-arr.l{left:calc(var(--cpv-d-arrow,2.8%) / -2.2)}
+.cpv-arr.r{right:calc(var(--cpv-d-arrow,2.8%) / -2.2)}
+.cpv-cols > div{min-width:0}
+.cpv-side{display:flex;flex-direction:column;gap:var(--cpv-d-secgap,1.3%)}
+.cpv-cols .cpv-ab{padding:var(--cpv-d-dockpad,1.2%)}
+.cpv-stick{border:1px dashed #cbd5e1;border-radius:8px;padding:4px;position:relative}
+.cpv-stick::after{content:'follows the scroll';position:absolute;top:-7px;right:6px;
+  background:#fff;padding:0 4px;font-size:7.5px;color:#94a3b8;letter-spacing:.02em}
+/* The address popup, CENTRED, because that is what desktop draws.
+   pvSheet() mocks a BOTTOM SHEET -- a dimmed page with the panel pinned to the
+   foot of it -- which is right for a phone and wrong here: wrapped as-is it
+   rendered a grey slab with the panel sitting under it. The three declarations
+   below unpin it. Width is the owner's own `d_modal_w` as a share of the page,
+   and the blur is theirs too, so both sliders move this. */
+.cpv-modal{margin-top:10px}
+.cpv-modal .cpv-scrim{
+  -webkit-backdrop-filter:blur(var(--cpv-d-blur,4px));backdrop-filter:blur(var(--cpv-d-blur,4px))}
+.cpv-modal .cpv-sheet{
+  top:50%;left:50%;right:auto;bottom:auto;
+  transform:translate(-50%,-50%);
+  width:var(--cpv-d-modal,38%);max-width:calc(100% - 28px);
+  max-height:calc(100% - 28px);
+  border-radius:12px;box-shadow:0 18px 40px -18px rgba(0,0,0,.5)}
+
+/* rows — every size derives from --h, exactly as the shop does */
+.cpv-ci{display:flex;align-items:center;gap:calc(var(--h) * .13);height:var(--h);
+  padding:calc(var(--h) * .13);background:#fff;border-bottom:1px solid #ebe3e6;overflow:hidden}
+.cpv-ci:first-child{border-radius:10px 10px 0 0}
+.cpv-ci:last-child{border-bottom:0;border-radius:0 0 10px 10px}
+.cpv-th{flex:0 0 auto;width:calc(var(--h) - var(--h) * .26);height:calc(var(--h) - var(--h) * .26);
+  border-radius:8px;display:grid;place-items:center;color:#fff;font-weight:600;
+  font-size:calc((var(--h) - var(--h) * .26) * .32)}
+.cpv-mid{flex:1 1 auto;min-width:0}
+.cpv-br{font-size:calc((7.5px + var(--h) * .022) * var(--f));font-weight:var(--w);
+  letter-spacing:.09em;text-transform:uppercase;color:#c13a5e;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.cpv-nm{font-size:calc((11.5px + var(--h) * .042) * var(--f));font-weight:var(--w);line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* --qs on the height, the glyph AND the paddings, which is what the shop does:
+   there the box is a calc() off --cpg-qty-h and the glyph off --cpg-qty-f, and
+   both carry the multiplier. Scaling only the height here would draw a stepper
+   that grew taller and not wider — a preview disagreeing with the page about
+   the control it is drawing, which is the one thing it must never do. */
+.cpv-qty{display:inline-flex;align-items:center;border:1px solid #ebe3e6;border-radius:99px;
+  height:calc(var(--h) * .30 * var(--qs));margin-top:calc(var(--h) * .04);
+  font-size:calc(var(--h) * .135 * var(--f) * var(--qs))}
+.cpv-qty b{padding:0 calc(var(--h) * .10 * var(--qs));font-weight:var(--w)}
+.cpv-qty i{padding:0 calc(var(--h) * .08 * var(--qs));font-style:normal;color:#6b7280}
+.cpv-pr{flex:0 0 auto;font-size:calc((11px + var(--h) * .040) * var(--f));font-weight:var(--w);
+  white-space:nowrap}
+
+/* ── THE ORDINARY ROW ON THE PAGE THE SHOP ACTUALLY SERVES ────── (Lane CR)
+   Every number below is one of the new controls, printed by pvRowVars() from
+   the value in the buffer — so this draws what `.kbb-cartpage .items
+   .ci:not(.ci-set)` will draw and not an impression of it. The fourth row is
+   a SET's row, greyed and labelled: it is the one row these controls cannot
+   reach, and the owner asked twice about exactly that boundary. */
+.cpv-cl{background:#fff;border:1px solid #efe6ea;border-radius:12px}
+.cpv-cl .r{display:flex;align-items:center;min-height:var(--cim);
+  padding-block:var(--cipt) var(--cipb);padding-inline:var(--cips) var(--cipe);
+  gap:var(--cig);border-bottom:1px solid #f3ecef}
+.cpv-cl .r:last-child{border-bottom:0}
+.cpv-cl .r.set{background:#faf7f8}
+.cpv-cl .th{flex:0 0 auto;width:var(--cith);height:var(--cith);border-radius:var(--cithr);
+  display:grid;place-items:center;color:#fff;font-weight:700;font-size:calc(var(--cith) * .22)}
+.cpv-cl .mid{flex:1 1 auto;min-width:0}
+.cpv-cl .br{font-size:var(--cibf);font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:#c13a5e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cpv-cl .nm{font-size:var(--cinf);font-weight:500;line-height:1.3;margin:1px 0 var(--cing);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cpv-cl .q{display:inline-flex;align-items:center;border:1px solid #ebe3e6;border-radius:8px;
+  margin-block:var(--ciqt) var(--ciqb);font-size:13px;line-height:1}
+.cpv-cl .q i{font-style:normal;width:26px;height:26px;display:grid;place-items:center;color:#6b7280}
+.cpv-cl .q b{min-width:24px;text-align:center;font-weight:700;font-size:12px}
+.cpv-cl .pr{flex:0 0 auto;font-size:13px;font-weight:700;white-space:nowrap}
+.cpv-cl .fan{display:flex;align-items:center;gap:6px;margin:10px 0 6px}
+.cpv-cl .fan s{width:20px;height:20px;border-radius:50%;background:#e4d7ea;
+  box-shadow:0 0 0 2px #fff;margin-inline-start:-7px;text-decoration:none}
+.cpv-cl .fan s:first-child{margin-inline-start:0}
+.cpv-cl .fan em{font-style:normal;font-size:10px;font-weight:650;color:#a98;
+  border:1px solid #eadfe4;border-radius:99px;padding:2px 7px}
+.cpv-lock{font-size:10.5px;font-weight:650;color:#8a7c83;background:#fff;border:1px dashed #e0d4da;
+  border-radius:7px;padding:3px 7px;display:inline-block;margin-top:5px}
+
+/* rail */
+.cpv-rec{margin:0 -10px;padding:9px 0;position:relative;overflow:hidden}
+.cpv-rec::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(115deg,#FFEDF3,#FFF6EC,#EFF9F3,#F4EFFC,#FFEDF3);background-size:280% 280%;
+  animation:cpvdrift calc(26s / var(--mo,1)) ease-in-out infinite;opacity:calc(.45 + .55 * var(--mo,1))}
+@keyframes cpvdrift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@media (prefers-reduced-motion:reduce){.cpv-rec::before{animation:none}}
+.cpv-rec > *{position:relative}
+.cpv-rec h6{margin:0 0 7px;padding:0 10px;font-size:11.5px;font-weight:600}
+.cpv-rail{display:flex;gap:5px;padding:0 10px 2px;overflow:hidden}
+.cpv-rc{flex:0 0 calc((100% - (5px * (var(--per) - 1))) / var(--per));background:#fff;
+  border:1px solid #ebe3e6;border-radius:7px;padding:4px}
+.cpv-rc .im{position:relative;aspect-ratio:1;border-radius:5px;margin-bottom:var(--rig,5px)}
+/* The + on the corner of the picture. Same three knobs the shop reads -- the
+   size is a multiplier and the two offsets are added to the corner it is
+   pinned to -- so the drawing cannot disagree with the card by arithmetic. */
+.cpv-rc .pl{position:absolute;inset-inline-end:calc(-2px + var(--rax,0px));
+  bottom:calc(-2px + var(--ray,0px));
+  width:calc(15px * var(--ras,1));height:calc(15px * var(--ras,1));border-radius:50%;
+  background:#1e9e5a;color:#fff;border:1.5px solid #fff;display:grid;place-items:center;
+  font-size:calc(10px * var(--ras,1));line-height:1}
+.cpv-rc .t{font-size:8px;font-weight:var(--rw);line-height:var(--rlh,1.25);
+  height:calc(var(--rlh,1.25) * 2em);overflow:hidden;color:#3c3a40;margin-bottom:var(--rg,2px)}
+.cpv-rc .p{font-size:8.5px;font-weight:var(--rpw,400)}
+
+/* summary */
+.cpv-sum{background:#fff;border:1px solid #ebe3e6;border-radius:10px;padding:10px;font-size:11px}
+.cpv-sr{display:flex;justify-content:space-between;gap:8px;padding:2px 0;color:#3c3a40}
+.cpv-sr s{color:#9aa0aa;margin-right:3px}
+.cpv-tot{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#e6f5ed;
+  border-radius:7px;padding:7px 9px;margin-top:7px;font-weight:700;font-size:12px}
+.cpv-ship{margin:6px 0 2px}
+.cpv-ship .t{font-size:10px;color:#6b7280;margin-bottom:4px}
+.cpv-ship .t.won{color:#1e9e5a;font-weight:600}
+.cpv-ship .bar{position:relative;height:7px;border-radius:99px;background:#f0eaec}
+.cpv-ship .fill{position:relative;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,#1e9e5a,#3fd089 45%,#1e9e5a);background-size:220% 100%;
+  animation:cpvflow 2.6s linear infinite}
+@keyframes cpvflow{to{background-position:-220% 0}}
+.cpv-ship .fill::after{content:"";position:absolute;right:0;top:50%;width:20px;height:20px;
+  transform:translate(50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(150,245,196,.7) 28%,rgba(63,208,137,0) 68%);
+  animation:cpvbloom 1.9s ease-in-out infinite}
+@keyframes cpvbloom{0%,100%{opacity:.75;transform:translate(50%,-50%) scale(.85)}
+  50%{opacity:1;transform:translate(50%,-50%) scale(1.15)}}
+@media (prefers-reduced-motion:reduce){.cpv-ship .fill,.cpv-ship .fill::after{animation:none}}
+/* The whole trust row off --ts, exactly as the shop derives it from
+   --cpg-trust-s: one number, so the row scales as a row. */
+.cpv-trust{display:flex;align-items:center;justify-content:center;gap:calc(5px * var(--ts));
+  flex-wrap:wrap;padding:calc(8px * var(--ts)) 0 2px;font-size:calc(9px * var(--ts));color:#6b7280}
+.cpv-trust .tick{color:#1e9e5a;font-weight:700}
+.cpv-pay{height:calc(13px * var(--ts));padding:0 calc(3px * var(--ts));border:1px solid #ebe3e6;
+  border-radius:2px;background:#fff;
+  display:grid;place-items:center;font-size:calc(5.5px * var(--ts));font-weight:600;color:#3c3a40}
+
+/* docked */
+/* White to the bottom edge, and --bp is the shop's own space under the rows.
+   Drawn on the block and not on the row inside it, for the same reason the
+   shop does it that way: the space it adds has to be white too. */
+.cpv-dock{border-top:1px solid #ebe3e6;background:#fff;padding-bottom:var(--bp);
+  box-shadow:0 -2px 10px -6px rgba(0,0,0,.25)}
+/* #fff, matching "the background must be full white" — the preview showed the
+   cream the shop no longer uses. */
+/* --af multiplies INTO --bf and does not replace it, and --aw paints only the
+   heading — the same two rules the shop follows, so the drawing cannot say one
+   thing and the page another. */
+.cpv-ab{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;
+  min-height:var(--ah);padding:0 10px;font-size:calc(11px * var(--bf) * var(--af))}
+.cpv-ab .who{min-width:0;overflow:hidden}
+.cpv-ab .who b,.cpv-ab .who i{display:block;font-style:normal;white-space:nowrap;overflow:hidden}
+.cpv-ab .who b{font-weight:var(--aw);color:#3c3a40}
+.cpv-ab .who i{color:#6b7280;font-size:calc(10px * var(--bf) * var(--af))}
+/* THE FADE ONLY ON THE ROW THAT HAS AN ADDRESS. Both states are drawn below, so
+   the difference this makes is visible here rather than only on a phone. */
+.cpv-ab.has .who b,.cpv-ab.has .who i{
+  -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
+  mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent)}
+.cpv-ab .bt{flex:0 0 auto;color:#1e9e5a;font-weight:var(--abw);
+  font-size:calc(11.5px * var(--bf) * var(--af) * var(--abf))}
+.cpv-cb{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;
+  min-height:var(--ch);padding:0 10px}
+/* 0 0 auto: the tally never shrinks, so the figure cannot be clipped — the
+   button gives way, exactly as it does on the page. */
+.cpv-cb .ta{flex:0 0 auto;min-width:0;white-space:nowrap}
+.cpv-cb .ta i{display:block;font-style:normal;font-size:calc(10px * var(--bf));color:#6b7280}
+.cpv-cb .ta b{display:block;font-size:calc(15px * var(--bf));font-weight:700}
+/* "AED" and the digits are ONE inline run. The shop's own defect was a
+   descendant selector turning the currency span into a block; the preview
+   states the intended result so a future edit has something to disagree with. */
+.cpv-cb .ta b span{display:inline;font-size:inherit;color:inherit;white-space:nowrap}
+.cpv-cb button{flex:0 1 auto;min-width:0;background:#1e9e5a;color:#fff;border:0;border-radius:8px;
+  padding:calc(9px * var(--bf)) calc(13px * var(--bf));font-size:calc(12.5px * var(--bf));
+  font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* popup */
+.cpv-stage{position:relative;height:290px;background:#fbf5f4;overflow:hidden}
+.cpv-scrim{position:absolute;inset:0;background:rgba(23,24,28,.34);
+  -webkit-backdrop-filter:blur(calc(var(--bl,3) * 1px));backdrop-filter:blur(calc(var(--bl,3) * 1px))}
+.cpv-sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:13px 13px 0 0;
+  padding:calc(11px * var(--sd));overflow:hidden;max-height:var(--cap)}
+.cpv-sheet h6{margin:0 0 8px;font-size:calc(13px * var(--sf));font-weight:700}
+.cpv-al{display:flex;gap:7px;align-items:flex-start;border:1px solid #e4e7ec;border-radius:8px;
+  padding:calc(8px * var(--sd));margin-bottom:6px;position:relative;overflow:hidden}
+.cpv-al.on{border-color:#1e9e5a}
+.cpv-al.on::after{content:"✓";position:absolute;top:0;right:0;width:26px;height:21px;
+  border-radius:0 7px 0 8px;background:#1e9e5a;color:#fff;display:grid;place-items:center;font-size:11px}
+.cpv-al .ad{min-width:0;flex:1}
+.cpv-al .ad b{display:block;font-size:calc(11.5px * var(--sf));padding-right:28px}
+.cpv-al .ad i{display:block;font-style:normal;font-size:calc(10px * var(--sf));color:#6b7280;
+  line-height:1.4;max-height:2.8em;overflow:hidden}
+.cpv-tag{flex:0 0 auto;align-self:center;background:#e8f6ee;color:#177f47;border-radius:4px;
+  padding:2px 6px;font-size:calc(9.5px * var(--sf));font-weight:500}
+.cpv-add{background:none;border:0;color:#1e9e5a;font-size:calc(11.5px * var(--sf));font-weight:600;
+  padding:calc(6px * var(--sd)) 0}
+/* The guest-cap line, at the preview's own scale — the live sheet's .cpg-note
+   in the same place and the same grey. */
+.cpv-note{margin:calc(3px * var(--sd)) 0 0;color:#6b7280;
+  font-size:calc(9.5px * var(--sf));line-height:1.35}
+.cpv-fg{display:grid;gap:calc(7px * var(--sd));margin-bottom:8px}
+.cpv-fg.two{grid-template-columns:1fr 1fr}
+.cpv-fg.two .full{grid-column:1 / -1}
+.cpv-fg label{display:block;font-size:calc(9.5px * var(--sf));font-weight:600;margin-bottom:2px;color:#3c3a40}
+.cpv-fi{border:1px solid #e4e7ec;border-radius:6px;padding:calc(6px * var(--sd)) 7px;
+  font-size:calc(11px * var(--sf));color:#9aa0aa;background:#fff;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.cpv-geo{font-size:calc(9px * var(--sf));color:#1e9e5a;margin:0}
+.cpv-act{display:grid;grid-template-columns:auto auto 1fr;gap:5px;margin-top:2px}
+.cpv-mk{display:inline-flex;align-items:center;gap:4px;border:1px solid #e4e7ec;border-radius:7px;
+  padding:calc(7px * var(--sd)) calc(8px * var(--sd));font-size:calc(10.5px * var(--sf));
+  font-weight:600;color:#3c3a40;white-space:nowrap}
+.cpv-mk.on{border-color:#1e9e5a;background:#e8f6ee;color:#177f47}
+.cpv-dl{display:grid;place-items:center;background:#1e9e5a;color:#fff;border-radius:7px;
+  padding:calc(7px * var(--sd)) 6px;font-size:calc(11px * var(--sf));font-weight:700;white-space:nowrap}
+.cps-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+          border-radius:var(--r,12px);padding:16px;min-width:0}
+.cps-title{font-weight:650;font-size:15px}
+.cps-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.55;margin-top:3px;max-width:68ch}
+.cps-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.cps-tab{padding:8px 12px;border:1px solid var(--border,#e6e6e6);border-radius:9px;
+         background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
+.cps-tab[aria-selected="true"]{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.cps-fields{display:grid;gap:14px;margin-top:14px;min-width:0}
+.cps-f{display:grid;gap:5px;min-width:0}
+.cps-fh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}
+.cps-fh label{font-size:12.5px;font-weight:650;min-width:0;overflow-wrap:anywhere}
+.cps-val{font-size:11.5px;font-weight:650;color:var(--accent,#15a85a);white-space:nowrap}
+.cps-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5;margin:0;max-width:68ch}
+.cps-f input[type=range]{width:100%;accent-color:var(--accent,#15a85a);margin:0;min-width:0}
+.cps-f input[type=text],.cps-f input[type=number],.cps-f select{
+  width:100%;min-width:0;padding:8px 10px;font:inherit;font-size:13px;
+  border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
+.cps-check{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.cps-check input{margin-top:3px;flex:none;width:16px;height:16px}
+.cps-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;min-width:0}
+.cps-btn{padding:8px 13px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;
+         color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%}
+.cps-btn.is-primary{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.cps-btn[disabled]{opacity:.45;cursor:default}
+.cps-note{border:1px dashed var(--border,#e6e6e6);border-radius:10px;padding:11px 12px;
+          font-size:12.5px;line-height:1.55;color:var(--ink-soft,#6b7280);min-width:0}
+.cps-search{width:100%;min-width:0;padding:9px 11px;font:inherit;font-size:13px;
+            border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
+.cps-list{margin-top:10px;border:1px solid var(--border,#e6e6e6);border-radius:10px;
+          max-height:300px;overflow-y:auto;min-width:0}
+.cps-row{display:flex;align-items:center;gap:10px;padding:9px 11px;min-width:0;cursor:pointer;
+         border-bottom:1px solid var(--border,#e6e6e6);background:transparent;border-left:0;
+         border-right:0;border-top:0;width:100%;text-align:left;color:inherit;font:inherit}
+.cps-row:last-child{border-bottom:0}
+.cps-box{width:19px;height:19px;flex:none;border:1.5px solid var(--border,#e6e6e6);border-radius:5px;
+         display:grid;place-items:center;font-size:12px;color:#fff}
+.cps-row[aria-selected="true"] .cps-box{border-color:var(--accent,#15a85a);background:var(--accent,#15a85a)}
+.cps-row .cps-nm{flex:1;min-width:0}
+.cps-row .cps-nm b{display:block;font-size:13px;font-weight:600;overflow:hidden;
+                   text-overflow:ellipsis;white-space:nowrap}
+.cps-row .cps-nm span{display:block;font-size:11px;color:var(--ink-soft,#6b7280)}
+.cps-empty{padding:22px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
+.cps-chosen{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-width:0}
+/* The chosen rail, drawn above the search because it is the answer the panel
+   exists to give. Tinted, so it reads as a held list rather than as more
+   results. */
+.cps-picked-wrap{border:1px solid var(--border,#e6e6e6);border-radius:10px;
+  background:var(--sunk,#f6f7f9);padding:10px 11px;margin-bottom:12px}
+.cps-picked-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;
+  color:var(--ink-soft,#6b7280);margin-bottom:8px}
+.cps-picked-h b{font-size:13px;color:var(--ink,#16181d)}
+.cps-picked-h em{font-style:normal;font-size:10.5px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;background:var(--accent,#15a85a);color:#fff;padding:2px 7px;border-radius:99px}
+.cps-picked{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.cps-pk{display:flex;align-items:center;gap:9px;background:var(--surface,#fff);
+  border:1px solid var(--border,#e6e6e6);border-radius:8px;padding:7px 9px;min-width:0}
+.cps-pos{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--accent,#15a85a);
+  color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700;
+  font-variant-numeric:tabular-nums}
+.cps-pk .cps-nm{flex:1;min-width:0}
+.cps-mv{flex:0 0 auto;display:flex;gap:3px}
+.cps-mv button{width:26px;height:26px;border:1px solid var(--border,#e6e6e6);border-radius:6px;
+  background:var(--surface,#fff);color:var(--ink-soft,#6b7280);cursor:pointer;font-size:12px;
+  line-height:1;display:grid;place-items:center}
+.cps-mv button:hover:not([disabled]){border-color:var(--accent,#15a85a);color:var(--accent,#15a85a)}
+/* Disabled, not hidden: the first and last rows keep their buttons in place so
+   the row does not reflow under the pointer as you move things. */
+.cps-mv button[disabled]{opacity:.35;cursor:default}
+.cps-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border,#e6e6e6);
+          border-radius:999px;padding:4px 6px 4px 11px;font-size:11.5px;max-width:100%}
+.cps-chip b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:22ch}
+.cps-chip button{border:0;background:transparent;color:var(--ink-soft,#6b7280);cursor:pointer;
+                 font:inherit;font-size:14px;line-height:1;padding:0 4px}
+@media (max-width:640px){ .cps-card{padding:13px} }

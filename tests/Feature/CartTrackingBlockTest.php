@@ -404,7 +404,9 @@ it('is wired exactly once: the routes in web.php and the screen in the console',
 
     expect(substr_count($web, "require __DIR__.'/cart-tracking-admin.php';"))->toBe(1)
         ->and(substr_count($app, "@include('admin.partials.cart-tracking-screen')"))->toBe(1)
-        ->and(substr_count($app, "{screen:'carttracking',label:'Cart Tracking',group:'Growth & Marketing'"))->toBe(1);
+        // Lane AP: the sidebar is App\Support\AdminNav's (server-rendered), not a NAV literal.
+        ->and(\App\Support\AdminNav::rows()['carttracking']['label'] ?? null)->toBe('Cart Tracking')
+        ->and(\App\Support\AdminNav::rows()['carttracking']['sec'])->toBe('Growth & Marketing');
 });
 
 it('costs the same number of queries with forty carts as with three, on every tab', function () {

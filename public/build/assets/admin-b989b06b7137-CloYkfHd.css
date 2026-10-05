@@ -1,0 +1,167 @@
+
+/* ---------------------------------------------------------------------------
+   Bulk Add / Bulk Likes. Every rule is prefixed rbk- and every id is rbk-, so
+   this file can never restyle or collide with another screen in the console.
+   The console is one document: an unprefixed .card or #save here would reach
+   into whatever else is mounted.
+
+   Same layout rule as the Review Settings and Coupons screens: nothing may be
+   wider than its column at 390px, because the owner reviews on a phone.
+   Measured on #content, not on documentElement -- the document metric is
+   structurally blind here because the console's shell is what scrolls, not the
+   page, and body{overflow-x:hidden} hides the difference anyway.
+--------------------------------------------------------------------------- */
+/* min-width:0 on the grid AND on its children is load-bearing, not tidiness.
+   A grid item's default min-width is auto -- "at least as wide as my content"
+   -- so a card holding a wide table refuses to shrink below it and drags the
+   whole column past the viewport with no way to scroll back. That shipped on
+   the Coupons screen; see tests/Feature/AdminScreenGridOverflowTest.php.
+
+   1400px to match .rvs-wrap and .ecwrap on the sibling settings screens rather
+   than a narrower band: the owner has already reported the console leaving
+   empty space down the right-hand side. Prose is capped separately below so
+   widening the column does not set a hint to a 1250px line. */
+.rbk-wrap{display:grid;gap:16px;min-width:0;max-width:1400px}
+.rbk-wrap > *{min-width:0}
+
+.rbk-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+          border-radius:var(--r,12px);padding:16px;min-width:0;box-shadow:var(--sh-s,none)}
+
+/* The screen's own heading and its tab strip, as a header row rather than a
+   bordered card. A full-width card repeating the title already in the bar above
+   #content pushed the first real control below the fold on a phone. */
+.rbk-head{display:grid;gap:3px;min-width:0;padding:0 2px}
+.rbk-title{font-weight:650;font-size:15px;margin:0}
+.rbk-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0;max-width:78ch;line-height:1.5}
+
+/* Two tabs over one feature. flex-wrap so the strip never widens the column at
+   390px; the hairline is the strip's own baseline, as on the Coupons screen. */
+.rbk-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--border,#e6e6e6);
+          margin:12px 0 0;min-width:0}
+.rbk-tabs > *{min-width:0}
+.rbk-tab{padding:9px 13px;font:inherit;font-size:13px;border:0;background:transparent;
+         color:var(--ink-soft,#6b7280);cursor:pointer;border-bottom:2px solid transparent;
+         margin-bottom:-1px;white-space:nowrap}
+.rbk-tab.rbk-on{color:inherit;font-weight:650;border-bottom-color:var(--accent,#15a85a)}
+
+/* A titled band: what it decides, one line on when you would touch it, then the
+   controls — with a hairline between bands rather than a box around each one.
+   The same shape as .ce-sec on the Coupons screen. */
+.rbk-sec{display:grid;gap:13px;min-width:0}
+.rbk-sec > *{min-width:0}
+.rbk-sec + .rbk-sec{margin-top:22px;padding-top:20px;border-top:1px solid var(--border,#e6e6e6)}
+.rbk-sec-h{display:grid;gap:3px;min-width:0}
+.rbk-sec-t{font-size:13.5px;font-weight:650}
+.rbk-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft,#6b7280);max-width:78ch}
+
+/* :empty so the "showing the first N" line leaves no gap when there is no more
+   to show, and the chip row none when nothing is selected. */
+.rbk-sec > .rbk-hint:empty,.rbk-sec > .rbk-chips:empty{display:none}
+
+/* The one notice. A quiet panel, not an alert: it states what the content is
+   and then gets out of the way. It does not block anything and it is not
+   repeated anywhere else on the screen. */
+.rbk-notice{border:1px solid var(--border,#e6e6e6);border-left:3px solid var(--ink-soft,#6b7280);
+            border-radius:var(--r,12px);padding:14px 16px;background:var(--surface,#fff);min-width:0}
+.rbk-notice h4{margin:0 0 6px;font-size:13.5px;font-weight:650}
+.rbk-notice p{margin:0 0 8px;font-size:12.5px;line-height:1.55;color:var(--ink-soft,#6b7280);max-width:88ch}
+.rbk-notice p:last-child{margin-bottom:0}
+.rbk-notice code{font-size:11.5px;padding:1px 5px;border-radius:5px;background:rgba(127,127,127,.14)}
+
+/* One row per control. Label column flexible, control column fixed-ish; at
+   560px they stack instead of squeezing the control to nothing. */
+.rbk-row{display:grid;grid-template-columns:1fr auto;gap:10px 16px;align-items:center;
+         padding:11px 0;border-top:1px solid var(--border,#e6e6e6);min-width:0}
+.rbk-row:first-of-type{border-top:0}
+.rbk-row > *{min-width:0}
+.rbk-lab{font-size:13.5px;font-weight:600;max-width:72ch}
+.rbk-hint{color:var(--ink-soft,#6b7280);font-size:12px;margin-top:2px;line-height:1.45;max-width:72ch}
+.rbk-ctl{display:flex;align-items:center;gap:8px;justify-self:end;flex-wrap:wrap}
+.rbk-row.rbk-wide{grid-template-columns:1fr}
+.rbk-row.rbk-wide .rbk-ctl{justify-self:stretch;display:block}
+
+@media (max-width:560px){
+  .rbk-row{grid-template-columns:1fr}
+  .rbk-ctl{justify-self:start}
+}
+
+/* Controls. Widths are capped at 100% so none of them can be the element that
+   pushes the column out. */
+.rbk-num{width:104px;max-width:100%;padding:7px 9px;font:inherit;font-variant-numeric:tabular-nums;
+         border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
+.rbk-sel{max-width:100%;padding:7px 9px;font:inherit;border:1px solid var(--border,#e6e6e6);
+         border-radius:9px;background:transparent;color:inherit}
+.rbk-txt{width:100%;max-width:100%;box-sizing:border-box;padding:8px 10px;font:inherit;
+         border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
+.rbk-area{width:100%;max-width:100%;box-sizing:border-box;min-height:132px;resize:vertical;
+          padding:9px 11px;font:inherit;font-size:13px;line-height:1.5;
+          border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
+.rbk-date{max-width:100%;padding:7px 9px;font:inherit;border:1px solid var(--border,#e6e6e6);
+          border-radius:9px;background:transparent;color:inherit}
+
+/* The switch. A real checkbox underneath so it is keyboard-reachable and has a
+   focus ring; the visual is the label. Same construction as .rvs-sw. */
+.rbk-sw{position:relative;display:inline-block;width:42px;height:24px;flex:none}
+.rbk-sw input{position:absolute;inset:0;opacity:0;margin:0;width:100%;height:100%;cursor:pointer}
+.rbk-sw i{position:absolute;inset:0;border-radius:999px;background:rgba(127,127,127,.32);
+          transition:background .16s ease;pointer-events:none;display:block}
+.rbk-sw i::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+                 background:#fff;transition:transform .16s ease;box-shadow:0 1px 3px rgba(0,0,0,.28)}
+.rbk-sw input:checked + i{background:var(--accent,#15a85a)}
+.rbk-sw input:checked + i::after{transform:translateX(18px)}
+.rbk-sw input:focus-visible + i{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
+
+/* The product picker. A bounded, scrolling list -- a catalogue of several
+   thousand is not a dropdown, and an unbounded list is the element that makes
+   the page scroll for ever. */
+.rbk-pick{border:1px solid var(--border,#e6e6e6);border-radius:10px;min-width:0;overflow:hidden}
+.rbk-pick-search{display:flex;gap:8px;padding:9px;border-bottom:1px solid var(--border,#e6e6e6);min-width:0}
+.rbk-pick-list{max-height:260px;overflow-y:auto;overflow-x:hidden;min-width:0}
+.rbk-pick-row{display:flex;gap:10px;align-items:center;padding:8px 11px;font-size:13px;
+              border-top:1px solid var(--border,#e6e6e6);min-width:0;cursor:pointer}
+.rbk-pick-row:first-child{border-top:0}
+.rbk-pick-row input{flex:none;margin:0}
+.rbk-pick-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rbk-pick-meta{flex:none;color:var(--ink-soft,#6b7280);font-size:11.5px;font-variant-numeric:tabular-nums}
+.rbk-pick-empty{padding:14px;color:var(--ink-soft,#6b7280);font-size:12.5px}
+
+/* Selected products, shown outside the scroller so a selection made and then
+   scrolled past is still visible. */
+.rbk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;min-width:0}
+.rbk-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:4px 6px 4px 10px;
+          border:1px solid var(--border,#e6e6e6);border-radius:999px;font-size:12px;min-width:0}
+.rbk-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.rbk-chip button{flex:none;border:0;background:transparent;color:inherit;cursor:pointer;
+                 font:inherit;line-height:1;padding:2px 4px;border-radius:50%;opacity:.7}
+.rbk-chip button:hover{opacity:1}
+
+/* The star mix. Five weights, each with the share it works out to, so the owner
+   sees the distribution rather than five numbers whose total they have to do in
+   their head. minmax(min(...),1fr) so a track can give way on a phone. */
+.rbk-mix{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(132px,100%),1fr));gap:10px;min-width:0}
+.rbk-mix > *{min-width:0}
+.rbk-mix label{display:block;font-size:12.5px;font-weight:600;margin-bottom:4px}
+.rbk-mix .rbk-num{width:100%}
+.rbk-mix-pct{color:var(--ink-soft,#6b7280);font-size:11.5px;margin-top:3px;font-variant-numeric:tabular-nums}
+
+.rbk-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.rbk-btn{padding:9px 16px;font:inherit;font-weight:600;border-radius:10px;cursor:pointer;
+         border:1px solid var(--accent,#15a85a);background:var(--accent,#15a85a);color:#fff}
+.rbk-btn[disabled]{opacity:.55;cursor:default}
+.rbk-btn.rbk-ghost{background:transparent;color:inherit;border-color:var(--border,#e6e6e6)}
+.rbk-note{color:var(--ink-soft,#6b7280);font-size:12.5px}
+.rbk-count{font-variant-numeric:tabular-nums;font-weight:650}
+.rbk-over{color:#b4443c}
+
+.rbk-banner{border:1px solid #b4443c;color:#b4443c;border-radius:var(--r,12px);
+            padding:12px 14px;font-size:13px;line-height:1.5;min-width:0}
+.rbk-banner.rbk-ok{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a)}
+
+/* The result table. overflow-x:auto alone is not a scroller: without a
+   min-width it grows to its content and scrolls nothing. */
+.rbk-scroll{overflow-x:auto;min-width:0;max-width:100%}
+.rbk-table{border-collapse:collapse;width:100%;font-size:12.5px}
+.rbk-table th,.rbk-table td{text-align:left;padding:7px 10px;border-top:1px solid var(--border,#e6e6e6);
+                            white-space:nowrap}
+.rbk-table th{font-weight:650;color:var(--ink-soft,#6b7280)}
+.rbk-table td.rbk-n{text-align:right;font-variant-numeric:tabular-nums}

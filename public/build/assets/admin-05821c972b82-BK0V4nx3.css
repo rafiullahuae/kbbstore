@@ -1,0 +1,255 @@
+
+/* ---------------------------------------------------------------------------
+   Manage Coupons. Every rule is prefixed ce- and appears nowhere else in the
+   console, so this file can never restyle another screen by accident.
+
+   THE LAYOUT RULE THIS SCREEN IS BUILT ON. A grid or flex item's default
+   min-width is `auto`, which means "at least as wide as my content". A card
+   holding a wide table therefore refuses to shrink, its inner overflow-x:auto
+   never gets the chance to scroll, and the whole column is stretched to the
+   table's natural width -- dragging everything laid out beside it off-screen
+   with it. That shipped once already on the Coupons usage screen: measured in
+   Chromium at 390px, the content box was 677px and the last three columns were
+   unreachable. Every grid and flex container below carries min-width:0 AND
+   passes it to its children, and the one wide table sits in a scroller that is
+   explicitly allowed to be narrower than the table inside it.
+
+   The console measures sideways overflow on #content, not on
+   documentElement -- body is overflow-x:hidden, so the document is never wider
+   than the viewport however broken a screen is.
+--------------------------------------------------------------------------- */
+.ce-wrap{display:grid;gap:16px;min-width:0}
+.ce-wrap > *{min-width:0}
+
+.ce-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+         border-radius:var(--r,12px);padding:16px;min-width:0}
+.ce-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;min-width:0}
+.ce-head > *{min-width:0}
+.ce-title{font-weight:650;font-size:15px}
+.ce-sub{color:var(--ink-soft,#6b7280);font-size:12.5px}
+.ce-link{border:0;background:none;padding:0;font:inherit;color:var(--accent,#15a85a);
+         text-decoration:underline;cursor:pointer}
+
+.ce-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;min-width:0}
+.ce-stats > *{min-width:0}
+.ce-stat{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+         border-radius:var(--r,12px);padding:13px 15px;box-shadow:var(--sh-s,none)}
+/* Caption above the figure, not under it. The eye reads the small label first
+   and then has something to hang the number on; the other way round it reads
+   three loose numbers and has to go back for each one. */
+.ce-stat b{display:block;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums;margin-top:3px}
+.ce-stat span{display:block;color:var(--ink-soft,#6b7280);font-size:11px;font-weight:650;
+              text-transform:uppercase;letter-spacing:.05em}
+
+/* ---- buttons ---- */
+.ce-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;font:inherit;font-size:13px;
+        border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit;
+        cursor:pointer;white-space:nowrap;min-width:0}
+.ce-btn:hover{background:rgba(127,127,127,.08)}
+.ce-btn[disabled]{opacity:.45;cursor:default}
+.ce-btn.is-primary{background:#1f7d52;border-color:#1f7d52;color:#fff;font-weight:600}
+.ce-btn.is-primary:hover{background:#1a6a45}
+.ce-btn.is-danger{border-color:#b4443c;color:#b4443c}
+.ce-btn.is-danger:hover{background:rgba(180,68,60,.09)}
+.ce-btn.is-small{padding:5px 10px;font-size:12px}
+
+.ce-link{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;
+         text-decoration:underline;opacity:.75}
+
+/* ---- filters ---- */
+.ce-filters{display:flex;gap:8px;flex-wrap:wrap;min-width:0}
+.ce-filters > *{min-width:0}
+.ce-filters input[type=search]{flex:1 1 180px;min-width:0}
+
+/* ---- the list table ----
+   overflow-x:auto alone is not a scroller. Without min-width:0 it grows to its
+   content and scrolls nothing at all. */
+.ce-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0;max-width:100%}
+.ce-table{width:100%;border-collapse:collapse;font-size:13px}
+.ce-table th,.ce-table td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border,#e6e6e6);
+                          white-space:nowrap;vertical-align:middle}
+.ce-table th{font-weight:600;color:var(--ink-soft,#6b7280);font-size:11.5px;
+             text-transform:uppercase;letter-spacing:.04em}
+.ce-table tbody tr:hover{background:rgba(127,127,127,.06)}
+.ce-table tbody td{padding-top:11px;padding-bottom:11px}
+.ce-num{font-variant-numeric:tabular-nums}
+.ce-code{font-weight:650;letter-spacing:.02em}
+
+/* The description rides under its code rather than taking a column of its own:
+   one thing to read per row, and the table keeps five columns on a laptop. */
+.ce-desc{display:block;max-width:34ch;margin-top:2px;font-size:11.5px;font-weight:400;
+         letter-spacing:0;color:var(--ink-soft,#6b7280);
+         overflow:hidden;text-overflow:ellipsis}
+
+/* How much of the code is spent, at a glance. An uncapped code gets no bar at
+   all rather than an empty one: "unlimited" and "untouched" must not look
+   alike. */
+.ce-meter{display:grid;gap:5px;min-width:0}
+.ce-meter-b{display:block;position:relative;height:5px;border-radius:999px;background:rgba(127,127,127,.18);
+            min-width:78px;overflow:hidden}
+.ce-meter-b i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:#1f7d52}
+.ce-meter-b.is-warn i{background:#b7791f}
+.ce-meter-b.is-done i{background:#b4443c}
+
+.ce-acts{text-align:right}
+.ce-rowacts{display:flex;gap:6px;flex-wrap:nowrap;justify-content:flex-end}
+
+/* The header, then a hairline, then the controls that filter what is under it.
+   Before this the search box floated between the title and the table belonging
+   to neither. */
+.ce-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0;
+            margin:14px 0 16px;padding-top:14px;border-top:1px solid var(--border,#e6e6e6)}
+.ce-toolbar > *{min-width:0}
+
+/* ---- status pills ---- */
+.ce-pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;
+         border:1px solid var(--border,#e6e6e6);color:var(--ink-soft,#6b7280);white-space:nowrap}
+.ce-pill.is-active{border-color:#1f7d52;color:#1f7d52}
+.ce-pill.is-expired{border-color:#b4443c;color:#b4443c}
+.ce-pill.is-exhausted{border-color:#b4443c;color:#b4443c}
+.ce-pill.is-scheduled{border-color:#b7791f;color:#b7791f}
+
+/* ---- tabs ---- */
+.ce-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--border,#e6e6e6);
+         margin:0 0 16px;min-width:0}
+.ce-tabs > *{min-width:0}
+.ce-tab{padding:9px 13px;font:inherit;font-size:13px;border:0;background:transparent;color:var(--ink-soft,#6b7280);
+        cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.ce-tab.on{color:inherit;font-weight:650;border-bottom-color:#1f7d52}
+
+/* ---- form fields ----
+   auto-fit with a min() floor rather than a fixed minmax: repeat(auto-fit,
+   minmax(240px,1fr)) cannot go below 240px per track, so two fields plus the
+   gap demand more than a 390px phone has and the row overflows instead of
+   stacking. */
+.ce-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:14px;min-width:0}
+.ce-grid > *{min-width:0}
+.ce-field{display:grid;gap:5px;min-width:0}
+.ce-field > *{min-width:0}
+.ce-label{font-size:12.5px;font-weight:600}
+/* Help is secondary and it stays secondary: smaller, lighter, and capped at a
+   readable measure so it can never spread into a full-width paragraph that the
+   eye has to cross before it finds the next label. Anything longer than a line
+   or two belongs in the section description or a note, not under a box. */
+.ce-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.45;max-width:62ch}
+
+/* ---- sections ----
+   The screen is a form somebody fills in, not a list of everything the system
+   knows. Each band says what it decides (the heading), when you would touch it
+   (one line under that), and then shows its fields -- with a hairline between
+   bands so the groups are visible without a box around each one. */
+.ce-sec{display:grid;gap:13px;min-width:0}
+.ce-sec > *{min-width:0}
+.ce-sec + .ce-sec{margin-top:22px;padding-top:20px;border-top:1px solid var(--border,#e6e6e6)}
+.ce-sec-h{display:grid;gap:3px;min-width:0}
+.ce-sec-t{font-size:13.5px;font-weight:650}
+.ce-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft,#6b7280);max-width:78ch}
+
+/* A switch and its explanation, as one quiet row. It used to be a bordered
+   callout sitting between two form fields, which made an ordinary checkbox
+   look like a warning. */
+.ce-opt{display:flex;gap:10px;align-items:flex-start;min-width:0;padding:11px 13px;
+        border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);
+        background:rgba(127,127,127,.03)}
+.ce-opt > *{min-width:0}
+.ce-opt input{margin:2px 0 0;flex:0 0 auto}
+.ce-opt-t{display:block;font-size:12.5px;font-weight:600;cursor:pointer}
+.ce-opt .ce-help{margin-top:3px}
+.ce-input,.ce-select,.ce-area{width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+        padding:8px 10px;font:inherit;font-size:13px;border:1px solid var(--border,#e6e6e6);
+        border-radius:9px;background:transparent;color:inherit}
+.ce-area{min-height:70px;resize:vertical}
+.ce-input:disabled,.ce-select:disabled{opacity:.6;cursor:not-allowed}
+
+/* A select's intrinsic width is its widest OPTION, which sets a floor no media
+   query can reach. Pinned so the discount-type box cannot widen the form. */
+.ce-select{text-overflow:ellipsis}
+
+/* Amount box with its unit attached. flex, so the unit never wraps under the
+   input and the input keeps shrinking. */
+.ce-unit{display:flex;align-items:stretch;min-width:0}
+.ce-unit > input{min-width:0;flex:1 1 auto;border-top-right-radius:0;border-bottom-right-radius:0}
+.ce-unit > span{display:flex;align-items:center;padding:0 11px;font-size:12.5px;white-space:nowrap;
+        border:1px solid var(--border,#e6e6e6);border-left:0;border-radius:0 9px 9px 0;
+        background:rgba(127,127,127,.07);color:var(--ink-soft,#6b7280)}
+
+
+/* ---- the "recorded but not applied" note ---- */
+.ce-note{border:1px solid var(--border,#e6e6e6);border-left:3px solid #b7791f;border-radius:9px;
+         padding:11px 13px;font-size:12px;line-height:1.55;color:var(--ink-soft,#6b7280);min-width:0}
+.ce-note b{color:inherit}
+.ce-note.is-plain{border-left-color:var(--ink-soft,#6b7280)}
+
+/* ---- pickers ----
+   Six of these sit on one tab. Drawn as six full-width blocks each with its own
+   bold label and its own paragraph of help, they read as six unrelated screens
+   stacked on top of each other. They are one decision -- what the code applies
+   to -- asked three times, so they are laid out that way: a quiet caption per
+   subject (Products, Categories, Brands) and under it the include box beside
+   the exclude box, tinted rather than outlined so no one of them is as loud as
+   a section heading. */
+.ce-picks{display:grid;gap:16px;min-width:0}
+.ce-picks > *{min-width:0}
+.ce-pickgrp{display:grid;gap:8px;min-width:0}
+.ce-pickgrp > *{min-width:0}
+.ce-pickgrp-t{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;
+              color:var(--ink-soft,#6b7280)}
+.ce-pickpair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));
+             gap:12px;min-width:0}
+.ce-pickpair > *{min-width:0}
+.ce-pick{display:grid;gap:7px;min-width:0;padding:11px 12px;
+         border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);
+         background:rgba(127,127,127,.025)}
+.ce-pick > *{min-width:0}
+.ce-pick-l{font-size:12px;font-weight:600}
+/* The empty state says what empty MEANS, because on a restriction field empty
+   is not "unfinished", it is "no restriction" -- the opposite reading. */
+.ce-pick-e{font-size:11.5px;color:var(--ink-soft,#6b7280);padding:1px 0}
+
+.ce-picker{display:grid;gap:7px;min-width:0}
+.ce-picker > *{min-width:0}
+.ce-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.ce-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0;
+         padding:4px 6px 4px 10px;border-radius:999px;font-size:12px;
+         border:1px solid var(--border,#e6e6e6);background:rgba(127,127,127,.06)}
+.ce-chip > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ce-chip.is-missing{border-color:#b4443c;color:#b4443c}
+.ce-chip button{border:0;background:none;color:inherit;cursor:pointer;font:inherit;
+                line-height:1;padding:2px 4px;opacity:.7}
+.ce-results{border:1px solid var(--border,#e6e6e6);border-radius:9px;overflow:hidden;min-width:0}
+.ce-results button{display:block;width:100%;text-align:left;padding:7px 10px;font:inherit;font-size:12.5px;
+                   border:0;border-bottom:1px solid var(--border,#e6e6e6);background:transparent;
+                   color:inherit;cursor:pointer;min-width:0;
+                   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ce-results button:last-child{border-bottom:0}
+.ce-results button:hover{background:rgba(127,127,127,.08)}
+.ce-results em{color:var(--ink-soft,#6b7280);font-style:normal;font-size:11.5px}
+
+/* ---- messages ---- */
+.ce-error{border:1px solid #b4443c;color:#b4443c;border-radius:9px;padding:11px 13px;font-size:12.5px;min-width:0}
+.ce-fielderr{color:#b4443c;font-size:11.5px}
+.ce-empty{padding:26px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
+.ce-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0}
+.ce-actions > *{min-width:0}
+.ce-spacer{flex:1 1 auto;min-width:0}
+.ce-pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;font-size:12.5px;flex-wrap:wrap;min-width:0}
+.ce-pager button{padding:5px 10px;border:1px solid var(--border,#e6e6e6);border-radius:8px;
+                 background:transparent;color:inherit;font:inherit;cursor:pointer}
+.ce-pager button[disabled]{opacity:.4;cursor:default}
+
+@media (max-width:640px){
+  .ce-card{padding:13px}
+  .ce-table th,.ce-table td{padding:8px}
+  .ce-head{align-items:stretch}
+  /* The Add Coupon button goes full width rather than sitting in a cramped
+     corner: it is the control this whole screen exists to provide. */
+  .ce-head .ce-btn.is-primary{width:100%;justify-content:center}
+  /* Tighter bands on a phone: the hairline is doing the separating, so the
+     space around it does not have to be as generous as on a laptop. */
+  .ce-sec + .ce-sec{margin-top:18px;padding-top:16px}
+  .ce-picks{gap:14px}
+  /* The tab strip is the only thing on this screen that may scroll sideways
+     on its own -- three tab names do not fit 390px, and wrapping them onto two
+     rows hides which one is selected. */
+  .ce-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+}

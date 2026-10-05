@@ -58,13 +58,24 @@ function jsBlock(string $s, int $from, string $open = '{', string $close = '}'):
     return '';
 }
 
-/** The id of every entry in NAV, in sidebar order. */
+/**
+ * The id of every built-in sidebar row, in sidebar order: App\Support\AdminNav
+ * (Lane AP, the one definition the server renders the sidebar from), less the
+ * `late` rows, whose renderers ship in their own partials -- the rows the old
+ * `const NAV` literal held.
+ */
 function navIds(): array
 {
-    $block = jsBlock(adminApp(), strpos(adminApp(), 'const NAV='), '[', ']');
-    preg_match_all("/\[\s*'([a-z0-9-]+)'\s*,\s*'/i", $block, $m);
+    $ids = [];
+    foreach (\App\Support\AdminNav::GROUPS as $g) {
+        foreach ($g['rows'] as $r) {
+            if (empty($r['late'])) {
+                $ids[] = $r['id'];
+            }
+        }
+    }
 
-    return array_values(array_unique($m[1]));
+    return $ids;
 }
 
 /** Keys of a single-line `const NAME={...}` map. */

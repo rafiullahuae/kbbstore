@@ -113,7 +113,13 @@ it('adds no second sidebar entry for ids the nav already has', function () {
      */
     $console = bdConsole();
 
-    preg_match_all("/\['(rev-add|rev-likes)','([^']+)'/", $console, $rows, PREG_SET_ORDER);
+    // Lane AP: the sidebar is App\Support\AdminNav's (server-rendered), not a NAV literal.
+    $rows = [];
+    foreach (\App\Support\AdminNav::rows() as $id => $r) {
+        if (in_array($id, ['rev-add', 'rev-likes'], true)) {
+            $rows[] = [null, $id, $r['label']];
+        }
+    }
 
     expect($rows)->toHaveCount(1, 'Bulk Add and Bulk Likes are two sidebar rows again');
     expect($rows[0][1])->toBe('rev-add');

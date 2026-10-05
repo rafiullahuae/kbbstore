@@ -1,0 +1,211 @@
+
+/* ---------------------------------------------------------------------------
+   New Order screen. Every rule is prefixed mo- and appears nowhere else in the
+   console, so this file can never restyle another screen by accident.
+
+   Layout rule that matters most: nothing here is allowed to be wider than its
+   column at 390px. The owner reviews on a phone, and a back-office screen you
+   have to pan sideways to read is a screen that does not get used. So every
+   grid collapses, every table sits in its own scroller, and no element carries
+   a min-width larger than the narrowest content box (390 - 48px of .content
+   padding = 342px).
+
+   SHAPE OF THE SCREEN, and why it is this shape.
+
+   It was two columns of roughly equal weight: Customer and Items on the left,
+   everything else on the right. Measured at 1280 that left the left column
+   485px tall beside a right column of 1190 — half the monitor empty, the other
+   half a ten-field stack with no grouping, and the total two screens away from
+   the items it totals. Someone taking an order on the phone was scrolling
+   between the number and the basket while talking.
+
+   Now the two columns carry four steps between them, read in the order the job
+   is done: who is it for (1) and what are they buying (2) on the left, where is
+   it going (3) below them, then how do they pay (4) and what does it come to on
+   the right. Measured filled at 1280 that is roughly 970px of left against
+   900px of right — neither column runs on while the other is blank.
+
+   The total is dealt with twice, because it is the number being read down the
+   phone. The items card carries a running total of its own, right under the
+   basket, so the figure needs no scroll at all; and the summary card is
+   `position:sticky` as the last child of a stretched right column, so once
+   reached it stays on screen for the rest of the page.
+
+   Below 1081px the grid collapses to one column and the summary stops sticking
+   — on a phone a pinned card is just a card that eats the viewport.
+--------------------------------------------------------------------------- */
+.mo-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+.mo-col{min-width:0}
+/* Stretched, not start-aligned: a sticky child can only travel inside its
+   parent's box, and a content-height column gives it nowhere to go. */
+.mo-rail{min-width:0;align-self:stretch}
+.mo-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+         box-shadow:var(--sh-s);padding:18px;margin-bottom:14px}
+.mo-card:last-child{margin-bottom:0}
+.mo-card>h3{font-size:13.5px;font-weight:700;letter-spacing:-.01em;margin-bottom:3px;
+            display:flex;align-items:center;gap:0;min-width:0}
+.mo-card>h3+p{font-size:11.5px;color:var(--ink-soft);margin-bottom:13px;line-height:1.5}
+.mo-step{display:inline-grid;place-items:center;width:19px;height:19px;border-radius:50%;flex:none;
+         background:var(--accent-soft);color:var(--accent-ink);font-size:10.5px;font-weight:700;margin-right:7px}
+
+/* The summary card is a result, not a step, so it is tinted rather than
+   numbered — it should not read as "thing you fill in fifth".
+
+   Sticky, and max-height'd: a pinned card taller than the window would hold its
+   own Create button below the fold with no way to scroll to it. */
+.mo-card.mo-sum{border-color:var(--accent);position:sticky;top:0;
+                max-height:calc(100vh - 28px);overflow:hidden auto;overscroll-behavior:contain}
+.mo-card.mo-sum>h3{color:var(--accent-ink)}
+
+/* Titled sub-sections. Delivery & payment was ten fields in one undivided
+   stack; these are the three questions it was actually asking. */
+.mo-sub{margin-top:16px;padding-top:15px;border-top:1px solid var(--border-2);min-width:0}
+.mo-sub:first-of-type{margin-top:0;padding-top:0;border-top:0}
+.mo-sub>h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.055em;
+           color:var(--ink-2);margin-bottom:3px}
+.mo-sub>h4+p{font-size:11px;color:var(--ink-soft);margin-bottom:11px;line-height:1.5}
+
+/* Search box + results. The results list is capped and scrolls rather than
+   pushing the totals off the bottom of a phone screen. */
+.mo-search{position:relative}
+.mo-search input{width:100%;border:1px solid var(--border);border-radius:10px;
+                 padding:10px 12px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+.mo-search input:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+/* The frame only. The rows inside it are the shared picker's (.kpp-hit, in
+   admin/partials/product-picker.blade.php), so the two order screens cannot
+   drift into two different-looking lists again. */
+.mo-results{margin-top:8px;border:1px solid var(--border);border-radius:10px;overflow:hidden auto;max-height:260px}
+.mo-results:empty{display:none}
+
+/* The chosen customer. */
+.mo-chosen{display:flex;gap:11px;align-items:flex-start;background:var(--accent-soft);
+           border-radius:10px;padding:11px 12px;flex-wrap:wrap}
+.mo-chosen div{flex:1;min-width:0}
+.mo-chosen b{display:block;font-size:13px;overflow-wrap:anywhere}
+.mo-chosen span{display:block;font-size:11.5px;color:var(--accent-ink);opacity:.85;overflow-wrap:anywhere}
+
+/* Two-up field rows that become one-up on a narrow screen. */
+.mo-two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.mo-fld{margin-bottom:13px;min-width:0}
+.mo-fld label{display:block;font-size:11.5px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+.mo-fld input,.mo-fld select,.mo-fld textarea{
+  width:100%;max-width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;
+  padding:9px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+.mo-fld textarea{resize:vertical;min-height:64px}
+.mo-fld input:focus,.mo-fld select:focus,.mo-fld textarea:focus{
+  outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.mo-fld small{display:block;font-size:10.5px;color:var(--ink-soft);margin-top:4px;line-height:1.45}
+.mo-fld.bad input,.mo-fld.bad select{border-color:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
+.mo-err{display:block;font-size:10.5px;color:var(--red);margin-top:4px;font-weight:600}
+
+/* Line items. A table would be unreadable at 390px, so the lines are rows that
+   reflow instead — the quantity and total drop under the name rather than the
+   whole screen scrolling sideways. */
+.mo-lines{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.mo-line{display:flex;gap:10px;align-items:center;padding:10px 11px;border-bottom:1px solid var(--border-2);flex-wrap:wrap}
+.mo-line:last-child{border-bottom:0}
+.mo-line-th{width:34px;height:34px;border-radius:8px;flex:none;overflow:hidden;display:grid;
+            place-items:center;font-size:10px;font-weight:800;color:#fff}
+.mo-line-th img{width:100%;height:100%;object-fit:cover;display:block}
+.mo-line-main{flex:1 1 150px;min-width:0}
+.mo-line-main b{display:block;font-size:12.5px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.mo-line-main span{display:block;font-size:10.5px;color:var(--ink-soft);overflow-wrap:anywhere}
+.mo-qty{display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:none}
+.mo-qty button{width:28px;height:30px;font-size:15px;line-height:1;color:var(--ink-soft);background:var(--surface-2)}
+.mo-qty button:hover{color:var(--ink);background:var(--surface-3)}
+.mo-qty input{width:40px;height:30px;text-align:center;border:0;font-size:12.5px;font-weight:600;
+              font-family:inherit;background:var(--surface);color:var(--ink)}
+.mo-line-tot{flex:none;font-size:12.5px;font-weight:700;min-width:74px;text-align:right}
+.mo-line-x{flex:none;width:26px;height:26px;border-radius:7px;color:var(--ink-faint);display:grid;place-items:center}
+.mo-line-x:hover{background:var(--red-soft);color:var(--red)}
+.mo-empty{padding:26px 14px;text-align:center;font-size:12px;color:var(--ink-soft)}
+
+/* Empty states that do something.
+   "Nothing added yet." in a grey box told the operator what they could already
+   see. These say what to type, and what the screen will do with it. */
+.mo-blank{padding:22px 16px;text-align:center;background:var(--surface-2);
+          border:1px dashed var(--border);border-radius:10px;min-width:0}
+.mo-blank .mo-blank-i{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;
+                      background:var(--surface);border:1px solid var(--border);color:var(--ink-faint);margin-bottom:9px}
+.mo-blank b{display:block;font-size:12.5px;color:var(--ink-2);margin-bottom:4px}
+.mo-blank p{font-size:11.5px;color:var(--ink-soft);line-height:1.55;margin:0 auto;max-width:300px}
+.mo-blank p+p{margin-top:6px}
+.mo-blank kbd{font-family:inherit;font-size:11px;font-weight:600;color:var(--ink-2);
+              background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:1px 5px}
+
+/* The running total under the basket, so the number being read down the phone
+   never needs a scroll to reach. */
+.mo-run{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;justify-content:space-between;
+        margin-top:11px;padding:11px 12px;border-radius:10px;background:var(--accent-soft);min-width:0}
+.mo-run:empty{display:none}
+.mo-run-l{font-size:11.5px;color:var(--accent-ink);opacity:.9;min-width:0;overflow-wrap:anywhere}
+/* The figures keep together on the right: a struck-through pre-discount price
+   floating between the label and the total read as a third number. */
+.mo-run-n{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;
+          justify-content:flex-end;min-width:0;margin-left:auto}
+.mo-run b{font-size:15px;font-weight:700;color:var(--accent-ink);
+          font-variant-numeric:tabular-nums;white-space:nowrap}
+.mo-run .mo-run-was{font-size:11.5px;color:var(--accent-ink);opacity:.6;
+                    text-decoration:line-through;font-weight:600;white-space:nowrap}
+
+/* What is still missing before a price can be worked out, instead of one grey
+   sentence listing all four. Each line ticks itself off as it is satisfied. */
+.mo-ready{display:flex;flex-direction:column;gap:7px;padding:2px 0 4px;min-width:0}
+.mo-ready-r{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--ink-soft);min-width:0}
+.mo-ready-r i{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;flex:none;
+              margin-top:1px;border:1px solid var(--border);background:var(--surface-2);
+              color:var(--ink-faint);font-size:9px;font-style:normal;font-weight:800}
+.mo-ready-r span{min-width:0;overflow-wrap:anywhere}
+.mo-ready-r.on{color:var(--ink-2)}
+.mo-ready-r.on i{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent-ink)}
+
+/* Totals. */
+.mo-tot{display:flex;flex-direction:column;gap:7px;font-size:12.5px}
+.mo-tot-r{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.mo-tot-r span:first-child{color:var(--ink-soft)}
+.mo-tot-r b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.mo-tot-r.grand{border-top:1px solid var(--border);padding-top:9px;margin-top:3px;font-size:15px;font-weight:700}
+.mo-tot-r.disc b{color:var(--accent-ink)}
+
+.mo-note{display:flex;gap:9px;align-items:flex-start;background:var(--surface-2);border:1px solid var(--border-2);
+         border-radius:9px;padding:10px 11px;font-size:11.5px;color:var(--ink-2);line-height:1.5}
+.mo-note.warn{background:var(--amber-soft);border-color:#f3dcb6;color:#8a5a14}
+.mo-note.bad{background:var(--red-soft);border-color:#f2cdc9;color:#b8362d}
+.mo-note b{font-weight:700}
+
+.mo-check{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.45;cursor:pointer}
+.mo-check input{margin:2px 0 0;width:15px;height:15px;flex:none;accent-color:var(--accent)}
+.mo-check.off{opacity:.62;cursor:not-allowed}
+.mo-check small{display:block;font-size:10.5px;color:var(--ink-soft);margin-top:3px}
+
+.mo-actions{display:flex;gap:9px;flex-wrap:wrap}
+.mo-actions .btn{flex:1 1 auto}
+
+/* The confirmation, after the order is created. */
+.mo-done{max-width:620px}
+.mo-done-h{display:flex;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.mo-done-h .mo-tick{width:38px;height:38px;border-radius:50%;background:var(--accent-soft);
+                    color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.mo-done-h div{min-width:0}
+.mo-done-h b{display:block;font-size:17px;letter-spacing:-.015em}
+.mo-done-h span{display:block;font-size:12px;color:var(--ink-soft)}
+.mo-done table{width:100%;border-collapse:collapse;font-size:12.5px}
+.mo-done th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;
+            color:var(--ink-soft);padding:0 8px 7px 0;font-weight:700}
+.mo-done td{padding:7px 8px 7px 0;border-top:1px solid var(--border-2);vertical-align:top;overflow-wrap:anywhere}
+.mo-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+@media (max-width:1080px){
+  .mo-grid{grid-template-columns:minmax(0,1fr)}
+  /* One column: a pinned card would sit on top of the form it summarises. */
+  .mo-card.mo-sum{position:static;max-height:none;overflow:visible}
+  .mo-card:last-child{margin-bottom:14px}
+}
+@media (max-width:520px){
+  .mo-two{grid-template-columns:1fr}
+  .mo-card{padding:15px}
+  .mo-line-tot{min-width:0;text-align:left}
+  .mo-actions .btn{flex:1 1 100%}
+  .mo-blank{padding:18px 13px}
+  .mo-run{padding:10px 11px}
+}

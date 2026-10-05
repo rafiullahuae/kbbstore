@@ -1349,7 +1349,9 @@ it('sits where every file in this lane says it sits', function () {
     );
 
     // And `Pages` really is a section of its own, not a row under Content.
-    expect(str_contains($app, "{sec:'Pages',items:[['pages-store'"))->toBeTrue();
+    // Lane AP: the sidebar is App\Support\AdminNav's (server-rendered), not a NAV literal.
+    $pages = array_values(array_filter(\App\Support\AdminNav::GROUPS, fn ($g) => $g['sec'] === 'Pages'));
+    expect($pages[0]['rows'][0]['id'] ?? null)->toBe('pages-store');
 
     $named = [
         'app/Http/Controllers/Admin/PageEditorApiController.php',

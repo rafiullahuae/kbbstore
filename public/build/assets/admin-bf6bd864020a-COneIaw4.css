@@ -1,0 +1,199 @@
+
+.igs-wrap{display:grid;gap:14px;min-width:0}
+.igs-wrap > *{min-width:0}
+.igs-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+          border-radius:var(--r,12px);padding:16px;min-width:0}
+.igs-title{font-weight:650;font-size:15px}
+.igs-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.55;margin-top:3px;max-width:68ch}
+.igs-note{border:1px dashed var(--border,#e6e6e6);border-radius:10px;padding:11px 12px;margin-top:12px;
+          font-size:12.5px;line-height:1.55;color:var(--ink-soft,#6b7280);min-width:0}
+.igs-note b{color:var(--ink,#16181d)}
+.igs-note.is-warm{border-style:solid;border-color:#e9d5a1;background:#fdf9ef}
+.igs-note.is-bad{border-style:solid;border-color:#d9534f;color:#b4443c}
+.igs-note.is-good{border-style:solid;border-color:#9ed8b6;background:#f2fbf6;color:#1d7145}
+.igs-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.igs-tab{padding:7px 12px;border:1px solid var(--border,#e6e6e6);border-radius:999px;background:transparent;
+         color:inherit;font:inherit;font-size:12.5px;cursor:pointer}
+.igs-tab[aria-selected="true"]{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.igs-fields{display:grid;gap:15px;margin-top:14px;min-width:0}
+.igs-f{display:grid;gap:5px;min-width:0}
+.igs-fh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}
+.igs-f label{font-size:12.5px;font-weight:650;overflow-wrap:anywhere}
+.igs-val{font-size:12px;color:var(--ink-soft,#6b7280);font-variant-numeric:tabular-nums;white-space:nowrap}
+.igs-f select,.igs-f input[type=text],.igs-f input[type=password]{width:100%;min-width:0;padding:8px 10px;
+  font:inherit;font-size:13px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;
+  color:inherit}
+.igs-f input[type=range]{width:100%;min-width:0}
+.igs-check{display:flex;gap:9px;align-items:flex-start;min-width:0}
+.igs-check input{margin-top:3px;flex:0 0 auto}
+.igs-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5;margin:0;max-width:68ch}
+.igs-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px;min-width:0}
+.igs-btn{padding:8px 13px;border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;
+         color:inherit;font:inherit;font-size:13px;cursor:pointer;max-width:100%;text-decoration:none;
+         display:inline-block}
+.igs-btn.is-primary{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+.igs-btn.is-bad{border-color:#d9534f;color:#b4443c}
+.igs-btn[disabled],.igs-btn.is-off{opacity:.45;cursor:default;pointer-events:none}
+
+/* ── the six-step checklist ───────────────────────────────────────────────
+   A list and not a table: on a phone a four-column table of instructions is a
+   horizontal scrollbar, and this screen is one the owner will read on a phone
+   because half of it tells him what to do IN the Instagram app. */
+.igs-steps{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:9px;counter-reset:igs}
+.igs-step{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;font-size:12.5px;
+          line-height:1.55;color:var(--ink-soft,#6b7280)}
+.igs-mark{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;
+          font-weight:700;border:1px solid var(--border,#e6e6e6);color:var(--ink-soft,#6b7280)}
+.igs-step.is-done .igs-mark{background:#15a85a;border-color:#15a85a;color:#fff}
+.igs-step.is-done{color:var(--ink,#16181d)}
+.igs-step.is-unknown .igs-mark{border-style:dashed}
+
+/* The redirect URI. `word-break:break-all` and not `anywhere`: this string must
+   be selectable and copyable in one gesture, and it has no spaces to wrap at. */
+.igs-uri{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px}
+.igs-uri code{flex:1 1 320px;min-width:0;padding:8px 10px;border:1px solid var(--border,#e6e6e6);
+  border-radius:8px;font-size:12px;word-break:break-all;background:rgba(0,0,0,.02)}
+
+/* The profile readback — proof the connection works, in the owner's own face. */
+.igs-me{display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.igs-me img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:#f3f4f6;flex:0 0 auto}
+.igs-me div{min-width:0}
+.igs-me b{font-size:14px;display:block;overflow-wrap:anywhere}
+.igs-me span{font-size:12px;color:var(--ink-soft,#6b7280);display:block;margin-top:2px}
+.igs-empty{color:var(--ink-soft,#6b7280);font-size:13px;padding:6px 0}
+
+/* ── THE PREVIEW ──────────────────────────────────────────────────────────
+   A DRAWING OF THE SECTION, NOT THE SECTION. Every other Appearance screen in
+   this console previews what it controls and this one used to ask the owner to
+   save and go look at the shop.
+
+   It is not an iframe of the storefront, and that is a cost decision rather than
+   a convenience: the section is behind the shop's own routes, so a live preview
+   is an authenticated fetch and a full page render per keystroke — and the
+   controls above it move on INPUT, which for a slider is thirty events a drag.
+   So the storefront's arrangement is restated here in CSS, and the browser lays
+   it out once per repaint from the stylesheet.
+
+   THE RULES BELOW ARE THE SAME ARITHMETIC AS resources/views/instagram/
+   assets.blade.php, at the same two breakpoints (640 and 900), including
+   InstagramSettings::cssVariables()'s peeking-rail fractions -- 2.3 tiles and 1.3
+   gaps on a phone, 5.3 and 4.3 wide. A preview whose columns are its own opinion
+   is a preview that lies, and the way to keep the two honest is for both to be
+   the same expressions rather than two sets of numbers that look similar.
+
+   ── AND THEY ARE @container RULES, NOT @media ──────────────────────────
+   The preview is a BOX INSIDE a console, so the width that decides its
+   arrangement is the box's, never the window's. @media here would draw the
+   desktop grid inside a 340px-wide preview on a 1280px screen, which is the
+   exact wrong answer -- and it is also what makes the Phone/Desktop switch below
+   work without JavaScript measuring anything: the switch sets a max-width, the
+   container query notices, and the browser redoes the layout. A browser with no
+   container-query support ignores every @container block and keeps the phone
+   arrangement, which is a smaller lie than the other way round.
+
+   NOTHING HERE MEASURES ANYTHING -- rule 4, and InstagramSectionShapeTest holds
+   this file to it by scanning for the eight element-measuring APIs BY NAME. Which
+   is why they are not written out in this comment either: that test is a
+   str_contains over the source, so naming one in prose is as red as calling it,
+   and this paragraph went red exactly once for saying so. Every size above is a
+   calc(), a repeat() or an aspect-ratio, and there is nothing left to ask the
+   browser for. */
+.igs-pvh{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;min-width:0}
+.igs-pvh b{font-weight:650;font-size:15px}
+.igs-pvh span{font-size:12px;color:var(--ink-soft,#6b7280)}
+.igs-pvw{display:flex;gap:6px;flex:0 0 auto}
+.igs-pvw button{padding:5px 10px;border:1px solid var(--border,#e6e6e6);border-radius:999px;background:transparent;
+  color:inherit;font:inherit;font-size:11.5px;cursor:pointer}
+.igs-pvw button[aria-pressed="true"]{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);font-weight:650}
+
+/* The frame. `container-type:inline-size` is what the @container rules below
+   resolve against, and `overflow:hidden` is the thing that keeps a peeking rail
+   inside this card instead of widening the whole console -- the fault rule 4's
+   scrollWidth number exists to catch. */
+.igs-pvf{margin-top:12px;border:1px solid var(--border,#e6e6e6);border-radius:12px;padding:12px;
+  background:var(--surface,#fff);container-type:inline-size;overflow:hidden;min-width:0}
+.igs-pvf.is-phone{max-width:390px}
+
+.igs-pv{--igsp-w:auto;--igsp-gap:8px;--igsp-r:10px;min-width:0}
+.igs-pv *{box-sizing:border-box;min-width:0}
+.igs-pvhd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 12px}
+.igs-pvhd h3{margin:0;font-size:17px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+.igs-pvhd i{font-style:normal;font-size:13px;color:#15a85a;font-weight:600;flex:0 0 auto}
+
+/* The profile box, in the two styles that draw one. */
+.igs-pvp{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.igs-pvp img,.igs-pvp .igs-pvav{border-radius:50%;object-fit:cover;flex:0 0 auto;background:#f3f4f6}
+.igs-pvp.is-card{padding:13px 14px;border:1px solid var(--border,#e6e6e6);border-radius:calc(var(--igsp-r) + 4px)}
+.igs-pvp.is-card img,.igs-pvp.is-card .igs-pvav{width:64px;height:64px}
+.igs-pvp.is-bar{gap:9px;margin-bottom:10px}
+.igs-pvp.is-bar img,.igs-pvp.is-bar .igs-pvav{width:36px;height:36px}
+.igs-pvn{display:grid;gap:2px;min-width:0}
+.igs-pvn b{font-size:15px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.igs-pvn span{font-size:12.5px;color:var(--ink-soft,#6b7280);line-height:1.35;overflow-wrap:anywhere}
+.igs-pvp.is-bar .igs-pvn b{font-size:13.5px}
+.igs-pvp.is-bar .igs-pvn span{font-size:11.5px}
+.igs-pvfl{margin-inline-start:auto;flex:0 0 auto;padding:8px 14px;border-radius:999px;background:#15a85a;color:#fff;
+  font-size:12.5px;font-weight:650}
+
+/* The track. Two grids, two flex scrollers, the same as the shop. */
+.igs-pvt{display:grid;gap:var(--igsp-gap)}
+.igs-pvt.is-grid,.igs-pvt.is-mosaic,.igs-pvt.is-masonry{grid-template-columns:repeat(2,minmax(0,1fr))}
+.igs-pvt.is-rail,.igs-pvt.is-strip{display:flex;overflow-x:auto;scrollbar-width:none}
+.igs-pvt.is-rail::-webkit-scrollbar,.igs-pvt.is-strip::-webkit-scrollbar{display:none}
+.igs-pvt.is-rail > *,.igs-pvt.is-strip > *{flex:0 0 var(--igsp-w)}
+.igs-pvt.is-mosaic > :first-child{grid-column:span 2;grid-row:span 2}
+
+/* The cell. `aspect-ratio` is what keeps a tile square without anybody knowing
+   its width, which is the whole reason there is nothing here to measure. */
+.igs-pvc{position:relative;display:block;overflow:hidden;border-radius:var(--igsp-r);aspect-ratio:1/1;
+  background:#f3f4f6}
+.igs-pvt.is-masonry .igs-pvc{aspect-ratio:4/5}
+.igs-pvc > img{display:block;width:100%;height:100%;object-fit:cover}
+
+/* A PLACEHOLDER IS DRAWN AS A PLACEHOLDER. Not an empty grey box that reads as a
+   broken picture: a hairline border and a diagonal wash, so "nothing has been
+   fetched yet" is legible at a glance and the note under the frame says it in
+   words. */
+/* TWO BACKGROUND LAYERS AND NOT A PSEUDO-ELEMENT, because `::before` and
+   `::after` on this cell are already spoken for by the album mark and the play
+   triangle -- and a ghost tile that borrowed one would be a ghost tile whose
+   badge disappeared the day somebody drew a placeholder for a video. */
+.igs-pvc.is-ghost{box-shadow:inset 0 0 0 1px var(--border,#e6e6e6);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b9bec7' stroke-width='1.6'%3E%3Crect x='3' y='3' width='18' height='18' rx='5'/%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Ccircle cx='17.2' cy='6.8' r='1'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(135deg,rgba(0,0,0,.045) 0 8px,transparent 8px 16px);
+  background-repeat:no-repeat,repeat;background-position:50% 50%,0 0;background-size:30% auto,auto}
+
+/* The play triangle and the album mark, as pseudo-elements on the same classes
+   the shop uses, so a tile costs no extra node here either. */
+.igs-pvc.is-video::after{content:"";position:absolute;inset-block-start:50%;inset-inline-start:50%;
+  translate:-50% -50%;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.42);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff'%3E%3Cpath d='M9 6.5v11l9-5.5z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:54% 50%;background-size:19px}
+.igs-pvt.is-strip .igs-pvc.is-video::after{width:26px;height:26px;background-size:13px}
+.igs-pvc.is-album::before{content:"";position:absolute;inset-block-start:6px;inset-inline-end:6px;width:14px;height:14px;
+  border:2px solid #fff;border-radius:3px;box-shadow:-3px 3px 0 -1px rgba(255,255,255,.55);opacity:.95}
+
+/* The counts, on the same gradient, and drawn only when there is a number. */
+.igs-pvm{position:absolute;inset-inline:0;inset-block-end:0;display:flex;gap:10px;align-items:center;
+  padding:15px 8px 6px;color:#fff;font-size:11.5px;font-weight:600;line-height:1;
+  background:linear-gradient(to top,rgba(0,0,0,.56),rgba(0,0,0,0))}
+.igs-pvm span{display:inline-flex;gap:4px;align-items:center;font-variant-numeric:tabular-nums}
+.igs-pvm svg{width:12px;height:12px;flex:0 0 auto}
+
+/* The caption. ALWAYS VISIBLE IN THE PREVIEW and hover-only on the shop, which
+   is a deliberate difference and is said in the note under the frame: a preview
+   of a thing that only appears on hover shows the owner nothing when he turns the
+   switch on, which is the one moment he is looking. */
+.igs-pvcap{position:absolute;inset:0;display:flex;align-items:flex-end;padding:8px;color:#fff;font-size:11px;
+  line-height:1.4;background:rgba(0,0,0,.44)}
+.igs-pvcap span{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+
+@container (min-width:640px){
+  .igs-pvt.is-grid,.igs-pvt.is-mosaic,.igs-pvt.is-masonry{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@container (min-width:900px){
+  .igs-pvt.is-masonry{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .igs-pvt.is-rail > *{flex-basis:calc((100% - (var(--igsp-gap) * 4.3)) / 5.3)}
+  .igs-pvt.is-strip > *{flex-basis:calc((100% - (var(--igsp-gap) * 7.5)) / 8.5)}
+  .igs-pvp.is-card img,.igs-pvp.is-card .igs-pvav{width:76px;height:76px}
+}

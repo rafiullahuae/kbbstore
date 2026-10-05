@@ -523,7 +523,8 @@ it('is wired into the console exactly once', function () {
 
     expect(substr_count($web, "require __DIR__.'/emails-admin.php';"))->toBe(1)
         ->and(substr_count($app, "@include('admin.partials.emails-screens')"))->toBe(1)
-        ->and(substr_count($app, "{sec:'Emails'"))->toBe(1)
+        // Lane AP: the sidebar is App\Support\AdminNav's (server-rendered), not a NAV literal.
+        ->and(count(array_filter(\App\Support\AdminNav::GROUPS, fn ($g) => $g['sec'] === 'Emails')))->toBe(1)
         ->and($app)->toContain("'emails':['Emails','Overview']")
         ->and($app)->toContain("'emails-sending':['Emails','Sending & delivery']")
         ->and($app)->toContain("'emails-branding':['Emails','Design & branding']")

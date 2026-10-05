@@ -1,0 +1,147 @@
+
+/* ---------------------------------------------------------------------------
+   Categories & Brands. Every rule is prefixed ct- and appears nowhere else in
+   the console, so this file can never restyle another screen by accident.
+
+   THE LAYOUT RULE, and it is the one that has already cost this project a
+   shipped bug. min-width:0 on every grid and flex child that can contain
+   something wide. A grid or flex item's default min-width is `auto`, which
+   means "at least as wide as my content" -- so a card refuses to shrink below
+   the width of the table inside it, the scroller's overflow-x:auto never gets
+   the chance to scroll, and the whole screen is stretched to the table's
+   natural width. That is exactly what shipped on the Coupons screen this week.
+
+   And the reason it is invisible in testing: this admin sets
+   body{overflow-x:hidden} and scrolls inside #content, so
+   document.documentElement.scrollWidth reads a comforting zero no matter how
+   over-wide the screen is. #content is the element that has to be measured.
+--------------------------------------------------------------------------- */
+.ct-wrap{display:grid;gap:16px;min-width:0}
+.ct-wrap > *{min-width:0}
+
+.ct-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+         border-radius:var(--r,12px);padding:16px;min-width:0}
+.ct-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;min-width:0}
+.ct-head > *{min-width:0}
+.ct-title{font-weight:650;font-size:15px}
+.ct-sub{color:var(--ink-soft,#6b7280);font-size:12.5px}
+
+.ct-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.ct-tab{border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);
+        border-radius:999px;padding:6px 13px;font:inherit;font-size:12.5px;cursor:pointer;
+        color:var(--ink-soft,#6b7280)}
+.ct-tab.on{background:var(--ink,#111);color:#fff;border-color:var(--ink,#111)}
+
+.ct-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:12px;min-width:0}
+.ct-stats > *{min-width:0}
+.ct-stat{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+         border-radius:var(--r,12px);padding:12px 14px;min-width:0}
+.ct-stat b{display:block;font-size:20px;line-height:1.3;font-variant-numeric:tabular-nums}
+.ct-stat span{color:var(--ink-soft,#6b7280);font-size:12px}
+
+/* The tree. Rows are a grid, not a table, because a table cannot reflow to a
+   stacked layout on a phone without losing its header association. */
+.ct-tree{display:grid;gap:6px;min-width:0}
+.ct-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
+        border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:9px 11px;
+        background:var(--surface,#fff);min-width:0}
+.ct-row > *{min-width:0}
+.ct-row.is-drag{opacity:.45}
+.ct-row.is-over{border-color:var(--ink,#111);box-shadow:0 0 0 2px var(--ink,#111) inset}
+.ct-grip{cursor:grab;color:var(--ink-faint,#9ca3af);font-size:15px;line-height:1;
+         padding:2px 4px;touch-action:none;user-select:none}
+.ct-grip:active{cursor:grabbing}
+
+.ct-main{display:flex;flex-wrap:wrap;gap:4px 9px;align-items:baseline;min-width:0}
+.ct-main > *{min-width:0}
+.ct-name{font-weight:600;font-size:13.5px;overflow-wrap:anywhere}
+/* The URL is the longest thing on the row and the most likely to blow the
+   layout out. It gets its own line on a phone and wraps anywhere. */
+.ct-path{font-family:var(--mono,ui-monospace,monospace);font-size:11px;
+         color:var(--ink-soft,#6b7280);overflow-wrap:anywhere;min-width:0}
+.ct-counts{font-size:11.5px;color:var(--ink-soft,#6b7280);white-space:nowrap}
+.ct-acts{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;min-width:0}
+.ct-btn{border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);
+        border-radius:8px;padding:5px 9px;font:inherit;font-size:11.5px;cursor:pointer;
+        color:var(--ink-2,#374151)}
+.ct-btn:hover{border-color:var(--ink,#111)}
+.ct-btn.is-danger{color:var(--danger,#d6455a)}
+.ct-btn.is-primary{background:var(--ink,#111);color:#fff;border-color:var(--ink,#111)}
+
+.ct-pill{display:inline-block;border-radius:999px;padding:2px 8px;font-size:10.5px;
+         background:var(--chip,#f3f4f6);color:var(--ink-soft,#6b7280);white-space:nowrap}
+.ct-pill.is-warn{background:#fef3c7;color:#92400e}
+.ct-pill.is-zero{background:#fee2e2;color:#991b1b}
+
+.ct-empty{padding:22px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
+
+/* Forms. Every field is a block and every input is width:100% with
+   min-width:0, so nothing in the editor can be wider than the modal. */
+.ct-fld{display:block;margin-bottom:12px;min-width:0}
+.ct-fld > label{display:block;font-size:12px;font-weight:600;margin-bottom:5px}
+.ct-fld input,.ct-fld select,.ct-fld textarea{
+  width:100%;min-width:0;box-sizing:border-box;padding:8px 10px;font:inherit;font-size:13px;
+  border:1px solid var(--border,#e6e6e6);border-radius:9px;background:var(--surface,#fff);
+  color:inherit}
+.ct-fld .ct-note{margin:5px 0 0;font-size:11.5px;color:var(--ink-soft,#6b7280)}
+.ct-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:0 12px;min-width:0}
+.ct-grid2 > *{min-width:0}
+
+.ct-warn{border:1px solid #fcd34d;background:#fffbeb;color:#92400e;
+         border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:12px;min-width:0;
+         overflow-wrap:anywhere}
+.ct-danger{border:1px solid #fca5a5;background:#fef2f2;color:#991b1b;
+           border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:12px;min-width:0;
+           overflow-wrap:anywhere}
+
+.ct-thumb{width:46px;height:46px;border-radius:8px;object-fit:cover;
+          border:1px solid var(--border,#e6e6e6);background:var(--chip,#f3f4f6);flex:0 0 auto}
+
+.ct-modal{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:900;
+          display:flex;align-items:flex-start;justify-content:center;padding:18px;overflow:auto}
+.ct-modal-box{background:var(--surface,#fff);border-radius:14px;width:min(560px,100%);
+              min-width:0;box-sizing:border-box;padding:18px;margin:auto}
+.ct-modal-h{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px;min-width:0}
+.ct-modal-h b{font-size:15px;min-width:0;overflow-wrap:anywhere}
+.ct-link{border:0;background:none;padding:0;font:inherit;color:var(--accent,#15a85a);
+         text-decoration:underline;cursor:pointer}
+.ct-x{border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:var(--ink-soft,#6b7280);flex:0 0 auto}
+.ct-modal-f{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:14px;min-width:0}
+
+/* The redirects table is the one genuinely tabular thing here, so it keeps a
+   table and gets its own scroller. Per the layout rule above, the scroller
+   only works because every ancestor carries min-width:0. */
+.ct-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0}
+.ct-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.ct-table th,.ct-table td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border,#e6e6e6);
+                          vertical-align:top}
+.ct-table th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft,#6b7280)}
+.ct-table code{font-family:var(--mono,ui-monospace,monospace);font-size:11px;overflow-wrap:anywhere}
+
+/* The category header panel in the editor (Lane PY; QC: preview, banner, tiles). */
+.ct-hdr-live{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:10px;margin-bottom:12px;min-width:0;
+  background:var(--chip,#f9fafb)}
+.ct-hdr-live > b{font-size:12.5px}
+.ct-banner-prev{margin-top:7px;border:1px solid var(--border,#e6e6e6);border-radius:9px;overflow:hidden;
+  background:repeating-linear-gradient(45deg,#f3f4f6 0 10px,#fff 10px 20px);min-width:0}
+.ct-banner-prev img{display:block;width:100%;height:auto;max-height:200px;object-fit:contain}
+.ct-banner-acts{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:8px;min-width:0}
+.ct-banner-acts .ct-btn{padding:7px 11px;font-size:12px}
+.ct-hdr-look{border-top:1px solid var(--border,#e6e6e6);padding-top:10px;margin:4px 0 12px;min-width:0}
+.ct-hdr-cols{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));margin-top:10px;min-width:0}
+.ct-hdr-cols > *{min-width:0}
+.ct-colour{display:flex;gap:7px;align-items:center;min-width:0}
+.ct-colour input[type=color]{width:40px;height:34px;padding:2px;flex:none}
+.ct-colour input[type=text]{flex:1 1 auto}
+.ct-hdr{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:10px 12px;margin-bottom:12px;min-width:0}
+.ct-hdr > summary{cursor:pointer;font-size:13px;min-width:0;overflow-wrap:anywhere}
+.ct-hdr-body{margin-top:12px;min-width:0}
+.ct-hdr .ct-note{font-size:11.5px;color:var(--ink-soft,#6b7280)}
+
+@media (max-width:560px){
+  /* The action buttons move under the name rather than competing with it for
+     the row's width. Without this the three-column grid keeps a column for
+     them at every width and the name is squeezed to nothing. */
+  .ct-row{grid-template-columns:auto 1fr}
+  .ct-acts{grid-column:1 / -1;justify-content:flex-start}
+}

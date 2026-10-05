@@ -54,7 +54,9 @@ it('is included in the console exactly once, after the block whose renderUsers i
         ->and(strpos($app, $include))->toBeGreaterThan(strpos($app, 'window.renderUsers = async function'));
 
     // The screen already has its row, title and dispatch entry: nothing new.
-    expect(substr_count($app, "['users','Users & Roles',I.users]"))->toBe(1)
+    // Lane AP: the sidebar is App\Support\AdminNav's (server-rendered), not a NAV literal.
+    expect(\App\Support\AdminNav::rows()['users']['label'] ?? null)->toBe('Users & Roles');
+    expect(\App\Support\AdminNav::rows()['users']['sec'])->toBe('Platform')
         ->and(substr_count($app, "users:['Platform','Users & Roles']"))->toBe(1);
 });
 

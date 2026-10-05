@@ -1,0 +1,160 @@
+
+/* ---------------------------------------------------------------------------
+   Export / Import. Every rule is prefixed rio- and every id is rio-, so this
+   file can never restyle or collide with another screen in the console. The
+   console is one document: an unprefixed .card or #save here would reach into
+   whatever else is mounted.
+
+   Same layout rule as the sibling screens: nothing may be wider than its column
+   at 390px, because the owner reviews on a phone. Measured on #content, not on
+   documentElement -- the document metric is structurally blind here, because
+   the console's shell is what scrolls, not the page.
+
+   min-width:0 on the grid AND on its children is load-bearing, not tidiness. A
+   grid item's default min-width is auto -- "at least as wide as my content" --
+   so a card refuses to shrink below its widest child and drags the whole column
+   out past the viewport with no way to scroll back. The reject table below is
+   exactly such a child: its reasons are long sentences.
+--------------------------------------------------------------------------- */
+.rio-wrap{display:grid;gap:16px;min-width:0;max-width:1400px}
+.rio-wrap > *{min-width:0}
+
+.rio-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
+          border-radius:var(--r,12px);padding:16px;min-width:0}
+.rio-legend{font-weight:650;font-size:14px;margin:0 0 3px}
+.rio-legend-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0 0 14px;max-width:80ch;line-height:1.5}
+.rio-headrow{display:grid;gap:3px;min-width:0;padding:0 2px}
+.rio-title{font-weight:650;font-size:15px;margin:0}
+.rio-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0;max-width:78ch;line-height:1.5}
+
+/* One row per control. At 560px they stack rather than squeezing the control
+   to nothing. */
+.rio-row{display:grid;grid-template-columns:1fr auto;gap:10px 16px;align-items:center;
+         padding:11px 0;border-top:1px solid var(--border,#e6e6e6);min-width:0}
+.rio-row:first-of-type{border-top:0}
+.rio-row > *{min-width:0}
+.rio-lab{font-size:13.5px;font-weight:600;max-width:72ch}
+.rio-hint{color:var(--ink-soft,#6b7280);font-size:12px;margin-top:2px;line-height:1.45;max-width:72ch}
+.rio-ctl{display:flex;align-items:center;gap:8px;justify-self:end;flex-wrap:wrap}
+
+@media (max-width:560px){
+  .rio-row{grid-template-columns:1fr}
+  .rio-ctl{justify-self:start}
+}
+
+.rio-sel,.rio-file{max-width:100%;padding:7px 9px;font:inherit;border:1px solid var(--border,#e6e6e6);
+                   border-radius:9px;background:transparent;color:inherit}
+.rio-file{width:100%}
+
+.rio-sw{position:relative;display:inline-block;width:42px;height:24px;flex:none}
+.rio-sw input{position:absolute;inset:0;opacity:0;margin:0;width:100%;height:100%;cursor:pointer}
+.rio-sw i{position:absolute;inset:0;border-radius:999px;background:rgba(127,127,127,.32);
+          transition:background .16s ease;pointer-events:none;display:block}
+.rio-sw i::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+                 background:#fff;transition:transform .16s ease;box-shadow:0 1px 3px rgba(0,0,0,.28)}
+.rio-sw input:checked + i{background:var(--accent,#15a85a)}
+.rio-sw input:checked + i::after{transform:translateX(18px)}
+.rio-sw input:focus-visible + i{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
+
+.rio-btn{appearance:none;border:1px solid var(--accent,#15a85a);background:var(--accent,#15a85a);color:#fff;
+         font:inherit;font-weight:600;padding:9px 16px;border-radius:10px;cursor:pointer}
+.rio-btn[disabled]{opacity:.55;cursor:default}
+.rio-ghost{background:transparent;color:inherit;border-color:var(--border,#e6e6e6)}
+.rio-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+.rio-banner{border:1px solid #d9534f;border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.5;
+            color:#b3312c;background:rgba(217,83,79,.07)}
+.rio-banner.rio-ok{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);background:rgba(21,168,90,.07)}
+
+/* The count tiles. auto-fit rather than a fixed column count, so they reflow to
+   one column on a phone instead of overflowing. */
+.rio-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;min-width:0}
+.rio-tile{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:10px 12px;min-width:0}
+.rio-tile b{display:block;font-size:20px;font-variant-numeric:tabular-nums;line-height:1.2}
+.rio-tile span{display:block;color:var(--ink-soft,#6b7280);font-size:12px;margin-top:2px}
+.rio-tile.rio-bad b{color:#b3312c}
+
+/* The reject list. Its own scroller, because a reason is a whole sentence and
+   the alternative is the page itself scrolling sideways. */
+.rio-scroll{overflow:auto;-webkit-overflow-scrolling:touch;max-height:340px;border:1px solid var(--border,#e6e6e6);
+            border-radius:10px;min-width:0}
+.rio-tab{width:100%;border-collapse:collapse;font-size:12.5px;min-width:420px}
+.rio-tab th,.rio-tab td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border,#e6e6e6);vertical-align:top}
+.rio-tab th{font-weight:650;position:sticky;top:0;background:var(--surface,#fff);z-index:1}
+.rio-tab tr:last-child td{border-bottom:0}
+.rio-tab td.rio-n{font-variant-numeric:tabular-nums;white-space:nowrap;width:1%;color:var(--ink-soft,#6b7280)}
+
+.rio-cols{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.rio-chip{border:1px solid var(--border,#e6e6e6);border-radius:999px;padding:3px 9px;font-size:12px;
+          font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.rio-chip.rio-dim{color:var(--ink-soft,#6b7280);opacity:.75}
+
+.rio-note{color:var(--ink-soft,#6b7280);font-size:12.5px;line-height:1.5;max-width:80ch}
+.rio-note code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.rio-warn{border-left:3px solid #d9a13d;padding-left:11px;margin-top:10px}
+
+/* Always in the markup, even with nothing in it — see the note in the import
+   card. :empty keeps it from leaving a gap under the file input when no file
+   has been chosen yet. */
+.rio-name{font-size:12.5px;color:var(--ink-soft,#6b7280);word-break:break-all;margin-top:6px}
+.rio-name:empty{display:none}
+
+/* ── the drop zone ────────────────────────────────────────────────────────
+   THE WHOLE IMPORT CARD IS THE TARGET, not the dashed box inside it. A CSV let
+   go two pixels outside a 90px box did not merely fail: nothing in this console
+   prevents the default drop, so the browser NAVIGATED AWAY to the file -- and on
+   this screen that means leaving a half-configured import behind to go and look
+   at raw CSV. The dashed box is what says a drop is possible and is also the
+   click path to the file dialog, so the affordance and the fallback are one
+   control. */
+.rio-drop{display:block;width:100%;margin-top:8px;padding:14px 12px;text-align:center;
+          font:inherit;font-size:12.5px;color:var(--ink-soft,#6b7280);background:none;cursor:pointer;
+          border:1.5px dashed var(--border,#e6e6e6);border-radius:10px;min-width:0}
+.rio-drop b{display:block;font-size:13px;font-weight:650;color:inherit;margin-bottom:3px}
+.rio-drop span{display:block;font-size:11.5px;margin-top:3px;overflow-wrap:anywhere}
+.rio-drop:hover,.rio-drop:focus-visible{border-color:var(--accent,#15a85a);color:var(--accent,#15a85a);
+          background:rgba(21,168,90,.05)}
+.rio-card.is-drag{outline:2px solid var(--accent,#15a85a);outline-offset:2px}
+.rio-card.is-drag .rio-drop{border-color:var(--accent,#15a85a);border-width:2px;padding:13.5px 11.5px;
+          color:var(--accent,#15a85a);background:rgba(21,168,90,.07)}
+
+/* ── the progress bar ─────────────────────────────────────────────────────
+   WHETHER IT EARNS ITS PLACE HERE, honestly: a review CSV is usually a few
+   hundred KB and goes up in under a second, so on a fast line the bar is a
+   flicker. It earns it in three cases that are not edge cases on this screen:
+
+     1. THE FILE GOES UP TWICE. The documented order is Check, then Import, so
+        every real import uploads the same file a second time.
+     2. A WooCommerce export of three thousand reviews with reply text is
+        comfortably over a megabyte, and the owner is on a domestic uplink.
+     3. THE SERVER PHASE IS THE LONG ONE, and it is the part a bar alone cannot
+        show. ReviewCsvImport writes in batches of rows; a bar that reaches 100%
+        and then sits there for eight seconds reads as a hung screen. That is
+        what the `server` stage below is for -- the bar stops being a percentage
+        and says "Reading the file" instead.
+
+   The drop zone is the bigger win. The bar is what stops the second half of the
+   run looking like nothing is happening. */
+.rio-up{display:grid;gap:5px;margin-top:10px;min-width:0}
+.rio-up-top{display:flex;gap:10px;align-items:baseline;justify-content:space-between;min-width:0}
+.rio-up-name{font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rio-up-pct{font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink-soft,#6b7280);flex:none}
+.rio-up-x{font:inherit;font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;flex:none;
+          border:1px solid var(--border,#e6e6e6);background:none;color:var(--ink-soft,#6b7280);cursor:pointer}
+.rio-up-x[hidden]{display:none}
+.rio-up-x:hover{border-color:#b3312c;color:#b3312c}
+.rio-up-track{height:6px;border-radius:999px;background:rgba(127,127,127,.18);overflow:hidden}
+.rio-up-track > i{display:block;height:100%;width:0;border-radius:999px;
+                  background:var(--accent,#15a85a);transition:width .18s linear}
+.rio-up.is-bad .rio-up-track > i{background:#b3312c}
+.rio-up.is-bad .rio-up-pct{color:#b3312c}
+/* Every byte is sent and the answer has not come: the rows are being parsed and
+   written. Striped by a keyframe on background-position, so nothing is measured
+   and no script runs per frame. */
+.rio-up.is-server .rio-up-track > i{width:100% !important;
+  background-image:linear-gradient(110deg,rgba(255,255,255,.45) 25%,transparent 25%,
+    transparent 50%,rgba(255,255,255,.45) 50%,rgba(255,255,255,.45) 75%,transparent 75%);
+  background-size:14px 14px;animation:rio-stripe .7s linear infinite}
+@keyframes rio-stripe{from{background-position:0 0}to{background-position:14px 0}}
+@media (prefers-reduced-motion: reduce){.rio-up-track > i{transition:none}
+  .rio-up.is-server .rio-up-track > i{animation:none}}

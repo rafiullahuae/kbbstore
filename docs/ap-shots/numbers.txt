@@ -1,0 +1,73 @@
+Lane AP: admin sidebar, collapse toggle, faster console load. Measured, 5 October 2026.
+
+Profile: Chromium (playwright, /opt/pw-browsers/chromium-1194), CPU throttle 4x,
+2 Mbit/s down and up, 40 ms RTT, gzip on (tools/perf-router.php), 1280x860, owner account.
+The machine was shared with other lanes (load average 8-10 on 4 cores), so each figure is
+one of two interleaved runs, before then after, under the same conditions. Warm is the
+median of 3. Harness: tools/ap-preview.sh, then tools/ap-measure.cjs <port> <label>.
+"Sidebar complete" is the first requestAnimationFrame in which #nav is visible and holds
+every row it holds after load. "Dashboard" is the first frame with #kbbDashWrap.
+
+DOCUMENT
+                              before         after
+  /admin raw bytes            4,747,846      inline: 4,771,486 | cached-files mode: 345,298
+  /admin gzip bytes           1,351,808      inline: 1,355,226 | cached-files mode: 82,180
+  sidebar <nav> starts at     byte 290,553   byte 67,374 (cached) / ~293,000 (inline)
+  sidebar rows in the HTML    0 (built by JS) all 95 (93 + the new App group's 2)
+
+COLD (first visit: cache empty, no kbb_aa cookie. Served inline, then prefetches the files)
+                              before (run1/run2)   after (run1/run2)
+  first sidebar row painted   1938 / 1454 ms       604 / 817 ms
+  sidebar complete            6538 / 6037 ms       604 / 817 ms   (complete in its first frame)
+  first contentful paint      1548 / 1028 ms       944 / 1112 ms
+  dashboard drawn             1938 / 1454 ms       1370 / 1550 ms
+  DOMContentLoaded            6554 / 6052 ms       6019 / 6516 ms (same bytes; unchanged)
+
+WARM (normal later visit: files from browser cache, 82 KB document)
+  sidebar complete            6053 / 6295 ms       288 / 291 ms
+  first contentful paint      1244 / 1280 ms       1152 / 472 ms
+  dashboard drawn             1519 / 1662 ms       1621 / 342 ms
+  DOMContentLoaded            6064 / 6325 ms       2549 / 1749 ms
+
+HARD REFRESH (Shift+reload: cache bypassed, no-cache sent. Served inline, like the cold load)
+  sidebar complete            6012 / 6541 ms       1071 / 1169 ms
+  first contentful paint      1392 / 1720 ms       1792 / 1328 ms
+  DOMContentLoaded            6048 / 6571 ms       6353 / 6638 ms
+
+  Before the change, the 92 NAV rows appeared at buildNav() (~1.5 s) and the 93rd,
+  #KBeautyBliss Spotted (in neither NAV nor LATE_NAV), only at DOMContentLoaded (~6 s).
+  On the first build of this lane, a throttled hard refresh painted 57 of 93 rows for 217 ms
+  because the line had delivered half of the <nav>. The <nav> now carries data-wait
+  (visibility:hidden) until the script printed after </nav> runs, so it paints whole.
+
+  Rejected after measuring: serving the files to a browser that does not have them. Cold
+  went to sidebar 1.1-1.5 s and dashboard 4.4 s, because ninety parallel files share the
+  line. Hence the cookie gate (App\Support\AdminConsoleAssets::serve).
+
+FILMSTRIPS (cold load, 0.5-7 s)
+  filmstrip-before.png   empty sidebar until about 1.5 s, then 92 rows
+  filmstrip-after.png    every row in the first painted frame
+
+CLICK BEFORE THE SCREEN'S SCRIPT HAS ARRIVED (tools/ap-early-click.cjs, Appearance -> Cart panel, throttled)
+  click at 1998 ms, window.go not yet defined  -> ends on "Cart panel", row lit, not the dashboard
+  click at 4491 ms, go defined, partial unparsed -> ends on "Cart panel", row lit, not the dashboard
+
+HIDE / SHOW BUTTON (tools/ap-shots.cjs). Admin: the panel icon at the left end of the top bar
+  1280 open      side x=0 w=248, main x=248 w=1032, aria-expanded=true,  label "Hide menu", scrollWidth 1280
+  1280 mid-slide side x=-219 (sliding), main x=29 (sliding)
+  1280 closed    side x=-248 visibility:hidden, main x=0 w=1280, aria-expanded=false, label "Show menu", scrollWidth 1280
+  1280 reload    <html class="side-closed"> already when the first <body> node is parsed (no flash)
+  1280 keyboard  focus + Enter reopens: side x=0, aria-expanded=true
+  390 phone      toggle not shown (display:none). The existing drawer (menu button) opens at x=0
+                 and closes after a row tap; scrollWidth 390
+  Slide: transform only (sidebar translateX, content plays a 248px transform keyframe),
+  0.26 s, none under prefers-reduced-motion.
+
+ROLES (server-side filter, tools/ap-role-shot.cjs)
+  owner 95 rows | manager 71 | editor 54 | support 5 (dash, orders, customers, quiz-leads, rev-all)
+  Before, every role was sent all 93 rows, including screens that answer that role with 403.
+
+EVERY SCREEN (tools/ap-walk.cjs: clicks all 94 rows + Console)
+  inline mode vs cached-files mode: same title, breadcrumb, lit row and errors on all 94.
+  One pre-existing failure in both modes and at HEAD: Store -> Analytics throws
+  "ReferenceError: sescHtml is not defined" (app.blade.php, anCardHead). Not this lane's.

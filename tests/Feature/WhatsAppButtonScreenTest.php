@@ -77,8 +77,12 @@ it('declares its sidebar row where the sidebar is built, as the partial declares
     $app = waFinished('resources/views/admin/app.blade.php');
     $src = (string) file_get_contents(resource_path('views/admin/partials/whatsapp-button-screen.blade.php'));
 
-    expect(substr_count($app, "{screen:'wabutton',label:'WhatsApp button',group:'Appearance',"
-        ."after:['pagewash','dividers','prodstyles','homepage'],"))->toBe(1);
+    // Lane AP: the declaration is App\Support\AdminNav's, placed directly
+    // after the first anchor the partial names.
+    $ids = array_keys(\App\Support\AdminNav::rows());
+    expect(\App\Support\AdminNav::rows()['wabutton']['label'] ?? null)->toBe('WhatsApp button')
+        ->and(\App\Support\AdminNav::rows()['wabutton']['sec'])->toBe('Appearance')
+        ->and($ids[array_search('wabutton', $ids, true) - 1])->toBe('pagewash');
 
     // The copy agrees with the partial's own call, anchor for anchor.
     expect($src)->toContain("after: ['pagewash', 'dividers', 'prodstyles', 'homepage']");

@@ -1193,8 +1193,11 @@ it('reaches the Tax tab from Business Details, and from the sidebar', function (
 
     // 3. The sidebar carries a Tax row of its own, so the word the owner is
     //    scanning the list for is in the list.
-    expect(preg_match("/\[\s*'tax'\s*,\s*'Tax'\s*,/", $html))
-        ->toBe(1, 'the sidebar has no Tax row');
+    //    Lane AP: the sidebar is App\Support\AdminNav's (server-rendered), not a NAV literal.
+    //    (This view is rendered with no account signed in, so its sidebar is
+    //    empty by design -- fail closed -- and the row is read from AdminNav.)
+    expect(\App\Support\AdminNav::rows()['tax']['label'] ?? null)
+        ->toBe('Tax', 'the sidebar has no Tax row');
 
     // 4. And the old home of the VAT rate points at the new one rather than
     //    dead-ending where he last saw it.

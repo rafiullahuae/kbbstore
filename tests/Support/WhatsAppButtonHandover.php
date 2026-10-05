@@ -66,6 +66,10 @@ final class WhatsAppButtonHandover
         $applied = [];
 
         foreach (self::blocks($base) as $b) {
+            if (RetiredNavLiterals::superseded($b['file'], $b['replacement'])) {
+                continue; // edited the retired NAV/LATE_NAV literals; the row is AdminNav's now (Lane AP)
+            }
+
             $src = $files[$b['file']] ??= (string) file_get_contents($base.'/'.$b['file']);
             $r = substr_count($src, $b['replacement']);
             $a = substr_count($src, $b['anchor']);

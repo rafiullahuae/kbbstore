@@ -34,6 +34,20 @@ return [
 
     /*
     |---------------------------------------------------------------------------
+    | Admin console: serve its static blocks as cached files (Lane AP)
+    |---------------------------------------------------------------------------
+    |
+    | The console's large <script>/<style> blocks that print byte for byte as
+    | written are built into public/build and served from there, cached, instead
+    | of inline in a document that is never cached. Only a block whose exact
+    | bytes the build holds is swapped -- see App\Support\AdminConsoleAssets.
+    | false keeps every block inline, which is how the console shipped before.
+    |
+    */
+    'admin_external_assets' => (bool) env('KBB_ADMIN_EXTERNAL_ASSETS', true),
+
+    /*
+    |---------------------------------------------------------------------------
     | Updater
     |---------------------------------------------------------------------------
     */

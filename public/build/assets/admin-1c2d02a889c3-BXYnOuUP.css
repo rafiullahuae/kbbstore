@@ -1,0 +1,129 @@
+
+/* Catalog → Product tabs. Built on the console's own tokens — --border, --r/
+   --r-sm/--r-xs, --sh-s, --surface-2/3, the ink scale — so the screen follows
+   the console theme instead of naming literals that cannot. */
+.kpt-wrap{display:grid;gap:16px;min-width:0}
+.kpt-wrap > *{min-width:0}
+.kpt-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);
+  border-radius:var(--r,18px);padding:18px;min-width:0;box-shadow:var(--sh-s)}
+.kpt-title{font-weight:680;font-size:15.5px;letter-spacing:-.01em;color:var(--ink,#101729)}
+.kpt-sub{color:var(--ink-soft,#626c80);font-size:12.5px;line-height:1.55;margin-top:4px;max-width:68ch}
+.kpt-note{border:1px solid var(--border,#e6e9f2);background:var(--surface-2,#f2f4fb);
+  border-radius:var(--r-sm,12px);padding:11px 13px;font-size:12.5px;line-height:1.55;
+  color:var(--ink-soft,#626c80);min-width:0;margin-top:12px}
+.kpt-note.is-bad{border-color:#f3c9c6;background:var(--red-soft,#fdeceb);color:#9d332c}
+.kpt-head{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;justify-content:space-between;min-width:0}
+.kpt-head > div{min-width:0;flex:1 1 220px}
+.kpt-btn{padding:8px 14px;border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);
+  background:var(--surface,#fff);color:var(--ink-2,#3c465c);font:inherit;font-size:12.5px;
+  font-weight:600;cursor:pointer;max-width:100%}
+.kpt-btn:hover{background:var(--surface-2,#f2f4fb)}
+.kpt-btn.is-primary{background:var(--accent,#15a85a);border-color:var(--accent,#15a85a);color:#fff}
+.kpt-btn.is-primary:hover{filter:brightness(1.05)}
+.kpt-mini{padding:5px 10px;border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);
+  background:var(--surface,#fff);color:var(--ink-2,#3c465c);font:inherit;font-size:11.5px;
+  font-weight:600;cursor:pointer;flex:none}
+.kpt-mini:hover{background:var(--surface-2,#f2f4fb)}
+.kpt-mini.is-danger{color:var(--red,#e3493f)}
+.kpt-mini[disabled]{opacity:.4;cursor:default}
+
+/* The ordered list. One row per tab, whatever kind it is. */
+.kpt-list{display:grid;gap:8px;min-width:0;margin-top:14px}
+.kpt-row{border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);
+  background:var(--surface-2,#f2f4fb);min-width:0;overflow:hidden}
+.kpt-row.is-builtin{background:var(--surface,#fff)}
+.kpt-rh{display:flex;align-items:center;gap:8px;padding:9px 11px;min-width:0;flex-wrap:wrap}
+.kpt-nm{font-size:12.5px;font-weight:620;color:var(--ink,#101729);line-height:1.35;
+  min-width:0;flex:1 1 150px;overflow-wrap:anywhere}
+.kpt-meta{display:block;font-size:11.5px;font-weight:500;color:var(--ink-soft,#626c80);line-height:1.4}
+.kpt-pill{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  border-radius:99px;padding:2px 8px;background:var(--surface-3,#e9ecf6);
+  color:var(--ink-soft,#626c80);flex:none}
+.kpt-pill.is-on{background:#e4f5ea;color:#1c6b36}
+.kpt-pill.is-off{background:#e9ecf6;color:#626c80}
+.kpt-pill.is-over{background:#fdf0d5;color:#8a5a00}
+.kpt-pill.is-hidden{background:#fdeceb;color:#9d332c}
+.kpt-ord{display:flex;gap:4px;flex:none}
+
+/* The editor, revealed under a row. */
+.kpt-edit{border-top:1px solid var(--border,#e6e9f2);background:var(--surface,#fff);
+  padding:14px 12px;display:grid;gap:12px;min-width:0}
+.kpt-f{display:grid;gap:5px;min-width:0}
+/* The control sits INSIDE its label rather than being joined to one by id.
+   Two ids would be two elements sharing a name the moment both editors are on
+   screen -- AdminNavAndIdsTest pins that across the console, and the console
+   has already lost a feature to it once. Nesting needs no id at all and the
+   association cannot go stale. */
+.kpt-f label{display:grid;gap:5px;min-width:0;font-size:11.5px;font-weight:650;
+  color:var(--ink-soft,#626c80);letter-spacing:.02em}
+.kpt-f label > input,.kpt-f label > select{font-weight:400}
+.kpt-f input[type=text],.kpt-f input[type=number],.kpt-f select{width:100%;box-sizing:border-box;
+  font:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--border,#e6e9f2);
+  border-radius:var(--r-xs,9px);background:var(--surface,#fff);color:var(--ink,#101729);min-width:0}
+.kpt-hint{font-size:11px;color:var(--ink-soft,#626c80);line-height:1.5}
+
+/* The rich-text pane. Same shape as the Pages editor's, with its own prefix. */
+.kpt-rte{border:1px solid var(--border,#e6e9f2);border-radius:10px;overflow:hidden;min-width:0}
+.kpt-rte-bar{display:flex;flex-wrap:wrap;gap:3px;padding:6px;background:var(--surface-2,#f2f4fb);
+  border-bottom:1px solid var(--border,#e6e9f2)}
+.kpt-rte-bar button{font:inherit;font-size:11.5px;font-weight:700;color:var(--ink-2,#3c465c);
+  background:transparent;border:1px solid transparent;border-radius:6px;padding:4px 8px;cursor:pointer}
+.kpt-rte-bar button:hover{background:var(--surface,#fff);border-color:var(--border,#e6e9f2)}
+.kpt-rte-area{padding:12px;font-size:13.5px;line-height:1.7;min-height:150px;outline:0;
+  background:var(--surface,#fff);color:var(--ink,#101729);overflow-wrap:break-word}
+.kpt-rte-area:empty:before{content:attr(data-ph);color:var(--ink-faint,#9aa3b5)}
+.kpt-rte-area p{margin:0 0 .7em}
+.kpt-rte-area h2{font-size:17px;margin:.7em 0 .35em}
+.kpt-rte-area h3{font-size:15px;margin:.7em 0 .35em}
+.kpt-rte-area ul,.kpt-rte-area ol{margin:0 0 .7em;padding-inline-start:1.4em}
+.kpt-rte-area img{max-width:100%;height:auto}
+
+/* Where it shows. The rule select, its chips and its tick lists. */
+.kpt-rule{border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);
+  background:var(--surface-2,#f2f4fb);padding:12px;display:grid;gap:10px;min-width:0}
+.kpt-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.kpt-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0;
+  padding:4px 6px 4px 10px;border-radius:99px;font-size:11.5px;font-weight:600;
+  background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);color:var(--ink-2,#3c465c)}
+.kpt-chip span{min-width:0;overflow-wrap:anywhere}
+.kpt-chip button{border:0;background:none;font:inherit;font-size:13px;line-height:1;
+  cursor:pointer;color:var(--ink-soft,#626c80);padding:0 4px;flex:none}
+.kpt-chip button:hover{color:var(--red,#e3493f)}
+/* A tick list, scrolled rather than grown: four levels of categories is a long
+   list and the Save button has to stay reachable on a phone. */
+.kpt-ticks{max-height:210px;overflow-y:auto;border:1px solid var(--border,#e6e9f2);
+  border-radius:var(--r-xs,9px);background:var(--surface,#fff);min-width:0}
+/* `.kpt-f label.kpt-tick` and not `.kpt-tick`, which is the whole of why this
+   rule needs saying twice. A tick is a <label> and it sits inside a `.kpt-f`,
+   so `.kpt-f label{display:grid}` -- the rule that stacks a field's caption
+   over its control -- was winning on equal specificity and stacking the
+   CHECKBOX over its own text. Measured, not guessed: the box rendered on the
+   right-hand end of a two-row cell. Raising the specificity fixes it without
+   touching the rule that every other field on this screen depends on. */
+.kpt-f label.kpt-tick{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;min-width:0;
+  font-size:12.5px;font-weight:500;letter-spacing:0;color:var(--ink,#101729);line-height:1.4;
+  border-bottom:1px solid var(--border,#e6e9f2);cursor:pointer}
+.kpt-tick:last-child{border-bottom:0}
+.kpt-tick:hover{background:var(--surface-2,#f2f4fb)}
+.kpt-tick input{margin:2px 0 0;flex:none}
+.kpt-tick span{min-width:0;overflow-wrap:anywhere}
+.kpt-tick small{display:block;color:var(--ink-soft,#626c80);font-size:11px}
+.kpt-picker{position:relative;min-width:0}
+.kpt-picker-results{position:absolute;z-index:40;left:0;right:0;top:calc(100% + 4px);
+  display:none;max-height:260px;overflow-y:auto;background:var(--surface,#fff);
+  border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);box-shadow:var(--sh-s)}
+
+/* The product picker. */
+.kpt-search{display:flex;gap:8px;flex-wrap:wrap;min-width:0;margin-top:12px}
+.kpt-search input{flex:1 1 200px;min-width:0;box-sizing:border-box;font:inherit;font-size:13px;
+  padding:8px 10px;border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);
+  background:var(--surface,#fff);color:var(--ink,#101729)}
+.kpt-hits{display:grid;gap:6px;margin-top:10px;min-width:0}
+.kpt-hit{display:flex;align-items:center;gap:9px;padding:8px 10px;min-width:0;width:100%;
+  border:1px solid var(--border,#e6e9f2);border-radius:var(--r-sm,12px);
+  background:var(--surface,#fff);cursor:pointer;text-align:start;font:inherit}
+.kpt-hit:hover{background:var(--surface-2,#f2f4fb)}
+.kpt-th{width:36px;height:36px;border-radius:8px;flex:none;background-size:cover;
+  background-position:center;background-color:var(--surface-2,#f2f4fb);
+  border:1px solid var(--border,#e6e9f2)}
+.kpt-hit .kpt-nm{flex:1 1 120px}

@@ -564,7 +564,8 @@ it('is wired at most once, so it is never registered twice', function () {
     $app = (string) file_get_contents(resource_path('views/admin/app.blade.php'));
     expect(substr_count($web, "require __DIR__ . '/seo-keywords-admin.php';") + substr_count($web, "require __DIR__.'/seo-keywords-admin.php';"))->toBeLessThanOrEqual(1)
         ->and(substr_count($app, "@include('admin.partials.seo-keywords-screen')"))->toBeLessThanOrEqual(1)
-        ->and(substr_count($app, "{screen:'seokeywords'"))->toBeLessThanOrEqual(1);
+        // Lane AP: the sidebar row is App\Support\AdminNav's (exactly one).
+        ->and(count(array_keys(array_keys(\App\Support\AdminNav::rows()), 'seokeywords', true)))->toBe(1);
 });
 
 it('prints every server string in the admin screen through esc()', function () {
