@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.388
+**WebP on every upload; Super Sale in the old site's order; page header
+controls with front-end editing; homepage brand images.** Apply after .387.
+Runs its migrations. Hard refresh after applying.
+
+| Your request | Now |
+|---|---|
+| "it's not converting auto ... still jpg" / "from anywhere i upload any image, it should be must converted to webp" | Every upload (Media page, brands, categories, banners, products) ends as WebP and is listed under its .webp name; each upload says "Saved as WebP · 113 KB → 41 KB" or exactly why not. Captions of pictures already converted are corrected |
+| "same squence and sorting of products as in original site https://kbeautybliss.com/super-sale/" | Pages → Page banners → Super Sale products → "Copy the order from kbeautybliss.com/super-sale/" (or `php artisan kbb:super-sale-order`). Only /super-sale/ changes |
+| "full control of super sale page header ... hide title ... image ... hide the all products button, count ... edit the inner page header from the front-end" | Pages → Page header (all custom pages or one page, laptop and phone apart), and an "Edit header" button on the page itself. Super Sale ships without the dot, count and All products button |
+| "include in the strip for desktop only 'Free skincare consultation'" | Added, laptop only; every strip item has "Shows on" (Pages → Page banners → Banners) |
+| "upload custom image for each brand ... mobile ... logo + image or only image or only text. keep by default only text ... desktop image + name, no logo" | Appearance → Homepage content → Top brands → Edit content → Brands tab (an image per brand) and Layout tab (Look · laptop, Look · phone) |
+
+Files: see the package's update.json.
+
 ## 2.60.387
 **Brand banner covers the phone header; automatic WebP on upload and in
 bulk.** Apply after .386. Runs the WebP migrations. Hard refresh after applying.
