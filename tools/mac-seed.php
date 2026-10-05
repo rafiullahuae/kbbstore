@@ -9,7 +9,7 @@ declare(strict_types=1);
  * database.
  *
  *   owner@example.com / PIN 482615   Full Admin (Rafi)
- *   ayesha@example.com / PIN 7391  Customer Support (Ayesha)
+ *   ayesha@example.com / PIN 739152 Customer Support (Ayesha)
  */
 
 use App\Services\OwnerApp\OwnerAppPath;
