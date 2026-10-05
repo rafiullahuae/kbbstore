@@ -250,3 +250,31 @@ home-indicator area. The owner checks each of these on a real device:
 - **iPad:** add it once.
 
 Findings feed one follow-up package if needed.
+
+## Scope as of 5 October (owner): build the app core only
+
+The owner: "skip the app addition icon etc. we are deciding on it for now ...
+just build the app for the site ... give me just one icon to test it". Phase 2
+therefore ships only the installable app: manifest, service worker (all the
+rules above), offline page, iOS/iPad head tags, ONE icon (1, white KB on the
+pink gradient: apple-touch 180, 192, 512, maskable 512), name "K-Beauty
+Bliss", and a minimal admin screen at **App → Site App** (on/off, default ON;
+the app name; a read-only icon preview; capability `siteapp.manage`, failing
+closed). He installs it from the browser's own menu.
+
+## Decided later (keep in the master plan)
+
+Nothing below is built; the code path leaves room for it without rework.
+
+- **How it is offered:** A bottom bar · B floating icon · C menu row +
+  My account row + one sheet after an order (recommended) · D top banner.
+  Letters combine.
+- **Button icon:** i expand arrows · ii phone + down arrow (recommended) ·
+  iii plus-in-square · iv the app icon.
+- **App icon:** 1 KB monogram (shipping now, for testing) · 2 wordmark ·
+  3 flower.
+- **"Not now" remembered for:** 30 days (proposed).
+- **Name under the icon:** "K-Beauty Bliss", with "KB Bliss" as the fallback
+  if a real iPhone cuts it.
+- **Back chevron in the installed iPhone app** on inner pages, if the device
+  check shows edge-swipe back is not enough.
