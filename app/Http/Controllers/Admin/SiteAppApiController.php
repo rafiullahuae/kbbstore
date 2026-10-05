@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Services\SiteApp;
+use App\Support\Url;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+/**
+ * App -> Site App (Lane PW): the whole app on or off, its name, and a
+ * read-only look at the icon. Nothing else is configurable yet — how the
+ * shop offers the install is decided later (docs/pw-preview/PLAN.md).
+ */
+final class SiteAppApiController extends Controller
+{
+    public function __construct(private SiteApp $app) {}
+
+    public function show(): JsonResponse
+    {
+        return response()->json($this->payload());
+    }
+
+    public function save(Request $request): JsonResponse
+    {
+        $in = $request->json()->all();
+        if (! is_array($in) || $in === []) {
+            return response()->json(['ok' => false, 'error' => 'Nothing to save.'] + $this->payload(), 422);
+        }
+
+        $r = $this->app->save($in);
+        if (! $r['ok']) {
+            return response()->json(['ok' => false, 'error' => $r['error']] + $this->payload(), 422);
+        }
+
+        return response()->json(['ok' => true] + $this->payload());
+    }
+
+    /** @return array<string,mixed> */
+    private function payload(): array
+    {
+        $icons = [];
+        foreach (SiteApp::ICONS as $key => [$size, $purpose]) {
+            $icons[] = ['key' => $key, 'size' => $size, 'purpose' => $purpose ?? 'apple-touch-icon', 'url' => SiteApp::iconUrl($key)];
+        }
+
+        return [
+            'values' => $this->app->all(),
+            'name_max' => SiteApp::NAME_MAX,
+            'icons' => $icons,
+            'links' => [
+                'manifest' => Url::raw('/manifest.webmanifest'),
+                'worker' => Url::raw('/sw.js'),
+                'offline' => Url::raw('/offline'),
+                'shop' => Url::raw('/'),
+            ],
+        ];
+    }
+}

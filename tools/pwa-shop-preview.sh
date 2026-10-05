@@ -70,6 +70,11 @@ mkdir -p "$SRC/storage/framework/views" "$SRC/storage/framework/sessions" \
          "$SRC/storage/framework/cache/data" "$SRC/storage/logs" "$SRC/storage/app/public" \
          "$SRC/bootstrap/cache"
 
+# Lane PW's wiring, applied to the COPY only (routes/web.php and the console
+# are the integrator's files): exactly the edits docs/pwa-wiring.json records.
+mkdir -p "$SRC/docs" && cp "$APP/docs/pwa-wiring.json" "$SRC/docs/pwa-wiring.json"
+php "$SRC/tools/pwa-wire.php" --skip-docs >/dev/null
+
 # The front controller finds the application by walking a candidate list; this
 # is the name on it that puts the copy where it will look.
 ln -sfn "$SRC" "$DIR/kbb-upgrade-app"
@@ -90,6 +95,7 @@ export KBB_PUBLIC_PATH="$ROOT" APP_ENV=local APP_DEBUG=true \
 
 php "$SRC/artisan" migrate --force >"$DIR/migrate.log" 2>&1 || { tail -30 "$DIR/migrate.log"; exit 1; }
 php "$SRC/artisan" db:seed --class=DemoCatalogueSeeder --force >>"$DIR/migrate.log" 2>&1 || true
+php "$SRC/artisan" tinker --execute="\\App\\Models\\AdminUser::create(['name' => 'Preview Owner', 'email' => 'owner@preview.test', 'password' => 'preview-secret-1', 'role' => 'owner']);" >>"$DIR/migrate.log" 2>&1 || true
 
 cp "$APP/tools/m1-router.php" "$ROOT/router.php"
 

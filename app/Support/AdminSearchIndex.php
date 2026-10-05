@@ -766,6 +766,10 @@ final class AdminSearchIndex
         'pageheader' => [
             'All custom pages' => ['Breadcrumb', 'Title', 'Product count', 'Intro', 'Dot', 'Header picture', 'Picture height', 'Position', 'Alignment'],
         ],
+        // App -> Site App (Lane PW): the shop as a Home Screen app.
+        'siteapp' => [
+            '' => ['Site App', 'App name', 'Icon', 'Add it to a phone', 'Home Screen', 'Install app', 'Service worker', 'Offline page'],
+        ],
         'pagebanners' => [
             'Banners' => ['Desktop picture', 'Phone picture', 'Alt text', 'Show the strip', 'Strip colour', 'Strip height', 'Text size', 'Tick size'],
             'Where they show' => [],

@@ -58,6 +58,13 @@ class PageController extends Controller
          * mounted, which is the guard doing exactly its job.
          */
         'import-chain',
+        /*
+         * The shop as a Home Screen app (Lane PW): /site-app/icons/{name}.png
+         * and /offline, the page its service worker shows when the network
+         * fails. Both are mounted above the page routes, so an article at
+         * either slug would be unreachable rather than shadowing them.
+         */
+        'site-app', 'offline',
         // Catalogue
         'shop', 'product', 'collections', 'product-category', 'cart', 'checkout', 'quick-view',
         'new-in', 'best-sellers', 'super-sale', 'everything-under-54-aed',

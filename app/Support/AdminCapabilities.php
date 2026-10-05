@@ -483,6 +483,13 @@ final class AdminCapabilities
         // five above, and its own capability for the same reason. (Lane WA)
         'wabutton.manage' => ['owner', 'manager', 'editor'],
 
+        // App -> Site App (Lane PW): whether the shop is an installable Home
+        // Screen app at all -- the manifest, and a service worker on every
+        // shopper's phone -- and the app's name. Its own capability, owner and
+        // manager: switching a worker on or off for every visitor is a platform
+        // decision, not an appearance tweak, so editors do not get it by default.
+        'siteapp.manage' => ['owner', 'manager'],
+
         // Pages → Page banners: the promo picture and strip on the custom pages
         // (/super-sale/ and the content pages), which page shows which, and
         // which products /super-sale/ lists. Storefront content printed on
@@ -1661,6 +1668,8 @@ final class AdminCapabilities
         ['*', 'admin-api/page-wash', 'pagewash.manage'],
         // One line and no '/**' sibling: no sub-endpoint here either. (Lane WA)
         ['*', 'admin-api/whatsapp-button', 'wabutton.manage'],
+        // One line and no '/**' sibling: no sub-endpoint. (Lane PW)
+        ['*', 'admin-api/site-app', 'siteapp.manage'],
         // One line and no '/**' sibling: no sub-endpoint. (Lane SS)
         ['*', 'admin-api/page-banners', 'pagebanners.manage'],
         // 2.60.388: copy /super-sale/'s order from the old site (one fixed URL).

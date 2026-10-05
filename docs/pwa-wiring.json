@@ -1,0 +1,74 @@
+[
+  {
+    "n": 1,
+    "file": "routes/web.php",
+    "count": 1,
+    "what": "the shop's Home Screen app files (manifest, worker, icons, offline page), inside the stateless group at the top, under wallet-domain.php",
+    "anchor": "    require __DIR__.'/wallet-domain.php';\n});",
+    "replacement": "    require __DIR__.'/wallet-domain.php';\n\n    // The shop as a Home Screen app (Lane PW): manifest, service worker,\n    // icons and offline page. Stateless for the same reason as the files\n    // above: public, identical for everybody, never a Set-Cookie.\n    require __DIR__.'/site-app.php';\n});"
+  },
+  {
+    "n": 2,
+    "file": "routes/web.php",
+    "count": 1,
+    "what": "App -> Site App endpoints, inside the guarded admin-api group, under the WhatsApp button",
+    "anchor": "        require __DIR__.'/whatsapp-button-admin.php';\n",
+    "replacement": "        require __DIR__.'/whatsapp-button-admin.php';\n        require __DIR__.'/site-app-admin.php';   // App -> Site App (Lane PW)\n"
+  },
+  {
+    "n": 3,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "the new top-level sidebar group \"App\", directly after Platform, holding its first row, Site App (static, like Page header). Owner App (another lane) joins it with kbbAddNavEntry({group:'App', after:['siteapp']}), which gives that row the NAV anchor AdminNavAndIdsTest requires",
+    "anchor": "  {sec:'Safety',items:[",
+    "replacement": "  {sec:'App',group:true,items:[['siteapp','Site App','<rect x=\"7\" y=\"2.5\" width=\"10\" height=\"19\" rx=\"2.5\"/><path d=\"M11 18.5h2\"/><path d=\"M10 9l2 2 2-2\"/><path d=\"M12 6v5\"/>']]},\n  {sec:'Safety',items:["
+  },
+  {
+    "n": 4,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "the breadcrumb and page title, after Page header",
+    "anchor": "'pageheader':['Pages','Page header'],",
+    "replacement": "'pageheader':['Pages','Page header'],'siteapp':['App','Site App'],"
+  },
+  {
+    "n": 5,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "arm the deep-link replay (?go=siteapp on a cold load), before 'spotted' so MarketingEmailsScreenTest's tail stays whole",
+    "anchor": "'emails-edit','spotted','mkt-email']);",
+    "replacement": "'emails-edit','siteapp','spotted','mkt-email']);"
+  },
+  {
+    "n": 6,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "load the screen, after Page header",
+    "anchor": "@include('admin.partials.page-header-screen')\n",
+    "replacement": "@include('admin.partials.page-header-screen')\n\n{{-- App -> Site App (Lane PW): the shop as a Home Screen app -- on/off, its\n     name, a read-only look at the icon. It wraps window.go for 'siteapp'; its sidebar row\n     is the static NAV entry in the App group. --}}\n@include('admin.partials.site-app-screen')\n"
+  },
+  {
+    "n": 7,
+    "file": "docs/GS-ADMIN-APP-BLOCKS.md",
+    "count": 2,
+    "what": "keep this lane's handover record in step with block 5 (it quotes the whole LATE_RENDERED line)",
+    "anchor": "'emails-edit','spotted','mkt-email']);",
+    "replacement": "'emails-edit','siteapp','spotted','mkt-email']);"
+  },
+  {
+    "n": 8,
+    "file": "docs/BG-ADMIN-APP-BLOCKS.md",
+    "count": 1,
+    "what": "keep this lane's handover record in step with block 5 (it quotes the whole LATE_RENDERED line)",
+    "anchor": "'emails-edit','spotted','mkt-email']);",
+    "replacement": "'emails-edit','siteapp','spotted','mkt-email']);"
+  },
+  {
+    "n": 9,
+    "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
+    "count": 1,
+    "what": "keep this lane's handover record in step with block 5 (it quotes the whole LATE_RENDERED line)",
+    "anchor": "'emails-edit','spotted','mkt-email']);",
+    "replacement": "'emails-edit','siteapp','spotted','mkt-email']);"
+  }
+]

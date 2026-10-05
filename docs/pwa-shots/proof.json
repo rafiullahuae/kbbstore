@@ -1,0 +1,395 @@
+{
+ "installable": {
+  "errors": [],
+  "manifestUrl": "http://127.0.0.1:8731/manifest.webmanifest",
+  "manifestErrors": [],
+  "name": "K-Beauty Bliss"
+ },
+ "registration": {
+  "loadEventEnd": 522,
+  "siteAppJsStart": 324,
+  "siteAppJsBytes": 1183,
+  "fcp": 512,
+  "scope": "controlled"
+ },
+ "navigations": {
+  "basketAttempted": true,
+  "basketInCart": true,
+  "via": {
+   "/": {
+    "status": 200,
+    "fromServiceWorker": true
+   },
+   "/shop/": {
+    "status": 200,
+    "fromServiceWorker": true
+   },
+   "/product/relief-sun-rice-probiotics-spf50/": {
+    "status": 200,
+    "fromServiceWorker": true
+   },
+   "/cart/": {
+    "status": 200,
+    "fromServiceWorker": false
+   },
+   "/checkout/": {
+    "status": 200,
+    "fromServiceWorker": false
+   },
+   "/my-account/": {
+    "status": 200,
+    "fromServiceWorker": false
+   },
+   "/my-wishlist/": {
+    "status": 200,
+    "fromServiceWorker": false
+   },
+   "/track-my-order/": {
+    "status": 200,
+    "fromServiceWorker": false
+   },
+   "/admin/login": {
+    "status": 200,
+    "fromServiceWorker": true
+   },
+   "/blog/": {
+    "status": 200,
+    "fromServiceWorker": true
+   }
+  }
+ },
+ "cachesAfterBrowsing": [
+  {
+   "cache": "kbb-shell-70c657787cbc",
+   "url": "/offline",
+   "type": "text/html; charset=utf-8"
+  },
+  {
+   "cache": "kbb-shell-70c657787cbc",
+   "url": "/site-app/icons/icon-192.png?v=6f31fb9cdb",
+   "type": "image/png"
+  },
+  {
+   "cache": "kbb-assets-v1",
+   "url": "/site-app.js?v=cd2ee656d6",
+   "type": "application/javascript; charset=utf-8"
+  },
+  {
+   "cache": "kbb-assets-v1",
+   "url": "/build/assets/outfit-latin-Bc-8i84L.woff2",
+   "type": "font/woff2"
+  },
+  {
+   "cache": "kbb-assets-v1",
+   "url": "/build/assets/app-Cfk1PW2Y.js",
+   "type": "application/javascript"
+  },
+  {
+   "cache": "kbb-assets-v1",
+   "url": "/build/assets/kbb-grid-skins-IQtiqDWU.css",
+   "type": "text/css; charset=UTF-8"
+  },
+  {
+   "cache": "kbb-assets-v1",
+   "url": "/build/assets/kbb-C09KW26c.css",
+   "type": "text/css; charset=UTF-8"
+  },
+  {
+   "cache": "kbb-assets-v1",
+   "url": "/build/assets/kbb-shop-BsFsL-jK.css",
+   "type": "text/css; charset=UTF-8"
+  },
+  {
+   "cache": "kbb-assets-v1",
+   "url": "/build/assets/kbb-product-BtVtcOOP.css",
+   "type": "text/css; charset=UTF-8"
+  },
+  {
+   "cache": "kbb-assets-v1",
+   "url": "/build/assets/kbb-pdp-trust-Dax_IKaE.css",
+   "type": "text/css; charset=UTF-8"
+  },
+  {
+   "cache": "kbb-assets-v1",
+   "url": "/build/assets/pdp-trust-CLra4tho.js",
+   "type": "application/javascript"
+  },
+  {
+   "cache": "kbb-assets-v1",
+   "url": "/build/assets/kbb-cart-K0T8xTU5.css",
+   "type": "text/css; charset=UTF-8"
+  },
+  {
+   "cache": "kbb-assets-v1",
+   "url": "/build/assets/kbb-checkout-tBQLYxs4.css",
+   "type": "text/css; charset=UTF-8"
+  },
+  {
+   "cache": "kbb-img-v1",
+   "url": "/uploads/demo-shots/relief-sun-rice-probiotics-spf50-1-front.png",
+   "type": "image/png"
+  },
+  {
+   "cache": "kbb-img-v1",
+   "url": "/uploads/demo-shots/relief-sun-rice-probiotics-spf50-2-texture.png",
+   "type": "image/png"
+  },
+  {
+   "cache": "kbb-img-v1",
+   "url": "/uploads/demo-shots/relief-sun-rice-probiotics-spf50-3-ingredients.png",
+   "type": "image/png"
+  },
+  {
+   "cache": "kbb-img-v1",
+   "url": "/uploads/demo-shots/relief-sun-rice-probiotics-spf50-4-on-skin.png",
+   "type": "image/png"
+  },
+  {
+   "cache": "kbb-img-v1",
+   "url": "/uploads/demo-shots/relief-sun-rice-probiotics-spf50-5-box.png",
+   "type": "image/png"
+  }
+ ],
+ "post": {
+  "status": 419
+ },
+ "offline": {
+  "shop": {
+   "title": "You are offline · K-Beauty Bliss",
+   "h1": "You are offline"
+  },
+  "cart": {
+   "browserError": "page.goto: net::ERR_INTERNET_DISCONNECTED at http://127.0.0.1:8731/cart/"
+  }
+ },
+ "update": {
+  "before": [
+   "kbb-shell-70c657787cbc"
+  ],
+  "after": [
+   "kbb-shell-47337d8cd685"
+  ],
+  "changed": true
+ },
+ "standalone": {
+  "iphone-se": {
+   "home": {
+    "label": "home",
+    "standalone": false,
+    "vw": 375,
+    "vh": 647,
+    "scrollWidth": 375,
+    "parts": {
+     "header": {
+      "l": 0,
+      "t": 0,
+      "r": 375,
+      "b": 127
+     },
+     "whatsapp": {
+      "l": 271,
+      "t": 539,
+      "r": 331,
+      "b": 599
+     },
+     "tabbar": null,
+     "sticky": null
+    },
+    "outside": []
+   },
+   "drawer": {
+    "l": 86,
+    "t": 0,
+    "r": 375,
+    "b": 647,
+    "vw": 375,
+    "vh": 647
+   }
+  },
+  "iphone-14": {
+   "home": {
+    "label": "home",
+    "standalone": false,
+    "vw": 390,
+    "vh": 763,
+    "scrollWidth": 390,
+    "parts": {
+     "header": {
+      "l": 0,
+      "t": 0,
+      "r": 390,
+      "b": 127
+     },
+     "whatsapp": {
+      "l": 286,
+      "t": 655,
+      "r": 346,
+      "b": 715
+     },
+     "tabbar": null,
+     "sticky": null
+    },
+    "outside": []
+   },
+   "drawer": {
+    "l": 90,
+    "t": 0,
+    "r": 390,
+    "b": 763,
+    "vw": 390,
+    "vh": 763
+   }
+  },
+  "iphone-15": {
+   "home": {
+    "label": "home",
+    "standalone": false,
+    "vw": 393,
+    "vh": 759,
+    "scrollWidth": 393,
+    "parts": {
+     "header": {
+      "l": 0,
+      "t": 0,
+      "r": 393,
+      "b": 127
+     },
+     "whatsapp": {
+      "l": 289,
+      "t": 651,
+      "r": 349,
+      "b": 711
+     },
+     "tabbar": null,
+     "sticky": null
+    },
+    "outside": []
+   },
+   "drawer": {
+    "l": 90,
+    "t": 0,
+    "r": 393,
+    "b": 759,
+    "vw": 393,
+    "vh": 759
+   }
+  },
+  "iphone-pro-max": {
+   "home": {
+    "label": "home",
+    "standalone": false,
+    "vw": 430,
+    "vh": 839,
+    "scrollWidth": 430,
+    "parts": {
+     "header": {
+      "l": 0,
+      "t": 0,
+      "r": 430,
+      "b": 127
+     },
+     "whatsapp": {
+      "l": 326,
+      "t": 731,
+      "r": 386,
+      "b": 791
+     },
+     "tabbar": null,
+     "sticky": null
+    },
+    "outside": []
+   },
+   "drawer": {
+    "l": 99,
+    "t": 0,
+    "r": 430,
+    "b": 839,
+    "vw": 430,
+    "vh": 839
+   }
+  },
+  "ipad": {
+   "home": {
+    "label": "home",
+    "standalone": false,
+    "vw": 820,
+    "vh": 1156,
+    "scrollWidth": 820,
+    "parts": {
+     "header": {
+      "l": 0,
+      "t": 0,
+      "r": 820,
+      "b": 71
+     },
+     "whatsapp": {
+      "l": 716,
+      "t": 1048,
+      "r": 776,
+      "b": 1108
+     },
+     "tabbar": null,
+     "sticky": null
+    },
+    "outside": []
+   },
+   "drawer": {
+    "l": 440,
+    "t": 0,
+    "r": 820,
+    "b": 1156,
+    "vw": 820,
+    "vh": 1156
+   }
+  },
+  "ipad-pro": {
+   "home": {
+    "label": "home",
+    "standalone": false,
+    "vw": 1024,
+    "vh": 1342,
+    "scrollWidth": 1024,
+    "parts": {
+     "header": {
+      "l": 0,
+      "t": 0,
+      "r": 1024,
+      "b": 94
+     },
+     "whatsapp": {
+      "l": 912,
+      "t": 1230,
+      "r": 972,
+      "b": 1290
+     },
+     "tabbar": null,
+     "sticky": null
+    },
+    "outside": []
+   },
+   "drawer": {
+    "l": 644,
+    "t": 0,
+    "r": 1024,
+    "b": 1342,
+    "vw": 1024,
+    "vh": 1342
+   }
+  }
+ },
+ "off": {
+  "saved": 200,
+  "manifestLink": false,
+  "registrations": 0,
+  "kbbCaches": [],
+  "manifestStatus": 404
+ },
+ "on": 200,
+ "consoleProblems": [
+  "error http://127.0.0.1:8731/ Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "--- a deliberate POST without a CSRF token: its 419 proves it reached the server, not the worker ---",
+  "http 419 POST http://127.0.0.1:8731/api/subscribe",
+  "error http://127.0.0.1:8731/blog/ Failed to load resource: the server responded with a status of 419 (unknown status)",
+  "--- switching the app OFF: a 404 for the manifest after this line is the switch working ---"
+ ]
+}

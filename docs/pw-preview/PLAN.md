@@ -278,3 +278,36 @@ Nothing below is built; the code path leaves room for it without rework.
   if a real iPhone cuts it.
 - **Back chevron in the installed iPhone app** on inner pages, if the device
   check shows edge-swipe back is not enough.
+
+## Phase 2 as built (app core only)
+
+What the plan above said, and what changed after reading the code:
+
+- **The manifest is localised by query, not by path.** `Locale::localisable()`
+  refuses any path whose last segment has a dot, so `/ar/manifest.webmanifest`
+  can't exist. An Arabic page links `/manifest.webmanifest?lang=ar`. The
+  language comes from the enabled-locale allowlist and never from the
+  request. Both languages are the same app (`id: "/"`).
+- **The registration script is served by the shop, not by the Vite bundle.**
+  `/site-app.js?v=<hash>` is deferred, 1.2 KB, and immutable under its hash.
+  This means no shared `public/build` rebuild, and no inline script for the
+  report-only CSP to flag.
+- **Icons are served the same way.** `/site-app/icons/{name}.png?v=<hash>`
+  serves allowlisted names only. They are drawn by `tools/pwa-icons.cjs` in
+  the shop's own Outfit 800.
+- **No `theme-color` meta on the page.** It would tint the browser bar for
+  every ordinary visitor. The colour lives in the manifest only.
+- **No viewport change.** The storefront viewport stays without
+  `viewport-fit=cover`, so iOS keeps the installed app's page out of the
+  notch and home-indicator areas. All fixed elements were measured inside
+  the screen at five installed-app sizes. The owner's device test confirms
+  it.
+- **Standalone documents included.** The head block is also in the four
+  documents that do not use the layout (blog, article, review wall, skin
+  quiz), so every storefront page can be installed from. That makes 37
+  pages, pinned by `StorefrontEnglishUnchangedTest`. Nothing else on any
+  page moved.
+- **Admin placement.** App → Site App is a static NAV row in the new App
+  group. A row registered by a partial must anchor on a NAV id
+  (AdminNavAndIdsTest), and an empty group has none. Owner App can register
+  `after:['siteapp']`.

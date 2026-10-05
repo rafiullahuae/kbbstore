@@ -203,6 +203,7 @@ final class AdminRoles
         ['storefront', 'Storefront tools', [
             'storefront.adminbar' => 'See the admin bar on the shop',
             'storefront.quick_edit' => 'Quick-edit category and brand headers on the shop',
+            'siteapp.manage' => 'Site App: make the shop an installable Home Screen app, and its name',
         ]],
         ['marketing', 'Marketing', [
             'marketing.view' => 'See newsletter, coupons and labels',

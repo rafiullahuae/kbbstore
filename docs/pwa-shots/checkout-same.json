@@ -1,0 +1,40 @@
+{
+ "block": {
+  "controlled": false,
+  "add": {
+   "status": 200,
+   "viaWorker": false
+  },
+  "cart": {
+   "status": 200,
+   "viaWorker": false,
+   "items": 1
+  },
+  "checkout": {
+   "status": 200,
+   "viaWorker": false,
+   "form": true
+  },
+  "cachedPages": []
+ },
+ "allow": {
+  "controlled": true,
+  "add": {
+   "status": 200,
+   "viaWorker": false
+  },
+  "cart": {
+   "status": 200,
+   "viaWorker": false,
+   "items": 1
+  },
+  "checkout": {
+   "status": 200,
+   "viaWorker": false,
+   "form": true
+  },
+  "cachedPages": [
+   "kbb-shell-70c657787cbc /offline"
+  ]
+ }
+}

@@ -30,6 +30,7 @@
 @endverbatim
 {!! $seo ?? '' !!}
 {!! app(\App\Services\Analytics::class)->headTags() !!}
+@include('partials.site-app-head')
 {{-- Outfit, served by this shop rather than by Google.            (Lane BG)
      The twin of the Arabic-face include below, which did the same for Cairo
      and left the Latin half linking a render-blocking third-party stylesheet.
