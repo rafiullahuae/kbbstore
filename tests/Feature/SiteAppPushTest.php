@@ -26,7 +26,7 @@ use Tests\Support\SiteAppPushRoutes;
  * about to allow notifications, after install when the open the app".
  */
 
-function sapNode(): string
+function ntSaNode(): string
 {
     $node = trim((string) shell_exec('command -v node 2>/dev/null'));
     if ($node === '') {
@@ -36,7 +36,7 @@ function sapNode(): string
     return $node;
 }
 
-function sapSet(string $key, mixed $value, bool $autoload = true): void
+function ntSaSet(string $key, mixed $value, bool $autoload = true): void
 {
     Setting::query()->updateOrCreate(['key' => $key], ['value' => is_array($value) ? json_encode($value) : $value, 'autoload' => $autoload]);
     Setting::flushMap();
@@ -45,19 +45,19 @@ function sapSet(string $key, mixed $value, bool $autoload = true): void
 }
 
 /** A subscription exactly as Chrome's PushSubscription.toJSON() gives one, with a real P-256 point. */
-function sapSub(string $endpoint = 'https://fcm.googleapis.com/fcm/send/abc:DEF123'): array
+function ntSaSub(string $endpoint = 'https://fcm.googleapis.com/fcm/send/abc:DEF123'): array
 {
     $key = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
 
     return ['endpoint' => $endpoint, 'keys' => ['p256dh' => WebPush::b64u(WebPush::publicPoint($key)), 'auth' => WebPush::b64u(random_bytes(16))]];
 }
 
-function sapCustomer(): Customer
+function ntSaCustomer(): Customer
 {
     return Customer::create(['name' => 'Push Shopper', 'email' => 'push-'.uniqid().'@example.test', 'password' => 'password123']);
 }
 
-function sapOrder(?Customer $customer, array $address): Order
+function ntSaOrder(?Customer $customer, array $address): Order
 {
     static $seq = 0;
     $seq++;
@@ -72,14 +72,14 @@ function sapOrder(?Customer $customer, array $address): Order
 }
 
 /** The subscriber token the response set, decrypted the way EncryptCookies reads it back. */
-function sapToken($response): string
+function ntSaToken($response): string
 {
     $raw = collect($response->headers->getCookies())->first(fn ($c) => $c->getName() === SiteAppPush::COOKIE)->getValue();
 
     return \Illuminate\Cookie\CookieValuePrefix::remove(decrypt($raw, false));
 }
 
-function sapLogin(Customer $c): array
+function ntSaLogin(Customer $c): array
 {
     return ['login_customer_'.sha1(\Illuminate\Auth\SessionGuard::class) => $c->id];
 }
@@ -108,8 +108,8 @@ it('answers the installed app with whether to ask, the shop\'s one VAPID key and
 it('answers in Arabic once the Arabic is approved, and in English until then', function () {
     /* DEFECT: the strings hard-coded in English in the script. MUTATION: drop
        the $locale argument from __() in SiteAppPush::config() -> red. */
-    sapSet(Locale::SETTING_ENABLED, '1');
-    sapSet(Locale::SETTING_RTL, '1');
+    ntSaSet(Locale::SETTING_ENABLED, '1');
+    ntSaSet(Locale::SETTING_RTL, '1');
     TranslationStore::flush();
     $this->artisan('migrate', ['--path' => 'database/migrations/2027_08_28_130100_seed_site_app_push_arabic_drafts.php', '--force' => true]);
 
@@ -133,14 +133,14 @@ it('stores a real subscription once, upserting by endpoint, with the session\'s 
        would let anybody attach their phone to somebody else's account.
        MUTATION: use insert() in SiteAppPush::store() -> count 2; read
        $request->input('customer_id') -> the id check is red. */
-    $sub = sapSub();
-    $mine = sapCustomer();
-    $other = sapCustomer();
+    $sub = ntSaSub();
+    $mine = ntSaCustomer();
+    $other = ntSaCustomer();
 
     $this->postJson('/api/site-app/push', $sub + ['lang' => 'en', 'customer_id' => $other->id])->assertOk()->assertExactJson(['ok' => true]);
     expect(DB::table('site_app_push_subscriptions')->value('customer_id'))->toBeNull();
 
-    $this->withSession(sapLogin($mine))
+    $this->withSession(ntSaLogin($mine))
         ->postJson('/api/site-app/push', $sub + ['lang' => 'en', 'customer_id' => $other->id])->assertOk();
     $this->flushSession();
     $this->postJson('/api/site-app/push', $sub + ['lang' => 'en'])->assertOk();          // a later guest sync keeps the link
@@ -165,7 +165,7 @@ it('refuses an endpoint off the push-service allowlist, plain http, bad keys and
        every send fail. MUTATION: drop WebPush::allowedEndpoint() from
        SiteAppPush::clean() -> the evil hosts are stored; drop the MAX_BODY
        check -> the 413 line is red. */
-    $good = sapSub();
+    $good = ntSaSub();
     $bad = [
         'other host' => ['endpoint' => 'https://evil.example/fcm.googleapis.com'] + $good,
         'lookalike' => ['endpoint' => 'https://fcm.googleapis.com.evil.example/x'] + $good,
@@ -187,7 +187,7 @@ it('refuses an endpoint off the push-service allowlist, plain http, bad keys and
 
     // Each real push service is accepted.
     foreach (['https://fcm.googleapis.com/fcm/send/a', 'https://web.push.apple.com/QJ', 'https://updates.push.services.mozilla.com/wpush/v2/a', 'https://wns2-par02p.notify.windows.com/w/?token=a'] as $ep) {
-        $this->postJson('/api/site-app/push', sapSub($ep))->assertOk();
+        $this->postJson('/api/site-app/push', ntSaSub($ep))->assertOk();
     }
     expect(DB::table('site_app_push_subscriptions')->count())->toBe(4);
 });
@@ -202,16 +202,16 @@ it('is rate limited per address', function () {
 });
 
 it('answers 404 to all three while the Site App is off', function () {
-    sapSet(SiteApp::SETTING, ['on' => false, 'name' => 'K-Beauty Bliss']);
+    ntSaSet(SiteApp::SETTING, ['on' => false, 'name' => 'K-Beauty Bliss']);
     $this->getJson('/api/site-app/push')->assertNotFound()->assertExactJson(['ok' => false]);
-    $this->postJson('/api/site-app/push', sapSub())->assertNotFound();
+    $this->postJson('/api/site-app/push', ntSaSub())->assertNotFound();
     $this->postJson('/api/site-app/push/off', ['endpoint' => 'x'])->assertNotFound();
 });
 
 it('drops the shop app\'s subscriptions when the VAPID pair is replaced, as it does the owner app\'s', function () {
     /* DEFECT: rows bound to a key that no longer exists, every send refused.
        MUTATION: take site_app_push_subscriptions out of VapidKeys::generate(). */
-    $this->postJson('/api/site-app/push', sapSub())->assertOk();
+    $this->postJson('/api/site-app/push', ntSaSub())->assertOk();
     VapidKeys::forget();
     VapidKeys::generate();
     expect(DB::table('site_app_push_subscriptions')->count())->toBe(0);
@@ -259,9 +259,9 @@ it('adds nothing to a page: the question lives in site-app.js and its strings co
  * site-app.js in node, with a browser stubbed around it. $setup runs before
  * the script; $after runs once its promises settle. Returns $after's value.
  */
-function sapRun(array $env, string $after = 'return state;'): mixed
+function ntSaRun(array $env, string $after = 'return state;'): mixed
 {
-    $node = sapNode();
+    $node = ntSaNode();
     $src = json_encode((string) file_get_contents(resource_path('site-app/site-app.js')));
     $cfg = json_encode($env + ['standalone' => true, 'perm' => 'default', 'np' => 0, 'ask' => true, 'now' => 1_800_000_000_000]);
     $key = json_encode(VapidKeys::publicKey());
@@ -328,7 +328,7 @@ it('shows the sheet only in the installed app with the permission undecided, and
        Chrome turns into a blocked quiet prompt; or the sheet in a browser tab.
        MUTATION: call requestPermission() in notify() -> askedBeforeTap is 1;
        drop standalone() from plan() -> the tab case shows a sheet. */
-    $s = sapRun([], "allow.on.click[0](); await tick(); await tick(); return state;");
+    $s = ntSaRun([], "allow.on.click[0](); await tick(); await tick(); return state;");
     expect($s['sheet'])->toBeTrue()
         ->and($s['askedBeforeTap'])->toBe(0)
         ->and($s['asked'])->toBe(1)
@@ -339,7 +339,7 @@ it('shows the sheet only in the installed app with the permission undecided, and
         ->and(array_keys($s['posted']['body']))->toBe(['endpoint', 'keys', 'lang'])
         ->and($s['ls'])->toHaveKey('kbb.sa.np');
 
-    $tab = sapRun(['standalone' => false]);
+    $tab = ntSaRun(['standalone' => false]);
     expect($tab['sheet'])->toBeFalse()->and($tab['fetches'])->toBe([]);         // a browser tab: not even a request
 });
 
@@ -347,13 +347,13 @@ it('never asks again after denied, holds "Not now" for seven days, and does not 
     /* MUTATION: return 'ask' for 'denied' in plan() -> the first line is red;
        change ASK_AGAIN_DAYS to 0 -> the second is red. */
     $now = 1_800_000_000_000;
-    expect(sapRun(['perm' => 'denied'])['fetches'])->toBe([])
-        ->and(sapRun(['np' => $now - 6 * 864e5])['fetches'])->toBe([])
-        ->and(sapRun(['np' => $now - 8 * 864e5])['sheet'])->toBeTrue()
-        ->and(sapRun(['ask' => false])['sheet'])->toBeFalse();
+    expect(ntSaRun(['perm' => 'denied'])['fetches'])->toBe([])
+        ->and(ntSaRun(['np' => $now - 6 * 864e5])['fetches'])->toBe([])
+        ->and(ntSaRun(['np' => $now - 8 * 864e5])['sheet'])->toBeTrue()
+        ->and(ntSaRun(['ask' => false])['sheet'])->toBeFalse();
 
     // Arabic: the sheet takes the page's direction.
-    expect(sapRun(['lang' => 'ar', 'dir' => 'rtl'])['dir'])->toBe('rtl');
+    expect(ntSaRun(['lang' => 'ar', 'dir' => 'rtl'])['dir'])->toBe('rtl');
 });
 
 it('keeps the browser\'s question inside the click handler, statically', function () {
@@ -372,7 +372,7 @@ it('turns a push into one notification and opens only an address on this shop', 
     /* DEFECT: a payload url sending the shopper to another site (or
        javascript:). MUTATION: return url.href without the origin test in
        shopUrl() -> the evil url survives. */
-    $node = sapNode();
+    $node = ntSaNode();
     $sw = json_encode((string) $this->get('/sw.js')->assertOk()->getContent());
     $js = <<<JS
 const vm = require('vm');
@@ -409,7 +409,7 @@ it('gives the phone a random HttpOnly subscriber cookie and records a coarse pla
     /* DEFECT: PII in the cookie, a cookie script can read, or the full user
        agent stored. MUTATION: pass httpOnly false to ->cookie() -> red. */
     $ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148';
-    $r = $this->withHeaders(['User-Agent' => $ua])->postJson('/api/site-app/push', sapSub())->assertOk();
+    $r = $this->withHeaders(['User-Agent' => $ua])->postJson('/api/site-app/push', ntSaSub())->assertOk();
     $c = collect($r->headers->getCookies())->first(fn ($c) => $c->getName() === SiteAppPush::COOKIE);
 
     expect($c)->not->toBeNull()
@@ -417,8 +417,8 @@ it('gives the phone a random HttpOnly subscriber cookie and records a coarse pla
         ->and($c->getSameSite())->toBe('lax');
     $row = DB::table('site_app_push_subscriptions')->first();
     expect($row->platform)->toBe('ios')
-        ->and($row->cookie_hash)->toBe(hash('sha256', sapToken($r)))
-        ->and(sapToken($r))->toMatch('/\A[0-9a-f]{32}\z/')
+        ->and($row->cookie_hash)->toBe(hash('sha256', ntSaToken($r)))
+        ->and(ntSaToken($r))->toMatch('/\A[0-9a-f]{32}\z/')
         ->and(json_encode($row))->not->toContain('iPhone OS');
     expect(SiteAppPush::platform('Mozilla/5.0 (Linux; Android 14; Pixel 8)'))->toBe('android')
         ->and(SiteAppPush::platform('Mozilla/5.0 (Windows NT 10.0; Win64; x64)'))->toBe('desktop');
@@ -428,19 +428,19 @@ it('locates the phone without asking: the shopper\'s last order first, else the 
     /* DEFECT: a location prompt (the owner: "no disturbance to the customer"),
        or a header guess overwriting a real address. MUTATION: drop the
        `!== 'order'` guard in SiteAppPush::store() -> the last region is Dubai. */
-    $none = sapSub('https://fcm.googleapis.com/fcm/send/none');
+    $none = ntSaSub('https://fcm.googleapis.com/fcm/send/none');
     $this->postJson('/api/site-app/push', $none)->assertOk();
     expect(DB::table('site_app_push_subscriptions')->where('endpoint_hash', hash('sha256', $none['endpoint']))->value('location_source'))->toBeNull();
 
-    $ip = sapSub('https://fcm.googleapis.com/fcm/send/ip');
+    $ip = ntSaSub('https://fcm.googleapis.com/fcm/send/ip');
     $this->withHeaders(['CF-IPCountry' => 'AE', 'CF-Region' => 'Dubai', 'CF-IPCity' => "Dubai\x01"])->postJson('/api/site-app/push', $ip)->assertOk();
     $row = DB::table('site_app_push_subscriptions')->where('endpoint_hash', hash('sha256', $ip['endpoint']))->first();
     expect([$row->country, $row->region, $row->city, $row->location_source])->toBe(['AE', 'Dubai', 'Dubai', 'ip-header']);
 
-    $c = sapCustomer();
-    sapOrder($c, ['city' => 'Sharjah', 'state' => 'Sharjah', 'country' => 'AE']);
-    $ord = sapSub('https://fcm.googleapis.com/fcm/send/ord');
-    $this->withSession(sapLogin($c))->withHeaders(['CF-IPCountry' => 'AE', 'CF-Region' => 'Dubai'])->postJson('/api/site-app/push', $ord)->assertOk();
+    $c = ntSaCustomer();
+    ntSaOrder($c, ['city' => 'Sharjah', 'state' => 'Sharjah', 'country' => 'AE']);
+    $ord = ntSaSub('https://fcm.googleapis.com/fcm/send/ord');
+    $this->withSession(ntSaLogin($c))->withHeaders(['CF-IPCountry' => 'AE', 'CF-Region' => 'Dubai'])->postJson('/api/site-app/push', $ord)->assertOk();
     $this->flushSession();
     $this->withHeaders(['CF-IPCountry' => 'AE', 'CF-Region' => 'Dubai'])->postJson('/api/site-app/push', $ord)->assertOk();   // a guess never replaces an order
     $row = DB::table('site_app_push_subscriptions')->where('endpoint_hash', hash('sha256', $ord['endpoint']))->first();
@@ -454,19 +454,19 @@ it('links an order placed from a subscribed phone to its row, by the cookie alon
     /* DEFECT: order updates that can never reach the phone that ordered, or a
        hook that costs a query on every order. MUTATION: drop the
        SiteAppPush::orderPlaced() call from the Order::created hook -> red. */
-    $r = $this->postJson('/api/site-app/push', sapSub())->assertOk();
-    $token = sapToken($r);
-    $c = sapCustomer();
+    $r = $this->postJson('/api/site-app/push', ntSaSub())->assertOk();
+    $token = ntSaToken($r);
+    $c = ntSaCustomer();
 
     $q = 0;
     DB::listen(function () use (&$q) { $q++; });
-    sapOrder($c, ['city' => 'Abu Dhabi', 'state' => 'Abu Dhabi', 'country' => 'AE']);   // no cookie on this request
+    ntSaOrder($c, ['city' => 'Abu Dhabi', 'state' => 'Abu Dhabi', 'country' => 'AE']);   // no cookie on this request
     $without = $q;
     expect(DB::table('site_app_push_subscriptions')->value('customer_id'))->toBeNull();
 
     $this->app['request']->cookies->set(SiteAppPush::COOKIE, $token);
     $q = 0;
-    sapOrder($c, ['city' => 'Al Ain', 'state' => 'Abu Dhabi', 'country' => 'AE']);
+    ntSaOrder($c, ['city' => 'Al Ain', 'state' => 'Abu Dhabi', 'country' => 'AE']);
     $row = DB::table('site_app_push_subscriptions')->first();
     expect([(int) $row->customer_id, $row->region, $row->city, $row->location_source])->toBe([$c->id, 'Abu Dhabi', 'Al Ain', 'order'])
         ->and($q)->toBeLessThanOrEqual($without + 3);                     // the cookie read and one UPDATE, no more
@@ -483,8 +483,8 @@ it('records an out-of-stock product a subscribed phone viewed, once, and nothing
     // No cookie: the same answer, nothing stored.
     $this->postJson('/api/site-app/push/viewed', ['product_id' => $oos->id])->assertExactJson(['ok' => true]);
 
-    $r = $this->postJson('/api/site-app/push', sapSub())->assertOk();
-    $token = sapToken($r);
+    $r = $this->postJson('/api/site-app/push', ntSaSub())->assertOk();
+    $token = ntSaToken($r);
     foreach ([$oos->id, $oos->id, $in->id, 999999] as $pid) {
         $this->withCredentials()->withCookie(SiteAppPush::COOKIE, $token)->postJson('/api/site-app/push/viewed', ['product_id' => $pid])->assertExactJson(['ok' => true]);
     }
@@ -500,11 +500,11 @@ it('records an out-of-stock product a subscribed phone viewed, once, and nothing
 
 it('sends the out-of-stock beacon only from a synced phone on a sold-out page, once per product per session', function () {
     /* MUTATION: drop the `when(SYNC)` test in interest() -> the unsynced case posts. */
-    $s = sapRun(['perm' => 'granted', 'synced' => true, 'oos' => true]);
+    $s = ntSaRun(['perm' => 'granted', 'synced' => true, 'oos' => true]);
     expect($s['viewed'])->toBe([42]);
-    expect(sapRun(['perm' => 'granted', 'synced' => false, 'oos' => true])['viewed'])->toBe([])
-        ->and(sapRun(['perm' => 'granted', 'synced' => true, 'oos' => false])['viewed'])->toBe([])
-        ->and(sapRun(['perm' => 'granted', 'synced' => true, 'oos' => true, 'seen' => '42'])['viewed'])->toBe([]);
+    expect(ntSaRun(['perm' => 'granted', 'synced' => false, 'oos' => true])['viewed'])->toBe([])
+        ->and(ntSaRun(['perm' => 'granted', 'synced' => true, 'oos' => false])['viewed'])->toBe([])
+        ->and(ntSaRun(['perm' => 'granted', 'synced' => true, 'oos' => true, 'seen' => '42'])['viewed'])->toBe([]);
 });
 
 it('keeps the route file mounted at most once', function () {
