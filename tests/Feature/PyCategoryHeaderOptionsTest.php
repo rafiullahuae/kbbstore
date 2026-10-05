@@ -460,7 +460,8 @@ describe('Catalog -> Categories -> Edit -> Category header', function () {
 
         $fresh = $c->fresh();
         expect($fresh->header_image)->toBe('/uploads/categories/lips.jpg')
-            ->and($fresh->header_style)->toBe(['align' => 'center', 'treatment' => 'label', 'box' => 'lilac', 'title_phone' => 56]);
+            // MySQL's JSON column hands keys back in its own order; compare by key, strictly.
+            ->and(collect($fresh->header_style)->sortKeys()->all())->toBe(['align' => 'center', 'box' => 'lilac', 'title_phone' => 56, 'treatment' => 'label']);
 
         // Catalog -> Catalog's own Categories tab sends no header keys at all.
         $this->putJson('/admin-api/categories/'.$c->id, ['name' => 'Lip Care', 'slug' => 'py-lip-care', 'description' => 'New.'])
