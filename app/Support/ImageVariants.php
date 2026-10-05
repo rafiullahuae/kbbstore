@@ -747,6 +747,36 @@ final class ImageVariants
     }
 
     /**
+     * THE HOMEPAGE #KBeautyBliss SPOTTED GRID (`ul.spt-sgl`).         Lane PS
+     *
+     * WHAT GOOGLE REPORTED (PageSpeed, extrabeauty.ae, 5 Oct 2026): the six
+     * pictures were served as their 586 x 699 originals (~100 KB each) for
+     * "displayed dimensions (219x284)" -- device pixels at Lighthouse's 1.75
+     * ratio, i.e. 125 CSS px -- with no srcset, although the admin upload had
+     * already made their 200w and 400w copies.
+     *
+     * MEASURED IN CHROMIUM on the Lane PS preview (`li` img width, CSS px), not
+     * read off the stylesheet; kbb.css:4558 is three columns in a 780px box,
+     * gap 6px to 900px and 12px above; "Six in a row" drops the box:
+     *
+     *   vw      three   declared        six   declared
+     *   412      125    136 (33vw)       60    70 (17vw)
+     *   700      209    231              102   119
+     *   900      256    297              135   153
+     *  1280      252    256              191   218
+     *  1920      252    256              261   270
+     *
+     * Every row is at or a shade ABOVE the box, the direction that cannot make
+     * the picture soft. Paired with detailSrcsetFor(), which names the
+     * original at its real width, so a box wider than 400 device pixels takes
+     * the original exactly as it does with no srcset.
+     */
+    public static function spottedGridSizesAttribute(bool $six): string
+    {
+        return $six ? '(max-width: 1680px) 17vw, 270px' : '(max-width: 900px) 33vw, 256px';
+    }
+
+    /**
      * A STORED image column, as a path split() will accept.          Lane PERF
      *
      * ── THE DEFECT THIS EXISTS FOR ──────────────────────────────────────────

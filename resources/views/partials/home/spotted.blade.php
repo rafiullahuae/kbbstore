@@ -51,9 +51,14 @@
 @endphp
 <section class="sec {{ $spt['classes'] }} spt-sg{{ $spt['g6'] ? ' spt-g6' : '' }}{{ $sptBtn !== '' && $spt['btn_top'] ? ' spt-btn-d-top' : '' }}{{ $sptRow }}" style="{{ $spt['style'] }}" aria-labelledby="spt-h"><div class="wrap">
   <div class="sh spt-head"><div><h2 id="spt-h">{{ $sptTitle }}</h2>@if ($spt['sub'] !== '')<p>{{ $spt['sub'] }}</p>@endif</div>@if ($sptBtn !== '')<span class="spt-hbtn">{!! $sptBtn !!}</span>@endif</div>
-  <ul class="spt-sgl">
+  {{-- THE SIX PICTURES OFFER THEIR COPIES (Lane PS). PageSpeed, 5 Oct 2026:
+       "This image file is larger than it needs to be (586x699) for its
+       displayed dimensions (219x284)", ~100 KB each, no srcset -- although the
+       admin upload had made the 200w/400w copies. detailSrcsetFor() names the
+       original at its real width, so no box is ever handed a smaller file than
+       it needs; with no copies on disk it is '' and the tag is the old one. --}}<ul class="spt-sgl">
 @foreach ($sptSvc->grid() as $g)
-    <li><a class="spt-sgc" href="{{ $g['href'] }}" aria-label="{{ $g['alt'] }}"@if ($g['external']) target="_blank" rel="noopener"@endif>@if ($g['src'] !== '')<img src="{{ $g['src'] }}" alt="{{ $g['alt'] }}" width="500" height="600" loading="lazy" decoding="async">@else<span class="spt-sgph">{!! \App\Services\SpottedSettings::CAMERA !!}</span>@endif</a></li>
+    <li><a class="spt-sgc" href="{{ $g['href'] }}" aria-label="{{ $g['alt'] }}"@if ($g['external']) target="_blank" rel="noopener"@endif>@if ($g['src'] !== '')<img src="{{ $g['src'] }}" alt="{{ $g['alt'] }}"@if (($sptSet = \App\Support\ImageVariants::detailSrcsetFor($g['src'])) !== '') srcset="{{ $sptSet }}" sizes="{{ \App\Support\ImageVariants::spottedGridSizesAttribute($spt['g6']) }}"@endif width="500" height="600" loading="lazy" decoding="async">@else<span class="spt-sgph">{!! \App\Services\SpottedSettings::CAMERA !!}</span>@endif</a></li>
 @endforeach
   </ul>
 @if ($sptBtn !== '')
