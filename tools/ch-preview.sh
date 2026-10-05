@@ -11,7 +11,7 @@
 # that worktree was removed when the branch merged -- the screenshots are a
 # deliverable, so the thing that produces them has to travel with the branch.
 set -e
-APP=/home/user/lane-ch
+APP=$(cd "$(dirname "$0")/.." && pwd)
 DIR=$APP/storage/framework/testing/ch-preview
 ROOT=$DIR/webroot
 DB=$DIR/preview.sqlite
