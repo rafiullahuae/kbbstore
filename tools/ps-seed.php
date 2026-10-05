@@ -59,15 +59,15 @@ foreach (Product::query()->orderBy('id')->get() as $i => $p) {
     $p->save();
 }
 
-/* 2. Spotted: /uploads/appearance/, 586 x 699, copies made as on upload. */
-if (\Illuminate\Support\Facades\Schema::hasTable('spotted_posts')) {
-    foreach (\App\Models\SpottedPost::query()->orderBy('id')->get() as $i => $post) {
-        $rel = 'uploads/appearance/20261005-0848'.(20 + $i).'-ps'.$i.'.webp';
-        $grain(public_path($rel), 586, 699, $pal[$i % 6], 7000 + $i, 90);
-        \App\Support\ImageVariants::generate('/'.$rel);
-        $post->image = '/'.$rel;
-        $post->save();
-    }
+/* 2. The Spotted GRID (what the live homepage draws: `ul.spt-sgl`), whose six
+      pictures are settings (spotted_grid_N_img) uploaded through the admin:
+      /uploads/appearance/, 586 x 699, with the copies MediaUploadController
+      makes on upload. */
+foreach (range(1, 6) as $n) {
+    $rel = 'uploads/appearance/20261005-0848'.(20 + $n).'-ps'.$n.'.webp';
+    $grain(public_path($rel), 586, $n % 2 ? 699 : 704, $pal[$n % 6], 7000 + $n, 90);
+    \App\Support\ImageVariants::generate('/'.$rel);
+    app(\App\Services\SettingsService::class)->set(\App\Services\SpottedSettings::PREFIX.'grid_'.$n.'_img', '/'.$rel);
 }
 
 /* 3. The first slide's phone picture, 864 x 920, with copies (an upload). */
@@ -81,6 +81,11 @@ if ($first !== null) {
     $first->image_m_h = 920;
     $first->save();
 }
+
+/* 4. The two-column feature WITHOUT photos, as the live homepage draws it: the
+      report's link-name failure is `a.hs-fim` with only a gradient. */
+app(\App\Services\SettingsService::class)->set('home_ft_l_img', '');
+app(\App\Services\SettingsService::class)->set('home_ft_r_img', '');
 
 \App\Services\SettingsService::forgetMemo();
 \Illuminate\Support\Facades\Cache::flush();
