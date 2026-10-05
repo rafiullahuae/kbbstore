@@ -304,9 +304,9 @@ function oaSecHostCase($test, AdminUser $owner): void
 
     // Bad hosts are refused, and an empty one puts the app back.
     foreach (['https://owner.example.test', 'owner.example.test/', 'owner', '203.0.113.9', 'owner.example.test:8443', '-x.example.com', ['a']] as $bad) {
-        $test->actingAs($owner, 'admin')->putJson('/admin-api/owner-app/security', ['host' => $bad])->assertStatus(422);
+        $test->actingAs($owner, 'admin')->putJson('http://localhost/admin-api/owner-app/security', ['host' => $bad])->assertStatus(422);
     }
-    $test->actingAs($owner, 'admin')->putJson('/admin-api/owner-app/security', ['host' => ''])->assertOk()->assertJsonPath('security.host', '');
+    $test->actingAs($owner, 'admin')->putJson('http://localhost/admin-api/owner-app/security', ['host' => ''])->assertOk()->assertJsonPath('security.host', '');
     expect(OwnerAppPath::host())->toBeNull();
 }
 

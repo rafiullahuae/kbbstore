@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Services\OwnerApp\OwnerAppPath;
 use App\Support\PrivateSurfaces;
 use Closure;
 use Illuminate\Http\Request;
@@ -39,6 +40,28 @@ final class PrivateNoIndex
 {
     public function handle(Request $request, Closure $next): Response
     {
+        /*
+         * THE APP'S OWN HOST SERVES THE APP AND NOTHING ELSE (2.60.402). With a
+         * dedicated host set and pointed at this server, every shop page used
+         * to answer there too -- noindexed, but the shop's scripts (and any
+         * third-party tag) then ran on the app's own origin, which is the one
+         * thing the dedicated host exists to prevent. Anything on that host
+         * outside the app's path is a bare 404 before any shop code runs.
+         * Case-sensitive, as the router is.
+         */
+        if (PrivateSurfaces::isPrivateHost($request->getHost())) {
+            $app = OwnerAppPath::current();
+            $path = trim($request->path(), '/');
+            if ($app === null || ($path !== $app && ! str_starts_with($path, $app.'/'))) {
+                return response('', 404, [
+                    'X-Robots-Tag' => PrivateSurfaces::ROBOTS,
+                    'Referrer-Policy' => 'no-referrer',
+                    'Cache-Control' => 'no-store',
+                    'Content-Type' => 'text/plain; charset=UTF-8',
+                ]);
+            }
+        }
+
         $response = $next($request);
 
         if ($this->isPrivate($request)) {

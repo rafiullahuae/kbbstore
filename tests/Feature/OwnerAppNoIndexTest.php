@@ -291,3 +291,32 @@ it('classifies paths without reading a setting for the fixed half', function () 
         ->and(PrivateSurfaces::isPrivateRoot('upcycled-serum'))->toBeFalse()
         ->and(PrivateSurfaces::isPrivatePath('/'.OwnerAppPath::current().'/sw.js'))->toBeTrue();
 });
+
+it('serves the app and nothing else on its own host: every other path is a bare 404 before shop code runs', function () {
+    // 2.60.402, the gap lane OA3 reported: with the dedicated host set, shop
+    // pages answered there (noindexed), so the shop's scripts and third-party
+    // tags ran on the app's own origin -- the isolation the host exists for.
+    // MUTATION: delete the host block at the top of PrivateNoIndex::handle()
+    // -> the shop home answers 200 on the owner host, red.
+    $owner = OA::admin();
+    OA::member($owner);
+
+    try {
+        OwnerAppPath::setHost('owner.example.test');
+        oa3Rewire();
+        $base = OA::base();
+        $h = 'http://owner.example.test';
+
+        foreach (['/', '/robots.txt', '/shop/', '/sitemap.xml', strtoupper($base)] as $path) {
+            $r = $this->flushHeaders()->get($h.$path);
+            expect($r->status())->toBe(404, $path)
+                ->and($r->getContent())->toBe('', $path)
+                ->and($r->headers->get('X-Robots-Tag'))->toBe(OA3_ROBOTS, $path);
+        }
+        expect($this->flushHeaders()->get($h.$base)->status())->toBe(200)
+            ->and($this->flushHeaders()->get('http://localhost/')->status())->toBe(200);
+    } finally {
+        OwnerAppPath::setHost('');
+        oa3Rewire();
+    }
+});
