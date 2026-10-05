@@ -261,7 +261,8 @@ it('answers both halves of the screen from the one endpoint', function () {
     expect($photo[0]['value'])->toBe(0);
     expect($photo[2]['value'])->toBe('0');
     expect($photo[3]['type'])->toBe('colour');
-    expect($photo[3]['value'])->toBe('#1F9D55');
+    // Lane CT: the approved contrast green (white on it 5.04:1; was #1F9D55, 3.49).
+    expect($photo[3]['value'])->toBe('#1A7F45');
 
     // Not merely present: a field carries what the renderer needs to draw it.
     $first = $body['layout'][1]['fields'][0];

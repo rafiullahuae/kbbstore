@@ -56,7 +56,7 @@
 <style id="kbb-ugc-style">
 /* ── tokens, R3's own, literal ─────────────────────────────────────────── */
 .kbb-ugc{
-  --ugc-ink:#2A2228; --ugc-ink2:#5E545A; --ugc-muted:#8C828A;
+  --ugc-ink:#2A2228; --ugc-ink2:#5E545A; --ugc-muted:#756C74;
   --ugc-pink:#E0567B; --ugc-pink-deep:#C13E63; --ugc-gold:#BE8E2E;
   --ugc-sale:#E23A4E; --ugc-line:rgba(42,34,40,.10);
   /* The star inside the WHITE card. #FFC53D was chosen for a 78%-alpha scrim

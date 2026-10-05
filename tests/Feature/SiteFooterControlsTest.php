@@ -197,9 +197,13 @@ it('uses the shop\'s own pinks, red and orange for the strip, drifting within th
         ->toContain('.kft-bt-p{background:#fff;color:var(--kft-accent,#C13E63);')
         ->and($css)->toContain("@media (prefers-reduced-motion:reduce){\n  .kft-motion .kft-help,.kft-motion .kft-name{animation:none}");
 
-    // Three of the four defaults are the shop's own tokens: --pink, --pink-deep, --sale.
+    // Two of the four defaults are the shop's own tokens: --pink-deep, --sale.
+    // ▲ Lane CT moved --pink to #C6395F for text contrast; the help strip's
+    // first stop stays #E0567B on purpose — it is a gradient under 17-22px bold
+    // white words (3:1 large text), the owner's approved footer, and was not in
+    // the contrast approval.
     $root = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
-    expect($root)->toContain('--pink:#E0567B; --pink-deep:#C13E63;')->toContain('--sale:#E23A4E;');
+    expect($root)->toContain('--pink:#C6395F; --pink-deep:#C13E63;')->toContain('--sale:#E23A4E;');
 
     $style = (string) (preg_match('#<footer class="[^"]*" style="([^"]*)"#', hfFooter($this), $m) ? $m[1] : '');
     expect($style)->toStartWith('--kft-from:#E0567B;--kft-c2:#C13E63;--kft-c3:#E23A4E;--kft-to:#D9603B;');

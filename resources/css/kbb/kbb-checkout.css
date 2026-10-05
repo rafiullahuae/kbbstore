@@ -16,9 +16,9 @@
  * ========================================================================== */
 
 .kbb-checkout{
-  --pink:#E0567B;--pink-deep:#C13E63;--pink-ink:#A82F53;
+  --pink:#C6395F;--pink-deep:#C13E63;--pink-ink:#A82F53;
   --cream:#FFF8F5;--pink-soft:#FFF0F4;--blush:#FCE0E8;
-  --ink:#2A2228;--ink-2:#5E545A;--muted:#8C828A;
+  --ink:#2A2228;--ink-2:#5E545A;--muted:#756C74;
   --line:rgba(42,34,40,.12);--line-2:rgba(42,34,40,.06);
   --sale:#E23A4E;--green:#2E9E6B;--r:13px;
   --sans:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;

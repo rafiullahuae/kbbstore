@@ -106,7 +106,8 @@ it('sends nothing at all while the shop is on its shipped colour', function () {
 
     // Case, because ModuleSchema's colour cast upper-cases and the picker sends
     // lower case, and both spellings have been in this column.
-    foreach (['#E0567B', '#e0567b', '#E0567b'] as $same) {
+    // Lane CT: the shipped colour is the approved #C6395F (was #E0567B).
+    foreach (['#C6395F', '#c6395f', '#C6395f'] as $same) {
         app(SettingsService::class)->set('brand_accent', $same);
         expect(BrandAccent::css())->toBe('', $same.' is the shipped colour and should emit nothing');
     }
@@ -161,7 +162,7 @@ it('puts the accent after the document\'s own stylesheet, or it loses the tie', 
     foreach (['/reviews/', '/skin-quiz/', '/skincare-guide/'] as $path) {
         $html = $this->followingRedirects()->get($path)->getContent();
 
-        $own = strpos($html, '--pink:#E0567B');
+        $own = strpos($html, '--pink:#C6395F');   // Lane CT: was #E0567B
         $accent = strpos($html, 'kbb-brand-accent');
 
         expect($own)->not->toBeFalse($path.' no longer declares its own --pink, so this guard asserts nothing');

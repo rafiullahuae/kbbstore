@@ -1,7 +1,10 @@
 :root{
-    --bg:#fff; --cream:#FFF8F5; --pink-soft:#FFF0F4; --blush:#FCE0E8; --pink:#E0567B; --pink-deep:#C13E63; --pink-ink:#A82F53;
-    --ink:#2A2228; --ink-2:#5E545A; --muted:#8C828A; --line:rgba(42,34,40,.10); --line-2:rgba(42,34,40,.06);
+    --bg:#fff; --cream:#FFF8F5; --pink-soft:#FFF0F4; --blush:#FCE0E8; --pink:#C6395F; --pink-deep:#C13E63; --pink-ink:#A82F53;
+    --ink:#2A2228; --ink-2:#5E545A; --muted:#756C74; --line:rgba(42,34,40,.10); --line-2:rgba(42,34,40,.06);
     --sale:#E23A4E; --gold:#BE8E2E; --green:#2E9E6B;
+    /* Lane CT: three text colours the contrast pass gave a name of their own, so
+       Appearance -> Product styles -> Colour can move each one (ProductStyles). */
+    --kbb-was:#796C75; --kbb-save:#1F7A50; --kbb-wa-foot:#27865B;
     --r-s:10px; --r-m:16px; --r-l:24px; --sh-s:0 1px 2px rgba(42,34,40,.05),0 4px 14px rgba(42,34,40,.06);
     --sh-m:0 14px 40px -18px rgba(42,34,40,.28); --sh-l:0 24px 60px -22px rgba(42,34,40,.4); --sans:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
     --ease:cubic-bezier(.22,.61,.36,1);--mw:min(68vw,300px);--sw:min(58vw,250px);
@@ -701,6 +704,7 @@
   .fcol .logo{color:#fff}.fcol .logo span{color:var(--pink)}
   .wa{display:inline-flex;align-items:center;gap:9px;background:var(--green);color:#fff;border-radius:99px;padding:11px 18px;font-size:13px;font-weight:700;margin-top:6px}
   .wa svg{width:17px;height:17px}
+  .fcol a.wa{background:var(--kbb-wa-foot,#27865B);color:#fff}
   .fcontact{font-size:14px;font-weight:700;color:#fff;margin:14px 0 4px}
   .fbot{border-top:1px solid rgba(255,255,255,.12);padding-top:20px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center;font-size:12px;color:#9A8C93}
   .fpay{display:flex;gap:8px;flex-wrap:wrap}.fpay span{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px 10px;font-size:10.5px;font-weight:700;color:#CDBFC6}
@@ -1620,7 +1624,7 @@ body{padding-bottom:46px}
 .kbb-home .rstep .rp b{color:var(--ink);font-size:12px}
 .kbb-home .rall{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;
       background:var(--ink);color:#fff;border-radius:12px;padding:14px;font-size:14px;font-weight:600}
-.kbb-home .rall span{background:#E9F6EF;color:var(--green);border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:700}
+.kbb-home .rall span{background:#E9F6EF;color:var(--kbb-save,#1F7A50);border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:700}
 .kbb-home .rall:hover{background:var(--pink-d)}
 .kbb-home .bd{display:flex;align-items:center;justify-content:center;min-height:62px}
 .kbb-home .bname{display:flex;align-items:center;gap:9px}
@@ -1697,17 +1701,17 @@ body{padding-bottom:46px}
 .kbb-badge{position:absolute;top:9px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;font-family:'Outfit',sans-serif;color:#fff;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .kbb-badge-new{inset-inline-start:9px;background:linear-gradient(135deg,#1cc36a,#12965a)}
 .kbb-badge-sale{inset-inline-end:9px;background:linear-gradient(135deg,#ff6f91,#C13E63)}
-.kbb-card-cat{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#8C828A;font-weight:600;margin-bottom:2px}
-.kbb-card-brand{color:#8C828A;font-weight:700}
-.kbb-card-sdesc{font-size:11.5px;color:#8C828A;margin-top:3px;line-height:1.4}
+.kbb-card-cat{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#756C74);font-weight:600;margin-bottom:2px}
+.kbb-card-brand{color:var(--muted,#756C74);font-weight:700}
+.kbb-card-sdesc{font-size:11.5px;color:var(--muted,#756C74);margin-top:3px;line-height:1.4}
 .kbb-card-rate{margin-top:4px;display:flex;align-items:center;gap:4px;font-size:12px}
 .kbb-crate{letter-spacing:1px}
 .kbb-cstar{color:#E3DADF}
 .kbb-cstar.on{color:#FFB400}
-.kbb-card-rc{color:#8C828A;font-size:11px}
-.kbb-card-reg{color:#b3aab0;font-weight:500;text-decoration:line-through;font-size:12px}
+.kbb-card-rc{color:var(--muted,#756C74);font-size:11px}
+.kbb-card-reg{color:var(--kbb-was,#796C75);font-weight:500;text-decoration:line-through;font-size:12px}
 .kbb-card-price{color:#C13E63;font-weight:700}
-.kbb-card-cart{margin-top:8px;display:block;text-align:center;border:0;background:#E0567B;color:#fff;border-radius:9px;padding:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
+.kbb-card-cart{margin-top:8px;display:block;text-align:center;border:0;background:#C6395F;color:#fff;border-radius:9px;padding:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
 .kbb-pgrid .kbb-card{display:flex;flex-direction:column;height:100%}
 .kbb-pgrid .kbb-card>.kbb-card-thumb{flex:none}
 .kbb-pgrid .kbb-card>.cb{flex:1;display:flex;flex-direction:column}
@@ -1738,7 +1742,7 @@ body:not(.pc-norate) .kbb-pgrid:not([data-skin="horizontal"]):not([data-skin="ov
 .kbb-pgrid[data-skin="spotlight"] .cp{display:inline-flex;align-items:center;gap:6px;background:#FFF0F4;padding:5px 12px;border-radius:20px;margin-top:8px}
 .kbb-pgrid[data-skin="editorial"] .kbb-card{border:0;background:none;text-align:center}
 .kbb-pgrid[data-skin="editorial"] .cb{padding:14px 6px}
-.kbb-pgrid[data-skin="editorial"] .kbb-card-brand{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:10px;color:#8C828A;margin-bottom:4px}
+.kbb-pgrid[data-skin="editorial"] .kbb-card-brand{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:10px;color:var(--muted,#756C74);margin-bottom:4px}
 .kbb-pgrid[data-skin="editorial"] .cn{font-weight:500}
 .kbb-pgrid[data-skin="editorial"] .kbb-card-rate,.kbb-pgrid[data-skin="editorial"] .cp{justify-content:center}
 .kbb-pgrid[data-skin="editorial"] .kbb-card-thumb{overflow:hidden}
@@ -1790,7 +1794,7 @@ body:not(.pc-norate) .kbb-pgrid:not([data-skin="horizontal"]):not([data-skin="ov
 .kbb-pgrid[data-skin="split"] .kbb-card{border:0;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 8px 22px rgba(42,34,40,.08)}
 .kbb-pgrid[data-skin="split"] .cb{background:#FFF0F4;padding:14px}
 .kbb-pgrid[data-skin="split"] .kbb-card-cat{color:#C13E63}
-.kbb-pgrid[data-skin="split"] .cp{display:inline-flex;align-items:center;gap:6px;background:#E0567B;padding:5px 12px;border-radius:20px;margin-top:8px}
+.kbb-pgrid[data-skin="split"] .cp{display:inline-flex;align-items:center;gap:6px;background:#C6395F;padding:5px 12px;border-radius:20px;margin-top:8px}
 .kbb-pgrid[data-skin="split"] .cp .kbb-card-price{color:#fff}
 .kbb-pgrid[data-skin="split"] .cp .kbb-card-reg{color:rgba(255,255,255,.72)}
 .kbb-pgrid[data-skin="round"] .kbb-card{border:0;background:none;text-align:center}
@@ -1855,7 +1859,7 @@ body:not(.pc-norate) .kbb-pgrid:not([data-skin="horizontal"]):not([data-skin="ov
 .kbb-pgrid[data-skin="magazine"] .kbb-card{border:0;background:none}
 .kbb-pgrid[data-skin="magazine"] .kbb-card-thumb{border-radius:10px}
 .kbb-pgrid[data-skin="magazine"] .cb{padding:12px 2px}
-.kbb-pgrid[data-skin="magazine"] .kbb-card-brand{display:block;font-size:11px;color:#E0567B;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.kbb-pgrid[data-skin="magazine"] .kbb-card-brand{display:block;font-size:11px;color:#C6395F;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
 .kbb-pgrid[data-skin="magazine"] .cn{font-size:17px;font-weight:700;line-height:1.25}
 .kbb-pgrid[data-skin="magazine"] .cp{font-size:15px}
 .kbb-pgrid[data-skin="fab"] .kbb-card{border:0;border-radius:16px;background:#fff;box-shadow:0 6px 18px rgba(42,34,40,.08);position:relative}
@@ -1948,7 +1952,7 @@ body:not(.pc-norate) .kbb-pgrid:not([data-skin="horizontal"]):not([data-skin="ov
     body:not(.pc-phonehover) .kbb-pgrid[data-skin="duotone"] .kbb-card:hover .kbb-card-thumb:after{opacity:1}
     body:not(.pc-phonehover) .kbb-pgrid[data-skin="fab"] .kbb-card:hover .kbb-card-cart{transform:none}
     body:not(.pc-phonehover) .kbb-pgrid[data-skin="showcase-airy"] .kbb-card:hover .kbb-card-cart{
-        background:transparent;color:var(--kbb-cart-bg,#E0567B)}
+        background:transparent;color:var(--kbb-cart-bg,#C6395F)}
 }
 
 /* ▲ THE LADDER THAT WAS ACTUALLY WINNING, and the reason the first attempt at
@@ -2323,7 +2327,9 @@ body::after{z-index:-1;opacity:0;background:var(--kbb-page-gradient-c)}
    baseline-aligned so the was-price and badge sit level with the figure. */
 .pdp .bb-price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;line-height:1.15}
 .pdp .bb-price .now{font-size:clamp(25px,2.7vw,31px);letter-spacing:-.02em;font-weight:800}
-.pdp .bb-price s{font-size:clamp(15px,1.6vw,18px);opacity:.75}
+.pdp .bb-price s{font-size:clamp(15px,1.6vw,18px)}
+/* Lane CT: was `opacity:.75`, which blended the crossed-out price to 2.34:1 on
+   the page (#FDEFF3); at full strength it is --muted, 4.53:1. */
 .pdp .bb-price .off{font-size:12.5px;padding:3px 10px;align-self:center}
 @media (max-width:640px){
     .pdp .bb-price .now{font-size:25px}
@@ -2942,8 +2948,8 @@ header{border-bottom:1px solid var(--line-2)}
    HEADER — driven by Appearance → Header. Values arrive as custom
    properties on the <header>, so this block never changes per shop.
    ═══════════════════════════════════════════════════════════════ */
-header{--hd-h:64px;--hd-bg:#fff;--hd-max:var(--site-max);--hd-logo:22px;--hd-logo-c:#2A2228;--hd-logo-a:#E0567B;
-  --hd-radius:99px;--hd-icon:21px;--hd-badge:#E0567B;--hd-nav:14px;--hd-gap:26px;--hd-hot:#E23B57;
+header{--hd-h:64px;--hd-bg:#fff;--hd-max:var(--site-max);--hd-logo:22px;--hd-logo-c:#2A2228;--hd-logo-a:#C6395F;
+  --hd-radius:99px;--hd-icon:21px;--hd-badge:#C6395F;--hd-nav:14px;--hd-gap:26px;--hd-hot:#E23B57;
   --hd-sup-bg:#E8F7EE;--hd-sup-fg:#1F9D55;--mi-size:46px;--mi-speed:5s;
   --mi-c1:#E0567B;--mi-c2:#E8A33D;--mi-c3:#1F9D55;
   background:var(--hd-bg)}
@@ -4784,6 +4790,10 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
   .kft-brand .kft-soc{grid-column:2;grid-row:1}
   .kft-ch{margin-bottom:7px;font-size:10.5px}
   .kft-col ul{gap:4px;font-size:var(--kft-fl-m,13px)}
+  /* Lane CT: Google's target-size audit -- each phone footer link was a ~17px
+     tap area 4px from the next. A 24px+ area per link, the gap folded into it. */
+  nav.kft-col > ul{gap:0}
+  nav.kft-col > ul > li > a{display:inline-block;padding:4px 0;min-height:24px}
   .kft-visit{grid-template-columns:1fr 1fr;gap:10px;font-size:12px}
   .kft-news{max-width:none;margin-top:12px}
   .kft-name{margin-top:14px;font-size:calc(min(calc(173.6vw / var(--kft-n, 14)), calc(2324px / var(--kft-n, 14))) * var(--kft-fn-m, 100) / 100)}
@@ -4838,7 +4848,7 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 /* margin-inline:auto rather than justify-content, so the words are centred in
    what is left whether there are two flags beside them, or none. */
 .kfb-tx{margin-inline:auto;font-size:var(--kfb-s,12px);line-height:1.25;font-weight:600;
-    letter-spacing:.005em;color:var(--kfb-ink,#E0567B);
+    letter-spacing:.005em;color:var(--kfb-ink,#C6395F);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kfb-pill .kfb-tx{border:1px solid var(--kfb-bd,#F0B6C9);border-radius:99px;padding:2px 12px}
 .kfb-fl{display:flex;flex:0 0 auto}
@@ -4914,7 +4924,7 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 .kbb-pager .page-numbers.current{background:var(--pink-soft,#FCEFF4);color:var(--pink-deep,#B4517A);border-color:transparent}
 .kbb-pager .page-numbers.prev,.kbb-pager .page-numbers.next{font-size:20px;font-weight:500}
 .kbb-pager-status:empty{display:none}
-.kbb-pager-status{font-size:13px;color:var(--muted,#8C828A)}
+.kbb-pager-status{font-size:13px;color:var(--muted,#756C74)}
 @media (max-width:900px){.kbb-pager .page-numbers{min-width:44px;min-height:44px}}
 
 /* "Load more on scroll": listing-load.js puts `is-auto` on the pager once it
@@ -5211,8 +5221,8 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
     --sc-border:rgba(42,34,40,.10);
     --sc-photo-bg:#FBF5F3;
     --sc-ink:#221A20;
-    --sc-muted:#9A8D94;
-    --sc-was:#A2959B;
+    --sc-muted:var(--muted,#756C74);
+    --sc-was:var(--kbb-was,#796C75);
     --sc-sale:#C13E63;
     --sc-pad:16px;
     --sc-gap:12px;
@@ -5634,10 +5644,10 @@ html[data-press="e"] .search-in.kbb-pressed{border-color:var(--pink);background-
     border-color:transparent;box-shadow:0 8px 26px rgba(42,34,40,.07)}
 .kbb-pgrid[data-skin="showcase-airy"] .kbb-card-cart{
     background:transparent;
-    color:var(--kbb-cart-bg,#E0567B);
-    box-shadow:inset 0 0 0 1.5px var(--kbb-cart-bg,#E0567B)}
+    color:var(--kbb-cart-bg,#C6395F);
+    box-shadow:inset 0 0 0 1.5px var(--kbb-cart-bg,#C6395F)}
 .kbb-pgrid[data-skin="showcase-airy"] .kbb-card:hover .kbb-card-cart{
-    background:var(--kbb-cart-bg,#E0567B);color:var(--kbb-cart-fg,#fff)}
+    background:var(--kbb-cart-bg,#C6395F);color:var(--kbb-cart-fg,#fff)}
 .kbb-pgrid[data-skin="showcase-airy"] .heart{border-color:rgba(42,34,40,.14)}
 
 /* ── THE PHONE, WHERE THE HEART CANNOT SHARE THE LINE ────────────────────────

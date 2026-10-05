@@ -170,6 +170,20 @@ function mScreenUrls(): array
  * `product-styles` entry ONLY — the dumped payload, leaf by leaf, with that
  * entry re-serialised in the file's own format — and the diff read before it
  * was committed: 7 lines out, every one of them one of the leaves above.
+ *
+ * ── AND AGAIN, 5 OCTOBER ─────────────────────────────────────────── Lane CT ──
+ *
+ * The owner approved the contrast proposal (docs/contrast-preview/). Leaves
+ * moved, and only these, read off a leaf-by-leaf diff of the dumped payloads:
+ *
+ *     product-styles colour tab .description   names the secondary text
+ *     sale_colour / new_colour / cart_bg       #E23B57 / #1F9D55 / #E0567B
+ *       .default and .value                    -> #D22B47 / #1A7F45 / #C6395F
+ *     colour tab fields[6..9]                  NEW: muted_colour, was_colour,
+ *                                              save_colour, wa_foot_colour
+ *     header badge_bg, logo_accent_col,        #E0567B -> #C6395F
+ *       mobile-header
+ *       search_icon / search_text .default/.value
  */
 it('sends every module screen the payload it sent before the shared schema', function () {
     $owner = AdminUser::create([
@@ -511,7 +525,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // Spliced into the fixture as one new field before show_cart, read off
     // the live payload; review-settings' `settings` gained sr_compact beside
     // sr_show_stars. Nothing else in the file moved.
-    expect($compared)->toBe(676, 'the number of controls drawn changed');
+    // 680 (Lane CT): Product styles → Colour gained four text colours
+    // (secondary text, crossed-out price, savings line, footer WhatsApp button).
+    expect($compared)->toBe(680, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

@@ -58,8 +58,8 @@ class MobileHeader
         'search_radius' => ['range', 'Corner rounding', 12, 'Ignored while Full width is on.', ['min' => 0, 'max' => 26, 'step' => 1, 'unit' => 'px']],
         'search_border' => ['bool', 'Border', true, ''],
         'search_bg'     => ['colour', 'Field background', '#FFFFFF', ''],
-        'search_icon'   => ['colour', 'Magnifier colour', '#E0567B', ''],
-        'search_text'   => ['colour', 'Typed text colour', '#E0567B', ''],
+        'search_icon'   => ['colour', 'Magnifier colour', '#C6395F', ''],
+        'search_text'   => ['colour', 'Typed text colour', '#C6395F', ''],
         'search_ph'     => ['colour', 'Placeholder colour', '#8A7F86', ''],
         // 44 is where the field renders today, and no setting put it there:
         // `.sbox input{min-height:44px}` is a tap-target floor from the mobile

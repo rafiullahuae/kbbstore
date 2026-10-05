@@ -2095,6 +2095,43 @@ final class EnglishRenderWalk
                 'with' => '<section class="sr sr-compact" id="sr" style=',
                 'hits' => 1,
             ],
+
+            /*
+             * THE APPROVED CONTRAST COLOURS, IN THE FOUR DOCUMENTS THAT DECLARE
+             * THEIR OWN :root. (Lane CT, 5 October)
+             *
+             * The owner approved docs/contrast-preview/ ("okay proceed", every
+             * row but the gold card). The journal, an article, the skin quiz
+             * and the review wall each carry their own copy of the shop's
+             * tokens in an inline <style>, so the two that moved — --pink
+             * #E0567B -> #C6395F and --muted #8C828A -> #756C74 — move in their
+             * bytes too. The diff was read page by page before this entry was
+             * written: on each of the four it is those two values and nothing
+             * else. Every other storefront page is unchanged byte for byte: the
+             * rest of the change is in the stylesheets, and the PHP defaults
+             * render the same on both sides of this walk.
+             */
+            'contrast: the brand pink in a standalone document (Lane CT)' => [
+                'pattern' => '#(--pink:\s?)\#E0567B(;\s?--pink-deep:\#C13E63;)#',
+                'with' => '${1}#C6395F$2',
+                'hits' => 4,
+            ],
+            'contrast: the secondary grey in a standalone document (Lane CT)' => [
+                'pattern' => '#(--ink-2:\#5E545A;\s?--muted:)\#8C828A;#',
+                'with' => '${1}#756C74;',
+                'hits' => 4,
+            ],
+            /*
+             * The slim footer's wordmark accent falls back to the header's
+             * wordmark accent DEFAULT (SlimFooterTest pins the two equal), and
+             * that default moved with the brand pink so the header, the site
+             * footer and the slim footer still draw "Bliss" in one colour.
+             */
+            'contrast: the slim footer wordmark follows the header (Lane CT)' => [
+                'pattern' => '#\.kbb-slimfoot \.sf-brand b\.sf-wm span\{color:var\(--sf-wm-a,\#E0567B\)\}#',
+                'with' => '.kbb-slimfoot .sf-brand b.sf-wm span{color:var(--sf-wm-a,#C6395F)}',
+                'hits' => 1,
+            ],
         ];
     }
 

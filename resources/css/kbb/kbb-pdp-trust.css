@@ -61,7 +61,7 @@
     padding:4px 0;border:0;background:none;cursor:pointer;
     font:inherit;font-size:14px;font-weight:700;color:var(--ink,#2A2228);text-align:start}
 .pts-auth-btn .pts-ic{inline-size:20px;block-size:20px;flex:0 0 auto;color:var(--pts-tick)}
-.pts-auth-btn .pts-info{inline-size:16px;block-size:16px;flex:0 0 auto;color:var(--muted,#8C828A);
+.pts-auth-btn .pts-info{inline-size:16px;block-size:16px;flex:0 0 auto;color:var(--muted,#756C74);
     transition:color .15s,transform .2s}
 .pts-auth-btn:hover .pts-info,.pts-auth-btn[aria-expanded="true"] .pts-info{color:var(--ink,#2A2228)}
 .pts-auth-btn:focus-visible{outline:2px solid var(--pts-tick);outline-offset:3px;border-radius:6px}

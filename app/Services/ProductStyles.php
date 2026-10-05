@@ -239,12 +239,27 @@ class ProductStyles
         'card_fw_brand'      => ['select', 'Brand name weight', '600', '', self::FONT_WEIGHTS],
 
         // ── Colour ──
-        'sale_colour'        => ['colour', 'Sale badge', '#E23B57', ''],
-        'new_colour'         => ['colour', 'New badge', '#1F9D55', ''],
+        // ▲ Lane CT, 5 October: the owner approved the contrast proposal
+        // (docs/contrast-preview/) -- "okay proceed" -- so the sale badge, the
+        // new badge and the button ship at the smallest darkening of their own
+        // hue that carries white text at 4.5:1 (WCAG AA). Were #E23B57 (4.20),
+        // #1F9D55 (3.49) and #E0567B (3.62). Each stays a control, so any one
+        // can be moved back.
+        'sale_colour'        => ['colour', 'Sale badge', '#D22B47', ''],
+        'new_colour'         => ['colour', 'New badge', '#1A7F45', ''],
         'price_colour'       => ['colour', 'Price', '#2A2228', ''],
         'star_colour'        => ['colour', 'Stars', '#E8A33D', ''],
-        'cart_bg'            => ['colour', 'Button background', '#E0567B', ''],
+        'cart_bg'            => ['colour', 'Button background', '#C6395F', ''],
         'cart_fg'            => ['colour', 'Button text', '#FFFFFF', ''],
+        // Four text colours that had no control before Lane CT, each at its
+        // approved value. Emitted only when moved (see cssVariables()), so at
+        // these defaults the shop's HTML carries nothing new; the stylesheet's
+        // :root already declares each one. Readable against the backgrounds
+        // App\Support\ContrastPairs names, and the screen says so if not.
+        'muted_colour'       => ['colour', 'Secondary text', '#756C74', 'Category and brand lines, review counts, notes under headings, the footer’s small print.'],
+        'was_colour'         => ['colour', 'Crossed-out price', '#796C75', 'The original price beside a sale price, on a product card.'],
+        'save_colour'        => ['colour', 'Savings line', '#1F7A50', 'The “Save AED … on this set” line on the home page.'],
+        'wa_foot_colour'     => ['colour', 'Footer WhatsApp button', '#27865B', 'The green button in the classic footer. Its label is white.'],
 
         // ── Sticky add to cart ──
         // Off by default: this bar was absent from the product page for several
@@ -298,8 +313,9 @@ class ProductStyles
                        'card_fs_title_m', 'card_fs_title_d', 'card_fs_price_m', 'card_fs_price_d', 'card_fs_reg_m', 'card_fs_reg_d',
                        'card_fs_btn_m', 'card_fs_btn_d', 'card_fs_brand_m', 'card_fs_brand_d',
                        'card_fw_title', 'card_fw_price', 'card_fw_sale', 'card_fw_btn', 'card_fw_brand']],
-        'colour'  => ['Colour', 'Badges, price and the button.',
-                      ['sale_colour', 'new_colour', 'price_colour', 'star_colour', 'cart_bg', 'cart_fg']],
+        'colour'  => ['Colour', 'Badges, prices, the button and the shop’s secondary text.',
+                      ['sale_colour', 'new_colour', 'price_colour', 'star_colour', 'cart_bg', 'cart_fg',
+                       'muted_colour', 'was_colour', 'save_colour', 'wa_foot_colour']],
         'sticky'  => ['Sticky Add to Cart', 'The bar that follows the shopper down the product page.',
                       ['sticky_show', 'sticky_devices', 'sticky_trigger', 'sticky_offset',
                        'sticky_thumb', 'sticky_name', 'sticky_price', 'sticky_label',
@@ -495,6 +511,7 @@ class ProductStyles
             // the reserved height drops to nothing.
             '--kbb-name-lines:' . ((int) $c['name_lines'] === 0 ? 99 : $c['name_lines']),
             '--kbb-name-min:' . ((int) $c['name_lines'] === 0 ? '0' : $c['name_lines'] . ' * 1.35em'),
+            ...$this->movedTextColours($c),
         ]);
     }
 
@@ -529,6 +546,42 @@ class ProductStyles
      * It can go in a later release, once no compiled view anywhere can still
      * name it.
      */
+    /**
+     * The four text colours Lane CT gave a control, as declarations — only the
+     * ones the owner has MOVED.
+     *
+     * At its default each is already on kbb.css's `:root`, so restating it on
+     * `<body>` would be bytes on every page that render identically (rule 1;
+     * StorefrontEnglishUnchangedTest pins those bytes). A moved one lands on
+     * `<body>`, which is nearer than `:root` to everything it styles. The value
+     * is the strict-hex cast's output, never raw input.
+     *
+     * @param  array<string, mixed>  $c
+     * @return list<string>
+     */
+    private function movedTextColours(array $c): array
+    {
+        $out = [];
+
+        foreach (self::TEXT_COLOUR_VARS as $key => $var) {
+            $v = (string) ($c[$key] ?? '');
+
+            if ($v !== '' && strcasecmp($v, (string) self::SCHEMA[$key][2]) !== 0 && preg_match('/^#[0-9a-fA-F]{6}$/', $v) === 1) {
+                $out[] = $var . ':' . $v;
+            }
+        }
+
+        return $out;
+    }
+
+    /** Setting key => the custom property kbb.css reads it through. */
+    public const TEXT_COLOUR_VARS = [
+        'muted_colour' => '--muted',
+        'was_colour' => '--kbb-was',
+        'save_colour' => '--kbb-save',
+        'wa_foot_colour' => '--kbb-wa-foot',
+    ];
+
     public function cardVariables(): string
     {
         $lines = (int) $this->all()['name_lines'];

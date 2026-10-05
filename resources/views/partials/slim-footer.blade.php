@@ -230,7 +230,7 @@
   text-transform:none;letter-spacing:-.02em;font-weight:800;
   color:var(--sf-wm-c,#2A2228);
 }
-.kbb-slimfoot .sf-brand b.sf-wm span{color:var(--sf-wm-a,#E0567B)}
+.kbb-slimfoot .sf-brand b.sf-wm span{color:var(--sf-wm-a,#C6395F)}
 /* The dark tone knocks the first half out to white and keeps the accent, which
    is the only reason a two-tone wordmark survives an ink background at all. */
 .kbb-slimfoot.sf-t-ink .sf-brand b.sf-wm{color:#fff}

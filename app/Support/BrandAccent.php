@@ -41,18 +41,19 @@ use App\Services\SettingsService;
  * A shop that has not moved its brand colour gets NOTHING — no `<style>`
  * element, not one byte, on any page. That is rule 1 and it is also why the
  * design default is compared here rather than at each call site: the string
- * `#E0567B` is the value the stylesheet already declares, so emitting it would
+ * `#C6395F` is the value the stylesheet already declares, so emitting it would
  * be a new element on forty pages that renders identically.
  *
  * The comparison is CASE-INSENSITIVE, which is not decoration: ModuleSchema's
  * colour cast upper-cases what it stores and the admin's own picker sends lower
- * case, so `#e0567b` and `#E0567B` are both "the default" and both have been in
+ * case, so `#c6395f` and `#C6395F` are both "the default" (until Lane CT that was
+ * `#E0567B`; the migration of that lane clears a stored old default) and both can be in
  * this column.
  */
 final class BrandAccent
 {
     /** The colour the stylesheet already declares, in `resources/css/kbb/kbb.css`. */
-    public const DEFAULT = '#E0567B';
+    public const DEFAULT = '#C6395F';
 
     /**
      * `['base' => …, 'deep' => …]`, or null when the shop is on the default.

@@ -684,8 +684,8 @@ class PageWash
     public const TEXT_TOKENS = [
         '--ink' => '#2A2228',
         '--ink-2' => '#5E545A',
-        '--muted' => '#8C828A',
-        '--pink' => '#E0567B',
+        '--muted' => '#756C74',
+        '--pink' => '#C6395F',
         '--pink-deep' => '#C13E63',
     ];
 
