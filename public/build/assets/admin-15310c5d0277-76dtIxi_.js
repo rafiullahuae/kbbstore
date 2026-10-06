@@ -11,6 +11,9 @@
   var formError = '';
   var found = [];          // product search results
   var searchTimer = null, searchSeq = 0;
+  // (Lane SG) From Instagram
+  var ig = null, igErr = '', igSel = [], igDirty = false, igBusy = '', igFilter = 'all', igQuery = '', igShow = 120, igMsg = '', igDragId = null;
+  var IG_PAGE = 120;
 
   function cookie(n) {
     var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
@@ -93,6 +96,7 @@
     editing = null;
     render();
     load();
+    loadIg();
     return undefined;
   };
 
@@ -245,6 +249,192 @@
     render();
   }
 
+  /* ---------------------------------------------- From Instagram (Lane SG)
+     Every post our Instagram account has, fetched by the sync (Refresh here,
+     or the daily job). Tick to show on the Spotted page; the ticked list is
+     ordered with ↑ ↓ or by dragging. Filter and search run over the list this
+     screen already has — no request per keystroke. Nothing is typed or
+     uploaded: the page fills itself from Instagram. */
+  async function loadIg() {
+    try {
+      var body = await api('/spotted/instagram');
+      ig = body; igErr = '';
+      igSel = (ig.posts || []).filter(function (p) { return p.sort !== null; })
+        .sort(function (a, b) { return a.sort - b.sort; }).map(function (p) { return p.id; });
+      igDirty = false;
+    } catch (e) {
+      ig = null;
+      igErr = e && e.status === 403 ? 'Your account cannot choose the Instagram posts (capability: spotted.instagram).'
+        : explain(e, 'The Instagram posts could not be read.');
+    }
+    render();
+  }
+
+  function igById(id) {
+    return ((ig && ig.posts) || []).filter(function (p) { return p.id === id; })[0] || null;
+  }
+
+  function igCount(n) {
+    if (n === null || n === undefined) return '';
+    if (n < 1000) return String(n);
+    var u = n >= 1e6 ? [1e6, 'M'] : [1e3, 'K'];
+    var v = n / u[0];
+    v = v >= 100 ? Math.floor(v) : Math.floor(v * 10) / 10;
+    return String(v).replace(/\.0$/, '') + u[1];
+  }
+
+  function igStats(p) {
+    return (p.likes !== null ? '<span>♥ ' + esc(igCount(p.likes)) + '</span>' : '')
+      + (p.comments !== null ? '<span>💬 ' + esc(igCount(p.comments)) + '</span>' : '')
+      + (p.shares !== null ? '<span>➤ ' + esc(igCount(p.shares)) + '</span>' : '')
+      + (p.views !== null && p.type === 'video' ? '<span>▶ ' + esc(igCount(p.views)) + '</span>' : '');
+  }
+
+  var IG_TYPE = { photo: 'Photo', video: 'Reel', album: 'Album' };
+
+  function igMatches() {
+    var q = igQuery.trim().toLowerCase();
+    return ((ig && ig.posts) || []).filter(function (p) {
+      if (igFilter === 'photo' && p.type === 'video') return false;
+      if (igFilter === 'video' && p.type !== 'video') return false;
+      return !q || String(p.caption || '').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+
+  function igTileHTML(p) {
+    var at = igSel.indexOf(p.id);
+    var src = safeSrc(p.thumb);
+    return '<button type="button" class="spa-igt' + (at >= 0 ? ' is-on' : '') + '" data-spa-igpick="' + p.id + '" aria-pressed="' + (at >= 0 ? 'true' : 'false') + '">'
+      + '<span class="spa-igimg">' + (src ? '<img src="' + esc(src) + '" alt="" loading="lazy" decoding="async">' : '')
+      + '<span class="spa-igtype">' + esc(IG_TYPE[p.type] || 'Photo') + '</span>'
+      + '<span class="spa-igtick">' + (at >= 0 ? (at + 1) : '') + '</span></span>'
+      + '<span class="spa-igmeta"><span>' + esc(p.caption || '(no caption)') + '</span>'
+      + '<small>' + igStats(p) + (p.date ? '<span>' + esc(p.date) + '</span>' : '') + '</small>'
+      + (p.drawable ? '' : '<small class="spa-igwarn">Picture not fetched yet — Refresh</small>')
+      + '</span></button>';
+  }
+
+  function igGridHTML() {
+    var list = igMatches();
+    var total = (ig && ig.posts || []).length;
+    var shown = list.slice(0, igShow);
+    var acct = (ig && ig.account) || {};
+    var line = 'Showing ' + shown.length + ' of ' + (list.length === total ? total : list.length + ' matching (' + total + ' synced)')
+      + ' posts from @' + esc(acct.handle || 'kbeauty.bliss')
+      + (acct.media_count !== null && acct.media_count !== undefined ? ' · Instagram reports ' + acct.media_count : '')
+      + (acct.synced_at ? ' · last synced ' + esc(new Date(acct.synced_at).toLocaleString()) : ' · not synced yet');
+    return '<p class="spa-sub" data-spa-igline>' + line + '</p>'
+      + (shown.length ? '<div class="spa-iggrid">' + shown.map(igTileHTML).join('') + '</div>'
+        : '<div class="spa-empty">' + (total ? 'No post matches.' : 'No posts synced yet. Press “Refresh from Instagram”.') + '</div>')
+      + (list.length > shown.length ? '<div class="spa-actions"><button type="button" class="spa-btn" data-spa-igmore>Show ' + Math.min(IG_PAGE, list.length - shown.length) + ' more</button></div>' : '');
+  }
+
+  function igSelHTML() {
+    if (!igSel.length) return '<div class="spa-empty">Nothing ticked yet — the Spotted page shows the manual posts below until you tick at least one.</div>';
+    return '<div class="spa-igsel">' + igSel.map(function (id, i) {
+      var p = igById(id);
+      if (!p) return '';
+      var src = safeSrc(p.thumb);
+      return '<div class="spa-igrow" draggable="true" data-spa-igrow="' + id + '">'
+        + '<span class="spa-ignum">' + (i + 1) + '</span>'
+        + '<span class="spa-igimg">' + (src ? '<img src="' + esc(src) + '" alt="" loading="lazy">' : '') + '</span>'
+        + '<span style="min-width:0"><b>' + esc(p.caption || '(no caption)') + '</b><small>' + esc(IG_TYPE[p.type] || 'Photo') + (p.date ? ' · ' + esc(p.date) : '') + '</small></span>'
+        + '<span class="spa-rbt">'
+        + '<button type="button" class="spa-btn" data-spa-igmove="' + id + ':-1" aria-label="Move up"' + (i === 0 ? ' disabled' : '') + '>↑</button>'
+        + '<button type="button" class="spa-btn" data-spa-igmove="' + id + ':1" aria-label="Move down"' + (i === igSel.length - 1 ? ' disabled' : '') + '>↓</button>'
+        + '<button type="button" class="spa-btn is-danger" data-spa-igpick="' + id + '" aria-label="Take off the page">✕</button>'
+        + '</span></div>';
+    }).join('') + '</div>';
+  }
+
+  function igCardHTML() {
+    if (igErr) return '<div class="spa-card"><div class="spa-title">From Instagram</div><div class="spa-err" role="alert" style="margin-top:10px">' + esc(igErr) + '</div></div>';
+    if (!ig) return '<div class="spa-card"><div class="spa-title">From Instagram</div><div class="spa-empty">Loading…</div></div>';
+    var acct = ig.account || {};
+    return '<div class="spa-card" data-spa-igcard>'
+      + '<div class="spa-title"><span>From Instagram</span><span style="display:flex;gap:8px;flex-wrap:wrap">'
+      + '<button class="spa-btn" data-spa-igrefresh' + (igBusy ? ' disabled' : '') + '>' + (igBusy === 'refresh' ? 'Fetching from Instagram…' : '↻ Refresh from Instagram') + '</button>'
+      + '<button class="spa-btn is-primary" data-spa-igsave' + (!igDirty || igBusy ? ' disabled' : '') + '>' + (igBusy === 'save' ? 'Saving…' : 'Save selection (' + igSel.length + ')') + '</button>'
+      + '</span></div>'
+      + '<p class="spa-sub">Every post and reel of @' + esc(acct.handle || 'kbeauty.bliss') + '. Tick the ones the Spotted page should show — the picture, caption, likes, comments, shares and link all come from Instagram. Shown when “What the Spotted page shows” (Settings → Spotted page) is Instagram.</p>'
+      + (acct.connected ? '' : '<div class="spa-err" role="alert" style="margin-top:10px">Instagram is not connected, so nothing new can be fetched. <button type="button" class="spa-btn" data-spa-iggo>Open Content → Instagram</button></div>')
+      + (igMsg ? '<p class="spa-sub" role="status" style="margin-top:8px"><b>' + esc(igMsg) + '</b></p>' : '')
+      + '<div class="spa-title" style="margin-top:14px;font-size:13.5px"><span>On the page, in this order (' + igSel.length + ')</span></div>'
+      + '<p class="spa-sub">Drag a row, or use ↑ ↓. Then Save selection.</p>'
+      + '<div data-spa-igselbox>' + igSelHTML() + '</div>'
+      + '<div class="spa-igbar">'
+      + ['all', 'photo', 'video'].map(function (f) {
+          return '<button type="button" class="spa-tab" data-spa-igf="' + f + '" aria-selected="' + (igFilter === f ? 'true' : 'false') + '">' + ({ all: 'All', photo: 'Posts', video: 'Videos & Reels' })[f] + '</button>';
+        }).join('')
+      + '<input type="search" data-spa-igq placeholder="Search captions…" value="' + esc(igQuery) + '" autocomplete="off" aria-label="Search captions">'
+      + '</div>'
+      + '<div data-spa-iggridbox>' + igGridHTML() + '</div>'
+      + '</div>';
+  }
+
+  /* Only the grid is redrawn while typing, so the caret stays in the box. */
+  function igPaintGrid() {
+    var box = document.querySelector('[data-spa-iggridbox]');
+    if (box) box.innerHTML = igGridHTML();
+  }
+
+  function igPaintSel() {
+    var box = document.querySelector('[data-spa-igselbox]');
+    if (box) box.innerHTML = igSelHTML();
+    var save = document.querySelector('[data-spa-igsave]');
+    if (save) { save.disabled = !igDirty || !!igBusy; save.textContent = 'Save selection (' + igSel.length + ')'; }
+  }
+
+  function igToggle(id) {
+    var at = igSel.indexOf(id);
+    if (at >= 0) igSel.splice(at, 1);
+    else {
+      if (igSel.length >= ((ig && ig.max) || 200)) { say('The page holds at most ' + ((ig && ig.max) || 200) + ' posts.'); return; }
+      igSel.push(id);
+    }
+    igDirty = true; igMsg = '';
+    igPaintSel(); igPaintGrid();
+  }
+
+  function igMove(id, d) {
+    var i = igSel.indexOf(id), j = i + d;
+    if (i < 0 || j < 0 || j >= igSel.length) return;
+    igSel[i] = igSel[j]; igSel[j] = id;
+    igDirty = true;
+    igPaintSel(); igPaintGrid();
+  }
+
+  async function igSave() {
+    igBusy = 'save'; render();
+    try {
+      var body = await api('/spotted/instagram', 'POST', { ids: igSel });
+      ig.posts = body.posts || ig.posts;
+      igDirty = false;
+      igMsg = 'Saved — ' + body.selected + ' Instagram posts on the Spotted page now.' + (body.note ? ' ' + body.note : '');
+      say('Saved.');
+    } catch (e) {
+      igMsg = explain(e, 'The selection could not be saved.');
+    } finally { igBusy = ''; render(); }
+  }
+
+  async function igRefresh() {
+    igBusy = 'refresh'; igMsg = ''; render();
+    try {
+      var r = await api('/instagram/refresh', 'POST', {});
+      igMsg = 'Fetched ' + (r.stored || 0) + ' posts (' + (r.pages || 1) + ' pages), ' + (r.pictures || 0) + ' pictures on this shop'
+        + (r.pending ? ', ' + r.pending + ' pictures still to fetch — press Refresh again or leave it to the nightly sync' : '')
+        + '.' + (r.insights_note ? ' ' + r.insights_note : '');
+    } catch (e) {
+      igMsg = e && e.status === 403 ? 'Your account cannot fetch from Instagram (Content → Instagram needs the instagram.manage capability).'
+        : explain(e, 'Instagram could not be reached.') + (e && e.body && e.body.detail ? ' (' + e.body.detail + ')' : '');
+    }
+    igBusy = '';
+    var keep = igSel.slice(), dirty = igDirty, msg = igMsg;
+    await loadIg();
+    if (dirty) { igSel = keep.filter(function (id) { return !!igById(id); }); igDirty = true; }
+    igMsg = msg; render();
+  }
+
   function render() {
     var host = document.querySelector('#content');
     if (!host || !here()) return;
@@ -265,8 +455,9 @@
 
     host.innerHTML = '<div class="spa-wrap">'
       + (banner ? '<div class="spa-err" role="alert">' + esc(banner) + '</div>' : '')
+      + igCardHTML()
       + '<div class="spa-card">'
-      + '<div class="spa-title"><span>Posts</span><span style="display:flex;gap:8px;flex-wrap:wrap">'
+      + '<div class="spa-title"><span>Manual posts</span><span style="display:flex;gap:8px;flex-wrap:wrap">'
       + '<a class="spa-btn" href="' + esc(data.page_url) + '" target="_blank" rel="noopener">View the Spotted page ↗</a>'
       + '<button class="spa-btn is-primary" data-spa-add>+ Add a post</button></span></div>'
       + '<p class="spa-sub">Hand-picked, in this order. <b>' + homeCount + '</b> on the homepage carousel, <b>' + pageCount + '</b> on the Spotted page. '
@@ -381,8 +572,35 @@
       return;
     }
     var s = e.target.closest('[data-spa-search]');
-    if (s) search(s.value);
+    if (s) { search(s.value); return; }
+    var q = e.target.closest('[data-spa-igq]');
+    if (q) { igQuery = q.value; igShow = IG_PAGE; igPaintGrid(); }
   });
+
+  /* Drag to reorder the ticked list. Native drag events only; nothing measured. */
+  document.addEventListener('dragstart', function (e) {
+    if (!here()) return;
+    var row = e.target.closest && e.target.closest('[data-spa-igrow]');
+    if (!row) return;
+    igDragId = Number(row.getAttribute('data-spa-igrow'));
+    row.classList.add('is-drag');
+    try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(igDragId)); } catch (x) {}
+  });
+  document.addEventListener('dragover', function (e) {
+    if (igDragId !== null && e.target.closest && e.target.closest('[data-spa-igrow]')) e.preventDefault();
+  });
+  document.addEventListener('drop', function (e) {
+    var row = e.target.closest && e.target.closest('[data-spa-igrow]');
+    if (igDragId === null || !row) return;
+    e.preventDefault();
+    var to = igSel.indexOf(Number(row.getAttribute('data-spa-igrow')));
+    var from = igSel.indexOf(igDragId);
+    igDragId = null;
+    if (from < 0 || to < 0 || from === to) { igPaintSel(); return; }
+    igSel.splice(to, 0, igSel.splice(from, 1)[0]);
+    igDirty = true; igPaintSel(); igPaintGrid();
+  });
+  document.addEventListener('dragend', function () { if (igDragId !== null) { igDragId = null; igPaintSel(); } });
 
   document.addEventListener('change', function (e) {
     if (!here()) return;
@@ -395,6 +613,17 @@
   document.addEventListener('click', function (e) {
     if (!here()) return;
     var t;
+    if ((t = e.target.closest('[data-spa-igpick]'))) { igToggle(Number(t.getAttribute('data-spa-igpick'))); return; }
+    if ((t = e.target.closest('[data-spa-igmove]'))) {
+      var im = t.getAttribute('data-spa-igmove').split(':');
+      igMove(Number(im[0]), Number(im[1]));
+      return;
+    }
+    if ((t = e.target.closest('[data-spa-igf]'))) { igFilter = t.getAttribute('data-spa-igf'); igShow = IG_PAGE; render(); return; }
+    if (e.target.closest('[data-spa-igmore]')) { igShow += IG_PAGE; igPaintGrid(); return; }
+    if (e.target.closest('[data-spa-igsave]')) { igSave(); return; }
+    if (e.target.closest('[data-spa-igrefresh]')) { igRefresh(); return; }
+    if (e.target.closest('[data-spa-iggo]')) { if (typeof window.go === 'function') window.go('instagram'); return; }
     if ((t = e.target.closest('[data-spa-gmove]'))) {
       var gm = t.getAttribute('data-spa-gmove').split(':');
       gridMove(Number(gm[0]), Number(gm[1]));
