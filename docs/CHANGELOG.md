@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.417
+**Spotted page from Instagram; blog and articles on the shop header; your
+policy pages; checkout footer links; menu underline.** Apply after .416. Runs
+its migrations. Hard refresh the shop and the admin.
+
+| Your request | Now |
+|---|---|
+| "fetch our instagram all posts / videos, and to choose from the list which one need to be shown ... cover image auto ... likes, comments, shares ... @kbeauty.bliss ... on click it will go the original posts" + "if the post is video, it should play on our website" + card design C | /kbeautybliss-spotted/ builds itself from the posts you tick. Appearance -> #KBeautyBliss Spotted -> From Instagram (Refresh from Instagram, filter, search, tick, order, Save selection). Settings -> Spotted page: source Instagram (Manual is the switch back), card style C, videos play on our page ON. Reconnect once at Content -> Instagram to allow share counts; until then shares are hidden. Nightly refresh 04:41 on the scheduler cron |
+| "on blog page, and on article page, the main header is not coming correct" | The Journal and every article use the shop's own header, menus, phone menu and footer |
+| Shipping & Delivery, Returns, Privacy Policy, FAQs "100% same content" | Your pasted text, word for word, with headings, bullets and spacing; the four run-in FAQ questions split out. Only pages still holding our placeholder were changed. Footer Help column: Shipping & Delivery, Returns Information, Order Tracking, FAQs, Privacy policy, Contact us, About us |
+| "remove these links. only in the footer link, replace those two links" | Checkout footer links now read Shipping & Delivery and Returns Information (Appearance -> Footer). The links under the cart totals and Place order are off (switches kept) |
+| "the underline should not show as the panel highlight is showing" | Hovering a mega menu item shows only the pointer |
+
+Files: see the package's update.json.
+
 ## 2.60.416
 **Desktop mega menus fit the site width.** Apply after .415. Hard refresh the shop.
 
