@@ -74,7 +74,10 @@ it('still emits the three classes it always emitted, and no more', function () {
     // owner asked for. It is the class the stylesheet and initMobileChrome()
     // key the side panel off; MobileMenuOpensFromTest pins it. Still no icon
     // class: the icon stays the Header screen's.
-    expect($classes)->toBe(['mm-card-cream', 'mm-left', 'mm-rule-children']);
+    // ▲ Lane M4 (6 October): `mm-v4` and `mm-an-sl` joined them deliberately —
+    // Style → Menu style ships at V4 two-tone (the owner picked it) and its
+    // sub-menu opens with the Slide down animation. Still no icon class.
+    expect($classes)->toBe(['mm-an-sl', 'mm-card-cream', 'mm-left', 'mm-rule-children', 'mm-v4']);
 });
 
 it('leaves the menu icon answered by the screen that reaches the element', function () {

@@ -202,7 +202,8 @@ function initSidePanel(menu, shut) {
     let pid = null, x0 = 0, y0 = 0, t0 = 0, dx = 0, axis = '', dragged = false;
 
     menu.addEventListener('pointerdown', (e) => {
-        if (!menu.classList.contains('on') || e.target.closest('input')) return;
+        // Nor the quick-link row (V4, Lane M4): it scrolls sideways itself.
+        if (!menu.classList.contains('on') || e.target.closest('input, .mm-chips')) return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
         pid = e.pointerId; x0 = e.clientX; y0 = e.clientY; t0 = e.timeStamp; dx = 0; axis = '';
     });

@@ -1,0 +1,128 @@
+{
+  "en-390": {
+    "open": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 343.2,
+      "bandH": null,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [],
+      "chipH": null,
+      "chipTapH": null,
+      "chipFont": null,
+      "chipRowScroll": null,
+      "rowH": [
+        47,
+        47,
+        44,
+        44
+      ],
+      "rowFont": "14.01px",
+      "countColour": "rgb(94, 84, 90)",
+      "headingFont": "9.5px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "none",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [],
+      "subFont": null,
+      "kidH": null,
+      "kidRows": null,
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342
+    },
+    "mid": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 343.2,
+      "bandH": null,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [],
+      "chipH": null,
+      "chipTapH": null,
+      "chipFont": null,
+      "chipRowScroll": null,
+      "rowH": [
+        47,
+        47,
+        44,
+        44
+      ],
+      "rowFont": "14.01px",
+      "countColour": "rgb(94, 84, 90)",
+      "headingFont": "9.5px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "none",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        32.6,
+        32.6
+      ],
+      "subFont": "12.01px",
+      "kidH": 293.5,
+      "kidRows": "none",
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342
+    },
+    "sub": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 343.2,
+      "bandH": null,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [],
+      "chipH": null,
+      "chipTapH": null,
+      "chipFont": null,
+      "chipRowScroll": null,
+      "rowH": [
+        47,
+        47,
+        44,
+        44
+      ],
+      "rowFont": "14.01px",
+      "countColour": "rgb(94, 84, 90)",
+      "headingFont": "9.5px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "none",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        32.6,
+        32.6
+      ],
+      "subFont": "12.01px",
+      "kidH": 293.5,
+      "kidRows": "none",
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342
+    },
+    "errors": []
+  }
+}

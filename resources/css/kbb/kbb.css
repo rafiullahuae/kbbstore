@@ -3051,6 +3051,111 @@ header{border-bottom:1px solid var(--line-2)}
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   MOBILE MENU · V4 TWO-TONE (Lane M4, 6 October)
+
+   After the side panel and the menu icon, so at equal specificity these
+   win over .mm-left's rules by order.
+
+   The owner picked V4 from docs/mv-preview: "V4 is fine. please proceed, but
+   give full control of font sizes, row height, paddings, upper custom links,
+   panel size, on click sub menu opening animation etc." Appearance → Mobile
+   menu → Style → Menu style. Every rule here is keyed off .mm-v4, which
+   MobileMenu::bodyClass() prints only for V4, so Classic matches none of them
+   and is the 2.60.413 panel exactly.
+
+   A pink top band holds search and the quick links (.mm-chips); the list sits
+   below, inside unchanged.
+
+   AUTO-ADJUST, NO SCRIPT. Every size on Appearance → Mobile menu → Sizes is a
+   BASE at a 390px phone, multiplied by --u: 0.92px at 320, 1px at 390, 1.08px
+   from 430 up (two straight lines through those points, the larger of them,
+   capped both ends), so a tablet is not handed giant rows. Rows and quick
+   links never go under a 44px tap height whatever is chosen. The defaults
+   live here as the same custom properties the panel prints when one is moved
+   (MobileMenu::twoToneVariables), so a shop on the defaults prints none.
+   ═══════════════════════════════════════════════════════════════ */
+.mmenu.mm-v4{
+    --u:clamp(.92px,max(calc(.5543px + .1143vw),calc(.22px + .2vw)),1.08px);
+    --m-bp:8;--m-sh:44;--m-sf:13;--m-cf:12;--m-ch:32;--m-cg:6;--m-cr:999px;
+    --m-rh:44;--m-rf:14;--m-ry:8;--m-rx:14;--m-qf:12;--m-qh:32;--m-cc:0;--m-gf:10;--m-ic:24;
+    --m-sd:220ms;--m-se:cubic-bezier(.2,.7,.3,1);
+    --ch:calc(var(--m-ch) * var(--u));
+    /* Counts and headings one step darker than the side panel's: 7.4:1 on
+       the band and on the glass. */
+    --muted:#4F464C
+}
+.mmenu.mm-v4.mm-left{width:var(--m-w,min(88vw,420px))}
+
+/* The band: whatever sits above the list, the last piece rounded. */
+.mm-v4 .mm-head,.mm-v4 .mm-srch,.mm-v4 .mm-chips{background:rgba(253,229,238,.94)}
+/* Two rules, not one list: a browser without :has() drops only the second. */
+.mm-v4 .mm-chips{border-radius:0 0 18px 18px;box-shadow:0 10px 20px -16px rgba(193,62,99,.6);position:relative;z-index:1}
+.mm-v4 .mm-srch:not(:has(~ .mm-chips)){border-radius:0 0 18px 18px;box-shadow:0 10px 20px -16px rgba(193,62,99,.6);z-index:1}
+.mm-v4 .mm-srch{padding-top:calc(var(--m-bp) * var(--u));padding-bottom:calc(var(--m-bp) * var(--u))}
+.mm-v4 .mm-srch:has(~ .mm-chips){padding-bottom:2px}
+.mm-v4 .mm-srch svg{top:calc(var(--m-bp) * var(--u) + max(44px,var(--m-sh) * var(--u)) / 2 - 7.5px)}
+.mm-v4 .mm-srch input{height:max(44px,calc(var(--m-sh) * var(--u)));padding-block:0;
+    font-size:calc(var(--m-sf) * var(--u));background:rgba(255,255,255,.85);border-color:rgba(224,86,123,.2)}
+.mm-v4 .mm-srch input:focus{background:#fff;border-color:var(--pink)}
+
+.mm-chips{display:none}
+.mm-v4 .mm-chips{display:block;flex:none;padding-bottom:calc(var(--m-bp) * var(--u) / 2)}
+.mm-v4 .mm-x + .mm-chips{padding-top:8px}
+.mm-v4 .mm-x + .mm-chips .mm-chipr{padding-inline-end:62px}
+/* The row scrolls sideways; its padding is what lets each pill's 44px tap
+   area (the ::after below) sit inside it rather than be clipped. */
+.mm-chipr{display:flex;gap:calc(var(--m-cg) * var(--u));overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;
+    padding:max(2px,calc((44px - var(--ch)) / 2)) 12px;
+    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+[dir="rtl"] .mm-chipr{-webkit-mask-image:linear-gradient(270deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(270deg,#000 calc(100% - 28px),transparent)}
+.mm-chipr::-webkit-scrollbar{display:none}
+.mm-chip{position:relative;flex:none;display:inline-flex;align-items:center;height:var(--ch);padding:0 calc(12 * var(--u));
+    border-radius:var(--m-cr);background:rgba(255,255,255,.92);border:1px solid rgba(224,86,123,.22);color:#3A2E35;
+    font-size:calc(var(--m-cf) * var(--u));font-weight:600;line-height:1;white-space:nowrap;text-decoration:none}
+.mm-chip::after{content:"";position:absolute;inset:min(0px,calc((100% - 44px) / 2)) 0}
+/* The palette (MobileMenu::CHIP_ACCENTS). Every filled one is AA with its text. */
+.mm-chip.a-sale{background:#B8163B;border-color:#B8163B;color:#fff}
+.mm-chip.a-pink{background:#B83560;border-color:#B83560;color:#fff}
+.mm-chip.a-gold{background:#FFF1D6;border-color:#E9C98A;color:#7A4B00}
+.mm-chip.a-green{background:#E6F5EC;border-color:#9BD3B2;color:#155E36}
+.mm-chip.a-ink{background:#2A2228;border-color:#2A2228;color:#fff}
+
+/* Rows, sub-items, headings, arrows — the Sizes card. */
+.mm-v4 .mm-it{min-height:max(44px,calc(var(--m-rh) * var(--u)));
+    padding:calc(var(--m-ry) * var(--u)) calc(var(--m-rx) * var(--u));font-size:calc(var(--m-rf) * var(--u))}
+.mm-v4 .mm-grp{font-size:calc(var(--m-gf) * var(--u));padding-inline:calc(var(--m-rx) * var(--u))}
+.mm-v4 .mm-car{width:calc(var(--m-ic) * var(--u));height:calc(var(--m-ic) * var(--u))}
+.mm-v4 .mm-car svg{width:66%;height:66%}
+.mm-v4 .mm-c2{column-gap:calc(var(--m-cc) * 1px)}
+.mm-v4 .mm-si{display:flex;align-items:center;min-height:calc(var(--m-qh) * var(--u));padding-block:2px;
+    padding-inline:calc(10 * var(--u));font-size:calc(var(--m-qf) * var(--u))}
+@container mmenu (max-width:300px){.mm-v4 .mm-si{padding-inline:8px}}
+
+/* Super Sale: a row the menu editor gave a highlight colour keeps it, 12%
+   darker, so its white text passes AA (#E23A4E 4.24:1 -> 5.27:1). The colour
+   is inline on the row, hence !important. Style → Super Sale highlight off:
+   red text, no fill. */
+.mm-v4 .mm-it[style*="background:"],.mm-v4 .mm-si[style*="background:"]{background-image:linear-gradient(rgba(0,0,0,.12),rgba(0,0,0,.12)) !important}
+.mm-v4.mm-nohl .mm-it[style*="background:"],.mm-v4.mm-nohl .mm-si[style*="background:"]{background:none !important;color:var(--sale) !important;font-weight:700}
+
+/* Sub-menu animation — the Sub-menu animation card. CSS only: the section's
+   height runs 0fr -> 1fr on a one-row grid, so nothing is measured. A closed
+   section is visibility:hidden as well, so it cannot be tabbed into. None
+   prints no class: the section snaps open, as in Classic. */
+.mm-v4.mm-an-sl .mm-node > .mm-kid,.mm-v4.mm-an-ex .mm-node > .mm-kid{display:grid;grid-template-rows:0fr;visibility:hidden;
+    transition:grid-template-rows var(--m-sd) var(--m-se),visibility 0s linear var(--m-sd)}
+.mm-v4.mm-an-sl .mm-node.on > .mm-kid,.mm-v4.mm-an-ex .mm-node.on > .mm-kid{grid-template-rows:1fr;visibility:visible;
+    transition:grid-template-rows var(--m-sd) var(--m-se),visibility 0s}
+.mm-v4.mm-an-sl .mm-kid > .mm-c2,.mm-v4.mm-an-ex .mm-kid > .mm-c2{min-height:0;overflow:hidden}
+.mm-v4.mm-an-sl .mm-kid > .mm-c2{opacity:0;transform:translateY(-8px);transition:opacity var(--m-sd),transform var(--m-sd) var(--m-se)}
+.mm-v4.mm-an-sl .mm-node.on > .mm-kid > .mm-c2{opacity:1;transform:none}
+.mm-v4.mm-an-fd .mm-node.on > .mm-kid{animation:mm-fd var(--m-sd) var(--m-se)}
+@keyframes mm-fd{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){
+    .mm-v4 .mm-kid,.mm-v4 .mm-kid > .mm-c2{transition:none !important;animation:none !important}
+}
+
+/* ═══════════════════════════════════════════════════════════════
    HEADER — driven by Appearance → Header. Values arrive as custom
    properties on the <header>, so this block never changes per shop.
    ═══════════════════════════════════════════════════════════════ */

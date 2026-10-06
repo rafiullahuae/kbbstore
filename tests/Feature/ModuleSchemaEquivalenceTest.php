@@ -289,6 +289,14 @@ function mAllowedRepairs(): array
  * (ranges, whose garbage lands on the minimum, so no row of theirs moved). The
  * cast is untouched; a valid colour is still stored as itself.
  */
+/*
+ * ── 214 ROWS ADDED, NONE MOVED ──────────────────────────────────── Lane M4 ──
+ *
+ * The 25 keys appended to MobileMenu::SCHEMA for the V4 two-tone menu the
+ * owner picked (menu_style ... sub_ease), recorded with this same corpus and
+ * inserted right after mobile_menu|account_label, which is where mEquivRows()
+ * walks them. Every one of the 5,734 lines before is untouched.
+ */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);
     $now = mEquivRows();

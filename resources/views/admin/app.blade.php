@@ -24171,6 +24171,8 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      CHECKOUT gains the bar, which is what was asked for. --}}
 @include('admin.partials.slim-footer-screen')
 @include('admin.partials.spotted-screen')
+{{-- Appearance -> Mobile menu (Lane M4): the Quick links card of the V4 two-tone menu (label, Arabic label, link or picked target, colour, on/off, reorder) and V4's band in the live phone. Wraps window.paintMobileMenu and window.mmPreview once; the links ride the screen's own Save. --}}
+@include('admin.partials.mobile-menu-chips-screen')
 
 {{-- Appearance → Site layout (Lane W1). ONE site width for the whole shop, one
      gutter, and a product grid whose column count is worked out from the row it

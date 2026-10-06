@@ -1,0 +1,10 @@
+[
+    {
+        "n": 1,
+        "what": "admin console: include Appearance -> Mobile menu -> Quick links and V4 in the live phone (Lane M4). It wraps window.paintMobileMenu and window.mmPreview, so it goes after the console's own scripts, beside the other late screen partials",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "@include('admin.partials.spotted-screen')\n",
+        "count": 1,
+        "replacement": "@include('admin.partials.spotted-screen')\n{{-- Appearance -> Mobile menu (Lane M4): the Quick links card of the V4 two-tone menu (label, Arabic label, link or picked target, colour, on/off, reorder) and V4's band in the live phone. Wraps window.paintMobileMenu and window.mmPreview once; the links ride the screen's own Save. --}}\n@include('admin.partials.mobile-menu-chips-screen')\n"
+    }
+]

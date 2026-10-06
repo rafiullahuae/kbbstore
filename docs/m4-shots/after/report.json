@@ -1,0 +1,920 @@
+{
+  "en-320": {
+    "open": {
+      "viewport": [
+        320,
+        568
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 281.6,
+      "bandH": 101,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 29.4,
+      "chipTapH": 46,
+      "chipFont": "11.0407px",
+      "chipRowScroll": [
+        439,
+        281
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "12.8808px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "9.2006px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [],
+      "subFont": null,
+      "kidH": null,
+      "kidRows": null,
+      "docScrollWidth": 320,
+      "docClientWidth": 320,
+      "panelScrollWidth": 281,
+      "panelClientWidth": 281
+    },
+    "mid": {
+      "viewport": [
+        320,
+        568
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 281.6,
+      "bandH": 101,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 29.4,
+      "chipTapH": 46,
+      "chipFont": "11.0407px",
+      "chipRowScroll": [
+        439,
+        281
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "12.8808px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "9.2006px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        29.4,
+        29.4
+      ],
+      "subFont": "11.0407px",
+      "kidH": 217.3,
+      "kidRows": "178.219px",
+      "docScrollWidth": 320,
+      "docClientWidth": 320,
+      "panelScrollWidth": 281,
+      "panelClientWidth": 281
+    },
+    "sub": {
+      "viewport": [
+        320,
+        568
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 281.6,
+      "bandH": 101,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 29.4,
+      "chipTapH": 46,
+      "chipFont": "11.0407px",
+      "chipRowScroll": [
+        439,
+        281
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "12.8808px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "9.2006px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        29.4,
+        29.4
+      ],
+      "subFont": "11.0407px",
+      "kidH": 264.9,
+      "kidRows": "264.938px",
+      "docScrollWidth": 320,
+      "docClientWidth": 320,
+      "panelScrollWidth": 281,
+      "panelClientWidth": 281
+    },
+    "errors": []
+  },
+  "en-360": {
+    "open": {
+      "viewport": [
+        360,
+        780
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 316.8,
+      "bandH": 101.6,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 30.9,
+      "chipTapH": 46,
+      "chipFont": "11.5894px",
+      "chipRowScroll": [
+        459,
+        316
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "13.5209px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "9.6578px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [],
+      "subFont": null,
+      "kidH": null,
+      "kidRows": null,
+      "docScrollWidth": 360,
+      "docClientWidth": 360,
+      "panelScrollWidth": 316,
+      "panelClientWidth": 316
+    },
+    "mid": {
+      "viewport": [
+        360,
+        780
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 316.8,
+      "bandH": 101.6,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 30.9,
+      "chipTapH": 46,
+      "chipFont": "11.5894px",
+      "chipRowScroll": [
+        459,
+        316
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "13.5209px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "9.6578px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        30.9,
+        30.9
+      ],
+      "subFont": "11.5894px",
+      "kidH": 239,
+      "kidRows": "205.453px",
+      "docScrollWidth": 360,
+      "docClientWidth": 360,
+      "panelScrollWidth": 316,
+      "panelClientWidth": 316
+    },
+    "sub": {
+      "viewport": [
+        360,
+        780
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 316.8,
+      "bandH": 101.6,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 30.9,
+      "chipTapH": 46,
+      "chipFont": "11.5894px",
+      "chipRowScroll": [
+        459,
+        316
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "13.5209px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "9.6578px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        30.9,
+        30.9
+      ],
+      "subFont": "11.5894px",
+      "kidH": 278,
+      "kidRows": "278.016px",
+      "docScrollWidth": 360,
+      "docClientWidth": 360,
+      "panelScrollWidth": 316,
+      "panelClientWidth": 316
+    },
+    "errors": []
+  },
+  "en-390": {
+    "open": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 343.2,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 32,
+      "chipTapH": 46,
+      "chipFont": "12.0008px",
+      "chipRowScroll": [
+        475,
+        342
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [],
+      "subFont": null,
+      "kidH": null,
+      "kidRows": null,
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342
+    },
+    "mid": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 343.2,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 32,
+      "chipTapH": 46,
+      "chipFont": "12.0008px",
+      "chipRowScroll": [
+        475,
+        342
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        32,
+        32
+      ],
+      "subFont": "12.0008px",
+      "kidH": 261.1,
+      "kidRows": "236.641px",
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342
+    },
+    "sub": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 343.2,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 32,
+      "chipTapH": 46,
+      "chipFont": "12.0008px",
+      "chipRowScroll": [
+        475,
+        342
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        32,
+        32
+      ],
+      "subFont": "12.0008px",
+      "kidH": 288,
+      "kidRows": "288px",
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342
+    },
+    "errors": []
+  },
+  "en-430": {
+    "open": {
+      "viewport": [
+        430,
+        932
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 378.4,
+      "bandH": 106.4,
+      "searchH": 47.5,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 34.5,
+      "chipTapH": 46,
+      "chipFont": "12.96px",
+      "chipRowScroll": [
+        509,
+        377
+      ],
+      "rowH": [
+        47.5,
+        47.5,
+        47.5,
+        47.5
+      ],
+      "rowFont": "15.12px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.8px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [],
+      "subFont": null,
+      "kidH": null,
+      "kidRows": null,
+      "docScrollWidth": 430,
+      "docClientWidth": 430,
+      "panelScrollWidth": 377,
+      "panelClientWidth": 377
+    },
+    "mid": {
+      "viewport": [
+        430,
+        932
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 378.4,
+      "bandH": 106.4,
+      "searchH": 47.5,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 34.5,
+      "chipTapH": 46,
+      "chipFont": "12.96px",
+      "chipRowScroll": [
+        509,
+        377
+      ],
+      "rowH": [
+        47.5,
+        47.5,
+        47.5,
+        47.5
+      ],
+      "rowFont": "15.12px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.8px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        34.5,
+        34.5
+      ],
+      "subFont": "12.96px",
+      "kidH": 285,
+      "kidRows": "261.25px",
+      "docScrollWidth": 430,
+      "docClientWidth": 430,
+      "panelScrollWidth": 377,
+      "panelClientWidth": 377
+    },
+    "sub": {
+      "viewport": [
+        430,
+        932
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 378.4,
+      "bandH": 106.4,
+      "searchH": 47.5,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 34.5,
+      "chipTapH": 46,
+      "chipFont": "12.96px",
+      "chipRowScroll": [
+        509,
+        377
+      ],
+      "rowH": [
+        47.5,
+        47.5,
+        47.5,
+        47.5
+      ],
+      "rowFont": "15.12px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.8px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        34.5,
+        34.5
+      ],
+      "subFont": "12.96px",
+      "kidH": 310.9,
+      "kidRows": "310.922px",
+      "docScrollWidth": 430,
+      "docClientWidth": 430,
+      "panelScrollWidth": 377,
+      "panelClientWidth": 377
+    },
+    "errors": []
+  },
+  "en-768": {
+    "open": {
+      "viewport": [
+        768,
+        1024
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 420,
+      "bandH": 106.4,
+      "searchH": 47.5,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 34.5,
+      "chipTapH": 46,
+      "chipFont": "12.96px",
+      "chipRowScroll": [
+        509,
+        419
+      ],
+      "rowH": [
+        47.5,
+        47.5,
+        47.5,
+        47.5
+      ],
+      "rowFont": "15.12px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.8px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [],
+      "subFont": null,
+      "kidH": null,
+      "kidRows": null,
+      "docScrollWidth": 768,
+      "docClientWidth": 768,
+      "panelScrollWidth": 419,
+      "panelClientWidth": 419
+    },
+    "mid": {
+      "viewport": [
+        768,
+        1024
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 420,
+      "bandH": 106.4,
+      "searchH": 47.5,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 34.5,
+      "chipTapH": 46,
+      "chipFont": "12.96px",
+      "chipRowScroll": [
+        509,
+        419
+      ],
+      "rowH": [
+        47.5,
+        47.5,
+        47.5,
+        47.5
+      ],
+      "rowFont": "15.12px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.8px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        34.5,
+        34.5
+      ],
+      "subFont": "12.96px",
+      "kidH": 300,
+      "kidRows": "289.406px",
+      "docScrollWidth": 768,
+      "docClientWidth": 768,
+      "panelScrollWidth": 419,
+      "panelClientWidth": 419
+    },
+    "sub": {
+      "viewport": [
+        768,
+        1024
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 420,
+      "bandH": 106.4,
+      "searchH": 47.5,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z"
+      ],
+      "chipH": 34.5,
+      "chipTapH": 46,
+      "chipFont": "12.96px",
+      "chipRowScroll": [
+        509,
+        419
+      ],
+      "rowH": [
+        47.5,
+        47.5,
+        47.5,
+        47.5
+      ],
+      "rowFont": "15.12px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.8px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        34.5,
+        34.5
+      ],
+      "subFont": "12.96px",
+      "kidH": 310.9,
+      "kidRows": "310.922px",
+      "docScrollWidth": 768,
+      "docClientWidth": 768,
+      "panelScrollWidth": 419,
+      "panelClientWidth": 419
+    },
+    "errors": []
+  },
+  "ar-390": {
+    "open": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 343.2,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "تخفيضات كبرى",
+        "وصل حديثًا",
+        "الأكثر مبيعًا",
+        "أقل من AED 54",
+        "الماركات أ–ي"
+      ],
+      "chipH": 32,
+      "chipTapH": 46,
+      "chipFont": "12.0008px",
+      "chipRowScroll": [
+        507,
+        342
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [],
+      "subFont": null,
+      "kidH": null,
+      "kidRows": null,
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342
+    },
+    "mid": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 343.2,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "تخفيضات كبرى",
+        "وصل حديثًا",
+        "الأكثر مبيعًا",
+        "أقل من AED 54",
+        "الماركات أ–ي"
+      ],
+      "chipH": 32,
+      "chipTapH": 46,
+      "chipFont": "12.0008px",
+      "chipRowScroll": [
+        507,
+        342
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        32,
+        32
+      ],
+      "subFont": "12.0008px",
+      "kidH": 256.7,
+      "kidRows": "228.781px",
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342
+    },
+    "sub": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr",
+      "panelW": 343.2,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "تخفيضات كبرى",
+        "وصل حديثًا",
+        "الأكثر مبيعًا",
+        "أقل من AED 54",
+        "الماركات أ–ي"
+      ],
+      "chipH": 32,
+      "chipTapH": 46,
+      "chipFont": "12.0008px",
+      "chipRowScroll": [
+        507,
+        342
+      ],
+      "rowH": [
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        32,
+        32
+      ],
+      "subFont": "12.0008px",
+      "kidH": 288,
+      "kidRows": "288px",
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342
+    },
+    "errors": []
+  }
+}

@@ -347,6 +347,10 @@ it('renders the checkout byte for byte as before this lane with both switches of
         // every page carrying the Site App tags: the install-offer catcher.
         // Not this lane's, so it is set aside here rather than pinned.
         $after = (string) preg_replace("#<script>addEventListener\\('beforeinstallprompt',[^<]*</script>\n#", '', $after, 1);
+        // Lane M4 (merged after this lane branched) adds the phone menu's quick
+        // links (V4 two-tone) under its search field on every page with the
+        // menu. Not this lane's either; StorefrontEnglishUnchangedTest pins it.
+        $after = (string) preg_replace('#    <div class="mm-chips"><div class="mm-chipr">.*?</div></div>\n#', '', $after, 1);
     } finally {
         EnglishRenderWalk::useViewPath($current[0]);
     }

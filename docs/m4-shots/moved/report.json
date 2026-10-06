@@ -1,0 +1,314 @@
+{
+  "en-390": {
+    "open": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-fd on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr;--m-w:min(100vw,clamp(240px,92vw,420px));--m-cf:13;--m-ch:36;--m-rh:52;--m-rf:15",
+      "panelW": 358.8,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z",
+        "Sunscreens"
+      ],
+      "chipH": 36,
+      "chipTapH": 46,
+      "chipFont": "13.0009px",
+      "chipRowScroll": [
+        597,
+        358
+      ],
+      "rowH": [
+        52,
+        52,
+        52,
+        52
+      ],
+      "rowFont": "15.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [],
+      "subFont": null,
+      "kidH": null,
+      "kidRows": null,
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 358,
+      "panelClientWidth": 358
+    },
+    "mid": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-fd on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr;--m-w:min(100vw,clamp(240px,92vw,420px));--m-cf:13;--m-ch:36;--m-rh:52;--m-rf:15",
+      "panelW": 358.8,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z",
+        "Sunscreens"
+      ],
+      "chipH": 36,
+      "chipTapH": 46,
+      "chipFont": "13.0009px",
+      "chipRowScroll": [
+        597,
+        358
+      ],
+      "rowH": [
+        52,
+        52,
+        52,
+        52
+      ],
+      "rowFont": "15.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        32,
+        32
+      ],
+      "subFont": "12.0008px",
+      "kidH": 288,
+      "kidRows": "none",
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 358,
+      "panelClientWidth": 358
+    },
+    "sub": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-fd on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr;--m-w:min(100vw,clamp(240px,92vw,420px));--m-cf:13;--m-ch:36;--m-rh:52;--m-rf:15",
+      "panelW": 358.8,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "Super Sale",
+        "New In",
+        "Best Sellers",
+        "Under 54 AED",
+        "Brands A–Z",
+        "Sunscreens"
+      ],
+      "chipH": 36,
+      "chipTapH": 46,
+      "chipFont": "13.0009px",
+      "chipRowScroll": [
+        597,
+        358
+      ],
+      "rowH": [
+        52,
+        52,
+        52,
+        52
+      ],
+      "rowFont": "15.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        32,
+        32
+      ],
+      "subFont": "12.0008px",
+      "kidH": 288,
+      "kidRows": "none",
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 358,
+      "panelClientWidth": 358
+    },
+    "errors": []
+  },
+  "ar-390": {
+    "open": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-fd on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr;--m-w:min(100vw,clamp(240px,92vw,420px));--m-cf:13;--m-ch:36;--m-rh:52;--m-rf:15",
+      "panelW": 358.8,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "تخفيضات كبرى",
+        "وصل حديثًا",
+        "الأكثر مبيعًا",
+        "أقل من AED 54",
+        "الماركات أ–ي",
+        "واقيات الشمس"
+      ],
+      "chipH": 36,
+      "chipTapH": 46,
+      "chipFont": "13.0009px",
+      "chipRowScroll": [
+        651,
+        358
+      ],
+      "rowH": [
+        52,
+        52,
+        52,
+        52
+      ],
+      "rowFont": "15.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [],
+      "subFont": null,
+      "kidH": null,
+      "kidRows": null,
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 358,
+      "panelClientWidth": 358
+    },
+    "mid": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-fd on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr;--m-w:min(100vw,clamp(240px,92vw,420px));--m-cf:13;--m-ch:36;--m-rh:52;--m-rf:15",
+      "panelW": 358.8,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "تخفيضات كبرى",
+        "وصل حديثًا",
+        "الأكثر مبيعًا",
+        "أقل من AED 54",
+        "الماركات أ–ي",
+        "واقيات الشمس"
+      ],
+      "chipH": 36,
+      "chipTapH": 46,
+      "chipFont": "13.0009px",
+      "chipRowScroll": [
+        651,
+        358
+      ],
+      "rowH": [
+        52,
+        52,
+        52,
+        52
+      ],
+      "rowFont": "15.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        32,
+        32
+      ],
+      "subFont": "12.0008px",
+      "kidH": 288,
+      "kidRows": "none",
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 358,
+      "panelClientWidth": 358
+    },
+    "sub": {
+      "viewport": [
+        390,
+        844
+      ],
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-fd on",
+      "style": "--mm-top:20%;--mm-radius:20px;--mm-speed:380ms;--mm-scrim:rgba(42,34,40,0.5);--mm-rule:#E0567B;--mm-rule-w:2px;--mm-card:#FFF8F5;--mm-parent-bg:#FFF3F6;--mm-parent-fg:#C13E63;--mm-pad:8px;--mm-size:13px;--mm-cols:1fr 1fr;--m-w:min(100vw,clamp(240px,92vw,420px));--m-cf:13;--m-ch:36;--m-rh:52;--m-rf:15",
+      "panelW": 358.8,
+      "bandH": 102,
+      "searchH": 44,
+      "searchFont": "16px",
+      "chips": [
+        "تخفيضات كبرى",
+        "وصل حديثًا",
+        "الأكثر مبيعًا",
+        "أقل من AED 54",
+        "الماركات أ–ي",
+        "واقيات الشمس"
+      ],
+      "chipH": 36,
+      "chipTapH": 46,
+      "chipFont": "13.0009px",
+      "chipRowScroll": [
+        651,
+        358
+      ],
+      "rowH": [
+        52,
+        52,
+        52,
+        52
+      ],
+      "rowFont": "15.001px",
+      "countColour": "rgb(79, 70, 76)",
+      "headingFont": "10.0007px",
+      "saleRow": {
+        "bg": "rgb(226, 58, 78)",
+        "image": "linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12))",
+        "colour": "rgb(255, 255, 255)"
+      },
+      "subH": [
+        32,
+        32
+      ],
+      "subFont": "12.0008px",
+      "kidH": 288,
+      "kidRows": "none",
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 358,
+      "panelClientWidth": 358
+    },
+    "errors": []
+  }
+}
