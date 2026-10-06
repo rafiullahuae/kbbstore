@@ -38,15 +38,38 @@
  * nothing here makes a request: the install sheets are a <template> in the
  * page, and the browser's own install box is the browser's.
  *
- *   - Android Chrome / Edge / Samsung: the browser's install offer
- *     (beforeinstallprompt) is held when it arrives and shown from the tap.
- *   - No offer (not arrived yet, refused, Firefox): the "⋮ → Install app" sheet.
- *   - iPhone / iPad: the two-step Share → Add to Home Screen sheet.
+ *   - Android Chrome / Edge: the browser's install offer (beforeinstallprompt)
+ *     is held when it arrives and shown from the tap — the browser's own
+ *     "Install app?" box, nothing of ours. prompt() only works inside a user
+ *     gesture, which the tap is. The head catches an offer that fires before
+ *     this deferred script runs (window.__kbbBip, partials/site-app-head).
+ *   - No offer: everything below is LANE IN (6 Oct), the owner: "i don't want
+ *     popup, i want if user click from android or iphone, it should give
+ *     install itself". What no website can change: Chrome fires the offer
+ *     only once the page is installable AND the shopper has tapped the site
+ *     at least once and spent ~30 s on it (Chrome's engagement rule), and
+ *     never while the app is already installed on that phone. Samsung
+ *     Internet 27+ never fires it (its own menu installs); Firefox never has.
+ *     iPhone and iPad have NO install API at all: Safari's Share -> Add to
+ *     Home Screen is the only way, and no page can open it or ask for it.
+ *     So the tap changes the row's own typing line into the one step left
+ *     ("Tap ⋮ … then Install app", "Tap Share … then Add to Home Screen") and
+ *     a small bouncing arrow points at that browser button for 6 s; any tap
+ *     ends it early. No overlay, no sheet, the row never changes height. The
+ *     row keeps listening: an offer that arrives later makes the very next
+ *     tap the browser's own install box. Appearance -> Footer -> App row ->
+ *     "Install help" = "Pop-up sheet (old)" brings back Lane FB's sheets,
+ *     which stay in the page's <template> either way.
  *   - Instagram, Facebook, TikTok and other in-app browsers: "open this page
- *     in your browser first" — they offer neither install nor Add to Home.
+ *     in Safari or Chrome" — they offer neither install nor Add to Home.
  *   - A laptop, only when "Show on laptops" printed the QR: the QR sheet.
- *   - Already installed: CSS hides the row (display-mode); navigator.standalone
- *     covers older iPhones here.
+ *   - Already installed: CSS hides the row inside the app (display-mode);
+ *     navigator.standalone covers older iPhones. IN THE BROWSER, Chrome on
+ *     Android (84+) answers navigator.getInstalledRelatedApps() with this
+ *     shop's own app when it is installed on this phone — the manifest lists
+ *     itself under related_applications (SiteApp::manifest()), and the page
+ *     asking is on the same origin and inside the app's scope — so the row
+ *     hides there too. Other browsers do not have the call; the row stays.
  *
  * ONE IntersectionObserver on the row does two jobs (the owner: "when the
  * install app row appear on screen, the floating whatsapp stuff must hide
@@ -103,21 +126,27 @@
   var upMode = app && pub > mine && typeof up.t === 'string' && up.t !== '' && !!btn;
   if (app && !upMode) { row.hidden = true; return; }
   if (upMode) upRow();
-  var offer = null;
-  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); offer = e; });
-  window.addEventListener('appinstalled', function () { offer = null; row.hidden = true; inView = false; html.classList.remove('kfa-on'); sync(); });
+  var offer = window.__kbbBip || null;
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); offer = e; if (hinting) unhint(); });
+  function gone() { offer = null; window.__kbbBip = null; row.hidden = true; inView = false; html.classList.remove('kfa-on'); if (hinting) unhint(); sync(); }
+  window.addEventListener('appinstalled', gone);
+  // Installed on this phone already, seen from the browser (Chrome Android):
+  // the row hides when the answer lands. Nothing is reserved; it just goes.
+  if (!app && typeof nav.getInstalledRelatedApps === 'function') {
+    nav.getInstalledRelatedApps().then(function (l) { if (l && l.length) gone(); }).catch(function () {});
+  }
 
   /* ── the typing (never in the update row: its words stay still) ── */
   var seq = [];
   if (!upMode) try { seq = JSON.parse(row.getAttribute('data-kfa') || '[]'); } catch (e) { seq = []; }
   var still = !!(mm && mm('(prefers-reduced-motion: reduce)').matches);
-  var inView = false, timer = 0, at = 0, n = 0, phase = 'hold', chars = [];
+  var inView = false, timer = 0, at = 0, n = 0, phase = 'hold', chars = [], hinting = false;
   function load(k) {
     chars = Array.from(String(seq[k][1]));
     ty.setAttribute('lang', seq[k][0] ? 'ar' : 'en');
     ty.setAttribute('dir', seq[k][0] ? 'rtl' : 'ltr');
   }
-  function live() { return inView && !document.hidden && !still && !!ty && seq.length > 1; }
+  function live() { return inView && !hinting && !document.hidden && !still && !!ty && seq.length > 1; }
   function step() {
     timer = 0;
     var wait;
@@ -207,6 +236,85 @@
     document.body.appendChild(back);
     x.focus();
   }
+  /*
+   * ── the inline hint (Lane IN) ──
+   * [hint key, where the arrow sits]: the browser button that installs, at
+   * its PHYSICAL place on the screen — browser chrome does not follow the
+   * page's direction, it follows the phone's language, so a phone set to
+   * Arabic gets the arrow mirrored. tr/br/bc/tl/bl: top right, bottom right…
+   *   Chrome / Edge / Firefox on Android   ⋮ top right
+   *   Samsung Internet                      ≡ bottom right
+   *   iPhone Safari before iOS 26           Share, bottom centre
+   *   iPhone Safari 26 (compact tab bar)    ••• bottom right, Share inside
+   *   iPad Safari, Chrome / Edge / Firefox on iPhone   Share, top right
+   *   in-app browsers                       ••• / ⋮ top right
+   */
+  function where() {
+    var k = kind();
+    if (k === 'qr') return null;
+    var rtl = /^(ar|he|fa|ur)\b/i.test(nav.language || '');
+    function side(p) { return rtl && p !== 'bc' ? p.charAt(0) + (p.charAt(1) === 'r' ? 'l' : 'r') : p; }
+    if (k === 'inapp') return ['inapp', side('tr')];
+    if (k === 'ios') {
+      if (/CriOS|FxiOS|EdgiOS/.test(ua) || !/iPhone|iPod/.test(ua)) return ['top', side('tr')];
+      var v = /Version\/(\d+)/.exec(ua);
+      return v && +v[1] >= 26 ? ['ios26', side('br')] : ['ios', 'bc'];
+    }
+    return /SamsungBrowser/.test(ua) ? ['sam', side('br')] : ['and', side('tr')];
+  }
+  var HCSS = '.kfa-hint .kfa-ty{color:#C13E63;font-weight:600}'
+    + '.kfa-ar{position:fixed;z-index:2147483000;width:46px;height:46px;border-radius:50%;background:#C13E63;color:#fff;display:grid;place-items:center;box-shadow:0 8px 22px rgba(193,62,99,.45);pointer-events:none;animation:kfa-up .8s ease-in-out infinite alternate}'
+    + '.kfa-ar svg{width:24px;height:24px}'
+    + '.kfa-ar-tr,.kfa-ar-tl{top:calc(8px + env(safe-area-inset-top))}'
+    + '.kfa-ar-br,.kfa-ar-bl,.kfa-ar-bc{bottom:calc(10px + env(safe-area-inset-bottom));animation-name:kfa-dn}'
+    + '.kfa-ar-tr,.kfa-ar-br{right:12px}.kfa-ar-tl,.kfa-ar-bl{left:12px}.kfa-ar-bc{left:calc(50% - 23px)}'
+    + '.kfa-ar-br svg,.kfa-ar-bl svg,.kfa-ar-bc svg{transform:rotate(180deg)}'
+    + '@keyframes kfa-up{to{transform:translateY(-9px)}}@keyframes kfa-dn{to{transform:translateY(9px)}}'
+    + '@media (prefers-reduced-motion:reduce){.kfa-ar{animation:none}}';
+  var arrow = null, hintT = 0, vh = row.querySelector('.kfa-vh'), vhWas = vh ? vh.textContent : '';
+  function hints() { try { return JSON.parse((tpl && tpl.getAttribute('data-hint')) || '{}') || {}; } catch (e) { return {}; } }
+  function hint(w) {
+    var words = hints()[w[0]];
+    if (!words || !ty) return false;
+    if (!document.getElementById('kfa-hcss')) {
+      var st = document.createElement('style');
+      st.id = 'kfa-hcss';
+      st.textContent = HCSS;
+      document.head.appendChild(st);
+    }
+    if (hinting) unhint();
+    hinting = true;
+    sync();
+    row.classList.add('kfa-hint');
+    ty.textContent = words;
+    ty.setAttribute('lang', html.getAttribute('lang') || 'en');
+    ty.setAttribute('dir', html.getAttribute('dir') || 'ltr');
+    if (vh) { vh.setAttribute('aria-live', 'polite'); vh.textContent = words; }
+    arrow = document.createElement('i');
+    arrow.className = 'kfa-ar kfa-ar-' + w[1];
+    arrow.setAttribute('aria-hidden', 'true');
+    arrow.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V5M5.5 11.5 12 5l6.5 6.5"/></svg>';
+    document.body.appendChild(arrow);
+    hintT = setTimeout(unhint, 6000);
+    // Any tap anywhere ends it. Registered from inside this click, so this
+    // tap's own pointerdown has already gone by.
+    document.addEventListener('pointerdown', unhint, true);
+    return true;
+  }
+  function unhint() {
+    if (!hinting) return;
+    hinting = false;
+    if (hintT) clearTimeout(hintT);
+    hintT = 0;
+    document.removeEventListener('pointerdown', unhint, true);
+    if (arrow && arrow.parentNode) arrow.parentNode.removeChild(arrow);
+    arrow = null;
+    row.classList.remove('kfa-hint');
+    if (vh) vh.textContent = vhWas;
+    if (seq.length) { load(at); ty.textContent = chars.slice(0, n).join(''); }
+    sync();
+  }
+
   /* ── the update row (Lane UA) ── */
   function ios() { return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1); }
   function upRow() {
@@ -290,11 +398,13 @@
       // The browser's own box, from this tap. One offer prompts once.
       var o = offer;
       offer = null;
+      window.__kbbBip = null;
       o.prompt();
       if (o.userChoice) o.userChoice.then(function (c) { if (c && c.outcome === 'accepted') row.hidden = true; }).catch(function () {});
       return;
     }
-    sheet(kind());
+    var w = row.hasAttribute('data-kfa-help') ? null : where();
+    if (!w || !hint(w)) sheet(kind());
   });
 })();
 

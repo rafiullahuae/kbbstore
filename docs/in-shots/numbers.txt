@@ -1,0 +1,18 @@
+android-offer    before: row 70px line-box 30px | after tap: row 70px line-box 30px, line "Order updates, straight to your phone.", arrow -, sheet false, prompt() calls 1, scrollWidth 390
+android-no-offer before: row 70px line-box 30px | after tap: row 70px line-box 30px, line "Tap ⋮ in your browser, then “Install app”.", arrow kfa-ar kfa-ar-tr, sheet false, prompt() calls 0, scrollWidth 390
+  offer arrives later: hint gone -> line "Order updates, straight to your phone."; next tap prompt() calls 1, sheet false
+iphone           before: row 70px line-box 30px | after tap: row 70px line-box 30px, line "Tap Share ⬆︎ below, then “Add to Home Screen”.", arrow kfa-ar kfa-ar-bc, sheet false, prompt() calls 0, scrollWidth 390
+iphone-ios26     before: row 70px line-box 30px | after tap: row 70px line-box 30px, line "Tap ••• below, then Share ⬆︎ → “Add to Home Screen”.", arrow kfa-ar kfa-ar-br, sheet false, prompt() calls 0, scrollWidth 390
+instagram        before: row 70px line-box 30px | after tap: row 70px line-box 30px, line "Open this page in Safari or Chrome to install.", arrow kfa-ar kfa-ar-tr, sheet false, prompt() calls 0, scrollWidth 390
+owner android-390        card top 46px, 358x204, first on My store true, button "Show me", open sheets 0, scrollWidth 390
+  Show me -> arrow ic-ar ic-ar-tr
+  Not now -> card gone true, oa.ic stored true
+owner android-390-offer  card top 46px, 358x153, first on My store true, button "Install app", open sheets 0, scrollWidth 390
+  Install app -> prompt() calls 1
+  Not now -> card gone true, oa.ic stored true
+owner iphone-390         card top 46px, 358x204, first on My store true, button "Show me", open sheets 0, scrollWidth 390
+  Show me -> arrow ic-ar ic-ar-bc
+  Not now -> card gone true, oa.ic stored true
+owner laptop-1280-offer  card top 46px, 760x136, first on My store true, button "Install app", open sheets 0, scrollWidth 1280
+  Install app -> prompt() calls 1
+  Not now -> card gone true, oa.ic stored true

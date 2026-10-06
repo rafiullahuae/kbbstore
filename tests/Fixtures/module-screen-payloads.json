@@ -5430,10 +5430,23 @@
             "name": "site_app_button",
             "type": "text",
             "label": "App row · button",
-            "help": "Empty: “Install” (Arabic on the Arabic shop). Android opens the browser’s own install box; iPhone and iPad get a two-step picture guide.",
+            "help": "Empty: “Install” (Arabic on the Arabic shop). Android opens the browser’s own install box; everywhere else, see “App row · install help”.",
             "options": null,
             "default": "",
             "value": ""
+          },
+          {
+            "key": "site_app_help",
+            "name": "site_app_help",
+            "type": "select",
+            "label": "App row · install help",
+            "help": "Where the browser can install directly (Chrome and Edge on Android, once Chrome allows it), the button opens the browser’s own install box either way. Otherwise — iPhone, iPad, Samsung Internet, Firefox, or Chrome before it is ready — “Inline hint” changes the row’s line to the one step left, with an arrow pointing at the browser’s button; “Pop-up sheet” opens the old two-step sheet.",
+            "options": {
+              "inline": "Inline hint in the row (new)",
+              "sheet": "Pop-up sheet (old)"
+            },
+            "default": "inline",
+            "value": "inline"
           },
           {
             "key": "site_d_app_laptop",

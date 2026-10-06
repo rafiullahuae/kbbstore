@@ -89,6 +89,9 @@ final class SiteFooter
     /** The big name, as a share of the size that fits it on one line. */
     private const NAME_SCALE = ['min' => 50, 'max' => 120, 'step' => 5, 'unit' => '%'];
 
+    /** App row · install help (Lane IN): the inline hint ships; the sheet is the old way. */
+    public const APP_HELP = ['inline' => 'Inline hint in the row (new)', 'sheet' => 'Pop-up sheet (old)'];
+
     /** Start / centre, for the brand block and the help strip. */
     private const ALIGN = ['start' => 'Lined up at the start (left in English, right in Arabic)', 'center' => 'Centred'];
 
@@ -239,7 +242,17 @@ final class SiteFooter
             'rule' => [self::class, 'cleanLines'],
             'help' => 'Same, in Arabic. Typed right to left. Empty: the shipped lines.'],
         'site_app_button' => ['type' => 'text', 'label' => 'App row · button', 'default' => '',
-            'help' => 'Empty: “Install” (Arabic on the Arabic shop). Android opens the browser’s own install box; iPhone and iPad get a two-step picture guide.'],
+            'help' => 'Empty: “Install” (Arabic on the Arabic shop). Android opens the browser’s own install box; everywhere else, see “App row · install help”.'],
+        /*
+         * Lane IN, 6 October. The owner: "the install app button is not giving
+         * auto install, i don't want popup". SHIPS 'inline' (he asked, CLAUDE.md
+         * rule 1): where the browser has no install offer to show, the tap
+         * changes the row's own typing line into the one step left, with an
+         * arrow at the browser's menu. 'sheet' is the way back to Lane FB's
+         * pop-up sheets, which stay in the page's <template> either way.
+         */
+        'site_app_help' => ['type' => 'select', 'label' => 'App row · install help', 'default' => 'inline', 'options' => self::APP_HELP,
+            'help' => 'Where the browser can install directly (Chrome and Edge on Android, once Chrome allows it), the button opens the browser’s own install box either way. Otherwise — iPhone, iPad, Samsung Internet, Firefox, or Chrome before it is ready — “Inline hint” changes the row’s line to the one step left, with an arrow pointing at the browser’s button; “Pop-up sheet” opens the old two-step sheet.'],
         'site_d_app_laptop' => ['type' => 'bool', 'label' => 'Show the app row on laptops (with a QR code to open the shop on the phone)', 'default' => false,
             'help' => 'Off: hidden on laptops and desktops 1024px and wider (iPads still see it). On: the button opens a QR code of the shop, drawn by the shop itself.'],
 
@@ -306,7 +319,7 @@ final class SiteFooter
         'site_m' => ['Site footer · layout mobile', 'Phones (900px and narrower): what shows, how it lines up, the spacing and the type sizes.',
             self::DEVICE_KEYS_M],
         'site_app' => ['Site footer · app row', 'The frosted-glass “get the app” row under the big name.',
-            ['site_app_on', 'site_app_title', 'site_app_lines', 'site_app_lines_ar', 'site_app_button', 'site_d_app_laptop']],
+            ['site_app_on', 'site_app_title', 'site_app_lines', 'site_app_lines_ar', 'site_app_button', 'site_app_help', 'site_d_app_laptop']],
     ];
 
     /** The layout tabs' keys, in the order they draw. */
@@ -507,7 +520,34 @@ final class SiteFooter
             // publishes one, and then the row's data-kfa-up. Read only inside
             // the installed app (site-app.js); a browser tab is unchanged.
             'update' => app(SiteAppUpdate::class)->page(),
+            // Lane IN: 'sheet' only when the owner chose the old pop-up; the
+            // script's default is the inline hint, so the default prints nothing.
+            'sheet' => ($c['site_app_help'] ?? 'inline') === 'sheet',
+            // The inline hints' words (Lane IN), in the page's language, as one
+            // JSON attribute on the row's <template>: site-app.js reads it only
+            // on a tap that has no install offer to show.
+            'hints' => json_encode([
+                'and' => __('store.footer.app_hint_and'), 'sam' => __('store.footer.app_hint_sam'),
+                'ios' => __('store.footer.app_hint_ios'), 'ios26' => __('store.footer.app_hint_ios26'),
+                'top' => __('store.footer.app_hint_top'), 'inapp' => __('store.footer.app_hint_inapp'),
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ];
+    }
+
+    /**
+     * Is the footer's app row switched on (Lane IN)? Two keys of the settings
+     * snapshot the page already holds — not all(), which walks the whole
+     * schema — for the head's early install-offer catcher. App -> Site App
+     * being on is the caller's half (partials/site-app-head).
+     */
+    public function appRowOn(): bool
+    {
+        $on = $this->settings->get(self::PREFIX.'site_app_on', null);
+        $design = $this->settings->get(self::PREFIX.'site_design', null);
+
+        $on = $on === null ? true : (is_bool($on) ? $on : (filter_var($on, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true));
+
+        return $on && $design !== 'classic';
     }
 
     /** At most this many links in one column; the rest of a pasted list is dropped. */

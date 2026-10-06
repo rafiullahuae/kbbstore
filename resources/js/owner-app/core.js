@@ -10,7 +10,7 @@
  * comes with it, so a reload of the same tab stays unlocked. (2.60.400)
  * The device and session tokens are HttpOnly cookies this code cannot read.
  * The PIN is never stored anywhere. localStorage holds three conveniences and
- * nothing else (see `store` below): whether the install sheet was offered,
+ * nothing else (see `store` below): when the install card was put off,
  * the full-screen preference, and the last notification seen. Shop data
  * (orders, customers, products) is held in MEMORY only, never in any browser
  * storage, and resetData() empties it whenever the app locks or signs out.
@@ -23,7 +23,7 @@ export const S = {
   base: document.body.getAttribute('data-base') || '',
   me: null, csrf: null, vapid: null, groups: {}, idle: 12, tz: null,
   cursor: 0, seen: 0, unread: 0, stage: 'boot',
-  staleMs: 30 * 60000, spinning: false, spinAt: 0, gen: 0, ui: null,
+  staleMs: 30 * 60000, spinning: false, spinAt: 0, gen: 0, ui: null, icOn: false,
 };
 
 /* ------------------------------------------- Customise app (Lane OA4) */
@@ -79,8 +79,10 @@ export const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 export const ic = (n, c) => '<svg class="i ' + (c || '') + '" aria-hidden="true"><use href="#i-' + n + '"/></svg>';
 
 /* The conveniences, and only these keys, ever. oa.np: when "Not now" was tapped on the notifications sheet (Lane NT).
-   oa.tn: when the "reinstall for the new top" notice was last closed (fs.js). */
-const KEYS = ['oa.a2', 'oa.fs', 'oa.seen', 'oa.np', 'oa.tn'];
+   oa.tn: when the "reinstall for the new top" notice was last closed (fs.js).
+   oa.ic: when "Not now" was tapped on the install card (install.js, Lane IN); it
+   replaces oa.a2, which marked the old install pop-up as shown once. */
+const KEYS = ['oa.fs', 'oa.seen', 'oa.np', 'oa.tn', 'oa.ic'];
 export const store = {
   get(k) { if (KEYS.indexOf(k) === -1) return null; try { return window.localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { if (KEYS.indexOf(k) === -1) return; try { window.localStorage.setItem(k, String(v)); } catch (e) { /* private mode */ } },

@@ -156,8 +156,13 @@ it('puts the eight head tags on a storefront page once, escaped, with the script
         // MUTATION: drop media="(display-mode: standalone)" -> red.
         ->and(substr_count($html, 'name="theme-color"'))->toBe(1)
         ->and($block)->toContain('<meta name="theme-color" media="(display-mode: standalone)" content="#FFFFFF">')
-        // And no install UI of any kind: that is decided later.
-        ->and($html)->not->toContain('beforeinstallprompt');
+        // The install UI was decided since (the footer's app row, Lane FB);
+        // the head carries only Lane IN's catcher for an early install offer,
+        // once, and it takes the offer only where the row was drawn.
+        // MUTATION: drop the document.querySelector('.kfa[data-kfa]') guard
+        // from partials/site-app-head -> red.
+        ->and(substr_count($html, 'beforeinstallprompt'))->toBe(1)
+        ->and($html)->toContain($block."<script>addEventListener('beforeinstallprompt',function(e){if(document.querySelector('.kfa[data-kfa]')){e.preventDefault();window.__kbbBip=e}})</script>\n");
 
     // The block sits in <head>, before </head>.
     expect(strpos($html, '<link rel="manifest"'))->toBeLessThan(strpos($html, '</head>'));

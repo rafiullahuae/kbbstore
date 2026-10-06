@@ -99,7 +99,9 @@ it('keeps the old full screen one choice away, and stores only one of its own op
 
     $m = $this->get(OA::base().'/manifest.webmanifest')->json();
     expect($m['display_override'])->toBe(['fullscreen', 'standalone'])
-        ->and(array_keys($m))->toBe(['name', 'short_name', 'id', 'start_url', 'scope', 'display', 'display_override', 'orientation', 'background_color', 'theme_color', 'icons']);
+        // related_applications (Lane IN): the app names itself, so Chrome can
+        // tell a browser tab it is installed and the install card stays away.
+        ->and(array_keys($m))->toBe(['name', 'short_name', 'id', 'start_url', 'scope', 'display', 'display_override', 'orientation', 'background_color', 'theme_color', 'icons', 'related_applications']);
     expect((string) $this->get(OA::base())->getContent())->toContain('<meta name="apple-mobile-web-app-status-bar-style" content="default">');
 
     icSbUi(['statusbar' => 'hidden"><script>']);

@@ -68,7 +68,7 @@ final class FooterPages
         // (Lane FB) Under the big name, above the © line. `site_d_app_laptop` is
         // the one desktop-only key here, so the Mobile page leaves it out.
         ['App row', 'The frosted-glass “get the app” row under the big name, with the typing lines and the Install button.',
-            ['site_app_on', 'site_app_title', 'site_app_lines', 'site_app_lines_ar', 'site_app_button', 'site_d_app_laptop']],
+            ['site_app_on', 'site_app_title', 'site_app_lines', 'site_app_lines_ar', 'site_app_button', 'site_app_help', 'site_d_app_laptop']],
         ['Bottom bar', 'The last row: © line, Privacy, Terms, the payment marks, and its effect.',
             ['site_{dev}_bot', 'site_{dev}_pay', 'site_sheen', 'site_sheen_speed']],
         ['Colours & effects', 'The strip’s four colours, the footer’s colours and the slow drift.',

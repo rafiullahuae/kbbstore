@@ -135,6 +135,12 @@ final class AppController extends Controller
                 ['src' => $a['icon-512'], 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
                 ['src' => $a['maskable-512'], 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
             ],
+            // Lane IN: the app names itself, so Chrome on Android answers
+            // getInstalledRelatedApps() in a browser tab and the dashboard's
+            // install card stays away on a phone that already has the app.
+            // The full manifest address on this request's own origin (the
+            // page asking must be same-origin and inside the scope).
+            'related_applications' => [['platform' => 'webapp', 'url' => $request->getSchemeAndHttpHost().$base.'/manifest.webmanifest']],
         ];
         /*
          * Full screen on Android only when chosen under Customise app -> Top of
