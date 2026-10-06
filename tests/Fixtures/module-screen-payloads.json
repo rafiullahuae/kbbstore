@@ -2770,6 +2770,343 @@
         "default": "Account",
         "value": "Account",
         "options": null
+      },
+      {
+        "key": "menu_style",
+        "type": "select",
+        "label": "Menu style",
+        "help": "V4 two-tone: a pink top band with search and quick links, the list on clearer glass. Classic is the panel exactly as 2.60.413 drew it — every control below this card does nothing in Classic.",
+        "default": "v4",
+        "value": "v4",
+        "options": {
+          "v4": "V4 two-tone",
+          "classic": "Classic glass (2.60.413)"
+        }
+      },
+      {
+        "key": "show_chips",
+        "type": "bool",
+        "label": "Quick links row",
+        "help": "The row of links under the search field. Edit them in the Quick links card.",
+        "default": true,
+        "value": true,
+        "options": null
+      },
+      {
+        "key": "sale_fill",
+        "type": "bool",
+        "label": "Super Sale highlight",
+        "help": "A menu row with a highlight colour (Super Sale) keeps its filled background, darkened so its white text passes AA. Off: red text, no fill.",
+        "default": true,
+        "value": true,
+        "options": null
+      },
+      {
+        "key": "panel_w_pct",
+        "type": "range",
+        "label": "Panel width",
+        "help": "Share of the screen the panel covers, between the two limits below.",
+        "default": 88,
+        "value": 88,
+        "options": {
+          "min": 60,
+          "max": 100,
+          "step": 1,
+          "unit": "%"
+        }
+      },
+      {
+        "key": "panel_w_min",
+        "type": "range",
+        "label": "Panel width · at least",
+        "help": "",
+        "default": 240,
+        "value": 240,
+        "options": {
+          "min": 200,
+          "max": 360,
+          "step": 10,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "panel_w_max",
+        "type": "range",
+        "label": "Panel width · at most",
+        "help": "A tablet gets a panel, not a sheet across the room.",
+        "default": 420,
+        "value": 420,
+        "options": {
+          "min": 300,
+          "max": 600,
+          "step": 10,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "band_pad",
+        "type": "range",
+        "label": "Top band padding",
+        "help": "Space above the search field and below the quick links.",
+        "default": 8,
+        "value": 8,
+        "options": {
+          "min": 0,
+          "max": 24,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "search_h",
+        "type": "range",
+        "label": "Search field height",
+        "help": "Never under 44px: it is a tap target.",
+        "default": 44,
+        "value": 44,
+        "options": {
+          "min": 44,
+          "max": 56,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "search_fs",
+        "type": "range",
+        "label": "Search text size",
+        "help": "",
+        "default": 13,
+        "value": 13,
+        "options": {
+          "min": 11,
+          "max": 18,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "chip_fs",
+        "type": "range",
+        "label": "Quick link text size",
+        "help": "",
+        "default": 12,
+        "value": 12,
+        "options": {
+          "min": 10,
+          "max": 16,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "chip_h",
+        "type": "range",
+        "label": "Quick link height",
+        "help": "The pill you see. Its tap area is never under 44px.",
+        "default": 32,
+        "value": 32,
+        "options": {
+          "min": 24,
+          "max": 44,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "chip_gap",
+        "type": "range",
+        "label": "Quick link gap",
+        "help": "",
+        "default": 6,
+        "value": 6,
+        "options": {
+          "min": 2,
+          "max": 16,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "chip_radius",
+        "type": "range",
+        "label": "Quick link corners",
+        "help": "24 is a full pill.",
+        "default": 24,
+        "value": 24,
+        "options": {
+          "min": 0,
+          "max": 24,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "row_h",
+        "type": "range",
+        "label": "Row height",
+        "help": "Never under 44px: that is a tap target.",
+        "default": 44,
+        "value": 44,
+        "options": {
+          "min": 44,
+          "max": 64,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "row_fs",
+        "type": "range",
+        "label": "Row text size",
+        "help": "",
+        "default": 14,
+        "value": 14,
+        "options": {
+          "min": 12,
+          "max": 18,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "row_py",
+        "type": "range",
+        "label": "Row padding · top and bottom",
+        "help": "",
+        "default": 8,
+        "value": 8,
+        "options": {
+          "min": 0,
+          "max": 16,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "row_px",
+        "type": "range",
+        "label": "Row padding · sides",
+        "help": "",
+        "default": 14,
+        "value": 14,
+        "options": {
+          "min": 8,
+          "max": 24,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "sub_fs",
+        "type": "range",
+        "label": "Sub-item text size",
+        "help": "The two-column items inside an open section.",
+        "default": 12,
+        "value": 12,
+        "options": {
+          "min": 10,
+          "max": 16,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "sub_h",
+        "type": "range",
+        "label": "Sub-item height",
+        "help": "",
+        "default": 32,
+        "value": 32,
+        "options": {
+          "min": 28,
+          "max": 48,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "col_gap",
+        "type": "range",
+        "label": "Two-column gap",
+        "help": "",
+        "default": 0,
+        "value": 0,
+        "options": {
+          "min": 0,
+          "max": 12,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "grp_fs",
+        "type": "range",
+        "label": "Section heading size",
+        "help": "ACCOUNT and the other small headings.",
+        "default": 10,
+        "value": 10,
+        "options": {
+          "min": 8,
+          "max": 14,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "icon_size",
+        "type": "range",
+        "label": "Arrow size",
+        "help": "The round arrow beside a section.",
+        "default": 24,
+        "value": 24,
+        "options": {
+          "min": 18,
+          "max": 36,
+          "step": 1,
+          "unit": "px"
+        }
+      },
+      {
+        "key": "sub_anim",
+        "type": "select",
+        "label": "How a section opens",
+        "help": "Panel open/close speed is Panel → Slide duration.",
+        "default": "slide",
+        "value": "slide",
+        "options": {
+          "slide": "Slide down",
+          "fade": "Fade",
+          "expand": "Expand",
+          "none": "None (instant)"
+        }
+      },
+      {
+        "key": "sub_ms",
+        "type": "range",
+        "label": "Opening duration",
+        "help": "",
+        "default": 220,
+        "value": 220,
+        "options": {
+          "min": 0,
+          "max": 600,
+          "step": 20,
+          "unit": "ms"
+        }
+      },
+      {
+        "key": "sub_ease",
+        "type": "select",
+        "label": "Opening easing",
+        "help": "",
+        "default": "ease-out",
+        "value": "ease-out",
+        "options": {
+          "ease-out": "Ease out",
+          "spring": "Spring",
+          "linear": "Linear"
+        }
       }
     ],
     "groups": [
@@ -2832,6 +3169,52 @@
           "support_text",
           "show_account",
           "account_label"
+        ]
+      },
+      {
+        "key": "style",
+        "label": "Style",
+        "description": "V4 two-tone or the classic glass panel.",
+        "fields": [
+          "menu_style",
+          "show_chips",
+          "sale_fill"
+        ]
+      },
+      {
+        "key": "sizes",
+        "label": "Sizes",
+        "description": "Every size is for a 390px phone; smaller and larger phones scale it automatically.",
+        "fields": [
+          "panel_w_pct",
+          "panel_w_min",
+          "panel_w_max",
+          "band_pad",
+          "search_h",
+          "search_fs",
+          "chip_fs",
+          "chip_h",
+          "chip_gap",
+          "chip_radius",
+          "row_h",
+          "row_fs",
+          "row_py",
+          "row_px",
+          "sub_fs",
+          "sub_h",
+          "col_gap",
+          "grp_fs",
+          "icon_size"
+        ]
+      },
+      {
+        "key": "motion",
+        "label": "Sub-menu animation",
+        "description": "How a section opens when it is tapped.",
+        "fields": [
+          "sub_anim",
+          "sub_ms",
+          "sub_ease"
         ]
       }
     ]

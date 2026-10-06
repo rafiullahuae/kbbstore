@@ -3307,6 +3307,22 @@ KBB_BH_CSS;
                 // The address book and its edit page, one stylesheet each.
                 'hits' => 2,
             ],
+            /*
+             * V4 TWO-TONE'S QUICK LINKS (Lane M4, 6 October). The owner picked
+             * V4 from docs/mv-preview ("V4 is fine. please proceed"), so it
+             * ships ON (CLAUDE.md rule 1, the 30 September reversal): one
+             * <div class="mm-chips"> under the menu's search field, holding the
+             * five default links, on every page that draws the phone menu.
+             * Exactly this element; the menu around it — rows, sub-items,
+             * account links — is still compared byte for byte, and in Classic
+             * (Appearance → Mobile menu → Style → Menu style) it is not printed
+             * at all. The nav's two new classes come out of
+             * MobileMenu::bodyClass() and so are on both sides of this walk.
+             */
+            'the phone menu quick links (Lane M4)' => [
+                'pattern' => '#    <div class="mm-chips"><div class="mm-chipr">(?:<a class="mm-chip(?: a-[a-z]+)?" href="[^"<>]*">[^<]*</a>){5}</div></div>\n#',
+                'hits' => 33,
+            ],
         ];
     }
 

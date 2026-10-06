@@ -93,6 +93,105 @@ class MobileMenu
         'support_text'  => ['text',   'Support wording',   '24/7 support', ''],
         'show_account'  => ['bool',   'Account links',     true, 'Sign in, register and wishlist.'],
         'account_label' => ['text',   'Account heading',   'Account', ''],
+
+        /*
+         * ── V4 "TWO-TONE" (Lane M4, 6 October) ─────────────────────────────
+         *
+         * The owner picked V4 from docs/mv-preview ("V4 is fine. please
+         * proceed, but give full control of font sizes, row height, paddings,
+         * upper custom links, panel size, on click sub menu opening animation
+         * etc."), so it ships ON. 'classic' is the undo: the panel exactly as
+         * 2.60.413 drew it — bodyClass() and cssVariables() answer byte for
+         * byte what they answered before, and no quick-link row is printed.
+         * MobileMenuTwoToneTest pins both halves.
+         *
+         * EVERY SIZE BELOW IS A BASE AT A 390px PHONE. The stylesheet scales it
+         * with the screen (--u in kbb.css: x0.92 at 320, x1.08 at 430 and
+         * above), and rows and quick links never go under a 44px tap height
+         * whatever is chosen here. Only a value moved off its default reaches
+         * the page, as one custom property on the panel.
+         *
+         * Appended, so every row ModuleSchemaEquivalenceTest recorded for the
+         * keys above keeps its line.
+         */
+        'menu_style'    => ['select', 'Menu style', 'v4', 'V4 two-tone: a pink top band with search and quick links, the list on clearer glass. Classic is the panel exactly as 2.60.413 drew it — every control below this card does nothing in Classic.', ['v4' => 'V4 two-tone', 'classic' => 'Classic glass (2.60.413)']],
+        'show_chips'    => ['bool',   'Quick links row', true, 'The row of links under the search field. Edit them in the Quick links card.'],
+        'sale_fill'     => ['bool',   'Super Sale highlight', true, 'A menu row with a highlight colour (Super Sale) keeps its filled background, darkened so its white text passes AA. Off: red text, no fill.'],
+
+        'panel_w_pct'   => ['range',  'Panel width',          88, 'Share of the screen the panel covers, between the two limits below.', ['min' => 60, 'max' => 100, 'step' => 1, 'unit' => '%']],
+        'panel_w_min'   => ['range',  'Panel width · at least', 240, '', ['min' => 200, 'max' => 360, 'step' => 10, 'unit' => 'px']],
+        'panel_w_max'   => ['range',  'Panel width · at most', 420, 'A tablet gets a panel, not a sheet across the room.', ['min' => 300, 'max' => 600, 'step' => 10, 'unit' => 'px']],
+        'band_pad'      => ['range',  'Top band padding',      8, 'Space above the search field and below the quick links.', ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'search_h'      => ['range',  'Search field height',  44, 'Never under 44px: it is a tap target.', ['min' => 44, 'max' => 56, 'step' => 1, 'unit' => 'px']],
+        'search_fs'     => ['range',  'Search text size',     13, '', ['min' => 11, 'max' => 18, 'step' => 1, 'unit' => 'px']],
+        'chip_fs'       => ['range',  'Quick link text size', 12, '', ['min' => 10, 'max' => 16, 'step' => 1, 'unit' => 'px']],
+        'chip_h'        => ['range',  'Quick link height',    32, 'The pill you see. Its tap area is never under 44px.', ['min' => 24, 'max' => 44, 'step' => 1, 'unit' => 'px']],
+        'chip_gap'      => ['range',  'Quick link gap',        6, '', ['min' => 2, 'max' => 16, 'step' => 1, 'unit' => 'px']],
+        'chip_radius'   => ['range',  'Quick link corners',   24, '24 is a full pill.', ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'row_h'         => ['range',  'Row height',           44, 'Never under 44px: that is a tap target.', ['min' => 44, 'max' => 64, 'step' => 1, 'unit' => 'px']],
+        'row_fs'        => ['range',  'Row text size',        14, '', ['min' => 12, 'max' => 18, 'step' => 1, 'unit' => 'px']],
+        'row_py'        => ['range',  'Row padding · top and bottom', 8, '', ['min' => 0, 'max' => 16, 'step' => 1, 'unit' => 'px']],
+        'row_px'        => ['range',  'Row padding · sides',  14, '', ['min' => 8, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'sub_fs'        => ['range',  'Sub-item text size',   12, 'The two-column items inside an open section.', ['min' => 10, 'max' => 16, 'step' => 1, 'unit' => 'px']],
+        'sub_h'         => ['range',  'Sub-item height',      32, '', ['min' => 28, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        'col_gap'       => ['range',  'Two-column gap',        0, '', ['min' => 0, 'max' => 12, 'step' => 1, 'unit' => 'px']],
+        'grp_fs'        => ['range',  'Section heading size', 10, 'ACCOUNT and the other small headings.', ['min' => 8, 'max' => 14, 'step' => 1, 'unit' => 'px']],
+        'icon_size'     => ['range',  'Arrow size',           24, 'The round arrow beside a section.', ['min' => 18, 'max' => 36, 'step' => 1, 'unit' => 'px']],
+
+        'sub_anim'      => ['select', 'How a section opens', 'slide', 'Panel open/close speed is Panel → Slide duration.', ['slide' => 'Slide down', 'fade' => 'Fade', 'expand' => 'Expand', 'none' => 'None (instant)']],
+        'sub_ms'        => ['range',  'Opening duration',    220, '', ['min' => 0, 'max' => 600, 'step' => 20, 'unit' => 'ms']],
+        'sub_ease'      => ['select', 'Opening easing', 'ease-out', '', ['ease-out' => 'Ease out', 'spring' => 'Spring', 'linear' => 'Linear']],
+    ];
+
+    /**
+     * SCHEMA key => [custom property, suffix], printed on the panel only when
+     * the value has moved off its default. Every value is an int from cast(),
+     * so nothing a setting holds is printed as text.
+     */
+    private const SIZE_VARS = [
+        'band_pad' => '--m-bp', 'search_h' => '--m-sh', 'search_fs' => '--m-sf',
+        'chip_fs' => '--m-cf', 'chip_h' => '--m-ch', 'chip_gap' => '--m-cg',
+        'row_h' => '--m-rh', 'row_fs' => '--m-rf', 'row_py' => '--m-ry', 'row_px' => '--m-rx',
+        'sub_fs' => '--m-qf', 'sub_h' => '--m-qh', 'col_gap' => '--m-cc', 'grp_fs' => '--m-gf',
+        'icon_size' => '--m-ic',
+    ];
+
+    /** sub_ease option => the timing function it prints. Constants, never a setting. */
+    private const EASING = [
+        'ease-out' => 'cubic-bezier(.2,.7,.3,1)',
+        'spring' => 'cubic-bezier(.34,1.56,.64,1)',
+        'linear' => 'linear',
+    ];
+
+    /** sub_anim option => panel class. 'none' prints none: the section snaps, as in Classic. */
+    private const ANIM_CLASS = ['slide' => 'mm-an-sl', 'fade' => 'mm-an-fd', 'expand' => 'mm-an-ex'];
+
+    /*
+     * ── THE QUICK LINKS ("upper custom links") ─────────────────────────────
+     *
+     * Stored beside the SCHEMA values, under `chips` in the same `mobile_menu`
+     * setting, so the shop reads them out of the map it already loaded — no
+     * second key, no lookup that misses. Not a SCHEMA field because a list is
+     * not one of ModuleSchema's types; cleanChips() is its whole cast.
+     *
+     * The five defaults are V4's, pointed at the routes the shop registers
+     * (MenuTargets::COLLECTIONS names each one's route): /super-sale/,
+     * /new-in/, /best-sellers/, /everything-under-54-aed/ and /brands/, the
+     * brand directory (A to Z). Not /shop/?orderby=…, which the preview guessed.
+     */
+    public const CHIP_MAX = 8;
+
+    public const CHIP_LABEL_MAX = 40;
+
+    /** accent => label. A chip stores the key; kbb.css owns the colours. */
+    public const CHIP_ACCENTS = ['' => 'White', 'sale' => 'Sale red', 'pink' => 'Pink', 'gold' => 'Gold', 'green' => 'Green', 'ink' => 'Dark'];
+
+    public const CHIPS_DEFAULT = [
+        ['label' => 'Super Sale', 'label_ar' => 'تخفيضات كبرى', 'url' => '/super-sale/', 'accent' => 'sale', 'on' => true],
+        ['label' => 'New In', 'label_ar' => 'وصل حديثًا', 'url' => '/new-in/', 'accent' => '', 'on' => true],
+        ['label' => 'Best Sellers', 'label_ar' => 'الأكثر مبيعًا', 'url' => '/best-sellers/', 'accent' => '', 'on' => true],
+        ['label' => 'Under 54 AED', 'label_ar' => 'أقل من AED 54', 'url' => '/everything-under-54-aed/', 'accent' => '', 'on' => true],
+        ['label' => 'Brands A–Z', 'label_ar' => 'الماركات أ–ي', 'url' => '/brands/', 'accent' => '', 'on' => true],
     ];
 
     /**
@@ -130,15 +229,38 @@ class MobileMenu
                    ['card_style', 'rule_position', 'rule_width', 'rule_colour', 'card_bg', 'parent_bg', 'parent_colour']],
         'foot' => ['Foot of the sheet', 'Support and account links.',
                    ['show_support', 'support_text', 'show_account', 'account_label']],
+        // Lane M4. After the five above, so their payload keeps its order.
+        'style' => ['Style', 'V4 two-tone or the classic glass panel.',
+                    ['menu_style', 'show_chips', 'sale_fill']],
+        'sizes' => ['Sizes', 'Every size is for a 390px phone; smaller and larger phones scale it automatically.',
+                    ['panel_w_pct', 'panel_w_min', 'panel_w_max', 'band_pad', 'search_h', 'search_fs',
+                     'chip_fs', 'chip_h', 'chip_gap', 'chip_radius', 'row_h', 'row_fs', 'row_py', 'row_px',
+                     'sub_fs', 'sub_h', 'col_gap', 'grp_fs', 'icon_size']],
+        'motion' => ['Sub-menu animation', 'How a section opens when it is tapped.',
+                     ['sub_anim', 'sub_ms', 'sub_ease']],
     ];
 
+    /** all(), once per instance: the sheet asks for it three times per page. */
+    private ?array $memo = null;
+
     public function __construct(private SettingsService $settings) {}
+
+    /** The stored `mobile_menu` value, from the map the request already holds. */
+    private function saved(): array
+    {
+        $saved = $this->settings->get('mobile_menu');
+
+        return is_array($saved) ? $saved : [];
+    }
 
     /** Saved values merged over the defaults. */
     public function all(): array
     {
-        $saved = $this->settings->get('mobile_menu');
-        $saved = is_array($saved) ? $saved : [];
+        if ($this->memo !== null) {
+            return $this->memo;
+        }
+
+        $saved = $this->saved();
 
         $out = [];
 
@@ -148,7 +270,7 @@ class MobileMenu
                 : $def[2];
         }
 
-        return $out;
+        return $this->memo = $out;
     }
 
     public function get(string $key): mixed
@@ -191,7 +313,142 @@ class MobileMenu
             }
         }
 
+        // The quick links travel with the same save, and a save that does not
+        // carry them keeps the ones already stored.
+        if (array_key_exists('chips', $values)) {
+            $clean['chips'] = self::cleanChips($values['chips']);
+        } elseif (array_key_exists('chips', $saved = $this->saved())) {
+            $clean['chips'] = self::cleanChips($saved['chips']);
+        }
+
         $this->settings->set('mobile_menu', $clean);
+        $this->memo = null;
+    }
+
+    /** True while the owner's pick, V4 two-tone, is the menu style. */
+    public function twoTone(): bool
+    {
+        return 'v4' === $this->all()['menu_style'];
+    }
+
+    /** The stored quick links, cleaned; the five defaults until any are saved. */
+    public function chips(): array
+    {
+        $saved = $this->saved();
+
+        return array_key_exists('chips', $saved) ? self::cleanChips($saved['chips']) : self::CHIPS_DEFAULT;
+    }
+
+    /**
+     * What the top band prints: the switched-on quick links, label in the page's
+     * language, address with the shop's base path. Empty in Classic and with the
+     * row switched off, so neither prints a thing.
+     *
+     * @return list<array{label: string, href: string, accent: string}>
+     */
+    public function chipsForRender(): array
+    {
+        $c = $this->all();
+
+        if ('v4' !== $c['menu_style'] || ! $c['show_chips']) {
+            return [];
+        }
+
+        $ar = 'ar' === \App\Support\Locale::current();
+        // The Brands module off takes /brands/ links out of the chrome, as
+        // NavigationService::filterItems() does for the menu itself. Read from
+        // the module map the page already loaded (no query of its own).
+        $hideBrands = ! $this->settings->moduleEnabled('brands', true);
+        $out = [];
+
+        foreach ($this->chips() as $chip) {
+            if (! $chip['on'] || ($hideBrands && \App\Support\BrandUrls::matches($chip['url']))) {
+                continue;
+            }
+
+            $out[] = [
+                'label' => $ar && '' !== $chip['label_ar'] ? $chip['label_ar'] : $chip['label'],
+                'href' => \App\Support\Url::to($chip['url']),
+                'accent' => $chip['accent'],
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * The quick links' whole cast. A chip with no label or with an address
+     * that is neither a path on this shop nor an https URL is dropped, and
+     * $errors says which and why (the console refuses the save with it);
+     * javascript:, data:, http: and //host never survive. At most CHIP_MAX.
+     *
+     * @param  list<string>|null  $errors
+     * @return list<array{label: string, label_ar: string, url: string, accent: string, on: bool}>
+     */
+    public static function cleanChips(mixed $raw, ?array &$errors = null): array
+    {
+        $errors = [];
+
+        if (! is_array($raw)) {
+            if (null !== $raw) {
+                $errors[] = 'Quick links must be a list.';
+            }
+
+            return [];
+        }
+
+        $out = [];
+
+        foreach (array_values($raw) as $i => $chip) {
+            $n = $i + 1;
+
+            if (count($out) >= self::CHIP_MAX) {
+                $errors[] = 'At most '.self::CHIP_MAX.' quick links.';
+                break;
+            }
+
+            if (! is_array($chip)) {
+                $errors[] = "Quick link {$n} is not a link.";
+                continue;
+            }
+
+            $label = self::chipText($chip['label'] ?? '');
+            $url = trim(is_string($chip['url'] ?? null) ? $chip['url'] : '');
+
+            if ('' === $label) {
+                $errors[] = "Quick link {$n} needs a label.";
+                continue;
+            }
+
+            if (! \App\Support\MenuTargets::customUrlAllowed($url)) {
+                $errors[] = "Quick link {$n} ({$label}): the link must be a path on this shop, like /new-in/, or an https:// address.";
+                continue;
+            }
+
+            $accent = is_string($chip['accent'] ?? null) && array_key_exists($chip['accent'], self::CHIP_ACCENTS) ? $chip['accent'] : '';
+
+            $out[] = [
+                'label' => $label,
+                'label_ar' => self::chipText($chip['label_ar'] ?? ''),
+                'url' => $url,
+                'accent' => $accent,
+                'on' => ! in_array($chip['on'] ?? true, [false, 0, '0', '', 'false', 'off', null], true),
+            ];
+        }
+
+        return $out;
+    }
+
+    /** One line of plain text, at most CHIP_LABEL_MAX characters. */
+    private static function chipText(mixed $raw): string
+    {
+        if (! is_string($raw)) {
+            return '';
+        }
+
+        $text = trim((string) preg_replace('/\s+/u', ' ', strip_tags($raw)));
+
+        return mb_substr($text, 0, self::CHIP_LABEL_MAX);
     }
 
     /**
@@ -223,7 +480,51 @@ class MobileMenu
             '--mm-pad:' . $pad[0],
             '--mm-size:' . $pad[1],
             '--mm-cols:' . ('1' === $c['child_columns'] ? '1fr' : '1fr 1fr'),
+            ...$this->twoToneVariables($c),
         ]);
+    }
+
+    /**
+     * V4's sizes, only those moved off their default — so a shop on the
+     * defaults (and every shop on Classic) gets exactly the attribute it got
+     * before. kbb.css holds every default as the same custom property.
+     *
+     * @return list<string>
+     */
+    private function twoToneVariables(array $c): array
+    {
+        if ('v4' !== $c['menu_style']) {
+            return [];
+        }
+
+        $d = static fn (string $k) => self::SCHEMA[$k][2];
+        $out = [];
+
+        if ($c['panel_w_pct'] !== $d('panel_w_pct') || $c['panel_w_min'] !== $d('panel_w_min') || $c['panel_w_max'] !== $d('panel_w_max')) {
+            $max = (int) $c['panel_w_max'];
+            $min = min((int) $c['panel_w_min'], $max);
+            $out[] = '--m-w:min(100vw,clamp('.$min.'px,'.(int) $c['panel_w_pct'].'vw,'.$max.'px))';
+        }
+
+        foreach (self::SIZE_VARS as $key => $var) {
+            if ($c[$key] !== $d($key)) {
+                $out[] = $var.':'.(int) $c[$key];
+            }
+        }
+
+        if ($c['chip_radius'] !== $d('chip_radius')) {
+            $out[] = '--m-cr:'.(int) $c['chip_radius'].'px';
+        }
+
+        if ($c['sub_ms'] !== $d('sub_ms')) {
+            $out[] = '--m-sd:'.(int) $c['sub_ms'].'ms';
+        }
+
+        if ($c['sub_ease'] !== $d('sub_ease')) {
+            $out[] = '--m-se:'.(self::EASING[$c['sub_ease']] ?? self::EASING['ease-out']);
+        }
+
+        return $out;
     }
 
     /** Classes that switch structural behaviour. */
@@ -237,6 +538,12 @@ class MobileMenu
             $c['show_counts'] ? '' : 'mm-nocounts',
             // Last, so 'bottom' renders the class list it always rendered.
             'left' === $c['open_from'] ? 'mm-left' : '',
+            // Lane M4: after everything above, so Classic is the 2.60.413 list.
+            ...('v4' === $c['menu_style'] ? [
+                'mm-v4',
+                self::ANIM_CLASS[$c['sub_anim']] ?? '',
+                $c['sale_fill'] ? '' : 'mm-nohl',
+            ] : []),
         ])));
     }
 }

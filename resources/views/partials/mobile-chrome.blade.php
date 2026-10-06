@@ -21,6 +21,13 @@
     if (app(\App\Services\DemoContent::class)->enabled()) {
         $mmItems = \App\Services\MenuDemo::fill($mmItems ?: []);
     }
+
+    /*
+     * V4's quick links (Lane M4), Appearance → Mobile menu → Quick links, are
+     * printed under the search field. chipsForRender() is empty in Classic and
+     * with the row switched off; the @if around them sits at column 0 so that
+     * Classic renders not one byte more than 2.60.413 did.
+     */
 @endphp
 
 <div class="mscrim" id="mscrim"></div>
@@ -40,6 +47,9 @@
             <input type="search" id="mmFilter" placeholder="{{ $cfg['search_text'] }}" autocomplete="off">
         </div>
     @endif
+@if ($mmChips = $mm->chipsForRender())
+    <div class="mm-chips"><div class="mm-chipr">@foreach ($mmChips as $chip)<a class="mm-chip{{ $chip['accent'] !== '' ? ' a-'.$chip['accent'] : '' }}" href="{{ $chip['href'] }}">{{ $chip['label'] }}</a>@endforeach</div></div>
+@endif
 
     <div class="mm-body" id="mmBody">
         @foreach ($mmItems as $item)

@@ -185,6 +185,20 @@ function mScreenUrls(): array
  *       mobile-header
  *       search_icon / search_text .default/.value
  */
+/*
+ * ── MOBILE MENU GAINED THREE CARDS, NOTHING MOVED ─────────────────── Lane M4 ──
+ *
+ *     mobile-menu.fields     + 25 after account_label: menu_style (v4), the
+ *                            Sizes card's 19 ranges, the Sub-menu animation
+ *                            card's three, show_chips, sale_fill
+ *     mobile-menu.groups     + style, sizes, motion after foot
+ *
+ * The owner picked V4 two-tone and asked for "full control of font sizes, row
+ * height, paddings, upper custom links, panel size, on click sub menu opening
+ * animation". Written by script into the `mobile-menu` entry ONLY, checked
+ * before writing: the 26 recorded fields and five groups are an exact prefix of
+ * what the screen sends now, and every other screen's entry is unchanged.
+ */
 it('sends every module screen the payload it sent before the shared schema', function () {
     $owner = AdminUser::create([
         'name' => 'Payload Owner',

@@ -84,7 +84,10 @@ it('opens from the left by default: the side panel class is on the menu', functi
     // Mutation: default 'bottom' in MobileMenu::SCHEMA, or drop the mm-left arm
     // of bodyClass(), and this is red — the shop would still rise from below.
     expect(MobileMenu::SCHEMA['open_from'][2])->toBe('left')
-        ->and(mnNavTag(mnHome()))->toContain('class="mmenu mm-card-cream mm-rule-children mm-left"');
+        // ▲ Lane M4: `mm-v4 mm-an-sl` follow it — Style → Menu style ships at
+        // V4 two-tone, the owner's pick, with its sub-menu animation. They are
+        // appended after mm-left, so this class list still starts as it did.
+        ->and(mnNavTag(mnHome()))->toContain('class="mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl"');
 });
 
 it('Bottom puts back the sheet: the same page, without the one class', function () {
@@ -94,13 +97,17 @@ it('Bottom puts back the sheet: the same page, without the one class', function 
     $bottom = mnHome();
 
     // Today's class list exactly — mm-left was appended last for this reason.
-    expect(mnNavTag($bottom))->toContain('class="mmenu mm-card-cream mm-rule-children"')
+    // ▲ Lane M4: plus V4's two classes, which are the menu STYLE and not the
+    // side it opens from; MobileMenuTwoToneTest pins Classic + Bottom as the
+    // 2.60.413 sheet byte for byte.
+    expect(mnNavTag($bottom))->toContain('class="mmenu mm-card-cream mm-rule-children mm-v4 mm-an-sl"')
         ->and($bottom)->not->toContain('mm-left');
 
     // And NOTHING else on the page differs. Mutation: print any other
     // attribute only for Left (a role, a tabindex, a wrapper) and this is red,
     // because Bottom would no longer be the markup it was.
-    expect(str_replace(' mm-left"', '"', $left))->toBe($bottom);
+    // ▲ Lane M4: V4's classes follow mm-left now, so it is no longer last.
+    expect(str_replace(' mm-left mm-v4', ' mm-v4', $left))->toBe($bottom);
 });
 
 it('stores one of its own two options, and anything else is Left', function () {

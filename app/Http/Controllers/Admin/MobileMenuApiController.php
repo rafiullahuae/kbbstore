@@ -57,17 +57,43 @@ class MobileMenuApiController extends Controller
             $groups[] = ['key' => $key, 'label' => $label, 'description' => $description, 'fields' => $keys];
         }
 
-        return response()->json(['fields' => $fields, 'groups' => $groups]);
+        /*
+         * Lane M4: the quick links of the V4 top band, beside `fields` rather
+         * than in it — a list is not a schema field, and `fields` + `groups`
+         * stay exactly what ModuleScreenPayloadTest recorded for them. The
+         * console's Quick links card (admin/partials/mobile-menu-chips-screen)
+         * reads this and posts `settings.chips` back with the ordinary Save.
+         */
+        $chips = [
+            'value' => $this->menu->chips(),
+            'default' => MobileMenu::CHIPS_DEFAULT,
+            'max' => MobileMenu::CHIP_MAX,
+            'label_max' => MobileMenu::CHIP_LABEL_MAX,
+            'accents' => MobileMenu::CHIP_ACCENTS,
+        ];
+
+        return response()->json(['fields' => $fields, 'groups' => $groups, 'chips' => $chips]);
     }
 
     public function save(Request $request): JsonResponse
     {
         $data = $request->validate(['settings' => ['required', 'array']]);
 
-        $unknown = array_diff(array_keys($data['settings']), array_keys(MobileMenu::SCHEMA));
+        $unknown = array_diff(array_keys($data['settings']), [...array_keys(MobileMenu::SCHEMA), 'chips']);
 
         if ($unknown !== []) {
             return response()->json(['ok' => false, 'error' => 'Unknown setting: ' . implode(', ', $unknown)], 422);
+        }
+
+        // A quick link that would be dropped is refused here, by name, rather
+        // than vanishing on save: javascript:, data:, http: and //host links,
+        // an empty label, a ninth link.
+        if (array_key_exists('chips', $data['settings'])) {
+            MobileMenu::cleanChips($data['settings']['chips'], $errors);
+
+            if ($errors !== []) {
+                return response()->json(['ok' => false, 'error' => implode(' ', $errors)], 422);
+            }
         }
 
         $this->menu->save($data['settings']);
@@ -76,6 +102,6 @@ class MobileMenuApiController extends Controller
         Cache::forget('kbb.nav.primary');
         Cache::forget('kbb.nav.mobile');
 
-        return response()->json(['ok' => true, 'saved' => count($data['settings']), 'values' => $this->menu->all()]);
+        return response()->json(['ok' => true, 'saved' => count($data['settings']), 'values' => $this->menu->all(), 'chips' => $this->menu->chips()]);
     }
 }

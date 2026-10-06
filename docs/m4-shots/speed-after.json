@@ -1,0 +1,9 @@
+{
+    "how": "tools/mn-speed.php at 41 requests per page (40 timed), five rounds interleaved before/after on the same preview (git stash for before); median of the five round medians. The machine is shared with other lanes, so single rounds swing +-10 ms both ways; the MobileMenu service itself costs ~0.1 ms per page before and after (storage/m4-logs bench).",
+    "before": {"product": {"median_ms": 26.9, "queries": 9, "settings_reads": 1, "bytes": 136527},
+               "category": {"median_ms": 16.5, "queries": 5, "settings_reads": 1, "bytes": 75959},
+               "brand": {"median_ms": 14.9, "queries": 5, "settings_reads": 1, "bytes": 75945}},
+    "after":  {"product": {"median_ms": 26.2, "queries": 9, "settings_reads": 1, "bytes": 136955},
+               "category": {"median_ms": 15.4, "queries": 5, "settings_reads": 1, "bytes": 76387},
+               "brand": {"median_ms": 16.0, "queries": 5, "settings_reads": 1, "bytes": 76373}}
+}
