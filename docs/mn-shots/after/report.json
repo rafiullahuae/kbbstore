@@ -1,0 +1,890 @@
+{
+  "en-320": {
+    "closed": {
+      "viewport": [
+        320,
+        568
+      ],
+      "panel": {
+        "x": -282,
+        "y": 0,
+        "w": 281.6,
+        "h": 568
+      },
+      "open": false,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "13.73px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 320,
+      "docClientWidth": 320,
+      "panelScrollWidth": 281,
+      "panelClientWidth": 281,
+      "focus": " dvs-ticks pc-nobrand pc-nocat",
+      "bodyOverflow": ""
+    },
+    "opening": {
+      "viewport": [
+        320,
+        568
+      ],
+      "panel": {
+        "x": -57,
+        "y": 0,
+        "w": 281.6,
+        "h": 568
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "13.73px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 320,
+      "docClientWidth": 320,
+      "panelScrollWidth": 281,
+      "panelClientWidth": 281,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "open": {
+      "viewport": [
+        320,
+        568
+      ],
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 281.6,
+        "h": 568
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "13.73px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 320,
+      "docClientWidth": 320,
+      "panelScrollWidth": 281,
+      "panelClientWidth": 281,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "sub": {
+      "viewport": [
+        320,
+        568
+      ],
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 281.6,
+        "h": 568
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "13.73px",
+      "subRows": [
+        32.6,
+        32.6,
+        32.6,
+        32.6
+      ],
+      "subFont": "12px",
+      "subColWidth": 130.3,
+      "subWraps": [],
+      "docScrollWidth": 320,
+      "docClientWidth": 320,
+      "panelScrollWidth": 281,
+      "panelClientWidth": 281,
+      "focus": "mm-it mm-par",
+      "bodyOverflow": "hidden"
+    },
+    "errors": []
+  },
+  "en-360": {
+    "closed": {
+      "viewport": [
+        360,
+        780
+      ],
+      "panel": {
+        "x": -317,
+        "y": 0,
+        "w": 316.8,
+        "h": 780
+      },
+      "open": false,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "13.89px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 360,
+      "docClientWidth": 360,
+      "panelScrollWidth": 316,
+      "panelClientWidth": 316,
+      "focus": " dvs-ticks pc-nobrand pc-nocat",
+      "bodyOverflow": ""
+    },
+    "opening": {
+      "viewport": [
+        360,
+        780
+      ],
+      "panel": {
+        "x": -47,
+        "y": 0,
+        "w": 316.8,
+        "h": 780
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "13.89px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 360,
+      "docClientWidth": 360,
+      "panelScrollWidth": 316,
+      "panelClientWidth": 316,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "open": {
+      "viewport": [
+        360,
+        780
+      ],
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 316.8,
+        "h": 780
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "13.89px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 360,
+      "docClientWidth": 360,
+      "panelScrollWidth": 316,
+      "panelClientWidth": 316,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "sub": {
+      "viewport": [
+        360,
+        780
+      ],
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 316.8,
+        "h": 780
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "13.89px",
+      "subRows": [
+        32.6,
+        32.6,
+        32.6,
+        32.6
+      ],
+      "subFont": "12px",
+      "subColWidth": 147.9,
+      "subWraps": [],
+      "docScrollWidth": 360,
+      "docClientWidth": 360,
+      "panelScrollWidth": 316,
+      "panelClientWidth": 316,
+      "focus": "mm-it mm-par",
+      "bodyOverflow": "hidden"
+    },
+    "errors": []
+  },
+  "en-390": {
+    "closed": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": -343,
+        "y": 0,
+        "w": 343.2,
+        "h": 844
+      },
+      "open": false,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.01px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342,
+      "focus": " dvs-ticks pc-nobrand pc-nocat",
+      "bodyOverflow": ""
+    },
+    "opening": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": -61,
+        "y": 0,
+        "w": 343.2,
+        "h": 844
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.01px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "open": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 343.2,
+        "h": 844
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.01px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "sub": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 343.2,
+        "h": 844
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.01px",
+      "subRows": [
+        32.6,
+        32.6,
+        32.6,
+        32.6
+      ],
+      "subFont": "12.01px",
+      "subColWidth": 161.1,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342,
+      "focus": "mm-it mm-par",
+      "bodyOverflow": "hidden"
+    },
+    "errors": []
+  },
+  "en-430": {
+    "closed": {
+      "viewport": [
+        430,
+        932
+      ],
+      "panel": {
+        "x": -378,
+        "y": 0,
+        "w": 378.4,
+        "h": 932
+      },
+      "open": false,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44.3,
+        44.3,
+        44.3,
+        44.3
+      ],
+      "rowFont": "14.17px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 430,
+      "docClientWidth": 430,
+      "panelScrollWidth": 377,
+      "panelClientWidth": 377,
+      "focus": " dvs-ticks pc-nobrand pc-nocat",
+      "bodyOverflow": ""
+    },
+    "opening": {
+      "viewport": [
+        430,
+        932
+      ],
+      "panel": {
+        "x": -43,
+        "y": 0,
+        "w": 378.4,
+        "h": 932
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44.3,
+        44.3,
+        44.3,
+        44.3
+      ],
+      "rowFont": "14.17px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 430,
+      "docClientWidth": 430,
+      "panelScrollWidth": 377,
+      "panelClientWidth": 377,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "open": {
+      "viewport": [
+        430,
+        932
+      ],
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 378.4,
+        "h": 932
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44.3,
+        44.3,
+        44.3,
+        44.3
+      ],
+      "rowFont": "14.17px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 430,
+      "docClientWidth": 430,
+      "panelScrollWidth": 377,
+      "panelClientWidth": 377,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "sub": {
+      "viewport": [
+        430,
+        932
+      ],
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 378.4,
+        "h": 932
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44.3,
+        44.3,
+        44.3,
+        44.3
+      ],
+      "rowFont": "14.17px",
+      "subRows": [
+        33.2,
+        33.2,
+        33.2,
+        33.2
+      ],
+      "subFont": "12.17px",
+      "subColWidth": 178.7,
+      "subWraps": [],
+      "docScrollWidth": 430,
+      "docClientWidth": 430,
+      "panelScrollWidth": 377,
+      "panelClientWidth": 377,
+      "focus": "mm-it mm-par",
+      "bodyOverflow": "hidden"
+    },
+    "errors": []
+  },
+  "en-768": {
+    "closed": {
+      "viewport": [
+        768,
+        1024
+      ],
+      "panel": {
+        "x": -420,
+        "y": 0,
+        "w": 420,
+        "h": 1024
+      },
+      "open": false,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        46.5,
+        46.5,
+        46.5,
+        46.5
+      ],
+      "rowFont": "15.5px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 768,
+      "docClientWidth": 768,
+      "panelScrollWidth": 419,
+      "panelClientWidth": 419,
+      "focus": " dvs-ticks pc-nobrand pc-nocat",
+      "bodyOverflow": ""
+    },
+    "opening": {
+      "viewport": [
+        768,
+        1024
+      ],
+      "panel": {
+        "x": -21,
+        "y": 0,
+        "w": 420,
+        "h": 1024
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        46.5,
+        46.5,
+        46.5,
+        46.5
+      ],
+      "rowFont": "15.5px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 768,
+      "docClientWidth": 768,
+      "panelScrollWidth": 419,
+      "panelClientWidth": 419,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "open": {
+      "viewport": [
+        768,
+        1024
+      ],
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 420,
+        "h": 1024
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        46.5,
+        46.5,
+        46.5,
+        46.5
+      ],
+      "rowFont": "15.5px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 768,
+      "docClientWidth": 768,
+      "panelScrollWidth": 419,
+      "panelClientWidth": 419,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "sub": {
+      "viewport": [
+        768,
+        1024
+      ],
+      "panel": {
+        "x": 0,
+        "y": 0,
+        "w": 420,
+        "h": 1024
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        46.5,
+        46.5,
+        46.5,
+        46.5
+      ],
+      "rowFont": "15.5px",
+      "subRows": [
+        38.3,
+        38.3,
+        38.3,
+        38.3
+      ],
+      "subFont": "13.5px",
+      "subColWidth": 199.5,
+      "subWraps": [],
+      "docScrollWidth": 768,
+      "docClientWidth": 768,
+      "panelScrollWidth": 419,
+      "panelClientWidth": 419,
+      "focus": "mm-it mm-par",
+      "bodyOverflow": "hidden"
+    },
+    "errors": []
+  },
+  "ar-390": {
+    "closed": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 390,
+        "y": 0,
+        "w": 343.2,
+        "h": 844
+      },
+      "open": false,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.01px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342,
+      "focus": " dvs-ticks pc-nobrand pc-nocat",
+      "bodyOverflow": ""
+    },
+    "opening": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 92,
+        "y": 0,
+        "w": 343.2,
+        "h": 844
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.01px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "open": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 47,
+        "y": 0,
+        "w": 343.2,
+        "h": 844
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.01px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342,
+      "focus": "mmx",
+      "bodyOverflow": "hidden"
+    },
+    "sub": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 47,
+        "y": 0,
+        "w": 343.2,
+        "h": 844
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children mm-left on",
+      "backdrop": "blur(12px) saturate(1.5) brightness(1.25)",
+      "background": "rgba(255, 250, 252, 0.8)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14.01px",
+      "subRows": [
+        32.6,
+        32.6,
+        32.6,
+        32.6
+      ],
+      "subFont": "12.01px",
+      "subColWidth": 161.1,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 342,
+      "panelClientWidth": 342,
+      "focus": "mm-it mm-par",
+      "bodyOverflow": "hidden"
+    },
+    "errors": []
+  }
+}

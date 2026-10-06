@@ -1,0 +1,23 @@
+{
+    "product": {
+        "path": "/product/relief-sun-rice-probiotics-spf50/",
+        "median_ms": 23.2,
+        "queries": 9,
+        "settings_reads": 1,
+        "bytes": 136030
+    },
+    "category": {
+        "path": "/collections/cleansers/",
+        "median_ms": 14.5,
+        "queries": 5,
+        "settings_reads": 1,
+        "bytes": 75393
+    },
+    "brand": {
+        "path": "/brands/beauty-of-joseon/",
+        "median_ms": 13.8,
+        "queries": 5,
+        "settings_reads": 1,
+        "bytes": 75362
+    }
+}

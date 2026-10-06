@@ -1,0 +1,298 @@
+{
+  "en-390": {
+    "closed": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 0,
+        "y": 844,
+        "w": 390,
+        "h": 675
+      },
+      "open": false,
+      "classes": "mmenu mm-card-cream mm-rule-children",
+      "backdrop": "none",
+      "background": "rgb(255, 255, 255)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 390,
+      "panelClientWidth": 390,
+      "focus": " dvs-ticks pc-nobrand pc-nocat",
+      "bodyOverflow": ""
+    },
+    "opening": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 0,
+        "y": 367,
+        "w": 390,
+        "h": 675
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children on",
+      "backdrop": "none",
+      "background": "rgb(255, 255, 255)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 390,
+      "panelClientWidth": 390,
+      "focus": "burger",
+      "bodyOverflow": "hidden"
+    },
+    "open": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 0,
+        "y": 169,
+        "w": 390,
+        "h": 675
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children on",
+      "backdrop": "none",
+      "background": "rgb(255, 255, 255)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 390,
+      "panelClientWidth": 390,
+      "focus": "burger",
+      "bodyOverflow": "hidden"
+    },
+    "sub": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 0,
+        "y": 169,
+        "w": 390,
+        "h": 675
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children on",
+      "backdrop": "none",
+      "background": "rgb(255, 255, 255)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14px",
+      "subRows": [
+        32.6,
+        32.6,
+        32.6,
+        32.6
+      ],
+      "subFont": "12px",
+      "subColWidth": 185,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 390,
+      "panelClientWidth": 390,
+      "focus": "mm-it mm-par",
+      "bodyOverflow": "hidden"
+    },
+    "errors": []
+  },
+  "ar-390": {
+    "closed": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 0,
+        "y": 844,
+        "w": 390,
+        "h": 675
+      },
+      "open": false,
+      "classes": "mmenu mm-card-cream mm-rule-children",
+      "backdrop": "none",
+      "background": "rgb(255, 255, 255)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 390,
+      "panelClientWidth": 390,
+      "focus": " dvs-ticks pc-nobrand pc-nocat",
+      "bodyOverflow": ""
+    },
+    "opening": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 0,
+        "y": 349,
+        "w": 390,
+        "h": 675
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children on",
+      "backdrop": "none",
+      "background": "rgb(255, 255, 255)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 390,
+      "panelClientWidth": 390,
+      "focus": "burger",
+      "bodyOverflow": "hidden"
+    },
+    "open": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 0,
+        "y": 169,
+        "w": 390,
+        "h": 675
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children on",
+      "backdrop": "none",
+      "background": "rgb(255, 255, 255)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14px",
+      "subRows": [],
+      "subFont": null,
+      "subColWidth": null,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 390,
+      "panelClientWidth": 390,
+      "focus": "burger",
+      "bodyOverflow": "hidden"
+    },
+    "sub": {
+      "viewport": [
+        390,
+        844
+      ],
+      "panel": {
+        "x": 0,
+        "y": 169,
+        "w": 390,
+        "h": 675
+      },
+      "open": true,
+      "classes": "mmenu mm-card-cream mm-rule-children on",
+      "backdrop": "none",
+      "background": "rgb(255, 255, 255)",
+      "rowHeights": [
+        47,
+        47,
+        44,
+        44,
+        44,
+        44
+      ],
+      "rowFont": "14px",
+      "subRows": [
+        32.6,
+        32.6,
+        32.6,
+        32.6
+      ],
+      "subFont": "12px",
+      "subColWidth": 185,
+      "subWraps": [],
+      "docScrollWidth": 390,
+      "docClientWidth": 390,
+      "panelScrollWidth": 390,
+      "panelClientWidth": 390,
+      "focus": "mm-it mm-par",
+      "bodyOverflow": "hidden"
+    },
+    "errors": []
+  }
+}

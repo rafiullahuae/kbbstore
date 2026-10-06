@@ -2889,6 +2889,112 @@ header{border-bottom:1px solid var(--line-2)}
 .mmenu.on{transform:none;visibility:visible;
     transition:transform var(--mm-speed) cubic-bezier(.32,.72,0,1),visibility 0s}
 
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE MENU · THE SIDE PANEL (Lane MN, 6 October)
+
+   Appearance → Mobile menu → Panel → "Menu opens from" → Left, which is the
+   default because the owner asked for it: "i need the same dual columns design
+   which we have it already and live, we just need to open from left side" and
+   "the panel design i need glossy glass type, which we have in the footer for
+   app install capsule". Bottom puts the sheet above back exactly as it was:
+   every rule here is keyed off .mm-left, which MobileMenu::bodyClass() prints
+   only for Left, so with Bottom not one of them matches.
+
+   WHAT MOVES: where it comes from (the left edge, the right in Arabic), how
+   tall it is (full height), and its surface (the footer capsule's glass). WHAT
+   DOES NOT: the rows, the two columns, search, account and support inside.
+
+   SIZES COME FROM THE SCREEN, NOT FROM SCRIPT. The width is min(88vw, 420px):
+   281px on a 320 phone, 343 on 390, 378 on 430, 420 from 478 up (a tablet
+   gets a panel, not a sheet across the room). Row height, text size and side
+   padding are clamp()s pinned to today's values at 390 (44px rows, 14px rows,
+   12px sub-items, 14px padding) and growing gently to 768; a container query
+   tightens the sub-item padding when the panel itself is under 300px.
+   ═══════════════════════════════════════════════════════════════ */
+.mmenu.mm-left{
+    --mm-dir:1;
+    /* The side panel travels about a third of what the sheet travels, so the
+       owner's "Slide duration" is scaled rather than ignored: 380 → 258ms. */
+    --mm-side-speed:calc(var(--mm-speed) * .68);
+    /* Inside the glass, the two secondary inks go one step darker, so counts,
+       group headings and SALE stay AA (4.5:1) even over a black photo behind
+       the dimmed page; over a white page they measure above today's. */
+    --muted:#5E545A; --sale:#B0182F;
+    top:0;bottom:0;inset-inline-start:0;inset-inline-end:auto;
+    width:min(88vw,420px);
+    padding-top:env(safe-area-inset-top,0px);
+    border-radius:0;
+    border-start-end-radius:var(--mm-radius);border-end-end-radius:var(--mm-radius);
+    transform:translateX(calc(-100% * var(--mm-dir)));
+    transition:transform var(--mm-side-speed) cubic-bezier(.32,.72,0,1),
+               visibility 0s linear var(--mm-side-speed);
+    /* Horizontal drags reach the script (swipe to close); vertical ones
+       still scroll the list. */
+    touch-action:pan-y;
+    container:mmenu / inline-size;
+    /* The footer app capsule's glass (.kfa-g): translucent white, blur and
+       saturate, a white hairline and an inner highlight, a pink-tinted shadow.
+       More opaque than the capsule (.80 against .55) because whole rows of
+       text sit on it, and brightness lifts the page the backdrop has dimmed. */
+    background:linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,0) 42%),rgba(255,250,252,.8);
+    -webkit-backdrop-filter:blur(12px) saturate(1.5) brightness(1.25);
+    backdrop-filter:blur(12px) saturate(1.5) brightness(1.25);
+    border-inline-end:1px solid rgba(255,255,255,.9);
+    box-shadow:18px 0 44px -18px rgba(193,62,99,.55),inset 0 1px 0 #fff
+}
+[dir="rtl"] .mmenu.mm-left{--mm-dir:-1;box-shadow:-18px 0 44px -18px rgba(193,62,99,.55),inset 0 1px 0 #fff}
+.mmenu.mm-left.on{transform:none;visibility:visible;
+    transition:transform var(--mm-side-speed) cubic-bezier(.32,.72,0,1),visibility 0s}
+/* Following a finger: the script sets the transform, nothing animates it. */
+.mmenu.mm-left.mm-drag{transition:none}
+/* Solid where glass cannot be had, or is not wanted. */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .mmenu.mm-left{background:#fff}
+}
+@media (prefers-reduced-transparency:reduce){
+    .mmenu.mm-left{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+
+/* A grab handle belongs to a sheet. The close button sits level with the
+   search field instead of on top of it, and pushes the list down when there
+   is no search or heading row to sit beside. */
+.mm-left .mm-grab{display:none}
+.mm-left .mm-x{top:calc(8px + env(safe-area-inset-top,0px))}
+.mm-left .mm-srch{padding-top:8px}
+.mm-left .mm-x ~ .mm-srch{padding-inline-end:62px}
+.mm-left .mm-x ~ .mm-head{padding-inline-end:62px}
+.mm-left .mm-x + .mm-body{margin-top:56px}
+.mm-left .mm-srch svg{top:22px}
+/* The icon sits at the inline start, so the room for it does too: in Arabic
+   the placeholder ran under the magnifier. */
+.mm-left .mm-srch input{padding-inline:32px 11px}
+
+/* Rows, scaled to the screen; at 390 every value is today's. */
+.mm-left .mm-it{min-height:clamp(44px,calc(41.4px + .67vw),48px);
+    padding-inline:clamp(12px,calc(8.5px + 1.4vw),18px);
+    font-size:clamp(13.5px,calc(12.45px + .4vw),15.5px)}
+.mm-left .mm-si{font-size:clamp(12px,calc(10.45px + .4vw),13.5px);
+    padding-block:clamp(8px,calc(6.05px + .5vw),11px);
+    padding-inline:clamp(10px,calc(6.5px + 1.4vw),16px);
+    /* A long name wraps inside its own column instead of being cut off. */
+    white-space:normal;overflow-wrap:break-word;text-overflow:clip}
+.mm-left .mm-grp{padding-inline:clamp(12px,calc(8.5px + 1.4vw),18px)}
+@container mmenu (max-width:300px){
+    .mm-left .mm-si{padding-inline:9px}
+    .mm-left .mm-car{width:26px;height:26px}
+}
+
+/* Scroll is locked by the script (body overflow hidden), as it always was.
+   NOT with scrollbar-gutter:stable on the root: measured, it RESERVED a 15px
+   gutter in Chromium where none was showing, so opening the panel shifted the
+   page and the burger 15px sideways -- the jump it was meant to prevent. */
+
+/* Reduced motion: no slide, a 150ms fade in place. */
+@media (prefers-reduced-motion:reduce){
+    .mmenu.mm-left{transform:none;opacity:0;transition:opacity .15s linear,visibility 0s linear .15s}
+    .mmenu.mm-left.on{opacity:1;transition:opacity .15s linear,visibility 0s}
+}
+
 /* ═══ Menu icon ═══
    One definition, no overrides. Every property the bars need is stated here,
    because a partial override left align-self from an older rule in charge and

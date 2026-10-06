@@ -626,7 +626,7 @@ final class AdminSearchIndex
         ],
         'mobilemenu' => [
             '' => [
-                'Sheet height', 'Corner radius', 'Slide duration', 'Backdrop darkness', 'Grab handle',
+                'Menu opens from', 'Sheet height', 'Corner radius', 'Slide duration', 'Backdrop darkness', 'Grab handle',
                 'Close button', 'Top of the sheet', 'Search field', 'Search placeholder', 'Heading row',
                 'Heading', 'Row density', 'Sub-item columns', 'Item counts', 'One section at a time',
                 'Open section', 'Open section style', 'Vertical rule', 'Rule thickness', 'Rule colour',
