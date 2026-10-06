@@ -226,7 +226,7 @@ class ProductTrustShare
             'WhatsApp prints the card description as one paragraph, so the points are joined on one line.',
             ['dot' => 'A dot ·', 'bullet' => 'A bullet •', 'bar' => 'A bar |', 'space' => 'A space only']],
         'card_domain' => ['bool', 'End the points with your domain', false,
-            'WhatsApp already prints the domain (extrabeauty.ae) under the card by itself; this adds it to the points as well.'],
+            'WhatsApp already prints your domain under the card by itself; this adds it to the points as well.'],
         'card_msg' => ['text', 'Message above the link', 'See what I’ve found on K-Beauty Bliss 💖',
             'What the Share button types above the product link. Plain text; never put a web address in it — WhatsApp previews the first link it finds.'],
         'card_msg_use' => ['select', 'Use the message for', 'chat',

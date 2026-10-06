@@ -234,7 +234,7 @@ final class OwnerAppAdminController extends Controller
             $host = is_string($raw) ? strtolower(trim($raw)) : null;
 
             if ($host === null || ($host !== '' && ! OwnerAppPath::validHost($host))) {
-                return response()->json(['ok' => false, 'message' => 'Enter a host name only, like owner.extrabeauty.ae — no https://, no slash, no port.',
+                return response()->json(['ok' => false, 'message' => 'Enter a host name only, like owner.example.com — no https://, no slash, no port.',
                     'errors' => ['host' => ['Invalid.']]], 422);
             }
 

@@ -244,7 +244,7 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             'apple_domain_association' => [
                 'text',
                 'Apple Pay domain file',
-                'Only needed for Apple Pay. In Stripe: Settings → Payments → Payment method domains → add extrabeauty.ae, then download the association file it offers and paste the whole contents here. This shop then serves it at /.well-known/apple-developer-merchantid-domain-association, which is where Apple looks. Full steps: docs/WALLETS-APPLE-GOOGLE-PAY.md.',
+                'Only needed for Apple Pay. In Stripe: Settings → Payments → Payment method domains → add your shop’s domain (and its www form), then download the association file it offers and paste the whole contents here. This shop then serves it at /.well-known/apple-developer-merchantid-domain-association, which is where Apple looks. Full steps: docs/WALLETS-APPLE-GOOGLE-PAY.md.',
                 'settings',
                 'optional',
             ],

@@ -186,7 +186,7 @@ final class SiteUrlApiController extends Controller
         if ($siteUrl !== '' && ! str_contains(strtolower($siteUrl), strtolower($currentHost))) {
             $out[] = [
                 'what' => 'Site URL (sitemap, canonical tags, IndexNow) is still '.$siteUrl,
-                'where' => 'Store → Settings → Site URL',
+                'where' => 'Store → SEO & Meta → Settings → Search appearance → Site URL (canonical base)',
                 'kind' => 'here',
             ];
         }

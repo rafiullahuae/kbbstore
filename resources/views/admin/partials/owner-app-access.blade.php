@@ -239,11 +239,14 @@
     var opts = Object.keys(S.push_text_options || {}).map(function (k) {
       return '<option value="' + esc(k) + '"' + (k === S.push_text ? ' selected' : '') + '>' + esc(S.push_text_options[k]) + '</option>';
     }).join('');
+    // The examples name the domain the admin is open on, not a domain written
+    // in here (Lane DM): the shop moves domains, the hint goes with it.
+    var site = String(location.hostname || 'example.com').replace(/^www\./, '');
     card.innerHTML = '<p class="oaa-h">Security</p><div class="oaa-set">' +
-      '<label>Own host (optional)<input class="rl-in oaa-host" type="text" inputmode="url" autocomplete="off" spellcheck="false" maxlength="253" placeholder="owner.extrabeauty.ae" data-sec="host" value="' + esc(S.host) + '"></label>' +
+      '<label>Own host (optional)<input class="rl-in oaa-host" type="text" inputmode="url" autocomplete="off" spellcheck="false" maxlength="253" placeholder="owner.' + esc(site) + '" data-sec="host" value="' + esc(S.host) + '"></label>' +
       '<label>Lock-screen notification text<select class="rl-in" data-sec="push_text">' + opts + '</select></label>' +
       '<button type="button" class="btn sm" data-oas="save">Save</button></div>' +
-      '<p class="rl-note oaa-mt">Serve the app only from its own subdomain, e.g. owner.extrabeauty.ae — the strongest isolation; needs the subdomain pointed at this server first. Changing it signs every phone out. Leave it empty to keep the app at the address above.</p>' +
+      '<p class="rl-note oaa-mt">Serve the app only from its own subdomain, e.g. owner.' + esc(site) + ' — the strongest isolation; needs the subdomain pointed at this server first. Changing it signs every phone out. Leave it empty to keep the app at the address above.</p>' +
       '<p class="rl-note oaa-mt">Generic notifications say only “New order” or “Low stock” on the lock screen — no customer name, amount or product.</p>';
     box.appendChild(card);
   }

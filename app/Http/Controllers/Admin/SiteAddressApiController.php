@@ -82,7 +82,7 @@ final class SiteAddressApiController extends Controller
         if ($canonical !== '' && ! $this->looksLikeHost($canonical)) {
             return response()->json([
                 'ok' => false,
-                'errors' => ['canonical_host' => 'That does not look like a domain. Type it like extrabeauty.ae — no https://, no trailing slash.'],
+                'errors' => ['canonical_host' => 'That does not look like a domain. Type just the domain, like example.com — no https://, no trailing slash.'],
             ], 422);
         }
 
@@ -145,7 +145,7 @@ final class SiteAddressApiController extends Controller
         $host = SiteHost::normalise($this->stripScheme((string) $request->input('host', '')));
 
         if ($host === '' || ! $this->looksLikeHost($host)) {
-            return response()->json(['ok' => false, 'reason' => 'Type a domain first, like extrabeauty.ae.'], 422);
+            return response()->json(['ok' => false, 'reason' => 'Type a domain first, like example.com.'], 422);
         }
 
         $url = 'https://'.$host.'/robots.txt';

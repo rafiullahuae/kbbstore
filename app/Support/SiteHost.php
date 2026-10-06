@@ -131,8 +131,8 @@ final class SiteHost
     }
 
     /**
-     * Every host that forwards to the canonical one: what was typed, plus the
-     * derived www counterpart of the canonical host.
+     * Every host that forwards to the canonical one: what was typed, the www
+     * twin of each, plus the derived www counterpart of the canonical host.
      *
      * @return list<string>
      */
@@ -152,8 +152,27 @@ final class SiteHost
         foreach (preg_split('/[\r\n,]+/', $raw) ?: [] as $line) {
             $host = self::normalise((string) $line);
 
-            if ($host !== '' && $host !== $canonical) {
-                $out[$host] = true;
+            if ($host === '') {
+                continue;
+            }
+
+            /*
+             * ▲ AND ITS www TWIN, the same courtesy the canonical host gets
+             * below. (Lane DM, the move to kbeautybliss.com.) Typing
+             * `extrabeauty.ae` forwarded the apex and left www.extrabeauty.ae
+             * -- a CNAME to the apex on the live DNS -- UNLISTED: it went on
+             * serving the whole shop, marked noindex, on the domain being
+             * left. docs/CUTOVER-EXTRABEAUTY.md §4.1 already promised "the www
+             * pair is handled for you" for an old address; this makes it true.
+             * Only the twin of a host somebody TYPED, so the allow-list
+             * argument in the class comment is untouched, and never the
+             * canonical host itself (`www.shop.com` main + `shop.com` typed
+             * must not list the main address as its own alias).
+             */
+            foreach ([$host, str_starts_with($host, 'www.') ? substr($host, 4) : 'www.'.$host] as $name) {
+                if ($name !== '' && $name !== $canonical) {
+                    $out[$name] = true;
+                }
             }
         }
 
