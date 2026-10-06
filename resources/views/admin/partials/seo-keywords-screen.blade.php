@@ -95,6 +95,8 @@
     });
   }
   function num(n) { return Number(n || 0).toLocaleString('en-US'); }
+  // The example property names the domain the admin is open on (Lane DM): the shop moves, the hint goes with it.
+  function skwSite() { return String(window.location.hostname || 'example.com').replace(/^www\./, ''); }
   function cookie(n) {
     var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
     return m ? decodeURIComponent(m.pop()) : '';
@@ -206,8 +208,8 @@
       + '<ol class="skw-steps"><li>At console.cloud.google.com create (or pick) a project → <b>APIs &amp; Services → Library</b> → enable <b>Google Search Console API</b>.</li>'
       + '<li><b>IAM &amp; Admin → Service accounts → Create</b>. No roles needed. Open it → <b>Keys → Add key → JSON</b>; a .json file downloads.</li>'
       + '<li>In Search Console → your property → <b>Settings → Users and permissions → Add user</b>: paste the service account’s email, permission <b>Restricted</b>.</li>'
-      + '<li>Paste the whole .json file below and the property exactly as Search Console names it — <code>sc-domain:extrabeauty.ae</code> or <code>https://extrabeauty.ae/</code>.</li></ol>'
-      + '<div style="margin-top:10px"><label class="skw-note" for="skwProp">Property</label><input class="skw-in" id="skwProp" placeholder="sc-domain:extrabeauty.ae" value="' + esc(g.property || '') + '" autocomplete="off"></div>'
+      + '<li>Paste the whole .json file below and the property exactly as Search Console names it — <code>sc-domain:' + esc(skwSite()) + '</code> or <code>https://' + esc(skwSite()) + '/</code>.</li></ol>'
+      + '<div style="margin-top:10px"><label class="skw-note" for="skwProp">Property</label><input class="skw-in" id="skwProp" placeholder="sc-domain:' + esc(skwSite()) + '" value="' + esc(g.property || '') + '" autocomplete="off"></div>'
       + '<div style="margin-top:10px"><label class="skw-note" for="skwKey">Service-account JSON key ' + (g.connected ? '(leave empty to keep the saved one)' : '') + '</label><textarea class="skw-ta" id="skwKey" spellcheck="false" autocomplete="off" placeholder="{ &quot;type&quot;: &quot;service_account&quot;, … }"></textarea><div class="skw-note">Stored encrypted on the server. It is never shown again or sent back to any browser.</div></div>'
       + '<div class="skw-row"><button type="button" class="skw-btn pri" data-skw-act="save-gsc">Save</button><button type="button" class="skw-btn" data-skw-act="test-gsc"' + (g.connected ? '' : ' disabled') + '>Test connection</button>' + (g.connected ? '<button type="button" class="skw-btn warn" data-skw-act="forget-gsc">Disconnect</button>' : '') + '</div></div>'
 

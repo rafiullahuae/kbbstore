@@ -17,6 +17,7 @@ use App\Services\Payments\Signature;
 use App\Services\Payments\VoidsAuthorisation;
 use App\Services\Payments\WebhookOutcome;
 use App\Support\Locale;
+use App\Support\SiteHost;
 use App\Support\Url;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -1524,6 +1525,18 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
      * for another system, another store or another environment does not match
      * and is never a candidate for deletion.
      *
+     * ▲ AND THIS SHOP'S OWN PATH ON AN ADDRESS IT HAS LEFT. (Lane DM.) After
+     * the domain move APP_URL says kbeautybliss.com, so the prefix says it too,
+     * and the hook Tabby still holds for https://extrabeauty.ae/api/payments/
+     * webhook/tabby/<secret> matched neither test: "Re-register" added the new
+     * hook and left the old one calling the old domain for ever -- every event
+     * delivered twice, a live dependency on extrabeauty.ae that Tabby offers
+     * no screen to remove, and the URL secret handed to whoever holds that
+     * domain next. A host counts as left ONLY when the owner typed it under
+     * Platform -> Site address -> Old addresses (SiteHost::aliases()), so a
+     * staging site or another store on the same Tabby account is still never
+     * a candidate.
+     *
      * @param  array<int, array<string, mixed>>  $hooks
      * @return array<int, array<string, mixed>>
      */
@@ -1539,12 +1552,29 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
                 continue;
             }
 
-            if (str_starts_with($candidate, $prefix)) {
+            if (str_starts_with($candidate, $prefix) || $this->isOursOnAnOldAddress($candidate, $prefix)) {
                 $stale[] = $hook;
             }
         }
 
         return $stale;
+    }
+
+    /** This shop's webhook path, on a host the owner listed as an old address. */
+    private function isOursOnAnOldAddress(string $candidate, string $prefix): bool
+    {
+        $parts = parse_url($candidate);
+        $ours = (string) parse_url($prefix, PHP_URL_PATH);
+
+        if (! is_array($parts) || ! in_array($parts['scheme'] ?? '', ['http', 'https'], true) || $ours === '' || isset($parts['port'])) {
+            return false;
+        }
+
+        $host = SiteHost::normalise((string) ($parts['host'] ?? ''));
+
+        return $host !== ''
+            && str_starts_with((string) ($parts['path'] ?? ''), $ours)
+            && in_array($host, SiteHost::aliases(), true);
     }
 
     /** Tabby has answered `is_test` as a bool and as the strings "true"/"1". */

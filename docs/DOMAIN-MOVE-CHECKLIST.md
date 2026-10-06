@@ -39,7 +39,7 @@ silently and late.
 | **`APP_URL`** | **Platform → Site address**, the banner, one button | Order and password-reset emails, the sitemap, canonical tags and payment callbacks all name the old domain. This is the big one. |
 | **Main address** (`canonical_host`) | Platform → Site address | The old-domain forwarding points somewhere wrong, and the "keep out of Google" inference misreads which host is which. |
 | **Old addresses to forward here** | Platform → Site address | The domain you have just left keeps serving a second, competing copy of the shop. |
-| **Site URL** (`site_url`) | Store → Settings → Site URL | `sitemap.xml`, `robots.txt`, canonical tags, Open Graph images and IndexNow all prefer this over `APP_URL`, so a stale one outranks a fixed `APP_URL`. Check it even if the banner says everything is fine. |
+| **Site URL** (`site_url`) | Store → SEO & Meta → Settings → Search appearance → Site URL (canonical base) | `sitemap.xml`, `robots.txt`, canonical tags, Open Graph images and IndexNow all prefer this over `APP_URL`, so a stale one outranks a fixed `APP_URL`. Check it even if the banner says everything is fine. |
 | **Session cookie name and path** | `.env` — `SESSION_COOKIE`, `SESSION_PATH`, `SESSION_DOMAIN` | Only if two apps share the new hostname (the console and the shop on one domain). Symptom: "randomly logged out". |
 | **`KBB_BASE_PATH`** | `.env` | Empty at a domain root. Left set, it prefixes every route and *every link on the site is wrong*. `install.php` now derives it from the address you installed at, so a fresh install gets this right by itself. |
 | **Product image URLs** | Store → Import → Addresses & pictures | Only if images are still hot-linked to the old WordPress host. Fetch, then apply. |
