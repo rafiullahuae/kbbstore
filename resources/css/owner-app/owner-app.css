@@ -538,6 +538,23 @@ details summary::-webkit-details-marker { display: none; }
 .seg.sm button { font-size: 11.5px; padding: 6px 9px; }
 .hero.busy, .tp.busy { opacity: .6; transition: opacity .15s; }
 
+/* No page zoom when a field takes focus, on any touch screen (Lane ZM).
+   Every field here was already 16px or more by design (see the head of this
+   file); this makes 16px a FLOOR that a field added later cannot slip under,
+   by element and !important, so no class rule can undercut it. A mouse-driven
+   desktop matches neither query.
+
+   16 is a floor, not a size, so the fields this file already draws at or above
+   it -- everything inside .inp (17px; the sign-in form's 16px) and the stock
+   stepper (20px) -- are LEFT OUT rather than re-asserted: re-asserting `.inp
+   input` at 17px also beat `.enrol .fld input`, and the PIN field grew from
+   16px to 17px and 206px to 220px wide. :where() keeps the floor at zero
+   specificity so any later !important that names a field still wins. */
+@media (hover: none), (pointer: coarse) {
+  :where(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=submit]):not([type=button]):not([type=reset]):not([type=image]),
+  select, textarea, [contenteditable]:not([contenteditable=false])):where(:not(.inp *, .step *)) { font-size: 16px !important; }
+}
+
 /* ---------------------------------------------- Customise app (Lane OA4)
  * Users & Roles → Owner app → Customise app. Every rule below hangs off a
  * class the app puts on <html> (core.js applyUi) — or, for the font, the

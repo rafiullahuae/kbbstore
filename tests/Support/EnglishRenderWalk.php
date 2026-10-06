@@ -3169,6 +3169,33 @@ KBB_BH_CSS;
                 'hits' => 1,
                 'perPage' => 1,
             ],
+
+            /*
+             * NO PAGE ZOOM WHEN A FIELD TAKES FOCUS.                    (Lane ZM)
+             *
+             * The owner: "fix this in all type of devices and for all input
+             * fields in our whole website". CSS only, and only inside
+             * `@media (hover:none),(pointer:coarse)`, so a laptop draws exactly
+             * what it did; on a phone fields are 16px and these two pages take
+             * 1px of padding back so their boxes stay the height they were.
+             * The skin quiz carries its own stylesheet instead of kbb.css, so it
+             * also gains partials/no-focus-zoom. NoFocusZoomTest has the rest.
+             */
+            'the skin quiz: the no-focus-zoom floor (Lane ZM)' => [
+                'pattern' => '#'.preg_quote('<style>@media (hover:none),(pointer:coarse){:where(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=submit]):not([type=button]):not([type=reset]):not([type=image]),select,textarea,[contenteditable]:not([contenteditable=false])){font-size:16px!important}}</style>', '#').'#',
+                'hits' => 1,
+            ],
+            'the skin quiz: its fields keep their 44px height at 16px (Lane ZM)' => [
+                'pattern' => '#/\* On a touch screen partials/no-focus-zoom lifts these to 16px[^*]*\(Lane ZM\)[^*]*\*/\n'
+                    .preg_quote('@media (hover:none),(pointer:coarse){.field input,.field textarea{padding-top:11px;padding-bottom:11px}}', '#')."\n#",
+                'hits' => 1,
+            ],
+            'the address book: its fields keep their height at 16px (Lane ZM)' => [
+                'pattern' => '#/\* On a touch screen kbb\.css lifts these fields to 16px[^*]*\(Lane ZM\)[^*]*\*/\n'
+                    .preg_quote('@media (hover:none),(pointer:coarse){.ab-f input,.ab-f select{padding-top:8px;padding-bottom:8px}}', '#')."\n#",
+                // The address book and its edit page, one stylesheet each.
+                'hits' => 2,
+            ],
         ];
     }
 

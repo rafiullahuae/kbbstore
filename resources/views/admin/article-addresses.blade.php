@@ -114,6 +114,7 @@ code{font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;backgrou
   .do{max-width:none}
 }
 </style>
+@include('partials.no-focus-zoom')
 </head>
 <body>
 <div class="wrap">

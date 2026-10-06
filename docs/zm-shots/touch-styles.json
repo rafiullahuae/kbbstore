@@ -1,0 +1,85 @@
+{
+ "styles /": {
+  "elements": 1107,
+  "elementsOld": 1107,
+  "differing": 4,
+  "differingTags": {
+   "SPAN": 2,
+   "INPUT": 2
+  }
+ },
+ "styles /shop/": {
+  "elements": 658,
+  "elementsOld": 658,
+  "differing": 4,
+  "differingTags": {
+   "SPAN": 2,
+   "INPUT": 2
+  }
+ },
+ "styles /product/mac-anua/": {
+  "elements": 1097,
+  "elementsOld": 1097,
+  "differing": 7,
+  "differingTags": {
+   "INPUT": 7
+  }
+ },
+ "styles /cart/": {
+  "elements": 387,
+  "elementsOld": 387,
+  "differing": 0,
+  "differingTags": {}
+ },
+ "styles /checkout/": {
+  "elements": 519,
+  "elementsOld": 519,
+  "differing": 5,
+  "differingTags": {
+   "INPUT": 5
+  }
+ },
+ "styles /my-account/": {
+  "elements": 487,
+  "elementsOld": 487,
+  "differing": 3,
+  "differingTags": {
+   "INPUT": 3
+  }
+ },
+ "styles /track-my-order/": {
+  "elements": 467,
+  "elementsOld": 467,
+  "differing": 4,
+  "differingTags": {
+   "SPAN": 2,
+   "INPUT": 2
+  }
+ },
+ "styles /contact-us/": {
+  "elements": 469,
+  "elementsOld": 469,
+  "differing": 2,
+  "differingTags": {
+   "INPUT": 2
+  }
+ },
+ "styles /no-such-page-zm/": {
+  "elements": 596,
+  "elementsOld": 596,
+  "differing": 4,
+  "differingTags": {
+   "SPAN": 1,
+   "INPUT": 3
+  }
+ },
+ "styles /ar/": {
+  "elements": 1108,
+  "elementsOld": 1108,
+  "differing": 3,
+  "differingTags": {
+   "SPAN": 1,
+   "INPUT": 2
+  }
+ }
+}
