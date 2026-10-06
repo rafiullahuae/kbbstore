@@ -90,6 +90,10 @@ class SiteLayoutApiController extends Controller
 
         Shortcodes::flush();
         Cache::forget('kbb.home.rails');
+        // "Sold-out products" (Lane SX) also reaches the homepage's own rows
+        // and the Grid sections, both cached: rebuilt on the next request.
+        \App\Support\HomeSections::flush();
+        \App\Services\GridSections::flush();
 
         return response()->json([
             'ok' => true,

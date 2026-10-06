@@ -11,6 +11,7 @@ use App\Support\BrandLogo;
 use App\Support\ImageVariants;
 use App\Support\PageBanner;
 use App\Support\ProductSeo;
+use App\Support\SoldOut;
 use App\Support\TranslationInput;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -54,7 +55,7 @@ class BrandsApiController extends Controller
             array_push($columns, 'brands.logo_color', 'brands.ring_color');
         }
 
-        $brands = Brand::query()
+        $read = static fn (array $columns) => Brand::query()
             ->select($columns)
             ->selectRaw('COUNT(products.id) as products_count')
             ->leftJoin('products', function ($join) {
@@ -65,6 +66,18 @@ class BrandsApiController extends Controller
             ->orderBy('brands.position')
             ->orderBy('brands.name')
             ->get();
+
+        /*
+         * Lane SX: the brand's own "Sold-out products" choice. Asked for
+         * outright rather than after a schema read, so this screen costs the
+         * queries it did (ArabicEditorBoxesTest pins the count); only a server
+         * whose migration has not run yet pays a second try, without it.
+         */
+        try {
+            $brands = $read([...$columns, 'brands.'.SoldOut::COLUMN]);
+        } catch (\Illuminate\Database\QueryException) {
+            $brands = $read($columns);
+        }
 
         /*
          * THE ARABIC BOXES' PREFILL. (Lane EX, T4b)
@@ -272,6 +285,10 @@ class BrandsApiController extends Controller
             // Lane BH: "Ring colour (blank = from the logo)". #rgb or #rrggbb
             // only -- it is printed into a style attribute.
             'ring_color' => ['nullable', 'string', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            // Lane SX: "Sold-out products" -- '' is "Use the shop default" and
+            // stores NULL; anything not one of the select's own options is
+            // refused. Optional: a request that does not send it leaves it.
+            SoldOut::COLUMN => ['sometimes', 'nullable', 'string', Rule::in(SoldOut::MODES)],
         ];
 
         /*
@@ -310,6 +327,14 @@ class BrandsApiController extends Controller
             unset($data['ring_color']);
         }
         $data['position'] = (int) ($data['position'] ?? $brand?->position ?? 0);
+
+        if (array_key_exists(SoldOut::COLUMN, $data)) {
+            if (SoldOut::columnReady('brands')) {
+                $data[SoldOut::COLUMN] = SoldOut::clean($data[SoldOut::COLUMN]);
+            } else {
+                unset($data[SoldOut::COLUMN]);
+            }
+        }
 
         /*
          * The boxes this screen draws are authoritative — blank means the

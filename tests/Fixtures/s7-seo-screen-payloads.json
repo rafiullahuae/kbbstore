@@ -47,6 +47,7 @@
                 "header_subtitle": null,
                 "header_description": null,
                 "header_style": null,
+                "sold_out_mode": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
@@ -86,6 +87,7 @@
                 "header_subtitle": null,
                 "header_description": null,
                 "header_style": null,
+                "sold_out_mode": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
@@ -125,6 +127,7 @@
                 "header_subtitle": null,
                 "header_description": null,
                 "header_style": null,
+                "sold_out_mode": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
@@ -164,6 +167,7 @@
                 "header_subtitle": null,
                 "header_description": null,
                 "header_style": null,
+                "sold_out_mode": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
@@ -203,6 +207,7 @@
                 "header_subtitle": null,
                 "header_description": null,
                 "header_style": null,
+                "sold_out_mode": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
@@ -242,6 +247,7 @@
                 "header_subtitle": null,
                 "header_description": null,
                 "header_style": null,
+                "sold_out_mode": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
@@ -295,6 +301,7 @@
                 "banner": null,
                 "logo_color": null,
                 "ring_color": null,
+                "sold_out_mode": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -325,6 +332,7 @@
                 "banner": null,
                 "logo_color": null,
                 "ring_color": null,
+                "sold_out_mode": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -355,6 +363,7 @@
                 "banner": null,
                 "logo_color": null,
                 "ring_color": null,
+                "sold_out_mode": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -385,6 +394,7 @@
                 "banner": null,
                 "logo_color": null,
                 "ring_color": null,
+                "sold_out_mode": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -415,6 +425,7 @@
                 "banner": null,
                 "logo_color": null,
                 "ring_color": null,
+                "sold_out_mode": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -445,6 +456,7 @@
                 "banner": null,
                 "logo_color": null,
                 "ring_color": null,
+                "sold_out_mode": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -475,6 +487,7 @@
                 "banner": null,
                 "logo_color": null,
                 "ring_color": null,
+                "sold_out_mode": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {
@@ -505,6 +518,7 @@
                 "banner": null,
                 "logo_color": null,
                 "ring_color": null,
+                "sold_out_mode": null,
                 "products_count": 3,
                 "translations": {
                     "ar": {

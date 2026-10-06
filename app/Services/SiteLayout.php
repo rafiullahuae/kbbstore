@@ -190,6 +190,24 @@ class SiteLayout
             'Off, as you asked: a category page, /super-sale/ and the skin-concern pages show no "All products" link to the shop, so a shopper stays on the page she came to. The site menu and footer are not affected. On: the links come back.'],
 
         /*
+         * ── SOLD-OUT PRODUCTS ON EVERY LISTING ───────────────────── Lane SX ──
+         *
+         * The owner: "i should have option on category / brands etc backend
+         * setting page, where i can exclude the sold out products or show at
+         * very end." An OPTION, so it ships at today's page: "show". Each
+         * category and brand can choose for itself in Catalog → Categories /
+         * Brands → Edit; this is what the rest follow. Not CSS -- a query --
+         * so css() and isDefault() never see it. App\Support\SoldOut.
+         */
+        'sold_out' => ['select', 'Sold-out products', 'show',
+            'How sold-out products sit in /shop, search, every category and brand page, the curated listings (Super Sale, New In, Best Sellers, under AED 54, skin concerns), product shortcodes and the homepage rows. Show as usual: where their order puts them. At the very end: after every in-stock product, each group in its usual order. Hide: left out of the grid and the product count; the product page itself still opens. A category or brand can choose differently in Catalog → Categories / Brands → Edit.',
+            [
+                'show' => 'Show as usual',
+                'end' => 'Show at the very end',
+                'hide' => 'Hide from listings',
+            ]],
+
+        /*
          * ── THE FILTERS DRAWER ON A PHONE ─────────────────────────── Lane FP ──
          *
          * The owner, on his phone's Filters drawer: "i want the filters panel
@@ -1084,7 +1102,7 @@ class SiteLayout
             ['max', 'gutter', 'gutter_wide', 'header_follows']],
         'grid' => ['Product grid',
             'The column count is not set here — it is worked out from the smallest card and the width each grid actually has, so a grid beside the shop filters gets the right answer rather than the window\'s answer.',
-            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count', 'filters_d', 'shop_links', 'filter_w', 'filter_max', 'filters_m', 'cols_m']],
+            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count', 'filters_d', 'shop_links', 'sold_out', 'filter_w', 'filter_max', 'filters_m', 'cols_m']],
         'loading' => ['Loading more products',
             'How /shop, every category, every brand page and the curated listings bring in more products: more on scroll, numbered arrows, or everything at once. Shoppers without JavaScript always get the arrows.',
             ['load_mode', 'load_batch', 'load_batch_custom', 'load_url']],
@@ -1392,7 +1410,7 @@ class SiteLayout
         foreach (self::normalised() as $key => $field) {
             if (in_array($key, self::LOAD_KEYS, true) || in_array($key, self::HEADER_KEYS, true)
                 || in_array($key, self::PRESS_KEYS, true) || in_array($key, self::BRAND_KEYS, true)
-                || in_array($key, self::FONT_KEYS, true)) {
+                || in_array($key, self::FONT_KEYS, true) || $key === 'sold_out') {
                 continue;
             }
 

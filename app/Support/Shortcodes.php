@@ -439,10 +439,16 @@ final class Shortcodes
 
         // Cached per attribute set: the same shortcode on a page renders the
         // same products for everyone until the catalogue changes. (Rule 27)
-        $key = 'kbb.sc.products.' . md5(serialize($a));
+        /*
+         * Sold-out products as usual, last, or not at all -- the shop's choice
+         * (Lane SX, App\Support\SoldOut). In the key only when it is not
+         * "show", so every entry built today keeps the name it has.
+         */
+        $soldOut = SoldOut::shopDefault();
+        $key = 'kbb.sc.products.' . md5(serialize($a)) . ($soldOut === SoldOut::SHOW ? '' : '.' . $soldOut);
         self::remember($key);
 
-        $products = Cache::remember($key, 600, function () use ($a, $limit) {
+        $products = Cache::remember($key, 600, function () use ($a, $limit, $soldOut) {
             $q = Product::query()->select(self::CARD_COLUMNS)->visible()
                 ->with(['brand:id,name,slug', 'categories:id,name,slug']);
 
@@ -560,11 +566,19 @@ final class Shortcodes
                 $q->orderBy('id', $dir);
             }
 
+            SoldOut::apply($q, $soldOut);
+
             $rows = $q->limit($limit)->get();
 
             // Restore the written order for a manual selection.
             if ($manualIds !== [] && ! isset($a['orderby'])) {
                 $rows = $rows->sortBy(fn ($p) => array_search($p->id, $manualIds, true))->values();
+
+                // "At the very end" holds for a hand-picked list too: in-stock
+                // first in the written order, then sold-out in the written order.
+                if ($soldOut === SoldOut::END) {
+                    $rows = $rows->partition(fn ($p) => $p->stock_status === 'instock')->flatten(1)->values();
+                }
             }
 
             return $rows;

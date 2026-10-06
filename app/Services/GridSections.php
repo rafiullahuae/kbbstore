@@ -642,6 +642,16 @@ class GridSections
             \App\Support\EffectivePrice::whereRange($base, null, $maxFils);
         }
 
+        /*
+         * Sold-out products as usual, last, or not at all -- the shop's choice
+         * (Lane SX, App\Support\SoldOut). "show" leaves every query below
+         * byte-for-byte as it was; "end" puts one key IN FRONT of each order.
+         * Every caller of this is cached, and saving Appearance → Site layout
+         * flushes those caches (SiteLayoutApiController::save).
+         */
+        $soldOut = \App\Support\SoldOut::shopDefault();
+        \App\Support\SoldOut::apply($base, $soldOut);
+
         return match ($source) {
             /*
              * `products_total_sales_index`
@@ -710,7 +720,7 @@ class GridSections
              * March. That is also the re-check the migration header promises:
              * a deleted id simply returns no row.
              */
-            'manual' => (function () use ($base, $manual, $limit) {
+            'manual' => (function () use ($base, $manual, $limit, $soldOut) {
                 $ids = array_values(array_filter(array_map('intval', $manual === '' ? [] : explode(',', $manual))));
 
                 if ($ids === []) {
@@ -719,11 +729,17 @@ class GridSections
 
                 $rows = $base->whereIn('id', array_slice($ids, 0, 48))->get()->keyBy('id');
 
-                return collect($ids)
+                $picked = collect($ids)
                     ->map(fn ($id) => $rows->get($id))
-                    ->filter()
-                    ->take($limit)
-                    ->values();
+                    ->filter();
+
+                // "At the very end" holds for a hand-picked row too: in stock
+                // first in the owner's order, then sold out in it. (Lane SX)
+                if ($soldOut === \App\Support\SoldOut::END) {
+                    $picked = $picked->partition(fn ($p) => $p->stock_status === 'instock')->flatten(1);
+                }
+
+                return $picked->take($limit)->values();
             })(),
 
             /*

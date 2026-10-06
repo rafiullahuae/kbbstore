@@ -113,7 +113,11 @@ class CollectionController extends Controller
         $campaign = $key === 'super-sale' ? \App\Support\SuperSale::campaign($this->settings) : null;
 
         if ($campaign !== null) {
-            $products = \App\Support\SuperSale::apply($this->cardQuery(), $campaign, \App\Support\SuperSaleOrder::ids($this->settings))
+            // The campaign category's own "Sold-out products" choice, else the
+            // shop's: /super-sale/ IS that category (Lane SX).
+            $products = \App\Support\SuperSale::apply(
+                \App\Support\SoldOut::apply($this->cardQuery(), \App\Support\SoldOut::campaignMode($campaign)),
+                $campaign, \App\Support\SuperSaleOrder::ids($this->settings))
                 ->paginate($this->perPage($key), ['*'], 'page', $page)->withQueryString();
 
             if ($products->total() > 0) {
@@ -125,7 +129,9 @@ class CollectionController extends Controller
             }
         }
 
-        $query = $this->cardQuery();
+        // Sold-out products as usual, last, or not at all -- the shop's
+        // choice (Lane SX). The "end" key goes in front of the order below.
+        $query = \App\Support\SoldOut::apply($this->cardQuery(), \App\Support\SoldOut::shopDefault());
 
         /*
          * EVERY ONE OF THESE ENDS IN `id`, BECAUSE ALL FOUR ARE PAGINATED.
@@ -307,6 +313,7 @@ class CollectionController extends Controller
         // The curated order first, featured as its tie-break (2.60.402; see
         // ShopController::applyDefaultSort for the owner's report).
         $query->orderBy('position')->orderByDesc('featured')->orderBy('id');
+        \App\Support\SoldOut::apply($query, \App\Support\SoldOut::shopDefault());   // Lane SX
 
         $page = max(1, (int) $request->query('page', 1));
 

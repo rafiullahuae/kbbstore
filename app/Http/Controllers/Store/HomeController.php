@@ -499,7 +499,10 @@ class HomeController extends Controller
      */
     private function rails(array $want, array $c = []): array
     {
-        $base = fn () => Product::query()->select(self::CARD_COLUMNS)->visible()->with('brand:id,name,slug');
+        // Sold-out products as usual, last, or not at all -- the shop's choice
+        // (Lane SX). "show" leaves each query below exactly as it was.
+        $soldOut = \App\Support\SoldOut::shopDefault();
+        $base = fn () => \App\Support\SoldOut::apply(Product::query()->select(self::CARD_COLUMNS)->visible()->with('brand:id,name,slug'), $soldOut);
         $out = [];
 
         /*

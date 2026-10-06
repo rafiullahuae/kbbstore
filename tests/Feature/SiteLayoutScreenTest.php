@@ -183,7 +183,8 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // category and campaign pages", both on Product grid, both shipped off.
     // 133 since 6 Oct: the brand header's space above and at the sides,
     // laptop and phone (Brand page tab), all at the 22px the page already leaves.
-    expect($keys)->toHaveCount(133);
+    // 134 with Lane SX: "Sold-out products" on Product grid, shipped at "Show as usual".
+    expect($keys)->toHaveCount(134);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is
