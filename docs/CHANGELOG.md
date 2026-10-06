@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.411
+**Inner pages 3-6x faster on the server; pages open instantly on intent.**
+Apply after .410. Runs its migration. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "inner pages are loading slightly slow, before it was super fast" | The cause: every page re-read the whole settings file thousands of times (3,824 reads for one category page). Now once per page. Measured with live-sized settings: product 309 -> 45 ms, category 308 -> 36 ms, brand 245 -> 33 ms, home 275 -> 46 ms. Pages byte-identical |
+| "super blazing speed with super fast shifting layout from one page to another" | Appearance -> Site layout -> Page speed -> "Open pages instantly" (ON): the next page is fetched while the finger is down / the pointer rests; never cart, checkout, account, admin, owner app or anything that changes state; off on Data Saver/2G. Pixels and "Most viewed" count only opened pages. Fade between pages: OFF (measured slower), one switch |
+
+Optional: Content -> Media Library -> "Make phone-sized copies" once.
+
+Files: see the package's update.json.
+
 ## 2.60.410
 **Cart and checkout: no address picker row, the order summary as one thin
 row, Browsed off; the footer button reads "Install App".** Apply after .409.
