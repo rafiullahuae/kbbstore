@@ -224,6 +224,52 @@ light, secure, optimized and bugs free." Read the code before deciding anything
 about it; grep for the line you need instead of reading a 3,000-line file; keep
 reports short. Spend on the code, not on the conversation.
 
+## Speed is frozen — the owner, 6 October
+
+> *"the speed and shifting between pages are absolutely fine now. make sure it
+> should not touch by anything, unless very necessary. write rules for it. and
+> don't disturb anything."*
+
+2.60.411 made inner pages 3–6x faster on the server (product 309 → 45 ms,
+category 308 → 36 ms with live-sized settings) and pages open on intent. That
+state is now a rule, not a mood. **A lane does not touch it unless its brief
+is about speed, and then only with before/after numbers.**
+
+What is protected, and what each rule forbids:
+
+- **`SettingsRequestMemo`** (middleware, registered in
+  `AppServiceProvider::boot()`): the settings map is read ONCE per web request.
+  The regression it fixed was every `SiteLayout->get()` re-reading and
+  unserializing the whole map — 3,824 reads for one category page. Never read
+  settings around it (no direct `Cache::get` of the settings map, no
+  `Setting::query()` per call, no per-key loop over `SettingsService::get()`
+  where `all()` once would do). `SettingsRequestMemoTest` pins "at most once
+  per page"; it going red is a speed regression, not a test to adjust.
+- **Instant navigation** (`App\Support\InstantNav`, `routes/instant-nav.php`,
+  the speculation-rules script, `POST /api/viewed`): prefetch only, never
+  prerender (pixels and "Most viewed" must count opened pages only); the
+  exclusion list (cart, checkout, account, login, admin, owner app, `/api`,
+  queries, files) only ever grows; the fade stays OFF unless the owner asks.
+  `InstantNavTest` pins all of it.
+- **Storefront query counts:** `StorefrontQueryBudgetTest` budgets are a
+  ceiling. A lane that needs one more query on a shop page says so in its
+  report and the integrator decides; it never raises a budget silently.
+- **Pictures:** every shop photograph offers its img-cache copies
+  (`ImageVariants::srcsetFor` and friends). No new `<img>` on a shop page
+  ships with a bare full-size `src` (the 903 KiB homepage brand photo of
+  2.60.406 is why).
+- **The head of every shop page:** no new render-blocking script or
+  stylesheet, no new third-party script without the owner's OK, no
+  layout-measuring JavaScript (already forbidden above).
+
+**Any lane whose diff touches** `app/Http/Middleware/SettingsRequestMemo.php`,
+`app/Services/SettingsService.php`, `app/Models/Setting.php`,
+`app/Support/InstantNav.php`, `routes/instant-nav.php`, `ImageVariants`,
+`resources/views/layouts/store.blade.php`'s `<head>`, or adds a settings read
+to a shop page, **must report server ms, query count and settings-map reads
+for the product, category and brand pages, before and after** — and the
+integrator reverts it if any of them got worse.
+
 ## Landmines, each one already paid for
 
 - **Packages 2.60.102–.106 were withdrawn** for being built against a stale
