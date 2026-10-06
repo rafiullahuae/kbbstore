@@ -1638,6 +1638,9 @@ final class EnglishRenderWalk
      *
      * @return array<string, array{pattern: string, with: string, hits: int}>
      */
+    /** partials/policy-links.blade.php as the walk's seed renders it. (Lane TP) */
+    private const LANE_TP_LINKS = '<p class="kbb-pol"><a href="/delivery/">Shipping &amp; Delivery</a><a href="/refund_returns/">Returns Information</a></p>';
+
     public static function approvedStorefrontChanges(): array
     {
         return [
@@ -1653,6 +1656,28 @@ final class EnglishRenderWalk
              * wrapper, so every row inside is still compared byte for byte.
              * Off, neither fires and the page is as it was.
              */
+            /*
+             * THE TWO POLICY LINKS UNDER THE TOTALS (Lane TP). The owner, 6
+             * October: "also apply … two links on cart / checkout pages".
+             * Shipping & Delivery and Returns Information, one <p> added after
+             * the cart summary's last row (its payment chips) and one after the
+             * checkout order block's delivery line, which is drawn twice
+             * (summary column and phone box). Switched at Appearance → Cart
+             * page → Summary & trust and Appearance → Checkout page → Trust &
+             * reviews; both ship ON. Measured before this rule existed: the
+             * walk named /cart and /checkout with a basket, at these lines,
+             * and nothing else outside the footer.
+             */
+            'the policy links under the cart totals (Lane TP)' => [
+                'pattern' => '#(<span>COD</span></div>\n)(        </aside>)#',
+                'with' => '$1'.self::LANE_TP_LINKS."\n".'$2',
+                'hits' => 1,
+            ],
+            'the policy links under Place order (Lane TP)' => [
+                'pattern' => '#(<span>1–3 days fast delivery all over UAE</span></div>\n)(</div>)#u',
+                'with' => '$1    '.self::LANE_TP_LINKS."\n".'$2',
+                'hits' => 2,
+            ],
             'the checkout totals card opens (Lane CD)' => [
                 'pattern' => '#<div class="kbb-freeship-slot">#',
                 'with' => '<div class="cotot"><div class="kbb-freeship-slot">',
@@ -4192,6 +4217,10 @@ KBB_BH_CSS;
      */
     private static function laneHbFooter(): string
     {
+        // (Lane TP) The Help column is the old shop's policy links, as the
+        // owner asked on 6 October: Shipping & Delivery, Returns Information,
+        // Order Tracking (/my-account/orders/), FAQs, Privacy policy, then
+        // Contact us and About us. Seven <li>, inside this column only.
         // (Lane FT) `kft-sheen-bar` is gone from the class list: the owner,
         // 4 October, "remove the effect from the very last row of the footer".
         // SiteFooter::SCHEMA['site_sheen'] ships 'off'. One class, one page
@@ -4223,9 +4252,11 @@ KBB_BH_CSS;
         <li><a href="/blog/">Journal</a></li>
       </ul></nav>
       <nav class="kft-col kft-col2" aria-labelledby="kft-help"><h2 id="kft-help" class="kft-ch">Help</h2><ul>
-        <li><a href="/track-my-order/">Track my order</a></li>
         <li><a href="/delivery/">Shipping &amp; Delivery</a></li>
+        <li><a href="/refund_returns/">Returns Information</a></li>
+        <li><a href="/my-account/orders/">Order Tracking</a></li>
         <li><a href="/faqs/">FAQs</a></li>
+        <li><a href="/privacy-policy/">Privacy policy</a></li>
         <li><a href="/contact-us/">Contact us</a></li>
         <li><a href="/about/">About us</a></li>
       </ul></nav>
