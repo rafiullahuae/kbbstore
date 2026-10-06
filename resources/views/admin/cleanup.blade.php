@@ -65,6 +65,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .msg.warn{background:var(--warn-bg);border:1px solid #f0dcaf;color:var(--warn)}
 @media (max-width:640px){ .wrap{padding:16px 16px 48px} h1{font-size:19px} }
 </style>
+@include('partials.no-focus-zoom')
 </head>
 <body>
 <div class="wrap">

@@ -29,6 +29,9 @@
   input[type=email],input[type=password]{width:100%;padding:11px 13px;border:1px solid var(--border);
     border-radius:11px;font-size:14px;background:var(--surface-2);color:var(--ink);outline:none}
   input:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px var(--accent-soft)}
+  /* 16px on a touch screen (partials/no-focus-zoom, Lane ZM); 1px less padding
+     top and bottom keeps the field 40px tall, as it was at 14px. */
+  @media (hover:none),(pointer:coarse){input[type=email],input[type=password]{padding-top:10px;padding-bottom:10px}}
   .row{display:flex;align-items:center;justify-content:space-between;margin:2px 0 20px;font-size:12.5px}
   .row label{display:flex;align-items:center;gap:7px;font-weight:500;color:var(--ink-soft);margin:0;cursor:pointer}
   .btn{width:100%;padding:12px;border:0;border-radius:11px;background:var(--accent);color:#fff;
@@ -38,6 +41,7 @@
     padding:10px 12px;border-radius:10px;margin-bottom:16px}
   .foot{margin-top:18px;text-align:center;font-size:11.5px;color:var(--ink-soft)}
 </style>
+@include('partials.no-focus-zoom')
 </head>
 <body>
   <div class="card">

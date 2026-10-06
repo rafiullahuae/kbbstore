@@ -156,6 +156,10 @@ input,textarea{font-family:inherit}
 .field input,.field textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px;color:var(--ink);background:#fff;transition:.15s}
 .field input:focus,.field textarea:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(224,86,123,.12)}
 .field.err input{border-color:var(--sale)}
+/* On a touch screen partials/no-focus-zoom lifts these to 16px so iOS does not
+   zoom the page on focus (Lane ZM); 1px less padding top and bottom keeps the
+   field 44px tall, as it was at 13.5px. */
+@media (hover:none),(pointer:coarse){.field input,.field textarea{padding-top:11px;padding-bottom:11px}}
 .field .msg{font-size:11px;color:var(--sale);margin-top:4px;display:none}
 .field.err .msg{display:block}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:11px}
@@ -263,7 +267,7 @@ input,textarea{font-family:inherit}
 
      (The markers are deliberately not spelled out with their @ in this comment:
      the fence is extracted before comments are stripped, so naming one here
-     would arm the trap it describes.) --}}@include('partials.shop-appearance-css')@include('partials.page-wash-css')@verbatim</head>
+     would arm the trap it describes.) --}}@include('partials.shop-appearance-css')@include('partials.page-wash-css')@include('partials.no-focus-zoom')@verbatim</head>
 <body>
 <div class="deco"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>@endverbatim
 <div class="preview-flag">{{ __('store.quiz.preview_flag') }}</div>

@@ -49,6 +49,7 @@ td{padding:10px;border-bottom:1px solid #1c2836;vertical-align:top}
 summary{cursor:pointer;color:#5fb3f5;margin-top:10px}
 code{background:#0f1720;padding:1px 5px;border-radius:4px;font-size:12px}
 </style>
+@include('partials.no-focus-zoom')
 </head>
 <body>
 <div class="wrap">

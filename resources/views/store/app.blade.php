@@ -571,6 +571,9 @@ footer p{font-size:13px;line-height:1.6;max-width:34ch}
 
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .hidden{display:none!important}
+/* The search overlay's field is 22px, larger than the no-focus-zoom floor
+   (partials/no-focus-zoom), so it keeps its own size on a touch screen. */
+@media (hover:none),(pointer:coarse){.search-ov input{font-size:22px!important}}
 </style>
 @endverbatim{{-- Appearance -> Page background (Lane BG). ZERO BYTES until the owner
      switches the wash on. THIS DOCUMENT DOES NOT EXTEND
@@ -605,7 +608,7 @@ footer p{font-size:13px;line-height:1.6;max-width:34ch}
 
      (The markers are deliberately not spelled out with their @ in this comment:
      the fence is extracted before comments are stripped, so naming one here
-     would arm the trap it describes.) --}}@include('partials.shop-appearance-css')@include('partials.page-wash-css')@verbatim</head>
+     would arm the trap it describes.) --}}@include('partials.shop-appearance-css')@include('partials.page-wash-css')@include('partials.no-focus-zoom')@verbatim</head>
 <body>
 
 <!-- TOP MARQUEE -->

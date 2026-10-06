@@ -2855,6 +2855,7 @@ html.side-closed .sidetog .sidetog-chev{transform:rotate(180deg)}
 @media(max-width:880px){.sidetog{display:none}}
 @media(prefers-reduced-motion:reduce){.side,.sidetog .sidetog-chev{transition:none!important}html.side-anim .main{animation:none!important}}
 </style>
+<style>@media (hover:none),(pointer:coarse){:where(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=submit]):not([type=button]):not([type=reset]):not([type=image]),select,textarea,[contenteditable]:not([contenteditable=false])){font-size:16px!important}}</style>
 </head>
 <body data-env="live">
 <div class="mesh"></div>

@@ -1,0 +1,222 @@
+{
+ "390 checkout": {
+  "file": "before-390--checkout.jpg",
+  "px": 16,
+  "h": 44.8,
+  "w": 316,
+  "lineHeight": "20.8px",
+  "padding": "11px 13px",
+  "scale": 1,
+  "scrollWidth": 390,
+  "vw": 390
+ },
+ "390 login-register": {
+  "file": "before-390--login-register.jpg",
+  "px": 16,
+  "h": 49,
+  "w": 310,
+  "lineHeight": "normal",
+  "padding": "22px 14px 7px 42px",
+  "scale": 1,
+  "scrollWidth": 390,
+  "vw": 390
+ },
+ "390 coupon": {
+  "file": "before-390--coupon.jpg",
+  "px": 16,
+  "h": 46.8,
+  "w": 228.4,
+  "lineHeight": "20.8px",
+  "padding": "12px 14px",
+  "scale": 1,
+  "scrollWidth": 390,
+  "vw": 390
+ },
+ "390 header-search": {
+  "file": "before-390--header-search.jpg",
+  "px": 16,
+  "h": 44,
+  "w": 309,
+  "lineHeight": "19.2px",
+  "padding": "0px",
+  "scale": 1,
+  "scrollWidth": 390,
+  "vw": 390
+ },
+ "390 footer-newsletter": {
+  "file": "before-390--footer-newsletter.jpg",
+  "px": 13.5,
+  "h": 40,
+  "w": 281.8,
+  "lineHeight": "20.25px",
+  "padding": "0px 15px",
+  "scale": 1,
+  "scrollWidth": 390,
+  "vw": 390
+ },
+ "390 search-404": {
+  "file": "before-390--search-404.jpg",
+  "px": 15,
+  "h": 42,
+  "w": 214,
+  "lineHeight": "24px",
+  "padding": "0px",
+  "scale": 1,
+  "scrollWidth": 390,
+  "vw": 390
+ },
+ "390 address-book": {
+  "file": "before-390--address-book.jpg",
+  "px": 14,
+  "h": 38,
+  "w": 316,
+  "lineHeight": "normal",
+  "padding": "9px 10px",
+  "scale": 1,
+  "scrollWidth": 390,
+  "vw": 390
+ },
+ "390 owner-app-sign-in-pin": {
+  "file": "before-390--owner-app-sign-in-pin.jpg",
+  "px": 16,
+  "h": 50,
+  "w": 206,
+  "lineHeight": "22.4px",
+  "padding": "1px 2px",
+  "scale": 1,
+  "scrollWidth": 390,
+  "vw": 390
+ },
+ "390 admin-login": {
+  "file": "before-390--admin-login.jpg",
+  "px": 14,
+  "h": 40,
+  "w": 328,
+  "lineHeight": "normal",
+  "padding": "11px 13px",
+  "scale": 1,
+  "scrollWidth": 390,
+  "vw": 390
+ },
+ "390 admin-store-settings": {
+  "file": "before-390--admin-store-settings.jpg",
+  "px": 13,
+  "h": 39.5,
+  "w": 332,
+  "lineHeight": "19.5px",
+  "padding": "9px 11px",
+  "scale": 1,
+  "scrollWidth": 390,
+  "vw": 390
+ },
+ "1280 checkout": {
+  "file": "before-1280--checkout.jpg",
+  "px": 14,
+  "h": 42.2,
+  "w": 560,
+  "lineHeight": "18.2px",
+  "padding": "11px 13px",
+  "scale": 1,
+  "scrollWidth": 1280,
+  "vw": 1280
+ },
+ "1280 login-register": {
+  "file": "before-1280--login-register.jpg",
+  "px": 14,
+  "h": 47,
+  "w": 340,
+  "lineHeight": "normal",
+  "padding": "22px 14px 7px 42px",
+  "scale": 1,
+  "scrollWidth": 1280,
+  "vw": 1280
+ },
+ "1280 coupon": {
+  "file": "before-1280--coupon.jpg",
+  "px": 14,
+  "h": 44.2,
+  "w": 472.4,
+  "lineHeight": "18.2px",
+  "padding": "12px 14px",
+  "scale": 1,
+  "scrollWidth": 1280,
+  "vw": 1280
+ },
+ "1280 header-search": {
+  "file": "before-1280--header-search.jpg",
+  "px": 13.5,
+  "h": 16.2,
+  "w": 659.4,
+  "lineHeight": "16.2px",
+  "padding": "0px",
+  "scale": 1,
+  "scrollWidth": 1280,
+  "vw": 1280
+ },
+ "1280 footer-newsletter": {
+  "file": "before-1280--footer-newsletter.jpg",
+  "px": 13.5,
+  "h": 40,
+  "w": 211.3,
+  "lineHeight": "20.25px",
+  "padding": "0px 15px",
+  "scale": 1,
+  "scrollWidth": 1280,
+  "vw": 1280
+ },
+ "1280 search-404": {
+  "file": "before-1280--search-404.jpg",
+  "px": 15,
+  "h": 42,
+  "w": 327.1,
+  "lineHeight": "24px",
+  "padding": "0px",
+  "scale": 1,
+  "scrollWidth": 1280,
+  "vw": 1280
+ },
+ "1280 address-book": {
+  "file": "before-1280--address-book.jpg",
+  "px": 14,
+  "h": 38,
+  "w": 256.7,
+  "lineHeight": "normal",
+  "padding": "9px 10px",
+  "scale": 1,
+  "scrollWidth": 1280,
+  "vw": 1280
+ },
+ "1280 owner-app-sign-in-pin": {
+  "file": "before-1280--owner-app-sign-in-pin.jpg",
+  "px": 16,
+  "h": 50,
+  "w": 206,
+  "lineHeight": "22.4px",
+  "padding": "1px 2px",
+  "scale": 1,
+  "scrollWidth": 1280,
+  "vw": 1280
+ },
+ "1280 admin-login": {
+  "file": "before-1280--admin-login.jpg",
+  "px": 14,
+  "h": 40,
+  "w": 338,
+  "lineHeight": "normal",
+  "padding": "11px 13px",
+  "scale": 1,
+  "scrollWidth": 1280,
+  "vw": 1280
+ },
+ "1280 admin-store-settings": {
+  "file": "before-1280--admin-store-settings.jpg",
+  "px": 13,
+  "h": 39.5,
+  "w": 310.1,
+  "lineHeight": "19.5px",
+  "padding": "9px 11px",
+  "scale": 1,
+  "scrollWidth": 1280,
+  "vw": 1280
+ }
+}

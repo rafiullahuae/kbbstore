@@ -1,0 +1,10 @@
+[
+    {
+        "n": 1,
+        "what": "admin console: the no-focus-zoom floor (the rule in partials/no-focus-zoom, as literal CSS because the head is inside @verbatim) in its own small <style> after the head stylesheet, so no field in any admin screen zooms the page on a phone. Under AdminConsoleAssets::MIN_BYTES, so it stays inline and no built asset changes (Lane ZM)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "</style>\n</head>\n",
+        "count": 1,
+        "replacement": "</style>\n<style>@media (hover:none),(pointer:coarse){:where(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=submit]):not([type=button]):not([type=reset]):not([type=image]),select,textarea,[contenteditable]:not([contenteditable=false])){font-size:16px!important}}</style>\n</head>\n"
+    }
+]

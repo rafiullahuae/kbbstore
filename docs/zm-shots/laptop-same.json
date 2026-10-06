@@ -1,0 +1,102 @@
+{
+ "styles /": {
+  "elements": 1107,
+  "elementsOld": 1107,
+  "differing": 0
+ },
+ "styles /shop/": {
+  "elements": 812,
+  "elementsOld": 812,
+  "differing": 0
+ },
+ "styles /product/mac-anua/": {
+  "elements": 1097,
+  "elementsOld": 1097,
+  "differing": 0
+ },
+ "styles /cart/": {
+  "elements": 383,
+  "elementsOld": 383,
+  "differing": 0
+ },
+ "styles /checkout/": {
+  "elements": 515,
+  "elementsOld": 515,
+  "differing": 0
+ },
+ "styles /my-account/": {
+  "elements": 487,
+  "elementsOld": 487,
+  "differing": 0
+ },
+ "styles /track-my-order/": {
+  "elements": 467,
+  "elementsOld": 467,
+  "differing": 0
+ },
+ "styles /contact-us/": {
+  "elements": 469,
+  "elementsOld": 469,
+  "differing": 0
+ },
+ "styles /no-such-page-zm/": {
+  "elements": 596,
+  "elementsOld": 596,
+  "differing": 0
+ },
+ "styles /ar/": {
+  "elements": 1108,
+  "elementsOld": 1108,
+  "differing": 0
+ },
+ "/": {
+  "oldCssServed": true,
+  "newVsOld": "identical bytes",
+  "control_newVsNew": "identical bytes"
+ },
+ "/shop/": {
+  "oldCssServed": true,
+  "newVsOld": "identical bytes",
+  "control_newVsNew": "identical bytes"
+ },
+ "/product/mac-anua/": {
+  "oldCssServed": true,
+  "newVsOld": "identical bytes",
+  "control_newVsNew": "identical bytes"
+ },
+ "/cart/": {
+  "oldCssServed": true,
+  "newVsOld": "identical bytes",
+  "control_newVsNew": "identical bytes"
+ },
+ "/checkout/": {
+  "oldCssServed": true,
+  "newVsOld": "identical bytes",
+  "control_newVsNew": "9 differing channel values"
+ },
+ "/my-account/": {
+  "oldCssServed": true,
+  "newVsOld": "identical bytes",
+  "control_newVsNew": "identical bytes"
+ },
+ "/track-my-order/": {
+  "oldCssServed": true,
+  "newVsOld": "identical bytes",
+  "control_newVsNew": "identical bytes"
+ },
+ "/contact-us/": {
+  "oldCssServed": true,
+  "newVsOld": "identical bytes",
+  "control_newVsNew": "identical bytes"
+ },
+ "/no-such-page-zm/": {
+  "oldCssServed": true,
+  "newVsOld": "identical bytes",
+  "control_newVsNew": "identical bytes"
+ },
+ "/ar/": {
+  "oldCssServed": true,
+  "newVsOld": "identical bytes",
+  "control_newVsNew": "identical bytes"
+ }
+}

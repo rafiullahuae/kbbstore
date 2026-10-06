@@ -131,6 +131,10 @@
 .ab-chk{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:13px;color:#5e545a}
 .ab-submit{grid-column:1/-1;display:flex;align-items:center;gap:14px}
 .ab-btn{background:#b4517a;color:#fff;border:0;border-radius:8px;padding:11px 22px;font-size:14px;cursor:pointer}
+/* On a touch screen kbb.css lifts these fields to 16px so iOS does not zoom
+   the page on focus (Lane ZM). 2px more text, 1px less padding top and
+   bottom: the boxes stay 38px and 40px, as they were at 14px. */
+@media (hover:none),(pointer:coarse){.ab-f input,.ab-f select{padding-top:8px;padding-bottom:8px}}
 </style>
 @endpush
 @endsection

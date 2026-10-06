@@ -1,0 +1,42 @@
+{
+ "address-book": {
+  "pixels": 1152000,
+  "differing": 0
+ },
+ "admin-login": {
+  "pixels": 1152000,
+  "differing": 0
+ },
+ "admin-store-settings": {
+  "pixels": 1152000,
+  "differing": 0
+ },
+ "checkout": {
+  "pixels": 1152000,
+  "differing": 0
+ },
+ "coupon": {
+  "pixels": 1152000,
+  "differing": 0
+ },
+ "footer-newsletter": {
+  "pixels": 1152000,
+  "differing": 0
+ },
+ "header-search": {
+  "pixels": 1152000,
+  "differing": 0
+ },
+ "login-register": {
+  "pixels": 1152000,
+  "differing": 0
+ },
+ "owner-app-sign-in-pin": {
+  "pixels": 1152000,
+  "differing": 0
+ },
+ "search-404": {
+  "pixels": 1152000,
+  "differing": 7
+ }
+}
