@@ -143,12 +143,20 @@ describe('signed in as an admin', function () {
 
         $child = Category::query()->where('slug', 't-face-cleansers')->first();
 
-        expect($child->path)->toBe('t-skincare/t-face-cleansers')
-            ->and((int) $child->depth)->toBe(1);
+        // ▲ Lane CH: a category made on this screen has a SHORT address —
+        // /collections/t-face-cleansers/ — under any parent. The owner chose
+        // short URLs when the tree came back; depth still says where it sits.
+        expect($child->path)->toBe('t-face-cleansers')
+            ->and((int) $child->depth)->toBe(1)
+            ->and((bool) $child->short_url)->toBeTrue();
 
-        // Renaming the parent's slug has to rewrite the child's cached path —
-        // SeoFilesController reads that column straight out to build the
-        // sitemap, so a stale one is a 404 published to search engines.
+        // A legacy nested row (short_url = 0, which is every row an import
+        // nests) still composes from its parent, and renaming the parent's
+        // slug has to rewrite the child's cached path — SeoFilesController
+        // reads that column straight out to build the sitemap, so a stale one
+        // is a 404 published to search engines.
+        DB::table('categories')->where('id', $child->id)->update(['short_url' => false]);
+
         $this->putJson('/admin-api/categories/' . $parent->id, [
             'name' => 'T Skincare', 'slug' => 't-skin-care',
         ])->assertOk();

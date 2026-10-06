@@ -457,7 +457,9 @@
         + '<div class="ct-title">Category tree</div>'
         + '<div class="ct-sub">Drag a row by its handle to reorder it among its own siblings. '
         + 'The count is what the category page actually lists.</div></div>'
-        + '<button class="ct-btn is-primary" id="ct-add">+ Add category</button>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;min-width:0">'
+        + '<button class="ct-btn" id="ct-hier">Copy hierarchy from kbeautybliss.com</button>'
+        + '<button class="ct-btn is-primary" id="ct-add">+ Add category</button></div>'
       + '</div>'
       + '<div style="margin-top:13px;min-width:0">' + body + '</div>'
       + '</div>';
@@ -1503,6 +1505,9 @@
 
     var add = document.getElementById('ct-add');
     if (add) add.onclick = function(){ editor(null); };
+    /* Lane CH: the dry run + apply lives in category-hierarchy-sync.blade.php. */
+    var hier = document.getElementById('ct-hier');
+    if (hier) hier.onclick = function(){ if (window.kbbCatHierarchy) window.kbbCatHierarchy.open(load); };
 
     host.querySelectorAll('[data-edit]').forEach(function(b){
       b.onclick = function(){ var c = catById(b.dataset.edit); if (c) { editor(c); wireModal(); } };
@@ -1639,3 +1644,4 @@
 })();
 </script>
 @endverbatim
+@include('admin.partials.category-hierarchy-sync')

@@ -144,4 +144,13 @@ return [
      */
     'health_deep' => (bool) env('KBB_HEALTH_DEEP', true),
 
+    /*
+     * Catalog → Categories → "Copy hierarchy from kbeautybliss.com" (Lane CH):
+     * the ONE host the server may fetch the WooCommerce category tree from,
+     * over https, at /wp-json/wp/v2/product_cat. A hostname only; anything
+     * else falls back to kbeautybliss.com. Not an admin field on purpose -- a
+     * typed URL would make the endpoint a fetch-anything proxy.
+     */
+    'hierarchy_source_host' => (string) env('KBB_HIERARCHY_SOURCE_HOST', 'kbeautybliss.com'),
+
 ];

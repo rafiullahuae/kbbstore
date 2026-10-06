@@ -1,0 +1,13 @@
+ch-before-category-1280.png  200 /collections/oil-cleansers/ crumb="Home / Category" links=0 jsonld="Home > Shop > Oil Cleansers" scrollWidth=1280 (viewport 1280)
+ch-before-category-390.png  200 /collections/oil-cleansers/ crumb="Home / Category" links=0 jsonld="Home > Shop > Oil Cleansers" scrollWidth=390 (viewport 390)
+ch-categories-button-390.png  button="Copy hierarchy from kbeautybliss.com"
+ch-dry-run-390.png  counts: 10 will get a parent | 3 already right | 1 here but not on kbeautybliss.com | 2 on kbeautybliss.com but not here | 0 conflicts (left as they are); tree rows=14; button="Apply — move 10 categories"; dialog width=354px; scrollWidth=390 (viewport 390)
+ch-categories-button-1280.png  button="Copy hierarchy from kbeautybliss.com"
+ch-dry-run-1280.png  counts: 10 will get a parent | 3 already right | 1 here but not on kbeautybliss.com | 2 on kbeautybliss.com but not here | 0 conflicts (left as they are); tree rows=14; button="Apply — move 10 categories"; dialog width=780px; scrollWidth=1280 (viewport 1280)
+ch-applied-1280.png  "Applied. 10 categories moved. Running it again changes nothing."
+ch-after-list-1280.png  depth:address 0:/collections/skincare/ 1:/collections/cleansers/ 2:/collections/oil-cleansers/ 2:/collections/foam-cleansers/ 1:/collections/toners/ 1:/collections/serums-ampoules/ 1:/collections/moisturizers/ 1:/collections/sun-care/ 0:/collections/makeup/ 1:/collections/lips/ 1:/collections/cushions/ 0:/collections/hair-body/ 1:/collections/body-care/ 0:/collections/gift-sets/; scrollWidth=1280 (viewport 1280)
+ch-after-list-390.png  depth:address 0:/collections/skincare/ 1:/collections/cleansers/ 2:/collections/oil-cleansers/ 2:/collections/foam-cleansers/ 1:/collections/toners/ 1:/collections/serums-ampoules/ 1:/collections/moisturizers/ 1:/collections/sun-care/ 0:/collections/makeup/ 1:/collections/lips/ 1:/collections/cushions/ 0:/collections/hair-body/ 1:/collections/body-care/ 0:/collections/gift-sets/; scrollWidth=390 (viewport 390)
+ch-after-category-1280.png  200 /collections/oil-cleansers/ crumb="Home / Skincare / Cleansers / Oil Cleansers" links=2 font=12.5px jsonld="Home > Shop > Skincare > Cleansers > Oil Cleansers" canonical=http://127.0.0.1:10621/collections/oil-cleansers/ scrollWidth=1280 (viewport 1280)
+  /collections/skincare/cleansers/oil-cleansers/ -> /collections/oil-cleansers/ (301)
+ch-after-category-390.png  200 /collections/oil-cleansers/ crumb="Home / Skincare / Cleansers / Oil Cleansers" links=2 font=12.5px jsonld="Home > Shop > Skincare > Cleansers > Oil Cleansers" canonical=http://127.0.0.1:10621/collections/oil-cleansers/ scrollWidth=390 (viewport 390)
+  /collections/skincare/cleansers/oil-cleansers/ -> /collections/oil-cleansers/ (301)
