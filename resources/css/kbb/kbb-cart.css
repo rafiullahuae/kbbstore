@@ -123,21 +123,6 @@
 .kbb-cartpage .coupon{display:flex;gap:8px;margin:14px 0;background:linear-gradient(135deg,#EEF8F1,#fff);border:1.4px dashed #BFE0CD;border-radius:12px;padding:10px}
 .kbb-cartpage .coupon input{flex:1;min-width:0;border:1.4px solid #C9E7D5;border-radius:9px;padding:11px 13px;font-family:inherit;font-size:13px;background:#fff}
 .kbb-cartpage .coupon input:focus{outline:none;border-color:#2E9E6B;box-shadow:0 0 0 3px rgba(46,158,107,.12)}
-/* FLOATING LABEL on the discount code (Lane CD) -- Appearance -> Checkout
-   page -> Fields & attention -> "Floating labels on checkout fields". The
-   Create account form's `.fld` (kbb.css), restated at this page's specificity:
-   the label is the placeholder, and lifts to a small heading inside the box. */
-.kbb-cartpage .coupon .fld.kbb-fl{position:relative;flex:1;min-width:0;margin:0}
-.kbb-cartpage .coupon .fld.kbb-fl input{width:100%;padding:calc(17px + var(--fld-gap,3px)) 13px 5px 40px}
-.kbb-cartpage .coupon .fld.kbb-fl > label{position:absolute;inset-inline-start:41px;top:13px;max-width:calc(100% - 54px);
-  font-size:13px;line-height:1.3;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;
-  transition:transform .16s ease,font-size .16s ease,color .16s ease}
-.kbb-cartpage .coupon .fld.kbb-fl input:is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label{
-  transform:translateY(calc(-7px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:#1F7D52}
-.kbb-cartpage .coupon .fld.kbb-fl .lead{position:absolute;inset-inline-start:13px;top:50%;transform:translateY(-50%);
-  display:grid;place-items:center;color:var(--muted);pointer-events:none}
-.kbb-cartpage .coupon .fld.kbb-fl .lead svg{width:17px;height:17px;display:block}
-.kbb-cartpage .coupon .fld.kbb-fl:focus-within .lead{color:#2E9E6B}
 .kbb-cartpage .coupon button{background:var(--pink);color:#fff;border-radius:9px;padding:0 16px;font-size:12.5px;font-weight:700;white-space:nowrap}
 .kbb-cartpage .coupon button:hover{background:var(--pink-deep)}
 .kbb-cartpage .appliedcoupon{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#EEF8F1;border:1px solid #C9E7D5;border-radius:10px;padding:9px 12px;font-size:12px;color:#1F7D52;font-weight:600;margin:12px 0}

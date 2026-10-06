@@ -292,6 +292,27 @@ it('keeps the server rules and the inline validation hooks the fields always had
         ->assertSessionHasErrors(['billing_first_name', 'billing_phone', 'billing_email', 'billing_address_1']);
 });
 
+it('floats the cart page\'s discount code too, and prints its CSS only where the field is', function () {
+    // MUTATION: drop the `@if ($kbbCartFl)` branch in cart-inner. RED.
+    app(SettingsService::class)->setModule('cart_coupon_field', true);
+    SettingsService::forgetMemo();
+    $cart = cdCart();
+
+    $html = cdShopper($cart)->get('/cart')->assertOk()->getContent();
+    expect(substr_count($html, 'id="kbbCartCoupon"'))->toBe(1)
+        ->and($html)->toMatch('#<span class="fld kbb-fl kbb-fl-coupon ico"><span class="lead" aria-hidden="true"><svg[^\n]*</svg>\n</span><input type="text" id="kbbCartCoupon" placeholder=" " autocomplete="off"><label for="kbbCartCoupon">Discount code</label></span>#')
+        ->and(substr_count($html, '/* FLOATING LABEL on the discount code (Lane CD)'))->toBe(1)
+        // Logical sides: in Arabic the icon sits at the right and so must its
+        // padding. It shipped `... 13px 5px 40px` once and the code ran under
+        // the icon in RTL.
+        ->and($html)->toContain('padding-inline-start:40px}');
+
+    cdSet(['float_labels' => false]);
+    $off = cdShopper($cart)->get('/cart')->assertOk()->getContent();
+    expect($off)->toContain('<input type="text" id="kbbCartCoupon" placeholder="Discount code" autocomplete="off">')
+        ->and($off)->not->toContain('kbb-fl');
+});
+
 it('puts every label back above its box with the switch off', function () {
     cdSet(['float_labels' => false]);
 
