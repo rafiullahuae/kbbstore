@@ -1,0 +1,164 @@
+[
+ {
+  "width": 1280,
+  "label": "All Brands",
+  "cls": "navitem mg-l mg-p",
+  "container": [
+   22,
+   1258
+  ],
+  "panel": [
+   22,
+   1258
+  ],
+  "panelW": 1236,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   693.6,
+   789.6
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "font": "11.5px",
+  "heading": null,
+  "columns": 7,
+  "colWidths": [
+   139.7,
+   139.7,
+   139.7,
+   139.7,
+   139.7,
+   139.7,
+   139.7
+  ],
+  "linksPerColumn": [
+   12,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13
+  ],
+  "notch": "1",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/after-ar-1280-all-brands.png"
+ },
+ {
+  "width": 1280,
+  "label": "Sunscreens",
+  "cls": "navitem mg-a mg-p",
+  "container": [
+   22,
+   1258
+  ],
+  "panel": [
+   22,
+   462
+  ],
+  "panelW": 440,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   197,
+   299.6
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "font": "13px",
+  "heading": null,
+  "columns": 2,
+  "colWidths": [
+   181,
+   181
+  ],
+  "linksPerColumn": [
+   6,
+   6
+  ],
+  "notch": "1",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/after-ar-1280-sunscreens.png"
+ },
+ {
+  "width": 1280,
+  "label": "Skincare",
+  "cls": "navitem mg-a mg-p",
+  "container": [
+   22,
+   1258
+  ],
+  "panel": [
+   104.8,
+   764.8
+  ],
+  "panelW": 660,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   104.8,
+   190.8
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "font": "13px",
+  "heading": "11px",
+  "columns": 3,
+  "colWidths": [
+   182,
+   182,
+   182
+  ],
+  "linksPerColumn": [
+   4,
+   6,
+   9
+  ],
+  "notch": "1",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/after-ar-1280-skincare.png"
+ },
+ {
+  "width": 1280,
+  "label": "Hair Care",
+  "cls": "navitem mg-s mg-p",
+  "container": [
+   22,
+   1258
+  ],
+  "panel": [
+   672.8,
+   888.8
+  ],
+  "panelW": 216,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   795.9,
+   888.8
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "font": "13px",
+  "heading": null,
+  "columns": 0,
+  "colWidths": [],
+  "linksPerColumn": [],
+  "notch": "1",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/after-ar-1280-hair-care.png"
+ }
+]

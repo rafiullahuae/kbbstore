@@ -139,6 +139,13 @@
  *   merge. `nav_fit|bool|"off"|true` is this screen's plain `(bool)` dialect,
  *   as for the flag-bar keys; each select's `"nope"` answers its default.
  *
+ *   Lane MG added FIVE more to HeaderSettings (Appearance → Header →
+ *   Navigation → "Fit mega menus to the site width"): `mega_fit` and
+ *   `mega_pointer` (bool, 11 rows each) and three selects, `mega_left_from`,
+ *   `mega_col_min`, `mega_text_min` (4 rows each) — 34 LINES INSERTED after
+ *   `nav_fit_max`'s, 0 MODIFIED, 0 REMOVED. Same dialect: `"off"` is true and
+ *   a select's `"nope"` answers its default (`'4'`, `'130'`, `'11.5'`).
+ *
  *   Lane CT added FOUR colours to product_styles (Appearance → Product styles
  *   → Colour: secondary text, crossed-out price, savings line, footer WhatsApp
  *   button) — 32 LINES INSERTED (4 × 8 colour rows) by the same merge — and

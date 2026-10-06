@@ -1,0 +1,666 @@
+[
+ {
+  "width": 1024,
+  "label": "All Brands",
+  "cls": "navitem",
+  "container": [
+   22,
+   1002
+  ],
+  "panel": [
+   402.5,
+   1344.5
+  ],
+  "panelW": 942.1,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   402.5,
+   478.7
+  ],
+  "inside": false,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1024,
+  "innerWidth": 1024,
+  "font": "13px",
+  "heading": null,
+  "columns": 9,
+  "colWidths": [
+   67.1,
+   67.1,
+   67.1,
+   67.1,
+   67.1,
+   67.1,
+   67.1,
+   67.1,
+   67.1
+  ],
+  "linksPerColumn": [
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10
+  ],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1024-all-brands.png"
+ },
+ {
+  "width": 1024,
+  "label": "Sunscreens",
+  "cls": "navitem",
+  "container": [
+   22,
+   1002
+  ],
+  "panel": [
+   785.6,
+   1225.6
+  ],
+  "panelW": 440,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   785.6,
+   867.5
+  ],
+  "inside": false,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1024,
+  "innerWidth": 1024,
+  "font": "13px",
+  "heading": null,
+  "columns": 2,
+  "colWidths": [
+   180.5,
+   180.5
+  ],
+  "linksPerColumn": [
+   6,
+   6
+  ],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1024-sunscreens.png"
+ },
+ {
+  "width": 1024,
+  "label": "Skincare",
+  "cls": "navitem",
+  "container": [
+   22,
+   1002
+  ],
+  "panel": [
+   278.5,
+   938.5
+  ],
+  "panelW": 660,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   871,
+   938.5
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1024,
+  "innerWidth": 1024,
+  "font": "13px",
+  "heading": "11px",
+  "columns": 3,
+  "colWidths": [
+   181.3,
+   181.3,
+   181.3
+  ],
+  "linksPerColumn": [
+   9,
+   6,
+   4
+  ],
+  "notch": "none",
+  "diagonalHeld": false,
+  "file": "docs/lane-mg-shots/before-1024-skincare.png"
+ },
+ {
+  "width": 1024,
+  "label": "Hair Care",
+  "cls": "navitem",
+  "container": [
+   22,
+   1002
+  ],
+  "panel": [
+   325.5,
+   541.5
+  ],
+  "panelW": 216,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   325.5,
+   398.9
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1024,
+  "innerWidth": 1024,
+  "font": "13px",
+  "heading": null,
+  "columns": 0,
+  "colWidths": [],
+  "linksPerColumn": [],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1024-hair-care.png"
+ },
+ {
+  "width": 1280,
+  "label": "All Brands",
+  "cls": "navitem",
+  "container": [
+   22,
+   1258
+  ],
+  "panel": [
+   490.4,
+   1668
+  ],
+  "panelW": 1177.6,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   490.4,
+   586.4
+  ],
+  "inside": false,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "font": "13px",
+  "heading": null,
+  "columns": 9,
+  "colWidths": [
+   93.3,
+   93.3,
+   93.3,
+   93.3,
+   93.3,
+   93.3,
+   93.3,
+   93.3,
+   93.3
+  ],
+  "linksPerColumn": [
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10
+  ],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1280-all-brands.png"
+ },
+ {
+  "width": 1280,
+  "label": "Sunscreens",
+  "cls": "navitem",
+  "container": [
+   22,
+   1258
+  ],
+  "panel": [
+   980.4,
+   1420.4
+  ],
+  "panelW": 440,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   980.4,
+   1083
+  ],
+  "inside": false,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "font": "13px",
+  "heading": null,
+  "columns": 2,
+  "colWidths": [
+   180.5,
+   180.5
+  ],
+  "linksPerColumn": [
+   6,
+   6
+  ],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1280-sunscreens.png"
+ },
+ {
+  "width": 1280,
+  "label": "Skincare",
+  "cls": "navitem",
+  "container": [
+   22,
+   1258
+  ],
+  "panel": [
+   515.2,
+   1175.2
+  ],
+  "panelW": 660,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   1089.3,
+   1175.2
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "font": "13px",
+  "heading": "11px",
+  "columns": 3,
+  "colWidths": [
+   181.3,
+   181.3,
+   181.3
+  ],
+  "linksPerColumn": [
+   9,
+   6,
+   4
+  ],
+  "notch": "none",
+  "diagonalHeld": false,
+  "file": "docs/lane-mg-shots/before-1280-skincare.png"
+ },
+ {
+  "width": 1280,
+  "label": "Hair Care",
+  "cls": "navitem",
+  "container": [
+   22,
+   1258
+  ],
+  "panel": [
+   391.2,
+   607.2
+  ],
+  "panelW": 216,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   391.2,
+   484.1
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1280,
+  "innerWidth": 1280,
+  "font": "13px",
+  "heading": null,
+  "columns": 0,
+  "colWidths": [],
+  "linksPerColumn": [],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1280-hair-care.png"
+ },
+ {
+  "width": 1440,
+  "label": "All Brands",
+  "cls": "navitem",
+  "container": [
+   22,
+   1418
+  ],
+  "panel": [
+   541.1,
+   1865.9
+  ],
+  "panelW": 1324.8,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   541.1,
+   645.6
+  ],
+  "inside": false,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1440,
+  "innerWidth": 1440,
+  "font": "13px",
+  "heading": null,
+  "columns": 9,
+  "colWidths": [
+   109.6,
+   109.6,
+   109.6,
+   109.6,
+   109.6,
+   109.6,
+   109.6,
+   109.6,
+   109.6
+  ],
+  "linksPerColumn": [
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10
+  ],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1440-all-brands.png"
+ },
+ {
+  "width": 1440,
+  "label": "Sunscreens",
+  "cls": "navitem",
+  "container": [
+   22,
+   1418
+  ],
+  "panel": [
+   1103,
+   1543
+  ],
+  "panelW": 440,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   1103,
+   1214
+  ],
+  "inside": false,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1440,
+  "innerWidth": 1440,
+  "font": "13px",
+  "heading": null,
+  "columns": 2,
+  "colWidths": [
+   180.5,
+   180.5
+  ],
+  "linksPerColumn": [
+   6,
+   6
+  ],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1440-sunscreens.png"
+ },
+ {
+  "width": 1440,
+  "label": "Skincare",
+  "cls": "navitem",
+  "container": [
+   22,
+   1418
+  ],
+  "panel": [
+   661.4,
+   1321.4
+  ],
+  "panelW": 660,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   1226.9,
+   1321.4
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1440,
+  "innerWidth": 1440,
+  "font": "13px",
+  "heading": "11px",
+  "columns": 3,
+  "colWidths": [
+   181.3,
+   181.3,
+   181.3
+  ],
+  "linksPerColumn": [
+   9,
+   6,
+   4
+  ],
+  "notch": "none",
+  "diagonalHeld": false,
+  "file": "docs/lane-mg-shots/before-1440-skincare.png"
+ },
+ {
+  "width": 1440,
+  "label": "Hair Care",
+  "cls": "navitem",
+  "container": [
+   22,
+   1418
+  ],
+  "panel": [
+   426.9,
+   642.9
+  ],
+  "panelW": 216,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   426.9,
+   528.2
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1440,
+  "innerWidth": 1440,
+  "font": "13px",
+  "heading": null,
+  "columns": 0,
+  "colWidths": [],
+  "linksPerColumn": [],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1440-hair-care.png"
+ },
+ {
+  "width": 1920,
+  "label": "All Brands",
+  "cls": "navitem",
+  "container": [
+   142,
+   1778
+  ],
+  "panel": [
+   744.9,
+   2511.3
+  ],
+  "panelW": 1766.4,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   744.9,
+   855.5
+  ],
+  "inside": false,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1920,
+  "innerWidth": 1920,
+  "font": "13px",
+  "heading": null,
+  "columns": 9,
+  "colWidths": [
+   158.7,
+   158.7,
+   158.7,
+   158.7,
+   158.7,
+   158.7,
+   158.7,
+   158.7,
+   158.7
+  ],
+  "linksPerColumn": [
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10,
+   10
+  ],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1920-all-brands.png"
+ },
+ {
+  "width": 1920,
+  "label": "Sunscreens",
+  "cls": "navitem",
+  "container": [
+   142,
+   1778
+  ],
+  "panel": [
+   1413.9,
+   1853.9
+  ],
+  "panelW": 440,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   1413.9,
+   1531
+  ],
+  "inside": false,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1920,
+  "innerWidth": 1920,
+  "font": "13px",
+  "heading": null,
+  "columns": 2,
+  "colWidths": [
+   180.5,
+   180.5
+  ],
+  "linksPerColumn": [
+   6,
+   6
+  ],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1920-sunscreens.png"
+ },
+ {
+  "width": 1920,
+  "label": "Skincare",
+  "cls": "navitem",
+  "container": [
+   142,
+   1778
+  ],
+  "panel": [
+   1000.4,
+   1660.4
+  ],
+  "panelW": 660,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   1559.9,
+   1660.4
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1920,
+  "innerWidth": 1920,
+  "font": "13px",
+  "heading": "11px",
+  "columns": 3,
+  "colWidths": [
+   181.3,
+   181.3,
+   181.3
+  ],
+  "linksPerColumn": [
+   9,
+   6,
+   4
+  ],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1920-skincare.png"
+ },
+ {
+  "width": 1920,
+  "label": "Hair Care",
+  "cls": "navitem",
+  "container": [
+   142,
+   1778
+  ],
+  "panel": [
+   608.6,
+   824.6
+  ],
+  "panelW": 216,
+  "panelTop": 91.5,
+  "linkBottom": 92.5,
+  "link": [
+   608.6,
+   716
+  ],
+  "inside": true,
+  "underParent": true,
+  "visible": "visible",
+  "scrollWidth": 1920,
+  "innerWidth": 1920,
+  "font": "13px",
+  "heading": null,
+  "columns": 0,
+  "colWidths": [],
+  "linksPerColumn": [],
+  "notch": "none",
+  "diagonalHeld": true,
+  "file": "docs/lane-mg-shots/before-1920-hair-care.png"
+ }
+]

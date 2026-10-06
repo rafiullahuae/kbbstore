@@ -454,6 +454,118 @@
   [dir="rtl"] .mega .mcol a::before, [dir="rtl"] .mega .mcol-link::before{inset:0 0 0 100%;transition:left .18s ease}
   [dir="rtl"] .mega .mcol a:hover::before, [dir="rtl"] .mega .mcol-link:hover::before{left:0}
   .mega .mcol a:hover, .mega .mcol-link:hover{color:var(--pink-deep)}
+  /* ── FIT MEGA MENUS TO THE SITE WIDTH (Lane MG) ──────────────────────────
+     The owner, over the "All Brands" panel running off the right edge of the
+     screen: a panel must never go outside the site width; its columns and
+     text squeeze to fit; a panel of more than four columns starts at the far
+     left of the site whatever its parent's position; and "a nice edge type to
+     show that this mega menu is for this parent item". Appearance → Header →
+     Navigation → "Fit mega menus to the site width" (ON), "Start from the left
+     beyond" (4 columns), "Smallest column width" (130px), "Smallest mega menu
+     text" (11.5px), "Pointer to the parent item" (ON).
+
+     THE DEFECT: a panel was placed from its own parent and sized
+     min(220px × columns, 92vw), and nothing knew the site's width. Nine brand
+     columns under a mid-row "All Brands" ran from x 490 to 1668 in a 1280px
+     window (1024: 403→1345, 1440: 541→1866, 1920: 745→2511), a two-column
+     panel third from the end from 980 to 1420, and `.mbar{overflow-x:clip}`
+     (2.60.369) cut off everything past the edge (docs/lane-mg-shots, the
+     `before-` pictures).
+
+     NOTHING BELOW MATCHES WITH THE SWITCH OFF: every selector needs a class
+     only App\Support\MegaMenuFit prints (mg-l / mg-a / mg-s / mg-p / mg-cols).
+     The item carries --mega-cols too, so its own hover bridges can use it.
+
+     WHERE A PANEL GOES — pure CSS, rendered once, nothing measured by script:
+     · The item goes position:static and the row (.wrap) becomes the panel's
+       containing block, so var(--site-gutter) from the row's edge IS the
+       content edge, and `top:auto` keeps the panel at its static position —
+       right under its own link, on a wrapped second row too.
+     · mg-l (more columns than the setting) starts at the content's start
+       edge. With anchor positioning it ends at max(its columns' width, the
+       end of its parent), capped by the content's end edge, so its parent
+       always has panel under it; without it, it spans the content width,
+       which keeps the same guarantee.
+     · mg-a (2 to N columns) and mg-s (one column), with anchor positioning:
+       start at the parent and CLAMPED between the content edges, so a panel
+       slides only as far as it must. The last two items keep opening from
+       their own end (the 1599px and nav-fill rules above), clamped the same
+       way. Without anchor positioning, mg-a sits at the content's start edge
+       with a transparent bridge to the row's end, and mg-s keeps today's
+       placement.
+     · --mg-s / --mg-e are the panel's start and end insets, so the panel and
+       the two hover bridges are drawn from one formula. Each is written for
+       the property it lands in — --mg-s only ever in an inline-START inset,
+       --mg-e only in an inline-END one — because anchor(start) / anchor(end)
+       measure from the side of the property that holds them: the same text
+       means a different length in the other inset.
+     THE HOVER BRIDGES: while an item is hovered, two transparent triangles
+     (the item's ::before and ::after) fill the lower half of the bar between
+     its link and each end of its panel. Any straight path from the link to
+     anywhere in the panel stays inside the link, a triangle or the panel, so
+     crossing a neighbour on the way no longer swaps the panel for its.
+     THE SQUEEZE: a plain list of links (the brand panel) is a multi-column
+     box of --mega-cols columns, each at least --mg-min wide. Past that floor
+     the browser uses FEWER, longer columns and rebalances the links across
+     them — no orphan row, no column too narrow to read — and while every
+     column fits, ceil(links / columns) per column is exactly the chunking
+     the server drew before. A panel with headed groups (.mcol) keeps each
+     group as one grid column, as the admin arranged it; past the floor whole
+     groups wrap onto another row, and the divider of the first group in a
+     row is clipped away. 36px between columns, the divider in the middle,
+     is today's 18px gap plus 18px of padding. The text is sized from
+     the column width the panel would give its full count: 13px from 180px,
+     shrinking with it to --mg-fmin; headings keep their 11:13 ratio (never
+     under 10px). Today's 2-, 3- and 4-column panels have 181-183px columns,
+     so a roomy panel renders at exactly today's 13px and 11px.
+     THE EDGE: under the hovered item, a short pink line lies on the panel's
+     top border, fading out at both ends, with a small caret in its middle
+     pointing up at the item — whose name turns pink with it. One shape, a
+     symmetric clip-path on a symmetric gradient, so it needs no mirroring.
+     Logical properties throughout, so Arabic mirrors. */
+  .mbar .wrap:has(> .navitem:is(.mg-l,.mg-a,.mg-s)){position:relative}
+  .mbar .wrap > .navitem:is(.mg-l,.mg-a){position:static}
+  .mbar .wrap > .navitem.mg-a{--mg-w:min(calc(220px * var(--mega-cols)), calc(100% - 2 * var(--site-gutter)))}
+  .mbar .wrap > .navitem.mg-s{--mg-w:216px}
+  .mbar .wrap > .navitem:is(.mg-l,.mg-a) > .drop{top:auto;margin-block-start:-1px}
+  .mbar .wrap > .navitem.mg-l > .drop{inset-inline:var(--site-gutter);width:auto}
+  .mbar .wrap > .navitem.mg-a > .drop{inset-inline-start:var(--site-gutter);inset-inline-end:auto;width:var(--mg-w)}
+  .mbar .wrap > .navitem.mg-a > .drop::after{content:"";position:absolute;inset-block:-1px 0;inset-inline-start:100%;width:calc(var(--hd-room, 0px) - 100%)}
+  .mega > .mg-cols{flex:1;min-width:0;columns:var(--mega-cols) var(--mg-min, 130px);column-gap:36px;column-rule:1px solid #F0E4E9;container-type:inline-size}
+  .mega .mg-cols > .mcol-group{border:0;padding:0}
+  .mega > .mg-cols:has(.mcol){display:grid;grid-template-columns:repeat(auto-fill,minmax(max(var(--mg-min, 130px), calc((100% - (var(--mega-cols) - 1) * 36px) / var(--mega-cols) - .1px)), 1fr));column-rule:none;overflow:hidden;overflow:clip;overflow-clip-margin:6px}
+  .mega .mg-cols:has(.mcol) > .mcol-group{position:relative;min-width:0}
+  .mega .mg-cols:has(.mcol) > .mcol-group::before{content:"";position:absolute;inset-block:0;inset-inline-start:-18.5px;border-inline-start:1px solid #F0E4E9}
+  .mega .mg-cols .mcol a, .mega .mg-cols .mcol-link{font-size:clamp(var(--mg-fmin, 11.5px), calc((100cqi - (var(--mega-cols) - 1) * 36px) / var(--mega-cols) * .07222), 13px)}
+  .mega .mg-cols .colh{font-size:max(10px, calc(clamp(var(--mg-fmin, 11.5px), calc((100cqi - (var(--mega-cols) - 1) * 36px) / var(--mega-cols) * .07222), 13px) * 11 / 13))}
+  .mbar .navitem.mg-p > .navlink::before{content:"";display:none;position:absolute;z-index:71;inset-inline:0;inset-block-end:0;height:6px;background:linear-gradient(90deg,transparent 15px,var(--pink) 38%,var(--pink) 62%,transparent calc(100% - 15px));clip-path:polygon(0 100%,0 calc(100% - 1.5px),calc(50% - 5px) calc(100% - 1.5px),50% 0,calc(50% + 5px) calc(100% - 1.5px),100% calc(100% - 1.5px),100% 100%);opacity:0;translate:0 8px;transition:opacity .16s var(--ease),translate .16s var(--ease);pointer-events:none}
+  .mbar .navitem:is(.mg-l,.mg-s).mg-p > .navlink::before{display:block}
+  .mbar .navitem.mg-p:hover > .navlink::before{opacity:1;translate:0 0}
+  .mbar .navitem.mg-p:hover > .navlink{color:var(--pink-deep)}
+  @supports (anchor-name: --a){
+    .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s){position:static;anchor-name:--mg-item;anchor-scope:--mg-item}
+    .mbar .wrap > .navitem.mg-l{--mg-s:var(--site-gutter);--mg-e:max(var(--site-gutter), min(calc(100% - var(--site-gutter) - 220px * var(--mega-cols)), anchor(end)))}
+    .mbar .wrap > .navitem:is(.mg-a,.mg-s){--mg-s:clamp(var(--site-gutter), anchor(start), calc(100% - var(--site-gutter) - var(--mg-w)));--mg-e:clamp(var(--site-gutter), calc(anchor(start) - var(--mg-w)), calc(100% - var(--site-gutter) - var(--mg-w)))}
+    .mbar.nav-fill .wrap > .navitem:is(.mg-a,.mg-s):nth-last-child(-n+2){--mg-s:clamp(var(--site-gutter), calc(anchor(end) - var(--mg-w)), calc(100% - var(--site-gutter) - var(--mg-w)));--mg-e:clamp(var(--site-gutter), anchor(end), calc(100% - var(--site-gutter) - var(--mg-w)))}
+    .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s) > .drop{position-anchor:--mg-item;top:auto;margin-block-start:-1px;inset-inline-start:var(--mg-s);inset-inline-end:var(--mg-e)}
+    .mbar .wrap > .navitem.mg-s > .drop{width:min-content;max-width:calc(100% - 2 * var(--site-gutter))}
+    .mbar .wrap > .navitem.mg-a > .drop::after{content:none}
+    .mbar .navitem.mg-a.mg-p > .navlink::before{display:block}
+    .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::before, .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::after{content:"";position:absolute;z-index:69;position-anchor:--mg-item;inset-block-start:anchor(center);inset-block-end:anchor(end)}
+    /* RTL-PHYSICAL: the bridges' clip-path points are physical, so each
+       triangle is cut twice — its slope must fall away from the link, which
+       is on the inline-end side of ::before and the inline-start side of
+       ::after, and those sides swap in Arabic. */
+    .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::before{inset-inline-start:var(--mg-s);inset-inline-end:anchor(start);clip-path:polygon(100% 0,100% 100%,0 100%)}
+    .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::after{inset-inline-start:anchor(end);inset-inline-end:var(--mg-e);clip-path:polygon(0 0,0 100%,100% 100%)}
+    [dir="rtl"] .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::before{clip-path:polygon(0 0,0 100%,100% 100%)}
+    [dir="rtl"] .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::after{clip-path:polygon(100% 0,100% 100%,0 100%)}
+  }
+  @media (max-width:1599.98px){
+    @supports (anchor-name: --a){
+      .mbar .wrap > .navitem:is(.mg-a,.mg-s):nth-last-child(-n+2){--mg-s:clamp(var(--site-gutter), calc(anchor(end) - var(--mg-w)), calc(100% - var(--site-gutter) - var(--mg-w)));--mg-e:clamp(var(--site-gutter), anchor(end), calc(100% - var(--site-gutter) - var(--mg-w)))}
+    }
+  }
   .feat{background:linear-gradient(135deg,#fff4f8,#ffe6ef);border-radius:14px;padding:14px}
   .feat .fh{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--pink-deep);margin-bottom:10px}
   .fcards{display:flex;gap:10px}

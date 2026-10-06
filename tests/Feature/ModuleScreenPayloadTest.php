@@ -565,7 +565,13 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // 690 -> 692 (Lane CD, after Lane IN's 690): Appearance -> Checkout page -> Fields & attention
     // gains "Desktop: totals above Place order" and "Floating labels on
     // checkout fields", inserted after sum_row; nothing else was touched.
-    expect($compared)->toBe(692, 'the number of controls drawn changed');
+    // 697 (Lane MG): + 5 on Appearance → Header → Navigation — "Fit mega menus
+    // to the site width" (`mega_fit`, ON because the owner asked for it),
+    // "Start from the left beyond", "Smallest column width", "Smallest mega
+    // menu text" and "Pointer to the parent item" (ON) — appended to the nav
+    // tab after `nav_fit_max`, which is their TABS position. Spliced into the
+    // fixture's header entry, not regenerated: five objects inserted, none changed.
+    expect($compared)->toBe(697, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
