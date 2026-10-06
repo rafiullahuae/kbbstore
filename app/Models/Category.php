@@ -46,6 +46,10 @@ class Category extends Model
         // a ten-minute cache: a renamed or new shelf is paired at once. (Lane RB)
         static::saved(static fn () => \App\Services\BuyTogetherPairs::forget());
         static::deleted(static fn () => \App\Services\BuyTogetherPairs::forget());
+        // /super-sale/ reads its campaign category's "Sold-out products"
+        // choice from a cached map, rebuilt after any category write. (Lane SX)
+        static::saved(static fn () => \App\Support\SoldOut::flush());
+        static::deleted(static fn () => \App\Support\SoldOut::flush());
     }
 
     public function parent()

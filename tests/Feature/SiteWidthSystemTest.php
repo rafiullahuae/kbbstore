@@ -583,6 +583,9 @@ it('ships every setting at the value the page already had, except the ones the o
         // page -- both off, as he asked.
         'filters_d' => false,
         'shop_links' => false,
+        // Lane SX: "Sold-out products" -- an option he asked for, not a
+        // change, so it ships at the page he has: as usual.
+        'sold_out' => 'show',
         // Lane FP: the Filters drawer on a phone, at the min(90vw, 300px) it
         // always had -- nothing moves until the owner drags one.
         'filter_w' => 90,

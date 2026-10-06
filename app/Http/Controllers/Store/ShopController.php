@@ -120,6 +120,12 @@ class ShopController extends Controller
         $this->applyFacets($query, $active, (string) $request->query('s', ''));
         $this->applySort($query, Facets::sort(), $category !== null);
 
+        // Sold-out products as usual, last, or not at all (Lane SX): the
+        // category's own choice, else the shop's -- /shop/ and search follow
+        // the shop's. BEFORE the count, so "N products", every ?paged= batch
+        // and the ItemList are all the same set. App\Support\SoldOut.
+        \App\Support\SoldOut::apply($query, \App\Support\SoldOut::for($category));
+
         $total = (clone $query)->count();
         $lastPage = max(1, (int) ceil($total / $perPage));
 

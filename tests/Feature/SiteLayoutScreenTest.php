@@ -181,7 +181,8 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // 127 since 2.60.405: "Show the page number in the address" (Loading more products).
     // 129 with Lane SO: "Filters · laptop" and "Links to the whole shop on
     // category and campaign pages", both on Product grid, both shipped off.
-    expect($keys)->toHaveCount(129);
+    // 130 with Lane SX: "Sold-out products" on Product grid, shipped at "Show as usual".
+    expect($keys)->toHaveCount(130);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

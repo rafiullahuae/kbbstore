@@ -403,6 +403,9 @@ class BrandController extends Controller
         $showsAll = \App\Support\ListingPagination::showsAll('brand', (int) $brand->id);
         $perPage = $showsAll ? \App\Services\SiteLayout::BRAND_ALL_CAP : $layout->perPage(self::PREVIEW_LIMIT);
         $page = \App\Support\Facets::page();
+        // Sold-out products as usual, last, or not at all: this brand's own
+        // choice, else the shop's. Off the row already loaded. (Lane SX)
+        $soldOut = \App\Support\SoldOut::for($brand);
 
         /*
          * Every product is on page 1 now, so an old ?paged=N address -- in a
@@ -411,7 +414,7 @@ class BrandController extends Controller
          * that still has real later pages.
          */
         if ($page > 1 && $showsAll
-            && Product::query()->visible()->where('brand_id', $brand->id)->count() <= \App\Services\SiteLayout::BRAND_ALL_CAP) {
+            && \App\Support\SoldOut::apply(Product::query()->visible()->where('brand_id', $brand->id), $soldOut)->count() <= \App\Services\SiteLayout::BRAND_ALL_CAP) {
             return redirect()->to(Url::to(UrlScheme::brand((string) $brand->slug)), 301);
         }
 
@@ -441,6 +444,7 @@ class BrandController extends Controller
             ->tap(static fn ($q) => \App\Support\ScopeOrder::orderInBrand($q))
             ->orderBy('name')
             ->orderBy('id')
+            ->tap(static fn ($q) => \App\Support\SoldOut::apply($q, $soldOut))
             ->when($page > 1, static fn ($q) => $q->offset(($page - 1) * $perPage))
             ->limit($perPage + 1)
             ->get();

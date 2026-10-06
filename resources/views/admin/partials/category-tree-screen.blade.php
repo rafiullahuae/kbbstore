@@ -1117,6 +1117,16 @@
     hdrLoadShop();
   }
 
+  /* Lane SX: the "Sold-out products" options. Constants; the stored value
+     only ever picks which one is selected. */
+  var SOLD_OUT = [['', 'Use the shop default'], ['show', 'Show as usual'], ['end', 'Show at the very end'], ['hide', 'Hide from listings']];
+  function soldOutOpts(cur){
+    cur = cur || '';
+    return SOLD_OUT.map(function(o){
+      return '<option value="' + o[0] + '"' + (o[0] === cur ? ' selected' : '') + '>' + o[1] + '</option>';
+    }).join('');
+  }
+
   /* -------------------------------------------------------------- editor */
   function editor(cat){
     var isNew = !cat;
@@ -1236,6 +1246,12 @@
         + '<span><b>Ask Google not to list this category page</b>'
         + '<span class="ct-note" style="display:block;margin-top:3px;font-weight:400">Removes the archive from search results AND from the sitemap. '
         + 'The products stay listed \u2014 this hides the category page only.</span></span></label></div>'
+      /* LANE SX — "Sold-out products" for this category's own page. '' is
+         "Use the shop default" (Appearance → Site layout → Product grid). */
+      + '<div class="ct-fld"><label for="ct-soldout">Sold-out products</label>'
+        + '<select id="ct-soldout">' + soldOutOpts(cat.sold_out_mode) + '</select>'
+        + '<p class="ct-note">How sold-out products sit on this category’s page. At the very end: after every in-stock product, each group in its usual order. '
+        + 'Hide: left out of the grid and the product count; the product page itself still opens.</p></div>'
       + '<div class="ct-grid2"><div class="ct-fld"><label for="ct-pos">Position</label>'
         + '<input id="ct-pos" type="number" min="0" value="' + esc(cat.position || 0) + '">'
         + '<p class="ct-note">Or just drag the row.</p></div><div></div></div>'
@@ -1325,6 +1341,7 @@
         description: val('ct-desc'),
         image: val('ct-image'),
         position: parseInt(val('ct-pos'), 10) || 0,
+        sold_out_mode: val('ct-soldout'),
         /* Every box on every save, including an unchecked checkbox as an
            explicit false. The server treats a key it RECEIVES as authoritative
            and leaves one it does not receive alone, so omitting the checkbox

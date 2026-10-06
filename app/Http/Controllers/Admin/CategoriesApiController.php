@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Store\ShopController;
 use App\Models\Category;
 use App\Support\CategoryPath;
+use App\Support\SoldOut;
 use App\Support\TranslationInput;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -70,7 +71,7 @@ class CategoriesApiController extends Controller
      */
     public function index(): JsonResponse
     {
-        $categories = Category::query()
+        $read = static fn (bool $soldOut) => Category::query()
             ->select('categories.id', 'categories.slug', 'categories.name', 'categories.parent_id',
                 'categories.description', 'categories.image', 'categories.position',
                 'categories.depth', 'categories.path', 'categories.seo', 'categories.banner',
@@ -78,6 +79,9 @@ class CategoriesApiController extends Controller
                 // editor can show -- and clear -- what the import put there.
                 'categories.header_image', 'categories.header_source', 'categories.header_title',
                 'categories.header_subtitle', 'categories.header_description', 'categories.header_style')
+            // Lane SX: the category's own "Sold-out products" choice -- see
+            // the try below.
+            ->when($soldOut, static fn ($q) => $q->addSelect('categories.'.SoldOut::COLUMN))
             // The headline count, and it has to agree with the archive page.
             //
             // It did not. This subquery filtered on `deleted_at IS NULL` alone,
@@ -130,6 +134,17 @@ class CategoriesApiController extends Controller
             ->orderBy('categories.position')
             ->orderBy('categories.name')
             ->get();
+
+        /*
+         * Lane SX: asked for outright rather than after a schema read, so the
+         * screen costs the queries it did; only a server whose migration has
+         * not run yet pays a second try, without the column.
+         */
+        try {
+            $categories = $read(true);
+        } catch (\Illuminate\Database\QueryException) {
+            $categories = $read(false);
+        }
 
         /*
          * THE ARABIC BOXES' PREFILL. (Lane EX, T4b)
@@ -721,6 +736,14 @@ class CategoriesApiController extends Controller
             // the storefront's quick-edit pencil validates with exactly these
             // and not with a copy of them.
             ...\App\Support\TitleHeaderInput::rules(),
+            /*
+             * Lane SX: "Sold-out products" -- '' is "Use the shop default" and
+             * stores NULL; anything that is not one of the select's own options
+             * is refused. OPTIONAL like the header keys: the Catalog tab that
+             * shares this endpoint does not draw it, so a save from there must
+             * leave the choice alone.
+             */
+            SoldOut::COLUMN => ['sometimes', 'nullable', 'string', Rule::in(SoldOut::MODES)],
         ];
 
         /*
@@ -756,6 +779,14 @@ class CategoriesApiController extends Controller
             ['title', 'description', 'canonical', 'og_image', 'noindex']
         );
         $data['banner'] = \App\Support\PageBanner::sanitize($data['banner'] ?? null);
+
+        if (array_key_exists(SoldOut::COLUMN, $data)) {
+            if (SoldOut::columnReady('categories')) {
+                $data[SoldOut::COLUMN] = SoldOut::clean($data[SoldOut::COLUMN]);
+            } else {
+                unset($data[SoldOut::COLUMN]);
+            }
+        }
 
         /*
          * THE SHOP'S "EDIT HEADER" PANEL OWNS KEYS THIS SCREEN DOES NOT DRAW
