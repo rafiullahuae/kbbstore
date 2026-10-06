@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.414
+**Checkout: floating labels and the laptop totals card; Install App installs
+directly on Android; owner app Install card.** Apply after .413. Runs its
+migration. Hard refresh the shop and the owner app.
+
+| Your request | Now |
+|---|---|
+| "the heading it self will show as place holder ... same like we have on Create account page" | Every checkout field and the cart's discount code: icon + the name inside, floating to a small label on tap. Appearance -> Checkout page -> Fields & attention -> "Floating labels on checkout fields" |
+| "ON DESKTOP checkout: the summary should have only products, rest ... above the place order button" | Laptops: the summary shows only products; subtotal, delivery, discount, COD fee and total in a card right above Place order. Same tab -> "Desktop: totals above Place order" |
+| "if user click from android ... it should give install itself ... i don't want popup" | Android Chrome/Edge: the tap opens the phone's own install box. Elsewhere no popup: the row's own line shows the one step with an arrow. Hidden on Android phones that already have the app. iPhone: Apple allows only Share -> Add to Home Screen. Appearance -> Footer -> App row -> "install help" |
+| "for owner app, when login first time, and if app is not installed, it should give immediately install option" | An "Install KBB Owner" card at the top of My store right after sign-in in a browser; Not now = 7 days |
+
+Files: see the package's update.json.
+
 ## 2.60.413
 **Phone menu opens from the left as a glass panel; Marketing Pixels guides.**
 Apply after .412. Hard refresh the shop and the admin.
