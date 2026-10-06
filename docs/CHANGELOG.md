@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.410
+**Cart and checkout: no address picker row, the order summary as one thin
+row, Browsed off; the footer button reads "Install App".** Apply after .409.
+Runs its migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "turn off the address row completely, from cart and checkout ... bring the manual fields under address section" | Cart: the address row is gone, the checkout row stays. Checkout: address, emirate, city/area, country typed directly under Shipping address, pre-filled for signed-in customers; the emirate still prices delivery |
+| "replace the whole summary section to this single thin row ... pink arrow with slight continue animation" | One 50px row: bag icon, Order summary, the total, a pink arrow; tap to open the full summary |
+| "turn off the browsed tab ... do not remove any existing functionality" | Off. All three behind switches: Appearance -> Checkout page -> Fields & attention |
+| "rename the button from Install > Install App" | "Install App" / «تثبيت التطبيق»; the row tightened on phones so it fits; Arabic headline «حمّلي تطبيقنا» |
+
+Files: see the package's update.json.
+
 ## 2.60.409
 **Footer "Get the app" row; the category tree from kbeautybliss.com.**
 Apply after .408. Runs its migrations. Hard refresh the shop.
