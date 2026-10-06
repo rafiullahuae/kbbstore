@@ -640,6 +640,17 @@ class OrderMailer
         }
 
         /*
+         * THE SHOP APP'S PUSH (Lane PN), behind the SAME gate as the email: an
+         * operator who unticks "notify the customer", or an import that is
+         * silent, silences both. Queued here, sent after the response; it can
+         * neither fail nor delay the email below.
+         */
+        try {
+            app(\App\Services\Push\PushAutomations::class)->orderStatus($order, $status);
+        } catch (\Throwable) {
+        }
+
+        /*
          * ONE REFUND, ONE EMAIL (Lane RL). A refund made through the payment
          * screen settles a `refunds` row — which sends OrderRefunded, the money
          * email — and then PaymentRefunder moves the order to `refunded`, which

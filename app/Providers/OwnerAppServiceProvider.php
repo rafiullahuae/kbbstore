@@ -69,6 +69,15 @@ final class OwnerAppServiceProvider extends ServiceProvider
             }
         });
 
+        // Lane PN: a cart started on a subscribed phone is that phone's basket
+        // (the basket reminder). Nothing unless the kbb_push cookie is present.
+        \App\Models\Cart::created(static function (\App\Models\Cart $cart): void {
+            try {
+                \App\Services\Push\PushAutomations::linkCart((int) $cart->getKey());
+            } catch (\Throwable) {
+            }
+        });
+
         Order::updated(static function (Order $order): void {
             if (! $order->wasChanged('status')) {
                 return;

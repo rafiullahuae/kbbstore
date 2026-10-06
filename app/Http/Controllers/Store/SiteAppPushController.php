@@ -95,6 +95,27 @@ final class SiteAppPushController extends Controller
         return response()->json(['ok' => true], 200, self::HEADERS);
     }
 
+    /**
+     * A notification was tapped (Lane PN): sw.js posts the click token the
+     * payload carried. Counted once per message, and only for a token this
+     * shop signed (HMAC); anything else is ignored with the same answer.
+     */
+    public function click(Request $request): JsonResponse
+    {
+        if (! $this->app->on()) {
+            return $this->gone();
+        }
+        if (strlen((string) $request->getContent()) > 200) {
+            return response()->json(['ok' => false], 413, self::HEADERS);
+        }
+        $id = \App\Services\Push\PushSender::clickId($request->input('c'));
+        if ($id !== null) {
+            \App\Services\Push\PushSender::click($id);
+        }
+
+        return response()->json(['ok' => true], 200, self::HEADERS);
+    }
+
     public function unsubscribe(Request $request): JsonResponse
     {
         if (! $this->app->on()) {

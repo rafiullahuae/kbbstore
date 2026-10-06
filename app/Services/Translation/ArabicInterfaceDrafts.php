@@ -162,7 +162,41 @@ final class ArabicInterfaceDrafts
             self::laneWaWhatsAppButton(),
             self::laneCtBlocked(),
             self::laneNtSiteAppPush(),
+            self::lanePnPushMessages(),
         );
+    }
+
+    /**
+     * Lane PN — the shop app's automatic notifications
+     * (InterfaceStrings::storePushMessages()). Drafts, reviewed under
+     * Translation → Strings; placeholders and the brand name kept as they are.
+     *
+     * @return array<string, string>
+     */
+    private static function lanePnPushMessages(): array
+    {
+        return [
+            'store.push.order_processing_title' => 'جارٍ تجهيز الطلب :order',
+            'store.push.order_processing_body' => 'نقوم بتجهيز طلبك من K-Beauty Bliss.',
+            'store.push.order_onhold_title' => 'الطلب :order قيد الانتظار',
+            'store.push.order_onhold_body' => 'اضغط لمعرفة ما نحتاجه للمتابعة.',
+            'store.push.order_shipped_title' => 'الطلب :order في الطريق إليك',
+            'store.push.order_shipped_body' => 'طلبك الآن مع شركة التوصيل. اضغط لمتابعته.',
+            'store.push.order_completed_title' => 'تم توصيل الطلب :order',
+            'store.push.order_completed_body' => 'نتمنى أن ينال إعجابك. اضغط لعرض طلبك.',
+            'store.push.order_cancelled_title' => 'تم إلغاء الطلب :order',
+            'store.push.order_cancelled_body' => 'اضغط لعرض التفاصيل.',
+            'store.push.order_refunded_title' => 'تم استرداد مبلغ الطلب :order',
+            'store.push.order_refunded_body' => 'المبلغ المسترد في طريقه إليك.',
+            'store.push.order_failed_title' => 'لم يكتمل الدفع للطلب :order',
+            'store.push.order_failed_body' => 'اضغط للمحاولة مرة أخرى.',
+            'store.push.stock_title' => 'عاد إلى المخزون',
+            'store.push.stock_body' => ':product متوفر من جديد. احصل عليه قبل أن ينفد مرة أخرى.',
+            'store.push.cart_title' => 'تركت شيئًا في حقيبتك',
+            'store.push.cart_body' => 'اختياراتك بانتظارك. اضغط لإتمام طلبك.',
+            'store.push.price_title' => 'انخفاض في السعر',
+            'store.push.price_body' => ':product أصبح الآن بسعر :price.',
+        ];
     }
 
     /**

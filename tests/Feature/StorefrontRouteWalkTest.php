@@ -492,6 +492,11 @@ function walkExpectations(array $seed): array
         'site-app.js'               => ['status' => 200],
         'site-app/icons/{name}.png' => ['params' => ['name' => 'icon-192'], 'status' => 200],
         'offline'                   => ['status' => 200],
+    ] : []) + (Route::has('site-app.push') ? [
+        // The installed app's notification question (Lane NT; walked here by
+        // Lane PN, whose click beacon shares the file and which found it
+        // unwalked): ON with the app, so 200 with the ask, the key, the strings.
+        'api/site-app/push'         => ['status' => 200],
     ] : []);
 }
 

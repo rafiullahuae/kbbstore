@@ -224,6 +224,7 @@ final class AdminNav
             ['id' => 'pixels', 'label' => 'Marketing Pixels', 'read' => 'admin-api/marketing-pixels', 'icon' => '<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>'],
             ['id' => 'searchterms', 'label' => 'Search Terms', 'read' => 'admin-api/search-terms', 'late' => true, 'icon' => '<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/><path d="M8 11h6"/><path d="M11 8v6"/>'],
             ['id' => 'carttracking', 'label' => 'Cart Tracking', 'read' => 'admin-api/cart-tracking', 'late' => true, 'icon' => '<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/><path d="m11 10 2 2 3-3"/>'],
+            ['id' => 'push', 'label' => 'Push Notifications', 'read' => 'admin-api/push', 'late' => true, 'tag' => 'new', 'icon' => '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'],
         ]],
         ['sec' => 'Reviews', 'rows' => [
             ['id' => 'rev-all', 'label' => 'All Reviews', 'read' => 'admin-api/reviews/list', 'icon' => '<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 21l1.1-6.5L2.6 9.8l6.5-.9z"/>'],

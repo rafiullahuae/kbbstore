@@ -790,6 +790,12 @@ final class AdminSearchIndex
             'Blocked' => ['Block this address or its range'],
             'Settings' => [],
         ],
+        'push' => [
+            'Campaigns' => ['New campaign', 'Who receives it', 'Emirate (where the phone is)', 'Send a test to my phone', 'Schedule', 'Send now'],
+            'Automations' => ['Order updates', 'Back in stock', 'Basket reminder', 'Price drop', 'Wording (English · Arabic)'],
+            'Subscribers & analytics' => ['By emirate', 'By city', 'Growth, last 30 days', 'Top campaigns'],
+            'Settings' => ['Frequency cap', 'Quiet hours', 'Where phones are'],
+        ],
         'rev-all' => [],
         'rev-add' => [
             'Add reviews' => [

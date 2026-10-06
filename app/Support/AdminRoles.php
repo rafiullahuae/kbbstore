@@ -213,6 +213,8 @@ final class AdminRoles
             'marketing.email.view' => 'See marketing emails and reports',
             'marketing.email.manage' => 'Build marketing emails and send tests',
             'marketing.email.send' => 'Send and schedule campaigns',
+            'push.view' => 'See push notification campaigns, reports and subscriber analytics',
+            'push.send' => 'Send, schedule and test push notifications, and change their automations and rules',
             'carttracking.view' => 'See Cart Tracking',
             'carttracking.block' => 'Block and unblock IP addresses',
         ]],

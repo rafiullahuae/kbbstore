@@ -1,0 +1,15 @@
+pn-campaigns-1280.png  crumb="Growth & Marketing / Push Notifications" sidebar G&M=[mkt-email,newsletter,labels,meta,pixels,searchterms,carttracking,push] rows=3 scrollWidth=1280 (viewport 1280) height=900
+pn-editor-1280.png  live count before="15phones match · Sharjah" after pressing Dubai="34phones match · Sharjah, Dubai"; admin-api requests while typing title+body=0, count requests for one chip=1; notification 278x120 title 14px body 13.5px; scrollWidth=1280 (viewport 1280)
+pn-notification-mock-1280.png  (labelled mock: the lock-screen card the worker's showNotification() produces from {t, b})
+pn-report-1280.png  35Aimed at | 30Delivered | 0Failed | 2No longer subscribed | 3Held by the daily cap | 9Clicks | 30%Click rate; byEmirate rows=2 scrollWidth=1280
+pn-automations-1280.png  Order updates: on=true, Back in stock: on=true, Basket reminder: on=true, Price drop: on=true; scrollWidth=1280 (viewport 1280) height=900
+pn-analytics-1280.png  61Subscribed phones | 22Signed-in customers | 39Guests | 3Turned off (all time) | 3No longer reachable; scrollWidth=1280 (viewport 1280) height=900
+pn-settings-1280.png  On=true, Locate by IP address when nothing better is known=true; scrollWidth=1280 (viewport 1280) height=900
+pn-settings-saved-1280.png  quiet hours from after save+reload = 23:00
+pn-campaigns-390.png  crumb="Growth & Marketing / Push Notifications" sidebar G&M=[mkt-email,newsletter,labels,meta,pixels,searchterms,carttracking,push] rows=3 scrollWidth=390 (viewport 390) height=844
+pn-editor-390.png  live count before="15phones match · Sharjah" after pressing Dubai="34phones match · Sharjah, Dubai"; admin-api requests while typing title+body=0, count requests for one chip=1; notification 300x80 title 14px body 13.5px; scrollWidth=390 (viewport 390)
+pn-notification-mock-390.png  (labelled mock: the lock-screen card the worker's showNotification() produces from {t, b})
+pn-report-390.png  35Aimed at | 30Delivered | 0Failed | 2No longer subscribed | 3Held by the daily cap | 9Clicks | 30%Click rate; byEmirate rows=2 scrollWidth=390
+pn-automations-390.png  Order updates: on=true, Back in stock: on=true, Basket reminder: on=true, Price drop: on=true; scrollWidth=390 (viewport 390) height=844
+pn-analytics-390.png  61Subscribed phones | 22Signed-in customers | 39Guests | 3Turned off (all time) | 3No longer reachable; scrollWidth=390 (viewport 390) height=844
+pn-settings-390.png  On=true, Locate by IP address when nothing better is known=true; scrollWidth=390 (viewport 390) height=844

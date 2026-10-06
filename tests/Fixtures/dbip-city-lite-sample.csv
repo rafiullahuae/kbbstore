@@ -1,0 +1,9 @@
+1.0.0.0,1.0.0.255,OC,AU,Queensland,South Brisbane,-27.4767,153.017
+2.48.0.0,2.48.255.255,AS,AE,Dubai,Dubai,25.0772,55.3093
+5.30.0.0,5.30.127.255,AS,AE,Sharjah,Sharjah,25.3374,55.4121
+5.30.128.0,5.30.255.255,AS,AE,"Ras al-Khaimah","Ras al-Khaimah",25.7895,55.9432
+37.245.0.0,37.245.255.255,AS,AE,"Abu Dhabi","Al Ain",24.2075,55.7447
+46.252.0.0,46.252.0.255,AS,SA,"Riyadh Region",Riyadh,24.6877,46.7219
+2001:8f8::,2001:8f8:ffff:ffff:ffff:ffff:ffff:ffff,AS,AE,Dubai,Dubai,25.0772,55.3093
+2a02:6040::,2a02:6040:ffff:ffff:ffff:ffff:ffff:ffff,AS,AE,"Umm al-Quwain","Umm al Quwain",25.5647,55.5552
+2a02:6041::,2a02:6041:ffff:ffff:ffff:ffff:ffff:ffff,EU,DE,Hessen,Frankfurt,50.11,8.68

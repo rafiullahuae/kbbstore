@@ -313,6 +313,16 @@ final class Audience
     }
 
     /**
+     * The ids of the customers these rules match, as a subquery (Lane PN:
+     * Push Notifications joins a phone to its shopper's purchase groups by
+     * customer_id, with these same rules rather than a copy of them).
+     */
+    public function customerIds(array $rules, string $match = 'all'): Builder
+    {
+        return DB::query()->fromSub($this->customers($rules, $match), 'pc')->select('pc.id');
+    }
+
+    /**
      * "N match · M can be emailed", and why the rest cannot. One statement.
      *
      * @return array{matched:int, emailable:int, reasons:array<string,int>}

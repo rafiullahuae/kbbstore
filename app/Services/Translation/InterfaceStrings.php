@@ -115,6 +115,7 @@ final class InterfaceStrings
                 self::storeWhatsApp(),
                 self::storeBlocked(),
                 self::storeSiteAppPush(),
+                self::storePushMessages(),
                 self::storeJs(),
             ),
             'email' => array_merge(
@@ -2832,6 +2833,41 @@ final class InterfaceStrings
             'site_app.push_body' => 'Allow notifications to hear from K-Beauty Bliss on this phone. You can turn them off any time in your phone\'s settings.',
             'site_app.push_allow' => 'Allow notifications',
             'site_app.push_later' => 'Not now',
+        ];
+    }
+
+    /**
+     * Lane PN — what the shop app's automatic notifications say (Growth &
+     * Marketing → Push Notifications → Automations), rendered in each phone's
+     * language when queued. :order is the shopper's own order number, the only
+     * personal detail a push carries; :product a product name; :price a price.
+     * Text only: the worker shows it with showNotification(), never as markup.
+     *
+     * @return array<string, string>
+     */
+    private static function storePushMessages(): array
+    {
+        return [
+            'push.order_processing_title' => 'Order :order is being prepared',
+            'push.order_processing_body' => 'We are getting your K-Beauty Bliss order ready.',
+            'push.order_onhold_title' => 'Order :order is on hold',
+            'push.order_onhold_body' => 'Tap to see what we need to carry on.',
+            'push.order_shipped_title' => 'Order :order is on its way',
+            'push.order_shipped_body' => 'It is with the courier now. Tap to follow it.',
+            'push.order_completed_title' => 'Order :order has been delivered',
+            'push.order_completed_body' => 'We hope you love it. Tap to see your order.',
+            'push.order_cancelled_title' => 'Order :order has been cancelled',
+            'push.order_cancelled_body' => 'Tap to see the details.',
+            'push.order_refunded_title' => 'Order :order has been refunded',
+            'push.order_refunded_body' => 'Your refund is on its way back to you.',
+            'push.order_failed_title' => 'Payment for order :order did not go through',
+            'push.order_failed_body' => 'Tap to try again.',
+            'push.stock_title' => 'Back in stock',
+            'push.stock_body' => ':product is back. Get it before it goes again.',
+            'push.cart_title' => 'You left something in your bag',
+            'push.cart_body' => 'Your picks are waiting. Tap to finish your order.',
+            'push.price_title' => 'Price drop',
+            'push.price_body' => ':product is now :price.',
         ];
     }
 

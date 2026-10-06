@@ -25,7 +25,8 @@
  *   6. A push message (Lane NT) becomes one notification built from three
  *      strings in it, title / body / url, and tapping it opens that url ONLY
  *      if it is on this shop; anything else opens the shop's home page.
- *      Nothing sends yet: a later lane only has to send.
+ *      A tap posts the message's signed click token to this shop's
+ *      /api/site-app/push/click (Lane PN), nowhere else.
  */
 'use strict';
 
@@ -173,13 +174,22 @@ self.addEventListener('push', (event) => {
     body: typeof d.b === 'string' ? d.b.slice(0, 300) : '',
     icon: ICON,
     tag: typeof d.g === 'string' && d.g ? d.g.slice(0, 40) : 'kbb',
-    data: { url: shopUrl(d.u) },
+    data: { url: shopUrl(d.u), c: typeof d.c === 'string' && /^[0-9]{1,18}\.[0-9a-f]{24}$/.test(d.c) ? d.c : '' },
   }));
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = shopUrl(event.notification.data && event.notification.data.url);
+  const data = event.notification.data || {};
+  const url = shopUrl(data.url);
+  // The tap, counted (Lane PN): the signed token the payload carried, posted to
+  // this shop only, no cookies, fire-and-forget. A failure changes nothing.
+  if (data.c) {
+    event.waitUntil(fetch(self.location.origin + BASE + '/api/site-app/push/click', {
+      method: 'POST', credentials: 'omit', keepalive: true,
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ c: data.c }),
+    }).catch(() => {}));
+  }
   event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
     for (const c of list) {
       if (new URL(c.url).origin === self.location.origin && typeof c.navigate === 'function') {

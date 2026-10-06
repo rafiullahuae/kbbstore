@@ -375,7 +375,7 @@ it('renders the sidebar the console settled on, group by group and row by row', 
             'dividers', 'pagewash', 'wabutton', 'cartpanel', 'cartpage', 'checkoutpage', 'slimfooter', 'acctpanel',
             'header', 'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout'],
         'Pages' => ['pages-store', 'pages-user', 'pagebanners', 'pageheader'],
-        'Growth & Marketing' => ['mkt-email', 'newsletter', 'labels', 'meta', 'pixels', 'searchterms', 'carttracking'],
+        'Growth & Marketing' => ['mkt-email', 'newsletter', 'labels', 'meta', 'pixels', 'searchterms', 'carttracking', 'push'],
         'Reviews' => ['rev-all', 'rev-add', 'rev-assign', 'rev-io', 'rev-badge', 'rev-settings'],
         '/flat' => ['shopfilters', 'updates'],
     ];

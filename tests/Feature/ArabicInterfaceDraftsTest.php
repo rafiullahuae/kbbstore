@@ -635,7 +635,11 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 1361 -> 1365 (Lane NT): the installed shop app's "Allow notifications"
     // sheet (store.site_app.push_title, _body, _allow, _later), seeded by
     // 2027_08_28_130100_seed_site_app_push_arabic_drafts.
-    expect($ui['drafts'])->toBe(1365, 'the shipped Arabic is not showing as drafts to review')
+    // 1365 -> 1385 (Lane PN): the shop app's automatic notifications
+    // (store.push.*: seven order statuses, back in stock, basket, price drop,
+    // a title and a body each), seeded by
+    // 2027_08_29_100100_seed_push_message_arabic_drafts.
+    expect($ui['drafts'])->toBe(1385, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

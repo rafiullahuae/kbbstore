@@ -151,7 +151,12 @@ it('has nothing that outlives a single request', function () {
     // "Keep cart events for", in chunks, and holds nothing between runs; the
     // page heartbeat (CartTrackingTick) does the same at most every six hours
     // when no cron line is installed.
-    expect(substr_count($console, 'Schedule::command('))->toBe(5, 'the set of scheduled commands has changed');
+    // 7 with Lane PN: `kbb:push-step`, every minute -- Push Notifications'
+    // campaigns and automations, on the same cron line; and
+    // `kbb:push-geo-import --auto`, hourly, which asks whether the monthly IP
+    // table is due and almost always answers no without touching the network.
+    // Both are commands, so neither keeps anything alive between requests.
+    expect(substr_count($console, 'Schedule::command('))->toBe(7, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

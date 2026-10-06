@@ -241,52 +241,16 @@ final class WebPush
      */
     public static function send(array $subs, array $payloads, int $ttl = 86400): int
     {
-        $pair = VapidKeys::pair();
-        if ($pair === null || $subs === []) {
+        $statuses = self::deliver($subs, $payloads, $ttl);
+        if ($statuses === []) {
             return 0;
         }
-
-        $requests = [];
-        foreach ($subs as $s) {
-            if (! self::allowedEndpoint((string) $s->endpoint) || ! isset($payloads[(int) $s->id])) {
-                continue;
-            }
-            $body = self::encrypt($payloads[(int) $s->id], (string) $s->p256dh, (string) $s->auth);
-            $auth = self::vapidHeader((string) $s->endpoint, $pair);
-            if ($body === null || $auth === null) {
-                continue;
-            }
-            $requests[(int) $s->id] = [(string) $s->endpoint, $body, $auth];
-        }
-
-        if ($requests === []) {
-            return 0;
-        }
-
-        $responses = Http::pool(function (Pool $pool) use ($requests, $ttl) {
-            $out = [];
-            foreach ($requests as $id => [$endpoint, $body, $auth]) {
-                $out[] = $pool->as((string) $id)
-                    ->timeout(5)
-                    ->connectTimeout(3)
-                    ->withHeaders([
-                        'Authorization' => $auth,
-                        'TTL' => (string) $ttl,
-                        'Urgency' => 'high',
-                        'Content-Encoding' => 'aes128gcm',
-                    ])
-                    ->withBody($body, 'application/octet-stream')
-                    ->post($endpoint);
-            }
-
-            return $out;
-        });
+        $requests = $statuses;
 
         $sent = 0;
         $gone = [];
         $failed = [];
-        foreach ($responses as $id => $response) {
-            $status = $response instanceof \Illuminate\Http\Client\Response ? $response->status() : 0;
+        foreach ($statuses as $id => $status) {
             if ($status >= 200 && $status < 300) {
                 $sent++;
             } elseif ($status === 404 || $status === 410) {
@@ -313,5 +277,72 @@ final class WebPush
         }
 
         return $sent;
+    }
+
+    /**
+     * The network half of send(), with no bookkeeping (Lane PN): POST one
+     * encrypted payload to each subscription, concurrently, and answer the
+     * push service's HTTP status per subscription id (0 for no answer). The
+     * caller decides what a 404/410 means for ITS table: send() deletes owner
+     * app rows, PushSender marks shop app rows gone.
+     *
+     * A subscription whose endpoint is off the allowlist, or whose payload is
+     * missing or will not encrypt, is not POSTed and not in the answer.
+     *
+     * @param  list<object{id:int, endpoint:string, p256dh:string, auth:string}>  $subs
+     * @param  array<int,string>  $payloads  subscription id => JSON payload
+     * @return array<int,int> subscription id => HTTP status
+     */
+    public static function deliver(array $subs, array $payloads, int $ttl = 86400, string $urgency = 'high'): array
+    {
+        $pair = VapidKeys::pair();
+        if ($pair === null || $subs === []) {
+            return [];
+        }
+        $urgency = in_array($urgency, ['very-low', 'low', 'normal', 'high'], true) ? $urgency : 'normal';
+
+        $requests = [];
+        foreach ($subs as $s) {
+            if (! self::allowedEndpoint((string) $s->endpoint) || ! isset($payloads[(int) $s->id])) {
+                continue;
+            }
+            $body = self::encrypt($payloads[(int) $s->id], (string) $s->p256dh, (string) $s->auth);
+            $auth = self::vapidHeader((string) $s->endpoint, $pair);
+            if ($body === null || $auth === null) {
+                continue;
+            }
+            $requests[(int) $s->id] = [(string) $s->endpoint, $body, $auth];
+        }
+
+        if ($requests === []) {
+            return [];
+        }
+
+        $responses = Http::pool(function (Pool $pool) use ($requests, $ttl, $urgency) {
+            $out = [];
+            foreach ($requests as $id => [$endpoint, $body, $auth]) {
+                $out[] = $pool->as((string) $id)
+                    ->timeout(5)
+                    ->connectTimeout(3)
+                    ->withHeaders([
+                        'Authorization' => $auth,
+                        'TTL' => (string) max(0, $ttl),
+                        'Urgency' => $urgency,
+                        'Content-Encoding' => 'aes128gcm',
+                    ])
+                    ->withBody($body, 'application/octet-stream')
+                    ->post($endpoint);
+            }
+
+            return $out;
+        });
+
+        $statuses = [];
+        foreach (array_keys($requests) as $id) {
+            $response = $responses[(string) $id] ?? null;
+            $statuses[$id] = $response instanceof \Illuminate\Http\Client\Response ? $response->status() : 0;
+        }
+
+        return $statuses;
     }
 }
