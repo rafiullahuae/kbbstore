@@ -1,0 +1,31 @@
+Lane SX interim (owner: "page shifting speed" = moving between pages)
+
+Measured 2.60.415 (5476967e) vs 2.60.416 (e6e0814d) vs 2.60.417 (e5e767a7) vs HEAD,
+MySQL live-scale previews (tools/spd-preview.sh), no route/config cache (as live),
+menu with a 97-brand "Brands" mega panel (10 cols) + 40-link "Skincare" (4 cols):
+
+- Server: identical. product ~51-59 ms / 12 queries / 28 cache reads; category ~45-54 / 5 / 21;
+  brand ~51-53 / 5 / 22; shop ~46-50 / 4 / 21; home ~60-68 / 2 / 28 at every ref.
+  MegaMenuFit is pure PHP on the one HeaderSettings::all() the bar already read.
+- Prefetch: speculation rules printed at every ref; product-card click served from the
+  prefetch cache 3/3 at every ref, laptop and phone; menu panel brand link 4/4 at every ref.
+- No JS errors at any ref. CLS ~0 everywhere.
+- CSS +6.3 KB raw / +1.1 KB gz (kbb.css), HTML +183 B.
+=> The product-card / category / brand navigation path did NOT regress in the lab.
+Now probing the desktop menu bar itself (MG hover bridges over neighbour links).
+
+CAUSE FOUND (desktop menu bar), 2.60.416 fdca57cc, Lane MG:
+resources/css/kbb/kbb.css (HEAD line ~559-564) — the "hover bridges":
+  .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::before/::after
+  {position:absolute;z-index:69; inset-block-start:anchor(center); inset-block-end:anchor(end); ...}
+While a mega item is hovered, two invisible triangles cover the LOWER HALF of the bar from
+its link out to the ends of its panel — i.e. on top of the neighbouring menu links. Slide from
+"Brands" to "Skincare" (or "Skincare" to "Sunscreens") a little below the text centre and:
+  - the pointer is on DIV.navitem (the old item's bridge), not on the link;
+  - the old panel stays open, the link under the pointer never gets hover -> no prefetch;
+  - THE CLICK DOES NOTHING (no navigation) — the shopper has to click again.
+Probe (tools/sx-neighbour.cjs, 1280px, y = 50/65/80% of link height):
+  2.60.415: 15/15 clicks navigate.  2.60.416 and HEAD: 11/15 — every 65% and 80% case
+  next to a mega item swallowed (hit DIV.navitem, clickNavigated=false).
+Fix (CSS only): non-hovered menu links sit above the bridges (bridges z 68, idle links z 69,
+panels stay 70), so a visible link always takes the pointer and the click.
