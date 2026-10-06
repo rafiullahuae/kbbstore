@@ -4844,6 +4844,8 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
 .kfa-bt svg{width:15px;height:15px}
 .kfa-bt:focus-visible{outline:2px solid #C13E63;outline-offset:2px}
 @media (min-width:768px){.kfa{padding:10px 0 12px}.kfa-g{max-width:780px;margin-inline:auto;gap:14px;padding:8px;padding-inline-start:20px}.kfa-ic{gap:6px}.kfa-ic i,.kfa-ic svg{width:21px;height:21px}.kfa-tx{display:flex;align-items:baseline;gap:12px}.kfa-tx b{font-size:15px;flex:none}.kfa-ln{flex:1;min-width:0;height:1.25em;font-size:13.5px}.kfa-ty{-webkit-line-clamp:1}.kfa-bt{min-height:44px;padding:0 20px;font-size:14px}}
+/* Phones: "Install App" is wider than "Install" (6 Oct). Measured in Lane FU's previews: without this the Arabic page cut the lines. Icons 17->15px, tighter gaps, button 13px. */
+@media (max-width:767px){.kfa-g{gap:7px;padding-inline-start:9px}.kfa-ic{gap:3px}.kfa-ic i,.kfa-ic svg{width:15px;height:15px}.kfa-bt{gap:5px;padding:0 11px;font-size:13px}.kfa-bt svg{width:14px;height:14px}}
 @media (min-width:1024px) and (pointer:fine){.kfa:not(.kfa-lt){display:none}}
 @media (display-mode:standalone),(display-mode:fullscreen){.kfa{display:none}}
 @media (prefers-reduced-motion:reduce){.kfa-run .kfa-ty::after{display:none}}

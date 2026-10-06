@@ -141,7 +141,9 @@ it('toggles the summary open class on the element the checkout CSS selects', fun
         'The checkout CSS no longer keys the expansion off .summary.open — this test and the JS need to move with it.');
 
     // The element carrying the class has to be the .summary aside itself.
-    expect(str_contains($blade, '<aside class="summary" id="kbbSummary">'))->toBeTrue(
+    // Lane CK (6 Oct) adds ` cosr-on` when the summary is folded into its one
+    // row; the element is still the .summary aside with id kbbSummary.
+    expect((bool) preg_match('/<aside class="summary(\{\{[^}]*\}\})?" id="kbbSummary">/', $blade))->toBeTrue(
         'The summary aside is no longer #kbbSummary, so the toggle target has drifted from the CSS.');
 
     expect((bool) preg_match("/getElementById\('kbbSummary'\)\??\.classList\.toggle\('open'\)/", $js))->toBeTrue(

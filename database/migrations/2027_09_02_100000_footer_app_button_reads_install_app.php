@@ -35,6 +35,17 @@ return new class extends Migration
                 ->where('value', 'تثبيت')
                 ->update(['value' => 'تثبيت التطبيق', 'source_hash' => sha1('Install App'), 'updated_at' => now()]);
 
+            // The Arabic headline, shortened in the same breath: beside the
+            // wider «تثبيت التطبيق» a 390px phone cut «حمّلي تطبيق K-Beauty Bliss»
+            // to "…auty Bliss" (measured). Only while it still reads the seed.
+            DB::table('translations')
+                ->where('locale', 'ar')
+                ->where('group', Translation::GROUP_UI)
+                ->where('item_id', 0)
+                ->where('field', TranslationStore::normaliseKey('store.footer.app_title'))
+                ->where('value', 'حمّلي تطبيق K-Beauty Bliss')
+                ->update(['value' => 'حمّلي تطبيقنا', 'updated_at' => now()]);
+
             TranslationStore::flush();
         } catch (\Throwable) {
             // The old word still reads correctly; the owner can retype it.
