@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.415
+**Phone menu style V4 "Two-tone", with full controls.** Apply after .414.
+Hard refresh the shop and the admin.
+
+| Your request | Now |
+|---|---|
+| "V4 is fine ... full control of font sizes, row height, paddings, upper custom links, panel size, on click sub menu opening animation ... adjust auto as per the user mobile screen size" | A pink top band with search and quick links above the list, on the glass panel. Appearance -> Mobile menu -> Style (V4 / Classic glass), Quick links (up to 8, EN + AR, pick or type the link, colour), Sizes (panel, band, search, quick links, rows, sub-items, headings, arrows), Sub-menu animation (Slide down / Fade / Expand / None, speed, easing). Sizes are set for a 390px phone and scale with the screen; taps never under 44px |
+
+Files: see the package's update.json.
+
 ## 2.60.414
 **Checkout: floating labels and the laptop totals card; Install App installs
 directly on Android; owner app Install card.** Apply after .413. Runs its
