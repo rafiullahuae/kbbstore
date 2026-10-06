@@ -4,12 +4,17 @@ Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
 ## 2.60.408
-**"Extra Beauty" becomes "K-Beauty Bliss" everywhere; test pushes to the
-phones you pick; brand header spacing.** Apply after .407. Runs its
-migrations. Hard refresh the admin and the shop.
+**Mega Menu: add categories, brands, pages, posts and collections with a
+tick; a scrollbar at the bottom. "Extra Beauty" becomes "K-Beauty Bliss"
+everywhere; test pushes to the phones you pick; sold-out products option;
+brand header spacing.** Apply after .407. Runs its migrations. Hard refresh
+the admin and the shop.
 
 | Your request | Now |
 |---|---|
+| "a full list of categories, brands, pages ... to directly click and add to specific menu / columns" and "a horizontal scroll bar ... at the bottom" | Store -> Mega Menu -> "+ Add items": Categories (as a tree), Brands A-Z, Pages, Blog posts, Collections, Custom link; search, tick, choose the menu and column, "Add to column", or drag. Picked items follow a renamed category or brand. A scrollbar fixed under the columns with < > buttons; the Mac back-swipe no longer fires there |
+| "exclude the sold out products or show at very end" | Appearance -> Site layout -> Product grid -> Sold-out products (shop default), and Catalog -> Categories / Brands -> Edit (each one). Ships at "Show as usual" |
+| "the top notch is covered in iphones, but not in android" | Android keeps the old full-screen layout until the owner app is installed again; the app now says so on such a phone, with the steps |
 | "replace the Extra Beauty with K-Beauty Bliss everywhere ... apply this auto" | Runs by itself on apply: product names, descriptions, tabs and picture text, categories, brands, reviews, captions, routines, checkout method names, labels and Arabic spellings. Orders, customers and sent emails stay as they were; extrabeauty.ae and info@ addresses stay until the domain move. Check: Store -> SEO Keywords -> Brand name ("0 to replace") |
 | "an option to test to my device ... list of installed devices" | Growth & Marketing -> Push Notifications -> Devices: every installed phone, tick and Send test, result per phone; "This is my phone" and a nickname |
 | "spacing controls overall as marked" (brand header) | Appearance -> Site layout -> Brand page -> space above / at the sides of the header, laptop and phone (and per brand). All at today's 22px |
