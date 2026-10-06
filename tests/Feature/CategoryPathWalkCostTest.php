@@ -207,14 +207,23 @@ it('walks the ancestry once per archive page, and not at all when the path colum
     }
 
     // With the materialised column, flat at every depth — no walk at all.
+    //
+    // ▲ Measured from depth 2, not depth 1, since Lane CH: a category with a
+    // parent now draws its parents in the breadcrumb (Home / Skincare /
+    // Toners, and the BreadcrumbList JSON-LD), which costs a FIXED two reads
+    // on a cold cache -- ProductTabs' id => parent map, then one whereIn for
+    // the ancestors -- whatever the depth. A top-level category reads neither.
+    // Flatness from depth 2 is still the assertion that catches a per-level
+    // walk; the fixed step is pinned on its own line below.
     foreach (Q11_DEPTHS as $depth) {
         expect($cost['set'][$depth])->toBe(
-            $cost['set'][1],
+            $depth === 1 ? $cost['set'][1] : $cost['set'][2],
             "a category archive at depth {$depth} cost {$cost['set'][$depth]} category queries "
-            . "against {$cost['set'][1]} at depth 1, with categories.path populated — "
+            . "against {$cost['set'][2]} at depth 2, with categories.path populated — "
             . 'the materialised column has stopped being read'
         );
     }
+    expect($cost['set'][2] - $cost['set'][1])->toBe(2, 'the breadcrumb ancestors are a fixed two reads over a top-level category');
 
     /*
      * Without it, ONE walk per page: exactly depth − 1 extra single-row reads,

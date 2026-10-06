@@ -20,7 +20,7 @@ class Category extends Model
 
     protected function casts(): array
     {
-        return ['depth' => 'int', 'position' => 'int', 'seo' => 'array', 'banner' => 'array', 'header_style' => 'array'];
+        return ['depth' => 'int', 'position' => 'int', 'short_url' => 'bool', 'seo' => 'array', 'banner' => 'array', 'header_style' => 'array'];
     }
 
     /**
@@ -67,14 +67,25 @@ class Category extends Model
         return $this->belongsToMany(Product::class);
     }
 
-    /** Full nested path, e.g. skincare/face-cleansers/makeup-removers. Production nests four deep. */
+    /**
+     * The address path when the cached `path` is missing, by the same rule as
+     * App\Support\CategoryTree: a short-address category (short_url) is its own
+     * slug under any parent; otherwise the parent chain, which stops at the
+     * first short ancestor because that ancestor's address is its slug.
+     */
     public function buildPath(): string
     {
+        if ($this->short_url) {
+            return (string) $this->slug;
+        }
         $segments = [$this->slug];
         $node = $this->parent;
         $guard = 0;
         while ($node && $guard++ < 10) {
             array_unshift($segments, $node->slug);
+            if ($node->short_url) {
+                break;
+            }
             $node = $node->parent;
         }
 

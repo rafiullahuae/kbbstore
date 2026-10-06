@@ -199,6 +199,12 @@ class ShopController extends Controller
         }
 
         [$title, $sub, $crumb] = $this->heading($category, (string) $request->query('s', ''));
+        $crumbParents = $this->ancestorsOf($category);
+        if ($crumbParents !== []) {
+            // Under a parent the crumb names the category itself, the way
+            // kbeautybliss.com reads: Home / Skincare / Toners.
+            $crumb = $category->t('name');
+        }
 
         $banner = $this->banner($category, $active, (string) $request->query('s', ''), $title);
 
@@ -481,13 +487,20 @@ class ShopController extends Controller
                  * sitemap, so the two documents cannot disagree.
                  */
                 'noindex' => ! empty($catSeo['noindex']) ?: null,
-                'breadcrumb' => $this->breadcrumbTrail($category),
+                'breadcrumb' => $this->breadcrumbTrail($category, $crumbParents),
                 // SEO → Keywords (Lane KW): which page's keywords this is. Only
                 // the unfiltered listing; a filtered view is a different page.
                 'seo_entity' => $selfCanonical ? ($category ? 'category:' . $category->id : 'collection:shop') : null,
             ], static fn ($v) => $v !== null),
             'sub' => $sub,
             'crumb' => $crumb,
+            // The category's parents, root first, as links before the crumb
+            // (Lane CH). Empty for a top-level category, which therefore
+            // renders byte for byte as before.
+            'crumbParents' => array_map(
+                static fn (Category $c) => ['name' => $c->t('name'), 'url' => $c->url()],
+                $crumbParents
+            ),
             'clearUrl' => $category ? $category->url() : Facets::clearUrl(),
             'chips' => $this->chips($active),
             // The sidebar is identical for every visitor and only changes with
@@ -829,7 +842,54 @@ class ShopController extends Controller
      * renderer itself (Seo::jsonLd()) has accepted a 'breadcrumb' context
      * key from the start, but no controller ever actually supplied one.
      */
-    private function breadcrumbTrail(?Category $category): array
+    /**
+     * The category's parents, root first. (Lane CH)
+     *
+     * NO QUERY for a top-level category -- `parent_id` is already on the row.
+     * Under a parent: the chain is walked in ProductTabs' cached id => parent
+     * map (one cache read, shared with the product page) and the ancestors
+     * are fetched in ONE query, however deep. Bounded, so a loop in the data
+     * cannot spin.
+     *
+     * @return list<Category>
+     */
+    private function ancestorsOf(?Category $category): array
+    {
+        if ($category === null || $category->parent_id === null) {
+            return [];
+        }
+
+        $tree = \App\Support\ProductTabs::categoryTree();
+        $ids = [];
+        $node = (int) $category->parent_id;
+
+        while ($node !== 0 && ! in_array($node, $ids, true) && $node !== (int) $category->id && count($ids) < 10) {
+            $ids[] = $node;
+            $node = (int) ($tree[$node] ?? 0);
+        }
+
+        $rows = Category::query()->whereIn('id', $ids)->get(['id', 'slug', 'name', 'parent_id', 'path', 'short_url'])->keyBy('id');
+
+        $out = [];
+        foreach (array_reverse($ids) as $id) {
+            if (isset($rows[$id])) {
+                // Hand each ancestor its parent from this same set, so a row
+                // with a null `path` builds its address without a query per
+                // level (CategoryPathWalkCostTest).
+                $pid = $rows[$id]->parent_id === null ? null : (int) $rows[$id]->parent_id;
+                $rows[$id]->setRelation('parent', $pid !== null ? ($rows[$pid] ?? null) : null);
+                $out[] = $rows[$id];
+            }
+        }
+        if ($out !== []) {
+            $category->setRelation('parent', end($out));
+        }
+
+        return $out;
+    }
+
+    /** @param list<Category> $parents */
+    private function breadcrumbTrail(?Category $category, array $parents = []): array
     {
         $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
         /*
@@ -844,6 +904,10 @@ class ShopController extends Controller
             ['name' => __('store.breadcrumb.home'), 'url' => $base . '/'],
             ['name' => __('store.breadcrumb.shop'), 'url' => $base . '/shop/'],
         ];
+
+        foreach ($parents as $parent) {
+            $trail[] = ['name' => $parent->t('name'), 'url' => $base . $parent->url()];
+        }
 
         if ($category) {
             $trail[] = ['name' => $category->t('name'), 'url' => $base . $category->url()];

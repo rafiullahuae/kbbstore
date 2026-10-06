@@ -142,7 +142,7 @@
 @include('partials.category-custom-header', ['ch' => $categoryHeader, 'chTotal' => $total])
 @else
 <div class="wrap">
-    <div class="crumb"><b>{{ __('store.breadcrumb.home') }}</b> / {{ $crumb }}</div>
+    <div class="crumb"><b>{{ __('store.breadcrumb.home') }}</b> / @foreach (($crumbParents ?? []) as $cp)<a href="{{ $cp['url'] }}">{{ $cp['name'] }}</a> / @endforeach{{ $crumb }}</div>
     @unless (($banner ?? null) || ($titleHeader ?? null))
         <div class="eyebrow">{{ __('store.shop.eyebrow') }}</div>
         <h1 class="ptitle">{{ $title }}</h1>

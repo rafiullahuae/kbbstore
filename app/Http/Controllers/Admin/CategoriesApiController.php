@@ -185,7 +185,10 @@ class CategoriesApiController extends Controller
         $translations = $this->translationsFrom($data);
 
         $category = DB::transaction(function () use ($data, $translations) {
-            $category = Category::query()->create($data);
+            // A new category gets a short address, /collections/{slug}/, under
+            // any parent -- the owner's choice when the tree came back (Lane
+            // CH): "category addresses stay exactly as now" and no URL changes.
+            $category = Category::query()->create($data + ['short_url' => true]);
             // After create(), because the row has no id before it. Same call on
             // both paths, in the same request and the same transaction as the
             // English row. See App\Support\TranslationInput.
@@ -931,44 +934,9 @@ class CategoriesApiController extends Controller
      */
     private function resyncTree(): void
     {
-        $rows = DB::table('categories')->select('id', 'slug', 'parent_id', 'path', 'depth')->get();
-
-        $byId = [];
-
-        foreach ($rows as $row) {
-            $byId[(int) $row->id] = $row;
-        }
-
-        foreach ($byId as $id => $row) {
-            $segments = [(string) $row->slug];
-            $depth = 0;
-            $parent = $row->parent_id === null ? null : (int) $row->parent_id;
-            $guard = 0;
-
-            // The guard is belt and braces: safeParentId already refuses a
-            // cycle, but rows imported from WooCommerce were never checked.
-            while ($parent !== null && $guard++ < self::MAX_DEPTH) {
-                $node = $byId[$parent] ?? null;
-
-                if ($node === null) {
-                    break;
-                }
-
-                array_unshift($segments, (string) $node->slug);
-                $depth++;
-                $parent = $node->parent_id === null ? null : (int) $node->parent_id;
-            }
-
-            $path = implode('/', $segments);
-
-            if ($path === (string) ($row->path ?? '') && $depth === (int) ($row->depth ?? -1)) {
-                continue;
-            }
-
-            DB::table('categories')->where('id', $id)->update([
-                'path' => $path,
-                'depth' => $depth,
-            ]);
-        }
+        // One rule for path and depth, shared with the hierarchy copy and the
+        // importer: a short-address category keeps /collections/{slug}/ under
+        // any parent (categories.short_url, Lane CH).
+        \App\Support\CategoryTree::resync();
     }
 }

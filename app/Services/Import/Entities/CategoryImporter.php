@@ -221,7 +221,7 @@ final class CategoryImporter extends EntityImporter
         /** @var array<int, list<int>> $children */
         $children = [];
 
-        foreach (Category::query()->select(['id', 'slug', 'parent_id', 'depth', 'path'])->cursor() as $node) {
+        foreach (Category::query()->select(['id', 'slug', 'parent_id', 'depth', 'path', 'short_url'])->cursor() as $node) {
             $id = (int) $node->id;
             $nodes[$id] = [
                 'id' => $id,
@@ -229,6 +229,7 @@ final class CategoryImporter extends EntityImporter
                 'parent_id' => $node->parent_id === null ? null : (int) $node->parent_id,
                 'depth' => (int) $node->depth,
                 'path' => $node->path === null ? null : (string) $node->path,
+                'short' => (bool) $node->short_url,
             ];
             $children[$node->parent_id === null ? 0 : (int) $node->parent_id][] = $id;
         }
@@ -250,7 +251,10 @@ final class CategoryImporter extends EntityImporter
 
             $seen[$id] = true;
 
-            $path = $prefix === '' ? $nodes[$id]['slug'] : $prefix.'/'.$nodes[$id]['slug'];
+            // A short-address category (categories.short_url, Lane CH) is its
+            // own slug under any parent, so a re-import that carries the tree
+            // can never move /collections/{slug}/. App\Support\CategoryTree.
+            $path = ($prefix === '' || $nodes[$id]['short']) ? $nodes[$id]['slug'] : $prefix.'/'.$nodes[$id]['slug'];
 
             if ($nodes[$id]['depth'] !== $depth || $nodes[$id]['path'] !== $path) {
                 Category::query()->whereKey($id)->update(['depth' => $depth, 'path' => $path]);

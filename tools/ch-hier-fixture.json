@@ -1,0 +1,17 @@
+[
+ {"id": 101, "name": "Skincare", "slug": "skincare", "parent": 0},
+ {"id": 102, "name": "Cleansers", "slug": "cleansers", "parent": 101},
+ {"id": 103, "name": "Oil Cleansers", "slug": "oil-cleansers", "parent": 102},
+ {"id": 104, "name": "Foam Cleansers", "slug": "foam-cleansers", "parent": 102},
+ {"id": 105, "name": "Toners &amp; Mists", "slug": "toners", "parent": 101},
+ {"id": 106, "name": "Serums &amp; Ampoules", "slug": "serums-ampoules", "parent": 101},
+ {"id": 107, "name": "Moisturizers", "slug": "moisturizers", "parent": 101},
+ {"id": 108, "name": "Sun Care", "slug": "sun-care", "parent": 101},
+ {"id": 109, "name": "Masks &amp; Packs", "slug": "masks-packs", "parent": 101},
+ {"id": 201, "name": "Makeup", "slug": "makeup", "parent": 0},
+ {"id": 202, "name": "Lips", "slug": "lips", "parent": 201},
+ {"id": 203, "name": "Cushions", "slug": "cushion-foundation", "parent": 201},
+ {"id": 301, "name": "Hair &amp; Body", "slug": "hair-body", "parent": 0},
+ {"id": 302, "name": "Body Care", "slug": "body-care", "parent": 301},
+ {"id": 303, "name": "Hair Care", "slug": "hair-care", "parent": 301}
+]

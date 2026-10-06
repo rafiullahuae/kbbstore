@@ -62,6 +62,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Admin\BrandsTreeApiController;
 use App\Http\Controllers\Admin\CategoriesApiController;
+use App\Http\Controllers\Admin\CategoryHierarchyApiController;
 use App\Http\Controllers\Admin\CategoryRedirectsApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -74,3 +75,11 @@ Route::post('/categories/{category}/merge', [CategoriesApiController::class, 'me
 
 Route::get('/brands-tree', [BrandsTreeApiController::class, 'index']);
 Route::post('/brands-tree/reorder', [BrandsTreeApiController::class, 'reorder']);
+
+// Catalog → Categories → "Copy hierarchy from kbeautybliss.com" (Lane CH): the
+// dry run (fetch from the configured host over https, or an uploaded export)
+// and the apply, which takes only the dry run's token. Both under the
+// `admin-api/categories/**` capability rule, catalog.manage. Shipped with
+// 2027_09_01_100100_clear_caches_category_hierarchy.
+Route::post('/categories/hierarchy/preview', [CategoryHierarchyApiController::class, 'preview']);
+Route::post('/categories/hierarchy/apply', [CategoryHierarchyApiController::class, 'apply']);
