@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.413
+**Phone menu opens from the left as a glass panel; Marketing Pixels guides.**
+Apply after .412. Hard refresh the shop and the admin.
+
+| Your request | Now |
+|---|---|
+| "the same dual columns design ... open from left side ... adjust everything as per the user screen size" + "glossy glass type" | Today's menu, unchanged inside, now a frosted-glass panel from the left (right in Arabic), 282-420px wide by screen. Appearance -> Mobile menu -> Panel -> "Menu opens from": Left (glass panel) / Bottom (sheet) |
+| "proper guide for each one, along with live urls ... a beautiful popup eye icon" | Growth & Marketing -> Marketing Pixels: an eye button before each ID opens a guide with steps, the ID's shape, the official links, a Test tip and "Paste my ID" |
+
+Files: see the package's update.json.
+
 ## 2.60.412
 **No zoom when tapping a field on phones; Update App for installed apps.**
 Apply after .411. Runs its migrations. Hard refresh the shop and the admin.
