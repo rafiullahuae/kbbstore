@@ -84,7 +84,19 @@ class ProductController extends Controller
          */
         \App\Support\SetEagerLoad::on([$product]);
 
-        $this->rememberViewed($request, $product->id);
+        /*
+         * "Recently viewed" is written only for a page the shopper OPENS. A
+         * speculative fetch (Appearance -> Site layout -> Page speed -> Open
+         * pages instantly; App\Support\InstantNav) may never be opened, and
+         * Chromium 141 stores this cookie from an unused prefetch -- measured.
+         * So that response leaves the cookie alone and asks for it from the
+         * page itself, which only runs when the page is shown.
+         */
+        if (\App\Support\InstantNav::isSpeculative($request)) {
+            $request->attributes->set(\App\Support\InstantNav::VIEWED_LATER, (int) $product->id);
+        } else {
+            self::rememberViewed($request, $product->id);
+        }
 
         $summary = $this->reviewSummary($product->id);
 
@@ -808,7 +820,7 @@ class ProductController extends Controller
      * A cookie of ids — no table, no query, no write on a page view. The
      * Recently Viewed module reads this when it lands.
      */
-    private function rememberViewed(Request $request, int $productId): void
+    public static function rememberViewed(Request $request, int $productId): void
     {
         $seen = array_filter(array_map('intval', explode(',', (string) $request->cookie('kbb_viewed', ''))));
         $seen = array_slice(array_values(array_unique(array_merge([$productId], $seen))), 0, 12);

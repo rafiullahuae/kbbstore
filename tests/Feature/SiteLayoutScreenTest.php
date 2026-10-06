@@ -148,7 +148,10 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
      */
     // ▲ `fonts` (Lane FS): the owner's font library, Body font and Headings
     // font — both at Outfit, so the page is unchanged until one moves.
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize', 'brandpage', 'press', 'fonts']);
+    // ▲ `speed` (Lane SP): "Open pages instantly" and "Smooth change between
+    // pages", ON as the owner asked; neither is CSS on :root, so "sending
+    // nothing" below still holds. InstantNavTest covers the tab's effect.
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize', 'brandpage', 'press', 'fonts', 'speed']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
@@ -184,7 +187,8 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // 133 since 6 Oct: the brand header's space above and at the sides,
     // laptop and phone (Brand page tab), all at the 22px the page already leaves.
     // 134 with Lane SX: "Sold-out products" on Product grid, shipped at "Show as usual".
-    expect($keys)->toHaveCount(134);
+    // 136 since Lane SP: the two Page speed switches.
+    expect($keys)->toHaveCount(136);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

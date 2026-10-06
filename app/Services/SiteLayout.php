@@ -898,6 +898,24 @@ class SiteLayout
         'font_heading' => ['select', 'Headings font', 'outfit',
             'Every heading — page titles, section headings, card titles. A homepage section can still pick its own on its Fonts & size tab.',
             \App\Support\FontLibrary::LABELS],
+
+        /*
+         * ── INSTANT PAGE CHANGES (Lane SP) ─────────────────────────────────
+         *
+         * The owner, 6 October: "when i go to any product etc page, the browser
+         * bar appears but the layout is shifting late. i want super blazing
+         * speed with super fast shifting layout from one page to another." He
+         * asked for speed, so "Open pages instantly" ships ON (CLAUDE.md rule
+         * 1, 30 Sept). The fade ships OFF because it was MEASURED to cost
+         * speed (+60-110 ms to the next page's first paint on a laptop) and
+         * he asked for speed; it is one switch away. Each switch off puts the
+         * old page back. Not CSS: in SPEED_KEYS, so isDefault()
+         * and css() skip them. App\Support\InstantNav does the work.
+         */
+        'nav_instant' => ['bool', 'Open pages instantly', true,
+            'On: when a shopper points at a product, category, brand or blog link (or starts to tap it), the shop fetches that page in the background, so it opens at once. Only shop pages are fetched -- never the cart, checkout, account, login or anything that changes something -- and nothing is fetched for shoppers on Data Saver or a 2G connection. Analytics and pixels only count pages that are really opened. Off: pages load when clicked, as before.'],
+        'nav_fade' => ['bool', 'Fade between pages', false,
+            'Off, because it costs speed: measured in Chrome, the fade makes the next page appear 60-110 ms later on a laptop, and Chrome already keeps the old page on screen until the new one is ready, so there is no white flash without it. On: the next page fades in (0.15 s) with the header held still -- Chrome, Edge, Android and Safari 18.2+; shoppers who ask their phone for less motion get no fade.'],
     ];
 
     /**
@@ -982,6 +1000,9 @@ class SiteLayout
         'brand_desc_lines', 'brand_desc_lines_m',
         // 6 Oct: the header's outer spacing, laptop then phone.
         'brand_space_top', 'brand_space_x', 'brand_space_top_m', 'brand_space_x_m'];
+
+    /** Lane SP: page-change switches, read by App\Support\InstantNav; not CSS. */
+    public const SPEED_KEYS = ['nav_instant', 'nav_fade'];
 
     /** The keys that are not CSS: skipped by isDefault(), never in css(). */
     private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom', 'load_url'];
@@ -1121,6 +1142,9 @@ class SiteLayout
         'fonts' => ['Fonts',
             'The shop\'s typefaces, from its own font library — twenty-nine families served from this shop, never from Google. Only the fonts you pick are loaded, and only the body font is preloaded.',
             self::FONT_KEYS],
+        'speed' => ['Page speed',
+            'How fast one page changes to the next. The shop fetches the page a shopper is about to open, so it opens at once. The fade is off: it looks smooth but makes the next page appear later.',
+            self::SPEED_KEYS],
     ];
 
     /** Every key lives in `settings`, written by this module's own endpoint. */
@@ -1410,7 +1434,8 @@ class SiteLayout
         foreach (self::normalised() as $key => $field) {
             if (in_array($key, self::LOAD_KEYS, true) || in_array($key, self::HEADER_KEYS, true)
                 || in_array($key, self::PRESS_KEYS, true) || in_array($key, self::BRAND_KEYS, true)
-                || in_array($key, self::FONT_KEYS, true) || $key === 'sold_out') {
+                || in_array($key, self::FONT_KEYS, true) || $key === 'sold_out'
+                || in_array($key, self::SPEED_KEYS, true)) {
                 continue;
             }
 

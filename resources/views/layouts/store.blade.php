@@ -145,6 +145,7 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
 {!! \App\Support\Seo::render($kbbSeoCtx) !!}
 @stack('head')
 @include('partials.site-app-head')
+@include('partials.instant-nav-head')
 
 {{-- Outfit 400-800, matching the theme exactly (T-BOOT-10), AND SERVED BY
      THIS SHOP — Lane PERF. App\Support\WebFonts carries the measurement in

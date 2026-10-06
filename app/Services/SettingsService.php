@@ -23,9 +23,86 @@ class SettingsService
     private const MODULES_KEY = 'kbb.modules';
     private const MODULE_SETTINGS_KEY = 'kbb.module_settings';
 
+    /*
+     * ── ONE READ OF THE CACHE PER REQUEST, NOT THREE THOUSAND ── (Lane SP) ──
+     *
+     * The owner, 6 October: "the inner pages are loading slightly slow,
+     * before it was super fast." Measured on a live-scale MySQL preview: a
+     * category page made 3,824 cache reads of `kbb.settings` (3,162 at
+     * 2.60.403), and on this host's FILE cache every one is a file open, a
+     * read and an unserialize of the whole settings map. SiteLayout::all()
+     * alone asks for its 134 keys one get() at a time, and every new
+     * SiteLayout->get() a lane adds (sold-out mode, filters, shop links...)
+     * is another 134 reads -- that is how 2.60.404-408 got slower without one
+     * extra SQL query.
+     *
+     * So while a web request is being handled (App\Http\Middleware\
+     * SettingsRequestMemo) the three maps are read from the cache ONCE and
+     * kept here. Outside a request -- artisan, queue jobs, a test's setup --
+     * nothing is memoised and every read goes to the cache exactly as before.
+     * Every write path drops the copy: set()/flush()/forgetMemo() directly,
+     * and any Cache::forget()/put() of these keys (BrandRename,
+     * AdminPathService, OwnerAppPath write the table and forget the key
+     * themselves) through AppServiceProvider's ForgettingKey/WritingKey
+     * listener, so a request that saves a setting reads the new value back.
+     */
+    private const REQUEST_MEMO_KEYS = [self::CACHE_KEY, self::MODULES_KEY, self::MODULE_SETTINGS_KEY];
+
+    /** @var array<string, array<mixed>> */
+    private static array $requestMemo = [];
+
+    private static int $requestDepth = 0;
+
+    public static function beginRequestMemo(): void
+    {
+        if (self::$requestDepth++ === 0) {
+            self::$requestMemo = [];
+        }
+    }
+
+    public static function endRequestMemo(): void
+    {
+        self::$requestDepth = max(0, self::$requestDepth - 1);
+
+        if (self::$requestDepth === 0) {
+            self::$requestMemo = [];
+        }
+    }
+
+    /** A cache key was written or forgotten: drop this request's copy of it. */
+    public static function forgetRequestMemo(?string $key = null): void
+    {
+        if ($key === null) {
+            self::$requestMemo = [];
+        } elseif (isset(self::$requestMemo[$key])) {
+            unset(self::$requestMemo[$key]);
+        }
+    }
+
+    public static function requestMemoActive(): bool
+    {
+        return self::$requestDepth > 0;
+    }
+
+    /** Cache::rememberForever(), read once per request while one is being handled. */
+    private static function remembered(string $key, \Closure $load): mixed
+    {
+        if (self::$requestDepth > 0 && isset(self::$requestMemo[$key])) {
+            return self::$requestMemo[$key];
+        }
+
+        $value = Cache::rememberForever($key, $load);
+
+        if (self::$requestDepth > 0 && is_array($value)) {
+            self::$requestMemo[$key] = $value;
+        }
+
+        return $value;
+    }
+
     public function all(): array
     {
-        $cached = Cache::rememberForever(self::CACHE_KEY, function () {
+        $cached = self::remembered(self::CACHE_KEY, function () {
             /*
              * Written as an explicit loop rather than pluck()->map()->all().
              *
@@ -148,6 +225,8 @@ class SettingsService
     /** Drop the per-request memo. Called by set() and flush(); also usable from tests. */
     public static function forgetMemo(?string $key = null): void
     {
+        self::$requestMemo = [];
+
         if ($key === null) {
             self::$memo = [];
             self::$snapshotTaken = false;
@@ -189,7 +268,7 @@ class SettingsService
      */
     public function moduleEnabled(string $module, bool $default = false): bool
     {
-        $map = Cache::rememberForever(self::MODULES_KEY, function () {
+        $map = self::remembered(self::MODULES_KEY, function () {
             $out = [];
 
             foreach (ModuleToggle::query()->get(['module', 'enabled']) as $row) {
@@ -284,7 +363,7 @@ class SettingsService
     /** @return array<string, mixed> */
     private function moduleSettingsMap(): array
     {
-        $map = Cache::rememberForever(self::MODULE_SETTINGS_KEY, function () {
+        $map = self::remembered(self::MODULE_SETTINGS_KEY, function () {
             $out = [];
 
             foreach (ModuleSetting::query()->get(['module', 'key', 'value']) as $row) {

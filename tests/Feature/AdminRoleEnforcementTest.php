@@ -305,6 +305,16 @@ it('has an authorization layer reading the role column', function () {
          */
         'CanonicalHost',
         'CheckRedirects',
+        /*
+         * Lane SP, and I have come and read this file as instructed.
+         *
+         * ClearPrefetchOnWrite authorises nothing and reads no role. On the
+         * response to a write it adds one header, Clear-Site-Data:
+         * "prefetchCache", so a shop page Chrome fetched ahead is never shown
+         * with the bag as it was before. It clears only the browser's
+         * prefetches -- no cookie, no storage -- and never touches a request.
+         */
+        'ClearPrefetchOnWrite',
         'EnforceAdminCapability',
         'NoIndexStaging',
         'NoStoreAdminApi',
@@ -387,6 +397,14 @@ it('has an authorization layer reading the role column', function () {
          * bootstrap/app.php that registers it.
          */
         'SetLocaleFromPath',
+        /*
+         * Lane SP, read as instructed. SettingsRequestMemo authorises nothing
+         * and reads no role: it marks where a request starts and ends so
+         * SettingsService reads its cached maps once per request. A setting
+         * written during the request (the admin's own saves) drops the copy,
+         * so the role column and every capability read exactly as before.
+         */
+        'SettingsRequestMemo',
     ]);
 
     // Still no Gate and no policy: four fixed roles and one map, not an RBAC
