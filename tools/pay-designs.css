@@ -1,0 +1,95 @@
+/* Lane PY -- PREVIEW ONLY. Four candidate looks for the checkout's payment
+   boxes, switched by data-pay-design="a|b|c|d" on .kbb-checkout, which only
+   tools/pay-shots.cjs sets. Nothing in the shop loads this file; Phase 2 moves
+   the design the owner picks into resources/css/kbb/kbb-checkout.css.
+
+   Brand colours, and where each one came from:
+     Tabby   #3BFF9D -> #3BFFC8 badge gradient, #292929 wordmark
+             (tabby-ai/tabby-android-sdk, res/drawable/ic_tabby_logo.xml)
+             #54545C widget grey (res/values/colors.xml)
+     Tamara  #AAE1FF #F9BD9A #FFBC8C #FFBE92 #F8BC8B #F29F7E #F0826B badge
+             gradient, #000000 wordmark (react-native-tamara-sdk 1.1.3,
+             android/.../drawable/tw_ic_logo_badge.xml); #FF9B83 icon disc
+             (tw_ic_tamara_badge.xml)
+     Card    #1434CB -- the Visa blue the shop's own PaymentMarkArt already uses
+     COD     #1F7D52 / #EEF8F1 -- the shop's own green, as today */
+
+.kbb-checkout[data-pay-design] .wc_payment_methods li.wc_payment_method.payment_method_tabby{
+  --b-grad:linear-gradient(90deg,#3BFF9D,#3BFFC8);--b-grad-v:linear-gradient(180deg,#3BFF9D,#3BFFC8);
+  --b-ink:#292929;--b-on:#292929;--b-tint:linear-gradient(#EBFFF6,#EBFFF6);--b-soft:#F3FFFA}
+.kbb-checkout[data-pay-design] .wc_payment_methods li.wc_payment_method.payment_method_tamara{
+  --b-grad:linear-gradient(110deg,#AAE1FF 1%,#F9BD9A 43%,#FFBC8C 51%,#FFBE92 64%,#F8BC8B 75%,#F29F7E 88%,#F0826B);
+  --b-grad-v:linear-gradient(180deg,#AAE1FF 1%,#F9BD9A 43%,#FFBC8C 51%,#F29F7E 88%,#F0826B);
+  --b-ink:#000;--b-on:#000;--b-tint:linear-gradient(110deg,#F1F9FF,#FEF4EE 50%,#FDEEE9);--b-soft:#FFF8F4}
+.kbb-checkout[data-pay-design] .wc_payment_methods li.wc_payment_method.payment_method_stripe{
+  --b-grad:linear-gradient(#1434CB,#1434CB);--b-grad-v:var(--b-grad);
+  --b-ink:#1434CB;--b-on:#fff;--b-tint:linear-gradient(#EFF2FD,#EFF2FD);--b-soft:#F6F8FE}
+.kbb-checkout[data-pay-design] .wc_payment_methods li.wc_payment_method.payment_method_cod{
+  --b-grad:linear-gradient(#1F7D52,#1F7D52);--b-grad-v:var(--b-grad);
+  --b-ink:#1F7D52;--b-on:#fff;--b-tint:linear-gradient(#EEF8F1,#EEF8F1);--b-soft:#F5FBF7}
+
+/* ---- shared: the logo slot, a fixed box so nothing moves when it paints ---- */
+/* today's label padding is half physical (14px 15px 14px 44px, then inline-start
+   44px): in Arabic the 44px stays on the LEFT, the side the logo now lives on */
+.kbb-checkout[data-pay-design] .wc_payment_methods li.wc_payment_method > label{gap:10px;padding-inline-end:15px!important}
+.kbb-checkout[data-pay-design] .pay-logo{margin-inline-start:auto;flex:none;display:inline-flex;align-items:center;justify-content:flex-end;gap:5px;inline-size:84px;block-size:26px}
+.kbb-checkout[data-pay-design] .pay-logo svg{display:block;block-size:100%;inline-size:auto;max-inline-size:100%}
+.kbb-checkout[data-pay-design] .pay-logo-stripe svg{block-size:20px}
+.kbb-checkout[data-pay-design] .pay-logo-cod svg{block-size:24px;color:#1F7D52}
+.kbb-checkout[data-pay-design] .pay-logo > .idle,.kbb-checkout[data-pay-design] .pay-logo > .sel{display:block;block-size:100%}
+.kbb-checkout[data-pay-design] .wc_payment_methods .pay-logo > .sel{display:none}
+/* the old banknote emoji is replaced by the drawn icon (it also vanished on select) */
+.kbb-checkout[data-pay-design] .wc_payment_methods li.payment_method_cod:not(:has(input:checked)) > label::after{content:none}
+.kbb-checkout[data-pay-design] .wc_payment_methods li.wc_payment_method:has(input:checked) > label::before{border-color:var(--b-ink)}
+.kbb-checkout[data-pay-design] .wc_payment_methods li.wc_payment_method:has(input:checked) > label::after{background:var(--b-ink)}
+.kbb-checkout[data-pay-design] #payment .wc_payment_methods li.wc_payment_method div.payment_box{border-top:1px dashed rgba(0,0,0,.14)!important}
+
+/* ================= A -- soft tint ================= */
+.kbb-checkout[data-pay-design="a"] .wc_payment_methods li.wc_payment_method,
+.kbb-checkout[data-pay-design="a"] .wc_payment_methods li.wc_payment_method:hover{background:var(--b-tint);border:1.6px solid var(--line)}
+.kbb-checkout[data-pay-design="a"] .wc_payment_methods li.wc_payment_method:has(input:checked){border:1.6px solid transparent;background:var(--b-tint) padding-box,var(--b-grad) border-box;box-shadow:0 0 0 1px rgba(0,0,0,.04)}
+.kbb-checkout[data-pay-design="a"] #payment .wc_payment_methods li.wc_payment_method div.payment_box{background:transparent!important}
+
+/* ================= B -- brand stripe ================= */
+.kbb-checkout[data-pay-design="b"] .wc_payment_methods li.wc_payment_method,
+.kbb-checkout[data-pay-design="b"] .wc_payment_methods li.wc_payment_method:hover{background:#fff}
+.kbb-checkout[data-pay-design="b"] .wc_payment_methods li.wc_payment_method::before{content:"";position:absolute;inset-block:0;inset-inline-start:0;inline-size:5px;background:var(--b-grad-v)}
+.kbb-checkout[data-pay-design="b"] .wc_payment_methods li.wc_payment_method:has(input:checked){border-color:var(--b-ink);background:#fff}
+.kbb-checkout[data-pay-design="b"] .wc_payment_methods li.payment_method_tabby:has(input:checked) > label::after,
+.kbb-checkout[data-pay-design="b"] .wc_payment_methods li.payment_method_tamara:has(input:checked) > label::after{background:var(--b-grad);inline-size:11px;block-size:11px;inset-inline-start:19px}
+.kbb-checkout[data-pay-design="b"] #payment .wc_payment_methods li.wc_payment_method div.payment_box{background:var(--b-soft)!important}
+
+/* ================= C -- bold selected ================= */
+.kbb-checkout[data-pay-design="c"] .wc_payment_methods li.wc_payment_method:hover{background:#fff;border-color:#CFCFD6}
+.kbb-checkout[data-pay-design="c"] .wc_payment_methods li.wc_payment_method:has(input:checked){border:1.6px solid transparent;background:var(--b-grad)}
+.kbb-checkout[data-pay-design="c"] .wc_payment_methods li.wc_payment_method:has(input:checked) > label{color:var(--b-on)}
+.kbb-checkout[data-pay-design="c"] .wc_payment_methods li.wc_payment_method:has(input:checked) > label::before{border-color:var(--b-on)}
+.kbb-checkout[data-pay-design="c"] .wc_payment_methods li.wc_payment_method:has(input:checked) > label::after{background:var(--b-on)}
+.kbb-checkout[data-pay-design="c"] .wc_payment_methods li.wc_payment_method:has(input:checked) .pay-logo > .idle{display:none}
+.kbb-checkout[data-pay-design="c"] .wc_payment_methods li.wc_payment_method:has(input:checked) .pay-logo > .sel{display:block}
+.kbb-checkout[data-pay-design="c"] .wc_payment_methods li.payment_method_stripe:has(input:checked) .pay-logo{background:#fff;border-radius:6px;padding:3px 6px;inline-size:auto}
+.kbb-checkout[data-pay-design="c"] .wc_payment_methods li.payment_method_cod:has(input:checked) .pay-logo-cod svg{color:#fff}
+.kbb-checkout[data-pay-design="c"] #payment .wc_payment_methods li.wc_payment_method div.payment_box{background:transparent!important;color:var(--b-on);border-top-color:rgba(0,0,0,.18)!important}
+.kbb-checkout[data-pay-design="c"] #payment .wc_payment_methods li.payment_method_stripe div.payment_box,
+.kbb-checkout[data-pay-design="c"] #payment .wc_payment_methods li.payment_method_cod div.payment_box{border-top-color:rgba(255,255,255,.35)!important}
+.kbb-checkout[data-pay-design="c"] #payment .wc_payment_methods li.payment_method_stripe div.payment_box label{color:#fff}
+
+/* ================= D -- clean card, brand panel with the 4 payments ================= */
+.kbb-checkout[data-pay-design="d"] .wc_payment_methods li.wc_payment_method,
+.kbb-checkout[data-pay-design="d"] .wc_payment_methods li.wc_payment_method:hover{background:#fff}
+.kbb-checkout[data-pay-design="d"] .wc_payment_methods li.wc_payment_method:has(input:checked){border-color:var(--b-ink);box-shadow:0 0 0 1px var(--b-ink);background:#fff}
+.kbb-checkout[data-pay-design="d"] #payment .wc_payment_methods li.wc_payment_method div.payment_box{background:var(--b-soft)!important;border-top:0!important;position:relative;padding-top:16px}
+.kbb-checkout[data-pay-design="d"] #payment .wc_payment_methods li.wc_payment_method div.payment_box::after{content:"";position:absolute;inset-inline:0;top:0;block-size:3px;background:var(--b-grad)}
+.kbb-checkout .pay-plan{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:10px 0 2px;text-align:center;position:relative}
+.kbb-checkout .pay-plan::before{content:"";position:absolute;inset-inline:12.5%;top:11px;block-size:1px;background:#54545C;opacity:.45}
+.kbb-checkout .pay-plan > span{display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+.kbb-checkout .pay-plan i{display:block;inline-size:22px;block-size:22px;border-radius:50%;background:var(--b-soft)}
+.kbb-checkout .pay-plan i svg{display:block;inline-size:22px;block-size:22px}
+.kbb-checkout .pay-plan b{font-size:12.5px;font-weight:800;color:#292929;white-space:nowrap}
+.kbb-checkout .pay-plan small{font-size:11px;font-weight:600;color:#54545C}
+.kbb-checkout .payment_method_tamara .pay-plan i{background:var(--b-grad);border:1.5px solid #000;inline-size:20px;block-size:20px;opacity:.35}
+.kbb-checkout .payment_method_tamara .pay-plan > span:first-child i{opacity:1}
+
+/* every design: the selected box keeps its rounded bottom corners (today's
+   sheet squares them, which reads as a cut-off once the box is coloured) */
+.kbb-checkout[data-pay-design] .wc_payment_methods li.wc_payment_method:has(input:checked){border-end-start-radius:12px;border-end-end-radius:12px}
