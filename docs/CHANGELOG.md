@@ -3,6 +3,15 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.416
+**Desktop mega menus fit the site width.** Apply after .415. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "The mega menu columns must be adjusted auto as per the site width ... more than 4 columns ... start from the most left ... a nice edge type to show that this mega menu is for this parent item" | No dropdown ever runs past the site edge. Panels with more than 4 columns (All Brands) start at the site's left edge; 2-4 column panels open under their item and slide only as far as needed. Columns and text shrink with the width (down to 130px / 11.5px), then a flat list reflows into fewer, longer columns. A pink edge with a small point under the hovered item. Appearance -> Header -> Navigation: "Fit mega menus to the site width" (ON), "Start from the left beyond" (4 columns), "Smallest column width", "Smallest mega menu text", "Pointer to the parent item" (ON) |
+
+Files: see the package's update.json.
+
 ## 2.60.415
 **Phone menu style V4 "Two-tone", with full controls.** Apply after .414.
 Hard refresh the shop and the admin.
