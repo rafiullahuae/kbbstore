@@ -197,6 +197,37 @@ class HeaderSettings
                               'Used when How it fills the row is Bigger text: the text never grows past this, and any room left over is shared out evenly between the items.',
                               ['14' => '14px', '15' => '15px', '16' => '16px', '17' => '17px', '18' => '18px', '19' => '19px', '20' => '20px']],
 
+        /*
+         * ── FIT MEGA MENUS TO THE SITE WIDTH ────────────────────── Lane MG ──
+         *
+         * The owner, over the "All Brands" panel running off the right edge of
+         * the screen: the panel must never go outside the site width, its
+         * columns and text squeeze to fit, a panel of more than four columns
+         * starts at the far left of the site, and "a nice edge type to show
+         * that this mega menu is for this parent item".
+         *
+         * ▲ `mega_fit` AND `mega_pointer` SHIP ON — he asked for both (CLAUDE.md,
+         *   the 30-September reversal). OFF prints the bar byte for byte as it
+         *   was; App\Support\MegaMenuFit decides and partials/nav-bar.blade.php
+         *   prints nothing new when it says no.
+         *
+         * Every size is a SELECT of fixed options, and MegaMenuFit re-checks
+         * each against its own list before anything reaches a `style` attribute.
+         */
+        'mega_fit'        => ['bool',   'Fit mega menus to the site width', true,
+                              'Desktop only. A drop-down panel never runs past the edges of the site: it moves, and its columns and text get narrower, to fit. Off shows the panels as they were.'],
+        'mega_left_from'  => ['select', 'Start from the left beyond', '4',
+                              'A panel with more columns than this starts at the left edge of the site, wherever its menu item sits. Smaller panels open under their own item.',
+                              ['2' => '2 columns', '3' => '3 columns', '4' => '4 columns', '5' => '5 columns', '6' => '6 columns', '7' => '7 columns', '8' => '8 columns']],
+        'mega_col_min'    => ['select', 'Smallest column width', '130',
+                              'Columns get narrower to fit the site. Below this width a panel uses fewer, longer columns (a panel with headed groups moves whole groups onto another row) instead of getting any narrower.',
+                              ['100' => '100px', '110' => '110px', '120' => '120px', '130' => '130px', '140' => '140px', '150' => '150px', '160' => '160px', '180' => '180px']],
+        'mega_text_min'   => ['select', 'Smallest mega menu text', '11.5',
+                              'The links in a panel get smaller with their column, down to this size. On a wide screen they stay at their normal 13px.',
+                              ['10' => '10px', '10.5' => '10.5px', '11' => '11px', '11.5' => '11.5px', '12' => '12px', '12.5' => '12.5px', '13' => '13px (never smaller)']],
+        'mega_pointer'    => ['bool',   'Pointer to the parent item', true,
+                              'A short pink line with a small point, on the top edge of an open panel under the menu item it belongs to, and that item\'s name in pink — so a panel that starts at the left still shows whose it is. Works with Fit mega menus to the site width.'],
+
         // ── Support ──
         'support_show'    => ['bool',   'Support block', true, 'The 24/7 WhatsApp block on the right.'],
         'support_label'   => ['text',   'Wording', '24/7 support', ''],
@@ -431,7 +462,8 @@ class HeaderSettings
         'menu'    => ['Menu icon', 'The control that opens the mobile menu.',
                       ['menu_icon', 'menu_icon_speed', 'menu_icon_size', 'menu_icon_c1', 'menu_icon_c2', 'menu_icon_c3']],
         'nav'     => ['Navigation', 'The category bar.',
-                      ['nav_show', 'nav_uppercase', 'nav_size', 'nav_gap', 'nav_hot_colour', 'nav_fit', 'nav_fit_mode', 'nav_fit_from', 'nav_fit_min', 'nav_fit_max']],
+                      ['nav_show', 'nav_uppercase', 'nav_size', 'nav_gap', 'nav_hot_colour', 'nav_fit', 'nav_fit_mode', 'nav_fit_from', 'nav_fit_min', 'nav_fit_max',
+                       'mega_fit', 'mega_left_from', 'mega_col_min', 'mega_text_min', 'mega_pointer']],
         'support' => ['Support', 'The WhatsApp block.',
                       ['support_show', 'support_label', 'support_icon_bg', 'support_icon_fg']],
         'flagbar' => ['Flag bar', 'The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. Off on phones and on desktop for now — switch either one on to bring it back, with the wording on phones only.',

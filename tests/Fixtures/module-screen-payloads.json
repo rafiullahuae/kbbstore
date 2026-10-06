@@ -1729,6 +1729,81 @@
             },
             "default": "18",
             "value": "18"
+          },
+          {
+            "key": "mega_fit",
+            "name": "mega_fit",
+            "type": "bool",
+            "label": "Fit mega menus to the site width",
+            "help": "Desktop only. A drop-down panel never runs past the edges of the site: it moves, and its columns and text get narrower, to fit. Off shows the panels as they were.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "mega_left_from",
+            "name": "mega_left_from",
+            "type": "select",
+            "label": "Start from the left beyond",
+            "help": "A panel with more columns than this starts at the left edge of the site, wherever its menu item sits. Smaller panels open under their own item.",
+            "options": {
+              "2": "2 columns",
+              "3": "3 columns",
+              "4": "4 columns",
+              "5": "5 columns",
+              "6": "6 columns",
+              "7": "7 columns",
+              "8": "8 columns"
+            },
+            "default": "4",
+            "value": "4"
+          },
+          {
+            "key": "mega_col_min",
+            "name": "mega_col_min",
+            "type": "select",
+            "label": "Smallest column width",
+            "help": "Columns get narrower to fit the site. Below this width a panel uses fewer, longer columns (a panel with headed groups moves whole groups onto another row) instead of getting any narrower.",
+            "options": {
+              "100": "100px",
+              "110": "110px",
+              "120": "120px",
+              "130": "130px",
+              "140": "140px",
+              "150": "150px",
+              "160": "160px",
+              "180": "180px"
+            },
+            "default": "130",
+            "value": "130"
+          },
+          {
+            "key": "mega_text_min",
+            "name": "mega_text_min",
+            "type": "select",
+            "label": "Smallest mega menu text",
+            "help": "The links in a panel get smaller with their column, down to this size. On a wide screen they stay at their normal 13px.",
+            "options": {
+              "10": "10px",
+              "10.5": "10.5px",
+              "11": "11px",
+              "11.5": "11.5px",
+              "12": "12px",
+              "12.5": "12.5px",
+              "13": "13px (never smaller)"
+            },
+            "default": "11.5",
+            "value": "11.5"
+          },
+          {
+            "key": "mega_pointer",
+            "name": "mega_pointer",
+            "type": "bool",
+            "label": "Pointer to the parent item",
+            "help": "A short pink line with a small point, on the top edge of an open panel under the menu item it belongs to, and that item's name in pink — so a panel that starts at the left still shows whose it is. Works with Fit mega menus to the site width.",
+            "options": null,
+            "default": true,
+            "value": true
           }
         ]
       },

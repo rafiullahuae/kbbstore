@@ -58,11 +58,25 @@
      * nothing else. Every value it does print is an integer or a px integer
      * from a select of fixed options.
      */
-    $kbbNavFit = \App\Support\NavRowFit::style($kbbNav, $kbbMega, app(\App\Services\HeaderSettings::class)->all());
+    $kbbHeader = app(\App\Services\HeaderSettings::class)->all();
+    $kbbNavFit = \App\Support\NavRowFit::style($kbbNav, $kbbMega, $kbbHeader);
+
+    /*
+     * Lane MG — Appearance → Header → Navigation → "Fit mega menus to the site
+     * width". The SAME settings read as the line above, not a second one.
+     * MegaMenuFit answers null with the switch off (or the Mega Menu module
+     * off), and then nothing below prints a byte it did not print before:
+     * `class="navitem"`, the panel's `--mega-cols:N` and its column groups
+     * straight inside it. On, an item with a panel gains its placement class
+     * (mg-l / mg-a / mg-s, plus mg-p for the pointer) and, for a mega panel,
+     * a style of its column count and two px values from fixed lists; the
+     * panel's columns sit in one `.mg-cols` grid so they can squeeze and wrap.
+     */
+    $kbbMegaFit = $kbbMega ? \App\Support\MegaMenuFit::from($kbbHeader) : null;
 @endphp
 <div class="mbar{{ $kbbNavFit !== null ? ' nav-fill' : '' }}"@if ($kbbNavFit !== null) style="{{ $kbbNavFit }}"@endif><div class="wrap">
     @foreach ($kbbNav as $item)
-        <div class="navitem">
+        <div class="navitem{{ $kbbMegaFit?->itemClass($item) }}"@if ($kbbItemStyle = $kbbMegaFit?->itemStyle($item)) style="{{ $kbbItemStyle }}"@endif>
             <a class="navlink" href="{{ Url::to($item['url'] ?? '/') }}"
                 @if (! empty($item['highlight_color'])) style="background:{{ $item['highlight_color'] }};color:#fff;border-radius:8px;padding:4px {{ $kbbNavFit !== null ? 'calc(10px * var(--nav-scale))' : '10px' }}" @endif
                 @if (! empty($item['new_tab'])) target="_blank" rel="noopener" @endif>
@@ -77,15 +91,13 @@
 
             @if ($kbbMega && ! empty($item['children']))
                 @php
-                    $childCount = count($item['children']);
                     // Manual setting wins outright; otherwise roughly 10 rows
-                    // per column, rounded up, minimum one column.
-                    $columnCount = max(1, (int) ($item['columns'] ?? ceil($childCount / 10)));
-                    $chunkSize = (int) ceil($childCount / $columnCount);
-                    $columns = array_chunk($item['children'], max(1, $chunkSize));
+                    // per column, rounded up, minimum one column. One copy of
+                    // the rule, which MegaMenuFit::itemClass() above shares.
+                    [$columnCount, $columns] = \App\Support\MegaMenuFit::columns($item);
                 @endphp
 
-                <div class="drop{{ $columnCount > 1 ? ' mega' : '' }}" style="{{ $columnCount > 1 ? '--mega-cols:' . count($columns) : '' }}">
+                <div class="drop{{ $columnCount > 1 ? ' mega' : '' }}" style="{{ $columnCount > 1 ? '--mega-cols:' . count($columns) : '' }}">{!! $kbbMegaFit !== null && $columnCount > 1 ? '<div class="mg-cols">' : '' !!}
                     @if ($columnCount > 1)
                         @foreach ($columns as $column)
                             <div class="mcol-group">
@@ -129,7 +141,7 @@
                             </a>
                         @endforeach
                     @endif
-                </div>
+                {!! $kbbMegaFit !== null && $columnCount > 1 ? '</div>' : '' !!}</div>
             @endif
         </div>
     @endforeach

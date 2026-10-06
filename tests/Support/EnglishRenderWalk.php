@@ -1831,6 +1831,44 @@ final class EnglishRenderWalk
                 'hits' => 31,
             ],
 
+            /*
+             * MEGA MENUS FIT THE SITE WIDTH. (Lane MG)
+             *
+             * The owner, over the "All Brands" panel running off the right edge
+             * of the screen: a panel must never leave the site width, its
+             * columns and text squeeze, a panel of more than four columns
+             * starts at the far left, and "a nice edge type to show that this
+             * mega menu is for this parent item". Appearance → Header →
+             * Navigation → "Fit mega menus to the site width" ships ON because
+             * he asked; off puts every byte back (MegaMenuFitTest pins the
+             * whole bar against the pre-lane template).
+             *
+             * WHAT MOVES, AND NOTHING ELSE: an item WITH a panel gains its
+             * placement class (mg-s one column, mg-a two to four, mg-l more)
+             * and mg-p for the pointer; a mega item also gains a style of its
+             * column count and two px values; a mega panel's columns sit in
+             * one `.mg-cols` box, opened right after the panel's tag and closed
+             * right before the panel's own `</div>`. Items without a panel stay
+             * `<div class="navitem">`. The walk's menu has no panel past four
+             * columns, so the mg-l case has no rule here: MegaMenuFitTest pins
+             * it on a menu of the owner's shape.
+             */
+            'mega menus fit the site width: one-column items (Lane MG)' => [
+                'pattern' => '#<div class="navitem">(\s*<a class="navlink"(?:(?!</a>).)*</a>\s*<div class="drop" style="">)#sU',
+                'with' => '<div class="navitem mg-s mg-p">$1',
+                'hits' => 31,
+            ],
+            'mega menus fit the site width: two-to-four-column items (Lane MG)' => [
+                'pattern' => '#<div class="navitem">(\s*<a class="navlink"(?:(?!</a>).)*</a>\s*<div class="drop mega" style="--mega-cols:([2-4])">)#sU',
+                'with' => '<div class="navitem mg-a mg-p" style="--mega-cols:$2;--mg-min:130px;--mg-fmin:11.5px">$1',
+                'hits' => 31,
+            ],
+            'mega menus fit the site width: the columns box (Lane MG)' => [
+                'pattern' => '#(<div class="drop mega" style="--mega-cols:\d+">)(.*\n {60}</div>)#sU',
+                'with' => '$1<div class="mg-cols">$2</div>',
+                'hits' => 31,
+            ],
+
             'the shipped card style, which the owner asked to change' => [
                 'pattern' => '#<div class="kbb-pgrid" data-skin="classic">#',
                 'with' => '<div class="kbb-pgrid" data-skin="'.\App\Support\GridSkins::DEFAULT.'">',
