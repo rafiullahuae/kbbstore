@@ -1,0 +1,194 @@
+{
+  "card-A": {
+    "390": {
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "cards": 40,
+      "firstCard": {
+        "w": 178,
+        "h": 317
+      },
+      "firstCover": {
+        "w": 176,
+        "h": 176
+      },
+      "videoCard": {
+        "w": 178,
+        "h": 317
+      },
+      "captionFont": "12.5px",
+      "captionLines": 2,
+      "imgCurrentSrc": "/img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg",
+      "imgSrcset": "/img-cache/200/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 200w, /img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 400w, /img-cache/800/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 800w",
+      "lazyImgs": 36,
+      "iframesBeforeTap": 0
+    },
+    "1280": {
+      "innerWidth": 1280,
+      "scrollWidth": 1280,
+      "cards": 40,
+      "firstCard": {
+        "w": 286,
+        "h": 445
+      },
+      "firstCover": {
+        "w": 284,
+        "h": 284
+      },
+      "videoCard": {
+        "w": 286,
+        "h": 445
+      },
+      "captionFont": "13.5px",
+      "captionLines": 2,
+      "imgCurrentSrc": "/img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg",
+      "imgSrcset": "/img-cache/200/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 200w, /img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 400w, /img-cache/800/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 800w",
+      "lazyImgs": 36,
+      "iframesBeforeTap": 0
+    }
+  },
+  "card-B": {
+    "390": {
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "cards": 40,
+      "firstCard": {
+        "w": 178,
+        "h": 223
+      },
+      "firstCover": {
+        "w": 178,
+        "h": 223
+      },
+      "videoCard": {
+        "w": 178,
+        "h": 223
+      },
+      "captionFont": "12.5px",
+      "captionLines": 2,
+      "imgCurrentSrc": "/img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg",
+      "imgSrcset": "/img-cache/200/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 200w, /img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 400w, /img-cache/800/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 800w",
+      "lazyImgs": 36,
+      "iframesBeforeTap": 0
+    },
+    "1280": {
+      "innerWidth": 1280,
+      "scrollWidth": 1280,
+      "cards": 40,
+      "firstCard": {
+        "w": 286,
+        "h": 358
+      },
+      "firstCover": {
+        "w": 286,
+        "h": 358
+      },
+      "videoCard": {
+        "w": 286,
+        "h": 358
+      },
+      "captionFont": "13.5px",
+      "captionLines": 2,
+      "imgCurrentSrc": "/img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg",
+      "imgSrcset": "/img-cache/200/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 200w, /img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 400w, /img-cache/800/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 800w",
+      "lazyImgs": 36,
+      "iframesBeforeTap": 0
+    }
+  },
+  "card-C": {
+    "390": {
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "cards": 40,
+      "firstCard": {
+        "w": 178,
+        "h": 349
+      },
+      "firstCover": {
+        "w": 162,
+        "h": 203
+      },
+      "videoCard": {
+        "w": 178,
+        "h": 349
+      },
+      "captionFont": "12.5px",
+      "captionLines": 2,
+      "imgCurrentSrc": "/img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg",
+      "imgSrcset": "/img-cache/200/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 200w, /img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 400w, /img-cache/800/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 800w",
+      "lazyImgs": 36,
+      "iframesBeforeTap": 0
+    },
+    "1280": {
+      "innerWidth": 1280,
+      "scrollWidth": 1280,
+      "cards": 40,
+      "firstCard": {
+        "w": 286,
+        "h": 505
+      },
+      "firstCover": {
+        "w": 266,
+        "h": 333
+      },
+      "videoCard": {
+        "w": 286,
+        "h": 505
+      },
+      "captionFont": "13.5px",
+      "captionLines": 2,
+      "imgCurrentSrc": "/img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg",
+      "imgSrcset": "/img-cache/200/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 200w, /img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 400w, /img-cache/800/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 800w",
+      "lazyImgs": 36,
+      "iframesBeforeTap": 0
+    }
+  },
+  "card-D": {
+    "390": {
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "cards": 40,
+      "firstCard": {
+        "w": 178,
+        "h": 316
+      },
+      "firstCover": {
+        "w": 178,
+        "h": 316
+      },
+      "videoCard": {
+        "w": 178,
+        "h": 316
+      },
+      "captionFont": "12.5px",
+      "captionLines": 2,
+      "imgCurrentSrc": "/img-cache/800/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg",
+      "imgSrcset": "/img-cache/200/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 200w, /img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 400w, /img-cache/800/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 800w",
+      "lazyImgs": 36,
+      "iframesBeforeTap": 0
+    },
+    "1280": {
+      "innerWidth": 1280,
+      "scrollWidth": 1280,
+      "cards": 40,
+      "firstCard": {
+        "w": 286,
+        "h": 509
+      },
+      "firstCover": {
+        "w": 286,
+        "h": 509
+      },
+      "videoCard": {
+        "w": 286,
+        "h": 509
+      },
+      "captionFont": "13.5px",
+      "captionLines": 2,
+      "imgCurrentSrc": "/img-cache/800/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg",
+      "imgSrcset": "/img-cache/200/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 200w, /img-cache/400/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 400w, /img-cache/800/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg 800w",
+      "lazyImgs": 36,
+      "iframesBeforeTap": 0
+    }
+  }
+}

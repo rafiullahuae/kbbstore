@@ -20,6 +20,8 @@ declare(strict_types=1);
 |     DELETE /admin-api/spotted/posts/{id}    remove a post
 |     POST   /admin-api/spotted/order         the list's new order
 |     GET    /admin-api/spotted/products      the product picker's search
+|     GET    /admin-api/spotted/instagram     (Lane SG) every synced IG post
+|     POST   /admin-api/spotted/instagram     (Lane SG) the page's selection
 |
 | THIS FILE IS REQUIRED FROM routes/web.php BY THE INTEGRATOR, inside the
 | existing admin-api group — the one that already carries `web`, `auth:admin`
@@ -44,6 +46,7 @@ declare(strict_types=1);
 */
 
 use App\Http\Controllers\Admin\SpottedApiController;
+use App\Http\Controllers\Admin\SpottedInstagramApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:120,1')->group(function () {
@@ -54,4 +57,9 @@ Route::middleware('throttle:120,1')->group(function () {
     Route::delete('/spotted/posts/{id}', [SpottedApiController::class, 'destroy'])->whereNumber('id')->name('admin.spotted.destroy');
     Route::post('/spotted/order', [SpottedApiController::class, 'order'])->name('admin.spotted.order');
     Route::get('/spotted/products', [SpottedApiController::class, 'products'])->name('admin.spotted.products');
+
+    // (Lane SG) From Instagram: the synced posts and the page's selection.
+    // Capability spotted.instagram (its own RULES line, above spotted/**).
+    Route::get('/spotted/instagram', [SpottedInstagramApiController::class, 'show'])->name('admin.spotted.instagram');
+    Route::post('/spotted/instagram', [SpottedInstagramApiController::class, 'save'])->name('admin.spotted.instagram.save');
 });

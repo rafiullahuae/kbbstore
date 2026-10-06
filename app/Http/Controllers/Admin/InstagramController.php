@@ -580,6 +580,11 @@ class InstagramController extends Controller
             'pictures' => (int) ($result['pictures'] ?? 0),
             'failed' => (int) ($result['failed'] ?? 0),
             'pruned' => (int) ($result['pruned'] ?? 0),
+            // (Lane SG) How many pages were read, how many pictures are still
+            // to fetch, and the shares note — for the Spotted picker's message.
+            'pages' => (int) ($result['pages'] ?? 0),
+            'pending' => (int) ($result['pending'] ?? 0),
+            'insights_note' => (string) ($result['insights_note'] ?? ''),
             'connection' => $this->connection(),
             'profile' => $this->publicProfile(),
             'content' => $this->content(),

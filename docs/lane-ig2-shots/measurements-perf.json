@@ -1,0 +1,40 @@
+{
+  "390": {
+    "cls": 0,
+    "cards": 40,
+    "eagerCovers": 4,
+    "lazyCovers": 36,
+    "asyncDecode": 40,
+    "withSrcset": 40,
+    "inlineCssBytes": 6372,
+    "inlineJsBytes": 2125,
+    "jsUsesTimers": false,
+    "jsReadsLayout": false,
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "coversFetchedBeforeScroll": 12,
+    "coverBytesBeforeScroll": 269886,
+    "allImageBytesBeforeScroll": 273020,
+    "sampleCover": "/img-cache/800/uploads/instagram/869de756c42bc5ea73ac698ded5d6d6f6e2ec1dd.jpg",
+    "requestsToInstagram": 0
+  },
+  "1280": {
+    "cls": 0,
+    "cards": 40,
+    "eagerCovers": 4,
+    "lazyCovers": 36,
+    "asyncDecode": 40,
+    "withSrcset": 40,
+    "inlineCssBytes": 6372,
+    "inlineJsBytes": 2125,
+    "jsUsesTimers": false,
+    "jsReadsLayout": false,
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "coversFetchedBeforeScroll": 16,
+    "coverBytesBeforeScroll": 135469,
+    "allImageBytesBeforeScroll": 138603,
+    "sampleCover": "/img-cache/400/uploads/instagram/6eac4f170a081a8486f1af3e6913e8327f22ef4a.jpg",
+    "requestsToInstagram": 0
+  }
+}

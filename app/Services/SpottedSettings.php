@@ -177,6 +177,27 @@ final class SpottedSettings
         'btn_gap_m' => ['type' => 'select', 'label' => 'Space above the button · phone', 'default' => '16', 'options' => self::PX, 'help' => ''],
 
         /* ── The page ─────────────────────────────────────────────────────── */
+        /* (Lane SG) The owner, 6 October: the page should be OUR Instagram posts,
+           picked from a list, "auto" — so the source ships at `instagram` AT HIS
+           REQUEST. Manual stays one choice away, and while nothing is ticked in
+           “From Instagram” the page shows the manual posts, so it is never blank. */
+        'page_source' => ['type' => 'select', 'label' => 'What the Spotted page shows', 'default' => 'instagram',
+            'options' => ['instagram' => 'Instagram — the posts ticked in “From Instagram” above', 'manual' => 'Manual uploads — the posts list above'],
+            'help' => 'With Instagram chosen and nothing ticked yet, the manual posts show, so the page is never empty.'],
+        /* (Lane SG) "if the post is video, it should play on our website directly
+           by embed from the instagram" — ON at his request. Off: a video opens
+           Instagram in a new tab, like a photo. */
+        /* (Lane SG) The owner, 6 October: "show me the cards designs too" — four
+           lettered card styles, every one filled from the synced Instagram data
+           alone. He picked C ("this design is fine, go with it"), so C is the
+           default AT HIS REQUEST; A, B and D stay selectable and cost the page
+           nothing — only the chosen style's rules are printed. */
+        'page_card' => ['type' => 'select', 'label' => 'Instagram card style', 'default' => 'c',
+            'options' => ['a' => 'A — Instagram native: profile row, square picture, counts, caption', 'b' => 'B — Overlay: caption and counts over the picture',
+                'c' => 'C — Soft pink frame: the picture framed, counts as pills (recommended)', 'd' => 'D — Reel-first: tall tiles, counts down the side like Reels'],
+            'help' => 'Only for the posts from Instagram. Everything on the card comes from Instagram itself.'],
+        'page_play' => ['type' => 'bool', 'label' => 'Videos play on our page', 'default' => true,
+            'help' => 'A tap on a reel or video opens Instagram’s own player over the page. Nothing loads from Instagram until the tap. Off: it opens the post on Instagram.'],
         'page_h1' => ['type' => 'text', 'label' => 'Page heading (H1)', 'default' => '',
             'help' => 'Empty: “#KBeautyBliss Spotted”.'],
         'page_intro' => ['type' => 'textarea', 'label' => 'Introduction', 'default' => '',
@@ -203,7 +224,7 @@ final class SpottedSettings
         'spacing' => ['Spacing', 'Each per device.',
             ['pad_top_d', 'pad_top_m', 'pad_bot_d', 'pad_bot_m', 'head_gap_d', 'head_gap_m', 'btn_gap_d', 'btn_gap_m']],
         'page' => ['Spotted page', 'The page at /kbeautybliss-spotted/: its heading, introduction, grid and what Google shows.',
-            ['page_h1', 'page_intro', 'page_cols_d', 'page_cols_m', 'seo_title', 'seo_desc']],
+            ['page_source', 'page_card', 'page_play', 'page_h1', 'page_intro', 'page_cols_d', 'page_cols_m', 'seo_title', 'seo_desc']],
     ];
 
     /**
@@ -362,7 +383,7 @@ final class SpottedSettings
     /**
      * The page's wording and grid, reduced to literals the same way.
      *
-     * @return array{classes:string, style:string, h1:string, intro:string, seo_title:string, seo_desc:string}
+     * @return array{classes:string, style:string, h1:string, intro:string, seo_title:string, seo_desc:string, source:string, play:bool, card:string, cols_d:int, cols_m:int}
      */
     public function page(): array
     {
@@ -379,7 +400,29 @@ final class SpottedSettings
             'intro' => self::text($c, 'page_intro'),
             'seo_title' => self::text($c, 'seo_title'),
             'seo_desc' => self::text($c, 'seo_desc'),
+            // (Lane SG) Option keys and a bool, never the stored string.
+            'source' => self::pick($c, 'page_source', ['instagram', 'manual'], 'instagram'),
+            'play' => (bool) ($c['page_play'] ?? true),
+            'card' => self::pick($c, 'page_card', ['a', 'b', 'c', 'd'], 'c'),
+            'cols_d' => (int) self::pick($c, 'page_cols_d', ['3', '4', '5'], '4'),
+            'cols_m' => (int) self::pick($c, 'page_cols_m', ['1', '2'], '2'),
         ];
+    }
+
+    /**
+     * (Lane SG) The Instagram posts ticked for the page, when the page's source
+     * is Instagram; empty otherwise, or when nothing is ticked — and the caller
+     * then draws the manual posts, so the page never goes blank.
+     *
+     * @return array{profile: array{handle: string, avatar: ?string}, cards: list<array<string, mixed>>}
+     */
+    public function instagramCards(?string $source = null): array
+    {
+        if (($source ?? $this->page()['source']) !== 'instagram') {
+            return ['profile' => ['handle' => SpottedInstagram::HANDLE, 'avatar' => null], 'cards' => []];
+        }
+
+        return app(SpottedInstagram::class)->cards();
     }
 
     /**
@@ -404,7 +447,7 @@ final class SpottedSettings
      */
     public function pageIsLive(): bool
     {
-        return $this->pageCards() !== [];
+        return $this->instagramCards()['cards'] !== [] || $this->pageCards() !== [];
     }
 
     /** @return list<array<string, mixed>> */

@@ -1,0 +1,36 @@
+{
+  "modal-390": {
+    "requestsToInstagramBeforeTap": 0,
+    "open": true,
+    "iframeSrc": "https://www.instagram.com/reel/C356A192B7x/embed/",
+    "frame": {
+      "w": 366,
+      "h": 651
+    },
+    "focused": "sigm-x",
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "afterEsc": {
+      "hidden": true,
+      "iframes": 0,
+      "focusBackOnCard": true
+    }
+  },
+  "modal-1280": {
+    "requestsToInstagramBeforeTap": 0,
+    "open": true,
+    "iframeSrc": "https://www.instagram.com/reel/C356A192B7x/embed/",
+    "frame": {
+      "w": 402,
+      "h": 716
+    },
+    "focused": "sigm-x",
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "afterEsc": {
+      "hidden": true,
+      "iframes": 0,
+      "focusBackOnCard": true
+    }
+  }
+}

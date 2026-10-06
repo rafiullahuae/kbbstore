@@ -108,7 +108,7 @@ final class AdminRoles
             'marketing.view', 'marketing.manage', 'marketing.export',
             'marketing.email.view', 'marketing.email.manage', 'emails.view', 'emails.test',
             'banners.view', 'banners.manage', 'gridsections.view', 'gridsections.manage',
-            'spotted.manage', 'instagram.view', 'ugc.view', 'ugc.manage', 'wabutton.manage',
+            'spotted.manage', 'spotted.instagram', 'instagram.view', 'ugc.view', 'ugc.manage', 'wabutton.manage',
         ],
     ];
 
@@ -194,6 +194,7 @@ final class AdminRoles
             'slimfooter.manage' => 'Footer bar',
             'footer.preview' => 'Footer previews',
             'spotted.manage' => '#KBeautyBliss Spotted',
+            'spotted.instagram' => '#KBeautyBliss Spotted — pick posts from Instagram',
             'sitelayout.manage' => 'Site width and columns',
             'pagewash.manage' => 'Page background',
             'wabutton.manage' => 'WhatsApp button',

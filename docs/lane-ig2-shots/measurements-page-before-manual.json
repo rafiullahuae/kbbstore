@@ -1,0 +1,32 @@
+{
+  "before-manual": {
+    "390": {
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "cards": 0,
+      "firstCard": null,
+      "firstCover": null,
+      "videoCard": null,
+      "captionFont": null,
+      "captionLines": null,
+      "imgCurrentSrc": null,
+      "imgSrcset": null,
+      "lazyImgs": 0,
+      "iframesBeforeTap": 0
+    },
+    "1280": {
+      "innerWidth": 1280,
+      "scrollWidth": 1280,
+      "cards": 0,
+      "firstCard": null,
+      "firstCover": null,
+      "videoCard": null,
+      "captionFont": null,
+      "captionLines": null,
+      "imgCurrentSrc": null,
+      "imgSrcset": null,
+      "lazyImgs": 0,
+      "iframesBeforeTap": 0
+    }
+  }
+}
