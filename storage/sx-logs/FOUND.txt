@@ -29,3 +29,20 @@ Probe (tools/sx-neighbour.cjs, 1280px, y = 50/65/80% of link height):
   next to a mega item swallowed (hit DIV.navitem, clickNavigated=false).
 Fix (CSS only): non-hovered menu links sit above the bridges (bridges z 68, idle links z 69,
 panels stay 70), so a visible link always takes the pointer and the click.
+
+AFTER THE FIX (sxfix = this worktree):
+- tools/sx-cover.cjs: other links hittable while a mega item is hovered:
+    1024: 2.60.415 100% | HEAD 81.2% | fix 100%
+    1280: 2.60.415 100% | HEAD 82.5% | fix 100%   (home, brand, category, product)
+    1440: 2.60.415 100% | HEAD 83.8% | fix 100%
+  panels still open on hover 2/2, straight move down stays in the panel 2/2 (home, brand).
+- tools/sx-neighbour.cjs: 15/15 clicks navigate (HEAD 11/15).
+- Page loads, server ms, queries, cache reads, prefetch 3/3, CLS: unchanged (m2.json).
+
+SIDE NOTES (pre-existing at 2.60.415, NOT touched):
+- kbb-shop.css:453 and kbb-product.css:655 carry a legacy `.mega{display:none;...}` (from the
+  2.60.41 baseline; its `.cat.has-mega` markup no longer exists). It loads after kbb.css on
+  category/shop and product pages, so every MULTI-COLUMN header panel (Brands, Skincare...)
+  never opens there at any ref. Single-column dropdowns are unaffected.
+- Brand page, laptop: one 0.015 shift at ~150-200 ms (brw-ph__media/panel and #brandGrid move
+  down 22px), before first paint, same at every ref.
