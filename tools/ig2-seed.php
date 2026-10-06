@@ -3,8 +3,8 @@
  * Lane SG (IG2) preview seed: the shared catalogue, the preview owner, and a
  * realistic synced Instagram account — 30 posts of @kbeauty.bliss (photos,
  * reels with 9:16 covers, carousels; long and short captions; counts in the
- * thousands; a few with no share figure, as Meta returns for some), 14 of them
- * ticked for /kbeautybliss-spotted/, plus three MANUAL posts so the "before"
+ * thousands; a few with no share figure, as Meta returns for some), 40 of 44
+ * ticked (IG2_N / IG2_PICK change that) for /kbeautybliss-spotted/, plus three MANUAL posts so the "before"
  * shot shows today's page. Pictures are drawn with GD into the preview's web
  * root. Written into the PREVIEW only; nothing here reaches a package.
  *
@@ -87,11 +87,13 @@ $captions = [
     'K-beauty for beginners: the only 4 products you need to start. Simple, gentle and effective — swipe through ➡️',
 ];
 $selected = (getenv('IG2_SELECT') ?: '1') !== '0';
+$total = (int) (getenv('IG2_N') ?: 44);
+$pick = (int) (getenv('IG2_PICK') ?: 40);
 $dir = IgPath::directory();
 @mkdir($dir, 0775, true);
 $now = now();
 $hasNew = Schema::hasColumn('instagram_posts', 'spotted_sort');
-for ($i = 0; $i < 30; $i++) {
+for ($i = 0; $i < $total; $i++) {
     $type = $i % 3 === 1 ? 'VIDEO' : ($i % 5 === 3 ? 'CAROUSEL_ALBUM' : 'IMAGE');
     [$w, $h] = $type === 'VIDEO' ? [720, 1280] : ($i % 4 === 0 ? [1080, 1080] : [1080, 1350]);
     $p = $palettes[$i % count($palettes)];
@@ -114,14 +116,14 @@ for ($i = 0; $i < 30; $i++) {
         $row['share_count'] = $i % 6 === 5 ? null : [210, 4, 3870, 12, 640, 1, 95, 0, 12400, 33, 512, 6, 28, 201, 2][$i % 15];
         $row['view_count'] = $type === 'VIDEO' ? [24100, 1203400, 8920, 45600, 3100][$i % 5] : null;
         $row['insights_at'] = $now;
-        $row['spotted_sort'] = $selected && $i < 14 ? $i + 1 : null;
+        $row['spotted_sort'] = $selected && $i < $pick ? $i + 1 : null;
     }
     InstagramPost::query()->updateOrCreate(['remote_id' => $rid], $row);
 }
 ig2Pic($dir.'/avatar-kbb.jpg', 160, 160, [255, 214, 226], [198, 57, 95], 'IMAGE', 2);
 app(InstagramSettings::class)->saveProfile([
     'username' => 'kbeauty.bliss', 'name' => 'K-Beauty Bliss', 'avatar' => '/'.IgPath::ROOT.'avatar-kbb.jpg',
-    'followers' => 18400, 'posts' => 30, 'account_type' => 'BUSINESS', 'fetched_at' => time() - 3600,
+    'followers' => 18400, 'posts' => $total, 'account_type' => 'BUSINESS', 'fetched_at' => time() - 3600,
 ]);
 
 // Three manual posts, the way the page is filled today.
@@ -133,7 +135,7 @@ foreach ([1, 2, 3] as $n) {
         'caption' => ['Torriden serum', 'My night routine', 'Restock day'][$n - 1], 'on_home' => true, 'on_page' => true, 'sort' => $n, 'link_to' => 'instagram',
     ]);
 }
-$card = getenv('IG2_CARD') ?: 'a';
+$card = getenv('IG2_CARD') ?: 'c';
 if (isset(SpottedSettings::SCHEMA['page_card'])) {
     app(SpottedSettings::class)->save(['page_card' => $card]);
 }

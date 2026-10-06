@@ -189,10 +189,12 @@ final class SpottedSettings
            Instagram in a new tab, like a photo. */
         /* (Lane SG) The owner, 6 October: "show me the cards designs too" — four
            lettered card styles, every one filled from the synced Instagram data
-           alone. A is the shipped one until he picks a letter. */
-        'page_card' => ['type' => 'select', 'label' => 'Instagram card style', 'default' => 'a',
+           alone. He picked C ("this design is fine, go with it"), so C is the
+           default AT HIS REQUEST; A, B and D stay selectable and cost the page
+           nothing — only the chosen style's rules are printed. */
+        'page_card' => ['type' => 'select', 'label' => 'Instagram card style', 'default' => 'c',
             'options' => ['a' => 'A — Instagram native: profile row, square picture, counts, caption', 'b' => 'B — Overlay: caption and counts over the picture',
-                'c' => 'C — Soft pink frame: the picture framed, counts as pills', 'd' => 'D — Reel-first: tall tiles, counts down the side like Reels'],
+                'c' => 'C — Soft pink frame: the picture framed, counts as pills (recommended)', 'd' => 'D — Reel-first: tall tiles, counts down the side like Reels'],
             'help' => 'Only for the posts from Instagram. Everything on the card comes from Instagram itself.'],
         'page_play' => ['type' => 'bool', 'label' => 'Videos play on our page', 'default' => true,
             'help' => 'A tap on a reel or video opens Instagram’s own player over the page. Nothing loads from Instagram until the tap. Off: it opens the post on Instagram.'],
@@ -401,7 +403,7 @@ final class SpottedSettings
             // (Lane SG) Option keys and a bool, never the stored string.
             'source' => self::pick($c, 'page_source', ['instagram', 'manual'], 'instagram'),
             'play' => (bool) ($c['page_play'] ?? true),
-            'card' => self::pick($c, 'page_card', ['a', 'b', 'c', 'd'], 'a'),
+            'card' => self::pick($c, 'page_card', ['a', 'b', 'c', 'd'], 'c'),
             'cols_d' => (int) self::pick($c, 'page_cols_d', ['3', '4', '5'], '4'),
             'cols_m' => (int) self::pick($c, 'page_cols_m', ['1', '2'], '2'),
         ];

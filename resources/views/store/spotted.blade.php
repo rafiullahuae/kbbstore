@@ -15,6 +15,7 @@
 @section('title', $seoTitle)
 
 @if ($ig['cards'] !== [])
+@php $sigPlayer = $page['play'] && collect($ig['cards'])->contains(fn ($c) => $c['embed'] !== null); @endphp
 {{-- (Lane SG) The Instagram cards' styles: this page only, inline, so no other
      page of the shop gains a byte and no stylesheet request is added. Every
      size is a calc(), an aspect-ratio or a clamp(); logical properties, so
@@ -51,52 +52,6 @@
 .kbb-home .sig-st svg{width:17px;height:17px;flex:none;color:var(--pink)}
 .kbb-home .sig-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 
-/* A — Instagram native: profile row, square picture, counts, caption, date. */
-.kbb-home .sig-a .sig-body{display:contents}
-.kbb-home .sig-a .sig-prof{order:-1;padding:10px 12px}
-.kbb-home .sig-a .sig-ph{aspect-ratio:1/1}
-.kbb-home .sig-a .sig-stats{order:1;margin:0;padding:11px 12px 5px;border:0;min-height:calc(18px + 16px)}
-.kbb-home .sig-a .sig-st svg{color:var(--ink)}
-.kbb-home .sig-a .sig-st:first-child svg{color:var(--pink)}
-.kbb-home .sig-a .sig-cap{order:2;margin:0 12px;color:var(--ink)}
-.kbb-home .sig-a .sig-date{order:3;display:block;padding:6px 12px 12px;margin-top:auto;text-transform:uppercase;font-size:10.5px}
-
-/* B — Overlay: the picture is the card; caption and counts over a gradient. */
-.kbb-home .sig-b .sig-card{aspect-ratio:4/5;height:auto;border:0;border-radius:16px}
-.kbb-home .sig-b .sig-ph{position:absolute;inset:0;aspect-ratio:auto}
-.kbb-home .sig-b .sig-body{position:absolute;inset:0;justify-content:flex-end;gap:6px;padding:12px;color:#fff;
-  background:linear-gradient(0deg,rgba(24,10,18,.86) 0%,rgba(24,10,18,.45) 34%,rgba(24,10,18,0) 58%)}
-.kbb-home .sig-b .sig-prof{position:absolute;top:10px;inset-inline-start:10px;max-width:calc(100% - 70px);padding:3px 10px 3px 3px;border-radius:99px;background:rgba(24,10,18,.5);font-size:12px}
-.kbb-home .sig-b .sig-av{width:24px;height:24px}
-.kbb-home .sig-b .sig-ig{display:none}
-.kbb-home .sig-b .sig-cap{color:#fff;min-height:0;text-shadow:0 1px 8px rgba(0,0,0,.35)}
-.kbb-home .sig-b .sig-stats{margin:0;border:0;padding:0;min-height:18px;color:#fff}
-.kbb-home .sig-b .sig-st svg{color:#fff}
-
-/* C — Soft pink frame: the picture framed on the shop's blush, counts as pills. */
-.kbb-home .sig-c .sig-card{background:var(--pink-soft);padding:9px;border-color:var(--blush)}
-.kbb-home .sig-c .sig-ph{border-radius:12px;box-shadow:0 10px 22px -16px rgba(120,40,80,.6)}
-.kbb-home .sig-c .sig-body{padding:10px 3px 2px}
-.kbb-home .sig-c .sig-cap{color:var(--ink)}
-.kbb-home .sig-c .sig-date{display:block}
-.kbb-home .sig-c .sig-stats{border:0;padding-top:2px;gap:6px}
-.kbb-home .sig-c .sig-st{padding:4px 9px;border-radius:99px;background:#fff;border:1px solid var(--blush);color:var(--pink-deep);font-size:12px}
-.kbb-home .sig-c .sig-st svg{width:14px;height:14px}
-
-/* D — Reel-first: tall tiles, big play button, counts down the side. */
-.kbb-home .sig-d .sig-card{aspect-ratio:9/16;height:auto;border:0;border-radius:16px;background:#1d1218}
-.kbb-home .sig-d .sig-ph{position:absolute;inset:0;aspect-ratio:auto}
-.kbb-home .sig-d .sig-play{width:68px;height:68px;inset-inline-start:calc(50% - 34px);top:calc(50% - 34px)}
-.kbb-home .sig-d .sig-play svg{width:30px;height:30px}
-.kbb-home .sig-d .sig-body{position:absolute;inset:0;justify-content:flex-end;gap:6px;padding:12px;padding-inline-end:58px;color:#fff;
-  background:linear-gradient(0deg,rgba(14,6,10,.82) 0%,rgba(14,6,10,.3) 32%,rgba(14,6,10,0) 50%)}
-.kbb-home .sig-d .sig-prof{font-size:12.5px}
-.kbb-home .sig-d .sig-ig{display:none}
-.kbb-home .sig-d .sig-cap{color:#fff;min-height:0}
-.kbb-home .sig-d .sig-stats{position:absolute;inset-inline-end:8px;bottom:14px;flex-direction:column;flex-wrap:nowrap;gap:14px;margin:0;padding:0;border:0;min-height:0;color:#fff;font-size:12px}
-.kbb-home .sig-d .sig-st{flex-direction:column;gap:3px;text-shadow:0 1px 6px rgba(0,0,0,.5)}
-.kbb-home .sig-d .sig-st svg{width:26px;height:26px;color:#fff;filter:drop-shadow(0 1px 4px rgba(0,0,0,.45))}
-
 @media (max-width:900px){
   .kbb-home .sig-grid{grid-template-columns:repeat(var(--sig-cols-m,2),minmax(0,1fr));gap:14px 10px}
   .kbb-home .sig-card{border-radius:14px}
@@ -112,24 +67,82 @@
   .kbb-home .sig-play svg{width:19px;height:19px}
   .kbb-home .sig-badge{top:8px;inset-inline-end:8px;padding:4px 7px;font-size:11px}
   .kbb-home .sig-badge svg{width:13px;height:13px}
+}
+@media (prefers-reduced-motion:reduce){.kbb-home .sig-card,.kbb-home .sig-ph img,.kbb-home .sig-play{transition:none}}
+{{-- Only the chosen card style's rules are printed (Lane SG): the other three cost the page nothing. --}}
+@if ($page['card'] === 'a')
+/* A — Instagram native: profile row, square picture, counts, caption, date. */
+.kbb-home .sig-a .sig-body{display:contents}
+.kbb-home .sig-a .sig-prof{order:-1;padding:10px 12px}
+.kbb-home .sig-a .sig-ph{aspect-ratio:1/1}
+.kbb-home .sig-a .sig-stats{order:1;margin:0;padding:11px 12px 5px;border:0;min-height:calc(18px + 16px)}
+.kbb-home .sig-a .sig-st svg{color:var(--ink)}
+.kbb-home .sig-a .sig-st:first-child svg{color:var(--pink)}
+.kbb-home .sig-a .sig-cap{order:2;margin:0 12px;color:var(--ink)}
+.kbb-home .sig-a .sig-date{order:3;display:block;padding:6px 12px 12px;margin-top:auto;text-transform:uppercase;font-size:10.5px}
+@media (max-width:900px){
   .kbb-home .sig-a .sig-prof{padding:8px 9px}
   .kbb-home .sig-a .sig-stats{padding:8px 9px 4px;min-height:calc(15px + 12px)}
   .kbb-home .sig-a .sig-cap{margin:0 9px}
   .kbb-home .sig-a .sig-date{padding:5px 9px 10px}
+}
+@elseif ($page['card'] === 'b')
+/* B — Overlay: the picture is the card; caption and counts over a gradient. */
+.kbb-home .sig-b .sig-card{aspect-ratio:4/5;height:auto;border:0;border-radius:16px}
+.kbb-home .sig-b .sig-ph{position:absolute;inset:0;aspect-ratio:auto}
+.kbb-home .sig-b .sig-body{position:absolute;inset:0;justify-content:flex-end;gap:6px;padding:12px;color:#fff;
+  background:linear-gradient(0deg,rgba(24,10,18,.86) 0%,rgba(24,10,18,.45) 34%,rgba(24,10,18,0) 58%)}
+.kbb-home .sig-b .sig-prof{position:absolute;top:10px;inset-inline-start:10px;max-width:calc(100% - 70px);padding:3px 10px 3px 3px;border-radius:99px;background:rgba(24,10,18,.5);font-size:12px}
+.kbb-home .sig-b .sig-av{width:24px;height:24px}
+.kbb-home .sig-b .sig-ig{display:none}
+.kbb-home .sig-b .sig-cap{color:#fff;min-height:0;text-shadow:0 1px 8px rgba(0,0,0,.35)}
+.kbb-home .sig-b .sig-stats{margin:0;border:0;padding:0;min-height:18px;color:#fff}
+.kbb-home .sig-b .sig-st svg{color:#fff}
+@media (max-width:900px){
   .kbb-home .sig-b .sig-body{padding:9px}
   .kbb-home .sig-b .sig-prof{top:8px;inset-inline-start:8px;font-size:11px;max-width:calc(100% - 56px)}
   .kbb-home .sig-b .sig-av{width:20px;height:20px}
+}
+@elseif ($page['card'] === 'c')
+/* C — Soft pink frame: the picture framed on the shop's blush, counts as pills. */
+.kbb-home .sig-c .sig-card{background:var(--pink-soft);padding:9px;border-color:var(--blush)}
+.kbb-home .sig-c .sig-ph{border-radius:12px;box-shadow:0 10px 22px -16px rgba(120,40,80,.6)}
+.kbb-home .sig-c .sig-body{padding:10px 3px 2px}
+.kbb-home .sig-c .sig-cap{color:var(--ink)}
+.kbb-home .sig-c .sig-date{display:block}
+.kbb-home .sig-c .sig-stats{border:0;padding-top:2px;gap:6px}
+.kbb-home .sig-c .sig-st{padding:4px 9px;border-radius:99px;background:#fff;border:1px solid var(--blush);color:var(--pink-deep);font-size:12px}
+.kbb-home .sig-c .sig-st svg{width:14px;height:14px}
+@media (max-width:900px){
   .kbb-home .sig-c .sig-card{padding:7px}
   .kbb-home .sig-c .sig-body{padding:8px 2px 2px}
   .kbb-home .sig-c .sig-stats{gap:4px}
   .kbb-home .sig-c .sig-st{gap:3px;padding:2px 6px;border:0;font-size:11px}
   .kbb-home .sig-c .sig-st svg{width:11px;height:11px}
+}
+@elseif ($page['card'] === 'd')
+/* D — Reel-first: tall tiles, big play button, counts down the side. */
+.kbb-home .sig-d .sig-card{aspect-ratio:9/16;height:auto;border:0;border-radius:16px;background:#1d1218}
+.kbb-home .sig-d .sig-ph{position:absolute;inset:0;aspect-ratio:auto}
+.kbb-home .sig-d .sig-play{width:68px;height:68px;inset-inline-start:calc(50% - 34px);top:calc(50% - 34px)}
+.kbb-home .sig-d .sig-play svg{width:30px;height:30px}
+.kbb-home .sig-d .sig-body{position:absolute;inset:0;justify-content:flex-end;gap:6px;padding:12px;padding-inline-end:58px;color:#fff;
+  background:linear-gradient(0deg,rgba(14,6,10,.82) 0%,rgba(14,6,10,.3) 32%,rgba(14,6,10,0) 50%)}
+.kbb-home .sig-d .sig-prof{font-size:12.5px}
+.kbb-home .sig-d .sig-ig{display:none}
+.kbb-home .sig-d .sig-cap{color:#fff;min-height:0}
+.kbb-home .sig-d .sig-stats{position:absolute;inset-inline-end:8px;bottom:14px;flex-direction:column;flex-wrap:nowrap;gap:14px;margin:0;padding:0;border:0;min-height:0;color:#fff;font-size:12px}
+.kbb-home .sig-d .sig-st{flex-direction:column;gap:3px;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.kbb-home .sig-d .sig-st svg{width:26px;height:26px;color:#fff;filter:drop-shadow(0 1px 4px rgba(0,0,0,.45))}
+@media (max-width:900px){
   .kbb-home .sig-d .sig-body{padding:9px;padding-inline-end:44px}
   .kbb-home .sig-d .sig-play{width:52px;height:52px;inset-inline-start:calc(50% - 26px);top:calc(50% - 26px)}
   .kbb-home .sig-d .sig-play svg{width:23px;height:23px}
   .kbb-home .sig-d .sig-stats{inset-inline-end:5px;bottom:10px;gap:10px;font-size:11px}
   .kbb-home .sig-d .sig-st svg{width:21px;height:21px}
 }
+@endif
+@if ($sigPlayer)
 .sigm{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:12px}
 .sigm[hidden]{display:none}
 .sigm-back{position:absolute;inset:0;background:rgba(24,12,18,.78)}
@@ -141,7 +154,7 @@
 .sigm-x:focus-visible,.sigm-ig:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .sigm-ig{color:#fff;font-size:13.5px;font-weight:700;text-decoration:underline;text-underline-offset:3px}
 html.sigm-on{overflow:hidden}
-@media (prefers-reduced-motion:reduce){.kbb-home .sig-card,.kbb-home .sig-ph img,.kbb-home .sig-play{transition:none}}
+@endif
 </style>
 @endpush
 @endif
@@ -154,6 +167,15 @@ html.sigm-on{overflow:hidden}
     <p>{{ $intro }}</p></div></div>
 @if ($ig['cards'] !== [])
 @php $sigSizes = \App\Services\SpottedInstagram::sizes($page['cols_d'], $page['cols_m'], $page['card']); @endphp
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="sgi-heart" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20.7 10.6 19.4C5.4 14.7 2 11.6 2 7.8 2 4.7 4.4 2.3 7.5 2.3c1.7 0 3.4.8 4.5 2.1 1.1-1.3 2.8-2.1 4.5-2.1 3.1 0 5.5 2.4 5.5 5.5 0 3.8-3.4 6.9-8.6 11.6Z"/></symbol>
+    <symbol id="sgi-com" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round" d="M20.7 12a8.7 8.7 0 0 1-12.9 7.6L3 21l1.4-4.6A8.7 8.7 0 1 1 20.7 12Z"/></symbol>
+    <symbol id="sgi-share" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round" d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></symbol>
+    <symbol id="sgi-reel" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M3 8.5h18M8.5 3l3 5.5M14 3l3 5.5"/></g><path fill="currentColor" d="m10.5 12 4.5 2.6-4.5 2.6z"/></symbol>
+    <symbol id="sgi-album" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="7" y="7" width="14" height="14" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11"/></g></symbol>
+    <symbol id="sgi-ig" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></g><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></symbol>
+    <symbol id="sgi-play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.5v13l11-6.5z"/></symbol>
+  </svg>
   <ul class="sig-grid sig-{{ $page['card'] }}" style="--sig-cols-d:{{ $page['cols_d'] }};--sig-cols-m:{{ $page['cols_m'] }}">
 @foreach ($ig['cards'] as $i => $card)
     <li class="sig-cell">@include('partials.spotted-ig-card', ['card' => $card, 'profile' => $ig['profile'], 'lazy' => $i >= 4, 'play' => $page['play'], 'sizes' => $sigSizes])</li>
@@ -170,7 +192,7 @@ html.sigm-on{overflow:hidden}
 @endif
 </div></section>
 </div>
-@if ($ig['cards'] !== [] && $page['play'] && collect($ig['cards'])->contains(fn ($c) => $c['embed'] !== null))
+@if ($ig['cards'] !== [] && $sigPlayer)
 {{-- (Lane SG) The video player: Instagram's own embed in a dialog, created on
      a tap and REMOVED on close, so a page nobody taps makes no request to
      instagram.com and a closed player stops playing. Measures nothing; every

@@ -319,16 +319,16 @@ it('falls back to the manual posts while nothing is ticked, and Manual is one sw
     expect(sgiPage())->toContain('Manual one')->not->toContain('From IG');
 });
 
-it('ships with Instagram as the source, videos playing here, and card style A', function () {
+it('ships with Instagram as the source, videos playing here, and card style C (the owner\'s pick)', function () {
     // The owner asked for these; Manual / off / B–D stay one choice away.
     $page = app(SpottedSettings::class)->page();
-    expect($page['source'])->toBe('instagram')->and($page['play'])->toBeTrue()->and($page['card'])->toBe('a');
+    expect($page['source'])->toBe('instagram')->and($page['play'])->toBeTrue()->and($page['card'])->toBe('c');
 
     // A hand-made POST of a value that is not an option stores the default.
     app(SpottedSettings::class)->save(['page_card' => 'z"><script>', 'page_source' => 'evil']);
     SettingsService::forgetMemo();
     $page = app(SpottedSettings::class)->page();
-    expect($page['card'])->toBe('a')->and($page['source'])->toBe('instagram');
+    expect($page['card'])->toBe('c')->and($page['source'])->toBe('instagram');
 });
 
 /* ─────────────────────────────── the card ──────────────────────────────────── */
@@ -354,7 +354,7 @@ it('draws the cover, the profile, the counts in compact form, an escaped caption
         ->toContain('Glow &lt;script&gt;alert(1)&lt;/script&gt; #kbeautybliss')
         ->not->toContain('<script>alert(1)')
         ->toContain('width="400" height="500"')
-        ->toContain('class="sig-grid sig-a"');
+        ->toContain('class="sig-grid sig-c"');
 });
 
 it('formats counts the way Instagram does, rounding down', function () {
@@ -429,13 +429,23 @@ it('lets the player through the content policy by one exact host', function () {
     }
 });
 
-it('draws each card style from the same markup', function () {
+it('draws each card style from the same markup, and prints only the chosen style\'s rules', function () {
+    /*
+     * The owner: "super light". Four styles must not mean four styles' CSS on
+     * every view.
+     *
+     * MUTATION NOTE. Replace the @if/@elseif chain with all four blocks → RED on
+     * the not->toContain.
+     */
     sgiPost(['spotted_sort' => 1]);
     foreach (['a', 'b', 'c', 'd'] as $s) {
         app(SpottedSettings::class)->save(['page_card' => $s]);
         $html = sgiPage();
         expect($html)->toContain('class="sig-grid sig-'.$s.'"')
             ->and($html)->toContain('.kbb-home .sig-'.$s.' ');
+        foreach (array_diff(['a', 'b', 'c', 'd'], [$s]) as $other) {
+            expect($html)->not->toContain('.kbb-home .sig-'.$other.' ');
+        }
     }
 });
 

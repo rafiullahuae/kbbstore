@@ -70,12 +70,12 @@ async function shootPage(browser, url, name, widths, before) {
     await page.goto(BASE + url, { waitUntil: 'networkidle' }); // the second render offers the srcset copies
     // Walk the page so every lazy picture below the fold has loaded before a
     // full-page shot (the shop's lazy loading is real; the shot must not show holes).
-    await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } window.scrollTo(0, 0); });
+    await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 150)); } window.scrollTo(0, 0); });
     await page.waitForLoadState('networkidle');
     if (before) await before(page);
     await page.waitForTimeout(300);
     out[w] = await measure(page);
-    await page.screenshot({ path: path.join(OUT, name + '-' + w + '.png'), fullPage: true });
+    await page.screenshot({ path: path.join(OUT, name + '-' + w + '.jpg'), fullPage: true, type: 'jpeg', quality: 80 });
     const grid = await page.$('.sig-grid, .spt-grid');
     if (grid) {
       // The grid crop is a CLIP of the full-page capture, taken at scroll 0, so
@@ -84,9 +84,13 @@ async function shootPage(browser, url, name, widths, before) {
       // and photographs the sticky header on top of row one).
       // The floating chat button (position:fixed, site-wide) is hidden for the
       // grid crop only, so it is not mistaken for part of a card.
-      await page.evaluate(() => { document.querySelectorAll('body *').forEach((el) => { if (getComputedStyle(el).position === 'fixed') el.style.display = 'none'; }); window.scrollTo(0, 0); });
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(300);
+      // Fixed AND sticky (the shop header turns fixed once scrolled), hidden for
+      // the crop only; their place is above the grid, so nothing moves.
+      await page.evaluate(() => document.querySelectorAll('body *').forEach((el) => { const p = getComputedStyle(el).position; if (p === 'fixed' || p === 'sticky') el.style.setProperty('visibility', 'hidden', 'important'); }));
       const box = await grid.evaluate((el) => { const r = el.getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, width: r.width, height: r.height }; });
-      await page.screenshot({ path: path.join(OUT, name + '-' + w + '-grid.png'), fullPage: true, clip: { x: Math.max(0, box.x - 8), y: box.y - 8, width: Math.min(w, box.width + 16), height: box.height + 16 } });
+      await page.screenshot({ path: path.join(OUT, name + '-' + w + '-grid.jpg'), type: 'jpeg', quality: 80, fullPage: true, clip: { x: Math.max(0, box.x - 8), y: box.y - 8, width: Math.min(w, box.width + 16), height: box.height + 16 } });
     }
     await ctx.close();
   }
@@ -102,18 +106,18 @@ async function shootPage(browser, url, name, widths, before) {
       php("app(App\\Services\\SpottedSettings::class)->save(['page_card' => '" + s + "']);");
       results['card-' + s.toUpperCase()] = await shootPage(browser, '/kbeautybliss-spotted/', 'card-' + s.toUpperCase(), [390, 1280]);
     }
-    php("app(App\\Services\\SpottedSettings::class)->save(['page_card' => 'a']);");
+    php("app(App\\Services\\SpottedSettings::class)->save(['page_card' => 'c']);");
   } else if (MODE === 'sheet') {
     const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
     const page = await ctx.newPage();
     const names = { A: 'Instagram native', B: 'Overlay', C: 'Soft pink frame', D: 'Reel-first' };
-    const img = (f) => 'data:image/png;base64,' + fs.readFileSync(path.join(OUT, f)).toString('base64');
+    const img = (f) => 'data:image/jpeg;base64,' + fs.readFileSync(path.join(OUT, f)).toString('base64');
     let html = '<!doctype html><meta charset=utf-8><body style="margin:0;padding:24px;font:15px system-ui;background:#fff5f8;color:#2a2228"><h1 style="margin:0 0 6px;font-size:24px">#KBeautyBliss Spotted — Instagram card styles</h1><p style="margin:0 0 18px;color:#6b5f66">Same synced posts in every style; nothing typed by hand. Laptop (1280) on the left, phone (390) on the right. Admin: Appearance → #KBeautyBliss Spotted → Settings → Spotted page → Instagram card style.</p>';
     for (const s of ['A', 'B', 'C', 'D']) {
-      html += '<section style="display:grid;grid-template-columns:3fr 1fr;gap:18px;align-items:start;margin-bottom:28px"><div><h2 style="margin:0 0 8px;font-size:18px">' + s + ' — ' + names[s] + '</h2><img style="width:100%;border-radius:10px;box-shadow:0 6px 20px -12px #a0406a" src="' + img('card-' + s + '-1280-grid.png') + '"></div><div><h2 style="margin:0 0 8px;font-size:18px">&nbsp;</h2><img style="width:100%;max-height:1100px;object-fit:cover;object-position:top;border-radius:10px;box-shadow:0 6px 20px -12px #a0406a" src="' + img('card-' + s + '-390-grid.png') + '"></div></section>';
+      html += '<section style="display:grid;grid-template-columns:3fr 1fr;gap:18px;align-items:start;margin-bottom:28px"><div><h2 style="margin:0 0 8px;font-size:18px">' + s + ' — ' + names[s] + '</h2><img style="width:100%;border-radius:10px;box-shadow:0 6px 20px -12px #a0406a" src="' + img('card-' + s + '-1280-grid.jpg') + '"></div><div><h2 style="margin:0 0 8px;font-size:18px">&nbsp;</h2><img style="width:100%;max-height:1100px;object-fit:cover;object-position:top;border-radius:10px;box-shadow:0 6px 20px -12px #a0406a" src="' + img('card-' + s + '-390-grid.jpg') + '"></div></section>';
     }
     await page.setContent(html, { waitUntil: 'load' });
-    await page.screenshot({ path: path.join(OUT, 'card-styles-sheet.png'), fullPage: true });
+    await page.screenshot({ path: path.join(OUT, 'card-styles-sheet.jpg'), fullPage: true, type: 'jpeg', quality: 80 });
     await ctx.close();
   } else if (MODE === 'page') {
     const prefix = process.argv[5] || 'page';
@@ -139,7 +143,7 @@ async function shootPage(browser, url, name, widths, before) {
         const b = f.getBoundingClientRect();
         return { open: !box.hidden, iframeSrc: f.getAttribute('src'), frame: { w: Math.round(b.width), h: Math.round(b.height) }, focused: document.activeElement.className, scrollWidth: document.documentElement.scrollWidth, innerWidth: innerWidth };
       });
-      await page.screenshot({ path: path.join(OUT, 'video-modal-' + w + '.png') });
+      await page.screenshot({ path: path.join(OUT, 'video-modal-' + w + '.jpg'), type: 'jpeg', quality: 82 });
       await page.keyboard.press('Escape');
       await page.waitForTimeout(200);
       const after = await page.evaluate(() => ({ hidden: document.getElementById('sigm').hidden, iframes: document.querySelectorAll('#sigm iframe').length, focusBackOnCard: !!document.activeElement.closest('.sig-card') }));
@@ -160,18 +164,18 @@ async function shootPage(browser, url, name, widths, before) {
       await page.waitForSelector('[data-spa-igcard] .spa-igt', { timeout: 15000 });
       await page.waitForTimeout(800);
       results['admin-' + w] = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: innerWidth, tiles: document.querySelectorAll('.spa-igt').length, line: (document.querySelector('[data-spa-igline]') || {}).textContent }));
-      await page.screenshot({ path: path.join(OUT, 'admin-picker-' + w + '.png'), fullPage: false });
+      await page.screenshot({ path: path.join(OUT, 'admin-picker-' + w + '.jpg'), type: 'jpeg', quality: 82 });
       // The picker's grid (filter, search, tiles), scrolled into view inside the
       // console's own scroller; then the same with "Videos & Reels" and a search.
       await page.evaluate(() => document.querySelector('.spa-igbar').scrollIntoView({ block: 'start' }));
       await page.waitForTimeout(500);
-      await page.screenshot({ path: path.join(OUT, 'admin-picker-' + w + '-grid.png') });
+      await page.screenshot({ path: path.join(OUT, 'admin-picker-' + w + '-grid.jpg'), type: 'jpeg', quality: 82 });
       await page.click('[data-spa-igf="video"]');
       await page.fill('[data-spa-igq]', 'routine');
       await page.evaluate(() => document.querySelector('.spa-igbar').scrollIntoView({ block: 'start' }));
       await page.waitForTimeout(500);
       results['admin-' + w].filtered = await page.evaluate(() => ({ tiles: document.querySelectorAll('.spa-igt').length, line: document.querySelector('[data-spa-igline]').textContent }));
-      await page.screenshot({ path: path.join(OUT, 'admin-picker-' + w + '-filtered.png') });
+      await page.screenshot({ path: path.join(OUT, 'admin-picker-' + w + '-filtered.jpg'), type: 'jpeg', quality: 82 });
       await ctx.close();
     }
   }
