@@ -3,6 +3,25 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.407
+**Push notifications for the shop app: Growth & Marketing -> Push
+Notifications.** Apply after .406. Runs its migrations. Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "a dedicated page ... Growth & Marketing > Push Notifications > Campaigns" | Campaigns: title, message, link, live phone preview; send to everyone or by emirate, city, language, phone type, customers / guests and purchase rules, with a live count; test to your phone, schedule, send; report with deliveries, clicks and click rate by emirate |
+| "orders updates will be auto" | Automations -> Order updates, ON: the same moments the status emails go out, and only when they do |
+| "back in stock ... only once if ... visit that out of stock product" | Automations -> Back in stock, ON: only phones that viewed it sold out, once per phone and product, ever |
+| abandoned cart, price drop | Automations -> Basket reminder (after 3 h, one only) and Price drop (10% or more, viewed sold out or hearted), ON |
+| "i want to minimal the notifications" | Settings: at most 1 offer a day and 3 a week per phone; quiet hours 22:00-09:00 (order updates are never held) |
+| "city, region wise ... no disturbance to the customer" | Where a phone is comes from its orders' delivery address first, then the IP address (free DB-IP city table, refreshed monthly by itself); never a question on the phone. A Sharjah campaign skips Dubai phones |
+
+Needs the server's cron line (the same one Marketing Emails uses). If it is
+missing, the Push Notifications screen shows the exact line to add in
+Cloudways -> Cron Job Management.
+
+Files: see the package's update.json.
+
 ## 2.60.406
 **Homepage brand photos load about 12x lighter.** Apply after .405. No
 migrations. Hard refresh the shop.
