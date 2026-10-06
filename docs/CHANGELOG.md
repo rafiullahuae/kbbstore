@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.412
+**No zoom when tapping a field on phones; Update App for installed apps.**
+Apply after .411. Runs its migrations. Hard refresh the shop and the admin.
+
+| Your request | Now |
+|---|---|
+| "the screen become zoomed in apple devices ... for all input fields in our whole website" | Every text field is 16px on touch screens (shop, owner app, admin): 529 of 689 measured were smaller. Laptops byte-identical; pinch-zoom still works |
+| "if we published any updates in the site app ... display again on the existing users device too with Update App button" | App -> Site App -> App update: write a message, "Publish an update to installed apps". Installed apps show an Update App row once per update; one tap loads the new version. Nothing changes until the first publish |
+
+Files: see the package's update.json.
+
 ## 2.60.411
 **Inner pages 3-6x faster on the server; pages open instantly on intent.**
 Apply after .410. Runs its migration. Hard refresh the shop.
