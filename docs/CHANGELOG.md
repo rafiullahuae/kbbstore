@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.418
+**Menu links clickable again while a mega panel is open; checkout payment
+boxes with official logos; domain-move fixes.** Apply after .417. Hard refresh
+the shop and the admin.
+
+| Your request | Now |
+|---|---|
+| "the page shifting is coming again slightly delayed" | Cause (measured): 2.60.416's invisible hover areas that keep a mega panel open covered the lower part of the neighbouring menu links, so a click there did nothing (11 of 15 neighbour clicks navigated; 2.60.415: 15 of 15) and the link never pre-loaded. Now 15 of 15, every link fully clickable. Server time, pre-loading and page sizes measured unchanged since 2.60.415 |
+| "option A, soft tint is fine ... give controls too on backend" | Official Tabby and Tamara logos, Visa/Mastercard, cash-on-delivery icon; each box tinted in its brand colour. Appearance -> Checkout page -> Payment boxes (style, logos, logo height, tint, border, per-method colours, Tamara badge/wordmark; "Today" restores the old boxes exactly) |
+| "change the domain ... zero dependency of the old domain" | docs/DOMAIN-MOVE-KBEAUTYBLISS.md runbook; `php artisan kbb:domain-check kbeautybliss.com --old=extrabeauty.ae` (read-only); www of every old address is forwarded too; Tabby re-sync removes the old-domain webhook; admin hints no longer say extrabeauty.ae |
+
+Files: see the package's update.json.
+
 ## 2.60.417
 **Spotted page from Instagram; blog and articles on the shop header; your
 policy pages; checkout footer links; menu underline.** Apply after .416. Runs
