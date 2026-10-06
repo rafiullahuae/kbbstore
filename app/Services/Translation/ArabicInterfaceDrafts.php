@@ -520,6 +520,7 @@ final class ArabicInterfaceDrafts
             'store.footer.link_track_order' => 'تتبع طلبي',
             'store.footer.link_delivery' => 'الشحن والتوصيل',
             'store.footer.link_returns' => 'معلومات الإرجاع',
+            'store.footer.link_order_tracking' => 'تتبع الطلب',
             'store.footer.link_faqs' => 'الأسئلة الشائعة',
             'store.footer.link_contact' => 'اتصل بنا',
             'store.footer.account_heading' => 'حسابي',

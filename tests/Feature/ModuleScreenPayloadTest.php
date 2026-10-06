@@ -213,6 +213,13 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // Flag bar's four defaults (46px, 14px text, 20px flags, dark ink — the
     // owner's countries strip) and Section dividers' section list, which gained
     // the Top strip and the Countries strip from HomepageSections::REGISTRY.
+    // ▲ Lane TP added one field to two screens and changed nothing else:
+    // `policy_links` (the Shipping & Delivery and Returns Information links
+    // the owner asked for) on cart-page's Summary & trust tab, before
+    // trust_on, and on checkout-page's Trust & reviews tab, after rating_min,
+    // whose description gained one sentence naming it. And two help lines on
+    // slim-footer (Appearance → Footer → Site footer · link columns) now say
+    // what the Help column ships with, returns included.
     // ▲ Lane FB added one tab to slim-footer and changed nothing else: the
     // footer's "app row" (site_app, six fields), inserted after site_m exactly
     // as the screen now sends it.
@@ -571,7 +578,12 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // menu text" and "Pointer to the parent item" (ON) — appended to the nav
     // tab after `nav_fit_max`, which is their TABS position. Spliced into the
     // fixture's header entry, not regenerated: five objects inserted, none changed.
-    expect($compared)->toBe(697, 'the number of controls drawn changed');
+    // 699 (Lane TP): + 2 — "Shipping & Delivery and Returns Information
+    // links" on Appearance → Cart page → Summary & trust (before trust_on) and
+    // on Appearance → Checkout page → Trust & reviews (after rating_min), both
+    // ON because the owner asked for them. Spliced in, nothing else changed
+    // beyond the trust tab's description and the two footer help lines above.
+    expect($compared)->toBe(699, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

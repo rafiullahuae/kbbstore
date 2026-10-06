@@ -297,6 +297,14 @@ function mAllowedRepairs(): array
  * cast is untouched; a valid colour is still stored as itself.
  */
 /*
+ * ── 22 ROWS ADDED, NONE MOVED ───────────────────────────────────── Lane TP ──
+ *
+ * `policy_links` (bool) on CartPage and CheckoutPage — the two policy links
+ * under the totals the owner asked for. 11 rows each, inserted by the
+ * keep-the-fixture's-line merge where mEquivRows() walks them; 0 modified,
+ * 0 removed.
+ */
+/*
  * ── 214 ROWS ADDED, NONE MOVED ──────────────────────────────────── Lane M4 ──
  *
  * The 25 keys appended to MobileMenu::SCHEMA for the V4 two-tone menu the

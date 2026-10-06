@@ -1,0 +1,362 @@
+{
+  "delivery-390": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "articleWidth": 366,
+    "h1": "26px",
+    "h2": null,
+    "h3": {
+      "size": "17px",
+      "mt": "28px",
+      "mb": "8px",
+      "list": "disc"
+    },
+    "p": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "14px",
+      "list": "disc"
+    },
+    "ul": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "16px",
+      "list": "disc"
+    },
+    "firstChildMarginTop": "0px",
+    "counts": {
+      "h2": 0,
+      "h3": 3,
+      "p": 9,
+      "li": 5,
+      "a": 0
+    }
+  },
+  "refund_returns-390": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "articleWidth": 366,
+    "h1": "26px",
+    "h2": null,
+    "h3": null,
+    "p": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "14px",
+      "list": "disc"
+    },
+    "ul": null,
+    "firstChildMarginTop": "0px",
+    "counts": {
+      "h2": 0,
+      "h3": 0,
+      "p": 3,
+      "li": 0,
+      "a": 1
+    }
+  },
+  "faqs-390": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "articleWidth": 366,
+    "h1": "26px",
+    "h2": {
+      "size": "13px",
+      "mt": "0px",
+      "mb": "2px",
+      "list": "disc"
+    },
+    "h3": {
+      "size": "17px",
+      "mt": "12px",
+      "mb": "8px",
+      "list": "disc"
+    },
+    "p": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "14px",
+      "list": "disc"
+    },
+    "ul": null,
+    "firstChildMarginTop": "0px",
+    "counts": {
+      "h2": 4,
+      "h3": 8,
+      "p": 8,
+      "li": 0,
+      "a": 3
+    }
+  },
+  "privacy-policy-390": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "articleWidth": 366,
+    "h1": "26px",
+    "h2": null,
+    "h3": {
+      "size": "17px",
+      "mt": "28px",
+      "mb": "8px",
+      "list": "disc"
+    },
+    "p": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "14px",
+      "list": "disc"
+    },
+    "ul": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "16px",
+      "list": "disc"
+    },
+    "firstChildMarginTop": "0px",
+    "counts": {
+      "h2": 0,
+      "h3": 6,
+      "p": 13,
+      "li": 5,
+      "a": 1
+    }
+  },
+  "footer-390": [
+    "Shipping & Delivery /delivery/",
+    "Returns Information /refund_returns/",
+    "Order Tracking /my-account/orders/",
+    "FAQs /faqs/",
+    "Privacy policy /privacy-policy/",
+    "Contact us /contact-us/",
+    "About us /about/"
+  ],
+  "cart-390": {
+    "inDom": 1,
+    "visible": 1,
+    "links": [
+      {
+        "text": "Shipping & Delivery",
+        "href": "/delivery/",
+        "h": 32,
+        "w": 111,
+        "size": "12.5px",
+        "color": "rgb(117, 108, 116)"
+      },
+      {
+        "text": "Returns Information",
+        "href": "/refund_returns/",
+        "h": 32,
+        "w": 115,
+        "size": "12.5px",
+        "color": "rgb(117, 108, 116)"
+      }
+    ],
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "checkout-390": {
+    "inDom": 2,
+    "visible": 1,
+    "links": [
+      {
+        "text": "Shipping & Delivery",
+        "href": "/delivery/",
+        "h": 32,
+        "w": 111,
+        "size": "12.5px",
+        "color": "rgb(117, 108, 116)"
+      },
+      {
+        "text": "Returns Information",
+        "href": "/refund_returns/",
+        "h": 32,
+        "w": 115,
+        "size": "12.5px",
+        "color": "rgb(117, 108, 116)"
+      }
+    ],
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "errors-390": [],
+  "delivery-1280": {
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "articleWidth": 716,
+    "h1": "40px",
+    "h2": null,
+    "h3": {
+      "size": "17px",
+      "mt": "28px",
+      "mb": "8px",
+      "list": "disc"
+    },
+    "p": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "14px",
+      "list": "disc"
+    },
+    "ul": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "16px",
+      "list": "disc"
+    },
+    "firstChildMarginTop": "0px",
+    "counts": {
+      "h2": 0,
+      "h3": 3,
+      "p": 9,
+      "li": 5,
+      "a": 0
+    }
+  },
+  "refund_returns-1280": {
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "articleWidth": 716,
+    "h1": "40px",
+    "h2": null,
+    "h3": null,
+    "p": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "14px",
+      "list": "disc"
+    },
+    "ul": null,
+    "firstChildMarginTop": "0px",
+    "counts": {
+      "h2": 0,
+      "h3": 0,
+      "p": 3,
+      "li": 0,
+      "a": 1
+    }
+  },
+  "faqs-1280": {
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "articleWidth": 716,
+    "h1": "40px",
+    "h2": {
+      "size": "13px",
+      "mt": "0px",
+      "mb": "2px",
+      "list": "disc"
+    },
+    "h3": {
+      "size": "17px",
+      "mt": "12px",
+      "mb": "8px",
+      "list": "disc"
+    },
+    "p": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "14px",
+      "list": "disc"
+    },
+    "ul": null,
+    "firstChildMarginTop": "0px",
+    "counts": {
+      "h2": 4,
+      "h3": 8,
+      "p": 8,
+      "li": 0,
+      "a": 3
+    }
+  },
+  "privacy-policy-1280": {
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "articleWidth": 716,
+    "h1": "40px",
+    "h2": null,
+    "h3": {
+      "size": "17px",
+      "mt": "28px",
+      "mb": "8px",
+      "list": "disc"
+    },
+    "p": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "14px",
+      "list": "disc"
+    },
+    "ul": {
+      "size": "15px",
+      "mt": "0px",
+      "mb": "16px",
+      "list": "disc"
+    },
+    "firstChildMarginTop": "0px",
+    "counts": {
+      "h2": 0,
+      "h3": 6,
+      "p": 13,
+      "li": 5,
+      "a": 1
+    }
+  },
+  "footer-1280": [
+    "Shipping & Delivery /delivery/",
+    "Returns Information /refund_returns/",
+    "Order Tracking /my-account/orders/",
+    "FAQs /faqs/",
+    "Privacy policy /privacy-policy/",
+    "Contact us /contact-us/",
+    "About us /about/"
+  ],
+  "cart-1280": {
+    "inDom": 1,
+    "visible": 1,
+    "links": [
+      {
+        "text": "Shipping & Delivery",
+        "href": "/delivery/",
+        "h": 32,
+        "w": 111,
+        "size": "12.5px",
+        "color": "rgb(117, 108, 116)"
+      },
+      {
+        "text": "Returns Information",
+        "href": "/refund_returns/",
+        "h": 32,
+        "w": 115,
+        "size": "12.5px",
+        "color": "rgb(117, 108, 116)"
+      }
+    ],
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "checkout-1280": {
+    "inDom": 2,
+    "visible": 1,
+    "links": [
+      {
+        "text": "Shipping & Delivery",
+        "href": "/delivery/",
+        "h": 32,
+        "w": 111,
+        "size": "12.5px",
+        "color": "rgb(117, 108, 116)"
+      },
+      {
+        "text": "Returns Information",
+        "href": "/refund_returns/",
+        "h": 32,
+        "w": 115,
+        "size": "12.5px",
+        "color": "rgb(117, 108, 116)"
+      }
+    ],
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "errors-1280": []
+}

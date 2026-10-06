@@ -402,6 +402,16 @@ class CartPage
 
         'sum_total_label' => ['text', 'Order total row', 'Order Total', ''],
 
+        // ── Policy links (Lane TP) ──
+        /*
+         * "also apply … two links on cart / checkout pages" — the owner, 6
+         * October. Shipping & Delivery and Returns Information, small, under
+         * the totals: the two answers a shopper looks for before paying. ON,
+         * because he asked for them; the switch is here to take them away.
+         */
+        'policy_links' => ['bool', 'Shipping & Delivery and Returns Information links under the totals', true,
+                           'Two small links to /delivery/ and /refund_returns/ under the summary, on both cart layouts.'],
+
         // ── Trust row ──
         'trust_on'    => ['bool', 'Secure badge and payment marks', true, ''],
         'trust_text'  => ['text', 'Secure badge wording', 'Secure checkout', ''],
@@ -786,6 +796,7 @@ class CartPage
                        'sum_service_on', 'sum_service_mode', 'sum_service', 'sum_service_pct',
                        'sum_service_label', 'sum_service_help',
                        'sum_total_label',
+                       'policy_links',
                        'trust_on', 'trust_text', 'trust_size',
                        'pay_visa', 'pay_mc', 'pay_apple', 'pay_google', 'pay_tabby', 'pay_tamara']],
         'bars'    => ['Docked rows', 'The two rows that stay at the foot of the screen.',

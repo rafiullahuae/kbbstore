@@ -267,6 +267,13 @@ class CheckoutPage
          * write "loved by UAE shoppers" around the number and cannot write the
          * number. RatingsTellTheTruthTest is still the reason.
          */
+        /*
+         * "also apply … two links on cart / checkout pages" — the owner, 6
+         * October (Lane TP). Shipping & Delivery and Returns Information under
+         * the Place order button. ON, because he asked for them.
+         */
+        'policy_links' => ['bool', 'Shipping & Delivery and Returns Information links under Place order', true,
+                           'Two small links to /delivery/ and /refund_returns/, under the pay button on both the phone and the desktop page.'],
         'rating_on'   => ['bool', 'Show the reviews line', true,
                           'The stars and the score above the order summary. It already draws nothing until there are enough approved reviews to mean anything, so this is for a shop that never wants it.'],
         'rating_text' => ['text', 'Reviews line wording', '{rating} from {count} reviews',
@@ -875,8 +882,8 @@ class CheckoutPage
         'tocart'       => ['Back to cart', 'The "Go back to cart" link at the top of the page — both surfaces on one tab. Which of the five LOOKS it wears is chosen on Store → Ecommerce → Checkout → Mobile layout; everything about its SIZE is here.',
                            ['d_tocart_size', 'd_tocart_icon', 'd_tocart_r',
                             'm_tocart_size', 'm_tocart_icon', 'm_tocart_r', 'm_tocart_min']],
-        'trust'        => ['Trust & reviews', 'The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims.',
-                           ['rating_on', 'rating_text', 'rating_min']],
+        'trust'        => ['Trust & reviews', 'The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims. The two policy links under Place order are switched here too.',
+                           ['rating_on', 'rating_text', 'rating_min', 'policy_links']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
                            ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'sum_row', 'sum_totals', 'float_labels', 'browsed_on',
                             'ph_weight', 'ph_tone', 'ph_italic',

@@ -638,6 +638,7 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
                  Apple Pay after the shop has stopped being able to take it. Same
                  source as the trust row above, the footer and the product page. --}}<div class="paylogos">@foreach (\App\Support\PaymentChips::row('cart') as $kbbChip)<span>{{ $kbbChip }}</span>@endforeach<span>{{ __('store.footer.pay_cod') }}</span></div>
 @endif
+@include('partials.policy-links', ['on' => (bool) $kbbCpg['policy_links']])
         </aside>
 @if ($kbbSq)
         {{-- The two rows that float at the foot of the screen.

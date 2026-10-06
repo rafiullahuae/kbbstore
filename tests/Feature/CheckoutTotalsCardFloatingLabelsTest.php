@@ -351,6 +351,10 @@ it('renders the checkout byte for byte as before this lane with both switches of
         // links (V4 two-tone) under its search field on every page with the
         // menu. Not this lane's either; StorefrontEnglishUnchangedTest pins it.
         $after = (string) preg_replace('#    <div class="mm-chips"><div class="mm-chipr">.*?</div></div>\n#', '', $after, 1);
+        // Lane TP (also later) adds the two policy links under Place order in
+        // each copy of the order block; StorefrontEnglishUnchangedTest and
+        // PolicyLinksTest pin them.
+        $after = str_replace('    <p class="kbb-pol"><a href="/delivery/">Shipping &amp; Delivery</a><a href="/refund_returns/">Returns Information</a></p>'."\n", '', $after);
     } finally {
         EnglishRenderWalk::useViewPath($current[0]);
     }
