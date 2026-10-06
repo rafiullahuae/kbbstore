@@ -1638,9 +1638,6 @@ final class EnglishRenderWalk
      *
      * @return array<string, array{pattern: string, with: string, hits: int}>
      */
-    /** partials/policy-links.blade.php as the walk's seed renders it. (Lane TP) */
-    private const LANE_TP_LINKS = '<p class="kbb-pol"><a href="/delivery/">Shipping &amp; Delivery</a><a href="/refund_returns/">Returns Information</a></p>';
-
     public static function approvedStorefrontChanges(): array
     {
         return [
@@ -1656,28 +1653,6 @@ final class EnglishRenderWalk
              * wrapper, so every row inside is still compared byte for byte.
              * Off, neither fires and the page is as it was.
              */
-            /*
-             * THE TWO POLICY LINKS UNDER THE TOTALS (Lane TP). The owner, 6
-             * October: "also apply … two links on cart / checkout pages".
-             * Shipping & Delivery and Returns Information, one <p> added after
-             * the cart summary's last row (its payment chips) and one after the
-             * checkout order block's delivery line, which is drawn twice
-             * (summary column and phone box). Switched at Appearance → Cart
-             * page → Summary & trust and Appearance → Checkout page → Trust &
-             * reviews; both ship ON. Measured before this rule existed: the
-             * walk named /cart and /checkout with a basket, at these lines,
-             * and nothing else outside the footer.
-             */
-            'the policy links under the cart totals (Lane TP)' => [
-                'pattern' => '#(<span>COD</span></div>\n)(        </aside>)#',
-                'with' => '$1'.self::LANE_TP_LINKS."\n".'$2',
-                'hits' => 1,
-            ],
-            'the policy links under Place order (Lane TP)' => [
-                'pattern' => '#(<span>1–3 days fast delivery all over UAE</span></div>\n)(</div>)#u',
-                'with' => '$1    '.self::LANE_TP_LINKS."\n".'$2',
-                'hits' => 2,
-            ],
             'the checkout totals card opens (Lane CD)' => [
                 'pattern' => '#<div class="kbb-freeship-slot">#',
                 'with' => '<div class="cotot"><div class="kbb-freeship-slot">',

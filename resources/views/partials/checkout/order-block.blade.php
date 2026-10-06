@@ -217,5 +217,7 @@
         @endif
     </div>
     @include('partials.checkout.delivery-line')
-    @include('partials.policy-links', ['on' => (bool) app(\App\Services\CheckoutPage::class)->get('policy_links')])
+@if ((bool) app(\App\Services\CheckoutPage::class)->get('policy_links'))
+    @include('partials.policy-links', ['on' => true])
+@endif
 @endif

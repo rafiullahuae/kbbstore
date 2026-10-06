@@ -22,12 +22,17 @@ declare(strict_types=1);
  *
  * The switches: Appearance → Cart page → Summary & trust → "Shipping &
  * Delivery and Returns Information links under the totals", and Appearance →
- * Checkout page → Trust & reviews → "… links under Place order". Both ship ON.
+ * Checkout page → Trust & reviews → "… links under Place order". Both ship OFF
+ * since 2.60.417 -- the owner, on the checkout: "remove these links. only in
+ * the footer link, replace those two links." The slim footer's two links now
+ * carry Shipping & Delivery and Returns Information (SlimFooterPolicyLinksTest);
+ * these switches stay so the pair can come back, and the cases below switch
+ * them on to prove they still work.
  *
  * MUTATION NOTES, RUN:
  *   · remove the @include from cart-inner.blade.php → RED (case 1, cart).
  *   · remove the @include from checkout/order-block.blade.php → RED (case 1).
- *   · ship either `policy_links` default as false → RED (case 1).
+ *   · ship either `policy_links` default as true → RED (case 3).
  *   · write the selector back as `.kbb-pol a{` → RED (case 2).
  *   · delete the `.policy-body h2{` rule → RED (case 3).
  */
@@ -72,7 +77,7 @@ const TP_LINKS = '<p class="kbb-pol"><a href="/delivery/">Shipping &amp; Deliver
 
 it('puts Shipping & Delivery and Returns Information under the cart totals, on both layouts, and takes them away when switched off', function () {
     foreach (['squeeze', 'classic'] as $layout) {
-        app(CartPage::class)->save(['layout' => $layout]);
+        app(CartPage::class)->save(['layout' => $layout, 'policy_links' => true]);
         tpForget();
 
         expect(substr_count(tpBasketPage('/cart/'), TP_LINKS))->toBe(1, $layout);
@@ -84,6 +89,8 @@ it('puts Shipping & Delivery and Returns Information under the cart totals, on b
 });
 
 it('puts the same two links under Place order on the checkout, and takes them away when switched off', function () {
+    app(CheckoutPage::class)->save(['policy_links' => true]);
+    tpForget();
     $html = tpBasketPage('/checkout/');
 
     expect($html)->toContain(TP_LINKS)
@@ -94,9 +101,9 @@ it('puts the same two links under Place order on the checkout, and takes them aw
     expect(tpBasketPage('/checkout/'))->not->toContain('kbb-pol');
 });
 
-it('ships both switches on, on the tabs the owner opens', function () {
-    expect(CartPage::SCHEMA['policy_links'][2])->toBeTrue()
-        ->and(CheckoutPage::SCHEMA['policy_links'][2])->toBeTrue()
+it('ships both switches off, on the tabs the owner opens', function () {
+    expect(CartPage::SCHEMA['policy_links'][2])->toBeFalse()
+        ->and(CheckoutPage::SCHEMA['policy_links'][2])->toBeFalse()
         ->and(CartPage::TABS['summary'][2])->toContain('policy_links')
         ->and(CheckoutPage::TABS['trust'][2])->toContain('policy_links');
 });

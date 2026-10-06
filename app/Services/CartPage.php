@@ -406,10 +406,14 @@ class CartPage
         /*
          * "also apply … two links on cart / checkout pages" — the owner, 6
          * October. Shipping & Delivery and Returns Information, small, under
-         * the totals: the two answers a shopper looks for before paying. ON,
-         * because he asked for them; the switch is here to take them away.
+         * the totals: the two answers a shopper looks for before paying.
+         *
+         * OFF since 2.60.417: he meant the slim footer's two links, not a new
+         * pair under the totals ("remove these links. only in the footer link,
+         * replace those two links"). SlimFooter's l1/l2 now carry them; this
+         * switch stays so the pair can come back.
          */
-        'policy_links' => ['bool', 'Shipping & Delivery and Returns Information links under the totals', true,
+        'policy_links' => ['bool', 'Shipping & Delivery and Returns Information links under the totals', false,
                            'Two small links to /delivery/ and /refund_returns/ under the summary, on both cart layouts.'],
 
         // ── Trust row ──

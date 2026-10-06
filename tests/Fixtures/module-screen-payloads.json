@@ -6552,8 +6552,8 @@
             "type": "text",
             "label": "First link",
             "help": "Empty removes the link.",
-            "default": "Shipping policy",
-            "value": "Shipping policy",
+            "default": "Shipping & Delivery",
+            "value": "Shipping & Delivery",
             "options": null
           },
           {
@@ -6561,8 +6561,8 @@
             "type": "text",
             "label": "First link goes to",
             "help": "A path on this shop, or a full https:// address.",
-            "default": "/shipping-policy",
-            "value": "/shipping-policy",
+            "default": "/delivery/",
+            "value": "/delivery/",
             "options": null
           },
           {
@@ -6570,8 +6570,8 @@
             "type": "text",
             "label": "Second link",
             "help": "Empty removes the link.",
-            "default": "Terms of service",
-            "value": "Terms of service",
+            "default": "Returns Information",
+            "value": "Returns Information",
             "options": null
           },
           {
@@ -6579,8 +6579,8 @@
             "type": "text",
             "label": "Second link goes to",
             "help": "A path on this shop, or a full https:// address.",
-            "default": "/terms-of-service",
-            "value": "/terms-of-service",
+            "default": "/refund_returns/",
+            "value": "/refund_returns/",
             "options": null
           },
           {
@@ -7564,8 +7564,8 @@
             "type": "bool",
             "label": "Shipping & Delivery and Returns Information links under the totals",
             "help": "Two small links to /delivery/ and /refund_returns/ under the summary, on both cart layouts.",
-            "default": true,
-            "value": true,
+            "default": false,
+            "value": false,
             "options": null
           },
           {
@@ -9690,8 +9690,8 @@
             "type": "bool",
             "label": "Shipping & Delivery and Returns Information links under Place order",
             "help": "Two small links to /delivery/ and /refund_returns/, under the pay button on both the phone and the desktop page.",
-            "default": true,
-            "value": true,
+            "default": false,
+            "value": false,
             "options": null
           }
         ]

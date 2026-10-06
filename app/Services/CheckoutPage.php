@@ -270,9 +270,10 @@ class CheckoutPage
         /*
          * "also apply … two links on cart / checkout pages" — the owner, 6
          * October (Lane TP). Shipping & Delivery and Returns Information under
-         * the Place order button. ON, because he asked for them.
+         * the Place order button. OFF since 2.60.417: he meant the slim
+         * footer's two links (see CartPage's note), which now carry them.
          */
-        'policy_links' => ['bool', 'Shipping & Delivery and Returns Information links under Place order', true,
+        'policy_links' => ['bool', 'Shipping & Delivery and Returns Information links under Place order', false,
                            'Two small links to /delivery/ and /refund_returns/, under the pay button on both the phone and the desktop page.'],
         'rating_on'   => ['bool', 'Show the reviews line', true,
                           'The stars and the score above the order summary. It already draws nothing until there are enough approved reviews to mean anything, so this is for a shop that never wants it.'],
