@@ -845,7 +845,15 @@
         + '<span><b style="font-weight:600">&#128717; Order summary</b></span>'
         + '<span><b style="font-weight:800">AED 463</b> <span style="color:#c13a5e">' + (folded ? '&#8964;' : '&#8963;') + '</span></span></div>';
       if (folded) {
-        return '<div class="chv-sum">' + row + '<div class="go">Place order</div></div>';
+        /* "Desktop: totals above Place order" (Lane CD): the folded row keeps
+           the totals, in their own card, right above the button. */
+        var card = pvOn('sum_totals')
+          ? '<div style="background:#fff8fa;border:1px solid #f1e4e9;border-radius:8px;padding:5px 7px;margin:6px 0 2px">'
+            + '<div class="sr"><span>Subtotal</span><span>AED 443</span></div>'
+            + '<div class="sr"><span>Delivery</span><span>AED 20</span></div>'
+            + '<div class="tot"><span>Total</span><span>AED 463</span></div></div>'
+          : '';
+        return '<div class="chv-sum">' + row + card + '<div class="go">Place order</div></div>';
       }
     }
     return '<div class="chv-sum">' + row

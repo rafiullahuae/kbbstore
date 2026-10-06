@@ -5,8 +5,22 @@
      twice, so an id would collide) so the country-change refresh in
      checkout.js can replace it wholesale — it was being left stale after a
      country change until now: the delivery charge updated correctly but this
-     bar kept showing whatever threshold the page loaded with. --}}
-<div class="kbb-freeship-slot">
+     bar kept showing whatever threshold the page loaded with.
+
+     THE TOTALS CARD (Lane CD). Appearance -> Checkout page -> Fields &
+     attention -> "Desktop: totals above Place order", ON as asked: everything
+     from the free-delivery bar down to the VAT note is wrapped in .cotot, and
+     kbb-checkout.css draws that as its own card right above Place order on a
+     laptop, where the folded summary row no longer hides it. A WRAPPER, NOT A
+     COPY: every live path (country / emirate, coupon, gift, the quantity
+     steppers' wholesale swap of .kbb-order-slot, the summary row's observer)
+     keeps finding the same classes it always did, and the server renders the
+     same wrapper into every orderHtml because it is this partial that draws it.
+     Off, the directives emit nothing and the block is byte for byte as it was.
+     (The flag is assigned inside the conditional, not by an inline php
+     directive: Blade pairs an inline one with the NEXT block-closing directive
+     in the file and swallows everything between as PHP.) --}}
+@if ($kbbCot = app(\App\Services\CheckoutPage::class)->desktopTotals())<div class="cotot">@endif<div class="kbb-freeship-slot">
     @include('partials.checkout.freeship-bar')
 </div>
 
@@ -175,6 +189,8 @@
      (5%)" printed beside it: a receipt contradicting itself. Both halves move
      together. --}}
 <div class="sumrow vat js-vat-row vat-note"@if (! ($totals['vat'] && ! $totals['vat']['added'])) hidden @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
+@if ($kbbCot)</div>
+@endif
 
 @if ($withActions ?? true)
     @include('partials.checkout.legal-notice')

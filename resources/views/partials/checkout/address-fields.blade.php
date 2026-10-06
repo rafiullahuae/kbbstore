@@ -17,25 +17,25 @@
     CheckoutController::typedAddress() builds it; old() wins over both, so a
     rejected submission comes back as it was typed.
 --}}
-                        <x-checkout.field name="billing_address_1" :label="__('store.checkout.field_address')" required
+                        <x-checkout.field name="billing_address_1" :label="__('store.checkout.field_address')" required icon="pin"
                             validate="validate-required" priority="50"
                             :placeholder="__('store.checkout.field_address_placeholder')"
                             autocomplete="section-billing billing address-line1"
                             :value="old('billing_address_1', $prefill['line1'] ?? '')" />
 
                         <div class="row2">
-                            <x-checkout.field name="billing_state" :label="__('store.checkout.field_state')" required
+                            <x-checkout.field name="billing_state" :label="__('store.checkout.field_state')" required icon="map"
                                 validate="validate-required validate-state" priority="80"
                                 autocomplete="section-billing billing address-level1"
                                 :value="old('billing_state', $prefill['state'] ?? '')" />
 
-                            <x-checkout.field name="billing_city" :label="__('store.checkout.field_city')" required
+                            <x-checkout.field name="billing_city" :label="__('store.checkout.field_city')" required icon="city"
                                 validate="validate-required" priority="70"
                                 :placeholder="__('store.checkout.field_city_placeholder')"
                                 autocomplete="section-billing billing address-level2"
                                 :value="old('billing_city', $prefill['city'] ?? '')" />
                         </div>
-                        <x-checkout.field name="billing_country" :label="__('store.checkout.field_country')" type="select" required
+                        <x-checkout.field name="billing_country" :label="__('store.checkout.field_country')" type="select" required icon="globe"
                             validate="validate-required" priority="40"
                             autocomplete="section-billing billing country">
                             @if ($countryDetected ?? false)

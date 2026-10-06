@@ -548,7 +548,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // help" (`site_app_help`, inline hint / pop-up sheet, ships "inline" as the
     // owner asked), spliced in after `site_app_button` where TABS puts it; the
     // only other leaf edited is `site_app_button`'s help, which named the sheet.
-    expect($compared)->toBe(690, 'the number of controls drawn changed');
+    // 690 -> 692 (Lane CD, after Lane IN's 690): Appearance -> Checkout page -> Fields & attention
+    // gains "Desktop: totals above Place order" and "Floating labels on
+    // checkout fields", inserted after sum_row; nothing else was touched.
+    expect($compared)->toBe(692, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

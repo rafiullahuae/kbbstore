@@ -255,6 +255,52 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .form-row input:focus,
 .kbb-checkout .form-row textarea:focus,
 .kbb-checkout .form-row select:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
+/* ── FLOATING LABELS (Lane CD) ─────────────────────────────────────────────
+   Appearance -> Checkout page -> Fields & attention -> "Floating labels on
+   checkout fields". The Create account form's `.fld` (kbb.css): the box is
+   one rounded card with the icon at its start, the label sits inside it as
+   the placeholder and lifts to a small pink heading at the top of the box when
+   the field is focused, filled, or filled by the browser. Same numbers as
+   `.fld` -- 19px + --fld-gap above the text, 7px below, 12px corners, label at
+   14px from the top, lifted by 8px + --fld-gap to 10.5px -- restated here only
+   because this page's own field rules (0,3,1) outrank kbb.css's `.fld input`.
+   Font size, border, focus ring and the validation colours are still the
+   checkout's own rules, untouched, so the text-size sliders, the 16px touch
+   floor (kbb.css) and inline validation all keep working. Pure CSS: no script,
+   no measuring. */
+.kbb-checkout .fld.kbb-fl{position:relative;display:block;margin:0}
+.kbb-checkout .fld.kbb-fl :is(input,select,textarea){border-radius:12px;
+  padding-top:calc(19px + var(--fld-gap,3px));padding-bottom:7px;padding-inline-start:14px}
+.kbb-checkout .fld.kbb-fl.ico :is(input,select,textarea){padding-inline-start:42px}
+.kbb-checkout .fld.kbb-fl > label{position:absolute;inset-inline-start:15px;top:14px;margin:0;max-width:calc(100% - 30px);
+  font-size:calc(14px * var(--cop-tinput));line-height:1.3;font-weight:400;letter-spacing:0;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;
+  transition:transform .16s ease,font-size .16s ease,color .16s ease}
+.kbb-checkout .fld.kbb-fl.ico > label{inset-inline-start:43px;max-width:calc(100% - 58px)}
+.kbb-checkout .fld.kbb-fl :is(input,textarea):is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label,
+.kbb-checkout .fld.kbb-fl select ~ label{
+  transform:translateY(calc(-8px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:var(--pink-deep)}
+/* A select with nothing chosen reads as empty, like a blank input. */
+.kbb-checkout .fld.kbb-fl select:has(option[value=""]:checked):not(:focus) ~ label{
+  transform:none;font-size:calc(14px * var(--cop-tinput));letter-spacing:0;color:var(--muted)}
+/* A hint of the field's own ("+971 5x xxx xxxx") waits until the label has
+   moved out of its way, so the two never print on top of each other. */
+.kbb-checkout .fld.kbb-fl :is(input,textarea):not(:focus)::placeholder{color:transparent}
+.kbb-checkout .fld.kbb-fl .lead{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);
+  display:grid;place-items:center;color:var(--muted);pointer-events:none}
+.kbb-checkout .fld.kbb-fl .lead svg{width:18px;height:18px;display:block}
+.kbb-checkout .fld.kbb-fl:focus-within .lead{color:var(--pink)}
+.kbb-checkout .fld.kbb-fl:has(textarea) .lead{top:16px;transform:none}
+.kbb-checkout .fld.kbb-fl .required{color:var(--pink)}
+/* A field judged wrong says so in its label too -- .form-row in front so this
+   outranks the lifted-label rule above (0,5,1 against 0,4,2). */
+.kbb-checkout .form-row.woocommerce-invalid .fld.kbb-fl > label,
+.kbb-checkout .form-row.kbb-invalid .fld.kbb-fl > label{color:var(--sale)}
+/* The discount code keeps its green box: green focus, green lifted label. */
+.kbb-checkout .coupon .fld.kbb-fl{flex:1;min-width:0}
+.kbb-checkout .coupon .fld.kbb-fl input{width:100%;border-radius:10px}
+.kbb-checkout .coupon .fld.kbb-fl input:is(:focus,:not(:placeholder-shown)) ~ label{color:#1F7D52;text-transform:none}
+.kbb-checkout .coupon .fld.kbb-fl:focus-within .lead{color:#2E9E6B}
 /* select2 (emirate dropdown) to match */
 .kbb-checkout .select2-container--default .select2-selection--single{border:1.5px solid var(--line)!important;border-radius:10px!important;min-height:46px;padding:5px 4px;background:#fff}
 .kbb-checkout .select2-container--default .select2-selection--single .select2-selection__rendered{line-height:34px;padding-inline-start:8px;color:var(--ink)}
@@ -733,6 +779,20 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .sumrow{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2);margin-bottom:7px}
 .kbb-checkout .sumrow.disc,.kbb-checkout .sumrow.disc span{color:var(--green);font-weight:600}
 .kbb-checkout .sumrow.tot{font-size:17px;font-weight:800;color:var(--ink);border-top:1px solid var(--line);padding-top:11px;margin-top:3px}
+/* THE TOTALS CARD (Lane CD) -- Appearance -> Checkout page -> Fields &
+   attention -> "Desktop: totals above Place order". .cotot is only rendered
+   while that switch is on, and only a laptop draws it as a card: the phone
+   page keeps the summary it shipped with, so below 901px the wrapper is an
+   unstyled block whose margins collapse through it and nothing moves. */
+@media(min-width:901px){
+  .kbb-checkout .summary .cotot{margin-top:10px;padding:13px 15px 6px;border:1px solid var(--line-2);border-radius:14px;
+    background:linear-gradient(180deg,#FFFAFB,#fff)}
+  .kbb-checkout .summary .cotot .freebar{margin:0 0 12px}
+  .kbb-checkout .summary .cotot .sumrow.tot{margin-top:6px;padding-top:10px;border-top-style:dashed}
+  /* Folded, the card is the first thing under the row: its own edge is the
+     divider, so the row's hairline and the panel gap above it are dropped. */
+  .kbb-checkout .summary.cosr-on:not(.cosr-open):has(.cotot) .panels{margin-top:4px}
+}
 .kbb-checkout .place{width:100%;background:var(--pink);color:#fff;border-radius:99px;padding:15px;font-weight:700;font-size:15px;margin-top:13px;transition:.18s var(--ease);box-shadow:0 16px 30px -14px rgba(193,62,99,.6);border:none;font-family:inherit;cursor:pointer}
 .kbb-checkout .place:hover{background:var(--pink-deep);transform:translateY(-2px)}
 .kbb-checkout .place[disabled]{opacity:.6;cursor:default;transform:none}

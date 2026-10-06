@@ -20,7 +20,33 @@
      * keeps it; only an install with no row at all gets the default.
      */
     $kbbCartCoupon = app(\App\Services\SettingsService::class)->moduleEnabled('cart_coupon_field', false);
+    // The checkout's "Floating labels on checkout fields" switch (Lane CD)
+    // covers this one field too. Asked only when the field is drawn at all.
+    $kbbCartFl = $kbbCartCoupon && app(\App\Services\CheckoutPage::class)->floatLabels();
 @endphp
+@if ($kbbCartFl)
+@push('styles')
+<style>
+/* FLOATING LABEL on the discount code (Lane CD) -- Appearance -> Checkout
+   page -> Fields & attention -> "Floating labels on checkout fields". The
+   Create account form's `.fld` (kbb.css), restated at this page's specificity:
+   the label is the placeholder, and lifts to a small heading inside the box.
+   Here and not in kbb-cart.css: printed only on a cart that draws the field
+   with the switch on, so every other cart page carries none of it. */
+.kbb-cartpage .coupon .fld.kbb-fl{position:relative;flex:1;min-width:0;margin:0}
+.kbb-cartpage .coupon .fld.kbb-fl input{width:100%;padding:calc(17px + var(--fld-gap,3px)) 13px 5px;padding-inline-start:40px}
+.kbb-cartpage .coupon .fld.kbb-fl > label{position:absolute;inset-inline-start:41px;top:13px;max-width:calc(100% - 54px);
+  font-size:13px;line-height:1.3;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;
+  transition:transform .16s ease,font-size .16s ease,color .16s ease}
+.kbb-cartpage .coupon .fld.kbb-fl input:is(:focus,:not(:placeholder-shown),:-webkit-autofill,:autofill) ~ label{
+  transform:translateY(calc(-7px - var(--fld-gap,3px)));font-size:10.5px;letter-spacing:.04em;color:#1F7D52}
+.kbb-cartpage .coupon .fld.kbb-fl .lead{position:absolute;inset-inline-start:13px;top:50%;transform:translateY(-50%);
+  display:grid;place-items:center;color:var(--muted);pointer-events:none}
+.kbb-cartpage .coupon .fld.kbb-fl .lead svg{width:17px;height:17px;display:block}
+.kbb-cartpage .coupon .fld.kbb-fl:focus-within .lead{color:#2E9E6B}
+</style>
+@endpush
+@endif
 
 @if ($items->isEmpty())
     <div class="empty">
@@ -338,7 +364,11 @@ $kbbLineWas = static function ($kbbWasLine): int {
              suggestion, not an entry field. --}}
         @if ($kbbCartCoupon)
         <div class="coupon">
+@if ($kbbCartFl)
+            <span class="fld kbb-fl kbb-fl-coupon ico"><span class="lead" aria-hidden="true">@include('partials.icon-tag')</span><input type="text" id="kbbCartCoupon" placeholder=" " autocomplete="off"><label for="kbbCartCoupon">{{ __('store.cart.coupon_placeholder') }}</label></span>
+@else
             <input type="text" id="kbbCartCoupon" placeholder="{{ __('store.cart.coupon_placeholder') }}" autocomplete="off">
+@endif
             <button type="button" data-kcpcoupon>{{ __('store.cart.coupon_apply') }}</button>
         </div>
             @if ($couponHint)
@@ -462,7 +492,11 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
                  cart.js reads the value by id. --}}
             @if ($kbbCartCoupon && ! $kbbSq)
                 <div class="coupon">
+@if ($kbbCartFl)
+                    <span class="fld kbb-fl kbb-fl-coupon ico"><span class="lead" aria-hidden="true">@include('partials.icon-tag')</span><input type="text" id="kbbCartCoupon" placeholder=" " autocomplete="off"><label for="kbbCartCoupon">{{ __('store.cart.coupon_placeholder') }}</label></span>
+@else
                     <input type="text" id="kbbCartCoupon" placeholder="{{ __('store.cart.coupon_placeholder') }}" autocomplete="off">
+@endif
                     <button type="button" data-kcpcoupon>{{ __('store.cart.coupon_apply') }}</button>
                 </div>
                 @if ($couponHint)

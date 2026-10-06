@@ -83,7 +83,15 @@
                 <div class="coupon">
                     <div class="ch"><span class="gift">🎁</span> {{ __('store.checkout.coupon_prompt') }}</div>
                     <div class="crow">
+{{-- FLOATING LABELS (Lane CD): Appearance -> Checkout page -> Fields &
+     attention -> "Floating labels on checkout fields", ON as asked. The
+     Create account form's .fld shape -- icon, control, then a real label the
+     CSS lifts once the box is focused or filled. Same name, id and
+     autocomplete either way; directives at column 0 so OFF is byte-identical. --}}@if ($kbbCoPage->floatLabels())
+                        <span class="fld kbb-fl kbb-fl-coupon ico"><span class="lead" aria-hidden="true">@include('partials.icon-tag')</span><input type="text" name="coupon_code" class="input-text" id="kbb_coupon_code" placeholder=" " autocomplete="off"><label for="kbb_coupon_code">{{ __('store.checkout.coupon_placeholder') }}</label></span>
+@else
                         <input type="text" name="coupon_code" class="input-text" id="kbb_coupon_code" placeholder="{{ __('store.checkout.coupon_placeholder') }}" autocomplete="off">
+@endif
                         <button type="button" class="apply" id="kbb_apply_coupon">{{ __('store.checkout.coupon_apply') }}</button>
                     </div>
                     @include('partials.checkout.coupon-hint')                </div>
@@ -118,7 +126,7 @@
                                  whole name -- splitName() in the controller cuts it up -- and a
                                  browser told "given-name" fills it with the first name alone,
                                  leaving the surname to be typed by hand on a phone. --}}
-                            <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_full_name')" required
+                            <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_full_name')" required icon="user"
                                 validate="validate-required" priority="10"
                                 :placeholder="__('store.checkout.field_full_name_placeholder')"
                                 autocomplete="section-billing billing name"
@@ -129,25 +137,25 @@
                                  in the controller has accepted this shape all along; only the form
                                  itself never offered it. --}}
                             <div class="row2">
-                                <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_first_name')" required
+                                <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_first_name')" required icon="user"
                                     rowClass="form-row-first" validate="validate-required" priority="10"
                                     autocomplete="section-billing billing given-name"
                                     :value="old('billing_first_name', $prefill['first_name'] ?? '')" />
 
-                                <x-checkout.field name="billing_last_name" :label="__('store.checkout.field_last_name')" required
+                                <x-checkout.field name="billing_last_name" :label="__('store.checkout.field_last_name')" required icon="user"
                                     rowClass="form-row-last" validate="validate-required" priority="20"
                                     autocomplete="section-billing billing family-name"
                                     :value="old('billing_last_name', $prefill['last_name'] ?? '')" />
                             </div>
 @endif
                         <div class="row2">
-                            <x-checkout.field name="billing_phone" :label="__('store.checkout.field_phone')" type="tel" required
+                            <x-checkout.field name="billing_phone" :label="__('store.checkout.field_phone')" type="tel" required icon="phone"
                                 validate="validate-required validate-phone" priority="100"
                                 :placeholder="__('store.checkout.field_phone_placeholder')" inputmode="tel"
                                 autocomplete="section-billing billing tel"
                                 :value="old('billing_phone', $prefill['phone'] ?? '')" />
 
-                            <x-checkout.field name="billing_email" :label="__('store.checkout.field_email')" type="email" required
+                            <x-checkout.field name="billing_email" :label="__('store.checkout.field_email')" type="email" required icon="mail"
                                 validate="validate-required validate-email" priority="1"
                                 :placeholder="__('store.checkout.field_email_placeholder')" inputmode="email"
                                 autocomplete="section-billing billing email"
@@ -169,10 +177,15 @@
                                     <input type="checkbox" name="create_account" id="create_account" value="1" @checked(old('create_account'))>
                                     <span>{{ __('store.checkout.create_account') }}</span>
                                 </label>
+@if ($kbbCoPage->floatLabels())
+                                <span class="woocommerce-input-wrapper kbb-acct-pw fld kbb-fl ico" id="account_password_wrap" hidden><span class="lead" aria-hidden="true">@include('partials.icon-lock')</span><input type="password" class="input-text" name="account_password" id="account_password"
+                                           placeholder=" " autocomplete="new-password" minlength="8"><label for="account_password">{{ __('store.checkout.password_placeholder') }}</label></span>
+@else
                                 <span class="woocommerce-input-wrapper kbb-acct-pw" id="account_password_wrap" hidden>
                                     <input type="password" class="input-text" name="account_password" id="account_password"
                                            placeholder="{{ __('store.checkout.password_placeholder') }}" autocomplete="new-password" minlength="8">
                                 </span>
+@endif
                                 @error('account_password')<span class="kbb-acct-err">{{ $message }}</span>@enderror
                             </p>
 @endguest
@@ -216,7 +229,7 @@
                             {{-- Not rendered rather than hidden, so nothing posts
                                  customer_note while it is off. place() has always
                                  treated it as nullable, so this needs no branch there. --}}
-                            <x-checkout.field name="customer_note" :label="__('store.checkout.field_notes')" type="textarea" optional
+                            <x-checkout.field name="customer_note" :label="__('store.checkout.field_notes')" type="textarea" optional icon="note"
                                 rowClass="form-row-wide kbb-note" rows="2" maxlength="600"
                                 :placeholder="__('store.checkout.field_notes_placeholder')"
                                 :value="old('customer_note')" />
@@ -234,9 +247,15 @@
                                         <b class="kbb-gift-fee">+{!! \App\Support\Money::format($giftFee) !!}</b>
                                     @endif
                                 </label>
+@if ($kbbCoPage->floatLabels())
+                                <span class="woocommerce-input-wrapper kbb-gift-msg" id="gift_note_wrap" hidden>
+                                    <span class="fld kbb-fl ico"><span class="lead" aria-hidden="true">@include('partials.icon-gift')</span><textarea name="gift_note" id="gift_note" class="input-text" rows="3" maxlength="600"
+                                              placeholder=" ">{{ old('gift_note') }}</textarea><label for="gift_note">{{ __('store.checkout.gift_note_placeholder') }}</label></span>
+@else
                                 <span class="woocommerce-input-wrapper kbb-gift-msg" id="gift_note_wrap" hidden>
                                     <textarea name="gift_note" id="gift_note" class="input-text" rows="3" maxlength="600"
                                               placeholder="{{ __('store.checkout.gift_note_placeholder') }}">{{ old('gift_note') }}</textarea>
+@endif
                                     <span class="kbb-gift-count">{!! trans_choice('store.checkout.gift_characters_left', 600, ['remaining' => '<span id="gift_left">600</span>']) !!}</span>
                                 </span>
                             </p>

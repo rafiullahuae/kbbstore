@@ -75,6 +75,12 @@
     'minlength' => null,
     'rows' => null,
     'id' => null,
+    // FLOATING LABEL (Lane CD): one of partials/icon-*, drawn at the start of
+    // the box while Appearance -> Checkout page -> Fields & attention ->
+    // "Floating labels on checkout fields" is on. `float` overrides the
+    // switch, for a caller that has already read it.
+    'icon' => null,
+    'float' => null,
 ])
 @php
     $fieldId = $id ?: $name;
@@ -107,8 +113,20 @@
     // `.input-text` is load-bearing: it is what both phone rules select on.
     $controlAttrs = ' class="input-text" name="'.e($name).'" id="'.e($fieldId).'"';
 
+    /*
+     * FLOATING (Lane CD) -- the Create account form's `.fld` shape: icon, the
+     * control, then the label AFTER it, so `:placeholder-shown ~ label` can
+     * tell CSS whether the box is empty with no script. A control with no
+     * hint of its own gets the account form's single-space placeholder for
+     * that; one with a hint keeps it, and kbb-checkout.css shows it only once
+     * the label has lifted out of its way. A select takes no placeholder.
+     */
+    $float = $float ?? app(\App\Services\CheckoutPage::class)->floatLabels();
+
     if ($type !== 'select' && $placeholder !== '') {
         $controlAttrs .= ' placeholder="'.e($placeholder).'"';
+    } elseif ($type !== 'select' && $float) {
+        $controlAttrs .= ' placeholder=" "';
     }
 
     if ($required) {
@@ -147,4 +165,8 @@
         default => '<input type="'.e($type).'"'.$controlAttrs.' value="'.e($value).'" />',
     };
 @endphp
+@if ($float)
+<p{!! $rowAttrs !!}><span class="woocommerce-input-wrapper fld kbb-fl{{ $icon ? ' ico' : '' }}">@if ($icon)<span class="lead" aria-hidden="true">{!! trim(view('partials.icon-'.$icon)->render()) !!}</span>@endif{!! $control !!}<label{!! $labelAttrs !!}>{{ $label }}{!! $marker !!}{!! $badge ?? '' !!}</label></span></p>
+@else
 <p{!! $rowAttrs !!}><label{!! $labelAttrs !!}>{{ $label }}{!! $marker !!}{!! $badge ?? '' !!}</label><span class="woocommerce-input-wrapper">{!! $control !!}</span></p>
+@endif

@@ -9271,6 +9271,24 @@
             "options": null
           },
           {
+            "key": "sum_totals",
+            "type": "bool",
+            "label": "Desktop: totals above Place order",
+            "help": "On, as asked: on a laptop the order summary row opens to the products only, and the subtotal, delivery, discount, fees and Total sit in their own card directly above Place order. Phones are not affected. Off puts the totals back inside the folded summary.",
+            "default": true,
+            "value": true,
+            "options": null
+          },
+          {
+            "key": "float_labels",
+            "type": "bool",
+            "label": "Floating labels on checkout fields",
+            "help": "On, as asked: every checkout field (and the cart's discount code) carries its name inside the box, the way the Create account form does, and the name shrinks to a small heading at the top of the box when the field is tapped or filled. Off puts the label back above each box.",
+            "default": true,
+            "value": true,
+            "options": null
+          },
+          {
             "key": "browsed_on",
             "type": "bool",
             "label": "Recently browsed in the summary",
