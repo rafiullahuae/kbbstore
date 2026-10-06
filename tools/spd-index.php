@@ -46,6 +46,10 @@ $response->headers->set('X-Spd-Q', (string) $before['q']);
 $response->headers->set('X-Spd-Qms', (string) round($before['ms'], 2));
 $response->headers->set('X-Spd-Mem', (string) round(memory_get_peak_usage(false) / 1024));
 $response->headers->set('X-Spd-Cache', (string) array_sum($before['cache']));
+if (is_file(__DIR__.'/../slow.on')) {
+    // 1.6 Mbps for the page's bytes, at a typical 6:1 gzip ratio (spd-router.php).
+    usleep((int) (strlen((string) $response->getContent()) / 6 * 5));
+}
 $response->send();
 $kernel->terminate($request, $response);
 $end = microtime(true);
@@ -53,7 +57,7 @@ $end = microtime(true);
 $uri = $_SERVER['REQUEST_URI'] ?? '/';
 if (! preg_match('#\.(css|js|png|jpe?g|webp|svg|woff2?|ico|txt|json)(\?|$)#', $uri)) {
     @file_put_contents(__DIR__.'/../spd-after.log', json_encode([
-        'uri' => $uri, 'ms' => round(($ready - LARAVEL_START) * 1000, 2), 'after_ms' => round(($end - $ready) * 1000, 2),
+        'uri' => $uri, 'purpose' => (string) ($_SERVER['HTTP_SEC_PURPOSE'] ?? ''), 'ms' => round(($ready - LARAVEL_START) * 1000, 2), 'after_ms' => round(($end - $ready) * 1000, 2),
         'q' => $before['q'], 'after_q' => $GLOBALS['spd']['q'] - $before['q'],
         'cache_reads' => array_sum($before['cache']), 'top_keys' => array_slice((function ($c) { arsort($c); return $c; })($before['cache']), 0, 8, true),
     ])."\n", FILE_APPEND);

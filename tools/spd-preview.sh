@@ -48,12 +48,13 @@ ln -sfn "$SRC" "$DIR/kbb-upgrade-app"
 cp "$APP/tools/spd-index.php" "$ROOT/index.php"
 cp -r "$SRC/public/build" "$ROOT/build"
 cp "$APP/public-web-root/favicon.ico" "$ROOT/favicon.ico"
-cp "$APP/tools/perf-router.php" "$ROOT/router.php"
+cp "$APP/tools/perf-router.php" "$ROOT/perf-router.php"
+cp "$APP/tools/spd-router.php" "$ROOT/router.php"
 
 mysql -u root -e "DROP DATABASE IF EXISTS $DBN; CREATE DATABASE $DBN CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL ON $DBN.* TO 'kbb'@'%';" 2>/dev/null \
   || mysql -u root -e "DROP DATABASE IF EXISTS $DBN; CREATE DATABASE $DBN CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL ON $DBN.* TO 'kbb'@'localhost';"
 
-export APP_ENV=production APP_DEBUG=false APP_URL="http://127.0.0.1:$PORT" \
+export APP_ENV=${SPD_APP_ENV:-production} APP_DEBUG=false APP_URL="http://127.0.0.1:$PORT" \
   APP_KEY=base64:bGFuZXBlcmZsYW5lcGVyZmxhbmVwZXJmbGFuZXBlcmY= \
   KBB_PUBLIC_PATH="$ROOT" \
   DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_PORT=3306 DB_DATABASE=$DBN DB_USERNAME=kbb DB_PASSWORD=kbb \

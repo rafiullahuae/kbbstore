@@ -2318,6 +2318,19 @@ KBB_BH_CSS;
                     .'<script src="/site-app\.js\?v=[0-9a-f]{10}" data-sw="/sw\.js" data-scope="/" defer></script>\n#',
                 'hits' => 37,
             ],
+            /*
+             * INSTANT PAGE CHANGES (Lane SP, Appearance -> Site layout -> Page
+             * speed). The owner asked for speed ("super blazing speed with
+             * super fast shifting layout from one page to another"), so "Open
+             * pages instantly" ships ON: one line in the head of every page that
+             * carries the Site App tags -- the script that adds the
+             * prefetch-on-hover rules. The fade ships off (measured to cost
+             * speed), so it adds nothing here. Nothing else moves.
+             */
+            'the instant page change script (Lane SP)' => [
+                'pattern' => '#<script data-r="[^"]*">\(function\(d,w\)\{[^<]*</script>\n#',
+                'hits' => 37,
+            ],
             // 2.60.393: the phone's 1 / 2 column buttons, beside Sort, on the
             // shop and category listing (hidden on a laptop).
             'the phone 1 / 2 column buttons (2.60.393)' => [

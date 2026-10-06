@@ -758,6 +758,11 @@ it('ships every setting at the value the page already had, except the ones the o
         // Lane FS: Appearance → Site layout → Fonts, at the shop's own Outfit.
         'font_body' => 'outfit',
         'font_heading' => 'outfit',
+        // Lane SP, Page speed: the owner asked for speed, so "Open pages
+        // instantly" ships ON; the fade ships off -- measured to cost the next
+        // page 60-110 ms of first paint (App\Support\InstantNav).
+        'nav_instant' => true,
+        'nav_fade' => false,
     ];
 
     expect(array_keys($fields))->toEqual(array_keys($expected));
