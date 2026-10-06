@@ -111,19 +111,36 @@ function initMobileChrome() {
 
     const singleOpen = menu.dataset.singleOpen !== '0';
 
+    /*
+     * Appearance → Mobile menu → Panel → "Menu opens from" (Lane MN). Left is
+     * the glass side panel and is what the server prints by default; Bottom is
+     * the sheet exactly as it was. Everything below that only the side panel
+     * does sits behind `side`, so with Bottom this function behaves as it
+     * always has.
+     */
+    const side = menu.classList.contains('mm-left');
+    if (side) menu.tabIndex = -1;
+
     const open = () => {
         menu.classList.add('on');
         scrim.classList.add('on');
         document.body.classList.add('menu-open');
         document.body.style.overflow = 'hidden';
         burger?.setAttribute('aria-expanded', 'true');
+        // Into the panel, on the close button rather than the search field,
+        // so a phone's keyboard does not jump up over the menu.
+        if (side) (document.getElementById('mmx') || menu).focus({ preventScroll: true });
     };
     const shut = () => {
+        const was = menu.classList.contains('on');
         menu.classList.remove('on');
         scrim.classList.remove('on');
         document.body.classList.remove('menu-open');
         document.body.style.overflow = '';
         burger?.setAttribute('aria-expanded', 'false');
+        // Back to the burger that opened it -- only when it really was open,
+        // because Escape anywhere on the page calls this too.
+        if (side && was) burger?.focus({ preventScroll: true });
     };
 
     burger?.addEventListener('click', () => (menu.classList.contains('on') ? shut() : open()));
@@ -155,7 +172,67 @@ function initMobileChrome() {
         if (event.target.closest('a')) shut();
     });
 
+    if (side) initSidePanel(menu, shut);
     initMenuFilter(menu);
+}
+
+/**
+ * What only the side panel does: keep Tab inside it while it is open, and close
+ * it on a swipe toward the edge it came from (the left, the right in Arabic).
+ *
+ * Nothing here measures the page. The swipe reads pointer coordinates and sets
+ * a transform; the panel's size is the stylesheet's business.
+ */
+function initSidePanel(menu, shut) {
+    const rtl = () => document.documentElement.dir === 'rtl';
+
+    // A row is reachable unless the filter hid it or it sits in a closed section.
+    const reachable = () => [...menu.querySelectorAll('a[href], button, input')]
+        .filter((el) => !el.closest('.mm-hide, [hidden], .mm-node:not(.on) > .mm-kid, .mm-grab'));
+
+    menu.addEventListener('keydown', (e) => {
+        if (e.key !== 'Tab' || !menu.classList.contains('on')) return;
+        const f = reachable();
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1], at = document.activeElement;
+        if (e.shiftKey && (at === first || at === menu)) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus(); }
+    });
+
+    let pid = null, x0 = 0, y0 = 0, t0 = 0, dx = 0, axis = '', dragged = false;
+
+    menu.addEventListener('pointerdown', (e) => {
+        if (!menu.classList.contains('on') || e.target.closest('input')) return;
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        pid = e.pointerId; x0 = e.clientX; y0 = e.clientY; t0 = e.timeStamp; dx = 0; axis = '';
+    });
+    menu.addEventListener('pointermove', (e) => {
+        if (e.pointerId !== pid) return;
+        // Toward the edge the panel came from is negative, in both directions.
+        const mx = (e.clientX - x0) * (rtl() ? -1 : 1);
+        if (!axis) {
+            if (Math.abs(mx) < 10 && Math.abs(e.clientY - y0) < 10) return;
+            axis = Math.abs(mx) > Math.abs(e.clientY - y0) * 1.2 ? 'x' : 'y';
+            if (axis === 'x') { try { menu.setPointerCapture(pid); } catch (_) { /* gone */ } menu.classList.add('mm-drag'); }
+        }
+        if (axis !== 'x') return;
+        dx = Math.min(0, mx);
+        menu.style.transform = `translateX(${rtl() ? -dx : dx}px)`;
+    });
+    const end = (e) => {
+        if (e.pointerId !== pid) return;
+        pid = null;
+        if (axis !== 'x') return;
+        dragged = true;
+        setTimeout(() => { dragged = false; }, 60);
+        menu.classList.remove('mm-drag');
+        menu.style.transform = '';
+        if (dx < -60 || dx / Math.max(1, e.timeStamp - t0) < -0.45) shut();
+    };
+    menu.addEventListener('pointerup', end);
+    menu.addEventListener('pointercancel', end);
+    // A drag that ends over a link is a swipe, not a tap on the link.
+    menu.addEventListener('click', (e) => { if (dragged) { e.preventDefault(); e.stopPropagation(); } }, true);
 }
 
 /**

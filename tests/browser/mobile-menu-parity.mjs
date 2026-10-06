@@ -1,6 +1,13 @@
 /**
  * The Arabic mobile menu is the English one, to the pixel.
  *
+ * ▲ LANE MN, 6 OCTOBER: the owner has since asked for the menu to "open from
+ * left side" with a glass panel, and that ships as the default (Appearance ->
+ * Mobile menu -> Panel -> "Menu opens from" -> Left). With Left the checks
+ * below become the side panel's: from the left in English, from the right in
+ * Arabic, the same size in both, full height. With Bottom they are the
+ * sheet's checks exactly as written.
+ *
  * WHY THIS EXISTS. The owner was sent a screenshot of an Arabic mobile menu
  * sliding in from the side and answered: "we don't have menu opening from side
  * in mobile, we have dedicated developed menu opening from downside. i need the
@@ -50,6 +57,7 @@ const read = (page) =>
             const r = el.getBoundingClientRect();
             return {
                 on: el.classList.contains('on'),
+                side: el.classList.contains('mm-left'),
                 x: Math.round(r.x), y: Math.round(r.y),
                 w: Math.round(r.width), h: Math.round(r.height),
             };
@@ -92,15 +100,33 @@ try {
     if (!en.closed.sheet || !ar.closed.sheet) fail('the sheet is not in the markup on one of the two pages');
     if (!en.closed.burger || !ar.closed.burger) fail('the burger is not in the markup on one of the two pages');
 
-    // The sheet is the same object in both languages, open and closed.
-    const same = (a, b) => a && b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
-    out.checks.sheetIdenticalClosed = same(en.closed.sheet, ar.closed.sheet);
-    out.checks.sheetIdenticalOpen = same(en.open.sheet, ar.open.sheet);
-
-    // It really is a bottom sheet: it starts below the fold and rises.
-    out.checks.risesFromTheBottom = en.closed.sheet.y > en.open.sheet.y && ar.closed.sheet.y > ar.open.sheet.y;
-    out.checks.fullWidth = en.open.sheet.w === en.closed.clientWidth && ar.open.sheet.w === ar.closed.clientWidth;
     out.checks.opens = en.open.sheet.on === true && ar.open.sheet.on === true;
+
+    if (en.open.sheet.side) {
+        /*
+         * ▲ LANE MN (6 October): THE SIDE PANEL. The owner asked for the menu
+         * to "open from left side" (Appearance -> Mobile menu -> Panel ->
+         * "Menu opens from" -> Left, the default). So the asymmetry above now
+         * applies to the panel too: it is a side object, and it MIRRORS — in
+         * from the left edge in English, the right edge in Arabic — while its
+         * size is the same in both.
+         */
+        const W = en.closed.clientWidth;
+        out.checks.sideSameSize = en.open.sheet.w === ar.open.sheet.w && en.open.sheet.h === ar.open.sheet.h;
+        out.checks.sideFullHeight = en.open.sheet.y === 0 && ar.open.sheet.y === 0;
+        out.checks.englishFromTheLeft = en.open.sheet.x === 0 && en.closed.sheet.x + en.closed.sheet.w <= 0;
+        out.checks.arabicFromTheRight = ar.open.sheet.x + ar.open.sheet.w === W && ar.closed.sheet.x >= W;
+        out.checks.narrowerThanTheScreen = en.open.sheet.w < W;
+    } else {
+        // Bottom: the sheet is the same object in both languages, open and closed.
+        const same = (a, b) => a && b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
+        out.checks.sheetIdenticalClosed = same(en.closed.sheet, ar.closed.sheet);
+        out.checks.sheetIdenticalOpen = same(en.open.sheet, ar.open.sheet);
+
+        // It really is a bottom sheet: it starts below the fold and rises.
+        out.checks.risesFromTheBottom = en.closed.sheet.y > en.open.sheet.y && ar.closed.sheet.y > ar.open.sheet.y;
+        out.checks.fullWidth = en.open.sheet.w === en.closed.clientWidth && ar.open.sheet.w === ar.closed.clientWidth;
+    }
 
     // The burger is a corner button and MUST move to the other corner.
     out.checks.burgerMirrors = en.closed.burger.x < en.closed.clientWidth / 2

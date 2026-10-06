@@ -69,7 +69,12 @@ it('still emits the three classes it always emitted, and no more', function () {
 
     sort($classes);
 
-    expect($classes)->toBe(['mm-card-cream', 'mm-rule-children']);
+    // ▲ Lane MN (6 October): `mm-left` joined them deliberately — Appearance →
+    // Mobile menu → Panel → "Menu opens from" ships at Left, the side panel the
+    // owner asked for. It is the class the stylesheet and initMobileChrome()
+    // key the side panel off; MobileMenuOpensFromTest pins it. Still no icon
+    // class: the icon stays the Header screen's.
+    expect($classes)->toBe(['mm-card-cream', 'mm-left', 'mm-rule-children']);
 });
 
 it('leaves the menu icon answered by the screen that reaches the element', function () {

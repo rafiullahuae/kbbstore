@@ -4807,7 +4807,7 @@ function paintMobileMenu(){
   const byKey={}; MM.fields.forEach(f=>byKey[f.key]=f);
   $('#content').innerHTML=`<div class="wrap ecwrap mmwrap">
     <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Mobile menu</h2>
-      <p class="mdesc" style="margin:0">The sheet that slides up from the bottom on phones.</p></div>
+      <p class="mdesc" style="margin:0">The phone menu: a glass panel from the left (from the right in Arabic), or the sheet from the bottom.</p></div>
     <div class="mmgrid">
       <div class="mmcols">
         ${MM.groups.map(g=>`<div class="card mmcard"><div class="mmhd"><b>${escHtml(g.label)}</b><span>${escHtml(g.description)}</span></div>

@@ -1,0 +1,54 @@
+{
+  "focusOnOpen": "mmx",
+  "tabEscapes": 0,
+  "escCloses": true,
+  "focusAfterEsc": "burger",
+  "backdropCloses": true,
+  "focusAfterBackdrop": "burger",
+  "bodyOverflowAfter": "",
+  "bodyOverflowOpen": "hidden",
+  "shortSwipeStaysOpen": true,
+  "transformAfterShortSwipe": "",
+  "swipeCloses": true,
+  "errorsEn": [],
+  "arPanel": [
+    47,
+    390
+  ],
+  "arSwipeCloses": true,
+  "errorsAr": [],
+  "longName": {
+    "h": 79,
+    "w": 130,
+    "hb": 79,
+    "bodyScroll": [
+      281,
+      281
+    ],
+    "doc": [
+      320,
+      320
+    ]
+  },
+  "reducedMotion": {
+    "transform": "none",
+    "opacity": "0",
+    "transition": "opacity, visibility"
+  },
+  "reducedTransparency": {
+    "bg": "rgb(255, 255, 255)",
+    "filter": "none"
+  },
+  "frames4xGlass": {
+    "frames": 39,
+    "avgMs": 17.9,
+    "maxMs": 33.3,
+    "over20": 3
+  },
+  "frames4xSolid": {
+    "frames": 41,
+    "avgMs": 17.1,
+    "maxMs": 33.3,
+    "over20": 1
+  }
+}

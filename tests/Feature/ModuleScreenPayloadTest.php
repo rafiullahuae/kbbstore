@@ -537,6 +537,13 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // inserted after notes_on; the only other leaf edited is the help text on
     // Appearance → Cart page's "Delivery address row", which now names the
     // switch it depends on. Nothing else in the fixture was touched.
+    // Still 689 after Lane MN: Appearance → Mobile menu → Panel gained "Menu
+    // opens from" (`open_from`, Left by default because the owner asked for
+    // the side panel), but mobile-menu answers `fields` + `groups`, which this
+    // count does not cover; it is compared whole above. Spliced in first in
+    // the panel group where TABS puts it, and three help texts beside it now
+    // say which controls are bottom-sheet only (height, grab handle) and what
+    // the side panel does with the slide duration. Nothing else was touched.
     expect($compared)->toBe(689, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {

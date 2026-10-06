@@ -17,9 +17,28 @@ class MobileMenu
     /** key => [type, label, default, help, options] */
     public const SCHEMA = [
         // --- panel ---
-        'height'        => ['range',  'Sheet height',        80, 'Percentage of the screen the sheet covers.', ['min' => 40, 'max' => 100, 'step' => 5, 'unit' => '%']],
+        /*
+         * WHERE THE MENU COMES FROM. (Lane MN, 6 October)
+         *
+         * The owner: "i need the same dual columns design which we have it
+         * already and live, we just need to open from left side, that's it" —
+         * and then "the panel design i need glossy glass type, which we have in
+         * the footer for app install capsule". So it ships ON at 'left', as he
+         * asked: a full-height glass panel sliding in from the left edge (the
+         * right in Arabic), with everything inside — rows, the two columns,
+         * search, account, support — exactly as before.
+         *
+         * 'bottom' is the undo: the sheet that rises from the bottom, with its
+         * markup and behaviour byte for byte what it was. The only thing that
+         * differs between the two in the HTML is the `mm-left` class
+         * bodyClass() adds; resources/css/kbb/kbb.css and initMobileChrome() in
+         * resources/js/kbb/home.js key everything side-only off that class.
+         * MobileMenuOpensFromTest pins both halves.
+         */
+        'open_from'     => ['select', 'Menu opens from',  'left', 'Left slides a glass panel in from the side (from the right in Arabic). Bottom is the sheet that rises from the bottom, as before.', ['left' => 'Left (glass panel)', 'bottom' => 'Bottom (sheet)']],
+        'height'        => ['range',  'Sheet height',        80, 'Percentage of the screen the sheet covers. Bottom sheet only; the side panel is always full height.', ['min' => 40, 'max' => 100, 'step' => 5, 'unit' => '%']],
         'radius'        => ['range',  'Corner radius',       20, '', ['min' => 0, 'max' => 34, 'step' => 2, 'unit' => 'px']],
-        'slide_speed'   => ['range',  'Slide duration',     380, '', ['min' => 150, 'max' => 700, 'step' => 10, 'unit' => 'ms']],
+        'slide_speed'   => ['range',  'Slide duration',     380, 'The side panel runs at about two thirds of this (380 ms → 260 ms): it travels a shorter way.', ['min' => 150, 'max' => 700, 'step' => 10, 'unit' => 'ms']],
         'scrim'         => ['range',  'Backdrop darkness',   50, '', ['min' => 0, 'max' => 80, 'step' => 5, 'unit' => '%']],
         /*
          * 'icon_style' WAS HERE, AND IT HAD NEVER DONE ANYTHING.        Lane AD
@@ -45,7 +64,7 @@ class MobileMenu
          * `.burger` rules it targets are the old markup that partial was
          * written to stop using.
          */
-        'show_grab'     => ['bool',   'Grab handle',       true, 'The small bar at the top edge.'],
+        'show_grab'     => ['bool',   'Grab handle',       true, 'The small bar at the top edge. Bottom sheet only.'],
         'show_close'    => ['bool',   'Close button',      true, ''],
 
         // --- header of the sheet ---
@@ -102,7 +121,7 @@ class MobileMenu
      */
     public const TABS = [
         'panel' => ['Panel', 'Size and motion of the sheet.',
-                    ['height', 'radius', 'slide_speed', 'scrim', 'show_grab', 'show_close']],
+                    ['open_from', 'height', 'radius', 'slide_speed', 'scrim', 'show_grab', 'show_close']],
         'top' => ['Top of the sheet', 'What sits above the menu itself.',
                   ['show_search', 'search_text', 'show_heading', 'heading_text']],
         'rows' => ['Rows', 'Density and layout of the items.',
@@ -216,6 +235,8 @@ class MobileMenu
             'mm-card-' . $c['card_style'],
             'mm-rule-' . $c['rule_position'],
             $c['show_counts'] ? '' : 'mm-nocounts',
+            // Last, so 'bottom' renders the class list it always rendered.
+            'left' === $c['open_from'] ? 'mm-left' : '',
         ])));
     }
 }

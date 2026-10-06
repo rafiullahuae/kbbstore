@@ -7,6 +7,15 @@ declare(strict_types=1);
  * THE SHOP'S MOBILE MENU IS THE BOTTOM SHEET, AND ONLY THE BOTTOM SHEET
  * =============================================================================
  *
+ * ▲ LANE MN, 6 OCTOBER — THE OWNER HAS SINCE ASKED FOR THE SIDE. "i need the
+ * same dual columns design which we have it already and live, we just need to
+ * open from left side, that's it." So `.mmenu` — still the one real menu, still
+ * opened by #burger through initMobileChrome() — now slides in from the left
+ * edge (the right in Arabic) as a glass panel by default, and rises from the
+ * bottom only when Appearance → Mobile menu → Panel → "Menu opens from" is set
+ * to Bottom. MobileMenuOpensFromTest pins that. Everything below about `.mnav`
+ * is unchanged and still true: it is a different drawer, and nothing opens it.
+ *
  * The owner reported this after being sent a screenshot of an Arabic mobile menu
  * sliding in from the side: "we don't have menu opening from side in mobile, we
  * have dedicated developed menu opening from downside."

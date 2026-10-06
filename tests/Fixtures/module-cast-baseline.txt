@@ -1335,6 +1335,10 @@ cart_panel|checkout_fg|colour|""|'#FFFFFF'
 cart_panel|checkout_fg|colour|"zz"|'#FFFFFF'
 cart_panel|checkout_fg|colour|null|'#FFFFFF'
 cart_panel|checkout_fg|colour|"#e23a4e"|'#E23A4E'
+mobile_menu|open_from|select|"left"|'left'
+mobile_menu|open_from|select|"nope"|'left'
+mobile_menu|open_from|select|""|'left'
+mobile_menu|open_from|select|null|'left'
 mobile_menu|height|range|5|40
 mobile_menu|height|range|"5"|40
 mobile_menu|height|range|0|40

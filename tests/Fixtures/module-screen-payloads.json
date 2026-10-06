@@ -2493,10 +2493,22 @@
   "mobile-menu": {
     "fields": [
       {
+        "key": "open_from",
+        "type": "select",
+        "label": "Menu opens from",
+        "help": "Left slides a glass panel in from the side (from the right in Arabic). Bottom is the sheet that rises from the bottom, as before.",
+        "default": "left",
+        "value": "left",
+        "options": {
+          "left": "Left (glass panel)",
+          "bottom": "Bottom (sheet)"
+        }
+      },
+      {
         "key": "height",
         "type": "range",
         "label": "Sheet height",
-        "help": "Percentage of the screen the sheet covers.",
+        "help": "Percentage of the screen the sheet covers. Bottom sheet only; the side panel is always full height.",
         "default": 80,
         "value": 80,
         "options": {
@@ -2524,7 +2536,7 @@
         "key": "slide_speed",
         "type": "range",
         "label": "Slide duration",
-        "help": "",
+        "help": "The side panel runs at about two thirds of this (380 ms → 260 ms): it travels a shorter way.",
         "default": 380,
         "value": 380,
         "options": {
@@ -2552,7 +2564,7 @@
         "key": "show_grab",
         "type": "bool",
         "label": "Grab handle",
-        "help": "The small bar at the top edge.",
+        "help": "The small bar at the top edge. Bottom sheet only.",
         "default": true,
         "value": true,
         "options": null
@@ -2766,6 +2778,7 @@
         "label": "Panel",
         "description": "Size and motion of the sheet.",
         "fields": [
+          "open_from",
           "height",
           "radius",
           "slide_speed",
