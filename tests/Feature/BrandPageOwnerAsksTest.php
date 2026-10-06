@@ -165,7 +165,9 @@ it('puts the three switches on their own tab, saved by the screen that owns the 
         'brand_name_fs_m', 'brand_desc_fs_m', 'brand_logo_size_m',
         // Lane BR4: the logo switch, the alignment and Read more.
         'brand_logo_show', 'brand_logo_show_m', 'brand_name_align', 'brand_desc_align', 'brand_desc_align_m',
-        'brand_desc_lines', 'brand_desc_lines_m'])
+        'brand_desc_lines', 'brand_desc_lines_m',
+        // 6 Oct: the header's outer spacing, laptop then phone.
+        'brand_space_top', 'brand_space_x', 'brand_space_top_m', 'brand_space_x_m'])
         ->and(SiteLayout::SCHEMA['brand_all'][2])->toBeTrue()
         ->and(SiteLayout::SCHEMA['brand_cta'][2])->toBeFalse()
         ->and(SiteLayout::SCHEMA['brand_popular'][2])->toBeFalse();

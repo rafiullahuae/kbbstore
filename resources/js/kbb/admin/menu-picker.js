@@ -245,7 +245,7 @@
       if (!cache) { body.innerHTML = '<p class="mx-note">Loading…</p>'; syncAdd(); return; }
       var rows = rowsFor(cache.groups, memo.tab);
       var warn = memo.tab === 'brands' && cache.brands_module_on === false
-        ? '<p class="mx-warn">Brand pages are switched off (Store → Modules → Brands), so brand links stay out of the header until it is on.</p>' : '';
+        ? '<p class="mx-warn">Brand pages are switched off (Store, then Modules, then Brands), so brand links stay out of the header until it is on.</p>' : '';
       body.innerHTML = warn + '<input class="mx-in mx-find" type="search" data-mx-find placeholder="Search ' + esc(TABS.filter(function (t) { return t[0] === memo.tab; })[0][1].toLowerCase()) + '…" aria-label="Search this list">'
         + '<div class="mx-list" data-mx-list>' + listHtml(memo.tab, rows, addedUrls(board.tree())) + '</div>';
       syncAdd();
