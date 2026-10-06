@@ -408,6 +408,10 @@ it('draws every new control on Appearance → Footer and saves it through the sa
         'Site footer · design', 'Site footer · help strip', 'Site footer · Visit us & name',
         'Site footer · link columns', 'Site footer · colours & effects',
         'Site footer · layout desktop', 'Site footer · layout mobile',
+        // (Lane FB) The app row's six keys travel in a tab of their own, last,
+        // so the seven above keep their order; the screen draws them as the
+        // "App row" section of both device pages (FooterPages::SITE).
+        'Site footer · app row',
     ]);
 
     $drawn = array_merge(...array_map(static fn ($t) => array_column($t['fields'], 'key'), $site));

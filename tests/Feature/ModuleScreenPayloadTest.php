@@ -199,6 +199,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // Flag bar's four defaults (46px, 14px text, 20px flags, dark ink — the
     // owner's countries strip) and Section dividers' section list, which gained
     // the Top strip and the Countries strip from HomepageSections::REGISTRY.
+    // ▲ Lane FB added one tab to slim-footer and changed nothing else: the
+    // footer's "app row" (site_app, six fields), inserted after site_m exactly
+    // as the screen now sends it.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -527,7 +530,8 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // sr_show_stars. Nothing else in the file moved.
     // 680 (Lane CT): Product styles → Colour gained four text colours
     // (secondary text, crossed-out price, savings line, footer WhatsApp button).
-    expect($compared)->toBe(680, 'the number of controls drawn changed');
+    // 686 (Lane FB): Appearance → Footer gained the app row's six controls.
+    expect($compared)->toBe(686, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

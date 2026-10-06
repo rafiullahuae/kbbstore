@@ -2318,6 +2318,23 @@ KBB_BH_CSS;
                     .'<script src="/site-app\.js\?v=[0-9a-f]{10}" data-sw="/sw\.js" data-scope="/" defer></script>\n#',
                 'hits' => 37,
             ],
+            /*
+             * THE FOOTER'S APP ROW (Lane FB, 6 October). The owner asked for it
+             * — "write something, Get orders update, restock alerts & coupons …
+             * the frosted glass design is fine, but i don't want to cover the
+             * logo, it should downside the big logo" — so it ships ON (CLAUDE.md
+             * rule 1, the 30 September reversal), on every page that draws the
+             * new footer: one <section class="kfa"> between the big name and the
+             * bottom bar, its install sheets in a <template> inside it. Exactly
+             * this element and nothing else; the footer around it is still
+             * compared byte for byte. 29 pages: every one
+             * with the new footer (the cart and checkout draw the slim bar, the
+             * four standalone documents no footer). Switch: Appearance → Footer → App row.
+             */
+            'the footer app row (Lane FB)' => [
+                'pattern' => '#  <section class="kfa" aria-labelledby="kfa-h" data-kfa="[^"]*"><div class="kft-wrap"><div class="kfa-g">\n.*?  </template></section>\n#s',
+                'hits' => 29,
+            ],
             // 2.60.393: the phone's 1 / 2 column buttons, beside Sort, on the
             // shop and category listing (hidden on a laptop).
             'the phone 1 / 2 column buttons (2.60.393)' => [

@@ -27,6 +27,14 @@
     come from SiteFooter::columns(), the third one "Account". What shows on
     each device is a kft-xd-* / kft-xm-* class; the markup is the same on both.
 
+    LANE FB, 6 October: the app row (.kfa) under the big name and above the
+    bottom bar — the owner: "the frosted glass design is fine, but i don't want
+    to cover the logo, it should downside the big logo". Printed only when
+    SiteFooter::app() says so (Appearance → Footer → App row, and App → Site
+    App on); its behaviour is in resources/site-app/site-app.js, which only
+    pages with the Site App carry. The install sheets wait in a <template>, so
+    opening one costs no request.
+
     Every class is kft- and nothing else on the shop uses that prefix. The
     <footer> element keeps its role; `footer.kft` out-specifies the old dark
     `footer{}` rule in kbb.css without touching it, so the classic design still
@@ -97,6 +105,21 @@
     <p class="kft-name" aria-hidden="true" style="--kft-n:{{ max(8, mb_strlen($kft['name'])) }}"@if ($kft['name_sheen']) data-kft-text="{{ $kft['name'] }}"@endif>{{ $kft['name'] }}</p>
 @endif
   </div></div>
+@if ($kft['app'])
+@php($kfa = $kft['app'])
+  <section class="kfa{{ $kfa['laptop'] ? ' kfa-lt' : '' }}" aria-labelledby="kfa-h" data-kfa="{{ $kfa['seq'] }}"><div class="kft-wrap"><div class="kfa-g">
+    <span class="kfa-ic"><i role="img" aria-label="{{ __('store.footer.app_ic_apple') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#000" d="M16.4 12.7c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.9-3.5.9-.8 0-1.8-.8-3-.8-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2-1.1 2.8-2.3.9-1.3 1.2-2.5 1.3-2.6-.1 0-2.5-.9-2.5-3.8ZM14.2 5.9c.6-.8 1.1-1.8 1-2.9-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.7-1 2.8 1 .1 2-.5 2.7-1.3Z"/></svg></i><i role="img" aria-label="{{ __('store.footer.app_ic_android') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#3DDC84" fill-rule="evenodd" d="M2 19.5a10 10 0 0 1 20 0ZM7.8 14.4a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Zm8.4 0a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/><path stroke="#3DDC84" stroke-width="1.5" stroke-linecap="round" d="M6.6 11.8 4.4 8.4m13 3.4 2.2-3.4"/></svg></i><i role="img" aria-label="{{ __('store.footer.app_ic_ipad') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="kfa-scr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F7A8BF"/><stop offset=".55" stop-color="#C9B3F0"/><stop offset="1" stop-color="#8FD3F4"/></linearGradient></defs><rect x="4" y="1.8" width="16" height="20.4" rx="2.6" fill="#3A3A3C"/><rect x="5.5" y="3.3" width="13" height="17.4" rx="1.3" fill="url(#kfa-scr)"/></svg></i></span>
+    <p class="kfa-tx"><b id="kfa-h">{{ $kfa['title'] }}</b><span class="kfa-ln"><span class="kfa-ty" aria-hidden="true" lang="{{ $kfa['first'][0] ? 'ar' : 'en' }}" dir="{{ $kfa['first'][0] ? 'rtl' : 'ltr' }}">{{ $kfa['first'][1] }}</span><span class="kfa-vh">{{ implode(' ', $kfa['own']) }}</span></span></p>
+    <button type="button" class="kfa-bt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14"/></svg><span>{{ $kfa['button'] }}</span></button>
+  </div></div><template class="kfa-tpl" data-close="{{ __('store.footer.app_close') }}">
+    <div data-s="ios"><h2>{{ __('store.footer.app_ios_title') }}</h2><ol><li><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M8 10H6.5A1.5 1.5 0 0 0 5 11.5v8A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-8a1.5 1.5 0 0 0-1.5-1.5H16"/></svg></i><span>{{ __('store.footer.app_ios_1') }}</span></li><li><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 8v8M8 12h8"/></svg></i><span>{{ __('store.footer.app_ios_2') }}</span></li></ol></div>
+    <div data-s="and"><h2>{{ __('store.footer.app_and_title') }}</h2><ol><li><i><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></i><span>{{ __('store.footer.app_and_1') }}</span></li><li><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14"/></svg></i><span>{{ __('store.footer.app_and_2') }}</span></li></ol></div>
+    <div data-s="inapp"><h2>{{ __('store.footer.app_inapp_title') }}</h2><ol><li><i><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></i><span>{{ __('store.footer.app_inapp_1') }}</span></li><li><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5Z"/></svg></i><span>{{ __('store.footer.app_inapp_2') }}</span></li></ol></div>
+@if ($kfa['qr'] !== '')
+    <div data-s="qr"><h2>{{ __('store.footer.app_qr_title') }}</h2><span class="kfa-qr">{!! $kfa['qr'] !!}</span><p>{{ __('store.footer.app_qr_1') }}</p></div>
+@endif
+  </template></section>
+@endif
   <div class="kft-bot"><div class="kft-wrap kft-bot-in">
     <span>{{ __('store.footer.copyright', ['year' => date('Y'), 'store' => $kbbSettings->get('store_name', 'K-Beauty Bliss')]) }}</span>
     <nav class="kft-legal"><a href="{{ Url::to('/privacy-policy/') }}">{{ __('store.footer.link_privacy') }}</a><a href="{{ Url::to('/terms-and-conditions/') }}">{{ __('store.footer.link_terms') }}</a></nav>

@@ -187,7 +187,8 @@ it('hands the screen every field, grouped into the three tabs', function () {
     // `site_`, so the one payload still splits without ambiguity.
     // (Lane HF) Seven of them since 4 October: link columns, colours &
     // effects, and a layout tab per device, still all before the slim bar's.
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['site', 'site_help', 'site_visit', 'site_cols', 'site_fx', 'site_d', 'site_m', 'pages', 'phone', 'layout', 'content', 'marks']);
+    // (Lane FB) And the app row's tab, last of the site footer's, 6 October.
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['site', 'site_help', 'site_visit', 'site_cols', 'site_fx', 'site_d', 'site_m', 'site_app', 'pages', 'phone', 'layout', 'content', 'marks']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
