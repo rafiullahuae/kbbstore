@@ -1,20 +1,4 @@
-{{--
-    Appearance → Mega Menu: the column board.                          Lane MO
 
-    resources/js/kbb/admin/menu-order.js, inlined as a classic script so it
-    needs no build step and defines window.KBBMenuOrder before the Mega Menu
-    screen paints; paintMegaMenu() mounts it in #mgmTree (tools/mo-wire.php
-    writes that call and this include). The file is a repository constant,
-    never a setting — the only thing this project prints unescaped — and
-    MenuOrderModuleTest holds that it cannot close this tag.
-
-    Sizes are the owner's compact layout A (docs/menu-editor-preview): 156px
-    columns, 24px rows, a 24x20 number box, 18x20 arrows, 12-12.5px text, an
-    8px gap. Motion is transform and opacity only, and none of it under
-    prefers-reduced-motion.
---}}
-@verbatim
-<style>
 .mo-wrap{position:relative;min-width:0}
 .mo-edge{display:none;position:absolute;top:0;bottom:8px;z-index:4;width:36px}
 .mo-edge-l{left:0;background:linear-gradient(90deg,rgba(224,86,123,.14),transparent)}
@@ -155,10 +139,3 @@ html:has(.mo-board),body:has(.mo-board),.content:has(.mo-board){overscroll-behav
   .mo-fab,.mo-fab span{transition:none}
   .mo-lift{transform:none}
 }
-</style>
-@endverbatim
-{{-- menu-picker.js FIRST, in the same tag: menu-order.js's mount() looks for
-     window.KBBMenuPicker when the screen paints, which is long after both have
-     run, but one tag keeps "the module whole inside its partial" one script. --}}
-<script>{!! file_get_contents(resource_path('js/kbb/admin/menu-picker.js')) !!}
-{!! file_get_contents(resource_path('js/kbb/admin/menu-order.js')) !!}</script>

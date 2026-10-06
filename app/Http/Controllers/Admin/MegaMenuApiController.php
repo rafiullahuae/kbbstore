@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Services\NavigationService;
+use App\Support\MenuTargets;
+use App\Support\SafeUrl;
 use App\Support\TranslationInput;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -348,6 +350,21 @@ class MegaMenuApiController extends Controller
         }
     }
 
+    private const LINK_REFUSED = 'That link is not one the shop will follow — use a path like /collections/toners/ or a full https:// address.';
+
+    /**
+     * (Lane MX) The scheme gate the header applies anyway (SafeUrl::href,
+     * through NavigationService::tree), asked at the door: a `javascript:` or
+     * `data:` address used to save and then render as the homepage, so the
+     * owner was never told. Paths, http(s), mailto: and tel: save as before.
+     */
+    private function linkAllowed(?string $url): bool
+    {
+        $url = trim((string) $url);
+
+        return $url === '' || SafeUrl::href($url, '') !== '';
+    }
+
     private function errorResponse(\Throwable $e): JsonResponse
     {
         return response()->json([
@@ -469,6 +486,10 @@ class MegaMenuApiController extends Controller
                 return response()->json(['ok' => false, 'errors' => ['That parent is on a different menu.']], 422);
             }
 
+            if (! $this->linkAllowed($data['url'] ?? null)) {
+                return response()->json(['ok' => false, 'errors' => [self::LINK_REFUSED]], 422);
+            }
+
             $depth = $this->depthOf($data['parent_id'] ?? null);
 
             if ($depth >= 3) {
@@ -522,7 +543,23 @@ class MegaMenuApiController extends Controller
 
             $data = $request->validate($english + TranslationInput::rules(new MenuItem, $english));
 
-            $item->update([
+            if (! $this->linkAllowed($data['url'] ?? null)) {
+                return response()->json(['ok' => false, 'errors' => [self::LINK_REFUSED]], 422);
+            }
+
+            /*
+             * (Lane MX) An item picked from Add items follows its category,
+             * brand, page or article (MenuTargets). Typing a different address
+             * into it makes it a plain link: the owner's typed address wins
+             * over the reference, rather than being silently replaced by the
+             * target's on the next render. Imported rows are not picked rows
+             * and keep both columns exactly as before.
+             */
+            $reference = MenuTargets::isPicked($item) && trim((string) ($data['url'] ?? '')) !== trim((string) $item->url)
+                ? ['target_type' => null, 'target_id' => null]
+                : [];
+
+            $item->update($reference + [
                 'label' => $data['label'],
                 'url' => $data['url'] ?? null,
                 'icon' => $data['icon'] ?? null,

@@ -906,6 +906,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         Route::get('/dividers',  [\App\Http\Controllers\Admin\SectionDividersApiController::class, 'show']);
         Route::post('/dividers', [\App\Http\Controllers\Admin\SectionDividersApiController::class, 'save']);
 
+        // Store → Mega Menu → Add items (Lane MX): the list of categories, brands,
+        // pages, posts and collections, and the one request that files picked
+        // ones into a column. BEFORE the block below, whose unconstrained
+        // POST /mega-menu/{item} would otherwise take /mega-menu/pick.
+        require __DIR__.'/mega-menu-picker-admin.php';
+
         Route::get('/mega-menu/menus',           [\App\Http\Controllers\Admin\MegaMenuApiController::class, 'menus']);
         Route::post('/mega-menu/menus',          [\App\Http\Controllers\Admin\MegaMenuApiController::class, 'createMenu']);
         Route::post('/mega-menu/demo',           [\App\Http\Controllers\Admin\MegaMenuApiController::class, 'loadDemo']);
