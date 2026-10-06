@@ -26,6 +26,11 @@ namespace App\Services;
  * stylesheet carries every default a second time as the var() fallback, so the
  * page is correct with no attribute on it at all.
  *
+ * ONE EXCEPTION, ASKED FOR: Payment boxes. The owner picked the soft-tint
+ * boxes from previews and asked for them on, so their default adds `cop-pay`
+ * to the section and the logos to the payment list. Their "Today" style is
+ * the zero-byte state for that tab (see the PAYMENT BOXES note in SCHEMA).
+ *
  * ── DESKTOP AND MOBILE ARE SEPARATE VALUES, NOT ONE VALUE AND A BREAKPOINT ──
  *
  * The owner asked for two screens, and the two are genuinely independent: a
@@ -833,6 +838,61 @@ class CheckoutPage
         'trust_tick_speed' => ['range', 'Tick speed', 100,
                                'Higher is faster. The pause between runs scales with it, so a slower tick also waits longer rather than drawing slowly and restarting at once.',
                                ['min' => 40, 'max' => 200, 'step' => 5, 'unit' => '%']],
+
+        /*
+         * ── PAYMENT BOXES (Lane PY) ─────────────────────────────────────────
+         *
+         * "for payments selection for tabby, tamara, i want proper their logos,
+         *  and i would love if i u can match the each payment box as per
+         *  payment gateway color scheme." He saw four lettered previews
+         * (docs/PY-PAYMENT-PREVIEWS.md) and picked "option A, soft tint ...
+         * and give controls too on backend."
+         *
+         * SO THE DEFAULT IS A, NOT TODAY: he asked for it, which makes it the
+         * shop's new state (CLAUDE.md, 30 September). `pay_style = plain` is
+         * the way back, and it is the whole way back -- every control below is
+         * inert under it and the payment step renders byte for byte as it did
+         * before this lane (CheckoutPaymentBoxesTest pins that).
+         *
+         * Every value is a choice from a fixed list or a clamped integer:
+         * nothing here is printed except as a class this class names, or as a
+         * whole number of pixels.
+         */
+        'pay_style'       => ['select', 'Style', 'soft',
+                              'Soft tint gives each box a light wash of its gateway\'s own colour, its logo on the right, and a brand-coloured border once chosen. Today puts the plain boxes back exactly as they were, with every control below switched off.', [
+                                  'soft'  => 'Soft tint — gateway colours and logos',
+                                  'plain' => 'Today — plain boxes, no logos',
+                              ]],
+        'pay_logos'       => ['bool', 'Show logos', true,
+                              'The Tabby and Tamara logos, Visa and Mastercard on the card box, and a banknote icon for cash on delivery, on the right of each box.'],
+        'pay_logo_h'      => ['range', 'Logo height', 26,
+                              '26px keeps every box the height it has always been. Taller logos make the boxes taller with them.',
+                              ['min' => 20, 'max' => 32, 'step' => 2, 'unit' => 'px']],
+        'pay_tint'        => ['select', 'Tint strength', 'medium',
+                              'How much of each gateway\'s colour washes its box. Medium is the preview you chose.', [
+                                  'light'  => 'Light',
+                                  'medium' => 'Medium — as previewed',
+                                  'strong' => 'Strong',
+                              ]],
+        'pay_border'      => ['select', 'Border of the chosen box', 'gradient',
+                              'Tabby and Tamara draw their own gradients; card and cash on delivery have one colour, so the first two choices look the same on those.', [
+                                  'gradient' => 'Brand gradient',
+                                  'solid'    => 'Brand colour, solid',
+                                  'pink'     => 'Shop pink',
+                              ]],
+        'pay_tabby'       => ['bool', 'Tabby in its brand colours', true,
+                              'Off keeps the Tabby box plain white and green like today, with its logo.'],
+        'pay_tamara'      => ['bool', 'Tamara in its brand colours', true,
+                              'Off keeps the Tamara box plain, with its logo.'],
+        'pay_card'        => ['bool', 'Card in its brand colours', true,
+                              'Visa blue. Off keeps the card box plain, with the card logos.'],
+        'pay_cod'         => ['bool', 'Cash on delivery in its colours', true,
+                              'The shop\'s own green. Off keeps the box plain, with the banknote icon.'],
+        'pay_tamara_logo' => ['select', 'Tamara logo', 'badge',
+                              'The Arabic shop shows Tamara\'s Arabic artwork either way.', [
+                                  'badge'    => 'Badge — the pastel pill, as previewed',
+                                  'wordmark' => 'Wordmark — the black logo alone',
+                              ]],
     ];
 
     /**
@@ -882,6 +942,10 @@ class CheckoutPage
                             'ph_weight', 'ph_tone', 'ph_italic',
                             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'addr_cue_speed', 'addr_cue_size',
                             'trust_tick', 'trust_tick_speed']],
+        /* Lane PY. Its own tab, so the owner finds it where its name says. */
+        'payments'     => ['Payment boxes', 'The four boxes under "4 Payment" — Tabby, Tamara, card and cash on delivery. One set of values for both surfaces.',
+                           ['pay_style', 'pay_logos', 'pay_logo_h', 'pay_tint', 'pay_border',
+                            'pay_tabby', 'pay_tamara', 'pay_card', 'pay_cod', 'pay_tamara_logo']],
     ];
 
     /**
@@ -1161,6 +1225,24 @@ class CheckoutPage
     ];
 
     /** [name weight, price weight] for bold on, and for bold off. */
+    /**
+     * Payment boxes (Lane PY): option => the class it adds to .kbb-checkout.
+     * The default of each is '' -- medium tint and the brand gradient are what
+     * `cop-pay` alone draws.
+     */
+    private const PAY_CLASSES = [
+        'pay_tint'   => ['light' => 'cop-pay-light', 'medium' => '', 'strong' => 'cop-pay-strong'],
+        'pay_border' => ['gradient' => '', 'solid' => 'cop-pay-bsolid', 'pink' => 'cop-pay-bpink'],
+    ];
+
+    /** Gateway id => the switch that keeps its box in its brand colours. */
+    private const PAY_BRAND = [
+        'tabby' => 'pay_tabby',
+        'tamara' => 'pay_tamara',
+        'stripe' => 'pay_card',
+        'cod' => 'pay_cod',
+    ];
+
     private const WEIGHTS_ON = [600, 700];
 
     private const WEIGHTS_OFF = [400, 500];
@@ -1424,6 +1506,13 @@ class CheckoutPage
             }
         }
 
+        // Payment boxes: the one number they print, and only while it can be
+        // seen -- under "Today" or with the logos off it would be a property
+        // nothing reads, and "Today" has to be the page as it was, byte for byte.
+        if ($this->payBoxesOn($c) && $c['pay_logos'] && $c['pay_logo_h'] !== self::SCHEMA['pay_logo_h'][2]) {
+            $out[] = '--cop-paylogo:'.(int) $c['pay_logo_h'].'px';
+        }
+
         return implode(';', $out);
     }
 
@@ -1491,6 +1580,20 @@ class CheckoutPage
             }
         }
 
+        // Payment boxes: `cop-pay` is the soft-tint style itself; the other two
+        // are lookups in maps this class owns, never the stored string.
+        if ($this->payBoxesOn($c)) {
+            $classes[] = 'cop-pay';
+
+            foreach (self::PAY_CLASSES as $key => $map) {
+                $class = $map[(string) $c[$key]] ?? '';
+
+                if ($class !== '') {
+                    $classes[] = $class;
+                }
+            }
+        }
+
         /*
          * Every class here is an OFF switch — `cop-floatalways` included, in
          * the sense that matters: the DEFAULT of every row above maps to the
@@ -1518,6 +1621,45 @@ class CheckoutPage
      * this screen existed asked for an always-there bar, and the default here
      * is not an instruction to take it away from them.
      */
+    /** @param array<string, mixed> $c */
+    private function payBoxesOn(array $c): bool
+    {
+        return $c['pay_style'] === 'soft';
+    }
+
+    /**
+     * What the payment list draws for each gateway, or null for "Today".
+     *
+     * Read by partials/checkout/payment-methods, which is rendered by the page
+     * AND re-rendered by the checkout's fragment refresh, so the answer comes
+     * from here rather than from the page's own variables. The logos are
+     * PaymentMarkArt constants: the partial prints them with {!! !!}, and no
+     * setting can reach their bytes -- a setting only decides WHICH constant.
+     *
+     * @return array{brand: array<string, bool>, logos: array<string, string>}|null
+     */
+    public function paymentBoxes(): ?array
+    {
+        $c = $this->all();
+
+        if (! $this->payBoxesOn($c)) {
+            return null;
+        }
+
+        $arabic = \App\Support\Locale::current() === 'ar';
+        $brand = [];
+        $logos = [];
+
+        foreach (self::PAY_BRAND as $gateway => $key) {
+            $brand[$gateway] = (bool) $c[$key];
+            $logos[$gateway] = $c['pay_logos']
+                ? \App\Support\PaymentMarkArt::checkoutLogo($gateway, $arabic, $c['pay_tamara_logo'] === 'wordmark')
+                : '';
+        }
+
+        return ['brand' => $brand, 'logos' => $logos];
+    }
+
     public function floatBar(): string
     {
         $mode = (string) $this->all()['m_float'];

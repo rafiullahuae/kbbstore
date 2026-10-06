@@ -333,7 +333,10 @@ it('renders the checkout byte for byte as before this lane with both switches of
      * condition on the fold rule in summary-row.blade.php, or the `@if` round
      * either half of the card in order-block.blade.php. RED.
      */
-    cdSet(['sum_totals' => false, 'float_labels' => false]);
+    // Lane PY's payment boxes ship ON since; their own "Today" style is the
+    // byte-for-byte way back (CheckoutPaymentBoxesTest), so it is set here and
+    // this test goes on comparing what it was written to compare.
+    cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain']);
     $cart = cdCart();
 
     $current = config('view.paths');

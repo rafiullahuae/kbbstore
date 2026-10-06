@@ -3,6 +3,10 @@
    UAE zone, and all four gateways on with fake keys (nothing here can reach a
    provider), in the order the owner's checkout shows them. Tabby carries the
    title from his screenshot, "Tabby Installments". PREVIEW FIXTURE ONLY. */
+\App\Models\AdminUser::firstOrCreate(['email' => 'owner@preview.test'], [
+    'name' => 'Preview Owner', 'password' => 'preview-secret-1', 'role' => 'owner',
+]);
+
 foreach ([
     ['Anua - PDRN Glass Skin Set', 'pay-anua-pdrn', 375],
     ['Arencia - Vitamin C Booster Trio', 'pay-arencia-trio', 279],

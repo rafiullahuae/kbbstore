@@ -9880,6 +9880,132 @@
             }
           }
         ]
+      },
+      {
+        "key": "payments",
+        "label": "Payment boxes",
+        "description": "The four boxes under \"4 Payment\" — Tabby, Tamara, card and cash on delivery. One set of values for both surfaces.",
+        "fields": [
+          {
+            "key": "pay_style",
+            "name": "pay_style",
+            "type": "select",
+            "label": "Style",
+            "help": "Soft tint gives each box a light wash of its gateway's own colour, its logo on the right, and a brand-coloured border once chosen. Today puts the plain boxes back exactly as they were, with every control below switched off.",
+            "options": {
+              "soft": "Soft tint — gateway colours and logos",
+              "plain": "Today — plain boxes, no logos"
+            },
+            "default": "soft",
+            "value": "soft"
+          },
+          {
+            "key": "pay_logos",
+            "name": "pay_logos",
+            "type": "bool",
+            "label": "Show logos",
+            "help": "The Tabby and Tamara logos, Visa and Mastercard on the card box, and a banknote icon for cash on delivery, on the right of each box.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "pay_logo_h",
+            "name": "pay_logo_h",
+            "type": "range",
+            "label": "Logo height",
+            "help": "26px keeps every box the height it has always been. Taller logos make the boxes taller with them.",
+            "options": {
+              "min": 20,
+              "max": 32,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 26,
+            "value": 26
+          },
+          {
+            "key": "pay_tint",
+            "name": "pay_tint",
+            "type": "select",
+            "label": "Tint strength",
+            "help": "How much of each gateway's colour washes its box. Medium is the preview you chose.",
+            "options": {
+              "light": "Light",
+              "medium": "Medium — as previewed",
+              "strong": "Strong"
+            },
+            "default": "medium",
+            "value": "medium"
+          },
+          {
+            "key": "pay_border",
+            "name": "pay_border",
+            "type": "select",
+            "label": "Border of the chosen box",
+            "help": "Tabby and Tamara draw their own gradients; card and cash on delivery have one colour, so the first two choices look the same on those.",
+            "options": {
+              "gradient": "Brand gradient",
+              "solid": "Brand colour, solid",
+              "pink": "Shop pink"
+            },
+            "default": "gradient",
+            "value": "gradient"
+          },
+          {
+            "key": "pay_tabby",
+            "name": "pay_tabby",
+            "type": "bool",
+            "label": "Tabby in its brand colours",
+            "help": "Off keeps the Tabby box plain white and green like today, with its logo.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "pay_tamara",
+            "name": "pay_tamara",
+            "type": "bool",
+            "label": "Tamara in its brand colours",
+            "help": "Off keeps the Tamara box plain, with its logo.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "pay_card",
+            "name": "pay_card",
+            "type": "bool",
+            "label": "Card in its brand colours",
+            "help": "Visa blue. Off keeps the card box plain, with the card logos.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "pay_cod",
+            "name": "pay_cod",
+            "type": "bool",
+            "label": "Cash on delivery in its colours",
+            "help": "The shop's own green. Off keeps the box plain, with the banknote icon.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "pay_tamara_logo",
+            "name": "pay_tamara_logo",
+            "type": "select",
+            "label": "Tamara logo",
+            "help": "The Arabic shop shows Tamara's Arabic artwork either way.",
+            "options": {
+              "badge": "Badge — the pastel pill, as previewed",
+              "wordmark": "Wordmark — the black logo alone"
+            },
+            "default": "badge",
+            "value": "badge"
+          }
+        ]
       }
     ],
     "mobileMax": 900,

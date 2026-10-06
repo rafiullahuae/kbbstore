@@ -304,6 +304,13 @@ function mAllowedRepairs(): array
  * inserted right after mobile_menu|account_label, which is where mEquivRows()
  * walks them. Every one of the 5,734 lines before is untouched.
  */
+/*
+ * ── 80 ROWS ADDED, NONE MOVED ──────────────────────────────────── Lane PY ──
+ *
+ * The ten payment-box keys appended to CheckoutPage::SCHEMA (pay_style ...
+ * pay_tamara_logo), recorded with this same corpus and inserted right after
+ * checkout_page|trust_tick_speed, which is where mEquivRows() walks them.
+ */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);
     $now = mEquivRows();

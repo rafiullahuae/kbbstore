@@ -101,6 +101,8 @@ it('hands the screen every field, grouped into the two tabs', function () {
         // under ten spacing sliders at the foot of the two Layout tabs.
         'tocart',
         'trust', 'cues',
+        // Lane PY: Tabby / Tamara / card / COD boxes, their logos and colours.
+        'payments',
     ])
         ->and($body['mobileMax'])->toBe(CheckoutPage::MOBILE_MAX);
 

@@ -288,6 +288,14 @@ it('sends every module screen the payload it sent before the shared schema', fun
     }
 
     /*
+     * ── ONE TAB APPENDED, NOTHING MOVED ─────────────────────────── Lane PY ──
+     *
+     *   checkout-page.tabs[11]   "Payment boxes", the ten pay_* controls,
+     *                            dumped from the live payload and appended
+     *                            after "cues". Every earlier tab and field is
+     *                            byte-identical in the fixture.
+     */
+    /*
      * ── 30 SEPTEMBER, FIVE EDITS TO THE FIXTURE, EACH ONE READ OFF THE DIFF ─
      *                                                              (Lane SEC)
      * None of them regenerated: the live payload was dumped, diffed against the
@@ -571,7 +579,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // menu text" and "Pointer to the parent item" (ON) — appended to the nav
     // tab after `nav_fit_max`, which is their TABS position. Spliced into the
     // fixture's header entry, not regenerated: five objects inserted, none changed.
-    expect($compared)->toBe(697, 'the number of controls drawn changed');
+    // 697 -> 707 (Lane PY): Appearance → Checkout page → Payment boxes, the
+    // ten pay_* controls on a tab of their own appended after "cues".
+    expect($compared)->toBe(707, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

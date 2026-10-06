@@ -86,3 +86,35 @@ PAY_AR=1 sh tools/pay-preview.sh && node tools/pay-shots.cjs docs/lane-py-shots 
 The designs live in `tools/pay-designs.css` (preview only, loaded by the shot
 script). The shop's fixed side tab `.kbt-z` is hidden in the shots because it
 overlaps the left edge.
+
+## Phase 2: what shipped (the owner picked A)
+
+> "option A, soft tint is fine. please proceed. and give controls too on backend."
+
+The controls are in **Appearance → Checkout page → Payment boxes**. Each one
+ships at A as previewed:
+
+| Control | Default | Choices |
+|---|---|---|
+| Style | Soft tint | Soft tint / Today (the plain boxes, byte-identical to before; every control below is inert under it) |
+| Show logos | on | |
+| Logo height | 26 px | 20–32 px, step 2 (26 keeps every row 56 px tall) |
+| Tint strength | Medium (as previewed) | Light / Medium / Strong |
+| Border of the chosen box | Brand gradient | Brand gradient / Brand colour, solid / Shop pink |
+| Tabby / Tamara / Card / Cash on delivery in brand colours | all on | Off keeps that one box plain, with its logo still shown |
+| Tamara logo | Badge | Badge / Wordmark. The Arabic shop uses Tamara's Arabic artwork automatically |
+
+Where each piece lives:
+- `App\Support\PaymentMarkArt::checkoutLogo()` holds the logos as fixed
+  constants, with the ids made unique per logo.
+- `CheckoutPage` holds the schema. `bodyClass()` adds `cop-pay`,
+  `cop-pay-light|strong` and `cop-pay-bsolid|bpink`; `cssVariables()` adds
+  `--cop-paylogo`; and `paymentBoxes()` supplies the logo and brand data.
+- `partials/checkout/payment-methods.blade.php` adds the `pay-brand` class to
+  each box and the logo slot inside each label.
+- `kbb-checkout.css` carries the "PAYMENT BOXES" block. It also holds the
+  Arabic 44 px gap fix and the rounded bottom corners on the chosen box.
+
+Shots: `final-*` in `docs/lane-py-shots/`. `final-today-*-390.png` is
+pixel-identical (same md5) to the pre-lane `now-*-390.png`. Reproduce them
+with `tools/pay-final-shots.cjs`.

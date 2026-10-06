@@ -1,0 +1,86 @@
+{
+ "final-tabby-ar-390": {
+  "sectionClass": "kbb-checkout cop-pay",
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "cls": "wc_payment_method payment_method_tabby pay-brand",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x53",
+    "bg": "linear-gradient(rgb(235, 255, 246), rgb(235, 255"
+   },
+   {
+    "id": "tamara",
+    "cls": "wc_payment_method payment_method_tamara pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x53",
+    "bg": "linear-gradient(110deg, rgb(241, 249, 255), rgb("
+   },
+   {
+    "id": "stripe",
+    "cls": "wc_payment_method payment_method_stripe pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x53",
+    "bg": "linear-gradient(rgb(239, 242, 253), rgb(239, 242"
+   },
+   {
+    "id": "cod",
+    "cls": "wc_payment_method payment_method_cod pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x53",
+    "bg": "linear-gradient(rgb(238, 248, 241), rgb(238, 248"
+   }
+  ]
+ },
+ "final-tamara-ar-390": {
+  "sectionClass": "kbb-checkout cop-pay",
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "cls": "wc_payment_method payment_method_tabby pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x53",
+    "bg": "linear-gradient(rgb(235, 255, 246), rgb(235, 255"
+   },
+   {
+    "id": "tamara",
+    "cls": "wc_payment_method payment_method_tamara pay-brand",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x53",
+    "bg": "linear-gradient(110deg, rgb(241, 249, 255), rgb("
+   },
+   {
+    "id": "stripe",
+    "cls": "wc_payment_method payment_method_stripe pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x53",
+    "bg": "linear-gradient(rgb(239, 242, 253), rgb(239, 242"
+   },
+   {
+    "id": "cod",
+    "cls": "wc_payment_method payment_method_cod pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x53",
+    "bg": "linear-gradient(rgb(238, 248, 241), rgb(238, 248"
+   }
+  ]
+ }
+}
