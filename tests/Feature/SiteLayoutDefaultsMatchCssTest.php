@@ -89,29 +89,24 @@ it('gives the shop listing its own tile minimum, in the sheet and in the schema'
     expect($shop)->toContain('--kbb-tile:var(--kbb-tile-shop,220px)');
 });
 
-it('gives the standalone documents the same fallback the shared sheet declares', function () {
+it('gives the Journal and an article the shared sheet\'s page container, not a copy of it', function () {
     /*
-     * THE THIRD COPY, and the reason it has to exist: the Journal index and an
-     * article page each carry their own <html> and load no shared stylesheet, so
-     * `var(--site-max)` resolves to nothing there unless a fallback is written
-     * in. Appearance → Site layout emits its block into those two heads as well,
-     * so a moved slider still reaches them; the fallback is what they use until
-     * one moves.
+     * THE THIRD COPY IS GONE (Lane BH). The Journal index and an article page
+     * used to carry their own <html>, load no shared stylesheet, and so keep a
+     * copy of `.wrap{max-width:var(--site-max,1680px)}` with the fallback
+     * spelled out -- the copy this case used to hold to the schema. They extend
+     * layouts/store.blade.php now, which loads kbb.css, so `.wrap` is kbb.css's
+     * one rule and a copy here would be a second source of the site width.
      *
-     * MUTATION: change 1680 to 1400 in either view and this is red.
+     * MUTATION: put `.wrap{max-width:var(--site-max,1680px)}` back into either
+     * view's stylesheet and this is red.
      */
-    $max = SiteLayout::SCHEMA['max'][2];
-    $lo = SiteLayout::SCHEMA['gutter'][2];
-    $hi = SiteLayout::SCHEMA['gutter_wide'][2];
-
     foreach (['store/blog.blade.php', 'store/post.blade.php'] as $view) {
         $source = (string) file_get_contents(base_path('resources/views/'.$view));
 
-        expect(str_contains($source, "max-width:var(--site-max,{$max}px)"))->toBeTrue($view);
-        expect(str_contains(
-            $source,
-            "clamp(var(--site-gutter-min,{$lo}px),2.2vw,var(--site-gutter-max,{$hi}px))"
-        ))->toBeTrue($view);
+        expect($source)->toContain("@extends('layouts.store')")
+            ->and($source)->not->toContain('--site-max')
+            ->and($source)->not->toContain('--site-gutter-min');
     }
 });
 
@@ -148,8 +143,15 @@ it('finds no var(--site-max) fallback anywhere in resources/views that disagrees
         }
     }
 
-    // And the guard is actually looking at something.
-    expect($found)->toBeGreaterThan(0);
+    /*
+     * And the guard is actually looking at something. Since Lane BH no view
+     * spells a fallback (the Journal and an article were the last two, and they
+     * take the width from kbb.css now), so the pattern is proven on the one
+     * place that must still carry the number instead: kbb.css's own :root.
+     */
+    $css = (string) file_get_contents(base_path('resources/css/kbb/kbb.css'));
+    expect($found > 0 || preg_match('/--site-max:\s*'.$max.'px/', $css) === 1)->toBeTrue(
+        'neither a view fallback nor kbb.css declares --site-max, so this guard reads nothing');
 });
 
 it('emits every numeric setting into a property named by a constant in the service', function () {

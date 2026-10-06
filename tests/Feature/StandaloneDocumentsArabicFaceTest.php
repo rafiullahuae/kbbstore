@@ -324,8 +324,16 @@ it('restates each document own stack rather than a stack of its own invention', 
      */
     $unpaired = [];
 
+    /*
+     * store/blog and store/post are exempt the same way since Lane BH: they
+     * extend layouts/store.blade.php, so their Latin stack is the built kbb.css
+     * one and the Arabic rule is the layout's own `kbb-arabic-face` block --
+     * there is no inline stack of their own left to pair against.
+     */
+    $onTheLayout = ['layouts/store (control)', 'store/blog', 'store/post'];
+
     foreach ($paired as $view => $count) {
-        if ($count === 0 && $view !== 'layouts/store (control)') {
+        if ($count === 0 && ! in_array($view, $onTheLayout, true)) {
             $unpaired[] = "{$view} emits an Arabic font rule that overrides nothing the document itself declares";
         }
     }
@@ -410,9 +418,9 @@ it('declares a Cairo face for every weight its own Latin link asks for', functio
      * whose list omitted a weight it used); this one cannot pass while it is
      * false.
      */
+    // The Journal and an article left this list with Lane BH: they extend the
+    // layout, whose own Cairo faces the layout's tests already govern.
     $expected = [
-        '/blog/' => '400;500;600;700',
-        '/blog/fs-face-post/' => '400;500;600;700',
         // 300 was in this list because the quiz ASKED Google for it, not because
         // it styles anything at 300: the census found zero elements at
         // font-weight 300 on every storefront page. It stopped asking. (Lane BG)
@@ -421,7 +429,7 @@ it('declares a Cairo face for every weight its own Latin link asks for', functio
         '/reviews/' => '400;500;600;700;800',
     ];
 
-    expect($expected)->toHaveCount(5);
+    expect($expected)->toHaveCount(3);
 
     foreach ($expected as $url => $weights) {
         $html = test()->get('/ar' . $url)->getContent();

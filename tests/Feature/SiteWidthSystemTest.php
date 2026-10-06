@@ -137,10 +137,13 @@ it('points every page container at the token instead of its own number', functio
         expect(w1CssRules($sheet))->toContain($needle);
     }
 
-    // The three page containers that live in a view rather than a sheet.
+    // The page container that lives in a view rather than a sheet. The Journal
+    // and an article had two more, copies of kbb.css's `.wrap`; they extend
+    // layouts/store.blade.php since Lane BH and use kbb.css's own rule, so
+    // neither may carry a `.wrap` rule of its own any more.
     expect(w1ViewRules('store/brands.blade.php'))->toContain('.brw{max-width:var(--site-max)');
-    expect(w1ViewRules('store/blog.blade.php'))->toContain('.wrap{max-width:var(--site-max,1680px)');
-    expect(w1ViewRules('store/post.blade.php'))->toContain('.wrap{max-width:var(--site-max,1680px)');
+    expect(w1ViewRules('store/blog.blade.php'))->not->toContain('.wrap{');
+    expect(w1ViewRules('store/post.blade.php'))->not->toContain('.wrap{');
 });
 
 it('leaves the dead duplicate .wrap rule gone rather than leaving two', function () {

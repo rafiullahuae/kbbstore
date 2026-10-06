@@ -90,8 +90,8 @@ because anything went physical.
 | `resources/views/layouts/store.blade.php` | 3 | 110 |
 | `resources/views/store/app.blade.php` | 25 | 1402 |
 | `resources/views/store/skin-quiz.blade.php` | 9 | 545 |
-| `resources/views/store/blog.blade.php` | 3 | 224 |
-| `resources/views/store/post.blade.php` | 2 | 223 |
+| `resources/views/store/blog.blade.php` | 1 | 104 |
+| `resources/views/store/post.blade.php` | 0 | 105 |
 | `resources/views/store/review-wall.blade.php` | 4 | 302 |
 | `resources/views/store/checkout.blade.php` | 2 | 33 |
 | `resources/views/store/checkout-success.blade.php` | 1 | 154 |
@@ -101,6 +101,13 @@ because anything went physical.
 | `resources/views/store/cart-squeeze.blade.php` | 6 | 473 |
 | `resources/views/invoices/document.blade.php` | 12 | 237 |
 <!-- rtl-audit:floors:end -->
+
+`store/blog.blade.php` and `store/post.blade.php` moved from 3/224 and 2/223 to
+1/104 and 0/105 with Lane BH: both extend `layouts/store.blade.php` now, and
+their own header, `.mnav` drawer and footer CSS -- which carried four of the
+five logical declarations -- went with the chrome the shared layout replaces.
+What is left is each page's own content sheet; the shared header's logical
+CSS is counted under `kbb.css`.
 
 `kbb-banner.css` had none to begin with; it is in scope so that a physical
 declaration added to it later fails the guard.

@@ -486,8 +486,26 @@ function budgetPages(array $seed): array
         'checkout'          => ['/checkout', null, 17, $seed['cart']->token],
         'cart drawer'       => ['/api/cart/drawer', null, 3],
         'checkout success'  => ['/checkout/success', null, 5],
-        'journal'           => ['/blog', null, 3],
-        'article'           => ['/blog/budget-article-0', null, 4],
+        /*
+         * 3 -> 5 and 4 -> 6 (Lane BH), raised deliberately, for the shared
+         * header the owner asked these two pages to draw: "on blog page, and
+         * on article page, the main header is not coming correct. i need the
+         * same as we have on all other pages."
+         *
+         * The two queries are the header's cart lookup, which every page on
+         * layouts/store.blade.php already pays and these two did not because
+         * they drew a bag icon that linked to /shop/ and knew nothing:
+         *
+         *   select * from carts where customer_id = ? ...  (signed-in shopper)
+         *   select * from carts where token = ? ...        (the cart cookie)
+         *
+         * Measured on this fixture, before -> after: journal 2 -> 4, article
+         * 3 -> 5. Each ceiling keeps the one query of slack it had, no more.
+         * Nothing per post: the grid and the related row are the same two
+         * queries they were, and the header's menus come from the cache.
+         */
+        'journal'           => ['/blog', null, 5],
+        'article'           => ['/blog/budget-article-0', null, 6],
         'search suggest'    => ['/api/search?q=serum', null, 3],
         'wishlist'          => ['/my-wishlist', null, 5],
         /*

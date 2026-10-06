@@ -104,10 +104,10 @@ it('puts the button on every storefront document exactly once', function () {
      * raw block (just above `</body>`) -> red, "store/skin-quiz.blade.php
      * includes the button 0 times".
      */
+    // store/blog and store/post extend the layout since Lane BH and get its
+    // one include; a second in either view would draw two buttons.
     $documents = [
         'layouts/store.blade.php',
-        'store/blog.blade.php',
-        'store/post.blade.php',
         'store/review-wall.blade.php',
         'store/skin-quiz.blade.php',
     ];

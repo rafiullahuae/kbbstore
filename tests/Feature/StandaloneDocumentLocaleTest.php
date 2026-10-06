@@ -120,7 +120,14 @@ function sdlHtmlTag(string $uri, bool $admin = false): string
 
     expect(preg_match('#<html\b[^>]*>#', $html, $m))->toBe(1, "No <html> element on {$uri}.");
 
-    return $m[0];
+    /*
+     * The Journal and an article extend layouts/store.blade.php since Lane BH,
+     * and that layout's <html> also carries the press-feedback attribute
+     * (Appearance -> Site layout -> Press feedback, a constant from
+     * SiteLayout::PRESS_ATTR). It is not a language attribute, so it is taken
+     * off before lang and dir are compared; nothing else is.
+     */
+    return (string) preg_replace('# data-press="[a-z]+"#', '', $m[0], 1);
 }
 
 it('declares Arabic and right-to-left on every standalone document', function () {

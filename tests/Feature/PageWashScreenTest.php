@@ -104,10 +104,10 @@ it('reaches every storefront document, each exactly once', function () {
      * MUTATION: delete the include from store/blog.blade.php and this fails by
      * name, which is the defect arriving again.
      */
+    // store/blog and store/post extend the layout since Lane BH, so its one
+    // include reaches them; JournalSharedHeaderTest pins that they do.
     $documents = [
         'layouts/store.blade.php',
-        'store/blog.blade.php',
-        'store/post.blade.php',
         'store/review-wall.blade.php',
         'store/skin-quiz.blade.php',
         'store/app.blade.php',
