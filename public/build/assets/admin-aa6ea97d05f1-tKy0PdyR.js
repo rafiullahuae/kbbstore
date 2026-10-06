@@ -129,12 +129,12 @@
     sources.then(function (j) {
       btn.textContent = 'Pick…';
       if (!j || !j.groups) {
-        var f = (j && j.failed) || 0;
+        var st = (j && j.failed) || 0;
         sources = null;   // asked again on the next press
-        btn.title = f === 404 && !(j.body && j.body.error)
+        btn.title = st === 404 && !(j.body && j.body.error)
           // The picker's endpoint missing from the compiled route table: the remedy is Platform → Cache.
           ? 'The list of shop links is not in this server\'s compiled route table yet. Clear the route cache (Platform → Cache) and reload — or type the link.'
-          : f === 403 ? 'Your account cannot read the shop\'s link list — type the link instead.'
+          : st === 403 ? 'Your account cannot read the shop\'s link list — type the link instead.'
           : 'The list could not be loaded — type the link instead.';
         if (typeof window.toast === 'function') window.toast(btn.title);
         return;
