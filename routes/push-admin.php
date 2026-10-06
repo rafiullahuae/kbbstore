@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\PushAdminController;
+use App\Http\Controllers\Admin\PushDevicesController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -29,7 +30,14 @@ use Illuminate\Support\Facades\Route;
 |               POST push/campaigns/{id}/send|schedule|cancel|step,
 |               POST push/test, push/settings, push/templates
 |
-| Shipped with 2027_08_29_100200_clear_caches_push_notifications.php: a route
+| Devices (Lane PD), the same two capabilities by the same rules:
+|
+|   push.view   GET  push/devices          (paginated, searchable list)
+|   push.send   PUT  push/devices/{id}     (nickname, "this is my phone")
+|               POST push/devices/test     (a test to the chosen phones)
+|
+| Shipped with 2027_08_29_100200_clear_caches_push_notifications.php (and,
+| for the Devices routes, 2027_08_30_100100_clear_caches_push_devices.php): a route
 | added to a cached route table does not exist until the cache is cleared.
 */
 
@@ -51,4 +59,8 @@ Route::prefix('push')->group(function () {
     Route::post('/test', [PushAdminController::class, 'test'])->middleware('throttle:6,1,push-test');
     Route::post('/settings', [PushAdminController::class, 'saveSettings']);
     Route::post('/templates', [PushAdminController::class, 'saveTemplates']);
+
+    Route::get('/devices', [PushDevicesController::class, 'index']);
+    Route::put('/devices/{id}', [PushDevicesController::class, 'update'])->whereNumber('id')->middleware('throttle:60,1,push-device-name');
+    Route::post('/devices/test', [PushDevicesController::class, 'test'])->middleware('throttle:'.PushDevicesController::TEST_PER_MINUTE.',1,push-device-test');
 });

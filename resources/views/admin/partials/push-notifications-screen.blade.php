@@ -7,10 +7,11 @@
     wise ... we will have all analytics ... also all controls to controls all
     the notifications".
 
-    Four tabs: Campaigns (write, aim, test, send or schedule, report),
+    Five tabs: Campaigns (write, aim, test, send or schedule, report),
     Automations (order updates, back in stock, basket, price drop — each with
-    its switch and its EN/AR wording), Subscribers & analytics, Settings (the
-    frequency cap, quiet hours, IP location).
+    its switch and its EN/AR wording), Subscribers & analytics, Devices (every
+    installed phone, a nickname, "this is my phone", a test to the chosen ones
+    — Lane PD), Settings (the frequency cap, quiet hours, IP location).
 
     Pulled into resources/views/admin/app.blade.php below Cart Tracking
     (tools/pn-wire.php writes the line), so window.go and toast() exist. It
@@ -98,6 +99,21 @@
 .pn-tpl input{direction:auto}
 .pn-badge{font-size:11px;font-weight:650;padding:1px 6px;border-radius:6px;background:#fff3dc;color:#8a5a00;margin-inline-start:6px}
 .pn-badge.ok{background:#e3f5ea;color:#0f7a41}
+.pn-dev-bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-top:12px}
+.pn-dev-bar .pn-in{flex:1 1 220px;width:auto}
+.pn-devs{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.pn-dev{display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 10px;align-items:start;border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:10px 12px}
+.pn-dev.is-on{border-color:var(--accent,#15a85a);background:rgba(21,168,90,.05)}
+.pn-dev input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;accent-color:var(--accent,#15a85a)}
+.pn-dev-name{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-weight:650;font-size:14px;overflow-wrap:anywhere}
+.pn-dev-meta{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12.5px;color:var(--ink-soft,#6b7280);margin-top:2px}
+.pn-dev-acts{grid-column:2;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.pn-dev-acts .pn-btn{padding:5px 10px;font-size:12.5px}
+.pn-dev-acts .pn-in{flex:1 1 160px;width:auto;font-size:13px;padding:5px 8px}
+.pn-pill.delivered{background:#e3f5ea;color:#0f7a41}.pn-pill.gone,.pn-pill.not_subscribed{background:#fbe9e7;color:#b4443c}
+.pn-pill.mine{background:#e6effc;color:#1f5fb8}
+@media (min-width:760px){.pn-dev{grid-template-columns:22px minmax(0,1fr) auto}.pn-dev-acts{grid-column:3;margin-top:0;justify-content:flex-end;max-width:420px}}
+.pn-pager{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-top:12px;font-size:12.5px}
 </style>
 
 <script>
@@ -107,10 +123,14 @@
   var SCREEN = 'push';
   var GROUP = 'Growth & Marketing';
   var TITLE = 'Push Notifications';
-  var TABS = [['campaigns', 'Campaigns'], ['automations', 'Automations'], ['analytics', 'Subscribers & analytics'], ['settings', 'Settings']];
+  var TABS = [['campaigns', 'Campaigns'], ['automations', 'Automations'], ['analytics', 'Subscribers & analytics'], ['devices', 'Devices'], ['settings', 'Settings']];
 
   var st = { tab: 'campaigns', view: 'list', ov: null, list: null, camp: null, report: null, an: null, banner: null, busy: false, seq: 0 };
   var draft = null, count = { n: null, label: '', seq: 0, timer: null }, links = [];
+  /* Devices (Lane PD): the page shown, what is ticked (kept across pages), the
+     last test's result per phone, and the campaign's words when the editor
+     opened this list to test them. */
+  var dev = { data: null, q: '', page: 1, sel: {}, results: {}, from: null, edit: null };
 
   function cookie(n) {
     var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
@@ -181,6 +201,7 @@
       st.ov = ov;
       if (tab === 'campaigns') { var l = await api('GET', '/campaigns'); if (mine === st.seq) st.list = l.campaigns; }
       if (tab === 'analytics') { var a = await api('GET', '/analytics'); if (mine === st.seq) st.an = a; }
+      if (tab === 'devices') { var dv = await api('GET', '/devices?' + new URLSearchParams({ q: dev.q, page: String(dev.page) }).toString()); if (mine === st.seq) dev.data = dv; }
     }, 'Push Notifications could not be loaded.');
   }
 
@@ -203,14 +224,15 @@
     var wrap = el('div', { class: 'pn-wrap', 'data-screen': SCREEN });
     c.appendChild(wrap);
     wrap.appendChild(el('div', { class: 'pn-tabs', role: 'tablist' }, TABS.map(function (t) {
-      return el('button', { type: 'button', class: 'pn-tab', role: 'tab', 'aria-selected': String(st.tab === t[0]), 'data-tab': t[0], text: t[1], onclick: function () { st.view = 'list'; open(t[0]); } });
+      return el('button', { type: 'button', class: 'pn-tab', role: 'tab', 'aria-selected': String(st.tab === t[0]), 'data-tab': t[0], text: t[1], onclick: function () { st.view = 'list'; dev.from = null; open(t[0]); } });
     })));
     if (st.banner) wrap.appendChild(el('div', { class: 'pn-note', role: 'alert', text: st.banner }));
     if (!st.ov) { wrap.appendChild(el('div', { class: 'pn-card pn-empty', text: st.busy ? 'Loading…' : 'Nothing to show.' })); return; }
-    if (!st.ov.cron.alive && st.tab !== 'analytics') wrap.appendChild(cronNote());
+    if (!st.ov.cron.alive && st.tab !== 'analytics' && st.tab !== 'devices') wrap.appendChild(cronNote());
     if (st.tab === 'campaigns') renderCampaigns(wrap);
     else if (st.tab === 'automations') renderAutomations(wrap);
     else if (st.tab === 'analytics') renderAnalytics(wrap);
+    else if (st.tab === 'devices') renderDevices(wrap);
     else renderSettings(wrap);
   }
 
@@ -368,7 +390,8 @@
       el('div', { class: 'pn-row', style: 'margin-top:16px' }, [
         el('button', { type: 'button', class: 'pn-btn', text: 'Back', onclick: function () { st.view = 'list'; open('campaigns'); } }),
         el('button', { type: 'button', class: 'pn-btn', text: 'Save draft', disabled: st.busy, onclick: function () { saveDraft(); } }),
-        el('button', { type: 'button', class: 'pn-btn', text: 'Send a test to my phone', disabled: st.busy, title: st.ov.test_devices ? null : 'Sign in to the shop app on your phone with your admin email and allow notifications', onclick: testSend }),
+        el('button', { type: 'button', class: 'pn-btn', text: 'Send a test to my phone', disabled: st.busy, title: st.ov.test_devices ? null : 'No phone is marked as yours yet: this opens Devices to choose it', onclick: testSend }),
+        el('button', { type: 'button', class: 'pn-btn', text: 'Test on chosen devices', disabled: st.busy, onclick: function () { testOnDevices(); } }),
       ]),
       el('div', { class: 'pn-row', style: 'margin-top:10px' }, [
         at,
@@ -403,6 +426,7 @@
     return ok;
   }
   async function testSend() {
+    if (!st.ov.test_devices) { testOnDevices(); say('Choose your phone below, then press “This is my phone”.'); return; }
     await run(async function () {
       var d = await api('POST', '/test', { title: draft.title, body: draft.body, url: draft.url });
       say(d.ok ? 'Sent to ' + d.sent + ' of your phones.' : (d.error || 'Not sent.'));
@@ -558,6 +582,144 @@
       el('thead', {}, [el('tr', {}, [el('th', { text: 'Campaign' }), el('th', { text: 'Sent' }), el('th', { class: 'n', text: 'Delivered' }), el('th', { class: 'n', text: 'Clicks' }), el('th', { class: 'n', text: 'CTR' })])]),
       el('tbody', {}, a.top.map(function (c) { return el('tr', { class: 'is-link', onclick: function () { st.tab = 'campaigns'; openCampaign(c.id); } }, [el('td', { text: c.title }), el('td', { text: when(c.at) }), el('td', { class: 'n', text: num(c.delivered) }), el('td', { class: 'n', text: num(c.clicks) }), el('td', { class: 'n', text: c.ctr + '%' })]); }))
     ])]) : el('p', { class: 'pn-sub', text: 'No campaign sent yet.' })]));
+  }
+
+
+  /* ---------------------------------------------------------- devices */
+
+  function ago(iso) {
+    if (!iso) return '—';
+    var t = new Date(iso).getTime();
+    if (isNaN(t)) return iso;
+    var m = Math.round((Date.now() - t) / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + ' min ago';
+    if (m < 1440) return Math.round(m / 60) + ' h ago';
+    if (m < 43200) return Math.round(m / 1440) + ' days ago';
+    return when(iso);
+  }
+  function testOnDevices() {
+    dev.from = { title: draft.title, body: draft.body, url: draft.url };
+    dev.results = {};
+    open('devices');
+  }
+  function loadDevices(page) { dev.page = page; open('devices'); }
+  function selected() { return Object.keys(dev.sel).filter(function (k) { return dev.sel[k]; }).map(Number); }
+
+  var RESULT = { delivered: 'Delivered', gone: 'Gone: unsubscribed', failed: 'Failed', not_subscribed: 'No longer subscribed' };
+
+  function renderDevices(wrap) {
+    var d = dev.data, can = st.ov.can_send;
+    if (!d) { wrap.appendChild(el('div', { class: 'pn-card pn-empty', text: st.busy ? 'Loading…' : 'Nothing to show.' })); return; }
+    var max = d.max_test;
+    if (dev.from) {
+      wrap.appendChild(el('div', { class: 'pn-info pn-row', style: 'justify-content:space-between' }, [
+        el('span', {}, ['Testing the campaign ', el('b', { text: '“' + (dev.from.title || 'Untitled') + '”' }), ': tick the devices and press Send test.']),
+        el('button', { type: 'button', class: 'pn-btn', text: 'Back to the campaign', onclick: function () { dev.from = null; st.tab = 'campaigns'; st.view = 'edit'; render(); } })
+      ]));
+    }
+    var search = el('input', { type: 'search', class: 'pn-in', placeholder: 'Search nickname, customer or city', value: dev.q, 'aria-label': 'Search devices', maxlength: 60 });
+    search.addEventListener('change', function () { dev.q = search.value.trim(); loadDevices(1); });
+    search.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); search.blur(); } });
+    var pageIds = d.devices.map(function (x) { return x.id; });
+    var allOn = pageIds.length > 0 && pageIds.every(function (i) { return dev.sel[i]; });
+    var all = el('input', { type: 'checkbox', 'aria-label': 'Select every device on this page', checked: allOn || null, onchange: function () { pageIds.forEach(function (i) { dev.sel[i] = all.checked; }); render(); } });
+    /* A tick updates the bar in place: no re-render, so focus stays on the box. */
+    var countEl = el('span', { class: 'pn-sub', style: 'margin:0', role: 'status' });
+    var clearBtn = el('button', { type: 'button', class: 'pn-btn', text: 'Clear', onclick: function () { dev.sel = {}; render(); } });
+    var sendBtn = can ? el('button', { type: 'button', class: 'pn-btn is-primary', onclick: function () { sendDeviceTest(); } }) : null;
+    function syncBar() {
+      var n = selected().length, over = n > max;
+      countEl.textContent = n + ' selected' + (over ? ' — at most ' + max + ' per test' : '');
+      countEl.classList.toggle('pn-over', over);
+      clearBtn.hidden = !n;
+      if (sendBtn) { sendBtn.textContent = 'Send test' + (n ? ' to ' + n : ''); sendBtn.disabled = st.busy || !n || over; }
+      all.checked = pageIds.length > 0 && pageIds.every(function (i) { return dev.sel[i]; });
+    }
+
+    var list = d.devices.length ? el('ul', { class: 'pn-devs' }, d.devices.map(function (x) {
+      var on = !!dev.sel[x.id], res = dev.results[x.id];
+      var box = el('input', { type: 'checkbox', 'aria-label': 'Select device #' + x.id, checked: on || null, onchange: function () { dev.sel[x.id] = box.checked; box.parentNode.classList.toggle('is-on', box.checked); syncBar(); } });
+      var acts = [];
+      if (can && dev.edit === x.id) {
+        var nick = el('input', { type: 'text', class: 'pn-in', value: x.nickname || '', maxlength: d.nickname_max, placeholder: 'e.g. Rafi\'s iPhone', 'aria-label': 'Nickname for device #' + x.id });
+        var save = function () { saveDevice(x.id, { nickname: nick.value }); };
+        nick.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') { dev.edit = null; render(); } });
+        acts.push(nick, el('button', { type: 'button', class: 'pn-btn is-primary', text: 'Save', onclick: save }), el('button', { type: 'button', class: 'pn-btn', text: 'Cancel', onclick: function () { dev.edit = null; render(); } }));
+        setTimeout(function () { nick.focus(); }, 0);
+      } else if (can) {
+        acts.push(el('button', { type: 'button', class: 'pn-btn', text: x.nickname ? 'Rename' : 'Add a nickname', onclick: function () { dev.edit = x.id; render(); } }));
+        acts.push(x.mine
+          ? el('button', { type: 'button', class: 'pn-btn', text: 'Not my phone', onclick: function () { saveDevice(x.id, { mine: false }); } })
+          : el('button', { type: 'button', class: 'pn-btn', text: 'This is my phone', onclick: function () { saveDevice(x.id, { mine: true }); } }));
+      }
+      return el('li', { class: 'pn-dev' + (on ? ' is-on' : ''), 'data-device': String(x.id) }, [
+        box,
+        el('div', {}, [
+          el('div', { class: 'pn-dev-name' }, [
+            el('span', { text: x.nickname || x.platform_label }),
+            el('span', { class: 'pn-sub', style: 'margin:0;font-weight:400', text: '#' + x.id }),
+            x.mine ? el('span', { class: 'pn-pill mine', text: 'Your phone' }) : null,
+            x.marked_by_other ? el('span', { class: 'pn-pill', text: 'Another admin\'s' }) : null,
+            res ? el('span', { class: 'pn-pill ' + res, role: 'status', text: RESULT[res] || res }) : null
+          ]),
+          el('div', { class: 'pn-dev-meta' }, [
+            el('span', { text: (x.nickname ? x.platform_label + ' · ' : '') + (x.place || 'Place unknown') }),
+            el('span', { text: x.language }),
+            el('span', { text: x.customer ? 'Customer: ' + x.customer : 'Guest' })
+          ]),
+          el('div', { class: 'pn-dev-meta' }, [
+            el('span', { text: 'Located by: ' + x.located_by }),
+            el('span', { text: 'Installed ' + when(x.installed_at) }),
+            el('span', { title: when(x.last_seen_at), text: 'Last seen ' + ago(x.last_seen_at) })
+          ])
+        ]),
+        acts.length ? el('div', { class: 'pn-dev-acts' }, acts) : null
+      ]);
+    })) : el('div', { class: 'pn-empty', text: dev.q ? 'No device matches “' + dev.q + '”.' : 'No phone has the shop app installed with notifications allowed yet.' });
+
+    syncBar();
+    wrap.appendChild(card('Installed devices', 'Every phone with the shop app installed and notifications allowed; yours first, then the most recently seen (the app checks in once a day). Not sure which one is yours? Tick the newest few and press Send test: each phone shows its own device number.', [
+      el('div', { class: 'pn-dev-bar' }, [search, el('button', { type: 'button', class: 'pn-btn', text: 'Search', onclick: function () { dev.q = search.value.trim(); loadDevices(1); } })]),
+      el('div', { class: 'pn-dev-bar' }, [
+        el('label', { class: 'pn-row', style: 'gap:6px;font-size:13px' }, [all, el('span', { text: 'This page' })]),
+        countEl, clearBtn, sendBtn
+      ]),
+      el('p', { class: 'pn-sub', text: dev.from ? 'Sends the campaign\'s title, message and link.' : 'Sends “Test notification — This is device #… in Push Notifications → Devices.”' }),
+      list,
+      el('div', { class: 'pn-pager' }, [
+        el('span', { text: num(d.total) + ' device' + (d.total === 1 ? '' : 's') + (d.q ? ' matching “' + d.q + '”' : '') + ' · page ' + d.page + ' of ' + d.pages }),
+        el('span', { class: 'pn-row', style: 'gap:6px' }, [
+          el('button', { type: 'button', class: 'pn-btn', text: 'Previous', disabled: d.page <= 1 || null, onclick: function () { loadDevices(d.page - 1); } }),
+          el('button', { type: 'button', class: 'pn-btn', text: 'Next', disabled: d.page >= d.pages || null, onclick: function () { loadDevices(d.page + 1); } })
+        ])
+      ])
+    ]));
+  }
+
+  async function saveDevice(id, body) {
+    await run(async function (mine) {
+      var r = await api('PUT', '/devices/' + id, body);
+      if (mine !== st.seq) return;
+      dev.edit = null;
+      dev.data.devices = dev.data.devices.map(function (x) { return x.id === id ? r.device : x; });
+      if ('mine' in body) { st.ov.test_devices = Math.max(0, st.ov.test_devices + (body.mine ? 1 : -1)); say(body.mine ? '“Send a test to my phone” now reaches this one.' : 'No longer marked as yours.'); }
+      else say('Saved.');
+    }, 'Not saved.');
+  }
+
+  async function sendDeviceTest() {
+    var ids = selected();
+    var body = { ids: ids };
+    if (dev.from && dev.from.title) { body.title = dev.from.title; body.body = dev.from.body; body.url = dev.from.url; }
+    await run(async function (mine) {
+      var r = await api('POST', '/devices/test', body);
+      if (mine !== st.seq) return;
+      dev.results = {};
+      r.results.forEach(function (x) { dev.results[x.id] = x.result; });
+      var gone = r.results.filter(function (x) { return x.result !== 'delivered'; }).length;
+      say('Delivered to ' + r.delivered + ' of ' + r.results.length + '.' + (gone ? ' ' + gone + ' did not take it.' : ''));
+    }, 'The test was not sent.');
   }
 
   /* --------------------------------------------------------- settings */

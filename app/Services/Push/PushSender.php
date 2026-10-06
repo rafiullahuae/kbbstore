@@ -467,20 +467,46 @@ final class PushSender
      */
     public function test(array $subscriptionIds, string $title, string $body, ?string $url): int
     {
+        $messages = [];
+        foreach (array_slice(array_values(array_unique(array_map('intval', $subscriptionIds))), 0, 5) as $sid) {
+            $messages[$sid] = [$title, $body, $url];
+        }
+
+        return count(array_filter($this->testEach($messages), static fn ($r) => $r === 'delivered'));
+    }
+
+    /**
+     * A test to chosen phones, each with its own text (Push Notifications →
+     * Devices, Lane PD). kind 'test' and no campaign: never in a campaign's
+     * totals, never in the frequency cap (PushRules::MARKETING_KINDS), and not
+     * held by quiet hours, because deliver() is called directly. A phone whose
+     * push service answers 404/410 goes to `gone` in deliver(), as for any send.
+     *
+     * @param  array<int, array{0:string, 1:string, 2:?string}>  $messages  subscription id => [title, body, url]
+     * @return array<int, string> subscription id => delivered | gone | failed
+     */
+    public function testEach(array $messages): array
+    {
         $now = now();
         $rows = [];
-        foreach (array_slice(array_values(array_unique(array_map('intval', $subscriptionIds))), 0, 5) as $sid) {
-            $rows[] = ['campaign_id' => null, 'kind' => 'test', 'ref' => null, 'subscription_id' => $sid, 'emirate' => null,
+        foreach ($messages as $sid => [$title, $body, $url]) {
+            $rows[] = ['campaign_id' => null, 'kind' => 'test', 'ref' => null, 'subscription_id' => (int) $sid, 'emirate' => null,
                 'title' => mb_substr($title, 0, 80), 'body' => mb_substr($body, 0, 200), 'url' => $url, 'status' => 'queued',
-                'dedupe' => 't:'.$sid.':'.bin2hex(random_bytes(8)), 'due_at' => $now, 'created_at' => $now, 'updated_at' => $now];
+                'dedupe' => 't:'.(int) $sid.':'.bin2hex(random_bytes(8)), 'due_at' => $now, 'created_at' => $now, 'updated_at' => $now];
         }
         if ($rows === []) {
-            return 0;
+            return [];
         }
         DB::table('push_sends')->insert($rows);
         $ids = DB::table('push_sends')->whereIn('dedupe', array_column($rows, 'dedupe'))->pluck('id')->all();
+        $this->deliver(array_map('intval', $ids));
 
-        return $this->deliver(array_map('intval', $ids));
+        $out = [];
+        foreach (DB::table('push_sends')->whereIn('id', $ids)->get(['subscription_id', 'status']) as $r) {
+            $out[(int) $r->subscription_id] = in_array($r->status, ['delivered', 'gone'], true) ? (string) $r->status : 'failed';
+        }
+
+        return $out;
     }
 
     /** A click from the worker's beacon: counted once per message. */
