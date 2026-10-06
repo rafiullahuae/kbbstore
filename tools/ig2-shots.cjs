@@ -78,11 +78,15 @@ async function shootPage(browser, url, name, widths, before) {
     await page.screenshot({ path: path.join(OUT, name + '-' + w + '.png'), fullPage: true });
     const grid = await page.$('.sig-grid, .spt-grid');
     if (grid) {
-      // The grid crop only: the sticky header and the floating chat button would
-      // otherwise be painted over the cards as the crop scrolls. The instrument
-      // hides them; the shop is not changed.
-      await page.evaluate(() => document.querySelectorAll('body *').forEach((el) => { const p = getComputedStyle(el).position; if (p === 'fixed' || p === 'sticky') el.style.visibility = 'hidden'; }));
-      await grid.screenshot({ path: path.join(OUT, name + '-' + w + '-grid.png') });
+      // The grid crop is a CLIP of the full-page capture, taken at scroll 0, so
+      // the sticky header stays at the top of the page where it really is and
+      // is never painted over the cards (an element screenshot scrolls the page
+      // and photographs the sticky header on top of row one).
+      // The floating chat button (position:fixed, site-wide) is hidden for the
+      // grid crop only, so it is not mistaken for part of a card.
+      await page.evaluate(() => { document.querySelectorAll('body *').forEach((el) => { if (getComputedStyle(el).position === 'fixed') el.style.display = 'none'; }); window.scrollTo(0, 0); });
+      const box = await grid.evaluate((el) => { const r = el.getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, width: r.width, height: r.height }; });
+      await page.screenshot({ path: path.join(OUT, name + '-' + w + '-grid.png'), fullPage: true, clip: { x: Math.max(0, box.x - 8), y: box.y - 8, width: Math.min(w, box.width + 16), height: box.height + 16 } });
     }
     await ctx.close();
   }
@@ -146,21 +150,28 @@ async function shootPage(browser, url, name, widths, before) {
     for (const w of [1280, 390]) {
       const ctx = await browser.newContext({ viewport: { width: w, height: w < 600 ? 844 : 900 }, deviceScaleFactor: w < 600 ? 2 : 1 });
       const page = await ctx.newPage();
-      await page.goto(BASE + '/admin/login', { waitUntil: 'networkidle' }).catch(() => {});
-      const adminPath = process.env.IG2_ADMIN || '/admin';
-      await page.goto(BASE + adminPath, { waitUntil: 'networkidle' });
-      if (await page.$('input[type=password]')) {
-        await page.fill('input[type=email], input[name=email]', 'owner@preview.test');
-        await page.fill('input[type=password]', 'preview-secret-1');
-        await Promise.all([page.waitForLoadState('networkidle'), page.keyboard.press('Enter')]);
-        await page.waitForTimeout(800);
-      }
+      await page.goto(BASE + '/admin/login', { waitUntil: 'networkidle' });
+      await page.fill('input[name=email]', 'owner@preview.test');
+      await page.fill('input[name=password]', 'preview-secret-1');
+      await page.click('button[type=submit], input[type=submit]').catch(() => {});
+      await page.waitForTimeout(1500);
+      await page.goto(BASE + '/admin', { waitUntil: 'networkidle' });
       await page.evaluate(() => window.go('spotted'));
       await page.waitForSelector('[data-spa-igcard] .spa-igt', { timeout: 15000 });
       await page.waitForTimeout(800);
       results['admin-' + w] = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: innerWidth, tiles: document.querySelectorAll('.spa-igt').length, line: (document.querySelector('[data-spa-igline]') || {}).textContent }));
-      const card = await page.$('[data-spa-igcard]');
-      await card.screenshot({ path: path.join(OUT, 'admin-picker-' + w + '.png') });
+      await page.screenshot({ path: path.join(OUT, 'admin-picker-' + w + '.png'), fullPage: false });
+      // The picker's grid (filter, search, tiles), scrolled into view inside the
+      // console's own scroller; then the same with "Videos & Reels" and a search.
+      await page.evaluate(() => document.querySelector('.spa-igbar').scrollIntoView({ block: 'start' }));
+      await page.waitForTimeout(500);
+      await page.screenshot({ path: path.join(OUT, 'admin-picker-' + w + '-grid.png') });
+      await page.click('[data-spa-igf="video"]');
+      await page.fill('[data-spa-igq]', 'routine');
+      await page.evaluate(() => document.querySelector('.spa-igbar').scrollIntoView({ block: 'start' }));
+      await page.waitForTimeout(500);
+      results['admin-' + w].filtered = await page.evaluate(() => ({ tiles: document.querySelectorAll('.spa-igt').length, line: document.querySelector('[data-spa-igline]').textContent }));
+      await page.screenshot({ path: path.join(OUT, 'admin-picker-' + w + '-filtered.png') });
       await ctx.close();
     }
   }

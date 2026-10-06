@@ -560,3 +560,33 @@ checks both sides are non-empty before `hash_equals` (because `hash_equals('', '
 is true), and enforces the TTL. What nothing covered was the *end* of that — a
 refused callback must also never reach Meta — so that is now asserted through the
 real route with `Http::assertNothingSent()`.
+
+---
+
+## 14. Lane SG (2.60.417): every post, shares, and the Spotted page
+
+* **Every post.** `InstagramSync::run()` follows the media edge 100 at a time by
+  the `after` cursor (never by requesting `paging.next`, which carries the
+  token) until Graph omits `next`, up to 1,000 posts. A picture already on our
+  disk is not downloaded again; new pictures are fetched for at most 20 s from
+  the admin button and the rest are counted as `pending` and finished by the next
+  press or by the daily `kbb:instagram-sync` (routes/console.php, 04:41, ten
+  minutes). The shop still never calls Instagram.
+* **Shares.** `SCOPE` now also asks for `instagram_business_manage_insights`.
+  Only the posts ticked for /kbeautybliss-spotted/ get one
+  `GET /{media-id}/insights?metric=shares` (`shares,views` for a VIDEO) per run;
+  stored in `instagram_posts.share_count` / `view_count`. No value, or a refusal
+  (no permission yet), is NULL and the card draws no share count. The first
+  refusal stops the loop. **The owner must press Reconnect once** on
+  Content → Instagram for shares to appear. UNVERIFIED against the live API from
+  this machine: the metric names (`shares`, `views`), the answer shape
+  (`values[0].value` or `total_value.value`, both read), and that Instagram
+  Login accepts the comma-separated scope list.
+* **The selection** is `instagram_posts.spotted_sort` (NULL = not shown), set on
+  Appearance → #KBeautyBliss Spotted → From Instagram
+  (`/admin-api/spotted/instagram`, capability `spotted.instagram`).
+* **Video embed.** A reel's card opens `https://www.instagram.com/{p|reel}/{shortcode}/embed/`
+  in a dialog on tap; the iframe is created on tap and removed on close.
+  `ContentSecurityPolicy` frame-src now lists `https://www.instagram.com` (§3's
+  one-line diff), which the old `tap = embed` option of this section benefits
+  from too.

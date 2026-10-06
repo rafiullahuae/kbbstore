@@ -274,6 +274,13 @@ final class ContentSecurityPolicy
             'https://js.stripe.com',
             'https://hooks.stripe.com',
             'https://pay.google.com',
+            // (Lane SG) Instagram's own post player, which the owner asked for
+            // ("if the post is video, it should play on our website directly by
+            // embed from the instagram"). One exact host, no wildcard; the frame
+            // is created only when a shopper taps a reel on /kbeautybliss-spotted/.
+            // The policy is report-only, so this stops a violation report per tap
+            // today and keeps the player working the day it is enforced.
+            'https://www.instagram.com',
         ],
 
         // No <video> or <audio> from anywhere but this shop.

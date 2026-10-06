@@ -130,7 +130,7 @@
   .kbb-home .sig-d .sig-stats{inset-inline-end:5px;bottom:10px;gap:10px;font-size:11px}
   .kbb-home .sig-d .sig-st svg{width:21px;height:21px}
 }
-.sigm{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:12px}
+.sigm{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:12px}
 .sigm[hidden]{display:none}
 .sigm-back{position:absolute;inset:0;background:rgba(24,12,18,.78)}
 .sigm-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;width:min(100%,calc((100dvh - 120px) * .5625 + 2px),402px)}

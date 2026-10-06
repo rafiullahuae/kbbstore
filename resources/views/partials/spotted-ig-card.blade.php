@@ -33,8 +33,8 @@
 @endif
   </span>
   <span class="sig-body">
-    <span class="sig-prof"><span class="sig-av">@if ($profile['avatar'] !== null)<img src="{{ $profile['avatar'] }}" alt="" width="28" height="28"@if ($sigLazy) loading="lazy"@endif decoding="async">@endif</span><b>{{ '@'.$profile['handle'] }}</b><svg class="sig-ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></span>
-    <span class="sig-cap">{{ $card['caption'] }}</span>
+    <span class="sig-prof"><span class="sig-av">@if ($profile['avatar'] !== null)<img src="{{ $profile['avatar'] }}" alt="" width="28" height="28"@if ($sigLazy) loading="lazy"@endif decoding="async">@endif</span><b dir="ltr">{{ '@'.$profile['handle'] }}</b><svg class="sig-ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></span>
+    <span class="sig-cap" dir="auto">{{ $card['caption'] }}</span>
 @if ($card['date'] !== null)
     <time class="sig-date" datetime="{{ $card['date'] }}">{{ \Illuminate\Support\Carbon::parse($card['date'])->translatedFormat('j M Y') }}</time>
 @endif

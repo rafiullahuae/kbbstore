@@ -649,7 +649,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 1405 -> 1411 (Lane IN): the row's six inline install hints
     // (store.footer.app_hint_*), seeded by
     // 2027_09_04_100000_seed_app_install_hint_arabic_drafts.
-    expect($ui['drafts'])->toBe(1411, 'the shipped Arabic is not showing as drafts to review')
+    // 1411 -> 1422 (Lane SG): the Instagram cards' eleven strings on
+    // /kbeautybliss-spotted/ (store.spotted.comments … video_dialog), seeded by
+    // 2027_09_05_170100_seed_spotted_instagram_arabic_drafts.
+    expect($ui['drafts'])->toBe(1422, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

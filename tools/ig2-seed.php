@@ -142,3 +142,7 @@ if (class_exists(\App\Services\SpottedInstagram::class)) {
     \App\Services\SpottedInstagram::flush();
 }
 echo "ig2 seed done (card {$card})\n";
+// The Arabic shop is a setting; on, so the Arabic shot has a page to take.
+app(SettingsService::class)->set(\App\Support\Locale::SETTING_ENABLED, '1');
+echo "arabic on\n";
+app(SettingsService::class)->set(\App\Support\Locale::SETTING_RTL, '1');

@@ -1,0 +1,21 @@
+{
+  "lane": "SG (2.60.417, Spotted from Instagram)",
+  "edits_needed": [],
+  "why_none": "Every route this lane adds is in routes/spotted-admin.php (already required once from routes/web.php inside the guarded admin-api group); the picker is inside resources/views/admin/partials/spotted-screen.blade.php (already included once from resources/views/admin/app.blade.php); the scheduled command is in routes/console.php (wired by bootstrap/app.php). tools/sg-wire.php only VERIFIES those three facts and changes nothing.",
+  "verify": "php tools/sg-wire.php",
+  "routes_added": [
+    "GET  /admin-api/spotted/instagram   admin.spotted.instagram       spotted.instagram",
+    "POST /admin-api/spotted/instagram   admin.spotted.instagram.save  spotted.instagram"
+  ],
+  "migrations": [
+    "2027_09_05_170000_add_spotted_fields_to_instagram_posts",
+    "2027_09_05_170100_seed_spotted_instagram_arabic_drafts",
+    "2027_09_05_170200_clear_caches_spotted_instagram"
+  ],
+  "schedule": "kbb:instagram-sync --unattended, daily 04:41, on the ONE existing cron line: * * * * * cd /home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app && php artisan schedule:run >> /dev/null 2>&1",
+  "merge_notes": [
+    "tests/Feature/ArabicInterfaceDraftsTest.php drafts pin 1411 -> 1422 (+11 strings). If another lane also bumps it, add the counts.",
+    "tests/Feature/NothingHereOutlivesOneRequestTest.php scheduled-command pin 7 -> 8.",
+    "App\\Services\\Security\\ContentSecurityPolicy frame-src gains https://www.instagram.com (report-only policy)."
+  ]
+}
