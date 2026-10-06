@@ -89,6 +89,13 @@
 .brw-ph--brand .brw-ph__more{color:#fff}
 
 /* the phone: the logo and name in a pill on the banner, the description below */
+/* OUTER SPACING (6 Oct; Site layout -> Brand page -> "space above / at the
+   sides of the header", and per brand). 22px is what .brw already leaves above
+   and at each side, so with nothing set --brw-ph-d is 0, the width is the
+   header width and the margins are the same centring margin:auto gave: no
+   pixel moves. Percent margins are of the container, so the header stays
+   centred at any header width while d pulls it out (or pushes it in). */
+.brw-ph{--brw-ph-d:calc(22px - var(--brw-ph-sx,22px));width:calc(var(--brw-ph-w,100%) + 2 * var(--brw-ph-d));margin-inline:calc((100% - var(--brw-ph-w,100%)) / 2 - var(--brw-ph-d));margin-top:calc(var(--brw-ph-st,22px) - 22px)}
 @container (max-width:599px){
   .brw-ph{width:100%}
   .brw-ph__media{min-height:var(--brw-ph-hm,165px);border-radius:16px}
@@ -118,4 +125,8 @@
   .brw-ph--dam-right .brw-ph__desc{text-align:end}
   .brw-ph--more-p .brw-ph__clamp:not(.is-open){display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--brw-ph-dlm,2);line-clamp:var(--brw-ph-dlm,2);overflow:hidden}
   .brw-ph--more-p .brw-ph__more{display:inline-block}
+}
+/* OUTER SPACING, phone: the same two, with the phone values. */
+@container (max-width:599px){
+  .brw-ph{--brw-ph-d:calc(22px - var(--brw-ph-sxm,22px));margin-top:calc(var(--brw-ph-stm,22px) - 22px)}
 }

@@ -743,6 +743,11 @@ it('ships every setting at the value the page already had, except the ones the o
         'brand_desc_align_m' => 'center',
         'brand_desc_lines' => 2,
         'brand_desc_lines_m' => 2,
+        // 6 Oct: the brand header's outer spacing, at the page's own 22px.
+        'brand_space_top' => 22,
+        'brand_space_x' => 22,
+        'brand_space_top_m' => 22,
+        'brand_space_x_m' => 22,
         'press' => 'c',
         // Lane FP, as the owner asked: "it's good only for small things like
         // icons etc." -- a default he chose, not the old behaviour.

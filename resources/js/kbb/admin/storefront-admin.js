@@ -456,6 +456,8 @@ const PANEL_BARS = [
     ['desc', 'Description size', '--brw-ph-fd', 'laptop'],
     ['logo_size', 'Logo size', '--brw-ph-lg', 'laptop'],
     ['lines', 'Description lines before "Read more"', '--brw-ph-dl', 'laptop'],
+    ['space_top', 'Space above the header', '--brw-ph-st', 'laptop'],
+    ['space_x', 'Space at the sides of the header', '--brw-ph-sx', 'laptop'],
     ['height_m', 'Banner height (the description card comes below it)', '--brw-ph-hm', 'phone'],
     ['inset_m', 'Logo and name distance from the banner edge', '--brw-ph-im', 'phone'],
     ['gap_m', 'Gap between the banner and the description', '--brw-ph-gm', 'phone'],
@@ -464,6 +466,8 @@ const PANEL_BARS = [
     ['desc_m', 'Description size', '--brw-ph-fdm', 'phone'],
     ['logo_size_m', 'Logo size', '--brw-ph-lgm', 'phone'],
     ['lines_m', 'Description lines before "Read more"', '--brw-ph-dlm', 'phone'],
+    ['space_top_m', 'Space above the header', '--brw-ph-stm', 'phone'],
+    ['space_x_m', 'Space at the sides of the header (0: edge to edge)', '--brw-ph-sxm', 'phone'],
 ];
 
 function openEditor(edit, opener) {

@@ -788,6 +788,26 @@ class SiteLayout
         'brand_desc_lines_m' => ['range', 'Panel · phone · description lines before "Read more"', 2,
             'Only for the Panel header, on phones: the same, in the card below the banner. Two, as you asked.',
             ['min' => 1, 'max' => 6, 'step' => 1, 'unit' => '']],
+        /*
+         * The header's own outer spacing (owner, 6 Oct, a phone screenshot with
+         * arrows above it and at both sides: "on the brand's header setting
+         * page, i need the spacing controls overall as marked"). 22px is what
+         * the page already leaves on every side (.brw's padding), so these
+         * ship at 22 and move nothing until he moves them. Less pulls the
+         * header up / out to the screen edge; more pushes it in.
+         */
+        'brand_space_top' => ['range', 'Panel · laptop · space above the header', 22,
+            'Only for the Panel header, on a laptop: from the menu bar down to the header.',
+            ['min' => 0, 'max' => 80, 'step' => 1, 'unit' => 'px']],
+        'brand_space_x' => ['range', 'Panel · laptop · space at the sides of the header', 22,
+            'Only for the Panel header, on a laptop: from the page edge to the header, both sides.',
+            ['min' => 0, 'max' => 80, 'step' => 1, 'unit' => 'px']],
+        'brand_space_top_m' => ['range', 'Panel · phone · space above the header', 22,
+            'Only for the Panel header, on phones: from the search bar down to the header.',
+            ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'brand_space_x_m' => ['range', 'Panel · phone · space at the sides of the header', 22,
+            'Only for the Panel header, on phones: from the screen edge to the header, both sides. 0 runs it edge to edge.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
 
         /*
          * ── PRESS FEEDBACK ──────────────────────────────────────── Lane RD ──
@@ -941,7 +961,9 @@ class SiteLayout
         'brand_name_fs_m', 'brand_desc_fs_m', 'brand_logo_size_m',
         // Lane BR4: the logo switch, the alignment and Read more, laptop then phone.
         'brand_logo_show', 'brand_logo_show_m', 'brand_name_align', 'brand_desc_align', 'brand_desc_align_m',
-        'brand_desc_lines', 'brand_desc_lines_m'];
+        'brand_desc_lines', 'brand_desc_lines_m',
+        // 6 Oct: the header's outer spacing, laptop then phone.
+        'brand_space_top', 'brand_space_x', 'brand_space_top_m', 'brand_space_x_m'];
 
     /** The keys that are not CSS: skipped by isDefault(), never in css(). */
     private const LOAD_KEYS = ['load_mode', 'load_batch', 'load_batch_custom', 'load_url'];

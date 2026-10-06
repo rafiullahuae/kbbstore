@@ -118,6 +118,11 @@ final class BrandPanel
         // Lane BR4: how many lines of the description show before "Read more".
         'lines' => ['brand_desc_lines', 1, 6, '--brw-ph-dl', ''],
         'lines_m' => ['brand_desc_lines_m', 1, 6, '--brw-ph-dlm', ''],
+        // 6 Oct: the header's outer spacing (kbb-brand-header.css, "OUTER SPACING").
+        'space_top' => ['brand_space_top', 0, 80, '--brw-ph-st', 'px'],
+        'space_x' => ['brand_space_x', 0, 80, '--brw-ph-sx', 'px'],
+        'space_top_m' => ['brand_space_top_m', 0, 60, '--brw-ph-stm', 'px'],
+        'space_x_m' => ['brand_space_x_m', 0, 40, '--brw-ph-sxm', 'px'],
     ];
 
     /**
@@ -134,6 +139,7 @@ final class BrandPanel
         'pad' => 26, 'inset' => 36, 'gap' => 12, 'name' => 34, 'desc' => 15, 'logo_size' => 72,
         'inset_m' => 12, 'gap_m' => 12, 'card_pad_m' => 14, 'name_m' => 22, 'desc_m' => 14, 'logo_size_m' => 52,
         'lines' => 2, 'lines_m' => 2,
+        'space_top' => 22, 'space_x' => 22, 'space_top_m' => 22, 'space_x_m' => 22,
     ];
 
     /**

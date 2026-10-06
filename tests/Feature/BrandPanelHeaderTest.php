@@ -304,7 +304,9 @@ describe('the "Edit brand header" pop-up', function () {
                 // Lane BR3's sizes, at design A's values.
                 'pad' => 26, 'inset' => 36, 'gap' => 12, 'name' => 34, 'desc' => 15, 'logo_size' => 72,
                 'inset_m' => 12, 'gap_m' => 12, 'card_pad_m' => 14, 'name_m' => 22, 'desc_m' => 14, 'logo_size_m' => 52,
-                'lines' => 2, 'lines_m' => 2])
+                'lines' => 2, 'lines_m' => 2,
+                // 6 Oct: the header's outer spacing, at the 22px the page already leaves.
+                'space_top' => 22, 'space_x' => 22, 'space_top_m' => 22, 'space_x_m' => 22])
             ->and($ctx->json('edit.panel.hint'))->toContain('Appearance → Site layout → Brand page')
             ->and($ctx->json('edit.panel.ranges.width'))->toBe(['min' => 60, 'max' => 100, 'unit' => '%'])
             ->and($ctx->json('edit.panel.ranges.height_m'))->toBe(['min' => 100, 'max' => 300, 'unit' => 'px'])

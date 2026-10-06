@@ -117,7 +117,8 @@ it('keeps an untouched brand page byte for byte as BR2 drew it: no new property,
 
 it('holds each default to one number: BrandPanel::QUIET, the shop setting and the stylesheet fallback', function () {
     // Lane BR4 adds the lines before "Read more", laptop and phone: a count, not px.
-    expect(array_keys(BrandPanel::QUIET))->toBe([...BR3_LAPTOP, ...BR3_PHONE, 'lines', 'lines_m']);
+    // 6 Oct: the header's outer spacing, laptop then phone.
+    expect(array_keys(BrandPanel::QUIET))->toBe([...BR3_LAPTOP, ...BR3_PHONE, 'lines', 'lines_m', 'space_top', 'space_x', 'space_top_m', 'space_x_m']);
 
     [$laptop, $phone] = br3CssParts();
 
@@ -133,8 +134,8 @@ it('holds each default to one number: BrandPanel::QUIET, the shop setting and th
             ->and($default)->toBeGreaterThanOrEqual($min)->toBeLessThanOrEqual($max)
             ->and($unit)->toBe(in_array($key, ['lines', 'lines_m'], true) ? '' : 'px');
 
-        $scope = in_array($key, [...BR3_PHONE, 'lines_m'], true) ? $phone : $laptop;
-        $other = in_array($key, [...BR3_PHONE, 'lines_m'], true) ? $laptop : $phone;
+        $scope = in_array($key, [...BR3_PHONE, 'lines_m', 'space_top_m', 'space_x_m'], true) ? $phone : $laptop;
+        $other = in_array($key, [...BR3_PHONE, 'lines_m', 'space_top_m', 'space_x_m'], true) ? $laptop : $phone;
 
         // Every fallback of this property, in the half of the sheet it belongs
         // to, is the default -- and the property is not read in the other half.
@@ -367,7 +368,7 @@ describe('the "Edit brand header" pop-up', function () {
         // MUTATION: leave a key out of PANEL_BARS / PANEL_CHOICES and the
         // pop-up cannot set what the server accepts.
         foreach (BrandPanel::RANGES as $key => [, , , $property]) {
-            $group = in_array($key, ['height_m', 'lines_m', ...BR3_PHONE], true) ? 'phone' : 'laptop';
+            $group = in_array($key, ['height_m', 'lines_m', 'space_top_m', 'space_x_m', ...BR3_PHONE], true) ? 'phone' : 'laptop';
             expect(preg_match("#\\['{$key}', '[^']+', '{$property}', '{$group}'\\]#", $js))->toBe(1, "bar {$key}");
         }
 
