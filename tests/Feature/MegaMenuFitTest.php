@@ -286,3 +286,20 @@ it('cannot reach the bar with the switch off: every rule needs a class only ON p
         }
     }
 });
+
+/*
+ * 2.60.417. On the shop, hovering All Brands drew TWO pink lines under it: the
+ * bar's ordinary hover underline (.navlink::after, scaled to 1 on hover) and,
+ * 4px below it, the pointer on the panel's edge. The owner: "the underline
+ * should not show as the panel highlight is showing." Wherever the pointer is
+ * displayed -- mg-l and mg-s always, mg-a under anchor positioning -- the
+ * underline stays at scaleX(0) on hover.
+ *
+ * Mutation: delete either `transform:scaleX(0)` rule in kbb.css and this is red.
+ */
+it('retracts the hover underline wherever the pointer is drawn', function () {
+    $css = mgCss();
+
+    expect($css)->toContain('.mbar .navitem:is(.mg-l,.mg-s).mg-p:hover > .navlink::after{transform:scaleX(0)}')
+        ->and($css)->toMatch('/@supports \(anchor-name: --a\)\{.*?\.mbar \.navitem\.mg-a\.mg-p:hover > \.navlink::after\{transform:scaleX\(0\)\}/s');
+});

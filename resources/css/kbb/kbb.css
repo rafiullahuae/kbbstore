@@ -542,6 +542,10 @@
   .mbar .navitem:is(.mg-l,.mg-s).mg-p > .navlink::before{display:block}
   .mbar .navitem.mg-p:hover > .navlink::before{opacity:1;translate:0 0}
   .mbar .navitem.mg-p:hover > .navlink{color:var(--pink-deep)}
+  /* (2.60.417) The owner: "the underline should not show as the panel
+     highlight is showing." Where the pointer is drawn, the hover underline
+     would be a second pink line 4px above it, so it stays retracted. */
+  .mbar .navitem:is(.mg-l,.mg-s).mg-p:hover > .navlink::after{transform:scaleX(0)}
   @supports (anchor-name: --a){
     .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s){position:static;anchor-name:--mg-item;anchor-scope:--mg-item}
     .mbar .wrap > .navitem.mg-l{--mg-s:var(--site-gutter);--mg-e:max(var(--site-gutter), min(calc(100% - var(--site-gutter) - 220px * var(--mega-cols)), anchor(end)))}
@@ -551,6 +555,7 @@
     .mbar .wrap > .navitem.mg-s > .drop{width:min-content;max-width:calc(100% - 2 * var(--site-gutter))}
     .mbar .wrap > .navitem.mg-a > .drop::after{content:none}
     .mbar .navitem.mg-a.mg-p > .navlink::before{display:block}
+    .mbar .navitem.mg-a.mg-p:hover > .navlink::after{transform:scaleX(0)}
     .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::before, .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::after{content:"";position:absolute;z-index:69;position-anchor:--mg-item;inset-block-start:anchor(center);inset-block-end:anchor(end)}
     /* RTL-PHYSICAL: the bridges' clip-path points are physical, so each
        triangle is cut twice — its slope must fall away from the link, which
