@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.409
+**Footer "Get the app" row; the category tree from kbeautybliss.com.**
+Apply after .408. Runs its migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| App row: frosted glass "downside the big logo", official-colour icons, "orders update, restock alerts & coupons", typing EN/AR lines, WhatsApp hides while it shows | Appearance -> Footer -> Site footer · Desktop / · Mobile -> App row (ON). Hidden inside the installed app and on laptops (switch: show on laptops with a QR). Arabic headline/button drafts: Translation -> Strings |
+| "the exact hirarchy which i have at kbeautybliss.com" | Catalog -> Categories -> Copy hierarchy from kbeautybliss.com: dry run, then Apply. Addresses stay short (/collections/oil-cleansers/); nested forms 301 to them |
+
+Files: see the package's update.json.
+
 ## 2.60.408
 **Mega Menu: add categories, brands, pages, posts and collections with a
 tick; a scrollbar at the bottom. "Extra Beauty" becomes "K-Beauty Bliss"
