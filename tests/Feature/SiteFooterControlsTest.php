@@ -333,7 +333,7 @@ it('sweeps a shine across the bottom bar, left to right in English and right to 
     expect(implode(' ', hfClasses(hfFooter($this))))->not->toContain('kft-sheen');
 });
 
-it('keeps only safe addresses and no word about returns in the owner\'s own link lists', function () {
+it('keeps only safe addresses in the owner\'s own link lists, Returns included now that he asked for it', function () {
     $clean = SiteFooter::cleanLinks(implode("\n", [
         'Gift cards | /gift-cards/',
         'Our Instagram | https://www.instagram.com/kbeauty.bliss/',
@@ -349,7 +349,9 @@ it('keeps only safe addresses and no word about returns in the owner\'s own link
         '<b>Bold</b> label | /bold/',
     ]));
 
-    expect($clean)->toBe("Gift cards | /gift-cards/\nOur Instagram | https://www.instagram.com/kbeauty.bliss/\nBold label | /bold/");
+    // (Lane TP) Returns and Exchange used to be dropped here too; the owner
+    // asked for Returns Information back on 6 October, so they are kept.
+    expect($clean)->toBe("Gift cards | /gift-cards/\nOur Instagram | https://www.instagram.com/kbeauty.bliss/\nReturns | /refund_returns/\nExchange | /returns/\nBold label | /bold/");
 
     // Twelve at most, and an emptied box is the shipped list, never a refusal.
     expect(count(SiteFooter::parseLinks(str_repeat("A | /a/\n", 30))))->toBe(SiteFooter::MAX_LINKS)
@@ -365,8 +367,7 @@ it('keeps only safe addresses and no word about returns in the owner\'s own link
         ->not->toContain('javascript:')
         ->not->toContain('New in')
         // The other two columns are untouched by the first one's list.
-        ->and($footer)->toContain('<a href="/my-account/orders/">My orders</a>')
-        ->and($footer)->not->toMatch('/return|refund/i');
+        ->and($footer)->toContain('<a href="/my-account/orders/">My orders</a>');
 });
 
 it('prints nothing into the footer\'s attributes but checked colours, clamped numbers and its own class names', function () {

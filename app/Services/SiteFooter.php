@@ -35,12 +35,17 @@ use App\Support\Url;
  * help strip's three lines, the two addresses, the big name, and the design
  * switch itself.
  *
- * ── NO WORD "RETURN" ────────────────────────────────────────────────────────
+ * ── "RETURN" IS BACK, BECAUSE HE ASKED FOR IT (Lane TP, 6 October) ─────────
  *
- * helpLinks() drops any footer-menu row whose label or address mentions a
- * return or a refund, and the shipped defaults carry none. The old footer's
- * "Returns Information" link (/refund_returns/) is not drawn by the new design.
- * The owner's own link lists (Lane HF) go through the same BANNED test.
+ * This section used to be "NO WORD RETURN": helpLinks() and the owner's own
+ * link lists dropped any row mentioning a return or a refund, after "we don't
+ * offer returns so don't include any return word". On 6 October he asked for
+ * the old shop's policy links back — "Shipping & Delivery, Returns
+ * Information, Order Tracking, Feedback, FAQs, Privacy Policy … also apply the
+ * links in the main footer" — so the filter is gone and the shipped Help
+ * column is that list (Feedback excepted: this shop has no such page, and a
+ * link to a 404 is not a link). A footer menu or a typed link list with a
+ * Returns row now draws it, which is the point.
  *
  * ── LANE HF, 4 OCTOBER: THE OWNER'S REWORK AND "CONTROL FOR COMPLETE FOOTER" ─
  *
@@ -72,9 +77,6 @@ final class SiteFooter
     public const PREFIX = 'sitefooter_';
 
     public const MODULE = 'site_footer';
-
-    /** What a footer-menu row may not mention, in the new design. */
-    public const BANNED = '/return|refund/i';
 
     /** A whole-pixel slider, 0–80. */
     private const PAD = ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px'];
@@ -163,12 +165,12 @@ final class SiteFooter
             'help' => 'Empty: “Shop”, in Arabic on the Arabic shop.'],
         'site_col1_links' => ['type' => 'textarea', 'label' => 'First column · links', 'default' => '',
             'rule' => [self::class, 'cleanLinks'],
-            'help' => 'One link per line, written  Label | /address  — an address on this shop starting with /, or a full https:// address. Empty: New in, Best sellers, Brands, Super sale, #KBeautyBliss, Journal. A line that is not a safe address, or that mentions returns or refunds, is dropped.'],
+            'help' => 'One link per line, written  Label | /address  — an address on this shop starting with /, or a full https:// address. Empty: New in, Best sellers, Brands, Super sale, #KBeautyBliss, Journal. A line that is not a safe address is dropped.'],
         'site_col2_title' => ['type' => 'text', 'label' => 'Second column · title', 'default' => '',
             'help' => 'Empty: “Help”.'],
         'site_col2_links' => ['type' => 'textarea', 'label' => 'Second column · links', 'default' => '',
             'rule' => [self::class, 'cleanLinks'],
-            'help' => 'Same format. Empty: the footer menu when one has been built, otherwise Track my order, Shipping & Delivery, FAQs, Contact us — then About us.'],
+            'help' => 'Same format. Empty: the footer menu when one has been built, otherwise Shipping & Delivery, Returns Information, Order Tracking, FAQs, Privacy policy, Contact us — then About us.'],
         'site_col3_title' => ['type' => 'text', 'label' => 'Third column · title', 'default' => '',
             'help' => 'Empty: “Account”.'],
         'site_col3_links' => ['type' => 'textarea', 'label' => 'Third column · links', 'default' => '',
@@ -400,7 +402,14 @@ final class SiteFooter
 
     /**
      * The Help column: the footer menu's rows when the owner has built one, the
-     * shop's real help pages otherwise — minus anything about returns.
+     * shop's real help pages otherwise — the old shop's policy links, in its
+     * order (Lane TP), then Contact us.
+     *
+     * ORDER TRACKING IS /my-account/orders/, the address the old footer used.
+     * A guest is sent to the sign-in form with the page remembered (the
+     * `auth:customer` group, GuestRedirect) and lands on the list after signing
+     * in. The guest look-up by order number stays one tap away: it is the help
+     * strip's "Track my order" button.
      *
      * @param  iterable<array<string, mixed>>  $nav
      * @return list<array{label: string, url: string}>
@@ -413,7 +422,7 @@ final class SiteFooter
             $label = trim((string) ($link['label'] ?? ''));
             $url = (string) ($link['url'] ?? '/');
 
-            if ($label === '' || preg_match(self::BANNED, $label.' '.$url) === 1) {
+            if ($label === '') {
                 continue;
             }
 
@@ -425,9 +434,11 @@ final class SiteFooter
         }
 
         return [
-            ['label' => __('store.footer.link_track_order'), 'url' => Url::to('/track-my-order/')],
             ['label' => __('store.footer.link_delivery'), 'url' => Url::to('/delivery/')],
+            ['label' => __('store.footer.link_returns'), 'url' => Url::to('/refund_returns/')],
+            ['label' => __('store.footer.link_order_tracking'), 'url' => Url::to('/my-account/orders/')],
             ['label' => __('store.footer.link_faqs'), 'url' => Url::to('/faqs/')],
+            ['label' => __('store.footer.link_privacy'), 'url' => Url::to('/privacy-policy/')],
             ['label' => __('store.footer.link_contact'), 'url' => Url::to('/contact-us/')],
         ];
     }
@@ -565,9 +576,9 @@ final class SiteFooter
      *    a backslash, which a browser would read as another host) or a full
      *    `https://` address with a host. Nothing else: no `javascript:`, no
      *    `http:`, no `//evil.example`, no `mailto:`.
-     *  - A line whose label or address mentions a return or a refund is
-     *    dropped, exactly as the footer menu's rows are (BANNED) — the shop
-     *    offers no returns and the owner asked for no such word.
+     *  - (A line mentioning a return or a refund used to be dropped here too.
+     *    The owner asked for Returns Information back on 6 October — Lane TP —
+     *    so it is drawn like any other line.)
      *  - The label is plain text: tags are stripped, it is capped at 60
      *    characters, and Blade escapes it again where it is printed.
      *
@@ -603,7 +614,7 @@ final class SiteFooter
             $label = mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tags(substr($line, 0, $cut))) ?? ''), 0, 60);
             $url = trim(substr($line, $cut + 1));
 
-            if ($label === '' || ! self::safeAddress($url) || preg_match(self::BANNED, $label.' '.$url) === 1) {
+            if ($label === '' || ! self::safeAddress($url)) {
                 continue;
             }
 

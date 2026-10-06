@@ -2815,8 +2815,38 @@ header{border-bottom:1px solid var(--line-2)}
 .kbb-home .policy-body ol > li{padding-inline-start:4px}
 .kbb-home .policy-body strong{color:var(--ink)}
 .kbb-home .policy-body a{color:var(--pink-deep);text-decoration:underline}
+/* Lane TP — the owner's pasted policy pages, and "fix any paragraph etc
+   issue". The rules above styled h3, p and lists and nothing else, so the FAQ's
+   section headings (h2, "PAYMENT OPTIONS") fell through to the shop's display
+   h2, an opening heading kept its 28px top margin under the title, and a table
+   had no cells to read. Scoped to .policy-body: content pages only. */
+.kbb-home .policy-body > :first-child{margin-top:0}
+.kbb-home .policy-body > :last-child{margin-bottom:0}
+.kbb-home .policy-body h2{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--pink-deep);margin:36px 0 2px;padding-top:20px;border-top:1px solid var(--line-2);line-height:1.4}
+.kbb-home .policy-body > h2:first-child{padding-top:0;border-top:0}
+.kbb-home .policy-body h2 + h3{margin-top:12px}
+.kbb-home .policy-body h4{font-size:15px;font-weight:700;color:var(--ink);margin:22px 0 6px}
+.kbb-home .policy-body ul{list-style:disc}
+.kbb-home .policy-body ol{list-style:decimal}
+.kbb-home .policy-body li::marker{color:var(--pink-deep)}
+.kbb-home .policy-body li > p{margin:0}
+.kbb-home .policy-body img{max-width:100%;height:auto}
+.kbb-home .policy-body table{border-collapse:collapse;margin:0 0 16px;font-size:14px}
+.kbb-home .policy-body th,.kbb-home .policy-body td{border:1px solid var(--line-2);padding:8px 12px;text-align:start;vertical-align:top}
+.kbb-home .policy-body th{color:var(--ink);font-weight:700}
+.kbb-home .policy-body blockquote{margin:0 0 16px;padding:2px 0 2px 16px;border-inline-start:3px solid var(--line-2)}
 .kbb-home .policy-date{margin-top:26px;padding-top:16px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--muted)}
 
+
+/* Lane TP — Shipping & Delivery and Returns Information under the cart and
+   checkout totals (partials/policy-links). Small and quiet; the padding makes
+   each a usable tap target without making the row loud. */
+.kbb-pol{display:flex;flex-wrap:wrap;justify-content:center;gap:0 18px;margin:10px 0 0;font-size:12.5px;line-height:1.4}
+/* p.kbb-pol, one element above kbb-checkout.css's `.kbb-checkout a{color:
+   inherit;text-decoration:none}`, which loads after this file and otherwise
+   draws the two links as plain ink text with no underline. */
+p.kbb-pol a{display:inline-block;padding:7px 2px;color:var(--muted,#756C74);text-decoration:underline;text-underline-offset:3px}
+p.kbb-pol a:hover{color:var(--pink-deep,#C13E63)}
 
 /* ═══ Product gallery thumbnails — from kbb-product.html ═══ */
 .pdp .gthumbs{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}

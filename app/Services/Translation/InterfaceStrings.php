@@ -185,6 +185,9 @@ final class InterfaceStrings
             'footer.link_track_order' => 'Track my order',
             'footer.link_delivery' => 'Shipping & Delivery',
             'footer.link_returns' => 'Returns Information',
+            // The Help column's link to /my-account/orders/, under the old shop's
+            // own name for it (Lane TP).
+            'footer.link_order_tracking' => 'Order Tracking',
             'footer.link_faqs' => 'FAQs',
             'footer.link_contact' => 'Contact us',
             'footer.account_heading' => 'My Account',
@@ -199,8 +202,9 @@ final class InterfaceStrings
             'footer.pay_cod' => 'COD',
             // The new site footer (Lane HB, master plan row 55): the WhatsApp help
             // strip, the Discover and Visit us columns, the offers form and the
-            // two policy links. No word "return" anywhere — the owner: "we don't
-            // offer returns so don't include any return word".
+            // two policy links. (It once carried no word "return" — "we don't offer
+            // returns so don't include any return word" — until the owner asked for
+            // Returns Information back in the Help column, Lane TP.)
             'footer.help_headline' => 'Find your perfect K-beauty match',
             'footer.help_chip' => '24/7 available',
             'footer.help_sub' => 'Ask us anything about your skin, a product or your order — we reply on WhatsApp.',
