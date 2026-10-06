@@ -30,6 +30,163 @@
  * No timer, no layout read, no polling; the sheet's CSS is written only when
  * the sheet is shown.
  */
+/*
+ * THE FOOTER'S APP ROW (Lane FB, 6 October): its Install button, its typing
+ * line, and the WhatsApp button stepping aside while it is on screen.
+ *
+ * Nothing here runs unless the footer printed the row (.kfa[data-kfa]), and
+ * nothing here makes a request: the install sheets are a <template> in the
+ * page, and the browser's own install box is the browser's.
+ *
+ *   - Android Chrome / Edge / Samsung: the browser's install offer
+ *     (beforeinstallprompt) is held when it arrives and shown from the tap.
+ *   - No offer (not arrived yet, refused, Firefox): the "⋮ → Install app" sheet.
+ *   - iPhone / iPad: the two-step Share → Add to Home Screen sheet.
+ *   - Instagram, Facebook, TikTok and other in-app browsers: "open this page
+ *     in your browser first" — they offer neither install nor Add to Home.
+ *   - A laptop, only when "Show on laptops" printed the QR: the QR sheet.
+ *   - Already installed: CSS hides the row (display-mode); navigator.standalone
+ *     covers older iPhones here.
+ *
+ * ONE IntersectionObserver on the row does two jobs (the owner: "when the
+ * install app row appear on screen, the floating whatsapp stuff must hide
+ * super instantly"): it sets html.kfa-on, which hides #kbbWa in CSS with no
+ * transition, and it starts and stops the typing. Its bottom margin is 64px,
+ * so WhatsApp is gone a moment BEFORE the row scrolls in and the two never
+ * share a frame. No scroll listener, no layout read.
+ *
+ * THE TYPING ("one line in english, then one line in arabic, and so on")
+ * runs only while the row is on screen AND the tab is visible: one
+ * setTimeout chain, cleared the moment either stops being true, and never
+ * started for a visitor who asks for reduced motion — she keeps the first
+ * line, printed by the server, still. Screen readers get the lines once from
+ * a visually-hidden span; the typing span is aria-hidden.
+ */
+(function () {
+  'use strict';
+  var row = document.querySelector('.kfa[data-kfa]');
+  if (!row) return;
+  var html = document.documentElement, nav = navigator, ua = nav.userAgent || '', mm = window.matchMedia;
+  if (nav.standalone === true) { row.hidden = true; return; }
+
+  var btn = row.querySelector('.kfa-bt'), tpl = row.querySelector('template.kfa-tpl'), ty = row.querySelector('.kfa-ty');
+  var offer = null;
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); offer = e; });
+  window.addEventListener('appinstalled', function () { offer = null; row.hidden = true; inView = false; html.classList.remove('kfa-on'); sync(); });
+
+  /* ── the typing ── */
+  var seq = [];
+  try { seq = JSON.parse(row.getAttribute('data-kfa') || '[]'); } catch (e) { seq = []; }
+  var still = !!(mm && mm('(prefers-reduced-motion: reduce)').matches);
+  var inView = false, timer = 0, at = 0, n = 0, phase = 'hold', chars = [];
+  function load(k) {
+    chars = Array.from(String(seq[k][1]));
+    ty.setAttribute('lang', seq[k][0] ? 'ar' : 'en');
+    ty.setAttribute('dir', seq[k][0] ? 'rtl' : 'ltr');
+  }
+  function live() { return inView && !document.hidden && !still && !!ty && seq.length > 1; }
+  function step() {
+    timer = 0;
+    var wait;
+    if (phase === 'type') {
+      n++;
+      if (n >= chars.length) { phase = 'hold'; wait = 2400; } else wait = 55;
+    } else if (phase === 'hold') {
+      phase = 'del'; wait = 30;
+    } else {
+      n--;
+      if (n <= 0) { n = 0; at = (at + 1) % seq.length; load(at); phase = 'type'; wait = 420; } else wait = 22;
+    }
+    ty.textContent = chars.slice(0, n).join('');
+    if (live()) timer = setTimeout(step, wait);
+  }
+  function sync() {
+    var go = live();
+    row.classList.toggle('kfa-run', go);
+    if (!go) { if (timer) clearTimeout(timer); timer = 0; return; }
+    if (!timer) timer = setTimeout(step, phase === 'hold' ? 1600 : 200);
+  }
+  if (ty && seq.length) { load(0); n = chars.length; }
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (es) {
+      inView = es[es.length - 1].isIntersecting && !row.hidden;
+      html.classList.toggle('kfa-on', inView);
+      sync();
+    }, { rootMargin: '0px 0px 64px 0px' }).observe(row);
+    document.addEventListener('visibilitychange', sync);
+  }
+
+  /* ── the tap ── */
+  var CSS = '.kfa-bk{position:fixed;inset:0;z-index:2147483000;background:rgba(42,34,40,.38);display:flex;align-items:flex-end;justify-content:center}'
+    + '.kfa-sh{box-sizing:border-box;position:relative;width:100%;max-width:440px;background:#fff;color:#2A2228;border-radius:24px 24px 0 0;padding:22px 20px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(42,34,40,.16);text-align:start}'
+    + '.kfa-sh h2{margin:0 0 16px;padding-inline-end:40px;font-size:18px;line-height:1.3;font-weight:700;color:#2A2228}'
+    + '.kfa-sh ol{list-style:none;margin:0;padding:0;display:grid;gap:14px;counter-reset:k}'
+    + '.kfa-sh li{display:flex;gap:14px;align-items:center;font-size:14.5px;line-height:1.45;color:#5E545A;counter-increment:k}'
+    + '.kfa-sh li>i{flex:none;position:relative;width:42px;height:42px;border-radius:13px;background:#FFF0F4;color:#C13E63;display:grid;place-items:center}'
+    + '.kfa-sh li>i::before{content:counter(k);position:absolute;top:-6px;inset-inline-start:-6px;width:19px;height:19px;border-radius:50%;background:#C13E63;color:#fff;font-size:11px;font-weight:700;line-height:19px;text-align:center;font-style:normal}'
+    + '.kfa-sh li svg{width:22px;height:22px}'
+    + '.kfa-x{position:absolute;top:14px;inset-inline-end:14px;width:36px;height:36px;border:0;border-radius:50%;background:#F5EEF1;color:#2A2228;font-size:22px;line-height:1;cursor:pointer}'
+    + '.kfa-x:focus-visible{outline:2px solid #C13E63;outline-offset:2px}'
+    + '.kfa-qr,.kfa-qr svg{display:block;width:184px;height:184px;margin:0 auto 12px}'
+    + '.kfa-sh p{margin:0;text-align:center;font-size:14px;color:#5E545A}'
+    + '@media (min-width:600px){.kfa-bk{align-items:center}.kfa-sh{border-radius:24px}}';
+
+  function kind() {
+    if (/Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|BytedanceWebview|Snapchat/i.test(ua)) return 'inapp';
+    if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1)) return 'ios';
+    if (!/Android/i.test(ua) && tpl && tpl.content.querySelector('[data-s="qr"]')) return 'qr';
+    return 'and';
+  }
+  function sheet(k) {
+    var part = tpl && tpl.content.querySelector('[data-s="' + k + '"]');
+    if (!part) return;
+    if (!document.getElementById('kfa-css')) {
+      var st = document.createElement('style');
+      st.id = 'kfa-css';
+      st.textContent = CSS;
+      document.head.appendChild(st);
+    }
+    var back = document.createElement('div'), box = document.createElement('div'), x = document.createElement('button');
+    back.className = 'kfa-bk';
+    box.className = 'kfa-sh';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-labelledby', 'kfa-sh-h');
+    box.setAttribute('dir', html.getAttribute('dir') || 'ltr');
+    x.type = 'button';
+    x.className = 'kfa-x';
+    x.setAttribute('aria-label', tpl.getAttribute('data-close') || '');
+    x.textContent = '×';
+    var body = document.importNode(part, true), h = body.querySelector('h2');
+    if (h) h.id = 'kfa-sh-h';
+    box.appendChild(x);
+    box.appendChild(body);
+    back.appendChild(box);
+    function close() {
+      document.removeEventListener('keydown', esc);
+      if (back.parentNode) back.parentNode.removeChild(back);
+      if (btn) btn.focus();
+    }
+    function esc(e) { if (e.key === 'Escape') close(); }
+    x.addEventListener('click', close);
+    back.addEventListener('click', function (e) { if (e.target === back) close(); });
+    document.addEventListener('keydown', esc);
+    document.body.appendChild(back);
+    x.focus();
+  }
+  if (btn) btn.addEventListener('click', function () {
+    if (offer) {
+      // The browser's own box, from this tap. One offer prompts once.
+      var o = offer;
+      offer = null;
+      o.prompt();
+      if (o.userChoice) o.userChoice.then(function (c) { if (c && c.outcome === 'accepted') row.hidden = true; }).catch(function () {});
+      return;
+    }
+    sheet(kind());
+  });
+})();
+
 (function () {
   'use strict';
   var s = document.currentScript;

@@ -5368,6 +5368,73 @@
         ]
       },
       {
+        "key": "site_app",
+        "label": "Site footer · app row",
+        "description": "The frosted-glass “get the app” row under the big name.",
+        "fields": [
+          {
+            "key": "site_app_on",
+            "name": "site_app_on",
+            "type": "bool",
+            "label": "Show the app row",
+            "help": "A frosted-glass row under the big name, above the © line, with the Install button. Never shown inside the installed app, and never while App → Site App is off.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "site_app_title",
+            "name": "site_app_title",
+            "type": "text",
+            "label": "App row · headline",
+            "help": "Empty: “Get the K-Beauty Bliss app” (Arabic on the Arabic shop, from Translation → Strings).",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_app_lines",
+            "name": "site_app_lines",
+            "type": "textarea",
+            "label": "App row · typing lines, English",
+            "help": "One line per row, up to 6, each up to 60 characters. They type themselves under the headline, one English line then one Arabic line, on both shops. Empty: the shipped lines.",
+            "options": null,
+            "default": "Order updates, straight to your phone.\nRestock alerts for your favourites.\nCoupons & offers, the moment they drop.\nYour glow, one tap away.",
+            "value": "Order updates, straight to your phone.\nRestock alerts for your favourites.\nCoupons & offers, the moment they drop.\nYour glow, one tap away."
+          },
+          {
+            "key": "site_app_lines_ar",
+            "name": "site_app_lines_ar",
+            "type": "textarea",
+            "label": "App row · typing lines, Arabic",
+            "help": "Same, in Arabic. Typed right to left. Empty: the shipped lines.",
+            "options": null,
+            "default": "تحديثات طلبكِ مباشرةً على هاتفكِ.\nتنبيهات عند عودة منتجاتكِ المفضّلة.\nكوبونات وعروض لحظة إطلاقها.\nإشراقتكِ على بُعد لمسة واحدة.",
+            "value": "تحديثات طلبكِ مباشرةً على هاتفكِ.\nتنبيهات عند عودة منتجاتكِ المفضّلة.\nكوبونات وعروض لحظة إطلاقها.\nإشراقتكِ على بُعد لمسة واحدة."
+          },
+          {
+            "key": "site_app_button",
+            "name": "site_app_button",
+            "type": "text",
+            "label": "App row · button",
+            "help": "Empty: “Install” (Arabic on the Arabic shop). Android opens the browser’s own install box; iPhone and iPad get a two-step picture guide.",
+            "options": null,
+            "default": "",
+            "value": ""
+          },
+          {
+            "key": "site_d_app_laptop",
+            "name": "site_d_app_laptop",
+            "type": "bool",
+            "label": "Show the app row on laptops (with a QR code to open the shop on the phone)",
+            "help": "Off: hidden on laptops and desktops 1024px and wider (iPads still see it). On: the button opens a QR code of the shop, drawn by the shop itself.",
+            "options": null,
+            "default": false,
+            "value": false
+          }
+        ]
+      },
+      {
         "key": "pages",
         "label": "Where it shows",
         "description": "One bar, two pages, two switches. The cart ships off so that page is untouched until you say otherwise.",

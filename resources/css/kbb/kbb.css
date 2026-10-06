@@ -4818,6 +4818,36 @@ footer.kft{background:var(--kft-bg,#fff);color:var(--ink);padding:0;margin:0;ove
   .kft-brand .kft-soc a{width:30px;height:30px}
   .kft-col ul{font-size:calc(var(--kft-fl-m, 13px) - .5px)}
 }
+/* ── THE APP ROW ─────────────────────────────────────── Lane FB, 6 Oct ──
+   Option D of docs/fa-preview (frosted glass), moved UNDER the big name and
+   above the bottom bar — the owner: "i don't want to cover the logo, it should
+   downside the big logo". A soft blush band so the glass has colour to frost.
+   The typing line has a FIXED box (two lines on a phone, one from 768px), so
+   typing and deleting never move the page. Hidden: in the installed app; on a
+   laptop (1024px+ with a mouse — an iPad keeps it) unless "Show on laptops";
+   and the floating WhatsApp button hides, with no fade, while the row is on
+   screen (html.kfa-on, set by one IntersectionObserver in site-app.js). */
+.kfa{padding:5px 0 7px;background:radial-gradient(36% 130% at 12% 50%,#F9C0D0 0,transparent 70%),radial-gradient(36% 130% at 88% 50%,#FFD9E3 0,transparent 70%),var(--kft-bg,#fff)}
+.kfa[hidden]{display:none}
+.kfa-g{display:flex;align-items:center;gap:9px;padding:5px;padding-inline-start:11px;border-radius:20px;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(12px) saturate(1.4);backdrop-filter:blur(12px) saturate(1.4);border:1px solid rgba(255,255,255,.9);box-shadow:0 10px 30px -14px rgba(193,62,99,.55),inset 0 1px 0 #fff}
+.kfa-ic{display:flex;gap:4px;flex:none}
+.kfa-ic i,.kfa-ic svg{display:block;width:17px;height:17px}
+.kfa-tx{flex:1;min-width:0;margin:0;line-height:1.25}
+.kfa-tx b{display:block;font-size:13px;font-weight:700;color:#4A1F30;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kfa-ln{display:block;height:2.5em;font-size:12px;color:#7A4A5B;overflow:hidden}
+.kfa-ty{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-align:start}
+.kfa-ty[lang=ar]{font-family:"Cairo","Geeza Pro","Noto Sans Arabic",system-ui,sans-serif}
+.kfa-run .kfa-ty::after{content:"";display:inline-block;width:1.5px;height:1.05em;margin-inline-start:1px;vertical-align:-.15em;background:#C13E63;animation:kfa-c 1s steps(1) infinite}
+@keyframes kfa-c{50%{opacity:0}}
+.kfa-vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.kfa-bt{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 13px;border:0;border-radius:14px;background:rgba(42,34,40,.88);color:#fff;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.kfa-bt svg{width:15px;height:15px}
+.kfa-bt:focus-visible{outline:2px solid #C13E63;outline-offset:2px}
+@media (min-width:768px){.kfa{padding:10px 0 12px}.kfa-g{max-width:780px;margin-inline:auto;gap:14px;padding:8px;padding-inline-start:20px}.kfa-ic{gap:6px}.kfa-ic i,.kfa-ic svg{width:21px;height:21px}.kfa-tx{display:flex;align-items:baseline;gap:12px}.kfa-tx b{font-size:15px;flex:none}.kfa-ln{flex:1;min-width:0;height:1.25em;font-size:13.5px}.kfa-ty{-webkit-line-clamp:1}.kfa-bt{min-height:44px;padding:0 20px;font-size:14px}}
+@media (min-width:1024px) and (pointer:fine){.kfa:not(.kfa-lt){display:none}}
+@media (display-mode:standalone),(display-mode:fullscreen){.kfa{display:none}}
+@media (prefers-reduced-motion:reduce){.kfa-run .kfa-ty::after{display:none}}
+html.kfa-on #kbbWa{visibility:hidden!important;opacity:0!important;transition:none!important;pointer-events:none!important}
 
 /* ── THE FLAG BAR ──────────────────────────────────────────────── Lane FB ──
    The thin strip above the header: UAE flag, one short line, Korean flag.

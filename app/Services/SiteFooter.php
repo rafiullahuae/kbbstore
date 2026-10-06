@@ -105,6 +105,21 @@ final class SiteFooter
      */
     public const PARTS = ['help', 'help_sub', 'logo', 'tag', 'soc', 'col1', 'col2', 'col3', 'visit', 'news', 'name', 'bot', 'pay'];
 
+    /**
+     * The app row's typing lines as shipped (Lane FB), built on the owner's own
+     * words — order updates, restock alerts, coupons. No discount figure: the
+     * shop sends offers through Growth & Marketing → Push Notifications, and
+     * that is all "coupons" promises. The Arabic speaks to a woman.
+     */
+    public const APP_LINES_EN = "Order updates, straight to your phone.\nRestock alerts for your favourites.\nCoupons & offers, the moment they drop.\nYour glow, one tap away.";
+
+    public const APP_LINES_AR = "تحديثات طلبكِ مباشرةً على هاتفكِ.\nتنبيهات عند عودة منتجاتكِ المفضّلة.\nكوبونات وعروض لحظة إطلاقها.\nإشراقتكِ على بُعد لمسة واحدة.";
+
+    /** At most this many typing lines per language, each at most LINE_MAX characters. */
+    public const MAX_LINES = 6;
+
+    public const LINE_MAX = 60;
+
     /** How fast the strip and the big name drift: key => [strip s, name s]. */
     public const DRIFT = ['8' => [8, 7], '14' => [14, 12], '24' => [24, 20]];
 
@@ -200,6 +215,34 @@ final class SiteFooter
         'site_sheen_speed' => ['type' => 'select', 'label' => 'Shine speed', 'default' => '5',
             'options' => self::SHEEN_SPEED, 'help' => ''],
 
+        /* ── The app row (Lane FB) ───────────────────────────────────────────── */
+        /*
+         * SHIPS ON. The owner, 6 October, choosing from docs/fa-preview/: "write
+         * something, Get orders update, restock alerts & coupons … i want that
+         * ladies must take more interest in it. the frosted glass design is fine,
+         * but i don't want to cover the logo, it should downside the big logo,
+         * also the icons i need colorful as official" — then "the app install
+         * content need to change continues, like a writing styline … one line in
+         * english, then one line in arabic, and so on." He asked for it, so it is
+         * the shop's new state (CLAUDE.md rule 1, the 30 September reversal);
+         * `site_app_on` is the way back. Never printed while App → Site App is
+         * off, whatever this says.
+         */
+        'site_app_on' => ['type' => 'bool', 'label' => 'Show the app row', 'default' => true,
+            'help' => 'A frosted-glass row under the big name, above the © line, with the Install button. Never shown inside the installed app, and never while App → Site App is off.'],
+        'site_app_title' => ['type' => 'text', 'label' => 'App row · headline', 'default' => '',
+            'help' => 'Empty: “Get the K-Beauty Bliss app” (Arabic on the Arabic shop, from Translation → Strings).'],
+        'site_app_lines' => ['type' => 'textarea', 'label' => 'App row · typing lines, English', 'default' => self::APP_LINES_EN,
+            'rule' => [self::class, 'cleanLines'],
+            'help' => 'One line per row, up to 6, each up to 60 characters. They type themselves under the headline, one English line then one Arabic line, on both shops. Empty: the shipped lines.'],
+        'site_app_lines_ar' => ['type' => 'textarea', 'label' => 'App row · typing lines, Arabic', 'default' => self::APP_LINES_AR,
+            'rule' => [self::class, 'cleanLines'],
+            'help' => 'Same, in Arabic. Typed right to left. Empty: the shipped lines.'],
+        'site_app_button' => ['type' => 'text', 'label' => 'App row · button', 'default' => '',
+            'help' => 'Empty: “Install” (Arabic on the Arabic shop). Android opens the browser’s own install box; iPhone and iPad get a two-step picture guide.'],
+        'site_d_app_laptop' => ['type' => 'bool', 'label' => 'Show the app row on laptops (with a QR code to open the shop on the phone)', 'default' => false,
+            'help' => 'Off: hidden on laptops and desktops 1024px and wider (iPads still see it). On: the button opens a QR code of the shop, drawn by the shop itself.'],
+
         /* ── Layout · desktop (Lane HF) ─────────────────────────────────────── */
         'site_d_help' => ['type' => 'bool', 'label' => 'Show: The help strip', 'default' => true, 'help' => ''],
         'site_d_help_sub' => ['type' => 'bool', 'label' => 'Show: The line under the strip’s headline', 'default' => true, 'help' => ''],
@@ -262,6 +305,8 @@ final class SiteFooter
             self::DEVICE_KEYS_D],
         'site_m' => ['Site footer · layout mobile', 'Phones (900px and narrower): what shows, how it lines up, the spacing and the type sizes.',
             self::DEVICE_KEYS_M],
+        'site_app' => ['Site footer · app row', 'The frosted-glass “get the app” row under the big name.',
+            ['site_app_on', 'site_app_title', 'site_app_lines', 'site_app_lines_ar', 'site_app_button', 'site_d_app_laptop']],
     ];
 
     /** The layout tabs' keys, in the order they draw. */
@@ -371,6 +416,93 @@ final class SiteFooter
             ['label' => __('store.footer.link_delivery'), 'url' => Url::to('/delivery/')],
             ['label' => __('store.footer.link_faqs'), 'url' => Url::to('/faqs/')],
             ['label' => __('store.footer.link_contact'), 'url' => Url::to('/contact-us/')],
+        ];
+    }
+
+    /**
+     * The rule behind the two typing-line boxes (Lane FB): plain text, one line
+     * per row, empty rows dropped, at most MAX_LINES of at most LINE_MAX
+     * characters. Tags are stripped here and Blade escapes again where the
+     * lines are printed (in a data attribute and a visually-hidden span), and
+     * the script only ever sets them as textContent. Never null: an emptied
+     * box is '' and means the shipped lines.
+     */
+    public static function cleanLines(mixed $raw, array $field = []): string
+    {
+        return implode("\n", self::lines($raw));
+    }
+
+    /** @return list<string> */
+    public static function lines(mixed $raw): array
+    {
+        if (! is_string($raw)) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach (preg_split('/\R/u', $raw) ?: [] as $line) {
+            $line = trim(preg_replace('/[\s\x00-\x1F\x7F]+/u', ' ', strip_tags($line)) ?? '');
+
+            if ($line === '') {
+                continue;
+            }
+
+            $out[] = mb_substr($line, 0, self::LINE_MAX);
+
+            if (count($out) === self::MAX_LINES) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Everything the app row prints, or null when it is not printed at all:
+     * switched off here, or App → Site App off (no manifest, no script, so
+     * nothing could be installed and the button would do nothing).
+     *
+     * The typing lines alternate languages — the owner: "one line in english,
+     * then one line in arabic, and so on" — starting with the page's own, so
+     * the line printed in the HTML (the first) is in the shopper's language.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function app(array $c): ?array
+    {
+        if (! (bool) ($c['site_app_on'] ?? true) || ! app(SiteApp::class)->on()) {
+            return null;
+        }
+
+        $text = static fn (string $key): string => trim(\App\Support\RichText::toText((string) ($c[$key] ?? '')));
+        $en = self::lines($c['site_app_lines'] ?? '') ?: self::lines(self::APP_LINES_EN);
+        $ar = self::lines($c['site_app_lines_ar'] ?? '') ?: self::lines(self::APP_LINES_AR);
+        $arabic = \App\Support\Locale::current() === 'ar';
+        [$first, $second] = $arabic ? [$ar, $en] : [$en, $ar];
+
+        $seq = [];
+        for ($i = 0, $n = max(count($first), count($second)); $i < $n; $i++) {
+            foreach ([[$first, $arabic], [$second, ! $arabic]] as [$list, $isAr]) {
+                if (isset($list[$i])) {
+                    $seq[] = [$isAr ? 1 : 0, $list[$i]];
+                }
+            }
+        }
+
+        $laptop = (bool) ($c['site_d_app_laptop'] ?? false);
+
+        return [
+            'title' => $text('site_app_title') !== '' ? $text('site_app_title') : __('store.footer.app_title'),
+            'button' => $text('site_app_button') !== '' ? $text('site_app_button') : __('store.footer.app_button'),
+            'first' => $seq[0],
+            'own' => $first,
+            'seq' => json_encode($seq, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'laptop' => $laptop,
+            // Drawn here only when the laptop switch is on, and only for the
+            // shop's front page in this language: a short address, a small code
+            // (version 2–3), about a millisecond and a half.
+            'qr' => $laptop ? \App\Support\QrCode::svg(Url::external('/'), __('store.footer.app_qr_title')) : '',
         ];
     }
 
@@ -674,6 +806,8 @@ final class SiteFooter
             // (kbb.css, .kft-sheen-name), so the text travels in an attribute —
             // escaped by Blade — only when that is where the shine is.
             'name_sheen' => $look['sheen'] === 'name' && $name !== '',
+            // The app row (Lane FB): null when it is not printed.
+            'app' => $this->app($c),
         ];
     }
 }

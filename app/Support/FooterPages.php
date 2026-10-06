@@ -65,6 +65,10 @@ final class FooterPages
             ['site_news_on', 'site_{dev}_news']],
         ['Big name', 'The large name across the bottom.',
             ['site_name_on', 'site_{dev}_name', 'site_name_text', 'site_{dev}_fs_name', 'site_name_tone']],
+        // (Lane FB) Under the big name, above the © line. `site_d_app_laptop` is
+        // the one desktop-only key here, so the Mobile page leaves it out.
+        ['App row', 'The frosted-glass “get the app” row under the big name, with the typing lines and the Install button.',
+            ['site_app_on', 'site_app_title', 'site_app_lines', 'site_app_lines_ar', 'site_app_button', 'site_d_app_laptop']],
         ['Bottom bar', 'The last row: © line, Privacy, Terms, the payment marks, and its effect.',
             ['site_{dev}_bot', 'site_{dev}_pay', 'site_sheen', 'site_sheen_speed']],
         ['Colours & effects', 'The strip’s four colours, the footer’s colours and the slow drift.',
@@ -157,10 +161,14 @@ final class FooterPages
         $out = [];
 
         foreach ($rows as [$title, $hint, $keys]) {
+            $keys = array_map(static fn (string $k): string => str_replace('{dev}', $meta['device'], $k), $keys);
+
             $out[] = [
                 'title' => $title,
                 'hint' => $hint,
-                'keys' => array_map(static fn (string $k): string => str_replace('{dev}', $meta['device'], $k), $keys),
+                // A key written for one device (site_d_…) is drawn on that
+                // device's page only, even in a section both pages share.
+                'keys' => array_values(array_filter($keys, static fn (string $k): bool => in_array(self::deviceOf($k), [null, $meta['device']], true))),
             ];
         }
 
