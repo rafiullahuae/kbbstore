@@ -79,7 +79,7 @@ it('prints the row once, under the big name and above the © row', function () {
         // The shipped copy, built on the owner's own words.
         ->and($html)->toContain('<b id="kfa-h">Get the K-Beauty Bliss app</b>')
         ->and($html)->toContain('lang="en" dir="ltr">Order updates, straight to your phone.</span>')
-        ->and($html)->toContain('<span>Install</span>')
+        ->and($html)->toContain('<span>Install App</span>' /* 6 Oct: the owner renamed it */)
         // The three icons, each with its own name, in their official colours.
         ->and($html)->toContain('aria-label="iPhone"')->and($html)->toContain('aria-label="Android"')->and($html)->toContain('aria-label="iPad"')
         ->and($html)->toContain('fill="#3DDC84"')->and($html)->toContain('fill="#000"');

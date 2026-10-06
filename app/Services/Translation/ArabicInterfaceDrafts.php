@@ -537,7 +537,7 @@ final class ArabicInterfaceDrafts
             'store.footer.help_sub' => 'اسألينا عن بشرتك أو أي منتج أو طلبك — نرد عبر WhatsApp.',
             // The footer's app row (Lane FB). Speaks to a woman, as the previews did.
             'store.footer.app_title' => 'حمّلي تطبيق K-Beauty Bliss',
-            'store.footer.app_button' => 'تثبيت',
+            'store.footer.app_button' => 'تثبيت التطبيق',
             'store.footer.app_ic_apple' => 'آيفون',
             'store.footer.app_ic_android' => 'أندرويد',
             'store.footer.app_ic_ipad' => 'آيباد',

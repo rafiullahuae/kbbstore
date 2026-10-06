@@ -207,7 +207,7 @@ final class InterfaceStrings
             // The footer's app row and its install sheets (Lane FB). Apple, Android
             // and iPad are product names but keyed, so the Arabic shop can spell them.
             'footer.app_title' => 'Get the K-Beauty Bliss app',
-            'footer.app_button' => 'Install',
+            'footer.app_button' => 'Install App',
             'footer.app_ic_apple' => 'iPhone',
             'footer.app_ic_android' => 'Android',
             'footer.app_ic_ipad' => 'iPad',
