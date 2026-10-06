@@ -64,6 +64,16 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
+/*
+ * "Update App" (Lane UA, App -> Site App -> App update). This worker already
+ * activates itself on install, so a waiting one is rare; the page still asks,
+ * so a worker that does wait is never the reason the button did nothing. The
+ * message carries no data the worker uses: one fixed word, one fixed action.
+ */
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
 /** The path after the base and the locale segment, plus that segment. */
 function split(pathname) {
   let p = pathname.startsWith(BASE + '/') ? pathname.slice(BASE.length) : pathname;

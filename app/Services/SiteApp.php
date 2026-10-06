@@ -245,7 +245,8 @@ final class SiteApp
 
     /**
      * Changes whenever anything the worker precaches or runs changes, so a
-     * package that alters any of them makes every installed copy update.
+     * package that alters any of them makes every installed copy update --
+     * and whenever the owner publishes an update (SiteAppUpdate).
      */
     public static function version(): string
     {
@@ -253,6 +254,13 @@ final class SiteApp
             self::fileHash(resource_path('views/site-app/offline.blade.php'))];
         foreach (array_keys(self::ICONS) as $k) {
             $parts[] = self::fileHash(self::iconPath($k));
+        }
+        // App → Site App → "Publish an update to installed apps" (Lane UA): a
+        // new worker, so the Update App button really has one to activate.
+        // Nothing until the first publish, so the worker keeps its bytes.
+        $update = app(SiteAppUpdate::class)->number();
+        if ($update > 0) {
+            $parts[] = 'u'.$update;
         }
 
         return substr(hash('sha256', implode('|', $parts)), 0, 12);

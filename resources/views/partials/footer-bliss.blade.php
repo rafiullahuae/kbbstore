@@ -35,6 +35,11 @@
     pages with the Site App carry. The install sheets wait in a <template>, so
     opening one costs no request.
 
+    LANE UA, 6 October: data-kfa-up, printed only once the owner has published
+    an update (App → Site App → App update). Inside the installed app only,
+    site-app.js turns this same row into "Update App"; a browser tab is
+    unchanged, and until the first publish the page is byte for byte the same.
+
     Every class is kft- and nothing else on the shop uses that prefix. The
     <footer> element keeps its role; `footer.kft` out-specifies the old dark
     `footer{}` rule in kbb.css without touching it, so the classic design still
@@ -107,7 +112,7 @@
   </div></div>
 @if ($kft['app'])
 @php($kfa = $kft['app'])
-  <section class="kfa{{ $kfa['laptop'] ? ' kfa-lt' : '' }}" aria-labelledby="kfa-h" data-kfa="{{ $kfa['seq'] }}"><div class="kft-wrap"><div class="kfa-g">
+  <section class="kfa{{ $kfa['laptop'] ? ' kfa-lt' : '' }}" aria-labelledby="kfa-h" data-kfa="{{ $kfa['seq'] }}"@if ($kfa['update'] !== '') data-kfa-up="{{ $kfa['update'] }}"@endif><div class="kft-wrap"><div class="kfa-g">
     <span class="kfa-ic"><i role="img" aria-label="{{ __('store.footer.app_ic_apple') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#000" d="M16.4 12.7c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.9-3.5.9-.8 0-1.8-.8-3-.8-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2-1.1 2.8-2.3.9-1.3 1.2-2.5 1.3-2.6-.1 0-2.5-.9-2.5-3.8ZM14.2 5.9c.6-.8 1.1-1.8 1-2.9-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.7-1 2.8 1 .1 2-.5 2.7-1.3Z"/></svg></i><i role="img" aria-label="{{ __('store.footer.app_ic_android') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#3DDC84" fill-rule="evenodd" d="M2 19.5a10 10 0 0 1 20 0ZM7.8 14.4a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Zm8.4 0a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/><path stroke="#3DDC84" stroke-width="1.5" stroke-linecap="round" d="M6.6 11.8 4.4 8.4m13 3.4 2.2-3.4"/></svg></i><i role="img" aria-label="{{ __('store.footer.app_ic_ipad') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="kfa-scr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F7A8BF"/><stop offset=".55" stop-color="#C9B3F0"/><stop offset="1" stop-color="#8FD3F4"/></linearGradient></defs><rect x="4" y="1.8" width="16" height="20.4" rx="2.6" fill="#3A3A3C"/><rect x="5.5" y="3.3" width="13" height="17.4" rx="1.3" fill="url(#kfa-scr)"/></svg></i></span>
     <p class="kfa-tx"><b id="kfa-h">{{ $kfa['title'] }}</b><span class="kfa-ln"><span class="kfa-ty" aria-hidden="true" lang="{{ $kfa['first'][0] ? 'ar' : 'en' }}" dir="{{ $kfa['first'][0] ? 'rtl' : 'ltr' }}">{{ $kfa['first'][1] }}</span><span class="kfa-vh">{{ implode(' ', $kfa['own']) }}</span></span></p>
     <button type="button" class="kfa-bt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14"/></svg><span>{{ $kfa['button'] }}</span></button>

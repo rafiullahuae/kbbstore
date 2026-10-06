@@ -223,6 +223,10 @@ final class InterfaceStrings
             'footer.app_inapp_2' => 'Choose “Open in browser” (Safari or Chrome), then tap Install again.',
             'footer.app_qr_title' => 'Scan with your phone camera',
             'footer.app_qr_1' => 'The shop opens on your phone — tap Install there.',
+            // App → Site App → App update (Lane UA): the row inside the installed app.
+            'footer.app_update_button' => 'Update App',
+            'footer.app_update_line' => 'The newest version, one tap away.',
+            'footer.app_update_ios' => 'To see the new icon: remove the app and add it again.',
             'footer.help_heading' => 'Help',
             'footer.discover_heading' => 'Discover',
             'footer.visit_heading' => 'Visit us',

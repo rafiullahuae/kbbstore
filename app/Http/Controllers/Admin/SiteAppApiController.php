@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\SiteApp;
 use App\Services\SiteAppPush;
+use App\Services\SiteAppUpdate;
 use App\Support\Url;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,7 +19,39 @@ use Illuminate\Http\Request;
  */
 final class SiteAppApiController extends Controller
 {
-    public function __construct(private SiteApp $app, private SiteAppPush $push) {}
+    public function __construct(private SiteApp $app, private SiteAppPush $push, private SiteAppUpdate $update) {}
+
+    /**
+     * App update -> "Publish an update to installed apps" (Lane UA): the next
+     * update number, the message in both languages, and the row switched on.
+     * The worker's VERSION moves with it, so every installed app has a new
+     * worker to take. {en?, ar?, icon?}; refused, never coerced.
+     */
+    public function publishUpdate(Request $request): JsonResponse
+    {
+        $in = $request->json()->all();
+        $r = $this->update->publish(is_array($in) ? $in : [], (string) (auth('admin')->user()?->name ?? 'Admin'));
+        if (! $r['ok']) {
+            return response()->json(['ok' => false, 'error' => $r['error']] + $this->payload(), 422);
+        }
+
+        return response()->json(['ok' => true] + $this->payload());
+    }
+
+    /** App update -> "Show the Update App row in installed apps": {show: bool}. */
+    public function showUpdate(Request $request): JsonResponse
+    {
+        $show = $request->json()->all()['show'] ?? null;
+        if (! is_bool($show)) {
+            return response()->json(['ok' => false, 'error' => 'Show must be true or false.'] + $this->payload(), 422);
+        }
+        $r = $this->update->setShow($show);
+        if (! $r['ok']) {
+            return response()->json(['ok' => false, 'error' => $r['error']] + $this->payload(), 422);
+        }
+
+        return response()->json(['ok' => true] + $this->payload());
+    }
 
     public function show(): JsonResponse
     {
@@ -71,6 +104,13 @@ final class SiteAppApiController extends Controller
             'icons' => $icons,
             // The owner's own icon and favicon card (Lane IC).
             'icon' => AppIconController::sitePayload(),
+            // App update (Lane UA).
+            'update' => $this->update->state() + [
+                'look_changed' => $this->update->lookChanged(),
+                'defaults' => ['en' => SiteAppUpdate::DEFAULT_EN, 'ar' => SiteAppUpdate::DEFAULT_AR],
+                'msg_max' => SiteAppUpdate::MSG_MAX,
+                'worker_version' => SiteApp::version(),
+            ],
             'links' => [
                 'manifest' => Url::raw('/manifest.webmanifest'),
                 'worker' => Url::raw('/sw.js'),
