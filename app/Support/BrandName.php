@@ -66,12 +66,16 @@ final class BrandName
     public const OLD = '/(?:(?<=\\\\[nrt])|(?<![\p{L}\p{N}@#.\/_\\\\\-]))extra[ \x{00A0}\-]?beauty(?![\p{L}\p{N}@_\-]|\.[\p{L}\p{N}]|'.self::LEGAL.')/iu';
 
     /** Any spelling at all — what the admin check counts as "still there". */
-    public const ANY = '/extra[\s\-_]?beauty|[اإأ]كسترا\s*بيوتي|\\\\u06(?:27|25|23)\\\\u0643\\\\u0633\\\\u062a\\\\u0631\\\\u0627(?:\s|\\\\u0020)?\\\\u0628\\\\u064a\\\\u0648\\\\u062a\\\\u064a/iu';
+    public const ANY = '/extra[\s\-_]?beauty|[اإأ]ي?كسترا\s*بيوت[يى]|\\\\u06(?:27|25|23)(?:\\\\u064a)?\\\\u0643\\\\u0633\\\\u062a\\\\u0631\\\\u0627(?:\s|\\\\u0020)?\\\\u0628\\\\u064a\\\\u0648\\\\u062a\\\\u06(?:4a|49)/iu';
 
-    /** The Arabic spelling, raw and as json_encode() writes it into a JSON column. */
-    private const OLD_AR = '/[اإأ]كسترا\s*بيوتي/u';
+    /**
+     * The Arabic spelling, raw and as json_encode() writes it into a JSON
+     * column. Lane EB added the two common variants a translator types: a
+     * final alef maqsura (بيوتى) and a yaa after the alef (ايكسترا).
+     */
+    private const OLD_AR = '/[اإأ]ي?كسترا\s*بيوت[يى]/u';
 
-    private const OLD_AR_ESCAPED = '/\\\\u06(?:27|25|23)\\\\u0643\\\\u0633\\\\u062a\\\\u0631\\\\u0627(?:\s|\\\\u0020)?\\\\u0628\\\\u064a\\\\u0648\\\\u062a\\\\u064a/i';
+    private const OLD_AR_ESCAPED = '/\\\\u06(?:27|25|23)(?:\\\\u064a)?\\\\u0643\\\\u0633\\\\u062a\\\\u0631\\\\u0627(?:\s|\\\\u0020)?\\\\u0628\\\\u064a\\\\u0648\\\\u062a\\\\u06(?:4a|49)/i';
 
     /**
      * $value with every old-name occurrence replaced, and how many there were.
