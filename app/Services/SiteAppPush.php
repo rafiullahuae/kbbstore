@@ -244,8 +244,15 @@ final class SiteAppPush
         $now = now();
 
         DB::transaction(function () use ($sub, $hash, $cookie, $customerId, $locale, $where, $platform, $now) {
-            DB::table(self::TABLE)->where('cookie_hash', $cookie)->where('endpoint_hash', '!=', $hash)->delete();
-            $old = DB::table(self::TABLE)->where('endpoint_hash', $hash)->first(['id', 'customer_id', 'location_source']);
+            // Lane PD: the owner's nickname and "this is my phone" mark belong
+            // to the phone, not to one endpoint; a phone that re-subscribes
+            // (a new key, a rotated endpoint) keeps them.
+            $left = DB::table(self::TABLE)->where('cookie_hash', $cookie)->where('endpoint_hash', '!=', $hash)
+                ->orderByDesc('id')->first(['id', 'nickname', 'admin_user_id']);
+            if ($left !== null) {
+                DB::table(self::TABLE)->where('cookie_hash', $cookie)->where('endpoint_hash', '!=', $hash)->delete();
+            }
+            $old = DB::table(self::TABLE)->where('endpoint_hash', $hash)->first(['id', 'customer_id', 'location_source', 'nickname', 'admin_user_id']);
 
             $row = ['endpoint' => $sub['endpoint'], 'p256dh' => $sub['p256dh'], 'auth' => $sub['auth'], 'cookie_hash' => $cookie,
                 'locale' => $locale, 'platform' => $platform, 'status' => 'active', 'fail_count' => 0,
@@ -255,6 +262,14 @@ final class SiteAppPush
             }
             if ($where !== null && ($old === null || $where['location_source'] === 'order' || $old->location_source !== 'order')) {
                 $row += $where + ['location_at' => $now];
+            }
+
+            if ($left !== null) {
+                foreach (['nickname', 'admin_user_id'] as $k) {
+                    if ($left->{$k} !== null && ($old === null || $old->{$k} === null)) {
+                        $row[$k] = $left->{$k};
+                    }
+                }
             }
 
             if ($old === null) {

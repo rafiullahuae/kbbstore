@@ -233,7 +233,7 @@ final class PushAdminController extends Controller
         }
         $devices = $this->ownDevices($request);
         if ($devices === []) {
-            return response()->json(['ok' => false, 'error' => 'No phone of yours is subscribed. Open the installed shop app on your phone, sign in with '.($request->user('admin')?->email ?? 'your admin email').' and allow notifications; it then appears here as your test phone.'], 422);
+            return response()->json(['ok' => false, 'error' => 'No phone is marked as yours yet. Open the Devices tab, find your phone (a test names each one) and press “This is my phone”; or sign in to the installed shop app with '.($request->user('admin')?->email ?? 'your admin email').'.'], 422);
         }
         $n = $this->sender->test($devices, $data['title'], $data['body'], $data['url']);
 
@@ -394,7 +394,10 @@ final class PushAdminController extends Controller
     /**
      * The admin's own subscribed phones: the one this browser's kbb_push
      * cookie names (if the admin uses the installed app in this browser), and
-     * every phone signed in to the shop as a customer with the admin's email.
+     * every phone signed in to the shop as a customer with the admin's email,
+     * and every phone the admin marked "this is my phone" under Devices (Lane
+     * PD) — the installed app on an iPhone keeps its own cookies, so without
+     * the mark a phone nobody signed in on was never "mine".
      *
      * @return list<int>
      */
@@ -403,10 +406,14 @@ final class PushAdminController extends Controller
         $admin = $request->user('admin');
         $token = SiteAppPush::token($request->cookie(SiteAppPush::COOKIE));
         $email = is_object($admin) ? strtolower(trim((string) ($admin->email ?? ''))) : '';
+        $adminId = is_object($admin) ? (int) $admin->getKey() : 0;
 
         return DB::table('site_app_push_subscriptions as s')->where('s.status', 'active')
-            ->where(function ($q) use ($token, $email) {
+            ->where(function ($q) use ($token, $email, $adminId) {
                 $q->whereRaw('1 = 0');
+                if ($adminId > 0) {
+                    $q->orWhere('s.admin_user_id', $adminId);
+                }
                 if ($token !== null) {
                     $q->orWhere('s.cookie_hash', hash('sha256', $token));
                 }

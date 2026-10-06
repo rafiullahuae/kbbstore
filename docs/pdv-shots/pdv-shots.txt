@@ -1,0 +1,12 @@
+pd-devices-1280.png  requests=[GET /admin-api/push | GET /admin-api/push/devices?q=&page=1] rows=25 row=962x85 checkbox=18x18 name=14px meta=12.5px actionBtn=112x31 pager="61 devices · page 1 of 3" scrollWidth=1280 (viewport 1280)
+   first row: "iPhone / iPad\n#6\nAl Nahda, Sharjah\nEnglish\nGuest\nLocated by: Delivery address (accurate)\nInstalled 8 Sept, 01:44\nLast seen 2 min ago\nAdd a nickname\nThis is my phone"
+pd-selected-1280.png  bar="This page 3 selected Clear Send test to 3" sendBtn=115x38 scrollWidth=1280
+pd-results-1280.png  requests=[POST /admin-api/push/devices/test] results=6:Delivered, 3:Gone: unsubscribed, 1:Delivered scrollWidth=1280
+pd-mine-1280.png  device #6 requests=[PUT /admin-api/push/devices/6 | PUT /admin-api/push/devices/6 | GET /admin-api/push | GET /admin-api/push/devices?q=&page=1] first row now: "Rafi's iPhone\n#6\nYour phone\nDelivered\niPhone / iPad · Al Nahda, Sharjah\nEnglish\nGuest\nLocated by: Delivery address (accurate)\nInstalled 8 Sept, 01:44\nLast seen 2 min ago\nRename\nNot my phone" scrollWidth=1280
+pd-from-editor-1280.png  banner="Testing the campaign “Weekend glow sale: 20% off”: tick the devices and press Send test. Back to the campaign" scrollWidth=1280
+pd-devices-390.png  requests=[GET /admin-api/push | GET /admin-api/push/devices?q=&page=1] rows=25 row=328x167 checkbox=18x18 name=14px meta=12.5px actionBtn=69x31 pager="60 devices · page 1 of 3" scrollWidth=390 (viewport 390)
+   first row: "Rafi's iPhone\n#6\nYour phone\niPhone / iPad · Al Nahda, Sharjah\nEnglish\nGuest\nLocated by: Delivery address (accurate)\nInstalled 8 Sept, 01:44\nLast seen 2 min ago\nRename\nNot my phone"
+pd-selected-390.png  bar="This page 3 selected Clear Send test to 3" sendBtn=115x38 scrollWidth=390
+pd-results-390.png  requests=[POST /admin-api/push/devices/test] results=6:Delivered, 1:Delivered, 2:Delivered scrollWidth=390
+pd-mine-390.png  device #1 requests=[PUT /admin-api/push/devices/1 | PUT /admin-api/push/devices/1 | GET /admin-api/push | GET /admin-api/push/devices?q=&page=1] first row now: "Rafi's iPhone\n#6\nYour phone\nDelivered\niPhone / iPad · Al Nahda, Sharjah\nEnglish\nGuest\nLocated by: Delivery address (accurate)\nInstalled 8 Sept, 01:44\nLast seen 2 min ago\nRename\nNot my phone" scrollWidth=390
+pd-from-editor-390.png  banner="Testing the campaign “Weekend glow sale: 20% off”: tick the devices and press Send test. Back to the campaign" scrollWidth=390
