@@ -450,17 +450,23 @@ class InstagramSync
                 $before = (string) ($post->local_path ?? '');
                 $have = $before !== '' && ($file = IgPath::absolute($before)) !== null && is_file($file);
 
-                // (Lane SG) A picture already on our disk is kept, not fetched
-                // again; a missing one is fetched while the run has time, and
-                // otherwise left for the next run (counted in `pending`).
+                // (Lane SG) Which pictures are fetched again. The newest FETCH
+                // posts (what the Instagram section draws) and the posts ticked
+                // for the Spotted page are refreshed as before — a reel's cover
+                // CAN be changed after posting. Every older, unticked post keeps
+                // the picture already on our disk: re-fetching hundreds of
+                // identical files on every press is the shared rate limit
+                // routes/instagram-admin.php warns about. A missing picture is
+                // fetched while the run has time, else counted in `pending`.
+                $fresh = $stored < self::FETCH || $post->spotted_sort !== null;
                 $path = null;
                 $tried = false;
 
-                if (! $have) {
+                if (! $have || $fresh) {
                     if (microtime(true) < $deadline) {
                         $tried = true;
                         $path = $this->storeImage($remoteId, $source, $before === '' ? null : $before);
-                    } else {
+                    } elseif (! $have) {
                         $pending++;
                     }
                 }
@@ -538,6 +544,7 @@ class InstagramSync
                 ->whereNotNull('spotted_sort')
                 ->orderByRaw('insights_at IS NOT NULL')
                 ->orderBy('insights_at')
+                ->orderBy('id')
                 ->limit(self::MAX_INSIGHTS)
                 ->get(['id', 'remote_id', 'media_type', 'local_path', 'share_count', 'view_count', 'insights_at']);
         } catch (\Throwable) {

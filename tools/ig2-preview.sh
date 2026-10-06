@@ -58,9 +58,9 @@ rm -f "$DIR/compiled/routes.php"
 cp "$SELF/tools/m1-router.php" "$ROOT/router.php"
 ( cd "$DIR" && php -S 127.0.0.1:"$PORT" -t "$ROOT" "$ROOT/router.php" >"$DIR/server.log" 2>&1 & echo $! > "$DIR/server.pid" )
 sleep 2
-nonce=$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')
-printf '%s' "$nonce" > "$ROOT/kbb-preview-id.txt"
-if [ "$(curl -s "http://127.0.0.1:$PORT/kbb-preview-id.txt" || true)" != "$nonce" ]; then
+kbbnonce=$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')
+printf '%s' "$kbbnonce" > "$ROOT/kbb-preview-id.txt"
+if [ "$(curl -s "http://127.0.0.1:$PORT/kbb-preview-id.txt" || true)" != "$kbbnonce" ]; then
   echo "REFUSING: 127.0.0.1:$PORT is not this preview's server." >&2
   kill "$(cat "$DIR/server.pid")" 2>/dev/null || true
   exit 4

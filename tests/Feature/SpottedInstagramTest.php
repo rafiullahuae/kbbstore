@@ -179,26 +179,38 @@ it('follows the media pages to the end, by cursor, and never requests the next U
         ->and(Http::recorded(fn (HttpRequest $r) => str_ends_with($r->url(), '/c.jpg')))->toHaveCount(1);
 });
 
-it('does not download a picture it already holds', function () {
+it('does not download again a picture it already holds for an old, unticked post', function () {
     /*
      * DEFECT: a thousand identical downloads per press — the rate limit the shop
-     * shares with every later refresh, spent for nothing.
+     * shares with every later refresh, spent for nothing. The newest 25 (what
+     * the Instagram section draws) and the ticked posts ARE refreshed, because a
+     * reel's cover can be changed after posting.
      *
-     * MUTATION NOTE. Make `$have` always false in InstagramSync::run() → RED:
-     * the second run downloads the picture again.
+     * MUTATION NOTE. Make `$fresh` always true in InstagramSync::run() → RED:
+     * the second run downloads all 27 pictures again, not 26.
      */
     sgiConnected();
-    $stubs = ['graph.instagram.com/*/me/media*' => Http::response(['data' => [sgiMedia('2001')]])];
+    $rows = [];
+    for ($i = 0; $i < 27; $i++) {
+        $rows[] = sgiMedia((string) (2100 + $i));
+    }
+    $stubs = ['graph.instagram.com/*/me/media*' => Http::response(['data' => $rows])];
     sgiFake($stubs);
     app(InstagramSync::class)->run();
-    $path = InstagramPost::query()->where('remote_id', '2001')->value('local_path');
-    expect(IgPath::absolute($path))->toBeFile();
+    expect(InstagramPost::query()->whereNotNull('local_path')->count())->toBe(27);
+
+    // The oldest is ticked for the Spotted page: refreshed too.
+    InstagramPost::query()->where('remote_id', '2126')->update(['spotted_sort' => 1]);
 
     sgiFake($stubs);
     $second = app(InstagramSync::class)->run();
 
-    expect(Http::recorded(fn (HttpRequest $r) => str_contains($r->url(), 'cdninstagram')))->toHaveCount(0)
-        ->and($second['pictures'])->toBe(1)
+    $fetched = Http::recorded(fn (HttpRequest $r) => str_contains($r->url(), 'cdninstagram'))
+        ->map(fn ($pair) => $pair[0]->url())->values()->all();
+    expect($fetched)->toHaveCount(26)
+        ->and($fetched)->not->toContain('https://scontent.cdninstagram.com/2125.jpg')
+        ->and($fetched)->toContain('https://scontent.cdninstagram.com/2126.jpg')
+        ->and($second['pictures'])->toBe(27)
         ->and($second['pending'])->toBe(0);
 });
 
