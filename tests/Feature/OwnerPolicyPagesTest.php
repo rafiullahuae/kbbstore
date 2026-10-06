@@ -139,7 +139,7 @@ it('splits the FAQ questions that were run into the answer before them, and ever
 
     expect($questions)->toBe(array_map(fn ($q) => html_entity_decode($q, ENT_QUOTES | ENT_HTML5, 'UTF-8'), $h3[1]))
         ->and(count($questions))->toBeGreaterThanOrEqual(8)
-        ->and($questions)->toContain('Which payment methods do you accept?', 'Can I change or cancel my order once placed?', 'What are your delivery charges?', 'Which K-Beauty brands do you carry?')
+        ->and(array_values(array_intersect(['Which payment methods do you accept?', 'Can I change or cancel my order once placed?', 'What are your delivery charges?', 'Which K-Beauty brands do you carry?'], $questions)))->toHaveCount(4)
         ->and(\App\Services\Seo\FaqSchema::node($body, null)['@type'] ?? null)->toBe('FAQPage');
 });
 

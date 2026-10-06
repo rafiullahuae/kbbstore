@@ -649,7 +649,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 1405 -> 1411 (Lane IN): the row's six inline install hints
     // (store.footer.app_hint_*), seeded by
     // 2027_09_04_100000_seed_app_install_hint_arabic_drafts.
-    expect($ui['drafts'])->toBe(1411, 'the shipped Arabic is not showing as drafts to review')
+    // 1411 -> 1412 (Lane TP): the footer's "Order Tracking" link
+    // (store.footer.link_order_tracking), seeded by
+    // 2027_09_05_200100_seed_footer_order_tracking_arabic_draft.
+    expect($ui['drafts'])->toBe(1412, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

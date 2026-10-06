@@ -5143,7 +5143,7 @@
             "name": "site_col1_links",
             "type": "textarea",
             "label": "First column · links",
-            "help": "One link per line, written  Label | /address  — an address on this shop starting with /, or a full https:// address. Empty: New in, Best sellers, Brands, Super sale, #KBeautyBliss, Journal. A line that is not a safe address, or that mentions returns or refunds, is dropped.",
+            "help": "One link per line, written  Label | /address  — an address on this shop starting with /, or a full https:// address. Empty: New in, Best sellers, Brands, Super sale, #KBeautyBliss, Journal. A line that is not a safe address is dropped.",
             "options": null,
             "default": "",
             "value": ""
@@ -5163,7 +5163,7 @@
             "name": "site_col2_links",
             "type": "textarea",
             "label": "Second column · links",
-            "help": "Same format. Empty: the footer menu when one has been built, otherwise Track my order, Shipping & Delivery, FAQs, Contact us — then About us.",
+            "help": "Same format. Empty: the footer menu when one has been built, otherwise Shipping & Delivery, Returns Information, Order Tracking, FAQs, Privacy policy, Contact us — then About us.",
             "options": null,
             "default": "",
             "value": ""
@@ -7560,6 +7560,15 @@
             "options": null
           },
           {
+            "key": "policy_links",
+            "type": "bool",
+            "label": "Shipping & Delivery and Returns Information links under the totals",
+            "help": "Two small links to /delivery/ and /refund_returns/ under the summary, on both cart layouts.",
+            "default": true,
+            "value": true,
+            "options": null
+          },
+          {
             "key": "trust_on",
             "type": "bool",
             "label": "Secure badge and payment marks",
@@ -9642,7 +9651,7 @@
       {
         "key": "trust",
         "label": "Trust & reviews",
-        "description": "The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — \"100% authentic\" beside the pay button and \"100% authentic K-beauty\" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims.",
+        "description": "The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — \"100% authentic\" beside the pay button and \"100% authentic K-beauty\" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims. The two policy links under Place order are switched here too.",
         "fields": [
           {
             "key": "rating_on",
@@ -9675,6 +9684,15 @@
               "step": 1,
               "unit": " reviews"
             }
+          },
+          {
+            "key": "policy_links",
+            "type": "bool",
+            "label": "Shipping & Delivery and Returns Information links under Place order",
+            "help": "Two small links to /delivery/ and /refund_returns/, under the pay button on both the phone and the desktop page.",
+            "default": true,
+            "value": true,
+            "options": null
           }
         ]
       },
