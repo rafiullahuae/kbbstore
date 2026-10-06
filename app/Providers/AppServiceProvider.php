@@ -133,6 +133,19 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Lane SP: a settings map written or forgotten mid-request -- by
+        // SettingsService itself or by a service that writes the table and
+        // forgets the key on its own -- is read fresh by the rest of that
+        // request. See SettingsService::REQUEST_MEMO_KEYS.
+        \Illuminate\Support\Facades\Event::listen(
+            [\Illuminate\Cache\Events\ForgettingKey::class, \Illuminate\Cache\Events\WritingKey::class],
+            static function ($event): void {
+                if (SettingsService::requestMemoActive()) {
+                    SettingsService::forgetRequestMemo((string) $event->key);
+                }
+            }
+        );
+
         /*
          * ── THE LINE THAT MAKES /ar EXIST, FROM A FILE A PACKAGE CAN SHIP ───
          *

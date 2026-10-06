@@ -59,6 +59,10 @@ return Application::configure(basePath: dirname(__DIR__))
          * shopper can see.
          */
         $middleware->prepend(\App\Http\Middleware\SetLocaleFromPath::class);
+        // Lane SP: the settings maps are read from the cache once per request,
+        // not once per setting (App\Services\SettingsService). Prepended LAST
+        // so it is the outermost middleware and covers every one after it.
+        $middleware->prepend(\App\Http\Middleware\SettingsRequestMemo::class);
 
         /*
          * THE REDIRECT TABLE, AND THE SECOND HALF OF THE SAME STORY.
