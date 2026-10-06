@@ -75,8 +75,14 @@
      * been open long enough for the state to have moved, and every fetch after
      * the first (choose, save, delete), which still round-trip because they
      * are writes and the server's answer is the truth.
+     *
+     * NULL WHILE THE PICKER IS OFF (Lane CK): nothing on the page can open the
+     * sheet, so a saved home address has no reason to be in its HTML, and the
+     * signed-in shopper's address-book query is not run. The cart still
+     * includes this partial while it is off, for the recommendation rail's
+     * arrows, which this script also drives.
      */
-    $kbbSheetSeed = \App\Support\CartAddressState::all(request());
+    $kbbSheetSeed = $kbbSheet->addressPickerOn() ? \App\Support\CartAddressState::all(request()) : null;
 @endphp
 <div class="cpg-portal{{ $kbbSheetClass }}"{!! $kbbSheetStyle !!}>
     <div class="cpg-scrim" id="cpgScrim"></div>

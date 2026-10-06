@@ -7172,7 +7172,7 @@
             "key": "addr_on",
             "type": "bool",
             "label": "Delivery address row",
-            "help": "",
+            "help": "Drawn only while Appearance → Checkout page → Fields & attention → \"Address picker row on cart and checkout\" is on. That switch ships off, so this one decides nothing until it is turned on.",
             "default": true,
             "value": true,
             "options": null
@@ -9222,6 +9222,33 @@
             "type": "bool",
             "label": "Show the delivery-notes box",
             "help": "Off, as asked: the \"Delivery instructions, a landmark, a preferred time\" box under Delivery is not drawn. Turn it on to bring it back. Notes already saved on past orders are unaffected either way.",
+            "default": false,
+            "value": false,
+            "options": null
+          },
+          {
+            "key": "addr_picker",
+            "type": "bool",
+            "label": "Address picker row on cart and checkout",
+            "help": "Off, as asked: the cart page has no \"choose your delivery address\" row, and the checkout's Shipping address section shows the address fields to type into, filled in for a signed-in customer from their saved address. On brings back the row on both pages and the address popup it opens.",
+            "default": false,
+            "value": false,
+            "options": null
+          },
+          {
+            "key": "sum_row",
+            "type": "bool",
+            "label": "Order summary: collapsed to one row",
+            "help": "On, as asked: the summary is one thin row -- bag icon, \"Order summary\", the order total and a pink arrow -- and the lines, subtotal and delivery open under it when tapped. Place order stays visible on a laptop. Off brings back the full summary as it was.",
+            "default": true,
+            "value": true,
+            "options": null
+          },
+          {
+            "key": "browsed_on",
+            "type": "bool",
+            "label": "Recently browsed in the summary",
+            "help": "Off, as asked: no \"Browsed\" tab beside the order summary, and the page does not look up recently viewed products for it. On brings the tab back.",
             "default": false,
             "value": false,
             "options": null

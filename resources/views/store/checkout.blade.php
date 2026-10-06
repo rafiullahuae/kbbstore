@@ -192,7 +192,15 @@
                     <!-- 2 · Shipping address -->
                     <div class="sec">
                         <h2><span class="n">2</span> {{ __('store.checkout.step_shipping') }}</h2>
+{{-- The picker row, or the four typed fields it replaced. Appearance ->
+     Checkout page -> Fields & attention -> "Address picker row on cart and
+     checkout", OFF as the owner asked (Lane CK). Directives at column 0, so
+     the ON branch renders the bytes it rendered before the switch existed;
+     the comment ends on the @if's own line so it leaves no newline. --}}@if ($kbbCoPage->addressPickerRow())
 @include('partials.checkout-address')
+@else
+@include('partials.checkout.address-fields')
+@endif
                     </div>
 
                     <!-- 3 · Delivery -->
@@ -272,7 +280,10 @@
             </div>
 
             <!-- RIGHT summary -->
-            <aside class="summary" id="kbbSummary">
+            <aside class="summary{{ $kbbCoPage->get('sum_row') ? ' cosr-on' : '' }}" id="kbbSummary">
+{{-- The one-row summary (Lane CK): Appearance -> Checkout page -> Fields &
+     attention -> "Order summary: collapsed to one row", ON as asked. Column 0
+     and one line, so OFF adds not a byte. --}}@if ($kbbCoPage->get('sum_row'))@include('partials.checkout.summary-row')@endif
                 @if ($showBrowsed)
                 <div class="sumtabs" role="tablist">
                     <button type="button" class="stab on" data-stab="summary">{{ __('store.checkout.tab_summary') }}</button>
@@ -665,5 +676,7 @@ window.KBB.routes.checkoutCoupon = @json(Url::to('/checkout/coupon'));
 {{-- The delivery-address sheet, the same one the cart page opens. It sits at
      the very foot of the page and outside every box that scrolls or clips, for
      the reasons its own header sets out. --}}
+@if ($kbbCoPage->addressPickerRow())
 @include('partials.address-sheet')
+@endif
 @endsection

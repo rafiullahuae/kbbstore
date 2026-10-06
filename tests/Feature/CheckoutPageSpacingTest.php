@@ -272,7 +272,11 @@ it('offers spacing and nothing structural', function () {
             // surface, which the owner asked for: "same on checkout rows".
             'd_sticky', 'rating_on', 'd_row_bold', 'd_row_brand', 'm_row_bold', 'm_row_brand',
             'd_head_sticky', 'm_head_sticky', 'm_t_input_floor',
-            'optin_on', 'optin_checked', 'notes_on', 'ph_italic',
+            // addr_picker (Lane CK) swaps what is INSIDE section 2 -- the
+            // picker row or the four typed fields -- and the section stays.
+            // sum_row and browsed_on (Lane CK) fold the summary to one row and
+            // drop its Browsed tab; the summary column itself stays.
+            'optin_on', 'optin_checked', 'notes_on', 'ph_italic', 'addr_picker', 'sum_row', 'browsed_on',
             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'trust_tick',
         ]);
 });
@@ -564,7 +568,9 @@ it('hands the sheet its list with the page, so the first open needs no request',
      */
     $sheet = (string) file_get_contents(resource_path('views/partials/address-sheet.blade.php'));
 
-    expect($sheet)->toContain('$kbbSheetSeed = \App\Support\CartAddressState::all(request());')
+    // Behind the picker switch since Lane CK: off, nothing can open the
+    // sheet, so the seed is null and no address reaches the page.
+    expect($sheet)->toContain('$kbbSheetSeed = $kbbSheet->addressPickerOn() ? \App\Support\CartAddressState::all(request()) : null;')
         ->and($sheet)->toContain('var SEED = @json($kbbSheetSeed);')
         ->and($sheet)->toContain('var state = SEED || null;')
         // The placeholder is kept for the case the seed cannot cover, so a

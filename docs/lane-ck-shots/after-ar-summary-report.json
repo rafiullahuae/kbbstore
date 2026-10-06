@@ -1,0 +1,31 @@
+{
+  "after-ar-390-chev-transform-1": "matrix(1, 0, 0, 1, 0, 2.95919)",
+  "after-ar-390-chev-transform-2": "matrix(1, 0, 0, 1, 0, 0.531528)",
+  "after-ar-390-chev-transform-3": "matrix(1, 0, 0, 1, 0, 1.49959)",
+  "after-ar-390-folded": {
+    "rowHeight": 50,
+    "summaryHeight": 52,
+    "rowTotal": "AED 1,823",
+    "blockTotal": "AED 1,823",
+    "ariaExpanded": "false",
+    "itemsVisible": false,
+    "placeVisible": false,
+    "browsedTab": false,
+    "chevColor": "rgb(198, 57, 95)",
+    "textSize": "13.5px",
+    "dir": "rtl",
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "after-ar-390-open": {
+    "ariaExpanded": "true",
+    "summaryHeight": 643,
+    "itemsVisible": true,
+    "scrollWidth": 390
+  },
+  "after-ar-390-cod": {
+    "rowTotal": "AED 1,823",
+    "blockTotal": "AED 1,823"
+  },
+  "after-ar-390-errors": []
+}

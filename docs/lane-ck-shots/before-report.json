@@ -1,0 +1,164 @@
+{
+  "add-25": "200 count=6 ",
+  "add-26": "200 count=7 ",
+  "add-27": "200 count=8 ",
+  "add-28": "200 count=9 ",
+  "add-29": "200 count=10 ",
+  "before-guest-390-cart": {
+    "docked": 102,
+    "addrRow": 40,
+    "checkoutRow": 62,
+    "wrapPaddingBottom": "126px",
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "before-guest-390-checkout": {
+    "sectionHeight": 136,
+    "address": {
+      "type": "hidden",
+      "value": "",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "emirate": {
+      "type": "hidden",
+      "value": "",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "city": {
+      "type": "hidden",
+      "value": "",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "country": {
+      "type": "hidden",
+      "value": "AE",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "pickerRow": true,
+    "sheet": true,
+    "delivery": "UAE delivery:\nAED 25",
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "before-guest-390-errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "login": 200,
+  "before-member-390-checkout": {
+    "sectionHeight": 136,
+    "address": {
+      "type": "hidden",
+      "value": "Building 1-10, G-04",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "emirate": {
+      "type": "hidden",
+      "value": "Dubai",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "city": {
+      "type": "hidden",
+      "value": "Dubai",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "country": {
+      "type": "hidden",
+      "value": "AE",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "pickerRow": true,
+    "sheet": true,
+    "delivery": "UAE delivery:\nAED 25",
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "before-member-390-errors": [
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ],
+  "before-guest-1280-cart": {
+    "docked": 132,
+    "addrRow": 40,
+    "checkoutRow": 62,
+    "wrapPaddingBottom": "24px",
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "before-guest-1280-checkout": {
+    "sectionHeight": 132,
+    "address": {
+      "type": "hidden",
+      "value": "",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "emirate": {
+      "type": "hidden",
+      "value": "",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "city": {
+      "type": "hidden",
+      "value": "",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "country": {
+      "type": "hidden",
+      "value": "AE",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "pickerRow": true,
+    "sheet": true,
+    "delivery": "UAE delivery:\nAED 25",
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "before-guest-1280-errors": [],
+  "before-member-1280-checkout": {
+    "sectionHeight": 136,
+    "address": {
+      "type": "hidden",
+      "value": "Building 1-10, G-04",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "emirate": {
+      "type": "hidden",
+      "value": "Dubai",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "city": {
+      "type": "hidden",
+      "value": "Dubai",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "country": {
+      "type": "hidden",
+      "value": "AE",
+      "h": 0,
+      "font": "13.3333px"
+    },
+    "pickerRow": true,
+    "sheet": true,
+    "delivery": "UAE delivery:\nAED 25",
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "before-member-1280-errors": [
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+}

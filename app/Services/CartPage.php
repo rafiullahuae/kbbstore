@@ -423,7 +423,7 @@ class CartPage
         'pay_tamara'  => ['bool', 'tamara', true, ''],
 
         // ── Docked bars ──
-        'addr_on'         => ['bool', 'Delivery address row', true, ''],
+        'addr_on'         => ['bool', 'Delivery address row', true, 'Drawn only while Appearance → Checkout page → Fields & attention → "Address picker row on cart and checkout" is on. That switch ships off, so this one decides nothing until it is turned on.'],
         'addr_h'          => ['range', 'Address row height', 40, '', ['min' => 32, 'max' => 56, 'step' => 2, 'unit' => 'px']],
         'co_h'            => ['range', 'Checkout row height', 62, '', ['min' => 50, 'max' => 86, 'step' => 2, 'unit' => 'px']],
         'bar_font'        => ['range', 'Text in both rows', 100,
@@ -1146,7 +1146,9 @@ class CartPage
             // keyframes are switched off by the class instead; this keeps the
             // opacity term honest without a second branch in the stylesheet.
             '--cpg-drift:' . ($c['rec_motion'] > 0 ? $c['rec_motion'] : 1),
-            '--cpg-addr-h:' . $c['addr_h'] . 'px',
+            // 0 when the row is not drawn, so .wrap's bottom padding
+            // (--cpg-bars) reserves only the checkout row it can see.
+            '--cpg-addr-h:' . ($this->addressRowOn() ? $c['addr_h'] : 0) . 'px',
             '--cpg-co-h:' . $c['co_h'] . 'px',
             '--cpg-bar-f:' . $this->ratio($c['bar_font']),
             '--cpg-bar-pad:' . $c['bar_pad'] . 'px',
@@ -1532,13 +1534,30 @@ class CartPage
      * classic cart layout would have had a checkout picker whose every call
      * answered 404.
      *
-     * The checkout's section is not switchable yet, so this is true whenever
-     * the shop has a checkout — which is always. When Appearance → Checkout
-     * page gains its own switch, it belongs in the `||` here and nowhere else.
+     * IT IS SWITCHABLE NOW (Lane CK). Appearance → Checkout page → Fields &
+     * attention → "Address picker row on cart and checkout" decides it for
+     * both pages, and ships OFF because the owner asked for the row gone from
+     * both. Off, nothing on the shop opens the sheet, so every endpoint
+     * answers 404 rather than writing session addresses for a row nobody can
+     * see. It never was the security boundary — that is the per-route
+     * auth:customer and $customer->addresses() — it is "the feature is off".
      */
     public function addressPickerOn(): bool
     {
-        return true;
+        return app(CheckoutPage::class)->addressPickerRow();
+    }
+
+    /**
+     * Whether the squeezed cart's docked bar draws its delivery-address row.
+     *
+     * Two switches, both required: this screen's own "Delivery address row"
+     * and the shop-wide picker switch above it. Read by the docked bar AND by
+     * cssVariables(), which reserves the row's height at the foot of the page —
+     * a row that is not drawn must not leave 40px of white under the basket.
+     */
+    public function addressRowOn(): bool
+    {
+        return (bool) $this->get('addr_on') && $this->addressPickerOn();
     }
 
     /** The handful of strings the address sheet's script needs. */

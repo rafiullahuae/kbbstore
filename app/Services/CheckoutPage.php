@@ -729,6 +729,55 @@ class CheckoutPage
         'ph_italic'      => ['bool', 'Placeholder in italics', false,
                              'Slanted, which separates the hint from what the shopper types more strongly than colour alone. Off is how it reads today.'],
 
+        /*
+         * ── THE ADDRESS PICKER ROW, OFF BY DEFAULT (Lane CK, 6 October) ────
+         *
+         * "turn off the address row completely, from cart and checkout pages,
+         * and bring the manual fields under address section on checkout page."
+         *
+         * A DEFAULT THAT CHANGES TODAY'S PAGE, because he asked for it in as
+         * many words -- CLAUDE.md rule 1 as it reads since 30 September. Off:
+         * the cart's docked "Please choose your delivery address  + Address"
+         * row is not drawn, and the checkout's Shipping address section is the
+         * four typed fields it was before the picker (address, emirate, city,
+         * country), filled from the signed-in customer's saved address. On:
+         * both pages exactly as they were, row, sheet and picker.
+         *
+         * ONE SWITCH FOR BOTH PAGES, on this screen, because the two rows are
+         * one feature over one address state: a cart row that picks an
+         * address the checkout then ignores is worse than either alone. The
+         * cart's own "Delivery address row" (Appearance -> Cart page) still
+         * applies on top of it when this is on.
+         *
+         * Nothing the server checks moves either way: place() validates the
+         * same four fields, and the order's address array has the same shape.
+         */
+        'addr_picker'    => ['bool', 'Address picker row on cart and checkout', false,
+                             'Off, as asked: the cart page has no "choose your delivery address" row, and the checkout\'s Shipping address section shows the address fields to type into, filled in for a signed-in customer from their saved address. On brings back the row on both pages and the address popup it opens.'],
+
+        /*
+         * ── THE ORDER SUMMARY AS ONE THIN ROW, AND BROWSED OFF (Lane CK) ───
+         *
+         * "on checkout page i want to replace the whole summary section to
+         * this single thin row, with cart icon, Order Summary text, then order
+         * total, and then down pink (our color) arrow with slight continue
+         * animation, also turn off the browsed tab on the checkout summary
+         * section. do not remove any existing functinoality, just turn off."
+         *
+         * Two more defaults that change today's page because he asked for
+         * them. `sum_row` ON draws partials/checkout/summary-row at the top of
+         * the summary and folds everything under it until it is tapped -- on
+         * a laptop the Place order button stays out, because the summary
+         * column is where that button lives. OFF is the summary exactly as it
+         * was. `browsed_on` OFF prints no Browsed tab and runs no query for
+         * it; ON brings the tab back, still subject to the older
+         * Store -> Ecommerce `show_browsed` switch.
+         */
+        'sum_row'        => ['bool', 'Order summary: collapsed to one row', true,
+                             'On, as asked: the summary is one thin row -- bag icon, "Order summary", the order total and a pink arrow -- and the lines, subtotal and delivery open under it when tapped. Place order stays visible on a laptop. Off brings back the full summary as it was.'],
+        'browsed_on'     => ['bool', 'Recently browsed in the summary', false,
+                             'Off, as asked: no "Browsed" tab beside the order summary, and the page does not look up recently viewed products for it. On brings the tab back.'],
+
         'addr_cue'       => ['bool', 'Point the shopper at the address button', true,
                              'The icon pair, the moving arrow and the halo on the button, on the "choose your delivery address" row. Off leaves that row exactly as it was.'],
         'addr_cue_icons' => ['bool', 'Show the home and office icons', true,
@@ -809,7 +858,7 @@ class CheckoutPage
         'trust'        => ['Trust & reviews', 'The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims.',
                            ['rating_on', 'rating_text', 'rating_min']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
-                           ['optin_on', 'optin_checked', 'notes_on',
+                           ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'sum_row', 'browsed_on',
                             'ph_weight', 'ph_tone', 'ph_italic',
                             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'addr_cue_speed', 'addr_cue_size',
                             'trust_tick', 'trust_tick_speed']],
@@ -1114,6 +1163,19 @@ class CheckoutPage
     public function get(string $key): mixed
     {
         return $this->all()[$key] ?? null;
+    }
+
+    /**
+     * Whether the cart and the checkout draw the delivery-address picker row.
+     *
+     * Off by default, as asked -- see `addr_picker` in SCHEMA. Read by the
+     * cart's docked bar, the cart's reserved bottom padding and the checkout's
+     * Shipping address section, so the three cannot disagree. One settings
+     * read, from the memoised map: no query.
+     */
+    public function addressPickerRow(): bool
+    {
+        return (bool) $this->get('addr_picker');
     }
 
     /** @param array<string, mixed> $values */

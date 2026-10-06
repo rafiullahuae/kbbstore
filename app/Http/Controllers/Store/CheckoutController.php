@@ -181,6 +181,23 @@ class CheckoutController extends Controller
          */
         $address = $customer?->defaultAddress('shipping') ?? $customer?->defaultAddress('billing');
 
+        /*
+         * THE TYPED ADDRESS, when the picker row is off (Lane CK) -- which is
+         * how it ships: Appearance -> Checkout page -> Fields & attention ->
+         * "Address picker row on cart and checkout". Null while the picker is
+         * on, so that mode reads exactly what it read before.
+         *
+         * It is computed HERE rather than in the view because the emirate it
+         * fills is also the one the delivery list below is first priced on.
+         * The form posts what it shows, and place() prices on what is posted;
+         * if the page priced on the address row's raw `state` while the box
+         * showed the city standing in for an empty one, the rate drawn and the
+         * rate charged could differ for the same shopper.
+         */
+        $typed = app(\App\Services\CartPage::class)->addressPickerOn()
+            ? null
+            : $this->typedAddress($customer, $address);
+
         // The country list is always live now — the zone countries (Gulf, in
         // production) plus anything Extended has added — so the selector and
         // detection both apply regardless of whether Extended has ever been
@@ -204,7 +221,7 @@ class CheckoutController extends Controller
          * fetched there, because it is the one tier that costs a query and the
          * storefront must not pay for it on every page.
          */
-        $resolved = \App\Support\ShopperCountry::for($request, $address?->country);
+        $resolved = \App\Support\ShopperCountry::for($request, $typed !== null ? ($typed['country'] ?? null) : $address?->country);
 
         /*
          * A GUESS IS FILTERED AGAINST THE SHOP'S OWN LIST; A STATEMENT IS NOT.
@@ -232,7 +249,7 @@ class CheckoutController extends Controller
             ? $resolved->code
             : null;
 
-        [$rates, $chosen, $totals] = $this->rateContext($cart, $country, old('billing_state') ?? $address?->state);
+        [$rates, $chosen, $totals] = $this->rateContext($cart, $country, old('billing_state') ?? ($typed !== null ? ($typed['state'] ?? null) : $address?->state));
 
         return view('store.checkout', [
             'settings' => $this->settings,
@@ -259,7 +276,7 @@ class CheckoutController extends Controller
             'unservedCountry' => $unserved,
             'deliveryEta' => $this->deliveryEta($country),
             'deliveryText' => $this->deliveryText($country),
-            'showBrowsed' => (bool) $this->settings->get('show_browsed', true),
+            'showBrowsed' => $this->browsedOn(),
             'browsed' => $this->browsed($request, $cart),
             // Off splits the field into first and last name. The backend has
             // always accepted either shape — splitName() auto-splits a single
@@ -267,7 +284,7 @@ class CheckoutController extends Controller
             // posted — only the form itself was never given the other shape
             // to send. The setting existed and did nothing until now.
             'singleName' => (bool) $this->settings->get('checkout_single_name', true),
-            'prefill' => $this->prefill($customer, $address),
+            'prefill' => $typed !== null ? array_merge($this->prefill($customer, $address), $typed) : $this->prefill($customer, $address),
         ]);
     }
 
@@ -1669,6 +1686,53 @@ class CheckoutController extends Controller
      *
      * @return array<string, string|null>
      */
+    /**
+     * The four address boxes the checkout shows while the picker row is off,
+     * filled for a returning customer so they do not retype what the shop has.
+     *
+     * Their saved address first -- line1 and line2 joined, the way the picker
+     * joined them, so an address saved through the cart's popup (apartment in
+     * line1, area in line2) arrives whole. Emirate falls back to the city,
+     * because the popup has always collected the emirate in its city box and
+     * left `state` empty. Then, for a customer with no saved address at all --
+     * most accounts made at the checkout -- the address on their latest order.
+     * That is one query, run only for that customer.
+     *
+     * Only the keys that have a value are returned, so array_merge() over
+     * prefill() never blanks one. Null for a guest: there is nothing to fill.
+     *
+     * @return array<string, string>|null
+     */
+    private function typedAddress(?Customer $customer, ?\App\Models\Address $address): ?array
+    {
+        if ($customer === null) {
+            return null;
+        }
+
+        if ($address !== null) {
+            $src = [
+                'line1' => (string) $address->line1, 'line2' => (string) $address->line2,
+                'city' => (string) $address->city, 'state' => (string) $address->state,
+                'country' => (string) $address->country,
+            ];
+        } else {
+            $last = $customer->orders()->latest('id')->first(['id', 'shipping_address']);
+            $src = is_array($last?->shipping_address) ? $last->shipping_address : [];
+        }
+
+        $text = static fn (string $k): string => is_scalar($src[$k] ?? null) ? trim((string) $src[$k]) : '';
+        $city = $text('city');
+
+        $out = array_filter([
+            'line1' => implode(' - ', array_filter([$text('line1'), $text('line2')], static fn (string $p) => $p !== '')),
+            'city' => $city,
+            'state' => $text('state') !== '' ? $text('state') : $city,
+            'country' => strtoupper($text('country')),
+        ], static fn (string $v) => $v !== '');
+
+        return $out === [] ? null : $out;
+    }
+
     private function prefill(?Customer $customer, ?\App\Models\Address $address): array
     {
         if ($customer === null) {
@@ -2508,8 +2572,28 @@ class CheckoutController extends Controller
         return $extended->enabled() ? $extended->etaFor($country) : null;
     }
 
+    /**
+     * Whether the checkout summary carries the Browsed tab.
+     *
+     * Two switches: the older Store -> Ecommerce `show_browsed`, and
+     * Appearance -> Checkout page -> Fields & attention -> "Recently browsed in
+     * the summary", which ships OFF because the owner asked for the tab off
+     * (Lane CK). Both settings reads come from the memoised map.
+     */
+    private function browsedOn(): bool
+    {
+        return (bool) $this->settings->get('show_browsed', true)
+            && (bool) app(\App\Services\CheckoutPage::class)->get('browsed_on');
+    }
+
     private function browsed(Request $request, $cart)
     {
+        // Off: no tab is printed, so nothing is looked up for one -- on the
+        // page and on every fragment refresh that would re-render its list.
+        if (! $this->browsedOn()) {
+            return collect();
+        }
+
         $ids = array_filter(array_map('intval', explode(',', (string) $request->cookie('kbb_viewed', ''))));
 
         if ($ids === []) {

@@ -759,6 +759,18 @@
      set, so it is the one that draws it. Every other tab draws the chosen row,
      which is what a shopper sees for the rest of the page's life. */
   function pvAddress() {
+    /* The picker row is off by default (Lane CK) -- the section is the four
+       boxes the shopper types into, drawn the way Contact draws its own. */
+    if (!pvOn('addr_picker')) {
+      var box = function (label, hint) {
+        return '<span><b class="chv-lb">' + label + '</b>'
+          + '<span class="chv-fi" style="display:block">' + hint + '</span></span>';
+      };
+      return '<div class="chv-fg">' + box('Address', 'Street, building / villa no.')
+        + '<span class="chv-fg two" style="display:grid">'
+        + box('Emirate', 'Dubai') + box('City / area', 'e.g. Al Reem Island') + '</span>'
+        + box('Country', 'United Arab Emirates') + '</div>';
+    }
     if (open !== 'cues') {
       return '<div class="chv-ad"><span class="ic">&#9750;</span>'
         + '<span class="tx"><b>Home</b><i>Al-Thumama - area 46, street 912 - Doha</i></span>'
@@ -823,7 +835,20 @@
   }
 
   function pvSummary() {
-    return '<div class="chv-sum">'
+    /* The one-row summary (Lane CK), folded, on every tab but the two that
+       are ABOUT the product rows -- those draw it open, so the rows they are
+       sizing are on screen. */
+    var row = '';
+    if (pvOn('sum_row')) {
+      var folded = open !== 'desktop_rows' && open !== 'mobile_rows';
+      row = '<div class="sr" style="align-items:center;min-height:26px;border-bottom:1px solid #ebe3e6;margin-bottom:6px">'
+        + '<span><b style="font-weight:600">&#128717; Order summary</b></span>'
+        + '<span><b style="font-weight:800">AED 463</b> <span style="color:#c13a5e">' + (folded ? '&#8964;' : '&#8963;') + '</span></span></div>';
+      if (folded) {
+        return '<div class="chv-sum">' + row + '<div class="go">Place order</div></div>';
+      }
+    }
+    return '<div class="chv-sum">' + row
       + pvRows()
       + '<div class="sr"><span>Subtotal</span><span>AED 443</span></div>'
       + '<div class="sr"><span>Delivery</span><span>AED 20</span></div>'

@@ -41,6 +41,17 @@ use Illuminate\Support\Str;
  * route file states the group it belongs in rather than leaving it to be
  * guessed.
  */
+/*
+ * THE PICKER ROW IS OFF BY DEFAULT since Lane CK (the owner: "turn off the
+ * address row completely, from cart and checkout pages"). Everything in this
+ * file is about that row and the sheet it opens, so the file switches it on
+ * -- Appearance -> Checkout page -> Fields & attention -> "Address picker row
+ * on cart and checkout" -- and CartCheckoutAddressRowOffTest pins the default.
+ */
+beforeEach(function () {
+    app(\App\Services\CheckoutPage::class)->save(['addr_picker' => true]);
+});
+
 function squeezeRoutes(): void
 {
     if (app('router')->getRoutes()->hasNamedRoute('cart.address')) {
