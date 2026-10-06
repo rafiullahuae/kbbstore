@@ -1,0 +1,66 @@
+{
+ "after-product-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "visibleOldName": 2,
+  "visibleNewName": 10,
+  "title": "K-Beauty Bliss Lab K-Beauty Bliss Glow Serum 30ml · K-Beauty Bliss | KBB",
+  "h1": "K-Beauty Bliss Glow Serum 30ml"
+ },
+ "after-product-1280": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "visibleOldName": 2,
+  "visibleNewName": 10,
+  "title": "K-Beauty Bliss Lab K-Beauty Bliss Glow Serum 30ml · K-Beauty Bliss | KBB",
+  "h1": "K-Beauty Bliss Glow Serum 30ml"
+ },
+ "after-category-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "visibleOldName": 0,
+  "visibleNewName": 6,
+  "title": "K-Beauty Bliss Picks · K-Beauty Bliss | KBB",
+  "h1": "K-Beauty Bliss Picks"
+ },
+ "after-category-1280": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "visibleOldName": 0,
+  "visibleNewName": 6,
+  "title": "K-Beauty Bliss Picks · K-Beauty Bliss | KBB",
+  "h1": "K-Beauty Bliss Picks"
+ },
+ "after-brand-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "visibleOldName": 0,
+  "visibleNewName": 7,
+  "title": "K-Beauty Bliss Lab | KBB",
+  "h1": "K-Beauty Bliss Lab"
+ },
+ "after-brand-1280": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "visibleOldName": 0,
+  "visibleNewName": 7,
+  "title": "K-Beauty Bliss Lab | KBB",
+  "h1": "K-Beauty Bliss Lab"
+ },
+ "after-check-screen-390": {
+  "scrollWidth": 390,
+  "summary": [
+   "Every area checked (37) — 0 to replace",
+   "Left on purpose (1)"
+  ],
+  "warn": "Nothing to replace. The shop’s stored text says K-Beauty Bliss everywhere it names itself."
+ },
+ "after-check-screen-1280": {
+  "scrollWidth": 1280,
+  "summary": [
+   "Every area checked (37) — 0 to replace",
+   "Left on purpose (1)"
+  ],
+  "warn": "Nothing to replace. The shop’s stored text says K-Beauty Bliss everywhere it names itself."
+ }
+}

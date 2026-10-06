@@ -97,6 +97,10 @@ class BrandNameApiController extends Controller
                 'rows' => array_slice($scan['rows'], 0, 200),
                 'left' => $scan['left'],
                 'errors' => $scan['errors'],
+                // Every area the check reads, with what it found and what is
+                // left on purpose — the "0 left" the owner looks for after
+                // applying. Labels are constants (BrandRename::AREAS).
+                'areas' => $scan['areas'] ?? [],
             ],
         ];
     }

@@ -1,0 +1,66 @@
+{
+ "before-product-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "visibleOldName": 10,
+  "visibleNewName": 3,
+  "title": "Extra Beauty Lab Extra Beauty Glow Serum 30ml · K-Beauty Bliss | KBB",
+  "h1": "Extra Beauty Glow Serum 30ml"
+ },
+ "before-product-1280": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "visibleOldName": 10,
+  "visibleNewName": 3,
+  "title": "Extra Beauty Lab Extra Beauty Glow Serum 30ml · K-Beauty Bliss | KBB",
+  "h1": "Extra Beauty Glow Serum 30ml"
+ },
+ "before-category-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "visibleOldName": 3,
+  "visibleNewName": 3,
+  "title": "Extra Beauty Picks · K-Beauty Bliss | KBB",
+  "h1": "Extra Beauty Picks"
+ },
+ "before-category-1280": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "visibleOldName": 3,
+  "visibleNewName": 3,
+  "title": "Extra Beauty Picks · K-Beauty Bliss | KBB",
+  "h1": "Extra Beauty Picks"
+ },
+ "before-brand-390": {
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "visibleOldName": 4,
+  "visibleNewName": 3,
+  "title": "Extra Beauty Lab | KBB",
+  "h1": "Extra Beauty Lab"
+ },
+ "before-brand-1280": {
+  "scrollWidth": 1280,
+  "clientWidth": 1280,
+  "visibleOldName": 4,
+  "visibleNewName": 3,
+  "title": "Extra Beauty Lab | KBB",
+  "h1": "Extra Beauty Lab"
+ },
+ "before-check-screen-390": {
+  "scrollWidth": 390,
+  "summary": [
+   "Every area checked (37) — 12 to replace",
+   "Left on purpose (1)"
+  ],
+  "warn": "12 places still say “Extra Beauty”. This is a dry run — nothing has changed yet."
+ },
+ "before-check-screen-1280": {
+  "scrollWidth": 1280,
+  "summary": [
+   "Every area checked (37) — 12 to replace",
+   "Left on purpose (1)"
+  ],
+  "warn": "12 places still say “Extra Beauty”. This is a dry run — nothing has changed yet."
+ }
+}

@@ -79,17 +79,19 @@ function brSeedEverywhere(): array
     return compact('product', 'customer', 'order');
 }
 
-/** The transactional rows, verbatim. */
+/**
+ * The transactional rows, verbatim. Lane EB (6 October, "everywhere") moved
+ * reviews, product names and descriptions and their translations OUT of this
+ * list and into BrandRename::TARGETS deliberately — they are asserted renamed
+ * below and in BrandRenameEverywhereTest. Records stay records.
+ */
 function brTransactional(): array
 {
     return [
         DB::table('customers')->get(['name', 'notes'])->toArray(),
         DB::table('orders')->get(['customer_note'])->toArray(),
         DB::table('order_notes')->get(['content'])->toArray(),
-        DB::table('reviews')->get(['content'])->toArray(),
         DB::table('import_history')->get(['notes'])->toArray(),
-        DB::table('products')->get(['name', 'description', 'short_description'])->toArray(),
-        DB::table('translations')->where('group', 'products')->get(['value'])->toArray(),
     ];
 }
 
@@ -100,7 +102,7 @@ function brSetting(string $key): ?string
 
 /* ------------------------------------------------------------ the migration */
 
-it('replaces the old name in brand-bearing stored text only, and never in an order, a customer, a review or a product description', function () {
+it('replaces the old name in brand-bearing stored text and the catalogue, and never in an order, a customer or import history', function () {
     // DEFECT: the live shop said "Extra Beauty" in its title, footer and email
     // From line because the STORE NAME setting did, while every code default
     // already read K-Beauty Bliss. MUTATION: add 'orders' => ['id', ['customer_note']]
@@ -132,9 +134,13 @@ it('replaces the old name in brand-bearing stored text only, and never in an ord
         ->and(DB::table('pages')->where('slug', 'br-about')->value('content'))->toBe('<p>K-Beauty Bliss is a UAE shop.</p>')
         ->and(json_decode((string) DB::table('pages')->where('slug', 'br-about')->value('seo'), true)['title'])->toBe('About us | K-Beauty Bliss')
         ->and(json_decode((string) DB::table('products')->where('slug', 'br-toner')->value('seo'), true)['title'])->toBe('Toner | K-Beauty Bliss')
+        // Lane EB: the owner asked for these too ("everywhere").
+        ->and(DB::table('products')->where('slug', 'br-toner')->value('name'))->toBe('K-Beauty Bliss Toner')
+        ->and(DB::table('reviews')->value('content'))->toBe('K-Beauty Bliss is great')
+        ->and(DB::table('translations')->where('group', 'products')->value('value'))->toBe('Loved by K-Beauty Bliss')
         ->and(brTransactional())->toEqual($before)
         ->and(json_encode(brTransactional()))->toContain('Paid Extra Beauty')->toContain('Is this Extra Beauty?')
-        ->toContain('Customer paid Extra Beauty')->toContain('Extra Beauty is great')->toContain('Sold by Extra Beauty');
+        ->toContain('Customer paid Extra Beauty')->toContain('from Extra Beauty export');
 });
 
 it('is idempotent and never fails the update, even with a target table missing', function () {
