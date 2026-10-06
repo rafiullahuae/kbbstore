@@ -1905,7 +1905,7 @@ final class EnglishRenderWalk
             'the typeface, which the owner asked to change (Lane PLC)' => [
                 'pattern' => '#Poppins#',
                 'with' => 'Outfit',
-                'hits' => 4,
+                'hits' => 2, // 4 -> 2 (Lane BH): the journal and an article are on the layout now and their old head is cut whole; the review wall and the skin quiz remain.
             ],
 
             /*
@@ -2220,12 +2220,12 @@ final class EnglishRenderWalk
             'contrast: the brand pink in a standalone document (Lane CT)' => [
                 'pattern' => '#(--pink:\s?)\#E0567B(;\s?--pink-deep:\#C13E63;)#',
                 'with' => '${1}#C6395F$2',
-                'hits' => 4,
+                'hits' => 2, // 4 -> 2 (Lane BH): the journal and an article are on the layout now and their old head is cut whole; the review wall and the skin quiz remain.
             ],
             'contrast: the secondary grey in a standalone document (Lane CT)' => [
                 'pattern' => '#(--ink-2:\#5E545A;\s?--muted:)\#8C828A;#',
                 'with' => '${1}#756C74;',
-                'hits' => 4,
+                'hits' => 2, // 4 -> 2 (Lane BH): the journal and an article are on the layout now and their old head is cut whole; the review wall and the skin quiz remain.
             ],
             /*
              * The slim footer's wordmark accent falls back to the header's
@@ -2348,6 +2348,37 @@ KBB_BH_CSS;
     public static function approvedInsertions(): array
     {
         return [
+            /*
+             * THE JOURNAL AND AN ARTICLE ON THE SHOP'S OWN LAYOUT (Lane BH).
+             * The owner: "on blog page, and on article page, the main header is
+             * not coming correct. i need the same as we have on all other
+             * pages. fix it on desktop + mobile both."
+             *
+             * store/blog and store/post were standalone documents with their
+             * own head, a hand-drawn header and a footer strip; they extend
+             * layouts/store.blade.php now. Their CHROME is replaced wholesale,
+             * so it is cut from both sides -- here everything the layout draws
+             * around the content (head, header, phone chrome, footer, drawers,
+             * scripts), and in approvedRemovals() everything the old documents
+             * drew around it -- and the CONTENT between, the hero, the grid of
+             * cards, the article and its related row, is still compared byte
+             * for byte. The layout's chrome is the same chrome every other page
+             * in this walk compares; JournalSharedHeaderTest pins that the two
+             * pages draw it, and that the SEO tags in the head did not move.
+             *
+             * FIRST IN THE LIST, so no rule below counts the layout's chrome on
+             * these two pages. Each fires on exactly 'blog' and 'blog/{slug}'.
+             */
+            'the journal and an article on the shared layout: head and header (Lane BH)' => [
+                'pattern' => '#\A.*?<main id="content">\n    <div class="kbb-journal">\n#s',
+                'hits' => 2,
+            ],
+            'the journal and an article on the shared layout: footer and scripts (Lane BH)' => [
+                // Anchored on the content's first element at the very start, which
+                // only these two pages have once the rule above has cut their head.
+                'pattern' => '#\A(?=<section class="hero">|<article id="article">).*?\K</div>\n</main>.*\z#s',
+                'hits' => 2,
+            ],
             // The shop's 404 page in its place (Lane NF): see the removal of
             // the same name. The whole '(404)' document, design B, once.
             'the bare framework 404 page (Lane NF)' => [
@@ -2382,7 +2413,7 @@ KBB_BH_CSS;
                     // offer should it fire before the deferred script, and takes it only
                     // on a page that drew the row. Nothing visible.
                     .'<script>addEventListener\(\'beforeinstallprompt\',function\(e\)\{if\(document\.querySelector\(\'\.kfa\[data-kfa\]\'\)\)\{e\.preventDefault\(\);window\.__kbbBip=e\}\}\)</script>\n#',
-                'hits' => 37,
+                'hits' => 35, // 37 -> 35 (Lane BH): the journal and an article are on the layout now, and their chrome is cut whole by the first rule in this list.
             ],
             /*
              * THE FOOTER'S APP ROW (Lane FB, 6 October). The owner asked for it
@@ -2412,7 +2443,7 @@ KBB_BH_CSS;
              */
             'the instant page change script (Lane SP)' => [
                 'pattern' => '#<script data-r="[^"]*">\(function\(d,w\)\{[^<]*</script>\n#',
-                'hits' => 37,
+                'hits' => 35, // 37 -> 35 (Lane BH): the journal and an article are on the layout now, and their chrome is cut whole by the first rule in this list.
             ],
             // 2.60.393: the phone's 1 / 2 column buttons, beside Sort, on the
             // shop and category listing (hidden on a laptop).
@@ -2547,7 +2578,7 @@ KBB_BH_CSS;
                 // 37: every storefront document the walk renders — the same
                 // set the Outfit faces reach (Lane PLC's 37): the 33 that draw
                 // the store layout and the four that carry their own <html>.
-                'hits' => 37,
+                'hits' => 35, // 37 -> 35 (Lane BH): the journal and an article are on the layout now, and their chrome is cut whole by the first rule in this list.
             ],
 
             /*
@@ -2847,7 +2878,7 @@ KBB_BH_CSS;
              */
             'the breadcrumb switches in the head (Lane PI-B)' => [
                 'pattern' => '#<style id="kbb-crumbs">[^<]*</style>\n#',
-                'hits' => 34,
+                'hits' => 33, // 34 -> 33 (Lane BH): the journal and an article are on the layout now, and their chrome is cut whole by the first rule in this list.
             ],
 
             /*
@@ -2900,7 +2931,7 @@ KBB_BH_CSS;
             'the self-hosted Outfit faces (Lane PLC)' => [
                 'pattern' => '#(?:<link rel="preload" as="font" type="font/woff2" crossorigin href="[^"]+">\n){1}'
                     .'<style id="kbb-outfit">.*?</style>\n#s',
-                'hits' => 37,
+                'hits' => 35, // 37 -> 35 (Lane BH): the journal and an article are on the layout now, and their chrome is cut whole by the first rule in this list.
             ],
 
             /*
@@ -2982,37 +3013,10 @@ KBB_BH_CSS;
                 'hits' => 1,
             ],
 
-            /*
-             * THE SHOP'S DESIGNED PAGE BACKGROUND, on the two documents that
-             * were white — Lane BG, and it has NO removal paired with it.
-             *
-             * TWO pages, the journal and an article. They do not extend
-             * layouts/store.blade.php and so never loaded kbb.css, where the
-             * designed `body` rule lives, and they rendered
-             * rgb(255,255,255) with no background-image while every other
-             * storefront page rendered rgb(253,239,243) and five layers.
-             * Measured with getComputedStyle on ten URLs, before and after.
-             *
-             * UNPAIRED ON PURPOSE. Every other rule in this method replaces
-             * something; this one adds a background where there was none, so
-             * there is nothing on the before side to cut. That is also why it
-             * is the one insertion here that is a VISIBLE change rather than a
-             * neutral one: docs/BG-STANDALONE-DOCUMENTS.md §5 costs the three
-             * ways of delivering it and this is the cheapest honest one, at
-             * +1,093 gzipped bytes and no extra request.
-             *
-             * `.*?` IS SAFE BECAUSE OF THE id, exactly as it is for
-             * kbb-poppins: the block is <style id="kbb-page-background">…
-             * </style> with no nested <style>. The artwork inside it is 9,130
-             * bytes of URL-encoded SVG and is held byte-identical to kbb.css's
-             * own copy by StandaloneDocumentHeadTest, so a lane that edits one
-             * and not the other is red there rather than silently different
-             * here.
-             */
-            'the designed page background on the journal and an article (Lane BG)' => [
-                'pattern' => '#<style id="kbb-page-background">.*?</style>#s',
-                'hits' => 2,
-            ],
+            // ('the designed page background on the journal and an article
+            // (Lane BG)' is gone with Lane BH: the two pages take the background
+            // from kbb.css itself on the shared layout, the copy partial is
+            // deleted, and their head is cut whole by the first rule here.)
 
             /*
              * THE HEAD OF THE PRODUCT PAGE'S BUY COLUMN, REDRAWN AS LEDGER.
@@ -3389,6 +3393,22 @@ KBB_BH_CSS;
     {
         return [
             /*
+             * THE JOURNAL'S AND AN ARTICLE'S OWN CHROME GOES (Lane BH): the
+             * standalone head, the hand-drawn 69px header, the four-link drawer
+             * and the footer strip, replaced by the shared layout's. The pair of
+             * the insertions of the same name; the content between is still
+             * compared byte for byte. The old header's `<header class="head"><div
+             * class="wrap head-in">` is the anchor because no other page has it.
+             */
+            'the journal and an article on the shared layout: head and header (Lane BH)' => [
+                'pattern' => '#\A<!DOCTYPE html>\n<html[^>]*>\n<head>.*?</head>\s*<body>\s*<header class="head"><div class="wrap head-in">.*?(?=<section class="hero">|<article id="article">)#s',
+                'hits' => 2,
+            ],
+            'the journal and an article on the shared layout: footer and scripts (Lane BH)' => [
+                'pattern' => '#<footer><div class="wrap fin">.*\z#s',
+                'hits' => 2,
+            ],
+            /*
              * THE BARE FRAMEWORK 404 GOES (Lane NF). The owner: "i want 404 page
              * for my site so nothing can give not found error page". The
              * before side of '(404)' is Laravel's own "404 | Not Found"
@@ -3589,11 +3609,10 @@ KBB_BH_CSS;
              * and dropped: zero elements at font-weight 300 on seven of eight
              * pages, one invisible one on the eighth.
              */
-            'the Google Fonts request on the journal and an article (Lane BG)' => [
-                'pattern' => '#\n<link href="https://fonts\.googleapis\.com/css2\?family=Poppins:'
-                    .'wght@400;500;600;700&display=swap" rel="stylesheet">\n#',
-                'hits' => 2,
-            ],
+            // ('the Google Fonts request on the journal and an article (Lane BG)'
+            // is gone with Lane BH: that link sat in the two documents' own
+            // head, which 'the journal and an article on the shared layout'
+            // now cuts whole.)
 
             'the Google Fonts request on the review wall (Lane BG)' => [
                 'pattern' => '#\n<link rel="preconnect" href="https://fonts\.googleapis\.com">\n'

@@ -197,17 +197,21 @@ it('gives every storefront page one background layer, with no image in it', func
     }
 
     /*
-     * The journal carries its own copy of the background and has to follow, or
-     * it is the one page still wearing the old one. It is the reason this case
-     * asks for /skincare-guide/ as well as the two layout pages.
+     * The journal used to carry its own copy of the background and had to
+     * follow. Since Lane BH it extends layouts/store.blade.php and takes the
+     * background from kbb.css itself -- the same stylesheet link as the home
+     * page -- so there is no copy left to fall behind, and none may come back.
      */
+    $home = (string) $this->get('/')->getContent();
+    preg_match('#<link rel="stylesheet" href="[^"]*kbb[^"]*\.css"[^>]*>#', $home, $sheet);
     $journal = (string) $this->followingRedirects()->get('/skincare-guide/')->getContent();
 
-    expect($journal)->toContain('id="kbb-page-background"')
-        ->and($journal)->toContain('var(--kbb-page-gradient)');
+    expect($sheet)->not->toBeEmpty();
+    expect($journal)->toContain($sheet[0])
+        ->and($journal)->not->toContain('id="kbb-page-background"');
 
     expect(str_contains($journal, 'repeat-y'))->toBeFalse(
-        'the journal still tiles its background, so the partial did not follow kbb.css');
+        'the journal tiles its background again');
 });
 
 it('keeps every colour the shipped background can show above the contrast floor', function () {

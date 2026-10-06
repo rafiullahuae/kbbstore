@@ -534,7 +534,16 @@ class PageController extends Controller
          * name to every <title>, so passing the title would name the shop twice
          * in one node — once here and once in the Organization beside it.
          */
-        $seo = Seo::render([
+        /*
+         * A CONTEXT, NOT A RENDERED <head> BLOCK (Lane BH). store/blog extends
+         * layouts/store.blade.php now, and that layout runs Seo::render() once
+         * for every page from `$seoCtx`. Rendering here as well would print two
+         * <title>s, two canonicals and two JSON-LD graphs. The array is the one
+         * this method always rendered; the layout adds only `noindex` from
+         * Indexability (false for /blog/) and `noindex_editorial`, which equals
+         * this context's own `noindex` -- so the tags are the same ones.
+         */
+        $seoCtx = [
             'type' => 'collection',
             'collection' => ['name' => 'The Glow Journal'],
             'title' => 'The Glow Journal',
@@ -544,11 +553,11 @@ class PageController extends Controller
                 ['name' => 'Home', 'url' => $base . '/'],
                 ['name' => 'Journal', 'url' => $base . UrlScheme::blogIndex()],
             ],
-        ]);
+        ];
 
         return view('store.blog', [
             'posts' => $posts,
-            'seo' => $seo,
+            'seoCtx' => $seoCtx,
             'settings' => $this->settings,
         ]);
     }
@@ -608,7 +617,9 @@ class PageController extends Controller
         $seoOverride = is_array($post->seo) ? $post->seo : [];
         $canonical = $base . UrlScheme::article((string) $post->slug);
 
-        $seo = Seo::render([
+        // A context for the layout's one Seo::render(), as in journal() above
+        // (Lane BH): store/post extends layouts/store.blade.php now.
+        $seoCtx = [
             'type' => 'article',
             'seo_entity' => 'post:' . $post->id, // SEO → Keywords (Lane KW)
             // t() throughout: an Arabic article whose <title> and
@@ -675,12 +686,12 @@ class PageController extends Controller
                 ['name' => __('store.journal.nav_journal'), 'url' => $base . UrlScheme::blogIndex()],
                 ['name' => $post->t('title'), 'url' => $canonical],
             ],
-        ]);
+        ];
 
         return view('store.post', [
             'post' => $post,
             'related' => $related,
-            'seo' => $seo,
+            'seoCtx' => $seoCtx,
             'settings' => $this->settings,
         ]);
     }

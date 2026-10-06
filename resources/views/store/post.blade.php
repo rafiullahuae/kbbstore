@@ -1,249 +1,80 @@
-@verbatim<!DOCTYPE html>
-@endverbatim{{--
-    THE DOCUMENT SAYS WHICH LANGUAGE IT IS IN.
+{{--
+    AN ARTICLE, /blog/{slug}/, ON THE SHOP'S OWN LAYOUT.             (Lane BH)
 
-    This page carries its own <html> and does not extend
-    layouts/store.blade.php, so it never picked up the two attributes that
-    layout has emitted since the bilingual foundation landed. /ar/ served this
-    document with a correct Arabic canonical and a correct hreflang set while
-    declaring itself English -- a lie to every screen reader, hyphenator and
-    translation tool that reads the attribute, on the pages a shopper is most
-    likely to read with one.
+    The owner: "on blog page, and on article page, the main header is not
+    coming correct. i need the same as we have on all other pages. fix it on
+    desktop + mobile both."
 
-    `dir` GOES THROUGH Locale::direction(), NEVER THROUGH THE LANGUAGE. This
-    shop has two switches and not one: Arabic can be live while the mirrored
-    layout is still being built, and direction() is the single place that
-    answers which of the two states the shop is in. That is the contract
-    resources/views/invoices/document.blade.php sets out at length and
-    layouts/store.blade.php already follows; this is the same two attributes,
-    not a second opinion on them.
+    Same defect and same fix as store/blog.blade.php, whose header note has the
+    whole account: this was a standalone document with a hand-drawn 69px
+    header (wordmark, three text links, a magnifier and a bag that both went to
+    /shop/, a four-link burger drawer) and a one-line footer strip, where every
+    other shop page draws the shared header, menu bar, mega menus, phone
+    header, phone menu and footer. It now extends layouts/store.blade.php.
 
-    WHAT IS STILL PHYSICAL. The stylesheet below is inline and this file's own.
-    Turning the mirrored layout on gives this document the right TEXT direction
-    and not yet a mirrored layout, and it does not give it an Arabic-capable
-    webfont either. Both measured, named and left for their owners in
-    docs/rtl-standalone-documents.md rather than papered over here.
---}}<html lang="{{ \App\Support\Locale::htmlLang() }}" dir="{{ \App\Support\Locale::direction() }}">@verbatim
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-@endverbatim
-{!! $seo ?? '' !!}
-{!! app(\App\Services\Analytics::class)->headTags() !!}
-@include('partials.site-app-head')
-@include('partials.instant-nav-head')
-{{-- Outfit, served by this shop rather than by Google.            (Lane BG)
-     The twin of the Arabic-face include below, which did the same for Cairo
-     and left the Latin half linking a render-blocking third-party stylesheet.
-     The partial's own header carries the measurement. --}}@include('partials.outfit-face'){{--
-    AND THE ARABIC FACE, WHICH THIS DOCUMENT ALSO HAS TO ASK FOR ITSELF.
+    THE <head> IS THE LAYOUT'S. Seo::render() runs there once, from the
+    `$seoCtx` PageController::post() hands in -- the same context it used to
+    render into `$seo` here -- so the title (and the editor's override with
+    `%%title%%`), description, canonical, hreflang, og:image, Article and
+    BreadcrumbList JSON-LD are the same tags. JournalSharedHeaderTest pins it.
 
-    The webfont link above carries no Arabic glyph. Before this, /ar/<post-slug>/
-    served real Arabic text in a document that linked Outfit only and named an
-    Arabic-capable family ZERO times, so every Arabic word rendered in whatever
-    face the device happened to have. Measured at 40px against Cairo and matching
-    neither -- docs/rtl-standalone-documents.md §2 found it, and
-    docs/FS-ARABIC-TYPOGRAPHY.md has this lane's before-and-after numbers.
+    THE ARTICLE IS THE MARKUP IT WAS, byte for byte (StorefrontEnglishUnchanged-
+    Test compares it), inside `.kbb-journal`, which every rule below is scoped
+    to: the old sheet styled `h1`, `article`, `footer`, `.wrap`, `.head`,
+    `.logo`, `.tool`, `.mnav` and `*` bare, and on the shared layout those would
+    have reached the shop's own header and footer. The 720px reading measure
+    stays on the article column; the related-posts row stays on the site width
+    through the shared `.wrap`. --}}
+@extends('layouts.store')
 
-    THE WHITESPACE HERE IS LOAD-BEARING, and it is why this include is glued to
-    the end of the link above rather than given a line of its own. Blade compiles
-    the include to a PHP tag, and PHP SWALLOWS ONE NEWLINE immediately after `?>`.
-    Every arrangement that leaves a single newline next to it therefore takes a
-    newline OUT of the ENGLISH document, which is a change to output that is
-    supposed to be unchanged. The line that follows puts the newline back.
-    Checked by fetching all seven English pages before and after: byte-identical.
-
-    (The two verbatim markers are never spelled out with their @ in a comment in
-    these files. A verbatim block is extracted from the RAW source before
-    comments are removed, so the word in a comment opens a block of its own.)
---}}@include('partials.arabic-face', [
-    'weights' => '400;500;600;700',
-    'stacks' => [
-        ':root' => ['--sans' => "'Outfit',system-ui,sans-serif"],
-        // AND `button`, which this document never gives a font to at all. A
-        // <button> does not inherit font-family from its parent -- the UA
-        // stylesheet sets it -- and unlike the other four documents this one
-        // carries no `button{font-family:inherit}`. So .chip (the tag filter,
-        // whose labels ARE translated) and .mnav-x rendered in the UA's Arial
-        // while every other element on the page moved to Cairo: 22 of 24
-        // text-bearing elements, measured. Scoped to html[lang="ar"] like the
-        // rest, so the English page keeps exactly the Arial it has today -- that
-        // half is a real defect of these two documents and belongs to whoever
-        // owns their typography, not to a lane that may not move English bytes.
-        'button' => ['font-family' => "'Outfit',system-ui,sans-serif"],
-    ],
-])
+@push('styles')
 @verbatim
-<style>
-  :root{--bg:#fff;--cream:#FFF8F5;--pink-soft:#FFF0F4;--blush:#FCE0E8;--pink:#C6395F;--pink-deep:#C13E63;
-    --ink:#2A2228;--ink-2:#5E545A;--muted:#756C74;--line:rgba(42,34,40,.10);--line-2:rgba(42,34,40,.06);
-    --r-m:14px;--r-l:20px;--sh-m:0 6px 20px rgba(42,34,40,.08);--sans:'Outfit',system-ui,sans-serif;--ease:cubic-bezier(.22,.61,.36,1)}
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:var(--sans);color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5}
-  a{color:inherit}
-  /* THE PAGE CONTAINER, on the site width.                        Lane W1
-
-     This is a STANDALONE DOCUMENT: it carries its own <html>, its own <head>
-     and its own :root, and it does not load resources/css/kbb/kbb.css. So
-     --site-max is not inherited from anywhere and the literal below is the one
-     place in this repo other than that sheet's :root where the number 1680
-     appears. That duplication is unavoidable for a document that loads no
-     shared stylesheet, so it is pinned instead of trusted:
-     SiteLayoutDefaultsMatchCssTest asserts that every var(--site-max, N)
-     fallback in resources/views agrees with kbb.css, and goes red if either
-     moves alone.
-
-     The var() is not decoration. Appearance -> Site layout emits
-     <style id="kbb-layout"> into this document's head too, so a moved slider
-     reaches the Journal as well as the shop; the fallback is what this page
-     uses until one moves.
-
-     The ARTICLE column is NOT on this. store/post.blade.php keeps
-     `article{max-width:720px}` because 720px is a reading measure and a 1680px
-     paragraph is unreadable. This width is the page chrome around it. */
-  .wrap{max-width:var(--site-max,1680px);margin-inline:auto;
-    /* The clamp is spelled out rather than taken from --site-gutter, which is
-       declared in kbb.css and this document does not load it. The emitted block
-       sets the two ENDS, so both halves reach here. */
-    padding-inline:clamp(var(--site-gutter-min,22px),2.2vw,var(--site-gutter-max,22px))}
-  .head{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line-2)}
-  .head-in{display:flex;align-items:center;gap:18px;height:68px}
-  .logo{font-size:20px;font-weight:700;letter-spacing:-.02em;text-decoration:none}.logo span{color:var(--pink)}
-  .nav-links{display:flex;gap:20px;margin-inline-start:6px}
-  .nav-links a{color:var(--ink-2);text-decoration:none;font-size:14px;font-weight:500}
-  .nav-links a:hover,.nav-links a.on{color:var(--pink-deep)}
-  .tools{margin-inline-start:auto;display:flex;gap:8px}
-  .tool{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;border:none;background:none;color:var(--ink);cursor:pointer;text-decoration:none}
-  .tool:hover{background:var(--pink-soft);color:var(--pink-deep)}.tool svg{width:22px;height:22px}
-  .burger{display:none;width:44px;height:44px;border-radius:12px;place-items:center;color:var(--ink);background:none;border:none;cursor:pointer}
-  .burger svg{width:24px;height:24px}
-  article{max-width:720px;margin:0 auto;padding:34px 20px 20px}
-  .crumb{font-size:12.5px;color:var(--muted);margin-bottom:16px}.crumb a{text-decoration:none}.crumb a:hover{color:var(--pink-deep)}
-  .atag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink-deep);background:var(--pink-soft);padding:5px 12px;border-radius:99px}
-  h1{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.18;margin:14px 0 12px}
-  .ameta{font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center;margin-bottom:22px}
-  .cover{aspect-ratio:16/8;border-radius:var(--r-l);margin-bottom:28px;display:grid;place-items:center;font-size:56px;background:var(--cream);position:relative;overflow:hidden}
+<style id="kbb-journal-css">
+  /* The article's own sheet, scoped to its content (Lane BH). The colour
+     tokens are NOT redeclared -- kbb.css carries the same values on :root and
+     the owner's brand colour overrides them there; the three this page drew
+     differently are restated on the wrapper. */
+  .kbb-journal{--r-m:14px;--r-l:20px;--sh-m:0 6px 20px rgba(42,34,40,.08);font-size:14px;line-height:1.5;color:var(--ink)}
+  .kbb-journal a{color:inherit}
+  .kbb-journal article{max-width:720px;margin:0 auto;padding:34px 20px 20px}
+  .kbb-journal .crumb{font-size:12.5px;color:var(--muted);margin-bottom:16px}.kbb-journal .crumb a{text-decoration:none}.kbb-journal .crumb a:hover{color:var(--pink-deep)}
+  .kbb-journal .atag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink-deep);background:var(--pink-soft);padding:5px 12px;border-radius:99px}
+  .kbb-journal h1{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.18;margin:14px 0 12px}
+  .kbb-journal .ameta{font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center;margin-bottom:22px}
+  .kbb-journal .cover{aspect-ratio:16/8;border-radius:var(--r-l);margin-bottom:28px;display:grid;place-items:center;font-size:56px;background:var(--cream);position:relative;overflow:hidden}
   /* The cover is a real image element when the post has a photograph. It is
      absolutely positioned so the emoji placeholder keeps the grid centring
      above, and object-fit:cover reproduces the `center/cover` it had as a
      background. */
-  .cover img,.mcover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-  .abody{font-size:16px;line-height:1.72;color:var(--ink)}
-  .abody p{margin:0 0 18px}
-  .abody h3{font-size:20px;font-weight:600;margin:28px 0 10px;letter-spacing:-.01em}
-  .abody b{font-weight:600}
-  .abody i{color:var(--ink-2)}
-  /* There was no rule for a body photograph here at all, and one plain <img>
-     took this page's scrollWidth to 1220 at 390px and 1500 at 1280 -- a
-     sideways scrollbar on every article carrying a picture. It had been
-     invisible because `posts` was empty on a fresh shop and the import that
-     fills it was itself removing every <picture> before it reached the column;
-     both halves changed in one release. `height:auto` is half the rule:
-     WordPress writes width= and height= attributes, and constraining the width
-     alone against a fixed height squashes the picture instead of scaling it. */
-  .abody img{max-width:100%;height:auto}
-  .backrow{max-width:720px;margin:10px auto 0;padding:0 20px}
-  .backrow a{font-size:13px;font-weight:600;color:var(--pink-deep);text-decoration:none}
-  .more{border-top:1px solid var(--line-2);margin-top:40px;padding-top:30px}
-  .more h2{font-size:19px;font-weight:700;margin-bottom:16px}
-  .mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-  .mcard{border:1px solid var(--line-2);border-radius:var(--r-l);overflow:hidden;text-decoration:none;color:var(--ink);transition:.2s var(--ease)}
-  .mcard:hover{box-shadow:var(--sh-m);transform:translateY(-3px)}
-  .mcover{aspect-ratio:16/10;display:grid;place-items:center;font-size:30px;background:var(--cream);position:relative;overflow:hidden}
-  .mc{padding:14px}.mt{font-size:14px;font-weight:600;line-height:1.35}.mtag{font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--pink-deep);margin-bottom:5px}
-  footer{background:var(--ink);color:#fff;padding:34px 0;margin-top:44px}
-  footer .fin{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.75)}
-  footer a{color:rgba(255,255,255,.75);text-decoration:none}footer a:hover{color:#fff}
-  .navov{position:fixed;inset:0;background:rgba(42,34,40,.42);z-index:105;opacity:0;visibility:hidden;transition:.3s}
-  .navov.on{opacity:1;visibility:visible}
-  /* THE MOBILE NAV, MIRRORED (Lane FK, completing T6 §11.4's deferral).
-     The RTL lane converted every other off-canvas panel and left this one
-     physical for a stated reason: "[dir="rtl"] cannot match there", because
-     this document hard-coded <html lang="en"> with no dir at all, so the
-     conversion bought nothing while changing a live page's English bytes. It
-     asked for it to be done "when someone gives those views a real <html dir>,
-     in one change that repins the guard once". That is this change.
+  .kbb-journal .cover img,.kbb-journal .mcover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .kbb-journal .abody{font-size:16px;line-height:1.72;color:var(--ink)}
+  .kbb-journal .abody p{margin:0 0 18px}
+  .kbb-journal .abody h3{font-size:20px;font-weight:600;margin:28px 0 10px;letter-spacing:-.01em}
+  .kbb-journal .abody b{font-weight:600}
+  .kbb-journal .abody i{color:var(--ink-2)}
+  /* A body photograph scales into the column. Without it one plain <img> took
+     this page's scrollWidth to 1220 at 390px and 1500 at 1280. `height:auto`
+     is half the rule: WordPress writes width= and height= attributes, and
+     constraining the width alone against a fixed height squashes the picture. */
+  .kbb-journal .abody img{max-width:100%;height:auto}
+  .kbb-journal .backrow{max-width:720px;margin:10px auto 0;padding:0 20px}
+  .kbb-journal .backrow a{font-size:13px;font-weight:600;color:var(--pink-deep);text-decoration:none}
+  .kbb-journal .more{border-top:1px solid var(--line-2);margin-top:40px;padding-top:30px}
+  .kbb-journal .more h2{font-size:19px;font-weight:700;margin-bottom:16px}
+  .kbb-journal .mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .kbb-journal .mcard{border:1px solid var(--line-2);border-radius:var(--r-l);overflow:hidden;text-decoration:none;color:var(--ink);transition:.2s var(--ease)}
+  .kbb-journal .mcard:hover{box-shadow:var(--sh-m);transform:translateY(-3px)}
+  .kbb-journal .mcover{aspect-ratio:16/10;display:grid;place-items:center;font-size:30px;background:var(--cream);position:relative;overflow:hidden}
+  .kbb-journal .mc{padding:14px}.kbb-journal .mt{font-size:14px;font-weight:600;line-height:1.35}.kbb-journal .mtag{font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--pink-deep);margin-bottom:5px}
+  /* The bottom gap the old footer strip's own margin-top:44px gave the page. */
+  .kbb-journal > .wrap:last-child{padding-bottom:44px}
+  @media(max-width:900px){.kbb-journal h1{font-size:26px}.kbb-journal .mgrid{grid-template-columns:1fr}}
+</style>
+@endverbatim
+@endpush
 
-     The inset is logical AND the transform is flipped, because translateX has
-     no logical form: inset-inline-start alone would pin the panel to the
-     reading edge under RTL while translateX(-100%) went on pushing it the other
-     way — out of the viewport in English, INTO it in Arabic. The override sits
-     before .mnav.on deliberately, so the open state still wins on equal
-     specificity. Both halves copied from kbb.css's own .mnav, which is this
-     same panel in the shared layout. */
-  .mnav{position:fixed;top:0;inset-inline-start:0;height:100%;width:290px;max-width:85vw;background:#fff;z-index:110;transform:translateX(-100%);transition:.3s var(--ease);padding:20px;display:flex;flex-direction:column}
-  [dir="rtl"] .mnav{transform:translateX(100%)}
-  .mnav.on{transform:none}
-  .mnav a{padding:14px 6px;text-decoration:none;font-weight:500;border-bottom:1px solid var(--line-2)}
-  .mnav-x{align-self:flex-end;font-size:20px;background:none;border:none;color:var(--ink-2);cursor:pointer;margin-bottom:6px}
-  @media(max-width:900px){h1{font-size:26px}.mgrid{grid-template-columns:1fr}.nav-links{display:none}.burger{display:grid}}
-</style>@endverbatim
-{{-- The shop's designed page background.                          (Lane BG)
-
-     THIS DOCUMENT WAS WHITE, and it was the last part of the same hole that
-     kept the brand colour and the site width off it: no `extends`, so no
-     kbb.css, so never the designed `body` rule. Measured before this include
-     with getComputedStyle on the rendered page: background-color
-     rgb(255,255,255) and background-image `none`, against rgb(253,239,243) and
-     five layers on the home page, /shop/, a product page and the cart.
-
-     AFTER THIS DOCUMENT'S OWN <style> AND BEFORE THE WASH, and both halves are
-     load-bearing. The rule it has to beat is this file's own
-     `body{background:var(--bg)}`, and `body` ties with `body` on specificity,
-     so it has to come later. The wash is the owner's own choice and has to beat
-     THIS, so the wash has to come later still — which is the order
-     layouts/store.blade.php already has, kbb.css first and the wash last.
-
-     NOT ZERO BYTES, unlike the two includes below it: +9,461 raw and +1,093
-     gzipped, and the partial's own header costs those three ways against each
-     other. --}}@include('partials.page-background-css')
-{{-- The brand colour and the site width.                           (Lane BG)
-
-     THIS DOCUMENT DOES NOT EXTEND layouts/store.blade.php, so nothing that
-     layout emits reaches it. The site-width block that used to stand here was
-     this document's own copy of the layout's; the BRAND COLOUR was never here
-     at all, because App\View\Composers\StoreComposer is registered for
-     `layouts.store` and nothing else, so `$kbbAccent` was not even defined.
-     This file declares `--pink:#E0567B` on its own `:root` and uses it, so a
-     shop that had changed its brand colour kept the old pink on this page.
-
-     LAST IN THE HEAD, AFTER THIS DOCUMENT'S OWN <style>, and that is
-     load-bearing rather than tidy: the accent rule is `:root` and so is this
-     document's own `--pink` declaration, so the two tie on specificity and
-     source order decides. Emitted earlier, it would lose.
-
-     ZERO BYTES until the owner moves one of them. --}}@include('partials.shop-appearance-css')
-{{-- Appearance -> Header -> Breadcrumbs. This document draws a trail and
-     does not extend the layout, so it carries the same one line. (Lane PI-B) --}}@include('partials.breadcrumb-css')
-{{-- Appearance -> Page background (Lane BG). ONE LINE, zero bytes until the
-     owner switches the wash on. THIS DOCUMENT DOES NOT EXTEND
-     layouts/store.blade.php -- it carries its own <html>, <head> and inline
-     stylesheet -- so the include has to be repeated here rather than inherited.
-     Measured: without it this page rendered BYTE-IDENTICALLY under all four
-     treatments, and tools/bg-sheet.cjs refused to arrange the row. LAST IN THE
-     HEAD so it outranks this file's own `body{background:var(--bg)}`. --}}@include('partials.page-wash-css')
-</head>
-<body>
-<header class="head"><div class="wrap head-in">
-  <button class="burger" onclick="document.getElementById('mnav').classList.add('on');document.getElementById('navov').classList.add('on')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-  <a class="logo" href="{{ \App\Support\Url::to('/') }}"><bdi>K-Beauty<span>Bliss</span></bdi></a>
-  <nav class="nav-links">
-    <a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a>
-    <a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a>
-    <a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}" class="on">{{ __('store.journal.nav_journal') }}</a>
-  </nav>
-  <div class="tools">
-    <a class="tool" href="{{ \App\Support\Url::to('/shop/') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg></a>
-    <a class="tool" href="{{ \App\Support\Url::to('/shop/') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/></svg></a>
-  </div>
-</div></header>
-
-<div class="navov" id="navov" onclick="this.classList.remove('on');document.getElementById('mnav').classList.remove('on')"></div>
-<nav class="mnav" id="mnav">
-  <button class="mnav-x" onclick="document.getElementById('mnav').classList.remove('on');document.getElementById('navov').classList.remove('on')">✕</button>
-  <a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a><a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a><a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a><a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.journal.nav_journal') }}</a>
-</nav>
-
+@section('content')
+<div class="kbb-journal">
 <article id="article">
   
   <div class="crumb"><a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.journal.nav_journal') }}</a></div>
@@ -321,12 +152,5 @@
 
 </div>
 
-<footer><div class="wrap fin">
-  <div>{{ __('store.journal.footer_line') }}</div>
-  <div><a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a> · <a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a> · <a href="{{ \App\Support\Url::to(\App\Support\UrlScheme::blogIndex()) }}">{{ __('store.journal.nav_journal') }}</a></div>
-</div></footer>@include('partials.whatsapp-button')
-@verbatim
-</body>
-</html>
-
-@endverbatim
+</div>
+@endsection

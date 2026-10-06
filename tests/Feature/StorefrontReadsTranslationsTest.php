@@ -360,23 +360,20 @@ it('translates a category, a brand, a page, an article and a menu label too', fu
     }
 
     /*
-     * The menu label is asserted on the pages that draw the SHARED header, and
-     * the Journal is deliberately not one of them.
+     * The menu label is asserted on the pages that draw the SHARED header --
+     * and since Lane BH the Journal and an article are among them.
      *
-     * store/post.blade.php and store/blog.blade.php open with
-     * `@verbatim<!DOCTYPE html><html lang="en">` and carry their own hard-coded
-     * nav. They do not extend layouts.store, so they have no shared header to
-     * translate, no dir="rtl" and no hreflang — the article's WORDS reach
-     * Arabic (asserted above) and its document does not. That is a real gap and
-     * it is named in this lane's report rather than fixed here: rebuilding two
-     * standalone documents onto the shared layout is a change to the RTL and
-     * SEO lanes' surface, not a line in this diff.
+     * store/post.blade.php and store/blog.blade.php used to open with their own
+     * <html lang="en"> and a hard-coded nav, so they had no shared header to
+     * translate and this case pinned that gap on purpose. They extend
+     * layouts.store now: the article carries the shared header, translated, and
+     * declares itself Arabic.
      */
-    foreach (['/ar/collections/fp-toners/', '/ar/brands/fp-anua/', '/ar/about/'] as $path) {
+    foreach (['/ar/collections/fp-toners/', '/ar/brands/fp-anua/', '/ar/about/', '/ar/blog/fp-article/'] as $path) {
         expect((string) test()->get($path)->getContent())->toContain('ZZSENTINELMENU');
     }
 
-    expect((string) test()->get('/ar/blog/fp-article/')->getContent())->toContain('<html lang="en">');
+    expect((string) test()->get('/ar/blog/fp-article/')->getContent())->toContain('<html lang="ar"');
 
     /*
      * The journal INDEX, which reads its tiles from a narrowed select. `id` had

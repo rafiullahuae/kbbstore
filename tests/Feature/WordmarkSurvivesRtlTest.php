@@ -77,8 +77,8 @@ it('wraps every wordmark so the document direction cannot reorder it', function 
         'partials/footer-classic.blade.php',
         'store/checkout.blade.php',
         'store/checkout-success.blade.php',
-        'store/blog.blade.php',
-        'store/post.blade.php',
+        // store/blog and store/post drew their own `.logo` until Lane BH; they
+        // extend the layout now and show partials/header.blade.php's, above.
     ];
 
     foreach ($files as $file) {

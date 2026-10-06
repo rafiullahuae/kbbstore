@@ -117,8 +117,11 @@ it('ships every approved colour in the source stylesheets and in the built ones'
     }
 
     // The documents that declare their own :root carry the same two tokens.
+    // (store/blog and store/post left this list with Lane BH: they extend
+    // layouts/store.blade.php now and take both tokens from kbb.css's :root,
+    // declaring neither -- JournalSharedHeaderTest pins that they stay off.)
     foreach (['css/kbb/kbb-product.css', 'css/kbb/kbb-shop.css', 'css/kbb/kbb-checkout.css',
-        'views/store/blog.blade.php', 'views/store/post.blade.php', 'views/store/review-wall.blade.php',
+        'views/store/review-wall.blade.php',
         'views/store/skin-quiz.blade.php'] as $f) {
         // Comments stripped: several of these files quote the old value in prose.
         $src = (string) preg_replace(['#/\*.*?\*/#s', '#\{\{--.*?--\}\}#s'], '', (string) file_get_contents(resource_path($f)));

@@ -43,14 +43,17 @@ use App\Support\BrandAccent;
  */
 it('includes the appearance partial exactly once in every document that needs it', function () {
     /*
-     * SIX, not five: the layout is a user of this partial too, and that is the
-     * point of it — one writer for the brand colour rather than one in the
-     * layout and five stale copies of the default in the documents.
+     * The layout is a user of this partial too, and that is the point of it —
+     * one writer for the brand colour rather than one in the layout and stale
+     * copies of the default in the documents.
+     *
+     * store/blog and store/post LEFT this list with Lane BH: they extend
+     * layouts/store.blade.php now, so the layout's one include reaches them and
+     * a second one in either view would emit the block twice into one head.
+     * JournalSharedHeaderTest pins that they extend the layout.
      */
     $documents = [
         'layouts/store.blade.php',
-        'store/blog.blade.php',
-        'store/post.blade.php',
         'store/review-wall.blade.php',
         'store/skin-quiz.blade.php',
         'store/app.blade.php',
@@ -159,7 +162,10 @@ it('puts the accent after the document\'s own stylesheet, or it loses the tie', 
      */
     app(SettingsService::class)->set('brand_accent', '#2E7D6B');
 
-    foreach (['/reviews/', '/skin-quiz/', '/skincare-guide/'] as $path) {
+    // (/skincare-guide/ left this list with Lane BH: the journal no longer
+    // declares a --pink of its own to tie with -- it takes kbb.css's :root,
+    // which the accent outranks by coming after it in the layout's head.)
+    foreach (['/reviews/', '/skin-quiz/'] as $path) {
         $html = $this->followingRedirects()->get($path)->getContent();
 
         $own = strpos($html, '--pink:#C6395F');   // Lane CT: was #E0567B
@@ -488,23 +494,27 @@ it('emits every head block the layout emits, on all six documents, at moved sett
 
 it('gives the journal and an article the designed page background, and leaves the designed ones alone', function () {
     /*
-     * The page background does not have ONE marker across the six, which is
-     * why it is its own case rather than a row in the table above: the layout
-     * gets it from kbb.css, the two documents that could not get it from
-     * kbb.css now carry partials/page-background-css, and two more are
-     * compositions in their own named colours that must NOT be flattened.
+     * The page background does not have ONE marker across the documents, which
+     * is why it is its own case rather than a row in the table above.
      *
-     * Measured with getComputedStyle before this lane touched them:
-     *   home, /shop/, product, cart   rgb(253,239,243) + 5 layers
-     *   the journal, an article       rgb(255,255,255) + none      ← the defect
-     *   the review wall               rgb(255,248,245) + its cream fade
-     *   the skin quiz                 transparent + 11 layers
+     * ▲ LANE BH. The journal and an article used to carry a COPY of kbb.css's
+     * background (partials/page-background-css, white before that). They extend
+     * layouts/store.blade.php now, so they take the background from kbb.css
+     * itself, exactly as the home page does, and the copy -- and the guard that
+     * held it identical to kbb.css -- are gone with nothing left to diverge.
+     * The two compositions in their own named colours must still NOT be
+     * flattened.
      */
     sdhMoveEverything();
 
+    $home = (string) $this->followingRedirects()->get('/')->getContent();
+    preg_match('#<link rel="stylesheet" href="[^"]*kbb[^"]*\.css"[^>]*>#', $home, $sheet);
+
+    expect($sheet)->not->toBeEmpty('the home page links no kbb.css build, so this guard asserts nothing');
+
     $carries = [
-        'journal' => ['/blog/', 'id="kbb-page-background"'],
-        'article' => ['/blog/sdh-audit-article/', 'id="kbb-page-background"'],
+        'journal' => ['/blog/', $sheet[0]],
+        'article' => ['/blog/sdh-audit-article/', $sheet[0]],
         'review wall' => ['/reviews/', 'linear-gradient(180deg,#fff,var(--cream) 520px)'],
         'skin quiz' => ['/skin-quiz/', 'radial-gradient(55% 45% at 88% -6%,#FFD3E4,transparent 70%)'],
     ];
@@ -517,46 +527,23 @@ it('gives the journal and an article the designed page background, and leaves th
     }
 
     /*
-     * AND THE OWNER'S WASH STILL BEATS IT, which is the half of this that a
-     * later lane would break by tidying the includes into a nicer order.
-     *
-     * The designed background is the SHIPPED design; the wash is a choice the
-     * owner made on Appearance → Page background. Both write `body`, so they
-     * tie on specificity and source order is the whole mechanism — and this one
-     * has to come FIRST, the opposite of what the brand accent asks for.
-     * layouts/store.blade.php has the same order: kbb.css, then the wash.
-     *
-     * Measured in Chromium with the wash on: the journal and an article compute
-     * rgb(252,242,241) with 0 layers, which is exactly what the home page
-     * computes — so the two documents now agree with the shop in BOTH states,
-     * where before they were white in one of them.
-     *
-     * MUTATION: move @include('partials.page-background-css') below
-     * @include('partials.page-wash-css') in store/blog.blade.php → red here,
-     * and the journal renders the shipped pink while the owner's wash is on.
+     * AND THE OWNER'S WASH STILL BEATS IT: both write `body`, they tie on
+     * specificity, and the wash has to come after the designed background --
+     * the order layouts/store.blade.php has, kbb.css then the wash. And no
+     * second copy of the background rides along in either page.
      */
     foreach (['/blog/', '/blog/sdh-audit-article/'] as $url) {
         $html = (string) $this->followingRedirects()->get($url)->getContent();
 
-        $designed = strpos($html, 'id="kbb-page-background"');
+        $designed = strpos($html, $sheet[0]);
         $wash = strpos($html, 'id="kbb-page-wash"');
 
         expect($designed)->not->toBeFalse($url.' does not carry the designed background');
         expect($wash)->not->toBeFalse($url.' does not carry the wash, so this guard asserts nothing');
         expect($wash)->toBeGreaterThan($designed, $url.' emits the wash BEFORE the designed'
             .' background, so the shipped design outranks the owner\'s own choice');
-    }
-
-    /*
-     * AND EXACTLY ONCE. Zero is the "built, never wired up" shape; two emits
-     * the same 9 KB of artwork twice into one head.
-     */
-    foreach (['store/blog.blade.php', 'store/post.blade.php'] as $view) {
-        $src = (string) preg_replace('/\{\{--.*?--\}\}/s', '',
-            (string) file_get_contents(resource_path('views/'.$view)));
-
-        expect(substr_count($src, "@include('partials.page-background-css')"))
-            ->toBe(1, $view.' does not include the page background exactly once');
+        expect(str_contains($html, 'id="kbb-page-background"'))->toBeFalse(
+            $url.' carries a second copy of the page background beside kbb.css');
     }
 });
 
@@ -581,8 +568,7 @@ it('includes the webfont partial exactly once in each document that needs it', f
      * expected table and docs/BG-STANDALONE-DOCUMENTS.md §3.5.
      */
     $expected = [
-        'store/blog.blade.php' => 1,
-        'store/post.blade.php' => 1,
+        // store/blog and store/post: the layout's own inline faces (Lane BH).
         'store/review-wall.blade.php' => 1,
         'store/skin-quiz.blade.php' => 1,
         'store/app.blade.php' => 0,
@@ -612,92 +598,12 @@ it('includes the webfont partial exactly once in each document that needs it', f
         ->toBe(1, 'layouts/store.blade.php no longer emits the Poppins faces exactly once');
 });
 
-it('keeps the copied background declaration identical to the one in kbb.css', function () {
-    /*
-     * THE ANTI-DIVERGENCE PIN, and the whole reason a copy of the page
-     * background is tolerable in partials/page-background-css.blade.php.
-     * kbb.css keeps its own copy because moving it into a separate stylesheet
-     * would add a render-blocking request to the forty pages that already fetch
-     * kbb.css -- docs/BG-STANDALONE-DOCUMENTS.md §5 costs that out -- so the two
-     * have to be held identical by something that fails.
-     *
-     * ▲ WHAT IS PINNED CHANGED WHEN THE DRAWING CAME OFF.
-     *
-     * This used to require the partial to carry kbb.css's 9,130-byte
-     * `--bg-botanical` declaration byte for byte. The owner asked for that
-     * drawing to come off the page background, so neither file carries it any
-     * more and the pin would have been asserting the absence of nothing. What
-     * the two files still share -- and what a lane can still edit in one and
-     * not the other -- is the gradient declaration and the body rule that uses
-     * it, so that is what this holds together now.
-     *
-     * MUTATION: change one byte of the gradient in either file → red, naming
-     * both. Run, both directions.
-     */
-    $css = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
-    $partial = (string) file_get_contents(resource_path('views/partials/page-background-css.blade.php'));
-
-    $start = strpos($css, '--kbb-page-gradient:');
-
-    expect($start)->not->toBeFalse('kbb.css no longer declares --kbb-page-gradient, so this guard'
-        .' asserts nothing. If the page background moved, move this with it.');
-
-    $declaration = substr($css, (int) $start, (int) strpos($css, "\n", (int) $start) - (int) $start);
-    $declaration = rtrim($declaration);
-
-    expect(strlen($declaration))->toBeGreaterThan(40,
-        'the extracted gradient declaration is too short to be the page background');
-
-    expect(str_contains($partial, $declaration))->toBeTrue(
-        'partials/page-background-css.blade.php and kbb.css no longer carry the SAME'
-        .' --kbb-page-gradient declaration. One of them was edited on its own; the journal and an'
-        ." article would now render a different background from every other page.\n"
-        .'  kbb.css: '.$declaration);
-
-    /*
-     * AND NEITHER OF THEM PUTS THE DRAWING BACK. The owner asked for it off the
-     * page background; a lane that reinstates it in either file fails here
-     * rather than on somebody noticing it on the shop.
-     */
-    $bodyRuleStart = strpos($css, 'body{'."\n".'  background-color:#FDEFF3;');
-
-    expect($bodyRuleStart)->not->toBeFalse('kbb.css no longer has the page-background body rule');
-
-    $bodyRule = substr($css, (int) $bodyRuleStart, (int) strpos($css, '}', (int) $bodyRuleStart) - (int) $bodyRuleStart + 1);
-
-    /*
-     * THE PARTIAL'S EMITTED CSS, NOT THE WHOLE FILE — and this caught itself.
-     *                                                          (Lane BG)
-     * Written as `$partial`, the check below went red on a correct file: the
-     * partial's own header comment explains at length that it USED to carry
-     * `--bg-botanical` and no longer does, and that prose satisfied the needle.
-     * The same shape this lane spent round 5 removing from three other files,
-     * in the assertion written to guard against it. The emitted stylesheet
-     * starts at the style tag; everything before it is commentary.
-     */
-    $emitted = substr($partial, (int) strpos($partial, '<style id="kbb-page-background">'));
-
-    foreach ([['kbb.css', $bodyRule], ['the partial', $emitted]] as [$label, $haystack]) {
-        expect(str_contains($haystack, '--bg-botanical'))->toBeFalse(
-            $label.' puts the botanical drawing back on the page background. The owner asked for'
-            .' it off: "you put some image on background of the whole site, which i don\'t want".'
-            .' Appearance → Page background → "Botanical drawing" is how it comes back, and it'
-            .' ships off.');
-
-        expect(str_contains($haystack, 'repeat-y'))->toBeFalse(
-            $label.' tiles the page background down the page again -- the "not continue type" the'
-            .' owner asked to be rid of.');
-    }
-});
-
 it('finds every document that carries its own head, and everything in the layout head', function () {
     /*
      * The two ways this audit goes stale, both made loud.
      */
     expect(sdhOwnHeadViews())->toBe([
         'app.blade.php',
-        'blog.blade.php',
-        'post.blade.php',
         'review-wall.blade.php',
         'skin-quiz.blade.php',
     ], 'a view under store/ carries its own <head> and is not in this audit. Add it to'
@@ -742,7 +648,7 @@ it('finds every document that carries its own head, and everything in the layout
          * wall and the quiz have no trail to hide (their "Home" is a nav link),
          * and app.blade.php is the admin-only App Preview.
          */
-        'breadcrumb-css' => 'styles the breadcrumb trail only; the article, the one standalone document with a trail, includes it itself',
+        'breadcrumb-css' => 'styles the breadcrumb trail only; none of the standalone documents draws one (the article, which does, extends the layout since Lane BH)',
     ];
 
     foreach ([...sdhLayoutHeadIncludes(), ...sdhLayoutHeadStyleIds()] as $thing) {
