@@ -1,0 +1,13 @@
+open + five tab switches: requests=["GET /admin-api/mega-menu/sources"] (1)
+1280 board: {"boardScrollWidth":2124,"boardClientWidth":650,"boardRange":1474,"trackRange":1474,"boardLeft":0,"trackLeft":0,"docScrollWidth":1280,"innerWidth":1280,"barBottomGap":18}
+search "ser": shown=["Cleansers","Face Serums","Serums","Moisturisers"] requests while typing=0
+add 3 ticked: requests=["POST /admin-api/mega-menu/pick"]
+drag Anua onto Top brands: requests=["POST /admin-api/mega-menu/pick"]
+custom javascript: -> requests=0 (refused in the panel; the server refuses it too, see MegaMenuPickerTest)
+thumb mid-drag (+200px): {"boardScrollWidth":2124,"boardClientWidth":952,"boardRange":1172,"trackRange":1172,"boardLeft":407,"trackLeft":407,"docScrollWidth":1280,"innerWidth":1280,"barBottomGap":18}
+keyboard: ArrowRight x2 on the track moved the board 464 -> 544; › moved it 544 -> 708 (one column = 164)
+horizontal over-scroll at the left end: history.length 4 -> 4, url unchanged=true; overscroll-behavior-x: html=none body=none .content=none [data-mo-board]=contain [data-mo-strack]=contain
+storefront K-Beauty panel: ["Cleansers /collections/skincare/cleansers/","Toners /collections/skincare/toners/","Face Serums /collections/skincare/face-serums/","Anua /brands/anua/"]
+390 requests: ["GET /admin-api/mega-menu/sources","POST /admin-api/mega-menu/pick"]
+390 board: {"boardScrollWidth":2124,"boardClientWidth":318,"boardRange":1806,"trackRange":1806,"boardLeft":0,"trackLeft":0,"docScrollWidth":390,"innerWidth":390,"barBottomGap":14}
+390 storefront menu: K-Beauty present=true scrollWidth=390

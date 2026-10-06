@@ -9,6 +9,7 @@ use App\Services\Translation\TranslationStore;
 use App\Support\BrandUrls;
 use App\Support\Color;
 use App\Support\Locale;
+use App\Support\MenuTargets;
 use App\Support\SafeUrl;
 use Illuminate\Support\Facades\Cache;
 
@@ -51,7 +52,7 @@ class NavigationService
                 return $this->fallback($location);
             }
 
-            return $this->tree($menu->allItems);
+            return $this->tree($menu->allItems, null, MenuTargets::livePaths($menu->allItems));
         });
     }
 
@@ -123,7 +124,21 @@ class NavigationService
      * for the next five minutes. The filter has to happen per-request,
      * after the cache read, in the template that actually renders it.
      */
-    private function tree($items, ?int $parentId = null): array
+    /*
+     * ── AND A FOURTH: AN ITEM PICKED FROM THE LIST FOLLOWS ITS TARGET ───────
+     *
+     * Store -> Mega Menu -> Add items stores a category, brand, page or article
+     * as a reference (`target_type` + `target_id`) beside the address it had
+     * when it was added. $live is MenuTargets::livePaths(): the address each
+     * of those rows' targets has NOW, one query per kind and none at all for a
+     * menu with no picked rows. So renaming a category's slug moves the header
+     * link with it, and a target since deleted or unpublished keeps the stored
+     * address. Rows the WordPress import wrote are not in $live — see
+     * MenuTargets::isPicked() for why — so an imported menu renders exactly as
+     * it did. Inside the cached closure, like the URL gate: the answer is the
+     * same for every visitor.
+     */
+    private function tree($items, ?int $parentId = null, array $live = []): array
     {
         return $items
             ->where('parent_id', $parentId)
@@ -132,14 +147,14 @@ class NavigationService
             ->map(fn ($item) => [
                 'id' => $item->id,
                 'label' => $item->label,
-                'url' => SafeUrl::href($item->url, '/'),
+                'url' => SafeUrl::href($live[(int) $item->id] ?? $item->url, '/'),
                 'icon' => $item->icon,
                 'badge' => $item->badge,
                 'highlight_color' => Color::isValidHex($item->highlight_color) ? $item->highlight_color : null,
                 'visibility' => $item->visibility ?? 'always',
                 'new_tab' => (bool) ($item->new_tab ?? false),
                 'columns' => $item->columns,
-                'children' => $this->tree($items, $item->id),
+                'children' => $this->tree($items, $item->id, $live),
             ])
             ->values()
             ->all();

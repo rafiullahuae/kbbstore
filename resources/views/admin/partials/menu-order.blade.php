@@ -20,7 +20,8 @@
 .mo-edge-l{left:0;background:linear-gradient(90deg,rgba(224,86,123,.14),transparent)}
 .mo-edge-r{right:0;background:linear-gradient(270deg,rgba(224,86,123,.14),transparent)}
 .mo-dragging .mo-edge{display:block}
-.mo-board{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 0 8px}
+.mo-board{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 0 8px;scrollbar-width:none}
+.mo-board::-webkit-scrollbar{display:none}
 .mo-cols{display:flex;align-items:flex-start;gap:8px;width:max-content}
 .mo-col{flex:0 0 156px;width:156px;min-width:0;padding:6px;display:flex;flex-direction:column;gap:5px;background:#faf9fc;border:1px solid #f0e4e9;border-top:3px solid var(--mo-hl,#f0e4e9);border-radius:9px}
 .mo-body{display:flex;flex-direction:column;gap:5px;min-height:4px}
@@ -83,6 +84,72 @@
 .mo-sheet-f .mo-in{height:30px;font-size:13px}
 .mo-go{height:30px;border:0;border-radius:8px;background:#2A2228;color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .mo-note{margin:0;font-size:12px;color:#8C828A}
+/* ── Lane MX: the bottom scrollbar. A real scrollbar on its own element, so its
+   thumb drags, its track pages and the arrow keys scroll it once it has focus.
+   The span inside is as wide as the board's columns (--mo-n of them at a 164px
+   stride, less the last 8px gap) less the ‹ › and their gaps, so the track's
+   scroll range IS the board's: synced 1:1 by scroll events, nothing measured.
+   ::-webkit-scrollbar styling is what makes Chrome and Safari on a Mac draw it
+   all the time instead of an overlay bar that hides until you scroll. ── */
+.mo-main{position:relative;min-width:0}
+.mo-sbar{--mo-sbw:26px;--mo-sbg:6px;position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:var(--mo-sbg);padding:5px 0;background:#fff;border-top:1px solid #f0e4e9}
+.mo-sb{flex:none;width:var(--mo-sbw);height:22px;padding:0;border:1px solid #e6dfe3;border-radius:6px;background:#fff;color:#5E545A;font:inherit;font-size:16px;line-height:1;display:grid;place-items:center;cursor:pointer}
+.mo-sb:hover{border-color:#E0567B;color:#C13E63}
+.mo-sb:focus-visible,.mo-strack:focus-visible{outline:2px solid #E0567B;outline-offset:1px}
+.mo-strack{flex:1;min-width:0;height:14px;overflow-x:scroll;overflow-y:hidden;overscroll-behavior-x:contain;border-radius:99px;background:#f6eef1}
+.mo-sspan{height:1px;width:calc(var(--mo-n,0) * 164px - 8px - 2 * (var(--mo-sbw) + var(--mo-sbg)))}
+.mo-strack::-webkit-scrollbar{height:14px}
+.mo-strack::-webkit-scrollbar-track{background:#f6eef1;border-radius:99px}
+.mo-strack::-webkit-scrollbar-thumb{background:#E0567B;border-radius:99px;border:3px solid #f6eef1}
+.mo-strack::-webkit-scrollbar-thumb:hover,.mo-strack::-webkit-scrollbar-thumb:active{background:#C13E63}
+@supports not selector(::-webkit-scrollbar){.mo-strack{scrollbar-width:auto;scrollbar-color:#E0567B #f6eef1}}
+/* The Mac's two-finger swipe is Back once a horizontal scroll reaches an end and
+   nothing contains it. On this screen nothing above the board may take it. */
+html:has(.mo-board),body:has(.mo-board),.content:has(.mo-board){overscroll-behavior-x:none}
+/* The floating + clears the bar instead of sitting on its › end. */
+.mo-main .mo-fab{bottom:58px}
+.mo-main .mo-sheet{bottom:122px}
+
+/* ── Lane MX: Add items — the WordPress-style list beside the columns ── */
+.mgmtree.mx-open{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
+@media (min-width:1000px){.mgmtree.mx-open{grid-template-columns:290px minmax(0,1fr)}.mgmtree.mx-open .mx-slot{position:sticky;top:0}}
+.mx-slot{min-width:0;margin-bottom:10px}
+.mgmtree.mx-open .mx-slot{margin-bottom:0}
+.mx-open-btn{display:flex;align-items:baseline;gap:7px;width:100%;padding:9px 12px;border:1px dashed #f3b3c6;border-radius:10px;background:#fff8fa;color:#C13E63;font:inherit;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
+.mx-open-btn small{font-size:11.5px;font-weight:500;color:#8C828A}
+.mx-open-btn:focus-visible,.mx-tab:focus-visible,.mx-go:focus-visible,.mx-link:focus-visible,.mx-x:focus-visible,.mx-in:focus,.mx-row input:focus-visible{outline:2px solid #E0567B;outline-offset:1px}
+.mx-panel{display:flex;flex-direction:column;gap:7px;padding:10px;background:#fff;border:1px solid #f0e4e9;border-radius:12px;max-height:calc(100vh - 140px);min-height:0}
+.mx-head{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font-size:13px}
+.mx-sub{flex:1;min-width:0;font-size:11.5px;color:#8C828A}
+.mx-x{width:22px;height:22px;padding:0;border:0;border-radius:6px;background:transparent;color:#5E545A;font-size:17px;line-height:1;cursor:pointer}
+.mx-tabs{display:flex;flex-wrap:wrap;gap:3px}
+.mx-tab{height:24px;padding:0 8px;border:1px solid #f0e4e9;border-radius:99px;background:#fff;color:#5E545A;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
+.mx-tab[aria-selected="true"]{background:#2A2228;border-color:#2A2228;color:#fff}
+.mx-in{display:block;width:100%;min-width:0;height:28px;padding:0 8px;border:1px solid #e6dfe3;border-radius:7px;background:#fff;color:#2A2228;font:inherit;font-size:12.5px}
+.mx-find{margin-bottom:5px}
+.mx-list{display:flex;flex-direction:column;gap:1px;min-height:60px;max-height:min(46vh,420px);overflow-y:auto;overscroll-behavior:contain;border:1px solid #f4ecef;border-radius:8px;padding:3px}
+.mx-row{display:flex;align-items:center;gap:6px;min-height:26px;padding:0 6px 0 calc(6px + var(--mx-d,0) * 14px);border-radius:6px;font-size:12.5px;color:#2A2228;cursor:grab;user-select:none;-webkit-user-select:none}
+.mx-row[hidden]{display:none}
+.mx-row:hover{background:#fff5f8}
+.mx-row input{flex:none;width:15px;height:15px;margin:0;accent-color:#E0567B;cursor:pointer}
+.mx-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mx-added{flex:none;display:none;font-size:11px;font-weight:800;color:#15a85a}
+.mx-on .mx-added{display:inline}
+.mx-target{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px;align-items:center}
+.mx-target select[data-mx-col]{grid-column:2}
+.mx-lbl{font-size:11.5px;font-weight:700;color:#5E545A}
+.mx-custom{display:flex;flex-direction:column;gap:5px}
+.mx-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mx-go{height:30px;padding:0 14px;border:0;border-radius:8px;background:#E0567B;color:#fff;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.mx-go[disabled]{opacity:.45;cursor:default}
+.mx-link{padding:0;border:0;background:none;color:#C13E63;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
+.mx-link[hidden]{display:none}
+.mx-note{margin:4px 2px;font-size:11.5px;color:#8C828A}
+.mx-note[hidden]{display:none}
+.mx-warn{margin:0 0 5px;padding:6px 8px;border-radius:7px;background:#fffaf0;border:1px solid #f0d9a2;font-size:11.5px;color:#7a5a12}
+.mx-dragging .mo-col,.mx-dragging .mo-grp{outline:1px dashed #f3b3c6;outline-offset:-1px}
+.mx-drop,.mx-dragging .mx-drop{background:#fff5f8;outline:2px solid #E0567B;outline-offset:-1px}
+
 @media (prefers-reduced-motion:reduce){
   .mo-flash::after,.mo-sheet,.mo-slide-u,.mo-slide-d,.mo-slide-l,.mo-slide-r{animation:none}
   .mo-fab,.mo-fab span{transition:none}
@@ -90,4 +157,8 @@
 }
 </style>
 @endverbatim
-<script>{!! file_get_contents(resource_path('js/kbb/admin/menu-order.js')) !!}</script>
+{{-- menu-picker.js FIRST, in the same tag: menu-order.js's mount() looks for
+     window.KBBMenuPicker when the screen paints, which is long after both have
+     run, but one tag keeps "the module whole inside its partial" one script. --}}
+<script>{!! file_get_contents(resource_path('js/kbb/admin/menu-picker.js')) !!}
+{!! file_get_contents(resource_path('js/kbb/admin/menu-order.js')) !!}</script>

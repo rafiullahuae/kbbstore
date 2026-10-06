@@ -356,6 +356,27 @@
       + '</div><div class="mo-sheet-f" data-mo-sheet-form></div></div>';
   }
 
+  /**
+   * THE BOTTOM SCROLLBAR (Lane MX). The owner: "i also need a horizontal
+   * scroll bar to drag to go horizontally, the mouse gestures something gives
+   * back page on mac. so i need a dedicated bar at the bottom".
+   *
+   * A slim native scrollbar on its own element, sticky to the bottom of the
+   * screen for as long as the board is on it, with ‹ › to step one column.
+   * NOTHING IS MEASURED: the track's inner width is CSS — the column count
+   * (--mo-n, set from the tree, which is data) times the column's fixed 164px
+   * stride, less the ‹ › and their gaps — so its scroll range is the board's
+   * scroll range to the pixel, and the two follow each other's scrollLeft
+   * through scroll events alone. Focus the track and the arrow keys scroll it;
+   * it is a real scrollbar, so its thumb drags and its track pages.
+   */
+  function sbarHtml() {
+    return '<div class="mo-sbar" data-mo-sbar>'
+      + '<button type="button" class="mo-sb" data-mo-sstep="-1" aria-label="Scroll one column left">\u2039</button>'
+      + '<div class="mo-strack" data-mo-strack tabindex="0" aria-label="Scroll the columns sideways: drag the bar, or use the arrow keys"><div class="mo-sspan"></div></div>'
+      + '<button type="button" class="mo-sb" data-mo-sstep="1" aria-label="Scroll one column right">\u203a</button></div>';
+  }
+
   function boardHtml(tree) {
     var t = tree || [];
     // The two edge strips exist only while dragging: moving over one scrolls
@@ -364,6 +385,7 @@
       + '<div class="mo-board" data-mo-board><div class="mo-cols" data-mo-zone="root">'
       + t.map(function (n, i) { return columnHtml(n, i + 1, t.length); }).join('')
       + '</div></div><span class="mo-edge mo-edge-r" data-mo-edge="1" aria-hidden="true"></span></div>'
+      + sbarHtml()
       + (t.length ? '' : '<p class="mo-empty">Nothing here yet — the header is showing its built-in fallback. Add the first item with the + button.</p>')
       + fabHtml();
   }
@@ -402,10 +424,17 @@
    */
   function mount(el, host) {
     if (!el) return null;
-    el.innerHTML = boardHtml(host.tree());
+    // [data-mx-slot] is Add items' place (menu-picker.js); .mo-main holds the
+    // board and its sticky bottom scrollbar, which sticks for as long as the
+    // board is on screen because .mo-main is exactly as tall as the board.
+    el.innerHTML = '<div class="mx-slot" data-mx-slot></div><div class="mo-main">' + boardHtml(host.tree()) + '</div>';
+    var picker = null;
+    // The column count, for the bottom scrollbar's CSS width. Data, not a measurement.
+    var count = function () { el.style.setProperty('--mo-n', String((host.tree() || []).length)); };
+    count();
     // Every local change goes through here, so the screen's other views of
-    // the tree (the live preview strip) can follow without a re-fetch.
-    var setTree = function (t) { host.setTree(t); if (host.changed) host.changed(); };
+    // the tree (the live preview strip, Add items' ticks) can follow without a re-fetch.
+    var setTree = function (t) { host.setTree(t); count(); if (host.changed) host.changed(); if (picker) picker.refresh(); };
     var board = q(el, '[data-mo-board]');
     var reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -532,26 +561,37 @@
           host.toast((r && r.data && r.data.errors && r.data.errors[0]) || 'Could not add that.', 'bad');
           return false;
         }
-        var tree = JSON.parse(JSON.stringify(host.tree()));
         var node = { id: Number(r.data.id), label: label, url: url || null, icon: null, badge: null, highlight_color: null, visibility: 'always', new_tab: false, children: [] };
-        if (parentId === null) tree.push(node);
-        else { var p = locate(tree, parentId).node; (p.children = p.children || []).push(node); }
-        setTree(tree);
-        var cols = q(el, '[data-mo-zone="root"]');
-        if (parentId === null) {
-          cols.appendChild(frag(columnHtml(node, tree.length, tree.length)));
-          var prev = directItems(cols)[tree.length - 2];
-          if (prev) prev.replaceChild(frag(headHtml(tree[tree.length - 2], tree.length - 1, tree.length)), prev.firstElementChild);
-          var empty = q(el, '.mo-empty');
-          if (empty) empty.remove();
-        } else {
-          var cid = columnOf(tree, node.id), old = itemEl(el, cid);
-          if (old) old.replaceWith(frag(itemHtml(tree, cid)));
-        }
-        flash(node.id);
+        insertNodes(parentId, [node]);
         host.toast('Added');
         return node.id;
       }, function () { creating = false; host.toast('Could not add that.', 'bad'); return false; });
+    }
+
+    /** New rows the server just made, last under parentId (null = new columns): the tree, then only what they touch. */
+    function insertNodes(parentId, nodes) {
+      if (!nodes || !nodes.length) return;
+      var tree = JSON.parse(JSON.stringify(host.tree()));
+      var before = tree.length;
+      if (parentId === null) Array.prototype.push.apply(tree, nodes);
+      else {
+        var at = locate(tree, parentId);
+        if (!at) { host.reload(); return; }
+        var p = at.node;
+        p.children = (p.children || []).concat(nodes);
+      }
+      setTree(tree);
+      var cols = q(el, '[data-mo-zone="root"]');
+      if (parentId === null) {
+        nodes.forEach(function (n, i) { cols.appendChild(frag(columnHtml(n, before + i + 1, tree.length))); });
+        directItems(cols).forEach(function (c, i) { if (i < before) c.replaceChild(frag(headHtml(tree[i], i + 1, tree.length)), c.firstElementChild); });
+        var empty = q(el, '.mo-empty');
+        if (empty) empty.remove();
+      } else {
+        var cid = columnOf(tree, nodes[0].id), old = itemEl(el, cid);
+        if (old) old.replaceWith(frag(itemHtml(tree, cid)));
+      }
+      flash(nodes[0].id);
     }
 
     function fieldsHtml() {
@@ -832,7 +872,42 @@
       if (e.target.matches('[data-mo-f="col"]') && choice === 'link') subsFor();
     });
 
-    return { controller: ctl, create: create };
+    /* ---- the bottom scrollbar: follows the board and leads it, by scroll events only ---- */
+
+    var strack = q(el, '[data-mo-strack]'), lead = board;
+    // Whichever one the person is using leads; the other only follows. A
+    // follower never writes back, so a smooth ‹ › step is never cut short by
+    // its own echo.
+    var leadBy = function (who) { return function () { lead = who; }; };
+    ['pointerdown', 'wheel', 'touchstart', 'focus', 'keydown'].forEach(function (ev) {
+      strack.addEventListener(ev, leadBy(strack), { passive: true });
+      board.addEventListener(ev, leadBy(board), { passive: true });
+    });
+    board.addEventListener('scroll', function () {
+      if (lead !== strack && strack.scrollLeft !== board.scrollLeft) strack.scrollLeft = board.scrollLeft;
+    }, { passive: true });
+    strack.addEventListener('scroll', function () {
+      if (lead === strack && board.scrollLeft !== strack.scrollLeft) board.scrollLeft = strack.scrollLeft;
+    }, { passive: true });
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-mo-sstep]');
+      if (!b) return;
+      lead = board;
+      // One column's stride: the 156px column and its 8px gap.
+      board.scrollBy({ left: Number(b.dataset.moSstep) * 164, behavior: reduced ? 'auto' : 'smooth' });
+    });
+
+    var api = { controller: ctl, create: create, insert: insertNodes };
+
+    /* ---- Add items (menu-picker.js), when it is loaded ---- */
+    if (typeof self !== 'undefined' && self.KBBMenuPicker) {
+      picker = self.KBBMenuPicker.mount(el, {
+        tree: host.tree, menuId: host.menuId, api: host.api, toast: host.toast,
+        insert: insertNodes, busy: busy, reload: host.reload,
+      });
+    }
+
+    return api;
   }
 
   return {
@@ -850,6 +925,7 @@
     applyPlan: applyPlan,
     controller: controller,
     boardHtml: boardHtml,
+    sbarHtml: sbarHtml,
     itemHtml: itemHtml,
     moreHtml: moreHtml,
     fabHtml: fabHtml,

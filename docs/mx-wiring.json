@@ -1,0 +1,10 @@
+[
+ {
+  "n": 1,
+  "what": "mount Add items' two routes (GET mega-menu/sources, POST mega-menu/pick) in the guarded admin-api group, before the mega-menu block",
+  "file": "routes/web.php",
+  "anchor": "        Route::get('/mega-menu/menus',           [\\App\\Http\\Controllers\\Admin\\MegaMenuApiController::class, 'menus']);\n",
+  "count": 1,
+  "replacement": "        // Store → Mega Menu → Add items (Lane MX): the list of categories, brands,\n        // pages, posts and collections, and the one request that files picked\n        // ones into a column. BEFORE the block below, whose unconstrained\n        // POST /mega-menu/{item} would otherwise take /mega-menu/pick.\n        require __DIR__.'/mega-menu-picker-admin.php';\n\n        Route::get('/mega-menu/menus',           [\\App\\Http\\Controllers\\Admin\\MegaMenuApiController::class, 'menus']);\n"
+ }
+]
