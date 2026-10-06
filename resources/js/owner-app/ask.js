@@ -38,7 +38,9 @@ const pushable = () => 'serviceWorker' in navigator && 'PushManager' in window &
 
 /** Should the sheet show now? Pure apart from what it reads. */
 export function shouldAsk(now) {
-  if (!S.askPush || !S.vapid || !standalone() || !pushable()) return false;
+  // Never over the install card (Lane IN): that card is browser-tab only and
+  // this sheet installed-only, so they cannot meet; S.icOn makes it explicit.
+  if (S.icOn || !S.askPush || !S.vapid || !standalone() || !pushable()) return false;
   if (window.Notification.permission !== 'default') return false;
   const t = +(store.get('oa.np') || 0);
   return !(t > 0 && (now === undefined ? Date.now() : now) - t < ASK_AGAIN_DAYS * DAY_MS);

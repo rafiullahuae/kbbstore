@@ -555,6 +555,36 @@ details summary::-webkit-details-marker { display: none; }
   select, textarea, [contenteditable]:not([contenteditable=false])):where(:not(.inp *, .step *)) { font-size: 16px !important; }
 }
 
+/* ── "Install KBB Owner" (Lane IN) ─────────────────────────────────────────
+   The card at the top of My store in a browser tab, until the app is
+   installed or "Not now" (install.js). Petal: blush glass, the accent
+   gradient on the one button that matters. The arrow points at the
+   browser's own button (Share / ⋮ / ≡) for six seconds; it is fixed, so it
+   moves nothing on the page, and pointer-events:none, so every tap goes
+   through it. Still under reduced motion. */
+.ic { position: relative; overflow: hidden; padding: 16px; background: radial-gradient(120% 140% at 100% 0, #FBD3DF 0, transparent 55%), linear-gradient(160deg, #FFF7F9, #FCE6EC); border: 1px solid rgba(168,71,92,.16); box-shadow: 0 14px 34px -18px rgba(158,63,85,.55); }
+.ic-top { display: flex; gap: 12px; align-items: center; }
+.ic-top > div { min-width: 0; }
+.ic-top b { display: block; font: var(--w-t) 17px/1.25 var(--font-d); color: var(--ink); }
+.ic-top small { display: block; margin-top: 3px; font-size: 12.5px; line-height: 1.4; color: var(--ink2); }
+.ic-hint { margin: 12px 0 0; padding: 10px 12px; border-radius: var(--r-sm); background: rgba(255,255,255,.75); font-size: 13px; line-height: 1.45; color: var(--ink2); }
+.ic-hint .i { width: 16px; height: 16px; vertical-align: -3px; color: var(--acc); }
+.ic-hint b { color: var(--ink); }
+.ic-btns { display: flex; gap: 10px; margin-top: 14px; }
+.ic-btns .btn { flex: 1 1 0; height: 46px; }
+.ic-btns .btn .i { width: 18px; height: 18px; }
+.ic-later { background: rgba(255,255,255,.8); color: var(--ink2); border: 1px solid rgba(168,71,92,.14); }
+.ic-go { background: var(--acc-grad); color: var(--on-acc); box-shadow: 0 10px 22px -12px rgba(158,63,85,.8); }
+.ic-ar { position: fixed; z-index: 90; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--acc-grad); color: var(--on-acc); box-shadow: 0 8px 22px rgba(158,63,85,.45); pointer-events: none; animation: ic-up .8s ease-in-out infinite alternate; }
+.ic-ar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.ic-ar-tr { top: calc(8px + env(safe-area-inset-top)); right: 12px; }
+.ic-ar-br, .ic-ar-bc { bottom: calc(10px + env(safe-area-inset-bottom)); animation-name: ic-dn; }
+.ic-ar-br { right: 12px; } .ic-ar-bc { left: calc(50% - 23px); }
+.ic-ar-br svg, .ic-ar-bc svg { transform: rotate(180deg); }
+@keyframes ic-up { to { transform: translateY(-9px); } }
+@keyframes ic-dn { to { transform: translateY(9px); } }
+@media (prefers-reduced-motion: reduce) { .ic-ar { animation: none; } }
+
 /* ---------------------------------------------- Customise app (Lane OA4)
  * Users & Roles → Owner app → Customise app. Every rule below hangs off a
  * class the app puts on <html> (core.js applyUi) — or, for the font, the
@@ -636,3 +666,4 @@ html.oa-nosync .ib.sync { display: none; }
 html.oa-nocontact .cu-act { display: none; }
 html.oa-nobulk :is([data-act="selall"], .bulk) { display: none; }
 html.oa-nobulk .sel { pointer-events: none; }
+

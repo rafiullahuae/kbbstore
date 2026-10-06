@@ -51,7 +51,9 @@ it('keeps four convenience keys in browser storage and nothing else, never the P
 
     // oa.np (Lane NT): when "Not now" was tapped on the notifications sheet.
     // oa.tn (6 Oct): when the Android "install again for the new top" notice was closed.
-    expect(trim($m[1] ?? ''))->toBe("'oa.a2', 'oa.fs', 'oa.seen', 'oa.np', 'oa.tn'");
+    // oa.ic (Lane IN): when "Not now" was tapped on the install card; it
+    // replaces oa.a2, the old install pop-up's shown-once mark, which nothing reads now.
+    expect(trim($m[1] ?? ''))->toBe("'oa.fs', 'oa.seen', 'oa.np', 'oa.tn', 'oa.ic'");
 
     foreach (glob(resource_path('js/owner-app/*.js')) as $f) {
         $code = (string) preg_replace(['#/\*.*?\*/#s', '#(^|\s)//[^\n]*#'], ['', '$1'], (string) file_get_contents($f));

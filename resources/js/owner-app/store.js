@@ -5,6 +5,7 @@
 import { S, esc, api, $, $$, ic, logo, top, back, toast, sheet, busy, tgl, ago, th, errorBox, store, standalone, isIOS, dateKey, time, isTablet,
   scr, fn, vars, syncBtn, screen, onScreen, once, landed, isFresh, onReset, ln, blk, times, skChips, skNote } from './core.js';
 import { ordersState } from './orders.js';
+import { card as installCard, cardClick, takeBip } from './install.js';
 
 /* ---------------------------------------------------------- my store */
 
@@ -25,7 +26,7 @@ export function fetchDashboard(passive) {
     if (g !== S.gen) return false;
     const host = onScreen('dash');
     if (!r.ok) {
-      if (host && host.hasAttribute('data-sk')) screen(host, 'dash', 0, header(), errorBox(r.data.message));
+      if (host && host.hasAttribute('data-sk')) screen(host, 'dash', 0, header(), installCard() + errorBox(r.data.message));
       return false;
     }
     D.data = r.data;
@@ -33,7 +34,7 @@ export function fetchDashboard(passive) {
     landed('dash');
     if (!ordersState().loaded) ordersState().counts.processing = r.data.counts.processing || 0;
     document.dispatchEvent(new CustomEvent('oa:badge'));
-    if (host) { screen(host, 'dash', 0, header(), body(D.data)); offerInstall(); }
+    if (host) screen(host, 'dash', 0, header(), installCard() + body(D.data));
     return true;
   });
 }
@@ -41,11 +42,13 @@ export function fetchDashboard(passive) {
 export async function renderDashboard(view) {
   view.className = 'view single';
   if (!S.me.can.orders) {
-    screen(view, 'dash-none', 0, header(), '<div class="card empty">Your role does not include orders. Products and customers are in the tabs below.</div>');
+    screen(view, 'dash-none', 0, header(), installCard() + '<div class="card empty">Your role does not include orders. Products and customers are in the tabs below.</div>');
     return;
   }
-  if (D.data && isFresh('dash')) { screen(view, 'dash', 0, header(), body(D.data)); offerInstall(); }
-  else screen(view, 'dash', 0, header(), dashSkel(), true);
+  // Lane IN: the install card leads every drawing of My store, grey bars included,
+  // so it is there the moment the dashboard first appears after a sign-in.
+  if (D.data && isFresh('dash')) screen(view, 'dash', 0, header(), installCard() + body(D.data));
+  else screen(view, 'dash', 0, header(), installCard() + dashSkel(), true);
   await fetchDashboard();
 }
 
@@ -153,6 +156,7 @@ function body(d) {
 }
 
 export function dashboardClick(e, view) {
+  if (cardClick(e)) return true;
   if (!D.data) return false;
   const b = e.target.closest('[data-dview],[data-range],[data-tp]');
   if (!b) return false;
@@ -197,32 +201,21 @@ async function part(view, which, sel) {
 
 /* ----------------------------------------------------- add to home */
 
-let installEvent = null;
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvent = e; });
-window.addEventListener('appinstalled', () => { installEvent = null; toast('Installed — it’s on your home screen'); });
+/* The install offer lives in install.js (Lane IN), which also draws the card
+   at the top of My store; the pop-up that used to open by itself is gone. */
+window.addEventListener('appinstalled', () => { toast('Installed — it’s on your home screen'); });
 
-/** Offered once, on the first visit, unless the app already runs from the home screen. */
-function offerInstall() {
-  if (standalone() || store.get('oa.a2')) return;
-  store.set('oa.a2', '1');
-  setTimeout(openInstall, 600);
-}
-
+/** More -> Add to home screen: the browser's own box when it has one, from this tap; else the steps. */
 export function openInstall() {
+  const now = takeBip();
+  if (now) { now.prompt(); if (now.userChoice) now.userChoice.catch(() => null); return; }
   const host = location.hostname;
   sheet('', '<div class="a2-head">' + logo() + '<div><b>Add K-Beauty Bliss Owner to your home screen</b><small>' + esc(host) + ' · under 200 KB</small></div></div>'
     + '<ul class="a2-list"><li><span class="tone t-acc">' + ic('bolt') + '</span>Opens full screen in one tap</li><li><span class="tone t-acc">' + ic('bell') + '</span>Order and stock alerts on this phone</li><li><span class="tone t-acc">' + ic('lock') + '</span>Locked with your PIN</li></ul>'
-    + (isIOS || !installEvent ? '<div class="a2-ios">On iPhone: tap ' + ic('share') + ' <b>Share</b>, then <b>Add to Home Screen</b> — it opens full screen</div>' : '')
-    + '<div class="btns"><button class="btn sec" type="button" data-close>Not now</button>' + (installEvent ? '<button class="btn pri" type="button" data-install>Install app</button>' : '<button class="btn pri" type="button" data-close>Got it</button>') + '</div>',
-  (panel, close) => {
-    const b = $('[data-install]', panel);
-    if (b) b.addEventListener('click', async () => {
-      const ev = installEvent;
-      installEvent = null;
-      close();
-      if (ev) { ev.prompt(); await ev.userChoice.catch(() => null); }
-    });
-  }, 'a2');
+    + (isIOS ? '<div class="a2-ios">On iPhone: tap ' + ic('share') + ' <b>Share</b>, then <b>Add to Home Screen</b> — it opens full screen</div>'
+      : '<div class="a2-ios">On Android: tap <b>⋮</b> in Chrome, then <b>Install app</b> — Chrome offers the one-tap install once you have used the app for about half a minute</div>')
+    + '<div class="btns"><button class="btn sec" type="button" data-close>Not now</button><button class="btn pri" type="button" data-close>Got it</button></div>',
+  undefined, 'a2');
 }
 
 /* -------------------------------------------------------- notifications */

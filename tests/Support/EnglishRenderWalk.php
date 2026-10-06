@@ -2315,7 +2315,13 @@ KBB_BH_CSS;
                     // Standalone only, so a shopper in the browser sees nothing new.
                     .'<meta name="theme-color" media="\(display-mode: standalone\)" content="\#FFFFFF">\n'
                     .'<meta name="apple-mobile-web-app-title" content="K-Beauty Bliss">\n'
-                    .'<script src="/site-app\.js\?v=[0-9a-f]{10}" data-sw="/sw\.js" data-scope="/" defer></script>\n#',
+                    .'<script src="/site-app\.js\?v=[0-9a-f]{10}" data-sw="/sw\.js" data-scope="/" defer></script>\n'
+                    // Lane IN, deliberately: the owner asked for the Install button
+                    // to install directly ("i don't want popup"). While the footer's
+                    // app row is switched on, one inline line catches Chrome's install
+                    // offer should it fire before the deferred script, and takes it only
+                    // on a page that drew the row. Nothing visible.
+                    .'<script>addEventListener\(\'beforeinstallprompt\',function\(e\)\{if\(document\.querySelector\(\'\.kfa\[data-kfa\]\'\)\)\{e\.preventDefault\(\);window\.__kbbBip=e\}\}\)</script>\n#',
                 'hits' => 37,
             ],
             /*

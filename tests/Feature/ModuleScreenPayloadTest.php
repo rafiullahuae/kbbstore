@@ -537,7 +537,11 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // inserted after notes_on; the only other leaf edited is the help text on
     // Appearance → Cart page's "Delivery address row", which now names the
     // switch it depends on. Nothing else in the fixture was touched.
-    expect($compared)->toBe(689, 'the number of controls drawn changed');
+    // 690 (Lane IN): Appearance → Footer → App row gained "App row · install
+    // help" (`site_app_help`, inline hint / pop-up sheet, ships "inline" as the
+    // owner asked), spliced in after `site_app_button` where TABS puts it; the
+    // only other leaf edited is `site_app_button`'s help, which named the sheet.
+    expect($compared)->toBe(690, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

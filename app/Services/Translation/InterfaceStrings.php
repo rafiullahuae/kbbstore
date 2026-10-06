@@ -221,6 +221,13 @@ final class InterfaceStrings
             'footer.app_inapp_title' => 'Open this page in your browser first',
             'footer.app_inapp_1' => 'Tap ••• or ⋮ at the top of the screen.',
             'footer.app_inapp_2' => 'Choose “Open in browser” (Safari or Chrome), then tap Install again.',
+            // The inline hints that replace the sheets (Lane IN): the row's own line.
+            'footer.app_hint_and' => 'Tap ⋮ in your browser, then “Install app”.',
+            'footer.app_hint_sam' => 'Tap ≡ below, then “Add page to” → Home screen.',
+            'footer.app_hint_ios' => 'Tap Share ⬆︎ below, then “Add to Home Screen”.',
+            'footer.app_hint_ios26' => 'Tap ••• below, then Share ⬆︎ → “Add to Home Screen”.',
+            'footer.app_hint_top' => 'Tap Share ⬆︎ at the top, then “Add to Home Screen”.',
+            'footer.app_hint_inapp' => 'Open this page in Safari or Chrome to install.',
             'footer.app_qr_title' => 'Scan with your phone camera',
             'footer.app_qr_1' => 'The shop opens on your phone — tap Install there.',
             // App → Site App → App update (Lane UA): the row inside the installed app.

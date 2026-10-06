@@ -196,7 +196,30 @@ final class SiteApp
             'background_color' => self::BACKGROUND,
             'categories' => ['shopping', 'beauty'],
             'icons' => $icons,
+            'related_applications' => self::related(),
         ];
+    }
+
+    /**
+     * The app names ITSELF (Lane IN), so Chrome on Android (84+) can answer
+     * navigator.getInstalledRelatedApps() from a browser tab with "already
+     * installed on this phone", and the footer's Install row hides there too.
+     * Chrome's rule: platform "webapp", the FULL address of the manifest, and
+     * a page on the same origin inside the app's scope asking. One entry per
+     * enabled language, because each language has its own manifest address
+     * and the phone may have installed either. prefer_related_applications is
+     * left out (false), so this never suppresses the install offer.
+     *
+     * @return list<array{platform: string, url: string}>
+     */
+    public static function related(): array
+    {
+        $out = [];
+        foreach (Locale::enabledCodes() as $code) {
+            $out[] = ['platform' => 'webapp', 'url' => Url::externalise(Url::raw('/manifest.webmanifest')).($code === Locale::DEFAULT ? '' : '?lang='.$code)];
+        }
+
+        return $out;
     }
 
     /**
