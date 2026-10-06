@@ -11886,7 +11886,7 @@ function renderSiteAddress(){
 
     +'<div style="margin-top:14px;max-width:520px">'
     +'<label style="font-size:12px;font-weight:600">Main address</label>'
-    +'<input id="saHost" class="inp" value="'+impEsc(s.canonical_host)+'" placeholder="extrabeauty.ae" '
+    +'<input id="saHost" class="inp" value="'+impEsc(s.canonical_host)+'" placeholder="'+impEsc(location.hostname.replace(/^www\./,''))+'" '
     +'style="width:100%;margin-top:4px;font-family:var(--mono)">'
     +'<p style="font-size:11px;color:var(--ink-soft);margin:4px 0 0">No https://, no trailing slash. '
     +'Leave empty and nothing on this screen does anything.</p>'
@@ -11897,10 +11897,10 @@ function renderSiteAddress(){
 
     +'<div style="margin-top:16px;max-width:520px">'
     +'<label style="font-size:12px;font-weight:600">Old addresses to forward here</label>'
-    +'<textarea id="saAliases" class="inp" rows="3" placeholder="kbeautybliss.com" '
+    +'<textarea id="saAliases" class="inp" rows="3" placeholder="old-domain.com" '
     +'style="width:100%;margin-top:4px;font-family:var(--mono)">'+impEsc(s.aliases)+'</textarea>'
     +'<p style="font-size:11px;color:var(--ink-soft);margin:4px 0 0">One per line. '
-    +'The www / non-www pair of your main address is handled automatically — you do not need to type it.'
+    +'The www / non-www pair of your main address, and of every old address listed here, is handled automatically — you do not need to type it.'
     +(s.derived_aliases&&s.derived_aliases.length
       ?'<br>Forwarding now: <code style="font-family:var(--mono);font-size:11px">'
         +s.derived_aliases.map(impEsc).join('</code>, <code style="font-family:var(--mono);font-size:11px">')+'</code>'
