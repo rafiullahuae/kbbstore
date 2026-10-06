@@ -24343,6 +24343,8 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 {{-- Safety -> 404 page (Lane NF): the design, the words, the links and the per-device sizes of the shop's 404 page. It wraps window.go for 'notfoundpage'; its sidebar row is the LATE_NAV entry. --}}
 @include('admin.partials.not-found-page-screen')
 @include('admin.partials.banners-screen')
+{{-- Growth & Marketing -> Marketing Pixels (Lane PX): an eye button in front of each ID that opens its how-to guide with the official Meta / Google / TikTok links. Wraps window.paintPixels; static text, no request. --}}
+@include('admin.partials.marketing-pixels-guide')
 {{-- Appearance -> Set -> Desktop / Mobile (Lane SA). Late-rendered for the same
      reason the four above it are: it runs after this file's own script has
      defined window.go, window.kbbAddNavEntry and toast(), appending its sidebar

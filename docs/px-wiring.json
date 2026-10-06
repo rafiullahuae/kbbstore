@@ -1,0 +1,10 @@
+[
+    {
+        "n": 1,
+        "what": "admin console: include the Marketing Pixels guide (Growth & Marketing -> Marketing Pixels -> the eye button in front of each ID and its popup). It wraps window.paintPixels, so it goes after the console's own scripts, beside the other late screen partials (Lane PX)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "@include('admin.partials.banners-screen')\n",
+        "count": 1,
+        "replacement": "@include('admin.partials.banners-screen')\n{{-- Growth & Marketing -> Marketing Pixels (Lane PX): an eye button in front of each ID that opens its how-to guide with the official Meta / Google / TikTok links. Wraps window.paintPixels; static text, no request. --}}\n@include('admin.partials.marketing-pixels-guide')\n"
+    }
+]
