@@ -27,7 +27,16 @@ use App\Services\CartService;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Route;
 
+/*
+ * The Browsed tab is OFF by default since Lane CK ("turn off the browsed tab on
+ * the checkout summary section"). This file is that tab's, so it switches it on
+ * -- Appearance -> Checkout page -> Fields & attention -> "Recently browsed in
+ * the summary". CheckoutSummaryRowTest pins the default.
+ */
 beforeEach(function () {
+    app(\App\Services\CheckoutPage::class)->save(['browsed_on' => true]);
+    SettingsService::forgetMemo();
+
     PaymentProvider::query()->delete();
     app(\App\Services\Payments\GatewayCredentials::class)->forget();
 

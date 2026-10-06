@@ -1,0 +1,50 @@
+{
+  "add-25": "200 count=1 ",
+  "add-26": "200 count=2 ",
+  "add-27": "200 count=3 ",
+  "add-28": "200 count=4 ",
+  "add-29": "200 count=5 ",
+  "after-ar-guest-390-cart": {
+    "docked": 62,
+    "addrRow": null,
+    "checkoutRow": 62,
+    "wrapPaddingBottom": "86px",
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "after-ar-guest-390-checkout": {
+    "sectionHeight": 372,
+    "address": {
+      "type": "text",
+      "value": "",
+      "h": 45,
+      "font": "16px"
+    },
+    "emirate": {
+      "type": "text",
+      "value": "",
+      "h": 45,
+      "font": "16px"
+    },
+    "city": {
+      "type": "text",
+      "value": "",
+      "h": 45,
+      "font": "16px"
+    },
+    "country": {
+      "type": "select-one",
+      "value": "AE",
+      "h": 45,
+      "font": "16px"
+    },
+    "pickerRow": false,
+    "sheet": false,
+    "delivery": "UAE delivery:\nAED 25",
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "after-ar-guest-390-errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

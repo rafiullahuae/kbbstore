@@ -531,7 +531,13 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // 680 (Lane CT): Product styles → Colour gained four text colours
     // (secondary text, crossed-out price, savings line, footer WhatsApp button).
     // 686 (Lane FB): Appearance → Footer gained the app row's six controls.
-    expect($compared)->toBe(686, 'the number of controls drawn changed');
+    // 689 (Lane CK): Appearance → Checkout page → Fields & attention gained
+    // three switches -- "Address picker row on cart and checkout", "Order
+    // summary: collapsed to one row" and "Recently browsed in the summary" --
+    // inserted after notes_on; the only other leaf edited is the help text on
+    // Appearance → Cart page's "Delivery address row", which now names the
+    // switch it depends on. Nothing else in the fixture was touched.
+    expect($compared)->toBe(689, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

@@ -3169,6 +3169,44 @@ KBB_BH_CSS;
                 'hits' => 1,
                 'perPage' => 1,
             ],
+            // The typed address fields in the picker row's place, and the
+            // listener that re-prices the delivery when the emirate changes
+            // (Lane CK): see the removals of the same lane. Checkout only, once.
+            'the checkout typed address fields (Lane CK)' => [
+                'pattern' => "#<p class=\"form-row form-row-wide validate-required\" id=\"billing_address_1_field\".*?id=\"billing_country_field\".*?</p>\n#s",
+                'hits' => 1,
+            ],
+            'the checkout typed address fields spacing rule (Lane CK)' => [
+                'pattern' => "#<style>\n/\* One rhythm down the four boxes \(Lane CK\)\..*?</style>\n#s",
+                'hits' => 1,
+            ],
+            /*
+             * THE ORDER SUMMARY FOLDED TO ONE ROW (Lane CK, part 2). The owner:
+             * "replace the whole summary section to this single thin row, with
+             * cart icon, Order Summary text, then order total, and then down
+             * pink (our color) arrow". Appearance -> Checkout page -> Fields &
+             * attention -> "Order summary: collapsed to one row" ships ON: the
+             * row and its toggle script at the top of the summary, its
+             * stylesheet, and the one class on <aside> that the stylesheet
+             * folds under. Nothing in the summary is removed -- it is all still
+             * compared byte for byte below the row. Off, none of the three.
+             */
+            'the checkout order summary row and its toggle (Lane CK)' => [
+                'pattern' => "#<button type=\"button\" class=\"cosr\" id=\"kbbSumRow\".*?</button>\n<script>\n.*?\n</script>\n#s",
+                'hits' => 1,
+            ],
+            'the checkout order summary row stylesheet (Lane CK)' => [
+                'pattern' => "#<style>\n/\* ── THE ORDER SUMMARY ROW \(Lane CK\) [^\n]*\n.*?</style>\n#s",
+                'hits' => 1,
+            ],
+            'the checkout summary fold class (Lane CK)' => [
+                'pattern' => '# cosr-on(?=" id="kbbSummary">)#',
+                'hits' => 1,
+            ],
+            'the checkout emirate re-price listener (Lane CK)' => [
+                'pattern' => "#<script>\n/\\* THE EMIRATE PRICES THE DELIVERY, .*?\n</script>\n#s",
+                'hits' => 1,
+            ],
         ];
     }
 
@@ -3575,6 +3613,42 @@ KBB_BH_CSS;
                 // new ones are reduced. One page; the NEW count does not move.
                 // 40 -> 33, Row 55 (Lane HA): see the eyebrow's note above.
                 'hits' => 33,
+            ],
+            /*
+             * THE CHECKOUT'S ADDRESS PICKER ROW GOES (Lane CK, 6 October). The
+             * owner: "turn off the address row completely, from cart and
+             * checkout pages, and bring the manual fields under address section
+             * on checkout page." Appearance -> Checkout page -> Fields &
+             * attention -> "Address picker row on cart and checkout" ships OFF,
+             * so the checkout loses five things, each cut once from its before
+             * side: the row's stylesheet, the sheet's stylesheet, the row with
+             * its four hidden inputs, the sheet's empty portal and the sheet's
+             * script. The four typed fields that replace the row, and the
+             * emirate's re-price listener, are the insertions of the same name.
+             * The cart in this walk is the classic layout, which has no docked
+             * bar, so it does not move; CartCheckoutAddressRowOffTest pins the
+             * squeezed cart. Switch on, and every one of these comes back
+             * byte for byte.
+             */
+            'the checkout address row stylesheet (Lane CK)' => [
+                'pattern' => "#<style>\n/\\* The checkout's address row\\..*?</style>\n#s",
+                'hits' => 1,
+            ],
+            'the address sheet stylesheet on the checkout (Lane CK)' => [
+                'pattern' => "#<style>\n/\\* ── the address sheet [^\n]*\n.*?</style>\n#s",
+                'hits' => 1,
+            ],
+            'the checkout address picker row and its hidden inputs (Lane CK)' => [
+                'pattern' => "#<div class=\"cka\" id=\"cka\">\n.*?\n</div>\n#s",
+                'hits' => 1,
+            ],
+            'the address sheet portal on the checkout (Lane CK)' => [
+                'pattern' => "#<div class=\"cpg-portal\">\n.*?\n</div>\n#s",
+                'hits' => 1,
+            ],
+            'the address sheet script on the checkout (Lane CK)' => [
+                'pattern' => "#<script>\n/\\*\n \\* The address sheet\\. .*?\n</script>\n#s",
+                'hits' => 1,
             ],
         ];
     }

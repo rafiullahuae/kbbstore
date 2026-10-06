@@ -78,7 +78,14 @@ $kbbCpg = $kbbCartPage->all();
  * session and the address book, and the classic page has nothing to show for
  * it.
  */
-$kbbAddrState = $kbbSq ? \App\Support\CartAddressState::all(request()) : null;
+/*
+ * And only while the row is drawn at all: Appearance -> Checkout page ->
+ * Fields & attention -> "Address picker row on cart and checkout" ships OFF
+ * (Lane CK, asked for), and a row nobody sees has no business costing the
+ * signed-in shopper an address-book query.
+ */
+$kbbAddrRowOn = $kbbSq && $kbbCartPage->addressRowOn();
+$kbbAddrState = $kbbAddrRowOn ? \App\Support\CartAddressState::all(request()) : null;
 $kbbAddr = $kbbAddrState['chosen'] ?? null;
 $kbbSignedIn = (bool) ($kbbAddrState['signedIn'] ?? false);
 /*
@@ -624,7 +631,7 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
              The address row is the SHORTER of the two, as asked, and both
              heights are sliders. --}}
         <div class="cpg-docked">
-        @if ($kbbCpg['addr_on'])
+        @if ($kbbAddrRowOn)
             {{-- cpg-has is what turns the fade-off-the-right on, and it is
                  rendered by the server so the row is never briefly wrong: a
                  shopper who reloads with an address already chosen gets the

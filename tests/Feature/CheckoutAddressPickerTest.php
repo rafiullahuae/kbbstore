@@ -39,6 +39,12 @@ use App\Services\SettingsService;
  * picker 404s on a shop running the classic cart page.
  */
 beforeEach(function () {
+    /*
+     * The picker is OFF by default since Lane CK; this file is the picker's,
+     * so it switches it on. CartCheckoutAddressRowOffTest pins the default.
+     */
+    app(\App\Services\CheckoutPage::class)->save(['addr_picker' => true]);
+
     $zone = ShippingZone::create(['name' => 'UAE', 'position' => 0]);
     ShippingZoneLocation::create(['shipping_zone_id' => $zone->id, 'type' => 'country', 'code' => 'AE']);
     ShippingMethod::create([

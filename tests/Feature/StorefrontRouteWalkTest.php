@@ -334,7 +334,15 @@ function walkExpectations(array $seed): array
          * red in CartPageSqueezeTest, which pins that the gate exists and sits
          * in the constructor where it covers the writes.
          */
-        'cart/address'             => ['status' => 200],
+        /*
+         * 404 SINCE LANE CK, and deliberately. The picker row ships OFF on
+         * both pages ("turn off the address row completely, from cart and
+         * checkout pages"), so nothing can open the sheet and the gate answers
+         * "the feature is off". Appearance -> Checkout page -> Fields &
+         * attention -> "Address picker row on cart and checkout" reopens it,
+         * and CartCheckoutAddressRowOffTest pins both halves.
+         */
+        'cart/address'             => ['status' => 404],
 
         // --- Wishlist ---------------------------------------------------
         'my-wishlist'              => ['status' => 200],
