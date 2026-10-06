@@ -778,6 +778,26 @@ class CheckoutPage
         'browsed_on'     => ['bool', 'Recently browsed in the summary', false,
                              'Off, as asked: no "Browsed" tab beside the order summary, and the page does not look up recently viewed products for it. On brings the tab back.'],
 
+        /*
+         * ── TOTALS ABOVE PLACE ORDER, AND FLOATING LABELS (Lane CD) ────────
+         *
+         * "ON DESKTOP checkout: the summary bar should have only products,
+         * rest of the sub total, delivery fees etc rows should be above the
+         * place order button." And: "input fields will not dedicated heading,
+         * the heading it self will show as place holder, and upon click the
+         * placeholder will set as tiny heading inside the input fields, same
+         * like we have on Create account page."
+         *
+         * Both ON because he asked for them (CLAUDE.md rule 1 since 30
+         * September). `sum_totals` OFF is the summary exactly as Lane CK left
+         * it; `float_labels` OFF is every field with its label above the box.
+         * Neither changes a name, an id, a rule or a byte that is posted.
+         */
+        'sum_totals'     => ['bool', 'Desktop: totals above Place order', true,
+                             'On, as asked: on a laptop the order summary row opens to the products only, and the subtotal, delivery, discount, fees and Total sit in their own card directly above Place order. Phones are not affected. Off puts the totals back inside the folded summary.'],
+        'float_labels'   => ['bool', 'Floating labels on checkout fields', true,
+                             'On, as asked: every checkout field (and the cart\'s discount code) carries its name inside the box, the way the Create account form does, and the name shrinks to a small heading at the top of the box when the field is tapped or filled. Off puts the label back above each box.'],
+
         'addr_cue'       => ['bool', 'Point the shopper at the address button', true,
                              'The icon pair, the moving arrow and the halo on the button, on the "choose your delivery address" row. Off leaves that row exactly as it was.'],
         'addr_cue_icons' => ['bool', 'Show the home and office icons', true,
@@ -858,7 +878,7 @@ class CheckoutPage
         'trust'        => ['Trust & reviews', 'The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims.',
                            ['rating_on', 'rating_text', 'rating_min']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
-                           ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'sum_row', 'browsed_on',
+                           ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'sum_row', 'sum_totals', 'float_labels', 'browsed_on',
                             'ph_weight', 'ph_tone', 'ph_italic',
                             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'addr_cue_speed', 'addr_cue_size',
                             'trust_tick', 'trust_tick_speed']],
@@ -1176,6 +1196,28 @@ class CheckoutPage
     public function addressPickerRow(): bool
     {
         return (bool) $this->get('addr_picker');
+    }
+
+    /**
+     * The two Lane CD switches, each ONE lookup in the memoised settings map
+     * rather than all(): the field component asks once per field, and all()
+     * walks the whole schema to answer.
+     */
+    public function desktopTotals(): bool
+    {
+        return $this->flag('sum_totals');
+    }
+
+    public function floatLabels(): bool
+    {
+        return $this->flag('float_labels');
+    }
+
+    private function flag(string $key): bool
+    {
+        $saved = $this->settings->get(self::PREFIX.$key, null);
+
+        return (bool) ($saved === null ? self::SCHEMA[$key][2] : $this->cast($key, $saved));
     }
 
     /** @param array<string, mixed> $values */

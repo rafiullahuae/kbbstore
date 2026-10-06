@@ -44,6 +44,7 @@
     $kbbRowGift = ($settings->get('gift_enabled', '1') && session('kbb_gift'))
         ? (int) $settings->get('gift_fee', '1500')
         : 0;
+    $kbbRowCot = app(\App\Services\CheckoutPage::class)->desktopTotals();
 @endphp
 <button type="button" class="cosr" id="kbbSumRow" aria-expanded="false" aria-controls="kbbPanels"><span class="cosr-ic">{!! \App\Support\HeaderIcons::cart() !!}</span><span class="cosr-tx">{{ __('store.checkout.tab_summary') }}</span><span class="cosr-tot"><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $kbbRowGift, $kbbRowDp) !!}</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $kbbRowCod + $kbbRowGift, $kbbRowDp) !!}</span></span><span class="cosr-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
 <script>
@@ -96,7 +97,7 @@
 /* Folded: everything that is the SUMMARY goes; the actions stay. !important
    because the order block's COD Total row is shown by a rule carrying an id
    in :has(), which would otherwise outrank this one. */
-.kbb-checkout .summary.cosr-on:not(.cosr-open) :is(.sumtabs,.co-items,.kbb-freeship-slot,.sumrow,.js-coupons,.peekfade,.viewfull){display:none!important}
+.kbb-checkout .summary.cosr-on:not(.cosr-open) :is(.sumtabs,.co-items,.kbb-freeship-slot,.sumrow,.js-coupons,.peekfade,.viewfull){!! $kbbRowCot ? ':not(.cotot *)' : '' !!}{display:none!important}{{-- Lane CD: NOT inside .cotot while "Desktop: totals above Place order" is on -- that is the totals card, which stays out above Place order. Off, this rule is the bytes it was. --}}
 .kbb-checkout .summary.cosr-on:not(.cosr-open) .cosr{border-bottom-color:transparent}
 .kbb-checkout .summary.cosr-on .panels{margin-top:12px}
 .kbb-checkout .summary.cosr-on :is(.viewfull,.peekfade){display:none}

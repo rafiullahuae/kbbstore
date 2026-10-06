@@ -20,6 +20,9 @@
      * keeps it; only an install with no row at all gets the default.
      */
     $kbbCartCoupon = app(\App\Services\SettingsService::class)->moduleEnabled('cart_coupon_field', false);
+    // The checkout's "Floating labels on checkout fields" switch (Lane CD)
+    // covers this one field too. Asked only when the field is drawn at all.
+    $kbbCartFl = $kbbCartCoupon && app(\App\Services\CheckoutPage::class)->floatLabels();
 @endphp
 
 @if ($items->isEmpty())
@@ -338,7 +341,11 @@ $kbbLineWas = static function ($kbbWasLine): int {
              suggestion, not an entry field. --}}
         @if ($kbbCartCoupon)
         <div class="coupon">
+@if ($kbbCartFl)
+            <span class="fld kbb-fl kbb-fl-coupon ico"><span class="lead" aria-hidden="true">@include('partials.icon-tag')</span><input type="text" id="kbbCartCoupon" placeholder=" " autocomplete="off"><label for="kbbCartCoupon">{{ __('store.cart.coupon_placeholder') }}</label></span>
+@else
             <input type="text" id="kbbCartCoupon" placeholder="{{ __('store.cart.coupon_placeholder') }}" autocomplete="off">
+@endif
             <button type="button" data-kcpcoupon>{{ __('store.cart.coupon_apply') }}</button>
         </div>
             @if ($couponHint)
@@ -462,7 +469,11 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
                  cart.js reads the value by id. --}}
             @if ($kbbCartCoupon && ! $kbbSq)
                 <div class="coupon">
+@if ($kbbCartFl)
+                    <span class="fld kbb-fl kbb-fl-coupon ico"><span class="lead" aria-hidden="true">@include('partials.icon-tag')</span><input type="text" id="kbbCartCoupon" placeholder=" " autocomplete="off"><label for="kbbCartCoupon">{{ __('store.cart.coupon_placeholder') }}</label></span>
+@else
                     <input type="text" id="kbbCartCoupon" placeholder="{{ __('store.cart.coupon_placeholder') }}" autocomplete="off">
+@endif
                     <button type="button" data-kcpcoupon>{{ __('store.cart.coupon_apply') }}</button>
                 </div>
                 @if ($couponHint)

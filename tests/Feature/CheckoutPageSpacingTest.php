@@ -276,7 +276,10 @@ it('offers spacing and nothing structural', function () {
             // picker row or the four typed fields -- and the section stays.
             // sum_row and browsed_on (Lane CK) fold the summary to one row and
             // drop its Browsed tab; the summary column itself stays.
-            'optin_on', 'optin_checked', 'notes_on', 'ph_italic', 'addr_picker', 'sum_row', 'browsed_on',
+            // sum_totals and float_labels (Lane CD) move the totals into a card
+            // above Place order on a laptop and the field labels inside their
+            // boxes; nothing is added or removed.
+            'optin_on', 'optin_checked', 'notes_on', 'ph_italic', 'addr_picker', 'sum_row', 'browsed_on', 'sum_totals', 'float_labels',
             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'trust_tick',
         ]);
 });

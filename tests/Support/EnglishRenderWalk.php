@@ -1642,6 +1642,28 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * THE TOTALS CARD ABOVE PLACE ORDER (Lane CD). The owner: "ON
+             * DESKTOP checkout: the summary bar should have only products,
+             * rest of the sub total, delivery fees etc rows should be above the
+             * place order button." Appearance -> Checkout page -> Fields &
+             * attention -> "Desktop: totals above Place order" ships ON: the
+             * order block, drawn twice on the checkout (summary column and the
+             * phone box), wraps its rows from the free-delivery bar to the VAT
+             * note in ONE div. Applied to the before side as exactly that
+             * wrapper, so every row inside is still compared byte for byte.
+             * Off, neither fires and the page is as it was.
+             */
+            'the checkout totals card opens (Lane CD)' => [
+                'pattern' => '#<div class="kbb-freeship-slot">#',
+                'with' => '<div class="cotot"><div class="kbb-freeship-slot">',
+                'hits' => 2,
+            ],
+            'the checkout totals card closes (Lane CD)' => [
+                'pattern' => '#(<div class="sumrow vat js-vat-row vat-note"[^\n]*</div>\n)#',
+                'with' => '$1</div>'."\n",
+                'hits' => 2,
+            ],
+            /*
              * THE SITE FOOTER, ON EVERY PAGE: THE APPROVED NEW DESIGN. (Lane HB)
              *
              * The owner approved docs/home-preview/footer-final.html (master
@@ -3216,6 +3238,38 @@ KBB_BH_CSS;
                 'pattern' => '# cosr-on(?=" id="kbbSummary">)#',
                 'hits' => 1,
             ],
+            /*
+             * FLOATING LABELS ON THE CHECKOUT FIELDS (Lane CD). The owner:
+             * "input fields will not dedicated heading, the heading it self
+             * will show as place holder, and upon click the placeholder will
+             * set as tiny heading inside the input fields, same like we have
+             * on Create account page." Appearance -> Checkout page -> Fields &
+             * attention -> "Floating labels on checkout fields" ships ON. Each
+             * field's inside -- icon, control, label after it -- is cut here,
+             * and the label-above shape it replaced is the removal of the same
+             * name; the <p class="form-row ..." id="..._field"> row around it is
+             * untouched and still compared. The component rows, the discount code, the
+             * account password and the gift message. Off, none of them.
+             */
+            'the checkout floating-label fields (Lane CD)' => [
+                'pattern' => '#<span class="woocommerce-input-wrapper fld kbb-fl[^"]*">.*?</label></span>(?=</p>)#s',
+                // Three: name, phone, email. The four address rows are inside
+                // Lane CK's typed-address insertion above, which cuts them whole.
+                'hits' => 3,
+                'perPage' => 3,
+            ],
+            'the checkout floating-label discount code (Lane CD)' => [
+                'pattern' => '#<span class="fld kbb-fl kbb-fl-coupon ico">.*?</label></span>#s',
+                'hits' => 1,
+            ],
+            'the checkout floating-label account password (Lane CD)' => [
+                'pattern' => '#<span class="woocommerce-input-wrapper kbb-acct-pw fld kbb-fl ico" id="account_password_wrap" hidden>.*?</label></span>#s',
+                'hits' => 1,
+            ],
+            'the checkout floating-label gift message (Lane CD)' => [
+                'pattern' => '#<span class="fld kbb-fl ico"><span class="lead" aria-hidden="true"><svg.*?</svg>\s*</span><textarea name="gift_note".*?</label></span>#s',
+                'hits' => 1,
+            ],
             'the checkout emirate re-price listener (Lane CK)' => [
                 'pattern' => "#<script>\n/\\* THE EMIRATE PRICES THE DELIVERY, .*?\n</script>\n#s",
                 'hits' => 1,
@@ -3670,6 +3724,25 @@ KBB_BH_CSS;
              * squeezed cart. Switch on, and every one of these comes back
              * byte for byte.
              */
+            // The label-above field shapes the floating labels replace (Lane
+            // CD): see the insertions of the same name.
+            'the checkout floating-label fields (Lane CD)' => [
+                'pattern' => '#<label for="[^"]+"(?: class="required_field")?>(?:(?!</label>).)*</label><span class="woocommerce-input-wrapper">.*?</span>(?=</p>)#s',
+                // Name, phone, email: the base views predate the typed address.
+                'hits' => 3,
+            ],
+            'the checkout floating-label discount code (Lane CD)' => [
+                'pattern' => '#<input type="text" name="coupon_code" class="input-text" id="kbb_coupon_code" placeholder="[^"]*" autocomplete="off">#',
+                'hits' => 1,
+            ],
+            'the checkout floating-label account password (Lane CD)' => [
+                'pattern' => '#<span class="woocommerce-input-wrapper kbb-acct-pw" id="account_password_wrap" hidden>\s*<input type="password"[^>]*>\s*</span>#',
+                'hits' => 1,
+            ],
+            'the checkout floating-label gift message (Lane CD)' => [
+                'pattern' => '#<textarea name="gift_note" id="gift_note" class="input-text" rows="3" maxlength="600"\s+placeholder="[^"]*">[^<]*</textarea>#',
+                'hits' => 1,
+            ],
             'the checkout address row stylesheet (Lane CK)' => [
                 'pattern' => "#<style>\n/\\* The checkout's address row\\..*?</style>\n#s",
                 'hits' => 1,

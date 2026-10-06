@@ -537,7 +537,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // inserted after notes_on; the only other leaf edited is the help text on
     // Appearance → Cart page's "Delivery address row", which now names the
     // switch it depends on. Nothing else in the fixture was touched.
-    expect($compared)->toBe(689, 'the number of controls drawn changed');
+    // 689 -> 691 (Lane CD): Appearance -> Checkout page -> Fields & attention
+    // gains "Desktop: totals above Place order" and "Floating labels on
+    // checkout fields", inserted after sum_row; nothing else was touched.
+    expect($compared)->toBe(691, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
