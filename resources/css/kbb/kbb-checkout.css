@@ -453,6 +453,71 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .lp{margin-inline-start:auto;font-size:12px;font-weight:800;padding:4px 9px;border-radius:7px;letter-spacing:.02em;background:#1a1f71;color:#fff}
 .kbb-checkout .pemoji{margin-inline-start:auto;font-size:18px}
 
+/* ==========================================================================
+   PAYMENT BOXES -- "A · Soft tint" (Lane PY). The owner picked A from four
+   previews (docs/PY-PAYMENT-PREVIEWS.md). Every rule hangs off .cop-pay, which
+   CheckoutPage::bodyClass() adds unless Appearance -> Checkout page ->
+   Payment boxes -> Style is "Today"; under "Today" none of this matches and
+   the boxes are exactly the ones above.
+
+   Brand colours, from the providers' own logo files:
+     Tabby  #3BFF9D -> #3BFFC8, ink #292929   (ic_tabby_logo.xml)
+     Tamara #AAE1FF ... #F0826B, ink #000      (tw_ic_logo_badge.xml)
+     Card   #1434CB, the Visa blue PaymentMarkArt already draws
+     COD    #1F7D52 / #EEF8F1, the shop's own green
+   --pt tint (medium = the preview), --pg selected border, --ps solid border,
+   --pi the radio dot. Light/Strong and the border choice swap these values
+   only; no rule below changes with them. Ink-2 on the strongest tint: 5.68:1.
+   ========================================================================== */
+.kbb-checkout.cop-pay .wc_payment_methods li.payment_method_tabby{
+  --pt:linear-gradient(#EBFFF6,#EBFFF6);--pg:linear-gradient(90deg,#3BFF9D,#3BFFC8);--ps:#3BFFB2;--pi:#292929}
+.kbb-checkout.cop-pay .wc_payment_methods li.payment_method_tamara{
+  --pt:linear-gradient(110deg,#F1F9FF,#FEF4EE 50%,#FDEEE9);
+  --pg:linear-gradient(110deg,#AAE1FF 1%,#F9BD9A 43%,#FFBC8C 51%,#FFBE92 64%,#F8BC8B 75%,#F29F7E 88%,#F0826B);--ps:#F29F7E;--pi:#000}
+.kbb-checkout.cop-pay .wc_payment_methods li.payment_method_stripe{
+  --pt:linear-gradient(#EFF2FD,#EFF2FD);--pg:linear-gradient(#1434CB,#1434CB);--ps:#1434CB;--pi:#1434CB}
+.kbb-checkout.cop-pay .wc_payment_methods li.payment_method_cod{
+  --pt:linear-gradient(#EEF8F1,#EEF8F1);--pg:linear-gradient(#1F7D52,#1F7D52);--ps:#1F7D52;--pi:#1F7D52}
+.kbb-checkout.cop-pay-light .wc_payment_methods li.payment_method_tabby{--pt:linear-gradient(#F5FFFB,#F5FFFB)}
+.kbb-checkout.cop-pay-light .wc_payment_methods li.payment_method_tamara{--pt:linear-gradient(110deg,#F8FDFF,#FFFAF7 50%,#FEF7F5)}
+.kbb-checkout.cop-pay-light .wc_payment_methods li.payment_method_stripe{--pt:linear-gradient(#F7F8FD,#F7F8FD)}
+.kbb-checkout.cop-pay-light .wc_payment_methods li.payment_method_cod{--pt:linear-gradient(#F7FBF9,#F7FBF9)}
+.kbb-checkout.cop-pay-strong .wc_payment_methods li.payment_method_tabby{--pt:linear-gradient(#D8FFF0,#D8FFF0)}
+.kbb-checkout.cop-pay-strong .wc_payment_methods li.payment_method_tamara{--pt:linear-gradient(110deg,#E4F5FF,#FDEADF 50%,#FBDDD7)}
+.kbb-checkout.cop-pay-strong .wc_payment_methods li.payment_method_stripe{--pt:linear-gradient(#E0E5F8,#E0E5F8)}
+.kbb-checkout.cop-pay-strong .wc_payment_methods li.payment_method_cod{--pt:linear-gradient(#DEEFE7,#DEEFE7)}
+.kbb-checkout.cop-pay-bsolid .wc_payment_methods li.wc_payment_method{--pg:linear-gradient(var(--ps),var(--ps))}
+.kbb-checkout.cop-pay-bpink .wc_payment_methods li.wc_payment_method{--pg:linear-gradient(var(--pink),var(--pink));--pi:var(--pink)}
+
+/* the box: tinted always, a brand border once chosen. The border keeps
+   today's 1.6px so choosing a box moves nothing on the page. */
+.kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method.pay-brand,
+.kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method.pay-brand:hover{background:var(--pt);border-color:var(--line)}
+.kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method.pay-brand:has(input:checked){border-color:transparent;background:var(--pt) padding-box,var(--pg) border-box}
+.kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method.pay-brand:has(input:checked) > label::before{border-color:var(--pi)}
+.kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method.pay-brand:has(input:checked) > label::after{background:var(--pi)}
+.kbb-checkout.cop-pay #payment .wc_payment_methods li.wc_payment_method.pay-brand div.payment_box{background:transparent!important;border-top:1px dashed rgba(0,0,0,.14)!important}
+/* SQUARE BOTTOM CORNERS, today's, read as a cut-off once the box has a colour
+   and a gradient edge: the description sits INSIDE this <li>, so nothing
+   below needs the corner to be square. Every box, branded or not. */
+.kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method:has(input:checked){border-end-start-radius:12px;border-end-end-radius:12px}
+
+/* the logo slot: a fixed box, so the row is the same height before and after
+   the artwork paints, and 26px is the height every row already had. */
+.kbb-checkout.cop-pay .pay-logo{margin-inline-start:auto;flex:none;display:inline-flex;align-items:center;justify-content:flex-end;gap:5px;
+  block-size:var(--cop-paylogo,26px);inline-size:calc(var(--cop-paylogo,26px) * 3.24)}
+.kbb-checkout.cop-pay .pay-logo svg{display:block;block-size:100%;inline-size:auto;max-inline-size:100%}
+.kbb-checkout.cop-pay .pay-logo-stripe svg{block-size:calc(var(--cop-paylogo,26px) * .77)}
+.kbb-checkout.cop-pay .pay-logo-cod svg{block-size:calc(var(--cop-paylogo,26px) * .92);color:#1F7D52}
+/* THE ARABIC GAP. The label's padding is `14px 15px 14px 44px` and then
+   `padding-inline-start:44px`, so in Arabic the physical 44px stays on the
+   LEFT -- the end of the row, where the logo now sits 29px further in than in
+   English. Measured: logo at x82 in Arabic before, x53 after (390 wide). */
+.kbb-checkout.cop-pay .wc_payment_methods li.wc_payment_method > label:has(> .pay-logo){gap:10px;padding-inline-end:15px!important}
+/* the banknote icon replaces the 💵 (which also vanished on select, the dot
+   needing the same ::after) */
+.kbb-checkout.cop-pay .wc_payment_methods li.payment_method_cod:not(:has(input:checked)) > label:has(> .pay-logo)::after{content:none}
+
 /* real WooCommerce place-order + terms live in #payment; hide the native button,
    we drive it from the summary/paybar proxy */
 .kbb-checkout #payment .place-order{padding:0!important;margin:0!important;background:transparent!important;border:0!important}

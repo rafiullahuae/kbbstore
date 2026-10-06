@@ -1,0 +1,268 @@
+{
+ "final-tabby-390": {
+  "sectionClass": "kbb-checkout cop-pay",
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "cls": "wc_payment_method payment_method_tabby pay-brand",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x252.8",
+    "bg": "linear-gradient(rgb(235, 255, 246), rgb(235, 255"
+   },
+   {
+    "id": "tamara",
+    "cls": "wc_payment_method payment_method_tamara pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x252.8",
+    "bg": "linear-gradient(110deg, rgb(241, 249, 255), rgb("
+   },
+   {
+    "id": "stripe",
+    "cls": "wc_payment_method payment_method_stripe pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x252.8",
+    "bg": "linear-gradient(rgb(239, 242, 253), rgb(239, 242"
+   },
+   {
+    "id": "cod",
+    "cls": "wc_payment_method payment_method_cod pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x252.8",
+    "bg": "linear-gradient(rgb(238, 248, 241), rgb(238, 248"
+   }
+  ]
+ },
+ "final-tamara-390": {
+  "sectionClass": "kbb-checkout cop-pay",
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "cls": "wc_payment_method payment_method_tabby pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x252.8",
+    "bg": "linear-gradient(rgb(235, 255, 246), rgb(235, 255"
+   },
+   {
+    "id": "tamara",
+    "cls": "wc_payment_method payment_method_tamara pay-brand",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x252.8",
+    "bg": "linear-gradient(110deg, rgb(241, 249, 255), rgb("
+   },
+   {
+    "id": "stripe",
+    "cls": "wc_payment_method payment_method_stripe pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x252.8",
+    "bg": "linear-gradient(rgb(239, 242, 253), rgb(239, 242"
+   },
+   {
+    "id": "cod",
+    "cls": "wc_payment_method payment_method_cod pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x252.8",
+    "bg": "linear-gradient(rgb(238, 248, 241), rgb(238, 248"
+   }
+  ]
+ },
+ "final-tabby-1280": {
+  "sectionClass": "kbb-checkout cop-pay",
+  "scrollWidth": 1280,
+  "items": [
+   {
+    "id": "tabby",
+    "cls": "wc_payment_method payment_method_tabby pay-brand",
+    "li": 104.1,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x616.8",
+    "bg": "linear-gradient(rgb(235, 255, 246), rgb(235, 255"
+   },
+   {
+    "id": "tamara",
+    "cls": "wc_payment_method payment_method_tamara pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x616.8",
+    "bg": "linear-gradient(110deg, rgb(241, 249, 255), rgb("
+   },
+   {
+    "id": "stripe",
+    "cls": "wc_payment_method payment_method_stripe pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x616.8",
+    "bg": "linear-gradient(rgb(239, 242, 253), rgb(239, 242"
+   },
+   {
+    "id": "cod",
+    "cls": "wc_payment_method payment_method_cod pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x616.8",
+    "bg": "linear-gradient(rgb(238, 248, 241), rgb(238, 248"
+   }
+  ]
+ },
+ "final-tamara-1280": {
+  "sectionClass": "kbb-checkout cop-pay",
+  "scrollWidth": 1280,
+  "items": [
+   {
+    "id": "tabby",
+    "cls": "wc_payment_method payment_method_tabby pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x616.8",
+    "bg": "linear-gradient(rgb(235, 255, 246), rgb(235, 255"
+   },
+   {
+    "id": "tamara",
+    "cls": "wc_payment_method payment_method_tamara pay-brand",
+    "li": 104.1,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x616.8",
+    "bg": "linear-gradient(110deg, rgb(241, 249, 255), rgb("
+   },
+   {
+    "id": "stripe",
+    "cls": "wc_payment_method payment_method_stripe pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x616.8",
+    "bg": "linear-gradient(rgb(239, 242, 253), rgb(239, 242"
+   },
+   {
+    "id": "cod",
+    "cls": "wc_payment_method payment_method_cod pay-brand",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": "84.2x26 @x616.8",
+    "bg": "linear-gradient(rgb(238, 248, 241), rgb(238, 248"
+   }
+  ]
+ },
+ "adminFields1280": [
+  "select-one",
+  "checkbox",
+  "range",
+  "select-one",
+  "select-one",
+  "checkbox",
+  "checkbox",
+  "checkbox",
+  "checkbox",
+  "select-one"
+ ],
+ "saveToday": 200,
+ "final-today-tabby-390": {
+  "sectionClass": "kbb-checkout",
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "cls": "wc_payment_method payment_method_tabby",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": null,
+    "bg": "none"
+   },
+   {
+    "id": "tamara",
+    "cls": "wc_payment_method payment_method_tamara",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": null,
+    "bg": "none"
+   },
+   {
+    "id": "stripe",
+    "cls": "wc_payment_method payment_method_stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": null,
+    "bg": "none"
+   },
+   {
+    "id": "cod",
+    "cls": "wc_payment_method payment_method_cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": null,
+    "bg": "none"
+   }
+  ]
+ },
+ "final-today-tamara-390": {
+  "sectionClass": "kbb-checkout",
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "cls": "wc_payment_method payment_method_tabby",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": null,
+    "bg": "none"
+   },
+   {
+    "id": "tamara",
+    "cls": "wc_payment_method payment_method_tamara",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": null,
+    "bg": "none"
+   },
+   {
+    "id": "stripe",
+    "cls": "wc_payment_method payment_method_stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": null,
+    "bg": "none"
+   },
+   {
+    "id": "cod",
+    "cls": "wc_payment_method payment_method_cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "logo": null,
+    "bg": "none"
+   }
+  ]
+ },
+ "saveSoft": 200
+}

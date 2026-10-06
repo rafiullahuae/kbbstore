@@ -1,0 +1,412 @@
+{
+ "now-tabby-ar-390": {
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(238, 248, 241)",
+    "logo": null
+   },
+   {
+    "id": "tamara",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": null
+   },
+   {
+    "id": "stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": null
+   },
+   {
+    "id": "cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": null
+   }
+  ]
+ },
+ "now-tamara-ar-390": {
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": null
+   },
+   {
+    "id": "tamara",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(238, 248, 241)",
+    "logo": null
+   },
+   {
+    "id": "stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": null
+   },
+   {
+    "id": "cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": null
+   }
+  ]
+ },
+ "a-tabby-ar-390": {
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "linear-gradient(rgb(235, 255, 246), rgb(235, 255, 246)), lin",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "tamara",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "linear-gradient(110deg, rgb(241, 249, 255), rgb(254, 244, 23",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "linear-gradient(rgb(239, 242, 253), rgb(239, 242, 253))",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "linear-gradient(rgb(238, 248, 241), rgb(238, 248, 241))",
+    "logo": "84x26 @x53"
+   }
+  ]
+ },
+ "a-tamara-ar-390": {
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "linear-gradient(rgb(235, 255, 246), rgb(235, 255, 246))",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "tamara",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "linear-gradient(110deg, rgb(241, 249, 255), rgb(254, 244, 23",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "linear-gradient(rgb(239, 242, 253), rgb(239, 242, 253))",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "linear-gradient(rgb(238, 248, 241), rgb(238, 248, 241))",
+    "logo": "84x26 @x53"
+   }
+  ]
+ },
+ "b-tabby-ar-390": {
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "tamara",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   }
+  ]
+ },
+ "b-tamara-ar-390": {
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "tamara",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   }
+  ]
+ },
+ "c-tabby-ar-390": {
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(41, 41, 41)",
+    "bg": "linear-gradient(90deg, rgb(59, 255, 157), rgb(59, 255, 200))",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "tamara",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   }
+  ]
+ },
+ "c-tamara-ar-390": {
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "tamara",
+    "li": 122.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(0, 0, 0)",
+    "bg": "linear-gradient(110deg, rgb(170, 225, 255) 1%, rgb(249, 189,",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   }
+  ]
+ },
+ "d-tabby-ar-390": {
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "li": 198.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "tamara",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   }
+  ]
+ },
+ "d-tamara-ar-390": {
+  "scrollWidth": 390,
+  "items": [
+   {
+    "id": "tabby",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "tamara",
+    "li": 196.3,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "stripe",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   },
+   {
+    "id": "cod",
+    "li": 58,
+    "label": 56,
+    "font": "13.5px/700",
+    "color": "rgb(42, 34, 40)",
+    "bg": "rgb(255, 255, 255)",
+    "logo": "84x26 @x53"
+   }
+  ]
+ }
+}

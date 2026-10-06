@@ -24,6 +24,21 @@
     $payChecked = in_array($selectedMethod ?? null, $payIds, true)
         ? ($selectedMethod ?? null)
         : ($payIds[0] ?? null);
+
+    // Appearance → Checkout page → Payment boxes. Null under "Today", and then
+    // nothing below prints a byte it did not print before (pinned by
+    // CheckoutPaymentBoxesTest). Asked of the service rather than the page's
+    // own $kbbCoPage because the fragment refresh renders this partial alone.
+    // Each logo is a PaymentMarkArt constant chosen by gateway id -- never a
+    // setting's bytes -- so the label prints it raw. It is written inline
+    // after the fee, with no comment or line of its own, because a Blade
+    // comment still leaves its line behind and "Today" may not gain a byte --
+    // and `</label>` shares its line: PHP swallows the newline that follows
+    // the @endif's closing tag, but Blade keeps the one after a raw echo, so a
+    // line break here would add one under "Today" (CheckoutPaymentBoxesTest
+    // caught exactly that). Never write PHP's closing-tag characters in these
+    // comments either: inside a // comment they still end PHP mode.
+    $payBoxes = app(\App\Services\CheckoutPage::class)->paymentBoxes();
 @endphp
 @if (!empty($payNotice))<p class="pay-note pay-moved" role="status" aria-live="polite">{{ $payNotice }}</p>@endif
 @if ($gateways === [] && empty($payNotice))
@@ -44,15 +59,14 @@
             <ul class="wc_payment_methods payment_methods methods">
             @if (!empty($codHidden))<p class="pay-note">{{ $codHidden }}</p>@endif
             @foreach ($gateways as $g)
-            <li class="wc_payment_method payment_method_{{ $g['id'] }}">
+            <li class="wc_payment_method payment_method_{{ $g['id'] }}{{ empty($payBoxes['brand'][$g['id']]) ? '' : ' pay-brand' }}">
     <input id="payment_method_{{ $g['id'] }}" type="radio" class="input-radio" name="payment_method" value="{{ $g['id'] }}" @checked($g['id'] === $payChecked) data-order_button_text="" />
 
     <label for="payment_method_{{ $g['id'] }}">
         {{ $g['title'] }}
         {{-- The fee, right on the option — not only in the paragraph below,
              which is easy to miss until after it has already been chosen. --}}
-        @if (!empty($g['fee_html']))<span class="codfee">{!! $g['fee_html'] !!}</span>@endif
-    </label>
+        @if (!empty($g['fee_html']))<span class="codfee">{!! $g['fee_html'] !!}</span>@endif{!! empty($payBoxes['logos'][$g['id']]) ? '' : '<span class="pay-logo pay-logo-'.e($g['id']).'" aria-hidden="true">'.$payBoxes['logos'][$g['id']].'</span>' !!}    </label>
             @if ($g['description'] || $g['id'] === 'stripe')
             {{-- Shown purely by :has() on .kbb-checkout below, matching how
                  the selected-option highlight on this same list already

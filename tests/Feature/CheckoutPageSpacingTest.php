@@ -35,9 +35,12 @@ function copCss(): string
  |------------------------------------------------------------------------*/
 
 it('emits no attribute at all while every control is at its default', function () {
+    // ' cop-pay' is the one class the defaults DO emit: the soft-tint payment
+    // boxes, which the owner picked and asked to have on (Lane PY). Their
+    // "Today" style takes it away -- CheckoutPaymentBoxesTest pins that.
     expect(cop()->cssVariables())->toBe('')
         ->and(cop()->styleAttr())->toBe('')
-        ->and(cop()->bodyClass())->toBe('');
+        ->and(cop()->bodyClass())->toBe(' cop-pay');
 });
 // MUTATION: emit every property unconditionally. RED — and on the shop, a
 // style attribute on a page StorefrontEnglishUnchangedTest compares byte for
@@ -58,7 +61,7 @@ it('ships the switch that is not a number as a class', function () {
     // decide whether `position:sticky` applies, so this one is a class.
     cop()->save(['d_sticky' => false]);
 
-    expect(cop()->bodyClass())->toBe(' cop-nostick')
+    expect(cop()->bodyClass())->toBe(' cop-nostick cop-pay')
         ->and(cop()->cssVariables())->toBe('');
 
     expect(copCss())->toContain('.kbb-checkout.cop-nostick .summary{position:static}');
@@ -284,6 +287,9 @@ it('offers spacing and nothing structural', function () {
             // boxes; nothing is added or removed.
             'optin_on', 'optin_checked', 'notes_on', 'ph_italic', 'addr_picker', 'sum_row', 'browsed_on', 'sum_totals', 'float_labels',
             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'trust_tick',
+            // Lane PY: whether the payment boxes draw logos, and which of them
+            // wear their gateway's colours. Looks; the four boxes stay four.
+            'pay_logos', 'pay_tabby', 'pay_tamara', 'pay_card', 'pay_cod',
         ]);
 });
 
@@ -390,7 +396,8 @@ it('turns a speed into a duration, not into itself', function () {
 // MUTATION: emit the ratio instead of its inverse. RED.
 
 it('ships every switch as an OFF class, so all-on puts no class on the page', function () {
-    expect(cop()->bodyClass())->toBe('');
+    // bar the payment boxes' own style class (Lane PY; see the first test)
+    expect(cop()->bodyClass())->toBe(' cop-pay');
 
     cop()->save([
         'd_head_sticky' => false, 'm_head_sticky' => false,
@@ -401,7 +408,7 @@ it('ships every switch as an OFF class, so all-on puts no class on the page', fu
     // switches so the default — everything on — is the empty string above and
     // not a list of classes the stylesheet then has to ignore.
     expect(cop()->bodyClass())
-        ->toBe(' cop-dhead-static cop-mhead-static cop-nocue cop-notick');
+        ->toBe(' cop-dhead-static cop-mhead-static cop-nocue cop-notick cop-pay');
 });
 
 it('gives each surface its own header switch instead of one that must undo the other', function () {
@@ -772,12 +779,12 @@ it('gives the placeholder a weight, a colour and a slant as well as a size', fun
     expect($css)->toContain('--cop-phw:400')
         ->and($css)->toContain('--cop-phc:#757575')
         ->and(cop()->cssVariables())->toBe('')
-        ->and(cop()->bodyClass())->toBe('');
+        ->and(cop()->bodyClass())->toBe(' cop-pay'); // the payment boxes' style (Lane PY)
 
     cop()->save(['ph_weight' => '300', 'ph_tone' => 'faint', 'ph_italic' => true]);
 
     expect(cop()->cssVariables())->toBe('--cop-phw:300;--cop-phc:#A9A2A6')
-        ->and(cop()->bodyClass())->toBe(' cop-phit');
+        ->and(cop()->bodyClass())->toBe(' cop-phit cop-pay');
 
     /*
      * A colour is printed into a declaration, so the stored value is a KEY

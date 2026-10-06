@@ -295,6 +295,14 @@ it('sends every module screen the payload it sent before the shared schema', fun
     }
 
     /*
+     * ── ONE TAB APPENDED, NOTHING MOVED ─────────────────────────── Lane PY ──
+     *
+     *   checkout-page.tabs[11]   "Payment boxes", the ten pay_* controls,
+     *                            dumped from the live payload and appended
+     *                            after "cues". Every earlier tab and field is
+     *                            byte-identical in the fixture.
+     */
+    /*
      * ── 30 SEPTEMBER, FIVE EDITS TO THE FIXTURE, EACH ONE READ OFF THE DIFF ─
      *                                                              (Lane SEC)
      * None of them regenerated: the live payload was dumped, diffed against the
@@ -580,10 +588,13 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // fixture's header entry, not regenerated: five objects inserted, none changed.
     // 699 (Lane TP): + 2 — "Shipping & Delivery and Returns Information
     // links" on Appearance → Cart page → Summary & trust (before trust_on) and
-    // on Appearance → Checkout page → Trust & reviews (after rating_min), both
-    // ON because the owner asked for them. Spliced in, nothing else changed
-    // beyond the trust tab's description and the two footer help lines above.
-    expect($compared)->toBe(699, 'the number of controls drawn changed');
+    // on Appearance → Checkout page → Trust & reviews (after rating_min); both
+    // OFF since 2.60.417 (the owner moved them to the slim footer). Spliced
+    // in, nothing else changed beyond the trust tab's description and the two
+    // footer help lines above.
+    // 699 -> 709 (Lane PY): Appearance → Checkout page → Payment boxes, the
+    // ten pay_* controls on a tab of their own appended after "cues".
+    expect($compared)->toBe(709, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
