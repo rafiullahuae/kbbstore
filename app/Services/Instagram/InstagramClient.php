@@ -62,11 +62,21 @@ class InstagramClient
     public const VERSION = 'v23.0';
 
     /**
-     * The one scope this feature asks for, and docs/IG-PROFILE.md §4 lists what it
-     * deliberately does NOT ask for: no insights (so no play counts, honestly
-     * absent rather than substituted), no publishing, no business discovery.
+     * The scopes this feature asks for. docs/IG-PROFILE.md §4 lists what it
+     * deliberately does NOT ask for: no publishing, no business discovery.
+     *
+     * (Lane SG, 2.60.417) `instagram_business_manage_insights` was added because
+     * the owner asked for SHARES on the #KBeautyBliss Spotted cards, and `shares`
+     * is a media INSIGHTS metric -- it is not a field on the media object the way
+     * like_count and comments_count are. A connection made before this package
+     * does not hold it, so shares stay hidden (never 0) until the owner presses
+     * Reconnect once on Content → Instagram. Comma-separated, which is how the
+     * Instagram Login authorize URL takes more than one.
      */
-    public const SCOPE = 'instagram_business_basic';
+    public const SCOPE = 'instagram_business_basic,instagram_business_manage_insights';
+
+    /** (Lane SG) The most a media page can carry; Graph's own ceiling. */
+    public const PAGE = 100;
 
     /**
      * Seconds. Short, because a person is watching a button.
@@ -217,17 +227,89 @@ class InstagramClient
      *
      * @return array{ok: bool, data?: array<string, mixed>, error?: string, reason?: string}
      */
-    public function media(string $token, int $limit): array
+    public function media(string $token, int $limit, ?string $after = null): array
     {
+        $query = [
+            'fields' => 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,'
+                .'like_count,comments_count,children{media_url,media_type,thumbnail_url}',
+            'limit' => max(1, min(self::PAGE, $limit)),
+            'access_token' => $token,
+        ];
+
+        /*
+         * (Lane SG) The NEXT page, by the `after` cursor -- rebuilt here against
+         * our own pinned endpoint rather than by following `paging.next`, which
+         * is a full URL Meta hands back WITH THE ACCESS TOKEN IN IT. Requesting
+         * whatever URL arrived in a response body would send the token to any
+         * host that body named; the cursor is an opaque string and the host is a
+         * constant. Only a cursor of the shape Graph issues is passed on.
+         */
+        if ($after !== null && preg_match('/^[A-Za-z0-9_=-]{1,512}$/', $after) === 1) {
+            $query['after'] = $after;
+        }
+
         return $this->request(
-            fn () => Http::timeout(self::TIMEOUT)->get(self::GRAPH.'/'.self::VERSION.'/me/media', [
-                'fields' => 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,'
-                    .'like_count,comments_count,children{media_url,media_type,thumbnail_url}',
-                'limit' => max(1, min(100, $limit)),
+            fn () => Http::timeout(self::TIMEOUT)->get(self::GRAPH.'/'.self::VERSION.'/me/media', $query),
+            ['data'],
+        );
+    }
+
+    /**
+     * (Lane SG) One media object's insights: `shares`, and `views` for a video.
+     *
+     * GET /{media-id}/insights?metric=… -- needs `instagram_business_manage_
+     * insights`. Asked for a metric a media type does not support, Graph refuses
+     * the WHOLE call, so a still asks for `shares` alone and only a VIDEO adds
+     * `views`. Answers are read from either shape Graph has used
+     * (`values[0].value`, or `total_value.value`); anything else is "no value",
+     * which the caller stores as null and the card does not draw.
+     *
+     * UNVERIFIED AGAINST THE LIVE API from this machine (no route to Meta): the
+     * metric names are the ones Meta's Instagram API with Instagram Login
+     * documents for FEED/REELS media in v22+; `views` replaced `plays` and
+     * `video_views`. The tests fake both answer shapes.
+     *
+     * @return array{ok: bool, shares?: ?int, views?: ?int, error?: string, reason?: string}
+     */
+    public function insights(string $token, string $mediaId, bool $video): array
+    {
+        if (preg_match('/^[A-Za-z0-9_]{1,64}$/', $mediaId) !== 1) {
+            return $this->fail('malformed', 'Not a media id.');
+        }
+
+        $answer = $this->request(
+            fn () => Http::timeout(self::TIMEOUT)->get(self::GRAPH.'/'.self::VERSION.'/'.$mediaId.'/insights', [
+                'metric' => $video ? 'shares,views' : 'shares',
                 'access_token' => $token,
             ]),
             ['data'],
         );
+
+        if (! ($answer['ok'] ?? false)) {
+            return $answer;
+        }
+
+        $found = ['shares' => null, 'views' => null];
+
+        foreach ((array) ($answer['data']['data'] ?? []) as $metric) {
+            if (! is_array($metric)) {
+                continue;
+            }
+
+            $name = (string) ($metric['name'] ?? '');
+
+            if (! array_key_exists($name, $found)) {
+                continue;
+            }
+
+            $value = $metric['values'][0]['value'] ?? ($metric['total_value']['value'] ?? null);
+
+            $found[$name] = is_int($value) || (is_string($value) && ctype_digit($value))
+                ? max(0, (int) $value)
+                : null;
+        }
+
+        return ['ok' => true] + $found;
     }
 
     /**

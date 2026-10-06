@@ -463,6 +463,14 @@ final class AdminCapabilities
         // narrowing one never narrows the other.
         'spotted.manage' => ['owner', 'manager', 'editor'],
 
+        // Appearance → #KBeautyBliss Spotted → From Instagram (Lane SG): which of
+        // our synced Instagram posts the Spotted page draws, and in what order.
+        // Its own capability so it can be narrowed apart from the screen; the
+        // same three roles by default. "Refresh from Instagram" on that panel
+        // is the existing POST admin-api/instagram/refresh — instagram.manage —
+        // so an editor can pick posts but cannot spend the Meta rate limit.
+        'spotted.instagram' => ['owner', 'manager', 'editor'],
+
         // The site width, the side gutter and the product column count: one
         // screen, nine numbers, and every one of them printed into a stylesheet
         // on every page of the shop. Storefront appearance again, and its own
@@ -1677,6 +1685,9 @@ final class AdminCapabilities
         // read is the bare path and every write is under it, and a write left
         // off the map would be owner-only rather than open -- but the editor
         // the owner gave this screen to would be refused for no reason.
+        // (Lane SG) ABOVE the screen's own '/**' line: RULES is first-match-wins,
+        // so listed below it the picker would resolve to spotted.manage.
+        ['*', 'admin-api/spotted/instagram', 'spotted.instagram'],
         ['*', 'admin-api/spotted', 'spotted.manage'],
         ['*', 'admin-api/spotted/**', 'spotted.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint.

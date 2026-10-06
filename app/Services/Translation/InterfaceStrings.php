@@ -1079,6 +1079,19 @@ final class InterfaceStrings
             // until he types one.
             'spotted.grid_heading' => '#KBEAUTYBLISS Spotted',
             'spotted.grid_photo' => '#KBeautyBliss Spotted photo :n',
+            // (Lane SG) The Instagram cards on /kbeautybliss-spotted/: the
+            // counts' spoken names, the type badges, and the video player.
+            'spotted.comments' => 'comments',
+            'spotted.shares' => 'shares',
+            'spotted.views' => 'views',
+            'spotted.reel' => 'Reel',
+            'spotted.album' => 'Album',
+            'spotted.ig_alt' => 'Instagram post by @:handle',
+            'spotted.ig_alt_video' => 'Instagram reel by @:handle',
+            'spotted.play' => 'Play the video here',
+            'spotted.close' => 'Close',
+            'spotted.view_on_ig' => 'View on Instagram',
+            'spotted.video_dialog' => 'Instagram video',
             'home.bestsellers_heading' => 'Best sellers',
             'home.bestsellers_badge' => 'This month',
             'home.bestsellers_subtitle' => 'The products customers keep coming back for.',

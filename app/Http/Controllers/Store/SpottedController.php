@@ -40,11 +40,17 @@ class SpottedController extends Controller
         $self = Url::to(SpottedSettings::URL);
         $absolute = preg_match('#^https?://#i', $self) === 1 ? $self : $base.$self;
 
-        $cards = $spotted->pageCards();
+        // (Lane SG) Our own Instagram posts, ticked on the admin screen, when
+        // the page's source is Instagram; the manual posts otherwise, and also
+        // while nothing is ticked — so the page never goes blank. One cache
+        // read either way on a warm page; neither path calls Instagram.
+        $ig = $spotted->instagramCards($page['source']);
+        $cards = $ig['cards'] === [] ? $spotted->pageCards() : [];
 
         return view('store.spotted', [
             'page' => $page,
             'cards' => $cards,
+            'ig' => $ig,
             'h1' => $h1,
             'intro' => $intro,
             'seoTitle' => $seoTitle,
@@ -56,7 +62,7 @@ class SpottedController extends Controller
                 // An empty grid is a thin page: it asks not to be indexed, and
                 // SeoFilesController leaves it out of /sitemap.xml by the same
                 // test (SpottedSettings::pageIsLive), so the two always agree.
-                'noindex' => $cards === [] ?: null,
+                'noindex' => ($cards === [] && $ig['cards'] === []) ?: null,
                 'breadcrumb' => [
                     ['name' => __('store.breadcrumb.home'), 'url' => $base.'/'],
                     ['name' => $h1, 'url' => $absolute],

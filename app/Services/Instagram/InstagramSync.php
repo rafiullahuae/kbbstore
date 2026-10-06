@@ -7,6 +7,8 @@ namespace App\Services\Instagram;
 use App\Models\InstagramPost;
 use App\Services\InstagramFeed;
 use App\Services\InstagramSettings;
+use App\Services\SpottedInstagram;
+use App\Support\ImageVariants;
 use App\Support\MediaRegistrar;
 
 /**
@@ -49,6 +51,36 @@ class InstagramSync
      * and costs the same as one.
      */
     public const FETCH = 25;
+
+    /*
+     * ── (Lane SG, 2.60.417) EVERY POST, NOT THE LAST TWENTY-FIVE ────────────
+     *
+     * The owner: "a function to fetch our instagram all posts / videos, and to
+     * choose from the list". So run() now follows the media edge page by page
+     * (100 a page, Graph's ceiling) until Instagram says there is no next page,
+     * or MAX_POSTS rows have been read -- a sane ceiling for a shop's own
+     * account, and ten page calls at most.
+     *
+     * WHAT A RUN MAY SPEND. A first run on a 600-post account is 600 pictures
+     * to bring onto our disk; at a few hundred ms each that is minutes, and the
+     * admin button is a web request a person is watching. So the slow work --
+     * a picture this shop does not have yet, a selected post's insights, its
+     * srcset copies -- runs until $seconds is spent and the rest is DEFERRED,
+     * counted in `pending`, and finished by the next press or by the daily
+     * `kbb:instagram-sync` (routes/console.php), which is given minutes.
+     *
+     * A PICTURE WE ALREADY HAVE IS NOT DOWNLOADED AGAIN. A post's image never
+     * changes after it is published, the file name is sha1(remote id), and
+     * re-fetching hundreds of identical files on every press is exactly the
+     * shared rate limit routes/instagram-admin.php warns about.
+     */
+    public const MAX_POSTS = 1000;
+
+    /** Seconds the admin button may spend on pictures and insights. */
+    public const WEB_SECONDS = 20;
+
+    /** The most selected posts whose insights one run asks for. */
+    public const MAX_INSIGHTS = 200;
 
     /**
      * Refresh the stored token if it is inside the window, and say what happened.
@@ -242,8 +274,10 @@ class InstagramSync
      *
      * @return array{ok: bool, error?: string, reason?: string, detail?: string, stored?: int, pictures?: int, failed?: int, pruned?: int}
      */
-    public function run(): array
+    public function run(int $seconds = self::WEB_SECONDS): array
     {
+        $deadline = microtime(true) + max(1, $seconds);
+
         if (! InstagramCredentials::hasSecret() || ! InstagramCredentials::hasAppId()) {
             return ['ok' => false, 'reason' => 'no_app', 'error' => InstagramClient::REASONS['no_app']];
         }
@@ -315,111 +349,154 @@ class InstagramSync
 
         /* ── the media ───────────────────────────────────────────────────── */
 
-        $media = $this->client->media($token, self::FETCH);
-
-        if (! ($media['ok'] ?? false)) {
-            return [
-                'ok' => false,
-                'reason' => (string) ($media['reason'] ?? 'refused'),
-                'error' => (string) ($media['error'] ?? ''),
-                'detail' => (string) ($media['detail'] ?? ''),
-            ];
-        }
-
-        $rows = is_array($media['data']['data'] ?? null) ? $media['data']['data'] : [];
-
         $stored = 0;
         $pictures = 0;
         $failed = 0;
+        $pending = 0;
+        $pages = 0;
         $seen = [];
         $now = now();
+        $after = null;
 
-        foreach ($rows as $row) {
-            if (! is_array($row)) {
-                continue;
+        do {
+            $media = $this->client->media($token, InstagramClient::PAGE, $after);
+
+            if (! ($media['ok'] ?? false)) {
+                // The FIRST page failing is the run failing, as before. A later
+                // page failing keeps what was read: those rows are real, and
+                // prune() below only judges the range that was actually seen.
+                if ($pages === 0) {
+                    return [
+                        'ok' => false,
+                        'reason' => (string) ($media['reason'] ?? 'refused'),
+                        'error' => (string) ($media['error'] ?? ''),
+                        'detail' => (string) ($media['detail'] ?? ''),
+                    ];
+                }
+
+                break;
             }
 
-            $remoteId = trim((string) ($row['id'] ?? ''));
+            $pages++;
 
-            // No id, no upsert key, no row. A media object without one is not
-            // something to guess at.
-            if ($remoteId === '' || strlen($remoteId) > 64) {
-                $failed++;
+            $rows = is_array($media['data']['data'] ?? null) ? $media['data']['data'] : [];
 
-                continue;
+            foreach ($rows as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+
+                $remoteId = trim((string) ($row['id'] ?? ''));
+
+                // No id, no upsert key, no row. A media object without one is not
+                // something to guess at.
+                if ($remoteId === '' || strlen($remoteId) > 64) {
+                    $failed++;
+
+                    continue;
+                }
+
+                $seen[] = $remoteId;
+
+                $post = InstagramPost::query()->firstOrNew(['remote_id' => $remoteId]);
+
+                $type = strtoupper((string) ($row['media_type'] ?? 'IMAGE'));
+
+                $post->media_type = in_array($type, InstagramPost::TYPES, true) ? $type : 'IMAGE';
+                $post->permalink = $this->permalink($row['permalink'] ?? null);
+                $post->shortcode = $this->shortcodeFrom($post->permalink);
+                $post->caption = $this->caption($row['caption'] ?? null);
+
+                /*
+                 * ── A NUMBER WE WERE NOT GIVEN IS LEFT EXACTLY AS IT WAS ────────
+                 *
+                 * `array_key_exists` and not `??`, and the difference is the whole of
+                 * docs/UGC-ENGAGEMENT.md's finding applied to a write. Instagram omits
+                 * `like_count` entirely when the owner has hidden likes on the post —
+                 * and a `?? null` would then overwrite yesterday's real figure with
+                 * "we do not know", on every refresh, for a reason that has nothing to
+                 * do with the number having changed.
+                 *
+                 * That document put it as "the deleted design wrote numbers only when
+                 * the answer carried some, so an old post could not null out
+                 * yesterday's real figures". Same rule, one layer along.
+                 */
+                if (array_key_exists('like_count', $row)) {
+                    $post->like_count = is_numeric($row['like_count']) ? (int) $row['like_count'] : null;
+                }
+
+                if (array_key_exists('comments_count', $row)) {
+                    $post->comments_count = is_numeric($row['comments_count']) ? (int) $row['comments_count'] : null;
+                }
+
+                $post->posted_at = $this->timestamp($row['timestamp'] ?? null);
+                $post->seen_at = $now;
+
+                /*
+                 * ── WHICH URL THE THUMBNAIL COMES FROM, AND WHY IT IS NOT media_url ─
+                 *
+                 * For a VIDEO, `media_url` is the MP4 and `thumbnail_url` is the poster
+                 * frame — so asking for media_url on a reel downloads a video file into
+                 * an image directory, which IgPath would then refuse to serve and
+                 * nobody would understand why.
+                 *
+                 * For a CAROUSEL_ALBUM the parent carries NEITHER, which is a Graph
+                 * quirk rather than an error: the pictures are on `children`. So the
+                 * first child's own thumbnail is used, which is the frame Instagram's
+                 * own grid shows for an album.
+                 */
+                $source = $this->thumbnailUrl($row);
+
+                $before = (string) ($post->local_path ?? '');
+                $have = $before !== '' && ($file = IgPath::absolute($before)) !== null && is_file($file);
+
+                // (Lane SG) A picture already on our disk is kept, not fetched
+                // again; a missing one is fetched while the run has time, and
+                // otherwise left for the next run (counted in `pending`).
+                $path = null;
+                $tried = false;
+
+                if (! $have) {
+                    if (microtime(true) < $deadline) {
+                        $tried = true;
+                        $path = $this->storeImage($remoteId, $source, $before === '' ? null : $before);
+                    } else {
+                        $pending++;
+                    }
+                }
+
+                if ($path !== null) {
+                    $post->local_path = $path;
+                    $pictures++;
+                } elseif ($have) {
+                    // On disk already: still a picture this shop holds.
+                    $pictures++;
+                } elseif ($before === '' && $tried) {
+                    // No picture now and none before, so this post is not drawable. The
+                    // row is still written: the next refresh may get the picture, and
+                    // the counts are worth keeping in the meantime.
+                    $failed++;
+                }
+
+                $post->save();
+                $stored++;
             }
-
-            $seen[] = $remoteId;
-
-            $post = InstagramPost::query()->firstOrNew(['remote_id' => $remoteId]);
-
-            $type = strtoupper((string) ($row['media_type'] ?? 'IMAGE'));
-
-            $post->media_type = in_array($type, InstagramPost::TYPES, true) ? $type : 'IMAGE';
-            $post->permalink = $this->permalink($row['permalink'] ?? null);
-            $post->shortcode = $this->shortcodeFrom($post->permalink);
-            $post->caption = $this->caption($row['caption'] ?? null);
 
             /*
-             * ── A NUMBER WE WERE NOT GIVEN IS LEFT EXACTLY AS IT WAS ────────
-             *
-             * `array_key_exists` and not `??`, and the difference is the whole of
-             * docs/UGC-ENGAGEMENT.md's finding applied to a write. Instagram omits
-             * `like_count` entirely when the owner has hidden likes on the post —
-             * and a `?? null` would then overwrite yesterday's real figure with
-             * "we do not know", on every refresh, for a reason that has nothing to
-             * do with the number having changed.
-             *
-             * That document put it as "the deleted design wrote numbers only when
-             * the answer carried some, so an old post could not null out
-             * yesterday's real figures". Same rule, one layer along.
+             * Graph omits `paging.next` on the last page; the cursor alone is not
+             * proof there is more. Both are required to go on.
              */
-            if (array_key_exists('like_count', $row)) {
-                $post->like_count = is_numeric($row['like_count']) ? (int) $row['like_count'] : null;
-            }
-
-            if (array_key_exists('comments_count', $row)) {
-                $post->comments_count = is_numeric($row['comments_count']) ? (int) $row['comments_count'] : null;
-            }
-
-            $post->posted_at = $this->timestamp($row['timestamp'] ?? null);
-            $post->seen_at = $now;
-
-            /*
-             * ── WHICH URL THE THUMBNAIL COMES FROM, AND WHY IT IS NOT media_url ─
-             *
-             * For a VIDEO, `media_url` is the MP4 and `thumbnail_url` is the poster
-             * frame — so asking for media_url on a reel downloads a video file into
-             * an image directory, which IgPath would then refuse to serve and
-             * nobody would understand why.
-             *
-             * For a CAROUSEL_ALBUM the parent carries NEITHER, which is a Graph
-             * quirk rather than an error: the pictures are on `children`. So the
-             * first child's own thumbnail is used, which is the frame Instagram's
-             * own grid shows for an album.
-             */
-            $source = $this->thumbnailUrl($row);
-
-            $before = (string) ($post->local_path ?? '');
-            $path = $this->storeImage($remoteId, $source, $before === '' ? null : $before);
-
-            if ($path !== null) {
-                $post->local_path = $path;
-                $pictures++;
-            } elseif ($before === '') {
-                // No picture now and none before, so this post is not drawable. The
-                // row is still written: the next refresh may get the picture, and
-                // the counts are worth keeping in the meantime.
-                $failed++;
-            }
-
-            $post->save();
-            $stored++;
-        }
+            $next = $media['data']['paging']['next'] ?? null;
+            $after = $media['data']['paging']['cursors']['after'] ?? null;
+            $more = is_string($next) && $next !== '' && is_string($after) && $after !== '';
+        } while ($more && count($seen) < self::MAX_POSTS && $pages < (int) ceil(self::MAX_POSTS / InstagramClient::PAGE));
 
         $pruned = $this->prune($seen);
 
+        $insights = $this->selectedInsights($token, $deadline);
+
         InstagramFeed::flush();
+        SpottedInstagram::flush();
 
         return [
             'ok' => true,
@@ -427,7 +504,89 @@ class InstagramSync
             'pictures' => $pictures,
             'failed' => $failed,
             'pruned' => $pruned,
+            'pages' => $pages,
+            'pending' => $pending,
+            'insights' => $insights['done'],
+            'insights_note' => $insights['note'],
         ];
+    }
+
+    /**
+     * (Lane SG) Shares (and, for a video, views) for the posts ticked for the
+     * #KBeautyBliss Spotted page -- one insights call each, ONLY for those, and
+     * only from here: the admin button, the selection save and the daily
+     * command. The shop never calls Instagram.
+     *
+     * The stalest first, so a run cut short by its deadline still moves every
+     * post forward over a few runs. Their srcset copies are made on the way,
+     * so the page offers a 200w/400w picture rather than the full one.
+     *
+     * STOPS AT THE FIRST REFUSAL. Without `instagram_business_manage_insights`
+     * every call is refused the same way; asking two hundred times to be told
+     * so two hundred times is two hundred calls off the shop's rate limit. The
+     * note says what to do (reconnect once). A post left unasked keeps the
+     * figure it had -- the same "a number we were not given is left as it was"
+     * rule run() applies to likes.
+     *
+     * @param  iterable<InstagramPost>|null  $only
+     * @return array{done: int, note: string}
+     */
+    public function selectedInsights(string $token, float $deadline, ?iterable $only = null): array
+    {
+        try {
+            $posts = $only ?? InstagramPost::query()
+                ->whereNotNull('spotted_sort')
+                ->orderByRaw('insights_at IS NOT NULL')
+                ->orderBy('insights_at')
+                ->limit(self::MAX_INSIGHTS)
+                ->get(['id', 'remote_id', 'media_type', 'local_path', 'share_count', 'view_count', 'insights_at']);
+        } catch (\Throwable) {
+            return ['done' => 0, 'note' => ''];
+        }
+
+        $done = 0;
+        $left = 0;
+        $note = '';
+
+        foreach ($posts as $post) {
+            if (microtime(true) >= $deadline) {
+                $left++;
+
+                continue;
+            }
+
+            $image = IgPath::stored($post->local_path);
+
+            if ($image !== null && ImageVariants::available() && ! ImageVariants::isComplete($image)) {
+                ImageVariants::generate($image);
+            }
+
+            if ($note !== '') {
+                continue;
+            }
+
+            $answer = $this->client->insights($token, (string) $post->remote_id, $post->media_type === 'VIDEO');
+
+            if (! ($answer['ok'] ?? false)) {
+                $note = in_array($answer['reason'] ?? '', ['refused', 'expired'], true)
+                    ? 'Shares are hidden: Instagram refused the insights request. Press Reconnect on Content → Instagram once, and allow “insights” when Instagram asks.'
+                    : 'Shares could not be read this time; the next refresh tries again.';
+
+                continue;
+            }
+
+            $post->share_count = $answer['shares'] ?? null;
+            $post->view_count = $answer['views'] ?? null;
+            $post->insights_at = now();
+            $post->save();
+            $done++;
+        }
+
+        if ($note === '' && $left > 0) {
+            $note = $left.' selected posts still to read shares for; the next refresh continues.';
+        }
+
+        return ['done' => $done, 'note' => $note];
     }
 
     /* ---------------------------------------------------------------- the pieces */
