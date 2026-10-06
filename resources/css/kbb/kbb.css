@@ -556,7 +556,21 @@
     .mbar .wrap > .navitem.mg-a > .drop::after{content:none}
     .mbar .navitem.mg-a.mg-p > .navlink::before{display:block}
     .mbar .navitem.mg-a.mg-p:hover > .navlink::after{transform:scaleX(0)}
-    .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::before, .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::after{content:"";position:absolute;z-index:69;position-anchor:--mg-item;inset-block-start:anchor(center);inset-block-end:anchor(end)}
+    /* ▲ (Lane SX, 2.60.418) A VISIBLE LINK ALWAYS TAKES THE POINTER. The
+       bridges below cover the lower half of the bar, which is where the
+       NEIGHBOURING menu links are. Drawn over them (z 69, 2.60.416-.417) they
+       swallowed those links: sliding from "Brands" to the next item a little
+       below its text kept the old panel open, never hovered the link under
+       the pointer (so it was never prefetched) and the CLICK LANDED ON THE
+       BRIDGE AND WENT NOWHERE -- the owner's "page shifting speed is back",
+       4 of 15 clicks dead at 1280 (storage/sx-logs/FOUND.txt). So the
+       bridges sit at 68 and every link but the hovered one at 69 while a
+       panel is open: the bridges still fill the bar's empty space, never a
+       link. Panels stay at 70, above both, so a wrapped second row still
+       goes under an open panel; the hovered link gets no z-index, so its
+       pointer (z 71) still draws over its panel's edge. */
+    .mbar .wrap:has(> .navitem:is(.mg-l,.mg-a,.mg-s):hover) > .navitem:not(:hover) > .navlink{z-index:69}
+    .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::before, .mbar .wrap > .navitem:is(.mg-l,.mg-a,.mg-s):hover::after{content:"";position:absolute;z-index:68;position-anchor:--mg-item;inset-block-start:anchor(center);inset-block-end:anchor(end)}
     /* RTL-PHYSICAL: the bridges' clip-path points are physical, so each
        triangle is cut twice — its slope must fall away from the link, which
        is on the inline-end side of ::before and the inline-start side of
