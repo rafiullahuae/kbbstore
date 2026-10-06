@@ -642,7 +642,11 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 1385 -> 1402 (Lane FB): the footer's app row — headline, button, the
     // three icons' names and the install sheets (store.footer.app_*, 17),
     // seeded by 2027_09_01_100100_seed_footer_app_row_arabic_drafts.
-    expect($ui['drafts'])->toBe(1402, 'the shipped Arabic is not showing as drafts to review')
+    // 1402 -> 1405 (Lane UA): the same row's Update App mode inside the
+    // installed app — button, line and the iPhone icon tip
+    // (store.footer.app_update_*), seeded by
+    // 2027_09_03_100000_seed_app_update_row_arabic_drafts.
+    expect($ui['drafts'])->toBe(1405, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

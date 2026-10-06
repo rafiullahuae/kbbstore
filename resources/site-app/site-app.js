@@ -67,16 +67,49 @@
   var row = document.querySelector('.kfa[data-kfa]');
   if (!row) return;
   var html = document.documentElement, nav = navigator, ua = nav.userAgent || '', mm = window.matchMedia;
-  if (nav.standalone === true) { row.hidden = true; return; }
-
   var btn = row.querySelector('.kfa-bt'), tpl = row.querySelector('template.kfa-tpl'), ty = row.querySelector('.kfa-ty');
+
+  /*
+   * UPDATE APP (Lane UA, App -> Site App -> App update). The owner: "if any
+   * user already installed, then the row will not show, but if we published
+   * any updates in the site app, then we will have option to enable to display
+   * again on the existing users device too with Update App button."
+   *
+   * The server prints data-kfa-up only once he has published an update: {v}
+   * the update number, and, while "Show the Update App row" is on, the words.
+   * This phone keeps the last number it has seen (UPK). INSIDE THE INSTALLED
+   * APP ONLY, a published number above it turns this same row into the update
+   * row; the button activates the new service worker and reloads, and the
+   * button or the x stores the number, so that update never shows again here.
+   * In a browser tab the row is the Install row exactly as before.
+   *
+   * A phone with no number yet: a browser tab, or an app opening for the first
+   * time with no worker in charge (a fresh install), starts level with the
+   * shop, so a new install never sees an old update. An app that already has
+   * a worker in charge was installed before this existed, so it starts at 0.
+   */
+  var UPK = 'kbb.sa.up';
+  var app = nav.standalone === true || !!(mm && (mm('(display-mode: standalone)').matches || mm('(display-mode: fullscreen)').matches));
+  var up = null;
+  try { up = JSON.parse(row.getAttribute('data-kfa-up') || 'null'); } catch (e) { up = null; }
+  var pub = up && typeof up.v === 'number' && up.v > 0 ? up.v : 0;
+  function keep(v) { try { window.localStorage.setItem(UPK, String(v)); } catch (e) { /* private mode */ } }
+  var mine = null;
+  try { var got = window.localStorage.getItem(UPK); mine = got === null ? null : (+got || 0); } catch (e) { mine = null; }
+  if (mine === null) {
+    mine = app && nav.serviceWorker && nav.serviceWorker.controller ? 0 : pub;
+    keep(mine);
+  }
+  var upMode = app && pub > mine && typeof up.t === 'string' && up.t !== '' && !!btn;
+  if (app && !upMode) { row.hidden = true; return; }
+  if (upMode) upRow();
   var offer = null;
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); offer = e; });
   window.addEventListener('appinstalled', function () { offer = null; row.hidden = true; inView = false; html.classList.remove('kfa-on'); sync(); });
 
-  /* ── the typing ── */
+  /* ── the typing (never in the update row: its words stay still) ── */
   var seq = [];
-  try { seq = JSON.parse(row.getAttribute('data-kfa') || '[]'); } catch (e) { seq = []; }
+  if (!upMode) try { seq = JSON.parse(row.getAttribute('data-kfa') || '[]'); } catch (e) { seq = []; }
   var still = !!(mm && mm('(prefers-reduced-motion: reduce)').matches);
   var inView = false, timer = 0, at = 0, n = 0, phase = 'hold', chars = [];
   function load(k) {
@@ -174,7 +207,85 @@
     document.body.appendChild(back);
     x.focus();
   }
+  /* ── the update row (Lane UA) ── */
+  function ios() { return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1); }
+  function upRow() {
+    // Only what the update row needs beyond the row's own CSS, so it wears
+    // whatever theme the row ships with: shown in the app, and its two extras.
+    if (!document.getElementById('kfa-up-css')) {
+      var st = document.createElement('style');
+      st.id = 'kfa-up-css';
+      st.textContent = 'html .kfa.kfa-up:not([hidden]){display:block}.kfa-up .kfa-ic{display:none}'
+        + '.kfa-up .kfa-tx b{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}'
+        + '.kfa-ai{flex:none;width:30px;height:30px;border-radius:8px;display:block}'
+        + '.kfa-ux{flex:none;width:32px;height:32px;margin-inline-start:-4px;border:0;border-radius:50%;background:transparent;color:inherit;font:inherit;font-size:20px;line-height:1;cursor:pointer;opacity:.7}'
+        + '.kfa-ux:focus-visible{outline:2px solid #C13E63;outline-offset:2px}'
+        + '.kfa-hn{margin:6px 4px 0;font-size:12px;line-height:1.4;text-align:center;opacity:.85}';
+      document.head.appendChild(st);
+    }
+    row.classList.add('kfa-up');
+    var g = row.querySelector('.kfa-g'), h = row.querySelector('#kfa-h'), vh = row.querySelector('.kfa-vh'), lab = btn.querySelector('span'), path = btn.querySelector('path');
+    if (h) h.textContent = up.t;
+    var line = typeof up.l === 'string' ? up.l : '';
+    if (ty) { ty.textContent = line; ty.setAttribute('lang', html.getAttribute('lang') || 'en'); ty.setAttribute('dir', html.getAttribute('dir') || 'ltr'); }
+    if (vh) vh.textContent = line;
+    if (lab && typeof up.b === 'string' && up.b) lab.textContent = up.b;
+    if (path) path.setAttribute('d', 'M20 11a8 8 0 1 0-2.3 5.7M20 4.5V11h-6.5');
+    var icon = document.querySelector('link[rel="apple-touch-icon"]');
+    if (g && icon && icon.getAttribute('href')) {
+      var img = document.createElement('img');
+      img.className = 'kfa-ai';
+      img.src = icon.getAttribute('href');
+      img.alt = '';
+      g.insertBefore(img, g.firstChild);
+    }
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'kfa-ux';
+    x.setAttribute('aria-label', typeof up.x === 'string' ? up.x : '');
+    x.textContent = '×';
+    x.addEventListener('click', function () { keep(pub); row.hidden = true; inView = false; html.classList.remove('kfa-on'); });
+    if (g) g.appendChild(x);
+    // The iPhone keeps its Home Screen icon and name until the app is removed
+    // and added again: say so, there only, and only if an update this phone
+    // has not seen changed them.
+    if (typeof up.h === 'string' && up.h && (+up.k || 0) > mine && ios() && g && g.parentNode) {
+      var hn = document.createElement('p');
+      hn.className = 'kfa-hn';
+      hn.textContent = up.h;
+      g.parentNode.insertBefore(hn, g.nextSibling);
+    }
+  }
+  /*
+   * The tap: ask the browser for the newest worker; one that waits is told to
+   * take over (SKIP_WAITING), and the page reloads once the new one is in
+   * charge. No new worker, no registration, offline: it just reloads. Every
+   * path ends in exactly one reload, and none of them waits on a timer.
+   */
+  function update() {
+    keep(pub);
+    btn.disabled = true;
+    var sw = nav.serviceWorker, done = false;
+    function reload() { if (!done) { done = true; window.location.reload(); } }
+    if (!sw || !sw.getRegistration) { reload(); return; }
+    sw.getRegistration().then(function (reg) {
+      if (!reg) return reload();
+      return reg.update().then(function () {
+        var w = reg.waiting || reg.installing;
+        if (!w) return reload();
+        sw.addEventListener('controllerchange', reload);
+        function nudge() {
+          if (w.state === 'installed') w.postMessage({ type: 'SKIP_WAITING' });
+          else if (w.state === 'activated' || w.state === 'redundant') reload();
+        }
+        w.addEventListener('statechange', nudge);
+        nudge();
+      });
+    }).catch(reload);
+  }
+
   if (btn) btn.addEventListener('click', function () {
+    if (upMode) { update(); return; }
     if (offer) {
       // The browser's own box, from this tap. One offer prompts once.
       var o = offer;

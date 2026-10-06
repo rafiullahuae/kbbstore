@@ -503,6 +503,10 @@ final class SiteFooter
             // shop's front page in this language: a short address, a small code
             // (version 2–3), about a millisecond and a half.
             'qr' => $laptop ? \App\Support\QrCode::svg(Url::external('/'), __('store.footer.app_qr_title')) : '',
+            // App → Site App → App update (Lane UA): '' until the owner first
+            // publishes one, and then the row's data-kfa-up. Read only inside
+            // the installed app (site-app.js); a browser tab is unchanged.
+            'update' => app(SiteAppUpdate::class)->page(),
         ];
     }
 
