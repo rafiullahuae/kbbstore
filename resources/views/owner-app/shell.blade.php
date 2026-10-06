@@ -19,6 +19,7 @@
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="{{ $top ?? '#FBE3EA' }}">
+<meta name="kbb-top" content="{{ ($fullscreen ?? true) ? 'full' : 'app' }}">
 <meta name="color-scheme" content="light">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">

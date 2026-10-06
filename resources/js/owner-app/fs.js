@@ -22,7 +22,7 @@
  * is no resize listener and nothing measures. A refused request is caught and
  * the class simply stays as it was. Full screen never triggers a refresh.
  */
-import { standalone } from './core.js';
+import { standalone, store, esc } from './core.js';
 
 const root = document.documentElement;
 const phone = window.matchMedia('(pointer: coarse) and (max-width: 600px)');
@@ -63,3 +63,28 @@ export function initFullscreen() {
 }
 
 export { sync as syncFullscreen };
+
+/*
+ * AN ANDROID PHONE STILL ON THE OLD FULL SCREEN (6 Oct). The owner: "the top
+ * notch is covered in iphones, but not in android devices." An iPhone reads
+ * the status-bar tag from the page every time the app opens; Android bakes
+ * the manifest's display mode into the installed app and refreshes it only
+ * when Chrome next updates that app (a day or more), or when it is installed
+ * again. So when the server says "colour to the top" (meta kbb-top = app) but
+ * this installed app is still running full screen, say so once a day, with
+ * the two taps that fix it. Reads two media queries and one meta tag; no
+ * timer, no request, nothing measured.
+ */
+export function nudgeReinstall() {
+  const meta = document.querySelector('meta[name="kbb-top"]');
+  if (!meta || meta.content !== 'app' || !window.matchMedia('(display-mode: fullscreen)').matches) return;
+  const last = +(store.get('oa.tn') || 0);
+  if (Date.now() - last < 864e5) return;
+  const el = document.createElement('div');
+  el.className = 'toast stay';
+  el.setAttribute('role', 'status');
+  el.innerHTML = '<span>' + esc('New: the app colour now reaches the top of the screen. Android keeps the old full-screen layout until the app is installed again: hold the KBB Owner icon, remove it, then open the app link in Chrome and tap ⋮ → Install app.') + '</span>'
+    + '<button type="button" class="tn-x" aria-label="Close">×</button>';
+  el.querySelector('.tn-x').addEventListener('click', () => { store.set('oa.tn', Date.now()); el.remove(); });
+  document.body.appendChild(el);
+}

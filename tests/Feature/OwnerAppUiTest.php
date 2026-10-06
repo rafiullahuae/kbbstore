@@ -50,7 +50,8 @@ it('keeps four convenience keys in browser storage and nothing else, never the P
     preg_match("/const KEYS = \\[([^\\]]*)\\]/", $core, $m);
 
     // oa.np (Lane NT): when "Not now" was tapped on the notifications sheet.
-    expect(trim($m[1] ?? ''))->toBe("'oa.a2', 'oa.fs', 'oa.seen', 'oa.np'");
+    // oa.tn (6 Oct): when the Android "install again for the new top" notice was closed.
+    expect(trim($m[1] ?? ''))->toBe("'oa.a2', 'oa.fs', 'oa.seen', 'oa.np', 'oa.tn'");
 
     foreach (glob(resource_path('js/owner-app/*.js')) as $f) {
         $code = (string) preg_replace(['#/\*.*?\*/#s', '#(^|\s)//[^\n]*#'], ['', '$1'], (string) file_get_contents($f));

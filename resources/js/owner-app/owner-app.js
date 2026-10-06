@@ -37,7 +37,7 @@
  * hidden. When the app is closed, Web Push carries the news instead.
  */
 import { S, esc, api, $, $$, ic, logo, toast, onAuthLost, AuthError, store, paint, setKey, setSpin, resetData, isFresh, once, applyUi, scr, fn } from './core.js';
-import { initFullscreen, fsButton, syncFullscreen } from './fs.js';
+import { initFullscreen, fsButton, syncFullscreen, nudgeReinstall } from './fs.js';
 import { renderPin, renderEnrol } from './auth.js';
 import { renderDashboard, dashboardClick, renderNotifications, notificationsClick, renderMore, moreClick, syncPush, fetchDashboard, fetchNotifications, recount } from './store.js';
 import { renderOrders, ordersClick, ordersState, clearSelection, refreshOrdersList, fetchOrders, fetchOrder } from './orders.js';
@@ -52,6 +52,7 @@ let view = null, pollT = 0, route = { name: '', id: 0 }, booting = false, syncin
 
 S.seen = +(store.get('oa.seen') || 0);
 initFullscreen();
+nudgeReinstall();
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(S.base + '/sw.js', { scope: S.base + '/' }).catch(() => {});
   navigator.serviceWorker.addEventListener('message', (e) => {

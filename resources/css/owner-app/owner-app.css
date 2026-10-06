@@ -274,6 +274,8 @@ textarea.ta { width: 100%; min-height: 120px; resize: none; border: 0; border-ra
   animation: toastin .3s cubic-bezier(.2,.8,.2,1); max-width: 520px; margin: 0 auto; }
 .toast .i { width: 18px; height: 18px; color: #6EE7B7; }
 .toast.bad .i { color: #FCA5A5; }
+.toast.stay { align-items: flex-start; line-height: 1.4; }
+.toast .tn-x { flex: none; margin-left: auto; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; line-height: 1; color: #fff; background: rgba(255,255,255,.14); }
 @keyframes toastin { from { opacity: 0; transform: translateY(-12px); } }
 
 /* -------------------------------------------------------------------- pin */
