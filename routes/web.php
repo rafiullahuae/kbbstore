@@ -568,6 +568,10 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // carttracking.view / carttracking.block, owner and manager.
         require __DIR__.'/cart-tracking-admin.php';
 
+        // Growth & Marketing → Push Notifications (Lane PN): campaigns to the shop
+        // app's subscribed phones, the automations, analytics. push.view / push.send.
+        require __DIR__.'/push-admin.php';
+
         /*
          * Store → SEO & Meta → SEO Audit. Lane S. Same group, same reason.
          * Its rows are four hand-built keys and never a model: the tables it

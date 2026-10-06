@@ -1107,6 +1107,17 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'admin-api/email-marketing/templates/{id}/preview' => '/admin-api/email-marketing/templates/' . $mktTemplate . '/preview',
         'admin-api/email-marketing/groups/{id}/export' => '/admin-api/email-marketing/groups/' . $mktSegment . '/export',
     ];
+    // Growth & Marketing → Push Notifications (Lane PN): a sent campaign with
+    // a send row, so its report's GROUP BY emirate runs on both engines.
+    $pushCampaign = (int) \Illuminate\Support\Facades\DB::table('push_campaigns')->insertGetId([
+        'title' => 'Guard push', 'body' => '', 'audience' => '{}', 'status' => 'sent', 'delivered' => 1, 'created_at' => now(), 'updated_at' => now(),
+    ]);
+    \Illuminate\Support\Facades\DB::table('push_sends')->insert(['campaign_id' => $pushCampaign, 'kind' => 'campaign', 'ref' => $pushCampaign,
+        'subscription_id' => 1, 'emirate' => 'dubai', 'title' => 'Guard push', 'status' => 'delivered', 'dedupe' => 'c:guard:' . $pushCampaign,
+        'created_at' => now(), 'updated_at' => now()]);
+    $driven += [
+        'admin-api/push/campaigns/{id}' => '/admin-api/push/campaigns/' . $pushCampaign,
+    ];
 
     /*
      * Growth & Marketing -> Cart Tracking (Lane CT). One tracked cart with a

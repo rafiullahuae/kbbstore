@@ -134,6 +134,29 @@ Schedule::command('kbb:campaigns-step')
     ->withoutOverlapping(5);
 
 /*
+| ── PUSH NOTIFICATIONS (Lane PN) ────────────────────────────────────────────
+|
+| Growth & Marketing → Push Notifications. Starts due campaigns (once: a
+| conditional UPDATE), sweeps the automations (back in stock, baskets, price
+| drops), sends what is queued within the frequency cap and outside quiet
+| hours, and steps campaigns that are sending. The same cron line as the
+| marketing emails above; a handful of indexed statements when idle.
+|
+| The IP → emirate table refreshes itself: hourly the command asks whether it
+| is due (switch on, table empty or a month old, no failure in six hours) and
+| almost always answers no without touching the network. In the background,
+| because the monthly download is ~130 MB.
+*/
+Schedule::command('kbb:push-step')
+    ->everyMinute()
+    ->withoutOverlapping(5);
+
+Schedule::command('kbb:push-geo-import --auto')
+    ->hourlyAt(23)
+    ->withoutOverlapping(60)
+    ->runInBackground();
+
+/*
 |--------------------------------------------------------------------------
 | Cart Tracking retention (Lane CT)
 |--------------------------------------------------------------------------

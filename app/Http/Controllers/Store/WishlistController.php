@@ -104,6 +104,10 @@ class WishlistController extends Controller
             ? array_values(array_diff($ids, [$id]))
             : array_slice(array_merge([$id], $ids), 0, self::MAX);
 
+        // Lane PN: a heart on a phone subscribed to the shop app is a price-drop
+        // watch. Nothing at all without that phone's kbb_push cookie.
+        \App\Services\Push\PushAutomations::wished($id, ! $saved);
+
         return response()
             ->json(['ok' => true, 'saved' => ! $saved, 'count' => count($ids)])
             // A year, so a wishlist is not lost between visits.

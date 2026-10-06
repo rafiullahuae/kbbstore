@@ -16,6 +16,11 @@ declare(strict_types=1);
 |   POST /api/site-app/push/off   forget one
 |   POST /api/site-app/push/viewed  an out-of-stock product a subscribed phone
 |                                 looked at (for "back in stock", later)
+|   POST /api/site-app/push/click   a notification was tapped (Lane PN): the
+|                                 worker's beacon, carrying the HMAC-signed
+|                                 token the payload brought. No CSRF token:
+|                                 a service worker has no page to read one
+|                                 from, and the signature is the credential.
 |
 | MOUNT IN THE ORDINARY WEB GROUP, NOT IN THE STATELESS GROUP THAT HOLDS
 | routes/site-app.php: the signed-in shopper comes from the session and the
@@ -25,6 +30,7 @@ declare(strict_types=1);
 */
 
 use App\Http\Controllers\Store\SiteAppPushController;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:20,1,site-app-push')->group(function () {
@@ -35,3 +41,7 @@ Route::middleware('throttle:20,1,site-app-push')->group(function () {
 Route::post('/api/site-app/push/viewed', [SiteAppPushController::class, 'viewed'])
     ->middleware('throttle:30,1,site-app-push-viewed')
     ->name('site-app.push.viewed');
+Route::post('/api/site-app/push/click', [SiteAppPushController::class, 'click'])
+    ->withoutMiddleware([ValidateCsrfToken::class])
+    ->middleware('throttle:30,1,site-app-push-click')
+    ->name('site-app.push.click');

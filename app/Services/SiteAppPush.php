@@ -179,7 +179,13 @@ final class SiteAppPush
         $region = self::text($request->header('CF-Region'), 60);
         $city = self::text($request->header('CF-IPCity'), 80);
         if ($country === null && $region === null && $city === null) {
-            return null;
+            // Lane PN: the optional offline IP -> emirate table, lowest tier,
+            // marked 'ip-db' (approximate). One indexed SELECT, never throws.
+            try {
+                return app(\App\Services\Push\PushRules::class)->get('geo_ip') ? \App\Services\Push\PushGeo::locate($request->ip()) : null;
+            } catch (\Throwable) {
+                return null;
+            }
         }
 
         return ['country' => $country, 'region' => $region, 'city' => $city, 'location_source' => 'ip-header'];
@@ -291,9 +297,12 @@ final class SiteAppPush
         }
 
         $hash = hash('sha256', $token);
-        $write = static function () use ($hash, $row): void {
+        $orderId = (int) $order->getKey();
+        $write = static function () use ($hash, $row, $orderId): void {
             try {
                 DB::table(self::TABLE)->where('cookie_hash', $hash)->update($row);
+                // Lane PN: which phone placed it, so a guest's order updates reach it.
+                \App\Services\Push\PushAutomations::linkOrder($orderId, $hash);
             } catch (\Throwable) {
             }
         };
@@ -335,7 +344,9 @@ final class SiteAppPush
     public static function forget(mixed $endpoint): void
     {
         if (is_string($endpoint) && $endpoint !== '' && strlen($endpoint) <= 1000) {
-            DB::table(self::TABLE)->where('endpoint_hash', hash('sha256', $endpoint))->delete();
+            $n = DB::table(self::TABLE)->where('endpoint_hash', hash('sha256', $endpoint))->delete();
+            // Lane PN: the row is gone, so the opt-out is counted by day for the analytics.
+            \App\Services\Push\PushStats::bump('optout', (int) $n);
         }
     }
 }

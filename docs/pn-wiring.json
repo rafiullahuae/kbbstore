@@ -1,0 +1,66 @@
+[
+ {
+  "n": 1,
+  "file": "routes/web.php",
+  "count": 1,
+  "what": "Growth & Marketing -> Push Notifications endpoints, inside the guarded admin-api group, under Cart Tracking",
+  "anchor": "        require __DIR__.'/cart-tracking-admin.php';\n",
+  "replacement": "        require __DIR__.'/cart-tracking-admin.php';\n\n        // Growth & Marketing → Push Notifications (Lane PN): campaigns to the shop\n        // app's subscribed phones, the automations, analytics. push.view / push.send.\n        require __DIR__.'/push-admin.php';\n"
+ },
+ {
+  "n": 2,
+  "file": "resources/views/admin/app.blade.php",
+  "count": 1,
+  "what": "the breadcrumb and page title, in TITLES after Cart Tracking (the console guard reads the literal)",
+  "anchor": "'carttracking':['Growth & Marketing','Cart Tracking'],",
+  "replacement": "'carttracking':['Growth & Marketing','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],"
+ },
+ {
+  "n": 3,
+  "file": "resources/views/admin/app.blade.php",
+  "count": 1,
+  "what": "arm the deep-link replay (?go=push on a cold load): 'push' second in LATE_RENDERED, where no other lane's record anchors (Lane SS anchors on 'carttracking','seokeywords', Lanes NF/PW on the tail)",
+  "anchor": "const LATE_RENDERED=new Set(['cartpanel','media',",
+  "replacement": "const LATE_RENDERED=new Set(['cartpanel','push','media',"
+ },
+ {
+  "n": 4,
+  "file": "resources/views/admin/app.blade.php",
+  "count": 1,
+  "what": "load the screen, after Cart Tracking",
+  "anchor": "@include('admin.partials.cart-tracking-screen')\n",
+  "replacement": "@include('admin.partials.cart-tracking-screen')\n\n{{-- Growth & Marketing → Push Notifications (Lane PN): campaigns, automations,\n     subscribers & analytics, settings. It wraps window.go for 'push'; its sidebar\n     row is AdminNav's static entry in Growth & Marketing. --}}\n@include('admin.partials.push-notifications-screen')\n"
+ },
+ {
+  "n": 5,
+  "file": "docs/GS-ADMIN-APP-BLOCKS.md",
+  "count": 1,
+  "what": "keep Lane GS's handover record in step with block 2 (its block 3 quotes the whole TITLES line, and GridSectionConsoleReachTest holds it to the console)",
+  "anchor": "'carttracking':['Growth & Marketing','Cart Tracking'],",
+  "replacement": "'carttracking':['Growth & Marketing','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],"
+ },
+ {
+  "n": 6,
+  "file": "docs/BG-ADMIN-APP-BLOCKS.md",
+  "count": 1,
+  "what": "keep Lane BG's handover record in step with block 2 (it quotes the whole TITLES line)",
+  "anchor": "'carttracking':['Growth & Marketing','Cart Tracking'],",
+  "replacement": "'carttracking':['Growth & Marketing','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],"
+ },
+ {
+  "n": 7,
+  "file": "docs/BG-ADMIN-APP-BLOCKS.md",
+  "count": 2,
+  "what": "keep Lane BG's handover record in step with block 3 (it quotes the whole LATE_RENDERED line)",
+  "anchor": "const LATE_RENDERED=new Set(['cartpanel','media',",
+  "replacement": "const LATE_RENDERED=new Set(['cartpanel','push','media',"
+ },
+ {
+  "n": 8,
+  "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
+  "count": 1,
+  "what": "keep Lane T1B's handover record in step with block 3 (it quotes the whole LATE_RENDERED line; TranslationConsoleTest holds it to the console)",
+  "anchor": "const LATE_RENDERED=new Set(['cartpanel','media',",
+  "replacement": "const LATE_RENDERED=new Set(['cartpanel','push','media',"
+ }
+]

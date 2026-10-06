@@ -576,6 +576,17 @@ final class AdminCapabilities
         'marketing.email.manage' => ['owner', 'manager'],
         'marketing.email.send' => ['owner', 'manager'],
 
+        /*
+         * Growth & Marketing -> Push Notifications (Lane PN). Two, and the
+         * same owners as marketing.email.send ("Owner and Administrator",
+         * Administrator = manager): push.view reads the campaigns, reports,
+         * analytics and the live count; push.send writes a campaign, sends,
+         * schedules, cancels, tests, and changes the automations and the
+         * rules. Support, editor and the Marketing Manager preset hold neither.
+         */
+        'push.view' => ['owner', 'manager'],
+        'push.send' => ['owner', 'manager'],
+
         // Delivery rates and the pay/ship rules: a manager's job, not a
         // configuration change.
         'store.shipping' => ['owner', 'manager'],
@@ -1785,6 +1796,16 @@ final class AdminCapabilities
          * export beside it is separated out for. Whoever can read it can take
          * the shop's marketing list with them.
          */
+        /*
+         * Push Notifications (Lane PN), every route in routes/push-admin.php:
+         * the GETs and the read-only live count are push.view, everything else
+         * under the prefix push.send. Fails closed: a verb not listed is send.
+         */
+        ['GET', 'admin-api/push', 'push.view'],
+        ['GET', 'admin-api/push/**', 'push.view'],
+        ['POST', 'admin-api/push/count', 'push.view'],
+        ['*', 'admin-api/push', 'push.send'],
+        ['*', 'admin-api/push/**', 'push.send'],
         /*
          * Marketing Emails (Lane MK), every route in routes/marketing-emails-
          * admin.php. SEND FIRST, then the export, then the two POSTs that only
