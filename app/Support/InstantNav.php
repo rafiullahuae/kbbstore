@@ -97,7 +97,9 @@ final class InstantNav
         '/best-sellers/',
         '/super-sale/',
         '/everything-under-54-aed/',
-        '/concern/',
+        // Not /concern/: those pages exist only while enough products carry
+        // the concern, and knowing that costs a query this line must not make
+        // (QuizConcernHandoffTest: no concern address on a shop without one).
     ];
 
     /** Links never fetched ahead, whatever their address. */

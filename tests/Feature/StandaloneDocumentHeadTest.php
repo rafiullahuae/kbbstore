@@ -723,6 +723,11 @@ it('finds every document that carries its own head, and everything in the layout
         // (store/app.blade.php) is not one. StorefrontEnglishUnchangedTest
         // counts the block on all 37 pages.
         'site-app-head' => 'the Home Screen app: manifest, apple-touch-icon and the worker registration',
+        // Lane SP: Appearance -> Site layout -> Page speed. The same four
+        // documents include it themselves, right after site-app-head, so a
+        // link from the journal or an article opens as fast as one from the
+        // shop. StorefrontEnglishUnchangedTest counts it on all 37 pages.
+        'instant-nav-head' => 'instant page changes: the prefetch-on-hover rules (and the fade, when it is on)',
     ];
 
     $layoutOnly = [

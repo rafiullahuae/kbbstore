@@ -18,7 +18,7 @@ DIR=$APP/storage/framework/testing/lane-spd-$LABEL
 SRC=$DIR/app
 ROOT=$DIR/webroot
 DBN=kbb_spd_$LABEL
-PORT=$(python3 - "${1:-8771}" <<'PY'
+PORT=$(python3 - "${1:-8771}" <<'KBBPORTPY'
 import socket, sys
 s0 = int(sys.argv[1])
 for p in range(s0, s0 + 400):
@@ -27,7 +27,7 @@ for p in range(s0, s0 + 400):
         s.bind(('127.0.0.1', p)); s.close(); print(p); break
     except OSError:
         s.close()
-PY
+KBBPORTPY
 )
 REF=${2:-}
 [ -f "$DIR/server.pid" ] && kill "$(cat "$DIR/server.pid")" 2>/dev/null || true
@@ -87,9 +87,12 @@ php -d opcache.enable_cli=1 -d opcache.validate_timestamps=0 -d memory_limit=512
   -S 127.0.0.1:"$PORT" -t "$ROOT" "$ROOT/router.php" >"$DIR/server.log" 2>&1 &
 echo $! > "$DIR/server.pid"
 sleep 2
-n=$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n'); printf '%s' "$n" > "$ROOT/kbb-preview-id.txt"
-if [ "$(curl -s "http://127.0.0.1:$PORT/kbb-preview-id.txt" || true)" != "$n" ]; then
-  echo "REFUSING: 127.0.0.1:$PORT is not this preview" >&2; kill "$(cat "$DIR/server.pid")" 2>/dev/null; exit 4
+kbbnonce=$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')
+printf '%s' "$kbbnonce" > "$ROOT/kbb-preview-id.txt"
+if [ "$(curl -s "http://127.0.0.1:$PORT/kbb-preview-id.txt" || true)" != "$kbbnonce" ]; then
+  echo "REFUSING: 127.0.0.1:$PORT is not this preview" >&2
+  kill "$(cat "$DIR/server.pid")" 2>/dev/null || true
+  exit 4
 fi
 echo "$PORT" > "$DIR/port"
 echo "preview $LABEL on http://127.0.0.1:$PORT pid $(cat "$DIR/server.pid") db $DBN"

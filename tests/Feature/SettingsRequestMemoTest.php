@@ -30,8 +30,8 @@ use Illuminate\Support\Facades\Route;
  * shop links ...) added 134 cache reads to the page without one extra query.
  * StorefrontQueryBudgetTest could not see it; this file can.
  *
- * MUTATION: delete the `prepend(SettingsRequestMemo::class)` line in
- * bootstrap/app.php (or make SettingsService::remembered() always go to the
+ * MUTATION: delete the `prependMiddleware(SettingsRequestMemo::class)` line in
+ * AppServiceProvider::boot() (or make SettingsService::remembered() always go to the
  * cache) and the first test reads thousands, not one.
  */
 
@@ -128,9 +128,13 @@ it('memoises nothing outside a web request, and ends the memo when a page throws
 });
 
 it('wraps every request: the memo middleware is registered exactly once, outermost', function () {
-    $app = (string) file_get_contents(base_path('bootstrap/app.php'));
+    $global = app(\Illuminate\Contracts\Http\Kernel::class)->getGlobalMiddleware();
 
-    expect(substr_count($app, '->prepend(\App\Http\Middleware\SettingsRequestMemo::class);'))->toBe(1)
-        // Prepended after SetLocaleFromPath, so it runs before it.
-        ->and(strpos($app, 'SettingsRequestMemo::class'))->toBeGreaterThan(strpos($app, 'prepend(\App\Http\Middleware\SetLocaleFromPath::class)'));
+    // Outermost, so every other middleware and the page itself read the memo.
+    expect(array_count_values($global)[\App\Http\Middleware\SettingsRequestMemo::class] ?? 0)->toBe(1)
+        ->and($global[0])->toBe(\App\Http\Middleware\SettingsRequestMemo::class);
+
+    // Registered from a file a package can carry: UpdateGuard refuses
+    // bootstrap/, so a line there would never reach the shop.
+    expect((string) file_get_contents(base_path('bootstrap/app.php')))->not->toContain('SettingsRequestMemo');
 });

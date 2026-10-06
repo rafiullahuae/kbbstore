@@ -225,7 +225,7 @@ it('throws away pages fetched ahead whenever something changes, and only then', 
     Route::middleware('web')->group(base_path('routes/instant-nav.php'));
     $product = Product::query()->visible()->firstOrFail();
 
-    // MUTATION: drop ClearPrefetchOnWrite from bootstrap/app.php and the
+    // MUTATION: drop ClearPrefetchOnWrite from AppServiceProvider::boot() and the
     // first assertion is red -- the bag shown on a prefetched page goes stale.
     expect(test()->post('/api/viewed', ['id' => $product->id])->headers->get('Clear-Site-Data'))->toBe('"prefetchCache"')
         ->and(test()->get('/shop/')->headers->get('Clear-Site-Data'))->toBeNull();

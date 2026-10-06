@@ -278,6 +278,20 @@ class AppServiceProvider extends ServiceProvider
              * the field in on Settings -> Site address.
              */
             $kernel->prependMiddleware(\App\Http\Middleware\CanonicalHost::class);
+
+            /*
+             * Lane SP. HERE AND NOT IN bootstrap/app.php, which UpdateGuard
+             * refuses to ship (BuildPackage::NEVER_SHIP's note): a line there
+             * would pass every test in the repo and never reach the shop.
+             *
+             * SettingsRequestMemo is prepended LAST -- after CanonicalHost --
+             * so it is the outermost of all: the settings maps are read from the cache once per request
+             * for everything after it (App\Services\SettingsService).
+             * ClearPrefetchOnWrite is pushed: it only adds a header to the
+             * response of a write (App\Support\InstantNav).
+             */
+            $kernel->prependMiddleware(\App\Http\Middleware\SettingsRequestMemo::class);
+            $kernel->pushMiddleware(\App\Http\Middleware\ClearPrefetchOnWrite::class);
         }
 
         /*
