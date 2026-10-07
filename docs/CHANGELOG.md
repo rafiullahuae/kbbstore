@@ -3,6 +3,22 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.420
+**Product photos never show their title; grey loading placeholders; instant
+gallery taps; Building / Area / Emirate address; old WordPress links
+forward.** Apply after .419. Runs its migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "it gives the empty box and title displays there in place of image" | Cause: the site app's background script handed a photo to the page only after saving a copy; when the phone refused the save, the photo failed and the title showed. Now the photo shows first and the copy is saved quietly |
+| "loading grey bars" (gallery and product cards) | Grey shimmer behind every gallery and card photo until it paints; no title, no jump. Appearance -> Product styles -> Layout -> Photo loading placeholder (Grey shimmer / Plain grey / None) |
+| "switching between the product gallery images, gives clear delays" | The thumbnail's own picture shows at once and the full photo covers it; the next photo is fetched quietly. Slow phone: 1.5 s -> 0.2 s; thumbnails paint at 1.5 s instead of 3.0 s |
+| "sometimes the inner pages stuck fully and keep loading" | Picture copies made after a page is sent now use one server worker at a time, and background pre-loads make none (1-3 s -> under 0.02 s per pre-load). SSH checks in docs/PG2-STALLS.md if it ever happens again |
+| "Building / Apartment or Villa ... Area / Street ... the Emirates will work as City" + bilingual list | Checkout and My account addresses: Building / Apartment or Villa, Area / Street, Emirate (Arabic — English list, your order), Country. The emirate is the order's city. Oman, Saudi Arabia, Qatar, Bahrain, Kuwait lists too. Appearance -> Checkout page -> Fields & attention -> "Emirate / state as a list". Arabic labels: approve 9 drafts in Store -> Translations. Tabby now receives the delivery address (it was empty) |
+| Old WordPress addresses 404 | /sitemap_index.xml, /wp-sitemap.xml, Yoast sitemaps, /feed/, /my-account/lost-password/, /my-account/edit-account/ forward (Store -> SEO & Meta -> Redirects & 404s) |
+
+Files: see the package's update.json.
+
 ## 2.60.419
 **Desktop mega menu opens on category, shop and product pages.** Apply after
 .418. Hard refresh the shop.
