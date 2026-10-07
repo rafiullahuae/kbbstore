@@ -175,7 +175,17 @@
     @endif
 </div>
 
-@push('scripts')
+{{-- ▲ IN THE HEAD, NOT AT THE FOOT OF THE BODY.                       (Lane LH)
+     This block was pushed to 'scripts', so it arrived after the whole page:
+     the brand page painted first with `.brw` at no top padding and then
+     dropped 22px when this sheet landed -- Lane SX measured one layout shift
+     of 0.015 at ~150-200 ms on laptops (.brw-ph__media, .brw-ph__panel and
+     #brandGrid down 22px), and Lane LH reproduced it at 0.0154 (y 94 -> 116).
+     Pushed to 'styles' it is in <head>, after kbb.css and this page's own
+     brand-header/banner sheets exactly as before; the only head blocks it now
+     precedes are the layout's appearance partials, and the one of those that
+     names a .brw selector (the breadcrumb switches) outranks it on
+     specificity either way. Not one rule changed. --}}@push('styles')
 <style>
 /* The brand landing and every brand page, on the site width.        Lane W1
    This carried its own 1180px — the sixth page-container value in the census in

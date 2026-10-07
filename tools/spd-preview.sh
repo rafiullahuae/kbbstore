@@ -66,7 +66,7 @@ export APP_ENV=${SPD_APP_ENV:-production} APP_DEBUG=false APP_URL="http://127.0.
 
 if [ "$MODE" = seed ]; then
   php "$SRC/artisan" migrate --force >"$DIR/migrate.log" 2>&1 || { tail -40 "$DIR/migrate.log"; exit 1; }
-  php -d memory_limit=2G "$SRC/artisan" tinker --execute="require '$APP/tools/spd-seed.php';" >>"$DIR/migrate.log" 2>&1 \
+  php -d memory_limit=2G "$SRC/artisan" tinker --execute="require '${SPD_SEED:-$APP/tools/spd-seed.php}';" >>"$DIR/migrate.log" 2>&1 \
     || { tail -40 "$DIR/migrate.log"; exit 1; }
   mysqldump -u root --single-transaction "$DBN" > "$DIR/seed.sql"
 else

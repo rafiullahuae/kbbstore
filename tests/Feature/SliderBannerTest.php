@@ -770,7 +770,9 @@ it('stops for hover, for focus, for reduced motion, for a hidden tab and for the
      */
     $script = sbScript();
 
-    expect($script)->toContain('return dwell > 0 && !stopped && !hovered && !focused && !quiet() && !document.hidden;')
+    // Lane LH: `loaded &&` leads -- the first dwell starts at the page's load
+    // event (MobileSpeedIndexTest); the five floors below are unchanged.
+    expect($script)->toContain('return loaded && dwell > 0 && !stopped && !hovered && !focused && !quiet() && !document.hidden;')
         ->and($script)->toContain("window.matchMedia('(prefers-reduced-motion: reduce)')")
         ->and($script)->toContain("root.addEventListener('mouseenter'")
         ->and($script)->toContain("root.addEventListener('focusin'")

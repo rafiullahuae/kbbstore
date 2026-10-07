@@ -981,6 +981,23 @@
   var hovered = false;
   var focused = false;
   var stopped = false;
+  {{-- ▲ THE FIRST DWELL STARTS WHEN THE PAGE HAS LOADED, NOT WHEN THE PARSER
+     REACHED THIS LINE.                                               (Lane LH)
+
+     This script runs mid-parse, at first paint, and the timer used to start
+     here -- so on a slow phone the picture slid away about four seconds after
+     it first appeared, while the rest of the page was still arriving, and
+     often onto a slide whose (lazy) picture had not loaded yet. It is also the
+     largest thing Lighthouse holds against the page whenever its film is still
+     running four seconds after first paint: Speed Index scores how complete
+     each frame looks against the LAST one, and on a phone the banner (his
+     864 x 920 phone picture) is half the screen, so every frame before the
+     slide changed counted as half-unfinished. Measured on a preview shaped
+     like his homepage, Slow 4G, 7 runs each, the film cut where PSI's stops:
+     observed Speed Index 3.37 s -> 2.67 s (autoplay switched off entirely:
+     2.67 s). `readyState` and the load event are document state, not a
+     measurement of any element; a page that is already loaded (bfcache, the
+     admin preview injecting this markup) starts at once, exactly as before. --}}var loaded = document.readyState === 'complete';
 
   {{-- prefers-reduced-motion, asked rather than assumed, and asked AGAIN if it
      changes while the page is open — somebody who turns the setting on while
@@ -1041,7 +1058,7 @@
   }
 
   function running(){
-    return dwell > 0 && !stopped && !hovered && !focused && !quiet() && !document.hidden;
+    return loaded && dwell > 0 && !stopped && !hovered && !focused && !quiet() && !document.hidden;
   }
 
   {{-- One place starts and stops the timer, and it also writes the class the
@@ -1163,5 +1180,6 @@
   root.classList.add('is-js');
   go(0, false);
   beat();
+  if (!loaded) window.addEventListener('load', function(){ loaded = true; beat(); });
 })();
 </script>

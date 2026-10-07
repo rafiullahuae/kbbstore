@@ -2253,6 +2253,23 @@ final class EnglishRenderWalk
                 'with' => 'width="66" height="66" loading="eager" fetchpriority="low" decoding="async">',
                 'hits' => 5, // the fixture product's five shots, one page
             ],
+            /*
+             * THE BRAND PAGES' OWN STYLESHEET MOVES INTO <head> (Lane LH). It
+             * was pushed to 'scripts', so /brands/ and a brand page painted
+             * once without it and dropped 22px when it arrived (CLS 0.015,
+             * Lane SX). LAST in this list on purpose: the two brand-page rules
+             * above edit the block's rules on the before side first, and this
+             * then moves the whole block -- same bytes -- to where the new
+             * template prints it: the end of the page's 'styles' push, which
+             * is just before the blank lines the layout's empty head partials
+             * leave above </head>. Everything else on both pages is still
+             * compared byte for byte. Two documents.
+             */
+            'the brand pages\' stylesheet, now in the head (Lane LH)' => [
+                'pattern' => '#(\n    \n            \n    \n    \n</head>)(.*?)(<style>\n/\* The brand landing and every brand page, on the site width\..*?</style>\n)#s',
+                'with' => '$3$1$2',
+                'hits' => 2,
+            ],
         ];
     }
 
