@@ -3260,7 +3260,9 @@ KBB_BH_CSS;
                 'hits' => 1,
             ],
             'the checkout typed address fields spacing rule (Lane CK)' => [
-                'pattern' => "#<style>\n/\* One rhythm down the four boxes \(Lane CK\)\..*?</style>\n#s",
+                // Either wording: Lane AD's list mode prints the same rule
+                // with City and Emirate swapped, plus the list's chevron.
+                'pattern' => "#<style>\n/\* One rhythm down the four boxes(?: \(Lane CK\)\.|, as Lane CK set it).*?</style>\n#s",
                 'hits' => 1,
             ],
             /*
@@ -3319,8 +3321,30 @@ KBB_BH_CSS;
                 'hits' => 1,
             ],
             'the checkout emirate re-price listener (Lane CK)' => [
-                'pattern' => "#<script>\n/\\* THE EMIRATE PRICES THE DELIVERY, .*?\n</script>\n#s",
+                // Lane AD's list mode hands the change on from the document
+                // rather than the element; same opening words, same place.
+                'pattern' => "#<script>\n/\\* THE EMIRATE PRICES THE DELIVERY\\b.*?\n</script>\n#s",
                 'hits' => 1,
+            ],
+            /*
+             * THE EMIRATE / STATE LIST (Lane AD). The owner: "if country is
+             * UAE, all 7 emirates list should be there, if oman and so on".
+             * Appearance -> Checkout page -> Fields & attention -> "Emirate /
+             * state as a list" ships ON. The list itself is inside the typed
+             * fields cut above; this is its country switch -- the JSON of the
+             * lists and the script that swaps them -- on the checkout and on
+             * both address-book pages, once each. And the address book's
+             * City / Postcode / Emirate / Country with the list, in place of
+             * the typed four (the removal of the same name). OFF prints none of
+             * it, byte for byte (AddressRegionsCheckoutTest).
+             */
+            'the emirate list\'s country switch (Lane AD)' => [
+                'pattern' => "#<script type=\"application/json\" id=\"kbb-state-lists\" data-for=\"[A-Z]{2}\">[^<]*</script>\n<script>\n\\(function \\(\\) \\{\n  var box = document\\.getElementById\\('kbb-state-lists'\\);.*?\n</script>\n#s",
+                'hits' => 3,
+            ],
+            'the address book\'s emirate list above Country (Lane AD)' => [
+                'pattern' => '#      <label class="ab-f ab-wide"><span>[^<]*</span>\n        <input type="text" name="line1"[^\n]*\n      <label class="ab-f ab-wide"><span>[^<]*</span>\n        <input type="text" name="line2"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="postcode"[^\n]*\n      <label class="ab-f"><span><span id="ab-state-label">.*?<select name="country" id="ab-country">.*?</select>\n      </label>\n#s',
+                'hits' => 2,
             ],
 
             /*
@@ -3392,6 +3416,18 @@ KBB_BH_CSS;
     public static function approvedRemovals(): array
     {
         return [
+            /*
+             * THE ADDRESS BOOK'S TYPED STATE BOX (Lane AD): Address line 1 and
+             * 2, City, State, Postcode, Country as typed rows, replaced by the
+             * insertion of the same name -- Building / Apartment or Villa,
+             * Area / Street, Postcode, and the Emirate as a list (it is the
+             * city) directly above Country.
+             * Both address-book pages, once each.
+             */
+            'the address book\'s emirate list above Country (Lane AD)' => [
+                'pattern' => '#      <label class="ab-f ab-wide"><span>[^<]*</span>\n        <input type="text" name="line1"[^\n]*\n      <label class="ab-f ab-wide"><span>[^<]*</span>\n        <input type="text" name="line2"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="city"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="state"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="postcode"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <select name="country">.*?</select>\n      </label>\n#s',
+                'hits' => 2,
+            ],
             /*
              * THE JOURNAL'S AND AN ARTICLE'S OWN CHROME GOES (Lane BH): the
              * standalone head, the hand-drawn 69px header, the four-link drawer

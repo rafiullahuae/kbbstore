@@ -769,6 +769,27 @@ class CheckoutPage
                              'Off, as asked: the cart page has no "choose your delivery address" row, and the checkout\'s Shipping address section shows the address fields to type into, filled in for a signed-in customer from their saved address. On brings back the row on both pages and the address popup it opens.'],
 
         /*
+         * ── EMIRATE / STATE AS A LIST (Lane AD) ────────────────────────────
+         *
+         * "also bring the EMIRATES field above country. and also i need a
+         * selection of EMIRATES. for each country. if country is UAE, all 7
+         * emirates list should be there, if oman and so on". ON because he
+         * asked for it (CLAUDE.md rule 1 since 30 September). ON: the
+         * Emirate box is a list that follows the Country select (App\Support\
+         * AddressRegions), sits directly above Country, and the server takes
+         * only a name from that list. Then: "The address field should call
+         * it, Building / Apartment or Villa and the City/ Area will be Area /
+         * Street and the Emirates will work as City" -- ON also renames those
+         * two boxes, posts Area / Street as line 2 and stores the Emirate as
+         * the city as well as the state. OFF is the typed box exactly as it was,
+         * in its old place. The value posted and stored is the same English
+         * name either way, so orders, emails and shipping zones read the same.
+         * Also governs My account -> Addresses.
+         */
+        'state_list'     => ['bool', 'Emirate / state as a list', true,
+                             'On, as asked: the address reads Building / Apartment or Villa, then Area / Street beside the Emirate, then Country. The Emirate is a list that follows the country -- the seven emirates for the UAE, the governorates of Oman, Bahrain and Kuwait, the regions of Saudi Arabia, the municipalities of Qatar, each shown in Arabic and English -- and it is saved as the order\'s city. Other countries get a Town / city box to type in. Also used on My account -> Addresses. Off puts back Address, Emirate and City / area as boxes to type into, in their old places.'],
+
+        /*
          * ── THE ORDER SUMMARY AS ONE THIN ROW, AND BROWSED OFF (Lane CK) ───
          *
          * "on checkout page i want to replace the whole summary section to
@@ -946,7 +967,7 @@ class CheckoutPage
         'trust'        => ['Trust & reviews', 'The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims. The two policy links under Place order are switched here too.',
                            ['rating_on', 'rating_text', 'rating_min', 'policy_links']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
-                           ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'sum_row', 'sum_totals', 'float_labels', 'browsed_on',
+                           ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'state_list', 'sum_row', 'sum_totals', 'float_labels', 'browsed_on',
                             'ph_weight', 'ph_tone', 'ph_italic',
                             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'addr_cue_speed', 'addr_cue_size',
                             'trust_tick', 'trust_tick_speed']],
@@ -1301,6 +1322,15 @@ class CheckoutPage
     public function floatLabels(): bool
     {
         return $this->flag('float_labels');
+    }
+
+    /**
+     * Lane AD's switch: the Emirate box as a list that follows the country.
+     * One lookup in the memoised settings map, like floatLabels().
+     */
+    public function stateList(): bool
+    {
+        return $this->flag('state_list');
     }
 
     private function flag(string $key): bool

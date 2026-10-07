@@ -16,7 +16,15 @@
     saved address — or the one on their latest order when they have none — as
     CheckoutController::typedAddress() builds it; old() wins over both, so a
     rejected submission comes back as it was typed.
+
+    THE EMIRATE AS A LIST (Lane AD) is partials/checkout/address-fields-list,
+    drawn instead of everything below while Appearance -> Checkout page ->
+    Fields & attention -> "Emirate / state as a list" is on (it ships on). Off,
+    this file renders exactly what it rendered before that switch existed.
 --}}
+@if ($stateList ?? false)
+@include('partials.checkout.address-fields-list')
+@else
                         <x-checkout.field name="billing_address_1" :label="__('store.checkout.field_address')" required icon="pin"
                             validate="validate-required" priority="50"
                             :placeholder="__('store.checkout.field_address_placeholder')"
@@ -76,3 +84,4 @@
 @media(max-width:480px){.kbb-checkout #billing_state_field{margin-bottom:0}}
 </style>
 @endpush
+@endif

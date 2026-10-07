@@ -1979,9 +1979,18 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
     /** @param array<string, mixed> $address */
     private function addressLine(array $address): string
     {
+        /*
+         * `line1` / `line2` too (Lane AD). The plugin's WooCommerce keys were
+         * the only ones read, and an order placed by this shop's own checkout
+         * stores `line1` (and, since the Area / Street box, `line2`) -- so
+         * every such order reached Tabby with an empty delivery address and
+         * only a city. The Woo keys still win where an imported order has
+         * them. MUTATION: drop the `line1` fallback and
+         * AddressRegionsCheckoutTest's gateway case is red.
+         */
         $parts = array_filter([
-            trim((string) ($address['address_1'] ?? $address['address'] ?? '')),
-            trim((string) ($address['address_2'] ?? '')),
+            trim((string) ($address['address_1'] ?? $address['line1'] ?? $address['address'] ?? '')),
+            trim((string) ($address['address_2'] ?? $address['line2'] ?? '')),
         ], fn (string $part) => $part !== '');
 
         return implode(', ', $parts);

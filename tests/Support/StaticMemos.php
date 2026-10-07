@@ -232,6 +232,9 @@ final class StaticMemos
      * @var array<class-string, string>
      */
     public const EXEMPT = [
+        \App\Support\AddressRegions::class => 'index is the alias lookup built from the class\'s own LISTS '
+            .'constant -- no database, no settings, no request -- so it holds the same bytes in every test; a '
+            .'cache of a constant, not state.',
         \App\Support\AdminConsoleAssets::class => 'manifest and buildId are keyed on public/build/manifest.json\'s '
             .'mtime and size, so a new build is a new key and nothing a test does can make it answer stale; '
             .'they are a read cache of a shipped file, not state.',

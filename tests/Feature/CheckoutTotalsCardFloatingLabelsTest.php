@@ -225,9 +225,12 @@ it('gives every checkout field the Create account form\'s floating label, keepin
         'billing_first_name' => ['user', 'section-billing billing name', 'Full name'],
         'billing_phone' => ['phone', 'section-billing billing tel', 'Phone'],
         'billing_email' => ['mail', 'section-billing billing email', 'Email address'],
-        'billing_address_1' => ['pin', 'section-billing billing address-line1', 'Address'],
+        // Since Lane AD (the owner: "Building / Apartment or Villa ... Area /
+        // Street and the Emirates will work as City") the address boxes are
+        // these three; the City box is gone and line 2 carries the area.
+        'billing_address_1' => ['pin', 'section-billing billing address-line1', 'Building / Apartment or Villa'],
         'billing_state' => ['map', 'section-billing billing address-level1', 'Emirate'],
-        'billing_city' => ['city', 'section-billing billing address-level2', 'City / area'],
+        'billing_address_2' => ['city', 'section-billing billing address-line2', 'Area / Street'],
         'billing_country' => ['globe', 'section-billing billing country', 'Country'],
     ];
 
@@ -249,7 +252,9 @@ it('gives every checkout field the Create account form\'s floating label, keepin
     // form's single-space placeholder so :placeholder-shown can read it.
     expect($html)->toContain('name="billing_phone" id="billing_phone" placeholder="+971 5x xxx xxxx" required aria-required="true" autocomplete="section-billing billing tel" inputmode="tel"')
         ->and($html)->toContain('name="billing_email" id="billing_email" placeholder="you@email.com" required aria-required="true" autocomplete="section-billing billing email" inputmode="email"')
-        ->and($html)->toContain('name="billing_state" id="billing_state" placeholder=" " required')
+        // City has no hint of its own since the Emirate became a list (Lane
+        // AD); the list takes no placeholder, its "Select" line is an option.
+        ->and($html)->toContain('<select class="input-text" name="billing_state" id="billing_state" required')
         ->and($html)->not->toMatch('#<select[^>]*placeholder#');
 });
 
@@ -284,7 +289,7 @@ it('keeps the server rules and the inline validation hooks the fields always had
     cdSet(['float_labels' => true]);
     $html = cdPage(cdCart());
 
-    foreach (['billing_first_name', 'billing_phone', 'billing_email', 'billing_address_1', 'billing_state', 'billing_city', 'billing_country'] as $id) {
+    foreach (['billing_first_name', 'billing_phone', 'billing_email', 'billing_address_1', 'billing_state', 'billing_address_2', 'billing_country'] as $id) {
         expect($html)->toMatch('#<p class="form-row [^"]*validate-required[^"]*" id="' . $id . '_field"[^>]*><span class="woocommerce-input-wrapper fld kbb-fl ico">.*?class="input-text" name="' . $id . '"#s');
     }
 
@@ -336,7 +341,9 @@ it('renders the checkout byte for byte as before this lane with both switches of
     // Lane PY's payment boxes ship ON since; their own "Today" style is the
     // byte-for-byte way back (CheckoutPaymentBoxesTest), so it is set here and
     // this test goes on comparing what it was written to compare.
-    cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain']);
+    // Lane AD's Emirate list ships ON too; OFF is its byte-for-byte way back
+    // (AddressRegionsCheckoutTest), so it is set here for the same reason.
+    cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain', 'state_list' => false]);
     $cart = cdCart();
 
     $current = config('view.paths');

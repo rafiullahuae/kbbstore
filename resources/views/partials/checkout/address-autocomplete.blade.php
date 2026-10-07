@@ -99,6 +99,27 @@
 
       if (cityEl && city) { cityEl.value = city; }
       if (stateEl && state && stateEl.tagName !== 'SELECT') { stateEl.value = state; }
+@if ($stateList ?? false)
+      /* The Emirate as a list (Lane AD): Google's "Ras Al-Khaimah" picks the
+         list's "Ras Al Khaimah" -- letters only, either case -- and the change
+         is announced so the delivery is re-priced on it. No match leaves the
+         list as it was. */
+      /* Area / Street is line 2 in that mode, and the emirate is the city: the
+         suggestion's neighbourhood goes in the box, never its city. */
+      var areaEl = document.getElementById('billing_address_2');
+      var area = part('sublocality_level_1') || part('sublocality') || part('neighborhood') || part('route');
+      if (areaEl && area) { areaEl.value = area; }
+      if (stateEl && state && stateEl.tagName === 'SELECT') {
+        var key = function (v) { return String(v).toLowerCase().replace(/[^a-z]/g, ''); };
+        for (var k = 0; k < stateEl.options.length; k++) {
+          if (stateEl.options[k].value !== '' && key(stateEl.options[k].value) === key(state)) {
+            stateEl.value = stateEl.options[k].value;
+            stateEl.dispatchEvent(new Event('change', { bubbles: true }));
+            break;
+          }
+        }
+      }
+@endif
     });
   };
 

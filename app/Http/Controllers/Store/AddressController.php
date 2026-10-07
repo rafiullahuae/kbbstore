@@ -126,6 +126,7 @@ class AddressController extends Controller
             'editing' => $editing,
             'types' => self::TYPES,
             'countries' => Countries::NAMES,
+            'stateList' => app(\App\Services\CheckoutPage::class)->stateList(),
         ]);
     }
 
@@ -176,6 +177,11 @@ class AddressController extends Controller
 
     private function validated(Request $request): array
     {
+        // Lane AD's list mode (Appearance -> Checkout page -> Fields &
+        // attention -> "Emirate / state as a list"): no City box, because
+        // "the Emirates will work as City", and the Emirate is required.
+        $listMode = app(\App\Services\CheckoutPage::class)->stateList();
+
         $data = $request->validate([
             'type' => ['required', 'string', 'in:' . implode(',', self::TYPES)],
             'first_name' => ['required', 'string', 'max:80'],
@@ -183,8 +189,10 @@ class AddressController extends Controller
             'company' => ['nullable', 'string', 'max:120'],
             'line1' => ['required', 'string', 'max:180'],
             'line2' => ['nullable', 'string', 'max:180'],
-            'city' => ['required', 'string', 'max:80'],
-            'state' => ['nullable', 'string', 'max:80'],
+            'city' => [$listMode ? 'nullable' : 'required', 'string', 'max:80'],
+            // A form rendered before the switch posts City and no list
+            // choice; its city stands in for the Emirate below.
+            'state' => [$listMode ? 'required_without:city' : 'nullable', 'nullable', 'string', 'max:80'],
             'postcode' => ['nullable', 'string', 'max:20'],
             'country' => ['required', 'string', 'size:2'],
             'phone' => ['nullable', 'string', 'max:40'],
@@ -193,6 +201,38 @@ class AddressController extends Controller
 
         $data['country'] = strtoupper($data['country']);
         $data['is_default'] = $request->boolean('is_default');
+
+        if (! $listMode) {
+            return $data;
+        }
+
+        /*
+         * THE EMIRATE IS ONE OF ITS COUNTRY'S LIST AND IS THE CITY (Lane AD),
+         * stored as the list's English name in both `state` and `city` -- the
+         * shape the checkout now writes on an order. A country with no list
+         * takes its typed town the same way. An old address's free-text city
+         * ("JLT") is not refused or erased: the form shows it in Area /
+         * Street, which is line 2.
+         *
+         * MUTATION: drop the canonical() check and AddressRegionsAccountTest's
+         * "refuses a state that is not in the list" saves "Atlantis"; drop the
+         * city copy and it saves no city.
+         */
+        $state = trim((string) ($data['state'] ?? ''));
+        $state = $state !== '' ? $state : trim((string) ($data['city'] ?? ''));
+
+        if (\App\Support\AddressRegions::has($data['country'])) {
+            $state = \App\Support\AddressRegions::canonical($data['country'], $state);
+
+            if ($state === null) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'state' => __('store.checkout.validate_state'),
+                ]);
+            }
+        }
+
+        $data['state'] = $state;
+        $data['city'] = $state;
 
         return $data;
     }
