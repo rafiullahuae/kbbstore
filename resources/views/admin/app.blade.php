@@ -22069,7 +22069,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      Saying so beats a switch that looks like it does more than it does. */
   var PAY_MODE_HELP={
     tamara:'Sandbox talks to Tamara’s sandbox API, live to the production one. This switch is the only thing that decides which.',
-    stripe:'A label for your own records. Stripe itself decides test or live from the keys you paste — pk_test_/sk_test_ against pk_live_/sk_live_.',
+    stripe:'Picks which key set the shop uses: Sandbox / test uses the Test keys, Live uses the Live keys. Switching back and forth keeps both sets.',
     tabby:'A label for your own records. Tabby itself decides test or live from the keys you paste.'
   };
 
