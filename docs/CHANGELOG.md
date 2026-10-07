@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.421
+**Mobile speed: banner slider waits for the page; brand pages no longer
+jump.** Apply after .420. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "in mobile 5.4 sec ... look for major things ... i really want to reduce that" | The banner slider's first slide change now counts from the page's load, so it no longer changes the screen while the page is still arriving (measured Speed Index on a slow phone 3.4 s -> 2.7 s on the test copy). Phones no longer run the desktop menu-fitting script (the forced reflow from our code). The biggest remaining cause is the 2.6 s the page takes to reach the test phone, which is network, not code |
+| Brand page 22 px jump (found while measuring) | The brand page's styles are in the head, so it paints in place: CLS 0.015 -> 0 (laptop), 0.023 -> 0 (phone). Brand header spacing controls unchanged |
+
+Files: see the package's update.json.
+
 ## 2.60.420
 **Product photos never show their title; grey loading placeholders; instant
 gallery taps; Building / Area / Emirate address; old WordPress links
