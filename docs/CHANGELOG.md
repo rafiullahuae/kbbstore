@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.422
+**Stripe settings, like the WordPress Stripe plugin.** Apply after .421. Runs its
+migrations. Hard refresh the admin. Every new setting starts at today's
+behaviour.
+
+| Your request | Now |
+|---|---|
+| "for stripe, i need the setting on backend to control the name on statements, hooks, invoice number etc." | Store -> Payments -> Stripe: statement descriptor (checked against Stripe's rules) and card suffix with optional order number; order number prefix shown in Stripe (the shop's own numbers unchanged); payment description template; separate Test and Live keys with a TEST MODE / LIVE badge; "Set up webhook automatically" with last event received and last signature failure (also removes an old-domain webhook); authorise now, capture later (Capture button on the order); Stripe email receipts; a payment log (no card data, no secrets). A test key can no longer take payments in Live mode. Test guide: docs/STRIPE-TEST-GUIDE.md |
+
+Files: see the package's update.json.
+
 ## 2.60.421
 **Mobile speed: banner slider waits for the page; brand pages no longer
 jump.** Apply after .420. Hard refresh the shop.
