@@ -407,6 +407,13 @@ it('gives a shopper back what they typed when the server refuses the order', fun
             continue;   // a select; its selected option is checked elsewhere
         }
 
+        if ($field === 'billing_state') {
+            // A list since Lane AD: what came back is the option marked selected.
+            expect($html)->toMatch('#<option value="' . preg_quote($value, '#') . '" selected>#',
+                "#{$field} did not come back with what the shopper chose.");
+            continue;
+        }
+
         $tag = cfcControl($html, $field);
 
         expect($tag)->not->toBeNull("#{$field} is no longer rendered on the checkout.");

@@ -79,6 +79,13 @@ function prefillBrowser(Cart $cart, ?Customer $customer = null)
 /** The `value="…"` one named input on the checkout was rendered with. */
 function prefillValueOf(string $html, string $name): ?string
 {
+    // The Emirate is a list since Lane AD ("Emirate / state as a list", on):
+    // its value is the option marked selected, and "" while it rests on the
+    // disabled "Select" line.
+    if (preg_match('#<select[^>]*name="' . preg_quote($name, '#') . '"[^>]*>(.*?)</select>#s', $html, $select)) {
+        return preg_match('#<option value="([^"]*)"[^>]*selected#', $select[1], $chosen) ? html_entity_decode($chosen[1]) : '';
+    }
+
     if (! preg_match('/<input[^>]*name="' . preg_quote($name, '/') . '"[^>]*>/', $html, $tag)) {
         return null;
     }

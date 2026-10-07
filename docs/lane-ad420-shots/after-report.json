@@ -1,0 +1,759 @@
+{
+  "after-guest-390-requests-on-load": 7,
+  "after-guest-390-request-list": [
+    "GET /checkout/",
+    "GET /site-app.js?v=77a49c5e03",
+    "GET /build/assets/outfit-latin-Bc-8i84L.woff2",
+    "GET /build/assets/kbb-BjK_EkMe.css",
+    "GET /build/assets/app-DbQQpHA0.js",
+    "GET /build/assets/kbb-checkout-C_5dhkur.css",
+    "GET /wishlist/ids"
+  ],
+  "after-guest-390-closed": {
+    "address": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 316,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Address *"
+    },
+    "city": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 378,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "City / area *"
+    },
+    "emirate": {
+      "tag": "SELECT",
+      "value": "",
+      "top": 441,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Emirate *"
+    },
+    "country": {
+      "tag": "SELECT",
+      "value": "AE",
+      "top": 503,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Country *"
+    },
+    "options": [
+      "Select",
+      "⁨أبو ظبي⁩ — Abu Dhabi",
+      "⁨الشارقة⁩ — Sharjah",
+      "⁨الفجيرة⁩ — Fujairah",
+      "⁨ام القيوين⁩ — Umm Al Quwain",
+      "⁨دبي⁩ — Dubai",
+      "⁨رأس الخيمة⁩ — Ras al Khaimah",
+      "⁨عجمان⁩ — Ajman"
+    ],
+    "delivery": "Free delivery",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "touchMedia": true,
+    "htmlBytes": 146995
+  },
+  "after-guest-390-after-choosing-sharjah": {
+    "requests": [
+      "POST /api/checkout/rates"
+    ],
+    "value": "Sharjah"
+  },
+  "after-guest-390-oman": {
+    "address": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 316,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Address *"
+    },
+    "city": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 378,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "City / area *"
+    },
+    "emirate": {
+      "tag": "SELECT",
+      "value": "",
+      "top": 441,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Governorate *"
+    },
+    "country": {
+      "tag": "SELECT",
+      "value": "OM",
+      "top": 503,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Country *"
+    },
+    "options": [
+      "Select",
+      "⁨البريمي⁩ — Al Buraimi",
+      "⁨الداخلية⁩ — Al Dakhiliyah",
+      "⁨الظاهرة⁩ — Al Dhahirah",
+      "⁨الوسطى⁩ — Al Wusta",
+      "⁨جنوب الباطنة⁩ — South Al Batinah",
+      "⁨جنوب الشرقية⁩ — South Al Sharqiyah",
+      "⁨شمال الباطنة⁩ — North Al Batinah",
+      "⁨شمال الشرقية⁩ — North Al Sharqiyah",
+      "⁨ظفار⁩ — Dhofar",
+      "⁨مسقط⁩ — Muscat",
+      "⁨مسندم⁩ — Musandam"
+    ],
+    "delivery": "Shipping Charges:\nAED 150",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "touchMedia": true,
+    "htmlBytes": 147612
+  },
+  "after-guest-390-oman-requests": [
+    "POST /api/checkout/rates"
+  ],
+  "after-guest-390-oman-muscat": {
+    "address": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 316,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Address *"
+    },
+    "city": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 378,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "City / area *"
+    },
+    "emirate": {
+      "tag": "SELECT",
+      "value": "Muscat",
+      "top": 441,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Governorate *"
+    },
+    "country": {
+      "tag": "SELECT",
+      "value": "OM",
+      "top": 503,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Country *"
+    },
+    "options": [
+      "Select",
+      "⁨البريمي⁩ — Al Buraimi",
+      "⁨الداخلية⁩ — Al Dakhiliyah",
+      "⁨الظاهرة⁩ — Al Dhahirah",
+      "⁨الوسطى⁩ — Al Wusta",
+      "⁨جنوب الباطنة⁩ — South Al Batinah",
+      "⁨جنوب الشرقية⁩ — South Al Sharqiyah",
+      "⁨شمال الباطنة⁩ — North Al Batinah",
+      "⁨شمال الشرقية⁩ — North Al Sharqiyah",
+      "⁨ظفار⁩ — Dhofar",
+      "⁨مسقط⁩ — Muscat",
+      "⁨مسندم⁩ — Musandam"
+    ],
+    "delivery": "Shipping Charges:\nAED 150",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "touchMedia": true,
+    "htmlBytes": 147621
+  },
+  "after-guest-390-back-to-uae": {
+    "address": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 316,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Address *"
+    },
+    "city": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 378,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "City / area *"
+    },
+    "emirate": {
+      "tag": "SELECT",
+      "value": "",
+      "top": 441,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Emirate *"
+    },
+    "country": {
+      "tag": "SELECT",
+      "value": "AE",
+      "top": 503,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Country *"
+    },
+    "options": [
+      "Select",
+      "⁨أبو ظبي⁩ — Abu Dhabi",
+      "⁨الشارقة⁩ — Sharjah",
+      "⁨الفجيرة⁩ — Fujairah",
+      "⁨ام القيوين⁩ — Umm Al Quwain",
+      "⁨دبي⁩ — Dubai",
+      "⁨رأس الخيمة⁩ — Ras al Khaimah",
+      "⁨عجمان⁩ — Ajman"
+    ],
+    "delivery": "Free delivery",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "touchMedia": true,
+    "htmlBytes": 146920
+  },
+  "after-guest-390-errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "login": 200,
+  "after-aisha-390-requests-on-load": 8,
+  "after-aisha-390-request-list": [
+    "GET /checkout/",
+    "GET /site-app.js?v=77a49c5e03",
+    "GET /build/assets/outfit-latin-Bc-8i84L.woff2",
+    "GET /build/assets/kbb-BjK_EkMe.css",
+    "GET /build/assets/app-DbQQpHA0.js",
+    "GET /build/assets/kbb-checkout-C_5dhkur.css",
+    "GET https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap",
+    "GET /wishlist/ids"
+  ],
+  "after-aisha-390-closed": {
+    "address": {
+      "tag": "INPUT",
+      "value": "Building 1-10, G-04",
+      "top": 316,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Address *"
+    },
+    "city": {
+      "tag": "INPUT",
+      "value": "Al Quoz",
+      "top": 378,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "City / area *"
+    },
+    "emirate": {
+      "tag": "SELECT",
+      "value": "Dubai",
+      "top": 441,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Emirate *"
+    },
+    "country": {
+      "tag": "SELECT",
+      "value": "AE",
+      "top": 503,
+      "left": 37,
+      "w": 316,
+      "h": 52,
+      "font": "16px",
+      "clickable": true,
+      "label": "Country *"
+    },
+    "options": [
+      "Select",
+      "⁨أبو ظبي⁩ — Abu Dhabi",
+      "⁨الشارقة⁩ — Sharjah",
+      "⁨الفجيرة⁩ — Fujairah",
+      "⁨ام القيوين⁩ — Umm Al Quwain",
+      "⁨دبي⁩ — Dubai",
+      "⁨رأس الخيمة⁩ — Ras al Khaimah",
+      "⁨عجمان⁩ — Ajman"
+    ],
+    "delivery": "Free delivery",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "touchMedia": true,
+    "htmlBytes": 146028
+  },
+  "after-aisha-390-after-choosing-sharjah": {
+    "requests": [
+      "POST /api/checkout/rates"
+    ],
+    "value": "Sharjah"
+  },
+  "after-aisha-390-errors": [
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ],
+  "after-aisha-390-account": {
+    "tag": "SELECT",
+    "value": "Dubai",
+    "h": 40,
+    "font": "14px",
+    "stateTop": 611,
+    "countryTop": 686,
+    "label": "Emirate",
+    "clickable": true,
+    "touchMedia": false,
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "after-aisha-390-account-saudi": {
+    "label": "Region",
+    "options": 14
+  },
+  "after-aisha-390-account-errors": [
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ],
+  "after-guest-1280-requests-on-load": 7,
+  "after-guest-1280-request-list": [
+    "GET /checkout/",
+    "GET /site-app.js?v=77a49c5e03",
+    "GET /build/assets/outfit-latin-Bc-8i84L.woff2",
+    "GET /build/assets/kbb-BjK_EkMe.css",
+    "GET /build/assets/app-DbQQpHA0.js",
+    "GET /build/assets/kbb-checkout-C_5dhkur.css",
+    "GET /wishlist/ids"
+  ],
+  "after-guest-1280-closed": {
+    "address": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 381,
+      "left": 157,
+      "w": 560,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Address *"
+    },
+    "city": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 440,
+      "left": 157,
+      "w": 275,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "City / area *"
+    },
+    "emirate": {
+      "tag": "SELECT",
+      "value": "",
+      "top": 440,
+      "left": 443,
+      "w": 275,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Emirate *"
+    },
+    "country": {
+      "tag": "SELECT",
+      "value": "AE",
+      "top": 499,
+      "left": 157,
+      "w": 560,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Country *"
+    },
+    "options": [
+      "Select",
+      "⁨أبو ظبي⁩ — Abu Dhabi",
+      "⁨الشارقة⁩ — Sharjah",
+      "⁨الفجيرة⁩ — Fujairah",
+      "⁨ام القيوين⁩ — Umm Al Quwain",
+      "⁨دبي⁩ — Dubai",
+      "⁨رأس الخيمة⁩ — Ras al Khaimah",
+      "⁨عجمان⁩ — Ajman"
+    ],
+    "delivery": "Free delivery",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "touchMedia": false,
+    "htmlBytes": 146755
+  },
+  "after-guest-1280-after-choosing-sharjah": {
+    "requests": [
+      "POST /api/checkout/rates"
+    ],
+    "value": "Sharjah"
+  },
+  "after-guest-1280-oman": {
+    "address": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 381,
+      "left": 157,
+      "w": 560,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Address *"
+    },
+    "city": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 440,
+      "left": 157,
+      "w": 275,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "City / area *"
+    },
+    "emirate": {
+      "tag": "SELECT",
+      "value": "",
+      "top": 440,
+      "left": 443,
+      "w": 275,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Governorate *"
+    },
+    "country": {
+      "tag": "SELECT",
+      "value": "OM",
+      "top": 499,
+      "left": 157,
+      "w": 560,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Country *"
+    },
+    "options": [
+      "Select",
+      "⁨البريمي⁩ — Al Buraimi",
+      "⁨الداخلية⁩ — Al Dakhiliyah",
+      "⁨الظاهرة⁩ — Al Dhahirah",
+      "⁨الوسطى⁩ — Al Wusta",
+      "⁨جنوب الباطنة⁩ — South Al Batinah",
+      "⁨جنوب الشرقية⁩ — South Al Sharqiyah",
+      "⁨شمال الباطنة⁩ — North Al Batinah",
+      "⁨شمال الشرقية⁩ — North Al Sharqiyah",
+      "⁨ظفار⁩ — Dhofar",
+      "⁨مسقط⁩ — Muscat",
+      "⁨مسندم⁩ — Musandam"
+    ],
+    "delivery": "Shipping Charges:\nAED 150",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "touchMedia": false,
+    "htmlBytes": 147372
+  },
+  "after-guest-1280-oman-requests": [
+    "POST /api/checkout/rates"
+  ],
+  "after-guest-1280-oman-muscat": {
+    "address": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 381,
+      "left": 157,
+      "w": 560,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Address *"
+    },
+    "city": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 440,
+      "left": 157,
+      "w": 275,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "City / area *"
+    },
+    "emirate": {
+      "tag": "SELECT",
+      "value": "Muscat",
+      "top": 440,
+      "left": 443,
+      "w": 275,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Governorate *"
+    },
+    "country": {
+      "tag": "SELECT",
+      "value": "OM",
+      "top": 499,
+      "left": 157,
+      "w": 560,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Country *"
+    },
+    "options": [
+      "Select",
+      "⁨البريمي⁩ — Al Buraimi",
+      "⁨الداخلية⁩ — Al Dakhiliyah",
+      "⁨الظاهرة⁩ — Al Dhahirah",
+      "⁨الوسطى⁩ — Al Wusta",
+      "⁨جنوب الباطنة⁩ — South Al Batinah",
+      "⁨جنوب الشرقية⁩ — South Al Sharqiyah",
+      "⁨شمال الباطنة⁩ — North Al Batinah",
+      "⁨شمال الشرقية⁩ — North Al Sharqiyah",
+      "⁨ظفار⁩ — Dhofar",
+      "⁨مسقط⁩ — Muscat",
+      "⁨مسندم⁩ — Musandam"
+    ],
+    "delivery": "Shipping Charges:\nAED 150",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "touchMedia": false,
+    "htmlBytes": 147381
+  },
+  "after-guest-1280-back-to-uae": {
+    "address": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 381,
+      "left": 157,
+      "w": 560,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Address *"
+    },
+    "city": {
+      "tag": "INPUT",
+      "value": "",
+      "top": 440,
+      "left": 157,
+      "w": 275,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "City / area *"
+    },
+    "emirate": {
+      "tag": "SELECT",
+      "value": "",
+      "top": 440,
+      "left": 443,
+      "w": 275,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Emirate *"
+    },
+    "country": {
+      "tag": "SELECT",
+      "value": "AE",
+      "top": 499,
+      "left": 157,
+      "w": 560,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Country *"
+    },
+    "options": [
+      "Select",
+      "⁨أبو ظبي⁩ — Abu Dhabi",
+      "⁨الشارقة⁩ — Sharjah",
+      "⁨الفجيرة⁩ — Fujairah",
+      "⁨ام القيوين⁩ — Umm Al Quwain",
+      "⁨دبي⁩ — Dubai",
+      "⁨رأس الخيمة⁩ — Ras al Khaimah",
+      "⁨عجمان⁩ — Ajman"
+    ],
+    "delivery": "Free delivery",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "touchMedia": false,
+    "htmlBytes": 146680
+  },
+  "after-guest-1280-errors": [],
+  "after-aisha-1280-requests-on-load": 8,
+  "after-aisha-1280-request-list": [
+    "GET /checkout/",
+    "GET /site-app.js?v=77a49c5e03",
+    "GET /build/assets/outfit-latin-Bc-8i84L.woff2",
+    "GET /build/assets/kbb-BjK_EkMe.css",
+    "GET /build/assets/app-DbQQpHA0.js",
+    "GET /build/assets/kbb-checkout-C_5dhkur.css",
+    "GET https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap",
+    "GET /wishlist/ids"
+  ],
+  "after-aisha-1280-closed": {
+    "address": {
+      "tag": "INPUT",
+      "value": "Building 1-10, G-04",
+      "top": 380,
+      "left": 157,
+      "w": 560,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Address *"
+    },
+    "city": {
+      "tag": "INPUT",
+      "value": "Al Quoz",
+      "top": 439,
+      "left": 157,
+      "w": 275,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "City / area *"
+    },
+    "emirate": {
+      "tag": "SELECT",
+      "value": "Dubai",
+      "top": 439,
+      "left": 443,
+      "w": 275,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Emirate *"
+    },
+    "country": {
+      "tag": "SELECT",
+      "value": "AE",
+      "top": 499,
+      "left": 157,
+      "w": 560,
+      "h": 49,
+      "font": "14px",
+      "clickable": true,
+      "label": "Country *"
+    },
+    "options": [
+      "Select",
+      "⁨أبو ظبي⁩ — Abu Dhabi",
+      "⁨الشارقة⁩ — Sharjah",
+      "⁨الفجيرة⁩ — Fujairah",
+      "⁨ام القيوين⁩ — Umm Al Quwain",
+      "⁨دبي⁩ — Dubai",
+      "⁨رأس الخيمة⁩ — Ras al Khaimah",
+      "⁨عجمان⁩ — Ajman"
+    ],
+    "delivery": "Free delivery",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "touchMedia": false,
+    "htmlBytes": 145810
+  },
+  "after-aisha-1280-after-choosing-sharjah": {
+    "requests": [
+      "POST /api/checkout/rates"
+    ],
+    "value": "Sharjah"
+  },
+  "after-aisha-1280-errors": [
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ],
+  "after-aisha-1280-account": {
+    "tag": "SELECT",
+    "value": "Dubai",
+    "h": 40,
+    "font": "14px",
+    "stateTop": 318,
+    "countryTop": 393,
+    "label": "Emirate",
+    "clickable": true,
+    "touchMedia": false,
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "after-aisha-1280-account-saudi": {
+    "label": "Region",
+    "options": 14
+  },
+  "after-aisha-1280-account-errors": [
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+}

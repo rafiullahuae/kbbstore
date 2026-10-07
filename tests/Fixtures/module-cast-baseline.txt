@@ -4911,6 +4911,17 @@ checkout_page|addr_picker|bool|"no"|true
 checkout_page|addr_picker|bool|1|true
 checkout_page|addr_picker|bool|0|false
 checkout_page|addr_picker|bool|null|false
+checkout_page|state_list|bool|true|true
+checkout_page|state_list|bool|false|false
+checkout_page|state_list|bool|"1"|true
+checkout_page|state_list|bool|"0"|false
+checkout_page|state_list|bool|""|false
+checkout_page|state_list|bool|"on"|true
+checkout_page|state_list|bool|"off"|true
+checkout_page|state_list|bool|"no"|true
+checkout_page|state_list|bool|1|true
+checkout_page|state_list|bool|0|false
+checkout_page|state_list|bool|null|false
 checkout_page|sum_row|bool|true|true
 checkout_page|sum_row|bool|false|false
 checkout_page|sum_row|bool|"1"|true

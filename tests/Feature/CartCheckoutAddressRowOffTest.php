@@ -44,6 +44,16 @@ use Tests\Support\EnglishRenderWalk;
  * still what prices the delivery.
  */
 beforeEach(function () {
+    /*
+     * THE TYPED EMIRATE BOX. This file pins the four typed fields as Lane CK
+     * drew them; since Lane AD the Emirate ships as a list ("Emirate / state
+     * as a list", on), and OFF is the way back to exactly this. The list's own
+     * order, prefill, pricing and refusal are pinned in
+     * AddressRegionsCheckoutTest.
+     */
+    app(CheckoutPage::class)->save(['state_list' => false]);
+    SettingsService::forgetMemo();
+
     PaymentProvider::query()->delete();
     PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
     app(SettingsService::class)->set('cod_fee', 0);

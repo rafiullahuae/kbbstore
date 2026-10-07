@@ -249,7 +249,9 @@ it('gives every checkout field the Create account form\'s floating label, keepin
     // form's single-space placeholder so :placeholder-shown can read it.
     expect($html)->toContain('name="billing_phone" id="billing_phone" placeholder="+971 5x xxx xxxx" required aria-required="true" autocomplete="section-billing billing tel" inputmode="tel"')
         ->and($html)->toContain('name="billing_email" id="billing_email" placeholder="you@email.com" required aria-required="true" autocomplete="section-billing billing email" inputmode="email"')
-        ->and($html)->toContain('name="billing_state" id="billing_state" placeholder=" " required')
+        // City has no hint of its own since the Emirate became a list (Lane
+        // AD); the list takes no placeholder, its "Select" line is an option.
+        ->and($html)->toContain('<select class="input-text" name="billing_state" id="billing_state" required')
         ->and($html)->not->toMatch('#<select[^>]*placeholder#');
 });
 
@@ -336,7 +338,9 @@ it('renders the checkout byte for byte as before this lane with both switches of
     // Lane PY's payment boxes ship ON since; their own "Today" style is the
     // byte-for-byte way back (CheckoutPaymentBoxesTest), so it is set here and
     // this test goes on comparing what it was written to compare.
-    cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain']);
+    // Lane AD's Emirate list ships ON too; OFF is its byte-for-byte way back
+    // (AddressRegionsCheckoutTest), so it is set here for the same reason.
+    cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain', 'state_list' => false]);
     $cart = cdCart();
 
     $current = config('view.paths');

@@ -1377,6 +1377,14 @@ final class InterfaceStrings
             'checkout.field_address' => 'Address',
             'checkout.field_address_placeholder' => 'Street, building / villa no.',
             'checkout.field_state' => 'Emirate',
+            // Lane AD: the label follows the country while Appearance -> Checkout
+            // page -> Fields & attention -> "Emirate / state as a list" is on
+            // (App\Support\AddressRegions). `field_state` stays the UAE's.
+            'checkout.field_state_governorate' => 'Governorate',
+            'checkout.field_state_region' => 'Region',
+            'checkout.field_state_municipality' => 'Municipality',
+            'checkout.field_state_other' => 'State / region',
+            'checkout.field_state_select' => 'Select',
             'checkout.field_city' => 'City / area',
             'checkout.field_city_placeholder' => 'e.g. Al Reem Island',
             'checkout.field_country' => 'Country',

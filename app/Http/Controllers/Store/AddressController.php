@@ -52,7 +52,7 @@ class AddressController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $this->validated($request);
+        $data = $this->validated($request, null);
 
         $address = $this->customer()->addresses()->create($data);
 
@@ -69,7 +69,7 @@ class AddressController extends Controller
     public function update(Request $request, int $id): RedirectResponse
     {
         $address = $this->find($id);
-        $data = $this->validated($request);
+        $data = $this->validated($request, $address);
 
         $address->update($data);
 
@@ -126,6 +126,7 @@ class AddressController extends Controller
             'editing' => $editing,
             'types' => self::TYPES,
             'countries' => Countries::NAMES,
+            'stateList' => app(\App\Services\CheckoutPage::class)->stateList(),
         ]);
     }
 
@@ -174,7 +175,7 @@ class AddressController extends Controller
         $address->forceFill(['is_default' => true])->save();
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?Address $existing): array
     {
         $data = $request->validate([
             'type' => ['required', 'string', 'in:' . implode(',', self::TYPES)],
@@ -193,6 +194,33 @@ class AddressController extends Controller
 
         $data['country'] = strtoupper($data['country']);
         $data['is_default'] = $request->boolean('is_default');
+
+        /*
+         * THE STATE IS ONE OF ITS COUNTRY'S LIST (Lane AD) while Appearance ->
+         * Checkout page -> Fields & attention -> "Emirate / state as a list" is
+         * on, stored as the list's English name -- the same string the checkout
+         * stores. Still optional, as it always was here. The one exception is
+         * the value this address already carries: an old free-text state the
+         * list does not know is offered back unchanged by the form, and saving
+         * the address without touching it must not be refused or erased.
+         *
+         * MUTATION: drop the canonical() check and AddressRegionsAccountTest's
+         * "refuses a state that is not in the list" saves "Atlantis".
+         */
+        $state = trim((string) ($data['state'] ?? ''));
+
+        if ($state !== '' && \App\Support\AddressRegions::has($data['country'])
+            && app(\App\Services\CheckoutPage::class)->stateList()) {
+            $canonical = \App\Support\AddressRegions::canonical($data['country'], $state);
+
+            if ($canonical === null && ($existing === null || $state !== (string) $existing->state)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'state' => __('store.checkout.validate_state'),
+                ]);
+            }
+
+            $data['state'] = $canonical ?? $state;
+        }
 
         return $data;
     }

@@ -194,7 +194,8 @@ class CheckoutController extends Controller
          * showed the city standing in for an empty one, the rate drawn and the
          * rate charged could differ for the same shopper.
          */
-        $typed = app(\App\Services\CartPage::class)->addressPickerOn()
+        $pickerOn = app(\App\Services\CartPage::class)->addressPickerOn();
+        $typed = $pickerOn
             ? null
             : $this->typedAddress($customer, $address);
 
@@ -249,7 +250,36 @@ class CheckoutController extends Controller
             ? $resolved->code
             : null;
 
-        [$rates, $chosen, $totals] = $this->rateContext($cart, $country, old('billing_state') ?? ($typed !== null ? ($typed['state'] ?? null) : $address?->state));
+        $prefill = $typed !== null ? array_merge($this->prefill($customer, $address), $typed) : $this->prefill($customer, $address);
+
+        /*
+         * THE EMIRATE AS A LIST (Lane AD), and the price drawn on what it shows.
+         *
+         * Appearance -> Checkout page -> Fields & attention -> "Emirate / state
+         * as a list", on as the owner asked. Only in the typed-fields mode: the
+         * picker row posts its own hidden emirate and is left exactly as it was.
+         *
+         * The box can only show a name from its list, so a saved "dubai", "DXB"
+         * or a city of "Dubai" with no state is shown as Dubai -- and the page
+         * is priced on Dubai, because place() will charge on what the box posts
+         * (the reason $typed is computed above). A saved value that names no
+         * row prices as the country and leaves the list on "Select"; the saved
+         * address itself is never rewritten by showing a page.
+         */
+        $stateList = ! $pickerOn
+            && app(\App\Services\CheckoutPage::class)->stateList();
+        $formCountry = strtoupper((string) old('billing_country', $prefill['country'] ?? $country));
+        $statePick = null;
+        $priceState = old('billing_state') ?? ($typed !== null ? ($typed['state'] ?? null) : $address?->state);
+
+        if ($stateList && \App\Support\AddressRegions::has($formCountry)) {
+            $statePick = old('billing_state') !== null
+                ? \App\Support\AddressRegions::canonical($formCountry, (string) old('billing_state'))
+                : \App\Support\AddressRegions::guess($formCountry, $prefill['state'] ?? null, $prefill['city'] ?? null);
+            $priceState = $statePick;
+        }
+
+        [$rates, $chosen, $totals] = $this->rateContext($cart, $country, $priceState);
 
         return view('store.checkout', [
             'settings' => $this->settings,
@@ -284,7 +314,9 @@ class CheckoutController extends Controller
             // posted — only the form itself was never given the other shape
             // to send. The setting existed and did nothing until now.
             'singleName' => (bool) $this->settings->get('checkout_single_name', true),
-            'prefill' => $typed !== null ? array_merge($this->prefill($customer, $address), $typed) : $this->prefill($customer, $address),
+            'prefill' => $prefill,
+            'stateList' => $stateList,
+            'statePick' => $statePick,
         ]);
     }
 
@@ -354,6 +386,35 @@ class CheckoutController extends Controller
             'payment_method' => ['required', 'string', 'max:40'],
             'billing_kbb_whatsapp' => ['nullable'],
         ], [], self::FIELD_NAMES);
+
+        /*
+         * THE EMIRATE IS ONE OF ITS COUNTRY'S LIST (Lane AD), while Appearance
+         * -> Checkout page -> Fields & attention -> "Emirate / state as a list"
+         * is on and the typed fields are the form. A select is a suggestion to
+         * a browser, not to a script: without this a POST could still carry
+         * "Dubaii" or a postcode, and the order, the label and the zone lookup
+         * would all get it. A spelling the list knows ("dubai", "DXB", "AE-DU")
+         * is stored as the list's own name, so a state-level zone written as
+         * `AE:Dubai` matches it. A country with no list keeps the free text,
+         * and the picker row's hidden emirate is not judged here at all.
+         *
+         * MUTATION: delete this block and AddressRegionsCheckoutTest's
+         * "refuses an emirate that is not in the list" places an order for
+         * "Atlantis".
+         */
+        if (! app(\App\Services\CartPage::class)->addressPickerOn()
+            && app(\App\Services\CheckoutPage::class)->stateList()
+            && \App\Support\AddressRegions::has($data['billing_country'])) {
+            $canonical = \App\Support\AddressRegions::canonical($data['billing_country'], $data['billing_state']);
+
+            if ($canonical === null) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'billing_state' => __('store.checkout.validate_state'),
+                ]);
+            }
+
+            $data['billing_state'] = $canonical;
+        }
 
         $cart = $this->loadCart($request);
 

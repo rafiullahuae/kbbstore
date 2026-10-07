@@ -1,0 +1,22 @@
+const { chromium } = require('playwright');
+(async () => {
+  const BASE = 'http://127.0.0.1:' + process.argv[2];
+  const ids = JSON.parse(await (await fetch(BASE + '/es-ids.json')).text());
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const page = await (await browser.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36' })).newPage();
+  const errors = []; page.on('pageerror', (e) => errors.push(String(e)));
+  await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+  for (const id of ids) await page.evaluate(async (pid) => { await fetch('/api/cart/add', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.KBB.csrf, Accept: 'application/json' }, body: JSON.stringify({ product_id: pid, quantity: 1 }) }); }, id);
+  await page.goto(BASE + '/checkout/', { waitUntil: 'networkidle' });
+  const st = () => page.evaluate(() => { const e = document.getElementById('billing_state'); return { tag: e.tagName, type: e.type, ph: e.getAttribute('placeholder'), name: e.name, req: e.required, ac: e.getAttribute('autocomplete'), label: document.querySelector('label[for="billing_state"]').textContent, n: e.options ? e.options.length : null, texts: e.options ? Array.from(e.options).map((o) => o.text).join('|') : null, value: e.value, delivery: document.getElementById('kbbDeliverySlot').innerText.slice(0, 60) }; });
+  const out = { start: await st() };
+  await page.selectOption('#billing_state', 'Dubai'); await page.waitForTimeout(800);
+  await page.selectOption('#billing_country', 'GB'); await page.waitForTimeout(1500); out.gb = await st();
+  await page.fill('#billing_state', 'Kent'); await page.locator('#billing_city').focus(); await page.waitForTimeout(1200); out.gbTyped = await st();
+  await page.selectOption('#billing_country', 'AE'); await page.waitForTimeout(1500); out.backAE = await st();
+  out.sameTextsAfterSwap = out.start.texts === out.backAE.texts;
+  await page.selectOption('#billing_country', 'OM'); await page.waitForTimeout(1200); out.om = (await st()).texts;
+  out.errors = errors;
+  console.log(JSON.stringify(out, null, 1));
+  await browser.close();
+})();
