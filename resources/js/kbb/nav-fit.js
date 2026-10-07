@@ -116,9 +116,22 @@ function rowNeeded(wrap){
   return width;
 }
 
+/*
+ * Lane LH: kbb.css hides `.mbar` below this width (`@media(max-width:1000px)
+ * {.mbar{display:none}}`), so on a phone there is nothing to fit -- and the
+ * `offsetWidth` read below was still made there, on load and again when the
+ * webfont landed, forcing a style-and-layout pass mid-load on every phone
+ * page (Lighthouse "Forced reflow", app-*.js). matchMedia answers from the
+ * viewport and reads no element, so asking it FIRST keeps phones off layout
+ * entirely; a desktop, and a tablet rotated past 1000px, measure as before.
+ */
+const PHONE_BAR_HIDDEN = '(max-width: 1000px)';
+
 function fitNavBar(){
   const wrap = document.querySelector('.mbar .wrap');
   if(!wrap) return;
+
+  if(window.matchMedia && window.matchMedia(PHONE_BAR_HIDDEN).matches) return;
 
   // Not visible (mobile breakpoint hides .mbar entirely) — nothing to fit,
   // and measuring a hidden element's width is meaningless anyway.
