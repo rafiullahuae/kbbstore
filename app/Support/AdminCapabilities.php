@@ -660,6 +660,15 @@ final class AdminCapabilities
          * IS mapped, to store.settings.
          */
         'platform.site_url' => ['owner'],
+        /*
+         * Platform -> Domain switch (Lane DW): the step-by-step move to a new
+         * domain. Its buttons reach APP_URL, the main and old addresses, the
+         * caches, the payment webhooks, the picture fetcher and the owner app's
+         * own address, so it is owner-only here AND its controller refuses
+         * anyone who is not a Full Admin even when a custom role is handed this
+         * key -- otherwise this one tick would be a side door to six others.
+         */
+        'platform.domain_switch' => ['owner'],
         'cache.manage' => ['owner'],
         'security.view' => ['owner'],
         'security.integrity' => ['owner'],
@@ -993,6 +1002,9 @@ final class AdminCapabilities
          */
         ['*', 'admin-api/site-url', 'platform.site_url'],
         ['*', 'admin-api/site-url/**', 'platform.site_url'],
+        // Platform -> Domain switch (Lane DW). Both lines: `/**` does not match the bare prefix.
+        ['*', 'admin-api/domain-switch', 'platform.domain_switch'],
+        ['*', 'admin-api/domain-switch/**', 'platform.domain_switch'],
         ['*', 'admin-api/site-address', 'store.settings'],
         ['*', 'admin-api/site-address/**', 'store.settings'],
 

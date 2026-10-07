@@ -359,7 +359,8 @@ it('renders the sidebar the console settled on, group by group and row by row', 
      */
     $settled = [
         '' => ['dash'],
-        'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'cache'],
+        // 'domainswitch' — Platform → Domain switch (Lane DW), after Site address.
+        'Platform' => ['theme', 'users', 'settings', 'siteaddr', 'domainswitch', 'cache'],
         // App: added after the capture, at the owner's request (5 October).
         'App' => ['siteapp', 'ownerapp'],
         // 'notfoundpage' — Safety → 404 page (Lane NF), after Demo Content.

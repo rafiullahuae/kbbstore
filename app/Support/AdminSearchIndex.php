@@ -130,6 +130,12 @@ final class AdminSearchIndex
                 'Forward these, permanently', 'Keep this install out of Google', 'Directory Privacy',
             ],
         ],
+        'domainswitch' => [
+            '' => [
+                'Readiness check', 'Tell the shop its new name', 'Add the new domain in Cloudways', 'Check DNS now',
+                'Check certificate', 'Switch the shop’s address', 'Payments and Instagram', 'Old pictures', 'Test orders',
+            ],
+        ],
         'cache' => [
             '' => [
                 'Shop pages may be reused for', 'Browsers may keep them for', '.htaccess',

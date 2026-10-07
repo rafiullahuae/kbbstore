@@ -117,6 +117,8 @@ final class AdminNav
             ['id' => 'users', 'label' => 'Users & Roles', 'read' => 'admin-api/roles/members', 'icon' => self::I['users']],
             ['id' => 'settings', 'label' => 'Settings', 'cap' => 'store.settings', 'icon' => self::I['settings']],
             ['id' => 'siteaddr', 'label' => 'Site address', 'read' => 'admin-api/site-address', 'icon' => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/>'],
+            // Platform -> Domain switch (Lane DW): the move to kbeautybliss.com, step by step.
+            ['id' => 'domainswitch', 'label' => 'Domain switch', 'read' => 'admin-api/domain-switch', 'late' => true, 'icon' => '<path d="M4 7h13l-3-3"/><path d="M20 17H7l3 3"/><circle cx="19" cy="7" r="1.6"/><circle cx="5" cy="17" r="1.6"/>'],
             ['id' => 'cache', 'label' => 'Cache', 'read' => 'admin-api/cache', 'late' => true, 'icon' => '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>'],
         ]],
         // App (the owner, via the integrator, 5 October): the shop's own app and
