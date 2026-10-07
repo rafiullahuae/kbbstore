@@ -177,13 +177,21 @@
                      data-alt="{{ $shotAlt }}"
                      style="background:{{ $shotImage ? '#fff' : Gradient::for($product->name . $i) }}">
                     @if ($shotImage)
-                        {{-- Below the fold on a phone and never the LCP: lazy. --}}
+                        {{-- (Lane PG2) EAGER AT LOW PRIORITY, NOT LAZY. "Below the
+                             fold on a phone" was not true: on a 390x844 phone
+                             the strip sits at ~530px, inside the first screen,
+                             and a lazy image is not even requested until layout
+                             has run. Measured on a throttled phone (4x CPU, 1.6
+                             Mbps), cold: thumbnails painted 2603 ms lazy, 1451 ms
+                             eager+low, while the main photo -- the LCP, which
+                             keeps fetchpriority="high" -- painted 2816 ms vs
+                             2664 ms, i.e. not delayed. Four ~5 KB files. --}}
                         <img class="gthumb-img" src="{{ $shotImage }}" alt="{{ $shotAlt }}"
                              @if ($thumbSrcset !== '')
                              srcset="{{ $thumbSrcset }}"
                              sizes="{{ ImageVariants::thumbSizesAttribute($thumbAspect) }}"
                              @endif
-                             width="66" height="66" loading="lazy" decoding="async">
+                             width="66" height="66" loading="eager" fetchpriority="low" decoding="async">
                     @else
                         {{ $shot['label'] ?? '' }}
                     @endif

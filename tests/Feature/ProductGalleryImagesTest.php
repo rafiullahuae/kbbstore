@@ -112,10 +112,10 @@ it('renders every thumbnail as a real img, lazily', function () {
     foreach ($thumbs as $i => $t) {
         $srcs[] = $t->getAttribute('src');
 
-        // Below the fold on a phone and never the LCP.
-        expect($t->getAttribute('loading'))->toBe('lazy');
+        // Never the LCP, so never high priority. (Lane PG2: eager at LOW priority, not lazy -- the strip is on a phone's first screen; GalleryLoadingPlaceholderTest has the numbers.)
+        expect($t->getAttribute('loading'))->toBe('eager');
         expect($t->getAttribute('decoding'))->toBe('async');
-        expect($t->getAttribute('fetchpriority'))->toBe('');
+        expect($t->getAttribute('fetchpriority'))->toBe('low');
         expect($t->getAttribute('width'))->not->toBe('');
         expect($t->getAttribute('height'))->not->toBe('');
         expect($t->getAttribute('alt'))->not->toBe('');

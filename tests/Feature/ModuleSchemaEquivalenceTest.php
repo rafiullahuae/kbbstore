@@ -96,6 +96,11 @@
  *   correct: this screen's dialect is the plain `(bool)` cast, the same one the
  *   eleven flag-bar keys beside it already answer with.
  *
+ *   Lane PG2 (the gallery lane) added ONE — `photo_placeholder`, Appearance
+ *   → Product styles → Layout → Photo loading placeholder — the same way:
+ *   FOUR LINES INSERTED after `image_ratio`'s, 0 MODIFIED, 0 REMOVED; a
+ *   value not on the list ("nope", "", null) answers the shipped 'shimmer'.
+ *
  *   Lane PI-B added SIX — Appearance → Header → Breadcrumbs: `bc_mobile`,
  *   `bc_desktop` and four 0–48px spacing ranges — the same way: 58 LINES
  *   INSERTED (2 × 11 bool + 4 × 9 range), 0 MODIFIED, 0 REMOVED, every existing

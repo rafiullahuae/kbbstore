@@ -126,6 +126,7 @@ function psOffDefault(): array
         'grid_skin' => 'luxe',
         'card_radius' => 26,
         'image_ratio' => 'landscape',
+        'photo_placeholder' => 'plain',   // Lane PG2: the grey box, standing still
         /* ▲ true, NOT false, FOR THESE TWO.                        (Lane CARD)
            Their shipped default moved to false — the owner asked for the brand
            line and the category eyebrow hidden in as many words — so `false` is

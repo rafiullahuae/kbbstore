@@ -223,6 +223,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // ▲ Lane FB added one tab to slim-footer and changed nothing else: the
     // footer's "app row" (site_app, six fields), inserted after site_m exactly
     // as the screen now sends it.
+    // ▲ Lane PG2 (the gallery lane, 7 October) added one field to
+    // product-styles and changed nothing else: `photo_placeholder` ("Photo
+    // loading placeholder", Grey shimmer / Plain grey / None) on the Layout
+    // tab after image_ratio, and that tab's description names it.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -596,7 +600,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // ten pay_* controls on a tab of their own appended after "cues".
     // 709 -> 710 (Lane AD): Appearance -> Checkout page -> Fields & attention
     // -> "Emirate / state as a list", the state_list switch.
-    expect($compared)->toBe(710, 'the number of controls drawn changed');
+    // 710 -> 711 (Lane PG2, the gallery lane): Appearance → Product styles →
+    // Layout → Photo loading placeholder.
+    expect($compared)->toBe(711, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

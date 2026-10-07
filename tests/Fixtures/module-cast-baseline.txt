@@ -3553,6 +3553,10 @@ product_styles|image_ratio|select|"square"|'square'
 product_styles|image_ratio|select|"nope"|'square'
 product_styles|image_ratio|select|""|'square'
 product_styles|image_ratio|select|null|'square'
+product_styles|photo_placeholder|select|"shimmer"|'shimmer'
+product_styles|photo_placeholder|select|"nope"|'shimmer'
+product_styles|photo_placeholder|select|""|'shimmer'
+product_styles|photo_placeholder|select|null|'shimmer'
 product_styles|show_brand|bool|true|true
 product_styles|show_brand|bool|false|false
 product_styles|show_brand|bool|"1"|true

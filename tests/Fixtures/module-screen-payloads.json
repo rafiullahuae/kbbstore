@@ -3592,7 +3592,7 @@
       {
         "key": "layout",
         "label": "Layout",
-        "description": "Card shape, corners, and hover on a phone.",
+        "description": "Card shape, corners, what a photo shows while it loads, and hover on a phone.",
         "fields": [
           {
             "key": "grid_skin",
@@ -3629,6 +3629,19 @@
               "portrait": "Portrait",
               "tall": "Tall",
               "landscape": "Landscape"
+            }
+          },
+          {
+            "key": "photo_placeholder",
+            "type": "select",
+            "label": "Photo loading placeholder",
+            "help": "What a product photo shows while it is still on its way (a slow connection): in every product grid and rail, and the main photo and thumbnails on the product page.",
+            "default": "shimmer",
+            "value": "shimmer",
+            "options": {
+              "shimmer": "Grey shimmer",
+              "plain": "Plain grey",
+              "none": "None — the plain box as before"
             }
           },
           {

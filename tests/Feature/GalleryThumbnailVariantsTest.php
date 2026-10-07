@@ -474,7 +474,9 @@ it('keeps the main frame eager and the strip lazy, with the dimensions that hold
     expect(imAttr($main, 'fetchpriority'))->toBe('high');
 
     foreach (imTags($html, 'gthumb-img') as $tag) {
-        expect(imAttr($tag, 'loading'))->toBe('lazy', 'a thumbnail is not lazy: '.$tag);
+        // Lane PG2: eager at LOW priority, not lazy -- the strip is on a phone's first screen; GalleryLoadingPlaceholderTest has the numbers.
+        expect(imAttr($tag, 'loading'))->toBe('eager', 'a thumbnail waits for layout again: '.$tag);
+        expect(imAttr($tag, 'fetchpriority'))->toBe('low', 'a thumbnail competes with the main photo: '.$tag);
         expect(imAttr($tag, 'decoding'))->toBe('async');
         expect(imAttr($tag, 'width'))->toBe('66', 'a thumbnail stopped reserving its space: '.$tag);
         expect(imAttr($tag, 'height'))->toBe('66');

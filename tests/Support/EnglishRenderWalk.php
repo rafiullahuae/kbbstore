@@ -2238,6 +2238,21 @@ final class EnglishRenderWalk
                 'with' => '.kbb-slimfoot .sf-brand b.sf-wm span{color:var(--sf-wm-a,#C6395F)}',
                 'hits' => 1,
             ],
+            /*
+             * THE GALLERY THUMBNAILS ARE FETCHED AT ONCE, AT LOW PRIORITY (Lane
+             * PG2). The owner: "product gallery thumbnails take slight delay".
+             * They sit on a phone's first screen (~530px down at 390x844) and
+             * were loading="lazy", so not even requested until layout. Measured
+             * throttled: painted 2603 ms lazy -> 1451 ms eager+low, the main
+             * photo (the LCP, still fetchpriority="high") not delayed. One
+             * attribute pair per thumbnail, on the product page only; nothing
+             * else in the walk moved.
+             */
+            'the gallery thumbnails load eagerly at low priority (Lane PG2)' => [
+                'pattern' => '#width="66" height="66" loading="lazy" decoding="async">#',
+                'with' => 'width="66" height="66" loading="eager" fetchpriority="low" decoding="async">',
+                'hits' => 5, // the fixture product's five shots, one page
+            ],
         ];
     }
 

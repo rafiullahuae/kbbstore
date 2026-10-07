@@ -173,6 +173,28 @@ a{color:inherit;text-decoration:none}
    height and is not what a srcset descriptor states. The markup declares a
    wider `sizes` for exactly those files and nothing else. */
 .gthumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+/* (Lane PG2) THE GREY LOADING BOX, on the main photo and every thumbnail.
+   The owner, with a phone screenshot of an empty white frame and the
+   product's title printed where the photo should be: "it gives the empty box
+   and title displays there in place of image", and then "i would love to
+   display the loading grey bars". The frames were plain white (#fff, inline in
+   partials/product-gallery.blade.php) and a picture that had not arrived was
+   an empty white box; one that FAILED was its alt text, which is what Chrome
+   paints for a broken <img> (measured: a loading one paints nothing).
+
+   The grey is painted on each <img> BEHIND its own pixels, so a photo covers
+   it the instant it paints -- the thumbnails are object-fit:cover and need
+   nothing more. The main photo is object-fit:contain, so a portrait bottle
+   leaves bars at its sides where the grey would stay: pdp.js's settle() adds
+   `.ld` once the picture is decoded, which hands those bars back to the
+   frame's white, exactly as before. Eight sweeps then plain grey, as on the
+   product cards (kbb.css), so nothing animates for the life of the page if the
+   script never runs. color:transparent: never the alt text, which stays in
+   the markup for screen readers. Appearance → Product styles → Layout →
+   "Photo loading placeholder" picks plain grey or none. */
+.gmain-img,.gthumb-img{color:transparent;background:#f2f4f7 linear-gradient(90deg,#f2f4f7 25%,#e9edf2 37%,#f2f4f7 63%) 0 0/400% 100%;animation:kbbshim 1.4s ease 8}
+.gmain-img.ld,.gthumb-img.ld{background:none;animation:none}
+@media (prefers-reduced-motion:reduce){.gmain-img,.gthumb-img{animation:none}}
 
 /* buy box */
 .bb-brand{font-size:12px;font-weight:700;color:var(--pink-deep);text-transform:uppercase;letter-spacing:.05em}
