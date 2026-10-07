@@ -1116,6 +1116,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          * owner. Naming a capability could only widen it.
          */
         require __DIR__.'/site-url-admin.php';
+        require __DIR__.'/domain-switch-admin.php';   // Platform → Domain switch (Lane DW)
 
         /*
          * Appearance -> Set -> Desktop / Mobile (Lane SA). Inside this group

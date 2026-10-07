@@ -3368,7 +3368,7 @@ window.kbbNavClick = kbbNavClick;
    `modules` used to be declared twice in this object: once as ['Platform',…]
    and again, later, as ['Store',…]. The second silently won, so anyone editing
    the first saw nothing change. One declaration now. */
-const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],siteaddr:['Platform','Site address'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],'notfoundpage':['Safety','404 page'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language settings'],'tr-progress':['Translation','Progress'],'tr-strings':['Translation','Strings'],'tr-machine':['Translation','Machine translation'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Tools'],'rev-likes':['Reviews','Bulk Tools'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],/* 'rev-capsule' has no sidebar row of its own any more — it and 'rev-badge'
+const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],siteaddr:['Platform','Site address'],'domainswitch':['Platform','Domain switch'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],'notfoundpage':['Safety','404 page'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language settings'],'tr-progress':['Translation','Progress'],'tr-strings':['Translation','Strings'],'tr-machine':['Translation','Machine translation'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Tools'],'rev-likes':['Reviews','Bulk Tools'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],/* 'rev-capsule' has no sidebar row of its own any more — it and 'rev-badge'
    open the same screen, whose two tabs are the two questions those screens used
    to ask of one set of seven settings. The id stays routable for #rev-capsule
    and ?go=rev-capsule, and it names the screen it actually opens rather than a
@@ -8519,7 +8519,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','push','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','pagination','ownerapp','banners','setap','cache','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','notfoundpage']);
+const LATE_RENDERED=new Set(['cartpanel','push','media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','routines','security','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','notfoundpage']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -24126,6 +24126,14 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      untouched while it is off, and no page's headers differ by a byte until the
      owner turns it on here. --}}
 @include('admin.partials.cache-screen')
+
+{{-- Platform → Domain switch (Lane DW): the move to kbeautybliss.com as one
+     numbered page -- a button for every step the shop can do itself, the exact
+     values to copy for the clicks only the owner can make in Cloudways and at
+     Internet.bs. Wraps window.go for 'domainswitch'; its sidebar row is
+     App\Support\AdminNav's. Endpoints: routes/domain-switch-admin.php,
+     `platform.domain_switch`, Full Admin only. --}}
+@include('admin.partials.domain-switch-screen')
 
 {{-- Appearance → Cart page (Lane: cart-page). Every knob on the squeezed cart
      page: the row height everything in a basket line is derived from, the
