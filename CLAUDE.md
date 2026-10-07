@@ -270,6 +270,36 @@ to a shop page, **must report server ms, query count and settings-map reads
 for the product, category and brand pages, before and after** — and the
 integrator reverts it if any of them got worse.
 
+### Every front-end change, not only the protected files — the owner, 7 October
+
+> *"set this rule for every single thing. that must not have any hidden errors
+> etc or extra scripts etc. and no disturbance or compromise on the speed."*
+
+Why it exists: 2.60.416 (mega menus fit the site width) touched none of the
+files above and still made page switching feel slow. Its invisible hover
+bridges sat over the neighbouring menu links, so 4 of 15 clicks did nothing and
+those links never prefetched (Lane SX, 2.60.418). And a leftover `.mega{display:
+none}` in kbb-shop.css / kbb-product.css had hidden every multi-column panel on
+category, shop and product pages since long before, unseen because every check
+looked at the homepage. Green tests did not catch either.
+
+So a lane whose diff touches anything a shopper sees — CSS, a shop Blade view
+or partial, header/footer/menu markup, any script — owes, before it reports:
+
+- **Clickable on the first try.** Every link it renders or overlays answers a
+  real click, measured in Chromium (`elementFromPoint` over the link's box, and
+  a click that navigates). Overlays, pseudo-element "bridges" and positioned
+  panels are the usual culprits.
+- **Every page type, not just the homepage.** Home, category, shop, brand,
+  product, blog — at 390 and 1280. Page stylesheets (kbb-shop.css,
+  kbb-product.css, …) load after kbb.css and silently override it.
+- **Prefetch still fires and is used** on product, category and brand links.
+- **No console errors, no new script, no new request** on any shop page, unless
+  the owner asked for that script.
+- **Numbers, before and after:** server ms and queries for product, category
+  and brand; HTML and render-blocking CSS bytes; CLS. Worse in any of them
+  without the owner's say-so is a revert.
+
 ## Landmines, each one already paid for
 
 - **Packages 2.60.102–.106 were withdrawn** for being built against a stale
