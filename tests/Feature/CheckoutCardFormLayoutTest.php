@@ -484,7 +484,8 @@ it('does not make a second Stripe customer for a shopper who already has one', f
 });
 
 it('does not send a test-mode customer to a shop that has gone live', function () {
-    fyStripeOn(mode: 'live');
+    // Live keys under a Live row (Lane SR: a test key on a Live row is not used).
+    fyStripeOn(['publishable_key' => 'pk_live_kbb_fy', 'secret_key' => 'sk_live_kbb_fy'], mode: 'live');
     fyStripeAnswers('pi_live', 'cus_live_new');
 
     $customer = Customer::create(['email' => 'saver@example.com', 'name' => 'Saver', 'password' => 'secret-secret']);

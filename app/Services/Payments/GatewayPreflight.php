@@ -127,6 +127,17 @@ final class GatewayPreflight
             }
         }
 
+        /*
+         * A GATEWAY WHOSE REQUIRED KEYS DEPEND ON ITS MODE says so itself.
+         * (Lane SR.) Stripe keeps a test set and a live set; only the set the
+         * Mode switch picks is required, so its six key fields are `optional`
+         * to the loop above and it reports the active set's gaps here, by the
+         * labels the owner sees ("Test secret key").
+         */
+        if (method_exists($gateway, 'missingCredentials')) {
+            $missing = array_merge($missing, $gateway->missingCredentials());
+        }
+
         $enabled = (bool) ($row?->enabled ?? false);
         $configured = $gateway->configured();
         $available = $gateway->availableFor(self::SAMPLE_TOTAL, 'AE');

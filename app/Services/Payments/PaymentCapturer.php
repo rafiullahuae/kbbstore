@@ -376,6 +376,13 @@ class PaymentCapturer
                 && $order->voided_at === null
                 && ! in_array((string) $order->status, self::VOID, true)
                 && ($windowDays === null || $authorisedAt !== null),
+            /*
+             * A card that was only AUTHORISED (Stripe's "Authorise only,
+             * capture later", Lane SR). Asked of the gateway, which reads the
+             * ledger row the payment was applied with, so an order keeps the
+             * answer it was placed under. False for every other gateway.
+             */
+            'awaiting_capture' => $supported && method_exists($gateway, 'awaitingCapture') && $gateway->awaitingCapture($order),
             'window' => $supported ? $gateway->captureWindow() : null,
             'window_days' => $windowDays,
             'days_held' => $daysHeld,

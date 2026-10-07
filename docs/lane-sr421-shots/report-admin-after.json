@@ -1,0 +1,58 @@
+{
+  "admin-390": {
+    "docScrollWidth": 390,
+    "clientWidth": 390,
+    "contentScrollWidth": 390,
+    "contentClientWidth": 390,
+    "badge": "TEST MODE",
+    "fields": [
+      "publishable_key_test",
+      "secret_key_test",
+      "webhook_signing_secret_test",
+      "publishable_key",
+      "secret_key",
+      "webhook_signing_secret",
+      "link_enabled",
+      "wallet_apple_pay",
+      "wallet_google_pay",
+      "apple_domain_association",
+      "statement_descriptor",
+      "statement_descriptor_suffix",
+      "statement_descriptor_order_number",
+      "order_reference_prefix",
+      "payment_description",
+      "capture_later",
+      "receipt_email"
+    ],
+    "panelHeight": 2066,
+    "consoleErrors": []
+  },
+  "admin-1280": {
+    "docScrollWidth": 1280,
+    "clientWidth": 1280,
+    "contentScrollWidth": 1032,
+    "contentClientWidth": 1032,
+    "badge": "TEST MODE",
+    "fields": [
+      "publishable_key_test",
+      "secret_key_test",
+      "webhook_signing_secret_test",
+      "publishable_key",
+      "secret_key",
+      "webhook_signing_secret",
+      "link_enabled",
+      "wallet_apple_pay",
+      "wallet_google_pay",
+      "apple_domain_association",
+      "statement_descriptor",
+      "statement_descriptor_suffix",
+      "statement_descriptor_order_number",
+      "order_reference_prefix",
+      "payment_description",
+      "capture_later",
+      "receipt_email"
+    ],
+    "panelHeight": 1222,
+    "consoleErrors": []
+  }
+}

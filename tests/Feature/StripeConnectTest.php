@@ -88,6 +88,13 @@ function connectRow(array $config = [], string $mode = 'test', bool $enabled = f
     return $row;
 }
 
+/** Lane SR's Stripe routes, mounted from routes/payments-connect.php on their own capabilities. */
+const SR_OWN_CAPABILITY_ROUTES = [
+    'admin-api/payments/stripe/webhook',
+    'admin-api/payments/stripe/webhook/setup',
+    'admin-api/payments/stripe/log',
+];
+
 function connectStoredConfig(): array
 {
     $row = PaymentProvider::find('stripe');
@@ -402,7 +409,8 @@ describe('the requests it sends to Stripe', function () {
         Http::assertNotSent(fn (Illuminate\Http\Client\Request $r) => $r->method() === 'POST'
             && parse_url($r->url(), PHP_URL_PATH) === '/v1/webhook_endpoints');
 
-        expect(connectStoredConfig()['webhook_signing_secret'])->toBe(CONNECT_WHSEC);
+        // Lane SR: a test-mode connection keeps its set in the TEST boxes.
+        expect(connectStoredConfig()['webhook_signing_secret_test'])->toBe(CONNECT_WHSEC);
     });
 
     it('adds the missing events to an endpoint it is reusing', function () {
@@ -516,7 +524,7 @@ describe('the requests it sends to Stripe', function () {
         // Said out loud, because something in his Stripe account changed.
         expect(implode(' ', $result['warnings']))->toContain('replaced');
 
-        expect(connectStoredConfig()['webhook_endpoint_id'])->toBe('we_KBBNEW1');
+        expect(connectStoredConfig()['webhook_endpoint_id_test'])->toBe('we_KBBNEW1');
     });
 
     it('never touches an endpoint pointing anywhere but this shop', function () {
@@ -977,14 +985,15 @@ describe('Connect OAuth', function () {
         $config = connectStoredConfig();
 
         // One storage shape, so one disconnect path: the same keys a pasted
-        // connection writes, with `connect_link` as the only difference.
-        expect($config['secret_key'])->toBe(CONNECT_OAUTH_KEY)
-            ->and($config['publishable_key'])->toBe('pk_test_oauth')
-            ->and($config['webhook_signing_secret'])->toBe(CONNECT_WHSEC)
+        // connection writes, with `connect_link` as the only difference -- in
+        // the TEST boxes, because this was a test-mode grant (Lane SR).
+        expect($config['secret_key_test'])->toBe(CONNECT_OAUTH_KEY)
+            ->and($config['publishable_key_test'])->toBe('pk_test_oauth')
+            ->and($config['webhook_signing_secret_test'])->toBe(CONNECT_WHSEC)
             ->and($config['connect_account_id'])->toBe('acct_OAUTH9')
             ->and($config['connect_link'])->toBe('oauth')
-            ->and($config['webhook_endpoint_id'])->toBe('we_OAUTH1')
-            ->and($config['webhook_endpoint_managed'])->toBe('1');
+            ->and($config['webhook_endpoint_id_test'])->toBe('we_OAUTH1')
+            ->and($config['webhook_endpoint_managed_test'])->toBe('1');
     });
 
     it('catches a live account authorised under a Sandbox tab', function () {
@@ -1052,8 +1061,8 @@ describe('the endpoints', function () {
         expect($raw)->not->toContain(CONNECT_TEST_KEY)
             ->and($raw)->not->toContain(CONNECT_WHSEC);
 
-        // And it really did connect.
-        expect(connectStoredConfig()['secret_key'])->toBe(CONNECT_TEST_KEY);
+        // And it really did connect -- into the Test boxes (Lane SR).
+        expect(connectStoredConfig()['secret_key_test'])->toBe(CONNECT_TEST_KEY);
     });
 
     it('returns 422 and Stripe\'s wording when the key is refused', function () {
@@ -1317,7 +1326,8 @@ describe('the guard', function () {
 
         // Registered by this file's beforeEach; diff by identity against a
         // freshly-loaded copy would double-register, so read what is there.
-        $mine = $before->filter(fn ($r) => str_starts_with($r->uri(), 'admin-api/payments/stripe/'))->values();
+        $mine = $before->filter(fn ($r) => str_starts_with($r->uri(), 'admin-api/payments/stripe/')
+            && ! in_array($r->uri(), SR_OWN_CAPABILITY_ROUTES, true))->values();
 
         /*
          * SEVEN since the one-click lane, not six: /connect/platform joined
@@ -1330,6 +1340,16 @@ describe('the guard', function () {
 
         foreach ($mine as $route) {
             expect(App\Support\AdminCapabilities::for($route))->toBe('payments.manage');
+        }
+
+        // Lane SR's three, in the same file, each on a capability of its own
+        // (CLAUDE.md rule 5) -- named here so they cannot be mistaken for an
+        // unmapped route that fell through to the owner-only fallback.
+        foreach (['GET admin-api/payments/stripe/webhook' => 'payments.stripe_webhook',
+            'POST admin-api/payments/stripe/webhook/setup' => 'payments.stripe_webhook',
+            'GET admin-api/payments/stripe/log' => 'payments.log'] as $route => $capability) {
+            [$method, $uri] = explode(' ', $route);
+            expect(App\Support\AdminCapabilities::forPath($method, $uri))->toBe($capability);
         }
     });
 
@@ -1374,7 +1394,7 @@ describe('the guard', function () {
         expect(connectStoredConfig())->not->toHaveKey('secret_key');
     });
 
-    it('defines exactly the seven routes the header describes, and chains no middleware', function () {
+    it('defines exactly the routes the header describes, and chains no middleware', function () {
         $mine = collect(Route::getRoutes()->getRoutes())
             ->filter(fn ($r) => str_starts_with($r->uri(), 'admin-api/payments/stripe/'))
             ->values();
@@ -1393,6 +1413,11 @@ describe('the guard', function () {
             // guide for making one. Named here rather than counted, so a route
             // appearing without anybody deciding it should fails this list.
             'GET admin-api/payments/stripe/connect/platform',
+            // Lane SR: the Stripe status block, "Set up webhook automatically"
+            // and the payment log (StripeSettingsController).
+            'GET admin-api/payments/stripe/webhook',
+            'POST admin-api/payments/stripe/webhook/setup',
+            'GET admin-api/payments/stripe/log',
         ]);
 
         // RouteRegistrar::middleware() REPLACES rather than appends. A chained

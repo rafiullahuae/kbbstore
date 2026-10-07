@@ -34,6 +34,17 @@ class GatewayCredentials
      */
     private array $memo = [];
 
+    /**
+     * The row's `mode`, read by the same query as the config. (Lane SR.)
+     *
+     * Stripe now picks its keys by mode, so the checkout asks "which mode" on
+     * every configured()/availableFor() call. Unmemoised that was a second
+     * `payment_providers` read per question on the checkout page.
+     *
+     * @var array<string, string>
+     */
+    private array $modes = [];
+
     /** @return array<string, mixed> */
     public function all(string $gatewayId): array
     {
@@ -42,6 +53,8 @@ class GatewayCredentials
         }
 
         $row = PaymentProvider::find($gatewayId);
+
+        $this->modes[$gatewayId] = $row?->mode === 'live' ? 'live' : 'test';
 
         // A decrypt failure (the app key was rotated, the row was written by
         // another install) must not take the checkout page down. An empty
@@ -76,7 +89,11 @@ class GatewayCredentials
 
     public function mode(string $gatewayId): string
     {
-        return PaymentProvider::find($gatewayId)?->mode === 'live' ? 'live' : 'test';
+        if (! array_key_exists($gatewayId, $this->modes)) {
+            $this->all($gatewayId);
+        }
+
+        return $this->modes[$gatewayId] ?? 'test';
     }
 
     public function live(string $gatewayId): bool
@@ -120,17 +137,18 @@ class GatewayCredentials
         $row->config = $config;
         $row->save();
 
-        unset($this->memo[$gatewayId]);
+        unset($this->memo[$gatewayId], $this->modes[$gatewayId]);
     }
 
     public function forget(?string $gatewayId = null): void
     {
         if ($gatewayId === null) {
             $this->memo = [];
+            $this->modes = [];
 
             return;
         }
 
-        unset($this->memo[$gatewayId]);
+        unset($this->memo[$gatewayId], $this->modes[$gatewayId]);
     }
 }

@@ -38,6 +38,11 @@
     All three come from ONE elements() instance, which is what lets
     confirmCardPayment() be handed the number element alone and find the other
     two itself. They are not three independent forms.
+    `requires_capture` COUNTS AS A FINISHED PAYMENT (Lane SR). Under Store ->
+    Payments -> Stripe -> "Authorise only, capture later" an approved card
+    stops at requires_capture, not succeeded: the money is held for the shop
+    and the order is confirmed exactly as a captured one. Treating it as a
+    failure would show the shopper an error for a card the bank approved.
 --}}
 @php
     $stripeGateway = app(\App\Services\Payments\GatewayRegistry::class)->find('stripe');
@@ -461,7 +466,7 @@
 
       var intent = result.paymentIntent;
 
-      if (!intent || (intent.status !== 'succeeded' && intent.status !== 'processing')) {
+      if (!intent || (intent.status !== 'succeeded' && intent.status !== 'processing' && intent.status !== 'requires_capture')) {
         showError(TEXT.generic);
         offerBail();
         lock(false);
