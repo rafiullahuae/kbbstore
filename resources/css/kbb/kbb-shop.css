@@ -450,19 +450,7 @@ img{max-width:100%}
 .cat.has-mega:hover .chev{transform:rotate(180deg)}
 .cat.sale{color:var(--sale);font-weight:700;letter-spacing:.01em}
 .cat.sale:hover{color:#b02a3b}
-.mega{position:absolute;top:100%;inset-inline-start:0;background:#fff;border:1px solid var(--line);border-top:2px solid var(--pink);border-radius:0 0 14px 14px;box-shadow:var(--sh-l);padding:14px;display:none;z-index:120;animation:mfade .16s var(--ease)}
 @keyframes mfade{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-.cat.has-mega:hover .mega{display:block}
-.mega-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);padding:2px 10px 8px}
-.mega a{display:block;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:400;color:var(--ink-2);text-decoration:none;white-space:nowrap}
-.mega a:hover{background:var(--pink-soft);color:var(--pink-deep)}
-.mega-skin{min-width:220px}
-.mega-all{color:var(--pink-deep)!important;font-weight:600!important;margin-top:4px;border-top:1px solid var(--line-2)}
-.mega-brands{inset-inline-end:0;inset-inline-start:auto;grid-template-columns:170px 1fr;gap:12px;width:min(760px,86vw)}
-.cat.has-mega:hover .mega-brands{display:grid}
-.mega-brands .mcol-trend{border-inline-end:1px solid var(--line-2);padding-inline-end:8px}
-.mega-brands .bgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:0 6px;max-height:56vh;overflow:auto}
-.mega-brands .bgrid a{font-size:12.5px;padding:6px 8px}
 /* mobile drawer dropdowns */
 .mnav{overflow-y:auto}
 .mnav details summary{list-style:none;cursor:pointer;padding:14px 6px;font-size:15px;font-weight:500;color:var(--ink);border-bottom:1px solid var(--line-2);display:flex;justify-content:space-between;align-items:center}
@@ -486,11 +474,6 @@ img{max-width:100%}
 .cat.sale{color:var(--sale);font-weight:600;background:var(--pink-soft);border-radius:99px;height:30px;padding:0 14px;margin:0 6px;align-self:center;letter-spacing:.02em}
 .cat.sale:hover{background:var(--sale);color:#fff}
 .cat.sale::after{display:none}
-.mega{border:1px solid var(--line-2);border-top:2px solid var(--pink);border-radius:0 0 16px 16px;box-shadow:0 22px 48px rgba(42,34,40,.15);padding:18px}
-.mega-title{color:var(--pink-deep);letter-spacing:.1em}
-.mega a{border-radius:10px}
-.mega a:hover{background:var(--pink-soft);color:var(--pink-deep)}
-.mega-brands{border-radius:0 0 16px 16px}
 
 /* ==========================================================================
    Mobile polish — Lane BM. Scoped to <=900px; desktop is untouched.
