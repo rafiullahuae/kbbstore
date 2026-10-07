@@ -3343,7 +3343,7 @@ KBB_BH_CSS;
                 'hits' => 3,
             ],
             'the address book\'s emirate list above Country (Lane AD)' => [
-                'pattern' => '#      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="city"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="postcode"[^\n]*\n      <label class="ab-f"><span id="ab-state-label">.*?<select name="country" id="ab-country">.*?</select>\n      </label>\n#s',
+                'pattern' => '#      <label class="ab-f ab-wide"><span>[^<]*</span>\n        <input type="text" name="line1"[^\n]*\n      <label class="ab-f ab-wide"><span>[^<]*</span>\n        <input type="text" name="line2"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="postcode"[^\n]*\n      <label class="ab-f"><span><span id="ab-state-label">.*?<select name="country" id="ab-country">.*?</select>\n      </label>\n#s',
                 'hits' => 2,
             ],
 
@@ -3417,13 +3417,15 @@ KBB_BH_CSS;
     {
         return [
             /*
-             * THE ADDRESS BOOK'S TYPED STATE BOX (Lane AD): City, State,
-             * Postcode, Country as four typed rows, replaced by the insertion
-             * of the same name -- the state as a list directly above Country.
+             * THE ADDRESS BOOK'S TYPED STATE BOX (Lane AD): Address line 1 and
+             * 2, City, State, Postcode, Country as typed rows, replaced by the
+             * insertion of the same name -- Building / Apartment or Villa,
+             * Area / Street, Postcode, and the Emirate as a list (it is the
+             * city) directly above Country.
              * Both address-book pages, once each.
              */
             'the address book\'s emirate list above Country (Lane AD)' => [
-                'pattern' => '#      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="city"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="state"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="postcode"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <select name="country">.*?</select>\n      </label>\n#s',
+                'pattern' => '#      <label class="ab-f ab-wide"><span>[^<]*</span>\n        <input type="text" name="line1"[^\n]*\n      <label class="ab-f ab-wide"><span>[^<]*</span>\n        <input type="text" name="line2"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="city"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="state"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <input type="text" name="postcode"[^\n]*\n      <label class="ab-f"><span>[^<]*</span>\n        <select name="country">.*?</select>\n      </label>\n#s',
                 'hits' => 2,
             ],
             /*

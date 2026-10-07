@@ -30,7 +30,7 @@ const measure = () => {
       label: (document.querySelector('label[for="' + id + '"]') || {}).textContent }; };
   const sel = document.getElementById('billing_state');
   return {
-    address: f('billing_address_1'), city: f('billing_city'), emirate: f('billing_state'), country: f('billing_country'),
+    address: f('billing_address_1'), area: f('billing_address_2'), city: f('billing_city'), emirate: f('billing_state'), country: f('billing_country'),
     options: sel && sel.tagName === 'SELECT' ? Array.from(sel.options).map((o) => o.text) : null,
     delivery: (document.getElementById('kbbDeliverySlot') || {}).innerText,
     scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth,

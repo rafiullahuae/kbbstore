@@ -225,9 +225,12 @@ it('gives every checkout field the Create account form\'s floating label, keepin
         'billing_first_name' => ['user', 'section-billing billing name', 'Full name'],
         'billing_phone' => ['phone', 'section-billing billing tel', 'Phone'],
         'billing_email' => ['mail', 'section-billing billing email', 'Email address'],
-        'billing_address_1' => ['pin', 'section-billing billing address-line1', 'Address'],
+        // Since Lane AD (the owner: "Building / Apartment or Villa ... Area /
+        // Street and the Emirates will work as City") the address boxes are
+        // these three; the City box is gone and line 2 carries the area.
+        'billing_address_1' => ['pin', 'section-billing billing address-line1', 'Building / Apartment or Villa'],
         'billing_state' => ['map', 'section-billing billing address-level1', 'Emirate'],
-        'billing_city' => ['city', 'section-billing billing address-level2', 'City / area'],
+        'billing_address_2' => ['city', 'section-billing billing address-line2', 'Area / Street'],
         'billing_country' => ['globe', 'section-billing billing country', 'Country'],
     ];
 
@@ -286,7 +289,7 @@ it('keeps the server rules and the inline validation hooks the fields always had
     cdSet(['float_labels' => true]);
     $html = cdPage(cdCart());
 
-    foreach (['billing_first_name', 'billing_phone', 'billing_email', 'billing_address_1', 'billing_state', 'billing_city', 'billing_country'] as $id) {
+    foreach (['billing_first_name', 'billing_phone', 'billing_email', 'billing_address_1', 'billing_state', 'billing_address_2', 'billing_country'] as $id) {
         expect($html)->toMatch('#<p class="form-row [^"]*validate-required[^"]*" id="' . $id . '_field"[^>]*><span class="woocommerce-input-wrapper fld kbb-fl ico">.*?class="input-text" name="' . $id . '"#s');
     }
 

@@ -2082,7 +2082,7 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
     private function address(array $a): array
     {
-        return [
+        $out = [
             'first_name' => (string) ($a['first_name'] ?? ''),
             'last_name' => (string) ($a['last_name'] ?? ''),
             'line1' => (string) ($a['line1'] ?? ''),
@@ -2091,6 +2091,19 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             'country_code' => strtoupper((string) ($a['country'] ?? 'AE')),
             'phone_number' => (string) ($a['phone'] ?? ''),
         ];
+
+        /*
+         * Area / Street (Lane AD's list mode stores it as `line2`), in
+         * Tamara's own optional `line2`. Only when there is one, so an order
+         * without it sends exactly the body it always did.
+         */
+        $line2 = trim((string) ($a['line2'] ?? ''));
+
+        if ($line2 !== '') {
+            $out = array_slice($out, 0, 3, true) + ['line2' => $line2] + $out;
+        }
+
+        return $out;
     }
 
     /**

@@ -77,6 +77,7 @@ class CheckoutController extends Controller
         'billing_last_name' => 'last name',
         'billing_address_1' => 'address',
         'billing_city' => 'city / area',
+        'billing_address_2' => 'area / street',
         'billing_state' => 'emirate',
         'billing_country' => 'country',
         'payment_method' => 'payment method',
@@ -272,10 +273,27 @@ class CheckoutController extends Controller
         $statePick = null;
         $priceState = old('billing_state') ?? ($typed !== null ? ($typed['state'] ?? null) : $address?->state);
 
+        if ($stateList) {
+            /*
+             * "THE EMIRATES WILL WORK AS CITY" (the owner, 7 October). The
+             * boxes are Building / Apartment or Villa (line 1), Area / Street
+             * (line 2) and the Emirate, which place() stores as both city and
+             * state. A saved address is read into them by
+             * AddressRegions::split(): its line 1 alone into Building, and an
+             * old city like "JLT" that names no emirate into Area / Street
+             * rather than lost.
+             */
+            $saved = \App\Support\AddressRegions::split($formCountry,
+                $prefill['saved_line2'] ?? null, $prefill['saved_city'] ?? ($prefill['city'] ?? null), $prefill['saved_state'] ?? ($prefill['state'] ?? null));
+            $prefill['building'] = $prefill['saved_line1'] ?? ($prefill['line1'] ?? '');
+            $prefill['area'] = $saved['area'];
+            $prefill['town'] = $saved['town'];
+        }
+
         if ($stateList && \App\Support\AddressRegions::has($formCountry)) {
             $statePick = old('billing_state') !== null
                 ? \App\Support\AddressRegions::canonical($formCountry, (string) old('billing_state'))
-                : \App\Support\AddressRegions::guess($formCountry, $prefill['state'] ?? null, $prefill['city'] ?? null);
+                : $saved['emirate'];
             $priceState = $statePick;
         }
 
@@ -342,6 +360,12 @@ class CheckoutController extends Controller
         // whatever shape was actually posted.
         $lastNameRule = $this->settings->get('checkout_single_name', true) ? 'nullable' : 'required';
 
+        // Lane AD's list mode: Appearance -> Checkout page -> Fields &
+        // attention -> "Emirate / state as a list", with the typed fields
+        // (not the picker row) as the form.
+        $listMode = ! app(\App\Services\CartPage::class)->addressPickerOn()
+            && app(\App\Services\CheckoutPage::class)->stateList();
+
         $data = $request->validate([
             'billing_email' => ['required', 'string', 'max:160', new \App\Rules\StorefrontEmail],
             // Guest checkout -> account. Both optional: leaving them alone
@@ -378,7 +402,14 @@ class CheckoutController extends Controller
             'billing_first_name' => ['required', 'string', 'max:120'],
             'billing_last_name' => [$lastNameRule, 'string', 'max:120'],
             'billing_address_1' => ['required', 'string', 'max:255'],
-            'billing_city' => ['required', 'string', 'max:120'],
+            // The list mode (Lane AD) posts Area / Street as line 2 and has no
+            // city box: the Emirate is the city. A page rendered before the
+            // switch (an open tab, a cached copy, a script) still posts the old
+            // "City / area" box instead, and that box always held the area, so
+            // it is taken as line 2 rather than refused. The typed mode is
+            // unchanged.
+            'billing_address_2' => [$listMode ? 'required_without:billing_city' : 'nullable', 'nullable', 'string', 'max:255'],
+            'billing_city' => [$listMode ? 'nullable' : 'required', 'string', 'max:120'],
             // A free-text field on the live site, not a fixed list.
             'billing_state' => ['required', 'string', 'max:120'],
             'billing_country' => ['required', 'string', 'size:2'],
@@ -402,9 +433,7 @@ class CheckoutController extends Controller
          * "refuses an emirate that is not in the list" places an order for
          * "Atlantis".
          */
-        if (! app(\App\Services\CartPage::class)->addressPickerOn()
-            && app(\App\Services\CheckoutPage::class)->stateList()
-            && \App\Support\AddressRegions::has($data['billing_country'])) {
+        if ($listMode && \App\Support\AddressRegions::has($data['billing_country'])) {
             $canonical = \App\Support\AddressRegions::canonical($data['billing_country'], $data['billing_state']);
 
             if ($canonical === null) {
@@ -414,6 +443,25 @@ class CheckoutController extends Controller
             }
 
             $data['billing_state'] = $canonical;
+        }
+
+        /*
+         * "THE EMIRATES WILL WORK AS CITY." In the list mode the Emirate (or,
+         * for a country with no list, the typed town) is stored as the city
+         * AND the state: the city is what Tabby and Tamara are sent and what
+         * the label prints, the state is what a state-level zone matches, and
+         * the emails and invoice print the two once when they agree. Area /
+         * Street is line 2, which both of those already print. This is the
+         * shape the picker row has always written (CartAddressState).
+         *
+         * MUTATION: drop this and AddressRegionsCheckoutTest's "stores the
+         * emirate as the order's city" stores no city at all.
+         */
+        if ($listMode) {
+            $data['billing_address_2'] = trim((string) ($data['billing_address_2'] ?? '')) !== ''
+                ? $data['billing_address_2']
+                : (string) ($data['billing_city'] ?? '');
+            $data['billing_city'] = $data['billing_state'];
         }
 
         $cart = $this->loadCart($request);
@@ -583,7 +631,7 @@ class CheckoutController extends Controller
         $accountCreated = false;
 
         try {
-            $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request, $paymentTitle, $orderNumber, &$accountCreated) {
+            $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request, $paymentTitle, $orderNumber, $listMode, &$accountCreated) {
                 $customer = $request->user('customer') ?? self::customerForGuestOrder(
                     $data['billing_email'],
                     $first,
@@ -625,6 +673,15 @@ class CheckoutController extends Controller
                     'state' => $data['billing_state'], 'country' => $data['billing_country'],
                     'phone' => $data['billing_phone'] ?? null,
                 ];
+
+                // Area / Street (Lane AD's list mode), in the key the emails,
+                // invoice, label and gateways already read. Added only in that
+                // mode, so the typed mode's address keeps its exact shape.
+                if ($listMode) {
+                    $address = array_slice($address, 0, 3, true)
+                        + ['line2' => $data['billing_address_2']]
+                        + $address;
+                }
 
                 $order = Order::create([
                     'order_number' => $orderNumber,
@@ -1789,6 +1846,14 @@ class CheckoutController extends Controller
             'city' => $city,
             'state' => $text('state') !== '' ? $text('state') : $city,
             'country' => strtoupper($text('country')),
+            // The saved parts as they are, for the list mode (Lane AD), which
+            // has a box of its own for each: Building / Apartment or Villa is
+            // line 1 alone, and AddressRegions::split() reads Area / Street
+            // and the Emirate out of line 2, city and state.
+            'saved_line1' => $text('line1'),
+            'saved_line2' => $text('line2'),
+            'saved_city' => $city,
+            'saved_state' => $text('state'),
         ], static fn (string $v) => $v !== '');
 
         return $out === [] ? null : $out;

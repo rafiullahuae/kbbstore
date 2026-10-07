@@ -14,8 +14,9 @@ use Illuminate\Support\Facades\Schema;
  * Arabic DRAFTS for the Emirate / state list's labels. (Lane AD)
  *
  * A copy of 2027_09_05_170100_seed_spotted_instagram_arabic_drafts with this
- * lane's keys: the label the field wears for each kind of country, and the
- * list's "Select" line. Drafts are never served (TranslationStore serves
+ * lane's keys: the label the field wears for each kind of country, the
+ * list's "Select" line, and the renamed Building / Apartment or Villa and
+ * Area / Street boxes with their hints. Drafts are never served (TranslationStore serves
  * approved rows only), so this changes no page; it puts the strings on the
  * owner's review list (Store -> Translations). The place names in the list are
  * data (App\Support\AddressRegions) and are shown in both languages already.
@@ -29,6 +30,10 @@ return new class extends Migration
         'store.checkout.field_state_municipality',
         'store.checkout.field_state_other',
         'store.checkout.field_state_select',
+        'store.checkout.field_building',
+        'store.checkout.field_building_placeholder',
+        'store.checkout.field_area_street',
+        'store.checkout.field_area_street_placeholder',
     ];
 
     public function up(): void

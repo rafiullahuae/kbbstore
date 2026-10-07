@@ -126,7 +126,10 @@ function adPlace(Cart $cart, array $over = [], ?Customer $customer = null)
         'billing_email' => 'list@example.com',
         'billing_phone' => '+971500000000',
         'billing_first_name' => 'Mariam Saeed',
-        'billing_address_1' => 'Villa 7, Street 12',
+        'billing_address_1' => 'Villa 7',
+        'billing_address_2' => 'Al Barsha 1, Street 12',
+        // Posted for the typed mode's sake (the OFF half of the fee test);
+        // the list mode has no City box and ignores it.
         'billing_city' => 'Al Barsha',
         'billing_state' => 'Dubai',
         'billing_country' => 'AE',
@@ -152,27 +155,46 @@ it('ships the list on, on Appearance -> Checkout page -> Fields & attention', fu
  | 2. The order of the fields
  |------------------------------------------------------------------------*/
 
-it('puts the Emirate directly above Country: Address, City / area, Emirate, Country', function () {
+it('reads Building / Apartment or Villa, Area / Street | Emirate, Country', function () {
     /*
-     * The page drew Address, Emirate, City / area, Country. He asked for the
-     * Emirate above Country, so it moves past City and is the last box before
-     * Country, as a list rather than a box to type in.
+     * The page drew Address, Emirate, City / area, Country. The owner: "bring
+     * the EMIRATES field above country", then "The address field should call
+     * it, Building / Apartment or Villa and the City/ Area will be Area /
+     * Street and the Emirates will work as City." So: Building (full width),
+     * Area / Street beside the Emirate list, Country -- the Emirate directly
+     * above Country, the street before the city, and no City box at all.
      *
-     * MUTATION: swap City and Emirate back in address-fields-list. RED.
+     * MUTATION: swap Area / Street and Emirate in address-fields-list, or put
+     * the City box back. RED.
      */
     $section = adSection(adBrowser(adCart())->get('/checkout/')->assertOk()->getContent());
 
     $at = fn (string $needle) => strpos($section, $needle);
 
-    expect($at('name="billing_address_1"'))->toBeLessThan($at('name="billing_city"'))
-        ->and($at('name="billing_city"'))->toBeLessThan($at('name="billing_state"'))
+    expect($at('name="billing_address_1"'))->toBeLessThan($at('name="billing_address_2"'))
+        ->and($at('name="billing_address_2"'))->toBeLessThan($at('name="billing_state"'))
         ->and($at('name="billing_state"'))->toBeLessThan($at('name="billing_country"'))
-        // A list, required in the browser as well as by place().
+        ->and($section)->not->toContain('name="billing_city"')
+        // Area / Street and the Emirate share the row; Building and Country do not.
+        ->and($section)->toMatch('#<div class="row2">\s*<p[^>]*id="billing_address_2_field".*?id="billing_state_field".*?</div>\s*<p[^>]*id="billing_country_field"#s')
+        // The labels he named, in English. (Arabic: drafts, see the Arabic test.)
+        ->and($section)->toMatch('#<label for="billing_address_1"[^>]*>Building / Apartment or Villa&nbsp;#')
+        ->and($section)->toMatch('#<label for="billing_address_2"[^>]*>Area / Street&nbsp;#')
+        ->and($section)->toMatch('#<label for="billing_state"[^>]*>Emirate&nbsp;#')
+        // A list, required in the browser as well as by place(); line 2 required too.
         ->and($section)->toMatch('/<select[^>]*name="billing_state"[^>]*required/')
-        ->and($section)->not->toMatch('/<input[^>]*name="billing_state"/')
-        // Nothing between Emirate and Country but the row's close.
-        ->and(substr($section, $at('id="billing_state_field"'), $at('id="billing_country_field"') - $at('id="billing_state_field"')))
-            ->not->toContain('billing_city');
+        ->and($section)->toMatch('/<input[^>]*name="billing_address_2"[^>]*required[^>]*autocomplete="section-billing billing address-line2"/')
+        ->and($section)->not->toMatch('/<input[^>]*name="billing_state"/');
+});
+
+it('has the Arabic labels he gave, as drafts for the owner to approve', function () {
+    // MUTATION: change a draft. RED.
+    $drafts = \App\Services\Translation\ArabicInterfaceDrafts::all();
+
+    expect($drafts['store.checkout.field_building'])->toBe('المبنى / الشقة أو الفيلا')
+        ->and($drafts['store.checkout.field_area_street'])->toBe('المنطقة / الشارع')
+        ->and($drafts['store.checkout.field_state'])->toBe('الإمارة')
+        ->and($drafts['store.checkout.field_state_select'])->toBe('اختر');
 });
 
 /* ------------------------------------------------------------------------
@@ -221,7 +243,7 @@ it('has a complete list for every Gulf country the shop delivers to, and its lab
         ->and(__(AddressRegions::labelKey('KW')))->toBe('Governorate')
         ->and(__(AddressRegions::labelKey('SA')))->toBe('Region')
         ->and(__(AddressRegions::labelKey('QA')))->toBe('Municipality')
-        ->and(__(AddressRegions::labelKey('GB')))->toBe('State / region');
+        ->and(__(AddressRegions::labelKey('GB')))->toBe('Town / city');
 
     // Every row is bilingual and every spelling answers to one row only.
     foreach (AddressRegions::LISTS as $country => [, $rows]) {
@@ -258,7 +280,7 @@ it('prints every offered country\'s list once, for the page to swap without a re
         ->and($cfg['c']['OM'][1][9])->toBe(['Muscat', 'مسقط'])
         ->and($cfg['c']['AE'][1][5])->toBe(['Ras Al Khaimah', 'رأس الخيمة', 'Ras al Khaimah'])
         ->and($cfg['s'])->toBe('Select')
-        ->and($cfg['o'])->toBe('State / region')
+        ->and($cfg['o'])->toBe('Town / city')
         // The script measures nothing and asks the server nothing.
         ->and($html)->not->toMatch('/kbb-state-lists[\s\S]{0,4000}?(fetch\(|getBoundingClientRect|offsetHeight)/');
 });
@@ -297,46 +319,54 @@ it('opens on the list of the country the page opens on', function () {
  | 4. Old values prefill sensibly
  |------------------------------------------------------------------------*/
 
-it('selects the matching emirate for a saved value in any spelling', function (?string $state, string $city, ?string $expected) {
+it('reads an old saved address into Building, Area / Street and the Emirate', function (?string $line2, string $city, ?string $state, ?string $emirate, string $area) {
     /*
      * Saved addresses carry whatever was typed, or a WooCommerce code: "dubai",
      * "DXB", "AE-DU". An address saved through the cart's popup carries the
      * emirate in its city with state empty; a Woo one may carry the area as
-     * state and the emirate as city. A value that names no emirate leaves the
-     * list on "Select" -- the saved address itself is never rewritten.
+     * state and the emirate as city; a typed one may carry "JLT" as the city.
+     *
+     * THE RULE (AddressRegions::split): the Emirate is the saved state if it
+     * names one, else the saved city; Area / Street is line 2, then the saved
+     * city and state WHEN THEY NAME NO EMIRATE, each once. Building is line 1
+     * alone. The saved row is never rewritten by showing the page.
      *
      * MUTATION: compare without normalise() in AddressRegions::canonical(). RED
-     * on "dubai", "DXB", "AE-DU". Drop the city candidate in show(). RED on
-     * the popup and Woo rows.
+     * on "dubai", "DXB", "AE-DU". Drop the city from split(). RED on "JLT".
      */
     $customer = Customer::create(['email' => 'p' . uniqid() . '@example.com', 'name' => 'Old Address', 'password' => 'secret-secret']);
     $customer->addresses()->create(['type' => 'shipping', 'is_default' => true,
-        'line1' => 'Flat 4', 'city' => $city, 'state' => $state, 'country' => 'AE']);
+        'line1' => 'Flat 4', 'line2' => $line2, 'city' => $city, 'state' => $state, 'country' => 'AE']);
 
-    $select = adStateSelect(adBrowser(adCart(), $customer)->get('/checkout/')->getContent());
+    $html = adBrowser(adCart(), $customer)->get('/checkout/')->getContent();
 
-    expect(adSelected($select))->toBe($expected ?? '');
+    expect(adSelected(adStateSelect($html)))->toBe($emirate ?? '')
+        ->and($html)->toMatch('#<input[^>]*name="billing_address_2"[^>]*value="' . preg_quote(e($area), '#') . '"#')
+        ->and($html)->toMatch('#<input[^>]*name="billing_address_1"[^>]*value="Flat 4"#');
 
-    // And the saved row is exactly as it was.
-    expect($customer->addresses()->first()->state)->toBe($state);
+    expect($customer->addresses()->first()->only(['line2', 'city', 'state']))
+        ->toBe(['line2' => $line2, 'city' => $city, 'state' => $state]);
 })->with([
-    'lower case' => ['dubai', 'Al Barsha', 'Dubai'],
-    'airport code' => ['DXB', 'Al Barsha', 'Dubai'],
-    'ISO code' => ['AE-DU', 'Al Barsha', 'Dubai'],
-    'Woo code' => ['RK', 'Al Nakheel', 'Ras Al Khaimah'],
-    'hyphenated' => ['Umm Al-Quwain', 'Al Salamah', 'Umm Al Quwain'],
-    'Arabic' => ['الشارقة', 'Al Nahda', 'Sharjah'],
-    'popup: emirate in city' => [null, 'Abu Dhabi', 'Abu Dhabi'],
-    'Woo: area as state, emirate as city' => ['Al Barsha', 'Dubai', 'Dubai'],
-    'names no emirate' => ['Al Quoz', 'Al Quoz', null],
+    'lower case' => [null, 'Al Barsha', 'dubai', 'Dubai', 'Al Barsha'],
+    'airport code' => [null, 'Al Barsha', 'DXB', 'Dubai', 'Al Barsha'],
+    'ISO code' => [null, 'Al Barsha', 'AE-DU', 'Dubai', 'Al Barsha'],
+    'Woo code' => [null, 'Al Nakheel', 'RK', 'Ras Al Khaimah', 'Al Nakheel'],
+    'hyphenated' => [null, 'Al Salamah', 'Umm Al-Quwain', 'Umm Al Quwain', 'Al Salamah'],
+    'Arabic' => [null, 'Al Nahda', 'الشارقة', 'Sharjah', 'Al Nahda'],
+    'popup: area in line 2, emirate in city' => ['Al Quoz Industrial 2', 'Dubai', null, 'Dubai', 'Al Quoz Industrial 2'],
+    'popup: emirate in city only' => [null, 'Abu Dhabi', null, 'Abu Dhabi', ''],
+    'Woo: area as state, emirate as city' => [null, 'Dubai', 'Al Barsha', 'Dubai', 'Al Barsha'],
+    'typed: JLT as the city, no state' => [null, 'JLT', null, null, 'JLT'],
+    'line 2 and an area city' => ['Cluster D', 'JLT', 'Dubai', 'Dubai', 'Cluster D, JLT'],
 ]);
 
 it('keeps a rejected submission\'s emirate chosen', function () {
     $html = adBrowser(adCart())
-        ->withSession(['_old_input' => ['billing_state' => 'Ajman', 'billing_country' => 'AE', 'billing_city' => 'Al Nuaimiya']])
+        ->withSession(['_old_input' => ['billing_state' => 'Ajman', 'billing_country' => 'AE', 'billing_address_2' => 'Al Nuaimiya']])
         ->get('/checkout/')->getContent();
 
-    expect(adSelected(adStateSelect($html)))->toBe('Ajman');
+    expect(adSelected(adStateSelect($html)))->toBe('Ajman')
+        ->and($html)->toMatch('#<input[^>]*name="billing_address_2"[^>]*value="Al Nuaimiya"#');
 });
 
 /* ------------------------------------------------------------------------
@@ -359,7 +389,7 @@ it('refuses an emirate that is not in the list', function () {
     adBrowser(adCart())->postJson('/checkout/place', [
         'billing_email' => 'list@example.com', 'billing_phone' => '+971500000000',
         'billing_first_name' => 'Mariam Saeed', 'billing_address_1' => 'Villa 7',
-        'billing_city' => 'Al Barsha', 'billing_state' => 'Muscat', 'billing_country' => 'AE',
+        'billing_address_2' => 'Al Barsha', 'billing_state' => 'Muscat', 'billing_country' => 'AE',
         'payment_method' => 'cod',
     ])->assertStatus(422)->assertJsonValidationErrors(['billing_state']);
 
@@ -373,27 +403,97 @@ it('stores the list\'s own English name, whatever spelling was posted', function
     expect(Order::latest('id')->first()->shipping_address['state'])->toBe('Dubai');
 });
 
-it('keeps the typed box for a country with no list', function () {
+it('keeps a typed Town / city box for a country with no list', function () {
     // A zone for the United Kingdom puts it in the Country select; it has no
-    // list, so the box is typed and any state is taken, as before.
+    // list, so the box is typed -- "Town / city" -- and stored as the city
+    // and the state alike, the way the Emirate is.
     $gb = ShippingZone::create(['name' => 'UK', 'position' => 5]);
     ShippingZoneLocation::create(['shipping_zone_id' => $gb->id, 'type' => 'country', 'code' => 'GB']);
     ShippingMethod::create(['shipping_zone_id' => $gb->id, 'type' => 'flat_rate', 'title' => 'UK post', 'cost' => 9000, 'enabled' => true, 'position' => 0]);
     ShippingService::flushZones();
 
-    adPlace(adCart(), ['billing_state' => 'Greater London', 'billing_city' => 'London', 'billing_country' => 'GB'])
+    adPlace(adCart(), ['billing_state' => 'London', 'billing_address_2' => 'Baker Street', 'billing_country' => 'GB'])
         ->assertSessionHasNoErrors();
 
-    expect(Order::latest('id')->first()->shipping_address['state'])->toBe('Greater London');
+    expect(Order::latest('id')->first()->shipping_address)->toMatchArray(['line2' => 'Baker Street', 'city' => 'London', 'state' => 'London']);
 
     $customer = Customer::create(['email' => 'gb@example.com', 'name' => 'Ann', 'password' => 'secret-secret']);
     $customer->addresses()->create(['type' => 'shipping', 'is_default' => true,
-        'line1' => '1 High St', 'city' => 'London', 'state' => 'Greater London', 'country' => 'GB']);
+        'line1' => '1 High St', 'line2' => 'Marylebone', 'city' => 'London', 'state' => 'Greater London', 'country' => 'GB']);
 
     $section = adSection(adBrowser(adCart(), $customer)->get('/checkout/')->getContent());
 
-    expect($section)->toMatch('/<input[^>]*name="billing_state"[^>]*value="Greater London"/')
-        ->and($section)->toMatch('#<label for="billing_state"[^>]*>State / region#');
+    expect($section)->toMatch('/<input[^>]*name="billing_state"[^>]*autocomplete="section-billing billing address-level2" value="London"/')
+        ->and($section)->toMatch('/<input[^>]*name="billing_address_2"[^>]*value="Marylebone"/')
+        ->and($section)->toMatch('#<label for="billing_state"[^>]*>Town / city#');
+});
+
+it('stores the emirate as the order\'s city and state, Area / Street as line 2, and prints them', function () {
+    /*
+     * "the Emirates will work as City." The order's address: line1 Building,
+     * line2 Area / Street, city AND state the Emirate -- the shape the picker
+     * row has always written. The emails and the invoice print line 2 and
+     * print the emirate once (OrderEmailPresenter::cityLine, InvoiceDocument).
+     * Tabby and Tamara are sent the emirate as the city.
+     *
+     * MUTATION: drop the billing_city copy in place(). RED (city is null). Drop
+     * the line2 insertion. RED. Drop Tabby's `line1` fallback. RED.
+     */
+    adPlace(adCart(), ['billing_address_1' => 'Marina Heights, Apt 1203', 'billing_address_2' => 'Dubai Marina, Al Marsa St', 'billing_state' => 'dubai'])
+        ->assertSessionHasNoErrors();
+
+    $order = Order::latest('id')->first();
+
+    expect($order->shipping_address)->toMatchArray([
+        'line1' => 'Marina Heights, Apt 1203',
+        'line2' => 'Dubai Marina, Al Marsa St',
+        'city' => 'Dubai',
+        'state' => 'Dubai',
+        'country' => 'AE',
+    ])->and(array_keys($order->shipping_address))->toBe(['first_name', 'last_name', 'line1', 'line2', 'city', 'state', 'country', 'phone']);
+
+    // The order email's address block: line 2 printed, Dubai once.
+    $email = (new ReflectionMethod(\App\Services\Mail\OrderEmailPresenter::class, 'address'));
+    $lines = $email->invoke(app(\App\Services\Mail\OrderEmailPresenter::class), $order->shipping_address);
+    expect($lines)->toContain('Marina Heights, Apt 1203')
+        ->and($lines)->toContain('Dubai Marina, Al Marsa St')
+        ->and($lines)->toContain('Dubai')
+        ->and($lines)->not->toContain('Dubai, Dubai');
+
+    // The invoice / packing slip the same way.
+    $invoice = new ReflectionMethod(\App\Services\Invoices\InvoiceDocument::class, 'address');
+    $doc = (new ReflectionClass(\App\Services\Invoices\InvoiceDocument::class))->newInstanceWithoutConstructor();
+    $printed = $invoice->invoke($doc, $order->shipping_address, false);
+    expect($printed)->toContain('Dubai Marina, Al Marsa St')->and($printed)->toContain('Dubai')
+        ->and(implode("\n", $printed))->not->toContain('Dubai Dubai');
+
+    // Tabby: address line from line1 + line2, the emirate as the city.
+    $tabby = new ReflectionMethod(\App\Services\Payments\Gateways\TabbyGateway::class, 'shippingAddress');
+    expect($tabby->invoke(app(\App\Services\Payments\Gateways\TabbyGateway::class), $order))->toBe([
+        'address' => 'Marina Heights, Apt 1203, Dubai Marina, Al Marsa St',
+        'city' => 'Dubai',
+    ]);
+
+    // Tamara: line1, line2, the emirate as city and region.
+    $tamara = new ReflectionMethod(\App\Services\Payments\Gateways\TamaraGateway::class, 'address');
+    expect($tamara->invoke(app(\App\Services\Payments\Gateways\TamaraGateway::class), $order->shipping_address))->toMatchArray([
+        'line1' => 'Marina Heights, Apt 1203', 'line2' => 'Dubai Marina, Al Marsa St', 'city' => 'Dubai', 'region' => 'Dubai',
+    ]);
+});
+
+it('requires Area / Street in the list mode, and takes a pre-switch page\'s City / area as it', function () {
+    /*
+     * A tab opened before the package, or a cached copy, still posts the old
+     * "City / area" box and no Area / Street. That box always held the area,
+     * so it becomes line 2 and the emirate the city, rather than a refused
+     * order. With neither, Area / Street is required.
+     * MUTATION: make billing_address_2 plainly required. RED on the second half.
+     */
+    adPlace(adCart(), ['billing_address_2' => '', 'billing_city' => ''])->assertSessionHasErrors(['billing_address_2']);
+
+    adPlace(adCart(), ['billing_address_2' => null, 'billing_city' => 'Jumeirah 1', 'billing_state' => 'Dubai'])->assertSessionHasNoErrors();
+
+    expect(Order::latest('id')->first()->shipping_address)->toMatchArray(['line2' => 'Jumeirah 1', 'city' => 'Dubai', 'state' => 'Dubai']);
 });
 
 /* ------------------------------------------------------------------------

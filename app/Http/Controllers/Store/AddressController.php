@@ -52,7 +52,7 @@ class AddressController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $this->validated($request, null);
+        $data = $this->validated($request);
 
         $address = $this->customer()->addresses()->create($data);
 
@@ -69,7 +69,7 @@ class AddressController extends Controller
     public function update(Request $request, int $id): RedirectResponse
     {
         $address = $this->find($id);
-        $data = $this->validated($request, $address);
+        $data = $this->validated($request);
 
         $address->update($data);
 
@@ -175,8 +175,13 @@ class AddressController extends Controller
         $address->forceFill(['is_default' => true])->save();
     }
 
-    private function validated(Request $request, ?Address $existing): array
+    private function validated(Request $request): array
     {
+        // Lane AD's list mode (Appearance -> Checkout page -> Fields &
+        // attention -> "Emirate / state as a list"): no City box, because
+        // "the Emirates will work as City", and the Emirate is required.
+        $listMode = app(\App\Services\CheckoutPage::class)->stateList();
+
         $data = $request->validate([
             'type' => ['required', 'string', 'in:' . implode(',', self::TYPES)],
             'first_name' => ['required', 'string', 'max:80'],
@@ -184,8 +189,10 @@ class AddressController extends Controller
             'company' => ['nullable', 'string', 'max:120'],
             'line1' => ['required', 'string', 'max:180'],
             'line2' => ['nullable', 'string', 'max:180'],
-            'city' => ['required', 'string', 'max:80'],
-            'state' => ['nullable', 'string', 'max:80'],
+            'city' => [$listMode ? 'nullable' : 'required', 'string', 'max:80'],
+            // A form rendered before the switch posts City and no list
+            // choice; its city stands in for the Emirate below.
+            'state' => [$listMode ? 'required_without:city' : 'nullable', 'nullable', 'string', 'max:80'],
             'postcode' => ['nullable', 'string', 'max:20'],
             'country' => ['required', 'string', 'size:2'],
             'phone' => ['nullable', 'string', 'max:40'],
@@ -195,32 +202,37 @@ class AddressController extends Controller
         $data['country'] = strtoupper($data['country']);
         $data['is_default'] = $request->boolean('is_default');
 
+        if (! $listMode) {
+            return $data;
+        }
+
         /*
-         * THE STATE IS ONE OF ITS COUNTRY'S LIST (Lane AD) while Appearance ->
-         * Checkout page -> Fields & attention -> "Emirate / state as a list" is
-         * on, stored as the list's English name -- the same string the checkout
-         * stores. Still optional, as it always was here. The one exception is
-         * the value this address already carries: an old free-text state the
-         * list does not know is offered back unchanged by the form, and saving
-         * the address without touching it must not be refused or erased.
+         * THE EMIRATE IS ONE OF ITS COUNTRY'S LIST AND IS THE CITY (Lane AD),
+         * stored as the list's English name in both `state` and `city` -- the
+         * shape the checkout now writes on an order. A country with no list
+         * takes its typed town the same way. An old address's free-text city
+         * ("JLT") is not refused or erased: the form shows it in Area /
+         * Street, which is line 2.
          *
          * MUTATION: drop the canonical() check and AddressRegionsAccountTest's
-         * "refuses a state that is not in the list" saves "Atlantis".
+         * "refuses a state that is not in the list" saves "Atlantis"; drop the
+         * city copy and it saves no city.
          */
         $state = trim((string) ($data['state'] ?? ''));
+        $state = $state !== '' ? $state : trim((string) ($data['city'] ?? ''));
 
-        if ($state !== '' && \App\Support\AddressRegions::has($data['country'])
-            && app(\App\Services\CheckoutPage::class)->stateList()) {
-            $canonical = \App\Support\AddressRegions::canonical($data['country'], $state);
+        if (\App\Support\AddressRegions::has($data['country'])) {
+            $state = \App\Support\AddressRegions::canonical($data['country'], $state);
 
-            if ($canonical === null && ($existing === null || $state !== (string) $existing->state)) {
+            if ($state === null) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'state' => __('store.checkout.validate_state'),
                 ]);
             }
-
-            $data['state'] = $canonical ?? $state;
         }
+
+        $data['state'] = $state;
+        $data['city'] = $state;
 
         return $data;
     }

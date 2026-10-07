@@ -12,7 +12,7 @@ const { chromium } = require('playwright');
   const out = { start: await st() };
   await page.selectOption('#billing_state', 'Dubai'); await page.waitForTimeout(800);
   await page.selectOption('#billing_country', 'GB'); await page.waitForTimeout(1500); out.gb = await st();
-  await page.fill('#billing_state', 'Kent'); await page.locator('#billing_city').focus(); await page.waitForTimeout(1200); out.gbTyped = await st();
+  await page.fill('#billing_state', 'Kent'); await page.locator('#billing_address_2').focus(); await page.waitForTimeout(1200); out.gbTyped = await st();
   await page.selectOption('#billing_country', 'AE'); await page.waitForTimeout(1500); out.backAE = await st();
   out.sameTextsAfterSwap = out.start.texts === out.backAE.texts;
   await page.selectOption('#billing_country', 'OM'); await page.waitForTimeout(1200); out.om = (await st()).texts;

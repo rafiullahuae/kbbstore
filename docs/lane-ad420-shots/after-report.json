@@ -19,9 +19,9 @@
       "h": 52,
       "font": "16px",
       "clickable": true,
-      "label": "Address *"
+      "label": "Building / Apartment or Villa *"
     },
-    "city": {
+    "area": {
       "tag": "INPUT",
       "value": "",
       "top": 378,
@@ -30,8 +30,9 @@
       "h": 52,
       "font": "16px",
       "clickable": true,
-      "label": "City / area *"
+      "label": "Area / Street *"
     },
+    "city": null,
     "emirate": {
       "tag": "SELECT",
       "value": "",
@@ -68,7 +69,7 @@
     "scrollWidth": 390,
     "clientWidth": 390,
     "touchMedia": true,
-    "htmlBytes": 146995
+    "htmlBytes": 146705
   },
   "after-guest-390-after-choosing-sharjah": {
     "requests": [
@@ -86,9 +87,9 @@
       "h": 52,
       "font": "16px",
       "clickable": true,
-      "label": "Address *"
+      "label": "Building / Apartment or Villa *"
     },
-    "city": {
+    "area": {
       "tag": "INPUT",
       "value": "",
       "top": 378,
@@ -97,8 +98,9 @@
       "h": 52,
       "font": "16px",
       "clickable": true,
-      "label": "City / area *"
+      "label": "Area / Street *"
     },
+    "city": null,
     "emirate": {
       "tag": "SELECT",
       "value": "",
@@ -139,7 +141,7 @@
     "scrollWidth": 390,
     "clientWidth": 390,
     "touchMedia": true,
-    "htmlBytes": 147612
+    "htmlBytes": 147322
   },
   "after-guest-390-oman-requests": [
     "POST /api/checkout/rates"
@@ -154,9 +156,9 @@
       "h": 52,
       "font": "16px",
       "clickable": true,
-      "label": "Address *"
+      "label": "Building / Apartment or Villa *"
     },
-    "city": {
+    "area": {
       "tag": "INPUT",
       "value": "",
       "top": 378,
@@ -165,8 +167,9 @@
       "h": 52,
       "font": "16px",
       "clickable": true,
-      "label": "City / area *"
+      "label": "Area / Street *"
     },
+    "city": null,
     "emirate": {
       "tag": "SELECT",
       "value": "Muscat",
@@ -207,7 +210,7 @@
     "scrollWidth": 390,
     "clientWidth": 390,
     "touchMedia": true,
-    "htmlBytes": 147621
+    "htmlBytes": 147331
   },
   "after-guest-390-back-to-uae": {
     "address": {
@@ -219,9 +222,9 @@
       "h": 52,
       "font": "16px",
       "clickable": true,
-      "label": "Address *"
+      "label": "Building / Apartment or Villa *"
     },
-    "city": {
+    "area": {
       "tag": "INPUT",
       "value": "",
       "top": 378,
@@ -230,8 +233,9 @@
       "h": 52,
       "font": "16px",
       "clickable": true,
-      "label": "City / area *"
+      "label": "Area / Street *"
     },
+    "city": null,
     "emirate": {
       "tag": "SELECT",
       "value": "",
@@ -268,7 +272,7 @@
     "scrollWidth": 390,
     "clientWidth": 390,
     "touchMedia": true,
-    "htmlBytes": 146920
+    "htmlBytes": 146630
   },
   "after-guest-390-errors": [
     "Failed to load resource: the server responded with a status of 404 (Not Found)"
@@ -295,9 +299,9 @@
       "h": 52,
       "font": "16px",
       "clickable": true,
-      "label": "Address *"
+      "label": "Building / Apartment or Villa *"
     },
-    "city": {
+    "area": {
       "tag": "INPUT",
       "value": "Al Quoz",
       "top": 378,
@@ -306,8 +310,9 @@
       "h": 52,
       "font": "16px",
       "clickable": true,
-      "label": "City / area *"
+      "label": "Area / Street *"
     },
+    "city": null,
     "emirate": {
       "tag": "SELECT",
       "value": "Dubai",
@@ -344,7 +349,7 @@
     "scrollWidth": 390,
     "clientWidth": 390,
     "touchMedia": true,
-    "htmlBytes": 146028
+    "htmlBytes": 145738
   },
   "after-aisha-390-after-choosing-sharjah": {
     "requests": [
@@ -360,12 +365,12 @@
     "tag": "SELECT",
     "value": "Dubai",
     "h": 40,
-    "font": "14px",
-    "stateTop": 611,
-    "countryTop": 686,
+    "font": "16px",
+    "stateTop": 537,
+    "countryTop": 613,
     "label": "Emirate",
     "clickable": true,
-    "touchMedia": false,
+    "touchMedia": true,
     "scrollWidth": 390,
     "clientWidth": 390
   },
@@ -399,9 +404,9 @@
       "h": 49,
       "font": "14px",
       "clickable": true,
-      "label": "Address *"
+      "label": "Building / Apartment or Villa *"
     },
-    "city": {
+    "area": {
       "tag": "INPUT",
       "value": "",
       "top": 440,
@@ -410,8 +415,9 @@
       "h": 49,
       "font": "14px",
       "clickable": true,
-      "label": "City / area *"
+      "label": "Area / Street *"
     },
+    "city": null,
     "emirate": {
       "tag": "SELECT",
       "value": "",
@@ -448,7 +454,7 @@
     "scrollWidth": 1280,
     "clientWidth": 1280,
     "touchMedia": false,
-    "htmlBytes": 146755
+    "htmlBytes": 146465
   },
   "after-guest-1280-after-choosing-sharjah": {
     "requests": [
@@ -466,9 +472,9 @@
       "h": 49,
       "font": "14px",
       "clickable": true,
-      "label": "Address *"
+      "label": "Building / Apartment or Villa *"
     },
-    "city": {
+    "area": {
       "tag": "INPUT",
       "value": "",
       "top": 440,
@@ -477,8 +483,9 @@
       "h": 49,
       "font": "14px",
       "clickable": true,
-      "label": "City / area *"
+      "label": "Area / Street *"
     },
+    "city": null,
     "emirate": {
       "tag": "SELECT",
       "value": "",
@@ -519,7 +526,7 @@
     "scrollWidth": 1280,
     "clientWidth": 1280,
     "touchMedia": false,
-    "htmlBytes": 147372
+    "htmlBytes": 147082
   },
   "after-guest-1280-oman-requests": [
     "POST /api/checkout/rates"
@@ -534,9 +541,9 @@
       "h": 49,
       "font": "14px",
       "clickable": true,
-      "label": "Address *"
+      "label": "Building / Apartment or Villa *"
     },
-    "city": {
+    "area": {
       "tag": "INPUT",
       "value": "",
       "top": 440,
@@ -545,8 +552,9 @@
       "h": 49,
       "font": "14px",
       "clickable": true,
-      "label": "City / area *"
+      "label": "Area / Street *"
     },
+    "city": null,
     "emirate": {
       "tag": "SELECT",
       "value": "Muscat",
@@ -587,7 +595,7 @@
     "scrollWidth": 1280,
     "clientWidth": 1280,
     "touchMedia": false,
-    "htmlBytes": 147381
+    "htmlBytes": 147091
   },
   "after-guest-1280-back-to-uae": {
     "address": {
@@ -599,9 +607,9 @@
       "h": 49,
       "font": "14px",
       "clickable": true,
-      "label": "Address *"
+      "label": "Building / Apartment or Villa *"
     },
-    "city": {
+    "area": {
       "tag": "INPUT",
       "value": "",
       "top": 440,
@@ -610,8 +618,9 @@
       "h": 49,
       "font": "14px",
       "clickable": true,
-      "label": "City / area *"
+      "label": "Area / Street *"
     },
+    "city": null,
     "emirate": {
       "tag": "SELECT",
       "value": "",
@@ -648,7 +657,7 @@
     "scrollWidth": 1280,
     "clientWidth": 1280,
     "touchMedia": false,
-    "htmlBytes": 146680
+    "htmlBytes": 146390
   },
   "after-guest-1280-errors": [],
   "after-aisha-1280-requests-on-load": 8,
@@ -672,9 +681,9 @@
       "h": 49,
       "font": "14px",
       "clickable": true,
-      "label": "Address *"
+      "label": "Building / Apartment or Villa *"
     },
-    "city": {
+    "area": {
       "tag": "INPUT",
       "value": "Al Quoz",
       "top": 439,
@@ -683,8 +692,9 @@
       "h": 49,
       "font": "14px",
       "clickable": true,
-      "label": "City / area *"
+      "label": "Area / Street *"
     },
+    "city": null,
     "emirate": {
       "tag": "SELECT",
       "value": "Dubai",
@@ -721,7 +731,7 @@
     "scrollWidth": 1280,
     "clientWidth": 1280,
     "touchMedia": false,
-    "htmlBytes": 145810
+    "htmlBytes": 145520
   },
   "after-aisha-1280-after-choosing-sharjah": {
     "requests": [
@@ -739,7 +749,7 @@
     "h": 40,
     "font": "14px",
     "stateTop": 318,
-    "countryTop": 393,
+    "countryTop": 318,
     "label": "Emirate",
     "clickable": true,
     "touchMedia": false,

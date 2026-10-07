@@ -47,6 +47,10 @@
         if (a.name !== 'type' && a.name !== 'value' && a.name !== 'placeholder') { el.setAttribute(a.name, a.value); }
       }
       if (!list) { el.type = 'text'; if (st.closest('.fld')) { el.placeholder = ' '; } }
+      /* The list is an emirate; the typed box for a country without one is a
+         town, and the browser's autofill is told which. */
+      a = el.getAttribute('autocomplete');
+      if (a) { el.setAttribute('autocomplete', list ? a.replace('address-level2', 'address-level1') : a.replace('address-level1', 'address-level2')); }
       st.parentNode.replaceChild(el, st);
     }
     if (list) {

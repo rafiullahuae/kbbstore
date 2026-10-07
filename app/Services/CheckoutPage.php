@@ -777,13 +777,17 @@ class CheckoutPage
          * asked for it (CLAUDE.md rule 1 since 30 September). ON: the
          * Emirate box is a list that follows the Country select (App\Support\
          * AddressRegions), sits directly above Country, and the server takes
-         * only a name from that list. OFF is the typed box exactly as it was,
+         * only a name from that list. Then: "The address field should call
+         * it, Building / Apartment or Villa and the City/ Area will be Area /
+         * Street and the Emirates will work as City" -- ON also renames those
+         * two boxes, posts Area / Street as line 2 and stores the Emirate as
+         * the city as well as the state. OFF is the typed box exactly as it was,
          * in its old place. The value posted and stored is the same English
          * name either way, so orders, emails and shipping zones read the same.
          * Also governs My account -> Addresses.
          */
         'state_list'     => ['bool', 'Emirate / state as a list', true,
-                             'On, as asked: the Emirate box is a list that follows the country -- the seven emirates for the UAE, the governorates of Oman, Bahrain and Kuwait, the regions of Saudi Arabia, the municipalities of Qatar, each shown in Arabic and English -- and it sits directly above Country. Other countries keep a box to type in. Also used on My account -> Addresses. Off puts back the box to type the emirate into, in its old place.'],
+                             'On, as asked: the address reads Building / Apartment or Villa, then Area / Street beside the Emirate, then Country. The Emirate is a list that follows the country -- the seven emirates for the UAE, the governorates of Oman, Bahrain and Kuwait, the regions of Saudi Arabia, the municipalities of Qatar, each shown in Arabic and English -- and it is saved as the order\'s city. Other countries get a Town / city box to type in. Also used on My account -> Addresses. Off puts back Address, Emirate and City / area as boxes to type into, in their old places.'],
 
         /*
          * ── THE ORDER SUMMARY AS ONE THIN ROW, AND BROWSED OFF (Lane CK) ───

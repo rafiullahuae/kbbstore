@@ -387,7 +387,7 @@ it('gives a shopper back what they typed when the server refuses the order', fun
         'billing_email' => 'noor@example.com',
         'billing_first_name' => "Noor O'Brien-Al Suwaidi",
         'billing_address_1' => 'Flat 3 & 4, "The Gate" Tower',
-        'billing_city' => 'Al Reem Island',
+        'billing_address_2' => 'Al Reem Island',
         'billing_state' => 'Abu Dhabi',
         'billing_country' => 'AE',
         'customer_note' => 'Ring the bell <twice>, please.',
@@ -471,7 +471,8 @@ it('places a real order from the rendered form and writes the row it wrote befor
         'billing_phone' => '+971 50 123 4567',
         'billing_first_name' => 'Layla Al Mansoori',
         'billing_address_1' => 'Villa 12, Street 7',
-        'billing_city' => 'Al Reem Island',
+        // Area / Street since Lane AD; the Emirate is the city.
+        'billing_address_2' => 'Al Reem Island',
         'billing_state' => 'Abu Dhabi',
         'customer_note' => 'Leave with the concierge, please.',
     ] as $field => $value) {
@@ -593,7 +594,10 @@ it('places a real order from the rendered form and writes the row it wrote befor
         'first_name' => 'Layla',
         'last_name' => 'Al Mansoori',
         'line1' => 'Villa 12, Street 7',
-        'city' => 'Al Reem Island',
+        // Lane AD: Area / Street is line 2 and "the Emirates will work as
+        // City", so the emirate is the city and the state alike.
+        'line2' => 'Al Reem Island',
+        'city' => 'Abu Dhabi',
         'state' => 'Abu Dhabi',
         'country' => 'AE',
         'phone' => '+971 50 123 4567',

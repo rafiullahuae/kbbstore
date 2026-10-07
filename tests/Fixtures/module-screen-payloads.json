@@ -9741,7 +9741,7 @@
             "key": "state_list",
             "type": "bool",
             "label": "Emirate / state as a list",
-            "help": "On, as asked: the Emirate box is a list that follows the country -- the seven emirates for the UAE, the governorates of Oman, Bahrain and Kuwait, the regions of Saudi Arabia, the municipalities of Qatar, each shown in Arabic and English -- and it sits directly above Country. Other countries keep a box to type in. Also used on My account -> Addresses. Off puts back the box to type the emirate into, in its old place.",
+            "help": "On, as asked: the address reads Building / Apartment or Villa, then Area / Street beside the Emirate, then Country. The Emirate is a list that follows the country -- the seven emirates for the UAE, the governorates of Oman, Bahrain and Kuwait, the regions of Saudi Arabia, the municipalities of Qatar, each shown in Arabic and English -- and it is saved as the order's city. Other countries get a Town / city box to type in. Also used on My account -> Addresses. Off puts back Address, Emirate and City / area as boxes to type into, in their old places.",
             "default": true,
             "value": true,
             "options": null

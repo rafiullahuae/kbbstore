@@ -5,39 +5,46 @@
     if country is UAE, all 7 emirates list should be there, if oman and so on".
     Off renders partials/checkout/address-fields exactly as it was.
 
-    ORDER: Address, City / area, Emirate, Country. The Emirate sits directly
-    above Country -- on a phone in the one column, on a laptop as the right
-    half of the row whose left half is City -- so the list the shopper reads
-    is the one for the country right under it.
+    And then: "The address field should call it, Building / Apartment or Villa
+    and the City/ Area will be Area / Street and the Emirates will work as
+    City."
 
-    SAME NAMES, IDS AND AUTOCOMPLETE TOKENS as the typed fields, so place(),
-    checkout.js, express wallets and inline validation read them unchanged. The
+    ORDER: Building / Apartment or Villa (full width); Area / Street | Emirate
+    (side by side on a laptop, stacked on a phone); Country. The Emirate sits
+    directly above Country, so the list the shopper reads is the one for the
+    country right under it, and the street comes before the city the way an
+    address is written.
+
+    WHAT EACH BOX WRITES: Building -> line 1 (billing_address_1, as Address
+    did); Area / Street -> line 2 (billing_address_2); the Emirate ->
+    billing_state, which place() stores as the order's city AND state. The
     value posted is the English name ("Dubai"); the text shown is Arabic and
     English, as the owner's screenshot of the old site has it. A country with
-    no list (anything Extended delivery adds beyond the Gulf) keeps the typed
-    box, labelled "State / region".
+    no list (anything Extended delivery adds beyond the Gulf) gets a typed
+    "Town / city" box in the Emirate's place, stored the same way.
 
-    $statePick is the controller's: old() first, else the saved state, else the
-    saved city, matched to the list ("dubai", "DXB", "AE-DU" are Dubai). The
-    page is priced on the same value, so the rate drawn is the rate charged.
+    $statePick is the controller's: old() first, else the saved address read by
+    AddressRegions::split() ("dubai", "DXB", "AE-DU" are Dubai; an old city
+    like "JLT" goes to Area / Street). The page is priced on the same value, so
+    the rate drawn is the rate charged.
 --}}
 @php
     $kbbStCountry = strtoupper((string) old('billing_country', $prefill['country'] ?? $defaultCountry));
     $kbbStHas = \App\Support\AddressRegions::has($kbbStCountry);
     $kbbStLabelText = __(\App\Support\AddressRegions::labelKey($kbbStCountry));
 @endphp
-                        <x-checkout.field name="billing_address_1" :label="__('store.checkout.field_address')" required icon="pin"
+                        <x-checkout.field name="billing_address_1" :label="__('store.checkout.field_building')" required icon="pin"
                             validate="validate-required" priority="50"
-                            :placeholder="__('store.checkout.field_address_placeholder')"
+                            :placeholder="__('store.checkout.field_building_placeholder')"
                             autocomplete="section-billing billing address-line1"
-                            :value="old('billing_address_1', $prefill['line1'] ?? '')" />
+                            :value="old('billing_address_1', $prefill['building'] ?? '')" />
 
                         <div class="row2">
-                            <x-checkout.field name="billing_city" :label="__('store.checkout.field_city')" required icon="city"
-                                validate="validate-required" priority="70"
-                                :placeholder="__('store.checkout.field_city_placeholder')"
-                                autocomplete="section-billing billing address-level2"
-                                :value="old('billing_city', $prefill['city'] ?? '')" />
+                            <x-checkout.field name="billing_address_2" :label="__('store.checkout.field_area_street')" required icon="city"
+                                validate="validate-required" priority="60"
+                                :placeholder="__('store.checkout.field_area_street_placeholder')"
+                                autocomplete="section-billing billing address-line2"
+                                :value="old('billing_address_2', $prefill['area'] ?? '')" />
 
 @if ($kbbStHas)
                             <x-checkout.field name="billing_state" :label="$kbbStLabelText" type="select" required icon="map"
@@ -48,8 +55,8 @@
 @else
                             <x-checkout.field name="billing_state" :label="$kbbStLabelText" required icon="map"
                                 validate="validate-required validate-state" priority="80"
-                                autocomplete="section-billing billing address-level1"
-                                :value="old('billing_state', $prefill['state'] ?? '')" />
+                                autocomplete="section-billing billing address-level2"
+                                :value="old('billing_state', $prefill['town'] ?? '')" />
 @endif
                         </div>
                         <x-checkout.field name="billing_country" :label="__('store.checkout.field_country')" type="select" required icon="globe"
@@ -84,10 +91,10 @@ document.addEventListener('change', function (e) {
 <style>
 /* One rhythm down the four boxes, as Lane CK set it for the typed fields, with
    the two halves of .row2 swapped: Emirate now closes the row, so it is the one
-   .form-row:last-child would leave touching Country; on a phone City is the
-   one that would stack its 10px onto the grid's 11px gap. */
+   .form-row:last-child would leave touching Country; on a phone Area / Street
+   is the one that would stack its 10px onto the grid's 11px gap. */
 .kbb-checkout #billing_state_field{margin-bottom:10px}
-@media(max-width:480px){.kbb-checkout #billing_city_field{margin-bottom:0}}
+@media(max-width:480px){.kbb-checkout #billing_address_2_field{margin-bottom:0}}
 /* The chevron Country already wears (kbb-checkout.css), on the same side in
    both directions: padding on the inline end, the picture moved under RTL. */
 #billing_state_field select.input-text{

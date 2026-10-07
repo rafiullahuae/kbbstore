@@ -75,43 +75,37 @@
         <input type="text" name="last_name" value="{{ old('last_name', $editing->last_name ?? '') }}"></label>
       <label class="ab-f ab-wide"><span>{{ __('store.addresses.field_company') }}</span>
         <input type="text" name="company" value="{{ old('company', $editing->company ?? '') }}"></label>
-      <label class="ab-f ab-wide"><span>{{ __('store.addresses.field_line1') }}</span>
-        <input type="text" name="line1" value="{{ old('line1', $editing->line1 ?? '') }}" required></label>
-      <label class="ab-f ab-wide"><span>{{ __('store.addresses.field_line2') }}</span>
-        <input type="text" name="line2" value="{{ old('line2', $editing->line2 ?? '') }}"></label>
 @if ($stateList ?? false)
 @php
     /*
-     * Lane AD: the Emirate / state as a list that follows the country,
-     * directly above Country -- Appearance -> Checkout page -> Fields &
-     * attention -> "Emirate / state as a list". The value is the English name,
-     * as the typed box stored it. A saved value the list does not know stays
-     * selected as itself, so editing the phone number of an old address does
-     * not quietly erase its state.
+     * Lane AD: the owner's address boxes -- "Building / Apartment or Villa",
+     * "Area / Street", and the Emirate as a list that follows the country and
+     * "will work as City" -- directly above Country. Appearance -> Checkout
+     * page -> Fields & attention -> "Emirate / state as a list". The saved
+     * row is read by AddressRegions::split(): an old city such as "JLT" that
+     * names no emirate is shown in Area / Street, so saving the form does not
+     * lose it.
      */
     $abCountry = strtoupper((string) old('country', $editing->country ?? 'AE'));
-    $abRaw = (string) old('state', $editing->state ?? '');
-    $abPick = \App\Support\AddressRegions::canonical($abCountry, $abRaw)
-        ?? (old('state') === null ? \App\Support\AddressRegions::canonical($abCountry, (string) ($editing->city ?? '')) : null);
-    $abKeep = $abPick === null && $abRaw !== '' && $abRaw === (string) ($editing->state ?? '') ? $abRaw : null;
+    $abSplit = \App\Support\AddressRegions::split($abCountry, $editing->line2 ?? null, $editing->city ?? null, $editing->state ?? null);
+    $abPick = old('state') !== null ? \App\Support\AddressRegions::canonical($abCountry, (string) old('state')) : $abSplit['emirate'];
 @endphp
-      <label class="ab-f"><span>{{ __('store.addresses.field_city') }}</span>
-        <input type="text" name="city" value="{{ old('city', $editing->city ?? '') }}" required></label>
+      <label class="ab-f ab-wide"><span>{{ __('store.checkout.field_building') }} *</span>
+        <input type="text" name="line1" value="{{ old('line1', $editing->line1 ?? '') }}" required></label>
+      <label class="ab-f ab-wide"><span>{{ __('store.checkout.field_area_street') }}</span>
+        <input type="text" name="line2" value="{{ old('line2', $abSplit['area']) }}"></label>
       <label class="ab-f"><span>{{ __('store.addresses.field_postcode') }}</span>
         <input type="text" name="postcode" value="{{ old('postcode', $editing->postcode ?? '') }}"></label>
-      <label class="ab-f"><span id="ab-state-label">{{ __(\App\Support\AddressRegions::labelKey($abCountry)) }}</span>
+      <label class="ab-f"><span><span id="ab-state-label">{{ __(\App\Support\AddressRegions::labelKey($abCountry)) }}</span> *</span>
 @if (\App\Support\AddressRegions::has($abCountry))
-        <select name="state" id="ab-state" autocomplete="address-level1">
-          <option value="" disabled @selected($abPick === null && $abKeep === null)>{{ __('store.checkout.field_state_select') }}</option>
-@if ($abKeep !== null)
-          <option value="{{ $abKeep }}" selected>{{ $abKeep }}</option>
-@endif
+        <select name="state" id="ab-state" autocomplete="address-level1" required>
+          <option value="" disabled @selected($abPick === null)>{{ __('store.checkout.field_state_select') }}</option>
 @foreach (\App\Support\AddressRegions::options($abCountry) as $abValue => $abText)
           <option value="{{ $abValue }}" @selected($abPick === $abValue)>{{ $abText }}</option>
 @endforeach
         </select>
 @else
-        <input type="text" name="state" id="ab-state" autocomplete="address-level1" value="{{ $abRaw }}">
+        <input type="text" name="state" id="ab-state" autocomplete="address-level2" required value="{{ old('state', $abSplit['town']) }}">
 @endif
       </label>
       <label class="ab-f"><span>{{ __('store.addresses.field_country') }}</span>
@@ -129,6 +123,10 @@
     'kbbStLabel' => '#ab-state-label',
 ])
 @else
+      <label class="ab-f ab-wide"><span>{{ __('store.addresses.field_line1') }}</span>
+        <input type="text" name="line1" value="{{ old('line1', $editing->line1 ?? '') }}" required></label>
+      <label class="ab-f ab-wide"><span>{{ __('store.addresses.field_line2') }}</span>
+        <input type="text" name="line2" value="{{ old('line2', $editing->line2 ?? '') }}"></label>
       <label class="ab-f"><span>{{ __('store.addresses.field_city') }}</span>
         <input type="text" name="city" value="{{ old('city', $editing->city ?? '') }}" required></label>
       <label class="ab-f"><span>{{ __('store.addresses.field_state') }}</span>

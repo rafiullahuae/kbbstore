@@ -214,6 +214,48 @@ final class AddressRegions
     }
 
     /**
+     * A saved address read into the boxes the list mode draws: Area / Street,
+     * the Emirate (which is also the city) and, for a country with no list,
+     * the typed city. The owner, 7 October: "the Emirates will work as City".
+     *
+     * THE RULE FOR OLD ROWS, which carry whatever a typed box or a WooCommerce
+     * export put in them:
+     *   - Emirate: the saved state if it names one, else the saved city
+     *     ("dubai", "DXB", "AE-DU" all name Dubai); otherwise none, and the
+     *     list rests on "Select".
+     *   - Area / Street: the saved line 2, then the saved city and the saved
+     *     state WHEN THEY NAME NO EMIRATE ("JLT", "Al Barsha"), each once,
+     *     joined with ", ". Nothing the shopper typed is dropped; it lands in
+     *     the box that now means it.
+     *   - A country with no list: the typed box is the city -- the saved city,
+     *     else the saved state -- and Area / Street is line 2.
+     *
+     * Reading only: the saved row is never rewritten by showing a form.
+     *
+     * @return array{area: string, emirate: ?string, town: string}
+     */
+    public static function split(?string $country, ?string $line2, ?string $city, ?string $state): array
+    {
+        $line2 = trim((string) $line2);
+        $city = trim((string) $city);
+        $state = trim((string) $state);
+
+        if (! self::has($country)) {
+            return ['area' => $line2, 'emirate' => null, 'town' => $city !== '' ? $city : $state];
+        }
+
+        $parts = [];
+        foreach ([$line2, $city, $state] as $i => $part) {
+            if ($part === '' || ($i > 0 && self::canonical($country, $part) !== null)) {
+                continue;
+            }
+            $parts[mb_strtolower($part)] ??= $part;
+        }
+
+        return ['area' => implode(', ', $parts), 'emirate' => self::guess($country, $state, $city), 'town' => ''];
+    }
+
+    /**
      * Everything the page's script needs to swap the list when the country
      * changes, for the countries the page offers: code => [label, [[value,
      * Arabic(, English shown)], ...]] -- the shown English only where it is

@@ -77,6 +77,13 @@ function prefillBrowser(Cart $cart, ?Customer $customer = null)
 }
 
 /** The `value="…"` one named input on the checkout was rendered with. */
+/*
+ * Since Lane AD the address boxes are Building / Apartment or Villa
+ * (billing_address_1, line 1 alone), Area / Street (billing_address_2) and the
+ * Emirate list, which is the city: a saved city that names no emirate --
+ * "Dubai Marina", "Jumeirah" -- is shown in Area / Street. AddressRegions
+ * CheckoutTest pins the whole rule.
+ */
 function prefillValueOf(string $html, string $name): ?string
 {
     // The Emirate is a list since Lane AD ("Emirate / state as a list", on):
@@ -118,7 +125,7 @@ it('fills the checkout in from the account the shopper is signed into', function
     expect(prefillValueOf($html, 'billing_phone'))->toBe('0501234567');
     expect(prefillValueOf($html, 'billing_first_name'))->toBe('Aisha Khan');
     expect(prefillValueOf($html, 'billing_address_1'))->toBe('12 Marina Walk');
-    expect(prefillValueOf($html, 'billing_city'))->toBe('Dubai Marina');
+    expect(prefillValueOf($html, 'billing_address_2'))->toBe('Dubai Marina');
     expect(prefillValueOf($html, 'billing_state'))->toBe('Dubai');
 });
 
@@ -148,7 +155,7 @@ it('reads a billing address when that is the only one the customer has', functio
     $html = prefillBrowser(prefillCart(), $customer)->get('/checkout')->assertOk()->getContent();
 
     expect(prefillValueOf($html, 'billing_address_1'))->toBe('8 Al Wasl Road');
-    expect(prefillValueOf($html, 'billing_city'))->toBe('Jumeirah');
+    expect(prefillValueOf($html, 'billing_address_2'))->toBe('Jumeirah');
 });
 
 it('prefers the shipping address when the customer has both', function () {
@@ -207,14 +214,14 @@ it('leaves every address box empty for a customer with no saved address', functi
 
     expect(prefillValueOf($html, 'billing_first_name'))->toBe('Newcomer');
     expect(prefillValueOf($html, 'billing_address_1'))->toBe('');
-    expect(prefillValueOf($html, 'billing_city'))->toBe('');
+    expect(prefillValueOf($html, 'billing_address_2'))->toBe('');
     expect(prefillValueOf($html, 'billing_state'))->toBe('');
 });
 
 it('fills in nothing at all for a guest', function () {
     $html = prefillBrowser(prefillCart())->get('/checkout')->assertOk()->getContent();
 
-    foreach (['billing_email', 'billing_phone', 'billing_first_name', 'billing_address_1', 'billing_city', 'billing_state'] as $field) {
+    foreach (['billing_email', 'billing_phone', 'billing_first_name', 'billing_address_1', 'billing_address_2', 'billing_state'] as $field) {
         expect(prefillValueOf($html, $field))->toBe('');
     }
 });
@@ -263,14 +270,14 @@ it('lets the shopper change a prefilled field, and uses what they changed', func
     $html = prefillBrowser($cart, $customer)
         ->withSession(['_old_input' => [
             'billing_address_1' => '99 Corrected Road',
-            'billing_city' => 'Abu Dhabi',
+            'billing_address_2' => 'Al Reem Island',
         ]])
         ->get('/checkout')
         ->assertOk()
         ->getContent();
 
     expect(prefillValueOf($html, 'billing_address_1'))->toBe('99 Corrected Road');
-    expect(prefillValueOf($html, 'billing_city'))->toBe('Abu Dhabi');
+    expect(prefillValueOf($html, 'billing_address_2'))->toBe('Al Reem Island');
     // And the account's own value is not sitting in the box underneath it.
     expect($html)->not->toContain('value="12 Marina Walk"');
 });
