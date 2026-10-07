@@ -66,7 +66,10 @@
     } else if (el !== st) { el.value = ''; }
     label(list ? list[0] : cfg.o);
     var row = el.closest('.form-row');
-    if (row && el.value === '') { row.classList.remove('woocommerce-validated', 'woocommerce-invalid', 'kbb-valid', 'kbb-invalid'); }
+    /* A mark inline validation left for the old value goes with it. Written as
+       a pattern: the class names themselves must not appear on a page whose
+       inline_validation module is off (ModuleInlineValidationTest). */
+    if (row && el.value === '') { row.className = row.className.replace(/\b(?:woocommerce-(?:in)?valid(?:ated)?|kbb-(?:in)?valid)\b/g, ' ').trim(); }
   }
   if (cs.value !== last) { last = cs.value; swap(); }
   cs.addEventListener('change', function () {

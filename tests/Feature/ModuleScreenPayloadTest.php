@@ -594,7 +594,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // footer help lines above.
     // 699 -> 709 (Lane PY): Appearance → Checkout page → Payment boxes, the
     // ten pay_* controls on a tab of their own appended after "cues".
-    expect($compared)->toBe(709, 'the number of controls drawn changed');
+    // 709 -> 710 (Lane AD): Appearance -> Checkout page -> Fields & attention
+    // -> "Emirate / state as a list", the state_list switch.
+    expect($compared)->toBe(710, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
