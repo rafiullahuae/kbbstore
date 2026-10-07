@@ -92,6 +92,11 @@ final class DomainReadiness
 
     private string $new;
 
+    /** @var list<string> tables the last references() call left unread for want of time */
+    private array $skipped = [];
+
+    private int $tableCount = 0;
+
     /** @var list<string> */
     private array $old;
 
@@ -147,6 +152,24 @@ final class DomainReadiness
             array_map(self::bare(...), $out),
             fn (string $h): bool => $h !== '' && $h !== self::bare($new) && $h !== 'localhost',
         )));
+    }
+
+    /**
+     * Tables the last references() call did not read because its deadline had
+     * passed. Always a tail of the table list, so a later call with
+     * offset = tableCount() - count(skipped()) reads exactly those.
+     *
+     * @return list<string>
+     */
+    public function skipped(): array
+    {
+        return $this->skipped;
+    }
+
+    /** How many tables with a text column the last references() call saw. */
+    public function tableCount(): int
+    {
+        return $this->tableCount;
     }
 
     public function newHost(): string
@@ -305,14 +328,38 @@ final class DomainReadiness
      * Every stored reference to the old domains, and every picture or video
      * address on the new domain this shop does not hold a copy of.
      *
+     * @param  float|null  $deadline  microtime(true) after which no further table is started; null reads them all
+     * @param  int  $offset  tables to skip from the start (a continuation)
      * @return list<array{table: string, column: string, host: string, kind: string, level: string, count: int, samples: list<string>}>
      */
-    public function references(int $samples = 5): array
+    public function references(int $samples = 5, ?float $deadline = null, int $offset = 0): array
     {
         $hosts = array_values(array_unique([...$this->old, $this->new]));
         $rows = [];
+        $tables = $this->textColumns();
+        $this->tableCount = count($tables);
+        $this->skipped = [];
+        $at = 0;
 
-        foreach ($this->textColumns() as $table => $columns) {
+        foreach ($tables as $table => $columns) {
+            /*
+             * THE TIME BUDGET (Lane DW). The command passes none and reads every
+             * table, as before. Platform -> Domain switch runs this inside a web
+             * request, so it passes a deadline: once it has passed, every table
+             * still to come is named in skipped() and NOT read -- never reported
+             * as clean -- and the screen offers "check the rest" from $offset.
+             * Checked between tables, so one table is always read whole.
+             */
+            if ($at++ < $offset) {
+                continue;
+            }
+
+            if ($deadline !== null && microtime(true) >= $deadline) {
+                $this->skipped[] = $table;
+
+                continue;
+            }
+
             $counts = $this->counts($table, $columns, $hosts);
 
             if ($counts === null) {

@@ -1,0 +1,469 @@
+{
+  "width": 390,
+  "passed": 56,
+  "failed": 0,
+  "shots": {
+    "before": "docs/lane-dw-shots/390-01-before-switch.png",
+    "dnsHostinger": "docs/lane-dw-shots/390-02-dns-still-hostinger.png",
+    "removeRefused": "docs/lane-dw-shots/390-03-remove-refused-risk.png",
+    "allGreen": "docs/lane-dw-shots/390-04-all-green.png"
+  },
+  "outbound_hosts": [
+    "api-sandbox.tamara.co",
+    "api.stripe.com",
+    "api.tabby.ai",
+    "dns.google",
+    "kbeautybliss.com"
+  ],
+  "dns_names": [
+    "extrabeauty.ae",
+    "kbeautybliss.com",
+    "www.kbeautybliss.com"
+  ],
+  "refusals": [
+    "manager: 403 GET https://extrabeauty.ae/admin-api/domain-switch",
+    "manager: 403 POST https://extrabeauty.ae/admin-api/domain-switch/run",
+    "extrabeauty.ae: 422 POST https://extrabeauty.ae/admin-api/domain-switch/run",
+    "extrabeauty.ae: 409 POST https://extrabeauty.ae/admin-api/domain-switch/run",
+    "extrabeauty.ae: 409 POST https://extrabeauty.ae/admin-api/domain-switch/run",
+    "extrabeauty.ae: 409 POST https://extrabeauty.ae/admin-api/domain-switch/run",
+    "extrabeauty.ae: 409 POST https://extrabeauty.ae/admin-api/domain-switch/run",
+    "kbeautybliss.com: 422 POST https://kbeautybliss.com/admin-api/domain-switch/run",
+    "kbeautybliss.com: 422 POST https://kbeautybliss.com/admin-api/domain-switch/run",
+    "kbeautybliss.com: 422 POST https://kbeautybliss.com/admin-api/domain-switch/run",
+    "kbeautybliss.com: 409 POST https://kbeautybliss.com/admin-api/domain-switch/run"
+  ],
+  "log": [
+    {
+      "what": "manager: GET state is 403",
+      "pass": true,
+      "got": 403
+    },
+    {
+      "what": "manager: POST set_names is 403",
+      "pass": true,
+      "got": {
+        "http": 403,
+        "message": "Your role (Store Manager) does not have the \"Move the shop to a new domain (Platform → Domain switch; Full Admin only)\" permission (platform.domain_switch)."
+      }
+    },
+    {
+      "what": "manager: no sidebar row",
+      "pass": true
+    },
+    {
+      "what": "every value the checklist names has a copy button",
+      "pass": true,
+      "got": [
+        "kbeautybliss.com",
+        "www.kbeautybliss.com",
+        "134.209.147.13",
+        "134.209.147.13",
+        "kbeautybliss.com",
+        "smtp.google.com",
+        "v=spf1 include:_spf.google.com ~all",
+        "177.202.242.149",
+        "kbeautybliss.com, www.kbeautybliss.com, extrabeauty.ae, www.extrabeauty.ae",
+        "kbeautybliss.com",
+        "kbeautybliss.com",
+        "https://kbeautybliss.com/admin-api/instagram/callback",
+        "extrabeauty.ae",
+        "www.extrabeauty.ae",
+        "kbeautybliss.com, www.kbeautybliss.com",
+        "extrabeauty.ae"
+      ]
+    },
+    {
+      "what": "Clipboard API: all 16 copy buttons put exactly their value on the clipboard",
+      "pass": true,
+      "got": "16 exact"
+    },
+    {
+      "what": "before: statuses",
+      "pass": true,
+      "got": {
+        "1": "problem",
+        "2": "todo",
+        "3": "yours",
+        "4": "todo",
+        "5": "todo",
+        "6": "todo",
+        "7": "todo",
+        "8": "todo",
+        "9": "yours",
+        "10": "todo",
+        "11": "todo"
+      }
+    },
+    {
+      "what": "readiness: finds the WordPress-only photo and the extrabeauty.ae link, each RISK",
+      "pass": true,
+      "got": [
+        "RISK1 link(s) in products (products.description) still send shoppers to extrabeauty.aeid 26: https://extrabeauty.ae/shop/old-cream/Open Impo",
+        "RISK1 picture or video address(es) in products (products.image) on kbeautybliss.com that only WordPress has todayid 25: https://kbeautybliss"
+      ]
+    },
+    {
+      "what": "before: switch, payments, forward and remove buttons are disabled",
+      "pass": true,
+      "got": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "what": "before: no horizontal overflow",
+      "pass": true,
+      "got": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "what": "fallback copy on plain http: the exact value is selected and copied",
+      "pass": true,
+      "got": {
+        "hasApi": false,
+        "copied": [
+          "v=spf1 include:_spf.google.com ~all"
+        ],
+        "label": "Copied ✓"
+      }
+    },
+    {
+      "what": "step 2 refuses the old domain, plainly, changing nothing",
+      "pass": true,
+      "got": {
+        "http": 422,
+        "ok": false,
+        "message": "extrabeauty.ae is the address the shop is leaving. Type the new one.",
+        "level": "todo",
+        "shown": "extrabeauty.ae is the address the shop is leaving. Type the new one."
+      }
+    },
+    {
+      "what": "step 2: Save the new name → ✓",
+      "pass": true,
+      "got": {
+        "http": 200,
+        "ok": true,
+        "message": "Done. Main address: kbeautybliss.com. Old addresses: extrabeauty.ae. Forwarding: off. Nothing visible changed: extrabeauty.ae works exactly as before.",
+        "level": "done",
+        "shown": "Done. Main address: kbeautybliss.com. Old addresses: extrabeauty.ae. Forwarding: off. Nothing visible changed: extrabeauty.ae works exactly as before."
+      }
+    },
+    {
+      "what": "step 2 pressed twice: still ✓, same settings",
+      "pass": true,
+      "got": "Done. Main address: kbeautybliss.com. Old addresses: extrabeauty.ae. Forwarding: off. Nothing visible changed: extrabeauty.ae works exactly as before."
+    },
+    {
+      "what": "step 3: where extrabeauty.ae points",
+      "pass": true,
+      "got": "extrabeauty.ae points at 134.209.147.13. Check that Cloudways → Servers → your server shows the same Public IP."
+    },
+    {
+      "what": "step 4 with DNS still at Hostinger → ✕ and says so",
+      "pass": true,
+      "got": "kbeautybliss.com still points at the old host (177.202.242.149). Change the A record at Internet.bs to 134.209.147.13. It can take up to 48 hours to spread."
+    },
+    {
+      "what": "step 4 with an AAAA record → ✕ and says delete it",
+      "pass": true,
+      "got": "kbeautybliss.com has an AAAA record (2606:4700::6810:84e5). Delete it at Internet.bs: phones that use it would not reach this shop."
+    },
+    {
+      "what": "step 4 with the right records → ✓",
+      "pass": true,
+      "got": "kbeautybliss.com points at this server and has no AAAA record."
+    },
+    {
+      "what": "step 4 after a reload: still ✓ (the dated result, not a click flag)",
+      "pass": true,
+      "got": {
+        "level": "done",
+        "badge": "✓ Done",
+        "msg": "kbeautybliss.com points at this server and has no AAAA record. (checked 10/7/2026, 12:27:47 PM)"
+      }
+    },
+    {
+      "what": "step 5 with no certificate → ✕ and says what to do",
+      "pass": true,
+      "got": "There is no valid certificate for kbeautybliss.com yet. Do step 5 in Cloudways (Let’s Encrypt), wait two minutes, then check again."
+    },
+    {
+      "what": "step 5 with a valid certificate → ✓",
+      "pass": true,
+      "got": "The certificate for kbeautybliss.com is valid (the shop answered 200)."
+    },
+    {
+      "what": "step 3 reads ✓ once the new domain answers over https",
+      "pass": true,
+      "got": {
+        "level": "done",
+        "badge": "✓ Done",
+        "msg": "extrabeauty.ae points at 134.209.147.13. Check that Cloudways → Servers → your server shows the same Public IP. (checked 10/7/2026, 12:27:40 PM)"
+      }
+    },
+    {
+      "what": "step 6 forced from extrabeauty.ae → 409, .env untouched",
+      "pass": true,
+      "got": {
+        "http": 409,
+        "ok": false,
+        "message": "Open https://kbeautybliss.com (the link above), sign in there, and press this button on that page. It only works on the new address, so the shop can never be pointed at an address that does not reach it."
+      }
+    },
+    {
+      "what": "step 7 forced before the switch → 409",
+      "pass": true,
+      "got": {
+        "http": 409,
+        "ok": false,
+        "message": "Do step 6 first. The payment providers are told the shop’s own address, and it is still extrabeauty.ae."
+      }
+    },
+    {
+      "what": "step 10 forced before the switch → 409",
+      "pass": true,
+      "got": {
+        "http": 409,
+        "ok": false,
+        "message": "Do step 6 first: old links can only be sent to the new address once the shop is using it."
+      }
+    },
+    {
+      "what": "step 11 forced before the switch → 409",
+      "pass": true,
+      "got": {
+        "http": 409,
+        "ok": false,
+        "message": "Do steps 6 and 10 first. The shop still uses the old address."
+      }
+    },
+    {
+      "what": "step 8: fetch → 1 picture, then ✓",
+      "pass": true,
+      "got": {
+        "http": 200,
+        "ok": true,
+        "message": "Fetched 1 picture(s). Nothing left to fetch.",
+        "level": "done",
+        "shown": "Fetched 1 picture(s). Nothing left to fetch."
+      }
+    },
+    {
+      "what": "step 8 pressed again: nothing left, no error",
+      "pass": true,
+      "got": "Fetched 0 picture(s). Nothing left to fetch."
+    },
+    {
+      "what": "on kbeautybliss.com: steps 2–5 ✓, 6 to do and its button live",
+      "pass": true,
+      "got": {
+        "1": "problem",
+        "2": "done",
+        "3": "done",
+        "4": "done",
+        "5": "done",
+        "6": "todo",
+        "7": "todo",
+        "8": "done",
+        "9": "yours",
+        "10": "todo",
+        "11": "todo"
+      }
+    },
+    {
+      "what": "step 6: Use https://kbeautybliss.com → ✓, APP_URL written, Site URL set, caches cleared",
+      "pass": true,
+      "got": {
+        "r": {
+          "http": 200,
+          "ok": true,
+          "message": "Done. The shop now calls itself https://kbeautybliss.com in emails, payment notices and links; Site URL is https://kbeautybliss.com; the shop’s caches were cleared. Now press Purge Varnish in Cloudways.",
+          "level": "done",
+          "shown": "Done. The shop now calls itself https://kbeautybliss.com in emails, payment notices and links; Site URL is https://kbeautybliss.com; the shop’s caches were cleared. Now press Purge Varnish in Cloudways."
+        },
+        "env": [
+          "APP_KEY=base64:bssR5X7U0kPGkOKsC2ETTcXT8k7PfpOdtA2BPJO5h4Q=",
+          "APP_URL=\"https://kbeautybliss.com\"",
+          ""
+        ]
+      }
+    },
+    {
+      "what": "step 6 pressed twice: harmless",
+      "pass": true,
+      "got": {
+        "http": 200,
+        "ok": true,
+        "message": "Done. The shop now calls itself https://kbeautybliss.com in emails, payment notices and links; Site URL is https://kbeautybliss.com; the shop’s caches were cleared. Now press Purge Varnish in Cloudways.",
+        "level": "done",
+        "shown": "Done. The shop now calls itself https://kbeautybliss.com in emails, payment notices and links; Site URL is https://kbeautybliss.com; the shop’s caches were cleared. Now press Purge Varnish in Cloudways."
+      }
+    },
+    {
+      "what": "step 6 after a reload: ✓",
+      "pass": true
+    },
+    {
+      "what": "step 7 stripe refusing → ✕ with the provider's reason",
+      "pass": true,
+      "got": "Stripe: Invalid API Key provided: sk_test_****dw"
+    },
+    {
+      "what": "step 7 stripe → ✓",
+      "pass": true,
+      "got": "Stripe will now send payment notices to kbeautybliss.com. 1 old webhook(s) removed. Now add kbeautybliss.com under Payment method domains in the Stripe dashboard."
+    },
+    {
+      "what": "step 7 stripe pressed twice: still ✓",
+      "pass": true,
+      "got": "Stripe will now send payment notices to kbeautybliss.com. 1 old webhook(s) removed. Now add kbeautybliss.com under Payment method domains in the Stripe dashboard."
+    },
+    {
+      "what": "step 7 tabby refusing → ✕ with the provider's reason",
+      "pass": true,
+      "got": "Tabby: Tabby refused. Nothing was changed. AE: Tabby refused to register this shop. SA: Tabby refused to register this shop. BH: Tabby refused to register this shop. KW: Tabby refused to register this shop. QA: Tabby refused to register this shop."
+    },
+    {
+      "what": "step 7 tabby → ✓",
+      "pass": true,
+      "got": "Tabby will now send notices to kbeautybliss.com. AE: Registered with Tabby. SA: Registered with Tabby. BH: Registered with Tabby. KW: Registered with Tabby. QA: Registered with Tabby."
+    },
+    {
+      "what": "step 7 tabby pressed twice: still ✓",
+      "pass": true,
+      "got": "Tabby will now send notices to kbeautybliss.com. AE: Registered with Tabby. SA: Registered with Tabby. BH: Registered with Tabby. KW: Registered with Tabby. QA: Registered with Tabby."
+    },
+    {
+      "what": "step 7 tamara refusing → ✕ with the provider's reason",
+      "pass": true,
+      "got": "Tamara: the old registration was removed, but registering again failed: Tamara refused the request. Nothing was changed. Press this button again."
+    },
+    {
+      "what": "step 7 tamara → ✓",
+      "pass": true,
+      "got": "Tamara will now send notices to kbeautybliss.com."
+    },
+    {
+      "what": "step 7 tamara pressed twice: still ✓",
+      "pass": true,
+      "got": "Tamara will now send notices to kbeautybliss.com."
+    },
+    {
+      "what": "step 7: ✓ with all three",
+      "pass": true,
+      "got": {
+        "level": "done",
+        "badge": "✓ Done",
+        "msg": "Tamara will now send notices to kbeautybliss.com."
+      }
+    },
+    {
+      "what": "step 10: forward → ✓",
+      "pass": true,
+      "got": "Done. Every old extrabeauty.ae link, bookmark and installed app now lands on kbeautybliss.com. Leave it like this for 2–4 weeks."
+    },
+    {
+      "what": "step 10 pressed twice: harmless",
+      "pass": true,
+      "got": "Done. Every old extrabeauty.ae link, bookmark and installed app now lands on kbeautybliss.com. Leave it like this for 2–4 weeks."
+    },
+    {
+      "what": "step 11 with RISK > 0 → refused, nothing removed",
+      "pass": true,
+      "got": "Nothing was removed: the check in step 1 still finds 1 problem(s) that would break without extrabeauty.ae. Fix them first."
+    },
+    {
+      "what": "step 1 after the fix: RISK 0 → ✓",
+      "pass": true,
+      "got": "RISK 0·TODO 0Checked 119 of 119 parts of the shop in 0.09 s"
+    },
+    {
+      "what": "step 11: remove extrabeauty.ae → ✓",
+      "pass": true,
+      "got": "Done. The shop no longer knows extrabeauty.ae. Now do the clicks listed below in Cloudways, at the registrar and in Stripe."
+    },
+    {
+      "what": "step 11 pressed twice: harmless",
+      "pass": true,
+      "got": "Done. The shop no longer knows extrabeauty.ae. Now do the clicks listed below in Cloudways, at the registrar and in Stripe."
+    },
+    {
+      "what": "step 2 pressed after step 11 does not bring extrabeauty.ae back",
+      "pass": true,
+      "got": "Nothing to do: kbeautybliss.com is the main address and extrabeauty.ae was removed in step 11."
+    },
+    {
+      "what": "all green after a reload",
+      "pass": true,
+      "got": {
+        "1": "done",
+        "2": "done",
+        "3": "done",
+        "4": "done",
+        "5": "done",
+        "6": "done",
+        "7": "done",
+        "8": "done",
+        "9": "yours",
+        "10": "done",
+        "11": "done"
+      }
+    },
+    {
+      "what": "all green: no horizontal overflow",
+      "pass": true,
+      "got": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "what": "all green: the check reads RISK 0 · TODO 0, and step 2 offers no button that would undo step 11",
+      "pass": true,
+      "got": "RISK 0·TODO 0Checked 119 of 119 parts of the shop in 0.12 s"
+    },
+    {
+      "what": "outbound: only the resolver, the new domain, Stripe, Tabby and Tamara",
+      "pass": true,
+      "got": [
+        "api-sandbox.tamara.co",
+        "api.stripe.com",
+        "api.tabby.ai",
+        "dns.google",
+        "kbeautybliss.com"
+      ]
+    },
+    {
+      "what": "DNS: only the configured names were looked up",
+      "pass": true,
+      "got": [
+        "extrabeauty.ae",
+        "kbeautybliss.com",
+        "www.kbeautybliss.com"
+      ]
+    },
+    {
+      "what": "no console errors (no script error, no unexpected failed load)",
+      "pass": true,
+      "got": []
+    },
+    {
+      "what": "every 4xx was a refusal this run provoked (403 manager, 409 locked step, 422 failure path)",
+      "pass": true,
+      "got": "11 expected"
+    },
+    {
+      "what": "no 5xx response",
+      "pass": true,
+      "got": []
+    }
+  ]
+}

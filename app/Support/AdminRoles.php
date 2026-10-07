@@ -233,6 +233,7 @@ final class AdminRoles
         ['settings', 'Settings & platform', [
             'store.settings' => 'Store settings, modules, mail and the admin address',
             'platform.site_url' => 'Change the site address',
+            'platform.domain_switch' => 'Move the shop to a new domain (Platform → Domain switch; Full Admin only)',
             'cache.manage' => 'Clear caches and browser caching',
             'updates.manage' => 'Install and roll back core updates',
             'system.diagnostics' => 'Error log, health and diagnostics',

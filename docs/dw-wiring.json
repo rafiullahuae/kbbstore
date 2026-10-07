@@ -1,0 +1,50 @@
+[
+    {
+        "n": 1,
+        "what": "routes/web.php: require the Domain switch routes inside the admin-api group, beside Site URL (Lane DW)",
+        "file": "routes/web.php",
+        "anchor": "        require __DIR__.'/site-url-admin.php';\n",
+        "count": 1,
+        "replacement": "        require __DIR__.'/site-url-admin.php';\n        require __DIR__.'/domain-switch-admin.php';   // Platform → Domain switch (Lane DW)\n"
+    },
+    {
+        "n": 2,
+        "what": "console TITLES: Platform → Domain switch, so ?go=domainswitch and #domainswitch name the screen (Lane DW)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "siteaddr:['Platform','Site address'],",
+        "count": 1,
+        "replacement": "siteaddr:['Platform','Site address'],'domainswitch':['Platform','Domain switch'],"
+    },
+    {
+        "n": 3,
+        "what": "console LATE_RENDERED: arm the deep-link replay for 'domainswitch' -- its partial wraps window.go and calls render() before load(), synchronously, the condition this set carries (Lane DW)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "'setap','cache','cartpage',",
+        "count": 1,
+        "replacement": "'setap','cache','domainswitch','cartpage',"
+    },
+    {
+        "n": 4,
+        "what": "console: include the Domain switch screen partial, after Cache (Lane DW)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "@include('admin.partials.cache-screen')\n",
+        "count": 1,
+        "replacement": "@include('admin.partials.cache-screen')\n\n{{-- Platform → Domain switch (Lane DW): the move to kbeautybliss.com as one\n     numbered page -- a button for every step the shop can do itself, the exact\n     values to copy for the clicks only the owner can make in Cloudways and at\n     Internet.bs. Wraps window.go for 'domainswitch'; its sidebar row is\n     App\\Support\\AdminNav's. Endpoints: routes/domain-switch-admin.php,\n     `platform.domain_switch`, Full Admin only. --}}\n@include('admin.partials.domain-switch-screen')\n"
+    },
+    {
+        "n": 5,
+        "what": "keep docs/T1B-ADMIN-APP-BLOCKS.md's quoted LATE_RENDERED line in step with the console (TranslationConsoleTest)",
+        "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
+        "anchor": "'setap','cache','cartpage',",
+        "count": 1,
+        "replacement": "'setap','cache','domainswitch','cartpage',"
+    },
+    {
+        "n": 6,
+        "what": "keep docs/BG-ADMIN-APP-BLOCKS.md's quoted LATE_RENDERED lines in step with the console",
+        "file": "docs/BG-ADMIN-APP-BLOCKS.md",
+        "anchor": "'setap','cache','cartpage',",
+        "count": 2,
+        "replacement": "'setap','cache','domainswitch','cartpage',"
+    }
+]
