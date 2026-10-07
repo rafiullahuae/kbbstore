@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.423
+**Platform -> Domain switch: the kbeautybliss.com move as buttons.** Apply after
+.422. Runs its migration. Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "i'm non technical, so avoid anything for me to do" + "200% working" | Admin -> Platform -> Domain switch (owner only): readiness check with Fix buttons, set the new name, copy-ready Cloudways and Internet.bs values with "Check DNS now" and "Check certificate", one button to switch the shop's address (+ Site URL + caches), Stripe / Tabby / Tamara re-registration, missing-picture fetch from WordPress, test checklist, forward extrabeauty.ae, and remove extrabeauty.ae (refused until nothing points at it). Every step turns green only on a real check. Tested end to end in a browser, 56/56 at 1280 and 390 |
+
+Files: see the package's update.json.
+
 ## 2.60.422
 **Stripe settings, like the WordPress Stripe plugin.** Apply after .421. Runs its
 migrations. Hard refresh the admin. Every new setting starts at today's
