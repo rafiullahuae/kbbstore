@@ -68,6 +68,30 @@ dig +short CAA kbeautybliss.com     # if this lists issuers, letsencrypt.org mus
 | Q10 | **Any other names on kbeautybliss.com** (blog., shop., cdn., an app, a QR code printed with a deep link)? | Leave their DNS records untouched. Tell me if any of them pointed at WordPress. |
 | Q11 | **Is the owner app on its own host** (Platform → Users & Roles → Owner app → Security → Own host)? | If it is `owner.extrabeauty.ae`, it moves to `owner.kbeautybliss.com` (needs a DNS record) or is cleared. Every phone signs in again either way. |
 
+### A1b · The owner's answers (7 October 2026)
+
+Measured by the owner over SSH:
+
+| | value | meaning |
+|---|---|---|
+| Registrar | **Internet.bs** | renews the domain, controls the nameservers |
+| Nameservers | `orbit.dns-parking.com`, `horizon.dns-parking.com` | **Hostinger DNS** — the records are edited in the Hostinger account |
+| `@` A | `177.202.242.149` | old WordPress at Hostinger — **the rollback value** |
+| `@` AAAA | `2a02:4780:67:35:9db0:736d:3781:4b41` | WordPress at Hostinger over IPv6 — **delete on the day** |
+| MX | `1 smtp.google.com.` | **Google Workspace** mail, independent of the website |
+| TXT | `v=spf1 include:_spf.google.com ~all` | Google only — add the shop's sender if it is not Google (Q8) |
+| CAA | none | Let's Encrypt may issue |
+| `www` | CNAME `kbeautybliss.com.` | follows `@`; no change |
+
+So on the day, in **Hostinger → Domains → kbeautybliss.com → DNS**: edit the `@`
+A record to the Cloudways IP and delete the `@` AAAA record. Nothing at Internet.bs.
+
+**Do not cancel the Hostinger plan** after the switch: the DNS zone, including
+Google Workspace's MX, lives in that account. Move DNS off Hostinger later, as
+its own step (Cloudflare suggested): copy every record (MX, SPF,
+`google._domainkey`, `_dmarc`, verifications) first, verify, then change the
+nameservers at Internet.bs.
+
 ### A2 · Export the whole DNS zone, and lower the TTL
 
 At the DNS host from Q1: **export / screenshot every record** of kbeautybliss.com
