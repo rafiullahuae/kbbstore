@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.419
+**Desktop mega menu opens on category, shop and product pages.** Apply after
+.418. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "the DESKTOP mega menu is not showing anything upon mouse hover" | Cause: a leftover rule from the old header in the category/shop and product stylesheets hid every multi-column panel on those pages (the homepage was fine). Removed; the panels open on every page type, checked in a browser at 1280 and 1024 on home, category, shop, brand, product and blog, no errors, no sideways scroll |
+
+Files: see the package's update.json.
+
 ## 2.60.418
 **Menu links clickable again while a mega panel is open; checkout payment
 boxes with official logos; domain-move fixes.** Apply after .417. Hard refresh
