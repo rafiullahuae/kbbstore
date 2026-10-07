@@ -92,6 +92,16 @@ its own step (Cloudflare suggested): copy every record (MX, SPF,
 `google._domainkey`, `_dmarc`, verifications) first, verify, then change the
 nameservers at Internet.bs.
 
+**The owner will delete the domain from Hostinger, so DNS moves to Internet.bs,
+in two steps 48 h apart.** (1) Recreate every record in Internet.bs → DNS
+Management with `@` A still `177.202.242.149` (TTL 300), `www` CNAME,
+MX `1 smtp.google.com`, the SPF TXT, and every record found under
+`google._domainkey`, `_dmarc` and any other name in the Hostinger panel — no
+AAAA. Switch the nameservers at Internet.bs to Internet.bs's own. Wait ≥ 48 h;
+verify NS, MX and a test email to info@. (2) On switch day change only the
+`@` A record at Internet.bs to the Cloudways IP. Delete the domain from
+Hostinger only after (2) has run cleanly for a few days.
+
 ### A2 · Export the whole DNS zone, and lower the TTL
 
 At the DNS host from Q1: **export / screenshot every record** of kbeautybliss.com
