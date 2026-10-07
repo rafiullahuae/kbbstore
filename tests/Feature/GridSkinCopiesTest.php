@@ -155,6 +155,16 @@ const KBB_ONLY_IN_GRID_SKINS = [
  */
 const KBB_ONLY_IN_KBB_CSS = [
     /*
+     * Lane PG2 — the grey loading box behind every card photo ("i would love
+     * to display the loading grey bars", "same thing for product image too").
+     * In kbb.css ONLY, deliberately: every page with a product card loads it,
+     * and at (0,2,0) it outranks both copies' `.kbb-card img{background:
+     * #FFF8F5}` on the three pages that also load kbb-grid-skins.css.
+     * GalleryLoadingPlaceholderTest pins the rule itself.
+     */
+    '|.kbb-card .kbb-card-img',
+    '@media (prefers-reduced-motion:reduce)|.kbb-card .kbb-card-img',
+    /*
      * Integrator, 2.60.354 — Quick view in the middle of the photograph. In
      * kbb.css ONLY, deliberately: the card is on every page and so is kbb.css.
      * The Showcase pair is said at Showcase's weight plus one so that it beats

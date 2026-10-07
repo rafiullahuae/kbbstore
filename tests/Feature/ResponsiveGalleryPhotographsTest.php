@@ -406,7 +406,7 @@ it('does not make the preload fetch a second copy of the hero', function () {
 
 /* ---------------------------------------------- what must not regress */
 
-it('keeps the main shot eager and high priority and every thumbnail lazy', function () {
+it('keeps the main shot eager and high priority and every thumbnail at low priority', function () {
     // srcset is exactly the kind of change that gets copied onto every <img>
     // in a file along with whatever else is on the line, so the loading
     // invariants are re-asserted with one present.
@@ -423,8 +423,9 @@ it('keeps the main shot eager and high priority and every thumbnail lazy', funct
     expect(dnAttr($main, 'srcset'))->not->toBeNull('the LCP image is the one that most needs a smaller copy');
 
     foreach (dnTags($html, 'gthumb-img') as $tag) {
-        expect(dnAttr($tag, 'loading'))->toBe('lazy', 'a thumbnail below the hero is not lazy: '.$tag);
-        expect(dnAttr($tag, 'fetchpriority'))->toBeNull('only the LCP may claim priority: '.$tag);
+        // Lane PG2: eager at LOW priority, not lazy -- the strip is on a phone's first screen; GalleryLoadingPlaceholderTest has the numbers.
+        expect(dnAttr($tag, 'loading'))->toBe('eager', 'a thumbnail waits for layout again: '.$tag);
+        expect(dnAttr($tag, 'fetchpriority'))->toBe('low', 'only the LCP may claim high priority: '.$tag);
     }
 });
 

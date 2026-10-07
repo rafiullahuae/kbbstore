@@ -349,6 +349,67 @@ final class ImageVariants
     private const TILE_AFTER_RESPONSE_SECONDS = 3.0;
 
     /**
+     * (Lane PG2) ONE PHP WORKER AT A TIME MAKES PICTURES AFTER A RESPONSE.
+     *
+     * The owner: "sometimes the inner pages stuck fully and keep loading ...
+     * only rarely". Every job on this class's after-response path -- tile
+     * copies (tileAfterResponse), banner copies (wideAfterResponse) and the
+     * link-preview card (ShareImage::makeAfterResponse) -- runs AFTER the
+     * shopper has the page, but INSIDE the PHP-FPM worker that served it, and
+     * that worker takes no other request until it is done. Measured on the
+     * seeded preview: the first home page view spent 1,105 ms on it after the
+     * response, a cold product page 136 ms; each photograph is ~140 ms of CPU
+     * and a tile batch is allowed 3 s. The per-photograph locks stop two
+     * workers making the SAME picture; nothing stopped five workers each
+     * making DIFFERENT pictures at once -- a crawler, three shoppers and
+     * Chrome's hover prefetches on a catalogue whose copies are still being
+     * made -- and a small pool with every worker busy is a page that sits
+     * there loading. So one cache lock now covers all of it: whichever worker
+     * holds it makes pictures, every other worker skips (the next view will
+     * find the gap again) and is free the moment its response is sent.
+     *
+     * Returns whether $work ran. Thirty seconds of lock, so a worker that
+     * dies mid-batch cannot stop pictures for longer than that. A cache that
+     * cannot take the lock is "not this time", never a 500.
+     */
+    public static function oneWorkerAtATime(callable $work): bool
+    {
+        try {
+            if (! \Illuminate\Support\Facades\Cache::add(self::AFTER_RESPONSE_BUSY, 1, 30)) {
+                return false;
+            }
+        } catch (\Throwable $e) {
+            report($e);
+
+            return false;
+        }
+
+        try {
+            $work();
+        } finally {
+            try {
+                \Illuminate\Support\Facades\Cache::forget(self::AFTER_RESPONSE_BUSY);
+            } catch (\Throwable) {
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * (Lane PG2) A page Chrome fetched AHEAD (Speculation Rules, see
+     * App\Support\InstantNav) schedules no pictures. It may never be opened,
+     * and the request that rendered it holds a worker like any other; the
+     * shopper's real views make the copies.
+     */
+    public static function mayWorkAfterResponse(): bool
+    {
+        return ! (app()->bound('request') && InstantNav::isSpeculative(request()));
+    }
+
+    public const AFTER_RESPONSE_BUSY = 'kbb.img-after-response.busy';
+
+    /**
      * Make a tile photograph's missing phone-sized copies AFTER the response.
      *                                                               (Lane PS)
      *
@@ -387,7 +448,8 @@ final class ImageVariants
      */
     public static function tileAfterResponse(string $image, ?string $fsRel = null): void
     {
-        if (! config('kbb.image_tile_after_response', true) || ! self::available() || ! app()->bound('request')) {
+        if (! config('kbb.image_tile_after_response', true) || ! self::available() || ! app()->bound('request')
+            || ! self::mayWorkAfterResponse()) {
             return;
         }
 
@@ -411,26 +473,28 @@ final class ImageVariants
             }
 
             defer(static function () use ($attributes): void {
-                $started = microtime(true);
-                $attempts = 0;
+                self::oneWorkerAtATime(static function () use ($attributes): void {
+                    $started = microtime(true);
+                    $attempts = 0;
 
-                foreach (array_keys($attributes->get('kbb.img-tile-pending', [])) as $one) {
-                    if ($attempts >= self::TILE_AFTER_RESPONSE_MAX
-                        || microtime(true) - $started > self::TILE_AFTER_RESPONSE_SECONDS) {
-                        break;
-                    }
-
-                    try {
-                        if (! \Illuminate\Support\Facades\Cache::add('kbb.img-tile.'.sha1($one), 1, 86400)) {
-                            continue;
+                    foreach (array_keys($attributes->get('kbb.img-tile-pending', [])) as $one) {
+                        if ($attempts >= self::TILE_AFTER_RESPONSE_MAX
+                            || microtime(true) - $started > self::TILE_AFTER_RESPONSE_SECONDS) {
+                            break;
                         }
 
-                        $attempts++;
-                        self::generate($one);
-                    } catch (\Throwable $e) {
-                        report($e);
+                        try {
+                            if (! \Illuminate\Support\Facades\Cache::add('kbb.img-tile.'.sha1($one), 1, 86400)) {
+                                continue;
+                            }
+
+                            $attempts++;
+                            self::generate($one);
+                        } catch (\Throwable $e) {
+                            report($e);
+                        }
                     }
-                }
+                });
             }, 'kbb-img-tiles-'.spl_object_id($attributes));
         } catch (\Throwable $e) {
             // Nothing scheduled is the page as it was. Never a 500.
@@ -543,7 +607,7 @@ final class ImageVariants
          * Config rather than a static, because config dies with the test's
          * application and a static would outlive it.
          */
-        if (! config('kbb.image_wide_after_response', true) || ! self::available()) {
+        if (! config('kbb.image_wide_after_response', true) || ! self::available() || ! self::mayWorkAfterResponse()) {
             return;
         }
 
@@ -553,10 +617,20 @@ final class ImageVariants
             }
 
             defer(static function () use ($image): void {
-                try {
-                    self::generateWide($image);
-                } catch (\Throwable $e) {
-                    report($e);
+                $ran = self::oneWorkerAtATime(static function () use ($image): void {
+                    try {
+                        self::generateWide($image);
+                    } catch (\Throwable $e) {
+                        report($e);
+                    }
+                });
+
+                if (! $ran) {
+                    // Another worker is busy with pictures: the next view does this one.
+                    try {
+                        \Illuminate\Support\Facades\Cache::forget('kbb.img-wide.'.sha1($image));
+                    } catch (\Throwable) {
+                    }
                 }
             }, 'kbb-img-wide-'.sha1($image));
         } catch (\Throwable $e) {

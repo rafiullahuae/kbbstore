@@ -241,23 +241,36 @@ final class ShareImage
     /** Register one after-response encode for this photograph, at most once per lock window. */
     public static function makeAfterResponse(string $image): void
     {
-        if (! ImageVariants::available() || ImageVariants::locate($image) === null) {
+        if (! ImageVariants::available() || ! ImageVariants::mayWorkAfterResponse() || ImageVariants::locate($image) === null) {
             return;
         }
 
-        if (! Cache::add('kbb.share-image.'.sha1($image.'|'.self::dir()), 1, self::LOCK_SECONDS)) {
+        $lock = 'kbb.share-image.'.sha1($image.'|'.self::dir());
+
+        if (! Cache::add($lock, 1, self::LOCK_SECONDS)) {
             return;
         }
 
-        app()->terminating(static function () use ($image): void {
-            try {
-                $result = self::make($image);
+        app()->terminating(static function () use ($image, $lock): void {
+            // (Lane PG2) one worker at a time across every after-response
+            // picture job -- ImageVariants::oneWorkerAtATime() has the why.
+            $ran = ImageVariants::oneWorkerAtATime(static function () use ($image): void {
+                try {
+                    $result = self::make($image);
 
-                if ($result['reason'] !== null && $result['reason'] !== 'fresh') {
-                    Log::info('Share image not made', ['image' => $image, 'reason' => $result['reason']]);
+                    if ($result['reason'] !== null && $result['reason'] !== 'fresh') {
+                        Log::info('Share image not made', ['image' => $image, 'reason' => $result['reason']]);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Share image failed', ['image' => $image, 'error' => $e->getMessage()]);
                 }
-            } catch (\Throwable $e) {
-                Log::warning('Share image failed', ['image' => $image, 'error' => $e->getMessage()]);
+            });
+
+            if (! $ran) {
+                try {
+                    Cache::forget($lock);   // the next view makes it
+                } catch (\Throwable) {
+                }
             }
         });
     }

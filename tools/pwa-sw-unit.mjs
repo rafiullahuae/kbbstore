@@ -183,6 +183,44 @@ ok((store.get('kbb-assets-v1') || new Map()).size <= 150, 'asset cache exceeds i
   vm.runInContext('fetch = globalThis.fetch', ctx);
 }
 
+// ---- (Lane PG2) a picture reaches the page whatever the cache does --------
+// The owner's screenshot -- every product photo replaced by its alt text --
+// is what Chrome paints for an <img> whose response FAILED, and this worker
+// used to hand the page its picture only after the copy had been written to
+// Cache Storage. A write the browser refuses (QuotaExceededError: incognito,
+// a full phone) rejected the whole response, so the photo broke; a slow write
+// held a picture that had already arrived. The page's answer must not wait
+// on the cache at all. Mutation: put back `.then(() => res)` after the
+// `caches.open(IMAGES)...put` chain and both checks below go red.
+{
+  const realOpen = caches.open;
+  const pic = '/wp-content/uploads/2026/10/refused-by-the-cache.jpg';
+  caches.open = async (n) => {
+    const c = cacheApi(n);
+    if (n === 'kbb-img-v1') c.put = async () => { throw new Error('QuotaExceededError'); };
+    return c;
+  };
+  let res = null;
+  try { res = (await dispatch(pic, { destination: 'image' })).res; } catch (e) { res = null; }
+  ok(res && res.status === 200 && res.type !== 'error', 'a picture the cache refused to store did not reach the page (the alt text shows instead)');
+
+  caches.open = async (n) => {
+    const c = cacheApi(n);
+    if (n === 'kbb-img-v1') c.put = () => new Promise(() => {});   // a write that never finishes
+    return c;
+  };
+  const event = {
+    request: { url: new URL('/wp-content/uploads/2026/10/slow-disk.jpg', ORIGIN).href, method: 'GET', mode: 'no-cors', destination: 'image', headers: headers() },
+    preloadResponse: Promise.resolve(undefined),
+    respondWith: (p) => { event.p = p; },
+    waitUntil: () => {},
+  };
+  listeners.fetch(event);
+  const got = await Promise.race([Promise.resolve(event.p).catch(() => null), new Promise((r) => setTimeout(() => r('waiting'), 200))]);
+  ok(got && got !== 'waiting' && got.status === 200, 'a picture waited for the cache write before reaching the page');
+  caches.open = realOpen;
+}
+
 // ---- activate: removes older shells only ---------------------------------
 store.set('kbb-shell-old000000000', new Map());
 store.set('someone-elses-cache', new Map());

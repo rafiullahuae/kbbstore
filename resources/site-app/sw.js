@@ -130,7 +130,7 @@ self.addEventListener('fetch', (event) => {
 
   if (asset) {                                           // rule 4: immutable, cache first
     event.respondWith((async () => {
-      const hit = await caches.match(req, { cacheName: ASSETS });
+      const hit = await caches.match(req, { cacheName: ASSETS }).catch(() => undefined);   // (PG2) a refused lookup is a miss, never a broken stylesheet
       if (hit) return hit;
       const res = await fetch(req);
       if (storable(res)) {
@@ -143,12 +143,23 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (req.destination === 'image' && IMAGE_EXT.test(url.pathname)) {   // rule 4: public images
+    /* (Lane PG2) THE PICTURE GOES TO THE PAGE FIRST; THE COPY IS KEPT AFTER.
+       This used to hand the page its response only once the copy had been
+       written to Cache Storage and the cache trimmed. So a cold photograph
+       could not paint a single row until it had fully downloaded AND been
+       stored, and a write the browser refused (QuotaExceededError: incognito,
+       a phone short of space) rejected the response itself -- the <img>
+       broke and Chrome painted its alt text, the product title, in place of
+       the main photo and every thumbnail. Reproduced in Chromium with a small
+       storage quota (docs/PG2-STALLS.md). The store is now waited on by the
+       worker (waitUntil), never by the page, and a failed lookup or store is
+       simply the picture from the network, as with no worker at all. */
     event.respondWith((async () => {
-      const hit = await caches.match(req, { cacheName: IMAGES });
+      const hit = await caches.match(req, { cacheName: IMAGES }).catch(() => undefined);
       const fresh = fetch(req).then((res) => {
         if (storable(res)) {
           const copy = res.clone();
-          return caches.open(IMAGES).then((c) => c.put(req, copy)).then(() => trim(IMAGES)).then(() => res);
+          event.waitUntil(caches.open(IMAGES).then((c) => c.put(req, copy)).then(() => trim(IMAGES)).catch(() => {}));
         }
         return res;
       });

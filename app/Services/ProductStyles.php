@@ -86,6 +86,20 @@ class ProductStyles
         // fallback in the match() below moved with it, so the sheet and this
         // screen cannot disagree about what "default" means.
         'image_ratio'        => ['select', 'Image shape', 'square', '', ['square' => 'Square', 'portrait' => 'Portrait', 'tall' => 'Tall', 'landscape' => 'Landscape']],
+        /*
+         * (Lane PG2) ▲ SHIPS AT "Grey shimmer", AND THE OWNER ASKED FOR IT:
+         * "due to slow internet connections, i would love to display the
+         * loading grey bars. so user will not annoy" -- then, of the product
+         * cards, "same thing for product image too". So the grey box is the
+         * shop's state, and this is the way back (CLAUDE.md rule 1, 30
+         * September). One answer for every product photo: the grids and rails
+         * (kbb.css `.kbb-card .kbb-card-img`) and the product page's main photo
+         * and thumbnails (kbb-product.css `.gmain-img,.gthumb-img`), because
+         * this screen's cardCss() is printed on every shop page, the product
+         * page included. "None" is the box as it was: cream on a card, the
+         * frame's white in the gallery.
+         */
+        'photo_placeholder'  => ['select', 'Photo loading placeholder', 'shimmer', 'What a product photo shows while it is still on its way (a slow connection): in every product grid and rail, and the main photo and thumbnails on the product page.', ['shimmer' => 'Grey shimmer', 'plain' => 'Plain grey', 'none' => 'None — the plain box as before']],
 
         // ── What the card shows ──
         /*
@@ -302,8 +316,8 @@ class ProductStyles
     ];
 
     public const TABS = [
-        'layout'  => ['Layout', 'Card shape, corners, and hover on a phone.',
-                      ['grid_skin', 'card_radius', 'image_ratio', 'hover_phone']],
+        'layout'  => ['Layout', 'Card shape, corners, what a photo shows while it loads, and hover on a phone.',
+                      ['grid_skin', 'card_radius', 'image_ratio', 'photo_placeholder', 'hover_phone']],
         'content' => ['Card content', 'What each card shows.',
                       ['show_brand', 'show_category', 'show_rating', 'show_was_price', 'show_discount', 'show_new', 'show_soldout', 'show_cart', 'name_lines']],
         'spacing' => ['Spacing & type', 'The space between the photo, the name, the price and the button, and the size and weight of each — a phone and a desktop set apart. Every value starts at what the shop shows today, so nothing moves until you move it.',
@@ -796,8 +810,25 @@ class ProductStyles
             $out .= self::flatten($weights);
         }
 
+        /* (Lane PG2) Photo loading placeholder. Nothing for the shipped grey
+           shimmer, which the stylesheets already draw; the doubled classes
+           outrank them whatever order the sheets arrive in. A constant per
+           option, chosen by a value that can only be one of them -- the select
+           cast refuses anything else, and so does this match. Rule 5. */
+        $out .= match ((string) $c['photo_placeholder']) {
+            'plain' => self::PHOTO_PLAIN,
+            'none' => self::PHOTO_NONE,
+            default => '',
+        };
+
         return $out;
     }
+
+    /** Plain grey: the same box, standing still. */
+    private const PHOTO_PLAIN = '.kbb-card .kbb-card-img.kbb-card-img,.gmain-img.gmain-img,.gthumb-img.gthumb-img{animation:none}';
+
+    /** None: the cream tile and the white gallery frame as they were before Lane PG2. */
+    private const PHOTO_NONE = '.kbb-card .kbb-card-img.kbb-card-img{background:#FFF8F5;animation:none}.gmain-img.gmain-img,.gthumb-img.gthumb-img{background:none;animation:none}';
 
     /** @param array<string, list<string>> $rules */
     private static function flatten(array $rules): string

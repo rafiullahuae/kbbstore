@@ -271,12 +271,67 @@ function setPrice(el, html, was, off, mayCreate) {
  * so their gradient and label are used instead — which is what makes the strip
  * legible before real photography exists.
  */
+
+/* (Lane PG2) The grey loading box behind a gallery photo (kbb-product.css) is
+   handed back to the frame's white once the photo is DECODED -- decode(), not
+   `load`, because a picture that has loaded but not yet been decoded paints
+   nothing, and taking the grey away then would flash the bare frame. Needed
+   for the main photo only because it is object-fit:contain (a portrait bottle
+   leaves bars that would otherwise stay grey); on a thumbnail it just stops
+   the sweep early. A failed picture settles too: never an endless shimmer. */
+function settle(img) {
+    if (!img) return;
+    const done = () => {
+        img.classList.add('ld');
+        img.removeAttribute('style');
+    };
+    if (img.decode) img.decode().then(done, done);
+    else done();
+}
+
 export function initGallery() {
-    const strip = document.getElementById('gthumbs');
     const main = document.getElementById('gmain');
-    if (!strip || !main) return;
+    if (!main) return;
+
+    settle(main.querySelector('.gmain-img'));
+
+    const strip = document.getElementById('gthumbs');
+    if (!strip) return;
+
+    strip.querySelectorAll('.gthumb-img').forEach(settle);
 
     const caption = document.getElementById('gcap');
+
+    /* (Lane PG2) WARM A SHOT BEFORE IT IS TAPPED. The owner: "switching
+       between the product gallery images, gives clear delays to show up the
+       specific picture upon click." Measured: the frame-sized file was only
+       requested on the tap, and Chrome keeps the OLD photo on screen until the
+       new one has fully arrived -- 1.4s on a throttled phone with nothing
+       moving. So the next shot is fetched once the page has finished loading
+       (low priority, never on Save-Data or a 2G/3G connection), and any
+       other shot the moment a finger or a pointer reaches its thumbnail. An
+       Image() off the page with the SAME srcset/sizes picks the same file the
+       frame will ask for, so the tap finds it in the cache. One file each,
+       once; no timer, nothing measured. */
+    const warmed = new Set();
+    const warm = (thumb, low) => {
+        const image = thumb && thumb.dataset.image;
+        if (!image || warmed.has(image)) return;
+        warmed.add(image);
+        const w = new Image();
+        w.decoding = 'async';
+        if (low) w.fetchPriority = 'low';
+        w.sizes = thumb.dataset.sizes || '';
+        w.srcset = thumb.dataset.srcset || '';
+        w.src = image;
+    };
+    strip.addEventListener('pointerover', (event) => warm(event.target.closest('.gthumb')), { passive: true });
+    const conn = navigator.connection;
+    if (!(conn && (conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || '')))) {
+        const next = () => warm(strip.querySelector('.gthumb.on + .gthumb'), true);
+        if (document.readyState === 'complete') next();
+        else window.addEventListener('load', next, { once: true });
+    }
 
     strip.addEventListener('click', (event) => {
         const thumb = event.target.closest('.gthumb');
@@ -287,20 +342,40 @@ export function initGallery() {
         const image = thumb.dataset.image;
 
         if (image) {
-            /* The frame carries a real <img> now, so swapping means changing
-               its src, not restyling the div. A product whose first shot is a
-               placeholder has no <img> to change, so one is created the first
-               time a photographed shot is chosen. */
-            let img = main.querySelector('.gmain-img');
+            /* (Lane PG2) A FRESH <img> FOR EVERY SWAP, WITH THE THUMBNAIL'S
+               OWN PICTURE BEHIND IT.
 
-            if (!img) {
-                img = document.createElement('img');
-                img.className = 'gmain-img';
-                img.id = 'gmainImg';
-                img.decoding = 'async';
-                img.width = 1000;
-                img.height = 1000;
-                main.prepend(img);
+               Changing the src of the <img> that is on screen keeps the OLD
+               photograph painted until the new file has completely arrived
+               (Chromium, measured) -- a tap that visibly does nothing for as
+               long as the download takes. A new element has no old picture.
+               Behind its (still empty) pixels it carries, as its background,
+               the file the tapped thumbnail is already showing -- decoded, so
+               it paints in the same frame -- contained exactly as the photo
+               will be, since it is a smaller copy of the same photograph. The
+               full-size file then paints over it as soon as it lands, and
+               settle() removes the background. A thumbnail with no picture yet
+               leaves the grey loading box instead. Never the old photo.
+
+               Same box (position:absolute, inset 0), same class, same id, so
+               nothing moves. */
+            const old = main.querySelector('.gmain-img');
+            const img = document.createElement('img');
+            img.className = 'gmain-img';
+            img.id = 'gmainImg';
+            img.decoding = 'async';
+            img.fetchPriority = 'high';
+            img.width = 1000;
+            img.height = 1000;
+
+            /* SAFE: currentSrc is the browser's own serialisation of a URL
+               this page's Blade printed, in which a quote, a backslash or a
+               line break cannot survive unescaped -- and one that somehow did
+               is refused here rather than written into a style. */
+            const small = thumb.querySelector('.gthumb-img');
+            const quick = small && small.complete && small.naturalWidth > 0 ? small.currentSrc : '';
+            if (quick && !/["\\\n\r]/.test(quick)) {
+                img.style.cssText = 'background:#fff url("' + quick + '") center/contain no-repeat;animation:none';
             }
 
             /* SRCSET FIRST, AND IT IS SET EVEN WHEN IT IS EMPTY.
@@ -330,7 +405,9 @@ export function initGallery() {
             img.sizes = thumb.dataset.sizes || '';
             img.src = image;
             img.alt = thumb.dataset.alt || '';
-            img.hidden = false;
+            if (old) old.replaceWith(img);
+            else main.prepend(img);
+            settle(img);
             main.style.background = '#fff';
         } else {
             const img = main.querySelector('.gmain-img');
