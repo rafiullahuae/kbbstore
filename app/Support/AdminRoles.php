@@ -227,6 +227,8 @@ final class AdminRoles
         ['shipping', 'Shipping & payments', [
             'store.shipping' => 'Shipping rates and rules',
             'payments.manage' => 'Payment gateways and their keys',
+            'payments.stripe_webhook' => 'Stripe: see webhook status and set the webhook up automatically',
+            'payments.log' => 'Read the payment log',
         ]],
         ['settings', 'Settings & platform', [
             'store.settings' => 'Store settings, modules, mail and the admin address',

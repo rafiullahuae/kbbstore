@@ -90,3 +90,19 @@ Route::get('/payments/stripe/connect/callback', [StripeConnectController::class,
 Route::post('/payments/stripe/connect/application', [StripeConnectController::class, 'application']);
 Route::post('/payments/stripe/connect', [StripeConnectController::class, 'store']);
 Route::post('/payments/stripe/disconnect', [StripeConnectController::class, 'destroy']);
+
+/*
+|--------------------------------------------------------------------------
+| Lane SR: the Stripe status block, automatic webhook setup and the payment
+| log, all on Store -> Payments -> Stripe. In this file rather than one of their
+| own because this one is already mounted in routes/web.php inside the admin
+| group, so they need no wiring -- only the clear_caches migration that ships
+| with them (2027_10_07_100100_clear_caches_stripe_settings.php). Their own
+| capabilities, payments.stripe_webhook and payments.log, are mapped in
+| App\Support\AdminCapabilities.
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/payments/stripe/webhook', [\App\Http\Controllers\Admin\StripeSettingsController::class, 'status']);
+Route::post('/payments/stripe/webhook/setup', [\App\Http\Controllers\Admin\StripeSettingsController::class, 'setup']);
+Route::get('/payments/stripe/log', [\App\Http\Controllers\Admin\StripeSettingsController::class, 'log']);

@@ -66,14 +66,17 @@ it('names the fields the owner has not filled in yet, rather than saying "not co
     $labels = collect($result['missing_fields'])->pluck('label');
     $keys = collect($result['missing_fields'])->pluck('key');
 
+    // Lane SR: Stripe keeps a test set and a live set, and the one Mode picks
+    // (test, here) is the one reported -- by the box he fills in next.
     expect($result['configured'])->toBeFalse()
-        ->and($keys)->toContain('secret_key')
-        ->and($keys)->toContain('webhook_signing_secret')
+        ->and($keys)->toContain('secret_key_test')
+        ->and($keys)->toContain('webhook_signing_secret_test')
         // The LABEL is what the owner reads, and it has to be the words on the
         // form rather than the column name.
-        ->and($labels)->toContain('Secret key')
-        ->and($labels)->toContain('Webhook signing secret')
+        ->and($labels)->toContain('Test secret key')
+        ->and($labels)->toContain('Test webhook signing secret')
         // The one he HAS filled in is not listed as missing.
+        ->and($keys)->not->toContain('publishable_key_test')
         ->and($keys)->not->toContain('publishable_key');
 });
 

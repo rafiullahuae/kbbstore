@@ -238,6 +238,9 @@ final class StripeConnect
      */
     public const EVENTS = [
         'payment_intent.succeeded',
+        // Lane SR: "Authorise only, capture later" -- an authorised card emits
+        // this (status requires_capture), not `succeeded`, until it is captured.
+        'payment_intent.amount_capturable_updated',
         'payment_intent.canceled',
         'payment_intent.payment_failed',
         'checkout.session.completed',
@@ -329,7 +332,11 @@ final class StripeConnect
             self::PLATFORM_KEYS['live']['secret'],
             'secret_key',
         ] as $key) {
-            $value = $this->credentials->get(self::GATEWAY, $key);
+            // The merchant key is the one IN FORCE for this mode (Lane SR) --
+            // a live exchange must never be authenticated with a test key.
+            $value = $key === 'secret_key'
+                ? $this->modeKey('secret_key', $mode)
+                : $this->credentials->get(self::GATEWAY, $key);
 
             if ($value !== '') {
                 return $value;
@@ -371,8 +378,8 @@ final class StripeConnect
         $this->credentials->forget(self::GATEWAY);
 
         $row = PaymentProvider::find(self::GATEWAY);
-        $connected = $this->credentials->get(self::GATEWAY, 'secret_key') !== '';
         $mode = self::normaliseMode($row?->mode);
+        $connected = $this->modeKey('secret_key', $mode) !== '';
         $clientId = $this->platformClientId($mode);
 
         return [
@@ -382,7 +389,7 @@ final class StripeConnect
             'enabled' => (bool) ($row?->enabled ?? false),
             'account' => $connected ? $this->storedAccount() : null,
             'webhook_url' => $this->webhookUrl(),
-            'webhook_endpoint_id' => $connected ? ($this->credentials->get(self::GATEWAY, 'webhook_endpoint_id') ?: null) : null,
+            'webhook_endpoint_id' => $connected ? ($this->modeKey('webhook_endpoint_id', $mode) ?: null) : null,
             'webhook_events' => self::EVENTS,
             // Empty string when no platform application is registered, which is
             // what the screen reads to decide whether to offer the OAuth button
@@ -651,7 +658,7 @@ final class StripeConnect
 
         /* ---- 5. the endpoint --------------------------------------------- */
 
-        $endpoint = $this->ensureWebhookEndpoint($key, $webhookUrl);
+        $endpoint = $this->ensureWebhookEndpoint($key, $webhookUrl, $tabMode);
 
         if (! $endpoint['ok']) {
             return $this->fail('webhook', $endpoint['error'] ?? 'Stripe refused to register this shop for payment notifications.', [
@@ -830,7 +837,7 @@ final class StripeConnect
             return $this->fail('webhook', 'This shop could not generate its own webhook address.');
         }
 
-        $endpoint = $this->ensureWebhookEndpoint($key, $webhookUrl);
+        $endpoint = $this->ensureWebhookEndpoint($key, $webhookUrl, $tabMode);
 
         if (! $endpoint['ok']) {
             return $this->fail('webhook', $endpoint['error'] ?? 'Stripe refused to register this shop for payment notifications.');
@@ -897,7 +904,7 @@ final class StripeConnect
      *
      * @return array<string, mixed>
      */
-    private function ensureWebhookEndpoint(string $key, string $webhookUrl): array
+    private function ensureWebhookEndpoint(string $key, string $webhookUrl, string $mode): array
     {
         $list = $this->stripeCall('GET', '/v1/webhook_endpoints?limit=100', [], $key);
 
@@ -915,8 +922,10 @@ final class StripeConnect
             }
         }
 
-        $storedId = $this->credentials->get(self::GATEWAY, 'webhook_endpoint_id');
-        $storedSigning = $this->credentials->get(self::GATEWAY, 'webhook_signing_secret');
+        // This MODE's endpoint and secret: test and live endpoints are separate
+        // objects at Stripe, listed only by a key of their own mode.
+        $storedId = $this->modeKey('webhook_endpoint_id', $mode);
+        $storedSigning = $this->modeKey('webhook_signing_secret', $mode);
 
         /* ---- reuse ------------------------------------------------------- */
 
@@ -947,11 +956,16 @@ final class StripeConnect
                 'ok' => true,
                 'id' => $storedId,
                 'signing_secret' => $storedSigning,
-                'managed' => $this->credentials->get(self::GATEWAY, 'webhook_endpoint_managed') === '1',
+                'managed' => $this->modeKey('webhook_endpoint_managed', $mode) === '1',
+                'stale_removed' => $this->removeStaleEndpoints($key, $list['body']['data'] ?? [], $webhookUrl),
                 'action' => $covered ? 'reused' : 'reused_events_updated',
                 'replaced' => false,
             ];
         }
+
+        /* ---- stale: this shop's path at an old address, or an old tail ---- */
+
+        $staleRemoved = $this->removeStaleEndpoints($key, $list['body']['data'] ?? [], $webhookUrl);
 
         /* ---- replace ----------------------------------------------------- */
 
@@ -1013,6 +1027,295 @@ final class StripeConnect
             'managed' => true,
             'action' => $replaced ? 'replaced' : 'created',
             'replaced' => $replaced,
+            'stale_removed' => $staleRemoved,
+        ];
+    }
+
+    /**
+     * Delete the endpoints that are THIS SHOP'S and no longer its address.
+     * (Lane SR -- the same rule Lane DM gave Tabby, TabbyGateway::staleHooks.)
+     *
+     * Two shapes, and only these two:
+     *
+     *   - this shop's webhook path on this shop's current host with a URL tail
+     *     that is not the current one (a Regenerate, or an install that was
+     *     reset): it can never verify again, and every event goes to it too.
+     *   - this shop's webhook path on a host the owner listed under Platform ->
+     *     Site address -> Old addresses (SiteHost::aliases()): the domain move.
+     *     Left alone it keeps calling the old domain for ever and hands the URL
+     *     secret to whoever holds that domain next.
+     *
+     * Anything else -- another shop, another system, a URL that merely looks
+     * similar on a host nobody listed -- is never touched. Failures are not
+     * fatal: the new endpoint is still made, and the owner can delete the old
+     * one by hand; the count says how many actually went.
+     *
+     * @param  array<int, mixed>  $endpoints
+     */
+    private function removeStaleEndpoints(string $key, array $endpoints, string $webhookUrl): int
+    {
+        $prefix = url(Url::external('/api/payments/webhook/' . self::GATEWAY . '/'));
+        $ourPath = (string) parse_url($prefix, PHP_URL_PATH);
+        $removed = 0;
+
+        foreach ($endpoints as $endpoint) {
+            if (! is_array($endpoint)) {
+                continue;
+            }
+
+            $url = (string) ($endpoint['url'] ?? '');
+            $id = (string) ($endpoint['id'] ?? '');
+
+            if ($url === '' || $id === '' || hash_equals($webhookUrl, $url)) {
+                continue;
+            }
+
+            $sameHostOldTail = str_starts_with($url, $prefix);
+            $oldHost = false;
+
+            if (! $sameHostOldTail && $ourPath !== '') {
+                $parts = parse_url($url);
+                $host = is_array($parts) ? \App\Support\SiteHost::normalise((string) ($parts['host'] ?? '')) : '';
+                $oldHost = is_array($parts)
+                    && in_array($parts['scheme'] ?? '', ['http', 'https'], true)
+                    && ! isset($parts['port'])
+                    && $host !== ''
+                    && str_starts_with((string) ($parts['path'] ?? ''), $ourPath)
+                    && in_array($host, \App\Support\SiteHost::aliases(), true);
+            }
+
+            if (! $sameHostOldTail && ! $oldHost) {
+                continue;
+            }
+
+            $delete = $this->stripeCall('DELETE', '/v1/webhook_endpoints/' . urlencode($id), [], $key);
+
+            if ($delete['ok'] || ($delete['status'] ?? null) === 404) {
+                $removed++;
+            }
+        }
+
+        return $removed;
+    }
+
+    /** The value in force for a mode -- see StripeKeys. (Lane SR.) */
+    private function modeKey(string $name, string $mode): string
+    {
+        return StripeKeys::get($this->credentials->all(self::GATEWAY), $mode, $name);
+    }
+
+    /* ====================================================================== */
+    /* "Set up webhook automatically" (Lane SR)                                */
+    /* ====================================================================== */
+
+    /**
+     * Register this shop's webhook at Stripe with the key ALREADY STORED for
+     * the current mode, and keep the signing secret Stripe returns.
+     *
+     * What the owner asked for, in WooCommerce's words: a button, not a visit
+     * to Developers -> Webhooks. The same ensureWebhookEndpoint() the connect
+     * flow uses, so the rules are the ones already proven there: never a second
+     * endpoint on our URL; an endpoint we hold the secret for is reused with
+     * any missing events added; one we cannot verify is replaced. And, new
+     * here, endpoints carrying this shop's path at an address it has left are
+     * removed (removeStaleEndpoints()).
+     *
+     * The key is never sent to the browser and never returned. Nothing is
+     * stored unless Stripe has handed back an endpoint id AND a signing secret.
+     *
+     * @return array<string, mixed>
+     */
+    public function setupWebhook(): array
+    {
+        $this->credentials->forget(self::GATEWAY);
+
+        $mode = $this->currentMode();
+        $key = $this->modeKey('secret_key', $mode);
+
+        if ($key === '') {
+            return $this->fail('key', $mode === 'live'
+                ? 'There is no Live secret key stored. Paste your sk_live_ key in Live secret key and save first.'
+                : 'There is no Test secret key stored. Paste your sk_test_ key in Test secret key and save first.');
+        }
+
+        if (StripeKeys::keyMode($key) !== null && StripeKeys::keyMode($key) !== $mode) {
+            return $this->fail('mode', 'The stored secret key is a ' . strtoupper((string) StripeKeys::keyMode($key))
+                . ' key but Mode is ' . ($mode === 'live' ? 'Live' : 'Sandbox / test') . '. Fix one of them first.');
+        }
+
+        $webhookUrl = $this->ensureWebhookUrl();
+
+        if ($webhookUrl === null) {
+            return $this->fail('webhook', 'This shop could not generate its own webhook address. Save the Stripe tab once and try again.');
+        }
+
+        $endpoint = $this->ensureWebhookEndpoint($key, $webhookUrl, $mode);
+
+        if (! $endpoint['ok']) {
+            PaymentLog::record(self::GATEWAY, 'error', 'webhook.setup', 'Automatic webhook setup failed.', [
+                'reason' => (string) ($endpoint['error'] ?? ''),
+            ], $mode);
+
+            return $this->fail('webhook', $endpoint['error'] ?? 'Stripe refused to register this shop for payment notifications.');
+        }
+
+        // The account's statement descriptor, refreshed while we are here. A
+        // failure is not a failure of the setup: the endpoint already exists.
+        $account = $this->stripeCall('GET', '/v1/account', [], $key);
+
+        $values = StripeKeys::normalise($this->credentials->all(self::GATEWAY));
+        $values[StripeKeys::slot('webhook_signing_secret', $mode)] = (string) $endpoint['signing_secret'];
+        $values[StripeKeys::slot('webhook_endpoint_id', $mode)] = (string) $endpoint['id'];
+        $values[StripeKeys::slot('webhook_endpoint_managed', $mode)] = ! empty($endpoint['managed']) ? '1' : '0';
+
+        // normalise() may have moved a legacy test set into the test boxes;
+        // the key we just used must still be in force for this mode afterwards.
+        $values[StripeKeys::slot('secret_key', $mode)] = $key;
+
+        if ($account['ok'] && is_array($account['body'])) {
+            $values['account_statement_descriptor'] = StripePaymentText::latin((string) ($account['body']['settings']['payments']['statement_descriptor'] ?? ''));
+            $values['account_descriptor_prefix'] = StripePaymentText::latin((string) ($account['body']['settings']['card_payments']['statement_descriptor_prefix'] ?? ''));
+        }
+
+        try {
+            $this->credentials->save(self::GATEWAY, $values);
+        } catch (\Throwable) {
+            if (! empty($endpoint['managed']) && ! str_starts_with((string) ($endpoint['action'] ?? ''), 'reused')) {
+                $this->stripeCall('DELETE', '/v1/webhook_endpoints/' . urlencode((string) $endpoint['id']), [], $key);
+            }
+
+            return $this->fail('store', 'Stripe registered the webhook but this shop could not save it. Nothing was changed; try again.');
+        }
+
+        $this->credentials->forget(self::GATEWAY);
+
+        PaymentLog::record(self::GATEWAY, 'info', 'webhook.setup', 'Webhook endpoint ' . ($endpoint['action'] ?? 'created') . ' at Stripe.', [
+            'webhook_endpoint' => (string) $endpoint['id'],
+            'action' => (string) ($endpoint['action'] ?? 'created'),
+            'removed' => (int) ($endpoint['stale_removed'] ?? 0),
+            'events' => self::EVENTS,
+        ], $mode);
+
+        return [
+            'ok' => true,
+            'mode' => $mode,
+            'action' => $endpoint['action'] ?? 'created',
+            'endpoint_id' => (string) $endpoint['id'],
+            'events' => self::EVENTS,
+            'stale_removed' => (int) ($endpoint['stale_removed'] ?? 0),
+            'status' => $this->settingsStatus(),
+        ];
+    }
+
+    /**
+     * Everything the Stripe status block on Store -> Payments -> Stripe draws.
+     * Reaches Stripe not at all: three small reads of this shop's own rows.
+     *
+     * NO SECRET, NOT EVEN MASKED: booleans for the secret key and the signing
+     * secret, the publishable key's MODE (not the key), and the webhook URL
+     * with its unguessable tail cut to its last four characters.
+     *
+     * @return array<string, mixed>
+     */
+    public function settingsStatus(): array
+    {
+        $this->credentials->forget(self::GATEWAY);
+
+        $mode = $this->currentMode();
+        $config = $this->credentials->all(self::GATEWAY);
+        $gateway = app(GatewayRegistry::class)->find(self::GATEWAY);
+
+        $secret = StripeKeys::get($config, $mode, 'secret_key');
+        $publishable = StripeKeys::get($config, $mode, 'publishable_key');
+        $signing = StripeKeys::get($config, $mode, 'webhook_signing_secret');
+
+        $warnings = [];
+
+        foreach (['secret key' => $secret, 'publishable key' => $publishable] as $label => $value) {
+            $keyMode = StripeKeys::keyMode($value);
+
+            if ($keyMode !== null && $keyMode !== $mode) {
+                $warnings[] = sprintf('The %s in force is a %s key but Mode is %s.', $label, strtoupper($keyMode), $mode === 'live' ? 'Live' : 'Sandbox / test');
+            }
+        }
+
+        if ($mode === 'live' && StripeKeys::legacyMode($config) === 'test') {
+            $warnings[] = 'Mode is Live but the Live key boxes hold TEST keys, so card payments are switched off until you paste your sk_live_ and pk_live_ keys. '
+                . 'Saving the Stripe tab once moves the test keys into the Test boxes.';
+        }
+
+        $url = $this->webhookUrl();
+        $tail = $this->credentials->get(self::GATEWAY, 'webhook_secret');
+        $masked = $url !== null && $tail !== '' ? substr($url, 0, -strlen($tail)) . '…' . substr($tail, -4) : null;
+
+        $sample = new Order(['order_number' => '10234', 'email' => 'shopper@example.com', 'total' => 0]);
+
+        $accountDescriptor = $this->credentials->get(self::GATEWAY, 'account_statement_descriptor');
+        $accountPrefix = $this->credentials->get(self::GATEWAY, 'account_descriptor_prefix');
+
+        $suffix = $gateway instanceof Gateways\StripeGateway ? $gateway->statementSuffix($sample) : null;
+        $full = $gateway instanceof Gateways\StripeGateway ? $gateway->fullDescriptor() : '';
+
+        return [
+            'mode' => $mode,
+            'test_mode' => $mode === 'test',
+            'keys' => [
+                'publishable_mode' => StripeKeys::keyMode($publishable),
+                'has_publishable' => $publishable !== '',
+                'has_secret' => $secret !== '',
+                'has_signing_secret' => $signing !== '',
+                'test_set' => $this->setFilled($config, 'test'),
+                'live_set' => $this->setFilled($config, 'live'),
+            ],
+            'warnings' => $warnings,
+            'webhook' => [
+                'url' => $masked,
+                'endpoint_id' => StripeKeys::get($config, $mode, 'webhook_endpoint_id') ?: null,
+                'managed' => StripeKeys::get($config, $mode, 'webhook_endpoint_managed') === '1',
+                'events' => self::EVENTS,
+                'last_event' => $this->logLine(PaymentLog::latest(self::GATEWAY, 'webhook.received')),
+                'last_signature_failure' => $this->logLine(PaymentLog::latest(self::GATEWAY, 'webhook.signature_failed')),
+                'last_setup' => $this->logLine(PaymentLog::latest(self::GATEWAY, 'webhook.setup')),
+            ],
+            'statement' => [
+                'full' => $full,
+                'full_is_default' => $this->credentials->get(self::GATEWAY, 'statement_descriptor') === '',
+                'account_descriptor' => $accountDescriptor !== '' ? $accountDescriptor : null,
+                'account_prefix' => $accountPrefix !== '' ? $accountPrefix : null,
+                // With no suffix a card statement shows the account's full
+                // descriptor; with one, the account's PREFIX, "* ", the suffix.
+                'card_example' => $suffix === null
+                    ? ($accountDescriptor !== '' ? $accountDescriptor : 'your Stripe account\'s statement descriptor')
+                    : ($accountPrefix !== '' ? $accountPrefix : 'PREFIX') . '* ' . $suffix,
+                'suffix_example' => $suffix,
+            ],
+            'description_example' => $gateway instanceof Gateways\StripeGateway ? $gateway->paymentDescription($sample) : null,
+            'capture_later' => $gateway instanceof Gateways\StripeGateway && $gateway->captureLater(),
+            'receipt_email' => $this->credentials->get(self::GATEWAY, 'receipt_email') === '1',
+        ];
+    }
+
+    /** Is a key set's secret + publishable pair filled in? */
+    private function setFilled(array $config, string $mode): bool
+    {
+        return StripeKeys::get($config, $mode, 'secret_key') !== ''
+            && StripeKeys::get($config, $mode, 'publishable_key') !== '';
+    }
+
+    /** @return array<string, mixed>|null */
+    private function logLine(?array $row): ?array
+    {
+        if ($row === null) {
+            return null;
+        }
+
+        return [
+            'at' => $row['at'],
+            'mode' => $row['mode'],
+            'message' => $row['message'],
+            'event_type' => $row['context']['event_type'] ?? null,
+            'outcome' => $row['context']['outcome'] ?? null,
+            'reason' => $row['context']['reason'] ?? null,
         ];
     }
 
@@ -1057,9 +1360,20 @@ final class StripeConnect
             ?? ''
         ));
 
-        $values = [
-            'secret_key' => $key,
-            'webhook_signing_secret' => $endpoint['signing_secret'],
+        /*
+         * INTO THE KEY SET OF THIS MODE. (Lane SR.) A test connection fills the
+         * Test boxes and a live one the Live boxes, so connecting live later
+         * does not throw away the test set the owner tested with -- and a set
+         * left in the old single boxes by an earlier connection is moved to
+         * where it belongs first (StripeKeys::normalise()).
+         */
+        $values = StripeKeys::normalise($this->credentials->all(self::GATEWAY));
+        $slot = static fn (string $name): string => StripeKeys::slot($name, $mode);
+
+        $values[$slot('secret_key')] = $key;
+        $values[$slot('webhook_signing_secret')] = $endpoint['signing_secret'];
+
+        $values = array_merge($values, [
             'connect_account_id' => $accountId,
             'connect_link' => $link,
             'connected_at' => now()->toIso8601String(),
@@ -1068,12 +1382,17 @@ final class StripeConnect
             'account_currency' => $accountCurrency,
             'charges_enabled' => $chargesEnabled ? '1' : '0',
             'livemode' => $livemode ? '1' : '0',
-            'webhook_endpoint_id' => $endpoint['id'],
-            'webhook_endpoint_managed' => ! empty($endpoint['managed']) ? '1' : '0',
-        ];
+            // What the account prints on card statements, read off the same
+            // GET /v1/account. Shown on the Stripe status block, and the prefix
+            // length bounds the statement descriptor suffix.
+            'account_statement_descriptor' => StripePaymentText::latin((string) ($account['settings']['payments']['statement_descriptor'] ?? '')),
+            'account_descriptor_prefix' => StripePaymentText::latin((string) ($account['settings']['card_payments']['statement_descriptor_prefix'] ?? '')),
+        ]);
+        $values[$slot('webhook_endpoint_id')] = $endpoint['id'];
+        $values[$slot('webhook_endpoint_managed')] = ! empty($endpoint['managed']) ? '1' : '0';
 
         if ($publishableKey !== null && $publishableKey !== '') {
-            $values['publishable_key'] = $publishableKey;
+            $values[$slot('publishable_key')] = $publishableKey;
         }
 
         try {
@@ -1176,9 +1495,8 @@ final class StripeConnect
     {
         $this->credentials->forget(self::GATEWAY);
 
-        $key = $this->credentials->get(self::GATEWAY, 'secret_key');
-        $endpointId = $this->credentials->get(self::GATEWAY, 'webhook_endpoint_id');
-        $managed = $this->credentials->get(self::GATEWAY, 'webhook_endpoint_managed') === '1';
+        $mode = $this->currentMode();
+        $key = $this->modeKey('secret_key', $mode);
         $link = $this->credentials->get(self::GATEWAY, 'connect_link');
         $accountId = $this->credentials->get(self::GATEWAY, 'connect_account_id');
         // Mode-resolved, like the authorize and the exchange: deauthorising
@@ -1192,37 +1510,60 @@ final class StripeConnect
 
         /* ---- 1. the endpoint we are responsible for ---------------------- */
 
-        if ($key !== '' && $endpointId !== '' && $managed) {
-            // Read it back before deleting. "Only the one this shop created" is
-            // checked rather than assumed: the id is ours, and its URL must
-            // still be ours too, or it is not the endpoint we think it is.
-            $read = $this->stripeCall('GET', '/v1/webhook_endpoints/' . urlencode($endpointId), [], $key);
+        /*
+         * Once per KEY SET (Lane SR): a test endpoint and a live endpoint are
+         * separate objects at Stripe, each deletable only with a key of its own
+         * mode. The current mode goes first; a set whose key and endpoint are
+         * the same as one already handled (a key with no mode in its text) is
+         * handled once.
+         */
+        $handled = [];
 
-            if (($read['status'] ?? null) === 404) {
-                $steps[] = 'webhook_already_gone';
-            } elseif (! $read['ok']) {
-                $steps[] = 'webhook_unreachable';
-                $warnings[] = 'Stripe could not be reached to remove this shop\'s webhook endpoint. '
-                    . 'It is harmless — with the keys cleared, nothing it sends can be accepted — but you can delete it '
-                    . 'yourself under Developers -> Webhooks.';
-            } elseif ($webhookUrl !== null && (string) ($read['body']['url'] ?? '') !== $webhookUrl) {
-                $steps[] = 'webhook_not_ours';
-                $warnings[] = 'The webhook endpoint recorded against this shop now points somewhere else, so it was left alone.';
-            } else {
-                $delete = $this->stripeCall('DELETE', '/v1/webhook_endpoints/' . urlencode($endpointId), [], $key);
+        foreach (array_unique([$mode, $mode === 'live' ? 'test' : 'live']) as $setMode) {
+            $key = $this->modeKey('secret_key', $setMode);
+            $endpointId = $this->modeKey('webhook_endpoint_id', $setMode);
+            $managed = $this->modeKey('webhook_endpoint_managed', $setMode) === '1';
 
-                if ($delete['ok'] || ($delete['status'] ?? null) === 404) {
-                    $steps[] = 'webhook_deleted';
-                } else {
-                    $steps[] = 'webhook_delete_failed';
-                    $warnings[] = 'Stripe refused to delete this shop\'s webhook endpoint. Remove it yourself under '
-                        . 'Developers -> Webhooks; until then it simply delivers to an address that no longer accepts anything.';
-                }
+            if (($key === '' && $endpointId === '') || in_array($key . '|' . $endpointId, $handled, true)) {
+                continue;
             }
-        } elseif ($endpointId !== '' && ! $managed) {
-            $steps[] = 'webhook_left_alone';
-            $warnings[] = 'The webhook endpoint for this shop was not created by this screen, so it was left in your Stripe account.';
+
+            $handled[] = $key . '|' . $endpointId;
+
+            if ($key !== '' && $endpointId !== '' && $managed) {
+                // Read it back before deleting. "Only the one this shop created" is
+                // checked rather than assumed: the id is ours, and its URL must
+                // still be ours too, or it is not the endpoint we think it is.
+                $read = $this->stripeCall('GET', '/v1/webhook_endpoints/' . urlencode($endpointId), [], $key);
+
+                if (($read['status'] ?? null) === 404) {
+                    $steps[] = 'webhook_already_gone';
+                } elseif (! $read['ok']) {
+                    $steps[] = 'webhook_unreachable';
+                    $warnings[] = 'Stripe could not be reached to remove this shop\'s webhook endpoint. '
+                        . 'It is harmless — with the keys cleared, nothing it sends can be accepted — but you can delete it '
+                        . 'yourself under Developers -> Webhooks.';
+                } elseif ($webhookUrl !== null && (string) ($read['body']['url'] ?? '') !== $webhookUrl) {
+                    $steps[] = 'webhook_not_ours';
+                    $warnings[] = 'The webhook endpoint recorded against this shop now points somewhere else, so it was left alone.';
+                } else {
+                    $delete = $this->stripeCall('DELETE', '/v1/webhook_endpoints/' . urlencode($endpointId), [], $key);
+
+                    if ($delete['ok'] || ($delete['status'] ?? null) === 404) {
+                        $steps[] = 'webhook_deleted';
+                    } else {
+                        $steps[] = 'webhook_delete_failed';
+                        $warnings[] = 'Stripe refused to delete this shop\'s webhook endpoint. Remove it yourself under '
+                            . 'Developers -> Webhooks; until then it simply delivers to an address that no longer accepts anything.';
+                    }
+                }
+            } elseif ($endpointId !== '' && ! $managed) {
+                $steps[] = 'webhook_left_alone';
+                $warnings[] = 'The webhook endpoint for this shop was not created by this screen, so it was left in your Stripe account.';
+            }
         }
+
+        $key = $this->modeKey('secret_key', $mode) ?: $this->modeKey('secret_key', $mode === 'live' ? 'test' : 'live');
 
         /* ---- 2. Connect deauthorise -------------------------------------- */
 
@@ -1252,6 +1593,14 @@ final class StripeConnect
             'secret_key' => null,
             'publishable_key' => null,
             'webhook_signing_secret' => null,
+            // Both key sets (Lane SR): a reset is a reset in either mode.
+            'secret_key_test' => null,
+            'publishable_key_test' => null,
+            'webhook_signing_secret_test' => null,
+            'webhook_endpoint_id_test' => null,
+            'webhook_endpoint_managed_test' => null,
+            'account_statement_descriptor' => null,
+            'account_descriptor_prefix' => null,
             // The URL tail goes too, so a reset is a reset: the next connection
             // gets a fresh address, and nothing that was ever pasted into a
             // dashboard still reaches this shop.

@@ -1,0 +1,16 @@
+{
+  "checkout-390": {
+    "htmlBytes": 185847,
+    "scrollWidth": 390,
+    "scripts": 17,
+    "stripeBox": true,
+    "consoleErrors": []
+  },
+  "checkout-1280": {
+    "htmlBytes": 185847,
+    "scrollWidth": 1280,
+    "scripts": 17,
+    "stripeBox": true,
+    "consoleErrors": []
+  }
+}

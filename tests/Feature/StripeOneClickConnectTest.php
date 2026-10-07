@@ -202,16 +202,17 @@ describe('the dead button', function () {
 
         // The same storage shape a pasted key produces, so there is one
         // disconnect path and not two that disagree.
-        expect($config['secret_key'])->toBe(FG_GRANTED_KEY)
+        // In the TEST boxes: this grant was made in test mode (Lane SR).
+        expect($config['secret_key_test'])->toBe(FG_GRANTED_KEY)
             ->and($config['connect_account_id'])->toBe('acct_FGNEW1')
             ->and($config['connect_link'])->toBe('oauth')
             // AN OAUTH GRANT CARRIES NO WEBHOOK SIGNING SECRET. Stripe returns
             // one only in the response that CREATES an endpoint, so the OAuth
             // path has to make the same call the pasted path makes or it ends
             // connected and deaf — taking payments it never hears about.
-            ->and($config['webhook_signing_secret'])->toBe(FG_WHSEC)
-            ->and($config['webhook_endpoint_id'])->toBe('we_FGNEW1')
-            ->and($config['webhook_endpoint_managed'])->toBe('1');
+            ->and($config['webhook_signing_secret_test'])->toBe(FG_WHSEC)
+            ->and($config['webhook_endpoint_id_test'])->toBe('we_FGNEW1')
+            ->and($config['webhook_endpoint_managed_test'])->toBe('1');
     });
 
     it('authenticates the exchange with the platform secret and not with anything else', function () {

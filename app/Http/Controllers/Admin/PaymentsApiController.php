@@ -171,6 +171,24 @@ class PaymentsApiController extends Controller
             ], 422);
         }
 
+        /*
+         * The gateway's own rules for its values, before anything is written.
+         * (Lane SR: Stripe's statement descriptor, prefix, description template
+         * and the key-in-the-wrong-box check.) Refused whole, with a sentence
+         * per field, so a half-applied save cannot happen.
+         */
+        if (method_exists($gateway, 'validateConfig')) {
+            $errors = $gateway->validateConfig($values);
+
+            if ($errors !== []) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => implode(' ', array_values($errors)),
+                    'errors' => $errors,
+                ], 422);
+            }
+        }
+
         $secretKeys = array_keys(array_filter($schema, fn ($def) => ($def[0] ?? '') === 'secret'));
 
         $row = PaymentProvider::firstOrNew(['id' => $gateway->id()]);
@@ -183,6 +201,22 @@ class PaymentsApiController extends Controller
         $row->save();
 
         $this->credentials->save($gateway->id(), $values, $secretKeys);
+
+        /*
+         * A Stripe shop set up before there were two key sets keeps its test
+         * keys in the boxes that now mean Live. The first save after this
+         * change moves them into the Test boxes, so the screen stops showing a
+         * test key under "Live" — see StripeKeys::normalise(), which only ever
+         * moves and never invents.
+         */
+        if ($gateway->id() === \App\Services\Payments\StripeConnect::GATEWAY) {
+            $this->credentials->forget($gateway->id());
+            $patch = \App\Services\Payments\StripeKeys::normalise($this->credentials->all($gateway->id()));
+
+            if ($patch !== []) {
+                $this->credentials->save($gateway->id(), $patch);
+            }
+        }
 
         // A webhook secret nobody has to invent. Generated once, on the first
         // save, and only if the gateway has such a field -- it is what makes

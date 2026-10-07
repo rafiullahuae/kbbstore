@@ -333,7 +333,13 @@ class Wallets
 
         // Gates 2 and 3 together: the secret key opens the intent, the
         // publishable key boots the script that draws the sheet.
-        if ($value('secret_key') === '' || $value('publishable_key') === '') {
+        // The keys of the CURRENT mode (Lane SR): StripeKeys is a pure function
+        // of the row this method already holds, so the test/live split costs
+        // the footer of every page nothing.
+        $mode = (string) ($row->mode ?? 'test');
+
+        if (\App\Services\Payments\StripeKeys::get($config, $mode, 'secret_key') === ''
+            || \App\Services\Payments\StripeKeys::get($config, $mode, 'publishable_key') === '') {
             return $this->none();
         }
 

@@ -49,7 +49,8 @@ use Illuminate\Support\Facades\Route;
  * distinctive enough that a substring search for it cannot match anything else
  * in a response body.
  */
-const RC_STRIPE_SECRET = 'sk_test_RECONCILECANARY00001';
+// sk_live_ under a Live row (Lane SR: a test key on a Live row is no longer used).
+const RC_STRIPE_SECRET = 'sk_live_RECONCILECANARY00001';
 
 const RC_TABBY_SECRET = 'sk_test_RECONCILECANARY00002';
 

@@ -664,6 +664,9 @@ final class AdminCapabilities
         'security.view' => ['owner'],
         'security.integrity' => ['owner'],
         'payments.manage' => ['owner'],
+        // Lane SR -- see the RULES entries for admin-api/payments/stripe/webhook.
+        'payments.stripe_webhook' => ['owner'],
+        'payments.log' => ['owner'],
         'users.manage' => ['owner'],
         /*
          * Platform -> Users & Roles -> Roles (Lane RL): create, rename, re-tick,
@@ -871,6 +874,27 @@ final class AdminCapabilities
         ['POST', 'admin-api/payments/stripe/connect/application', 'payments.manage'],
         ['POST', 'admin-api/payments/stripe/disconnect', 'payments.manage'],
         ['GET', 'admin-api/payments/stripe/connect/*', 'payments.manage'],
+        /*
+         * Lane SR: Store -> Payments -> Stripe's status block, its "Set up
+         * webhook automatically" button and its payment log. THEIR OWN
+         * capabilities, per CLAUDE.md rule 5, owner-only as this ships:
+         *
+         *   payments.stripe_webhook  reads the status block and REGISTERS an
+         *                            endpoint in the owner's Stripe account with
+         *                            the stored secret key -- a write at Stripe.
+         *   payments.log             reads the payment log: order numbers,
+         *                            PaymentIntent ids, Stripe's error codes.
+         *                            Never a key or a card number, but still
+         *                            not something to hand out with a read of
+         *                            the order list.
+         *
+         * Neither is folded into payments.manage, so the day a manager may read
+         * the log to help troubleshoot, he does not also gain the button that
+         * rewrites the shop's webhook registration.
+         */
+        ['GET', 'admin-api/payments/stripe/webhook', 'payments.stripe_webhook'],
+        ['POST', 'admin-api/payments/stripe/webhook/setup', 'payments.stripe_webhook'],
+        ['GET', 'admin-api/payments/stripe/log', 'payments.log'],
         /*
          * Tabby webhook registration — routes/payments-tabby.php.
          *

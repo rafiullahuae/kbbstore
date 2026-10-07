@@ -65,6 +65,11 @@
     partial render — Stripe on offer with a publishable key — so a second
     <script src> would be a second copy of the same file. This waits for it
     instead, and if it never arrives it removes the row. See waitForStripe().
+    `requires_capture` COUNTS AS A FINISHED PAYMENT (Lane SR). Under Store ->
+    Payments -> Stripe -> "Authorise only, capture later" an approved card
+    stops at requires_capture, not succeeded: the money is held for the shop
+    and the order is confirmed exactly as a captured one. Treating it as a
+    failure would show the shopper an error for a card the bank approved.
 --}}
 @php
     /*
@@ -508,7 +513,7 @@
 
         var intent = result.paymentIntent;
 
-        if (!intent || (intent.status !== 'succeeded' && intent.status !== 'processing')) {
+        if (!intent || (intent.status !== 'succeeded' && intent.status !== 'processing' && intent.status !== 'requires_capture')) {
           event.paymentFailed({ reason: 'fail' });
           await release(order);
           say(TEXT.failed);

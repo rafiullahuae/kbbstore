@@ -170,6 +170,25 @@ final class OrderPaymentPanel
             ]);
         }
 
+        /*
+         * AUTHORISED, NOT CAPTURED (Lane SR). A Stripe card taken under
+         * "Authorise only, capture later": the bank has approved it and the
+         * money is HELD, not taken. Amber, said in words, with the Capture
+         * button below -- the owner must not read a green "Paid" on an order
+         * whose money Stripe will hand back in a week unless he acts.
+         */
+        if (! empty($settlement['awaiting_capture']) && $order->captured_at === null) {
+            return array_merge($panel, [
+                'state' => 'authorised',
+                'tone' => 'amber',
+                'headline' => 'Card authorised — not captured yet',
+                'detail' => 'The money is held on the customer\'s card but not taken. Press Capture to take it; '
+                    . 'Stripe releases an authorisation that is not captured within about 7 days.',
+                'date_paid' => StoreTime::iso($order->paid_at),
+                'date_label' => self::label($order->paid_at),
+            ]);
+        }
+
         return array_merge($panel, [
             'state' => 'paid',
             'tone' => 'green',
@@ -188,7 +207,7 @@ final class OrderPaymentPanel
      */
     private static function capture(Order $order, string $method, array $settlement): array
     {
-        $offered = in_array($method, self::AUTHORISE_THEN_CAPTURE, true)
+        $offered = (in_array($method, self::AUTHORISE_THEN_CAPTURE, true) || ! empty($settlement['awaiting_capture']))
             && ! empty($settlement['capturable'])
             && $order->paid_at !== null
             && $order->captured_at === null;

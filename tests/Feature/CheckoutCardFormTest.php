@@ -229,14 +229,17 @@ it('loads no Stripe script at all when no card gateway is configured', function 
 });
 
 it('never puts the secret key on the checkout page', function () {
-    formStripeOn(['secret_key' => 'sk_live_KBBFORMCANARY0000001']);
+    // A TEST secret beside the test publishable key, as a real test-mode shop
+    // has them (Lane SR: a live secret under a test publishable key in test
+    // mode is now a mismatched pair and switches the card option off).
+    formStripeOn(['secret_key' => 'sk_test_KBBFORMCANARY0000001']);
 
     $html = formShopper(formCart())->get('/checkout')->assertOk()->getContent();
 
     // The publishable key belongs there; its partner never does, and this page
     // is the one place the two sit closest together in the code.
     expect($html)->toContain(FORM_PK);
-    expect($html)->not->toContain('sk_live_KBBFORMCANARY0000001');
+    expect($html)->not->toContain('sk_test_KBBFORMCANARY0000001');
     expect($html)->not->toContain('whsec_form_signing');
 });
 

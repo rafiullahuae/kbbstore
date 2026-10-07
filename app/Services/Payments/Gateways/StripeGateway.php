@@ -14,6 +14,9 @@ use App\Services\Payments\Reconciliation\RemoteTxn;
 use App\Services\Payments\SettlementResult;
 use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
+use App\Services\Payments\PaymentLog;
+use App\Services\Payments\StripeKeys;
+use App\Services\Payments\StripePaymentText;
 use App\Services\Payments\WebhookOutcome;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -106,7 +109,7 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
      */
     public function configured(): bool
     {
-        return $this->credentials->filled($this->id(), 'secret_key');
+        return $this->key('secret_key') !== '';
     }
 
     /**
@@ -126,7 +129,7 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
     public function availableFor(int $totalFils, ?string $country = null): bool
     {
         return parent::availableFor($totalFils, $country)
-            && $this->credentials->filled($this->id(), 'publishable_key');
+            && $this->key('publishable_key') !== '';
     }
 
     /**
@@ -138,7 +141,287 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
      */
     public function publishableKey(): string
     {
-        return $this->credentials->get($this->id(), 'publishable_key');
+        return $this->key('publishable_key');
+    }
+
+    /**
+     * The credential in force for the shop's current Mode. (Lane SR.)
+     *
+     * Every read of a key, a signing secret or a webhook endpoint id goes
+     * through here, so test and live cannot be crossed by one caller reading
+     * the raw box. See App\Services\Payments\StripeKeys for the rules,
+     * including the one that keeps a shop set up with a single key set working.
+     */
+    public function key(string $name): string
+    {
+        return StripeKeys::get($this->credentials->all($this->id()), $this->mode(), $name);
+    }
+
+    /** 'test' or 'live' — the Mode switch on Store → Payments → Stripe. */
+    public function mode(): string
+    {
+        return $this->credentials->mode($this->id());
+    }
+
+    /* ------------------------------------------------ the owner's settings */
+
+    /** A plain setting from the schema's `settings` column, trimmed. */
+    private function setting(string $name): string
+    {
+        return $this->credentials->get($this->id(), $name);
+    }
+
+    /** Authorise at checkout, take the money on the order screen. Off unless switched on. */
+    public function captureLater(): bool
+    {
+        return $this->setting('capture_later') === '1';
+    }
+
+    /**
+     * The order number as Stripe shows it: the owner's prefix, then ours.
+     *
+     * DISPLAY ONLY. reference() — the plain number — is still what goes in
+     * metadata.order_number, the idempotency key and every lookup, so a prefix
+     * added, changed or removed later cannot strand a payment.
+     */
+    public function displayReference(Order $order): string
+    {
+        $prefix = $this->setting('order_reference_prefix');
+
+        return (StripePaymentText::referencePrefixError($prefix) === null ? $prefix : '') . $this->reference($order);
+    }
+
+    public function paymentDescription(Order $order): string
+    {
+        $template = $this->setting('payment_description');
+
+        return StripePaymentText::description(
+            $template,
+            $this->displayReference($order),
+            $this->reference($order),
+            // Read only when the template asks for it: the default sends no
+            // shop name and so costs no settings read.
+            str_contains($template, '{shop}') ? $this->shopName() : '',
+        );
+    }
+
+    /** The full descriptor in force: the owner's, else one made from the shop name. */
+    public function fullDescriptor(): string
+    {
+        $own = $this->setting('statement_descriptor');
+
+        return $own !== '' && StripePaymentText::fullDescriptorError($own) === null
+            ? $own
+            : StripePaymentText::defaultFullDescriptor($this->shopName());
+    }
+
+    /** The account's shortened-descriptor prefix length, when connect read it. */
+    public function accountPrefixLength(): ?int
+    {
+        $prefix = $this->setting('account_descriptor_prefix');
+
+        return $prefix !== '' ? strlen($prefix) : null;
+    }
+
+    public function statementSuffix(Order $order): ?string
+    {
+        return StripePaymentText::suffix(
+            $this->setting('statement_descriptor_suffix'),
+            $this->setting('statement_descriptor_order_number') === '1',
+            $this->reference($order),
+            $this->accountPrefixLength(),
+        );
+    }
+
+    private function shopName(): string
+    {
+        $name = trim((string) (app(\App\Services\SettingsService::class)->get('store_name', '') ?? ''));
+
+        return $name !== '' ? $name : \App\Support\BrandName::appName();
+    }
+
+    /**
+     * The PaymentIntent parameters the owner's settings add, and ONLY those
+     * that are in use. An empty array is today's request, unchanged.
+     *
+     * @return array<string, mixed>
+     */
+    private function intentSettings(Order $order): array
+    {
+        $extra = [];
+
+        /*
+         * `statement_descriptor_suffix`, never `statement_descriptor`: the
+         * intent is card-only, and Stripe's PaymentIntent reference says a
+         * full descriptor on a card charge "returns an error".
+         */
+        $suffix = $this->statementSuffix($order);
+
+        if ($suffix !== null) {
+            $extra['statement_descriptor_suffix'] = $suffix;
+        }
+
+        if ($this->captureLater()) {
+            $extra['capture_method'] = 'manual';
+        }
+
+        $email = trim((string) $order->email);
+
+        if ($this->setting('receipt_email') === '1' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $extra['receipt_email'] = $email;
+        }
+
+        if ($this->displayReference($order) !== $this->reference($order)) {
+            $extra['metadata'] = ['order_reference' => $this->displayReference($order)];
+        }
+
+        return $extra;
+    }
+
+    /**
+     * Admin-side validation of a save, before anything is written.
+     *
+     * Called by PaymentsApiController::save() for any gateway that has it. A
+     * message per field the owner can act on; the save is refused whole.
+     *
+     * @param  array<string, mixed>  $values
+     * @return array<string, string>
+     */
+    public function validateConfig(array $values): array
+    {
+        $errors = [];
+        $text = static fn (string $key): ?string => array_key_exists($key, $values) && is_scalar($values[$key]) ? trim((string) $values[$key]) : null;
+
+        foreach ([
+            'statement_descriptor' => fn (string $v) => StripePaymentText::fullDescriptorError($v),
+            'statement_descriptor_suffix' => fn (string $v) => StripePaymentText::suffixError($v, $this->accountPrefixLength()),
+            'order_reference_prefix' => fn (string $v) => StripePaymentText::referencePrefixError($v),
+            'payment_description' => fn (string $v) => StripePaymentText::descriptionError($v),
+        ] as $key => $check) {
+            $value = $text($key);
+
+            if ($value !== null && ($error = $check($value)) !== null) {
+                $errors[$key] = $error;
+            }
+        }
+
+        /*
+         * A key in the box for the other mode. Stripe decides test or live from
+         * the key alone, so a pk_live_ in the Test box would take real money
+         * with the switch reading Sandbox. Refused with the fix in the message.
+         */
+        foreach (['publishable_key', 'secret_key'] as $name) {
+            foreach (['test', 'live'] as $mode) {
+                $value = $text(StripeKeys::slot($name, $mode));
+
+                if ($value === null || $value === '') {
+                    continue;
+                }
+
+                $keyMode = StripeKeys::keyMode($value);
+
+                if ($keyMode === null) {
+                    $errors[StripeKeys::slot($name, $mode)] = sprintf(
+                        'That does not look like a Stripe %s key: it should start %s.',
+                        $name === 'publishable_key' ? 'publishable' : 'secret',
+                        $name === 'publishable_key' ? 'pk_' . $mode . '_' : 'sk_' . $mode . '_ (or rk_' . $mode . '_)',
+                    );
+                } elseif ($keyMode !== $mode && ! ($mode === 'live' && $this->testKeyMayLandInLiveBox($name, $value, $values))) {
+                    $errors[StripeKeys::slot($name, $mode)] = sprintf(
+                        'That is a %s key in the %s box. Paste it into the %s box instead.',
+                        strtoupper($keyMode), $mode === 'test' ? 'Test' : 'Live', $keyMode === 'test' ? 'Test' : 'Live',
+                    );
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * A TEST key arriving in a LIVE box is the old single-set shape, and it is
+     * accepted in exactly the two cases where nothing can be crossed:
+     *
+     *   - it is the value already stored there, re-posted: the screen sends
+     *     every plain field back with the value it painted, and a shop set up
+     *     before the two sets existed paints its old pk_test_ key in the Live
+     *     box. The owner did not type it and must not be refused a save.
+     *   - the Test boxes are empty, stored and posted: the key then belongs to
+     *     the only test set there is, and PaymentsApiController moves the lot
+     *     into the Test boxes straight after the save (StripeKeys::normalise()).
+     *
+     * With a test set already in place it is refused, because the move would
+     * have nowhere to go and the key would be dropped.
+     *
+     * @param  array<string, mixed>  $posted
+     */
+    private function testKeyMayLandInLiveBox(string $name, string $value, array $posted): bool
+    {
+        if ($value === $this->credentials->get($this->id(), $name)) {
+            return true;
+        }
+
+        foreach (['publishable_key_test', 'secret_key_test', 'webhook_signing_secret_test'] as $key) {
+            $incoming = is_scalar($posted[$key] ?? null) ? trim((string) $posted[$key]) : '';
+
+            if ($incoming !== '' || $this->credentials->get($this->id(), $key) !== '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * What is still missing for the CURRENT mode, for GatewayPreflight.
+     *
+     * @return list<array{key: string, label: string}>
+     */
+    public function missingCredentials(): array
+    {
+        $mode = $this->mode();
+        $schema = $this->configSchema();
+        $missing = [];
+
+        foreach (['publishable_key', 'secret_key', 'webhook_signing_secret'] as $name) {
+            if ($this->key($name) === '') {
+                $slot = StripeKeys::slot($name, $mode);
+                $missing[] = ['key' => $slot, 'label' => (string) ($schema[$slot][1] ?? $slot)];
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
+     * Was this order's card only AUTHORISED, and is the money still to take?
+     *
+     * Read off the ledger row PaymentConfirmer wrote when it applied the
+     * payment, which carries `capture_method: manual` when the intent was
+     * `requires_capture` — so an order keeps the answer it was placed under,
+     * whatever the setting says today. One indexed query, asked only on the
+     * order screen and only for a Stripe order that is paid and not captured.
+     */
+    public function awaitingCapture(Order $order): bool
+    {
+        $ref = trim((string) $order->transaction_id);
+
+        if ($order->paid_at === null || $order->captured_at !== null || ! str_starts_with($ref, 'pi_')) {
+            return false;
+        }
+
+        return \App\Models\PaymentEvent::query()
+            ->where('provider', $this->id())
+            ->where('external_id', $ref)
+            ->where('type', 'paid')
+            ->where('payload', 'like', '%"capture_method":"manual"%')
+            ->exists();
+    }
+
+    /** One line in Store → Payments → Stripe → Payment log. Never throws. */
+    private function journal(string $level, string $event, string $message, array $context = []): void
+    {
+        PaymentLog::record($this->id(), $level, $event, $message, $context, $this->mode());
     }
 
     /**
@@ -166,9 +449,23 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
     public function configSchema(): array
     {
         return [
-            'publishable_key' => ['text', 'Publishable key', 'Starts pk_test_ or pk_live_. Safe to appear in the page.', 'keys'],
-            'secret_key' => ['secret', 'Secret key', 'Starts sk_test_ or sk_live_. Never leaves the server, and is never returned by any API.', 'keys'],
-            'webhook_signing_secret' => ['secret', 'Webhook signing secret', 'Starts whsec_. From Stripe Dashboard -> Developers -> Webhooks, after adding the endpoint URL below. Without it no webhook can be verified.', 'keys'],
+            /*
+             * TWO KEY SETS, ONE SWITCH. (Lane SR.) Test first, because that is
+             * the set the owner fills in first. The Mode switch at the top of
+             * this column picks which set the shop uses; App\Services\Payments\
+             * StripeKeys is the one place that answers "which value is in
+             * force", including for a shop set up before there were two sets.
+             *
+             * All six are `optional` to the generic preflight loop, which cannot
+             * know that only the active set is required. missingCredentials()
+             * below reports the active set's gaps instead, by mode.
+             */
+            'publishable_key_test' => ['text', 'Test publishable key', 'Starts pk_test_. Used while Mode is Sandbox / test. Stripe Dashboard → Developers → API keys, with "Test mode" on.', 'keys', 'optional'],
+            'secret_key_test' => ['secret', 'Test secret key', 'Starts sk_test_ (or rk_test_). Used while Mode is Sandbox / test. Never leaves the server.', 'keys', 'optional'],
+            'webhook_signing_secret_test' => ['secret', 'Test webhook signing secret', 'Starts whsec_. Filled in for you by "Set up webhook automatically" below, in test mode.', 'keys', 'optional'],
+            'publishable_key' => ['text', 'Live publishable key', 'Starts pk_live_. Used while Mode is Live. Safe to appear in the page.', 'keys', 'optional'],
+            'secret_key' => ['secret', 'Live secret key', 'Starts sk_live_ (or rk_live_). Used while Mode is Live. Never leaves the server, and is never returned by any API.', 'keys', 'optional'],
+            'webhook_signing_secret' => ['secret', 'Live webhook signing secret', 'Starts whsec_. Filled in for you by "Set up webhook automatically" below, in live mode. Without it no live webhook can be verified.', 'keys', 'optional'],
             'webhook_secret' => ['secret', 'URL secret', 'Generated for you. Forms part of the webhook URL below.', 'keys'],
             /*
              * NOT A CREDENTIAL — a switch, and the first entry in any gateway's
@@ -248,6 +545,22 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
                 'settings',
                 'optional',
             ],
+            /*
+             * ─── WHAT THE WOOCOMMERCE STRIPE PLUGIN OFFERS, AND THIS SHOP NOW
+             *     DOES TOO (Lane SR) ──────────────────────────────────────────
+             *
+             * Every one of these ships at the value that sends Stripe exactly
+             * what it was sent before: empty boxes and Off switches. The owner
+             * asked for the controls, not for different payments.
+             * StripePaymentText holds the rules and the reasons.
+             */
+            'statement_descriptor' => ['text', 'Statement descriptor (full)', '5–22 characters, Latin letters, at least one letter, none of < > \\ \' " *. Stripe refuses a per-payment full descriptor on CARD payments, so card statements show your Stripe account\'s own descriptor (Stripe Dashboard → Settings → Business → Public details). This is the name you want there; the Stripe status block below compares it with what your account actually says. Left empty, your shop name is used.', 'settings', 'optional'],
+            'statement_descriptor_suffix' => ['text', 'Statement descriptor suffix (cards)', 'Added after your Stripe account\'s shortened descriptor on card statements, as "PREFIX* SUFFIX" (22 characters in all). Empty sends no suffix, which is how this shop has always worked.', 'settings', 'optional'],
+            'statement_descriptor_order_number' => ['bool', 'Add the order number to card statements', 'Puts the order number in the suffix, e.g. "KBB* 10234", so a customer can match the line on their statement to their order. Off by default.', 'settings'],
+            'order_reference_prefix' => ['text', 'Order number prefix shown in Stripe', 'e.g. KBB- makes order 10234 read "KBB-10234" in the payment description and in Stripe\'s metadata (order_reference). The shop\'s own order numbers do not change, and Stripe keeps the plain number too (order_number), which is what this shop matches payments on.', 'settings', 'optional'],
+            'payment_description' => ['text', 'Payment description', 'What Stripe shows beside each payment. Placeholders: {number} (with the prefix above), {order_number} (plain), {shop}. Empty means "Order {number}", as before.', 'settings', 'optional'],
+            'capture_later' => ['bool', 'Authorise only, capture later', 'On: a card is only AUTHORISED at checkout and the money is taken when you press Capture on the order (Store → Orders → the order → Payment). Stripe releases an authorisation that is not captured within 7 days. Off (default): the money is taken at checkout, as before.', 'settings'],
+            'receipt_email' => ['bool', 'Stripe email receipts', 'On: Stripe emails its own payment receipt to the shopper\'s order email as well as this shop\'s order email. Off by default. Stripe does not send receipts for test-mode payments.', 'settings'],
         ];
     }
 
@@ -270,7 +583,7 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
     protected function authHeaders(): array
     {
-        return ['Authorization' => 'Bearer ' . $this->credentials->get($this->id(), 'secret_key')];
+        return ['Authorization' => 'Bearer ' . $this->key('secret_key')];
     }
 
     /* ------------------------------------------------------------- checkout */
@@ -409,7 +722,12 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              * that one changes with it.
              */
             'payment_method_types' => ['card'],
-            'description' => 'Order ' . $this->reference($order),
+            /*
+             * "Order 10234" unless the owner wrote his own wording — see
+             * paymentDescription(). With nothing set this is byte-identical to
+             * the string this line always sent.
+             */
+            'description' => $this->paymentDescription($order),
             /*
              * The stamp every other path reads. `metadata` on a PaymentIntent
              * is copied onto its charge, which is what lets reconciliation say
@@ -422,6 +740,23 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              */
             'metadata' => ['order_number' => $this->reference($order)],
         ];
+
+        /*
+         * ─── THE OWNER'S STRIPE SETTINGS (Lane SR) ─────────────────────────
+         *
+         * Each key is added ONLY when its setting is in use, so a shop that has
+         * not touched them sends Stripe exactly the request it always sent —
+         * and the idempotency key below stays exactly what it always was.
+         */
+        $extra = $this->intentSettings($order);
+        $payload = array_merge($payload, $extra);
+
+        if (isset($extra['metadata'])) {
+            // order_number stays the PLAIN number whatever the prefix: it is
+            // the key handleWebhook() looks the order up by, on this payment
+            // and on every payment made before the prefix existed.
+            $payload['metadata'] = ['order_number' => $this->reference($order)] + $extra['metadata'];
+        }
 
         /*
          * KEEPING THE CARD, when the shopper asked for it and only then.
@@ -467,7 +802,11 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              * that cannot take a card for a shopper who merely changed their
              * mind about a tick.
              */
-            'kbb-intent-' . $this->reference($order) . ($stripeCustomer === null ? '' : '-save'),
+            'kbb-intent-' . $this->reference($order) . ($stripeCustomer === null ? '' : '-save')
+                // A settings change between a lost response and its retry is a
+                // different request; Stripe would 400 a reused key. Only present
+                // when a setting is in use, so the default key is unchanged.
+                . ($extra === [] ? '' : '-' . substr(sha1((string) json_encode($extra)), 0, 10)),
         );
 
         $result = $attempt['body'];
@@ -475,10 +814,24 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         $intentId = $result['id'] ?? null;
 
         if (! is_string($secret) || $secret === '' || ! is_string($intentId) || $intentId === '') {
+            $this->journal('error', 'intent.failed', 'Stripe did not open a payment for this order.', [
+                'order' => $this->reference($order),
+                'http_status' => $attempt['status'],
+                'error_code' => $attempt['error'],
+            ]);
+
             return PaymentStart::failed('We could not reach our card processor. Please try another payment method.');
         }
 
         $order->forceFill(['transaction_id' => $intentId])->save();
+
+        $this->journal('info', 'intent.created', 'Payment started at checkout.', [
+            'order' => $this->reference($order),
+            'payment_intent' => $intentId,
+            'amount' => (int) $order->total,
+            'currency' => strtoupper($currency),
+            'capture_method' => $this->captureLater() ? 'manual' : 'automatic',
+        ]);
 
         // The id, never the secret. This log goes to a file a support person
         // reads; a client secret in it is a handle to the payment.
@@ -644,6 +997,19 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             return null;
         }
 
+        /*
+         * AND IT MUST CAPTURE THE WAY THE SHOP NOW CAPTURES. (Lane SR.)
+         * `capture_method` is fixed at creation like setup_future_usage. An
+         * automatic intent reused after "Authorise only" was switched on would
+         * take the money the owner asked to hold, and the reverse would leave
+         * money authorised that nobody is going to capture.
+         */
+        $manual = (string) ($intent['capture_method'] ?? '') === 'manual';
+
+        if ($manual !== $this->captureLater()) {
+            return null;
+        }
+
         $secret = $intent['client_secret'] ?? null;
         $id = $intent['id'] ?? null;
 
@@ -704,6 +1070,9 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
                 : $request->post($url, $this->flatten($payload));
         } catch (\Throwable $e) {
             $this->log('transport error', $path, null, ['error' => $e->getMessage()]);
+            $this->journal('error', 'api.unreachable', 'Stripe could not be reached.', [
+                'endpoint' => strtoupper($method) . ' ' . $this->logPath($path),
+            ]);
 
             return ['ok' => false, 'status' => null, 'body' => null, 'error' => 'transport_error'];
         }
@@ -713,12 +1082,37 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         $decoded = $response->json();
         $decoded = is_array($decoded) ? $decoded : null;
 
+        /*
+         * Stripe's own error, kept for the payment log: code, decline code,
+         * type and its sentence. PaymentLog scrubs and cuts every one of them;
+         * a successful call is not logged here at all — the caller says what
+         * it meant, once.
+         */
+        if (! $response->successful()) {
+            $error = is_array($decoded['error'] ?? null) ? $decoded['error'] : [];
+
+            $this->journal('error', 'api.error', 'Stripe answered ' . $response->status() . ' to ' . strtoupper($method) . ' ' . $this->logPath($path) . '.', [
+                'endpoint' => strtoupper($method) . ' ' . $this->logPath($path),
+                'http_status' => $response->status(),
+                'error_code' => is_string($error['code'] ?? null) ? $error['code'] : null,
+                'decline_code' => is_string($error['decline_code'] ?? null) ? $error['decline_code'] : null,
+                'error_type' => is_string($error['type'] ?? null) ? $error['type'] : null,
+                'error_message' => is_string($error['message'] ?? null) ? $error['message'] : null,
+            ]);
+        }
+
         return [
             'ok' => $response->successful(),
             'status' => $response->status(),
             'body' => $response->successful() ? $decoded : null,
             'error' => $response->successful() ? null : $this->errorCode($decoded),
         ];
+    }
+
+    /** The path without its query string, for the log. */
+    private function logPath(string $path): string
+    {
+        return (string) strtok($path, '?');
     }
 
     /** ['a' => ['b' => 1]] -> ['a[b]' => 1] */
@@ -787,6 +1181,30 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
         $intent = $read['body'];
         $status = (string) ($intent['status'] ?? '');
+
+        /*
+         * `requires_capture` IS A PAYMENT TOO, when the owner asked for
+         * "Authorise only". (Lane SR.) The bank has approved the card and the
+         * money is held for this shop; the order is confirmed exactly like a
+         * captured one, and the ledger row says `capture_method: manual` so the
+         * order screen offers Capture. The figure is `amount_capturable`, what
+         * is actually held — `amount_received` is 0 until the capture.
+         */
+        if ($status === 'requires_capture') {
+            return $this->confirmer->confirm(
+                $order,
+                $this->id(),
+                $intentId,
+                (int) ($intent['amount_capturable'] ?? 0),
+                (string) ($intent['currency'] ?? ''),
+                [
+                    'event_type' => 'browser_confirmation',
+                    'payment_intent' => $intentId,
+                    'reference' => $this->reference($order),
+                    'capture_method' => 'manual',
+                ],
+            );
+        }
 
         if ($status !== 'succeeded') {
             return WebhookOutcome::ignored('the payment has not succeeded');
@@ -865,8 +1283,38 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
     /* -------------------------------------------------------------- webhook */
 
+    /**
+     * Every webhook, with its outcome written to the payment log. (Lane SR.)
+     *
+     * The log is what lets the owner see "Last event received" on the Stripe
+     * status block — which is how he can tell the endpoint works without a
+     * shell. A delivery that fails the URL secret is NOT logged: that is a
+     * stranger guessing at the address, and logging it would let anybody fill
+     * the log. One that passes the URL secret and fails Stripe's signature IS
+     * logged, because only someone holding our URL can produce it, and in
+     * practice that is Stripe itself with a signing secret this shop does not
+     * have — the one misconfiguration the owner can fix.
+     */
     public function handleWebhook(Request $request): WebhookOutcome
     {
+        $outcome = $this->processWebhook($request, $logged);
+
+        if ($logged !== null) {
+            $this->journal(
+                $outcome->accepted ? 'info' : 'error',
+                $logged['event'],
+                $logged['message'],
+                $logged['context'] + ['outcome' => $outcome->message, 'http_status' => $outcome->status],
+            );
+        }
+
+        return $outcome;
+    }
+
+    private function processWebhook(Request $request, ?array &$logged): WebhookOutcome
+    {
+        $logged = null;
+
         // (1) URL secret, before anything else.
         $urlSecret = $this->credentials->get($this->id(), 'webhook_secret');
 
@@ -874,11 +1322,21 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             return WebhookOutcome::rejected();
         }
 
-        // (2) Stripe's own signature, over the RAW body.
-        $signing = $this->credentials->get($this->id(), 'webhook_signing_secret');
+        // (2) Stripe's own signature, over the RAW body, with the signing
+        // secret of the CURRENT mode — test and live endpoints are separate
+        // objects at Stripe, each with its own secret.
+        $signing = $this->key('webhook_signing_secret');
         $raw = $request->getContent();
 
         if (! $this->signatureValid($request->header('Stripe-Signature'), $raw, $signing)) {
+            $logged = [
+                'event' => 'webhook.signature_failed',
+                'message' => $signing === ''
+                    ? 'A webhook arrived but no signing secret is stored for ' . $this->mode() . ' mode, so it could not be verified.'
+                    : 'A webhook arrived with a signature that does not match the ' . $this->mode() . ' signing secret.',
+                'context' => ['reason' => $request->header('Stripe-Signature') === null ? 'no Stripe-Signature header' : 'signature mismatch or too old'],
+            ];
+
             return WebhookOutcome::rejected();
         }
 
@@ -892,14 +1350,43 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         $object = $event['data']['object'] ?? [];
         $object = is_array($object) ? $object : [];
 
+        $logged = [
+            'event' => 'webhook.received',
+            'message' => 'Webhook ' . ($type !== '' ? $type : '(no type)') . ' received.',
+            'context' => [
+                'event_type' => $type,
+                'event_id' => is_string($event['id'] ?? null) ? $event['id'] : null,
+                'payment_intent' => is_string($object['id'] ?? null) ? $object['id'] : null,
+            ],
+        ];
+
+        /*
+         * THE PLAIN ORDER NUMBER, AND ONLY THAT. metadata.order_number has
+         * always carried our own number and still does; the prefixed form the
+         * owner may have set travels in metadata.order_reference for display
+         * and is never looked up. So a payment made before the prefix existed,
+         * after it was set, and after it was changed all find their order.
+         */
         $reference = $object['client_reference_id']
             ?? ($object['metadata']['order_number'] ?? null);
 
         $order = $this->findOrderByReference(is_string($reference) ? $reference : null);
 
         if ($order === null) {
+            /*
+             * `stripe trigger` and the Dashboard's "Send test webhook" both
+             * produce events with no order behind them. Answering 200 and
+             * logging it lets the owner see a test event arrive; it changes
+             * nothing, because nothing was found to change.
+             */
+            if ($reference === null) {
+                return WebhookOutcome::ignored('event carries no order number (a test event?)');
+            }
+
             return WebhookOutcome::refused('no order for that reference');
         }
+
+        $logged['context']['order'] = $this->reference($order);
 
         $summary = [
             'event_id' => $event['id'] ?? null,
@@ -940,6 +1427,31 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
          * comparison that must be made against money moved rather than money
          * requested.
          */
+        /*
+         * AUTHORISED, NOT YET CAPTURED — "Authorise only" is on. (Lane SR.)
+         * A manual-capture intent never emits `payment_intent.succeeded` at
+         * authorisation; it emits this, with status `requires_capture`, and
+         * `succeeded` only arrives after the owner presses Capture (where it is
+         * refused as already applied, which is correct). Without this arm a
+         * shopper whose browser closed after the bank approved would leave an
+         * order the shop never hears about, holding money it can no longer
+         * capture once the week is out.
+         */
+        if ($type === 'payment_intent.amount_capturable_updated') {
+            if ((string) ($object['status'] ?? '') !== 'requires_capture') {
+                return WebhookOutcome::ignored('nothing is held for capture');
+            }
+
+            return $this->confirmer->confirm(
+                $order,
+                $this->id(),
+                (string) ($object['id'] ?? ''),
+                (int) ($object['amount_capturable'] ?? 0),
+                (string) ($object['currency'] ?? ''),
+                $summary + ['capture_method' => 'manual'],
+            );
+        }
+
         if ($type === 'payment_intent.succeeded') {
             return $this->confirmer->confirm(
                 $order,
@@ -1022,6 +1534,14 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
     public function captureWindow(): string
     {
+        if ($this->captureLater()) {
+            return sprintf(
+                'Card payments are only authorised at checkout ("Authorise only, capture later" is on). '
+                . 'Press Capture to take the money; Stripe releases an authorisation left uncaptured after about %d days.',
+                self::CAPTURE_DAYS,
+            );
+        }
+
         return sprintf(
             'Card payments through Checkout are captured by Stripe at authorisation, so there is normally nothing to do. '
             . 'An authorisation deliberately left uncaptured lapses after about %d days.',
@@ -1127,6 +1647,14 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             'capture:' . $order->order_number,
         );
 
+        $this->journal(
+            $attempt['ok'] && (string) ($attempt['body']['status'] ?? '') === 'succeeded' ? 'info' : 'error',
+            'capture',
+            $attempt['ok'] ? 'Capture sent to Stripe.' : 'Stripe refused the capture.',
+            ['order' => $this->reference($order), 'payment_intent' => $intentId, 'amount' => $amountFils,
+                'status' => (string) ($attempt['body']['status'] ?? ''), 'error_code' => $attempt['error']],
+        );
+
         if (! $attempt['ok'] || (string) ($attempt['body']['status'] ?? '') !== 'succeeded') {
             return SettlementResult::failed(
                 $attempt['error'] ?? 'capture_rejected',
@@ -1194,6 +1722,14 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
         $refundId = $attempt['ok'] ? ($attempt['body']['id'] ?? null) : null;
         $refundStatus = $attempt['ok'] ? (string) ($attempt['body']['status'] ?? '') : '';
+
+        $this->journal(
+            in_array($refundStatus, ['succeeded', 'pending'], true) ? 'info' : 'error',
+            'refund',
+            in_array($refundStatus, ['succeeded', 'pending'], true) ? 'Refund accepted by Stripe.' : 'Stripe refused the refund.',
+            ['order' => $this->reference($order), 'payment_intent' => $intentId, 'refund' => is_string($refundId) ? $refundId : null,
+                'amount' => $amountFils, 'status' => $refundStatus, 'error_code' => $attempt['error']],
+        );
 
         // `failed` and `canceled` are real Stripe refund states and both come
         // back on a 200. A refund is only a refund when Stripe says pending or

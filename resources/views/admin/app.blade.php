@@ -24223,6 +24223,13 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      caller of any kind — built, tested, capability-mapped and unreachable. The
      webhook is how Tamara tells this shop about a decline. --}}
 @include('admin.partials.tamara-connection-screen')
+{{-- Store → Payments → Stripe: the TEST MODE / LIVE badge, what a card
+     statement and Stripe will say, the webhook status with "Set up webhook
+     automatically", and the payment log (Lane SR). A PANEL attached to the
+     Stripe card from outside through a MutationObserver, like the two around
+     it; the settings themselves are StripeGateway::configSchema() fields that
+     the payments screen above already draws. --}}
+@include('admin.partials.stripe-settings-panel')
 {{-- Orders → an order → Items → Release the hold (Lane OD). A PANEL, not a
      screen: no sidebar row, no go() id, no window.go wrapper, so it needs no
      TITLES row and no LATE_RENDERED entry. It attaches itself to the order
