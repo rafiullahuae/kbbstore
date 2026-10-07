@@ -75,11 +75,18 @@ replaced them carries its own — `.kbb-tile .lbl`, `.kbb-tile .heart` and
 in `docs/lane-pg-shots`. This floor is lower because the sheet is smaller, not
 because anything went physical.
 
+2.60.419: kbb-shop.css drops from 40 to 39. The removed rules were the old
+header's `.mega` block (a `.cat.has-mega` menu that no longer exists), which hid
+the real mega panel on category and shop pages. One of them,
+`.mega-brands{inset-inline-end:0;inset-inline-start:auto}`, carried logical
+properties. The panel's direction now lives only in kbb.css, which is logical
+throughout. Nothing went physical.
+
 <!-- rtl-audit:floors:begin -->
 | file | logical direction declarations (floor) | total declarations parsed |
 |---|---|---|
 | `resources/css/kbb/kbb.css` | 186 | 5765 |
-| `resources/css/kbb/kbb-shop.css` | 40 | 1248 |
+| `resources/css/kbb/kbb-shop.css` | 39 | 1256 |
 | `resources/css/kbb/kbb-product.css` | 36 | 1341 |
 | `resources/css/kbb/kbb-cart.css` | 5 | 300 |
 | `resources/css/kbb/kbb-checkout.css` | 38 | 1339 |
