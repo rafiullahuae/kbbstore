@@ -56,3 +56,20 @@ SHOP PAGES, firewall OFF vs ON (enforce), visitor from a Protect country (tools/
 
 PREFETCH with the firewall on: {'href': '/product/advanced-snail-96-mucin-power-essence/', 'prefetchRequestsSeenByServer': 1, 'navigation': {'type': 'navigational-prefetch', 'url': '/product/advanced-snail-96-mucin-power-essence/'}}
 PROTECT in Chromium: {'proofCookie': {'httpOnly': True, 'sameSite': 'Lax', 'len': 31}, 'browserAddToCart': 200, 'clickToResponseMs': 125, 'badge': None, 'botPostWithoutPage': 403, 'botBody': '{"ok":false,"error":"The cart only answers a web browser. Please use Chrome, Safari, Firefox or Edge.","blocked":true,"r'}
+
+FIRST TAP, Protect visitor (China), firewall ON, in Chromium (tools/fw451-proof.cjs):
+  S1: {'kbb_pv_in_browser_at_end': False, 'kbb_pv_before_tap': False, 'shownAfterAdd': [], 'finalUrl': '/checkout/success?order=10002', 'errors': []}
+      /api/cart/add          200  page-load cookie sent: False
+      /checkout/coupon       200  page-load cookie sent: False
+      /api/checkout/rates    200  page-load cookie sent: False
+      /api/checkout/rates    200  page-load cookie sent: False
+      /checkout/place        200  page-load cookie sent: False
+  S2: {'hadProofThenDeleted': True, 'shownAfterAdd': [], 'proofReissued': True}
+      /api/cart/add          200  page-load cookie sent: False
+  S3_firewall_off: {'cookiesAtTap': ['kbb_tz', 'XSRF-TOKEN', 'kbb_session'], 'shownAfterAdd': []}
+      /api/cart/add          419  page-load cookie sent: False
+  S3_firewall_on: {'cookiesAtTap': ['kbb_tz', 'XSRF-TOKEN', 'kbb_pv', 'kbb_session'], 'shownAfterAdd': []}
+      /api/cart/add          419  page-load cookie sent: False
+  S4: {'coldAdd': 403, 'forgedSessionAdd': 403, 'coldPlace': 403, 'coldCoupon': 403, 'jarAfter': []}
+  S1 = page-load cookie stripped from every answer; S2 = deleted mid-visit; S3 = every Set-Cookie stripped
+  from the first HTML (the shop's own CSRF answers 419 with the firewall OFF and ON alike); S4 = cold scripts.

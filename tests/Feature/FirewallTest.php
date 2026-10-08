@@ -389,15 +389,13 @@ it('Protect: refuses a bot that posts to the cart without loading a page, and le
     fwlVisitor(FWL_SG, FWL_UA, [], [Firewall::COOKIE => $proof])
         ->postJson('/api/cart/add', ['product_id' => $p->id])->assertOk();
 
-    // Bound to the range it was issued to: replayed from elsewhere it fails —
-    // and the refusal carries a fresh proof, so a shopper whose phone changed
-    // network succeeds on the next tap.
+    // Bound to the range it was issued to: replayed from elsewhere it fails,
+    // and the refusal hands out NO new proof — a real browser never reaches a
+    // refusal (it carries the shop's session cookie, see the next case), so a
+    // proof here would only serve a script with a cookie jar.
     $r = fwlVisitor('203.0.113.200', FWL_UA, [], [Firewall::COOKIE => $proof])
         ->postJson('/api/cart/add', ['product_id' => $p->id])->assertStatus(403);
-    $fresh = fwlProof($r);
-    expect($fresh)->not->toBeNull()->not->toBe($proof);
-    fwlVisitor('203.0.113.200', FWL_UA, [], [Firewall::COOKIE => $fresh])
-        ->postJson('/api/cart/add', ['product_id' => $p->id])->assertOk();
+    expect(fwlProof($r))->toBeNull();
 
     // Forged and expired proofs fail.
     fwlVisitor(FWL_SG, FWL_UA, [], [Firewall::COOKIE => dechex(time()).'.'.str_repeat('A', 22)])
@@ -420,6 +418,45 @@ it('Protect: refuses a bot that posts to the cart without loading a page, and le
     FirewallConfig::save(['mode' => 'enforce']);
     fwlVisitor(FWL_CN)->get('/product/'.$p->slug.'/')->assertOk();
     fwlVisitor(FWL_CN)->get('/cart')->assertOk();
+});
+
+it('Protect: never refuses a real shopper\'s first tap when the page-load cookie is missing, and still refuses a cold script', function () {
+    /*
+     * DEFECT (the coordinator's review): a Protect-country shopper whose
+     * page-load cookie expired, or who opened the page before the firewall
+     * was on, has the FIRST add-to-cart refused and only the next tap works —
+     * a visible failure on the button. MUTATION: drop the shopCookie() arm in
+     * Firewall::before() and the first POST below is 403.
+     */
+    $p = fwlProduct();
+    FirewallConfig::save(['mode' => 'enforce']);
+    $enc = app('encrypter');
+    $cookie = fn (string $name, string $value): string => $enc->encrypt(\Illuminate\Cookie\CookieValuePrefix::create($name, $enc->getKey()).$value, false);
+    $session = (string) config('session.cookie');
+
+    // (The test client keeps the cookies it was given for the rest of the
+    // test, so the refusals come first and the browsers last.)
+
+    // And cold — no page, no session — is refused as before.
+    fwlVisitor(FWL_CN)->postJson('/api/cart/add', ['product_id' => $p->id])->assertStatus(403)->assertSee('FN', false);
+
+    // A script cannot forge one: garbage, a value encrypted with another key,
+    // or a real shop cookie moved to another cookie's name.
+    fwlVisitor(FWL_CN, FWL_UA, [], [$session => str_repeat('A', 120)])
+        ->postJson('/api/cart/add', ['product_id' => $p->id])->assertStatus(403);
+    $other = new \Illuminate\Encryption\Encrypter(random_bytes(32), 'AES-256-CBC');
+    fwlVisitor(FWL_CN, FWL_UA, [], [$session => $other->encrypt(\Illuminate\Cookie\CookieValuePrefix::create($session, $other->getKey()).'x', false)])
+        ->postJson('/api/cart/add', ['product_id' => $p->id])->assertStatus(403);
+    fwlVisitor(FWL_CN, FWL_UA, [], [$session => $cookie('kbb_some_other_cookie', 'x')])
+        ->postJson('/api/cart/add', ['product_id' => $p->id])->assertStatus(403);
+
+    // A browser the shop has served (its session cookie, or its XSRF-TOKEN),
+    // no page-load cookie: through on the first tap, and the answer carries one.
+    $r = fwlVisitor(FWL_CN, FWL_UA, [], [$session => $cookie($session, str_repeat('a', 40))])
+        ->postJson('/api/cart/add', ['product_id' => $p->id])->assertOk();
+    expect(fwlProof($r))->not->toBeNull();
+    fwlVisitor(FWL_CN, FWL_UA, [], [$session => 'not-ours', 'XSRF-TOKEN' => $cookie('XSRF-TOKEN', str_repeat('t', 40))])
+        ->postJson('/api/cart/add', ['product_id' => $p->id])->assertOk();
 });
 
 it('refuses nothing in Monitor mode, and logs what it would have refused', function () {

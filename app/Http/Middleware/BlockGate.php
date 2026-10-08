@@ -130,8 +130,9 @@ final class BlockGate
      * A firewall refusal. 429 + Retry-After for a ban, 403 otherwise; the same
      * no-store page or JSON as every other refusal here, with the reason as the
      * reference ("F" + a letter) so the owner can match a customer's screenshot
-     * to the live view. A Protect refusal carries a fresh page-load proof, so a
-     * real shopper whose network changed mid-visit succeeds on the next tap.
+     * to the live view. A Protect refusal does NOT hand out a proof: a real
+     * browser never gets here (Firewall::shopCookie() lets it through), so a
+     * proof on the refusal would only teach a script with a cookie jar.
      *
      * @param  array{0:string, 1:int, 2:int}  $refusal
      */
@@ -143,10 +144,6 @@ final class BlockGate
 
         if ($retry > 0) {
             $response->headers->set('Retry-After', (string) $retry);
-        }
-
-        if ($reason === 'no_proof') {
-            Firewall::attachProofTo($request, $response);
         }
 
         return $response;

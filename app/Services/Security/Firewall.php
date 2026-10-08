@@ -7,6 +7,7 @@ namespace App\Services\Security;
 use App\Http\Middleware\BlockGate;
 use App\Support\InstantNav;
 use App\Support\IpRange;
+use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Auth;
@@ -65,18 +66,29 @@ use Symfony\Component\HttpFoundation\Response;
  * and any form. A script that POSTs without having loaded a page (the
  * "attack many times a second from fresh addresses" pattern) does not have
  * one, and is refused. Valid for 12 hours; re-issued on any page once it is
- * six hours old or the visitor's range has changed; and set on the refusal
- * itself, so a real shopper whose phone changed network between page and
- * click succeeds on the next tap.
+ * six hours old or the visitor's range has changed.
  *
+ * ▲ A REAL SHOPPER'S FIRST TAP IS NEVER THE ONE REFUSED (the coordinator's
+ * review, 8 Oct). The proof can be missing from a real browser — expired while
+ * a tab sat open, the page opened before the firewall was switched on, a
+ * phone that changed network, a privacy setting. So a write without a valid
+ * proof is still let through when it carries the shop's own session or
+ * XSRF-TOKEN cookie, checked by decryption under the app key (shopCookie()):
+ * only a browser this shop has served has one, a cold script cannot forge
+ * one, and Laravel's CSRF check behind this middleware binds web writes to a
+ * live session as it always has. The answer to that write carries a fresh
+ * proof. Net effect: anything that would pass the shop's own CSRF check
+ * passes the firewall, so the firewall adds no failure a shopper can see;
+ * only a POST with no shop cookie at all is refused here.
+
  * Lighter than the JavaScript token the brief sketched: it needs no change to
  * any script, so it cannot break on a browser where a script fails, and the
  * shop's JS bundles stay byte-identical. What it does not stop — a bot that
  * loads a page with a cookie jar first — the flood limits do.
  *
- * Not a substitute for CSRF, which still guards every `web` write: the proof
- * adds the range binding and the time limit CSRF does not have, and covers
- * the `api` group (POST /api/checkout/session), which has no CSRF at all.
+ * Not a substitute for CSRF, which still guards every `web` write. It covers
+ * the `api` group too (the skin quiz, POST /api/checkout/session), which has
+ * no CSRF at all; there a decrypting shop cookie is the whole second proof.
  *
  * It is a RAW cookie on purpose: BlockGate is outside EncryptCookies, so it
  * reads the cookie before decryption and sets it after encryption. The HMAC is
@@ -186,10 +198,17 @@ final class Firewall
 
         if ($rule === 'protect' && $fw['proof'] && $write
             && self::proofAge($request->cookies->get(self::COOKIE), $net) === null) {
-            FirewallLog::hit('no_proof', $bin, $cc, $enforce);
+            if (self::shopCookie($request)) {
+                // A browser this shop has served: let the write through
+                // (Laravel's CSRF check behind it still binds it to a live
+                // session) and hand out a fresh proof on its answer.
+                self::$state['reissue'] = true;
+            } else {
+                FirewallLog::hit('no_proof', $bin, $cc, $enforce);
 
-            if ($enforce) {
-                return ['no_proof', 403, 0];
+                if ($enforce) {
+                    return ['no_proof', 403, 0];
+                }
             }
         }
 
@@ -256,7 +275,9 @@ final class Firewall
             FirewallLog::hit('flood', $s['bin'], $s['cc'], $s['enforce']);
         }
 
-        if ($s['rule'] === 'protect' && $fw['proof'] && $request->isMethod('GET')
+        if (! empty($s['reissue'])) {
+            self::attachProof($request, $response, $s['net']);
+        } elseif ($s['rule'] === 'protect' && $fw['proof'] && $request->isMethod('GET')
             && $response->getStatusCode() === 200
             && str_contains((string) $response->headers->get('Content-Type'), 'text/html')) {
             $age = self::proofAge($request->cookies->get(self::COOKIE), $s['net']);
@@ -264,16 +285,6 @@ final class Firewall
             if ($age === null || $age > self::PROOF_TTL / 2) {
                 self::attachProof($request, $response, $s['net']);
             }
-        }
-    }
-
-    /** The /24 (/64) a refused request came from, for re-issuing the proof. */
-    public static function attachProofTo(Request $request, Response $response): void
-    {
-        $bin = IpRange::pack($request->ip());
-
-        if ($bin !== null) {
-            self::attachProof($request, $response, self::netOf($bin));
         }
     }
 
@@ -427,6 +438,55 @@ final class Firewall
         }
 
         return max(0, $age);
+    }
+
+    /**
+     * Does the request carry a cookie only THIS shop could have issued — its
+     * session cookie or its XSRF-TOKEN, decrypting under the app key with the
+     * cookie-name prefix Laravel binds into every encrypted cookie?
+     *
+     * WHY THIS IS THE SECOND PROOF. The page-load cookie can be missing from a
+     * real browser through no fault of the shopper: it expired while a tab
+     * sat open, the page was opened before the firewall was switched on, a
+     * privacy setting dropped it. Refusing that shopper's first tap would be a
+     * visible failure, which the owner ruled out. Every page this shop serves
+     * also sets the session and XSRF-TOKEN cookies, so a browser that has
+     * seen any page has one of them; a script posting cold has neither, and
+     * cannot forge one without the app key. Checked here WITHOUT the session
+     * store (no query); on the web routes Laravel's own CSRF check, which
+     * runs after this middleware, then refuses anything not tied to a live
+     * session with its usual 419.
+     *
+     * Read before EncryptCookies runs, so the values are still encrypted.
+     * One AES-CBC + HMAC decrypt (a few µs), and only on a Protect-country
+     * write that came without a valid page-load cookie.
+     */
+    private static function shopCookie(Request $request): bool
+    {
+        try {
+            $encrypter = app('encrypter');
+
+            foreach ([(string) config('session.cookie'), 'XSRF-TOKEN'] as $name) {
+                $raw = $request->cookies->get($name);
+
+                if (! is_string($raw) || $raw === '' || strlen($raw) > 4096) {
+                    continue;
+                }
+
+                try {
+                    $plain = $encrypter->decrypt($raw, false);
+                } catch (\Throwable) {
+                    continue;
+                }
+
+                if (is_string($plain) && CookieValuePrefix::validate($name, $plain, $encrypter->getAllKeys()) !== null) {
+                    return true;
+                }
+            }
+        } catch (\Throwable) {
+        }
+
+        return false;
     }
 
     private static function mac(int $t, string $net): string
