@@ -249,7 +249,11 @@ server.listen(0, '127.0.0.1', async () => {
     {
       const { page: pg, cdp: cg } = await open('g4', { effectiveType: '4g', saveData: false });
       await pg.waitForFunction(() => document.readyState === 'complete', null, { timeout: 8000 });
-      const loadAt = Date.now();
+      // The page's OWN load moment, not the moment this poll noticed it: the
+      // poll can trail the load event by tens of ms, and the warm-up starts AT
+      // load, so a poll-time stamp read a correct warm-up as "before load"
+      // (1 run in 3 in the 2.60.445 suite). Same machine, same epoch clock.
+      const loadAt = await pg.evaluate(() => Math.floor(performance.timeOrigin + performance.getEntriesByType('navigation')[0].loadEventStart));
       await pg.waitForTimeout(2500);
       const warm = ['big-1', 'big-2', 'big-3'].map((k) => of('g4', k).filter((a) => a.dest === 'empty'));
       ok(warm.every((w) => w.length === 1), '8. the 4G warm-up did not fetch every shot exactly once by fetch(): ' + JSON.stringify(warm.map((w) => w.length)));
