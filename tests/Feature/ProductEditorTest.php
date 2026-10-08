@@ -171,7 +171,10 @@ it('carries the whole admin-api middleware stack on every registered route', fun
      */
     $routes = ProductEditorRoutes::registered();
 
-    expect($routes)->toHaveCount(6);
+    // 6 -> 7 (Lane RPL): POST product-editor-photo-undo/{id}, the Undo for a
+    // replaced picture, from routes/product-photo-admin.php. It must carry the
+    // same stack as the other six, which the loop below proves.
+    expect($routes)->toHaveCount(7);
 
     foreach ($routes as $route) {
         // toContain() is VARIADIC in Pest — every argument is another needle,
