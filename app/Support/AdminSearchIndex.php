@@ -664,14 +664,16 @@ final class AdminSearchIndex
             'Spacing · Buy column' => [],
             'Type · Buy column' => [],
             'Type · Sections & tabs' => [],
-            // (Lane RP2) The three blocks: brand, category, you may also like.
+            // (Lane BC) Brand | category tabs or blocks, best sellers, continue shopping.
             'You may also like' => [
+                'Brand and category · Show as', 'Tabs · Tab that opens first',
+                'Brand · Show “More from {brand}”', 'Category · Show “More {category}”',
+                'Continue shopping · Show “Continue shopping”', 'Best sellers · Show the best-sellers block',
                 'Global · Laptop · slider or grid', 'Global · Laptop · number of products',
                 'Global · Phone · slider or grid', 'Global · Phone · number of products',
-                'Block 1 · Show “More from {brand}”', 'Block 2 · Show “More {category}”', 'Block 3 · Show “You may also like”',
                 'Hide out-of-stock products', 'Carousels · cards in view on a laptop', 'Carousels · cards in view on a phone',
                 'Carousels · arrows on a phone', 'Carousels · move on their own', 'Carousels · seconds between moves',
-                'Block 3 · Heading', 'Block 3 · Small line above the heading', 'Order of the three blocks',
+                'Tabs · Heading', 'Tabs · Small line above the heading', 'Continue shopping · Heading', 'Order of the blocks',
             ],
             'Trust · Delivery box' => [
                 'Show the delivery box', 'Delivery picture', 'First line', 'Box colour', 'Box edge colour',

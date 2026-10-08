@@ -3430,11 +3430,11 @@ KBB_BH_CSS;
                 'hits' => 33,
             ],
             /*
-             * THE THREE RECOMMENDATION BLOCKS (Lane RP; Lane RP2) — the pair
-             * of the removal of the same name. Since Lane RP2: 1 "More from
-             * {brand}" (slider), 2 "More {category}" (grid), 3 "You may also
-             * like" (best sellers, slider), no product twice — whichever of
-             * them this product draws, everything from the `<!-- related -->`
+             * THE RECOMMENDATION BLOCKS (Lane RP; Lane RP2; Lane BC) — the pair
+             * of the removal of the same name. Since Lane BC: "More from
+             * {brand}" | "More {category}" as two tabs (or two blocks), the
+             * best sellers (off), and Continue shopping, no product twice —
+             * whichever of them this product draws, everything from the `<!-- related -->`
              * comment to the page's closing </div>, cut as one, exactly as the
              * removal cuts the old section from the same place. Once.
              */
@@ -3835,8 +3835,13 @@ KBB_BH_CSS;
                  * 99 -> 111 (Lane RP2): that list is now all three blocks'
                  * cards — brand, category, best sellers, no product twice —
                  * on the same one page, and cut whole below the same way.
+                 *
+                 * 111 -> 109 (Lane BC): the owner's third plan — brand and
+                 * category back as two tabs, then Continue shopping, the best
+                 * sellers off — two tiles fewer on that one page, cut whole
+                 * below the same way.
                  */
-                'hits' => 111,
+                'hits' => 109,
             ],
 
             /*

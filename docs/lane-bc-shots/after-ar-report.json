@@ -1,0 +1,194 @@
+{
+ "390": {
+  "onLoad": {
+   "requests": 17,
+   "scripts": [
+    "/site-app.js?v=77a49c5e03",
+    "/build/assets/app-BJ0pk2I8.js",
+    "/build/assets/pdp-trust-CLra4tho.js"
+   ],
+   "cls": 0,
+   "scrollWidth": 390,
+   "htmlBytes": 187501
+  },
+  "beforeTabClick": {
+   "ymal-h": {
+    "title": "قد يعجبك أيضًا",
+    "tabs": [
+     "المزيد من Anua (open)",
+     "المزيد من Toners"
+    ],
+    "tracks": {
+     "rp-r-brand": {
+      "mode": "slider",
+      "rendered": 11,
+      "visible": 11,
+      "invisiblePicsFetched": 0
+     },
+     "rp-r-category": {
+      "mode": "slider",
+      "rendered": 12,
+      "visible": 0,
+      "invisiblePicsFetched": 0
+     }
+    }
+   },
+   "rp3-h": {
+    "title": "تابع التسوق",
+    "tabs": [],
+    "tracks": {
+     "rp3-r": {
+      "mode": "slider",
+      "rendered": 10,
+      "visible": 10,
+      "invisiblePicsFetched": 0
+     }
+    }
+   }
+  },
+  "clsAfterScroll": 0,
+  "firstClick": {
+   "ok": 44,
+   "badCount": 0,
+   "bad": []
+  },
+  "afterTabClick": {
+   "ymal-h": {
+    "title": "قد يعجبك أيضًا",
+    "tabs": [
+     "المزيد من Anua",
+     "المزيد من Toners (open)"
+    ],
+    "tracks": {
+     "rp-r-brand": {
+      "mode": "slider",
+      "rendered": 11,
+      "visible": 0,
+      "invisiblePicsFetched": 11
+     },
+     "rp-r-category": {
+      "mode": "slider",
+      "rendered": 12,
+      "visible": 12,
+      "invisiblePicsFetched": 0
+     }
+    }
+   },
+   "rp3-h": {
+    "title": "تابع التسوق",
+    "tabs": [],
+    "tracks": {
+     "rp3-r": {
+      "mode": "slider",
+      "rendered": 10,
+      "visible": 10,
+      "invisiblePicsFetched": 0
+     }
+    }
+   }
+  },
+  "clsAfterTab": 0,
+  "prefetch": {
+   "href": "/ar/product/round-lab-dokdo-cleanser/",
+   "prefetchRequests": 1,
+   "deliveryType": "navigational-prefetch"
+  },
+  "consoleErrors": []
+ },
+ "1280": {
+  "onLoad": {
+   "requests": 24,
+   "scripts": [
+    "/site-app.js?v=77a49c5e03",
+    "/build/assets/app-BJ0pk2I8.js",
+    "/build/assets/pdp-trust-CLra4tho.js"
+   ],
+   "cls": 0,
+   "scrollWidth": 1280,
+   "htmlBytes": 187501
+  },
+  "beforeTabClick": {
+   "ymal-h": {
+    "title": "قد يعجبك أيضًا",
+    "tabs": [
+     "المزيد من Anua (open)",
+     "المزيد من Toners"
+    ],
+    "tracks": {
+     "rp-r-brand": {
+      "mode": "slider",
+      "rendered": 11,
+      "visible": 11,
+      "invisiblePicsFetched": 0
+     },
+     "rp-r-category": {
+      "mode": "slider",
+      "rendered": 12,
+      "visible": 0,
+      "invisiblePicsFetched": 0
+     }
+    }
+   },
+   "rp3-h": {
+    "title": "تابع التسوق",
+    "tabs": [],
+    "tracks": {
+     "rp3-r": {
+      "mode": "slider",
+      "rendered": 10,
+      "visible": 10,
+      "invisiblePicsFetched": 0
+     }
+    }
+   }
+  },
+  "clsAfterScroll": 0,
+  "firstClick": {
+   "ok": 44,
+   "badCount": 0,
+   "bad": []
+  },
+  "afterTabClick": {
+   "ymal-h": {
+    "title": "قد يعجبك أيضًا",
+    "tabs": [
+     "المزيد من Anua",
+     "المزيد من Toners (open)"
+    ],
+    "tracks": {
+     "rp-r-brand": {
+      "mode": "slider",
+      "rendered": 11,
+      "visible": 0,
+      "invisiblePicsFetched": 11
+     },
+     "rp-r-category": {
+      "mode": "slider",
+      "rendered": 12,
+      "visible": 12,
+      "invisiblePicsFetched": 0
+     }
+    }
+   },
+   "rp3-h": {
+    "title": "تابع التسوق",
+    "tabs": [],
+    "tracks": {
+     "rp3-r": {
+      "mode": "slider",
+      "rendered": 10,
+      "visible": 10,
+      "invisiblePicsFetched": 0
+     }
+    }
+   }
+  },
+  "clsAfterTab": 0,
+  "prefetch": {
+   "href": "/ar/product/round-lab-dokdo-cleanser/",
+   "prefetchRequests": 1,
+   "deliveryType": "navigational-prefetch"
+  },
+  "consoleErrors": []
+ }
+}

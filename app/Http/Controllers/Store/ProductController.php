@@ -177,21 +177,23 @@ class ProductController extends Controller
         $realSummary = $summary;
 
         /*
-         * The three blocks at the foot of the page (Lane RP2): App\Services\
-         * ProductRecs. 1 more from the brand, 2 more from the breadcrumb's
-         * category, 3 "You may also like" (best sellers), no product twice.
-         * "Buy these together" is chosen FIRST so blocks 2 and 3 can leave out
-         * what it shows, as they did before; two statements for all three.
+         * The blocks at the foot of the page (Lane BC): App\Services\
+         * ProductRecs. Brand | category tabs (or two blocks), best sellers
+         * (off by default) and Continue shopping, no product twice. "Buy
+         * these together" is chosen FIRST so the blocks below the brand can
+         * leave out what it shows; two statements for every block.
          */
         $buyTogether = app(\App\Services\BuyTogether::class)->forProduct($product);
         $recs = app(\App\Services\ProductRecs::class)->forProduct(
             $product,
+            $request,
             $buyTogether['products']->pluck('id')->map(fn ($i) => (int) $i)->all(),
         );
         $alsoLike = $recs['alsoLike'];
-        // Every card of the three blocks: what ProductDesktopSections::drawn()
+        // Every card of the blocks: what ProductDesktopSections::drawn()
         // asks ("is the foot drawn?") and what `$related` has always carried.
-        $kbbFoot = collect($recs['brand']['products'])->concat($recs['category']['products'])->concat($alsoLike['products'])->values();
+        $kbbFoot = collect($recs['brand']['products'])->concat($recs['category']['products'])
+            ->concat($alsoLike['products'])->concat($recs['recent']['products'])->values();
 
         return view('store.product', [
             'product' => $product,
@@ -199,8 +201,8 @@ class ProductController extends Controller
             'summary' => $summary,
             'reviews' => $reviews,
             /*
-             * Block 3, "You may also like" (Lane RP2: the shop's best sellers).
-             * The partial is still partials/you-may-also-like.blade.php.
+             * The best-seller block (Lane BC: off by default) and the blocks'
+             * shared config. Its partial is partials/you-may-also-like.
              */
             'alsoLike' => $alsoLike,
             /*

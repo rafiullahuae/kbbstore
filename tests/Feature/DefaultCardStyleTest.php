@@ -152,7 +152,7 @@ it('states the shipped card style in five places and they all say the same thing
 
 /* ═══════════ 2 · every grid on the site, proved rather than assumed ═══════ */
 
-it('has exactly four templates that open a product grid, and each takes its skin from the resolver', function () {
+it('has exactly five templates that open a product grid, and each takes its skin from the resolver', function () {
     /*
      * THE SOURCE, not a set of pages: a fifth grid can exist and simply not be
      * on a page a case happens to render. Comments are stripped first — six
@@ -202,16 +202,19 @@ it('has exactly four templates that open a product grid, and each takes its skin
         // became the "You may also like" carousel, and since Lane RP2 all three
         // blocks at the foot of the page — brand, category, you may also like —
         // draw through this one partial: same tile, same `.rel.kbb-pgrid`,
-        // same skin.
+        // same skin. (Lane BC) And the brand | category TABS draw their two
+        // panels through recs-tabs — the same tile, grid and skin again.
         'resources/views/partials/product/recs-block.blade.php',
+        'resources/views/partials/product/recs-tabs.blade.php',
         'resources/views/store/shop.blade.php',
     ], 'the list of product grids on this site has changed — every one of them has to take its skin from GridSkins::resolve()');
 
-    // And each of the four asks the resolver rather than naming a skin.
+    // And each of the five asks the resolver rather than naming a skin.
     foreach ([
         'components/product-grid.blade.php' => '$skin',
         'partials/home/grid.blade.php' => 'GridSkins::resolve',
         'partials/product/recs-block.blade.php' => 'GridSkins::resolve',
+        'partials/product/recs-tabs.blade.php' => 'GridSkins::resolve',
         'store/shop.blade.php' => '$kbbSkin',
     ] as $view => $needle) {
         $code = (string) preg_replace(

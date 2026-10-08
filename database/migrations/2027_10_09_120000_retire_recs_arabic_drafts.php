@@ -9,13 +9,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Six interface strings the product page no longer prints. (Lane RP2)
+ * Two interface strings the product page no longer prints. (Lane RP2; Lane BC)
  *
- * Lane RP's tabs, "Complete your routine" and "Continue shopping" are gone —
- * the owner changed the three blocks to brand / category / best sellers — and
- * their wording went with them. 2027_10_08_120000_seed_recs_arabic_drafts
- * seeded an Arabic DRAFT for each; left behind, they would sit in
- * Translation → Progress as six drafts to review for words no page shows.
+ * "Complete your routine" is gone — the owner removed it — and its wording
+ * went with it. 2027_10_08_120000_seed_recs_arabic_drafts seeded an Arabic
+ * DRAFT for each; left behind, they would sit in Translation → Progress as two
+ * drafts to review for words no page shows.
+ *
+ * (Lane BC) This file retired SIX keys until the owner brought the tabs and
+ * Continue shopping back. It had never been shipped (the package was held),
+ * so it was narrowed rather than undone by a second migration: the four that
+ * came back keep the drafts 2027_10_08_120000 seeded.
  *
  * Only a machine draft is removed: a string the owner typed or approved is his
  * and stays. Nothing on any page changes — drafts are never served.
@@ -23,12 +27,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     private const KEYS = [
-        'store.product.recs_tabs_label',
-        'store.product.recs_more_eyebrow',
         'store.product.recs_routine_heading',
         'store.product.recs_routine_eyebrow',
-        'store.product.recs_recent_heading',
-        'store.product.recs_recent_eyebrow',
     ];
 
     public function up(): void

@@ -1,0 +1,128 @@
+{
+ "390": {
+  "onLoad": {
+   "requests": 15,
+   "scripts": [
+    "/site-app.js?v=77a49c5e03",
+    "/build/assets/app-BJ0pk2I8.js",
+    "/build/assets/pdp-trust-CLra4tho.js"
+   ],
+   "cls": 0,
+   "scrollWidth": 390,
+   "htmlBytes": 172884
+  },
+  "beforeTabClick": {
+   "rp1-h": {
+    "title": "More from Anua",
+    "tabs": [],
+    "tracks": {
+     "rp1-r": {
+      "mode": "slider",
+      "rendered": 11,
+      "visible": 11,
+      "invisiblePicsFetched": 0
+     }
+    }
+   },
+   "rp2-h": {
+    "title": "More Toners",
+    "tabs": [],
+    "tracks": {
+     "rp2-r": {
+      "mode": "grid",
+      "rendered": 10,
+      "visible": 10,
+      "invisiblePicsFetched": 0
+     }
+    }
+   },
+   "rp3-h": {
+    "title": "Continue shopping",
+    "tabs": [],
+    "tracks": {
+     "rp3-r": {
+      "mode": "slider",
+      "rendered": 10,
+      "visible": 10,
+      "invisiblePicsFetched": 0
+     }
+    }
+   }
+  },
+  "clsAfterScroll": 0,
+  "firstClick": {
+   "ok": 62,
+   "badCount": 0,
+   "bad": []
+  },
+  "prefetch": {
+   "href": "/product/round-lab-dokdo-cleanser/",
+   "prefetchRequests": 1,
+   "deliveryType": "navigational-prefetch"
+  },
+  "consoleErrors": []
+ },
+ "1280": {
+  "onLoad": {
+   "requests": 22,
+   "scripts": [
+    "/site-app.js?v=77a49c5e03",
+    "/build/assets/app-BJ0pk2I8.js",
+    "/build/assets/pdp-trust-CLra4tho.js"
+   ],
+   "cls": 0,
+   "scrollWidth": 1280,
+   "htmlBytes": 172884
+  },
+  "beforeTabClick": {
+   "rp1-h": {
+    "title": "More from Anua",
+    "tabs": [],
+    "tracks": {
+     "rp1-r": {
+      "mode": "slider",
+      "rendered": 11,
+      "visible": 11,
+      "invisiblePicsFetched": 0
+     }
+    }
+   },
+   "rp2-h": {
+    "title": "More Toners",
+    "tabs": [],
+    "tracks": {
+     "rp2-r": {
+      "mode": "grid",
+      "rendered": 10,
+      "visible": 10,
+      "invisiblePicsFetched": 0
+     }
+    }
+   },
+   "rp3-h": {
+    "title": "Continue shopping",
+    "tabs": [],
+    "tracks": {
+     "rp3-r": {
+      "mode": "slider",
+      "rendered": 10,
+      "visible": 10,
+      "invisiblePicsFetched": 0
+     }
+    }
+   }
+  },
+  "clsAfterScroll": 0,
+  "firstClick": {
+   "ok": 62,
+   "badCount": 0,
+   "bad": []
+  },
+  "prefetch": {
+   "href": "/product/round-lab-dokdo-cleanser/",
+   "prefetchRequests": 1,
+   "deliveryType": "navigational-prefetch"
+  },
+  "consoleErrors": []
+ }
+}
