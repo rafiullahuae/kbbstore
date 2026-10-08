@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.439
+**Image SEO that just works, and the Coming Soon page.** Apply after .438. Runs its
+migrations. Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "the start renaming button not working ... a third button with joint both ... live progress bar and counts ... the select ... should not be able to un-select" | Catalog -> Image SEO: Start was grey until "Preview changes" ran, with no word why. Start now previews first, then asks "Rename N files?"; zero files says why. New "Rename files + ALT text" (one preview, one run, Undo reverses both, your own ALT kept). Live progress bar: done/total, renamed, ALT written, skipped, failed with reasons, time left, Stop/Resume. "Select all N results" covers every page; unticks stay unticked |
+| "kbeautybliss.com should ... show a beautiful coming soon ... options on back backend under Appearance > Coming Soon page ... enable and disable along with the domain" | Appearance -> Coming Soon page: On/Off, which address (kbeautybliss.com by default; extrabeauty.ae keeps the shop), EN/AR wording, colour or picture, secret preview link for test orders, live preview. Admins see the real shop. Payments, SSL check, admin and email links are never blocked; Google is told it is temporary (503). Emergency: php artisan kbb:coming-soon off |
+
+Files: see the package's update.json.
+
 ## 2.60.438
 **Replace product pictures (old ones off the server), and the banner box lined up with
 the logo with position controls.** Apply after .437. No migrations beyond the cache clear.
