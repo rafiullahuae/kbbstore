@@ -188,6 +188,10 @@ server.listen(0, '127.0.0.1', async () => {
     // 3 + 7. Shot 3 (index 2): its large file is held 2.5 s, its mid copy is
     // instant. A finger lands (pointerdown asks for the mid), then the tap.
     await page.hover('.gthumb[data-i="2"]');
+    // The request is asserted once it has ARRIVED, not the instant after the
+    // hover: under load it reached the test server a few ms later and this read
+    // 0 (one run in three in the 2.60.434 suite). Still exactly one request.
+    for (let t = 0; t < 40 && of('a', 'big-2').length === 0; t++) { await page.waitForTimeout(50); }
     ok(of('a', 'big-2').length === 1, '5. hovering a thumbnail did not start its large file');
     await page.dispatchEvent('.gthumb[data-i="2"] .gthumb-img', 'pointerdown', { bubbles: true });
     await page.waitForTimeout(250);
