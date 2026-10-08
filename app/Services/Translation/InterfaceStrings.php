@@ -1600,6 +1600,14 @@ final class InterfaceStrings
             // anywhere. The provider's own address, offered as a link.
             'checkout.placing_redirect_stuck' => 'We could not open :provider automatically.',
             'checkout.placing_redirect_link' => 'Continue to :provider',
+            // Lane PO hotfix: what a Place order press that cannot go ahead says,
+            // beside the button and under the field -- never a native bubble.
+            'checkout.place_check_field' => 'Please check: :field ↑',
+            'checkout.place_card_unavailable' => 'Card payment could not load in this browser. Please choose another payment method.',
+            'checkout.field_missing' => 'Please fill in :field.',
+            'checkout.field_bad_email' => 'Please enter a valid email address.',
+            'checkout.field_choose' => 'Please choose your :field.',
+            'checkout.field_bad_value' => 'Please check this field.',
 
             /*
              * THE RETURN FROM AN INSTALMENT PROVIDER WITHOUT A PAYMENT.

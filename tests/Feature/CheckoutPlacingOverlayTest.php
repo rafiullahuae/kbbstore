@@ -867,7 +867,7 @@ it('stops the old full-page post from also running', function () {
     $handler = substr($src, strpos($src, "if (!event.target.closest || !event.target.closest('[data-place]')) { return; }"));
 
     $stop = strpos($handler, 'event.stopPropagation();');
-    $firstBranch = strpos($handler, 'if (busy) { return; }');
+    $firstBranch = strpos($handler, 'if (busy) {');
 
     expect($stop)->not->toBeFalse('nothing stops checkout.js from also submitting')
         ->and($stop)->toBeLessThan($firstBranch, 'an early return can leave the old form post running');

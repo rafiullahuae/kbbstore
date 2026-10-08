@@ -123,6 +123,15 @@
     textContent and written back as textContent — so a merchant who renames a
     gateway to a <script> tag renames it to the literal characters of one.
 --}}<!--kbb-placing-->@include('partials.checkout.placing-style')
+<style>
+/* (Lane PO hotfix) What a press that cannot go ahead says: beside the Place
+   order button pressed, and under the field. In the floating bar the line sits
+   ABOVE the bar, out of its flow, so the bar does not change height. */
+.kbb-place-note{margin:8px 0 0;font-size:12.5px;line-height:1.4;font-weight:600;color:#C8325C;text-align:center}
+.kbb-place-note button{all:unset;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.mpbar .kbb-place-note{position:absolute;inset-inline:12px;bottom:calc(100% + 6px);margin:0;padding:8px 12px;border-radius:10px;background:#fff;box-shadow:0 6px 20px -8px rgba(42,34,40,.35)}
+.kbb-ferr{display:block;margin:5px 2px 0;font-size:12px;line-height:1.35;font-weight:600;color:#C8325C}
+</style>
 <template id="kbbPlacingTpl">@include('partials.checkout.placing-card', [
     'label' => __('store.checkout.placing_label'),
     'title' => '',
@@ -157,6 +166,20 @@
     stuck:        @json(__('store.checkout.placing_redirect_stuck')),
     stuckLink:    @json(__('store.checkout.placing_redirect_link'))
   };
+
+  /* (Lane PO hotfix) The words for a press that cannot go ahead. */
+  var SAY = {
+    check:       @json(__('store.checkout.place_check_field')),
+    cardLoading: @json(__('store.checkout.card_not_ready')),
+    cardMissing: @json(__('store.checkout.place_card_unavailable')),
+    missing:     @json(__('store.checkout.field_missing')),
+    email:       @json(__('store.checkout.field_bad_email')),
+    choose:      @json(__('store.checkout.field_choose')),
+    bad:         @json(__('store.checkout.field_bad_value'))
+  };
+
+  /* ?kbbdiag=1 only (partials/checkout/diag); a no-op on every other load. */
+  function trace(msg) { try { if (window.kbbDiag) { window.kbbDiag('overlay', msg); } } catch (e) {} }
 
   /* HOW LONG THE DECORATION MAY HOLD THE SHOPPER UP, in one place so it can be
      read in one go. The tick is decoration; the order is not. */
@@ -586,8 +609,9 @@
 
     event.preventDefault();
     event.stopPropagation();
+    trace('saw the press');
 
-    if (busy) { return; }
+    if (busy) { trace('busy: an order is already on its way'); return; }
 
     /*
      * THE BROWSER'S OWN VALIDATION FIRST, AND THE FIELD TAKEN IN HAND THE SAME
@@ -600,17 +624,20 @@
      * the Place order button is rendered after the fields, so the control
      * needing attention is always far above the one being pressed.
      */
-    var invalid = FORM.querySelector(':invalid');
+    if (!check(event.target, 'overlay')) { return; }
 
-    if (invalid) {
-      invalid.scrollIntoView({ block: 'center', behavior: 'instant' });
-      invalid.focus({ preventScroll: true });
-      FORM.reportValidity();
+    /* The card was chosen but its script never started (Stripe.js blocked or
+       failed to load): stripe-elements registers nothing, so the press lands
+       here. Posting it would open an order this page cannot pay for. */
+    var method = FORM.querySelector('input[name="payment_method"]:checked');
+    if (method && method.value === 'stripe' && !(window.KBB && window.KBB.cardLeg)) {
+      note(event.target, SAY.cardMissing, null);
+      trace('card chosen but the card form never started');
       return;
     }
 
-    if (!FORM.reportValidity()) { return; }
-
+    clearNote();
+    trace('placing');
     place();
   }, true);
 
@@ -619,7 +646,7 @@
   FORM.addEventListener('submit', function (event) {
     event.preventDefault();
     event.stopPropagation();
-    if (!busy) { place(); }
+    if (!busy && check(null, 'overlay-enter')) { clearNote(); place(); }
   }, true);
 
   /*
@@ -631,7 +658,10 @@
    * most ordinary gesture there is. It is taken down on restore.
    */
   window.addEventListener('pageshow', function (event) {
-    if (event.persisted && busy) { down(); }
+    /* (Lane PO hotfix) down() puts each button back the way it FOUND it, and
+       the card leg had disabled them before the overlay went up -- so a page
+       restored mid-payment came back with dead buttons. liven() after it. */
+    if (event.persisted && busy) { down(); liven(); }
   });
 
   /* Firefox restores a button's `disabled` across a reload (Chrome does not),
@@ -651,7 +681,150 @@
    * overlay is missing — an older package, a view cache that did not clear —
    * still takes a card payment exactly as it did before.
    */
+  /* --------------------------------------- a press that cannot go ahead (Lane PO) */
+
+  /*
+   * NEVER A SILENT PRESS. Firefox for Android does not reliably draw the
+   * browser's validation bubble, so a press on a form with one wrong box
+   * focused that box and said nothing at all -- "nothing happening upon
+   * click". Every early return of the three Place order handlers (this one,
+   * stripe-elements' pay(), checkout.js) now leaves words beside the button
+   * that was pressed, and a wrong box gets its own line under it, in the
+   * shopper's language. The native bubble is not asked for at all.
+   *
+   * One copy, published as window.KBB.placeCheck / placeNote, because three
+   * copies of "what to say" are three answers a release apart.
+   */
+  var noteEl = null, noteFor = null;
+
+  /* Not rendered: a hidden input, or inside [hidden] or an inline display:none.
+     Read from attributes, never from layout. */
+  function shown(el) {
+    if (el.type === 'hidden' || el.closest('[hidden]')) { return false; }
+    for (var n = el; n && n !== FORM; n = n.parentElement) {
+      if (n.style && n.style.display === 'none') { return false; }
+    }
+    return true;
+  }
+
+  function label(el) {
+    var l = el.id ? FORM.querySelector('label[for="' + el.id + '"]') : null;
+    var copy = l ? l.cloneNode(true) : null;
+    if (copy) {
+      Array.prototype.forEach.call(copy.querySelectorAll('.required, .optional, abbr'), function (x) { x.parentNode.removeChild(x); });
+    }
+    var text = copy ? copy.textContent.replace(/[\s\u00a0*]+/g, ' ').trim() : '';
+    return text || el.getAttribute('aria-label') || el.name || '';
+  }
+
+  function rule(el) {
+    var v = el.validity || {};
+    if (el.type === 'email' && (v.typeMismatch || v.patternMismatch)) { return SAY.email; }
+    if (v.valueMissing) { return (el.tagName === 'SELECT' ? SAY.choose : SAY.missing).replace(':field', label(el)); }
+    return el.validationMessage || SAY.bad;
+  }
+
+  /*
+   * The first box that stops the order. A box that is NOT RENDERED cannot be
+   * put right by the shopper, so it never blocks: it loses `required`, and what
+   * an autofill typed into it is dropped (a saved password poured into the
+   * hidden account-password box, minlength 8, is the case that exists). The
+   * server still validates everything it needs.
+   */
+  function blocking() {
+    var list = FORM.querySelectorAll('input, select, textarea');
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      if (!el.willValidate || el.validity.valid) { continue; }
+      if (!shown(el)) {
+        el.required = false;
+        if (!el.validity.valid && el.type !== 'radio' && el.type !== 'checkbox') { el.value = ''; }
+        trace('released a hidden box: ' + (el.id || el.name));
+        continue;
+      }
+      return el;
+    }
+    return null;
+  }
+
+  function clearNote() {
+    if (noteEl && noteEl.parentNode) { noteEl.parentNode.removeChild(noteEl); }
+    noteEl = null;
+    noteFor = null;
+  }
+
+  function note(pressed, text, field) {
+    clearNote();
+    var b = (pressed && pressed.closest && pressed.closest('[data-place]'))
+      || document.querySelector('.kbb-mobile-order [data-place]') || document.querySelector('[data-place]');
+    if (!b || !b.parentNode) { return; }
+
+    noteEl = document.createElement('p');
+    noteEl.className = 'kbb-place-note';
+    noteEl.id = 'kbbPlaceNote';
+    noteEl.setAttribute('role', 'alert');
+    var words = document.createElement(field ? 'button' : 'span');
+    words.textContent = text;
+    if (field) {
+      words.type = 'button';
+      words.addEventListener('click', function () {
+        field.scrollIntoView({ block: 'center', behavior: 'instant' });
+        field.focus({ preventScroll: true });
+      });
+    }
+    noteEl.appendChild(words);
+    noteFor = field || null;
+    b.parentNode.insertBefore(noteEl, b.nextSibling);
+  }
+
+  function fieldError(el, text) {
+    var id = (el.id || el.name) + '-kbberr';
+    var err = document.getElementById(id);
+    if (!err) {
+      err = document.createElement('span');
+      err.id = id;
+      err.className = 'kbb-ferr';
+      err.setAttribute('role', 'alert');
+      var host = el.closest('.woocommerce-input-wrapper') || el;
+      host.parentNode.insertBefore(err, host.nextSibling);
+      var d = el.getAttribute('aria-describedby');
+      el.setAttribute('aria-describedby', d ? d + ' ' + id : id);
+      var off = function () {
+        if (!el.validity.valid) { return; }
+        if (err.parentNode) { err.parentNode.removeChild(err); }
+        var left = (el.getAttribute('aria-describedby') || '').split(' ').filter(function (x) { return x && x !== id; }).join(' ');
+        if (left) { el.setAttribute('aria-describedby', left); } else { el.removeAttribute('aria-describedby'); }
+        el.removeAttribute('aria-invalid');
+        if (noteFor === el) { clearNote(); }
+        el.removeEventListener('input', off);
+        el.removeEventListener('change', off);
+      };
+      el.addEventListener('input', off);
+      el.addEventListener('change', off);
+    }
+    err.textContent = text;
+    el.setAttribute('aria-invalid', 'true');
+  }
+
+  /* true: go ahead. false: the shopper has been told why, beside the button
+     and under the box, and the box is in view with the focus in it. */
+  function check(pressed, who) {
+    var el = blocking();
+    if (!el) { return true; }
+    fieldError(el, rule(el));
+    note(pressed, SAY.check.replace(':field', label(el)), el);
+    el.scrollIntoView({ block: 'center', behavior: 'instant' });
+    try { el.focus({ preventScroll: true }); } catch (e) {}
+    try { if (window.kbbDiag) { window.kbbDiag(who || 'overlay', 'stopped at ' + (el.id || el.name) + ': ' + el.validationMessage); } } catch (e) {}
+    return false;
+  }
+
   window.KBB = window.KBB || {};
+  window.KBB.placeCheck = check;
+  window.KBB.placeNote = function (pressed, kind) { note(pressed, SAY[kind] || TEXT.failed, null); };
+  window.KBB.placeNoteClear = clearNote;
+  trace('ready');
+
   window.KBB.placing = {
     begin: begin,
     confirmed: confirmed,

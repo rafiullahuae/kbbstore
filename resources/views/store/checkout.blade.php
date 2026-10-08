@@ -30,7 +30,7 @@
      */
     $kbbCoPage = app(\App\Services\CheckoutPage::class);
 @endphp
-<section class="kbb-checkout{{ $kbbCoPage->bodyClass() }}"{!! $kbbCoPage->styleAttr() !!}>
+<section class="kbb-checkout{{ $kbbCoPage->bodyClass() }}"{!! $kbbCoPage->styleAttr() !!}>{{-- Lane PO: the diagnostic panel, /checkout/?kbbdiag=1 only; an echo rather than @if, because @endif at a line's end eats its newline and every other checkout must render not one byte more. --}}{!! request()->query('kbbdiag') === '1' ? view('partials.checkout.diag')->render() : '' !!}
 
     <!-- slim secure-checkout header (design .head) -->
     <header class="co-head"><div class="in">

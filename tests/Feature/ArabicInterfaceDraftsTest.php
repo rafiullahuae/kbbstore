@@ -683,7 +683,11 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // like this", "Continue shopping", "Recently viewed"); only the routine
     // pair stays retired. The retiring migration had never shipped and was
     // narrowed to those two, so the four keep their 2027_10_08_120000 drafts.
-    expect($ui['drafts'])->toBe(1467, 'the shipped Arabic is not showing as drafts to review')
+    // 1467 -> 1473 (Lane PO hotfix): what a Place order press that cannot go
+    // ahead says beside the button and under the field (store.checkout.place_*,
+    // 2, and store.checkout.field_*, 4), seeded by
+    // 2027_10_09_130000_seed_place_order_notice_arabic_drafts.
+    expect($ui['drafts'])->toBe(1473, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

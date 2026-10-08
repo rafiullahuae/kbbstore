@@ -78,6 +78,9 @@
   'use strict';
 
   var FORM = document.getElementById('kbbCheckoutForm');
+  /* ?kbbdiag=1 only (partials/checkout/diag); a no-op on every other load. */
+  function trace(msg) { try { if (window.kbbDiag) { window.kbbDiag('card', msg); } } catch (e) {} }
+  trace('script ran; Stripe is ' + typeof Stripe);
   if (!FORM || typeof Stripe !== 'function') return;
 
   var PLACE_URL   = @json(\App\Support\Url::to('/checkout/place'));
@@ -221,6 +224,7 @@
     });
 
     ready = !!parts.number && !!mountedIn.number;
+    trace('mounted: ' + (mountedIn.number ? 'yes' : 'no box') + ', ready ' + ready);
 
     syncSave();
   }
@@ -354,24 +358,44 @@
    * Idempotency-Key underneath it for the request that reached Stripe and
    * whose answer never came back.
    */
-  async function pay() {
-    if (busy) return;
+  async function pay(pressed) {
+    trace('saw the press');
+    if (busy) { trace('busy: a payment is already on its way'); return; }
 
     /* The browser's own validation first, and the field taken in hand the same
        way checkout.js does it — the Place order button is rendered after the
        fields, so the control that needs attention is always far above the one
        being pressed, and reportValidity() alone neither scrolls to it nor
        focuses it at a phone viewport. */
-    var invalid = FORM.querySelector(':invalid');
-    if (invalid) {
-      invalid.scrollIntoView({ block: 'center', behavior: 'instant' });
-      invalid.focus({ preventScroll: true });
-      FORM.reportValidity();
+    /* (Lane PO hotfix) One answer for a wrong box, shared with the overlay:
+       words beside the button pressed and under the box, never the browser's
+       bubble alone (Firefox for Android draws none). The old path stays for a
+       page whose overlay is missing. */
+    var placeCheck = window.KBB && window.KBB.placeCheck;
+    if (placeCheck) {
+      if (!placeCheck(pressed, 'card')) return;
+    } else {
+      var invalid = FORM.querySelector(':invalid');
+      if (invalid) {
+        invalid.scrollIntoView({ block: 'center', behavior: 'instant' });
+        invalid.focus({ preventScroll: true });
+        FORM.reportValidity();
+        return;
+      }
+      if (!FORM.reportValidity()) return;
+    }
+
+    if (!ready) {
+      /* Said beside the button as well as in the card box: the card box is
+         a screen above the button on a phone, and a press that changes
+         nothing where the shopper is looking reads as a dead button. */
+      showError(TEXT.notReady);
+      if (window.KBB && window.KBB.placeNote) { window.KBB.placeNote(pressed, 'cardLoading'); }
+      trace('card form not ready');
       return;
     }
-    if (!FORM.reportValidity()) return;
-
-    if (!ready) { showError(TEXT.notReady); return; }
+    if (window.KBB && window.KBB.placeNoteClear) { window.KBB.placeNoteClear(); }
+    trace('paying');
 
     clearError();
     lock(true);
@@ -636,7 +660,7 @@
        empty." --}}
     event.preventDefault();
     event.stopImmediatePropagation();
-    pay();
+    pay(event.target);
   }, true);
 
   /* Enter inside a field submits the form without going near a button. Same
@@ -715,6 +739,25 @@
 
     releasing = post(ABANDON_URL, { order: order }).catch(function () {});
   });
+
+  /*
+   * (Lane PO hotfix) THE BACK BUTTON, ON THIS SIDE TOO. A page restored from
+   * the back/forward cache comes back with this script's state as it was left:
+   * `busy` still true and the buttons still locked if the shopper left in the
+   * middle of a payment (the bank's page, the received page). Every press
+   * after that returned at `if (busy)` -- silently. Nothing can still be in
+   * flight on a restored page, so it starts again.
+   */
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted && busy) { busy = false; lock(false); trace('restored from the back/forward cache: unlocked'); }
+  });
+
+  /* The overlay asks for this before it lets a card press through to a post:
+     a card chosen with this script absent (Stripe.js blocked) is said, not
+     posted. */
+  window.KBB = window.KBB || {};
+  window.KBB.cardLeg = true;
+  trace('listening');
 })();
 </script>
 @endif

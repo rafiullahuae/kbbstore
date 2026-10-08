@@ -377,6 +377,14 @@ it('renders the checkout byte for byte as before this lane with both switches of
         $after = str_replace(' data-place="1" autocomplete="off">', ' data-place="1">', $after);
         $after = str_replace("    /* Header only: a body _token is read first by Laravel and a reload can bring\n       back a stale one; window.KBB.csrf is this load's. */\n    init.body.delete('_token');\n", '', $after);
         $after = (string) preg_replace("#  /\\* Firefox restores a button's `disabled` across a reload \\(Chrome does not\\),\n.*?if \\(!event\\.persisted\\) \\{ liven\\(\\); \\} \\}\\);\n\n#s", '', $after, 1);
+        // Lane PO (later) changes the place-order overlay -- the words for a
+        // press that cannot go ahead, the card's back/forward unlock. That
+        // block is the overlay's, not this lane's; CheckoutPlacingOverlayTest
+        // and CheckoutPlaceOrderNeverSilentTest pin it, so it is set aside on
+        // both sides rather than chased string by string.
+        $overlay = '#<!--kbb-placing-->.*?<!--/kbb-placing-->#s';
+        $before = (string) preg_replace($overlay, '', $before, 1);
+        $after = (string) preg_replace($overlay, '', $after, 1);
     } finally {
         EnglishRenderWalk::useViewPath($current[0]);
     }
