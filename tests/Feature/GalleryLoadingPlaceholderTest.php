@@ -41,11 +41,34 @@ use App\Services\SettingsService;
  *      ships at Grey shimmer and prints nothing for it; Plain grey and None
  *      print their one fixed rule on the product page AND a category page.
  *
+ * LANE GX -- "the 66px stand-in stretched to the gallery size looks blurry for
+ * a moment", then "display a grey loading instead of presenting blur", then
+ * "in the background silently load all gallery sharp pictures". Measured on
+ * a throttled phone (390px DPR 3, 4x CPU, 1.6 Mbps) the old stand-in was a
+ * 200px file over 1050 real pixels, and not even instant: old -> grey (150 ms)
+ * -> blurred (350 ms) -> sharp (1.4 s). The unit (checks 3, 7-11) now pins:
+ * not ready -> the grey box, NEVER the stretched thumbnail; the 400w copy a
+ * finger asked for stands in when it is in (or takes over the grey when it
+ * lands); the photograph fades in (0.14 s, none under reduced motion) and the
+ * stand-in goes; on 4G the whole gallery is fetched one file at a time by a
+ * cancellable fetch() after load AND the main photo, so a later tap paints
+ * the photograph in its first frame and downloads nothing; a finger on a link
+ * cancels the file in flight; Save-Data fetches nothing unasked.
+ *
  * MUTATIONS, each run: put pdp.js back to `img.src = image` on the element on
  * screen and the unit says "3. a tap left the OLD photo ... [220,40,40]";
  * delete the (Lane PG2) block from kbb-product.css and it says "1. the main
  * frame is not the grey loading box" and "6. a failed photo painted its alt
  * text"; change `8}` to `infinite}` on either rule and test 3 here is red.
+ * (Lane GX) Put the stretched thumbnail back as the stand-in and the unit says
+ * "3. a tap whose photograph is not in showed something other than the grey
+ * box ... [230,180,20]"; drop the finger's mid request and "7. a finger on a
+ * thumbnail did not ask for its 400w copy"; warm with Image() instead of
+ * fetch() and "8 ... by fetch(): [0,0,0]" and "9. a finger on a link did not
+ * cancel"; drop the link listener and "9. a finger on a link did not cancel";
+ * let Save-Data through and "10. Save-Data: a shot was fetched without being
+ * tapped"; start the next file before the last one ends and "8 ... two shots
+ * at once"; drop the transition and "3. the photograph does not fade in".
  */
 
 function pgStripped(string $file): string
@@ -159,4 +182,22 @@ it('ships at Grey shimmer and prints nothing for it; Plain grey and None reach t
     $settings->set('photo_placeholder', '}body{display:none');
     app(ProductStyles::class)->forgetResolved();
     expect(app(ProductStyles::class)->cardCss())->not->toContain('display:none')->not->toContain($plain)->not->toContain($none);
+});
+
+it('fades a tapped photograph in over its stand-in, briefly, moving nothing, and not under reduced motion', function () {
+    /* (Lane GX) The photograph used to pop over a stretched thumbnail. It
+       now fades in over the grey box or the mid copy: opacity only, 0.14 s,
+       none when the shopper asked for reduced motion. pdp.js adds .gx-in only
+       on a tap whose photograph is not already in, so a warmed shot paints
+       straight away with no fade at all (unit check 8). */
+    $product = pgStripped('kbb-product.css');
+
+    expect($product)->toContain('.gmain-img.gx-in{opacity:0;transition:opacity .14s ease-out}')
+        ->toContain('.gmain-img.gx-in.ld{opacity:1}')
+        ->toContain('@media (prefers-reduced-motion:reduce){.gmain-img.gx-in{transition:none}}');
+
+    preg_match_all('/\.gx-in[^{]*\{([^}]*)\}/', $product, $m);
+    foreach ($m[1] as $rule) {
+        expect($rule)->not->toMatch('/width|height|margin|padding|position|inset|transform|top|left/');
+    }
 });

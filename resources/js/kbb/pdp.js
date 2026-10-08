@@ -279,28 +279,74 @@ function setPrice(el, html, was, off, mayCreate) {
    for the main photo only because it is object-fit:contain (a portrait bottle
    leaves bars that would otherwise stay grey); on a thumbnail it just stops
    the sweep early. A failed picture settles too: never an endless shimmer. */
-function settle(img) {
-    if (!img) return;
+function settle(img, then) {
+    if (!img) return Promise.resolve();
     const done = () => {
         img.classList.add('ld');
         img.removeAttribute('style');
+        if (then) then();
     };
-    if (img.decode) img.decode().then(done, done);
-    else done();
+    return img.decode ? img.decode().then(done, done) : Promise.resolve(done());
+}
+
+/* (Lane GX) THE IDLE WARM-UP STOPS HERE: one megabyte of photographs per
+   product view, whatever the gallery holds. */
+const WARM_CAP = 1048576;
+
+/* (Lane GX) A 1x1 GIF, the stand-in file pick() offers the browser. */
+const DOT = 'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+/* (Lane GX) WHICH FILE WILL THE FRAME ASK FOR, without asking for it.
+
+   The idle warm-up has to download with fetch(), because fetch() is the one
+   request a page can really cancel: an Image() whose src is cleared stops on
+   the page but NOT on the wire once the shop's service worker is in control
+   (measured through a throttled proxy: 188 of 188 KB still delivered after the
+   cancel, against 48 KB for an aborted fetch). But fetch() needs the URL, and
+   which srcset candidate a browser takes depends on the viewport, the device
+   pixel ratio, `sizes` and its own rounding rules -- guessing it here would
+   download a file the frame then ignores.
+
+   So the browser is asked: the SAME width descriptors and `sizes`, over tiny
+   local blob: files instead of the real addresses. It chooses exactly as the
+   frame will (checked against the frame at 360-1280px, DPR 1-3) and fetches
+   only the blob. Not data: URLs -- Chromium treats those as already cached
+   and always takes the widest. Resolves to '' when there is nothing to pick. */
+function pick(srcset, sizes, fallback) {
+    const list = srcset ? srcset.split(', ') : [];
+    if (!list.length) return Promise.resolve(fallback || '');
+    const dot = new Blob([Uint8Array.from(atob(DOT), (c) => c.charCodeAt(0))], { type: 'image/gif' });
+    const blobs = list.map(() => URL.createObjectURL(dot));
+    const probe = new Image();
+    return new Promise((resolve) => {
+        probe.onload = probe.onerror = () => {
+            const i = blobs.indexOf(probe.currentSrc);
+            blobs.forEach((u) => URL.revokeObjectURL(u));
+            resolve(i < 0 ? '' : list[i].slice(0, list[i].lastIndexOf(' ')));
+        };
+        probe.sizes = sizes || '';
+        probe.srcset = list.map((c, i) => blobs[i] + c.slice(c.lastIndexOf(' '))).join(', ');
+    });
 }
 
 export function initGallery() {
     const main = document.getElementById('gmain');
     if (!main) return;
 
-    settle(main.querySelector('.gmain-img'));
+    const lcp = settle(main.querySelector('.gmain-img'));
 
     const strip = document.getElementById('gthumbs');
     if (!strip) return;
 
-    strip.querySelectorAll('.gthumb-img').forEach(settle);
+    strip.querySelectorAll('.gthumb-img').forEach((i) => settle(i));
 
     const caption = document.getElementById('gcap');
+    const conn = navigator.connection;
+    // Save-Data, 2G or 3G: no fetch nobody asked for. Unknown (Safari,
+    // Firefox) is not lean -- today's one next-shot warm-up runs there.
+    const lean = Boolean(conn && (conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || '')));
+    // A connection that SAYS it is 4G, and only that, gets the whole gallery.
+    const good = Boolean(conn && !conn.saveData && conn.effectiveType === '4g');
 
     /* (Lane PG2) WARM A SHOT BEFORE IT IS TAPPED. The owner: "switching
        between the product gallery images, gives clear delays to show up the
@@ -312,22 +358,185 @@ export function initGallery() {
        other shot the moment a finger or a pointer reaches its thumbnail. An
        Image() off the page with the SAME srcset/sizes picks the same file the
        frame will ask for, so the tap finds it in the cache. One file each,
-       once; no timer, nothing measured. */
-    const warmed = new Set();
+       once; no timer, nothing measured.
+
+       (Lane GX) AND IT IS DECODED once it lands (decode() runs off the main
+       thread), so the tap that finds it paints it in one frame with no
+       decode hitch. `ready` holds the shots whose frame-sized file is in. */
+    const warmed = new Map();
+    const ready = new Set();
     const warm = (thumb, low) => {
         const image = thumb && thumb.dataset.image;
-        if (!image || warmed.has(image)) return;
-        warmed.add(image);
+        if (!image || warmed.has(image)) return null;
         const w = new Image();
         w.decoding = 'async';
         if (low) w.fetchPriority = 'low';
         w.sizes = thumb.dataset.sizes || '';
         w.srcset = thumb.dataset.srcset || '';
         w.src = image;
+        warmed.set(image, w);
+        return w.decode().then(() => { ready.add(image); }, () => {});
     };
     strip.addEventListener('pointerover', (event) => warm(event.target.closest('.gthumb')), { passive: true });
-    const conn = navigator.connection;
-    if (!(conn && (conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || '')))) {
+
+    /* (Lane GX) THE SHARPER STAND-IN, FETCHED ON INTENT. The owner: the 66px
+       picture stretched to the frame "looks blurry for a moment" -- "display a
+       grey loading instead of presenting blur". So a tap no longer shows the
+       thumbnail's own file. When a finger lands on (or focus reaches) a
+       thumbnail, its MID copy -- the 400px one, which the thumbnail's own
+       srcset already lists -- is asked for at low priority. (The 800px copy
+       was measured too: on a slow phone it arrived after 1.7 s and held the
+       photograph back to 3.4 s.)
+       If it is decoded by the time of the tap it is the stand-in; if it lands
+       while the frame-sized file is still on its way it takes over the grey
+       box then; otherwise the grey box stays until the photograph itself. Never
+       on Save-Data/2G/3G, never once the frame-sized file is already in, and
+       nothing before a finger asks: no request on page load. */
+    const mids = new Map();
+    const midFor = (thumb) => {
+        const image = thumb && thumb.dataset.image;
+        const small = thumb && thumb.querySelector('.gthumb-img');
+        const list = small && small.getAttribute('srcset');
+        if (lean || !image || !list || ready.has(image) || mids.has(image)) return;
+        const mid = list.split(', ').find((c) => / 400w$/.test(c));
+        if (!mid) return;
+        const m = new Image();
+        m.decoding = 'async';
+        m.fetchPriority = 'low';
+        m.src = mid.slice(0, -5);
+        const entry = { url: '', wait: null };
+        entry.wait = m.decode().then(() => {
+            // SAFE: the browser's own serialisation of a URL this page's Blade
+            // printed; one carrying a quote, a backslash or a line break is
+            // refused rather than written into a style.
+            if (!/["\\\n\r]/.test(m.currentSrc)) entry.url = m.currentSrc;
+            return entry.url;
+        }, () => '');
+        mids.set(image, entry);
+    };
+    const intent = (event) => midFor(event.target.closest && event.target.closest('.gthumb'));
+    strip.addEventListener('pointerdown', intent, { passive: true });
+    strip.addEventListener('focusin', intent);
+
+    /* (Lane GX) THE WHOLE GALLERY, QUIETLY, WHILE THE SHOPPER READS. The
+       owner: "when user open the product page, then in the background silently
+       load all gallery sharp pictures." Only on a connection that reports 4G
+       and no Save-Data; elsewhere the single next-shot warm-up below is
+       unchanged. It waits for the page's `load` AND for the main photograph
+       (the LCP) to be decoded, then takes ONE shot at a time, starting with
+       the next, each at low priority in an idle callback, so nothing it does
+       competes with the page or with itself. It stops at WARM_CAP, and for
+       good the moment the shopper heads elsewhere -- a finger or a button on
+       any link (that is when instant navigation asks for the next page), the
+       tab hidden, the page left -- cancelling the file in flight so it never
+       shares the line with the next page. */
+    let yieldTo = () => {};
+    if (good) {
+        let stopped = false;
+        let paused = 0;
+        let current = null;
+        let spent = 0;
+        const shots = [...strip.querySelectorAll('.gthumb')];
+        const at = shots.findIndex((t) => t.classList.contains('on'));
+        const queue = shots.slice(at + 1).concat(shots.slice(0, Math.max(0, at)));
+        const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1));
+        // The download in flight is cancelled on the wire (see pick()), and
+        // the shot may be asked for again.
+        const cancel = () => {
+            const c = current;
+            current = null;
+            if (!c) return null;
+            c.ac.abort();
+            return c.thumb;
+        };
+        const stop = () => {
+            stopped = true;
+            cancel();
+        };
+        const next = () => {
+            if (stopped || paused || current) return;
+            if (spent >= WARM_CAP) return stop();
+            let thumb = null;
+            while (queue.length && !thumb) {
+                thumb = queue.shift();
+                if (!thumb.dataset.image || warmed.has(thumb.dataset.image)) thumb = null;
+            }
+            if (!thumb) return;
+            const mine = (current = { thumb, ac: new AbortController() });
+            const { signal } = mine.ac;
+            pick(thumb.dataset.srcset, thumb.dataset.sizes, thumb.dataset.image)
+                .then((url) => url && !signal.aborted && fetch(url, { signal, priority: 'low' }))
+                .then((res) => res && res.ok ? res.blob() : null)
+                // Now in the HTTP cache: an Image() with the frame's own
+                // srcset takes it from there, decodes it, and marks it ready.
+                .then((blob) => {
+                    spent += blob ? blob.size : 0;
+                    return blob && !signal.aborted ? warm(thumb, true) : null;
+                })
+                .catch(() => {})
+                .then(() => {
+                    if (current !== mine) return;
+                    current = null;
+                    idle(next);
+                });
+        };
+        /* A TAP COMES FIRST. The moment a finger lands on a thumbnail whose
+           photograph is not in, the file warming for another shot is dropped
+           (and queued again), so the tapped one has the line to itself; the
+           tap then holds the warm-up until its photograph is on screen. A
+           finger that lifts without tapping (a scroll) lets it carry on. */
+        const makeWay = (event) => {
+            const thumb = event.target.closest && event.target.closest('.gthumb');
+            const image = thumb && thumb.dataset.image;
+            if (stopped || !image || ready.has(image) || !current || current.thumb === thumb) return;
+            const back = cancel();
+            if (back) queue.unshift(back);
+        };
+        strip.addEventListener('pointerdown', makeWay, { passive: true });
+        strip.addEventListener('pointerup', () => idle(next), { passive: true });
+        strip.addEventListener('pointercancel', () => idle(next), { passive: true });
+        yieldTo = (image, shown) => {
+            if (stopped) return;
+            if (current && current.thumb.dataset.image !== image) {
+                const back = cancel();
+                if (back) queue.unshift(back);
+            }
+            paused++;
+            shown.then(() => {
+                paused--;
+                idle(next);
+            });
+        };
+        const leaving = (event) => { if (event.target.closest && event.target.closest('a[href]')) stop(); };
+        document.addEventListener('pointerdown', leaving, { capture: true, passive: true });
+        /* A pointer RESTING on a link is when instant navigation fetches the
+           next page (Speculation Rules, moderate), so the warm-up steps aside
+           for as long as it rests there -- the file in flight dropped and
+           queued again -- and carries on when the pointer moves off. */
+        let resting = null;
+        document.addEventListener('pointerover', (event) => {
+            const link = event.target.closest && event.target.closest('a[href]');
+            if (!link || link === resting || stopped) return;
+            if (!resting) {
+                paused++;
+                const back = cancel();
+                if (back) queue.unshift(back);
+            }
+            resting = link;
+        }, { capture: true, passive: true });
+        document.addEventListener('pointerout', (event) => {
+            if (!resting || (event.relatedTarget && resting.contains(event.relatedTarget))) return;
+            resting = null;
+            paused--;
+            idle(next);
+        }, { capture: true, passive: true });
+        document.addEventListener('touchstart', leaving, { capture: true, passive: true });
+        document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+        window.addEventListener('pagehide', stop);
+        const begin = () => lcp.then(() => idle(next));
+        if (document.readyState === 'complete') begin();
+        else window.addEventListener('load', begin, { once: true });
+    } else if (!lean) {
         const next = () => warm(strip.querySelector('.gthumb.on + .gthumb'), true);
         if (document.readyState === 'complete') next();
         else window.addEventListener('load', next, { once: true });
@@ -341,25 +550,34 @@ export function initGallery() {
 
         const image = thumb.dataset.image;
 
-        if (image) {
-            /* (Lane PG2) A FRESH <img> FOR EVERY SWAP, WITH THE THUMBNAIL'S
-               OWN PICTURE BEHIND IT.
+        // A stand-in left by a tap whose photograph never arrived.
+        main.querySelectorAll('.gx-s').forEach((s) => s.remove());
 
-               Changing the src of the <img> that is on screen keeps the OLD
-               photograph painted until the new file has completely arrived
-               (Chromium, measured) -- a tap that visibly does nothing for as
-               long as the download takes. A new element has no old picture.
-               Behind its (still empty) pixels it carries, as its background,
-               the file the tapped thumbnail is already showing -- decoded, so
-               it paints in the same frame -- contained exactly as the photo
-               will be, since it is a smaller copy of the same photograph. The
-               full-size file then paints over it as soon as it lands, and
-               settle() removes the background. A thumbnail with no picture yet
-               leaves the grey loading box instead. Never the old photo.
+        if (image) {
+            /* (Lane PG2) A FRESH <img> FOR EVERY SWAP. Changing the src of the
+               <img> that is on screen keeps the OLD photograph painted until
+               the new file has completely arrived (Chromium, measured) -- a
+               tap that visibly does nothing for as long as the download takes.
+               A new element has no old picture. Never the old photo.
+
+               (Lane GX) AND WHAT STANDS IN FOR IT IS NO LONGER THE 66px
+               THUMBNAIL. Measured on a throttled phone (390px, DPR 3), that
+               stand-in was a 200px file stretched over 1050 real pixels -- and
+               it was not even instant: as a CSS background it is fetched
+               again from the disk cache, so the frame went old -> grey (150
+               ms) -> blurred (350 ms) -> sharp (1.4 s). Now:
+                 - the frame-sized file already in (warmed): it goes straight
+                   in, decoded, in one frame -- no stand-in, no fade;
+                 - otherwise a stand-in BEHIND it: the shot's mid copy if that
+                   is decoded, else the gallery's own loading box (Appearance
+                   -> Product styles -> Layout -> Photo loading placeholder:
+                   shimmer, plain or none), which the mid copy takes over if it
+                   lands first; the photograph then fades in over it (0.14 s,
+                   CSS; none under reduced motion) and the stand-in goes.
 
                Same box (position:absolute, inset 0), same class, same id, so
                nothing moves. */
-            const old = main.querySelector('.gmain-img');
+            const old = main.querySelector('img.gmain-img');
             const img = document.createElement('img');
             img.className = 'gmain-img';
             img.id = 'gmainImg';
@@ -367,16 +585,6 @@ export function initGallery() {
             img.fetchPriority = 'high';
             img.width = 1000;
             img.height = 1000;
-
-            /* SAFE: currentSrc is the browser's own serialisation of a URL
-               this page's Blade printed, in which a quote, a backslash or a
-               line break cannot survive unescaped -- and one that somehow did
-               is refused here rather than written into a style. */
-            const small = thumb.querySelector('.gthumb-img');
-            const quick = small && small.complete && small.naturalWidth > 0 ? small.currentSrc : '';
-            if (quick && !/["\\\n\r]/.test(quick)) {
-                img.style.cssText = 'background:#fff url("' + quick + '") center/contain no-repeat;animation:none';
-            }
 
             /* SRCSET FIRST, AND IT IS SET EVEN WHEN IT IS EMPTY.
 
@@ -405,12 +613,39 @@ export function initGallery() {
             img.sizes = thumb.dataset.sizes || '';
             img.src = image;
             img.alt = thumb.dataset.alt || '';
-            if (old) old.replaceWith(img);
-            else main.prepend(img);
-            settle(img);
+            // The frame now holds this shot: no warm-up asks for it again,
+            // and once it is decoded a tap back to it is instant.
+            warmed.set(image, img);
+            const mark = () => { if (img.naturalWidth > 0) ready.add(image); };
+
+            if (ready.has(image) && img.complete) {
+                if (old) old.replaceWith(img);
+                else main.prepend(img);
+                settle(img, mark);
+            } else {
+                const stand = document.createElement('span');
+                stand.className = 'gmain-img gx-s';
+                stand.setAttribute('aria-hidden', 'true');
+                img.classList.add('gx-in');
+                if (old) old.replaceWith(stand, img);
+                else main.prepend(stand, img);
+                const mid = mids.get(image);
+                const show = (url) => {
+                    if (url && stand.isConnected) stand.style.cssText = 'background:#fff url("' + url + '") center/contain no-repeat;animation:none';
+                };
+                if (mid && mid.url) show(mid.url);
+                else if (mid) mid.wait.then(show);
+                yieldTo(image, settle(img, () => {
+                    mark();
+                    // No fade to wait for (reduced motion, or no stylesheet):
+                    // the stand-in goes now, never left under the photograph.
+                    if (getComputedStyle(img).transitionDuration === '0s') stand.remove();
+                    else img.addEventListener('transitionend', () => stand.remove(), { once: true });
+                }));
+            }
             main.style.background = '#fff';
         } else {
-            const img = main.querySelector('.gmain-img');
+            const img = main.querySelector('img.gmain-img');
             if (img) img.hidden = true;
             main.style.background = getComputedStyle(thumb).background;
         }

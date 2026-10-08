@@ -14,7 +14,8 @@
  * Every response is held for `rtt` ms before its first byte, then its body is
  * paced from a single shared bucket of `kbps`, round-robin across streams.
  * GET http://pg2g.control/stats returns bytes by content type since the last
- * GET http://pg2g.control/reset.
+ * GET http://pg2g.control/reset (read from the server), and under `sent` the
+ * bytes actually paced out to the browser -- which stop when it cancels.
  */
 const http = require('http');
 process.on('uncaughtException', (e) => { process.stderr.write('proxy error ' + (e && e.message) + '\n'); });
@@ -39,6 +40,8 @@ setInterval(() => {
       if (n > 0) {
         try { s.res.write(s.buf.subarray(s.off, s.off + n)); } catch (e) { s.ended = true; s.off = s.buf.length; }
         s.off += n; budget -= n;
+        if (s.type) { stats.sent = stats.sent || {}; stats.sent[s.type] = (stats.sent[s.type] || 0) + n; }
+        if (s.path && process.env.PG2G_BYPATH) { stats.byPath = stats.byPath || {}; stats.byPath[s.path] = (stats.byPath[s.path] || 0) + n; }
       }
       if (s.off >= s.buf.length && s.ended) { s.res.end(); active.delete(s); } else if (s.off < s.buf.length) next.push(s);
     }
@@ -60,14 +63,20 @@ http.createServer((req, res) => {
   req.on('error', () => {});
   const t0 = Date.now();
   const up = http.request({ host: u.hostname, port: u.port || 80, path: u.pathname + u.search, method: req.method, headers: req.headers }, (r) => {
-    const s = { res, buf: Buffer.alloc(0), off: 0, ended: false };
     const type = String(r.headers['content-type'] || 'other').split(';')[0];
+    const s = { res, buf: Buffer.alloc(0), off: 0, ended: false, type, path: u.pathname };
     const wait = Math.max(0, RTT - (Date.now() - t0));
+    // (Lane GX) A request the browser cancels inside the RTT must not be
+    // paced out afterwards: it used to join `active` anyway and burn the
+    // shared budget on a closed socket -- a whole file's worth of bandwidth
+    // stolen from every other response, which no real network does.
+    let closed = false;
     setTimeout(() => {
+      if (closed) return;
       try { res.writeHead(r.statusCode, r.headers); } catch (e) { return; }
       active.add(s);
     }, wait);
-    res.on('close', () => { active.delete(s); r.destroy(); });
+    res.on('close', () => { closed = true; active.delete(s); r.destroy(); });
     r.on('data', (c) => { s.buf = Buffer.concat([s.buf, c]); stats[type] = (stats[type] || 0) + c.length; });
     r.on('end', () => { s.ended = true; });
   });

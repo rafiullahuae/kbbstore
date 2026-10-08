@@ -195,6 +195,13 @@ a{color:inherit;text-decoration:none}
 .gmain-img,.gthumb-img{color:transparent;background:#f2f4f7 linear-gradient(90deg,#f2f4f7 25%,#e9edf2 37%,#f2f4f7 63%) 0 0/400% 100%;animation:kbbshim 1.4s ease 8}
 .gmain-img.ld,.gthumb-img.ld{background:none;animation:none}
 @media (prefers-reduced-motion:reduce){.gmain-img,.gthumb-img{animation:none}}
+/* (Lane GX) A tapped photograph that was not already in fades in over its
+   stand-in (the loading box, or the shot's mid copy) instead of popping:
+   0.14 s of opacity, nothing that moves, none under reduced motion. pdp.js
+   adds .gx-in only on that path and removes the stand-in when it is done. */
+.gmain-img.gx-in{opacity:0;transition:opacity .14s ease-out}
+.gmain-img.gx-in.ld{opacity:1}
+@media (prefers-reduced-motion:reduce){.gmain-img.gx-in{transition:none}}
 
 /* buy box */
 .bb-brand{font-size:12px;font-weight:700;color:var(--pink-deep);text-transform:uppercase;letter-spacing:.05em}
