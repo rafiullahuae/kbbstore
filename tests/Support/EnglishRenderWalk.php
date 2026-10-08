@@ -1943,7 +1943,10 @@ final class EnglishRenderWalk
                     .'      <button type="button" class="ymal-btn" data-ymal-next aria-controls="related" aria-label="More products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>'."\n"
                     .'    </div>'."\n"
                     .'    <div class="rel kbb-pgrid ymal-track" data-skin="$5" id="related" data-ymal-track tabindex="0" role="region" aria-label="$3">',
-                'hits' => 1,
+                // 1 -> 0 (Lane RP): the section this rewrote is cut whole by
+                // the removal "the one-row You may also like carousel (Lane
+                // RP)", which runs first; block 1's tabs replace it.
+                'hits' => 0,
             ],
 
             /*
@@ -2173,7 +2176,9 @@ final class EnglishRenderWalk
             'you may also like: 2.3 cards on a phone (Lane PX)' => [
                 'pattern' => '#aria-labelledby="ymal-h" style="--ymal-d:5;--ymal-m:2">#',
                 'with' => 'aria-labelledby="ymal-h" style="--ymal-d:5;--ymal-m:2.3">',
-                'hits' => 1,
+                // 1 -> 0 (Lane RP): cut with the section above; the 2.3 is on
+                // block 1's tabs and block 3, RecsBlocksTest.
+                'hits' => 0,
             ],
             'the review section: compact summary (Lane PX)' => [
                 // `style=` because the review wall's own <section class="sr"
@@ -3421,6 +3426,19 @@ KBB_BH_CSS;
                 'pattern' => '#    <div class="mm-chips"><div class="mm-chipr">(?:<a class="mm-chip(?: a-[a-z]+)?" href="[^"<>]*">[^<]*</a>){5}</div></div>\n#',
                 'hits' => 33,
             ],
+            /*
+             * THE THREE RECOMMENDATION BLOCKS (Lane RP) — the pair of the
+             * removal of the same name. Block 1's two tabs ("More from
+             * {brand}" | "More {category}"), block 2's "Complete your routine"
+             * grid and block 3's "Continue shopping" carousel: everything from
+             * the `<!-- related -->` comment to the page's closing </div>, cut
+             * as one, exactly as the removal cuts the old section from the
+             * same place. The one product page, once.
+             */
+            'the product page: the three recommendation blocks (Lane RP)' => [
+                'pattern' => '#(?<=<!-- related -->\n)\s*<section class="sec ymal ymal-tabs[^"]*" data-rp-tabs .*?aria-labelledby="rp2-h".*?aria-labelledby="rp3-h".*?</section>\n\s*(?=</div>)#s',
+                'hits' => 1,
+            ],
         ];
     }
 
@@ -3804,8 +3822,14 @@ KBB_BH_CSS;
                  * the old Blade over the CURRENT PHP, so their tiles are no longer
                  * on it. Twelve tiles fewer on one page, the homepage; the -N%
                  * count falls by the seven of those twelve that were reduced.
+                 *
+                 * 107 -> 99 (Lane RP): the "before" product page draws the old
+                 * one-row carousel over the CURRENT controller, whose list is
+                 * now block 1's two tabs (brand + category, no best-seller
+                 * top-up) — four tiles on this fixture where AlsoLikeRail drew
+                 * twelve. One page; the whole old section is cut below anyway.
                  */
-                'hits' => 107,
+                'hits' => 99,
             ],
 
             /*
@@ -3853,7 +3877,9 @@ KBB_BH_CSS;
                 // draws twelve tiles where it drew three, and three of the nine
                 // new ones are reduced. One page; the NEW count does not move.
                 // 40 -> 33, Row 55 (Lane HA): see the eyebrow's note above.
-                'hits' => 33,
+                // 33 -> 32 (Lane RP): see the brand line's note — one of the
+                // eight tiles the old carousel no longer draws was reduced.
+                'hits' => 32,
             ],
             /*
              * THE CHECKOUT'S ADDRESS PICKER ROW GOES (Lane CK, 6 October). The
@@ -3908,6 +3934,24 @@ KBB_BH_CSS;
             ],
             'the address sheet script on the checkout (Lane CK)' => [
                 'pattern' => "#<script>\n/\\*\n \\* The address sheet\\. .*?\n</script>\n#s",
+                'hits' => 1,
+            ],
+            /*
+             * THE ONE-ROW "YOU MAY ALSO LIKE" CAROUSEL GOES (Lane RP), replaced
+             * by the three blocks of the insertion of the same name. The owner,
+             * 8 October: "1st a SLIDER, 2nd a GRID, 3rd a SLIDER", the first
+             * one opening on the brand or category the shopper came from — so
+             * it ships on (CLAUDE.md, 30 September). The product page only;
+             * everything around the foot is still compared byte for byte, and
+             * RecsBlocksTest pins that Layout "One row" with blocks 2 and 3 off
+             * prints exactly this section again.
+             */
+            'the one-row You may also like carousel (Lane RP)' => [
+                // The pre-conversion section this walk's "before" side draws
+                // (the Lane PS carousel is a substitution over it, and the
+                // substitutions run after the removals), from the indent
+                // after the comment through its closing tag.
+                'pattern' => '#(?<=<!-- related -->\n)\s*<section class="sec">\n    <div class="eyebrow">Complete your routine</div>\n    <h2>You may also like</h2>\n.*?</section>\n\s*(?=</div>)#s',
                 'hits' => 1,
             ],
         ];

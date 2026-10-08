@@ -1,0 +1,222 @@
+{
+ "390": {
+  "direct": {
+   "tabs": [],
+   "imagesOnLoad": 4,
+   "footImagesFetchedOnLoad": {
+    "ymal-h": "1/12"
+   },
+   "cls": 0,
+   "lcp": {
+    "t": 776,
+    "el": "H1.bb-title"
+   },
+   "requestsOnLoad": 15,
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "footImagesFetchedAfterScroll": {
+    "ymal-h": "7/12"
+   },
+   "blocks": {
+    "one": true,
+    "two": false,
+    "three": false
+   },
+   "clsAfterScroll": 0,
+   "firstClick": {
+    "ok": 24,
+    "bad": [],
+    "badCount": 0
+   },
+   "layout": {
+    "tabHeight": null,
+    "tabFont": null,
+    "block1CardWidth": 144.8,
+    "block2CardWidth": null,
+    "block3CardWidth": null,
+    "block1Height": 472,
+    "headingFont": "22px"
+   },
+   "consoleErrors": []
+  },
+  "fromCategory": {
+   "clicked": "/product/anua-heartleaf-77-clear-pad/",
+   "hint": null,
+   "tabs": [],
+   "cls": 0,
+   "deliveryType": "navigational-prefetch",
+   "clsAfterScroll": 0
+  },
+  "fromBrand": {
+   "clicked": "/product/anua-heartleaf-77-clear-pad/",
+   "hint": null,
+   "tabs": [],
+   "cls": 0
+  },
+  "tamperedHint": {
+   "tabs": [],
+   "imgInjected": false
+  },
+  "fromPagesConsoleErrors": [],
+  "pages": {
+   "/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 19,
+    "scripts": 2
+   },
+   "/collections/skincare/toners/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 25,
+    "scripts": 2
+   },
+   "/shop/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 32,
+    "scripts": 2
+   },
+   "/brands/anua/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 19,
+    "scripts": 2
+   },
+   "/product/anua-heartleaf-77-clear-pad/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 15,
+    "scripts": 3
+   },
+   "/blog/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 8,
+    "scripts": 2
+   }
+  }
+ },
+ "1280": {
+  "direct": {
+   "tabs": [],
+   "imagesOnLoad": 12,
+   "footImagesFetchedOnLoad": {
+    "ymal-h": "8/12"
+   },
+   "cls": 0,
+   "lcp": {
+    "t": 388,
+    "el": "H1.bb-title"
+   },
+   "requestsOnLoad": 23,
+   "scrollWidth": 1280,
+   "clientWidth": 1280,
+   "footImagesFetchedAfterScroll": {
+    "ymal-h": "8/12"
+   },
+   "blocks": {
+    "one": true,
+    "two": false,
+    "three": false
+   },
+   "clsAfterScroll": 0,
+   "firstClick": {
+    "ok": 24,
+    "bad": [],
+    "badCount": 0
+   },
+   "layout": {
+    "tabHeight": null,
+    "tabFont": null,
+    "block1CardWidth": 232.8,
+    "block2CardWidth": null,
+    "block3CardWidth": null,
+    "block1Height": 560,
+    "headingFont": "22px"
+   },
+   "consoleErrors": []
+  },
+  "fromCategory": {
+   "clicked": "/product/anua-heartleaf-77-clear-pad/",
+   "hint": null,
+   "tabs": [],
+   "cls": 0,
+   "deliveryType": "navigational-prefetch",
+   "clsAfterScroll": 0
+  },
+  "fromBrand": {
+   "clicked": "/product/anua-heartleaf-77-clear-pad/",
+   "hint": null,
+   "tabs": [],
+   "cls": 0
+  },
+  "tamperedHint": {
+   "tabs": [],
+   "imgInjected": false
+  },
+  "fromPagesConsoleErrors": [],
+  "pages": {
+   "/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0,
+    "requests": 21,
+    "scripts": 2
+   },
+   "/collections/skincare/toners/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0,
+    "requests": 27,
+    "scripts": 2
+   },
+   "/shop/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0,
+    "requests": 47,
+    "scripts": 2
+   },
+   "/brands/anua/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0,
+    "requests": 23,
+    "scripts": 2
+   },
+   "/product/anua-heartleaf-77-clear-pad/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0,
+    "requests": 23,
+    "scripts": 3
+   },
+   "/blog/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0,
+    "requests": 8,
+    "scripts": 2
+   }
+  }
+ }
+}

@@ -87,7 +87,7 @@ class AlsoLikeSettings
             'When a brand or category has too few products, finish the row from the parent category, then the shop’s best sellers.'],
 
         'count' => ['range', 'How many products', 12,
-            'The most the carousel will hold.',
+            'The most the carousel will hold — in each tab, when Block 1 · Layout is two tabs.',
             ['min' => 4, 'max' => 24, 'step' => 1, 'unit' => '']],
 
         'hide_oos' => ['bool', 'Hide out-of-stock products', true,
@@ -132,18 +132,78 @@ class AlsoLikeSettings
             'Leave empty for the standard Arabic heading, قد يعجبك أيضًا. Your English heading is never shown on the Arabic page.'],
 
         'eyebrow' => ['text', 'Small line above the heading', '',
-            'Leave empty for the standard line, “Complete your routine”.'],
+            'Leave empty for the standard line: “More like this” over the two tabs, “Complete your routine” over one row.'],
 
         'eyebrow_ar' => ['text', 'Small line — Arabic', '',
             'Leave empty for the standard Arabic line.'],
+
+        /*
+         * ── ▲ THE THREE BLOCKS, AND THEY SHIP ON BECAUSE HE ASKED. (Lane RP)
+         *
+         * "1st a SLIDER, 2nd a GRID, 3rd a SLIDER", the first one opening on
+         * the brand or the category the shopper came from. CLAUDE.md's 30
+         * September reversal: what he asked for is the shop's new state, so
+         * `layout => tabs`, both new blocks on. Every one of them can be taken
+         * back here; `layout => one` and both blocks off is the page as it was,
+         * byte for byte (RecsBlocksTest pins that).
+         */
+        'layout' => ['select', 'Block 1 · Layout', 'tabs',
+            'Two tabs: “More from {brand}” and “More {category}”. The tab that opens first is the one the shopper came from — a brand page opens the brand, a category page the category. Both lists are on the page for Google either way.',
+            ['tabs' => 'Two tabs — this brand / this category', 'one' => 'One row, brand and category mixed (as before)']],
+
+        'first' => ['select', 'Block 1 · Tab that opens first', 'brand',
+            'For a shopper who did not come from a brand or category page — from search, Google, a link or the homepage.',
+            ['brand' => 'More from the brand', 'category' => 'More from the category']],
+
+        'routine_on' => ['bool', 'Block 2 · Show “Complete your routine”', true,
+            'A grid of the next steps of a routine — cleanser, toner, serum, moisturiser, sunscreen — from the shelves set in Product page → Buy these together → category pairs. In stock first, and products sharing a tag (a skin concern) with this one first. Never repeats a product shown above it.'],
+
+        'routine_count' => ['range', 'Block 2 · How many products', 10,
+            'Ten fills two rows on a laptop.',
+            ['min' => 4, 'max' => 12, 'step' => 1, 'unit' => '']],
+
+        'routine_title' => ['text', 'Block 2 · Heading', '',
+            'Leave empty for the standard heading, “Complete your routine”.'],
+
+        'routine_title_ar' => ['text', 'Block 2 · Heading — Arabic', '',
+            'Leave empty for the standard Arabic heading.'],
+
+        'recent_on' => ['bool', 'Block 3 · Show “Continue shopping”', true,
+            'A carousel of what this shopper looked at recently, then the shop’s best sellers. A first-time visitor and Google see best sellers.'],
+
+        'recent_count' => ['range', 'Block 3 · How many products', 10,
+            'The most the carousel will hold.',
+            ['min' => 4, 'max' => 12, 'step' => 1, 'unit' => '']],
+
+        'recent_title' => ['text', 'Block 3 · Heading', '',
+            'Leave empty for the standard heading, “Continue shopping”.'],
+
+        'recent_title_ar' => ['text', 'Block 3 · Heading — Arabic', '',
+            'Leave empty for the standard Arabic heading.'],
+
+        'order' => ['select', 'Order of the three blocks', '123',
+            'Top to bottom, at the foot of the product page.',
+            self::ORDERS],
+    ];
+
+    /** The six orders of the three blocks. A select stores one of these or the default. */
+    public const ORDERS = [
+        '123' => '1 Tabs · 2 Routine grid · 3 Continue shopping',
+        '132' => '1 Tabs · 3 Continue shopping · 2 Routine grid',
+        '213' => '2 Routine grid · 1 Tabs · 3 Continue shopping',
+        '231' => '2 Routine grid · 3 Continue shopping · 1 Tabs',
+        '312' => '3 Continue shopping · 1 Tabs · 2 Routine grid',
+        '321' => '3 Continue shopping · 2 Routine grid · 1 Tabs',
     ];
 
     /** Same shape as ProductLayout::TABS — the console draws it the same way. */
     public const TABS = [
         'ymal' => ['You may also like',
-            'The carousel at the foot of every product page: where its products come from, how many, and how it moves.',
-            ['enabled', 'rule', 'mix', 'fill', 'count', 'hide_oos', 'per_desktop', 'per_phone', 'arrows_m',
-                'autoplay', 'autoplay_s', 'title', 'title_ar', 'eyebrow', 'eyebrow_ar']],
+            'The three blocks at the foot of every product page: 1 the tabs (this brand / this category), 2 “Complete your routine”, 3 “Continue shopping” — where their products come from, how many, and how they move.',
+            ['enabled', 'layout', 'first', 'rule', 'mix', 'fill', 'count', 'hide_oos', 'per_desktop', 'per_phone', 'arrows_m',
+                'autoplay', 'autoplay_s', 'title', 'title_ar', 'eyebrow', 'eyebrow_ar',
+                'routine_on', 'routine_count', 'routine_title', 'routine_title_ar',
+                'recent_on', 'recent_count', 'recent_title', 'recent_title_ar', 'order']],
     ];
 
     /**

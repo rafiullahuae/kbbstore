@@ -324,6 +324,14 @@ function mAllowedRepairs(): array
  * pay_tamara_logo), recorded with this same corpus and inserted right after
  * checkout_page|trust_tick_speed, which is where mEquivRows() walks them.
  */
+/*
+ * ── 76 ROWS ADDED, NONE MOVED ──────────────────────────────────── Lane RP ──
+ *
+ * The eleven keys appended to AlsoLikeSettings::SCHEMA for the product page's
+ * three recommendation blocks (layout ... order), recorded with this same
+ * corpus and appended after also_like|eyebrow_ar, the last row, which is
+ * where mEquivRows() walks them. Every line before is untouched.
+ */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);
     $now = mEquivRows();

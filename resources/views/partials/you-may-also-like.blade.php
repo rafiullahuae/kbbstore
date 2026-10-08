@@ -49,6 +49,29 @@
     $ymalArrM = ! empty($ymalC['arrows_m']) ? ' ymal-arr-m' : '';
     $ymalAuto = ! empty($ymalC['autoplay']) ? max(3, min(15, (int) ($ymalC['autoplay_s'] ?? 5))) : 0;
 @endphp
+@if (! empty($ymal['panels']))
+{{-- ── (Lane RP) TWO TABS: "More from {brand}" | "More {category}" ──────────
+     Both lists are drawn, so both are crawlable links and the URL never
+     changes. The first tab is open (the owner's "opens first", brand by
+     default); ymal.js opens the other one when the listing page the shopper
+     clicked from (sessionStorage, shop.js) is one of its `data-rp-paths`. A
+     closed panel is `hidden`: display:none, so its lazy pictures are not
+     fetched until it is opened. Each panel is its own [data-ymal] carousel. --}}
+  <section class="sec ymal ymal-tabs{{ $ymalArrM }} {{ $modules->classFor('related') }}" data-rp-tabs aria-labelledby="ymal-h" style="--ymal-d:{{ $ymalD }};--ymal-m:{{ $ymalM }}">
+    <div class="eyebrow">{{ $ymal['wording']['eyebrow'] }}</div>
+    <h2 id="ymal-h">{{ $ymal['wording']['title'] }}</h2>
+    <div class="rp-tabs" role="tablist" aria-label="{{ __('store.product.recs_tabs_label') }}">@foreach ($ymal['panels'] as $kbbRpI => $kbbRpP)<button type="button" class="rp-tab" role="tab" id="rp-t-{{ $kbbRpP['key'] }}" aria-controls="rp-p-{{ $kbbRpP['key'] }}" aria-selected="{{ $kbbRpI === 0 ? 'true' : 'false' }}"@if ($kbbRpI > 0) tabindex="-1"@endif data-rp-tab>{{ $kbbRpP['label'] }}</button>@endforeach</div>
+@foreach ($ymal['panels'] as $kbbRpI => $kbbRpP)
+    <div class="rp-panel" id="rp-p-{{ $kbbRpP['key'] }}" role="tabpanel" aria-labelledby="rp-t-{{ $kbbRpP['key'] }}" data-ymal data-ymal-auto="{{ $ymalAuto }}" data-rp-paths="{{ implode(' ', $kbbRpP['paths']) }}"@if ($kbbRpI > 0) hidden @endif>
+      <div class="ymal-nav">
+        <button type="button" class="ymal-btn" data-ymal-prev aria-controls="rp-r-{{ $kbbRpP['key'] }}" aria-label="{{ __('store.product.related_prev') }}" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
+        <button type="button" class="ymal-btn" data-ymal-next aria-controls="rp-r-{{ $kbbRpP['key'] }}" aria-label="{{ __('store.product.related_next') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>
+      </div>
+      <div class="rel kbb-pgrid ymal-track" data-skin="{{ \App\Support\GridSkins::resolve(null) }}" id="rp-r-{{ $kbbRpP['key'] }}" data-ymal-track tabindex="0" role="region" aria-label="{{ $kbbRpP['label'] }}">@foreach ($kbbRpP['products'] as $item)<x-product-card :product="$item" />@endforeach</div>
+    </div>
+@endforeach
+  </section>
+@else
   <section class="sec ymal{{ $ymalArrM }} {{ $modules->classFor('related') }}" data-ymal data-ymal-auto="{{ $ymalAuto }}" aria-labelledby="ymal-h" style="--ymal-d:{{ $ymalD }};--ymal-m:{{ $ymalM }}">
     <div class="eyebrow">{{ $ymal['wording']['eyebrow'] }}</div>
     <h2 id="ymal-h">{{ $ymal['wording']['title'] }}</h2>
@@ -58,4 +81,5 @@
     </div>
     <div class="rel kbb-pgrid ymal-track" data-skin="{{ \App\Support\GridSkins::resolve(null) }}" id="related" data-ymal-track tabindex="0" role="region" aria-label="{{ $ymal['wording']['title'] }}">@foreach ($ymalCards as $item)<x-product-card :product="$item" />@endforeach</div>
   </section>
+@endif
   @endif

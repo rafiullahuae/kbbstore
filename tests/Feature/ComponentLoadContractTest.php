@@ -157,6 +157,16 @@ const CLC_COVERED = [
      * and its warm path), covered by the same /product/{slug} render below.
      */
     'resources/views/partials/you-may-also-like.blade.php' => 'the "You may also like" carousel on a product page',
+    /*
+     * Lane RP. Blocks 2 and 3 at the foot of a product page — "Complete your
+     * routine" and "Continue shopping". Their cards come from App\Services\
+     * ProductRecs, which loads `brand:id,name,slug` once for every card of all
+     * three blocks on its cold path and `with('brand:id,name,slug')` on its
+     * warm one. Covered by the same /product/{slug} render below, which draws
+     * both (they ship on).
+     */
+    'resources/views/partials/product/recs-routine.blade.php' => '"Complete your routine" on a product page',
+    'resources/views/partials/product/recs-recent.blade.php' => '"Continue shopping" on a product page',
     'resources/views/store/routines.blade.php' => '/routines/{concern}',
     'resources/views/store/collection.blade.php' => '/concern/{concern}/',
     'resources/views/store/wishlist.blade.php' => '/my-wishlist',

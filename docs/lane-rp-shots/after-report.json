@@ -1,0 +1,324 @@
+{
+ "390": {
+  "direct": {
+   "tabs": [
+    "More from Anua [open]",
+    "More Toners"
+   ],
+   "imagesOnLoad": 4,
+   "footImagesFetchedOnLoad": {
+    "ymal-h:rp-p-brand": "2/11",
+    "ymal-h:rp-p-category": "0/12",
+    "rp2-h": "0/10",
+    "rp3-h": "0/10"
+   },
+   "cls": 0,
+   "lcp": {
+    "t": 436,
+    "el": "H1.bb-title"
+   },
+   "requestsOnLoad": 15,
+   "scrollWidth": 390,
+   "clientWidth": 390,
+   "footImagesFetchedAfterScroll": {
+    "ymal-h:rp-p-brand": "7/11",
+    "ymal-h:rp-p-category": "0/12",
+    "rp2-h": "10/10",
+    "rp3-h": "7/10"
+   },
+   "blocks": {
+    "one": true,
+    "two": true,
+    "three": true
+   },
+   "clsAfterScroll": 0,
+   "firstClick": {
+    "ok": 62,
+    "bad": [],
+    "badCount": 0
+   },
+   "layout": {
+    "tabHeight": 36,
+    "tabFont": "13px",
+    "block1CardWidth": 144.8,
+    "block2CardWidth": 168,
+    "block3CardWidth": 144.8,
+    "block1Height": 518,
+    "headingFont": "22px"
+   },
+   "afterCategoryTabClick": {
+    "tabs": [
+     "More from Anua",
+     "More Toners [open]"
+    ],
+    "before": {
+     "ymal-h:rp-p-brand": "7/11",
+     "ymal-h:rp-p-category": "0/12",
+     "rp2-h": "10/10",
+     "rp3-h": "10/10"
+    },
+    "after": {
+     "ymal-h:rp-p-brand": "7/11",
+     "ymal-h:rp-p-category": "7/12",
+     "rp2-h": "10/10",
+     "rp3-h": "10/10"
+    }
+   },
+   "prefetch": {
+    "href": "/product/torriden-dive-in-serum/",
+    "prefetchRequests": 1,
+    "deliveryType": "navigational-prefetch",
+    "landed": "/product/torriden-dive-in-serum/"
+   },
+   "consoleErrors": []
+  },
+  "fromCategory": {
+   "clicked": "/product/anua-heartleaf-77-clear-pad/",
+   "hint": "/collections/skincare/toners/",
+   "tabs": [
+    "More from Anua",
+    "More Toners [open]"
+   ],
+   "cls": 0,
+   "deliveryType": "navigational-prefetch",
+   "clsAfterScroll": 0
+  },
+  "fromBrand": {
+   "clicked": "/product/anua-heartleaf-77-clear-pad/",
+   "hint": "/brands/anua/",
+   "tabs": [
+    "More from Anua [open]",
+    "More Toners"
+   ],
+   "cls": 0
+  },
+  "tamperedHint": {
+   "tabs": [
+    "More from Anua [open]",
+    "More Toners"
+   ],
+   "imgInjected": false
+  },
+  "fromPagesConsoleErrors": [],
+  "arabic": {
+   "dir": "rtl",
+   "tabs": [
+    "المزيد من Anua [open]",
+    "المزيد من Toners"
+   ],
+   "scrollWidth": 390,
+   "errors": []
+  },
+  "pages": {
+   "/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 19,
+    "scripts": 2
+   },
+   "/collections/skincare/toners/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 25,
+    "scripts": 2
+   },
+   "/shop/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 32,
+    "scripts": 2
+   },
+   "/brands/anua/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 19,
+    "scripts": 2
+   },
+   "/product/anua-heartleaf-77-clear-pad/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 15,
+    "scripts": 3
+   },
+   "/blog/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 390,
+    "cls": 0,
+    "requests": 8,
+    "scripts": 2
+   }
+  }
+ },
+ "1280": {
+  "direct": {
+   "tabs": [
+    "More from Anua [open]",
+    "More Toners"
+   ],
+   "imagesOnLoad": 11,
+   "footImagesFetchedOnLoad": {
+    "ymal-h:rp-p-brand": "8/11",
+    "ymal-h:rp-p-category": "0/12",
+    "rp2-h": "0/10",
+    "rp3-h": "0/10"
+   },
+   "cls": 0,
+   "lcp": {
+    "t": 416,
+    "el": "H1.bb-title"
+   },
+   "requestsOnLoad": 22,
+   "scrollWidth": 1280,
+   "clientWidth": 1280,
+   "footImagesFetchedAfterScroll": {
+    "ymal-h:rp-p-brand": "8/11",
+    "ymal-h:rp-p-category": "0/12",
+    "rp2-h": "10/10",
+    "rp3-h": "8/10"
+   },
+   "blocks": {
+    "one": true,
+    "two": true,
+    "three": true
+   },
+   "clsAfterScroll": 0,
+   "firstClick": {
+    "ok": 62,
+    "bad": [],
+    "badCount": 0
+   },
+   "layout": {
+    "tabHeight": 36,
+    "tabFont": "13px",
+    "block1CardWidth": 232.8,
+    "block2CardWidth": 232.8,
+    "block3CardWidth": 232.8,
+    "block1Height": 606,
+    "headingFont": "22px"
+   },
+   "afterCategoryTabClick": {
+    "tabs": [
+     "More from Anua",
+     "More Toners [open]"
+    ],
+    "before": {
+     "ymal-h:rp-p-brand": "11/11",
+     "ymal-h:rp-p-category": "0/12",
+     "rp2-h": "10/10",
+     "rp3-h": "10/10"
+    },
+    "after": {
+     "ymal-h:rp-p-brand": "11/11",
+     "ymal-h:rp-p-category": "8/12",
+     "rp2-h": "10/10",
+     "rp3-h": "10/10"
+    }
+   },
+   "prefetch": {
+    "href": "/product/torriden-dive-in-serum/",
+    "prefetchRequests": 1,
+    "deliveryType": "navigational-prefetch",
+    "landed": "/product/torriden-dive-in-serum/"
+   },
+   "consoleErrors": []
+  },
+  "fromCategory": {
+   "clicked": "/product/anua-heartleaf-77-clear-pad/",
+   "hint": "/collections/skincare/toners/",
+   "tabs": [
+    "More from Anua",
+    "More Toners [open]"
+   ],
+   "cls": 0,
+   "deliveryType": "navigational-prefetch",
+   "clsAfterScroll": 0
+  },
+  "fromBrand": {
+   "clicked": "/product/anua-heartleaf-77-clear-pad/",
+   "hint": "/brands/anua/",
+   "tabs": [
+    "More from Anua [open]",
+    "More Toners"
+   ],
+   "cls": 0
+  },
+  "tamperedHint": {
+   "tabs": [
+    "More from Anua [open]",
+    "More Toners"
+   ],
+   "imgInjected": false
+  },
+  "fromPagesConsoleErrors": [],
+  "arabic": {
+   "dir": "rtl",
+   "tabs": [
+    "المزيد من Anua [open]",
+    "المزيد من Toners"
+   ],
+   "scrollWidth": 1280,
+   "errors": []
+  },
+  "pages": {
+   "/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0,
+    "requests": 22,
+    "scripts": 2
+   },
+   "/collections/skincare/toners/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0,
+    "requests": 27,
+    "scripts": 2
+   },
+   "/shop/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0,
+    "requests": 47,
+    "scripts": 2
+   },
+   "/brands/anua/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0,
+    "requests": 23,
+    "scripts": 2
+   },
+   "/product/anua-heartleaf-77-clear-pad/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0,
+    "requests": 22,
+    "scripts": 3
+   },
+   "/blog/": {
+    "status": 200,
+    "errors": 0,
+    "scrollWidth": 1280,
+    "cls": 0.0173,
+    "requests": 8,
+    "scripts": 2
+   }
+  }
+ }
+}

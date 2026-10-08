@@ -173,7 +173,21 @@ class ProductController extends Controller
          */
         $realSummary = $summary;
 
-        $alsoLike = app(\App\Services\AlsoLikeRail::class)->forProduct($product);
+        /*
+         * The three blocks at the foot of the page (Lane RP): App\Services\
+         * ProductRecs. Block 1 is "You may also like" — two tabs, or
+         * AlsoLikeRail's one row exactly as before when the owner keeps that —
+         * and blocks 2 and 3 are "Complete your routine" and "Continue
+         * shopping". "Buy these together" is chosen FIRST so nothing it shows
+         * is repeated below it; same two statements as before, in a new order.
+         */
+        $buyTogether = app(\App\Services\BuyTogether::class)->forProduct($product);
+        $recs = app(\App\Services\ProductRecs::class)->forProduct(
+            $product,
+            $request,
+            $buyTogether['products']->pluck('id')->map(fn ($i) => (int) $i)->all(),
+        );
+        $alsoLike = $recs['alsoLike'];
 
         return view('store.product', [
             'product' => $product,
@@ -218,7 +232,9 @@ class ProductController extends Controller
              * partial still names it. An empty collection is what it always
              * received with its module off, so the walk draws nothing there.
              */
-            'buyTogether' => app(\App\Services\BuyTogether::class)->forProduct($product),
+            'buyTogether' => $buyTogether,
+            // Blocks 2 and 3 and the order of all three. (Lane RP)
+            'recs' => $recs,
             'bundle' => collect(),
             'vatLine' => $this->vatLine($request),
             // $summary is built at the top of this method but was never
