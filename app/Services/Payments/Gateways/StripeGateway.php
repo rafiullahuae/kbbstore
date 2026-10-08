@@ -1404,27 +1404,78 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
      */
     public function abandonIntent(Order $order): bool
     {
+        return $this->closeIntent($order, spareInProgress: false) === self::INTENT_CLOSED;
+    }
+
+    /**
+     * How long a card payment waiting on the shopper's bank (3-D Secure) is
+     * left alone by an unfinished-payment sweep from another tab. (Lane SW)
+     *
+     * Long enough for any real challenge -- an OTP by SMS, a banking app, a
+     * slow phone -- and short enough that a challenge truly abandoned (the tab
+     * closed mid-way, Back pressed) gives the basket back the same quarter of
+     * an hour. "Return to your basket" never waits for it.
+     */
+    public const AUTHENTICATING_GRACE_SECONDS = 15 * 60;
+
+    private const INTENT_CLOSED = 'closed';
+
+    private const INTENT_IN_PROGRESS = 'in_progress';
+
+    private const INTENT_OPEN = 'open';
+
+    /**
+     * Close the intent at Stripe, or say why not: closed (cancelled now, dead
+     * already, or never opened), in_progress (spared: the shopper is still
+     * answering their bank), open (money moved, or Stripe unreachable).
+     */
+    private function closeIntent(Order $order, bool $spareInProgress): string
+    {
         $intentId = trim((string) $order->transaction_id);
 
         if ($intentId === '' || ! str_starts_with($intentId, 'pi_')) {
             // Nothing was ever opened, so there is nothing to keep open.
-            return true;
+            return self::INTENT_CLOSED;
         }
 
         $read = $this->stripeAttempt('GET', '/v1/payment_intents/' . urlencode($intentId));
 
         if (! $read['ok'] || ! is_array($read['body'])) {
-            return false;
+            return self::INTENT_OPEN;
         }
 
         $status = (string) ($read['body']['status'] ?? '');
 
         if (in_array($status, ['succeeded', 'processing', 'requires_capture'], true)) {
-            return false;
+            return self::INTENT_OPEN;
         }
 
         if ($status === 'canceled') {
-            return true;
+            return self::INTENT_CLOSED;
+        }
+
+        /*
+         * (Lane SW) THE SHOPPER IS ANSWERING THEIR BANK -- leave it alone.
+         *
+         * `requires_action` is a 3-D Secure challenge open in front of the
+         * shopper; `requires_confirmation` is the step just before it. The
+         * basket page or the checkout opened in ANOTHER tab used to sweep this
+         * order as unfinished: the intent was cancelled under the challenge,
+         * which then failed, and the order was released while the shopper was
+         * typing their OTP. While the intent is young that is a payment in
+         * progress, not an abandoned one. Its age is Stripe's own `created`,
+         * else the order's. Only the sweep spares it: "Return to your basket"
+         * (abandonIntent) closes it at once, and a provider's own failure
+         * return passes $spareInProgress false.
+         */
+        if ($spareInProgress && in_array($status, ['requires_action', 'requires_confirmation'], true)) {
+            $created = is_numeric($read['body']['created'] ?? null)
+                ? (int) $read['body']['created']
+                : ($order->created_at?->getTimestamp() ?? 0);
+
+            if (now()->getTimestamp() - $created < self::AUTHENTICATING_GRACE_SECONDS) {
+                return self::INTENT_IN_PROGRESS;
+            }
         }
 
         $cancel = $this->stripeAttempt(
@@ -1439,7 +1490,9 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             'ok' => $cancel['ok'] ? 'yes' : 'no',
         ]);
 
-        return $cancel['ok'] && (string) ($cancel['body']['status'] ?? '') === 'canceled';
+        return $cancel['ok'] && (string) ($cancel['body']['status'] ?? '') === 'canceled'
+            ? self::INTENT_CLOSED
+            : self::INTENT_OPEN;
     }
 
     /**
@@ -1453,11 +1506,21 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
      * card form calls: the order becomes paid and its basket stays converted.
      * Stripe unreachable is false whatever $shopperCameBack says -- a card
      * intent left confirmable is a payment a stale tab can still take.
+     *
+     * (Lane SW) And a young intent still in 3-D Secure is false too unless
+     * $shopperCameBack: the basket or checkout in another tab must not cancel
+     * a challenge the shopper is answering (closeIntent()).
      */
     public function settleBeforeRelease(Order $order, bool $shopperCameBack): bool
     {
-        if ($this->abandonIntent($order)) {
+        $closed = $this->closeIntent($order, spareInProgress: ! $shopperCameBack);
+
+        if ($closed === self::INTENT_CLOSED) {
             return true;
+        }
+
+        if ($closed === self::INTENT_IN_PROGRESS) {
+            return false;
         }
 
         $this->confirmFromBrowser($order);

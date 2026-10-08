@@ -33,6 +33,7 @@ use App\Models\ShippingZoneLocation;
 use App\Services\CartService;
 use App\Services\Checkout\UnfinishedPayment;
 use App\Services\Payments\GatewayRegistry;
+use App\Services\Payments\Gateways\StripeGateway;
 use App\Services\Payments\PaymentConfirmer;
 use App\Services\Payments\SettlesBeforeRelease;
 use Illuminate\Support\Facades\DB;
@@ -92,6 +93,8 @@ function bkProviders(): object
         public bool $down = false;
         public array $cancelled = [];
         public int $opened = 0;
+        /** When each intent was opened, as Stripe's `created` (Lane SW). */
+        public array $created = [];
     };
 
     Http::fake(function (Illuminate\Http\Client\Request $request) use ($s) {
@@ -103,6 +106,7 @@ function bkProviders(): object
         // answer the shop's question on the way BACK.
         if ($post && $path === '/v1/payment_intents') {
             $id = 'pi_bk_'.(++$s->opened);
+            $s->created[$id] = now()->getTimestamp();
 
             return Http::response(['id' => $id, 'client_secret' => $id.'_secret', 'status' => 'requires_payment_method'], 200);
         }
@@ -130,7 +134,7 @@ function bkProviders(): object
             $status = in_array($m[1], $s->cancelled, true) ? 'canceled' : $s->stripe;
 
             return Http::response([
-                'id' => $m[1], 'status' => $status, 'currency' => 'aed', 'amount' => (int) ($order?->total ?? 0),
+                'id' => $m[1], 'status' => $status, 'created' => $s->created[$m[1]] ?? null, 'currency' => 'aed', 'amount' => (int) ($order?->total ?? 0),
                 'amount_received' => $status === 'succeeded' ? (int) ($order?->total ?? 0) : 0,
             ], 200);
         }
@@ -624,6 +628,85 @@ it('leaves a cash-on-delivery order alone: it is placed, not unfinished', functi
         ->and($serum->fresh()->stock)->toBe(4);
 });
 
+/* ═══════ 4b. a payment still in progress is not swept from another tab ═════ */
+
+it('leaves a 3-D Secure the shopper is still answering alone when the basket or checkout opens in another tab', function (string $status) {
+    /*
+     * (Lane SW, found by Lane TY.) The shopper is mid 3-D Secure -- the
+     * intent is `requires_action` (or `requires_confirmation`, the step just
+     * before) -- and opens /cart/ or /checkout/ in another tab. recover() used
+     * to cancel the intent at Stripe under the open challenge and release the
+     * order: the challenge then failed while the shopper typed their OTP, and
+     * the stock went back on the shelf.
+     *
+     * MUTATION: in StripeGateway::closeIntent() change `$spareInProgress &&`
+     * to `false &&` -> the intent is cancelled and the basket restored on the
+     * first /cart/ visit, and the first expectation below goes red.
+     */
+    bkGatewayOn('stripe');
+    $stripe = bkProviders();
+    $serum = bkProduct('Glow Serum', 5);
+    $cart = bkCart([[$serum, 2]]);
+    $order = bkPlace($cart, 'stripe');
+
+    $stripe->stripe = $status;
+
+    bkAs($cart)->get('/cart/')->assertOk();
+    bkNext();
+    bkAs($cart)->get('/checkout/');
+    bkNext();
+
+    expect($stripe->cancelled)->toBe([], 'the intent was cancelled under an open 3-D Secure challenge')
+        ->and($order->fresh()->status)->toBe('pending')
+        ->and($cart->fresh()->status)->toBe('converted')
+        ->and($serum->fresh()->stock)->toBe(3, 'the order was released while it was being paid');
+
+    // Fourteen minutes on: still the shopper's to finish.
+    $this->travel(StripeGateway::AUTHENTICATING_GRACE_SECONDS - 60)->seconds();
+    bkAs($cart)->get('/cart/')->assertOk();
+    bkNext();
+    expect($stripe->cancelled)->toBe([]);
+
+    // Past the grace: abandoned, and the basket comes back by itself.
+    $this->travel(120)->seconds();
+    $html = bkAs($cart)->get('/cart/')->assertOk()->getContent();
+
+    expect($stripe->cancelled)->toBe([$order->transaction_id], 'the intent must be closed at Stripe before anything is released')
+        ->and($order->fresh()->status)->toBe('failed')
+        ->and($cart->fresh()->status)->toBe('active')
+        ->and($serum->fresh()->stock)->toBe(5)
+        ->and($html)->toContain(bkLine($serum));
+})->with(['requires_action', 'requires_confirmation']);
+
+it('releases a young 3-D Secure at once when the shopper presses "Return to your basket", or the bank sends them back failed', function (string $way) {
+    /*
+     * The grace is for a sweep from another tab only. The shopper's own
+     * "Return to your basket" (data-kbb-card-bail -> /checkout/card/abandon)
+     * and Stripe's failed full-redirect return are statements that the payment
+     * is over, and close the intent immediately.
+     *
+     * MUTATION: in StripeGateway::abandonIntent() pass `spareInProgress: true`
+     * -> the bail row keeps the order pending and goes red; in
+     * settleBeforeRelease() pass `spareInProgress: true` -> the redirect row.
+     */
+    bkGatewayOn('stripe');
+    $stripe = bkProviders();
+    $serum = bkProduct('Glow Serum', 5);
+    $cart = bkCart([[$serum, 2]]);
+    $order = bkPlace($cart, 'stripe');
+
+    $stripe->stripe = 'requires_action';
+
+    $way === 'bail'
+        ? bkAs($cart)->postJson('/checkout/card/abandon', ['order' => $order->order_number])->assertOk()
+        : bkAs($cart)->get('/checkout/success?order='.$order->order_number.'&payment_intent='.$order->transaction_id.'&redirect_status=failed');
+
+    expect($stripe->cancelled)->toBe([$order->transaction_id])
+        ->and($order->fresh()->status)->toBe('failed')
+        ->and($cart->fresh()->status)->toBe('active')
+        ->and($serum->fresh()->stock)->toBe(5);
+})->with(['bail', 'failed 3-D Secure return']);
+
 /* ═══════ 5. every gateway the shop has, through every way back unpaid ══════ */
 
 it('knows every gateway the registry has, so a new one cannot be missed', function () {
@@ -690,6 +773,11 @@ it('gives the basket back', function (string $gateway, string $kind, array $stat
         app(PaymentConfirmer::class)->fail($order->fresh(), $gateway, (string) $order->transaction_id, 'expired', []);
     }
 
+    // (Lane SW) A 3-D Secure that timed out is, by definition, no longer young.
+    if ($kind === 'timeout' && $gateway === 'stripe') {
+        $this->travel(StripeGateway::AUTHENTICATING_GRACE_SECONDS + 60)->seconds();
+    }
+
     $number = $order->order_number;
 
     match ($way) {
@@ -700,6 +788,18 @@ it('gives the basket back', function (string $gateway, string $kind, array $stat
         'back-to-checkout' => bkAs($cart)->get('/checkout/'),
         'bail' => bkAs($cart)->postJson('/checkout/card/abandon', ['order' => $number]),
     };
+
+    // (Lane SW) Back to the checkout while the 3-D Secure challenge is still
+    // young looks exactly like the checkout opened in ANOTHER tab while the
+    // shopper answers it, so the challenge is left alone; once it is older
+    // than the grace, the next visit gives the basket back.
+    if ($gateway === 'stripe' && $kind === 'back button') {
+        expect($cart->fresh()->status)->toBe('converted', 'a young 3-D Secure was swept from another tab')
+            ->and($script->cancelled)->toBe([]);
+        $this->travel(StripeGateway::AUTHENTICATING_GRACE_SECONDS + 60)->seconds();
+        bkNext();
+        bkAs($cart)->get('/checkout/');
+    }
 
     // Stripe that cannot be reached keeps its intent open and so keeps the
     // order: nothing is released until Stripe confirms the intent is closed.

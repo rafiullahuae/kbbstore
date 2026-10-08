@@ -44,6 +44,18 @@ use Illuminate\Http\Request;
  *   3. the move to `failed` is conditional on the status decided on, and the
  *      basket write is inside the same transaction behind a locked re-read.
  *
+ * A PAYMENT STILL IN PROGRESS IS NOT UNFINISHED (Lane SW). The basket or the
+ * checkout opened in another tab while the shopper answers a 3-D Secure
+ * challenge must not cancel it: Stripe's settleBeforeRelease() leaves a young
+ * `requires_action` / `requires_confirmation` intent alone unless the shopper
+ * came back by the provider's own failure return (StripeGateway::
+ * AUTHENTICATING_GRACE_SECONDS). Tabby's `CREATED` and Tamara's `new` are NOT
+ * spared, deliberately: neither provider tells "on our page now" from "pressed
+ * Back from our page", and Back to the checkout is the owner's own case for an
+ * immediate basket ("cart must not be empty in any case"). A Tabby or Tamara
+ * payment finished after such a release is recorded by PaymentConfirmer as a
+ * late confirmation with an ACTION NEEDED refund note, never a revived order.
+ *
  * WHO MAY TRIGGER IT. Only the browser that placed the order: the order number
  * is read from `kbb_last_order` in this session (written by place(), or by the
  * signed "Complete your order" link), never from the request -- a number in a
