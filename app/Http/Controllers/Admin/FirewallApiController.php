@@ -43,7 +43,6 @@ final class FirewallApiController extends Controller
     public function show(Request $request): JsonResponse
     {
         $all = FirewallConfig::all();
-        FirewallStore::use((string) $all['settings']['store']);
 
         return response()->json([
             'fields' => $this->fields($all['settings']),
@@ -55,7 +54,7 @@ final class FirewallApiController extends Controller
             'my_ip' => IpRange::normalise($request->ip()),
             'my_ip_allowed' => $this->allowed($all['allow'], (string) $request->ip()),
             'blocks' => $this->blockCount(),
-            'store' => ['name' => FirewallStore::name(), 'driver' => (string) config('cache.stores.'.FirewallStore::name().'.driver', FirewallStore::name()), 'shop' => (string) config('cache.default')],
+            'store' => ['logs' => FirewallStore::name(), 'shop' => (string) config('cache.default')],
             'data' => [
                 'country' => CountryDb::verify(),
                 'bots' => GoodBots::about(),
@@ -68,8 +67,6 @@ final class FirewallApiController extends Controller
     /** GET security/firewall/live */
     public function liveView(): JsonResponse
     {
-        FirewallStore::use((string) FirewallConfig::all()['settings']['store']);
-
         return response()->json(['live' => $this->live()]);
     }
 
@@ -77,11 +74,6 @@ final class FirewallApiController extends Controller
     public function save(Request $request): JsonResponse
     {
         $values = array_intersect_key((array) $request->input('values', []), FirewallConfig::SCHEMA);
-
-        if (isset($values['store']) && FirewallConfig::cast('store', $values['store']) !== 'auto'
-            && ! FirewallStore::works((string) FirewallConfig::cast('store', $values['store']))) {
-            return response()->json(['ok' => false, 'error' => 'That counter storage does not answer on this server. Switch it on in the hosting panel first (Cloudways: Server → Settings & Packages → Packages), then choose it here.'], 422);
-        }
 
         $before = FirewallConfig::all()['settings'];
         FirewallConfig::save($values, $this->who());
@@ -147,7 +139,7 @@ final class FirewallApiController extends Controller
 
         if ($result['ok']) {
             $this->security->record('firewall.allow', 'Firewall: always allow '.$result['cidr'], ['subject' => $result['cidr'], 'severity' => 'notice']);
-            Firewall::unban(bin2hex((string) IpRange::pack(explode('/', $result['cidr'])[0])));
+            Firewall::unban((string) Firewall::subjectFor($result['cidr']));
         }
 
         return response()->json($result + ['allow' => FirewallConfig::all()['allow']], $result['ok'] ? 200 : 422);
@@ -170,7 +162,6 @@ final class FirewallApiController extends Controller
     public function unban(Request $request): JsonResponse
     {
         $data = $request->validate(['subject' => ['required', 'string', 'max:49']]);
-        FirewallStore::use((string) FirewallConfig::all()['settings']['store']);
         $ok = Firewall::unban($data['subject']);
 
         if ($ok) {

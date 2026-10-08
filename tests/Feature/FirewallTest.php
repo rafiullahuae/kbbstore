@@ -213,6 +213,12 @@ it('bans a flood within seconds, and the ban ends by itself', function () {
     $bans = Firewall::bans();
     expect($bans)->toHaveCount(1)->and($bans[0]['who'])->toBe(FW_AE)->and($bans[0]['why'])->toBe('10s');
 
+    // IPv6 the same way, and its /64 neighbour is not caught with it.
+    fwBurst('2a00:1450:4001:82a::5', 21, '/product/'.$p->slug.'/');
+    fwVisitor('2a00:1450:4001:82a::5')->get('/cart')->assertStatus(429);
+    fwVisitor('2a00:1450:4001:82a::6')->get('/cart')->assertOk();
+    expect(Firewall::unban((string) Firewall::subjectFor('2a00:1450:4001:82a::5')))->toBeTrue();
+
     $this->travel(11)->minutes();
     fwVisitor(FW_AE)->get('/cart')->assertOk();
 
@@ -226,19 +232,55 @@ it('bans a flood within seconds, and the ban ends by itself', function () {
     // Unban from the screen's endpoint lifts it at once.
     fwBurst(FW_AE, 21, '/product/'.$p->slug.'/');
     fwVisitor(FW_AE)->get('/cart')->assertStatus(429);
-    expect(Firewall::unban(bin2hex(inet_pton(FW_AE))))->toBeTrue();
+    expect(Firewall::unban((string) Firewall::subjectFor(FW_AE)))->toBeTrue()
+        ->and(Firewall::subjectFor(FW_AE))->toBe($bans[0]['subject']);
     fwVisitor(FW_AE)->get('/cart')->assertOk();
+});
+
+it('bans a range that rotates addresses, even across a minute boundary', function () {
+    /*
+     * DEFECT: "each time they change the ips" — 20 addresses in one /24, each
+     * well under the per-address limit, together far over the range's; and a
+     * fixed one-minute window lets them send nearly twice the limit by
+     * straddling a minute (measured on the preview: 500 requests in 50 s from
+     * a Russian /24 went unbanned that way). MUTATION: make estimate() return
+     * $r['n60'] only and the range is never banned.
+     */
+    $p = fwProduct();
+    $this->travelTo(now()->startOfMinute()->addSeconds(50));
+    FirewallConfig::save(['mode' => 'enforce', 'net_60s' => 120]);
+
+    $wave = function () use ($p): void {
+        for ($a = 1; $a <= 20; $a++) {
+            for ($i = 0; $i < 5; $i++) {
+                fwVisitor('94.201.7.'.$a)->get('/product/'.$p->slug.'/');
+            }
+        }
+    };
+
+    $wave();                        // 100 at :50
+    fwVisitor('94.201.7.99')->get('/cart')->assertOk();
+    $this->travel(15)->seconds();   // :05 of the next minute
+    $wave();                        // 100 more: 100 + 100 × 55/60 > 120
+
+    fwVisitor('94.201.7.200')->get('/cart')->assertStatus(429);   // a fresh address, same /24
+    fwVisitor('94.202.7.1')->get('/cart')->assertOk();            // the next /24 is not caught
+    expect(collect(Firewall::bans())->pluck('who')->all())->toContain('94.201.7.0/24');
 });
 
 it('never bans a fast shopper browsing with hover-prefetch, even from a Protect country', function () {
     /*
      * DEFECT: InstantNav prefetches a page on every hover, and a shopper who
-     * skims a category gets banned from the checkout — from an ad click, in
-     * a Protect country. The profile replayed here is the PEAK measured in
-     * Chromium (tools/fw-human.cjs): 16 requests in the busiest 10 s, 45 in
-     * the busiest minute, prefetches included. MUTATION: count prefetches in
-     * the page counter (drop the isSpeculative() arm) and lower ip_10s to its
-     * minimum, and the shopper is banned.
+     * skims a category gets banned from the checkout — from an ad click, in a
+     * Protect country. MEASURED in Chromium (tools/fw451-human.cjs, two
+     * minutes of skimming at 1280 and 390, every request the app would
+     * handle logged by tools/fw451-router.php): the busiest 10 s held 9 page
+     * and API requests and 19 prefetches; the busiest minute, 26 page and API
+     * requests. Replayed here at TWICE that, for a whole minute: 18 pages and
+     * 38 prefetches every 10 s, 108 pages in the minute — under the Protect
+     * limits (half of 60/10 s, 240/60 s and 80 prefetches/10 s).
+     * MUTATION: count prefetches with the pages (drop the isSpeculative() arm
+     * of after()) and the Protect visitor is banned within the first 10 s.
      */
     $p = fwProduct();
     $this->travelTo(now()->startOfMinute()->addSeconds(1));
@@ -246,15 +288,14 @@ it('never bans a fast shopper browsing with hover-prefetch, even from a Protect 
     $page = '/product/'.$p->slug.'/';
 
     foreach ([FW_AE, FW_CN] as $ip) {
-        for ($second = 0; $second < 60; $second++) {
-            // Three times the measured peak, every 10 s, for a whole minute.
-            if ($second % 10 < 3) {
-                for ($k = 0; $k < 3; $k++) {
-                    fwVisitor($ip)->get($page);
-                    fwVisitor($ip, FW_UA, ['Sec-Purpose' => 'prefetch'])->get($page)->assertOk();
+        for ($block = 0; $block < 6; $block++) {
+            for ($k = 0; $k < 38; $k++) {
+                if ($k < 18) {
+                    fwVisitor($ip)->get($page)->assertOk();
                 }
+                fwVisitor($ip, FW_UA, ['Sec-Purpose' => 'prefetch'])->get($page)->assertOk();
             }
-            $this->travel(1)->seconds();
+            $this->travel(10)->seconds();
         }
 
         fwVisitor($ip)->get('/cart')->assertOk();
@@ -500,9 +541,24 @@ it('gives every non-owner role a 403 on every Firewall endpoint, and the owner t
     $fw = IpBlockList::compiled()['fw'];
     expect($fw['mode'])->toBe('enforce')->and($fw['scope'])->toBe('commerce')->and($fw['ip_10s'])->toBe(20);
 
-    // Off from the shell, whatever the screen says.
+    // Off from the shell, whatever the screen says — and the marker file it
+    // drops stops the firewall even where PHP-FPM's OPcache still holds the
+    // old compiled "enforce" (simulated here by writing enforce back without
+    // touching the marker). MUTATION: drop Firewall::killed() from BlockGate
+    // and the flood below is banned.
     $this->artisan('kbb:firewall', ['action' => 'off'])->assertSuccessful();
-    expect(IpBlockList::compiled()['fw']['mode'])->toBe('off');
+    expect(IpBlockList::compiled()['fw']['mode'])->toBe('off')->and(Firewall::killed())->toBeTrue();
+    $stale = IpBlockList::compiled();
+    $stale['fw']['mode'] = 'enforce';
+    $stale['fw']['ip_10s'] = 20;
+    file_put_contents(IpBlockList::path(), '<?php return '.var_export($stale, true).';');
+    IpBlockList::forget();
+    $p = fwProduct();
+    fwBurst(FW_AE, 25, '/product/'.$p->slug.'/');
+    fwVisitor(FW_AE)->get('/cart')->assertOk();
+
+    $this->artisan('kbb:firewall', ['action' => 'monitor'])->assertSuccessful();
+    expect(Firewall::killed())->toBeFalse();
 });
 
 it('adds no database query to a shop page, in any mode', function () {
@@ -556,22 +612,42 @@ it('reads the client address the way the app trusts proxies: a header cannot cha
     fwVisitor(FW_AE)->get('/')->assertOk();
 });
 
-it('fails open when its counter store is unavailable', function () {
+it('fails open when its counter table cannot be written', function () {
     /*
-     * DEFECT: Redis goes away and every shop page 500s. MUTATION: remove the
-     * try/catch in FirewallStore::bump().
+     * DEFECT: a full disk or a permissions slip under storage/ turns every
+     * shop page into a 500. MUTATION: remove the try/catch and the null
+     * returns in FirewallCounters::update().
      */
-    config(['cache.stores.fw-broken' => ['driver' => 'redis', 'connection' => 'no-such-connection']]);
     $p = fwProduct();
-    FirewallConfig::save(['mode' => 'enforce']);
-    DB::table('firewall_rules')->where('subject', 'store')->delete();
-    DB::table('firewall_rules')->insert(['kind' => 'setting', 'subject' => 'store', 'value' => json_encode('fw-broken'), 'created_at' => now(), 'updated_at' => now()]);
-    IpBlockList::rebuild();
-    expect(IpBlockList::compiled()['fw']['store'])->toBe('auto'); // a select stores its own options only
+    FirewallConfig::save(['mode' => 'enforce', 'ip_10s' => 20]);
+    $blocker = $this->fwDir.'/not-a-directory';
+    file_put_contents($blocker, 'x');
+    \App\Services\Security\FirewallCounters::useDir($blocker.'/table');
 
-    FirewallStore::use('fw-broken');
-    expect(FirewallStore::bump('x', 10))->toBe(0);
-    fwVisitor(FW_AE)->get('/product/'.$p->slug.'/')->assertOk();
+    for ($i = 0; $i < 25; $i++) {
+        fwVisitor(FW_AE)->get('/product/'.$p->slug.'/')->assertOk();
+    }
+    fwVisitor(FW_AE)->get('/cart')->assertOk();
+    expect(Firewall::bans())->toBe([]);
+});
+
+it('keeps the counter table at a fixed size, however many addresses come', function () {
+    /*
+     * DEFECT: one counter file per visitor per window (what Laravel's file
+     * cache does with a windowed key) fills the disk during a botnet flood.
+     * MUTATION: key the record by window as well as address, and the file
+     * count grows past 256.
+     */
+    $p = fwProduct();
+    FirewallConfig::save(['mode' => 'monitor']);
+    for ($i = 1; $i <= 300; $i++) {
+        fwVisitor('94.200.'.intdiv($i, 250).'.'.($i % 250 + 1))->get('/cart');
+    }
+    $files = glob(\App\Services\Security\FirewallCounters::dir().'/*') ?: [];
+    expect(count($files))->toBeLessThanOrEqual(256);
+    foreach ($files as $f) {
+        expect(filesize($f))->toBeLessThanOrEqual(64 * 4 * 64);
+    }
 });
 
 it('is wired exactly once: the routes from security-admin.php, the screen from the Security partial', function () {

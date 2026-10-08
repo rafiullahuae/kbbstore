@@ -31,8 +31,8 @@ const phone = W < 900;
     await p.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
     let visited = 0;
     while (Date.now() - t0 < 120000) {
-        await hoverAll('a[href*="/product/"], a[href*="/product-category/"], a[href*="/brands/"]', 12, 250);
-        const cats = await p.$$('a[href*="/product-category/"], a[href*="/shop"]');
+        await hoverAll('a[href*="/product/"], a[href*="/collections/"], a[href*="/brands/"]', 12, 250);
+        const cats = await p.$$('a[href*="/collections/"], a[href*="/shop"]');
         if (cats.length) {
             await Promise.all([p.waitForLoadState('domcontentloaded'), cats[visited % cats.length].click({ timeout: 3000 }).catch(() => {})]);
         }

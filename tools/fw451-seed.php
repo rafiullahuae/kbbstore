@@ -9,7 +9,7 @@ AdminUser::updateOrCreate(['email' => 'owner@preview.test'], ['name' => 'Preview
 
 try {
     \App\Models\Post::updateOrCreate(['slug' => 'fw-routine'], ['title' => 'A five-step evening routine', 'status' => 'publish',
-        'content' => '<p>Cleanse, tone, treat, moisturise, protect.</p>', 'published_at' => now()->subDay()]);
+        'body' => '<p>Cleanse, tone, treat, moisturise, protect.</p>', 'published_at' => now()->subDay()]);
 } catch (\Throwable $e) {
     echo 'post: '.$e->getMessage()."\n";
 }

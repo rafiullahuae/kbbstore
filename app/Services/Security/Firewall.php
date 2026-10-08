@@ -119,7 +119,6 @@ final class Firewall
             return null;
         }
 
-        FirewallStore::use((string) $fw['store']);
         $enforce = $fw['mode'] === 'enforce';
         $write = ! in_array($request->getMethod(), ['GET', 'HEAD', 'OPTIONS'], true);
         $ua = (string) $request->userAgent();
@@ -167,13 +166,17 @@ final class Firewall
         }
 
         if ($covered) {
-            foreach (FirewallStore::many(['fw:b:'.$key, 'fw:b:'.$net]) as $ban) {
-                if (is_array($ban) && (int) ($ban['until'] ?? 0) > FirewallStore::now()) {
-                    $refuse = $enforce && empty($ban['m']);
+            $now = FirewallStore::now();
+
+            foreach ([['a', $bin], ['n', self::netBin($bin)]] as [$kind, $addr]) {
+                $r = FirewallCounters::read(self::kind($kind, $bin), $addr);
+
+                if ($r !== null && $r['ban'] > $now) {
+                    $refuse = $enforce && ($r['flags'] & 1) === 0;
                     FirewallLog::hit('banned', $bin, $cc, $refuse);
 
                     if ($refuse) {
-                        return ['banned', 429, max(1, (int) $ban['until'] - FirewallStore::now())];
+                        return ['banned', 429, max(1, $r['ban'] - $now)];
                     }
 
                     break;
@@ -212,28 +215,45 @@ final class Firewall
 
         $t = FirewallStore::now();
         $scale = $s['rule'] === 'protect' ? $fw['protect_pct'] / 100 : 1.0;
-        $limit = static fn (int $n): int => max(1, (int) ceil($n * $scale)) + 1;
+        $limit = static fn (int $n): int => max(1, (int) ceil($n * $scale));
+        $w10 = intdiv($t, 10);
+        $w60 = intdiv($t, 60);
+        $banned = [];
 
         if (InstantNav::isSpeculative($request)) {
             // Prefetch has a counter of its own: hovering can never add to the
             // page-view counts, so it can never get a shopper banned.
-            if (FirewallStore::bump('fw:p:'.$s['key'].':'.intdiv($t, 10), 20) === $limit($fw['prefetch_10s'])) {
-                self::ban($s, $s['key'], inet_ntop($s['bin']), 'prefetch', $fw);
-            }
+            FirewallCounters::update(self::kind('a', $s['bin']), $s['bin'], $t, function (array $r) use ($w10, $limit, $fw, $t, $s, &$banned): array {
+                [$r['wp'], $r['np']] = $r['wp'] === $w10 ? [$w10, $r['np'] + 1] : [$w10, 1];
+
+                return $r['np'] > $limit($fw['prefetch_10s']) && $r['ban'] <= $t ? self::ban($r, 4, $t, $s, $fw, $banned) : $r;
+            });
         } else {
-            $a = FirewallStore::bump('fw:a:'.$s['key'].':'.intdiv($t, 10), 20);
-            $b = FirewallStore::bump('fw:m:'.$s['key'].':'.intdiv($t, 60), 90);
-            $c = FirewallStore::bump('fw:n:'.$s['net'].':'.intdiv($t, 60), 90);
+            FirewallCounters::update(self::kind('a', $s['bin']), $s['bin'], $t, function (array $r) use ($w10, $w60, $limit, $fw, $t, $s, &$banned): array {
+                [$r['w10'], $r['n10']] = $r['w10'] === $w10 ? [$w10, $r['n10'] + 1] : [$w10, 1];
+                $r = self::slide($r, $w60);
 
-            // `===`, not `>=`: a ban is written once, on the request that
-            // crosses the line, not on every request after it.
-            if ($a === $limit($fw['ip_10s']) || $b === $limit($fw['ip_60s'])) {
-                self::ban($s, $s['key'], inet_ntop($s['bin']), $a === $limit($fw['ip_10s']) ? '10s' : '60s', $fw);
-            }
+                // Once per ban: not again while this one is running.
+                if ($r['ban'] > $t) {
+                    return $r;
+                }
 
-            if ($c === $limit($fw['net_60s'])) {
-                self::ban($s, $s['net'], $s['net'], 'range', $fw);
-            }
+                if ($r['n10'] > $limit($fw['ip_10s'])) {
+                    return self::ban($r, 1, $t, $s, $fw, $banned);
+                }
+
+                return self::estimate($r, $t) > $limit($fw['ip_60s']) ? self::ban($r, 2, $t, $s, $fw, $banned) : $r;
+            });
+
+            FirewallCounters::update(self::kind('n', $s['bin']), self::netBin($s['bin']), $t, function (array $r) use ($w60, $limit, $fw, $t, $s, &$banned): array {
+                $r = self::slide($r, $w60);
+
+                return $r['ban'] <= $t && self::estimate($r, $t) > $limit($fw['net_60s']) ? self::ban($r, 3, $t, $s, $fw, $banned) : $r;
+            });
+        }
+
+        foreach ($banned as $_) {
+            FirewallLog::hit('flood', $s['bin'], $s['cc'], $s['enforce']);
         }
 
         if ($s['rule'] === 'protect' && $fw['proof'] && $request->isMethod('GET')
@@ -268,50 +288,74 @@ final class Firewall
 
     /* ═══════════════════════════════════════════════ bans ═══ */
 
-    private static function ban(array $s, string $subject, string $label, string $why, array $fw): void
+    /** Count one request in the current minute, carrying the last minute's count over. */
+    private static function slide(array $r, int $w60): array
     {
-        $strikes = max(1, FirewallStore::bump('fw:s:'.$subject, 86400));
-        $minutes = (int) min($fw['ban_max'], $fw['ban'] * (2 ** min(16, $strikes - 1)));
-        $until = FirewallStore::now() + $minutes * 60;
+        if ($r['w60'] === $w60) {
+            $r['n60']++;
+        } else {
+            $r['p60'] = $r['w60'] === $w60 - 1 ? $r['n60'] : 0;
+            $r['w60'] = $w60;
+            $r['n60'] = 1;
+        }
 
-        FirewallStore::put('fw:b:'.$subject, [
-            'until' => $until, 'm' => $s['enforce'] ? 0 : 1, 'why' => $why, 'strikes' => $strikes,
-            'who' => $label, 'cc' => $s['cc'], 'at' => FirewallStore::now(),
-        ], $minutes * 60);
-
-        $slot = FirewallStore::bump('fw:bx', 2 * 86400);
-        FirewallStore::put('fw:bx:'.($slot % 1000), $subject, 2 * 86400);
-        FirewallLog::hit('flood', $s['bin'], $s['cc'], $s['enforce']);
+        return $r;
     }
 
     /**
-     * Bans still running, newest first, from the ring of the last 1,000.
+     * Requests in the last 60 seconds, estimated: this minute's count plus the
+     * share of last minute's that still falls inside the window. A fixed
+     * minute would let a bot send twice the limit across a minute boundary
+     * (measured: 500 requests in 50 s straddling one went unbanned); the
+     * estimate does not, and costs one extra integer per record.
+     */
+    private static function estimate(array $r, int $t): int
+    {
+        return $r['n60'] + intdiv($r['p60'] * (60 - $t % 60), 60);
+    }
+
+    /**
+     * Ban the record: 10 minutes (the owner's setting), doubled for each
+     * strike in the last 24 hours, up to the longest ban. Inside the record's
+     * own update, so it is atomic with the count that crossed the line.
+     */
+    private static function ban(array $r, int $why, int $t, array $s, array $fw, array &$banned): array
+    {
+        $r['strikes'] = $r['stk'] > $t ? $r['strikes'] + 1 : 1;
+        $r['stk'] = $t + 86400;
+        $minutes = (int) min($fw['ban_max'], $fw['ban'] * (2 ** min(16, $r['strikes'] - 1)));
+        $r['ban'] = $t + $minutes * 60;
+        $r['flags'] = ($s['enforce'] ? 0 : 1) | ($why << 1);
+        $banned[] = $why;
+
+        return $r;
+    }
+
+    /**
+     * Bans still running, longest first — the screen's list.
      *
      * @return list<array<string, mixed>>
      */
     public static function bans(): array
     {
-        $slots = FirewallStore::many(array_map(static fn (int $i): string => 'fw:bx:'.$i, range(0, 999)));
-        $subjects = array_values(array_unique(array_filter($slots, 'is_string')));
-
-        if ($subjects === []) {
-            return [];
-        }
-
+        $now = FirewallStore::now();
         $out = [];
 
-        foreach (FirewallStore::many(array_map(static fn (string $s): string => 'fw:b:'.$s, $subjects)) as $k => $ban) {
-            if (is_array($ban) && (int) ($ban['until'] ?? 0) > FirewallStore::now()) {
-                $out[] = [
-                    'subject' => substr((string) $k, 5),
-                    'who' => (string) ($ban['who'] ?? ''),
-                    'why' => (string) ($ban['why'] ?? ''),
-                    'country' => (string) ($ban['cc'] ?? ''),
-                    'strikes' => (int) ($ban['strikes'] ?? 1),
-                    'until' => date(DATE_ATOM, (int) $ban['until']),
-                    'monitor' => ! empty($ban['m']),
-                ];
-            }
+        foreach (FirewallCounters::bans($now) as $r) {
+            $v4 = $r['kind'] === 'a' || $r['kind'] === 'n';
+            $bin = $v4 ? substr($r['addr'], 0, 4) : $r['addr'];
+            $range = $r['kind'] === 'n' || $r['kind'] === 'N';
+            $who = (string) inet_ntop($bin).($range ? '/'.IpRange::RANGE_PREFIX[$v4 ? 4 : 6] : '');
+
+            $out[] = [
+                'subject' => $r['kind'].'-'.bin2hex($bin),
+                'who' => $who,
+                'why' => FirewallCounters::WHY[($r['flags'] >> 1) & 7] ?? 'flood',
+                'country' => $range ? '' : CountryDb::lookup($bin),
+                'strikes' => $r['strikes'],
+                'until' => date(DATE_ATOM, $r['ban']),
+                'monitor' => ($r['flags'] & 1) === 1,
+            ];
         }
 
         usort($out, static fn (array $a, array $b): int => strcmp($b['until'], $a['until']));
@@ -319,17 +363,46 @@ final class Firewall
         return $out;
     }
 
+    /** Lift a ban: "a-<hex>" for an address, "n-<hex>" for a range (bans()' subject). */
     public static function unban(string $subject): bool
     {
-        if (preg_match('#^([0-9a-f]{8}|[0-9a-f]{32}|[0-9a-f:.]+/\d{1,3})$#', $subject) !== 1) {
+        if (preg_match('/^([aAnN])-([0-9a-f]{8}|[0-9a-f]{32})$/', $subject, $m) !== 1) {
             return false;
         }
 
-        $had = FirewallStore::get('fw:b:'.$subject) !== null;
-        FirewallStore::forget('fw:b:'.$subject);
-        FirewallStore::forget('fw:s:'.$subject);
+        if (FirewallCounters::read($m[1], (string) hex2bin($m[2])) === null) {
+            return false;
+        }
+
+        $had = false;
+        FirewallCounters::update($m[1], (string) hex2bin($m[2]), FirewallStore::now(), function (array $r) use (&$had): array {
+            $had = $r['ban'] > FirewallStore::now();
+            $r['ban'] = 0;
+            $r['strikes'] = 0;
+            $r['stk'] = 0;
+            $r['n10'] = 0;
+            $r['n60'] = 0;
+            $r['np'] = 0;
+
+            return $r;
+        });
 
         return $had;
+    }
+
+    /** The unban subject for an address typed by a person ("203.0.113.7" or "203.0.113.0/24"). */
+    public static function subjectFor(string $input): ?string
+    {
+        $r = IpRange::parse($input);
+
+        if ($r === null) {
+            return null;
+        }
+
+        $bin = (string) hex2bin($r['network']);
+        $kind = $r['prefix'] === ($r['family'] === 4 ? 32 : 128) ? 'a' : 'n';
+
+        return self::kind($kind, $bin).'-'.bin2hex($kind === 'n' ? self::netBin($bin) : $bin);
     }
 
     /* ═══════════════════════════════════════════════ the proof ═══ */
@@ -374,6 +447,36 @@ final class Firewall
             || str_contains($uri, 'webhook') || str_contains($uri, 'import-chain')
             || str_starts_with((string) $route->getName(), 'owner-app.')
             || BlockGate::isAdminArea($route);
+    }
+
+    /**
+     * The emergency switch `php artisan kbb:firewall off` also drops a marker
+     * file. The compiled settings file is cached by OPcache in PHP-FPM, and a
+     * console process cannot clear another process's OPcache — so a
+     * console-made "off" could otherwise wait for OPcache to revalidate (or,
+     * with timestamp validation off, for a PHP-FPM reload). One stat() a
+     * request, only while the firewall is on.
+     */
+    public static function killed(): bool
+    {
+        return is_file(self::killSwitch());
+    }
+
+    public static function killSwitch(): string
+    {
+        return storage_path('framework/kbb-firewall-off');
+    }
+
+    /** The /24 (/64) network of an address, as packed bytes. */
+    public static function netBin(string $bin): string
+    {
+        return IpRange::mask($bin, IpRange::RANGE_PREFIX[strlen($bin) === 4 ? 4 : 6]);
+    }
+
+    /** a/n for IPv4, A/N for IPv6: one table, no collisions between families. */
+    private static function kind(string $kind, string $bin): string
+    {
+        return strlen($bin) === 4 ? $kind : strtoupper($kind);
     }
 
     public static function netOf(string $bin): string

@@ -195,15 +195,12 @@
   }
 
   function statusHTML() {
-    var mode = values.mode || 'off', line = MODE_LINE[mode] || MODE_LINE.off, st = data.store;
+    var mode = values.mode || 'off', line = MODE_LINE[mode] || MODE_LINE.off;
     var tone = mode === 'enforce' ? 'is-quiet' : (mode === 'monitor' ? 'is-watch' : '');
     var buttons = [['off', 'Off'], ['monitor', 'Monitor'], ['enforce', 'On']].map(function (m) {
       return '<button type="button" class="fwl-mode is-' + m[0] + '" data-fwl-mode="' + m[0] + '" aria-pressed="'
         + (mode === m[0] ? 'true' : 'false') + '"' + (busy ? ' disabled' : '') + '>' + m[1] + '</button>';
     }).join('');
-    var storeNote = st.driver === 'file'
-      ? ' Counters are kept in files. That works; Redis is faster under a heavy flood — switch it on in Cloudways (Server → Settings & Packages → Packages) and choose Redis below.'
-      : '';
     var cdb = data.data.country;
     var geo = cdb.ok ? '' : '<div class="sx-off">The country database is not on this server yet, so country rules are not applied. Press "Download country database" further down (once).</div>';
 
@@ -211,10 +208,11 @@
       + '<div class="sx-vline">' + esc(line[0]) + '</div>'
       + '<p class="sx-sub">' + esc(line[1]) + '</p>'
       + '<div class="fwl-modes">' + buttons + '</div>'
-      + '<p class="sx-help" style="margin-top:10px">Emergency off from the server: <code>php artisan kbb:firewall off</code>. '
-      + 'Counters: <b>' + esc(st.name) + '</b>.' + esc(storeNote) + '</p>' + geo
+      + '<p class="sx-help" style="margin-top:10px">Emergency off from the server: <code>php artisan kbb:firewall off</code></p>' + geo
       + '</div>';
   }
+
+  var SHORT = { flood: 'flood ban', banned: 'while banned', no_proof: 'posted without a page', fake_bot: 'fake bot', country: 'country blocked', watch: 'watched' };
 
   function listHTML(rows, empty, line) {
     if (!rows || !rows.length) return '<div class="sx-empty">' + esc(empty) + '</div>';
@@ -233,7 +231,7 @@
     });
     var ips = listHTML(lv.ips, 'No address yet.', function (i) {
       return '<div class="fwl-li"><span><b>' + esc(i.ip) + '</b>' + (i.country ? ' <span class="fwl-tag">' + esc(i.country) + '</span>' : '')
-        + '<small>' + esc(i.reasons.join(', ')) + '</small></span><span class="fwl-n">' + esc(i.hits) + '</span></div>';
+        + '<small>' + esc(i.reasons.map(function (r) { return SHORT[r] || r; }).join(', ')) + '</small></span><span class="fwl-n">' + esc(i.hits) + '</span></div>';
     });
     var nets = listHTML(lv.nets, 'No range yet.', function (n) {
       return '<div class="fwl-li"><span>' + esc(n.net) + '</span><span class="fwl-n">' + esc(n.hits) + '</span></div>';
@@ -262,7 +260,7 @@
   }
 
   function limitsHTML() {
-    var keys = ['scope', 'ip_10s', 'ip_60s', 'net_60s', 'prefetch_10s', 'ban_minutes', 'ban_max_minutes', 'protect_percent', 'protect_proof', 'fake_bots', 'store'];
+    var keys = ['scope', 'ip_10s', 'ip_60s', 'net_60s', 'prefetch_10s', 'ban_minutes', 'ban_max_minutes', 'protect_percent', 'protect_proof', 'fake_bots'];
     return '<div class="sx-card"><div class="sx-title">Flood limits and bans</div>'
       + '<p class="sx-sub">An address that asks faster than any person can is banned for a few minutes, invisibly to everyone else. Signed-in admins, always-allowed addresses and verified search engines are never counted.</p>'
       + '<div class="sx-fields">' + keys.map(function (k) { var fl = f(k); return fl ? fieldHTML(fl) : ''; }).join('') + '</div>'

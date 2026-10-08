@@ -223,6 +223,7 @@ final class StaticMemos
             // the open country file, the bot ranges and the flush flag.
             \App\Services\Security\Firewall::class => static fn () => \App\Services\Security\Firewall::reset(),
             \App\Services\Security\FirewallStore::class => static fn () => \App\Services\Security\FirewallStore::reset(),
+            \App\Services\Security\FirewallCounters::class => static fn () => \App\Services\Security\FirewallCounters::wipeTestTable(),
             \App\Services\Security\FirewallLog::class => static fn () => \App\Services\Security\FirewallLog::reset(),
             \App\Services\Security\CountryDb::class => static fn () => \App\Services\Security\CountryDb::forget(),
             \App\Services\Security\GoodBots::class => static fn () => \App\Services\Security\GoodBots::forget(),

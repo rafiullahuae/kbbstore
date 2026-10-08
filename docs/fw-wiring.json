@@ -1,0 +1,34 @@
+[
+    {
+        "n": 1,
+        "what": "console TITLES: Store → Security → Firewall, so ?go=firewall and #firewall name the screen (Lane FW)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "'security':['Store','Security'],",
+        "count": 1,
+        "replacement": "'security':['Store','Security'],'firewall':['Store → Security','Firewall'],"
+    },
+    {
+        "n": 2,
+        "what": "console LATE_RENDERED: arm the deep-link replay for 'firewall' -- its partial (included from the Security partial) wraps window.go and draws the screen itself (Lane FW)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "'imageseo','security','paygw',",
+        "count": 1,
+        "replacement": "'imageseo','security','firewall','paygw',"
+    },
+    {
+        "n": 3,
+        "what": "docs/T1B-ADMIN-APP-BLOCKS.md quotes the console's whole LATE_RENDERED line; keep it in step (Lane FW)",
+        "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
+        "anchor": "'imageseo','security','paygw',",
+        "count": 1,
+        "replacement": "'imageseo','security','firewall','paygw',"
+    },
+    {
+        "n": 4,
+        "what": "docs/BG-ADMIN-APP-BLOCKS.md quotes the same line twice; keep both in step (Lane FW)",
+        "file": "docs/BG-ADMIN-APP-BLOCKS.md",
+        "anchor": "'imageseo','security','paygw',",
+        "count": 2,
+        "replacement": "'imageseo','security','firewall','paygw',"
+    }
+]

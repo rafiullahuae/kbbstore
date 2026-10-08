@@ -77,7 +77,7 @@ final class FirewallStore
 
     public static function name(): string
     {
-        return self::$name ??= self::resolve(IpBlockList::compiled()['fw']['store'] ?? 'auto');
+        return self::$name ??= self::resolve();
     }
 
     private static function repo(): ?Repository

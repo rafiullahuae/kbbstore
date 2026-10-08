@@ -40,16 +40,16 @@ final class FirewallConfig
             'Cart, checkout and forms: a banned address can still read the shop. The whole storefront: every shop page answers 429. The admin, webhooks and payment returns are never refused either way.',
             ['commerce' => 'Cart, checkout and forms', 'site' => 'The whole storefront']],
         'ip_10s' => ['range', 'Per address, in 10 seconds', 60,
-            'More requests than this from one address within 10 seconds is a flood. A fast shopper with hover-prefetch peaked at 16 in our measurement.',
+            'More requests than this from one address within 10 seconds is a flood. Measured in Chrome: a fast shopper skimming with hover-prefetch peaked at 9 page and cart requests in 10 seconds.',
             ['min' => 20, 'max' => 600, 'step' => 5, 'unit' => ' requests']],
         'ip_60s' => ['range', 'Per address, in 60 seconds', 240,
-            'The sustained limit for one address. A fast shopper peaked at 45 in a minute.',
+            'The sustained limit for one address. The same fast shopper peaked at 26 in a minute.',
             ['min' => 60, 'max' => 3000, 'step' => 10, 'unit' => ' requests']],
         'net_60s' => ['range', 'Per range (/24 or IPv6 /64), in 60 seconds', 900,
             'For bots that rotate addresses inside one network. Kept high: a mobile carrier puts many real customers in one range.',
             ['min' => 120, 'max' => 10000, 'step' => 20, 'unit' => ' requests']],
         'prefetch_10s' => ['range', 'Prefetches per address, in 10 seconds', 80,
-            'Hover-prefetch requests are counted on their own, never with page views, so prefetch can never get a shopper banned.',
+            'Hover-prefetch requests are counted on their own, never with page views, so prefetch can never get a shopper banned. The fast shopper peaked at 19 in 10 seconds.',
             ['min' => 20, 'max' => 600, 'step' => 5, 'unit' => ' prefetches']],
         'ban_minutes' => ['range', 'First ban lasts', 10,
             'A flood earns a temporary ban that ends by itself. Each repeat within 24 hours doubles it.',
@@ -64,9 +64,6 @@ final class FirewallConfig
             'Invisible: the page a visitor opens carries a signed cookie, and adding to cart, checking out or sending a form must bring it back. A script that posts without loading a page is refused. No captcha, no extra request, no delay.'],
         'fake_bots' => ['bool', 'Refuse fake search-engine bots', true,
             'A visitor that calls itself Googlebot (or Bing, Apple, Yandex, Pinterest) but does not come from that company\'s network, checked by the company\'s own published method. No real browser ever sends those names.'],
-        'store' => ['select', 'Counter storage', 'auto',
-            'Where the per-address counters live. Auto uses the shop\'s cache unless that is the database, then files. Redis or Memcached is fastest when the server has it.',
-            ['auto' => 'Auto', 'file' => 'Files', 'redis' => 'Redis', 'memcached' => 'Memcached', 'apc' => 'APCu']],
     ];
 
     public const COUNTRY_ACTIONS = ['allow' => 'Allow', 'watch' => 'Watch', 'protect' => 'Protect', 'block' => 'Block'];
@@ -195,7 +192,6 @@ final class FirewallConfig
             'protect_pct' => $s['protect_percent'],
             'proof' => $s['protect_proof'],
             'fake' => $s['fake_bots'],
-            'store' => $s['store'],
             'countries' => $countries,
             'botre' => GoodBots::regex(array_keys(array_filter($all['bots']))),
             'skip' => $skip,
@@ -214,6 +210,12 @@ final class FirewallConfig
     /** @param array<string, mixed> $values  unknown keys are ignored */
     public static function save(array $values, ?string $by = null): void
     {
+        // Choosing a mode from the screen (or the console) supersedes the
+        // emergency marker; `kbb:firewall off` writes it again after this.
+        if (isset($values['mode'])) {
+            @unlink(Firewall::killSwitch());
+        }
+
         foreach ($values as $key => $value) {
             if (isset(self::SCHEMA[$key])) {
                 self::put('setting', (string) $key, json_encode(self::cast((string) $key, $value)), null, $by);

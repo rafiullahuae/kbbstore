@@ -65,9 +65,14 @@ class FirewallCommand extends Command
             }
         }
 
+        // Off is also a marker file, which PHP-FPM sees on its next request
+        // whatever OPcache holds (Firewall::killed()).
+        if ($mode === 'off') {
+            @touch(Firewall::killSwitch());
+        }
+
         IpBlockList::forget();
         $this->info('Firewall is now '.strtoupper(IpBlockList::compiled()['fw']['mode']).'.');
-        $this->line('PHP-FPM may cache the old file for a moment; if it still acts, reload PHP-FPM.');
 
         return self::SUCCESS;
     }
@@ -75,14 +80,13 @@ class FirewallCommand extends Command
     private function status(): int
     {
         $fw = IpBlockList::compiled()['fw'];
-        FirewallStore::use((string) $fw['store']);
         $country = CountryDb::verify();
 
         $this->line('Mode:            '.$fw['mode']);
         $this->line('Scope:           '.$fw['scope']);
         $this->line('Limits:          '.$fw['ip_10s'].'/10 s, '.$fw['ip_60s'].'/60 s per address; '.$fw['net_60s'].'/60 s per range; prefetch '.$fw['prefetch_10s'].'/10 s');
         $this->line('Countries:       '.(json_encode($fw['countries']) ?: '{}'));
-        $this->line('Counter store:   '.FirewallStore::name());
+        $this->line('Counters:        storage/framework/firewall (fixed 4 MiB table); logs in the "'.FirewallStore::name().'" cache store');
         $this->line('Country data:    '.($country['ok'] ? $country['v4'].' IPv4 + '.$country['v6'].' IPv6 ranges, built '.$country['date'] : 'MISSING — '.$country['error'].' (run: php artisan kbb:firewall data)'));
         $this->line('Active bans:     '.count(Firewall::bans()));
 
@@ -91,10 +95,9 @@ class FirewallCommand extends Command
 
     private function unban(string $target): int
     {
-        $subject = str_contains($target, '/') ? $target : bin2hex((string) \App\Support\IpRange::pack($target));
-        FirewallStore::use((string) IpBlockList::compiled()['fw']['store']);
+        $subject = Firewall::subjectFor($target);
 
-        if ($subject === '' || ! Firewall::unban($subject)) {
+        if ($subject === null || ! Firewall::unban($subject)) {
             $this->warn('No ban found for '.$target.'.');
 
             return self::FAILURE;

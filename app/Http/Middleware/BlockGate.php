@@ -110,7 +110,7 @@ final class BlockGate
         // nothing else. See App\Services\Security\Firewall for the order.
         $fw = $gate['fw'] ?? null;
 
-        if (! is_array($fw) || ($fw['mode'] ?? 'off') === 'off') {
+        if (! is_array($fw) || ($fw['mode'] ?? 'off') === 'off' || Firewall::killed()) {
             return $next($request);
         }
 
