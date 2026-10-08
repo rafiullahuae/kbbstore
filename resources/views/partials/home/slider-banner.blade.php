@@ -235,6 +235,26 @@
     };
 
     /*
+     * ── LANE HB3: "EXACTLY THIS HEIGHT" ─────────────────────────────────────
+     * When a device's height is exact the frame is N px tall at every width
+     * and the picture covers it, whatever the set-wide fit says -- a whole
+     * picture in a fixed-height frame is either letterboxed or stretched, and
+     * neither is what "600px tall" means. Rendered width is then the larger of
+     * the screen and N x the picture's own aspect, which is what the `sizes`
+     * below says, so the browser fetches the right candidate. The CSS is
+     * partials/home/slider-exact-css, included only when a device is exact.
+     */
+    $bsExactD = $set->sliderExact(false);
+    $bsExactM = $set->sliderExact(true);
+    $bsExactSizes = static function (int $height) use ($bsSizes): \Closure {
+        return static fn (?int $w, ?int $h, float $ar): string => $w && $h
+            ? 'max(100vw, '.(int) round($height * $w / $h).'px)'
+            : $bsSizes;
+    };
+    $bsSizesAtD = $bsExactD ? $bsExactSizes($set->sliderHeight(false)) : $bsSizesAt;
+    $bsSizesAtM = $bsExactM ? $bsExactSizes($set->sliderHeight(true)) : $bsSizesAt;
+
+    /*
      * WHAT EACH BREAKPOINT WILL ACTUALLY DRAW, decided once per card and here
      * rather than in the markup, because five things are read off it — the
      * source element, the img, both `sizes` and the preload — and a condition
@@ -253,7 +273,7 @@
 
     $bsCrops = $set->sliderCropsPhone();
 
-    $bsPhoneFor = static function ($card) use ($bsArM, $bsCropToken, $bsCrops, $bsSizesAt): array {
+    $bsPhoneFor = static function ($card) use ($bsArM, $bsCropToken, $bsCrops, $bsSizesAtM): array {
         /*
          * ── THREE WAYS TO FILL THE PHONE FRAME, BEST FIRST ──────────────────
          *
@@ -281,7 +301,7 @@
                 'srcset' => null,
                 'w' => $card->image_m_w,
                 'h' => $card->image_m_h,
-                'sizes' => $bsSizesAt($card->image_m_w, $card->image_m_h, $bsArM),
+                'sizes' => $bsSizesAtM($card->image_m_w, $card->image_m_h, $bsArM),
             ];
         }
 
@@ -315,7 +335,7 @@
                 'srcset' => $crop,
                 'w' => $card->image_w && $card->image_h ? $cropW : null,
                 'h' => $card->image_w && $card->image_h ? $cropH : null,
-                'sizes' => $bsSizesAt($cropW, $cropH, $bsArM),
+                'sizes' => $bsSizesAtM($cropW, $cropH, $bsArM),
             ];
         }
 
@@ -325,7 +345,7 @@
             'srcset' => null,
             'w' => $card->image_w,
             'h' => $card->image_h,
-            'sizes' => $bsSizesAt($card->image_w, $card->image_h, $bsArM),
+            'sizes' => $bsSizesAtM($card->image_w, $card->image_h, $bsArM),
         ];
     };
 
@@ -335,8 +355,8 @@
      * and the factor collapses to 1 — so this is byte-identical on the whole
      * existing catalogue and only speaks up for a picture wider than 1920:550.
      */
-    $bsSizesFor = static function ($card) use ($bsArD, $bsSizesAt): string {
-        return $bsSizesAt($card->image_w, $card->image_h, $bsArD);
+    $bsSizesFor = static function ($card) use ($bsArD, $bsSizesAtD): string {
+        return $bsSizesAtD($card->image_w, $card->image_h, $bsArD);
     };
 
     /*
@@ -436,7 +456,7 @@
     $hbWords = [];
 
     foreach ($cards as $hbI => $hbCard) {
-        $hbWords[$hbI] = BannerTextBox::words($hbCard, $hbCfg, $hbAr);
+        $hbWords[$hbI] = BannerTextBox::words($hbCard, $hbCfg, $hbAr, $bsExactM);
     }
 
     $hbAny = array_filter($hbWords) !== [];
@@ -830,7 +850,7 @@
   .kbbs.is-veil .kbbs-nav,.kbbs.is-veil .kbbs-pp{opacity:1}
 }
 </style>
-@if ($hbAny)@include('partials.home.slider-text-box-css')@endif<div class="kbbs is-{{ $bsStyle }}{{ $bsArrows ? ' is-arrows' : '' }}{{ $bsBars ? ' is-bars' : '' }}{{ $bsDwell > 0 ? ' is-auto' : '' }}{{ $set->sliderFills() ? ' is-fill' : '' }}{{ $bsCover ? '' : ' is-whole' }}{{ $bsBgMode === 'none' ? '' : ' has-bg' }}{{ $hbAny ? ' has-hb hb-'.$hbCfg['style'].' hb-glow-'.$hbCfg['glow'].BannerTextBox::rootClasses($hbCfg) : '' }}"
+@includeWhen($bsExactD || $bsExactM, 'partials.home.slider-exact-css', ['bsExactD' => $bsExactD, 'bsExactM' => $bsExactM])@if ($hbAny)@include('partials.home.slider-text-box-css')@endif<div class="kbbs is-{{ $bsStyle }}{{ $bsArrows ? ' is-arrows' : '' }}{{ $bsBars ? ' is-bars' : '' }}{{ $bsDwell > 0 ? ' is-auto' : '' }}{{ $set->sliderFills() ? ' is-fill' : '' }}{{ $bsCover ? '' : ' is-whole' }}{{ $bsBgMode === 'none' ? '' : ' has-bg' }}{{ $bsExactD ? ' is-hx-d' : '' }}{{ $bsExactM ? ' is-hx-m' : '' }}{{ $hbAny ? ' has-hb hb-'.$hbCfg['style'].' hb-glow-'.$hbCfg['glow'].BannerTextBox::rootClasses($hbCfg) : '' }}"
      id="{{ $bsUid }}"
      style="{{ $bsVars }}{{ $bsBgVars === '' ? '' : ';'.$bsBgVars }}{{ $hbAny ? ';'.BannerTextBox::cssVariables($hbCfg).BannerTextBox::siteVariables($hbCfg) : '' }}"
      role="region"

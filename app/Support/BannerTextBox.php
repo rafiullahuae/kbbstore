@@ -381,7 +381,7 @@ final class BannerTextBox
      *
      * @return array{eyebrow:string,heading:string,text:string,button:string,href:string,sticker:string,ring:string,end:bool,phone:bool}|null
      */
-    public static function words(BannerCard $card, array $cfg, bool $arabic): ?array
+    public static function words(BannerCard $card, array $cfg, bool $arabic, bool $phoneFrame = false): ?array
     {
         if (! filter_var($card->getAttribute('box_on'), FILTER_VALIDATE_BOOLEAN)) {
             return null;
@@ -412,7 +412,9 @@ final class BannerTextBox
             'sticker' => $cfg['show_sticker'] && $cfg['style'] === 'd' ? $pick('sticker') : '',
             'ring' => '',
             'end' => (string) $card->getAttribute('box_pos') === 'end',
-            'phone' => $card->hasPhonePicture(),
+            // Lane HB3: with an EXACT phone height the frame is a fixed phone
+            // shape (430 x N crop or the phone picture), so the box has room.
+            'phone' => $card->hasPhonePicture() || $phoneFrame,
         ];
 
         if ($w['sticker'] !== '') {

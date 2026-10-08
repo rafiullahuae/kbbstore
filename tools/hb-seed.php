@@ -25,6 +25,8 @@ foreach ([Locale::SETTING_ENABLED, Locale::SETTING_RTL] as $key) {
 $set = BannerSet::create([
     'name' => 'Homepage slider', 'slug' => 'homepage-slider', 'status' => 'publish', 'position' => 0,
     'kind' => 'slider', 'show_arrows' => true, 'show_dots' => true, 'autoplay' => false,
+    // Lane HB3: the owner's phone height (HB_PHONE_H, e.g. 600). 0 is Auto.
+    'slider_h_m' => (int) (getenv('HB_PHONE_H') ?: 0),
 ]);
 
 $words = [
@@ -45,11 +47,16 @@ foreach ($words as $i => [$pic, $eb, $h, $t, $btn, $stk, $ring, $ebAr, $hAr, $tA
     \App\Support\MediaRegistrar::record($m);
 
     $row = [
-        'banner_set_id' => $set->id, 'image' => $d, 'image_m' => $m,
-        'image_w' => 1920, 'image_h' => 550, 'image_m_w' => 500, 'image_m_h' => 600,
+        'banner_set_id' => $set->id, 'image' => $d,
+        'image_w' => 1920, 'image_h' => 550,
         'alt' => str_replace('*', '', $h), 'heading' => $h, 'body' => $t, 'button_label' => $btn,
         'button_url' => '/shop/', 'position' => $i + 1, 'status' => 'publish',
     ];
+
+    // Lane HB3: HB_NO_PHONE=1 seeds pictures WITHOUT phone pictures (his case).
+    if (! getenv('HB_NO_PHONE')) {
+        $row += ['image_m' => $m, 'image_m_w' => 500, 'image_m_h' => 600];
+    }
 
     if ($hasBox) {
         $row += ['box_on' => true, 'eyebrow' => $eb, 'sticker' => $stk, 'sticker_ring' => $ring,
