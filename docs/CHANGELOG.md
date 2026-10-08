@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.435
+**The desktop menu shows the page you are on.** Apply after .434. Runs its migrations.
+Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "when i go to any page/category or brand etc from the top menu in desktop, it's not highlighting ... make the nice and super light style" | The top-menu item for the page (or the section it sits in: a sub-category, a product's category, a brand, an article) turns deep pink with the thin underline; one item only; one marker when its panel is open; Arabic too. Appearance -> Header -> Navigation: Show the current page (on), style line / dot / text only, colour. No script, no query, nothing moves |
+
+Files: see the package's update.json.
+
 ## 2.60.434
 **"SKIN&amp;LAB" reads "SKIN&LAB" everywhere.** Apply after .433. Runs its migrations.
 Hard refresh the shop.
