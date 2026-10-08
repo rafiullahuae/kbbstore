@@ -10,6 +10,7 @@ use App\Models\BannerSet;
 use App\Services\Banners;
 use App\Services\ModuleSchema;
 use App\Services\SettingsService;
+use App\Support\BannerTextBox;
 use App\Support\ImageVariants;
 use App\Support\MediaRegistrar;
 use Illuminate\Http\JsonResponse;
@@ -123,6 +124,16 @@ class BannerApiController extends Controller
                 // Lane RC. Whole picture or fill-and-crop, drawn as a select.
                 'slider_fits' => BannerSet::SLIDER_FITS,
                 'limits' => BannerSet::LIMITS,
+                // Lane HB. The text box's options and slider ranges, from the
+                // one class that also clamps them on the way in and out.
+                'text_box' => [
+                    'styles' => BannerTextBox::STYLES,
+                    'glows' => BannerTextBox::GLOWS,
+                    'buttons' => BannerTextBox::BUTTONS,
+                    'positions' => BannerTextBox::POSITIONS,
+                    'sliders' => BannerTextBox::SLIDERS,
+                    'defaults' => BannerTextBox::defaults(),
+                ],
             ],
         ]);
     }
@@ -324,6 +335,28 @@ class BannerApiController extends Controller
             'slider_h_m' => ['sometimes', 'integer'],
         ];
 
+        /*
+         * ── LANE HB: the slider's text box, set-wide ───────────────────────
+         * Flat `tb_*` keys, because the console's draft and its preview send
+         * exactly the flat keys it lists. The three selects are Rule::in over
+         * BannerTextBox's own options; the sizes are numbers, clamped and
+         * stepped by BannerTextBox::normalize() in fillSet() and again at
+         * render, so a value outside the range cannot reach a page.
+         */
+        $rules['tb_style'] = ['sometimes', Rule::in(array_keys(BannerTextBox::STYLES))];
+        $rules['tb_glow'] = ['sometimes', Rule::in(array_keys(BannerTextBox::GLOWS))];
+        $rules['tb_button'] = ['sometimes', Rule::in(array_keys(BannerTextBox::BUTTONS))];
+
+        foreach (array_keys(BannerTextBox::SHOWS) as $key) {
+            $rules['tb_'.$key] = ['sometimes', 'boolean'];
+        }
+
+        foreach (BannerTextBox::keys() as $key) {
+            if (str_starts_with($key, 'size_')) {
+                $rules['tb_'.$key] = ['sometimes', 'numeric'];
+            }
+        }
+
         foreach (['bg_color', 'btn_bg', 'btn_text', 'btn_hover'] as $colour) {
             $rules[$colour] = ['sometimes', 'nullable', 'string', 'regex:/^(#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6}))?$/'];
         }
@@ -402,6 +435,22 @@ class BannerApiController extends Controller
             if ($data['bg_image'] !== '') {
                 MediaRegistrar::record($data['bg_image']);
             }
+        }
+
+        // Lane HB. The `tb_*` keys are one JSON document, merged over what the
+        // set already holds so a partial save keeps the rest, and normalised.
+        $box = [];
+
+        foreach (BannerTextBox::keys() as $key) {
+            if (array_key_exists('tb_'.$key, $data)) {
+                $box[$key] = $data['tb_'.$key];
+            }
+
+            unset($data['tb_'.$key]);
+        }
+
+        if ($box !== []) {
+            $data['text_box'] = json_encode(BannerTextBox::normalize($box + BannerTextBox::forSet($set)));
         }
 
         $set->fill($data);
@@ -592,6 +641,18 @@ class BannerApiController extends Controller
             'button_url' => ['sometimes', 'nullable', 'string', 'max:400'],
             'position' => ['sometimes', 'integer', 'min:0', 'max:9999'],
             'status' => ['sometimes', Rule::in(array_keys(BannerCard::STATUSES))],
+            // Lane HB. The words on a slider picture.
+            'box_on' => ['sometimes', 'boolean'],
+            'box_pos' => ['sometimes', Rule::in(array_keys(BannerTextBox::POSITIONS))],
+            'eyebrow' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'sticker' => ['sometimes', 'nullable', 'string', 'max:24'],
+            'sticker_ring' => ['sometimes', 'nullable', 'string', 'max:40'],
+            'eyebrow_ar' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'heading_ar' => ['sometimes', 'nullable', 'string', 'max:190'],
+            'body_ar' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'button_label_ar' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'sticker_ar' => ['sometimes', 'nullable', 'string', 'max:24'],
+            'sticker_ring_ar' => ['sometimes', 'nullable', 'string', 'max:40'],
         ];
 
         if ($prefix === '') {
@@ -662,7 +723,9 @@ class BannerApiController extends Controller
      */
     private function fillCard(BannerCard $card, array $data): void
     {
-        foreach (['alt', 'heading', 'body', 'button_label', 'button_url'] as $text) {
+        foreach (['alt', 'heading', 'body', 'button_label', 'button_url',
+            'eyebrow', 'sticker', 'sticker_ring', 'eyebrow_ar', 'heading_ar', 'body_ar',
+            'button_label_ar', 'sticker_ar', 'sticker_ring_ar'] as $text) {
             if (array_key_exists($text, $data)) {
                 $card->{$text} = trim((string) $data[$text]);
             }
@@ -670,6 +733,15 @@ class BannerApiController extends Controller
 
         if (array_key_exists('position', $data)) {
             $card->position = (int) $data['position'];
+        }
+
+        // Lane HB. Validated as a boolean and one of two tokens above.
+        if (array_key_exists('box_on', $data)) {
+            $card->box_on = (bool) $data['box_on'];
+        }
+
+        if (array_key_exists('box_pos', $data)) {
+            $card->box_pos = (string) $data['box_pos'] === 'end' ? 'end' : 'start';
         }
 
         if (array_key_exists('status', $data)) {
@@ -986,7 +1058,7 @@ class BannerApiController extends Controller
             'slider_h' => $set->sliderHeight(false),
             'slider_h_m' => $set->sliderHeight(true),
             'cards_count' => $set->cards_count ?? $set->cards()->count(),
-        ];
+        ] + self::textBoxPayload($set);
     }
 
     /**
@@ -998,6 +1070,18 @@ class BannerApiController extends Controller
      *
      * @return array<string, string>
      */
+    /** Lane HB. The set's text box as the flat `tb_*` keys the console edits. */
+    private static function textBoxPayload(BannerSet $set): array
+    {
+        $out = [];
+
+        foreach (BannerTextBox::forSet($set) as $key => $value) {
+            $out['tb_'.$key] = $value;
+        }
+
+        return $out;
+    }
+
     private static function overridesOptions(): array
     {
         return Banners::overrides()['set']['options'];
@@ -1034,6 +1118,19 @@ class BannerApiController extends Controller
             'button_url_safe' => Banners::safeUrl($card->button_url) !== '',
             'position' => $card->position,
             'status' => $card->status,
+            // Lane HB, the words on a slider picture.
+            'box_on' => (bool) $card->box_on,
+            'box_pos' => (string) $card->box_pos === 'end' ? 'end' : 'start',
+            'eyebrow' => (string) $card->eyebrow,
+            'sticker' => (string) $card->sticker,
+            'sticker_ring' => (string) $card->sticker_ring,
+            'eyebrow_ar' => (string) $card->eyebrow_ar,
+            'heading_ar' => (string) $card->heading_ar,
+            'body_ar' => (string) $card->body_ar,
+            'button_label_ar' => (string) $card->button_label_ar,
+            'sticker_ar' => (string) $card->sticker_ar,
+            'sticker_ring_ar' => (string) $card->sticker_ring_ar,
+            'button_url_button' => BannerTextBox::buttonUrl($card->button_url) !== '',
         ];
     }
 

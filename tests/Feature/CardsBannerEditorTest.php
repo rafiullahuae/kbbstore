@@ -133,7 +133,12 @@ it('draws a control for every set column the editor can write, exactly once', fu
      * subtraction from the model's own list so a column added to BannerSet
      * without a control fails HERE rather than on the shop.
      */
-    $owned = array_values(array_diff((new BannerSet)->getFillable(), ['slug']));
+    /*
+     * ▲ ADVANCED BY LANE HB: `text_box` is one JSON column that the screen
+     * edits as the flat `tb_*` keys of TB_KEYS, appended to SET_KEYS after
+     * this list. BannerTextBoxTest pins TB_KEYS to BannerTextBox::keys().
+     */
+    $owned = array_values(array_diff((new BannerSet)->getFillable(), ['slug', 'text_box']));
 
     sort($owned);
     sort($sent);
