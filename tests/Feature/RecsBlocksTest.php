@@ -52,7 +52,7 @@ use App\Services\ProductSections;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-function rpProduct(string $name, ?Brand $brand, array $categories, int $sales, array $extra = []): Product
+function recsProduct(string $name, ?Brand $brand, array $categories, int $sales, array $extra = []): Product
 {
     $p = Product::create(array_merge([
         'slug' => Str::slug($name).'-'.Str::lower(Str::random(5)),
@@ -73,7 +73,7 @@ function rpProduct(string $name, ?Brand $brand, array $categories, int $sales, a
     return $p;
 }
 
-function rpCategory(string $name): Category
+function recsCategory(string $name): Category
 {
     // depth 0, position -1: the shelf BuyTogetherPairs picks for its kind,
     // ahead of the demo catalogue's own Serums, Moisturisers ...
@@ -82,21 +82,21 @@ function rpCategory(string $name): Category
 }
 
 /** @return array<string, mixed> */
-function rpShop(): array
+function recsShop(): array
 {
     $anua = Brand::create(['slug' => 'anua-'.Str::lower(Str::random(4)), 'name' => 'Anua']);
     $other = Brand::create(['slug' => 'other-'.Str::lower(Str::random(4)), 'name' => 'Other']);
     $far = Brand::create(['slug' => 'far-'.Str::lower(Str::random(4)), 'name' => 'Far']);
 
-    $toners = rpCategory('Toners');
-    $serums = rpCategory('Serums');
-    $creams = rpCategory('Moisturisers');
-    $suns = rpCategory('Sunscreens');
-    $hair = rpCategory('Hair');
+    $toners = recsCategory('Toners');
+    $serums = recsCategory('Serums');
+    $creams = recsCategory('Moisturisers');
+    $suns = recsCategory('Sunscreens');
+    $hair = recsCategory('Hair');
 
     $hydration = Tag::create(['slug' => 'hydration-'.Str::lower(Str::random(4)), 'name' => 'Hydration']);
 
-    $self = rpProduct('Heartleaf Toner', $anua, [$toners], 10);
+    $self = recsProduct('Heartleaf Toner', $anua, [$toners], 10);
     $self->tags()->sync([$hydration->id]);
 
     $s = [
@@ -105,26 +105,26 @@ function rpShop(): array
         'toners' => $toners,
         // Block 1, brand tab: Anua on other shelves. b1 is ALSO a serum, so a
         // missing exclusion shows it again in block 2.
-        'b1' => rpProduct('Anua Serum', $anua, [$serums], 300),
-        'b2' => rpProduct('Anua Cream', $anua, [$creams], 200),
-        'b3' => rpProduct('Anua Hair', $anua, [$hair], 100),
+        'b1' => recsProduct('Anua Serum', $anua, [$serums], 300),
+        'b2' => recsProduct('Anua Cream', $anua, [$creams], 200),
+        'b3' => recsProduct('Anua Hair', $anua, [$hair], 100),
         // Block 1, category tab: other brands' toners.
-        'c1' => rpProduct('Toner One', $other, [$toners], 290),
-        'c2' => rpProduct('Toner Two', $other, [$toners], 190),
-        'c3' => rpProduct('Toner Three', $other, [$toners], 90),
+        'c1' => recsProduct('Toner One', $other, [$toners], 290),
+        'c2' => recsProduct('Toner Two', $other, [$toners], 190),
+        'c3' => recsProduct('Toner Three', $other, [$toners], 90),
         // Block 2, the routine after a toner: serum, moisturiser, sunscreen.
         // s1 shares the toner's tag and sells less than s2 — it still leads.
-        's1' => rpProduct('Hydra Serum', $far, [$serums], 20),
-        's2' => rpProduct('Bright Serum', $far, [$serums], 400),
-        'm1' => rpProduct('Day Cream', $far, [$creams], 30),
-        'moos' => rpProduct('Sold Out Cream', $far, [$creams], 9000, ['stock_status' => 'outofstock']),
-        'u1' => rpProduct('Daily Sun', $far, [$suns], 25),
+        's1' => recsProduct('Hydra Serum', $far, [$serums], 20),
+        's2' => recsProduct('Bright Serum', $far, [$serums], 400),
+        'm1' => recsProduct('Day Cream', $far, [$creams], 30),
+        'moos' => recsProduct('Sold Out Cream', $far, [$creams], 9000, ['stock_status' => 'outofstock']),
+        'u1' => recsProduct('Daily Sun', $far, [$suns], 25),
         // The shop's best sellers: block 3's fallback.
-        'x1' => rpProduct('Hair Best', $far, [$hair], 90000),
-        'x2' => rpProduct('Hair Next', $far, [$hair], 80000),
-        'x3' => rpProduct('Hair Third', $far, [$hair], 70000),
+        'x1' => recsProduct('Hair Best', $far, [$hair], 90000),
+        'x2' => recsProduct('Hair Next', $far, [$hair], 80000),
+        'x3' => recsProduct('Hair Third', $far, [$hair], 70000),
         // Viewed earlier by the shopper, in no other block.
-        'v1' => rpProduct('Old Find', $other, [$hair], 1),
+        'v1' => recsProduct('Old Find', $other, [$hair], 1),
     ];
     $s['s1']->tags()->sync([$hydration->id]);
 
@@ -132,7 +132,7 @@ function rpShop(): array
 }
 
 /** The HTML of one block, by its heading id. */
-function rpBlock(string $html, string $headingId): string
+function recsBlock(string $html, string $headingId): string
 {
     preg_match('#<section [^>]*aria-labelledby="'.preg_quote($headingId, '#').'".*?</section>#s', $html, $m);
 
@@ -140,22 +140,22 @@ function rpBlock(string $html, string $headingId): string
 }
 
 /** @return list<string> product slugs linked from a fragment, in order, de-duplicated */
-function rpSlugs(string $fragment): array
+function recsSlugs(string $fragment): array
 {
     preg_match_all('#href="/product/([^/"?]+)/"#', $fragment, $m);
 
     return array_values(array_unique($m[1]));
 }
 
-function rpPage(\Tests\TestCase $test, Product $p): string
+function recsPage(\Tests\TestCase $test, Product $p): string
 {
     return $test->get('/product/'.$p->slug.'/')->assertOk()->getContent();
 }
 
 it('draws both tabs with crawlable links, the brand open and the category closed', function () {
-    $s = rpShop();
-    $html = rpPage($this, $s['self']);
-    $one = rpBlock($html, 'ymal-h');
+    $s = recsShop();
+    $html = recsPage($this, $s['self']);
+    $one = recsBlock($html, 'ymal-h');
 
     expect($one)->toContain('data-rp-tabs')
         ->and($one)->toContain('>More from Anua</button>')
@@ -172,16 +172,16 @@ it('draws both tabs with crawlable links, the brand open and the category closed
 
     // Both lists are links in the HTML, whichever tab is open.
     $panels = explode('id="rp-p-category"', $one);
-    expect(rpSlugs($panels[0]))->toContain($s['b1']->slug, $s['b2']->slug, $s['b3']->slug)
-        ->and(rpSlugs($panels[1]))->toContain($s['c1']->slug, $s['c2']->slug, $s['c3']->slug);
+    expect(recsSlugs($panels[0]))->toContain($s['b1']->slug, $s['b2']->slug, $s['b3']->slug)
+        ->and(recsSlugs($panels[1]))->toContain($s['c1']->slug, $s['c2']->slug, $s['c3']->slug);
 });
 
 it('lists the category\'s parent shelves too, so a click from Skincare opens "More Toners"', function () {
-    $s = rpShop();
+    $s = recsShop();
     $parent = Category::create(['slug' => 'skin-'.Str::lower(Str::random(4)), 'name' => 'Skincare', 'depth' => 0, 'position' => 9]);
     $s['toners']->update(['parent_id' => $parent->id, 'depth' => 1, 'path' => $parent->slug.'/'.$s['toners']->slug]);
 
-    $one = rpBlock(rpPage($this, $s['self']), 'ymal-h');
+    $one = recsBlock(recsPage($this, $s['self']), 'ymal-h');
     preg_match('#<div class="rp-panel" id="rp-p-category"[^>]*data-rp-paths="([^"]*)"#', $one, $m);
 
     expect(explode(' ', $m[1] ?? ''))->toBe([
@@ -191,10 +191,10 @@ it('lists the category\'s parent shelves too, so a click from Skincare opens "Mo
 });
 
 it('opens on the category when he chose it as the tab that opens first', function () {
-    $s = rpShop();
+    $s = recsShop();
     app(AlsoLikeSettings::class)->save(['first' => 'category']);
 
-    $one = rpBlock(rpPage($this, $s['self']), 'ymal-h');
+    $one = recsBlock(recsPage($this, $s['self']), 'ymal-h');
 
     expect($one)->toContain('id="rp-t-category" aria-controls="rp-p-category" aria-selected="true"')
         ->and(strpos($one, 'id="rp-p-category"'))->toBeLessThan(strpos($one, 'id="rp-p-brand"'));
@@ -203,23 +203,23 @@ it('opens on the category when he chose it as the tab that opens first', functio
 });
 
 it('draws one tab for a product with no brand, and the single row for one with neither', function () {
-    $s = rpShop();
-    $lone = rpProduct('No Brand Toner', null, [$s['toners']], 5);
+    $s = recsShop();
+    $lone = recsProduct('No Brand Toner', null, [$s['toners']], 5);
 
-    $one = rpBlock(rpPage($this, $lone), 'ymal-h');
+    $one = recsBlock(recsPage($this, $lone), 'ymal-h');
     expect(substr_count($one, 'data-rp-tab>'))->toBe(1)
         ->and($one)->toContain('>More Toners</button>');
 
-    $bare = rpProduct('Nothing At All', null, [], 5);
-    $page = rpPage($this, $bare);
+    $bare = recsProduct('Nothing At All', null, [], 5);
+    $page = recsPage($this, $bare);
     expect($page)->not->toContain('data-rp-tabs')
-        ->and(rpBlock($page, 'ymal-h'))->toContain('id="related" data-ymal-track');
+        ->and(recsBlock($page, 'ymal-h'))->toContain('id="related" data-ymal-track');
 });
 
 it('builds block 2 from the routine shelves, sharing a skin concern first, one shelf at a time', function () {
-    $s = rpShop();
-    $two = rpBlock(rpPage($this, $s['self']), 'rp2-h');
-    $slugs = rpSlugs($two);
+    $s = recsShop();
+    $two = recsBlock(recsPage($this, $s['self']), 'rp2-h');
+    $slugs = recsSlugs($two);
 
     expect($two)->toContain('<h2 id="rp2-h">Complete your routine</h2>')
         ->and($two)->toContain('class="rel kbb-pgrid"')
@@ -233,25 +233,25 @@ it('builds block 2 from the routine shelves, sharing a skin concern first, one s
 });
 
 it('puts in-stock products first when sold-out ones are allowed', function () {
-    $s = rpShop();
+    $s = recsShop();
     app(AlsoLikeSettings::class)->save(['hide_oos' => false]);
 
-    $slugs = rpSlugs(rpBlock(rpPage($this, $s['self']), 'rp2-h'));
+    $slugs = recsSlugs(recsBlock(recsPage($this, $s['self']), 'rp2-h'));
 
     expect($slugs)->toContain($s['moos']->slug)
         ->and(array_search($s['m1']->slug, $slugs, true))->toBeLessThan(array_search($s['moos']->slug, $slugs, true));
 });
 
 it('never repeats a product between the blocks, nor what Buy these together shows', function () {
-    $s = rpShop();
+    $s = recsShop();
     // "Buy these together" ships off; on, it takes the best seller of each
     // routine shelf — exactly what block 2 would otherwise lead with.
     app(\App\Services\BuyTogetherSettings::class)->save(['on' => true]);
-    $html = rpPage($this, $s['self']);
+    $html = recsPage($this, $s['self']);
 
-    $one = rpSlugs(rpBlock($html, 'ymal-h'));
-    $two = rpSlugs(rpBlock($html, 'rp2-h'));
-    $three = rpSlugs(rpBlock($html, 'rp3-h'));
+    $one = recsSlugs(recsBlock($html, 'ymal-h'));
+    $two = recsSlugs(recsBlock($html, 'rp2-h'));
+    $three = recsSlugs(recsBlock($html, 'rp3-h'));
 
     expect($two)->not->toBeEmpty()->and($three)->not->toBeEmpty()
         ->and(array_intersect($one, $two))->toBe([])
@@ -263,22 +263,22 @@ it('never repeats a product between the blocks, nor what Buy these together show
 
     // Whatever "Buy these together" drew is not drawn again below it.
     preg_match('#<section[^>]*class="[^"]*kbb-fbt.*?</section>#s', $html, $fbt);
-    $bt = array_diff(rpSlugs($fbt[0] ?? ''), [$s['self']->slug]);
+    $bt = array_diff(recsSlugs($fbt[0] ?? ''), [$s['self']->slug]);
     expect($bt)->toContain($s['s2']->slug, $s['u1']->slug)
         ->and(array_intersect($bt, array_merge($two, $three)))->toBe([]);
 });
 
 it('fills block 3 with best sellers for a first visit, and puts what the shopper viewed first', function () {
-    $s = rpShop();
+    $s = recsShop();
 
-    $three = rpBlock(rpPage($this, $s['self']), 'rp3-h');
+    $three = recsBlock(recsPage($this, $s['self']), 'rp3-h');
     expect($three)->toContain('<div class="eyebrow">Best sellers</div>')
         ->and($three)->toContain('<h2 id="rp3-h">Continue shopping</h2>')
-        ->and(rpSlugs($three))->toContain($s['x3']->slug);
+        ->and(recsSlugs($three))->toContain($s['x3']->slug);
     // Best sellers, best first ("Buy these together" may have taken the top
     // one or two; what is left keeps the order).
-    $sales = Product::query()->whereIn('slug', rpSlugs($three))->pluck('total_sales', 'slug');
-    $inOrder = array_map(fn ($slug) => (int) $sales[$slug], rpSlugs($three));
+    $sales = Product::query()->whereIn('slug', recsSlugs($three))->pluck('total_sales', 'slug');
+    $inOrder = array_map(fn ($slug) => (int) $sales[$slug], recsSlugs($three));
     $sorted = $inOrder;
     rsort($sorted);
     expect($inOrder)->toBe($sorted);
@@ -287,17 +287,17 @@ it('fills block 3 with best sellers for a first visit, and puts what the shopper
     // product itself is never listed.
     $cookie = implode(',', [$s['self']->id, $s['v1']->id, $s['c3']->id]);
     $html = $this->withCookie('kbb_viewed', $cookie)->get('/product/'.$s['self']->slug.'/')->assertOk()->getContent();
-    $three = rpBlock($html, 'rp3-h');
+    $three = recsBlock($html, 'rp3-h');
 
     expect($three)->toContain('<div class="eyebrow">Recently viewed</div>')
-        ->and(rpSlugs($three)[0])->toBe($s['v1']->slug)
-        ->and(rpSlugs($three))->not->toContain($s['c3']->slug);
+        ->and(recsSlugs($three)[0])->toBe($s['v1']->slug)
+        ->and(recsSlugs($three))->not->toContain($s['c3']->slug);
 });
 
 it('links every card to a clean product URL, lazy, with no query string', function () {
-    $s = rpShop();
-    $html = rpPage($this, $s['self']);
-    $foot = rpBlock($html, 'ymal-h').rpBlock($html, 'rp2-h').rpBlock($html, 'rp3-h');
+    $s = recsShop();
+    $html = recsPage($this, $s['self']);
+    $foot = recsBlock($html, 'ymal-h').recsBlock($html, 'rp2-h').recsBlock($html, 'rp3-h');
 
     // Every navigating link is a plain /product/{slug}/ — InstantNav
     // prefetches it. The only other href is the card's own no-JavaScript
@@ -322,7 +322,7 @@ it('links every card to a clean product URL, lazy, with no query string', functi
 });
 
 it('costs the same queries with 3 relatives as with 40, and fewer warm', function () {
-    $s = rpShop();
+    $s = recsShop();
     $count = function () use ($s): int {
         app()->forgetInstance(\App\Services\SettingsService::class);
         DB::flushQueryLog();
@@ -345,8 +345,8 @@ it('costs the same queries with 3 relatives as with 40, and fewer warm', functio
     $small = $count();
 
     foreach (range(1, 37) as $i) {
-        rpProduct('More Anua '.$i, $s['brand'], [$s['toners']], 5 + $i);
-        rpProduct('More Serum '.$i, null, [$s['toners']], 5 + $i)->categories()->sync([Category::where('name', 'Serums')->orderByDesc('id')->value('id')]);
+        recsProduct('More Anua '.$i, $s['brand'], [$s['toners']], 5 + $i);
+        recsProduct('More Serum '.$i, null, [$s['toners']], 5 + $i)->categories()->sync([Category::where('name', 'Serums')->orderByDesc('id')->value('id')]);
     }
 
     $cold();
@@ -360,7 +360,7 @@ it('costs the same queries with 3 relatives as with 40, and fewer warm', functio
 });
 
 it('asks two statements for all three blocks, cold and warm', function () {
-    $s = rpShop();
+    $s = recsShop();
     $s['self']->load(['brand:id,name,slug', 'categories:id,name,slug,path']);
     app(\App\Services\SettingsService::class)->all();
     app(ProductSections::class)->all();
@@ -385,10 +385,10 @@ it('asks two statements for all three blocks, cold and warm', function () {
 });
 
 it('switched off is today\'s page, byte for byte', function () {
-    $s = rpShop();
+    $s = recsShop();
     app(AlsoLikeSettings::class)->save(['layout' => 'one', 'routine_on' => false, 'recent_on' => false]);
 
-    $html = rpPage($this, $s['self']);
+    $html = recsPage($this, $s['self']);
 
     $product = Product::query()->with(['brand:id,name,slug', 'categories:id,name,slug,path'])->find($s['self']->id);
     $old = view('partials.you-may-also-like', [
@@ -404,22 +404,22 @@ it('switched off is today\'s page, byte for byte', function () {
 });
 
 it('turns each block off on its own, and keeps the order he set', function () {
-    $s = rpShop();
+    $s = recsShop();
 
     app(AlsoLikeSettings::class)->save(['routine_on' => false]);
-    $html = rpPage($this, $s['self']);
+    $html = recsPage($this, $s['self']);
     expect($html)->not->toContain('rp2-h')->and($html)->toContain('rp3-h')->and($html)->toContain('data-rp-tabs');
 
     app(AlsoLikeSettings::class)->save(['routine_on' => true, 'recent_on' => false]);
-    $html = rpPage($this, $s['self']);
+    $html = recsPage($this, $s['self']);
     expect($html)->toContain('rp2-h')->and($html)->not->toContain('rp3-h');
 
     app(AlsoLikeSettings::class)->save(['recent_on' => true, 'enabled' => false]);
-    $html = rpPage($this, $s['self']);
+    $html = recsPage($this, $s['self']);
     expect($html)->not->toContain('ymal-h')->and($html)->toContain('rp2-h')->and($html)->toContain('rp3-h');
 
     app(AlsoLikeSettings::class)->save(['enabled' => true, 'order' => '321']);
-    $html = rpPage($this, $s['self']);
+    $html = recsPage($this, $s['self']);
     expect(strpos($html, 'rp3-h'))->toBeLessThan(strpos($html, 'rp2-h'))
         ->and(strpos($html, 'rp2-h'))->toBeLessThan(strpos($html, 'id="ymal-h"'));
 
