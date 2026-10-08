@@ -1158,6 +1158,9 @@ final class EnglishRenderWalk
             'sitemap.xml' => $file,
             'robots.txt' => $file,
             'llms.txt' => $file,
+            // The Google Merchant Center product feed (Lane SEO): XML for Merchant
+            // Center and Meta, no Blade, no shopper string.
+            'feeds/google-merchant.xml' => $file,
             // Apple's domain-association document (Lane WAL). Machine-facing in
             // the strictest sense: Apple's own fetcher reads it to verify this
             // domain, and Apple Pay draws no sheet until it has. Both spellings

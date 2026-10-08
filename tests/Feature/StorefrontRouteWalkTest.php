@@ -167,6 +167,7 @@ function walkExpectations(array $seed): array
         'sitemap.xml'              => ['status' => 200],
         'robots.txt'               => ['status' => 200],
         'llms.txt'                 => ['status' => 200],
+        'feeds/google-merchant.xml' => ['status' => 200], // Google Shopping feed (Lane SEO)
         /*
          * Apple's domain-association document (Lane WAL), both spellings Apple
          * publishes. 404 IS THE CORRECT ANSWER ON A SHOP THAT HAS NOT SET ONE
