@@ -187,7 +187,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-tocart--icon_round:hover{border-color:var(--pink);color:var(--pink-deep);background:var(--pink-soft)}
 
 /* coupon — standalone card, champagne/green scheme */
-.kbb-checkout .coupon{background:linear-gradient(135deg,#EEF8F1,#fff);border:1.6px dashed #BFE0CD;border-radius:14px;padding:14px 15px;margin-bottom:var(--cop-block);position:relative;overflow:hidden}
+.kbb-checkout .coupon{background:linear-gradient(135deg,#EEF8F1,#fff);border:1.6px dashed #BFE0CD;border-radius:14px;padding:14px 15px;margin-bottom:var(--cop-block);position:relative;overflow:hidden;overflow:clip}
 .kbb-checkout .coupon::after{content:"";position:absolute;inset-inline-end:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:rgba(46,158,107,.07)}
 .kbb-checkout .coupon .ch{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;margin-bottom:10px;color:#1F7D52}
 .kbb-checkout .coupon .ch .gift{font-size:17px}
@@ -199,6 +199,37 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .coupon .apply:hover{background:var(--pink-deep)}
 .kbb-checkout .coupon .hint{font-size:11px;color:#1F7D52;margin-top:9px;font-weight:500}
 .kbb-checkout .coupon .hint b{background:#fff;border:1px solid #BFE0CD;border-radius:6px;padding:1px 6px;font-weight:700;cursor:pointer;color:#1F7D52}
+/* Lane CP: the coupon's answer, in place, under the box -- applied (green, the
+   box's own #1F7D52), refused (the checkout's error ink, as .co-note.err), or
+   dimmed while the next answer is on its way. A flex row so Remove sits on the
+   sentence's line and wraps under it rather than off the edge at 390. The
+   apply button keeps its exact size while busy: the label goes transparent and
+   a ring is drawn over it, so nothing beside it moves when the answer lands.
+   Under reduced motion the ring is still drawn, it just does not turn.
+   Class names are this
+   page's alone (co-cmsg, co-crm), so they carry no .kbb-checkout prefix. */
+.co-cmsg{position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;margin:9px 0 0;font-size:12.5px;line-height:1.45;font-weight:600;color:#1F7D52}
+.co-cmsg::before{content:"\2713";flex:0 0 17px;height:17px;border-radius:50%;background:#2E9E6B;color:#fff;font-size:10.5px;line-height:17px;text-align:center}
+.co-cmsg-t{flex:1 1 0;min-width:0}
+.co-cmsg.is-err{color:var(--pink-ink)}
+.co-cmsg.is-err::before{content:"!";background:var(--pink-ink)}
+.co-cmsg.is-busy{opacity:.55}
+.co-cmsg.is-new::before{visibility:hidden}
+/* Two lines held on a phone, whatever the answer: "Coupon SAVE10 applied — you
+   save AED 21.50 · Remove" needs two at 390 and "That code has expired." one,
+   and a line that grows or shrinks when the answer lands, after the tap's own
+   500ms, is a layout shift. One fixed height for every state is none. */
+@media(max-width:480px){.co-cmsg{min-height:2.9em;align-content:center}}
+/* overflow:clip after the box's own overflow:hidden (above): the same clipping
+   of its decorative circle, but not a scroll container. As one it could be
+   scrolled, and was -- 30px sideways the moment the answer line went in,
+   cutting the gift icon off at 390 and the field's start off in Arabic. */
+.co-crm{background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--ink-2);text-decoration:underline;cursor:pointer}
+.kbb-checkout .coupon input[aria-invalid=true]{border-color:#F3C4CE;background:#FFF8FA}
+.kbb-checkout .coupon .apply[aria-busy=true]{position:relative;color:transparent;cursor:progress}
+.coupon .apply[aria-busy=true]::after{content:"";position:absolute;inset:0;margin:auto;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:kbbCpSpin .7s linear infinite}
+@keyframes kbbCpSpin{to{transform:rotate(1turn)}}
+@media(prefers-reduced-motion:reduce){.coupon .apply[aria-busy=true]::after{animation:none}}
 
 /* unified form box + numbered sections */
 .kbb-checkout .formbox{background:#fff;border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden;box-shadow:0 12px 36px -24px rgba(42,34,40,.22)}

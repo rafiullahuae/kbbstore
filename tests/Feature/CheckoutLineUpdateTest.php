@@ -271,8 +271,8 @@ it('no longer reloads the page when a stepper is pressed', function () {
     // The stepper branch reaches changeLine(), which repaints in place.
     expect($js)->toContain('changeLine(');
 
-    // And the one remaining reload belongs to the coupon box, which has no
-    // fragment endpoint of its own yet — it must not have crept back onto the
-    // quantity path.
-    expect(substr_count($js, 'window.location.reload()'))->toBe(1);
+    // And no reload anywhere: the last one belonged to the coupon box's
+    // fallback, which Lane CP removed (it is what wiped every typed field). It
+    // must not creep back onto the quantity path or any other.
+    expect(substr_count($js, 'window.location.reload()'))->toBe(0);
 });
