@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Cache;
  *
  *   1  slider  "More from {brand}"   this product's brand, best sellers first
  *                                    (the brand tab's order, unchanged)
- *   2  grid    "More {category}"     the category the breadcrumb names, in
+ *   2  grid    "More {category}"     the product's most specific category, in
  *                                    stock first then best sellers (the grid
  *                                    in this position always put stock first),
  *                                    minus block 1
@@ -41,13 +41,18 @@ use Illuminate\Support\Facades\Cache;
  * cached cannot open a gap a repeat falls into. "Buy these together" is kept
  * out of blocks 2 and 3, exactly as it was before this change.
  *
- * ── THE CATEGORY IS THE BREADCRUMB'S ───────────────────────────────────────
+ * ── THE CATEGORY IS THE MOST SPECIFIC ONE ──────────────────────────────────
  *
- * Both breadcrumbs on the page — the visible one in store/product.blade.php
- * and the BreadcrumbList in ProductController::breadcrumbTrail() — print
- * `$product->categories->first()`: the first of the categories the page's
- * own query loaded. Block 2 reads exactly that (breadcrumbCategory()), so its
- * heading and the crumb above the title always name the same shelf.
+ * "if the product is from the toner category, then the 2nd block will pick
+ * the products from that category" — Toners, not Skincare above it. Of the
+ * product's categories (the page's own query loads them, with parent_id and
+ * depth — no extra query), categoryCandidates() keeps the deepest: never one
+ * that is the parent of another of its categories, then the greatest `depth`
+ * (CategoryTree keeps it). Two equally deep ones both go into the ONE union,
+ * and the one with more in-stock products besides this one wins, then the
+ * lowest id — deterministic, whatever order the pivot rows were written in.
+ * A thin deepest category is kept, never swapped for its parent. The
+ * breadcrumbs are left as they are (they print categories->first()).
  *
  * ── ▲ TWO QUERIES FOR ALL THREE, COLD OR WARM ──────────────────────────────
  *
@@ -121,10 +126,10 @@ class ProductRecs
         }
 
         $brand = $c['brand_on'] && $product->brand_id !== null && $product->relationLoaded('brand') ? $product->brand : null;
-        $category = $c['cat_on'] ? self::breadcrumbCategory($product) : null;
+        $candidates = $c['cat_on'] ? self::categoryCandidates($product) : [];
         $also = (bool) $c['enabled'];
 
-        if ($brand === null && $category === null && ! $also) {
+        if ($brand === null && $candidates === [] && ! $also) {
             return $out;
         }
 
@@ -138,8 +143,9 @@ class ProductRecs
             'also' => AlsoLikeSettings::layoutFor($c, 'also'),
         ];
         $picks = $also ? AlsoLikePicks::read($product) : ['mode' => AlsoLikePicks::MODE_RULE, 'ids' => []];
-        $lists = $this->lists($product, $c, $brand !== null ? $lay['brand']['n'] : 0, $category === null ? null : (int) $category->id,
-            $category === null ? 0 : $lay['cat']['n'], $also ? $lay['also']['n'] : 0, $picks);
+        [$lists, $categoryId] = $this->lists($product, $c, $brand !== null ? $lay['brand']['n'] : 0,
+            array_map(fn ($cat) => (int) $cat->id, $candidates), $candidates === [] ? 0 : $lay['cat']['n'], $also ? $lay['also']['n'] : 0, $picks);
+        $category = $categoryId === null ? null : collect($candidates)->first(fn ($cat) => (int) $cat->id === $categoryId);
 
         $taken = [(int) $product->id => true];
 
@@ -186,12 +192,27 @@ class ProductRecs
     }
 
     /**
-     * The category both breadcrumbs print: the first the page's own query
-     * loaded. Null when the product has none — block 2 is then not drawn.
+     * The product's most specific categories, from the relation the page
+     * already loaded: none that is the parent of another of them, then the
+     * greatest depth. Usually one; two only when two are equally deep, and
+     * lists() settles those by stock, then id. Sorted by id, so the order the
+     * pivot rows were written in cannot matter.
+     *
+     * @return list<\App\Models\Category>
      */
-    public static function breadcrumbCategory(Product $product): ?\App\Models\Category
+    public static function categoryCandidates(Product $product): array
     {
-        return $product->relationLoaded('categories') ? $product->categories->first() : null;
+        if (! $product->relationLoaded('categories') || $product->categories->isEmpty()) {
+            return [];
+        }
+
+        $cats = $product->categories->sortBy(fn ($cat) => (int) $cat->id)->values();
+        $parents = $cats->pluck('parent_id')->filter()->map(fn ($id) => (int) $id)->flip();
+        $leaves = $cats->reject(fn ($cat) => isset($parents[(int) $cat->id]));
+        $leaves = $leaves->isEmpty() ? $cats : $leaves; // a cycle: every one is a parent
+        $deepest = (int) $leaves->max(fn ($cat) => (int) $cat->getAttribute('depth'));
+
+        return $leaves->filter(fn ($cat) => (int) $cat->getAttribute('depth') === $deepest)->values()->all();
     }
 
     /**
@@ -233,19 +254,25 @@ class ProductRecs
      * @param  array{mode: string, ids: list<int>}  $picks
      * @return array<string, list<Product>>
      */
-    private function lists(Product $product, array $c, int $n1, ?int $categoryId, int $n2, int $n3, array $picks): array
+    /**
+     * @param  list<int>  $categoryIds  categoryCandidates(), by id
+     * @return array{0: array<string, list<Product>>, 1: ?int} the lists, and the category block 2 is about
+     */
+    private function lists(Product $product, array $c, int $n1, array $categoryIds, int $n2, int $n3, array $picks): array
     {
         $fp = md5(json_encode([
             // The cached shape; a new one is never read as an old one.
-            3,
-            $n1, $n2, $n3, $c['hide_oos'], $picks, $product->brand_id, $categoryId,
+            4,
+            $n1, $n2, $n3, $c['hide_oos'], $picks, $product->brand_id, $categoryIds,
         ]) ?: '');
 
         $key = self::CACHE_PREFIX.(int) $product->id;
         $hit = Cache::get($key);
 
         if (is_array($hit) && ($hit['fp'] ?? null) === $fp && is_array($hit['ids'] ?? null)) {
-            return $this->hydrate($hit['ids'], (bool) $c['hide_oos']);
+            $cat = isset($hit['cat']) && in_array((int) $hit['cat'], $categoryIds, true) ? (int) $hit['cat'] : null;
+
+            return [$this->hydrate($hit['ids'], (bool) $c['hide_oos']), $cat];
         }
 
         $parts = [];
@@ -256,12 +283,15 @@ class ProductRecs
         }
 
         if ($n2 > 0) {
-            // Enough to fill the grid after block 1 has taken its share of it.
-            // In stock first, as the grid in this position always ordered.
-            $parts[] = $this->bestFirst($this->inStockFirst($this->part($product, $c, self::CATEGORY, $n1 + $n2 + self::SLACK)))
-                ->whereExists(fn ($q) => $q->selectRaw('1')->from('category_product as rpc')
-                    ->whereColumn('rpc.product_id', 'products.id')
-                    ->where('rpc.category_id', $categoryId));
+            // In stock first, as the grid in this position always ordered. One
+            // SELECT per equally-deep candidate (almost always one), each
+            // enough to fill the grid after block 1 has taken its share.
+            foreach ($categoryIds as $id) {
+                $parts[] = $this->bestFirst($this->inStockFirst($this->part($product, $c, self::CATEGORY.$id, $n1 + $n2 + self::SLACK)))
+                    ->whereExists(fn ($q) => $q->selectRaw('1')->from('category_product as rpc')
+                        ->whereColumn('rpc.product_id', 'products.id')
+                        ->where('rpc.category_id', $id));
+            }
         }
 
         if ($n3 > 0) {
@@ -278,7 +308,7 @@ class ProductRecs
         }
 
         if ($parts === []) {
-            return [];
+            return [[], null];
         }
 
         $query = array_shift($parts);
@@ -297,18 +327,33 @@ class ProductRecs
             $pools[(string) $row->getAttribute('rp_src')][] = $row;
         }
 
+        // Equally deep candidates: the one with more in-stock products besides
+        // this one, then the lowest id. Counted from the rows this statement
+        // already read, each capped at what the grid could use — two that can
+        // both fill it are a tie, and the lowest id is the stable answer.
+        $categoryId = null;
+        $best = -1;
+
+        foreach ($categoryIds as $id) {
+            $stocked = count(array_filter($pools[self::CATEGORY.$id] ?? [], fn ($m) => $m->stock_status !== 'outofstock'));
+
+            if ($stocked > $best) {
+                [$categoryId, $best] = [$id, $stocked];
+            }
+        }
+
         // Disjoint, in fill order, each with room for the per-visit exclusions.
         $skip = [(int) $product->id => true];
         $lists = [self::BRAND => self::take($pools[self::BRAND] ?? [], $skip, $n1)];
         $skip += self::idsOf($lists[self::BRAND]);
-        $lists[self::CATEGORY] = self::take($pools[self::CATEGORY] ?? [], $skip, $n2 > 0 ? $n2 + self::SLACK : 0);
+        $lists[self::CATEGORY] = self::take($categoryId === null ? [] : ($pools[self::CATEGORY.$categoryId] ?? []), $skip, $n2 > 0 ? $n2 + self::SLACK : 0);
         $skip += self::idsOf($lists[self::CATEGORY]);
         $lead = self::inOrder(self::byId($pools[self::MANUAL] ?? []), $picks['ids']);
         $lists[self::BEST] = self::take(array_merge($lead, $pools[self::BEST] ?? []), $skip, $n3 > 0 ? $n3 + self::SLACK : 0);
 
-        Cache::put($key, ['fp' => $fp, 'ids' => array_map(fn ($list) => array_map(fn ($m) => (int) $m->id, $list), $lists)], self::TTL);
+        Cache::put($key, ['fp' => $fp, 'cat' => $categoryId, 'ids' => array_map(fn ($list) => array_map(fn ($m) => (int) $m->id, $list), $lists)], self::TTL);
 
-        return $lists;
+        return [$lists, $categoryId];
     }
 
     /**

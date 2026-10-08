@@ -89,7 +89,7 @@ class AlsoLikeSettings
             'Leave empty for the standard Arabic heading.'],
 
         'cat_on' => ['bool', 'Block 2 · Show “More {category}”', true,
-            'A grid of more products from the category this product’s breadcrumb names, in stock first, then best sellers. Never repeats a product from block 1.'],
+            'A grid of more products from this product’s most specific category — Toners, not Skincare above it — in stock first, then best sellers. Never repeats a product from block 1.'],
 
         'cat_title' => ['text', 'Block 2 · Heading', '',
             'Leave empty for the standard heading, “More” and the category’s name.'],

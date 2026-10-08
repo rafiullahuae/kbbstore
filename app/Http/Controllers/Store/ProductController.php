@@ -56,7 +56,10 @@ class ProductController extends Controller
             ->visible()
             ->with([
                 'brand:id,name,slug',
-                'categories:id,name,slug,path',
+                // parent_id and depth (Lane RP2): which of the product's
+                // categories is the most specific, for "More {category}" —
+                // two more columns on the same query, not another one.
+                'categories:id,name,slug,path,parent_id,depth',
                 'variants' => fn ($q) => $q->orderBy('position'),
                 'variants.attributeValues:id,attribute_id,name,slug',
             ])

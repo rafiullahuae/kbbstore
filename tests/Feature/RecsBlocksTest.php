@@ -29,8 +29,12 @@ declare(strict_types=1);
  *       Anua toner shows in blocks 1 and 2.
  *   M2  ProductRecs — the product itself let in (part()'s `!= id` and
  *       forProduct()'s `$taken` both dropped) → "never repeats" red.
- *   M3  ProductRecs::breadcrumbCategory() — categories->last() → "uses the
- *       breadcrumb's category" red: block 2 names the other shelf.
+ *   M3  ProductRecs::categoryCandidates() — the parent filter dropped (keep
+ *       every category) → "most specific category" red in the stale-depth
+ *       case and, with the depth sort also dropped, in both insert orders:
+ *       block 2 names Skincare.
+ *   M3b ProductRecs::lists() — `$stocked > $best` made `>=` (the LAST equal
+ *       candidate wins) → "breaks a tie … lowest id" red: Mists, not Pads.
  *   M4  ProductRecs::forProduct()'s `&& $one !== []` AND recs.blade.php's
  *       isNotEmpty() both dropped (either alone still holds) → "a brand with
  *       nothing else" red: an empty "More from Solo" is printed.
@@ -239,24 +243,92 @@ it('draws no category block for a product with a brand and no category', functio
         ->and(recsBlock($html, 'ymal-h'))->not->toBe('');
 });
 
-it('uses the breadcrumb\'s category for block 2', function () {
-    $s = recsShop();
-    $parent = recsCategory('Skincare');
-    $p = recsProduct('Two Shelf Toner', $s['other'], [$parent, $s['toners']], 5);
+/**
+ * A parent and a child shelf, with the product in both — its pivot rows
+ * written parent-first or child-first.
+ *
+ * @return array{0: Product, 1: Category, 2: Category}
+ */
+function recsTwoShelves(array $s, bool $parentFirst): array
+{
+    $parent = Category::create(['slug' => 'skincare-'.Str::lower(Str::random(4)), 'name' => 'Skincare', 'depth' => 0, 'position' => 0]);
+    $child = Category::create(['slug' => 'toner-'.Str::lower(Str::random(4)), 'name' => 'Toner', 'parent_id' => $parent->id, 'depth' => 1, 'position' => 0]);
+    // Ids decide nothing: the parent is made first and has the lower id in
+    // one run, and is given the higher one in the other.
+    if (! $parentFirst) {
+        [$parent, $child] = [$child, $parent];
+        $parent->forceFill(['name' => 'Skincare', 'parent_id' => null, 'depth' => 0])->save();
+        $child->forceFill(['name' => 'Toner', 'parent_id' => $parent->id, 'depth' => 1])->save();
+    }
+
+    $p = recsProduct('Two Shelf Toner '.($parentFirst ? 'a' : 'b'), $s['other'], [], 5);
+    DB::table('category_product')->insert($parentFirst
+        ? [['product_id' => $p->id, 'category_id' => $parent->id], ['product_id' => $p->id, 'category_id' => $child->id]]
+        : [['product_id' => $p->id, 'category_id' => $child->id], ['product_id' => $p->id, 'category_id' => $parent->id]]);
+
     recsProduct('Skincare Only', $s['far'], [$parent], 400);
+    recsProduct('Toner Only', $s['far'], [$child], 300);
+
+    return [$p, $parent, $child];
+}
+
+it('uses the product\'s most specific category for block 2, whatever order its shelves were filed in', function (bool $parentFirst) {
+    $s = recsShop();
+    [$p, $parent, $child] = recsTwoShelves($s, $parentFirst);
+
+    $two = recsBlock(recsPage($this, $p), 'rp2-h');
+
+    expect($two)->toContain('<h2 id="rp2-h">More Toner</h2>')
+        ->and(recsSlugs($two))->not->toBeEmpty();
+
+    // And its cards are that shelf's — never the parent's own.
+    $ids = DB::table('category_product')->where('category_id', $child->id)->pluck('product_id')->all();
+    $slugs = Product::query()->whereIn('id', $ids)->pluck('slug')->all();
+    expect(array_diff(recsSlugs($two), $slugs))->toBe([]);
+})->with(['parent row first' => [true], 'child row first' => [false]]);
+
+it('keeps the child even when the stored depth says otherwise, and never climbs to a thinner shelf\'s parent', function () {
+    $s = recsShop();
+    [$p, $parent, $child] = recsTwoShelves($s, true);
+    // A depth CategoryTree has not resynced yet: both read 0. The child is
+    // still the one whose parent is also on the product.
+    DB::table('categories')->where('id', $child->id)->update(['depth' => 0]);
 
     $html = recsPage($this, $p);
-    preg_match('#<div class="crumb"><a [^>]*>[^<]*</a> / <a [^>]*>([^<]*)</a>#', $html, $crumb);
+    // "Toner" has one other product; "Skincare" would fill more. It stays Toner.
+    expect(recsBlock($html, 'rp2-h'))->toContain('More Toner</h2>')
+        ->and(recsCards($html, 'rp2-h'))->toBe(1);
+});
 
-    expect($crumb[1] ?? null)->not->toBeNull()
-        ->and(recsBlock($html, 'rp2-h'))->toContain('<h2 id="rp2-h">More '.$crumb[1].'</h2>');
+it('breaks a tie between two equally deep shelves by stock, then by the lowest id, every time', function () {
+    $s = recsShop();
+    $pads = recsCategory('Pads');   // the lower id
+    $mists = recsCategory('Mists'); // the higher id
+    $p = recsProduct('Pad Mist', $s['other'], [$mists, $pads], 5);
 
-    // And its cards are that shelf's.
-    $shelf = Category::query()->whereIn('id', [$parent->id, $s['toners']->id])->where('name', $crumb[1])->firstOrFail();
-    $ids = DB::table('category_product')->where('category_id', $shelf->id)->pluck('product_id')->all();
-    $slugs = Product::query()->whereIn('id', $ids)->pluck('slug')->all();
-    expect(recsSlugs(recsBlock($html, 'rp2-h')))->not->toBeEmpty()
-        ->and(array_diff(recsSlugs(recsBlock($html, 'rp2-h')), $slugs))->toBe([]);
+    // Equal and thin (one other product each): the lowest id, Pads.
+    recsProduct('Pad A', $s['far'], [$pads], 10);
+    recsProduct('Mist A', $s['far'], [$mists], 10);
+    foreach ([1, 2] as $run) {
+        ProductRecs::forget((int) $p->id);
+        expect(recsBlock(recsPage($this, $p), 'rp2-h'))->toContain('More Pads</h2>');
+    }
+
+    // Mists gains in-stock products (and a sold-out one, which does not count): Mists.
+    recsProduct('Mist B', $s['far'], [$mists], 9);
+    recsProduct('Mist C', $s['far'], [$mists], 8);
+    recsProduct('Pad Sold Out', $s['far'], [$pads], 7, ['stock_status' => 'outofstock']);
+    recsProduct('Pad Sold Out 2', $s['far'], [$pads], 6, ['stock_status' => 'outofstock']);
+    app(AlsoLikeSettings::class)->save(['hide_oos' => false]);
+    ProductRecs::forget((int) $p->id);
+    expect(recsBlock(recsPage($this, $p), 'rp2-h'))->toContain('More Mists</h2>');
+
+    // The candidates are the same whatever order the relation loads them in.
+    $fresh = Product::query()->with('categories:id,name,slug,path,parent_id,depth')->find($p->id);
+    $ids = fn () => array_map(fn ($c) => (int) $c->id, ProductRecs::categoryCandidates($fresh));
+    $before = $ids();
+    $fresh->setRelation('categories', $fresh->categories->reverse()->values());
+    expect($ids())->toBe($before)->and($before)->toBe([(int) $pads->id, (int) $mists->id]);
 });
 
 it('puts in-stock products first in blocks 2 and 3 when sold-out ones are allowed', function () {
@@ -491,9 +563,12 @@ it('costs the same queries with 3 relatives as with 40, and no more warm', funct
         ->and($count())->toBeLessThanOrEqual($big);
 });
 
-it('asks two statements for all three blocks, cold and warm', function () {
+it('asks two statements for all three blocks, cold and warm — with one shelf or two equally deep', function () {
     $s = recsShop();
-    $s['self']->load(['brand:id,name,slug', 'categories:id,name,slug,path']);
+    // Two equally deep shelves are two SELECTs inside the same union, not a query each.
+    $s['self']->categories()->attach(recsCategory('Pads')->id);
+    $s['self']->load(['brand:id,name,slug', 'categories:id,name,slug,path,parent_id,depth']);
+    expect(ProductRecs::categoryCandidates($s['self']))->toHaveCount(2);
     app(\App\Services\SettingsService::class)->all();
     app(ProductSections::class)->all();
     __('store.product.recs_tab_brand');
@@ -528,7 +603,7 @@ it('drops a product hidden after the lists were cached, on the very next view', 
 
 it('asks nothing of the database when the foot is off on every device', function () {
     $s = recsShop();
-    $p = Product::query()->with(['brand:id,name,slug', 'categories:id,name,slug,path'])->find($s['self']->id);
+    $p = Product::query()->with(['brand:id,name,slug', 'categories:id,name,slug,path,parent_id,depth'])->find($s['self']->id);
     app(ProductSections::class)->save(['related' => ['desktop' => false, 'mobile' => false]]);
     app(\App\Services\SettingsService::class)->all();
     app(ProductSections::class)->all();
@@ -665,7 +740,7 @@ it('reuses the cards when the lists are rebuilt, and reads a repeat view as one 
     expect(unserialize(gzinflate($bundle), ['allowed_classes' => false]))->toHaveKey($s['x1']->id);
 
     ProductRecs::forget((int) $s['self']->id);
-    $p = Product::query()->with(['brand:id,name,slug', 'categories:id,name,slug,path'])->find($s['self']->id);
+    $p = Product::query()->with(['brand:id,name,slug', 'categories:id,name,slug,path,parent_id,depth'])->find($s['self']->id);
     $row = app(ProductRecs::class)->forProduct($p)['alsoLike']['products']->firstWhere('id', $s['x1']->id);
 
     expect($row->getAttribute('rp_src'))->not->toBeNull()
