@@ -216,6 +216,7 @@ final class AdminRoles
             'marketing.email.send' => 'Send and schedule campaigns',
             'push.view' => 'See push notification campaigns, reports and subscriber analytics',
             'push.send' => 'Send, schedule and test push notifications, and change their automations and rules',
+            'marketing.feed' => 'Google Shopping feed: see its address and switch it on or off',
             'carttracking.view' => 'See Cart Tracking',
             'carttracking.block' => 'Block and unblock IP addresses',
         ]],

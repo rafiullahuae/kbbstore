@@ -362,17 +362,21 @@ class SeoFilesController extends Controller
          * entry buying nothing, so the entry carries the one element that is
          * still read.
          *
-         * OFF BY DEFAULT, and that is rule 1 rather than timidity: /sitemap.xml
-         * is byte-pinned by the English render walk, and a package that moves
-         * a file Search Console has already fetched should move it because an
-         * operator decided to, on a day they can watch what happens. With the
-         * box unticked this method emits the bytes it emits today and runs the
-         * same queries — the images column is not even selected.
+         * ON BY DEFAULT SINCE LANE SEO (2.60.425), and the owner decided it.
+         * This shipped off under the old rule 1 ("an operator should move a
+         * file Search Console has fetched"). He then sent the SEO checklist
+         * and said "do the needful", with the move onto kbeautybliss.com about
+         * to put that domain's Google Images index at stake -- so under the
+         * 30 September rule the switch ships on, and migration
+         * 2027_10_08_100000_clear_caches_seo_feed writes '1' over the stored
+         * default. With the box unticked this method still emits exactly the
+         * old bytes and runs the same queries (the images column is not even
+         * selected).
          *
          * Store → SEO & Meta → Settings · Sitemap & robots · "Product images
          * in sitemap".
          */
-        $withImages = SeoSettings::from($s, 'sitemap_images', '0') === '1';
+        $withImages = SeoSettings::from($s, 'sitemap_images', '1') === '1';
 
         $urls = [];
         $add = function ($loc, $lastmod = null, $priority = '0.6', $freq = 'weekly', array $images = []) use (&$urls) {

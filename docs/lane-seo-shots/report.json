@@ -1,0 +1,155 @@
+{
+  "admin": {
+    "390": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "title": "Google Shopping feed",
+      "crumb": "Growth & Marketing",
+      "url": "https://kbeautybliss.test/feeds/google-merchant.xml",
+      "items": 3,
+      "navRow": true,
+      "offStatus": 404,
+      "onStatus": 200,
+      "errors": [
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin/login': Not supported for insecure origins.",
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin-api/presence/beat': Not supported for insecure origins.",
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin-api/presence/beat': Not supported for insecure origins.",
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin-api/presence/beat': Not supported for insecure origins.",
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin-api/merchant-feed': Not supported for insecure origins.",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin-api/merchant-feed': Not supported for insecure origins."
+      ]
+    },
+    "1280": {
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "title": "Google Shopping feed",
+      "crumb": "Growth & Marketing",
+      "url": "https://kbeautybliss.test/feeds/google-merchant.xml",
+      "items": 3,
+      "navRow": true,
+      "offStatus": 404,
+      "onStatus": 200,
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin/login': Not supported for insecure origins.",
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin-api/presence/beat': Not supported for insecure origins.",
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin-api/presence/beat': Not supported for insecure origins.",
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin-api/presence/beat': Not supported for insecure origins.",
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin-api/merchant-feed': Not supported for insecure origins.",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Clear-Site-Data header on 'http://kbeautybliss.test:10930/admin-api/merchant-feed': Not supported for insecure origins."
+      ]
+    }
+  },
+  "shop": {
+    "home-1280": {
+      "status": 200,
+      "cls": 0.001,
+      "scrollWidth": 1280,
+      "speculation": 1,
+      "ldjson": 5,
+      "errors": [],
+      "loadErrors": 0
+    },
+    "shop-1280": {
+      "status": 200,
+      "cls": 0,
+      "scrollWidth": 1280,
+      "speculation": 1,
+      "ldjson": 4,
+      "errors": [],
+      "loadErrors": 0
+    },
+    "category-1280": {
+      "status": 200,
+      "cls": 0,
+      "scrollWidth": 1280,
+      "speculation": 1,
+      "ldjson": 4,
+      "errors": [],
+      "loadErrors": 0
+    },
+    "brand-1280": {
+      "status": 200,
+      "cls": 0,
+      "scrollWidth": 1280,
+      "speculation": 1,
+      "ldjson": 4,
+      "errors": [],
+      "loadErrors": 0
+    },
+    "product-1280": {
+      "status": 200,
+      "cls": 0,
+      "scrollWidth": 1280,
+      "speculation": 1,
+      "ldjson": 4,
+      "errors": [],
+      "loadErrors": 0
+    },
+    "blog-1280": {
+      "status": 200,
+      "cls": 0,
+      "scrollWidth": 1280,
+      "speculation": 1,
+      "ldjson": 4,
+      "errors": [],
+      "loadErrors": 0
+    },
+    "home-390": {
+      "status": 200,
+      "cls": 0,
+      "scrollWidth": 390,
+      "speculation": 1,
+      "ldjson": 5,
+      "errors": [],
+      "loadErrors": 0
+    },
+    "shop-390": {
+      "status": 200,
+      "cls": 0,
+      "scrollWidth": 390,
+      "speculation": 1,
+      "ldjson": 4,
+      "errors": [],
+      "loadErrors": 0
+    },
+    "category-390": {
+      "status": 200,
+      "cls": 0,
+      "scrollWidth": 390,
+      "speculation": 1,
+      "ldjson": 4,
+      "errors": [],
+      "loadErrors": 0
+    },
+    "brand-390": {
+      "status": 200,
+      "cls": 0,
+      "scrollWidth": 390,
+      "speculation": 1,
+      "ldjson": 4,
+      "errors": [],
+      "loadErrors": 0
+    },
+    "product-390": {
+      "status": 200,
+      "cls": 0,
+      "scrollWidth": 390,
+      "speculation": 1,
+      "ldjson": 4,
+      "errors": [],
+      "loadErrors": 0
+    },
+    "blog-390": {
+      "status": 200,
+      "cls": 0,
+      "scrollWidth": 390,
+      "speculation": 1,
+      "ldjson": 4,
+      "errors": [],
+      "loadErrors": 0
+    }
+  }
+}

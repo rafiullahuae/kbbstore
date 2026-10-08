@@ -358,19 +358,25 @@ it('names the biggest problem in one line rather than printing a score', functio
 
 /* ------------------------------------------------- the sitemap's image entries */
 
-it('serves the sitemap without an image namespace until the box is ticked', function () {
+it('lists product images by default, and serves the old image-free sitemap when the box is unticked', function () {
     isaSettings();
     isaProduct(['images' => ['/media/gallery-1.jpg']]);
 
     /*
-     * RULE 1. /sitemap.xml is byte-pinned by the English render walk, and a new
-     * setting ships at the value the page already has — so applying this
-     * package must not move one byte of a file Search Console has already
-     * fetched.
+     * ON SINCE LANE SEO, at the owner's request ("do the needful" on the SEO
+     * checklist, ahead of the move onto kbeautybliss.com whose Google Images
+     * index is the asset to protect). Migration 2027_10_08_100000 writes '1',
+     * so a migrated shop -- this test database included -- lists the gallery.
      *
-     * MUTATION NOTE: change the default in SeoFilesController::sitemap() from
-     * '0' to '1' and this is red.
+     * MUTATION NOTE: delete the settings write in that migration AND change the
+     * default in SeoFilesController::sitemap() back to '0', and the first
+     * expectation is red.
      */
+    $xml = test()->get('/sitemap.xml')->assertOk()->getContent();
+    expect($xml)->toContain('<image:loc>'.ISA_BASE.'/media/gallery-1.jpg</image:loc>');
+
+    // Unticked, it is the file Search Console fetched before: no namespace, no entry.
+    isaSettings(['sitemap_images' => '0']);
     $xml = test()->get('/sitemap.xml')->assertOk()->getContent();
 
     expect($xml)->not->toContain('sitemap-image');
