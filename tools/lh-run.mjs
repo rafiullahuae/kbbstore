@@ -57,7 +57,10 @@ try {
       networkQuietThresholdMs: 1000, cpuQuietThresholdMs: 1000 } : {}),
     throttling: { ...(base.settings?.throttling ?? { rttMs: 150, throughputKbps: 1638.4, requestLatencyMs: 562.5,
       downloadThroughputKbps: 1474.56, uploadThroughputKbps: 675 }), cpuSlowdownMultiplier: profile === 'desktop' ? 1.8 : 2.6 } } };
-  const runner = await lighthouse(url, { logLevel: 'error', output: 'json', port: chrome.port, onlyCategories: ['performance'] }, config);
+  /* LH_COOKIE (Lane CC): a Cookie header for every request, so /cart/ and
+     /checkout/ can be measured with a basket instead of redirecting. */
+  const extraHeaders = process.env.LH_COOKIE ? { Cookie: process.env.LH_COOKIE } : undefined;
+  const runner = await lighthouse(url, { logLevel: 'error', output: 'json', port: chrome.port, onlyCategories: ['performance'], extraHeaders }, config);
   const lhr = runner.lhr;
   fs.writeFileSync(path.join(out, `${label}-${profile}.json`), runner.report);
   /* The filmed frames, kept so tools/lh-si-cut.mjs can re-score the run as

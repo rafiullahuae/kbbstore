@@ -134,6 +134,8 @@ final class StaticMemos
              * from a file it has nothing to do with.
              */
             SiteHost::class => static fn () => SiteHost::forget(),
+            // The built grid stylesheet's bytes, keyed by Vite entry (Lane CC).
+            \App\Support\LandingCss::class => static fn () => \App\Support\LandingCss::forget(),
             /*
              * The per-module normalised schemas (Lane M2).
              *
