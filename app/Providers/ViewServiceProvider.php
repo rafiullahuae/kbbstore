@@ -11,6 +11,27 @@ use Illuminate\Support\ServiceProvider;
 
 class ViewServiceProvider extends ServiceProvider
 {
+    /**
+     * (Lane TY) The Blade compiler writes its compiled views atomically. Its
+     * stock write truncates the file and then fills it, and a request that
+     * includes it in between renders that partial as NOTHING -- the empty
+     * "Your order" of the owner's order #56181. See App\View\AtomicViewFiles.
+     *
+     * extend(), not a re-registration: the compiler Laravel built stays the
+     * same object with the same paths, directives and components; only the
+     * Filesystem it writes through is swapped.
+     */
+    public function register(): void
+    {
+        $this->app->extend('blade.compiler', function ($blade) {
+            \Closure::bind(function () {
+                $this->files = new \App\View\AtomicViewFiles;
+            }, $blade, \Illuminate\View\Compilers\Compiler::class)();
+
+            return $blade;
+        });
+    }
+
     public function boot(): void
     {
         View::composer('layouts.store', StoreComposer::class);
