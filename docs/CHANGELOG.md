@@ -3,6 +3,15 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.427
+**Sold-out popup redesign.** Apply after .426. No migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "on the popup, the product image should also come, and black color title, also reduce the font size little bit, and then is soldout in red. also the text, your bag is updated etc. that should be a nice frosted glass type long capsule type box, and with right corner green tick icon, half outside the box." | Each sold-out line shows its picture, the name in black at a slightly smaller size, and "is sold out" in red. After Remove, "Your bag is updated" sits in a frosted-glass capsule with a green tick half outside its right corner (left corner in Arabic). Phone and desktop, EN/AR. No new script and no new request |
+
+Files: see the package's update.json.
+
 ## 2.60.426
 **Catalog -> Image SEO.** Apply after .425. Runs its migrations. Hard refresh the
 admin.
