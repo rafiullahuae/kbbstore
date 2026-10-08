@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.441
+**The phone banner is exactly the height you set.** Apply after .440. Runs its
+migrations. Hard refresh the shop and the admin.
+
+| Your request | Now |
+|---|---|
+| "on mobile the overall height of the banner is not working, i set 600px height, but it's showing horizontal type size" | The height slider was a maximum, so a wide picture stayed a 112px strip. Appearance -> Banners -> set -> Size & fit: "How the computer/phone height works" = Up to this height / Exactly this height. Your phone banner is now Exactly 600px (360/390/430 wide all measured 600 tall); the picture fills it, cropped on the server for slides with no phone picture (phone banner pictures 73 KB -> 20 KB). The text box shows on phones and never spills out of the frame; the admin preview shows the true height. Computer unchanged |
+
+Files: see the package's update.json.
+
 ## 2.60.440
 **Checkout pages load once, "Confirming payment" instead of "Total to pay", a card
 in its security check is safe from other tabs, and iPhone never zooms on the card
