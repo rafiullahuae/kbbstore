@@ -1,0 +1,58 @@
+Lane FW — Store → Security → Firewall: measured, 8 Oct 2026, preview (php -S, SQLite, CACHE_STORE=file).
+
+SERVER, in-process, OPcache on, median of 15 (tools/fw451-speed.php). ms are sandbox noise-level; queries,
+settings-map reads, HTML bytes and the page md5 (tokens removed) are exact and identical in every mode.
+
+enforce-36.110.0.1     firewall alone  61.9 us/request
+   home       30.9 ms  1 queries  1 settings read  115547 B  md5 938302a6  proof cookie True
+   product    22.8 ms  9 queries  1 settings read  146278 B  md5 14e7d730  proof cookie True
+   category   17.3 ms  5 queries  1 settings read  76270 B  md5 0d87671d  proof cookie True
+   brand      17.4 ms  5 queries  1 settings read  76277 B  md5 ec17b059  proof cookie True
+enforce-94.200.10.20   firewall alone  39.3 us/request
+   home         23 ms  1 queries  1 settings read  115547 B  md5 938302a6  proof cookie False
+   product    20.8 ms  9 queries  1 settings read  146278 B  md5 14e7d730  proof cookie False
+   category   10.4 ms  5 queries  1 settings read  76270 B  md5 0d87671d  proof cookie False
+   brand      14.3 ms  5 queries  1 settings read  76277 B  md5 ec17b059  proof cookie False
+monitor-36.110.0.1     firewall alone  64.5 us/request
+   home       20.7 ms  1 queries  1 settings read  115547 B  md5 938302a6  proof cookie True
+   product    15.6 ms  9 queries  1 settings read  146278 B  md5 14e7d730  proof cookie True
+   category   10.6 ms  5 queries  1 settings read  76270 B  md5 0d87671d  proof cookie True
+   brand         9 ms  5 queries  1 settings read  76277 B  md5 ec17b059  proof cookie True
+monitor-94.200.10.20   firewall alone  37.2 us/request
+   home       18.7 ms  1 queries  1 settings read  115547 B  md5 938302a6  proof cookie False
+   product    15.1 ms  9 queries  1 settings read  146278 B  md5 14e7d730  proof cookie False
+   category   15.9 ms  5 queries  1 settings read  76270 B  md5 0d87671d  proof cookie False
+   brand      12.1 ms  5 queries  1 settings read  76277 B  md5 ec17b059  proof cookie False
+off-36.110.0.1         firewall alone   0.5 us/request
+   home       24.6 ms  1 queries  1 settings read  115547 B  md5 938302a6  proof cookie False
+   product    22.5 ms  9 queries  1 settings read  146278 B  md5 14e7d730  proof cookie False
+   category   11.1 ms  5 queries  1 settings read  76270 B  md5 0d87671d  proof cookie False
+   brand      12.2 ms  5 queries  1 settings read  76277 B  md5 ec17b059  proof cookie False
+off-94.200.10.20       firewall alone   0.8 us/request
+   home       25.1 ms  1 queries  1 settings read  115547 B  md5 938302a6  proof cookie False
+   product    15.4 ms  9 queries  1 settings read  146278 B  md5 14e7d730  proof cookie False
+   category   18.1 ms  5 queries  1 settings read  76270 B  md5 0d87671d  proof cookie False
+   brand      17.8 ms  5 queries  1 settings read  76277 B  md5 ec17b059  proof cookie False
+
+HUMAN in Chromium, skimming with hover-prefetch for 2 minutes (tools/fw451-human.cjs; every request the
+application would handle logged by tools/fw451-router.php, peaks by tools/fw451-peak.py):
+   1280: 197 requests, 148 of them prefetches; busiest 10 s: 9 page/API + 19 prefetch; busiest minute: 26 page/API
+   390:   82 requests,  45 of them prefetches; busiest 10 s: 9 page/API +  9 prefetch; busiest minute: 17 page/API
+   Defaults: 60 / 10 s and 240 / 60 s per address, 80 prefetches / 10 s, 900 / 60 s per /24 — Protect at 50%.
+
+SHOP PAGES, firewall OFF vs ON (enforce), visitor from a Protect country (tools/fw451-shots.cjs):
+   home@390       screenshot identical True  (off vs off again True)  requests [8, 8]  scrollWidth [390, 390]  console errors [1, 0]
+   category@390   screenshot identical True  (off vs off again True)  requests [10, 10]  scrollWidth [390, 390]  console errors [0, 0]
+   brand@390      screenshot identical True  (off vs off again True)  requests [9, 9]  scrollWidth [390, 390]  console errors [0, 0]
+   product@390    screenshot identical True  (off vs off again False)  requests [30, 29]  scrollWidth [390, 390]  console errors [0, 0]
+   shop@390       screenshot identical True  (off vs off again True)  requests [10, 10]  scrollWidth [390, 390]  console errors [0, 0]
+   blog@390       screenshot identical True  (off vs off again True)  requests [8, 8]  scrollWidth [390, 390]  console errors [0, 0]
+   home@1280      screenshot identical True  (off vs off again True)  requests [8, 8]  scrollWidth [1280, 1280]  console errors [0, 0]
+   category@1280  screenshot identical True  (off vs off again True)  requests [10, 10]  scrollWidth [1280, 1280]  console errors [0, 0]
+   brand@1280     screenshot identical True  (off vs off again True)  requests [9, 9]  scrollWidth [1280, 1280]  console errors [0, 0]
+   product@1280   screenshot identical True  (off vs off again False)  requests [29, 29]  scrollWidth [1280, 1280]  console errors [0, 0]
+   shop@1280      screenshot identical True  (off vs off again True)  requests [10, 10]  scrollWidth [1280, 1280]  console errors [0, 0]
+   blog@1280      screenshot identical True  (off vs off again True)  requests [8, 8]  scrollWidth [1280, 1280]  console errors [0, 0]
+
+PREFETCH with the firewall on: {'href': '/product/advanced-snail-96-mucin-power-essence/', 'prefetchRequestsSeenByServer': 1, 'navigation': {'type': 'navigational-prefetch', 'url': '/product/advanced-snail-96-mucin-power-essence/'}}
+PROTECT in Chromium: {'proofCookie': {'httpOnly': True, 'sameSite': 'Lax', 'len': 31}, 'browserAddToCart': 200, 'clickToResponseMs': 125, 'badge': None, 'botPostWithoutPage': 403, 'botBody': '{"ok":false,"error":"The cart only answers a web browser. Please use Chrome, Safari, Firefox or Edge.","blocked":true,"r'}
