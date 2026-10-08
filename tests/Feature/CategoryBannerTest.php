@@ -210,44 +210,91 @@ it('gives phones the category\'s own phone picture', function () {
 
 /* ═══════════════════ 2. a category without one, unchanged ═══════════════════ */
 
-it('leaves a category with no picture byte for byte as it was', function () {
+it('draws the brand page\'s no-picture look on a category with no picture', function () {
     /*
-     * "A category with no banner image set must look exactly like today."
-     * Today is the page under "Category header -- as before", which is the
-     * code path this lane did not touch -- so the two renders must be equal
-     * to the byte, for the light box, the plain title and the Catalog tint.
+     * Lane CB2. The owner: "no more old header style for categories ... i
+     * want to see ... the brand header design for categories". A category
+     * with no picture draws what a BRAND with no picture draws -- the Panel
+     * on its own ground (`brw-ph--noimg`), with no <img> and no picture
+     * partial -- and never the old light box. One <h1>, the category's name.
+     * A Catalog banner with no picture (the old tint) is the same: the Panel
+     * replaces it, as it does on a brand page.
      *
-     * MUTATION: let forCategory() draw the brand's no-picture Panel (return
-     * draw() with a null image instead of null) and all three are red.
+     * MUTATION: put `if ($image === null) return null;` back in
+     * forCategory() and both pages are red (the light box / tint return).
      */
     cbCategory('cb-box');
     cbCategory('cb-tint', ['banner' => ['enabled' => true, 'style' => 'tint', 'heading' => 'Tinted']]);
 
-    foreach (['/collections/cb-box/', '/collections/cb-tint/'] as $path) {
-        cbLayout(['catb_hero' => 'panel']);
-        $now = cbPage($path);
-        cbLayout(['catb_hero' => 'header']);
-        $before = cbPage($path);
+    foreach (['/collections/cb-box/' => 'cb-box', '/collections/cb-tint/' => 'cb-tint'] as $path => $slug) {
+        $html = cbPage($path);
+        $section = cbSection($html);
 
-        expect(preg_replace('#name="csrf-token" content="[^"]+"|value="[A-Za-z0-9]{40}"#', '', $now))
-            ->toBe(preg_replace('#name="csrf-token" content="[^"]+"|value="[A-Za-z0-9]{40}"#', '', $before), $path.' changed with no picture')
-            ->and($now)->not->toContain('kbb-cbw')
-            ->and($now)->not->toContain('kbb-brand-header');
+        expect($section)->toContain('brw-ph--noimg')
+            ->and($section)->not->toContain('<img')
+            ->and($section)->toContain('<h1 class="brw-ph__name" id="brw-ph-title">Cleansers '.$slug.'</h1>')
+            ->and(substr_count($html, '<h1'))->toBe(1)
+            ->and($html)->not->toContain('data-kbb-title-header')
+            ->and($html)->not->toContain('class="kbb-banner');
     }
-
-    // And the light box is what that page is.
-    cbLayout(['catb_hero' => 'panel']);
-    expect(cbPage('/collections/cb-box/'))->toContain('data-kbb-title-header');
 });
 
-it('puts the title header back for every category under "Category header -- as before"', function () {
-    /* MUTATION: ignore `catb_hero` in ShopController and this is red. */
+it('draws the same no-picture look a brand with no picture draws', function () {
+    /*
+     * "Check exactly what the brand page draws for a brand with no banner
+     * picture": the same class list and the same style variables, from the
+     * same draw(), at the same shipped settings -- the category only swaps
+     * the brand's colour for the shop pink (a category has no colour).
+     *
+     * MUTATION: give forCategory() its own class list and this is red.
+     */
+    $brand = Brand::create(['name' => 'Nopic', 'slug' => 'cb-nopic', 'description' => 'Plain.']);
+    $cat = cbCategory('cb-nopic2');
+    $all = app(SiteLayout::class)->all();
+
+    $b = BrandPanel::forBrand($brand, $all);
+    $c = BrandPanel::forCategory($cat, $all, 'Cleansers cb-nopic2');
+
+    expect($c['image'])->toBeNull()
+        ->and(str_contains($b['class'], 'brw-ph--noimg'))->toBeTrue()
+        ->and($c['class'])->toBe($b['class']);
+});
+
+it('puts the old header back for every category under "Old category header"', function () {
+    /*
+     * The switch, at Appearance -> Site layout -> Category header (brand
+     * design) -> Category page header. Flipped, every category -- picture
+     * or not -- draws the old title header / light box again.
+     *
+     * MUTATION: ignore `catb_hero` in forCategory() and this is red.
+     */
     cbCategory('cb-back', ['header_image' => '/uploads/cb-test/x.jpg']);
+    cbCategory('cb-back2');
     cbLayout(['catb_hero' => 'header']);
 
-    $html = cbPage('/collections/cb-back/');
+    foreach (['/collections/cb-back/', '/collections/cb-back2/'] as $path) {
+        $html = cbPage($path);
+        expect($html)->toContain('data-kbb-title-header')->and($html)->not->toContain('kbb-cbw');
+    }
+});
 
-    expect($html)->toContain('data-kbb-title-header')->and($html)->not->toContain('kbb-cbw');
+it('keeps the old header only where a category chose it for itself', function () {
+    /*
+     * A default never keeps a category on the old header; only an explicit
+     * per-category choice does (Catalog -> Categories -> Edit -> Category
+     * header -> Header design -> "Old category header", `header_layout.hero`).
+     * And "Brand-page design" there keeps one category on the brand design
+     * while the shop is switched back.
+     *
+     * MUTATION: drop categoryHero() from forCategory() and both are red.
+     */
+    cbCategory('cb-own-old', ['header_layout' => ['hero' => 'old']]);
+    cbCategory('cb-own-new', ['header_layout' => ['hero' => 'brand']]);
+
+    expect(cbPage('/collections/cb-own-old/'))->toContain('data-kbb-title-header')->not->toContain('kbb-cbw');
+
+    cbLayout(['catb_hero' => 'header']);
+    expect(cbSection(cbPage('/collections/cb-own-new/')))->toContain('brw-ph--noimg');
 });
 
 /* ══════════════ 2b. which picture, and never a broken banner ══════════════ */
@@ -290,56 +337,78 @@ it('takes the category\'s own Banner picture over the old one', function () {
     expect($section)->toContain('src="/uploads/cb-test/mine.jpg"')->and($section)->not->toContain('old.jpg');
 });
 
-it('never draws a broken banner: a picture not on this server keeps the old header', function () {
+it('never draws a broken banner: a picture not on this server gets the no-picture look', function () {
     /*
      * An imported `header_image` can be a file the media copy never brought
      * across, or an address on the OLD WooCommerce domain. The banner draws
      * only a picture ImageVariants can open under this web root; anything
-     * else leaves the page byte for byte as it was under "Category header --
-     * as before" -- the old title header, which drew it the same way before.
-     * A Banner picture that is missing falls through to the old one.
+     * else gets the brand design's no-picture look -- not the old header,
+     * and never a broken <img>. A missing Banner picture falls through to
+     * the old one.
      *
-     * MUTATION: drop the onServer() test in forCategory() and all three are
-     * red (a banner on a 404, or on another site's file).
+     * MUTATION: drop the onServer() test in forCategory() and the first two
+     * are red (an <img> on a 404, or on another site's file).
      */
     cbCategory('cb-gone', ['header_image' => '/uploads/cb-test/never-copied.jpg']);
     cbCategory('cb-far', ['header_image' => 'https://kbeautybliss.com/wp-content/uploads/2024/01/banner.jpg']);
 
     foreach (['/collections/cb-gone/', '/collections/cb-far/'] as $path) {
-        cbLayout(['catb_hero' => 'panel']);
-        $now = cbPage($path);
-        cbLayout(['catb_hero' => 'header']);
-        $before = cbPage($path);
+        $html = cbPage($path);
+        $section = cbSection($html);
 
-        expect(cbBare($now))->toBe(cbBare($before), $path.' drew something new for a picture it cannot show')
-            ->and($now)->not->toContain('kbb-cbw');
+        expect($section)->toContain('brw-ph--noimg')
+            ->and($section)->not->toContain('<img')
+            ->and($html)->not->toContain('never-copied.jpg')
+            ->and($html)->not->toContain('kbeautybliss.com/wp-content')
+            ->and($html)->not->toContain('data-kbb-title-header');
     }
 
-    cbLayout(['catb_hero' => 'panel']);
     cbCategory('cb-miss', ['header_image' => '/uploads/cb-test/old.jpg', 'header_layout' => ['image' => '/uploads/cb-test/deleted.jpg']]);
     expect(cbSection(cbPage('/collections/cb-miss/')))->toContain('src="/uploads/cb-test/old.jpg"');
 });
 
 it('uses the square category picture only where the old header did', function () {
     /*
-     * "Whatever the old title header showed": the category's own square
-     * picture was the old header's picture only with "When no banner was
-     * imported, use the category picture" on, which ships Off. So a category
-     * with nothing but that picture is unchanged at the shipped settings,
-     * and becomes a banner exactly when the old header would have shown it.
+     * The category's own square picture was the old header's picture only
+     * with "When no banner was imported, use the category picture" on, which
+     * ships Off. So with only that picture, the shipped page is the
+     * no-picture look; with the switch on, that picture is the banner.
      *
      * MUTATION: read `image` in oldPicture() without the switch and the
      * first half is red.
      */
     cbCategory('cb-sq', ['image' => '/uploads/cb-test/sq.jpg']);
 
-    cbLayout(['catb_hero' => 'panel']);
-    $now = cbPage('/collections/cb-sq/');
-    cbLayout(['catb_hero' => 'header']);
-    expect(cbBare($now))->toBe(cbBare(cbPage('/collections/cb-sq/')))->and($now)->not->toContain('kbb-cbw');
+    expect(cbSection(cbPage('/collections/cb-sq/')))->toContain('brw-ph--noimg')->not->toContain('class="brw-ph__img"');
 
-    cbLayout(['catb_hero' => 'panel', 'cat_header_fallback' => true]);
+    cbLayout(['cat_header_fallback' => true]);
     expect(cbSection(cbPage('/collections/cb-sq/')))->toContain('src="/uploads/cb-test/sq.jpg"');
+});
+
+it('shows the switch first and hides the old tabs while the brand design is on', function () {
+    /*
+     * The owner landed on the old "Category header" tab and could not find
+     * the brand design. Now: the switch is the first control on the brand
+     * design tab (and on the old tab), that tab sits where the category
+     * header used to, and the screen drops the two old tabs from its strip
+     * while "Brand-page design" is chosen -- their values still save.
+     *
+     * MUTATION: drop the `brandDesign && OLD_TABS` filter from
+     * site-layout-screen and the screen half is red; put catb_hero anywhere
+     * but first in CATBANNER_KEYS and the first expectation is red.
+     */
+    expect(SiteLayout::CATBANNER_KEYS[0])->toBe('catb_hero')
+        ->and(SiteLayout::SCHEMA['catb_hero'][1])->toBe('Category page header')
+        ->and(SiteLayout::SCHEMA['catb_hero'][4])->toBe(['panel' => 'Brand-page design (default)', 'header' => 'Old category header'])
+        ->and(SiteLayout::TABS['catbanner'][0])->toBe('Category header (brand design)')
+        ->and(SiteLayout::TABS['catheader'][0])->toBe('Old category header')
+        ->and(array_search('catbanner', array_keys(SiteLayout::TABS), true))->toBe(array_search('catheader', array_keys(SiteLayout::TABS), true) - 1);
+
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/site-layout-screen.blade.php'));
+    expect($screen)->toContain("var brandDesign = values.catb_hero !== 'header';")
+        ->and($screen)->toContain('var shownTabs = tabs.filter(function (t) { return !(brandDesign && OLD_TABS[t.key]); });')
+        ->and($screen)->toContain('var strip = shownTabs.map(')
+        ->and($screen)->toContain("? (heroField ? fieldHTML(heroField) : '') + lookHTML(current)");
 });
 
 it('keeps the Banner picture out of the Media Library\'s delete list', function () {
@@ -425,10 +494,9 @@ it('answers every Category banner control, each under its own name', function ()
     $section = cbSection(cbPage('/collections/cb-ctl/'));
     expect($section)->toContain('--brw-ph-h:410px')->and($section)->toContain('brw-ph--at-top-right');
 
-    // Every one of them on the Category banner tab, next to Brand page.
-    expect(SiteLayout::TABS['catbanner'][0])->toBe('Category banner')
+    // Every one of them on the brand-design tab.
+    expect(SiteLayout::TABS['catbanner'][0])->toBe('Category header (brand design)')
         ->and(array_keys(SiteLayout::TABS))->toContain('catbanner')
-        ->and(array_search('catbanner', array_keys(SiteLayout::TABS), true))->toBe(array_search('brandpage', array_keys(SiteLayout::TABS), true) + 1)
         ->and(count(SiteLayout::CATBANNER_KEYS))->toBe(count(BrandPanel::RANGES) + count(BrandPanel::CHOICES) + 1)
         ->and(SiteLayout::SCHEMA['catb_hero'][2])->toBe('panel');
 });
@@ -478,6 +546,13 @@ it('saves a category\'s banner layout from Catalog -> Categories, and refuses wh
         ->assertStatus(422)->assertJsonValidationErrors(['header_layout.image']);
     expect($cat->fresh()->header_layout)->toBe(['image' => '/uploads/cb-test/mine.jpg']);
 
+    // Lane CB2: the category's own Header design -- one of its two options,
+    // or blank. MUTATION: drop the hero rule and the 422 is a 200.
+    test()->putJson('/admin-api/categories/'.$cat->id, $base + ['header_layout' => ['hero' => 'old']])->assertOk();
+    expect($cat->fresh()->header_layout)->toBe(['hero' => 'old']);
+    test()->putJson('/admin-api/categories/'.$cat->id, $base + ['header_layout' => ['hero' => 'sideways']])->assertStatus(422);
+    expect($cat->fresh()->header_layout)->toBe(['hero' => 'old']);
+
     // All blank is "follow the shop": NULL.
     test()->putJson('/admin-api/categories/'.$cat->id, $base + ['header_layout' => []])->assertOk();
     expect($cat->fresh()->header_layout)->toBeNull();
@@ -523,7 +598,7 @@ it('escapes the name, cleans the description and refuses a script address', func
         ->and($section)->not->toContain('javascript:')
         ->and($section)->toContain('<p>Soft</p>');
 
-    expect(cbPage('/collections/cb-js/'))->not->toContain('kbb-cbw')->not->toContain('javascript:alert');
+    expect(cbPage('/collections/cb-js/'))->toContain('brw-ph--noimg')->not->toContain('javascript:alert');
 });
 
 /* ═══════════════════════════ 6. the query count ═══════════════════════════ */
@@ -591,8 +666,7 @@ it('previews the category banner in the category "Edit header" panel', function 
     /*
      * The page draws the banner, so the panel's live preview and its swap
      * after Save draw it too -- in the same wrapper the page uses, which is
-     * what category-header-editor.js looks for. A category with no picture
-     * keeps the title header there as on its page.
+     * what category-header-editor.js looks for -- with a picture or without.
      *
      * MUTATION: drop the panel branch from CategoryHeaderApiController::
      * rendered() and the first line is red (the preview would show the old
@@ -604,5 +678,5 @@ it('previews the category banner in the category "Edit header" panel', function 
     expect(\App\Http\Controllers\Admin\CategoryHeaderApiController::rendered($with)['html'])
         ->toStartWith('<div class="wrap kbb-cbw"><div class="brw-phw" data-kbb-brand-header>')
         ->and(\App\Http\Controllers\Admin\CategoryHeaderApiController::rendered($without)['html'])
-        ->toContain('data-kbb-title-header');
+        ->toContain('brw-ph--noimg');
 });

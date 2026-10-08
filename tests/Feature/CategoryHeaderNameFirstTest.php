@@ -34,6 +34,20 @@ function chnPage(string $slug): string
     return test()->get('/collections/'.$slug.'/')->assertOk()->getContent();
 }
 
+
+/*
+ * Lane CB2: every category page draws the brand-page design by default now,
+ * because the owner asked ("no more old header style for categories"). This
+ * file pins the OLD category header, which is still the page under
+ * Appearance -> Site layout -> Category page header -> "Old category header",
+ * so it is pinned THERE. CategoryBannerTest pins the new default.
+ */
+beforeEach(function () {
+    app(\App\Services\SiteLayout::class)->save(['catb_hero' => 'header']);
+    \App\Models\Setting::flushMap();
+    \App\Services\SettingsService::forgetMemo();
+});
+
 it('heads a category with its own name when the import left "hide" as its title', function () {
     Category::create(['name' => 'Chn Skincare', 'slug' => 'chn-skincare', 'header_title' => 'hide', 'header_subtitle' => 'show']);
 

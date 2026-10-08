@@ -854,6 +854,8 @@ class CategoriesApiController extends Controller
 
         // The category's own Banner picture: what switches the banner on.
         $rules['header_layout.image'] = ['nullable', 'string', 'max:2048'];
+        // Lane CB2: this category's own header design; blank follows the shop.
+        $rules['header_layout.hero'] = ['nullable', 'string', Rule::in(\App\Support\BrandPanel::CATEGORY_HEROES)];
 
         return $rules;
     }
@@ -871,7 +873,7 @@ class CategoriesApiController extends Controller
     {
         $raw = $request->input('header_layout');
         $raw = is_array($raw) ? $raw : [];
-        $unknown = array_diff(array_keys($raw), array_keys(\App\Support\BrandPanel::CHOICES + \App\Support\BrandPanel::RANGES), ['image']);
+        $unknown = array_diff(array_keys($raw), array_keys(\App\Support\BrandPanel::CHOICES + \App\Support\BrandPanel::RANGES), ['image', 'hero']);
 
         if ($unknown !== []) {
             throw \Illuminate\Validation\ValidationException::withMessages(['header_layout' => 'The banner layout has no setting called "'.mb_substr((string) reset($unknown), 0, 40).'".']);
@@ -892,6 +894,12 @@ class CategoriesApiController extends Controller
             }
 
             $clean['image'] = $safe;
+        }
+
+        $hero = \App\Support\BrandPanel::categoryHero(['hero' => $raw['hero'] ?? null]);
+
+        if ($hero !== null) {
+            $clean['hero'] = $hero;
         }
 
         if ($clean !== [] && ! \App\Support\BrandPanel::columnReady('categories')) {

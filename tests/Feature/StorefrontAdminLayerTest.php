@@ -81,6 +81,20 @@ function raContext(\Tests\TestCase $test, string $path): \Illuminate\Testing\Tes
     return $test->getJson('/admin-api/storefront/context?path=' . rawurlencode($path));
 }
 
+
+/*
+ * Lane CB2: every category page draws the brand-page design by default now,
+ * because the owner asked ("no more old header style for categories"). This
+ * file pins the OLD category header, which is still the page under
+ * Appearance -> Site layout -> Category page header -> "Old category header",
+ * so it is pinned THERE. CategoryBannerTest pins the new default.
+ */
+beforeEach(function () {
+    app(\App\Services\SiteLayout::class)->save(['catb_hero' => 'header']);
+    \App\Models\Setting::flushMap();
+    \App\Services\SettingsService::forgetMemo();
+});
+
 beforeEach(function () {
     StorefrontAdminRoutes::wire($this->app);
 });

@@ -399,13 +399,15 @@ final class BrandPanel
      * Appearance -> Site layout -> Category banner -> "Category header -- as
      * before" puts every category back on the title header.
      *
-     * ── ONLY WITH A PICTURE ─────────────────────────────────────────────────
+     * ── EVERY CATEGORY, PICTURE OR NOT (Lane CB2) ───────────────────────────
      *
-     * A brand with no picture still draws the Panel, on a ground in its own
-     * shades (`brw-ph--noimg`). A category does NOT: the owner asked for the
-     * banner, and a category with no picture keeps today's header -- the light
-     * box, the plain title or the Catalog banner's tint -- byte for byte. The
-     * no-picture Panel is a decision for him, not a default this lane chose.
+     * The owner, after 2.60.433: "no more old header style for categories ...
+     * i want to see a clear switch or the brand header design for categories".
+     * So a category with no picture -- or one whose picture is not on this
+     * server -- draws the brand page's no-picture look (`brw-ph--noimg`, the
+     * ground in the shop pink's shades), exactly as a brand with no picture
+     * does. Null (the old header) only when the shop switch is on "Old
+     * category header", or the category's own explicit choice says so.
      *
      * ── WHERE EACH PART COMES FROM ──────────────────────────────────────────
      *
@@ -434,14 +436,20 @@ final class BrandPanel
      */
     public static function forCategory(Category $category, array $layout, string $title, ?array $banner = null): ?array
     {
-        if (($layout['catb_hero'] ?? 'panel') === 'header') {
+        $own = $category->getAttribute('header_layout');
+
+        // Lane CB2: an explicit per-category choice wins; otherwise the shop's
+        // switch, which ships at the brand design for EVERY category.
+        $hero = self::categoryHero($own) ?? (($layout['catb_hero'] ?? 'panel') === 'header' ? 'old' : 'brand');
+
+        if ($hero === 'old') {
             return null;
         }
 
-        $own = $category->getAttribute('header_layout');
-
         // The category's own Banner picture first, else the picture its old
         // header showed -- oldPicture() -- each only if it is on this server.
+        // None (or none on this server): the brand page's no-picture look,
+        // never the old header and never a broken picture.
         $image = null;
         $ratio = null;
 
@@ -453,10 +461,6 @@ final class BrandPanel
             }
         }
 
-        if ($image === null) {
-            return null;
-        }
-
         $v = self::sanitize($own) + self::shop($layout, true);
         [$heading, $description] = TitleHeader::wordsOf($category, $title, $layout);
 
@@ -465,16 +469,16 @@ final class BrandPanel
         }
 
         $style = TitleHeader::sanitizeStyle($category->getAttribute('header_style'));
-        $phone = TitleHeader::safeImage($style['img_phone'] ?? null);
+        $phone = $image === null ? null : TitleHeader::safeImage($style['img_phone'] ?? null);
         $phoneRatio = $phone !== null && $phone !== $image ? self::onServer($phone) : null;
         // A phone picture that is not on this server is dropped, never drawn broken.
         $phone = $phoneRatio !== null ? $phone : null;
 
         return [
             'image_phone' => $phone,
-            'srcset' => self::srcset($image),
+            'srcset' => $image === null ? '' : self::srcset($image),
             'srcset_phone' => $phone === null ? '' : self::srcset($phone),
-            'sizes' => self::sizes($image, (int) $v['height'], (int) $v['height_m'], $ratio),
+            'sizes' => $image === null ? '' : self::sizes($image, (int) $v['height'], (int) $v['height_m'], $ratio),
             'sizes_phone' => $phone === null ? '' : self::sizes($phone, (int) $v['height'], (int) $v['height_m'], $phoneRatio),
             'heading' => $heading,
             'logo_image' => TitleHeader::safeImage($category->getAttribute('image')),
@@ -527,6 +531,26 @@ final class BrandPanel
         }
 
         return $ratio !== null && $ratio > 0 ? $ratio : null;
+    }
+
+    /** Lane CB2: the per-category header choices -- blank follows the shop. */
+    public const CATEGORY_HEROES = ['brand', 'old'];
+
+    /**
+     * Lane CB2: a category's own explicit header choice (`header_layout.hero`):
+     * 'brand' or 'old', or null to follow Appearance -> Site layout. Only an
+     * explicit choice saved per category keeps a category on the old header
+     * while the shop is on the brand design.
+     */
+    public static function categoryHero(mixed $raw): ?string
+    {
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+
+        $v = is_array($raw) ? ($raw['hero'] ?? null) : null;
+
+        return is_string($v) && in_array($v, self::CATEGORY_HEROES, true) ? $v : null;
     }
 
     /**

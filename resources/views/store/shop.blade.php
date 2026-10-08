@@ -282,7 +282,7 @@
                      passes null and the tile simply has no eyebrow — which
                      costs no query, where reading each product's own categories
                      would have cost one on this page and on three others. --}}
-                <x-product-card :product="$product" :eager="$loop->first && ! ($catPanel ?? null)" :cat-label="($category ?? null)?->t('name')" />
+                <x-product-card :product="$product" :eager="$loop->first && ($catPanel['image'] ?? null) === null" :cat-label="($category ?? null)?->t('name')" />
             @empty
                 <div class="empty" style="grid-column:1/-1"><b>{{ __('store.shop.empty_heading') }}</b>{{ __('store.shop.empty_body') }}</div>
             @endforelse

@@ -62,6 +62,9 @@ it('pins one column with ?mcols=1 and refuses any other value', function () {
 });
 
 it('covers the phone header with the picture by default, centred', function () {
+    // Lane CB2: the old category header, pinned where it still is -- "Old
+    // category header"; every category draws the brand design by default now.
+    app(\App\Services\SiteLayout::class)->save(['catb_hero' => 'header']);
     plCategory();
     $html = (string) $this->get('/collections/pl-sun/')->getContent();
 

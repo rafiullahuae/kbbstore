@@ -364,9 +364,10 @@ const KBB_ELEMENT_ANCHORED_R6 = [
         ['<h1 class="ptitle">', 1],
     ],
     // Lane PY: a category is headed by the title header now, so the listing's
-    // own heading is its <h1>, still named once.
+    // own heading is its <h1>, still named once. Lane CB2: that header is the
+    // brand-page design's, so its <h1>.
     'tests/Feature/CategoryStorefrontSyncTest.php' => [
-        ['<h1 class="kbb-th__title" id="kbb-th-title">', 1],
+        ['<h1 class="brw-ph__name" id="brw-ph-title">', 1],
     ],
     'tests/Feature/CategoryPathWalkCostTest.php' => [
         ['<span class="kbb-card-nm">', 3],

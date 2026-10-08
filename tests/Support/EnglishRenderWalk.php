@@ -2695,32 +2695,31 @@ KBB_BH_CSS;
             ],
 
             /*
-             * THE CATEGORY TITLE HEADER, ON A CATEGORY WITH NO PICTURE.
-             *                                                       (Lane PY)
+             * THE CATEGORY HEADER, IN THE BRAND PAGE'S DESIGN.      (Lane CB2)
              *
-             * The owner, on Lane PT's preview: "by default make the title name
-             * left side as before, i just wanted the background image or light
-             * colored box containing skincare makeup etc products icons. if no
-             * image." The walk's category has no picture, so it now opens on
-             * the LIGHT BOX: the header's stylesheet in <head>, and the
-             * <section> in place of the plain eyebrow / <h1> / line, which
-             * 'the plain category title' in approvedRemovals() cuts from the
-             * other side. ONE page, the category archive; /shop/, the brand
-             * page and every other page are compared byte for byte as before.
+             * The owner, after 2.60.433: "no more old header style for
+             * categories ... the brand header design for categories". The
+             * walk's category has no picture, so it now opens on the brand
+             * page's NO-PICTURE look -- the brand header's stylesheet and the
+             * category rule in <head>, and the Panel (`brw-ph--noimg`) in a
+             * box of its own where Lane PY's light box sat; 'the plain
+             * category title' in approvedRemovals() still cuts the old plain
+             * heading from the other side. ONE page, the category archive;
+             * /shop/, the brand page and every other page are compared byte
+             * for byte as before. These two replace Lane PY's "category title
+             * header stylesheet" and "light box", which this default retired.
              *
-             * THE PATTERN NAMES THE SHIPPED DEFAULTS -- box, dark words, Start,
-             * no treatment, Blush icons -- so a default that moves without
-             * this walk being told is red here, not just in a unit test.
-             * PyCategoryHeaderOptionsTest pins what is inside the section.
+             * THE PATTERN NAMES THE SHIPPED DEFAULTS -- frosted panel, capsule,
+             * circle, centre, no picture -- so a default that moves without
+             * this walk being told is red here. CategoryBannerTest pins what
+             * is inside the section.
              */
-            'the category title header stylesheet (Lane PY)' => [
-                'pattern' => '#<link rel="preload" as="style" href="/build/assets/kbb-title-header-[A-Za-z0-9_-]+\.css" /><link rel="stylesheet" href="/build/assets/kbb-title-header-[A-Za-z0-9_-]+\.css" />#',
+            'the category header stylesheet, brand design (Lane CB2)' => [
+                'pattern' => '#<link rel="preload" as="style" href="/build/assets/kbb-brand-header-[A-Za-z0-9_-]+\.css" /><link rel="stylesheet" href="/build/assets/kbb-brand-header-[A-Za-z0-9_-]+\.css" />\n?<style>\.kbb-cbw\{[^<]*</style>\n?#',
                 'hits' => 1,
             ],
-            'the category title header, the light box (Lane PY)' => [
-                // 2.60.350: `kbb-th--v-bottom` -- the words at the foot of the box,
-                // as the owner asked.
-                'pattern' => '#<section class="kbb-th kbb-th--box kbb-th--dark kbb-th--a-start kbb-th--v-bottom kbb-th--t-none kbb-th--box-blush" style="[^"<>]*" data-kbb-title-header aria-labelledby="kbb-th-title">\n.*?</section>\n#s',
+            'the category header, brand design with no picture (Lane CB2)' => [
+                'pattern' => '#<div class="wrap kbb-cbw">\n<div class="brw-phw" data-kbb-brand-header>\n<section class="brw-ph brw-ph--frost brw-ph--pill-capsule brw-ph--logo-circle brw-ph--pos-center[^"]* brw-ph--noimg[^"]*" style="[^"<>]*" aria-labelledby="brw-ph-title">.*?</section>\n</div>\n</div>\n#s',
                 'hits' => 1,
             ],
 

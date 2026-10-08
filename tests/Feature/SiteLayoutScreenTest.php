@@ -153,11 +153,16 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // nothing" below still holds. InstantNavTest covers the tab's effect.
     // ▲ `catbanner` (Lane CB): the brand page's Panel on category pages, every
     // Brand page Panel control again for categories; not CSS on :root.
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize', 'brandpage', 'catbanner', 'press', 'fonts', 'speed']);
+    // ▲ Lane CB2: `catbanner` ("Category header (brand design)") moved up to
+    // where the category header was -- every category page uses it now.
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catbanner', 'catheader', 'catheadersize', 'brandpage', 'press', 'fonts', 'speed']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
-    expect($keys)->toBe(array_keys(SiteLayout::SCHEMA));
+    // Every key on exactly one tab. (Lane CB2 moved the brand-design tab up,
+    // so the tabs no longer walk the schema in its own order.)
+    expect(collect($keys)->sort()->values()->all())->toBe(collect(array_keys(SiteLayout::SCHEMA))->sort()->values()->all())
+        ->and(count(array_unique($keys)))->toBe(count($keys));
     // 47 since 2.60.350: where the words sit, the generic line, and Read more.
     /*
      * SEVENTY-FOUR SINCE LANE QC: "and for mobile also" gave the six design

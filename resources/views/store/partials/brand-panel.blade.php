@@ -40,7 +40,9 @@
 <section class="{{ $panel['class'] }}" style="{{ $panel['style'] }}" aria-labelledby="brw-ph-title">
 <div class="brw-ph__media">
 @if (isset($panelCategory))
+@if ($panel['image'] !== null)
 @include('store.partials.category-panel-picture', ['panel' => $panel])
+@endif
 @elseif ($panel['image'] !== null)
 <img class="brw-ph__img" src="{{ $panel['image'] }}" alt="" width="{{ \App\Support\TitleHeader::IMG_WIDTH }}" height="{{ \App\Support\TitleHeader::IMG_HEIGHT }}" decoding="async" fetchpriority="high">
 @endif

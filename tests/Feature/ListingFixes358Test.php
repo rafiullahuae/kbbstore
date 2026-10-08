@@ -73,6 +73,9 @@ it('hides the product count beside Filters by default, and shows it when switche
 it('shows the whole picture on a phone when switched on, with the blurred copy behind it', function () {
     // 2.60.393: off by default now (the owner: "cover the whole area by middle
     // and center"); this is the switch that puts the whole picture back.
+    // Lane CB2: the old category header, pinned where it still is -- "Old
+    // category header"; every category draws the brand design by default now.
+    app(\App\Services\SiteLayout::class)->save(['catb_hero' => 'header']);
     lf358Set('layout_cat_header_phone_whole', '1');
     lf358Category(['header_image' => '/uploads/lf/banner.jpg']);
 

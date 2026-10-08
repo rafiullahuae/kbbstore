@@ -84,8 +84,9 @@ it('shows a newly created category on the storefront without waiting for a cache
         // dot and every card's category label — so bare it could not tell a
         // listing that had rendered from one that had rendered nothing but its
         // head (Lane PLC). Since Lane PY that heading is the title header's
-        // <h1> -- every category gets the header, picture or light box.
-        ->assertSee('<h1 class="kbb-th__title" id="kbb-th-title">AQ Fresh Category', false);
+        // <h1> -- every category gets the header, picture or light box. Since
+        // Lane CB2 that header is the brand-page design's.
+        ->assertSee('<h1 class="brw-ph__name" id="brw-ph-title">AQ Fresh Category', false);
 });
 
 it('changes the order the shop sidebar shows when categories are reordered', function () {

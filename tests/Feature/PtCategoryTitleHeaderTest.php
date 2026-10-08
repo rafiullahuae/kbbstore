@@ -93,6 +93,20 @@ function ptPage(string $path): string
 
 /* ═══════════════════════════════════════════════════════════════ import ═══ */
 
+
+/*
+ * Lane CB2: every category page draws the brand-page design by default now,
+ * because the owner asked ("no more old header style for categories"). This
+ * file pins the OLD category header, which is still the page under
+ * Appearance -> Site layout -> Category page header -> "Old category header",
+ * so it is pinned THERE. CategoryBannerTest pins the new default.
+ */
+beforeEach(function () {
+    app(\App\Services\SiteLayout::class)->save(['catb_hero' => 'header']);
+    \App\Models\Setting::flushMap();
+    \App\Services\SettingsService::forgetMemo();
+});
+
 it('lands the banner, title and subtitle the export carries', function () {
     ptImportFixtureForHeader();
 

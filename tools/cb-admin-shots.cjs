@@ -35,6 +35,9 @@ const CAT = process.argv[4] || '1';
     const sl = await page.evaluate(() => ({
       crumb: (document.querySelector('#crumb') || {}).textContent,
       tab: (document.querySelector('[data-sls-tab].on, [data-sls-tab][aria-selected="true"]') || {}).textContent,
+      // Lane CB2: the strip as he sees it -- the old header's tabs are gone while the brand design is on.
+      strip: [...document.querySelectorAll('[data-sls-tab]')].map((t) => t.textContent.trim()),
+      oldNote: !!document.querySelector('[data-sls-oldnote]'),
       labels: [...document.querySelectorAll('.sls-fields label, .sls-fields .sls-lab')].map((l) => l.textContent.trim()).slice(0, 40),
       sw: document.documentElement.scrollWidth,
     }));
