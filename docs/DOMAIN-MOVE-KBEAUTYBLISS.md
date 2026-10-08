@@ -240,6 +240,30 @@ kbeautybliss.com would forward visitors **to extrabeauty.ae**.
 normally, indexable, canonical tags still on extrabeauty.ae. Check: open
 https://extrabeauty.ae — loads as before.
 
+### B1b · Coming Soon page on kbeautybliss.com (Lane CS)
+
+**Appearance → Coming Soon page** → On, *Only this address: kbeautybliss.com*,
+Save — before B3. kbeautybliss.com then answers every visitor with a 503
+"Something new is coming" page (`Retry-After: 3600`, `X-Robots-Tag: noindex`,
+`Cache-Control: no-store, private`) while extrabeauty.ae is untouched; a signed-in
+admin or the secret preview link sees the real shop there. Always let through:
+the admin and owner-app addresses, `/admin-api/*`, `/api/*` (all payment
+webhooks), `/checkout/card/*`, `/checkout/success`, `/checkout/pending`,
+`/checkout/restore-basket`, `/.well-known/*` (Let's Encrypt, Apple Pay), `/up`,
+`/_kbb-health`, `/import-chain/*`, file addresses, the web manifest and the
+links customers' emails carry (reset, verify, unsubscribe, view-in-browser).
+`robots.txt` answers `Disallow: /` there; the sitemap is hidden. Turn it off
+after C's test orders pass, before E1. Emergency, over SSH:
+`php artisan kbb:coming-soon off`. Step-by-step behaviour:
+`KBEAUTYBLISS-SWITCH-CHECKLIST.md`, steps 6a and 20a.
+
+**Varnish.** The page is a 503 and `no-store, private`; Varnish's built-in
+`vcl_backend_response` caches neither (and Cloudways keys its cache on the Host
+header, so extrabeauty.ae's cached pages are never served for kbeautybliss.com).
+**CHECK** on the day, after B3: `curl -sI https://kbeautybliss.com/ | grep -iE
+"^HTTP|x-kbb-coming-soon|cache-control|age:"` — expect `503`,
+`x-kbb-coming-soon: 1`, `no-store, private`, and `age: 0` on a second request.
+
 ### B2 · Add the domains in Cloudways
 
 Cloudways → Applications → this app → **Domain Management**: add

@@ -497,6 +497,13 @@ final class AdminCapabilities
         // five above, and its own capability for the same reason. (Lane WA)
         'wabutton.manage' => ['owner', 'manager', 'editor'],
 
+        // Appearance -> Coming Soon page (Lane CS): one switch that hides the
+        // whole shop on an address (or on every address) behind a 503 page,
+        // and the secret link that lets someone past it. A shop-wide
+        // visibility decision, not an appearance tweak, so owner only like
+        // platform.domain_switch; hand it to a custom role deliberately.
+        'comingsoon.manage' => ['owner'],
+
         // App -> Site App (Lane PW): whether the shop is an installable Home
         // Screen app at all -- the manifest, and a service worker on every
         // shopper's phone -- and the app's name. Its own capability, owner and
@@ -1763,6 +1770,9 @@ final class AdminCapabilities
         ['*', 'admin-api/page-wash', 'pagewash.manage'],
         // One line and no '/**' sibling: no sub-endpoint here either. (Lane WA)
         ['*', 'admin-api/whatsapp-button', 'wabutton.manage'],
+        // Appearance -> Coming Soon page (Lane CS). Both lines: `/**` does not match the bare prefix.
+        ['*', 'admin-api/coming-soon', 'comingsoon.manage'],
+        ['*', 'admin-api/coming-soon/**', 'comingsoon.manage'],
         // The screen's read and save (Lane PW), and its icon upload (Lane IC).
         ['*', 'admin-api/site-app', 'siteapp.manage'],
         ['*', 'admin-api/site-app/**', 'siteapp.manage'],

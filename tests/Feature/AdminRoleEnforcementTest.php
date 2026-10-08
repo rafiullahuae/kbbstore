@@ -315,6 +315,21 @@ it('has an authorization layer reading the role column', function () {
          * prefetches -- no cookie, no storage -- and never touches a request.
          */
         'ClearPrefetchOnWrite',
+        /*
+         * Lane CS (Appearance -> Coming Soon page), and I have come and read
+         * this file as instructed.
+         *
+         * Neither authorises anything in the back office or reads a role.
+         * ComingSoonGate decides, on the request HOST and PATH, whether a
+         * visitor to the hidden address sees the shop or a 503 page; the
+         * admin path, /admin-api and the owner app are always let through
+         * untouched (ComingSoon::pathAllowed). ComingSoonAdminPass asks only
+         * "is anyone signed in on the admin guard?" -- any account, any role --
+         * to let the owner see his own shop there; it grants no capability.
+         * Both are inert while the page is off, which is how it ships.
+         */
+        'ComingSoonAdminPass',
+        'ComingSoonGate',
         'EnforceAdminCapability',
         'NoIndexStaging',
         'NoStoreAdminApi',

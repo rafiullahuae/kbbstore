@@ -199,6 +199,7 @@ final class AdminRoles
             'sitelayout.manage' => 'Site width and columns',
             'pagewash.manage' => 'Page background',
             'wabutton.manage' => 'WhatsApp button',
+            'comingsoon.manage' => 'Coming Soon page: hide the shop on an address, and its preview link (Full Admin by default)',
             'pagebanners.manage' => 'Page banners and the Super Sale products',
             'pageheader.manage' => 'Page header of the custom pages, and its “Edit header” panel on the shop',
             'categoryheader.manage' => 'A category page’s “Edit header” panel on the shop, and its custom header area',

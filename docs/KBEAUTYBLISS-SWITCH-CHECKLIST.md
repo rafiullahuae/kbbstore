@@ -28,6 +28,22 @@ Undo, at any point before Part G: at Internet.bs, set the `@` A record back to
 6. In **Cloudways → Applications → your app → Domain Management**, add
    `kbeautybliss.com` and `www.kbeautybliss.com`. Keep extrabeauty.ae for now.
 
+6a. **Turn the Coming Soon page on — before the DNS change.**
+   **Appearance → Coming Soon page**: Show it **On**, Which address
+   **Only this address: kbeautybliss.com** (www is included), check the words
+   in the preview, **Save**. The status line must read
+   *"ON — kbeautybliss.com (and www.kbeautybliss.com) shows the Coming Soon
+   page; extrabeauty.ae shows the shop."* Then press **Copy** under *Secret
+   preview link* and send it to your phone (it lasts 24 hours; **New link**
+   makes another and stops the old one).
+   From now on, anyone who reaches kbeautybliss.com sees "Something new is
+   coming" (HTTP 503, not indexed, never cached); extrabeauty.ae is untouched.
+   You see the real shop there when you are signed in (a small dark notice says
+   so) or after opening the preview link on that phone.
+
+   Locked out, or it misbehaves? Over SSH in the app folder:
+   `php artisan kbb:coming-soon off` — the shop shows again on the next request.
+
 ## B. DNS at Internet.bs
 7. Go to **Internet.bs → kbeautybliss.com → DNS Management** and create these records:
 
@@ -78,6 +94,31 @@ Undo, at any point before Part G: at Internet.bs, set the `@` A record back to
     - the Arabic shop works
     - Instagram connects
     - the phone app installs from kbeautybliss.com
+
+20a. **Turn the Coming Soon page off** — only after every test above passed:
+    **Appearance → Coming Soon page** → Show it **Off** → **Save** (or
+    `php artisan kbb:coming-soon off`). The status line reads *"OFF — every
+    address shows the shop."* Open https://kbeautybliss.com in a private window:
+    the shop, no notice. Nothing needs purging — the Coming Soon page is never
+    cached — but if anything looks stale, Cloudways → Varnish → **Purge**.
+    Do this **before** step 21: with forwarding on and Coming Soon still on,
+    extrabeauty.ae visitors would be sent into the Coming Soon page (the
+    screen warns you if that is ever the case).
+
+### What each step does while the Coming Soon page is on (kbeautybliss.com only)
+
+| Step | With Coming Soon ON |
+|---|---|
+| 7–9 DNS | `dig` is unaffected. As DNS spreads, visitors reaching kbeautybliss.com get the Coming Soon page instead of Hostinger. |
+| 10 Certificate | Unaffected. Let's Encrypt checks `/.well-known/acme-challenge/…`; everything under `/.well-known/` is always let through. |
+| 11 Sign in, "Use this address" | Unaffected: the admin address is always let through. Once signed in you see the real shop on kbeautybliss.com, with the notice. |
+| 12 Site URL, 13 Varnish purge / Clear everything | Unaffected. The page is sent `no-store`, so no cache holds it. |
+| 14 Old links, `kbb:domain-check` | Unaffected. The wizard's certificate check reads `robots.txt`, which answers (`Disallow: /` while on). |
+| 15–18 Stripe, Tabby, Tamara, Instagram | Unaffected: every webhook (`/api/payments/webhook/…`), Stripe Connect and the Instagram callback (`/admin-api/…`) are let through. |
+| 19 Uploads | Unaffected: picture and file addresses are let through. |
+| 20 Test orders | Signed in, or with the preview link: the real shop. Card confirm (`/checkout/card/…`), the return pages (`/checkout/success`, `/checkout/pending`) and the webhooks are let through for everyone, so a payment always lands. Password-reset, verify and unsubscribe links work for anyone. The phone app's manifest is let through, so it installs. |
+| Meanwhile on extrabeauty.ae | The shop as always. **Once step 11 is done**, emails sent to real customers link to kbeautybliss.com: order and account links there show the Coming Soon page to a customer who is not signed in, until 20a. Keep the gap between 11 and 20a to a few hours. |
+| 21 Forwarding | Turn Coming Soon off first (20a). |
 
 ## F. Move visitors over gently (this is what keeps anything from breaking)
 21. Go to **Platform → Site address** and set **Forward permanently: ON**.

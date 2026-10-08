@@ -1,0 +1,130 @@
+{
+  "page-en-390": {
+    "status": 503,
+    "headers": {
+      "cache-control": "no-store, private",
+      "retry-after": "3600",
+      "x-robots-tag": "noindex, nofollow"
+    },
+    "bytes": 2959,
+    "requests": 1,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "dir": "ltr",
+    "h1": "28.86px",
+    "message": "17.5px",
+    "scripts": 0,
+    "langLinkHit": true
+  },
+  "page-ar-390": {
+    "status": 503,
+    "headers": {
+      "cache-control": "no-store, private",
+      "retry-after": "3600",
+      "x-robots-tag": "noindex, nofollow"
+    },
+    "bytes": 2983,
+    "requests": 1,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "dir": "rtl",
+    "h1": "28.86px",
+    "message": "17.5px",
+    "scripts": 0,
+    "langLinkHit": true
+  },
+  "page-en-1280": {
+    "status": 503,
+    "headers": {
+      "cache-control": "no-store, private",
+      "retry-after": "3600",
+      "x-robots-tag": "noindex, nofollow"
+    },
+    "bytes": 2959,
+    "requests": 1,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "dir": "ltr",
+    "h1": "40px",
+    "message": "17.5px",
+    "scripts": 0,
+    "langLinkHit": true
+  },
+  "page-ar-1280": {
+    "status": 503,
+    "headers": {
+      "cache-control": "no-store, private",
+      "retry-after": "3600",
+      "x-robots-tag": "noindex, nofollow"
+    },
+    "bytes": 2983,
+    "requests": 1,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "dir": "rtl",
+    "h1": "40px",
+    "message": "17.5px",
+    "scripts": 0,
+    "langLinkHit": true
+  },
+  "admin-1280": {
+    "title": "Coming Soon page",
+    "crumb": "Appearance",
+    "status": "ONON — kbeautybliss.com (and www.kbeautybliss.com) shows the Coming Soon page; extrabeauty.ae shows the shop.\n\nLocked out? Over SSH in the app folder: php artisan kbb:coming-soon off",
+    "navRow": true,
+    "scrollWidth": 1280
+  },
+  "domainswitch-line": "Coming Soon page: ON for kbeautybliss.com — visitors there see it; you (signed in) and the preview link see the shop. Turn it off after the test orders in step 9 pass. Open Appearance → Coming Soon page",
+  "admin-390": {
+    "title": "Coming Soon page",
+    "crumb": "Appearance",
+    "status": "ONON — kbeautybliss.com (and www.kbeautybliss.com) shows the Coming Soon page; extrabeauty.ae shows the shop.\n\nLocked out? Over SSH in the app folder: php artisan kbb:coming-soon off",
+    "navRow": true,
+    "scrollWidth": 390
+  },
+  "admin-shop-390": {
+    "status": 200,
+    "cache-control": "no-store, private",
+    "x-robots-tag": "noindex, nofollow, noarchive",
+    "notice": "Coming Soon is ON for visitors on this address",
+    "noticeTakesClick": false,
+    "pointerEvents": "none",
+    "scrollWidth": 390,
+    "noticeHeight": 50
+  },
+  "admin-shop-1280": {
+    "status": 200,
+    "cache-control": "no-store, private",
+    "x-robots-tag": "noindex, nofollow, noarchive",
+    "notice": "Coming Soon is ON for visitors on this address",
+    "noticeTakesClick": false,
+    "pointerEvents": "none",
+    "scrollWidth": 1280,
+    "noticeHeight": 33
+  },
+  "extrabeauty-visitor-390": {
+    "status": 200,
+    "notice": false,
+    "comingSoon": null
+  },
+  "consoleErrors": [
+    "page-en-390: Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "page-ar-390: Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "page-en-1280: Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "page-ar-1280: Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+    "admin-1280: Clear-Site-Data header on 'http://extrabeauty.ae:11470/admin/login': Not supported for insecure origins.",
+    "admin-1280: Clear-Site-Data header on 'http://extrabeauty.ae:11470/admin-api/presence/beat': Not supported for insecure origins.",
+    "admin-1280: Clear-Site-Data header on 'http://extrabeauty.ae:11470/admin-api/presence/beat': Not supported for insecure origins.",
+    "admin-1280: Clear-Site-Data header on 'http://extrabeauty.ae:11470/admin-api/coming-soon/preview': Not supported for insecure origins.",
+    "admin-1280: Clear-Site-Data header on 'http://extrabeauty.ae:11470/admin-api/coming-soon/link': Not supported for insecure origins.",
+    "admin-1280: Clear-Site-Data header on 'http://extrabeauty.ae:11470/admin-api/coming-soon/preview': Not supported for insecure origins.",
+    "admin-1280: Clear-Site-Data header on 'http://extrabeauty.ae:11470/admin-api/presence/beat': Not supported for insecure origins.",
+    "admin-390: Clear-Site-Data header on 'http://extrabeauty.ae:11470/admin/login': Not supported for insecure origins.",
+    "admin-390: Clear-Site-Data header on 'http://extrabeauty.ae:11470/admin-api/presence/beat': Not supported for insecure origins.",
+    "admin-390: Clear-Site-Data header on 'http://extrabeauty.ae:11470/admin-api/presence/beat': Not supported for insecure origins.",
+    "admin-390: Clear-Site-Data header on 'http://extrabeauty.ae:11470/admin-api/coming-soon/preview': Not supported for insecure origins.",
+    "admin-shop-390: Clear-Site-Data header on 'http://kbeautybliss.com:11470/admin/login': Not supported for insecure origins.",
+    "admin-shop-390: Clear-Site-Data header on 'http://kbeautybliss.com:11470/admin-api/presence/beat': Not supported for insecure origins.",
+    "admin-shop-1280: Clear-Site-Data header on 'http://kbeautybliss.com:11470/admin/login': Not supported for insecure origins."
+  ]
+}

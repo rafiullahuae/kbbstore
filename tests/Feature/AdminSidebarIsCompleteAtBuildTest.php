@@ -372,9 +372,10 @@ it('renders the sidebar the console settled on, group by group and row by row', 
         'Emails' => ['emails', 'emails-sending', 'emails-customer', 'emails-branding', 'emails-sent', 'mail'],
         'Content' => ['posts', 'htmlblocks', 'media', 'ugcsections', 'instagram'],
         'Translation' => ['tr-settings', 'tr-progress', 'tr-strings', 'tr-machine'],
+        // 'comingsoon' — Appearance → Coming Soon page (Lane CS), last, after Site layout.
         'Appearance' => ['homepage', 'hpcontent', 'spotted', 'banners', 'gridsections', 'prodstyles', 'mobilehdr',
             'dividers', 'pagewash', 'wabutton', 'cartpanel', 'cartpage', 'checkoutpage', 'slimfooter', 'acctpanel',
-            'header', 'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout'],
+            'header', 'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout', 'comingsoon'],
         'Pages' => ['pages-store', 'pages-user', 'pagebanners', 'pageheader'],
         // 'merchantfeed' — Growth & Marketing → Google Shopping feed (Lane SEO), after Meta & Facebook.
         'Growth & Marketing' => ['mkt-email', 'newsletter', 'labels', 'meta', 'merchantfeed', 'pixels', 'searchterms', 'carttracking', 'push'],

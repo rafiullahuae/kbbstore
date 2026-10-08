@@ -136,6 +136,14 @@ final class AdminSearchIndex
                 'Check certificate', 'Switch the shop’s address', 'Payments and Instagram', 'Old pictures', 'Test orders',
             ],
         ],
+        // Appearance → Coming Soon page (Lane CS).
+        'comingsoon' => [
+            '' => [
+                'Coming Soon page', 'Show it', 'Only this address', 'Every address', 'New link',
+                'What it says', 'Heading', 'Message', 'Small line', 'Background colour', 'Background picture', 'Contact links',
+                'Secret preview link', 'Open the saved page',
+            ],
+        ],
         'cache' => [
             '' => [
                 'Shop pages may be reused for', 'Browsers may keep them for', '.htaccess',

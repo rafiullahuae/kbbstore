@@ -675,6 +675,8 @@ final class DomainSwitch
                 'forward' => $removed || $forwarding ? 'done' : 'todo',
                 'remove' => $removed ? 'done' : 'todo',
             ],
+            // Appearance -> Coming Soon page (Lane CS): one line at the top of the wizard.
+            'coming_soon' => \App\Support\ComingSoon::summary(),
             'can' => [
                 'switch' => $served,
                 'payments' => $switched,

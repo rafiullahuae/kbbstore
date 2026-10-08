@@ -280,6 +280,17 @@ class AppServiceProvider extends ServiceProvider
             $kernel->prependMiddleware(\App\Http\Middleware\CanonicalHost::class);
 
             /*
+             * Appearance -> Coming Soon page (Lane CS). Prepended AFTER
+             * CanonicalHost, so it runs BEFORE it: a hidden address that is
+             * also a forwarded old address shows the page rather than a 301,
+             * and the gate itself never redirects off the host, so the two
+             * cannot loop. Still inside SettingsRequestMemo (prepended below).
+             * OFF, as it ships: one array lookup in the Setting::map() that
+             * CanonicalHost reads anyway. See App\Support\ComingSoon.
+             */
+            $kernel->prependMiddleware(\App\Http\Middleware\ComingSoonGate::class);
+
+            /*
              * Lane SP. HERE AND NOT IN bootstrap/app.php, which UpdateGuard
              * refuses to ship (BuildPackage::NEVER_SHIP's note): a line there
              * would pass every test in the repo and never reach the shop.
@@ -479,6 +490,13 @@ class AppServiceProvider extends ServiceProvider
              * where it lives.
              */
             $kernel->appendMiddlewareToGroup('web', \App\Services\Security\CspHeaders::class);
+
+            /*
+             * Appearance -> Coming Soon page (Lane CS): the half that needs
+             * the session -- after StartSession, before any controller. One
+             * attribute read for every request the gate did not mark.
+             */
+            $kernel->appendMiddlewareToGroup('web', \App\Http\Middleware\ComingSoonAdminPass::class);
         }
 
         /*
