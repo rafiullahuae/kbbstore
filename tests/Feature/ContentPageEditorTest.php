@@ -615,8 +615,11 @@ it('gives the owner a per-page way out of the double-escaped title tag', functio
      */
     $terms = Page::query()->where('slug', 'terms-and-conditions')->firstOrFail();
 
+    // Lane AMP took that fix: the layout reads its title section as text and
+    // store/page.blade.php hands it PageTitle::decoded(), so with no override at
+    // all the page is escaped once too (EntityDecodeEscapesTest pins both halves).
     preg_match('#<title>(.*?)</title>#s', (string) test()->get('/terms-and-conditions/')->getContent(), $m);
-    expect($m[1])->toBe('Terms &amp;amp;amp; Conditions · K-Beauty Bliss');
+    expect($m[1])->toBe('Terms &amp; Conditions · K-Beauty Bliss');
 
     test()->actingAs(cpeAdmin(), 'admin');
 
