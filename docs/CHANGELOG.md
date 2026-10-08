@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.428
+**Three related-product blocks on the product page.** Apply after .427. Runs its
+migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| Product page 3 blocks: block 1 depends on where the shopper came from (category or brand), slider / grid / slider | 1 "You may also like" (slider, tabs "More from {brand}" / "More {category}", opens on the one the shopper came from, brand first otherwise); 2 "Complete your routine" (grid of complementary products, in stock first); 3 "Continue shopping" (slider of recently viewed, then best sellers). On by default; controls at Appearance -> Product page -> You may also like ("One row" with blocks 2 and 3 off is the old page exactly). Product page warm 16.5 -> 14.5 ms, queries unchanged on every page |
+
+Files: see the package's update.json.
+
 ## 2.60.427
 **Sold-out popup redesign.** Apply after .426. No migrations. Hard refresh the shop.
 
