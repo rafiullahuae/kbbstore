@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.437
+**Every category page uses the brand-page header; "Your order" never empty on the
+thank-you page.** Apply after .436. No migrations. Hard refresh the shop and the admin.
+
+| Your request | Now |
+|---|---|
+| "the brand header is okay, and i need that for category pages too ... no more old header style for categories ... a clear switch" | Every category uses the brand-page header, with or without a picture (no picture = the brand page's no-picture look); a picture not on this server falls back to that look, never broken. Appearance -> Site layout -> "Category header (brand design)": first control "Category page header: Brand-page design / Old category header"; the old tabs are hidden while the brand design is on. Per category: Catalog -> Categories -> Edit -> Category header -> Header design |
+| "the order details are completely missing ... on thank you page" | Cause: right after a package, page templates are rebuilt by emptying then refilling each file, and Chrome (through the shop app) loads the thank-you page twice 8 ms apart -- the second copy could read an empty template. Templates are now written whole and swapped in at once (reproduced 6 times in 400 before, 0 after) |
+
+Files: see the package's update.json.
+
 ## 2.60.436
 **The bag is never empty after an unfinished payment, on every payment method.**
 Apply after .435. Runs its migrations. Hard refresh the shop.
