@@ -171,8 +171,12 @@ final class CardFragments
                 $put[$bundleKey] = gzdeflate(serialize($fresh), 1);
             }
 
+            // Nothing to write when every miss was found in its shared entry;
+            // an empty putMany() also trips the framework's cache event.
             try {
-                Cache::putMany($put, self::TTL);
+                if ($put !== []) {
+                    Cache::putMany($put, self::TTL);
+                }
             } catch (\Throwable) {
                 // A cache that will not write costs a re-render next time, never a page.
             }

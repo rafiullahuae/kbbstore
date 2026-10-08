@@ -673,7 +673,12 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // (store.checkout.coupon_*, 13) and "too many tries"
     // (store.js.coupon_slow_down, 1), seeded by
     // 2027_10_08_131000_seed_checkout_coupon_arabic_drafts.
-    expect($ui['drafts'])->toBe(1469, 'the shipped Arabic is not showing as drafts to review')
+    // 1469 -> 1463 (Lane RP2): six of those nine retired with the tabs,
+    // "Complete your routine" and "Continue shopping" (the tab list's name,
+    // "More like this", and the two blocks' headings and small lines) —
+    // removed from the code, and their machine drafts by
+    // 2027_10_09_120000_retire_recs_arabic_drafts.
+    expect($ui['drafts'])->toBe(1463, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

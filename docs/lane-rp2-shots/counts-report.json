@@ -1,0 +1,90 @@
+{
+ "390": {
+  "onLoad": {
+   "requests": 15,
+   "images": 4,
+   "scripts": 3,
+   "cls": 0,
+   "lcp": {
+    "t": 472,
+    "el": "H1.bb-title"
+   },
+   "scrollWidth": 390,
+   "htmlBytes": 166187
+  },
+  "blocks": {
+   "rp1-h": {
+    "mode": "slider",
+    "rendered": 8,
+    "shown": 8,
+    "hiddenPicsFetched": 0,
+    "title": "More from Anua"
+   },
+   "rp2-h": {
+    "mode": "grid",
+    "rendered": 10,
+    "shown": 10,
+    "hiddenPicsFetched": 0,
+    "title": "More Toners"
+   },
+   "ymal-h": {
+    "mode": "slider",
+    "rendered": 12,
+    "shown": 4,
+    "hiddenPicsFetched": 0,
+    "title": "You may also like"
+   }
+  },
+  "clsAfterScroll": 0,
+  "firstClick": {
+   "ok": 44,
+   "bad": [],
+   "badCount": 0
+  },
+  "consoleErrors": []
+ },
+ "1280": {
+  "onLoad": {
+   "requests": 20,
+   "images": 9,
+   "scripts": 3,
+   "cls": 0,
+   "lcp": {
+    "t": 476,
+    "el": "H1.bb-title"
+   },
+   "scrollWidth": 1280,
+   "htmlBytes": 166244
+  },
+  "blocks": {
+   "rp1-h": {
+    "mode": "slider",
+    "rendered": 8,
+    "shown": 5,
+    "hiddenPicsFetched": 0,
+    "title": "More from Anua"
+   },
+   "rp2-h": {
+    "mode": "grid",
+    "rendered": 10,
+    "shown": 10,
+    "hiddenPicsFetched": 0,
+    "title": "More Toners"
+   },
+   "ymal-h": {
+    "mode": "slider",
+    "rendered": 12,
+    "shown": 12,
+    "hiddenPicsFetched": 0,
+    "title": "You may also like"
+   }
+  },
+  "clsAfterScroll": 0,
+  "firstClick": {
+   "ok": 54,
+   "bad": [],
+   "badCount": 0
+  },
+  "consoleErrors": []
+ }
+}

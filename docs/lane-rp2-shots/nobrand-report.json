@@ -1,0 +1,78 @@
+{
+ "390": {
+  "onLoad": {
+   "requests": 15,
+   "images": 4,
+   "scripts": 3,
+   "cls": 0,
+   "lcp": {
+    "t": 468,
+    "el": "H1.bb-title"
+   },
+   "scrollWidth": 390,
+   "htmlBytes": 152928
+  },
+  "blocks": {
+   "rp1-h": null,
+   "rp2-h": {
+    "mode": "grid",
+    "rendered": 10,
+    "shown": 10,
+    "hiddenPicsFetched": 0,
+    "title": "More Toners"
+   },
+   "ymal-h": {
+    "mode": "slider",
+    "rendered": 12,
+    "shown": 12,
+    "hiddenPicsFetched": 0,
+    "title": "You may also like"
+   }
+  },
+  "clsAfterScroll": 0,
+  "firstClick": {
+   "ok": 44,
+   "bad": [],
+   "badCount": 0
+  },
+  "consoleErrors": []
+ },
+ "1280": {
+  "onLoad": {
+   "requests": 21,
+   "images": 10,
+   "scripts": 3,
+   "cls": 0,
+   "lcp": {
+    "t": 516,
+    "el": "H1.bb-title"
+   },
+   "scrollWidth": 1280,
+   "htmlBytes": 152973
+  },
+  "blocks": {
+   "rp1-h": null,
+   "rp2-h": {
+    "mode": "grid",
+    "rendered": 10,
+    "shown": 10,
+    "hiddenPicsFetched": 0,
+    "title": "More Toners"
+   },
+   "ymal-h": {
+    "mode": "slider",
+    "rendered": 12,
+    "shown": 12,
+    "hiddenPicsFetched": 0,
+    "title": "You may also like"
+   }
+  },
+  "clsAfterScroll": 0,
+  "firstClick": {
+   "ok": 44,
+   "bad": [],
+   "badCount": 0
+  },
+  "consoleErrors": []
+ }
+}

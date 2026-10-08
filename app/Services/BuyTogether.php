@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Cache;
  * Which products "Buy these together" shows on one product page.   (Lane RB)
  *
  * App\Services\BuyTogetherSettings carries the owner's request; this is the
- * choosing, and it is App\Services\AlsoLikeRail's shape on purpose — the same
+ * choosing, and it is App\Services\ProductRecs' shape on purpose — the same
  * number of queries, cold or warm, whatever the rule and whatever the count.
  *
  * ── THE RULE ────────────────────────────────────────────────────────────────

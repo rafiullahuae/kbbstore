@@ -3430,16 +3430,16 @@ KBB_BH_CSS;
                 'hits' => 33,
             ],
             /*
-             * THE THREE RECOMMENDATION BLOCKS (Lane RP) — the pair of the
-             * removal of the same name. Block 1's two tabs ("More from
-             * {brand}" | "More {category}"), block 2's "Complete your routine"
-             * grid and block 3's "Continue shopping" carousel: everything from
-             * the `<!-- related -->` comment to the page's closing </div>, cut
-             * as one, exactly as the removal cuts the old section from the
-             * same place. The one product page, once.
+             * THE THREE RECOMMENDATION BLOCKS (Lane RP; Lane RP2) — the pair
+             * of the removal of the same name. Since Lane RP2: 1 "More from
+             * {brand}" (slider), 2 "More {category}" (grid), 3 "You may also
+             * like" (best sellers, slider), no product twice — whichever of
+             * them this product draws, everything from the `<!-- related -->`
+             * comment to the page's closing </div>, cut as one, exactly as the
+             * removal cuts the old section from the same place. Once.
              */
             'the product page: the three recommendation blocks (Lane RP)' => [
-                'pattern' => '#(?<=<!-- related -->\n)\s*<section class="sec ymal ymal-tabs[^"]*" data-rp-tabs .*?aria-labelledby="rp2-h".*?aria-labelledby="rp3-h".*?</section>\n\s*(?=</div>)#s',
+                'pattern' => '#(?<=<!-- related -->\n)\s*<section class="sec ymal[^"]*"[^>]*aria-labelledby="(?:rp1-h|rp2-h|ymal-h)".*?</section>\n\s*(?=</div>)#s',
                 'hits' => 1,
             ],
         ];
@@ -3831,8 +3831,12 @@ KBB_BH_CSS;
                  * now block 1's two tabs (brand + category, no best-seller
                  * top-up) — four tiles on this fixture where AlsoLikeRail drew
                  * twelve. One page; the whole old section is cut below anyway.
+                 *
+                 * 99 -> 111 (Lane RP2): that list is now all three blocks'
+                 * cards — brand, category, best sellers, no product twice —
+                 * on the same one page, and cut whole below the same way.
                  */
-                'hits' => 99,
+                'hits' => 111,
             ],
 
             /*
@@ -3882,7 +3886,9 @@ KBB_BH_CSS;
                 // 40 -> 33, Row 55 (Lane HA): see the eyebrow's note above.
                 // 33 -> 32 (Lane RP): see the brand line's note — one of the
                 // eight tiles the old carousel no longer draws was reduced.
-                'hits' => 32,
+                // 32 -> 34 (Lane RP2): the brand line's note again; two of the
+                // twelve tiles the three blocks add there are reduced.
+                'hits' => 34,
             ],
             /*
              * THE CHECKOUT'S ADDRESS PICKER ROW GOES (Lane CK, 6 October). The

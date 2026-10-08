@@ -1,0 +1,100 @@
+{
+ "390": {
+  "onLoad": {
+   "requests": 15,
+   "images": 4,
+   "scripts": 3,
+   "cls": 0,
+   "lcp": {
+    "t": 368,
+    "el": "H1.bb-title"
+   },
+   "scrollWidth": 390,
+   "htmlBytes": 170345
+  },
+  "blocks": {
+   "rp1-h": {
+    "mode": "slider",
+    "rendered": 11,
+    "shown": 11,
+    "hiddenPicsFetched": 0,
+    "title": "More from Anua"
+   },
+   "rp2-h": {
+    "mode": "grid",
+    "rendered": 10,
+    "shown": 10,
+    "hiddenPicsFetched": 0,
+    "title": "More Toners"
+   },
+   "ymal-h": {
+    "mode": "slider",
+    "rendered": 12,
+    "shown": 12,
+    "hiddenPicsFetched": 0,
+    "title": "You may also like"
+   }
+  },
+  "clsAfterScroll": 0,
+  "firstClick": {
+   "ok": 66,
+   "bad": [],
+   "badCount": 0
+  },
+  "prefetch": {
+   "href": "/product/medicube-zero-pore-one-day-toner/",
+   "prefetchRequests": 1,
+   "deliveryType": "navigational-prefetch"
+  },
+  "consoleErrors": []
+ },
+ "1280": {
+  "onLoad": {
+   "requests": 23,
+   "images": 12,
+   "scripts": 3,
+   "cls": 0,
+   "lcp": {
+    "t": 420,
+    "el": "H1.bb-title"
+   },
+   "scrollWidth": 1280,
+   "htmlBytes": 170390
+  },
+  "blocks": {
+   "rp1-h": {
+    "mode": "slider",
+    "rendered": 11,
+    "shown": 11,
+    "hiddenPicsFetched": 0,
+    "title": "More from Anua"
+   },
+   "rp2-h": {
+    "mode": "grid",
+    "rendered": 10,
+    "shown": 10,
+    "hiddenPicsFetched": 0,
+    "title": "More Toners"
+   },
+   "ymal-h": {
+    "mode": "slider",
+    "rendered": 12,
+    "shown": 12,
+    "hiddenPicsFetched": 0,
+    "title": "You may also like"
+   }
+  },
+  "clsAfterScroll": 0,
+  "firstClick": {
+   "ok": 66,
+   "bad": [],
+   "badCount": 0
+  },
+  "prefetch": {
+   "href": "/product/medicube-zero-pore-one-day-toner/",
+   "prefetchRequests": 1,
+   "deliveryType": "navigational-prefetch"
+  },
+  "consoleErrors": []
+ }
+}

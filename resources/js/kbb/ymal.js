@@ -27,65 +27,7 @@
  *    right-to-left page "next" is a NEGATIVE scrollBy.
  */
 export function initAlsoLike() {
-    document.querySelectorAll('[data-rp-tabs]').forEach(setUpTabs);
     document.querySelectorAll('[data-ymal]').forEach(setUp);
-}
-
-/* ── (Lane RP) BLOCK 1'S TWO TABS: "More from {brand}" | "More {category}" ──
-   Both panels are in the HTML; the first is open. If the shopper clicked
-   through from a brand or category listing, shop.js left that listing's path
-   in sessionStorage (HINT) and the panel listing that path in its
-   `data-rp-paths` opens instead. The stored value is only ever COMPARED with
-   strings the server printed — never written into the page — and anything
-   that is not a short absolute path is ignored. No request, no geometry read;
-   the block is at the foot of the page, so the swap happens before it is in
-   view. */
-const HINT = 'kbb_rp_from';
-
-function setUpTabs(root) {
-    const tabs = Array.prototype.slice.call(root.querySelectorAll('[data-rp-tab]'));
-    if (tabs.length < 2) return;
-
-    const panelOf = (tab) => document.getElementById(tab.getAttribute('aria-controls') || '');
-
-    const show = (tab, focus) => {
-        tabs.forEach((t) => {
-            const on = t === tab;
-            const panel = panelOf(t);
-            t.setAttribute('aria-selected', on ? 'true' : 'false');
-            t.tabIndex = on ? 0 : -1;
-            if (panel) panel.hidden = !on;
-        });
-        if (focus) tab.focus();
-    };
-
-    tabs.forEach((tab, i) => {
-        tab.addEventListener('click', () => show(tab, false));
-        // Arrow keys move along the tab list (WAI-ARIA tabs), mirrored in RTL.
-        tab.addEventListener('keydown', (e) => {
-            if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-            const rtl = getComputedStyle(root).direction === 'rtl';
-            const step = (e.key === 'ArrowRight') !== rtl ? 1 : -1;
-            e.preventDefault();
-            show(tabs[(i + step + tabs.length) % tabs.length], true);
-        });
-    });
-
-    let from = null;
-    try {
-        from = window.sessionStorage.getItem(HINT);
-    } catch {
-        from = null;
-    }
-
-    if (typeof from !== 'string' || from.length > 300 || from.charAt(0) !== '/') return;
-
-    const hit = tabs.find((t) => {
-        const panel = panelOf(t);
-        return panel && (panel.getAttribute('data-rp-paths') || '').split(' ').indexOf(from) !== -1;
-    });
-
-    if (hit) show(hit, false);
 }
 
 function setUp(root) {
@@ -99,12 +41,23 @@ function setUp(root) {
 
     const cards = track.children;
     const first = cards[0];
-    const last = cards[cards.length - 1];
+    /* (Lane RP2) A block may show fewer cards on one device than the other:
+       the extras are display:none there, so "the end" is the last card that
+       device shows. `data-ymal-n` is "laptop phone" — printed only when they
+       differ — and the phone is the page's own max-width:900px. A media
+       query answers which, not a measurement. */
+    const counts = (track.getAttribute('data-ymal-n') || '').split(' ').map(Number);
+    const phone = counts.length === 2 && window.matchMedia ? window.matchMedia('(max-width: 900px)') : null;
+    const lastAt = (n) => cards[Math.min(cards.length, n || cards.length) - 1];
+    const ends = phone ? [lastAt(counts[0]), lastAt(counts[1])] : [cards[cards.length - 1]];
+    const lastNow = () => (phone && phone.matches ? ends[1] : ends[0]);
+    const whole = new Map();
     const rtl = getComputedStyle(track).direction === 'rtl';
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     let atStart = true;
     let atEnd = cards.length < 2;
+    const settle = () => { atEnd = cards.length < 2 || !!whole.get(lastNow()); };
 
     const paint = () => {
         if (prev) prev.disabled = atStart;
@@ -112,17 +65,19 @@ function setUp(root) {
     };
 
     if ('IntersectionObserver' in window) {
-        const ends = new IntersectionObserver((entries) => {
+        const io = new IntersectionObserver((entries) => {
             entries.forEach((e) => {
-                const whole = e.isIntersecting && e.intersectionRatio > 0.95;
-                if (e.target === first) atStart = whole;
-                if (e.target === last) atEnd = whole;
+                const full = e.isIntersecting && e.intersectionRatio > 0.95;
+                if (e.target === first) atStart = full;
+                whole.set(e.target, full);
             });
+            settle();
             paint();
         }, { root: track, threshold: [0, 0.95, 1] });
 
-        ends.observe(first);
-        if (last !== first) ends.observe(last);
+        io.observe(first);
+        ends.forEach((el) => { if (el && el !== first) io.observe(el); });
+        if (phone && phone.addEventListener) phone.addEventListener('change', () => { settle(); paint(); });
     } else {
         // No observer: leave both arrows usable rather than guessing.
         atStart = false;

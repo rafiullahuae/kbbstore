@@ -197,15 +197,13 @@ it('has exactly four templates that open a product grid, and each takes its skin
     )))->toBe([
         'resources/views/components/product-grid.blade.php',
         'resources/views/partials/home/grid.blade.php',
-        // ▲ ADDED (Lane RP). Blocks 2 and 3 at the foot of the product page,
-        // "Complete your routine" and "Continue shopping": the same tile in the
-        // same `.rel.kbb-pgrid`, skin from GridSkins::resolve(null).
-        'resources/views/partials/product/recs-recent.blade.php',
-        'resources/views/partials/product/recs-routine.blade.php',
-        // ▲ MOVED, NOT ADDED (Lane PS). The product page's related rail left
-        // store/product.blade.php for its own partial when it became the "You
-        // may also like" carousel; same tile, same `.rel.kbb-pgrid`, same skin.
-        'resources/views/partials/you-may-also-like.blade.php',
+        // ▲ MOVED, NOT ADDED (Lane PS; Lane RP; Lane RP2). The product page's
+        // related rail left store/product.blade.php for its own partial when it
+        // became the "You may also like" carousel, and since Lane RP2 all three
+        // blocks at the foot of the page — brand, category, you may also like —
+        // draw through this one partial: same tile, same `.rel.kbb-pgrid`,
+        // same skin.
+        'resources/views/partials/product/recs-block.blade.php',
         'resources/views/store/shop.blade.php',
     ], 'the list of product grids on this site has changed — every one of them has to take its skin from GridSkins::resolve()');
 
@@ -213,9 +211,7 @@ it('has exactly four templates that open a product grid, and each takes its skin
     foreach ([
         'components/product-grid.blade.php' => '$skin',
         'partials/home/grid.blade.php' => 'GridSkins::resolve',
-        'partials/you-may-also-like.blade.php' => 'GridSkins::resolve',
-        'partials/product/recs-recent.blade.php' => 'GridSkins::resolve',
-        'partials/product/recs-routine.blade.php' => 'GridSkins::resolve',
+        'partials/product/recs-block.blade.php' => 'GridSkins::resolve',
         'store/shop.blade.php' => '$kbbSkin',
     ] as $view => $needle) {
         $code = (string) preg_replace(

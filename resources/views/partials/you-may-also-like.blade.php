@@ -1,85 +1,24 @@
 {{--
-  "You may also like" — the carousel at the foot of a product page.  (Lane PS)
+  Block 3 · "You may also like" — the shop's best sellers, minus blocks 1 and 2,
+  a product's own picks first.                       (Lane PS; Lane RP2)
 
-  The owner: "You may also like should be a slider on each product page, I need
-  it carousel by suggesting products from the same brand and category mixed."
+  WHAT CHOOSES THE CARDS is App\Services\ProductRecs, and WHAT HE CONTROLS is
+  App\Services\AlsoLikeSettings — Appearance → Product page → You may also like
+  — plus each product's own picks in Catalog → Products → (edit) → You may also
+  like. Drawn by partials/product/recs-block.blade.php, the same markup as the
+  other two blocks: the shop's own <x-product-card>s (cached by
+  App\Support\CardFragments) in `.rel.kbb-pgrid[data-skin]`, as a carousel
+  (`.ymal-track`, resources/js/kbb/ymal.js) or a grid, per device.
 
-  WHAT CHOOSES THE CARDS is App\Services\AlsoLikeRail (two queries, cold or
-  warm), and WHAT HE CONTROLS is App\Services\AlsoLikeSettings — Appearance →
-  Product page → You may also like — plus each product's own picks in Catalog →
-  Products → (edit) → You may also like.
-
-  ── THE CARDS ARE THE SHOP'S CARDS ─────────────────────────────────────────
-
-  <x-product-card>, inside `.rel.kbb-pgrid[data-skin]` exactly as the grid
-  was, so the 28 skins, the badges, the set prices (SetPricing::prime() ran
-  over these rows) and Appearance → Product styles all reach them unchanged.
-  Only the TRACK changed: one row that scrolls, instead of rows that wrap.
-
-  ── NO JAVASCRIPT DECIDES ANY SIZE ─────────────────────────────────────────
-
-  A card is `(100% − gaps) ÷ cards-in-view` wide, in CSS (kbb-product.css,
-  `.ymal-track`), from two custom properties printed here — the phone one may
-  be fractional, 2.3 by default (Lane PX) — each held to its own option list. The page paints
-  at its final size before any script runs, so nothing shifts — rule 4.
-  resources/js/kbb/ymal.js only scrolls, and reads no element geometry to
-  decide a size.
-
-  ── RTL ────────────────────────────────────────────────────────────────────
-
-  Everything is logical: scroll-snap, `inset-inline-*`, `padding-inline`. The
-  arrows say "previous"/"next" rather than left/right, their chevrons mirror
-  under [dir=rtl], and ymal.js flips the scroll sign by the track's own
-  computed `direction`.
---}}
-@php
-    $ymal = $alsoLike ?? ['products' => collect(), 'config' => [], 'wording' => ['title' => '', 'eyebrow' => '']];
-    $ymalCards = $ymal['products'];
-    $ymalC = $ymal['config'];
-@endphp
-@if ($ymalCards->isNotEmpty())
-@php
-    // Integers, from a select that only stores its own options (ModuleSchema).
-    $ymalD = max(1, min(6, (int) ($ymalC['per_desktop'] ?? 5)));
-    /* (Lane PX) A phone count may be fractional now (2.3 is the default). It
-       is printed into a style attribute, so it is checked for MEMBERSHIP of
-       the schema's own options rather than cast — anything else is 2.3. */
-    $ymalM = (string) ($ymalC['per_phone'] ?? '2.3');
-    $ymalM = in_array($ymalM, array_map('strval', array_keys(\App\Services\AlsoLikeSettings::SCHEMA['per_phone'][4])), true) ? $ymalM : '2.3';
-    $ymalArrM = ! empty($ymalC['arrows_m']) ? ' ymal-arr-m' : '';
-    $ymalAuto = ! empty($ymalC['autoplay']) ? max(3, min(15, (int) ($ymalC['autoplay_s'] ?? 5))) : 0;
-@endphp
-@if (! empty($ymal['panels']))
-{{-- ── (Lane RP) TWO TABS: "More from {brand}" | "More {category}" ──────────
-     Both lists are drawn, so both are crawlable links and the URL never
-     changes. The first tab is open (the owner's "opens first", brand by
-     default); ymal.js opens the other one when the listing page the shopper
-     clicked from (sessionStorage, shop.js) is one of its `data-rp-paths`. A
-     closed panel is `hidden`: display:none, so its lazy pictures are not
-     fetched until it is opened. Each panel is its own [data-ymal] carousel. --}}
-  <section class="sec ymal ymal-tabs{{ $ymalArrM }} {{ $modules->classFor('related') }}" data-rp-tabs aria-labelledby="ymal-h" style="--ymal-d:{{ $ymalD }};--ymal-m:{{ $ymalM }}">
-    <div class="eyebrow">{{ $ymal['wording']['eyebrow'] }}</div>
-    <h2 id="ymal-h">{{ $ymal['wording']['title'] }}</h2>
-    <div class="rp-tabs" role="tablist" aria-label="{{ __('store.product.recs_tabs_label') }}">@foreach ($ymal['panels'] as $kbbRpI => $kbbRpP)<button type="button" class="rp-tab" role="tab" id="rp-t-{{ $kbbRpP['key'] }}" aria-controls="rp-p-{{ $kbbRpP['key'] }}" aria-selected="{{ $kbbRpI === 0 ? 'true' : 'false' }}"@if ($kbbRpI > 0) tabindex="-1"@endif data-rp-tab>{{ $kbbRpP['label'] }}</button>@endforeach</div>
-@foreach ($ymal['panels'] as $kbbRpI => $kbbRpP)
-    <div class="rp-panel" id="rp-p-{{ $kbbRpP['key'] }}" role="tabpanel" aria-labelledby="rp-t-{{ $kbbRpP['key'] }}" data-ymal data-ymal-auto="{{ $ymalAuto }}" data-rp-paths="{{ implode(' ', $kbbRpP['paths']) }}"@if ($kbbRpI > 0) hidden @endif>
-      <div class="ymal-nav">
-        <button type="button" class="ymal-btn" data-ymal-prev aria-controls="rp-r-{{ $kbbRpP['key'] }}" aria-label="{{ __('store.product.related_prev') }}" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
-        <button type="button" class="ymal-btn" data-ymal-next aria-controls="rp-r-{{ $kbbRpP['key'] }}" aria-label="{{ __('store.product.related_next') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>
-      </div>
-      <div class="rel kbb-pgrid ymal-track" data-skin="{{ \App\Support\GridSkins::resolve(null) }}" id="rp-r-{{ $kbbRpP['key'] }}" data-ymal-track tabindex="0" role="region" aria-label="{{ $kbbRpP['label'] }}">@foreach ($kbbRpP['products'] as $item){!! $kbbRpCards[$item->id] ?? \App\Support\CardFragments::render($item) !!}@endforeach</div>
-    </div>
-@endforeach
-  </section>
-@else
-  <section class="sec ymal{{ $ymalArrM }} {{ $modules->classFor('related') }}" data-ymal data-ymal-auto="{{ $ymalAuto }}" aria-labelledby="ymal-h" style="--ymal-d:{{ $ymalD }};--ymal-m:{{ $ymalM }}">
-    <div class="eyebrow">{{ $ymal['wording']['eyebrow'] }}</div>
-    <h2 id="ymal-h">{{ $ymal['wording']['title'] }}</h2>
-    <div class="ymal-nav">
-      <button type="button" class="ymal-btn" data-ymal-prev aria-controls="related" aria-label="{{ __('store.product.related_prev') }}" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
-      <button type="button" class="ymal-btn" data-ymal-next aria-controls="related" aria-label="{{ __('store.product.related_next') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>
-    </div>
-    <div class="rel kbb-pgrid ymal-track" data-skin="{{ \App\Support\GridSkins::resolve(null) }}" id="related" data-ymal-track tabindex="0" role="region" aria-label="{{ $ymal['wording']['title'] }}">@foreach ($ymalCards as $item)<x-product-card :product="$item" />@endforeach</div>
-  </section>
+  NO JAVASCRIPT DECIDES ANY SIZE. A card is `(100% − gaps) ÷ cards-in-view`
+  wide in CSS (kbb-product.css, `.ymal-track`); ymal.js only scrolls.
+--}}@if (($alsoLike['products'] ?? collect())->isNotEmpty())
+@include('partials.product.recs-block', ['kbbB' => [
+    'h' => 'ymal-h',
+    'r' => 'related',
+    'eyebrow' => $alsoLike['wording']['eyebrow'],
+    'title' => $alsoLike['wording']['title'],
+    'products' => $alsoLike['products'],
+    'layout' => $alsoLike['layout'] ?? \App\Services\AlsoLikeSettings::layoutFor($alsoLike['config'] ?? \App\Services\AlsoLikeSettings::defaults(), 'also'),
+]])
 @endif
-  @endif

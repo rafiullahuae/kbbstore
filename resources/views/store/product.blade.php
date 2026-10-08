@@ -245,7 +245,7 @@
        block it appends ` pds-on …` to the class and `;--pds-o-<key>:<int>` to
        the style, read only inside the laptop media query. */
     $kbbDsec = app(\App\Services\ProductDesktopSections::class);
-    $kbbDsecDrawn = $kbbDsec->isDefault() ? [] : \App\Services\ProductDesktopSections::drawn($modules, $buyTogether ?? null, $alsoLike ?? null);
+    $kbbDsecDrawn = $kbbDsec->isDefault() ? [] : \App\Services\ProductDesktopSections::drawn($modules, $buyTogether ?? null, ['products' => $related ?? collect()]);
     /* (Lane RG) The buy column's three blocks that depend on the product, for
        ProductDesktopSections::firstBuy() -- worked out only once he has moved
        a buy-column block, from values this template already holds. */
@@ -254,7 +254,7 @@
         'paylater' => $kbbMsec->payLater() !== [],
         'bundles' => $isVar || ! empty($bundles) || $product->type === 'set',
         // (Lane RI) only when he has dragged it in: drawn() asks no query.
-        'buytogether' => $kbbDsec->buyTogetherRight() && \App\Services\ProductDesktopSections::drawn($modules, $buyTogether ?? null, $alsoLike ?? null)['buytogether'],
+        'buytogether' => $kbbDsec->buyTogetherRight() && \App\Services\ProductDesktopSections::drawn($modules, $buyTogether ?? null, ['products' => $related ?? collect()])['buytogether'],
     ];
     /* (Lane RI) Buy these together in the buy column: the ONE `.kbb-fbt`
        element is drawn at the end of `.buybox` instead of after `.pdp`. */

@@ -332,6 +332,18 @@ function mAllowedRepairs(): array
  * corpus and appended after also_like|eyebrow_ar, the last row, which is
  * where mEquivRows() walks them. Every line before is untouched.
  */
+/*
+ * ── also_like RE-RECORDED, NO VALUE MOVED ────────────────────────── Lane RP2 ──
+ *
+ * The owner changed the product page's three blocks (brand / category / best
+ * sellers, then slider-or-grid and counts per device), so AlsoLikeSettings::
+ * SCHEMA lost rule, mix, fill, layout, first and Lane RP's routine_* / recent_*
+ * keys and gained brand_*, cat_*, the four global and twelve per-block layout
+ * keys. Its section — the fixture's last — is re-recorded from this corpus.
+ * Every key that survives (enabled, count, hide_oos, per_*, arrows_m,
+ * autoplay*, title*, eyebrow*, order) answers exactly what it answered; only
+ * its place in the walk moved. Every line before also_like is untouched.
+ */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);
     $now = mEquivRows();

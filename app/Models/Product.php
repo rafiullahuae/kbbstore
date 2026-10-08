@@ -46,13 +46,11 @@ class Product extends Model
         static::saved(static fn () => \App\Services\VariantPricing::invalidate());
         static::deleted(static fn () => \App\Services\VariantPricing::invalidate());
 
-        // "You may also like" caches its choice per product for ten minutes
-        // (App\Services\AlsoLikeRail). Saving the product -- its brand, its
-        // picks -- drops that product's choice at once. (Lane PS)
-        static::saved(static fn (self $p) => \App\Services\AlsoLikeRail::forget((int) $p->getKey()));
         // "Buy these together" caches its candidates the same way. (Lane RB)
         static::saved(static fn (self $p) => \App\Services\BuyTogether::forget((int) $p->getKey()));
-        // And the three recommendation blocks' pools. (Lane RP)
+        // The three recommendation blocks cache their lists per product
+        // (App\Services\ProductRecs). Saving the product -- its brand, its
+        // category, its picks -- drops that product's lists at once.
         static::saved(static fn (self $p) => \App\Services\ProductRecs::forget((int) $p->getKey()));
 
         // A product moved to another brand has no place in that brand's order
