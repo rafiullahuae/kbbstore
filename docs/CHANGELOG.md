@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.440
+**Checkout pages load once, "Confirming payment" instead of "Total to pay", a card
+in its security check is safe from other tabs, and iPhone never zooms on the card
+fields.** Apply after .439. Runs its migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| (found while fixing the empty thank-you page) | The shop app made Chrome load cart, checkout, thank-you and account pages twice; now once. Product and shop pages unchanged |
+| (found while fixing the empty thank-you page) | A slow card check no longer shows "TOTAL TO PAY" on a paid order: it says "Confirming payment" until Stripe confirms, then "Total paid". Press-to-thank-you with a slow check 4.6 s -> 2.0 s |
+| (found while fixing the empty thank-you page) | A shopper answering the bank's 3-D Secure check is no longer cancelled by another tab for 15 minutes; Return to your basket still releases it at once |
+| "the checkout fields are still zoomout the screen ... including stripe fields" | Every shop field was already 16px on a phone; Stripe's card number, expiry and CVC were 14px inside Stripe's frame. They are 16px on touch screens now, so iPhone does not zoom. Pinch-zoom still works |
+
+Files: see the package's update.json.
+
 ## 2.60.439
 **Image SEO that just works, and the Coming Soon page.** Apply after .438. Runs its
 migrations. Hard refresh the admin.
