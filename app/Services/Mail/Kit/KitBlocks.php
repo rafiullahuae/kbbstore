@@ -298,7 +298,7 @@ final class KitBlocks
 
             case 'hero_image':
             case 'image':
-                $src = MailKit::image($b['src'], 600);
+                $src = MailKit::image($b['src'], 600, false);
 
                 return $src === null ? '' : self::view('image', $k, ['src' => $src, 'alt' => $v($b['alt']), 'href' => MailKit::url($b['url']),
                     'bleed' => $b['type'] === 'hero_image', 'h' => MailKit::heightFor($b['src'], 600)]);

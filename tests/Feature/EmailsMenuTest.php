@@ -670,8 +670,29 @@ it('takes an email logo only from the Media Library or https, and puts it in the
     $this->postJson('/admin-api/emails/branding', ['settings' => ['email_logo' => '/uploads/2026/10/kbb-logo.png']])->assertOk();
     rkFresh();
 
+    /*
+     * (Lane EM, 8 October) The logo has to EXIST to be printed: an email
+     * picture is a file in this web root on the shop's public https address
+     * (Services\Mail\Kit\MailImage), and a logo with no file behind it prints
+     * the wordmark rather than a broken frame (EmailPicturesTest). So the
+     * Media Library file is put where the Media Library would have put it.
+     */
+    $pub = kbbTempDir().'/rk-logo-'.bin2hex(random_bytes(4));
+    @mkdir($pub.'/uploads/2026/10', 0777, true);
+    $im = imagecreatetruecolor(340, 80);
+    imagepng($im, $pub.'/uploads/2026/10/kbb-logo.png');
+    imagedestroy($im);
+    app()->usePublicPath($pub);
+    config(['app.url' => 'https://extrabeauty.ae']);
+
     expect(app(EmailBranding::class)->logoUrl())->toEndWith('/uploads/2026/10/kbb-logo.png')
-        ->and((string) (new OrderConfirmation(rkOrder()))->render())->toContain('/uploads/2026/10/kbb-logo.png');
+        ->and((string) (new OrderConfirmation(rkOrder()))->render())->toContain('https://extrabeauty.ae/uploads/2026/10/kbb-logo.png');
+
+    @unlink($pub.'/uploads/2026/10/kbb-logo.png');
+    @rmdir($pub.'/uploads/2026/10');
+    @rmdir($pub.'/uploads/2026');
+    @rmdir($pub.'/uploads');
+    @rmdir($pub);
 
     /*
      * MUTATION: drop the `//` and quote checks in EmailLook::clean() for LOGO
