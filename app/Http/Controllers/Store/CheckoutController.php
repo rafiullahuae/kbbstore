@@ -103,6 +103,18 @@ class CheckoutController extends Controller
 
     public function page(Request $request): View|RedirectResponse
     {
+        /*
+         * (Lane BK) BACK FROM A PAYMENT THAT DID NOT FINISH -- the browser's
+         * Back button from Tabby or Tamara lands exactly here. The order is
+         * released and the basket given back BEFORE the cart is read, so the
+         * checkout draws with every line and the shopper's remembered details
+         * instead of bouncing to an empty bag. due() is a session read: an
+         * ordinary checkout runs no query for this.
+         */
+        if (\App\Services\Checkout\UnfinishedPayment::due($request)) {
+            $this->takeBackUnfinished($request);
+        }
+
         $cart = $this->loadCart($request);
 
         /*
@@ -491,7 +503,7 @@ class CheckoutController extends Controller
          * they now read. One order, one claim: never two live ones.
          */
         if (! $cart || $cart->items->isEmpty()) {
-            $cart = $this->resumeCardBasket($request) ?? $cart;
+            $cart = $this->resumeCardBasket($request) ?? $this->resumeUnfinished($request) ?? $cart;
         }
 
         if (! $cart || $cart->items->isEmpty()) {
@@ -956,6 +968,11 @@ class CheckoutController extends Controller
         // have silently broken the real customer's own conversion tracking
         // if they revisited their own success page a moment later.
         session(['kbb_last_order' => $order->order_number]);
+
+        // (Lane BK) And WHICH basket became it. The cookie moves the moment
+        // the shopper adds anything after an unfinished payment; this does not,
+        // so UnfinishedPayment can still find the basket and merge it.
+        session([\App\Services\Checkout\UnfinishedPayment::BASKET_KEY => (string) $cart->token]);
 
         /*
          * ------------------------------------------- "save this card for later"
@@ -1451,6 +1468,38 @@ class CheckoutController extends Controller
     }
 
     /**
+     * (Lane BK) Settle an unfinished payment for this page, and say so on it.
+     * Shared by the checkout page and place(); the basket page has its own
+     * two lines in CartController::page().
+     */
+    private function takeBackUnfinished(Request $request): bool
+    {
+        [$outcome] = app(\App\Services\Checkout\UnfinishedPayment::class)->recover($request, shopperCameBack: false);
+
+        if ($outcome !== \App\Services\Checkout\BasketRelease::RESTORED && $outcome !== \App\Services\Checkout\BasketRelease::MERGED) {
+            return false;
+        }
+
+        $request->session()->now(\App\Services\Checkout\UnfinishedPayment::BACK_KEY, $outcome);
+
+        return true;
+    }
+
+    /**
+     * place() over a basket an unfinished non-card payment left converted --
+     * a checkout restored by the Back button from the provider's page and
+     * pressed again. resumeCardBasket() covers the card; this, the rest.
+     */
+    private function resumeUnfinished(Request $request): ?\App\Models\Cart
+    {
+        if (! \App\Services\Checkout\UnfinishedPayment::due($request) || ! $this->takeBackUnfinished($request)) {
+            return null;
+        }
+
+        return $this->loadCart($request);
+    }
+
+    /**
      * "Your bag is empty", said so that it cannot contradict the page. (Lane CO)
      *
      * The page the shopper is looking at lists their items, so a bare "Your
@@ -1692,9 +1741,40 @@ class CheckoutController extends Controller
      * "we could not find that order" panel — so the page cannot be used to
      * probe which order numbers exist.
      */
-    public function success(Request $request): View
+    public function success(Request $request): View|RedirectResponse
     {
         $number = trim((string) $request->query('order', ''));
+
+        /*
+         * (Lane BK) A 3-D SECURE THAT FAILED BY FULL REDIRECT comes back HERE:
+         * place() hands Stripe this page as `return_url`, and Stripe appends
+         * `redirect_status`. Anything but a success drew an order-received page
+         * for an order that was never paid, over an empty bag. Now the intent
+         * is cancelled at Stripe, the order released and the basket given back
+         * -- only for this session's own order (recover() matches the number
+         * against `kbb_last_order`), and only if Stripe agrees nothing was
+         * taken; otherwise the page renders exactly as before. The parameter is
+         * a trigger, never evidence: a forged one can only ask Stripe.
+         */
+        $redirectStatus = (string) $request->query('redirect_status', '');
+
+        if ($number !== '' && $redirectStatus !== ''
+            && ! in_array($redirectStatus, ['succeeded', 'processing', 'requires_capture'], true)) {
+            [$outcome] = app(\App\Services\Checkout\UnfinishedPayment::class)->recover($request, shopperCameBack: true, number: $number);
+
+            if ($outcome === \App\Services\Checkout\BasketRelease::RESTORED || $outcome === \App\Services\Checkout\BasketRelease::MERGED) {
+                return redirect(\App\Services\Checkout\UnfinishedPayment::cartUrl($request, $outcome))
+                    ->with(\App\Services\Checkout\UnfinishedPayment::BACK_KEY, $outcome);
+            }
+
+            // Stripe could not be asked. NOT the receipt: rendering it would
+            // consume `kbb_last_order` (the pixel block forgets it) and with it
+            // the only handle on this basket. The basket page asks again.
+            if ($outcome === \App\Services\Checkout\UnfinishedPayment::WAITING) {
+                return redirect(Url::redirect('/cart/', $request))
+                    ->withErrors(__('store.checkout.return_not_completed'));
+            }
+        }
 
         $order = $number === '' ? null : Order::with([
             // Eager-loaded because Marketing Pixels' Purchase event reads every

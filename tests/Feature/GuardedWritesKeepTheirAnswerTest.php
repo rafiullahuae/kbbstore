@@ -317,7 +317,7 @@ it('still places an ordinary cash-on-delivery order', function () {
 
 /* ═════════ 2. the instalment leg, already fixed — pinned as a pair ═════════ */
 
-it('does not hand the basket back when an instalment plan confirms mid-press', function () {
+it('does not hand the basket back when an instalment plan confirms mid-return', function () {
     /*
      * The same shape on Store\CheckoutReturnController::restore(), kept here
      * beside its sibling so that a future change to one is visibly a change to
@@ -335,18 +335,13 @@ it('does not hand the basket back when an instalment plan confirms mid-press', f
         ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
         ->withUnencryptedCookie(CartService::COOKIE, $cart->token);
 
+    // (Lane BK) The return address itself now gives the basket back, so the
+    // race is on that GET rather than on a later button press.
     test()->withSession(['kbb_last_order' => $order->order_number]);
-    $request->get('/checkout/pending?order='.$order->order_number);
-
-    expect(session(CheckoutReturnController::RESTORABLE_KEY))->toBe($order->order_number);
 
     $disarm = gwWebhookLandsMidWrite($order);
 
-    test()
-        ->withCredentials()
-        ->withoutMiddleware(Illuminate\Cookie\Middleware\EncryptCookies::class)
-        ->withUnencryptedCookie(CartService::COOKIE, $cart->token)
-        ->post('/checkout/restore-basket');
+    $request->get('/checkout/pending?order='.$order->order_number);
 
     $disarm();
 

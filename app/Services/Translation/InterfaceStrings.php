@@ -1634,6 +1634,16 @@ final class InterfaceStrings
             'checkout.restore_basket' => 'Put my basket back',
             'checkout.restore_done' => 'Your basket is back. The order that did not complete has been cancelled and nothing was charged.',
             'checkout.restore_gone' => 'There is nothing to put back. Your basket is as you left it.',
+
+            /*
+             * (Lane BK) THE BASKET COMES BACK BY ITSELF after a payment that did
+             * not finish, and this is what the shopper reads above it. Calm, and
+             * only what is true: nothing was charged, and the bag is theirs.
+             * return_merged when they had started a new basket in between.
+             */
+            'checkout.return_restored' => 'Your payment wasn’t completed — nothing was charged. Your bag is just as you left it.',
+            'checkout.return_merged' => 'Your payment wasn’t completed — nothing was charged. We’ve put those items back in your bag, alongside what you added since.',
+            'checkout.return_try_again' => 'Try again',
         ];
     }
 

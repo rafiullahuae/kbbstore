@@ -12,6 +12,7 @@ use App\Services\Payments\Reconciliation\ReconcileWindow;
 use App\Services\Payments\Reconciliation\RemotePage;
 use App\Services\Payments\Reconciliation\RemoteTxn;
 use App\Services\Payments\SettlementResult;
+use App\Services\Payments\SettlesBeforeRelease;
 use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
 use App\Services\Payments\VoidsAuthorisation;
@@ -61,7 +62,7 @@ use Illuminate\Http\Request;
  * `order_status` and is how an approval is announced; the webhook carries
  * `event_type` and is how expiry and decline are. Both are handled.
  */
-class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments, VoidsAuthorisation
+class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments, VoidsAuthorisation, SettlesBeforeRelease
 {
     private const LIVE = 'https://api.tamara.co';
 
@@ -881,32 +882,10 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             return WebhookOutcome::failed('tamara is not configured');
         }
 
-        $tamaraOrderId = trim((string) $order->transaction_id);
-        $recovered = false;
+        [$tamaraOrderId, $remote, $recovered, $error] = $this->fetchRemote($order);
 
-        if ($tamaraOrderId === '') {
-            $byReference = $this->call(
-                'GET',
-                '/merchants/orders/reference-id/' . urlencode((string) $order->order_number),
-            );
-
-            if ($byReference === null) {
-                return WebhookOutcome::failed('could not ask tamara about that reference');
-            }
-
-            $tamaraOrderId = (string) ($this->stringOrNull($byReference['order_id'] ?? null) ?? '');
-
-            if ($tamaraOrderId === '') {
-                return WebhookOutcome::refused('tamara has no order for that reference');
-            }
-
-            $recovered = true;
-        }
-
-        $remote = $this->call('GET', '/merchants/orders/' . urlencode($tamaraOrderId));
-
-        if ($remote === null) {
-            return WebhookOutcome::failed('could not read that order from tamara');
+        if ($error !== null) {
+            return $error;
         }
 
         /*
@@ -928,6 +907,83 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             'source' => 'sweep',
             'recovered_id' => $recovered,
         ]);
+    }
+
+    /**
+     * Before an unfinished Tamara order is let go (Lane BK).
+     *
+     * The order is read from Tamara exactly as reconcileAuthorisation() reads
+     * it, and the answer is applied through the same settleFromRemote(): an
+     * `approved` plan is authorised and confirmed, so the shopper's order is
+     * PAID and their basket is not released. Declined, expired and cancelled
+     * fail the order. `new` is a plan the shopper did not finish.
+     */
+    public function settleBeforeRelease(Order $order, bool $shopperCameBack): bool
+    {
+        if (! $this->configured()) {
+            return $shopperCameBack;
+        }
+
+        [$tamaraOrderId, $remote, , $error] = $this->fetchRemote($order);
+
+        if ($error !== null) {
+            // Tamara holds no order under this reference: nothing can be paid.
+            return $error->status === 422 ? true : $shopperCameBack;
+        }
+
+        // Somebody else's Tamara order says nothing about this one.
+        if ((string) ($remote['order_reference_id'] ?? '') !== (string) $order->order_number) {
+            return $shopperCameBack;
+        }
+
+        $status = strtolower(trim((string) ($remote['status'] ?? '')));
+
+        $this->settleFromRemote($order, $tamaraOrderId, $remote, [
+            'tamara_order_id' => $tamaraOrderId,
+            'reference' => (string) $order->order_number,
+            'source' => 'return',
+        ]);
+
+        return ! in_array($status, ['approved', 'authorised', 'authorized', 'fully_captured', 'partially_captured'], true);
+    }
+
+    /**
+     * Tamara's own record of this order: [id, remote, recovered, error].
+     * Shared by reconcileAuthorisation() and settleBeforeRelease().
+     *
+     * @return array{0: string, 1: ?array, 2: bool, 3: ?WebhookOutcome}
+     */
+    private function fetchRemote(Order $order): array
+    {
+        $tamaraOrderId = trim((string) $order->transaction_id);
+        $recovered = false;
+
+        if ($tamaraOrderId === '') {
+            $byReference = $this->call(
+                'GET',
+                '/merchants/orders/reference-id/' . urlencode((string) $order->order_number),
+            );
+
+            if ($byReference === null) {
+                return ['', null, false, WebhookOutcome::failed('could not ask tamara about that reference')];
+            }
+
+            $tamaraOrderId = (string) ($this->stringOrNull($byReference['order_id'] ?? null) ?? '');
+
+            if ($tamaraOrderId === '') {
+                return ['', null, false, WebhookOutcome::refused('tamara has no order for that reference')];
+            }
+
+            $recovered = true;
+        }
+
+        $remote = $this->call('GET', '/merchants/orders/' . urlencode($tamaraOrderId));
+
+        if ($remote === null) {
+            return [$tamaraOrderId, null, $recovered, WebhookOutcome::failed('could not read that order from tamara')];
+        }
+
+        return [$tamaraOrderId, $remote, $recovered, null];
     }
 
     /* ----------------------------------------------------------- settlement */

@@ -1281,6 +1281,9 @@ final class ArabicInterfaceDrafts
             'store.checkout.restore_basket' => 'أعد حقيبتي',
             'store.checkout.restore_done' => 'عادت حقيبتك. تم إلغاء الطلب الذي لم يكتمل ولم يُخصم أي مبلغ.',
             'store.checkout.restore_gone' => 'لا يوجد ما يمكن إعادته. حقيبتك كما تركتها.',
+            'store.checkout.return_restored' => 'لم يكتمل الدفع — ولم يُخصم أي مبلغ. حقيبتك كما تركتها تمامًا.',
+            'store.checkout.return_merged' => 'لم يكتمل الدفع — ولم يُخصم أي مبلغ. أعدنا تلك المنتجات إلى حقيبتك إلى جانب ما أضفته بعدها.',
+            'store.checkout.return_try_again' => 'حاول مرة أخرى',
         ];
     }
 

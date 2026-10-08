@@ -168,6 +168,13 @@ class CartService
     {
         $this->rememberCookie($cart->token);
         $this->forget();
+
+        // (Lane BK) And THIS request resolves to it too. The incoming cookie
+        // still names the old token, so without this a page rendered in the
+        // same request as a restore re-reads that cookie and finds nothing.
+        if ($cart->status === 'active') {
+            $this->resolved = $cart;
+        }
     }
 
     /** Forget the memo — used after a merge swaps one cart for another. */

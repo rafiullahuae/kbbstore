@@ -690,7 +690,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 1473 -> 1475 (Lane PO): "Remember my details on this device" and "Not
     // you? Clear details" (store.checkout.remember_*, 2), seeded by
     // 2027_10_08_140000_seed_checkout_remember_arabic_drafts.
-    expect($ui['drafts'])->toBe(1475, 'the shipped Arabic is not showing as drafts to review')
+    // 1475 -> 1478 (Lane BK): the basket that comes back by itself --
+    // store.checkout.return_restored / return_merged / return_try_again (3),
+    // seeded by 2027_10_10_100000_seed_basket_back_arabic_drafts.
+    expect($ui['drafts'])->toBe(1478, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

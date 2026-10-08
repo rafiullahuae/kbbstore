@@ -63,7 +63,7 @@
      comment's closer touches the conditional, and PHP swallows the newline
      after the conditional's compiled closing tag. Indented and on its own line
      it added a blank line to every checkout in the shop, which is how
-     StorefrontEnglishUnchangedTest found it. --}}@if ((($setStockNotices ?? [])) !== [])<div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0">@include('partials.set-stock-notice')</div>@endif
+     StorefrontEnglishUnchangedTest found it. --}}@if ((($setStockNotices ?? [])) !== [])<div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0">@include('partials.set-stock-notice')</div>@endif<?php /* (Lane BK) The basket an unfinished payment held, given back on this very request -- the Back button from Tabby or Tamara lands here. Raw PHP rather than a glued @if: Blade strips comments first and "@endif@if" would not compile. Zero bytes otherwise. */ if (($kbbBack = \App\Services\Checkout\UnfinishedPayment::noticeFor(request())) !== ''): ?><div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0"><div class="co-note ok" role="status">{{ $kbbBack === 'merged' ? __('store.checkout.return_merged') : __('store.checkout.return_restored') }}</div></div><?php endif; ?>
 
     <form name="checkout" method="post" class="checkout woocommerce-checkout" action="{{ Url::to('/checkout/place') }}" enctype="multipart/form-data" id="kbbCheckoutForm">
         @csrf

@@ -12,6 +12,7 @@ use App\Services\Payments\Reconciliation\ReconcileWindow;
 use App\Services\Payments\Reconciliation\RemotePage;
 use App\Services\Payments\Reconciliation\RemoteTxn;
 use App\Services\Payments\SettlementResult;
+use App\Services\Payments\SettlesBeforeRelease;
 use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
 use App\Services\Payments\PaymentLog;
@@ -70,7 +71,7 @@ use Illuminate\Support\Facades\Http;
  * is still compared against the order's own total by PaymentConfirmer, which
  * is what actually protects us.
  */
-class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments
+class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments, SettlesBeforeRelease
 {
     private const API = 'https://api.stripe.com';
 
@@ -1439,6 +1440,29 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         ]);
 
         return $cancel['ok'] && (string) ($cancel['body']['status'] ?? '') === 'canceled';
+    }
+
+    /**
+     * Before an unfinished card or wallet order is let go (Lane BK).
+     *
+     * abandonIntent() closes the intent at Stripe and answers true only once
+     * Stripe says it is `canceled` -- so nothing can be charged against this
+     * order afterwards, from any tab. When it will not close because the money
+     * has moved (succeeded, processing, held for capture), the payment is
+     * applied here, server to server, through the same confirmFromBrowser() the
+     * card form calls: the order becomes paid and its basket stays converted.
+     * Stripe unreachable is false whatever $shopperCameBack says -- a card
+     * intent left confirmable is a payment a stale tab can still take.
+     */
+    public function settleBeforeRelease(Order $order, bool $shopperCameBack): bool
+    {
+        if ($this->abandonIntent($order)) {
+            return true;
+        }
+
+        $this->confirmFromBrowser($order);
+
+        return false;
     }
 
     /* -------------------------------------------------------------- webhook */

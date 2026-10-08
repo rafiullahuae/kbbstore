@@ -9,6 +9,8 @@ use App\Models\Product;
 use Illuminate\Support\Facades\Cache;
 use App\Models\ProductVariant;
 use App\Services\CartService;
+use App\Services\Checkout\BasketRelease;
+use App\Services\Checkout\UnfinishedPayment;
 use App\Services\CouponService;
 use App\Services\SettingsService;
 use App\Support\Money;
@@ -70,6 +72,20 @@ class CartController extends Controller
 
     public function page(Request $request): View
     {
+        /*
+         * (Lane BK) A shopper back from a payment they did not finish -- the
+         * Back button, a tab closed and reopened later, a timed-out provider --
+         * gets their basket here, before loadCart() would mint them an empty
+         * one. Session-only gate: an ordinary basket view runs no query for it.
+         */
+        if (UnfinishedPayment::due($request)) {
+            [$outcome] = app(UnfinishedPayment::class)->recover($request, shopperCameBack: false);
+
+            if ($outcome === BasketRelease::RESTORED || $outcome === BasketRelease::MERGED) {
+                $request->session()->now(UnfinishedPayment::BACK_KEY, $outcome);
+            }
+        }
+
         return view('store.cart', $this->payload($this->loadCart($request), $request));
     }
 

@@ -12,6 +12,7 @@ use App\Services\Payments\Reconciliation\ReconcileWindow;
 use App\Services\Payments\Reconciliation\RemotePage;
 use App\Services\Payments\Reconciliation\RemoteTxn;
 use App\Services\Payments\SettlementResult;
+use App\Services\Payments\SettlesBeforeRelease;
 use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
 use App\Services\Payments\VoidsAuthorisation;
@@ -137,7 +138,7 @@ use Illuminate\Http\Request;
  * ever leaked: the body is used for exactly one thing, reading the payment id
  * to go and ask about.
  */
-class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments, VoidsAuthorisation
+class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments, VoidsAuthorisation, SettlesBeforeRelease
 {
     private const API = 'https://api.tabby.ai';
 
@@ -660,6 +661,52 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransa
             return WebhookOutcome::refused('no order for that reference');
         }
 
+        return $this->applyVerifiedPayment($order, $payment, $paymentId);
+    }
+
+    /**
+     * Before an unfinished Tabby order is let go (Lane BK).
+     *
+     * GET /api/v2/payments/{id} -- the call handleWebhook() makes -- and its
+     * answer is applied through the SAME branch the webhook takes,
+     * applyVerifiedPayment(), so the return leg and the webhook cannot read one
+     * status two ways. AUTHORIZED (or CLOSED with a capture) is money: it is
+     * applied, the order is paid, and nothing is released. REJECTED, EXPIRED and
+     * an uncaptured CLOSED fail the order the way the webhook would. CREATED is
+     * a payment the shopper did not finish and that Tabby has not authorised.
+     */
+    public function settleBeforeRelease(Order $order, bool $shopperCameBack): bool
+    {
+        $paymentId = trim((string) $order->transaction_id);
+
+        // No payment was ever opened at Tabby, so none can complete.
+        if ($paymentId === '') {
+            return true;
+        }
+
+        $payment = $this->configured()
+            ? $this->call('GET', '/api/v2/payments/' . urlencode($paymentId))
+            : null;
+
+        if ($payment === null
+            || (string) ($payment['order']['reference_id'] ?? '') !== (string) $order->order_number) {
+            return $shopperCameBack;
+        }
+
+        $status = strtoupper((string) ($payment['status'] ?? ''));
+        $moneyMoved = $status === 'AUTHORIZED' || ($status === 'CLOSED' && $this->hasCapture($payment));
+
+        $this->applyVerifiedPayment($order, $payment, $paymentId);
+
+        return ! $moneyMoved;
+    }
+
+    /**
+     * What a VERIFIED Tabby payment means for its order. Shared by the webhook
+     * and settleBeforeRelease(); $payment is always Tabby's own GET answer.
+     */
+    private function applyVerifiedPayment(Order $order, array $payment, string $paymentId): WebhookOutcome
+    {
         $status = strtoupper((string) ($payment['status'] ?? ''));
         $captured = $this->hasCapture($payment);
 

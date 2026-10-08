@@ -39,6 +39,18 @@ use Illuminate\Support\Facades\DB;
  */
 final class BasketRelease
 {
+    /** giveBack(): the basket is live again, exactly as it was converted. */
+    public const RESTORED = 'restored';
+
+    /** giveBack(): its lines were folded into the basket this browser has now. */
+    public const MERGED = 'merged';
+
+    /** giveBack(): the order is over, but this basket was already given back. */
+    public const GONE = 'gone';
+
+    /** giveBack(): money moved or the order is still being paid. Nothing written. */
+    public const HELD = 'held';
+
     public function __construct(
         private readonly OrderStatus $status,
         private readonly PlacementState $placement,
@@ -88,11 +100,7 @@ final class BasketRelease
                 only: ['paid_at' => null],
             );
 
-            $fresh = Order::query()->whereKey($order->getKey())->lockForUpdate()->first();
-
-            $released = $fresh !== null
-                && $fresh->paid_at === null
-                && $this->placement->forOrder($fresh) === PlacementState::REFUSED;
+            $released = $this->isOver(Order::query()->whereKey($order->getKey())->lockForUpdate()->first());
 
             if (! $released || $cart === null || ! $this->cartBelongsTo($cart, $order)) {
                 return;
@@ -107,5 +115,124 @@ final class BasketRelease
         });
 
         return $released;
+    }
+
+    /**
+     * Fail $order and give the shopper their basket, merged into the one they
+     * have now if they started another. (Lane BK)
+     *
+     * ONE TRANSACTION, and both rows are re-read under a lock inside it:
+     *
+     *   - the ORDER, by isOver(): `paid_at` still null and the order refused.
+     *     The move itself is conditional on the status this caller decided on,
+     *     so a confirmation that lands after that decision makes the move
+     *     refuse and the basket is not touched (HELD). Paid always wins.
+     *   - the BASKET, by cartBelongsTo() on a locked fresh copy. A second
+     *     return (Back, a reload, two tabs) finds it already `active` or
+     *     `merged` and writes nothing (GONE) -- which is what makes a double
+     *     return unable to add the same lines twice.
+     *
+     * $live is this browser's CURRENT basket when it is a different, non-empty
+     * one: the shopper came back and added something before returning. The
+     * restored lines are added to it rather than replacing it, quantities
+     * summed exactly as CartService::mergeGuestCart() sums them, and the old
+     * row is marked `merged`. Its coupon travels when $live has none.
+     */
+    public function giveBack(Order $order, Cart $basket, ?Cart $live, string $reason): string
+    {
+        $result = self::HELD;
+        $decidedOn = (string) $order->status;
+
+        DB::transaction(function () use ($order, $basket, $live, $reason, $decidedOn, &$result) {
+            app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideFor($order, false);
+
+            $this->status->moveTo(
+                $order,
+                'failed',
+                by: 'system',
+                reason: $reason,
+                only: ['paid_at' => null, 'status' => $decidedOn],
+            );
+
+            if (! $this->isOver(Order::query()->whereKey($order->getKey())->lockForUpdate()->first())) {
+                return;
+            }
+
+            $fresh = Cart::query()->whereKey($basket->getKey())->lockForUpdate()->first();
+
+            if ($fresh === null || ! $this->cartBelongsTo($fresh, $order)) {
+                $result = self::GONE;
+
+                return;
+            }
+
+            if ($live === null || (int) $live->getKey() === (int) $fresh->getKey()) {
+                $fresh->forceFill([
+                    'status' => 'active',
+                    'converted_at' => null,
+                    'converted_order_id' => null,
+                    'last_activity_at' => now(),
+                ])->save();
+                $result = self::RESTORED;
+
+                return;
+            }
+
+            $this->fold($fresh, $live);
+            $result = self::MERGED;
+        });
+
+        return $result;
+    }
+
+    /** The order is over and took no money: $fresh is the row re-read under a lock. */
+    private function isOver(?Order $fresh): bool
+    {
+        return $fresh !== null
+            && $fresh->paid_at === null
+            && $this->placement->forOrder($fresh) === PlacementState::REFUSED;
+    }
+
+    /** $from's lines into $into, summed; $from is left `merged` and empty. */
+    private function fold(Cart $from, Cart $into): void
+    {
+        $have = $into->items()->get()->keyBy(
+            fn ($line) => $line->product_id.'|'.(int) $line->product_variant_id
+        );
+
+        foreach ($from->items()->get() as $line) {
+            $existing = $have->get($line->product_id.'|'.(int) $line->product_variant_id);
+
+            if ($existing !== null) {
+                $existing->update(['quantity' => min(99, $existing->quantity + $line->quantity)]
+                    + ($line->bt_group && ! $existing->bt_group
+                        ? ['bt_group' => $line->bt_group, 'bt_size' => $line->bt_size] : []));
+
+                continue;
+            }
+
+            $into->items()->create([
+                'product_id' => $line->product_id,
+                'product_variant_id' => $line->product_variant_id,
+                'quantity' => $line->quantity,
+                'unit_price' => $line->unit_price,
+                'bt_group' => $line->bt_group,
+                'bt_size' => $line->bt_size,
+            ]);
+        }
+
+        $from->items()->delete();
+
+        $tracker = app(\App\Services\CartTracking\CartTracker::class);
+        $tracker->revalue($from, 0);
+
+        $from->forceFill(['status' => 'merged', 'converted_order_id' => null])->save();
+
+        $into->forceFill(array_filter([
+            'coupon_id' => $into->coupon_id ? null : $from->coupon_id,
+            'last_activity_at' => now(),
+        ], fn ($v) => $v !== null))->save();
+
+        $tracker->revalue($into);
     }
 }

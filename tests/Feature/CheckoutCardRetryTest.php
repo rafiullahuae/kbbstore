@@ -345,7 +345,10 @@ it('does not release an attempt whose money has already moved', function () {
         ->assertJsonPath('error', 'This basket has already been ordered (order ' . $number . ').')
         ->assertJsonPath('url', '/checkout/success?order=' . $number);
 
-    expect(Order::where('order_number', $number)->value('status'))->toBe('pending')
+    // (Lane BK) Stripe's `succeeded` is APPLIED on the spot now (paid wins,
+    // UnfinishedPayment via StripeGateway::settleBeforeRelease()), rather than
+    // left `pending` for the webhook. Still nothing cancelled or released.
+    expect(Order::where('order_number', $number)->value('status'))->toBe('processing')
         ->and($cart->fresh()->status)->toBe('converted')
         ->and($stripe->cancelled)->toBe([])
         ->and($serum->fresh()->stock)->toBe(4)
