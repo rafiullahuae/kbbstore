@@ -3,6 +3,22 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.433
+**Category banners, one placing box with the tick, faster ordering, remembered
+details, payments check and domain-switch safety.** Apply after .432. Runs its
+migrations. Hard refresh the shop and the admin.
+
+| Your request | Now |
+|---|---|
+| "i need the categories banners, exact same like brand banners" + "if there's banner, then the banner should be picked auto by new design" | Category pages with a picture show the brand-page banner automatically; a new per-category Banner picture wins over the old one; no picture = exactly as before; a picture not on this server = as before, never broken. Appearance -> Site layout -> Category banner (35 controls, "Category header -- as before" to switch back); Catalog -> Categories -> Edit -> Category header -> Banner layout |
+| "breakcrums ... goes behind the brand banner" + spacing and padding | Never behind the banner any more; Appearance -> Header -> Breadcrumbs: space above/below plus new inner padding, phone and desktop |
+| "i need just once the box ... check icon come and instantly goes to thank you page" + "super quick" | One "Placing your order" box: spinner turns into the tick in the same box (the bank check opens over it); cash 2.8 s -> 1.0 s, card 4.5 s -> 2.4 s to the thank-you page; order emails sent after the shopper is through |
+| "the address fields etc should keep the data in user browser ... even without login" | Name, phone, email, country, emirate, area, building and delivery remembered on the shopper's own device (never card, coupon, password, notes); "Remember my details" tick and "Not you? Clear details". Appearance -> Checkout page -> Fields & attention |
+| "no any data or settings should be gone after domain switch" + "finalized check for payment gateways" | Platform -> Domain switch -> 1b Payments ready? -> Check everything (Stripe, Tabby, Tamara, COD; read only, no secrets shown). Step 6b fixes old extrabeauty.ae links in content (preview count, undo). Guest baskets, wishlists and recently viewed follow shoppers to the new address; Google still sees a clean 301. Test plan: docs/PAYMENT-TEST-PLAN.md |
+| The white bar with the keyboard (Firefox) | /checkout/?kbbdiag=1 now records what sits above the keyboard, so the next fix is exact |
+
+Files: see the package's update.json.
+
 ## 2.60.432
 **Firefox Place order (the hidden password), coupon in place, product-page tabs and
 Continue shopping, breadcrumb, homepage banner text box.** Apply after .431. Runs its
