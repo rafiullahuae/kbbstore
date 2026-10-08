@@ -94,7 +94,7 @@
 @endif
                         <button type="button" class="apply" id="kbb_apply_coupon">{{ __('store.checkout.coupon_apply') }}</button>
                     </div>
-                    @include('partials.checkout.coupon-hint')                </div>
+@if (session()->has('kbb_coupon_notice') || (string) ($totals['coupon_code'] ?? '') !== '')@include('partials.checkout.coupon-line')@endif                    @include('partials.checkout.coupon-hint')                </div>
 
                 <div class="formbox" id="customer_details">
 

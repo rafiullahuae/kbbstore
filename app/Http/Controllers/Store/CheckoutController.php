@@ -2744,20 +2744,28 @@ class CheckoutController extends Controller
      * coupon from the database and checks it against this cart, exactly as the
      * cart page's own endpoint does. The browser sends a code, never an amount.
      */
-    public function couponUpdate(Request $request): JsonResponse
+    public function couponUpdate(Request $request): JsonResponse|RedirectResponse
     {
         $data = $request->validate([
             'code' => ['nullable', 'string', 'max:60'],
+            // The checkout form's own name for the box, so the whole form
+            // posted here without the script means the same thing.
+            'coupon_code' => ['nullable', 'string', 'max:60'],
             'remove' => ['nullable', 'boolean'],
             'country' => ['nullable', 'string', 'size:2'],
             'state' => ['nullable', 'string', 'max:120'],
             'payment_method' => ['nullable', 'string', 'max:40'],
+            // The payment options the page is showing right now, so the answer
+            // can leave #payment alone when the new total offers the same ones
+            // (Lane CP). Ids only -- a choice of what to redraw, never a price.
+            'offered' => ['nullable', 'array', 'max:12'],
+            'offered.*' => ['string', 'max:40'],
         ]);
 
         $cart = $this->loadCart($request);
 
         if (! $cart || $cart->items->isEmpty()) {
-            return response()->json([
+            return $this->couponAnswer($request, [
                 'ok' => false,
                 'error' => 'Your bag is empty — please start again from the cart.',
             ], 422);
@@ -2765,34 +2773,79 @@ class CheckoutController extends Controller
 
         if ($request->boolean('remove')) {
             $cart->forceFill(['coupon_id' => null])->save();
-            $message = 'Coupon removed';
         } else {
             $result = $this->coupons->validate(
-                (string) ($data['code'] ?? ''),
+                trim((string) ($data['code'] ?? $data['coupon_code'] ?? '')),
                 $cart,
                 $request->user('customer')?->email
             );
 
-            // A rejected code leaves the cart exactly as it was. The page is
-            // still repainted from the unchanged totals so the shopper sees the
-            // error beside figures that are current, not stale.
+            /*
+             * A REFUSED CODE REDRAWS NOTHING (Lane CP).
+             *
+             * It used to come back with every fragment, rendered from totals
+             * that had not moved, and the page swapped them all in -- #payment
+             * included, so a mistyped code tore down the card fields' three
+             * mount boxes and re-mounted Stripe into new ones, and reset the
+             * "save this card" tick, to show figures that were already on
+             * screen. The cart is untouched, so the answer is the sentence and
+             * nothing else, in the shopper's language: CouponService's own
+             * reason, keyed rather than matched on its English.
+             */
             if (! $result['ok']) {
-                return response()->json(
-                    ['ok' => false, 'error' => $result['error']]
-                    + $this->fragments($request, $cart, $data)
-                );
+                $reason = (string) ($result['reason'] ?? '');
+
+                return $this->couponAnswer($request, [
+                    'ok' => false,
+                    'error' => in_array($reason, \App\Services\CouponService::REASONS, true)
+                        ? __('store.checkout.coupon_err_'.$reason)
+                        : (string) $result['error'],
+                ]);
             }
 
             $cart->forceFill(['coupon_id' => $result['coupon']->id])->save();
-            $message = 'Coupon applied';
         }
 
         $cart = $this->loadCart($request);
 
-        return response()->json(
-            ['ok' => true, 'message' => $message]
-            + $this->fragments($request, $cart, $data)
-        );
+        /*
+         * The applied line ("Coupon SAVE10 applied — you save AED 21.50",
+         * and its Remove) comes back rendered by the same partial the page
+         * draws on load, from the same totals as the discount row beside it,
+         * so the two cannot disagree. No coupon id, no usage count: nothing of
+         * the coupon row beyond the code the discount row already prints.
+         */
+        $parts = $this->fragments($request, $cart, $data, true);
+
+        return $this->couponAnswer($request, ($request->boolean('remove')
+            ? ['ok' => true, 'message' => __('store.checkout.coupon_removed')]
+            : ['ok' => true]) + $parts);
+    }
+
+    /**
+     * The coupon endpoint's answer, as JSON to the page's script, and as a
+     * redirect back to the checkout for a plain form post (Lane CP).
+     *
+     * A browser that posts the form without the script used to be handed raw
+     * JSON as a page. Now it lands back on /checkout/ with the same sentence
+     * the script would have shown, flashed for one request and drawn under the
+     * coupon box (store/checkout.blade.php). Nothing else is flashed: the
+     * fragments are this page's own markup and the reload draws them anyway.
+     */
+    private function couponAnswer(Request $request, array $payload, int $status = 200): JsonResponse|RedirectResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json($payload, $status);
+        }
+
+        // An empty bag has no checkout to go back to: page() itself sends it
+        // to the cart.
+        $to = $status === 422 ? '/cart/' : '/checkout/';
+
+        return redirect()->to(Url::to($to))->with('kbb_coupon_notice', [
+            'ok' => (bool) ($payload['ok'] ?? false),
+            'text' => (string) (($payload['ok'] ?? false) ? ($payload['message'] ?? '') : ($payload['error'] ?? '')),
+        ]);
     }
 
     /**
@@ -2808,7 +2861,7 @@ class CheckoutController extends Controller
      * order total, so a quantity change in either direction can withdraw or
      * restore the method they have selected.
      */
-    private function fragments(Request $request, $cart, array $data): array
+    private function fragments(Request $request, $cart, array $data, bool $coupon = false): array
     {
         // Only a country the shopper's own selector offers. Anything else
         // falls back to the store's country rather than being taken on trust.
@@ -2841,13 +2894,53 @@ class CheckoutController extends Controller
                     . $gateways[0]['title'] . ' is selected instead.';
         }
 
-        $browsed = $this->browsed($request, $cart);
-
         $view = [
             'settings' => $this->settings,
             'items' => $cart->items,
             'totals' => $totals,
         ];
+
+        /*
+         * A COUPON MOVES THE TOTALS AND NOTHING ELSE (Lane CP).
+         *
+         * Not the lines (a coupon's discount is one row in the order block, not
+         * a figure on each line), not the Browsed list, and not the payment
+         * options UNLESS the new total changes which ones are offered -- the
+         * Cash-on-delivery window is the case that can. The page says which it
+         * is showing; when that is still exactly the list, #payment is left
+         * where it is, so the selected method, the card element mounted inside
+         * it and the "save this card" tick are not torn down to be redrawn
+         * identical. An older script that does not send the list gets the
+         * whole answer, as before.
+         */
+        if ($coupon) {
+            $shown = array_values(array_filter((array) ($data['offered'] ?? []), 'is_string'));
+            $samePayment = ! $dropped && $shown !== [] && $shown === $offeredIds;
+
+            return [
+                'count' => (int) ($totals['item_count'] ?? 0),
+                'orderHtml' => view('partials.checkout.order-block', $view + [
+                    'withActions' => true,
+                    'deliveryText' => $this->deliveryText($country),
+                ])->render(),
+                'thumbsHtml' => view('partials.checkout.thumbs', $view)->render(),
+                'total' => \App\Support\Money::format($totalFils + $this->giftFee($request), $this->ledgerDp($totals, $request)),
+                'payNotice' => $payNotice,
+            ] + ($samePayment ? [] : [
+                'paymentHtml' => view('partials.checkout.payment-methods', [
+                    'gateways' => $gateways,
+                    'codHidden' => $codHidden,
+                    'selectedMethod' => $dropped ? null : ($posted !== '' ? $posted : null),
+                    'payNotice' => $payNotice,
+                ])->render(),
+            ]) + [
+                'couponHtml' => (string) ($totals['coupon_code'] ?? '') !== ''
+                    ? view('partials.checkout.coupon-applied', $view)->render()
+                    : '',
+            ];
+        }
+
+        $browsed = $this->browsed($request, $cart);
 
         return [
             'count' => (int) ($totals['item_count'] ?? 0),

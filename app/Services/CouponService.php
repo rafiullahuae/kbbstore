@@ -23,42 +23,49 @@ use LogicException;
  */
 class CouponService
 {
-    /** @return array{ok: bool, coupon: ?Coupon, error: ?string} */
+    /**
+     * `reason` names WHICH refusal it was, one of REASONS, so a page can say it
+     * in the shopper's language (Lane CP: the checkout's coupon line, EN and
+     * AR) without matching on the English sentence. `error` is unchanged for
+     * every caller that already prints it.
+     *
+     * @return array{ok: bool, coupon: ?Coupon, error: ?string, reason?: string}
+     */
     public function validate(string $code, Cart $cart, ?string $email = null): array
     {
         $coupon = Coupon::code($code)->first();
 
         if (! $coupon) {
-            return $this->fail('That code is not valid.');
+            return $this->fail('That code is not valid.', 'invalid');
         }
 
         $now = now();
 
         if ($coupon->starts_at && $now->lt($coupon->starts_at)) {
-            return $this->fail('That code is not active yet.');
+            return $this->fail('That code is not active yet.', 'not_started');
         }
 
         if ($coupon->expires_at && $now->gt($coupon->expires_at)) {
-            return $this->fail('That code has expired.');
+            return $this->fail('That code has expired.', 'expired');
         }
 
         if ($coupon->usage_limit !== null && $coupon->usage_count >= $coupon->usage_limit) {
-            return $this->fail('That code has been fully redeemed.');
+            return $this->fail('That code has been fully redeemed.', 'used_up');
         }
 
         $subtotal = $this->cartSubtotal($cart);
 
         if ($coupon->minimum_amount && $subtotal < $coupon->minimum_amount) {
-            return $this->fail('Your basket does not meet the minimum for that code.');
+            return $this->fail('Your basket does not meet the minimum for that code.', 'minimum');
         }
 
         if ($coupon->maximum_amount && $subtotal > $coupon->maximum_amount) {
-            return $this->fail('That code does not apply to a basket this size.');
+            return $this->fail('That code does not apply to a basket this size.', 'maximum');
         }
 
         if ($email) {
             if ($coupon->allowed_emails && ! in_array(mb_strtolower($email), array_map('mb_strtolower', $coupon->allowed_emails), true)) {
-                return $this->fail('That code is not available on this account.');
+                return $this->fail('That code is not available on this account.', 'account');
             }
 
             if ($coupon->usage_limit_per_user !== null) {
@@ -74,7 +81,7 @@ class CouponService
                     ->count();
 
                 if ($used >= $coupon->usage_limit_per_user) {
-                    return $this->fail('You have already used that code.');
+                    return $this->fail('You have already used that code.', 'already_used');
                 }
             }
         }
@@ -84,7 +91,7 @@ class CouponService
         // nothing but one bundle has nothing left for a code to discount, and
         // is told so here rather than shown a code that takes off AED 0.
         if ($this->couponLines($coupon, $cart) === []) {
-            return $this->fail('That code does not apply to anything in your basket.');
+            return $this->fail('That code does not apply to anything in your basket.', 'no_items');
         }
 
         return ['ok' => true, 'coupon' => $coupon, 'error' => null];
@@ -919,8 +926,11 @@ class CouponService
         return (int) $cart->items->sum(fn ($i) => $i->lineTotal());
     }
 
-    private function fail(string $message): array
+    /** Every `reason` validate() can answer with. */
+    public const REASONS = ['invalid', 'not_started', 'expired', 'used_up', 'minimum', 'maximum', 'account', 'already_used', 'no_items'];
+
+    private function fail(string $message, string $reason): array
     {
-        return ['ok' => false, 'coupon' => null, 'error' => $message];
+        return ['ok' => false, 'coupon' => null, 'error' => $message, 'reason' => $reason];
     }
 }

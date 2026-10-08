@@ -90,9 +90,11 @@ it('applies a coupon and returns the checkout regions to repaint', function () {
     $response->assertOk()->assertJson(['ok' => true]);
 
     // The regions the page swaps in. Without orderHtml there is nothing to
-    // repaint and a reload would be the only honest option.
+    // repaint and a reload would be the only honest option. Lane CP: the
+    // lines are NOT among them -- a coupon is one row in the order block, not
+    // a figure on each line (CheckoutCouponSmoothTest pins the whole list).
     expect($response->json('orderHtml'))->toBeString()->not->toBe('')
-        ->and($response->json('itemsHtml'))->toBeString();
+        ->and($response->json())->not->toHaveKey('itemsHtml');
 
     // The discount is really on the cart, not just in the wording.
     expect($cart->fresh()->coupon_id)->not->toBeNull();
@@ -101,7 +103,7 @@ it('applies a coupon and returns the checkout regions to repaint', function () {
     expect($response->json('orderHtml'))->toContain('370');
 });
 
-it('refuses an unknown code without touching the cart, and still returns fragments', function () {
+it('refuses an unknown code without touching the cart, and redraws nothing', function () {
     $cart = couponCart(20000, 2);
 
     $response = couponPost($cart, ['code' => 'NOPE-NOT-REAL', 'country' => 'AE']);
@@ -112,9 +114,10 @@ it('refuses an unknown code without touching the cart, and still returns fragmen
     // Unchanged cart...
     expect($cart->fresh()->coupon_id)->toBeNull();
 
-    // ...but the page is still repainted, so the error appears beside figures
-    // that are current rather than stale.
-    expect($response->json('orderHtml'))->toBeString()->not->toBe('');
+    // ...and, since Lane CP, nothing is repainted: the totals on screen are
+    // already the cart's, and redrawing them swapped #payment for an identical
+    // copy on every mistyped code -- the card fields torn down and re-mounted.
+    expect($response->json())->not->toHaveKey('orderHtml');
 });
 
 it('removes an applied coupon', function () {

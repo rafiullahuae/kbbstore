@@ -166,17 +166,54 @@ export function initCheckout() {
         // Coupon.
         if (event.target.closest('#kbb_apply_coupon')) {
             event.preventDefault();
-            const field = document.getElementById('kbb_coupon_code');
-            if (field?.value.trim()) await changeCoupon(field.value.trim(), false);
+            await applyTyped();
+            return;
+        }
+
+        // Remove, from the applied line under the box (Lane CP).
+        if (event.target.closest('[data-kbb-coupon-remove]')) {
+            event.preventDefault();
+            await changeCoupon('', true);
             return;
         }
 
         const hint = event.target.closest('.hint [data-code]');
         if (hint) {
             event.preventDefault();
+            // Into the box as well, so a refusal leaves the code there to fix.
+            const field = document.getElementById('kbb_coupon_code');
+            if (field) field.value = hint.dataset.code;
             await changeCoupon(hint.dataset.code, false);
         }
     });
+
+    /*
+     * ENTER IN THE COUPON BOX CAN NEVER PLACE THE ORDER (Lane CP).
+     *
+     * The box sits inside #kbbCheckoutForm, and two listeners on that form
+     * (placing-overlay and stripe-elements) answer ANY `submit` by placing the
+     * order -- deliberately, "Enter inside a field submits the form". Today the
+     * keydown handler below stops Enter before the browser gets that far, and
+     * the form has no submit button for implicit submission to use. Neither is
+     * a guarantee: a phone keyboard's Go key, an autofill helper or a future
+     * submit button in the form reaches `submit` without a keydown Enter, and
+     * the shopper who meant "apply SAVE10" would have an order placed. Measured
+     * in Chromium: form.requestSubmit() with the coupon box focused posted
+     * /checkout/place.
+     *
+     * Capture on the DOCUMENT, so this runs before the form's own capture
+     * listeners whatever order the scripts loaded in. Only a submit with no
+     * submitter while the coupon box has focus is taken; Place order is a
+     * type=button and never arrives here.
+     */
+    document.addEventListener('submit', (event) => {
+        if (event.target !== form || event.submitter) return;
+        if (document.activeElement?.id !== 'kbb_coupon_code') return;
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        applyTyped();
+    }, true);
 
     /*
      * Enter in the discount-code field applies the code.
@@ -196,8 +233,7 @@ export function initCheckout() {
 
         event.preventDefault();
 
-        const code = event.target.value.trim();
-        if (code) await changeCoupon(code, false);
+        await applyTyped();
     });
 
     /*
@@ -550,15 +586,94 @@ export function initCheckout() {
         }
     }
 
-    /* Same shape as changeLine: the server returns this page's own fragments,
-       so applying a code repaints in place instead of reloading and throwing
-       away every field already typed. Falls back to the old reload-based path
-       when the route is not published (an older cached layout). */
+    /*
+     * THE COUPON, IN PLACE (Lane CP).
+     *
+     * Same shape as changeLine: the server answers with this page's own
+     * fragments and only those are swapped -- the order block, the mobile bag
+     * strip, the sticky bar's total, and #payment ONLY when the new total
+     * changes which methods are offered (the page tells it which are shown).
+     * Every field the shopper typed, the chosen delivery and payment method and
+     * any card element mounted in #payment stay exactly where they are.
+     *
+     * The answer is said under the box, in words the server wrote in the
+     * shopper's language -- never a toast that is gone in 1.7 seconds, never an
+     * alert. A refused code stays in the box to be corrected.
+     *
+     * No reload on any path. The fallback that used to post to the cart's own
+     * coupon endpoint and then reload the page (when this route was not
+     * published) is gone: a reload is exactly what throws away everything the
+     * shopper typed, which is the complaint this answers.
+     */
+    let couponBusy = false;
+
+    const couponMsg = () => {
+        let el = document.getElementById('kbbCouponMsg');
+        if (el) return el;
+
+        const row = form.querySelector('.coupon .crow');
+        if (!row) return null;
+
+        el = document.createElement('p');
+        el.id = 'kbbCouponMsg';
+        el.className = 'co-cmsg is-new';
+        el.setAttribute('role', 'status');
+        el.setAttribute('aria-live', 'polite');
+        // One line held open while the answer is on its way, made in the same
+        // task as the tap, so the box grows with the gesture and not a beat
+        // later when the answer lands (that would count as a layout shift).
+        el.innerHTML = '&nbsp;';
+        row.after(el);
+
+        return el;
+    };
+
+    /* kind: 'ok' | 'err'. `html` is markup the server rendered (the applied
+       line and its Remove, every value in it escaped there); `text` goes in as
+       text and nothing else. */
+    const sayCoupon = (kind, text, html) => {
+        const el = couponMsg();
+        if (!el) return;
+
+        el.classList.remove('is-new', 'is-busy');
+        el.classList.toggle('is-err', kind === 'err');
+        el.classList.toggle('is-ok', kind === 'ok');
+
+        if (typeof html === 'string' && html.trim() !== '') el.innerHTML = html;
+        else el.textContent = text || '';
+    };
+
+    async function applyTyped() {
+        const field = document.getElementById('kbb_coupon_code');
+        const code = field?.value.trim() || '';
+
+        if (!code) { field?.focus(); return; }
+
+        await changeCoupon(code, false);
+    }
+
     async function changeCoupon(code, remove) {
+        // One request at a time: a double tap, Enter then Apply, or Apply
+        // while Remove is on its way is one change, not two racing writes.
+        if (couponBusy) return;
+
+        const field = document.getElementById('kbb_coupon_code');
+        const btn = document.getElementById('kbb_apply_coupon');
         const url = couponUrl();
-        if (!url) return post('/coupon', remove ? { remove: true } : { code });
+
+        couponBusy = true;
+        // aria-disabled, not `disabled`: disabling the button that has focus
+        // throws focus to <body>, which loses a keyboard shopper's place --
+        // and Chrome then scrolled the coupon box (an overflow:hidden scroller,
+        // for its decorative circle) 30px sideways, cutting the gift icon off.
+        // couponBusy is what refuses the second press.
+        btn?.setAttribute('aria-busy', 'true');
+        btn?.setAttribute('aria-disabled', 'true');
+        couponMsg()?.classList.add('is-busy');
 
         try {
+            if (!url) throw new Error('no coupon route');
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -572,29 +687,38 @@ export function initCheckout() {
                     country: document.getElementById('billing_country')?.value || '',
                     state: document.getElementById('billing_state')?.value || '',
                     payment_method: document.querySelector('input[name="payment_method"]:checked')?.value || '',
+                    // Which methods are on screen, so an unchanged list is
+                    // left alone. Ids only; the server decides what is offered.
+                    offered: [...document.querySelectorAll('#payment input[name="payment_method"]')].map((r) => r.value),
                 }),
             });
 
             const data = await response.json().catch(() => null);
 
-            if (!data) {
-                window.kbbToast?.(t('store.js.coupon_failed', 'Could not apply that code — please try again.'));
+            if (!data || data.ok !== true) {
+                const said = data && typeof data.error === 'string' ? data.error : '';
+                sayCoupon('err', said
+                    || (response.status === 429 ? t('store.js.coupon_slow_down', 'Too many tries — please wait a minute and try again.')
+                        : response.status === 419 ? t('store.js.session_expired', 'Your session expired — please reload the page.')
+                            : t('store.js.coupon_failed', 'Could not apply that code — please try again.')));
+                // Only a refusal of the code itself marks the box; a dropped
+                // connection says nothing about what was typed.
+                if (said && field && !remove) field.setAttribute('aria-invalid', 'true');
                 return;
             }
 
-            // A rejected code still carries fragments, rendered from the
-            // unchanged totals, so the error is shown beside current figures.
-            // orderHtml is the one region fragments() always returns.
             if (typeof data.orderHtml === 'string') applyFragments(data);
 
-            if (data.ok !== true) {
-                window.kbbToast?.(data.error || t('store.js.coupon_rejected', 'That code could not be applied.'));
-                return;
-            }
-
-            if (data.message) window.kbbToast?.(data.message);
+            field?.removeAttribute('aria-invalid');
+            if (remove && field) field.value = '';
+            sayCoupon('ok', data.message || '', data.couponHtml);
         } catch {
-            window.kbbToast?.('No connection — please try again.');
+            sayCoupon('err', t('store.js.coupon_failed', 'Could not apply that code — please try again.'));
+        } finally {
+            couponBusy = false;
+            btn?.removeAttribute('aria-busy');
+            btn?.removeAttribute('aria-disabled');
+            document.getElementById('kbbCouponMsg')?.classList.remove('is-busy');
         }
     }
 
@@ -650,31 +774,6 @@ export function initCheckout() {
             // the list, so this lands on a detached node and costs nothing.
             btn.disabled = false;
             btn.removeAttribute('aria-busy');
-        }
-    }
-
-    async function post(path, body) {
-        try {
-            const response = await fetch(`${window.KBB.routes.cartApi}${path}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': window.KBB.csrf,
-                    Accept: 'application/json',
-                    'X-KBB-Hm': String(Math.round(performance.now())), // (Lane CT) see cart.js
-                },
-                body: JSON.stringify(body),
-            });
-            const data = await response.json();
-            if (data.error) { window.kbbToast?.(data.error); return; }
-            /* Coupons only, now that the steppers have an endpoint that returns
-               this page's own fragments. A coupon changes the line discounts,
-               the totals, the free-delivery bar and which payment methods are
-               offered, and /api/cart/coupon renders none of those — so until it
-               does, a reload is the honest way to keep every copy in step. */
-            window.location.reload();
-        } catch {
-            window.kbbToast?.(t('store.js.generic_error', 'Something went wrong — please try again.'));
         }
     }
 
