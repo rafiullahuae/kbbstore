@@ -504,7 +504,7 @@
   function why() {
     var t = '';
     if (selEmpty()) t = 'The buttons wake up once products are selected: tick them on the Find tab, or press "Select all … results" there.';
-    else if (jobBusy) t = 'A run is going (below). Stop it, or let it finish, before starting another.';
+    else if (jobBusy) t = 'A run is going. Stop it, or let it finish, before starting another.';
     else if (busy === 'preview' && pv) t = 'Checking ' + num(pv.at) + ' of ' + num(pv.total || selInfo.products) + ' products…';
     else if (busy) t = 'Working…';
     else if (pv && pv.done && !pv.counts.rename && !(pv.kind === 'combo' && pv.counts.alt)) t = nothingWhy(pv);
