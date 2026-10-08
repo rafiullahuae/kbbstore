@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.442
+**The domain switch is one numbered installer: 17 steps, each with Verify, Skip and
+resume.** Apply after .441. Runs its migrations. Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "the migration steps are too confusing ... make me somthing super simple like installer type. step by step and the system verify the changes ... skip option if i will update something later, like stripe live apis" | Platform -> Domain switch: steps 1-17 in the order of work (no 1b/6a). Each step says what to do and where, with copy buttons; Verify checks the real state (DNS, SSL on all four names, main address, caches, old links, payments, Coming Soon, forwarding, sitemap) and shows green / amber / red with the fix; the shop's own actions are buttons. Skip for now on every step except 2, 5, 6, 7, 8 (each says why); skipped steps listed at step 17 with Return to it. Progress is saved (phone too). Step 8 waits for DNS and SSL green; forwarding refuses while Coming Soon is on. The server IP is read from where extrabeauty.ae points, never typed in. docs/KBEAUTYBLISS-SWITCH-CHECKLIST.md has the same 17 steps |
+
+Files: see the package's update.json.
+
 ## 2.60.441
 **The phone banner is exactly the height you set.** Apply after .440. Runs its
 migrations. Hard refresh the shop and the admin.
