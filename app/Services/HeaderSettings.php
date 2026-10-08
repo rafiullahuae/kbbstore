@@ -568,7 +568,14 @@ class HeaderSettings
      * the integer in the second, which reaches here already clamped to its own
      * slider's range by cast() — rule 5, unchanged.
      */
-    private function maxWidthCss(): string
+    /*
+     * PUBLIC SINCE LANE HB2: the homepage banner's text box lines up with the
+     * header (App\Support\BannerTextBox::siteVariables()), and it asks THIS
+     * method rather than deciding the header's width a second time -- two
+     * places answering "how wide is the header" is the bug the note above
+     * records.
+     */
+    public function maxWidthCss(): string
     {
         return $this->layout->get('header_follows')
             ? 'var(--site-max)'

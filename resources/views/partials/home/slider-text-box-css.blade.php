@@ -15,6 +15,25 @@
     `.kbb-home a{color:inherit}` (0,1,1) beat a bare `.hb-fill` and drew the
     Filled button's label in ink on pink -- measured in Chromium, rgb(42,34,40).
 
+    WHERE THE BOX SITS (Lane HB2) is .hb-pos: a flex column spanning the frame
+    between its insets, with a spacer above the box and one below. Their
+    flex-grow shares out the free height (top 0/1, middle .5/.5, bottom 1/0, a
+    custom % is p/1-p) and a custom px is the upper spacer's shrinkable basis,
+    so the box can never leave the frame and nothing is measured. Across, the
+    box's own width is known CSS, so `clamp(0, offset + room x p, room)` on its
+    margin-inline-start keeps it between the column's edges.
+    BannerTextBox::positionNumbers() carries the full argument.
+
+    INSIDE THE SITE WIDTH: the header's .wrap is max-width --hd-max (the site
+    width, or the header's own number), centred, padded --site-gutter -- and
+    --mh-l / --mh-r at 900px and under. The server prints those three values
+    onto the slider (--hb-hdmax, --hb-mhl, --hb-mhr, from HeaderSettings and
+    MobileHeader, the same methods the header itself uses). The frame is
+    centred too, so the logo's edge sits  (frame - header width) / 2 + padding
+    in from the frame's edge, and never less than that padding on a full-bleed
+    banner -- the max() below, with 100cqi as the frame's width. The two sides
+    are separate because the phone header's two paddings can differ.
+
     The box is NOT a link and is `pointer-events:none`: a click anywhere on it
     except the button falls through to the picture's own link, which is the
     whole-slide click the slider always had. The button is the one thing in it
@@ -22,13 +41,22 @@
 --}}<style>
 .kbbs.has-hb .kbbs-s{position:relative}
 .kbbs.has-hb{--hb-h:var(--hb-h-m,26px);--hb-t:var(--hb-t-m,14px);--hb-e:var(--hb-e-m,11px);--hb-b:var(--hb-b-m,1);--hb-w:var(--hb-w-m,100%);
-  --hb-in:16px;--hb-bot:16px;--hb-g:8px;--hb-lc:3}
+  --hb-vg1:var(--hb-vg1-m,1);--hb-vb:var(--hb-vb-m,0px);--hb-vg2:var(--hb-vg2-m,0);--hb-xp:var(--hb-xp-m,0);--hb-xo:var(--hb-xo-m,0px);
+  --hb-in:16px;--hb-ins:var(--hb-in);--hb-ine:var(--hb-in);--hb-tb:16px;--hb-bot:16px;--hb-o:0px;--hb-g:8px;--hb-lc:3;--hb-rm:min(var(--hb-w),100%);
+  --hb-gs:var(--site-gutter,22px);--hb-ge:var(--site-gutter,22px);--hb-pads:0px;--hb-pade:0px;
+  --hb-site:var(--hb-hdmax,var(--site-max,1680px))}
+.kbb-secw-bleed .kbbs.has-hb{--hb-pads:var(--hb-gs);--hb-pade:var(--hb-ge)}
+@media (max-width:900px){.kbbs.has-hb{--hb-gs:var(--hb-mhl,12px);--hb-ge:var(--hb-mhr,12px)}}
+.kbbs.has-hb.hb-d{--hb-o:28px}
 .kbbs.has-hb.is-bars.is-inset{--hb-bot:66px}
 .kbbs.has-hb.is-corner.is-bars,.kbbs.has-hb.is-corner.is-arrows{--hb-bot:64px}
-.hb-box{position:absolute;z-index:1;inset-inline-start:var(--hb-in);bottom:var(--hb-bot);inline-size:min(var(--hb-w),100% - 2 * var(--hb-in));
+.hb-pos{position:absolute;z-index:1;inset-block:calc(var(--hb-tb) + var(--hb-o)) var(--hb-bot);inset-inline:var(--hb-ins) var(--hb-ine);
+  display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;pointer-events:none}
+.hb-pos::before{content:"";flex:var(--hb-vg1) 1 var(--hb-vb)}
+.hb-pos::after{content:"";flex:var(--hb-vg2) 1 0px}
+.hb-box{position:relative;flex:none;inline-size:var(--hb-rm);margin-inline-start:clamp(0px,var(--hb-xo) + (100% - var(--hb-rm)) * var(--hb-xp),100% - var(--hb-rm));
   box-sizing:border-box;display:flex;flex-direction:column;align-items:flex-start;gap:var(--hb-g);pointer-events:none;
   font-family:var(--sans,"Outfit",system-ui,sans-serif);text-align:start}
-.hb-box.is-end{inset-inline-start:auto;inset-inline-end:var(--hb-in)}
 .hb-eb,.hb-h,.hb-t{margin:0;max-inline-size:100%}
 .hb-eb{font-size:var(--hb-e);font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hb-h{font-size:var(--hb-h);line-height:1.12;font-weight:600;letter-spacing:-.015em;color:var(--ink,#2A2228);text-wrap:balance}
@@ -71,16 +99,25 @@ html[lang=ar] .hb-stk text{letter-spacing:0;font-size:11px}
 .hb-stk b{font-size:16px;font-weight:800;line-height:1;color:#A82F53}
 html[lang=ar] .hb-stk b{font-size:13px}
 @media (max-width:767.98px){
-  .hb-box.no-m{display:none}
+  .hb-pos.no-m{display:none}
+  .kbbs.has-hb.hb-site-m{--hb-ins:max(var(--hb-pads),(100cqi - var(--hb-site)) / 2 + var(--hb-gs));--hb-ine:max(var(--hb-pade),(100cqi - var(--hb-site)) / 2 + var(--hb-ge))}
+  .hb-hs-m .hb-box.is-end{margin-inline-start:clamp(0px,100% - var(--hb-rm) - var(--hb-xo),100% - var(--hb-rm))}
   .kbbs.has-hb.is-arrows:not(.is-corner) .kbbs-nav{top:34%}
+  .kbbs.has-hb.hb-na-m .kbbs-nav{display:none}
 }
 @media (min-width:768px){
   .kbbs.has-hb{--hb-h:var(--hb-h-d,34px);--hb-t:var(--hb-t-d,15px);--hb-e:var(--hb-e-d,11.5px);--hb-b:var(--hb-b-d,1);--hb-w:var(--hb-w-d,420px);
-    --hb-in:clamp(60px,5.5cqi,80px);--hb-bot:clamp(24px,4cqi,52px);--hb-g:10px;--hb-lc:2}
+    --hb-vg1:var(--hb-vg1-d,1);--hb-vb:var(--hb-vb-d,0px);--hb-vg2:var(--hb-vg2-d,0);--hb-xp:var(--hb-xp-d,0);--hb-xo:var(--hb-xo-d,0px);
+    --hb-in:clamp(60px,5.5cqi,80px);--hb-tb:clamp(24px,4cqi,52px);--hb-bot:clamp(24px,4cqi,52px);--hb-g:10px;--hb-lc:2}
+  .kbbs.has-hb.hb-d{--hb-o:24px}
+  .kbbs.has-hb.hb-site-d{--hb-ins:max(var(--hb-pads),(100cqi - var(--hb-site)) / 2 + var(--hb-gs));--hb-ine:max(var(--hb-pade),(100cqi - var(--hb-site)) / 2 + var(--hb-ge))}
+  .hb-hs-d .hb-box.is-end{margin-inline-start:clamp(0px,100% - var(--hb-rm) - var(--hb-xo),100% - var(--hb-rm))}
+  .hb-d .hb-pos{inset-inline-end:max(var(--hb-ine),32px)}
+  .hb-d.hb-va-d .hb-pos{inset-block-start:calc(var(--hb-bot) + 24px)}
   .kbbs.has-hb.is-bars.is-inset{--hb-bot:max(66px,4cqi)}
   .kbbs.has-hb.is-corner.is-bars,.kbbs.has-hb.is-corner.is-arrows{--hb-bot:68px}
   .hb-a .hb-box{padding:22px 28px 24px;border-radius:24px}
-  .hb-d .hb-box{bottom:auto;top:calc(50% + 12px);transform:translateY(-50%) rotate(-1.6deg);padding:22px 28px 24px;border-radius:28px}
+  .hb-d .hb-box{transform:rotate(-1.6deg);padding:22px 28px 24px;border-radius:28px}
   .hb-stk{width:88px;height:88px;top:-24px;inset-inline-end:-28px}
   .hb-stk b{font-size:18px}
 }

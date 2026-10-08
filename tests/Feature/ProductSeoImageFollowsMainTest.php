@@ -282,5 +282,8 @@ it('writes the main image through one function, so the share image follows every
     expect(substr_count($code, 'model.image = '))
         ->toBe(1, 'model.image is written outside setMainImage()')
         ->and(substr_count($code, 'setMainImage('))
-        ->toBe(4, 'one definition and the three controls that set a main image');
+        // 5 with Lane RPL: the fourth control is Replace (click the main image,
+        // or its Replace button -> the Media Library in replace mode), and it
+        // goes through setMainImage() like the other three.
+        ->toBe(5, 'one definition and the four controls that set a main image');
 });

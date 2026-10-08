@@ -656,6 +656,14 @@ class AppServiceProvider extends ServiceProvider
                     return $legacyImage;
                 }
 
+                // A product picture the owner removed with nothing in its slot
+                // (Lane RPL): 410 Gone once its 30 days in the trash are up --
+                // not a soft 404 -- and an old email's copy of it goes to the
+                // product's current picture. Null for everything else.
+                if (($gonePicture = \App\Services\Media\PictureTrash::respond($request)) !== null) {
+                    return $gonePicture;
+                }
+
                 if ($request->isMethod('GET') && !$request->is('admin*', 'admin-api*', 'api*')) {
                     \App\Support\NotFoundLogger::record($request->path(), $request->header('referer'));
                 }

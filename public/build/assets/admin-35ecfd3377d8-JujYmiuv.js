@@ -86,7 +86,10 @@
   var TB_KEYS = ['tb_style', 'tb_glow', 'tb_button',
     'tb_show_eyebrow', 'tb_show_heading', 'tb_show_text', 'tb_show_button', 'tb_show_sticker',
     'tb_size_h_d', 'tb_size_h_m', 'tb_size_t_d', 'tb_size_t_m', 'tb_size_e_d', 'tb_size_e_m',
-    'tb_size_b_d', 'tb_size_b_m', 'tb_size_w_d', 'tb_size_w_m'];
+    'tb_size_b_d', 'tb_size_b_m', 'tb_size_w_d', 'tb_size_w_m',
+    /* Lane HB2: where the box sits, per device. */
+    'tb_inside_d', 'tb_vpos_d', 'tb_vval_d', 'tb_vunit_d', 'tb_hpos_d', 'tb_hval_d', 'tb_hunit_d',
+    'tb_inside_m', 'tb_vpos_m', 'tb_vval_m', 'tb_vunit_m', 'tb_hpos_m', 'tb_hval_m', 'tb_hunit_m'];
   SET_KEYS = SET_KEYS.concat(TB_KEYS);
 
   /* Lane RC. What each kind is called on a set's row. The labels in the type
@@ -806,7 +809,34 @@
       html += '</div>';
     });
 
-    return html + '<div class="bns-row" style="margin-top:10px"><button class="bns-btn" type="button" data-bns-tbreset>Reset sizes to default</button></div>';
+    html += '<div class="bns-row" style="margin-top:10px"><button class="bns-btn" type="button" data-bns-tbreset>Reset sizes to default</button></div>';
+
+    /* ── LANE HB2: WHERE THE BOX SITS, per device ──
+       "the control for the box that it should not go outside the site width.
+       and also the position for the box like bottom, middle and a custom
+       positioning by setting up the percentage or px. same for mobile." */
+    var custom = function(axis, dev, label, help){
+      var key = 'tb_' + axis + 'val_' + dev, unit = 'tb_' + axis + 'unit_' + dev;
+      var opts = '';
+      Object.keys(T.units).forEach(function(u){ opts += '<option value="' + esc(u) + '"' + (String(s[unit]) === u ? ' selected' : '') + '>' + esc(T.units[u]) + '</option>'; });
+      return fld(label, help, '<div class="bns-row" style="flex-wrap:nowrap">'
+        + '<input class="bns-in" type="number" step="1" min="0" max="1000" data-bns-set="' + key + '" value="' + esc(s[key]) + '">'
+        + '<select class="bns-sel bns-narrow" data-bns-set="' + unit + '">' + opts + '</select></div>');
+    };
+    [['d', 'Position on a computer'], ['m', 'Position on a phone']].forEach(function(dev){
+      var d = dev[0];
+      html += '<div class="bns-lab" style="margin-top:14px">' + esc(dev[1]) + '</div>'
+        + '<div class="bns-row" style="margin-top:6px">' + sw('tb_inside_' + d, 'Keep the box inside the site width', s['tb_inside_' + d]) + '</div>'
+        + '<div class="bns-help">On: the box lines up with the logo and the header, at every screen width. Off: it is measured from the edge of the picture.</div>'
+        + '<div class="bns-grid" style="margin-top:8px">'
+        + pick('tb_vpos_' + d, 'Up and down', 'Style\u2019s own: A at the bottom; D in the middle on a computer, at the bottom on a phone. Custom uses the number beside it.' + (d === 'm' ? ' On a phone, anywhere but the bottom, the arrows step aside so they never cover the button; swiping and the bars still work.' : ''), s['tb_vpos_' + d], T.vpos)
+        + custom('v', d, 'Custom up and down', '% : 0 is the top, 50 the middle, 100 the bottom. px: the distance from the top. Either way the box never leaves the banner.')
+        + pick('tb_hpos_' + d, 'Across', 'Picture\u2019s side: the Start or End chosen on each picture (Words on this picture). Custom is measured in from that side.', s['tb_hpos_' + d], T.hpos)
+        + custom('h', d, 'Custom across', 'How far in from each picture\u2019s side, in px or % of the banner\u2019s width. It stops at the other side.')
+        + '</div>';
+    });
+
+    return html;
   }
 
   /* ── LANE HB: ONE PICTURE'S WORDS, English and Arabic ── */

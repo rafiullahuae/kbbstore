@@ -26,86 +26,7 @@ use Illuminate\Support\Facades\Hash;
  * is the change that turns it red.
  */
 
-/** A slider set with $n published pictures; $cards[i] overrides picture i (1-based). */
-function hbSet(array $set = [], int $n = 2, array $cards = []): BannerSet
-{
-    BannerCard::query()->delete();
-    BannerSet::query()->delete();
-
-    $s = BannerSet::create($set + [
-        'name' => 'Hero', 'slug' => 'hb-'.uniqid(), 'status' => 'publish', 'position' => 0, 'kind' => 'slider',
-    ]);
-
-    foreach (range(1, $n) as $i) {
-        BannerCard::create(($cards[$i] ?? []) + [
-            'banner_set_id' => $s->id,
-            'image' => 'uploads/banners/hb-'.$i.'.webp',
-            'image_m' => 'uploads/banners/hb-'.$i.'-m.webp',
-            'image_w' => 1920, 'image_h' => 550, 'image_m_w' => 500, 'image_m_h' => 600,
-            'alt' => 'Picture '.$i,
-            'button_url' => '/shop/',
-            'position' => $i,
-            'status' => 'publish',
-        ]);
-    }
-
-    return $s;
-}
-
-/** The words a picture shows when its switch is on. */
-function hbWords(array $extra = []): array
-{
-    return $extra + [
-        'box_on' => true,
-        'eyebrow' => 'NEW IN EYEBROW',
-        'heading' => 'Glass skin starts here',
-        'body' => 'SHORT TEXT LINE',
-        'button_label' => 'Shop the Glow Edit',
-    ];
-}
-
-/** Render the slider exactly as the homepage does, from the homepage's loader. */
-function hbRender(BannerSet $set): string
-{
-    [$loaded, $cards] = app(Banners::class)->forPreview($set->id);
-
-    $factory = app('view');
-    $factory->flushState();
-    $factory->incrementRender();
-
-    try {
-        $html = view($loaded->homePartial(), [
-            'set' => $loaded, 'cards' => $cards,
-            'sections' => app(\App\Services\HomepageSections::class),
-        ])->render();
-        $head = $factory->yieldPushContent('head');
-    } finally {
-        $factory->decrementRender();
-        $factory->flushState();
-    }
-
-    return $head.$html;
-}
-
-function hbBox(string $html, int $nth = 0): string
-{
-    preg_match_all('#<div class="hb-box[^"]*">.*?</div>#s', $html, $m);
-
-    return $m[0][$nth] ?? '';
-}
-
-function hbArabic(): void
-{
-    foreach ([Locale::SETTING_ENABLED, Locale::SETTING_RTL] as $key) {
-        Setting::query()->updateOrCreate(['key' => $key], ['value' => '1', 'autoload' => true]);
-    }
-
-    Setting::flushMap();
-    SettingsService::forgetMemo();
-    app(SettingsService::class)->flush();
-    TranslationStore::flush();
-    app()->setLocale('ar');
-}
+require_once __DIR__.'/../Support/BannerTextBoxHelpers.php';
 
 /* ═════════════════════════ ships byte-identical ═══════════════════════════ */
 
@@ -143,8 +64,8 @@ it('prints the bytes the slider printed before Lane HB when no picture has words
     $src = (string) file_get_contents(resource_path('views/partials/home/slider-banner.blade.php'));
     $prints = [
         "@if (\$hbAny)@include('partials.home.slider-text-box-css')@endif",
-        "{{ \$hbAny ? ' has-hb hb-'.\$hbCfg['style'].' hb-glow-'.\$hbCfg['glow'] : '' }}",
-        "{{ \$hbAny ? ';'.BannerTextBox::cssVariables(\$hbCfg) : '' }}",
+        "{{ \$hbAny ? ' has-hb hb-'.\$hbCfg['style'].' hb-glow-'.\$hbCfg['glow'].BannerTextBox::rootClasses(\$hbCfg) : '' }}",
+        "{{ \$hbAny ? ';'.BannerTextBox::cssVariables(\$hbCfg).BannerTextBox::siteVariables(\$hbCfg) : '' }}",
         "@if (\$hbWords[\$bsI] !== null)@include('partials.home.slider-text-box', ['hbW' => \$hbWords[\$bsI], 'hbRing' => \$bsUid.'-r'.\$bsI])@endif",
         '{!! $hbNoTab !!}',
     ];
@@ -321,7 +242,8 @@ it('clamps every size and refuses unknown options, on the way in and on the way 
 
     $vars = BannerTextBox::cssVariables(['size_h_d' => '30px;}body{x:y', 'size_w_d' => 999]);
 
-    expect($vars)->toMatch('/^(--hb-[htebw]-[dm]:[0-9.]+(px|%)?;?)+$/')
+    // ▲ Lane HB2 added the position numbers (--hb-vg1-d, --hb-xo-m, ...): still numbers only.
+    expect($vars)->toMatch('/^(--hb-[a-z0-9]+-[dm]:-?[0-9.]+(px|%)?;?)+$/')
         ->and($vars)->toContain('--hb-w-d:560px')->toContain('--hb-h-d:34px');
 
     // And through the admin endpoint.
@@ -381,9 +303,9 @@ it('hides the box on phones for a picture with no phone picture', function () {
     $html = hbRender(hbSet([], 2, [1 => hbWords(['image_m' => '', 'image_m_w' => null, 'image_m_h' => null]), 2 => hbWords()]));
     $css = (string) file_get_contents(resource_path('views/partials/home/slider-text-box-css.blade.php'));
 
-    expect(hbBox($html, 0))->toContain('class="hb-box no-m"')
-        ->and(hbBox($html, 1))->toContain('class="hb-box"')
-        ->and($css)->toMatch('/@media \(max-width:767\.98px\)\{\s*\.hb-box\.no-m\{display:none\}/');
+    expect($html)->toContain('<div class="hb-pos no-m"><div class="hb-box">')
+        ->and(substr_count($html, '<div class="hb-pos"><div class="hb-box">'))->toBe(1)
+        ->and($css)->toMatch('/@media \(max-width:767\.98px\)\{\s*\.hb-pos\.no-m\{display:none\}/');
 });
 
 /* ═══════════════════════════════ Arabic ═══════════════════════════════════ */

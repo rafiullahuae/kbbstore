@@ -45,6 +45,10 @@
     }
   }
   var banner = null;
+  /* Lane RPL: what the last save did with the pictures it took off the
+     product -- `kept` (still used elsewhere) and `renamed`. Pictures in the
+     trash come from model.picture_trash, which the server sends on every load. */
+  var photoNote = null;
   var busy = false;
   var dirty = false;
   var seq = 0;
@@ -338,6 +342,7 @@
     try {
       var r = await api('/product-editor-load/' + id);
       if (mine !== seq) return;
+      photoNote = null;
       adopt(r.product);
       dirty = false;
 
@@ -558,6 +563,8 @@
       image: model.image,
       images: model.images,
       image_alts: model.image_alts || {},
+      // Lane RPL: which picture took which slot (Replace), for the 301.
+      replaced: (model.replaced || []).filter(function(p){ return p && p.from && p.to; }).slice(0, 24),
       seo: model.seo || {},
 
       /* ── THE TYPE, AND THE SET (Lane SP) ─────────────────────────────────
@@ -627,6 +634,7 @@
       adopt(r.product);
       dirty = false;
       banner = null;
+      photoNote = r.photos || null;
       say(creating ? 'Product created.' : 'Saved.');
       var landed = true;
     } catch (e) {
@@ -1615,7 +1623,10 @@
     var tiles = model.images.map(function(u, i){
       return '<div class="peo-tile" draggable="true" data-i="' + i + '">'
         + '<span class="peo-grip" title="Drag to reorder">⠿</span>'
-        + '<img src="' + url(shownAt(u)) + '" alt="">'
+        + '<button type="button" class="peo-repl" data-repl="' + i + '" title="Replace this picture" '
+        +   'aria-label="Replace the picture in position ' + (i + 2) + '">'
+        +   '<img src="' + url(shownAt(u)) + '" alt="">'
+        +   '<span class="peo-replhint" aria-hidden="true">Replace</span></button>'
         + '<span class="peo-body">'
         +   '<span class="peo-ord">Position ' + (i + 2) + '</span>'
         +   '<input class="peo-alt" data-alt="' + esc(u) + '" value="' + esc(altOf(u)) + '" '
@@ -1676,12 +1687,113 @@
     return '<div class="peo-mediawrap"><div class="peo-media">'
       + mainImageView()
       + galleryView()
-      + '</div></div>';
+      + '</div>' + photoNoteView() + '</div>';
+  }
+
+  /* Lane RPL. What the save did with every picture it took off the product:
+     in the trash (with Undo, until the day it is deleted for good), kept
+     because something else still shows it, or named for Google. Every string
+     from the server goes through esc(); the only markup is this function's. */
+  function photoNoteView(){
+    var trash = (model && model.picture_trash) || [];
+    var kept = (photoNote && photoNote.kept) || [];
+    var named = (photoNote && photoNote.renamed) || [];
+
+    if (!trash.length && !kept.length && !named.length) return '';
+
+    var rows = trash.map(function(t){
+      var what = t.replacement ? 'Replaced — old picture removed from the server' : 'Removed — picture removed from the server';
+      var thumb = t.replacement ? '<img src="' + url(shownAt(t.replacement)) + '" alt="">' : '';
+
+      return '<div class="peo-trow">' + thumb
+        + '<span class="peo-ttext"><b>' + esc(what) + '</b>'
+        +   '<span class="peo-tsub"><code>' + esc(t.old) + '</code>'
+        +   (t.replacement ? ' now answers with the new picture (301).' : '.')
+        +   ' Undo until ' + esc(t.purge_after) + ', then it is deleted for good.</span></span>'
+        + '<button type="button" class="peo-btn" data-undo="' + Number(t.id) + '">Undo</button>'
+        + '</div>';
+    });
+
+    kept.forEach(function(k){
+      rows.push('<div class="peo-trow is-kept"><span class="peo-ttext"><b>Kept: <code>' + esc(k.old) + '</code></b>'
+        + '<span class="peo-tsub">Still used by ' + esc((k.by || []).join(', ')) + ' — so it stays on the server.</span></span></div>');
+    });
+
+    if (named.length) {
+      rows.push('<div class="peo-trow"><span class="peo-ttext"><b>Named for Google</b>'
+        + '<span class="peo-tsub">' + named.map(function(n){ return '<code>' + esc(n) + '</code>'; }).join(' ')
+        + '</span></span></div>');
+    }
+
+    return '<div class="peo-trash" id="peo-trash"><h4>Pictures from your last saves</h4>' + rows.join('') + '</div>';
+  }
+
+  /* Remember which picture took which slot, for the server's 301. A slot
+     replaced twice before a save is one replacement: the first picture to the
+     last. Only a hint -- the server believes a pair only when the old picture
+     really left the product and the new one is on it. */
+  function noteReplaced(from, to){
+    model.replaced = model.replaced || [];
+
+    for (var i = 0; i < model.replaced.length; i++) {
+      if (model.replaced[i].to === from) { model.replaced[i].to = to; return; }
+    }
+
+    model.replaced.push({ from: from, to: to });
+  }
+
+  /* An address safe for a src PROPERTY (not markup): the same scheme rule as url(), unescaped. */
+  function safeSrc(u){
+    var s = String(u == null ? '' : u).trim();
+    return /^\s*(javascript|data|vbscript)\s*:/i.test(s) ? '' : s;
+  }
+
+  /* Clicking a thumbnail, or the main image, or the main image's Replace:
+     the Media Library in replace mode for THAT slot. Upload works inside it. */
+  function replaceSlot(slot){
+    if (typeof window.kbbPickMedia !== 'function') {
+      banner = 'The Media Library is not available on this screen.'; render(); return;
+    }
+
+    collect();
+
+    var isMain = slot === 'main';
+    var at = isMain ? -1 : parseInt(slot, 10);
+    var old = isMain ? model.image : model.images[at];
+
+    if (!old) return;
+
+    window.kbbPickMedia({
+      title: isMain ? 'Replace the main image' : 'Replace the picture in position ' + (at + 2),
+      note: 'Pick the new picture or upload one — it takes the same place. When you save, the old picture '
+        + 'is removed from the server unless something else on the shop still uses it, and you can undo for 30 days.',
+      folder: 'products',
+      replacing: safeSrc(shownAt(old)),
+      okLabel: 'Replace with this',
+      onPick: function(urls){
+        var u = urls && urls[0];
+
+        if (!u || u === old) return;
+
+        if (u === model.image || model.images.indexOf(u) !== -1) {
+          banner = 'That picture is already on this product.'; render(); return;
+        }
+
+        if (isMain) setMainImage(u); else model.images[at] = u;
+
+        noteReplaced(old, u);
+        dirty = true;
+        render();
+        markDirty();
+      }
+    });
   }
 
   function mainImageView(){
     var box = model.image
-      ? '<img src="' + url(shownAt(model.image)) + '" alt="">'
+      ? '<button type="button" class="peo-repl" data-repl="main" title="Replace the main image" aria-label="Replace the main image">'
+        + '<img src="' + url(shownAt(model.image)) + '" alt="">'
+        + '<span class="peo-replhint" aria-hidden="true">Replace</span></button>'
       : '<div class="peo-ph">No main image yet</div>';
 
     return '<section class="peo-card peo-media-main" id="peo-mainzone">'
@@ -3859,7 +3971,49 @@
     }
 
     var mainFile = document.querySelector('#content #peo-mainfile');
-    on('#peo-mainpick', 'click', function(){ if (mainFile) mainFile.click(); });
+    /* "Replace" is the same flow as clicking the picture (Lane RPL); with no
+       main image yet the button says Upload and opens the file chooser as it
+       always did. */
+    on('#peo-mainpick', 'click', function(){
+      if (model && model.image) { replaceSlot('main'); return; }
+      if (mainFile) mainFile.click();
+    });
+
+    document.querySelectorAll('#content [data-repl]').forEach(function(b){
+      b.onclick = function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        replaceSlot(b.getAttribute('data-repl'));
+      };
+    });
+
+    document.querySelectorAll('#content [data-undo]').forEach(function(b){
+      b.onclick = async function(e){
+        e.preventDefault();
+
+        if (busy) return;
+
+        if (dirty) {
+          banner = 'Save or discard your changes first, then Undo — Undo reloads this product.';
+          render();
+          return;
+        }
+
+        busy = true; banner = null; render();
+
+        try {
+          var r = await api('/product-editor-photo-undo/' + model.id, { json: { trash_id: Number(b.getAttribute('data-undo')) } });
+          adopt(r.product);
+          dirty = false;
+          photoNote = null;
+          say(r.message || 'The picture is back.');
+        } catch (err) {
+          banner = message(err, 'Could not undo. Check your connection and try again.');
+        }
+
+        busy = false; render();
+      };
+    });
     if (mainFile) mainFile.addEventListener('change', function(){ takeFiles(mainFile.files, 'main'); });
 
     on('#peo-mainrm', 'click', function(){

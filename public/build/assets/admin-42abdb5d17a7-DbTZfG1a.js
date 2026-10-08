@@ -708,12 +708,27 @@
       return;
     }
 
-    var strip = tabs.map(function (t) {
+    /* Lane CB2: while the category pages use the brand-page design, the old
+       header's two tabs are not in use -- they leave the strip (their values
+       still travel with Save), so nobody lands on controls the shop is not
+       drawing. "Old category header" brings them back. */
+    var brandDesign = values.catb_hero !== 'header';
+    var OLD_TABS = { catheader: 1, catheadersize: 1 };
+    if (brandDesign && OLD_TABS[open]) open = 'catbanner';
+    var shownTabs = tabs.filter(function (t) { return !(brandDesign && OLD_TABS[t.key]); });
+    var heroField = null;
+    tabs.forEach(function (t) { t.fields.forEach(function (x) { if (x.key === 'catb_hero') heroField = x; }); });
+
+    var strip = shownTabs.map(function (t) {
       return '<button type="button" class="sls-tab" data-sls-tab="' + esc(t.key) + '"'
         + ' aria-selected="' + (t.key === open ? 'true' : 'false') + '">' + esc(t.label) + '</button>';
     }).join('');
 
     var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
+    var oldNote = (brandDesign && current.key === 'catbanner')
+      ? '<p class="sls-help" data-sls-oldnote style="margin-top:10px">Old category header (not in use): its two tabs are hidden while '
+        + '<b>Category page header</b> is on <b>Brand-page design</b>. Choose <b>Old category header</b> above to bring them back.</p>'
+      : '';
 
     var headerTab = current.key === 'catheader' || current.key === 'catheadersize';
     if (headerTab) loadCats();
@@ -729,7 +744,10 @@
       + '<div class="sls-card' + (headerTab ? ' sls-main' : '') + '">'
       + '<div class="sls-tabs">' + strip + '</div>'
       + '<p class="sls-sub" style="margin-top:12px">' + esc(current.description) + '</p>'
-      + '<div class="sls-fields">' + (current.key === 'catheader' ? lookHTML(current) : current.fields.map(fieldHTML).join('')) + '</div>'
+      + '<div class="sls-fields">' + (current.key === 'catheader'
+          ? (heroField ? fieldHTML(heroField) : '') + lookHTML(current)
+          : current.fields.map(fieldHTML).join('')) + '</div>'
+      + oldNote
       + '<div class="sls-actions">'
       + '<button class="sls-btn is-primary" data-sls-save' + (busy ? ' disabled' : '') + '>'
       + (busy ? 'Saving…' : 'Save') + '</button>'

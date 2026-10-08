@@ -1,0 +1,92 @@
+{
+  "width": 390,
+  "before": [
+    "anua-heartleaf-toner-texture.jpg",
+    "anua-toner-sale-50-off.jpg",
+    "anua-toner-promo-banner.jpg",
+    "anua-heartleaf-shelf.jpg"
+  ],
+  "hint": {
+    "button": [
+      56,
+      56
+    ],
+    "hintOpacity": "1",
+    "hintText": "Replace",
+    "clickableAtCentre": true,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "hoverNone": true,
+    "hintHeightUnfocused": "17.3906px",
+    "mainClickable": true
+  },
+  "picker": {
+    "title": "Replace the picture in position 3",
+    "replacingShown": true,
+    "replacingImg": "anua-toner-sale-50-off.jpg",
+    "ok": "Replace with this",
+    "uploadButton": true,
+    "scrollWidth": 390
+  },
+  "afterPick": [
+    "anua-heartleaf-toner-texture.jpg",
+    "anua-heartleaf-toner-front-clean.jpg",
+    "img-4821.webp",
+    "anua-heartleaf-toner-back-clean.jpg"
+  ],
+  "note": {
+    "rows": [
+      "Replaced — old picture removed from the server anua-toner-promo-banner.jpg now answers with the new picture (301). Undo until 2026-11-07, then it is deleted for good. Undo",
+      "Replaced — old picture removed from the server anua-toner-sale-50-off.jpg now answers with the new picture (301). Undo until 2026-11-07, then it is deleted for good. Undo",
+      "Kept: anua-heartleaf-shelf.jpg Still used by product “Anua Heartleaf Pore Control Cleansing Oil” (gallery) — so it stays on the server.",
+      "Named for Google heartleaf-77-soothing-toner-anua.webp"
+    ],
+    "undo": 2,
+    "gallery": [
+      "anua-heartleaf-toner-texture.jpg",
+      "anua-heartleaf-toner-front-clean.jpg",
+      "heartleaf-77-soothing-toner-anua.webp",
+      "anua-heartleaf-toner-back-clean.jpg"
+    ],
+    "alts": [
+      "",
+      "Anua Heartleaf 77% Soothing Toner – Toner",
+      "Heartleaf 77% Soothing Toner by Anua – view 4",
+      "Heartleaf 77% Soothing Toner by Anua – view 5"
+    ],
+    "scrollWidth": 390
+  },
+  "http": {
+    "replaced": [
+      301,
+      "/uploads/products/anua-heartleaf-toner-front-clean.jpg"
+    ],
+    "replacedPhoneCopy": [
+      301,
+      "/img-cache/400/uploads/products/anua-heartleaf-toner-front-clean.jpg"
+    ],
+    "uploadedReplaced": [
+      301,
+      "/uploads/products/heartleaf-77-soothing-toner-anua.webp"
+    ],
+    "shared": [
+      200,
+      ""
+    ]
+  },
+  "undone": {
+    "rows": [
+      "Replaced — old picture removed from the server anua-toner-sale-50-off.jpg now answers with the new picture (301). Undo until 2026-11-07, then it is deleted for good. Undo"
+    ],
+    "gallery": [
+      "anua-heartleaf-toner-texture.jpg",
+      "anua-heartleaf-toner-front-clean.jpg",
+      "anua-toner-promo-banner.jpg",
+      "anua-heartleaf-toner-back-clean.jpg"
+    ]
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:9151/favicon.ico"
+  ],
+  "missing": []
+}

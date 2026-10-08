@@ -236,6 +236,8 @@
       + '<div class="mp-head"><div style="min-width:0">'
       +   '<p class="mp-title" id="mp-title">Choose an image</p>'
       +   '<p class="mp-sub" id="mp-sub"></p>'
+      +   '<div class="mp-repl" id="mp-repl" hidden><img alt="" id="mp-replimg"><span><b>Replacing this picture.</b> '
+      +     'The one you pick takes its place.</span></div>'
       + '</div><button type="button" class="mp-btn" id="mp-x" aria-label="Close">Close</button></div>'
       + '<div class="mp-tools">'
       +   '<div class="mp-row">'
@@ -423,7 +425,7 @@
 
     var ok = el.querySelector('#mp-ok');
     ok.disabled = chosen.length === 0;
-    ok.textContent = chosen.length > 1 ? ('Use ' + chosen.length + ' images') : 'Use image';
+    ok.textContent = chosen.length > 1 ? ('Use ' + chosen.length + ' images') : ((opts && opts.okLabel) || 'Use image');
 
     el.querySelector('#mp-count').textContent = chosen.length
       ? (chosen.length + ' selected')
@@ -1170,7 +1172,10 @@
   }
 
   /**
-   * window.kbbPickMedia({ multiple, title, note, folder, onPick, upload, pickUploaded })
+   * window.kbbPickMedia({ multiple, title, note, folder, onPick, upload, pickUploaded, replacing, okLabel })
+   *
+   * `replacing` (Lane RPL, the product editor's Replace): the address of the
+   * picture being replaced, shown in the header; `okLabel` names the button.
    *
    * `upload: true` opens the computer's file chooser straight away, on the
    * click that opened the picker (Lane QC: "Upload banner"); the library is
@@ -1195,6 +1200,16 @@
     items = [];
 
     el.querySelector('#mp-title').textContent = options.title || 'Choose an image';
+
+    /* REPLACE MODE (Lane RPL): `replacing` is the address of the picture the
+       pick will take the place of -- shown, never sent anywhere. Cleared on
+       every open, so an ordinary pick never inherits the last replace. */
+    var repl = el.querySelector('#mp-repl');
+    var replImg = el.querySelector('#mp-replimg');
+    var replacing = typeof options.replacing === 'string' ? options.replacing : '';
+    repl.hidden = replacing === '';
+    if (replacing === '') replImg.removeAttribute('src'); else replImg.src = replacing;
+    el.setAttribute('aria-label', replacing === '' ? 'Choose an image' : 'Replace a picture');
     el.querySelector('#mp-sub').textContent = options.note
       || (options.multiple
             ? 'Pick as many as you like, or upload new ones.'

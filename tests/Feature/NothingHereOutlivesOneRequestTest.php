@@ -159,7 +159,10 @@ it('has nothing that outlives a single request', function () {
     // 8 with Lane SG: `kbb:instagram-sync --unattended`, daily at 04:41 -- our
     // Instagram posts, their pictures and the Spotted posts' shares. A command
     // that fetches, writes and exits; nothing is held between runs.
-    expect(substr_count($console, 'Schedule::command('))->toBe(8, 'the set of scheduled commands has changed');
+    // 9 with Lane RPL: `kbb:picture-trash-purge`, daily at 03:29 -- product
+    // pictures whose 30 days in the trash are up. Reads its rows, unlinks,
+    // exits; nothing is held between runs.
+    expect(substr_count($console, 'Schedule::command('))->toBe(9, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

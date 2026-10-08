@@ -532,6 +532,10 @@ class ProductEditorApiController extends Controller
              */
             'thumbs' => $this->editorThumbs($product),
 
+            // Lane RPL: pictures a save of this product took off the server,
+            // still within their 30 days -- the editor offers Undo on each.
+            'picture_trash' => $product->exists ? \App\Services\Media\PictureTrash::pendingFor((int) $product->id) : [],
+
             'seo' => is_array($product->seo) ? $product->seo : null,
 
             /*
@@ -636,6 +640,10 @@ class ProductEditorApiController extends Controller
 
         $product = null;
 
+        // Lane RPL: every picture on a new product is new -- its empty
+        // description boxes get the Image SEO proposal for their slot.
+        \App\Services\ImageSeo\NewPictures::proposeAlts($data, new Product, []);
+
         $failure = DB::transaction(function () use ($data, &$product) {
             $product = new Product;
 
@@ -652,6 +660,8 @@ class ProductEditorApiController extends Controller
         if ($failure instanceof JsonResponse) {
             return $failure;
         }
+
+        $this->namePictures($product, []);
 
         return response()->json([
             'ok' => true,
@@ -684,6 +694,16 @@ class ProductEditorApiController extends Controller
          */
         $alsoLike = \App\Support\AlsoLikePicks::fromRequest($request, $product);
 
+        /*
+         * Lane RPL. The pictures as they were, before anything is written: a
+         * picture this save takes off the product is cleaned up afterwards
+         * (PictureTrash), and one it puts on gets its description now and its
+         * SEO name afterwards (NewPictures). Only THIS product's own pictures
+         * can ever be candidates -- nothing a request names.
+         */
+        $picturesBefore = \App\Services\Media\PictureTrash::slots($product);
+        \App\Services\ImageSeo\NewPictures::proposeAlts($data, $product, $picturesBefore);
+
         $failure = DB::transaction(function () use ($product, $data, $alsoLike) {
             $failure = $this->apply($product, $data);
 
@@ -698,8 +718,99 @@ class ProductEditorApiController extends Controller
             return $failure;
         }
 
+        $renamed = $this->namePictures($product, $picturesBefore);
+        $photos = ['trashed' => [], 'kept' => []];
+
+        /*
+         * The product is saved; nothing below may turn that into an error. A
+         * picture that could not be cleaned up stays where it was -- on the
+         * server, which is where it was before the owner pressed Save.
+         */
+        try {
+            $hints = [];
+
+            foreach ((array) ($data['replaced'] ?? []) as $pair) {
+                $to = (string) ($pair['to'] ?? '');
+                $toRel = \App\Services\ImageSeo\ImageFiles::local($to);
+
+                if ($toRel !== null && isset($renamed[$toRel])) {
+                    $to = \App\Services\ImageSeo\ImageSeoPlanner::swapBasename($to, basename($renamed[$toRel]));
+                }
+
+                $hints[(string) ($pair['from'] ?? '')] = $to;
+            }
+
+            $photos = \App\Services\Media\PictureTrash::afterSave(
+                $product->fresh(), $picturesBefore, $hints, auth('admin')->user()
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return response()->json([
             'ok' => true,
+            'product' => $this->payload($product->fresh(['brand', 'categories'])),
+            'photos' => $photos + ['renamed' => array_map('basename', array_values($renamed))],
+        ]);
+    }
+
+    /**
+     * Lane RPL: a new picture with a generic upload name takes its Image SEO
+     * name now. Never fails the save it follows.
+     *
+     * @param  list<array{url: string}>  $before
+     * @return array<string, string> old relative path => new relative path
+     */
+    private function namePictures(?Product $product, array $before): array
+    {
+        if ($product === null || ! $product->exists) {
+            return [];
+        }
+
+        try {
+            $renamed = \App\Services\ImageSeo\NewPictures::nameNewFiles($product->fresh(), $before, auth('admin')->user());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return [];
+        }
+
+        if ($renamed !== []) {
+            // The rename rewrote the row through the query builder; the shop's
+            // home cache and every card keyed on updated_at learn of it here.
+            Product::query()->find($product->id)?->touchQuietly();
+
+            if (method_exists(\App\Http\Controllers\Store\HomeController::class, 'flushCache')) {
+                \App\Http\Controllers\Store\HomeController::flushCache();
+            }
+        }
+
+        return $renamed;
+    }
+
+    /**
+     * Catalog → Products → edit → Pictures removed from the server → Undo.
+     * (Lane RPL) The picture comes back from the trash, onto the server and
+     * into its slot. Only a picture THIS product's save put in the trash.
+     */
+    public function photoUndo(Request $request, int $id): JsonResponse
+    {
+        $product = Product::find($id);
+
+        if (! $product) {
+            return response()->json(['ok' => false, 'message' => 'That product no longer exists.'], 404);
+        }
+
+        $data = $request->validate(['trash_id' => ['required', 'integer', 'min:1']]);
+        $result = \App\Services\Media\PictureTrash::undo((int) $data['trash_id'], $product);
+
+        if (! $result['ok']) {
+            return response()->json(['ok' => false, 'message' => $result['message']], 409);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => $result['message'],
             'product' => $this->payload($product->fresh(['brand', 'categories'])),
         ]);
     }
@@ -852,6 +963,12 @@ class ProductEditorApiController extends Controller
             'images' => ['sometimes', 'array', 'max:24'],
             'images.*' => ['string', 'max:500', self::imageUrlRule()],
             'image_alts' => ['sometimes', 'nullable', 'array'],
+            // Lane RPL: which picture took which slot, from the editor's
+            // Replace. A hint only -- PictureTrash believes a pair only when
+            // the old picture really left this product and the new one is on it.
+            'replaced' => ['sometimes', 'nullable', 'array', 'max:24'],
+            'replaced.*.from' => ['required', 'string', 'max:500'],
+            'replaced.*.to' => ['required', 'string', 'max:500'],
             'image_alts.*' => ['nullable', 'string', 'max:250'],
 
             /*

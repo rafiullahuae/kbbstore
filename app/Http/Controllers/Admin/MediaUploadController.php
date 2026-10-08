@@ -415,7 +415,26 @@ class MediaUploadController extends Controller
             }
         }
 
-        return Media::query()->where('path', 'like', 'uploads/' . $folder . '/' . $stem . '.%')->exists();
+        if (Media::query()->where('path', 'like', 'uploads/' . $folder . '/' . $stem . '.%')->exists()) {
+            return true;
+        }
+
+        /*
+         * Lane RPL: nor a name a replaced or removed product picture had. Its
+         * address still answers -- a 301 to the picture that took its slot, or
+         * the file waiting in the trash for Undo -- and a new upload under it
+         * would hand that address different bytes.
+         */
+        try {
+            $like = 'uploads/' . $folder . '/' . $stem . '.%';
+
+            return (\Illuminate\Support\Facades\Schema::hasTable('picture_trash')
+                    && \Illuminate\Support\Facades\DB::table('picture_trash')->where('old_path', 'like', $like)->whereIn('status', ['trashed', 'purged'])->exists())
+                || (\Illuminate\Support\Facades\Schema::hasTable('image_renames')
+                    && \Illuminate\Support\Facades\DB::table('image_renames')->where('old_path', 'like', $like)->where('role', 'replace')->where('status', 'done')->exists());
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     private function record(string $path, string $filename, string $mime, string $destination, string $clientName): bool
