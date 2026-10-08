@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.429
+**Stripe: "We could not reach our card processor" fixed at every cause in our code.**
+Apply after .428. No migrations. Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "the stripe is giving now this error ... please look for it properly deep" | Four of our faults each produced that exact sentence; all fixed with tests. (1) "Add the order number to card statements" sent digits only, which Stripe refuses -- now "KBB* ORDER 10234". (2) A key in the wrong box (pk_ in a secret box, sk_ in a publishable box) was accepted -- the save now refuses it, and a wrong one already saved switches cards off instead of failing at checkout. (3) Test and live keys mixed -- same guard. (4) Another copy of the shop on the same Stripe keys could block an order reference for 24 h -- one retry with a fresh reference. Also: a saved Stripe customer from other keys is replaced. Store -> Payments -> Stripe now shows the reason in plain words in a red box, and names any wrong or empty key box |
+| Image SEO | A title longer than 8 words drops its pack size ("6 pairs") before a word of the name ("Jelly") |
+
+Files: see the package's update.json.
+
 ## 2.60.428
 **Three related-product blocks on the product page.** Apply after .427. Runs its
 migrations. Hard refresh the shop.
