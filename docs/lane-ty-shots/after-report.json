@@ -1,0 +1,66 @@
+{
+ "390": {
+  "url": "/checkout/success?order=10007",
+  "summarySecHeight": 444,
+  "summaryBelowHeading": 402,
+  "lines": 9,
+  "visibleLines": 9,
+  "totalRow": true,
+  "totalVisible": true,
+  "deliveryRow": true,
+  "summaryText": "☰\nYour order\n1\nNIDA\nNIDA Cream\n1 × AED 69\nAED 69\n1\nARENCIA\nArencia Fresh Green Rice Mochi Cleanser\n1 × AED 99\nAED 99\n1\nARENCIA\nArencia Holy Hyssop Serum & Toner\n1 × AED 119\nAED 119\nShow 6 more items\nDelivery · Free delivery\nFree\nTotal\nAED 851\nYou're paying VAT (5%)\nAED 41",
+  "account": true,
+  "payment": "ORDER NUMBER #10007 | TOTAL PAID AED 851 | PAYMENT Credit / Debit Card | DELIVERY Free delivery 1–3 days fast delivery all over UAE",
+  "scrollWidth": 390,
+  "adds": [
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200
+  ],
+  "errors": [],
+  "nav": [
+   "GET /checkout/",
+   "POST /api/checkout/rates",
+   "POST /checkout/place",
+   "POST /checkout/card/paid",
+   "GET /checkout/success?order=10007"
+  ]
+ },
+ "1280": {
+  "url": "/checkout/success?order=10008",
+  "summarySecHeight": 432,
+  "summaryBelowHeading": 390,
+  "lines": 9,
+  "visibleLines": 9,
+  "totalRow": true,
+  "totalVisible": true,
+  "deliveryRow": true,
+  "summaryText": "☰\nYour order\n1\nNIDA\nNIDA Cream\n1 × AED 69\nAED 69\n1\nARENCIA\nArencia Fresh Green Rice Mochi Cleanser\n1 × AED 99\nAED 99\n1\nARENCIA\nArencia Holy Hyssop Serum & Toner\n1 × AED 119\nAED 119\nShow 6 more items\nDelivery · Free delivery\nFree\nTotal\nAED 851\nYou're paying VAT (5%)\nAED 41",
+  "account": true,
+  "payment": "ORDER NUMBER #10008 | TOTAL PAID AED 851 | PAYMENT Credit / Debit Card | DELIVERY Free delivery 1–3 days fast delivery all over UAE",
+  "scrollWidth": 1280,
+  "adds": [
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200
+  ],
+  "errors": [],
+  "nav": [
+   "GET /checkout/",
+   "POST /api/checkout/rates",
+   "POST /checkout/place",
+   "POST /checkout/card/paid",
+   "GET /checkout/success?order=10008"
+  ]
+ }
+}
