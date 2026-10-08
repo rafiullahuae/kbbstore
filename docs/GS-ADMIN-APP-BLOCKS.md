@@ -149,7 +149,7 @@ Anchor (occurs once):
 Replacement:
 
 ```
-'sitelayout':['Appearance','Site layout'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Growth & Marketing','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],'seokeywords':['Store','SEO Keywords']};
+'spotted':['Appearance','#KBeautyBliss Spotted'],'wabutton':['Appearance','WhatsApp button'],'cache':['Platform','Cache'],'cartpage':['Appearance','Cart page'],'checkoutpage':['Appearance','Checkout page'],'routines':['Catalog','Build my routine'],'imageseo':['Catalog','Image SEO'],'security':['Store','Security'],'paygw':['Store','Gateway webhooks'],'sitelayout':['Appearance','Site layout'],'comingsoon':['Appearance','Coming Soon page'],'slimfooter':['Appearance','Footer'],'gridsections':['Appearance','Grid sections'],'pagewash':['Appearance','Page background'],'searchterms':['Growth & Marketing','Search Terms'],'carttracking':['Growth & Marketing','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],'seokeywords':['Store','SEO Keywords']};
 ```
 
 ## Block 4 · arm the deep-link replay
