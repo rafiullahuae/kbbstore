@@ -15,7 +15,7 @@ const path = require('path');
 
 const BASE = process.env.HB_BASE || 'http://127.0.0.1:10460';
 const TAG = process.env.HB_TAG || 'shot';
-const OUT = path.join(__dirname, '..', 'docs', 'lane-hb-shots');
+const OUT = path.join(__dirname, '..', 'docs', process.env.HB_OUT || 'lane-hb-shots');
 const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const WIDTHS = (process.env.HB_WIDTHS || '390,1280').split(',').map(Number);
 const LANGS = (process.env.HB_LANGS || 'en').split(',');

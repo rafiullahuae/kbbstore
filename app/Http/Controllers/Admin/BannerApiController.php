@@ -133,6 +133,10 @@ class BannerApiController extends Controller
                     'positions' => BannerTextBox::POSITIONS,
                     'sliders' => BannerTextBox::SLIDERS,
                     'defaults' => BannerTextBox::defaults(),
+                    'vpos' => BannerTextBox::VPOS,
+                    'hpos' => BannerTextBox::HPOS,
+                    'units' => BannerTextBox::UNITS,
+                    'offsets' => BannerTextBox::OFFSETS,
                 ],
             ],
         ]);
@@ -355,6 +359,19 @@ class BannerApiController extends Controller
             if (str_starts_with($key, 'size_')) {
                 $rules['tb_'.$key] = ['sometimes', 'numeric'];
             }
+        }
+
+        // Lane HB2: the position, per device. Selects are Rule::in over their
+        // own options; the two numbers are clamped to their unit's range by
+        // BannerTextBox::normalize() in fillSet() and again at render.
+        foreach (['d', 'm'] as $dev) {
+            $rules['tb_inside_'.$dev] = ['sometimes', 'boolean'];
+            $rules['tb_vpos_'.$dev] = ['sometimes', Rule::in(array_keys(BannerTextBox::VPOS))];
+            $rules['tb_hpos_'.$dev] = ['sometimes', Rule::in(array_keys(BannerTextBox::HPOS))];
+            $rules['tb_vunit_'.$dev] = ['sometimes', Rule::in(array_keys(BannerTextBox::UNITS))];
+            $rules['tb_hunit_'.$dev] = ['sometimes', Rule::in(array_keys(BannerTextBox::UNITS))];
+            $rules['tb_vval_'.$dev] = ['sometimes', 'numeric'];
+            $rules['tb_hval_'.$dev] = ['sometimes', 'numeric'];
         }
 
         foreach (['bg_color', 'btn_bg', 'btn_text', 'btn_hover'] as $colour) {

@@ -64,6 +64,37 @@ final class BannerTextBox
         'w' => ['Box width', 'px|%', [280, 420, 560, 10], [70, 100, 100, 5]],
     ];
 
+    /*
+     * ── POSITION (Lane HB2) ─────────────────────────────────────────────────
+     * The owner: "the control for the box that it should not go outside the
+     * site width. and also the position for the box like bottom, middle and a
+     * custom positioning by setting up the percentage or px. same for mobile."
+     * Every one of these has a computer and a phone value.
+     */
+    public const VPOS = [
+        'auto' => 'Style’s own',
+        'top' => 'Top', 'middle' => 'Middle', 'bottom' => 'Bottom', 'custom' => 'Custom',
+    ];
+
+    public const HPOS = [
+        'auto' => 'Picture’s side',
+        'start' => 'Start', 'centre' => 'Centre', 'end' => 'End',
+        'custom' => 'Custom',
+    ];
+
+    public const UNITS = ['pct' => '%', 'px' => 'px'];
+
+    /** The custom value's range by axis and unit: [min, max]. */
+    public const OFFSETS = ['v' => ['pct' => [0, 100], 'px' => [0, 600]], 'h' => ['pct' => [0, 100], 'px' => [0, 1000]]];
+
+    /** The position half of the document, per device, at its shipped values. */
+    public const POSITION = [
+        // "it should not go outside the site width" -- he asked, so it ships ON.
+        'inside' => true,
+        'vpos' => 'auto', 'vval' => 50, 'vunit' => 'pct',
+        'hpos' => 'auto', 'hval' => 0, 'hunit' => 'px',
+    ];
+
     /** The defaults, as the flat keys the admin draft and the JSON both use. */
     public static function defaults(): array
     {
@@ -72,6 +103,12 @@ final class BannerTextBox
         foreach (self::SLIDERS as $k => [, , $d, $m]) {
             $out['size_'.$k.'_d'] = $d[1];
             $out['size_'.$k.'_m'] = $m[1];
+        }
+
+        foreach (['d', 'm'] as $dev) {
+            foreach (self::POSITION as $k => $v) {
+                $out[$k.'_'.$dev] = $v;
+            }
         }
 
         return $out;
@@ -122,6 +159,31 @@ final class BannerTextBox
             }
         }
 
+        foreach (['d', 'm'] as $dev) {
+            if (array_key_exists('inside_'.$dev, $raw)) {
+                $out['inside_'.$dev] = filter_var($raw['inside_'.$dev], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+            }
+
+            foreach (['vpos' => self::VPOS, 'hpos' => self::HPOS, 'vunit' => self::UNITS, 'hunit' => self::UNITS] as $k => $options) {
+                $key = $k.'_'.$dev;
+
+                if (isset($raw[$key]) && is_string($raw[$key]) && array_key_exists($raw[$key], $options)) {
+                    $out[$key] = $raw[$key];
+                }
+            }
+
+            // The custom value is clamped to its own unit's range, so a unit
+            // switched after the number was typed cannot leave 900% behind.
+            foreach (['v', 'h'] as $axis) {
+                $key = $axis.'val_'.$dev;
+                [$min, $max] = self::OFFSETS[$axis][$out[$axis.'unit_'.$dev]];
+
+                $out[$key] = isset($raw[$key]) && is_numeric($raw[$key])
+                    ? (int) round(max($min, min($max, (float) $raw[$key])))
+                    : (int) max($min, min($max, (int) $out[$key]));
+            }
+        }
+
         foreach ($out as $key => $value) {
             if (is_float($value) && floor($value) === $value) {
                 $out[$key] = (int) $value;
@@ -165,7 +227,121 @@ final class BannerTextBox
             }
         }
 
+        foreach (['d', 'm'] as $dev) {
+            foreach (self::positionNumbers($cfg, $dev) as $name => $value) {
+                $out[] = '--hb-'.$name.'-'.$dev.':'.$value;
+            }
+        }
+
         return implode(';', $out);
+    }
+
+    /**
+     * ONE DEVICE'S POSITION AS NUMBERS -- and the technique, because the box's
+     * own height is never known to the server or measured in the browser.
+     *
+     * VERTICAL. The box sits in a flex column (.hb-pos) that spans the frame
+     * between a top and a bottom inset, with a spacer above it (::before) and
+     * one below (::after). The free height -- column minus box -- is shared
+     * between the two spacers by their flex-grow:
+     *     vg1 = p above, vg2 = 1 - p below      (top 0, middle .5, bottom 1)
+     * so the box's top is  inset + p x (column - box)  -- a percentage of the
+     * TRAVEL, which can never put the box outside the column, at any size. A
+     * custom % is that p. A custom px is the spacer's flex-basis instead (vb)
+     * with grow 0 and shrink 1: when the box would run off the bottom the
+     * spacer shrinks, so the box stops at the bottom inset rather than leaving.
+     *
+     * HORIZONTAL. The box's width is CSS the server wrote -- min(width, column)
+     * -- so the room beside it IS known to the stylesheet: (100% - width). The
+     * box's margin-inline-start is  clamp(0, xo + room x xp, room):  xp is 0 /
+     * .5 / 1 for start / centre / end, xo a custom offset; the clamp keeps it
+     * between the column's two edges. Pictures set to End mirror the offset
+     * when the mode follows the picture's side (the hb-hs-* class).
+     *
+     * @return array<string, string>  name => a number, optionally px or %
+     */
+    public static function positionNumbers(array $cfg, string $dev): array
+    {
+        $vpos = $cfg['vpos_'.$dev];
+
+        if ($vpos === 'auto') {
+            $vpos = $cfg['style'] === 'd' && $dev === 'd' ? 'middle' : 'bottom';
+        }
+
+        $p = ['top' => 0.0, 'middle' => 0.5, 'bottom' => 1.0][$vpos] ?? null;
+        $vb = '0px';
+
+        if ($vpos === 'custom') {
+            if ($cfg['vunit_'.$dev] === 'px') {
+                $p = 0.0;
+                $vb = self::num((float) $cfg['vval_'.$dev]).'px';
+                $g1 = '0';
+                $g2 = '1';
+            } else {
+                $p = (float) $cfg['vval_'.$dev] / 100;
+            }
+        }
+
+        $g1 ??= self::num($p);
+        $g2 ??= self::num(1 - $p);
+
+        $hpos = $cfg['hpos_'.$dev];
+        $xp = ['auto' => 0.0, 'start' => 0.0, 'centre' => 0.5, 'end' => 1.0, 'custom' => 0.0][$hpos] ?? 0.0;
+        $xo = $hpos === 'custom'
+            ? self::num((float) $cfg['hval_'.$dev]).($cfg['hunit_'.$dev] === 'px' ? 'px' : '%')
+            : '0px';
+
+        return ['vg1' => $g1, 'vb' => $vb, 'vg2' => $g2, 'xp' => self::num($xp), 'xo' => $xo];
+    }
+
+    /**
+     * THE HEADER'S OWN WIDTH AND PADDING, for "Keep the box inside the site
+     * width" -- printed only when that switch is on for a device.
+     *
+     * Read from the two services the header itself is drawn from, so the box
+     * cannot disagree with the logo: HeaderSettings::maxWidthCss() is
+     * `var(--site-max)` or "<n>px", MobileHeader's two paddings are integers.
+     * Both read the request's one settings map, which the header has already
+     * read on this page -- no query, no second read.
+     */
+    public static function siteVariables(array $cfg): string
+    {
+        if (! $cfg['inside_d'] && ! $cfg['inside_m']) {
+            return '';
+        }
+
+        $max = app(\App\Services\HeaderSettings::class)->maxWidthCss();
+        $max = $max === 'var(--site-max)' || preg_match('/^\d{1,5}px$/', $max) === 1 ? $max : 'var(--site-max)';
+        $mobile = app(\App\Services\MobileHeader::class)->all();
+
+        return ';--hb-hdmax:'.$max
+            .';--hb-mhl:'.max(0, min(64, (int) ($mobile['pad_left'] ?? 12))).'px'
+            .';--hb-mhr:'.max(0, min(64, (int) ($mobile['pad_right'] ?? 12))).'px';
+    }
+
+    /**
+     * The slider's position classes -- constants, one per switch that is on:
+     * hb-site-{d,m}  keep the box inside the site width
+     * hb-va-d        computer vertical is the style's own (D's exact old centre)
+     * hb-hs-{d,m}    the horizontal mode follows each picture's Start/End
+     * hb-na-m        a phone's box is not at the bottom: the arrows step aside
+     */
+    public static function rootClasses(array $cfg): string
+    {
+        $out = '';
+
+        foreach (['d', 'm'] as $dev) {
+            $out .= $cfg['inside_'.$dev] ? ' hb-site-'.$dev : '';
+            $out .= in_array($cfg['hpos_'.$dev], ['auto', 'custom'], true) ? ' hb-hs-'.$dev : '';
+        }
+
+        // A phone's box is the full width, so wherever it sits that is not the
+        // bottom, the slider's arrows (at the frame's two edges) would land on
+        // it -- and on its button. They step aside there; swipe and the bars
+        // still move the slider. At the bottom they stay where 2.60.432 put them.
+        $phoneBottom = BannerTextBox::positionNumbers($cfg, 'm')['vg1'] === '1';
+
+        return $out.($cfg['vpos_d'] === 'auto' ? ' hb-va-d' : '').($phoneBottom ? '' : ' hb-na-m');
     }
 
     private static function num(float $v): string

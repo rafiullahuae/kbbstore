@@ -830,9 +830,9 @@
   .kbbs.is-veil .kbbs-nav,.kbbs.is-veil .kbbs-pp{opacity:1}
 }
 </style>
-@if ($hbAny)@include('partials.home.slider-text-box-css')@endif<div class="kbbs is-{{ $bsStyle }}{{ $bsArrows ? ' is-arrows' : '' }}{{ $bsBars ? ' is-bars' : '' }}{{ $bsDwell > 0 ? ' is-auto' : '' }}{{ $set->sliderFills() ? ' is-fill' : '' }}{{ $bsCover ? '' : ' is-whole' }}{{ $bsBgMode === 'none' ? '' : ' has-bg' }}{{ $hbAny ? ' has-hb hb-'.$hbCfg['style'].' hb-glow-'.$hbCfg['glow'] : '' }}"
+@if ($hbAny)@include('partials.home.slider-text-box-css')@endif<div class="kbbs is-{{ $bsStyle }}{{ $bsArrows ? ' is-arrows' : '' }}{{ $bsBars ? ' is-bars' : '' }}{{ $bsDwell > 0 ? ' is-auto' : '' }}{{ $set->sliderFills() ? ' is-fill' : '' }}{{ $bsCover ? '' : ' is-whole' }}{{ $bsBgMode === 'none' ? '' : ' has-bg' }}{{ $hbAny ? ' has-hb hb-'.$hbCfg['style'].' hb-glow-'.$hbCfg['glow'].BannerTextBox::rootClasses($hbCfg) : '' }}"
      id="{{ $bsUid }}"
-     style="{{ $bsVars }}{{ $bsBgVars === '' ? '' : ';'.$bsBgVars }}{{ $hbAny ? ';'.BannerTextBox::cssVariables($hbCfg) : '' }}"
+     style="{{ $bsVars }}{{ $bsBgVars === '' ? '' : ';'.$bsBgVars }}{{ $hbAny ? ';'.BannerTextBox::cssVariables($hbCfg).BannerTextBox::siteVariables($hbCfg) : '' }}"
      role="region"
      aria-roledescription="carousel"
      aria-label="{{ $bsLabel }}"
