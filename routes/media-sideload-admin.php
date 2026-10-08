@@ -72,3 +72,13 @@ Route::get('/urls-media/progress-page', [MediaSideloadApiController::class, 'pag
 Route::get('/urls-media/sideload.csv', [MediaSideloadApiController::class, 'failures']);
 
 Route::post('/urls-media/sideload', [MediaSideloadApiController::class, 'sideload']);
+
+/*
+| "Fetch missing pictures from the old server" (Lane PX). Under /urls-media/
+| so the existing data.import rule covers it; the screen's buttons are in
+| Store → Import and Platform → Domain switch. Ships with
+| 2027_10_14_090100_clear_caches_old_server_pictures.php.
+*/
+Route::get('/urls-media/old-server', [\App\Http\Controllers\Admin\OldServerPicturesApiController::class, 'show']);
+Route::get('/urls-media/old-server.csv', [\App\Http\Controllers\Admin\OldServerPicturesApiController::class, 'csv']);
+Route::post('/urls-media/old-server', [\App\Http\Controllers\Admin\OldServerPicturesApiController::class, 'act']);

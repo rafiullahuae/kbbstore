@@ -9443,6 +9443,9 @@ function impPaint(){
     +(anyFile?impRunCard(s):'')
     +impRejectsCard(s)
     +gbUrlsMediaCard()
+    /* Fetch missing pictures from the old server (Lane PX): drawn by
+       admin.partials.old-pictures-panel into this card. */
+    +'<div class="card pad" data-oldpics></div>'
     +gdLiveProgressCard()
     +gfHistoryCard()
     +u3ArticleAddressCard()
@@ -9450,6 +9453,7 @@ function impPaint(){
     +'</div>';
 
   impWire();
+  if(window.kbbOldPictures) window.kbbOldPictures.mountAll(document.getElementById('content'));
 }
 
 function impCss(){
@@ -24147,6 +24151,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      App\Support\AdminNav's. Endpoints: routes/domain-switch-admin.php,
      `platform.domain_switch`, Full Admin only. --}}
 @include('admin.partials.domain-switch-screen')
+@include('admin.partials.old-pictures-panel')
 
 {{-- Appearance → Cart page (Lane: cart-page). Every knob on the squeezed cart
      page: the row height everything in a basket line is derived from, the

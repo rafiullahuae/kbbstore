@@ -80,6 +80,10 @@ it('names every writer that puts a file in the media library', function () {
         'app/Services/UgcMedia.php' => ['Shoppable'],
         'app/Services/UgcTranscoder.php' => ['covers'],
         'app/Services/Import/MediaSideloader.php' => ['store import'],
+        // Lane PX — "Fetch missing pictures from the old server": the same kind
+        // of file as the sideloader's (a WordPress picture brought across by the
+        // migration), so the same words on the screen cover it.
+        'app/Services/Import/OldServerPictures.php' => ['store import'],
         'app/Http/Controllers/Store/ReviewController.php' => ['reviews'],
         'app/Services/Instagram/InstagramSync.php' => ['Instagram'],
         /*
@@ -143,6 +147,7 @@ it('goes red when a ninth writer starts filling the library', function () {
         'app/Services/UgcMedia.php',
         'app/Services/UgcTranscoder.php',
         'app/Services/Import/MediaSideloader.php',
+        'app/Services/Import/OldServerPictures.php',   // Lane PX, see above
         'app/Http/Controllers/Store/ReviewController.php',
         'app/Services/Instagram/InstagramSync.php',
         // Lane BN — Appearance → Banners → Cards banner. See the row beside it

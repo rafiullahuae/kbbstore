@@ -6404,6 +6404,9 @@ function impPaint(){
     +(anyFile?impRunCard(s):'')
     +impRejectsCard(s)
     +gbUrlsMediaCard()
+    /* Fetch missing pictures from the old server (Lane PX): drawn by
+       admin.partials.old-pictures-panel into this card. */
+    +'<div class="card pad" data-oldpics></div>'
     +gdLiveProgressCard()
     +gfHistoryCard()
     +u3ArticleAddressCard()
@@ -6411,6 +6414,7 @@ function impPaint(){
     +'</div>';
 
   impWire();
+  if(window.kbbOldPictures) window.kbbOldPictures.mountAll(document.getElementById('content'));
 }
 
 function impCss(){

@@ -1,0 +1,108 @@
+{
+ "390": {
+  "check": [
+   "47 missing",
+   "0 fetched",
+   "47 still to try",
+   "0 failed (can retry)",
+   "0 lost (404 there too) or refused"
+  ],
+  "checkMsg": "Checked: 51 picture(s) named, 47 missing on this server.",
+  "during": [
+   "40 missing",
+   "7 fetched",
+   "39 still to try",
+   "0 failed (can retry)",
+   "1 lost (404 there too) or refused"
+  ],
+  "stopped": [
+   "32 missing",
+   "15 fetched",
+   "31 still to try",
+   "0 failed (can retry)",
+   "1 lost (404 there too) or refused"
+  ],
+  "stopMsg": "Stopped. 31 still to try. Press Resume to carry on from where it stopped.",
+  "resumeLabel": "Resume",
+  "done": [
+   "3 missing",
+   "44 fetched",
+   "0 still to try",
+   "0 failed (can retry)",
+   "3 lost (404 there too) or refused"
+  ],
+  "doneMsg": "Finished. 3 picture(s) still missing.",
+  "importScroll": [
+   390,
+   390
+  ],
+  "checkHit": true,
+  "dwNums": [
+   "3 missing",
+   "44 fetched",
+   "0 still to try",
+   "0 failed (can retry)",
+   "3 lost (404 there too) or refused"
+  ],
+  "dwScroll": [
+   390,
+   390
+  ],
+  "dwHostingerLine": "When kbeautybliss.com’s nameservers have shown Internet.bs for 2 days, delete the domain and site from Hostinger and cancel the plan — but not before “Pictures still on the old server” above shows 0 missing.",
+  "errors": []
+ },
+ "1280": {
+  "check": [
+   "47 missing",
+   "0 fetched",
+   "47 still to try",
+   "0 failed (can retry)",
+   "0 lost (404 there too) or refused"
+  ],
+  "checkMsg": "Checked: 51 picture(s) named, 47 missing on this server.",
+  "during": [
+   "40 missing",
+   "7 fetched",
+   "39 still to try",
+   "0 failed (can retry)",
+   "1 lost (404 there too) or refused"
+  ],
+  "stopped": [
+   "32 missing",
+   "15 fetched",
+   "31 still to try",
+   "0 failed (can retry)",
+   "1 lost (404 there too) or refused"
+  ],
+  "stopMsg": "Stopped. 31 still to try. Press Resume to carry on from where it stopped.",
+  "resumeLabel": "Resume",
+  "done": [
+   "3 missing",
+   "44 fetched",
+   "0 still to try",
+   "0 failed (can retry)",
+   "3 lost (404 there too) or refused"
+  ],
+  "doneMsg": "Finished. 3 picture(s) still missing.",
+  "importScroll": [
+   1280,
+   1280
+  ],
+  "checkHit": true,
+  "dwNums": [
+   "3 missing",
+   "44 fetched",
+   "0 still to try",
+   "0 failed (can retry)",
+   "3 lost (404 there too) or refused"
+  ],
+  "dwScroll": [
+   1280,
+   1280
+  ],
+  "dwHostingerLine": "When kbeautybliss.com’s nameservers have shown Internet.bs for 2 days, delete the domain and site from Hostinger and cancel the plan — but not before “Pictures still on the old server” above shows 0 missing.",
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:9953/favicon.ico"
+  ]
+ }
+}

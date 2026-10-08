@@ -350,12 +350,14 @@
         return '<li>Step ' + esc(x.n) + ': ' + esc(x.title) + (why ? ' — ' + esc(why) : '') + ' <button type="button" class="dwi-link" data-dwi-step="' + esc(x.key) + '" data-dwi-do="undo">Return to it</button></li>';
       }).join('') + '</ul>' : note('Nothing skipped.'));
       if (left.length) h += '<h4>Not done yet</h4><ul>' + left.map(function (x) { return '<li>' + go(x.key, 'Step ' + x.n + ': ' + x.title) + '</li>'; }).join('') + '</ul>';
+      /* Pictures never copied off Hostinger (Lane PX): admin.partials.old-pictures-panel draws here. */
+      h += '<h4>Pictures still on the old server</h4><div data-oldpics></div>';
       h += '<h4>In 2–4 weeks, when nobody uses ' + esc(st.old) + ' any more</h4><ul>'
         + '<li>Press the button below: it runs the readiness check itself and refuses while anything still depends on ' + esc(st.old) + '.</li>'
         + '<li>Cloudways → Domain Management → remove ' + copy(st.old) + ' and ' + copy('www.' + st.old) + '.</li>'
         + '<li>Cloudways → SSL Certificate → Let’s Encrypt again with only ' + copy(st.copy.certificate_after) + ', then Varnish → Purge.</li>'
         + '<li>At ' + esc(st.old) + '’s registrar, remove its A record. Stripe dashboard → Payment method domains → remove ' + esc(st.old) + '.</li>'
-        + '<li>When ' + esc(st.new) + '’s nameservers have shown Internet.bs for 2 days, delete the domain and site from Hostinger and cancel the plan.</li></ul>';
+        + '<li>When ' + esc(st.new) + '’s nameservers have shown Internet.bs for 2 days, delete the domain and site from Hostinger and cancel the plan — <b>but not before “Pictures still on the old server” above shows 0 missing.</b></li></ul>';
       return h + '<div class="dwi-row">' + btn('remove_old', 'Remove ' + st.old + ' completely', { quiet: true, disabled: !st.can.remove || st.steps.remove === 'done' }) + '</div></div>';
     }
   };
@@ -406,6 +408,7 @@
       + '<div class="dwi-track" role="progressbar" aria-valuemin="0" aria-valuemax="' + esc(inst.total) + '" aria-valuenow="' + esc(finished) + '"><div class="dwi-fill" style="width:' + Math.round(finished / inst.total * 100) + '%"></div></div></div>'
       + '<ol class="dwi-steps">' + inst.steps.map(stepHtml).join('') + '</ol>'
       + '<div class="dwi-foot"><span>Progress is saved on the server, so it is the same on your phone.</span><button type="button" class="dwi-link" data-dwi-reset>Reset progress</button></div>';
+    if (window.kbbOldPictures) window.kbbOldPictures.mountAll(root);
     var input = root.querySelector('#dwi-domain');
     if (input && typed !== null) input.value = typed;
     var ov = root.querySelector('#dwi-override');
