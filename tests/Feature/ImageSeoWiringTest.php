@@ -87,3 +87,45 @@ it('ships the clear-caches migration that the new routes, capability and tile ne
         ->and($m)->toContain('AdminRoles::CACHE_KEY')
         ->and($m)->toContain("storage_path('framework/views/*.php')");
 });
+
+it('leaves every other lane\'s wiring record whole: nothing it already wrote stops being found', function () {
+    /*
+     * Each lane's wiring test re-applies its JSON in memory and counts on its
+     * replacement still being in the file. Inserting this lane's entries in
+     * the MIDDLE of somebody else's replacement (a LATE_RENDERED run, a TITLES
+     * pair, the line after an include) made five of those go red on the first
+     * wired run -- ListingPagination, NotFoundPage and OwnerApp among them.
+     * MUTATION: point block 4's anchor back at "@include('admin.partials.pagination-screen')\n"
+     * and OA4's include block is reported broken here (measured).
+     */
+    $others = [];
+
+    foreach (glob(base_path('docs/*-wiring.json')) ?: [] as $file) {
+        if (basename($file) === 'ir-wiring.json') {
+            continue;
+        }
+
+        foreach (json_decode((string) file_get_contents($file), true) ?: [] as $e) {
+            foreach (['anchor', 'replacement'] as $key) {
+                if (($e[$key] ?? '') !== '') {
+                    $others[] = [basename($file).' block '.($e['n'] ?? '?'), $e['file'] ?? '', $e[$key]];
+                }
+            }
+        }
+    }
+
+    $broken = [];
+
+    foreach (array_unique(array_column(json_decode((string) file_get_contents(base_path('docs/ir-wiring.json')), true), 'file')) as $file) {
+        $before = (string) file_get_contents(base_path($file));
+        $after = irWired($file);
+
+        foreach ($others as [$label, $target, $needle]) {
+            if ($target === $file && str_contains($before, $needle) && ! str_contains($after, $needle)) {
+                $broken[] = $label.' ('.$file.')';
+            }
+        }
+    }
+
+    expect(array_values(array_unique($broken)))->toBe([]);
+});

@@ -1,0 +1,2 @@
+/sitemap.xml: picture URLs 9, pre-rename names left (excluding the shared picture left alone by default): 0
+/feeds/google-merchant.xml: picture URLs 10, pre-rename names left (excluding the shared picture left alone by default): 0

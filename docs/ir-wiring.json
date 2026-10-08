@@ -11,9 +11,9 @@
         "n": 2,
         "what": "console TITLES: Catalog → Image SEO, so ?go=imageseo and #imageseo name the screen (Lane IR)",
         "file": "resources/views/admin/app.blade.php",
-        "anchor": "'pagination':['Catalog','Pagination'],",
+        "anchor": "'routines':['Catalog','Build my routine'],",
         "count": 1,
-        "replacement": "'pagination':['Catalog','Pagination'],'imageseo':['Catalog','Image SEO'],"
+        "replacement": "'routines':['Catalog','Build my routine'],'imageseo':['Catalog','Image SEO'],"
     },
     {
         "n": 3,
@@ -25,11 +25,11 @@
     },
     {
         "n": 4,
-        "what": "console: include the Image SEO screen partial, after Pagination (Lane IR)",
+        "what": "console: include the Image SEO screen partial, after Build my routine (Lane IR)",
         "file": "resources/views/admin/app.blade.php",
-        "anchor": "@include('admin.partials.pagination-screen')\n",
+        "anchor": "@include('admin.partials.routines-screen')\n",
         "count": 1,
-        "replacement": "@include('admin.partials.pagination-screen')\n\n{{-- Catalog → Image SEO (Lane IR): find product pictures, rename the files\n     to the product name (old addresses 301 to the new), bulk alt text, undo.\n     Wraps window.go for 'imageseo'; its sidebar row is App\\Support\\AdminNav's.\n     Endpoints: routes/image-seo-admin.php, `media.image_seo`. --}}\n@include('admin.partials.image-seo-screen')\n"
+        "replacement": "@include('admin.partials.routines-screen')\n\n{{-- Catalog → Image SEO (Lane IR): find product pictures, rename the files\n     to the product name (old addresses 301 to the new), bulk alt text, undo.\n     Wraps window.go for 'imageseo'; its sidebar row is App\\Support\\AdminNav's.\n     Endpoints: routes/image-seo-admin.php, `media.image_seo`. --}}\n@include('admin.partials.image-seo-screen')\n"
     },
     {
         "n": 5,
