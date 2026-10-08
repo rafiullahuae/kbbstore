@@ -885,6 +885,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // create endpoints above, so mounting both is safe; the older create
         // path is the one to retire once this screen has been used in anger.
         require __DIR__.'/product-editor-admin.php';
+        require __DIR__.'/product-photo-admin.php';
 
         // Catalog → Build my routine: role tagging, the routines and the
         // module's settings. Same guarded group as the rest of admin-api —

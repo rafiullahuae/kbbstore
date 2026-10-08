@@ -339,6 +339,37 @@ a.peo-btn{display:inline-block;text-decoration:none}
   .peo-tile .peo-body{flex:1 1 100%;order:3}
 }
 
+/* ── REPLACE A PICTURE (Lane RPL) ────────────────────────────────────────────
+   The thumbnail IS the control: a button around the picture opens the Media
+   Library in replace mode for that slot. The word "Replace" is the hint, on
+   hover and on keyboard focus; on a touch screen, where nothing hovers, it sits
+   as a strip along the bottom so the tap is discoverable. Pure CSS: nothing
+   here measures anything. The ✕ beside it still removes a slot outright. */
+.peo-repl{position:relative;flex:none;display:block;padding:0;border:0;margin:0;background:none;
+          border-radius:8px;cursor:pointer;color:inherit;font:inherit;line-height:0}
+.peo-repl:focus-visible{outline:2px solid #1f7d52;outline-offset:2px}
+.peo-replhint{position:absolute;inset:0;display:grid;place-items:center;border-radius:inherit;
+              background:rgba(17,24,39,.58);color:#fff;font-size:10.5px;font-weight:700;line-height:1.2;
+              letter-spacing:.02em;opacity:0;transition:opacity .12s;pointer-events:none}
+.peo-repl:hover .peo-replhint,.peo-repl:focus-visible .peo-replhint{opacity:1}
+.peo-main-img .peo-repl{width:100%;border-radius:0}
+.peo-main-img .peo-replhint{font-size:13px}
+@media(hover:none){
+  .peo-replhint{opacity:1;inset:auto 0 0 0;padding:3px 0;border-radius:0 0 8px 8px;font-size:9.5px}
+  .peo-main-img .peo-replhint{border-radius:0;font-size:12px;padding:6px 0}
+}
+
+/* What the last save did with the pictures it took off the product, and Undo. */
+.peo-trash{margin-top:12px;display:grid;gap:7px;min-width:0}
+.peo-trash h4{margin:0;font-size:12px;font-weight:700;color:var(--ink-soft,#6b7280);text-transform:uppercase;letter-spacing:.04em}
+.peo-trow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;border-radius:9px;min-width:0;
+          font-size:12.5px;line-height:1.4;border:1px solid #cfe7da;background:#f1f9f4}
+.peo-trow.is-kept{border-color:#f1dcae;background:#fdf8ec}
+.peo-trow .peo-ttext{flex:1 1 220px;min-width:0;overflow-wrap:anywhere}
+.peo-trow img{width:34px;height:34px;flex:none;object-fit:cover;border-radius:6px;border:1px solid var(--border,#e6e6e6)}
+.peo-trow code{font-size:11.5px;background:rgba(0,0,0,.05);padding:1px 4px;border-radius:4px}
+.peo-trow .peo-tsub{display:block;color:var(--ink-soft,#6b7280);font-size:11.5px}
+
 .peo-drop{border:1.5px dashed var(--border,#e6e6e6);border-radius:10px;padding:18px 12px;text-align:center;
           font-size:12.5px;color:var(--ink-soft,#6b7280);cursor:pointer;min-width:0;background:none;
           display:block;width:100%;font-family:inherit}

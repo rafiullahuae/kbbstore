@@ -576,12 +576,21 @@
     };
     var pic = typeof own.image === 'string' ? own.image : '';
     var safePic = window.kbbTH ? window.kbbTH.safeImage(pic) : '';
-    return '<details class="ct-hdr-look" id="ct-cbl"' + (pic ? ' open' : '') + '><summary><b style="font-size:13px">Banner layout</b> '
-      + '<span class="ct-note" style="display:inline">the brand page\u2019s banner, on this category</span></summary>'
-      + '<p class="ct-note" style="margin:6px 0 8px">A category with a picture shows the brand page\u2019s banner: '
-      + 'the picture as the background, a panel with the category name and description on it, and on a phone the name in a capsule with the description below. '
-      + 'The <b>Banner picture</b> is used first; blank uses the header picture above. No picture at all: the page keeps its header, exactly as it is. '
-      + 'The shop\u2019s look is <b>Appearance \u2192 Site layout \u2192 Category banner</b>; blank or <b>Shop setting</b> follows it. '
+    /* Lane CB2: this category's own header design, first of everything. */
+    var shopHero = (hdr.shop || {}).catb_hero === 'header' ? 'Old category header' : 'Brand-page design';
+    var hero = own.hero === 'brand' || own.hero === 'old' ? own.hero : '';
+    return '<details class="ct-hdr-look" id="ct-cbl" open><summary><b style="font-size:13px">Brand-page design</b> '
+      + '<span class="ct-note" style="display:inline">the brand page\u2019s header, on this category</span></summary>'
+      + '<div class="ct-fld" style="margin-top:8px"><label for="ct-cbl-hero">Header design</label>'
+        + '<select id="ct-cbl-hero">'
+        + '<option value=""' + (hero === '' ? ' selected' : '') + '>Shop setting (' + esc(shopHero) + ')</option>'
+        + '<option value="brand"' + (hero === 'brand' ? ' selected' : '') + '>Brand-page design</option>'
+        + '<option value="old"' + (hero === 'old' ? ' selected' : '') + '>Old category header</option>'
+        + '</select></div>'
+      + '<p class="ct-note" style="margin:6px 0 8px">The brand page\u2019s header: the picture as the background, a panel with the category name and description on it, '
+      + 'and on a phone the name in a capsule with the description below. With no picture it takes the brand page\u2019s no-picture look. '
+      + 'The <b>Banner picture</b> is used first; blank uses the header picture below. '
+      + 'The shop\u2019s look is <b>Appearance \u2192 Site layout \u2192 Category header (brand design)</b>; blank or <b>Shop setting</b> follows it. '
       + '<button type="button" class="ct-link" id="ct-cblclear">Use the shop settings for all of these</button></p>'
       + '<div class="ct-fld"><label for="ct-cblimg">Banner picture</label>'
         + '<div class="ct-banner-prev" id="ct-cblwrap"' + (safePic ? '' : ' hidden') + '>'
@@ -605,6 +614,8 @@
     var out = {};
     var img = document.getElementById('ct-cblimg');
     if (img && img.value.trim() !== '') out.image = img.value.trim();
+    var heroSel = document.getElementById('ct-cbl-hero');
+    if (heroSel && heroSel.value !== '') out.hero = heroSel.value;
     CB_FIELDS.forEach(function(f){
       var el = document.getElementById('ct-cbl-' + f.key);
       if (!el || el.value === '') return;
@@ -698,8 +709,10 @@
       + '<summary><b>Category header</b> <span class="ct-note" style="display:inline">'
       + 'banner, title, description and look on this category’s page</span></summary>'
       + '<div class="ct-hdr-body">'
-      + '<p class="ct-note" style="margin:0 0 10px">Anything left blank or on <b>Shop setting</b> follows '
-      + '<b>Appearance → Site layout → Category header</b>.</p>'
+      + bannerLayoutHTML(cat)
+      + '<p class="ct-note" style="margin:14px 0 10px"><b>Old category header</b> -- used only where the header design is '
+      + '<b>Old category header</b>. Its header picture is also the brand design\u2019s picture when Banner picture is blank. '
+      + 'Anything left blank or on <b>Shop setting</b> follows <b>Appearance → Site layout → Old category header</b>.</p>'
 
       /* 1. The live preview of THIS category. */
       + '<div class="ct-hdr-live" data-ct-hdrlive></div>'
@@ -763,7 +776,6 @@
               + ' value="' + esc(v == null ? '' : v) + '" placeholder="Shop setting"></div>';
           }).join('')
       + '</div>'
-      + bannerLayoutHTML(cat)
       + '</div></details>';
   }
 
