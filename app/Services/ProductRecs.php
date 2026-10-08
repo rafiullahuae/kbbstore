@@ -66,7 +66,14 @@ class ProductRecs
 {
     public const CACHE_PREFIX = 'kbb.recs.';
 
-    public const TTL = 600;
+    /*
+     * One hour (was 600 s). Which products are suggested may be up to an hour
+     * old; what each card prints never is -- CardFragments re-checks price,
+     * stock, labels and names on every view. The rebuild costs ~2.4 ms CPU
+     * once per product per TTL, so a longer TTL keeps the product page at or
+     * under its pre-blocks speed (integrator, measured by Lane RP).
+     */
+    public const TTL = 3600;
 
     /** Complementary shelves read for block 2 — BuyTogetherPairs::MAX_PAIRS. */
     public const MAX_SHELVES = 5;
