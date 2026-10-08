@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.436
+**The bag is never empty after an unfinished payment, on every payment method.**
+Apply after .435. Runs its migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "when ... user cancel the order before completing the payment ... cart must not be empty in any case" + "for tabby also and for other payment methods also" | Card (incl. 3-D Secure), Apple/Google Pay, Tabby and Tamara: on cancel, decline, timeout, provider error, Back, or closing the tab and coming back, the bag comes back by itself with its items, quantities, sets, coupon and gift wrap; stock and coupon are returned; "Your payment wasn't completed — nothing was charged. Your bag is just as you left it." with Try again. A payment that went through always counts as paid. Only the shopper who placed the order gets it back. Arabic wording arrives as drafts (Translation -> Strings) |
+
+Files: see the package's update.json.
+
 ## 2.60.435
 **The desktop menu shows the page you are on.** Apply after .434. Runs its migrations.
 Hard refresh the shop.
