@@ -1,0 +1,146 @@
+{
+  "invalid-390": {
+    "viewport": 390,
+    "pageScrollWidth": 390,
+    "horizontalOverflow": 0,
+    "routeTabs": [
+      "Connect with Facebook (recommended) [selected]",
+      "Connect with Instagram"
+    ],
+    "steps": 7,
+    "stepStates": [
+      "is-done",
+      "is-done",
+      "is-done",
+      "is-done",
+      "is-unknown",
+      "is-unknown",
+      "is-done"
+    ],
+    "redirectUris": [
+      "http://127.0.0.1:10470/admin-api/instagram/callback",
+      "https://kbeautybliss.com/admin-api/instagram/callback"
+    ],
+    "copyButtons": [
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      },
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      }
+    ],
+    "fields": [
+      "App ID",
+      "App secret",
+      "Configuration ID optional",
+      "Layout",
+      "The profile box",
+      "How many posts",
+      "Space between tiles",
+      "Corner radius",
+      "Heading above the section"
+    ],
+    "inputFontSize": 13,
+    "connectButton": {
+      "w": 94,
+      "h": 38,
+      "clickable": true
+    },
+    "buttons": [
+      "Reconnect",
+      "Copy",
+      "Copy",
+      "Save",
+      "Reconnect with Facebook",
+      "Refresh posts",
+      "Disconnect",
+      "Delete the 44 stored posts",
+      "Save",
+      "Reload"
+    ],
+    "picks": [],
+    "unlinked": null,
+    "checkAgain": null,
+    "connectedNote": null,
+    "invalidNote": "Facebook has stopped accepting this shop's connection (since October 8, 2026). This happens after a password change, when the app is removed, or when the Page role changes. Your posts are still showing on the shop; only new posts have stopped arriving.\nReconnect",
+    "secretInputValue": "",
+    "htmlHasSecret": false,
+    "consoleErrors": []
+  },
+  "invalid-1280": {
+    "viewport": 1280,
+    "pageScrollWidth": 1280,
+    "horizontalOverflow": 0,
+    "routeTabs": [
+      "Connect with Facebook (recommended) [selected]",
+      "Connect with Instagram"
+    ],
+    "steps": 7,
+    "stepStates": [
+      "is-done",
+      "is-done",
+      "is-done",
+      "is-done",
+      "is-unknown",
+      "is-unknown",
+      "is-done"
+    ],
+    "redirectUris": [
+      "http://127.0.0.1:10470/admin-api/instagram/callback",
+      "https://kbeautybliss.com/admin-api/instagram/callback"
+    ],
+    "copyButtons": [
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      },
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      }
+    ],
+    "fields": [
+      "App ID",
+      "App secret",
+      "Configuration ID optional",
+      "Layout",
+      "The profile box",
+      "How many posts",
+      "Space between tiles",
+      "Corner radius",
+      "Heading above the section"
+    ],
+    "inputFontSize": 13,
+    "connectButton": {
+      "w": 94,
+      "h": 38,
+      "clickable": true
+    },
+    "buttons": [
+      "Reconnect",
+      "Copy",
+      "Copy",
+      "Save",
+      "Reconnect with Facebook",
+      "Refresh posts",
+      "Disconnect",
+      "Delete the 44 stored posts",
+      "Save",
+      "Reload"
+    ],
+    "picks": [],
+    "unlinked": null,
+    "checkAgain": null,
+    "connectedNote": null,
+    "invalidNote": "Facebook has stopped accepting this shop's connection (since October 8, 2026). This happens after a password change, when the app is removed, or when the Page role changes. Your posts are still showing on the shop; only new posts have stopped arriving.\nReconnect",
+    "secretInputValue": "",
+    "htmlHasSecret": false,
+    "consoleErrors": []
+  }
+}

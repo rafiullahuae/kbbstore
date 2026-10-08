@@ -1,0 +1,146 @@
+{
+  "connected-390": {
+    "viewport": 390,
+    "pageScrollWidth": 390,
+    "horizontalOverflow": 0,
+    "routeTabs": [
+      "Connect with Facebook (recommended) [selected]",
+      "Connect with Instagram"
+    ],
+    "steps": 7,
+    "stepStates": [
+      "is-done",
+      "is-done",
+      "is-done",
+      "is-done",
+      "is-unknown",
+      "is-unknown",
+      "is-done"
+    ],
+    "redirectUris": [
+      "http://127.0.0.1:10470/admin-api/instagram/callback",
+      "https://kbeautybliss.com/admin-api/instagram/callback"
+    ],
+    "copyButtons": [
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      },
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      }
+    ],
+    "fields": [
+      "App ID",
+      "App secret",
+      "Configuration ID optional",
+      "Layout",
+      "The profile box",
+      "How many posts",
+      "Space between tiles",
+      "Corner radius",
+      "Heading above the section"
+    ],
+    "inputFontSize": 13,
+    "connectButton": {
+      "w": 188,
+      "h": 38,
+      "clickable": true
+    },
+    "buttons": [
+      "Copy",
+      "Copy",
+      "Save",
+      "Reconnect with Facebook",
+      "Refresh posts",
+      "Disconnect",
+      "Delete the 44 stored posts",
+      "Save",
+      "Reload"
+    ],
+    "picks": [],
+    "unlinked": null,
+    "checkAgain": null,
+    "connectedNote": "Connected through Facebook — Page “KBB Shop”. This connection does not expire on a timer. If Facebook ever stops accepting it, this screen turns red and you get an email.",
+    "invalidNote": null,
+    "secretInputValue": "",
+    "htmlHasSecret": false,
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:10470/favicon.ico"
+    ]
+  },
+  "connected-1280": {
+    "viewport": 1280,
+    "pageScrollWidth": 1280,
+    "horizontalOverflow": 0,
+    "routeTabs": [
+      "Connect with Facebook (recommended) [selected]",
+      "Connect with Instagram"
+    ],
+    "steps": 7,
+    "stepStates": [
+      "is-done",
+      "is-done",
+      "is-done",
+      "is-done",
+      "is-unknown",
+      "is-unknown",
+      "is-done"
+    ],
+    "redirectUris": [
+      "http://127.0.0.1:10470/admin-api/instagram/callback",
+      "https://kbeautybliss.com/admin-api/instagram/callback"
+    ],
+    "copyButtons": [
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      },
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      }
+    ],
+    "fields": [
+      "App ID",
+      "App secret",
+      "Configuration ID optional",
+      "Layout",
+      "The profile box",
+      "How many posts",
+      "Space between tiles",
+      "Corner radius",
+      "Heading above the section"
+    ],
+    "inputFontSize": 13,
+    "connectButton": {
+      "w": 188,
+      "h": 38,
+      "clickable": true
+    },
+    "buttons": [
+      "Copy",
+      "Copy",
+      "Save",
+      "Reconnect with Facebook",
+      "Refresh posts",
+      "Disconnect",
+      "Delete the 44 stored posts",
+      "Save",
+      "Reload"
+    ],
+    "picks": [],
+    "unlinked": null,
+    "checkAgain": null,
+    "connectedNote": "Connected through Facebook — Page “KBB Shop”. This connection does not expire on a timer. If Facebook ever stops accepting it, this screen turns red and you get an email.",
+    "invalidNote": null,
+    "secretInputValue": "",
+    "htmlHasSecret": false,
+    "consoleErrors": []
+  }
+}

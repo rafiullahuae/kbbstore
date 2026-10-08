@@ -86,10 +86,60 @@ final class InstagramCredentials
      */
     public const REFRESH_WINDOW_DAYS = 7;
 
+    /*
+     * ── (Lane IG2) THE SECOND ROUTE: INSTAGRAM API WITH FACEBOOK LOGIN ──────
+     *
+     * Meta does not offer "API setup with Instagram login" to every account; the
+     * owner's own app shows only "API setup with Facebook login". That route
+     * logs in on facebook.com and reads the account through the Facebook Page it
+     * is linked to, so it needs a DIFFERENT app id and secret — the Facebook app's
+     * own, from App settings → Basic — and an optional Facebook Login for
+     * Business configuration id.
+     *
+     * The CONNECTION itself still lives in the one slot above: TOKEN_KEY holds the
+     * Page access token, USER_KEY the Instagram account id, and VIA_KEY says which
+     * route minted them. One connection at a time, so everything that already
+     * asks hasToken() / token() — the Spotted screen, the daily command — keeps
+     * working without knowing there are two routes.
+     *
+     * The long-lived Facebook USER token is NOT stored: the Page token derived
+     * from it does not expire on a timer, and everything that would kill the Page
+     * token (a password change, the app removed, the Page role revoked) kills the
+     * user token too — so keeping it would buy no recovery and cost a second
+     * secret at rest. It lives, encrypted, in the admin SESSION only while the
+     * owner is choosing a Page (FacebookConnect::PENDING_KEY), and is dropped the
+     * moment he has.
+     */
+
+    /** Which route minted the stored token: 'instagram' or 'facebook'. Not a secret. */
+    public const VIA_KEY = 'instagram_via';
+
+    /** The Facebook app id — App settings → Basic. Not a secret. */
+    public const FB_APP_ID_KEY = 'instagram_fb_app_id';
+
+    /** The Facebook app secret — App settings → Basic. Encrypted. */
+    public const FB_SECRET_KEY = 'instagram_fb_app_secret';
+
+    /** Facebook Login for Business → Configurations → the configuration id. Optional, not a secret. */
+    public const FB_CONFIG_KEY = 'instagram_fb_config_id';
+
+    /** The Facebook Page the Instagram account is linked to, id and name. Not secrets. */
+    public const PAGE_ID_KEY = 'instagram_fb_page_id';
+
+    public const PAGE_NAME_KEY = 'instagram_fb_page_name';
+
+    /**
+     * Set when Meta has stopped accepting the stored token (error 190 and kin):
+     * JSON {at, reason, notified}. Cleared by the next successful connection.
+     */
+    public const INVALID_KEY = 'instagram_token_invalid';
+
     /** Every key this class owns, for the test that proves none of them is public. */
     public const ALL_KEYS = [
         self::APP_ID_KEY, self::SECRET_KEY, self::TOKEN_KEY,
         self::EXPIRES_KEY, self::USER_KEY,
+        self::VIA_KEY, self::FB_APP_ID_KEY, self::FB_SECRET_KEY, self::FB_CONFIG_KEY,
+        self::PAGE_ID_KEY, self::PAGE_NAME_KEY, self::INVALID_KEY,
     ];
 
     /* ------------------------------------------------------ what a screen may ask */
@@ -151,6 +201,66 @@ final class InstagramCredentials
         return (string) (self::plain(self::USER_KEY, false) ?? '');
     }
 
+    /** (Lane IG2) Which route the stored connection came through. */
+    public static function via(): string
+    {
+        return self::plain(self::VIA_KEY, false) === 'facebook' ? 'facebook' : 'instagram';
+    }
+
+    public static function viaFacebook(): bool
+    {
+        return self::via() === 'facebook';
+    }
+
+    public static function hasFbAppId(): bool
+    {
+        return self::plain(self::FB_APP_ID_KEY, false) !== null;
+    }
+
+    public static function hasFbSecret(): bool
+    {
+        return self::plain(self::FB_SECRET_KEY, true) !== null;
+    }
+
+    /** The Facebook app id, or null. Not a secret — it travels in the login URL. */
+    public static function fbAppId(): ?string
+    {
+        return self::plain(self::FB_APP_ID_KEY, false);
+    }
+
+    /** The Facebook Login for Business configuration id, or null. */
+    public static function fbConfigId(): ?string
+    {
+        return self::plain(self::FB_CONFIG_KEY, false);
+    }
+
+    /** The linked Facebook Page's name, or ''. The screen prints it. */
+    public static function pageName(): string
+    {
+        return (string) (self::plain(self::PAGE_NAME_KEY, false) ?? '');
+    }
+
+    /**
+     * Why the stored token stopped working, or null while it works.
+     *
+     * @return array{at: int, reason: string, notified: bool}|null
+     */
+    public static function invalid(): ?array
+    {
+        $raw = self::plain(self::INVALID_KEY, false);
+        $data = $raw === null ? null : json_decode($raw, true);
+
+        if (! is_array($data) || ! isset($data['at'])) {
+            return null;
+        }
+
+        return [
+            'at' => (int) $data['at'],
+            'reason' => (string) ($data['reason'] ?? 'expired'),
+            'notified' => (bool) ($data['notified'] ?? false),
+        ];
+    }
+
     /* ------------------------------------------- what only InstagramClient may ask */
 
     /** The app id, or null. */
@@ -175,6 +285,16 @@ final class InstagramCredentials
     public static function token(): ?string
     {
         return self::plain(self::TOKEN_KEY, true);
+    }
+
+    /**
+     * (Lane IG2) The Facebook app secret in plaintext, or null. ONE CALLER:
+     * FacebookGraphClient, which sends it to graph.facebook.com and signs each
+     * call's appsecret_proof with it.
+     */
+    public static function fbSecret(): ?string
+    {
+        return self::plain(self::FB_SECRET_KEY, true);
     }
 
     /* ---------------------------------------------------------------------- writes */
@@ -225,6 +345,84 @@ final class InstagramCredentials
         if ($userId !== null && trim($userId) !== '') {
             self::put(self::USER_KEY, trim($userId), false);
         }
+
+        // (Lane IG2) Only the Instagram-login route mints a token through here.
+        self::put(self::VIA_KEY, 'instagram', false);
+        self::put(self::INVALID_KEY, '', false);
+    }
+
+    /**
+     * (Lane IG2) Save the Facebook app id, secret and optional configuration id.
+     * An empty secret LEAVES THE STORED ONE ALONE, exactly as saveApp() does.
+     */
+    public static function saveFacebookApp(string $appId, ?string $secret, ?string $configId): void
+    {
+        self::put(self::FB_APP_ID_KEY, trim($appId), false);
+        self::put(self::FB_CONFIG_KEY, trim((string) $configId), false);
+
+        $secret = $secret === null ? '' : trim($secret);
+
+        if ($secret !== '') {
+            self::put(self::FB_SECRET_KEY, $secret, true);
+        }
+    }
+
+    /**
+     * (Lane IG2) Store the connection the Facebook route ends in.
+     *
+     * `$expiresAt` is a unix time or null. A Page token derived from a long-lived
+     * user token carries no expiry of its own (`expires_at: 0` from debug_token);
+     * when Meta reports a data-access expiry instead, that date is stored so the
+     * screen can say "reconnect before" — and null leaves the expiry blank, which
+     * the screen reads as "does not expire on a timer".
+     */
+    public static function saveFacebookConnection(
+        string $pageToken,
+        string $igUserId,
+        string $pageId,
+        string $pageName,
+        ?int $expiresAt = null,
+    ): void {
+        $pageToken = trim($pageToken);
+        $igUserId = trim($igUserId);
+
+        if ($pageToken === '' || $igUserId === '') {
+            return;
+        }
+
+        self::put(self::TOKEN_KEY, $pageToken, true);
+        self::put(self::EXPIRES_KEY, $expiresAt !== null && $expiresAt > 0 ? (string) $expiresAt : '', false);
+        self::put(self::USER_KEY, $igUserId, false);
+        self::put(self::PAGE_ID_KEY, trim($pageId), false);
+        self::put(self::PAGE_NAME_KEY, mb_substr(trim($pageName), 0, 120), false);
+        self::put(self::VIA_KEY, 'facebook', false);
+        self::put(self::INVALID_KEY, '', false);
+    }
+
+    /**
+     * (Lane IG2) Record that Meta refused the stored token as invalid. Returns
+     * TRUE only the first time — the caller sends the owner one email per
+     * invalidation, not one per refresh press.
+     */
+    public static function markInvalid(string $reason): bool
+    {
+        if (! self::hasToken()) {
+            return false;
+        }
+
+        $current = self::invalid();
+
+        if ($current !== null && $current['notified']) {
+            return false;
+        }
+
+        self::put(self::INVALID_KEY, (string) json_encode([
+            'at' => $current['at'] ?? time(),
+            'reason' => preg_replace('/[^a-z_]/', '', $reason) ?: 'expired',
+            'notified' => true,
+        ]), false);
+
+        return true;
     }
 
     /**
@@ -240,6 +438,10 @@ final class InstagramCredentials
         self::put(self::TOKEN_KEY, '', true);
         self::put(self::EXPIRES_KEY, '', false);
         self::put(self::USER_KEY, '', false);
+        self::put(self::VIA_KEY, '', false);
+        self::put(self::PAGE_ID_KEY, '', false);
+        self::put(self::PAGE_NAME_KEY, '', false);
+        self::put(self::INVALID_KEY, '', false);
     }
 
     /** Forget everything, app registration included. */
@@ -248,6 +450,9 @@ final class InstagramCredentials
         self::forgetToken();
         self::put(self::APP_ID_KEY, '', false);
         self::put(self::SECRET_KEY, '', true);
+        self::put(self::FB_APP_ID_KEY, '', false);
+        self::put(self::FB_SECRET_KEY, '', true);
+        self::put(self::FB_CONFIG_KEY, '', false);
     }
 
     /* --------------------------------------------------------------------- plumbing */

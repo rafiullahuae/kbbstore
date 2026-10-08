@@ -75,6 +75,78 @@ final class InstagramAuth
     }
 
     /**
+     * (Lane IG2) Every redirect URI the owner should register in Meta: the one
+     * this shop answers on today, and the same path on the address it is moving
+     * to (DomainSwitch::target(), kbeautybliss.com unless the main address says
+     * otherwise). Registering both now means the move does not break the
+     * connection. Same scheme and path; only the host differs. Deduplicated, so
+     * once the move is done there is one line.
+     *
+     * @return list<string>
+     */
+    public static function redirectUris(): array
+    {
+        $current = self::redirectUri();
+        $uris = [$current];
+
+        $parts = parse_url($current);
+        $target = (new \App\Services\DomainMove\DomainSwitch())->target();
+
+        if (is_array($parts) && isset($parts['host']) && \App\Services\DomainMove\DomainSwitch::isName($target)) {
+            $uris[] = 'https://'.strtolower($target).($parts['path'] ?? self::CALLBACK_PATH);
+        }
+
+        return array_values(array_unique($uris));
+    }
+
+    /**
+     * (Lane IG2) The Facebook Login for Business dialog URL, or a refusal.
+     *
+     * With a configuration id saved, `config_id` is sent and `scope` is NOT: for a
+     * "User access token" configuration Meta's documentation says config_id
+     * replaces scope, and the permissions are the ones ticked in that
+     * configuration. Without one, the classic `scope` list is sent — which Meta
+     * still accepts for an app admin in Development mode.
+     *
+     * @return array{ok: bool, url?: string, state?: string, error?: string, reason?: string}
+     */
+    public static function facebookAuthorizeUrl(): array
+    {
+        $appId = InstagramCredentials::fbAppId();
+
+        if ($appId === null || ! InstagramCredentials::hasFbSecret()) {
+            return [
+                'ok' => false,
+                'reason' => 'no_app',
+                'error' => 'Save your Facebook App ID and App secret first — they are in your Meta app under '
+                    .'App settings → Basic.',
+            ];
+        }
+
+        $state = Str::random(40);
+        $config = InstagramCredentials::fbConfigId();
+
+        $query = [
+            'client_id' => $appId,
+            'redirect_uri' => self::redirectUri(),
+            'state' => $state,
+            'response_type' => 'code',
+        ];
+
+        if ($config !== null && preg_match('/^[0-9]{6,32}$/', $config) === 1) {
+            $query['config_id'] = $config;
+        } else {
+            $query['scope'] = FacebookGraphClient::SCOPE;
+        }
+
+        return [
+            'ok' => true,
+            'state' => $state,
+            'url' => FacebookGraphClient::DIALOG.'?'.http_build_query($query),
+        ];
+    }
+
+    /**
      * Where to send the owner, and the state to remember — or a refusal.
      *
      * @return array{ok: bool, url?: string, state?: string, error?: string, reason?: string}
@@ -113,11 +185,15 @@ final class InstagramAuth
      * session keys would be two things that can fall out of step, and the one that
      * mattered would be the one missing."
      */
-    public static function remember(Request $request, string $state): void
+    public static function remember(Request $request, string $state, string $via = 'instagram'): void
     {
         $request->session()->put(self::STATE_SESSION_KEY, [
             'value' => $state,
             'issued_at' => time(),
+            // (Lane IG2) Which route minted it. Read back by consume(), so the
+            // callback — one fixed URI for both routes — knows which exchange to
+            // run from the SERVER's record, never from anything in the URL.
+            'via' => $via === 'facebook' ? 'facebook' : 'instagram',
         ]);
     }
 
@@ -139,11 +215,12 @@ final class InstagramAuth
      * and a session it did not start has none stored. StripeConnect's callback
      * carries the identical comment because it is the identical trap.
      *
-     * @return array{ok: bool, error?: string}
+     * @return array{ok: bool, error?: string, via?: string}
      */
     public static function consume(Request $request, string $given): array
     {
         $stored = $request->session()->pull(self::STATE_SESSION_KEY);
+        $via = is_array($stored) && ($stored['via'] ?? '') === 'facebook' ? 'facebook' : 'instagram';
 
         $expected = is_array($stored) ? (string) ($stored['value'] ?? '') : '';
         $issuedAt = is_array($stored) ? (int) ($stored['issued_at'] ?? 0) : 0;
@@ -156,7 +233,7 @@ final class InstagramAuth
             ];
         }
 
-        if ($issuedAt > 0 && (time() - $issuedAt) > self::STATE_TTL_SECONDS) {
+        if ($issuedAt <= 0 || (time() - $issuedAt) > self::STATE_TTL_SECONDS) {
             return [
                 'ok' => false,
                 'error' => 'This Instagram window was open too long and the request has expired, so nothing was '
@@ -164,6 +241,6 @@ final class InstagramAuth
             ];
         }
 
-        return ['ok' => true];
+        return ['ok' => true, 'via' => $via];
     }
 }

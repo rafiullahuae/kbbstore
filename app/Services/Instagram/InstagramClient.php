@@ -40,7 +40,7 @@ use Illuminate\Support\Facades\Http;
  * and never resolves this class at all — "a rail that blocks on a third party is a
  * shop that goes down when they do", and this file is the third party.
  */
-class InstagramClient
+class InstagramClient implements InstagramSource
 {
     /** Where the authorisation screen the owner sees lives. */
     public const AUTHORIZE_URL = 'https://www.instagram.com/oauth/authorize';

@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\InstagramPost;
+use App\Services\Instagram\FacebookConnect;
+use App\Services\Instagram\FacebookGraphClient;
 use App\Services\Instagram\IgPath;
 use App\Services\Instagram\InstagramAuth;
 use App\Services\Instagram\InstagramClient;
@@ -56,6 +58,9 @@ use Illuminate\Support\Str;
  */
 class InstagramController extends Controller
 {
+    /** (Lane IG2) The Facebook login in progress for this request, if any — names only. */
+    private ?array $pending = null;
+
     public function __construct(
         private InstagramSettings $settings,
         private InstagramSync $sync,
@@ -83,8 +88,12 @@ class InstagramController extends Controller
      * drawing an empty tick beside it would imply this server checked and found it
      * undone.
      */
-    public function show(): JsonResponse
+    public function show(Request $request): JsonResponse
     {
+        // (Lane IG2) The Facebook login waiting on a picker or "Check again" —
+        // names only, from the session. Never a token.
+        $this->pending = FacebookConnect::pending($request);
+
         return response()->json([
             'tabs' => ModuleSchema::tabs(
                 InstagramSettings::SCHEMA,
@@ -112,6 +121,7 @@ class InstagramController extends Controller
     private function connection(): array
     {
         $expires = InstagramCredentials::expiresAt();
+        $invalid = InstagramCredentials::invalid();
 
         return [
             // Public by construction — see the class docblock.
@@ -141,6 +151,97 @@ class InstagramController extends Controller
             // before he grants it. A constant, from InstagramClient.
             'scope' => InstagramClient::SCOPE,
             'steps' => $this->steps(),
+
+            /*
+             * (Lane IG2) Which route the stored connection came through, and
+             * whether Meta has stopped accepting it (error 190 and kin). The
+             * screen turns `invalid` into the Reconnect warning.
+             */
+            'via' => InstagramCredentials::hasToken() ? InstagramCredentials::via() : null,
+            'invalid' => $invalid !== null,
+            'invalid_since' => $invalid === null ? null : gmdate('c', $invalid['at']),
+            'page_name' => InstagramCredentials::viaFacebook() ? InstagramCredentials::pageName() : '',
+            'facebook' => $this->facebook(),
+        ];
+    }
+
+    /**
+     * (Lane IG2) "Connect with Facebook" — the route Meta actually offers the
+     * owner's app. Booleans and ids, never the secret; the redirect URIs for
+     * today's address AND kbeautybliss.com, because he registers both.
+     *
+     * @return array<string, mixed>
+     */
+    private function facebook(): array
+    {
+        $profile = $this->settings->profile();
+        $type = strtoupper((string) ($profile['account_type'] ?? ''));
+        $viaFb = InstagramCredentials::viaFacebook() && InstagramCredentials::hasToken();
+        $config = InstagramCredentials::fbConfigId();
+
+        return [
+            'app_id' => InstagramCredentials::fbAppId(),
+            'secret_saved' => InstagramCredentials::hasFbSecret(),
+            'config_id' => $config,
+            'redirect_uris' => InstagramAuth::redirectUris(),
+            'permissions' => explode(',', FacebookGraphClient::SCOPE),
+            'graph_version' => FacebookGraphClient::VERSION,
+            'pending' => $this->pending,
+            'username' => (string) ($profile['username'] ?? ''),
+            'steps' => [
+                [
+                    'key' => 'professional',
+                    'text' => 'Your Instagram account must be a professional account. Instagram app → Settings → '
+                        .'Account type and tools → Switch to professional account → Business (or Creator).',
+                    'observable' => true,
+                    'done' => $type !== '' && $type !== 'PERSONAL',
+                ],
+                [
+                    'key' => 'page',
+                    'text' => 'Link it to the shop\'s Facebook Page. Instagram app → Settings → Accounts Center → '
+                        .'Accounts → Add accounts → Facebook → choose the Page.',
+                    'observable' => $viaFb,
+                    'done' => $viaFb ? true : null,
+                ],
+                [
+                    'key' => 'keys',
+                    'text' => 'In your Meta app (developers.facebook.com → My Apps → your app): App settings → '
+                        .'Basic. Copy the App ID and the App secret (press Show) into the boxes below and press Save.',
+                    'observable' => true,
+                    'done' => InstagramCredentials::hasFbAppId() && InstagramCredentials::hasFbSecret(),
+                ],
+                [
+                    'key' => 'config',
+                    'text' => 'Optional, recommended: Facebook Login for Business → Configurations → Create '
+                        .'configuration. Name it “Shop Instagram” → Login variation: General → Access token: User '
+                        .'access token → Assets: Pages and Instagram accounts → Permissions: '
+                        .str_replace(',', ', ', FacebookGraphClient::SCOPE).' → Create. Copy the Configuration ID '
+                        .'into the box below.',
+                    'observable' => true,
+                    'done' => $config !== null ? true : null,
+                ],
+                [
+                    'key' => 'redirect',
+                    'text' => 'Facebook Login for Business → Settings → Valid OAuth Redirect URIs: paste BOTH '
+                        .'addresses below (Copy buttons), then Save changes at the bottom of that page.',
+                    'observable' => false,
+                    'done' => null,
+                ],
+                [
+                    'key' => 'mode',
+                    'text' => 'Leave the app as it is: Development mode and Publish → Unpublished are fine, because '
+                        .'you are the app\'s admin (App roles). No App Review is needed to read your own account.',
+                    'observable' => false,
+                    'done' => null,
+                ],
+                [
+                    'key' => 'connect',
+                    'text' => 'Press Connect with Facebook. Log in on Facebook\'s own page, choose the Page and the '
+                        .'Instagram account, and press Continue / Save. Everything after that is automatic.',
+                    'observable' => true,
+                    'done' => $viaFb,
+                ],
+            ],
         ];
     }
 
@@ -470,7 +571,12 @@ class InstagramController extends Controller
             return $probe;
         }
 
-        $answer = InstagramAuth::authorizeUrl();
+        // (Lane IG2) `?via=facebook` picks the Facebook Login for Business dialog;
+        // anything else is the Instagram-login route exactly as before. The
+        // choice is recorded with the state, server-side, for the callback.
+        $via = $request->query('via') === 'facebook' ? 'facebook' : 'instagram';
+
+        $answer = $via === 'facebook' ? InstagramAuth::facebookAuthorizeUrl() : InstagramAuth::authorizeUrl();
 
         if (! ($answer['ok'] ?? false)) {
             return redirect()->to($this->screenUrl($request, [
@@ -478,7 +584,11 @@ class InstagramController extends Controller
             ]));
         }
 
-        InstagramAuth::remember($request, (string) $answer['state']);
+        if ($via === 'facebook') {
+            FacebookConnect::forget($request);
+        }
+
+        InstagramAuth::remember($request, (string) $answer['state'], $via);
 
         return redirect()->away((string) $answer['url']);
     }
@@ -521,6 +631,16 @@ class InstagramController extends Controller
             $denied = $request->query('error') === 'access_denied'
                 || $request->query('error_reason') === 'user_denied';
 
+            if (($check['via'] ?? '') === 'facebook') {
+                return redirect()->to($this->screenUrl($request, [
+                    'ig_error' => $denied
+                        ? 'You did not finish the Facebook login, so nothing was changed. Press Connect with '
+                            .'Facebook again when you are ready.'
+                        : 'Facebook refused the login. Check that both redirect URIs on this screen are in Facebook '
+                            .'Login for Business → Settings → Valid OAuth Redirect URIs, then try again.',
+                ]));
+            }
+
             return redirect()->to($this->screenUrl($request, [
                 'ig_error' => $denied
                     ? 'You did not grant access on Instagram’s screen, so nothing was changed. Press '
@@ -537,6 +657,14 @@ class InstagramController extends Controller
                 'ig_error' => 'Instagram sent no authorisation code back, so nothing was changed. Press '
                     .'Configure now again.',
             ]));
+        }
+
+        if (($check['via'] ?? '') === 'facebook') {
+            $done = app(FacebookConnect::class)->callback($request, $code);
+
+            return redirect()->to($this->screenUrl($request, $done['ok']
+                ? ['ig_done' => (string) $done['message']]
+                : ['ig_error' => (string) $done['error'], 'ig_detail' => (string) ($done['detail'] ?? '')]));
         }
 
         $done = $this->sync->connect($code);
@@ -606,9 +734,83 @@ class InstagramController extends Controller
      * `?posts=1` is that second button. It is a separate flag and not a separate
      * endpoint so the capability map has one rule to cover both.
      */
+    /**
+     * (Lane IG2) Save the Facebook app's ID and secret (App settings → Basic) and
+     * the optional Facebook Login for Business configuration id.
+     */
+    public function saveFacebookApp(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'app_id' => ['required', 'string', 'max:64'],
+            'app_secret' => ['nullable', 'string', 'max:200'],
+            'config_id' => ['nullable', 'string', 'max:64'],
+        ]);
+
+        $appId = trim((string) $data['app_id']);
+        $secret = trim((string) ($data['app_secret'] ?? ''));
+        $config = trim((string) ($data['config_id'] ?? ''));
+
+        if (preg_match('/^[0-9]{6,32}$/', $appId) !== 1) {
+            return response()->json(['ok' => false, 'error' => 'That does not look like a Facebook App ID. It is a '
+                .'number, usually 15 or 16 digits, at the top of App settings → Basic.'], 422);
+        }
+
+        if ($secret !== '' && preg_match('/^[A-Za-z0-9]{16,64}$/', $secret) !== 1) {
+            return response()->json(['ok' => false, 'error' => 'That does not look like an App secret. It is 32 '
+                .'letters and digits — App settings → Basic → App secret → Show, then copy.'], 422);
+        }
+
+        if ($secret === '' && ! InstagramCredentials::hasFbSecret()) {
+            return response()->json(['ok' => false, 'error' => 'The App secret is needed the first time. Leave the '
+                .'box empty only to keep the one already saved.'], 422);
+        }
+
+        if ($config !== '' && preg_match('/^[0-9]{6,32}$/', $config) !== 1) {
+            return response()->json(['ok' => false, 'error' => 'That does not look like a Configuration ID. It is a '
+                .'number shown under Facebook Login for Business → Configurations, beside the configuration name. '
+                .'Leave the box empty if you have not made one.'], 422);
+        }
+
+        InstagramCredentials::saveFacebookApp($appId, $secret === '' ? null : $secret, $config);
+
+        return response()->json(['ok' => true, 'connection' => $this->connection()]);
+    }
+
+    /** (Lane IG2) "Check again" — after linking the Page in the Instagram app. */
+    public function facebookCheck(Request $request): JsonResponse
+    {
+        return $this->facebookAnswer($request, app(FacebookConnect::class)->checkAgain($request));
+    }
+
+    /** (Lane IG2) The picker's choice. */
+    public function facebookPick(Request $request): JsonResponse
+    {
+        $data = $request->validate(['page_id' => ['required', 'string', 'regex:/^[0-9]{1,32}$/']]);
+
+        return $this->facebookAnswer($request, app(FacebookConnect::class)->pick($request, (string) $data['page_id']));
+    }
+
+    /** @param array<string, mixed> $done */
+    private function facebookAnswer(Request $request, array $done): JsonResponse
+    {
+        $this->pending = FacebookConnect::pending($request);
+
+        return response()->json([
+            'ok' => (bool) ($done['ok'] ?? false),
+            'state' => (string) ($done['state'] ?? ''),
+            'message' => (string) ($done['message'] ?? ''),
+            'error' => (string) ($done['error'] ?? ''),
+            'detail' => (string) ($done['detail'] ?? ''),
+            'connection' => $this->connection(),
+            'profile' => $this->publicProfile(),
+            'content' => $this->content(),
+        ], ($done['ok'] ?? false) ? 200 : 422);
+    }
+
     public function disconnect(Request $request): JsonResponse
     {
         InstagramCredentials::forgetToken();
+        FacebookConnect::forget($request);
 
         $removed = 0;
 

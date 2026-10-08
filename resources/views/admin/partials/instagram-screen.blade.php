@@ -109,6 +109,18 @@
 .igs-step.is-done{color:var(--ink,#16181d)}
 .igs-step.is-unknown .igs-mark{border-style:dashed}
 
+/* (Lane IG2) The two connection routes, and the Page picker after a Facebook
+   login. The route switch reuses .igs-tab; a pick is a full-width button so a
+   thumb on a 390px phone cannot miss it. */
+.igs-route{margin-top:12px}
+.igs-picks{display:grid;gap:8px;margin-top:10px}
+.igs-pick{display:block;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--border,#e6e6e6);
+          border-radius:10px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;
+          overflow-wrap:anywhere}
+.igs-pick b{display:block}
+.igs-pick span{font-size:12px;color:var(--ink-soft,#6b7280)}
+.igs-pick[disabled]{opacity:.45;cursor:default}
+
 /* The redirect URI. `word-break:break-all` and not `anywhere`: this string must
    be selectable and copyable in one gesture, and it has no spaces to wrap at. */
 .igs-uri{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px}
@@ -266,6 +278,10 @@
   var SCREEN = 'instagram';
   var tabs = null, values = {}, open = null, banner = null, busy = false, seq = 0;
   var moduleOn = false, connection = null, me = null, content = null;
+  /* (Lane IG2) Which connection route's panel is open. A view, never posted:
+     null means "follow the server" -- the route the stored connection came
+     through, else Facebook, which is the one Meta offers the owner's app. */
+  var route = null;
   /* Which width the preview frame is drawn at. A view of the drawing and not a
      setting, so it is never posted and never saved -- and it is why the frame's
      arrangement is decided by @container rules rather than @media ones. */
@@ -459,6 +475,7 @@
   /* When the connection expires, in the owner's words, coloured by urgency. */
   function expiryHTML() {
     if (!connection || !connection.connected) return '';
+    if (connection.via === 'facebook' || connection.invalid) return '';
 
     var days = connection.days_left;
     var when = connection.expires_at ? new Date(connection.expires_at) : null;
@@ -521,17 +538,170 @@
           : '');
   }
 
+  /* (Lane IG2) ── TWO ROUTES, ONE CARD ─────────────────────────────────────
+     "Connect with Facebook" (Instagram API with Facebook Login) is what Meta
+     actually offers the owner's app, so it is the default panel. "Connect with
+     Instagram" is the original route, byte-for-byte the panel it always was. */
+  function currentRoute() {
+    if (route === 'facebook' || route === 'instagram') return route;
+    return (connection && connection.via) || 'facebook';
+  }
+
   function connectionHTML() {
-    var c = connection || {};
-    var ready = c.app_id && c.secret_saved;
+    var r = currentRoute();
 
     return '<div class="igs-card">'
       + '<div class="igs-title">Connection</div>'
       + '<p class="igs-sub">This shop reads <b>our own</b> Instagram account through Meta\'s Graph API, '
       + 'which is what makes the real like and comment counts available at all — they are ordinary fields '
-      + 'on our own posts. Nothing here is sent to Instagram until you press Configure now.</p>'
+      + 'on our own posts. Nothing is sent to Meta until you press Connect.</p>'
+      + '<div class="igs-tabs igs-route" role="tablist" aria-label="How to connect">'
+      + '<button class="igs-tab" role="tab" data-igs-route="facebook" aria-selected="' + (r === 'facebook') + '">'
+      + 'Connect with Facebook (recommended)</button>'
+      + '<button class="igs-tab" role="tab" data-igs-route="instagram" aria-selected="' + (r === 'instagram') + '">'
+      + 'Connect with Instagram</button></div>'
+      + invalidHTML()
+      + (r === 'facebook' ? facebookHTML() : instagramHTML())
+      + '</div>';
+  }
 
-      + stepsHTML()
+  /* Meta has stopped accepting the stored token (error 190 and kin). Said on
+     both panels, with the button that fixes it, because it is the one state
+     in which the owner must act. */
+  function invalidHTML() {
+    var c = connection || {};
+    if (!c.connected || !c.invalid) return '';
+    var fb = c.via === 'facebook';
+    var when = c.invalid_since ? new Date(c.invalid_since) : null;
+    var date = when && !isNaN(when.getTime())
+      ? when.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+    return '<div class="igs-note is-bad" data-igs-invalid><b>' + (fb ? 'Facebook' : 'Instagram')
+      + ' has stopped accepting this shop\'s connection' + (date ? ' (since ' + esc(date) + ')' : '') + '.</b> '
+      + 'This happens after a password change, when the app is removed, or when the Page role changes. '
+      + 'Your posts are still showing on the shop; only new posts have stopped arriving. '
+      + '<div class="igs-actions" style="margin-top:9px"><a class="igs-btn is-primary" href="' + esc(base())
+      + '/instagram/start' + (fb ? '?via=facebook' : '') + '" data-igs-oauth>Reconnect</a></div></div>';
+  }
+
+  /* ── Connect with Facebook ──────────────────────────────────────────── */
+  function facebookHTML() {
+    var c = connection || {};
+    var f = c.facebook || {};
+    var ready = f.app_id && f.secret_saved;
+    var mine = c.connected && c.via === 'facebook';
+    var uris = f.redirect_uris || [];
+
+    /* What needs him NOW -- the picker, "not linked", the connection's state --
+       sits ABOVE the setup steps, so it is the first thing he sees when the
+       Facebook window closes, not something below a seven-step list. */
+    return pendingHTML(f)
+      + (mine ? fbStatusHTML(c) + profileHTML() : '')
+      + '<p class="igs-help" style="margin-top:12px">For a Meta app that shows <b>Instagram API → API setup '
+      + 'with Facebook login</b> (and not “with Instagram login”). You log in on Facebook\'s own page and pick '
+      + 'the Page and the Instagram account; everything after that is automatic.</p>'
+      + stepsListHTML(f.steps || [])
+
+      + '<div class="igs-note"><b>Valid OAuth Redirect URIs.</b> In your Meta app: <b>Facebook Login for '
+      + 'Business → Settings → Valid OAuth Redirect URIs</b>. Paste both — today\'s address and kbeautybliss.com, '
+      + 'so the move does not break the connection — then press <b>Save changes</b>.'
+      + uris.map(function (u) {
+          return '<div class="igs-uri"><code>' + esc(u) + '</code><button class="igs-btn" data-igs-copy>Copy</button></div>';
+        }).join('')
+      + '</div>'
+
+      + '<div class="igs-fields">'
+      + '<div class="igs-f"><div class="igs-fh"><label for="igs-fbappid">App ID</label></div>'
+      + '<input id="igs-fbappid" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"'
+      + ' value="' + esc(f.app_id || '') + '" data-igs-fbappid>'
+      + '<p class="igs-help">App settings → Basic → App ID (a number, usually 15 or 16 digits).</p></div>'
+
+      + '<div class="igs-f"><div class="igs-fh"><label for="igs-fbsecret">App secret</label></div>'
+      + '<input id="igs-fbsecret" type="password" autocomplete="off" spellcheck="false"'
+      + ' placeholder="' + (f.secret_saved ? 'A secret is stored — leave empty to keep it' : 'Required the first time') + '"'
+      + ' data-igs-fbsecret>'
+      + '<p class="igs-help">App settings → Basic → App secret → Show. Stored encrypted and never shown again.</p></div>'
+
+      + '<div class="igs-f"><div class="igs-fh"><label for="igs-fbconfig">Configuration ID <span class="igs-val">optional</span></label></div>'
+      + '<input id="igs-fbconfig" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"'
+      + ' value="' + esc(f.config_id || '') + '" data-igs-fbconfig>'
+      + '<p class="igs-help">To make one: <b>Facebook Login for Business → Configurations → Create '
+      + 'configuration</b> → name it → Login variation <b>General</b> → Access token <b>User access token</b> → '
+      + 'Assets <b>Pages</b> and <b>Instagram accounts</b> → Permissions <b>' + esc((f.permissions || []).join(', '))
+      + '</b> → Create → copy the ID shown beside it. Empty is fine: the login then asks for those permissions '
+      + 'directly.</p></div>'
+      + '</div>'
+
+      + '<div class="igs-actions">'
+      + '<button class="igs-btn" data-igs-fbsave' + (busy ? ' disabled' : '') + '>Save</button>'
+      + '<a class="igs-btn is-primary' + (ready ? '' : ' is-off') + '" href="' + esc(base()) + '/instagram/start?via=facebook"'
+      + (ready ? ' data-igs-oauth' : ' aria-disabled="true" tabindex="-1"') + '>'
+      + (mine ? 'Reconnect with Facebook' : 'Connect with Facebook') + '</a>'
+      + (mine
+          ? '<button class="igs-btn" data-igs-refresh' + (busy ? ' disabled' : '') + '>Refresh posts</button>'
+            + '<button class="igs-btn is-bad" data-igs-disconnect' + (busy ? ' disabled' : '') + '>Disconnect</button>'
+          : '')
+      + ((content && content.posts > 0)
+          ? '<button class="igs-btn is-bad" data-igs-clear' + (busy ? ' disabled' : '') + '>Delete the ' + esc(String(content.posts)) + ' stored posts</button>'
+          : '')
+      + '</div>'
+      + (ready ? '' : '<p class="igs-help" style="margin-top:10px"><b>Connect with Facebook is greyed out</b> '
+          + 'until the App ID and App secret are saved.</p>');
+  }
+
+  /* After the Facebook login: a picker, or "not linked" with Check again. */
+  function pendingHTML(f) {
+    var p = f.pending;
+    if (!p) return '';
+
+    if (p.state === 'pick') {
+      return '<div class="igs-note is-warm" data-igs-picker><b>Choose the Instagram account this shop should show.</b> '
+        + 'Several of your Pages have one linked.'
+        + '<div class="igs-picks">' + (p.candidates || []).map(function (x) {
+            return '<button class="igs-pick" data-igs-pick="' + esc(x.page_id) + '"' + (busy ? ' disabled' : '') + '>'
+              + '<b>' + esc(x.ig_username ? '@' + x.ig_username : 'Instagram account') + '</b>'
+              + '<span>Facebook Page: ' + esc(x.page_name || x.page_id) + '</span></button>';
+          }).join('') + '</div></div>';
+    }
+
+    var who = f.username ? '@' + f.username : 'Your Instagram account';
+    return '<div class="igs-note is-bad" data-igs-unlinked><b>' + esc(who) + ' is not linked to a Facebook Page</b> — '
+      + 'Instagram app → Settings → Accounts Center → connect your Page. Then press Check again; you do not have '
+      + 'to log in again.'
+      + ((p.pages || []).length ? '<br>Pages this login can see: ' + esc(p.pages.join(', ')) + '.' : '')
+      + '<div class="igs-actions" style="margin-top:9px"><button class="igs-btn is-primary" data-igs-fbcheck'
+      + (busy ? ' disabled' : '') + '>Check again</button></div></div>';
+  }
+
+  function fbStatusHTML(c) {
+    if (c.invalid) return '';
+    var when = c.expires_at ? new Date(c.expires_at) : null;
+    var date = when && !isNaN(when.getTime())
+      ? when.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : null;
+    return '<div class="igs-note is-good" data-igs-fbconnected><b>Connected through Facebook'
+      + (c.page_name ? ' — Page “' + esc(c.page_name) + '”' : '') + '.</b> '
+      + (date
+          ? 'Facebook asks for a fresh login by ' + esc(date) + '; press Reconnect with Facebook any time before then. '
+          : 'This connection does not expire on a timer. ')
+      + 'If Facebook ever stops accepting it, this screen turns red and you get an email.</div>';
+  }
+
+  /* The numbered list, shared by both routes. */
+  function stepsListHTML(steps) {
+    if (!steps.length) return '';
+    return '<ol class="igs-steps">' + steps.map(function (s, i) {
+      var cls = s.done === true ? ' is-done' : (s.done === null || s.observable === false ? ' is-unknown' : '');
+      var mark = s.done === true ? '&#10003;' : String(i + 1);
+      return '<li class="igs-step' + cls + '"><span class="igs-mark" aria-hidden="true">' + mark + '</span>'
+        + '<span>' + esc(s.text) + '</span></li>';
+    }).join('') + '</ol>';
+  }
+
+  /* ── Connect with Instagram — the original panel, unchanged ──────────── */
+  function instagramHTML() {
+    var c = connection || {};
+    var ready = c.app_id && c.secret_saved;
+
+    return stepsHTML()
 
       + '<div class="igs-note"><b>Step 4 — the redirect URI.</b> Paste this into your Meta app under '
       + '<b>Instagram → API setup with Instagram login → Business login settings → OAuth redirect URIs</b>, '
@@ -621,8 +791,7 @@
             + 'against.</p>')
 
       + expiryHTML()
-      + profileHTML()
-      + '</div>';
+      + profileHTML();
   }
 
   /* ------------------------------------------------------------------ preview */
@@ -1051,6 +1220,42 @@
     }
   }
 
+  /* (Lane IG2) Facebook route: save the app, Check again, pick a Page. */
+  async function saveFacebookKeys() {
+    if (busy) return;
+    var v = function (sel) { var el = document.querySelector(sel); return el ? el.value : ''; };
+    var payload = { app_id: v('[data-igs-fbappid]'), app_secret: v('[data-igs-fbsecret]'), config_id: v('[data-igs-fbconfig]') };
+    busy = true; banner = null; render();
+    try {
+      var body = await api('/instagram/fb/app', payload);
+      connection = body.connection || connection;
+      banner = { ok: true, text: 'Saved. Press Connect with Facebook to log in.' };
+      say('Saved');
+    } catch (e) {
+      banner = { ok: false, text: explain(e, 'Those could not be saved.') };
+    } finally {
+      busy = false; render();
+    }
+  }
+
+  async function facebookStep(path, body) {
+    if (busy) return;
+    busy = true; banner = null; render();
+    try {
+      var r = await api(path, body);
+      connection = r.connection || connection;
+      me = r.profile || me;
+      content = r.content || content;
+      banner = r.state === 'connected' ? { ok: true, text: r.message } : (r.message ? { ok: r.state === 'pick', text: r.message } : null);
+    } catch (e) {
+      var b = e && e.body ? e.body : null;
+      if (b && b.connection) { connection = b.connection; }
+      banner = { ok: false, text: explain(e, 'Facebook could not be asked.') };
+    } finally {
+      busy = false; render();
+    }
+  }
+
   async function refresh() {
     if (busy) return;
     busy = true; banner = null; render();
@@ -1338,7 +1543,12 @@
 
       if (!onScreen()) return;
 
-      banner = (connection && connection.connected)
+      var fbPending = connection && connection.facebook && connection.facebook.pending;
+      banner = fbPending
+        ? (fbPending.state === 'pick'
+            ? { ok: true, text: 'Logged in with Facebook. Choose the Instagram account below.' }
+            : { ok: false, text: 'Logged in with Facebook, but no Instagram account is linked to your Page yet — see below.' })
+        : (connection && connection.connected)
         ? { ok: true, text: 'Connected to Instagram. '
             + (content && content.drawable
                 ? content.drawable + ' post' + (content.drawable === 1 ? '' : 's') + ' with a picture are '
@@ -1494,6 +1704,12 @@
 
     if (t.closest('[data-igs-save]')) { e.preventDefault(); save(); return; }
     if (t.closest('[data-igs-savekeys]')) { e.preventDefault(); saveKeys(); return; }
+    var rt = t.closest('[data-igs-route]');
+    if (rt) { e.preventDefault(); route = rt.getAttribute('data-igs-route'); render(); return; }
+    if (t.closest('[data-igs-fbsave]')) { e.preventDefault(); saveFacebookKeys(); return; }
+    if (t.closest('[data-igs-fbcheck]')) { e.preventDefault(); facebookStep('/instagram/fb/check', {}); return; }
+    var pk = t.closest('[data-igs-pick]');
+    if (pk) { e.preventDefault(); facebookStep('/instagram/fb/pick', { page_id: pk.getAttribute('data-igs-pick') }); return; }
     if (t.closest('[data-igs-refresh]')) { e.preventDefault(); refresh(); return; }
     if (t.closest('[data-igs-disconnect]')) { e.preventDefault(); disconnect(false); return; }
     if (t.closest('[data-igs-clear]')) { e.preventDefault(); disconnect(true); return; }
@@ -1501,7 +1717,8 @@
 
     if (t.closest('[data-igs-copy]')) {
       e.preventDefault();
-      var code = document.querySelector('[data-igs-uri]');
+      var box = t.closest('.igs-uri');
+      var code = (box && box.querySelector('code')) || document.querySelector('[data-igs-uri]');
       if (!code) return;
       var text = code.textContent || '';
       /* The clipboard API needs a secure context and a permission the admin may

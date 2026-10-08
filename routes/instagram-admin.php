@@ -26,6 +26,19 @@ declare(strict_types=1);
 |     POST   /admin-api/instagram/refresh    fetch the profile and posts again
 |     DELETE /admin-api/instagram            disconnect (?posts=1 also clears)
 |
+|   (Lane IG2) Instagram API with Facebook Login — the route Meta offers the
+|   owner's app. /start?via=facebook and the SAME /callback carry it (the
+|   route is recorded with the state, server-side), so no new GET exists and
+|   the redirect URI the owner registers is one address for both routes.
+|
+|     POST   /admin-api/instagram/fb/app     save the Facebook App ID, App secret
+|                                            and optional Configuration ID
+|     POST   /admin-api/instagram/fb/check   "Check again" after linking a Page
+|     POST   /admin-api/instagram/fb/pick    choose among several linked Pages
+|
+|   All three are POSTs under `admin-api/instagram/**`, so the existing
+|   instagram.manage rule in AdminCapabilities::RULES already covers them.
+|
 | THIS FILE IS REQUIRED FROM routes/web.php BY THE INTEGRATOR, inside the
 | existing admin-api group — the one that already carries `web`, `auth:admin` and
 | NoStoreAdminApi — beside the other Content route files. The exact line, and it
@@ -97,6 +110,20 @@ use Illuminate\Support\Facades\Route;
 Route::post('/instagram/app', [InstagramController::class, 'saveApp'])
     ->middleware('throttle:60,1')
     ->name('admin.instagram.app');
+
+Route::post('/instagram/fb/app', [InstagramController::class, 'saveFacebookApp'])
+    ->middleware('throttle:60,1')
+    ->name('admin.instagram.fb.app');
+
+// Each reaches graph.facebook.com (and pick may run a full first fetch), so
+// these are as tight as /refresh.
+Route::post('/instagram/fb/check', [InstagramController::class, 'facebookCheck'])
+    ->middleware('throttle:12,1')
+    ->name('admin.instagram.fb.check');
+
+Route::post('/instagram/fb/pick', [InstagramController::class, 'facebookPick'])
+    ->middleware('throttle:12,1')
+    ->name('admin.instagram.fb.pick');
 
 Route::post('/instagram/refresh', [InstagramController::class, 'refresh'])
     ->middleware('throttle:12,1')

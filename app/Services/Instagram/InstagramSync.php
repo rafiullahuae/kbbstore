@@ -103,6 +103,16 @@ class InstagramSync
      */
     public function refreshTokenIfDue(): array
     {
+        /*
+         * (Lane IG2) A Page token from the Facebook route has no refresh call:
+         * it does not expire on a timer, and when Meta does stop accepting it the
+         * only repair is logging in again. Sending it to graph.instagram.com's
+         * refresh endpoint would be a call to the wrong host with the wrong token.
+         */
+        if (InstagramCredentials::viaFacebook()) {
+            return ['refreshed' => false, 'reason' => 'reconnect'];
+        }
+
         if (! InstagramCredentials::hasToken() || ! InstagramCredentials::needsRefresh()) {
             return ['refreshed' => false];
         }
@@ -277,9 +287,18 @@ class InstagramSync
     public function run(int $seconds = self::WEB_SECONDS): array
     {
         $deadline = microtime(true) + max(1, $seconds);
+        $this->source = null;
 
-        if (! InstagramCredentials::hasSecret() || ! InstagramCredentials::hasAppId()) {
-            return ['ok' => false, 'reason' => 'no_app', 'error' => InstagramClient::REASONS['no_app']];
+        $facebook = InstagramCredentials::viaFacebook();
+
+        if ($facebook
+            ? (! InstagramCredentials::hasFbSecret() || ! InstagramCredentials::hasFbAppId())
+            : (! InstagramCredentials::hasSecret() || ! InstagramCredentials::hasAppId())) {
+            return [
+                'ok' => false,
+                'reason' => 'no_app',
+                'error' => $facebook ? FacebookGraphClient::REASONS['no_app'] : InstagramClient::REASONS['no_app'],
+            ];
         }
 
         $this->refreshTokenIfDue();
@@ -292,9 +311,11 @@ class InstagramSync
 
         /* ── the profile ─────────────────────────────────────────────────── */
 
-        $profile = $this->client->profile($token);
+        $profile = $this->source()->profile($token);
 
         if (! ($profile['ok'] ?? false)) {
+            $this->noticeIfDead($profile);
+
             return [
                 'ok' => false,
                 'reason' => (string) ($profile['reason'] ?? 'refused'),
@@ -359,13 +380,15 @@ class InstagramSync
         $after = null;
 
         do {
-            $media = $this->client->media($token, InstagramClient::PAGE, $after);
+            $media = $this->source()->media($token, InstagramClient::PAGE, $after);
 
             if (! ($media['ok'] ?? false)) {
                 // The FIRST page failing is the run failing, as before. A later
                 // page failing keeps what was read: those rows are real, and
                 // prune() below only judges the range that was actually seen.
                 if ($pages === 0) {
+                    $this->noticeIfDead($media);
+
                     return [
                         'ok' => false,
                         'reason' => (string) ($media['reason'] ?? 'refused'),
@@ -539,6 +562,10 @@ class InstagramSync
      */
     public function selectedInsights(string $token, float $deadline, ?iterable $only = null): array
     {
+        if ($only !== null) {
+            $this->source = null;
+        }
+
         try {
             $posts = $only ?? InstagramPost::query()
                 ->whereNotNull('spotted_sort')
@@ -572,10 +599,10 @@ class InstagramSync
                 continue;
             }
 
-            $answer = $this->client->insights($token, (string) $post->remote_id, $post->media_type === 'VIDEO');
+            $answer = $this->source()->insights($token, (string) $post->remote_id, $post->media_type === 'VIDEO');
 
             if (! ($answer['ok'] ?? false)) {
-                $note = in_array($answer['reason'] ?? '', ['refused', 'expired'], true)
+                $note = in_array($answer['reason'] ?? '', ['refused', 'expired', 'permission'], true)
                     ? 'Shares are hidden: Instagram refused the insights request. Press Reconnect on Content → Instagram once, and allow “insights” when Instagram asks.'
                     : 'Shares could not be read this time; the next refresh tries again.';
 
@@ -597,6 +624,41 @@ class InstagramSync
     }
 
     /* ---------------------------------------------------------------- the pieces */
+
+    /**
+     * (Lane IG2) Where the profile, posts and insights are read from: the host
+     * that minted the stored token. The rows, the pictures and the cache below
+     * are the same whichever it is — that is the InstagramSource seam.
+     */
+    private function source(): InstagramSource
+    {
+        // Read once per call site batch rather than once per insights call: the
+        // route is one settings row, and a 200-post insights pass must not
+        // become 200 reads of it. Re-read on every public entry (run/insights).
+        return $this->source ??= InstagramCredentials::viaFacebook()
+            ? app(FacebookGraphClient::class)
+            : $this->client;
+    }
+
+    /** (Lane IG2) The source for the current pass; reset at each public entry. */
+    private ?InstagramSource $source = null;
+
+    /**
+     * (Lane IG2) Meta has stopped accepting the stored token: record it so the
+     * screen shows Reconnect, and email the owner — once per invalidation.
+     *
+     * @param  array<string, mixed>  $answer
+     */
+    private function noticeIfDead(array $answer): void
+    {
+        if (($answer['reason'] ?? '') !== 'expired') {
+            return;
+        }
+
+        if (InstagramCredentials::markInvalid('expired')) {
+            InstagramReconnectNotice::send(InstagramCredentials::via());
+        }
+    }
 
     /**
      * Download one image and put it on our own disk, or null.

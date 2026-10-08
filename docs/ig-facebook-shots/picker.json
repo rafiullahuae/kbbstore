@@ -1,0 +1,166 @@
+{
+  "picker-390": {
+    "viewport": 390,
+    "pageScrollWidth": 390,
+    "horizontalOverflow": 0,
+    "routeTabs": [
+      "Connect with Facebook (recommended) [selected]",
+      "Connect with Instagram"
+    ],
+    "steps": 7,
+    "stepStates": [
+      "is-done",
+      "is-unknown",
+      "is-done",
+      "is-done",
+      "is-unknown",
+      "is-unknown",
+      "todo"
+    ],
+    "redirectUris": [
+      "http://127.0.0.1:10470/admin-api/instagram/callback",
+      "https://kbeautybliss.com/admin-api/instagram/callback"
+    ],
+    "copyButtons": [
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      },
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      }
+    ],
+    "fields": [
+      "App ID",
+      "App secret",
+      "Configuration ID optional",
+      "Layout",
+      "The profile box",
+      "How many posts",
+      "Space between tiles",
+      "Corner radius",
+      "Heading above the section"
+    ],
+    "inputFontSize": 13,
+    "connectButton": {
+      "w": 174,
+      "h": 38,
+      "clickable": true
+    },
+    "buttons": [
+      "Copy",
+      "Copy",
+      "Save",
+      "Connect with Facebook",
+      "Delete the 44 stored posts",
+      "Save",
+      "Reload"
+    ],
+    "picks": [
+      {
+        "text": "@kbeauty.bliss | Facebook Page: KBB Shop",
+        "w": 302,
+        "h": 62,
+        "clickable": true
+      },
+      {
+        "text": "@kbb.outlet | Facebook Page: KBB Outlet",
+        "w": 302,
+        "h": 62,
+        "clickable": true
+      }
+    ],
+    "unlinked": null,
+    "checkAgain": null,
+    "connectedNote": null,
+    "invalidNote": null,
+    "secretInputValue": "",
+    "htmlHasSecret": false,
+    "consoleErrors": []
+  },
+  "picker-1280": {
+    "viewport": 1280,
+    "pageScrollWidth": 1280,
+    "horizontalOverflow": 0,
+    "routeTabs": [
+      "Connect with Facebook (recommended) [selected]",
+      "Connect with Instagram"
+    ],
+    "steps": 7,
+    "stepStates": [
+      "is-done",
+      "is-unknown",
+      "is-done",
+      "is-done",
+      "is-unknown",
+      "is-unknown",
+      "todo"
+    ],
+    "redirectUris": [
+      "http://127.0.0.1:10470/admin-api/instagram/callback",
+      "https://kbeautybliss.com/admin-api/instagram/callback"
+    ],
+    "copyButtons": [
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      },
+      {
+        "w": 58,
+        "h": 38,
+        "clickable": true
+      }
+    ],
+    "fields": [
+      "App ID",
+      "App secret",
+      "Configuration ID optional",
+      "Layout",
+      "The profile box",
+      "How many posts",
+      "Space between tiles",
+      "Corner radius",
+      "Heading above the section"
+    ],
+    "inputFontSize": 13,
+    "connectButton": {
+      "w": 174,
+      "h": 38,
+      "clickable": true
+    },
+    "buttons": [
+      "Copy",
+      "Copy",
+      "Save",
+      "Connect with Facebook",
+      "Delete the 44 stored posts",
+      "Save",
+      "Reload"
+    ],
+    "picks": [
+      {
+        "text": "@kbeauty.bliss | Facebook Page: KBB Shop",
+        "w": 936,
+        "h": 62,
+        "clickable": true
+      },
+      {
+        "text": "@kbb.outlet | Facebook Page: KBB Outlet",
+        "w": 936,
+        "h": 62,
+        "clickable": true
+      }
+    ],
+    "unlinked": null,
+    "checkAgain": null,
+    "connectedNote": null,
+    "invalidNote": null,
+    "secretInputValue": "",
+    "htmlHasSecret": false,
+    "consoleErrors": []
+  }
+}
