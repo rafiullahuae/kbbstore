@@ -14,9 +14,11 @@ use App\Services\ImageSeo\ImageScore;
 use App\Services\ImageSeo\ImageSeo;
 use App\Services\ImageSeo\ImageSeoJobs;
 use App\Services\ImageSeo\ImageSeoPlanner;
+use App\Services\ImageSeo\ImageSeoSelection;
 use App\Services\SecurityModule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -37,6 +39,11 @@ use Illuminate\Support\Facades\DB;
 final class ImageSeoApiController extends Controller
 {
     private const AUDIT = 'image_seo';
+
+    /** Held while a Start is decided, so two Starts cannot both find the shop idle. */
+    private const START_LOCK = 'kbb.image-seo.start';
+
+    private const TOKEN = ['required', 'string', 'regex:/^[A-Za-z0-9-]{16,64}$/'];
 
     /** Opening the screen: the filters' lists, the rubric, the recent runs. */
     public function show(): JsonResponse
@@ -65,80 +72,140 @@ final class ImageSeoApiController extends Controller
         return response()->json(['ok' => true] + ImageSeo::find($q, $q['strategy'], $q['shared']));
     }
 
-    /** "Select every match": the ids, capped. */
-    public function ids(Request $request): JsonResponse
+    /**
+     * The selection bar's numbers, resolved here from the selection's shape
+     * ("all matching F except these", or "these ids"): never the browser's
+     * own count.
+     */
+    public function selection(Request $request): JsonResponse
     {
-        $q = $this->filters($request);
-        $ids = ImageSeo::ids($q);
+        $selection = ImageSeoSelection::from($request->validate(ImageSeoSelection::rules())['selection']);
+        $ids = $selection->ids();
 
-        return response()->json(['ok' => true, 'ids' => $ids, 'capped' => count($ids) >= 5000]);
+        if ($ids === null) {
+            return response()->json(['ok' => false, 'message' => 'More than '.number_format(ImageSeoSelection::MAX).' products match. Narrow the search first.'], 422);
+        }
+
+        return response()->json(['ok' => true, 'products' => count($ids), 'matching' => $selection->matched, 'pictures' => $selection->pictures($ids)]);
     }
 
-    /** Rename tab, dry run: up to 50 products per call. Writes nothing. */
+    /**
+     * Rename tab, the preview (Rename files, or Rename files + ALT text): the
+     * first call resolves the selection on the server and freezes it as a
+     * run in status "preview"; each call plans the next 50 products and
+     * answers the running totals. Writes nothing to the shop.
+     */
     public function preview(Request $request): JsonResponse
     {
-        $data = $request->validate($this->selectionRules(50) + [
+        $data = $request->validate([
+            'token' => self::TOKEN,
+            'kind' => ['required', 'in:rename,combo'],
+            'offset' => ['required', 'integer', 'min:0', 'max:'.ImageSeoSelection::MAX],
             'strategy' => ['nullable', 'in:'.implode(',', ImageNamer::STRATEGIES)],
             'include_shared' => ['nullable', 'boolean'],
-        ]);
+            'template' => ['nullable', 'in:'.implode(',', AltText::TEMPLATES)],
+            'first' => ['nullable', 'string', 'max:200'],
+            'rest' => ['nullable', 'string', 'max:200'],
+            'keep' => ['nullable', 'boolean'],
+        ] + ImageSeoSelection::rules());
 
-        [$ids, $only] = $this->selection($data['products']);
-        $products = Product::query()->whereIn('id', $ids)->with(['brand:id,name', 'category:id,name'])
-            ->get(['id', 'name', 'slug', 'sku', 'status', 'brand_id', 'category_id', 'image', 'images', 'image_alts'])
-            ->sortBy(fn ($p) => array_search((int) $p->id, $ids, true))->values();
+        // Its own namespace: a browser's token can never name an undo ("undo-7").
+        $token = 'p-'.$data['token'];
+        $job = DB::table('image_seo_jobs')->where('token', $token)->first();
 
-        $plans = (new ImageSeoPlanner($data['strategy'] ?? ImageNamer::STRATEGY_VARIATIONS, (bool) ($data['include_shared'] ?? false)))->plan($products, $only);
+        if ($job === null) {
+            if ((int) $data['offset'] !== 0) {
+                return response()->json(['ok' => false, 'message' => 'That preview has expired. Press Preview again.'], 409);
+            }
 
-        return response()->json(['ok' => true, 'items' => $plans]);
+            $selection = ImageSeoSelection::from($data['selection']);
+            $ids = $selection->ids();
+
+            if ($ids === null) {
+                return response()->json(['ok' => false, 'message' => 'More than '.number_format(ImageSeoSelection::MAX).' products are selected. Narrow the search first.'], 422);
+            }
+
+            if ($ids === []) {
+                return response()->json(['ok' => false, 'message' => 'Nothing is selected. Tick products on the Find tab first.'], 422);
+            }
+
+            $job = ImageSeoJobs::prepare($data['kind'], $token, $selection->items($ids), [
+                'strategy' => $data['strategy'] ?? ImageNamer::STRATEGY_VARIATIONS,
+                'include_shared' => (bool) ($data['include_shared'] ?? false),
+            ] + ($data['kind'] === 'combo' ? [
+                'template' => $data['template'] ?? 'variations',
+                'first' => (string) ($data['first'] ?? ''),
+                'rest' => (string) ($data['rest'] ?? ''),
+                'keep' => (bool) ($data['keep'] ?? true),
+            ] : []), $request->user('admin'));
+        }
+
+        if ($job->status !== 'preview' || $job->kind !== $data['kind']) {
+            return response()->json(['ok' => false, 'message' => 'That preview was already started as run #'.$job->id.'.', 'job' => ImageSeoJobs::view($job, false)], 409);
+        }
+
+        return response()->json(['ok' => true, 'job_id' => (int) $job->id] + ImageSeoJobs::previewChunk($job, (int) $data['offset']));
     }
 
-    /** Rename tab, Start: one job per preview token. */
+    /**
+     * Rename tab, Start: turns a finished preview into a run. Refused without
+     * one, refused while another run is going, and decided under a lock so
+     * two Starts pressed together cannot both find the shop idle.
+     */
     public function start(Request $request): JsonResponse
     {
-        if (($busy = $this->running()) !== null) {
-            return response()->json(['ok' => false, 'message' => 'Another run is in progress (#'.$busy['id'].'). Resume or stop it first.', 'running' => $busy], 409);
+        $token = 'p-'.$request->validate(['token' => self::TOKEN])['token'];
+        $lock = Cache::lock(self::START_LOCK, 15);
+
+        if (! $lock->get()) {
+            return response()->json(['ok' => false, 'message' => 'Another Start is being handled right now. Try again in a moment.'], 409);
         }
 
-        $data = $request->validate($this->selectionRules(5000) + [
-            'token' => ['required', 'string', 'regex:/^[A-Za-z0-9-]{16,64}$/'],
-            'strategy' => ['nullable', 'in:'.implode(',', ImageNamer::STRATEGIES)],
-            'include_shared' => ['nullable', 'boolean'],
-        ]);
+        try {
+            $mine = DB::table('image_seo_jobs')->where('token', $token)->first();
+            $busy = $this->running();
 
-        [$ids, $only] = $this->selection($data['products']);
-        $known = Product::query()->whereIn('id', $ids)->pluck('id')->map(fn ($v) => (int) $v)->all();
-        $items = [];
-
-        foreach ($ids as $id) {
-            if (in_array($id, $known, true)) {
-                $items[] = isset($only[$id]) ? ['p' => $id, 'only' => $only[$id]] : ['p' => $id];
+            if ($busy !== null && ($mine === null || (int) $mine->id !== $busy['id'])) {
+                return response()->json(['ok' => false, 'message' => 'Another run is in progress (#'.$busy['id'].'). Resume or stop it first.', 'running' => $busy], 409);
             }
+
+            $out = ImageSeoJobs::begin($token);
+        } finally {
+            $lock->release();
         }
 
-        if ($items === []) {
-            return response()->json(['ok' => false, 'message' => 'Nothing selected.'], 422);
+        if ($out['error'] === 'preview') {
+            return response()->json(['ok' => false, 'need_preview' => true, 'message' => 'Preview the changes first: Start runs exactly what the preview showed.'], 409);
         }
 
-        $job = ImageSeoJobs::start('rename', 'r-'.$data['token'], $items, [
-            'strategy' => $data['strategy'] ?? ImageNamer::STRATEGY_VARIATIONS,
-            'include_shared' => (bool) ($data['include_shared'] ?? false),
-        ], $request->user('admin'));
+        if ($out['error'] === 'nothing') {
+            return response()->json(['ok' => false, 'message' => 'The preview found nothing to change.'], 422);
+        }
 
-        $this->audit('Image SEO: rename started for '.count($items).' product(s)', 'job '.$job->id);
+        $job = $out['job'];
 
-        return response()->json(['ok' => true, 'job' => ImageSeoJobs::view($job)]);
+        if ($out['started']) {
+            $this->audit('Image SEO: '.($job->kind === 'combo' ? 'rename + ALT text' : 'rename').' started for '.$job->total.' product(s)', 'job '.$job->id);
+        }
+
+        return response()->json(['ok' => true, 'job' => ImageSeoJobs::view($job, false)]);
     }
 
     /** One bounded slice of a running job. */
     public function step(Request $request): JsonResponse
     {
-        $id = (int) $request->validate(['job' => ['required', 'integer', 'min:1']])['job'];
+        $data = $request->validate(['job' => ['required', 'integer', 'min:1'], 'resume' => ['nullable', 'boolean']]);
+        $id = (int) $data['job'];
 
         if (! DB::table('image_seo_jobs')->where('id', $id)->exists()) {
             return response()->json(['ok' => false, 'message' => 'No such run.'], 404);
         }
 
-        $out = ImageSeoJobs::step($id, $request->user('admin'));
+        $out = ImageSeoJobs::step($id, $request->user('admin'), (bool) ($data['resume'] ?? false));
+
+        if (isset($out['refused'])) {
+            return response()->json(['ok' => false, 'message' => $out['refused'], 'job' => $out['job']], 409);
+        }
 
         return response()->json(['ok' => true] + $out, empty($out['busy']) ? 200 : 202);
     }
@@ -154,17 +221,17 @@ final class ImageSeoApiController extends Controller
 
         $this->audit('Image SEO: run #'.$id.' stopped', '');
 
-        return response()->json(['ok' => true, 'job' => ImageSeoJobs::view($job)]);
+        return response()->json(['ok' => true, 'job' => ImageSeoJobs::view($job, false)]);
     }
 
     public function job(Request $request): JsonResponse
     {
-        $id = (int) $request->validate(['id' => ['required', 'integer', 'min:1']])['id'];
-        $job = DB::table('image_seo_jobs')->where('id', $id)->first();
+        $data = $request->validate(['id' => ['required', 'integer', 'min:1'], 'brief' => ['nullable', 'boolean']]);
+        $job = DB::table('image_seo_jobs')->where('id', (int) $data['id'])->where('status', '!=', 'preview')->first();
 
         return $job === null
             ? response()->json(['ok' => false, 'message' => 'No such run.'], 404)
-            : response()->json(['ok' => true, 'job' => ImageSeoJobs::view($job)]);
+            : response()->json(['ok' => true, 'job' => ImageSeoJobs::view($job, ! ($data['brief'] ?? false))]);
     }
 
     /** Undo a finished rename or alt run, from the ledger. */
@@ -174,8 +241,8 @@ final class ImageSeoApiController extends Controller
 
         $original = DB::table('image_seo_jobs')->where('id', $id)->first();
 
-        if ($original === null || ! in_array($original->kind, ['rename', 'alt'], true)) {
-            return response()->json(['ok' => false, 'message' => 'Only a rename or an alt-text run can be undone.'], 422);
+        if ($original === null || ! in_array($original->kind, ['rename', 'alt', 'combo'], true) || $original->status === 'preview') {
+            return response()->json(['ok' => false, 'message' => 'Only a rename, an alt-text or a rename + ALT text run can be undone.'], 422);
         }
 
         if (($busy = $this->running()) !== null) {
@@ -190,22 +257,31 @@ final class ImageSeoApiController extends Controller
 
         $this->audit('Image SEO: undo of run #'.$id.' started', 'job '.$job->id);
 
-        return response()->json(['ok' => true, 'job' => ImageSeoJobs::view($job)]);
+        return response()->json(['ok' => true, 'job' => ImageSeoJobs::view($job, false)]);
     }
 
-    /** ALT tab, dry run: proposals and the score each would give. */
+    /**
+     * ALT tab, dry run: proposals and the score each would give, for the
+     * next 50 products of the selection (resolved here, as everywhere).
+     */
     public function altPreview(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'products' => ['required', 'array', 'min:1', 'max:50'],
-            'products.*' => ['integer', 'min:1'],
+        $data = $request->validate(ImageSeoSelection::rules() + [
+            'offset' => ['nullable', 'integer', 'min:0', 'max:'.ImageSeoSelection::MAX],
             'template' => ['nullable', 'in:'.implode(',', AltText::TEMPLATES)],
             'first' => ['nullable', 'string', 'max:200'],
             'rest' => ['nullable', 'string', 'max:200'],
             'only_missing' => ['nullable', 'boolean'],
         ]);
 
-        $ids = array_values(array_unique(array_map('intval', $data['products'])));
+        $all = ImageSeoSelection::from($data['selection'])->ids();
+
+        if ($all === null) {
+            return response()->json(['ok' => false, 'message' => 'More than '.number_format(ImageSeoSelection::MAX).' products are selected. Narrow the search first.'], 422);
+        }
+
+        $offset = (int) ($data['offset'] ?? 0);
+        $ids = array_slice($all, $offset, 50);
         $products = Product::query()->whereIn('id', $ids)->with(['brand:id,name', 'category:id,name'])
             ->get(['id', 'name', 'slug', 'sku', 'status', 'brand_id', 'category_id', 'image', 'images', 'image_alts'])
             ->sortBy(fn ($p) => array_search((int) $p->id, $ids, true))->values();
@@ -247,19 +323,17 @@ final class ImageSeoApiController extends Controller
             unset($product);
         }
 
-        return response()->json(['ok' => true, 'items' => $items]);
+        $next = $offset + count($ids);
+
+        return response()->json(['ok' => true, 'items' => $items, 'total' => count($all), 'next' => $next, 'done' => $next >= count($all)]);
     }
 
     /** ALT tab, Apply: a job, so it is resumable and undoable like a rename. */
     public function altStart(Request $request): JsonResponse
     {
-        if (($busy = $this->running()) !== null) {
-            return response()->json(['ok' => false, 'message' => 'Another run is in progress (#'.$busy['id'].'). Resume or stop it first.', 'running' => $busy], 409);
-        }
-
         $data = $request->validate([
-            'token' => ['required', 'string', 'regex:/^[A-Za-z0-9-]{16,64}$/'],
-            'items' => ['required', 'array', 'min:1', 'max:2000'],
+            'token' => self::TOKEN,
+            'items' => ['required', 'array', 'min:1', 'max:'.ImageSeoSelection::MAX],
             'items.*.p' => ['required', 'integer', 'min:1'],
             'items.*.alts' => ['required', 'array', 'min:1', 'max:40'],
             'items.*.alts.*' => ['required', 'string', 'max:300'],
@@ -287,10 +361,28 @@ final class ImageSeoApiController extends Controller
             return response()->json(['ok' => false, 'message' => 'No alt text to apply: each must be 5–125 characters.'], 422);
         }
 
-        $job = ImageSeoJobs::start('alt', 'a-'.$data['token'], $items, [], $request->user('admin'));
+        $lock = Cache::lock(self::START_LOCK, 15);
+
+        if (! $lock->get()) {
+            return response()->json(['ok' => false, 'message' => 'Another Start is being handled right now. Try again in a moment.'], 409);
+        }
+
+        try {
+            $mine = DB::table('image_seo_jobs')->where('token', 'a-'.$data['token'])->first();
+            $busy = $this->running();
+
+            if ($busy !== null && ($mine === null || (int) $mine->id !== $busy['id'])) {
+                return response()->json(['ok' => false, 'message' => 'Another run is in progress (#'.$busy['id'].'). Resume or stop it first.', 'running' => $busy], 409);
+            }
+
+            $job = ImageSeoJobs::start('alt', 'a-'.$data['token'], $items, [], $request->user('admin'));
+        } finally {
+            $lock->release();
+        }
+
         $this->audit('Image SEO: alt text started for '.count($items).' product(s)', 'job '.$job->id);
 
-        return response()->json(['ok' => true, 'job' => ImageSeoJobs::view($job)]);
+        return response()->json(['ok' => true, 'job' => ImageSeoJobs::view($job, false)]);
     }
 
     /** The one-time score backfill, one bounded batch. */
@@ -329,38 +421,6 @@ final class ImageSeoApiController extends Controller
         ];
     }
 
-    /** @return array<string, array<int, mixed>> */
-    private function selectionRules(int $max): array
-    {
-        return [
-            'products' => ['required', 'array', 'min:1', 'max:'.$max],
-            'products.*.p' => ['required', 'integer', 'min:1'],
-            'products.*.only' => ['nullable', 'array', 'max:60'],
-            'products.*.only.*' => ['string', 'max:600'],
-        ];
-    }
-
-    /** @return array{0: list<int>, 1: array<int, list<string>>} */
-    private function selection(array $products): array
-    {
-        $ids = [];
-        $only = [];
-
-        foreach ($products as $entry) {
-            $id = (int) $entry['p'];
-
-            if (! in_array($id, $ids, true)) {
-                $ids[] = $id;
-            }
-
-            if (isset($entry['only']) && is_array($entry['only'])) {
-                $only[$id] = array_values(array_map('strval', $entry['only']));
-            }
-        }
-
-        return [$ids, $only];
-    }
-
     /**
      * The job a screen is actively stepping right now: running AND touched in
      * the last two minutes. A run whose tab was closed mid-way is not "busy"
@@ -372,7 +432,7 @@ final class ImageSeoApiController extends Controller
     {
         $job = DB::table('image_seo_jobs')->where('status', 'running')->where('updated_at', '>=', now()->subMinutes(2))->orderByDesc('id')->first();
 
-        return $job === null ? null : ImageSeoJobs::view($job);
+        return $job === null ? null : ImageSeoJobs::view($job, false);
     }
 
     /** @return array<string, mixed>|null the newest unfinished run, to offer Resume */
@@ -380,7 +440,7 @@ final class ImageSeoApiController extends Controller
     {
         $job = DB::table('image_seo_jobs')->whereIn('status', ['running', 'stopped'])->whereColumn('position', '<', 'total')->orderByDesc('id')->first();
 
-        return $job === null ? null : ImageSeoJobs::view($job);
+        return $job === null ? null : ImageSeoJobs::view($job, false);
     }
 
     private function audit(string $summary, string $after): void

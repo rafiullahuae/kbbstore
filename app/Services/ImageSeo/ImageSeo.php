@@ -44,13 +44,6 @@ final class ImageSeo
         ];
     }
 
-    /** Product ids for "select every match", capped so one request stays bounded. */
-    public static function ids(array $q, int $cap = 5000): array
-    {
-        return self::sorted(self::query($q), (string) ($q['sort'] ?? 'name'))
-            ->limit($cap)->pluck('products.id')->map(fn ($id) => (int) $id)->all();
-    }
-
     /** @param array<string, mixed> $q */
     public static function query(array $q): Builder
     {

@@ -17,10 +17,10 @@ declare(strict_types=1);
 |     GET  /admin-api/image-seo                 filters' lists, rubric, recent runs
 |     GET  /admin-api/image-seo/find            Find tab: one page, every picture planned
 |     GET  /admin-api/image-seo/job             one run (?id=)
-|     POST /admin-api/image-seo/ids             "select every match"
-|     POST /admin-api/image-seo/preview         Rename tab dry run (writes nothing)
-|     POST /admin-api/image-seo/start           Rename tab Start (token makes it idempotent)
-|     POST /admin-api/image-seo/step            one bounded slice of a run
+|     POST /admin-api/image-seo/selection       the selection bar's true counts (Lane IS2)
+|     POST /admin-api/image-seo/preview         Rename tab preview, 50 products a call (writes nothing to the shop)
+|     POST /admin-api/image-seo/start           Rename tab Start: a finished preview becomes a run
+|     POST /admin-api/image-seo/step            one bounded slice of a run (~1.5 s), its live progress
 |     POST /admin-api/image-seo/stop            pause a run
 |     POST /admin-api/image-seo/undo            undo a rename or alt run (confirm=UNDO)
 |     POST /admin-api/image-seo/alt-preview     ALT tab dry run
@@ -34,7 +34,9 @@ declare(strict_types=1);
 | appends.
 |
 | Ships with 2027_10_08_120100_clear_caches_image_seo.php, for the compiled
-| route table, the cached role map and the Media Library's compiled view.
+| route table, the cached role map and the Media Library's compiled view; Lane
+| IS2's /selection (which replaced /ids) with
+| 2027_10_11_100100_clear_caches_image_seo_combined.php.
 |
 */
 
@@ -44,7 +46,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/image-seo', [ImageSeoApiController::class, 'show'])->name('admin.image-seo');
 Route::get('/image-seo/find', [ImageSeoApiController::class, 'find'])->name('admin.image-seo.find');
 Route::get('/image-seo/job', [ImageSeoApiController::class, 'job'])->name('admin.image-seo.job');
-Route::post('/image-seo/ids', [ImageSeoApiController::class, 'ids'])->name('admin.image-seo.ids');
+Route::post('/image-seo/selection', [ImageSeoApiController::class, 'selection'])->name('admin.image-seo.selection');
 Route::post('/image-seo/preview', [ImageSeoApiController::class, 'preview'])->name('admin.image-seo.preview');
 Route::post('/image-seo/start', [ImageSeoApiController::class, 'start'])->name('admin.image-seo.start');
 Route::post('/image-seo/step', [ImageSeoApiController::class, 'step'])->name('admin.image-seo.step');

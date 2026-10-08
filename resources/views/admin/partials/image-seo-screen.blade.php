@@ -16,10 +16,18 @@
       History       every run, its log, Undo.
 
     Endpoints: routes/image-seo-admin.php, `media.image_seo` (owner, manager),
-    CSRF via the XSRF cookie like every console screen. NO TIMER AND NO
-    POLLING: a search is a submit, a run is "post the next step when the last
-    one answered", and the score backfill is the same finite loop. No layout
-    measurement. Every value printed passes through esc().
+    CSRF via the XSRF cookie like every console screen. NO POLLING LOOP: a
+    search is a submit, a run is "post the next step when the last one
+    answered" (each step ~1.5 s of work, its answer a few hundred bytes of
+    counts -- that IS the live progress bar), and the preview and the score
+    backfill are the same finite loop. NO TIMER: the selection bar's count is
+    one request at a time, with one more owed if the selection moved while it
+    was out. No layout measurement. Every value printed passes through esc().
+
+    Lane IS2: the selection is "all matching F except these" or "these ids"
+    and the server resolves it; Start previews first when there is no
+    preview; "Rename files + ALT text" is the third button; every greyed
+    button says why underneath.
 
     Wired by tools/ir-wire.php from docs/ir-wiring.json (title, deep-link set
     and this include); the sidebar row is App\Support\AdminNav's.
@@ -116,16 +124,28 @@
   var q = { q: '', brand: 0, category: 0, filter: '', sort: 'name', page: 1 };
   var found = null;           // last /find answer
   var plans = {};             // product id -> last plan seen
-  var sel = {};               // product id -> true (all) | {rel: true}
+
+  /* THE SELECTION LIVES HERE, NOT ON A PAGE (Lane IS2). Either "all products
+     matching `filter`, except these ids" or "these ids", plus per product the
+     pictures left ticked. A page only READS it to draw its boxes, so moving
+     between pages can neither re-tick nor lose anything, and "all 5,000"
+     costs one small object. The server resolves it (POST /selection,
+     /preview); the counts in the bar are the server's. */
+  var sel = { mode: 'none', ids: {}, filter: null, except: {}, only: {} };
+  var selInfo = { products: 0, pictures: null, error: '' };
+  var selSeq = 0;
+  var selAsking = false;      // a count request is out; another is owed when it lands
+
   var strategy = 'variations';
   var shared = false;
-  var preview = null;         // rename preview items
-  var previewToken = '';
+  var pv = null;              // the preview on screen: {kind, token, at, total, done, counts, items}
   var job = null;             // the run on screen
   var jobBusy = false;
   var stopAsked = false;
+  var runLog = [];            // what this tab saw the run do, newest last (60 kept)
+  var runFailures = [];
   var liveCheck = null;
-  var alt = { template: 'variations', first: '{full}', rest: '{name} by {brand} – view {index}', keep: true, items: null, edits: {}, token: '' };
+  var alt = { template: 'variations', first: '{full}', rest: '{name} by {brand} – view {index}', keep: true, items: null, edits: {}, token: '', at: 0, total: 0 };
   var msg = null;
   var scoring = null;         // {left, running}
   var busy = '';
@@ -180,26 +200,112 @@
 
   function ten(score) { return Math.floor(Math.max(0, Math.min(100, score)) / 10 + 0.5); }
 
-  function selCount() {
-    var products = 0, pictures = 0;
-    Object.keys(sel).forEach(function (id) {
-      products++;
-      if (sel[id] === true) { pictures += plans[id] ? plans[id].images.filter(function (i) { return i.rel; }).length : 0; }
-      else pictures += Object.keys(sel[id]).length;
-    });
-    return { products: products, pictures: pictures };
+  function num(n) { return Number(n || 0).toLocaleString('en-US'); }
+
+  function plural(n, one, many) { return num(n) + ' ' + (Number(n) === 1 ? one : many); }
+
+  function clock(ms) {
+    var s = Math.max(0, Math.round(ms / 1000));
+    var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60;
+    return (h ? h + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (r < 10 ? '0' : '') + r;
   }
 
-  function selectionPayload() {
-    return Object.keys(sel).map(function (id) {
-      return sel[id] === true ? { p: +id } : { p: +id, only: Object.keys(sel[id]) };
-    });
+  /* ------------------------------------------------------- the selection */
+  function selEmpty() { return sel.mode === 'none'; }
+
+  function sameFilter(a, b) {
+    return !!a && !!b && a.q === b.q && +a.brand === +b.brand && +a.category === +b.category && (a.filter || '') === (b.filter || '');
+  }
+
+  function currentFilter() { return { q: q.q, brand: +q.brand || 0, category: +q.category || 0, filter: q.filter || '' }; }
+
+  function productPicked(pid) {
+    if (sel.mode === 'all') return !sel.except[pid];
+    return !!sel.ids[pid];
   }
 
   function isPicked(pid, rel) {
-    var s = sel[pid];
-    if (!s) return false;
-    return s === true || !!s[rel];
+    if (!productPicked(pid)) return false;
+    return !sel.only[pid] || !!sel.only[pid][rel];
+  }
+
+  function relsOf(pid) { return (plans[pid] ? plans[pid].images : []).filter(function (i) { return i.rel; }).map(function (i) { return i.rel; }); }
+
+  function pickProduct(pid, on) {
+    delete sel.only[pid];
+    if (sel.mode === 'all') { if (on) delete sel.except[pid]; else sel.except[pid] = true; }
+    else {
+      if (on) { sel.mode = 'ids'; sel.ids[pid] = true; } else delete sel.ids[pid];
+      if (!Object.keys(sel.ids).length) sel.mode = 'none';
+    }
+  }
+
+  function pickImage(pid, rel, on) {
+    var all = relsOf(pid);
+    var cur = {};
+    if (productPicked(pid)) { (sel.only[pid] ? Object.keys(sel.only[pid]) : all).forEach(function (r) { cur[r] = true; }); }
+    if (on) cur[rel] = true; else delete cur[rel];
+    var n = Object.keys(cur).length;
+    if (!n) { pickProduct(pid, false); return; }
+    pickProduct(pid, true);
+    if (n < all.length) sel.only[pid] = cur;
+  }
+
+  function clearSelection() {
+    sel = { mode: 'none', ids: {}, filter: null, except: {}, only: {} };
+    selInfo = { products: 0, pictures: null, error: '' };
+    selSeq++;
+  }
+
+  function selectionPayload() {
+    return {
+      mode: sel.mode === 'all' ? 'all' : 'ids',
+      ids: sel.mode === 'all' ? [] : Object.keys(sel.ids).map(Number),
+      filter: sel.mode === 'all' ? sel.filter : null,
+      except: sel.mode === 'all' ? Object.keys(sel.except).map(Number) : [],
+      only: Object.keys(sel.only).map(function (p) { return { p: +p, rels: Object.keys(sel.only[p]) }; })
+    };
+  }
+
+  /* Anything about the selection moved: the preview and the ALT list it
+     made are spent, and the bar asks the server for the true numbers. No
+     timer: one request at a time, and clicks made while it is out are
+     answered by ONE more request when it lands -- twenty quick ticks cost
+     two requests, not twenty. */
+  function selChanged() {
+    pv = null; alt.items = null; alt.edits = {};
+    var known = sel.mode === 'ids' ? Object.keys(sel.ids).length
+      : (found && sameFilter(sel.filter, found.filter) ? Math.max(0, found.total - Object.keys(sel.except).length) : selInfo.products);
+    selInfo = { products: known, matching: sel.mode === 'all' && found && sameFilter(sel.filter, found.filter) ? found.total : null, pictures: null, error: '' };
+    selSeq++;
+    render();
+    if (!selEmpty()) askCounts();
+  }
+
+  async function askCounts() {
+    if (selAsking) return;
+    selAsking = true;
+    var seq = selSeq;
+    var r = await api('/image-seo/selection', { selection: selectionPayload() });
+    selAsking = false;
+    if (seq !== selSeq) { if (!selEmpty()) askCounts(); return; }   // it moved meanwhile: ask once more
+    if (r.status !== 200) selInfo = { products: selInfo.products, matching: selInfo.matching, pictures: null, error: fail(r) };
+    else selInfo = { products: r.body.products, matching: r.body.matching, pictures: r.body.pictures, error: '' };
+    renderCounts();
+  }
+
+  function selBar() {
+    if (selEmpty()) return '';
+    var n = selInfo.products;
+    var pics = selInfo.error ? '' : (selInfo.pictures == null ? '<span style="opacity:.75">counting pictures…</span>' : plural(selInfo.pictures, 'picture', 'pictures'));
+    var ex = Object.keys(sel.except).length;
+    var what = sel.mode === 'all'
+      ? 'All <b>' + num(selInfo.matching != null ? selInfo.matching : n + ex) + '</b> products selected' + (ex ? ' (' + num(ex) + ' excluded) · <b>' + num(n) + '</b> to work on' : '') + ' · ' + pics
+      : '<b>' + num(n) + '</b> ' + (n === 1 ? 'product' : 'products') + ' selected · ' + pics;
+    return '<div class="isx-bar" data-isx-selbar><span>' + what + (selInfo.error ? esc(selInfo.error) : '') + '</span>'
+      + '<span class="isx-row"><button type="button" class="isx-btn is-quiet" data-isx="tab-rename">Rename…</button>'
+      + '<button type="button" class="isx-btn is-quiet" data-isx="tab-alt">ALT text…</button>'
+      + '<button type="button" class="isx-btn is-quiet" data-isx="clear-sel">Clear</button></span></div>';
   }
 
   function show(m) { msg = m; }
@@ -209,17 +315,42 @@
     var host = document.querySelector('[data-isx-screen]');
     if (!host) return;
     if (!boot) { host.innerHTML = '<div class="isx-card"><p class="isx-sub">' + (msg ? esc(msg.text) : 'Loading Image SEO…') + '</p></div>'; return; }
-    var c = selCount();
+    // What he is typing in the search form survives a redraw he did not ask
+    // for (a count landing, the score backfill moving on).
+    var draft = null;
+    var form = host.querySelector('[data-isx-form="find"]');
+    if (form) {
+      draft = {};
+      ['q', 'brand', 'category', 'filter', 'sort'].forEach(function (k) { if (form.elements[k]) draft[k] = form.elements[k].value; });
+      var focused = document.activeElement && form.contains(document.activeElement) ? document.activeElement.name : '';
+      var caret = focused === 'q' ? [form.elements.q.selectionStart, form.elements.q.selectionEnd] : null;
+    }
     host.innerHTML = head()
       + '<div class="isx-tabs" role="tablist">'
       + tabBtn('find', 'Find') + tabBtn('rename', 'Rename files') + tabBtn('alt', 'ALT text') + tabBtn('history', 'History')
       + '</div>'
-      + (c.products ? '<div class="isx-bar"><span><b>' + esc(c.products) + '</b> product(s) selected · ' + esc(c.pictures) + ' picture(s)</span>'
-        + '<span class="isx-row"><button type="button" class="isx-btn is-quiet" data-isx="tab-rename">Rename…</button>'
-        + '<button type="button" class="isx-btn is-quiet" data-isx="tab-alt">ALT text…</button>'
-        + '<button type="button" class="isx-btn is-quiet" data-isx="clear-sel">Clear</button></span></div>' : '')
+      + selBar()
       + (msg ? '<div class="isx-msg ' + (msg.ok === true ? 'is-ok' : (msg.ok === false ? 'is-bad' : 'is-info')) + '" role="status" style="margin:0 0 12px">' + esc(msg.text) + '</div>' : '')
       + (tab === 'find' ? findTab() : tab === 'rename' ? renameTab() : tab === 'alt' ? altTab() : historyTab());
+    var again = draft && host.querySelector('[data-isx-form="find"]');
+    if (again) {
+      Object.keys(draft).forEach(function (k) { if (again.elements[k]) again.elements[k].value = draft[k]; });
+      if (focused && again.elements[focused]) {
+        again.elements[focused].focus();
+        if (caret) again.elements.q.setSelectionRange(caret[0], caret[1]);
+      }
+    }
+  }
+
+  /* A count arriving redraws the bar and the "N products selected" lines,
+     nothing else: no form, list or button under the pointer is replaced. */
+  function renderCounts() {
+    var bar = document.querySelector('[data-isx-selbar]');
+    if (!bar) { render(); return; }
+    var holder = document.createElement('div');
+    holder.innerHTML = selBar();
+    if (holder.firstChild) bar.replaceWith(holder.firstChild);
+    document.querySelectorAll('[data-isx-selcount]').forEach(function (e) { e.textContent = plural(selInfo.products, 'product', 'products') + ' selected.'; });
   }
 
   function tabBtn(id, label) {
@@ -234,7 +365,7 @@
     var resume = '';
     var rj = boot.resumable;
     if (rj && (!job || job.id !== rj.id)) {
-      resume = '<div class="isx-msg is-info">Run #' + esc(rj.id) + ' (' + esc(rj.kind) + ') stopped at ' + esc(rj.position) + ' of ' + esc(rj.total) + ' products. '
+      resume = '<div class="isx-msg is-info">Run #' + esc(rj.id) + ' (' + esc(kindName(rj)) + ') stopped at ' + esc(rj.position) + ' of ' + esc(rj.total) + ' products. '
         + '<button type="button" class="isx-btn is-quiet" data-isx="resume" data-isx-job="' + esc(rj.id) + '">Resume</button></div>';
     }
     return '<div class="isx-card isx-head"><h2>Image SEO</h2>'
@@ -267,16 +398,20 @@
     if (!found) return form + '<div class="isx-card isx-empty">' + (busy === 'find' ? 'Searching…' : 'Search to see products and their pictures.') + '</div>';
     if (!found.items.length) return form + '<div class="isx-card isx-empty">No products match.</div>';
 
-    var allOnPage = found.items.every(function (p) { return sel[p.id] === true; });
-    var top = '<div class="isx-row" style="justify-content:space-between"><span class="isx-meta">' + esc(found.total) + ' product(s) · page ' + esc(found.page) + ' of ' + esc(found.pages) + '</span>'
+    var allOnPage = found.items.every(function (p) { return productPicked(p.id); });
+    var allHere = sel.mode === 'all' && sameFilter(sel.filter, found.filter);
+    var top = '<div class="isx-row" style="justify-content:space-between"><span class="isx-meta">' + plural(found.total, 'product', 'products') + ' · page ' + esc(found.page) + ' of ' + esc(found.pages) + '</span>'
       + '<span class="isx-row"><button type="button" class="isx-btn is-quiet" data-isx="page-all">' + (allOnPage ? 'Unselect this page' : 'Select this page') + '</button>'
-      + '<button type="button" class="isx-btn is-quiet" data-isx="all-matches"' + (busy === 'ids' ? ' disabled' : '') + '>Select all ' + esc(found.total) + ' matches</button></span></div>';
+      + (allHere
+        ? '<span class="isx-meta">All ' + num(found.total) + ' results are selected</span>'
+        : '<button type="button" class="isx-btn is-quiet" data-isx="all-matches">Select all ' + num(found.total) + ' results</button>')
+      + '</span></div>';
 
     return form + '<div class="isx-card">' + top + found.items.map(productCard).join('') + pager() + '</div>';
   }
 
   function productCard(p) {
-    var picked = sel[p.id] === true;
+    var picked = productPicked(p.id) && !sel.only[p.id];
     var low = p.lowest == null ? '' : '<span class="isx-meta">lowest</span>' + scoreBadge(ten(p.lowest), '') + '<span class="isx-meta">average ' + esc(ten(p.average)) + '/10</span>';
     return '<div class="isx-prod"><div class="isx-ph">'
       + '<input type="checkbox" aria-label="Select every picture of ' + esc(p.name) + '" data-isx="pick-product" data-isx-p="' + esc(p.id) + '"' + (picked ? ' checked' : '') + '>'
@@ -323,121 +458,218 @@
     busy = '';
     if (r.status !== 200) { show({ ok: false, text: fail(r) }); render(); return; }
     found = r.body;
+    found.filter = currentFilter();
     found.items.forEach(function (p) { plans[p.id] = p; });
     msg = null;
     render();
   }
 
   /* --------------------------------------------------------- Rename tab */
+  var TEMPLATE_NAMES = { variations: 'Natural variations (recommended)', numbered: 'Name + view', custom: 'My own wording' };
+
   function renameTab() {
-    var c = selCount();
+    var none = selEmpty();
     var opts = '<div class="isx-opts">'
       + '<label><input type="radio" name="isx-strategy" value="variations" data-isx="strategy"' + (strategy === 'variations' ? ' checked' : '') + '><span><b>Word-order variations</b> (recommended): medicube-pdrn-eye-patches, pdrn-medicube-eye-patches, eye-patches-pdrn-by-medicube…</span></label>'
       + '<label><input type="radio" name="isx-strategy" value="numbered" data-isx="strategy"' + (strategy === 'numbered' ? ' checked' : '') + '><span><b>Name + view number</b>: medicube-pdrn-eye-patches, medicube-pdrn-eye-patches-2, -3…</span></label>'
       + '<label><input type="checkbox" data-isx="shared"' + (shared ? ' checked' : '') + '><span>Include pictures shared by several products (named after the product being renamed; every product keeps showing it)</span></label>'
       + '</div>';
-    var head = '<div class="isx-card"><b>Rename files</b><p class="isx-sub">' + (c.products ? esc(c.products) + ' product(s) selected.' : 'Select products on the Find tab first.')
-      + ' Nothing changes until you press Start. Names are lower case, hyphenated, made from the product title; the old address of every file redirects to the new one.</p>' + opts
-      + '<div class="isx-row" style="margin-top:10px"><button type="button" class="isx-btn is-quiet" data-isx="preview"' + (!c.products || busy || jobBusy ? ' disabled' : '') + '>' + (busy === 'preview' ? 'Preparing…' : 'Preview changes') + '</button>'
-      + '<button type="button" class="isx-btn" data-isx="start"' + (!preview || !preview.rename || jobBusy || busy ? ' disabled' : '') + '>Start renaming' + (preview ? ' ' + esc(preview.rename) + ' file(s)' : '') + '</button></div></div>';
-    return head + (job && job.kind !== 'alt' ? jobCard() : '') + previewCard();
+    var altLine = '<div class="isx-opts" style="margin-top:10px;border-top:1px solid var(--border,#eef0f5);padding-top:10px">'
+      + '<span class="isx-sub"><b>Rename files + ALT text</b> also writes ALT text for the same pictures with the ALT text tab\'s choice: <b>' + esc(TEMPLATE_NAMES[alt.template] || alt.template) + '</b>'
+      + ' <button type="button" class="isx-btn is-quiet" data-isx="tab-alt" style="padding:3px 9px;font-size:12px">Change</button></span>'
+      + '<label><input type="checkbox" data-isx="keep"' + (alt.keep ? ' checked' : '') + '><span>Keep ALT text somebody already wrote</span></label></div>';
+
+    var ready = function (kind) { return pv && pv.kind === kind && pv.done; };
+    var off = none || !!busy || jobBusy;
+    var startLabel = ready('rename') ? (pv.counts.rename ? 'Start renaming ' + plural(pv.counts.rename, 'file', 'files') : 'Nothing to rename') : 'Preview, then start renaming';
+    var comboLabel = ready('combo')
+      ? (pv.counts.rename + pv.counts.alt ? 'Start: rename ' + plural(pv.counts.rename, 'file', 'files') + ' + write ' + plural(pv.counts.alt, 'ALT text', 'ALT texts') : 'Nothing to change')
+      : 'Rename files + ALT text';
+    var startOff = off || (ready('rename') && !pv.counts.rename);
+    var comboOff = off || (ready('combo') && !(pv.counts.rename + pv.counts.alt));
+
+    var head = '<div class="isx-card"><b>Rename files</b><p class="isx-sub">' + (none ? 'Select products on the Find tab first.' : '<span data-isx-selcount>' + plural(selInfo.products, 'product', 'products') + ' selected.</span>')
+      + ' Nothing changes until you press Start, and Start always shows you what it will do first. Names are lower case, hyphenated, made from the product title; the old address of every file redirects to the new one.</p>' + opts + altLine
+      + '<div class="isx-row" style="margin-top:12px"><button type="button" class="isx-btn is-quiet" data-isx="preview"' + (off ? ' disabled' : '') + '>' + (busy === 'preview' && pv && pv.kind === 'rename' ? 'Checking…' : 'Preview changes') + '</button>'
+      + '<button type="button" class="isx-btn" data-isx="start"' + (startOff ? ' disabled' : '') + '>' + esc(startLabel) + '</button>'
+      + '<button type="button" class="isx-btn" data-isx="combo"' + (comboOff ? ' disabled' : '') + '>' + esc(comboLabel) + '</button></div>'
+      + why() + '</div>';
+    // A run still going sits on top, where a phone sees it without scrolling.
+    var mine = job && job.kind !== 'alt';
+    if (mine && job.status !== 'done') return jobCard() + head + previewCard();
+    return head + (mine ? jobCard() : '') + previewCard();
+  }
+
+  /* Every greyed button says why, on the screen, under the buttons. */
+  function why() {
+    var t = '';
+    if (selEmpty()) t = 'The buttons wake up once products are selected: tick them on the Find tab, or press "Select all … results" there.';
+    else if (jobBusy) t = 'A run is going (below). Stop it, or let it finish, before starting another.';
+    else if (busy === 'preview' && pv) t = 'Checking ' + num(pv.at) + ' of ' + num(pv.total || selInfo.products) + ' products…';
+    else if (busy) t = 'Working…';
+    else if (pv && pv.done && !pv.counts.rename && !(pv.kind === 'combo' && pv.counts.alt)) t = nothingWhy(pv);
+    return t ? '<div class="isx-msg is-info" data-isx-why>' + esc(t) + '</div>' : '';
+  }
+
+  function reasonsText(c) {
+    return Object.keys(c.reasons || {}).sort(function (a, b) { return c.reasons[b] - c.reasons[a]; })
+      .map(function (k) { return num(c.reasons[k]) + ' ' + k; }).join(' · ');
+  }
+
+  function nothingWhy(p) {
+    var c = p.counts;
+    var out = 'Nothing to ' + (p.kind === 'combo' ? 'change' : 'rename') + ' in ' + (c.products === 1 ? 'this product' : 'these ' + num(c.products) + ' products') + ': ' + (reasonsText(c) || 'no pictures on this shop') + '.';
+    if (c.reasons && c.reasons['shared with other products'] && !shared) out += ' Tick "Include pictures shared by several products" to rename shared ones.';
+    if (p.kind === 'combo' && c.kept) out += ' ' + plural(c.kept, 'ALT text was', 'ALT texts were') + ' kept as written; untick "Keep ALT text somebody already wrote" to replace ' + (c.kept === 1 ? 'it' : 'them') + '.';
+    return out;
   }
 
   function previewCard() {
-    if (!preview) return '';
+    if (!pv || !pv.counts) return '';
+    var c = pv.counts;
     var rows = [];
-    preview.items.forEach(function (p) {
+    (pv.items || []).forEach(function (p) {
       p.images.forEach(function (i) {
-        if (i.reason === 'not selected') return;
         rows.push('<li><b>' + esc(p.name) + '</b><br>' + action(i)
           + (i.action === 'rename' || i.action === 'repoint' ? '<br><code class="isx-code">' + esc(i.rel) + '</code> <span class="isx-arrow" style="color:#15a85a;font-weight:800">→</span> <code class="isx-code">' + esc(i.proposed_rel) + '</code>' : '')
+          + (i.alt ? '<br><span class="isx-why">ALT → “' + esc(i.alt) + '”</span>' : '')
           + '</li>');
       });
     });
-    return '<div class="isx-card"><b>Preview</b> <span class="isx-meta">' + esc(preview.rename) + ' to rename · ' + esc(preview.ok) + ' already named · ' + esc(preview.skip) + ' skipped</span>'
-      + (preview.partial ? '<div class="isx-msg is-info">Showing the first ' + esc(preview.items.length) + ' products; the run covers all ' + esc(selCount().products) + '.</div>' : '')
-      + '<ul class="isx-log" style="max-height:480px">' + rows.join('') + '</ul></div>';
+    var pct = pv.total ? Math.round(pv.at / pv.total * 100) : 0;
+    var totals = '<b>' + plural(c.rename, 'file', 'files') + ' to rename</b>'
+      + (pv.kind === 'combo' ? ' · <b>' + plural(c.alt, 'ALT text', 'ALT texts') + ' to write</b>' + (c.kept ? ' · ' + num(c.kept) + ' kept as written' : '') : '')
+      + ' · ' + num(c.ok) + ' already named · ' + num(c.skip) + ' skipped';
+    return '<div class="isx-card" data-isx-preview><b>' + (pv.kind === 'combo' ? 'Preview: rename files + ALT text' : 'Preview: rename files') + '</b> <span class="isx-meta">' + plural(c.products, 'product', 'products') + (pv.done ? '' : ' so far') + '</span>'
+      + (pv.done ? '' : '<div class="isx-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>')
+      + '<div class="isx-sub" style="margin-top:6px">' + totals + '</div>'
+      + (reasonsText(c) ? '<div class="isx-why">Not renamed: ' + esc(reasonsText(c)) + '</div>' : '')
+      + (pv.total > (pv.items || []).length && rows.length ? '<div class="isx-msg is-info">Listing the first ' + num((pv.items || []).length) + ' products; the counts and the run cover all ' + num(pv.total) + '.</div>' : '')
+      + (rows.length ? '<ul class="isx-log" style="max-height:480px">' + rows.join('') + '</ul>' : '') + '</div>';
   }
 
-  async function doPreview() {
-    var all = selectionPayload();
-    if (!all.length) return;
-    busy = 'preview'; preview = null; render();
-    var r = await api('/image-seo/preview', { products: all.slice(0, 50), strategy: strategy, include_shared: shared });
-    busy = '';
-    if (r.status !== 200) { show({ ok: false, text: fail(r) }); render(); return; }
-    var n = { rename: 0, ok: 0, skip: 0 };
-    r.body.items.forEach(function (p) {
-      plans[p.id] = p;
-      p.images.forEach(function (i) {
-        if (i.reason === 'not selected') return;
-        if (i.action === 'rename' || i.action === 'repoint') n.rename++; else if (i.action === 'ok') n.ok++; else n.skip++;
-      });
-    });
-    preview = { items: r.body.items, rename: n.rename, ok: n.ok, skip: n.skip, partial: all.length > 50 };
-    // More than 50 products: the count of the rest is the run's to report.
-    if (all.length > 50 && !n.rename) preview.rename = 1;
-    previewToken = token();
-    msg = null;
-    render();
+  /* The preview, 50 products a request, until the server says done. Each
+     answer moves the bar; nothing repeats on a timer. */
+  async function runPreview(kind) {
+    if (selEmpty()) return false;
+    pv = { kind: kind, token: token(), at: 0, total: selInfo.products, done: false, counts: null, items: [] };
+    busy = 'preview'; msg = null; render();
+    var offset = 0;
+    for (var guard = 0; guard < 400; guard++) {
+      var r = await api('/image-seo/preview', { token: pv.token, kind: kind, offset: offset, selection: selectionPayload(), strategy: strategy, include_shared: shared,
+        template: alt.template, first: alt.first, rest: alt.rest, keep: alt.keep });
+      if (!pv || pv.kind !== kind) { busy = ''; render(); return false; }   // the selection moved meanwhile
+      if (r.status !== 200) { pv = null; busy = ''; show({ ok: false, text: fail(r) }); render(); return false; }
+      if (offset === 0) pv.items = r.body.items; else pv.items = pv.items.concat(r.body.items);
+      pv.at = r.body.at; pv.total = r.body.total; pv.counts = r.body.counts; pv.done = r.body.done;
+      render();
+      if (pv.done || r.body.at <= offset) break;
+      offset = r.body.at;
+    }
+    busy = ''; render();
+    return !!(pv && pv.done);
   }
 
-  async function startRename() {
-    if (!preview) return;
-    if (!window.confirm('Rename the selected pictures now? Every old address will redirect to the new name, and the run can be undone from History.')) return;
-    var r = await api('/image-seo/start', { token: previewToken, products: selectionPayload(), strategy: strategy, include_shared: shared });
+  /* Start, for both kinds: no preview yet, or one for something else, and
+     the preview runs first; then one question with the real numbers. */
+  async function go(kind) {
+    if (busy || jobBusy) return;
+    if (!(pv && pv.kind === kind && pv.done)) {
+      if (!(await runPreview(kind))) return;
+    }
+    var c = pv.counts;
+    var files = c.rename, alts = kind === 'combo' ? c.alt : 0;
+    if (!files && !alts) { render(); return; }
+    var question = kind === 'combo'
+      ? 'Rename ' + plural(files, 'file', 'files') + ' and write ' + plural(alts, 'ALT text', 'ALT texts') + ' in ' + plural(c.products, 'product', 'products') + '?'
+      : 'Rename ' + plural(files, 'file', 'files') + ' in ' + plural(c.products, 'product', 'products') + '?';
+    if (!window.confirm(question + ' Every old address will redirect to the new name, and the run can be undone from History.')) return;
+    var r = await api('/image-seo/start', { token: pv.token });
+    if (r.status === 409 && r.body.need_preview) { pv = null; show({ ok: null, text: 'The preview had expired, so nothing started. Press the button again to preview and start.' }); render(); return; }
     if (r.status !== 200) { show({ ok: false, text: fail(r) }); render(); return; }
-    job = r.body.job; liveCheck = null;
-    run();
+    job = r.body.job; pv = null; liveCheck = null;
+    run(false);
   }
 
   /* -------------------------------------------------------------- a run */
+  var KIND_NAMES = { rename: 'Rename files', alt: 'ALT text', combo: 'Rename files + ALT text', undo: 'Undo' };
+
+  function kindName(j) { return j.undo_of ? 'Undo of run #' + j.undo_of : (KIND_NAMES[j.kind] || j.kind); }
+
+  function counts(j) {
+    var undo = j.kind === 'undo' || j.undo_of != null;
+    var parts = [];
+    if (j.kind !== 'alt') parts.push(plural(j.renamed, undo ? 'file restored' : 'file renamed', undo ? 'files restored' : 'files renamed'));
+    if (j.kind === 'combo' || j.kind === 'alt' || j.alt_written) {
+      // Runs from before Lane IS2 counted ALT text under "renamed".
+      parts.push(plural(j.alt_written || (j.kind === 'alt' ? j.renamed : 0), 'ALT text', 'ALT texts') + (undo ? ' restored' : ' written'));
+    }
+    parts.push(num(j.skipped) + ' skipped', num(j.failed) + ' failed');
+    return parts.join(' · ');
+  }
+
   function jobCard() {
     if (!job) return '';
     var pct = job.total ? Math.round(job.position / job.total * 100) : 100;
-    var kind = job.kind === 'alt' ? (job.undo_of ? 'Undo of run #' + job.undo_of : 'Alt text') : job.kind === 'undo' ? 'Undo of run #' + job.undo_of : 'Rename';
-    var log = (job.log || []).slice().reverse().slice(0, 60).map(function (e) {
+    var done = job.status === 'done';
+    var log = runLog.length ? runLog : (job.log || []);
+    var fails = runFailures.length ? runFailures : (job.failures || []);
+    var line = function (e) {
       var cls = e.status === 'rolled_back' ? 'is-fail' : (e.status === 'skipped' ? 'is-skip' : (e.status === 'ok' ? 'is-ok' : 'is-rename'));
-      return '<li><span class="isx-tag ' + cls + '">' + esc(e.status.replace('_', ' ')) + '</span><b>' + esc(e.name) + '</b>'
+      return '<li><span class="isx-tag ' + cls + '">' + esc(e.status === 'rolled_back' ? 'failed' : e.status.replace('_', ' ')) + '</span><b>' + esc(e.name) + '</b>'
         + (e.rel ? '<br><code class="isx-code">' + esc(e.rel) + '</code>' + (e.to && e.status !== 'skipped' ? ' → <code class="isx-code">' + esc(e.to) + '</code>' : '') : '')
         + (e.reason ? '<br><span class="isx-why">' + esc(e.reason) + '</span>' : '')
         + (e.refs ? '<span class="isx-why"> · ' + esc(e.refs) + ' reference(s) updated · ' + esc(e.files) + ' file(s) moved</span>' : '') + '</li>';
-    }).join('');
+    };
+    var eta = '';
+    if (!done && job.position > 0 && job.elapsed_ms > 0) eta = ' · about ' + clock(job.elapsed_ms / job.position * (job.total - job.position)) + ' left';
+    var time = done ? 'Finished in ' + clock(job.elapsed_ms) : 'Elapsed ' + clock(job.elapsed_ms) + eta;
     var check = liveCheck ? '<div class="isx-msg ' + (liveCheck.ok ? 'is-ok' : 'is-bad') + '">' + esc(liveCheck.text) + '</div>' : '';
     var buttons = '';
-    if (jobBusy) buttons = '<button type="button" class="isx-btn is-quiet" data-isx="stop">Stop after this step</button>';
-    else if (job.status !== 'done') buttons = '<button type="button" class="isx-btn" data-isx="resume" data-isx-job="' + esc(job.id) + '">Resume</button>';
-    else if ((job.kind === 'rename' || (job.kind === 'alt' && !job.undo_of)) && !job.undone) buttons = '<button type="button" class="isx-btn is-quiet" data-isx="undo" data-isx-job="' + esc(job.id) + '">Undo this run</button>';
-    return '<div class="isx-card"><b>' + esc(kind) + ' · run #' + esc(job.id) + '</b> <span class="isx-meta">' + esc(job.status === 'done' ? 'finished' : (jobBusy ? 'running' : 'paused')) + '</span>'
+    if (jobBusy) buttons = '<button type="button" class="isx-btn is-quiet" data-isx="stop"' + (stopAsked ? ' disabled' : '') + '>' + (stopAsked ? 'Stopping…' : 'Stop') + '</button>';
+    else if (!done) buttons = '<button type="button" class="isx-btn" data-isx="resume" data-isx-job="' + esc(job.id) + '">Resume</button>';
+    else if (!job.undo_of && job.kind !== 'undo' && !job.undone) buttons = '<button type="button" class="isx-btn is-quiet" data-isx="undo" data-isx-job="' + esc(job.id) + '">Undo this run</button>';
+    return '<div class="isx-card" data-isx-run><b>' + esc(kindName(job)) + ' · run #' + esc(job.id) + '</b> <span class="isx-meta">' + esc(done ? 'finished' : (jobBusy ? 'running' : 'paused')) + '</span>'
       + '<div class="isx-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>'
-      + '<div class="isx-meta">' + esc(job.position) + ' of ' + esc(job.total) + ' products · ' + esc(job.renamed) + ' done · ' + esc(job.skipped) + ' skipped · ' + esc(job.failed) + ' rolled back</div>'
+      + '<div class="isx-sub" data-isx-counts><b>' + num(job.position) + ' / ' + num(job.total) + '</b> products · ' + esc(counts(job)) + '</div>'
+      + '<div class="isx-meta" data-isx-time>' + esc(time) + '</div>'
       + check + '<div class="isx-row" style="margin-top:8px">' + buttons + '</div>'
-      + (log ? '<ul class="isx-log">' + log + '</ul>' : '') + '</div>';
+      + (fails.length ? '<div class="isx-msg is-bad"><b>' + plural(fails.length, 'failure', 'failures') + '</b> (nothing was changed for these; the rest went ahead)<ul class="isx-log" style="max-height:200px">' + fails.slice().reverse().map(line).join('') + '</ul></div>' : '')
+      + (log.length ? '<details' + (done ? '' : ' open') + ' style="margin-top:8px"><summary>What it did</summary><ul class="isx-log">' + log.slice().reverse().slice(0, 60).map(line).join('') + '</ul></details>' : '') + '</div>';
   }
 
-  async function run() {
+  /* The run: post a step, draw its answer, post the next. Each step does up
+     to ~1.5 s of work and answers a few hundred bytes of counts, so this IS
+     the live progress -- there is no second poll and no timer, and nothing
+     is left behind when the run ends, is stopped, or the screen is left. */
+  async function run(resume) {
     if (!job || jobBusy) return;
-    jobBusy = true; stopAsked = false; render();
+    jobBusy = true; stopAsked = false; runLog = []; runFailures = []; render();
     var lastRenamed = null;
-    while (job && job.status !== 'done' && !stopAsked) {
-      var r = await api('/image-seo/step', { job: job.id });
-      if (r.status === 202) { show({ ok: null, text: 'Another window is running a step of Image SEO right now. Press Resume in a moment.' }); break; }
+    var first = true;
+    while (job && job.status !== 'done' && !stopAsked && document.querySelector('[data-isx-screen]')) {
+      var r = await api('/image-seo/step', { job: job.id, resume: first && !!resume });
+      first = false;
+      if (r.status === 202) { show({ ok: null, text: 'Another window is running a step of this run right now; it carries on there. Press Resume here to follow it from this window.' }); break; }
       if (r.status !== 200) { show({ ok: false, text: fail(r) }); break; }
-      if (r.body.job && r.body.job.id) job = r.body.job;
-      (r.body.results || []).forEach(function (x) { if (x.status === 'renamed' || x.status === 'restored') lastRenamed = x; });
+      if (r.body.job && r.body.job.id) job = Object.assign({}, job, r.body.job);
+      (r.body.results || []).forEach(function (x) {
+        if (x.status === 'renamed' || x.status === 'restored') lastRenamed = x;
+        if (x.status === 'rolled_back') runFailures.push(x);
+        if (x.status !== 'ok') runLog.push(x);
+      });
+      if (runLog.length > 60) runLog = runLog.slice(-60);
+      if (runFailures.length > 50) runFailures = runFailures.slice(-50);
       render();
+      if (job.status === 'stopped') break;   // stopped from another window
     }
     if (stopAsked && job && job.status !== 'done') {
       var s = await api('/image-seo/stop', { job: job.id });
-      if (s.body.job) job = s.body.job;
+      if (s.body.job) job = Object.assign({}, job, s.body.job);
     }
-    jobBusy = false;
-    // A finished run spends its preview and its alt list: what they showed is
-    // now the shop's state, and Start again would only return the same run.
-    if (job && job.status === 'done') {
-      if (job.kind === 'alt') { alt.items = null; alt.edits = {}; } else { preview = null; }
-    }
-    if (lastRenamed) await check(lastRenamed);
+    jobBusy = false; stopAsked = false;
+    if (job && job.status === 'done' && job.kind === 'alt') { alt.items = null; alt.edits = {}; }
+    if (lastRenamed && job && job.status === 'done') await check(lastRenamed);
     reboot();
   }
 
@@ -463,7 +695,7 @@
 
   /* ------------------------------------------------------------ ALT tab */
   function altTab() {
-    var c = selCount();
+    var none = selEmpty();
     var opts = '<div class="isx-opts">'
       + '<label><input type="radio" name="isx-tpl" value="variations" data-isx="tpl"' + (alt.template === 'variations' ? ' checked' : '') + '><span><b>Natural variations</b> (recommended): “Medicube PDRN Eye Patches”, “PDRN Eye Patches by Medicube”, “Medicube PDRN Eye Patches – Eye Care”…</span></label>'
       + '<label><input type="radio" name="isx-tpl" value="numbered" data-isx="tpl"' + (alt.template === 'numbered' ? ' checked' : '') + '><span><b>Name + view</b>: “Medicube PDRN Eye Patches – view 2 of 5”</span></label>'
@@ -471,12 +703,24 @@
       + (alt.template === 'custom' ? '<div class="isx-form" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)"><div class="isx-field"><label for="isx-first">First picture</label><input id="isx-first" class="isx-in" maxlength="200" data-isx-in="first" value="' + esc(alt.first) + '"></div>'
         + '<div class="isx-field"><label for="isx-rest">Other pictures</label><input id="isx-rest" class="isx-in" maxlength="200" data-isx-in="rest" value="' + esc(alt.rest) + '"></div></div>' : '')
       + '<label><input type="checkbox" data-isx="keep"' + (alt.keep ? ' checked' : '') + '><span>Keep alt text somebody already wrote</span></label></div>';
-    var head = '<div class="isx-card"><b>ALT text</b><p class="isx-sub">' + (c.products ? esc(c.products) + ' product(s) selected.' : 'Select products on the Find tab first.')
+    var head = '<div class="isx-card"><b>ALT text</b><p class="isx-sub">' + (none ? 'Select products on the Find tab first.' : '<span data-isx-selcount>' + plural(selInfo.products, 'product', 'products') + ' selected.</span>')
       + ' Alt text is what Google Images reads and what a screen reader says. 5–125 characters, describes the picture, not the same on every picture. You can edit every line before applying.'
       + ' <b>English only:</b> this shop stores one alt per picture, and it is shown on the Arabic shop too; a picture with no alt written keeps its automatic Arabic one there.</p>' + opts
-      + '<div class="isx-row" style="margin-top:10px"><button type="button" class="isx-btn is-quiet" data-isx="alt-preview"' + (!c.products || busy || jobBusy ? ' disabled' : '') + '>' + (busy === 'alt-preview' ? 'Preparing…' : 'Preview alt text') + '</button>'
-      + '<button type="button" class="isx-btn" data-isx="alt-apply"' + (!alt.items || jobBusy || busy ? ' disabled' : '') + '>Apply alt text</button></div></div>';
-    return head + (job && job.kind === 'alt' ? jobCard() : '') + altList();
+      + '<div class="isx-row" style="margin-top:10px"><button type="button" class="isx-btn is-quiet" data-isx="alt-preview"' + (none || busy || jobBusy ? ' disabled' : '') + '>' + (busy === 'alt-preview' ? 'Preparing… ' + num(alt.at) + ' of ' + num(alt.total) : 'Preview alt text') + '</button>'
+      + '<button type="button" class="isx-btn" data-isx="alt-apply"' + (!alt.items || jobBusy || busy ? ' disabled' : '') + '>Apply alt text</button></div>'
+      + altWhy() + '</div>';
+    var mine = job && job.kind === 'alt';
+    if (mine && job.status !== 'done') return jobCard() + head + altList();
+    return head + (mine ? jobCard() : '') + altList();
+  }
+
+  function altWhy() {
+    var t = '';
+    if (selEmpty()) t = 'The buttons wake up once products are selected on the Find tab.';
+    else if (jobBusy) t = 'A run is going. Stop it, or let it finish, first.';
+    else if (busy === 'alt-preview') t = 'Preparing ' + num(alt.at) + ' of ' + num(alt.total) + ' products…';
+    else if (!alt.items) t = 'Apply wakes up after "Preview alt text": every line can be edited before it is written.';
+    return t ? '<div class="isx-msg is-info">' + esc(t) + '</div>' : '';
   }
 
   function altKey(p, url) { return p + '|' + url; }
@@ -500,14 +744,18 @@
   }
 
   async function altPreview() {
-    var ids = Object.keys(sel).map(Number);
-    if (!ids.length) return;
-    busy = 'alt-preview'; alt.items = null; alt.edits = {}; render();
+    if (selEmpty()) return;
+    busy = 'alt-preview'; alt.items = null; alt.edits = {}; alt.at = 0; alt.total = selInfo.products; render();
     var items = [];
-    for (var i = 0; i < ids.length; i += 50) {
-      var r = await api('/image-seo/alt-preview', { products: ids.slice(i, i + 50), template: alt.template, first: alt.first, rest: alt.rest, only_missing: alt.keep });
+    var offset = 0;
+    for (var guard = 0; guard < 400; guard++) {
+      var r = await api('/image-seo/alt-preview', { selection: selectionPayload(), offset: offset, template: alt.template, first: alt.first, rest: alt.rest, only_missing: alt.keep });
       if (r.status !== 200) { busy = ''; show({ ok: false, text: fail(r) }); render(); return; }
       items = items.concat(r.body.items);
+      alt.at = r.body.next; alt.total = r.body.total;
+      render();
+      if (r.body.done || r.body.next <= offset) break;
+      offset = r.body.next;
     }
     busy = ''; alt.items = items; alt.token = token(); msg = null; render();
   }
@@ -540,10 +788,9 @@
   /* -------------------------------------------------------- History tab */
   function historyTab() {
     var rows = (boot.jobs || []).map(function (j) {
-      var kind = j.kind === 'undo' || j.undo_of ? 'Undo of #' + j.undo_of : (j.kind === 'alt' ? 'Alt text' : 'Rename');
-      var can = j.status === 'done' && !j.undo_of && (j.kind === 'rename' || j.kind === 'alt');
-      return '<tr><td>#' + esc(j.id) + '</td><td>' + esc(kind) + '</td><td>' + esc(j.created_at) + (j.by ? '<br><span class="isx-meta">' + esc(j.by) + '</span>' : '') + '</td>'
-        + '<td>' + esc(j.renamed) + ' done · ' + esc(j.skipped) + ' skipped · ' + esc(j.failed) + ' rolled back<br><span class="isx-meta">' + esc(j.position) + '/' + esc(j.total) + ' products · ' + esc(j.status) + '</span></td>'
+      var can = j.status === 'done' && !j.undo_of && (j.kind === 'rename' || j.kind === 'alt' || j.kind === 'combo');
+      return '<tr><td>#' + esc(j.id) + '</td><td>' + esc(kindName(j)) + '</td><td>' + esc(j.created_at) + (j.by ? '<br><span class="isx-meta">' + esc(j.by) + '</span>' : '') + '</td>'
+        + '<td>' + esc(counts(j)) + '<br><span class="isx-meta">' + esc(j.position) + '/' + esc(j.total) + ' products · ' + esc(j.status) + (j.elapsed_ms ? ' · ' + clock(j.elapsed_ms) : '') + '</span></td>'
         + '<td class="isx-row"><button type="button" class="isx-btn is-quiet" data-isx="open-job" data-isx-job="' + esc(j.id) + '">Log</button>'
         + (j.status !== 'done' ? '<button type="button" class="isx-btn is-quiet" data-isx="resume" data-isx-job="' + esc(j.id) + '">Resume</button>' : '')
         + (can ? '<button type="button" class="isx-btn is-quiet" data-isx="undo" data-isx-job="' + esc(j.id) + '">Undo</button>' : '') + '</td></tr>';
@@ -554,15 +801,15 @@
   async function openJob(id) {
     var r = await api('/image-seo/job?id=' + encodeURIComponent(id));
     if (r.status !== 200) { show({ ok: false, text: fail(r) }); render(); return; }
-    job = r.body.job; liveCheck = null; render();
+    job = r.body.job; liveCheck = null; runLog = []; runFailures = []; render();
   }
 
   async function undo(id) {
-    if (!window.confirm('Undo run #' + id + '? Every picture it renamed gets its old name back (and its old address works again), or every alt text it wrote is put back.')) return;
+    if (!window.confirm('Undo run #' + id + '? Every picture it renamed gets its old name back (and its old address works again), and every ALT text it wrote is put back.')) return;
     var r = await api('/image-seo/undo', { job: +id, confirm: 'UNDO' });
     if (r.status !== 200) { show({ ok: false, text: fail(r) }); render(); return; }
     job = r.body.job; liveCheck = null;
-    run();
+    run(false);
   }
 
   /* --------------------------------------------------- score backfill */
@@ -592,6 +839,9 @@
     var r = await api('/image-seo');
     if (r.status !== 200) { boot = null; show({ ok: false, text: fail(r) }); render(); return; }
     boot = r.body;
+    // A run this screen was driving when the page was reloaded carries on;
+    // a stopped or long-idle one waits for Resume (the banner above).
+    if (boot.running && !jobBusy) { job = boot.running; tab = job.kind === 'alt' ? 'alt' : 'rename'; run(false); }
     render();
     if (boot.unscored > 0) score();
   }
@@ -604,10 +854,17 @@
     var f = e.target.closest('[data-isx-form="find"]');
     if (!f) return;
     e.preventDefault();
-    q.q = f.elements.q.value.trim();
-    q.brand = +f.elements.brand.value || 0;
-    q.category = +f.elements.category.value || 0;
-    q.filter = f.elements.filter.value;
+    var next = { q: f.elements.q.value.trim(), brand: +f.elements.brand.value || 0, category: +f.elements.category.value || 0, filter: f.elements.filter.value };
+    // "All matching F" is tied to F: a different search would quietly mean
+    // a different selection, so it is cleared -- after asking.
+    if (sel.mode === 'all' && !sameFilter(next, sel.filter)) {
+      if (!window.confirm('A new search clears the selection of all ' + num(selInfo.products) + ' products matching the current one. Search anyway?')) {
+        f.elements.q.value = q.q; f.elements.brand.value = q.brand; f.elements.category.value = q.category; f.elements.filter.value = q.filter;
+        return;
+      }
+      clearSelection(); selChanged();
+    }
+    q.q = next.q; q.brand = next.brand; q.category = next.category; q.filter = next.filter;
     q.sort = f.elements.sort.value;
     find(1);
   });
@@ -621,6 +878,7 @@
       if (count) count.textContent = t.value.length + '/125' + (t.value.trim().length < 5 ? ' · too short' : '');
     } else if (t.hasAttribute('data-isx-in')) {
       alt[t.getAttribute('data-isx-in')] = t.value;
+      if (pv && pv.kind === 'combo') pv = null;
     }
   });
 
@@ -628,22 +886,12 @@
     if (!within(e)) return;
     var t = e.target;
     var a = t.getAttribute('data-isx');
-    if (a === 'pick-product') {
-      var pid = t.getAttribute('data-isx-p');
-      if (t.checked) sel[pid] = true; else delete sel[pid];
-      preview = null; render();
-    } else if (a === 'pick-image') {
-      var p = t.getAttribute('data-isx-p'), rel = t.getAttribute('data-isx-rel');
-      var cur = sel[p];
-      if (cur === true) { cur = {}; (plans[p] ? plans[p].images : []).forEach(function (i) { if (i.rel) cur[i.rel] = true; }); }
-      cur = cur || {};
-      if (t.checked) cur[rel] = true; else delete cur[rel];
-      if (Object.keys(cur).length) sel[p] = cur; else delete sel[p];
-      preview = null; render();
-    } else if (a === 'strategy') { strategy = t.value; preview = null; render(); }
-    else if (a === 'shared') { shared = t.checked; preview = null; render(); }
-    else if (a === 'tpl') { alt.template = t.value; alt.items = null; render(); }
-    else if (a === 'keep') { alt.keep = t.checked; alt.items = null; render(); }
+    if (a === 'pick-product') { pickProduct(t.getAttribute('data-isx-p'), t.checked); selChanged(); }
+    else if (a === 'pick-image') { pickImage(t.getAttribute('data-isx-p'), t.getAttribute('data-isx-rel'), t.checked); selChanged(); }
+    else if (a === 'strategy') { strategy = t.value; pv = null; render(); }
+    else if (a === 'shared') { shared = t.checked; pv = null; render(); }
+    else if (a === 'tpl') { alt.template = t.value; alt.items = null; if (pv && pv.kind === 'combo') pv = null; render(); }
+    else if (a === 'keep') { alt.keep = t.checked; alt.items = null; if (pv && pv.kind === 'combo') pv = null; render(); }
   });
 
   document.addEventListener('click', function (e) {
@@ -653,19 +901,20 @@
     var a = b.getAttribute('data-isx');
     var id = b.getAttribute('data-isx-job');
     if (a.indexOf('tab-') === 0) { tab = a.slice(4); render(); return; }
-    if (a === 'clear-sel') { sel = {}; preview = null; alt.items = null; render(); return; }
+    if (a === 'clear-sel') { clearSelection(); selChanged(); return; }
     if (a === 'prev' && found) { find(found.page - 1); return; }
     if (a === 'next' && found) { find(found.page + 1); return; }
     if (a === 'page-all' && found) {
-      var all = found.items.every(function (p) { return sel[p.id] === true; });
-      found.items.forEach(function (p) { if (all) delete sel[p.id]; else sel[p.id] = true; });
-      preview = null; render(); return;
+      var all = found.items.every(function (p) { return productPicked(p.id); });
+      found.items.forEach(function (p) { pickProduct(p.id, !all); });
+      selChanged(); return;
     }
     if (a === 'all-matches') { allMatches(); return; }
-    if (a === 'preview') { doPreview(); return; }
-    if (a === 'start') { startRename(); return; }
+    if (a === 'preview') { runPreview('rename'); return; }
+    if (a === 'start') { go('rename'); return; }
+    if (a === 'combo') { go('combo'); return; }
     if (a === 'stop') { stopAsked = true; b.disabled = true; b.textContent = 'Stopping…'; return; }
-    if (a === 'resume' && id) { openJob(id).then(run); return; }
+    if (a === 'resume' && id) { openJob(id).then(function () { run(true); }); return; }
     if (a === 'undo' && id) { undo(id); return; }
     if (a === 'open-job' && id) { openJob(id); return; }
     if (a === 'alt-preview') { altPreview(); return; }
@@ -673,14 +922,14 @@
     if (a === 'score') { score(); return; }
   });
 
-  async function allMatches() {
-    busy = 'ids'; render();
-    var r = await api('/image-seo/ids', { q: q.q, brand: q.brand, category: q.category, filter: q.filter || null, sort: q.sort });
-    busy = '';
-    if (r.status !== 200) { show({ ok: false, text: fail(r) }); render(); return; }
-    r.body.ids.forEach(function (id) { if (!sel[id]) sel[id] = true; });
-    show({ ok: null, text: r.body.ids.length + ' product(s) selected' + (r.body.capped ? ' (the first 5,000).' : '.') });
-    preview = null; render();
+  /* "Select all N results": every product matching the search on screen,
+     on every page, as one rule the server resolves. */
+  function allMatches() {
+    if (!found) return;
+    var elsewhere = sel.mode === 'ids' && Object.keys(sel.ids).some(function (id) { return !found.items.some(function (p) { return String(p.id) === String(id); }); });
+    if (elsewhere && !window.confirm('Replace the ' + num(Object.keys(sel.ids).length) + ' products you ticked with all ' + num(found.total) + ' results of this search?')) return;
+    sel = { mode: 'all', ids: {}, filter: found.filter, except: {}, only: {} };
+    selChanged();
   }
 
   function addNavEntry() {
