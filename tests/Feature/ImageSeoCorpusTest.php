@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 use App\Services\ImageSeo\AltText;
 use App\Services\ImageSeo\ImageNamer;
+use App\Services\ImageSeo\ImageScore;
 use Tests\Support\ImageNamerRules;
 
 function inCorpus(): array
@@ -154,4 +155,23 @@ it('writes the brand once as the shop spells it, in English, and never loses the
             expect($alt)->toEndWith('– view '.($i + 1));
         }
     }
+});
+
+it('scores keyword stuffing the way Google describes it: a keyword list in the alt, a word twice in the file name', function () {
+    /*
+     * Google: "Avoid filling alt attributes with keywords (keyword
+     * stuffing)"; its spam policy describes keywords that "appear in a list
+     * or group". The score only caught one word written three times, so a
+     * comma list of twelve different keywords scored a clean 10/10, and so
+     * did "eye-patches-eye-mask-patches". MUTATION: drop isKeywordList() from
+     * the $stuffed line and the first score is 100; drop the repeats() branch
+     * and the second is 100.
+     */
+    $list = ImageScore::score('medicube-pdrn-eye-patches.jpg', 'Medicube', 'Medicube PDRN eye patches', 'Medicube PDRN eye patches, collagen, korean skincare, dark circles, puffy eyes', true);
+    $twice = ImageScore::score('medicube-pdrn-eye-patches-eye-mask.jpg', 'Medicube', 'Medicube PDRN eye patches', 'Medicube PDRN Eye Patches', true);
+    $natural = ImageScore::score('medicube-pdrn-eye-patches.jpg', 'Medicube', 'Medicube PDRN eye patches', 'Medicube PDRN Eye Patches, 60 patches in a jar', true);
+
+    expect($list['score'])->toBe(95)->and(ImageScore::reasons($list['lost']))->toBe('−0.5 keyword stuffing in alt')
+        ->and($twice['score'])->toBe(90)->and(ImageScore::reasons($twice['lost']))->toBe('−1 a word repeated in file name')
+        ->and($natural['score'])->toBe(100);
 });
