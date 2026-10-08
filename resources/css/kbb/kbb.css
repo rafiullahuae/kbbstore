@@ -4748,24 +4748,14 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
    flow so the `height:100%` on the <img> has something to resolve against. */
 .kbb-card-shot{position:absolute;inset:0;display:block;z-index:2}
 .kbb-card-img{width:100%;height:100%;object-fit:cover;display:block}
-/* (Lane PG2) THE GREY LOADING BOX. The owner: "due to slow internet
-   connections, i would love to display the loading grey bars", then "same
-   thing for product image too". The tile's own background was a flat cream
-   (#FFF8F5 on `.kbb-card img`), indistinguishable from an empty box. It is
-   the shop's skeleton grey now -- the cart drawer's (.kc-skel) colours and
-   keyframes -- painted on the <img> itself, BEHIND its pixels: the photo is
-   object-fit:cover, so the moment it paints it covers this completely, with
-   no script, no class to flip and nothing that can shift (the frame is still
-   the CSS-sized box). EIGHT sweeps (~11s), not infinite: a background
-   animation repaints the tile every frame, and an endless one would keep
-   doing it under every loaded photo for as long as the page is open; after
-   the eighth it rests on plain grey. color:transparent hides the alt text
-   Chrome paints for a picture that FAILED (the owner's screenshot) -- the alt
-   attribute itself stays for screen readers. Appearance → Product styles →
-   Layout → "Photo loading placeholder" picks plain grey or the old cream
-   (ProductStyles::cardCss()). */
-.kbb-card .kbb-card-img{color:transparent;background:#f2f4f7 linear-gradient(90deg,#f2f4f7 25%,#e9edf2 37%,#f2f4f7 63%) 0 0/400% 100%;animation:kbbshim 1.4s ease 8}
-@media (prefers-reduced-motion:reduce){.kbb-card .kbb-card-img{animation:none}}
+/* (Lane PG2, scoped by Lane LZ) color:transparent hides the alt text Chrome
+   paints for a picture that FAILED -- PG2's fix, kept; the alt attribute stays
+   for screen readers. The grey shimmer PG2 also put here is GONE from the
+   cards: the owner, 8 October, "i wanted only and only for images 2nd and
+   onwards images on the products page. no any other!" A card is the cream
+   tile it was before PG2 (`.kbb-card img`, above). The loading box now lives
+   only on the product page's tapped photo (kbb-product.css, .gx-s/.gx-in). */
+.kbb-card .kbb-card-img{color:transparent}
 .kbb-card-ph{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:20px;color:rgba(255,255,255,.92);letter-spacing:.04em}
 
 /* ── THE STRETCHED LINK ─────────────────────────────────────────────────────

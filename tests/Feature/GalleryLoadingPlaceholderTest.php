@@ -139,33 +139,74 @@ it('keeps the main photo the LCP and fetches the thumbnails at once, at low prio
     }
 });
 
-it('paints the grey behind every gallery and card photo, stops it, and moves nothing', function () {
-    $product = pgStripped('kbb-product.css');
-    $base = pgStripped('kbb.css');
-
-    preg_match('/\.gmain-img,\.gthumb-img\{([^}]*)\}/', $product, $g);
-    preg_match('/\.kbb-card \.kbb-card-img\{([^}]*)\}/', $base, $c);
-
-    foreach (['gallery' => $g[1] ?? '', 'card' => $c[1] ?? ''] as $where => $rule) {
-        expect($rule)->not->toBe('', "the {$where} placeholder rule is gone")
-            ->toContain('color:transparent')            // never the alt text
-            ->toContain('#f2f4f7')                      // the shop's skeleton grey
-            ->toMatch('/animation:kbbshim [\d.]+s ease \d+$/')   // a COUNT, so it stops
-            ->not->toMatch('/infinite|width|height|margin|padding|position|inset|aspect/');
+/*
+ * ▲ Lane LZ -- THE GREY BOX IS FOR THE PRODUCT PAGE'S 2ND PHOTO ONWARDS ONLY.
+ * The owner, 8 October: "we have done the fade grey stuff yesterday i think.
+ * but i wanted only and only for images 2nd and onwards images on the products
+ * page. no any other! bcz the product page gallery images switching was coming
+ * blurred. so you did this, but you have applied on the whole site, which i
+ * didn't want it." PG2 painted it behind every card on every page, the main
+ * photo and the thumbnails. Now: the cards are the cream tile, the main photo
+ * and the thumbnails the frame's white, exactly as before PG2; the grey is on
+ * the tap path only (.gx-s, the stand-in, and .gx-in, the tapped photo), which
+ * pdp.js builds after a tap and the server never prints.
+ *
+ * MUTATIONS: put the grey back on `.kbb-card .kbb-card-img` or on
+ * `.gmain-img,.gthumb-img` (PG2's selectors) and the first case is red.
+ */
+it('draws the grey loading box only behind a tapped 2nd-onwards photo, never a card, the first photo or a thumbnail', function () {
+    $sheets = [];
+    foreach (['kbb.css', 'kbb-product.css', 'kbb-shop.css', 'kbb-grid-skins.css'] as $f) {
+        $sheets[$f] = pgStripped($f);
     }
 
-    expect($product)->toContain('.gmain-img.ld,.gthumb-img.ld{background:none;animation:none}')
-        ->toMatch('/@media \(prefers-reduced-motion:reduce\)\{\.gmain-img,\.gthumb-img\{animation:none\}\}/')
-        ->and($base)->toMatch('/@media \(prefers-reduced-motion:reduce\)\{\.kbb-card \.kbb-card-img\{animation:none\}\}/');
+    $greyed = [];
+    foreach ($sheets as $f => $css) {
+        preg_match_all('/([^{}]+)\{([^{}]*(?:kbbshim|#f2f4f7)[^{}]*)\}/', $css, $m, PREG_SET_ORDER);
+        foreach ($m as [, $sel]) {
+            foreach (explode(',', trim($sel)) as $one) {
+                if (preg_match('/kbb-card-img|gmain-img|gthumb-img|\bimg\b/', $one)) {
+                    $greyed[] = trim($one);
+                }
+            }
+        }
+    }
+
+    // Exactly the tap path, and every selector carries a tap-only class.
+    expect($greyed)->toBe(['.gmain-img.gx-s', '.gmain-img.gx-in']);
+    // PG2's site-wide rules are gone; its alt-text lock stays.
+    expect($sheets['kbb.css'])->toContain('.kbb-card .kbb-card-img{color:transparent}')
+        ->not->toMatch('/\.kbb-card \.kbb-card-img\{[^}]*(background|animation)/');
+    expect($sheets['kbb-product.css'])->toContain('.gmain-img,.gthumb-img{color:transparent}')
+        ->not->toMatch('/(^|\})\.gmain-img,\.gthumb-img\{[^}]*(background|animation)/');
+    // The cream tile the cards had before PG2 is what they show again.
+    expect($sheets['kbb.css'])->toContain('.kbb-card img{width:100%;aspect-ratio:1;object-fit:cover;background:#FFF8F5}');
 });
 
-it('ships at Grey shimmer and prints nothing for it; Plain grey and None reach the product page and the grid', function () {
+it('stops the box, honours reduced motion, hands it back once decoded, and moves nothing', function () {
+    $product = pgStripped('kbb-product.css');
+
+    preg_match('/\.gmain-img\.gx-s,\.gmain-img\.gx-in\{([^}]*)\}/', $product, $g);
+    expect($g[1] ?? '')->toContain('#f2f4f7')
+        ->toMatch('/animation:kbbshim [\d.]+s ease \d+$/')   // a COUNT, so it stops
+        ->not->toMatch('/infinite|width|height|margin|padding|position|inset|aspect/');
+    expect($product)->toContain('.gmain-img.gx-in.ld{background:none;animation:none}')
+        ->toContain('@media (prefers-reduced-motion:reduce){.gmain-img.gx-s,.gmain-img.gx-in{animation:none}}');
+
+    // Neither class is ever in the server's HTML: the page opens without the box.
+    $html = pgProductPage();
+    expect($html)->not->toContain('gx-s')->not->toContain('gx-in');
+});
+
+it('ships at Grey shimmer and prints nothing for it; Plain grey and None reach the product page', function () {
     $settings = app(SettingsService::class);
     expect(ProductStyles::SCHEMA['photo_placeholder'][2])->toBe('shimmer')
         ->and(ProductStyles::TABS['layout'][2])->toContain('photo_placeholder');
 
-    $plain = '.kbb-card .kbb-card-img.kbb-card-img,.gmain-img.gmain-img,.gthumb-img.gthumb-img{animation:none}';
-    $none = '.kbb-card .kbb-card-img.kbb-card-img{background:#FFF8F5;animation:none}.gmain-img.gmain-img,.gthumb-img.gthumb-img{background:none;animation:none}';
+    // (Lane LZ) The tap path only, like the box itself.
+    $plain = '.gmain-img.gx-s.gx-s,.gmain-img.gx-in.gx-in{animation:none}';
+    $none = '.gmain-img.gx-s.gx-s,.gmain-img.gx-in.gx-in{background:none;animation:none}';
+    expect(ProductStyles::SCHEMA['photo_placeholder'][3])->toContain('Product page only')->toContain('not affected');
 
     expect(pgProductPage())->not->toContain($plain)->not->toContain($none);
 

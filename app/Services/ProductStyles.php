@@ -98,8 +98,18 @@ class ProductStyles
          * this screen's cardCss() is printed on every shop page, the product
          * page included. "None" is the box as it was: cream on a card, the
          * frame's white in the gallery.
+         *
+         * ▲ (Lane LZ) NOW THE PRODUCT PAGE'S 2ND PHOTO ONWARDS ONLY. The owner,
+         * 8 October: "i wanted only and only for images 2nd and onwards images
+         * on the products page. no any other! bcz the product page gallery
+         * images switching was coming blurred. so you did this, but you have
+         * applied on the whole site, which i didn't want it." The cards, the
+         * main photo as the page opens and the thumbnails are back to what they
+         * were before PG2; this switch picks the box behind a TAPPED photo
+         * (kbb-product.css `.gmain-img.gx-s`, `.gmain-img.gx-in`) and nothing
+         * else.
          */
-        'photo_placeholder'  => ['select', 'Photo loading placeholder', 'shimmer', 'What a product photo shows while it is still on its way (a slow connection): in every product grid and rail, and the main photo and thumbnails on the product page.', ['shimmer' => 'Grey shimmer', 'plain' => 'Plain grey', 'none' => 'None — the plain box as before']],
+        'photo_placeholder'  => ['select', 'Photo loading placeholder', 'shimmer', 'Product page only: what shows in the big photo frame while the 2nd, 3rd… photo is still on its way after a shopper taps or swipes to it (a slow connection). Product cards, the first photo and the thumbnails are not affected.', ['shimmer' => 'Grey shimmer', 'plain' => 'Plain grey', 'none' => 'None — the plain box as before']],
 
         // ── What the card shows ──
         /*
@@ -824,11 +834,11 @@ class ProductStyles
         return $out;
     }
 
-    /** Plain grey: the same box, standing still. */
-    private const PHOTO_PLAIN = '.kbb-card .kbb-card-img.kbb-card-img,.gmain-img.gmain-img,.gthumb-img.gthumb-img{animation:none}';
+    /** Plain grey: the same box behind a tapped photo, standing still. (Lane LZ: the tap path only.) */
+    private const PHOTO_PLAIN = '.gmain-img.gx-s.gx-s,.gmain-img.gx-in.gx-in{animation:none}';
 
-    /** None: the cream tile and the white gallery frame as they were before Lane PG2. */
-    private const PHOTO_NONE = '.kbb-card .kbb-card-img.kbb-card-img{background:#FFF8F5;animation:none}.gmain-img.gmain-img,.gthumb-img.gthumb-img{background:none;animation:none}';
+    /** None: the gallery frame's white behind a tapped photo, as before Lane PG2. (Lane LZ: the tap path only.) */
+    private const PHOTO_NONE = '.gmain-img.gx-s.gx-s,.gmain-img.gx-in.gx-in{background:none;animation:none}';
 
     /** @param array<string, list<string>> $rules */
     private static function flatten(array $rules): string

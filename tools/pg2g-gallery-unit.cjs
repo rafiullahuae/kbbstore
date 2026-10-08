@@ -10,8 +10,9 @@
  * navigator.connection is set per page: none (Safari/Firefox: no API), '4g',
  * or Save-Data.
  *
- *   1. While the main photo has not arrived, its box is the grey loading box
- *      (a background behind the <img>) and no alt text is painted.
+ *   1. While the main photo has not arrived, its box is the frame's WHITE, as
+ *      before PG2 -- the grey box is for the 2nd photo onwards only (the owner,
+ *      8 October; Lane LZ) -- and no alt text is painted.
  *   2. Once it is decoded the grey is handed back to the frame (.ld).
  *   3. (GX) A tap on a shot whose large file is slow shows the GREY loading
  *      box -- never the old photo and never the thumbnail's own small file
@@ -166,10 +167,12 @@ server.listen(0, '127.0.0.1', async () => {
   try {
     const { page, cdp } = await open('a');
 
-    // 1. big-0 is held for 1.2 s: the main frame is grey, and no text is painted.
+    // 1. big-0 is held for 1.2 s: the main frame is the frame's white (Lane LZ:
+    //    the grey box is for the 2nd photo onwards only), and no text is painted.
     const box = await page.evaluate(() => { const r = document.getElementById('gmain').getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
     const mid = [box.x + box.w / 2, box.y + box.h / 2];
-    ok(greyish(await colourAt(page, cdp, mid[0], mid[1])), '1. the main frame is not the grey loading box while its photo is on the way');
+    const first = await colourAt(page, cdp, mid[0], mid[1]);
+    ok(first && Math.min(...first) >= 250, '1. the FIRST photo shows a loading box (the owner: "only and only for images 2nd and onwards"): ' + JSON.stringify(first));
     ok(await page.evaluate(() => getComputedStyle(document.getElementById('gmainImg')).color === 'rgba(0, 0, 0, 0)'), '1. the main photo would paint its alt text (color is not transparent)');
 
     // 2. Once decoded: the red photo, and .ld.

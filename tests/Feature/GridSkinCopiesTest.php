@@ -161,9 +161,11 @@ const KBB_ONLY_IN_KBB_CSS = [
      * and at (0,2,0) it outranks both copies' `.kbb-card img{background:
      * #FFF8F5}` on the three pages that also load kbb-grid-skins.css.
      * GalleryLoadingPlaceholderTest pins the rule itself.
+     * ▲ Lane LZ: the grey is gone from the cards (the owner: the 2nd product
+     * photo onwards ONLY); the rule left is PG2's alt-text lock,
+     * `color:transparent`, and its reduced-motion twin went with the shimmer.
      */
     '|.kbb-card .kbb-card-img',
-    '@media (prefers-reduced-motion:reduce)|.kbb-card .kbb-card-img',
     /*
      * Integrator, 2.60.354 — Quick view in the middle of the photograph. In
      * kbb.css ONLY, deliberately: the card is on every page and so is kbb.css.

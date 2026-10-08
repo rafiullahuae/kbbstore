@@ -3729,7 +3729,7 @@
             "key": "photo_placeholder",
             "type": "select",
             "label": "Photo loading placeholder",
-            "help": "What a product photo shows while it is still on its way (a slow connection): in every product grid and rail, and the main photo and thumbnails on the product page.",
+            "help": "Product page only: what shows in the big photo frame while the 2nd, 3rd\u2026 photo is still on its way after a shopper taps or swipes to it (a slow connection). Product cards, the first photo and the thumbnails are not affected.",
             "default": "shimmer",
             "value": "shimmer",
             "options": {
