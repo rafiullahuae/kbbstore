@@ -99,6 +99,10 @@ class MediaLibraryApiController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // Lane RPL: product pictures whose 30 days in the trash are up, for a
+        // shop with no cron line. At most every six hours; never throws.
+        \App\Services\Media\PictureTrash::purgeLazily();
+
         $rows = $this->filtered($request);
 
         $page = max(1, (int) $request->query('page', '1'));

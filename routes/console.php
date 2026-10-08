@@ -188,3 +188,18 @@ Schedule::command('kbb:instagram-sync --unattended')
     ->dailyAt('04:41')
     ->withoutOverlapping(60)
     ->runInBackground();
+
+/*
+|--------------------------------------------------------------------------
+| Replaced product pictures, 30 days on (Lane RPL)
+|--------------------------------------------------------------------------
+|
+| Catalog → Products → edit: a picture the owner replaced or removed moved to
+| storage/app/picture-trash on Save, with Undo on the product screen. After 30
+| days this deletes it for good -- asking again whether anything uses it, and
+| putting it back if something does. Without the cron line the Media Library
+| does the same when it is opened, at most every six hours.
+*/
+Schedule::command('kbb:picture-trash-purge')
+    ->dailyAt('03:29')
+    ->withoutOverlapping(30);

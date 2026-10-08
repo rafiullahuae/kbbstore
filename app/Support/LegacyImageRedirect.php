@@ -159,6 +159,17 @@ final class LegacyImageRedirect
                 $suffix = '.jpg';
             }
 
+            // An email's JPEG (img-cache/mail/<w>/<path>.jpg|.png, MailImage)
+            // in an inbox: the same copy of wherever <path> went, or that
+            // picture itself. Without this a picture replaced in the product
+            // editor (Lane RPL) or renamed by Image SEO broke every order email
+            // already sent with it.
+            if ($depth === 3 && $segments[1] === 'mail' && preg_match('/\.(jpg|png)$/', $inner, $m) === 1
+                && in_array(strtolower(pathinfo(substr($inner, 0, -4), PATHINFO_EXTENSION)), self::EXTENSIONS, true)) {
+                $inner = substr($inner, 0, -4);
+                $suffix = '.'.$m[1];
+            }
+
             if (! self::eligible($inner)) {
                 continue;
             }

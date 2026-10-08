@@ -1380,6 +1380,9 @@ final class AdminCapabilities
         ['GET', 'admin-api/routines', 'catalog.view'],
         ['GET', 'admin-api/catalog/**', 'catalog.view'],
         ['*', 'admin-api/catalog/**', 'catalog.manage'],
+        // Lane RPL: Undo of a picture a product save took off the server. The
+        // product edit capability, named on its own line; a GET is not a route.
+        ['POST', 'admin-api/product-editor-photo-undo/*', 'catalog.manage'],
         ['GET', 'admin-api/product-editor-load/*', 'catalog.view'],
         ['GET', 'admin-api/product-editor-*', 'catalog.view'],
         ['*', 'admin-api/product-editor-*', 'catalog.manage'],

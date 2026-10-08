@@ -192,6 +192,48 @@ final class WebpReferences
     }
 
     /**
+     * WHO still writes this path down: the same walk as referenced() — the
+     * allowlist and the read-only tables, the same boundary and host rules —
+     * but it names the rows instead of stopping at the first, and it does not
+     * count the Media Library's own row (a catalogued file is not a used one).
+     *
+     * Catalog → Products → edit asks this before a replaced picture leaves the
+     * server (Lane RPL), and prints the answer as "kept: still used by …".
+     * Read-only; at most $limit hits.
+     *
+     * @return list<array{table: string, column: string, id: string}>
+     */
+    public static function usedBy(string $relative, int $limit = 8): array
+    {
+        $hosts = self::ownHosts();
+        $needles = self::needles([$relative]);
+        $schema = [];
+        $probe = [$relative => $relative.'#'];
+        $out = [];
+
+        foreach ([self::COLUMNS, self::GUARD_ONLY] as $set) {
+            foreach ($set as $table => [$pk, $columns]) {
+                foreach (self::present($table, $columns, $schema) as $column) {
+                    foreach (self::rowsMentioning($table, $pk, $column, $needles) as $row) {
+                        $count = 0;
+                        self::replaceIn((string) $row->value, $probe, $hosts, $count);
+
+                        if ($count > 0) {
+                            $out[] = ['table' => $table, 'column' => $column, 'id' => (string) $row->pk];
+
+                            if (count($out) >= $limit) {
+                                return $out;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Replace every reference to a mapped path inside one string.
      *
      * Pure, so the boundary and host rules can be tested without a database.

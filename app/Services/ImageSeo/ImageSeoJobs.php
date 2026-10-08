@@ -32,7 +32,7 @@ final class ImageSeoJobs
 
     public const MAX_SECONDS = 8.0;
 
-    private const LOCK = 'kbb.image-seo.step';
+    public const LOCK = 'kbb.image-seo.step';
 
     private const LOG_MAX = 3000;
 
