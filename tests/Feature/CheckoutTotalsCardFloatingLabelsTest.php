@@ -371,6 +371,12 @@ it('renders the checkout byte for byte as before this lane with both switches of
             "        \n        var refused = window.KBB && window.KBB.refused;\n        if (refused && data.code === 'sold_out') { down(); if (refused(data)) { return; } }\n\n",
             "        if (refused) { refused(data, (document.getElementById('kbbPlacingNotice') || {}).firstElementChild); }\n",
         ], '', $after);
+        // The Firefox hotfix (after 2.60.430) marks the Place order buttons
+        // autocomplete="off" and adds two blocks to placing-overlay's script;
+        // CheckoutFirefoxRestoreTest pins them.
+        $after = str_replace(' data-place="1" autocomplete="off">', ' data-place="1">', $after);
+        $after = str_replace("    /* Header only: a body _token is read first by Laravel and a reload can bring\n       back a stale one; window.KBB.csrf is this load's. */\n    init.body.delete('_token');\n", '', $after);
+        $after = (string) preg_replace("#  /\\* Firefox restores a button's `disabled` across a reload \\(Chrome does not\\),\n.*?if \\(!event\\.persisted\\) \\{ liven\\(\\); \\} \\}\\);\n\n#s", '', $after, 1);
     } finally {
         EnglishRenderWalk::useViewPath($current[0]);
     }
