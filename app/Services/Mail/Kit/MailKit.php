@@ -205,36 +205,18 @@ final class MailKit
     }
 
     /**
-     * A product picture for an email, absolute, at the variant width asked
-     * for (ImageVariants::WIDTHS), or null when there is none.
+     * A picture for an email: an https URL of a file that exists in this web
+     * root, as a JPEG copy sized for the box, or null.             (Lane EM)
      *
-     * Absolute because a mail client has no origin to resolve "/wp-content/…"
-     * against, and null rather than a guess because a broken image in an
-     * inbox reads as a broken shop.
+     * $width keeps its old meaning — the shop variant the caller used to ask
+     * for (200 for the 64px item and rate rows, 400 for 200px cards, 600 for
+     * full-width blocks) — and maps onto MailImage::WIDTHS. Everything else,
+     * and why the old body sent every product picture to a 404, is in
+     * MailImage's header.
      */
-    public static function image(mixed $stored, int $width = 200): ?string
+    public static function image(mixed $stored, int $width = 200, bool $placeholder = true): ?string
     {
-        $stored = is_string($stored) ? trim($stored) : '';
-
-        if ($stored === '') {
-            return null;
-        }
-
-        try {
-            $stored = ImageVariants::variantUrl($stored, $width);
-        } catch (\Throwable) {
-            // The original is still a picture; the variant is an optimisation.
-        }
-
-        if (preg_match('#^https?://#i', $stored) === 1) {
-            return $stored;
-        }
-
-        if (str_starts_with($stored, '//') || preg_match('#^[a-z][a-z0-9+.-]*:#i', $stored) === 1) {
-            return null;
-        }
-
-        return self::url(Url::externalise(Url::media($stored)));
+        return MailImage::src($stored, $width <= 200 ? 128 : ($width <= 400 ? 400 : 600), $placeholder);
     }
 
     /**
@@ -271,30 +253,31 @@ final class MailKit
      */
     private static function logo(mixed $logoUrl): ?array
     {
-        $url = self::url($logoUrl);
-
-        if ($url === null || str_starts_with(strtolower($url), 'mailto:')) {
-            return null;
-        }
-
-        try {
-            $size = ImageVariants::sizeOf($url);
-        } catch (\Throwable) {
-            $size = null;
-        }
-
         /*
+         * (Lane EM, 8 October) Through MailImage, like every other picture in
+         * the kit: a local logo is a file that exists on the shop's https
+         * origin (a WebP one gets a PNG copy), a missing one prints the
+         * wordmark rather than a broken frame.
+         *
          * A logo whose proportions cannot be read (an https URL on another
          * host, the shape EmailLook and org_logo both accept) is still the
          * owner's logo: it prints at 170px wide with no declared height.
-         * Dropping it -- what this did until Lane EM -- printed the wordmark
-         * instead of a logo the owner had set, with nothing saying why.
+         * Dropping it printed the wordmark instead of a logo the owner had
+         * set, with nothing saying why.
          */
-        if (! is_array($size) || (int) ($size[0] ?? 0) < 1 || (int) ($size[1] ?? 0) < 1) {
+        $logo = MailImage::logo($logoUrl);
+
+        if ($logo === null) {
+            return null;
+        }
+
+        [$url, $w, $h] = $logo;
+
+        if ($w === null || $h === null || $w < 1 || $h < 1) {
             return [$url, 170, null];
         }
 
-        return [$url, 170, max(1, (int) round(170 * (int) $size[1] / (int) $size[0]))];
+        return [$url, 170, max(1, (int) round(170 * $h / $w))];
     }
 
     /**
