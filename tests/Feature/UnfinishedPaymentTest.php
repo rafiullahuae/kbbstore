@@ -38,6 +38,7 @@ use App\Services\Payments\SettlesBeforeRelease;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Tests\Support\SqlShape;
 
 beforeEach(function () {
     PaymentProvider::query()->delete();
@@ -393,7 +394,7 @@ it('lets a webhook that lands mid-release win, writing nothing to the basket or 
     $fired = false;
 
     DB::beforeExecuting(function (string $sql) use (&$fired, $order) {
-        if ($fired || DB::transactionLevel() < 2 || ! str_contains($sql, 'from "orders"')) {
+        if ($fired || DB::transactionLevel() < 2 || ! str_contains(SqlShape::portable($sql), 'from "orders"')) {
             return;
         }
         $fired = true;
@@ -593,7 +594,7 @@ it('runs no query for this on an ordinary basket or checkout view', function () 
     bkAs($cart)->get('/cart/')->assertOk();
     bkNext();
     bkAs($cart)->get('/checkout/')->assertOk();
-    $sql = collect(DB::getQueryLog())->pluck('query')->implode("\n");
+    $sql = collect(DB::getQueryLog())->pluck('query')->map(fn ($q) => SqlShape::portable($q))->implode("\n");
     DB::disableQueryLog();
 
     expect($sql)->not->toContain('from "orders"')
@@ -603,7 +604,7 @@ it('runs no query for this on an ordinary basket or checkout view', function () 
     test()->withSession(['kbb_last_order' => 'X1', UnfinishedPayment::CHECKED_KEY => 'X1']);
     DB::enableQueryLog();
     bkAs($cart)->get('/cart/')->assertOk();
-    $again = collect(DB::getQueryLog())->pluck('query')->implode("\n");
+    $again = collect(DB::getQueryLog())->pluck('query')->map(fn ($q) => SqlShape::portable($q))->implode("\n");
     DB::disableQueryLog();
 
     expect($again)->not->toContain('from "orders"');
