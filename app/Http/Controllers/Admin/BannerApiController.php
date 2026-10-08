@@ -124,6 +124,7 @@ class BannerApiController extends Controller
                 // Lane RC. Whole picture or fill-and-crop, drawn as a select.
                 'slider_fits' => BannerSet::SLIDER_FITS,
                 'limits' => BannerSet::LIMITS,
+                'slider_hmodes' => BannerSet::SLIDER_HMODES,
                 // Lane HB. The text box's options and slider ranges, from the
                 // one class that also clamps them on the way in and out.
                 'text_box' => [
@@ -337,6 +338,9 @@ class BannerApiController extends Controller
             'slider_fit' => ['sometimes', Rule::in(array_keys(BannerSet::SLIDER_FITS))],
             'slider_h' => ['sometimes', 'integer'],
             'slider_h_m' => ['sometimes', 'integer'],
+            // Lane HB3: how each height works, one of BannerSet's own two tokens.
+            'slider_hmode' => ['sometimes', Rule::in(array_keys(BannerSet::SLIDER_HMODES))],
+            'slider_hmode_m' => ['sometimes', Rule::in(array_keys(BannerSet::SLIDER_HMODES))],
         ];
 
         /*
@@ -1074,6 +1078,9 @@ class BannerApiController extends Controller
             'slider_fit' => $set->sliderFit(),
             'slider_h' => $set->sliderHeight(false),
             'slider_h_m' => $set->sliderHeight(true),
+            // Lane HB3. Read through the model: an unknown token is `max`.
+            'slider_hmode' => $set->sliderHeightMode(false),
+            'slider_hmode_m' => $set->sliderHeightMode(true),
             'cards_count' => $set->cards_count ?? $set->cards()->count(),
         ] + self::textBoxPayload($set);
     }

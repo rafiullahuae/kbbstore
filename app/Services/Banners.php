@@ -291,6 +291,8 @@ class Banners
             'slider_fit', 'slider_h', 'slider_h_m',
             // Lane HB. Same row, same query: the text box adds no query.
             'text_box',
+            // Lane HB3. How each height works -- same row again.
+            'slider_hmode', 'slider_hmode_m',
         ];
 
         $select = ['banner_cards.'.'id as c_id'];

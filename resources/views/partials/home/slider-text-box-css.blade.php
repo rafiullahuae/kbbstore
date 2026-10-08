@@ -34,6 +34,14 @@
     banner -- the max() below, with 100cqi as the frame's width. The two sides
     are separate because the phone header's two paddings can differ.
 
+    NEVER TALLER THAN ITS FRAME (Lane HB3). The owner's preview showed a phone
+    box spilling over a short, wide frame. .hb-pos is a size container, so the
+    box can take `max-block-size:100%` of the room between the insets: when it
+    is short, the heading and the short text give up lines (they are the only
+    two that shrink), and when the room is under 120px -- too little for even a
+    heading and a button -- the box is not drawn at all. Pure CSS: the browser
+    sizes its own boxes; nothing is measured by script.
+
     The box is NOT a link and is `pointer-events:none`: a click anywhere on it
     except the button falls through to the picture's own link, which is the
     whole-slide click the slider always had. The button is the one thing in it
@@ -51,12 +59,15 @@
 .kbbs.has-hb.is-bars.is-inset{--hb-bot:66px}
 .kbbs.has-hb.is-corner.is-bars,.kbbs.has-hb.is-corner.is-arrows{--hb-bot:64px}
 .hb-pos{position:absolute;z-index:1;inset-block:calc(var(--hb-tb) + var(--hb-o)) var(--hb-bot);inset-inline:var(--hb-ins) var(--hb-ine);
-  display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;pointer-events:none}
+  display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;pointer-events:none;container:hbpos / size}
 .hb-pos::before{content:"";flex:var(--hb-vg1) 1 var(--hb-vb)}
 .hb-pos::after{content:"";flex:var(--hb-vg2) 1 0px}
-.hb-box{position:relative;flex:none;inline-size:var(--hb-rm);margin-inline-start:clamp(0px,var(--hb-xo) + (100% - var(--hb-rm)) * var(--hb-xp),100% - var(--hb-rm));
+.hb-box{position:relative;flex:none;max-block-size:100%;inline-size:var(--hb-rm);margin-inline-start:clamp(0px,var(--hb-xo) + (100% - var(--hb-rm)) * var(--hb-xp),100% - var(--hb-rm));
   box-sizing:border-box;display:flex;flex-direction:column;align-items:flex-start;gap:var(--hb-g);pointer-events:none;
   font-family:var(--sans,"Outfit",system-ui,sans-serif);text-align:start}
+.hb-box > *{flex-shrink:0}
+.hb-box > .hb-h,.hb-box > .hb-t{flex-shrink:1;min-block-size:0}
+@container hbpos (max-height:119px){.hb-box{display:none}}
 .hb-eb,.hb-h,.hb-t{margin:0;max-inline-size:100%}
 .hb-eb{font-size:var(--hb-e);font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hb-h{font-size:var(--hb-h);line-height:1.12;font-weight:600;letter-spacing:-.015em;color:var(--ink,#2A2228);text-wrap:balance}

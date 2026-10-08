@@ -138,7 +138,9 @@ it('draws a control for every set column the editor can write, exactly once', fu
      * edits as the flat `tb_*` keys of TB_KEYS, appended to SET_KEYS after
      * this list. BannerTextBoxTest pins TB_KEYS to BannerTextBox::keys().
      */
-    $owned = array_values(array_diff((new BannerSet)->getFillable(), ['slug', 'text_box']));
+    // ▲ ADVANCED BY LANE HB3: the two height modes are appended to SET_KEYS
+    // with SET_KEYS.concat() right after this list (BannerHeightExactTest pins it).
+    $owned = array_values(array_diff((new BannerSet)->getFillable(), ['slug', 'text_box', 'slider_hmode', 'slider_hmode_m']));
 
     sort($owned);
     sort($sent);

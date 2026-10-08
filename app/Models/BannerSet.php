@@ -43,6 +43,8 @@ class BannerSet extends Model
         'kind', 'slider_style', 'slider_ratio', 'slider_ratio_m',
         // Lane RC. How a slider fits its pictures, and the two height caps.
         'slider_fit', 'slider_h', 'slider_h_m',
+        // Lane HB3. Whether each height is a cap ("Up to") or THE height ("Exactly").
+        'slider_hmode', 'slider_hmode_m',
         // Lane HB. The slider's text box, set-wide: one JSON document that only
         // App\Support\BannerTextBox reads or writes.
         'text_box',
@@ -115,6 +117,8 @@ class BannerSet extends Model
         'slider_fit' => 'contain',
         'slider_h' => 0,
         'slider_h_m' => 0,
+        'slider_hmode' => 'max',
+        'slider_hmode_m' => 'max',
         'card_radius' => 0,
         'shadow' => 'none',
     ];
@@ -254,6 +258,24 @@ class BannerSet extends Model
 
     /** The `auto` frame-shape token: the first picture's own proportions. */
     public const SLIDER_AUTO = 'auto';
+
+    /**
+     * Lane HB3 -- HOW EACH HEIGHT WORKS. The owner: "on mobile the overall
+     * height of the banner is not working, i set 600px height, but it's showing
+     * horizontal type size."
+     *
+     * `max` is the cap sliderHeight() has always been: with an Auto shape and a
+     * wide picture the frame is the picture's own shape, shorter than the cap,
+     * so the cap never bites -- which is what he saw. `exact` makes the number
+     * THE frame's height on that device: the picture fills it (cover, centred;
+     * there is no focal point to honour), a slide with its own phone picture
+     * shows that, and one without gets a server-made crop, never the whole
+     * desktop file.
+     */
+    public const SLIDER_HMODES = ['max' => 'Up to this height', 'exact' => 'Exactly this height'];
+
+    /** The crop width an exact phone height is cut for: the widest common phone. */
+    public const EXACT_PHONE_W = 430;
 
     /**
      * The four treatments of the slider, `token => [label, the note]`.
@@ -685,7 +707,23 @@ class BannerSet extends Model
      */
     public function sliderCropsPhone(): bool
     {
-        return $this->sliderFit() === 'cover' && $this->sliderRatioKey(true) !== self::SLIDER_AUTO;
+        // Lane HB3: an exact phone height crops too -- to its own shape.
+        return $this->sliderExact(true)
+            || ($this->sliderFit() === 'cover' && $this->sliderRatioKey(true) !== self::SLIDER_AUTO);
+    }
+
+    /** Lane HB3. `max` or `exact` for one device; anything else is `max`. */
+    public function sliderHeightMode(bool $phone = false): string
+    {
+        $raw = (string) ($phone ? $this->slider_hmode_m : $this->slider_hmode);
+
+        return isset(self::SLIDER_HMODES[$raw]) ? $raw : 'max';
+    }
+
+    /** Lane HB3. True when this device's frame IS its height: Exactly, and a height set. */
+    public function sliderExact(bool $phone = false): bool
+    {
+        return $this->sliderHeightMode($phone) === 'exact' && $this->sliderHeight($phone) > 0;
     }
 
     /**
@@ -705,6 +743,11 @@ class BannerSet extends Model
      */
     public function sliderRatioMobileToken(): string
     {
+        // Lane HB3: an exact phone height is cut to 430 x N, its own directory.
+        if ($this->sliderExact(true)) {
+            return self::EXACT_PHONE_W.'x'.$this->sliderHeight(true);
+        }
+
         // `auto` is a key and NOT a shape, so it answers the shipped phone
         // preset here, exactly as an unknown key does. Nothing crops under
         // `auto` (sliderCropsPhone() says no), so this only keeps the token
@@ -726,6 +769,10 @@ class BannerSet extends Model
     /** The same, below 768px. */
     public function sliderRatioMobileValue(array $cards = []): float
     {
+        if ($this->sliderExact(true)) {
+            return self::EXACT_PHONE_W / $this->sliderHeight(true);
+        }
+
         return self::ratioValue($this->sliderRatioMobileCss($cards));
     }
 

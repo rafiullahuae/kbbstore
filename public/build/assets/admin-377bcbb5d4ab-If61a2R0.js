@@ -79,6 +79,9 @@
        the reason the note above gives, or they are controls that save nothing. */
     'slider_fit', 'slider_h', 'slider_h_m'];
 
+  /* Lane HB3: how each height works -- Up to (a cap) or Exactly. */
+  SET_KEYS = SET_KEYS.concat(['slider_hmode', 'slider_hmode_m']);
+
   /* Lane HB. The slider's text box, set-wide: ONE column on the server
      (banner_sets.text_box, JSON) and these flat keys here, so Save and the
      preview send them like every other set key. BannerTextBoxTest pins this
@@ -446,6 +449,10 @@
 
   /* Lane RC. A height cap as a range, whose read-out says "Auto" at 0 rather
      than "0", because 0 here is not a height -- it is "no cap". */
+  /* Lane HB3: the owner's own words for the two ways a height can work. */
+  var HEIGHT_HELP = 'Up to: the banner is the picture\u2019s own shape and never taller than this. Exactly: the banner is always this tall; the picture fills it.';
+  var PHONE_CROP_HELP = 'With Exactly, a picture without its own phone picture is cropped to fill the height; add a phone picture for full control.';
+
   function heightText(v){
     v = Number(v) || 0;
     return v <= 0 ? 'Auto' : Math.max(80, v) + 'px';
@@ -513,7 +520,9 @@
       var ratio = previewShape(phone);
       var bodyH = Math.round((previewWidth - 36) / ratio);
       var cap = draft.set.kind === 'slider' ? Number((phone ? draft.set.slider_h_m : draft.set.slider_h) || 0) : 0;
-      if (cap > 0) bodyH = Math.min(bodyH, Math.max(80, cap));
+      /* Lane HB3: Exactly is THE height, the way the shop draws it; Up to is the cap. */
+      var exact = String((phone ? draft.set.slider_hmode_m : draft.set.slider_hmode) || 'max') === 'exact';
+      if (cap > 0) bodyH = exact ? Math.max(80, cap) : Math.min(bodyH, Math.max(80, cap));
 
       /*
        * AN ASPECT RATIO ON THE FRAME, NOT A HEIGHT, and the difference shows on
@@ -866,7 +875,7 @@
       + '<div class="bns-row"><label class="bns-sw"><input type="checkbox" data-bns-card="' + id + '" data-bns-k="box_on"' + (d.box_on ? ' checked' : '') + '><span>Show words on this picture</span></label>' + pos + '</div>'
       + '<div class="bns-help" style="margin-top:6px">Switches on by itself when you type. The button goes to <b>Where it goes</b> above; with no link there is no button. '
       + 'Wrap a word or two of the heading in *stars* for the Sticker card\u2019s highlighter. '
-      + (d.image_m ? '' : '<b>This picture has no phone picture, so its words are hidden on phones</b> &mdash; a 1920 \u00d7 550 picture is too short there to hold them. ')
+      + (d.image_m || (String(s.slider_hmode_m) === 'exact' && Number(s.slider_h_m) > 0) ? '' : '<b>This picture has no phone picture, so its words are hidden on phones</b> &mdash; a 1920 \u00d7 550 picture is too short there to hold them. ')
       + '</div>'
       + '<div class="bns-row"><button class="bns-btn is-primary" type="button" data-bns-wtab="en" data-bns-wcard="' + id + '">English</button>'
       + '<button class="bns-btn" type="button" data-bns-wtab="ar" data-bns-wcard="' + id + '">العربية</button></div>'
@@ -926,8 +935,13 @@
         + pick('slider_fit', 'How the pictures fit', 'Whole picture is how the shop ships: nothing is ever cut, at any screen size, and any spare room shows what is behind the banner. Fill the frame crops the edges, centred, so there is no spare room.', s.slider_fit, e.slider_fits)
         + pick('slider_ratio', 'Shape on a computer', 'From a tablet up. Auto is the first picture\u2019s own shape, so the banner is exactly as tall as the picture at every screen width.', s.slider_ratio, e.slider_ratios)
         + pick('slider_ratio_m', 'Shape on a phone', 'Below a tablet. Auto uses the phone picture\u2019s own shape, or the computer one\u2019s when a slide has no phone picture.', s.slider_ratio_m, e.slider_ratios)
-        + heightField('slider_h', 'Banner height on a computer', 'the most the banner may be. Auto follows the picture. With a number, a wider screen stops the banner at that height and the picture is shown whole inside it, centred.', s.slider_h, L.slider_h[0], L.slider_h[1])
-        + heightField('slider_h_m', 'Banner height on a phone', 'the same, below a tablet. Auto follows the phone picture.', s.slider_h_m, L.slider_h_m[0], L.slider_h_m[1])
+        /* Lane HB3. "i set 600px height, but it's showing horizontal type size":
+           the height was only ever a cap. Each one now says how it works, and
+           the help cannot be read as "this is the height" when it is not. */
+        + heightField('slider_h', 'Banner height on a computer', HEIGHT_HELP, s.slider_h, L.slider_h[0], L.slider_h[1])
+        + pick('slider_hmode', 'How the computer height works', 'Applies when a height is set (not Auto).', s.slider_hmode, e.slider_hmodes)
+        + heightField('slider_h_m', 'Banner height on a phone', HEIGHT_HELP, s.slider_h_m, L.slider_h_m[0], L.slider_h_m[1])
+        + pick('slider_hmode_m', 'How the phone height works', 'Applies when a height is set (not Auto). ' + PHONE_CROP_HELP, s.slider_hmode_m, e.slider_hmodes)
         + num('card_radius', 'Corner radius', 'px', s.card_radius, L.card_radius[0], L.card_radius[1])
         + pick('shadow', 'Shadow', 'No border at all — the corner radius and the shadow are what lift the picture off the page.', s.shadow, e.shadows)
         + '</div>';
@@ -1133,11 +1147,14 @@
              fit, an Auto phone shape, or a single image, the phone shows the
              whole wide picture, small; and the line says that instead. */
           + (pictures && d.image && !d.image_m
-              ? (slider && s.slider_fit === 'cover' && String(s.slider_ratio_m || 'auto') !== 'auto'
+              ? (slider && String(s.slider_hmode_m) === 'exact' && Number(s.slider_h_m) > 0
+                  /* Lane HB3: the owner's sentence, with his number in it. */
+                  ? '<span class="bns-warn">No phone picture yet, so this one is cropped to fill ' + esc(Math.max(80, Number(s.slider_h_m))) + 'px on phones; add a phone picture for full control.</span>'
+                  : slider && s.slider_fit === 'cover' && String(s.slider_ratio_m || 'auto') !== 'auto'
                   ? '<span class="bns-warn">No phone picture yet, so phones see only the middle of this one — sharp, but cropped to about a quarter of its width. Choose one at 500 × 600 to decide what they see.</span>'
                   : '<span class="bns-warn">No phone picture yet, so phones show this one whole — nothing cut, but a wide picture is a short strip on a phone (1920 × 550 is 112px tall at 390). Choose one at 500 × 600 for a taller phone banner.</span>')
                 /* Lane HB: and the words, if it has any, are not drawn there. */
-                + (slider && d.box_on ? '<span class="bns-warn">Its words are hidden on phones until it has a phone picture.</span>' : '')
+                + (slider && d.box_on && !(String(s.slider_hmode_m) === 'exact' && Number(s.slider_h_m) > 0) ? '<span class="bns-warn">Its words are hidden on phones until it has a phone picture.</span>' : '')
               : '')
         + '</div>'
         /* THE THREE TEXT BOXES ARE THE CARDS ROW'S AND ARE NOT DRAWN FOR A
