@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.430
+**Email pictures always load; sharper gallery taps; image names Google likes.** Apply
+after .429. No migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "the images are failing to load in the emails ... must not failed in any case" | Cause: emails built picture addresses with "/wp-content/uploads/" added twice, so every product anyone had viewed broke (order 56171). Every email picture (orders, campaigns, logo) now points at a file checked to exist on this server, as a JPEG copy every mail app shows (Outlook cannot show WebP), on the shop's https address; a renamed picture resolves to its current file; a missing one shows a neat placeholder. Pictures still only on the old WordPress site stay linked there until Store -> Import -> Addresses & pictures copies them |
+| "the gallery images ... gets blured" / "load all gallery sharp pictures in the background" | A tapped photo never shows the stretched thumbnail: the grey loading box (Appearance -> Product styles -> Layout -> Photo loading placeholder), or the 400 copy, then the sharp photo fades in. On 4G, after the page has loaded and is idle, the gallery's photos load quietly one at a time (max 1 MB), stopping the moment a link is touched; never on Save-Data or slower connections. LCP, CLS and page switching unchanged |
+| "train our app well by complex conditions" / "as per google liking" | Catalog -> Image SEO names and ALT text tested on 199 real-style titles (sets, 1+1, sizes, SPF, shades, Dr./I'm From/d'Alba brands): sets keep their contents ("cream-mist-spray-set"), number names stay ("345 relief", "snail 96"), sizes and "fl oz"/"PA++++"/"new" are dropped, brand once, ALT never repeats; score marks down keyword stuffing |
+
+Files: see the package's update.json.
+
 ## 2.60.429
 **Stripe: "We could not reach our card processor" fixed at every cause in our code.**
 Apply after .428. No migrations. Hard refresh the admin.
