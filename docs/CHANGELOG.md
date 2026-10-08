@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.434
+**"SKIN&amp;LAB" reads "SKIN&LAB" everywhere.** Apply after .433. Runs its migrations.
+Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "The '&' mostly coming like this in most of the places. please i need it to fix everywhere" | Imported names were saved HTML-encoded by WordPress and escaped again on the page. Product, brand, category, tag, attribute, menu, review and banner text is decoded once (an undo record is kept; slugs and rich descriptions untouched); future imports store plain text; old orders show the clean name without being changed. Also fixed: brand, category and content page titles were escaped twice or three times in the browser tab and on Google ("SKIN&amp;amp;LAB") |
+
+Files: see the package's update.json.
+
 ## 2.60.433
 **Category banners, one placing box with the tick, faster ordering, remembered
 details, payments check and domain-switch safety.** Apply after .432. Runs its
