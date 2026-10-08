@@ -197,6 +197,11 @@ it('has exactly four templates that open a product grid, and each takes its skin
     )))->toBe([
         'resources/views/components/product-grid.blade.php',
         'resources/views/partials/home/grid.blade.php',
+        // ▲ ADDED (Lane RP). Blocks 2 and 3 at the foot of the product page,
+        // "Complete your routine" and "Continue shopping": the same tile in the
+        // same `.rel.kbb-pgrid`, skin from GridSkins::resolve(null).
+        'resources/views/partials/product/recs-recent.blade.php',
+        'resources/views/partials/product/recs-routine.blade.php',
         // ▲ MOVED, NOT ADDED (Lane PS). The product page's related rail left
         // store/product.blade.php for its own partial when it became the "You
         // may also like" carousel; same tile, same `.rel.kbb-pgrid`, same skin.
@@ -209,6 +214,8 @@ it('has exactly four templates that open a product grid, and each takes its skin
         'components/product-grid.blade.php' => '$skin',
         'partials/home/grid.blade.php' => 'GridSkins::resolve',
         'partials/you-may-also-like.blade.php' => 'GridSkins::resolve',
+        'partials/product/recs-recent.blade.php' => 'GridSkins::resolve',
+        'partials/product/recs-routine.blade.php' => 'GridSkins::resolve',
         'store/shop.blade.php' => '$kbbSkin',
     ] as $view => $needle) {
         $code = (string) preg_replace(

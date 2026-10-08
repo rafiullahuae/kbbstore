@@ -95,6 +95,7 @@ class ProductRecs
         private AlsoLikeSettings $settings,
         private ProductSections $sections,
         private BuyTogetherPairs $pairs,
+        private SettingsService $settingsSnapshot,
     ) {}
 
     /** Drop one product's cached pools. Called from Product::booted(). */
@@ -243,10 +244,15 @@ class ProductRecs
     {
         $categoryIds = $this->categoryIds($product);
         $specific = $this->specificCategory($product);
-        $shelves = $wantRoutine ? $this->shelves($product, $categoryIds) : [];
+        // The routine shelves are resolved on the COLD path only: they need
+        // BuyTogetherPairs' category list, and a warm view must not. What
+        // decides them — his pair overrides, from the settings snapshot already
+        // in memory — is in the fingerprint instead; a renamed shelf is picked
+        // up within the TTL.
         $fp = md5(json_encode([
             $c['rule'], $c['fill'], $c['count'], $c['hide_oos'], $c['layout'], $c['routine_on'], $c['routine_count'],
-            $c['recent_on'], $c['recent_count'], $tabs, $picks, $product->brand_id, $categoryIds, $specific, $shelves,
+            $c['recent_on'], $c['recent_count'], $tabs, $picks, $product->brand_id, $categoryIds, $specific,
+            $wantRoutine ? $this->settingsSnapshot->get(BuyTogetherPairs::SETTING, null) : null,
         ]) ?: '');
 
         $key = self::CACHE_PREFIX.(int) $product->id;
@@ -256,6 +262,7 @@ class ProductRecs
             return $this->hydrate($hit['ids'], $viewed, (bool) $c['hide_oos']);
         }
 
+        $shelves = $wantRoutine ? $this->shelves($product, $categoryIds) : [];
         $count = (int) $c['count'];
         $parts = [];
 

@@ -529,6 +529,12 @@ it('is flat in the number of members', function () {
     $large = sfSetOf(12);
 
     $count = function (string $url): int {
+        // (Lane RP) A fresh request's set-price memo, as PHP-FPM gives every
+        // request: the foot's best sellers draw the OTHER set as a card and
+        // prime its price, one grouped statement on both pages — but the
+        // warm-up request had already primed one of them in this process.
+        // SetProductPageTest carries the same line for the same reason.
+        \App\Support\SetPricing::forget();
         DB::flushQueryLog();
         DB::enableQueryLog();
         $this->get($url)->assertOk();
