@@ -3,6 +3,21 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.432
+**Firefox Place order (the hidden password), coupon in place, product-page tabs and
+Continue shopping, breadcrumb, homepage banner text box.** Apply after .431. Runs its
+migrations. Hard refresh the shop and the admin.
+
+| Your request | Now |
+|---|---|
+| "the place order button still not working" (Firefox) -- you found it: a short password Firefox filled into the hidden account box | The hidden account password is switched off while hidden (never autofilled, checked or sent); a hidden box can never block an order; every refusal now says why beside the button you pressed ("Please check: Phone ↑", card still loading, card could not load in this browser). After Back during a card payment the buttons come back alive. Checking page: /checkout/?kbbdiag=1 |
+| "use the coupon field, it should not delete all the data ... neither refresh the page" | Coupons apply and remove in place; every typed field, delivery choice and payment method stays; reason under the field in EN/AR; Go/Enter in the coupon box applies it and never places the order |
+| Product page: "keep also the tab, more from anua, and more from toner ... third will be continue shoping" | Appearance -> Product page -> You may also like: tabs (brand / most specific category, opens on where the shopper came from), then Continue shopping; best sellers off; "Two separate blocks" option; slider/grid and count per device; no product repeats |
+| Breadcrumb "YES agree, do it" | Product breadcrumb uses the same most specific category as the tab (Home › Skincare › Toners › Product); Google's breadcrumb data matches |
+| Banner text box, A and D, "make the box outer glow the same" | Appearance -> Banners -> homepage slider -> Text box, and each picture -> Words on this picture (EN/AR). Pastel glow on both. Nothing shows until you write words on a picture |
+
+Files: see the package's update.json.
+
 ## 2.60.431
 **Place order works in Firefox.** Apply after .430. No migrations. Hard refresh
 the checkout once (Ctrl+Shift+R).
