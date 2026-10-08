@@ -22799,8 +22799,15 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
     var titleEl=document.getElementById('pay_title_'+id);
     var modeEl=document.getElementById('pay_mode_'+id);
 
+    // A null in the override means "clear this secret on purpose" (the New
+    // webhook URL button). Sent as its own list: a blank or null value in
+    // `settings` always keeps the stored key.
+    var clear=[];
+    Object.keys(settings).forEach(function(k){ if(settings[k]===null){ clear.push(k); delete settings[k]; } });
+
     var payload={
       id:id,
+      clear:clear,
       enabled:tog?tog.classList.contains('on'):!!g.enabled,
       title:titleEl?titleEl.value:g.title,
       mode:modeEl?modeEl.value:g.mode,

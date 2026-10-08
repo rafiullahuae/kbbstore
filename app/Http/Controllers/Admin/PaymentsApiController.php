@@ -149,6 +149,8 @@ class PaymentsApiController extends Controller
             'mode' => ['nullable', 'string', 'in:test,live'],
             'position' => ['nullable', 'integer', 'min:0', 'max:999'],
             'settings' => ['nullable', 'array'],
+            'clear' => ['nullable', 'array', 'max:10'],
+            'clear.*' => ['string', 'max:60'],
         ]);
 
         $gateway = $this->registry->find($data['id']);
@@ -190,6 +192,42 @@ class PaymentsApiController extends Controller
         }
 
         $secretKeys = array_keys(array_filter($schema, fn ($def) => ($def[0] ?? '') === 'secret'));
+
+        /*
+         * A BLANK KEY BOX KEEPS THE STORED KEY, ON EVERY GATEWAY. The owner,
+         * October 2026: "if i save anything in the payment gateway setting
+         * page, i need to re-enter the api every single time." Secrets are never
+         * sent back to the browser, so their boxes post blank -- and Laravel's
+         * global ConvertEmptyStringsToNull turns that blank into null before
+         * this controller sees it. GatewayCredentials::save() reads null as
+         * "remove", so saving a title, a mode or a statement descriptor erased
+         * Stripe's, Tabby's and Tamara's keys, and the webhook URL secret with
+         * them (a new URL the provider no longer knew). So a null or blank
+         * secret is dropped here = unchanged, and the only way to clear one is
+         * to name it in `clear` (the "New webhook URL" button does exactly that).
+         *
+         * MUTATION: delete this block and PaymentKeysSurviveASaveTest goes red
+         * for every gateway.
+         */
+        foreach ($secretKeys as $key) {
+            // webhook_secret is never a box on the screen (PAY_HIDDEN_FIELDS),
+            // so a null for it can only be the New webhook URL button in its
+            // older shape -- an explicit clear, kept working for an admin page
+            // left open across the update.
+            if ($key === 'webhook_secret' && array_key_exists($key, $values) && $values[$key] === null) {
+                continue;
+            }
+
+            if (array_key_exists($key, $values) && trim((string) ($values[$key] ?? '')) === '') {
+                unset($values[$key]);
+            }
+        }
+
+        foreach ((array) ($data['clear'] ?? []) as $key) {
+            if (in_array($key, $secretKeys, true)) {
+                $values[$key] = null;
+            }
+        }
 
         $row = PaymentProvider::firstOrNew(['id' => $gateway->id()]);
         $row->fill([
