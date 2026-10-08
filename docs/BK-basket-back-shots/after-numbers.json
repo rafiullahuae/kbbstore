@@ -1,0 +1,314 @@
+[
+  {
+    "tag": "after",
+    "flow": "tabby-cancel",
+    "lang": "en",
+    "vp": "390",
+    "file": "after-tabby-cancel-en-390.png",
+    "order": "10024",
+    "orderStatus": "failed",
+    "url": "/cart/?back=restored",
+    "dir": "ltr",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "heading": "Your Bag (2 items)",
+    "lines": 2,
+    "emptyBag": false,
+    "notice": "Your payment wasn’t completed — nothing was charged. Your bag is just as you left it.Try again",
+    "noticeClass": "co-note ok",
+    "noticeBox": {
+      "w": 362,
+      "h": 115,
+      "font": "13px"
+    },
+    "restoreButton": 0,
+    "retry": {
+      "w": 96,
+      "h": 40,
+      "href": "/checkout/",
+      "hit": true
+    },
+    "cls": 0,
+    "consoleErrors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ],
+    "tryAgain": {
+      "url": "/checkout/",
+      "status": "ok",
+      "lines": 0
+    }
+  },
+  {
+    "tag": "after",
+    "flow": "tabby-cancel",
+    "lang": "en",
+    "vp": "1280",
+    "file": "after-tabby-cancel-en-1280.png",
+    "order": "10025",
+    "orderStatus": "failed",
+    "url": "/cart/?back=restored",
+    "dir": "ltr",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "heading": "Your Bag (2 items)",
+    "lines": 2,
+    "emptyBag": false,
+    "notice": "Your payment wasn’t completed — nothing was charged. Your bag is just as you left it.Try again",
+    "noticeClass": "co-note ok",
+    "noticeBox": {
+      "w": 996,
+      "h": 96,
+      "font": "13px"
+    },
+    "restoreButton": 0,
+    "retry": {
+      "w": 96,
+      "h": 40,
+      "href": "/checkout/",
+      "hit": true
+    },
+    "cls": 0,
+    "consoleErrors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ],
+    "tryAgain": {
+      "url": "/checkout/",
+      "status": "ok",
+      "lines": 0
+    }
+  },
+  {
+    "tag": "after",
+    "flow": "tabby-cancel",
+    "lang": "ar",
+    "vp": "390",
+    "file": "after-tabby-cancel-ar-390.png",
+    "order": "10026",
+    "orderStatus": "failed",
+    "url": "/ar/cart/?back=restored",
+    "dir": "rtl",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "heading": "حقيبتك (منتجان)",
+    "lines": 2,
+    "emptyBag": false,
+    "notice": "لم يكتمل الدفع — ولم يُخصم أي مبلغ. حقيبتك كما تركتها تمامًا.حاول مرة أخرى",
+    "noticeClass": "co-note ok",
+    "noticeBox": {
+      "w": 362,
+      "h": 115,
+      "font": "13px"
+    },
+    "restoreButton": 0,
+    "retry": {
+      "w": 124,
+      "h": 40,
+      "href": "/ar/checkout/",
+      "hit": true
+    },
+    "cls": 0,
+    "consoleErrors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ],
+    "tryAgain": {
+      "url": "/ar/checkout/",
+      "status": "ok",
+      "lines": 0
+    }
+  },
+  {
+    "tag": "after",
+    "flow": "tabby-cancel",
+    "lang": "ar",
+    "vp": "1280",
+    "file": "after-tabby-cancel-ar-1280.png",
+    "order": "10027",
+    "orderStatus": "failed",
+    "url": "/ar/cart/?back=restored",
+    "dir": "rtl",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "heading": "حقيبتك (منتجان)",
+    "lines": 2,
+    "emptyBag": false,
+    "notice": "لم يكتمل الدفع — ولم يُخصم أي مبلغ. حقيبتك كما تركتها تمامًا.حاول مرة أخرى",
+    "noticeClass": "co-note ok",
+    "noticeBox": {
+      "w": 996,
+      "h": 96,
+      "font": "13px"
+    },
+    "restoreButton": 0,
+    "retry": {
+      "w": 124,
+      "h": 40,
+      "href": "/ar/checkout/",
+      "hit": true
+    },
+    "cls": 0,
+    "consoleErrors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ],
+    "tryAgain": {
+      "url": "/ar/checkout/",
+      "status": "ok",
+      "lines": 0
+    }
+  },
+  {
+    "tag": "after",
+    "flow": "stripe-3ds-cancel",
+    "lang": "en",
+    "vp": "390",
+    "file": "after-stripe-3ds-cancel-en-390.png",
+    "order": "10028",
+    "orderStatus": "failed",
+    "url": "/cart/?back=restored",
+    "dir": "ltr",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "heading": "Your Bag (2 items)",
+    "lines": 2,
+    "emptyBag": false,
+    "notice": "Your payment wasn’t completed — nothing was charged. Your bag is just as you left it.Try again",
+    "noticeClass": "co-note ok",
+    "noticeBox": {
+      "w": 362,
+      "h": 115,
+      "font": "13px"
+    },
+    "restoreButton": 0,
+    "retry": {
+      "w": 96,
+      "h": 40,
+      "href": "/checkout/",
+      "hit": true
+    },
+    "cls": 0,
+    "consoleErrors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ],
+    "tryAgain": {
+      "url": "/checkout/",
+      "status": "ok",
+      "lines": 0
+    }
+  },
+  {
+    "tag": "after",
+    "flow": "stripe-3ds-cancel",
+    "lang": "en",
+    "vp": "1280",
+    "file": "after-stripe-3ds-cancel-en-1280.png",
+    "order": "10029",
+    "orderStatus": "failed",
+    "url": "/cart/?back=restored",
+    "dir": "ltr",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "heading": "Your Bag (2 items)",
+    "lines": 2,
+    "emptyBag": false,
+    "notice": "Your payment wasn’t completed — nothing was charged. Your bag is just as you left it.Try again",
+    "noticeClass": "co-note ok",
+    "noticeBox": {
+      "w": 996,
+      "h": 96,
+      "font": "13px"
+    },
+    "restoreButton": 0,
+    "retry": {
+      "w": 96,
+      "h": 40,
+      "href": "/checkout/",
+      "hit": true
+    },
+    "cls": 0,
+    "consoleErrors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ],
+    "tryAgain": {
+      "url": "/checkout/",
+      "status": "ok",
+      "lines": 0
+    }
+  },
+  {
+    "tag": "after",
+    "flow": "stripe-3ds-cancel",
+    "lang": "ar",
+    "vp": "390",
+    "file": "after-stripe-3ds-cancel-ar-390.png",
+    "order": "10030",
+    "orderStatus": "failed",
+    "url": "/ar/cart/?back=restored",
+    "dir": "rtl",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "heading": "حقيبتك (منتجان)",
+    "lines": 2,
+    "emptyBag": false,
+    "notice": "لم يكتمل الدفع — ولم يُخصم أي مبلغ. حقيبتك كما تركتها تمامًا.حاول مرة أخرى",
+    "noticeClass": "co-note ok",
+    "noticeBox": {
+      "w": 362,
+      "h": 115,
+      "font": "13px"
+    },
+    "restoreButton": 0,
+    "retry": {
+      "w": 124,
+      "h": 40,
+      "href": "/ar/checkout/",
+      "hit": true
+    },
+    "cls": 0,
+    "consoleErrors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ],
+    "tryAgain": {
+      "url": "/ar/checkout/",
+      "status": "ok",
+      "lines": 0
+    }
+  },
+  {
+    "tag": "after",
+    "flow": "stripe-3ds-cancel",
+    "lang": "ar",
+    "vp": "1280",
+    "file": "after-stripe-3ds-cancel-ar-1280.png",
+    "order": "10031",
+    "orderStatus": "failed",
+    "url": "/ar/cart/?back=restored",
+    "dir": "rtl",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "heading": "حقيبتك (منتجان)",
+    "lines": 2,
+    "emptyBag": false,
+    "notice": "لم يكتمل الدفع — ولم يُخصم أي مبلغ. حقيبتك كما تركتها تمامًا.حاول مرة أخرى",
+    "noticeClass": "co-note ok",
+    "noticeBox": {
+      "w": 996,
+      "h": 96,
+      "font": "13px"
+    },
+    "restoreButton": 0,
+    "retry": {
+      "w": 124,
+      "h": 40,
+      "href": "/ar/checkout/",
+      "hit": true
+    },
+    "cls": 0,
+    "consoleErrors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+    ],
+    "tryAgain": {
+      "url": "/ar/checkout/",
+      "status": "ok",
+      "lines": 0
+    }
+  }
+]
