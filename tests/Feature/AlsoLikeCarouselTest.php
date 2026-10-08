@@ -18,17 +18,10 @@ declare(strict_types=1);
  *
  * MUTATIONS, each RUN against this file and each red:
  *
- *   M1  AlsoLikeRail::assemble() — drop the interleave() call (brand pool then
- *       category pool, in that order) → "it mixes brand and category in turn"
- *       red: the order reads b1 b2 b3 c1 c2 c3.
- *   M2  AlsoLikeRail::part() — remove the hide_oos where() → "it leaves out
- *       hidden, sold-out and the product itself" red: the sold-out sibling
- *       comes back.
- *   M3  AlsoLikeRail::products() — remove the visible()/oos re-check in
- *       hydrate() → "it drops a product hidden after the choice was cached"
- *       red: the warm read still shows it.
- *   M4  Product::booted() — remove the AlsoLikeRail::forget() listener →
- *       "it forgets a product's choice when the product is saved" red.
+ *   M1–M3 went with App\Services\AlsoLikeRail (Lane RP2); RecsBlocksTest
+ *       carries their successors against App\Services\ProductRecs.
+ *   M4  Product::booted() — remove the ProductRecs::forget() listener →
+ *       "it forgets a product's lists when the product is saved" red.
  *   M5  AlsoLikePicks::fromRequest() — remove the visible() check → "it
  *       refuses a pick the shop cannot show" red (200 instead of 422).
  *   M6  ProductPageApiController::save() — move the unknown-key check below
@@ -42,7 +35,6 @@ use App\Models\AdminUser;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
-use App\Services\AlsoLikeRail;
 use App\Services\AlsoLikeSettings;
 use App\Services\ProductSections;
 use App\Services\SettingsService;
@@ -141,198 +133,34 @@ function ymalWarm(): void
     AlsoLikeSettings::wording(app(AlsoLikeSettings::class)->all());
 }
 
-/** The names the rail chose, in order. */
-function ymalNames(Product $product, array $settings = []): array
-{
-    if ($settings !== []) {
-        app(AlsoLikeSettings::class)->save($settings);
-    }
+/*
+ * (Lane RP2) The rail's own cases — the brand/category mix, the ratio, the
+ * seven rules, the tree top-up — went with App\Services\AlsoLikeRail when the
+ * owner made the three blocks brand / category / best sellers. What they also
+ * guarded lives on in tests/Feature/RecsBlocksTest.php against
+ * App\Services\ProductRecs: hidden, sold-out and the product itself left out;
+ * a product's own picks first or alone; two queries cold and warm; a product
+ * hidden after the lists were cached gone on the next view; nothing asked of
+ * the database with the foot off; and a saved product forgets its lists (below).
+ */
 
-    $fresh = Product::with('categories:id')->find($product->id);
-
-    return app(AlsoLikeRail::class)->forProduct($fresh)['products']->pluck('name')->all();
-}
-
-/* ═══════════════════════════ the default rule ════════════════════════════ */
-
-it('mixes brand and category in turn, best sellers first, then tops up from the tree and the shop', function () {
+it('forgets a product\'s lists when the product is saved', function () {
     $s = ymalShop();
+    $this->get('/product/'.$s['self']->slug.'/')->assertOk();
 
-    // The first eleven: the twelfth is the demo catalogue the test database
-    // carries, topping the row up to the shipped count.
-    expect(array_slice(ymalNames($s['self']), 0, 11))->toBe([
-        // brand, category, brand, category — 1 : 1, each best-selling first
-        'Anua One', 'Toner One', 'Anua Two', 'Toner Two', 'Anua Three', 'Toner Three',
-        // the tree: Toners' parent is Skincare, whose other shelf is Serums
-        'Serum One', 'Serum Two',
-        // then the whole shop's best sellers
-        'Hair Best', 'Hair Next', 'Hair Third',
-    ]);
-});
-
-it('leaves out hidden, sold-out and draft products and the product itself', function () {
-    $s = ymalShop();
-    $names = ymalNames($s['self']);
-
-    expect($names)->not->toContain('Anua Sold Out')
-        ->not->toContain('Anua Hidden')
-        ->not->toContain('Anua Draft')
-        ->not->toContain('Heartleaf Toner');
-
-    // The out-of-stock switch is a switch: off, and the sold-out sibling joins.
-    expect(ymalNames($s['self'], ['hide_oos' => false]))->toContain('Anua Sold Out')
-        ->not->toContain('Anua Hidden');
-});
-
-it('ships twelve cards and holds the count to its own 4–24', function () {
-    $s = ymalShop();
-
-    for ($i = 0; $i < 20; $i++) {
-        ymalProduct('Filler '.$i, null, [], 1);
-    }
-
-    expect(ymalNames($s['self']))->toHaveCount(12);
-    expect(ymalNames($s['self'], ['count' => 4]))->toHaveCount(4);
-    // A count the slider cannot send is clamped, not stored as typed.
-    expect(ymalNames($s['self'], ['count' => 999]))->toHaveCount(24);
-    expect(app(AlsoLikeSettings::class)->all()['count'])->toBe(24);
-});
-
-it('weights the mix by the ratio he chooses', function () {
-    $s = ymalShop();
-
-    expect(array_slice(ymalNames($s['self'], ['mix' => '2:1']), 0, 6))
-        ->toBe(['Anua One', 'Anua Two', 'Toner One', 'Anua Three', 'Toner Two', 'Toner Three']);
-
-    // A ratio that is not one of the options is the default, never stored.
-    app(AlsoLikeSettings::class)->save(['mix' => '9:1']);
-    expect(app(AlsoLikeSettings::class)->all()['mix'])->toBe('1:1');
-});
-
-it('answers every rule on the list', function () {
-    $s = ymalShop();
-
-    expect(ymalNames($s['self'], ['rule' => 'brand', 'fill' => false]))->toBe(['Anua One', 'Anua Two', 'Anua Three']);
-    expect(ymalNames($s['self'], ['rule' => 'category', 'fill' => false]))->toBe(['Toner One', 'Toner Two', 'Toner Three']);
-    expect(array_slice(ymalNames($s['self'], ['rule' => 'best']), 0, 3))->toBe(['Hair Best', 'Hair Next', 'Hair Third']);
-
-    $s['c3']->forceFill(['sale_price' => 2500])->save();
-    // Half off is the deepest cut in the shop, and the /super-sale order is
-    // deepest first.
-    expect(ymalNames($s['self'], ['rule' => 'sale', 'fill' => false])[0])->toBe('Toner Three');
-    expect(ymalNames($s['self'], ['rule' => 'sale', 'fill' => false]))->not->toContain('Toner Two');
-
-    $new = ymalProduct('Brand New', null, [], 0);
-    $new->forceFill(['created_at' => now()->addMinute()])->save();
-    expect(ymalNames($s['self'], ['rule' => 'newest'])[0])->toBe('Brand New');
-
-    // "Manual picks only" with no picks on this product: no section at all.
-    expect(ymalNames($s['self'], ['rule' => 'manual']))->toBe([]);
-});
-
-/* ═════════════════════════════ manual picks ══════════════════════════════ */
-
-it('puts a product\'s own picks first, in his order, or alone', function () {
-    $s = ymalShop();
-
-    $s['self']->forceFill(['also_like' => ['mode' => 'first', 'ids' => [$s['x3']->id, $s['s2']->id]]])->save();
-
-    $names = ymalNames($s['self']);
-    expect(array_slice($names, 0, 3))->toBe(['Hair Third', 'Serum Two', 'Anua One']);
-    expect(array_count_values($names)['Hair Third'])->toBe(1);
-
-    $s['self']->forceFill(['also_like' => ['mode' => 'only', 'ids' => [$s['x3']->id, $s['hidden']->id, $s['s2']->id]]])->save();
-
-    // A pick hidden since it was made is simply not shown.
-    expect(ymalNames($s['self']))->toBe(['Hair Third', 'Serum Two']);
-});
-
-/* ═════════════════════════ cost, and the cache ═══════════════════════════ */
-
-it('costs two queries cold and two warm, for four cards or twenty-four', function () {
-    $s = ymalShop();
-
-    for ($i = 0; $i < 30; $i++) {
-        ymalProduct('Bulk '.$i, $s['brand'], [$s['toners']], $i);
-    }
-
-    $s['self']->forceFill(['also_like' => ['mode' => 'first', 'ids' => [$s['x1']->id]]])->save();
-
-    foreach ([4, 24] as $count) {
-        app(AlsoLikeSettings::class)->save(['count' => $count]);
-        Cache::flush();
-        $fresh = Product::with('categories:id')->find($s['self']->id);
-        ymalWarm();
-
-        DB::enableQueryLog();
-        DB::flushQueryLog();
-        $cold = app(AlsoLikeRail::class)->forProduct($fresh)['products'];
-        $coldQueries = count(DB::getQueryLog());
-
-        DB::flushQueryLog();
-        $warm = app(AlsoLikeRail::class)->forProduct($fresh)['products'];
-        $warmQueries = count(DB::getQueryLog());
-        DB::disableQueryLog();
-
-        expect($cold)->toHaveCount($count)
-            ->and($warm->pluck('id')->all())->toBe($cold->pluck('id')->all())
-            ->and($coldQueries)->toBe(2, "cold, {$count} cards")
-            ->and($warmQueries)->toBe(2, "warm, {$count} cards");
-    }
-});
-
-it('drops a product hidden after the choice was cached, on the very next view', function () {
-    $s = ymalShop();
-    expect(ymalNames($s['self']))->toContain('Toner One');
-
-    // A raw write: no model event, so the cache is NOT forgotten — the warm
-    // read alone has to notice.
-    DB::table('products')->where('id', $s['c1']->id)->update(['is_visible' => false]);
-    expect(ymalNames($s['self']))->not->toContain('Toner One');
-
-    DB::table('products')->where('id', $s['c2']->id)->update(['stock_status' => 'outofstock']);
-    expect(ymalNames($s['self']))->not->toContain('Toner Two');
-});
-
-it('forgets a product\'s choice when the product is saved', function () {
-    $s = ymalShop();
-    ymalNames($s['self']);
-
-    expect(Cache::has(AlsoLikeRail::CACHE_PREFIX.$s['self']->id))->toBeTrue();
+    expect(Cache::has(\App\Services\ProductRecs::CACHE_PREFIX.$s['self']->id))->toBeTrue();
 
     $s['self']->forceFill(['name' => 'Heartleaf Toner 2'])->save();
 
-    expect(Cache::has(AlsoLikeRail::CACHE_PREFIX.$s['self']->id))->toBeFalse();
-});
-
-it('asks nothing of the database when the section is off', function () {
-    $s = ymalShop();
-    $fresh = Product::with('categories:id')->find($s['self']->id);
-
-    app(AlsoLikeSettings::class)->save(['enabled' => false]);
-    ymalWarm();
-    DB::enableQueryLog();
-    DB::flushQueryLog();
-    expect(app(AlsoLikeRail::class)->forProduct($fresh)['products'])->toHaveCount(0);
-    expect(DB::getQueryLog())->toBe([]);
-
-    app(AlsoLikeSettings::class)->save(['enabled' => true]);
-    app(ProductSections::class)->save(['related' => ['desktop' => false, 'mobile' => false]]);
-    ymalWarm();
-    app(ProductSections::class)->all();
-    DB::flushQueryLog();
-    expect(app(AlsoLikeRail::class)->forProduct($fresh)['products'])->toHaveCount(0);
-    expect(DB::getQueryLog())->toBe([]);
-    DB::disableQueryLog();
+    expect(Cache::has(\App\Services\ProductRecs::CACHE_PREFIX.$s['self']->id))->toBeFalse();
 });
 
 /* ═══════════════════════════════ the page ════════════════════════════════ */
 
 it('draws the shop\'s own cards in one scrolling row, with arrows and a reserved size', function () {
     $s = ymalShop();
-    // (Lane RP) The one-row layout the owner can go back to — block 1 as
-    // "One row", blocks 2 and 3 off — is this carousel, unchanged.
-    app(AlsoLikeSettings::class)->save(['layout' => 'one', 'routine_on' => false, 'recent_on' => false]);
+    // (Lane RP2) Block 3 alone: the carousel this file has always been about.
+    app(AlsoLikeSettings::class)->save(['brand_on' => false, 'cat_on' => false]);
 
     $html = $this->get('/product/'.$s['self']->slug.'/')->assertOk()->getContent();
 
@@ -345,8 +173,7 @@ it('draws the shop\'s own cards in one scrolling row, with arrows and a reserved
         ->and($html)->toContain('<h2 id="ymal-h">You may also like</h2>');
 
     preg_match('#id="related".*?</section>#s', $html, $m);
-    // Twelve, the shipped count: this fixture's eleven relatives, topped up
-    // from the demo catalogue the test database carries.
+    // Twelve, the shipped count, from the shop's best sellers.
     expect(substr_count($m[0] ?? '', 'class="kbb-card kbb-tile'))->toBe(12);
     // The cards' pictures are lazy: the rail is at the foot of the page.
     expect(substr_count($m[0] ?? '', 'loading="eager"'))->toBe(0);
@@ -411,18 +238,18 @@ it('serves and saves the carousel tab as its own half', function () {
 
     app(ProductSections::class)->save(['tabs' => ['desktop' => false, 'mobile' => false]]);
 
-    $this->postJson('/admin-api/product-page', ['also' => ['rule' => 'brand', 'count' => 8, 'per_desktop' => '4', 'autoplay' => true]])
+    $this->postJson('/admin-api/product-page', ['also' => ['g_layout_d' => 'grid', 'brand_count_m' => '8', 'per_desktop' => '4', 'autoplay' => true]])
         ->assertOk()->assertJson(['ok' => true, 'saved' => 4]);
 
     $c = app(AlsoLikeSettings::class)->all();
-    expect([$c['rule'], $c['count'], $c['per_desktop'], $c['autoplay']])->toBe(['brand', 8, '4', true]);
+    expect([$c['g_layout_d'], (string) $c['brand_count_m'], $c['per_desktop'], $c['autoplay']])->toBe(['grid', '8', '4', true]);
     // The switch the carousel post never mentioned stayed where it was.
     expect(app(ProductSections::class)->all()['tabs']['desktop'])->toBeFalse();
 
     // A select stores one of its own options or the default.
-    $this->postJson('/admin-api/product-page', ['also' => ['rule' => 'everything', 'per_phone' => '7']])->assertOk();
+    $this->postJson('/admin-api/product-page', ['also' => ['g_layout_m' => 'everything', 'per_phone' => '7', 'also_count_d' => '99']])->assertOk();
     $c = app(AlsoLikeSettings::class)->all();
-    expect([$c['rule'], $c['per_phone']])->toBe(['mix', '2.3']); // Lane PX: the default is 2.3
+    expect([$c['g_layout_m'], $c['per_phone'], (string) $c['also_count_d']])->toBe(['std', '2.3', 'global']); // Lane PX: the default is 2.3
 
     // Markup in a heading is wording, not markup.
     $this->postJson('/admin-api/product-page', ['also' => ['title' => '<script>x</script>Pairs well']])->assertOk();
@@ -441,9 +268,9 @@ it('refuses an unknown carousel key and writes nothing at all', function () {
     expect(app(AlsoLikeSettings::class)->all())->toBe(AlsoLikeSettings::defaults());
 });
 
-it('ships the carousel on, mixed, twelve, five and 2.3, and autoplay off', function () {
+it('ships the carousel on, twelve, five and 2.3, and autoplay off', function () {
     expect(AlsoLikeSettings::defaults())->toMatchArray([
-        'enabled' => true, 'rule' => 'mix', 'mix' => '1:1', 'fill' => true, 'count' => 12,
+        'enabled' => true, 'count' => 12,
         // Lane PX: per_phone 2 -> 2.3 and arrows_m off, both the owner's ask.
         'hide_oos' => true, 'per_desktop' => '5', 'per_phone' => '2.3', 'arrows_m' => false, 'autoplay' => false,
         'title' => '', 'title_ar' => '',

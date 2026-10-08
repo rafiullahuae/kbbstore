@@ -668,7 +668,12 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // — two tab labels, the tab list's name, and the blocks' headings and
     // small lines (store.product.recs_*), seeded by
     // 2027_10_08_120000_seed_recs_arabic_drafts.
-    expect($ui['drafts'])->toBe(1455, 'the shipped Arabic is not showing as drafts to review')
+    // 1455 -> 1449 (Lane RP2): six of those nine retired with the tabs,
+    // "Complete your routine" and "Continue shopping" (the tab list's name,
+    // "More like this", and the two blocks' headings and small lines) —
+    // removed from the code, and their machine drafts by
+    // 2027_10_09_120000_retire_recs_arabic_drafts.
+    expect($ui['drafts'])->toBe(1449, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

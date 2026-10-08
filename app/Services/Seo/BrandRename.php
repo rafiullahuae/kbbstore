@@ -406,7 +406,7 @@ final class BrandRename
     {
         foreach (array_keys($touched['products'] ?? []) as $id) {
             try {
-                \App\Services\AlsoLikeRail::forget((int) $id);
+                \App\Services\ProductRecs::forget((int) $id);
                 \App\Services\BuyTogether::forget((int) $id);
             } catch (\Throwable) {
             }

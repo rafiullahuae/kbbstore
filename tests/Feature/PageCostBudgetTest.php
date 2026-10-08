@@ -168,15 +168,13 @@ it('keeps the grid and the product page inside a hard query ceiling', function (
         '/shop' => [19, 16],
         '/collections/'.$seed['category']->slug => [19, 16],
         /*
-         * 22 -> 23, measured 19 -> 20 (Lane RP). The product page's
-         * "Complete your routine" reads the shop's shelf list
-         * (BuyTogetherPairs::categories(), one SELECT of `categories`) on a
-         * COLD choice only — this walk flushes every cache. That list is
-         * cached ten minutes for every product page at once, and a warm
-         * product page does not ask for it at all (RecsBlocksTest: two
-         * statements for all three blocks, cold and warm, once it is cached).
+         * 22 -> 23 -> 22, measured 19 -> 20 -> 19 (Lane RP, then Lane RP2).
+         * Lane RP's "Complete your routine" read the shop's shelf list on a
+         * cold choice; the three blocks Lane RP2 draws instead (brand,
+         * category, best sellers) never do, so the ceiling is back where it
+         * was set.
          */
-        '/product/'.$seed['product']->slug => [23, 20],
+        '/product/'.$seed['product']->slug => [22, 19],
     ];
 
     $over = [];

@@ -149,17 +149,9 @@ const CLC_COVERED = [
     'app/Support/Shortcodes.php' => 'a CMS page carrying [kbb_products]',
     'resources/views/store/shop.blade.php' => '/shop',
     /*
-     * Lane PS. "You may also like" — what this list called "the related rail on
-     * a product page", under store/product.blade.php — moved into its own
-     * partial when it became a carousel, so the product page itself no longer
-     * renders a card and its entry went with the call. The same cards, now
-     * from App\Services\AlsoLikeRail (`brand:id,name,slug` on both its cold
-     * and its warm path), covered by the same /product/{slug} render below.
-     */
-    'resources/views/partials/you-may-also-like.blade.php' => 'the "You may also like" carousel on a product page',
-    /*
-     * Lane RP. The product page's three recommendation blocks draw their
-     * cards through App\Support\CardFragments, which renders <x-product-card>
+     * Lane RP; Lane RP2. The product page's three recommendation blocks —
+     * "You may also like" among them, which Lane PS gave its own partial —
+     * draw their cards through App\Support\CardFragments, which renders <x-product-card>
      * for a cache miss. Its products come from App\Services\ProductRecs,
      * which loads `brand:id,name,slug` once for every card of all three blocks
      * on its cold path and `with('brand:id,name,slug')` on its warm one.

@@ -25,7 +25,7 @@ use Illuminate\View\View;
 class ProductController extends Controller
 {
     /*
-     * PUBLIC since Lane PS, read by App\Services\AlsoLikeRail: the "You may
+     * PUBLIC since Lane PS, read by App\Services\ProductRecs: the "You may
      * also like" carousel selects these columns in its union, so the cards on
      * the rail and the ones Frequently Bought Together draws from related()
      * below are one list of columns rather than two that can drift.
@@ -174,20 +174,21 @@ class ProductController extends Controller
         $realSummary = $summary;
 
         /*
-         * The three blocks at the foot of the page (Lane RP): App\Services\
-         * ProductRecs. Block 1 is "You may also like" — two tabs, or
-         * AlsoLikeRail's one row exactly as before when the owner keeps that —
-         * and blocks 2 and 3 are "Complete your routine" and "Continue
-         * shopping". "Buy these together" is chosen FIRST so nothing it shows
-         * is repeated below it; same two statements as before, in a new order.
+         * The three blocks at the foot of the page (Lane RP2): App\Services\
+         * ProductRecs. 1 more from the brand, 2 more from the breadcrumb's
+         * category, 3 "You may also like" (best sellers), no product twice.
+         * "Buy these together" is chosen FIRST so blocks 2 and 3 can leave out
+         * what it shows, as they did before; two statements for all three.
          */
         $buyTogether = app(\App\Services\BuyTogether::class)->forProduct($product);
         $recs = app(\App\Services\ProductRecs::class)->forProduct(
             $product,
-            $request,
             $buyTogether['products']->pluck('id')->map(fn ($i) => (int) $i)->all(),
         );
         $alsoLike = $recs['alsoLike'];
+        // Every card of the three blocks: what ProductDesktopSections::drawn()
+        // asks ("is the foot drawn?") and what `$related` has always carried.
+        $kbbFoot = collect($recs['brand']['products'])->concat($recs['category']['products'])->concat($alsoLike['products'])->values();
 
         return view('store.product', [
             'product' => $product,
@@ -195,11 +196,8 @@ class ProductController extends Controller
             'summary' => $summary,
             'reviews' => $reviews,
             /*
-             * "You may also like" — a carousel, mixed from the same brand and
-             * the same category, with the owner's controls and per-product
-             * picks. (Lane PS) App\Services\AlsoLikeRail chooses. The old
-             * related() it replaced went in Lane RB, with the Frequently
-             * Bought Together block that was its last caller.
+             * Block 3, "You may also like" (Lane RP2: the shop's best sellers).
+             * The partial is still partials/you-may-also-like.blade.php.
              */
             'alsoLike' => $alsoLike,
             /*
@@ -209,9 +207,10 @@ class ProductController extends Controller
              * templates against this controller, and they do — so it is what
              * lets that walk show the cards byte-identical inside a new
              * wrapper, rather than an error page. Costs no query: it is the
-             * rail's own result.
+             * three blocks' own cards (Lane RP2), and it is also what the
+             * template hands ProductDesktopSections::drawn() for "related".
              */
-            'related' => $alsoLike['products'],
+            'related' => $kbbFoot,
             'settings' => $this->settings,
             'cutoff' => $this->cutoff($request),
             'bundles' => app(\App\Services\BundleService::class)->forProduct($product),

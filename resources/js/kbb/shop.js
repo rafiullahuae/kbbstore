@@ -7,21 +7,6 @@
  */
 
 export function initShop() {
-    // (Lane RP) Which listing a product was opened from, for the product
-    // page's "More from {brand}" | "More {category}" tabs (ymal.js). Only the
-    // listing's own path, only in this tab, only on a click into its grid —
-    // no request, nothing else stored. The category grid is #grid, a brand's
-    // is #brandGrid.
-    const listing = document.getElementById('grid') || document.getElementById('brandGrid');
-    listing?.addEventListener('click', (event) => {
-        if (!event.target.closest('a[href]')) return;
-        try {
-            window.sessionStorage.setItem('kbb_rp_from', decodeURI(window.location.pathname));
-        } catch {
-            // Private mode or storage off: the product page opens its default tab.
-        }
-    });
-
     // (2.60.393) The phone's own 1 / 2 column buttons: a separate pin
     // (?mcols=) so a phone choice never moves a laptop's columns.
     const colselm = document.getElementById('colselm');
