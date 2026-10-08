@@ -91,6 +91,12 @@ class ProductRecs
 
     private const VIEWED = 'v';
 
+    /** Block 2's ranked order, as cached. */
+    private const ROUTINE = 'R';
+
+    /** Room in a cached list for what a visit takes out ("Buy these together" draws ≤ 5). */
+    private const SLACK = 6;
+
     public function __construct(
         private AlsoLikeSettings $settings,
         private ProductSections $sections,
@@ -119,7 +125,7 @@ class ProductRecs
         $out = [
             'alsoLike' => ['products' => $none, 'config' => $c, 'wording' => AlsoLikeSettings::wording($c), 'panels' => []],
             'routine' => ['products' => $none, 'title' => '', 'eyebrow' => ''],
-            'recent' => ['products' => $none, 'title' => '', 'eyebrow' => '', 'viewed' => false],
+            'recent' => ['products' => $none, 'title' => '', 'eyebrow' => '', 'viewed' => false, 'seen' => []],
             'order' => self::order($c),
         ];
 
@@ -250,6 +256,8 @@ class ProductRecs
         // in memory — is in the fingerprint instead; a renamed shelf is picked
         // up within the TTL.
         $fp = md5(json_encode([
+            // The cached shape; a new one is never read as an old one.
+            2,
             $c['rule'], $c['fill'], $c['count'], $c['hide_oos'], $c['layout'], $c['routine_on'], $c['routine_count'],
             $c['recent_on'], $c['recent_count'], $tabs, $picks, $product->brand_id, $categoryIds, $specific,
             $wantRoutine ? $this->settingsSnapshot->get(BuyTogetherPairs::SETTING, null) : null,
@@ -299,10 +307,12 @@ class ProductRecs
 
         $routineCount = (int) $c['routine_count'];
 
+        // One turn each, so a shelf needs at most the block's count; a lone
+        // shelf carries the slack the exclusions may eat.
+        $perShelf = count($shelves) > 1 ? $routineCount : $routineCount + self::SLACK;
+
         foreach ($shelves as $i => $shelf) {
-            // Twice the count: block 1 and "Buy these together" are taken out
-            // AFTER this, per request, and the shelf must still fill its turns.
-            $parts[] = $this->routineOrder($this->part($product, $c, 'r'.$i, $routineCount * 2), $product)
+            $parts[] = $this->routineOrder($this->part($product, $c, 'r'.$i, $perShelf), $product)
                 ->whereExists(fn ($q) => $q->selectRaw('1')->from('category_product as rpr')
                     ->whereColumn('rpr.product_id', 'products.id')
                     ->where('rpr.category_id', $shelf));
@@ -311,7 +321,7 @@ class ProductRecs
         if ($wantRoutine && $shelves === []) {
             // No routine shelf for this product (a device, a shelf with no
             // kind): products that share a tag with it, from OTHER shelves.
-            $parts[] = $this->routineOrder($this->part($product, $c, self::TAG, $routineCount * 2), $product)
+            $parts[] = $this->routineOrder($this->part($product, $c, self::TAG, $routineCount + self::SLACK), $product)
                 ->whereExists(self::sharesTag((int) $product->id))
                 ->when($categoryIds !== [], fn ($q) => $q->whereNotExists(fn ($s) => $s->selectRaw('1')->from('category_product as rpo')
                     ->whereColumn('rpo.product_id', 'products.id')
@@ -320,8 +330,10 @@ class ProductRecs
 
         if ($wantRoutine || $wantRecent) {
             // The top-up for every block, enough to survive every exclusion.
-            $need = ($tabs ? 2 * $count : 0) + ($wantRoutine ? $routineCount : 0) + ($wantRecent ? (int) $c['recent_count'] : 0) + 8;
-            $parts[] = $this->inStockFirst($this->part($product, $c, self::BEST, min(72, $need)))
+            // Block 1 can hold the shop's top sellers twice over (two tabs):
+            // the pool must outlast that AND still fill blocks 2 and 3.
+            $need = ($tabs ? 2 * $count : 0) + ($wantRoutine ? $routineCount : 0) + ($wantRecent ? (int) $c['recent_count'] : 0) + self::SLACK;
+            $parts[] = $this->inStockFirst($this->part($product, $c, self::BEST, min(60, $need)))
                 ->orderByDesc('products.total_sales')->orderByDesc('products.id');
         }
 
@@ -346,24 +358,75 @@ class ProductRecs
         \App\Support\SetPricing::prime($rows);
 
         $pools = [];
-        $ids = [];
 
         foreach ($rows as $row) {
-            $src = (string) $row->getAttribute('rp_src');
-            $pools[$src][] = $row;
+            $pools[(string) $row->getAttribute('rp_src')][] = $row;
+        }
 
-            if ($src !== self::VIEWED) {
-                $ids[$src][] = (int) $row->id;
+        $ranked = $this->rank($product, $c, $picks, $tabs, $pools);
+
+        if ($cacheable !== []) {
+            Cache::put($key, ['fp' => $fp, 'ids' => array_map(fn ($list) => array_map(fn ($m) => (int) $m->id, $list), $ranked)], self::TTL);
+        }
+
+        $ranked[self::VIEWED] = self::inOrder(self::byId($pools[self::VIEWED] ?? []), $viewed);
+
+        return $ranked;
+    }
+
+    /**
+     * The cold path's pools, cut down to what the blocks can use, in order —
+     * this is what is cached, so a warm view loads ~60 rows rather than every
+     * candidate the union read:
+     *
+     *   b  block 1's brand tab, final       c  block 1's category tab, final
+     *   r  block 2's routine order (one shelf at a time, then shared tags),
+     *      without block 1, with SLACK for what "Buy these together" takes
+     *   f  best sellers without block 1: block 2's top-up and block 3's
+     *
+     * Nothing per-request is decided here: the exclusions that vary by visit
+     * (Buy these together, the viewed cookie) run in assemble().
+     *
+     * @param  array<string, mixed>  $c
+     * @param  array{mode: string, ids: list<int>}  $picks
+     * @param  array<string, list<Product>>  $pools
+     * @return array<string, list<Product>>
+     */
+    private function rank(Product $product, array $c, array $picks, bool $tabs, array $pools): array
+    {
+        $self = (int) $product->id;
+        $skip = [$self => true];
+        $out = [];
+        $slack = self::SLACK + ($tabs ? 0 : (int) $c['count']);
+
+        if ($tabs) {
+            $count = (int) $c['count'];
+            $lead = $picks['mode'] === AlsoLikePicks::MODE_FIRST && $picks['ids'] !== []
+                ? self::inOrder(self::byId($pools[self::MANUAL] ?? []), $picks['ids'])
+                : [];
+
+            $out[self::BRAND] = self::take(array_merge($lead, $pools[self::BRAND] ?? []), [$self => true], $count);
+            $out[self::CATEGORY] = self::take(array_merge($lead, $pools[self::CATEGORY] ?? [], $c['fill'] ? ($pools[self::TREE] ?? []) : []), [$self => true], $count);
+            $skip += self::idsOf($out[self::BRAND]) + self::idsOf($out[self::CATEGORY]);
+        }
+
+        $shelves = [];
+
+        foreach ($pools as $src => $list) {
+            if (preg_match('/^r(\d+)$/', (string) $src, $m) === 1) {
+                $shelves[(int) $m[1]] = $list;
             }
         }
 
-        if ($cacheable !== []) {
-            Cache::put($key, ['fp' => $fp, 'ids' => $ids], self::TTL);
-        }
+        ksort($shelves);
+        $want = (int) $c['routine_count'] + $slack;
+        $routine = self::roundRobin(array_values($shelves), $skip, $want);
+        $out[self::ROUTINE] = array_merge($routine, self::take($pools[self::TAG] ?? [], $skip + self::idsOf($routine), $want - count($routine)));
+        // Best sellers not already in block 1: block 2's top-up when a shelf
+        // runs dry, and block 3's fallback after whatever block 2 drew.
+        $out[self::BEST] = self::take($pools[self::BEST] ?? [], $skip, (int) $c['routine_count'] + (int) $c['recent_count'] + $slack);
 
-        $pools[self::VIEWED] = self::inOrder(self::byId($pools[self::VIEWED] ?? []), $viewed);
-
-        return $pools;
+        return $out;
     }
 
     /**
@@ -440,14 +503,8 @@ class ProductRecs
 
         if ($tabs) {
             $count = (int) $c['count'];
-            $lead = [];
-
-            if ($picks['mode'] === AlsoLikePicks::MODE_FIRST && $picks['ids'] !== []) {
-                $lead = self::inOrder(self::byId($pools[self::MANUAL] ?? []), $picks['ids']);
-            }
-
-            $brand = self::take(array_merge($lead, $pools[self::BRAND] ?? []), [$self => true], $count);
-            $cat = self::take(array_merge($lead, $pools[self::CATEGORY] ?? [], $c['fill'] ? ($pools[self::TREE] ?? []) : []), [$self => true], $count);
+            $brand = self::take($pools[self::BRAND] ?? [], [$self => true], $count);
+            $cat = self::take($pools[self::CATEGORY] ?? [], [$self => true], $count);
 
             $panels = [];
             $brandModel = $product->relationLoaded('brand') ? $product->brand : null;
@@ -514,17 +571,7 @@ class ProductRecs
         $taken += $block1;
 
         if ($wantRoutine) {
-            $shelves = [];
-
-            foreach ($pools as $src => $list) {
-                if (str_starts_with((string) $src, 'r')) {
-                    $shelves[(int) substr((string) $src, 1)] = $list;
-                }
-            }
-
-            ksort($shelves);
-            $routine = self::roundRobin(array_values($shelves), $taken, (int) $c['routine_count']);
-            $routine = array_merge($routine, self::take($pools[self::TAG] ?? [], $taken + self::idsOf($routine), (int) $c['routine_count'] - count($routine)));
+            $routine = self::take($pools[self::ROUTINE] ?? [], $taken, (int) $c['routine_count']);
 
             if ($c['fill']) {
                 $routine = array_merge($routine, self::take($pools[self::BEST] ?? [], $taken + self::idsOf($routine), (int) $c['routine_count'] - count($routine)));
@@ -542,7 +589,8 @@ class ProductRecs
             $recent = array_merge($seen, self::take($pools[self::BEST] ?? [], $taken + self::idsOf($seen), $n - count($seen)));
 
             if ($recent !== []) {
-                $out['recent'] = ['products' => collect($recent), 'viewed' => $seen !== []] + self::wording($c, 'recent', $seen !== []);
+                $out['recent'] = ['products' => collect($recent), 'viewed' => $seen !== [], 'seen' => array_keys(self::idsOf($seen))]
+                    + self::wording($c, 'recent', $seen !== []);
             }
         }
 

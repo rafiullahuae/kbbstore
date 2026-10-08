@@ -21,8 +21,9 @@ declare(strict_types=1);
  *       page is the old single row, no data-rp-tabs.
  *   R2  ProductRecs::assemble() — drop the array_reverse() for `first` →
  *       "opens on the category when he chose it" red.
- *   R3  ProductRecs::assemble() — `$taken += $block1` deleted → "never repeats
- *       a product" red: a brand sibling on a routine shelf shows twice.
+ *   R3  Both exclusions of block 1 removed — rank()'s `$skip` and
+ *       assemble()'s `$taken += $block1` (either alone still holds) → "never
+ *       repeats a product" red: a brand sibling on a routine shelf shows twice.
  *   R4  ProductRecs::routineOrder() — drop the inStockFirst() call → "in stock
  *       first" red: the sold-out best seller leads its shelf.
  *   R5  ProductRecs::routineOrder() — drop the tag CASE → "shares a skin
@@ -477,4 +478,179 @@ it('prints a typed heading as text, and his Arabic heading only on the Arabic pa
     // Saved through the schema, markup is stripped before it is stored.
     app(AlsoLikeSettings::class)->save(['routine_title' => '<script>x</script>Next']);
     expect(app(AlsoLikeSettings::class)->all()['routine_title'])->not->toContain('<script>');
+});
+
+/* ═════════════ the cached cards (App\Support\CardFragments) ══════════════
+ *
+ * The blocks' cards are rendered once and reused — the coordinator's speed
+ * gate: ~43 cards cost ~8 ms of PHP per view uncached. What follows pins that
+ * the cache serves EXACTLY what the component would draw, and never a card
+ * from before a change.
+ *
+ * MUTATIONS, run and red:
+ *   F1  CardFragments::signature() — drop the row → "a price or stock
+ *       change" red: the old price is served.
+ *   F2  CardFragments::shop() — hash only the language, not the settings
+ *       snapshot and module switches → "a setting they print" red: the
+ *       wishlist hearts stay off after Wishlist is switched on.
+ *   F3  CardFragments::many() — key without the locale → "keys each
+ *       language" red: one entry overwrites the other.
+ *   F4  CardFragments::signature() — keep the union's `rp_src` tag → "reuses
+ *       the cards when the choice is rebuilt" red.
+ *   F5  ProductRecs::pools() — the best-seller pool sized without block 1's
+ *       two tabs (`$tabs ? 0`) → "fills every block to its count" red: block
+ *       3 draws 2 cards, not 10.
+ */
+
+it('serves cached cards byte-identical to the component, cold and warm', function () {
+    $s = recsShop();
+    \Illuminate\Support\Facades\Cache::flush();
+
+    $cold = recsPage($this, $s['self']);
+    expect(\Illuminate\Support\Facades\Cache::get('kbb.card.en.'.$s['b1']->id))->toBeArray();
+    $warm = recsPage($this, $s['self']);
+
+    $foot = fn (string $h) => recsBlock($h, 'ymal-h').recsBlock($h, 'rp2-h').recsBlock($h, 'rp3-h');
+    expect($foot($warm))->toBe($foot($cold));
+
+    // And a cached card is exactly what <x-product-card> draws in a grid: the
+    // one-row layout still writes the tag inline, so compare the two.
+    app(AlsoLikeSettings::class)->save(['layout' => 'one']);
+    $inline = recsBlock(recsPage($this, $s['self']), 'ymal-h');
+    $p = Product::query()->select(\App\Http\Controllers\Store\ProductController::CARD_COLUMNS)->with('brand:id,name,slug')->find($s['b1']->id);
+    $card = \App\Support\CardFragments::render($p);
+
+    expect($card)->toContain('/product/'.$s['b1']->slug.'/')
+        ->and($inline)->toContain($card)
+        ->and(\Illuminate\Support\Facades\Cache::get('kbb.card.en.'.$s['b1']->id)[1])->toBe($card);
+});
+
+it('never serves a card from before a price or stock change', function () {
+    $s = recsShop();
+    app(AlsoLikeSettings::class)->save(['hide_oos' => false]);
+    recsPage($this, $s['self']);
+
+    $s['b1']->update(['price' => 12300]);
+    $s['c1']->update(['stock_status' => 'outofstock']);
+
+    $html = recsPage($this, $s['self']);
+    preg_match('#<div class="kbb-card[^"]*"[^>]*>(?:(?!<div class="kbb-card).)*?/product/'.$s['b1']->slug.'/.*?</div>\s*</div>#s', recsBlock($html, 'ymal-h'), $b1);
+
+    expect(recsBlock($html, 'ymal-h'))->toContain('123')
+        ->and(\Illuminate\Support\Facades\Cache::get('kbb.card.en.'.$s['b1']->id)[1])->toContain('123')
+        ->and(\Illuminate\Support\Facades\Cache::get('kbb.card.en.'.$s['c1']->id)[1])
+            ->toBe(\App\Support\CardFragments::render(Product::query()->select(\App\Http\Controllers\Store\ProductController::CARD_COLUMNS)->with('brand:id,name,slug')->find($s['c1']->id)));
+});
+
+it('re-renders the cards when a setting they print changes', function () {
+    $s = recsShop();
+    recsPage($this, $s['self']);
+    expect(recsBlock(recsPage($this, $s['self']), 'rp2-h'))->not->toContain('data-kbb-wish=');
+
+    app(\App\Services\SettingsService::class)->setModule('wishlist', true);
+
+    expect(recsBlock(recsPage($this, $s['self']), 'rp2-h'))->toContain('data-kbb-wish=');
+});
+
+it('keys each language apart, and puts nothing per-visitor into a card', function () {
+    $s = recsShop();
+    app(\App\Services\SettingsService::class)->set(\App\Support\Locale::SETTING_ENABLED, true);
+    \App\Services\Translation\TranslationStore::put('ar', \App\Models\Translation::GROUP_UI, 0, 'store.product_card.add_to_cart', 'أضف إلى السلة', \App\Models\Translation::STATUS_PUBLISHED);
+
+    $en = recsBlock(recsPage($this, $s['self']), 'rp2-h');
+    $ar = recsBlock($this->get('/ar/product/'.$s['self']->slug.'/')->assertOk()->getContent(), 'rp2-h');
+
+    expect($en)->toContain('Add to cart')->not->toContain('أضف إلى السلة')
+        ->and($ar)->toContain('أضف إلى السلة')
+        ->and(\Illuminate\Support\Facades\Cache::get('kbb.card.ar.'.$s['s1']->id))->toBeArray()
+        ->and(\Illuminate\Support\Facades\Cache::get('kbb.card.en.'.$s['s1']->id))->toBeArray();
+
+    // The card reads no session, cookie, customer or request — one cached card
+    // is right for every visitor. The wishlist heart is inert markup.
+    $card = (string) preg_replace('/\{\{--.*?--\}\}/s', '', (string) file_get_contents(resource_path('views/components/product-card.blade.php')));
+    foreach (['session(', 'Session::', 'cookie(', 'request(', 'Request::', 'auth(', 'Auth::', 'csrf', '@auth', 'app(\\App\\Services\\CartService', 'CartService::current', 'auth()->'] as $needle) {
+        expect(str_contains($card, $needle))->toBeFalse("the card reads {$needle} — it can no longer be shared between visitors");
+    }
+});
+
+it('keeps one cache entry per product and language, however often it changes', function () {
+    $s = recsShop();
+    foreach ([5100, 5200, 5300] as $price) {
+        $s['b1']->update(['price' => $price]);
+        recsPage($this, $s['self']);
+    }
+
+    expect(\Illuminate\Support\Facades\Cache::get('kbb.card.en.'.$s['b1']->id)[1])->toContain('53');
+});
+
+it('reuses the cards when the choice is rebuilt, not only when it is cached', function () {
+    /*
+     * The cold choice comes out of the union with a source tag on each row;
+     * the warm one does not. A signature that included the tag missed on
+     * every cold view and re-rendered every card — measured, +6 ms.
+     */
+    $s = recsShop();
+    recsPage($this, $s['self']);
+    recsPage($this, $s['self']); // the warm choice: its rows carry no tag
+    $before = \Illuminate\Support\Facades\Cache::get('kbb.card.en.'.$s['b1']->id);
+
+    ProductRecs::forget((int) $s['self']->id);
+    $p = Product::query()->with(['brand:id,name,slug', 'categories:id,name,slug,path'])->find($s['self']->id);
+    $cold = app(ProductRecs::class)->forProduct($p, \Illuminate\Http\Request::create('/'));
+    $row = collect($cold['alsoLike']['panels'][0]['products'])->firstWhere('id', $s['b1']->id);
+
+    expect($row->getAttribute('rp_src'))->not->toBeNull();
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    $html = \App\Support\CardFragments::many([$row]);
+    DB::disableQueryLog();
+
+    expect($html[$s['b1']->id])->toBe($before[1])
+        ->and(\Illuminate\Support\Facades\Cache::get('kbb.card.en.'.$s['b1']->id))->toBe($before);
+});
+
+it('fills every block to its count even when block 1 holds the shop\'s best sellers', function () {
+    /*
+     * The shared best-seller pool is block 2's top-up and block 3's fallback,
+     * and block 1's two tabs can hold its top two dozen. A pool sized without
+     * that (a trim tried while chasing the speed gate) left "Continue
+     * shopping" with TWO cards on the preview shop. Here the brand and the
+     * category are the shop's 24 best sellers.
+     */
+    $s = recsShop();
+    $other = Brand::create(['slug' => 'big-'.Str::lower(Str::random(4)), 'name' => 'Big']);
+    foreach (range(1, 12) as $i) {
+        recsProduct('Anua Top '.$i, $s['brand'], [Category::where('name', 'Hair')->orderByDesc('id')->firstOrFail()], 500000 + $i);
+        recsProduct('Toner Top '.$i, $other, [$s['toners']], 400000 + $i);
+    }
+
+    $html = recsPage($this, $s['self']);
+    $cards = fn (string $id) => substr_count(recsBlock($html, $id), 'class="kbb-card kbb-tile');
+
+    expect($cards('rp2-h'))->toBe(10)
+        ->and($cards('rp3-h'))->toBe(10);
+});
+
+it('reads a repeat view\'s shared cards as one entry, and keeps the shopper\'s history out of it', function () {
+    $s = recsShop();
+    $cookie = implode(',', [$s['v1']->id]);
+    $first = $this->withCookie('kbb_viewed', $cookie)->get('/product/'.$s['self']->slug.'/')->assertOk()->getContent();
+
+    $raw = \Illuminate\Support\Facades\Cache::get('kbb.cards.en.'.$s['self']->id);
+    $bundle = unserialize(gzinflate($raw), ['allowed_classes' => false]);
+
+    expect($bundle)->toHaveKey($s['b1']->id)
+        // v1 is this shopper's own; it lives only in its per-card entry.
+        ->and($bundle)->not->toHaveKey($s['v1']->id)
+        ->and(\Illuminate\Support\Facades\Cache::get('kbb.card.en.'.$s['v1']->id))->toBeArray();
+
+    // A second visitor with no history: the page's entry is not rewritten.
+    $this->get('/product/'.$s['self']->slug.'/')->assertOk();
+    expect(\Illuminate\Support\Facades\Cache::get('kbb.cards.en.'.$s['self']->id))->toBe($raw);
+
+    // And the same visitor again: byte-identical page.
+    $again = $this->withCookie('kbb_viewed', $cookie)->get('/product/'.$s['self']->slug.'/')->assertOk()->getContent();
+    $foot = fn (string $h) => recsBlock($h, 'ymal-h').recsBlock($h, 'rp2-h').recsBlock($h, 'rp3-h');
+    expect($foot($again))->toBe($foot($first));
 });

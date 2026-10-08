@@ -14,6 +14,6 @@
   <section class="sec ymal rp-grid {{ $modules->classFor('related') }}" aria-labelledby="rp2-h">
     <div class="eyebrow">{{ $kbbRt['eyebrow'] }}</div>
     <h2 id="rp2-h">{{ $kbbRt['title'] }}</h2>
-    <div class="rel kbb-pgrid" data-skin="{{ \App\Support\GridSkins::resolve(null) }}">@foreach ($kbbRt['products'] as $item)<x-product-card :product="$item" />@endforeach</div>
+    <div class="rel kbb-pgrid" data-skin="{{ \App\Support\GridSkins::resolve(null) }}">@foreach ($kbbRt['products'] as $item){!! $kbbRpCards[$item->id] ?? \App\Support\CardFragments::render($item) !!}@endforeach</div>
   </section>
 @endif

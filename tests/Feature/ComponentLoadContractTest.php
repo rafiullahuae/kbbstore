@@ -158,15 +158,14 @@ const CLC_COVERED = [
      */
     'resources/views/partials/you-may-also-like.blade.php' => 'the "You may also like" carousel on a product page',
     /*
-     * Lane RP. Blocks 2 and 3 at the foot of a product page — "Complete your
-     * routine" and "Continue shopping". Their cards come from App\Services\
-     * ProductRecs, which loads `brand:id,name,slug` once for every card of all
-     * three blocks on its cold path and `with('brand:id,name,slug')` on its
-     * warm one. Covered by the same /product/{slug} render below, which draws
-     * both (they ship on).
+     * Lane RP. The product page's three recommendation blocks draw their
+     * cards through App\Support\CardFragments, which renders <x-product-card>
+     * for a cache miss. Its products come from App\Services\ProductRecs,
+     * which loads `brand:id,name,slug` once for every card of all three blocks
+     * on its cold path and `with('brand:id,name,slug')` on its warm one.
+     * Covered by the /product/{slug} render below, which draws all three.
      */
-    'resources/views/partials/product/recs-routine.blade.php' => '"Complete your routine" on a product page',
-    'resources/views/partials/product/recs-recent.blade.php' => '"Continue shopping" on a product page',
+    'app/Support/CardFragments.php' => 'the product page\'s recommendation blocks (cached cards)',
     'resources/views/store/routines.blade.php' => '/routines/{concern}',
     'resources/views/store/collection.blade.php' => '/concern/{concern}/',
     'resources/views/store/wishlist.blade.php' => '/my-wishlist',
