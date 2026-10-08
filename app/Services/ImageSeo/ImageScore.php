@@ -21,7 +21,8 @@ namespace App\Services\ImageSeo;
  *     15  lower case, words joined by hyphens, no spaces/underscores/capitals
  *     15  the brand is in it (awarded when the product has no brand)
  *     15  the product's own words are in it (7 for only one of them)
- *     10  3–8 words and at most 75 characters
+ *     10  3–8 words and at most 75 characters, no word in it twice (Google:
+ *         "short, but descriptive"; a repeated word is stuffing, not description)
  *      5  not a camera or random name (IMG_1234, 20261005-101010-ab12cd,
  *         a hash, a "-scaled" or "-1024x1024" copy). A random name also
  *         loses the format and length points: it is not descriptive at all.
@@ -29,7 +30,9 @@ namespace App\Services\ImageSeo;
  *     10  written for this picture (5 when the shop falls back to its automatic one)
  *     10  5–125 characters
  *     15  names the product (7 for only the brand or one word of it)
- *      5  no "image of", no word stuffed three times, not the same as another
+ *      5  no "image of", no keyword stuffing -- a word three times, or a list of
+ *         keywords ("eye patches, pdrn, collagen, korean skincare"), which is
+ *         what Google's spam policy describes -- and not the same as another
  *         picture of this product
  *
  * Every point lost comes back in `lost` with its reason, which is the one-line
@@ -45,12 +48,12 @@ final class ImageScore
         [15, 'File name', 'lower case, words joined by hyphens'],
         [15, 'File name', 'contains the brand'],
         [15, 'File name', 'contains the product\'s own words (7 for one word)'],
-        [10, 'File name', '3–8 words, at most 75 characters'],
+        [10, 'File name', '3–8 words, at most 75 characters, no word twice'],
         [5, 'File name', 'not a camera, random or resized-copy name'],
         [10, 'Alt text', 'written for this picture (5 for the automatic one)'],
         [10, 'Alt text', '5–125 characters'],
         [15, 'Alt text', 'names the product (7 for only the brand or one word)'],
-        [5, 'Alt text', 'no "image of", no stuffing, differs from the other pictures'],
+        [5, 'Alt text', 'no "image of", no keyword stuffing or keyword list, differs from the other pictures'],
     ];
 
     /**
@@ -88,6 +91,8 @@ final class ImageScore
                 $miss(10, 'file name too short');
             } elseif ($count > 8 || strlen($stem) > 75) {
                 $miss(10, 'file name too long');
+            } elseif (self::repeats($stemWords)) {
+                $miss(10, 'a word repeated in file name');
             }
         }
 
@@ -128,7 +133,7 @@ final class ImageScore
             }
 
             $counts = array_count_values(array_filter($altWords, static fn ($w) => strlen($w) > 2));
-            $stuffed = $counts !== [] && max($counts) >= 3;
+            $stuffed = ($counts !== [] && max($counts) >= 3) || self::isKeywordList($alt);
             $prefix = preg_match('/^(an?\s+)?(image|picture|photo|pic)\s+(of|showing)\b/i', $alt) === 1;
             $dup = in_array(mb_strtolower($alt), array_map(static fn ($a) => mb_strtolower(trim((string) $a)), $otherAlts), true);
 
@@ -172,6 +177,28 @@ final class ImageScore
             || preg_match('/^[\d\W_]+$/', $s) === 1                  // only numbers
             || preg_match('/-\d{2,4}x\d{2,4}$|-scaled$|-e\d{10,}$/', $s) === 1   // a resized WordPress copy
             || preg_match('/^[a-z0-9]{1,3}$/', $s) === 1;           // "a1", "x"
+    }
+
+    /** Whether a word other than a number appears twice: "eye-patches-eye-mask-patches". @param list<string> $words */
+    private static function repeats(array $words): bool
+    {
+        $words = array_filter($words, static fn (string $w): bool => ! ctype_digit($w));
+
+        return count($words) !== count(array_unique($words));
+    }
+
+    /**
+     * Keywords strung together rather than a description: four or more
+     * comma-, pipe- or semicolon-separated pieces, most of them one to three
+     * words. Google: "Avoid filling alt attributes with keywords (keyword
+     * stuffing)"; its spam policy: keywords that "appear in a list or group".
+     */
+    private static function isKeywordList(string $alt): bool
+    {
+        $parts = array_values(array_filter(array_map('trim', preg_split('/[,|;]+/u', $alt) ?: []), static fn (string $p): bool => $p !== ''));
+        $short = array_filter($parts, static fn (string $p): bool => count(preg_split('/\s+/u', $p) ?: []) <= 3);
+
+        return count($parts) >= 4 && count($short) >= 3;
     }
 
     /** @param list<string> $words @param list<string> $run */
