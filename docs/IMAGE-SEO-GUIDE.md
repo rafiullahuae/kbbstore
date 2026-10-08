@@ -1,6 +1,6 @@
 # Image SEO — the owner's guide
 
-**Where:** Admin → **Catalog → Image SEO** (sidebar, under Pagination).
+**Where:** Admin → **Catalog → Image SEO** (sidebar, after Product editor).
 **Who:** the owner and Store Manager accounts (permission "Rename product
 pictures for SEO and bulk-write their alt text" in Platform → Users & Roles).
 Content Editors and Support cannot open it.
