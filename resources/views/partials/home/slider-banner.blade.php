@@ -120,6 +120,7 @@
      * renders this partial with no parent at all.
      */
     use App\Services\Banners;
+    use App\Support\BannerTextBox;
     use App\Support\ImageVariants;
     use App\Support\Locale;
     use App\Support\Url;
@@ -418,6 +419,27 @@
         'own' => $bsSrcsetFor($bsLcpPhone['image']),
         default => '',
     };
+
+    /*
+     * ── LANE HB: THE TEXT BOX ───────────────────────────────────────────────
+     * Worked out for every slide BEFORE anything is printed, because the
+     * stylesheet, the slider's classes and its custom properties are only
+     * written when at least one slide draws a box. A set with no words on any
+     * picture -- every set on the shop the day this ships, since box_on
+     * migrates false -- prints exactly the bytes it printed before.
+     * App\Support\BannerTextBox decides all of it; nothing here reads a
+     * column the loader did not already select, so this costs no query.
+     */
+    $hbCfg = BannerTextBox::forSet($set);
+    $hbAr = ! Locale::isDefault() && Locale::current() === 'ar';
+    $hbBtn = BannerTextBox::buttonStyle($hbCfg);
+    $hbWords = [];
+
+    foreach ($cards as $hbI => $hbCard) {
+        $hbWords[$hbI] = BannerTextBox::words($hbCard, $hbCfg, $hbAr);
+    }
+
+    $hbAny = array_filter($hbWords) !== [];
 @endphp
 {{-- THE FIRST PICTURE IS THE ONE THE PAGE PRELOADS. With this section on it is
      the largest element in its part of the page and, above the fold, the
@@ -808,9 +830,9 @@
   .kbbs.is-veil .kbbs-nav,.kbbs.is-veil .kbbs-pp{opacity:1}
 }
 </style>
-<div class="kbbs is-{{ $bsStyle }}{{ $bsArrows ? ' is-arrows' : '' }}{{ $bsBars ? ' is-bars' : '' }}{{ $bsDwell > 0 ? ' is-auto' : '' }}{{ $set->sliderFills() ? ' is-fill' : '' }}{{ $bsCover ? '' : ' is-whole' }}{{ $bsBgMode === 'none' ? '' : ' has-bg' }}"
+@if ($hbAny)@include('partials.home.slider-text-box-css')@endif<div class="kbbs is-{{ $bsStyle }}{{ $bsArrows ? ' is-arrows' : '' }}{{ $bsBars ? ' is-bars' : '' }}{{ $bsDwell > 0 ? ' is-auto' : '' }}{{ $set->sliderFills() ? ' is-fill' : '' }}{{ $bsCover ? '' : ' is-whole' }}{{ $bsBgMode === 'none' ? '' : ' has-bg' }}{{ $hbAny ? ' has-hb hb-'.$hbCfg['style'].' hb-glow-'.$hbCfg['glow'] : '' }}"
      id="{{ $bsUid }}"
-     style="{{ $bsVars }}{{ $bsBgVars === '' ? '' : ';'.$bsBgVars }}"
+     style="{{ $bsVars }}{{ $bsBgVars === '' ? '' : ';'.$bsBgVars }}{{ $hbAny ? ';'.BannerTextBox::cssVariables($hbCfg) : '' }}"
      role="region"
      aria-roledescription="carousel"
      aria-label="{{ $bsLabel }}"
@@ -833,6 +855,9 @@
              * cannot end up disagreeing with its opening one.
              */
             $bsHref = Banners::safeUrl($bsCard->button_url);
+            /* Lane HB. A constant or nothing: the picture stops being a tab
+               stop when the box's button already is one for the same place. */
+            $hbNoTab = $hbWords[$bsI] !== null && $hbWords[$bsI]['button'] !== '' && $bsHref !== '' ? ' tabindex="-1"' : '';
             $bsAlt = trim((string) $bsCard->alt) !== '' ? $bsCard->alt : '';
             $bsSrcset = $bsSrcsetFor((string) $bsCard->image);
             $bsDeskSizes = $bsImgSizesFor($bsCard);
@@ -855,7 +880,7 @@
                  measured, `dragstart` fired and the browser sent
                  `pointercancel`, so the swipe handler never saw its
                  `pointerup` and the slider did not move. --}}
-            <a class="kbbs-a" draggable="false"@if ($bsHref !== '') href="{{ Url::to($bsHref) }}"@endif>
+            @if ($hbWords[$bsI] !== null)@include('partials.home.slider-text-box', ['hbW' => $hbWords[$bsI], 'hbRing' => $bsUid.'-r'.$bsI])@endif<a class="kbbs-a" draggable="false"@if ($bsHref !== '') href="{{ Url::to($bsHref) }}"@endif{!! $hbNoTab !!}>
               {{-- THE FIRST PICTURE IS EAGER AND HIGH PRIORITY and every other
                    one is lazy: a slider that lazy-loads its own first picture
                    is a slider that made the page slower.

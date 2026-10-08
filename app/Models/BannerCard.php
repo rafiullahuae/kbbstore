@@ -27,6 +27,9 @@ class BannerCard extends Model
         // three above. A slider draws it below 768px; a cards banner has one
         // frame shape and ignores it.
         'image_m', 'image_m_w', 'image_m_h',
+        // Lane HB. The words on a slider picture -- App\Support\BannerTextBox.
+        'box_on', 'box_pos', 'eyebrow', 'sticker', 'sticker_ring',
+        'eyebrow_ar', 'heading_ar', 'body_ar', 'button_label_ar', 'sticker_ar', 'sticker_ring_ar',
     ];
 
     protected $casts = [
@@ -36,6 +39,7 @@ class BannerCard extends Model
         'position' => 'int',
         'image_m_w' => 'int',
         'image_m_h' => 'int',
+        'box_on' => 'bool',
     ];
 
     public const STATUSES = ['publish' => 'Published', 'draft' => 'Draft'];

@@ -43,6 +43,9 @@ class BannerSet extends Model
         'kind', 'slider_style', 'slider_ratio', 'slider_ratio_m',
         // Lane RC. How a slider fits its pictures, and the two height caps.
         'slider_fit', 'slider_h', 'slider_h_m',
+        // Lane HB. The slider's text box, set-wide: one JSON document that only
+        // App\Support\BannerTextBox reads or writes.
+        'text_box',
     ];
 
     /**

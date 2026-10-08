@@ -289,6 +289,8 @@ class Banners
             // the two height caps reach the shop through this list or not at
             // all. BannerSingleImageTest drives the stored value to the page.
             'slider_fit', 'slider_h', 'slider_h_m',
+            // Lane HB. Same row, same query: the text box adds no query.
+            'text_box',
         ];
 
         $select = ['banner_cards.'.'id as c_id'];
@@ -309,6 +311,9 @@ class Banners
             'image', 'alt', 'heading', 'body', 'button_label', 'button_url',
             'image_w', 'image_h', 'position',
             'image_m', 'image_m_w', 'image_m_h',
+            // Lane HB, the words on a slider picture.
+            'box_on', 'box_pos', 'eyebrow', 'sticker', 'sticker_ring',
+            'eyebrow_ar', 'heading_ar', 'body_ar', 'button_label_ar', 'sticker_ar', 'sticker_ring_ar',
         ] as $c) {
             $select[] = 'banner_cards.'.$c.' as c_'.$c;
         }
@@ -374,6 +379,17 @@ class Banners
                 'image_m' => $row['c_image_m'],
                 'image_m_w' => $row['c_image_m_w'],
                 'image_m_h' => $row['c_image_m_h'],
+                'box_on' => $row['c_box_on'],
+                'box_pos' => $row['c_box_pos'],
+                'eyebrow' => $row['c_eyebrow'],
+                'sticker' => $row['c_sticker'],
+                'sticker_ring' => $row['c_sticker_ring'],
+                'eyebrow_ar' => $row['c_eyebrow_ar'],
+                'heading_ar' => $row['c_heading_ar'],
+                'body_ar' => $row['c_body_ar'],
+                'button_label_ar' => $row['c_button_label_ar'],
+                'sticker_ar' => $row['c_sticker_ar'],
+                'sticker_ring_ar' => $row['c_sticker_ring_ar'],
                 'position' => $row['c_position'],
                 'status' => 'publish',
             ])->syncOriginal();
