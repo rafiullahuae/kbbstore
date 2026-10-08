@@ -3,6 +3,18 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.438
+**Replace product pictures (old ones off the server), and the banner box lined up with
+the logo with position controls.** Apply after .437. No migrations beyond the cache clear.
+Hard refresh the admin and the shop.
+
+| Your request | Now |
+|---|---|
+| "the picture thumbnail should work and click will open the media library to replace the picture ... upon update product, the old pictures will get removed from the server ... the new one will have properly alt name" | Catalog -> Products -> edit -> Images: click any picture (or Replace) to replace that slot from the Media Library. On save, a replaced or removed picture no other product, banner, post or email uses goes to a hidden bin (30-day Undo, then deleted); a shared one is kept and says who uses it. The old address redirects to the new picture (Google Images keeps its ranking). New pictures get an SEO file name and ALT text (only where the box is empty) |
+| "the box ... should not go outside the site width ... position ... bottom, middle and a custom ... same for mobile" | Appearance -> Banners -> set -> Text box -> Position on a computer / on a phone: Keep inside the site width (on: the box lines up with the logo at every width), Up and down (Top / Middle / Bottom / Custom % or px), Across (Start / Centre / End / Custom). The box never leaves the banner |
+
+Files: see the package's update.json.
+
 ## 2.60.437
 **Every category page uses the brand-page header; "Your order" never empty on the
 thank-you page.** Apply after .436. No migrations. Hard refresh the shop and the admin.
