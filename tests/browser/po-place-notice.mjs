@@ -136,7 +136,10 @@ try {
     const { ctx, page, seen } = await open();
     await fill(page);
     await page.click('label[for="payment_method_cod"]');
-    await page.evaluate(() => { document.getElementById('account_password_wrap').hidden = false; });
+    // 2.60.432 keeps this box DISABLED while hidden, so autofill cannot reach it.
+    // Worst case on purpose: switched back on and filled short, then hidden
+    // again -- the second layer, blocking()'s release, must still let it place.
+    await page.evaluate(() => { const pw = document.getElementById('account_password'); pw.disabled = false; document.getElementById('account_password_wrap').hidden = false; });
     await page.fill('#account_password', 'abc');
     await page.evaluate(() => { document.getElementById('account_password_wrap').hidden = true; });
     const invalidBefore = await page.evaluate(() => !document.getElementById('account_password').validity.valid);

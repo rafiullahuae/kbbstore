@@ -626,7 +626,10 @@ window.KBB.routes.checkoutCoupon = @json(Url::to('/checkout/coupon'));
     // Only required while the box is ticked, so an untouched checkout still
     // submits -- the server applies the same rule with required_if.
     var pw = document.getElementById('account_password');
-    if (pw) { pw.required = box.checked; if (!box.checked) pw.value = ''; }
+    if (pw) { pw.required = box.checked; pw.disabled = !box.checked; if (!box.checked) pw.value = ''; }{{-- DISABLED while hidden, not only
+         "not required": a disabled field is never autofilled, never validated and never sent. Firefox filled a saved
+         short password into this hidden box, its minlength made the whole form invalid, and Place order did nothing
+         with nothing on screen to say why (the owner, 8 October). CheckoutPlaceOrderNeverSilentTest. --}}
   }
   box.addEventListener('change', sync);
   sync();

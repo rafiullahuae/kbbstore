@@ -129,6 +129,20 @@ it('never lets a box that is not rendered block the order', function () {
         ->and($overlay)->not->toMatch('/getBoundingClientRect|getClientRects|offset(Width|Height|Parent)|getComputedStyle|checkVisibility/');
 });
 
+it('switches the hidden account password OFF, so Firefox cannot autofill it', function () {
+    /*
+     * The owner found it on his phone (8 October): Firefox had filled a saved,
+     * short password into the hidden "create an account" box; its minlength
+     * made the form invalid and Place order did nothing. A DISABLED field is
+     * never autofilled, never validated and never sent. MUTATION: drop
+     * `pw.disabled = !box.checked;` from checkout.blade.php -> red.
+     */
+    $view = file_get_contents(resource_path('views/store/checkout.blade.php'));
+
+    expect($view)->toContain('pw.disabled = !box.checked;')
+        ->and($view)->toContain('pw.required = box.checked;');
+});
+
 /* ═════════════════════════ the words ═══════════════════════════════════════ */
 
 it('has the words in English, and their Arabic as drafts with a seed', function () {

@@ -3452,6 +3452,12 @@ KBB_BH_CSS;
              * compared output (measured: no hit), so only the attribute is
              * approved here. CheckoutFirefoxRestoreTest pins the script.
              */
+            'firefox: the hidden account password is switched off while hidden (2.60.432)' => [
+                // The owner: Firefox autofilled a short saved password into the
+                // hidden "create an account" box and Place order did nothing.
+                'pattern' => '#pw\\.required = box\\.checked;\\K pw\\.disabled = !box\\.checked;#',
+                'hits' => 1,
+            ],
             'firefox: autocomplete off on the Place order buttons (hotfix 2.60.431)' => [
                 'pattern' => '#<button type="button" class="(?:place|mb)" data-place="1"\K autocomplete="off"#',
                 'hits' => 3,
