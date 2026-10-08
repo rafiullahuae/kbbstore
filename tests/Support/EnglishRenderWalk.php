@@ -2278,6 +2278,26 @@ final class EnglishRenderWalk
                 'with' => '$3$1$2',
                 'hits' => 2,
             ],
+
+            /*
+             * THE CONTENT PAGES' <title>, ESCAPED ONCE (Lane AMP). The owner:
+             * "The '&' mostly coming like this in most of the places. please i
+             * need it to fix everywhere." layouts/store.blade.php now reads the
+             * title section as text and store/page.blade.php hands it
+             * PageTitle::decoded(), so the two content pages in this walk whose
+             * title has an "&" stop publishing it three times over:
+             *
+             *   Terms &amp;amp;amp; Conditions  ->  Terms &amp; Conditions
+             *   Shipping &amp;amp;amp; Delivery ->  Shipping &amp; Delivery
+             *
+             * The diff was read: <title>, og:title and twitter:title on those
+             * two pages, and nothing else on any page moved.
+             */
+            'the content pages\' <title> escaped once, not three times (Lane AMP)' => [
+                'pattern' => '#(<title>|<meta property="og:title" content="|<meta name="twitter:title" content=")((?:Terms|Shipping)) &amp;amp;amp; #',
+                'with' => '$1$2 &amp; ',
+                'hits' => 6, // two pages x <title>, og:title, twitter:title
+            ],
         ];
     }
 
