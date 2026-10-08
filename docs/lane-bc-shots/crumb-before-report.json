@@ -1,0 +1,40 @@
+{
+ "390": {
+  "text": "Home / Toners / Anua Heartleaf 77% Clear Pad",
+  "height": 62,
+  "fontSize": "12.5px",
+  "scrollWidth": 390,
+  "links": [
+   {
+    "text": "Home",
+    "href": "/",
+    "clickable": true
+   },
+   {
+    "text": "Toners",
+    "href": "/collections/skincare/toners/",
+    "clickable": true
+   }
+  ],
+  "errors": []
+ },
+ "1280": {
+  "text": "Home / Toners / Anua Heartleaf 77% Clear Pad",
+  "height": 37,
+  "fontSize": "12.5px",
+  "scrollWidth": 1280,
+  "links": [
+   {
+    "text": "Home",
+    "href": "/",
+    "clickable": true
+   },
+   {
+    "text": "Toners",
+    "href": "/collections/skincare/toners/",
+    "clickable": true
+   }
+  ],
+  "errors": []
+ }
+}

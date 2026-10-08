@@ -177,21 +177,26 @@ class ProductController extends Controller
         $realSummary = $summary;
 
         /*
-         * The three blocks at the foot of the page (Lane RP2): App\Services\
-         * ProductRecs. 1 more from the brand, 2 more from the breadcrumb's
-         * category, 3 "You may also like" (best sellers), no product twice.
-         * "Buy these together" is chosen FIRST so blocks 2 and 3 can leave out
-         * what it shows, as they did before; two statements for all three.
+         * The blocks at the foot of the page (Lane BC): App\Services\
+         * ProductRecs. Brand | category tabs (or two blocks), best sellers
+         * (off by default) and Continue shopping, no product twice. "Buy
+         * these together" is chosen FIRST so the blocks below the brand can
+         * leave out what it shows; two statements for every block.
          */
         $buyTogether = app(\App\Services\BuyTogether::class)->forProduct($product);
         $recs = app(\App\Services\ProductRecs::class)->forProduct(
             $product,
+            $request,
             $buyTogether['products']->pluck('id')->map(fn ($i) => (int) $i)->all(),
         );
         $alsoLike = $recs['alsoLike'];
-        // Every card of the three blocks: what ProductDesktopSections::drawn()
+        // Every card of the blocks: what ProductDesktopSections::drawn()
         // asks ("is the foot drawn?") and what `$related` has always carried.
-        $kbbFoot = collect($recs['brand']['products'])->concat($recs['category']['products'])->concat($alsoLike['products'])->values();
+        $kbbFoot = collect($recs['brand']['products'])->concat($recs['category']['products'])
+            ->concat($alsoLike['products'])->concat($recs['recent']['products'])->values();
+        // The breadcrumbs' path (Lane BC): the same category "More {category}"
+        // is about, and the categories above it the product is also filed under.
+        $crumbTrail = \App\Support\ProductCategory::trail($product, $recs['category']['id'] ?? null);
 
         return view('store.product', [
             'product' => $product,
@@ -199,8 +204,8 @@ class ProductController extends Controller
             'summary' => $summary,
             'reviews' => $reviews,
             /*
-             * Block 3, "You may also like" (Lane RP2: the shop's best sellers).
-             * The partial is still partials/you-may-also-like.blade.php.
+             * The best-seller block (Lane BC: off by default) and the blocks'
+             * shared config. Its partial is partials/you-may-also-like.
              */
             'alsoLike' => $alsoLike,
             /*
@@ -214,6 +219,7 @@ class ProductController extends Controller
              * template hands ProductDesktopSections::drawn() for "related".
              */
             'related' => $kbbFoot,
+            'crumbTrail' => $crumbTrail,
             'settings' => $this->settings,
             'cutoff' => $this->cutoff($request),
             'bundles' => app(\App\Services\BundleService::class)->forProduct($product),
@@ -244,7 +250,7 @@ class ProductController extends Controller
             // variable that does not exist inside the closure. PHP 8 raises
             // a warning, Laravel promotes it to an ErrorException, and every
             // product page returned 500.
-            'seoCtx' => (function () use ($product, $realSummary) {
+            'seoCtx' => (function () use ($product, $realSummary, $crumbTrail) {
                 // SeoSettings::map(), not Setting::map(): the latter memoises in
                 // a process-level static as well as in the cache, so the first
                 // render in a long-lived process pins site_url for every render
@@ -291,7 +297,7 @@ class ProductController extends Controller
                     // og:/twitter: only. Null when the card is switched off.
                     'share_card' => \App\Support\ShareCard::forProduct($product),
                     'url' => !empty($override['canonical']) ? $override['canonical'] : ($base . $product->url()),
-                    'breadcrumb' => $this->breadcrumbTrail($product),
+                    'breadcrumb' => $this->breadcrumbTrail($product, $crumbTrail),
                     'noindex' => !empty($override['noindex']),
                     'product' => [
                         /*
@@ -465,13 +471,18 @@ class ProductController extends Controller
      * seen — never replacing a real image.
      */
     /**
-     * Home → Shop → [Category, if the product has one] → Product name.
-     * `categories` is already eager-loaded on the product query above, so
-     * this costs nothing extra — the first assigned category is used
-     * rather than every one, since a breadcrumb showing multiple parallel
-     * parents doesn't map to how BreadcrumbList is meant to be read.
+     * Home → Shop → [the product's category path] → Product name.
+     *
+     * (Lane BC) The path is App\Support\ProductCategory::trail(): the
+     * product's most specific category — the one "More {category}" is about —
+     * with the categories above it that the product is also filed under,
+     * root first. The visible crumb prints the same list, so the two always
+     * agree; one category is exactly what this printed before. No query: it
+     * is the `categories` relation the product query already loaded.
+     *
+     * @param  list<\App\Models\Category>  $path
      */
-    private function breadcrumbTrail(Product $product): array
+    private function breadcrumbTrail(Product $product, array $path): array
     {
         $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
         // The same two keys the visible breadcrumb prints, so the crumb a
@@ -483,9 +494,7 @@ class ProductController extends Controller
             ['name' => __('store.breadcrumb.shop'), 'url' => $base . '/shop/'],
         ];
 
-        $category = $product->categories->first();
-
-        if ($category) {
+        foreach ($path as $category) {
             $trail[] = ['name' => $category->t('name'), 'url' => $base . $category->url()];
         }
 

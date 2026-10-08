@@ -597,6 +597,19 @@ a{color:inherit;text-decoration:none}
   .ymal-arr-m h2{padding-inline-end:80px}
 }
 @media(prefers-reduced-motion:reduce){.rel.ymal-track{scroll-behavior:auto}}
+/* ── (Lane RP; Lane BC) THE TWO TABS — "More from {brand}" | "More {category}" ──
+   Pills under the heading. One row that scrolls sideways if two long names
+   do not fit a phone; a pill never wraps. 36px tall: a thumb-sized target.
+   The open tab is ink, as the carousel arrows' hover is. A closed panel is
+   [hidden] (display:none), so its lazy pictures are not fetched. */
+.rp-tabs{display:flex;gap:8px;margin:-6px 0 16px;overflow-x:auto;scrollbar-width:none}
+.rp-tabs::-webkit-scrollbar{display:none}
+.rp-tab{flex:none;min-height:36px;padding:0 15px;border-radius:99px;border:1px solid var(--line-2);background:#fff;
+  color:var(--ink-2);font:inherit;font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;transition:background .16s,color .16s,border-color .16s}
+.rp-tab:hover{border-color:var(--ink)}
+.rp-tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.rp-tab:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px}
+.rp-panel[hidden]{display:none}
 /* ── (Lane RP2) SLIDER OR GRID, PER DEVICE ─────────────────────────────────
    Appearance → Product page → You may also like → … slider or grid. A block
    that is a slider on either device carries the carousel markup; `rp-dg` /

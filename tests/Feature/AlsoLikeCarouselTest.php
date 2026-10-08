@@ -159,20 +159,21 @@ it('forgets a product\'s lists when the product is saved', function () {
 
 it('draws the shop\'s own cards in one scrolling row, with arrows and a reserved size', function () {
     $s = ymalShop();
-    // (Lane RP2) Block 3 alone: the carousel this file has always been about.
-    app(AlsoLikeSettings::class)->save(['brand_on' => false, 'cat_on' => false]);
+    // The best-seller block alone (Lane RP2's block 3; off by default since
+    // Lane BC): the carousel this file has always been about.
+    app(AlsoLikeSettings::class)->save(['brand_on' => false, 'cat_on' => false, 'recent_on' => false, 'best_on' => true]);
 
     $html = $this->get('/product/'.$s['self']->slug.'/')->assertOk()->getContent();
 
     expect(substr_count($html, 'data-ymal '))->toBe(1)
         ->and($html)->toContain('class="rel kbb-pgrid ymal-track" data-skin="')
-        ->and($html)->toContain('id="related" data-ymal-track tabindex="0" role="region"')
+        ->and($html)->toContain('id="rpf-r" data-ymal-track tabindex="0" role="region"')
         ->and($html)->toContain('style="--ymal-d:5;--ymal-m:2.3"') // Lane PX: 2.3 on a phone, as the owner asked
         ->and($html)->toContain('aria-label="Previous products" disabled')
         ->and($html)->toContain('aria-label="More products"')
-        ->and($html)->toContain('<h2 id="ymal-h">You may also like</h2>');
+        ->and($html)->toContain('<h2 id="rpf-h">Best sellers</h2>');
 
-    preg_match('#id="related".*?</section>#s', $html, $m);
+    preg_match('#id="rpf-r".*?</section>#s', $html, $m);
     // Twelve, the shipped count, from the shop's best sellers.
     expect(substr_count($m[0] ?? '', 'class="kbb-card kbb-tile'))->toBe(12);
     // The cards' pictures are lazy: the rail is at the foot of the page.
@@ -247,9 +248,9 @@ it('serves and saves the carousel tab as its own half', function () {
     expect(app(ProductSections::class)->all()['tabs']['desktop'])->toBeFalse();
 
     // A select stores one of its own options or the default.
-    $this->postJson('/admin-api/product-page', ['also' => ['g_layout_m' => 'everything', 'per_phone' => '7', 'also_count_d' => '99']])->assertOk();
+    $this->postJson('/admin-api/product-page', ['also' => ['g_layout_m' => 'everything', 'per_phone' => '7', 'best_count_d' => '99']])->assertOk();
     $c = app(AlsoLikeSettings::class)->all();
-    expect([$c['g_layout_m'], $c['per_phone'], (string) $c['also_count_d']])->toBe(['std', '2.3', 'global']); // Lane PX: the default is 2.3
+    expect([$c['g_layout_m'], $c['per_phone'], (string) $c['best_count_d']])->toBe(['std', '2.3', 'global']); // Lane PX: the default is 2.3
 
     // Markup in a heading is wording, not markup.
     $this->postJson('/admin-api/product-page', ['also' => ['title' => '<script>x</script>Pairs well']])->assertOk();
@@ -268,9 +269,10 @@ it('refuses an unknown carousel key and writes nothing at all', function () {
     expect(app(AlsoLikeSettings::class)->all())->toBe(AlsoLikeSettings::defaults());
 });
 
-it('ships the carousel on, twelve, five and 2.3, and autoplay off', function () {
+it('ships tabs and continue shopping on, the best sellers off, twelve, five and 2.3, and autoplay off', function () {
     expect(AlsoLikeSettings::defaults())->toMatchArray([
-        'enabled' => true, 'count' => 12,
+        // Lane BC: the owner's third plan.
+        'pair' => 'tabs', 'tab_first' => 'auto', 'recent_on' => true, 'best_on' => false, 'count' => 12,
         // Lane PX: per_phone 2 -> 2.3 and arrows_m off, both the owner's ask.
         'hide_oos' => true, 'per_desktop' => '5', 'per_phone' => '2.3', 'arrows_m' => false, 'autoplay' => false,
         'title' => '', 'title_ar' => '',

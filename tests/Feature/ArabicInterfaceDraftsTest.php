@@ -678,7 +678,12 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // "More like this", and the two blocks' headings and small lines) —
     // removed from the code, and their machine drafts by
     // 2027_10_09_120000_retire_recs_arabic_drafts.
-    expect($ui['drafts'])->toBe(1463, 'the shipped Arabic is not showing as drafts to review')
+    // 1463 -> 1467 (Lane BC): the owner brought the tabs and Continue
+    // shopping back, so four of those six return (the tab list's name, "More
+    // like this", "Continue shopping", "Recently viewed"); only the routine
+    // pair stays retired. The retiring migration had never shipped and was
+    // narrowed to those two, so the four keep their 2027_10_08_120000 drafts.
+    expect($ui['drafts'])->toBe(1467, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

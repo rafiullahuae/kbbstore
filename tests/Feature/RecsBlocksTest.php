@@ -3,24 +3,22 @@
 declare(strict_types=1);
 
 /*
- * The three recommendation blocks at the foot of a product page. (Lane RP2)
+ * The product page's blocks with "Brand and category · Show as" = Two
+ * separate blocks and the best-seller block on — Lane RP2's build, kept as an
+ * OPTION when the owner brought the tabs back (Lane BC). The default — tabs,
+ * then Continue shopping — is RecsTabsTest.
  *
- * The owner, changing the plan Lane RP shipped in 2.60.428: "first block will
- * be brand … 2nd block will be category … 3rd block will be You may also like
- * but the products will be picked as best sellers. and also make sure no any
- * repeat product should be there in all 3 blocks, cross wise repeat also
- * should not." Then: "also give facility to choose slider or grid, and along
- * with number of products to display … for desktop and mobile seperately with
- * global options."
+ * Lane RP2's brief: "first block will be brand … 2nd block will be category …
+ * 3rd block will be You may also like but the products will be picked as best
+ * sellers. and also make sure no any repeat product should be there in all 3
+ * blocks, cross wise repeat also should not." Then: "also give facility to
+ * choose slider or grid, and along with number of products to display … for
+ * desktop and mobile seperately with global options."
  *
  * App\Services\ProductRecs chooses, App\Services\AlsoLikeSettings::layoutFor()
  * decides slider/grid and how many per device, partials/product/recs-block
- * draws, App\Support\CardFragments caches each card.
- *
- * WHAT THE PAGE DID BEFORE, which the cases below would have caught: two tabs
- * (brand / category) opened from a listing-page hint, "Complete your routine"
- * from routine shelves, and "Continue shopping" from the viewed cookie — and
- * no control of slider/grid or of the count per device.
+ * draws, App\Support\CardFragments caches each card. The best-seller block's
+ * heading is `rpf-h` (Lane BC; it was `ymal-h`, which is the tab block's again).
  *
  * MUTATIONS, each run and each red (storage/rp2-logs/rp2-mut.py):
  *   M1  ProductRecs — block 1 not taken out of blocks 2 and 3, in both places
@@ -62,6 +60,11 @@ use App\Support\AlsoLikePicks;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+
+// Lane RP2's arrangement: the brand block, the category block, best sellers.
+beforeEach(function () {
+    app(AlsoLikeSettings::class)->save(['pair' => 'blocks', 'best_on' => true, 'recent_on' => false]);
+});
 
 function recsProduct(string $name, ?Brand $brand, array $categories, int $sales, array $extra = []): Product
 {
@@ -165,13 +168,13 @@ it('draws brand, then category, then best sellers, with their own headings', fun
 
     $one = recsBlock($html, 'rp1-h');
     $two = recsBlock($html, 'rp2-h');
-    $three = recsBlock($html, 'ymal-h');
+    $three = recsBlock($html, 'rpf-h');
 
     expect($one)->toContain('<h2 id="rp1-h">More from Anua</h2>')->toContain('data-ymal ')
         ->and($two)->toContain('<h2 id="rp2-h">More Toners</h2>')->toContain('class="rel kbb-pgrid"')->not->toContain('data-ymal')
-        ->and($three)->toContain('<h2 id="ymal-h">You may also like</h2>')->toContain('<div class="eyebrow">Best sellers</div>')
+        ->and($three)->toContain('<h2 id="rpf-h">Best sellers</h2>')->not->toContain('class="eyebrow"')
         ->and(strpos($html, 'id="rp1-h"'))->toBeLessThan(strpos($html, 'id="rp2-h"'))
-        ->and(strpos($html, 'id="rp2-h"'))->toBeLessThan(strpos($html, 'id="ymal-h"'));
+        ->and(strpos($html, 'id="rp2-h"'))->toBeLessThan(strpos($html, 'id="rpf-h"'));
 
     // Block 1 is the brand, best sellers first; block 2 the category without
     // them; block 3 the shop's best sellers without both.
@@ -189,7 +192,7 @@ it('never repeats a product across the three blocks, nor shows the product itsel
     app(\App\Services\BuyTogetherSettings::class)->save(['on' => true]);
     $html = recsPage($this, $s['self']);
 
-    $all = array_merge(recsSlugs(recsBlock($html, 'rp1-h')), recsSlugs(recsBlock($html, 'rp2-h')), recsSlugs(recsBlock($html, 'ymal-h')));
+    $all = array_merge(recsSlugs(recsBlock($html, 'rp1-h')), recsSlugs(recsBlock($html, 'rp2-h')), recsSlugs(recsBlock($html, 'rpf-h')));
 
     expect($all)->not->toBeEmpty()
         ->and(count($all))->toBe(count(array_unique($all)))
@@ -197,12 +200,12 @@ it('never repeats a product across the three blocks, nor shows the product itsel
         ->and($all)->not->toContain($s['oos']->slug)
         // The Anua toners are in block 1 only, though each is also a toner and a best seller.
         ->and(recsSlugs(recsBlock($html, 'rp2-h')))->not->toContain($s['a1']->slug)
-        ->and(recsSlugs(recsBlock($html, 'ymal-h')))->not->toContain($s['a1']->slug);
+        ->and(recsSlugs(recsBlock($html, 'rpf-h')))->not->toContain($s['a1']->slug);
 
     // Whatever "Buy these together" drew stays out of blocks 2 and 3, as before.
     preg_match('#<section[^>]*class="[^"]*kbb-fbt.*?</section>#s', $html, $fbt);
     $bt = array_diff(recsSlugs($fbt[0] ?? ''), [$s['self']->slug]);
-    expect(array_intersect($bt, array_merge(recsSlugs(recsBlock($html, 'rp2-h')), recsSlugs(recsBlock($html, 'ymal-h')))))->toBe([]);
+    expect(array_intersect($bt, array_merge(recsSlugs(recsBlock($html, 'rp2-h')), recsSlugs(recsBlock($html, 'rpf-h')))))->toBe([]);
 });
 
 it('fills every block to its count even when the brand and the category are the shop\'s best sellers', function () {
@@ -216,7 +219,7 @@ it('fills every block to its count even when the brand and the category are the 
 
     expect(recsCards($html, 'rp1-h'))->toBe(12)
         ->and(recsCards($html, 'rp2-h'))->toBe(10)
-        ->and(recsCards($html, 'ymal-h'))->toBe(12);
+        ->and(recsCards($html, 'rpf-h'))->toBe(12);
 });
 
 it('draws no brand block for a product with no brand, or a brand with nothing else', function () {
@@ -226,7 +229,7 @@ it('draws no brand block for a product with no brand, or a brand with nothing el
     $html = recsPage($this, $lone);
     expect($html)->not->toContain('id="rp1-h"')
         ->and(recsBlock($html, 'rp2-h'))->toContain('More Toners')
-        ->and(recsBlock($html, 'ymal-h'))->not->toBe('');
+        ->and(recsBlock($html, 'rpf-h'))->not->toBe('');
 
     $solo = Brand::create(['slug' => 'solo-'.Str::lower(Str::random(4)), 'name' => 'Solo']);
     $only = recsProduct('Solo Toner', $solo, [$s['toners']], 5);
@@ -240,7 +243,7 @@ it('draws no category block for a product with a brand and no category', functio
 
     expect(recsBlock($html, 'rp1-h'))->toContain('More from Anua')
         ->and($html)->not->toContain('id="rp2-h"')
-        ->and(recsBlock($html, 'ymal-h'))->not->toBe('');
+        ->and(recsBlock($html, 'rpf-h'))->not->toBe('');
 });
 
 /**
@@ -339,7 +342,7 @@ it('puts in-stock products first in blocks 2 and 3 when sold-out ones are allowe
 
     $html = recsPage($this, $s['self']);
     $two = recsSlugs(recsBlock($html, 'rp2-h'));
-    $three = recsSlugs(recsBlock($html, 'ymal-h'));
+    $three = recsSlugs(recsBlock($html, 'rpf-h'));
 
     // Block 1 orders by sales alone, as the brand tab always did.
     expect(recsSlugs(recsBlock($html, 'rp1-h'))[0])->toBe($s['oos']->slug)
@@ -354,20 +357,20 @@ it('puts a product\'s own picks first in block 3, or alone, and never twice', fu
     // a1 is block 1's and t3 block 2's: picking them does not repeat them.
     $s['self']->update(['also_like' => ['mode' => AlsoLikePicks::MODE_FIRST, 'ids' => [$s['x3']->id, $s['t3']->id, $s['a1']->id]]]);
     $html = recsPage($this, $s['self']);
-    $three = recsSlugs(recsBlock($html, 'ymal-h'));
+    $three = recsSlugs(recsBlock($html, 'rpf-h'));
 
     expect(recsSlugs(recsBlock($html, 'rp2-h')))->toContain($s['t3']->slug)
         ->and($three)->not->toContain($s['t3']->slug)->not->toContain($s['a1']->slug)
         ->and(array_slice($three, 0, 2))->toBe([$s['x3']->slug, $s['x1']->slug]);
 
     $s['self']->update(['also_like' => ['mode' => AlsoLikePicks::MODE_ONLY, 'ids' => [$s['x3']->id, $s['x2']->id]]]);
-    expect(recsSlugs(recsBlock(recsPage($this, $s['self']), 'ymal-h')))->toBe([$s['x3']->slug, $s['x2']->slug]);
+    expect(recsSlugs(recsBlock(recsPage($this, $s['self']), 'rpf-h')))->toBe([$s['x3']->slug, $s['x2']->slug]);
 });
 
 it('links every card to a clean product URL, lazy, with no query string', function () {
     $s = recsShop();
     $html = recsPage($this, $s['self']);
-    $foot = recsBlock($html, 'rp1-h').recsBlock($html, 'rp2-h').recsBlock($html, 'ymal-h');
+    $foot = recsBlock($html, 'rp1-h').recsBlock($html, 'rp2-h').recsBlock($html, 'rpf-h');
 
     preg_match_all('#<a [^>]*href="([^"]+)"[^>]*>#', $foot, $links, PREG_SET_ORDER);
     expect($links)->not->toBeEmpty();
@@ -393,30 +396,33 @@ it('turns each block off on its own, keeps the order he set, and survives the re
 
     app(AlsoLikeSettings::class)->save(['brand_on' => false]);
     $html = recsPage($this, $s['self']);
-    expect($html)->not->toContain('id="rp1-h"')->toContain('id="rp2-h"')->toContain('id="ymal-h"');
+    expect($html)->not->toContain('id="rp1-h"')->toContain('id="rp2-h"')->toContain('id="rpf-h"');
 
     app(AlsoLikeSettings::class)->save(['brand_on' => true, 'cat_on' => false]);
     $html = recsPage($this, $s['self']);
     expect($html)->toContain('id="rp1-h"')->not->toContain('id="rp2-h"');
 
-    app(AlsoLikeSettings::class)->save(['cat_on' => true, 'enabled' => false]);
+    app(AlsoLikeSettings::class)->save(['cat_on' => true, 'best_on' => false]);
     $html = recsPage($this, $s['self']);
-    expect($html)->not->toContain('id="ymal-h"')->toContain('id="rp1-h"')->toContain('id="rp2-h"');
+    expect($html)->not->toContain('id="rpf-h"')->toContain('id="rp1-h"')->toContain('id="rp2-h"');
 
-    app(AlsoLikeSettings::class)->save(['enabled' => true, 'order' => '321']);
+    app(AlsoLikeSettings::class)->save(['best_on' => true, 'order' => '321']);
     $html = recsPage($this, $s['self']);
-    expect(strpos($html, 'id="ymal-h"'))->toBeLessThan(strpos($html, 'id="rp2-h"'))
-        ->and(strpos($html, 'id="rp2-h"'))->toBeLessThan(strpos($html, 'id="rp1-h"'));
+    // 3 2 1: (Continue shopping, off here) · best sellers · brand and
+    // category — the brand block then the category block, always that way.
+    expect(strpos($html, 'id="rpf-h"'))->toBeLessThan(strpos($html, 'id="rp1-h"'))
+        ->and(strpos($html, 'id="rp1-h"'))->toBeLessThan(strpos($html, 'id="rp2-h"'));
 
-    // Values saved under the keys Lane RP shipped and Lane RP2 retired: never
-    // read, and the page draws.
+    // Values saved under keys 2.60.428 shipped (or Lane RP2 used) and Lane BC
+    // retired — `enabled` among them, which would switch the best sellers
+    // off if it were still read: never read, and the page draws.
     $settings = app(\App\Services\SettingsService::class);
     foreach (['ymal_layout' => 'one', 'ymal_first' => 'category', 'ymal_rule' => 'sale', 'ymal_mix' => '3:1', 'ymal_fill' => false,
-        'ymal_routine_on' => true, 'ymal_routine_count' => 99, 'ymal_recent_on' => true, 'ymal_recent_title' => '<b>x</b>'] as $k => $v) {
+        'ymal_routine_on' => true, 'ymal_routine_count' => 99, 'ymal_enabled' => false, 'ymal_also_count_d' => '4'] as $k => $v) {
         $settings->set($k, $v);
     }
     $html = recsPage($this, $s['self']);
-    expect($html)->toContain('id="rp1-h"')->toContain('id="rp2-h"')->toContain('id="ymal-h"');
+    expect($html)->toContain('id="rp1-h"')->toContain('id="rp2-h"')->toContain('id="rpf-h"');
 });
 
 /* ══════════════════════ slider or grid, per device ═════════════════════════ */
@@ -434,13 +440,13 @@ it('ships the look the page already had: slider, grid, slider, 12 · 10 · 12, n
     app(AlsoLikeSettings::class)->save(array_filter($d, fn ($k) => str_contains($k, '_layout_') || str_contains($k, '_count_'), ARRAY_FILTER_USE_KEY));
     $after = recsPage($this, $s['self']);
 
-    $foot = fn (string $h) => recsBlock($h, 'rp1-h').recsBlock($h, 'rp2-h').recsBlock($h, 'ymal-h');
+    $foot = fn (string $h) => recsBlock($h, 'rp1-h').recsBlock($h, 'rp2-h').recsBlock($h, 'rpf-h');
     expect($foot($after))->toBe($foot($before))
         ->and($foot($before))->not->toContain('rp-dg')->not->toContain('rp-mg')->not->toContain('data-ymal-n="')
         ->and($before)->not->toContain(':nth-child(n+')
         ->and(recsCards($before, 'rp1-h'))->toBe(12)
         ->and(recsCards($before, 'rp2-h'))->toBe(10)
-        ->and(recsCards($before, 'ymal-h'))->toBe(12);
+        ->and(recsCards($before, 'rpf-h'))->toBe(12);
 });
 
 it('makes every block a grid or a slider per device from the global setting', function () {
@@ -450,7 +456,7 @@ it('makes every block a grid or a slider per device from the global setting', fu
     $html = recsPage($this, $s['self']);
     // Sliders on the phone, grids on the laptop: the carousel markup with rp-dg.
     expect(recsBlock($html, 'rp1-h'))->toContain('data-ymal ')->toMatch('/class="sec ymal rp-dg /')
-        ->and(recsBlock($html, 'ymal-h'))->toMatch('/class="sec ymal rp-dg /')
+        ->and(recsBlock($html, 'rpf-h'))->toMatch('/class="sec ymal rp-dg /')
         // Block 2 is a grid on both now: the plain grid, no script.
         ->and(recsBlock($html, 'rp2-h'))->toContain('class="sec ymal rp-grid ')->not->toContain('data-ymal');
 
@@ -463,13 +469,13 @@ it('makes every block a grid or a slider per device from the global setting', fu
 
 it('lets a block\'s own setting beat the global one', function () {
     $s = recsShop();
-    app(AlsoLikeSettings::class)->save(['g_layout_m' => 'grid', 'brand_layout_m' => 'slider', 'g_count_d' => '6', 'also_count_d' => '9']);
+    app(AlsoLikeSettings::class)->save(['g_layout_m' => 'grid', 'brand_layout_m' => 'slider', 'g_count_d' => '6', 'best_count_d' => '9']);
     $html = recsPage($this, $s['self']);
     $c = app(AlsoLikeSettings::class)->all();
 
     expect(recsBlock($html, 'rp1-h'))->not->toContain('rp-mg')
-        ->and(recsBlock($html, 'ymal-h'))->toContain('rp-mg')
-        ->and(AlsoLikeSettings::layoutFor($c, 'also')['nd'])->toBe(9)
+        ->and(recsBlock($html, 'rpf-h'))->toContain('rp-mg')
+        ->and(AlsoLikeSettings::layoutFor($c, 'best')['nd'])->toBe(9)
         ->and(AlsoLikeSettings::layoutFor($c, 'brand')['nd'])->toBe(6);
 });
 
@@ -480,34 +486,41 @@ it('falls through "Same as global" to the global value, and "Standard" to the bl
     $c['cat_layout_d'] = 'global';
     $c['count'] = 16;
 
+    $c['recent_count'] = 7;
+
     $cat = AlsoLikeSettings::layoutFor($c, 'cat');
-    $also = AlsoLikeSettings::layoutFor($c, 'also');
+    $tabs = AlsoLikeSettings::layoutFor($c, 'tabs');
+    $recent = AlsoLikeSettings::layoutFor($c, 'recent');
+    $best = AlsoLikeSettings::layoutFor($c, 'best');
 
     expect($cat['d'])->toBe('slider')->and($cat['m'])->toBe('grid')
         ->and($cat['nd'])->toBe(10)->and($cat['nm'])->toBe(5)->and($cat['n'])->toBe(10)
-        // Block 3's standard is his saved `count`.
-        ->and($also['nd'])->toBe(16)->and($also['nm'])->toBe(5);
+        // The tabs' standard is his saved `count`, Continue shopping's his
+        // saved `recent_count` (both 2.60.428's), the best sellers' 12.
+        ->and($tabs['nd'])->toBe(16)->and($tabs['nm'])->toBe(5)
+        ->and($recent['nd'])->toBe(7)->and($recent['d'])->toBe('slider')
+        ->and($best['nd'])->toBe(12)->and($best['d'])->toBe('slider');
 });
 
 it('renders the larger count once and hides the rest on the device that shows fewer', function () {
     $s = recsShop();
-    app(AlsoLikeSettings::class)->save(['also_count_d' => '8', 'also_count_m' => '4']);
+    app(AlsoLikeSettings::class)->save(['best_count_d' => '8', 'best_count_m' => '4']);
     $html = recsPage($this, $s['self']);
 
-    expect(recsCards($html, 'ymal-h'))->toBe(8)
-        ->and(recsBlock($html, 'ymal-h'))->toContain('data-ymal-n="8 4"')
-        ->and($html)->toContain('@media(max-width:900px){#related>:nth-child(n+5){display:none}}')
-        ->and($html)->not->toContain('@media(min-width:901px){#related>');
+    expect(recsCards($html, 'rpf-h'))->toBe(8)
+        ->and(recsBlock($html, 'rpf-h'))->toContain('data-ymal-n="8 4"')
+        ->and($html)->toContain('@media(max-width:900px){#rpf-r>:nth-child(n+5){display:none}}')
+        ->and($html)->not->toContain('@media(min-width:901px){#rpf-r>');
 
     // The other way round for block 1, on the laptop.
-    app(AlsoLikeSettings::class)->save(['also_count_d' => 'global', 'also_count_m' => 'global', 'brand_count_d' => '4', 'brand_count_m' => '5']);
+    app(AlsoLikeSettings::class)->save(['best_count_d' => 'global', 'best_count_m' => 'global', 'brand_count_d' => '4', 'brand_count_m' => '5']);
     $html = recsPage($this, $s['self']);
     expect(recsCards($html, 'rp1-h'))->toBe(5)
         ->and($html)->toContain('@media(min-width:901px){#rp1-r>:nth-child(n+5){display:none}}');
 
     // And the no-repeat rule runs on what is rendered: no repeat on either
     // device, whatever each one hides.
-    $all = array_merge(recsSlugs(recsBlock($html, 'rp1-h')), recsSlugs(recsBlock($html, 'rp2-h')), recsSlugs(recsBlock($html, 'ymal-h')));
+    $all = array_merge(recsSlugs(recsBlock($html, 'rp1-h')), recsSlugs(recsBlock($html, 'rp2-h')), recsSlugs(recsBlock($html, 'rpf-h')));
     expect(count($all))->toBe(count(array_unique($all)));
 });
 
@@ -517,15 +530,15 @@ it('falls back to the default for a stored value that is not one of its options'
     $settings->set('ymal_g_layout_d', 'carousel"><script>');
     $settings->set('ymal_g_count_m', '9999');
     $settings->set('ymal_brand_layout_m', 'grid;x');
-    $settings->set('ymal_also_count_d', '-3');
+    $settings->set('ymal_best_count_d', '-3');
 
     $c = app(AlsoLikeSettings::class)->all();
     expect($c['g_layout_d'])->toBe('std')->and((string) $c['g_count_m'])->toBe('std')
-        ->and($c['brand_layout_m'])->toBe('global')->and((string) $c['also_count_d'])->toBe('global');
+        ->and($c['brand_layout_m'])->toBe('global')->and((string) $c['best_count_d'])->toBe('global');
 
     $html = recsPage($this, $s['self']);
     expect($html)->not->toContain('carousel"><script>')->not->toContain('rp-dg')->not->toContain('rp-mg')
-        ->and(recsCards($html, 'ymal-h'))->toBe(12);
+        ->and(recsCards($html, 'rpf-h'))->toBe(12);
 });
 
 /* ═══════════════════════════════ the cost ═════════════════════════════════ */
@@ -577,10 +590,10 @@ it('asks two statements for all three blocks, cold and warm — with one shelf o
 
     DB::flushQueryLog();
     DB::enableQueryLog();
-    $cold = $recs->forProduct($s['self']);
+    $cold = $recs->forProduct($s['self'], request());
     $coldN = count(DB::getQueryLog());
     DB::flushQueryLog();
-    $warm = $recs->forProduct($s['self']);
+    $warm = $recs->forProduct($s['self'], request());
     $warmN = count(DB::getQueryLog());
     DB::disableQueryLog();
 
@@ -611,7 +624,7 @@ it('asks nothing of the database when the foot is off on every device', function
 
     DB::flushQueryLog();
     DB::enableQueryLog();
-    $out = app(ProductRecs::class)->forProduct($p);
+    $out = app(ProductRecs::class)->forProduct($p, request());
     expect(DB::getQueryLog())->toBe([])
         ->and($out['brand']['products'])->toHaveCount(0)
         ->and($out['alsoLike']['products'])->toHaveCount(0);
@@ -623,21 +636,27 @@ it('asks nothing of the database when the foot is off on every device', function
 it('puts every control on Appearance → Product page → You may also like, and drops the retired ones', function () {
     $tab = AlsoLikeSettings::TABS['ymal'][2];
 
-    foreach (['g_layout_d', 'g_count_d', 'g_layout_m', 'g_count_m', 'brand_on', 'brand_title', 'brand_title_ar', 'cat_on', 'cat_title', 'cat_title_ar',
-        'enabled', 'title', 'title_ar', 'order'] as $key) {
+    foreach (['pair', 'tab_first', 'g_layout_d', 'g_count_d', 'g_layout_m', 'g_count_m', 'brand_on', 'brand_title', 'brand_title_ar',
+        'cat_on', 'cat_title', 'cat_title_ar', 'recent_on', 'recent_title', 'recent_title_ar', 'best_on', 'best_title', 'best_title_ar',
+        'title', 'title_ar', 'eyebrow', 'eyebrow_ar', 'order'] as $key) {
         expect($tab)->toContain($key);
     }
-    foreach (['brand', 'cat', 'also'] as $b) {
+    foreach (['tabs', 'brand', 'cat', 'recent', 'best'] as $b) {
         foreach (['layout_d', 'count_d', 'layout_m', 'count_m'] as $f) {
             expect($tab)->toContain($b.'_'.$f)->and(AlsoLikeSettings::SCHEMA[$b.'_'.$f][2])->toBe('global');
         }
     }
-    foreach (['layout', 'first', 'rule', 'mix', 'fill', 'routine_on', 'routine_count', 'recent_on', 'recent_count', 'brand_count', 'cat_count'] as $gone) {
+    foreach (['layout', 'first', 'enabled', 'rule', 'mix', 'fill', 'routine_on', 'routine_count', 'routine_title', 'brand_count', 'cat_count',
+        'also_layout_d', 'also_count_d'] as $gone) {
         expect(AlsoLikeSettings::SCHEMA)->not->toHaveKey($gone)->and($tab)->not->toContain($gone);
     }
 
+    // What ships: tabs, opened where the shopper came from, Continue shopping,
+    // and the best sellers OFF — the owner's words.
     $d = AlsoLikeSettings::defaults();
-    expect($d['brand_on'])->toBeTrue()->and($d['cat_on'])->toBeTrue()->and($d['enabled'])->toBeTrue()
+    expect($d['pair'])->toBe('tabs')->and($d['tab_first'])->toBe('auto')
+        ->and($d['brand_on'])->toBeTrue()->and($d['cat_on'])->toBeTrue()
+        ->and($d['recent_on'])->toBeTrue()->and($d['best_on'])->toBeFalse()
         ->and($d['g_layout_d'])->toBe('std')->and($d['g_count_m'])->toBe('std')->and($d['order'])->toBe('123');
 });
 
@@ -654,16 +673,6 @@ it('prints a typed heading as text, and his Arabic heading only on the Arabic pa
     expect(recsBlock($ar, 'rp2-h'))->toContain('المزيد من التونر');
 });
 
-it('ships no listing hint and no tab script any more', function () {
-    $js = (string) file_get_contents(resource_path('js/kbb/ymal.js'));
-    $shop = (string) file_get_contents(resource_path('js/kbb/shop.js'));
-
-    foreach (['sessionStorage', 'kbb_rp_from', 'data-rp-tab', 'innerHTML', 'getBoundingClientRect', 'offsetWidth', 'fetch(', 'sendBeacon'] as $api) {
-        expect(str_contains($js, $api))->toBeFalse("ymal.js reaches for {$api}");
-    }
-    expect($shop)->not->toContain('sessionStorage')->not->toContain('kbb_rp_from');
-});
-
 /* ═════════════ the cached cards (App\Support\CardFragments) ══════════════ */
 
 it('serves cached cards byte-identical to the component, cold and warm', function () {
@@ -674,7 +683,7 @@ it('serves cached cards byte-identical to the component, cold and warm', functio
     expect(Cache::get('kbb.card.en.'.$s['x1']->id))->toBeArray();
     $warm = recsPage($this, $s['self']);
 
-    $foot = fn (string $h) => recsBlock($h, 'rp1-h').recsBlock($h, 'rp2-h').recsBlock($h, 'ymal-h');
+    $foot = fn (string $h) => recsBlock($h, 'rp1-h').recsBlock($h, 'rp2-h').recsBlock($h, 'rpf-h');
     expect($foot($warm))->toBe($foot($cold));
 
     // A cached card is exactly what <x-product-card> draws inline in a grid.
@@ -695,7 +704,7 @@ it('never serves a card from before a price or stock change', function () {
 
     $html = recsPage($this, $s['self']);
 
-    expect(recsBlock($html, 'ymal-h'))->toContain('123')
+    expect(recsBlock($html, 'rpf-h'))->toContain('123')
         ->and(Cache::get('kbb.card.en.'.$s['x1']->id)[1])->toContain('123')
         ->and(Cache::get('kbb.card.en.'.$s['t1']->id)[1])
             ->toBe(\App\Support\CardFragments::render(Product::query()->select(\App\Http\Controllers\Store\ProductController::CARD_COLUMNS)->with('brand:id,name,slug')->find($s['t1']->id)));
@@ -741,7 +750,7 @@ it('reuses the cards when the lists are rebuilt, and reads a repeat view as one 
 
     ProductRecs::forget((int) $s['self']->id);
     $p = Product::query()->with(['brand:id,name,slug', 'categories:id,name,slug,path,parent_id,depth'])->find($s['self']->id);
-    $row = app(ProductRecs::class)->forProduct($p)['alsoLike']['products']->firstWhere('id', $s['x1']->id);
+    $row = app(ProductRecs::class)->forProduct($p, request())['alsoLike']['products']->firstWhere('id', $s['x1']->id);
 
     expect($row->getAttribute('rp_src'))->not->toBeNull()
         ->and(\App\Support\CardFragments::many([$row])[$s['x1']->id])->toBe($before[1])

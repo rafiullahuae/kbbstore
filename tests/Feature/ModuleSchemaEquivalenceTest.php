@@ -344,6 +344,15 @@ function mAllowedRepairs(): array
  * autoplay*, title*, eyebrow*, order) answers exactly what it answered; only
  * its place in the walk moved. Every line before also_like is untouched.
  */
+/*
+ * ── also_like RE-RECORDED AGAIN, NO VALUE MOVED ───────────────────── Lane BC ──
+ *
+ * The owner's third plan (tabs, then Continue shopping, the best sellers off):
+ * the section lost enabled and also_* and gained pair, tab_first, tabs_*,
+ * recent_*, best_*. Re-recorded from this corpus; all 181 calls on keys that
+ * survive answer exactly what they answered (compared row by row before the
+ * section was replaced). Every line before also_like is untouched.
+ */
 it('answers every recorded cast exactly as it did before the shared schema', function () {
     $recorded = file(base_path('tests/Fixtures/module-cast-baseline.txt'), FILE_IGNORE_NEW_LINES);
     $now = mEquivRows();

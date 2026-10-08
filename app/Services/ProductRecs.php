@@ -8,62 +8,74 @@ use App\Http\Controllers\Store\ProductController;
 use App\Models\Product;
 use App\Support\AlsoLikePicks;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * The three recommendation blocks at the foot of a product page. (Lane RP2)
+ * The recommendation blocks at the foot of a product page.  (Lane RP → RP2 → BC)
  *
- * The owner, changing the plan Lane RP shipped in 2.60.428:
+ * The owner's third plan (Lane BC):
  *
- *   "first block will be brand, if user visit the anua product, then firt
- *    block will display the products from the anua brand. and 2nd block will
- *    be category, if the product is from the toner category, then the 2nd
- *    block will pick the products from that category. and 3rd block will be
- *    You may also like but the proudcts will be picked as best sellers. and
- *    also make sure no any repeat product should be there in all 3 blocks,
- *    cross wise repeat also should not."
+ *   "keep also the tab, more from anua, and more from toner, both tabs. and
+ *    remove the second block complete your routine. … give option to disabl
+ *    the tabs and show the brand, and then the category block, but by default
+ *    keep the tabs on, turn off the 2nd block and third will be continue
+ *    shoping which we have already."
  *
- *   1  slider  "More from {brand}"   this product's brand, best sellers first
- *                                    (the brand tab's order, unchanged)
- *   2  grid    "More {category}"     the product's most specific category, in
- *                                    stock first then best sellers (the grid
- *                                    in this position always put stock first),
- *                                    minus block 1
- *   3  slider  "You may also like"   the shop's best sellers, in stock first,
- *                                    minus blocks 1 and 2; a product's own
- *                                    picks (Catalog → Products → edit) lead it
+ *   1  Brand and category. DEFAULT: one block, two tabs — "More from {brand}"
+ *      (best sellers first) | "More {category}" (the most specific category,
+ *      in stock first, then best sellers). Both lists are in the HTML, so
+ *      both are crawlable and the URL never varies; the closed tab is
+ *      [hidden], so its pictures are not fetched. Which tab opens first is
+ *      AlsoLikeSettings `tab_first`: by default the one matching the listing
+ *      the shopper clicked from (a sessionStorage hint shop.js writes, read
+ *      by ymal.js — the server response never varies on it), else the brand.
+ *      OPTION (`pair` = blocks): a brand block, then a category block.
+ *   2  Best sellers — OFF by default (`best_on`).
+ *   3  Continue shopping: the shopper's recently viewed products (the
+ *      `kbb_viewed` cookie ProductController::rememberViewed() writes), then
+ *      best sellers. A crawler and a first visit carry no cookie and see best
+ *      sellers: real, crawlable links.
+ *
+ * A product's own picks (Catalog → Products → edit → You may also like) lead
+ * the best-seller block while it is on, and otherwise follow the recently
+ * viewed in Continue shopping — "Only my picks" leaves the best-seller
+ * top-up out of whichever block carries them.
  *
  * ── NO PRODUCT TWICE, AND NEVER THE ONE ON THE PAGE ────────────────────────
  *
- * Filled in that order, each from what the blocks before it did not take. The
- * cached lists are disjoint by construction, and forProduct() takes again
+ * Filled brand → category → best sellers → continue shopping, each from what
+ * the ones before it did not take — the category tab included: it leaves out
+ * what the brand tab shows, so switching tabs never shows a card twice.
+ * "Buy these together" is kept out of everything after the brand, as before.
+ * The cached lists are disjoint by construction, and forProduct() takes again
  * against everything already drawn, so a card hidden since the lists were
- * cached cannot open a gap a repeat falls into. "Buy these together" is kept
- * out of blocks 2 and 3, exactly as it was before this change.
+ * cached cannot open a gap a repeat falls into.
  *
  * ── THE CATEGORY IS THE MOST SPECIFIC ONE ──────────────────────────────────
  *
- * "if the product is from the toner category, then the 2nd block will pick
- * the products from that category" — Toners, not Skincare above it. Of the
- * product's categories (the page's own query loads them, with parent_id and
- * depth — no extra query), categoryCandidates() keeps the deepest: never one
- * that is the parent of another of its categories, then the greatest `depth`
- * (CategoryTree keeps it). Two equally deep ones both go into the ONE union,
- * and the one with more in-stock products besides this one wins, then the
- * lowest id — deterministic, whatever order the pivot rows were written in.
- * A thin deepest category is kept, never swapped for its parent. The
- * breadcrumbs are left as they are (they print categories->first()).
+ * Of the product's categories (the page's own query loads them, with
+ * parent_id and depth — no extra query), categoryCandidates() keeps the
+ * deepest: never one that is the parent of another of its categories, then
+ * the greatest `depth`. Two equally deep ones both go into the ONE union, and
+ * the one with more in-stock products besides this one wins, then the lowest
+ * id — deterministic, whatever order the pivot rows were written in.
+ * The breadcrumbs follow the same choice (App\Support\ProductCategory::trail(),
+ * given `category.id`): Home › Skincare › Toner › Product.
  *
- * ── ▲ TWO QUERIES FOR ALL THREE, COLD OR WARM ──────────────────────────────
+ * ── ▲ TWO QUERIES FOR EVERY BLOCK, COLD OR WARM ────────────────────────────
  *
- *   COLD  ONE `UNION ALL` — the brand, the category, the best sellers and the
- *         product's own picks — then the brands, eager-loaded once.
- *   WARM  The three final lists are cached per product (TTL below; a saved
- *         product forgets its own, a changed setting changes the fingerprint),
- *         so a repeat view reads ONE `WHERE id IN (…)`, then the brands.
+ *   COLD  ONE `UNION ALL` — the brand, the category, the product's own picks,
+ *         the best sellers and the shopper's viewed ids — then the brands,
+ *         eager-loaded once.
+ *   WARM  The lists are cached per product (TTL below; a saved product
+ *         forgets its own, a changed setting changes the fingerprint), so a
+ *         repeat view reads ONE `WHERE id IN (…)` — cached ids and the viewed
+ *         ids together — then the brands.
  *
- * Visibility and stock are re-applied on the warm read. What each card PRINTS
- * is never served stale: App\Support\CardFragments signs every card.
+ * Visibility and stock are re-applied on the warm read. The viewed ids are
+ * never cached: they are the shopper's, not the product's. What each card
+ * PRINTS is never served stale: App\Support\CardFragments signs every card.
  */
 class ProductRecs
 {
@@ -78,6 +90,12 @@ class ProductRecs
      */
     public const TTL = 3600;
 
+    /** The longest list Continue shopping reads from the cookie (rememberViewed keeps 12). */
+    public const MAX_VIEWED = 12;
+
+    /** The sessionStorage key the listing script writes. Pinned by a test. */
+    public const HINT_KEY = 'kbb_rp_from';
+
     private const BRAND = 'b';
 
     private const CATEGORY = 'c';
@@ -86,7 +104,9 @@ class ProductRecs
 
     private const MANUAL = 'm';
 
-    /** Room in blocks 2 and 3's cached lists for what "Buy these together" takes out (it draws ≤ 5). */
+    private const VIEWED = 'v';
+
+    /** Room in the cached lists for what "Buy these together" takes out (it draws ≤ 5). */
     private const SLACK = 6;
 
     public function __construct(
@@ -103,19 +123,24 @@ class ProductRecs
     }
 
     /**
-     * Everything the three partials need.
+     * Everything the partials need.
      *
      * @param  list<int>  $onPage  ids already drawn elsewhere on the page ("Buy these together")
-     * @return array{brand: array<string, mixed>, category: array<string, mixed>, alsoLike: array<string, mixed>, order: list<string>}
+     * @return array{brand: array<string, mixed>, category: array<string, mixed>, tabs: ?array<string, mixed>, recent: array<string, mixed>, alsoLike: array<string, mixed>, order: list<string>}
      */
-    public function forProduct(Product $product, array $onPage = []): array
+    public function forProduct(Product $product, Request $request, array $onPage = []): array
     {
         $c = $this->settings->all();
         $none = collect();
+        $tabsMode = ($c['pair'] ?? 'tabs') !== 'blocks';
         $out = [
             'brand' => ['products' => $none, 'title' => ''],
-            'category' => ['products' => $none, 'title' => ''],
-            'alsoLike' => ['products' => $none, 'config' => $c, 'wording' => AlsoLikeSettings::wording($c)],
+            'category' => ['products' => $none, 'title' => '', 'id' => null],
+            // The tab block, when both tabs have cards: panels, heading, layout.
+            'tabs' => null,
+            'recent' => ['products' => $none, 'title' => '', 'eyebrow' => '', 'seen' => []],
+            // The best-seller block (and, as always, the shared config).
+            'alsoLike' => ['products' => $none, 'config' => $c, 'title' => ''],
             'order' => self::order($c),
         ];
 
@@ -127,9 +152,10 @@ class ProductRecs
 
         $brand = $c['brand_on'] && $product->brand_id !== null && $product->relationLoaded('brand') ? $product->brand : null;
         $candidates = $c['cat_on'] ? self::categoryCandidates($product) : [];
-        $also = (bool) $c['enabled'];
+        $wantBest = (bool) $c['best_on'];
+        $wantRecent = (bool) $c['recent_on'];
 
-        if ($brand === null && $candidates === [] && ! $also) {
+        if ($brand === null && $candidates === [] && ! $wantBest && ! $wantRecent) {
             return $out;
         }
 
@@ -138,81 +164,187 @@ class ProductRecs
         // below runs on what is RENDERED, and a card hidden on a phone can
         // never turn up in another block there.
         $lay = [
-            'brand' => AlsoLikeSettings::layoutFor($c, 'brand'),
-            'cat' => AlsoLikeSettings::layoutFor($c, 'cat'),
-            'also' => AlsoLikeSettings::layoutFor($c, 'also'),
+            'brand' => AlsoLikeSettings::layoutFor($c, $tabsMode ? 'tabs' : 'brand'),
+            'cat' => AlsoLikeSettings::layoutFor($c, $tabsMode ? 'tabs' : 'cat'),
+            'recent' => AlsoLikeSettings::layoutFor($c, 'recent'),
+            'best' => AlsoLikeSettings::layoutFor($c, 'best'),
         ];
-        $picks = $also ? AlsoLikePicks::read($product) : ['mode' => AlsoLikePicks::MODE_RULE, 'ids' => []];
-        [$lists, $categoryId] = $this->lists($product, $c, $brand !== null ? $lay['brand']['n'] : 0,
-            array_map(fn ($cat) => (int) $cat->id, $candidates), $candidates === [] ? 0 : $lay['cat']['n'], $also ? $lay['also']['n'] : 0, $picks);
+        $n = [
+            'b' => $brand !== null ? $lay['brand']['n'] : 0,
+            'c' => $candidates === [] ? 0 : $lay['cat']['n'],
+            'r' => $wantRecent ? $lay['recent']['n'] : 0,
+            'f' => $wantBest ? $lay['best']['n'] : 0,
+        ];
+
+        // His picks lead the best-seller block while it is on, and otherwise
+        // follow the recently viewed in Continue shopping.
+        $host = $wantBest ? 'f' : ($wantRecent ? 'r' : null);
+        $picks = $host !== null ? AlsoLikePicks::read($product) : ['mode' => AlsoLikePicks::MODE_RULE, 'ids' => []];
+        $usePicks = $picks['ids'] !== [] && $picks['mode'] !== AlsoLikePicks::MODE_RULE;
+        $only = $usePicks && $picks['mode'] === AlsoLikePicks::MODE_ONLY;
+        // Which blocks top up from the shop's best sellers.
+        $topUp = ['f' => $n['f'] > 0 && ! ($only && $host === 'f'), 'r' => $n['r'] > 0 && ! ($only && $host === 'r')];
+
+        $viewed = $wantRecent ? self::viewedIds($request, (int) $product->id) : [];
+        [$lists, $categoryId] = $this->lists($product, $c, $n, array_map(fn ($cat) => (int) $cat->id, $candidates),
+            $usePicks ? $picks : null, $topUp['f'] || $topUp['r'], $viewed);
         $category = $categoryId === null ? null : collect($candidates)->first(fn ($cat) => (int) $cat->id === $categoryId);
+        $out['category']['id'] = $categoryId;
 
         $taken = [(int) $product->id => true];
 
-        // 1. The brand. Nothing else on the page is taken out of it, as before.
-        $one = self::take($lists[self::BRAND] ?? [], $taken, $lay['brand']['n']);
+        // 1a. The brand. Nothing else on the page is taken out of it, as before.
+        $one = self::take($lists[self::BRAND] ?? [], $taken, $n['b']);
         $taken += self::idsOf($one);
 
-        // "Buy these together" stays out of blocks 2 and 3, as it did before.
+        // "Buy these together" stays out of everything below the brand.
         foreach ($onPage as $id) {
             $taken[(int) $id] = true;
         }
 
-        // 2. The category, without block 1.
-        $two = self::take($lists[self::CATEGORY] ?? [], $taken, $lay['cat']['n']);
+        // 1b. The category, without the brand's cards — tab or block.
+        $two = self::take($lists[self::CATEGORY] ?? [], $taken, $n['c']);
         $taken += self::idsOf($two);
 
-        // 3. Best sellers (his picks first), without blocks 1 and 2.
-        $three = self::take($lists[self::BEST] ?? [], $taken, $lay['also']['n']);
+        $manual = $lists[self::MANUAL] ?? [];
+
+        // 2. Best sellers, his picks first.
+        $best = $n['f'] > 0 ? self::take(array_merge($host === 'f' ? $manual : [], $topUp['f'] ? ($lists[self::BEST] ?? []) : []), $taken, $n['f']) : [];
+        $taken += self::idsOf($best);
+
+        // 3. Continue shopping: what this shopper viewed, then his picks (when
+        // the best-seller block is off), then best sellers.
+        $seen = [];
+        $recent = [];
+
+        if ($n['r'] > 0) {
+            $seen = self::take($lists[self::VIEWED] ?? [], $taken, $n['r']);
+            $recent = array_merge($seen, self::take(
+                array_merge($host === 'r' ? $manual : [], $topUp['r'] ? ($lists[self::BEST] ?? []) : []),
+                $taken + self::idsOf($seen), $n['r'] - count($seen)));
+        }
 
         $ar = ! \App\Support\Locale::isDefault() && \App\Support\Locale::current() === 'ar';
+        $typed = fn (string $key): string => trim((string) ($c[$key.($ar ? '_ar' : '')] ?? ''));
 
         if ($brand !== null && $one !== []) {
-            $typed = trim((string) ($c[$ar ? 'brand_title_ar' : 'brand_title'] ?? ''));
             $out['brand'] = [
                 'products' => collect($one),
                 'layout' => $lay['brand'],
-                'title' => $typed !== '' ? $typed : (string) __('store.product.recs_tab_brand', ['brand' => (string) $brand->t('name')]),
+                'title' => $typed('brand_title') !== '' ? $typed('brand_title') : (string) __('store.product.recs_tab_brand', ['brand' => (string) $brand->t('name')]),
+                'paths' => [self::pathOf($brand->url())],
             ];
         }
 
         if ($category !== null && $two !== []) {
-            $typed = trim((string) ($c[$ar ? 'cat_title_ar' : 'cat_title'] ?? ''));
             $out['category'] = [
                 'products' => collect($two),
                 'layout' => $lay['cat'],
-                'title' => $typed !== '' ? $typed : (string) __('store.product.recs_tab_category', ['category' => (string) $category->t('name')]),
+                'title' => $typed('cat_title') !== '' ? $typed('cat_title') : (string) __('store.product.recs_tab_category', ['category' => (string) $category->t('name')]),
+                'paths' => self::categoryPaths($product),
+                'id' => $categoryId,
             ];
         }
 
-        $out['alsoLike']['products'] = collect($three);
-        $out['alsoLike']['layout'] = $lay['also'];
+        // Two tabs only when both have cards; one alone is drawn as its block.
+        if ($tabsMode && $out['brand']['products']->isNotEmpty() && $out['category']['products']->isNotEmpty()) {
+            $first = (string) ($c['tab_first'] ?? 'auto');
+            $panels = ['brand' => ['key' => 'brand'] + $out['brand'], 'category' => ['key' => 'category'] + $out['category']];
+            $out['tabs'] = AlsoLikeSettings::wording($c) + [
+                'panels' => array_values($first === 'category' ? array_reverse($panels) : $panels),
+                'layout' => $lay['brand'],
+                // Only "where the shopper came from" lets the browser switch.
+                'hint' => ! in_array($first, ['brand', 'category'], true),
+            ];
+        }
+
+        if ($best !== []) {
+            $out['alsoLike']['products'] = collect($best);
+            $out['alsoLike']['layout'] = $lay['best'];
+            $out['alsoLike']['title'] = $typed('best_title') !== '' ? $typed('best_title') : (string) __('store.product.recs_best_eyebrow');
+        }
+
+        if ($recent !== []) {
+            $out['recent'] = [
+                'products' => collect($recent),
+                'layout' => $lay['recent'],
+                'title' => $typed('recent_title') !== '' ? $typed('recent_title') : (string) __('store.product.recs_recent_heading'),
+                'eyebrow' => (string) __($seen !== [] ? 'store.product.recs_recent_eyebrow' : 'store.product.recs_best_eyebrow'),
+                'seen' => array_keys(self::idsOf($seen)),
+            ];
+        }
 
         return $out;
     }
 
     /**
-     * The product's most specific categories, from the relation the page
-     * already loaded: none that is the parent of another of them, then the
-     * greatest depth. Usually one; two only when two are equally deep, and
-     * lists() settles those by stock, then id. Sorted by id, so the order the
-     * pivot rows were written in cannot matter.
+     * The shopper's recently viewed ids, newest first, without this product.
+     * From the cookie only — integers, de-duplicated, at most MAX_VIEWED.
+     *
+     * @return list<int>
+     */
+    public static function viewedIds(Request $request, int $currentId): array
+    {
+        $raw = (string) $request->cookie('kbb_viewed', '');
+        $out = [];
+
+        foreach (explode(',', substr($raw, 0, 200)) as $id) {
+            $id = (int) $id;
+
+            if ($id > 0 && $id !== $currentId && ! in_array($id, $out, true)) {
+                $out[] = $id;
+            }
+
+            if (count($out) >= self::MAX_VIEWED) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /** A URL's path, decoded — what the listing script stores and compares. */
+    public static function pathOf(string $url): string
+    {
+        return rawurldecode((string) (parse_url($url, PHP_URL_PATH) ?: '/'));
+    }
+
+    /**
+     * Every listing path that should open the category tab: each of the
+     * product's categories and the shelves above it in its path. No query —
+     * `path` is on the rows the page loaded.
+     *
+     * @return list<string>
+     */
+    private static function categoryPaths(Product $product): array
+    {
+        $out = [];
+
+        foreach ($product->categories as $cm) {
+            $segments = array_values(array_filter(explode('/', trim((string) ($cm->path ?: $cm->slug), '/')), 'strlen'));
+
+            for ($i = count($segments); $i >= 1; $i--) {
+                $out[] = self::pathOf(\App\Support\Url::to(
+                    \App\Support\UrlScheme::collection(implode('/', array_slice($segments, 0, $i)))
+                ));
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    /**
+     * The product's most specific categories — App\Support\ProductCategory,
+     * the ONE chooser the breadcrumbs ask too (Lane BC), so the crumb and
+     * "More {category}" can never name two shelves. Usually one; two only
+     * when two are equally deep, and lists() settles those by stock, then id,
+     * and hands its answer to the crumb as `category.id`.
      *
      * @return list<\App\Models\Category>
      */
     public static function categoryCandidates(Product $product): array
     {
-        if (! $product->relationLoaded('categories') || $product->categories->isEmpty()) {
-            return [];
-        }
-
-        $cats = $product->categories->sortBy(fn ($cat) => (int) $cat->id)->values();
-        $parents = $cats->pluck('parent_id')->filter()->map(fn ($id) => (int) $id)->flip();
-        $leaves = $cats->reject(fn ($cat) => isset($parents[(int) $cat->id]));
-        $leaves = $leaves->isEmpty() ? $cats : $leaves; // a cycle: every one is a parent
-        $deepest = (int) $leaves->max(fn ($cat) => (int) $cat->getAttribute('depth'));
-
-        return $leaves->filter(fn ($cat) => (int) $cat->getAttribute('depth') === $deepest)->values()->all();
+        return \App\Support\ProductCategory::candidates($product);
     }
 
     /**
@@ -247,23 +379,27 @@ class ProductRecs
     }
 
     /**
-     * The three lists, already disjoint: cached ids + one IN when warm, one
-     * union when cold. Either way the brands are loaded once, for every card.
+     * The lists, already disjoint: cached ids + one IN when warm, one union
+     * when cold — the shopper's viewed ids ride in the same statement either
+     * way, and are never cached. Then the brands, once, for every card.
+     *
+     *   b  the brand, final                c  the category, without b
+     *   m  his picks, in his order         f  best sellers, without b and c
+     *   v  the viewed ids, in cookie order (per request)
      *
      * @param  array<string, mixed>  $c
-     * @param  array{mode: string, ids: list<int>}  $picks
-     * @return array<string, list<Product>>
-     */
-    /**
+     * @param  array{b: int, c: int, r: int, f: int}  $n
      * @param  list<int>  $categoryIds  categoryCandidates(), by id
-     * @return array{0: array<string, list<Product>>, 1: ?int} the lists, and the category block 2 is about
+     * @param  array{mode: string, ids: list<int>}|null  $picks  null when no block carries them
+     * @param  list<int>  $viewed
+     * @return array{0: array<string, list<Product>>, 1: ?int} the lists, and the category chosen
      */
-    private function lists(Product $product, array $c, int $n1, array $categoryIds, int $n2, int $n3, array $picks): array
+    private function lists(Product $product, array $c, array $n, array $categoryIds, ?array $picks, bool $needBest, array $viewed): array
     {
         $fp = md5(json_encode([
             // The cached shape; a new one is never read as an old one.
-            4,
-            $n1, $n2, $n3, $c['hide_oos'], $picks, $product->brand_id, $categoryIds,
+            5,
+            $n, $c['hide_oos'], $picks, $needBest, $product->brand_id, $categoryIds,
         ]) ?: '');
 
         $key = self::CACHE_PREFIX.(int) $product->id;
@@ -272,39 +408,44 @@ class ProductRecs
         if (is_array($hit) && ($hit['fp'] ?? null) === $fp && is_array($hit['ids'] ?? null)) {
             $cat = isset($hit['cat']) && in_array((int) $hit['cat'], $categoryIds, true) ? (int) $hit['cat'] : null;
 
-            return [$this->hydrate($hit['ids'], (bool) $c['hide_oos']), $cat];
+            return [$this->hydrate($hit['ids'], $viewed, (bool) $c['hide_oos']), $cat];
         }
 
         $parts = [];
 
-        if ($n1 > 0) {
-            $parts[] = $this->bestFirst($this->part($product, $c, self::BRAND, $n1))
+        if ($n['b'] > 0) {
+            $parts[] = $this->bestFirst($this->part($product, $c, self::BRAND, $n['b']))
                 ->where('products.brand_id', (int) $product->brand_id);
         }
 
-        if ($n2 > 0) {
-            // In stock first, as the grid in this position always ordered. One
-            // SELECT per equally-deep candidate (almost always one), each
-            // enough to fill the grid after block 1 has taken its share.
+        if ($n['c'] > 0) {
+            // In stock first, then best sellers. One SELECT per equally-deep
+            // candidate (almost always one), each enough to fill the category
+            // after the brand has taken its share.
             foreach ($categoryIds as $id) {
-                $parts[] = $this->bestFirst($this->inStockFirst($this->part($product, $c, self::CATEGORY.$id, $n1 + $n2 + self::SLACK)))
+                $parts[] = $this->bestFirst($this->inStockFirst($this->part($product, $c, self::CATEGORY.$id, $n['b'] + $n['c'] + self::SLACK)))
                     ->whereExists(fn ($q) => $q->selectRaw('1')->from('category_product as rpc')
                         ->whereColumn('rpc.product_id', 'products.id')
                         ->where('rpc.category_id', $id));
             }
         }
 
-        if ($n3 > 0) {
-            if ($picks['ids'] !== [] && $picks['mode'] !== AlsoLikePicks::MODE_RULE) {
-                $parts[] = $this->part($product, $c, self::MANUAL, count($picks['ids']))->whereIn('products.id', $picks['ids']);
-            }
+        if ($picks !== null) {
+            $parts[] = $this->part($product, $c, self::MANUAL, count($picks['ids']))->whereIn('products.id', $picks['ids']);
+        }
 
-            if ($picks['mode'] !== AlsoLikePicks::MODE_ONLY || $picks['ids'] === []) {
-                // Enough to fill block 3 after blocks 1 and 2 have taken theirs —
-                // on a best seller's own page that can be the shop's top two dozen.
-                $parts[] = $this->inStockFirst($this->part($product, $c, self::BEST, $n1 + $n2 + $n3 + 2 * self::SLACK))
-                    ->orderByDesc('products.total_sales')->orderByDesc('products.id');
-            }
+        if ($needBest) {
+            // Enough to fill every block that tops up after the brand and the
+            // category have taken theirs — on a best seller's own page that
+            // can be the shop's top few dozen.
+            $parts[] = $this->inStockFirst($this->part($product, $c, self::BEST, min(120, $n['b'] + $n['c'] + $n['r'] + $n['f'] + 2 * self::SLACK)))
+                ->orderByDesc('products.total_sales')->orderByDesc('products.id');
+        }
+
+        $cacheable = $parts !== [];
+
+        if ($viewed !== []) {
+            $parts[] = $this->part($product, $c, self::VIEWED, count($viewed))->whereIn('products.id', $viewed);
         }
 
         if ($parts === []) {
@@ -329,43 +470,48 @@ class ProductRecs
 
         // Equally deep candidates: the one with more in-stock products besides
         // this one, then the lowest id. Counted from the rows this statement
-        // already read, each capped at what the grid could use — two that can
+        // already read, each capped at what the block could use — two that can
         // both fill it are a tie, and the lowest id is the stable answer.
         $categoryId = null;
-        $best = -1;
+        $most = -1;
 
         foreach ($categoryIds as $id) {
             $stocked = count(array_filter($pools[self::CATEGORY.$id] ?? [], fn ($m) => $m->stock_status !== 'outofstock'));
 
-            if ($stocked > $best) {
-                [$categoryId, $best] = [$id, $stocked];
+            if ($stocked > $most) {
+                [$categoryId, $most] = [$id, $stocked];
             }
         }
 
         // Disjoint, in fill order, each with room for the per-visit exclusions.
         $skip = [(int) $product->id => true];
-        $lists = [self::BRAND => self::take($pools[self::BRAND] ?? [], $skip, $n1)];
+        $lists = [self::BRAND => self::take($pools[self::BRAND] ?? [], $skip, $n['b'])];
         $skip += self::idsOf($lists[self::BRAND]);
-        $lists[self::CATEGORY] = self::take($categoryId === null ? [] : ($pools[self::CATEGORY.$categoryId] ?? []), $skip, $n2 > 0 ? $n2 + self::SLACK : 0);
+        $lists[self::CATEGORY] = self::take($categoryId === null ? [] : ($pools[self::CATEGORY.$categoryId] ?? []), $skip, $n['c'] > 0 ? $n['c'] + self::SLACK : 0);
         $skip += self::idsOf($lists[self::CATEGORY]);
-        $lead = self::inOrder(self::byId($pools[self::MANUAL] ?? []), $picks['ids']);
-        $lists[self::BEST] = self::take(array_merge($lead, $pools[self::BEST] ?? []), $skip, $n3 > 0 ? $n3 + self::SLACK : 0);
+        $lists[self::MANUAL] = $picks === null ? [] : self::take(self::inOrder(self::byId($pools[self::MANUAL] ?? []), $picks['ids']), $skip, AlsoLikePicks::MAX);
+        $lists[self::BEST] = $needBest ? self::take($pools[self::BEST] ?? [], $skip, $n['r'] + $n['f'] + self::SLACK + count($picks['ids'] ?? [])) : [];
 
-        Cache::put($key, ['fp' => $fp, 'cat' => $categoryId, 'ids' => array_map(fn ($list) => array_map(fn ($m) => (int) $m->id, $list), $lists)], self::TTL);
+        if ($cacheable) {
+            Cache::put($key, ['fp' => $fp, 'cat' => $categoryId, 'ids' => array_map(fn ($list) => array_map(fn ($m) => (int) $m->id, $list), $lists)], self::TTL);
+        }
+
+        $lists[self::VIEWED] = self::inOrder(self::byId($pools[self::VIEWED] ?? []), $viewed);
 
         return [$lists, $categoryId];
     }
 
     /**
-     * The warm path: every cached id in ONE statement, visibility and stock
-     * re-applied, then the brands.
+     * The warm path: every cached id and every viewed id in ONE statement,
+     * visibility and stock re-applied, then the brands.
      *
      * @param  array<string, list<int>>  $cached
+     * @param  list<int>  $viewed
      * @return array<string, list<Product>>
      */
-    private function hydrate(array $cached, bool $hideOos): array
+    private function hydrate(array $cached, array $viewed, bool $hideOos): array
     {
-        $all = [];
+        $all = $viewed;
 
         foreach ($cached as $list) {
             foreach ((array) $list as $id) {
@@ -398,6 +544,8 @@ class ProductRecs
         foreach ($cached as $src => $list) {
             $lists[(string) $src] = self::inOrder($byId, array_map('intval', (array) $list));
         }
+
+        $lists[self::VIEWED] = self::inOrder($byId, $viewed);
 
         return $lists;
     }

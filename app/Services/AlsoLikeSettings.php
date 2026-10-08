@@ -9,12 +9,13 @@ use App\Support\Locale;
 /**
  * Appearance → Product page → You may also like.                 (Lane PS)
  *
- * ▲ SINCE LANE RP2 THIS TAB DRIVES THREE BLOCKS: 1 more from the brand, 2 more
- * from the breadcrumb's category, 3 "You may also like" = the shop's best
- * sellers, with no product twice (App\Services\ProductRecs). The history
- * below is how the carousel began; its mixing rules (`rule`, `mix`, `fill`)
- * and Lane RP's tabs, routine and recently-viewed blocks are retired, and a
- * value still saved under one of those keys is never read.
+ * ▲ SINCE LANE BC THIS TAB DRIVES THE FOOT OF THE PAGE: brand and category
+ * (two tabs by default, or two blocks), an optional best-seller block, and
+ * Continue shopping, with no product twice (App\Services\ProductRecs). See
+ * SCHEMA's head. The history below is how the carousel began; its mixing
+ * rules (`rule`, `mix`, `fill`), "Complete your routine" and 2.60.428's
+ * `enabled` / `first` are retired, and a value still saved under one of those
+ * keys is never read.
  *
  * The owner, 2 October:
  *
@@ -68,60 +69,106 @@ class AlsoLikeSettings
     /** key => [type, label, default, help, options] */
     public const SCHEMA = [
         /*
-         * ── ▲ THREE BLOCKS: BRAND, CATEGORY, BEST SELLERS. (Lane RP2) ─────────
+         * ── ▲ TABS, THEN CONTINUE SHOPPING. (Lane BC, the owner's third plan) ──
          *
-         * The owner changed the plan Lane RP shipped (2.60.428): "first block
-         * will be brand … 2nd block will be category … 3rd block will be You
-         * may also like but the products will be picked as best sellers … no
-         * any repeat product". He asked for it, so it ships on (CLAUDE.md, 30
-         * September). The two tabs, the listing-page hint, "Complete your
-         * routine", "Continue shopping" and the old mixing rules are gone, and
-         * so are their controls; a value saved for one of them is simply never
-         * read again (RecsBlocksTest pins that the page still draws).
+         * "keep also the tab, more from anua, and more from toner, both tabs.
+         *  and remove the second block complete your routine. keep such things
+         *  by default rest will be off, and also give option to disabl the tabs
+         *  and show the brand, and then the category block, but by default keep
+         *  the tabs on, turn off the 2nd block and third will be continue
+         *  shoping which we have already."
+         *
+         *   1  Brand and category — ONE block with two tabs (2.60.428's), or,
+         *      with `pair` = blocks, a brand block then a category block (Lane
+         *      RP2's). The category is the product's most specific one.
+         *   2  Best sellers — Lane RP2's best-seller block. OFF by default.
+         *   3  Continue shopping — the shopper's recently viewed, then best
+         *      sellers (2.60.428's).
+         *
+         * "Complete your routine" is gone for good. He asked for all of this,
+         * so it ships on (CLAUDE.md, 30 September). No product twice across
+         * every block on the page (App\Services\ProductRecs).
+         *
+         * Keys that 2.60.428 shipped keep their meaning where they still mean
+         * the same thing — `title` / `eyebrow` are the tab block's heading,
+         * `count` its standard number, `recent_*` continue shopping — and a
+         * key whose meaning changed was given a NEW name rather than reused, so
+         * a value he saved for the old meaning cannot switch the new thing:
+         * `enabled` (2.60.428's block 1 switch, possibly saved "on") is never
+         * read, and the best-seller block is `best_on`; 2.60.428's `first`
+         * ("brand" when there is no hint) is never read, and the opening tab is
+         * `tab_first`.
          */
-        'brand_on' => ['bool', 'Block 1 · Show “More from {brand}”', true,
-            'A carousel of more products from this product’s brand, best sellers first. Not drawn for a product with no brand, or a brand with nothing else to show.'],
+        'pair' => ['select', 'Brand and category · Show as', 'tabs',
+            'Tabs: one block, “More from {brand}” | “More {category}”, both lists on the page for Google. Two separate blocks: the brand block, then the category block. Either way no product is in both.',
+            ['tabs' => 'Tabs — one block, brand | category', 'blocks' => 'Two separate blocks — brand, then category']],
 
-        'brand_title' => ['text', 'Block 1 · Heading', '',
-            'Leave empty for the standard heading, “More from” and the brand’s name.'],
+        'tab_first' => ['select', 'Tabs · Tab that opens first', 'auto',
+            'Where the shopper came from: a brand page opens the brand tab, a category page the category tab, anything else (search, Google, the homepage) the brand tab.',
+            ['auto' => 'Where the shopper came from', 'brand' => 'Always the brand', 'category' => 'Always the category']],
 
-        'brand_title_ar' => ['text', 'Block 1 · Heading — Arabic', '',
-            'Leave empty for the standard Arabic heading.'],
+        'title' => ['text', 'Tabs · Heading', '',
+            'Leave empty for the standard heading, “You may also like”.'],
 
-        'cat_on' => ['bool', 'Block 2 · Show “More {category}”', true,
-            'A grid of more products from this product’s most specific category — Toners, not Skincare above it — in stock first, then best sellers. Never repeats a product from block 1.'],
+        'title_ar' => ['text', 'Tabs · Heading — Arabic', '',
+            'Leave empty for the standard Arabic heading, قد يعجبك أيضًا. Your English heading is never shown on the Arabic page.'],
 
-        'cat_title' => ['text', 'Block 2 · Heading', '',
-            'Leave empty for the standard heading, “More” and the category’s name.'],
+        'eyebrow' => ['text', 'Tabs · Small line above the heading', '',
+            'Leave empty for the standard line, “More like this”.'],
 
-        'cat_title_ar' => ['text', 'Block 2 · Heading — Arabic', '',
-            'Leave empty for the standard Arabic heading.'],
-
-        'enabled' => ['bool', 'Block 3 · Show “You may also like”', true,
-            'A carousel of the shop’s best sellers, in stock first, that are not already in blocks 1 and 2. A product’s own picks (Catalog → Products → edit → You may also like) come first. Per-device visibility of all three blocks is the “You may also like” row on the Sections tab.'],
+        'eyebrow_ar' => ['text', 'Tabs · Small line — Arabic', '',
+            'Leave empty for the standard Arabic line.'],
 
         /*
-         * Block 3's STANDARD count — the number "You may also like" has had
-         * since Lane PS, and a value he saved for it is kept. Not drawn on the
-         * tab any more: the per-device counts below are the control, and
-         * "Standard" there means this number for block 3, 12 for block 1 and
-         * 10 for block 2.
+         * The tab block's STANDARD number: 2.60.428's "how many" for block 1,
+         * so a value he saved for it is kept. Not drawn on the tab; the
+         * per-device counts below are the control, and "Standard" there
+         * means this number for the tabs.
          */
-        'count' => ['range', 'Block 3 · Standard number of products', 12,
+        'count' => ['range', 'Tabs · Standard number of products', 12,
             'Used when the number is left on “Standard”.',
             ['min' => 4, 'max' => 24, 'step' => 1, 'unit' => '']],
 
-        'title' => ['text', 'Block 3 · Heading', '',
-            'Leave empty for the standard heading, “You may also like”.'],
+        'brand_on' => ['bool', 'Brand · Show “More from {brand}”', true,
+            'More products from this product’s brand, best sellers first — the first tab, or the brand block. Not drawn for a product with no brand, or a brand with nothing else to show.'],
 
-        'title_ar' => ['text', 'Block 3 · Heading — Arabic', '',
-            'Leave empty for the standard Arabic heading, قد يعجبك أيضًا. Your English heading is never shown on the Arabic page.'],
+        'brand_title' => ['text', 'Brand · Heading', '',
+            'The tab’s name, or the block’s heading. Leave empty for “More from” and the brand’s name.'],
 
-        'eyebrow' => ['text', 'Block 3 · Small line above the heading', '',
-            'Leave empty for the standard line, “Best sellers”.'],
+        'brand_title_ar' => ['text', 'Brand · Heading — Arabic', '',
+            'Leave empty for the standard Arabic heading.'],
 
-        'eyebrow_ar' => ['text', 'Block 3 · Small line — Arabic', '',
-            'Leave empty for the standard Arabic line.'],
+        'cat_on' => ['bool', 'Category · Show “More {category}”', true,
+            'More products from this product’s most specific category — Toners, not Skincare above it — in stock first, then best sellers: the second tab, or the category block. Never repeats a product from the brand.'],
+
+        'cat_title' => ['text', 'Category · Heading', '',
+            'The tab’s name, or the block’s heading. Leave empty for “More” and the category’s name.'],
+
+        'cat_title_ar' => ['text', 'Category · Heading — Arabic', '',
+            'Leave empty for the standard Arabic heading.'],
+
+        'recent_on' => ['bool', 'Continue shopping · Show “Continue shopping”', true,
+            'What this shopper looked at recently, then the shop’s best sellers. A first-time visitor and Google see best sellers. A product’s own picks (Catalog → Products → edit → You may also like) come after the recently viewed, unless the best-sellers block is on.'],
+
+        'recent_title' => ['text', 'Continue shopping · Heading', '',
+            'Leave empty for the standard heading, “Continue shopping”.'],
+
+        'recent_title_ar' => ['text', 'Continue shopping · Heading — Arabic', '',
+            'Leave empty for the standard Arabic heading.'],
+
+        /* Continue shopping's STANDARD number: 2.60.428's, kept like `count`. */
+        'recent_count' => ['range', 'Continue shopping · Standard number of products', 10,
+            'Used when the number is left on “Standard”.',
+            ['min' => 4, 'max' => 24, 'step' => 1, 'unit' => '']],
+
+        'best_on' => ['bool', 'Best sellers · Show the best-sellers block', false,
+            'A block of the shop’s best sellers, in stock first, that are not already shown above. While it is on, a product’s own picks lead it instead of Continue shopping.'],
+
+        'best_title' => ['text', 'Best sellers · Heading', '',
+            'Leave empty for the standard heading, “Best sellers”.'],
+
+        'best_title_ar' => ['text', 'Best sellers · Heading — Arabic', '',
+            'Leave empty for the standard Arabic heading.'],
 
         /*
          * ── SLIDER OR GRID, AND HOW MANY — PER DEVICE (Lane RP2) ─────────────
@@ -131,42 +178,51 @@ class AlsoLikeSettings
          * desktop and mobile seperately with global options."
          *
          * A GLOBAL pair per device, and the same four controls on each block,
-         * each "Same as global" by default. Global "Standard" is the look the
-         * page already has — brand slider, category grid, you-may-also-like
-         * slider; 12, 10 and 12 — so applying this moves nothing until he
-         * picks something. Laptop is from 901 px, phone below: the product
-         * page's own breakpoint (kbb-product.css, the carousels' arrows).
-         * Resolved by AlsoLikeSettings::layoutFor().
+         * each "Same as global" by default. Global "Standard" is each block's
+         * own look (STANDARD below): sliders, the separate category block a
+         * grid; 12, the category block and continue shopping 10. Laptop is
+         * from 901 px, phone below: the product page's own breakpoint
+         * (kbb-product.css, the carousels' arrows). Resolved by layoutFor().
          */
         'g_layout_d' => ['select', 'Global · Laptop · slider or grid', 'std',
-            'For all three blocks on a laptop, unless a block says otherwise below.', self::GLOBAL_LAYOUTS],
+            'For every block on a laptop, unless a block says otherwise below.', self::GLOBAL_LAYOUTS],
         'g_count_d' => ['select', 'Global · Laptop · number of products', 'std',
-            'For all three blocks on a laptop (4–24), unless a block says otherwise below.', self::GLOBAL_COUNTS],
+            'For every block on a laptop (4–24), unless a block says otherwise below.', self::GLOBAL_COUNTS],
         'g_layout_m' => ['select', 'Global · Phone · slider or grid', 'std',
-            'For all three blocks on a phone, unless a block says otherwise below.', self::GLOBAL_LAYOUTS],
+            'For every block on a phone, unless a block says otherwise below.', self::GLOBAL_LAYOUTS],
         'g_count_m' => ['select', 'Global · Phone · number of products', 'std',
-            'For all three blocks on a phone (4–24), unless a block says otherwise below.', self::GLOBAL_COUNTS],
+            'For every block on a phone (4–24), unless a block says otherwise below.', self::GLOBAL_COUNTS],
 
-        'brand_layout_d' => ['select', 'Block 1 · Laptop · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
-        'brand_count_d' => ['select', 'Block 1 · Laptop · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
-        'brand_layout_m' => ['select', 'Block 1 · Phone · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
-        'brand_count_m' => ['select', 'Block 1 · Phone · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
+        'tabs_layout_d' => ['select', 'Tabs · Laptop · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
+        'tabs_count_d' => ['select', 'Tabs · Laptop · number of products', 'global', '4–24, in each tab.', self::BLOCK_COUNTS],
+        'tabs_layout_m' => ['select', 'Tabs · Phone · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
+        'tabs_count_m' => ['select', 'Tabs · Phone · number of products', 'global', '4–24, in each tab.', self::BLOCK_COUNTS],
 
-        'cat_layout_d' => ['select', 'Block 2 · Laptop · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
-        'cat_count_d' => ['select', 'Block 2 · Laptop · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
-        'cat_layout_m' => ['select', 'Block 2 · Phone · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
-        'cat_count_m' => ['select', 'Block 2 · Phone · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
+        'brand_layout_d' => ['select', 'Brand block · Laptop · slider or grid', 'global', 'Two separate blocks only.', self::BLOCK_LAYOUTS],
+        'brand_count_d' => ['select', 'Brand block · Laptop · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
+        'brand_layout_m' => ['select', 'Brand block · Phone · slider or grid', 'global', 'Two separate blocks only.', self::BLOCK_LAYOUTS],
+        'brand_count_m' => ['select', 'Brand block · Phone · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
 
-        'also_layout_d' => ['select', 'Block 3 · Laptop · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
-        'also_count_d' => ['select', 'Block 3 · Laptop · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
-        'also_layout_m' => ['select', 'Block 3 · Phone · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
-        'also_count_m' => ['select', 'Block 3 · Phone · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
+        'cat_layout_d' => ['select', 'Category block · Laptop · slider or grid', 'global', 'Two separate blocks only.', self::BLOCK_LAYOUTS],
+        'cat_count_d' => ['select', 'Category block · Laptop · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
+        'cat_layout_m' => ['select', 'Category block · Phone · slider or grid', 'global', 'Two separate blocks only.', self::BLOCK_LAYOUTS],
+        'cat_count_m' => ['select', 'Category block · Phone · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
+
+        'recent_layout_d' => ['select', 'Continue shopping · Laptop · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
+        'recent_count_d' => ['select', 'Continue shopping · Laptop · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
+        'recent_layout_m' => ['select', 'Continue shopping · Phone · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
+        'recent_count_m' => ['select', 'Continue shopping · Phone · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
+
+        'best_layout_d' => ['select', 'Best sellers · Laptop · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
+        'best_count_d' => ['select', 'Best sellers · Laptop · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
+        'best_layout_m' => ['select', 'Best sellers · Phone · slider or grid', 'global', '', self::BLOCK_LAYOUTS],
+        'best_count_m' => ['select', 'Best sellers · Phone · number of products', 'global', '4–24.', self::BLOCK_COUNTS],
 
         'hide_oos' => ['bool', 'Hide out-of-stock products', true,
-            'Leave sold-out products out of all three blocks. Hidden and unpublished products are never shown.'],
+            'Leave sold-out products out of every block. Hidden and unpublished products are never shown.'],
 
         'per_desktop' => ['select', 'Carousels · cards in view on a laptop', '5',
-            'Blocks 1 and 3: how many cards fit across before the arrows take over.',
+            'Every slider: how many cards fit across before the arrows take over.',
             ['3' => '3', '4' => '4', '5' => '5', '6' => '6']],
 
         /*
@@ -176,7 +232,7 @@ class AlsoLikeSettings
          * `--ymal-m` the calc() already divides by; nothing measures anything.
          */
         'per_phone' => ['select', 'Carousels · cards in view on a phone', '2.3',
-            'Blocks 1 and 3: how many cards fit across a phone before a swipe. A part-visible card at the screen edge tells a thumb there is more to swipe.',
+            'Every slider: how many cards fit across a phone before a swipe. A part-visible card at the screen edge tells a thumb there is more to swipe.',
             ['1' => '1', '1.5' => '1½ — the next one peeks', '2' => '2', '2.2' => '2.2 — a sliver of the next one',
                 '2.3' => '2.3 — the next one peeks (recommended)', '2.5' => '2½ — the next one peeks', '3' => '3']],
 
@@ -184,37 +240,45 @@ class AlsoLikeSettings
             'Off: the peeking card shows there is more, and a swipe moves it. On: the two round arrows show on a phone too, beside the heading.'],
 
         'autoplay' => ['bool', 'Carousels · move on their own', false,
-            'Advance the carousels every few seconds. They stop while the shopper hovers, touches or tabs into them, and never run for a visitor who has asked for reduced motion.'],
+            'Advance the brand and category sliders every few seconds (Continue shopping never moves on its own). They stop while the shopper hovers, touches or tabs into them, and never run for a visitor who has asked for reduced motion.'],
 
         'autoplay_s' => ['range', 'Carousels · seconds between moves', 5,
             'Only used when “Move on their own” is on.',
             ['min' => 3, 'max' => 15, 'step' => 1, 'unit' => 's']],
 
-        'order' => ['select', 'Order of the three blocks', '123',
-            'Top to bottom, at the foot of the product page.',
+        'order' => ['select', 'Order of the blocks', '123',
+            'Top to bottom, at the foot of the product page. A block that is off is skipped.',
             self::ORDERS],
     ];
 
-    /** The six orders of the three blocks. A select stores one of these or the default. */
+    /**
+     * The six orders. 1 and 3 are the digits 2.60.428 gave the tabs and
+     * Continue shopping, so an order he saved then still means the same two
+     * blocks; 2 was "Complete your routine" and is the best-seller block now.
+     */
     public const ORDERS = [
-        '123' => '1 Brand · 2 Category · 3 You may also like',
-        '132' => '1 Brand · 3 You may also like · 2 Category',
-        '213' => '2 Category · 1 Brand · 3 You may also like',
-        '231' => '2 Category · 3 You may also like · 1 Brand',
-        '312' => '3 You may also like · 1 Brand · 2 Category',
-        '321' => '3 You may also like · 2 Category · 1 Brand',
+        '123' => 'Brand & category · Best sellers · Continue shopping',
+        '132' => 'Brand & category · Continue shopping · Best sellers',
+        '213' => 'Best sellers · Brand & category · Continue shopping',
+        '231' => 'Best sellers · Continue shopping · Brand & category',
+        '312' => 'Continue shopping · Brand & category · Best sellers',
+        '321' => 'Continue shopping · Best sellers · Brand & category',
     ];
 
-    /** Each block's own look when the global layout is "Standard". */
+    /**
+     * Each block's own look when the global setting is "Standard". A null
+     * count is read from the setting named by `key` (one he may have saved).
+     */
     public const STANDARD = [
+        'tabs' => ['layout' => 'slider', 'count' => null, 'key' => 'count'],
         'brand' => ['layout' => 'slider', 'count' => 12],
         'cat' => ['layout' => 'grid', 'count' => 10],
-        // Block 3's count is the `count` setting (12 unless he saved another).
-        'also' => ['layout' => 'slider', 'count' => null],
+        'recent' => ['layout' => 'slider', 'count' => null, 'key' => 'recent_count'],
+        'best' => ['layout' => 'slider', 'count' => 12],
     ];
 
     public const GLOBAL_LAYOUTS = [
-        'std' => 'Standard — slider · grid · slider',
+        'std' => 'Standard — sliders; the category block a grid',
         'slider' => 'Slider',
         'grid' => 'Grid',
     ];
@@ -230,7 +294,7 @@ class AlsoLikeSettings
     public const COUNT_MAX = 24;
 
     public const GLOBAL_COUNTS = [
-        'std' => 'Standard — 12 · 10 · 12',
+        'std' => 'Standard — 12; category block and continue shopping 10',
         '4' => '4', '5' => '5', '6' => '6', '7' => '7', '8' => '8', '9' => '9', '10' => '10', '11' => '11',
         '12' => '12', '13' => '13', '14' => '14', '15' => '15', '16' => '16', '17' => '17', '18' => '18',
         '19' => '19', '20' => '20', '21' => '21', '22' => '22', '23' => '23', '24' => '24',
@@ -246,11 +310,14 @@ class AlsoLikeSettings
     /** Same shape as ProductLayout::TABS — the console draws it the same way. */
     public const TABS = [
         'ymal' => ['You may also like',
-            'The three blocks at the foot of every product page: 1 more from the brand, 2 more from the category, 3 “You may also like” (best sellers). No product is shown twice.',
-            ['g_layout_d', 'g_count_d', 'g_layout_m', 'g_count_m',
-                'brand_on', 'brand_layout_d', 'brand_count_d', 'brand_layout_m', 'brand_count_m', 'brand_title', 'brand_title_ar',
-                'cat_on', 'cat_layout_d', 'cat_count_d', 'cat_layout_m', 'cat_count_m', 'cat_title', 'cat_title_ar',
-                'enabled', 'also_layout_d', 'also_count_d', 'also_layout_m', 'also_count_m', 'title', 'title_ar', 'eyebrow', 'eyebrow_ar',
+            'The blocks at the foot of every product page: brand and category (two tabs, or two blocks), the best sellers (off unless you switch it on), and Continue shopping. No product is shown twice.',
+            ['pair', 'tab_first', 'brand_on', 'cat_on', 'recent_on', 'best_on',
+                'g_layout_d', 'g_count_d', 'g_layout_m', 'g_count_m',
+                'tabs_layout_d', 'tabs_count_d', 'tabs_layout_m', 'tabs_count_m', 'title', 'title_ar', 'eyebrow', 'eyebrow_ar',
+                'brand_layout_d', 'brand_count_d', 'brand_layout_m', 'brand_count_m', 'brand_title', 'brand_title_ar',
+                'cat_layout_d', 'cat_count_d', 'cat_layout_m', 'cat_count_m', 'cat_title', 'cat_title_ar',
+                'recent_layout_d', 'recent_count_d', 'recent_layout_m', 'recent_count_m', 'recent_title', 'recent_title_ar',
+                'best_layout_d', 'best_count_d', 'best_layout_m', 'best_count_m', 'best_title', 'best_title_ar',
                 'hide_oos', 'per_desktop', 'per_phone', 'arrows_m', 'autoplay', 'autoplay_s', 'order']],
     ];
 
@@ -322,7 +389,7 @@ class AlsoLikeSettings
     public static function layoutFor(array $c, string $block): array
     {
         $std = self::STANDARD[$block];
-        $stdCount = $std['count'] ?? max(self::COUNT_MIN, min(self::COUNT_MAX, (int) ($c['count'] ?? 12)));
+        $stdCount = $std['count'] ?? max(self::COUNT_MIN, min(self::COUNT_MAX, (int) ($c[$std['key']] ?? self::SCHEMA[$std['key']][2])));
         $out = [];
 
         foreach (['d', 'm'] as $dev) {
@@ -346,7 +413,7 @@ class AlsoLikeSettings
     }
 
     /**
-     * The heading and the eyebrow for the language this page is in.
+     * The tab block's heading and eyebrow for the language this page is in.
      *
      * The interface string when the box is empty, so the translation system
      * keeps answering for a shop that never typed anything.
@@ -363,9 +430,8 @@ class AlsoLikeSettings
 
         return [
             'title' => $title !== '' ? $title : (string) __('store.product.related_heading'),
-            // Block 3 is the shop's best sellers now (Lane RP2), so its small
-            // line says so — an interface string the Arabic side already has.
-            'eyebrow' => $eyebrow !== '' ? $eyebrow : (string) __('store.product.recs_best_eyebrow'),
+            // The tab block's small line, as 2.60.428 printed it.
+            'eyebrow' => $eyebrow !== '' ? $eyebrow : (string) __('store.product.recs_more_eyebrow'),
         ];
     }
 

@@ -27,7 +27,68 @@
  *    right-to-left page "next" is a NEGATIVE scrollBy.
  */
 export function initAlsoLike() {
+    document.querySelectorAll('[data-rp-tabs]').forEach(setUpTabs);
     document.querySelectorAll('[data-ymal]').forEach(setUp);
+}
+
+/* ── (Lane RP; Lane BC) THE TWO TABS: "More from {brand}" | "More {category}" ──
+   Both panels are in the HTML; the first is open. When the block carries
+   `data-rp-hint` (Tab that opens first = where the shopper came from) and the
+   shopper clicked through from a brand or category listing, shop.js left that
+   listing's path in sessionStorage (HINT) and the panel listing that path in
+   its `data-rp-paths` opens instead. The stored value is only ever COMPARED with
+   strings the server printed — never written into the page — and anything
+   that is not a short absolute path is ignored. No request, no geometry read;
+   the block is at the foot of the page, so the swap happens before it is in
+   view. */
+const HINT = 'kbb_rp_from';
+
+function setUpTabs(root) {
+    const tabs = Array.prototype.slice.call(root.querySelectorAll('[data-rp-tab]'));
+    if (tabs.length < 2) return;
+
+    const panelOf = (tab) => document.getElementById(tab.getAttribute('aria-controls') || '');
+
+    const show = (tab, focus) => {
+        tabs.forEach((t) => {
+            const on = t === tab;
+            const panel = panelOf(t);
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+            t.tabIndex = on ? 0 : -1;
+            if (panel) panel.hidden = !on;
+        });
+        if (focus) tab.focus();
+    };
+
+    tabs.forEach((tab, i) => {
+        tab.addEventListener('click', () => show(tab, false));
+        // Arrow keys move along the tab list (WAI-ARIA tabs), mirrored in RTL.
+        tab.addEventListener('keydown', (e) => {
+            if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+            const rtl = getComputedStyle(root).direction === 'rtl';
+            const step = (e.key === 'ArrowRight') !== rtl ? 1 : -1;
+            e.preventDefault();
+            show(tabs[(i + step + tabs.length) % tabs.length], true);
+        });
+    });
+
+    if (!root.hasAttribute('data-rp-hint')) return;
+
+    let from = null;
+    try {
+        from = window.sessionStorage.getItem(HINT);
+    } catch {
+        from = null;
+    }
+
+    if (typeof from !== 'string' || from.length > 300 || from.charAt(0) !== '/') return;
+
+    const hit = tabs.find((t) => {
+        const panel = panelOf(t);
+        return panel && (panel.getAttribute('data-rp-paths') || '').split(' ').indexOf(from) !== -1;
+    });
+
+    if (hit) show(hit, false);
 }
 
 function setUp(root) {
