@@ -17,10 +17,13 @@
     Placed first in the page so its error listener is up before any other
     script runs.
 --}}
-<div id="kbbDiag" style="position:fixed;top:0;left:0;right:0;z-index:2147483646;max-height:46vh;overflow:auto;background:rgba(18,18,20,.9);color:#fff;font:11px/1.4 ui-monospace,Menlo,Consolas,monospace;padding:6px 8px;direction:ltr;text-align:left"><b>kbbdiag</b> <button type="button" id="kbbDiagFold" style="font:inherit;margin-left:8px">fold</button><pre id="kbbDiagLog" style="margin:4px 0 0;white-space:pre-wrap;word-break:break-word"></pre></div>
+<div id="kbbDiag" dir="ltr" style="position:fixed;top:0;inset-inline:0;z-index:2147483646;max-height:46vh;overflow:auto;background:rgba(18,18,20,.9);color:#fff;font:11px/1.4 ui-monospace,Menlo,Consolas,monospace;padding:6px 8px;text-align:start"><b id="kbbDiagT"></b><button type="button" id="kbbDiagFold" style="font:inherit;margin-inline-start:8px"></button><pre id="kbbDiagLog" style="margin:4px 0 0;white-space:pre-wrap;word-break:break-word"></pre></div>
 <script>
 (function () {
   var out = document.getElementById('kbbDiagLog'), lines = [], t0 = Date.now();
+  /* Written here rather than in the markup: an engineer's panel, not shop copy. */
+  document.getElementById('kbbDiagT').textContent = 'kbbdiag';
+  document.getElementById('kbbDiagFold').textContent = 'fold';
   function w(src, msg) {
     lines.push('+' + (Date.now() - t0) + 'ms ' + src + ': ' + msg);
     if (lines.length > 80) { lines.shift(); }

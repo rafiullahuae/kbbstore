@@ -86,7 +86,7 @@ it('hands every wrong box to the one shared answer, in all three handlers', func
         ->and($overlay)->not->toContain('FORM.reportValidity()')
         ->and($card)->toContain("if (!placeCheck(pressed, 'card')) return;")
         ->and($card)->toContain('pay(event.target);')
-        ->and($js)->toContain("if (!window.KBB.placeCheck(event.target, 'checkout.js')) return;");
+        ->and($js)->toContain("if (check && !check(event.target, 'checkout.js')) return;");
 });
 
 it('says "the card form is still loading" beside the button, not only in the card box', function () {

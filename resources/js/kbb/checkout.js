@@ -94,15 +94,9 @@ export function initCheckout() {
         if (event.target.closest('[data-place]')) {
             event.preventDefault();
             window.kbbDiag?.('checkout.js', 'saw the press');
-
-            /* (Lane PO hotfix) The overlay's one answer for a wrong box --
-               words beside the button and under the field, never the
-               browser's bubble alone, which Firefox for Android does not draw.
-               The path below stays for a page whose overlay is missing. */
-            if (typeof window.KBB?.placeCheck === 'function') {
-                if (!window.KBB.placeCheck(event.target, 'checkout.js')) return;
-            }
-
+            // The overlay's one answer, then the fallback (Lane PO hotfix).
+            const check = window.KBB?.placeCheck;
+            if (check && !check(event.target, 'checkout.js')) return;
             const invalid = form.querySelector(':invalid');
 
             if (invalid) {
