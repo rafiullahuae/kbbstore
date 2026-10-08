@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.424
+**Homepage opens with one render-blocking stylesheet instead of two.** Apply after
+.423. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "do as per your recommendations, but make sure there's no compromise on the site speed or pages shifting speed" | When the homepage is the first page of a visit, the small grid stylesheet is printed inside the page instead of being a second blocking request (phone first paint 1.36 s -> 1.27 s; 49 -> 44 KiB render-blocking). Clicks inside the shop and pre-loading download exactly the same files as before; pixels identical; no setting. Splitting the main stylesheet was measured slower and not shipped |
+
+Files: see the package's update.json.
+
 ## 2.60.423
 **Platform -> Domain switch: the kbeautybliss.com move as buttons.** Apply after
 .422. Runs its migration. Hard refresh the admin.
