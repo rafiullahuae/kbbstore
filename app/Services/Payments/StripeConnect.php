@@ -1229,20 +1229,14 @@ final class StripeConnect
         $publishable = StripeKeys::get($config, $mode, 'publishable_key');
         $signing = StripeKeys::get($config, $mode, 'webhook_signing_secret');
 
-        $warnings = [];
-
-        foreach (['secret key' => $secret, 'publishable key' => $publishable] as $label => $value) {
-            $keyMode = StripeKeys::keyMode($value);
-
-            if ($keyMode !== null && $keyMode !== $mode) {
-                $warnings[] = sprintf('The %s in force is a %s key but Mode is %s.', $label, strtoupper($keyMode), $mode === 'live' ? 'Live' : 'Sandbox / test');
-            }
-        }
-
-        if ($mode === 'live' && StripeKeys::legacyMode($config) === 'test') {
-            $warnings[] = 'Mode is Live but the Live key boxes hold TEST keys, so card payments are switched off until you paste your sk_live_ and pk_live_ keys. '
-                . 'Saving the Stripe tab once moves the test keys into the Test boxes.';
-        }
+        /*
+         * Every key problem for this Mode in plain words (Lane ST): an empty
+         * box, a pk_ in a secret box, an sk_ in a publishable box, a key of
+         * the other mode. StripeKeys::get() reads each of those as no key, so
+         * the checkout stops offering cards; this is where the owner is told
+         * which box to fix.
+         */
+        $warnings = StripeKeys::problems($config, $mode);
 
         $url = $this->webhookUrl();
         $tail = $this->credentials->get(self::GATEWAY, 'webhook_secret');
@@ -1292,6 +1286,40 @@ final class StripeConnect
             'description_example' => $gateway instanceof Gateways\StripeGateway ? $gateway->paymentDescription($sample) : null,
             'capture_later' => $gateway instanceof Gateways\StripeGateway && $gateway->captureLater(),
             'receipt_email' => $this->credentials->get(self::GATEWAY, 'receipt_email') === '1',
+            'last_failure' => $this->lastFailure(),
+        ];
+    }
+
+    /**
+     * The last card payment Stripe would not open, while no payment has opened
+     * since. (Lane ST.) Its message is StripeGateway::failureReason(): the
+     * cause in plain words, with Stripe's own sentence. Null once a payment
+     * opens again, so a fixed problem does not stay on the screen.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function lastFailure(): ?array
+    {
+        $failed = PaymentLog::latest(self::GATEWAY, 'intent.failed');
+
+        if ($failed === null) {
+            return null;
+        }
+
+        $opened = PaymentLog::latest(self::GATEWAY, 'intent.created');
+
+        if ($opened !== null && $opened['id'] > $failed['id']) {
+            return null;
+        }
+
+        return [
+            'at' => $failed['at'],
+            'mode' => $failed['mode'],
+            'message' => $failed['message'],
+            'order' => $failed['context']['order'] ?? null,
+            'http_status' => $failed['context']['http_status'] ?? null,
+            'error_code' => $failed['context']['error_code'] ?? null,
+            'error_message' => $failed['context']['error_message'] ?? null,
         ];
     }
 
