@@ -207,6 +207,9 @@ final class StaticMemos
              * "Order shipped" leaves the next test's shipped email reordered.
              */
             \App\Services\Mail\Kit\KitSections::class => static fn () => \App\Services\Mail\Kit\KitSections::forget(),
+            // Lane EM: the per-minute cap on new email copies counts across
+            // renders; a test that made copies must not spend the next one's.
+            \App\Services\Mail\Kit\MailImage::class => static fn () => \App\Services\Mail\Kit\MailImage::resetBudget(),
             \App\Services\Mail\Kit\EmailWording::class => static fn () => \App\Services\Mail\Kit\EmailWording::forget(),
             // (Lane CT) The compiled block list: a per-process FILE as well as a
             // memo, so a block written by one test would otherwise be enforced
