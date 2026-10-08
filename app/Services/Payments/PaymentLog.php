@@ -55,7 +55,7 @@ final class PaymentLog
     /** The context keys that may be written, and nothing else. */
     public const ALLOWED = [
         'order', 'reference', 'payment_intent', 'refund', 'event_id', 'event_type',
-        'endpoint', 'http_status', 'error_code', 'decline_code', 'error_type', 'error_message',
+        'endpoint', 'http_status', 'error_code', 'decline_code', 'error_type', 'error_param', 'error_message',
         'status', 'outcome', 'detail', 'amount', 'currency', 'capture_method', 'action',
         'webhook_endpoint', 'events', 'removed', 'mode', 'reason',
     ];

@@ -167,6 +167,22 @@ class Customer extends Authenticatable
         $this->forceFill(['stripe_customer_ids' => $map])->save();
     }
 
+    /**
+     * Forget this mode's id, but only if it is still $id -- Stripe said the
+     * account has no such customer (Lane ST). Leaves the other mode alone.
+     */
+    public function forgetStripeCustomerId(string $mode, string $id): void
+    {
+        if ($this->stripeCustomerId($mode) !== $id) {
+            return;
+        }
+
+        $map = is_array($this->stripe_customer_ids) ? $this->stripe_customer_ids : [];
+        unset($map[$mode]);
+
+        $this->forceFill(['stripe_customer_ids' => $map === [] ? null : $map])->save();
+    }
+
     public function displayName(): string
     {
         return $this->name ?: trim($this->first_name . ' ' . $this->last_name) ?: $this->email;

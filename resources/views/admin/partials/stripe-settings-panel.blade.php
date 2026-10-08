@@ -169,6 +169,14 @@
 
     (s.warnings || []).forEach(function(text){ html += '<p class="srs-warn">' + esc(text) + '</p>'; });
 
+    /* Lane ST: why the last card payment did not open, until one opens again.
+       The message is written in plain words by StripeGateway::failureReason(). */
+    if (s.last_failure) {
+      var f = s.last_failure;
+      html += '<p class="srs-warn" id="srs-last-failure"><b>Last card payment that could not start</b> (' + esc(when(f.at)) +
+        (f.order ? ', order ' + esc(f.order) : '') + '): ' + esc(f.message) + '</p>';
+    }
+
     html += '<div class="srs-box"><h4>What customers and Stripe will see</h4><dl class="srs-dl">' +
       '<dt>Card statement (example, order 10234)</dt><dd><code>' + esc(st.card_example || '') + '</code></dd>' +
       '<dt>Payment description in Stripe</dt><dd><code>' + esc(s.description_example || '') + '</code></dd>' +

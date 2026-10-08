@@ -86,6 +86,15 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
      */
     private const CAPTURE_DAYS = 7;
 
+    /**
+     * Stripe's smallest charge in AED, the only currency an order is placed
+     * in (CheckoutController writes 'AED'): "The minimum amount is $0.50 US
+     * or equivalent in charge currency", which Stripe's minimums table puts
+     * at AED 2.00. Below it POST /v1/payment_intents is amount_too_small, so
+     * the card is not offered. (Lane ST.)
+     */
+    public const MIN_FILS = 200;
+
     public function id(): string
     {
         return 'stripe';
@@ -129,7 +138,12 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
     public function availableFor(int $totalFils, ?string $country = null): bool
     {
         return parent::availableFor($totalFils, $country)
-            && $this->key('publishable_key') !== '';
+            && $totalFils >= self::MIN_FILS
+            && $this->key('publishable_key') !== ''
+            // The secret key too (Lane ST): StripeKeys::get() now reads '' for
+            // a key of the wrong kind or mode, and a card form whose Place
+            // order can only fail is worse than no card form.
+            && $this->key('secret_key') !== '';
     }
 
     /**
@@ -319,6 +333,23 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
                 }
 
                 $keyMode = StripeKeys::keyMode($value);
+                $kind = StripeKeys::keyKind($value);
+
+                /*
+                 * THE RIGHT KIND OF KEY, not only the right mode. (Lane ST.)
+                 * pk_test_ in "Test secret key" is test-mode and passed the
+                 * check below, then every Place order sent it as the Bearer
+                 * and Stripe answered 401 — "We could not reach our card
+                 * processor." The reverse would print a secret key into the
+                 * checkout page.
+                 */
+                if ($kind !== null && $kind !== $name) {
+                    $errors[StripeKeys::slot($name, $mode)] = $name === 'secret_key'
+                        ? sprintf('That is your publishable key (pk_…) in the %s secret key box. The secret key is the other one on Stripe → Developers → API keys and starts sk_%s_.', $mode === 'test' ? 'Test' : 'Live', $mode)
+                        : sprintf('That is a SECRET key in the %s publishable key box, and this box is shown to shoppers. Paste the key that starts pk_%s_ here.', $mode === 'test' ? 'Test' : 'Live', $mode);
+
+                    continue;
+                }
 
                 if ($keyMode === null) {
                     $errors[StripeKeys::slot($name, $mode)] = sprintf(
@@ -556,7 +587,7 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              */
             'statement_descriptor' => ['text', 'Statement descriptor (full)', '5–22 characters, Latin letters, at least one letter, none of < > \\ \' " *. Stripe refuses a per-payment full descriptor on CARD payments, so card statements show your Stripe account\'s own descriptor (Stripe Dashboard → Settings → Business → Public details). This is the name you want there; the Stripe status block below compares it with what your account actually says. Left empty, your shop name is used.', 'settings', 'optional'],
             'statement_descriptor_suffix' => ['text', 'Statement descriptor suffix (cards)', 'Added after your Stripe account\'s shortened descriptor on card statements, as "PREFIX* SUFFIX" (22 characters in all). Empty sends no suffix, which is how this shop has always worked.', 'settings', 'optional'],
-            'statement_descriptor_order_number' => ['bool', 'Add the order number to card statements', 'Puts the order number in the suffix, e.g. "KBB* 10234", so a customer can match the line on their statement to their order. Off by default.', 'settings'],
+            'statement_descriptor_order_number' => ['bool', 'Add the order number to card statements', 'Puts the order number in the suffix, e.g. "KBB* ORDER 10234" (Stripe needs a letter in the suffix, so a bare number gets ORDER, or ORD where space is short, in front), so a customer can match the line on their statement to their order. Off by default.', 'settings'],
             'order_reference_prefix' => ['text', 'Order number prefix shown in Stripe', 'e.g. KBB- makes order 10234 read "KBB-10234" in the payment description and in Stripe\'s metadata (order_reference). The shop\'s own order numbers do not change, and Stripe keeps the plain number too (order_number), which is what this shop matches payments on.', 'settings', 'optional'],
             'payment_description' => ['text', 'Payment description', 'What Stripe shows beside each payment. Placeholders: {number} (with the prefix above), {order_number} (plain), {shop}. Empty means "Order {number}", as before.', 'settings', 'optional'],
             'capture_later' => ['bool', 'Authorise only, capture later', 'On: a card is only AUTHORISED at checkout and the money is taken when you press Capture on the order (Store → Orders → the order → Payment). Stripe releases an authorisation that is not captured within 7 days. Off (default): the money is taken at checkout, as before.', 'settings'],
@@ -789,6 +820,12 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
          * unique index on `refunds.idempotency_key` plays for refunds, for the
          * one case an index cannot see.
          */
+        $idempotencyKey = 'kbb-intent-' . $this->reference($order) . ($stripeCustomer === null ? '' : '-save')
+            // A settings change between a lost response and its retry is a
+            // different request; Stripe would 400 a reused key. Only present
+            // when a setting is in use, so the default key is unchanged.
+            . ($extra === [] ? '' : '-' . substr(sha1((string) json_encode($extra)), 0, 10));
+
         $attempt = $this->stripeAttempt(
             'POST',
             '/v1/payment_intents',
@@ -802,22 +839,89 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
              * that cannot take a card for a shopper who merely changed their
              * mind about a tick.
              */
-            'kbb-intent-' . $this->reference($order) . ($stripeCustomer === null ? '' : '-save')
-                // A settings change between a lost response and its retry is a
-                // different request; Stripe would 400 a reused key. Only present
-                // when a setting is in use, so the default key is unchanged.
-                . ($extra === [] ? '' : '-' . substr(sha1((string) json_encode($extra)), 0, 10)),
+            $idempotencyKey,
         );
+
+        /*
+         * ▲ TWO REFUSALS THE SHOP CAN ANSWER ITSELF, ONCE EACH. (Lane ST.)
+         *
+         * Both ended in "We could not reach our card processor." on every
+         * attempt, whatever card the shopper typed, because neither is about
+         * the card:
+         *
+         *   - idempotency_error. An Idempotency-Key is scoped to the Stripe
+         *     ACCOUNT, not to this install. Another copy of this shop on the
+         *     same keys (the old staging box) whose order 10234 was another
+         *     basket has already spent 'kbb-intent-10234', and Stripe refuses
+         *     it with other parameters for 24 hours. The request never ran,
+         *     so a key that also carries this payload's hash is safe.
+         *   - resource_missing on `customer`. The cus_ stored for this mode
+         *     was made with another Stripe account's keys (a new sandbox, keys
+         *     re-entered). It is dropped and made again in THIS account; if
+         *     that fails the payment goes ahead without saving the card,
+         *     which is stripeCustomerFor()'s rule already.
+         *
+         * Exactly one retry, always under a fresh key, so a retry cannot meet
+         * the first attempt's stored answer. Anything else is the owner's to
+         * fix and is explained in the payment log below.
+         *
+         * MUTATION: delete this block and StripeCardProcessorTest's "retries
+         * once with a fresh key" and "recreates a saved Stripe customer" both
+         * answer 422 with the owner's sentence.
+         */
+        if (! $attempt['ok'] && $attempt['status'] === 400) {
+            $retry = null;
+
+            if ($attempt['error_type'] === 'idempotency_error') {
+                $retry = $payload;
+            } elseif ($stripeCustomer !== null && $attempt['error'] === 'resource_missing' && $attempt['error_param'] === 'customer') {
+                $stripeCustomer = $this->stripeCustomerFor($order, stale: $stripeCustomer);
+                $retry = $payload;
+                unset($retry['customer'], $retry['setup_future_usage']);
+
+                if ($stripeCustomer !== null) {
+                    $retry['customer'] = $stripeCustomer;
+                    $retry['setup_future_usage'] = 'on_session';
+                }
+            }
+
+            if ($retry !== null) {
+                $this->journal('info', 'intent.retry', $attempt['error_type'] === 'idempotency_error'
+                    ? 'Stripe had seen this order\'s payment reference before with other details (another copy of this shop on the same Stripe keys?). Tried again with a fresh reference.'
+                    : 'The saved Stripe customer does not exist in this Stripe account. Made a new one and tried again.', [
+                    'order' => $this->reference($order),
+                    'error_code' => $attempt['error'],
+                ]);
+
+                $payload = $retry;
+                $attempt = $this->stripeAttempt(
+                    'POST',
+                    '/v1/payment_intents',
+                    $payload,
+                    $idempotencyKey . '-r' . substr(sha1((string) json_encode($payload)), 0, 16),
+                );
+            }
+        }
 
         $result = $attempt['body'];
         $secret = $result['client_secret'] ?? null;
         $intentId = $result['id'] ?? null;
 
         if (! is_string($secret) || $secret === '' || ! is_string($intentId) || $intentId === '') {
-            $this->journal('error', 'intent.failed', 'Stripe did not open a payment for this order.', [
+            /*
+             * THE OWNER READS THE CAUSE HERE, in plain words, and the shopper
+             * does not. (Lane ST.) The message is the "What happened" column
+             * of Store → Payments → Stripe → Payment log, and the line the
+             * Stripe status block shows until a payment opens again; Stripe's
+             * own sentence and code ride in the details.
+             */
+            $this->journal('error', 'intent.failed', $this->failureReason($attempt), [
                 'order' => $this->reference($order),
                 'http_status' => $attempt['status'],
                 'error_code' => $attempt['error'],
+                'error_type' => $attempt['error_type'],
+                'error_param' => $attempt['error_param'],
+                'error_message' => $attempt['error_message'],
             ]);
 
             return PaymentStart::failed('We could not reach our card processor. Please try another payment method.');
@@ -863,7 +967,7 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
      * openIntent() goes on to take an ordinary payment. Nothing here can refuse
      * a sale.
      */
-    private function stripeCustomerFor(Order $order): ?string
+    private function stripeCustomerFor(Order $order, ?string $stale = null): ?string
     {
         $customer = $order->customer;
 
@@ -872,6 +976,17 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         }
 
         $mode = $this->credentials->live($this->id()) ? 'live' : 'test';
+
+        /*
+         * $stale: Stripe has just said this account has no such customer
+         * (Lane ST — see openIntent()). It is forgotten first, so a failure
+         * to make the new one below does not leave the dead id to be sent on
+         * every later order.
+         */
+        if ($stale !== null) {
+            $customer->forgetStripeCustomerId($mode, $stale);
+        }
+
         $stored = $customer->stripeCustomerId($mode);
 
         if ($stored !== null) {
@@ -893,7 +1008,10 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             // never arrived returns the customer that was made rather than
             // making a second one. Stripe expires these after 24 hours, which
             // is only reachable at all if the write below failed as well.
-            'kbb-customer-' . $mode . '-' . $customer->id,
+            // Replacing a stale id takes its own key: within those 24 hours
+            // the plain one would hand back the very customer that is gone.
+            'kbb-customer-' . $mode . '-' . $customer->id
+                . ($stale === null ? '' : '-' . substr(sha1($stale), 0, 10)),
         );
 
         $id = is_array($attempt['body']) ? ($attempt['body']['id'] ?? null) : null;
@@ -1074,7 +1192,8 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
                 'endpoint' => strtoupper($method) . ' ' . $this->logPath($path),
             ]);
 
-            return ['ok' => false, 'status' => null, 'body' => null, 'error' => 'transport_error'];
+            return ['ok' => false, 'status' => null, 'body' => null, 'error' => 'transport_error',
+                'error_type' => null, 'error_param' => null, 'error_message' => null];
         }
 
         $this->log('api call', $path, $response->status());
@@ -1088,8 +1207,10 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
          * a successful call is not logged here at all — the caller says what
          * it meant, once.
          */
+        $error = ! $response->successful() && is_array($decoded['error'] ?? null) ? $decoded['error'] : [];
+        $said = static fn (string $field): ?string => is_string($error[$field] ?? null) ? $error[$field] : null;
+
         if (! $response->successful()) {
-            $error = is_array($decoded['error'] ?? null) ? $decoded['error'] : [];
 
             $this->journal('error', 'api.error', 'Stripe answered ' . $response->status() . ' to ' . strtoupper($method) . ' ' . $this->logPath($path) . '.', [
                 'endpoint' => strtoupper($method) . ' ' . $this->logPath($path),
@@ -1097,6 +1218,7 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
                 'error_code' => is_string($error['code'] ?? null) ? $error['code'] : null,
                 'decline_code' => is_string($error['decline_code'] ?? null) ? $error['decline_code'] : null,
                 'error_type' => is_string($error['type'] ?? null) ? $error['type'] : null,
+                'error_param' => $said('param'),
                 'error_message' => is_string($error['message'] ?? null) ? $error['message'] : null,
             ]);
         }
@@ -1106,7 +1228,45 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             'status' => $response->status(),
             'body' => $response->successful() ? $decoded : null,
             'error' => $response->successful() ? null : $this->errorCode($decoded),
+            // Kept for the caller's decision and its plain-words log line
+            // (Lane ST); never shown to a shopper.
+            'error_type' => $said('type'),
+            'error_param' => $said('param'),
+            'error_message' => $said('message'),
         ];
+    }
+
+    /**
+     * Why Stripe did not open the payment, in words the owner can act on.
+     * (Lane ST.) Written to the payment log, never shown to a shopper. Each
+     * branch is a cause this checkout has actually met or can meet; the last
+     * one quotes Stripe, so nothing is ever reduced to "it failed".
+     *
+     * @param  array{status: int|null, error: string|null, error_type: string|null, error_param: string|null, error_message: string|null}  $attempt
+     */
+    private function failureReason(array $attempt): string
+    {
+        $status = $attempt['status'];
+        $code = (string) ($attempt['error'] ?? '');
+        $type = (string) ($attempt['error_type'] ?? '');
+        $param = (string) ($attempt['error_param'] ?? '');
+        $said = trim((string) ($attempt['error_message'] ?? ''));
+        $quote = $said !== '' ? ' Stripe said: "' . mb_substr($said, 0, 110) . '"' : '';
+
+        $reason = match (true) {
+            $status === null => 'This server could not reach Stripe at all (no answer within ' . self::TIMEOUT . ' seconds, or the connection was refused). Not a settings problem: ask the host to allow outgoing HTTPS to api.stripe.com.',
+            $status === 401 => 'Stripe refused the secret key for this Mode. Copy it again from Stripe → Developers → API keys and paste it into Store → Payments → Stripe → ' . ($this->mode() === 'test' ? 'Test' : 'Live') . ' secret key.' . $quote,
+            $status === 403 => 'The secret key is not allowed to create payments. A restricted key (rk_) needs Write access to PaymentIntents; or use the standard sk_ key.' . $quote,
+            $param === 'statement_descriptor_suffix' => 'Stripe refused the card statement text. Change "Statement descriptor suffix" or switch off "Add the order number to card statements".' . $quote,
+            $code === 'amount_too_small' => 'The order total is below Stripe\'s minimum card payment (AED 2.00).',
+            $type === 'idempotency_error' => 'Stripe had seen this order\'s payment reference before with other details, and the retry was refused too.' . $quote,
+            $code === 'resource_missing' && $param === 'customer' => 'The saved Stripe customer does not exist in this Stripe account, and a new one could not be used.' . $quote,
+            $status === 429 => 'Stripe asked this shop to slow down (too many requests). It passes on its own.',
+            $status >= 500 => 'Stripe had a problem on its side (HTTP ' . $status . '). It usually passes within minutes; status.stripe.com says.',
+            default => 'Stripe refused to open the payment (HTTP ' . $status . ($code !== '' ? ', ' . $code : '') . ').' . $quote,
+        };
+
+        return mb_substr($reason, 0, 255);
     }
 
     /** The path without its query string, for the log. */

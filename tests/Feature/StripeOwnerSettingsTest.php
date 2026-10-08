@@ -491,7 +491,11 @@ it('keeps the order number whole when the suffix would overflow 22 characters', 
     // A 10-character prefix leaves 10 for the suffix: the owner's text gives
     // way, the number the customer matches on does not.
     expect(StripePaymentText::suffix('KBEAUTY SHOP', true, '1023456', 10))->toBe('KB 1023456')
-        ->and(StripePaymentText::suffix('', true, '10234', null))->toBe('10234')
+        // Lane ST: was '10234' -- digits only, which Stripe refuses ("If you
+        // use a prefix and a suffix, both require at least one letter") and
+        // the shopper read as "We could not reach our card processor."
+        ->and(StripePaymentText::suffix('', true, '10234', null))->toBe('ORD 10234')
+        ->and(StripePaymentText::suffix('', true, '10234', 3))->toBe('ORDER 10234')
         ->and(StripePaymentText::suffix('', false, '10234', null))->toBeNull()
         ->and(strlen('KBEAUTYBLS* ' . StripePaymentText::suffix('KBEAUTY SHOP', true, '1023456', 10)))->toBeLessThanOrEqual(22);
 });

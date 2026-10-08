@@ -173,7 +173,39 @@ final class StripePaymentText
             $suffix = rtrim(substr($text, 0, $room));
         }
 
+        if ($suffix !== '' && ! preg_match('/[A-Za-z]/', $suffix)) {
+            $suffix = self::lettered($suffix, $room);
+        }
+
         return $suffix !== '' ? $suffix : null;
+    }
+
+    /**
+     * A suffix with no letter in it, given one. (Lane ST.)
+     *
+     * Stripe's statement-descriptor rules: "If you use a prefix and a suffix,
+     * both require at least one letter." "Add the order number to card
+     * statements" with no suffix text sent the bare number -- "10234" -- and
+     * Stripe refused the PaymentIntent, which the shopper read as "We could
+     * not reach our card processor." The typed suffix was always held to the
+     * rule (suffixError()); the order-number path skipped it.
+     *
+     * The longest label that fits beside the WHOLE number wins; only when not
+     * even one letter fits is the number cut, from the left as above.
+     */
+    private static function lettered(string $digits, int $room): string
+    {
+        if ($room < 2) {
+            return '';
+        }
+
+        foreach (['ORDER ', 'ORD ', 'NO ', 'O'] as $label) {
+            if (strlen($label . $digits) <= $room) {
+                return $label . $digits;
+            }
+        }
+
+        return 'O' . substr($digits, -($room - 1));
     }
 
     /** The description Stripe shows beside the payment. */

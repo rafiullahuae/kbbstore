@@ -79,6 +79,108 @@ final class StripeKeys
     public static function get(array $config, ?string $mode, string $name): string
     {
         $mode = self::mode($mode);
+        $found = self::raw($config, $mode, $name);
+
+        /*
+         * ▲ A KEY THAT CANNOT DO THIS SLOT'S JOB IS NO KEY. (Lane ST.)
+         *
+         * The checkout boots Stripe.js with the publishable key and opens the
+         * payment with the secret key, and both must be of this Mode. A pk_ in
+         * a secret slot sent "Authorization: Bearer pk_…", which Stripe refuses
+         * with 401 — card fields drawn, every Place order answered "We could
+         * not reach our card processor." An sk_ in a publishable slot would be
+         * printed into every checkout page. A pk_live_ beside an sk_test_
+         * boots Stripe.js on the live account while the server opens test
+         * payments. Reading '' instead takes the card off the till
+         * (availableFor()) and problems() tells the admin which box is wrong.
+         *
+         * Only a key whose own prefix says it is the wrong kind or the wrong
+         * mode is refused; a value with no recognisable prefix is passed
+         * through as before.
+         */
+        if ($found !== '' && in_array($name, ['publishable_key', 'secret_key'], true)) {
+            $kind = self::keyKind($found);
+            $keyMode = self::keyMode($found);
+
+            if (($kind !== null && $kind !== $name) || ($keyMode !== null && $keyMode !== $mode)) {
+                return '';
+            }
+        }
+
+        return $found;
+    }
+
+    /** 'publishable_key' for pk_, 'secret_key' for sk_ / rk_, else null. */
+    public static function keyKind(string $key): ?string
+    {
+        $key = trim($key);
+
+        if (str_starts_with($key, 'pk_')) {
+            return 'publishable_key';
+        }
+
+        if (str_starts_with($key, 'sk_') || str_starts_with($key, 'rk_')) {
+            return 'secret_key';
+        }
+
+        return null;
+    }
+
+    /**
+     * What is wrong with the keys for this Mode, in words the owner can act
+     * on, naming the box as the screen labels it. (Lane ST.) Pure: the Stripe
+     * status block reads it; nothing on a shop page does.
+     *
+     * @param  array<string, mixed>  $config
+     * @return list<string>
+     */
+    public static function problems(array $config, ?string $mode): array
+    {
+        $mode = self::mode($mode);
+        $box = static fn (string $name): string => ($mode === 'test' ? 'Test ' : 'Live ')
+            . ($name === 'secret_key' ? 'secret key' : 'publishable key');
+        $modeWord = $mode === 'test' ? 'Sandbox / test' : 'Live';
+
+        // The old single key set, holding TEST keys, read under Live: one
+        // sentence says all of it (it was StripeConnect::settingsStatus()'s).
+        if ($mode === 'live' && self::legacyMode($config) === 'test') {
+            return ['Mode is Live but the Live key boxes hold TEST keys, so card payments are switched off until you paste your sk_live_ and pk_live_ keys. '
+                . 'Saving the Stripe tab once moves the test keys into the Test boxes.'];
+        }
+
+        $out = [];
+
+        foreach (['secret_key', 'publishable_key'] as $name) {
+            $found = self::raw($config, $mode, $name);
+
+            if ($found === '') {
+                $out[] = sprintf('The %s box is empty, so card payments are switched off at the checkout. Paste the key from Stripe → Developers → API keys%s.', $box($name), $mode === 'test' ? ' (with Test mode on)' : '');
+
+                continue;
+            }
+
+            $kind = self::keyKind($found);
+            $keyMode = self::keyMode($found);
+
+            if ($kind !== null && $kind !== $name) {
+                $out[] = $name === 'secret_key'
+                    ? sprintf('The %s box holds a PUBLISHABLE key (it starts pk_). Stripe refuses to open a payment with it, so card payments are switched off. Paste the key that starts sk_%s_ instead.', $box($name), $mode)
+                    : sprintf('The %s box holds a SECRET key (it starts sk_ or rk_). It would be shown to every shopper, so card payments are switched off. Paste the key that starts pk_%s_ there, and roll the secret key in Stripe if this page was ever live.', $box($name), $mode);
+            } elseif ($keyMode !== null && $keyMode !== $mode) {
+                $out[] = sprintf('Your %s is a %s key but Mode is %s, so card payments are switched off. Either switch Mode to %s or paste the %s key.', $name === 'secret_key' ? 'secret key' : 'publishable key', strtoupper($keyMode), $modeWord, $keyMode === 'test' ? 'Sandbox / test' : 'Live', $mode === 'test' ? 'pk_test_ / sk_test_' : 'pk_live_ / sk_live_');
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * The value stored for this mode, before the kind/mode check in get().
+     *
+     * @param  array<string, mixed>  $config
+     */
+    private static function raw(array $config, string $mode, string $name): string
+    {
         $value = static fn (string $key): string => is_scalar($config[$key] ?? null) ? trim((string) $config[$key]) : '';
 
         if (! in_array($name, self::SLOTTED, true)) {
@@ -169,7 +271,12 @@ final class StripeKeys
         foreach (self::SLOTTED as $name) {
             $legacy = is_scalar($config[$name] ?? null) ? trim((string) $config[$name]) : '';
 
-            if ($legacy === '') {
+            /*
+             * A LIVE key beside the legacy test set stays where it is: it is
+             * in the right box already. Moving it into the Test box paired a
+             * pk_live_ with an sk_test_. (Lane ST.)
+             */
+            if ($legacy === '' || self::keyMode($legacy) === 'live') {
                 continue;
             }
 
