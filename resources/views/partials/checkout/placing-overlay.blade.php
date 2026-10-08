@@ -478,6 +478,9 @@
       },
       body: new FormData(FORM)
     };
+    /* Header only: a body _token is read first by Laravel and a reload can bring
+       back a stale one; window.KBB.csrf is this load's. */
+    init.body.delete('_token');
 
     if (window.AbortController) {
       aborter = new AbortController();
@@ -630,6 +633,14 @@
   window.addEventListener('pageshow', function (event) {
     if (event.persisted && busy) { down(); }
   });
+
+  /* Firefox restores a button's `disabled` across a reload (Chrome does not),
+     so a reload in the middle of a press brought back a Place order button
+     that never answered again. No Place order button is ever rendered
+     disabled by the server, so on a fresh load they are all live. */
+  function liven() { if (!busy) { buttons().forEach(function (b) { b.disabled = false; }); } }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', liven); } else { liven(); }
+  window.addEventListener('pageshow', function (event) { if (!event.persisted) { liven(); } });
 
   /* ------------------------------------------------------------------ the API */
 

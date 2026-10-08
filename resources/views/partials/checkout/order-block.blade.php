@@ -194,7 +194,7 @@
 
 @if ($withActions ?? true)
     @include('partials.checkout.legal-notice')
-    <button type="button" class="place" data-place="1">{{ __('store.checkout.place_order') }}</button>
+    <button type="button" class="place" data-place="1" autocomplete="off">{{ __('store.checkout.place_order') }}</button>
     {{-- "100% authentic" WAS A LITERAL HERE — Lane DR.
 
          The last sentence a shopper reads before pressing Place order, on the

@@ -372,7 +372,7 @@
          rather than one stuck across the bottom. --}}
     <div class="mpbar">
         <div><div class="ml">{{ __('store.checkout.total') }}</div><div class="mt js-total">{!! Money::format($totals['total']) !!}</div></div>
-        <button type="button" class="mb" data-place="1">{{ __('store.checkout.place_order') }}</button>
+        <button type="button" class="mb" data-place="1" autocomplete="off">{{ __('store.checkout.place_order') }}</button>
     </div>
     @if ($kbbFloat === 'smart')
     @push('scripts')

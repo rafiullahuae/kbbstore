@@ -256,6 +256,9 @@
     data.forEach(function (value, key) { out[key] = value; });
     out.payment_method = 'stripe';
     out.save_card = '';
+    /* A Firefox-restored body _token can be stale; the header carries this
+       load's (see checkout.blade.php). */
+    delete out._token;
     return out;
   }
 
