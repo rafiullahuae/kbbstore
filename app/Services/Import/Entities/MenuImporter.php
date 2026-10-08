@@ -106,7 +106,7 @@ final class MenuImporter extends EntityImporter
 
         $attributes = [
             'source_term_id' => $termId,
-            'name' => $name,
+            'name' => \App\Support\PlainText::decode($name), // plain text; slug from the export (Lane AMP)
         ];
 
         if ($menu === null) {

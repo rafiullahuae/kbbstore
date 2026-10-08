@@ -204,7 +204,10 @@ final class MenuItemImporter extends EntityImporter
             );
         }
 
-        $label = $this->fit($label, 60, 'label', $row, $report);
+        // Plain text, decoded BEFORE the 60-character fit so the limit counts the
+        // characters a shopper reads ("Toners &amp; Mists" is a category name as
+        // WordPress stores it). (Lane AMP)
+        $label = $this->fit((string) \App\Support\PlainText::decode($label), 60, 'label', $row, $report);
 
         $item = MenuItem::query()->where('source_post_id', $id)->first() ?? new MenuItem;
 

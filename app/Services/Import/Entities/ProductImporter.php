@@ -440,7 +440,10 @@ final class ProductImporter extends EntityImporter
         $attributes = [
             'wc_id' => $wcId,
             'slug' => $slug,
-            'name' => $name,
+            // Stored as the text a shopper reads -- WordPress hands post_title over
+            // HTML-encoded ("SKIN&amp;LAB"). The slug above was taken from what came,
+            // so no URL moves. See App\Support\PlainText. (Lane AMP)
+            'name' => \App\Support\PlainText::decode($name),
             'sku' => $row->text('sku'),
             'brand_id' => $brandId,
             'category_id' => $categoryIds[0] ?? null,

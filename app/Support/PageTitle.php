@@ -75,6 +75,11 @@ namespace App\Support;
  * advance, on a shared layout every lane renders through, and it is reported
  * rather than taken here.
  *
+ * ▲ TAKEN BY LANE AMP, on the owner's "fix it everywhere": the layout now reads
+ *   its title section as text, and store/page.blade.php hands it decoded()
+ *   rather than strip_tags() of the HTML column. Both halves are needed --
+ *   either alone still publishes `Terms &amp;amp; Conditions`.
+ *
  * WHAT IS FIXED HERE is the half that belongs to pages and moves nothing today:
  * `Store\PageController::show()` passed the RAW column as `title_token`, the
  * substitution for Yoast's `%%title%%`. So an owner who typed the shipped Yoast

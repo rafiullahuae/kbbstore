@@ -29,7 +29,16 @@ use App\Support\Url;
  */
 $kbbPath = request()->getPathInfo() ?: '/';
 $kbbIsHome = trim($kbbPath, '/') === '';
-$kbbRawTitle = trim(strip_tags($__env->yieldContent('title', '')));
+/*
+ * The title as TEXT (Lane AMP). `@section('title', $x)` runs $x through e()
+ * inside Blade, so the section holds HTML; App\Support\Seo escapes the title
+ * again when it prints <title> and og:title. Read raw, "SKIN&LAB" published as
+ * `SKIN&amp;amp;LAB` -- the brand page, the category page and every content
+ * page whose title has an "&" or an apostrophe. Tags off, references decoded
+ * once: text in, escaped exactly once on the way out. Pages that hand Seo
+ * their own $seoCtx['title'] (products, articles) never read this.
+ */
+$kbbRawTitle = trim(html_entity_decode(strip_tags($__env->yieldContent('title', '')), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 /*
  * Url::to() trims a trailing slash (UrlGenerator::format does), but every
  * storefront route is declared with one and every internal link carries one.

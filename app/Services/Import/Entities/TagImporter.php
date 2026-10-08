@@ -116,7 +116,7 @@ final class TagImporter extends EntityImporter
         $outcome = $context->apply($tag, [
             'source_term_id' => $termId,
             'slug' => $slug,
-            'name' => $name,
+            'name' => \App\Support\PlainText::decode($name), // plain text; slug from the export (Lane AMP)
         ]);
 
         $context->record($this->name(), $outcome);

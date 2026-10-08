@@ -1,5 +1,5 @@
 @extends('layouts.store')
-@php use App\Support\Url; $pageTitle = strip_tags($page->t('title')); @endphp
+@php use App\Support\Url; $pageTitle = \App\Support\PageTitle::decoded($page->t('title')); @endphp
 
 @section('title', __('store.page.page_title', ['title' => $pageTitle]))
 

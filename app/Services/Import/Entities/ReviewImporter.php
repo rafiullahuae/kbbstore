@@ -292,7 +292,7 @@ final class ReviewImporter extends EntityImporter
             'author_name' => mb_substr($author, 0, 255),
             'author_email' => mb_substr($this->email($row) ?? '', 0, 255),
             'rating' => $rating,
-            'title' => mb_substr(trim(strip_tags((string) $row->text('title', 'title', 'review_title', 'summary'))), 0, 255),
+            'title' => mb_substr(trim(\App\Support\PlainText::decode(strip_tags((string) $row->text('title', 'title', 'review_title', 'summary')))), 0, 255),
             'content' => $this->content($row),
             'status' => $status,
             'verified' => (bool) $row->bool(false, 'verified', 'verified_owner', 'verified_buyer', 'meta_verified'),
@@ -787,7 +787,8 @@ final class ReviewImporter extends EntityImporter
      */
     private function author(Row $row): string
     {
-        $author = trim(strip_tags((string) $row->text('author', 'author', 'author_name', 'comment_author', 'reviewer', 'reviewer_name')));
+        // comment_author is stored encoded by WordPress (_wp_specialchars); kept as plain text. (Lane AMP)
+        $author = trim((string) \App\Support\PlainText::decode(strip_tags((string) $row->text('author', 'author', 'author_name', 'comment_author', 'reviewer', 'reviewer_name'))));
 
         if ($author !== '') {
             return $author;
@@ -869,7 +870,8 @@ final class ReviewImporter extends EntityImporter
             );
         }
 
-        return $clean === '' ? null : $clean;
+        // Text, decoded once: comment_content arrives with "&amp;" and "&#8217;" in it. (Lane AMP)
+        return $clean === '' ? null : \App\Support\PlainText::decode($clean);
     }
 
     /**
@@ -956,7 +958,7 @@ final class ReviewImporter extends EntityImporter
 
     private function reply(Row $row): ?string
     {
-        $reply = trim(strip_tags((string) $row->text('reply', 'reply', 'response', 'admin_reply')));
+        $reply = trim((string) \App\Support\PlainText::decode(strip_tags((string) $row->text('reply', 'reply', 'response', 'admin_reply'))));
 
         return $reply === '' ? null : $reply;
     }

@@ -241,12 +241,13 @@ final class PostImporter extends EntityImporter
         $outcome = $context->apply($post, [
             'source_post_id' => $id,
             'slug' => $slug,
-            'title' => $title,
+            // Plain text; the address above was settled from the export's own title (Lane AMP).
+            'title' => \App\Support\PlainText::decode($title),
             'excerpt' => $this->cleanBodyReported($row->text('excerpt', 'post_excerpt'), 'excerpt', $row, $report),
             'body' => $body,
             'cover' => $row->text('image', 'cover', 'thumbnail', 'featured_image'),
             'tag' => $this->settleTag($row, $report),
-            'author' => $row->text('author_name', 'author') ?? 'K-Beauty Bliss',
+            'author' => \App\Support\PlainText::decode($row->text('author_name', 'author')) ?? 'K-Beauty Bliss',
             'status' => in_array($status, self::PUBLISHED, true) ? 'published' : 'draft',
             'published_at' => $this->publishedAt($row, $context),
         ]);

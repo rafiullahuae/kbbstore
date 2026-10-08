@@ -6,6 +6,7 @@ namespace App\Services\Reviews;
 
 use App\Services\Import\DateParser;
 use App\Services\Import\RowRejected;
+use App\Support\PlainText;
 use App\Support\ProductRating;
 use App\Support\ReviewStatus;
 use Illuminate\Support\Facades\Cache;
@@ -380,7 +381,8 @@ final class ReviewCsvImport
             $this->note($line, $productNote);
         }
 
-        $author = trim(strip_tags($this->cell($raw, 'author')));
+        // Plain text, entities decoded once: a WordPress or review-app export carries "&amp;". (Lane AMP)
+        $author = trim(PlainText::decode(strip_tags($this->cell($raw, 'author'))));
 
         if ($author === '') {
             // Not a rejection. WooCommerce stores an empty comment_author for a
@@ -416,9 +418,9 @@ final class ReviewCsvImport
                 'author_name' => mb_substr($author, 0, 255),
                 'author_email' => mb_substr($email, 0, 255),
                 'rating' => $rating,
-                'title' => mb_substr(trim(strip_tags($this->cell($raw, 'title'))), 0, 255),
-                'content' => trim(strip_tags($this->cell($raw, 'content'))),
-                'reply' => trim(strip_tags($this->cell($raw, 'reply'))) ?: null,
+                'title' => mb_substr(trim(PlainText::decode(strip_tags($this->cell($raw, 'title')))), 0, 255),
+                'content' => trim(PlainText::decode(strip_tags($this->cell($raw, 'content')))),
+                'reply' => trim(PlainText::decode(strip_tags($this->cell($raw, 'reply')))) ?: null,
                 'status' => $this->status($this->cell($raw, 'status')),
                 'verified' => $this->truthy($this->cell($raw, 'verified')),
                 'helpful' => $helpful,

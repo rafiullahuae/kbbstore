@@ -234,7 +234,11 @@ final class YoastSeo
                 continue;
             }
 
-            $out[$key] = $value;
+            // The title and description are text a search result prints, and
+            // they arrive with "&amp;" in them like every other WordPress
+            // title; App\Support\Seo escapes them once on the way out. The
+            // canonical and og image are URLs and are left as they came. (Lane AMP)
+            $out[$key] = $key === 'title' || $key === 'desc' ? (string) PlainText::decode($value) : $value;
         }
 
         return $out;

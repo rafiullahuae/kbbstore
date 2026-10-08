@@ -1,0 +1,124 @@
+{
+  "product-390": {
+    "title": "SKIN&LAB - Vitamin C Brightening Serum · K-Beauty Bliss | KBB",
+    "ogTitle": "SKIN&LAB - Vitamin C Brightening Serum",
+    "h1": "SKIN&LAB - Vitamin C Brightening Serum",
+    "crumbs": [],
+    "cardTexts": [
+      "SKIN 1004",
+      "SKIN&LAB",
+      "SKIN&LAB - Vitamin C Brightening Serum\n                    AED 79",
+      "SKIN&LAB – Vitamin C Mask “Glow”",
+      "SKIN&LAB - Barrierderm Intensive Cream 50ml",
+      "SKIN 1004"
+    ],
+    "ldHasAmpEntity": false,
+    "visibleAmpEntity": false,
+    "scrollWidth": 390,
+    "status": 200,
+    "htmlDoubleEscaped": 0,
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  "product-1280": {
+    "title": "SKIN&LAB - Vitamin C Brightening Serum · K-Beauty Bliss | KBB",
+    "ogTitle": "SKIN&LAB - Vitamin C Brightening Serum",
+    "h1": "SKIN&LAB - Vitamin C Brightening Serum",
+    "crumbs": [],
+    "cardTexts": [
+      "SKIN 1004",
+      "SKIN&LAB",
+      "SKIN&LAB - Vitamin C Brightening Serum\n                    AED 79",
+      "SKIN&LAB – Vitamin C Mask “Glow”",
+      "SKIN&LAB - Barrierderm Intensive Cream 50ml",
+      "SKIN 1004"
+    ],
+    "ldHasAmpEntity": false,
+    "visibleAmpEntity": false,
+    "scrollWidth": 1280,
+    "status": 200,
+    "htmlDoubleEscaped": 0,
+    "errors": []
+  },
+  "brand-390": {
+    "title": "SKIN&LAB | KBB",
+    "ogTitle": "SKIN&LAB | KBB",
+    "h1": "SKIN&LAB",
+    "crumbs": [
+      "Home › Brands › SKIN&LAB"
+    ],
+    "cardTexts": [
+      "SKIN 1004",
+      "SKIN&LAB - Barrierderm Intensive Cream 50ml",
+      "SKIN&LAB - Vitamin C Brightening Serum",
+      "SKIN&LAB – Vitamin C Mask “Glow”",
+      "SKIN 1004"
+    ],
+    "ldHasAmpEntity": false,
+    "visibleAmpEntity": false,
+    "scrollWidth": 390,
+    "status": 200,
+    "htmlDoubleEscaped": 0,
+    "errors": []
+  },
+  "brand-1280": {
+    "title": "SKIN&LAB | KBB",
+    "ogTitle": "SKIN&LAB | KBB",
+    "h1": "SKIN&LAB",
+    "crumbs": [
+      "Home › Brands › SKIN&LAB"
+    ],
+    "cardTexts": [
+      "SKIN 1004",
+      "SKIN&LAB - Barrierderm Intensive Cream 50ml",
+      "SKIN&LAB - Vitamin C Brightening Serum",
+      "SKIN&LAB – Vitamin C Mask “Glow”",
+      "SKIN 1004"
+    ],
+    "ldHasAmpEntity": false,
+    "visibleAmpEntity": false,
+    "scrollWidth": 1280,
+    "status": 200,
+    "htmlDoubleEscaped": 0,
+    "errors": []
+  },
+  "category-390": {
+    "title": "Serums & Ampoules · K-Beauty Bliss | KBB",
+    "ogTitle": "Serums & Ampoules · K-Beauty Bliss | KBB",
+    "h1": "Serums & Ampoules",
+    "crumbs": [],
+    "cardTexts": [
+      "SKIN 1004",
+      "SKIN&LAB - Barrierderm Intensive Cream 50ml",
+      "SKIN&LAB - Vitamin C Brightening Serum",
+      "SKIN&LAB – Vitamin C Mask “Glow”",
+      "SKIN 1004"
+    ],
+    "ldHasAmpEntity": false,
+    "visibleAmpEntity": false,
+    "scrollWidth": 390,
+    "status": 200,
+    "htmlDoubleEscaped": 0,
+    "errors": []
+  },
+  "category-1280": {
+    "title": "Serums & Ampoules · K-Beauty Bliss | KBB",
+    "ogTitle": "Serums & Ampoules · K-Beauty Bliss | KBB",
+    "h1": "Serums & Ampoules",
+    "crumbs": [],
+    "cardTexts": [
+      "SKIN 1004",
+      "SKIN&LAB - Barrierderm Intensive Cream 50ml",
+      "SKIN&LAB - Vitamin C Brightening Serum",
+      "SKIN&LAB – Vitamin C Mask “Glow”",
+      "SKIN 1004"
+    ],
+    "ldHasAmpEntity": false,
+    "visibleAmpEntity": false,
+    "scrollWidth": 1280,
+    "status": 200,
+    "htmlDoubleEscaped": 0,
+    "errors": []
+  }
+}

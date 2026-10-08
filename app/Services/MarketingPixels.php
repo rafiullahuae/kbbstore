@@ -156,7 +156,11 @@ class MarketingPixels
         }
 
         if ($this->analytics->active('ga4')) {
-            $name = json_encode((string) $product->name);
+            // JSON_HEX_TAG: a name is plain text now (Lane AMP), so a `<` in it is a
+            // real `<`, and inside <script> it is written \u003C -- a name can never
+            // open a comment or a tag in the page. Byte-identical for any name
+            // without angle brackets.
+            $name = json_encode((string) $product->name, JSON_HEX_TAG);
             $out .= "<script>gtag('event','view_item',{currency:{$currency},value:{$price},items:[{item_id:{$pid},item_name:{$name},price:{$price}}]});</script>\n";
         }
 
@@ -343,7 +347,7 @@ HTML;
         if ($this->analytics->active('ga4')) {
             $orderNumber = json_encode((string) $order->order_number);
             $out .= '<script>gtag(\'event\',\'purchase\',{transaction_id:' . $orderNumber . ',value:' . $total
-                . ',currency:' . $currency . ',items:' . json_encode($items) . '});</script>' . "\n";
+                . ',currency:' . $currency . ',items:' . json_encode($items, JSON_HEX_TAG) . '});</script>' . "\n";
         }
 
         if ($this->analytics->active('tiktok')) {

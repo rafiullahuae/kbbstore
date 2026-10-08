@@ -112,7 +112,7 @@ final class CustomerImporter extends EntityImporter
         $attributes = [
             'wp_user_id' => $wpUserId,
             'email' => $email,
-            'name' => $name === '' ? null : $name,
+            'name' => $name === '' ? null : \App\Support\PlainText::decode($name), // display_name is stored encoded (Lane AMP)
             'first_name' => $first,
             'last_name' => $last,
             'phone' => $row->text('phone', 'billing_phone'),

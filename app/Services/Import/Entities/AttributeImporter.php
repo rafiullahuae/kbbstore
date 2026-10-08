@@ -169,7 +169,7 @@ final class AttributeImporter extends EntityImporter
             'attribute_id' => $attributeId,
             'source_term_id' => $termId,
             'slug' => $termSlug,
-            'name' => $termName,
+            'name' => \App\Support\PlainText::decode($termName), // plain text; slug from the export (Lane AMP)
         ]);
 
         $context->record($this->name(), $outcome);
@@ -277,7 +277,7 @@ final class AttributeImporter extends EntityImporter
         $attributes = [
             'source_attribute_id' => $sourceId,
             'slug' => $slug,
-            'name' => $label ?? Str::headline($slug),
+            'name' => \App\Support\PlainText::decode($label) ?? Str::headline($slug), // plain text (Lane AMP)
         ];
 
         /*
