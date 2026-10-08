@@ -73,13 +73,33 @@
      * panel's columns sit in one `.mg-cols` grid so they can squeeze and wrap.
      */
     $kbbMegaFit = $kbbMega ? \App\Support\MegaMenuFit::from($kbbHeader) : null;
+
+    /*
+     * Lane MN — Appearance → Header → Navigation → "Show the current page".
+     * The owner: "when i go to any page/category or brand etc from the top
+     * menu in desktop, it's not highlighting etc as open or current page."
+     * Nothing here ever marked one. NavCurrent picks ONE top-level item (and
+     * the link in its panel that won it) from what this request already holds
+     * — the path, the page's category or product rows — with no query and no
+     * further settings read, and writes 'page' or 'true' onto a copy of the
+     * tree; the links below print it as aria-current, kbb.css paints it.
+     * Switched off, the tree is untouched and nothing below prints a byte it
+     * did not print before. The copy is this partial's own: the phone menu
+     * (mobile-chrome) reads its own $kbbNav and is not touched.
+     */
+    if ($kbbHeader['nav_current'] ?? true) {
+        $kbbNav = \App\Support\NavCurrent::mark($kbbNav, \App\Support\NavCurrent::here(request(), $category ?? null, $product ?? null, $crumbTrail ?? null));
+    }
+    $kbbCurClass = \App\Support\NavCurrent::barClass($kbbHeader);
+    $kbbCurStyle = \App\Support\NavCurrent::barStyle($kbbHeader);
+    $kbbBarStyle = implode(';', array_filter([$kbbNavFit, $kbbCurStyle], static fn ($v) => $v !== null));
 @endphp
-<div class="mbar{{ $kbbNavFit !== null ? ' nav-fill' : '' }}"@if ($kbbNavFit !== null) style="{{ $kbbNavFit }}"@endif><div class="wrap">
+<div class="mbar{{ $kbbNavFit !== null ? ' nav-fill' : '' }}{{ $kbbCurClass }}"@if ($kbbBarStyle !== '') style="{{ $kbbBarStyle }}"@endif><div class="wrap">
     @foreach ($kbbNav as $item)
         <div class="navitem{{ $kbbMegaFit?->itemClass($item) }}"@if ($kbbItemStyle = $kbbMegaFit?->itemStyle($item)) style="{{ $kbbItemStyle }}"@endif>
             <a class="navlink" href="{{ Url::to($item['url'] ?? '/') }}"
                 @if (! empty($item['highlight_color'])) style="background:{{ $item['highlight_color'] }};color:#fff;border-radius:8px;padding:4px {{ $kbbNavFit !== null ? 'calc(10px * var(--nav-scale))' : '10px' }}" @endif
-                @if (! empty($item['new_tab'])) target="_blank" rel="noopener" @endif>
+                @if (! empty($item['new_tab'])) target="_blank" rel="noopener" @endif{!! \App\Support\NavCurrent::attr($item) !!}>
                 {{ $item['label'] }}
                 @if (! empty($item['badge']))
                     <span class="npill" style="background:#15a85a">{{ $item['badge'] }}</span>
@@ -108,7 +128,7 @@
                                             @foreach ($entry['children'] as $link)
                                                 <a href="{{ Url::to($link['url'] ?? '/') }}"
                                                     @if (! empty($link['highlight_color'])) style="background:{{ $link['highlight_color'] }};color:#fff;border-radius:6px" @endif
-                                                    @if (! empty($link['new_tab'])) target="_blank" rel="noopener" @endif>
+                                                    @if (! empty($link['new_tab'])) target="_blank" rel="noopener" @endif{!! \App\Support\NavCurrent::attr($link) !!}>
                                                     @if (! empty($link['icon']))<span class="di">{{ $link['icon'] }}</span>@endif
                                                     <span>{{ $link['label'] }}</span>
                                                 </a>
@@ -123,7 +143,7 @@
                                              edge case, so this has to hold up either way. --}}
                                         <a class="mcol-link" href="{{ Url::to($entry['url'] ?? '/') }}"
                                             @if (! empty($entry['highlight_color'])) style="background:{{ $entry['highlight_color'] }};color:#fff;border-radius:6px" @endif
-                                            @if (! empty($entry['new_tab'])) target="_blank" rel="noopener" @endif>
+                                            @if (! empty($entry['new_tab'])) target="_blank" rel="noopener" @endif{!! \App\Support\NavCurrent::attr($entry) !!}>
                                             @if (! empty($entry['icon']))<span class="di">{{ $entry['icon'] }}</span>@endif
                                             <span>{{ $entry['label'] }}</span>
                                         </a>
@@ -135,7 +155,7 @@
                         @foreach ($item['children'] as $link)
                             <a href="{{ Url::to($link['url'] ?? '/') }}"
                                 @if (! empty($link['highlight_color'])) style="background:{{ $link['highlight_color'] }};color:#fff;border-radius:6px" @endif
-                                @if (! empty($link['new_tab'])) target="_blank" rel="noopener" @endif>
+                                @if (! empty($link['new_tab'])) target="_blank" rel="noopener" @endif{!! \App\Support\NavCurrent::attr($link) !!}>
                                 @if (! empty($link['icon']))<span class="di">{{ $link['icon'] }}</span>@endif
                                 <span>{{ $link['label'] }}</span>
                             </a>

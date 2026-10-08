@@ -51,10 +51,20 @@ function jshPost(string $slug = 'jsh-article', array $extra = []): Post
     ], $extra));
 }
 
-/** One element, outermost match, or '' -- `<header …>…</header>` and the like. */
+/**
+ * One element, outermost match, or '' -- `<header …>…</header>` and the like.
+ *
+ * ▲ Lane MN (2.60.441): the desktop menu now marks the page you are on with
+ * aria-current on ONE link (App\Support\NavCurrent), so the bar on /blog/ is
+ * meant to differ from the bar on /about/ by exactly that attribute. It is cut
+ * from the menu links here and nothing else is: every other byte of the header
+ * is still compared. NavCurrentTest pins the marking itself.
+ */
 function jshBlock(string $html, string $tag): string
 {
-    return preg_match('#<' . $tag . '\b.*?</' . $tag . '>#s', $html, $m) ? $m[0] : '';
+    $block = preg_match('#<' . $tag . '\b.*?</' . $tag . '>#s', $html, $m) ? $m[0] : '';
+
+    return (string) preg_replace('#(<a [^<>]*?) aria-current="(?:page|true)">#', '$1>', $block);
 }
 
 it('draws the same header and footer on the Journal and an article as on a content page', function () {

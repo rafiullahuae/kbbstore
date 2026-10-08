@@ -593,6 +593,40 @@
   .fcard b{font-size:11px;display:block;line-height:1.25;color:var(--ink)}
   .fcard span{font-size:11px;color:var(--pink-deep);font-weight:700}
 
+  /* ── THE CURRENT PAGE ──────────────────────────────── Lane MN, 2.60.441 ──
+     The owner: "when i go to any page/category or brand etc from the top menu
+     in desktop, it's not highlighting etc as open or current page. make the
+     nice and super light style etc." Nothing marked it: no aria-current, no
+     class, no rule. partials/nav-bar.blade.php now prints aria-current on ONE
+     top-level link (App\Support\NavCurrent) and on the link in its panel that
+     won it, and these rules paint it. Appearance → Header → Navigation →
+     Show the current page / Current page style / Current page colour.
+
+     LIGHT: the item's name in the colour, and the hover underline held out —
+     the same 2px line, so the current item looks like the hover look, kept.
+     No weight, size or padding change, so nothing moves (CLS 0, every link the
+     same height as before), and the line is the link's own ::after, absolutely
+     placed inside it: no overlay, nothing over a neighbouring link.
+
+     ONE INDICATOR AT A TIME — the owner, 2.60.417: "the underline should not
+     show as the panel highlight is showing." Two rules keep that:
+     · on the current item, the panel pointer's own retract rules above
+       (0,6,0) outrank the held line here (0,5,0), so with its panel open the
+       pointer is the only mark;
+     · while ANY OTHER item is hovered the held line retracts (0,8,0), so the
+       line follows the pointer and the bar never shows two. The colour stays.
+
+     ▲ SPECIFICITY IS THE POINT. kbb-shop.css and kbb-product.css load after
+     this file and carry `a{color:inherit}`; every selector here is at least
+     (0,3,0), and NavCurrentTest fails if either page sheet ever names
+     .navlink, .mbar, .navitem or aria-current. Logical insets, so Arabic
+     mirrors; the dot is centred, so it needs no mirroring. */
+  .mbar .navlink[aria-current]{color:var(--nav-cur,var(--pink-deep))}
+  .mbar:not(.nc-text) .navlink[aria-current]:not([style])::after{transform:scaleX(1);background:var(--nav-cur,var(--pink));border-radius:2px}
+  .mbar.nc-dot .navlink[aria-current]:not([style])::after{inset-inline:calc(50% - 2px);width:4px;height:4px;border-radius:50%;bottom:6px}
+  .mbar .wrap:has(> .navitem:hover) > .navitem:not(:hover) > .navlink[aria-current]::after{transform:scaleX(0)}
+  .mbar .drop a[aria-current]{color:var(--nav-cur,var(--pink-deep));background:var(--pink-soft)}
+
   /* ===== search suggestions ===== */
   .search-wrap{position:relative;flex:1;max-width:440px}
   .search-wrap .search-in{max-width:none;width:100%}

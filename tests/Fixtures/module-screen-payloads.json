@@ -1804,6 +1804,40 @@
             "options": null,
             "default": true,
             "value": true
+          },
+          {
+            "key": "nav_current",
+            "name": "nav_current",
+            "type": "bool",
+            "label": "Show the current page",
+            "help": "Desktop only. The menu item for the page the shopper is on — the page itself, or the category, brand list or blog it sits inside — is shown in colour. Only one item is marked at a time.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "nav_current_style",
+            "name": "nav_current_style",
+            "type": "select",
+            "label": "Current page style",
+            "help": "Line: the coloured text with the same thin line the menu shows on hover. Dot: a small dot under the text. Text: the colour only. While a drop-down panel is open, its own highlight is the only one shown.",
+            "options": {
+              "line": "Coloured text and a line under it",
+              "dot": "Coloured text and a small dot",
+              "text": "Coloured text only"
+            },
+            "default": "line",
+            "value": "line"
+          },
+          {
+            "key": "nav_current_colour",
+            "name": "nav_current_colour",
+            "type": "colour",
+            "label": "Current page colour",
+            "help": "The shop's deep pink by default.",
+            "options": null,
+            "default": "#C13E63",
+            "value": "#C13E63"
           }
         ]
       },

@@ -155,6 +155,13 @@
  *   `nav_fit_max`'s, 0 MODIFIED, 0 REMOVED. Same dialect: `"off"` is true and
  *   a select's `"nope"` answers its default (`'4'`, `'130'`, `'11.5'`).
  *
+ *   Lane MN added THREE to HeaderSettings (Appearance → Header → Navigation →
+ *   "Show the current page"): `nav_current` (bool, 11 rows), the select
+ *   `nav_current_style` (4 rows) and the colour `nav_current_colour` (8 rows)
+ *   — 23 LINES INSERTED after `mega_pointer`'s, 0 MODIFIED, 0 REMOVED. Same
+ *   dialect: `"off"` is true, the select's `"nope"` answers 'line', and a
+ *   colour that is not a strict hex answers the default '#C13E63'.
+ *
  *   Lane CT added FOUR colours to product_styles (Appearance → Product styles
  *   → Colour: secondary text, crossed-out price, savings line, footer WhatsApp
  *   button) — 32 LINES INSERTED (4 × 8 colour rows) by the same merge — and
