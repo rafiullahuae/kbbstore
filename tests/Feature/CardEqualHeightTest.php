@@ -760,6 +760,11 @@ it('knows every template that draws a product tile, including the grid nobody wa
         // listings' .kbb-pgrid — so these tiles land inside a grid this list
         // already names and get its card, its skin and its equal heights.
         'resources/views/partials/listing-batch.blade.php',
+        // (Lane RP) The product page's three recommendation blocks are NOT on
+        // this list because they no longer write the tag: their cards are the
+        // same <x-product-card>, rendered once by App\Support\CardFragments
+        // and reused, inside the same `.rel.kbb-pgrid` — so they get the card
+        // and the equal heights this list is about.
         // ▲ MOVED, NOT ADDED (Lane PS). The product page's related rail left
         // store/product.blade.php for its own partial when it became the "You
         // may also like" carousel; same tile, same `.rel.kbb-pgrid`, same skin.

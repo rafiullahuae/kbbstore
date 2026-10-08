@@ -193,7 +193,8 @@ it('keeps the template\'s blocks in today\'s DOM order, which is the default ord
         'buytogether' => strpos($tpl, "@include('partials.fbt')"),
         'details' => strpos($tpl, '<section class="sec pm-sec pm-details">'),
         'reviews' => strpos($tpl, "@include('partials.reviews')"),
-        'related' => strpos($tpl, "@include('partials.you-may-also-like')"),
+        // (Lane RP) the foot's three blocks, "You may also like" first.
+        'related' => strpos($tpl, "@include('partials.product.recs')"),
     ];
     foreach ($at as $k => $pos) {
         expect($pos)->not->toBeFalse("{$k} is not in the template");

@@ -52,6 +52,8 @@ class Product extends Model
         static::saved(static fn (self $p) => \App\Services\AlsoLikeRail::forget((int) $p->getKey()));
         // "Buy these together" caches its candidates the same way. (Lane RB)
         static::saved(static fn (self $p) => \App\Services\BuyTogether::forget((int) $p->getKey()));
+        // And the three recommendation blocks' pools. (Lane RP)
+        static::saved(static fn (self $p) => \App\Services\ProductRecs::forget((int) $p->getKey()));
 
         // A product moved to another brand has no place in that brand's order
         // yet: it joins the end of it rather than carrying the old brand's

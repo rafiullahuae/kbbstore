@@ -330,6 +330,9 @@ it('asks nothing of the database when the section is off', function () {
 
 it('draws the shop\'s own cards in one scrolling row, with arrows and a reserved size', function () {
     $s = ymalShop();
+    // (Lane RP) The one-row layout the owner can go back to — block 1 as
+    // "One row", blocks 2 and 3 off — is this carousel, unchanged.
+    app(AlsoLikeSettings::class)->save(['layout' => 'one', 'routine_on' => false, 'recent_on' => false]);
 
     $html = $this->get('/product/'.$s['self']->slug.'/')->assertOk()->getContent();
 
@@ -387,9 +390,13 @@ it('sizes the cards in CSS and reads no geometry to do it', function () {
     expect(substr_count($app, "import { initAlsoLike } from './ymal.js';"))->toBe(1)
         ->and(substr_count($app, '    initAlsoLike,'))->toBe(1);
 
-    // And the partial is on the product page exactly once.
+    // And the partial is on the product page exactly once — through the
+    // three-block foot (Lane RP), which the page includes exactly once.
     $page = (string) file_get_contents(resource_path('views/store/product.blade.php'));
-    expect(substr_count($page, "@include('partials.you-may-also-like')"))->toBe(1);
+    $foot = (string) file_get_contents(resource_path('views/partials/product/recs.blade.php'));
+    expect(substr_count($page, "@include('partials.product.recs')"))->toBe(1)
+        ->and(substr_count($page, "@include('partials.you-may-also-like')"))->toBe(0)
+        ->and(substr_count($foot, "@include('partials.you-may-also-like')"))->toBe(1);
 });
 
 /* ═════════════════════ Appearance → Product page ═════════════════════════ */

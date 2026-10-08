@@ -664,7 +664,11 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 10; its "Go back to cart" is the existing store.checkout.back_to_cart) and the basket-gone sentence with its two links
     // (store.checkout.bag_gone*, 4), seeded by
     // 2027_10_08_120200_seed_sold_out_dialog_arabic_drafts.
-    expect($ui['drafts'])->toBe(1446, 'the shipped Arabic is not showing as drafts to review')
+    // 1446 -> 1455 (Lane RP): the product page's three recommendation blocks
+    // — two tab labels, the tab list's name, and the blocks' headings and
+    // small lines (store.product.recs_*), seeded by
+    // 2027_10_08_120000_seed_recs_arabic_drafts.
+    expect($ui['drafts'])->toBe(1455, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });
@@ -993,7 +997,7 @@ it('never labels two controls on one screen with the same Arabic', function () {
         ['store.brands.card_count', 'store.cart.item_count', 'store.home.category_product_count', 'store.set.count_note'],
         ['store.checkout.field_address', 'store.reviews.field_title'],
         ['store.checkout.secure_badge', 'store.home.trust_payments_title'],
-        ['store.collection.title_best_sellers', 'store.footer.link_best_sellers', 'store.home.bestsellers_grid_label', 'store.home.bestsellers_heading', 'store.product_card.label_bestseller', 'store.shop.sort_popularity'],
+        ['store.collection.title_best_sellers', 'store.footer.link_best_sellers', 'store.home.bestsellers_grid_label', 'store.home.bestsellers_heading', 'store.product.recs_best_eyebrow', 'store.product_card.label_bestseller', 'store.shop.sort_popularity'],
         ['store.home.flash_link', 'store.product_grid.view_all'],
         ['store.instagram.follow', 'store.quiz.js_continue'],
         ['store.order_received.show_more', 'store.set.show_all'],

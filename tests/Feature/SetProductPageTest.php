@@ -224,6 +224,16 @@ it('costs the same number of queries for a set of twelve as for a set of three',
     ));
 
     $count = function (string $url): int {
+        /*
+         * (Lane RP) A fresh request's set-price memo, as PHP-FPM gives every
+         * request. The page's foot now shows best sellers ("Continue
+         * shopping"), so each set page draws the OTHER set as a card and
+         * primes its price — one grouped statement, the same on both pages.
+         * Without this the warm-up request below had already primed the large
+         * set inside this process, so only the second measurement paid it and
+         * the two read 12 and 13 for a reason that is not the member count.
+         */
+        \App\Support\SetPricing::forget();
         DB::flushQueryLog();
         DB::enableQueryLog();
         $this->get($url)->assertOk();

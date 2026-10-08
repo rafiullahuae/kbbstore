@@ -1250,6 +1250,17 @@ final class InterfaceStrings
             // The carousel's two arrows (Lane PS). Read by a screen reader only.
             'product.related_prev' => 'Previous products',
             'product.related_next' => 'More products',
+            // The three recommendation blocks (Lane RP). Tab labels carry the
+            // brand's and the category's own (translated) names.
+            'product.recs_tab_brand' => 'More from :brand',
+            'product.recs_tab_category' => 'More :category',
+            'product.recs_tabs_label' => 'Show more from',
+            'product.recs_more_eyebrow' => 'More like this',
+            'product.recs_routine_heading' => 'Complete your routine',
+            'product.recs_routine_eyebrow' => 'Pairs well with this',
+            'product.recs_recent_heading' => 'Continue shopping',
+            'product.recs_recent_eyebrow' => 'Recently viewed',
+            'product.recs_best_eyebrow' => 'Best sellers',
             'product.save_to_wishlist' => 'Save to wishlist',
             // The DEFAULT of the `fbt_title` setting.
             'fbt.title' => 'Complete your routine',

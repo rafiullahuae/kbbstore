@@ -994,7 +994,7 @@
 @endunless
 
   <!-- related -->
-@include('partials.you-may-also-like')
+@include('partials.product.recs')
 </div>
 
 {{-- Sticky add-to-cart. Off unless switched on in Appearance → Product styles →
