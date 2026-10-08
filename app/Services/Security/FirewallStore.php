@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Log;
 /**
  * Where the firewall's counters and bans live.                     (Lane FW)
  *
- * THE FASTEST STORE THE SERVER HAS, NEVER THE DATABASE. "auto" is the shop's
- * own cache store unless that store is `database` (a query per counter — the
- * thing this module must never add) or `dynamodb`/`null`; then the file store.
- * The owner can pick Redis, Memcached or APCu on the screen once the server has
- * one; save() checks it answers before keeping it.
+ * NOT THE PER-REQUEST COUNTERS — those are FirewallCounters' fixed table.
+ * This store holds the rare things: the live view's aggregated log, the DNS
+ * verdicts for claimed bots, the flush lock. It is the shop's own cache store
+ * unless that is `database` (a query per write — the thing this module must
+ * never add) or `dynamodb`/`null`; then the file store.
  *
  * FAILS OPEN, ALWAYS. Every call is wrapped: a Redis that has gone away, a full
  * disk or a permissions error makes the firewall count nothing and refuse
@@ -46,14 +46,10 @@ final class FirewallStore
         return \Illuminate\Support\Carbon::hasTestNow() ? \Illuminate\Support\Carbon::now()->getTimestamp() : time();
     }
 
-    /** The store name "auto" (or a choice) resolves to on this server. */
-    public static function resolve(string $choice = 'auto'): string
+    /** The store this server's firewall log uses. */
+    public static function resolve(): string
     {
         $stores = (array) config('cache.stores', []);
-
-        if ($choice !== 'auto' && isset($stores[$choice])) {
-            return $choice;
-        }
 
         $default = (string) config('cache.default', 'file');
         $driver = (string) ($stores[$default]['driver'] ?? $default);
@@ -63,16 +59,6 @@ final class FirewallStore
         }
 
         return $default;
-    }
-
-    public static function use(string $choice): void
-    {
-        $name = self::resolve($choice);
-
-        if ($name !== self::$name) {
-            self::$name = $name;
-            self::$repo = null;
-        }
     }
 
     public static function name(): string
@@ -168,31 +154,6 @@ final class FirewallStore
         } catch (\Throwable $e) {
             self::warn($e);
 
-            return false;
-        }
-    }
-
-    public static function forget(string $key): void
-    {
-        try {
-            self::repo()?->forget($key);
-        } catch (\Throwable $e) {
-            self::warn($e);
-        }
-    }
-
-    /** Does $choice answer a write and a read? For the screen's save. */
-    public static function works(string $choice): bool
-    {
-        try {
-            $repo = Cache::store(self::resolve($choice));
-            $key = 'fw:probe:'.bin2hex(random_bytes(4));
-            $repo->put($key, 'ok', 10);
-            $ok = $repo->get($key) === 'ok';
-            $repo->forget($key);
-
-            return $ok;
-        } catch (\Throwable) {
             return false;
         }
     }

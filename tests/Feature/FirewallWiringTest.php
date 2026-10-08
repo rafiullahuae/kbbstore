@@ -13,7 +13,7 @@ declare(strict_types=1);
  * integrator runs tools/fw-wire.php -- it pins the finished state.
  */
 
-function fwWired(string $file): string
+function fwlWired(string $file): string
 {
     $src = (string) file_get_contents(base_path($file));
 
@@ -31,7 +31,7 @@ function fwWired(string $file): string
 
 it('names the screen once and arms its deep link once', function () {
     // MUTATION: delete block 2 and LATE_RENDERED holds no 'firewall'; apply it twice and it holds two.
-    $app = fwWired('resources/views/admin/app.blade.php');
+    $app = fwlWired('resources/views/admin/app.blade.php');
 
     expect(substr_count($app, "'firewall':['Store → Security','Firewall']"))->toBe(1)
         ->and(preg_match('/const LATE_RENDERED\s*=\s*new Set\(\[([^\]]*)\]\);/', $app, $m))->toBe(1)
@@ -44,11 +44,11 @@ it('names the screen once and arms its deep link once', function () {
 });
 
 it('keeps the handover documents that quote LATE_RENDERED in step with the console', function () {
-    $app = fwWired('resources/views/admin/app.blade.php');
+    $app = fwlWired('resources/views/admin/app.blade.php');
 
-    preg_match_all('/const LATE_RENDERED=new Set\(\[[^\]]*\]\);/', fwWired('docs/T1B-ADMIN-APP-BLOCKS.md'), $quoted);
+    preg_match_all('/const LATE_RENDERED=new Set\(\[[^\]]*\]\);/', fwlWired('docs/T1B-ADMIN-APP-BLOCKS.md'), $quoted);
     expect($app)->toContain((string) end($quoted[0]));
-    expect(substr_count(fwWired('docs/BG-ADMIN-APP-BLOCKS.md'), "'imageseo','security','firewall','paygw',"))->toBe(2);
+    expect(substr_count(fwlWired('docs/BG-ADMIN-APP-BLOCKS.md'), "'imageseo','security','firewall','paygw',"))->toBe(2);
 });
 
 it('leaves every other lane\'s wiring record whole', function () {
@@ -71,7 +71,7 @@ it('leaves every other lane\'s wiring record whole', function () {
 
     foreach (array_unique(array_column(json_decode((string) file_get_contents(base_path('docs/fw-wiring.json')), true), 'file')) as $file) {
         $before = (string) file_get_contents(base_path($file));
-        $after = fwWired($file);
+        $after = fwlWired($file);
 
         foreach ($others as [$label, $target, $needle]) {
             if ($target === $file && str_contains($before, $needle) && ! str_contains($after, $needle)) {
