@@ -293,6 +293,10 @@ class CategoryHeaderApiController extends Controller
                 'recommended' => StorefrontAdminController::RECOMMENDED,
             ],
             'css' => self::stylesheet(),
+            // Lane CB: what the category banner needs when the preview draws
+            // it on a page that did not (its first picture, just uploaded).
+            'panel_css' => self::stylesheet('resources/css/kbb/kbb-brand-header.css'),
+            'panel_inline' => \App\Support\BrandPanel::CATEGORY_CSS,
             'console' => (string) (parse_url(route('admin'), PHP_URL_PATH) ?: '/').'?kbb-open=category:'.$id.'#catalog/categories',
         ];
     }
@@ -333,6 +337,23 @@ class CategoryHeaderApiController extends Controller
     public static function rendered(Category $category): array
     {
         $title = (string) $category->t('name');
+
+        /*
+         * Lane CB: a category with a picture draws the category banner -- the
+         * brand page's Panel -- on its page (ShopController), so the live
+         * preview and the swap after Save draw that too: the same partial,
+         * the same inputs, in the same wrapper.
+         */
+        $all = app(SiteLayout::class)->all();
+        $panel = \App\Support\BrandPanel::forCategory($category, $all, $title, PageBanner::forModel($category, $title));
+
+        if ($panel !== null) {
+            return [
+                'html' => '<div class="wrap kbb-cbw">'.trim(view('store.partials.brand-panel', ['panel' => $panel, 'panelCategory' => $category])->render()).'</div>',
+                'note' => 'This category has a picture, so it shows the category banner. Its look is Appearance → Site layout → Category banner, and this category\'s own in Catalog → Categories → Edit → Category header → Banner layout.',
+            ];
+        }
+
         $header = TitleHeader::forModel($category, $title, PageBanner::forModel($category, $title));
 
         if ($header === null) {
@@ -412,10 +433,10 @@ class CategoryHeaderApiController extends Controller
         return TitleHeaderInput::clean($data);
     }
 
-    private static function stylesheet(): ?string
+    private static function stylesheet(string $entry = 'resources/css/kbb/kbb-title-header.css'): ?string
     {
         try {
-            $path = (string) (parse_url(Vite::asset('resources/css/kbb/kbb-title-header.css'), PHP_URL_PATH) ?? '');
+            $path = (string) (parse_url(Vite::asset($entry), PHP_URL_PATH) ?? '');
         } catch (\Throwable) {
             return null;
         }

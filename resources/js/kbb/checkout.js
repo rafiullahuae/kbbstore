@@ -27,6 +27,8 @@ export function initCheckout() {
 
     window.kbbDiag?.('checkout.js', 'handler attached');
 
+    rememberDetails(form);
+
     // Summary / Browsed pill tabs.
     document.addEventListener('click', async (event) => {
         const tab = event.target.closest('[data-stab]');
@@ -1029,4 +1031,201 @@ export function initCheckout() {
 
         return false;
     };
+}
+
+/* ------------------------------------------------------------------------ *
+ * REMEMBER THE DETAILS ON THIS DEVICE (Lane PO).
+ *
+ * The owner: "the address fields etc should keep the data in user browser, so
+ * user should not enter everything again n again. even wihout login."
+ *
+ * WHAT IS KEPT: name, phone, email, country, emirate / state, Area / Street,
+ * Building, the town box where a country has one, and the delivery choice.
+ * WHAT IS NEVER KEPT: the card (it lives in Stripe's iframes and this page
+ * cannot read it anyway), the coupon, the account password, "save this card",
+ * the payment method -- and the delivery NOTES and the gift message, which are
+ * about one parcel and are the free-text boxes most likely to hold something a
+ * shared device should not show the next person ("leave it with my
+ * neighbour", a birthday message). Nothing here is a list of what NOT to read:
+ * only the ids below are ever read, so a field added to the form tomorrow is
+ * not kept until somebody adds it here on purpose.
+ *
+ * WHERE: this browser's localStorage, one versioned key. Same-origin by
+ * construction -- no other site can read it, it is never sent anywhere, the
+ * server neither reads nor writes it -- and every touch is in a try/catch,
+ * because Safari's private mode and a blocked-storage setting both throw.
+ *
+ * WHEN IT IS WRITTEN: as each field is left (`change`), when the page is left,
+ * and when the shop accepts an order (placing-overlay calls
+ * window.KBB.remember.save() from confirmed() and leaving()). Never per
+ * keystroke. Only while "Remember my details on this device" is ticked;
+ * unticking erases the copy there and then.
+ *
+ * WHEN IT IS READ: once, as the page starts, before a shopper can have typed.
+ * A box is filled only when it is EMPTY and the server put nothing in it --
+ * an address a signed-in customer has saved, or what a refused submission
+ * sent back, always wins -- and the address half only when the remembered
+ * country is the country the page is already on, so a remembered Dubai villa
+ * never lands under a Saudi country the shopper picked in the header. No
+ * request is made and no event is raised: filling a box is not a change the
+ * shopper made, so nothing re-prices and inline validation judges nothing.
+ *
+ * Measures no layout, builds no markup: values in through `.value`, the link
+ * shown by a class.
+ * ------------------------------------------------------------------------ */
+const REMEMBER_KEY = 'kbb.checkout.details.v1';
+const REMEMBER_DAYS = 365;
+const REMEMBER_CONTACT = ['billing_first_name', 'billing_last_name', 'billing_phone', 'billing_email'];
+const REMEMBER_ADDRESS = ['billing_address_1', 'billing_address_2', 'billing_city', 'billing_state'];
+
+const localStore = () => { try { return window.localStorage || null; } catch { return null; } };
+
+function readRemembered() {
+    const ls = localStore();
+    if (!ls) return null;
+    try {
+        const kept = JSON.parse(ls.getItem(REMEMBER_KEY) || 'null');
+        if (!kept || kept.v !== 1 || !kept.f || typeof kept.f !== 'object') return null;
+        if (!(Date.now() - Number(kept.at) < REMEMBER_DAYS * 864e5)) { ls.removeItem(REMEMBER_KEY); return null; }
+        return kept.f;
+    } catch { return null; }
+}
+
+function forgetRemembered() {
+    try { localStore()?.removeItem(REMEMBER_KEY); } catch { /* storage off: nothing kept */ }
+}
+
+/* The price printed in a delivery option's label ('' for a free one). */
+const ratePrice = (radio) => {
+    const label = radio && radio.id ? document.querySelector(`label[for="${radio.id}"]`) : null;
+    return (label?.querySelector('.woocommerce-Price-amount')?.textContent || '').trim();
+};
+
+function rememberDetails(form) {
+    const tick = document.getElementById('kbb_remember');
+    const clear = document.getElementById('kbbRememberClear');
+
+    // Switched off on Appearance -> Checkout page: keep nothing, hold nothing.
+    if (!tick) { forgetRemembered(); return; }
+
+    /* Only a box the shopper can see: never a password, never a hidden
+       input, never one inside [hidden] or an inline display:none (the
+       hidden account box is how Firefox's autofill stopped Place order). */
+    const field = (id) => {
+        const el = document.getElementById(id);
+        if (!el || !form.contains(el) || el.type === 'hidden' || el.type === 'password' || el.disabled) return null;
+        if (el.closest('[hidden]')) return null;
+        for (let n = el; n && n !== form; n = n.parentElement) {
+            if (n.style && n.style.display === 'none') return null;
+        }
+        return el;
+    };
+
+    const collect = () => {
+        const f = {};
+        [...REMEMBER_CONTACT, ...REMEMBER_ADDRESS, 'billing_country'].forEach((id) => {
+            const el = field(id);
+            const value = el ? String(el.value || '').trim().slice(0, 255) : '';
+            if (value !== '') f[id] = value;
+        });
+        const ship = form.querySelector('input[name="shipping_method"]:checked');
+        if (ship) f.shipping_method = String(ship.value).slice(0, 64);
+        return f;
+    };
+
+    const save = () => {
+        if (!tick.checked) return;
+        const f = collect();
+        if (Object.keys(f).length === 0) return;
+        try { localStore()?.setItem(REMEMBER_KEY, JSON.stringify({ v: 1, at: Date.now(), f })); } catch { /* full or blocked */ }
+    };
+
+    /* ---- restore, once ---- */
+    const kept = readRemembered();
+    const restored = [];
+
+    if (kept) {
+        const serverFilled = [...REMEMBER_CONTACT, ...REMEMBER_ADDRESS].some((id) => {
+            const el = field(id);
+            if (!el) return false;
+            if (el.tagName === 'SELECT') return [...el.options].some((o) => o.defaultSelected && o.value !== '');
+            return String(el.defaultValue || '').trim() !== '';
+        });
+        const country = field('billing_country');
+        const sameCountry = !!country && typeof kept.billing_country === 'string' && country.value === kept.billing_country;
+
+        const fill = (id) => {
+            const el = field(id);
+            const value = kept[id];
+            if (!el || typeof value !== 'string' || value === '' || el.value !== '') return;
+            if (el.tagName === 'SELECT') {
+                if (serverFilled || ![...el.options].some((o) => o.value === value && !o.disabled)) return;
+            } else if (String(el.defaultValue || '') !== '') {
+                return;
+            }
+            el.value = value;
+            restored.push([el, value]);
+        };
+
+        REMEMBER_CONTACT.forEach(fill);
+        if (sameCountry) REMEMBER_ADDRESS.forEach(fill);
+
+        /* The delivery choice, only where it cannot move the total: the page
+           priced its totals for the option it checked, and nothing re-prices
+           when a radio changes, so a remembered option is taken only when its
+           printed price is the checked one's. */
+        if (sameCountry && !serverFilled && typeof kept.shipping_method === 'string') {
+            const radios = [...form.querySelectorAll('input[name="shipping_method"]')];
+            const want = radios.find((r) => r.value === kept.shipping_method);
+            const now = radios.find((r) => r.checked);
+            if (want && !want.checked && (!now || (now.defaultChecked && ratePrice(want) === ratePrice(now)))) {
+                want.checked = true;
+                restored.push([want, true]);
+            }
+        }
+
+        /* The floating Place-order bar asks "is this placeable?" on input. */
+        if (restored.length) form.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    if (clear && restored.length) {
+        clear.classList.add('on');
+        clear.removeAttribute('aria-hidden');
+        clear.removeAttribute('tabindex');
+    }
+
+    /* ---- the shopper's say ---- */
+    tick.addEventListener('change', (event) => {
+        // Not a field of the order: nothing else on this page hears it.
+        event.stopPropagation();
+        if (tick.checked) save(); else forgetRemembered();
+    });
+
+    clear?.addEventListener('click', (event) => {
+        event.preventDefault();
+        forgetRemembered();
+        // Empty what was filled from the copy and still says what it said.
+        restored.forEach(([el, value]) => {
+            if (el.type === 'radio') return;
+            if (el.value === value) el.value = '';
+        });
+        clear.classList.remove('on');
+        clear.setAttribute('aria-hidden', 'true');
+        clear.setAttribute('tabindex', '-1');
+        field('billing_first_name')?.focus({ preventScroll: true });
+    });
+
+    /* ---- writing ---- */
+    const keptIds = new Set([...REMEMBER_CONTACT, ...REMEMBER_ADDRESS, 'billing_country']);
+    let typed = false;
+    form.addEventListener('input', (event) => { if (event.target && keptIds.has(event.target.id)) typed = true; });
+    form.addEventListener('change', (event) => {
+        const t = event.target;
+        if (t && (keptIds.has(t.id) || t.name === 'shipping_method')) save();
+    });
+    // A box still focused when the page is left never fired `change`.
+    window.addEventListener('pagehide', () => { if (typed) save(); });
+
+    window.KBB = window.KBB || {};
+    window.KBB.remember = { save };
 }

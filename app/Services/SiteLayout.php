@@ -828,6 +828,170 @@ class SiteLayout
             ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
 
         /*
+         * THE CATEGORY BANNER.                                       (Lane CB)
+         *
+         * The owner, 8 October: "i need the categories banners, exact same
+         * like brand banners. with exact same controls and everything. just
+         * use the same thing on the categories pages." So every control of the
+         * brand page's Panel header (Brand page tab, above) is here again for
+         * the category page, with the same bounds and the same shipped values,
+         * read by App\Support\BrandPanel under its CATEGORY_PREFIX -- one
+         * resolver, two sets of numbers. Each category can change any of them
+         * in Catalog → Categories → Edit → Category header → Banner layout
+         * (`categories.header_layout`).
+         *
+         * ON, because he asked -- and only for a category WITH a picture. A
+         * category without one keeps today's header byte for byte. Not CSS:
+         * in CATBANNER_KEYS, so isDefault()/css() skip them.
+         */
+        'catb_hero' => ['select', 'Category banner style', 'panel',
+            'Panel, as you asked: a category with a picture gets the brand page\'s header -- the picture as the background, a panel on it with the category name and description; on a phone the name in a capsule on the banner and the description below it. The picture is the category\'s own Banner picture (Catalog → Categories → Edit → Category header → Banner layout), else the one its header already showed. Category header: the title header, as before. A category with no picture keeps its header either way.',
+            [
+                'panel' => 'Panel -- the brand page\'s banner',
+                'header' => 'Category header -- as before',
+            ]],
+        'catb_panel_style' => ['select', 'Banner · background', 'frost',
+            'Frosted white: a soft white panel with dark text, readable on any banner. Dark pink: a dark shade of the shop pink with white text.',
+            [
+                'frost' => 'Frosted white',
+                'brand' => 'Dark pink',
+            ]],
+        'catb_pill' => ['select', 'Banner · name on phones', 'capsule',
+            'The shape behind the category name on a phone\'s banner.',
+            [
+                'capsule' => 'Capsule',
+                'rect' => 'Rectangle',
+            ]],
+        'catb_logo_shape' => ['select', 'Banner · picture shape', 'circle',
+            'The category\'s own square picture, when "show the category picture" is on. Each category can pick its own.',
+            [
+                'circle' => 'Circle',
+                'rect' => 'Rectangle',
+            ]],
+        'catb_header_w' => ['range', 'Banner · header width', 100,
+            'On a laptop: how much of the page width the banner takes, centred.',
+            ['min' => 60, 'max' => 100, 'step' => 1, 'unit' => '%']],
+        'catb_banner_h' => ['range', 'Banner · laptop · header height', 270,
+            'The height of the WHOLE header on a laptop -- the banner, with the panel on it. It grows past this only if the panel needs more room.',
+            ['min' => 160, 'max' => 460, 'step' => 5, 'unit' => 'px']],
+        'catb_banner_h_m' => ['range', 'Banner · phone · banner height', 165,
+            'The banner on a phone, with the logo and name on it. The description card comes BELOW it, so the whole phone header is this, plus the gap, plus the card.',
+            ['min' => 100, 'max' => 300, 'step' => 5, 'unit' => 'px']],
+        'catb_content_w' => ['range', 'Banner · content width', 60,
+            'On a laptop: the panel\'s width, as a share of the banner\'s.',
+            ['min' => 40, 'max' => 85, 'step' => 1, 'unit' => '%']],
+        'catb_img_pos' => ['select', 'Banner · picture position', 'center',
+            'Which part of the banner stays in view when it is cropped to fit.',
+            [
+                'left' => 'Left',
+                'center' => 'Centre',
+                'right' => 'Right',
+            ]],
+        'catb_panel_x' => ['select', 'Banner · laptop · panel across the banner', 'left',
+            'On a laptop: the panel on the left of the banner (as designed), in the middle, or on the right.',
+            [
+                'left' => 'Left',
+                'center' => 'Centre',
+                'right' => 'Right',
+            ]],
+        'catb_panel_y' => ['select', 'Banner · laptop · panel up and down', 'middle',
+            'On a laptop: the panel in the middle of the banner\'s height, at its top, or at its bottom.',
+            [
+                'middle' => 'Middle',
+                'top' => 'Top',
+                'bottom' => 'Bottom',
+            ]],
+        'catb_panel_pad' => ['range', 'Banner · laptop · space inside the panel', 26,
+            'The padding at the panel\'s sides; top and bottom are 4px less.',
+            ['min' => 8, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'catb_panel_inset' => ['range', 'Banner · laptop · panel distance from the banner edge', 36,
+            'From the banner\'s side; from its top and bottom it is two thirds of this. At 36 it narrows on a small laptop.',
+            ['min' => 0, 'max' => 120, 'step' => 1, 'unit' => 'px']],
+        'catb_desc_gap' => ['range', 'Banner · laptop · gap between the name and the description', 12,
+            'The space between the logo-and-name row and the description, inside the panel.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'catb_name_fs' => ['range', 'Banner · laptop · category name size', 34,
+            'At 34 it narrows on a small laptop; any other size is kept exactly.',
+            ['min' => 18, 'max' => 56, 'step' => 1, 'unit' => 'px']],
+        'catb_desc_fs' => ['range', 'Banner · laptop · description size', 15,
+            'The description\'s text, inside the panel.',
+            ['min' => 12, 'max' => 22, 'step' => 1, 'unit' => 'px']],
+        'catb_logo_size' => ['range', 'Banner · laptop · picture size', 72,
+            'The picture\'s height (a circle is as wide; a rectangle is 2.3 times as wide).',
+            ['min' => 40, 'max' => 120, 'step' => 1, 'unit' => 'px']],
+        'catb_pill_at' => ['select', 'Banner · phone · name position (with the picture, when it shows)', 'bottom-center',
+            'On phones: where the capsule with the category name (and the picture, when it shows) sits on the banner. Bottom centre, as on the brand page.',
+            [
+                'bottom-center' => 'Bottom centre',
+                'bottom-left' => 'Bottom left',
+                'bottom-right' => 'Bottom right',
+                'top-left' => 'Top left',
+                'top-center' => 'Top centre',
+                'top-right' => 'Top right',
+            ]],
+        'catb_pill_inset_m' => ['range', 'Banner · phone · capsule distance from the banner edge', 12,
+            'On phones.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'catb_card_gap_m' => ['range', 'Banner · phone · gap between the banner and the description', 12,
+            'On phones: the space above the description card.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'catb_card_pad_m' => ['range', 'Banner · phone · space inside the description card', 14,
+            'On phones: top and bottom; the sides are 2px more.',
+            ['min' => 6, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'catb_name_fs_m' => ['range', 'Banner · phone · category name size', 22,
+            'On phones: the name in the capsule.',
+            ['min' => 14, 'max' => 36, 'step' => 1, 'unit' => 'px']],
+        'catb_desc_fs_m' => ['range', 'Banner · phone · description size', 14,
+            'On phones: the text in the card below the banner.',
+            ['min' => 12, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        'catb_logo_size_m' => ['range', 'Banner · phone · picture size', 52,
+            'On phones: the picture\'s height in the capsule.',
+            ['min' => 28, 'max' => 80, 'step' => 1, 'unit' => 'px']],
+        'catb_logo_show' => ['bool', 'Banner · laptop · show the category picture', false,
+            'Off, as on the brand page: the panel shows the category name and the description. On: the category\'s own square picture (Catalog → Categories → Edit → Image) shows beside the name.'],
+        'catb_logo_show_m' => ['bool', 'Banner · phone · show the category picture', false,
+            'Off, as on the brand page: the capsule holds the category name alone. On: the category\'s square picture shows beside it.'],
+        'catb_name_align' => ['select', 'Banner · laptop · category name alignment', 'center',
+            'On a laptop: the category name (with the picture, when it shows) inside the panel. Centre, as on the brand page.',
+            [
+                'center' => 'Centre',
+                'left' => 'Left',
+                'right' => 'Right',
+            ]],
+        'catb_desc_align' => ['select', 'Banner · laptop · description alignment', 'center',
+            'On a laptop: the description\'s lines inside the panel. Centre, as on the brand page.',
+            [
+                'center' => 'Centre',
+                'left' => 'Left',
+                'right' => 'Right',
+            ]],
+        'catb_desc_align_m' => ['select', 'Banner · phone · description alignment', 'center',
+            'On phones: the description\'s lines in the card below the banner. Centre, as on the brand page.',
+            [
+                'center' => 'Centre',
+                'left' => 'Left',
+                'right' => 'Right',
+            ]],
+        'catb_desc_lines' => ['range', 'Banner · laptop · description lines before "Read more"', 2,
+            'On a laptop: a longer description is cut at this many lines, with "Read more" under it to open the rest in place and "Read less" to close it. Two, as on the brand page.',
+            ['min' => 1, 'max' => 6, 'step' => 1, 'unit' => '']],
+        'catb_desc_lines_m' => ['range', 'Banner · phone · description lines before "Read more"', 2,
+            'On phones: the same, in the card below the banner. Two, as on the brand page.',
+            ['min' => 1, 'max' => 6, 'step' => 1, 'unit' => '']],
+        'catb_space_top' => ['range', 'Banner · laptop · space above the header', 22,
+            'On a laptop: from the menu bar down to the header.',
+            ['min' => 0, 'max' => 80, 'step' => 1, 'unit' => 'px']],
+        'catb_space_x' => ['range', 'Banner · laptop · space at the sides of the header', 22,
+            'On a laptop: from the page edge to the header, both sides.',
+            ['min' => 0, 'max' => 80, 'step' => 1, 'unit' => 'px']],
+        'catb_space_top_m' => ['range', 'Banner · phone · space above the header', 22,
+            'On phones: from the search bar down to the header.',
+            ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'catb_space_x_m' => ['range', 'Banner · phone · space at the sides of the header', 22,
+            'On phones: from the screen edge to the header, both sides. 0 runs it edge to edge.',
+            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+
+        /*
          * ── PRESS FEEDBACK ──────────────────────────────────────── Lane RD ──
          *
          * "when u click on any button or icon. it leaves gray square /
@@ -1001,6 +1165,12 @@ class SiteLayout
         // 6 Oct: the header's outer spacing, laptop then phone.
         'brand_space_top', 'brand_space_x', 'brand_space_top_m', 'brand_space_x_m'];
 
+    /**
+     * The category banner's settings (Lane CB): not CSS, skipped by
+     * isDefault(). The brand page's Panel keys under BrandPanel::CATEGORY_PREFIX.
+     */
+    public const CATBANNER_KEYS = ['catb_hero', 'catb_panel_style', 'catb_pill', 'catb_logo_shape', 'catb_header_w', 'catb_banner_h', 'catb_banner_h_m', 'catb_content_w', 'catb_img_pos', 'catb_panel_x', 'catb_panel_y', 'catb_panel_pad', 'catb_panel_inset', 'catb_desc_gap', 'catb_name_fs', 'catb_desc_fs', 'catb_logo_size', 'catb_pill_at', 'catb_pill_inset_m', 'catb_card_gap_m', 'catb_card_pad_m', 'catb_name_fs_m', 'catb_desc_fs_m', 'catb_logo_size_m', 'catb_logo_show', 'catb_logo_show_m', 'catb_name_align', 'catb_desc_align', 'catb_desc_align_m', 'catb_desc_lines', 'catb_desc_lines_m', 'catb_space_top', 'catb_space_x', 'catb_space_top_m', 'catb_space_x_m'];
+
     /** Lane SP: page-change switches, read by App\Support\InstantNav; not CSS. */
     public const SPEED_KEYS = ['nav_instant', 'nav_fade'];
 
@@ -1136,6 +1306,9 @@ class SiteLayout
         'brandpage' => ['Brand page',
             'What a brand\'s own page shows above its products, and whether it lists them all at once.',
             self::BRAND_KEYS],
+        'catbanner' => ['Category banner',
+            'The brand page\'s banner on category pages: the same look and the same controls as Brand page, for every category that has a banner picture (Catalog → Categories → Edit → Category header). A category with no picture keeps its header as it is. Each category can change any of these for itself in Catalog → Categories → Edit → Category header → Banner layout.',
+            self::CATBANNER_KEYS],
         'press' => ['Press feedback',
             'What every button and icon in the shop does under a finger or a click. Tap the samples below to feel each one before you save; nothing changes on the shop until you press Save.',
             self::PRESS_KEYS],
@@ -1434,6 +1607,7 @@ class SiteLayout
         foreach (self::normalised() as $key => $field) {
             if (in_array($key, self::LOAD_KEYS, true) || in_array($key, self::HEADER_KEYS, true)
                 || in_array($key, self::PRESS_KEYS, true) || in_array($key, self::BRAND_KEYS, true)
+                || in_array($key, self::CATBANNER_KEYS, true)
                 || in_array($key, self::FONT_KEYS, true) || $key === 'sold_out'
                 || in_array($key, self::SPEED_KEYS, true)) {
                 continue;

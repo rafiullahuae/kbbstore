@@ -109,7 +109,10 @@ it('answers the context with an allowlist, never a model', function () {
 
     $ctx = $this->getJson('/admin-api/storefront/context?path='.rawurlencode('/collections/ch-sunscreens/'))->assertOk()->json('categoryheader');
 
-    expect(array_keys($ctx))->toBe(['id', 'key', 'name', 'mode', 'legacy_banner', 'fields', 'custom', 'placeholders', 'limits', 'spec', 'pageheader', 'sample', 'endpoints', 'upload', 'css', 'console'])
+    expect(array_keys($ctx))->toBe(['id', 'key', 'name', 'mode', 'legacy_banner', 'fields', 'custom', 'placeholders', 'limits', 'spec', 'pageheader', 'sample', 'endpoints', 'upload', 'css',
+        // Lane CB: the category banner's sheet and its rules, for a preview
+        // that draws it (both constants or a same-origin path).
+        'panel_css', 'panel_inline', 'console'])
         ->and(array_keys($ctx['fields']))->toBe(['header_title', 'header_description', 'header_image', 'header_style'])
         ->and(json_encode($ctx))->not->toContain('secret-term-meta-key');
 });

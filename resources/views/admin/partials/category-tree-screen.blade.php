@@ -48,6 +48,8 @@
     partial before site-layout-screen, which uses the same kit.
 --}}
 @include('admin.partials.title-header-kit')
+{{-- Lane CB: the category banner's per-category controls (App\Support\BrandPanel::categoryFields), read by "Banner layout" below. Constants only: labels, option keys and bounds. --}}
+<script type="application/json" id="ct-cbl-fields">@json(\App\Support\BrandPanel::categoryFields())</script>
 @verbatim
 <style>
 /* ---------------------------------------------------------------------------
@@ -727,6 +729,93 @@
   ];
 
   /*
+   * ── LANE CB: BANNER LAYOUT ─────────────────────────────────────────────
+   *
+   * "i need the categories banners, exact same like brand banners. with
+   * exact same controls and everything." A category with a header picture
+   * draws the brand page's banner (Appearance -> Site layout -> Category
+   * banner); these are its own choices over the shop's, exactly the ones a
+   * brand's "Edit brand header" pop-up offers. Blank / "Shop setting" follows
+   * the shop. The list -- keys, labels, options, bounds -- is the server's
+   * own (BrandPanel::categoryFields, in #ct-cbl-fields), and the server is the
+   * judge regardless: BrandPanel::sanitize() keeps a choice on its list and a
+   * size inside its range. Saved as `header_layout` with everything else.
+   */
+  var CB_FIELDS = (function(){
+    try { return JSON.parse((document.getElementById('ct-cbl-fields') || {}).textContent || '[]'); }
+    catch (e) { return []; }
+  })();
+
+  function cbShopSays(f){
+    var shop = hdr.shop || {};
+    var v = shop[f.setting];
+    if (v === undefined || v === null) return '';
+    if (f.type === 'choice') {
+      if (v === true || v === false) v = v ? 'on' : 'off';
+      return (f.options && f.options[v]) || String(v);
+    }
+    return String(v) + (f.unit || '');
+  }
+
+  function bannerLayoutHTML(cat){
+    var own = (cat && cat.header_layout && typeof cat.header_layout === 'object') ? cat.header_layout : {};
+    var fld = function(f){
+      var id = 'ct-cbl-' + f.key;
+      var says = cbShopSays(f);
+      if (f.type === 'choice') {
+        return '<div class="ct-fld"><label for="' + id + '">' + esc(f.label) + '</label>'
+          + '<select id="' + id + '" data-ct-cbl="' + esc(f.key) + '">'
+          + '<option value="">Shop setting' + (says ? ' (' + esc(says) + ')' : '') + '</option>'
+          + Object.keys(f.options || {}).map(function(k){
+              return '<option value="' + esc(k) + '"' + (own[f.key] === k ? ' selected' : '') + '>' + esc(f.options[k]) + '</option>';
+            }).join('')
+          + '</select></div>';
+      }
+      var v = own[f.key];
+      return '<div class="ct-fld"><label for="' + id + '">' + esc(f.label) + (f.unit ? ' (' + esc(f.unit) + ')' : '') + '</label>'
+        + '<input id="' + id + '" data-ct-cbl="' + esc(f.key) + '" type="number" inputmode="numeric" min="' + Number(f.min) + '" max="' + Number(f.max) + '"'
+        + ' value="' + esc(v == null ? '' : v) + '" placeholder="Shop setting' + (says ? ' (' + esc(says) + ')' : '') + '"></div>';
+    };
+    var pic = typeof own.image === 'string' ? own.image : '';
+    var safePic = window.kbbTH ? window.kbbTH.safeImage(pic) : '';
+    return '<details class="ct-hdr-look" id="ct-cbl"' + (pic ? ' open' : '') + '><summary><b style="font-size:13px">Banner layout</b> '
+      + '<span class="ct-note" style="display:inline">the brand page\u2019s banner, on this category</span></summary>'
+      + '<p class="ct-note" style="margin:6px 0 8px">A category with a picture shows the brand page\u2019s banner: '
+      + 'the picture as the background, a panel with the category name and description on it, and on a phone the name in a capsule with the description below. '
+      + 'The <b>Banner picture</b> is used first; blank uses the header picture above. No picture at all: the page keeps its header, exactly as it is. '
+      + 'The shop\u2019s look is <b>Appearance \u2192 Site layout \u2192 Category banner</b>; blank or <b>Shop setting</b> follows it. '
+      + '<button type="button" class="ct-link" id="ct-cblclear">Use the shop settings for all of these</button></p>'
+      + '<div class="ct-fld"><label for="ct-cblimg">Banner picture</label>'
+        + '<div class="ct-banner-prev" id="ct-cblwrap"' + (safePic ? '' : ' hidden') + '>'
+        + '<img id="ct-cblthumb" alt="The banner picture"' + (safePic ? ' src="' + esc(safePic) + '"' : '') + '></div>'
+        + '<div class="ct-banner-acts">'
+        + '<button type="button" class="ct-btn is-primary" id="ct-cblup">Upload banner</button>'
+        + '<button type="button" class="ct-btn" id="ct-cbllib">Choose from Media Library</button>'
+        + '<button type="button" class="ct-btn" id="ct-cbldrop">Remove picture</button>'
+        + '</div>'
+        + '<p class="ct-note">Best at 2400 \u00d7 600, JPG or WebP. Cropped to fill, never stretched.</p>'
+        + '<label for="ct-cblimg" class="ct-note" style="display:block;margin-top:7px">Picture address</label>'
+        + '<input id="ct-cblimg" value="' + esc(pic) + '" placeholder="Blank: the header picture above">'
+      + '</div>'
+      + '<div class="ct-grid2">' + CB_FIELDS.map(fld).join('') + '</div></details>';
+  }
+
+  /* The layout for the save: only the boxes that hold something. A number
+     box that holds other than digits is sent as typed, so the server refuses
+     it with its own message. */
+  function bannerLayoutPayload(){
+    var out = {};
+    var img = document.getElementById('ct-cblimg');
+    if (img && img.value.trim() !== '') out.image = img.value.trim();
+    CB_FIELDS.forEach(function(f){
+      var el = document.getElementById('ct-cbl-' + f.key);
+      if (!el || el.value === '') return;
+      out[f.key] = f.type === 'range' && /^\d+$/.test(el.value) ? parseInt(el.value, 10) : el.value;
+    });
+    return out;
+  }
+
+  /*
    * ── LANE QC: PER DEVICE, AS PICTURES, WITH A LIVE PREVIEW ─────────────────
    *
    * "i need the same designs on backend to choose the category banner
@@ -876,6 +965,7 @@
               + ' value="' + esc(v == null ? '' : v) + '" placeholder="Shop setting"></div>';
           }).join('')
       + '</div>'
+      + bannerLayoutHTML(cat)
       + '</div></details>';
   }
 
@@ -972,6 +1062,15 @@
     if (fx) fx.innerHTML = hdrFocusHTML();
     var dv = document.querySelector('[data-ct-hdrdevbar]');
     if (dv) dv.innerHTML = window.kbbTH.deviceSwitch('data-ct-hdrdev', hdr.dev, 'Edit the design for');
+    // Lane CB: once the shop's settings are in, each Banner layout box says
+    // what "Shop setting" is. Only the hint changes; no value is touched.
+    CB_FIELDS.forEach(function(f){
+      var el = document.getElementById('ct-cbl-' + f.key);
+      var says = cbShopSays(f);
+      if (!el || !says) return;
+      if (f.type === 'choice') el.options[0].textContent = 'Shop setting (' + says + ')';
+      else el.placeholder = 'Shop setting (' + says + ')';
+    });
   }
 
   /* The panel's values for the save request. A number box that holds
@@ -1000,11 +1099,47 @@
       header_title: val('ct-hdrtitle'),
       header_subtitle: val('ct-hdrsub'),
       header_description: val('ct-hdrdesc'),
-      header_style: style
+      header_style: style,
+      header_layout: bannerLayoutPayload()
     };
   }
 
   function wireHeaderPanel(){
+    var cblClear = document.getElementById('ct-cblclear');
+    if (cblClear) cblClear.onclick = function(){
+      CB_FIELDS.forEach(function(f){ var el = document.getElementById('ct-cbl-' + f.key); if (el) el.value = ''; });
+    };
+    /* Lane CB: the Banner picture -- the shared Media Library, as the
+       header picture below uses it; the thumbnail only shows a safe path. */
+    function applyBannerImage(url){
+      var box = document.getElementById('ct-cblimg');
+      var thumb = document.getElementById('ct-cblthumb');
+      var wrap = document.getElementById('ct-cblwrap');
+      if (box) box.value = url || '';
+      var safe = window.kbbTH ? window.kbbTH.safeImage(url) : '';
+      if (thumb) { if (safe) thumb.src = safe; else thumb.removeAttribute('src'); }
+      if (wrap) wrap.hidden = !safe;
+    }
+    function pickBanner(upload){
+      if (typeof window.kbbPickMedia !== 'function') { say('The Media Library is not available.'); return; }
+      window.kbbPickMedia({
+        title: upload ? 'Upload a banner' : 'Choose the banner picture',
+        note: 'Best at 2400 \u00d7 600. It joins the Media Library; press Save category to keep it on this category.',
+        folder: 'categories',
+        upload: !!upload,
+        pickUploaded: !!upload,
+        onPick: function(urls){ if (urls && urls.length) { applyBannerImage(urls[0]); say('Banner picture chosen'); } }
+      });
+    }
+    var cblUp = document.getElementById('ct-cblup');
+    if (cblUp) cblUp.onclick = function(e){ e.preventDefault(); pickBanner(true); };
+    var cblLib = document.getElementById('ct-cbllib');
+    if (cblLib) cblLib.onclick = function(e){ e.preventDefault(); pickBanner(false); };
+    var cblDrop = document.getElementById('ct-cbldrop');
+    if (cblDrop) cblDrop.onclick = function(e){ e.preventDefault(); applyBannerImage(''); };
+    var cblBox = document.getElementById('ct-cblimg');
+    if (cblBox) cblBox.oninput = function(){ applyBannerImage(cblBox.value.trim()); };
+
     var state = document.getElementById('ct-hdrupstate');
 
     function applyHeaderImage(url){

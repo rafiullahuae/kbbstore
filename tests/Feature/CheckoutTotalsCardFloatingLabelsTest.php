@@ -343,7 +343,9 @@ it('renders the checkout byte for byte as before this lane with both switches of
     // this test goes on comparing what it was written to compare.
     // Lane AD's Emirate list ships ON too; OFF is its byte-for-byte way back
     // (AddressRegionsCheckoutTest), so it is set here for the same reason.
-    cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain', 'state_list' => false]);
+    // Lane PO's "Remember my details" ships ON too; OFF draws nothing
+    // (CheckoutPlaceOrderOnceTest), so it is set here for the same reason.
+    cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain', 'state_list' => false, 'remember_on' => false]);
     $cart = cdCart();
 
     $current = config('view.paths');

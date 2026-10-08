@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\DomainMove\ContentRewrite;
 use App\Services\DomainMove\DnsLookup;
 use App\Services\DomainMove\DomainReadiness;
 use App\Services\DomainMove\DomainSwitch;
@@ -49,6 +50,8 @@ final class DomainSwitchApiController extends Controller
     public const ACTIONS = [
         'check_old_dns', 'check_dns', 'check_tls', 'set_names', 'switch_address',
         'stripe', 'tabby', 'tamara', 'fetch_pictures', 'forward_on', 'remove_old',
+        // Lane DS: step 6b, old links in the shop's text.
+        'rewrite_content', 'undo_rewrite',
     ];
 
     public const AUDIT_EVENT = 'domain_switch';
@@ -79,6 +82,21 @@ final class DomainSwitchApiController extends Controller
         return $this->refuse($request) ?? response()->json($this->switch->pictures());
     }
 
+    /**
+     * GET /admin-api/domain-switch/rewrite -- step 6b's preview: every place an
+     * absolute link to the domain being left would change, counted, with a
+     * sample each. Reads only. (Lane DS)
+     */
+    public function rewritePreview(Request $request): JsonResponse
+    {
+        if ($refused = $this->refuse($request)) {
+            return $refused;
+        }
+
+        return response()->json(['ok' => true, 'can_apply' => $this->switch->addressSwitched()]
+            + ContentRewrite::forSwitch($this->switch)->preview());
+    }
+
     /** POST /admin-api/domain-switch/run {action, ...} */
     public function run(Request $request): JsonResponse
     {
@@ -104,6 +122,8 @@ final class DomainSwitchApiController extends Controller
             'fetch_pictures' => $this->fetchPictures(),
             'forward_on' => $this->forwardOn(),
             'remove_old' => $this->removeOld((string) ($data['confirm'] ?? '')),
+            'rewrite_content' => $this->rewriteContent((string) ($data['confirm'] ?? '')),
+            'undo_rewrite' => $this->undoRewrite(),
         };
 
         $body = (array) $response->getData(true);
@@ -389,6 +409,59 @@ final class DomainSwitchApiController extends Controller
         ]);
     }
 
+    /**
+     * Step 6b: old links in the shop's text -> the main address. (Lane DS)
+     *
+     * Only once the shop has switched (step 6): before that, kbeautybliss.com
+     * still opens WordPress, and a link pointed at it would leave this shop.
+     * The confirm value is the number of links the preview showed, so the
+     * button can only apply what the owner has just looked at.
+     */
+    private function rewriteContent(string $confirm): JsonResponse
+    {
+        if (! $this->switch->addressSwitched()) {
+            return $this->no(409, 'Do step 6 first. Until the shop has switched, '.$this->switch->newBare()
+                .' does not open this shop yet, and links pointed at it would send shoppers away.');
+        }
+
+        $rewrite = ContentRewrite::forSwitch($this->switch);
+        $preview = $rewrite->preview(0);
+
+        if ($preview['links'] === 0) {
+            return $this->ok(['message' => 'Nothing to change: no link in the shop’s text points at '.implode(', ', $rewrite->oldHosts()).'.']);
+        }
+
+        if ($confirm !== (string) $preview['links']) {
+            return $this->no(409, 'The shop changed since you looked. Press “Show what would change” again, then confirm.');
+        }
+
+        $result = $rewrite->apply();
+        app(CacheApiController::class)->clear(Request::create('/', 'POST', ['target' => 'all']));
+
+        return $this->ok([
+            'message' => 'Done. '.$result['links'].' link(s) in '.$result['rows'].' place(s) now point at https://'.$rewrite->newHost()
+                .'. Orders, customers and payment settings were not touched. “Undo” puts every one back.',
+            'rewrite' => $result,
+        ]);
+    }
+
+    private function undoRewrite(): JsonResponse
+    {
+        $result = ContentRewrite::forSwitch($this->switch)->undo();
+
+        if ($result['batch'] === null) {
+            return $this->ok(['message' => 'Nothing to undo.']);
+        }
+
+        app(CacheApiController::class)->clear(Request::create('/', 'POST', ['target' => 'all']));
+
+        return $this->ok([
+            'message' => 'Undone: '.$result['restored'].' place(s) put back as they were.'
+                .($result['kept'] > 0 ? ' '.$result['kept'].' were edited since and were left as they are now.' : ''),
+            'rewrite' => $result,
+        ]);
+    }
+
     /* ═════════════════════════════════════════════════════════ helpers ══ */
 
     /** SiteAddressApiController::save, with its validation; null on success. */
@@ -425,7 +498,7 @@ final class DomainSwitchApiController extends Controller
         app(SecurityModule::class)->record(self::AUDIT_EVENT, 'Domain switch: '.$action.($ok ? '' : ' (refused)'), [
             'subject' => 'domain_switch.'.$action,
             'after' => mb_substr($message, 0, 500),
-            'severity' => in_array($action, ['switch_address', 'remove_old', 'forward_on', 'set_names'], true) && $ok ? 'alert' : 'notice',
+            'severity' => in_array($action, ['switch_address', 'remove_old', 'forward_on', 'set_names', 'rewrite_content', 'undo_rewrite'], true) && $ok ? 'alert' : 'notice',
         ]);
     }
 

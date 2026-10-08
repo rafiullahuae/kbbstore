@@ -1,0 +1,147 @@
+{
+ "width": 1280,
+ "method": "stripe",
+ "scenario": "plain",
+ "locale": "en",
+ "reduced": false,
+ "landed": true,
+ "url": "/checkout/success",
+ "marks": [
+  [
+   0,
+   "press",
+   ""
+  ],
+  [
+   27,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   27,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   27,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   27,
+   "box-added",
+   "kbb-placing is-up"
+  ],
+  [
+   27,
+   "box-title",
+   "Placing your order…"
+  ],
+  [
+   27,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   28,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   28,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   28,
+   "box-class",
+   "kbb-placing is-up"
+  ],
+  [
+   459,
+   "stripe-confirm-start",
+   ""
+  ],
+  [
+   1087,
+   "stripe-confirm-end",
+   ""
+  ],
+  [
+   1089,
+   "box-title",
+   "Order placed"
+  ],
+  [
+   1089,
+   "box-class",
+   "kbb-placing is-up is-done"
+  ]
+ ],
+ "requests": [
+  {
+   "url": "/checkout/place",
+   "status": 200,
+   "serverMs": 413.7,
+   "queries": 29,
+   "stripeMs": 300.2,
+   "mailMs": 0,
+   "start": 34,
+   "ttfb": 453,
+   "end": 464
+  },
+  {
+   "url": "/checkout/card/paid",
+   "status": 200,
+   "serverMs": 359.4,
+   "queries": 17,
+   "stripeMs": 300.1,
+   "mailMs": 0,
+   "start": 1093,
+   "ttfb": 1454,
+   "end": 1465
+  },
+  {
+   "url": "/checkout/success",
+   "status": 200,
+   "serverMs": 74.4,
+   "queries": 10,
+   "stripeMs": 0,
+   "mailMs": 0,
+   "start": 1488,
+   "ttfb": 1571,
+   "end": 1613
+  }
+ ],
+ "thankYou": {
+  "navStart": 1471,
+  "requestStart": 1491,
+  "responseStart": 1571,
+  "responseEnd": 1598,
+  "fcp": 1971
+ },
+ "boxOpenedTimes": 1,
+ "boxRemovedTimes": 0,
+ "toasts": [],
+ "errors": [],
+ "frames": [
+  -135,
+  -65,
+  2,
+  91,
+  380,
+  599,
+  768,
+  980,
+  1248,
+  1443,
+  1862,
+  2006,
+  2040,
+  2090,
+  2202,
+  2294,
+  2341,
+  2407
+ ]
+}

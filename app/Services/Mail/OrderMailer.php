@@ -65,6 +65,88 @@ class OrderMailer
     ) {}
 
     // ------------------------------------------------------------------
+    // AFTER THE RESPONSE, ON THE CHECKOUT'S OWN REQUESTS (Lane PO).
+    //
+    // Every send below talks to a mail server -- Gmail's SMTP relay or this
+    // host's MTA -- and every one used to happen INSIDE the shopper's request.
+    // Cash on delivery sent two (the receipt and the merchant alert) before
+    // place() answered, and the card's confirmation sent the receipt before the
+    // shopper could see the thank-you page. On Gmail that is a TLS handshake, a
+    // login and a DATA exchange per message: the measured preview, with a
+    // 600 ms stand-in per message, had place() at 1,313 ms of which 1,200 was
+    // mail.
+    //
+    // NOT A QUEUE -- the header above says why there must not be one. It is
+    // app()->terminating(), which Laravel runs after Symfony's send() has
+    // called fastcgi_finish_request(): the shopper has the answer and the PHP
+    // worker carries on into the mail, in the same process, with the same
+    // try/catch around each send. OwnerAppEvents and OwnerAppAlerts already
+    // send this way on the same host.
+    //
+    // OPT-IN PER REQUEST, never global. Only the checkout's place() and its
+    // order-received page switch it on; every admin screen that reports
+    // "sent" or "failed" back to the owner (resend, on-hold, invoice) still
+    // sends in line, because their answer is the point.
+    //
+    // ARMED ONCE PER CONTAINER: terminating callbacks are not cleared after
+    // they run, so one per call would resend earlier mail at every later
+    // terminate in a long-lived process (OwnerAppAlerts' note).
+    // ------------------------------------------------------------------
+
+    private static bool $deferring = false;
+
+    /** @var list<callable> */
+    private static array $pending = [];
+
+    /** From here to the end of this request, order mail goes after the response. */
+    public static function deferUntilResponse(): void
+    {
+        self::$deferring = true;
+
+        try {
+            $app = app();
+            if (! $app->bound('kbb.order-mail.armed')) {
+                $app->instance('kbb.order-mail.armed', true);
+                $app->terminating(static fn () => self::flushDeferred());
+            }
+        } catch (\Throwable) {
+            // No container to wait for: send in line, as before.
+            self::$deferring = false;
+        }
+    }
+
+    /** Drop what is waiting without sending it -- a test's reset, never the shop's. */
+    public static function forget(): void
+    {
+        self::$deferring = false;
+        self::$pending = [];
+    }
+
+    /** Whether a send right now would wait for the response. */
+    public static function deferring(): bool
+    {
+        return self::$deferring;
+    }
+
+    /** Send what waited. Returns how many sends ran. Cannot throw. */
+    public static function flushDeferred(): int
+    {
+        self::$deferring = false;
+        $todo = self::$pending;
+        self::$pending = [];
+
+        foreach ($todo as $send) {
+            try {
+                $send();
+            } catch (\Throwable) {
+                // send() logs its own failures; nothing here may reach the shopper.
+            }
+        }
+
+        return count($todo);
+    }
+
+    // ------------------------------------------------------------------
     // The switches. One literal key each — see the class header.
     // ------------------------------------------------------------------
 
@@ -878,6 +960,12 @@ class OrderMailer
     /** @return bool  true when the message was handed to the transport without an exception. */
     private function send(callable $build, string $to, Order $order, string $kind, bool $inOrderLocale = true): bool
     {
+        if (self::$deferring) {
+            self::$pending[] = fn () => $this->send($build, $to, $order, $kind, $inOrderLocale);
+
+            return true;
+        }
+
         /*
          * Asked again here, although all three callers have asked already. This
          * is the backstop for the SIXTH send, written next month by somebody

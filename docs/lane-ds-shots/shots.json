@@ -1,0 +1,116 @@
+{
+  "390": {
+    "outboundOnOpen": 0,
+    "payCheckMs": 209,
+    "pay": {
+      "dots": [
+        "red",
+        "green",
+        "green",
+        "green",
+        "red",
+        "green",
+        "green",
+        "red",
+        "green",
+        "green",
+        "red",
+        "green",
+        "green",
+        "amber",
+        "green",
+        "green",
+        "red",
+        "red",
+        "green",
+        "amber",
+        "green",
+        "red",
+        "green",
+        "red",
+        "green",
+        "green",
+        "green",
+        "green"
+      ],
+      "text": "1b\nPayments ready?\n✕ Needs attention\n\nAsks Stripe, Tabby and Tamara, with the keys the shop holds, whether everything is set for kbeautybliss.com, and checks cash on delivery. It only reads: nothing is changed at any provider. Run it before the switch, and again after step 7.\n\nCheck everything again\n\nChecked 10/8/2026, 8:32:27 AM · 17 green, 2 amber, 5 red · main address kbeautybliss.com.\n\nCard (Stripe)\nFix this\nOffered at checkout: Card payment is switched on. Mode: Live.\nKeys: Secret key …Cd34 and publishable key …Ab12 are both LIVE keys, matching Mode.\nStripe account: Reachable (K-Beauty Bliss), and Stripe allows it to take payments.\nWebhook: Still points at extrabeauty.ae (https://extrabeauty.ae/api/payments/webhook/stripe/…cdef), not at kbeautybliss.com.\n→ Press “Set up webhook automatically” in Store → Payments → Stripe (or step 7 of this page).\nWebhook events: Listens to all 7 events the shop acts on.\nSigning secret: Present, so the shop can prove a notice really came from Stripe.\nApple Pay / Google Pay · kbeautybliss.com: kbeautybliss.com is not registered with Stripe for wallets, so the Apple Pay button will not show there.\n→ Stripe dashboard → Settings → Payment method domains → Add kbeautybliss.com.\nCard statement text: Valid: “K-Beauty Bliss”.\nLast card payment: No card payment has been tried yet.\nTabby\nFix this\nOffered at checkout: Tabby is switched on.\nKeys: Secret key …view and public key …view are both SANDBOX keys.\nMode: These are sandbox keys: no real instalment is taken.\n→ Paste your live keys in Store → Payments → Tabby when your test orders pass.\nMerchant code: AE (from the shop’s currency).\nTabby account: Tabby accepted the secret key for AE.\nWebhook: Still points at extrabeauty.ae (https://extrabeauty.ae/api/payments/webhook/tabby/…cdef), not at kbeautybliss.com.\n→ Press “Register / re-sync” in Store → Gateway webhooks → Tabby (or step 7 of this page).\nTamara\nFix this\nOffered at checkout: Tamara is switched on.\nMode: Sandbox: the shop talks to api-sandbox.tamara.co and no real plan is taken.\n→ Switch Mode to Live in Store → Payments → Tamara (with your live token) when your test orders pass.\nNotification token: Present, so the shop can check a notice really came from Tamara.\nTamara account: Tamara’s SANDBOX server refused the API token …view.\n→ A sandbox token works only with Mode = Sandbox, a live one only with Live. Fix the token or Mode in Store → Payments → Tamara.\nOrder notices: Points at https://kbeautybliss.com/api/payments/webhook/tamara/…cdef, the main address.\nWebhook: Tamara no longer knows the registration this shop holds.\n→ Press “Remove the registration”, then “Register the webhook” in Store → Gateway webhooks → Tamara (or step 7 of this page).\nCash on delivery\nAll good\nOffered at checkout: Cash on delivery is switched on.\nFee: AED 10 per order.\nLimits: No lower or upper limit: offered on every basket."
+    },
+    "rw": {
+      "text": "6b\nOld links in the shop’s text\n● To do\n\nProduct descriptions, articles, pages, menus, banners, footer and email templates that still link to extrabeauty.ae are pointed at kbeautybliss.com. Orders, customers and payment settings are never touched, and Undo puts everything back.\n\nLook again\n7 link(s) in 4 place(s) would change to https://kbeautybliss.com/… — the same page on the new address.\nProducts · description\nid 26\n<p>See also <a href=\"https://extrabeauty.ae/shop/old-cream/\">our old cream</a>.</p>\n<p>See also <a href=\"https://kbeautybliss.com/shop/old-cream/\">our old cream</a>.</p>\nid 27\n… it with our <a href=\"https://extrabeauty.ae/collections/toners/\">toners</a> and read <a h…\n… it with our <a href=\"https://kbeautybliss.com/collections/toners/\">toners</a> and read <a…\n4\nPages · content\nid 8\n…estions? See <a href=\"https://extrabeauty.ae/faq/\">our FAQ</a>.</p>\n…estions? See <a href=\"https://kbeautybliss.com/faq/\">our FAQ</a>.</p>\n1\nShop settings (header, footer, banners, …) · value\nsetting footer_copy\n…op online at <a href=\"https://extrabeauty.ae/\">extrabeauty.ae</a> · <a href=\"https://www.…\n…op online at <a href=\"https://kbeautybliss.com/\">extrabeauty.ae</a> · <a href=\"https://kb…\n2\nChange these 7 links\n\nLeft alone on purpose: 1 payment or security setting(s), 0 packed value(s). Email addresses and the name in a sentence are never changed.",
+      "apply": true
+    },
+    "metrics": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "errors": [],
+    "outbound": [
+      "GET https://api.stripe.com/v1/account",
+      "GET https://api.stripe.com/v1/webhook_endpoints/we_preview",
+      "GET https://api.stripe.com/v1/payment_method_domains?domain_name=kbeautybliss.com",
+      "GET https://api.tabby.ai/api/v1/webhooks",
+      "GET https://api-sandbox.tamara.co/checkout/payment-types?country=AE&currency=AED",
+      "GET https://api-sandbox.tamara.co/webhooks/tw-preview-1"
+    ]
+  },
+  "1280": {
+    "outboundOnOpen": 0,
+    "payCheckMs": 138,
+    "pay": {
+      "dots": [
+        "red",
+        "green",
+        "green",
+        "green",
+        "red",
+        "green",
+        "green",
+        "red",
+        "green",
+        "green",
+        "red",
+        "green",
+        "green",
+        "amber",
+        "green",
+        "green",
+        "red",
+        "red",
+        "green",
+        "amber",
+        "green",
+        "red",
+        "green",
+        "red",
+        "green",
+        "green",
+        "green",
+        "green"
+      ],
+      "text": "1b\nPayments ready?\n✕ Needs attention\n\nAsks Stripe, Tabby and Tamara, with the keys the shop holds, whether everything is set for kbeautybliss.com, and checks cash on delivery. It only reads: nothing is changed at any provider. Run it before the switch, and again after step 7.\n\nCheck everything again\n\nChecked 10/8/2026, 8:32:37 AM · 17 green, 2 amber, 5 red · main address kbeautybliss.com.\n\nCard (Stripe)\nFix this\nOffered at checkout: Card payment is switched on. Mode: Live.\nKeys: Secret key …Cd34 and publishable key …Ab12 are both LIVE keys, matching Mode.\nStripe account: Reachable (K-Beauty Bliss), and Stripe allows it to take payments.\nWebhook: Still points at extrabeauty.ae (https://extrabeauty.ae/api/payments/webhook/stripe/…cdef), not at kbeautybliss.com.\n→ Press “Set up webhook automatically” in Store → Payments → Stripe (or step 7 of this page).\nWebhook events: Listens to all 7 events the shop acts on.\nSigning secret: Present, so the shop can prove a notice really came from Stripe.\nApple Pay / Google Pay · kbeautybliss.com: kbeautybliss.com is not registered with Stripe for wallets, so the Apple Pay button will not show there.\n→ Stripe dashboard → Settings → Payment method domains → Add kbeautybliss.com.\nCard statement text: Valid: “K-Beauty Bliss”.\nLast card payment: No card payment has been tried yet.\nTabby\nFix this\nOffered at checkout: Tabby is switched on.\nKeys: Secret key …view and public key …view are both SANDBOX keys.\nMode: These are sandbox keys: no real instalment is taken.\n→ Paste your live keys in Store → Payments → Tabby when your test orders pass.\nMerchant code: AE (from the shop’s currency).\nTabby account: Tabby accepted the secret key for AE.\nWebhook: Still points at extrabeauty.ae (https://extrabeauty.ae/api/payments/webhook/tabby/…cdef), not at kbeautybliss.com.\n→ Press “Register / re-sync” in Store → Gateway webhooks → Tabby (or step 7 of this page).\nTamara\nFix this\nOffered at checkout: Tamara is switched on.\nMode: Sandbox: the shop talks to api-sandbox.tamara.co and no real plan is taken.\n→ Switch Mode to Live in Store → Payments → Tamara (with your live token) when your test orders pass.\nNotification token: Present, so the shop can check a notice really came from Tamara.\nTamara account: Tamara’s SANDBOX server refused the API token …view.\n→ A sandbox token works only with Mode = Sandbox, a live one only with Live. Fix the token or Mode in Store → Payments → Tamara.\nOrder notices: Points at https://kbeautybliss.com/api/payments/webhook/tamara/…cdef, the main address.\nWebhook: Tamara no longer knows the registration this shop holds.\n→ Press “Remove the registration”, then “Register the webhook” in Store → Gateway webhooks → Tamara (or step 7 of this page).\nCash on delivery\nAll good\nOffered at checkout: Cash on delivery is switched on.\nFee: AED 10 per order.\nLimits: No lower or upper limit: offered on every basket."
+    },
+    "rw": {
+      "text": "6b\nOld links in the shop’s text\n● To do\n\nProduct descriptions, articles, pages, menus, banners, footer and email templates that still link to extrabeauty.ae are pointed at kbeautybliss.com. Orders, customers and payment settings are never touched, and Undo puts everything back.\n\nLook again\n7 link(s) in 4 place(s) would change to https://kbeautybliss.com/… — the same page on the new address.\nWHERE\tLINKS\nProducts · description\nid 26\n<p>See also <a href=\"https://extrabeauty.ae/shop/old-cream/\">our old cream</a>.</p>\n<p>See also <a href=\"https://kbeautybliss.com/shop/old-cream/\">our old cream</a>.</p>\nid 27\n… it with our <a href=\"https://extrabeauty.ae/collections/toners/\">toners</a> and read <a h…\n… it with our <a href=\"https://kbeautybliss.com/collections/toners/\">toners</a> and read <a…\n\t4\nPages · content\nid 8\n…estions? See <a href=\"https://extrabeauty.ae/faq/\">our FAQ</a>.</p>\n…estions? See <a href=\"https://kbeautybliss.com/faq/\">our FAQ</a>.</p>\n\t1\nShop settings (header, footer, banners, …) · value\nsetting footer_copy\n…op online at <a href=\"https://extrabeauty.ae/\">extrabeauty.ae</a> · <a href=\"https://www.…\n…op online at <a href=\"https://kbeautybliss.com/\">extrabeauty.ae</a> · <a href=\"https://kb…\n\t2\nChange these 7 links\n\nLeft alone on purpose: 1 payment or security setting(s), 0 packed value(s). Email addresses and the name in a sentence are never changed.",
+      "apply": true
+    },
+    "metrics": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280
+    },
+    "errors": [],
+    "outbound": [
+      "GET https://api.stripe.com/v1/account",
+      "GET https://api.stripe.com/v1/webhook_endpoints/we_preview",
+      "GET https://api.stripe.com/v1/payment_method_domains?domain_name=kbeautybliss.com",
+      "GET https://api.tabby.ai/api/v1/webhooks",
+      "GET https://api-sandbox.tamara.co/checkout/payment-types?country=AE&currency=AED",
+      "GET https://api-sandbox.tamara.co/webhooks/tw-preview-1",
+      "GET https://api.stripe.com/v1/account",
+      "GET https://api.stripe.com/v1/webhook_endpoints/we_preview",
+      "GET https://api.stripe.com/v1/payment_method_domains?domain_name=kbeautybliss.com",
+      "GET https://api.tabby.ai/api/v1/webhooks",
+      "GET https://api-sandbox.tamara.co/checkout/payment-types?country=AE&currency=AED",
+      "GET https://api-sandbox.tamara.co/webhooks/tw-preview-1"
+    ]
+  }
+}

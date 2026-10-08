@@ -1,0 +1,147 @@
+{
+ "width": 390,
+ "method": "stripe",
+ "scenario": "plain",
+ "locale": "en",
+ "reduced": false,
+ "landed": true,
+ "url": "/checkout/success",
+ "marks": [
+  [
+   0,
+   "press",
+   ""
+  ],
+  [
+   19,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   19,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   19,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   19,
+   "box-added",
+   "kbb-placing is-up"
+  ],
+  [
+   19,
+   "box-title",
+   "Placing your order…"
+  ],
+  [
+   19,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   19,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   19,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   19,
+   "box-class",
+   "kbb-placing is-up"
+  ],
+  [
+   437,
+   "stripe-confirm-start",
+   ""
+  ],
+  [
+   1083,
+   "stripe-confirm-end",
+   ""
+  ],
+  [
+   1084,
+   "box-title",
+   "Order placed"
+  ],
+  [
+   1085,
+   "box-class",
+   "kbb-placing is-up is-done"
+  ]
+ ],
+ "requests": [
+  {
+   "url": "/checkout/place",
+   "status": 200,
+   "serverMs": 403.8,
+   "queries": 29,
+   "stripeMs": 300.2,
+   "mailMs": 0,
+   "start": 21,
+   "ttfb": 430,
+   "end": 435
+  },
+  {
+   "url": "/checkout/card/paid",
+   "status": 200,
+   "serverMs": 370.5,
+   "queries": 17,
+   "stripeMs": 300.3,
+   "mailMs": 0,
+   "start": 1086,
+   "ttfb": 1461,
+   "end": 1466
+  },
+  {
+   "url": "/checkout/success",
+   "status": 200,
+   "serverMs": 43.4,
+   "queries": 10,
+   "stripeMs": 0,
+   "mailMs": 0,
+   "start": 1488,
+   "ttfb": 1533,
+   "end": 1548
+  }
+ ],
+ "thankYou": {
+  "navStart": 1466,
+  "requestStart": 1488,
+  "responseStart": 1533,
+  "responseEnd": 1535,
+  "fcp": 1834
+ },
+ "boxOpenedTimes": 1,
+ "boxRemovedTimes": 0,
+ "toasts": [],
+ "errors": [],
+ "frames": [
+  -137,
+  -18,
+  155,
+  330,
+  436,
+  558,
+  681,
+  837,
+  977,
+  1160,
+  1308,
+  1507,
+  1805,
+  1929,
+  2044,
+  2179,
+  2298,
+  2412
+ ]
+}

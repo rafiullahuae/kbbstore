@@ -312,10 +312,18 @@ class OrderNumbers
      */
     private function resync(): void
     {
+        /*
+         * ONE scan, not two (Lane PO). This read seedValue() twice -- once for
+         * the guard and once for the value -- so every Place order walked the
+         * whole order table twice. Measured on the checkout preview with 2,400
+         * orders: place() 321 ms of our own time, 130 ms with an empty table.
+         */
+        $seed = self::seedValue();
+
         DB::table(self::TABLE)
             ->where('id', self::ROW_ID)
-            ->where('next_number', '<', self::seedValue())
-            ->update(['next_number' => self::seedValue()]);
+            ->where('next_number', '<', $seed)
+            ->update(['next_number' => $seed]);
     }
 
     /**
@@ -354,9 +362,16 @@ class OrderNumbers
     {
         $highest = self::FIRST_NUMBER - 1;
 
+        /*
+         * toBase(): plain rows, not Order models (Lane PO). One column is read
+         * and compared; hydrating a model per row -- casts, attribute arrays,
+         * the lot -- was most of what this scan cost. withTrashed() is applied
+         * first, so trashed orders still count, exactly as before.
+         */
         Order::withTrashed()
             ->select('order_number')
             ->orderBy('id')
+            ->toBase()
             ->chunk(1000, function ($rows) use (&$highest) {
                 foreach ($rows as $row) {
                     $number = trim((string) $row->order_number);

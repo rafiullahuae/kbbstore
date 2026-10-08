@@ -27,27 +27,44 @@
     aria-expanded and aria-controls, both labels printed and one shown by the
     button's own state, so the script only flips aria-expanded and a class
     (tabs.js initReadMore). Nothing is measured, and nothing moves on load.
+
+    LANE CB. The same header on a CATEGORY page: called with `$panelCategory` and
+    BrandPanel::forCategory()'s $panel instead of `$brand`. The words are the
+    category's (the panel's own `heading`), the picture is a <picture> with
+    its img-cache srcset and, when the category has one, its phone picture
+    (store/partials/category-panel-picture), and the "logo" is the category's
+    own square picture behind the same switches. The brand page's branch
+    below is untouched, byte for byte.
 --}}
 <div class="brw-phw" data-kbb-brand-header>
 <section class="{{ $panel['class'] }}" style="{{ $panel['style'] }}" aria-labelledby="brw-ph-title">
 <div class="brw-ph__media">
-@if ($panel['image'] !== null)
+@if (isset($panelCategory))
+@include('store.partials.category-panel-picture', ['panel' => $panel])
+@elseif ($panel['image'] !== null)
 <img class="brw-ph__img" src="{{ $panel['image'] }}" alt="" width="{{ \App\Support\TitleHeader::IMG_WIDTH }}" height="{{ \App\Support\TitleHeader::IMG_HEIGHT }}" decoding="async" fetchpriority="high">
 @endif
 </div>
 <div class="brw-ph__panel">
 <div class="brw-ph__id">
+@if (isset($panelCategory))
+@if ($panel['logo'] ?? false)
+<span class="brw-logo brw-logo--lg">@if ($panel['logo_image'] !== null)<img src="{{ $panel['logo_image'] }}" alt="" decoding="async">@else<span class="brw-initial">{{ mb_strtoupper(mb_substr($panel['heading'], 0, 1)) }}</span>@endif</span>
+@endif
+<h1 class="brw-ph__name" id="brw-ph-title">{{ $panel['heading'] }}</h1>
+@else
 @if ($panel['logo'] ?? true)
 @include('store.partials.brand-logo', ['brand' => $brand, 'ring' => $ring ?? false, 'ringHex' => $ringHex ?? null])
 @endif
 <h1 class="brw-ph__name" id="brw-ph-title">{{ $brand->t('name') }}</h1>
+@endif
 </div>
 @if (($panel['description'] ?? '') !== '' && ($panel['more'] ?? false))
 <div class="brw-ph__desc brw-desc"><div class="brw-ph__clamp" id="brw-ph-text">{!! $panel['description'] !!}</div><button class="brw-ph__more" type="button" aria-expanded="false" aria-controls="brw-ph-text" data-brw-more><span class="brw-ph__more-o">{{ __('store.brands.read_more') }}</span><span class="brw-ph__more-c">{{ __('store.brands.read_less') }}</span></button></div>
 @elseif (($panel['description'] ?? '') !== '')
 <div class="brw-ph__desc brw-desc">{!! $panel['description'] !!}</div>
 @endif
-@if ($cta ?? false)
+@if (($cta ?? false) && ! isset($panelCategory))
 <a class="brw-cta brw-ph__cta" href="{{ $brand->filterUrl() }}">{{ __('store.brands.shop_all', ['brand' => $brand->t('name')]) }}</a>
 @endif
 </div>

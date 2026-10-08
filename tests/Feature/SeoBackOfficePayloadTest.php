@@ -62,6 +62,12 @@ use Tests\Support\KeyOrder;
  * SeoRowPreviewScreenTest, which reads the partial and requires that the
  * three ids it posts are exactly the three it posted before.
  */
+/*
+ * ▲ Lane CB advanced the fixture by one key and nothing else: each recorded
+ * category carries `header_layout` (null) -- the category banner's own layout,
+ * Catalog -> Categories -> Edit -> Category header -> Banner layout -- the way
+ * Lane SX's `sold_out_mode` was added. Spliced in, not re-recorded.
+ */
 function s7PayloadUrls(): array
 {
     return ['settings', 'categories', 'brands'];

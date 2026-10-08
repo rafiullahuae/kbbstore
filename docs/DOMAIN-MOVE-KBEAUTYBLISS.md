@@ -481,9 +481,17 @@ Things that can only fade, not be switched:
   reports them gone.
 - **Owner app phones.** Sign in again on kbeautybliss.com and reinstall; then
   revoke the old devices in Platform → Users & Roles → Owner app.
-- **Logged-in customers and baskets.** Cookies belong to a domain; everybody is
-  signed out once and a guest basket started on extrabeauty.ae is not carried
-  across.
+- **Logged-in customers.** Cookies belong to a domain; everybody is signed out
+  once. Deliberately not carried: a login in a URL is a login that can be
+  stolen from a URL. A signed-in customer's basket belongs to their account,
+  so it is back the moment they sign in on kbeautybliss.com.
+- **Guest baskets, wishlists, recently viewed — CARRIED (Lane DS).** While
+  forwarding is on, a shopper opening a page on extrabeauty.ae with a guest
+  basket (or wishlist / recently viewed) is sent across with a one-time,
+  2-minute, signed token; kbeautybliss.com restores the cookies and
+  immediately redirects to the clean address. Search engines, assets and
+  cookie-less visits get exactly the 301 they always got. See
+  "Appendix · nothing lost in the switch" below.
 
 ### E3 · Old WordPress addresses — what this shop answers (measured)
 
@@ -608,3 +616,97 @@ the second one suggests typing the new main address as an old one (harmless:
 `aliases()` drops the main address, but confusing). Its help line "The www /
 non-www pair of your main address is handled automatically" could now say "of
 your main address and of each old address".
+
+---
+
+## Appendix · nothing lost in the switch (Lane DS, 8 October 2026)
+
+The owner: *"also make sure, no any data or settings should be gone after
+domain switch."* Audited in the code, not assumed.
+
+### Server side — follows the main address by itself
+
+Same server, same database, same `APP_KEY`: every row, setting, upload,
+img-cache file, order, customer, encrypted payment key (`payment_providers.config`
+is `encrypted:array` under `APP_KEY`), password hash and push key survives
+untouched. Nothing is keyed by host:
+
+| item | how it is built | after the switch |
+|---|---|---|
+| cache keys | `CACHE_PREFIX` from `APP_NAME`; no key contains a host (grep `getHost()` in app/) | unchanged; step 6 clears caches anyway |
+| settings | one global `settings` table, no per-host rows | unchanged |
+| `SiteHost` | main / old addresses are settings | step 2 sets them |
+| emails, canonical, hreflang, sitemap, robots, IndexNow, Open Graph | `APP_URL` / Site URL at render or send time | follows step 6 |
+| payment return URLs, Tamara IPN URL | `Url::external()` at request time | follows step 6 |
+| Stripe / Tabby / Tamara **webhooks** | registered at the provider | step 7's buttons; step 1b proves it |
+| Apple Pay domain | registered at Stripe | **you**: Stripe → Payment method domains (step 1b says if missing) |
+| Instagram callback / Stripe Connect redirect | built from `APP_URL`, registered at Meta / Stripe | **you**: Meta app redirect URI (step 7 shows the value); Connect only if used |
+| owner app "Own host" | a setting | step 11 clears it if on the old domain |
+| PWA manifest, service worker | relative `start_url` / `scope` | per origin by nature (see below) |
+| customer link signatures, unsubscribe tokens | no host inside | old email links keep working through the 301 |
+| absolute `https://extrabeauty.ae/…` in content | stored text | **step 6b** rewrites them (preview, undo) |
+| web-root files (robots.txt, .htaccess, …) | on disk, served before the shop | `kbb:domain-check` now reads them (RISK / TODO) |
+| `ASSET_URL` | `.env` | `kbb:domain-check` now flags it if on the old domain |
+
+### Content naming the old domain — step 6b
+
+Platform → Domain switch → **6b · Old links in the shop's text**: *Show what
+would change* (counts and before/after samples per place) → *Change these N
+links* (only after step 6, confirms the exact count it showed) → *Undo* (puts
+every cell back unless it was edited since). Content tables only — products,
+articles, pages, blocks, menus, banners, email and marketing templates,
+redirect targets, translations, media, settings. Never orders, payments,
+payment providers, customers or sent mail; never a settings key about
+payments, security or the addresses themselves; never an email address or the
+bare name in a sentence. The undo record is `domain_content_rewrites`.
+
+### Browser side — per domain by nature
+
+| state | where it lives | carried? |
+|---|---|---|
+| guest basket | `kbb_cart` cookie (encrypted) | **yes**, by the handoff |
+| wishlist | `kbb_wishlist` cookie | **yes**, merged |
+| recently viewed | `kbb_viewed` cookie | **yes**, merged |
+| customer login | session cookie | **no**, on purpose; sign in again; their basket follows the account |
+| admin login | session cookie | no; sign in again |
+| consent banner | — | the shop has none |
+| currency / language | AED only; language is in the path (`/ar/`) | the 301 keeps the path |
+| timezone hint `kbb_tz`, filter memory `kbb_filters`, review votes, video likes | cookies | no — rebuilt on the next visit, nothing lost that matters |
+| WhatsApp button "closed", "frequently bought" seen | localStorage | no — cosmetic |
+| "remember my details" (if Lane PO ships it in localStorage) | localStorage | no — a server redirect cannot read localStorage |
+| installed shop app (PWA) and its push subscription | the origin it was installed from | **no**: keeps working through the forward (taps open extrabeauty.ae → 301); reinstall from kbeautybliss.com. Covered by the 2–4 week forward |
+| owner app on phones | its own origin | no: sign in and reinstall (checklist step 24) |
+
+### The handoff, and why the 301 stays clean for Google
+
+`CanonicalHost` → `DomainHandoff::forward()`. On an old address with
+forwarding ON:
+
+- **Everything except a shopper's page navigation carrying a basket cookie**
+  gets the unchanged `301` to the same path and query. Googlebot and Bingbot
+  crawl without cookies, so they always get it; a bot User-Agent, `HEAD`,
+  any `Accept` that is not HTML, `Sec-Fetch-Dest` other than `document`, a
+  prefetch, a path with a file extension and `/api/` get it too.
+- **A shopper's GET of a page with a guest basket / wishlist / recently viewed**
+  gets `302`, `Cache-Control: no-store, private`, `Referrer-Policy: no-referrer`,
+  to the same address plus `?kbb_handoff=<token>`. 302 and not 301 because a
+  301 is cacheable: a browser or Varnish keeping it would replay a one-time
+  token. No crawler ever receives this hop, so the permanent-move signal is
+  exactly as strong as before.
+- **The token**: `base64url(JSON).base64url(HMAC-SHA256)`, key derived from
+  `APP_KEY`; payload = target host, expiry (120 s), 128-bit nonce, the basket's
+  numeric id (never its token), wishlist and viewed ids. Only active **guest**
+  baskets with at least one line.
+- **On kbeautybliss.com** a request with `kbb_handoff` is never rendered: a
+  `302` (no-store, no-referrer, noindex) to the same address without it. Only
+  if the MAC is right, it has not expired, the host matches and the nonce has
+  never been spent (atomic `Cache::add`) are the cookies set. An existing
+  basket on the new domain is never replaced. Forged, expired, replayed or
+  wrong-host tokens get the same clean redirect and nothing else.
+- **Cost**: on every normal page, one array lookup; no query, no settings read.
+  The issue side runs only on requests already being forwarded.
+- **Limit**: if a cache in front (Varnish) served a stored 301 to a shopper,
+  that shopper simply arrives without the basket — the state before this change.
+
+Tests: `tests/Feature/DomainHandoffTest.php`, `ContentRewriteTest.php`,
+`PaymentsReadinessTest.php`.

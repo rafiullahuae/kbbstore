@@ -50,6 +50,10 @@ function bcSet(array $values): void
     SettingsService::forgetMemo();
 }
 
+/** Lane CB: the clamp breadcrumbCss() adds to every device the trail is on. */
+const BC_NO_RISE = ':root body .brw-crumb+.brw-phw .brw-ph{margin-top:max(0px,calc(var(--brw-ph-st,22px) - 22px))}'
+    .'@container (max-width:599px){:root body .brw-crumb+.brw-phw .brw-ph{margin-top:max(0px,calc(var(--brw-ph-stm,22px) - 22px))}}';
+
 /** One `<style id="kbb-crumbs">…</style>` from a document, or null. */
 function bcStyle(string $html): ?string
 {
@@ -210,16 +214,19 @@ it('switches phones and desktop independently, with each width its own spacing',
 
     $css = app(HeaderSettings::class)->breadcrumbCss();
     $sel = ':root body :is(.crumb,.brw-crumb,.rtn-crumb)';
+    // Lane CB: wherever the trail is ON, the brand banner after it may not
+    // rise over it (CrumbBannerOverlapTest has the defect and the numbers).
+    $noRise = BC_NO_RISE;
 
     expect($css)->toBe(
         '@media (max-width:900px){'.$sel.'{display:none}'.$sel.'+:is(.eyebrow,.sh){margin-top:6px}}'
-        .'@media (min-width:901px){'.$sel.'{margin-top:0;margin-bottom:0;padding-top:30px;padding-bottom:12px}}'
+        .'@media (min-width:901px){'.$sel.'{margin-top:0;margin-bottom:0;padding-top:30px;padding-bottom:12px}'.$noRise.'}'
     );
 
     bcSet(['bc_mobile' => true, 'bc_desktop' => false]);
 
     expect(app(HeaderSettings::class)->breadcrumbCss())->toBe(
-        '@media (max-width:900px){'.$sel.'{margin-top:0;margin-bottom:0;padding-top:6px;padding-bottom:6px}}'
+        '@media (max-width:900px){'.$sel.'{margin-top:0;margin-bottom:0;padding-top:6px;padding-bottom:6px}'.$noRise.'}'
         .'@media (min-width:901px){'.$sel.'{display:none}'.$sel.'+:is(.eyebrow,.sh){margin-top:30px}}'
     );
 
@@ -293,7 +300,9 @@ it('draws the six controls on Appearance → Header → Breadcrumbs', function (
 
     $fields = collect($tabs['crumbs']['fields'])->keyBy('key');
 
-    expect($fields->keys()->all())->toBe(['bc_mobile', 'bc_desktop', 'bc_above_mobile', 'bc_below_mobile', 'bc_above', 'bc_below'])
+    // Ten since Lane CB: each device's inner padding, top/bottom and left/right.
+    expect($fields->keys()->all())->toBe(['bc_mobile', 'bc_desktop', 'bc_above_mobile', 'bc_below_mobile', 'bc_pad_y_mobile', 'bc_pad_x_mobile',
+        'bc_above', 'bc_below', 'bc_pad_y', 'bc_pad_x'])
         ->and($fields['bc_mobile']['type'])->toBe('bool')
         ->and($fields['bc_mobile']['value'])->toBeFalse()
         ->and($fields['bc_desktop']['value'])->toBeFalse()

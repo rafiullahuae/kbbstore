@@ -96,6 +96,10 @@
  *   correct: this screen's dialect is the plain `(bool)` cast, the same one the
  *   eleven flag-bar keys beside it already answer with.
  *
+ *   Lane PO added ONE -- `remember_on`, Appearance → Checkout page → Fields
+ *   & attention → "Remember shopper details on this device" -- the same way:
+ *   ELEVEN LINES INSERTED after `browsed_on`'s, 0 MODIFIED, 0 REMOVED.
+ *
  *   Lane PG2 (the gallery lane) added ONE — `photo_placeholder`, Appearance
  *   → Product styles → Layout → Photo loading placeholder — the same way:
  *   FOUR LINES INSERTED after `image_ratio`'s, 0 MODIFIED, 0 REMOVED; a

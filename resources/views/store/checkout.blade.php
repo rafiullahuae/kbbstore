@@ -100,7 +100,7 @@
 
                     <!-- 1 · Contact -->
                     <div class="sec">
-                        <h2><span class="n">1</span> {{ __('store.checkout.step_contact') }}</h2>
+                        <h2><span class="n">1</span> {{ __('store.checkout.step_contact') }}@if ($kbbCoPage->get('remember_on'))<button type="button" class="kbb-rmb-clear" id="kbbRememberClear" aria-hidden="true" tabindex="-1">{{ __('store.checkout.remember_clear') }}</button>@endif</h2>
 {{-- NAME FIRST, then PHONE and EMAIL side by side, and all three required.
 
      The three things this order needs to reach a human, in the order someone
@@ -213,6 +213,11 @@
 @include('partials.checkout-address')
 @else
 @include('partials.checkout.address-fields')
+@endif
+{{-- Lane PO: "Remember my details on this device". Nothing at all while
+     Appearance -> Checkout page -> Fields & attention -> "Remember shopper
+     details on this device" is off. --}}@if ($kbbCoPage->get('remember_on'))
+@include('partials.checkout.remember-row')
 @endif
                     </div>
 

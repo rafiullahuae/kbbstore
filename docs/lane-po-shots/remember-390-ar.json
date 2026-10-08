@@ -1,0 +1,37 @@
+{
+ "shots": [
+  {
+   "label": "1 · first visit, typed",
+   "kept": "billing_first_name, billing_phone, billing_email, billing_address_1, billing_address_2, billing_state, billing_country",
+   "cls": 0,
+   "clear": "hidden",
+   "clearHit": false,
+   "sw": 390
+  },
+  {
+   "label": "2 · next visit: restored",
+   "kept": "billing_first_name, billing_phone, billing_email, billing_address_1, billing_address_2, billing_state, billing_country, shipping_method",
+   "cls": 0,
+   "clear": "visible",
+   "clearHit": true,
+   "sw": 390
+  },
+  {
+   "label": "3 · after \"Not you? Clear details\"",
+   "kept": "(nothing)",
+   "cls": 0,
+   "clear": "hidden",
+   "clearHit": false,
+   "sw": 390
+  },
+  {
+   "label": "4 · tick off: copy erased",
+   "kept": "(nothing)",
+   "cls": 0,
+   "clear": "hidden",
+   "clearHit": false,
+   "sw": 390
+  }
+ ],
+ "errors": []
+}

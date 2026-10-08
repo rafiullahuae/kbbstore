@@ -236,7 +236,9 @@ it('runs the domain check in the request, finds a picture still on extrabeauty.a
     $picture = collect($r['findings'])->first(fn ($f) => str_contains($f['title'], 'still load from extrabeauty.ae'));
     expect($picture)->not->toBeNull()
         ->and($picture['level'])->toBe('risk')
-        ->and($picture['fix'])->toBe(['step' => 8, 'label' => 'Fetch them (step 8)'])
+        // Lane DS: an extrabeauty.ae address names a file on THIS server; step 6b
+        // re-points it (Fetch, step 8, is for files only WordPress holds).
+        ->and($picture['fix'])->toBe(['step' => '6b', 'label' => 'Point them at the new address (step 6b)'])
         ->and($picture['samples'][0])->toContain('https://extrabeauty.ae/wp-content/uploads/2024/01/serum.jpg');
 
     // The configuration half, in words, with the step that fixes each line.

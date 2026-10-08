@@ -271,47 +271,14 @@ final class TitleHeader
          * an imported old-shop title lands -- wins in English; the Arabic page
          * keeps the translated name, because the custom title has no Arabic.
          */
-        $override = $english ? self::text($model->getAttribute('header_title'), 160) : '';
-
-        /*
-         * 2.60.350: "hide" on every header. The old shop's theme stored its
-         * "hide the title" switch as a term-meta VALUE, exporter 1.11.0 read
-         * that key as a title override, and the import wrote "hide" as the
-         * title of every category. The import no longer writes these two
-         * columns (importColumns), a migration cleared what it wrote, and a
-         * value that is only a switch word is never a heading.
-         */
-        if (self::isSwitchWord($override)) {
-            $override = '';
-        }
-
-        $heading = $override !== '' ? $override : self::text($title, 160);
+        $heading = self::headingOf($model, $title, $english);
 
         $subtitle = $english ? self::text($model->getAttribute('header_subtitle'), 300) : '';
         if (self::isSwitchWord($subtitle)) {
             $subtitle = '';
         }
 
-        /*
-         * "... if custom title or description not entered by me." The custom
-         * header description wins in English; otherwise the category's own,
-         * translated. Through the same allowlist either way.
-         */
-        $description = self::descriptionOf($model, $english);
-
-        /*
-         * "if no description set from backend, then generic line should come.
-         * Find your favorite products in our wide range <category name>
-         * category." English categories only: the sentence has no Arabic yet,
-         * and a brand is not a category.
-         */
-        if ($description === '' && $english && ! $brand) {
-            $generic = trim((string) ($settings['cat_header_generic'] ?? ''));
-
-            if ($generic !== '') {
-                $description = e(str_replace('{category}', self::text($title, 160), mb_substr($generic, 0, 300)));
-            }
-        }
+        $description = self::describe($model, $title, $settings, $english, $brand);
 
         $more = (bool) ($settings['cat_header_more'] ?? false);
 
@@ -435,6 +402,73 @@ final class TitleHeader
             'class' => $class,
             'style' => self::style($settings, $own, $phone, $laptop, $split),
         ];
+    }
+
+    /**
+     * Lane CB: the heading and the description this header would print, for
+     * the category banner (BrandPanel::forCategory), which carries the same
+     * words in another shape. Exactly forModel()'s rules -- one body, below.
+     *
+     * @param  array<string, mixed>  $layout  SiteLayout::all()
+     * @return array{0: string, 1: string}
+     */
+    public static function wordsOf(Model $model, string $title, array $layout): array
+    {
+        $english = Locale::segment() === '';
+
+        return [self::headingOf($model, $title, $english), self::describe($model, $title, $layout, $english, false)];
+    }
+
+    /**
+     * "The title will be get from the category name itself, if custom
+     * title ... not entered by me." The custom title -- which is also where
+     * an imported old-shop title lands -- wins in English; the Arabic page
+     * keeps the translated name, because the custom title has no Arabic.
+     */
+    private static function headingOf(Model $model, string $title, bool $english): string
+    {
+        $override = $english ? self::text($model->getAttribute('header_title'), 160) : '';
+
+        /*
+         * 2.60.350: "hide" on every header. The old shop's theme stored its
+         * "hide the title" switch as a term-meta VALUE, exporter 1.11.0 read
+         * that key as a title override, and the import wrote "hide" as the
+         * title of every category. The import no longer writes these two
+         * columns (importColumns), a migration cleared what it wrote, and a
+         * value that is only a switch word is never a heading.
+         */
+        if (self::isSwitchWord($override)) {
+            $override = '';
+        }
+
+        return $override !== '' ? $override : self::text($title, 160);
+    }
+
+    /** @param  array<string, mixed>  $settings */
+    private static function describe(Model $model, string $title, array $settings, bool $english, bool $brand): string
+    {
+        /*
+         * "... if custom title or description not entered by me." The custom
+         * header description wins in English; otherwise the category's own,
+         * translated. Through the same allowlist either way.
+         */
+        $description = self::descriptionOf($model, $english);
+
+        /*
+         * "if no description set from backend, then generic line should come.
+         * Find your favorite products in our wide range <category name>
+         * category." English categories only: the sentence has no Arabic yet,
+         * and a brand is not a category.
+         */
+        if ($description === '' && $english && ! $brand) {
+            $generic = trim((string) ($settings['cat_header_generic'] ?? ''));
+
+            if ($generic !== '') {
+                $description = e(str_replace('{category}', self::text($title, 160), mb_substr($generic, 0, 300)));
+            }
+        }
+
+        return $description;
     }
 
     /**

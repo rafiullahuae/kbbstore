@@ -84,6 +84,41 @@ $app->booted(function ($app) use ($dir) {
             return Http::response("\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01".str_repeat('*', 2048)."\xFF\xD9", 200, ['Content-Type' => 'image/jpeg']);
         }
 
+        /*
+         * Lane DS: the read-only payments check (Platform -> Domain switch ->
+         * Payments ready?), answered as scenario.json's `ds` world says.
+         * GETs only -- the check never sends anything else.
+         */
+        if (isset($scenario['ds']) && $r->method() === 'GET') {
+            $ds = (array) $scenario['ds'];
+            $hook = (string) ($ds['hook_host'] ?? 'extrabeauty.ae');
+
+            if ($h === 'api.stripe.com') {
+                parse_str((string) parse_url($url, PHP_URL_QUERY), $q);
+
+                return match (true) {
+                    $p === '/v1/account' => Http::response(['id' => 'acct_preview', 'charges_enabled' => true, 'business_profile' => ['name' => 'K-Beauty Bliss']]),
+                    str_starts_with($p, '/v1/webhook_endpoints/') => Http::response(['id' => basename($p), 'status' => 'enabled',
+                        'url' => 'https://'.$hook.'/api/payments/webhook/stripe/whsec-stripe-dwpreview0123456789abcdef',
+                        'enabled_events' => \App\Services\Payments\StripeConnect::EVENTS]),
+                    $p === '/v1/payment_method_domains' => Http::response(['data' => in_array($q['domain_name'] ?? '', (array) ($ds['wallets'] ?? []), true)
+                        ? [['domain_name' => $q['domain_name'], 'enabled' => true, 'apple_pay' => ['status' => 'active']]] : []]),
+                    default => Http::response(['error' => ['message' => 'not in the preview']], 404),
+                };
+            }
+
+            if ($h === 'api.tabby.ai') {
+                return Http::response([['id' => 'wh_preview', 'url' => 'https://'.$hook.'/api/payments/webhook/tabby/whsec-tabby-dwpreview0123456789abcdef', 'is_test' => true]]);
+            }
+
+            if (str_ends_with($h, 'tamara.co')) {
+                return match (true) {
+                    str_starts_with($p, '/checkout/payment-types') => Http::response(['message' => 'Unauthorized'], 401),
+                    default => Http::response(['message' => 'Not found'], 404),
+                };
+            }
+        }
+
         if ($h === 'api.stripe.com') {
             if (($scenario['stripe'] ?? 'ok') === 'error') {
                 return Http::response(['error' => ['type' => 'invalid_request_error', 'message' => 'Invalid API Key provided: sk_test_****dw']], 401);

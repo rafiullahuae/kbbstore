@@ -813,6 +813,22 @@ class CheckoutPage
                              'Off, as asked: no "Browsed" tab beside the order summary, and the page does not look up recently viewed products for it. On brings the tab back.'],
 
         /*
+         * ── REMEMBER THE DETAILS ON THIS DEVICE (Lane PO) ──────────────────
+         *
+         * "ALSO the address fields etc should keep the data in user browser,
+         * so user should not enter everything again n again. even wihout
+         * login." ON because he asked for it. ON draws "Remember my details on
+         * this device" under the address (ticked) and "Not you? Clear details"
+         * in the Contact bar, and checkout.js keeps name, phone, email, the
+         * address and the delivery choice in this browser's own storage --
+         * never a card, a coupon, a password or the payment method. OFF draws
+         * neither, and the script erases any copy a browser already holds.
+         * Nothing is sent to the server either way.
+         */
+        'remember_on'    => ['bool', 'Remember shopper details on this device', true,
+                             'On, as asked: name, phone, email, the address and the delivery choice are kept in the shopper\'s own browser and filled in on their next checkout, with no account. A ticked "Remember my details on this device" sits under the address -- unticking it erases the copy at once -- and "Not you? Clear details" appears when a remembered copy was used. Cards, coupons, passwords and the payment method are never kept. Off removes both and erases any copy a browser holds.'],
+
+        /*
          * ── TOTALS ABOVE PLACE ORDER, AND FLOATING LABELS (Lane CD) ────────
          *
          * "ON DESKTOP checkout: the summary bar should have only products,
@@ -967,7 +983,7 @@ class CheckoutPage
         'trust'        => ['Trust & reviews', 'The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims. The two policy links under Place order are switched here too.',
                            ['rating_on', 'rating_text', 'rating_min', 'policy_links']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
-                           ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'state_list', 'sum_row', 'sum_totals', 'float_labels', 'browsed_on',
+                           ['optin_on', 'optin_checked', 'notes_on', 'addr_picker', 'state_list', 'sum_row', 'sum_totals', 'float_labels', 'browsed_on', 'remember_on',
                             'ph_weight', 'ph_tone', 'ph_italic',
                             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'addr_cue_speed', 'addr_cue_size',
                             'trust_tick', 'trust_tick_speed']],

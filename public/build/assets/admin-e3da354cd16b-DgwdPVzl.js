@@ -12,6 +12,8 @@
   var busy = '';          // the action in flight
   var banner = '';
   var seq = 0;
+  var pay = null;         // POST /domain-switch/payments-check (Lane DS)
+  var rw = null;          // GET /domain-switch/rewrite (Lane DS)
 
   function cookie(n) {
     var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
@@ -180,6 +182,48 @@
     return step(5, st.steps.tls, 'Certificate for ' + st.new, 'The padlock. Without it, browsers refuse the new address.', body);
   }
 
+  /* Lane DS: 1b, payments ready? Network only when the button is pressed. */
+  var PAYWORD = { green: 'All good', amber: 'Check', red: 'Fix this' };
+  function s1b() {
+    var level = !pay ? 'todo' : (pay.level === 'red' ? 'problem' : (pay.level === 'green' ? 'done' : 'todo'));
+    var body = '<div class="dw-row">' + btn('pay_check', pay ? 'Check everything again' : 'Check everything', { quiet: !!pay && pay.level === 'green' }) + '</div>';
+    if (pay) {
+      body += '<p class="dw-why">Checked ' + esc(new Date(pay.checked_at).toLocaleString()) + ' · ' + esc(pay.counts.green) + ' green, ' + esc(pay.counts.amber) + ' amber, ' + esc(pay.counts.red) + ' red'
+        + (pay.switching ? ' · the shop uses ' + esc(pay.serving) + ' today and is moving to ' + esc(pay.main) + '.' : ' · main address ' + esc(pay.main) + '.') + '</p>';
+      body += '<div class="dw-pay">' + pay.providers.map(function (p) {
+        return '<section><h4><span class="dw-dot is-' + esc(p.level) + '"></span>' + esc(p.title) + ' <span class="dw-badge is-' + (p.level === 'green' ? 'done' : (p.level === 'red' ? 'problem' : 'todo')) + '">' + esc(PAYWORD[p.level]) + '</span></h4><ul>'
+          + p.checks.map(function (c) {
+            return '<li class="is-' + esc(c.level) + '"><span class="dw-dot is-' + esc(c.level) + '"></span><span><b>' + esc(c.title) + ':</b> ' + esc(c.detail)
+              + (c.fix ? '<span class="dw-fix">→ ' + esc(c.fix) + '</span>' : '') + '</span></li>';
+          }).join('') + '</ul></section>';
+      }).join('') + '</div>';
+    }
+    return step('1b', level, 'Payments ready?', 'Asks Stripe, Tabby and Tamara, with the keys the shop holds, whether everything is set for ' + esc(st.new) + ', and checks cash on delivery. It only reads: nothing is changed at any provider. Run it before the switch, and again after step 7.', body);
+  }
+
+  /* Lane DS: 6b, old links in the shop's text. */
+  function s6b() {
+    var last = rw && rw.last;
+    var level = !rw ? 'todo' : (rw.links === 0 ? 'done' : 'todo');
+    var body = '<div class="dw-row">' + btn('rw_preview', rw ? 'Look again' : 'Show what would change', { quiet: !!rw }) + '</div>';
+    if (rw) {
+      if (rw.links === 0) body += '<div class="dw-msg is-ok">No link in the shop’s text points at ' + esc(rw.old.join(', ')) + '.</div>';
+      else {
+        body += '<div class="dw-msg is-info"><b>' + esc(rw.links) + '</b> link(s) in <b>' + esc(rw.rows) + '</b> place(s) would change to https://' + esc(rw.new) + '/… — the same page on the new address.</div>'
+          + '<table class="dw-table dw-rw"><colgroup><col><col class="n"></colgroup><thead><tr><th>Where</th><th>Links</th></tr></thead><tbody>'
+          + rw.places.map(function (pl) {
+            var sm = (pl.samples || []).map(function (x) { return '<div><small>' + esc(x.where) + '</small><br><del><code>' + esc(x.before) + '</code></del><br><ins><code>' + esc(x.after) + '</code></ins></div>'; }).join('');
+            return '<tr><td><b>' + esc(pl.label) + '</b>' + sm + '</td><td>' + esc(pl.links) + '</td></tr>';
+          }).join('') + '</tbody></table>';
+        body += '<div class="dw-row">' + btn('rewrite_content', 'Change these ' + rw.links + ' links', { disabled: !rw.can_apply }) + '</div>';
+        if (!rw.can_apply) body += '<div class="dw-msg is-info">Do step 6 first: until then ' + esc(rw.new) + ' still opens the old WordPress shop.</div>';
+      }
+      if (rw.skipped && (rw.skipped.protected_settings || rw.skipped.serialized)) body += '<p class="dw-why">Left alone on purpose: ' + esc(rw.skipped.protected_settings) + ' address, payment or security setting(s), ' + esc(rw.skipped.serialized) + ' packed value(s). Email addresses and the name in a sentence are never changed.</p>';
+      if (last && !last.undone) body += '<div class="dw-row">' + btn('undo_rewrite', 'Undo the change of ' + new Date(last.at.replace(' ', 'T')).toLocaleString(), { quiet: true }) + '</div>';
+    }
+    return step('6b', level, 'Old links in the shop’s text', 'Product descriptions, articles, pages, menus, banners, footer and email templates that still link to ' + esc(st.old) + ' are pointed at ' + esc(st.new) + '. Orders, customers and payment settings are never touched, and Undo puts everything back.', body);
+  }
+
   function s6() {
     var level = st.steps['switch'], body = '';
     body += '<dl class="dw-kv"><dt>Shop’s address now</dt><dd>' + esc(st.now.app_url || '(not set)') + '</dd><dt>Site URL now</dt><dd>' + esc(st.now.site_url || '(empty)') + '</dd></dl>';
@@ -272,7 +316,7 @@
     root.innerHTML = '<div class="dw-head"><h2>Move the shop to ' + esc(st.new) + '</h2>'
       + '<p>Do the steps in order. Each one checks itself every time you open this page. Buttons do the work inside the shop; the grey boxes are clicks only you can do, in Cloudways or at Internet.bs, with the exact values to copy.</p>'
       + '<div class="dw-legend"><span>✓ done</span><span>● to do</span><span>✕ needs attention</span></div></div>'
-      + '<ol class="dw-steps">' + [s1(), s2(), s3(), s4(), s5(), s6(), s7(), s8(), s9(), s10(), s11()].join('') + '</ol>';
+      + '<ol class="dw-steps">' + [s1(), s1b(), s2(), s3(), s4(), s5(), s6(), s6b(), s7(), s8(), s9(), s10(), s11()].join('') + '</ol>';
     var input = root.querySelector('#dw-domain');
     if (input && typed !== null) { input.value = typed; if (focus) input.focus(); }
   }
@@ -301,11 +345,21 @@
     render();
   }
 
-  var STEP_OF = { check_old_dns: 3, check_dns: 4, check_tls: 5, set_names: 2, switch_address: 6, stripe: '7stripe', tabby: '7tabby', tamara: '7tamara', fetch_pictures: 8, forward_on: 10, remove_old: 11 };
+  var STEP_OF = { pay_check: '1b', rw_preview: '6b', rewrite_content: '6b', undo_rewrite: '6b', check_old_dns: 3, check_dns: 4, check_tls: 5, set_names: 2, switch_address: 6, stripe: '7stripe', tabby: '7tabby', tamara: '7tamara', fetch_pictures: 8, forward_on: 10, remove_old: 11 };
 
   async function run(action) {
     if (action === 'readiness') { readiness(0); return; }
     if (action === 'readiness_more') { readiness(rd ? rd.next_offset : 0); return; }
+    if (action === 'pay_check' || action === 'rw_preview') {
+      busy = action; delete msgs[STEP_OF[action]]; render();
+      var g;
+      try { g = action === 'pay_check' ? await api('/domain-switch/payments-check', {}) : await api('/domain-switch/rewrite'); }
+      catch (e) { g = { status: 0, body: { message: 'The shop could not be reached. Check your connection and try again.' } }; }
+      busy = '';
+      if (g.status === 200) { if (action === 'pay_check') pay = g.body; else rw = g.body; }
+      else msgs[STEP_OF[action]] = { ok: false, text: fail(g.status, g.body) };
+      render(); return;
+    }
     var body = { action: action };
     if (action === 'set_names') body.domain = (document.getElementById('dw-domain') || {}).value || '';
     if (action === 'switch_address') {
@@ -316,6 +370,10 @@
       if (!window.confirm('Remove ' + st.old + ' from the shop completely? Do this only 2–4 weeks after step 10, when the test orders have passed.')) return;
       body.confirm = 'REMOVE';
     }
+    if (action === 'rewrite_content') {
+      if (!rw || !window.confirm('Change ' + rw.links + ' link(s) to https://' + rw.new + '? Undo is offered afterwards.')) return;
+      body.confirm = String(rw.links);
+    }
     busy = action; render();
     var r;
     try { r = await api('/domain-switch/run', body); } catch (e) { r = { status: 0, body: { message: 'The shop could not be reached. Check your connection and try again.' } }; }
@@ -324,8 +382,9 @@
     msgs[STEP_OF[action]] = { ok: ok, text: ok ? (r.body.message || 'Done.') : fail(r.status, r.body) };
     if (r.body.state) st = r.body.state;
     if (r.body.pictures) pics = r.body.pictures;
+    if (ok && (action === 'rewrite_content' || action === 'undo_rewrite')) { var again = await api('/domain-switch/rewrite'); if (again.status === 200) rw = again.body; }
     render();
-    if (ok && (action === 'set_names' || action === 'switch_address' || action === 'remove_old' || action === 'forward_on')) readiness(0);
+    if (ok && (action === 'set_names' || action === 'switch_address' || action === 'remove_old' || action === 'forward_on' || action === 'rewrite_content' || action === 'undo_rewrite')) readiness(0);
   }
 
   function copyText(value, button) {
@@ -379,7 +438,7 @@
     var host = document.getElementById('content');
     if (!host) return undefined;
     host.innerHTML = '<div class="wrap dw" data-dw-screen></div>';
-    st = null; rd = null; pics = null; msgs = {}; busy = ''; banner = '';
+    st = null; rd = null; pics = null; pay = null; rw = null; msgs = {}; busy = ''; banner = '';
     render();
     load();
     return undefined;

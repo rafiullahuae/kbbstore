@@ -227,6 +227,14 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // product-styles and changed nothing else: `photo_placeholder` ("Photo
     // loading placeholder", Grey shimmer / Plain grey / None) on the Layout
     // tab after image_ratio, and that tab's description names it.
+    // ▲ Lane CB added four fields to header's Breadcrumbs tab and changed
+    // nothing else: the trail's inner padding the owner asked for ("full
+    // control of spacing ... and also padding, for desktop and mobile both"),
+    // bc_pad_y_mobile / bc_pad_x_mobile after bc_below_mobile and bc_pad_y /
+    // bc_pad_x after bc_below, all 0-40px at 0. Spliced in, not regenerated.
+    // ▲ Lane PO (8 October) added one field to checkout-page and changed
+    // nothing else: `remember_on` ("Remember shopper details on this device")
+    // on the Fields & attention tab after browsed_on.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -602,7 +610,11 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // -> "Emirate / state as a list", the state_list switch.
     // 710 -> 711 (Lane PG2, the gallery lane): Appearance → Product styles →
     // Layout → Photo loading placeholder.
-    expect($compared)->toBe(711, 'the number of controls drawn changed');
+    // 711 -> 715 (Lane CB): Appearance → Header → Breadcrumbs → the four
+    // "Inner padding" sliders, phone and desktop.
+    // 715 -> 716 (Lane PO): Appearance -> Checkout page -> Fields & attention
+    // -> "Remember shopper details on this device".
+    expect($compared)->toBe(716, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

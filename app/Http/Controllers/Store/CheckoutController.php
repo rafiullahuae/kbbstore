@@ -464,6 +464,16 @@ class CheckoutController extends Controller
             $data['billing_city'] = $data['billing_state'];
         }
 
+        /*
+         * Every order email this request causes -- the receipt and the merchant
+         * alert below, and any status mail a gateway's start() sets off -- goes
+         * AFTER the response (Lane PO). They were sent in line, and on a real
+         * mail server two of them were most of the time Place order took. The
+         * same try/catch wraps each send; only WHEN it runs moves. See
+         * OrderMailer::deferUntilResponse().
+         */
+        \App\Services\Mail\OrderMailer::deferUntilResponse();
+
         $cart = $this->loadCart($request);
 
         /*
@@ -1074,6 +1084,11 @@ class CheckoutController extends Controller
          * failure, logs it with the order number and returns — its header sets
          * out why a missing email is a support question and a failed checkout is
          * an outage. Nothing is queued; there is no worker on this host.
+         *
+         * AND IT DOES NOT HOLD THE SHOPPER UP (Lane PO): deferUntilResponse()
+         * at the top of this method means the messages are built here and
+         * handed to the mail server from app()->terminating(), after the
+         * answer has gone.
          */
         app(\App\Services\Mail\OrderMailer::class)->placed($order);
 
@@ -1505,6 +1520,9 @@ class CheckoutController extends Controller
         if (! $gateway instanceof \App\Services\Payments\Gateways\StripeGateway) {
             return response()->json(['ok' => false], 404);
         }
+
+        // The receipt a confirmation sets off goes after the answer (Lane PO).
+        \App\Services\Mail\OrderMailer::deferUntilResponse();
 
         $outcome = $gateway->confirmFromBrowser($order);
 

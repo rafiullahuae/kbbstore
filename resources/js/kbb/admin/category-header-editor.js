@@ -129,7 +129,9 @@ function messageOf(res, fallback) {
 function adopt(html) {
     const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
     const fresh = doc.body.firstElementChild;
-    return fresh && fresh.hasAttribute('data-kbb-title-header') ? document.importNode(fresh, true) : null;
+    // Lane CB: or the category banner's wrapper (the brand page's Panel).
+    return fresh && (fresh.hasAttribute('data-kbb-title-header') || fresh.classList.contains('kbb-cbw'))
+        ? document.importNode(fresh, true) : null;
 }
 
 /* ------------------------------------------------- the custom header area */
@@ -206,6 +208,13 @@ export function openPanel(ctx, csrf, opener, toast) {
     ensureStyle('kbb-ph-css', ctx.pageheader.css);
     ensureStyle('kbb-pb-css', ctx.spec.banner.css);
     ensureStyle('kbb-chc-css', ctx.spec.area_css);
+    // Lane CB: the category banner's sheet and rules, for a preview that
+    // draws it on a page that did not (its first picture, just uploaded).
+    if (ctx.panel_inline) ensureStyle('kbb-cbw-css', String(ctx.panel_inline));
+    if (ctx.panel_css && ![...document.querySelectorAll('link[rel=stylesheet]')].some((l) => l.getAttribute('href') === ctx.panel_css)) {
+        const href = safePath(ctx.panel_css);
+        if (href) document.head.appendChild(h('link', { rel: 'stylesheet', href }));
+    }
     if (ctx.css && ![...document.querySelectorAll('link[rel=stylesheet]')].some((l) => l.getAttribute('href') === ctx.css)) {
         const href = safePath(ctx.css);
         if (href) document.head.appendChild(h('link', { rel: 'stylesheet', href }));
@@ -233,7 +242,7 @@ export function openPanel(ctx, csrf, opener, toast) {
 
     function snapshot() {
         const area = document.querySelector('[data-kbb-ch]');
-        const th = document.querySelector('[data-kbb-title-header]');
+        const th = document.querySelector('[data-kbb-title-header]') || document.querySelector('.kbb-cbw');
         const crumbWrap = [...document.querySelectorAll('.wrap')].find((w) => w.querySelector(':scope > .crumb') && !w.classList.contains('shop')) || null;
         const legacy = document.querySelector('.kbb-banner');
         const grid = document.querySelector('.wrap.shop');

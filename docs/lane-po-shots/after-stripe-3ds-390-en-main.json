@@ -1,0 +1,167 @@
+{
+ "width": 390,
+ "method": "stripe",
+ "scenario": "3ds",
+ "locale": "en",
+ "reduced": false,
+ "landed": true,
+ "url": "/checkout/success",
+ "marks": [
+  [
+   0,
+   "press",
+   ""
+  ],
+  [
+   23,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   23,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   23,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   23,
+   "box-added",
+   "kbb-placing is-up"
+  ],
+  [
+   23,
+   "box-title",
+   "Placing your order…"
+  ],
+  [
+   23,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   23,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   23,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   23,
+   "box-class",
+   "kbb-placing is-up"
+  ],
+  [
+   429,
+   "stripe-confirm-start",
+   ""
+  ],
+  [
+   429,
+   "3ds-open",
+   ""
+  ],
+  [
+   429,
+   "bank-modal-open",
+   ""
+  ],
+  [
+   1930,
+   "3ds-closed",
+   ""
+  ],
+  [
+   1931,
+   "bank-modal-closed",
+   ""
+  ],
+  [
+   1962,
+   "stripe-confirm-end",
+   ""
+  ],
+  [
+   1965,
+   "box-title",
+   "Order placed"
+  ],
+  [
+   1965,
+   "box-class",
+   "kbb-placing is-up is-done"
+  ]
+ ],
+ "requests": [
+  {
+   "url": "/checkout/place",
+   "status": 200,
+   "serverMs": 389.6,
+   "queries": 28,
+   "stripeMs": 300.2,
+   "mailMs": 0,
+   "start": 26,
+   "ttfb": 418,
+   "end": 423
+  },
+  {
+   "url": "/checkout/card/paid",
+   "status": 200,
+   "serverMs": 349.6,
+   "queries": 17,
+   "stripeMs": 300.1,
+   "mailMs": 0,
+   "start": 1973,
+   "ttfb": 2324,
+   "end": 2336
+  },
+  {
+   "url": "/checkout/success",
+   "status": 200,
+   "serverMs": 29.7,
+   "queries": 8,
+   "stripeMs": 0,
+   "mailMs": 0,
+   "start": 2346,
+   "ttfb": 2377,
+   "end": 2389
+  }
+ ],
+ "thankYou": {
+  "navStart": 2330,
+  "requestStart": 2346,
+  "responseStart": 2377,
+  "responseEnd": 2378,
+  "fcp": 2546
+ },
+ "boxOpenedTimes": 1,
+ "boxRemovedTimes": 0,
+ "toasts": [],
+ "errors": [],
+ "frames": [
+  -134,
+  45,
+  255,
+  420,
+  646,
+  872,
+  1038,
+  1254,
+  1463,
+  1650,
+  1856,
+  2057,
+  2276,
+  2524,
+  2679,
+  2845,
+  3028,
+  3194
+ ]
+}

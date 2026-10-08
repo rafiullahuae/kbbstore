@@ -469,21 +469,22 @@
        * what marks that order paid.
        */
       /*
-       * THE OVERLAY COMES DOWN FOR THE BANK'S STEP, DELIBERATELY.
+       * THE BOX STAYS UP FOR THE BANK'S STEP (Lane PO).
        *
        * confirmCardPayment is where 3-D SECURE happens, and Stripe answers it
-       * by injecting its own full-screen challenge into this document. Our
-       * overlay marks every other child of <body> `inert` while it is up, which
-       * is exactly the property that would make a challenge injected into one
-       * of them unanswerable — and a shopper who cannot answer their bank is a
-       * shopper whose payment cannot complete. It is not a risk worth carrying
-       * for a blur behind a modal that is already covering the page.
+       * by injecting its own full-screen challenge into this document. This
+       * used to take the overlay DOWN here, because the overlay marks the page
+       * `inert` and a challenge landing in an inert subtree cannot be
+       * answered -- and then put it back UP when Stripe answered. With no
+       * challenge (most cards) that was the box closing and reopening a second
+       * later: "the two times box opening gives confusion to user".
        *
-       * The buttons stay disabled: the overlay restores each one to the value
-       * it found, and lock(true) had already disabled them. `busy` above is
-       * still true, so a second press cannot start a second payment either.
+       * hold() keeps the box and lifts what made the challenge unsafe -- the
+       * `inert` and the focus trap -- so Stripe's frame opens above the card
+       * and is answerable wherever it lands. The buttons stay disabled and
+       * `busy` above is still true, so nothing can start a second payment.
        */
-      if (ov) { ov.dismiss(); }
+      if (ov) { ov.hold(); }
 
       var result = await stripe.confirmCardPayment(handle.client_secret, {
         payment_method: {
@@ -494,6 +495,8 @@
       });
 
       if (result.error) {
+        /* The box closes ONCE, here, and the reason is on the card form. */
+        if (ov) { ov.dismiss(); }
         /*
          * STRIPE'S OWN SENTENCE, not one of ours. "Your card was declined",
          * "Your card has expired", "We are unable to authenticate your payment
@@ -512,31 +515,35 @@
       var intent = result.paymentIntent;
 
       if (!intent || (intent.status !== 'succeeded' && intent.status !== 'processing' && intent.status !== 'requires_capture')) {
+        if (ov) { ov.dismiss(); }
         showError(TEXT.generic);
         offerBail();
         lock(false);
         return;
       }
 
-      /* Stripe has said `succeeded`, so the payment is real and the overlay
-         may go back up — over a page that is about to be left rather than one
-         the shopper is still working on. It is raised BEFORE the report below
-         so the gap between the bank's modal closing and the tick is covered. */
-      if (ov) { ov.begin(); }
-
       /*
-       * Tell the shop, then go. The server verifies this against Stripe before
-       * it believes a word of it, and if this request never arrives the webhook
-       * marks the order paid anyway — so a failure here is not allowed to stop
-       * the shopper reaching their order-received page for a payment that has
-       * genuinely gone through.
+       * THE TICK IN THE SAME BOX, AND THE REPORT UNDER IT (Lane PO).
+       *
+       * Stripe has said `succeeded`. The shop is told -- POST
+       * /checkout/card/paid, which reads the intent back from Stripe before it
+       * believes a word, so the received page says "Total paid" -- and that
+       * report used to be AWAITED before the tick was even drawn, after which
+       * the tick held the page another 900 ms. Now the tick is drawn at once
+       * and the report runs underneath it: confirmed() opens the received page
+       * when BOTH the tick has had its moment and the report has answered (or
+       * a few seconds have passed -- the webhook marks the order paid if this
+       * never lands, so a lost report must not hold the shopper).
+       *
+       * One request, never two: a POST is never repeated by the shop's
+       * service worker, where a confirming GET of the received page would be
+       * (it requests bypassed navigations twice, see the lane report).
        */
-      try { await post(PAID_URL, { order: handle.order }); } catch (e) { /* the webhook has it */ }
+      var report = post(PAID_URL, { order: handle.order }).catch(function () { /* the webhook has it */ });
 
-      /* The tick, and then the received page. confirmed() schedules the
-         navigation the instant the tick starts, so the animation cannot hold up
-         an order that is finished. */
-      if (ov) { ov.confirmed(handle.success_url); return; }
+      if (ov) { ov.confirmed(handle.success_url, report); return; }
+
+      await report;
 
       window.location.assign(handle.success_url);
     } catch (e) {

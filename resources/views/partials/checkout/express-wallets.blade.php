@@ -552,10 +552,14 @@
         var ov = (window.KBB && window.KBB.placing) || null;
         if (ov) { ov.begin(); }
 
-        try { await post(PAID_URL, { order: order }); } catch (e) { /* the webhook has it */ }
+        /* (Lane PO) The report runs under the tick rather than before it;
+           confirmed() opens the received page once both are done (or the
+           report has had four seconds). Same as the card form. */
+        var report = post(PAID_URL, { order: order }).catch(function () { /* the webhook has it */ });
 
-        if (ov) { ov.confirmed(placed.body.success_url); return; }
+        if (ov) { ov.confirmed(placed.body.success_url, report); return; }
 
+        await report;
         window.location.assign(placed.body.success_url);
       } catch (e) {
         /* If the overlay went up a line or two ago and then something threw,

@@ -183,13 +183,23 @@
 
   /* HOW LONG THE DECORATION MAY HOLD THE SHOPPER UP, in one place so it can be
      read in one go. The tick is decoration; the order is not. */
-  var TICK_MS = 900;      // the tick on screen before the received page
-  var LEAVE_MS = 700;     // "Taking you to Tabby…" before the browser goes
+  /* (Lane PO) 900 -> 360. The navigation now STARTS while the tick is
+     drawing, and the browser keeps this document painted until the received
+     page has its first paint (paint holding) -- so the tick stays on screen
+     for this plus the received page's own load (median 841 ms in the
+     preview, where php -S serves the page; 360 of it is this constant), and
+     none of the rest is spent waiting on purpose. The owner: "check icon come
+     and instantly goes to thank you page". */
+  var TICK_MS = 360;      // the tick drawing before the received page is asked for
+  var REPORT_MS = 4000;   // (Lane PO) the most the card's report to the shop may hold the tick
+  var LEAVE_MS = 250;     // "Taking you to Tabby…" before the browser goes (Lane PO: was 700; the page stays painted until the provider answers)
   var STUCK_MS = 10000;   // the redirect plainly did not happen
   var ABORT_MS = 45000;   // no answer at all
 
   var box = null, titleEl = null, noteEl = null, liveEl = null;
   var busy = false, lastFocus = null, aborter = null, timers = [], timedOut = false;
+  /* (Lane PO) The bank's step is under way: see hold(). */
+  var bank = false;
 
   /* ------------------------------------------------------------ the element */
 
@@ -237,7 +247,10 @@
   }
 
   document.addEventListener('focusin', function (event) {
-    if (!busy || !box || box.contains(event.target)) { return; }
+    /* (Lane PO) Not while the bank's challenge is up: it is Stripe's frame,
+       appended to <body> after the freeze, and pulling focus out of it would
+       leave a shopper unable to type the code their bank sent. */
+    if (!busy || bank || !box || box.contains(event.target)) { return; }
     box.focus();
   });
 
@@ -373,6 +386,7 @@
   function down() {
     clearTimers();
     busy = false;
+    bank = false;
     if (aborter) { try { aborter.abort(); } catch (e) {} aborter = null; }
     freeze(false);
     disable(false);
@@ -399,18 +413,71 @@
    * page whose work is finished. And the tick is only ever drawn from here —
    * which is only ever reached after the server has said the order stands.
    */
-  function confirmed(url) {
+  function confirmed(url, report) {
     /* stripe-elements may call this having taken the lock through begin() long
        before Stripe answered; a caller that did not still gets a frozen page
        under its tick. */
     if (!busy) { begin(); }
 
+    /* ONE TICK, ONE NAVIGATION, whoever calls twice. */
+    if (box.classList.contains('is-done')) { return; }
+
+    remember();
     say(TEXT.done, '');
     box.classList.add('is-done');
 
     if (!url) { return; }
 
-    later(function () { window.location.assign(url); }, TICK_MS);
+    /* (Lane PO) `report`, when given, is the card leg's POST to the shop,
+       running under the tick: the received page opens when the tick has had
+       TICK_MS AND the report has answered -- or REPORT_MS has passed, because
+       a report that never lands is the webhook's to finish, not the shopper's
+       to wait for. Either way, one navigation. */
+    var ticked = false, answered = !(report && typeof report.then === 'function'), gone = false;
+    function go() {
+      if (gone || !ticked || !answered) { return; }
+      gone = true;
+      window.location.assign(url);
+    }
+    later(function () { ticked = true; go(); }, TICK_MS);
+    if (!answered) {
+      later(function () { answered = true; go(); }, REPORT_MS);
+      report.then(function () { answered = true; go(); }, function () { answered = true; go(); });
+    }
+  }
+
+  /*
+   * THE BANK'S STEP, WITH THE BOX STILL UP (Lane PO).
+   *
+   * The card leg used to take this overlay DOWN before Stripe's
+   * confirmCardPayment() and put it back UP when Stripe answered, so that a
+   * 3-D Secure challenge could never land in something `inert`. On a card with
+   * no challenge that was the box closing and opening again a second later,
+   * over a page whose button now read "Confirming your payment…" -- and the
+   * owner's words for it were "the two times box opening gives confusion to
+   * user, user may think that we are placing order twice."
+   *
+   * The box stays. What made the challenge unsafe is lifted instead: the page
+   * is un-frozen (no `inert` anywhere, so a frame Stripe injects can be
+   * answered wherever it lands) and the focus trap stands down. Stripe's
+   * challenge is a frame appended to <body> at the top z-index, so it opens
+   * ABOVE this card; when it closes, the card is still there, still saying
+   * "Placing your order…", and turns into the tick in place. The buttons stay
+   * disabled -- disable() put them that way and nothing here touches them -- and
+   * the card still covers the page, so nothing under it can be pressed.
+   */
+  function hold() {
+    if (!busy) { begin(); }
+
+    bank = true;
+    freeze(false);
+  }
+
+  /* The details the shopper typed, kept on this device if they asked
+     (resources/js/kbb/checkout.js, window.KBB.remember). Only on an order the
+     shop has accepted; guarded, because a payment path may not depend on it. */
+  function remember() {
+    try { if (window.KBB && window.KBB.remember) { window.KBB.remember.save(); } } catch (e) {}
   }
 
   /* --------------------------------------------------------------- leaving */
@@ -459,6 +526,7 @@
 
     if (!safe) { fail(TEXT.failed); return; }
 
+    remember();
     say(TEXT.leaving.replace(':provider', name), TEXT.leavingNote.replace(':provider', name));
 
     later(function () { window.location.assign(safe); }, LEAVE_MS);
@@ -827,6 +895,7 @@
 
   window.KBB.placing = {
     begin: begin,
+    hold: hold,
     confirmed: confirmed,
     leaving: leaving,
     fail: fail,

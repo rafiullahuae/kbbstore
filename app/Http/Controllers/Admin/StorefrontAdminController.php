@@ -676,6 +676,18 @@ class StorefrontAdminController extends Controller
             return ['kind' => 'panel', 'html' => $this->panelHtml($model, $banner), 'note' => ''];
         }
 
+        // Lane CB: a category with a picture draws the category banner -- the
+        // brand page's Panel -- on its page, so the pencil previews and swaps
+        // that, from the same partial and the same inputs as ShopController.
+        if (! $isBrand && $model instanceof Category) {
+            $all = app(\App\Services\SiteLayout::class)->all();
+            $catPanel = BrandPanel::forCategory($model, $all, $title, $banner);
+
+            if ($catPanel !== null) {
+                return ['kind' => 'panel', 'html' => trim(view('store.partials.brand-panel', ['panel' => $catPanel, 'panelCategory' => $model])->render()), 'note' => ''];
+            }
+        }
+
         if ($banner !== null) {
             return [
                 'kind' => 'banner',

@@ -1,0 +1,147 @@
+{
+ "width": 390,
+ "method": "stripe",
+ "scenario": "plain",
+ "locale": "en",
+ "reduced": false,
+ "landed": true,
+ "url": "/checkout/success",
+ "marks": [
+  [
+   0,
+   "press",
+   ""
+  ],
+  [
+   25,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   25,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   25,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   25,
+   "box-added",
+   "kbb-placing is-up"
+  ],
+  [
+   25,
+   "box-title",
+   "Placing your order…"
+  ],
+  [
+   25,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   25,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   25,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   25,
+   "box-class",
+   "kbb-placing is-up"
+  ],
+  [
+   533,
+   "stripe-confirm-start",
+   ""
+  ],
+  [
+   1214,
+   "stripe-confirm-end",
+   ""
+  ],
+  [
+   1215,
+   "box-title",
+   "Order placed"
+  ],
+  [
+   1215,
+   "box-class",
+   "kbb-placing is-up is-done"
+  ]
+ ],
+ "requests": [
+  {
+   "url": "/checkout/place",
+   "status": 200,
+   "serverMs": 486.9,
+   "queries": 29,
+   "stripeMs": 301.6,
+   "mailMs": 0,
+   "start": 30,
+   "ttfb": 518,
+   "end": 527
+  },
+  {
+   "url": "/checkout/card/paid",
+   "status": 200,
+   "serverMs": 353,
+   "queries": 17,
+   "stripeMs": 300.2,
+   "mailMs": 0,
+   "start": 1217,
+   "ttfb": 1571,
+   "end": 1575
+  },
+  {
+   "url": "/checkout/success",
+   "status": 200,
+   "serverMs": 38.5,
+   "queries": 8,
+   "stripeMs": 0,
+   "mailMs": 0,
+   "start": 1591,
+   "ttfb": 1631,
+   "end": 1642
+  }
+ ],
+ "thankYou": {
+  "navStart": 1582,
+  "requestStart": 1591,
+  "responseStart": 1631,
+  "responseEnd": 1637,
+  "fcp": 1778
+ },
+ "boxOpenedTimes": 1,
+ "boxRemovedTimes": 0,
+ "toasts": [],
+ "errors": [],
+ "frames": [
+  -140,
+  24,
+  227,
+  415,
+  572,
+  708,
+  835,
+  983,
+  1126,
+  1293,
+  1443,
+  1592,
+  1752,
+  1874,
+  2008,
+  2158,
+  2290,
+  2423
+ ]
+}

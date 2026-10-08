@@ -30,6 +30,9 @@
      category with no header must not gain a byte. --}}@if ($titleHeader ?? null)
 @vite('resources/css/kbb/kbb-title-header.css')
 @endif
+@if ($catPanel ?? null)
+@include('store.partials.category-panel-head')
+@endif
 @endpush
 
 {{-- ── THE FILTER SIDEBAR STARTS HIDDEN ───────────────────────── Lane PG ──
@@ -143,7 +146,7 @@
 @else
 <div class="wrap">
     <div class="crumb"><b>{{ __('store.breadcrumb.home') }}</b> / @foreach (($crumbParents ?? []) as $cp)<a href="{{ $cp['url'] }}">{{ $cp['name'] }}</a> / @endforeach{{ $crumb }}</div>
-    @unless (($banner ?? null) || ($titleHeader ?? null))
+    @unless (($banner ?? null) || ($titleHeader ?? null) || ($catPanel ?? null))
         <div class="eyebrow">{{ __('store.shop.eyebrow') }}</div>
         <h1 class="ptitle">{{ $title }}</h1>
 {{-- No generic line under a one-brand listing's name (2.60.346). The directives
@@ -156,6 +159,11 @@
 <x-kbb-banner :banner="$banner ?? null" />
 @if ($titleHeader ?? null)
 <x-kbb-title-header :header="$titleHeader" />
+@endif
+@if ($catPanel ?? null)
+<div class="wrap kbb-cbw">
+@include('store.partials.brand-panel', ['panel' => $catPanel, 'panelCategory' => $category])
+</div>
 @endif
 @endif
 
@@ -274,7 +282,7 @@
                      passes null and the tile simply has no eyebrow — which
                      costs no query, where reading each product's own categories
                      would have cost one on this page and on three others. --}}
-                <x-product-card :product="$product" :eager="$loop->first" :cat-label="($category ?? null)?->t('name')" />
+                <x-product-card :product="$product" :eager="$loop->first && ! ($catPanel ?? null)" :cat-label="($category ?? null)?->t('name')" />
             @empty
                 <div class="empty" style="grid-column:1/-1"><b>{{ __('store.shop.empty_heading') }}</b>{{ __('store.shop.empty_body') }}</div>
             @endforelse

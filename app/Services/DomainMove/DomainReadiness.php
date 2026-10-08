@@ -67,7 +67,7 @@ final class DomainReadiness
      */
     public const HISTORY = [
         'audit_events', 'cache', 'cache_locks', 'cart_events', 'cart_recoveries', 'customer_password_reset_tokens',
-        'demo_seed_log', 'failed_jobs', 'import_checkpoints', 'import_history', 'import_runs', 'job_batches', 'jobs',
+        'demo_seed_log', 'domain_content_rewrites', 'failed_jobs', 'import_checkpoints', 'import_history', 'import_runs', 'job_batches', 'jobs',
         'mail_deliveries', 'mail_web_copies', 'media_sideload_items', 'media_sideload_runs', 'migrations',
         'mkt_clicks', 'mkt_sends', 'not_found_log', 'old_link_rewrites', 'order_emails', 'order_items',
         'order_notes', 'orders', 'owner_app_events', 'owner_app_logins', 'password_reset_tokens', 'payment_events',
@@ -317,6 +317,65 @@ final class DomainReadiness
         if (self::bare((string) config('kbb.hierarchy_source_host', '')) === $this->new) {
             $out[] = $this->line(self::INFO, 'Copy hierarchy source', $this->new.' -- after the switch that is this shop, not WordPress; '
                 .'set KBB_HIERARCHY_SOURCE_HOST if a WordPress copy stays reachable elsewhere', '.env');
+        }
+
+        // ── ASSET_URL (Lane DS): every compiled script and stylesheet is built on it when set.
+        $assetHost = self::bare((string) parse_url((string) config('app.asset_url', ''), PHP_URL_HOST));
+
+        if ($assetHost !== '' && $this->isOld($assetHost)) {
+            $out[] = $this->line(self::RISK, 'ASSET_URL', (string) config('app.asset_url').' -- every script and stylesheet would load from the old domain', '.env');
+        }
+
+        foreach ($this->webRootFiles() as $line) {
+            $out[] = $line;
+        }
+
+        return $out;
+    }
+
+    /** Files the web server answers before the shop does. A static one wins over the shop's own. */
+    public const WEB_ROOT_FILES = '/^(?:\.htaccess|[A-Za-z0-9._-]+\.(?:txt|xml|json|webmanifest|html?))$/';
+
+    /**
+     * Web-root files that name a domain being left. (Lane DS.)
+     *
+     * The database scan cannot see these, and they are served by Apache before
+     * the application is asked: a static robots.txt or sitemap.xml left from an
+     * earlier setup pointing at extrabeauty.ae would be what Google reads on
+     * kbeautybliss.com, and an .htaccess rule naming the old host keeps working
+     * (or breaking) after the switch. Top level only, small files only, and
+     * the escaped form an .htaccess condition uses (extrabeauty\.ae) counts.
+     *
+     * @return list<array{level: string, what: string, detail: string, where: string}>
+     */
+    public function webRootFiles(?string $root = null): array
+    {
+        $root ??= public_path();
+        $out = [];
+
+        if ($this->old === [] || ! is_dir($root)) {
+            return $out;
+        }
+
+        $alts = implode('|', array_map(fn ($h) => str_replace('\\.', '\\\\?\\.', preg_quote($h, '~')), $this->old));
+        $seen = 0;
+
+        foreach (scandir($root) ?: [] as $name) {
+            $path = $root.DIRECTORY_SEPARATOR.$name;
+
+            if (preg_match(self::WEB_ROOT_FILES, $name) !== 1 || ! is_file($path) || is_link($path) || filesize($path) > 512 * 1024 || ++$seen > 60) {
+                continue;
+            }
+
+            $body = (string) @file_get_contents($path);
+
+            if (preg_match_all('~(?<![a-z0-9-])(?:[a-z0-9-]+\\\\?\.)*(?:'.$alts.')(?![a-z0-9-])~i', $body, $m) > 0) {
+                $risky = in_array(strtolower($name), ['robots.txt', 'sitemap.xml', 'sitemap_index.xml', 'manifest.json', 'site.webmanifest'], true);
+                $out[] = $this->line($risky ? self::RISK : self::TODO, 'Web root file',
+                    $name.' names '.strtolower(str_replace('\\', '', $m[0][0])).' '.count($m[0]).' time(s)'
+                    .($risky ? ' -- the server sends this file instead of the shop\'s own' : ' -- read what that line does before the switch'),
+                    'the web root folder (public_html) on the server');
+            }
         }
 
         return $out;

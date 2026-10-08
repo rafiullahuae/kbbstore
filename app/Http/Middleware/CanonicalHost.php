@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Services\DomainMove\DomainHandoff;
 use App\Support\SiteHost;
 use App\Support\Url;
 use Closure;
@@ -88,13 +89,31 @@ final class CanonicalHost
 
     public function handle(Request $request, Closure $next): Response
     {
+        /*
+         * THE BASKET HANDOFF'S OTHER END (Lane DS). A request carrying
+         * ?kbb_handoff= is never rendered: it is answered with a clean 302 to
+         * the same address without it, the shopper's cookies restored only if
+         * the token is genuine. See App\Services\DomainMove\DomainHandoff.
+         * Every other request pays one array lookup here and nothing else.
+         */
+        if (DomainHandoff::present($request) && ! $this->isExempt($request->getPathInfo())) {
+            return DomainHandoff::consume($request);
+        }
+
         $verdict = SiteHost::classify($request->getHost());
 
         if ($this->shouldForward($request, $verdict)) {
             $target = $this->targetFor($request);
 
             if ($target !== null) {
-                return redirect()->away($target, 301);
+                /*
+                 * A SHOPPER'S page with a basket gets a no-store 302 carrying a
+                 * one-time token instead (DomainHandoff::forward). Everything
+                 * else -- every crawler, every asset, every cookie-less visit --
+                 * gets exactly the 301 below, unchanged, which is what keeps
+                 * the old domain's ranking moving across.
+                 */
+                return DomainHandoff::forward($request, $target) ?? redirect()->away($target, 301);
             }
         }
 

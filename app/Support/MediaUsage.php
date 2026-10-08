@@ -205,7 +205,7 @@ final class MediaUsage
         }
 
         if ($type === null || $type === 'category') {
-            $q = Category::query()->select(self::withHeaderImage('categories', ['id', 'name', 'image']));
+            $q = Category::query()->select(self::withHeaderLayout(self::withHeaderImage('categories', ['id', 'name', 'image'])));
 
             if ($owner !== null) {
                 SearchTerms::whereLike($q, 'name', $owner);
@@ -267,6 +267,27 @@ final class MediaUsage
         try {
             if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'header_image')) {
                 $columns[] = 'header_image';
+            }
+        } catch (\Throwable) {
+            // No schema to ask: read what every version has.
+        }
+
+        return $columns;
+    }
+
+    /**
+     * Lane CB: `header_layout` too, when categories has it -- the category
+     * banner's own picture is a key inside it. Same guard, same reason as
+     * withHeaderImage(): the column arrives in 2027_10_09_100000.
+     *
+     * @param  list<string>  $columns
+     * @return list<string>
+     */
+    private static function withHeaderLayout(array $columns): array
+    {
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasColumn('categories', 'header_layout')) {
+                $columns[] = 'header_layout';
             }
         } catch (\Throwable) {
             // No schema to ask: read what every version has.
@@ -352,6 +373,15 @@ final class MediaUsage
         if ($kind === 'category') {
             $add('Category image', 'image', $row->image);
             $add('Title header picture', 'header_image', $row->header_image ?? null);
+
+            // Lane CB: the Banner picture -- the file the category banner is
+            // drawn on, so not one the Media Library may offer to delete.
+            $layout = $row->header_layout ?? null;
+            $layout = is_string($layout) ? json_decode($layout, true) : $layout;
+
+            if (is_array($layout) && isset($layout['image'])) {
+                $add('Category banner picture', 'header_layout', $layout['image']);
+            }
         }
     }
 

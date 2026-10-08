@@ -1,0 +1,197 @@
+{
+ "width": 390,
+ "method": "stripe",
+ "scenario": "plain",
+ "locale": "en",
+ "reduced": false,
+ "landed": true,
+ "url": "/checkout/success",
+ "marks": [
+  [
+   0,
+   "press",
+   ""
+  ],
+  [
+   50,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   50,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   50,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   50,
+   "box-added",
+   "kbb-placing is-up"
+  ],
+  [
+   50,
+   "box-title",
+   "Placing your order…"
+  ],
+  [
+   50,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   50,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   50,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   50,
+   "box-class",
+   "kbb-placing is-up"
+  ],
+  [
+   1279,
+   "stripe-confirm-start",
+   ""
+  ],
+  [
+   1280,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   1280,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   1280,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   1280,
+   "box-removed",
+   ""
+  ],
+  [
+   1930,
+   "stripe-confirm-end",
+   ""
+  ],
+  [
+   1943,
+   "box-added",
+   "kbb-placing is-up"
+  ],
+  [
+   1943,
+   "box-title",
+   "Placing your order…"
+  ],
+  [
+   1943,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   1943,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   1943,
+   "button",
+   "disabled Confirming your payment…"
+  ],
+  [
+   1943,
+   "box-class",
+   "kbb-placing is-up"
+  ],
+  [
+   2994,
+   "box-title",
+   "Order placed"
+  ],
+  [
+   2994,
+   "box-class",
+   "kbb-placing is-up is-done"
+  ]
+ ],
+ "requests": [
+  {
+   "url": "/checkout/place",
+   "status": 200,
+   "serverMs": 1153.4,
+   "queries": 40,
+   "stripeMs": 301.5,
+   "mailMs": 604.2,
+   "start": 90,
+   "ttfb": 1246,
+   "end": 1300
+  },
+  {
+   "url": "/checkout/card/paid",
+   "status": 200,
+   "serverMs": 1003.6,
+   "queries": 28,
+   "stripeMs": 300.1,
+   "mailMs": 600.1,
+   "start": 1966,
+   "ttfb": 2972,
+   "end": 3011
+  },
+  {
+   "url": "/checkout/success",
+   "status": 200,
+   "serverMs": 254.3,
+   "queries": 8,
+   "stripeMs": 0,
+   "mailMs": 0,
+   "start": 3913,
+   "ttfb": 4180,
+   "end": 4198
+  }
+ ],
+ "thankYou": {
+  "navStart": 3897,
+  "requestStart": 3913,
+  "responseStart": 4180,
+  "responseEnd": 4188,
+  "fcp": 4573
+ },
+ "boxOpenedTimes": 2,
+ "boxRemovedTimes": 1,
+ "toasts": [],
+ "errors": [],
+ "frames": [
+  -129,
+  170,
+  549,
+  929,
+  1370,
+  1560,
+  1785,
+  2009,
+  2356,
+  2600,
+  3015,
+  3349,
+  3660,
+  4030,
+  4290,
+  4705,
+  4935,
+  5133
+ ]
+}

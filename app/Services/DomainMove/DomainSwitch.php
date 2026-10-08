@@ -286,6 +286,8 @@ final class DomainSwitch
             'Keep this install out of Google' => ['Hidden from Google', ['screen' => 'siteaddr', 'label' => 'Open Site address']],
             'Owner app host' => ['The owner app’s own address', ['screen' => 'ownerapp', 'label' => 'Open Owner App']],
             'Mail From address' => ['The address order emails are sent from', ['screen' => 'emails-sending', 'label' => 'Open Sending & delivery']],
+            'Web root file' => ['A file on the server that names an old address', null],
+            'ASSET_URL' => ['Where scripts and stylesheets load from (ASSET_URL)', null],
             default => ['A server setting ('.$c['what'].')', null],
         };
 
@@ -319,10 +321,16 @@ final class DomainSwitch
             'upload' => $isNew
                 ? [$n.' picture or video address(es) in '.$place.' on '.$r['host'].' that only WordPress has today',
                     ['step' => 8, 'label' => 'Fetch them (step 8)']]
+                // Lane DS: an address on the domain being left names a file on
+                // THIS server (one server, two names), so nothing needs fetching:
+                // step 6b points the address at the new name, undoably.
                 : [$n.' picture or video address(es) in '.$place.' still load from '.$r['host'],
-                    ['step' => 8, 'label' => 'Fetch them (step 8)']],
-            'link' => [$n.' link(s) in '.$place.' still send shoppers to '.$r['host'],
-                ['screen' => 'import', 'label' => 'Open Import → Addresses & pictures → Links to the old site']],
+                    ['step' => '6b', 'label' => 'Point them at the new address (step 6b)']],
+            'link' => $isNew
+                ? [$n.' link(s) in '.$place.' still send shoppers to '.$r['host'],
+                    ['screen' => 'import', 'label' => 'Open Import → Addresses & pictures → Links to the old site']]
+                : [$n.' link(s) in '.$place.' still send shoppers to '.$r['host'],
+                    ['step' => '6b', 'label' => 'Point them at the new address (step 6b)']],
             'email' => [$n.' email address(es) in '.$place.' end in '.$r['host'], self::screenFor($r['table'])],
             'text' => [$n.' mention(s) of '.$r['host'].' in '.$place, self::screenFor($r['table'])],
             'unreadable' => ['Part of the shop could not be checked ('.$r['table'].')', ['check' => true, 'label' => 'Check again']],

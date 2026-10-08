@@ -747,11 +747,11 @@ it('is driven by the card and the wallet legs, and every call is guarded', funct
         ->and($card)->toContain('(window.KBB && window.KBB.placing) || null')
         ->and($card)->toContain('if (ov) { ov.begin(); }')
         ->and($card)->toContain('if (ov) { ov.dismiss(); }')
-        ->and($card)->toContain('if (ov) { ov.confirmed(handle.success_url); return; }')
+        ->and($card)->toContain('if (ov) { ov.confirmed(handle.success_url, report); return; }')
         ->and($card)->toContain('if (ov) { ov.leaving(placed.body.url); return; }');
 
     expect($wallets)->toContain('(window.KBB && window.KBB.placing) || null')
-        ->and($wallets)->toContain('if (ov) { ov.confirmed(placed.body.success_url); return; }');
+        ->and($wallets)->toContain('if (ov) { ov.confirmed(placed.body.success_url, report); return; }');
 
     foreach ([$card, $wallets] as $src) {
         expect(preg_match('/(?<!&& )window\.KBB\.placing\./', $src))
@@ -759,31 +759,38 @@ it('is driven by the card and the wallet legs, and every call is guarded', funct
     }
 });
 
-it('takes the overlay down before the bank\'s own 3-D Secure step', function () {
+it('keeps the overlay up, un-frozen, for the bank\'s own 3-D Secure step', function () {
     /*
-     * THE ONE THAT WOULD HAVE COST A PAYMENT.
+     * THE ONE THAT WOULD HAVE COST A PAYMENT, and the one the owner saw twice.
      *
      * The overlay marks every other child of <body> `inert` while it is up.
      * Stripe answers confirmCardPayment by injecting its 3-D Secure challenge
      * into this document, and `inert` is exactly the property that would make a
-     * challenge injected into one of those subtrees unanswerable — a shopper
-     * who cannot answer their bank is a shopper whose payment cannot complete.
+     * challenge injected into one of those subtrees unanswerable.
      *
-     * So it comes down for that step, and the buttons stay disabled because the
-     * overlay restores each one to the value it FOUND rather than enabling it.
+     * This used to take the overlay DOWN for that step and put it back UP after
+     * it -- on a card with no challenge, the box closing and reopening a second
+     * later ("the two times box opening gives confusion to user", Lane PO). It
+     * now calls hold(): the box stays, the `inert` and the focus trap go, so the
+     * challenge is answerable wherever it lands and opens above the card. The
+     * buttons stay disabled because nothing in hold() touches them.
      *
-     * MUTATION, run: delete the `if (ov) { ov.dismiss(); }` above
-     * confirmCardPayment → this goes red on the ordering assertion.
+     * MUTATION, run: replace `if (ov) { ov.hold(); }` above confirmCardPayment
+     * with `if (ov) { ov.dismiss(); }` -> red on the ordering assertion.
      */
     $card = plcSource('stripe-elements');
+    $before = substr($card, 0, strpos($card, 'await stripe.confirmCardPayment'));
 
-    $dismiss = strrpos(substr($card, 0, strpos($card, 'await stripe.confirmCardPayment')), 'if (ov) { ov.dismiss(); }');
+    $hold = strrpos($before, 'if (ov) { ov.hold(); }');
+    $dismiss = strrpos($before, 'if (ov) { ov.dismiss(); }');
 
-    expect($dismiss)->not->toBeFalse('nothing takes the overlay down before 3-D Secure');
+    expect($hold)->not->toBeFalse('nothing un-freezes the page before 3-D Secure')
+        ->and($hold)->toBeGreaterThan((int) $dismiss, 'the overlay is taken down before 3-D Secure');
 
-    // And the restore-what-you-found rule the above depends on.
+    // And the restore-what-you-found rule the failure paths depend on.
     expect(plcSource('placing-overlay'))
-        ->toContain('wasDisabled.forEach(function (row) { row[0].disabled = row[1]; });');
+        ->toContain('wasDisabled.forEach(function (row) { row[0].disabled = row[1]; });')
+        ->toContain("function hold() {\n    if (!busy) { begin(); }\n\n    bank = true;\n    freeze(false);\n  }");
 });
 
 it('shows no overlay behind a native payment sheet', function () {

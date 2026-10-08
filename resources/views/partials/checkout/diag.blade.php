@@ -79,6 +79,30 @@
   window.addEventListener('load', function () { census('load'); });
   window.addEventListener('pageshow', function (e) { if (e.persisted) { census('restored from back/forward cache'); } });
 
+  /*
+   * THE KEYBOARD (the "white bar" report). Each time the keyboard opens or
+   * closes the visual viewport changes size; this logs both viewports, where
+   * the document ends against them, and what is painted at three heights
+   * just above the keyboard -- element and background. An element of ours
+   * names itself; Firefox's own strip above the keyboard (form autofill)
+   * lies outside the visual viewport and shows as nothing of ours there.
+   */
+  var vv = window.visualViewport, vvTimer = 0;
+  function bottomOf() {
+    var h = vv ? vv.height : innerHeight, top = vv ? vv.offsetTop : 0, out = [];
+    [8, 45, 90].forEach(function (up) {
+      var y = Math.max(0, Math.round(top + h - up)), n = document.elementFromPoint(innerWidth / 2, y);
+      out.push(up + 'px up: ' + name(n) + (n ? ' bg ' + getComputedStyle(n).backgroundColor : ''));
+    });
+    w('viewport', 'layout ' + innerWidth + 'x' + innerHeight + ' | visual ' + (vv ? Math.round(vv.width) + 'x' + Math.round(vv.height) + ' @' + Math.round(vv.offsetTop) : 'n/a')
+      + ' | scrollY ' + Math.round(scrollY) + ' of ' + document.documentElement.scrollHeight
+      + ' | document ends ' + Math.round(document.documentElement.getBoundingClientRect().bottom) + ' | focus ' + name(document.activeElement)
+      + '\n    ' + out.join('\n    '));
+  }
+  function soon() { clearTimeout(vvTimer); vvTimer = setTimeout(bottomOf, 250); }
+  if (vv) { vv.addEventListener('resize', soon); }
+  window.addEventListener('resize', soon);
+
   document.getElementById('kbbDiagFold').addEventListener('click', function () {
     var p = document.getElementById('kbbDiag');
     p.style.maxHeight = p.style.maxHeight === '24px' ? '46vh' : '24px';

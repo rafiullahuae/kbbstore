@@ -151,7 +151,9 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // ▲ `speed` (Lane SP): "Open pages instantly" and "Smooth change between
     // pages", ON as the owner asked; neither is CSS on :root, so "sending
     // nothing" below still holds. InstantNavTest covers the tab's effect.
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize', 'brandpage', 'press', 'fonts', 'speed']);
+    // ▲ `catbanner` (Lane CB): the brand page's Panel on category pages, every
+    // Brand page Panel control again for categories; not CSS on :root.
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['width', 'grid', 'loading', 'catheader', 'catheadersize', 'brandpage', 'catbanner', 'press', 'fonts', 'speed']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
@@ -188,7 +190,9 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // laptop and phone (Brand page tab), all at the 22px the page already leaves.
     // 134 with Lane SX: "Sold-out products" on Product grid, shipped at "Show as usual".
     // 136 since Lane SP: the two Page speed switches.
-    expect($keys)->toHaveCount(136);
+    // 171 with Lane CB: the Category banner tab -- its style switch and the
+    // thirty-four Brand page Panel controls again, for category pages.
+    expect($keys)->toHaveCount(171);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

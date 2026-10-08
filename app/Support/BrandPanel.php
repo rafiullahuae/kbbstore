@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Models\Brand;
+use App\Models\Category;
 
 /**
  * The brand page's PANEL header (Lane BR2): the banner as the background, and
@@ -175,29 +176,99 @@ final class BrandPanel
     /** Used when a brand has no colour of its own: the shop pink. */
     private const FALLBACK_COLOUR = '#e0567b';
 
-    private static ?bool $column = null;
+    /**
+     * Lane CB: the same header on a CATEGORY page -- the owner: "i need the
+     * categories banners, exact same like brand banners. with exact same
+     * controls and everything." Every setting above is the brand page's; a
+     * category reads the same setting under this prefix instead of `brand_`
+     * (Appearance -> Site layout -> Category banner), with the same bounds
+     * and the same shipped values, so the two headers cannot drift apart.
+     */
+    public const CATEGORY_PREFIX = 'catb_';
 
     /**
-     * Whether `brands.header_layout` exists yet. Asked by the WRITER only: a
+     * Lane CB: the few rules the category banner needs beyond kbb-brand-
+     * header.css -- the ones the brand page keeps in its own view (store/
+     * brands: the logo circle, the description's paragraphs) -- scoped to the
+     * category banner's wrapper, plus the wrapper's 22px, the brand page's
+     * .brw top padding that "space above the header" counts from. A CONSTANT:
+     * printed unescaped into a <style> by store/partials/category-panel-head
+     * and handed to the category "Edit header" panel for its live preview.
+     */
+    public const CATEGORY_CSS = '.kbb-cbw{padding-top:22px}'
+        .'.kbb-cbw .brw-logo{border-radius:50%;background:var(--cream);display:grid;place-items:center;overflow:hidden;flex:none}'
+        .'.kbb-cbw .brw-logo img{width:100%;height:100%;object-fit:contain}'
+        .'.kbb-cbw .brw-initial{font-size:34px;color:var(--pink)}'
+        .'.kbb-cbw .brw-desc p{margin:0 0 6px}.kbb-cbw .brw-desc p:last-child{margin-bottom:0}';
+
+    /** @var array<string, bool> table => whether its `header_layout` exists */
+    private static array $column = [];
+
+    /**
+     * Whether `{table}.header_layout` exists yet. Asked by the WRITER only: a
      * package's files land before its migrations run. The storefront only
      * reads the attribute, which is null on a row without the column.
      */
-    public static function columnReady(): bool
+    public static function columnReady(string $table = 'brands'): bool
     {
-        if (self::$column === null) {
+        if (! isset(self::$column[$table])) {
             try {
-                self::$column = \Illuminate\Support\Facades\Schema::hasColumn('brands', 'header_layout');
+                self::$column[$table] = \Illuminate\Support\Facades\Schema::hasColumn($table, 'header_layout');
             } catch (\Throwable) {
                 return false;
             }
         }
 
-        return self::$column;
+        return self::$column[$table];
     }
 
     public static function forgetColumn(): void
     {
-        self::$column = null;
+        self::$column = [];
+    }
+
+    /**
+     * The shop setting a key reads: the brand page's own name, or for a
+     * category the same name under CATEGORY_PREFIX (`brand_banner_h` ->
+     * `catb_banner_h`).
+     */
+    public static function settingKey(string $brandSetting, bool $category = false): string
+    {
+        return $category ? self::CATEGORY_PREFIX.substr($brandSetting, strlen('brand_')) : $brandSetting;
+    }
+
+    /**
+     * Lane CB: the category banner's per-category controls, for Catalog ->
+     * Categories -> Edit -> Category header -> Banner layout -- every own
+     * key, labelled and bounded by its Site layout setting, so the screen
+     * cannot offer an option or a range the server would refuse.
+     *
+     * @return list<array{key:string, setting:string, label:string, type:string, options?:array<string,string>, min?:int, max?:int, unit?:string}>
+     */
+    public static function categoryFields(): array
+    {
+        $schema = \App\Services\SiteLayout::SCHEMA;
+        $label = static fn (string $setting): string => ucfirst((string) preg_replace('/^Banner · /u', '', (string) ($schema[$setting][1] ?? $setting)));
+        $out = [];
+
+        foreach (self::CHOICES as $key => [$brandSetting, $allowed]) {
+            $setting = self::settingKey($brandSetting, true);
+            $names = in_array($key, self::SWITCHES, true) ? ['off' => 'Off', 'on' => 'On'] : ($schema[$setting][4] ?? []);
+            $options = [];
+
+            foreach ($allowed as $value) {
+                $options[$value] = (string) ($names[$value] ?? $value);
+            }
+
+            $out[] = ['key' => $key, 'setting' => $setting, 'label' => $label($setting), 'type' => 'choice', 'options' => $options];
+        }
+
+        foreach (self::RANGES as $key => [$brandSetting, $min, $max, , $unit]) {
+            $setting = self::settingKey($brandSetting, true);
+            $out[] = ['key' => $key, 'setting' => $setting, 'label' => $label($setting), 'type' => 'range', 'min' => $min, 'max' => $max, 'unit' => $unit];
+        }
+
+        return $out;
     }
 
     /**
@@ -244,12 +315,12 @@ final class BrandPanel
      * @param  array<string, mixed>  $layout  SiteLayout::all()
      * @return array<string, string|int>
      */
-    public static function shop(array $layout): array
+    public static function shop(array $layout, bool $category = false): array
     {
         $out = [];
 
         foreach (self::CHOICES as $key => [$setting, $allowed]) {
-            $v = $layout[$setting] ?? null;
+            $v = $layout[self::settingKey($setting, $category)] ?? null;
 
             if (in_array($key, self::SWITCHES, true)) {
                 // A switch on Site layout; absent is its shipped Off.
@@ -262,7 +333,7 @@ final class BrandPanel
         }
 
         foreach (self::RANGES as $key => [$setting, $min, $max]) {
-            $out[$key] = max($min, min($max, (int) ($layout[$setting] ?? $min)));
+            $out[$key] = max($min, min($max, (int) ($layout[self::settingKey($setting, $category)] ?? $min)));
         }
 
         return $out;
@@ -310,6 +381,218 @@ final class BrandPanel
             $description = e(trim($banner['subheading']));
         }
 
+        return self::draw($v, $image, $description, BrandLogo::ring($brand) ?? self::FALLBACK_COLOUR);
+    }
+
+    /**
+     * Lane CB: the same header for one CATEGORY, or null -- and null is the
+     * category page exactly as it was.
+     *
+     * ── WHICH PICTURE ───────────────────────────────────────────────────────
+     *
+     * The category's own Banner picture (Catalog -> Categories -> Edit ->
+     * Category header -> Banner layout, `header_layout.image`) first; else
+     * the picture its old header showed (oldPicture()) -- the owner: "yes if
+     * there's banner, then the banner should be picked auto by new design".
+     * Either one only when it is a file on this server (onServer()); one that
+     * is not leaves the page exactly as it was, never a broken banner.
+     * Appearance -> Site layout -> Category banner -> "Category header -- as
+     * before" puts every category back on the title header.
+     *
+     * ── ONLY WITH A PICTURE ─────────────────────────────────────────────────
+     *
+     * A brand with no picture still draws the Panel, on a ground in its own
+     * shades (`brw-ph--noimg`). A category does NOT: the owner asked for the
+     * banner, and a category with no picture keeps today's header -- the light
+     * box, the plain title or the Catalog banner's tint -- byte for byte. The
+     * no-picture Panel is a decision for him, not a default this lane chose.
+     *
+     * ── WHERE EACH PART COMES FROM ──────────────────────────────────────────
+     *
+     *   picture      the category's own Banner picture; on "all", failing
+     *                that, the Catalog banner's picture when it is on and has
+     *                one, else the category's header picture (Catalog ->
+     *                Categories -> Edit -> Category header -> Header picture,
+     *                or the imported banner). Its PHONE picture is the one the category's
+     *                "Edit header" panel already keeps (`header_style.
+     *                img_phone`), offered to phones only.
+     *   heading      the title header's own: the custom title in English, else
+     *                the category's name, translated (TitleHeader::wordsOf).
+     *   description  the title header's own, with its generic line for a
+     *                category that has none.
+     *   logo         a category has no logo; its own square picture
+     *                (`categories.image`) stands in, behind the same "Show the
+     *                logo" switches, which ship Off as the brand's do.
+     *   colours      the shop pink, which is what a brand with no colour gets.
+     *
+     * Settings: the brand page's, under CATEGORY_PREFIX. Own choices:
+     * `categories.header_layout`, through sanitize() exactly as a brand's.
+     *
+     * @param  array<string, mixed>  $layout  SiteLayout::all()
+     * @param  array<string, mixed>|null  $banner  PageBanner::forModel()
+     * @return array{image:string, image_phone:?string, srcset:string, srcset_phone:string, sizes:string, sizes_phone:string, heading:string, logo_image:?string, class:string, style:string, description:string, logo:bool, more:bool}|null
+     */
+    public static function forCategory(Category $category, array $layout, string $title, ?array $banner = null): ?array
+    {
+        if (($layout['catb_hero'] ?? 'panel') === 'header') {
+            return null;
+        }
+
+        $own = $category->getAttribute('header_layout');
+
+        // The category's own Banner picture first, else the picture its old
+        // header showed -- oldPicture() -- each only if it is on this server.
+        $image = null;
+        $ratio = null;
+
+        foreach ([self::categoryImage($own), self::oldPicture($category, $layout, $banner)] as $candidate) {
+            if ($candidate !== null && ($ratio = self::onServer($candidate)) !== null) {
+                $image = $candidate;
+
+                break;
+            }
+        }
+
+        if ($image === null) {
+            return null;
+        }
+
+        $v = self::sanitize($own) + self::shop($layout, true);
+        [$heading, $description] = TitleHeader::wordsOf($category, $title, $layout);
+
+        if ($description === '' && is_string($banner['subheading'] ?? null) && trim($banner['subheading']) !== '') {
+            $description = e(trim($banner['subheading']));
+        }
+
+        $style = TitleHeader::sanitizeStyle($category->getAttribute('header_style'));
+        $phone = TitleHeader::safeImage($style['img_phone'] ?? null);
+        $phoneRatio = $phone !== null && $phone !== $image ? self::onServer($phone) : null;
+        // A phone picture that is not on this server is dropped, never drawn broken.
+        $phone = $phoneRatio !== null ? $phone : null;
+
+        return [
+            'image_phone' => $phone,
+            'srcset' => self::srcset($image),
+            'srcset_phone' => $phone === null ? '' : self::srcset($phone),
+            'sizes' => self::sizes($image, (int) $v['height'], (int) $v['height_m'], $ratio),
+            'sizes_phone' => $phone === null ? '' : self::sizes($phone, (int) $v['height'], (int) $v['height_m'], $phoneRatio),
+            'heading' => $heading,
+            'logo_image' => TitleHeader::safeImage($category->getAttribute('image')),
+        ] + self::draw($v, $image, $description, self::FALLBACK_COLOUR);
+    }
+
+    /**
+     * Lane CB: the picture a category's OLD header showed, so the banner picks
+     * it up by itself -- the owner: "yes if there's banner, then the banner
+     * should be picked auto by new design". Exactly the old page's rule:
+     * with the Catalog banner on, its picture (TitleHeader::forModel() steps
+     * aside for it); otherwise, while Appearance -> Site layout -> Category
+     * header -> "Show the header on category pages" is on, the header picture
+     * (imported, or chosen in Category header), else -- only with "When no
+     * banner was imported, use the category picture" on, which ships Off --
+     * the category's own square picture.
+     *
+     * @param  array<string, mixed>  $layout
+     * @param  array<string, mixed>|null  $banner
+     */
+    private static function oldPicture(Category $category, array $layout, ?array $banner): ?string
+    {
+        if ($banner !== null) {
+            return TitleHeader::safeImage($banner['image'] ?? null);
+        }
+
+        if (empty($layout['cat_header'])) {
+            return null;
+        }
+
+        return TitleHeader::safeImage($category->getAttribute('header_image'))
+            ?? (! empty($layout['cat_header_fallback']) ? TitleHeader::safeImage($category->getAttribute('image')) : null);
+    }
+
+    /**
+     * The picture's shape when it is a picture ON THIS SERVER, else null --
+     * and null means the category keeps its old header, never a broken
+     * banner. ImageVariants::aspectOf() opens the file's header under this
+     * web root: a root-relative path or this host's own absolute URL that is
+     * really an image answers; a missing file, a non-image, and an address on
+     * another host (an old-domain WooCommerce URL the media rewrite has not
+     * moved) do not. One header read, which sizes() needed anyway.
+     */
+    private static function onServer(string $image): ?float
+    {
+        try {
+            $ratio = ImageVariants::aspectOf(ImageVariants::rootRelative($image));
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $ratio !== null && $ratio > 0 ? $ratio : null;
+    }
+
+    /**
+     * Lane CB: a category's own Banner picture (`header_layout.image`), or
+     * null. Through TitleHeader::safeImage(), the header picture's own check:
+     * an uploaded path or an http(s) address, nothing that can leave the
+     * attribute. Not in sanitize(), which a brand's layout shares.
+     */
+    public static function categoryImage(mixed $raw): ?string
+    {
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+
+        return is_array($raw) ? TitleHeader::safeImage($raw['image'] ?? null) : null;
+    }
+
+    /**
+     * The picture's img-cache copies, so a phone is not handed the 2400px
+     * original. '' when there are none on disk (a picture still on the old
+     * site, or no GD) -- read from the disk only, never a query.
+     */
+    private static function srcset(string $image): string
+    {
+        try {
+            return ImageVariants::bannerSrcsetFor(ImageVariants::rootRelative($image));
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
+    /**
+     * The `sizes` for a picture that COVERS the banner. The banner is about
+     * the page's width, but it is cropped to fill a fixed height, so a wide
+     * picture in a short phone banner is drawn wider than the screen: a 3.2 : 1
+     * picture in the 165px phone banner is 528 CSS px wide on a 390px phone.
+     * `min(100vw, 2400px)` alone asked for the 400w copy there and the phone
+     * upscaled it -- measured in Chromium. So the height times the picture's
+     * own ratio is a floor, per device (the banner turns phone-shaped under
+     * 600px). The ratio is read from the file's header, never a query; a
+     * picture that is not on this server keeps the plain width.
+     */
+    private static function sizes(string $image, int $height, int $heightPhone, ?float $ratio = null): string
+    {
+        $plain = ImageVariants::bannerSliderSizesAttribute();
+        $ratio ??= self::onServer($image);
+
+        if ($ratio === null || $ratio <= 0) {
+            return $plain;
+        }
+
+        $phone = (int) ceil($heightPhone * $ratio);
+        $laptop = (int) ceil($height * $ratio);
+
+        return '(max-width: 599px) max(100vw, '.min(2400, $phone).'px), min(max(100vw, '.min(2400, $laptop).'px), 2400px)';
+    }
+
+    /**
+     * The class, the style and the switches, from resolved values -- one
+     * body for the brand page and the category page.
+     *
+     * @param  array<string, string|int>  $v  own choices over the shop's
+     * @return array{image:?string, class:string, style:string, description:string, logo:bool, more:bool}
+     */
+    private static function draw(array $v, ?string $image, string $description, string $base): array
+    {
         $class = 'brw-ph brw-ph--'.$v['panel'].' brw-ph--pill-'.$v['pill'].' brw-ph--logo-'.$v['logo']
             .' brw-ph--pos-'.$v['position'].($image === null ? ' brw-ph--noimg' : '');
 
@@ -346,7 +629,6 @@ final class BrandPanel
             }
         }
 
-        $base = BrandLogo::ring($brand) ?? self::FALLBACK_COLOUR;
         $style[] = '--brw-ph-dk:'.self::mix($base, '#000000', 30);
         $style[] = '--brw-ph-lt:'.self::mix($base, '#ffffff', 10);
 

@@ -683,6 +683,13 @@ final class AdminCapabilities
          * key -- otherwise this one tick would be a side door to six others.
          */
         'platform.domain_switch' => ['owner'],
+        /*
+         * Platform -> Domain switch -> Payments ready? (Lane DS). READ-ONLY
+         * calls to Stripe, Tabby and Tamara with the stored keys; no secret is
+         * returned. Its own key so it can be handed to whoever tests payments
+         * without handing them the switch.
+         */
+        'payments.check' => ['owner'],
         'cache.manage' => ['owner'],
         'security.view' => ['owner'],
         'security.integrity' => ['owner'],
@@ -1016,6 +1023,9 @@ final class AdminCapabilities
          */
         ['*', 'admin-api/site-url', 'platform.site_url'],
         ['*', 'admin-api/site-url/**', 'platform.site_url'],
+        // Platform -> Domain switch -> Payments ready? (Lane DS): read-only checks
+        // against Stripe, Tabby and Tamara. Its own key, ABOVE the wildcard below.
+        ['POST', 'admin-api/domain-switch/payments-check', 'payments.check'],
         // Platform -> Domain switch (Lane DW). Both lines: `/**` does not match the bare prefix.
         ['*', 'admin-api/domain-switch', 'platform.domain_switch'],
         ['*', 'admin-api/domain-switch/**', 'platform.domain_switch'],

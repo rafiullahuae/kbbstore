@@ -236,6 +236,30 @@ class ShopController extends Controller
         }
 
         /*
+         * THE CATEGORY BANNER (Lane CB): the brand page's Panel header on a
+         * category with a picture -- its own Banner picture, else the one its
+         * old header showed. The owner: "i need the categories banners, exact
+         * same like brand banners", and "if there's banner, then the banner
+         * should be picked auto by new design". It replaces the title header
+         * and the Catalog banner the way the Panel does on a brand page; the
+         * custom header area above still wins. Null for a category with no
+         * picture on this server, or on "Category header -- as before": that
+         * page is exactly as it was. Off the row already loaded and the settings map the
+         * request has already read -- no query.
+         */
+        $catPanel = null;
+
+        if ($category && $categoryHeader === null) {
+            $layoutAll = app(\App\Services\SiteLayout::class)->all();
+
+            $catPanel = \App\Support\BrandPanel::forCategory($category, $layoutAll, $title, $banner);
+
+            if ($catPanel !== null) {
+                $titleHeader = null;
+            }
+        }
+
+        /*
          * A ONE-BRAND LISTING IS NAMED FOR ITS BRAND.              (2.60.346)
          *
          * The owner, on /shop/?filter_brands=celimax: "it showin one default
@@ -359,8 +383,11 @@ class ShopController extends Controller
         return view('store.shop', [
             'filtersD' => $filtersD,
             'filtersM' => $filtersM,
-            'banner' => $banner,
+            // Under the category banner the Catalog banner is not drawn on its
+            // own -- its picture is the panel's background (Lane CB).
+            'banner' => $catPanel === null ? $banner : null,
             'titleHeader' => $titleHeader,
+            'catPanel' => $catPanel,
             'categoryHeader' => $categoryHeader,
             /*
              * THE ARCHIVE'S CATEGORY, FOR THE TILE'S EYEBROW.          Lane PG

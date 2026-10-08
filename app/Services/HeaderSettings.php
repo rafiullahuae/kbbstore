@@ -444,6 +444,30 @@ class HeaderSettings
         'bc_below'        => ['range',  'Space below · desktop', 0,
                               'Between the trail and the page underneath it.',
                               ['min' => 0, 'max' => 48, 'step' => 1, 'unit' => 'px']],
+        /*
+         * ── ITS INNER PADDING (Lane CB) ────────────────────────────────────
+         *
+         * The owner, 8 October: "give us full control of spacing top and
+         * bottom of breadcrums, and also padding. for desktop and mobile
+         * both." "Space above" and "Space below" stay what they were (and
+         * where they were); these four are the trail's own padding inside
+         * that space -- top and bottom, and left and right, which moves the
+         * trail in from the page's side. All four ship at 0, which is the
+         * trail exactly as it is, and at 0 breadcrumbCss() prints the very
+         * bytes it printed before they existed.
+         */
+        'bc_pad_y_mobile' => ['range',  'Inner padding · top and bottom · phone', 0,
+                              'Inside the trail, above and below its words, on screens up to 900px wide. Added to the space above and below.',
+                              ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'bc_pad_x_mobile' => ['range',  'Inner padding · left and right · phone', 0,
+                              'Moves the trail in from the page\'s sides, on screens up to 900px wide.',
+                              ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'bc_pad_y'        => ['range',  'Inner padding · top and bottom · desktop', 0,
+                              'Inside the trail, above and below its words, on screens wider than 900px. Added to the space above and below.',
+                              ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'bc_pad_x'        => ['range',  'Inner padding · left and right · desktop', 0,
+                              'Moves the trail in from the page\'s sides, on screens wider than 900px.',
+                              ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
     ];
 
     /** tab key => [label, description, field keys] */
@@ -470,7 +494,8 @@ class HeaderSettings
                       ['fb_mobile', 'fb_desktop', 'fb_text', 'fb_text_desktop', 'fb_flags', 'fb_height', 'fb_size', 'fb_flag_h',
                        'fb_bg', 'fb_ink', 'fb_pill', 'fb_border']],
         'crumbs'  => ['Breadcrumbs', 'The "Home / Category / Product" line under the header, on product, category, shop, brand, article, wishlist and content pages. Off on phones and desktop by default; each width has its own switch and its own spacing.',
-                      ['bc_mobile', 'bc_desktop', 'bc_above_mobile', 'bc_below_mobile', 'bc_above', 'bc_below']],
+                      ['bc_mobile', 'bc_desktop', 'bc_above_mobile', 'bc_below_mobile', 'bc_pad_y_mobile', 'bc_pad_x_mobile',
+                       'bc_above', 'bc_below', 'bc_pad_y', 'bc_pad_x']],
     ];
 
     public function __construct(
@@ -792,10 +817,48 @@ class HeaderSettings
         $c = $this->all();
         $sel = ':root body :is(' . implode(',', self::CRUMB_SELECTORS) . ')';
 
-        $device = static function (string $query, bool $on, int $above, int $below) use ($sel): string {
-            if ($on) {
+        /*
+         * ── AND THE BRAND BANNER NEVER RISES OVER IT (Lane CB) ──────────────
+         *
+         * The owner: "i have enabled the breakcrums, but it goes behind the
+         * brand banner." The brand header's "space above the header"
+         * (Appearance -> Site layout -> Brand page, and per brand) is a
+         * margin of `space - 22px` (kbb-brand-header.css, OUTER SPACING),
+         * written when nothing sat between the page's 22px top padding and
+         * the header: anything under 22 pulls the header UP by the
+         * difference. With the trail on, that is up over the trail -- and the
+         * header is `position:relative; isolation:isolate`, so it paints on
+         * top: at 0 the banner covered the whole trail and every crumb link
+         * answered the banner's picture instead (measured with
+         * elementFromPoint, 390 and 1280). Wherever the trail is SHOWN, the
+         * header following it may not go above it: the pull is clamped at 0,
+         * by device as the header itself chooses (its own container query).
+         * Where the trail is hidden the pull is untouched, so the page the
+         * owner tuned without breadcrumbs does not move. At the shipped 22
+         * the clamp is 0 = 0 and nothing moves either.
+         *
+         * A category banner sits in a box of its own below the trail
+         * (store/partials/category-panel-head), so it needs no rule here.
+         */
+        $noRise = ':root body .brw-crumb+.brw-phw .brw-ph';
+        $noRise = $noRise . '{margin-top:max(0px,calc(var(--brw-ph-st,22px) - 22px))}'
+            . '@container (max-width:599px){' . $noRise . '{margin-top:max(0px,calc(var(--brw-ph-stm,22px) - 22px))}}';
+
+        $device = static function (string $query, bool $on, int $above, int $below, int $padY = 0, int $padX = 0) use ($sel, $noRise): string {
+            if ($on && $padY === 0 && $padX === 0) {
                 return '@media ' . $query . '{' . $sel . '{margin-top:0;margin-bottom:0;padding-top:'
-                    . $above . 'px;padding-bottom:' . $below . 'px}}';
+                    . $above . 'px;padding-bottom:' . $below . 'px}' . $noRise . '}';
+            }
+
+            /*
+             * With inner padding (Lane CB): the space above and below become
+             * the trail's margins and the padding its own, so each slider
+             * means what its label says. The words land where the two add up
+             * to, which with both paddings at 0 is the line above exactly.
+             */
+            if ($on) {
+                return '@media ' . $query . '{' . $sel . '{margin-top:' . $above . 'px;margin-bottom:' . $below
+                    . 'px;padding:' . $padY . 'px ' . $padX . 'px}' . $noRise . '}';
             }
 
             /*
@@ -813,8 +876,10 @@ class HeaderSettings
                 . $sel . '+:is(.eyebrow,.sh){margin-top:' . $above . 'px}}';
         };
 
-        return $device('(max-width:900px)', (bool) $c['bc_mobile'], (int) $c['bc_above_mobile'], (int) $c['bc_below_mobile'])
-             . $device('(min-width:901px)', (bool) $c['bc_desktop'], (int) $c['bc_above'], (int) $c['bc_below']);
+        return $device('(max-width:900px)', (bool) $c['bc_mobile'], (int) $c['bc_above_mobile'], (int) $c['bc_below_mobile'],
+                (int) $c['bc_pad_y_mobile'], (int) $c['bc_pad_x_mobile'])
+             . $device('(min-width:901px)', (bool) $c['bc_desktop'], (int) $c['bc_above'], (int) $c['bc_below'],
+                (int) $c['bc_pad_y'], (int) $c['bc_pad_x']);
     }
 
     /**

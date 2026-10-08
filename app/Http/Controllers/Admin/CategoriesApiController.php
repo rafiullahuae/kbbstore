@@ -82,6 +82,8 @@ class CategoriesApiController extends Controller
             // Lane SX: the category's own "Sold-out products" choice -- see
             // the try below.
             ->when($soldOut, static fn ($q) => $q->addSelect('categories.'.SoldOut::COLUMN))
+            // Lane CB: the category banner's own layout, once its column exists.
+            ->when(\App\Support\BrandPanel::columnReady('categories'), static fn ($q) => $q->addSelect('categories.header_layout'))
             // The headline count, and it has to agree with the archive page.
             //
             // It did not. This subquery filtered on `deleted_at IS NULL` alone,
@@ -740,6 +742,14 @@ class CategoriesApiController extends Controller
             // and not with a copy of them.
             ...\App\Support\TitleHeaderInput::rules(),
             /*
+             * Lane CB: the category banner's own layout -- the brand page's
+             * Panel controls, per category (Category header -> Banner layout).
+             * OPTIONAL like the header keys. Each choice is one of its own
+             * options and each size a whole number in its slider's range;
+             * blank follows Appearance -> Site layout -> Category banner.
+             */
+            ...self::layoutRules(),
+            /*
              * Lane SX: "Sold-out products" -- '' is "Use the shop default" and
              * stores NULL; anything that is not one of the select's own options
              * is refused. OPTIONAL like the header keys: the Catalog tab that
@@ -783,6 +793,19 @@ class CategoriesApiController extends Controller
         );
         $data['banner'] = \App\Support\PageBanner::sanitize($data['banner'] ?? null);
 
+        unset($data['header_layout']);
+
+        if ($request->exists('header_layout')) {
+            $layout = $this->headerLayout($request);
+
+            // A package's files land before its migrations: without the
+            // column there is nothing to write, and headerLayout() has
+            // already refused a layout that would have been lost.
+            if (\App\Support\BrandPanel::columnReady('categories')) {
+                $data['header_layout'] = $layout;
+            }
+        }
+
         if (array_key_exists(SoldOut::COLUMN, $data)) {
             if (SoldOut::columnReady('categories')) {
                 $data[SoldOut::COLUMN] = SoldOut::clean($data[SoldOut::COLUMN]);
@@ -809,6 +832,73 @@ class CategoriesApiController extends Controller
         }
 
         return $this->headerFields($data);
+    }
+
+    /**
+     * Lane CB: the rules for `header_layout`, from BrandPanel's own lists --
+     * the ones the brand page's pop-up validates with.
+     *
+     * @return array<string, list<mixed>>
+     */
+    private static function layoutRules(): array
+    {
+        $rules = ['header_layout' => ['sometimes', 'nullable', 'array']];
+
+        foreach (\App\Support\BrandPanel::CHOICES as $key => [, $allowed]) {
+            $rules['header_layout.'.$key] = ['nullable', 'string', Rule::in($allowed)];
+        }
+
+        foreach (\App\Support\BrandPanel::RANGES as $key => [, $min, $max]) {
+            $rules['header_layout.'.$key] = ['nullable', 'integer', 'between:'.$min.','.$max];
+        }
+
+        // The category's own Banner picture: what switches the banner on.
+        $rules['header_layout.image'] = ['nullable', 'string', 'max:2048'];
+
+        return $rules;
+    }
+
+    /**
+     * The category's own banner layout, ready for its column: only known
+     * keys (an unknown one is refused, not dropped), each cleaned by
+     * BrandPanel::sanitize(); nothing left is NULL, "follow the shop". Read
+     * off the INPUT, which the rules have checked key by key -- the
+     * validator's own answer leaves out the blank boxes that mean "shop".
+     *
+     * @return array<string, string|int>|null
+     */
+    private function headerLayout(Request $request): ?array
+    {
+        $raw = $request->input('header_layout');
+        $raw = is_array($raw) ? $raw : [];
+        $unknown = array_diff(array_keys($raw), array_keys(\App\Support\BrandPanel::CHOICES + \App\Support\BrandPanel::RANGES), ['image']);
+
+        if ($unknown !== []) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['header_layout' => 'The banner layout has no setting called "'.mb_substr((string) reset($unknown), 0, 40).'".']);
+        }
+
+        $clean = \App\Support\BrandPanel::sanitize(array_filter($raw, static fn ($v): bool => $v !== null && $v !== ''));
+
+        // The Banner picture, through the header picture's own check; one
+        // that is not an uploaded path or an http(s) address is refused, not
+        // dropped, so a typo is not saved as "no banner".
+        $picture = trim((string) ($raw['image'] ?? ''));
+
+        if ($picture !== '') {
+            $safe = \App\Support\BrandPanel::categoryImage(['image' => $picture]);
+
+            if ($safe === null) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['header_layout.image' => 'The banner picture must be an uploaded file or an http(s) address.']);
+            }
+
+            $clean['image'] = $safe;
+        }
+
+        if ($clean !== [] && ! \App\Support\BrandPanel::columnReady('categories')) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['header_layout' => 'The banner layout needs this update\'s database step. Run the update again from Store → Core Updates.']);
+        }
+
+        return $clean === [] ? null : $clean;
     }
 
     /**

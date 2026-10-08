@@ -285,7 +285,10 @@ it('offers spacing and nothing structural', function () {
             // sum_totals and float_labels (Lane CD) move the totals into a card
             // above Place order on a laptop and the field labels inside their
             // boxes; nothing is added or removed.
-            'optin_on', 'optin_checked', 'notes_on', 'ph_italic', 'addr_picker', 'state_list', 'sum_row', 'browsed_on', 'sum_totals', 'float_labels',
+            // remember_on (Lane PO) draws a tick under the address and a link in
+            // the Contact bar, and keeps the typed details in the browser;
+            // every section stays.
+            'optin_on', 'optin_checked', 'notes_on', 'ph_italic', 'addr_picker', 'state_list', 'sum_row', 'browsed_on', 'remember_on', 'sum_totals', 'float_labels',
             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'trust_tick',
             // Lane PY: whether the payment boxes draw logos, and which of them
             // wear their gateway's colours. Looks; the four boxes stay four.

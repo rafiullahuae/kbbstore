@@ -687,7 +687,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // ahead says beside the button and under the field (store.checkout.place_*,
     // 2, and store.checkout.field_*, 4), seeded by
     // 2027_10_09_130000_seed_place_order_notice_arabic_drafts.
-    expect($ui['drafts'])->toBe(1473, 'the shipped Arabic is not showing as drafts to review')
+    // 1473 -> 1475 (Lane PO): "Remember my details on this device" and "Not
+    // you? Clear details" (store.checkout.remember_*, 2), seeded by
+    // 2027_10_08_140000_seed_checkout_remember_arabic_drafts.
+    expect($ui['drafts'])->toBe(1475, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

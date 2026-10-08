@@ -54,7 +54,8 @@ final class WebpReferences
         'product_variants' => ['id', ['image']],
         'attribute_values' => ['id', ['swatch_image']],
         'brands' => ['id', ['logo', 'banner', 'header_image', 'seo', 'description']],
-        'categories' => ['id', ['image', 'banner', 'header_image', 'seo', 'description']],
+        // header_layout (Lane CB): the category banner's own picture is a key in it.
+        'categories' => ['id', ['image', 'banner', 'header_image', 'header_layout', 'seo', 'description']],
         'product_tabs' => ['id', ['body']],
         // Banners, Spotted, the homepage furniture.
         'banner_cards' => ['id', ['image', 'image_m', 'body']],

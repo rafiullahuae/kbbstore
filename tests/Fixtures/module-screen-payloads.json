@@ -2048,6 +2048,36 @@
             "value": 0
           },
           {
+            "key": "bc_pad_y_mobile",
+            "name": "bc_pad_y_mobile",
+            "type": "range",
+            "label": "Inner padding · top and bottom · phone",
+            "help": "Inside the trail, above and below its words, on screens up to 900px wide. Added to the space above and below.",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "bc_pad_x_mobile",
+            "name": "bc_pad_x_mobile",
+            "type": "range",
+            "label": "Inner padding · left and right · phone",
+            "help": "Moves the trail in from the page's sides, on screens up to 900px wide.",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
             "key": "bc_above",
             "name": "bc_above",
             "type": "range",
@@ -2071,6 +2101,36 @@
             "options": {
               "min": 0,
               "max": 48,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "bc_pad_y",
+            "name": "bc_pad_y",
+            "type": "range",
+            "label": "Inner padding · top and bottom · desktop",
+            "help": "Inside the trail, above and below its words, on screens wider than 900px. Added to the space above and below.",
+            "options": {
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 0,
+            "value": 0
+          },
+          {
+            "key": "bc_pad_x",
+            "name": "bc_pad_x",
+            "type": "range",
+            "label": "Inner padding · left and right · desktop",
+            "help": "Moves the trail in from the page's sides, on screens wider than 900px.",
+            "options": {
+              "min": 0,
+              "max": 40,
               "step": 1,
               "unit": "px"
             },
@@ -9793,6 +9853,15 @@
             "help": "Off, as asked: no \"Browsed\" tab beside the order summary, and the page does not look up recently viewed products for it. On brings the tab back.",
             "default": false,
             "value": false,
+            "options": null
+          },
+          {
+            "key": "remember_on",
+            "type": "bool",
+            "label": "Remember shopper details on this device",
+            "help": "On, as asked: name, phone, email, the address and the delivery choice are kept in the shopper's own browser and filled in on their next checkout, with no account. A ticked \"Remember my details on this device\" sits under the address -- unticking it erases the copy at once -- and \"Not you? Clear details\" appears when a remembered copy was used. Cards, coupons, passwords and the payment method are never kept. Off removes both and erases any copy a browser holds.",
+            "default": true,
+            "value": true,
             "options": null
           },
           {

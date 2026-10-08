@@ -1608,6 +1608,9 @@ final class InterfaceStrings
             'checkout.field_bad_email' => 'Please enter a valid email address.',
             'checkout.field_choose' => 'Please choose your :field.',
             'checkout.field_bad_value' => 'Please check this field.',
+            // Lane PO: the details kept in this browser, and the way to forget them.
+            'checkout.remember_me' => 'Remember my details on this device',
+            'checkout.remember_clear' => 'Not you? Clear details',
 
             /*
              * THE RETURN FROM AN INSTALMENT PROVIDER WITHOUT A PAYMENT.

@@ -1,0 +1,111 @@
+{
+ "width": 390,
+ "method": "cod",
+ "scenario": "plain",
+ "locale": "ar",
+ "reduced": false,
+ "landed": true,
+ "url": "/ar/checkout/success",
+ "marks": [
+  [
+   0,
+   "press",
+   ""
+  ],
+  [
+   25,
+   "box-added",
+   "kbb-placing is-up"
+  ],
+  [
+   25,
+   "box-title",
+   "جارٍ تنفيذ طلبك…"
+  ],
+  [
+   25,
+   "button",
+   "disabled تأكيد الطلب"
+  ],
+  [
+   25,
+   "button",
+   "disabled تأكيد الطلب"
+  ],
+  [
+   25,
+   "button",
+   "disabled تأكيد الطلب"
+  ],
+  [
+   25,
+   "box-class",
+   "kbb-placing is-up"
+  ],
+  [
+   136,
+   "box-title",
+   "تم تنفيذ الطلب"
+  ],
+  [
+   136,
+   "box-class",
+   "kbb-placing is-up is-done"
+  ]
+ ],
+ "requests": [
+  {
+   "url": "/ar/checkout/place",
+   "status": 200,
+   "serverMs": 95.8,
+   "queries": 37,
+   "stripeMs": 0,
+   "mailMs": 0,
+   "start": 31,
+   "ttfb": 131,
+   "end": 139
+  },
+  {
+   "url": "/ar/checkout/success",
+   "status": 200,
+   "serverMs": 73.7,
+   "queries": 10,
+   "stripeMs": 0,
+   "mailMs": 0,
+   "start": 526,
+   "ttfb": 601,
+   "end": 630
+  }
+ ],
+ "thankYou": {
+  "navStart": 497,
+  "requestStart": 526,
+  "responseStart": 601,
+  "responseEnd": 604,
+  "fcp": 929
+ },
+ "boxOpenedTimes": 1,
+ "boxRemovedTimes": 0,
+ "toasts": [],
+ "errors": [],
+ "frames": [
+  -122,
+  -40,
+  47,
+  164,
+  292,
+  390,
+  504,
+  591,
+  736,
+  864,
+  983,
+  1049,
+  1128,
+  1211,
+  1295,
+  1361,
+  1446,
+  1528
+ ]
+}

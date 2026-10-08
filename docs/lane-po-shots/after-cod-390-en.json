@@ -1,0 +1,111 @@
+{
+ "width": 390,
+ "method": "cod",
+ "scenario": "plain",
+ "locale": "en",
+ "reduced": false,
+ "landed": true,
+ "url": "/checkout/success",
+ "marks": [
+  [
+   0,
+   "press",
+   ""
+  ],
+  [
+   25,
+   "box-added",
+   "kbb-placing is-up"
+  ],
+  [
+   25,
+   "box-title",
+   "Placing your order…"
+  ],
+  [
+   25,
+   "button",
+   "disabled Place order"
+  ],
+  [
+   25,
+   "button",
+   "disabled Place order"
+  ],
+  [
+   25,
+   "button",
+   "disabled Place order"
+  ],
+  [
+   25,
+   "box-class",
+   "kbb-placing is-up"
+  ],
+  [
+   143,
+   "box-title",
+   "Order placed"
+  ],
+  [
+   143,
+   "box-class",
+   "kbb-placing is-up is-done"
+  ]
+ ],
+ "requests": [
+  {
+   "url": "/checkout/place",
+   "status": 200,
+   "serverMs": 79.9,
+   "queries": 36,
+   "stripeMs": 0,
+   "mailMs": 0,
+   "start": 43,
+   "ttfb": 137,
+   "end": 158
+  },
+  {
+   "url": "/checkout/success",
+   "status": 200,
+   "serverMs": 51,
+   "queries": 10,
+   "stripeMs": 0,
+   "mailMs": 0,
+   "start": 569,
+   "ttfb": 623,
+   "end": 686
+  }
+ ],
+ "thankYou": {
+  "navStart": 504,
+  "requestStart": 570,
+  "responseStart": 623,
+  "responseEnd": 627,
+  "fcp": 916
+ },
+ "boxOpenedTimes": 1,
+ "boxRemovedTimes": 0,
+ "toasts": [],
+ "errors": [],
+ "frames": [
+  -127,
+  -34,
+  32,
+  124,
+  251,
+  345,
+  550,
+  686,
+  814,
+  927,
+  992,
+  1079,
+  1160,
+  1230,
+  1312,
+  1402,
+  1458,
+  1543
+ ]
+}

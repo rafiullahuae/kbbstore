@@ -15,6 +15,8 @@ Undo, at any point before Part G: at Internet.bs, set the `@` A record back to
    on WordPress, copy them across first with Store → Import → Addresses & pictures,
    while WordPress is still online.
 3. If WordPress still takes orders, run one last import of orders and customers.
+   Then **Platform → Domain switch → 1b Payments ready? → Check everything**:
+   no red. Test each gateway as `docs/PAYMENT-TEST-PLAN.md` says.
 4. Go to **Platform → Site address**:
    - Main address: `kbeautybliss.com`
    - Old addresses: `extrabeauty.ae`
@@ -52,7 +54,9 @@ Undo, at any point before Part G: at Internet.bs, set the `@` A record back to
 13. In Cloudways, make kbeautybliss.com the **primary domain** and press
     **Purge Varnish**. Then in the shop, go to **Platform → Cache** and press
     **Clear everything**.
-14. Run `kbb:domain-check` again. The output must say **RISK 0**.
+14. **Platform → Domain switch → 6b Old links in the shop's text → Show what
+    would change → Change these links.** (Undo is offered.) Then run
+    `kbb:domain-check` again. The output must say **RISK 0**.
 
 ## D. Payments and apps (extrabeauty.ae must still be listed under Old addresses)
 15. **Stripe:** go to Store → Payments → Stripe and press **Set up webhook
@@ -65,7 +69,9 @@ Undo, at any point before Part G: at Internet.bs, set the `@` A record back to
     `public_html/wp-content/uploads/`. This keeps old picture links working.
 
 ## E. Test
-20. Place test orders: card, cash on delivery, Tabby and Tamara. Then check
+20. Press **1b Payments ready? → Check everything** again: every webhook must
+    read green, "the main address". Place test orders: card, cash on delivery,
+    Tabby and Tamara. Then check
     each of these:
     - order emails show kbeautybliss.com links
     - password reset works

@@ -3463,6 +3463,29 @@ KBB_BH_CSS;
                 'hits' => 3,
                 'perPage' => 3,
             ],
+            /*
+             * "REMEMBER MY DETAILS ON THIS DEVICE" (Lane PO). The owner: "the
+             * address fields etc should keep the data in user browser, so user
+             * should not enter everything again n again. even wihout login."
+             * Appearance -> Checkout page -> Fields & attention -> "Remember
+             * shopper details on this device" ships ON: a ticked box under the
+             * address (no name, so nothing posts), the "Not you? Clear details"
+             * link in the Contact bar (hidden until a remembered copy is used),
+             * and that link's few rules in the head. Checkout only, once each.
+             * Off, none of the three (CheckoutPlaceOrderOnceTest).
+             */
+            'the checkout remember-me link rules (Lane PO)' => [
+                'pattern' => "#<style>\n\.kbb-checkout \.sec > h2 \.kbb-rmb-clear\{.*?</style>\n#s",
+                'hits' => 1,
+            ],
+            'the checkout remember-me link in the Contact bar (Lane PO)' => [
+                'pattern' => '#<button type="button" class="kbb-rmb-clear" id="kbbRememberClear" aria-hidden="true" tabindex="-1">[^<]*</button>#',
+                'hits' => 1,
+            ],
+            'the checkout remember-me tick under the address (Lane PO)' => [
+                'pattern' => '#\n?\s*<p class="form-row form-row-wide kbb-acct kbb-rmb" id="kbb_remember_field">.*?</p>(?=\n)#s',
+                'hits' => 1,
+            ],
         ];
     }
 
