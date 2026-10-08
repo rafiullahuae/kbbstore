@@ -664,11 +664,14 @@ final class AdminSearchIndex
             'Spacing · Buy column' => [],
             'Type · Buy column' => [],
             'Type · Sections & tabs' => [],
+            // (Lane RP2) The three blocks: brand, category, you may also like.
             'You may also like' => [
-                'Show “You may also like”', 'What to show', 'Brand : category mix', 'Top up when short',
-                'Hide out-of-stock products', 'Cards in view on a laptop', 'Cards in view on a phone', 'Arrows on a phone',
-                'Move on its own', 'Seconds between moves', 'Heading', 'Heading — Arabic',
-                'Small line above the heading', 'Small line — Arabic',
+                'Global · Laptop · slider or grid', 'Global · Laptop · number of products',
+                'Global · Phone · slider or grid', 'Global · Phone · number of products',
+                'Block 1 · Show “More from {brand}”', 'Block 2 · Show “More {category}”', 'Block 3 · Show “You may also like”',
+                'Hide out-of-stock products', 'Carousels · cards in view on a laptop', 'Carousels · cards in view on a phone',
+                'Carousels · arrows on a phone', 'Carousels · move on their own', 'Carousels · seconds between moves',
+                'Block 3 · Heading', 'Block 3 · Small line above the heading', 'Order of the three blocks',
             ],
             'Trust · Delivery box' => [
                 'Show the delivery box', 'Delivery picture', 'First line', 'Box colour', 'Box edge colour',

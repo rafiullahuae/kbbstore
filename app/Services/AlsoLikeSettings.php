@@ -214,7 +214,7 @@ class AlsoLikeSettings
     ];
 
     public const GLOBAL_LAYOUTS = [
-        'std' => 'Standard — brand slider · category grid · you may also like slider',
+        'std' => 'Standard — slider · grid · slider',
         'slider' => 'Slider',
         'grid' => 'Grid',
     ];
