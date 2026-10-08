@@ -1,104 +1,104 @@
 {{--
-    Platform → Domain switch (Lane DW). The owner, 7 October 2026: "i'm non
-    technical, so avoid anything for me to do."
+    Platform → Domain switch, as ONE numbered installer (Lane DW2; first built
+    by Lane DW, payments check and old-links step by Lane DS).
 
-    The move from extrabeauty.ae to kbeautybliss.com as ONE numbered page:
-    every step the shop can do itself is a button; every step only the owner
-    can do (Cloudways, Internet.bs, Stripe's dashboard) is a grey box with the
-    exact value to copy. Each step's ✓ / ● / ✕ comes from the server's reading
-    of the shop as it is now (DomainSwitch::state()), never from a click.
+    The owner, 8 October 2026: "the migration steps are too confusing by not
+    mentioned from start to end as number wise, it's mixed. can you make me
+    somthing super simple like installer type. step by step and the system
+    verify the changes etc. and also skip option if i will update something
+    later."
 
-    Endpoints: GET /admin-api/domain-switch (+ /readiness, /pictures) and
-    POST /admin-api/domain-switch/run — `platform.domain_switch`, Full Admin
-    only, CSRF via the XSRF cookie like every console screen. No polling, no
-    timer, no layout measurement; one GET of state, one of the readiness
-    check and one of the picture counts when the screen opens, and one POST
-    per button press. Every value printed passes through esc().
+    The steps, their numbers and titles come from the server
+    (App\Services\DomainMove\SwitchInstaller::STEPS) -- this file holds only the
+    words under each title, keyed by the step's stable name, never a number.
+    docs/KBEAUTYBLISS-SWITCH-CHECKLIST.md carries the same list (a test pins it).
 
-    Wired by tools/dw-wire.php from docs/dw-wiring.json (title, deep-link set
-    and this include); the sidebar row is App\Support\AdminNav's.
-
-    Lane DS adds two steps, both on button press only (nothing on open):
-      1b  Payments ready?  POST /admin-api/domain-switch/payments-check
-          (`payments.check`): read-only checks at Stripe, Tabby, Tamara, COD.
-      6b  Old links in the shop's text  GET /admin-api/domain-switch/rewrite
-          (preview), then run {action: rewrite_content | undo_rewrite}.
+    Endpoints, all `platform.domain_switch`, Full Admin only, CSRF via the
+    XSRF cookie like every console screen:
+      GET  /admin-api/domain-switch            when the screen opens: stored progress + settings. No network.
+      POST /admin-api/domain-switch/step       Verify / Mark as done / Skip / Return to it / Reset
+      POST /admin-api/domain-switch/run        a step's action button (the existing actions)
+      GET  /admin-api/domain-switch/rewrite    the old-links preview, on its button only
+    No polling, no timer, no layout measurement; every value printed passes
+    through esc().
 --}}
 @verbatim
 <style>
-.dw{max-width:860px;margin:0 auto;min-width:0}
-.dw-head h2{margin:0 0 6px;font-size:20px}
-.dw-head p{margin:0 0 10px;color:var(--ink-soft,#6b7280);font-size:14px;line-height:1.5}
-.dw-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--ink-soft,#6b7280);margin-bottom:16px}
-.dw-steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
-.dw-step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;border:1px solid var(--border,#e6e6e6);
-         border-radius:14px;padding:14px 16px;background:var(--card,#fff);min-width:0}
-.dw-step.is-done{border-color:rgba(22,163,74,.35)}
-.dw-step.is-problem{border-color:rgba(220,38,38,.45)}
-.dw-num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;
-        background:rgba(0,0,0,.06);color:inherit}
-.dw-step.is-done .dw-num{background:#16a34a;color:#fff}
-.dw-step.is-problem .dw-num{background:#dc2626;color:#fff}
-.dw-step.is-todo .dw-num{background:#f59e0b;color:#fff}
-.dw-body{min-width:0}
-.dw-title{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-weight:700;font-size:15.5px}
-.dw-why{margin:4px 0 0;color:var(--ink-soft,#6b7280);font-size:13.5px;line-height:1.5}
-.dw-badge{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
-.dw-badge.is-done{background:rgba(22,163,74,.12);color:#15803d}
-.dw-badge.is-todo{background:rgba(245,158,11,.15);color:#b45309}
-.dw-badge.is-problem{background:rgba(220,38,38,.12);color:#b91c1c}
-.dw-badge.is-yours{background:rgba(0,0,0,.06);color:var(--ink-soft,#6b7280)}
-.dw-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
-.dw-btn{font:inherit;font-size:13.5px;font-weight:650;border-radius:10px;padding:9px 14px;cursor:pointer;
-        border:1px solid transparent;background:var(--accent,#e11d74);color:#fff;max-width:100%}
-.dw-btn.is-quiet{background:transparent;color:inherit;border-color:var(--border,#d4d4d4)}
-.dw-btn[disabled]{opacity:.5;cursor:not-allowed}
-.dw-yours{margin-top:10px;border-radius:10px;background:rgba(0,0,0,.035);padding:10px 12px;font-size:13.5px;line-height:1.55}
-.dw-yours b.dw-who{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft,#6b7280);margin-bottom:4px}
-.dw-yours ol,.dw-yours ul{margin:4px 0 0;padding-left:20px}
-.dw-copy{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0;vertical-align:middle;margin:2px 0}
-.dw-copy code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;background:rgba(0,0,0,.06);
-              border-radius:6px;padding:2px 7px;overflow-wrap:anywhere;word-break:break-all;min-width:0}
-.dw-copy button{font:inherit;font-size:11.5px;font-weight:650;border:1px solid var(--border,#d4d4d4);background:transparent;
-                color:inherit;border-radius:7px;padding:2px 8px;cursor:pointer;flex:none}
-.dw-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;table-layout:fixed}
-.dw-table th,.dw-table td{text-align:left;padding:6px 6px;border-bottom:1px solid var(--border,#e6e6e6);vertical-align:top;overflow-wrap:anywhere}
-.dw-table th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft,#6b7280)}
-.dw-table col.t{width:62px}.dw-table col.n{width:56px}
-.dw-msg{margin-top:10px;border-radius:10px;padding:9px 12px;font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}
-.dw-msg.is-ok{background:rgba(22,163,74,.1);color:#166534}
-.dw-msg.is-bad{background:rgba(220,38,38,.09);color:#991b1b}
-.dw-msg.is-info{background:rgba(0,0,0,.04)}
-.dw-find{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
-.dw-find li{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:8px 10px;font-size:13.5px;min-width:0}
-.dw-find .dw-l{font-weight:700;font-size:11px;border-radius:6px;padding:1px 6px;margin-right:6px}
-.dw-l.is-risk{background:#dc2626;color:#fff}.dw-l.is-todo{background:#f59e0b;color:#fff}.dw-l.is-ok{background:#16a34a;color:#fff}.dw-l.is-info{background:rgba(0,0,0,.1)}
-.dw-find small{display:block;color:var(--ink-soft,#6b7280);margin-top:3px;overflow-wrap:anywhere}
-.dw-find .dw-btn{margin-top:6px;padding:5px 10px;font-size:12.5px}
-.dw-input{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--border,#d4d4d4);border-radius:9px;
-          background:transparent;color:inherit;min-width:0;width:260px;max-width:100%}
-.dw-kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin-top:8px;font-size:13.5px}
-.dw-kv dt{color:var(--ink-soft,#6b7280)}.dw-kv dd{margin:0;overflow-wrap:anywhere}
-.dw details summary{cursor:pointer;font-size:13px;color:var(--ink-soft,#6b7280);margin-top:8px}
-.dw-pay{display:grid;gap:10px;margin-top:10px}
-.dw-pay section{border:1px solid var(--border,#e6e6e6);border-radius:12px;padding:10px 12px;min-width:0}
-.dw-pay h4{margin:0 0 6px;font-size:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.dw-pay ul{list-style:none;margin:0;padding:0;display:grid;gap:5px}
-.dw-pay li{display:grid;grid-template-columns:14px minmax(0,1fr);gap:8px;font-size:13.5px;line-height:1.45;min-width:0}
-.dw-dot{width:10px;height:10px;border-radius:50%;margin-top:5px}
-.dw-dot.is-green{background:#16a34a}.dw-dot.is-amber{background:#f59e0b}.dw-dot.is-red{background:#dc2626}
-.dw-pay li b{font-weight:650}.dw-pay li span{overflow-wrap:anywhere}
-.dw-pay .dw-fix{display:block;color:#991b1b;margin-top:2px}.dw-pay li.is-amber .dw-fix{color:#92400e}
-.dw-rw td code{font-size:12px;overflow-wrap:anywhere;word-break:break-all}
-.dw-rw del{color:#991b1b}.dw-rw ins{color:#166534;text-decoration:none}
-@media (max-width:640px){.dw-step{grid-template-columns:28px minmax(0,1fr);gap:9px;padding:12px}.dw-num{width:26px;height:26px;font-size:12px}
-  /* The DNS table as one card per record: four columns do not fit a phone. */
-  .dw-table thead{display:none}
-  .dw-table,.dw-table tbody{display:block;width:100%}
-  .dw-table tr{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:8px 0;border-bottom:1px solid var(--border,#e6e6e6)}
-  .dw-table td{display:block;border:0;padding:0}
-  .dw-table td:nth-child(3){flex:1 1 100%;order:3}
-  .dw-yours ol,.dw-yours ul{padding-left:18px}}
+.dwi{max-width:860px;margin:0 auto;min-width:0}
+.dwi h2{margin:0 0 6px;font-size:20px}
+.dwi-lead{margin:0 0 12px;color:var(--ink-soft,#6b7280);font-size:14px;line-height:1.5}
+.dwi-sos{border:1px solid rgba(220,38,38,.35);background:rgba(220,38,38,.05);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.55;margin-bottom:14px;overflow-wrap:anywhere}
+.dwi-sos b{color:#991b1b}
+.dwi-bar{margin:0 0 14px}
+.dwi-bar-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:14px;font-weight:700;margin-bottom:6px}
+.dwi-bar-top span{font-weight:500;color:var(--ink-soft,#6b7280);font-size:13px}
+.dwi-track{height:8px;border-radius:99px;background:rgba(0,0,0,.08);overflow:hidden}
+.dwi-fill{height:100%;background:#16a34a;border-radius:99px}
+.dwi-steps{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.dwi-step{border:1px solid var(--border,#e6e6e6);border-radius:14px;background:var(--card,#fff);min-width:0}
+.dwi-step.is-current{border-color:var(--accent,#e11d74);box-shadow:0 0 0 2px rgba(225,29,116,.15)}
+.dwi-head{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:11px 14px;border:0;
+          background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:14px}
+.dwi-num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:rgba(0,0,0,.07)}
+.dwi-step.is-done .dwi-num{background:#16a34a;color:#fff}
+.dwi-step.is-skipped .dwi-num{background:#9ca3af;color:#fff}
+.dwi-step.is-current .dwi-num{background:var(--accent,#e11d74);color:#fff}
+.dwi-title{font-weight:700;font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+.dwi-chip{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.dwi-chip.is-done{background:rgba(22,163,74,.12);color:#15803d}
+.dwi-chip.is-skipped{background:rgba(0,0,0,.07);color:var(--ink-soft,#4b5563)}
+.dwi-chip.is-todo{background:rgba(245,158,11,.15);color:#b45309}
+.dwi-chip.is-red{background:rgba(220,38,38,.12);color:#b91c1c}
+.dwi-body{padding:0 14px 14px 54px;min-width:0}
+.dwi-what{margin:0;font-size:14px;line-height:1.55;overflow-wrap:anywhere}
+.dwi-what+.dwi-what{margin-top:6px}
+.dwi-vals{display:grid;gap:6px;margin-top:10px}
+.dwi-val{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:13px;min-width:0}
+.dwi-val>span:first-child{color:var(--ink-soft,#6b7280);min-width:136px}
+.dwi-val code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;overflow-wrap:anywhere;word-break:break-all}
+.dwi-copy{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0}
+.dwi-copy code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;background:rgba(0,0,0,.06);border-radius:6px;padding:2px 7px;overflow-wrap:anywhere;word-break:break-all;min-width:0}
+.dwi-copy button{font:inherit;font-size:11.5px;font-weight:650;border:1px solid var(--border,#d4d4d4);background:transparent;color:inherit;border-radius:7px;padding:2px 8px;cursor:pointer;flex:none}
+.dwi-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.dwi-btn{font:inherit;font-size:13.5px;font-weight:650;border-radius:10px;padding:9px 14px;cursor:pointer;border:1px solid transparent;background:var(--accent,#e11d74);color:#fff;max-width:100%}
+.dwi-btn.is-quiet{background:transparent;color:inherit;border-color:var(--border,#d4d4d4)}
+.dwi-btn.is-ok{background:#16a34a}
+.dwi-btn[disabled]{opacity:.5;cursor:not-allowed}
+.dwi-link{font:inherit;font-size:13px;border:0;background:none;color:var(--accent,#e11d74);text-decoration:underline;cursor:pointer;padding:0;text-align:left}
+.dwi-res{margin-top:12px;border-radius:10px;padding:9px 12px;font-size:13.5px;line-height:1.5;overflow-wrap:anywhere;border-left:4px solid}
+.dwi-res.is-green{background:rgba(22,163,74,.08);border-color:#16a34a;color:#14532d}
+.dwi-res.is-amber{background:rgba(245,158,11,.1);border-color:#f59e0b;color:#78350f}
+.dwi-res.is-red{background:rgba(220,38,38,.08);border-color:#dc2626;color:#7f1d1d}
+.dwi-res.is-info{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.2)}
+.dwi-res>b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.dwi-res .dwi-fix{display:block;margin-top:4px;font-weight:600}
+.dwi-res small{display:block;margin-top:4px;opacity:.8}
+.dwi-note{margin:10px 0 0;font-size:12.5px;color:var(--ink-soft,#6b7280);line-height:1.5;overflow-wrap:anywhere}
+.dwi-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;table-layout:fixed}
+.dwi-table th,.dwi-table td{text-align:left;padding:6px;border-bottom:1px solid var(--border,#e6e6e6);vertical-align:top;overflow-wrap:anywhere}
+.dwi-table th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft,#6b7280)}
+.dwi-table col.t{width:64px}.dwi-table col.n{width:56px}.dwi-table col.x{width:86px}
+.dwi-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:5px}
+.dwi-list li{display:grid;grid-template-columns:12px minmax(0,1fr);gap:8px;font-size:13px;line-height:1.45;min-width:0;overflow-wrap:anywhere}
+.dwi-dot{width:10px;height:10px;border-radius:50%;margin-top:4px;background:#9ca3af}
+.dwi-dot.is-green{background:#16a34a}.dwi-dot.is-amber,.dwi-dot.is-todo{background:#f59e0b}.dwi-dot.is-red,.dwi-dot.is-risk{background:#dc2626}
+.dwi-input{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--border,#d4d4d4);border-radius:9px;background:transparent;color:inherit;min-width:0;width:240px;max-width:100%}
+.dwi-sum h4{margin:12px 0 4px;font-size:14px}
+.dwi-sum ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.6;overflow-wrap:anywhere}
+.dwi-rw td code{font-size:12px;word-break:break-all}.dwi-rw del{color:#991b1b}.dwi-rw ins{color:#166534;text-decoration:none}
+.dwi-foot{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px;color:var(--ink-soft,#6b7280)}
+@media (max-width:640px){
+  .dwi-head{grid-template-columns:26px minmax(0,1fr);padding:10px 12px}
+  .dwi-head .dwi-chip{grid-column:2;justify-self:start}
+  .dwi-num{width:26px;height:26px;font-size:12px}
+  .dwi-bar-top{display:block}.dwi-bar-top span{display:block}
+  .dwi-body{padding:0 12px 12px}
+  .dwi-table thead{display:none}
+  .dwi-table,.dwi-table tbody{display:block;width:100%}
+  .dwi-table tr{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:8px 0;border-bottom:1px solid var(--border,#e6e6e6)}
+  .dwi-table td{display:block;border:0;padding:0}
+  .dwi-table td:nth-child(3){flex:1 1 100%;order:3}
+}
 </style>
 <script>
 (function () {
@@ -106,16 +106,13 @@
   var SCREEN = 'domainswitch';
   var BASE = window.location.pathname.replace(/\/+$/, '');
 
-  var st = null;          // GET /domain-switch
-  var rd = null;          // readiness, accumulated across "check the rest"
-  var rdBusy = false;
-  var pics = null;        // GET /domain-switch/pictures
-  var msgs = {};          // step -> {ok, text}
-  var busy = '';          // the action in flight
+  var st = null;        // GET /domain-switch (settings + st.installer)
+  var open = null;      // the step number shown open
+  var msgs = {};        // step key -> {ok, text}
+  var busy = '';        // what is in flight
   var banner = '';
+  var rw = null;        // the old-links preview
   var seq = 0;
-  var pay = null;         // POST /domain-switch/payments-check (Lane DS)
-  var rw = null;          // GET /domain-switch/rewrite (Lane DS)
 
   function cookie(n) {
     var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
@@ -129,7 +126,9 @@
       opts.headers['Content-Type'] = 'application/json';
       opts.body = JSON.stringify(body);
     }
-    var r = await fetch(BASE.replace(/\/[^\/]*$/, '') + '/admin-api' + path, opts);
+    var r;
+    try { r = await fetch(BASE.replace(/\/[^\/]*$/, '') + '/admin-api' + path, opts); }
+    catch (e) { return { status: 0, body: { message: 'The shop could not be reached. Check your connection and try again.' } }; }
     var payload = null;
     try { payload = await r.json(); } catch (e) { payload = null; }
     return { status: r.status, body: payload || {} };
@@ -145,295 +144,277 @@
     if (status === 404) return 'This screen\'s endpoints are not in the server\'s route table yet. Go to Platform → Cache, press Clear everything, and reload.';
     if (status === 403) return (body && body.message) || 'Only the owner can use this screen.';
     if (status === 419) return 'Your session expired. Reload the page and sign in again.';
+    if (status === 429) return 'Too many presses in a minute. Wait a moment, then try again.';
     return (body && (body.message || body.reason)) || 'Something went wrong (' + status + '). Nothing was changed. Reload and try again.';
   }
 
-  /* ------------------------------------------------------------- pieces */
-  var WORDS = { done: '✓ Done', todo: '● To do', problem: '✕ Needs attention', yours: '● Your click' };
-
-  function badge(level) { return '<span class="dw-badge is-' + esc(level) + '">' + esc(WORDS[level] || level) + '</span>'; }
-
+  /* ------------------------------------------------------------ pieces */
   function copy(value) {
-    return '<span class="dw-copy"><code>' + esc(value) + '</code><button type="button" data-copy="' + esc(value) + '">Copy</button></span>';
+    return '<span class="dwi-copy"><code>' + esc(value) + '</code><button type="button" data-copy="' + esc(value) + '">Copy</button></span>';
   }
+  function val(label, value) { return '<div class="dwi-val"><span>' + esc(label) + '</span>' + copy(value) + '</div>'; }
+  function vals(list) { return '<div class="dwi-vals">' + list.join('') + '</div>'; }
+  function what(html) { return '<p class="dwi-what">' + html + '</p>'; }
+  function note(html) { return '<p class="dwi-note">' + html + '</p>'; }
+  function b(s) { return '<b>' + esc(s) + '</b>'; }
 
-  function msg(step) {
-    var m = msgs[step];
-    if (!m) return '';
-    return '<div class="dw-msg ' + (m.ok === true ? 'is-ok' : (m.ok === false ? 'is-bad' : 'is-info')) + '" role="status">' + esc(m.text) + '</div>';
-  }
-
-  function btn(action, label, opts) {
-    opts = opts || {};
-    var off = busy !== '' || opts.disabled;
-    return '<button type="button" class="dw-btn' + (opts.quiet ? ' is-quiet' : '') + '" data-dw="' + esc(action) + '"' + (off ? ' disabled' : '') + '>'
+  function btn(action, label, o) {
+    o = o || {};
+    var off = busy !== '' || o.disabled;
+    return '<button type="button" class="dwi-btn' + (o.quiet ? ' is-quiet' : '') + '" data-dw="' + esc(action) + '"' + (off ? ' disabled' : '') + '>'
       + esc(busy === action ? 'Working…' : label) + '</button>';
   }
-
-  function yours(who, html) { return '<div class="dw-yours"><b class="dw-who">' + esc(who) + '</b>' + html + '</div>'; }
-
-  function step(n, level, title, why, body) {
-    return '<li class="dw-step is-' + esc(level) + '" id="dw-step-' + n + '"><div class="dw-num" aria-hidden="true">' + n + '</div>'
-      + '<div class="dw-body"><div class="dw-title">' + esc(title) + ' ' + badge(level) + '</div>'
-      + '<p class="dw-why">' + why + '</p>' + body + msg(n) + '</div></li>';
+  function stepBtn(doWhat, key, label, cls) {
+    var id = doWhat + ':' + key;
+    return '<button type="button" class="dwi-btn' + (cls ? ' ' + cls : '') + '" data-dwi-step="' + esc(key) + '" data-dwi-do="' + esc(doWhat) + '"' + (busy !== '' ? ' disabled' : '') + '>'
+      + esc(busy === id ? (doWhat === 'verify' ? 'Checking…' : 'Saving…') : label) + '</button>';
   }
-
   function when(iso) {
     if (!iso) return '';
     var d = new Date(iso);
-    return isNaN(d.getTime()) ? '' : ' (checked ' + d.toLocaleString() + ')';
+    return isNaN(d.getTime()) ? '' : d.toLocaleString();
   }
+  function stepBy(key) { return st.installer.steps.filter(function (s) { return s.key === key; })[0]; }
+  function num(key) { var s = stepBy(key); return s ? s.n : 0; }
+  function go(key, label) { return '<button type="button" class="dwi-link" data-dwi-open="' + esc(num(key)) + '">' + esc(label || ('step ' + num(key))) + '</button>'; }
 
-  /* -------------------------------------------------------------- steps */
-  function s1() {
-    var level = !rd ? 'todo' : (rd.risk > 0 ? 'problem' : (rd.complete ? 'done' : 'todo'));
-    var body = '';
-    if (!rd) {
-      body += '<div class="dw-msg is-info">' + (rdBusy ? 'Checking the whole shop…' : 'Not checked yet.') + '</div>';
-    } else {
-      body += '<div class="dw-row"><b>RISK ' + esc(rd.risk) + '</b><span>·</span><b>TODO ' + esc(rd.todo) + '</b><span style="color:var(--ink-soft,#6b7280);font-size:13px">'
-        + esc('Checked ' + rd.tables_checked + ' of ' + rd.tables_total + ' parts of the shop in ' + rd.seconds + ' s') + '</span></div>';
-      body += '<p class="dw-why">' + (rd.risk === 0 && rd.complete
-        ? 'Nothing found that breaks on the switch. The TODO lines are the steps below.'
-        : (rd.risk > 0 ? 'RISK lines would break on the switch, or keep depending on ' + esc(st ? st.old : 'the old domain') + '. Fix them first — each has a button.' : 'Part of the shop is still to be checked.')) + '</p>';
-      var open = rd.findings.filter(function (f) { return f.level === 'risk' || f.level === 'todo'; });
-      var rest = rd.findings.filter(function (f) { return !(f.level === 'risk' || f.level === 'todo'); });
-      if (open.length) body += '<ul class="dw-find">' + open.map(finding).join('') + '</ul>';
-      if (rest.length) body += '<details><summary>' + esc(rest.length + ' thing(s) already right') + '</summary><ul class="dw-find">' + rest.map(finding).join('') + '</ul></details>';
+  var LEVEL = { green: 'All good', amber: 'Not yet', red: 'Needs fixing' };
+
+  function result(s) {
+    var m = msgs[s.key];
+    var out = '';
+    if (m) out += '<div class="dwi-res ' + (m.ok === true ? 'is-green' : (m.ok === false ? 'is-red' : 'is-info')) + '" role="status">' + esc(m.text) + '</div>';
+    if (s.level && s.verified_at) {
+      out += '<div class="dwi-res is-' + esc(s.level) + '" data-level="' + esc(s.level) + '"><b>' + esc(LEVEL[s.level]) + '</b>' + esc(s.message)
+        + (s.fix ? '<span class="dwi-fix">→ ' + esc(s.fix) + '</span>' : '')
+        + '<small>Last verified ' + esc(when(s.verified_at)) + '</small></div>';
+    } else if (s.kind === 'verify') {
+      out += note('Not verified yet.');
+    } else if (s.status === 'done' && s.updated_at) {
+      out += note('Marked as done ' + esc(when(s.updated_at)) + '.');
     }
-    body += '<div class="dw-row">' + btn('readiness', rd ? 'Check again' : 'Check now', { quiet: !!rd, disabled: rdBusy })
-      + (rd && !rd.complete ? btn('readiness_more', 'Check the rest', { disabled: rdBusy }) : '') + '</div>';
-    return step(1, level, 'Readiness check', 'Looks through the whole shop for anything that still depends on ' + esc(st.old) + ' or would break on ' + esc(st.new) + '. It only reads; it changes nothing.', body);
+    return out;
   }
 
-  function finding(f) {
-    var fix = '';
-    if (f.fix && f.fix.step) fix = '<button type="button" class="dw-btn is-quiet" data-goto="' + esc(f.fix.step) + '">' + esc(f.fix.label) + '</button>';
-    else if (f.fix && f.fix.screen) fix = '<button type="button" class="dw-btn is-quiet" data-screen="' + esc(f.fix.screen) + '">' + esc(f.fix.label) + '</button>';
-    else if (f.fix && f.fix.check) fix = '<button type="button" class="dw-btn is-quiet" data-dw="readiness">' + esc(f.fix.label) + '</button>';
-    return '<li><span class="dw-l is-' + esc(f.level) + '">' + esc(String(f.level).toUpperCase()) + '</span>' + esc(f.title)
-      + (f.detail ? '<small>' + esc(f.detail) + '</small>' : '')
-      + (f.samples && f.samples.length ? '<small>' + f.samples.map(esc).join('<br>') + '</small>' : '') + fix + '</li>';
+  /* The payments check, open lines only: what is green needs no reading. */
+  function payList(list) {
+    if (!list || !list.length) return '';
+    var green = 0, rows = [];
+    list.forEach(function (p) {
+      p.checks.forEach(function (c) {
+        if (c.level === 'green') { green++; return; }
+        rows.push('<li><span class="dwi-dot is-' + esc(c.level) + '"></span><span><b>' + esc(p.title + ' · ' + c.title) + ':</b> ' + esc(c.detail)
+          + (c.fix ? ' <i>→ ' + esc(c.fix) + '</i>' : '') + '</span></li>');
+      });
+    });
+    return '<ul class="dwi-list">' + rows.join('') + '<li><span class="dwi-dot is-green"></span><span>' + esc(green) + ' other payment check(s) are green.</span></li></ul>';
   }
 
-  function s2() {
-    var now = st.now, level = st.steps.names;
-    var body = '<dl class="dw-kv"><dt>Main address now</dt><dd>' + esc(now.main_address || '(not set)') + '</dd>'
-      + '<dt>Old addresses now</dt><dd>' + esc(now.old_addresses.length ? now.old_addresses.join(', ') : '(none)') + '</dd>'
-      + '<dt>Forwarding now</dt><dd>' + (now.forwarding ? 'on' : 'off') + '</dd></dl>';
-    if (st.steps.remove === 'done') {
-      body += '<div class="dw-msg is-ok">' + esc(st.old) + ' was removed in step 11, so it is no longer an old address. Nothing to do here.</div>';
-    } else {
-      body += '<div class="dw-row"><label for="dw-domain" style="font-size:13.5px;font-weight:600">New main address</label>'
-        + '<input class="dw-input" id="dw-domain" type="text" inputmode="url" autocomplete="off" spellcheck="false" value="' + esc(st.proposed.main_address) + '"></div>'
-        + '<p class="dw-why">Old addresses will be: <b>' + esc(st.proposed.old_addresses.join(', ')) + '</b> (and their www). '
-        + (level === 'done' ? 'Forwarding is left as it is.' : 'Forwarding stays <b>off</b>.') + '</p>'
-        + '<div class="dw-row">' + btn('set_names', level === 'done' ? 'Save again' : 'Save the new name', { quiet: level === 'done' }) + '</div>';
-    }
-    return step(2, level, 'Tell the shop its new name', 'The shop learns that ' + esc(st.new) + ' is its main address and ' + esc(st.old) + ' its old one. Nothing changes for shoppers yet.', body);
-  }
-
-  function s3() {
-    var c = st.checks.old_dns;
-    var body = yours('Your clicks in Cloudways', '<ol>'
-      + '<li>Applications → your app → <b>Domain Management</b> → add ' + copy(st.copy.domains[0]) + ' and ' + copy(st.copy.domains[1]) + '. Keep ' + esc(st.old) + ' for now.</li>'
-      + '<li>Servers → your server: the <b>Public IP</b> should be ' + copy(st.server_ip) + '.</li></ol>');
-    body += '<div class="dw-row">' + btn('check_old_dns', 'Check where ' + st.old + ' points', { quiet: true }) + '</div>';
-    if (c && !msgs[3]) body += '<div class="dw-msg ' + (c.level === 'done' ? 'is-ok' : 'is-bad') + '">' + esc(c.message + when(c.checked_at)) + '</div>';
-    return step(3, st.steps.cloudways, 'Add the new domain in Cloudways', 'So the server answers on ' + esc(st.new) + '. Only you can do this, in Cloudways.', body);
-  }
-
-  function s4() {
-    var c = st.checks.dns, rows = st.dns_table;
-    var t = '<table class="dw-table"><colgroup><col class="t"><col class="n"><col><col class="x" style="width:84px"></colgroup>'
-      + '<thead><tr><th>Type</th><th>Name</th><th>Value</th><th></th></tr></thead><tbody>'
-      + rows.map(function (r) { return '<tr><td><b>' + esc(r.type) + '</b></td><td>' + esc(r.name) + '</td><td>' + copy(r.value) + '</td><td>' + esc(r.extra) + '</td></tr>'; }).join('')
-      + '</tbody></table>';
-    var body = yours('Your clicks at Internet.bs', '<ol><li>Internet.bs → ' + esc(st.new) + ' → <b>DNS Management</b>: create these records.' + t
-      + '<b>Do not create an AAAA record.</b></li><li>Under <b>Nameservers</b>, switch to Internet.bs’s own DNS nameservers.</li>'
-      + '<li>Wait. It takes from a few minutes to 48 hours. Press <b>Check DNS now</b> whenever you like.</li></ol>'
-      + '<p class="dw-why">To undo before step 11: set the A record back to ' + copy(st.previous_ip) + '.</p>');
-    body += '<div class="dw-row">' + btn('check_dns', 'Check DNS now') + '</div>';
-    if (c) {
-      var rec = c.records || {};
-      var line = function (label, vals, good) {
-        return '<dt>' + esc(label) + '</dt><dd>' + esc(vals && vals.length ? vals.join(', ') : 'none') + ' ' + (good ? '✓' : '●') + '</dd>';
-      };
-      var a = rec.A || [];
-      body += '<dl class="dw-kv">'
-        + line('A', a, a.length > 0 && a.every(function (ip) { return (c.expected || []).indexOf(ip) >= 0; }))
-        + line('AAAA', rec.AAAA, !(rec.AAAA || []).length)
-        + line('www', rec.www, (rec.www || []).length > 0)
-        + line('MX', rec.MX, (rec.MX || []).some(function (m) { return /smtp\.google\.com$/.test(m); }))
-        + line('SPF', rec.TXT, (rec.TXT || []).some(function (t) { return t.indexOf('include:_spf.google.com') >= 0; }))
-        + line('Nameservers', rec.NS, (rec.NS || []).length > 0) + '</dl>';
-      if (!msgs[4]) body += '<div class="dw-msg ' + (c.level === 'done' ? 'is-ok' : 'is-bad') + '">' + esc(c.message + when(c.checked_at)) + '</div>';
-    } else if (st.request.on_target) {
-      body += '<div class="dw-msg is-ok">You are on ' + esc(st.request.host) + ' right now, so its DNS already points here.</div>';
-    }
-    return step(4, st.steps.dns, 'Point ' + st.new + ' at this server (Internet.bs)', 'The internet’s address book has to send ' + esc(st.new) + ' to this server. Only you can do this, at Internet.bs.', body);
-  }
-
-  function s5() {
-    var c = st.checks.tls;
-    var body = yours('Your click in Cloudways', 'Applications → your app → <b>SSL Certificate</b> → Let’s Encrypt → enter all four names: ' + copy(st.copy.certificate)
-      + '<br>' + esc(st.old) + ' stays on the certificate while it forwards (step 10).');
-    body += '<div class="dw-row">' + btn('check_tls', 'Check certificate') + '</div>';
-    if (c && !msgs[5]) body += '<div class="dw-msg ' + (c.level === 'done' ? 'is-ok' : 'is-bad') + '">' + esc(c.message + when(c.checked_at)) + '</div>';
-    else if (!c && st.request.on_target && !msgs[5]) body += '<div class="dw-msg is-ok">This page reached you over https on ' + esc(st.request.host) + ', so the certificate works.</div>';
-    return step(5, st.steps.tls, 'Certificate for ' + st.new, 'The padlock. Without it, browsers refuse the new address.', body);
-  }
-
-  /* Lane DS: 1b, payments ready? Network only when the button is pressed. */
-  var PAYWORD = { green: 'All good', amber: 'Check', red: 'Fix this' };
-  function s1b() {
-    var level = !pay ? 'todo' : (pay.level === 'red' ? 'problem' : (pay.level === 'green' ? 'done' : 'todo'));
-    var body = '<div class="dw-row">' + btn('pay_check', pay ? 'Check everything again' : 'Check everything', { quiet: !!pay && pay.level === 'green' }) + '</div>';
-    if (pay) {
-      body += '<p class="dw-why">Checked ' + esc(new Date(pay.checked_at).toLocaleString()) + ' · ' + esc(pay.counts.green) + ' green, ' + esc(pay.counts.amber) + ' amber, ' + esc(pay.counts.red) + ' red'
-        + (pay.switching ? ' · the shop uses ' + esc(pay.serving) + ' today and is moving to ' + esc(pay.main) + '.' : ' · main address ' + esc(pay.main) + '.') + '</p>';
-      body += '<div class="dw-pay">' + pay.providers.map(function (p) {
-        return '<section><h4><span class="dw-dot is-' + esc(p.level) + '"></span>' + esc(p.title) + ' <span class="dw-badge is-' + (p.level === 'green' ? 'done' : (p.level === 'red' ? 'problem' : 'todo')) + '">' + esc(PAYWORD[p.level]) + '</span></h4><ul>'
-          + p.checks.map(function (c) {
-            return '<li class="is-' + esc(c.level) + '"><span class="dw-dot is-' + esc(c.level) + '"></span><span><b>' + esc(c.title) + ':</b> ' + esc(c.detail)
-              + (c.fix ? '<span class="dw-fix">→ ' + esc(c.fix) + '</span>' : '') + '</span></li>';
-          }).join('') + '</ul></section>';
-      }).join('') + '</div>';
-    }
-    return step('1b', level, 'Payments ready?', 'Asks Stripe, Tabby and Tamara, with the keys the shop holds, whether everything is set for ' + esc(st.new) + ', and checks cash on delivery. It only reads: nothing is changed at any provider. Run it before the switch, and again after step 7.', body);
-  }
-
-  /* Lane DS: 6b, old links in the shop's text. */
-  function s6b() {
-    var last = rw && rw.last;
-    var level = !rw ? 'todo' : (rw.links === 0 ? 'done' : 'todo');
-    var body = '<div class="dw-row">' + btn('rw_preview', rw ? 'Look again' : 'Show what would change', { quiet: !!rw }) + '</div>';
-    if (rw) {
-      if (rw.links === 0) body += '<div class="dw-msg is-ok">No link in the shop’s text points at ' + esc(rw.old.join(', ')) + '.</div>';
-      else {
-        body += '<div class="dw-msg is-info"><b>' + esc(rw.links) + '</b> link(s) in <b>' + esc(rw.rows) + '</b> place(s) would change to https://' + esc(rw.new) + '/… — the same page on the new address.</div>'
-          + '<table class="dw-table dw-rw"><colgroup><col><col class="n"></colgroup><thead><tr><th>Where</th><th>Links</th></tr></thead><tbody>'
-          + rw.places.map(function (pl) {
-            var sm = (pl.samples || []).map(function (x) { return '<div><small>' + esc(x.where) + '</small><br><del><code>' + esc(x.before) + '</code></del><br><ins><code>' + esc(x.after) + '</code></ins></div>'; }).join('');
-            return '<tr><td><b>' + esc(pl.label) + '</b>' + sm + '</td><td>' + esc(pl.links) + '</td></tr>';
-          }).join('') + '</tbody></table>';
-        body += '<div class="dw-row">' + btn('rewrite_content', 'Change these ' + rw.links + ' links', { disabled: !rw.can_apply }) + '</div>';
-        if (!rw.can_apply) body += '<div class="dw-msg is-info">Do step 6 first: until then ' + esc(rw.new) + ' still opens the old WordPress shop.</div>';
+  /* ------------------------------------------------ the words of each step */
+  var BODY = {
+    start: function (s) {
+      var d = s.data || {}, h = '';
+      h += what('First, a backup: ' + b('Cloudways → Servers → your server → Backups → Take backup now') + '. If WordPress still takes orders, run one last import of orders and customers (Store → Import / Export).');
+      h += what('Then press ' + b('Verify') + '. The shop finds this server’s address (where ' + esc(st.old) + ' points today), looks through itself for anything that would break on ' + esc(st.new) + ', and asks Stripe, Tabby and Tamara if they are ready. It changes nothing.');
+      if (d.findings && d.findings.length) {
+        h += '<ul class="dwi-list">' + d.findings.map(function (f) {
+          var fix = '';
+          if (f.fix && f.fix.step === s.n) fix = ' ' + btn('fetch_pictures', 'Fetch them from WordPress', { quiet: true });
+          else if (f.fix && f.fix.step) fix = ' <button type="button" class="dwi-link" data-dwi-open="' + esc(f.fix.step) + '">' + esc(f.fix.label) + '</button>';
+          else if (f.fix && f.fix.screen) fix = ' <button type="button" class="dwi-link" data-screen="' + esc(f.fix.screen) + '">' + esc(f.fix.label) + '</button>';
+          return '<li><span class="dwi-dot is-' + esc(f.level) + '"></span><span>' + esc(f.title) + (f.detail ? ' — ' + esc(f.detail) : '') + fix + '</span></li>';
+        }).join('') + '</ul>';
       }
-      if (rw.skipped && (rw.skipped.protected_settings || rw.skipped.serialized)) body += '<p class="dw-why">Left alone on purpose: ' + esc(rw.skipped.protected_settings) + ' address, payment or security setting(s), ' + esc(rw.skipped.serialized) + ' packed value(s). Email addresses and the name in a sentence are never changed.</p>';
-      if (last && !last.undone) body += '<div class="dw-row">' + btn('undo_rewrite', 'Undo the change of ' + new Date(last.at.replace(' ', 'T')).toLocaleString(), { quiet: true }) + '</div>';
+      return h + payList(d.payments);
+    },
+    name: function () {
+      return what('The shop learns that ' + b(st.new) + ' is its main address and ' + b(st.old) + ' its old one. Forwarding stays off. Nothing changes for shoppers: ' + esc(st.old) + ' works exactly as before.')
+        + '<div class="dwi-row"><label for="dwi-domain" style="font-size:13.5px;font-weight:600">New address</label>'
+        + '<input class="dwi-input" id="dwi-domain" type="text" inputmode="url" autocomplete="off" spellcheck="false" value="' + esc(st.proposed.main_address) + '">'
+        + btn('set_names', 'Save the new name') + '</div>';
+    },
+    cs_on: function () {
+      var h = what('Before the DNS change, so anyone who reaches ' + b(st.new) + ' sees “Something new is coming” while you set up and test. ' + esc(st.old) + ' is not touched. Signed in, you see the real shop there.');
+      h += '<div class="dwi-row">' + btn('coming_soon_on', 'Turn it on for ' + st.new) + '<button type="button" class="dwi-link" data-screen="comingsoon">Change its words: Appearance → Coming Soon page</button></div>';
+      if (st.coming_soon_link) h += vals([val('Preview link for your phone', st.coming_soon_link.url)]) + note('Works until ' + esc(when(st.coming_soon_link.until)) + '. Appearance → Coming Soon page → New link makes another.');
+      return h;
+    },
+    cloudways: function () {
+      return what(b('Cloudways → Applications → your app → Domain Management') + ': add both names below as additional domains. Keep ' + esc(st.old) + '.')
+        + vals([val('Domain', st.copy.domains[0]), val('Domain', st.copy.domains[1])])
+        + note('The shop cannot look inside Cloudways, so press “Mark as done” when both are added. The certificate check in step ' + esc(num('ssl')) + ' proves it later.');
+    },
+    dns_records: function () {
+      var rows = st.dns_table.map(function (r) {
+        return '<tr><td><b>' + esc(r.type) + '</b></td><td>' + esc(r.name) + '</td><td>' + (r.value ? copy(r.value) : '<i>press Verify in ' + go('start') + ' first</i>') + '</td><td>' + esc(r.extra) + '</td></tr>';
+      }).join('');
+      return what(b('Internet.bs → ' + st.new + ' → DNS Management') + ': create these four records. Then under ' + b('Nameservers') + ' choose Internet.bs’s own DNS nameservers. ' + b('Do not create an AAAA record.'))
+        + '<table class="dwi-table"><colgroup><col class="t"><col class="n"><col><col class="x"></colgroup><thead><tr><th>Type</th><th>Name</th><th>Value</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>'
+        + note(st.server_ip ? 'The A value is this server’s address, learned from where ' + esc(st.old) + ' points today. Cloudways → Servers → your server → Public IP shows the same.'
+          : 'The shop learns this server’s address from where ' + esc(st.old) + ' points today: press Verify in ' + go('start') + ' first, or read the Public IP in Cloudways → Servers → your server.')
+        + note('To undo before step ' + esc(num('switch')) + ': set the A record back to ' + copy(st.previous_ip) + '.');
+    },
+    dns_wait: function () {
+      return what('Nothing to do but wait: the change spreads round the world in a few minutes to 48 hours. Press ' + b('Verify') + ' now and then. It asks the internet where ' + esc(st.new) + ' and www.' + esc(st.new) + ' point and compares that with this server' + (st.server_ip ? ' (' + esc(st.server_ip) + ')' : '') + '.');
+    },
+    ssl: function () {
+      return what(b('Cloudways → Applications → your app → SSL Certificate → Let’s Encrypt') + ': enter all four names below, then wait two minutes. ' + esc(st.old) + ' stays on the certificate while it forwards.')
+        + vals([val('Names', st.copy.certificate)]);
+    },
+    switch: function (s) {
+      var inst = st.installer;
+      var h = what('From now on emails, payment notices, Google and every link use ' + b('https://' + st.target) + '. ' + esc(st.old) + ' keeps working.');
+      h += '<div class="dwi-vals"><div class="dwi-val"><span>Shop’s address now</span><code>' + esc(st.now.app_url || '(not set)') + '</code></div><div class="dwi-val"><span>Site URL now</span><code>' + esc(st.now.site_url || '(empty)') + '</code></div></div>';
+      if (!st.request.on_target && s.status !== 'done') {
+        var there = st.copy.admin_on_target + window.location.pathname;
+        h += '<div class="dwi-res is-info">This button only works on the new address, so the shop can never be pointed at an address that does not reach it. Open <a href="' + esc(there) + '" rel="noopener">' + esc(there) + '</a>, sign in, and come back to step ' + esc(s.n) + '.</div>';
+      }
+      if (!(inst.gate.dns && inst.gate.ssl) && s.status !== 'done') {
+        h += '<div class="dwi-res is-amber"><b>Waiting for steps ' + esc(num('dns_wait')) + ' and ' + esc(num('ssl')) + '</b>'
+          + 'The shop will not switch until DNS (step ' + esc(num('dns_wait')) + ') and the certificate (step ' + esc(num('ssl')) + ') have both verified green. '
+          + 'If you are sure, type CONFIRM below: customers whose DNS has not caught up would not reach the shop.'
+          + '<span class="dwi-row" style="margin-top:6px"><input class="dwi-input" id="dwi-override" type="text" autocomplete="off" spellcheck="false" placeholder="Type CONFIRM" style="width:160px"></span></div>';
+      }
+      return h + '<div class="dwi-row">' + btn('switch_address', 'Make ' + st.new + ' the main address', { disabled: !st.can['switch'] }) + '</div>';
+    },
+    caches: function () {
+      return what('So nobody is shown a copy saved before the switch: press the button (the shop’s own caches), then in Cloudways make ' + b(st.new) + ' the ' + b('primary domain') + ' (Domain Management), then ' + b('Application Settings → Varnish → Purge') + '.')
+        + '<div class="dwi-row">' + btn('clear_caches', 'Clear the shop’s caches') + '</div>'
+        + note('Verify opens https://' + esc(st.old) + '/ and checks that the page it gets names ' + esc(st.new) + '.');
+    },
+    links: function () {
+      var h = what('Product descriptions, articles, pages, menus, banners and email templates that still link to ' + esc(st.old) + ' are pointed at ' + esc(st.new) + '. Orders, customers and payment settings are never touched, and Undo puts everything back.');
+      h += '<div class="dwi-row">' + btn('rw_preview', rw ? 'Look again' : 'Show what would change', { quiet: !!rw }) + '</div>';
+      if (rw) {
+        if (rw.links === 0) h += '<div class="dwi-res is-green">No link in the shop’s text points at ' + esc(rw.old.join(', ')) + '.</div>';
+        else {
+          h += '<div class="dwi-res is-info"><b>' + esc(rw.links) + ' link(s) in ' + esc(rw.rows) + ' place(s)</b>would change to https://' + esc(rw.new) + '/… — the same page on the new address.</div>'
+            + '<table class="dwi-table dwi-rw"><colgroup><col><col class="n"></colgroup><thead><tr><th>Where</th><th>Links</th></tr></thead><tbody>'
+            + rw.places.map(function (pl) {
+              var sm = (pl.samples || []).map(function (x) { return '<div><small>' + esc(x.where) + '</small><br><del><code>' + esc(x.before) + '</code></del><br><ins><code>' + esc(x.after) + '</code></ins></div>'; }).join('');
+              return '<tr><td><b>' + esc(pl.label) + '</b>' + sm + '</td><td>' + esc(pl.links) + '</td></tr>';
+            }).join('') + '</tbody></table>';
+          h += '<div class="dwi-row">' + btn('rewrite_content', 'Change these ' + rw.links + ' links', { disabled: !rw.can_apply }) + '</div>';
+          if (!rw.can_apply) h += note('Do step ' + esc(num('switch')) + ' first: until then ' + esc(rw.new) + ' still opens the old WordPress shop.');
+        }
+        if (rw.last && !rw.last.undone) h += '<div class="dwi-row">' + btn('undo_rewrite', 'Undo the change of ' + when(String(rw.last.at).replace(' ', 'T')), { quiet: true }) + '</div>';
+      }
+      return h;
+    },
+    payments: function (s) {
+      var p = st.steps.payments, can = st.can.payments;
+      var h = what('Stripe, Tabby and Tamara send payment notices to the shop’s address. Each button tells one of them the new address and removes the old one. Then ' + b('Stripe dashboard → Settings → Payment method domains → Add') + ' ' + copy(st.new) + ' for Apple Pay and Google Pay.');
+      h += '<div class="dwi-row">' + btn('stripe', 'Set up Stripe webhook automatically', { disabled: !can, quiet: p.stripe.level === 'done' })
+        + btn('tabby', 'Register Tabby', { disabled: !can, quiet: p.tabby.level === 'done' })
+        + btn('tamara', 'Register Tamara', { disabled: !can, quiet: p.tamara.level === 'done' }) + '</div>';
+      if (!can) h += note('These buttons wait for step ' + esc(num('switch')) + ': the providers are told the shop’s own address.');
+      h += note('Verify asks each provider with the keys the shop holds; it changes nothing. Still on sandbox keys? Press “Skip for now” and come back when the live keys are in.');
+      return h + payList((s.data || {}).payments);
+    },
+    callbacks: function () {
+      return what('The shop cannot read these dashboards, so press “Mark as done” when you have added the new addresses:')
+        + '<ul class="dwi-list"><li><span class="dwi-dot"></span><span>' + b('Meta for developers → your app → Instagram → Business login settings → OAuth redirect URIs') + ': add the Instagram address below. Keep the old one until a reconnect has worked.</span></li>'
+        + '<li><span class="dwi-dot"></span><span>Only if you use “Connect with Stripe”: the Connect settings’ redirect URIs: add the Stripe Connect address below.</span></li>'
+        + '<li><span class="dwi-dot"></span><span>' + b('Meta Events Manager → your pixel → Settings → Traffic permissions') + ': if an allow list is on, add ' + esc(st.new) + '.</span></li></ul>'
+        + vals([val('Instagram', st.copy.instagram), val('Stripe Connect', 'https://' + st.target + '/admin-api/payments/stripe/connect/callback')]);
+    },
+    tests: function () {
+      var t = 'https://' + st.target, link = function (p) { return '<a href="' + esc(t + p) + '" target="_blank" rel="noopener">' + esc(t + p) + '</a>'; };
+      var h = what('Signed in, or on your phone with the preview link, place test orders on ' + link('/shop/') + ': card, cash on delivery, Tabby and Tamara. Then check: the order emails show ' + esc(st.target) + ' links; password reset works (' + link('/my-account/') + '); the Arabic shop works (' + link('/ar/') + '); the phone app installs.');
+      if (st.coming_soon_link) h += vals([val('Preview link', st.coming_soon_link.url)]);
+      return h + note('The shop cannot judge a test order for you, so press “Mark as done” when all of them passed.');
+    },
+    cs_off: function () {
+      return what('Only after every test order passed. Then everyone sees the shop on ' + b(st.new) + '.')
+        + '<div class="dwi-row">' + btn('coming_soon_off', 'Turn the Coming Soon page off') + '</div>';
+    },
+    forward: function () {
+      var cs = st.coming_soon && st.coming_soon.on;
+      var h = what('Every old ' + esc(st.old) + ' link, bookmark and installed app then lands on ' + b(st.new) + '. Leave it on for 2–4 weeks.');
+      if (cs) h += '<div class="dwi-res is-amber"><b>Not yet</b>The Coming Soon page is still on. Forwarding now would send every ' + esc(st.old) + ' customer to the Coming Soon page instead of the shop. Turn it off in ' + go('cs_off') + ' first.</div>';
+      return h + '<div class="dwi-row">' + btn('forward_on', 'Forward ' + st.old + ' to ' + st.new, { disabled: cs || !st.can.forward }) + '</div>';
+    },
+    google: function (s) {
+      var sm = 'https://' + st.target + '/sitemap.xml', ix = (s.data || {}).indexnow;
+      return what(b('Google Search Console → the ' + st.new + ' property → Sitemaps') + ': remove the old WordPress sitemaps and add the one below. If ' + esc(st.old) + ' is a property there too: ' + b('Settings → Change of address → ' + st.new) + '. Then tell Bing and the other IndexNow engines.')
+        + vals([val('Sitemap', sm)])
+        + '<div class="dwi-row">' + btn('indexnow', 'Ping IndexNow (Bing and others)', { quiet: !!(ix && ix.ok) }) + '</div>'
+        + (ix ? note('IndexNow ' + (ix.ok ? 'accepted' : 'did not accept') + ' the last ping, ' + esc(when(ix.at)) + '.') : '')
+        + note('Verify checks what the shop gives Google (the sitemap’s address, nothing hiding it). Search Console itself cannot be checked from here.');
+    },
+    done: function () {
+      var inst = st.installer, h = '<div class="dwi-sum">';
+      var left = inst.steps.filter(function (x) { return x.status === null && x.key !== 'done'; });
+      h += '<h4>Skipped — do later</h4>' + (inst.skipped.length ? '<ul>' + inst.skipped.map(function (x) {
+        var why = x.message.length > 160 ? x.message.slice(0, 157) + '…' : x.message;
+        return '<li>Step ' + esc(x.n) + ': ' + esc(x.title) + (why ? ' — ' + esc(why) : '') + ' <button type="button" class="dwi-link" data-dwi-step="' + esc(x.key) + '" data-dwi-do="undo">Return to it</button></li>';
+      }).join('') + '</ul>' : note('Nothing skipped.'));
+      if (left.length) h += '<h4>Not done yet</h4><ul>' + left.map(function (x) { return '<li>' + go(x.key, 'Step ' + x.n + ': ' + x.title) + '</li>'; }).join('') + '</ul>';
+      h += '<h4>In 2–4 weeks, when nobody uses ' + esc(st.old) + ' any more</h4><ul>'
+        + '<li>Press the button below: it runs the readiness check itself and refuses while anything still depends on ' + esc(st.old) + '.</li>'
+        + '<li>Cloudways → Domain Management → remove ' + copy(st.old) + ' and ' + copy('www.' + st.old) + '.</li>'
+        + '<li>Cloudways → SSL Certificate → Let’s Encrypt again with only ' + copy(st.copy.certificate_after) + ', then Varnish → Purge.</li>'
+        + '<li>At ' + esc(st.old) + '’s registrar, remove its A record. Stripe dashboard → Payment method domains → remove ' + esc(st.old) + '.</li>'
+        + '<li>When ' + esc(st.new) + '’s nameservers have shown Internet.bs for 2 days, delete the domain and site from Hostinger and cancel the plan.</li></ul>';
+      return h + '<div class="dwi-row">' + btn('remove_old', 'Remove ' + st.old + ' completely', { quiet: true, disabled: !st.can.remove || st.steps.remove === 'done' }) + '</div></div>';
     }
-    return step('6b', level, 'Old links in the shop’s text', 'Product descriptions, articles, pages, menus, banners, footer and email templates that still link to ' + esc(st.old) + ' are pointed at ' + esc(st.new) + '. Orders, customers and payment settings are never touched, and Undo puts everything back.', body);
+  };
+
+  /* ------------------------------------------------------------- render */
+  function chip(s) {
+    if (s.status === 'done') return '<span class="dwi-chip is-done">✓ Done</span>';
+    if (s.status === 'skipped') return '<span class="dwi-chip is-skipped">Skipped — do later</span>';
+    if (s.level === 'red') return '<span class="dwi-chip is-red">✕ Needs fixing</span>';
+    return '<span class="dwi-chip is-todo">● To do</span>';
   }
 
-  function s6() {
-    var level = st.steps['switch'], body = '';
-    body += '<dl class="dw-kv"><dt>Shop’s address now</dt><dd>' + esc(st.now.app_url || '(not set)') + '</dd><dt>Site URL now</dt><dd>' + esc(st.now.site_url || '(empty)') + '</dd></dl>';
-    if (!st.can['switch'] && level !== 'done') {
-      var there = st.copy.admin_on_target + window.location.pathname;
-      body += '<div class="dw-msg is-info">This button only works on the new address. When steps 3–5 are ✓, open <a href="' + esc(there) + '" rel="noopener">' + esc(there) + '</a>, sign in, and press it there.</div>';
-    }
-    body += '<div class="dw-row">' + btn('switch_address', 'Use ' + st.proposed.app_url + ' from now on', { disabled: !st.can['switch'], quiet: level === 'done' }) + '</div>';
-    body += yours('Then your clicks in Cloudways', '<ol><li>Domain Management → make ' + copy(st.new) + ' the <b>primary domain</b>.</li><li>Your app → Application Settings → Varnish → <b>Purge</b>.</li></ol>');
-    return step(6, level, 'Switch the shop’s address', 'From now on emails, payment notices, Google and every link use https://' + esc(st.target) + '. The shop’s caches are cleared at the same time.', body);
+  function stepHtml(s) {
+    var inst = st.installer, isOpen = open === s.n;
+    var cls = 'dwi-step' + (s.status === 'done' ? ' is-done' : '') + (s.status === 'skipped' ? ' is-skipped' : '') + (inst.current === s.n ? ' is-current' : '');
+    var h = '<li class="' + cls + '" id="dwi-step-' + esc(s.n) + '" data-key="' + esc(s.key) + '"><button type="button" class="dwi-head" data-dwi-open="' + esc(s.n) + '" aria-expanded="' + (isOpen ? 'true' : 'false') + '">'
+      + '<span class="dwi-num" aria-hidden="true">' + (s.status === 'done' ? '✓' : esc(s.n)) + '</span><span class="dwi-title">' + esc('Step ' + s.n + '. ' + s.title) + '</span>' + chip(s) + '</button>';
+    if (!isOpen) return h + '</li>';
+    h += '<div class="dwi-body">' + (BODY[s.key] ? BODY[s.key](s) : '') + result(s) + '<div class="dwi-row">';
+    if (s.status === 'skipped') h += stepBtn('undo', s.key, 'Return to it');
+    else if (s.kind === 'verify') h += stepBtn('verify', s.key, s.verified_at ? 'Verify again' : 'Verify', s.status === 'done' ? 'is-quiet' : '');
+    else if (s.status !== 'done') h += stepBtn('done', s.key, 'Mark as done', 'is-ok');
+    else h += stepBtn('undo', s.key, 'Not done yet', 'is-quiet');
+    if (s.status !== 'skipped' && s.status !== 'done' && !s.critical && s.key !== 'done') h += stepBtn('skip', s.key, 'Skip for now', 'is-quiet');
+    if ((s.status === 'done' || s.status === 'skipped') && s.n < inst.total) h += '<button type="button" class="dwi-btn is-quiet" data-dwi-open="' + esc(s.n + 1) + '">Next: step ' + esc(s.n + 1) + ' →</button>';
+    h += '</div>';
+    if (s.critical && s.status !== 'done') h += note(esc(s.why_no_skip));
+    return h + '</div></li>';
   }
 
-  function s7() {
-    var p = st.steps.payments, levels = [p.stripe.level, p.tabby.level, p.tamara.level];
-    var level = levels.indexOf('problem') >= 0 ? 'problem' : (levels.every(function (l) { return l === 'done'; }) ? 'done' : 'todo');
-    var row = function (key, label, action) {
-      return '<div class="dw-row">' + btn(key, action, { disabled: !st.can.payments, quiet: p[key].level === 'done' }) + ' ' + badge(p[key].level)
-        + '<span style="font-size:13px">' + esc(label) + '</span></div>'
-        + (p[key].message && !msgs['7' + key] ? '<div class="dw-msg ' + (p[key].level === 'done' ? 'is-ok' : 'is-bad') + '">' + esc(p[key].message) + '</div>' : '')
-        + (msgs['7' + key] ? '<div class="dw-msg ' + (msgs['7' + key].ok ? 'is-ok' : 'is-bad') + '">' + esc(msgs['7' + key].text) + '</div>' : '');
-    };
-    var body = (st.can.payments ? '' : '<div class="dw-msg is-info">Do step 6 first: the providers are told the shop’s own address.</div>')
-      + row('stripe', 'Stripe', 'Set up Stripe webhook') + row('tabby', 'Tabby', 'Register / re-sync Tabby') + row('tamara', 'Tamara', 'Remove then register Tamara')
-      + yours('Your clicks', '<ol><li>Stripe dashboard → Settings → <b>Payment method domains</b> → add ' + copy(st.new) + '.</li>'
-        + '<li>Meta app (Instagram) → Valid OAuth Redirect URIs → add ' + copy(st.copy.instagram) + '</li></ol>');
-    return step(7, level, 'Payments and Instagram', 'Stripe, Tabby and Tamara send payment notices to the shop’s address; each button tells them the new one and removes the old one.', body);
-  }
-
-  function s8() {
-    var level = !pics ? 'todo' : (pics.remote === 0 && pics.missing === 0 ? 'done' : 'todo');
-    var body = '';
-    if (!pics) body += '<div class="dw-msg is-info">Counting pictures…</div>';
-    else {
-      body += '<dl class="dw-kv"><dt>On this server</dt><dd>' + esc(pics.present) + '</dd>'
-        + '<dt>Still loading from another site</dt><dd>' + esc(pics.remote) + (pics.hosts.length ? ' (' + esc(pics.hosts.join(', ')) + ')' : '') + '</dd>'
-        + '<dt>Named but not on this server</dt><dd>' + esc(pics.missing) + '</dd>'
-        + (pics.failed ? '<dt>Could not be fetched</dt><dd>' + esc(pics.failed) + '</dd>' : '') + '</dl>';
-      body += '<div class="dw-row">' + btn('fetch_pictures', 'Fetch missing pictures from WordPress', { disabled: pics.remaining === 0 })
-        + '<a class="dw-btn is-quiet" href="' + esc(BASE.replace(/\/[^\/]*$/, '') + '/admin-api/urls-media/progress-page') + '" target="_blank" rel="noopener">Live progress page</a></div>'
-        + '<p class="dw-why">Each press fetches one small batch (about 10 pictures) and can be pressed again until nothing is left. Do this while WordPress is still online.</p>';
-      if (pics.missing > 0) body += yours('Your click (only if the number above is not 0)', 'Upload <b>wp-content/uploads</b> from your WordPress backup to Cloudways at ' + copy('public_html/wp-content/uploads/') + ' This keeps old picture links working.');
-    }
-    return step(8, level, 'Old pictures', 'Every product, brand and article picture must be on this server before WordPress goes away.', body);
-  }
-
-  function s9() {
-    var t = 'https://' + st.target;
-    var link = function (href, text) { return '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + esc(text) + '</a>'; };
-    var body = yours('Your checks', '<ul>'
-      + (st.coming_soon && st.coming_soon.on ? '<li>The Coming Soon page is on: sign in on ' + esc(st.target) + ' or open the preview link from Appearance → Coming Soon page first, then turn it off when these pass.</li>' : '')
-      + '<li>Place test orders on ' + link(t + '/shop', t + '/shop') + ': card, cash on delivery, Tabby and Tamara.</li>'
-      + '<li>The order emails show ' + esc(st.target) + ' links.</li>'
-      + '<li>Password reset works: ' + link(t + '/my-account/', t + '/my-account/') + ' → Lost your password?</li>'
-      + '<li>The Arabic shop works: ' + link(t + '/ar/', t + '/ar/') + '</li>'
-      + '<li>Instagram connects: <button type="button" class="dw-btn is-quiet" data-screen="instagram">Open Content → Instagram</button></li>'
-      + '<li>The phone app installs from ' + link(t + '/', t) + '</li></ul>');
-    return step(9, 'yours', 'Test orders', 'Nothing here is automatic. Check these yourself before step 10.', body);
-  }
-
-  function s10() {
-    var level = st.steps.forward;
-    var body = (st.can.forward ? '' : '<div class="dw-msg is-info">Do step 6 first.</div>')
-      + '<div class="dw-row">' + btn('forward_on', 'Forward ' + st.old + ' to ' + st.new, { disabled: !st.can.forward || level === 'done', quiet: level === 'done' }) + '</div>'
-      + '<p class="dw-why">Leave it on for 2–4 weeks, so customers with old links and the old phone app move across.</p>';
-    return step(10, level, 'Forward ' + st.old, 'Every old ' + esc(st.old) + ' link, bookmark and installed app then lands on ' + esc(st.new) + '.', body);
-  }
-
-  function s11() {
-    var level = st.steps.remove;
-    var ready = rd && rd.complete && rd.risk === 0;
-    var body = '<div class="dw-msg ' + (ready ? 'is-ok' : 'is-info') + '">' + (ready ? 'The readiness check (step 1) shows RISK 0.' : 'Allowed only when the readiness check (step 1) shows RISK 0. The shop checks again itself when you press the button.') + '</div>'
-      + '<div class="dw-row">' + btn('remove_old', 'Remove ' + st.old + ' completely', { disabled: !st.can.remove || level === 'done', quiet: level === 'done' }) + '</div>'
-      + '<p class="dw-why">Clears the old addresses' + (st.now.owner_app_host ? ', and the owner app’s own address if it is on ' + esc(st.old) : '') + '.</p>'
-      + yours('Then your clicks', '<ol><li>Cloudways → Domain Management → remove ' + copy(st.old) + ' and ' + copy('www.' + st.old) + '.</li>'
-        + '<li>Cloudways → SSL Certificate → Let’s Encrypt again with only ' + copy(st.copy.certificate_after) + ', then Varnish → <b>Purge</b>.</li>'
-        + '<li>At ' + esc(st.old) + '’s registrar, remove its A record.</li>'
-        + '<li>Stripe dashboard → Payment method domains → remove ' + copy(st.old) + '.</li>'
-        + '<li>When the nameservers of ' + esc(st.new) + ' have shown Internet.bs for 2 days (step 4’s check), delete the domain and site from Hostinger and cancel the plan.</li></ol>');
-    return step(11, level, 'Remove ' + st.old + ' completely', 'The last step, 2–4 weeks after step 10. After this the shop no longer depends on ' + esc(st.old) + ' at all.', body);
-  }
-
-  /* Appearance -> Coming Soon page (Lane CS): turn it on BEFORE step 4 (DNS),
-     off after step 9's test orders pass. */
-  function comingSoon() {
-    var cs = st.coming_soon;
-    if (!cs) return '';
-    return '<div class="dw-msg ' + (cs.on ? 'is-info' : 'is-ok') + '" data-dw-coming-soon><b>' + esc(cs.line) + '</b> — '
-      + (cs.on ? 'visitors there see it; you (signed in) and the preview link see the shop. Turn it off after the test orders in step 9 pass.'
-        : 'turn it on before step 4, so ' + esc(st.new) + ' shows it instead of the shop while you set up and test.')
-      + ' <button type="button" class="dw-btn is-quiet" data-screen="comingsoon">Open Appearance → Coming Soon page</button></div>';
-  }
-
-  /* -------------------------------------------------------------- render */
   function render() {
     var host = document.getElementById('content');
     if (!host || !host.querySelector('[data-dw-screen]')) return;
     var root = host.querySelector('[data-dw-screen]');
-    if (banner) { root.innerHTML = '<div class="dw-msg is-bad">' + esc(banner) + '</div>'; return; }
-    if (!st) { root.innerHTML = '<div class="dw-msg is-info">Loading…</div>'; return; }
-    var focus = document.activeElement && document.activeElement.id === 'dw-domain';
-    var typed = root.querySelector('#dw-domain') ? root.querySelector('#dw-domain').value : null;
-    root.innerHTML = '<div class="dw-head"><h2>Move the shop to ' + esc(st.new) + '</h2>'
-      + '<p>Do the steps in order. Each one checks itself every time you open this page. Buttons do the work inside the shop; the grey boxes are clicks only you can do, in Cloudways or at Internet.bs, with the exact values to copy.</p>'
-      + '<div class="dw-legend"><span>✓ done</span><span>● to do</span><span>✕ needs attention</span></div>'
-      + comingSoon() + '</div>'
-      + '<ol class="dw-steps">' + [s1(), s1b(), s2(), s3(), s4(), s5(), s6(), s6b(), s7(), s8(), s9(), s10(), s11()].join('') + '</ol>';
-    var input = root.querySelector('#dw-domain');
-    if (input && typed !== null) { input.value = typed; if (focus) input.focus(); }
+    if (banner) { root.innerHTML = '<div class="dwi-res is-red">' + esc(banner) + '</div>'; return; }
+    if (!st) { root.innerHTML = '<div class="dwi-res is-info">Loading…</div>'; return; }
+    var inst = st.installer;
+    var typed = root.querySelector('#dwi-domain') ? root.querySelector('#dwi-domain').value : null;
+    var typedOverride = root.querySelector('#dwi-override') ? root.querySelector('#dwi-override').value : null;
+    if (open === null) open = inst.current || inst.total;
+    var finished = inst.done + inst.skipped.length;
+    root.innerHTML = '<h2>Move the shop to ' + esc(st.new) + '</h2>'
+      + '<p class="dwi-lead">' + esc(inst.total) + ' steps, in order. Each one says what to do, then checks it for you. A step you cannot do yet can be skipped and done later; the last step lists them.</p>'
+      + '<div class="dwi-sos" role="note"><b>If anything goes wrong:</b> Cloudways → Servers → Launch SSH Terminal, in the app folder run ' + copy(st.emergency)
+      + ' and the shop shows again on the next request. ' + esc(st.old) + ' keeps working throughout: to go back after step ' + esc(num('switch')) + ', open ' + esc(st.old_admin) + ' with your admin path, go to Platform → Site address, press “Use this address from now on”, and set Main address back to ' + esc(st.old) + '.</div>'
+      + '<div class="dwi-bar"><div class="dwi-bar-top">' + (inst.finished ? 'All ' + esc(inst.total) + ' steps done or skipped' : 'Step ' + esc(inst.current) + ' of ' + esc(inst.total))
+      + '<span>' + esc(inst.done) + ' done · ' + esc(inst.skipped.length) + ' skipped</span></div>'
+      + '<div class="dwi-track" role="progressbar" aria-valuemin="0" aria-valuemax="' + esc(inst.total) + '" aria-valuenow="' + esc(finished) + '"><div class="dwi-fill" style="width:' + Math.round(finished / inst.total * 100) + '%"></div></div></div>'
+      + '<ol class="dwi-steps">' + inst.steps.map(stepHtml).join('') + '</ol>'
+      + '<div class="dwi-foot"><span>Progress is saved on the server, so it is the same on your phone.</span><button type="button" class="dwi-link" data-dwi-reset>Reset progress</button></div>';
+    var input = root.querySelector('#dwi-domain');
+    if (input && typed !== null) input.value = typed;
+    var ov = root.querySelector('#dwi-override');
+    if (ov && typedOverride !== null) ov.value = typedOverride;
+  }
+
+  function take(body) {
+    var next = body && body.state ? body.state : (body && body.installer ? body : null);
+    if (next) st = next;
   }
 
   async function load() {
@@ -442,64 +423,71 @@
     if (mine !== seq) return;
     if (r.status !== 200) { banner = fail(r.status, r.body); render(); return; }
     banner = ''; st = r.body; render();
-    readiness(0);
-    api('/domain-switch/pictures').then(function (p) { if (mine === seq && p.status === 200) { pics = p.body; render(); } });
   }
 
-  async function readiness(offset) {
-    rdBusy = true; if (!offset) rd = null; render();
-    var r = await api('/domain-switch/readiness' + (offset ? '?offset=' + encodeURIComponent(offset) : ''));
-    rdBusy = false;
-    if (r.status !== 200) { msgs[1] = { ok: false, text: fail(r.status, r.body) }; render(); return; }
-    var b = r.body;
-    if (offset && rd) {
-      rd.findings = rd.findings.concat(b.findings); rd.risk += b.risk; rd.todo += b.todo;
-      rd.complete = b.complete; rd.next_offset = b.next_offset; rd.tables_checked += b.tables_checked; rd.seconds = Math.round((rd.seconds + b.seconds) * 100) / 100;
-    } else rd = b;
-    delete msgs[1];
-    render();
-  }
+  var CONFIRMS = {
+    set_names: function () { return 'Save ' + ((document.getElementById('dwi-domain') || {}).value || st.new) + ' as the shop’s new name? Nothing changes for shoppers.'; },
+    coming_soon_on: function () { return 'Show the Coming Soon page on ' + st.new + '? ' + st.old + ' keeps showing the shop.'; },
+    coming_soon_off: function () { return 'Turn the Coming Soon page off? Everyone will see the shop on ' + st.new + '.'; },
+    switch_address: function () { return 'The shop will call itself ' + st.proposed.app_url + ' from now on, in every email and link. Continue?'; },
+    clear_caches: function () { return 'Clear the shop’s caches? Pages are rebuilt on their next visit.'; },
+    forward_on: function () { return 'Send every ' + st.old + ' visitor to ' + st.new + '?'; },
+    stripe: function () { return 'Tell Stripe the new address and remove the old webhook?'; },
+    tabby: function () { return 'Tell Tabby the new address and remove the old webhook?'; },
+    tamara: function () { return 'Remove Tamara’s old registration and register the new address?'; },
+    remove_old: function () { return 'Remove ' + st.old + ' from the shop completely? Only 2–4 weeks after forwarding started.'; }
+  };
 
-  var STEP_OF = { pay_check: '1b', rw_preview: '6b', rewrite_content: '6b', undo_rewrite: '6b', check_old_dns: 3, check_dns: 4, check_tls: 5, set_names: 2, switch_address: 6, stripe: '7stripe', tabby: '7tabby', tamara: '7tamara', fetch_pictures: 8, forward_on: 10, remove_old: 11 };
+  var STEP_OF = { set_names: 'name', coming_soon_on: 'cs_on', switch_address: 'switch', clear_caches: 'caches', rewrite_content: 'links', undo_rewrite: 'links',
+    stripe: 'payments', tabby: 'payments', tamara: 'payments', fetch_pictures: 'start', coming_soon_off: 'cs_off', forward_on: 'forward', indexnow: 'google', remove_old: 'done' };
 
   async function run(action) {
-    if (action === 'readiness') { readiness(0); return; }
-    if (action === 'readiness_more') { readiness(rd ? rd.next_offset : 0); return; }
-    if (action === 'pay_check' || action === 'rw_preview') {
-      busy = action; delete msgs[STEP_OF[action]]; render();
-      var g;
-      try { g = action === 'pay_check' ? await api('/domain-switch/payments-check', {}) : await api('/domain-switch/rewrite'); }
-      catch (e) { g = { status: 0, body: { message: 'The shop could not be reached. Check your connection and try again.' } }; }
+    if (action === 'rw_preview') {
+      busy = action; render();
+      var g = await api('/domain-switch/rewrite');
       busy = '';
-      if (g.status === 200) { if (action === 'pay_check') pay = g.body; else rw = g.body; }
-      else msgs[STEP_OF[action]] = { ok: false, text: fail(g.status, g.body) };
+      if (g.status === 200) rw = g.body; else msgs.links = { ok: false, text: fail(g.status, g.body) };
       render(); return;
     }
     var body = { action: action };
-    if (action === 'set_names') body.domain = (document.getElementById('dw-domain') || {}).value || '';
+    if (CONFIRMS[action] && !window.confirm(CONFIRMS[action]())) return;
+    if (action === 'set_names') body.domain = (document.getElementById('dwi-domain') || {}).value || '';
     if (action === 'switch_address') {
-      if (!window.confirm('The shop will call itself ' + st.proposed.app_url + ' from now on, in every email and link. Continue?')) return;
       body.confirm = st.proposed.confirm || '';
+      body.override = ((document.getElementById('dwi-override') || {}).value || '').trim();
     }
-    if (action === 'remove_old') {
-      if (!window.confirm('Remove ' + st.old + ' from the shop completely? Do this only 2–4 weeks after step 10, when the test orders have passed.')) return;
-      body.confirm = 'REMOVE';
-    }
+    if (action === 'remove_old') body.confirm = 'REMOVE';
     if (action === 'rewrite_content') {
       if (!rw || !window.confirm('Change ' + rw.links + ' link(s) to https://' + rw.new + '? Undo is offered afterwards.')) return;
       body.confirm = String(rw.links);
     }
+    var key = STEP_OF[action] || 'start';
     busy = action; render();
-    var r;
-    try { r = await api('/domain-switch/run', body); } catch (e) { r = { status: 0, body: { message: 'The shop could not be reached. Check your connection and try again.' } }; }
+    var r = await api('/domain-switch/run', body);
     busy = '';
     var ok = r.status >= 200 && r.status < 300 && r.body.ok !== false;
-    msgs[STEP_OF[action]] = { ok: ok, text: ok ? (r.body.message || 'Done.') : fail(r.status, r.body) };
-    if (r.body.state) st = r.body.state;
-    if (r.body.pictures) pics = r.body.pictures;
+    msgs[key] = { ok: ok, text: ok ? (r.body.message || 'Done.') : fail(r.status, r.body) };
+    take(r.body);
     if (ok && (action === 'rewrite_content' || action === 'undo_rewrite')) { var again = await api('/domain-switch/rewrite'); if (again.status === 200) rw = again.body; }
     render();
-    if (ok && (action === 'set_names' || action === 'switch_address' || action === 'remove_old' || action === 'forward_on' || action === 'rewrite_content' || action === 'undo_rewrite')) readiness(0);
+  }
+
+  async function step(key, doWhat) {
+    var body = { step: key, 'do': doWhat };
+    if (doWhat === 'reset') {
+      if (!window.confirm('Reset the progress of every step? Only the ticks on this page are forgotten; the shop itself is not changed.')) return;
+      body = { 'do': 'reset', confirm: 'RESET' };
+    }
+    busy = doWhat + ':' + key; delete msgs[key]; render();
+    var r = await api('/domain-switch/step', body);
+    busy = '';
+    var ok = r.status >= 200 && r.status < 300 && r.body.ok !== false;
+    if (!ok || doWhat === 'skip' || doWhat === 'reset') msgs[key || 'start'] = { ok: ok ? null : false, text: ok ? r.body.message : fail(r.status, r.body) };
+    take(r.body);
+    if (ok && doWhat === 'reset') open = null;
+    else if (ok && doWhat === 'undo') open = num(key);
+    else if (ok && (doWhat === 'done' || doWhat === 'skip')) open = st.installer.current || st.installer.total;
+    render();
   }
 
   function copyText(value, button) {
@@ -520,14 +508,24 @@
   document.addEventListener('click', function (e) {
     var t = e.target;
     if (!t || !t.closest || !t.closest('[data-dw-screen]')) return;
-    var b = t.closest('[data-copy]');
-    if (b) { copyText(b.getAttribute('data-copy'), b); return; }
-    b = t.closest('[data-dw]');
-    if (b && !b.disabled) { run(b.getAttribute('data-dw')); return; }
-    b = t.closest('[data-goto]');
-    if (b) { var el = document.getElementById('dw-step-' + b.getAttribute('data-goto')); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-    b = t.closest('[data-screen]');
-    if (b && window.go) window.go(b.getAttribute('data-screen'));
+    var el = t.closest('[data-copy]');
+    if (el) { copyText(el.getAttribute('data-copy'), el); return; }
+    el = t.closest('[data-dwi-step]');
+    if (el && !el.disabled) { step(el.getAttribute('data-dwi-step'), el.getAttribute('data-dwi-do')); return; }
+    if (t.closest('[data-dwi-reset]')) { step('', 'reset'); return; }
+    el = t.closest('[data-dw]');
+    if (el && !el.disabled) { run(el.getAttribute('data-dw')); return; }
+    el = t.closest('[data-dwi-open]');
+    if (el) {
+      var n = +el.getAttribute('data-dwi-open'), head = el.classList.contains('dwi-head');
+      open = (head && open === n) ? -1 : n;
+      render();
+      var li = document.getElementById('dwi-step-' + n);
+      if (li && !head) li.scrollIntoView({ block: 'start' });
+      return;
+    }
+    el = t.closest('[data-screen]');
+    if (el && window.go) window.go(el.getAttribute('data-screen'));
   });
 
   function addNavEntry() {
@@ -552,8 +550,8 @@
     if (side) side.classList.remove('open');
     var host = document.getElementById('content');
     if (!host) return undefined;
-    host.innerHTML = '<div class="wrap dw" data-dw-screen></div>';
-    st = null; rd = null; pics = null; pay = null; rw = null; msgs = {}; busy = ''; banner = '';
+    host.innerHTML = '<div class="wrap dwi" data-dw-screen></div>';
+    st = null; rw = null; msgs = {}; busy = ''; banner = ''; open = null;
     render();
     load();
     return undefined;

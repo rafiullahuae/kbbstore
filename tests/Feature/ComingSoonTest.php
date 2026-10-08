@@ -439,15 +439,23 @@ it('warns when forwarding would send the old address\'s visitors into the Coming
         ->and(implode(' ', $status['warnings']))->toContain('Forward permanently is ON');
 });
 
-it('puts a Coming Soon line on the Domain switch wizard', function () {
+it('puts the Coming Soon page on and off as steps of the Domain switch installer', function () {
     csOn();
     $state = app(\App\Services\DomainMove\DomainSwitch::class)->state(\Illuminate\Http\Request::create(CS_OLD.'/admin'));
 
     expect($state['coming_soon'])->toBe(['on' => true, 'line' => 'Coming Soon page: ON for kbeautybliss.com']);
 
     $screen = (string) file_get_contents(resource_path('views/admin/partials/domain-switch-screen.blade.php'));
+    // Lane DW2: the wizard became a numbered installer. Coming Soon is two of
+    // its steps -- on before the DNS change, off after the test orders -- each
+    // with its own button, and a link to this screen for the words.
+    $keys = array_keys(\App\Services\DomainMove\SwitchInstaller::STEPS);
     expect($screen)->toContain('data-screen="comingsoon"')
-        ->and($screen)->toContain('comingSoon() + \'</div>\'');
+        ->and($screen)->toContain("btn('coming_soon_on'")
+        ->and($screen)->toContain("btn('coming_soon_off'")
+        ->and(array_search('cs_on', $keys, true))->toBeLessThan(array_search('dns_records', $keys, true))
+        ->and(array_search('cs_off', $keys, true))->toBeGreaterThan(array_search('tests', $keys, true))
+        ->and(array_search('cs_off', $keys, true))->toBeLessThan(array_search('forward', $keys, true));
 });
 
 /* ═════════════════════════════════════════════ 5. nothing else moves ══ */

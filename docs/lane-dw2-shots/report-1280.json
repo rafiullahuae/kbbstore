@@ -1,0 +1,49 @@
+{
+  "width": 1280,
+  "onOpen": [
+    "GET /admin-api/domain-switch",
+    "POST /admin-api/domain-switch/step",
+    "POST /admin-api/domain-switch/run",
+    "POST /admin-api/domain-switch/step",
+    "POST /admin-api/domain-switch/step",
+    "POST /admin-api/domain-switch/step"
+  ],
+  "console": [],
+  "verify": {
+    "start": {
+      "status": 200,
+      "level": "red",
+      "message": "This server’s address: 134.209.147.13 (where extrabeauty.ae points today). Readiness check: 2 thing(s) would break on the switch. Payments check: 17 green, 5 amber, 3 red."
+    },
+    "name": "Done. Main address: kbeautybliss.com. Old addresses: extrabeauty.ae. Forwarding: off. Nothing visible changed: extrabeauty.ae works exactly as before.",
+    "dns_wait": {
+      "status": 200,
+      "level": "green",
+      "message": "kbeautybliss.com and www.kbeautybliss.com point at this server (134.209.147.13), and there is no AAAA record."
+    },
+    "payments": {
+      "status": 200,
+      "level": "red",
+      "message": "3 red, 7 amber. Card (Stripe) · Mode: Stripe is in Sandbox / test mode: no real card is charged. Card (Stripe) · Stripe account: Stripe has not enabled payments on this account yet. Card (Stripe) · Webhook: Points at https://extrabeauty.ae/api/payments/webhook/stripe/…cdef: extrabeauty.ae is the address the shop uses today, and the main address is kbeautybliss.com. Card (Stripe) · Signing secret: Missing: every notice from Stripe would be refused."
+    },
+    "paymentsSkip": {
+      "status": 200,
+      "message": "Step 11 skipped. It is listed at the end, with a button to return to it."
+    }
+  },
+  "overflow": {
+    "01-overview": 1280,
+    "02-step1-red-with-fix": 1280,
+    "03-step6-verify-green": 1280,
+    "04-step11-skipped": 1280,
+    "05-step8-gate": 1280,
+    "06-final-summary": 1280
+  },
+  "onOpenFiltered": [
+    "GET /admin-api/domain-switch"
+  ],
+  "outboundOnOpen": 0,
+  "progressLine": "Step 1 of 170 done · 0 skipped",
+  "summary": "Skipped — do later\nStep 11: Payments: Stripe webhook, Apple Pay domain, Tabby, Tamara — 3 red, 7 amber. Card (Stripe) · Mode: Stripe is in Sandbox / test mode: no real card is charged. Card (Stripe) · Stripe account: Stripe has not enabled payme… Return to it\nNot done yet\nStep 1: Before you start\nStep 3: Coming Soon page ON for kbeautybliss.com\nStep 4: Cloudways: add the domain\nStep 5: Internet.bs: DNS records\nStep 7: Cloudways: SSL certificate\nStep 8: Make kbeautybliss.com the main address\nStep 9: Clear caches\nStep 10: Old links in content\nStep 12: Instagram and other callbacks\nStep 13: Test orders\nStep 14: Coming Soon page OFF\nStep 15: Forward the old address\nStep 16: Google: Search Console, sitemap, IndexNow\nIn 2–4 weeks, when nobody uses extrabeauty.ae any more\nPress the button below: it runs the readiness check itself and refuses while anything still depends on extrabeauty.ae.\nCloudways → Domain Management → remove \nextrabeauty.ae\nCopy\n and \nwww.extrabeauty.ae\nCopy\n.\nCloudways → SSL Certificate → Let’s Encrypt again with only \nkbeautybliss.com, www.kbeautybliss.com\nCopy\n, then Varnish → Purge.\nAt extrabeauty.ae’s registrar, remove its A record. Stripe dashboard → Payment method domains → remove extrabeauty.ae.\nWhen kbeautybliss.com’s nameservers have shown Internet.bs for 2 days, delete the domain and site from Hostinger and cancel the plan.\nRemove extrabeauty.ae completely",
+  "clickable": true
+}

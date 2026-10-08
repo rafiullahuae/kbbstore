@@ -1,6 +1,9 @@
 /*
  * LANE DW — Platform → Domain switch, end to end, in Chromium.
  *
+ * SUPERSEDED (Lane DW2): the lettered wizard this drives became the numbered
+ * installer; tools/dw2-shots.cjs drives that. Kept as the record of Lane DW.
+ *
  *   php tools/dw-wire.php && sh tools/dw-preview.sh 10780
  *   node tools/dw-e2e.cjs 1280      # then re-run dw-preview.sh, and:
  *   node tools/dw-e2e.cjs 390

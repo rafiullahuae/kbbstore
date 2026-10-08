@@ -72,6 +72,30 @@ $app->booted(function ($app) use ($dir) {
             ], $records)]);
         }
 
+        /*
+         * Lane DW2: the installer's certificate check fetches robots.txt on all
+         * four names, and its caches / forwarding checks fetch extrabeauty.ae's
+         * home page. `tls_old` (default ok) is the old names' certificate;
+         * `oldhome` is what extrabeauty.ae/ answers: fresh | stale | forward.
+         */
+        if (in_array($h, ['www.kbeautybliss.com', 'extrabeauty.ae', 'www.extrabeauty.ae'], true) && $p === '/robots.txt') {
+            $how = str_ends_with($h, 'extrabeauty.ae') ? ($scenario['tls_old'] ?? 'ok') : ($scenario['tls'] ?? 'nodns');
+
+            return match ($how) {
+                'ok' => Http::response("User-agent: *\n", 200),
+                'nocert' => Http::failedConnection('cURL error 60: SSL: no alternative certificate subject name matches target host name'),
+                default => Http::failedConnection('cURL error 6: Could not resolve host: '.$h),
+            };
+        }
+
+        if ($h === 'extrabeauty.ae' && ($p === '/' || $p === '')) {
+            return match ($scenario['oldhome'] ?? 'stale') {
+                'forward' => Http::response('', 301, ['Location' => 'https://kbeautybliss.com/']),
+                'fresh' => Http::response('<html><head><link rel="canonical" href="https://kbeautybliss.com/"></head></html>', 200),
+                default => Http::response('<html><head><link rel="canonical" href="https://extrabeauty.ae/"></head></html>', 200),
+            };
+        }
+
         if ($h === 'kbeautybliss.com' && $p === '/robots.txt') {
             return match ($scenario['tls'] ?? 'nodns') {
                 'ok' => Http::response("User-agent: *\n", 200),

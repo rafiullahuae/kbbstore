@@ -67,7 +67,7 @@ final class DomainReadiness
      */
     public const HISTORY = [
         'audit_events', 'cache', 'cache_locks', 'cart_events', 'cart_recoveries', 'customer_password_reset_tokens',
-        'demo_seed_log', 'domain_content_rewrites', 'failed_jobs', 'import_checkpoints', 'import_history', 'import_runs', 'job_batches', 'jobs',
+        'demo_seed_log', 'domain_content_rewrites', 'domain_switch_progress', 'failed_jobs', 'import_checkpoints', 'import_history', 'import_runs', 'job_batches', 'jobs',
         'mail_deliveries', 'mail_web_copies', 'media_sideload_items', 'media_sideload_runs', 'migrations',
         'mkt_clicks', 'mkt_sends', 'not_found_log', 'old_link_rewrites', 'order_emails', 'order_items',
         'order_notes', 'orders', 'owner_app_events', 'owner_app_logins', 'password_reset_tokens', 'payment_events',

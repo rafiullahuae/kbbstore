@@ -195,7 +195,7 @@ it('reads amber before the switch: right for today, to be re-registered at step 
 
     expect($r['switching'])->toBeTrue()->and($r['serving'])->toBe('extrabeauty.ae')
         ->and(prChecks($r, 'stripe')['Webhook']['level'])->toBe('amber')
-        ->and(prChecks($r, 'stripe')['Webhook']['fix'])->toContain('After step 6')
+        ->and(prChecks($r, 'stripe')['Webhook']['fix'])->toContain('After step '.\App\Services\DomainMove\SwitchInstaller::num('switch').' of Platform → Domain switch')
         ->and(prChecks($r, 'tabby')['Webhook']['level'])->toBe('amber')
         ->and(prChecks($r, 'tamara')['Webhook']['level'])->toBe('amber')
         ->and($r['counts']['red'])->toBe(0);

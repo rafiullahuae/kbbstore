@@ -37,6 +37,9 @@ use Illuminate\Support\Facades\Http;
 use Tests\Support\DomainSwitchRoutes;
 
 const DW_OLD = 'https://extrabeauty.ae';
+
+/** A documentation address (RFC 5737), standing in for the server: the shop learns the real one from DNS, never a constant. */
+const DW_IP = '203.0.113.10';
 const DW_NEW = 'https://kbeautybliss.com';
 
 function dwOwner(string $role = 'owner'): AdminUser
@@ -100,12 +103,20 @@ function dwGoodZone(): array
 {
     return [
         'kbeautybliss.com' => [
-            'A' => [DomainSwitch::SERVER_IP], 'NS' => ['ns1.internet.bs.', 'ns2.internet.bs.'],
+            'A' => [DW_IP], 'NS' => ['ns1.internet.bs.', 'ns2.internet.bs.'],
             'MX' => ['1 smtp.google.com.'], 'TXT' => ['"v=spf1 include:_spf.google.com ~all"'],
         ],
         'www.kbeautybliss.com' => ['CNAME' => ['kbeautybliss.com.']],
-        'extrabeauty.ae' => ['A' => [DomainSwitch::SERVER_IP]],
+        'extrabeauty.ae' => ['A' => [DW_IP]],
     ];
+}
+
+/** Lane DW2: the installer's DNS and certificate steps verified green -- the switch's gate open. */
+function dwGateGreen(): void
+{
+    foreach (['dns_wait', 'ssl'] as $step) {
+        app(\App\Services\DomainMove\SwitchInstaller::class)->write($step, ['status' => 'done', 'level' => 'green', 'verified_at' => now()]);
+    }
 }
 
 function dwRun(array $body, string $origin = DW_OLD): \Illuminate\Testing\TestResponse
@@ -195,7 +206,9 @@ it('reads the shop as it is today: everything to do, the switch locked until the
         ->and($s['can']['payments'])->toBeFalse()
         ->and($s['copy']['certificate'])->toBe('kbeautybliss.com, www.kbeautybliss.com, extrabeauty.ae, www.extrabeauty.ae')
         ->and($s['copy']['instagram'])->toBe('https://kbeautybliss.com/admin-api/instagram/callback')
-        ->and($s['dns_table'][0])->toBe(['type' => 'A', 'name' => '@', 'value' => '134.209.147.13', 'extra' => 'TTL 300'])
+        // Lane DW2: no address is written into the shop. Until a check has
+        // learned it from where extrabeauty.ae points, the A value is blank.
+        ->and($s['dns_table'][0])->toBe(['type' => 'A', 'name' => '@', 'value' => '', 'extra' => 'TTL 300'])
         ->and(collect($s['dns_table'])->pluck('type')->all())->not->toContain('AAAA');
 });
 
@@ -236,9 +249,9 @@ it('runs the domain check in the request, finds a picture still on extrabeauty.a
     $picture = collect($r['findings'])->first(fn ($f) => str_contains($f['title'], 'still load from extrabeauty.ae'));
     expect($picture)->not->toBeNull()
         ->and($picture['level'])->toBe('risk')
-        // Lane DS: an extrabeauty.ae address names a file on THIS server; step 6b
-        // re-points it (Fetch, step 8, is for files only WordPress holds).
-        ->and($picture['fix'])->toBe(['step' => '6b', 'label' => 'Point them at the new address (step 6b)'])
+        // Lane DS: an extrabeauty.ae address names a file on THIS server; the
+        // old-links step re-points it (Fetch, in step 1, is for files only WordPress holds).
+        ->and($picture['fix'])->toBe(['step' => 10, 'label' => 'Point them at the new address (step 10)'])
         ->and($picture['samples'][0])->toContain('https://extrabeauty.ae/wp-content/uploads/2024/01/serum.jpg');
 
     // The configuration half, in words, with the step that fixes each line.
@@ -341,7 +354,7 @@ it('reports DNS done when the A record is this server and there is no AAAA, and 
 
     $r = dwRun(['action' => 'check_dns'])->assertOk()->json();
     expect($r['level'])->toBe('done')
-        ->and($r['records']['A'])->toBe(['134.209.147.13'])
+        ->and($r['records']['A'])->toBe([DW_IP])
         ->and($r['records']['MX'])->toBe(['1 smtp.google.com'])
         ->and($r['records']['TXT'])->toBe(['v=spf1 include:_spf.google.com ~all'])
         ->and($r['records']['www'])->toBe(['kbeautybliss.com'])
@@ -360,10 +373,11 @@ it('says in plain words that kbeautybliss.com still points at Hostinger', functi
     $this->actingAs(dwOwner(), 'admin');
 
     $r = dwRun(['action' => 'check_dns'])->assertOk()->json();
-    expect($r['level'])->toBe('problem')
+    // Lane DW2: "not yet" (amber), not an error: the change may still be spreading.
+    expect($r['level'])->toBe('todo')
         ->and($r['message'])->toContain('still points at the old host (177.202.242.149)')
-        ->and($r['message'])->toContain('134.209.147.13')
-        ->and($r['state']['steps']['dns'])->toBe('problem');
+        ->and($r['message'])->toContain(DW_IP)
+        ->and($r['state']['steps']['dns'])->toBe('todo');
 });
 
 it('flags an AAAA record even when the A record is right', function () {
@@ -381,7 +395,7 @@ it('says "not yet" for a name with no A record, and "could not ask" when nothing
     $this->actingAs(dwOwner(), 'admin');
     expect(dwRun(['action' => 'check_dns'])->json('level'))->toBe('todo');
 
-    // The public resolver unreachable AND the server's own failing: a problem, not a pass.
+    // The public resolver unreachable AND the server's own failing: "try again", never a pass.
     Http::fake(fn () => Http::failedConnection('cURL error 28: timed out'));
     app()->instance(DnsLookup::class, new class extends DnsLookup
     {
@@ -391,7 +405,7 @@ it('says "not yet" for a name with no A record, and "could not ask" when nothing
         }
     });
     $r = dwRun(['action' => 'check_dns'])->json();
-    expect($r['level'])->toBe('problem')->and($r['message'])->toContain('could not be asked');
+    expect($r['level'])->toBe('todo')->and($r['message'])->toContain('could not be asked');
 });
 
 it('falls back to the server resolver when the public one cannot be reached', function () {
@@ -400,7 +414,7 @@ it('falls back to the server resolver when the public one cannot be reached', fu
     {
         protected function native(string $host, string $type): ?array
         {
-            return $host === 'kbeautybliss.com' && $type === 'A' ? [DomainSwitch::SERVER_IP] : [];
+            return in_array($host, ['kbeautybliss.com', 'www.kbeautybliss.com', 'extrabeauty.ae'], true) && $type === 'A' ? [DW_IP] : [];
         }
     });
     $this->actingAs(dwOwner(), 'admin');
@@ -433,12 +447,12 @@ it('only ever looks up the configured domains, whatever the request carries (no 
         ->and($allowed)->not->toContain('10.0.0.5')->not->toContain('internal.corp.example');
 });
 
-it('reads where extrabeauty.ae points for step 3', function () {
+it('reads where extrabeauty.ae points: this server\'s address', function () {
     dwDns(dwGoodZone());
     $this->actingAs(dwOwner(), 'admin');
 
     $r = dwRun(['action' => 'check_old_dns'])->assertOk()->json();
-    expect($r['level'])->toBe('done')->and($r['message'])->toContain('extrabeauty.ae points at 134.209.147.13');
+    expect($r['level'])->toBe('done')->and($r['message'])->toContain('extrabeauty.ae points at '.DW_IP.': that is this server’s public address');
 });
 
 /* ═════════════════════════════════════════════════════ 6. the certificate */
@@ -463,14 +477,14 @@ it('tells a missing certificate from a domain that does not resolve yet, in plai
         return Http::failedConnection(array_shift($errors));
     });
     $r = dwRun(['action' => 'check_tls'])->json();
-    expect($r['level'])->toBe('problem')->and($r['message'])->toContain('no valid certificate for kbeautybliss.com yet')
+    expect($r['level'])->toBe('problem')->and($r['message'])->toContain('There is no valid certificate for kbeautybliss.com')
         ->and($r['message'])->not->toContain('cURL');
 
     expect(dwRun(['action' => 'check_tls'])->json('message'))->toContain('cannot be found yet');
     expect(dwRun(['action' => 'check_tls'])->json('message'))->toContain('Nothing answered at kbeautybliss.com');
 });
 
-/* ═════════════════════════════════════════ 7. step 6: switch the address */
+/* ═══════════════════════════════════ 7. step 8: make it the main address */
 
 it('refuses to switch the address from extrabeauty.ae, and touches nothing', function () {
     // The rule "Use this address" has always had: only on the address being adopted.
@@ -488,6 +502,7 @@ it('switches APP_URL, Site URL and clears caches on kbeautybliss.com, and a seco
     dwToday([SiteHost::KEY_CANONICAL => 'kbeautybliss.com', SiteHost::KEY_ALIASES => 'extrabeauty.ae']);
     $env = dwSandboxEnv();
     Cache::put('dw-probe', 'stale', 600);
+    dwGateGreen();
     $this->actingAs(dwOwner(), 'admin');
 
     $r = dwRun(['action' => 'switch_address', 'confirm' => DW_NEW], DW_NEW)->assertOk()->json();
@@ -507,6 +522,7 @@ it('switches APP_URL, Site URL and clears caches on kbeautybliss.com, and a seco
 it('refuses a stale confirmation (a tab left open since before the DNS change)', function () {
     dwToday([SiteHost::KEY_CANONICAL => 'kbeautybliss.com']);
     $env = dwSandboxEnv();
+    dwGateGreen();
     $this->actingAs(dwOwner(), 'admin');
 
     dwRun(['action' => 'switch_address', 'confirm' => DW_OLD], DW_NEW)->assertStatus(409);
@@ -764,7 +780,7 @@ it('removes the old addresses and an owner-app host on extrabeauty.ae when RISK 
     expect(collect($r['findings'])->firstWhere('title', 'The old addresses the shop knows about')['level'])->toBe('ok')
         ->and($r['todo'])->toBe(0);
 
-    dwRun(['action' => 'set_names', 'domain' => 'kbeautybliss.com'])->assertOk()->assertJsonPath('message', 'Nothing to do: kbeautybliss.com is the main address and extrabeauty.ae was removed in step 11.');
+    dwRun(['action' => 'set_names', 'domain' => 'kbeautybliss.com'])->assertOk()->assertJsonPath('message', 'Nothing to do: kbeautybliss.com is the main address and extrabeauty.ae was removed in step 17.');
     Setting::flushMap();
     SiteHost::forget();
     expect(SiteHost::classify('extrabeauty.ae'))->not->toBe(SiteHost::ALIAS);

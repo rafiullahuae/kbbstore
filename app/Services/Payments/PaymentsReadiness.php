@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\Http;
  * Every provider call in this class is a GET (self::get() is the only
  * transport and it cannot send anything else). Nothing is stored, nothing is
  * registered, nothing is deleted: the existing buttons on Store -> Payments,
- * Store -> Gateway webhooks and the wizard's step 7 do that, and every fix
+ * Store -> Gateway webhooks and the installer's payments step do that, and every fix
  * below names the one to press.
  *
  * ── NO SECRET LEAVES ─────────────────────────────────────────────────────
@@ -40,10 +40,10 @@ use Illuminate\Support\Facades\Http;
  * ── "THE MAIN ADDRESS" ───────────────────────────────────────────────────
  *
  * Providers are told the address the shop USES (APP_URL): today extrabeauty.ae,
- * after step 6 kbeautybliss.com. The main address is the one the shop is
+ * after the switch kbeautybliss.com. The main address is the one the shop is
  * moving to (Platform -> Site address). Before the switch the two differ and a
  * webhook on today's address is AMBER -- right for now, to be re-registered at
- * step 7. After the switch they are the same, and "points at the main address"
+ * the payments step. After the switch they are the same, and "points at the main address"
  * is the check that turns green or red.
  *
  * Network only when the button is pressed, short timeouts, one call per
@@ -191,7 +191,7 @@ final class PaymentsReadiness
         // ── the webhook
         $ours = $connect->webhookUrl();
         $endpointId = StripeKeys::get($config, $mode, 'webhook_endpoint_id');
-        $button = 'press “Set up webhook automatically” in '.$where.' (or step 7 of this page)';
+        $button = 'press “Set up webhook automatically” in '.$where.' (or step '.\App\Services\DomainMove\SwitchInstaller::num('payments').' of Platform → Domain switch)';
 
         if ($ours === null) {
             $out[] = self::line(self::RED, 'Webhook', 'This shop has no webhook address yet, so Stripe cannot tell it a payment succeeded.', ucfirst($button).'.');
@@ -337,7 +337,7 @@ final class PaymentsReadiness
 
         $hooks = $this->get(self::TABBY_API.'/api/v1/webhooks', ['Authorization' => 'Bearer '.$secret, 'X-Merchant-Code' => $code]);
         $ours = app(TabbyGateway::class)->ourWebhookUrl();
-        $button = 'press “Register / re-sync” in Store → Gateway webhooks → Tabby (or step 7 of this page)';
+        $button = 'press “Register / re-sync” in Store → Gateway webhooks → Tabby (or step '.\App\Services\DomainMove\SwitchInstaller::num('payments').' of Platform → Domain switch)';
 
         if ($hooks['status'] === null || $hooks['status'] >= 500) {
             $out[] = self::line(self::AMBER, 'Tabby account', 'Tabby could not be reached just now.', 'Press the button again in a minute.');
@@ -443,7 +443,7 @@ final class PaymentsReadiness
         $secret = $this->credentials->get('tamara', 'webhook_secret');
         $ours = $secret === '' ? null : url(Url::external('/api/payments/webhook/tamara/')).$secret;
         $id = $this->credentials->get('tamara', 'webhook_id');
-        $button = 'press “Remove the registration”, then “Register the webhook” in Store → Gateway webhooks → Tamara (or step 7 of this page)';
+        $button = 'press “Remove the registration”, then “Register the webhook” in Store → Gateway webhooks → Tamara (or step '.\App\Services\DomainMove\SwitchInstaller::num('payments').' of Platform → Domain switch)';
 
         if ($ours !== null) {
             $out[] = $this->pointsAt('Order notices', $ours, $ours, 'tamara', '');
@@ -452,7 +452,7 @@ final class PaymentsReadiness
         if ($ours === null) {
             $out[] = self::line(self::RED, 'Webhook', 'This shop has no Tamara webhook address yet.', 'Save the Tamara tab once in '.$where.', then '.$button.'.');
         } elseif ($id === '') {
-            $out[] = self::line(self::RED, 'Webhook', 'No webhook is registered, so a declined or expired Tamara order is never cancelled here.', 'Press “Register the webhook” in Store → Gateway webhooks → Tamara (or step 7 of this page).');
+            $out[] = self::line(self::RED, 'Webhook', 'No webhook is registered, so a declined or expired Tamara order is never cancelled here.', 'Press “Register the webhook” in Store → Gateway webhooks → Tamara (or step '.\App\Services\DomainMove\SwitchInstaller::num('payments').' of Platform → Domain switch).');
         } else {
             $hook = $this->get($base.'/webhooks/'.rawurlencode($id), $auth);
             $body = is_array($hook['body']) ? (is_array($hook['body']['data'] ?? null) ? $hook['body']['data'] : $hook['body']) : [];
@@ -530,8 +530,8 @@ final class PaymentsReadiness
 
             return self::line(self::AMBER, $title, 'Points at '.$shown.': '.$host.' is the address the shop uses today, and the main address is '.$this->main.'.',
                 $button !== ''
-                    ? 'Right until the switch. After step 6 of this page, '.$button.', then run this check again.'
-                    : 'Follows the shop’s address by itself after step 6; nothing to press.');
+                    ? 'Right until the switch. After step '.\App\Services\DomainMove\SwitchInstaller::num('switch').' of Platform → Domain switch, '.$button.', then run this check again.'
+                    : 'Follows the shop’s address by itself after step '.\App\Services\DomainMove\SwitchInstaller::num('switch').'; nothing to press.');
         }
 
         $path = (string) parse_url($registered, PHP_URL_PATH);

@@ -255,7 +255,7 @@ links customers' emails carry (reset, verify, unsubscribe, view-in-browser).
 `robots.txt` answers `Disallow: /` there; the sitemap is hidden. Turn it off
 after C's test orders pass, before E1. Emergency, over SSH:
 `php artisan kbb:coming-soon off`. Step-by-step behaviour:
-`KBEAUTYBLISS-SWITCH-CHECKLIST.md`, steps 6a and 20a.
+`KBEAUTYBLISS-SWITCH-CHECKLIST.md`, steps 3 and 14 (the same numbers as Platform → Domain switch).
 
 **Varnish.** The page is a 503 and `no-store, private`; Varnish's built-in
 `vcl_backend_response` caches neither (and Cloudways keys its cache on the Host

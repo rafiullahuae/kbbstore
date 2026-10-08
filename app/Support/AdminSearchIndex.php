@@ -132,8 +132,11 @@ final class AdminSearchIndex
         ],
         'domainswitch' => [
             '' => [
-                'Readiness check', 'Tell the shop its new name', 'Add the new domain in Cloudways', 'Check DNS now',
-                'Check certificate', 'Switch the shop’s address', 'Payments and Instagram', 'Old pictures', 'Test orders',
+                // Lane DW2: the installer's step titles (SwitchInstaller::STEPS).
+                'Before you start', 'Tell the shop its new name', 'Coming Soon page ON', 'Cloudways: add the domain',
+                'Internet.bs: DNS records', 'Wait for DNS', 'SSL certificate', 'Make kbeautybliss.com the main address',
+                'Clear caches', 'Old links in content', 'Payments', 'Instagram and other callbacks', 'Test orders',
+                'Coming Soon page OFF', 'Forward the old address', 'Search Console, sitemap, IndexNow', 'Verify', 'Skip for now',
             ],
         ],
         // Appearance → Coming Soon page (Lane CS).

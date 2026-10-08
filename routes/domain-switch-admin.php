@@ -21,6 +21,7 @@ declare(strict_types=1);
 |
 |     GET  /admin-api/domain-switch/rewrite      old links in content, preview (Lane DS)
 |     POST /admin-api/domain-switch/payments-check   "Payments ready?" (Lane DS)
+|     POST /admin-api/domain-switch/step         the installer: {step, do} (Lane DW2)
 |
 | The payments check carries its OWN capability, `payments.check`, mapped in
 | AdminCapabilities::RULES above the domain-switch wildcard (first match wins).
@@ -37,7 +38,8 @@ declare(strict_types=1);
 | RouteRegistrar::middleware() replaces rather than appends.
 |
 | Ships with 2027_10_07_210100_clear_caches_domain_switch.php, for the compiled
-| route table and the cached role map.
+| route table and the cached role map; /step with
+| 2027_10_12_101100_clear_caches_domain_installer.php.
 |
 */
 
@@ -51,3 +53,5 @@ Route::get('/domain-switch/pictures', [DomainSwitchApiController::class, 'pictur
 Route::post('/domain-switch/run', [DomainSwitchApiController::class, 'run'])->name('admin.domain-switch.run');
 Route::get('/domain-switch/rewrite', [DomainSwitchApiController::class, 'rewritePreview'])->name('admin.domain-switch.rewrite');
 Route::post('/domain-switch/payments-check', [PaymentsCheckApiController::class, 'run'])->name('admin.domain-switch.payments-check');
+// Lane DW2: the numbered installer -- Verify / Mark as done / Skip / Return to it / Reset.
+Route::post('/domain-switch/step', [DomainSwitchApiController::class, 'step'])->middleware('throttle:60,1')->name('admin.domain-switch.step');

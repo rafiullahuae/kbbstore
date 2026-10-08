@@ -11,7 +11,6 @@ use App\Services\Instagram\InstagramAuth;
 use App\Services\OwnerApp\OwnerAppPath;
 use App\Support\SiteHost;
 use App\Support\SiteUrl;
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -54,15 +53,15 @@ final class DomainSwitch
 
     public const DEFAULT_OLD = 'extrabeauty.ae';
 
-    /**
-     * The Cloudways server's public address, as extrabeauty.ae resolves today
-     * (docs/KBEAUTYBLISS-SWITCH-CHECKLIST.md step 5). The shop cannot learn
-     * its own public address reliably from inside the server -- behind
-     * Varnish and nginx SERVER_ADDR is a private one -- so the screen shows
-     * this, asks the owner to compare it with Cloudways, and also accepts
-     * whatever the old domain resolves to right now.
+    /*
+     * NO SERVER ADDRESS IS WRITTEN HERE (Lane DW2). The shop cannot learn its
+     * own public address from inside the server -- behind Varnish and nginx
+     * SERVER_ADDR is a private one -- and a constant goes stale the day the
+     * server is rebuilt. extrabeauty.ae is served by this server today, so what
+     * it resolves to IS this server's public address: every check below asks
+     * the world for it, and the installer keeps the answer it got
+     * (SwitchInstaller::serverIps()) so step 5 can show it with a copy button.
      */
-    public const SERVER_IP = '134.209.147.13';
 
     /** Where kbeautybliss.com pointed before the move (Hostinger); the checklist's undo value. */
     public const PREVIOUS_IP = '177.202.242.149';
@@ -183,7 +182,7 @@ final class DomainSwitch
         return $request->isSecure() && $host === $this->target();
     }
 
-    /** Old addresses cleared after the switch: step 11's in-shop half is done. */
+    /** Old addresses cleared after the switch: the last step's in-shop half is done. */
     public function oldRemoved(): bool
     {
         if (SiteHost::canonical() !== $this->target() || ! $this->addressSwitched()) {
@@ -217,13 +216,14 @@ final class DomainSwitch
 
             foreach ($engine->checks() as $c) {
                 /*
-                 * After step 11 the old addresses are gone ON PURPOSE. The engine
-                 * still reads "not listed" as something to do, and its fix would be
-                 * step 2 -- which would put them back. Said as done instead.
+                 * After the old address is removed (the last step's "in 2–4 weeks"
+                 * button) the old addresses are gone ON PURPOSE. The engine still
+                 * reads "not listed" as something to do, and its fix would be the
+                 * "new name" step -- which would put them back. Said as done instead.
                  */
                 if ($removed && in_array($c['what'], ['Old addresses to forward', 'Forward these, permanently'], true)) {
                     $c['level'] = DomainReadiness::OK;
-                    $c['detail'] = $this->primaryOld().' was removed in step 11; nothing forwards it any more.';
+                    $c['detail'] = $this->primaryOld().' was removed in step '.SwitchInstaller::num('done').'; nothing forwards it any more.';
                 }
 
                 $findings[] = $this->plainCheck($c);
@@ -277,12 +277,14 @@ final class DomainSwitch
      */
     private function plainCheck(array $c): array
     {
+        $go = static fn (string $key): array => ['step' => SwitchInstaller::num($key), 'label' => 'Go to step '.SwitchInstaller::num($key)];
+
         [$title, $fix] = match ($c['what']) {
-            'APP_URL' => ['The shop’s own address (emails, payment notices, links)', ['step' => 6, 'label' => 'Go to step 6']],
-            'Site URL' => ['The address Google is given (Site URL)', ['step' => 6, 'label' => 'Go to step 6']],
-            'Main address' => ['The shop’s main address', ['step' => 2, 'label' => 'Go to step 2']],
-            'Old addresses to forward' => ['The old addresses the shop knows about', ['step' => 2, 'label' => 'Go to step 2']],
-            'Forward these, permanently' => ['Sending old links to the new address', ['step' => 10, 'label' => 'Go to step 10']],
+            'APP_URL' => ['The shop’s own address (emails, payment notices, links)', $go('switch')],
+            'Site URL' => ['The address Google is given (Site URL)', $go('switch')],
+            'Main address' => ['The shop’s main address', $go('name')],
+            'Old addresses to forward' => ['The old addresses the shop knows about', $go('name')],
+            'Forward these, permanently' => ['Sending old links to the new address', $go('forward')],
             'Keep this install out of Google' => ['Hidden from Google', ['screen' => 'siteaddr', 'label' => 'Open Site address']],
             'Owner app host' => ['The owner app’s own address', ['screen' => 'ownerapp', 'label' => 'Open Owner App']],
             'Mail From address' => ['The address order emails are sent from', ['screen' => 'emails-sending', 'label' => 'Open Sending & delivery']],
@@ -320,17 +322,17 @@ final class DomainSwitch
         [$title, $fix] = match ($r['kind']) {
             'upload' => $isNew
                 ? [$n.' picture or video address(es) in '.$place.' on '.$r['host'].' that only WordPress has today',
-                    ['step' => 8, 'label' => 'Fetch them (step 8)']]
+                    ['step' => SwitchInstaller::num('start'), 'label' => 'Fetch them (step '.SwitchInstaller::num('start').')']]
                 // Lane DS: an address on the domain being left names a file on
                 // THIS server (one server, two names), so nothing needs fetching:
-                // step 6b points the address at the new name, undoably.
+                // the old-links step points the address at the new name, undoably.
                 : [$n.' picture or video address(es) in '.$place.' still load from '.$r['host'],
-                    ['step' => '6b', 'label' => 'Point them at the new address (step 6b)']],
+                    ['step' => SwitchInstaller::num('links'), 'label' => 'Point them at the new address (step '.SwitchInstaller::num('links').')']],
             'link' => $isNew
                 ? [$n.' link(s) in '.$place.' still send shoppers to '.$r['host'],
                     ['screen' => 'import', 'label' => 'Open Import → Addresses & pictures → Links to the old site']]
                 : [$n.' link(s) in '.$place.' still send shoppers to '.$r['host'],
-                    ['step' => '6b', 'label' => 'Point them at the new address (step 6b)']],
+                    ['step' => SwitchInstaller::num('links'), 'label' => 'Point them at the new address (step '.SwitchInstaller::num('links').')']],
             'email' => [$n.' email address(es) in '.$place.' end in '.$r['host'], self::screenFor($r['table'])],
             'text' => [$n.' mention(s) of '.$r['host'].' in '.$place, self::screenFor($r['table'])],
             'unreadable' => ['Part of the shop could not be checked ('.$r['table'].')', ['check' => true, 'label' => 'Check again']],
@@ -412,13 +414,18 @@ final class DomainSwitch
     /**
      * Look up the new domain and the old one, and judge the answer.
      *
+     * "This server" is what the domain being left resolves to right now, plus
+     * any address an earlier check learned the same way ($known). Never a
+     * constant -- see the note at the top of the class.
+     *
+     * @param  list<string>  $known
      * @return array<string, mixed>
      */
-    public function checkDns(DnsLookup $dns): array
+    public function checkDns(DnsLookup $dns, array $known = []): array
     {
         $new = $this->newBare();
         $old = $this->primaryOld();
-        $queries = [[$new, 'A'], [$new, 'AAAA'], [$new, 'NS'], [$new, 'MX'], [$new, 'TXT'], ['www.'.$new, 'CNAME'], ['www.'.$new, 'A']];
+        $queries = [[$new, 'A'], [$new, 'AAAA'], [$new, 'NS'], [$new, 'MX'], [$new, 'TXT'], ['www.'.$new, 'CNAME'], ['www.'.$new, 'A'], ['www.'.$new, 'AAAA']];
 
         if (in_array($old, $this->dnsHosts(), true)) {
             $queries[] = [$old, 'A'];
@@ -432,27 +439,57 @@ final class DomainSwitch
         $a = $get($new, 'A');
         $aaaa = $get($new, 'AAAA');
         $oldA = $get($old, 'A');
-        $expected = array_values(array_unique([self::SERVER_IP, ...$oldA['records']]));
+        $expected = array_values(array_unique(array_filter([...$oldA['records'], ...array_filter($known, fn ($ip) => filter_var($ip, FILTER_VALIDATE_IP) !== false)])));
+        $here = $expected === [] ? 'this server' : 'this server ('.implode(', ', $expected).')';
+        $www = 'www.'.$new;
+        $wwwA = $get($www, 'A');
+        $wwwCname = $get($www, 'CNAME')['records'];
+        $wwwAaaa = $get($www, 'AAAA');
 
         $problems = [];
         $level = 'done';
+        $worse = static function (string $now, string $to): string {
+            return ['done' => 0, 'todo' => 1, 'problem' => 2][$to] > ['done' => 0, 'todo' => 1, 'problem' => 2][$now] ? $to : $now;
+        };
 
         if (! $a['ok']) {
-            $level = 'problem';
+            $level = 'todo';
             $problems[] = 'The address book of the internet could not be asked just now. Try again in a minute.';
+        } elseif ($expected === []) {
+            $level = 'todo';
+            $problems[] = 'The shop could not learn this server’s address: '.$old.' did not answer just now. Try again in a minute.';
         } elseif ($a['records'] === []) {
             $level = 'todo';
-            $problems[] = $new.' has no A record yet. Add it at Internet.bs (the first row of the table above), then wait a few minutes.';
+            $problems[] = $new.' has no A record yet. Add it at Internet.bs (step '.SwitchInstaller::num('dns_records').'), then wait a few minutes.';
         } elseif (array_diff($a['records'], $expected) !== []) {
-            $level = 'problem';
-            $problems[] = in_array(self::PREVIOUS_IP, $a['records'], true)
-                ? $new.' still points at the old host ('.self::PREVIOUS_IP.'). Change the A record at Internet.bs to '.self::SERVER_IP.'. It can take up to 48 hours to spread.'
-                : $new.' points at '.implode(', ', $a['records']).', not at this server ('.self::SERVER_IP.'). Change the A record at Internet.bs.';
+            if (in_array(self::PREVIOUS_IP, $a['records'], true)) {
+                $level = 'todo';
+                $problems[] = $new.' still points at the old host ('.self::PREVIOUS_IP.'). If you already changed the A record at Internet.bs to '.implode(', ', $expected)
+                    .', the change is still spreading (up to 48 hours): press Verify again later.';
+            } else {
+                $level = 'problem';
+                $problems[] = $new.' points at '.implode(', ', $a['records']).', not at '.$here.'. Change the A record at Internet.bs to '.implode(', ', $expected).'.';
+            }
         }
 
-        if ($aaaa['records'] !== []) {
+        if ($a['ok'] && $expected !== []) {
+            // A CNAME to the bare name follows it, and the bare name is judged above.
+            $wwwOk = in_array($new, $wwwCname, true)
+                || ($wwwA['records'] !== [] && array_diff($wwwA['records'], $expected) === []);
+
+            if (! $wwwOk) {
+                $level = $worse($level, $wwwA['records'] === [] && $wwwCname === [] ? 'todo' : 'problem');
+                $problems[] = $wwwA['records'] === [] && $wwwCname === []
+                    ? $www.' has no record yet. Add the CNAME www → '.$new.' at Internet.bs.'
+                    : $www.' points at '.implode(', ', $wwwA['records'] ?: $wwwCname).', not at '.$here.'. Make it a CNAME to '.$new.' at Internet.bs.';
+            }
+        }
+
+        $aaaa = array_values(array_unique([...$aaaa['records'], ...$wwwAaaa['records']]));
+
+        if ($aaaa !== []) {
             $level = 'problem';
-            $problems[] = $new.' has an AAAA record ('.implode(', ', $aaaa['records']).'). Delete it at Internet.bs: phones that use it would not reach this shop.';
+            $problems[] = $new.' has an AAAA record ('.implode(', ', $aaaa).'). Delete it at Internet.bs: phones that use it would not reach this shop.';
         }
 
         $result = [
@@ -462,17 +499,17 @@ final class DomainSwitch
             'expected' => $expected,
             'records' => [
                 'A' => $a['records'],
-                'AAAA' => $aaaa['records'],
+                'AAAA' => $aaaa,
                 'NS' => $get($new, 'NS')['records'],
                 'MX' => $get($new, 'MX')['records'],
                 'TXT' => array_values(array_filter($get($new, 'TXT')['records'], fn ($t) => str_starts_with($t, 'v=spf1'))),
-                'www' => $get('www.'.$new, 'CNAME')['records'] ?: $get('www.'.$new, 'A')['records'],
+                'www' => $wwwCname ?: $wwwA['records'],
             ],
             'old' => ['host' => $old, 'A' => $oldA['records']],
             'source' => $a['source'],
             'problems' => $problems,
             'message' => $level === 'done'
-                ? $new.' points at this server and has no AAAA record.'
+                ? $new.' and www.'.$new.' point at '.$here.', and there is no AAAA record.'
                 : implode(' ', $problems),
         ];
 
@@ -482,8 +519,8 @@ final class DomainSwitch
     }
 
     /**
-     * Step 3's check: what the domain being left resolves to, which is the
-     * address the shop is reached on today.
+     * What the domain being left resolves to: the address the shop is
+     * reached on today, which is this server's public address.
      *
      * @return array<string, mixed>
      */
@@ -492,19 +529,18 @@ final class DomainSwitch
         $old = $this->primaryOld();
         $answer = $dns->lookup([[$old, 'A']])[$old.' A'] ?? ['ok' => false, 'records' => [], 'source' => 'none'];
 
-        $matches = in_array(self::SERVER_IP, $answer['records'], true);
+        $found = $answer['records'] !== [];
         $result = [
-            'level' => ! $answer['ok'] ? 'problem' : ($matches ? 'done' : 'problem'),
+            'level' => ! $answer['ok'] || ! $found ? 'problem' : 'done',
             'checked_at' => now()->toIso8601String(),
             'host' => $old,
             'records' => $answer['records'],
             'source' => $answer['source'],
             'message' => ! $answer['ok']
                 ? 'Could not look '.$old.' up just now. Try again in a minute.'
-                : ($matches
-                    ? $old.' points at '.self::SERVER_IP.'. Check that Cloudways → Servers → your server shows the same Public IP.'
-                    : $old.' points at '.($answer['records'] === [] ? 'nothing' : implode(', ', $answer['records']))
-                        .', not '.self::SERVER_IP.'. Use the Public IP Cloudways shows in the DNS records below, and tell your developer.'),
+                : ($found
+                    ? $old.' points at '.implode(', ', $answer['records']).': that is this server’s public address. Cloudways → Servers → your server shows the same Public IP.'
+                    : $old.' points nowhere just now, so the shop cannot learn this server’s address. Read the Public IP in Cloudways → Servers → your server, and tell your developer.'),
         ];
 
         $this->remember('old_dns', $result);
@@ -531,36 +567,150 @@ final class DomainSwitch
             $response = Http::timeout(8)->connectTimeout(4)
                 ->withOptions(['allow_redirects' => false])
                 ->get($url);
-
-            $status = $response->status();
-            $result = [
-                'level' => $status < 500 ? 'done' : 'problem',
-                'status' => $status,
-                'message' => $status < 500
-                    ? 'The certificate for '.$host.' is valid (the shop answered '.$status.').'
-                    : 'The certificate is valid, but '.$host.' answered '.$status.'. Purge Varnish in Cloudways and check again.',
-            ];
-        } catch (ConnectionException $e) {
-            $code = preg_match('/cURL error (\d+)/', $e->getMessage(), $m) === 1 ? (int) $m[1] : 0;
-
-            $result = [
-                'level' => 'problem',
-                'status' => null,
-                'message' => match (true) {
-                    $code === 6 => $host.' cannot be found yet. Finish step 4 (DNS) first, then check again.',
-                    in_array($code, [35, 51, 53, 54, 58, 59, 60, 64, 66, 77, 80, 82, 83, 90, 91], true) => 'There is no valid certificate for '.$host.' yet. Do step 5 in Cloudways (Let’s Encrypt), wait two minutes, then check again.',
-                    in_array($code, [7, 28], true) => 'Nothing answered at '.$host.'. Check step 3 (Cloudways domain) and step 4 (DNS).',
-                    default => 'Could not reach https://'.$host.'. Check steps 3, 4 and 5, then try again.',
-                },
-            ];
-        } catch (\Throwable) {
-            $result = ['level' => 'problem', 'status' => null, 'message' => 'Could not reach https://'.$host.'. Try again in a minute.'];
+        } catch (\Throwable $e) {
+            $response = $e;
         }
+
+        $probe = self::judgeTls($host, $response);
+        $result = ['level' => $probe['level'] === 'green' ? 'done' : 'problem', 'status' => $probe['status'], 'message' => $probe['message']];
 
         $result += ['checked_at' => now()->toIso8601String(), 'host' => $host];
         $this->remember('tls', $result);
 
         return $result;
+    }
+
+    /**
+     * The certificate check for several names at once, in parallel: each name's
+     * https://<name>/robots.txt, no redirect followed. (Lane DW2)
+     *
+     * Only names this shop is moving between (probeHosts()) are ever fetched;
+     * anything else is dropped before a request is made, so nothing typed or
+     * sent can turn this into a probe of another host.
+     *
+     * @param  list<string>  $hosts
+     * @return array<string, array{level: string, status: int|null, kind: string, message: string}>
+     */
+    public function tlsProbe(array $hosts): array
+    {
+        $allowed = $this->probeHosts();
+        $hosts = array_values(array_unique(array_filter($hosts, fn ($h) => in_array($h, $allowed, true))));
+
+        if ($hosts === []) {
+            return [];
+        }
+
+        try {
+            $responses = Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($hosts) {
+                $out = [];
+
+                foreach ($hosts as $host) {
+                    $out[] = $pool->as($host)->timeout(8)->connectTimeout(4)
+                        ->withOptions(['allow_redirects' => false])
+                        ->get('https://'.$host.'/robots.txt');
+                }
+
+                return $out;
+            });
+        } catch (\Throwable) {
+            $responses = [];
+        }
+
+        $out = [];
+
+        foreach ($hosts as $host) {
+            $out[$host] = self::judgeTls($host, $responses[$host] ?? null);
+        }
+
+        return $out;
+    }
+
+    /**
+     * GET https://<the domain being left>/, no redirect followed: what a
+     * shopper on an old link gets right now. (Lane DW2)
+     *
+     * Returns the status, where a redirect points, and the page's canonical
+     * address -- the three facts the "caches" and "forwarding" checks judge.
+     * Never the body, never the transport's message.
+     *
+     * @return array{ok: bool, status: int|null, location: string, canonical: string, host: string}
+     */
+    public function fetchOldHome(): array
+    {
+        $host = $this->primaryOld();
+        $blank = ['ok' => false, 'status' => null, 'location' => '', 'canonical' => '', 'host' => $host];
+
+        if (! in_array($host, $this->probeHosts(), true)) {
+            return $blank;
+        }
+
+        try {
+            $r = Http::timeout(8)->connectTimeout(4)->withOptions(['allow_redirects' => false])
+                ->withHeaders(['Accept' => 'text/html'])->get('https://'.$host.'/');
+        } catch (\Throwable) {
+            return $blank;
+        }
+
+        $canonical = '';
+
+        if (preg_match('/<link\b[^>]*\brel=["\']?canonical["\']?[^>]*>/i', substr($r->body(), 0, 300000), $tag) === 1
+            && preg_match('/\bhref=["\']([^"\']+)["\']/i', $tag[0], $href) === 1) {
+            $canonical = html_entity_decode($href[1], ENT_QUOTES);
+        }
+
+        return [
+            'ok' => true,
+            'status' => $r->status(),
+            'location' => (string) $r->header('Location'),
+            'canonical' => $canonical,
+            'host' => $host,
+        ];
+    }
+
+    /** dnsHosts(), plus the www twin of each domain being left: every name a check may fetch. */
+    public function probeHosts(): array
+    {
+        $out = $this->dnsHosts();
+
+        foreach ($this->oldHosts() as $old) {
+            if (! str_starts_with($old, 'www.')) {
+                $out[] = 'www.'.$old;
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    /**
+     * One name's certificate answer, in plain words. The cURL error NUMBER
+     * tells "no certificate for this name" from "nothing answers" from "DNS
+     * not there yet"; the message itself is never echoed.
+     *
+     * @return array{level: string, status: int|null, kind: string, message: string}
+     */
+    public static function judgeTls(string $host, mixed $response): array
+    {
+        $dns = SwitchInstaller::num('dns_wait');
+        $ssl = SwitchInstaller::num('ssl');
+
+        if ($response instanceof \Illuminate\Http\Client\Response) {
+            $status = $response->status();
+
+            return $status < 500
+                ? ['level' => 'green', 'status' => $status, 'kind' => 'ok', 'message' => 'The certificate for '.$host.' is valid (the shop answered '.$status.').']
+                : ['level' => 'amber', 'status' => $status, 'kind' => 'server', 'message' => 'The certificate for '.$host.' is valid, but the shop answered '.$status.'. Purge Varnish in Cloudways and check again.'];
+        }
+
+        $code = $response instanceof \Throwable && preg_match('/cURL error (\d+)/', $response->getMessage(), $m) === 1 ? (int) $m[1] : 0;
+
+        return match (true) {
+            $code === 6 => ['level' => 'amber', 'status' => null, 'kind' => 'dns', 'message' => $host.' cannot be found yet. Finish step '.$dns.' (DNS) first, then check again.'],
+            in_array($code, [35, 51, 53, 54, 58, 59, 60, 64, 66, 77, 80, 82, 83, 90, 91], true) => ['level' => 'red', 'status' => null, 'kind' => 'cert',
+                'message' => 'There is no valid certificate for '.$host.'. Do step '.$ssl.' in Cloudways (Let’s Encrypt, with every name listed), wait two minutes, then check again.'],
+            in_array($code, [7, 28], true) => ['level' => 'red', 'status' => null, 'kind' => 'down',
+                'message' => 'Nothing answered at '.$host.'. Check step '.SwitchInstaller::num('cloudways').' (Cloudways domain) and step '.$dns.' (DNS).'],
+            default => ['level' => 'amber', 'status' => null, 'kind' => 'unknown', 'message' => 'Could not reach https://'.$host.' just now. Try again in a minute.'],
+        };
     }
 
     /* ═══════════════════════════════════════════════════════ the state ══ */
@@ -622,6 +772,7 @@ final class DomainSwitch
         }
 
         $forwarding = SiteHost::redirectEnabled() && $canonical === $target;
+        $ips = app(SwitchInstaller::class)->serverIps();
 
         return [
             'ok' => true,
@@ -629,7 +780,8 @@ final class DomainSwitch
             'new' => $new,
             'old' => $old,
             'old_hosts' => $this->oldHosts(),
-            'server_ip' => self::SERVER_IP,
+            // Learned from the world, never written down: SwitchInstaller::serverIps().
+            'server_ip' => implode(', ', $ips),
             'previous_ip' => self::PREVIOUS_IP,
             'request' => [
                 'host' => SiteHost::normalise($request->getHost()),
@@ -659,7 +811,7 @@ final class DomainSwitch
                 'admin_on_target' => 'https://'.$target,
             ],
             'dns_table' => [
-                ['type' => 'A', 'name' => '@', 'value' => self::SERVER_IP, 'extra' => 'TTL 300'],
+                ['type' => 'A', 'name' => '@', 'value' => $ips[0] ?? '', 'extra' => 'TTL 300'],
                 ['type' => 'CNAME', 'name' => 'www', 'value' => $new, 'extra' => ''],
                 ['type' => 'MX', 'name' => '@', 'value' => 'smtp.google.com', 'extra' => 'Priority 1'],
                 ['type' => 'TXT', 'name' => '@', 'value' => 'v=spf1 include:_spf.google.com ~all', 'extra' => ''],

@@ -9,6 +9,7 @@ use App\Services\DomainMove\ContentRewrite;
 use App\Services\DomainMove\DnsLookup;
 use App\Services\DomainMove\DomainReadiness;
 use App\Services\DomainMove\DomainSwitch;
+use App\Services\DomainMove\SwitchInstaller;
 use App\Services\Import\MediaSideloader;
 use App\Services\OwnerApp\OwnerAppPath;
 use App\Services\SecurityModule;
@@ -50,18 +51,90 @@ final class DomainSwitchApiController extends Controller
     public const ACTIONS = [
         'check_old_dns', 'check_dns', 'check_tls', 'set_names', 'switch_address',
         'stripe', 'tabby', 'tamara', 'fetch_pictures', 'forward_on', 'remove_old',
-        // Lane DS: step 6b, old links in the shop's text.
+        // Lane DS: old links in the shop's text.
         'rewrite_content', 'undo_rewrite',
+        // Lane DW2: the installer's own buttons, each calling an existing action.
+        'coming_soon_on', 'coming_soon_off', 'clear_caches', 'indexnow',
     ];
+
+    /** What the installer's step endpoint accepts. */
+    public const STEP_DOS = ['verify', 'done', 'skip', 'undo', 'reset'];
+
+    /** Typed to pass step 8's gate without green DNS and certificate checks. */
+    public const OVERRIDE = 'CONFIRM';
 
     public const AUDIT_EVENT = 'domain_switch';
 
-    public function __construct(private DomainSwitch $switch) {}
+    public function __construct(private DomainSwitch $switch, private SwitchInstaller $installer) {}
 
-    /** GET /admin-api/domain-switch */
+    /**
+     * GET /admin-api/domain-switch -- the installer as it stands: every step's
+     * stored progress and the shop's own settings. Reads the database only;
+     * no DNS, no TLS, no provider is asked when the page opens.
+     */
     public function show(Request $request): JsonResponse
     {
-        return $this->refuse($request) ?? response()->json($this->switch->state($request));
+        return $this->refuse($request) ?? response()->json($this->full($request));
+    }
+
+    /**
+     * POST /admin-api/domain-switch/step {step, do: verify|done|skip|undo} and
+     * {do: reset, confirm: RESET}. (Lane DW2)
+     *
+     * `step` is checked against SwitchInstaller::STEPS; nothing in the body
+     * becomes a host, a URL or a column. Verify is the only path that reaches
+     * the network, and only towards the shop's own names and the payment APIs.
+     */
+    public function step(Request $request): JsonResponse
+    {
+        if ($refused = $this->refuse($request)) {
+            return $refused;
+        }
+
+        $data = $request->validate([
+            'do' => ['required', 'string', 'in:'.implode(',', self::STEP_DOS)],
+            'step' => ['required_unless:do,reset', 'nullable', 'string', 'in:'.implode(',', array_keys(SwitchInstaller::STEPS))],
+            'confirm' => ['sometimes', 'nullable', 'string', 'max:16'],
+        ]);
+
+        if (! SwitchInstaller::ready()) {
+            return $this->no(409, 'The installer’s progress table is not there yet. Run the package’s migrations (Store → Core Updates applies them), then reload.');
+        }
+
+        $do = (string) $data['do'];
+        $key = (string) ($data['step'] ?? '');
+
+        if ($do === 'reset') {
+            if (($data['confirm'] ?? '') !== 'RESET') {
+                return $this->no(422, 'Confirm first: type RESET. Only the ticks on this page are forgotten; the shop itself is not changed.');
+            }
+
+            $this->installer->reset();
+            $this->audit('installer_reset', true, 'progress reset');
+
+            return response()->json(['ok' => true, 'message' => 'Progress reset. The shop itself was not changed; Verify each step again to see where it stands.'] + $this->full($request));
+        }
+
+        if ($do === 'verify') {
+            if (SwitchInstaller::STEPS[$key][1] !== 'verify') {
+                return $this->no(422, 'Step '.SwitchInstaller::num($key).' cannot be checked by the shop. Do it, then press “Mark as done”.');
+            }
+
+            try {
+                $r = $this->installer->verify($key, $request);
+            } catch (\Throwable) {
+                return $this->no(500, 'The check stopped unexpectedly. Nothing was changed; press Verify again in a minute.');
+            }
+
+            $this->audit('verify_'.$key, true, $r['level'].': '.$r['message']);
+
+            return response()->json(['ok' => true, 'level' => $r['level'], 'message' => $r['message'], 'fix' => $r['fix']] + $this->full($request));
+        }
+
+        $r = $this->installer->mark($key, $do);
+        $this->audit($do.'_'.$key, $r['ok'], $r['message']);
+
+        return response()->json($r + $this->full($request), $r['ok'] ? 200 : 422);
     }
 
     /** GET /admin-api/domain-switch/readiness?offset=N -- read-only, time-boxed. */
@@ -83,7 +156,7 @@ final class DomainSwitchApiController extends Controller
     }
 
     /**
-     * GET /admin-api/domain-switch/rewrite -- step 6b's preview: every place an
+     * GET /admin-api/domain-switch/rewrite -- the old-links step's preview: every place an
      * absolute link to the domain being left would change, counted, with a
      * sample each. Reads only. (Lane DS)
      */
@@ -108,6 +181,7 @@ final class DomainSwitchApiController extends Controller
             'action' => ['required', 'string', 'in:'.implode(',', self::ACTIONS)],
             'domain' => ['sometimes', 'nullable', 'string', 'max:255'],
             'confirm' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'override' => ['sometimes', 'nullable', 'string', 'max:16'],
         ]);
 
         $action = (string) $data['action'];
@@ -117,13 +191,17 @@ final class DomainSwitchApiController extends Controller
             'check_dns' => $this->ok($this->switch->checkDns(app(DnsLookup::class))),
             'check_tls' => $this->ok($this->switch->checkTls()),
             'set_names' => $this->setNames((string) ($data['domain'] ?? '')),
-            'switch_address' => $this->switchAddress($request),
+            'switch_address' => $this->switchAddress($request, (string) ($data['override'] ?? '')),
             'stripe', 'tabby', 'tamara' => $this->payment($action),
             'fetch_pictures' => $this->fetchPictures(),
             'forward_on' => $this->forwardOn(),
             'remove_old' => $this->removeOld((string) ($data['confirm'] ?? '')),
             'rewrite_content' => $this->rewriteContent((string) ($data['confirm'] ?? '')),
             'undo_rewrite' => $this->undoRewrite(),
+            'coming_soon_on' => $this->comingSoon(true),
+            'coming_soon_off' => $this->comingSoon(false),
+            'clear_caches' => $this->clearCaches(),
+            'indexnow' => $this->indexNow(),
         };
 
         $body = (array) $response->getData(true);
@@ -133,12 +211,48 @@ final class DomainSwitchApiController extends Controller
         \App\Models\Setting::flushMap();
         SiteHost::forget();
 
-        return response()->json($body + ['state' => $this->switch->state($request)], $response->getStatusCode());
+        // A step whose check reads only the shop is verified straight away, so
+        // the owner sees the change land without pressing anything else.
+        $step = SwitchInstaller::ACTION_STEP[$action] ?? null;
+        $ok = $response->getStatusCode() < 400 && ($body['ok'] ?? true) !== false;
+
+        if ($ok && $step !== null && in_array($step, SwitchInstaller::LOCAL, true) && SwitchInstaller::ready()) {
+            try {
+                $this->installer->verify($step, $request);
+            } catch (\Throwable) {
+                // The action happened; the owner can press Verify.
+            }
+        }
+
+        return response()->json($body + ['state' => $this->full($request)], $response->getStatusCode());
+    }
+
+    /**
+     * Everything the installer screen draws: the shop's state, the stored
+     * progress, and the Coming Soon preview link when the page is on.
+     *
+     * @return array<string, mixed>
+     */
+    private function full(Request $request): array
+    {
+        $state = $this->switch->state($request);
+        $state['installer'] = $this->installer->view();
+        $state['coming_soon_link'] = null;
+
+        if (($state['coming_soon']['on'] ?? false) === true) {
+            $cs = (array) app(ComingSoonApiController::class)->show($request)->getData(true);
+            $state['coming_soon_link'] = is_array($cs['link'] ?? null) ? ['url' => (string) $cs['link']['url'], 'until' => (string) $cs['link']['until']] : null;
+        }
+
+        $state['emergency'] = \App\Support\ComingSoon::EMERGENCY;
+        $state['old_admin'] = 'https://'.$this->switch->primaryOld();
+
+        return $state;
     }
 
     /* ═════════════════════════════════════════════════════════ actions ══ */
 
-    /** Step 2: main address = the new domain, old addresses = the ones being left, forwarding off. */
+    /** The new name: main address = the new domain, old addresses = the ones being left, forwarding off. */
     private function setNames(string $typed): JsonResponse
     {
         $domain = SiteHost::normalise($this->stripScheme($typed));
@@ -150,8 +264,8 @@ final class DomainSwitchApiController extends Controller
         $bare = DomainReadiness::bare($domain);
 
         if ($this->switch->oldRemoved() && $domain === SiteHost::canonical()) {
-            // Pressing step 2 again after step 11 would list the removed domain again.
-            return $this->ok(['message' => 'Nothing to do: '.$domain.' is the main address and '.$this->switch->primaryOld().' was removed in step 11.']);
+            // Pressing it again after the old address was removed would list it again.
+            return $this->ok(['message' => 'Nothing to do: '.$domain.' is the main address and '.$this->switch->primaryOld().' was removed in step '.SwitchInstaller::num('done').'.']);
         }
 
         if ($bare === DomainSwitch::DEFAULT_OLD || $bare === DomainReadiness::bare($this->switch->appHost())) {
@@ -180,7 +294,7 @@ final class DomainSwitchApiController extends Controller
 
         /*
          * FORWARDING OFF -- unless this exact main address was already set, so a
-         * second press after step 10 does not quietly switch the forwarding
+         * second press after forwarding is on does not quietly switch the forwarding
          * back off. The first press is the one the checklist describes.
          */
         $redirect = $before === $domain ? SiteHost::redirectEnabled() : false;
@@ -197,12 +311,21 @@ final class DomainSwitchApiController extends Controller
         ]);
     }
 
-    /** Step 6: APP_URL, Site URL, caches. Only on the new address, as "Use this address" always was. */
-    private function switchAddress(Request $request): JsonResponse
+    /**
+     * The "main address" step: APP_URL, Site URL, caches. Only on the new
+     * address, as "Use this address" always was -- and only once the DNS and
+     * certificate steps have verified green, unless the owner types CONFIRM.
+     */
+    private function switchAddress(Request $request, string $override): JsonResponse
     {
         if (! $this->switch->servedOnTarget($request)) {
             return $this->no(409, 'Open https://'.$this->switch->target().' (the link above), sign in there, and press this button on that page. '
                 .'It only works on the new address, so the shop can never be pointed at an address that does not reach it.');
+        }
+
+        if (! $this->installer->networkGreen() && $override !== self::OVERRIDE) {
+            return $this->no(409, 'Not yet: steps '.SwitchInstaller::num('dns_wait').' (DNS) and '.SwitchInstaller::num('ssl').' (certificate) have not both verified green. '
+                .'Press Verify on each first. If you are sure, type '.self::OVERRIDE.' to switch anyway — customers whose DNS has not caught up would not reach the shop.');
         }
 
         $adopt = app(SiteUrlApiController::class)->adopt($request);
@@ -231,11 +354,11 @@ final class DomainSwitchApiController extends Controller
         ]);
     }
 
-    /** Step 7: the existing provider actions, after the address has moved. */
+    /** The payments step: the existing provider actions, after the address has moved. */
     private function payment(string $provider): JsonResponse
     {
         if (! $this->switch->addressSwitched()) {
-            return $this->no(409, 'Do step 6 first. The payment providers are told the shop’s own address, and it is still '
+            return $this->no(409, 'Do step '.SwitchInstaller::num('switch').' first. The payment providers are told the shop’s own address, and it is still '
                 .($this->switch->appHost() ?: 'not set').'.');
         }
 
@@ -332,7 +455,7 @@ final class DomainSwitchApiController extends Controller
         return [true, 'Tamara will now send notices to '.$this->switch->target().'.'];
     }
 
-    /** Step 8: one bounded batch of the importer's own picture fetcher. Press again to continue. */
+    /** Before you start: one bounded batch of the importer's own picture fetcher. Press again to continue. */
     private function fetchPictures(): JsonResponse
     {
         $r = app(MediaSideloader::class)->batch();
@@ -350,11 +473,23 @@ final class DomainSwitchApiController extends Controller
             : $this->no(422, $message);
     }
 
-    /** Step 10: Forward = ON. */
+    /** Forward = ON. Never while the Coming Soon page still hides the address everyone would be sent to. */
     private function forwardOn(): JsonResponse
     {
         if (! $this->switch->addressSwitched() || SiteHost::canonical() !== $this->switch->target()) {
-            return $this->no(409, 'Do step 6 first: old links can only be sent to the new address once the shop is using it.');
+            return $this->no(409, 'Do step '.SwitchInstaller::num('switch').' first: old links can only be sent to the new address once the shop is using it.');
+        }
+
+        $map = \App\Models\Setting::map();
+
+        if (\App\Support\ComingSoon::on($map) && \App\Support\ComingSoon::hides($this->switch->target(), $map)) {
+            return $this->no(409, 'Not yet: the Coming Soon page is still on for '.DomainReadiness::bare($this->switch->target()).'. Forwarding now would send every '
+                .$this->switch->primaryOld().' visitor — your customers — to the Coming Soon page instead of the shop. Turn it off in step '
+                .SwitchInstaller::num('cs_off').' first.');
+        }
+
+        if (SiteHost::redirectEnabled()) {
+            return $this->ok(['message' => 'Forwarding is already on: every old '.$this->switch->primaryOld().' link lands on '.$this->switch->target().'.']);
         }
 
         $result = $this->siteAddress(SiteHost::canonical(), (string) (\App\Models\Setting::map()[SiteHost::KEY_ALIASES] ?? ''), true);
@@ -364,7 +499,7 @@ final class DomainSwitchApiController extends Controller
         ]);
     }
 
-    /** Step 11: clear the old addresses and an owner-app host on them. Only when nothing still depends on them. */
+    /** In 2–4 weeks (the last step): clear the old addresses and an owner-app host on them. Only when nothing still depends on them. */
     private function removeOld(string $confirm): JsonResponse
     {
         if ($confirm !== 'REMOVE') {
@@ -372,7 +507,7 @@ final class DomainSwitchApiController extends Controller
         }
 
         if (! $this->switch->addressSwitched() || SiteHost::canonical() !== $this->switch->target()) {
-            return $this->no(409, 'Do steps 6 and 10 first. The shop still uses the old address.');
+            return $this->no(409, 'Do steps '.SwitchInstaller::num('switch').' and '.SwitchInstaller::num('forward').' first. The shop still uses the old address.');
         }
 
         $check = $this->switch->fullRisk();
@@ -382,7 +517,7 @@ final class DomainSwitchApiController extends Controller
         }
 
         if ($check['risk'] > 0) {
-            return $this->no(409, 'Nothing was removed: the check in step 1 still finds '.$check['risk']
+            return $this->no(409, 'Nothing was removed: the readiness check (step '.SwitchInstaller::num('start').') still finds '.$check['risk']
                 .' problem(s) that would break without '.$this->switch->primaryOld().'. Fix them first.');
         }
 
@@ -410,9 +545,9 @@ final class DomainSwitchApiController extends Controller
     }
 
     /**
-     * Step 6b: old links in the shop's text -> the main address. (Lane DS)
+     * Old links in the shop's text -> the main address. (Lane DS)
      *
-     * Only once the shop has switched (step 6): before that, kbeautybliss.com
+     * Only once the shop has switched: before that, kbeautybliss.com
      * still opens WordPress, and a link pointed at it would leave this shop.
      * The confirm value is the number of links the preview showed, so the
      * button can only apply what the owner has just looked at.
@@ -420,7 +555,7 @@ final class DomainSwitchApiController extends Controller
     private function rewriteContent(string $confirm): JsonResponse
     {
         if (! $this->switch->addressSwitched()) {
-            return $this->no(409, 'Do step 6 first. Until the shop has switched, '.$this->switch->newBare()
+            return $this->no(409, 'Do step '.SwitchInstaller::num('switch').' first. Until the shop has switched, '.$this->switch->newBare()
                 .' does not open this shop yet, and links pointed at it would send shoppers away.');
         }
 
@@ -462,6 +597,75 @@ final class DomainSwitchApiController extends Controller
         ]);
     }
 
+    /**
+     * Coming Soon on (for the new address only) or off, through the Coming
+     * Soon screen's own save -- its validation, its preview-link minting. (Lane DW2)
+     * Idempotent: pressing it in the state it already has writes nothing.
+     */
+    private function comingSoon(bool $on): JsonResponse
+    {
+        $map = \App\Models\Setting::map();
+        $host = \App\Support\ComingSoon::bare($this->switch->target());
+        $isOn = \App\Support\ComingSoon::on($map);
+
+        if (! $on && ! $isOn) {
+            return $this->ok(['message' => 'The Coming Soon page is already off: every address shows the shop.']);
+        }
+
+        if ($on && $isOn && \App\Support\ComingSoon::scope($map) === \App\Support\ComingSoon::SCOPE_HOST && \App\Support\ComingSoon::host($map) === $host) {
+            return $this->ok(['message' => 'The Coming Soon page is already on for '.$host.'. Nothing changed.']);
+        }
+
+        $body = $on ? ['on' => true, 'scope' => \App\Support\ComingSoon::SCOPE_HOST, 'host' => $host] : ['on' => false];
+        $response = app(ComingSoonApiController::class)->save(Request::create('/', 'POST', [], [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode($body)));
+        $r = (array) $response->getData(true);
+
+        if ($response->getStatusCode() >= 400 || ($r['ok'] ?? false) !== true) {
+            return $this->no(422, (string) ($r['error'] ?? 'The Coming Soon page could not be saved. Nothing was changed.'));
+        }
+
+        return $this->ok(['message' => $on
+            ? 'Done. '.$host.' (and www.'.$host.') now shows the Coming Soon page; '.$this->switch->primaryOld().' shows the shop as always. Signed in, you see the shop there.'
+            : 'Done. The Coming Soon page is off: every address shows the shop.']);
+    }
+
+    /** Platform → Cache → Clear everything, the same call. */
+    private function clearCaches(): JsonResponse
+    {
+        $clear = app(CacheApiController::class)->clear(Request::create('/', 'POST', ['target' => 'all']));
+
+        return $clear->getStatusCode() < 400
+            ? $this->ok(['message' => 'Done. The shop’s own caches were cleared. Now purge Varnish in Cloudways (the line below), then press Verify.'])
+            : $this->no(422, 'The caches could not be cleared just now. Nothing else was touched; press it again.');
+    }
+
+    /**
+     * Tell Bing and the other IndexNow engines the shop's home and shop pages
+     * are at the new address, through the existing IndexNow::submit() (which
+     * refuses on a private install and when instant indexing is off).
+     */
+    private function indexNow(): JsonResponse
+    {
+        if (! $this->switch->addressSwitched()) {
+            return $this->no(409, 'Do step '.SwitchInstaller::num('switch').' first: the search engines would be told the old address.');
+        }
+
+        if (! \App\Services\Seo\IndexNow::enabled()) {
+            return $this->no(409, 'Instant indexing is off (Store → SEO & Meta → Settings), or the shop is hidden from search engines, so nothing was sent. Google does not use IndexNow anyway: the sitemap is what it reads.');
+        }
+
+        $base = 'https://'.$this->switch->target();
+        $sent = \App\Services\Seo\IndexNow::submit([$base.'/', $base.'/shop/'], $this->switch->target());
+
+        if (SwitchInstaller::ready()) {
+            $this->installer->write('google', ['data' => ['indexnow' => ['ok' => $sent, 'at' => now()->toIso8601String()]]]);
+        }
+
+        return $sent
+            ? $this->ok(['message' => 'Sent. Bing and the other IndexNow search engines were told about '.$base.'/.'])
+            : $this->no(422, 'IndexNow did not accept it just now. Nothing else is affected; press it again later.');
+    }
+
     /* ═════════════════════════════════════════════════════════ helpers ══ */
 
     /** SiteAddressApiController::save, with its validation; null on success. */
@@ -498,7 +702,7 @@ final class DomainSwitchApiController extends Controller
         app(SecurityModule::class)->record(self::AUDIT_EVENT, 'Domain switch: '.$action.($ok ? '' : ' (refused)'), [
             'subject' => 'domain_switch.'.$action,
             'after' => mb_substr($message, 0, 500),
-            'severity' => in_array($action, ['switch_address', 'remove_old', 'forward_on', 'set_names', 'rewrite_content', 'undo_rewrite'], true) && $ok ? 'alert' : 'notice',
+            'severity' => in_array($action, ['switch_address', 'remove_old', 'forward_on', 'set_names', 'rewrite_content', 'undo_rewrite', 'coming_soon_on', 'coming_soon_off', 'installer_reset'], true) && $ok ? 'alert' : 'notice',
         ]);
     }
 
