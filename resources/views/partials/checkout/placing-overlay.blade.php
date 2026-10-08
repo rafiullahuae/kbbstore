@@ -518,11 +518,18 @@
       if (!answer.ok || !answer.data || answer.data.ok !== true) {
         var data = answer.data || {};
 
+        {{-- Lane CO: a sold-out line opens the dialog the owner asked for
+             (checkout.js, window.KBB.refused) with the overlay down first; a
+             basket that is genuinely gone gets its link under the sentence. --}}
+        var refused = window.KBB && window.KBB.refused;
+        if (refused && data.code === 'sold_out') { down(); if (refused(data)) { return; } }
+
         fail(
           (typeof data.error === 'string' && data.error)
           || firstValidationError(data)
           || TEXT.failed
         );
+        if (refused) { refused(data, (document.getElementById('kbbPlacingNotice') || {}).firstElementChild); }
 
         return;
       }

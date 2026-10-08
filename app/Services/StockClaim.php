@@ -309,7 +309,7 @@ final class StockClaim
             $product = $rows['products']->get($productId);
 
             if ($product === null) {
-                throw new StockUnavailable($label . ' is no longer available. Please remove it from your basket to continue.');
+                throw new StockUnavailable($label . ' is no longer available. Please remove it from your basket to continue.', $label);
             }
 
             $variantId = isset($line['variant_id']) && $line['variant_id'] !== null
@@ -319,7 +319,7 @@ final class StockClaim
             $variant = $variantId === null ? null : $rows['variants']->get($variantId);
 
             if ($variantId !== null && $variant === null) {
-                throw new StockUnavailable($label . ' is no longer available. Please remove it from your basket to continue.');
+                throw new StockUnavailable($label . ' is no longer available. Please remove it from your basket to continue.', $label);
             }
 
             /*
@@ -339,7 +339,7 @@ final class StockClaim
                 $asked[$pair] = true;
 
                 if (($variant?->stock_status ?? $product->stock_status) !== 'instock') {
-                    throw new StockUnavailable($label . ' is sold out. Please remove it from your basket to continue.');
+                    throw new StockUnavailable($label . ' is sold out. Please remove it from your basket to continue.', $label);
                 }
             }
 
@@ -431,7 +431,7 @@ final class StockClaim
             ->update(['stock' => DB::raw('stock - ' . $quantity)]);
 
         if ($changed !== 1) {
-            throw new StockUnavailable($this->shortfall($label, $have));
+            throw new StockUnavailable($this->shortfall($label, $have), $label);
         }
 
         $emptied = $have - $quantity <= 0;

@@ -677,4 +677,160 @@ export function initCheckout() {
             window.kbbToast?.(t('store.js.generic_error', 'Something went wrong — please try again.'));
         }
     }
+
+    /* ------------------------------------------------------------------ *
+     * The sold-out dialog (Lane CO).
+     *
+     * Place order used to answer a sold-out line with red text under the card
+     * fields; the owner asked for "a proper popup with remove from the list".
+     * Both callers — the card form (stripe-elements) and the overlay that
+     * places every other method (placing-overlay) — hand the refusal to
+     * window.KBB.refused(body) below and keep their red text when it answers
+     * false (an older bundle, or a browser with no <dialog>).
+     *
+     * A NATIVE <dialog> OPENED WITH showModal(): the rest of the page is inert
+     * while it is up (the focus trap), Esc closes it (`cancel`), focus goes
+     * back where it was on close, and the backdrop is the browser's. No
+     * library, no measuring: the size is CSS (min() and dvh), and the markup
+     * and its few rules are built on first use only, so a checkout that never
+     * meets a sold-out line carries no byte of it.
+     *
+     * Every sentence arrives in `body` already in the shopper's language
+     * (CheckoutController::soldOutAnswer()) and goes in through textContent.
+     * ------------------------------------------------------------------ */
+    const SO_CSS = '.kbb-so{margin:auto;border:0;border-radius:14px;padding:22px 20px 18px;width:min(440px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;color:#1F2A24;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.25)}'
+        + '.kbb-so::backdrop{background:rgba(20,24,22,.45)}'
+        + '.kbb-so h2{margin:0 0 6px;font-size:18px;line-height:1.3}'
+        + '.kbb-so p{margin:0 0 10px;font-size:14px;line-height:1.45}'
+        + '.kbb-so ul{margin:0 0 14px;padding:0;list-style:none}'
+        + '.kbb-so li{padding:9px 12px;margin:0 0 6px;border-radius:8px;background:#FFF0F4;color:#A82F53;font-size:14px;line-height:1.4;font-weight:600}'
+        + '.kbb-so-act{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}'
+        + '.kbb-so button{min-height:44px;padding:0 20px;border:0;border-radius:99px;background:var(--pink,#C6395F);color:#fff;font:inherit;font-weight:700;cursor:pointer}'
+        + '.kbb-so button[disabled]{opacity:.6;cursor:default}'
+        + '.kbb-so a{min-height:44px;display:inline-flex;align-items:center;color:inherit;text-decoration:underline}'
+        + '.kbb-so [role=status]:empty{display:none}';
+
+    function openSoldOut(body) {
+        const words = (body && body.dialog) || null;
+        if (!words || typeof HTMLDialogElement !== 'function' || typeof words.url !== 'string' || words.url.charAt(0) !== '/') return false;
+
+        if (!document.getElementById('kbbSoCss')) {
+            const css = document.createElement('style');
+            css.id = 'kbbSoCss';
+            css.textContent = SO_CSS;
+            document.head.appendChild(css);
+        }
+
+        document.getElementById('kbbSoldOut')?.remove();
+
+        const lines = Array.isArray(body.lines) ? body.lines : [];
+        const dialog = document.createElement('dialog');
+        dialog.id = 'kbbSoldOut';
+        dialog.className = 'kbb-so';
+        dialog.setAttribute('aria-labelledby', 'kbbSoTitle');
+
+        const add = (tag, text, parent = dialog) => {
+            const el = document.createElement(tag);
+            if (text) el.textContent = text;
+            parent.appendChild(el);
+            return el;
+        };
+
+        add('h2', words.title).id = 'kbbSoTitle';
+        add('p', lines.length ? words.intro : (body.error || ''));
+        const list = add('ul');
+        lines.forEach((line) => { add('li', line.text, list); });
+        const say = add('p');
+        say.setAttribute('role', 'status');
+
+        const act = add('div');
+        act.className = 'kbb-so-act';
+        const go = add('button', words.remove, act);
+        go.type = 'button';
+        go.hidden = lines.length === 0;
+        const back = add('a', words.cart, act);
+        back.href = words.cartUrl;
+
+        go.addEventListener('click', async () => {
+            go.disabled = true;
+            say.textContent = words.working;
+
+            let data = null;
+            try {
+                const response = await fetch(words.url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': window.KBB.csrf,
+                        Accept: 'application/json',
+                    },
+                    body: JSON.stringify({
+                        item_ids: lines.map((line) => line.id),
+                        country: document.getElementById('billing_country')?.value || '',
+                        state: document.getElementById('billing_state')?.value || '',
+                        payment_method: document.querySelector('input[name="payment_method"]:checked')?.value || '',
+                    }),
+                });
+                data = await response.json().catch(() => null);
+            } catch { data = null; }
+
+            if (!data || data.ok !== true) {
+                say.textContent = (data && data.error) || words.failed;
+                go.disabled = false;
+                return;
+            }
+
+            /* Nothing left to buy: said in the dialog, with the way to the
+               shop, rather than a jump the shopper did not ask for. */
+            if (data.empty) {
+                setCartCount(0);
+                list.remove();
+                go.remove();
+                say.textContent = data.message || words.empty;
+                back.textContent = words.shop;
+                back.href = words.shopUrl;
+                back.focus();
+                return;
+            }
+
+            /* The same regions the quantity stepper repaints: totals, delivery
+               fee, payment options. Every field the shopper typed stays. */
+            applyFragments(data);
+            dialog.close();
+            document.getElementById('payment')?.scrollIntoView({ block: 'center', behavior: 'instant' });
+            window.kbbToast?.(words.done);
+        });
+
+        dialog.addEventListener('close', () => { dialog.remove(); });
+
+        document.body.appendChild(dialog);
+        dialog.showModal();
+        (go.hidden ? back : go).focus();
+
+        return true;
+    }
+
+    /*
+     * place()'s refusal, for the two inline scripts that post it
+     * (stripe-elements, placing-overlay). They print the sentence first, so an
+     * older bundle without this still says what went wrong; this then opens
+     * the dialog for a sold-out basket (true: the caller clears its red line)
+     * or, for a basket that is genuinely gone, adds the way to it under the
+     * sentence. Kept here rather than in either partial so the checkout HTML
+     * does not carry it twice.
+     */
+    window.KBB = window.KBB || {};
+    window.KBB.refused = (body, line) => {
+        if (body && body.code === 'sold_out') return openSoldOut(body);
+
+        if (line && body && body.code === 'bag_gone' && typeof body.url === 'string' && body.url.charAt(0) === '/') {
+            const a = document.createElement('a');
+            a.href = body.url;
+            a.textContent = body.link || body.url;
+            line.append(' ', a);
+        }
+
+        return false;
+    };
 }

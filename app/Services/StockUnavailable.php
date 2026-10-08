@@ -29,4 +29,14 @@ use RuntimeException;
  */
 class StockUnavailable extends RuntimeException
 {
+    /**
+     * @param  string|null  $subject  the line the sentence names, in the
+     *                                shopper's terms ("Toner (in Glow set)") —
+     *                                what the checkout's sold-out dialog lists
+     *                                (Lane CO). Null where nobody set it.
+     */
+    public function __construct(string $message = '', public readonly ?string $subject = null)
+    {
+        parent::__construct($message);
+    }
 }

@@ -1497,6 +1497,26 @@ final class InterfaceStrings
             'checkout.wallet_total_moved' => 'Your order total changed while the payment sheet was open, so nothing has been charged. Your basket is safe — please check the total and try again.',
             'checkout.wallet_failed' => 'That payment did not go through and nothing has been charged. Your basket is safe — please try again or pay by card below.',
             'checkout.wallet_working' => 'Confirming your payment…',
+            /*
+             * Lane CO: the sold-out dialog Place order opens instead of red
+             * text, and the sentence for a basket that is genuinely gone.
+             * Rendered by CheckoutController (soldOutAnswer(), bagGone()) and
+             * sent in the JSON answer, so the script translates nothing.
+             */
+            'checkout.bag_gone' => 'The basket on this page is no longer available — it may have been ordered or changed in another tab.',
+            'checkout.bag_gone_ordered' => 'This basket has already been ordered (order :number).',
+            'checkout.bag_gone_view_order' => 'View your order',
+            'checkout.bag_gone_view_cart' => 'View your basket',
+            'checkout.so_title' => 'Sorry — sold out',
+            'checkout.so_intro' => 'These sold out while you were checking out:',
+            'checkout.so_line_gone' => ':name is sold out',
+            'checkout.so_line_short' => 'Only :left left of :name — your bag will keep :left',
+            'checkout.so_remove' => 'Remove and continue',
+            'checkout.so_working' => 'Updating your bag…',
+            'checkout.so_failed' => 'Could not update your bag — please try again.',
+            'checkout.so_empty' => 'Your bag is now empty.',
+            'checkout.so_shop' => 'Continue shopping',
+            'checkout.so_done' => 'Your bag is updated. Please check the total and place your order.',
             'checkout.tab_summary' => 'Order summary',
             'checkout.tab_browsed' => 'Browsed',
             'checkout.browsed_heading' => 'Recently browsed — add in one tap',
