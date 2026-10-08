@@ -65,16 +65,24 @@ it('wires the console exactly once: title, deep link and the include', function 
 it('keeps the handover documents that quote LATE_RENDERED in step with the console', function () {
     $app = seoWired('resources/views/admin/app.blade.php');
 
-    foreach (['docs/T1B-ADMIN-APP-BLOCKS.md', 'docs/BG-ADMIN-APP-BLOCKS.md'] as $doc) {
-        expect(seoWired($doc))->toContain("'wabutton','searchterms','merchantfeed','carttracking',");
+    foreach (['docs/T1B-ADMIN-APP-BLOCKS.md', 'docs/BG-ADMIN-APP-BLOCKS.md', 'docs/GS-ADMIN-APP-BLOCKS.md'] as $doc) {
+        expect(seoWired($doc))->toContain("'wabutton','searchterms','merchantfeed','carttracking',")
+            ->not->toContain("'wabutton','searchterms','carttracking',");
     }
+
+    // Lane PN's recorded include block stays whole (PushWiringTest re-applies it otherwise).
+    $pn = collect(json_decode((string) file_get_contents(base_path('docs/pn-wiring.json')), true))->firstWhere('anchor', "@include('admin.partials.cart-tracking-screen')\n");
+    expect(substr_count($app, $pn['replacement']))->toBe(1);
 
     preg_match_all('/const LATE_RENDERED=new Set\(\[[^\]]*\]\);/', seoWired('docs/T1B-ADMIN-APP-BLOCKS.md'), $quoted);
     expect($app)->toContain((string) end($quoted[0]));
 });
 
-it('lists the feed route in the English render walk once it is registered', function () {
-    expect(substr_count(seoWired('tests/Support/EnglishRenderWalk.php'), "'feeds/google-merchant.xml' => \$file,"))->toBe(1);
+it('lists the feed route in both route walks once it is registered, and reserves its first segment', function () {
+    expect(substr_count(seoWired('tests/Support/EnglishRenderWalk.php'), "'feeds/google-merchant.xml' => \$file,"))->toBe(1)
+        ->and(substr_count(seoWired('tests/Feature/StorefrontRouteWalkTest.php'), "'feeds/google-merchant.xml' => ['status' => 200],"))->toBe(1)
+        // RootSlugCollisionTest: a root-level post slugged `feeds` would otherwise claim the address.
+        ->and(\App\Http\Controllers\Store\PageController::RESERVED_SLUGS)->toContain('feeds');
 });
 
 it('ships a screen with no timer, no polling, no layout measurement, and escapes what it prints', function () {

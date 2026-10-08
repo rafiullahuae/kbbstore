@@ -33,11 +33,11 @@
     },
     {
         "n": 5,
-        "what": "console: include the Google Shopping feed screen partial, after Cart Tracking (Lane SEO)",
+        "what": "console: include the Google Shopping feed screen partial, after Push Notifications (Lane SEO) -- anchored on the push include so Lane PN's recorded replacement stays whole",
         "file": "resources/views/admin/app.blade.php",
-        "anchor": "@include('admin.partials.cart-tracking-screen')\n",
+        "anchor": "@include('admin.partials.push-notifications-screen')\n",
         "count": 1,
-        "replacement": "@include('admin.partials.cart-tracking-screen')\n\n{{-- Growth & Marketing → Google Shopping feed (Lane SEO): the product feed for\n     Merchant Center and Meta -- switch, address with Copy, what it holds. Wraps\n     window.go for 'merchantfeed'; its sidebar row is App\\Support\\AdminNav's.\n     Endpoints: routes/merchant-feed-admin.php, `marketing.feed`. --}}\n@include('admin.partials.merchant-feed-screen')\n"
+        "replacement": "@include('admin.partials.push-notifications-screen')\n\n{{-- Growth & Marketing → Google Shopping feed (Lane SEO): the product feed for\n     Merchant Center and Meta -- switch, address with Copy, what it holds. Wraps\n     window.go for 'merchantfeed'; its sidebar row is App\\Support\\AdminNav's.\n     Endpoints: routes/merchant-feed-admin.php, `marketing.feed`. --}}\n@include('admin.partials.merchant-feed-screen')\n"
     },
     {
         "n": 6,
@@ -62,5 +62,21 @@
         "anchor": "            'llms.txt' => $file,\n",
         "count": 1,
         "replacement": "            'llms.txt' => $file,\n            // The Google Merchant Center product feed (Lane SEO): XML for Merchant\n            // Center and Meta, no Blade, no shopper string.\n            'feeds/google-merchant.xml' => $file,\n"
+    },
+    {
+        "n": 9,
+        "what": "keep docs/GS-ADMIN-APP-BLOCKS.md's two quoted LATE_RENDERED lines in step with the console (GridSectionConsoleReachTest block 4)",
+        "file": "docs/GS-ADMIN-APP-BLOCKS.md",
+        "anchor": "'wabutton','searchterms','carttracking',",
+        "count": 2,
+        "replacement": "'wabutton','searchterms','merchantfeed','carttracking',"
+    },
+    {
+        "n": 10,
+        "what": "tests/Feature/StorefrontRouteWalkTest.php: walk the new public GET route on every run (200 while the switch is on), only once block 1 registers it",
+        "file": "tests/Feature/StorefrontRouteWalkTest.php",
+        "anchor": "        'llms.txt'                 => ['status' => 200],\n",
+        "count": 1,
+        "replacement": "        'llms.txt'                 => ['status' => 200],\n        'feeds/google-merchant.xml' => ['status' => 200], // Google Shopping feed (Lane SEO)\n"
     }
 ]
