@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.444
+**Store -> Security -> Firewall: invisible bot protection.** Apply after .443. Runs its
+migrations. Hard refresh the admin. Starts in Monitor mode (refuses nothing).
+
+| Your request | Now |
+|---|---|
+| "a lot of bots from china, russia, singapore, hongkong ... don't harm real visitors at all ... full control on backend ... always allow google and other friendly bots" + "totally invisible ... no delay" | Store -> Security -> Firewall: Off / Monitor (default) / On. Verified good bots always allowed (Google incl. AdsBot, Bing, Apple, DuckDuckGo, Yandex, Meta, WhatsApp, Pinterest), fake ones refused. Floods get a temporary ban (10 min, doubling, ends by itself). Countries Allow / Watch / Protect / Block; CN, RU, SG, HK on Protect (half limits; cart/checkout/form writes need proof of a real page or the shop's own session -- invisible, first tap always works). Live view of the last 24 h, Unban, always-allow list with "Add my current address". No CAPTCHA, no script, ~0.04 ms per page, no extra queries. Emergency: php artisan kbb:firewall off. Once after install: press "Download country database" and "Refresh bot lists". Country data: IP Geolocation by DB-IP (CC BY 4.0) |
+
+Files: see the package's update.json.
+
 ## 2.60.443
 **Instagram: Connect with Facebook.** Apply after .442, AFTER the domain switch is
 finished. Runs its migrations. Hard refresh the admin.

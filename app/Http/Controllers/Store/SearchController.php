@@ -274,6 +274,19 @@ class SearchController extends Controller
         return $payload;
     }
 
+    /**
+     * The search panel's thumbnail: the 200px img-cache copy, never the
+     * original. The panel draws these at about 48-64px, and the original is
+     * 70-470 KB where the copy is a few KB -- the owner, 8 October: "the search
+     * box results uses original size of the product ... it's loading super
+     * slow". variantUrl() returns the original unchanged when no copy exists,
+     * so a picture is never lost. SearchThumbnailsAreSmallTest.
+     */
+    private function thumb(?string $image): ?string
+    {
+        return ($image === null || $image === '') ? $image : \App\Support\ImageVariants::variantUrl($image, 200);
+    }
+
     /** One product as a panel row -- the shape both result builders print. */
     private function productRow(Product $p): array
     {
@@ -281,7 +294,7 @@ class SearchController extends Controller
             'label' => $p->t('name'),
             'meta' => $p->brand?->t('name'),
             'price' => Money::plain($p->effectivePrice()),
-            'image' => $p->image,
+            'image' => $this->thumb($p->image),
             'colour' => \App\Support\Gradient::for(($p->brand?->name ?? '') . $p->name),
             'initials' => \App\Support\Gradient::initials($p->brand?->t('name') ?: $p->t('name')),
             'url' => $p->url(),
@@ -478,7 +491,7 @@ class SearchController extends Controller
                         'label' => $p->t('name'),
                         'meta' => $p->brand?->t('name'),
                         'price' => Money::plain($p->effectivePrice()),
-                        'image' => $p->image,
+                        'image' => $this->thumb($p->image),
                         'colour' => \App\Support\Gradient::for(($p->brand?->name ?? '') . $p->name),
                         'initials' => \App\Support\Gradient::initials($p->brand?->t('name') ?: $p->t('name')),
                         'url' => $p->url(),
@@ -663,7 +676,7 @@ class SearchController extends Controller
                         'label' => $p->t('name'),
                         'meta' => $p->brand?->t('name'),
                         'price' => Money::plain($p->effectivePrice()),
-                        'image' => $p->image,
+                        'image' => $this->thumb($p->image),
                         // The theme's .si swatch falls back to a gradient with
                         // initials when a product has no photo.
                         'colour' => \App\Support\Gradient::for(($p->brand?->name ?? '') . $p->name),
@@ -779,7 +792,7 @@ class SearchController extends Controller
                     'name' => $p->t('name'),
                     'brand' => $p->brand?->t('name'),
                     'url' => Url::to('/product/' . $p->slug . '/'),
-                    'image' => $p->image,
+                    'image' => $this->thumb($p->image),
                     /*
                      * plain(), NOT format(). (Lane PI-A) format() is the
                      * WooCommerce-shaped <span> markup Blade prints with
