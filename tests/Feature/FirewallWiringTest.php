@@ -5,8 +5,8 @@ declare(strict_types=1);
 /*
  * Store → Security → Firewall (Lane FW): the console half, wired exactly once.
  *
- * The routes and the screen partial need no integrator edit (security-admin.php
- * requires firewall-admin.php; security-screen includes firewall-screen). What
+ * The routes and the screen partial need no integrator edit (the routes are in
+ * security-admin.php; security-screen includes firewall-screen). What
  * does is the console's own lists: TITLES (so ?go=firewall and #firewall name
  * the screen) and LATE_RENDERED (the deep-link replay). docs/fw-wiring.json is
  * applied IN MEMORY here, so this is the same test before and after the

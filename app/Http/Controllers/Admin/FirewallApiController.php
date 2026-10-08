@@ -239,6 +239,8 @@ final class FirewallApiController extends Controller
             $out[] = ['code' => $cc, 'name' => $name ?? $cc, 'action' => $rules[$cc] ?? 'allow', 'preset' => FirewallConfig::COUNTRY_DEFAULTS[$cc] ?? 'allow'];
         }
 
+        usort($out, static fn (array $a, array $b): int => strcmp($a['name'], $b['name']));
+
         return $out;
     }
 

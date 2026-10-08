@@ -650,16 +650,14 @@ it('keeps the counter table at a fixed size, however many addresses come', funct
     }
 });
 
-it('is wired exactly once: the routes from security-admin.php, the screen from the Security partial', function () {
+it('is wired exactly once: the routes in security-admin.php, the screen from the Security partial', function () {
     /*
      * DEFECT: built and never mounted (zero), or the sidebar row and the
      * window.go wrapper registered twice (two).
      */
-    $sec = (string) file_get_contents(base_path('routes/security-admin.php'));
     $partial = (string) file_get_contents(resource_path('views/admin/partials/security-screen.blade.php'));
 
-    expect(substr_count($sec, "require __DIR__.'/firewall-admin.php';"))->toBe(1)
-        ->and(substr_count($partial, "@include('admin.partials.firewall-screen')"))->toBe(1)
+    expect(substr_count($partial, "@include('admin.partials.firewall-screen')"))->toBe(1)
         ->and(collect(app('router')->getRoutes()->getRoutes())->filter(fn ($r) => $r->uri() === 'admin-api/security/firewall')->count())->toBe(2);
 
     $screen = (string) file_get_contents(resource_path('views/admin/partials/firewall-screen.blade.php'));

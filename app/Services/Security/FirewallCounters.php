@@ -221,11 +221,12 @@ final class FirewallCounters
     public static function wipeTestTable(): void
     {
         self::reset();
+        $dir = storage_path('framework/firewall-test-'.getmypid());
 
-        if (app()->runningUnitTests() && str_contains(self::dir(), '-test-')) {
+        if (app()->runningUnitTests()) {
             @unlink(Firewall::killSwitch());
 
-            foreach (glob(self::dir().'/*.bin') ?: [] as $f) {
+            foreach (glob($dir.'/*.bin') ?: [] as $f) {
                 @unlink($f);
             }
         }

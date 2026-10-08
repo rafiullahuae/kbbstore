@@ -6,8 +6,8 @@ use Illuminate\Database\Migrations\Migration;
 
 /*
  * Lane FW: Store -> Security -> Firewall adds nine routes under
- * /admin-api/security/firewall (routes/firewall-admin.php, required from
- * routes/security-admin.php) and two capabilities. A compiled route cache would
+ * /admin-api/security/firewall (in routes/security-admin.php) and two
+ * capabilities. A compiled route cache would
  * hide them, so the compiled files and the cached role map are cleared here --
  * the same body every other clear_caches_* migration carries.
  */

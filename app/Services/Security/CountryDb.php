@@ -282,7 +282,8 @@ final class CountryDb
             return $fail('checksum does not match: the file is damaged');
         }
 
-        return ['ok' => true, 'date' => $info['date'], 'v4' => $info['n4'], 'v6' => $info['n6'], 'countries' => $info['ncc'], 'bytes' => $size, 'error' => null];
+        // The table's entry 0 is "unknown", not a country.
+        return ['ok' => true, 'date' => $info['date'], 'v4' => $info['n4'], 'v6' => $info['n6'], 'countries' => $info['ncc'] - 1, 'bytes' => $size, 'error' => null];
     }
 
     /* ═══════════════════════════════════════════════ building ═══ */
