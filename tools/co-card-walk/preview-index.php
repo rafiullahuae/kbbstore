@@ -84,6 +84,12 @@ $app->booted(function () use ($state) {
         return response('ok');
     });
 
+    \Illuminate\Support\Facades\Route::middleware('web')->get('/__co/empty/{slug}', function (string $slug) {
+        \App\Models\Product::where('slug', $slug)->update(['stock' => 0]);
+
+        return response('ok');
+    });
+
     \Illuminate\Support\Facades\Route::middleware('web')->get('/__co/in-stock/{slug}', function (string $slug) {
         \App\Models\Product::where('slug', $slug)->update(['stock_status' => 'instock', 'stock' => 8]);
 

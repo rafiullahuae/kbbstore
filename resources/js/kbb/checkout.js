@@ -698,17 +698,83 @@ export function initCheckout() {
      * Every sentence arrives in `body` already in the shopper's language
      * (CheckoutController::soldOutAnswer()) and goes in through textContent.
      * ------------------------------------------------------------------ */
-    const SO_CSS = '.kbb-so{margin:auto;border:0;border-radius:14px;padding:22px 20px 18px;width:min(440px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;color:#1F2A24;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.25)}'
+    /*
+     * (Lane CO2, the owner's design) Each line: the picture, the product in
+     * the shop's ink, a size smaller than before, and "is sold out" in the
+     * sale red. The confirmation is a long frosted capsule -- the footer app
+     * capsule's glass (.kfa-g: blur 12 + saturate 1.4, white hairline, pink
+     * shadow) at the .82 white the menu panel uses where rows of text sit
+     * under it (at .55 the order summary read through the sentence at 390),
+     * solid white where backdrop-filter is missing --
+     * with a green tick sitting half outside its end corner. Logical
+     * properties throughout, so Arabic mirrors it. Sizes are fixed boxes:
+     * nothing here is measured and nothing moves the page.
+     */
+    const SO_GLASS = 'background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(12px) saturate(1.4);backdrop-filter:blur(12px) saturate(1.4);border:1px solid rgba(255,255,255,.9);box-shadow:0 10px 30px -14px rgba(193,62,99,.55),inset 0 1px 0 #fff';
+    const SO_CSS = '.kbb-so{margin:auto;border:0;border-radius:14px;padding:22px 20px 18px;width:min(440px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;color:var(--ink,#2A2228);background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.25)}'
         + '.kbb-so::backdrop{background:rgba(20,24,22,.45)}'
         + '.kbb-so h2{margin:0 0 6px;font-size:18px;line-height:1.3}'
         + '.kbb-so p{margin:0 0 10px;font-size:14px;line-height:1.45}'
         + '.kbb-so ul{margin:0 0 14px;padding:0;list-style:none}'
-        + '.kbb-so li{padding:9px 12px;margin:0 0 6px;border-radius:8px;background:#FFF0F4;color:#A82F53;font-size:14px;line-height:1.4;font-weight:600}'
+        + '.kbb-so li{display:flex;align-items:center;gap:12px;padding:8px;margin:0 0 6px;border-radius:10px;background:#FFF6F8;font-size:13px;line-height:1.4}'
+        + '.kbb-so li img,.kbb-so-ph{flex:none;width:44px;height:44px;border-radius:8px;object-fit:cover;background:#FCE0E8}'
+        + '.kbb-so li b{font-weight:600;color:var(--ink,#2A2228)}'
+        + '.kbb-so-r{color:var(--sale,#E23A4E);font-weight:600}'
         + '.kbb-so-act{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}'
         + '.kbb-so button{min-height:44px;padding:0 20px;border:0;border-radius:99px;background:var(--pink,#C6395F);color:#fff;font:inherit;font-weight:700;cursor:pointer}'
         + '.kbb-so button[disabled]{opacity:.6;cursor:default}'
         + '.kbb-so a{min-height:44px;display:inline-flex;align-items:center;color:inherit;text-decoration:underline}'
-        + '.kbb-so [role=status]:empty{display:none}';
+        + '.kbb-so [role=status]:empty{display:none}'
+        + '.kbb-so-cap{position:relative;display:flex;align-items:center;min-height:44px;margin:12px 0 4px;padding:10px 22px;padding-inline-end:28px;border-radius:999px;color:var(--ink,#2A2228);font-size:13px;font-weight:600;line-height:1.35;' + SO_GLASS + '}'
+        + '.kbb-so-cap i{position:absolute;top:-14px;inset-inline-end:10px;width:26px;height:26px;border-radius:50%;background:var(--green,#2E9E6B);display:grid;place-items:center;box-shadow:0 4px 10px -3px rgba(46,158,107,.6),0 0 0 2px #fff}'
+        + '.kbb-so-cap svg{width:14px;height:14px}'
+        + '@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.kbb-so-cap{background:#fff}}'
+        + '.kbb-so-note{position:fixed;z-index:2147483000;inset-inline:16px;bottom:calc(96px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;pointer-events:none}'
+        + '.kbb-so-note .kbb-so-cap{margin:0;max-width:520px;animation:kbbSoIn .22s ease-out}'
+        + '.kbb-so-note:empty{display:none}'
+        + '@media (min-width:900px){.kbb-so-note{bottom:32px}}'
+        + '@keyframes kbbSoIn{from{opacity:0;transform:translateY(8px)}}'
+        + '@media (prefers-reduced-motion:reduce){.kbb-so-note .kbb-so-cap{animation:none}}';
+
+    /* The green tick, decorative (aria-hidden): the sentence beside it is
+       what a screen reader announces. A constant, never data. */
+    const SO_TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+    /* Turn an element into the frosted capsule: the sentence, then the tick. */
+    function soCapsule(el, text) {
+        el.className = 'kbb-so-cap';
+        el.textContent = text;
+        const tick = document.createElement('i');
+        tick.innerHTML = SO_TICK;
+        el.appendChild(tick);
+        return el;
+    }
+
+    /* The page-level notice after "Remove and continue": one polite live
+       region, made once, filled per message, emptied by ONE timer that is
+       cleared on the next message — no loop, nothing left running. */
+    let soNoteTimer = null;
+    function soNotice(text) {
+        let region = document.getElementById('kbbSoNote');
+        if (!region) {
+            region = document.createElement('div');
+            region.id = 'kbbSoNote';
+            region.className = 'kbb-so-note';
+            region.setAttribute('role', 'status');
+            region.setAttribute('aria-live', 'polite');
+            document.body.appendChild(region);
+        }
+        region.textContent = '';
+        region.appendChild(soCapsule(document.createElement('p'), text));
+        clearTimeout(soNoteTimer);
+        soNoteTimer = setTimeout(() => { region.textContent = ''; }, 5000);
+    }
+
+    /* Only a picture on this shop: a root-relative path or this origin. */
+    const soSameOrigin = (src) => {
+        if (typeof src !== 'string' || src === '') return false;
+        try { return new URL(src, window.location.href).origin === window.location.origin; } catch { return false; }
+    };
 
     function openSoldOut(body) {
         const words = (body && body.dialog) || null;
@@ -739,7 +805,26 @@ export function initCheckout() {
         add('h2', words.title).id = 'kbbSoTitle';
         add('p', lines.length ? words.intro : (body.error || ''));
         const list = add('ul');
-        lines.forEach((line) => { add('li', line.text, list); });
+        lines.forEach((line) => {
+            const li = add('li', '', list);
+
+            if (soSameOrigin(line.img)) {
+                const img = add('img', '', li);
+                img.src = line.img;
+                img.alt = '';
+                img.width = 44;
+                img.height = 44;
+                img.decoding = 'async';
+            } else {
+                add('span', '', li).className = 'kbb-so-ph';
+            }
+
+            const copy = add('span', '', li);
+            if (typeof line.name !== 'string') { copy.textContent = line.text; return; }
+            if (line.before) add('span', line.before, copy).className = 'kbb-so-r';
+            add('b', line.name, copy);
+            if (line.after) add('span', line.after, copy).className = 'kbb-so-r';
+        });
         const say = add('p');
         say.setAttribute('role', 'status');
 
@@ -787,7 +872,7 @@ export function initCheckout() {
                 setCartCount(0);
                 list.remove();
                 go.remove();
-                say.textContent = data.message || words.empty;
+                soCapsule(say, data.message || words.empty);
                 back.textContent = words.shop;
                 back.href = words.shopUrl;
                 back.focus();
@@ -799,7 +884,7 @@ export function initCheckout() {
             applyFragments(data);
             dialog.close();
             document.getElementById('payment')?.scrollIntoView({ block: 'center', behavior: 'instant' });
-            window.kbbToast?.(words.done);
+            soNotice(words.done);
         });
 
         dialog.addEventListener('close', () => { dialog.remove(); });

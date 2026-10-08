@@ -1224,12 +1224,28 @@ class CheckoutController extends Controller
         $lines = [];
 
         foreach ($this->carts->unavailableLines($cart) as $id => $line) {
+            /*
+             * THE SENTENCE IN THREE PIECES (Lane CO2), for the owner's design:
+             * the product in black, "is sold out" in red. The translated
+             * template is split around its own :name, so the red words fall
+             * wherever the language puts them -- after the name in English,
+             * before it in Arabic ("نفدت كمية :name") -- from ONE key, and the
+             * script never assembles a sentence. `text` stays whole for a
+             * bundle that predates this.
+             */
+            $template = $line['keep'] > 0
+                ? __('store.checkout.so_line_short', ['left' => $line['keep']])
+                : __('store.checkout.so_line_gone');
+            [$before, $after] = array_pad(explode(':name', $template, 2), 2, '');
+
             $lines[] = [
                 'id' => $id,
                 'keep' => $line['keep'],
-                'text' => $line['keep'] > 0
-                    ? __('store.checkout.so_line_short', ['name' => $line['subject'], 'left' => $line['keep']])
-                    : __('store.checkout.so_line_gone', ['name' => $line['subject']]),
+                'text' => $before . $line['subject'] . $after,
+                'name' => $line['subject'],
+                'before' => $before,
+                'after' => $after,
+                'img' => $this->soldOutThumb($cart->items->firstWhere('id', $id)),
             ];
         }
 
@@ -1240,6 +1256,36 @@ class CheckoutController extends Controller
             'lines' => $lines,
             'dialog' => $this->soldOutStrings(),
         ], 422);
+    }
+
+    /**
+     * The line's own small picture for the sold-out dialog, or null. (Lane CO2)
+     *
+     * Off the line ALREADY LOADED by loadCart() -- the variant's image, else
+     * the product's, the same choice the order summary makes -- so the dialog
+     * costs no query. ONLY an img-cache copy (200 px, else 400): variantUrl()
+     * hands back the original when no copy exists, and a full-size photograph
+     * in a 44 px box is the 903 KiB mistake CLAUDE.md records, so that case is
+     * a plain tile instead. The path comes from ImageVariants, which only ever
+     * builds one on this shop's own img-cache directory.
+     */
+    private function soldOutThumb($item): ?string
+    {
+        $image = (string) ($item?->variant?->image ?: $item?->product?->image ?: '');
+
+        if ($image === '') {
+            return null;
+        }
+
+        foreach ([200, 400] as $width) {
+            $copy = \App\Support\ImageVariants::variantUrl($image, $width);
+
+            if ($copy !== $image) {
+                return $copy;
+            }
+        }
+
+        return null;
     }
 
     /** The dialog's own words, in the shopper's language. */
