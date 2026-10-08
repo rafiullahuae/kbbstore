@@ -1,0 +1,66 @@
+[
+    {
+        "n": 1,
+        "what": "routes/web.php: the public feed, inside the session-less crawl-file group beside sitemap/robots/llms (no Set-Cookie, publicly cacheable) (Lane SEO)",
+        "file": "routes/web.php",
+        "anchor": "    Route::get('/llms.txt',    [SeoFilesController::class, 'llms']);\n",
+        "count": 1,
+        "replacement": "    Route::get('/llms.txt',    [SeoFilesController::class, 'llms']);\n\n    // The Google Merchant Center product feed (Lane SEO): /feeds/google-merchant.xml,\n    // machine-read like the three files above. Growth & Marketing -> Google Shopping feed.\n    require __DIR__.'/merchant-feed.php';\n"
+    },
+    {
+        "n": 2,
+        "what": "routes/web.php: the admin endpoints inside the guarded admin-api group, after Push Notifications (Lane SEO)",
+        "file": "routes/web.php",
+        "anchor": "        require __DIR__.'/push-admin.php';\n",
+        "count": 1,
+        "replacement": "        require __DIR__.'/push-admin.php';\n\n        // Growth & Marketing → Google Shopping feed (Lane SEO): the feed switch,\n        // its address and contents. marketing.feed, owner and manager.\n        require __DIR__.'/merchant-feed-admin.php';\n"
+    },
+    {
+        "n": 3,
+        "what": "console TITLES: Growth & Marketing → Google Shopping feed, so ?go=merchantfeed and #merchantfeed name the screen (Lane SEO)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "meta:['Growth & Marketing','Meta & Facebook'],",
+        "count": 1,
+        "replacement": "meta:['Growth & Marketing','Meta & Facebook'],'merchantfeed':['Growth & Marketing','Google Shopping feed'],"
+    },
+    {
+        "n": 4,
+        "what": "console LATE_RENDERED: arm the deep-link replay for 'merchantfeed' -- its partial wraps window.go and calls render() before load(), synchronously (Lane SEO)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "'wabutton','searchterms','carttracking',",
+        "count": 1,
+        "replacement": "'wabutton','searchterms','merchantfeed','carttracking',"
+    },
+    {
+        "n": 5,
+        "what": "console: include the Google Shopping feed screen partial, after Cart Tracking (Lane SEO)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "@include('admin.partials.cart-tracking-screen')\n",
+        "count": 1,
+        "replacement": "@include('admin.partials.cart-tracking-screen')\n\n{{-- Growth & Marketing → Google Shopping feed (Lane SEO): the product feed for\n     Merchant Center and Meta -- switch, address with Copy, what it holds. Wraps\n     window.go for 'merchantfeed'; its sidebar row is App\\Support\\AdminNav's.\n     Endpoints: routes/merchant-feed-admin.php, `marketing.feed`. --}}\n@include('admin.partials.merchant-feed-screen')\n"
+    },
+    {
+        "n": 6,
+        "what": "keep docs/T1B-ADMIN-APP-BLOCKS.md's quoted LATE_RENDERED line in step with the console (TranslationConsoleTest)",
+        "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
+        "anchor": "'wabutton','searchterms','carttracking',",
+        "count": 1,
+        "replacement": "'wabutton','searchterms','merchantfeed','carttracking',"
+    },
+    {
+        "n": 7,
+        "what": "keep docs/BG-ADMIN-APP-BLOCKS.md's quoted LATE_RENDERED line in step with the console",
+        "file": "docs/BG-ADMIN-APP-BLOCKS.md",
+        "anchor": "'wabutton','searchterms','carttracking',",
+        "count": 1,
+        "replacement": "'wabutton','searchterms','merchantfeed','carttracking',"
+    },
+    {
+        "n": 8,
+        "what": "tests/Support/EnglishRenderWalk.php: list the new public GET route as a machine-facing file (StorefrontEnglishUnchangedTest's every-route check), only once block 1 registers it",
+        "file": "tests/Support/EnglishRenderWalk.php",
+        "anchor": "            'llms.txt' => $file,\n",
+        "count": 1,
+        "replacement": "            'llms.txt' => $file,\n            // The Google Merchant Center product feed (Lane SEO): XML for Merchant\n            // Center and Meta, no Blade, no shopper string.\n            'feeds/google-merchant.xml' => $file,\n"
+    }
+]

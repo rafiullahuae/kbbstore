@@ -1,0 +1,91 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Seo Lab Toner 5",
+    "brand": {
+      "@type": "Brand",
+      "name": "SEO Lab"
+    },
+    "description": "A gentle hydrating toner, number 5.",
+    "image": [
+      "https://kbeautybliss.test/wp-content/uploads/2021/05/seo-product-5.jpg",
+      "https://kbeautybliss.test/wp-content/uploads/2021/05/seo-product-5-2.jpg",
+      "https://kbeautybliss.test/wp-content/uploads/2021/05/seo-product-5-3.jpg"
+    ],
+    "sku": "SEO-5",
+    "url": "https://kbeautybliss.test/product/seo-product-5/",
+    "offers": {
+      "@type": "AggregateOffer",
+      "priceCurrency": "AED",
+      "availability": "https://schema.org/InStock",
+      "url": "https://kbeautybliss.test/product/seo-product-5/",
+      "itemCondition": "https://schema.org/NewCondition",
+      "lowPrice": "99.00",
+      "highPrice": "159.00",
+      "offerCount": 2,
+      "offers": [
+        {
+          "@type": "Offer",
+          "priceCurrency": "AED",
+          "price": "99.00",
+          "availability": "https://schema.org/InStock",
+          "sku": "SEO-5-30ml",
+          "url": "https://kbeautybliss.test/product/seo-product-5/",
+          "itemCondition": "https://schema.org/NewCondition",
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "99.00",
+            "priceCurrency": "AED",
+            "valueAddedTaxIncluded": true
+          }
+        },
+        {
+          "@type": "Offer",
+          "priceCurrency": "AED",
+          "price": "159.00",
+          "availability": "https://schema.org/InStock",
+          "sku": "SEO-5-100ml",
+          "url": "https://kbeautybliss.test/product/seo-product-5/",
+          "itemCondition": "https://schema.org/NewCondition",
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "159.00",
+            "priceCurrency": "AED",
+            "valueAddedTaxIncluded": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://kbeautybliss.test/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Shop",
+        "item": "https://kbeautybliss.test/shop/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Toners",
+        "item": "https://kbeautybliss.test/collections/seo-toners/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 4,
+        "name": "Seo Lab Toner 5",
+        "item": "https://kbeautybliss.test/product/seo-product-5/"
+      }
+    ]
+  }
+]

@@ -2,6 +2,7 @@
     "settings": {
         "settings": {
             "seo_default_description": "Shop Korean skincare in the UAE \u2014 serums, creams, moisturisers and beauty devices from Korean beauty brands.",
+            "sitemap_images": "1",
             "gift_enabled": "1",
             "gift_fee": "1500",
             "canonical_host": "",

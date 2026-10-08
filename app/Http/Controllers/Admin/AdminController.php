@@ -2014,8 +2014,8 @@ class AdminController extends Controller
         // Sitemap / robots.
         'sitemap_enabled' => ['flag', 'XML sitemap'],
         /*
-         * Product images in the sitemap (Lane S). A flag, and it ships at '0'
-         * so applying the package does not move /sitemap.xml -- see the long
+         * Product images in the sitemap (Lane S). A flag; it shipped at '0'
+         * and is ON since Lane SEO, at the owner's request -- see the long
          * note in Store\SeoFilesController::sitemap(). Listed here because a
          * key absent from this map is a key the SEO screen can post and the
          * server will silently drop, which is the "Saved on screen, no row in

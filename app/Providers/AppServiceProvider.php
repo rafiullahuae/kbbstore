@@ -640,6 +640,15 @@ class AppServiceProvider extends ServiceProvider
                     return redirect(\App\Support\Url::redirect($redirect->target, $request), $redirect->code);
                 }
 
+                // An old picture address (Google Images' /wp-content/uploads/…
+                // index, a WordPress sized copy, a JPEG since turned into WebP)
+                // sent to the file that shows that picture now. Only 404s reach
+                // this line, and the class leaves at once for anything not under
+                // an upload root -- see App\Support\LegacyImageRedirect (Lane SEO).
+                if (($legacyImage = \App\Support\LegacyImageRedirect::respond($request)) !== null) {
+                    return $legacyImage;
+                }
+
                 if ($request->isMethod('GET') && !$request->is('admin*', 'admin-api*', 'api*')) {
                     \App\Support\NotFoundLogger::record($request->path(), $request->header('referer'));
                 }
