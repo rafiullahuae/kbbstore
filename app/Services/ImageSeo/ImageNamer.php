@@ -63,6 +63,12 @@ final class ImageNamer
     /** What a generated stem must look like before it is allowed near a disk. */
     public const SLUG_PATTERN = '/^[a-z0-9]+(?:-[a-z0-9]+)*$/';
 
+    /** A number, alone or with its unit glued on: 6, 50ml, 100g, 30ea. */
+    private const AMOUNT = '/^\d+(?:ml|g|kg|mg|oz|l|ea|pcs?|pairs?|ct|sheets?|caps?)?$/';
+
+    /** Count words that only mean something after a number: "6 pairs", "30 ea". */
+    private const COUNT_WORDS = ['pair', 'pairs', 'pcs', 'pc', 'ea', 'ml', 'g', 'kg', 'mg', 'oz', 'ct', 'count', 'pieces', 'piece'];
+
     /** Joining words: they carry no meaning in a filename. */
     private const STOP = ['a', 'an', 'the', 'and', 'or', 'with', 'for', 'of', 'in', 'on', 'to', 'by', 'from', 'at', 'x', 'plus', 'amp'];
 
@@ -361,6 +367,29 @@ final class ImageNamer
 
             return count($words) > self::MAX_WORDS || $length > self::MAX_LENGTH;
         };
+
+        /*
+         * The pack size goes before any word of the name. "medicube PDRN Pink
+         * Collagen Jelly Eye Mask 6 pairs" is nine words; popping the key
+         * first dropped "jelly" -- the word that says what the product is --
+         * and kept "6 pairs", which nobody searches a picture by. Only a bare
+         * number ("6", "50ml") and a count word right after a number ("pairs",
+         * "ea") go here; a type head ("60 patches") keeps its head.
+         */
+        foreach (['type', 'key'] as $group) {
+            for ($i = count($$group) - 1; $i >= 0 && $too(); $i--) {
+                $word = $$group[$i];
+                $afterNumber = $i > 0 && preg_match('/^\d+$/', $$group[$i - 1]) === 1;
+
+                if ($afterNumber && in_array($word, self::COUNT_WORDS, true)) {
+                    // "6 pairs" goes as one: a lone "6" left behind means nothing.
+                    array_splice($$group, $i - 1, 2);
+                    $i--;
+                } elseif (preg_match(self::AMOUNT, $word) === 1) {
+                    array_splice($$group, $i, 1);
+                }
+            }
+        }
 
         while ($too() && $key !== []) {
             array_pop($key);

@@ -217,6 +217,30 @@ it('caps names at 8 words and 70 characters, lower-case hyphenated ASCII only', 
     }
 });
 
+it('drops the pack size before a word of the name when a title is too long', function () {
+    /*
+     * The owner's own title, 8 October. Nine words over the cap of eight, and
+     * fit() used to pop the key first: every picture lost "jelly" -- the word
+     * that says what the product is -- and kept "6 pairs", which nobody
+     * searches a picture by. Mutation: delete the pack-size loop in
+     * ImageNamer::fit() and the first name reads
+     * medicube-pdrn-pink-collagen-eye-mask-6-pairs again.
+     */
+    $names = ImageNamer::names('medicube', 'medicube - PDRN Pink Collagen Jelly Eye Mask 6 pairs', 5);
+
+    expect($names[0])->toBe('medicube-pdrn-pink-collagen-jelly-eye-mask')
+        ->and($names)->toHaveCount(5)
+        ->and(array_unique($names))->toHaveCount(5);
+
+    foreach ($names as $name) {
+        expect($name)->toContain('jelly')->not->toContain('pairs')->not->toMatch('/-6(-|$)/');
+    }
+
+    // A title that already fits keeps its size: nothing is dropped that need not be.
+    expect(ImageNamer::names('Anua', 'Anua Heartleaf 77% Soothing Toner 250ml', 1))
+        ->toBe(['anua-heartleaf-77-soothing-toner-250ml']);
+});
+
 it('adds a short suffix only when another file already holds the name', function () {
     $taken = fn (string $stem): bool => $stem === 'pdrn-medicube-eye-patches';
 
