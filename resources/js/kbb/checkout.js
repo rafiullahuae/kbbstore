@@ -111,7 +111,14 @@ export function initCheckout() {
                 return;
             }
 
-            if (form.reportValidity()) form.submit();
+            if (form.reportValidity()) {
+                /* A plain post sends the hidden _token, which Firefox may have
+                   restored from before a login (stale: 419). This load's token
+                   is in window.KBB.csrf, which no browser restores. */
+                const token = form.querySelector('input[name="_token"]');
+                if (token && window.KBB && window.KBB.csrf) token.value = window.KBB.csrf;
+                form.submit();
+            }
             return;
         }
 

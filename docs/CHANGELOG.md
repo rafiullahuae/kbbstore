@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.431
+**Place order works in Firefox.** Apply after .430. No migrations. Hard refresh
+the checkout once (Ctrl+Shift+R).
+
+| Your request | Now |
+|---|---|
+| "The place order button is not working at all ... in chrome working, in mozilla browser not working" | Firefox, unlike Chrome, keeps a button's "switched off" state across a reload; a Place order button switched off mid-press came back dead. The buttons now tell Firefox not to keep it, every fresh checkout switches them back on, and the order request carries only this page's security token. Reproduced on 2.60.430 (dead for cash and card), fixed places both |
+
+Files: see the package's update.json.
+
 ## 2.60.430
 **Email pictures always load; sharper gallery taps; image names Google likes.** Apply
 after .429. No migrations. Hard refresh the shop.

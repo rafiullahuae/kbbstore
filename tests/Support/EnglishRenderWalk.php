@@ -3442,6 +3442,21 @@ KBB_BH_CSS;
                 'pattern' => '#(?<=<!-- related -->\n)\s*<section class="sec ymal[^"]*"[^>]*aria-labelledby="(?:rp1-h|rp2-h|ymal-h)".*?</section>\n\s*(?=</div>)#s',
                 'hits' => 1,
             ],
+            /*
+             * FIREFOX KEPT A DEAD PLACE ORDER BUTTON (hotfix after 2.60.430).
+             * The owner: "The place order button is not working at all ... in
+             * crhome working, in mozilla browser not working." Firefox persists
+             * a button's dynamic `disabled` across page loads; autocomplete="off"
+             * on the Place order buttons stops it. placing-overlay also re-lives
+             * them on load; that script change does not show in this walk's
+             * compared output (measured: no hit), so only the attribute is
+             * approved here. CheckoutFirefoxRestoreTest pins the script.
+             */
+            'firefox: autocomplete off on the Place order buttons (hotfix 2.60.431)' => [
+                'pattern' => '#<button type="button" class="(?:place|mb)" data-place="1"\K autocomplete="off"#',
+                'hits' => 3,
+                'perPage' => 3,
+            ],
         ];
     }
 

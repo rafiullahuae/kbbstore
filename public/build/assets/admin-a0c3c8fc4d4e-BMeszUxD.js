@@ -79,6 +79,16 @@
        the reason the note above gives, or they are controls that save nothing. */
     'slider_fit', 'slider_h', 'slider_h_m'];
 
+  /* Lane HB. The slider's text box, set-wide: ONE column on the server
+     (banner_sets.text_box, JSON) and these flat keys here, so Save and the
+     preview send them like every other set key. BannerTextBoxTest pins this
+     list to App\Support\BannerTextBox::keys(). */
+  var TB_KEYS = ['tb_style', 'tb_glow', 'tb_button',
+    'tb_show_eyebrow', 'tb_show_heading', 'tb_show_text', 'tb_show_button', 'tb_show_sticker',
+    'tb_size_h_d', 'tb_size_h_m', 'tb_size_t_d', 'tb_size_t_m', 'tb_size_e_d', 'tb_size_e_m',
+    'tb_size_b_d', 'tb_size_b_m', 'tb_size_w_d', 'tb_size_w_m'];
+  SET_KEYS = SET_KEYS.concat(TB_KEYS);
+
   /* Lane RC. What each kind is called on a set's row. The labels in the type
      select come from the server (BannerSet::KINDS); these are the short pill. */
   var KIND_PILLS = {cards: 'Cards banner', slider: 'Picture slider', single: 'Single image'};
@@ -87,7 +97,15 @@
      exactly these keys on Save, so a column left out of it is a control the
      owner can operate, see redraw in the preview, and lose the moment he
      presses the button -- which is worse than not having the control. */
-  var CARD_KEYS = ['image', 'image_m', 'alt', 'heading', 'body', 'button_label', 'button_url', 'position', 'status'];
+  var CARD_KEYS = ['image', 'image_m', 'alt', 'heading', 'body', 'button_label', 'button_url', 'position', 'status',
+    /* Lane HB. The words on a slider picture. */
+    'box_on', 'box_pos', 'eyebrow', 'sticker', 'sticker_ring',
+    'eyebrow_ar', 'heading_ar', 'body_ar', 'button_label_ar', 'sticker_ar', 'sticker_ring_ar'];
+
+  /* Lane HB. Typing into any of these switches the picture's words on, so
+     "write words on a picture" is all it takes for them to show. */
+  var WORD_KEYS = ['eyebrow', 'heading', 'body', 'button_label', 'sticker', 'sticker_ring',
+    'eyebrow_ar', 'heading_ar', 'body_ar', 'button_label_ar', 'sticker_ar', 'sticker_ring_ar'];
 
   /* The colour a control falls back to when the set says "use the shop's own".
      These are the SHOP'S values out of resources/css/kbb/kbb.css, not this
@@ -746,6 +764,88 @@
       + '</div>';
   }
 
+  /* ── LANE HB: THE TEXT BOX, SET-WIDE ───────────────────────────────────
+     The owner: "give full control of hide show any element ... the button i
+     need small ... give control to reduce the button size by drag, across all
+     banners together". Every option and range comes from the server
+     (App\Support\BannerTextBox), which clamps them again on Save and at
+     render, so this screen cannot offer a value the shop would not draw. */
+  function textBoxSection(s){
+    var T = data.enums.text_box;
+    if (!T) return '';
+
+    var html = '<div class="bns-sec" id="bns-textbox">Text box</div>'
+      + '<div class="bns-sub">Words in a box over each picture: a small eyebrow line, a heading, a short line and a button. '
+      + 'Everything here is for <b>every picture in this set together</b>. The words themselves are under each picture below, in <b>Words on this picture</b> &mdash; '
+      + 'a picture with no words shows no box, exactly as before.</div>'
+      + '<div class="bns-grid">'
+      + pick('tb_style', 'Text box style', 'A: a frosted blush card in the bottom corner. D: a white card with a round sticker, tilted a little.', s.tb_style, T.styles)
+      + pick('tb_glow', 'Box glow', 'The edge round the box, on both styles. Pastel gradient is a pink-lilac-peach rim; Soft white is a thin white edge with a white halo.', s.tb_glow, T.glows)
+      + pick('tb_button', 'Button style', 'Gradient pill is the Sticker card\u2019s own; with style A it draws as Filled.', s.tb_button, T.buttons)
+      + '</div>'
+      + '<div class="bns-lab" style="margin-top:14px">Show on every picture</div>'
+      + '<div class="bns-row" style="margin-top:6px">'
+      + sw('tb_show_eyebrow', 'Eyebrow line', s.tb_show_eyebrow)
+      + sw('tb_show_heading', 'Heading', s.tb_show_heading)
+      + sw('tb_show_text', 'Short text', s.tb_show_text)
+      + sw('tb_show_button', 'Button', s.tb_show_button)
+      + sw('tb_show_sticker', 'Sticker (style D)', s.tb_show_sticker)
+      + sw('show_dots', 'Slide dots', s.show_dots)
+      + '</div>'
+      + '<div class="bns-help" style="margin-top:8px">Off hides it on every picture, and the box shrinks to what is left &mdash; no gap. '
+      + 'A field left empty on one picture hides it on that picture only. Slide dots is the same switch as \u201cShow the bars along the bottom\u201d above.</div>';
+
+    [['d', 'Sizes on a computer'], ['m', 'Sizes on a phone']].forEach(function(dev){
+      html += '<div class="bns-lab" style="margin-top:14px">' + esc(dev[1]) + '</div><div class="bns-grid" style="margin-top:6px">';
+      Object.keys(T.sliders).forEach(function(k){
+        var r = T.sliders[k], lim = dev[0] === 'd' ? r[2] : r[3];
+        var unit = k === 'b' ? '%' : (k === 'w' ? (dev[0] === 'd' ? 'px' : '% of the width') : 'px');
+        var key = 'tb_size_' + k + '_' + dev[0];
+        html += num(key, r[0], unit + ' \u00b7 ' + lim[0] + ' to ' + lim[2] + ', default ' + lim[1], s[key], lim[0], lim[2], lim[3]);
+      });
+      html += '</div>';
+    });
+
+    return html + '<div class="bns-row" style="margin-top:10px"><button class="bns-btn" type="button" data-bns-tbreset>Reset sizes to default</button></div>';
+  }
+
+  /* ── LANE HB: ONE PICTURE'S WORDS, English and Arabic ── */
+  function wordsEditor(c, d, s){
+    var id = esc(c.id);
+    var LAB = {eyebrow: 'Eyebrow', heading: 'Heading', body: 'Short text', button_label: 'Button text', sticker: 'Sticker word (D)', sticker_ring: 'Sticker ring (D)'};
+    var field = function(k, ph, max, ar){
+      return fld(LAB[k.replace(/_ar$/, '')] + (ar ? ' \u00b7 العربية' : ''), '', '<input class="bns-in" type="text" placeholder="' + esc(ph) + '" maxlength="' + max + '" data-bns-card="' + id + '" data-bns-k="' + k + '" value="' + esc(d[k] == null ? '' : d[k]) + '"' + (ar ? ' dir="rtl" lang="ar"' : '') + '>');
+    };
+    var pane = function(sfx, ar){
+      return field('eyebrow' + sfx, ar ? 'السطر الصغير فوق العنوان' : 'Eyebrow, e.g. New in \u00b7 Glass skin', 120, ar)
+        + field('heading' + sfx, ar ? 'العنوان' : 'Heading, e.g. Glass skin starts here', 190, ar)
+        + field('body' + sfx, ar ? 'سطر قصير' : 'Short text, one line', 255, ar)
+        + field('button_label' + sfx, ar ? 'نص الزر' : 'Button text, e.g. Shop the Glow Edit', 80, ar)
+        + field('sticker' + sfx, ar ? 'كلمة الملصق (النمط D)' : 'Sticker word (style D), e.g. NEW', 24, ar)
+        + field('sticker_ring' + sfx, ar ? 'نص حول الملصق (النمط D)' : 'Words round the sticker (style D), e.g. JUST LANDED', 40, ar);
+    };
+    var T = data.enums.text_box || {positions: {}};
+    var pos = '<select class="bns-sel" data-bns-card="' + id + '" data-bns-k="box_pos">';
+    Object.keys(T.positions).forEach(function(k){
+      pos += '<option value="' + esc(k) + '"' + (String(d.box_pos || 'start') === k ? ' selected' : '') + '>Box position: ' + esc(T.positions[k]) + '</option>';
+    });
+    pos += '</select>';
+
+    return '<details class="bns-words"' + (d.box_on ? ' open' : '') + '><summary>Words on this picture'
+      + (d.box_on ? ' <span class="bns-on">showing</span>' : '') + '</summary>'
+      + '<div class="bns-row"><label class="bns-sw"><input type="checkbox" data-bns-card="' + id + '" data-bns-k="box_on"' + (d.box_on ? ' checked' : '') + '><span>Show words on this picture</span></label>' + pos + '</div>'
+      + '<div class="bns-help" style="margin-top:6px">Switches on by itself when you type. The button goes to <b>Where it goes</b> above; with no link there is no button. '
+      + 'Wrap a word or two of the heading in *stars* for the Sticker card\u2019s highlighter. '
+      + (d.image_m ? '' : '<b>This picture has no phone picture, so its words are hidden on phones</b> &mdash; a 1920 \u00d7 550 picture is too short there to hold them. ')
+      + '</div>'
+      + '<div class="bns-row"><button class="bns-btn is-primary" type="button" data-bns-wtab="en" data-bns-wcard="' + id + '">English</button>'
+      + '<button class="bns-btn" type="button" data-bns-wtab="ar" data-bns-wcard="' + id + '">العربية</button></div>'
+      + '<div class="bns-grid" data-bns-wpane="en" data-bns-wcard="' + id + '">' + pane('', false) + '</div>'
+      + '<div class="bns-grid" data-bns-wpane="ar" data-bns-wcard="' + id + '" hidden>' + pane('_ar', true)
+      + '<span class="bns-help">An Arabic field left empty shows the English words on the Arabic shop.</span></div>'
+      + '</details>';
+  }
+
   function editorView(){
     if (openId === null) return '';
 
@@ -828,6 +928,8 @@
         + 'A shopper can also swipe, and use the left and right arrow keys once he has tabbed into it. '
         + 'With one picture in the set neither is drawn, because there is nowhere to go.'
         + '</div>';
+
+      html += textBoxSection(s);
     } else if (single) {
       /* ── Lane RC: the single image. Its height is the picture's own, so
          there is no shape and no height control to offer -- only the two
@@ -1004,6 +1106,8 @@
               ? (slider && s.slider_fit === 'cover' && String(s.slider_ratio_m || 'auto') !== 'auto'
                   ? '<span class="bns-warn">No phone picture yet, so phones see only the middle of this one — sharp, but cropped to about a quarter of its width. Choose one at 500 × 600 to decide what they see.</span>'
                   : '<span class="bns-warn">No phone picture yet, so phones show this one whole — nothing cut, but a wide picture is a short strip on a phone (1920 × 550 is 112px tall at 390). Choose one at 500 × 600 for a taller phone banner.</span>')
+                /* Lane HB: and the words, if it has any, are not drawn there. */
+                + (slider && d.box_on ? '<span class="bns-warn">Its words are hidden on phones until it has a phone picture.</span>' : '')
               : '')
         + '</div>'
         /* THE THREE TEXT BOXES ARE THE CARDS ROW'S AND ARE NOT DRAWN FOR A
@@ -1022,7 +1126,9 @@
           + '<input class="bns-in" type="text" placeholder="Where it goes, e.g. /shop/" maxlength="400" data-bns-card="' + esc(c.id) + '" data-bns-k="button_url" value="' + esc(d.button_url) + '">'
           + '<input class="bns-in" type="text" placeholder="Picture description, for screen readers" maxlength="255" data-bns-card="' + esc(c.id) + '" data-bns-k="alt" value="' + esc(d.alt) + '">'
           + '<input class="bns-in" type="number" min="0" max="9999" placeholder="Order" data-bns-card="' + esc(c.id) + '" data-bns-k="position" value="' + esc(d.position) + '">'
-        + '</div></div></div>';
+        + '</div></div>'
+        + (slider ? wordsEditor(c, d, s) : '')
+        + '</div>';
     });
 
     html += '</div>';
@@ -1184,6 +1290,10 @@
 
       var apply = function(){
         draft.set[key] = el.type === 'checkbox' ? el.checked : (el.type === 'number' || el.type === 'range' ? Number(el.value) : el.value);
+        /* Lane HB: "Slide dots" in the Text box is the bars switch above; keep both boxes telling the truth. */
+        if (el.type === 'checkbox') {
+          document.querySelectorAll('[data-bns-set="' + key + '"]').forEach(function(o){ if (o !== el) o.checked = el.checked; });
+        }
         if (out) out.textContent = el.dataset.bnsHeight ? heightText(el.value) : el.value;
         if (key === 'bg_mode') {
           document.querySelectorAll('[data-bns-when]').forEach(function(w){
@@ -1299,11 +1409,37 @@
       } catch (e) { newCard.disabled = false; say(explain(e, 'Could not add a card.')); }
     };
 
+    /* Lane HB: the English / Arabic tabs of a picture's words, and Reset sizes. */
+    document.querySelectorAll('[data-bns-wtab]').forEach(function(b){
+      b.onclick = function(){
+        var card = b.dataset.bnsWcard;
+        document.querySelectorAll('[data-bns-wtab][data-bns-wcard="' + card + '"]').forEach(function(t){ t.classList.toggle('is-primary', t === b); });
+        document.querySelectorAll('[data-bns-wpane][data-bns-wcard="' + card + '"]').forEach(function(p){ p.hidden = p.dataset.bnsWpane !== b.dataset.bnsWtab; });
+      };
+    });
+
+    var tbReset = document.querySelector('[data-bns-tbreset]');
+    if (tbReset) {
+      tbReset.onclick = function(){
+        var D = (data.enums.text_box || {}).defaults || {};
+        Object.keys(D).forEach(function(k){ if (k.indexOf('size_') === 0) draft.set['tb_' + k] = D[k]; });
+        markDirty();
+        render();
+        refreshPreview();
+      };
+    }
+
     document.querySelectorAll('[data-bns-card]').forEach(function(el){
       var id = el.dataset.bnsCard;
       var key = el.dataset.bnsK;
       var apply = function(){
-        draft.cards[id][key] = el.type === 'number' ? Number(el.value) : el.value;
+        draft.cards[id][key] = el.type === 'checkbox' ? el.checked : (el.type === 'number' ? Number(el.value) : el.value);
+        /* Lane HB: writing words switches the picture's words on. */
+        if (WORD_KEYS.indexOf(key) !== -1 && el.closest('.bns-words') && String(el.value).trim() !== '' && !draft.cards[id].box_on) {
+          draft.cards[id].box_on = true;
+          var on = document.querySelector('[data-bns-card="' + id + '"][data-bns-k="box_on"]');
+          if (on) on.checked = true;
+        }
         markDirty();
         schedulePreview();
       };

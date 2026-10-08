@@ -558,6 +558,9 @@
     var data = new FormData(FORM);
     var out = {};
     data.forEach(function (value, key) { out[key] = value; });
+    /* The header carries this load's token; a body _token Firefox restored on
+       reload can be stale (see checkout.blade.php) and Laravel reads it first. */
+    delete out._token;
     return out;
   }
 
