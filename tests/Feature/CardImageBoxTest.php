@@ -99,7 +99,7 @@ it('reads the attributes and the frame off one map, so they cannot disagree', fu
     expect(app(ProductStyles::class)->cssVariables())->toContain('--kbb-ratio:1.2/1;');
 });
 
-it('leaves every homepage card lazy, because an eager first rail cost the banner its LCP', function () {
+it('gives no homepage card priority, because a prioritised first rail cost the banner its LCP; only the first section\'s visible row is eager', function () {
     /*
      * TRIED AND MEASURED, NOT SHIPPED (Lane PF2). The first rail's first two
      * cards were given the card's own `eager` prop -- the one /shop passes its
@@ -118,14 +118,27 @@ it('leaves every homepage card lazy, because an eager first rail cost the banner
      *
      * MUTATION, run: pass `:eager="$loop->index < 2"` in partials/home/grid
      * and this is red.
+     *
+     * ▲ Lane LZ: the first section's VISIBLE ROW is loading="eager" now, and
+     * still with NO fetchpriority -- the attribute PF2 found cost the banner.
+     * The owner's complaint was the row popping in after the page. Measured,
+     * cold, 390x844 DPR3 4x CPU on 9 Mbps / 150 ms, median of 5: every
+     * first-screen picture visible 1334 -> 1064 ms; the banner (LCP) 604 ->
+     * 660 ms. eager + fetchpriority="low" measured the same (1052 / 640), so
+     * no attribute was added for it. Every card after that row, and every
+     * other section, is still lazy -- which is the half of this pin that
+     * stays. Nothing on the homepage claims priority but the banner.
      */
     cibCatalogue();
 
-    $cards = cibCards((string) test()->get('/')->assertOk()->getContent());
+    $html = (string) test()->get('/')->assertOk()->getContent();
+    $cards = cibCards($html);
     expect(count($cards))->toBeGreaterThan(2);
 
-    foreach ($cards as $tag) {
-        expect(cibAttr($tag, 'loading'))->toBe('lazy', $tag)
+    $row = in_array('bundles', app(\App\Services\HomepageSections::class)->firstOnScreen(), true) && str_contains($html, 'id="bndl-track"')
+        ? \App\Support\HomeBundles::config()['above'] : 0;
+    foreach ($cards as $i => $tag) {
+        expect(cibAttr($tag, 'loading'))->toBe($i < $row ? 'eager' : 'lazy', $tag)
             ->and(cibAttr($tag, 'fetchpriority'))->toBeNull($tag);
     }
 });

@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require(path.join(__dirname, '..', 'node_modules', 'playwright'));
 const [dir, prof, slug, step, max, out, labels] = process.argv.slice(2);
-const names = { v405: '2.60.405', lzb: '2.60.443 (now)', lza: 'Lane LZ fix' };
+const names = { v405: '2.60.405', lzb: '2.60.443', lzm: 'main now (0e0affc2)', lza: 'Lane LZ fix' };
 (async () => {
   const W = prof === 'phone' ? 120 : 250;
   let html = '<body style="margin:0;padding:10px;font:12px system-ui;background:#fff"><table style="border-collapse:collapse">';

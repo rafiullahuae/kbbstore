@@ -346,7 +346,7 @@ it('states the FRAME\'s shape, never the file\'s, so it still cannot move anythi
     }
 });
 
-it('leaves the one eager tile eager and every other tile lazy', function () {
+it('leaves the one high-priority tile eager, the rest of its row eager without priority, and every other tile lazy', function () {
     // Lane DB's invariant, re-asserted with a srcset present, because srcset is
     // exactly the kind of change that gets copied onto every <img> in a file
     // along with whatever else is on the line.
@@ -362,8 +362,11 @@ it('leaves the one eager tile eager and every other tile lazy', function () {
     expect(tagAttribute($first, 'fetchpriority'))->toBe('high');
     expect(tagAttribute($first, 'srcset'))->not->toBeNull('the LCP tile is the one that most needs a smaller copy');
 
-    foreach ($photos as $tag) {
-        expect(tagAttribute($tag, 'loading'))->toBe('lazy', 'a tile below the first is not lazy: '.$tag);
+    // ▲ Lane LZ: the rest of the first ROW is eager too (no priority); every
+    // tile after it is lazy. SiteLayout::aboveFoldCards, AboveFoldImagesTest.
+    $row = app(\App\Services\SiteLayout::class)->aboveFoldCards();
+    foreach ($photos as $i => $tag) {
+        expect(tagAttribute($tag, 'loading'))->toBe($i + 1 < $row ? 'eager' : 'lazy', 'tile '.($i + 2).' is on the wrong side of the first row: '.$tag);
         expect(tagAttribute($tag, 'fetchpriority'))->toBeNull('only the LCP candidate may claim priority: '.$tag);
     }
 });
