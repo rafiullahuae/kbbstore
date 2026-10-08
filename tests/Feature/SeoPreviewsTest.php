@@ -1077,9 +1077,9 @@ it('measures the whole SEO surface, asserts every verdict and writes the preview
 
     $rows[] = spRow($C,
         'Product images in the sitemap — the whole gallery, de-duplicated, where Shopify emits the featured image only.',
-        'SEO-GAP §2 — NEW, off by default',
-        spCheck($imageTags > 0 && preg_match('#<image:loc>#', $sitemapEn) === 0),
-        'Ships OFF: 0 <image:loc> elements at the default. With Store → SEO & Meta → Settings · "Product images in sitemap" on: ' . $imageTags . ' <image:loc> elements. <image:loc> only — Google withdrew support for image:title, image:caption and image:license.',
+        'SEO-GAP §2 — built off by default; ON since Lane SEO at the owner\'s request',
+        spCheck($imageTags > 0 && preg_match('#<image:loc>#', $sitemapEn) === 1),
+        'Ships ON (Lane SEO, ahead of the move onto kbeautybliss.com): ' . preg_match_all('#<image:loc>#', $sitemapEn) . ' <image:loc> elements at the default, ' . $imageTags . ' with Store → SEO & Meta → Settings · "Product images in sitemap" set explicitly. <image:loc> only — Google withdrew support for image:title, image:caption and image:license.',
         'app/Http/Controllers/Store/SeoFilesController.php:879');
 
     $rows[] = spRow($C,

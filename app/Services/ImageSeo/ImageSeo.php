@@ -227,5 +227,14 @@ final class ImageSeo
 
         \App\Models\Setting::flushMap();
         \App\Services\SettingsService::forgetMemo();
+
+        // The Google Shopping feed keys its cache on a stamp the rename's
+        // query-builder writes cannot move (Lane SEO). WebpReferences already
+        // bumps it on every write; said again here so an alt-only run and a
+        // future writer cannot miss it. The image sitemap and the JSON-LD are
+        // built from live rows on each request and hold no cache to clear.
+        if (class_exists(\App\Services\Seo\MerchantFeed::class)) {
+            \App\Services\Seo\MerchantFeed::forget();
+        }
     }
 }

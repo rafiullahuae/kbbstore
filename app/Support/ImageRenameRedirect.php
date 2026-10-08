@@ -4,37 +4,28 @@ declare(strict_types=1);
 
 namespace App\Support;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The 301 from a picture's old address to the name Catalog → Image SEO gave
- * it. (Lane IR)
+ * Where a picture Catalog → Image SEO renamed lives now, from its ledger.
+ * (Lane IR)
  *
- * ── ONE ENTRY POINT ────────────────────────────────────────────────────────
+ * NOT AN ENTRY POINT OF ITS OWN. The 404 handler has one image redirect,
+ * App\Support\LegacyImageRedirect (Lane SEO), and this ledger is one of the
+ * move records it follows (its movedTo()), beside webp_conversions — so an old
+ * WordPress URL, a pre-WebP URL and a pre-rename URL all reach the file that
+ * exists now in ONE 301, and so do their img-cache copies.
  *
- * targetFor($request) is the whole public surface the 404 handler calls
- * (AppServiceProvider's NotFoundHttpException renderable, after the Store →
- * Redirects match and before the 404 is logged). resolvePath($rel) is the same
- * answer for a caller that already has a web-root-relative path — another
- * image redirect (the SEO lane's /wp-content/uploads → current image) passes
- * its own target through here so a renamed picture is still ONE hop.
+ *   ledgerTarget($rel)  exact old path → new path; one indexed query on
+ *                       image_renames.old_path. What LegacyImageRedirect asks.
+ *   resolvePath($rel)   the same for a path OR any img-cache copy of it, with
+ *                       no disk check — ImageRenamer's in-transaction proof that
+ *                       the old address will redirect before anything commits
+ *                       (the old file is still on disk at that moment, so a
+ *                       disk-following answer would be "no move" there).
  *
- * ── WHY IT CANNOT COST A NORMAL PAGE ANYTHING ──────────────────────────────
- *
- * It runs only for a request that already MISSED: the web server serves a
- * file that exists without starting PHP, and Laravel reaches its 404 handler
- * only after no route matched. Then a string test throws out everything that
- * is not a picture under an upload root or img-cache (bots asking for
- * /wp-login.php cost nothing), and what is left is ONE indexed query on
- * image_renames.old_path.
- *
- * ── THE OLD COPIES REDIRECT TOO ────────────────────────────────────────────
- *
- * A page cached before the rename (by the host, by a browser, by the shop
- * app's service worker) asks for `img-cache/400/uploads/products/old.jpg` in
- * its srcset. Those answer with the matching copy of the new file — and with
- * the new original when that width was never made — never a 404.
+ * Chains are collapsed when the ledger is written (A→B then B→C leaves A→C),
+ * so either answer is already the final name.
  */
 final class ImageRenameRedirect
 {
@@ -42,34 +33,22 @@ final class ImageRenameRedirect
 
     private const JPG_SUFFIXED = ['share', 'share-sq'];
 
-    /** The URL to send this request to, or null when it is not a renamed picture. */
-    public static function targetFor(Request $request): ?string
+    /** Exact old path → its new path, or null. */
+    public static function ledgerTarget(string $rel): ?string
     {
-        if (! $request->isMethod('GET') && ! $request->isMethod('HEAD')) {
+        $rel = ltrim($rel, '/');
+
+        if ($rel === '' || strlen($rel) > 600) {
             return null;
         }
 
-        $path = rawurldecode($request->getPathInfo());
-        $root = rtrim($request->getBaseUrl(), '/');
-
-        // A base path the routes carry (KBB_BASE_PATH on the old staging box)
-        // is part of the address, not of the path below the web root.
-        $base = Url::base();
-
-        if ($base !== '' && $base !== $root && str_starts_with($path, $base.'/')) {
-            $path = substr($path, strlen($base));
-            $root .= $base;
-        }
-
-        $target = self::resolvePath(ltrim($path, '/'));
-
-        if ($target === null) {
+        try {
+            $to = DB::table('image_renames')->where('old_path', $rel)->where('status', 'done')->orderByDesc('id')->value('new_path');
+        } catch (\Throwable) {
             return null;
         }
 
-        $encoded = implode('/', array_map('rawurlencode', explode('/', $target)));
-
-        return $root.'/'.$encoded;
+        return is_string($to) && $to !== '' ? $to : null;
     }
 
     /** The web-root-relative path a renamed picture (or copy of one) now lives at. */

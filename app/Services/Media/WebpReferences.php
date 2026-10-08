@@ -151,6 +151,12 @@ final class WebpReferences
             Setting::flushMap();
         }
 
+        // These writes bypass Eloquent, so products.updated_at does not move and
+        // the Google Shopping feed's cache stamp cannot see them (Lane SEO).
+        if ($write && $out['replacements'] > 0) {
+            \App\Services\Seo\MerchantFeed::forget();
+        }
+
         return $out;
     }
 

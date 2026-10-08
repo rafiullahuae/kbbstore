@@ -225,6 +225,8 @@ final class AdminNav
             ['id' => 'newsletter', 'label' => 'Newsletter', 'read' => 'admin-api/newsletter', 'icon' => '<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],
             ['id' => 'labels', 'label' => 'Product Labels', 'read' => 'admin-api/product-labels', 'icon' => '<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],
             ['id' => 'meta', 'label' => 'Meta & Facebook', 'cap' => 'marketing.view', 'tag' => 'lock', 'icon' => '<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>'],
+            // Growth & Marketing -> Google Shopping feed (Lane SEO): the product feed for Merchant Center and Meta.
+            ['id' => 'merchantfeed', 'label' => 'Google Shopping feed', 'read' => 'admin-api/merchant-feed', 'late' => true, 'icon' => '<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/><path d="M3 11h2M2 14h3"/>'],
             ['id' => 'pixels', 'label' => 'Marketing Pixels', 'read' => 'admin-api/marketing-pixels', 'icon' => '<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>'],
             ['id' => 'searchterms', 'label' => 'Search Terms', 'read' => 'admin-api/search-terms', 'late' => true, 'icon' => '<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/><path d="M8 11h6"/><path d="M11 8v6"/>'],
             ['id' => 'carttracking', 'label' => 'Cart Tracking', 'read' => 'admin-api/cart-tracking', 'late' => true, 'icon' => '<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/><path d="m11 10 2 2 3-3"/>'],

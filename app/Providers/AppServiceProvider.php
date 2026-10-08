@@ -645,20 +645,15 @@ class AppServiceProvider extends ServiceProvider
                     return redirect(\App\Support\Url::redirect($redirect->target, $request), $redirect->code);
                 }
 
-                /*
-                 * A picture Catalog -> Image SEO renamed (Lane IR): its old
-                 * address, or any old img-cache copy of it, answers 301 with the
-                 * new one in a single hop. Reached only by a request that has
-                 * already missed both the disk and every route, and costs one
-                 * indexed query on image_renames for a picture path, nothing at
-                 * all for anything else. App\Support\ImageRenameRedirect is the
-                 * one entry point; another image redirect joins it there.
-                 */
-                if (($renamed = \App\Support\ImageRenameRedirect::targetFor($request)) !== null) {
-                    // Root-relative on purpose: the scheme and host are the
-                    // visitor's own, so a proxy that hides https cannot turn
-                    // this into an http:// hop.
-                    return new \Illuminate\Http\RedirectResponse($renamed, 301);
+                // An old picture address (Google Images' /wp-content/uploads/…
+                // index, a WordPress sized copy, a JPEG since turned into WebP)
+                // sent to the file that shows that picture now. Only 404s reach
+                // this line, and the class leaves at once for anything not under
+                // an upload root or img-cache -- see App\Support\LegacyImageRedirect
+                // (Lane SEO). A picture Catalog -> Image SEO renamed (Lane IR)
+                // is answered by the same class, from its ledger, in one hop.
+                if (($legacyImage = \App\Support\LegacyImageRedirect::respond($request)) !== null) {
+                    return $legacyImage;
                 }
 
                 if ($request->isMethod('GET') && !$request->is('admin*', 'admin-api*', 'api*')) {

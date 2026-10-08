@@ -42,6 +42,10 @@ Route::withoutMiddleware(SeoFilesController::STATELESS)->group(function () {
     Route::get('/robots.txt',  [SeoFilesController::class, 'robots']);
     Route::get('/llms.txt',    [SeoFilesController::class, 'llms']);
 
+    // The Google Merchant Center product feed (Lane SEO): /feeds/google-merchant.xml,
+    // machine-read like the three files above. Growth & Marketing -> Google Shopping feed.
+    require __DIR__.'/merchant-feed.php';
+
     /*
      * The fourth document of the same kind (Lane WAL): Apple's domain
      * association file, machine-read, no session and no per-visitor content.
@@ -571,6 +575,10 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Growth & Marketing → Push Notifications (Lane PN): campaigns to the shop
         // app's subscribed phones, the automations, analytics. push.view / push.send.
         require __DIR__.'/push-admin.php';
+
+        // Growth & Marketing → Google Shopping feed (Lane SEO): the feed switch,
+        // its address and contents. marketing.feed, owner and manager.
+        require __DIR__.'/merchant-feed-admin.php';
 
         /*
          * Store → SEO & Meta → SEO Audit. Lane S. Same group, same reason.

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Items of one variable product (grouped by item_group_id), from the same feed. -->
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>sample</title><link>https://kbeautybliss.test/</link><description>sample</description>
+<item>
+<g:id>SEO-5-30ml</g:id>
+<g:item_group_id>SEO-5</g:item_group_id>
+<g:title>Seo Lab Toner 5</g:title>
+<g:description>A gentle hydrating toner with centella, number 5.</g:description>
+<g:link>https://kbeautybliss.test/product/seo-product-5/</g:link>
+<g:image_link>https://kbeautybliss.test/wp-content/uploads/2021/05/seo-product-5.jpg</g:image_link>
+<g:additional_image_link>https://kbeautybliss.test/wp-content/uploads/2021/05/seo-product-5-2.jpg</g:additional_image_link>
+<g:additional_image_link>https://kbeautybliss.test/wp-content/uploads/2021/05/seo-product-5-3.jpg</g:additional_image_link>
+<g:availability>in_stock</g:availability>
+<g:price>99.00 AED</g:price>
+<g:brand>SEO Lab</g:brand>
+<g:identifier_exists>no</g:identifier_exists>
+<g:condition>new</g:condition>
+<g:product_type>Skincare &gt; Toners</g:product_type>
+</item>
+<item>
+<g:id>SEO-5-100ml</g:id>
+<g:item_group_id>SEO-5</g:item_group_id>
+<g:title>Seo Lab Toner 5</g:title>
+<g:description>A gentle hydrating toner with centella, number 5.</g:description>
+<g:link>https://kbeautybliss.test/product/seo-product-5/</g:link>
+<g:image_link>https://kbeautybliss.test/wp-content/uploads/2021/05/seo-product-5.jpg</g:image_link>
+<g:additional_image_link>https://kbeautybliss.test/wp-content/uploads/2021/05/seo-product-5-2.jpg</g:additional_image_link>
+<g:additional_image_link>https://kbeautybliss.test/wp-content/uploads/2021/05/seo-product-5-3.jpg</g:additional_image_link>
+<g:availability>in_stock</g:availability>
+<g:price>159.00 AED</g:price>
+<g:brand>SEO Lab</g:brand>
+<g:identifier_exists>no</g:identifier_exists>
+<g:condition>new</g:condition>
+<g:product_type>Skincare &gt; Toners</g:product_type>
+</item>
+</channel></rss>

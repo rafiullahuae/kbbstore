@@ -601,6 +601,14 @@ final class AdminCapabilities
         'push.view' => ['owner', 'manager'],
         'push.send' => ['owner', 'manager'],
 
+        /*
+         * Growth & Marketing -> Google Shopping feed (Lane SEO): read the feed's
+         * address and contents, and switch the public feed on or off. The feed
+         * itself is public by design (Merchant Center fetches it); this guards
+         * only the switch. Same owners as the other marketing tools.
+         */
+        'marketing.feed' => ['owner', 'manager'],
+
         // Delivery rates and the pay/ship rules: a manager's job, not a
         // configuration change.
         'store.shipping' => ['owner', 'manager'],
@@ -1863,6 +1871,9 @@ final class AdminCapabilities
         ['POST', 'admin-api/push/count', 'push.view'],
         ['*', 'admin-api/push', 'push.send'],
         ['*', 'admin-api/push/**', 'push.send'],
+        // Google Shopping feed (Lane SEO). Both lines: `/**` does not match the bare prefix.
+        ['*', 'admin-api/merchant-feed', 'marketing.feed'],
+        ['*', 'admin-api/merchant-feed/**', 'marketing.feed'],
         /*
          * Marketing Emails (Lane MK), every route in routes/marketing-emails-
          * admin.php. SEND FIRST, then the export, then the two POSTs that only

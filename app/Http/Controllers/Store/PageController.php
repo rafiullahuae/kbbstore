@@ -139,6 +139,8 @@ class PageController extends Controller
         'storage', 'build', 'uploads', 'assets', 'images', 'fonts',
         // WordPress leftovers the old site still gets crawled for
         'wp-content', 'wp-admin', 'wp-includes', 'wp-json', 'feed',
+        // The Google Merchant Center product feed, /feeds/google-merchant.xml (Lane SEO)
+        'feeds',
     ];
 
     public function __construct(private SettingsService $settings) {}

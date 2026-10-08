@@ -809,6 +809,9 @@ final class AdminSearchIndex
             'Blocked' => ['Block this address or its range'],
             'Settings' => [],
         ],
+        'merchantfeed' => [
+            '' => ['Google Shopping feed', 'Feed address', 'Merchant Center', 'What the feed holds'],
+        ],
         'push' => [
             'Campaigns' => ['New campaign', 'Who receives it', 'Emirate (where the phone is)', 'Send a test to my phone', 'Schedule', 'Send now'],
             'Automations' => ['Order updates', 'Back in stock', 'Basket reminder', 'Price drop', 'Wording (English · Arabic)'],

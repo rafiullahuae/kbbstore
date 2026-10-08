@@ -326,16 +326,16 @@ it('renames every picture, its copies and every reference, with a 301 from each 
     // The old address and an old phone-size copy each answer 301, one hop, to a file that is there.
     $old = test()->get('/'.$r['m2']);
     $old->assertStatus(301);
-    expect($old->headers->get('Location'))->toBe('/'.$new['m2']);
+    expect(parse_url((string) $old->headers->get('Location'), PHP_URL_PATH))->toBe('/'.$new['m2']);
 
     $copy = test()->get('/img-cache/400/'.$r['m4']);
     $copy->assertStatus(301);
-    expect($copy->headers->get('Location'))->toBe('/img-cache/400/'.$new['m4'])
+    expect(parse_url((string) $copy->headers->get('Location'), PHP_URL_PATH))->toBe('/img-cache/400/'.$new['m4'])
         ->and(is_file(public_path('img-cache/400/'.$new['m4'])))->toBeTrue();
 
     // Something that was never renamed is still an ordinary 404.
     test()->get('/uploads/products/never-was.jpg')->assertNotFound();
-    // MUTATION: remove the ImageRenameRedirect line from AppServiceProvider's 404 handler and the first 301 is a 404.
+    // MUTATION: drop the ImageRenameRedirect::ledgerTarget() line from LegacyImageRedirect::movedTo() and the first 301 is a 404.
 });
 
 it('keeps the product page complete after a rename: the same srcset widths, every one a file on disk', function () {
@@ -600,6 +600,7 @@ it('never treats another host, a traversal, a customer folder or a non-picture a
         ->and(ImageFiles::local('/uploads/products/a%20b.jpg'))->toBe('uploads/products/a b.jpg')
         ->and(ImageFiles::local(irUrl('wp-content/uploads/2023/05/a.jpg')))->toBe('wp-content/uploads/2023/05/a.jpg')
         ->and(ImageRenameRedirect::resolvePath('../../etc/passwd.jpg'))->toBeNull()
+        ->and(\App\Support\LegacyImageRedirect::targetFor('img-cache/400/../../.env.jpg'))->toBeNull()
         ->and(ImageRenameRedirect::resolvePath('wp-login.php'))->toBeNull();
 });
 
@@ -723,4 +724,31 @@ it('renames a file written two ways on one product once, and both spellings foll
         ->and($p->images)->toBe(['/uploads/products/anua-heartleaf-toner.jpg'])
         ->and(is_file(public_path('uploads/products/anua-heartleaf-toner.jpg')))->toBeTrue();
     // MUTATION: drop the `same_as` branch in ImageSeoPlanner and the second spelling is planned as its own rename of a file the first already moved: rolled back.
+});
+
+
+it('sends an old WordPress sized copy, a pre-WebP name and a pre-rename name to the final file in one 301', function () {
+    irRoot();
+    $brand = Brand::create(['name' => 'COSRX', 'slug' => 'ir-cosrx-3']);
+    // A JPEG turned into WebP with its original REMOVED, then renamed here.
+    irPicture('uploads/products/snail.webp', 2, 'webp');
+    ImageVariants::generate('/uploads/products/snail.webp');
+    DB::table('webp_conversions')->insert(['from_path' => 'uploads/products/snail.jpg', 'to_path' => 'uploads/products/snail.webp',
+        'origin' => 'bulk', 'status' => 'removed', 'refs_done' => true, 'created_at' => now(), 'updated_at' => now()]);
+    $p = Product::create(['name' => 'COSRX Snail Mucin Essence', 'slug' => 'ir-cosrx-snail-3', 'brand_id' => $brand->id, 'price' => 100, 'image' => '/uploads/products/snail.webp']);
+
+    irRename([$p->id]);
+    $final = 'uploads/products/cosrx-snail-mucin-essence.webp';
+
+    expect(is_file(public_path($final)))->toBeTrue()
+        ->and(\App\Support\LegacyImageRedirect::targetFor('uploads/products/snail.webp'))->toBe($final)
+        ->and(\App\Support\LegacyImageRedirect::targetFor('uploads/products/snail.jpg'))->toBe($final)
+        ->and(\App\Support\LegacyImageRedirect::targetFor('uploads/products/snail-600x600.jpg'))->toBe($final)
+        ->and(\App\Support\LegacyImageRedirect::targetFor('img-cache/400/uploads/products/snail.webp'))->toBe('img-cache/400/'.$final)
+        // A width that was never made: the new original, still a picture.
+        ->and(\App\Support\LegacyImageRedirect::targetFor('img-cache/1600/uploads/products/snail.webp'))->toBe($final);
+
+    $res = test()->get('/uploads/products/snail.jpg');
+    $res->assertStatus(301);
+    expect(parse_url((string) $res->headers->get('Location'), PHP_URL_PATH))->toBe('/'.$final);
 });
