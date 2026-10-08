@@ -466,9 +466,27 @@ class CheckoutController extends Controller
 
         $cart = $this->loadCart($request);
 
+        /*
+         * A CARD ATTEMPT THIS BROWSER LEFT BEHIND IS PUT AWAY FIRST (Lane CO).
+         *
+         * Placing a card order marks the basket `converted` before the card is
+         * confirmed, and the page keeps the order's handle so a second card
+         * reuses it. Anything that loses that handle — a release request still
+         * in flight when Place order is pressed again, a release Stripe would
+         * not confirm, a second script on the page — left this press finding
+         * no basket and answering "Your bag is empty." over a page full of
+         * items. resumeCardBasket() releases that attempt the way "return to
+         * your basket" does (intent cancelled at Stripe first, stock and coupon
+         * handed back) and this press places a fresh order from the fields as
+         * they now read. One order, one claim: never two live ones.
+         */
+        if (! $cart || $cart->items->isEmpty()) {
+            $cart = $this->resumeCardBasket($request) ?? $cart;
+        }
+
         if (! $cart || $cart->items->isEmpty()) {
             return $request->expectsJson()
-                ? $this->refused($request, 'Your bag is empty.')
+                ? $this->bagGone($request)
                 : redirect(Url::redirect('/cart/', $request))->withErrors('Your bag is empty.');
         }
 
@@ -878,7 +896,10 @@ class CheckoutController extends Controller
                 // on the next line — no query of its own.
                 app(\App\Services\CartTracking\CartTracker::class)->converted($cart, $order);
 
-                $cart->forceFill(['status' => 'converted', 'converted_at' => now()])->save();
+                // converted_order_id (Lane CO): which order this basket became,
+                // so putting it back can never re-open a basket a LATER attempt
+                // converted. Same save, no query of its own. See BasketRelease.
+                $cart->forceFill(['status' => 'converted', 'converted_at' => now(), 'converted_order_id' => $order->id])->save();
 
                 return $order;
             });
@@ -894,7 +915,16 @@ class CheckoutController extends Controller
              * it lands above the form with everything they typed still in the
              * fields. That is the promise this change makes: the customer is
              * told, in words, before any money moves.
+             *
+             * THROUGH THE JSON DOOR IT IS A DIALOG (Lane CO), at the owner's
+             * request: every line that cannot be bought, named, with one press
+             * to take them out and carry on. `error` is still the sentence, for
+             * a script that only reads that.
              */
+            if ($request->expectsJson()) {
+                return $this->soldOutAnswer($request, $cart, $e);
+            }
+
             return $this->refused($request, $e->getMessage());
         } catch (\App\Services\CouponExhausted $e) {
             // The code ran out between this shopper applying it and pressing
@@ -999,15 +1029,26 @@ class CheckoutController extends Controller
              * answer to "was this code given back", and
              * `coupon_redemptions.released_at` is where it is written down.
              */
-            // Lane RL: the shopper is looking at this failure on screen, so no
-            // "payment failed" email for it -- the 30-minute reminder follows up.
-            app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideFor($order, false);
-            app(\App\Services\Orders\OrderStatus::class)->moveTo(
+            /*
+             * ▲ AND THE BASKET GOES BACK (Lane CO). This branch used to fail
+             * the order and stop, leaving the cart `converted` — and
+             * CartService only ever finds an `active` one. So the shopper read
+             * the gateway's sentence once, pressed Place order again, and was
+             * told "Your bag is empty." over a page still listing their items,
+             * on every card they tried. That is the owner's report of
+             * 8 October, word for word. A payment that never started has
+             * bought nothing; the basket is theirs.
+             *
+             * MUTATION: put the bare moveTo() back and CheckoutCardRetryTest's
+             * "keeps the basket when Stripe refuses to open the payment" answers
+             * the retry with "Your bag is empty.".
+             */
+            app(\App\Services\Checkout\BasketRelease::class)->failAndRestore(
                 $order,
-                'failed',
-                by: 'system',
-                reason: 'The payment could not be started.',
+                $cart,
+                'The payment could not be started.',
             );
+            $this->carts->forget();
 
             return $this->refused(
                 $request,
@@ -1076,15 +1117,15 @@ class CheckoutController extends Controller
              * told what to do instead.
              */
             if (! $request->expectsJson()) {
-                // Lane RL: the shopper is looking at this failure on screen, so no
-                // "payment failed" email for it -- the 30-minute reminder follows up.
-                app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideFor($order, false);
-                app(\App\Services\Orders\OrderStatus::class)->moveTo(
+                // Failed AND the basket put back (Lane CO) -- the shopper is
+                // told to switch JavaScript on and try again, and "again" must
+                // find their basket. See the gateway-refused branch above.
+                app(\App\Services\Checkout\BasketRelease::class)->failAndRestore(
                     $order,
-                    'failed',
-                    by: 'system',
-                    reason: 'The card form could not be completed in this browser.',
+                    $cart,
+                    'The card form could not be completed in this browser.',
                 );
+                $this->carts->forget();
 
                 return back()->withInput()->withErrors(
                     'Paying by card needs JavaScript switched on in your browser. '
@@ -1160,6 +1201,227 @@ class CheckoutController extends Controller
         }
 
         return back()->withInput()->withErrors($message);
+    }
+
+    /**
+     * The refusal for a basket holding something that cannot be bought, as the
+     * checkout's sold-out dialog reads it. (Lane CO)
+     *
+     * `lines` is every line that cannot be bought as it stands — asked of each
+     * line on its own by CartService::unavailableLines(), so a second sold-out
+     * line is listed now rather than discovered on the next press. `keep` is 0
+     * for a line that has to go and n where only n can be bought. Every
+     * sentence is rendered here, in the shopper's language, so the script
+     * builds the dialog with textContent and translates nothing itself.
+     *
+     * If no single line is refused on its own (two lines that only run out
+     * together), `lines` is empty and the dialog shows the sentence with the
+     * way back to the basket — the honest answer, rather than a guess at
+     * which one to remove.
+     */
+    private function soldOutAnswer(Request $request, $cart, \App\Services\StockUnavailable $e): JsonResponse
+    {
+        $lines = [];
+
+        foreach ($this->carts->unavailableLines($cart) as $id => $line) {
+            $lines[] = [
+                'id' => $id,
+                'keep' => $line['keep'],
+                'text' => $line['keep'] > 0
+                    ? __('store.checkout.so_line_short', ['name' => $line['subject'], 'left' => $line['keep']])
+                    : __('store.checkout.so_line_gone', ['name' => $line['subject']]),
+            ];
+        }
+
+        return response()->json([
+            'ok' => false,
+            'code' => 'sold_out',
+            'error' => $e->getMessage(),
+            'lines' => $lines,
+            'dialog' => $this->soldOutStrings(),
+        ], 422);
+    }
+
+    /** The dialog's own words, in the shopper's language. */
+    private function soldOutStrings(): array
+    {
+        return [
+            'title' => __('store.checkout.so_title'),
+            'intro' => __('store.checkout.so_intro'),
+            'remove' => __('store.checkout.so_remove'),
+            'cart' => __('store.checkout.back_to_cart'),
+            'cartUrl' => Url::to('/cart/'),
+            // The dialog's own endpoint, sent with the refusal rather than
+            // printed on every checkout: a page that never meets a sold-out
+            // line carries no byte of this feature.
+            'url' => Url::to('/checkout/sold-out'),
+            'working' => __('store.checkout.so_working'),
+            'failed' => __('store.checkout.so_failed'),
+            'empty' => __('store.checkout.so_empty'),
+            'shop' => __('store.checkout.so_shop'),
+            'shopUrl' => Url::to('/shop/'),
+            'done' => __('store.checkout.so_done'),
+        ];
+    }
+
+    /**
+     * "Remove and continue", from the sold-out dialog. (Lane CO)
+     *
+     * TAKES LINE IDS, AND TRUSTS NONE OF THEM. Only a line of THIS browser's
+     * own basket (loadCart(): the cart cookie, or the signed-in customer's
+     * basket) can be touched, and only one that a fresh probe still refuses —
+     * so a posted id from someone else's basket matches nothing, and an
+     * in-stock line posted by a stale dialog or by hand is left exactly as it
+     * is. A line that can be partly bought is cut to what is there rather than
+     * removed. CSRF and the session come from the `web` group
+     * (routes/checkout-card.php); throttled there too.
+     *
+     * Answers with the same regions the quantity stepper repaints, so the
+     * shopper stays on the page with everything they typed, and their next
+     * press of Place order is priced on the basket they now see.
+     */
+    public function soldOutRemove(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'item_ids' => ['required', 'array', 'min:1', 'max:50'],
+            'item_ids.*' => ['integer'],
+            'country' => ['nullable', 'string', 'size:2'],
+            'state' => ['nullable', 'string', 'max:120'],
+            'payment_method' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $cart = $this->loadCart($request);
+
+        if (! $cart || $cart->items->isEmpty()) {
+            return $this->bagGone($request);
+        }
+
+        $asked = array_values(array_unique(array_map('intval', $data['item_ids'])));
+        $changed = [];
+
+        foreach ($this->carts->unavailableLines($cart, $asked) as $id => $line) {
+            $this->carts->updateQuantity($cart, $id, $line['keep']);
+            $changed[] = $id;
+        }
+
+        $this->carts->forget();
+        $cart = $this->loadCart($request);
+
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json([
+                'ok' => true,
+                'empty' => true,
+                'count' => 0,
+                'changed' => $changed,
+                'message' => __('store.checkout.so_empty'),
+                'redirect' => Url::to('/shop/'),
+            ]);
+        }
+
+        return response()->json(
+            ['ok' => true, 'empty' => false, 'changed' => $changed]
+            + $this->fragments($request, $cart, $data)
+        );
+    }
+
+    /**
+     * The basket an earlier card attempt from THIS browser converted, re-opened
+     * — or null when there is none, or it is not safe to.
+     *
+     * Every condition is one the shopper already holds and none is taken from
+     * the request body: the order is the one `kbb_last_order` names (place()
+     * writes it for the browser that placed it), the basket is the one this
+     * browser's cart cookie names, and the basket must have been converted INTO
+     * that order (BasketRelease::cartBelongsTo()).
+     *
+     * An order still awaiting its card is released only once Stripe says the
+     * intent is cancelled (or was never opened). If Stripe says the money has
+     * moved — a 3-D Secure window that finished in the background — nothing is
+     * touched and bagGone() sends the shopper to their order.
+     */
+    private function resumeCardBasket(Request $request): ?\App\Models\Cart
+    {
+        $number = trim((string) $request->session()->get('kbb_last_order', ''));
+        $token = trim((string) $request->cookie(CartService::COOKIE));
+
+        if ($number === '' || $token === '') {
+            return null;
+        }
+
+        $order = Order::where('order_number', $number)->first();
+
+        if ($order === null || $order->paid_at !== null || $order->payment_method !== 'stripe') {
+            return null;
+        }
+
+        $cart = \App\Models\Cart::query()
+            ->where('token', $token)
+            ->where('status', 'converted')
+            ->first();
+
+        $release = app(\App\Services\Checkout\BasketRelease::class);
+
+        if ($cart === null || ! $release->cartBelongsTo($cart, $order)) {
+            return null;
+        }
+
+        $state = app(\App\Services\Checkout\PlacementState::class)->forOrder($order);
+
+        if ($state === \App\Services\Checkout\PlacementState::CONFIRMED) {
+            return null;
+        }
+
+        if ($state === \App\Services\Checkout\PlacementState::AWAITING) {
+            $gateway = app(\App\Services\Payments\GatewayRegistry::class)->find('stripe');
+
+            if (! $gateway instanceof \App\Services\Payments\Gateways\StripeGateway || ! $gateway->abandonIntent($order)) {
+                return null;
+            }
+        }
+
+        if (! $release->failAndRestore($order, $cart, 'The shopper placed the order again; this card attempt was released.')) {
+            return null;
+        }
+
+        $request->session()->forget('kbb_last_order');
+        $this->carts->forget();
+
+        return $this->loadCart($request);
+    }
+
+    /**
+     * "Your bag is empty", said so that it cannot contradict the page. (Lane CO)
+     *
+     * The page the shopper is looking at lists their items, so a bare "Your
+     * bag is empty." reads as a broken checkout. If this browser's last order
+     * went ahead (or is still with the bank), they are told so and given the
+     * order; otherwise they are told the basket changed elsewhere and given
+     * the basket. `error` keeps its old meaning for any script that reads only
+     * that; `code` and `url` are what the card form and the overlay use.
+     */
+    private function bagGone(Request $request): JsonResponse
+    {
+        $number = trim((string) $request->session()->get('kbb_last_order', ''));
+        $order = $number === '' ? null : Order::where('order_number', $number)->first();
+        $state = app(\App\Services\Checkout\PlacementState::class)->forOrder($order);
+
+        if ($order !== null && $state !== \App\Services\Checkout\PlacementState::REFUSED) {
+            return response()->json([
+                'ok' => false,
+                'code' => 'bag_gone',
+                'error' => __('store.checkout.bag_gone_ordered', ['number' => $order->order_number]),
+                'url' => Url::to('/checkout/success') . '?order=' . urlencode((string) $order->order_number),
+                'link' => __('store.checkout.bag_gone_view_order'),
+            ], 422);
+        }
+
+        return response()->json([
+            'ok' => false,
+            'code' => 'bag_gone',
+            'error' => __('store.checkout.bag_gone'),
+            'url' => Url::to('/cart/'),
+            'link' => __('store.checkout.bag_gone_view_cart'),
+        ], 422);
     }
 
     /* ------------------------------------------- the card form's two reports */
@@ -1279,62 +1541,28 @@ class CheckoutController extends Controller
             ->where('status', 'converted')
             ->first();
 
-        $released = false;
-
-        DB::transaction(function () use ($order, $cart, &$released) {
-            // Lane RL: the shopper is looking at this failure on screen, so no
-            // "payment failed" email for it -- the 30-minute reminder follows up.
-            app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideFor($order, false);
-            app(\App\Services\Orders\OrderStatus::class)->moveTo(
-                $order,
-                'failed',
-                by: 'system',
-                /*
-                 * True of both callers, which is why it does not say "returned
-                 * to their basket". One is the control beside a decline, which
-                 * does send them back; the other is a field they corrected
-                 * afterwards, which replaces this order in place and leaves
-                 * them where they are.
-                 */
-                reason: 'The card payment was cancelled before it completed; the basket was restored.',
-                only: ['paid_at' => null],
-            );
-
-            /*
-             * ▲ THE BASKET GOES BACK ONLY IF THE ORDER REALLY IS OVER.
-             *
-             * `only: ['paid_at' => null]` is an admission that this row can
-             * change under us — it is re-read under lockForUpdate inside
-             * moveTo() precisely because the `paid_at` test forty lines above
-             * was made on a stale read. But moveTo()'s answer was DISCARDED
-             * here and the cart write below ran regardless, so a confirmation
-             * landing in that window left the order paid AND the basket live:
-             * the shopper holds a bag of goods they have been charged for, and
-             * the units are never released because the order never moved.
-             *
-             * The same defect was found and fixed on the instalment leg
-             * (Store\CheckoutReturnController::restore()); this is its sibling,
-             * and the two are now the same shape.
-             *
-             * moveTo()'s null cannot be the test, because it means both "the
-             * precondition did not hold" and "already there with nothing else
-             * to record" — and the second is an ordinary shopper whose order
-             * was already `failed`, who is owed their basket. The row answers
-             * both at once, under the same lock, inside the same transaction.
-             */
-            $fresh = Order::query()->whereKey($order->getKey())->lockForUpdate()->first();
-
-            $released = $fresh !== null
-                && $fresh->paid_at === null
-                && app(\App\Services\Checkout\PlacementState::class)->forOrder($fresh)
-                    === \App\Services\Checkout\PlacementState::REFUSED;
-
-            if (! $released) {
-                return;
-            }
-
-            $cart?->forceFill(['status' => 'active', 'converted_at' => null, 'last_activity_at' => now()])->save();
-        });
+        /*
+         * Failed, and the basket re-opened, in one locked transaction — the
+         * rules that used to be written out here (the order really is over,
+         * read off the row; the cart write in the same transaction) are now
+         * BasketRelease's, shared with place().
+         *
+         * ▲ PLUS ONE (Lane CO): only the basket THIS order was made from. A
+         * card retry places a second order out of the same basket, and this
+         * request for the first one can land after it. Re-opening the cart
+         * then would hand back a basket that is already being paid for again.
+         * MUTATION: drop cartBelongsTo() from BasketRelease and
+         * CheckoutCardRetryTest's "a late abandon of the first attempt leaves
+         * the second attempt's basket alone" re-opens it.
+         */
+        $released = app(\App\Services\Checkout\BasketRelease::class)->failAndRestore(
+            $order,
+            $cart,
+            // True of both callers, which is why it does not say "returned to
+            // their basket": the control beside a decline, and a field
+            // corrected afterwards, which replaces this order in place.
+            'The card payment was cancelled before it completed; the basket was restored.',
+        );
 
         /*
          * The payment went through while they were pressing it. Nothing was

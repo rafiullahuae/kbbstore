@@ -73,3 +73,20 @@ Route::post('/checkout/card/paid', [CheckoutController::class, 'cardConfirmed'])
 Route::post('/checkout/card/abandon', [CheckoutController::class, 'cardAbandoned'])
     ->middleware('throttle:20,1')
     ->name('checkout.cardAbandoned');
+
+/*
+|--------------------------------------------------------------------------
+| Checkout — the sold-out dialog's "Remove and continue" (Lane CO)
+|--------------------------------------------------------------------------
+|
+| Here rather than in a file of its own because this file is already wired
+| into routes/web.php at the top level (the `web` group: session, cookies and
+| CSRF), and the endpoint belongs to the same press of Place order the two
+| card reports do. It takes line ids only, acts only on this browser's own
+| basket, and only on lines a fresh stock probe still refuses — see
+| CheckoutController::soldOutRemove(). Shipped with
+| database/migrations/2027_10_08_120100_clear_caches_checkout_sold_out.php.
+*/
+Route::post('/checkout/sold-out', [CheckoutController::class, 'soldOutRemove'])
+    ->middleware('throttle:20,1')
+    ->name('checkout.soldOutRemove');

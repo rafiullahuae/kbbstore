@@ -365,6 +365,12 @@ it('renders the checkout byte for byte as before this lane with both switches of
         // each copy of the order block; StorefrontEnglishUnchangedTest and
         // PolicyLinksTest pin them.
         $after = str_replace('    <p class="kbb-pol"><a href="/delivery/">Shipping &amp; Delivery</a><a href="/refund_returns/">Returns Information</a></p>'."\n", '', $after);
+        // Lane CO (later) hands place()'s refusal to the sold-out dialog in
+        // placing-overlay's script; CheckoutCardRetryTest pins it.
+        $after = str_replace([
+            "        \n        var refused = window.KBB && window.KBB.refused;\n        if (refused && data.code === 'sold_out') { down(); if (refused(data)) { return; } }\n\n",
+            "        if (refused) { refused(data, (document.getElementById('kbbPlacingNotice') || {}).firstElementChild); }\n",
+        ], '', $after);
     } finally {
         EnglishRenderWalk::useViewPath($current[0]);
     }

@@ -135,6 +135,11 @@
   var openOrder = null;
   var busy = false;
 
+  {{-- A release of the previous attempt still in flight (see the change
+     listener at the bottom). pay() waits for it, so the next order is never
+     placed while the last one still holds the basket. (Lane CO) --}}
+  var releasing = null;
+
   /* ------------------------------------------------------------------ mount */
 
   var STYLE = {
@@ -205,6 +210,12 @@
         });
       }
 
+      {{-- Unmounted from the box the fragment swap threw away before it goes into
+         the new one (Lane CO). Stripe refuses mount() on an Element that is
+         still mounted, and a refusal here left the card number in a detached
+         box after "Remove and continue" repainted #payment. --}}
+      if (mountedIn[field]) { try { parts[field].unmount(); } catch (e) {} }
+
       parts[field].mount(box);
       mountedIn[field] = box;
     });
@@ -263,6 +274,14 @@
     if (!el) return;
     el.textContent = message || TEXT.generic;
     el.classList.add('on');
+  }
+
+  {{-- Lane CO: place()'s refusal. A sold-out line opens the dialog the owner
+       asked for (checkout.js, window.KBB.refused) instead of this red line; a
+       basket that is genuinely gone gets its link under the sentence. --}}
+  function refusal(body) {
+    showError((body && body.error) || TEXT.generic);
+    if (window.KBB && window.KBB.refused && window.KBB.refused(body, errorBox())) clearError();
   }
 
   function clearError() {
@@ -367,6 +386,8 @@
     if (ov) { ov.begin(); }
 
     try {
+      if (releasing) { try { await releasing; } catch (e) {} releasing = null; }
+
       var handle = openOrder;
 
       /* An order and an intent, unless this is a retry after a decline — in
@@ -382,8 +403,8 @@
              which is behind the blur. An overlay left up over the reason is
              the failure this whole feature was written against. */
           if (ov) { ov.dismiss(); }
-          showError((placed.body && placed.body.error) || TEXT.generic);
           lock(false);
+          refusal(placed.body);
           return;
         }
 
@@ -602,8 +623,16 @@
     if (!event.target.closest('[data-place]')) return;
     if (chosen() !== 'stripe') return;
 
+    {{-- stopIMMEDIATEPropagation, and that is the fix for a second order (Lane
+       CO). placing-overlay listens on this same node in the same phase, and
+       stopPropagation() does not stop a listener on the SAME node — so every
+       press that pay() turned away without raising the overlay (the card form
+       still loading, a payment already in progress) fell through to the
+       overlay, which posted the form, placed a card order it cannot confirm,
+       and left the basket converted: the next press said "Your bag is
+       empty." --}}
     event.preventDefault();
-    event.stopPropagation();
+    event.stopImmediatePropagation();
     pay();
   }, true);
 
@@ -612,7 +641,7 @@
   FORM.addEventListener('submit', function (event) {
     if (chosen() !== 'stripe') return;
     event.preventDefault();
-    event.stopPropagation();
+    event.stopImmediatePropagation();
     pay();
   }, true);
 
@@ -681,7 +710,7 @@
     var b = bailButton();
     if (b) b.classList.remove('on');
 
-    post(ABANDON_URL, { order: order }).catch(function () {});
+    releasing = post(ABANDON_URL, { order: order }).catch(function () {});
   });
 })();
 </script>

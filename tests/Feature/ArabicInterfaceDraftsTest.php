@@ -660,7 +660,11 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // renamed Building / Apartment or Villa and Area / Street boxes with
     // their hints (store.checkout.field_building*, field_area_street*), seeded
     // by 2027_09_07_140100_seed_address_regions_arabic_drafts.
-    expect($ui['drafts'])->toBe(1432, 'the shipped Arabic is not showing as drafts to review')
+    // 1432 -> 1446 (Lane CO): the checkout's sold-out dialog (store.checkout.so_*,
+    // 10; its "Go back to cart" is the existing store.checkout.back_to_cart) and the basket-gone sentence with its two links
+    // (store.checkout.bag_gone*, 4), seeded by
+    // 2027_10_08_120200_seed_sold_out_dialog_arabic_drafts.
+    expect($ui['drafts'])->toBe(1446, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

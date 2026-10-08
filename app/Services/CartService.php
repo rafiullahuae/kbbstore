@@ -644,18 +644,115 @@ class CartService
                 continue;
             }
 
-            $lines[] = [
-                'product_id' => (int) $item->product_id,
-                'variant_id' => $item->product_variant_id !== null ? (int) $item->product_variant_id : null,
-                'quantity' => (int) $item->quantity,
-                // Taken from the relations the checkout has already loaded, so
-                // the refusal sentence costs no query. Summing two lines that
-                // share a shelf is StockClaim's job, not this loop's.
-                'label' => $this->lineLabel($item),
-            ];
+            $lines[] = $this->claimLine($item, (int) $item->quantity);
         }
 
         app(StockClaim::class)->claim($lines, $order?->id !== null ? (int) $order->id : null);
+    }
+
+    /** One basket line in the shape StockClaim::claim() takes. */
+    private function claimLine(CartItem $item, int $quantity): array
+    {
+        return [
+            'product_id' => (int) $item->product_id,
+            'variant_id' => $item->product_variant_id !== null ? (int) $item->product_variant_id : null,
+            'quantity' => $quantity,
+            // Taken from the relations the checkout has already loaded, so
+            // the refusal sentence costs no query. Summing two lines that
+            // share a shelf is StockClaim's job, not this loop's.
+            'label' => $this->lineLabel($item),
+        ];
+    }
+
+    /**
+     * Which lines of this basket cannot be bought as they stand, and what each
+     * could be cut to. (Lane CO — the checkout's sold-out dialog.)
+     *
+     * claimStock() refuses the whole basket on the FIRST shelf it cannot
+     * cover, which is right for the money path and useless for telling the
+     * shopper what to do: the owner asked for every sold-out line to be listed
+     * at once, with one press to clear them. So each line is asked on its own.
+     *
+     * THE SAME QUESTION, NOT A SECOND COPY OF IT. Each probe is a real
+     * StockClaim::claim() of that one line — the set rule, the variant/parent
+     * shelf, the status check and the counted stock all exactly as Place order
+     * will apply them — inside a transaction that is ALWAYS rolled back, with
+     * no order id, so nothing is decremented and nothing is recorded. A second
+     * implementation of "is this in stock" is how the dialog and the refusal
+     * would come to disagree.
+     *
+     * Only ever run after a refusal or on the dialog's own press, never on a
+     * page view, so it costs the shop nothing on the paths that are measured.
+     *
+     * @param  list<int>|null  $onlyIds  restrict to these line ids
+     * @return array<int, array{subject:string, keep:int}>  keyed by line id;
+     *         keep 0 = the line has to go, n = only n of it can be bought
+     */
+    public function unavailableLines(Cart $cart, ?array $onlyIds = null): array
+    {
+        $cart->loadMissing('items.product', 'items.variant');
+
+        $out = [];
+
+        foreach ($cart->items as $item) {
+            if ($item->product_id === null || ($onlyIds !== null && ! in_array((int) $item->id, $onlyIds, true))) {
+                continue;
+            }
+
+            $quantity = max(1, (int) $item->quantity);
+            $refusal = $this->probe($item, $quantity);
+
+            if ($refusal === null) {
+                continue;
+            }
+
+            /*
+             * How many CAN be bought, when more than one was asked for: the
+             * largest quantity a probe accepts, found by halving (at most seven
+             * probes for the 99 a line can hold). Zero means the line goes.
+             */
+            $keep = 0;
+
+            if ($quantity > 1 && $this->probe($item, 1) === null) {
+                $low = 1;
+                $high = $quantity - 1;
+
+                while ($low < $high) {
+                    $mid = intdiv($low + $high + 1, 2);
+
+                    if ($this->probe($item, $mid) === null) {
+                        $low = $mid;
+                    } else {
+                        $high = $mid - 1;
+                    }
+                }
+
+                $keep = $low;
+            }
+
+            $out[(int) $item->id] = [
+                'subject' => (string) ($refusal->subject ?? $this->lineLabel($item)),
+                'keep' => $keep,
+            ];
+        }
+
+        return $out;
+    }
+
+    /** One line, claimed and rolled back: the refusal, or null if it would go through. */
+    private function probe(CartItem $item, int $quantity): ?StockUnavailable
+    {
+        DB::beginTransaction();
+
+        try {
+            app(StockClaim::class)->claim([$this->claimLine($item, $quantity)], null);
+
+            return null;
+        } catch (StockUnavailable $e) {
+            return $e;
+        } finally {
+            DB::rollBack();
+        }
     }
 
     /**
