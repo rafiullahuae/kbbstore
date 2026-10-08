@@ -47,14 +47,14 @@
          and the half no slider could reach, because an empty div is not a
          margin anybody thinks to look at. With it gone, the gap under the
          header is Page padding - top on the Layout tab, which is a control. --}}
-    @if ($errors->any() || \App\Services\Checkout\UnfinishedPayment::noticeFor(request()) !== '')
+    @if ($errors->any())
     <div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0">
-@if ($errors->any())
         <div class="co-note err">{{ $errors->first() }}</div>
-@else
-        {{-- (Lane BK) The basket an unfinished payment held, given back on this very request: the Back button from Tabby or Tamara lands here. --}}
+    </div>
+    @elseif (\App\Services\Checkout\UnfinishedPayment::noticeFor(request()) !== '')
+    {{-- (Lane BK) The basket an unfinished payment held, given back on this very request: the Back button from Tabby or Tamara lands here. Same band, same geometry. --}}
+    <div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0">
         <div class="co-note ok" role="status">{{ \App\Services\Checkout\UnfinishedPayment::noticeFor(request()) === 'merged' ? __('store.checkout.return_merged') : __('store.checkout.return_restored') }}</div>
-@endif
     </div>
     @endif
 {{-- ONE JAR, CLAIMED TWICE (Lane SEC). Rendered only when a set in this basket
