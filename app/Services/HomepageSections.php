@@ -844,6 +844,35 @@ class HomepageSections
         return '<style>.kbb-home{display:flex;flex-direction:column}' . $rules . '</style>';
     }
 
+    /**
+     * The sections a shopper meets FIRST under the banner, on a laptop and on
+     * a phone -- the ones whose top row is in the first viewport.     (Lane LZ)
+     *
+     * The page orders its sections with CSS `order`, so source order says
+     * nothing; this walks the same sorted all() the order classes come from.
+     * The strips, the banner and the hero band are skipped (they are the top of
+     * the page, with their own preloaded picture), and so are the category
+     * circles, which carry no picture and are one short row. Read once per page.
+     *
+     * @return list<string>
+     */
+    public function firstOnScreen(): array
+    {
+        $skip = ['topstrip', 'cards_banner', 'countries', 'hero', 'delivery', 'ticker', 'categories'];
+        $first = [];
+
+        foreach (['desktop', 'mobile'] as $device) {
+            foreach ($this->all() as $key => $row) {
+                if ($row[$device] && ! in_array($key, $skip, true)) {
+                    $first[$key] = true;
+                    break;
+                }
+            }
+        }
+
+        return array_keys($first);
+    }
+
     /** True when the section is off on both, so it need not render at all. */
     public function hidden(string $key): bool
     {

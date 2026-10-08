@@ -123,6 +123,10 @@
      * StorefrontEnglishUnchangedTest compares BYTES.
      */
     $colsChosen = in_array((string) request()->query('cols'), ['2', '3', '4', '5'], true);
+    // (Lane LZ) The rest of the grid's first row is not lazy either, under the
+    // same condition as its first card (no category picture above the grid).
+    // SiteLayout::aboveFoldCards has the measurement and the arithmetic.
+    $kbbAbove = (($catPanel['image'] ?? null) === null) ? app(\App\Services\SiteLayout::class)->aboveFoldCards() : 0;
 
     /*
      * The tile's own skin, so /shop and every category archive draw the SAME
@@ -282,7 +286,7 @@
                      passes null and the tile simply has no eyebrow — which
                      costs no query, where reading each product's own categories
                      would have cost one on this page and on three others. --}}
-                <x-product-card :product="$product" :eager="$loop->first && ($catPanel['image'] ?? null) === null" :cat-label="($category ?? null)?->t('name')" />
+                <x-product-card :product="$product" :eager="$loop->first && ($catPanel['image'] ?? null) === null" :above="$loop->index < $kbbAbove" :cat-label="($category ?? null)?->t('name')" />
             @empty
                 <div class="empty" style="grid-column:1/-1"><b>{{ __('store.shop.empty_heading') }}</b>{{ __('store.shop.empty_body') }}</div>
             @endforelse

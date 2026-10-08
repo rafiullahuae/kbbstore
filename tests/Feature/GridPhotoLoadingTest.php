@@ -206,11 +206,15 @@ it('paints every product tile photograph as an img and not as a CSS background',
     }
 });
 
-it('loads only the first tile of the shop grid eagerly and lazies the rest', function () {
+// ▲ Lane LZ: the rest of the FIRST ROW is eager too (at the browser's own
+// priority) -- it is on screen, and lazy made it paint after the first tile.
+// Every tile after the row is lazy, and only the first claims high priority.
+it('loads the first row of the shop grid eagerly, the first tile alone at high priority, and lazies the rest', function () {
     seedPhotographedCatalogue();
 
     $photos = imagesWithClass((string) test()->get('/shop')->getContent(), 'kbb-card-img');
-    expect(count($photos))->toBeGreaterThan(1, 'need more than one tile to tell eager from lazy');
+    $row = app(\App\Services\SiteLayout::class)->aboveFoldCards();
+    expect(count($photos))->toBeGreaterThan($row, 'need more tiles than the first row to tell eager from lazy');
 
     $first = array_shift($photos);
 
@@ -219,9 +223,9 @@ it('loads only the first tile of the shop grid eagerly and lazies the rest', fun
     expect(str_contains($first, 'fetchpriority="high"'))
         ->toBeTrue('the first tile should be fetched at high priority: ' . $first);
 
-    foreach ($photos as $tag) {
-        expect(str_contains($tag, 'loading="lazy"'))
-            ->toBeTrue('a tile below the first is not lazy-loaded: ' . $tag);
+    foreach ($photos as $i => $tag) {
+        expect(str_contains($tag, $i + 1 < $row ? 'loading="eager"' : 'loading="lazy"'))
+            ->toBeTrue('tile ' . ($i + 2) . ' is on the wrong side of the first row: ' . $tag);
         expect(str_contains($tag, 'fetchpriority="high"'))
             ->toBeFalse('only the LCP candidate may claim high priority: ' . $tag);
     }

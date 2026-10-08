@@ -102,6 +102,8 @@
 @props([
     'product',
     'eager' => false,
+    // (Lane LZ) In the grid's first row but not its first card: not lazy.
+    'above' => false,
     // The small upper-case line above the name. The owner's reference calls it
     // SKINCARE SETS on a bundles rail -- it is the SECTION's label there, not
     // the product's own category, which is why this is a caller's string.
@@ -412,13 +414,20 @@
 
                  `eager` is passed by the page that knows this card is the first
                  one in its grid, which is the LCP candidate at both widths.
-                 Everything else is lazy: a browser still fetches a lazy image
-                 that is already inside the viewport, so the cards beside this
-                 one are not delayed — what lazy buys is the rest of the page,
-                 which is most of it. --}}
+
+                 `above` (Lane LZ) is every other card of the grid's first row:
+                 eager, at the browser's own priority. "A browser still fetches
+                 a lazy image that is already inside the viewport" is true and
+                 was the whole of the old reasoning -- but it fetches it LATE:
+                 not until the stylesheet is in and the page laid out. Measured
+                 at 390 on Fast 4G, the card beside the eager one started at
+                 855 ms against 207, and the row filled in a picture at a time,
+                 which is what the owner kept seeing. The caller works out the
+                 count (SiteLayout::aboveFoldCards); everything after it is
+                 still lazy. --}}
             <a class="kbb-card-shot" href="{{ $link }}" tabindex="-1"><img class="kbb-card-img" src="{{ $img }}" alt="{{ $product->altFor($img) }}" width="{{ $kbbImgW }}" height="{{ $kbbImgH }}"
                  @if ($kbbSrcset !== '') srcset="{{ $kbbSrcset }}" sizes="{{ \App\Support\ImageVariants::tileSizesAttribute() }}" @endif
-                 @if ($eager) loading="eager" fetchpriority="high" @else loading="lazy" @endif
+                 @if ($eager) loading="eager" fetchpriority="high" @elseif ($above) loading="eager" @else loading="lazy" @endif
                  decoding="async"></a>
         @else
             {{-- Same gradient fallback the rest of the site uses, so a product

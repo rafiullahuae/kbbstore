@@ -11,7 +11,11 @@
  * the newline that followed it, so a note written that way adds one byte to
  * every homepage. Written the first way it cost exactly that, and
  * StorefrontEnglishUnchangedTest reported it at byte 24715.
+ *
+ * (Lane LZ) The first section under the banner, per device: its first row is
+ * in the first viewport, so its cards are not lazy. Read once, here.
  */
+$homeFirst = $sections->firstOnScreen();
 @endphp
 @section('flagbar-placed', '1')
 @php use App\Support\Money; use App\Support\Url; use App\Support\Gradient; @endphp
@@ -586,7 +590,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
     <a class="bndl-all bndl-all-top" href="{{ $bndlUrl }}">{{ $bndlLabel }}<i>{!! $bndlArrow !!}</i></a></div>
   <div class="bndl-stage">
     <button type="button" class="bndl-arr bndl-prev" data-ymal-prev aria-controls="bndl-track" aria-label="{{ __('store.product.related_prev') }}" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
-  @include('partials.home.grid', ['items' => $rails['bundles'], 'skin' => $sections->skinFor('bundles'), 'catLabel' => __('store.home.bundles_grid_label'), 'trackLabel' => $bndlTitle])
+  @include('partials.home.grid', ['items' => $rails['bundles'], 'skin' => $sections->skinFor('bundles'), 'catLabel' => __('store.home.bundles_grid_label'), 'trackLabel' => $bndlTitle, 'aboveFold' => in_array('bundles', $homeFirst, true) ? $bndl['above'] : 0])
     <button type="button" class="bndl-arr bndl-next" data-ymal-next aria-controls="bndl-track" aria-label="{{ __('store.product.related_next') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>
   </div>
   <div class="bndl-foot"><a class="bndl-all bndl-all-bottom" href="{{ $bndlUrl }}">{{ $bndlLabel }}<i>{!! $bndlArrow !!}</i></a></div>
@@ -596,7 +600,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
      carries the reasoning; Appearance → Homepage content → Best Sellers the
      controls. A rail with no products draws nothing. --}}@unless ($sections->hidden('bestselling'))
 @if ($home['bestselling']->isNotEmpty())
-@include('partials.home.hs-rail', ['key' => 'bestselling', 'cls' => $sections->classFor('bestselling'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'bestselling'), 'items' => $home['bestselling']])
+@include('partials.home.hs-rail', ['onTop' => in_array('bestselling', $homeFirst, true), 'key' => 'bestselling', 'cls' => $sections->classFor('bestselling'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'bestselling'), 'items' => $home['bestselling']])
 @endif
 @endunless
 
@@ -606,7 +610,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
   <div class="sh"><div><h2>{{ __('store.home.recommended_heading') }} <span class="cnt">{{ __('store.home.recommended_badge') }}</span></h2>
     <p>{{ __('store.home.recommended_subtitle') }}</p></div>
     <a class="lnk" href="{{ Url::to('/shop/') }}">{{ __('store.home.recommended_link') }}</a></div>
-  @include('partials.home.grid', ['items' => $rails['recommended'], 'skin' => $sections->skinFor('recommended'), 'catLabel' => __('store.home.recommended_grid_label')])
+  @include('partials.home.grid', ['items' => $rails['recommended'], 'skin' => $sections->skinFor('recommended'), 'catLabel' => __('store.home.recommended_grid_label'), 'aboveFold' => in_array('recommended', $homeFirst, true) ? app(\App\Services\SiteLayout::class)->aboveFoldCards() : 0])
 </div></section>
 @endunless
 
@@ -827,7 +831,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
      GridSections::trendingScores(); the controls are Appearance → Homepage
      content → Trending. --}}@unless ($sections->hidden('trending'))
 @if ($home['trending']->isNotEmpty())
-@include('partials.home.hs-rail', ['key' => 'trending', 'cls' => $sections->classFor('trending'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'trending'), 'items' => $home['trending']])
+@include('partials.home.hs-rail', ['onTop' => in_array('trending', $homeFirst, true), 'key' => 'trending', 'cls' => $sections->classFor('trending'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'trending'), 'items' => $home['trending']])
 @endif
 @endunless
 
@@ -837,7 +841,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
   <div class="sh"><div><h2>{{ __('store.home.bestsellers_heading') }} <span class="cnt">{{ __('store.home.bestsellers_badge') }}</span></h2>
     <p>{{ __('store.home.bestsellers_subtitle') }}</p></div>
     <a class="lnk" href="{{ Url::to('/shop/?orderby=popularity') }}">{{ __('store.home.bestsellers_link') }}</a></div>
-  @include('partials.home.grid', ['items' => $rails['best1'], 'skin' => $sections->skinFor('bestsellers'), 'catLabel' => __('store.home.bestsellers_grid_label'), 'rank' => true])
+  @include('partials.home.grid', ['items' => $rails['best1'], 'skin' => $sections->skinFor('bestsellers'), 'catLabel' => __('store.home.bestsellers_grid_label'), 'rank' => true, 'aboveFold' => in_array('bestsellers', $homeFirst, true) ? app(\App\Services\SiteLayout::class)->aboveFoldCards() : 0])
 </div></section>
 @endunless
 
@@ -847,7 +851,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
   <div class="sh"><div><h2>{{ __('store.home.flash_heading') }} <span class="cnt">{{ __('store.home.flash_badge') }}</span></h2>
     <p>{{ __('store.home.flash_subtitle') }}</p></div>
     <a class="lnk" href="{{ Url::to('/shop/?on_sale=1') }}">{{ __('store.home.flash_link') }}</a></div>
-  @include('partials.home.grid', ['items' => $rails['flash'], 'skin' => $sections->skinFor('flash'), 'catLabel' => __('store.home.flash_grid_label')])
+  @include('partials.home.grid', ['items' => $rails['flash'], 'skin' => $sections->skinFor('flash'), 'catLabel' => __('store.home.flash_grid_label'), 'aboveFold' => in_array('flash', $homeFirst, true) ? app(\App\Services\SiteLayout::class)->aboveFoldCards() : 0])
 </div></section>
 @endunless
 
@@ -866,7 +870,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
 {{-- UNDER AED 54, SECTION 7 OF ROW 55 (Lane HA). The ceiling is the price
      the shopper pays — GridSections::fetchPool() says how. --}}@unless ($sections->hidden('under54'))
 @if ($home['under54']->isNotEmpty())
-@include('partials.home.hs-rail', ['key' => 'under54', 'cls' => $sections->classFor('under54'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'under54'), 'items' => $home['under54']])
+@include('partials.home.hs-rail', ['onTop' => in_array('under54', $homeFirst, true), 'key' => 'under54', 'cls' => $sections->classFor('under54'), 'r' => \App\Support\HomeSections::rail($homeSettings, 'under54'), 'items' => $home['under54']])
 @endif
 @endunless
 {{-- THE TWO-COLUMN FEATURE, SECTION 8 OF ROW 55 (Lane HA). --}}@unless ($sections->hidden('feature'))

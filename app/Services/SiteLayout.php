@@ -1401,6 +1401,44 @@ class SiteLayout
 
     public function __construct(private SettingsService $settings) {}
 
+    /**
+     * How many cards of a product grid are in the FIRST VIEWPORT, so they are
+     * not loading="lazy".                                             (Lane LZ)
+     *
+     * The owner: "the page loads instantly, but the images keep showing time to
+     * time". Measured on a seeded category at 390 on Fast 4G: the first card
+     * (eager) started at 207 ms, the card beside it (lazy) at 855 ms -- a lazy
+     * picture is not asked for until the stylesheet has arrived and the page
+     * has been laid out, so the row filled in a piece at a time.
+     *
+     * The count is the FIRST ROW at the widest the grid gets, from this
+     * screen's own numbers and the same arithmetic as the CSS track (kbb.css
+     * :root): `row >= N * (tile + gap) - gap`, the row being the site width
+     * less both wide-screen gutters, clamped to the cap; or the pinned count.
+     * The smaller of the two tile minimums, so /shop is covered too. Never
+     * fewer than two of the phone's rows, which is what a listing with a short
+     * header shows at 390. Nothing here measures a page: the same HTML serves
+     * every device, so this is an upper bound, and everything after it stays
+     * lazy.
+     */
+    public function aboveFoldCards(): int
+    {
+        $c = $this->all();
+        $floor = max(1, (int) $c['cols_floor']);
+        $pin = (int) $c['pin'];
+
+        if ($pin >= 2) {
+            $cols = $pin;
+        } else {
+            $gap = max(0, (int) $c['gap']);
+            $row = (int) $c['max'] - 2 * (int) $c['gutter_wide'];
+            $cols = intdiv($row + $gap, max(1, min((int) $c['tile'], (int) $c['tile_shop']) + $gap));
+            $cols = min(max(2, (int) $c['cols_cap']), $cols);
+        }
+
+        return max($cols, 2 * $floor);
+    }
+
     /** @return array<string, array<string, mixed>> */
     public static function normalised(): array
     {

@@ -31,7 +31,7 @@ final class HomeBundles
     public const DEFAULT_URL = '/shop/?cat=skincare-sets';
 
     /**
-     * @return array{classes: string, style: string, auto: int, title: string, sub: string, label: string, url: string, count: bool}
+     * @return array{classes: string, style: string, auto: int, title: string, sub: string, label: string, url: string, count: bool, above: int}
      */
     public static function config(): array
     {
@@ -55,6 +55,7 @@ final class HomeBundles
         $btnM = $pick('home_hb_btn_m', ['top', 'bottom', 'off'], 'bottom');
 
         $perM = $pick('home_hb_per_m', ['1', '1.5', '2', '2.2', '2.3', '2.5'], '2.3');
+        $perD = $pick('home_hb_per_d', ['3', '4', '5', '6'], '4');
 
         $classes = [
             'bndl',
@@ -72,7 +73,7 @@ final class HomeBundles
         ];
 
         $style = implode(';', [
-            '--bndl-per-d:'.$pick('home_hb_per_d', ['3', '4', '5', '6'], '4'),
+            '--bndl-per-d:'.$perD,
             '--bndl-per-m:'.$perM,
             '--bndl-pad-d:'.$pick('home_hb_pad_d', $px, '8').'px',
             '--bndl-pad-m:'.$pick('home_hb_pad_m', $px, '8').'px',
@@ -99,6 +100,14 @@ final class HomeBundles
             // (Lane PF) The "8 sets" badge beside the heading. The owner crossed
             // it out, 4 October; `home_hb_count` brings it back.
             'count' => (bool) ($c['home_hb_count'] ?? false),
+            // (Lane LZ) How many cards the row shows at once, on whichever
+            // device shows more: the carousel's own "per view" (a part card
+            // counts), or the shop's first row when it is a grid. Used only
+            // when this is the first section under the banner.
+            'above' => max(
+                $layoutD === 'carousel' ? (int) ceil((float) $perD) : app(\App\Services\SiteLayout::class)->aboveFoldCards(),
+                $layoutM === 'carousel' ? (int) ceil((float) $perM) : 2,
+            ),
         ];
     }
 }

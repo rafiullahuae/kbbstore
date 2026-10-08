@@ -101,6 +101,10 @@
      */
     $pinCols = ($columns !== null && (int) $columns >= 1) ? min(8, (int) $columns) : null;
     $pinMobile = ($columnsMobile !== null && (int) $columnsMobile >= 1) ? min(2, (int) $columnsMobile) : null;
+    // (Lane LZ) The first row is in the first viewport when nothing is drawn
+    // above the grid -- the same caller's word as eagerFirst -- so it is not
+    // lazy. A grid further down the page keeps every card lazy.
+    $kbbAbove = $eagerFirst ? app(\App\Services\SiteLayout::class)->aboveFoldCards() : 0;
 @endphp
 
 @if ($heading || $moreUrl)
@@ -139,6 +143,6 @@
              above); /shop's do not, and making the card read the relation would
              have put one more query on /shop, on every category archive, on the
              product page and on /routines. --}}
-        <x-product-card :product="$p" :eager="$eagerFirst && $loop->first" :cat-label="$p->categories->first()?->t('name')" />
+        <x-product-card :product="$p" :eager="$eagerFirst && $loop->first" :above="$loop->index < $kbbAbove" :cat-label="$p->categories->first()?->t('name')" />
     @endforeach
 </div>

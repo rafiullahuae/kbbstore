@@ -395,6 +395,9 @@ final class HomeSections
             'count_d' => $countD,
             'count_m' => $countM,
             'fetch' => max($countD, $countM),
+            // (Lane LZ) One row, on whichever device has the wider one: the
+            // cards not lazy when this rail is the first section on screen.
+            'above' => max((int) self::pick($c, "home_{$p}_cols_d"), (int) self::pick($c, "home_{$p}_cols_m")),
             'classes' => 'hs hs-rail hs-'.$section.' '.$frame['bg'].' hs-dc-'.$countD.' hs-mc-'.$countM,
             'style' => $frame['style'].';--hs-cols-d:'.self::pick($c, "home_{$p}_cols_d").';--hs-cols-m:'.self::pick($c, "home_{$p}_cols_m"),
             'eyebrow' => self::text($c, "home_{$p}_eyebrow"),

@@ -49,23 +49,29 @@ beforeEach(function () {
     }
 });
 
-it('loads the first Super Sale tile eagerly at high priority and every other tile lazily', function () {
+// ▲ Lane LZ: "every other tile lazily" became "the rest of the FIRST ROW eager
+// at the browser's own priority, everything after it lazy" -- the row beside the
+// first tile is on screen and was painting late (AboveFoldImagesTest). The
+// first tile alone still claims high priority, which is what this file pins.
+it('loads the first Super Sale tile eagerly at high priority and no other tile at high priority', function () {
     $imgs = fteImgs('/super-sale/');
+    $row = app(\App\Services\SiteLayout::class)->aboveFoldCards();
 
     expect(count($imgs))->toBeGreaterThan(1, 'the page drew fewer than two tiles');
     expect($imgs[0])->toContain('loading="eager" fetchpriority="high"');
-    foreach (array_slice($imgs, 1) as $img) {
-        expect($img)->toContain('loading="lazy"')->and($img)->not->toContain('fetchpriority');
+    foreach (array_slice($imgs, 1) as $i => $img) {
+        expect($img)->toContain($i + 1 < $row ? 'loading="eager"' : 'loading="lazy"')->and($img)->not->toContain('fetchpriority');
     }
 });
 
-it('loads the first tile of a brand page eagerly at high priority and every other tile lazily', function () {
+it('loads the first tile of a brand page eagerly at high priority and no other tile at high priority', function () {
     $imgs = fteImgs('/brands/fte-house/');
+    $row = app(\App\Services\SiteLayout::class)->aboveFoldCards();
 
     expect(count($imgs))->toBe(4);
     expect($imgs[0])->toContain('loading="eager" fetchpriority="high"');
-    foreach (array_slice($imgs, 1) as $img) {
-        expect($img)->toContain('loading="lazy"')->and($img)->not->toContain('fetchpriority');
+    foreach (array_slice($imgs, 1) as $i => $img) {
+        expect($img)->toContain($i + 1 < $row ? 'loading="eager"' : 'loading="lazy"')->and($img)->not->toContain('fetchpriority');
     }
 });
 

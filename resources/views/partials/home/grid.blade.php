@@ -50,8 +50,14 @@
      (2.60.370) $trackLabel makes this grid a carousel track for ymal.js — the
      homepage's Big savings bundles. Absent everywhere else, so every other
      grid prints exactly what it did. --}}
+@php
+    // (Lane LZ) How many of the first cards are in the first viewport, so not
+    // lazy: the caller's own count (`aboveFold`, the homepage's first section),
+    // or the shop's first row when the caller says nothing sits above the grid.
+    $kbbAbove = (int) ($aboveFold ?? (($eagerFirst ?? false) ? app(\App\Services\SiteLayout::class)->aboveFoldCards() : 0));
+@endphp
 <div class="kbb-pgrid{{ isset($trackLabel) ? ' bndl-track' : '' }}" data-skin="{{ \App\Support\GridSkins::resolve($skin ?? null) }}"@isset($trackLabel) id="bndl-track" data-ymal-track tabindex="0" role="region" aria-label="{{ $trackLabel }}"@endisset>
     @foreach ($items as $i => $p)
-        <x-product-card :product="$p" :eager="($eagerFirst ?? false) && $loop->first" :cat-label="$catLabel ?? null" :rank="($rank ?? false) ? $i + 1 : null" />
+        <x-product-card :product="$p" :eager="($eagerFirst ?? false) && $loop->first" :above="$loop->index < $kbbAbove" :cat-label="$catLabel ?? null" :rank="($rank ?? false) ? $i + 1 : null" />
     @endforeach
 </div>

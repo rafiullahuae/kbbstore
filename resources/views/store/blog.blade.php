@@ -106,9 +106,12 @@
     <div class="cover" style="background:{{ \App\Support\CoverImage::background($p->cover) }}">
       @if($coverSrc)
         {{-- The first card is the one most likely to be the largest element in
-             view on arrival, so it loads eagerly; the rest are below it. --}}
+             view on arrival, so it loads eagerly; the rest are below it.
+             (Lane LZ) Not all of them: the first ROW is in view at 1280 --
+             three, from this page's own `repeat(3,1fr)` above -- and the two
+             beside the first were lazy, so they painted after it. --}}
         <img src="{{ $coverSrc }}" alt="{{ $p->t('title') }}" width="800" height="500"
-             loading="{{ $loop->first ? 'eager' : 'lazy' }}">
+             loading="{{ $loop->index < 3 ? 'eager' : 'lazy' }}">
       @else
         {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$p->tag] ?? '✨' }}
       @endif
