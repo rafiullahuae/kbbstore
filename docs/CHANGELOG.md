@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.443
+**Instagram: Connect with Facebook.** Apply after .442, AFTER the domain switch is
+finished. Runs its migrations. Hard refresh the admin.
+
+| Your request | Now |
+|---|---|
+| "i need the instagram configurator auto ... the app will ask my ... login ... and will do everything auto" | Meta does not offer "Instagram login" to your account, only "Facebook login", so Content -> Instagram now has "Connect with Facebook (recommended)": 7 numbered steps matching your Meta app (App ID + secret from App settings -> Basic, optional Configuration ID, both redirect addresses with Copy), then press Connect with Facebook, log in on Facebook's page, pick the Page/Instagram account; profile, posts and pictures follow automatically. Tokens encrypted, never shown; an expired connection shows Reconnect and emails you once. "Connect with Instagram" is still there |
+
+Files: see the package's update.json.
+
 ## 2.60.442
 **The domain switch is one numbered installer: 17 steps, each with Verify, Skip and
 resume.** Apply after .441. Runs its migrations. Hard refresh the admin.
