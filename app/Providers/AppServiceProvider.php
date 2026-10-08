@@ -500,6 +500,11 @@ class AppServiceProvider extends ServiceProvider
          */
         \App\Support\MediaUsageWriter::listen();
 
+        // Catalog -> Image SEO (Lane IR): a product whose pictures, alt text or
+        // name change elsewhere has its Media Library score re-stored. Admin
+        // and importer writes only; the shop never saves a product.
+        \App\Services\ImageSeo\ImageSeo::listen();
+
         /*
          * `orders.locale` — the language the customer was shopping in.
          *
@@ -644,7 +649,9 @@ class AppServiceProvider extends ServiceProvider
                 // index, a WordPress sized copy, a JPEG since turned into WebP)
                 // sent to the file that shows that picture now. Only 404s reach
                 // this line, and the class leaves at once for anything not under
-                // an upload root -- see App\Support\LegacyImageRedirect (Lane SEO).
+                // an upload root or img-cache -- see App\Support\LegacyImageRedirect
+                // (Lane SEO). A picture Catalog -> Image SEO renamed (Lane IR)
+                // is answered by the same class, from its ledger, in one hop.
                 if (($legacyImage = \App\Support\LegacyImageRedirect::respond($request)) !== null) {
                     return $legacyImage;
                 }

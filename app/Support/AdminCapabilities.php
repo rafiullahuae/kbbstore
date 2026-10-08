@@ -273,6 +273,12 @@ final class AdminCapabilities
         // not run the shop-wide conversion.
         'media.optimize' => ['owner', 'manager'],
 
+        // Catalog -> Image SEO (Lane IR). Its own capability and NOT
+        // catalog.manage or content.manage: a run renames files on disk and
+        // rewrites their addresses across the catalogue, pages and settings.
+        // Owner and manager, like the WebP run it is built beside.
+        'media.image_seo' => ['owner', 'manager'],
+
         /*
          * Content -> Shoppable video (Lane V2, Phase 20). The UGC library: the
          * clips, who made them, whether they said yes, and which products are
@@ -1621,6 +1627,10 @@ final class AdminCapabilities
         // Lane WP. ABOVE the media/** line, or that line would claim them.
         ['*', 'admin-api/media/webp', 'media.optimize'],
         ['*', 'admin-api/media/webp/**', 'media.optimize'],
+        // Lane IR. Every path under the prefix; one added without a line here
+        // is still this capability, never wider.
+        ['*', 'admin-api/image-seo', 'media.image_seo'],
+        ['*', 'admin-api/image-seo/**', 'media.image_seo'],
         ['*', 'admin-api/media', 'content.manage'],
         ['*', 'admin-api/media/**', 'content.manage'],
         ['*', 'admin-api/blocks', 'content.manage'],

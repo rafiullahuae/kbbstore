@@ -740,6 +740,28 @@ class MediaLibraryApiController extends Controller
                 static fn ($u) => (string) $u['name'],
                 array_slice($usage, 0, 3),
             ))),
+        ] + self::seo($media);
+    }
+
+    /**
+     * (Lane IR) The tile's score and green tick, READ off the row: Catalog →
+     * Image SEO stores both when it scores or renames a picture, so a page of
+     * 24 tiles computes nothing. The tick is the owner's definition — renamed
+     * by Image SEO AND a high score (8/10 or better, ImageScore::TICK).
+     *
+     * @return array{seo_score: int|null, seo_ten: int|null, seo_renamed: bool, seo_tick: bool}
+     */
+    private static function seo(Media $media): array
+    {
+        $raw = $media->getAttribute('seo_score');
+        $score = $raw === null ? null : (int) $raw;
+        $renamed = ! empty($media->getAttribute('seo_renamed_at'));
+
+        return [
+            'seo_score' => $score,
+            'seo_ten' => $score === null ? null : \App\Services\ImageSeo\ImageScore::ten($score),
+            'seo_renamed' => $renamed,
+            'seo_tick' => $renamed && $score !== null && $score >= \App\Services\ImageSeo\ImageScore::TICK,
         ];
     }
 

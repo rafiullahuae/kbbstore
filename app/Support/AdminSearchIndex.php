@@ -175,6 +175,13 @@ final class AdminSearchIndex
         'pagination' => [
             '' => ['Pagination on the shop', 'Listing pages', 'Categories and brands'],
         ],
+        // Catalog → Image SEO (Lane IR): rename product pictures, bulk alt text.
+        'imageseo' => [
+            'Find' => ['How the score works', 'Needs attention first', 'Missing alt text'],
+            'Rename files' => ['Word-order variations', 'Name + view number', 'Undo this run'],
+            'ALT text' => ['Natural variations', 'Keep alt text somebody already wrote'],
+            'History' => [],
+        ],
         'sets' => [],
         'product-editor' => [],
         'routines' => [

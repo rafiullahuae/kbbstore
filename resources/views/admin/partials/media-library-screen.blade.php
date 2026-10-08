@@ -172,6 +172,13 @@
 /* A VIDEO'S TILE. Green rather than grey, so a page holding both reads as two
    kinds at a glance and not as one kind with a label on some of them. */
 .mlib-pill.is-video{background:var(--accent,#15a85a)}
+/* (Lane IR) Catalog -> Image SEO's score on the tile: green with a tick when
+   the picture was renamed there AND scores 8/10 or better, amber 5-7, red 0-4.
+   Read off the row; nothing is computed per tile. */
+.mlib-pill.is-seo{background:rgba(16,23,41,.72)}
+.mlib-pill.is-seo.is-good{background:#15803d}
+.mlib-pill.is-seo.is-mid{background:#b45309}
+.mlib-pill.is-seo.is-low{background:#b91c1c}
 
 /* ── WHAT A VIDEO LOOKS LIKE IN THE GRID ──────────────────────────────────
    A film strip and the container name, drawn in CSS and one inline SVG, and
@@ -784,6 +791,14 @@
       + (item.used
         ? '<span class="mlib-pill">' + esc(item.used_types.join(', ')) + '</span>'
         : '<span class="mlib-pill is-free">unused</span>');
+    /* (Lane IR) The Image SEO score, when the picture has one, and the green
+       tick the owner asked for: renamed by Catalog -> Image SEO AND 8/10+. */
+    if (item.seo_ten !== null && item.seo_ten !== undefined) {
+      var seoBand = item.seo_ten >= 8 ? 'is-good' : (item.seo_ten >= 5 ? 'is-mid' : 'is-low');
+      badge += '<span class="mlib-pill is-seo ' + seoBand + '" title="'
+        + esc('Image SEO score ' + item.seo_ten + '/10' + (item.seo_renamed ? ', renamed by Image SEO' : ', not renamed yet')) + '">'
+        + (item.seo_tick ? '✓ ' : '') + esc(String(item.seo_ten)) + '/10</span>';
+    }
 
     /*
      * A VIDEO DRAWS A FILM STRIP, NOT AN <img>.
@@ -846,6 +861,7 @@
       + '<span class="mlib-meta">'
       + '<span class="mlib-name">' + esc(title) + '</span>'
       + sub
+      + (item.seo_renamed ? '<span class="mlib-dim">' + esc(item.filename) + '</span>' : '')
       + '<span class="mlib-dim">' + esc(dims(item)) + ' · ' + esc(bytes(item.size)) + '</span>'
       + '<span class="mlib-dim">' + esc(when(item.created_at)) + '</span>'
       + '</span></button>';
@@ -1005,6 +1021,9 @@
       + fact('Type', esc(item.mime || '—'))
       + fact('Uploaded', esc(when(item.created_at)))
       + fact('Alt text', item.alt ? esc(item.alt) : '<span class="mlib-sub">none</span>')
+      + (item.seo_ten !== null && item.seo_ten !== undefined
+        ? fact('Image SEO', esc((item.seo_tick ? '✓ ' : '') + item.seo_ten + '/10' + (item.seo_renamed ? ' · renamed by Catalog → Image SEO' : ' · not renamed yet')))
+        : '')
       + fact('Stored as', '<code>' + esc(item.filename) + '</code>')
       + fact('Path', '<code>' + esc(item.path) + '</code>')
       + '</dl></div>'

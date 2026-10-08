@@ -1,0 +1,1007 @@
+{
+  "origin": "http://127.0.0.1:10880",
+  "before": {
+    "home@1280": {
+      "status": 200,
+      "images": 0,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": []
+    },
+    "category-eye@1280": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261005-101010-a1b2c3.jpg"
+      ]
+    },
+    "category-toners@1280": {
+      "status": 200,
+      "images": 3,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 9,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261006-090000-aa11bb.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090002-oil111.jpg",
+        "/uploads/products/20261001-000000-snail1.webp"
+      ]
+    },
+    "brand-medicube@1280": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261005-101010-a1b2c3.jpg"
+      ]
+    },
+    "brand-anua@1280": {
+      "status": 200,
+      "images": 2,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 6,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261006-090000-aa11bb.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090002-oil111.jpg"
+      ]
+    },
+    "product-medicube@1280": {
+      "status": 200,
+      "images": 8,
+      "backgrounds": 5,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261005-101015-zz9900.jpg",
+      "broken": 0,
+      "srcset": 13,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261005-101010-a1b2c3.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261005-101010-a1b2c3.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261005-101011-d4e5f6.jpg"
+      ]
+    },
+    "product-anua@1280": {
+      "status": 200,
+      "images": 6,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 13,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261006-090000-aa11bb.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090000-aa11bb.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090001-shared.jpg"
+      ]
+    },
+    "product-cosrx@1280": {
+      "status": 200,
+      "images": 4,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261001-000000-snail1.webp",
+      "broken": 0,
+      "srcset": 10,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "/uploads/products/20261001-000000-snail1.webp",
+        "http://127.0.0.1:10880/uploads/products/20261006-090002-oil111.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090000-aa11bb.jpg"
+      ]
+    },
+    "product-boj@1280": {
+      "status": 200,
+      "images": 2,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/Relief_Sun_SPF50.jpg",
+      "broken": 0,
+      "srcset": 4,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "/uploads/products/Relief_Sun_SPF50.jpg",
+        "http://127.0.0.1:10880/uploads/products/Relief_Sun_SPF50.jpg"
+      ]
+    },
+    "search@1280": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261005-101010-a1b2c3.jpg"
+      ]
+    },
+    "cart@1280": {
+      "status": 200,
+      "images": 0,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": []
+    },
+    "spotted@1280": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "/uploads/products/20261005-101011-d4e5f6.jpg"
+      ]
+    },
+    "journal-post@1280": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/IMG_1234.jpg"
+      ]
+    },
+    "home@390": {
+      "status": 200,
+      "images": 0,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": []
+    },
+    "category-eye@390": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261005-101010-a1b2c3.jpg"
+      ]
+    },
+    "category-toners@390": {
+      "status": 200,
+      "images": 3,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 9,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261006-090000-aa11bb.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090002-oil111.jpg",
+        "/uploads/products/20261001-000000-snail1.webp"
+      ]
+    },
+    "brand-medicube@390": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261005-101010-a1b2c3.jpg"
+      ]
+    },
+    "brand-anua@390": {
+      "status": 200,
+      "images": 2,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 6,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261006-090000-aa11bb.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090002-oil111.jpg"
+      ]
+    },
+    "product-medicube@390": {
+      "status": 200,
+      "images": 8,
+      "backgrounds": 5,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261005-101015-zz9900.jpg",
+      "broken": 0,
+      "srcset": 13,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261005-101010-a1b2c3.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261005-101010-a1b2c3.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261005-101011-d4e5f6.jpg"
+      ]
+    },
+    "product-anua@390": {
+      "status": 200,
+      "images": 6,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 13,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261006-090000-aa11bb.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090000-aa11bb.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090001-shared.jpg"
+      ]
+    },
+    "product-cosrx@390": {
+      "status": 200,
+      "images": 4,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261001-000000-snail1.webp",
+      "broken": 0,
+      "srcset": 10,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "/uploads/products/20261001-000000-snail1.webp",
+        "http://127.0.0.1:10880/uploads/products/20261006-090002-oil111.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090000-aa11bb.jpg"
+      ]
+    },
+    "product-boj@390": {
+      "status": 200,
+      "images": 2,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/Relief_Sun_SPF50.jpg",
+      "broken": 0,
+      "srcset": 4,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "/uploads/products/Relief_Sun_SPF50.jpg",
+        "http://127.0.0.1:10880/uploads/products/Relief_Sun_SPF50.jpg"
+      ]
+    },
+    "search@390": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/20261005-101010-a1b2c3.jpg"
+      ]
+    },
+    "cart@390": {
+      "status": 200,
+      "images": 0,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": []
+    },
+    "spotted@390": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "/uploads/products/20261005-101011-d4e5f6.jpg"
+      ]
+    },
+    "journal-post@390": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/20261006-090000-aa11bb.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/IMG_1234.jpg"
+      ]
+    }
+  },
+  "after": {
+    "home@1280": {
+      "status": 200,
+      "images": 0,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": []
+    },
+    "category-eye@1280": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/medicube-pdrn-eye-patches.jpg"
+      ]
+    },
+    "category-toners@1280": {
+      "status": 200,
+      "images": 3,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 9,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-pore-control-cleansing-oil.jpg",
+        "/uploads/products/cosrx-advanced-snail-96-mucin-power-essence.webp"
+      ]
+    },
+    "brand-medicube@1280": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/medicube-pdrn-eye-patches.jpg"
+      ]
+    },
+    "brand-anua@1280": {
+      "status": 200,
+      "images": 2,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 6,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-pore-control-cleansing-oil.jpg"
+      ]
+    },
+    "product-medicube@1280": {
+      "status": 200,
+      "images": 8,
+      "backgrounds": 5,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/medicube-eye-patches-pdrn.jpg",
+      "broken": 0,
+      "srcset": 13,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/medicube-pdrn-eye-patches.jpg",
+        "http://127.0.0.1:10880/uploads/products/medicube-pdrn-eye-patches.jpg",
+        "http://127.0.0.1:10880/uploads/products/pdrn-medicube-eye-patches.jpg"
+      ]
+    },
+    "product-anua@1280": {
+      "status": 200,
+      "images": 6,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 13,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090001-shared.jpg"
+      ]
+    },
+    "product-cosrx@1280": {
+      "status": 200,
+      "images": 4,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/cosrx-advanced-snail-96-mucin-power-essence.webp",
+      "broken": 0,
+      "srcset": 10,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "/uploads/products/cosrx-advanced-snail-96-mucin-power-essence.webp",
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-pore-control-cleansing-oil.jpg",
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-77-soothing-toner.jpg"
+      ]
+    },
+    "product-boj@1280": {
+      "status": 200,
+      "images": 2,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/beauty-of-joseon-relief-sun-rice-probiotics-spf50.jpg",
+      "broken": 0,
+      "srcset": 4,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "/uploads/products/beauty-of-joseon-relief-sun-rice-probiotics-spf50.jpg",
+        "http://127.0.0.1:10880/uploads/products/beauty-of-joseon-relief-sun-rice-probiotics-spf50.jpg"
+      ]
+    },
+    "search@1280": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/medicube-pdrn-eye-patches.jpg"
+      ]
+    },
+    "cart@1280": {
+      "status": 200,
+      "images": 0,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": []
+    },
+    "spotted@1280": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "/uploads/products/pdrn-medicube-eye-patches.jpg"
+      ]
+    },
+    "journal-post@1280": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/eye-patches-pdrn-by-medicube.jpg"
+      ]
+    },
+    "home@390": {
+      "status": 200,
+      "images": 0,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": []
+    },
+    "category-eye@390": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/medicube-pdrn-eye-patches.jpg"
+      ]
+    },
+    "category-toners@390": {
+      "status": 200,
+      "images": 3,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 9,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-pore-control-cleansing-oil.jpg",
+        "/uploads/products/cosrx-advanced-snail-96-mucin-power-essence.webp"
+      ]
+    },
+    "brand-medicube@390": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/medicube-pdrn-eye-patches.jpg"
+      ]
+    },
+    "brand-anua@390": {
+      "status": 200,
+      "images": 2,
+      "backgrounds": 2,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 6,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-pore-control-cleansing-oil.jpg"
+      ]
+    },
+    "product-medicube@390": {
+      "status": 200,
+      "images": 8,
+      "backgrounds": 5,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/medicube-eye-patches-pdrn.jpg",
+      "broken": 0,
+      "srcset": 13,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/medicube-pdrn-eye-patches.jpg",
+        "http://127.0.0.1:10880/uploads/products/medicube-pdrn-eye-patches.jpg",
+        "http://127.0.0.1:10880/uploads/products/pdrn-medicube-eye-patches.jpg"
+      ]
+    },
+    "product-anua@390": {
+      "status": 200,
+      "images": 6,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 13,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+        "http://127.0.0.1:10880/uploads/products/20261006-090001-shared.jpg"
+      ]
+    },
+    "product-cosrx@390": {
+      "status": 200,
+      "images": 4,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/cosrx-advanced-snail-96-mucin-power-essence.webp",
+      "broken": 0,
+      "srcset": 10,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "/uploads/products/cosrx-advanced-snail-96-mucin-power-essence.webp",
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-pore-control-cleansing-oil.jpg",
+        "http://127.0.0.1:10880/uploads/products/anua-heartleaf-77-soothing-toner.jpg"
+      ]
+    },
+    "product-boj@390": {
+      "status": 200,
+      "images": 2,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/beauty-of-joseon-relief-sun-rice-probiotics-spf50.jpg",
+      "broken": 0,
+      "srcset": 4,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "/uploads/products/beauty-of-joseon-relief-sun-rice-probiotics-spf50.jpg",
+        "http://127.0.0.1:10880/uploads/products/beauty-of-joseon-relief-sun-rice-probiotics-spf50.jpg"
+      ]
+    },
+    "search@390": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 3,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/medicube-pdrn-eye-patches.jpg"
+      ]
+    },
+    "cart@390": {
+      "status": 200,
+      "images": 0,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": []
+    },
+    "spotted@390": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "/uploads/products/pdrn-medicube-eye-patches.jpg"
+      ]
+    },
+    "journal-post@390": {
+      "status": 200,
+      "images": 1,
+      "backgrounds": 4,
+      "sampleBackground": "http://127.0.0.1:10880/img-cache/400/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "broken": 0,
+      "srcset": 0,
+      "srcsetBad": 0,
+      "consoleErrors": 0,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "sampleSrc": [
+        "http://127.0.0.1:10880/uploads/products/eye-patches-pdrn-by-medicube.jpg"
+      ]
+    }
+  },
+  "redirects": [
+    {
+      "type": "opaqueredirect",
+      "finalUrl": "http://127.0.0.1:10880/uploads/products/medicube-pdrn-eye-patches.jpg",
+      "finalStatus": 200,
+      "redirected": true,
+      "ctype": "image/jpeg",
+      "rel": "uploads/products/20261005-101010-a1b2c3.jpg",
+      "targetStatusNoFollow": 200
+    },
+    {
+      "type": "opaqueredirect",
+      "finalUrl": "http://127.0.0.1:10880/uploads/products/pdrn-medicube-eye-patches.jpg",
+      "finalStatus": 200,
+      "redirected": true,
+      "ctype": "image/jpeg",
+      "rel": "uploads/products/20261005-101011-d4e5f6.jpg",
+      "targetStatusNoFollow": 200
+    },
+    {
+      "type": "opaqueredirect",
+      "finalUrl": "http://127.0.0.1:10880/uploads/products/eye-patches-pdrn-by-medicube.jpg",
+      "finalStatus": 200,
+      "redirected": true,
+      "ctype": "image/jpeg",
+      "rel": "uploads/products/IMG_1234.jpg",
+      "targetStatusNoFollow": 200
+    },
+    {
+      "type": "opaqueredirect",
+      "finalUrl": "http://127.0.0.1:10880/wp-content/uploads/2023/05/pdrn-eye-patches-medicube.jpg",
+      "finalStatus": 200,
+      "redirected": true,
+      "ctype": "image/jpeg",
+      "rel": "wp-content/uploads/2023/05/DSC00042.jpg",
+      "targetStatusNoFollow": 200
+    },
+    {
+      "type": "opaqueredirect",
+      "finalUrl": "http://127.0.0.1:10880/uploads/products/medicube-eye-patches-pdrn.jpg",
+      "finalStatus": 200,
+      "redirected": true,
+      "ctype": "image/jpeg",
+      "rel": "uploads/products/20261005-101015-zz9900.jpg",
+      "targetStatusNoFollow": 200
+    },
+    {
+      "type": "opaqueredirect",
+      "finalUrl": "http://127.0.0.1:10880/uploads/products/anua-heartleaf-77-soothing-toner.jpg",
+      "finalStatus": 200,
+      "redirected": true,
+      "ctype": "image/jpeg",
+      "rel": "uploads/products/20261006-090000-aa11bb.jpg",
+      "targetStatusNoFollow": 200
+    },
+    {
+      "type": "opaqueredirect",
+      "finalUrl": "http://127.0.0.1:10880/uploads/products/cosrx-advanced-snail-96-mucin-power-essence.webp",
+      "finalStatus": 200,
+      "redirected": true,
+      "ctype": "image/webp",
+      "rel": "uploads/products/20261001-000000-snail1.webp",
+      "targetStatusNoFollow": 200
+    },
+    {
+      "type": "opaqueredirect",
+      "finalUrl": "http://127.0.0.1:10880/uploads/products/cosrx-advanced-snail-96-mucin-power-essence.jpg",
+      "finalStatus": 200,
+      "redirected": true,
+      "ctype": "image/jpeg",
+      "rel": "uploads/products/20261001-000000-snail1.jpg",
+      "targetStatusNoFollow": 200
+    },
+    {
+      "type": "opaqueredirect",
+      "finalUrl": "http://127.0.0.1:10880/img-cache/400/uploads/products/medicube-pdrn-eye-patches.jpg",
+      "finalStatus": 200,
+      "redirected": true,
+      "ctype": "image/jpeg",
+      "rel": "img-cache/400/uploads/products/20261005-101010-a1b2c3.jpg",
+      "targetStatusNoFollow": 200
+    },
+    {
+      "type": "opaqueredirect",
+      "finalUrl": "http://127.0.0.1:10880/img-cache/800/wp-content/uploads/2023/05/pdrn-eye-patches-medicube.jpg",
+      "finalStatus": 200,
+      "redirected": true,
+      "ctype": "image/jpeg",
+      "rel": "img-cache/800/wp-content/uploads/2023/05/DSC00042.jpg",
+      "targetStatusNoFollow": 200
+    }
+  ],
+  "admin": {
+    "01-find@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "02-rename-preview@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "04-alt-preview@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "consoleErrors-before@390": [],
+    "01-find@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "02-rename-preview@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "03-rename-done@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "liveCheck": "✓ Checked live: Relief_Sun_SPF50.jpg redirects, and beauty-of-joseon-relief-sun-rice-probiotics-spf50.jpg loads.",
+    "04-alt-preview@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "05-alt-done@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "06-find-after@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "07-history@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "media@1280": {
+      "ticks": 9,
+      "scored": 10,
+      "broken": []
+    },
+    "08-media-library@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "09-product-editor@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "product-editor@1280": {
+      "broken": []
+    },
+    "consoleErrors@1280": [],
+    "06-find-after@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "07-history@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "media@390": {
+      "ticks": 9,
+      "scored": 10,
+      "broken": []
+    },
+    "08-media-library@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "09-product-editor@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "product-editor@390": {
+      "broken": []
+    },
+    "consoleErrors@390": [],
+    "editorStatus": 403
+  },
+  "failures": []
+}

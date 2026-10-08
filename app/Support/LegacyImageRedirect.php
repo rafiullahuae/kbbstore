@@ -81,6 +81,13 @@ final class LegacyImageRedirect
     {
         $path = ltrim($path, '/');
 
+        // An old phone-size / banner / crop / share copy (Lane IR): the copy of
+        // wherever its original went, or that original when the copy was never
+        // made -- a picture, never a 404, and still one hop.
+        if (str_starts_with($path, ImageVariants::DIR.'/')) {
+            return self::copyTarget($path);
+        }
+
         if (! self::eligible($path)) {
             return null;
         }
@@ -107,8 +114,8 @@ final class LegacyImageRedirect
 
         $path = $request->decodedPath();
 
-        // The cheap gate, before anything else is computed: two prefix tests.
-        if (! self::underRoot($path)) {
+        // The cheap gate, before anything else is computed: three prefix tests.
+        if (! self::underRoot($path) && ! str_starts_with($path, ImageVariants::DIR.'/')) {
             return null;
         }
 
@@ -121,6 +128,51 @@ final class LegacyImageRedirect
         $encoded = implode('/', array_map('rawurlencode', explode('/', $target)));
 
         return new RedirectResponse(SiteUrl::origin($request) . Url::raw('/' . $encoded), 301);
+    }
+
+    /**
+     * `img-cache/<w>/<old>`, `img-cache/c<w>x<h>/<w>/<old>` or
+     * `img-cache/share[-sq]/<old>.jpg`, answered with the same copy of the
+     * file <old> now lives at. (Lane IR)
+     */
+    private static function copyTarget(string $path): ?string
+    {
+        if (strlen($path) > 600 || str_contains($path, '..') || str_contains($path, '\\') || str_contains($path, '//')
+            || preg_match('/[\x00-\x1F\x7F]/', $path) === 1) {
+            return null;
+        }
+
+        $segments = explode('/', $path);
+
+        foreach ([2, 3] as $depth) {
+            if (count($segments) <= $depth) {
+                continue;
+            }
+
+            $prefix = implode('/', array_slice($segments, 0, $depth)).'/';
+            $inner = implode('/', array_slice($segments, $depth));
+            $suffix = '';
+
+            if ($depth === 2 && in_array($segments[1], ['share', 'share-sq'], true) && str_ends_with($inner, '.jpg')
+                && in_array(strtolower(pathinfo(substr($inner, 0, -4), PATHINFO_EXTENSION)), self::EXTENSIONS, true)) {
+                $inner = substr($inner, 0, -4);
+                $suffix = '.jpg';
+            }
+
+            if (! self::eligible($inner)) {
+                continue;
+            }
+
+            $current = self::current($inner);
+
+            if ($current === null || $current === $inner) {
+                continue;
+            }
+
+            return self::onDisk($prefix.$current.$suffix) ? $prefix.$current.$suffix : $current;
+        }
+
+        return null;
     }
 
     private static function underRoot(string $path): bool
@@ -226,7 +278,14 @@ final class LegacyImageRedirect
             return null;
         }
 
-        return is_string($to) && $to !== '' ? ltrim($to, '/') : null;
+        if (is_string($to) && $to !== '') {
+            return ltrim($to, '/');
+        }
+
+        // Catalog -> Image SEO's rename ledger (Lane IR): one indexed lookup on
+        // image_renames.old_path. Chains are collapsed when written, so this
+        // is the final name already; the hop loop above still guards it.
+        return ImageRenameRedirect::ledgerTarget($path);
     }
 
     private static function onDisk(string $path): bool
