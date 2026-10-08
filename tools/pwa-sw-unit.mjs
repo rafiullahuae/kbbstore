@@ -65,19 +65,25 @@ const ctx = vm.createContext({ self, caches, fetch: fetchStub, Response: Resp, U
 vm.runInContext(src, ctx, { filename: 'sw.js' });
 
 const headers = (h = {}) => ({ has: (k) => Object.keys(h).map((x) => x.toLowerCase()).includes(k.toLowerCase()) });
-async function dispatch(url, { method = 'GET', mode = 'no-cors', destination = '', h = {} } = {}) {
+async function dispatch(url, { method = 'GET', mode = 'no-cors', destination = '', h = {}, preload } = {}) {
   let responded = null;
   const waits = [];
   const event = {
     request: { url: new URL(url, ORIGIN).href, method, mode, destination, headers: headers(h) },
-    preloadResponse: Promise.resolve(undefined),
+    // What Chrome's navigation preload already fetched (Lane SW); undefined
+    // where there is none, as in Safari and Firefox.
+    preloadResponse: Promise.resolve(preload),
     respondWith: (p) => { responded = p; },
     waitUntil: (p) => waits.push(p),
   };
   listeners.fetch(event);
-  const res = responded ? await responded : null;
+  let res = null;
+  let rejected = false;
+  if (responded) {
+    try { res = await responded; } catch (e) { rejected = true; }
+  }
   await Promise.all(waits);
-  return { handled: !!responded, res };
+  return { handled: !!responded, res, rejected };
 }
 
 // ---- install: precaches the offline page(s) and nothing personal ---------
@@ -112,11 +118,32 @@ for (const u of ['https://checkout.tabby.ai/x', 'https://api.tamara.co/checkout'
 }
 ok(!(await dispatch('/video.mp4', { h: { Range: 'bytes=0-' } })).handled, 'a Range request was handled');
 
-// ---- rule 3: the shopper's own pages, payment returns, APIs: stepped aside
-for (const p of ['/cart', '/cart/', '/cart-panel', '/checkout', '/checkout/', '/checkout/success?order=1', '/checkout/pending', '/checkout/order-pay?id=2',
+// ---- rule 3: the shopper's own pages, payment returns, APIs --------------
+// A request is stepped around entirely. A PAGE is the network's own answer,
+// asked for ONCE (Lane SW): the response navigation preload already fetched
+// is handed over unchanged, and only where there is no preload is the page
+// fetched -- once. It is never stored and never the offline page.
+//
+// MUTATION: put back `if (bypassed(p)) return;` under `req.mode === 'navigate'`
+// -> "navigation to /checkout/success?order=1 left its preload unused" for
+// every path below: Chrome then asks the server for that page TWICE.
+const BYPASSED = ['/cart', '/cart/', '/cart-panel', '/checkout', '/checkout/', '/checkout/success?order=1', '/checkout/pending', '/checkout/order-pay?id=2',
   '/my-account', '/my-account/orders/7', '/account-panel', '/orders/7', '/track-my-order', '/wishlist', '/my-wishlist', '/api/products', '/admin-api/settings',
-  '/payments/tamara', '/.well-known/apple-developer-merchantid-domain-association', '/ar/cart', '/ar/checkout/success', '/ar/my-account']) {
-  ok(!(await dispatch(p, { mode: 'navigate' })).handled, 'navigation to ' + p + ' was handled; it must be bypassed');
+  '/payments/tamara', '/.well-known/apple-developer-merchantid-domain-association', '/ar/cart', '/ar/checkout/success', '/ar/my-account'];
+const storedNames = () => [...store].map(([n, m]) => n + ':' + m.size).sort().join(',');
+for (const p of BYPASSED) {
+  const stored = storedNames();
+  const pre = new Resp('preloaded ' + p, { headers: { 'content-type': 'text/html' } });
+  let before = fetched.length;
+  const n = await dispatch(p, { mode: 'navigate', preload: pre });
+  ok(n.handled && n.res === pre, 'navigation to ' + p + ' left its preload unused: the browser would ask the server for it a second time');
+  ok(fetched.length === before, 'navigation to ' + p + ' was fetched again although its preload had answered (' + (fetched.length - before) + ' extra)');
+
+  before = fetched.length;
+  const np = await dispatch(p, { mode: 'navigate' });
+  ok(np.handled && fetched.length === before + 1 && String(np.res && np.res.body).startsWith('body of'), 'navigation to ' + p + ' with no preload should be ONE request to the network');
+  ok(storedNames() === stored, 'navigation to ' + p + ' STORED something: ' + storedNames());
+
   ok(!(await dispatch(p)).handled, 'request to ' + p + ' was handled; it must be bypassed');
 }
 // A path that merely STARTS with a bypassed word is a normal page.
@@ -146,8 +173,10 @@ network = 'down';
   const ar = await dispatch('/ar/shop/', { mode: 'navigate' });
   const arWanted = Object.keys(JSON.parse(src.match(/const OFFLINE = (\{.*?\});/)[1])).includes('ar') ? '/ar/offline' : '/offline';
   ok(ar.handled && String(ar.res.body).includes(arWanted), 'offline Arabic navigation should answer ' + arWanted + ', got ' + (ar.res && ar.res.body));
+  // A bypassed page offline is the browser's own network error, as with no
+  // worker at all -- never the offline page, never anything from a cache.
   const cart = await dispatch('/cart', { mode: 'navigate' });
-  ok(!cart.handled, 'offline /cart must still be the browser\'s own (bypassed)');
+  ok(cart.rejected && !cart.res, 'offline /cart must fail as the browser\'s own error, got ' + (cart.res && cart.res.body));
 }
 network = 'up';
 

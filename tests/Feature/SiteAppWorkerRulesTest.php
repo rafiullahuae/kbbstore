@@ -15,8 +15,9 @@ use Tests\Support\SiteAppRoutes;
  * dispatches real fetch events at the real handler. It proves, rule by rule:
  * POST/PUT/DELETE and every other origin (Tabby, Tamara, Stripe, Google,
  * Meta, WhatsApp) are never touched; the cart, checkout and every payment
- * return, My account, orders, wishlist and the APIs are stepped around, in
- * English and Arabic; every other page comes from the network and is NEVER
+ * return, My account, orders, wishlist and the APIs are never cached -- a
+ * request is stepped around, a page is the network's answer asked for once
+ * (navigation preload's, Lane SW) -- in English and Arabic; every other page comes from the network and is NEVER
  * stored; offline navigation gets the precached offline page in its own
  * language; hashed assets and images are cached with their caps; a 404 is not
  * stored; activate removes only the worker's own older shells.
@@ -24,8 +25,14 @@ use Tests\Support\SiteAppRoutes;
  * MUTATIONS, each one run:
  *   - delete `if (req.method !== 'GET') return;` in resources/site-app/sw.js
  *       -> "POST /cart/add was handled by the worker" (and three more).
- *   - delete `if (bypassed(p)) return;` under `req.mode === 'navigate'`
- *       -> "navigation to /checkout/success?order=1 was handled" and the rest.
+ *   - (Lane SW) put back the bare `if (bypassed(p)) return;` under
+ *     `req.mode === 'navigate'` -> "navigation to /checkout/success?order=1
+ *     left its preload unused" and the rest: with navigation preload on,
+ *     Chrome then requested every cart, checkout, payment-return and account
+ *     page TWICE (measured, docs/lane-sw-shots). Those pages are still never
+ *     stored and never the offline page; they are the preload's own answer.
+ *   - replace `pre || fetch(req)` in that branch with `fetch(req)` -> "was
+ *     fetched again although its preload had answered".
  *   - add `caches.open(SHELL).then((c) => c.put(req, pre.clone()))` to the
  *     navigation branch -> "a page was STORED".
  *   - change `p.startsWith(b + '/')` to `p.startsWith(b)` -> "/cartier-serum

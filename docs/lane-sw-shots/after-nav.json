@@ -1,0 +1,199 @@
+{
+ "390": {
+  "controlled": true,
+  "preloadOn": true,
+  "rows": {
+   "/cart/": {
+    "finalUrl": "/cart/",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /cart/ preload=true purpose=-"
+    ]
+   },
+   "/checkout/": {
+    "finalUrl": "/checkout/",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /checkout/ preload=true purpose=-"
+    ]
+   },
+   "/checkout/success?order=10001": {
+    "finalUrl": "/checkout/success?order=10001",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /checkout/success?order=10001 preload=true purpose=-"
+    ]
+   },
+   "/checkout/pending?order=10001": {
+    "finalUrl": "/checkout/",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 2,
+    "log": [
+     "GET /checkout/pending?order=10001 preload=true purpose=-",
+     "GET /checkout/ preload=true purpose=-"
+    ]
+   },
+   "/my-account/": {
+    "finalUrl": "/my-account/",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /my-account/ preload=true purpose=-"
+    ]
+   },
+   "/product/ty-arencia-rice": {
+    "finalUrl": "/product/ty-arencia-rice",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /product/ty-arencia-rice preload=true purpose=-"
+    ]
+   },
+   "/shop/": {
+    "finalUrl": "/shop/",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /shop/ preload=true purpose=-"
+    ]
+   }
+  },
+  "prefetch": {
+   "href": "/product/relief-sun-rice-probiotics-spf50/",
+   "prefetchRequests": 1,
+   "serverRequestsOnClick": 0
+  },
+  "fresh": {
+   "hasRohto": true,
+   "hasNida": true
+  },
+  "cached": {
+   "kbb-shell-8133118128bd": {
+    "entries": 2,
+    "htmlOtherThanOffline": []
+   },
+   "kbb-assets-v1": {
+    "entries": 10,
+    "htmlOtherThanOffline": []
+   },
+   "kbb-img-v1": {
+    "entries": 5,
+    "htmlOtherThanOffline": []
+   }
+  },
+  "scrollWidth": 390,
+  "errors": [
+   "console: Failed to load resource: the server responded with a status of 404 (Not Found)",
+   "console: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "console: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+  ]
+ },
+ "1280": {
+  "controlled": true,
+  "preloadOn": true,
+  "rows": {
+   "/cart/": {
+    "finalUrl": "/cart/",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /cart/ preload=true purpose=-"
+    ]
+   },
+   "/checkout/": {
+    "finalUrl": "/checkout/",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /checkout/ preload=true purpose=-"
+    ]
+   },
+   "/checkout/success?order=10001": {
+    "finalUrl": "/checkout/success?order=10001",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /checkout/success?order=10001 preload=true purpose=-"
+    ]
+   },
+   "/checkout/pending?order=10001": {
+    "finalUrl": "/checkout/",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 2,
+    "log": [
+     "GET /checkout/pending?order=10001 preload=true purpose=-",
+     "GET /checkout/ preload=true purpose=-"
+    ]
+   },
+   "/my-account/": {
+    "finalUrl": "/my-account/",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /my-account/ preload=true purpose=-"
+    ]
+   },
+   "/product/ty-arencia-rice": {
+    "finalUrl": "/product/ty-arencia-rice",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /product/ty-arencia-rice preload=true purpose=-"
+    ]
+   },
+   "/shop/": {
+    "finalUrl": "/shop/",
+    "status": 200,
+    "fromServiceWorker": true,
+    "serverRequests": 1,
+    "log": [
+     "GET /shop/ preload=true purpose=-"
+    ]
+   }
+  },
+  "prefetch": {
+   "href": "/product/relief-sun-rice-probiotics-spf50/",
+   "prefetchRequests": 1,
+   "serverRequestsOnClick": 0
+  },
+  "fresh": {
+   "hasRohto": true,
+   "hasNida": true
+  },
+  "cached": {
+   "kbb-shell-8133118128bd": {
+    "entries": 2,
+    "htmlOtherThanOffline": []
+   },
+   "kbb-assets-v1": {
+    "entries": 10,
+    "htmlOtherThanOffline": []
+   },
+   "kbb-img-v1": {
+    "entries": 5,
+    "htmlOtherThanOffline": []
+   }
+  },
+  "scrollWidth": 1280,
+  "errors": [
+   "console: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "console: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED"
+  ]
+ }
+}

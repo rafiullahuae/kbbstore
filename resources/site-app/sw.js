@@ -15,7 +15,9 @@
  *      navigation preload so the worker adds no wait, and only when the
  *      network itself fails does the shopper see the offline page.
  *   3. The shopper's own pages, every payment return and the APIs (BYPASS)
- *      are not even passed through: the worker steps aside entirely.
+ *      are never stored and never answered from a cache: a request steps
+ *      aside entirely, and a page is the network's own answer -- the one
+ *      navigation preload already fetched, so it is asked for ONCE (Lane SW).
  *   4. It stores three kinds of public file and nothing else: hashed build
  *      assets (cache first, they never change), the app's own versioned
  *      files under /site-app/ (cache first), and product/content images
@@ -109,7 +111,22 @@ self.addEventListener('fetch', (event) => {
   const { p, seg } = split(url.pathname);
 
   if (req.mode === 'navigate') {
-    if (bypassed(p)) return;                             // rule 3
+    /* (Lane SW) RULE 3 FOR A PAGE: STRAIGHT FROM THE NETWORK, ASKED FOR ONCE.
+       Navigation preload is on for the whole registration (activate, below),
+       so Chrome has ALREADY sent this page's request by the time this handler
+       runs. Stepping aside here (a bare `return`) threw that answer away and
+       made the browser ask a SECOND time, about 8 ms later -- measured in
+       Chromium: two GETs of /checkout/success, /cart/ and /my-account/ per
+       navigation, one carrying `Service-Worker-Navigation-Preload: true`,
+       each doing the server's work twice on the shop's most sensitive pages.
+       So the answer already on its way is the one handed over: unchanged,
+       never stored, never the offline page (a failure is the browser's own
+       error, as with no worker), and asked for again only when there is no
+       preload at all (Safari, Firefox, a worker that has just woken). */
+    if (bypassed(p)) {                                   // rule 3
+      event.respondWith(Promise.resolve(event.preloadResponse).then((pre) => pre || fetch(req)));
+      return;
+    }
     event.respondWith((async () => {                     // rule 2: never stored
       try {
         const pre = await event.preloadResponse;
