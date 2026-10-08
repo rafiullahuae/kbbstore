@@ -281,7 +281,7 @@
     return '<div class="isx-prod"><div class="isx-ph">'
       + '<input type="checkbox" aria-label="Select every picture of ' + esc(p.name) + '" data-isx="pick-product" data-isx-p="' + esc(p.id) + '"' + (picked ? ' checked' : '') + '>'
       + '<b>' + esc(p.name) + '</b><span class="isx-meta">' + esc([p.brand, p.sku ? 'SKU ' + p.sku : '', p.category, p.status !== 'publish' ? p.status : ''].filter(Boolean).join(' · ')) + '</span>'
-      + '<span class="isx-sum">' + low + '<span class="isx-meta">· ' + esc(p.to_rename) + ' to rename</span></span></div>'
+      + '<span class="isx-sum">' + (p.images.length ? low + '<span class="isx-meta">· ' + esc(p.to_rename) + ' to rename</span>' : '<span class="isx-meta">no pictures</span>') + '</span></div>'
       + p.images.map(function (i) { return imageRow(p, i); }).join('') + '</div>';
   }
 
@@ -340,7 +340,7 @@
       + ' Nothing changes until you press Start. Names are lower case, hyphenated, made from the product title; the old address of every file redirects to the new one.</p>' + opts
       + '<div class="isx-row" style="margin-top:10px"><button type="button" class="isx-btn is-quiet" data-isx="preview"' + (!c.products || busy || jobBusy ? ' disabled' : '') + '>' + (busy === 'preview' ? 'Preparing…' : 'Preview changes') + '</button>'
       + '<button type="button" class="isx-btn" data-isx="start"' + (!preview || !preview.rename || jobBusy || busy ? ' disabled' : '') + '>Start renaming' + (preview ? ' ' + esc(preview.rename) + ' file(s)' : '') + '</button></div></div>';
-    return head + jobCard() + previewCard();
+    return head + (job && job.kind !== 'alt' ? jobCard() : '') + previewCard();
   }
 
   function previewCard() {
@@ -432,6 +432,11 @@
       if (s.body.job) job = s.body.job;
     }
     jobBusy = false;
+    // A finished run spends its preview and its alt list: what they showed is
+    // now the shop's state, and Start again would only return the same run.
+    if (job && job.status === 'done') {
+      if (job.kind === 'alt') { alt.items = null; alt.edits = {}; } else { preview = null; }
+    }
     if (lastRenamed) await check(lastRenamed);
     reboot();
   }
@@ -471,14 +476,16 @@
       + ' <b>English only:</b> this shop stores one alt per picture, and it is shown on the Arabic shop too; a picture with no alt written keeps its automatic Arabic one there.</p>' + opts
       + '<div class="isx-row" style="margin-top:10px"><button type="button" class="isx-btn is-quiet" data-isx="alt-preview"' + (!c.products || busy || jobBusy ? ' disabled' : '') + '>' + (busy === 'alt-preview' ? 'Preparing…' : 'Preview alt text') + '</button>'
       + '<button type="button" class="isx-btn" data-isx="alt-apply"' + (!alt.items || jobBusy || busy ? ' disabled' : '') + '>Apply alt text</button></div></div>';
-    return head + jobCard() + altList();
+    return head + (job && job.kind === 'alt' ? jobCard() : '') + altList();
   }
 
   function altKey(p, url) { return p + '|' + url; }
 
   function altList() {
     if (!alt.items) return '';
-    return '<div class="isx-card">' + alt.items.map(function (p) {
+    var withPictures = alt.items.filter(function (p) { return p.images.length; });
+    if (!withPictures.length) return '<div class="isx-card isx-empty">None of the selected products has a picture.</div>';
+    return '<div class="isx-card">' + withPictures.map(function (p) {
       return '<div class="isx-prod"><div class="isx-ph"><b>' + esc(p.name) + '</b><span class="isx-meta">' + esc([p.brand, p.category].filter(Boolean).join(' · ')) + '</span></div>'
         + p.images.map(function (i) {
           var k = altKey(p.id, i.url);
@@ -683,7 +690,7 @@
       label: 'Image SEO',
       icon: '<rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m17 12-4-4-8 8"/><circle cx="17.5" cy="17.5" r="3"/><path d="m22 22-2.3-2.3"/>',
       group: 'Catalog',
-      after: ['pagination']
+      after: ['pagination', 'catalog']
     });
   }
 

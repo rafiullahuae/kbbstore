@@ -75,9 +75,19 @@ final class ImageSeoPlanner
                 }
             }
 
-            foreach ($list as &$image) {
+            $relSeen = [];
+
+            foreach ($list as $at => &$image) {
                 $image['rel'] = ImageFiles::local($image['url']);
                 $image['exists'] = $image['rel'] !== null && ImageFiles::exists($image['rel']);
+
+                // The same FILE written two ways (absolute and root-relative):
+                // renamed once, with the first; the rewrite reaches both spellings.
+                $image['same_as'] = $image['rel'] !== null ? ($relSeen[$image['rel']] ?? null) : null;
+
+                if ($image['rel'] !== null && $image['same_as'] === null) {
+                    $relSeen[$image['rel']] = $at + 1;
+                }
 
                 if ($image['rel'] !== null) {
                     $rels[$image['rel']] = true;
@@ -220,7 +230,9 @@ final class ImageSeoPlanner
 
             $scores[] = $now['score'];
 
-            if ($only !== null && $rel !== null && ! in_array($rel, $only, true)) {
+            if (($image['same_as'] ?? null) !== null) {
+                $plan['reason'] = 'the same file as picture '.$image['same_as'].' — renamed with it';
+            } elseif ($only !== null && $rel !== null && ! in_array($rel, $only, true)) {
                 $plan['reason'] = 'not selected';
             } elseif ($rel === null) {
                 $plan['reason'] = 'on another website, not on this shop — bring it across first (Store Import → pictures)';

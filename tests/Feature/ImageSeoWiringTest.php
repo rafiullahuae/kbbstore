@@ -56,7 +56,7 @@ it('keeps the handover documents that quote LATE_RENDERED in step with the conso
     $app = irWired('resources/views/admin/app.blade.php');
 
     foreach (['docs/T1B-ADMIN-APP-BLOCKS.md', 'docs/BG-ADMIN-APP-BLOCKS.md'] as $doc) {
-        expect(irWired($doc))->toContain("'product-tabs','pagination','imageseo','ownerapp',");
+        expect(irWired($doc))->toContain("'routines','imageseo','security',");
     }
 
     preg_match_all('/const LATE_RENDERED=new Set\(\[[^\]]*\]\);/', irWired('docs/T1B-ADMIN-APP-BLOCKS.md'), $quoted);

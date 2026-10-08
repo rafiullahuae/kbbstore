@@ -19,9 +19,9 @@
         "n": 3,
         "what": "console LATE_RENDERED: arm the deep-link replay for 'imageseo' -- its partial wraps window.go and draws the screen itself (Lane IR)",
         "file": "resources/views/admin/app.blade.php",
-        "anchor": "'product-tabs','pagination','ownerapp',",
+        "anchor": "'routines','security',",
         "count": 1,
-        "replacement": "'product-tabs','pagination','imageseo','ownerapp',"
+        "replacement": "'routines','imageseo','security',"
     },
     {
         "n": 4,
@@ -35,16 +35,16 @@
         "n": 5,
         "what": "keep docs/T1B-ADMIN-APP-BLOCKS.md's quoted LATE_RENDERED line in step with the console (TranslationConsoleTest)",
         "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
-        "anchor": "'product-tabs','pagination','ownerapp',",
+        "anchor": "'routines','security',",
         "count": 1,
-        "replacement": "'product-tabs','pagination','imageseo','ownerapp',"
+        "replacement": "'routines','imageseo','security',"
     },
     {
         "n": 6,
         "what": "keep docs/BG-ADMIN-APP-BLOCKS.md's quoted LATE_RENDERED lines in step with the console",
         "file": "docs/BG-ADMIN-APP-BLOCKS.md",
-        "anchor": "'product-tabs','pagination','ownerapp',",
+        "anchor": "'routines','security',",
         "count": 2,
-        "replacement": "'product-tabs','pagination','imageseo','ownerapp',"
+        "replacement": "'routines','imageseo','security',"
     }
 ]

@@ -169,11 +169,11 @@ final class ImageSeo
             return ['scored' => 0, 'next' => 0, 'done' => true, 'left' => 0];
         }
 
-        $ids = DB::table('media_usages')->join('media', 'media.id', '=', 'media_usages.media_id')
-            ->where('media_usages.owner_type', 'product')->whereNull('media.seo_score')
-            ->where('media_usages.owner_id', '>', $after)
-            ->distinct()->orderBy('media_usages.owner_id')->limit($batch)
-            ->pluck('media_usages.owner_id')->map(fn ($id) => (int) $id)->all();
+        $ids = DB::table('products')->where('products.id', '>', $after)
+            ->whereExists(fn ($q) => $q->from('media_usages')->join('media', 'media.id', '=', 'media_usages.media_id')
+                ->whereColumn('media_usages.owner_id', 'products.id')->where('media_usages.owner_type', 'product')->whereNull('media.seo_score'))
+            ->orderBy('products.id')->limit($batch)
+            ->pluck('products.id')->map(fn ($id) => (int) $id)->all();
 
         $scored = self::rescore($ids);
         $next = $ids === [] ? 0 : max($ids);

@@ -689,3 +689,38 @@ it('costs the same number of queries for a Find page of 3 products as for 40', f
         ->and($large)->toBe($small);
     // MUTATION: load the variants per product inside ImageSeoPlanner::plan()'s loop and the 40-product page costs 20 more queries.
 });
+
+it('answers an old address with one indexed query, and a non-picture 404 with none', function () {
+    irRoot();
+    $shop = irShop();
+    irRename([$shop['medi']->id]);
+
+    $n = 0;
+    DB::listen(function () use (&$n) { $n++; });
+
+    expect(ImageRenameRedirect::resolvePath('img-cache/400/'.$shop['rels']['m1']))->toBe('img-cache/400/uploads/products/medicube-pdrn-eye-patches.jpg')
+        ->and($n)->toBe(1);
+
+    $n = 0;
+    expect(ImageRenameRedirect::resolvePath('wp-login.php'))->toBeNull()
+        ->and(ImageRenameRedirect::resolvePath('product/some-page/'))->toBeNull()
+        ->and($n)->toBe(0);
+    // MUTATION: drop the picture-path regex in resolvePath() and the two non-pictures each cost a query.
+});
+
+it('renames a file written two ways on one product once, and both spellings follow it', function () {
+    irRoot();
+    $brand = Brand::create(['name' => 'Anua', 'slug' => 'ir-anua-2']);
+    irPicture('uploads/products/IMG_9.jpg');
+    $p = Product::create(['name' => 'Anua Heartleaf Toner', 'slug' => 'ir-anua-twice', 'brand_id' => $brand->id, 'price' => 100,
+        'image' => irUrl('uploads/products/IMG_9.jpg'), 'images' => ['/uploads/products/IMG_9.jpg']]);
+
+    $run = irRename([$p->id]);
+    $p = $p->fresh();
+
+    expect(collect($run['results'])->where('status', 'renamed'))->toHaveCount(1)
+        ->and($p->image)->toBe(irUrl('uploads/products/anua-heartleaf-toner.jpg'))
+        ->and($p->images)->toBe(['/uploads/products/anua-heartleaf-toner.jpg'])
+        ->and(is_file(public_path('uploads/products/anua-heartleaf-toner.jpg')))->toBeTrue();
+    // MUTATION: drop the `same_as` branch in ImageSeoPlanner and the second spelling is planned as its own rename of a file the first already moved: rolled back.
+});
