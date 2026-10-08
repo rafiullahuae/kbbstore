@@ -865,6 +865,10 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // gives admin-api/media/webp/** to media.optimize, above media/**.
         require __DIR__.'/webp-admin.php';
 
+        // Catalog → Image SEO (Lane IR): rename product pictures to the product
+        // name and bulk alt text; `media.image_seo`, owner and manager.
+        require __DIR__.'/image-seo-admin.php';
+
         // Content → HTML Blocks: reusable snippets placed into pages and posts
         // with [kbb_block slug="…"].
         require __DIR__.'/html-blocks-admin.php';

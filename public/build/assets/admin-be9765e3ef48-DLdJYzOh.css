@@ -120,6 +120,13 @@
 /* A VIDEO'S TILE. Green rather than grey, so a page holding both reads as two
    kinds at a glance and not as one kind with a label on some of them. */
 .mlib-pill.is-video{background:var(--accent,#15a85a)}
+/* (Lane IR) Catalog -> Image SEO's score on the tile: green with a tick when
+   the picture was renamed there AND scores 8/10 or better, amber 5-7, red 0-4.
+   Read off the row; nothing is computed per tile. */
+.mlib-pill.is-seo{background:rgba(16,23,41,.72)}
+.mlib-pill.is-seo.is-good{background:#15803d}
+.mlib-pill.is-seo.is-mid{background:#b45309}
+.mlib-pill.is-seo.is-low{background:#b91c1c}
 
 /* ── WHAT A VIDEO LOOKS LIKE IN THE GRID ──────────────────────────────────
    A film strip and the container name, drawn in CSS and one inline SVG, and
