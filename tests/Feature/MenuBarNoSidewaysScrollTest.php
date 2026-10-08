@@ -48,7 +48,12 @@ it('opens the last two menus leftward on windows up to 1599px, and leaves wider 
      * ▲ Lane NV: a fitted bar (nine or more items) prints `nav-fill` and a
      * style on `.mbar` itself; the wrap is still its only child and the items
      * still the wrap's only children, which is what "the last two" relies on.
+     *
+     * ▲ Lane MN: and the current-page style class and colour beside it
+     * (NavCurrent::barClass / barStyle), joined into the same one attribute.
+     * Both are '' / null at the shipped defaults, so the default bar still
+     * prints exactly `<div class="mbar">` or `<div class="mbar nav-fill" style="…">`.
      */
-    expect($bar)->toContain('<div class="mbar{{ $kbbNavFit !== null ? \' nav-fill\' : \'\' }}"@if ($kbbNavFit !== null) style="{{ $kbbNavFit }}"@endif><div class="wrap">')
+    expect($bar)->toContain('<div class="mbar{{ $kbbNavFit !== null ? \' nav-fill\' : \'\' }}{{ $kbbCurClass }}"@if ($kbbBarStyle !== \'\') style="{{ $kbbBarStyle }}"@endif><div class="wrap">')
         ->and($bar)->toMatch('#@endforeach\s*</div></div>\s*$#');
 });

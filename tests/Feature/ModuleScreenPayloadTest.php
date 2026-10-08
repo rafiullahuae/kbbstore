@@ -186,6 +186,16 @@ function mScreenUrls(): array
  *       search_icon / search_text .default/.value
  */
 /*
+ * ── HEADER → NAVIGATION GAINED THREE FIELDS, NOTHING MOVED ───────── Lane MN ──
+ *     header.nav.fields   + nav_current (bool, true), nav_current_style
+ *                         (select line|dot|text, 'line'), nav_current_colour
+ *                         (colour, #C13E63), after mega_pointer
+ * The owner asked for the desktop menu to show the page you are on, so the
+ * switch ships on. Inserted into the `header` entry ONLY, in the file's own
+ * format, from HeaderSettings::SCHEMA; the diff is 34 added lines and no other
+ * line of the fixture moved.
+ */
+/*
  * ── MOBILE MENU GAINED THREE CARDS, NOTHING MOVED ─────────────────── Lane M4 ──
  *
  *     mobile-menu.fields     + 25 after account_label: menu_style (v4), the
@@ -614,7 +624,9 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // "Inner padding" sliders, phone and desktop.
     // 715 -> 716 (Lane PO): Appearance -> Checkout page -> Fields & attention
     // -> "Remember shopper details on this device".
-    expect($compared)->toBe(716, 'the number of controls drawn changed');
+    // 716 -> 719 (Lane MN): Appearance -> Header -> Navigation -> "Show the
+    // current page", its style and its colour.
+    expect($compared)->toBe(719, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

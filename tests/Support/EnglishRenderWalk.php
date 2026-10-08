@@ -3506,6 +3506,25 @@ KBB_BH_CSS;
                 'pattern' => '#\n?\s*<p class="form-row form-row-wide kbb-acct kbb-rmb" id="kbb_remember_field">.*?</p>(?=\n)#s',
                 'hits' => 1,
             ],
+            /*
+             * THE DESKTOP MENU MARKS THE PAGE YOU ARE ON (Lane MN, 2.60.441).
+             * The owner: "when i go to any page/category or brand etc from the
+             * top menu in desktop, it's not highlighting etc as open or current
+             * page." Appearance -> Header -> Navigation -> "Show the current
+             * page" ships ON. ONE attribute on ONE top-level link -- nothing
+             * else on the page moves, which is what cutting only the attribute
+             * (\K) and comparing the rest byte for byte proves. At most once a
+             * page: two would be two items marked, the defect NavCurrentTest
+             * pins. Four of the walk's pages are inside an item of its menu:
+             * super-sale and everything-under-54-aed (the page itself, "page"),
+             * brands ("page") and brands/{slug} ("true"); each diff read before
+             * the count was set. No walk page is a link inside a panel, so the
+             * panel link has no rule here -- NavCurrentTest covers it.
+             */
+            'the current page on the desktop menu (Lane MN)' => [
+                'pattern' => '#<a class="navlink" href="[^"]*"[^<>]*?\K aria-current="(?:page|true)"(?=>)#',
+                'hits' => 4,
+            ],
         ];
     }
 

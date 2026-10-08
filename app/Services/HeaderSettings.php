@@ -228,6 +228,29 @@ class HeaderSettings
         'mega_pointer'    => ['bool',   'Pointer to the parent item', true,
                               'A short pink line with a small point, on the top edge of an open panel under the menu item it belongs to, and that item\'s name in pink — so a panel that starts at the left still shows whose it is. Works with Fit mega menus to the site width.'],
 
+        /*
+         * ── SHOW THE CURRENT PAGE ─────────────────────────────────── Lane MN ──
+         *
+         * The owner: "when i go to any page/category or brand etc from the top
+         * menu in desktop, it's not highlighting etc as open or current page.
+         * make the nice and super light style etc."
+         *
+         * ▲ `nav_current` SHIPS ON — he asked for it (CLAUDE.md, the
+         *   30-September reversal). Off prints the bar byte for byte as it was:
+         *   no aria-current, no class. App\Support\NavCurrent decides which
+         *   ONE item is current; kbb.css paints it.
+         *
+         * The style is a class from this select's own keys and the colour a
+         * strict hex, printed only when it is not the default — so the shipped
+         * look costs no bytes beyond the attribute itself.
+         */
+        'nav_current'     => ['bool',   'Show the current page', true,
+                              'Desktop only. The menu item for the page the shopper is on — the page itself, or the category, brand list or blog it sits inside — is shown in colour. Only one item is marked at a time.'],
+        'nav_current_style' => ['select', 'Current page style', 'line',
+                              'Line: the coloured text with the same thin line the menu shows on hover. Dot: a small dot under the text. Text: the colour only. While a drop-down panel is open, its own highlight is the only one shown.',
+                              ['line' => 'Coloured text and a line under it', 'dot' => 'Coloured text and a small dot', 'text' => 'Coloured text only']],
+        'nav_current_colour' => ['colour', 'Current page colour', '#C13E63', 'The shop\'s deep pink by default.'],
+
         // ── Support ──
         'support_show'    => ['bool',   'Support block', true, 'The 24/7 WhatsApp block on the right.'],
         'support_label'   => ['text',   'Wording', '24/7 support', ''],
@@ -487,7 +510,8 @@ class HeaderSettings
                       ['menu_icon', 'menu_icon_speed', 'menu_icon_size', 'menu_icon_c1', 'menu_icon_c2', 'menu_icon_c3']],
         'nav'     => ['Navigation', 'The category bar.',
                       ['nav_show', 'nav_uppercase', 'nav_size', 'nav_gap', 'nav_hot_colour', 'nav_fit', 'nav_fit_mode', 'nav_fit_from', 'nav_fit_min', 'nav_fit_max',
-                       'mega_fit', 'mega_left_from', 'mega_col_min', 'mega_text_min', 'mega_pointer']],
+                       'mega_fit', 'mega_left_from', 'mega_col_min', 'mega_text_min', 'mega_pointer',
+                       'nav_current', 'nav_current_style', 'nav_current_colour']],
         'support' => ['Support', 'The WhatsApp block.',
                       ['support_show', 'support_label', 'support_icon_bg', 'support_icon_fg']],
         'flagbar' => ['Flag bar', 'The thin strip with the UAE flag, one short line and the Korean flag. On the home page it sits under the banner; on every other page it sits above the header. Off on phones and on desktop for now — switch either one on to bring it back, with the wording on phones only.',
