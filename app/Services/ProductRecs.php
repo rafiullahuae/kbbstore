@@ -60,6 +60,8 @@ use Illuminate\Support\Facades\Cache;
  * the greatest `depth`. Two equally deep ones both go into the ONE union, and
  * the one with more in-stock products besides this one wins, then the lowest
  * id — deterministic, whatever order the pivot rows were written in.
+ * The breadcrumbs follow the same choice (App\Support\ProductCategory::trail(),
+ * given `category.id`): Home › Skincare › Toner › Product.
  *
  * ── ▲ TWO QUERIES FOR EVERY BLOCK, COLD OR WARM ────────────────────────────
  *
@@ -332,27 +334,17 @@ class ProductRecs
     }
 
     /**
-     * The product's most specific categories, from the relation the page
-     * already loaded: none that is the parent of another of them, then the
-     * greatest depth. Usually one; two only when two are equally deep, and
-     * lists() settles those by stock, then id. Sorted by id, so the order the
-     * pivot rows were written in cannot matter.
+     * The product's most specific categories — App\Support\ProductCategory,
+     * the ONE chooser the breadcrumbs ask too (Lane BC), so the crumb and
+     * "More {category}" can never name two shelves. Usually one; two only
+     * when two are equally deep, and lists() settles those by stock, then id,
+     * and hands its answer to the crumb as `category.id`.
      *
      * @return list<\App\Models\Category>
      */
     public static function categoryCandidates(Product $product): array
     {
-        if (! $product->relationLoaded('categories') || $product->categories->isEmpty()) {
-            return [];
-        }
-
-        $cats = $product->categories->sortBy(fn ($cat) => (int) $cat->id)->values();
-        $parents = $cats->pluck('parent_id')->filter()->map(fn ($id) => (int) $id)->flip();
-        $leaves = $cats->reject(fn ($cat) => isset($parents[(int) $cat->id]));
-        $leaves = $leaves->isEmpty() ? $cats : $leaves; // a cycle: every one is a parent
-        $deepest = (int) $leaves->max(fn ($cat) => (int) $cat->getAttribute('depth'));
-
-        return $leaves->filter(fn ($cat) => (int) $cat->getAttribute('depth') === $deepest)->values()->all();
+        return \App\Support\ProductCategory::candidates($product);
     }
 
     /**

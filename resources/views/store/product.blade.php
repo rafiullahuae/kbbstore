@@ -379,7 +379,7 @@
 
 @section('content')
 <div class="wrap pdp-page {{ $kbbMsec->wrapperClass() }}{{ $kbbDsec->wrapperClass($kbbDsecDrawn, $kbbDsecBuyDrawn) }}" style="{{ $kbbMsec->wrapperStyle() }}{{ $kbbDsec->wrapperStyle() }}">
-  <div class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ $product->categories->first()?->url() ?? Url::to('/shop/') }}">{{ $product->categories->first()?->t('name') ?? __('store.breadcrumb.shop') }}</a> / {{ $name }}</div>
+  <div class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / @forelse ($crumbTrail ?? \App\Support\ProductCategory::trail($product) as $kbbCrumb)<a href="{{ $kbbCrumb->url() }}">{{ $kbbCrumb->t('name') }}</a> / @empty<a href="{{ Url::to('/shop/') }}">{{ __('store.breadcrumb.shop') }}</a> / @endforelse{{ $name }}</div>
   <div class="pdp">
     <!-- gallery -->
     @include('partials.product-gallery')
