@@ -36,6 +36,10 @@
     "file": "assets/admin-15e8731578e7-BpLkVf8G.js",
     "src": "admin-console/15e8731578e78e7562509ecbdf53621f41f08059.js"
   },
+  "admin-console/1b97477c3c62ed610e67c7597af767cb984810a2.js": {
+    "file": "assets/admin-1b97477c3c62-9AAQK3AV.js",
+    "src": "admin-console/1b97477c3c62ed610e67c7597af767cb984810a2.js"
+  },
   "admin-console/1bdeacc66bc5c56841c4b80563894dc656c11fe6.js": {
     "file": "assets/admin-1bdeacc66bc5-XXgLILox.js",
     "src": "admin-console/1bdeacc66bc5c56841c4b80563894dc656c11fe6.js"
@@ -264,10 +268,6 @@
     "file": "assets/admin-a005226be880-BS3hH4az.js",
     "src": "admin-console/a005226be8809e45cdaf12300b91037d7b176cfb.js"
   },
-  "admin-console/a07bff31f338b588c4f3a43c897d5e50cb5a64eb.js": {
-    "file": "assets/admin-a07bff31f338-U2Ppgg1R.js",
-    "src": "admin-console/a07bff31f338b588c4f3a43c897d5e50cb5a64eb.js"
-  },
   "admin-console/a13658c2dc9c80393ef8940f60f1f2b3bfc2a81e.css": {
     "file": "assets/admin-a13658c2dc9c-B418b0wF.css",
     "src": "admin-console/a13658c2dc9c80393ef8940f60f1f2b3bfc2a81e.css"
@@ -464,7 +464,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-product.css": {
-    "file": "assets/kbb-product-K-8tjMLk.css",
+    "file": "assets/kbb-product-BXvsRY2J.css",
     "src": "resources/css/kbb/kbb-product.css",
     "isEntry": true
   },
@@ -692,7 +692,7 @@
     ]
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-DF4QKMv8.js",
+    "file": "assets/storefront-admin-BohDoEc-.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -705,7 +705,7 @@
     ]
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-C8wc0aoK.js",
+    "file": "assets/app-CRWr5o-Z.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,
