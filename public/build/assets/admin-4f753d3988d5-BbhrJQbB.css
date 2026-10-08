@@ -48,6 +48,18 @@
 .igs-step.is-done{color:var(--ink,#16181d)}
 .igs-step.is-unknown .igs-mark{border-style:dashed}
 
+/* (Lane IG2) The two connection routes, and the Page picker after a Facebook
+   login. The route switch reuses .igs-tab; a pick is a full-width button so a
+   thumb on a 390px phone cannot miss it. */
+.igs-route{margin-top:12px}
+.igs-picks{display:grid;gap:8px;margin-top:10px}
+.igs-pick{display:block;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--border,#e6e6e6);
+          border-radius:10px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;
+          overflow-wrap:anywhere}
+.igs-pick b{display:block}
+.igs-pick span{font-size:12px;color:var(--ink-soft,#6b7280)}
+.igs-pick[disabled]{opacity:.45;cursor:default}
+
 /* The redirect URI. `word-break:break-all` and not `anywhere`: this string must
    be selectable and copyable in one gesture, and it has no spaces to wrap at. */
 .igs-uri{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px}
