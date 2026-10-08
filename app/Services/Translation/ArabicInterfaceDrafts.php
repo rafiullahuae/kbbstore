@@ -1298,6 +1298,7 @@ final class ArabicInterfaceDrafts
             'store.order_received.fact_order_number' => 'رقم الطلب',
             'store.order_received.fact_total_paid' => 'الإجمالي المدفوع',
             'store.order_received.fact_total_to_pay' => 'الإجمالي المستحق',
+            'store.order_received.fact_total_confirming' => 'جارٍ تأكيد الدفع',
             'store.order_received.fact_payment' => 'الدفع',
             'store.order_received.fact_delivery' => 'التوصيل',
             'store.order_received.next_heading' => 'ما الخطوة التالية',

@@ -554,13 +554,21 @@
 
         /* (Lane PO) The report runs under the tick rather than before it;
            confirmed() opens the received page once both are done (or the
-           report has had four seconds). Same as the card form. */
+           report has had a second and a half). Same as the card form, and
+           (Lane SW) the page is told Stripe's status the same way, so a report
+           still running reads "confirming payment", never "Total to pay". */
         var report = post(PAID_URL, { order: order }).catch(function () { /* the webhook has it */ });
+        var landing = placed.body.success_url;
+        try {
+          var lu = new URL(landing, window.location.href);
+          lu.searchParams.set('redirect_status', String(intent.status || ''));
+          landing = lu.href;
+        } catch (e2) { /* the plain address: the wording falls back to "to pay" */ }
 
-        if (ov) { ov.confirmed(placed.body.success_url, report); return; }
+        if (ov) { ov.confirmed(landing, report); return; }
 
         await report;
-        window.location.assign(placed.body.success_url);
+        window.location.assign(landing);
       } catch (e) {
         /* If the overlay went up a line or two ago and then something threw,
            it comes down with everything else — a frozen shop is not an

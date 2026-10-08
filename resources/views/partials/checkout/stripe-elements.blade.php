@@ -541,11 +541,18 @@
        */
       var report = post(PAID_URL, { order: handle.order }).catch(function () { /* the webhook has it */ });
 
-      if (ov) { ov.confirmed(handle.success_url, report); return; }
+      /* (Lane SW) The received page is told what Stripe told THIS browser, in
+         Stripe's own `redirect_status` -- the parameter a full-redirect 3-D
+         Secure return already carries -- so an order the report has not yet
+         marked paid reads "confirming payment", not "Total to pay". Wording
+         only: the server never marks anything paid on it. */
+      var landing = withStatus(handle.success_url, intent.status);
+
+      if (ov) { ov.confirmed(landing, report); return; }
 
       await report;
 
-      window.location.assign(handle.success_url);
+      window.location.assign(landing);
     } catch (e) {
       if (ov) { ov.dismiss(); }
       showError(TEXT.generic);
@@ -601,6 +608,14 @@
     var details = { email: val('billing_email') };
     if (name) details.name = name;
     return details;
+  }
+
+  function withStatus(url, status) {
+    try {
+      var u = new URL(url, window.location.href);
+      u.searchParams.set('redirect_status', String(status || ''));
+      return u.href;
+    } catch (e) { return url; }
   }
 
   async function post(url, body) {

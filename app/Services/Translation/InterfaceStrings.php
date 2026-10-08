@@ -1669,6 +1669,9 @@ final class InterfaceStrings
             'order_received.fact_order_number' => 'Order number',
             'order_received.fact_total_paid' => 'Total paid',
             'order_received.fact_total_to_pay' => 'Total to pay',
+            // (Lane SW) A card payment Stripe told the browser had gone through,
+            // before the shop has recorded it. Never "paid", never "to pay".
+            'order_received.fact_total_confirming' => 'Confirming payment',
             'order_received.fact_payment' => 'Payment',
             'order_received.fact_delivery' => 'Delivery',
             'order_received.next_heading' => 'What next',

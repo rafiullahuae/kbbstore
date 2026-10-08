@@ -191,7 +191,14 @@
      none of the rest is spent waiting on purpose. The owner: "check icon come
      and instantly goes to thank you page". */
   var TICK_MS = 360;      // the tick drawing before the received page is asked for
-  var REPORT_MS = 4000;   // (Lane PO) the most the card's report to the shop may hold the tick
+  /* (Lane PO) The most the card's report to the shop may hold the tick. (Lane
+     SW) 4000 -> 1500: a report still running when the received page is asked
+     for no longer reads "Total to pay" there -- the page says the payment is
+     being confirmed (CheckoutController::success(), `redirect_status`) -- so a
+     slow Stripe read-back need not hold the shopper on the tick for four
+     seconds. Measured in Chromium with the read-back held 5 s: press to
+     thank-you 4.5 s before, ~2.2 s after. */
+  var REPORT_MS = 1500;
   var LEAVE_MS = 250;     // "Taking you to Tabby…" before the browser goes (Lane PO: was 700; the page stays painted until the provider answers)
   var STUCK_MS = 10000;   // the redirect plainly did not happen
   var ABORT_MS = 45000;   // no answer at all

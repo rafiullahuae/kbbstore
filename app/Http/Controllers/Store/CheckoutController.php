@@ -1808,10 +1808,28 @@ class CheckoutController extends Controller
          */
         $country = (string) ($order?->shipping_address['country'] ?? '');
 
+        /*
+         * (Lane SW) PAID BY THE CARD, NOT YET RECORDED: "confirming", never "to
+         * pay". The card form opens this page when its report to the shop
+         * (/checkout/card/paid) has answered OR after a short cap, and Stripe's
+         * full-redirect 3-D Secure return lands here before the webhook; either
+         * way the order can still read `pending`, and "Total to pay" told a
+         * shopper who had just paid that they owed the money. Both arrive with
+         * Stripe's own `redirect_status`. It decides a WORD and nothing else:
+         * the order is marked paid only by Stripe's answer to the server.
+         */
+        $confirmingPayment = $order !== null
+            && $order->paid_at === null
+            && $order->status === 'pending'
+            && $order->payment_method === 'stripe'
+            && str_starts_with((string) $order->transaction_id, 'pi_')
+            && in_array($redirectStatus, ['succeeded', 'processing', 'requires_capture'], true);
+
         return view('store.checkout-success', [
             'order' => $order,
             'settings' => $this->settings,
             'deliveryText' => $country === '' ? '' : $this->deliveryText($country),
+            'confirmingPayment' => $confirmingPayment,
         ]);
     }
 
