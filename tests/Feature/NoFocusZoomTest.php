@@ -190,3 +190,20 @@ it('measured every field at 16px or more on a touch screen, and a laptop unchang
         }
     }
 });
+
+it('gives Stripe\'s card fields 16px on a touch screen, where the stylesheet floor cannot reach', function () {
+    /*
+     * The owner, 8 October, after an iPhone order: "the checkout fields are
+     * still zoomout the screen ... including stripe fields". Every field the
+     * shop draws was already 16px on a phone; the card number, expiry and CVC
+     * are drawn by Stripe inside its own frames and took fontSize '14px' from
+     * stripe-elements, so iOS zoomed the page on each of them.
+     *
+     * MUTATION: put `fontSize: '14px'` back in STYLE.base -> red.
+     */
+    $view = file_get_contents(resource_path('views/partials/checkout/stripe-elements.blade.php'));
+
+    expect($view)->toContain("var TOUCH = !!(window.matchMedia && window.matchMedia('(hover:none),(pointer:coarse)').matches);")
+        ->and($view)->toContain("fontSize: TOUCH ? '16px' : '14px',")
+        ->and($view)->not->toMatch("/fontSize:\\s*'(1[0-5]|[0-9])px'\\s*,/");
+});

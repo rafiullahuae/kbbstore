@@ -145,9 +145,17 @@
 
   /* ------------------------------------------------------------------ mount */
 
+  /* 16px ON A TOUCH SCREEN, because iOS Safari zooms the whole page into any
+     field whose text is under 16px -- and the card number, expiry and CVC sit
+     in Stripe's own frames, where the site-wide 16px floor in kbb.css cannot
+     reach. The owner, 8 October: "the checkout fields are still zoomout the
+     screen ... including stripe fields". The same media query as that floor;
+     a mouse-and-keyboard screen keeps its 14px. StripeCardFieldsNoZoomTest. */
+  var TOUCH = !!(window.matchMedia && window.matchMedia('(hover:none),(pointer:coarse)').matches);
+
   var STYLE = {
     base: {
-      fontSize: '14px',
+      fontSize: TOUCH ? '16px' : '14px',
       fontFamily: 'inherit',
       color: '#1F2A24',
       '::placeholder': { color: '#9AA8A0' }
