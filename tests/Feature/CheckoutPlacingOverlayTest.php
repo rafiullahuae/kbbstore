@@ -747,11 +747,11 @@ it('is driven by the card and the wallet legs, and every call is guarded', funct
         ->and($card)->toContain('(window.KBB && window.KBB.placing) || null')
         ->and($card)->toContain('if (ov) { ov.begin(); }')
         ->and($card)->toContain('if (ov) { ov.dismiss(); }')
-        ->and($card)->toContain('if (ov) { ov.confirmed(handle.success_url, report); return; }')
+        ->and($card)->toContain('if (ov) { ov.confirmed(landing, report); return; }')
         ->and($card)->toContain('if (ov) { ov.leaving(placed.body.url); return; }');
 
     expect($wallets)->toContain('(window.KBB && window.KBB.placing) || null')
-        ->and($wallets)->toContain('if (ov) { ov.confirmed(placed.body.success_url, report); return; }');
+        ->and($wallets)->toContain('if (ov) { ov.confirmed(landing, report); return; }');
 
     foreach ([$card, $wallets] as $src) {
         expect(preg_match('/(?<!&& )window\.KBB\.placing\./', $src))

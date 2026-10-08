@@ -134,7 +134,9 @@ it('keeps the one box up from the press to the tick on the card leg', function (
 
     $from = strpos($card, 'handle = openOrder = placed.body;');
     $confirm = strpos($card, 'await stripe.confirmCardPayment');
-    $success = strpos($card, 'if (ov) { ov.confirmed(handle.success_url, report); return; }');
+    // (Lane SW) The received page now opens at `landing`: the same success_url
+    // with Stripe's redirect_status on it (CardPaidReceivedWordingTest).
+    $success = strpos($card, 'if (ov) { ov.confirmed(landing, report); return; }');
 
     expect($from)->not->toBeFalse()->and($confirm)->toBeGreaterThan($from)->and($success)->toBeGreaterThan($confirm);
 
