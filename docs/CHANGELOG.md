@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.426
+**Catalog -> Image SEO.** Apply after .425. Runs its migrations. Hard refresh the
+admin.
+
+| Your request | Now |
+|---|---|
+| "rename the products images as per the product title ... single word variation ... ALT tag as bulk ... green tick in media library" + "rating for each image ... like 6/10" | Admin -> Catalog -> Image SEO: Find (search by product, SKU, brand, category; X/10 score in front of every picture URL with the reason; needs-attention sort), Rename files (preview, then Start with progress, Stop/Resume; your word-order variations), ALT text (templates, edit each line, Apply), History with Undo. Media Library shows the score and a green tick. Old addresses (incl. WordPress -600x600 copies and pre-WebP names) forward to the renamed picture in one 301. Guide: docs/IMAGE-SEO-GUIDE.md |
+
+Files: see the package's update.json.
+
 ## 2.60.425
 **Stripe test orders go through; sold-out popup; payment keys stay saved; Google
 Shopping feed, old picture links, image sitemap.** Apply after .424. Runs its
