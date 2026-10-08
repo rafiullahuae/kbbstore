@@ -500,6 +500,11 @@ class AppServiceProvider extends ServiceProvider
          */
         \App\Support\MediaUsageWriter::listen();
 
+        // Catalog -> Image SEO (Lane IR): a product whose pictures, alt text or
+        // name change elsewhere has its Media Library score re-stored. Admin
+        // and importer writes only; the shop never saves a product.
+        \App\Services\ImageSeo\ImageSeo::listen();
+
         /*
          * `orders.locale` — the language the customer was shopping in.
          *
@@ -638,6 +643,22 @@ class AppServiceProvider extends ServiceProvider
                     // The argument is what makes that testable — see
                     // Url::redirect()'s note on runningInConsole().
                     return redirect(\App\Support\Url::redirect($redirect->target, $request), $redirect->code);
+                }
+
+                /*
+                 * A picture Catalog -> Image SEO renamed (Lane IR): its old
+                 * address, or any old img-cache copy of it, answers 301 with the
+                 * new one in a single hop. Reached only by a request that has
+                 * already missed both the disk and every route, and costs one
+                 * indexed query on image_renames for a picture path, nothing at
+                 * all for anything else. App\Support\ImageRenameRedirect is the
+                 * one entry point; another image redirect joins it there.
+                 */
+                if (($renamed = \App\Support\ImageRenameRedirect::targetFor($request)) !== null) {
+                    // Root-relative on purpose: the scheme and host are the
+                    // visitor's own, so a proxy that hides https cannot turn
+                    // this into an http:// hop.
+                    return new \Illuminate\Http\RedirectResponse($renamed, 301);
                 }
 
                 if ($request->isMethod('GET') && !$request->is('admin*', 'admin-api*', 'api*')) {

@@ -166,6 +166,7 @@ final class AdminRoles
         ['content', 'Content & media', [
             'content.manage' => 'Media, menus, categories copy, redirects and translations',
             'media.optimize' => 'Convert images to WebP across the shop, undo it and remove originals',
+            'media.image_seo' => 'Rename product pictures for SEO and bulk-write their alt text (Catalog → Image SEO), and undo it',
             'posts.manage' => 'Write Journal articles',
             'pages.manage' => 'Edit content pages (terms, privacy, FAQ…)',
             'ugc.view' => 'See the shoppable-video library',
