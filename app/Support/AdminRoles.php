@@ -245,6 +245,8 @@ final class AdminRoles
         ['security', 'Security', [
             'security.view' => 'See the security log',
             'security.integrity' => 'Run the file integrity check',
+            'firewall.view' => 'See the firewall and what it refused',
+            'firewall.manage' => 'Change the firewall: mode, limits, countries, bots, always-allow, bans',
         ]],
         ['data', 'Data & import', [
             'data.import' => 'Import customers, orders and products',

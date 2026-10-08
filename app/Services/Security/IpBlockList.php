@@ -38,7 +38,9 @@ use Illuminate\Support\Facades\Log;
  * still two isset() calls. The file is include()d, so under opcache the array
  * lives in shared memory and costs nothing to "load"; it carries the handful
  * of Cart Tracking settings the request path needs too, so BlockGate and
- * CartTracker never touch SettingsService.
+ * CartTracker never touch SettingsService — and, since Lane FW, the compiled
+ * firewall (FirewallConfig::compile()), so the firewall's configuration costs
+ * the request path nothing either.
  *
  * NOT the cache store: on a host whose CACHE_STORE is `database`, a
  * Cache::get() is a query on every page, which is exactly what this exists to
@@ -67,7 +69,8 @@ use Illuminate\Support\Facades\Log;
  */
 final class IpBlockList
 {
-    public const VERSION = 2;
+    /** 3: the file also carries the compiled firewall (`fw`, Lane FW). */
+    public const VERSION = 3;
 
     /** Seconds before a failed build (no table yet) is retried. */
     private const RETRY = 60;
@@ -93,7 +96,7 @@ final class IpBlockList
     /**
      * The compiled list and the request-path settings.
      *
-     * @return array{v:int, ready:bool, retry:int, n:int, settings:array<string,mixed>, 4:array, 6:array}
+     * @return array{v:int, ready:bool, retry:int, n:int, settings:array<string,mixed>, fw:array<string,mixed>, 4:array, 6:array}
      */
     public static function compiled(): array
     {
@@ -211,7 +214,7 @@ final class IpBlockList
     public static function rebuild(): array
     {
         try {
-            $data = self::empty(true, 0, CartTrackingSettings::fromDatabase());
+            $data = self::empty(true, 0, CartTrackingSettings::fromDatabase(), FirewallConfig::compile());
 
             foreach (IpBlock::query()->get(['id', 'family', 'prefix', 'network', 'expires_at']) as $row) {
                 $expires = $row->expires_at?->getTimestamp() ?? 0;
@@ -288,7 +291,7 @@ final class IpBlockList
         }
     }
 
-    private static function empty(bool $ready, int $retry, ?array $settings = null): array
+    private static function empty(bool $ready, int $retry, ?array $settings = null, ?array $fw = null): array
     {
         if ($settings === null) {
             $settings = [];
@@ -301,7 +304,11 @@ final class IpBlockList
             $settings['track'] = $ready && $settings['track'];
         }
 
-        return ['v' => self::VERSION, 'ready' => $ready, 'retry' => $retry, 'n' => 0, 'settings' => $settings, 4 => [], 6 => []];
+        // The firewall's shipped defaults need no query: FirewallConfig
+        // knows them, so a NOT READY file still carries a working firewall.
+        $fw ??= FirewallConfig::compileDefaults();
+
+        return ['v' => self::VERSION, 'ready' => $ready, 'retry' => $retry, 'n' => 0, 'settings' => $settings, 'fw' => $fw, 4 => [], 6 => []];
     }
 
     private static function write(array $data): void

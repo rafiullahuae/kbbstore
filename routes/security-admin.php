@@ -80,3 +80,9 @@ Route::post('/security', [SecurityController::class, 'save'])
 Route::post('/security/integrity', [SecurityController::class, 'integrity'])
     ->middleware('throttle:6,1')
     ->name('admin.security.integrity');
+
+/*
+ * Store → Security → Firewall (Lane FW): its nine endpoints, in their own file
+ * and inside this same guarded group. See routes/firewall-admin.php.
+ */
+require __DIR__.'/firewall-admin.php';

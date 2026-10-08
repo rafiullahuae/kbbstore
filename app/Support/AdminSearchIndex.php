@@ -341,6 +341,13 @@ final class AdminSearchIndex
             'Content security policy' => [],
             'Evidence & retention' => [],
         ],
+        // Lane FW: Store -> Security -> Firewall.
+        'firewall' => [
+            '' => [
+                'Flood limits and bans', 'Countries', 'Search engines and link previews', 'Always allow',
+                'Block list and data', 'Download country database', 'Refresh bot lists', 'Active bans',
+            ],
+        ],
         'analytics' => [],
         'search' => [
             'Search' => [

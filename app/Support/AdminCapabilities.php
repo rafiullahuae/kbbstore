@@ -700,6 +700,14 @@ final class AdminCapabilities
         'cache.manage' => ['owner'],
         'security.view' => ['owner'],
         'security.integrity' => ['owner'],
+        /*
+         * Store -> Security -> Firewall (Lane FW). Two keys, both owner-only:
+         * reading what the firewall saw, and changing what it refuses. NOT
+         * security.view: the day a manager may read the audit trail, that must
+         * not hand them the switch that turns the shop's bot protection off.
+         */
+        'firewall.view' => ['owner'],
+        'firewall.manage' => ['owner'],
         'payments.manage' => ['owner'],
         // Lane SR -- see the RULES entries for admin-api/payments/stripe/webhook.
         'payments.stripe_webhook' => ['owner'],
@@ -1137,6 +1145,16 @@ final class AdminCapabilities
          * work rather than reads a row.
          */
         ['POST', 'admin-api/security/integrity', 'security.integrity'],
+
+        /*
+         * Lane FW. ABOVE the security wildcard for the same reason as the
+         * line before: first match wins, and below it every firewall endpoint
+         * -- the mode switch included -- would resolve to security.view.
+         */
+        ['GET', 'admin-api/security/firewall', 'firewall.view'],
+        ['GET', 'admin-api/security/firewall/**', 'firewall.view'],
+        ['*', 'admin-api/security/firewall', 'firewall.manage'],
+        ['*', 'admin-api/security/firewall/**', 'firewall.manage'],
 
         ['*', 'admin-api/security', 'security.view'],
         ['*', 'admin-api/security/**', 'security.view'],

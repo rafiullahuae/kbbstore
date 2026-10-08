@@ -161,6 +161,7 @@ final class AdminNav
             ['id' => 'payments', 'label' => 'Payments', 'read' => 'admin-api/payments', 'icon' => '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],
             ['id' => 'paygw', 'label' => 'Gateway webhooks', 'read' => 'admin-api/payments/tamara', 'late' => true, 'icon' => '<path d="M12 3a4 4 0 0 1 3.4 6.1l2.8 4.6"/><path d="M8.2 20a4 4 0 0 1-1.4-7.1L9.6 8"/><path d="M18 20a4 4 0 0 0 1-7.9H13"/>'],
             ['id' => 'security', 'label' => 'Security', 'read' => 'admin-api/security', 'late' => true, 'icon' => '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="m9 12 2 2 4-4"/>'],
+            ['id' => 'firewall', 'label' => 'Firewall', 'read' => 'admin-api/security/firewall', 'late' => true, 'icon' => '<path d="M3 5h18v14H3z"/><path d="M3 10h18M3 14.5h18M9 5v5M15 10v4.5M9 14.5V19"/>'],
             ['id' => 'analytics', 'label' => 'Analytics', 'read' => 'admin-api/analytics', 'icon' => '<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],
             ['id' => 'search', 'label' => 'Site Search', 'read' => 'admin-api/site-search', 'icon' => '<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],
             ['id' => 'seo', 'label' => 'SEO & Meta', 'read' => 'admin-api/settings', 'icon' => '<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],

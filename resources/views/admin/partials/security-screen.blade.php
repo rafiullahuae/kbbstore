@@ -643,14 +643,11 @@
 
       + cspHTML()
 
-      + '<div class="sx-note">Blocking is '
-      + '<b>a later round, on purpose</b>. A module that starts refusing traffic on its first day refuses '
-      + 'the wrong thing \u2014 you, your payment provider\u2019s webhooks, Google\u2019s crawler \u2014 and gets '
-      + 'switched off, which leaves the shop worse off than one with no module at all, because everybody '
-      + 'now believes it is protected. The content-security policy above is the first half of that done '
-      + 'properly: it is written, it is sent, and it reports rather than refuses until you have seen what '
-      + 'refusing would cost. Volumetric floods and most bot traffic are answered before the request ever '
-      + 'reaches this application at all, and belong at Cloudflare or your host rather than here.</div>'
+      + '<div class="sx-note">Floods, bots and country rules are refused by the <b>Firewall</b> '
+      + '(Store \u2192 Security \u2192 Firewall), which starts in Monitor mode \u2014 counting and logging, '
+      + 'refusing nothing \u2014 so you can see what it would refuse before it does. The content-security '
+      + 'policy above reports rather than refuses for the same reason.'
+      + ' <button type="button" class="sx-btn" data-fw-open style="margin-left:6px">Open the Firewall</button></div>'
 
       + listHTML('Failed sign-ins', 'Every wrong password on the admin login, and every attempt the '
           + 'five-per-minute throttle turned away before it reached the password at all. The password '
@@ -719,6 +716,7 @@
     if (e.target.closest('[data-sx-reload]')) { load(); return; }
     if (e.target.closest('[data-sx-defaults]')) { defaults(); return; }
     if (e.target.closest('[data-sx-check]')) { check(); return; }
+    if (e.target.closest('[data-fw-open]')) { window.go('firewall'); return; }
   });
 
   /* "Check now". A POST, because it makes the server do work and write rows --
@@ -762,3 +760,6 @@
 })();
 </script>
 @endverbatim
+
+{{-- Store → Security → Firewall (Lane FW): its own screen, drawn by its own partial. --}}
+@include('admin.partials.firewall-screen')

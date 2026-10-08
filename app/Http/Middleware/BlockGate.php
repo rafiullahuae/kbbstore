@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Services\CartTracking\BotSignals;
+use App\Services\Security\Firewall;
 use App\Services\Security\IpBlockList;
 use Closure;
 use Illuminate\Http\Request;
@@ -105,7 +106,50 @@ final class BlockGate
             }
         }
 
-        return $next($request);
+        // Store → Security → Firewall (Lane FW). Off: one array read and
+        // nothing else. See App\Services\Security\Firewall for the order.
+        $fw = $gate['fw'] ?? null;
+
+        if (! is_array($fw) || ($fw['mode'] ?? 'off') === 'off') {
+            return $next($request);
+        }
+
+        $refusal = Firewall::before($request, $fw);
+
+        if ($refusal !== null) {
+            return self::refuseFirewall($request, $refusal, $fw);
+        }
+
+        $response = $next($request);
+        Firewall::after($request, $response, $fw);
+
+        return $response;
+    }
+
+    /**
+     * A firewall refusal. 429 + Retry-After for a ban, 403 otherwise; the same
+     * no-store page or JSON as every other refusal here, with the reason as the
+     * reference ("F" + a letter) so the owner can match a customer's screenshot
+     * to the live view. A Protect refusal carries a fresh page-load proof, so a
+     * real shopper whose network changed mid-visit succeeds on the next tap.
+     *
+     * @param  array{0:string, 1:int, 2:int}  $refusal
+     */
+    private static function refuseFirewall(Request $request, array $refusal, array $fw): Response
+    {
+        [$reason, $status, $retry] = $refusal;
+        $response = self::refuse($request, $reason === 'country' ? 'blocked' : 'bot', null,
+            $reason === 'fake_bot' || ($fw['scope'] ?? '') === 'site', $status, 'F'.strtoupper($reason[0]));
+
+        if ($retry > 0) {
+            $response->headers->set('Retry-After', (string) $retry);
+        }
+
+        if ($reason === 'no_proof') {
+            Firewall::attachProofTo($request, $response);
+        }
+
+        return $response;
     }
 
     /** Does the block scope cover this request? */
@@ -167,17 +211,17 @@ final class BlockGate
         return str_contains($uri, 'webhook') || str_contains($uri, 'import-chain');
     }
 
-    private static function refuse(Request $request, string $why, ?int $blockId, bool $wholeSite): Response
+    private static function refuse(Request $request, string $why, ?int $blockId, bool $wholeSite, int $status = 403, ?string $prefix = null): Response
     {
-        $reference = $blockId !== null ? 'B'.$blockId : 'R'.substr(sha1((string) $request->ip()), 0, 6);
+        $reference = $blockId !== null ? 'B'.$blockId : ($prefix ?? 'R').substr(sha1((string) $request->ip()), 0, 6);
         $message = $why === 'blocked'
             ? __('store.blocked.json')
             : __('store.blocked.bot_json');
 
         if ($request->expectsJson() || $request->isJson() || str_contains($request->path(), 'api/')) {
-            $response = response()->json(['ok' => false, 'error' => $message, 'blocked' => true, 'reference' => $reference], 403);
+            $response = response()->json(['ok' => false, 'error' => $message, 'blocked' => true, 'reference' => $reference], $status);
         } else {
-            $response = response()->view('errors.kbb-blocked', ['reference' => $reference, 'why' => $why, 'home' => ! $wholeSite], 403);
+            $response = response()->view('errors.kbb-blocked', ['reference' => $reference, 'why' => $why, 'home' => ! $wholeSite], $status);
         }
 
         $response->headers->set('Cache-Control', 'no-store, private');

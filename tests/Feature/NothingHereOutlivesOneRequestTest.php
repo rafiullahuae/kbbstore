@@ -162,7 +162,10 @@ it('has nothing that outlives a single request', function () {
     // 9 with Lane RPL: `kbb:picture-trash-purge`, daily at 03:29 -- product
     // pictures whose 30 days in the trash are up. Reads its rows, unlinks,
     // exits; nothing is held between runs.
-    expect(substr_count($console, 'Schedule::command('))->toBe(9, 'the set of scheduled commands has changed');
+    // 10 with Lane FW: `kbb:firewall data --auto`, hourly -- asks whether the
+    // country database (monthly) or the bot address lists (weekly) are due,
+    // downloads into storage/app/firewall/ when they are, exits.
+    expect(substr_count($console, 'Schedule::command('))->toBe(10, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

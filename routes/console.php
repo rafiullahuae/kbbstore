@@ -203,3 +203,20 @@ Schedule::command('kbb:instagram-sync --unattended')
 Schedule::command('kbb:picture-trash-purge')
     ->dailyAt('03:29')
     ->withoutOverlapping(30);
+
+/*
+|--------------------------------------------------------------------------
+| Store → Security → Firewall data (Lane FW)
+|--------------------------------------------------------------------------
+|
+| The country database (DB-IP IP to Country Lite, monthly, ~30 MB download,
+| converted to a ~5 MB lookup file) and the search engines' published address
+| lists (weekly). Hourly the command asks whether either is due and almost
+| always answers no without touching the network; a failure waits six hours.
+| Without a cron line, the owner presses "Download country database" once on
+| the Firewall screen.
+*/
+Schedule::command('kbb:firewall data --auto')
+    ->hourlyAt(37)
+    ->withoutOverlapping(30)
+    ->runInBackground();
