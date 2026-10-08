@@ -1,0 +1,50 @@
+[
+    {
+        "n": 1,
+        "what": "routes/web.php: require the Coming Soon routes inside the guarded admin-api group, after Site App (Lane CS)",
+        "file": "routes/web.php",
+        "anchor": "        require __DIR__.'/site-app-admin.php';   // App -> Site App (Lane PW)\n",
+        "count": 1,
+        "replacement": "        require __DIR__.'/site-app-admin.php';   // App -> Site App (Lane PW)\n        // Appearance → Coming Soon page (Lane CS): `comingsoon.manage`, owner only.\n        require __DIR__.'/coming-soon-admin.php';\n"
+    },
+    {
+        "n": 2,
+        "what": "console TITLES: Appearance → Coming Soon page, so ?go=comingsoon and #comingsoon name the screen (Lane CS)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "'sitelayout':['Appearance','Site layout'],",
+        "count": 1,
+        "replacement": "'sitelayout':['Appearance','Site layout'],'comingsoon':['Appearance','Coming Soon page'],"
+    },
+    {
+        "n": 3,
+        "what": "console LATE_RENDERED: arm the deep-link replay for 'comingsoon' -- its partial wraps window.go and draws the screen itself (Lane CS)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "'cartpanel','push','media','tax','tr-settings',",
+        "count": 1,
+        "replacement": "'cartpanel','push','media','tax','comingsoon','tr-settings',"
+    },
+    {
+        "n": 4,
+        "what": "console: include the Coming Soon screen partial, after Page background (Lane CS)",
+        "file": "resources/views/admin/app.blade.php",
+        "anchor": "@include('admin.partials.page-wash-screen')\n",
+        "count": 1,
+        "replacement": "@include('admin.partials.page-wash-screen')\n\n{{-- Appearance → Coming Soon page (Lane CS): hide the shop on one address (or\n     every address) behind a 503 Coming Soon page while the domain moves, with\n     a secret preview link for test orders. Wraps window.go for 'comingsoon';\n     its sidebar row is App\\Support\\AdminNav's. Endpoints:\n     routes/coming-soon-admin.php, `comingsoon.manage`. --}}\n@include('admin.partials.coming-soon-screen')\n"
+    },
+    {
+        "n": 5,
+        "what": "keep docs/T1B-ADMIN-APP-BLOCKS.md's quoted LATE_RENDERED line in step with the console (TranslationConsoleTest)",
+        "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
+        "anchor": "'cartpanel','push','media','tax','tr-settings',",
+        "count": 1,
+        "replacement": "'cartpanel','push','media','tax','comingsoon','tr-settings',"
+    },
+    {
+        "n": 6,
+        "what": "keep docs/BG-ADMIN-APP-BLOCKS.md's quoted LATE_RENDERED lines in step with the console",
+        "file": "docs/BG-ADMIN-APP-BLOCKS.md",
+        "anchor": "'cartpanel','push','media','tax','tr-settings',",
+        "count": 2,
+        "replacement": "'cartpanel','push','media','tax','comingsoon','tr-settings',"
+    }
+]

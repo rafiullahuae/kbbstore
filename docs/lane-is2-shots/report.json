@@ -1,0 +1,138 @@
+{
+  "steps": [
+    "ticked 1 for MDC-PDRN-60",
+    "ticked 1 for ANU-HL77",
+    "ticked 1 for ANU-HL-CO",
+    "ticked 1 for CRX-SN96",
+    "ticked 1 for BOJ-RS50",
+    "ticked 2 for IS2-GLOW",
+    "bar: 7 products selected · 27 pictures",
+    "Start before any preview: {\"text\":\"Preview, then start renaming\",\"disabled\":false} why=",
+    "Start pressed with no preview -> dialog: [\"Rename 25 files in 7 products? Every old address will redirect to the new name, and the run can be undone from History.\"]",
+    "bar (one shared picture): 1 product selected · 1 picture",
+    "zero rename: Nothing to rename in this product: 1 shared with other products. Tick \"Include pictures shared by several products\" to rename shared ones. button={\"text\":\"Nothing to rename\",\"disabled\":true}",
+    "bar after select all: All 1,234 products selected · 2,468 pictures",
+    "page 1 all ticked=true; page 2 after the round trip: false,false,true,true",
+    "bar: All 1,234 products selected (2 excluded) · 1,232 to work on · 2,464 pictures",
+    "combined preview of 1,232 products took 3616 ms; dialog: [\"Rename 2,464 files and write 2,464 ALT texts in 1,232 products? Every old address will redirect to the new name, and the run can be undone from History.\"]",
+    "mid-run: 55 / 1,232 products · 110 files renamed · 110 ALT texts written · 0 skipped · 0 failed | Elapsed 0:03 · about 1:06 left",
+    "after a reload the run carried on by itself: 82 -> 142",
+    "stopped at 167, still 167 three seconds later",
+    "resumed",
+    "finished in 82467 ms: 1,232 / 1,232 products · 2,464 files renamed · 2,464 ALT texts written · 0 skipped · 0 failed | Finished in 1:12",
+    "step requests: {\"count\":46,\"maxBytes\":4237,\"medianGapMs\":1612,\"maxGapMs\":6601}",
+    "requests while idle for 6 s: 0",
+    "undo: 1,232 / 1,232 products · 2,464 files restored · 2,464 ALT texts restored · 0 skipped · 0 failed"
+  ],
+  "failures": [],
+  "measures": {
+    "01-rename-tab-7-products@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "01-rename-tab-7-products@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "02-start-previewed-first@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "02-start-previewed-first@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "03-nothing-to-rename-says-why@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "03-nothing-to-rename-says-why@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "04-all-1234-selected-2-excluded@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "04-all-1234-selected-2-excluded@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "05-combined-preview-checking@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "05-combined-preview-checking@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "06-combined-preview@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "06-combined-preview@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "07-live-progress-mid-run@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "07-live-progress-mid-run@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "07b-stopped@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "07b-stopped@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "08-finished-summary@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "08-finished-summary@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    },
+    "steps": {
+      "count": 46,
+      "maxBytes": 4237,
+      "medianGapMs": 1612,
+      "maxGapMs": 6601
+    },
+    "idleRequests": 0,
+    "09-history-after-undo@1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "contentOverflow": 0
+    },
+    "09-history-after-undo@390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "contentOverflow": 0
+    }
+  },
+  "errors": []
+}

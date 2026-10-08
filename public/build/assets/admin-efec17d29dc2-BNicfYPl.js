@@ -273,6 +273,7 @@
     var t = 'https://' + st.target;
     var link = function (href, text) { return '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + esc(text) + '</a>'; };
     var body = yours('Your checks', '<ul>'
+      + (st.coming_soon && st.coming_soon.on ? '<li>The Coming Soon page is on: sign in on ' + esc(st.target) + ' or open the preview link from Appearance → Coming Soon page first, then turn it off when these pass.</li>' : '')
       + '<li>Place test orders on ' + link(t + '/shop', t + '/shop') + ': card, cash on delivery, Tabby and Tamara.</li>'
       + '<li>The order emails show ' + esc(st.target) + ' links.</li>'
       + '<li>Password reset works: ' + link(t + '/my-account/', t + '/my-account/') + ' → Lost your password?</li>'
@@ -304,6 +305,17 @@
     return step(11, level, 'Remove ' + st.old + ' completely', 'The last step, 2–4 weeks after step 10. After this the shop no longer depends on ' + esc(st.old) + ' at all.', body);
   }
 
+  /* Appearance -> Coming Soon page (Lane CS): turn it on BEFORE step 4 (DNS),
+     off after step 9's test orders pass. */
+  function comingSoon() {
+    var cs = st.coming_soon;
+    if (!cs) return '';
+    return '<div class="dw-msg ' + (cs.on ? 'is-info' : 'is-ok') + '" data-dw-coming-soon><b>' + esc(cs.line) + '</b> — '
+      + (cs.on ? 'visitors there see it; you (signed in) and the preview link see the shop. Turn it off after the test orders in step 9 pass.'
+        : 'turn it on before step 4, so ' + esc(st.new) + ' shows it instead of the shop while you set up and test.')
+      + ' <button type="button" class="dw-btn is-quiet" data-screen="comingsoon">Open Appearance → Coming Soon page</button></div>';
+  }
+
   /* -------------------------------------------------------------- render */
   function render() {
     var host = document.getElementById('content');
@@ -315,7 +327,8 @@
     var typed = root.querySelector('#dw-domain') ? root.querySelector('#dw-domain').value : null;
     root.innerHTML = '<div class="dw-head"><h2>Move the shop to ' + esc(st.new) + '</h2>'
       + '<p>Do the steps in order. Each one checks itself every time you open this page. Buttons do the work inside the shop; the grey boxes are clicks only you can do, in Cloudways or at Internet.bs, with the exact values to copy.</p>'
-      + '<div class="dw-legend"><span>✓ done</span><span>● to do</span><span>✕ needs attention</span></div></div>'
+      + '<div class="dw-legend"><span>✓ done</span><span>● to do</span><span>✕ needs attention</span></div>'
+      + comingSoon() + '</div>'
       + '<ol class="dw-steps">' + [s1(), s1b(), s2(), s3(), s4(), s5(), s6(), s6b(), s7(), s8(), s9(), s10(), s11()].join('') + '</ol>';
     var input = root.querySelector('#dw-domain');
     if (input && typed !== null) { input.value = typed; if (focus) input.focus(); }

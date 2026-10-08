@@ -213,6 +213,8 @@ final class AdminNav
             ['id' => 'bundles', 'label' => 'Quantity bundles', 'read' => 'admin-api/bundles', 'icon' => '<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],
             ['id' => 'layout', 'label' => 'Product grid', 'read' => 'admin-api/layout', 'icon' => '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'],
             ['id' => 'sitelayout', 'label' => 'Site layout', 'read' => 'admin-api/site-layout', 'late' => true, 'icon' => '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 4v16"/>'],
+            // Appearance -> Coming Soon page (Lane CS): hide the shop on an address while the domain moves.
+            ['id' => 'comingsoon', 'label' => 'Coming Soon page', 'read' => 'admin-api/coming-soon', 'late' => true, 'icon' => '<path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 10 6 10 9s-10 4-10 9"/><path d="M17 3c0 5-10 6-10 9s10 4 10 9"/>'],
         ]],
         ['sec' => 'Pages', 'rows' => [
             ['id' => 'pages-store', 'label' => 'Store pages', 'read' => 'admin-api/pages/store', 'icon' => '<path d="M3 9h18M3 15h18M9 3v18"/><rect x="3" y="3" width="18" height="18" rx="2"/>'],

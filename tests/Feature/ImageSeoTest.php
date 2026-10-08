@@ -659,14 +659,16 @@ it('starts, steps and undoes through the endpoints, with the selection refused w
     $shop = irShop();
     test()->actingAs(irAdmin(), 'admin');
 
-    test()->postJson('/admin-api/image-seo/start', ['token' => '../../etc', 'products' => [['p' => $shop['medi']->id]]])->assertStatus(422);
-    test()->postJson('/admin-api/image-seo/preview', ['products' => [['p' => 'x']]])->assertStatus(422);
+    test()->postJson('/admin-api/image-seo/start', ['token' => '../../etc'])->assertStatus(422);
+    test()->postJson('/admin-api/image-seo/preview', ['token' => 'tok-0123456789abcdef', 'kind' => 'rename', 'offset' => 0, 'selection' => ['mode' => 'ids', 'ids' => ['x']]])->assertStatus(422);
 
-    $preview = test()->postJson('/admin-api/image-seo/preview', ['products' => [['p' => $shop['medi']->id]]])->assertOk();
+    // Lane IS2: the preview is the run's frozen list, and Start needs it.
+    $preview = test()->postJson('/admin-api/image-seo/preview', ['token' => 'tok-0123456789abcdef', 'kind' => 'rename', 'offset' => 0, 'selection' => ['mode' => 'ids', 'ids' => [$shop['medi']->id]]])->assertOk();
     expect($preview->json('items.0.images.0.proposed_rel'))->toBe('uploads/products/medicube-pdrn-eye-patches.jpg')
+        ->and($preview->json('counts.rename'))->toBe(5)
         ->and(is_file(public_path($shop['rels']['m1'])))->toBeTrue();   // a preview writes nothing
 
-    $job = test()->postJson('/admin-api/image-seo/start', ['token' => 'tok-0123456789abcdef', 'products' => [['p' => $shop['medi']->id]]])->assertOk()->json('job');
+    $job = test()->postJson('/admin-api/image-seo/start', ['token' => 'tok-0123456789abcdef'])->assertOk()->json('job');
 
     for ($i = 0; $i < 5 && $job['status'] !== 'done'; $i++) {
         $job = test()->postJson('/admin-api/image-seo/step', ['job' => $job['id']])->assertOk()->json('job');

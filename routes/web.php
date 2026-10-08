@@ -554,6 +554,8 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/page-wash-admin.php';
         require __DIR__.'/whatsapp-button-admin.php';
         require __DIR__.'/site-app-admin.php';   // App -> Site App (Lane PW)
+        // Appearance → Coming Soon page (Lane CS): `comingsoon.manage`, owner only.
+        require __DIR__.'/coming-soon-admin.php';
 
         /*
          * Store → Security. Lane C. Inside this group for the reason the
