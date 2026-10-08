@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.445
+**Pictures appear at once: the grey loading box only where you asked, the first row of
+pictures loads immediately, search thumbnails tiny.** Apply after .444. Runs its
+migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "the images keep showing time to time ... giving bad experience" + "the fade grey stuff ... i wanted only and only for images 2nd and onwards images on the products page ... you have applied on the whole site" | The grey shimmering box from 7 October sat behind every product picture on the site. It now shows only behind a gallery photo you tap on the product page; product cards everywhere, the main photo and thumbnails are back as before. Appearance -> Product styles -> Layout -> Photo loading placeholder now governs only that. The first row of pictures on shop, category, brand, search and the first homepage section under the banner loads at once instead of last (phone category: all first-screen pictures 1.44 s -> 0.97 s; home -> category tap: empty frames 0.34 s -> 0.05 s) |
+| "why the search box results uses original size of the product ... it should be super tiny" | Search thumbnails use the 200px copy (a few KB) instead of the original (70-470 KB) |
+| (your own upload of missing pictures) | Store -> Import / Export -> "Fetch missing pictures from the old server" -> Check (counts only) -> Download the list: every missing picture and the product or banner that uses it |
+
+Files: see the package's update.json.
+
 ## 2.60.444
 **Store -> Security -> Firewall: invisible bot protection.** Apply after .443. Runs its
 migrations. Hard refresh the admin. Starts in Monitor mode (refuses nothing).
