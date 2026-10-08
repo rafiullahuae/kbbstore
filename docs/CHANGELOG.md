@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.425
+**Stripe test orders go through; sold-out popup; payment keys stay saved; Google
+Shopping feed, old picture links, image sitemap.** Apply after .424. Runs its
+migrations. Hard refresh the shop and the admin. Re-enter your payment keys once.
+
+| Your request | Now |
+|---|---|
+| "with demo card details, the order is not going through. it gives empty cart error" | Cause: a refused card payment left the basket locked, so every retry said "Your bag is empty". A refusal now reopens the basket at once; retries work; no duplicate orders, no double stock. Stripe's reason is kept in Store -> Payments -> Stripe -> Payment log |
+| "if any product is currently out of stock during checkout, it should give me proper popup with remove from the list option" | Popup listing every sold-out line (sets included): Remove and continue (totals refresh in place, details kept) or Go back to cart. All payment methods, EN/AR, phone |
+| "i need to re-enter the api every single time" (all gateways) | Saving gateway settings never erases stored keys; a blank key box keeps the saved key. Only "New webhook URL" clears its own secret |
+| SEO checklist | Audit in docs/SEO-AUDIT-2026-10.md. Google Shopping feed at /feeds/google-merchant.xml (Growth & Marketing -> Google Shopping feed); old WordPress picture URLs (incl. -600x600 copies) forward to the picture in one 301; image sitemap on |
+
+Files: see the package's update.json.
+
 ## 2.60.424
 **Homepage opens with one render-blocking stylesheet instead of two.** Apply after
 .423. Hard refresh the shop.
