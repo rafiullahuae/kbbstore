@@ -110,4 +110,7 @@ public/wp-content/
 # are rebuilt from the database; neither is source.
 /storage/framework/kbb-cart-tracking.tick
 /storage/framework/kbb-ip-blocks*.php
+# Lane FW: the firewall's counter table and its emergency-off marker.
+/storage/framework/firewall*/
+/storage/framework/kbb-firewall-off
 /storage/framework/kbb-ip-blocks*.tmp
