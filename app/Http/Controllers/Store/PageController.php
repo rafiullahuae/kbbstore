@@ -309,6 +309,9 @@ class PageController extends Controller
             // see resources/views/layouts/store.blade.php. An empty array is the
             // no-override case and merges to nothing.
             'seoCtx' => $seoCtx,
+            // The contact page's cards, icons and inquiry form (Lane CT), or null
+            // on every other page. Settings already loaded: no query.
+            'contactHub' => $slug === 'contact-us' ? \App\Support\ContactPage::view() : null,
         ]);
     }
 

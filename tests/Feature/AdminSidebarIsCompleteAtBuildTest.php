@@ -366,9 +366,10 @@ it('renders the sidebar the console settled on, group by group and row by row', 
         // 'notfoundpage' — Safety → 404 page (Lane NF), after Demo Content.
         'Safety' => ['debug', 'sandbox', 'democontent', 'notfoundpage'],
         'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'imageseo', 'routines', 'category-tree', 'brands-manager', 'pagination'],
+        // 'inquiries' — Store → Inquiries (Lane CT), after Quiz Leads.
         'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'import', 'orders',
             'order-new', 'coupon-editor', 'payments', 'paygw', 'security', 'firewall', 'analytics', 'search', 'seo', 'seokeywords',
-            'store-settings', 'customers', 'quiz-leads'],
+            'store-settings', 'customers', 'quiz-leads', 'inquiries'],
         'Emails' => ['emails', 'emails-sending', 'emails-customer', 'emails-branding', 'emails-sent', 'mail'],
         'Content' => ['posts', 'htmlblocks', 'media', 'ugcsections', 'instagram'],
         'Translation' => ['tr-settings', 'tr-progress', 'tr-strings', 'tr-machine'],
