@@ -720,7 +720,7 @@
     ]
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-JdHI6oZl.js",
+    "file": "assets/storefront-admin-5s8dU7eV.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -733,7 +733,7 @@
     ]
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-ezS3jML_.js",
+    "file": "assets/app-CJw9M73f.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,
