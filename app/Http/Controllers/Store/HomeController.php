@@ -139,7 +139,26 @@ class HomeController extends Controller
             ->get());
 
         // Category tiles, cached alongside the rails.
-        $categories = $draws('categories') ? Cache::remember('kbb.home.cats', 900, fn () => Category::query()
+        /*
+         * Lane SC: while a parent lists its sub-categories' products, its tile
+         * says how many its page lists -- each product once -- and a parent
+         * whose products are all in its children gets a tile at all. Same one
+         * cache entry; counted in one query (CategoryRollup::counts()), then
+         * the empty tiles, the order and the cut of ten done on those counts.
+         * Nothing rolling up: the original query below, under its own key.
+         */
+        $categories = $draws('categories') && \App\Support\CategoryRollup::hasRollups()
+            ? Cache::remember(\App\Support\CategoryRollup::cacheKey(\App\Support\CategoryRollup::HOME_CACHE), 900, static fn () => \App\Support\CategoryRollup::applyCounts(
+                Category::query()->select('id', 'name', 'slug', 'path')
+                    ->withCount(['products' => fn ($q) => $q->visible()])
+                    ->get(),
+                static fn ($a, $b) => [-(int) $a->products_count, mb_strtolower((string) $a->name), (int) $a->id]
+                    <=> [-(int) $b->products_count, mb_strtolower((string) $b->name), (int) $b->id],
+                10,
+            ))
+            : null;
+
+        $categories ??= $draws('categories') ? Cache::remember('kbb.home.cats', 900, fn () => Category::query()
             /*
              * ▲ `path` IS SELECTED, AND IT COSTS NOTHING TO SELECT IT.
              *
@@ -607,6 +626,7 @@ class HomeController extends Controller
 
         Cache::forget('kbb.home.rails');
         Cache::forget('kbb.home.brands');
+        \App\Support\CategoryRollup::forgetLists();   // Lane SC
 
         // Row 55 (Lane HA): the new sections' one entry.
         \App\Support\HomeSections::flush();

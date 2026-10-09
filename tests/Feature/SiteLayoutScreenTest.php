@@ -197,7 +197,9 @@ it('draws five tabs and forty-four controls, and says the shop is sending nothin
     // 136 since Lane SP: the two Page speed switches.
     // 171 with Lane CB: the Category banner tab -- its style switch and the
     // thirty-four Brand page Panel controls again, for category pages.
-    expect($keys)->toHaveCount(171);
+    // 172 with Lane SC: "Sub-category products on a parent category" on
+    // Product grid, shipped at "Include sub-categories" (the owner asked).
+    expect($keys)->toHaveCount(172);
 
     /*
      * Rule 1, visible on the screen itself: a shop that has saved nothing is

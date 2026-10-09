@@ -502,16 +502,9 @@ class SearchController extends Controller
 
         // Categories, unaffected by which brand was recognised.
         if ($rest !== '' && ($n = (int) $this->header->get('search_limit_categories'))) {
-            $cats = SearchTerms::whereLike(
+            $cats = $this->suggestCategories(SearchTerms::whereLike(
                 Category::query()->select('id', 'name', 'slug'), 'categories.name', $rest
-            )
-                ->withCount(['products' => fn ($w) => $w->visible()])
-                ->groupBy('categories.id', 'categories.name', 'categories.slug')
-                ->having('products_count', '>', 0)
-                ->orderByDesc('products_count')
-                ->orderByDesc('categories.id')
-                ->limit($n)
-                ->get();
+            ), $n);
 
             if ($cats->isNotEmpty()) {
                 $groups[] = [
@@ -688,16 +681,9 @@ class SearchController extends Controller
         }
 
         if ($n = (int) $this->header->get('search_limit_categories')) {
-            $cats = SearchTerms::whereLike(
+            $cats = $this->suggestCategories(SearchTerms::whereLike(
                 Category::query()->select('id', 'name', 'slug'), 'categories.name', $q
-            )
-                ->withCount(['products' => fn ($w) => $w->visible()])
-                ->groupBy('categories.id', 'categories.name', 'categories.slug')
-                ->having('products_count', '>', 0)
-                ->orderByDesc('products_count')
-                ->orderByDesc('categories.id')
-                ->limit($n)
-                ->get();
+            ), $n);
 
             if ($cats->isNotEmpty()) {
                 $groups[] = [
@@ -822,5 +808,37 @@ class SearchController extends Controller
     public function page(Request $request)
     {
         return app(ShopController::class)->index($request);
+    }
+
+    /**
+     * The categories a suggestion lists, with "N products" beside each.
+     *
+     * Lane SC: while a parent lists its sub-categories' products, N is what
+     * its page lists, each product once, and a parent whose products are all
+     * in its children is suggested at all. The rolled-up counts are one cached
+     * map (CategoryRollup::counts()), so this costs no query while warm; the
+     * name match itself is the same one statement, without the HAVING, ORDER
+     * and LIMIT, which are done on the rolled-up counts instead. Nothing
+     * rolling up: the original statement, unchanged.
+     */
+    private function suggestCategories(\Illuminate\Database\Eloquent\Builder $base, int $n): \Illuminate\Support\Collection
+    {
+        $base->withCount(['products' => fn ($w) => $w->visible()]);
+
+        if (\App\Support\CategoryRollup::hasRollups()) {
+            return \App\Support\CategoryRollup::applyCounts(
+                $base->get(),
+                static fn ($a, $b) => [-(int) $a->products_count, -(int) $a->id] <=> [-(int) $b->products_count, -(int) $b->id],
+                $n,
+            );
+        }
+
+        return $base
+            ->groupBy('categories.id', 'categories.name', 'categories.slug')
+            ->having('products_count', '>', 0)
+            ->orderByDesc('products_count')
+            ->orderByDesc('categories.id')
+            ->limit($n)
+            ->get();
     }
 }

@@ -90,6 +90,7 @@ final class CategoryTree
         Cache::forget('kbb.home.rails');
         ProductTabs::flush();
         \App\Services\BuyTogetherPairs::forget();
+        CategoryRollup::flush();
     }
 
     /**

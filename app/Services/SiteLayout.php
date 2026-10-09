@@ -208,6 +208,22 @@ class SiteLayout
             ]],
 
         /*
+         * ── SUB-CATEGORY PRODUCTS ON A PARENT ─────────────────────── Lane SC ──
+         *
+         * The owner: "i want that all the products of sub categories should
+         * also show in the main parent category too, automatically. give this
+         * option on backend also." So it ships ON (he asked), with Off as the
+         * way back. Not CSS -- a query -- so css() and isDefault() never see
+         * it. App\Support\CategoryRollup.
+         */
+        'sub_products' => ['select', 'Sub-category products on a parent category', 'include',
+            'Whether a category page also lists the products of every category under it, at any depth. Include: Skincare lists everything in Toners, Serums and their own sub-categories as well as its own, each product once, with filters, sorting, the product count and the pages all on the combined list. Only its own: a category lists just the products filed directly under it, as before. A category can choose differently in Catalog → Categories → Edit.',
+            [
+                'include' => 'Include sub-categories',
+                'own' => 'Only its own products',
+            ]],
+
+        /*
          * ── THE FILTERS DRAWER ON A PHONE ─────────────────────────── Lane FP ──
          *
          * The owner, on his phone's Filters drawer: "i want the filters panel
@@ -1293,7 +1309,7 @@ class SiteLayout
             ['max', 'gutter', 'gutter_wide', 'header_follows']],
         'grid' => ['Product grid',
             'The column count is not set here — it is worked out from the smallest card and the width each grid actually has, so a grid beside the shop filters gets the right answer rather than the window\'s answer.',
-            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count', 'filters_d', 'shop_links', 'sold_out', 'filter_w', 'filter_max', 'filters_m', 'cols_m']],
+            ['tile', 'tile_shop', 'cols_floor', 'cols_cap', 'gap', 'pin', 'show_count', 'filters_d', 'shop_links', 'sold_out', 'sub_products', 'filter_w', 'filter_max', 'filters_m', 'cols_m']],
         'loading' => ['Loading more products',
             'How /shop, every category, every brand page and the curated listings bring in more products: more on scroll, numbered arrows, or everything at once. Shoppers without JavaScript always get the arrows.',
             ['load_mode', 'load_batch', 'load_batch_custom', 'load_url']],
@@ -1646,7 +1662,7 @@ class SiteLayout
             if (in_array($key, self::LOAD_KEYS, true) || in_array($key, self::HEADER_KEYS, true)
                 || in_array($key, self::PRESS_KEYS, true) || in_array($key, self::BRAND_KEYS, true)
                 || in_array($key, self::CATBANNER_KEYS, true)
-                || in_array($key, self::FONT_KEYS, true) || $key === 'sold_out'
+                || in_array($key, self::FONT_KEYS, true) || $key === 'sold_out' || $key === 'sub_products'
                 || in_array($key, self::SPEED_KEYS, true)) {
                 continue;
             }

@@ -367,6 +367,7 @@
         if (mine !== seq) return;
         cats = (d && d.categories) || [];
         ARABIC_SHAPE = (d && d.translatable) || ARABIC_SHAPE;
+        SUB_DEFAULT = (d && d.sub_products_default === 'own') ? 'own' : 'include';
       } else if (tab === 'brands') {
         var b = await api('/brands-tree');
         if (mine !== seq) return;
@@ -1276,6 +1277,19 @@
     }).join('');
   }
 
+  /* Lane SC: "Sub-category products" on this category's own page. Constants,
+     as above; '' follows Appearance → Site layout → Product grid, whose
+     current choice the index hands down so the first option can say it. */
+  var SUB_DEFAULT = 'include';
+  var SUB_PRODUCTS = [['include', 'Include sub-categories'], ['own', 'Only this category\u2019s own products']];
+  function subProductsOpts(cur){
+    cur = cur || '';
+    var shop = SUB_DEFAULT === 'own' ? 'only its own' : 'include sub-categories';
+    return [['', 'Use the shop setting (now: ' + shop + ')']].concat(SUB_PRODUCTS).map(function(o){
+      return '<option value="' + o[0] + '"' + (o[0] === cur ? ' selected' : '') + '>' + o[1] + '</option>';
+    }).join('');
+  }
+
   /* -------------------------------------------------------------- editor */
   function editor(cat){
     var isNew = !cat;
@@ -1401,6 +1415,14 @@
         + '<select id="ct-soldout">' + soldOutOpts(cat.sold_out_mode) + '</select>'
         + '<p class="ct-note">How sold-out products sit on this category’s page. At the very end: after every in-stock product, each group in its usual order. '
         + 'Hide: left out of the grid and the product count; the product page itself still opens.</p></div>'
+      /* LANE SC — whether this category's page also lists the products of the
+         categories under it. '' is "Use the shop setting". */
+      + '<div class="ct-fld"><label for="ct-subprod">Sub-category products</label>'
+        + '<select id="ct-subprod">' + subProductsOpts(cat && cat.sub_products) + '</select>'
+        + '<p class="ct-note">Include: this category\u2019s page also lists every product in the categories under it, at any depth, each product once. '
+        + 'Only its own: just the products filed directly under it.'
+        + (cat && cat.listed_count != null ? ' Its page lists <b>' + esc(cat.listed_count) + '</b> product' + (+cat.listed_count === 1 ? '' : 's') + ' now.' : '')
+        + '</p></div>'
       + '<div class="ct-grid2"><div class="ct-fld"><label for="ct-pos">Position</label>'
         + '<input id="ct-pos" type="number" min="0" value="' + esc(cat.position || 0) + '">'
         + '<p class="ct-note">Or just drag the row.</p></div><div></div></div>'
@@ -1491,6 +1513,7 @@
         image: val('ct-image'),
         position: parseInt(val('ct-pos'), 10) || 0,
         sold_out_mode: val('ct-soldout'),
+        sub_products: val('ct-subprod'),
         /* Every box on every save, including an unchecked checkbox as an
            explicit false. The server treats a key it RECEIVES as authoritative
            and leaves one it does not receive alone, so omitting the checkbox
