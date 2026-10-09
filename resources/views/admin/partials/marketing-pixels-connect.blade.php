@@ -107,7 +107,7 @@
     google_site_verification:['Site verification (tag or code)','text','<meta name="google-site-verification" …>'],
     consent_mode:['Consent Mode v2','select',[['off','Off (default)'],['eea','EEA, UK and Switzerland: denied by default']]],
     tiktok_token:['Events API access token','secret','Access token'], tiktok_test_code:['Test Events code','text','TEST12345'],
-    meta_app_id:['Meta App ID','text','App ID'], meta_app_secret:['Meta App Secret','secret','App Secret']
+    meta_app_id:['Meta App ID (digits only)','text','e.g. 1234567890123456'], meta_app_secret:['Meta App Secret','secret','App Secret']
   };
   function base(){ return mpBase(); }
   function api(path, body){
@@ -152,7 +152,7 @@
       var pick = (S.meta_oauth.pixels || []).length > 1 ? '<div class="mpx-card"><h3>Pick your pixel</h3>' + S.meta_oauth.pixels.map(function (p) { return '<div class="mpx-row"><button class="btn small" data-mpx-pick="' + a(p.id) + '">Use</button> ' + e(p.name) + ' <code>' + e(p.id) + '</code></div>'; }).join('') + '</div>' : '';
       return warn + msg + pick + '<div class="mpx-card"><h3>' + e(WIZ.meta.title) + '</h3><p class="mpx-muted">' + status(S.server.meta, 'Server events (Conversions API)') + '</p>' + steps('meta') + checks([['meta','Check Meta'],['live','Check live page']]) + '</div>'
         + '<div class="mpx-card"><h3>Catalog feed</h3><p class="mpx-muted">Commerce Manager → Catalog → Data sources → Data feed → Scheduled feed. Its ids match what the pixel sends.</p>' + copyRow('Meta catalog feed', S.feeds.meta) + '</div>'
-        + '<div class="mpx-card"><h3>Connect with Facebook (optional, your own app)</h3><p class="mpx-muted">Picks the Pixel ID for you. ' + (S.meta_oauth.source === 'instagram' ? 'Uses the Meta app you connected Instagram with.' : S.meta_oauth.source === 'own' ? 'Uses the app below.' : 'Add your app first.') + ' The token above is still a paste.</p>'
+        + '<div class="mpx-card"><h3>Connect with Facebook (optional, your own app)</h3><p class="mpx-muted">Picks the Pixel ID for you. ' + (S.meta_oauth.source === 'own' ? 'Uses the app below.' : 'Add your Meta app’s ID and secret first.') + ' The token above is still a paste.</p>'
         + field('meta_app_id') + field('meta_app_secret') + copyRow('Add this to Facebook Login for Business → Valid OAuth Redirect URIs', S.meta_oauth.redirect_uri)
         + '<div class="mpx-row"><button class="btn primary" type="button" data-mpx-save>Save app</button><button class="btn" type="button" data-mpx-fb>Connect with Facebook</button></div></div>';
     }

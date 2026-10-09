@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Pixels;
 
 use App\Services\Analytics;
-use App\Services\Instagram\InstagramCredentials;
 use App\Support\Url;
 use Illuminate\Http\Request;
 
@@ -29,14 +28,15 @@ use Illuminate\Http\Request;
  * An app that only touches its OWNER'S ad accounts needs no App Review: the
  * default (now "Limited") access to ads_read and business_management covers
  * accounts where the person logging in has a role on the app. So: the owner's
- * app — the one he made for Instagram is reused when present — logs him in,
+ * app — its id and secret saved on the Meta tab (meta_app_id, and
+ * meta_app_secret encrypted) — logs him in,
  * this class asks Graph for the pixels on his ad accounts, and he picks one.
  * The ID is written; NO token is kept: the user token from this login expires
  * in hours or weeks, and the Conversions API uses the never-expiring token
  * Events Manager generates, which stays a paste.
  *
  * The state is single-use, session-bound and 15 minutes long, checked before
- * the code is looked at (InstagramAuth's reasoning, carried over). A pixel id
+ * the code is looked at (the same reasoning as every OAuth callback in this shop). A pixel id
  * from the browser is accepted only if it is one Meta returned to this
  * session.
  */
@@ -54,34 +54,29 @@ final class MetaConnect
 
     public function __construct(private PixelConfig $config, private PlatformClient $client, private Analytics $analytics) {}
 
+    /*
+     * Marketing Pixels' OWN app settings. This used to fall back to the app the
+     * owner set up for the Instagram module; that module is retired (Lane IGR)
+     * and its credentials deleted, so the id and secret were copied here once
+     * by 2027_10_15_130200_copy_meta_app_to_marketing_pixels and this class
+     * reads nothing else.
+     */
     public function appId(): ?string
     {
         $own = $this->config->get('meta_app_id');
 
-        if ($own !== '') {
-            return $own;
-        }
-
-        return class_exists(InstagramCredentials::class) ? InstagramCredentials::fbAppId() : null;
+        return preg_match(PixelConfig::SHAPES['meta_app_id'][0], $own) === 1 ? $own : null;
     }
 
     private function appSecret(): ?string
     {
-        if ($this->config->get('meta_app_id') !== '') {
-            return $this->config->secret('meta_app_secret');
-        }
-
-        return class_exists(InstagramCredentials::class) ? InstagramCredentials::fbSecret() : null;
+        return $this->config->secret('meta_app_secret');
     }
 
-    /** Which app the button will use, for the screen. */
+    /** 'own' when both are saved, else 'none' — for the screen. */
     public function source(): string
     {
-        if ($this->config->get('meta_app_id') !== '') {
-            return 'own';
-        }
-
-        return $this->appId() !== null && $this->appSecret() !== null ? 'instagram' : 'none';
+        return $this->appId() !== null && $this->appSecret() !== null ? 'own' : 'none';
     }
 
     public static function redirectUri(): string

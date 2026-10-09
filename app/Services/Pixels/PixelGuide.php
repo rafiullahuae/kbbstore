@@ -81,7 +81,7 @@ final class PixelGuide
                     'Meta’s WordPress plugin connects with “Meta Business Extension”, a popup that runs under Meta’s own app. That popup needs a private permission (manage_business_extension) that Meta gives only to approved partners. This shop is not a Meta partner, and using Meta’s app id would be pretending to be their plugin.',
                     'Google and TikTok work the same way: their one-click connectors are for approved platforms (Shopify, WooCommerce). Google’s own Merchant API also needs a Google Cloud project, and an unverified one loses its login every 7 days.',
                     'So each platform is a short guided wizard: open the exact page, copy one thing, paste it here, press Check. The Check button proves it worked by asking the platform itself.',
-                    'Meta has one real shortcut: “Connect with Facebook” logs in with YOUR OWN Meta app (the one you made for Instagram is reused) and lists your pixels to pick from. That needs no Meta review, because the app only reads your own accounts.',
+                    'Meta has one real shortcut: “Connect with Facebook” logs in with YOUR OWN Meta app (its App ID and App Secret go in the Meta tab) and lists your pixels to pick from. That needs no Meta review, because the app only reads your own accounts.',
                 ], [['Meta: Business Extension requirements', 'https://developers.facebook.com/docs/facebook-business-extension/fbe/get-started/pixel-capi-onboarding/']], null, null, []],
                 ['Where it is', [
                     'Everything is under ' . self::HERE . '. Tabs: Pixels (the three IDs) · Meta · Google · TikTok · Custom code · Last events · Guide.',
@@ -119,8 +119,7 @@ final class PixelGuide
                 ], [['Open Commerce Manager', 'https://business.facebook.com/commerce/']], self::HERE . ' → Meta (feed address)', 'Commerce Manager → Diagnostics shows no errors after the first fetch. The Feed check here validates every item first.', ['“Missing brand”: fill in the product’s brand in the product editor.']],
                 ['Optional: Connect with Facebook (your own app)', [
                     'This only picks the Pixel ID for you. You still paste the Conversions API token.',
-                    'If you connected Instagram with “Connect with Facebook”, the same app is used and there is nothing to set up.',
-                    'Otherwise: Meta for Developers → My Apps → your app → App settings → Basic: copy App ID and App Secret into the Meta tab.',
+                                        'Meta for Developers → My Apps → your app (or Create app → type Business) → App settings → Basic: copy the App ID (digits only) and the App Secret into the Meta tab → Connect with Facebook → Save app. The secret is stored encrypted and shown back as its last four characters only.',
                     'Facebook Login for Business → Settings → Valid OAuth Redirect URIs: add the address shown on the Meta tab (it ends /admin-api/marketing-pixels/meta/callback). Save.',
                     'Press Connect with Facebook, log in, allow access. One pixel is filled in at once; several show a list to pick from.',
                 ], [['Open Meta for Developers', 'https://developers.facebook.com/apps/']], self::HERE . ' → Meta → Connect with Facebook', null, ['“URL blocked”: the redirect address is not in Valid OAuth Redirect URIs, or differs by www/https.', '“No pixels”: the Facebook user is not on the ad account that owns the pixel.']],

@@ -32,7 +32,7 @@ Read from the plugin source (`core/class-facebookwordpresssettingspage.php`, `co
    - TikTok: a test event read back as `code: 0`.
    - Live page: the home page is fetched and each loader and verification tag is looked for.
    - Feeds: every item is parsed and checked.
-3. An optional real **"Connect with Facebook"** with the owner's own Meta app. The Instagram one is reused when present. It lists his pixels so he can pick one. The CAPI token stays a paste, because the user token from that login expires and Events Manager's generated token does not.
+3. An optional real **"Connect with Facebook"** with the owner's own Meta app, whose App ID and encrypted App Secret are Marketing Pixels' own settings (copied once from the retired Instagram module). It lists his pixels so he can pick one. The CAPI token stays a paste, because the user token from that login expires and Events Manager's generated token does not.
 
 ## 3. Facts used, per platform
 

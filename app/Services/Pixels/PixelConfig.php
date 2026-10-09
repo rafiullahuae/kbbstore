@@ -51,7 +51,7 @@ final class PixelConfig
         'meta_capi_token' => ['/^[A-Za-z0-9_\-\.|]{20,512}$/', 'Conversions API access token'],
         'meta_test_code' => ['/^TEST[A-Za-z0-9]{2,20}$/', 'Meta test event code'],
         'meta_capi' => ['/^[01]$/', 'Send Meta server events'],
-        'meta_app_id' => ['/^[0-9]{5,20}$/', 'Meta App ID'],
+        'meta_app_id' => ['/^[0-9]{5,25}$/', 'Meta App ID (digits only)'],
         'meta_app_secret' => ['/^[a-f0-9]{32}$/i', 'Meta App Secret'],
         'ga4_api_secret' => ['/^[A-Za-z0-9_\-]{8,100}$/', 'GA4 Measurement Protocol API secret'],
         'ga4_mp' => ['/^[01]$/', 'Send GA4 purchase from the server'],
