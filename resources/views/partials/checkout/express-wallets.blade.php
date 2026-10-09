@@ -151,11 +151,19 @@
      in. So: laid out at full width, visibility:hidden, height 0 and clipped
      (no gap, no layout shift for a shopper without a wallet, and nothing to
      click or read — aria-hidden), and show() takes all of it off. --}}
+{{-- UNDER THE COUPON BOX NOW, with a heading above and an OR line below
+     (Lane CO: "bring the apple google pay row to above, right after the coupon
+     box nicely with Express checkout grey same heading ... and bottom OR with a
+     nice seperator"). The heading is the third node the script reveals and
+     removes with the other two, so a shopper with no wallet sees none of them
+     and the coupon box sits on the form exactly as before. Its words are
+     Appearance -> Checkout page -> Coupon, express & sign in, escaped. --}}
+<p class="co-xc-h" data-kbb-express-head hidden>{{ app(\App\Services\CheckoutPage::class)->expressHeading() }}</p>
 <div class="express" style="display:block;visibility:hidden;height:0;overflow:hidden;margin:0" data-kbb-express data-kbb-express-pending aria-hidden="true">
     <div data-kbb-express-mount></div>
     <p class="pay-note" data-kbb-express-error role="status" aria-live="polite" hidden></p>
 </div>
-<div class="ordiv" data-kbb-express-divider hidden>{{ __('store.checkout.or_pay_with') }}</div>
+<div class="ordiv co-xc-or" data-kbb-express-divider hidden>{{ __('store.checkout.express_or') }}</div>
 <script>
 (function () {
   'use strict';
@@ -163,6 +171,7 @@
   var FORM = document.getElementById('kbbCheckoutForm');
   var ROW = document.querySelector('[data-kbb-express]');
   var DIVIDER = document.querySelector('[data-kbb-express-divider]');
+  var HEAD = document.querySelector('[data-kbb-express-head]');
 
   if (!FORM || !ROW) return;
 
@@ -208,6 +217,7 @@
        cannot be shown by anything. */
     if (ROW && ROW.parentNode) ROW.parentNode.removeChild(ROW);
     if (DIVIDER && DIVIDER.parentNode) DIVIDER.parentNode.removeChild(DIVIDER);
+    if (HEAD && HEAD.parentNode) HEAD.parentNode.removeChild(HEAD);
   }
 
   function show() {
@@ -219,6 +229,7 @@
     ROW.style.cssText = 'display:block';
     ROW.hidden = false;
     if (DIVIDER) DIVIDER.hidden = false;
+    if (HEAD) HEAD.hidden = false;
   }
 
   function say(message) {

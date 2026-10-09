@@ -712,7 +712,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // aloud as "Back to cart" (store.checkout.head_back), seeded by
     // 2027_10_16_120100_checkout_back_arrow_and_remember_arabic.
     // +13 (Lane TS): the trust strip's words, 2027_10_17_100100_seed_trust_strip_arabic_drafts.
-    expect($ui['drafts'])->toBe(1529, 'the shipped Arabic is not showing as drafts to review')
+    // +16 (Lane CO): the "OR" under the checkout's wallet row and the Sign in
+    // window's words (store.checkout.express_or, store.checkout.signin_*),
+    // seeded by 2027_10_18_100200_seed_checkout_sign_in_arabic_drafts.
+    expect($ui['drafts'])->toBe(1545, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });
@@ -1037,7 +1040,8 @@ it('never labels two controls on one screen with the same Arabic', function () {
         ['store.account.orders_empty', 'store.collection.empty'],
         ['store.account.register_title', 'store.account_panel.register_button', 'store.account_panel.tab_register', 'store.mobile_menu.link_register'],
         // (Lane CT) + store.contact.label_email, the contact form's "Email address": the same field as the other four.
-        ['store.account_panel.field_email', 'store.checkout.field_email', 'store.contact.label_email', 'store.quiz.js_label_email', 'store.reviews.field_email'],
+        // (Lane CO) + store.checkout.signin_email, the checkout's sign-in window's "Email address": the same field again.
+        ['store.account_panel.field_email', 'store.checkout.field_email', 'store.checkout.signin_email', 'store.contact.label_email', 'store.quiz.js_label_email', 'store.reviews.field_email'],
         ['store.addresses.add_address', 'store.addresses.form_heading_add'],
         ['store.brands.card_count', 'store.cart.item_count', 'store.home.category_product_count', 'store.set.count_note'],
         ['store.checkout.field_address', 'store.reviews.field_title'],

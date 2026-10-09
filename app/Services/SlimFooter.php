@@ -139,8 +139,13 @@ class SlimFooter
          * the markup moving, so the document order — and therefore the tab
          * order and what a screen reader reads — is unchanged.
          */
-        'links_pos'  => ['select', 'Where the policy links sit', 'brand',
-                         'Only the one-line shapes have a choice here; the stacked and ruled-row shapes put every block on its own line anyway.', [
+        /* Lane CO: "move the privacy etc row to the end after payments icon
+           with a grey line seperator" -- the owner, on the phone checkout.
+           `end` is what he asked for, so it is what ships; the other two are
+           one click away. */
+        'links_pos'  => ['select', 'Where the policy links sit', 'end',
+                         'Last row, under a thin grey line, is what ships: Shipping & Delivery and Privacy policy close the bar, after the payment marks, on a phone and a computer. The other two keep them beside the brand.', [
+                             'end'    => 'Last row, after the payment marks, under a thin grey line',
                              'brand'  => 'Under the wordmark, with the byline',
                              'inline' => 'At the end of the row',
                          ]],

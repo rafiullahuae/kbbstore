@@ -104,7 +104,11 @@
             <!-- LEFT -->
             <div>
                 <div class="coupon">
+{{-- Lane CO: "remove the icon + text Have a discount code? from the coupon
+     box" -- Appearance -> Checkout page -> Coupon, express & sign in -> first
+     switch, OFF as asked. ON is the line exactly as it was. --}}@if ($kbbCoPage->couponHead())
                     <div class="ch"><span class="gift">🎁</span> {{ __('store.checkout.coupon_prompt') }}</div>
+@endif
                     <div class="crow">
 {{-- FLOATING LABELS (Lane CD): Appearance -> Checkout page -> Fields &
      attention -> "Floating labels on checkout fields", ON as asked. The
@@ -117,13 +121,24 @@
 @endif
                         <button type="button" class="apply" id="kbb_apply_coupon">{{ __('store.checkout.coupon_apply') }}</button>
                     </div>
-@if (session()->has('kbb_coupon_notice') || (string) ($totals['coupon_code'] ?? '') !== '')@include('partials.checkout.coupon-line')@endif                    @include('partials.checkout.coupon-hint')                </div>
+@if (session()->has('kbb_coupon_notice') || (string) ($totals['coupon_code'] ?? '') !== '')@include('partials.checkout.coupon-line')@endif                    @include('partials.checkout.coupon-hint')                </div>{{--
+     APPLE PAY AND GOOGLE PAY, under the coupon box (Lane CO). Stripe's Express
+     Checkout Element, drawn by the partial and revealed only once Stripe says
+     this browser has a wallet: no wallet, no row, no heading, no OR line and
+     no gap. It is still inside #kbbCheckoutForm, and the script finds the form
+     by id, so the fields it checks, the amount it opens the sheet with and the
+     order it places are exactly what they were when it sat under "4 Payment".
+     Glued to the </div>, so a shop with no wallet renders not one byte more.
+--}}@include('partials.checkout.express-wallets')
+
 
                 <div class="formbox" id="customer_details">
 
                     <!-- 1 · Contact -->
                     <div class="sec">
-                        <h2><span class="n">1</span> {{ __('store.checkout.step_contact') }}@if ($kbbCoPage->get('remember_on'))<button type="button" class="kbb-rmb-clear" id="kbbRememberClear" aria-hidden="true" tabindex="-1">{{ __('store.checkout.remember_clear') }}</button>@endif</h2>
+                        <h2><span class="n">1</span> {{ __('store.checkout.step_contact') }}@if ($kbbCoPage->get('remember_on'))<button type="button" class="kbb-rmb-clear" id="kbbRememberClear" aria-hidden="true" tabindex="-1">{{ __('store.checkout.remember_clear') }}</button>@endif
+{{-- Lane CO: "Sign in" on the right, guests only; Appearance -> Checkout page -> Coupon, express & sign in. A real link to the full sign-in page until partials/checkout/sign-in takes it over. Its own line, and PHP eats the newline after each closing tag, so with the link off the heading is byte for byte what it was. --}}@if ($kbbCoPage->signInLink() && ! auth('customer')->check())<a class="co-signin" href="{{ Url::to('/my-account/') }}" data-kbb-signin>{{ __('store.checkout.signin_link') }}</a>@endif
+</h2>
 {{-- CONTACT IS THE EMAIL ADDRESS (Lane QK6). The owner: "Change Shipping
      address section heading to Shipping Details, remove the phone and Full
      name fields from the contact section and bring these two fields to
@@ -284,24 +299,7 @@
                     <div class="sec pay">
                         <h2><span class="n">4</span> {{ __('store.checkout.step_payment') }}</h2>
 
-                        {{-- APPLE PAY AND GOOGLE PAY, FOR REAL THIS TIME.
-
-                             What stood here was two buttons with no listener
-                             behind them and no gateway behind that —
-                             `aria-hidden="true"` and `tabindex="-1"` kept a
-                             screen reader and a keyboard away from them, which
-                             is a fair description of what they were. The shop
-                             drew Apple Pay on every checkout and could not take
-                             an Apple Pay payment.
-
-                             The partial draws Stripe's Express Checkout Element
-                             instead, and draws NOTHING — no row, no divider, no
-                             gap — on a browser with no wallet, on a shop that
-                             has not switched the wallets on, or if Stripe fails
-                             to load. The "or pay with" divider moved inside it
-                             for that reason: a divider is a claim that there is
-                             something above it. --}}@include('partials.checkout.express-wallets')
-
+                        {{-- Apple Pay and Google Pay moved up, under the coupon box (Lane CO). --}}
                         {{-- The list itself lives in its own partial: adding a
                              product from Browsed can move the order total
                              across the Cash-on-delivery window, and the refresh
@@ -374,6 +372,9 @@
         <div class="kbb-mobile-order">
             <div class="kbb-thumbs-slot">@include('partials.checkout.thumbs')</div><div class="kbb-order-slot">@include('partials.checkout.order-block', ['withActions' => true])</div>        </div>
     </form>
+{{-- Lane CO: the "Sign in" window, OUTSIDE the checkout form (a form inside a form is not a form). Guests only, and only while the link above is drawn. --}}@if ($kbbCoPage->signInLink() && ! auth('customer')->check())
+@include('partials.checkout.sign-in')
+@endif
 
     @php $kbbFloat = $kbbCoPage->floatBar(); @endphp
     @if ($kbbFloat !== 'off')

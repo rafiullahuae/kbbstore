@@ -97,6 +97,17 @@ class CheckoutPage
         'd_block_gap' => ['range', 'Space between blocks', 16,
                           'Between the heading and the coupon box, and between the coupon box and the card that holds the four numbered sections.',
                           ['min' => 0, 'max' => 48, 'step' => 2, 'unit' => 'px']],
+        /* Lane CO. "it's not changing the spacing between the Delivery block
+           and Payment block ... please keep increase that as like space between
+           others and give proper controls for these." The gap under each
+           numbered section was its bottom PADDING, so "Space between blocks"
+           above never reached it. ON (follow) is what he asked for; at the
+           shipped 16 = 16 the page does not move by a pixel. */
+        'd_sec_same'  => ['bool', 'Gaps between sections follow “Space between blocks”', true,
+                          'On, as asked: the space under Contact, Shipping Details and Delivery — down to the next numbered heading — is the same number as "Space between blocks" above, so every gap on the page moves together. Off uses the slider below instead.'],
+        'd_sec_gap'   => ['range', 'Space between sections', 16,
+                          'From the last thing in a numbered section (the "Remember my details" tick, the delivery option) to the next section\'s heading bar. Only read while the switch above is off.',
+                          ['min' => 6, 'max' => 48, 'step' => 2, 'unit' => 'px']],
         'd_sec_pad'   => ['range', 'Padding inside each section', 16,
                           'Applies to all four numbered sections at once — Contact, Shipping address, Delivery and Payment. Their heading bars are worked out from this number, so the bars keep meeting the card edge at every value instead of drifting away from it.',
                           ['min' => 6, 'max' => 40, 'step' => 1, 'unit' => 'px']],
@@ -203,6 +214,11 @@ class CheckoutPage
         'm_block_gap' => ['range', 'Space between blocks', 16,
                           'Between the heading and the coupon box, between the coupon box and the card of sections, and above the Place order box at the foot.',
                           ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'm_sec_same'  => ['bool', 'Gaps between sections follow “Space between blocks”', true,
+                          'On, as asked: the space under Contact, Shipping Details and Delivery — down to the next numbered heading — is the same number as "Space between blocks" above, so every gap on the phone page moves together. Off uses the slider below instead.'],
+        'm_sec_gap'   => ['range', 'Space between sections', 16,
+                          'From the last thing in a numbered section (the "Remember my details" tick, the delivery option) to the next section\'s heading bar. Only read while the switch above is off.',
+                          ['min' => 6, 'max' => 40, 'step' => 1, 'unit' => 'px']],
         'm_sec_pad'   => ['range', 'Padding inside each section', 16,
                           'All four numbered sections, and the Place order box below them. Their heading bars follow it.',
                           ['min' => 6, 'max' => 32, 'step' => 1, 'unit' => 'px']],
@@ -1073,7 +1089,29 @@ class CheckoutPage
          */
         'fs_bar_on'     => ['bool', 'Free-delivery bar on the cart and checkout pages', false,
                             'Off, as asked: no progress bar and no "You\'ve unlocked free delivery" or "AED X away" line on the cart page or the checkout, before or after a coupon, quantity or country change. The Delivery row in the totals is not affected, and neither is the bar in the cart panel (the drawer). On puts the bar back in every place it was. Its colours are Store → Ecommerce → Cart → Free delivery → Bar style.'],
+        /*
+         * Lane CO, the owner on a phone screenshot of the checkout, 9 October:
+         * "remove the icon + text Have a discount code? from the coupon box",
+         * "bring the apple google pay row to above, right after the coupon box
+         * nicely with Express checkout grey same heading", and "a Sign in text
+         * on the right side of the Contact block title ... a nice on screen
+         * popup with the quick login form". Each one shipped as he asked, each
+         * one a switch or a box he can move back.
+         */
+        'coupon_head'   => ['bool', 'Show “Have a discount code?” above the coupon box', false,
+                            'Off, as asked: the coupon box is just the code box and Apply. On puts the gift icon and the line back.'],
+        'xc_head'       => ['text', 'Express checkout heading', self::XC_HEAD,
+                            'The small grey heading over the Apple Pay / Google Pay buttons under the coupon box. It and the "OR" line under the buttons appear only on a phone or browser that can actually pay with a wallet — nobody else sees either. Up to 120 characters.'],
+        'xc_head_ar'    => ['text', 'Express checkout heading — Arabic', self::XC_HEAD_AR,
+                            'The same on the Arabic shop (/ar/).'],
+        'signin_on'     => ['bool', '“Sign in” beside the Contact heading', true,
+                            'On, as asked: a shopper who is not signed in sees "Sign in" on the right of "1 Contact". It opens a small sign-in window over the page (with "Forgot password?", no sign-up), fills in their saved name, email, phone and address, and closes itself. Never shown to a signed-in customer.'],
     ];
+
+    /** Lane CO: the heading over the wallet buttons, his words. */
+    public const XC_HEAD = 'Express checkout';
+
+    public const XC_HEAD_AR = 'الدفع السريع';
 
     /** Lane QK6: the delivery labels and the line beside the heading, his words. */
     public const DL_PAID = 'Express Delivery';
@@ -1115,7 +1153,7 @@ class CheckoutPage
         'desktop'      => ['Desktop · Layout', 'The two-column checkout, from 901px up. Nothing on this tab can reach a phone.',
                            ['d_shell_pt', 'd_shell_pb',
                             'd_max', 'd_aside', 'd_gap', 'd_pad_x', 'd_pad_y', 'd_title_pt',
-                            'd_block_gap', 'd_sec_pad', 'd_aside_pad',
+                            'd_block_gap', 'd_sec_same', 'd_sec_gap', 'd_sec_pad', 'd_aside_pad',
                             'd_sticky', 'd_sticky_top']],
         'desktop_head' => ['Desktop · Header', 'The secure-checkout bar across the top. Its height is its padding plus the taller of the logo and the badge, so those are the controls rather than a "height" that would fight them.',
                            ['d_head_pad_y', 'd_head_pad_x', 'd_head_max', 'd_head_align', 'd_head_logo', 'd_head_badge', 'd_head_sticky']],
@@ -1127,7 +1165,7 @@ class CheckoutPage
                             'd_tab_min', 'd_tab_pad', 'd_tab_font', 'd_tab_gap']],
         'mobile'       => ['Mobile · Layout', 'The single-column checkout, at 900px and below. Nothing on this tab can reach a desktop.',
                            ['m_shell_pt', 'm_shell_pb',
-                            'm_pad_x', 'm_pad_y', 'm_title_pt', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad',
+                            'm_pad_x', 'm_pad_y', 'm_title_pt', 'm_gap', 'm_block_gap', 'm_sec_same', 'm_sec_gap', 'm_sec_pad', 'm_aside_pad',
                             'm_float', 'm_merge']],
         'mobile_head'  => ['Mobile · Header', 'The same bar on a phone. Worth a look at 360px: the badge is the first thing that crowds the logo.',
                            ['m_head_pad_y', 'm_head_pad_x', 'm_head_max', 'm_head_align', 'm_head_logo', 'm_head_badge', 'm_head_sticky']],
@@ -1161,6 +1199,9 @@ class CheckoutPage
                            ['dl_on', 'dl_paid', 'dl_paid_ar', 'dl_free', 'dl_free_ar', 'dl_note_on', 'dl_note', 'dl_note_ar', 'fs_bar_on']],
         'cline'        => ['Coupon line', 'The line at the very top of the checkout: "For Discount, Apply coupon GLOW". Tapping the code applies it to the order in place. One set of values for both surfaces.',
                            ['cline_on', 'cline_coupon', 'cline_text', 'cline_text_ar']],
+        /* Lane CO, appended so every other tab keeps its place. */
+        'express'      => ['Coupon, express & sign in', 'The coupon box, the Apple Pay / Google Pay row under it with its "Express checkout" heading and "OR" line, and the "Sign in" link beside "1 Contact" with its sign-in window. One set of values for both surfaces.',
+                           ['coupon_head', 'xc_head', 'xc_head_ar', 'signin_on']],
     ];
 
     /**
@@ -1635,6 +1676,28 @@ class CheckoutPage
             : e($text).' '.$pill;
     }
 
+    /** Lane CO: "Have a discount code?" over the coupon box. OFF as asked. */
+    public function couponHead(): bool
+    {
+        return $this->flag('coupon_head');
+    }
+
+    /** Lane CO: "Sign in" beside "1 Contact" for a guest. ON as asked. */
+    public function signInLink(): bool
+    {
+        return $this->flag('signin_on');
+    }
+
+    /**
+     * Lane CO: the heading over the wallet buttons for the current locale,
+     * PLAIN TEXT -- the view escapes it with {{ }}, so a setting never reaches
+     * the page unescaped.
+     */
+    public function expressHeading(): string
+    {
+        return $this->localised('xc_head', self::XC_HEAD);
+    }
+
     /** Lane QK6: the two ways back, each one lookup in the memoised map. OFF as asked. */
     public function showShopLink(): bool
     {
@@ -1910,6 +1973,19 @@ class CheckoutPage
                 [$name, $price] = $c[$key] ? self::WEIGHTS_ON : self::WEIGHTS_OFF;
                 $out[] = $nameProp.':'.$name;
                 $out[] = $priceProp.':'.$price;
+            }
+        }
+
+        /*
+         * Lane CO: the gap under each numbered section. While its switch says
+         * "follow" nothing is printed and the stylesheet falls back to the
+         * block gap -- so the shipped page carries no new byte. Switched off,
+         * the slider's own number is printed even at 16, because then 16 is a
+         * choice and the block gap must no longer reach it.
+         */
+        foreach (['d' => ['d_sec_same', 'd_sec_gap'], 'm' => ['m_sec_same', 'm_sec_gap']] as $side => [$same, $gap]) {
+            if (! $c[$same]) {
+                $out[] = '--cop-'.$side.'-secgap:'.(int) $c[$gap].'px';
             }
         }
 

@@ -267,6 +267,15 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // card under Payment", OFF, first on Trust & reviews, whose description
     // names it) and m_merge ("Payment and Place order as one card", ON, after
     // m_float on Mobile · Layout).
+    // ▲ Lane CO (9 October), each the owner's request, spliced in, not
+    // regenerated: checkout-page gains d_sec_same / d_sec_gap and m_sec_same /
+    // m_sec_gap (the gaps between the numbered sections, after d_block_gap /
+    // m_block_gap) and one tab appended after cline, `express` ("Coupon,
+    // express & sign in": coupon_head, xc_head, xc_head_ar, signin_on).
+    // slim-footer's links_pos gains its first option "end" and ships at it,
+    // with new help -- the policy links as the footer's last row, as asked.
+    // And slim-footer's pad_top / m_pad_top VALUES read 30, not 12 / 10: the
+    // rows migration 2027_10_17_100000 stores (30px above the logo, as asked).
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();
@@ -696,7 +705,10 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // pay_bg, pay_unsel and head_back, each the owner's request.
     // 766 -> 768 (Lane QK9): checkout-page gains trust_card and m_merge,
     // each the owner's request.
-    expect($compared)->toBe(768, 'the number of controls drawn changed');
+    // 768 -> 776 (Lane CO): checkout-page gains d_sec_same, d_sec_gap,
+    // m_sec_same, m_sec_gap, coupon_head, xc_head, xc_head_ar and signin_on,
+    // each the owner's request.
+    expect($compared)->toBe(776, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)

@@ -1648,6 +1648,16 @@ final class EnglishRenderWalk
     {
         return [
             /*
+             * The checkout footer's policy links as its LAST ROW (Lane CO), as
+             * the owner asked; the block was already last in this walk's bar,
+             * so only its class moves. See the insertion of the same name.
+             */
+            'the checkout footer\'s policy links, the last row (Lane CO)' => [
+                'pattern' => '#<div class="sf-links">(\n<a href="/delivery/">)#',
+                'with' => '<div class="sf-links sf-links-end">$1',
+                'hits' => 1,
+            ],
+            /*
              * "i need Express Delivery or Free Express Delivery upon free
              * delivery eligibility or with 20 aed charges. need to change the
              * text." -- the owner (Lane QK6). Appearance -> Checkout page ->
@@ -2466,6 +2476,36 @@ KBB_BH_CSS;
     public static function approvedInsertions(): array
     {
         return [
+            /*
+             * "SIGN IN" BESIDE "1 CONTACT", AND ITS WINDOW. (Lane CO) The owner:
+             * "I need a Sign in text on the right side of the Contact block
+             * title ... a nice on screen popup with the quick login form".
+             * Appearance -> Checkout page -> Coupon, express & sign in, ON as
+             * asked; guests only. The link closes onto the heading's own text
+             * and the <dialog> with its script follows </form> directly, so
+             * cutting both leaves the page byte for byte; off, neither renders
+             * (CheckoutSignInPolishTest). Once each, on the basket checkout.
+             */
+            'the "Sign in" link on the Contact bar (Lane CO)' => [
+                'pattern' => '#<a class="co-signin" href="/my-account/" data-kbb-signin>Sign in</a>#',
+                'hits' => 1,
+            ],
+            'the checkout\'s Sign in window, after the form (Lane CO)' => [
+                'pattern' => '#(?<=    </form>\n)<dialog class="co-si" id="kbbSignIn".*?</dialog>\n<script>\n\(function \(\) \{\n  \'use strict\';\n\n  var D = document\.getElementById\(\'kbbSignIn\'\);.*?\n\}\)\(\);\n</script>\n#s',
+                'hits' => 1,
+            ],
+            /*
+             * THE CHECKOUT FOOTER'S POLICY LINKS AS ITS LAST ROW. (Lane CO) "move
+             * the privacy etc row to the end after payments icon with a grey line
+             * seperator". The footer's own inline style gains the three rules
+             * for that row, printed only while the links ARE last (Appearance ->
+             * Footer -> "Where the policy links sit", the new default, as
+             * asked); the element's class is the substitution of the same name.
+             */
+            'the checkout footer\'s last-row links rules (Lane CO)' => [
+                'pattern' => '#/\* Lane CO: the links as the last row\..*?content:none!important\}\n#s',
+                'hits' => 1,
+            ],
             /*
              * THE "← CHECKOUT" HEADING AT THE TOP. (Lane QK8) The owner: "i
              * want the summary section the checkout page heading. and the icon
@@ -3760,6 +3800,17 @@ KBB_BH_CSS;
     public static function approvedRemovals(): array
     {
         return [
+            /*
+             * "HAVE A DISCOUNT CODE?" GOES. (Lane CO) The owner: "remove the
+             * icon + text Have a discount code? from the coupon box". Appearance
+             * -> Checkout page -> Coupon, express & sign in -> first switch, OFF
+             * as asked; switched on, the line is exactly these bytes again
+             * (CheckoutSignInPolishTest). Once, on the basket checkout.
+             */
+            'the "Have a discount code?" line over the coupon box (Lane CO)' => [
+                'pattern' => '#                    <div class="ch"><span class="gift">🎁</span> Have a discount code\?</div>\n#',
+                'hits' => 1,
+            ],
             /*
              * THE REVIEWS & AUTHENTICITY CARD UNDER PAYMENT GOES. (Lane QK9)
              * The owner, on a phone screenshot of the live checkout with the

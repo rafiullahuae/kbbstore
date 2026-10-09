@@ -33,6 +33,28 @@ class CustomerAuthController extends Controller
 
     public function login(Request $request): RedirectResponse
     {
+        $customer = $this->attempt($request);
+
+        // Shown once inside the account panel, then gone.
+        session()->flash('kbb.greet', ['kind' => 'back', 'name' => $this->firstName($customer)]);
+
+        return redirect()->intended('/my-account/');
+    }
+
+    /**
+     * THE ONE SIGN-IN. The account page's form above and the checkout's
+     * "Sign in" window (Store\CheckoutSignInController, Lane CO) both come
+     * through here, so the throttle, the WordPress-hash upgrade, the session
+     * regeneration and the basket merge cannot drift into two versions with
+     * one of them weaker. Moved out of login() unchanged: what it validates,
+     * the key it throttles on, the 300-second lockout, the one message for a
+     * wrong address and a wrong password alike.
+     *
+     * Throws ValidationException on any refusal -- a redirect back for the
+     * form, a 422 for a JSON caller, which is Laravel's own rendering.
+     */
+    public function attempt(Request $request): Customer
+    {
         $data = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
@@ -66,10 +88,7 @@ class CustomerAuthController extends Controller
             $this->carts->mergeGuestCart($guestCart, $customer->id);
         }
 
-        // Shown once inside the account panel, then gone.
-        session()->flash('kbb.greet', ['kind' => 'back', 'name' => $this->firstName($customer)]);
-
-        return redirect()->intended('/my-account/');
+        return $customer;
     }
 
     public function register(Request $request): RedirectResponse

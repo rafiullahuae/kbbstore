@@ -172,6 +172,9 @@
      screen when the switch is off rather than sitting there doing nothing. */
   function hidden(f) {
     if (f.key === 'd_sticky_top') return !pvOn('d_sticky');
+    /* (Lane CO) Its own number only while the section gaps stop following "Space between blocks". */
+    if (f.key === 'd_sec_gap') return pvOn('d_sec_same');
+    if (f.key === 'm_sec_gap') return pvOn('m_sec_same');
     /* Both only mean anything while the line above them is drawn at all. */
     if (f.key === 'rating_text' || f.key === 'rating_min') return !pvOn('rating_on');
     /* (Lane QK6) The coupon line's coupon and wording, only while it is drawn. */
@@ -581,6 +584,7 @@
       + ';--chv-pady:' + pvPct('d_pad_y', 22)
       + ';--chv-block:' + pvPct('d_block_gap', 16)
       + ';--chv-secpad:' + pvPct('d_sec_pad', 16)
+      + (pvOn('d_sec_same') ? '' : ';--chv-secgap:' + pvPct('d_sec_gap', 16))
       + ';--chv-asidepad:' + pvPct('d_aside_pad', 17)
       // The rows, at the size they are actually set to -- see the note by
       // .chv-ci. A percentage would be wrong here whatever it said: these boxes
@@ -622,6 +626,7 @@
       + ';--chv-mgap:' + pvPx('m_gap', 14)
       + ';--chv-block:' + pvPx('m_block_gap', 16)
       + ';--chv-secpad:' + pvPx('m_sec_pad', 16)
+      + (pvOn('m_sec_same') ? '' : ';--chv-secgap:' + pvPx('m_sec_gap', 16))
       + ';--chv-asidepad:' + pvPx('m_aside_pad', 14)
       + ';--chv-rowh:' + pvPx('m_row_h', 54)
       + ';--chv-rowp-t:' + pvPx('m_row_pt', 10)

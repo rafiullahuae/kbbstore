@@ -348,8 +348,13 @@ it('renders the checkout byte for byte as before this lane with both switches of
     // Lane QK6's back links and delivery labels: the links are OFF and the
     // labels ON since, as the owner asked; ON / OFF respectively are their
     // byte-for-byte way back (CheckoutCouponLineTest, CheckoutDeliveryLabelsTest).
+    // Lane CO's coupon heading (OFF, as asked) and "Sign in" (ON, as asked):
+    // ON / OFF are their byte-for-byte way back (CheckoutSignInPolishTest), and
+    // the footer's links "under the wordmark" are the old position.
     cdSet(['sum_totals' => false, 'float_labels' => false, 'pay_style' => 'plain', 'state_list' => false, 'remember_on' => false,
-        'shop_link' => true, 'cart_link' => true, 'dl_on' => false, 'dl_note_on' => false]);
+        'shop_link' => true, 'cart_link' => true, 'dl_on' => false, 'dl_note_on' => false,
+        'coupon_head' => true, 'signin_on' => false]);
+    app(\App\Services\SlimFooter::class)->save(['links_pos' => 'brand']);
     // Lane LG2's lotus logo ships ON in the checkout's header and drawer;
     // "Text only (as before)" is its byte-for-byte way back (LogoLockupTest),
     // so it is set here for the same reason.

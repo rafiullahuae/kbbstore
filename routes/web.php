@@ -1432,6 +1432,7 @@ require __DIR__.'/checkout-card.php';
  * Pay sheet may not be a figure the browser worked out.
  */
 require __DIR__.'/wallet-checkout.php';
+require __DIR__.'/checkout-sign-in.php';   // Checkout -> "Sign in" window: quick login and forgot password (Lane CO)
 
 /*
  * The two reports the card form on /checkout/ makes after a payment: that the

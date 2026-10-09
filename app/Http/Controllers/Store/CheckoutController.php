@@ -2200,6 +2200,64 @@ class CheckoutController extends Controller
      * @return array<string, string|null>
      */
     /**
+     * THE BOXES A SIGNED-IN CUSTOMER WOULD HAVE SEEN FILLED, keyed by the field
+     * each one fills -- for the checkout's "Sign in" window (Lane CO), which
+     * signs the shopper in without reloading the page and then fills the form
+     * in place.
+     *
+     * Worked out by the same three methods index() uses -- prefill(),
+     * typedAddress() and AddressRegions::split() -- in the same order, so the
+     * window fills exactly what a reload would have rendered and nothing else.
+     *
+     * AN EXPLICIT ALLOWLIST, never a model: the field names are written out
+     * below, each value is a trimmed string, and a value the account does not
+     * hold is LEFT OUT rather than sent empty -- so the page never writes a
+     * blank over something the shopper already typed. Nothing for the picker
+     * row: that mode draws the saved-address list on the server, and the page
+     * reloads instead (see CheckoutSignInController).
+     *
+     * @return array<string, string>
+     */
+    public function signedInFields(Customer $customer, ?string $pageCountry): array
+    {
+        $address = $customer->defaultAddress('shipping') ?? $customer->defaultAddress('billing');
+        $pickerOn = app(\App\Services\CartPage::class)->addressPickerOn();
+        $typed = $pickerOn ? null : $this->typedAddress($customer, $address);
+        $prefill = $typed !== null ? array_merge($this->prefill($customer, $address), $typed) : $this->prefill($customer, $address);
+
+        $out = ['billing_email' => $prefill['email'] ?? null, 'billing_phone' => $prefill['phone'] ?? null];
+
+        if ((bool) $this->settings->get('checkout_single_name', true)) {
+            $out['billing_first_name'] = $prefill['name'] ?? null;
+        } else {
+            $out['billing_first_name'] = $prefill['first_name'] ?? null;
+            $out['billing_last_name'] = $prefill['last_name'] ?? null;
+        }
+
+        if (! $pickerOn) {
+            $country = strtoupper((string) ($prefill['country'] ?? $pageCountry ?? ''));
+            $out['billing_country'] = $prefill['country'] ?? null;
+
+            if (app(\App\Services\CheckoutPage::class)->stateList()) {
+                $saved = \App\Support\AddressRegions::split($country,
+                    $prefill['saved_line2'] ?? null, $prefill['saved_city'] ?? ($prefill['city'] ?? null), $prefill['saved_state'] ?? ($prefill['state'] ?? null));
+                $out['billing_address_1'] = $prefill['saved_line1'] ?? ($prefill['line1'] ?? null);
+                $out['billing_address_2'] = $saved['area'];
+                $out['billing_state'] = \App\Support\AddressRegions::has($country) ? $saved['emirate'] : $saved['town'];
+            } else {
+                $out['billing_address_1'] = $prefill['line1'] ?? null;
+                $out['billing_city'] = $prefill['city'] ?? null;
+                $out['billing_state'] = $prefill['state'] ?? null;
+            }
+        }
+
+        return array_filter(
+            array_map(static fn ($v): string => is_scalar($v) ? mb_substr(trim((string) $v), 0, 255) : '', $out),
+            static fn (string $v): bool => $v !== '',
+        );
+    }
+
+    /**
      * The four address boxes the checkout shows while the picker row is off,
      * filled for a returning customer so they do not retype what the shop has.
      *

@@ -103,6 +103,20 @@ class PasswordResetController extends Controller
      */
     public function send(Request $request): RedirectResponse
     {
+        $this->sendLink($request);
+
+        return redirect(Url::redirect('/my-account/forgot'))->with('status', self::SENT_MESSAGE);
+    }
+
+    /**
+     * Everything send() does except the answer, so the checkout's "Forgot
+     * password?" (Store\CheckoutSignInController, Lane CO) asks the same
+     * broker, the same two throttles and the same deferred mail rather than a
+     * second copy of them. Returns nothing on purpose: there is no outcome a
+     * caller could branch on, which is the no-enumeration rule above.
+     */
+    public function sendLink(Request $request): void
+    {
         $data = $request->validate([
             // `max` before the rule so an absurd payload is rejected without
             // running a regex over it.
@@ -170,8 +184,6 @@ class PasswordResetController extends Controller
         if (! in_array($status, [Password::RESET_LINK_SENT, Password::INVALID_USER, Password::RESET_THROTTLED], true)) {
             Log::warning('Customer password reset returned an unexpected broker status.', ['status' => $status]);
         }
-
-        return redirect(Url::redirect('/my-account/forgot'))->with('status', self::SENT_MESSAGE);
     }
 
     /**

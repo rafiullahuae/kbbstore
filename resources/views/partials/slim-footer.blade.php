@@ -58,6 +58,11 @@
     $sfLinksInBrand = $sfC['links_pos'] === 'brand'
         && ($sfL1 !== null || $sfL2 !== null || $sfL3 !== null
             || $sfC['l1_text'] !== '' || $sfC['l2_text'] !== '' || $sfC['l3_text'] !== '');
+    /* Lane CO: the links as the LAST row, after the payment marks, under a
+       thin grey line. Moved in the markup for the reason above, so the tab
+       order still matches what is on screen. Drawn only if a link has words. */
+    $sfLinksAtEnd = $sfC['links_pos'] === 'end'
+        && ($sfC['l1_text'] !== '' || $sfC['l2_text'] !== '' || $sfC['l3_text'] !== '');
 @endphp
 @if ($sfHasBrand || $sfC['byline'] !== '' || $sfLinksInBrand)
         <div class="sf-brand">
@@ -102,7 +107,7 @@
 @endif
         </div>
 @endif
-@if (! $sfLinksInBrand && ($sfC['l1_text'] !== '' || $sfC['l2_text'] !== '' || $sfC['l3_text'] !== ''))
+@if (! $sfLinksInBrand && ! $sfLinksAtEnd && ($sfC['l1_text'] !== '' || $sfC['l2_text'] !== '' || $sfC['l3_text'] !== ''))
         <div class="sf-links">
 @if ($sfC['l1_text'] !== '' && $sfL1 !== null)<a href="{{ $sfL1 }}">{{ $sfC['l1_text'] }}</a>@elseif ($sfC['l1_text'] !== '')<span>{{ $sfC['l1_text'] }}</span>@endif
 @if ($sfC['l2_text'] !== '' && $sfL2 !== null)<a href="{{ $sfL2 }}">{{ $sfC['l2_text'] }}</a>@elseif ($sfC['l2_text'] !== '')<span>{{ $sfC['l2_text'] }}</span>@endif
@@ -121,6 +126,13 @@
 @foreach ($sfMarks as $sfMark)
             <span class="sf-mk">{!! $sfMark !!}</span>
 @endforeach
+        </div>
+@endif
+@if ($sfLinksAtEnd)
+        <div class="sf-links sf-links-end">
+@if ($sfC['l1_text'] !== '' && $sfL1 !== null)<a href="{{ $sfL1 }}">{{ $sfC['l1_text'] }}</a>@elseif ($sfC['l1_text'] !== '')<span>{{ $sfC['l1_text'] }}</span>@endif
+@if ($sfC['l2_text'] !== '' && $sfL2 !== null)<a href="{{ $sfL2 }}">{{ $sfC['l2_text'] }}</a>@elseif ($sfC['l2_text'] !== '')<span>{{ $sfC['l2_text'] }}</span>@endif
+@if ($sfC['l3_text'] !== '' && $sfL3 !== null)<a href="{{ $sfL3 }}">{{ $sfC['l3_text'] }}</a>@elseif ($sfC['l3_text'] !== '')<span>{{ $sfC['l3_text'] }}</span>@endif
         </div>
 @endif
 @if ($sfC['copy'] !== '')
@@ -260,6 +272,19 @@
 .kbb-slimfoot a:hover{color:var(--sf-ink)}
 .kbb-slimfoot .sf-links{display:flex;flex-wrap:wrap;gap:calc(var(--sf-gap) * .5) var(--sf-gap)}
 .kbb-slimfoot .sf-links a,.kbb-slimfoot .sf-links span{color:inherit;text-decoration:underline;text-underline-offset:2px}
+@if ($sfLinksAtEnd)
+/* Lane CO: the links as the last row. width:100% rather than flex-basis, so
+   it takes a line of its own in the row shapes AND stays a plain full-width
+   block in the column ones (a percentage flex-basis on a column is a height).
+   The line is a neutral grey drawn through --sf-line on this element alone,
+   so the ruled-rows shape's own hairline rule paints it grey too, on every
+   tone. Never a separator mark after the block before it, or after itself.
+   Printed only while the links ARE last, so the other two positions render
+   the bar byte for byte as before. */
+.kbb-slimfoot .sf-links-end{width:100%;--sf-line:rgba(120,116,118,.28);
+  border-top:1px solid var(--sf-line);padding-top:calc(var(--sf-gap) * .55)}
+.kbb-slimfoot .sf-in > :is(:has(+ .sf-links-end), .sf-links-end)::after{content:none!important}
+@endif
 
 /* Pushed to the far end whatever the shape, because "back to top" belongs at
    the end of the line the eye is already travelling along. */

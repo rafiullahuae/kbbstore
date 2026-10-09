@@ -194,6 +194,8 @@
    cannot disagree with the page. */
 .chv-sec{padding:var(--chv-secpad,16px);border-bottom:1px solid #ebe3e6}
 .chv-sec:last-child{border-bottom:0}
+/* (Lane CO) The gap down to the next numbered heading: the block gap, or its own slider. */
+.chv-sec:has(+ .chv-sec){padding-bottom:var(--chv-secgap,var(--chv-block,13px))}
 .chv-sec > h6{margin:calc(var(--chv-secpad,16px) * -1) calc(var(--chv-secpad,16px) * -1) 9px;
   padding:6px var(--chv-secpad,16px) 6px calc(var(--chv-secpad,16px) - 3px);
   background:#fbf5f4;border-bottom:1px solid #f0eaec;border-inline-start:3px solid #c13a5e;
@@ -515,6 +517,9 @@
      screen when the switch is off rather than sitting there doing nothing. */
   function hidden(f) {
     if (f.key === 'd_sticky_top') return !pvOn('d_sticky');
+    /* (Lane CO) Its own number only while the section gaps stop following "Space between blocks". */
+    if (f.key === 'd_sec_gap') return pvOn('d_sec_same');
+    if (f.key === 'm_sec_gap') return pvOn('m_sec_same');
     /* Both only mean anything while the line above them is drawn at all. */
     if (f.key === 'rating_text' || f.key === 'rating_min') return !pvOn('rating_on');
     /* (Lane QK6) The coupon line's coupon and wording, only while it is drawn. */
@@ -924,6 +929,7 @@
       + ';--chv-pady:' + pvPct('d_pad_y', 22)
       + ';--chv-block:' + pvPct('d_block_gap', 16)
       + ';--chv-secpad:' + pvPct('d_sec_pad', 16)
+      + (pvOn('d_sec_same') ? '' : ';--chv-secgap:' + pvPct('d_sec_gap', 16))
       + ';--chv-asidepad:' + pvPct('d_aside_pad', 17)
       // The rows, at the size they are actually set to -- see the note by
       // .chv-ci. A percentage would be wrong here whatever it said: these boxes
@@ -965,6 +971,7 @@
       + ';--chv-mgap:' + pvPx('m_gap', 14)
       + ';--chv-block:' + pvPx('m_block_gap', 16)
       + ';--chv-secpad:' + pvPx('m_sec_pad', 16)
+      + (pvOn('m_sec_same') ? '' : ';--chv-secgap:' + pvPx('m_sec_gap', 16))
       + ';--chv-asidepad:' + pvPx('m_aside_pad', 14)
       + ';--chv-rowh:' + pvPx('m_row_h', 54)
       + ';--chv-rowp-t:' + pvPx('m_row_pt', 10)

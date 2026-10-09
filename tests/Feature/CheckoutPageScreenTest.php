@@ -105,6 +105,9 @@ it('hands the screen every field, grouped into the two tabs', function () {
         'payments',
         // Lane QK6, appended: the UAE delivery labels and line, and the coupon line.
         'delivery', 'cline',
+        // Lane CO, appended: the coupon box's heading switch, the wallet row's
+        // "Express checkout" heading (EN/AR) and the "Sign in" window.
+        'express',
     ])
         ->and($body['mobileMax'])->toBe(CheckoutPage::MOBILE_MAX);
 
