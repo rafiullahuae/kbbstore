@@ -1,0 +1,128 @@
+[
+  {
+    "TAG": "before",
+    "w": 390,
+    "at": "cart, 2 x AED 69 (under)",
+    "subtotal": "<span class=\"woocommerce-Price-amount amount\" dir=\"ltr\"><span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">AED</span> 130</span>",
+    "scope": "#cartInner",
+    "barsInMarkup": 1,
+    "barsVisible": 1,
+    "saysUnlocked": false,
+    "saysAway": true,
+    "deliveryRow": null,
+    "scrollWidth": 390
+  },
+  {
+    "TAG": "before",
+    "w": 390,
+    "at": "cart, after \"+\" x2 -> 4 (over)",
+    "scope": "#cartInner",
+    "barsInMarkup": 1,
+    "barsVisible": 1,
+    "saysUnlocked": true,
+    "saysAway": false,
+    "deliveryRow": null,
+    "scrollWidth": 390
+  },
+  {
+    "TAG": "before",
+    "w": 390,
+    "at": "checkout, 4 (over), summary open",
+    "scope": ".kbb-checkout",
+    "barsInMarkup": 2,
+    "barsVisible": 2,
+    "saysUnlocked": true,
+    "saysAway": false,
+    "deliveryRow": "Free",
+    "scrollWidth": 390
+  },
+  {
+    "TAG": "before",
+    "w": 390,
+    "at": "checkout, after \"−\" x2 -> 2 (under)",
+    "scope": ".kbb-checkout",
+    "barsInMarkup": 2,
+    "barsVisible": 2,
+    "saysUnlocked": false,
+    "saysAway": true,
+    "deliveryRow": "AED 20",
+    "scrollWidth": 390
+  },
+  {
+    "TAG": "before",
+    "w": 390,
+    "at": "cart panel (drawer), after its own \"+\": 3 in the bag",
+    "drawerBar": true,
+    "drawerText": "You're AED 13 away from free delivery",
+    "drawerFill": "93%"
+  },
+  {
+    "TAG": "before",
+    "w": 390,
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "TAG": "before",
+    "w": 1280,
+    "at": "cart, 2 x AED 69 (under)",
+    "subtotal": "<span class=\"woocommerce-Price-amount amount\" dir=\"ltr\"><span class=\"woocommerce-Price-currencySymbol\" dir=\"auto\">AED</span> 130</span>",
+    "scope": "#cartInner",
+    "barsInMarkup": 1,
+    "barsVisible": 1,
+    "saysUnlocked": false,
+    "saysAway": true,
+    "deliveryRow": null,
+    "scrollWidth": 1280
+  },
+  {
+    "TAG": "before",
+    "w": 1280,
+    "at": "cart, after \"+\" x2 -> 4 (over)",
+    "scope": "#cartInner",
+    "barsInMarkup": 1,
+    "barsVisible": 1,
+    "saysUnlocked": true,
+    "saysAway": false,
+    "deliveryRow": null,
+    "scrollWidth": 1280
+  },
+  {
+    "TAG": "before",
+    "w": 1280,
+    "at": "checkout, 4 (over), summary open",
+    "scope": ".kbb-checkout",
+    "barsInMarkup": 2,
+    "barsVisible": 1,
+    "saysUnlocked": true,
+    "saysAway": false,
+    "deliveryRow": "Free",
+    "scrollWidth": 1280
+  },
+  {
+    "TAG": "before",
+    "w": 1280,
+    "at": "checkout, after \"−\" x2 -> 2 (under)",
+    "scope": ".kbb-checkout",
+    "barsInMarkup": 2,
+    "barsVisible": 1,
+    "saysUnlocked": false,
+    "saysAway": true,
+    "deliveryRow": "AED 20",
+    "scrollWidth": 1280
+  },
+  {
+    "TAG": "before",
+    "w": 1280,
+    "at": "cart panel (drawer), after its own \"+\": 3 in the bag",
+    "drawerBar": true,
+    "drawerText": "You're AED 13 away from free delivery",
+    "drawerFill": "93%"
+  },
+  {
+    "TAG": "before",
+    "w": 1280,
+    "consoleErrors": []
+  }
+]

@@ -71,7 +71,15 @@ class EcommerceApiController extends Controller
             'cart' => [
                 'label' => 'Cart',
                 'sections' => [
-                    'freeship' => ['Free delivery', 'The progress bar shoppers see as they approach the threshold.', 'truck', ['freeship_bar', 'freeship_bar_style']],
+                    /*
+                     * Lane QK7: the On/Off that sat here saved a `freeship_bar`
+                     * setting nothing on the shop read -- an inert switch
+                     * labelled "Shown in the cart, drawer and checkout". The
+                     * real one for the cart page and the checkout is on
+                     * Appearance → Checkout page, so this section keeps the
+                     * style and says where the switch is.
+                     */
+                    'freeship' => ['Free delivery', 'The look of the free-delivery progress bar. Whether the cart page and the checkout draw it is Appearance → Checkout page → Delivery labels → “Free-delivery bar on the cart and checkout pages” (off).', 'truck', ['freeship_bar_style']],
                     'drawer' => ['Mini-cart drawer', 'The panel that slides in when something is added.', 'bag', ['minicart_promo', 'show_browsed']],
                     'coupons' => ['Coupons', 'The hint under the coupon box on the cart page.', 'pct', ['cart_coupon_text']],
                     /*
@@ -118,7 +126,6 @@ class EcommerceApiController extends Controller
                     'cart_recovery_subject'     => ['text', 'Reminder subject line', '', 'Used exactly as written, for every message in the sequence. Empty means nothing is ever sent.'],
                     'cart_recovery_body'        => ['textarea', 'Reminder message', '', 'Your own words. The basket contents, a link back to it, the reason the email arrived and the unsubscribe link are added for you. Empty means nothing is ever sent.'],
                     'cart_recovery_schedule'    => ['text', 'When to send', '', 'Hours after the shopper ticks the box, separated by commas — “4, 24” sends two reminders, one at four hours and one at twenty-four. Each is measured from the tick, not from the previous message. Empty means nothing is ever sent.'],
-                    'freeship_bar'        => ['bool', 'Free-delivery progress bar', true, 'Shown in the cart, drawer and checkout.'],
                     'freeship_bar_style'  => ['select', 'Bar style', 'mint', '', ['mint' => 'Mint', 'candy' => 'Candy', 'gold' => 'Gold', 'mono' => 'Mono', 'rider' => 'Rider']],
                     'minicart_promo'      => ['textarea', 'Mini-cart promo line', '', 'Appears above the subtotal in the drawer. HTML allowed.'],
                     'show_browsed'        => ['bool', 'Browsed tab in the cart drawer', true, 'Recently viewed products, with one-tap add.'],
@@ -616,11 +623,6 @@ class EcommerceApiController extends Controller
                 'legend' => ['Capsule only, inline only, both, or hidden. Showing both puts two rating badges above the price, which reads as a duplicate.'],
             ],
             // ---- individual settings ----
-            'freeship_bar' => [
-                'caption' => 'Turned off',
-                'stage' => '<div style="opacity:.45;font-size:12.5px">— no bar, no message —</div><div class="ecmr" style="margin-top:11px"><span>Subtotal</span><span>د.إ1,050</span></div>',
-                'legend' => ['Only the bar is removed. Free delivery still applies at the threshold.'],
-            ],
             'freeship_bar_style' => [
                 'caption' => 'Style comparison',
                 'stage' => '<div style="display:flex;gap:9px;flex-wrap:wrap">'

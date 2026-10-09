@@ -4258,6 +4258,30 @@ KBB_BH_CSS;
                 'pattern' => '#(?<=<p class="co-lead">Almost glowing — just a few details.</p>\n                    </div>\n)\s*<a class="co-tocart.*?</a>\n#s',
                 'hits' => 1,
             ],
+            /*
+             * THE FREE-DELIVERY BAR GOES FROM THE CART PAGE AND THE CHECKOUT
+             * (Lane QK7). The owner, with two screenshots of the live checkout:
+             * "the unlocked / free delivery green bar still showing in summary
+             * section and also above the place order button on checkout, turn
+             * off from the cart and checkout page. please." Appearance ->
+             * Checkout page -> Delivery labels -> "Free-delivery bar on the
+             * cart and checkout pages", OFF as asked (and written off by a
+             * data migration). The walk's basket qualifies, so the before side
+             * draws the green "unlocked" state: once on the cart page (the
+             * band over the items; the classic layout has no summary bar) and
+             * twice on the checkout (the summary and "Your bag"). The bar and
+             * its sentence only -- the empty .kbb-freeship-slot stays for the
+             * country-change re-render, and every totals row is untouched.
+             * The cart panel's own bar is not this one and is not cut.
+             */
+            'the cart page\'s free-delivery bar, off as asked (Lane QK7)' => [
+                'pattern' => '#<div class="ship">\n.*?<div class="bar"><div class="fill" style="width:[0-9.]+%"></div></div>\n\s*</div>\n\s*(?=<div class="items">)#s',
+                'hits' => 1,
+            ],
+            'the checkout\'s free-delivery bar in both order blocks, off as asked (Lane QK7)' => [
+                'pattern' => '#(?<=<div class="kbb-freeship-slot">\n    )<div class="freebar [^"]*">\n.*?\n</div>\n(?=</div>)#s',
+                'hits' => 2,
+            ],
         ];
     }
 

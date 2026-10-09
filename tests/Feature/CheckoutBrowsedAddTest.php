@@ -301,6 +301,10 @@ it('keeps the chosen payment method checked when the new total still allows it',
 });
 
 it('moves the summary, the mobile bag strip and the free-delivery bar together', function () {
+    // Lane QK7: the bar ships OFF on the cart page and the checkout (Appearance →
+    // Checkout page → Delivery labels); this test is about the bar when it is drawn.
+    app(\App\Services\CheckoutPage::class)->save(['fs_bar_on' => true]);
+    \App\Services\SettingsService::forgetMemo();
     // Free delivery at 400.00, so a cart of 200.00 sits at 50% and one more
     // 150.00 product takes it to 350.00 — 88%, still short.
     $zone = ShippingZone::first();
@@ -339,6 +343,10 @@ it('moves the summary, the mobile bag strip and the free-delivery bar together',
 });
 
 it('says free delivery is unlocked in every region at once when the add crosses the threshold', function () {
+    // Lane QK7: the bar ships OFF on the cart page and the checkout (Appearance →
+    // Checkout page → Delivery labels); this test is about the bar when it is drawn.
+    app(\App\Services\CheckoutPage::class)->save(['fs_bar_on' => true]);
+    \App\Services\SettingsService::forgetMemo();
     $zone = ShippingZone::first();
     ShippingMethod::create([
         'shipping_zone_id' => $zone->id,

@@ -301,6 +301,10 @@ it('takes a percentage fee off the order value AFTER the coupon', function () {
 // not a lump of arithmetic in the view.
 
 it('puts the shop\'s own free-delivery bar where the delivery row was', function () {
+    // Lane QK7: the bar ships OFF on the cart page and the checkout (Appearance →
+    // Checkout page → Delivery labels); this test is about the bar when it is drawn.
+    app(\App\Services\CheckoutPage::class)->save(['fs_bar_on' => true]);
+    \App\Services\SettingsService::forgetMemo();
     // The delivery row ships off, so this is the default state of the page.
     squeezeOn();
 
@@ -339,6 +343,10 @@ it('puts the shop\'s own free-delivery bar where the delivery row was', function
 });
 
 it('shows the green congratulations once the order qualifies', function () {
+    // Lane QK7: the bar ships OFF on the cart page and the checkout (Appearance →
+    // Checkout page → Delivery labels); this test is about the bar when it is drawn.
+    app(\App\Services\CheckoutPage::class)->save(['fs_bar_on' => true]);
+    \App\Services\SettingsService::forgetMemo();
     // A test of its own rather than a second render in the one above:
     // ShippingService memoises its zones for the life of the process, so
     // moving the threshold mid-test moves the database and not the answer —
@@ -870,6 +878,10 @@ it('animates the free-delivery bar and lets its bloom out of the track', functio
 // still fills, and the effect is simply gone.
 
 it('does not bloom a bar that has not started', function () {
+    // Lane QK7: the bar ships OFF on the cart page and the checkout (Appearance →
+    // Checkout page → Delivery labels); this test is about the bar when it is drawn.
+    app(\App\Services\CheckoutPage::class)->save(['fs_bar_on' => true]);
+    \App\Services\SettingsService::forgetMemo();
     squeezeOn();
     squeezeFreeOver(50000);
 

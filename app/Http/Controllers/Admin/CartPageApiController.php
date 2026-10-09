@@ -77,6 +77,9 @@ class CartPageApiController extends Controller
             // reading it, so the screen is handed the products themselves.
             'chosen' => $this->page->recommended()->map(fn (Product $p) => $this->card($p))->all(),
             'maxRec' => CartPage::MAX_REC,
+            // Lane QK7: the preview draws the free-delivery bar only while the
+            // checkout's switch for both pages is on, so it shows the shop.
+            'fsBar' => app(\App\Services\CheckoutPage::class)->freeDeliveryBar(),
         ]);
     }
 

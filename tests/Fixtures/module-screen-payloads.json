@@ -8028,7 +8028,7 @@
             "key": "sum_delivery_on",
             "type": "bool",
             "label": "Standard Delivery row",
-            "help": "Off, so the cart page does not try to answer a question the checkout answers properly. While it is off, the shop's own free-delivery bar takes its place in the summary — the green congratulations once an order qualifies, and how much more would qualify it before that.",
+            "help": "Off, so the cart page does not try to answer a question the checkout answers properly. While it is off, the shop's own free-delivery bar can take its place in the summary — the green congratulations once an order qualifies, and how much more would qualify it before that — but only while Appearance → Checkout page → Delivery labels → “Free-delivery bar on the cart and checkout pages” is on. That switch ships off, as asked, and then nothing is drawn here.",
             "default": false,
             "value": false,
             "options": null
@@ -10654,7 +10654,7 @@
       {
         "key": "delivery",
         "label": "Delivery labels",
-        "description": "The \"3 Delivery\" section on a UAE checkout: what the delivery option is called, paid and free, and the small free-delivery line beside the heading. One set of values for both surfaces.",
+        "description": "The \"3 Delivery\" section on a UAE checkout: what the delivery option is called, paid and free, and the small free-delivery line beside the heading. Last on the tab: the free-delivery bar on the cart page and the checkout. One set of values for both surfaces.",
         "fields": [
           {
             "key": "dl_on",
@@ -10735,6 +10735,16 @@
             "options": null,
             "default": "توصيل مجاني للطلبات فوق {amount}",
             "value": "توصيل مجاني للطلبات فوق {amount}"
+          },
+          {
+            "key": "fs_bar_on",
+            "name": "fs_bar_on",
+            "type": "bool",
+            "label": "Free-delivery bar on the cart and checkout pages",
+            "help": "Off, as asked: no progress bar and no \"You've unlocked free delivery\" or \"AED X away\" line on the cart page or the checkout, before or after a coupon, quantity or country change. The Delivery row in the totals is not affected, and neither is the bar in the cart panel (the drawer). On puts the bar back in every place it was. Its colours are Store → Ecommerce → Cart → Free delivery → Bar style.",
+            "options": null,
+            "default": false,
+            "value": false
           }
         ]
       },

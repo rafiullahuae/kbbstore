@@ -358,7 +358,7 @@ class CartPage
          * nothing, which is how this kind of deletion half-happens.
          */
         'sum_delivery_on'   => ['bool', 'Standard Delivery row', false,
-                                'Off, so the cart page does not try to answer a question the checkout answers properly. While it is off, the shop\'s own free-delivery bar takes its place in the summary — the green congratulations once an order qualifies, and how much more would qualify it before that.'],
+                                'Off, so the cart page does not try to answer a question the checkout answers properly. While it is off, the shop\'s own free-delivery bar can take its place in the summary — the green congratulations once an order qualifies, and how much more would qualify it before that — but only while Appearance → Checkout page → Delivery labels → “Free-delivery bar on the cart and checkout pages” is on. That switch ships off, as asked, and then nothing is drawn here.'],
         'sum_std_label'     => ['text', 'Standard row', 'Standard Delivery Charge', ''],
         'sum_std_help'      => ['text', 'Standard (i) note', 'Free on every order. Two to four working days.', ''],
         'sum_std_free'      => ['text', 'Standard row value', 'Free', ''],

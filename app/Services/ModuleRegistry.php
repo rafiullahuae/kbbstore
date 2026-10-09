@@ -118,7 +118,17 @@ class ModuleRegistry
      */
     public const REGISTRY = [
         // ── Checkout ──
-        'freeship_bar' => ['checkout', 'Free-shipping progress bar', 'Animated “X away from free delivery” bar with celebration on unlock.', true, 'Appearance → Cart panel', 'cartpanel', 'drawer', 'top', 'The progress bar at the top of the cart panel, under the tabs.', 'live'],
+        /*
+         * `elsewhere` since Lane QK7. This row used to say "Appearance → Cart
+         * panel" and point at the drawer — which never read it: the drawer's
+         * bar shows whenever a free-delivery amount is set. What it did gate
+         * was the checkout's bar, and only that, so the owner turned "the
+         * delivery bar" off and still saw it on the cart page. The cart page
+         * and the checkout now share ONE switch on Appearance → Checkout page,
+         * and a second switch here for the same thing is how a control ends
+         * up half working.
+         */
+        'freeship_bar' => ['checkout', 'Free-shipping progress bar', 'The “AED X away from free delivery” / “You\'ve unlocked free delivery” bar on the cart page and the checkout.', false, 'Appearance → Checkout page → Delivery labels', 'checkoutpage', 'checkout', 'aside', 'On the cart page and the checkout — both of the checkout\'s order summaries, and in place after a coupon, quantity or country change — switched by “Free-delivery bar on the cart and checkout pages” (off, as asked). The cart panel\'s own bar is not switched here: it shows whenever a free-delivery amount is set.', 'elsewhere'],
         'vat_line' => ['checkout', 'Inclusive VAT line', 'Shows the VAT already included in the total.', true, 'Store → Ecommerce → Checkout', 'ecommerce', 'checkout', 'aside', 'A line in the order summary showing the VAT already included.', 'elsewhere'],
         'cod_fee' => ['checkout', 'Cash-on-delivery fee', 'Adds the COD surcharge when Cash on delivery is chosen.', true, 'Store → Ecommerce → Checkout', 'ecommerce', 'checkout', 'aside', 'A surcharge row in the order summary when Cash on delivery is chosen.', 'elsewhere'],
         'delivery_line' => ['checkout', 'Delivery-info line', 'Country-aware “fast delivery” message under the summary.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'aside', 'The delivery message under the order summary.', 'live'],

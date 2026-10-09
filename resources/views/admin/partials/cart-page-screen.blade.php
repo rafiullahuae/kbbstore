@@ -449,6 +449,7 @@
   var values = {};       // key -> current value, edited in place
   var chosen = [];       // [{id,name,brand,image}] the rail's products, in order
   var maxRec = 24;
+  var fsBar = false;     // Appearance → Checkout page's free-delivery bar switch (Lane QK7)
   var open = null;       // which tab is showing
   var results = [];      // last search
   var banner = null;
@@ -552,6 +553,7 @@
       tabs = body.tabs || [];
       chosen = body.chosen || [];
       maxRec = body.maxRec || 24;
+      fsBar = body.fsBar === true;
       values = {};
       tabs.forEach(function (t) {
         t.fields.forEach(function (f) { values[f.key] = f.value; });
@@ -990,6 +992,11 @@
     if (pvOn('sum_delivery_on')) {
       out += '<div class="cpv-sr"><span>' + esc(pvText('sum_std_label', 'Standard Delivery Charge'))
         + ' ⓘ</span><span>' + esc(pvText('sum_std_free', 'Free')) + '</span></div>';
+    } else if (!fsBar) {
+      /* Lane QK7: the bar is switched off for the cart page and the checkout,
+         so the shop draws nothing here -- and neither does the preview. */
+      out += '<div class="cpv-ship"><div class="t">Free-delivery bar: off — '
+        + 'Appearance → Checkout page → Delivery labels.</div></div>';
     } else {
       /* The free-delivery bar stands in for the delivery lines -- it answers
          the same question AND says what would make delivery free.

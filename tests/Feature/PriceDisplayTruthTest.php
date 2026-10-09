@@ -356,6 +356,10 @@ it('still gives a real sale its badge and not the bestseller one', function () {
 /* ─────────────────── the same rounding, measured against zero ────────────── */
 
 it('never says a shopper is AED 0 away from free delivery', function () {
+    // Lane QK7: the bar ships OFF on the cart page and the checkout (Appearance →
+    // Checkout page → Delivery labels); this test is about the bar when it is drawn.
+    app(\App\Services\CheckoutPage::class)->save(['fs_bar_on' => true]);
+    \App\Services\SettingsService::forgetMemo();
     // A zone whose free-delivery floor sits 30 fils above this basket. Rounded
     // to whole dirhams the remainder is "AED 0" — which is exactly what the
     // UNLOCKED state looks like, and the unlocked branch did not run: the bar
@@ -390,6 +394,10 @@ it('never says a shopper is AED 0 away from free delivery', function () {
 });
 
 it('fills the cart panel bar from the same number the cart page uses', function () {
+    // Lane QK7: the bar ships OFF on the cart page and the checkout (Appearance →
+    // Checkout page → Delivery labels); this test is about the bar when it is drawn.
+    app(\App\Services\CheckoutPage::class)->save(['fs_bar_on' => true]);
+    \App\Services\SettingsService::forgetMemo();
     // Two copies of one rule: the panel divided for itself while the cart page
     // read CartService::totals()['free_shipping_percent'], whose own comment
     // says the two must not diverge. One basket filled the panel's bar to

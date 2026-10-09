@@ -675,7 +675,11 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // (cline_on, cline_coupon, cline_text(_ar)). The tocart tab and the two new
     // ones were dumped from the live payload; every other tab is untouched.
     // The coupon list is the payload's own `coupons` key, not recorded.
-    expect($compared)->toBe(760, 'the number of controls drawn changed');
+    // 760 -> 761 (Lane QK7): Appearance -> Checkout page -> Delivery labels
+    // gains `fs_bar_on`, "Free-delivery bar on the cart and checkout pages",
+    // OFF as the owner asked; appended last on the tab, whose description
+    // says so. The cart page's sum_delivery_on help now names that switch.
+    expect($compared)->toBe(761, 'the number of controls drawn changed');
 
     foreach (['review-settings', 'review-badges', 'cache'] as $flat) {
         expect($expected[$flat]['settings'] ?? null)
