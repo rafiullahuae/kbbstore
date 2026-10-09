@@ -36,10 +36,6 @@
     "file": "assets/admin-15e8731578e7-BpLkVf8G.js",
     "src": "admin-console/15e8731578e78e7562509ecbdf53621f41f08059.js"
   },
-  "admin-console/1b97477c3c62ed610e67c7597af767cb984810a2.js": {
-    "file": "assets/admin-1b97477c3c62-9AAQK3AV.js",
-    "src": "admin-console/1b97477c3c62ed610e67c7597af767cb984810a2.js"
-  },
   "admin-console/1bdeacc66bc5c56841c4b80563894dc656c11fe6.js": {
     "file": "assets/admin-1bdeacc66bc5-XXgLILox.js",
     "src": "admin-console/1bdeacc66bc5c56841c4b80563894dc656c11fe6.js"
@@ -132,6 +128,10 @@
     "file": "assets/admin-519f01e43e8d-Bx1tJ1Qw.js",
     "src": "admin-console/519f01e43e8d8fb2a419eac898781b32cb861c95.js"
   },
+  "admin-console/53cab73028b2d711f17efb505b474f36fdca3f57.js": {
+    "file": "assets/admin-53cab73028b2-T-btztbL.js",
+    "src": "admin-console/53cab73028b2d711f17efb505b474f36fdca3f57.js"
+  },
   "admin-console/566a1b0b4b65c7d7d6e3c39bd1ac2a54aec24008.js": {
     "file": "assets/admin-566a1b0b4b65-D7o4VzuC.js",
     "src": "admin-console/566a1b0b4b65c7d7d6e3c39bd1ac2a54aec24008.js"
@@ -179,6 +179,10 @@
   "admin-console/6c0aad2fd01b17c2e7b103ed36ffceeedb8a08d7.js": {
     "file": "assets/admin-6c0aad2fd01b-dDu9yvxr.js",
     "src": "admin-console/6c0aad2fd01b17c2e7b103ed36ffceeedb8a08d7.js"
+  },
+  "admin-console/706a7277f4c87c9fb9b8b6b989021b6718184605.js": {
+    "file": "assets/admin-706a7277f4c8-BxGt0NVa.js",
+    "src": "admin-console/706a7277f4c87c9fb9b8b6b989021b6718184605.js"
   },
   "admin-console/7195664845e7cb5a900d7d9200121e29c2e5f067.js": {
     "file": "assets/admin-7195664845e7-dhXJgd9i.js",
@@ -412,10 +416,6 @@
     "file": "assets/admin-d0440b43406f-lCFwM0XH.js",
     "src": "admin-console/d0440b43406f37cf109cd4906c8de3c073550b66.js"
   },
-  "admin-console/d1c64aab5085f49e20aa743aa5b8d2be07e03901.js": {
-    "file": "assets/admin-d1c64aab5085-DKQrbfJZ.js",
-    "src": "admin-console/d1c64aab5085f49e20aa743aa5b8d2be07e03901.js"
-  },
   "admin-console/d56a3567ba251f268019e90254c1f335276af6eb.js": {
     "file": "assets/admin-d56a3567ba25-C3YuvTcc.js",
     "src": "admin-console/d56a3567ba251f268019e90254c1f335276af6eb.js"
@@ -511,7 +511,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb.css": {
-    "file": "assets/kbb-BBzsX5WI.css",
+    "file": "assets/kbb-C_JvMzyL.css",
     "src": "resources/css/kbb/kbb.css",
     "isEntry": true
   },
@@ -724,7 +724,7 @@
     ]
   },
   "resources/js/kbb/admin/storefront-admin.js": {
-    "file": "assets/storefront-admin-BIEiA63T.js",
+    "file": "assets/storefront-admin-BEcqjQor.js",
     "name": "storefront-admin",
     "src": "resources/js/kbb/admin/storefront-admin.js",
     "isDynamicEntry": true,
@@ -737,7 +737,7 @@
     ]
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-DsbMwuN-.js",
+    "file": "assets/app-DlLmAgLl.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,

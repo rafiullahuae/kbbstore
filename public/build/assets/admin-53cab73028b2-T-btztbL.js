@@ -9594,7 +9594,10 @@
       var d={}; try{ d=await r.json(); }catch(pe){}
       if(!r.ok||d.ok===false){
         var why=d.error||'';
-        if(d.errors){ why=Object.keys(d.errors).map(function(k){ return d.errors[k][0]; }).join(' '); }
+        /* A gateway's validateConfig() sends ONE sentence per field, not
+           Laravel's list: [0] of a string is its first letter, and every such
+           refusal read "Could not save — T". (Lane WL.) */
+        if(d.errors){ why=Object.keys(d.errors).map(function(k){ var v=d.errors[k]; return Array.isArray(v)?v[0]:v; }).join(' '); }
         throw new Error(why||('Request failed ('+r.status+')'));
       }
       toast(note||(g.title+' saved'));

@@ -131,6 +131,8 @@
       '<li>Press <b>Refresh</b>: Last event received shows <code>payment_intent.succeeded</code>. In Stripe: Developers → Webhooks → this endpoint → the delivery and its 200 response.</li>' +
       '</ol></div></div>';
 
+    html += wallets(s.wallets);
+
     html += '<div class="srs-box"><h4>Payment log</h4>' +
       '<p class="srs-help" style="margin-top:0">Gateway events, Stripe errors and webhook outcomes, newest first (the last 500 are kept). Never card numbers, keys or secrets.</p>' +
       '<div class="srs-row"><button type="button" class="btn ghost" id="srs-log-btn">' + (log ? 'Reload the log' : 'Show the payment log') + '</button></div>';
@@ -158,6 +160,40 @@
     if (refresh) refresh.onclick = function(){ said = null; load(); };
     var logBtn = document.getElementById('srs-log-btn');
     if (logBtn) logBtn.onclick = loadLog;
+  }
+
+  /* Lane WL: Apple Pay and Google Pay -- the switches, Apple's file, and the
+     domain to register. Every value is escaped; the one link is scheme-checked. */
+  function wallets(v){
+    if (!v) return '';
+    var file = v.file || {}, offered = v.offered || {};
+
+    function state(on, live){
+      if (!on) return '<span class="pill grey">Off</span>';
+      return live ? '<span class="pill green">On — offered at checkout</span>'
+        : '<span class="pill red">On, but NOT offered: cards are off or a key is missing above</span>';
+    }
+
+    var url = String(v.file_url || '');
+    var shown = /^https:\/\//.test(url)
+      ? '<a href="' + esc(url) + '" target="_blank" rel="noopener"><code>' + esc(url) + '</code></a>'
+      : '<code>' + esc(url) + '</code>';
+
+    return '<div class="srs-box" id="srs-wallets"><h4>Apple Pay and Google Pay</h4><dl class="srs-dl">' +
+      '<dt>Apple Pay</dt><dd>' + state(!!v.apple_pay, !!offered.apple_pay) + '</dd>' +
+      '<dt>Google Pay</dt><dd>' + state(!!v.google_pay, !!offered.google_pay) + '</dd>' +
+      '<dt>Apple Pay domain file</dt><dd id="srs-apple-file">' + (file.ok
+        ? '<span class="pill green">Apple’s file is in place</span>' + (file.source === 'file' ? ' (the file on the server)' : '')
+        : '<span class="pill red">Not right</span> ' + esc(file.problem || '')) + '</dd>' +
+      '<dt>Apple looks for it at</dt><dd>' + shown + '</dd>' +
+      '<dt>Register in Stripe</dt><dd>' + (v.register || []).map(function(d){ return '<code>' + esc(d) + '</code>'; }).join(' and ') + '</dd>' +
+      '</dl>' +
+      '<div class="srs-help">For the buttons to appear: <ol>' +
+      '<li>Switch <b>Apple Pay</b> and/or <b>Google Pay</b> to On below, under How this shop uses it, and save.</li>' +
+      '<li>In Stripe (the same Test or Live mode as Mode here): Settings → Payments → Payment method domains → <b>Add a new domain</b> → ' + (v.register || []).map(esc).join(', then ') + '. One registration covers Apple Pay and Google Pay.</li>' +
+      '<li>Put Apple’s file in the <b>Apple Pay domain file</b> box below (the whole file, not the pmd_… ID), save, then in Stripe open the domain and press verify / retry for Apple Pay.</li>' +
+      '<li>Platform → Domain switch → <b>Payments ready?</b> then shows what Stripe says about the domain.</li>' +
+      '</ol>The buttons only appear on a phone that can pay: Safari on iPhone with a card in Apple Wallet, Chrome on Android with a card in Google Wallet. Anywhere else the row is left out, with no message, by design.</div></div>';
   }
 
   /* ----------------------------------------------------------- actions */
