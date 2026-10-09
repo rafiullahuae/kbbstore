@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.454
+**Apple Pay and Google Pay buttons can finally be drawn; the free-delivery bar is off on the
+cart and checkout pages; an on-phone wallet diagnostic.** Apply after .453. Runs its
+migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "apple pay is still not showing ... not on android neither on iphone" | Found with real Stripe on kbeautybliss.com: the checkout asked Stripe for a button layout Stripe refuses ("overflow: never is only supported when maxRows is 0"), so Stripe threw and drew nothing, on every phone, for both wallets. Fixed; both buttons sit side by side. Test: Safari on iPhone with a card in Apple Wallet, Chrome on Android with a card in Google Wallet, item in the basket |
+| (diagnosis) | /checkout/?kbbdiag=1 shows a box at the Payment step with exactly what Stripe answered on that phone. Off without the parameter |
+| "the unlocked / free delivery green bar still showing ... turn off from the cart and checkout page" | Off on the cart page and checkout everywhere (summary, "Your bag", after quantity / coupon / country changes). The old Modules switch only covered part of it. One switch now: Appearance -> Checkout page -> Delivery labels -> "Free-delivery bar on the cart and checkout pages" (Off). The cart panel bar is unchanged |
+
+Files: see the package's update.json.
+
 ## 2.60.453
 **Checkout: GLOW coupon line, no back links, Shipping Details, Express Delivery labels;
 Apple Pay / Google Pay buttons fixed; space above the footer; cart icon on the cart page.**
