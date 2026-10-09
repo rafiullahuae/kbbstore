@@ -3,6 +3,19 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.446
+**Footer support icon, WhatsApp button steps aside from the footer strip, banner text
+box spacing, Firewall in tabs.** Apply after .445. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "in the main footer strip in start, we have whatsapp icon, we need support icon, give multiple icons controls on backend" | The strip shows a Support headset. Appearance -> Footer -> Site footer · help strip -> Strip icon: Support (default, as you asked), WhatsApp chat (the old one), Chat bubble, Phone, Email, Heart, Sparkle, No icon |
+| "the support strip and the floating whatsapp icon, must not overlap ... should hide immidiately temporary" | The floating WhatsApp button hides the moment the footer strip reaches its corner and comes back when you scroll away. No layout measuring, no timer: one browser observer and one CSS class |
+| "for homepage main banners ... the padding inside box between each element, and the spacing downside the box etc." | Appearance -> Banners -> (homepage set) -> Text box -> "Spacing on a computer" / "Spacing on a phone": inner padding, gaps between eyebrow, heading, text and button, sticker offset, space below/above the box, and "Reset spacing to default". Untouched banners look exactly as now |
+| "the firewall layout at backend i don't like ... i want proper tabs and sections" | Store -> Security -> Firewall is now tabs with grouped sections; every setting is where it was in meaning, nothing changed in behaviour |
+
+Files: see the package's update.json.
+
 ## 2.60.445
 **Pictures appear at once: the grey loading box only where you asked, the first row of
 pictures loads immediately, search thumbnails tiny.** Apply after .444. Runs its
