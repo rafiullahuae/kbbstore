@@ -287,7 +287,7 @@ it('answers the live endpoint in its shape, with the window allowlisted and 10 b
     expect($five['active'])->toBe(1)->and($ten['active'])->toBe(2)->and($tf['active'])->toBe(3)
         ->and($ten['carts'])->toBe(1)
         ->and($ten['bars'])->toHaveCount(30)
-        ->and(array_keys($ten))->toBe(['window', 'now', 'active', 'views', 'carts', 'bars', 'mobile_pct', 'langs', 'countries', 'pages', 'sources', 'feed', 'orders', 'since', 'order_since']);
+        ->and(array_keys($ten))->toBe(['window', 'now', 'online', 'online_pages', 'country_db', 'active', 'views', 'carts', 'bars', 'bar_ticks', 'mobile_pct', 'langs', 'countries', 'pages', 'sources', 'feed', 'orders', 'since', 'order_since']);
 
     // Aggregates only: no hash of anybody leaves the server.
     $json = json_encode($tf);
@@ -386,7 +386,9 @@ it('keeps the live display asleep unless the screen is open and the tab visible'
             ->and($js)->toContain("document.visibilityState !== 'visible'")
             ->and($js)->toContain('clearTimeout(')
             ->and($js)->not->toContain('setInterval(')
-            ->and(substr_count($js, 'setTimeout('))->toBe(1, $where.': one timer, re-armed after each answer')
+            // One POLL timer, re-armed after each answer (the board's other
+            // timeouts are the drag long-press and the layout save, Lane AN2).
+            ->and(substr_count($js, 'st.timer = setTimeout('))->toBe(1, $where.': one poll timer, re-armed after each answer')
             ->and($js)->toContain('since=');
     }
     // Leaving the screen tears it down: the console's go wrapper and the app's route change.
@@ -404,7 +406,8 @@ it('sends one beacon per opened page from the bundle, after load, never for a pr
 
     // MUTATION: send from boot() rather than after load, or drop the
     // prerendering guard, and these are red.
-    expect(substr_count($hit, 'navigator.sendBeacon('))->toBe(1)
+    // Two: the page view, and the online heartbeat / leave (Lane AN2).
+    expect(substr_count($hit, 'navigator.sendBeacon('))->toBe(2)
         ->and($hit)->toContain("window.addEventListener('load', go, { once: true })")
         ->and($hit)->toContain('document.prerendering')
         ->and($hit)->not->toContain('setInterval(')

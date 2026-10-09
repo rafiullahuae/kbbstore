@@ -24,7 +24,9 @@ use Illuminate\Support\Facades\Schema;
  *   when the SEO keyword sync has banked any. A fixed number of queries
  *   whatever the range or the catalogue (SiteAnalyticsTest pins it).
  *
- * live(): the last N minutes (5, 10, 15 or 25; default 10), read from
+ * live(): "Online now" from an_online (App\Services\Analytics\Online: who is
+ *   on the shop this moment, and the pages they are reading); then the last N
+ *   minutes (5, 10, 15 or 25; default 10) for the secondary figures, read from
  *   an_hits on its minute index, plus a "Happening now" feed of the last 30
  *   minutes' views, carts and orders after `since` ids. Computed per request,
  *   never cached or precomputed: nobody looking means nobody pays.
@@ -38,6 +40,26 @@ final class Report
     public const TOP = 10;
 
     public const DIMS = ['page', 'entry', 'channel', 'source', 'medium', 'campaign', 'referrer', 'device', 'browser', 'os', 'country', 'lang'];
+
+    /**
+     * The y-axis of the "visitors per minute" chart, as Google Analytics'
+     * realtime chart draws it: 0 at the base and round steps of 1, 2 or 5
+     * (times a power of ten), about four intervals, the top tick at or above
+     * the tallest bar. 7 -> 0,2,4,6,8; 1 -> 0,1; 13 -> 0,5,10,15; 0 -> 0,1.
+     *
+     * @return list<int>
+     */
+    public static function ticks(int $max): array
+    {
+        $max = max(1, $max);
+        $raw = $max / 4;
+        $pow = 10 ** (int) floor(log10($raw));
+        $f = $raw / $pow;
+        $step = max(1, (int) round(($f <= 1 ? 1 : ($f <= 2 ? 2 : ($f <= 5 ? 5 : 10))) * $pow));
+        $top = (int) (ceil($max / $step) * $step);
+
+        return range(0, $top, $step);
+    }
 
     public static function window(mixed $w): int
     {
@@ -85,7 +107,7 @@ final class Report
     public static function summary(string $from, string $to): array
     {
         $days = DB::table('an_days')->whereBetween('day', [$from, $to])->orderBy('day')
-            ->get(['day', 'views', 'visitors', 'sessions', 'bounces', 'carts', 'checkouts']);
+            ->get(['day', 'views', 'visitors', 'sessions', 'bounces', 'carts', 'checkouts', 'rolled_at']);
 
         $span = (int) CarbonImmutable::parse($from)->diffInDays(CarbonImmutable::parse($to)) + 1;
         $pFrom = CarbonImmutable::parse($from)->subDays($span)->format('Y-m-d');
@@ -129,8 +151,12 @@ final class Report
         }
         unset($c);
 
+        $rolled = $days->max('rolled_at');
+
         return [
             'from' => $from, 'to' => $to,
+            // When the newest summary row was rebuilt, for "Updated 13:59".
+            'updated' => $rolled === null ? null : StoreTime::iso((string) $rolled),
             'totals' => $totals + $orders,
             'previous' => ['visitors' => (int) ($prev->visitors ?? 0), 'views' => (int) ($prev->views ?? 0),
                 'sessions' => (int) ($prev->sessions ?? 0), 'bounces' => (int) ($prev->bounces ?? 0)],
@@ -278,10 +304,10 @@ final class Report
             $series[] = (int) ($bars[$m] ?? 0);
         }
 
-        $pages = DB::table('an_hits')->where('m', '>=', $wFrom)->where('k', '!=', 1)
-            ->groupBy('path')->selectRaw('path, MAX(title) title, COUNT(DISTINCT v) n')
-            ->orderByDesc('n')->orderBy('path')->limit(8)->get()
-            ->map(static fn ($r): array => ['path' => (string) $r->path, 'title' => (string) $r->title, 'n' => (int) $r->n])->all();
+        // ONLINE NOW (Lane AN2): who is on the shop this moment, and what they
+        // are reading -- an_online, not the window. Two tabs are one visitor.
+        $online = Online::now();
+        $pages = Online::pages(8);
 
         // Sources now: how each session in the window ARRIVED (its entry page,
         // up to two hours back), so a shopper who came from Instagram twenty
@@ -327,10 +353,16 @@ final class Report
         return [
             'window' => $window,
             'now' => $now * 60,
+            'online' => $online['online'],
+            'online_pages' => $online['pages'],
+            // Countries need the firewall's country file (or Cloudflare's
+            // header); without either the board says how to get it.
+            'country_db' => is_file(\App\Services\Security\CountryDb::path()),
             'active' => $active,
             'views' => $views,
             'carts' => $carts,
             'bars' => $series,
+            'bar_ticks' => self::ticks($series === [] ? 0 : max($series)),
             'mobile_pct' => $active > 0 ? (int) round(($devices['mobile'] ?? 0) / $active * 100) : 0,
             'langs' => ['en' => (int) ($langs['en'] ?? 0), 'ar' => (int) ($langs['ar'] ?? 0)],
             'countries' => array_slice(array_map(static fn ($k, $v): array => ['cc' => $k, 'n' => $v], array_keys($c = $count($here, 'cc')), $c), 0, 8),

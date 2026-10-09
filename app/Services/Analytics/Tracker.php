@@ -79,6 +79,14 @@ final class Tracker
 
             DB::table('an_hits')->insert($row);
 
+            if ($kind === 0) {
+                // Its own guard: "online now" failing must not undo the view.
+                try {
+                    Online::seen($row);
+                } catch (\Throwable) {
+                }
+            }
+
             if ($kind === 0 && $row['e'] === 1) {
                 Attribution::fromBeacon($request, $row);
             }
@@ -96,37 +104,22 @@ final class Tracker
      */
     public static function row(Request $request, int $kind = 0): ?array
     {
-        $settings = app(SettingsService::class);
+        $v = self::visitorFor($request);
 
-        if (! (bool) $settings->get(self::SETTING_ON, true)) {
-            return null;
-        }
-
-        if (InstantNav::isSpeculative($request) || $request->cookies->has('kbb_ah')) {
+        if ($v === null) {
             return null;
         }
 
         $ua = (string) $request->userAgent();
-
-        if (self::isBot($ua)) {
-            return null;
-        }
-
         $ip = (string) $request->ip();
-
-        if (self::excluded($ip, (string) $settings->get(self::SETTING_EXCLUDE, ''))) {
-            return null;
-        }
-
         $nowMin = intdiv(time(), 60);
-        $v = self::visitor($ip, $ua);
 
         if ($kind === 1) {
             // An add to cart: no page fields, the visitor only.
             return ['m' => $nowMin, 'v' => $v, 's' => self::session($v, 0, $nowMin), 'k' => 1, 'e' => 0,
                 'path' => '', 'title' => '', 'ref' => '', 'ch' => 'direct', 'src' => '', 'med' => '', 'cmp' => '',
                 'dev' => self::device($ua), 'br' => self::browser($ua), 'os' => self::os($ua),
-                'cc' => self::country($ip), 'lang' => ''];
+                'cc' => self::country($ip, $request), 'lang' => ''];
         }
 
         $path = self::path((string) $request->input('p', ''));
@@ -160,9 +153,41 @@ final class Tracker
             'dev' => self::device($ua),
             'br' => self::browser($ua),
             'os' => self::os($ua),
-            'cc' => self::country($ip),
+            'cc' => self::country($ip, $request),
             'lang' => preg_match('/^(en|ar)$/', (string) $request->input('l', '')) ? (string) $request->input('l') : '',
         ];
+    }
+
+    /**
+     * The visitor hash for a request that may be counted, or null: tracking
+     * off, a prefetch, a signed-in administrator, a crawler, or one of the
+     * owner's addresses. Shared by the page view and the online heartbeat.
+     */
+    public static function visitorFor(Request $request): ?string
+    {
+        $settings = app(SettingsService::class);
+
+        if (! (bool) $settings->get(self::SETTING_ON, true)) {
+            return null;
+        }
+
+        if (InstantNav::isSpeculative($request) || $request->cookies->has('kbb_ah')) {
+            return null;
+        }
+
+        $ua = (string) $request->userAgent();
+
+        if (self::isBot($ua)) {
+            return null;
+        }
+
+        $ip = (string) $request->ip();
+
+        if (self::excluded($ip, (string) $settings->get(self::SETTING_EXCLUDE, ''))) {
+            return null;
+        }
+
+        return self::visitor($ip, $ua);
     }
 
     public static function isBot(string $ua): bool
@@ -365,11 +390,24 @@ final class Tracker
         };
     }
 
-    public static function country(string $ip): string
+    /**
+     * The visitor's country: the firewall's country file first. Without it
+     * (not downloaded yet), Cloudflare's CF-IPCountry header when the shop is
+     * behind Cloudflare (Cloudways' Cloudflare Enterprise add-on sends it);
+     * otherwise ''. The header is a fallback for a COUNT, never a security
+     * decision: a client could send it, and the firewall never reads it.
+     */
+    public static function country(string $ip, ?Request $request = null): string
     {
         $bin = IpRange::pack($ip);
+        $cc = $bin === null ? '' : strtoupper(substr(CountryDb::lookup($bin), 0, 2));
 
-        return $bin === null ? '' : strtoupper(substr(CountryDb::lookup($bin), 0, 2));
+        if ($cc === '' && $request !== null) {
+            $h = strtoupper((string) $request->headers->get('CF-IPCountry', ''));
+            $cc = preg_match('/^[A-Z]{2}$/', $h) && $h !== 'XX' && $h !== 'T1' ? $h : '';
+        }
+
+        return $cc;
     }
 
     public static function isCheckout(string $path): bool

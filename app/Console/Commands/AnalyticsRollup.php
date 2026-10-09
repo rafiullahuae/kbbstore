@@ -20,6 +20,8 @@ final class AnalyticsRollup extends Command
 
     public function handle(): int
     {
+        // The board's "is the scheduler running?" (Lane AN2).
+        \Illuminate\Support\Facades\Cache::put(Rollup::TICK_KEY, time(), 86400);
         $days = Rollup::runDue((bool) $this->option('force'));
         $this->line('Analytics: rebuilt '.$days.' day(s).');
 

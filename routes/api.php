@@ -75,4 +75,7 @@ require __DIR__.'/security-csp.php';
  */
 require __DIR__.'/ugc.php';
 
+// Analytics "Online now" (Lane AN2): the heartbeat and leave beacon, stateless.
+require __DIR__.'/analytics-online.php';
+
 });

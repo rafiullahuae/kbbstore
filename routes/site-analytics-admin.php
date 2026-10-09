@@ -28,3 +28,11 @@ Route::get('/site-analytics/settings', [SiteAnalyticsApiController::class, 'sett
     ->name('admin.site-analytics.settings');
 Route::post('/site-analytics/settings', [SiteAnalyticsApiController::class, 'saveSettings'])
     ->middleware('throttle:30,1')->name('admin.site-analytics.settings.save');
+
+// The board's layout, per admin (Lane AN2): drag-and-drop order and hidden blocks.
+Route::get('/site-analytics/layout', [SiteAnalyticsApiController::class, 'layout'])
+    ->name('admin.site-analytics.layout');
+Route::put('/site-analytics/layout', [SiteAnalyticsApiController::class, 'saveLayout'])
+    ->middleware('throttle:60,1')->name('admin.site-analytics.layout.save');
+Route::delete('/site-analytics/layout', [SiteAnalyticsApiController::class, 'resetLayout'])
+    ->middleware('throttle:30,1')->name('admin.site-analytics.layout.reset');

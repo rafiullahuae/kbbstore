@@ -604,10 +604,19 @@ details summary::-webkit-details-marker { display: none; }
 .an-big { display: flex; align-items: flex-end; gap: 14px; margin-top: 8px; }
 .an-big b { font-size: 64px; font-weight: 800; letter-spacing: -.05em; line-height: .95; font-variant-numeric: tabular-nums; }
 .an-big small { color: #9aa5bd; font-size: 12.5px; padding-bottom: 8px; }
-.an-bars { width: 100%; height: 60px; display: block; margin-top: 12px; }
-.an-bars rect { fill: #22c06c; opacity: .55; }
-.an-bars rect.now { fill: #3ddc84; opacity: 1; }
-.an-axis { display: flex; justify-content: space-between; font-size: 11px; color: #9aa5bd; margin-top: 2px; }
+.an-bars { width: 100%; height: auto; display: block; margin-top: 12px; overflow: visible; }
+.an-bars rect { fill: #22c06c; opacity: .6; }
+.an-bars rect.now, .an-bars rect.on { fill: #3ddc84; opacity: 1; }
+.an-bars rect.hit { fill: transparent; opacity: 1; }
+.an-bars line.grid { stroke: rgba(255,255,255,.08); }
+.an-bars line.base { stroke: rgba(255,255,255,.22); }
+.an-bars text.ax { fill: #9aa5bd; font: 9px var(--font); font-variant-numeric: tabular-nums; }
+.an-bars .tip rect { fill: #fff; opacity: 1; }
+.an-bars .tip text { fill: #101729; font: 600 8.5px var(--font); font-variant-numeric: tabular-nums; }
+.an-axis { display: flex; justify-content: center; font-size: 11px; color: #9aa5bd; margin-top: 2px; }
+.an-wl { display: inline-flex; align-items: center; gap: 4px; font: 500 11px var(--font); text-transform: none; letter-spacing: 0; }
+.an-up { margin-left: 8px; font-size: 11.5px; color: var(--ink3); }
+.an-note { font-size: 11.5px; color: var(--ink3); margin: 6px 0 0; }
 .an-minis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
 .an-minis > div { background: #141a2b; border: 1px solid #232c42; border-radius: 12px; padding: 9px 11px; min-width: 0; }
 .an-minis b { display: block; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
