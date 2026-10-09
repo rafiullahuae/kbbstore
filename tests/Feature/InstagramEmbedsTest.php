@@ -356,22 +356,27 @@ it('costs no query and the same work at three posts as at forty', function () {
 
 /* ═════════════════════════════════════════════════ the homepage row ═══ */
 
-it('sits directly after the Instagram Profile row, in the registry, every preset and the page', function () {
+it('sits where the Instagram Profile row stood, in the registry, every preset and the page', function () {
+    // (Lane IGR) The API-fed `instagram` row was retired and this row took its
+    // place, so it now follows `videos`, as that row did.
     $keys = array_keys(HomepageSections::REGISTRY);
-    expect($keys[array_search('instagram', $keys, true) + 1])->toBe('igembeds');
+    expect($keys)->not->toContain('instagram')
+        ->and($keys[array_search('videos', $keys, true) + 1])->toBe('igembeds');
 
     foreach (HomepageLayouts::LAYOUTS as $name => $layout) {
         $s = $layout['sections'];
-        expect($s[array_search('instagram', $s, true) + 1] ?? null)->toBe('igembeds', $name);
+        expect($s)->not->toContain('instagram')
+            ->and($s[array_search('videos', $s, true) + 1] ?? null)->toBe('igembeds', $name);
     }
 
     expect(HomepageSections::OFF_BY_DEFAULT)->not->toContain('igembeds');
 
     $tpl = (string) file_get_contents(resource_path('views/store/home.blade.php'));
-    $ig = strpos($tpl, "classFor('instagram')");
+    $videos = strpos($tpl, "classFor('videos')");
     $mine = strpos($tpl, "classFor('igembeds')");
     $next = strpos($tpl, "hidden('trending')");
-    expect($ig)->toBeLessThan($mine)->and($mine)->toBeLessThan($next)
+    expect($videos)->toBeLessThan($mine)->and($mine)->toBeLessThan($next)
+        ->and($tpl)->not->toContain("classFor('instagram')")
         ->and(substr_count($tpl, "Shortcodes::render('[kbb_instagram_embeds]')"))->toBe(1);
 });
 

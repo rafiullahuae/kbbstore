@@ -205,7 +205,8 @@ it('reads the shop as it is today: everything to do, the switch locked until the
         ->and($s['can']['switch'])->toBeFalse()
         ->and($s['can']['payments'])->toBeFalse()
         ->and($s['copy']['certificate'])->toBe('kbeautybliss.com, www.kbeautybliss.com, extrabeauty.ae, www.extrabeauty.ae')
-        ->and($s['copy']['instagram'])->toBe('https://kbeautybliss.com/admin-api/instagram/callback')
+        // (Lane IGR) No Instagram redirect URI: the API module is retired.
+        ->and($s['copy'])->not->toHaveKey('instagram')
         // Lane DW2: no address is written into the shop. Until a check has
         // learned it from where extrabeauty.ae points, the A value is blank.
         ->and($s['dns_table'][0])->toBe(['type' => 'A', 'name' => '@', 'value' => '', 'extra' => 'TTL 300'])

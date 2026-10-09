@@ -1,0 +1,66 @@
+[
+  {
+    "n": 1,
+    "file": "routes/web.php",
+    "count": 1,
+    "what": "mount Store → Inquiries' admin routes inside the guarded admin-api group",
+    "anchor": "        require __DIR__.'/not-found-page-admin.php';  // Safety → 404 page (Lane NF)\n",
+    "replacement": "        require __DIR__.'/not-found-page-admin.php';  // Safety → 404 page (Lane NF)\n        require __DIR__.'/contact-inquiries-admin.php';  // Store → Inquiries (Lane CT)\n"
+  },
+  {
+    "n": 2,
+    "file": "routes/web.php",
+    "count": 1,
+    "what": "mount the contact page's form POST in the web group (session + CSRF)",
+    "anchor": "require __DIR__.'/newsletter-public.php';\n",
+    "replacement": "require __DIR__.'/newsletter-public.php';\nrequire __DIR__.'/contact-form.php';      // Contact page inquiry form (Lane CT); web group for the session and CSRF\n"
+  },
+  {
+    "n": 3,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "the screen's crumb and title",
+    "anchor": "'quiz-leads':['Store','Quiz Leads']",
+    "replacement": "'quiz-leads':['Store','Quiz Leads'],'inquiries':['Store','Inquiries']"
+  },
+  {
+    "n": 4,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "replay a click that lands before the partial",
+    "anchor": "'spotted','mkt-email','notfoundpage']);",
+    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+  },
+  {
+    "n": 5,
+    "file": "resources/views/admin/app.blade.php",
+    "count": 1,
+    "what": "include the screen once, after the 404 page's",
+    "anchor": "@include('admin.partials.not-found-page-screen')\n",
+    "replacement": "@include('admin.partials.not-found-page-screen')\n{{-- Store -> Inquiries (Lane CT): the contact page's messages (list, read, mark read, delete) and its Contact page settings. It wraps window.go for 'inquiries'; its sidebar row is AdminNav's late entry. --}}\n@include('admin.partials.contact-inquiries-screen')\n"
+  },
+  {
+    "n": 6,
+    "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
+    "count": 1,
+    "what": "keep the recorded block in step",
+    "anchor": "'spotted','mkt-email','notfoundpage']);",
+    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+  },
+  {
+    "n": 7,
+    "file": "docs/BG-ADMIN-APP-BLOCKS.md",
+    "count": 1,
+    "what": "keep the recorded block in step",
+    "anchor": "'spotted','mkt-email','notfoundpage']);",
+    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+  },
+  {
+    "n": 8,
+    "file": "docs/GS-ADMIN-APP-BLOCKS.md",
+    "count": 2,
+    "what": "keep the recorded block in step",
+    "anchor": "'spotted','mkt-email','notfoundpage']);",
+    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
+  }
+]

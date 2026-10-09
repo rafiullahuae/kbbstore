@@ -147,6 +147,13 @@ function navSidebarPartialRows(): array
     $out = [];
 
     foreach (glob(resource_path('views/admin/partials/*.blade.php')) ?: [] as $file) {
+        // (Lane IGR) The retired Instagram API screen is on disk and included
+        // nowhere (EverythingIsMountedOnceTest pins the zero), so it registers
+        // nothing in the console that exists.
+        if (\Tests\Support\RetiredInstagramApi::isRetired($file)) {
+            continue;
+        }
+
         $body = (string) file_get_contents($file);
         $screen = null;
         if (preg_match("/(?:var|const)\s+SCREEN\s*=\s*'([^']+)'/", $body, $sm)) {
@@ -367,11 +374,13 @@ it('renders the sidebar the console settled on, group by group and row by row', 
         // 'notfoundpage' — Safety → 404 page (Lane NF), after Demo Content.
         'Safety' => ['debug', 'sandbox', 'democontent', 'notfoundpage'],
         'Catalog' => ['catalog', 'product-tabs', 'sets', 'product-editor', 'imageseo', 'routines', 'category-tree', 'brands-manager', 'pagination'],
+        // 'inquiries' — Store → Inquiries (Lane CT), after Quiz Leads.
         'Store' => ['modules', 'megamenu', 'ecommerce', 'tax', 'payship', 'shipping', 'import', 'orders',
             'order-new', 'coupon-editor', 'payments', 'paygw', 'security', 'firewall', 'analytics', 'search', 'seo', 'seokeywords',
-            'store-settings', 'customers', 'quiz-leads'],
+            'store-settings', 'customers', 'quiz-leads', 'inquiries'],
         'Emails' => ['emails', 'emails-sending', 'emails-customer', 'emails-branding', 'emails-sent', 'mail'],
-        'Content' => ['posts', 'htmlblocks', 'media', 'ugcsections', 'instagram', 'igembeds'],
+        // (Lane IGR) 'instagram' (Content → Instagram, the API module) retired.
+        'Content' => ['posts', 'htmlblocks', 'media', 'ugcsections', 'igembeds'],
         'Translation' => ['tr-settings', 'tr-progress', 'tr-strings', 'tr-machine'],
         // 'comingsoon' — Appearance → Coming Soon page (Lane CS), last, after Site layout.
         'Appearance' => ['homepage', 'hpcontent', 'spotted', 'banners', 'gridsections', 'prodstyles', 'mobilehdr',

@@ -3,9 +3,9 @@
     "n": 1,
     "file": "routes/web.php",
     "count": 1,
-    "what": "mount Analytics' admin routes inside the guarded admin-api group",
-    "anchor": "        require __DIR__.'/not-found-page-admin.php';  // Safety → 404 page (Lane NF)\n",
-    "replacement": "        require __DIR__.'/not-found-page-admin.php';  // Safety → 404 page (Lane NF)\n        require __DIR__.'/site-analytics-admin.php';  // Analytics (Lane AN)\n"
+    "what": "mount Analytics' admin routes inside the guarded admin-api group, after Inquiries",
+    "anchor": "        require __DIR__.'/contact-inquiries-admin.php';  // Store → Inquiries (Lane CT)\n",
+    "replacement": "        require __DIR__.'/contact-inquiries-admin.php';  // Store → Inquiries (Lane CT)\n        require __DIR__.'/site-analytics-admin.php';  // Analytics (Lane AN)\n"
   },
   {
     "n": 2,
@@ -27,9 +27,9 @@
     "n": 4,
     "file": "resources/views/admin/app.blade.php",
     "count": 1,
-    "what": "include the screen once, after the 404 page's",
-    "anchor": "@include('admin.partials.not-found-page-screen')\n",
-    "replacement": "@include('admin.partials.not-found-page-screen')\n{{-- Analytics (Lane AN): the realtime board (design B) -- live visitors, pages, sources, orders and revenue by source. It wraps window.go for 'site-analytics'; its sidebar row is AdminNav's, under Dashboard. --}}\n@include('admin.partials.site-analytics-screen')\n"
+    "what": "include the screen once, after Inquiries'",
+    "anchor": "@include('admin.partials.contact-inquiries-screen')\n",
+    "replacement": "@include('admin.partials.contact-inquiries-screen')\n{{-- Analytics (Lane AN): the realtime board (design B) -- live visitors, pages, sources, orders and revenue by source. It wraps window.go for 'site-analytics'; its sidebar row is AdminNav's, under Dashboard. --}}\n@include('admin.partials.site-analytics-screen')\n"
   },
   {
     "n": 5,

@@ -7,7 +7,6 @@ namespace App\Services\DomainMove;
 use App\Models\Setting;
 use App\Services\Import\MediaAudit;
 use App\Services\Import\MediaSideloader;
-use App\Services\Instagram\InstagramAuth;
 use App\Services\OwnerApp\OwnerAppPath;
 use App\Support\SiteHost;
 use App\Support\SiteUrl;
@@ -807,7 +806,6 @@ final class DomainSwitch
                 'domains' => [$new, 'www.'.$new],
                 'certificate' => self::certificateNames($new, $old),
                 'certificate_after' => $new.', www.'.$new,
-                'instagram' => 'https://'.$target.InstagramAuth::CALLBACK_PATH,
                 'admin_on_target' => 'https://'.$target,
             ],
             'dns_table' => [

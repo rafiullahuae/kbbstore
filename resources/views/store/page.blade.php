@@ -27,6 +27,12 @@
 @if (empty($pageTop) && empty($pagePanel))
         <h1>{!! $page->t('title') !!}</h1>
 @endif
+{{-- The contact page's cards (Lane CT), under the page's title whichever header draws it: only /contact-us/ has a $contactHub, so every other page renders byte for byte as before. The page's own stylesheet rides along, inline, from here. --}}@if (! empty($contactHub))
+@push('styles')
+@include('store.partials.contact-hub-head')
+@endpush
+@include('store.partials.contact-hub-cards', ['hub' => $contactHub])
+@endif
         {{-- Content is authored in the admin, so it is trusted HTML.
 
              @shortcodes, not {!! !!}. AppServiceProvider has registered this
@@ -51,6 +57,9 @@
             <p class="policy-date">{{ __('store.page.last_updated', ['date' => $page->updated_at->format('j F Y')]) }}</p>
         @endif
     </article>
+{{-- The inquiry form, the social icons and the opening hours (Lane CT). --}}@if (! empty($contactHub))
+@include('store.partials.contact-hub-form', ['hub' => $contactHub])
+@endif
 </div></section>
 </div>
 @endsection

@@ -53,7 +53,7 @@ it('mounts the admin routes exactly once, inside the guarded admin-api group', f
     $web = anWired()['files']['routes/web.php'];
 
     expect(substr_count($web, "require __DIR__.'/site-analytics-admin.php';"))->toBe(1)
-        ->and($web)->toContain("require __DIR__.'/not-found-page-admin.php';  // Safety → 404 page (Lane NF)\n        require __DIR__.'/site-analytics-admin.php';");
+        ->and($web)->toContain("require __DIR__.'/contact-inquiries-admin.php';  // Store → Inquiries (Lane CT)\n        require __DIR__.'/site-analytics-admin.php';");
 });
 
 it('puts the screen in the console exactly once: include, title, late replay and sidebar row', function () {

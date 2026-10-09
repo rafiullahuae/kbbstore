@@ -138,7 +138,11 @@ it('requires every route file exactly once', function () {
             $wiring
         );
 
-        if ($count !== 1) {
+        // (Lane IGR) A retired file is still on disk (packages cannot delete one,
+        // see Tests\Support\RetiredInstagramApi) and must be mounted ZERO times.
+        $want = \Tests\Support\RetiredInstagramApi::isRetiredName($name) ? 0 : 1;
+
+        if ($count !== $want) {
             $wrong[] = sprintf(
                 '  %-34s is required %d times by routes/web.php + routes/api.php',
                 $name,
@@ -215,7 +219,10 @@ it('includes every admin console partial exactly once', function () {
             $haystack
         );
 
-        if ($count !== 1) {
+        // (Lane IGR) The retired Instagram API screen is included ZERO times.
+        $want = \Tests\Support\RetiredInstagramApi::isRetiredName($name) ? 0 : 1;
+
+        if ($count !== $want) {
             $wrong[] = sprintf('  %-34s is included %d times', $name, $count);
         }
     }

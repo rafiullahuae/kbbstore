@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.449
+**Contact page rebuilt with an inquiry inbox; Marketing Pixels upgrade with server events,
+catalog feeds, Custom code and a full guide; Instagram embeds on #KBeautyBliss Spotted; the
+old Instagram API module retired.** Apply after .448. Runs its migrations. Hard refresh.
+
+| Your request | Now |
+|---|---|
+| "the contact page should have proper sections for whatsapp, contact, email, and a inquiry form ... social media icons" + "remove the call option ... support on whatsapp, instagram and email" + "short page" + "form fields ... same as checkout" | /contact-us/: WhatsApp card on top, Instagram and Email side by side (one row of three on a computer), your new text, a checkout-style inquiry form, social icons and opening hours; about 30% shorter. Floating WhatsApp button hidden on this page only. Inquiries: Store -> Inquiries -> Inbox (email alert to you). Settings: Store -> Inquiries -> Contact page (each card, form on/off, recipient, topics). Previous text kept as a hidden draft |
+| "upgrade my marketing pixels module ... facebook ... google including analytics tag, gtag and google merchant ... tiktok ... auto connector ... complete guide ... with urls" | Growth & Marketing -> Marketing Pixels: tabs Pixels, Meta, Google, TikTok, Custom code, Last events, Guide. Step-by-step setup with links and a Check button that sends a real test event; optional Connect with Facebook using your own Meta app. Server-side Purchase / Checkout / Add to cart for Meta and TikTok and GA4 purchase, without double counting. Feeds: /feeds/google-merchant.xml, /feeds/meta-catalog.xml, /feeds/tiktok-catalog.xml. One-click "auto connect" like the WordPress plugin needs Meta partner approval, so the Guide explains each step instead |
+| "facility to use header code, footer or body code ... site speed must not be disturb" | Marketing Pixels -> Custom code: Head, Body start, Footer boxes; off/empty adds nothing; loads after the page by default; owner only; every save logged, one-click restore |
+| "the instagram new embed function should go auto on the #KBeautyBlissSpoted ... old instagram api ... discontinue ... and the instagram connect page too" | The Spotted page shows your pasted Instagram embeds (Appearance -> #KBeautyBliss Spotted -> Settings -> "Show Instagram embeds on this page"). Content -> Instagram, Connect with Facebook, its daily sync and every stored Instagram token removed; the homepage Instagram row becomes the embeds row in the same place |
+
+Files: see the package's update.json.
+
 ## 2.60.448
 **Orders: click a row to open it, bulk status asks Proceed, long-press in the owner app;
 normal pages get the brand-style header; About us rewritten; banner 100% = bottom.**

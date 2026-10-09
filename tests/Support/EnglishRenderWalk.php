@@ -1161,6 +1161,9 @@ final class EnglishRenderWalk
             // The Google Merchant Center product feed (Lane SEO): XML for Merchant
             // Center and Meta, no Blade, no shopper string.
             'feeds/google-merchant.xml' => $file,
+            // Lane MP: the Meta and TikTok catalog feeds, the same builder as Google's.
+            'feeds/meta-catalog.xml' => $file,
+            'feeds/tiktok-catalog.xml' => $file,
             // Apple's domain-association document (Lane WAL). Machine-facing in
             // the strictest sense: Apple's own fetcher reads it to verify this
             // domain, and Apple Pay draws no sheet until it has. Both spellings
@@ -3585,6 +3588,30 @@ KBB_BH_CSS;
             'the current page on the desktop menu (Lane MN)' => [
                 'pattern' => '#<a class="navlink" href="[^"]*"[^<>]*?\K aria-current="(?:page|true)"(?=>)#',
                 'hits' => 4,
+            ],
+            /*
+             * THE CONTACT PAGE'S CARDS, ICONS AND INQUIRY FORM (Lane CT). The
+             * owner, 9 October: "the contact page should have proper sections
+             * for whatsapp, contact, email, and a inquiry form nicely design.
+             * and our social media icons." He asked for it, so it ships on.
+             * Three whole elements on ONE page, contact-us, and nothing else
+             * on it or on any other page moves: the page's own inline <style>
+             * in the head, the cards under the title, and the form with its
+             * social icons after the page's text. Each at most once; the
+             * page's own words between them are still compared byte for byte.
+             * ContactPageTest pins what each one draws.
+             */
+            'the contact page stylesheet, inline in its head (Lane CT)' => [
+                'pattern' => '#<style>\n\.ctc\{.*?</style>\n#s',
+                'hits' => 1,
+            ],
+            'the contact page cards (Lane CT)' => [
+                'pattern' => '#<section class="ctc ctc-top" aria-label="[^"]*">.*?</section>\n#s',
+                'hits' => 1,
+            ],
+            'the contact page inquiry form and social icons (Lane CT)' => [
+                'pattern' => '#<div class="ctc ctc-low[^"]*">\n.*?\n</div>\n(?=</div></section>)#s',
+                'hits' => 1,
             ],
         ];
     }
