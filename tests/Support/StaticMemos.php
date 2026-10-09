@@ -78,6 +78,8 @@ final class StaticMemos
             \App\Services\OwnerApp\OwnerAppAlerts::class => static fn () => \App\Services\OwnerApp\OwnerAppAlerts::forget(),
             // Lane PO: order mail held for after the response.
             \App\Services\Mail\OrderMailer::class => static fn () => \App\Services\Mail\OrderMailer::forget(),
+            // Lane MP: server events buffered for after the response (integrator, 2.60.449).
+            \App\Services\Pixels\ServerEvents::class => static fn () => \App\Services\Pixels\ServerEvents::forget(),
             // Lane PW: the hashes in the app's versioned URLs, per process.
             \App\Services\SiteApp::class => static fn () => \App\Services\SiteApp::forgetHashes(),
             IndexNow::class => static fn () => IndexNow::forgetKey(),

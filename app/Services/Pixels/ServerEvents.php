@@ -508,6 +508,18 @@ final class ServerEvents
         });
     }
 
+    /**
+     * Drop what is waiting without sending it -- a test's reset, never the
+     * shop's. Under PHP-FPM the buffer cannot outlive its request (statics
+     * start empty in every request, and terminating() drains it), but in one
+     * long test process a case that queues an event and never terminates
+     * would hand its closure to the next case's first terminate().
+     */
+    public static function forget(): void
+    {
+        self::$buffer = [];
+    }
+
     /** @return list<array<string, mixed>> the newest rows for the panel. */
     public static function recent(int $limit = 30): array
     {
