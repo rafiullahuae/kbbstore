@@ -969,6 +969,11 @@ class CheckoutController extends Controller
         // if they revisited their own success page a moment later.
         session(['kbb_last_order' => $order->order_number]);
 
+        // Analytics (Lane AN): where this order came from -- the first and
+        // last non-direct touch the beacon kept in this session. One UPDATE,
+        // never throws; no touches leaves it NULL, which reads Unknown.
+        \App\Services\Analytics\Attribution::stamp($order, $request);
+
         // (Lane BK) And WHICH basket became it. The cookie moves the moment
         // the shopper adds anything after an unfinished payment; this does not,
         // so UnfinishedPayment can still find the basket and merge it.

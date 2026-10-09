@@ -204,6 +204,8 @@ class OrdersApiController extends Controller
             // Chip order, so the screen renders the same sequence every time
             // instead of whatever order the database felt like returning.
             'statuses' => $counts['statuses'],
+            // The Source filter's choices (Lane AN): a constant, no query.
+            'sources' => ['unknown' => 'Unknown'] + \App\Services\Analytics\Channels::MAP,
             'revenue_statuses' => Order::REAL_STATUSES,
             // Lane ORD: for the bulk bar's confirmation line.
             'status_emails' => self::emailingStatuses(),
@@ -748,6 +750,10 @@ class OrdersApiController extends Controller
                 'orders.payment_method_title',
                 'orders.shipping_method',
                 'orders.coupon_code',
+                // Where the order came from (Lane AN): two short columns, so the
+                // Source chip costs the list no query of its own.
+                'orders.src_channel',
+                'orders.src_campaign',
                 // Selected for the name/city fallback on a guest order and
                 // reduced to three fields in rowToApi(). Never returned raw.
                 'orders.billing_address',
@@ -903,6 +909,17 @@ class OrdersApiController extends Controller
 
         if ($payment !== '') {
             $query->where('orders.payment_method', '=', $payment);
+        }
+
+        // Source (Lane AN): one of Channels::MAP's keys, or "unknown" for the
+        // orders nothing recorded (before analytics, imports, manual orders).
+        // Anything else is ignored rather than matched.
+        $source = trim((string) $request->query('source', ''));
+
+        if ($source === 'unknown') {
+            $query->whereNull('orders.src_channel');
+        } elseif (\App\Services\Analytics\Channels::valid($source)) {
+            $query->where('orders.src_channel', '=', $source);
         }
 
         return $query;
@@ -1218,6 +1235,8 @@ class OrdersApiController extends Controller
             // per-gateway config read, and a list of 50 rows is the wrong place
             // to do 50 of them. The detail screen still shows the full label.
             'payment' => $this->paymentLabel($o),
+            'source' => \App\Services\Analytics\Attribution::chip($o->src_channel, $o->src_campaign),
+            'source_key' => $o->src_channel,
             'payment_method' => $this->blankToNull($o->payment_method),
             'shipping_method' => $this->blankToNull($o->shipping_method),
             'coupon_code' => $this->blankToNull($o->coupon_code),

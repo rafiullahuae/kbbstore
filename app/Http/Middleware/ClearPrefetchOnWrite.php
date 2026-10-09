@@ -36,7 +36,13 @@ final class ClearPrefetchOnWrite
             // The "Most viewed" beacon changes nothing a page shows (its
             // ranking is cached ten minutes): it must not throw away a page
             // the shopper is about to open. Lane RB's routes/buy-together.php.
-            && ! $request->routeIs('product.view-beacon')) {
+            && ! $request->routeIs('product.view-beacon')
+            // The page-view beacon every shop page sends after load (Lane AN)
+            // changes nothing a page shows either -- unless it carries `id`,
+            // the "Recently viewed" write, which does (the row on the next
+            // product page). Without this, every page view would throw away
+            // whatever had been fetched ahead while the page was loading.
+            && ! ($request->routeIs('product.viewed-later') && ! $request->filled('id'))) {
             try {
                 if (InstantNav::on()) {
                     $response->headers->set('Clear-Site-Data', '"prefetchCache"');

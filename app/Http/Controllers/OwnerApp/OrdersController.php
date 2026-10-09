@@ -80,6 +80,7 @@ final class OrdersController extends Controller
             ->get([
                 'o.id', 'o.order_number', 'o.status', 'o.total', 'o.created_at', 'o.payment_method',
                 'o.payment_method_title', 'o.billing_address', 'c.name as c_name',
+                'o.src_channel', 'o.src_campaign',
                 DB::raw('(SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) as items_n'),
             ]);
 
@@ -197,6 +198,9 @@ final class OrdersController extends Controller
             'created_at' => StoreTime::iso($o->created_at),
             'day' => StoreTime::dayKey($o->created_at),
             'items' => isset($o->items_n) ? (int) $o->items_n : null,
+            // Lane AN: the Source chip; null where the row carried no column
+            // (customer history, dashboard), so nothing is shown there.
+            'source' => property_exists($o, 'src_channel') ? \App\Services\Analytics\Attribution::chip($o->src_channel, $o->src_campaign ?? null) : null,
         ];
     }
 

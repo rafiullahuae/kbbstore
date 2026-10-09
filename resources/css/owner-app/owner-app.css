@@ -590,6 +590,43 @@ details summary::-webkit-details-marker { display: none; }
 @keyframes ic-dn { to { transform: translateY(9px); } }
 @media (prefers-reduced-motion: reduce) { .ic-ar { animation: none; } }
 
+/* ── Analytics (Lane AN): design B, the realtime board, for the phone ── */
+.an-live { background: #0c1120; color: #eef1f9; }
+.an-live .an-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; font: 700 11px/1.2 var(--font); letter-spacing: .08em; text-transform: uppercase; color: #9aa5bd; }
+.an-live .an-h > span { display: flex; align-items: center; gap: 7px; }
+.an-live .seg { background: #141a2b; }
+.an-live .seg button { color: #9aa5bd; }
+.an-live .seg button.on { background: #232c42; color: #eef1f9; box-shadow: none; }
+.an-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c06c; display: inline-block; animation: anpulse 2s infinite; }
+.an-dot.off { background: #9aa5bd; animation: none; }
+@keyframes anpulse { 0% { box-shadow: 0 0 0 0 rgba(34,192,108,.55); } 70% { box-shadow: 0 0 0 8px rgba(34,192,108,0); } 100% { box-shadow: 0 0 0 0 rgba(34,192,108,0); } }
+@media (prefers-reduced-motion: reduce) { .an-dot { animation: none; } }
+.an-big { display: flex; align-items: flex-end; gap: 14px; margin-top: 8px; }
+.an-big b { font-size: 64px; font-weight: 800; letter-spacing: -.05em; line-height: .95; font-variant-numeric: tabular-nums; }
+.an-big small { color: #9aa5bd; font-size: 12.5px; padding-bottom: 8px; }
+.an-bars { width: 100%; height: 60px; display: block; margin-top: 12px; }
+.an-bars rect { fill: #22c06c; opacity: .55; }
+.an-bars rect.now { fill: #3ddc84; opacity: 1; }
+.an-axis { display: flex; justify-content: space-between; font-size: 11px; color: #9aa5bd; margin-top: 2px; }
+.an-minis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.an-minis > div { background: #141a2b; border: 1px solid #232c42; border-radius: 12px; padding: 9px 11px; min-width: 0; }
+.an-minis b { display: block; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.an-minis small { font-size: 11px; color: #9aa5bd; }
+.an-feed time { font: 11px ui-monospace, Menlo, monospace; color: var(--ink3); flex: none; width: 40px; }
+.an-ev { font: 700 10.5px/1 var(--font); padding: 4px 7px; border-radius: 99px; background: #eaf0fd; color: #3f6fe0; flex: none; }
+.an-ev.cart { background: #fdf2e2; color: #a0620e; }
+.an-ev.order { background: #e7f7ee; color: #0b6e3a; }
+.an-range { margin: 4px 0 10px; overflow-x: auto; }
+.an-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.an-strip .card { margin: 0; padding: 11px 12px; }
+.an-strip b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.an-strip small { font-size: 11.5px; color: var(--ink3); }
+.an-funnel { width: 100%; height: auto; display: block; }
+.an-funnel rect { fill: #15a85a; }
+.an-funnel rect.f0 { fill: #cfeedd; }
+.an-funnel text { font: 11.5px var(--font); fill: var(--ink); }
+.row .rm small.src { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 99px; background: var(--surface2); color: var(--ink2); max-width: 100%; }
+
 /* ---------------------------------------------- Customise app (Lane OA4)
  * Users & Roles → Owner app → Customise app. Every rule below hangs off a
  * class the app puts on <html> (core.js applyUi) — or, for the font, the
@@ -671,4 +708,5 @@ html.oa-nosync .ib.sync { display: none; }
 html.oa-nocontact .cu-act { display: none; }
 html.oa-nobulk :is([data-act="selall"], [data-act="selmode"], .bulk) { display: none; }
 html.oa-nobulk .sel { pointer-events: none; }
+
 

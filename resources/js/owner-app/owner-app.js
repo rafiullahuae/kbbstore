@@ -44,6 +44,7 @@ import { renderOrders, ordersClick, ordersState, clearSelection, refreshOrdersLi
 import { renderProducts, renderProduct, productsClick, productClick, setProductFilter, refreshProductsList, fetchProducts, fetchProduct } from './products.js';
 import { renderCustomers, renderCustomer, customersClick, fetchCustomers, fetchCustomer } from './customers.js';
 import { offerPush } from './ask.js';
+import { renderAnalytics, analyticsClick, stopAnalytics } from './analytics.js';
 
 /* The live check: 25 s unless Customise app sets 15–120 s, or switches it off (Lane OA4). */
 const pollMs = () => Math.max(15, Math.min(120, +(S.ui && S.ui.live_seconds) || 25)) * 1000;
@@ -219,9 +220,11 @@ function unlocked(d) {
 
 /* ---------------------------------------------------------------- frame */
 
-const TABS = [['', 'My store', 'chart'], ['orders', 'Orders', 'receipt'], ['products', 'Products', 'box'], ['more', 'More', 'grid']];
+// Lane AN: Analytics (live visitors, sources, orders by source) for a member
+// who may see revenue (analytics.view), second, as the owner asked.
+const TABS = [['', 'My store', 'chart'], ['analytics', 'Live', 'eye'], ['orders', 'Orders', 'receipt'], ['products', 'Products', 'box'], ['more', 'More', 'grid']];
 /* The tabs this member sees: role first, then Customise app. More is always there. */
-const tabsOn = () => TABS.filter(([k]) => (k !== '' || scr('store')) && (k !== 'orders' || (S.me.can.orders && scr('orders'))) && (k !== 'products' || (S.me.can.products && scr('products'))));
+const tabsOn = () => TABS.filter(([k]) => (k !== '' || scr('store')) && (k !== 'orders' || (S.me.can.orders && scr('orders'))) && (k !== 'analytics' || S.me.can.sales) && (k !== 'products' || (S.me.can.products && scr('products'))));
 const navKey = () => (S.me ? tabsOn().map(([k]) => k).join() : '');
 /* A screen that is switched off, by name: the address falls through to the first tab still on. */
 const SCR = { '': 'store', orders: 'orders', products: 'products', customers: 'customers', notifications: 'notifications' };
@@ -254,6 +257,8 @@ async function show() {
     if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
   });
   if (route.name !== 'orders' || prev !== 'orders') clearSelection();
+  // Leaving Analytics: its live display sleeps at once (Lane AN).
+  if (route.name !== 'analytics') stopAnalytics();
   const n = route.name;
   if (n === 'orders' && route.q) { ordersState().status = route.q; history.replaceState(null, '', '#/orders'); }
   if (n === 'products' && route.q) { setProductFilter(route.q); history.replaceState(null, '', '#/products'); }
@@ -262,6 +267,7 @@ async function show() {
   else if (n === 'customers') await (route.id ? renderCustomer(view, route.id) : renderCustomers(view));
   else if (n === 'notifications') await renderNotifications(view);
   else if (n === 'more') await renderMore(view);
+  else if (n === 'analytics') await renderAnalytics(view);
   else await renderDashboard(view);
   badges();
 }
@@ -281,6 +287,7 @@ root.addEventListener('click', async (e) => {
     if (n === 'customers' && await customersClick(e, view)) return;
     if (n === 'notifications' && notificationsClick(e, view)) return;
     if (n === '' && dashboardClick(e, view)) return;
+    if (n === 'analytics' && analyticsClick(e)) return;
     if (n === 'more') await moreClick(e, view, gate);
   } catch (err) {
     if (!(err instanceof AuthError)) toast('That did not work. Try again.', true);

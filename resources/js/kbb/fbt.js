@@ -34,6 +34,7 @@
 import { addTogether } from './cart.js';
 import { closeAll } from './overlay.js';
 import { t } from './i18n.js';
+import { addToHit } from './hit.js';
 
 /** How long the button may spin before it gives itself back. */
 const GIVE_UP_MS = 20000;
@@ -294,6 +295,18 @@ function countView(block) {
     const id = Number(block.dataset.bt);
     const url = block.dataset.viewUrl;
     if (!id || !url || !navigator.sendBeacon || !window.KBB?.csrf) return;
+
+    // Lane AN: ride on the page's one beacon (hit.js) rather than send a
+    // second request. Decided now, at start-up, before that beacon leaves;
+    // if it has already gone, the old path below sends this one alone.
+    const today = new Date().toISOString().slice(0, 10);
+    let seenNow = [];
+    try { seenNow = JSON.parse(localStorage.getItem('kbb_pv_' + today) || '[]'); } catch { seenNow = []; }
+    if (Array.isArray(seenNow) && seenNow.includes(id)) return;
+    if (addToHit('pv', id)) {
+        try { localStorage.setItem('kbb_pv_' + today, JSON.stringify(seenNow.concat(id).slice(-200))); } catch { /* counted, not remembered */ }
+        return;
+    }
 
     const send = () => {
         const day = new Date().toISOString().slice(0, 10);

@@ -44,7 +44,9 @@ final class OwnerAppUiGate
     ];
 
     /** Behind the PIN but never switched off: More holds lock, sign-out and notifications. */
-    public const ALWAYS = ['lock', 'forget', 'push', 'push.off', 'push.test', 'notify'];
+    // 'analytics', 'analytics.live' (Lane AN): no Customise-app switch; the
+    // controller refuses them without analytics.view.
+    public const ALWAYS = ['lock', 'forget', 'push', 'push.off', 'push.test', 'notify', 'analytics', 'analytics.live'];
 
     /** Product fields => the function that may change them (OwnerApp\ProductsController::EDITABLE). */
     public const PRODUCT_FIELDS = [

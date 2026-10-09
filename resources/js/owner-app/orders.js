@@ -183,7 +183,8 @@ function paintList(view) {
 export function row(o) {
   return '<div class="row ord' + (L.sel.has(o.id) ? ' on' : '') + (o.id === L.cur ? ' cur' : '') + '" data-o="' + o.id + '"><button type="button" class="sel" data-act="sel" aria-label="Select order ' + esc(o.number) + '">' + av(o.name) + ic('check') + '</button>'
     + '<a class="rm" href="#/orders/' + o.id + '"><b>#' + esc(o.number) + ' <span>' + esc(o.name) + '</span></b><small>' + esc(day(o.created_at)) + ' · ' + esc(time(o.created_at))
-    + (o.items !== null && o.items !== undefined ? ' · ' + o.items + ' item' + (o.items === 1 ? '' : 's') : '') + '</small></a>'
+    + (o.items !== null && o.items !== undefined ? ' · ' + o.items + ' item' + (o.items === 1 ? '' : 's') : '') + '</small>'
+    + (o.source ? '<small class="src">' + esc(o.source) + '</small>' : '') + '</a>'
     + '<a class="re" href="#/orders/' + o.id + '" tabindex="-1"><b>' + esc(o.total_display) + '</b>' + pill(o.status) + '</a></div>';
 }
 

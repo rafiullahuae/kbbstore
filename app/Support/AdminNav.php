@@ -111,6 +111,10 @@ final class AdminNav
     public const GROUPS = [
         ['sec' => 'Overview', 'flat' => true, 'rows' => [
             ['id' => 'dash', 'label' => 'Dashboard', 'read' => 'admin-api/stats', 'icon' => self::I['dash']],
+            // Analytics (Lane AN): live visitors, pages, sources, orders by source.
+            // Its own top-level row under Dashboard, as the owner asked; a
+            // partial draws it (admin.partials.site-analytics-screen).
+            ['id' => 'site-analytics', 'label' => 'Analytics', 'read' => 'admin-api/site-analytics', 'late' => true, 'icon' => '<path d="M3 12h4l3-8 4 16 3-8h4"/>'],
         ]],
         ['sec' => 'Platform', 'rows' => [
             ['id' => 'theme', 'label' => 'K-Beauty Bliss Theme', 'cap' => 'store.settings', 'icon' => self::I['theme']],
