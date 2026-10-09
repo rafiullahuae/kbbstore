@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Page;
 use App\Support\BrandPanel;
+use App\Support\ContactPage;
 use App\Support\PageTitle;
 use App\Support\RichText;
 use App\Support\RoutedPages;
@@ -199,6 +200,9 @@ class PageEditorApiController extends Controller
      */
     public const TITLE_STORED_MAX = 255;
 
+    /** The one page with a Contact cards card (Lane CT2): PageController draws the cards on this slug only. */
+    public const CONTACT_SLUG = 'contact-us';
+
     /**
      * Everything the screen needs before it draws a form.
      *
@@ -333,6 +337,24 @@ class PageEditorApiController extends Controller
         // dropped when a key, a choice or the picture is not one it may hold.
         $header = $request->exists('header_layout') ? $this->headerLayout($request) : false;
 
+        // Lane CT2: the contact page's cards, checked in full before anything
+        // is written, and only on the page that draws them. They are stored
+        // in the `contact_page` row Store → Inquiries → Contact page saves
+        // (ContactPage::storeCards), not on this page row: one list, two
+        // screens. Same capability as the rest of this save (pages.manage).
+        $cards = null;
+        if ($request->exists('contact_cards')) {
+            if ($page->slug !== self::CONTACT_SLUG) {
+                return response()->json(['ok' => false, 'message' => 'Only the Contact Us page has contact cards.'], 422);
+            }
+
+            [$cardErrors, $cards] = ContactPage::checkCards($request->input('contact_cards'));
+
+            if ($cardErrors !== []) {
+                return response()->json(['ok' => false, 'message' => 'Not saved — '.$cardErrors[0], 'errors' => ['contact_cards' => $cardErrors]], 422);
+            }
+        }
+
         $this->fill($page, $data, $title);
 
         // Never written before its migration has run: a package's files land
@@ -345,6 +367,10 @@ class PageEditorApiController extends Controller
         $page->save();
 
         $page->saveTranslations($this->translations($data['translations'] ?? []));
+
+        if ($cards !== null) {
+            ContactPage::storeCards($cards);
+        }
 
         return response()->json([
             'ok' => true,
@@ -648,6 +674,8 @@ class PageEditorApiController extends Controller
             'header_layout' => BrandPanel::pageOwn($page->getAttribute('header_layout')),
             'header_shop' => (app(\App\Services\SiteLayout::class)->only(['pg_hero'])['pg_hero'] ?? 'panel') === 'banner' ? 'banner' : 'brand',
             'translations' => self::decodedTranslations($page->translationsForEditor()),
+            // Lane CT2: the Contact cards card, on the contact page only.
+            'contact_cards' => $page->slug === self::CONTACT_SLUG ? ContactPage::editor() : null,
         ];
     }
 

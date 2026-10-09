@@ -143,6 +143,23 @@ textarea.pg-ctl{resize:vertical;line-height:1.6}
   background:linear-gradient(135deg,#FFF0F4,#FCE0E8);display:grid;place-items:center;
   overflow:hidden;font-size:12px;color:#9a6b78;text-align:center;padding:8px}
 .pg-img-prev img{width:100%;height:100%;object-fit:cover;display:block}
+.pg-cc-list{display:grid;gap:8px}
+.pg-cc-item{border:1px solid var(--border,#e6e6e6);border-radius:10px;padding:8px 10px;min-width:0}
+.pg-cc-item.is-off{background:var(--surface-2,#f7f8fa)}
+.pg-cc-row{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.pg-cc-name{flex:1 1 140px;min-width:0;font-size:13px;font-weight:700;overflow-wrap:anywhere}
+.pg-cc-name small{display:block;font-weight:400;font-size:11px;color:var(--ink-soft,#6b7280)}
+.pg-cc-show{display:flex;gap:6px;align-items:center;font-size:12px;font-weight:600}
+.pg-cc-btn{font:inherit;font-size:12px;min-width:32px;min-height:32px;padding:4px 8px;border-radius:7px;
+  border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);color:var(--ink-2,#374151);cursor:pointer}
+.pg-cc-btn:disabled{opacity:.4;cursor:default}
+.pg-cc-item details{margin-top:6px}
+.pg-cc-item summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--ink-2,#374151);padding:4px 0}
+.pg-cc-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
+.pg-cc-fields .pg-f{margin:0}
+.pg-cc-fields .pg-cc-wide{grid-column:1/-1}
+@media (max-width:600px){.pg-cc-fields{grid-template-columns:minmax(0,1fr)}}
+.pg-cc-add{margin-top:10px}
 @media (prefers-color-scheme: dark){
   .pg-addr.is-ok{background:#0f2a1a;color:#8fd6a6}
   .pg-addr.is-bad{background:#2a1212;color:#f0a6a6}
@@ -367,6 +384,7 @@ textarea.pg-ctl{resize:vertical;line-height:1.6}
       +     '</div>'
       +   '</div>'
 
+      + contactCard()
       +   '<div class="pg-card">'
       +     '<h3>The page</h3>'
       +     '<div class="pg-rte">'
@@ -522,6 +540,141 @@ textarea.pg-ctl{resize:vertical;line-height:1.6}
       + '</div>';
   }
 
+  /* LANE CT2 -- Contact cards, on the Contact Us page only (model.contact_cards
+     is null for every other page). The owner: "please add manually and give
+     such blocks edits option directly in contact us page edits." Each box
+     opens on what the card shows today; a box left as it is follows the shop's
+     settings, a typed one is this page's own. Show is the same switch as
+     Store -> Inquiries -> Contact page: ContactPage stores one list for both.
+     Every value goes through esc(); the server re-checks every one
+     (ContactPage::checkCards) and refuses a link that is not https://,
+     http://, mailto:, tel: or a /path. Re-renders only this card, so text
+     typed in the other boxes on the screen is never redrawn away. */
+  var CC_NAMES = {wa: 'WhatsApp', ig: 'Instagram', email: 'Email', phone: 'Phone'};
+  var CC_VALUE = {wa: 'Number shown', ig: '@handle shown', email: 'Email address shown', phone: 'Number shown'};
+  var CC_SOURCE = {
+    wa: 'Settings → Business → How customers reach you',
+    ig: 'Store → SEO & Meta → Settings → Social profiles (else Store → Mail’s Instagram, else @kbeauty.bliss)',
+    email: 'Settings → Business → How customers reach you',
+    phone: 'Settings → Business → How customers reach you'
+  };
+  var CC_ICONS = {chat: 'Chat bubble', instagram: 'Instagram', mail: 'Envelope', phone: 'Phone', location: 'Map pin', clock: 'Clock', link: 'Link'};
+
+  function cc(){ return model && model.contact_cards; }
+
+  function ccCustoms(){ return cc().cards.filter(function(c){ return c.custom; }).length; }
+
+  function contactCard(){
+    var d = cc();
+    if (!d) return '';
+    var lim = d.limits || {};
+    var cards = d.cards || [];
+    var room = cards.length < d.max && ccCustoms() < d.max - 4;
+    var field = function(c, i, f, label, extra){
+      return '<div class="pg-f' + (extra || '') + '"><label for="pg-cc-' + i + '-' + f + '">' + esc(label) + '</label>'
+        + '<input id="pg-cc-' + i + '-' + f + '" class="pg-ctl" data-cc-i="' + i + '" data-cc-f="' + f + '" maxlength="' + (lim[f] || 120) + '" value="' + esc(c[f]) + '"></div>';
+    };
+    return '<div class="pg-card" id="pg-cc">'
+      + '<h3>Contact cards</h3>'
+      + '<p class="pg-hint" style="margin:0 0 10px">The cards above this page’s text, in this order. Each box opens on what the card shows today: '
+      +   'change one and the shop shows yours; leave it and the card follows the shop’s settings (and the Arabic page keeps its Arabic words). '
+      +   '<b>Show</b> is the same switch as <b>Store → Inquiries → Contact page</b>. Saved with the page’s Save button.</p>'
+      + '<div class="pg-cc-list">'
+      + cards.map(function(c, i){
+          var name = c.custom ? (c.title || 'Your card') : CC_NAMES[c.k];
+          return '<div class="pg-cc-item' + (c.on ? '' : ' is-off') + '">'
+            + '<div class="pg-cc-row">'
+            +   '<span class="pg-cc-name">' + esc(name) + '<small>' + (c.custom ? 'Your own card' : 'From the shop’s settings') + '</small></span>'
+            +   '<label class="pg-cc-show"><input type="checkbox" data-cc-i="' + i + '" data-cc-f="on"' + (c.on ? ' checked' : '') + '> Show</label>'
+            +   '<button type="button" class="pg-cc-btn" data-cc-move="-1" data-cc-at="' + i + '" aria-label="Move ' + esc(name) + ' up"' + (i === 0 ? ' disabled' : '') + '>↑</button>'
+            +   '<button type="button" class="pg-cc-btn" data-cc-move="1" data-cc-at="' + i + '" aria-label="Move ' + esc(name) + ' down"' + (i === cards.length - 1 ? ' disabled' : '') + '>↓</button>'
+            +   (c.custom
+                  ? '<button type="button" class="pg-cc-btn" data-cc-del="' + i + '">Remove</button>'
+                  : '<button type="button" class="pg-cc-btn" data-cc-reset="' + i + '">Shop’s own</button>')
+            + '</div>'
+            + '<details data-cc-open="' + i + '"' + (c._open ? ' open' : '') + '><summary>Edit the words and the link</summary>'
+            + '<div class="pg-cc-fields">'
+            +   (c.custom
+                  ? '<div class="pg-f"><label for="pg-cc-' + i + '-icon">Icon</label><select id="pg-cc-' + i + '-icon" class="pg-ctl" data-cc-i="' + i + '" data-cc-f="icon">'
+                    + (d.icons || []).map(function(k){ return '<option value="' + esc(k) + '"' + (c.icon === k ? ' selected' : '') + '>' + esc(CC_ICONS[k] || k) + '</option>'; }).join('')
+                    + '</select></div>'
+                  : '')
+            +   field(c, i, 'title', 'Title')
+            +   field(c, i, 'note', 'Subtitle')
+            +   field(c, i, 'value', c.custom ? 'Value shown' : CC_VALUE[c.k])
+            +   field(c, i, 'action', 'Button text')
+            +   field(c, i, 'link', 'Link', ' pg-cc-wide')
+            + '</div>'
+            + '<p class="pg-hint">' + (c.custom
+                ? 'Title, button text and link are needed. The link: https://…, mailto:name@example.com, tel:+971… or /a-page-on-this-shop/.'
+                : 'From ' + esc(CC_SOURCE[c.k]) + (c.shop && c.shop.link ? ': ' + esc(c.shop.link) + '.' : ' — not set there yet.')
+                  + ' A new value carries its own link when the link box is left as it was. Links: https://…, http://…, mailto:, tel:.')
+            + ' Title and subtitle up to ' + (lim.title || 60) + ' and ' + (lim.note || 120) + ' characters; on phones the subtitle is hidden.</p>'
+            + '</details>'
+            + '</div>';
+        }).join('')
+      + '</div>'
+      + '<button type="button" class="btn ghost pg-cc-add" data-cc-add' + (room ? '' : ' disabled') + '>+ Add card</button>'
+      + '<p class="pg-hint">Up to ' + esc(d.max) + ' cards: the four above and ' + esc(d.max - 4) + ' of your own (a map pin for the shop, the opening hours, a link…). '
+      +   'Phones show them two a row, the first one across when the number is odd; computers three a row.</p>'
+      + '</div>';
+  }
+
+  function ccRedraw(){
+    var host = $('#pg-cc');
+    if (!host) return;
+    var wrap = document.createElement('div');
+    wrap.innerHTML = contactCard();
+    host.replaceWith(wrap.firstChild);
+    wireCards();
+  }
+
+  function wireCards(){
+    var host = $('#pg-cc');
+    if (!host || !cc()) return;
+    var cards = cc().cards;
+    var edit = function(e){
+      var t = e.target;
+      if (!t || !t.dataset || t.dataset.ccI === undefined) return;
+      var c = cards[+t.dataset.ccI];
+      if (!c) return;
+      if (t.dataset.ccF === 'on') {
+        c.on = t.checked;
+        var item = t.closest('.pg-cc-item');
+        if (item) item.classList.toggle('is-off', !c.on);
+      } else {
+        c[t.dataset.ccF] = t.value;
+      }
+    };
+    host.addEventListener('input', edit);
+    host.addEventListener('change', edit);
+    host.querySelectorAll('details[data-cc-open]').forEach(function(dt){
+      dt.addEventListener('toggle', function(){ var c = cards[+dt.dataset.ccOpen]; if (c) c._open = dt.open; });
+    });
+    host.addEventListener('click', function(e){
+      var b = e.target && e.target.closest ? e.target.closest('button') : null;
+      if (!b || !host.contains(b)) return;
+      if (b.dataset.ccMove) {
+        var i = +b.dataset.ccAt, j = i + (+b.dataset.ccMove);
+        if (j < 0 || j >= cards.length) return;
+        var x = cards[i]; cards[i] = cards[j]; cards[j] = x;
+      } else if (b.dataset.ccDel !== undefined) {
+        cards.splice(+b.dataset.ccDel, 1);
+      } else if (b.dataset.ccReset !== undefined) {
+        var r = cards[+b.dataset.ccReset];
+        if (r && r.shop) ['title', 'note', 'value', 'action', 'link'].forEach(function(f){ r[f] = r.shop[f] || ''; });
+      } else if (b.hasAttribute('data-cc-add')) {
+        var used = {}; cards.forEach(function(c){ used[c.k] = 1; });
+        var n = 1; while (used['c' + n] && n < 9) n++;
+        if (used['c' + n] || cards.length >= cc().max || ccCustoms() >= cc().max - 4) return;
+        cards.push({k: 'c' + n, on: true, custom: true, icon: 'link', title: '', note: '', value: '', action: 'Open', link: '', shop: null, _open: true});
+      } else {
+        return;
+      }
+      ccRedraw();
+    });
+  }
+
   function picturePreview(url){
     url = String(url || '').trim();
     var safe = /^https?:\/\//i.test(url) || (url.charAt(0) === '/' && url.charAt(1) !== '/');
@@ -599,6 +752,7 @@ textarea.pg-ctl{resize:vertical;line-height:1.6}
     if (status) status.onchange = function(){ model.status = status.value; };
 
     wireHeader();
+    wireCards();
 
     var image = $('#pg-seo-image');
     if (image) image.oninput = function(){
@@ -705,6 +859,15 @@ textarea.pg-ctl{resize:vertical;line-height:1.6}
         sub: header().sub || ''
       }
     };
+
+    /* Lane CT2: the contact page's cards, the fields the server keeps and
+       nothing else; sent only for the page that has them. */
+    if (cc()) {
+      payload.contact_cards = cc().cards.map(function(c){
+        return {k: c.k, on: !!c.on, icon: c.icon || '', title: c.title || '', note: c.note || '',
+          value: c.value || '', action: c.action || '', link: c.link || ''};
+      });
+    }
 
     try {
       var out = await api('/page-editor-save/' + model.id, 'POST', payload);

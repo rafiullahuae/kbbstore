@@ -121,11 +121,12 @@ it('ships the phone card off and says nothing about calls, but keeps the switch'
     expect(ctContact())->toContain('href="tel:+971585052611"');
 });
 
-it('opens the footer’s Instagram profile as a direct message, and hides the card without one', function () {
+it('opens the footer’s Instagram profile as a direct message, and falls back rather than vanishing', function () {
     /*
      * MUTATION: return the profile URL instead of ig.me/m/<handle> in
-     * ContactPage::instagram() -> red; drop the `$instagram !== null` check ->
-     * an empty profile still draws a card, red.
+     * ContactPage::instagram() -> red. The fallback half is Lane CT2's: the
+     * owner's live page lost the card because `social_instagram` was saved
+     * blank — see ContactCardsEditorTest for the whole chain.
      */
     expect(ContactPage::instagram('https://www.instagram.com/kbeauty.bliss/'))->toBe(['href' => 'https://ig.me/m/kbeauty.bliss', 'detail' => '@kbeauty.bliss'])
         ->and(ContactPage::instagram('https://instagram.com/some.shop'))->toBe(['href' => 'https://ig.me/m/some.shop', 'detail' => '@some.shop'])
@@ -134,13 +135,15 @@ it('opens the footer’s Instagram profile as a direct message, and hides the ca
         ->and(ContactPage::instagram('#'))->toBeNull()
         ->and(ContactPage::instagram(''))->toBeNull();
 
+    // Saved blank, or refused: the shop's known profile, never nothing.
     ctSet('social_instagram', '');
-    $html = ctContact();
-    expect($html)->not->toContain('data-ct="ig"')->and($html)->toContain('data-ct="wa"');
+    expect(ctContact())->toContain('data-ct="ig" href="https://ig.me/m/kbeauty.bliss"');
 
     ctSet('social_instagram', 'javascript:alert(1)');
-    expect(ctContact())->not->toContain('data-ct="ig"');
+    $html = ctContact();
+    expect($html)->toContain('data-ct="ig" href="https://ig.me/m/kbeauty.bliss"')->and($html)->not->toContain('javascript:alert(1)');
 
+    // Switched off, it is gone whatever the profile.
     ctSet('social_instagram', 'https://www.instagram.com/kbeauty.bliss/');
     expect(ContactPage::save(array_replace(ContactPage::defaults(), ['ig' => false, 'topics' => 'Other'])))->toBe([]);
     expect(ctContact())->not->toContain('data-ct="ig"');

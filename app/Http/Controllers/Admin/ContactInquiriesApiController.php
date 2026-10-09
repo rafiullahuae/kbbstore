@@ -7,7 +7,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ContactInquiry;
 use App\Support\ContactPage;
-use App\Support\SupportContact;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -110,12 +109,9 @@ class ContactInquiriesApiController extends Controller
             'defaults' => ContactPage::defaults(),
             // What each card would show today, so the screen can say "hidden:
             // no address" instead of offering a switch that draws nothing.
-            'values' => [
-                'wa' => SupportContact::whatsapp(),
-                'ig' => ContactPage::instagramFor(app(\App\Services\SettingsService::class))['detail'] ?? '',
-                'phone' => SupportContact::phone(),
-                'email' => SupportContact::email(),
-            ],
+            // Lane CT2: what the card prints, the page editor's override
+            // included, so the two screens describe the same card.
+            'values' => array_column(array_filter(ContactPage::editor()['cards'], static fn (array $c): bool => ! $c['custom']), 'value', 'k'),
             // The address an inquiry goes to while the box is blank.
             'fallback' => ($fb = ContactPage::recipientWithSource(['recipient' => ''] + $config))[0],
             'fallbackFrom' => $fb[1],
