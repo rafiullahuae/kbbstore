@@ -3,6 +3,16 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.460
+**Header and menu: no add-to-cart tick, Super Sale row plain with a flash, three-line menu icon.** Apply after .459.
+Runs its migration. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "remove the tick arrow that comes with cart panel when adding product to cart" | Gone; the panel still opens. Appearance -> Cart panel -> Behaviour -> "When something is added" (None) |
+| "in mobile menu, remove the red color of super sale menu, add a flash icon with super sale" | The Super Sale row looks like the rows around it, with a small pink flash. The top quick-link chip and the desktop pill keep their colour. Appearance -> Mobile menu -> Style -> "Super Sale highlight" (Off), "Flash icon beside Super Sale" (On) |
+| "the mobile menu icon i need simple three lines but beautiful. also give option on backend to change back anytime" | Three lines. Appearance -> Header -> Menu icon -> Icon: "Three lines" / "Four squares (previous)" (the old icon exactly) |
+
 ## 2.60.459
 **Checkout: coupon box tidied, equal gaps between sections, footer links last, Express checkout under the coupon, "Sign in" window.** Apply after .458.
 Runs its migrations. Hard refresh the shop.
