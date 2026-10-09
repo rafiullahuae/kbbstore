@@ -98,7 +98,7 @@ function anOwner(): AdminUser
     return AdminUser::create(['name' => 'AN owner', 'email' => 'an-ol-'.uniqid().'@example.test', 'password' => 'secret-secret', 'role' => 'owner']);
 }
 
-function anOrder(?string $ch, ?string $cmp = null): Order
+function anwOrder(?string $ch, ?string $cmp = null): Order
 {
     $o = Order::create(['order_number' => 'ANL-'.uniqid(), 'email' => 'x@y.z', 'status' => 'processing', 'currency' => 'AED', 'subtotal' => 1000, 'total' => 1000]);
     DB::table('orders')->where('id', $o->id)->update(['src_channel' => $ch, 'src_campaign' => $cmp]);
@@ -122,9 +122,9 @@ it('shows each order\'s source on the list, filters by it, and costs the list no
         return [$n, $j];
     };
 
-    anOrder('instagram_ads', 'eid_sale');
-    anOrder(null);
-    anOrder('google');
+    anwOrder('instagram_ads', 'eid_sale');
+    anwOrder(null);
+    anwOrder('google');
     $count(); // warm the one-time reads
     [$small, $j] = $count();
     $chips = collect($j['orders'])->pluck('source', 'source_key')->all();
@@ -134,7 +134,7 @@ it('shows each order\'s source on the list, filters by it, and costs the list no
         ->and($j['sources']['tiktok_ads'])->toBe('TikTok Ads');
 
     for ($i = 0; $i < 9; $i++) {
-        anOrder($i % 2 ? 'tiktok_ads' : null, 'c'.$i);
+        anwOrder($i % 2 ? 'tiktok_ads' : null, 'c'.$i);
     }
     [$large] = $count();
     // The number itself, so a lane that adds a query has to say so here.
@@ -151,9 +151,9 @@ it('shows each order\'s source on the list, filters by it, and costs the list no
 
 it('shows the Source panel on the order screen, Unknown for an order nothing recorded', function () {
     $admin = anOwner();
-    $o = anOrder('tiktok_ads', 'launch');
+    $o = anwOrder('tiktok_ads', 'launch');
     DB::table('orders')->where('id', $o->id)->update(['src_attr' => json_encode(['first' => ['ch' => 'google', 's' => '', 'm' => '', 'c' => '', 'k' => '', 'p' => '/', 'd' => 1], 'last' => ['ch' => 'tiktok_ads', 's' => 'tiktok', 'm' => 'cpc', 'c' => 'launch', 'k' => 't', 'p' => '/p/', 'd' => 3], 'days' => 2])]);
-    $u = anOrder(null);
+    $u = anwOrder(null);
 
     $s = test()->actingAs($admin, 'admin')->getJson('/admin-api/orders/'.$o->id.'/detail')->assertOk()->json('source');
     expect($s['chip'])->toBe('TikTok Ads · launch')->and($s['first']['channel'])->toBe('Google Organic')
