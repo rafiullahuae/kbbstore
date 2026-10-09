@@ -154,6 +154,8 @@ it('never lets a box be taller than its frame', function () {
     expect($css)->toContain('container:hbpos / size}')
         ->and($css)->toMatch('/\.hb-box\{position:relative;flex:none;max-block-size:100%;/')
         ->and($css)->toContain('.hb-box > .hb-h,.hb-box > .hb-t{flex-shrink:1;min-block-size:0}')
+        // ▲ Lane HB4: and the heading keeps at least one line, giving way after the text.
+        ->and($css)->toContain('.hb-box > .hb-h{flex-shrink:.25;min-block-size:1lh}')
         ->and($css)->toContain('@container hbpos (max-height:119px){.hb-box{display:none}}');
 });
 

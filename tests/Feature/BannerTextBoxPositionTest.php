@@ -144,7 +144,9 @@ it('keeps style D\'s computer centre exactly where 2.60.432 drew it, and its sti
      * mode uses the ordinary top inset plus the sticker's overhang.
      * MUTATION: drop the hb-va-d rule and D moves 12px+.
      */
-    expect(hbCss())->toContain('.hb-d.hb-va-d .hb-pos{inset-block-start:calc(var(--hb-bot) + 24px)}')
+    // ▲ Lane HB4: anchored to the AUTO bottom (--hb-bot0), so a "space below"
+    // he sets moves only the bottom edge, not D's centre.
+    expect(hbCss())->toContain('.hb-d.hb-va-d .hb-pos{inset-block-start:calc(var(--hb-bot0) + 24px)}')
         ->and(hbCss())->toContain('inset-block:calc(var(--hb-tb) + var(--hb-o)) var(--hb-bot)')
         ->and(BannerTextBox::rootClasses(BannerTextBox::normalize([])))->toContain('hb-va-d')
         ->and(BannerTextBox::rootClasses(BannerTextBox::normalize(['vpos_d' => 'top'])))->not->toContain('hb-va-d');

@@ -280,7 +280,10 @@
     'tb_size_b_d', 'tb_size_b_m', 'tb_size_w_d', 'tb_size_w_m',
     /* Lane HB2: where the box sits, per device. */
     'tb_inside_d', 'tb_vpos_d', 'tb_vval_d', 'tb_vunit_d', 'tb_hpos_d', 'tb_hval_d', 'tb_hunit_d',
-    'tb_inside_m', 'tb_vpos_m', 'tb_vval_m', 'tb_vunit_m', 'tb_hpos_m', 'tb_hval_m', 'tb_hunit_m'];
+    'tb_inside_m', 'tb_vpos_m', 'tb_vval_m', 'tb_vunit_m', 'tb_hpos_m', 'tb_hval_m', 'tb_hunit_m',
+    /* Lane HB4: the spacing, per device. */
+    'tb_sp_pt_d', 'tb_sp_pt_m', 'tb_sp_pb_d', 'tb_sp_pb_m', 'tb_sp_px_d', 'tb_sp_px_m', 'tb_sp_geh_d', 'tb_sp_geh_m', 'tb_sp_ght_d', 'tb_sp_ght_m',
+    'tb_sp_gtb_d', 'tb_sp_gtb_m', 'tb_sp_su_d', 'tb_sp_su_m', 'tb_sp_so_d', 'tb_sp_so_m', 'tb_sp_sb_d', 'tb_sp_sb_m', 'tb_sp_st_d', 'tb_sp_st_m'];
   SET_KEYS = SET_KEYS.concat(TB_KEYS);
 
   /* Lane RC. What each kind is called on a set's row. The labels in the type
@@ -1008,6 +1011,22 @@
 
     html += '<div class="bns-row" style="margin-top:10px"><button class="bns-btn" type="button" data-bns-tbreset>Reset sizes to default</button></div>';
 
+    /* ── LANE HB4: SPACING, per device ──
+       "the padding inside box between each element, and the spacing downside
+       the box etc. give me these controls." Every default is what the shop
+       drew before these existed, so nothing moves until a slider does. */
+    [['d', 'Spacing on a computer'], ['m', 'Spacing on a phone']].forEach(function(dev){
+      html += '<div class="bns-lab" style="margin-top:14px">' + esc(dev[1]) + '</div><div class="bns-grid" style="margin-top:6px">';
+      Object.keys(T.spacing).forEach(function(k){
+        var r = T.spacing[k], lim = dev[0] === 'd' ? r[2] : r[3];
+        var key = 'tb_sp_' + k + '_' + dev[0];
+        html += num(key, r[0], 'px \u00b7 ' + lim[0] + ' to ' + lim[2] + ', default ' + (lim[1] === 0 ? 'Auto' : lim[1]), s[key], lim[0], lim[2], lim[3]);
+      });
+      html += '</div>';
+    });
+    html += '<div class="bns-help" style="margin-top:6px">The gaps are between the elements that are showing. Space below / above: 0 is Auto (the style\u2019s own); a number moves the box that far from the banner\u2019s bottom or top edge when it sits at Bottom or Top \u2014 never into the strip the slide bars use.</div>'
+      + '<div class="bns-row" style="margin-top:10px"><button class="bns-btn" type="button" data-bns-tbspreset>Reset spacing to default</button></div>';
+
     /* ── LANE HB2: WHERE THE BOX SITS, per device ──
        "the control for the box that it should not go outside the site width.
        and also the position for the box like bottom, middle and a custom
@@ -1652,6 +1671,18 @@
         document.querySelectorAll('[data-bns-wpane][data-bns-wcard="' + card + '"]').forEach(function(p){ p.hidden = p.dataset.bnsWpane !== b.dataset.bnsWtab; });
       };
     });
+
+    /* Lane HB4: Reset spacing, the same way Reset sizes works. */
+    var tbSpReset = document.querySelector('[data-bns-tbspreset]');
+    if (tbSpReset) {
+      tbSpReset.onclick = function(){
+        var D = (data.enums.text_box || {}).defaults || {};
+        Object.keys(D).forEach(function(k){ if (k.indexOf('sp_') === 0) draft.set['tb_' + k] = D[k]; });
+        markDirty();
+        render();
+        refreshPreview();
+      };
+    }
 
     var tbReset = document.querySelector('[data-bns-tbreset]');
     if (tbReset) {

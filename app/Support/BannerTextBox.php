@@ -65,6 +65,31 @@ final class BannerTextBox
     ];
 
     /*
+     * ── SPACING (Lane HB4) ──────────────────────────────────────────────────
+     * The owner: "the padding inside box between each element, and the
+     * spacing downside the box etc. give me these controls."
+     * key => [label, unit, computer [min, default, max, step], phone [...]].
+     * EVERY DEFAULT IS THE VALUE 2.60.445 DRAWS, for both styles (A and D share
+     * them): padding 22/24/28 and 18/20/18, the 10 and 8px gaps, the button's
+     * extra .4 of a gap (14 and 11.2), D's sticker 24/28 up and 28/8 out. The
+     * two spaces are 0 = Auto, which keeps the style's own inset and the
+     * slider bars' strip exactly as before. A default value is never printed:
+     * the stylesheet's own fallback IS the default.
+     */
+    public const SPACING = [
+        'pt' => ['Inner padding, top', 'px', [0, 22, 48, 1], [0, 18, 48, 1]],
+        'pb' => ['Inner padding, bottom', 'px', [0, 24, 48, 1], [0, 20, 48, 1]],
+        'px' => ['Inner padding, left and right', 'px', [0, 28, 48, 1], [0, 18, 48, 1]],
+        'geh' => ['Gap: eyebrow to heading', 'px', [0, 10, 40, 0.2], [0, 8, 40, 0.2]],
+        'ght' => ['Gap: heading to short text', 'px', [0, 10, 40, 0.2], [0, 8, 40, 0.2]],
+        'gtb' => ['Gap: before the button', 'px', [0, 14, 40, 0.2], [0, 11.2, 40, 0.2]],
+        'su' => ['Sticker: how far above the box (D)', 'px', [0, 24, 48, 1], [0, 28, 48, 1]],
+        'so' => ['Sticker: how far past the side (D)', 'px', [0, 28, 48, 1], [0, 8, 48, 1]],
+        'sb' => ['Space below the box, at Bottom (0 = Auto)', 'px', [0, 0, 200, 1], [0, 0, 200, 1]],
+        'st' => ['Space above the box, at Top (0 = Auto)', 'px', [0, 0, 200, 1], [0, 0, 200, 1]],
+    ];
+
+    /*
      * ── POSITION (Lane HB2) ─────────────────────────────────────────────────
      * The owner: "the control for the box that it should not go outside the
      * site width. and also the position for the box like bottom, middle and a
@@ -111,6 +136,11 @@ final class BannerTextBox
             }
         }
 
+        foreach (self::SPACING as $k => [, , $d, $m]) {
+            $out['sp_'.$k.'_d'] = $d[1];
+            $out['sp_'.$k.'_m'] = $m[1];
+        }
+
         return $out;
     }
 
@@ -155,6 +185,18 @@ final class BannerTextBox
                 if (isset($raw[$key]) && is_numeric($raw[$key])) {
                     $v = max($min, min($max, (float) $raw[$key]));
                     $out[$key] = $min + round(($v - $min) / $step) * $step;
+                }
+            }
+        }
+
+        // Lane HB4: the spacing, clamped and snapped like the sizes.
+        foreach (self::SPACING as $k => [, , $d, $m]) {
+            foreach (['d' => $d, 'm' => $m] as $dev => [$min, , $max, $step]) {
+                $key = 'sp_'.$k.'_'.$dev;
+
+                if (isset($raw[$key]) && is_numeric($raw[$key])) {
+                    $v = max($min, min($max, (float) $raw[$key]));
+                    $out[$key] = round($min + round(($v - $min) / $step) * $step, 2);
                 }
             }
         }
@@ -230,6 +272,18 @@ final class BannerTextBox
         foreach (['d', 'm'] as $dev) {
             foreach (self::positionNumbers($cfg, $dev) as $name => $value) {
                 $out[] = '--hb-'.$name.'-'.$dev.':'.$value;
+            }
+        }
+
+        // Lane HB4: only a spacing he has MOVED is printed; the stylesheet's
+        // fallback is the default, so an untouched set draws what it drew.
+        foreach (self::SPACING as $k => [, , $d, $m]) {
+            foreach (['d' => $d, 'm' => $m] as $dev => $range) {
+                $v = (float) $cfg['sp_'.$k.'_'.$dev];
+
+                if (abs($v - (float) $range[1]) > 0.001) {
+                    $out[] = '--hb-sp-'.$k.'-'.$dev.':'.self::num($v).'px';
+                }
             }
         }
 
@@ -325,6 +379,8 @@ final class BannerTextBox
      * hb-va-d        computer vertical is the style's own (D's exact old centre)
      * hb-hs-{d,m}    the horizontal mode follows each picture's Start/End
      * hb-na-m        a phone's box is not at the bottom: the arrows step aside
+     * hb-sb-{d,m}    a space below the box is set (else Auto)
+     * hb-st-{d,m}    a space above the box is set (else Auto)
      */
     public static function rootClasses(array $cfg): string
     {
@@ -333,6 +389,12 @@ final class BannerTextBox
         foreach (['d', 'm'] as $dev) {
             $out .= $cfg['inside_'.$dev] ? ' hb-site-'.$dev : '';
             $out .= in_array($cfg['hpos_'.$dev], ['auto', 'custom'], true) ? ' hb-hs-'.$dev : '';
+        }
+
+        // Lane HB4: a space below/above the box he has set (0 is Auto).
+        foreach (['d', 'm'] as $dev) {
+            $out .= (float) $cfg['sp_sb_'.$dev] > 0 ? ' hb-sb-'.$dev : '';
+            $out .= (float) $cfg['sp_st_'.$dev] > 0 ? ' hb-st-'.$dev : '';
         }
 
         // A phone's box is the full width, so wherever it sits that is not the

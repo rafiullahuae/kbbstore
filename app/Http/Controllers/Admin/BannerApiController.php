@@ -138,6 +138,7 @@ class BannerApiController extends Controller
                     'hpos' => BannerTextBox::HPOS,
                     'units' => BannerTextBox::UNITS,
                     'offsets' => BannerTextBox::OFFSETS,
+                    'spacing' => BannerTextBox::SPACING,
                 ],
             ],
         ]);
@@ -360,7 +361,7 @@ class BannerApiController extends Controller
         }
 
         foreach (BannerTextBox::keys() as $key) {
-            if (str_starts_with($key, 'size_')) {
+            if (str_starts_with($key, 'size_') || str_starts_with($key, 'sp_')) {
                 $rules['tb_'.$key] = ['sometimes', 'numeric'];
             }
         }
