@@ -1,0 +1,142 @@
+{
+ "note": "tools/mp-speed.php on a 40-product SQLite shop (tools/mp-env.sh); median of 9 after 1 warm-up, in-process kernel. before = base 4f1ee298. ms are noisy on a shared box; queries/settings reads/blocking are exact. Product HTML carries a random \"bought together\" pick and a CSRF token, so its bytes vary by a few hundred between builds; category and brand are byte-identical off.",
+ "before": {
+  "off": {
+   "mode": "off",
+   "product": {
+    "status": 200,
+    "median_ms": 38.3,
+    "queries": 13,
+    "settings_reads": 6,
+    "html_bytes": 163973,
+    "render_blocking": 3
+   },
+   "category": {
+    "status": 200,
+    "median_ms": 38.6,
+    "queries": 7,
+    "settings_reads": 5,
+    "html_bytes": 90407,
+    "render_blocking": 3
+   },
+   "brand": {
+    "status": 200,
+    "median_ms": 68.5,
+    "queries": 5,
+    "settings_reads": 6,
+    "html_bytes": 134741,
+    "render_blocking": 2
+   }
+  },
+  "ids": {
+   "mode": "ids",
+   "product": {
+    "status": 200,
+    "median_ms": 41.2,
+    "queries": 13,
+    "settings_reads": 6,
+    "html_bytes": 166933,
+    "render_blocking": 3
+   },
+   "category": {
+    "status": 200,
+    "median_ms": 32,
+    "queries": 7,
+    "settings_reads": 5,
+    "html_bytes": 92803,
+    "render_blocking": 3
+   },
+   "brand": {
+    "status": 200,
+    "median_ms": 55.5,
+    "queries": 5,
+    "settings_reads": 6,
+    "html_bytes": 137137,
+    "render_blocking": 2
+   }
+  }
+ },
+ "after": {
+  "off": {
+   "mode": "off",
+   "product": {
+    "status": 200,
+    "median_ms": 38.1,
+    "queries": 13,
+    "settings_reads": 6,
+    "html_bytes": 163687,
+    "render_blocking": 3
+   },
+   "category": {
+    "status": 200,
+    "median_ms": 26.1,
+    "queries": 7,
+    "settings_reads": 5,
+    "html_bytes": 90407,
+    "render_blocking": 3
+   },
+   "brand": {
+    "status": 200,
+    "median_ms": 48,
+    "queries": 5,
+    "settings_reads": 6,
+    "html_bytes": 134741,
+    "render_blocking": 2
+   }
+  },
+  "ids": {
+   "mode": "ids",
+   "product": {
+    "status": 200,
+    "median_ms": 34.4,
+    "queries": 13,
+    "settings_reads": 6,
+    "html_bytes": 166966,
+    "render_blocking": 3
+   },
+   "category": {
+    "status": 200,
+    "median_ms": 28.3,
+    "queries": 7,
+    "settings_reads": 5,
+    "html_bytes": 92935,
+    "render_blocking": 3
+   },
+   "brand": {
+    "status": 200,
+    "median_ms": 44.6,
+    "queries": 5,
+    "settings_reads": 6,
+    "html_bytes": 137269,
+    "render_blocking": 2
+   }
+  },
+  "all": {
+   "mode": "all",
+   "product": {
+    "status": 200,
+    "median_ms": 38.1,
+    "queries": 13,
+    "settings_reads": 6,
+    "html_bytes": 169228,
+    "render_blocking": 3
+   },
+   "category": {
+    "status": 200,
+    "median_ms": 24,
+    "queries": 7,
+    "settings_reads": 5,
+    "html_bytes": 95197,
+    "render_blocking": 3
+   },
+   "brand": {
+    "status": 200,
+    "median_ms": 51,
+    "queries": 5,
+    "settings_reads": 6,
+    "html_bytes": 139531,
+    "render_blocking": 2
+   }
+  }
+ }
+}
