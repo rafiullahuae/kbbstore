@@ -1,0 +1,494 @@
+[
+ {
+  "page": "home",
+  "vw": 320,
+  "scrollWidth": 320,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-card",
+  "strip": {
+   "top": 549,
+   "h": 78.2
+  },
+  "gapAbove": 4,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": {
+   "top": 125,
+   "h": 30
+  },
+  "footer": {
+   "top": 7130,
+   "h": 820
+  },
+  "font": "10.5px",
+  "icon": "20px/1.75px",
+  "status": 200,
+  "url": "/",
+  "consoleErrors": []
+ },
+ {
+  "page": "super-sale",
+  "vw": 320,
+  "scrollWidth": 320,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-bare",
+  "strip": {
+   "top": 327,
+   "h": 76.2
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": {
+   "top": 125,
+   "h": 30
+  },
+  "footer": {
+   "top": 2486,
+   "h": 820
+  },
+  "font": "10.5px",
+  "icon": "20px/1.75px",
+  "status": 200,
+  "url": "/super-sale/",
+  "consoleErrors": []
+ },
+ {
+  "page": "category",
+  "vw": 320,
+  "scrollWidth": 320,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-foot",
+  "strip": {
+   "top": 2550,
+   "h": 88.2
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 2638,
+   "h": 820
+  },
+  "font": "10.5px",
+  "icon": "20px/1.75px",
+  "status": 200,
+  "url": "/collections/super-sale/",
+  "consoleErrors": []
+ },
+ {
+  "page": "product",
+  "vw": 320,
+  "scrollWidth": 320,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-foot",
+  "strip": {
+   "top": 3151,
+   "h": 88.2
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 3239,
+   "h": 820
+  },
+  "font": "10.5px",
+  "icon": "20px/1.75px",
+  "status": 200,
+  "url": "/product/house-of-hur-moist-ampoule-blusher/",
+  "consoleErrors": []
+ },
+ {
+  "page": "blog",
+  "vw": 320,
+  "scrollWidth": 320,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-foot",
+  "strip": {
+   "top": 709,
+   "h": 88.2
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 798,
+   "h": 820
+  },
+  "font": "10.5px",
+  "icon": "20px/1.75px",
+  "status": 200,
+  "url": "/blog/",
+  "consoleErrors": []
+ },
+ {
+  "page": "cart",
+  "vw": 320,
+  "scrollWidth": 320,
+  "stripsInHtml": 0,
+  "stripVisible": null,
+  "strip": null,
+  "gapAbove": null,
+  "rows": null,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": null,
+  "font": null,
+  "icon": null,
+  "status": 200,
+  "url": "/cart/",
+  "consoleErrors": []
+ },
+ {
+  "page": "checkout",
+  "vw": 320,
+  "scrollWidth": 320,
+  "stripsInHtml": 0,
+  "stripVisible": null,
+  "strip": null,
+  "gapAbove": null,
+  "rows": null,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 1787,
+   "h": 164.5
+  },
+  "font": null,
+  "icon": null,
+  "status": 200,
+  "url": "/checkout/",
+  "consoleErrors": []
+ },
+ {
+  "page": "home",
+  "vw": 390,
+  "scrollWidth": 390,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-card",
+  "strip": {
+   "top": 635,
+   "h": 82.6
+  },
+  "gapAbove": 4,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": {
+   "top": 127,
+   "h": 30
+  },
+  "footer": {
+   "top": 7574,
+   "h": 783.5
+  },
+  "font": "11.5px",
+  "icon": "20px/1.75px",
+  "status": 200,
+  "url": "/",
+  "consoleErrors": []
+ },
+ {
+  "page": "super-sale",
+  "vw": 390,
+  "scrollWidth": 390,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-bare",
+  "strip": {
+   "top": 329,
+   "h": 80.6
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": {
+   "top": 127,
+   "h": 30
+  },
+  "footer": {
+   "top": 2702,
+   "h": 783.5
+  },
+  "font": "11.5px",
+  "icon": "20px/1.75px",
+  "status": 200,
+  "url": "/super-sale/",
+  "consoleErrors": []
+ },
+ {
+  "page": "category",
+  "vw": 390,
+  "scrollWidth": 390,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-foot",
+  "strip": {
+   "top": 2762,
+   "h": 92.6
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 2855,
+   "h": 783.5
+  },
+  "font": "11.5px",
+  "icon": "20px/1.75px",
+  "status": 200,
+  "url": "/collections/super-sale/",
+  "consoleErrors": []
+ },
+ {
+  "page": "product",
+  "vw": 390,
+  "scrollWidth": 390,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-foot",
+  "strip": {
+   "top": 3112,
+   "h": 92.6
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 3205,
+   "h": 783.5
+  },
+  "font": "11.5px",
+  "icon": "20px/1.75px",
+  "status": 200,
+  "url": "/product/house-of-hur-moist-ampoule-blusher/",
+  "consoleErrors": []
+ },
+ {
+  "page": "blog",
+  "vw": 390,
+  "scrollWidth": 390,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-foot",
+  "strip": {
+   "top": 690,
+   "h": 92.6
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 783,
+   "h": 783.5
+  },
+  "font": "11.5px",
+  "icon": "20px/1.75px",
+  "status": 200,
+  "url": "/blog/",
+  "consoleErrors": []
+ },
+ {
+  "page": "cart",
+  "vw": 390,
+  "scrollWidth": 390,
+  "stripsInHtml": 0,
+  "stripVisible": null,
+  "strip": null,
+  "gapAbove": null,
+  "rows": null,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": null,
+  "font": null,
+  "icon": null,
+  "status": 200,
+  "url": "/cart/",
+  "consoleErrors": []
+ },
+ {
+  "page": "checkout",
+  "vw": 390,
+  "scrollWidth": 390,
+  "stripsInHtml": 0,
+  "stripVisible": null,
+  "strip": null,
+  "gapAbove": null,
+  "rows": null,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 1760,
+   "h": 164.5
+  },
+  "font": null,
+  "icon": null,
+  "status": 200,
+  "url": "/checkout/",
+  "consoleErrors": []
+ },
+ {
+  "page": "home",
+  "vw": 1280,
+  "scrollWidth": 1280,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-card",
+  "strip": {
+   "top": 480,
+   "h": 66
+  },
+  "gapAbove": 6,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 7146,
+   "h": 538.1
+  },
+  "font": "14.5px",
+  "icon": "22px/1.75px",
+  "status": 200,
+  "url": "/",
+  "consoleErrors": []
+ },
+ {
+  "page": "super-sale",
+  "vw": 1280,
+  "scrollWidth": 1280,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-bare",
+  "strip": {
+   "top": 406,
+   "h": 64
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": {
+   "top": 94,
+   "h": 30
+  },
+  "footer": {
+   "top": 2276,
+   "h": 538.1
+  },
+  "font": "14.5px",
+  "icon": "22px/1.75px",
+  "status": 200,
+  "url": "/super-sale/",
+  "consoleErrors": []
+ },
+ {
+  "page": "category",
+  "vw": 1280,
+  "scrollWidth": 1280,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-foot",
+  "strip": {
+   "top": 2276,
+   "h": 151.3
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 2427,
+   "h": 538.1
+  },
+  "font": "15.5px",
+  "icon": "28px/1.75px",
+  "status": 200,
+  "url": "/collections/super-sale/",
+  "consoleErrors": []
+ },
+ {
+  "page": "product",
+  "vw": 1280,
+  "scrollWidth": 1280,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-foot",
+  "strip": {
+   "top": 3026,
+   "h": 151.3
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 3178,
+   "h": 538.1
+  },
+  "font": "15.5px",
+  "icon": "28px/1.75px",
+  "status": 200,
+  "url": "/product/house-of-hur-moist-ampoule-blusher/",
+  "consoleErrors": []
+ },
+ {
+  "page": "blog",
+  "vw": 1280,
+  "scrollWidth": 1280,
+  "stripsInHtml": 1,
+  "stripVisible": "ktr ktr-foot",
+  "strip": {
+   "top": 677,
+   "h": 151.3
+  },
+  "gapAbove": 0,
+  "rows": 1,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 828,
+   "h": 538.1
+  },
+  "font": "15.5px",
+  "icon": "28px/1.75px",
+  "status": 200,
+  "url": "/blog/",
+  "consoleErrors": []
+ },
+ {
+  "page": "cart",
+  "vw": 1280,
+  "scrollWidth": 1280,
+  "stripsInHtml": 0,
+  "stripVisible": null,
+  "strip": null,
+  "gapAbove": null,
+  "rows": null,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": null,
+  "font": null,
+  "icon": null,
+  "status": 200,
+  "url": "/cart/",
+  "consoleErrors": []
+ },
+ {
+  "page": "checkout",
+  "vw": 1280,
+  "scrollWidth": 1280,
+  "stripsInHtml": 0,
+  "stripVisible": null,
+  "strip": null,
+  "gapAbove": null,
+  "rows": null,
+  "clippedText": 0,
+  "thinLine": null,
+  "footer": {
+   "top": 1202,
+   "h": 84.5
+  },
+  "font": null,
+  "icon": null,
+  "status": 200,
+  "url": "/checkout/",
+  "consoleErrors": []
+ }
+]

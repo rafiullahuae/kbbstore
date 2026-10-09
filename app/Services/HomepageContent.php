@@ -266,6 +266,9 @@ final class HomepageContent
            section heading and description. App\Support\HomeHeadings. Last,
            because it belongs to no one section — see PAGE_TABS. ──────── */
         ...\App\Support\HomeHeadings::SCHEMA,
+        /* ── (Lane TS) The trust strip: homepage, Super Sale and above the
+           footer. Page-wide like the headings, so after them — PAGE_TABS. ── */
+        ...\App\Support\TrustStrip::SCHEMA,
     ];
 
     /**
@@ -275,7 +278,7 @@ final class HomepageContent
      * claim it, so it is named here instead and HomepageLiveEditTest counts it
      * as claimed by the page.
      */
-    public const PAGE_TABS = ['headings'];
+    public const PAGE_TABS = ['headings', 'truststrip'];
 
     /**
      * tab => [label, description, keys] — the shape ModuleSchema::tabs() reads.
@@ -314,6 +317,8 @@ final class HomepageContent
         ...\App\Support\HomeSources::TABS,
         /* Lane HC: the Top strip. */
         ...\App\Support\HomeStrips::TABS,
+        /* Lane TS: the trust strip, on the homepage and beyond it. */
+        ...\App\Support\TrustStrip::TABS,
     ];
 
     /**

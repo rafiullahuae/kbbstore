@@ -174,6 +174,22 @@ final class InterfaceStrings
             // each can be dropped when it is not true for this shopper.
             'topstrip.text' => '1-3 Days Delivery all over UAE',
             'topstrip.free_over' => 'Free Delivery over :amount',
+            // Lane TS: the trust strip -- under the homepage banner, under the
+            // Super Sale header and above the footer. The owner's own wording,
+            // two lines per item; the sub-lines show on a laptop above the footer.
+            'trust_strip.label' => 'Why shop with us',
+            'trust_strip.auth_a' => '100%',
+            'trust_strip.auth_b' => 'Authentic',
+            'trust_strip.auth_sub' => 'Genuine products from Korea',
+            'trust_strip.del_a' => 'Express UAE',
+            'trust_strip.del_b' => 'Delivery',
+            'trust_strip.del_sub' => '1–3 days, all over the UAE',
+            'trust_strip.pay_a' => 'Tabby, Tamara',
+            'trust_strip.pay_b' => 'Card, COD',
+            'trust_strip.pay_sub' => 'Pay later, by card or on delivery',
+            'trust_strip.sup_a' => '24/7',
+            'trust_strip.sup_b' => 'Support',
+            'trust_strip.sup_sub' => 'Real people, day and night',
             'footer.tagline' => 'Authentic Korean beauty, curated for the UAE.',
             'footer.whatsapp_cta' => 'Chat on WhatsApp',
             'footer.shop_heading' => 'Shop',

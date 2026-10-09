@@ -711,7 +711,8 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // +1 (Lane QK8): the round back arrow beside the Checkout heading, read
     // aloud as "Back to cart" (store.checkout.head_back), seeded by
     // 2027_10_16_120100_checkout_back_arrow_and_remember_arabic.
-    expect($ui['drafts'])->toBe(1516, 'the shipped Arabic is not showing as drafts to review')
+    // +13 (Lane TS): the trust strip's words, 2027_10_17_100100_seed_trust_strip_arabic_drafts.
+    expect($ui['drafts'])->toBe(1529, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

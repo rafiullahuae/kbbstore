@@ -3035,7 +3035,27 @@ KBB_BH_CSS;
              */
             'the homepage Top strip (Lane HC)' => [
                 'pattern' => '#<style id="kbb-kts">[^<]*</style><(div|a) class="kts[^"]*"[^>]*>.*?</(div|a)>\n#s',
-                'hits' => 1,
+                // 1 -> 2 (Lane TS): "this thin 1-3 days delivery strip will
+                // also come on super sale page at the top" -- the same partial,
+                // at the top of /super-sale/. TrustStripTest pins it.
+                'hits' => 2,
+            ],
+
+            /*
+             * THE TRUST STRIP. (Lane TS) The owner picked H1 and F1 off
+             * docs/trust-strip-options: the white card under the homepage
+             * banner, the same row with no box under the Super Sale header,
+             * and the row above the footer on every other page (no box on a
+             * phone, the large-icon row on a laptop). All three ship ON, as
+             * asked. One <section class="ktr ...">, cut whole with the newline
+             * after it. Home, /super-sale/, the cart and the checkout never
+             * carry the footer one; TrustStripTest pins which page shows which.
+             */
+            'the trust strip (Lane TS)' => [
+                'pattern' => '#<section class="ktr ktr-(?:card|bare|foot)[^"]*" aria-label="Why shop with us"><ul>.*?</ul></section>\n#s',
+                // 29: the homepage (card), /super-sale/ (bare) and the 27
+                // walked pages that draw the site footer (foot).
+                'hits' => 29,
             ],
 
             /*

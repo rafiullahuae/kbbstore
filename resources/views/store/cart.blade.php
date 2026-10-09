@@ -53,6 +53,7 @@
 @unless ($kbbCartPage->get('footer_on'))
 @section('no-footer', '1')
 @endunless
+@section('no-trust-strip', '1')
 
 @section('title', __('store.cart.page_title'))
 @section('kbb-wa-tab', '1')

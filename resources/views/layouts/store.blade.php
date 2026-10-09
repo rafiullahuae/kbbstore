@@ -520,6 +520,7 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
  */
 @endphp
 @unless (View::hasSection('bare') || View::hasSection('no-footer'))
+@if (! View::hasSection('no-trust-strip') && ($ktrFoot = \App\Support\TrustStrip::place(app(\App\Services\SettingsService::class)->all(), 'ts_foot')) !== null)@include('partials.trust-strip', ['v' => 'foot', 'cls' => $ktrFoot])@endif
     @include('partials.footer')
 @endunless
 

@@ -18,6 +18,7 @@
 $homeFirst = $sections->firstOnScreen();
 @endphp
 @section('flagbar-placed', '1')
+@section('no-trust-strip', '1')
 @php use App\Support\Money; use App\Support\Url; use App\Support\Gradient; @endphp
 
 @section('title', 'K-Beauty Bliss · Authentic Korean skincare in the UAE')
@@ -203,7 +204,7 @@ $homeFirst = $sections->firstOnScreen();
      Nothing from a setting is interpolated into this file: the partial escapes
      the four operator strings itself and scheme-checks the button's URL before
      it becomes an href.
-     --}}@unless ($sections->hidden('cards_banner'))
+     --}}@php $ktrHome = \App\Support\TrustStrip::place($settings->all(), 'ts_home'); $ktrAfterBanner = $bnSection !== null && ! $sections->hidden('cards_banner'); @endphp@unless ($sections->hidden('cards_banner'))
 @if ($bnSection !== null)
 {{-- THE PARTIAL IS THE SET'S OWN, AND IT IS A LOOKUP IN A CONSTANT — Lane BN2.
      `banner_sets.kind` chose between two banner types and BannerSet::homePartial()
@@ -218,6 +219,7 @@ $homeFirst = $sections->firstOnScreen();
      picture at 390 and at 1280. BannerSet::SECTION_STYLES keeps 8px for the
      cards row and gives the two picture kinds 0. --}}
 <section class="sec {{ $sections->classFor('cards_banner') }}" style="{{ $bnSection[0]->homeSectionStyle() }}"><div class="wrap">@include($bnSection[0]->homePartial(), ['set' => $bnSection[0], 'cards' => $bnSection[1]])</div></section>
+{{-- Lane TS: the trust strip, directly under the picture banner. --}}@if ($ktrHome !== null)@include('partials.trust-strip', ['v' => 'card', 'cls' => trim($ktrHome.($sections->orderIsDefault() ? '' : ' kbb-ord-'.$sections->all()['cards_banner']['order']))])@endif
 @endif
 @endunless
 @php
@@ -555,6 +557,7 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
   @endunless
 </div></section>
 @endunless
+{{-- Lane TS: no picture banner, so the hero is the banner and the strip goes under it. --}}@if ($ktrHome !== null && ! $ktrAfterBanner)@include('partials.trust-strip', ['v' => 'card', 'cls' => trim($ktrHome.($sections->orderIsDefault() ? '' : ' kbb-ord-'.$sections->all()['hero']['order']))])@endif
 
 {{-- CATEGORIES --}}
 @unless ($sections->hidden('categories'))

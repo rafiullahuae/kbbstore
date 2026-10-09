@@ -57,7 +57,9 @@ function sp3Products(int $n, string $tag = 'x'): void
 /** The top area a page printed, or ''. */
 function sp3Block(string $html): string
 {
-    return preg_match('#<style id="kbb-pt-css">.*?\n</div>\n(?=<section class="sec">)#s', $html, $m) ? $m[0] : '';
+    // (Lane TS) /super-sale/ now carries the trust strip directly under this
+    // block, before the listing; TrustStripTest pins it.
+    return preg_match('#<style id="kbb-pt-css">.*?\n</div>\n(?=(?:<section class="ktr [^"]*"[^>]*>.*?</section>\n)?<section class="sec">)#s', $html, $m) ? $m[0] : '';
 }
 
 /** The strip switched on for one page, with the shipped banner. */

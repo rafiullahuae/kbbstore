@@ -14,6 +14,7 @@
 @extends('layouts.store')
 @php use App\Support\Money; use App\Support\Url; @endphp
 @section('title', __('store.order_pay.page_title'))
+@section('no-trust-strip', '1')
 
 @push('styles')
 <style>

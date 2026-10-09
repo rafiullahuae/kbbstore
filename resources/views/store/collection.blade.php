@@ -7,8 +7,10 @@
     @vite('resources/css/kbb/kbb-grid-skins.css')
 @endpush
 
+@if (($key ?? '') === 'super-sale')@section('no-trust-strip', '1')@endif
 @section('content')
 <div class="kbb-home">
+{{-- Lane TS: on /super-sale/ only, the thin delivery line at the very top and the trust strip under the header (App\Support\TrustStrip). --}}@php $ktrAll = ($key ?? '') === 'super-sale' ? app(\App\Services\SettingsService::class)->all() : null; $ktrSale = $ktrAll === null ? null : \App\Support\TrustStrip::place($ktrAll, 'ts_sale'); $ktrLine = $ktrAll === null ? null : \App\Support\TrustStrip::place($ktrAll, 'ts_sale_line'); @endphp@if ($ktrLine !== null)@include('partials.home.top-strip', ['cls' => $ktrLine, 'ts' => \App\Support\TrustStrip::saleLine($ktrAll)])@endif
 {{-- The top of the page (Lane SP3): the header area and the strip in the owner's order. Null = the original markup below, byte for byte. --}}@if (! empty($pageTop))
 @php
     $phParts = [
@@ -27,6 +29,7 @@
 @endphp
 @include('partials.page-top', ['ph' => $phParts])
 @endif
+@if (($ktrSale ?? null) !== null && ! empty($pageTop))@include('partials.trust-strip', ['v' => 'bare', 'cls' => $ktrSale])@endif
 <section class="sec"><div class="wrap">
 @if (empty($pageTop))
     <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{{ $title }}</span></nav>
@@ -46,6 +49,7 @@
 @endif
     </div>
 @endif
+@if (($ktrSale ?? null) !== null && empty($pageTop))@include('partials.trust-strip', ['v' => 'bare', 'cls' => trim('ktr-in '.$ktrSale)])@endif
 
     @if ($products->isEmpty())
         <p class="empty">{!! __('store.collection.empty', ['link' => '<a href="' . e(Url::to('/shop/')) . '">' . e(__('store.collection.empty_link')) . '</a>']) !!}</p>
