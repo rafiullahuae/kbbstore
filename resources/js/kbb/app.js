@@ -65,6 +65,7 @@ import { initAdminLayer } from './admin-hint.js';
 // Lane RD: press feedback -- no grey box, a live response on every button and
 // icon. Classes only; it returns at once when the owner chose Off. See press.js.
 import { initPress } from './press.js';
+import { initWaAway } from './wa-away.js';
 
 /* ── EVERY STEP RUNS, WHATEVER ANY OTHER STEP DOES. ─────────────────────────
  *
@@ -109,6 +110,7 @@ const STEPS = [
     initAdminLayer,
     initPress,
     initReadMore,
+    initWaAway,
 ];
 
 const boot = () => {
