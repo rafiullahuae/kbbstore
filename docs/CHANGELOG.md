@@ -3,6 +3,14 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.462
+**Checkout: "5% VAT inclusive" without the amount, in both order summaries. VAT is calculated exactly as before.** Apply after .461.
+No migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "remove the vat price that comes above place order button, only mention 5% VAT inclusive" / "remove the vat value also ... at the backend the VAT will be calculated properly" | The line above Place order and the phone's top Order summary read "5% VAT inclusive", no amount, and stay so after a coupon, quantity or delivery change. The cart page and cart panel never showed an amount. Order totals, stored VAT, invoices, emails, admin and payment amounts are unchanged (tested: the same order with and without the amount stores identical figures). Appearance -> Checkout page -> Trust & reviews -> "Show VAT amount to customers" (Off), "VAT line wording" (EN / AR) |
+
 ## 2.60.461
 **Cart: order total straight after Your Bag on a phone; 50px under the cart panel buttons and under the cart page's checkout bar.** Apply after .460.
 Runs its migration. Hard refresh the shop.
