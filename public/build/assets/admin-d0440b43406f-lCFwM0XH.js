@@ -58,15 +58,47 @@
     }).join('');
   }
 
-  /* Visitors per minute, last 30 minutes, bars from zero. */
-  function bars(series) {
-    var W = 300, H = 80, n = series.length || 1, max = Math.max.apply(null, series.concat([1])), bw = W / n, o = '';
+  /* Visitors per minute, last 30 minutes, read like Google Analytics'
+     realtime chart: the server's round ticks (Report::ticks, 0 at the base)
+     on the right with faint gridlines, "-30 min … -1 min" underneath, every
+     bar drawn to scale against the top tick. Exact value on hover or tap,
+     from the numbers already here -- no request, nothing measured. */
+  var CH = { W: 320, H: 104, PW: 292, TOP: 6, BASE: 84 };
+  function bars(series, ticks) {
+    var n = series.length || 1, top = ticks && ticks.length ? ticks[ticks.length - 1] : Math.max.apply(null, series.concat([1]));
+    var bw = CH.PW / n, span = CH.BASE - CH.TOP, o = '';
+    (ticks || []).forEach(function (t) {
+      var y = (CH.BASE - t / top * span).toFixed(1);
+      o += '<line x1="0" x2="' + CH.PW + '" y1="' + y + '" y2="' + y + '" stroke="rgba(255,255,255,' + (t === 0 ? '.22' : '.08') + ')" stroke-width="1"/>'
+        + '<text class="an-ax" x="' + (CH.PW + 6) + '" y="' + (+y + 3).toFixed(1) + '">' + t + '</text>';
+    });
     series.forEach(function (v, i) {
-      var h = v / max * (H - 2);
-      o += '<rect x="' + (i * bw + 1).toFixed(1) + '" y="' + (H - h).toFixed(1) + '" width="' + Math.max(1, bw - 2).toFixed(1) + '" height="' + h.toFixed(1) + '" rx="1.5" fill="' + (i === n - 1 ? '#3ddc84' : '#22c06c') + '" opacity="' + (i === n - 1 ? 1 : 0.55) + '"><title>' + v + '</title></rect>';
+      var h = v / top * span;
+      o += '<rect data-i="' + i + '" x="' + (i * bw + 1).toFixed(1) + '" y="' + (CH.BASE - h).toFixed(1) + '" width="' + Math.max(1, bw - 2).toFixed(1) + '" height="' + Math.max(0, h).toFixed(1) + '" rx="1.5" fill="' + (i === n - 1 ? '#3ddc84' : '#22c06c') + '" opacity="' + (i === n - 1 ? 1 : 0.6) + '"/>'
+        // An invisible full-height target, so a bar of 0 or 1 can still be tapped.
+        + '<rect data-i="' + i + '" x="' + (i * bw).toFixed(1) + '" y="' + CH.TOP + '" width="' + bw.toFixed(1) + '" height="' + span + '" fill="transparent"/>';
+    });
+    [30, 25, 20, 15, 10, 5, 1].forEach(function (k, j, all) {
+      var i = n - k, x = (i * bw + bw / 2).toFixed(1);
+      o += '<text class="an-ax" x="' + (j === 0 ? 0 : (j === all.length - 1 ? CH.PW : x)) + '" y="' + (CH.H - 4) + '" text-anchor="' + (j === 0 ? 'start' : (j === all.length - 1 ? 'end' : 'middle')) + '">−' + k + (j === 0 || j === all.length - 1 ? ' min' : '') + '</text>';
     });
     return o;
   }
+  function barTip(i) {
+    var tip = q('[data-an="tip"]'), d = st.live;
+    if (!tip || !d || !d.bars || d.bars[i] == null) return;
+    var v = d.bars[i], at = d.now - (d.bars.length - 1 - i) * 60;
+    tip.textContent = hhmm(at) + ' · ' + v + ' visitor' + (v === 1 ? '' : 's');
+    tip.style.left = (((i + 0.5) * CH.PW / d.bars.length) / CH.W * 100).toFixed(2) + '%';
+    tip.hidden = false;
+  }
+  document.addEventListener('pointerover', function (e) {
+    var r = e.target && e.target.closest ? e.target.closest('[data-an="bars"] rect[data-i]') : null;
+    if (r) barTip(+r.getAttribute('data-i'));
+  });
+  document.addEventListener('pointerout', function (e) {
+    if (e.pointerType === 'mouse' && e.target && e.target.closest && e.target.closest('[data-an="bars"]')) { var t = q('[data-an="tip"]'); if (t) t.hidden = true; }
+  });
 
   /* Checkout funnel, each bar's width = its count / visitors. */
   function funnel(t) {
@@ -99,30 +131,32 @@
     if (!host) return;
     host.innerHTML = '<div class="wrap anb" data-an>'
       + '<div class="an-top"><h2>Live</h2><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+      + '<span class="faint" data-an="updated"></span>'
       + '<div class="seg" data-an-ranges>' + RANGES.map(function (r) { return '<button type="button" data-an-range="' + r[0] + '">' + r[1] + '</button>'; }).join('') + '</div>'
       + '<span class="an-custom" data-an-custom><input type="date" data-an-from aria-label="From"> – <input type="date" data-an-to aria-label="To"><button type="button" class="btn ghost sm" data-an-apply>Show</button></span>'
       + '</div></div>'
-      + '<div data-an-err></div>'
-      + '<div class="board"><div class="night">'
-      + '<div class="sec-title" style="flex-wrap:wrap"><span style="display:flex;gap:8px;align-items:center"><span class="dot" data-an-dot></span><span>Active visitors · last <span data-an-wlabel>' + st.win + '</span> minutes</span></span>'
-      + '<span class="seg dark" data-an-wins>' + WINDOWS.map(function (w) { return '<button type="button" data-an-win="' + w + '">' + w + '</button>'; }).join('') + '</span></div>'
-      + '<div style="display:flex;align-items:end;gap:18px;flex-wrap:wrap"><div class="huge" data-an="active">–</div><div class="sub" style="padding-bottom:10px"><b data-an="views">–</b> page views<br><b data-an="carts">–</b> added to cart</div></div>'
-      + '<svg class="bars" data-an="bars" viewBox="0 0 300 80" preserveAspectRatio="none" aria-label="Visitors per minute, last 30 minutes"></svg>'
-      + '<div class="sub" style="font-size:11px;display:flex;justify-content:space-between"><span>−30 min</span><span>visitors per minute</span><span>now</span></div>'
-      + '<div class="minis"><div class="mini"><b data-an="mobile">–</b><span>on mobile</span></div><div class="mini"><b data-an="langs">–</b><span>EN / AR</span></div><div class="mini"><b data-an="topcc">–</b><span>top country now</span></div><div class="mini"><b data-an="topsrc">–</b><span>top source now</span></div></div>'
+      + '<div data-an-err></div><div data-an="cron"></div>'
+      + '<div class="an-tools"><span data-an="hiddenchip"></span><button type="button" class="an-link" data-an-reset>Reset layout</button><span class="an-sr" aria-live="polite" data-an-say></span></div>'
+      + '<div class="an-grid" data-an-grid>'
+      + blk('live', 2, '<div class="night">'
+      + '<div class="sec-title" style="flex-wrap:wrap"><span style="display:flex;gap:8px;align-items:center"><span class="dot" data-an-dot></span><span>Online now</span></span>'
+      + '<span style="display:inline-flex;align-items:center"><span class="an-wl">Figures below: last</span><span class="seg dark" data-an-wins>' + WINDOWS.map(function (w) { return '<button type="button" data-an-win="' + w + '">' + w + '</button>'; }).join('') + '</span><span class="an-wl" style="margin:0 0 0 6px">min</span></span></div>'
+      + '<div style="display:flex;align-items:end;gap:18px;flex-wrap:wrap"><div class="huge" data-an="online" title="Visitors on the shop this moment">–</div><div class="sub" style="padding-bottom:10px">on <b data-an="onpages">–</b> page<span data-an="onpl">s</span> right now<br><b data-an="active">–</b> visitors in the last <span data-an-wlabel>' + st.win + '</span> min · <b data-an="views">–</b> page views · <b data-an="carts">–</b> added to cart</div></div>'
+      + '<div class="an-chart"><svg class="bars" data-an="bars" viewBox="0 0 ' + CH.W + ' ' + CH.H + '" aria-label="Visitors per minute, last 30 minutes"></svg><div class="an-tip" data-an="tip" hidden></div></div>'
+      + '<div class="sub" style="font-size:11px;text-align:center">visitors per minute, last 30 minutes</div>'
+      + '<div class="minis"><div class="mini"><b data-an="mobile">–</b><span>on mobile · last <span data-an-wlabel>' + st.win + '</span> min</span></div><div class="mini"><b data-an="langs">–</b><span>EN / AR · last <span data-an-wlabel>' + st.win + '</span> min</span></div><div class="mini"><b data-an="topcc">–</b><span>top country · last <span data-an-wlabel>' + st.win + '</span> min</span></div><div class="mini"><b data-an="topsrc">–</b><span>top source · last <span data-an-wlabel>' + st.win + '</span> min</span></div></div>'
+      + '</div>')
+      + blk('feed', 1, '<div class="card pad"><div class="sec-title"><span>Happening now</span><span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">last 30 minutes, newest first</span></div><ul class="feed" data-an="feed"></ul></div>')
+      + blk('pagesnow', 1, '<div class="card pad"><div class="sec-title"><span>Pages being read now</span><span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">online now</span></div><table class="tbl"><colgroup><col><col style="width:48px"></colgroup><tbody data-an="pagesnow"></tbody></table></div>')
+      + blk('srcnow', 1, '<div class="card pad"><div class="sec-title"><span>Sources</span><span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">last <span data-an-wlabel>' + st.win + '</span> min</span></div><ul class="bl" data-an="srcnow"></ul></div>')
+      + blk('ccnow', 1, '<div class="card pad"><div class="sec-title"><span>Countries</span><span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">last <span data-an-wlabel>' + st.win + '</span> min · cities: coming later</span></div><ul class="bl" data-an="ccnow"></ul><div data-an="cchint"></div></div>')
+      + blk('strip', 3, '<div class="strip" data-an="strip"></div>')
+      + REST.map(function (id) { return blk(id, 1, '<div data-an="b-' + id + '"></div>'); }).join('')
       + '</div>'
-      + '<div class="card pad"><div class="sec-title"><span>Happening now</span><span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">last 30 minutes, newest first</span></div><ul class="feed" data-an="feed"></ul></div>'
-      + '</div>'
-      + '<div class="now3">'
-      + '<div class="card pad"><div class="sec-title">Pages being read now</div><table class="tbl"><colgroup><col><col style="width:48px"></colgroup><tbody data-an="pagesnow"></tbody></table></div>'
-      + '<div class="card pad"><div class="sec-title">Sources now</div><ul class="bl" data-an="srcnow"></ul></div>'
-      + '<div class="card pad"><div class="sec-title"><span>Countries now</span><span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">cities: coming later</span></div><ul class="bl" data-an="ccnow"></ul></div>'
-      + '</div>'
-      + '<div class="strip" data-an="strip"></div>'
-      + '<div class="rest" data-an="rest"></div>'
       + '<div class="card pad an-set" data-an="settings"></div>'
       + '</div>';
     paintControls();
+    applyLayout();
   }
 
   function paintControls() {
@@ -132,8 +166,8 @@
     if (c) c.classList.toggle('on', st.range === 'custom');
     var w = q('[data-an-wins]');
     if (w) Array.prototype.forEach.call(w.querySelectorAll('button'), function (b) { b.classList.toggle('on', +b.getAttribute('data-an-win') === st.win); });
-    var l = q('[data-an-wlabel]');
-    if (l) l.textContent = st.win;
+    var host = document.getElementById('content');
+    if (host) Array.prototype.forEach.call(host.querySelectorAll('[data-an-wlabel]'), function (l) { l.textContent = st.win; });
   }
 
   function set(sel, html) { var el = q('[data-an="' + sel + '"]'); if (el) el.innerHTML = html; }
@@ -142,20 +176,29 @@
   function paintLive() {
     var d = st.live;
     if (!d) return;
+    if (drag) { st.deferred = true; return; }
+    text('online', fmt(d.online));
+    text('onpages', fmt(d.online_pages));
+    text('onpl', d.online_pages === 1 ? '' : 's');
     text('active', fmt(d.active));
     text('views', fmt(d.views));
     text('carts', fmt(d.carts));
-    set('bars', bars(d.bars || []));
+    set('bars', bars(d.bars || [], d.bar_ticks));
+    var tip = q('[data-an="tip"]'); if (tip) tip.hidden = true;
     text('mobile', d.active ? d.mobile_pct + '%' : '–');
     var lt = (d.langs.en || 0) + (d.langs.ar || 0);
     text('langs', lt ? pct(d.langs.en, lt) + ' / ' + pct(d.langs.ar, lt) : '–');
-    text('topcc', d.countries && d.countries.length ? (CC[d.countries[0].cc] || d.countries[0].cc) : '–');
+    var known = (d.countries || []).filter(function (c) { return c.cc; });
+    text('topcc', known.length ? (CC[known[0].cc] || known[0].cc) : (d.country_db ? '–' : 'Needs data'));
     text('topsrc', d.sources && d.sources.length ? d.sources[0].label : '–');
     set('pagesnow', (d.pages || []).length ? d.pages.map(function (p) {
       return '<tr><td><span class="ttl">' + esc(p.title || path(p.path)) + '</span><span class="path">' + esc(path(p.path)) + '</span></td><td class="r" style="font-weight:700">' + fmt(p.n) + '</td></tr>';
-    }).join('') : '<tr><td class="empty">Nobody on the shop in the last ' + st.win + ' minutes.</td></tr>');
+    }).join('') : '<tr><td class="empty">Nobody on the shop right now.</td></tr>');
     set('srcnow', bl((d.sources || []).map(function (s) { return [s.label, s.n]; })));
-    set('ccnow', bl((d.countries || []).map(function (c) { return [CC[c.cc] || c.cc, c.n]; })));
+    // No country file and no Cloudflare header: say how to get one, rather
+    // than a list that reads "Unknown".
+    set('ccnow', !d.country_db && !known.length ? '' : bl((d.countries || []).map(function (c) { return [CC[c.cc] || c.cc, c.n]; })));
+    set('cchint', d.country_db ? '' : '<div class="an-hint" data-an-cchint>Countries need the country database: Store → Security → Firewall → Data → <b>Download country database</b> (once; the hourly schedule keeps it fresh).</div>');
     paintFeed();
   }
 
@@ -180,9 +223,18 @@
     }).join('') : '<li class="empty">Quiet for the last 30 minutes.</li>');
   }
 
+  function paintCron(c) {
+    var el = q('[data-an="cron"]');
+    if (!el || !c) return;
+    el.innerHTML = c.alive ? '' : '<div class="an-hint" style="margin:0 0 12px">The scheduler is not running on this server, so today’s figures are rebuilt only while this board is open (every poll keeps them current). To keep them current all the time, add this cron job in ' + esc(c.where) + ':<br><code style="font-size:11.5px;word-break:break-all">' + esc(c.line) + '</code></div>';
+  }
+
   function paintSummary() {
     var s = st.sum;
     if (!s) return;
+    if (drag) { st.deferred = true; return; }
+    var up = q('[data-an="updated"]');
+    if (up) up.textContent = s.updated ? 'Updated ' + hhmm(Date.parse(s.updated) / 1000) : '';
     var t = s.totals, p = s.previous;
     var bounce = t.sessions ? Math.round(t.bounces / t.sessions * 100) : 0;
     var pbounce = p.sessions ? Math.round(p.bounces / p.sessions * 100) : 0;
@@ -207,21 +259,29 @@
       ? list(g.rows.map(function (r) { return [r.term, r.clicks, r.impressions + ' impr.']; }))
       : '<div class="gsc"><b>Connect Search Console (coming next)</b><div style="margin-top:4px">The words people typed into Google before landing here. The shop already has the connector (Store → SEO keywords); this card fills once Search Console is connected and synced.</div></div>';
 
-    set('rest', ''
-      + (s.series && s.series.length > 1 ? card('Visitors per day', daily(s.series)) : '')
-      + card('Top pages', list(rows(d.page, 'views', function (r) { return r.label || path(r.val); })), 'views')
-      + card('Sources', list(rows(d.channel, 'sessions')), 'sessions')
-      + card('Orders &amp; revenue by source', list(ch, true), 'AED · conv.')
-      + card('Orders by campaign', list(cp, true), 'AED')
-      + card('Campaigns (UTM)', list(rows(d.campaign, 'sessions')), 'sessions')
-      + card('Checkout funnel', '<svg viewBox="0 0 320 150" style="width:100%;height:auto;display:block">' + funnel(t) + '</svg>')
-      + card('Entry pages', list(rows(d.entry, 'sessions', function (r) { return path(r.val); })), 'sessions')
-      + card('Searched on the shop', list((s.search || []).map(function (r) { return [r.term, r.hits, r.results === 0 ? 'no results' : '']; })), 'searches')
-      + card('Google search keywords', gsc, g.connected ? 'clicks · last 90 days' : '')
-      + card('Referrers · UTM source', list(rows(d.referrer, 'sessions')) + '<div style="height:10px"></div>' + list(rows(d.source, 'sessions')))
-      + card('Devices · Browsers', list(rows(d.device, 'sessions')) + '<div style="height:10px"></div>' + list(rows(d.browser, 'sessions')))
-      + card('Language · Countries', list(rows(d.lang, 'sessions')) + '<div style="height:10px"></div>' + list(rows(d.country, 'sessions', function (r) { return CC[r.val] || r.val; })))
-    );
+    var B = {
+      daily: s.series && s.series.length > 1 ? card('Visitors per day', daily(s.series)) : '',
+      pages: card('Top pages', list(rows(d.page, 'views', function (r) { return r.label || path(r.val); })), 'views'),
+      sources: card('Sources', list(rows(d.channel, 'sessions')), 'sessions'),
+      revsrc: card('Orders &amp; revenue by source', list(ch, true), 'AED · conv.'),
+      campaigns: card('Orders by campaign', list(cp, true), 'AED'),
+      utm: card('Campaigns (UTM)', list(rows(d.campaign, 'sessions')), 'sessions'),
+      funnel: card('Checkout funnel', '<svg viewBox="0 0 320 150" style="width:100%;height:auto;display:block">' + funnel(t) + '</svg>'
+        + '<div class="faint" style="margin-top:4px">Same period for every bar: visitors, visitors who added to cart, visitors who reached checkout, and paid orders.</div>'),
+      entry: card('Entry pages', list(rows(d.entry, 'sessions', function (r) { return path(r.val); })), 'sessions'),
+      search: card('Searched on the shop', list((s.search || []).map(function (r) { return [r.term, r.hits, r.results === 0 ? 'no results' : '']; })), 'searches'),
+      google: card('Google search keywords', gsc, g.connected ? 'clicks · last 90 days' : ''),
+      referrers: card('Referrers · UTM source', list(rows(d.referrer, 'sessions')) + '<div style="height:10px"></div>' + list(rows(d.source, 'sessions'))),
+      devices: card('Devices · Browsers', list(rows(d.device, 'sessions')) + '<div style="height:10px"></div>' + list(rows(d.browser, 'sessions'))),
+      langs: card('Language · Countries', list(rows(d.lang, 'sessions')) + '<div style="height:10px"></div>' + list(rows(d.country, 'sessions', function (r) { return CC[r.val] || r.val; })))
+    };
+    // Each block's content goes into that block, wherever the owner put it.
+    REST.forEach(function (id) {
+      set('b-' + id, B[id]);
+      var b = q('[data-blk="' + id + '"]');
+      if (b) b.classList.toggle('an-empty', B[id] === '');
+    });
+    if (s.layout && !st.layout) { st.layout = s.layout; applyLayout(); }
   }
 
   function paintSettings() {
@@ -259,8 +319,11 @@
     if (!st.active || st.busy) return;
     st.busy = true;
     try {
-      var j = await api('GET', '/live?w=' + st.win + '&since=' + st.since + '&osince=' + st.osince);
+      var j = await api('GET', '/live?w=' + st.win + '&since=' + st.since + '&osince=' + st.osince + (st.range === 'today' ? '&today=1' : ''));
       if (!st.active || !q('[data-an]')) return;
+      // Today's KPIs, funnel and lists ride on the same poll (Lane AN2).
+      if (j.today && st.range === 'today') { st.sum = j.today; st.sumAt = Date.now(); paintSummary(); }
+      paintCron(j.cron);
       st.live = j;
       st.since = Math.max(st.since, j.since || 0);
       st.osince = Math.max(st.osince, j.order_since || 0);
@@ -307,8 +370,23 @@
   }
 
   document.addEventListener('click', function (e) {
-    var t = e.target && e.target.closest ? e.target.closest('[data-an-range],[data-an-win],[data-an-apply],[data-an-save],[data-an-mine]') : null;
+    var t = e.target && e.target.closest ? e.target.closest('[data-an-range],[data-an-win],[data-an-apply],[data-an-save],[data-an-mine],[data-an-hide],[data-an-showall],[data-an-reset]') : null;
     if (!t || !t.closest('[data-an]')) return;
+    if (t.hasAttribute('data-an-hide')) {
+      var id = t.closest('[data-blk]').getAttribute('data-blk');
+      st.layout = { order: order(), hidden: ((st.layout && st.layout.hidden) || []).concat([id]) };
+      applyLayout(); save(); say(NAMES[id] + ' hidden.');
+      return;
+    }
+    if (t.hasAttribute('data-an-showall')) {
+      st.layout = { order: order(), hidden: [] };
+      applyLayout(); save(); say('Every block is shown.');
+      return;
+    }
+    if (t.hasAttribute('data-an-reset')) {
+      api('DELETE', '/layout').then(function (j) { st.layout = j; applyLayout(); say('Layout reset.'); }).catch(function () { say('The layout could not be reset.'); });
+      return;
+    }
     if (t.hasAttribute('data-an-range')) {
       st.range = t.getAttribute('data-an-range');
       paintControls();
@@ -339,6 +417,103 @@
         .then(function (j) { st.set = j; paintSettings(); var m = q('[data-an-msg]'); if (m) m.textContent = 'Saved.'; })
         .catch(function (e3) { if (msg) { msg.textContent = e3.status === 403 ? 'Your role cannot change these.' : e3.message; msg.classList.add('err'); } });
     }
+  });
+
+  /* ── MOVE THE BLOCKS (Lane AN2) ─────────────────────────────────────────
+     The owner: "the blocks should be moveable to change the position as per
+     my convenience. should be drag n drop." Native POINTER events (mouse and
+     touch alike; HTML5 drag-and-drop is poor on touch): press the handle (a
+     long press on touch), and the block moves through the grid to wherever
+     the pointer is -- found with elementFromPoint, nothing measured. The
+     handle is a button: arrow up / down moves the block, announced. One PUT,
+     debounced, after a drop; none while dragging. The order and hidden blocks
+     are this admin's own (BoardLayout), shared with the owner app. */
+  var NAMES = { live: 'Online now', feed: 'Happening now', pagesnow: 'Pages being read now', srcnow: 'Sources (live)', ccnow: 'Countries (live)', strip: 'Today’s figures',
+    daily: 'Visitors per day', pages: 'Top pages', sources: 'Sources', revsrc: 'Orders & revenue by source', campaigns: 'Orders by campaign', utm: 'Campaigns (UTM)',
+    funnel: 'Checkout funnel', entry: 'Entry pages', search: 'Searched on the shop', google: 'Google search keywords', referrers: 'Referrers · UTM source', devices: 'Devices · Browsers', langs: 'Language · Countries' };
+  var REST = ['daily', 'pages', 'sources', 'revsrc', 'campaigns', 'utm', 'funnel', 'entry', 'search', 'google', 'referrers', 'devices', 'langs'];
+  var drag = null, press = null, saveT = 0;
+
+  function blk(id, span, inner) {
+    return '<section class="an-blk an-s' + span + '" data-blk="' + id + '">'
+      + '<button type="button" class="an-hdl" data-an-hdl aria-label="Move ' + esc(NAMES[id]) + ' (arrow keys, or drag)" title="Drag to move">⠿</button>'
+      + '<button type="button" class="an-eye" data-an-hide aria-label="Hide ' + esc(NAMES[id]) + '" title="Hide this block">✕</button>'
+      + inner + '</section>';
+  }
+  function grid() { return q('[data-an-grid]'); }
+  function order() { var g = grid(); return g ? Array.prototype.map.call(g.children, function (b) { return b.getAttribute('data-blk'); }) : []; }
+  function applyLayout() {
+    var g = grid(), L = st.layout;
+    if (!g || !L) return;
+    (L.order || []).forEach(function (id) { var b = g.querySelector('[data-blk="' + id + '"]'); if (b) g.appendChild(b); });
+    Array.prototype.forEach.call(g.children, function (b) { b.classList.toggle('an-off', (L.hidden || []).indexOf(b.getAttribute('data-blk')) >= 0); });
+    var chip = q('[data-an="hiddenchip"]'), n = (L.hidden || []).length;
+    if (chip) chip.innerHTML = n ? '<button type="button" class="an-link" data-an-showall>Hidden blocks (' + n + ') · show</button>' : '';
+  }
+  function say(t) { var el = q('[data-an-say]'); if (el) el.textContent = t; }
+  function save() {
+    if (saveT) clearTimeout(saveT);
+    saveT = setTimeout(function () {
+      saveT = 0;
+      api('PUT', '/layout', { order: order(), hidden: (st.layout && st.layout.hidden) || [] })
+        .then(function (j) { st.layout = j; }).catch(function () { say('The layout could not be saved. It is kept on this screen until you leave.'); });
+    }, 600);
+  }
+  function settle() {
+    st.layout = { order: order(), hidden: (st.layout && st.layout.hidden) || [] };
+    save();
+  }
+  function endDrag() {
+    if (press) { clearTimeout(press.t); press = null; }
+    if (!drag) return;
+    drag.el.classList.remove('an-drag');
+    var g = grid(); if (g) g.classList.remove('an-dragging');
+    var moved = drag.from !== order().join();
+    drag = null;
+    if (moved) settle();
+    if (st.deferred) { st.deferred = false; paintLive(); paintSummary(); }
+  }
+  document.addEventListener('pointerdown', function (e) {
+    var h = e.target && e.target.closest ? e.target.closest('[data-an-hdl]') : null;
+    if (!h || !grid() || e.button > 0) return;
+    var el = h.closest('[data-blk]');
+    var start = function () {
+      press = null;
+      drag = { el: el, from: order().join() };
+      el.classList.add('an-drag');
+      grid().classList.add('an-dragging');
+      say('Moving ' + NAMES[el.getAttribute('data-blk')] + '.');
+    };
+    if (e.pointerType === 'touch') press = { t: setTimeout(start, 350), x: e.clientX, y: e.clientY };
+    else { e.preventDefault(); start(); }
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (press && (Math.abs(e.clientX - press.x) > 10 || Math.abs(e.clientY - press.y) > 10)) { clearTimeout(press.t); press = null; }
+    if (!drag) return;
+    e.preventDefault();
+    // Near the top or bottom of the window: scroll the board along.
+    var edge = e.clientY < 70 ? -14 : (e.clientY > window.innerHeight - 70 ? 14 : 0);
+    if (edge) { var c = document.getElementById('content'); if (c) c.scrollBy(0, edge); window.scrollBy(0, edge); }
+    var over = document.elementFromPoint(e.clientX, e.clientY);
+    var tb = over && over.closest ? over.closest('[data-blk]') : null;
+    var g = grid();
+    if (!tb || tb === drag.el || tb.parentNode !== g) return;
+    var kids = Array.prototype.slice.call(g.children);
+    g.insertBefore(drag.el, kids.indexOf(tb) > kids.indexOf(drag.el) ? tb.nextSibling : tb);
+  }, { passive: false });
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', endDrag);
+  document.addEventListener('keydown', function (e) {
+    var h = e.target && e.target.closest ? e.target.closest('[data-an-hdl]') : null;
+    if (!h || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+    e.preventDefault();
+    var el = h.closest('[data-blk]'), g = grid();
+    var sib = e.key === 'ArrowUp' ? el.previousElementSibling : el.nextElementSibling;
+    if (!sib) return;
+    g.insertBefore(el, e.key === 'ArrowUp' ? sib : sib.nextSibling);
+    h.focus();
+    say(NAMES[el.getAttribute('data-blk')] + ' moved to position ' + (order().indexOf(el.getAttribute('data-blk')) + 1) + ' of ' + order().length + '.');
+    settle();
   });
 
   /* AdminNav already draws this row at build time (Overview, under

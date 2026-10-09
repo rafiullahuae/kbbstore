@@ -61,6 +61,16 @@ async function hide(page, hidden) {
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(300);
     await page.screenshot({ path: `${OUT}/admin-analytics-live-${width}.png` });
+    // Lane AN2: the per-minute chart's value on hover (mouse) or tap (phone).
+    const target = await page.$$('[data-an="bars"] rect[data-i="24"]');
+    if (target.length) {
+      if (width < 700) await target[target.length - 1].tap().catch(() => target[target.length - 1].click());
+      else await target[target.length - 1].hover();
+      await page.waitForTimeout(250);
+      const tip = await page.evaluate(() => { const t = document.querySelector('[data-an="tip"]'); return t && !t.hidden ? t.textContent : '(none)'; });
+      say(`chart tip ${width}: ${tip}; online ${await page.evaluate(() => document.querySelector('[data-an="online"]').textContent)}`);
+      await page.screenshot({ path: `${OUT}/admin-analytics-chart-tip-${width}.png`, clip: { x: 0, y: 0, width, height: width < 700 ? 900 : 640 } });
+    }
 
     if (width === 1280) {
       // The window picker: 25 minutes, one request, remembered.
@@ -113,6 +123,7 @@ async function hide(page, hidden) {
   if (APP) {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, userAgent: IPHONE });
     await ctx.addInitScript(() => { delete Element.prototype.requestFullscreen; });
+    // The board's own page has no shop beacon; nothing here sends one.
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
@@ -130,6 +141,8 @@ async function hide(page, hidden) {
     await page.waitForTimeout(1500);
     const m = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, tabs: [...document.querySelectorAll('.nav [data-tab]')].map((t) => t.textContent.trim()) }));
     say(`owner app 390: scrollWidth ${m.sw}; tabs ${m.tabs.join(' / ')}`);
+    await page.click('[data-ani="24"]').catch(() => {});
+    await page.waitForTimeout(400);
     await page.screenshot({ path: `${OUT}/owner-app-analytics-390.png` });
     const tallA = await page.evaluate(() => Math.ceil(document.querySelector('.view').scrollHeight + 160));
     await page.setViewportSize({ width: 390, height: tallA });

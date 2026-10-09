@@ -100,11 +100,52 @@ export function hitFields(loc, doc, now) {
     return f;
 }
 
+/*
+ * ONLINE NOW (Lane AN2). The owner: "this number only a total number of
+ * visitors present on the website at same time!" After the page view has gone,
+ * a VISIBLE tab tells /api/online it is still here every 45 s; going hidden or
+ * leaving the page tells it at once (x=left), and coming back says so (x=hb).
+ * One timer, re-armed after each beat, stopped whenever the tab is hidden; no
+ * beat at all for a prefetch or a prerender (nothing here runs until the page
+ * is shown) or for a signed-in administrator. Stateless: no token, no cookie.
+ */
+const BEAT_MS = 45000;
+
 export function initHit() {
     const K = window.KBB;
     if (!K || !K.csrf || !navigator.sendBeacon) return;
+    const base = K.base || '';
+    let beat = 0;
+    let online = false;
 
-    const go = () => {
+    const ping = (x) => {
+        const b = new FormData();
+        b.append('p', location.pathname.slice(0, 300));
+        if (x !== 'left') b.append('t', (document.title || '').slice(0, 120));
+        b.append('x', x);
+        navigator.sendBeacon(base + '/api/online', b);
+    };
+    const stopBeat = () => { if (beat) clearTimeout(beat); beat = 0; };
+    const startBeat = () => {
+        stopBeat();
+        if (!online || document.visibilityState !== 'visible') return;
+        beat = setTimeout(() => { beat = 0; ping('hb'); startBeat(); }, BEAT_MS);
+    };
+    const goOnline = () => {
+        online = true;
+        startBeat();
+        document.addEventListener('visibilitychange', () => {
+            if (!online) return;
+            if (document.visibilityState !== 'visible') { stopBeat(); ping('left'); return; }
+            ping('hb');
+            startBeat();
+        });
+        window.addEventListener('pagehide', () => { stopBeat(); if (online) ping('left'); });
+        // Back from the back-forward cache: the page never reloaded.
+        window.addEventListener('pageshow', (e) => { if (e.persisted && online) { ping('hb'); startBeat(); } });
+    };
+
+    const go = (e) => {
         if (sent) return;
         sent = true;
 
@@ -121,7 +162,12 @@ export function initHit() {
             const f = hitFields(location, document, Date.now());
             Object.keys(f).forEach((k) => body.append(k, f[k]));
         }
-        navigator.sendBeacon((K.base || '') + '/api/viewed', body);
+        navigator.sendBeacon(base + '/api/viewed', body);
+
+        if (admin) return;
+        // Left before `load`: counted, and gone at once.
+        if (e && e.type === 'pagehide') ping('left');
+        else goOnline();
     };
 
     const arm = () => {

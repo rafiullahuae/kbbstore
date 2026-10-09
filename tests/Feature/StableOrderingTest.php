@@ -524,6 +524,8 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
         ['Services/Analytics/Report.php', "orderBy('val')"],
         ['Services/Analytics/Report.php', "orderBy('path')"],
         ['Services/Analytics/Report.php', "orderBy('ch')"],
+        // Lane AN2: "Online now"'s pages, grouped by path and ending on it.
+        ['Services/Analytics/Online.php', "orderBy('path')"],
     ];
 
     $root = app_path();

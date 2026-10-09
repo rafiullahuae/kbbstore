@@ -1977,6 +1977,11 @@ final class AdminCapabilities
         ['GET', 'admin-api/site-analytics/live', 'analytics.view'],
         ['GET', 'admin-api/site-analytics/settings', 'analytics.view'],
         ['POST', 'admin-api/site-analytics/settings', 'analytics.manage'],
+        // The viewer's own layout of the board (Lane AN2): reading the board
+        // is enough to arrange it, since it changes nothing anybody else sees.
+        ['GET', 'admin-api/site-analytics/layout', 'analytics.view'],
+        ['PUT', 'admin-api/site-analytics/layout', 'analytics.view'],
+        ['DELETE', 'admin-api/site-analytics/layout', 'analytics.view'],
         ['GET', 'admin-api/search-terms', 'search_terms.view'],
 
         // (Lane CT) Cart Tracking. Every GET reads; every other verb writes.

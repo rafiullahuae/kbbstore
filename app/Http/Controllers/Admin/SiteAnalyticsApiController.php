@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\Analytics\BoardLayout;
 use App\Services\Analytics\Report;
 use App\Services\Analytics\Rollup;
 use App\Services\Analytics\Tracker;
@@ -49,17 +50,77 @@ final class SiteAnalyticsApiController extends Controller
 
         [$from, $to, $key] = Report::range((string) $request->query('range', 'today'), $request->query('from'), $request->query('to'));
 
-        return ['ok' => true, 'range' => $key] + Report::summary($from, $to);
+        return ['ok' => true, 'range' => $key, 'layout' => BoardLayout::get(self::adminId($request))] + Report::summary($from, $to);
     }
 
     /** @return array<string, mixed> */
     public static function livePayload(Request $request): array
     {
-        return ['ok' => true] + Report::live(
+        $out = ['ok' => true] + Report::live(
             Report::window($request->query('w')),
             max(0, (int) $request->query('since', 0)),
             max(0, (int) $request->query('osince', 0)),
         );
+
+        // TODAY MOVES WITH THE LIVE CARD (Lane AN2). The owner saw the
+        // funnel and the lists lag the live card: they are today's summary,
+        // which only the minute rollup rebuilds, and without cron only the
+        // board's first open did. So while the board shows Today, every poll
+        // brings today's summary too, rebuilt here if it is over a minute old
+        // (Rollup::freshToday, under a lock). Other ranges are not touched.
+        if ($request->query('today') === '1') {
+            Rollup::freshToday(60);
+            [$from, $to] = Report::range('today');
+            $out['today'] = ['ok' => true, 'range' => 'today'] + Report::summary($from, $to);
+        }
+
+        $out['cron'] = [
+            'alive' => Rollup::cronAlive(),
+            'line' => '* * * * * cd '.base_path().' && php artisan schedule:run >> /dev/null 2>&1',
+            'where' => 'Cloudways → your application → Cron Job Management → Add New Cron Job',
+        ];
+
+        return $out;
+    }
+
+    /*
+     * The board's layout for THIS admin (Lane AN2): block order and hidden
+     * blocks, allowlisted by BoardLayout. analytics.view, because it is the
+     * viewer's own arrangement and changes nothing anybody else sees.
+     */
+    public function layout(Request $request): JsonResponse
+    {
+        return response()->json(['ok' => true] + BoardLayout::get(self::adminId($request)));
+    }
+
+    public function saveLayout(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'order' => ['present', 'array', 'max:60'],
+            'order.*' => ['string', 'max:24'],
+            'hidden' => ['nullable', 'array', 'max:60'],
+            'hidden.*' => ['string', 'max:24'],
+        ]);
+        $id = self::adminId($request);
+        abort_if($id === null, 403);
+
+        return response()->json(['ok' => true] + BoardLayout::put($id, $data['order'], $data['hidden'] ?? []));
+    }
+
+    public function resetLayout(Request $request): JsonResponse
+    {
+        $id = self::adminId($request);
+        abort_if($id === null, 403);
+
+        return response()->json(['ok' => true] + BoardLayout::reset($id));
+    }
+
+    /** The signed-in admin: the console's guard, or the owner app's member. */
+    public static function adminId(Request $request): ?int
+    {
+        $a = $request->attributes->get('oa.admin') ?? auth('admin')->user();
+
+        return $a instanceof \App\Models\AdminUser ? (int) $a->getKey() : null;
     }
 
     public function settings(SettingsService $settings): JsonResponse

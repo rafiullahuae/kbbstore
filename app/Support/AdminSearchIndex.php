@@ -111,7 +111,7 @@ final class AdminSearchIndex
         'dash' => [],
         // Analytics (Lane AN): the realtime board.
         'site-analytics' => [
-            'Live' => ['Active visitors', 'Happening now', 'Pages being read now', 'Sources now', 'Countries now'],
+            'Live' => ['Online now', 'Happening now', 'Pages being read now', 'Visitors per minute', 'Reset layout'],
             'Range' => ['Visitors', 'Page views', 'Sessions', 'Bounce rate', 'Revenue', 'Orders & revenue by source',
                 'Orders by campaign', 'Campaigns (UTM)', 'Checkout funnel', 'Entry pages', 'Searched on the shop',
                 'Google search keywords', 'Devices', 'Browsers', 'Countries'],

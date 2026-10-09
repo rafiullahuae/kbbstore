@@ -66,12 +66,47 @@ final class Rollup
         return $done;
     }
 
+    public const TICK_KEY = 'kbb:an:tick';
+
+    /**
+     * Today's summary no older than $seconds, for the board's live poll
+     * (Lane AN2): when it is, rebuild it here -- under a lock, so two boards
+     * open at once (the console and the owner app) never both rebuild; the
+     * one that does not get the lock reads the summary as it is and is fresh
+     * on its next poll. Returns whether this call rebuilt. Without cron this
+     * is what keeps today moving; with cron it almost never has work to do.
+     */
+    public static function freshToday(int $seconds = 60): bool
+    {
+        if (! self::stale($seconds)) {
+            return false;
+        }
+
+        $ran = Cache::lock('kbb:an:rollup', 30)->get(static function (): bool {
+            // Checked again inside the lock: the holder before us may have just done it.
+            if (! self::stale(5)) {
+                return false;
+            }
+            self::runDue(true);
+
+            return true;
+        });
+
+        return (bool) $ran;
+    }
+
+    /** The scheduler ran the rollup within the last five minutes. */
+    public static function cronAlive(): bool
+    {
+        return (int) Cache::get(self::TICK_KEY, 0) >= now()->getTimestamp() - 300;
+    }
+
     /** Is today's summary older than $seconds? (The dashboard's lazy check.) */
     public static function stale(int $seconds = 120): bool
     {
         $at = DB::table('an_days')->where('day', StoreTime::now()->format('Y-m-d'))->value('rolled_at');
 
-        return $at === null || CarbonImmutable::parse((string) $at, 'UTC')->getTimestamp() < time() - $seconds;
+        return $at === null || CarbonImmutable::parse((string) $at, 'UTC')->getTimestamp() < now()->getTimestamp() - $seconds;
     }
 
     /** [start, end) epoch minutes of a shop day. */
@@ -220,6 +255,11 @@ final class Rollup
         $maxId = DB::table('an_hits')->where('m', '<', $cutoff)->max('id');
         $n = $maxId === null ? 0 : DB::table('an_hits')->where('id', '<=', (int) $maxId)->delete();
         Tracker::forgetOldSalts();
+
+        try {
+            Online::prune();   // "Online now" rows older than ten minutes (Lane AN2)
+        } catch (\Throwable) {
+        }
 
         return $n;
     }
