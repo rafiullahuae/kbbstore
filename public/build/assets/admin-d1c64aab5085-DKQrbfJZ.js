@@ -6577,7 +6577,7 @@
         '</div>')+
 
       smSec('Social profiles',
-        'Your official accounts, linked into the Organization schema below so Google can confirm they are genuinely yours — it is what feeds the Knowledge Panel and brand searches. Leave blank any you do not have.',
+        'Your official accounts, linked into the Organization schema below so Google can confirm they are genuinely yours — it is what feeds the Knowledge Panel and brand searches. Leave blank any you do not have. Also editable at Appearance → Footer.',
         '<div class="sm-grid">'+
           smField('seo_soc_fb','Facebook','<input id="seo_soc_fb" value="'+sesc(S.social_facebook)+'" placeholder="https://facebook.com/kbeautybliss">')+
           smField('seo_soc_ig','Instagram','<input id="seo_soc_ig" value="'+sesc(S.social_instagram)+'" placeholder="https://instagram.com/kbeautybliss">')+

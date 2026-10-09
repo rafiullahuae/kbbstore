@@ -21,6 +21,10 @@
   var squeezeKeys = [];  // which controls "Squeeze this page" drives to their minimum
   var draftView = null;  // what kbbDrafts reads as "saved" for one call after a page save
   var pvTimer = null, pvSeq = 0, pvCtl = null, pvNote = '';
+  /* Social profiles (Lane QK2): the GLOBAL social_* settings, saved through
+     PUT admin-api/settings like Store → SEO & Meta does — never footer copies,
+     so they stay out of values/saved and out of Reset and Squeeze. */
+  var socials = null, socVals = {}, socSaved = {}, socBusy = false, socState = '', socKind = '';
 
   /* UNFINISHED CHANGES (Lane PM). Leaving this screen with edits in `values`
      keeps them in Unfinished in the top bar; they come back on the next visit. */
@@ -37,13 +41,13 @@
     return m ? decodeURIComponent(m.pop()) : '';
   }
 
-  async function api(path, body, signal) {
+  async function api(path, body, signal, method) {
     var opts = { headers: { Accept: 'application/json' }, credentials: 'same-origin' };
     opts.headers['X-XSRF-TOKEN'] = cookie('XSRF-TOKEN');
     if (signal) opts.signal = signal;
 
     if (body !== undefined) {
-      opts.method = 'POST';
+      opts.method = method || 'POST';
       opts.headers['Content-Type'] = 'application/json';
       opts.body = JSON.stringify(body);
     }
@@ -131,6 +135,14 @@
   function absorb(body, keepDirty) {
     tabs = body.tabs || [];
     squeezeKeys = body.squeeze || [];
+    socials = body.socials || null;
+    var socWas = socVals, socWasSaved = socSaved;
+    socVals = {}; socSaved = {};
+    ((socials && socials.fields) || []).forEach(function (f) {
+      var keep = keepDirty && Object.prototype.hasOwnProperty.call(socWas, f.key) && socWas[f.key] !== socWasSaved[f.key];
+      socSaved[f.key] = String(f.value == null ? '' : f.value);
+      socVals[f.key] = keep ? socWas[f.key] : socSaved[f.key];
+    });
     pages = body.pages || [];
     shared = {};
     (body.shared || []).forEach(function (k) { shared[k] = true; });
@@ -204,6 +216,66 @@
     } finally {
       busy = false; render(); preview(0);
     }
+  }
+
+  /* SOCIAL PROFILES save only what moved, through the endpoint and capability
+     Store → SEO & Meta already uses (store.settings). Its validation refuses
+     anything but an http/https address, and writes nothing if one fails. */
+  function socDirty() { return Object.keys(socVals).filter(function (k) { return socVals[k] !== socSaved[k]; }); }
+
+  async function saveSocials() {
+    if (socBusy || !socials || !socials.editable) return;
+    var keys = socDirty();
+    if (!keys.length) { socState = 'Nothing to save.'; socKind = ''; paintSoc(); return; }
+    var payload = {};
+    keys.forEach(function (k) { payload[k] = socVals[k].trim(); });
+    socBusy = true; socState = 'Saving…'; socKind = ''; paintSoc();
+    try {
+      await api('/settings', { settings: payload }, undefined, 'PUT');
+      keys.forEach(function (k) { socSaved[k] = socVals[k] = payload[k]; });
+      socState = 'Saved. The footer, Contact page, emails and Google now use these.'; socKind = 'is-ok';
+      say('Social profiles saved.');
+      preview(0);
+    } catch (e) {
+      socState = (e && e.status === 403)
+        ? 'Your role cannot change the social profiles. They are Store settings.'
+        : ((e && e.body && e.body.message) ? e.body.message : explain(e, 'That could not be saved.'));
+      socKind = 'is-bad';
+      say(socState, 'bad');
+    } finally {
+      socBusy = false; paintSoc();
+    }
+  }
+
+  function socStateHTML() {
+    var n = socDirty().length;
+    var text = socState || (n ? n + ' unsaved ' + (n === 1 ? 'change' : 'changes') : 'All saved');
+    var kind = socState ? socKind : (n ? 'is-dirty' : '');
+    return '<span class="sfs-state ' + kind + '" data-sfs-socstate>' + esc(text) + '</span>';
+  }
+
+  function paintSoc() {
+    var el = document.querySelector('[data-sfs-socstate]');
+    if (el) { var h = document.createElement('div'); h.innerHTML = socStateHTML(); el.replaceWith(h.firstChild); }
+    var b = document.querySelector('[data-sfs-socsave]');
+    if (b) b.disabled = socBusy;
+  }
+
+  function socialsHTML() {
+    if (!socials || !socials.fields || !socials.fields.length) return '';
+    var ro = !socials.editable;
+    return '<section class="sfs-card sfs-sec" id="sfs-sec-soc"><h3>Social profiles</h3>'
+      + '<p>The same links as Store → SEO &amp; Meta → Social profiles; changing them here changes them everywhere (footer icons, Contact page, emails, Google).</p>'
+      + (ro ? '<div class="sfs-note" style="margin-bottom:10px">Read only: your role cannot change Store settings.</div>' : '')
+      + '<div class="sfs-fields">' + socials.fields.map(function (f) {
+          var id = 'sfs-soc-' + f.key;
+          return '<div class="sfs-f"><div class="sfs-fh"><label for="' + esc(id) + '">' + esc(f.label) + '</label></div>'
+            + '<input type="text" inputmode="url" id="' + esc(id) + '" data-sfs-soc="' + esc(f.key) + '" value="' + esc(socVals[f.key])
+            + '" placeholder="' + esc(f.placeholder) + '" maxlength="' + (Number(socials.max) || 500) + '" autocomplete="off" spellcheck="false"' + (ro ? ' readonly' : '') + '>'
+            + (f.hint ? '<div class="sfs-more">' + esc(f.hint) + '</div>' : '') + '</div>';
+        }).join('') + '</div>'
+      + (ro ? '' : '<div class="sfs-bar" style="margin-top:12px"><button class="sfs-btn is-primary" data-sfs-socsave' + (socBusy ? ' disabled' : '') + '>Save social profiles</button>' + socStateHTML() + '</div>')
+      + '</section>';
   }
 
   /* ------------------------------------------------------------ drawing */
@@ -319,6 +391,7 @@
 
   function controlsHTML(p) {
     var bar = p.footer === 'bar';
+    var soc = p.footer === 'site' ? socialsHTML() : '';
     return '<div class="sfs-card"><div class="sfs-title">' + esc(p.label) + '</div><p class="sfs-sub">' + esc(p.hint) + '</p>'
       + '<div class="sfs-bar" style="margin-top:12px">'
       + '<button class="sfs-btn is-primary" data-sfs-save' + (busy ? ' disabled' : '') + '>Save this page</button>'
@@ -329,8 +402,9 @@
       + '<p class="sfs-sub" style="margin-top:8px">Reset and Squeeze move only the controls on <b>this page</b>; nothing is stored until you press Save. Controls tagged <b>Desktop + mobile</b> change on both pages.</p>'
       + '<nav class="sfs-jump" aria-label="Sections">' + p.sections.map(function (s, i) {
           return '<a href="#sfs-sec-' + i + '" data-sfs-jump="' + i + '">' + esc(s.title) + '</a>';
-        }).join('') + '</nav></div>'
-      + p.sections.map(function (s, i) { return sectionHTML(p, s, i); }).join('');
+        }).join('') + (soc ? '<a href="#sfs-sec-soc" data-sfs-jump="soc">Social profiles</a>' : '') + '</nav></div>'
+      + p.sections.map(function (s, i) { return sectionHTML(p, s, i); }).join('')
+      + soc;
   }
 
   function whereHTML(p) {
@@ -456,6 +530,8 @@
 
   /* --------------------------------------------------------------- events */
   document.addEventListener('input', function (e) {
+    var se = e.target.closest ? e.target.closest('[data-sfs-soc]') : null;
+    if (se && socials) { socVals[se.getAttribute('data-sfs-soc')] = se.value; socState = ''; paintSoc(); return; }
     var el = e.target.closest ? e.target.closest('[data-sfs-key]') : null;
     if (!el || !tabs) return;
 
@@ -489,6 +565,7 @@
       if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
+    if (e.target.closest('[data-sfs-socsave]')) { saveSocials(); return; }
     if (e.target.closest('[data-sfs-save]')) { save(); return; }
     if (e.target.closest('[data-sfs-reload]')) { load(); return; }
     if (e.target.closest('[data-sfs-discard]')) { preset('saved'); return; }
