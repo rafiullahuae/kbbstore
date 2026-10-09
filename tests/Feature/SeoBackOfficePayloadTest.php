@@ -77,6 +77,10 @@ use Tests\Support\KeyOrder;
  * settings body gains the six social_* keys, resolved to the values the shop
  * uses, so SEO & Meta -> Social profiles can no longer open blank and save
  * '' over the live profiles. Nothing else moved.
+ *
+ * ▲ 2.60.454 re-recorded it (KBB_S7_RECORD=1), diff read: the settings body gains
+ * `checkoutpage_fs_bar_on` = "0", the row Lane QK7's migration writes to switch
+ * the free-delivery bar off on the cart and checkout pages. Nothing else moved.
  */
 function s7PayloadUrls(): array
 {

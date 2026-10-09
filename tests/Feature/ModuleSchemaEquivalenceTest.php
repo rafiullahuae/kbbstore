@@ -80,6 +80,9 @@
  *   exists to forbid. The fixture is a record of what the code did BEFORE the
  *   shared cast, not a snapshot of what it does now.
  *
+ *   (2.60.454: Lane QK7's `fs_bar_on` on checkout_page, 11 lines inserted,
+ *   0 modified, 0 removed, by exactly this method.)
+ *
  *   Take the new rows and nothing else: rebuild the corpus, then for every line
  *   whose identity (module|key|type|input) is already in the fixture, keep the
  *   FIXTURE's line. What is left to write is exactly the new keys' rows.

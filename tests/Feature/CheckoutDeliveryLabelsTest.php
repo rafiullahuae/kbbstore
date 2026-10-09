@@ -234,7 +234,7 @@ it('sits on its own tab, Appearance → Checkout page → Delivery labels, shipp
     $tab = collect($tabs)->firstWhere('key', 'delivery');
 
     expect($tab['label'])->toBe('Delivery labels')
-        ->and(array_column($tab['fields'], 'key'))->toBe(['dl_on', 'dl_paid', 'dl_paid_ar', 'dl_free', 'dl_free_ar', 'dl_note_on', 'dl_note', 'dl_note_ar'])
+        ->and(array_column($tab['fields'], 'key'))->toBe(['dl_on', 'dl_paid', 'dl_paid_ar', 'dl_free', 'dl_free_ar', 'dl_note_on', 'dl_note', 'dl_note_ar', 'fs_bar_on'])
         ->and(CheckoutPage::SCHEMA['dl_on'][2])->toBeTrue()
         ->and(CheckoutPage::SCHEMA['dl_note_on'][2])->toBeTrue();
 });

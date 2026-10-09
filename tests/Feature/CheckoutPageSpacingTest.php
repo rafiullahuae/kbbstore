@@ -297,6 +297,8 @@ it('offers spacing and nothing structural', function () {
             // top, the two ways back (both off), the UAE delivery labels and
             // the free-delivery line beside Delivery. None is a layout.
             'cline_on', 'shop_link', 'cart_link', 'dl_on', 'dl_note_on',
+            // Lane QK7: the free-delivery bar on the cart and checkout pages (OFF, he asked).
+            'fs_bar_on',
         ]);
 });
 

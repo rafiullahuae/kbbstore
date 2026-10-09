@@ -5504,6 +5504,17 @@ checkout_page|dl_note_ar|text|"  sp  "|'sp'
 checkout_page|dl_note_ar|text|"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"|'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 checkout_page|dl_note_ar|text|null|'توصيل مجاني للطلبات فوق {amount}'
 checkout_page|dl_note_ar|text|"<b>x<\/b>"|'<b>x</b>'
+checkout_page|fs_bar_on|bool|true|true
+checkout_page|fs_bar_on|bool|false|false
+checkout_page|fs_bar_on|bool|"1"|true
+checkout_page|fs_bar_on|bool|"0"|false
+checkout_page|fs_bar_on|bool|""|false
+checkout_page|fs_bar_on|bool|"on"|true
+checkout_page|fs_bar_on|bool|"off"|true
+checkout_page|fs_bar_on|bool|"no"|true
+checkout_page|fs_bar_on|bool|1|true
+checkout_page|fs_bar_on|bool|0|false
+checkout_page|fs_bar_on|bool|null|false
 mobile_header|match_page|bool|true|true
 mobile_header|match_page|bool|false|false
 mobile_header|match_page|bool|"1"|true
