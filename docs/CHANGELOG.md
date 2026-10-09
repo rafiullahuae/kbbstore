@@ -3,6 +3,24 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.452
+**Analytics: Online now, a Google-style minute chart, a live funnel, movable blocks; Contact
+cards editable in the page editor with the Instagram card; SEO social links can no longer be
+blanked by a save; the GLOW coupon line in the cart panel.** Apply after .451. Runs its
+migrations. Hard refresh the admin and the shop.
+
+| Your request | Now |
+|---|---|
+| "this number only a total number of visitors present on the website at same time" | Analytics' big number is Online now: people on the site this moment (a tab left or closed drops off at once; a reader on a long page stays). The 5/10/15/25 picker now drives the secondary figures, clearly labelled. Owner app Live tab too |
+| "numbers should show vertically ... same like in google" | The minute chart has a number scale on the right with guide lines, -30 ... -1 min underneath, and the exact count on hover or tap |
+| "this column is not updating in real time" | With Today selected, the funnel and lists refresh with every 15-second update ("Updated 13:59"); all four funnel steps count the same day |
+| "blocks should be moveable ... drag n drop" | Drag any Analytics block by its handle (long-press on phone), hide blocks, Reset layout; saved to your admin account |
+| (countries "Unknown") | The board now says what is missing. One-time: Cloudways -> Cron Job Management -> add `* * * * * cd /home/1672906.cloudwaysapps.com/yjmakdgtjs/private_html/kbb-app && php artisan schedule:run >> /dev/null 2>&1`, then Store -> Security -> Firewall -> Data -> Download country database |
+| "i have added the instagram link, but not showing the third block. please add manually and give such blocks edits option directly in contact us page edits" | Pages -> User pages -> Contact Us -> Edit -> Contact cards: each card's show/hide, title, subtitle, value, button and link, order, and up to two extra cards. The Instagram card is ON (your SEO link, else the Mail settings handle, else @kbeauty.bliss). Cause found: SEO & Meta -> Social profiles opened blank and one Save wiped every link; it now opens on the real links |
+| "Need Discount? Use coupon code {coupon-code} on checkout ... selectable ... cart panel settings" + "by default, coupon: glow" | Cart panel: "Need Discount? Use coupon code GLOW on checkout" above Subtotal, tap to copy. Appearance -> Cart panel -> Coupon hint (on/off, coupon, text EN/AR). Hides itself if the coupon expires or is used up |
+
+Files: see the package's update.json.
+
 ## 2.60.451
 **Logo D (lotus lockup) on every page, search that understands spelling mistakes, and
 social profiles editable from Appearance -> Footer.** Apply after .450. Runs its migrations.
