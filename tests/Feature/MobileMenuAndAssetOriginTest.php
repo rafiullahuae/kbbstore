@@ -109,7 +109,9 @@ it('still wires the mobile menu, and in the same position', function () {
     // step before it moved either.
     // 26 since Lane PF added initReadMore (the homepage About us's Read more,
     // the product description's own toggle) LAST, so no step before it moved.
-    expect($steps)->toHaveCount(26);
+    // 27 since initWaAway (the floating WhatsApp button stepping aside from
+    // the footer help strip, 9 October) went LAST, so no step before it moved.
+    expect($steps)->toHaveCount(27);
     expect($steps[0])->toBe('initOverlay');
     expect($steps[8])->toBe('initHome');   // wires the mobile menu
     expect($steps[16])->toBe('initListingLoad');

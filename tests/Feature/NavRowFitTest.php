@@ -256,7 +256,10 @@ it('measures layout only where it already did, and nav-fit.js grows no observer'
     }
 
     sort($measuring);
-    expect($measuring)->toBe(['fbt.js', 'listing-load.js', 'nav-fit.js', 'pdp.js', 'ymal.js']);
+    // wa-away.js (9 October) holds one IntersectionObserver and reads no
+    // geometry: the browser reports the footer strip crossing the bottom 14%
+    // of the viewport, and a class on <html> hides the WhatsApp button in CSS.
+    expect($measuring)->toBe(['fbt.js', 'listing-load.js', 'nav-fit.js', 'pdp.js', 'wa-away.js', 'ymal.js']);
 
     foreach ([app_path('Support/NavRowFit.php'), resource_path('views/partials/nav-bar.blade.php')] as $file) {
         foreach ($apis as $api) {

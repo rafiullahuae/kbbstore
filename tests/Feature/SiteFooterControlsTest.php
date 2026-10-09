@@ -311,8 +311,14 @@ it('sweeps a shine across the bottom bar, left to right in English and right to 
         ->and(hfMedia($css, 'prefers-reduced-motion:reduce', '.kft-motion .kft-help'))
         ->toContain('.kft-sheen-bar .kft-bot::before,.kft-sheen-bar .kft-bot::after,.kft-sheen-name .kft-name::after{animation:none;display:none}');
 
-    // No script anywhere is involved: nothing in resources/js names the footer.
+    // No script anywhere is involved: nothing in resources/js names the footer,
+    // except wa-away.js, which only watches the help strip to move the floating
+    // WhatsApp button aside (9 October) and names nothing of the sheen.
     foreach (glob(resource_path('js/**/*.js')) ?: [] as $file) {
+        if (basename($file) === 'wa-away.js') {
+            expect((string) file_get_contents($file))->not->toContain('sheen');
+            continue;
+        }
         expect((string) file_get_contents($file))->not->toContain('kft-');
     }
 
