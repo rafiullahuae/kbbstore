@@ -237,6 +237,12 @@ it('leaves no navigation in the console unaccounted for', function () {
         "app  window.open(url, '_blank', 'noopener');",      // bulk documents
         // ── GATED BEFORE (these replace the whole console) ─────────────────
         'app  window.location.href = url;',                  // orders export
+        // ── EXEMPT (Lane ORD): an order row opened in a new tab. olHref() is
+        // location.pathname + '#orders/<id>' -- the console's own address,
+        // never /admin-api -- so a dead session there is the login screen a
+        // reload would show, and this tab is left exactly as it was.
+        "app  if(newTab){ window.open(olHref(id), '_blank', 'noopener'); return; }",
+        "app  if(e.ctrlKey || e.metaKey){ window.open(olHref(id), '_blank', 'noopener'); return; }",
         "app  window.open(url, '_blank', 'noopener');",      // the four order documents
         'app  window.location.href = url;',                  // customers export
         'app  window.location.href = url;',                  // reviews export

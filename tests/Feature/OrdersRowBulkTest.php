@@ -89,7 +89,7 @@ it('changes N orders in ONE request and answers with what the screen needs to re
 
     DB::enableQueryLog();
     $r = test()->postJson('/admin-api/orders-bulk-status', ['ids' => array_merge($todo, $already), 'status' => 'completed'])->assertOk();
-    $selects = collect(DB::getQueryLog())->filter(fn ($q) => str_starts_with(strtolower($q['query']), 'select "id", "order_number", "status", "total" from "orders"'))->count();
+    $selects = collect(DB::getQueryLog())->filter(fn ($q) => str_starts_with(strtolower(\Tests\Support\SqlShape::portable($q['query'])), 'select "id", "order_number", "status", "total" from "orders"'))->count();
     DB::disableQueryLog();
 
     expect($r->json('changed'))->toBe(3)
@@ -147,7 +147,7 @@ it('takes a whole 500-row page in one request, read in chunks', function () {
 
     DB::enableQueryLog();
     test()->postJson('/admin-api/orders-bulk-status', ['ids' => $padded, 'status' => 'onhold'])->assertOk()->assertJsonPath('changed', 3);
-    $reads = collect(DB::getQueryLog())->filter(fn ($q) => str_contains($q['query'], 'select "id", "order_number", "status", "total"'))->count();
+    $reads = collect(DB::getQueryLog())->filter(fn ($q) => str_contains(\Tests\Support\SqlShape::portable($q['query']), 'select "id", "order_number", "status", "total"'))->count();
     DB::disableQueryLog();
     expect($reads)->toBe(5);   // 500 / BULK_CHUNK(100)
 
