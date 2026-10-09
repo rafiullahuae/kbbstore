@@ -306,6 +306,72 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .formbox{background:#fff;border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden;box-shadow:0 12px 36px -24px rgba(42,34,40,.22)}
 .kbb-checkout .sec{padding:var(--cop-secpad);border-bottom:1px solid var(--line-2)}
 .kbb-checkout .sec:last-child{border-bottom:none}
+/* THE GAP BETWEEN TWO NUMBERED SECTIONS (Lane CO). It was this section's
+   bottom padding, so "Space between blocks" never reached it -- the owner
+   opened every other gap on the page and "Remember my details -> 3 Delivery"
+   and "the delivery option -> 4 Payment" stayed where they were. Only a
+   section FOLLOWED by another one: the last (Payment) keeps its padding, which
+   is the seam it shares with the Place order card. --cop-secgap is the block
+   gap unless Appearance -> Checkout page -> Layout sets its own; at the
+   shipped 16 = 16 nothing moves. */
+.kbb-checkout .sec:has(+ .sec){padding-bottom:var(--cop-secgap)}
+/* ── "SIGN IN" AND ITS WINDOW (Lane CO) ──────────────────────────────────
+   The link sits at the end of the "1 Contact" bar. After the remember row's
+   "Clear details" (which already takes the free space with an auto margin) it
+   keeps a fixed gap instead, so two auto margins never split the bar.
+   Its tap area grows with a pseudo-element that stays inside the bar's own
+   10px padding -- it covers nothing else that can be clicked. */
+.kbb-checkout .sec > h2 .co-signin{margin-inline-start:auto;position:relative;font-size:12.5px;font-weight:600;line-height:1.2;
+  color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.kbb-checkout .sec > h2 .co-signin::after{content:"";position:absolute;inset:-8px -6px}
+.kbb-checkout .sec > h2 .co-signin:hover{color:var(--pink-deep)}
+.kbb-checkout .sec > h2 .kbb-rmb-clear + .co-signin{margin-inline-start:14px}
+/* The window: a native <dialog> in the top layer, so it inherits this page's
+   field styles through the DOM and is laid out by the browser, centred. Opens
+   with @starting-style (a fade and a small lift), closes by .is-out for the
+   same 180ms the script waits before close(). */
+.kbb-checkout .co-si{width:min(400px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px);margin:auto;padding:0;border:0;border-radius:18px;
+  background:#fff;color:var(--ink);box-shadow:0 30px 80px -24px rgba(42,34,40,.5);overflow:auto;
+  opacity:1;transform:none;transition:opacity .18s ease,transform .18s ease}
+.kbb-checkout .co-si::backdrop{background:rgba(32,24,30,.48);transition:opacity .18s ease}
+@starting-style{
+  .kbb-checkout .co-si[open]{opacity:0;transform:translateY(12px) scale(.97)}
+  .kbb-checkout .co-si[open]::backdrop{opacity:0}
+}
+.kbb-checkout .co-si.is-out{opacity:0;transform:translateY(8px) scale(.96)}
+.kbb-checkout .co-si.is-out::backdrop{opacity:0}
+.kbb-checkout .co-si-in{position:relative;padding:26px 22px 22px}
+.kbb-checkout .co-si-x{position:absolute;top:10px;inset-inline-end:10px;width:36px;height:36px;display:grid;place-items:center;
+  border:0;border-radius:50%;background:transparent;color:var(--muted);cursor:pointer}
+.kbb-checkout .co-si-x:hover{background:var(--cream);color:var(--ink)}
+.kbb-checkout .co-si-h{margin:0 0 6px;font-size:19px;font-weight:800;line-height:1.25;color:var(--ink);outline:none}
+.kbb-checkout .co-si-lead{margin:0 0 16px;font-size:13px;line-height:1.45;color:var(--ink-2)}
+.kbb-checkout .co-si .form-row{margin-bottom:12px}
+.kbb-checkout .co-si-err{margin:2px 0 12px;font-size:12.5px;font-weight:600;color:var(--pink-deep)}
+.kbb-checkout .co-si-go{width:100%;min-height:48px;border:0;border-radius:12px;background:var(--pink);color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer;position:relative}
+.kbb-checkout .co-si-go:hover{background:var(--pink-deep)}
+.kbb-checkout .co-si-go[aria-busy="true"]{color:transparent;pointer-events:none}
+.kbb-checkout .co-si-go[aria-busy="true"]::after{content:"";position:absolute;inset:0;margin:auto;width:20px;height:20px;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;animation:co-si-spin .7s linear infinite}
+@keyframes co-si-spin{to{transform:rotate(360deg)}}
+.kbb-checkout .co-si-foot{margin:14px 0 0;text-align:center}
+.kbb-checkout .co-si-link{border:0;background:none;padding:6px 4px;font:inherit;font-size:13px;font-weight:600;color:var(--ink);
+  text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.kbb-checkout .co-si-link:hover{color:var(--pink-deep)}
+.kbb-checkout .co-si-sent{margin:4px 0 0;padding:12px 14px;border-radius:12px;background:#EEF8F1;color:#1F7D52;font-size:13px;font-weight:600;line-height:1.45}
+.kbb-checkout .co-si-full{margin:12px 0 0;text-align:center;font-size:12.5px}
+.kbb-checkout .co-si-full a{color:var(--ink-2);text-decoration:underline}
+.kbb-checkout .co-si-done{display:grid;justify-items:center;gap:10px;padding:18px 0 8px;text-align:center}
+.kbb-checkout .co-si-done circle{stroke-dasharray:151;stroke-dashoffset:151;animation:co-si-draw .35s ease-out forwards}
+.kbb-checkout .co-si-done path{stroke-dasharray:36;stroke-dashoffset:36;animation:co-si-draw .25s .25s ease-out forwards}
+.kbb-checkout .co-si-done .co-si-h{color:#1F7D52;margin:0}
+@keyframes co-si-draw{to{stroke-dashoffset:0}}
+.kbb-checkout .co-si-x:focus-visible,.kbb-checkout .co-si-link:focus-visible,.kbb-checkout .co-si-go:focus-visible,
+.kbb-checkout .sec > h2 .co-signin:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){
+  .kbb-checkout .co-si,.kbb-checkout .co-si::backdrop{transition:none}
+  .kbb-checkout .co-si-done circle,.kbb-checkout .co-si-done path{animation:none;stroke-dashoffset:0}
+}
 /* The negative margin and the right padding are the SAME number as the
    section padding -- that is what pulls the heading bar out to the card
    edge. Hard-coded 16s here would come adrift the moment the slider moved,
@@ -465,6 +531,14 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .xg-b{color:#4285F4}.kbb-checkout .xg-o{color:#EA4335}.kbb-checkout .xg-y{color:#FBBC05}.kbb-checkout .xg-gr{color:#34A853}
 .kbb-checkout .ordiv{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:11px;margin:2px 0 14px}
 .kbb-checkout .ordiv::before,.kbb-checkout .ordiv::after{content:"";flex:1;height:1px;background:var(--line)}
+/* Lane CO: the wallet row under the coupon box, Shopify's shape -- a small
+   centred grey heading over the buttons and a ruled "OR" under them. All three
+   nodes start hidden and the wallet script reveals them together, so these
+   rules only ever paint for a shopper whose browser can pay with a wallet.
+   The OR line closes on the block gap, which is the gap the coupon box itself
+   leaves above the form when there is no wallet row at all. */
+.kbb-checkout .co-xc-h{margin:0 0 9px;text-align:center;font-size:12.5px;font-weight:600;line-height:1.3;color:var(--muted);letter-spacing:.01em}
+.kbb-checkout .ordiv.co-xc-or{margin:2px 0 var(--cop-block);font-size:11.5px;font-weight:700;letter-spacing:.08em}
 
 /* ---- OPTION CARDS (delivery + payment) — design .opt with custom .dot ---- */
 /* Shared card shell for: relocated shipping <li>, and payment <li.wc_payment_method> */
@@ -720,6 +794,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   --cop-pady:var(--cop-d-pady,22px);
   --cop-titlept:var(--cop-d-titlept,var(--cop-pady));
   --cop-block:var(--cop-d-block,16px);
+  --cop-secgap:var(--cop-d-secgap,var(--cop-block));
   --cop-secpad:var(--cop-d-secpad,16px);
   --cop-asidepad:var(--cop-d-asidepad,17px);
   /* The order-summary lines. Same indirection, same reason. --cop-rowf and
@@ -1199,6 +1274,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
     --cop-pady:var(--cop-m-pady,22px);
     --cop-titlept:var(--cop-m-titlept,var(--cop-pady));
     --cop-block:var(--cop-m-block,16px);
+    --cop-secgap:var(--cop-m-secgap,var(--cop-block));
     --cop-secpad:var(--cop-m-secpad,16px);
     --cop-asidepad:var(--cop-m-asidepad,14px);
     --cop-itemspt:var(--cop-m-itemspt,8px);

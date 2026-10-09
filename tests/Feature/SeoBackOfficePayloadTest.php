@@ -87,6 +87,12 @@ use Tests\Support\KeyOrder;
  *
  * ▲ 2.60.456: + the `checkoutpage_*` rows Lane QK9 (one card, reviews card off)
  * migration writes (the section heading size ships as a 15px base instead). Diff read; nothing else.
+ *
+ * ▲ Lane CO re-recorded it (KBB_S7_RECORD=1), diff read: the settings body
+ * gains `slimfooter_links_pos` = "end", `slimfooter_pad_top` = "30" and
+ * `slimfooter_m_pad_top` = "30", the three rows migration 2027_10_17_100000
+ * writes -- the checkout footer's policy links as its last row and 30px above
+ * the logo, as the owner asked. Nothing else moved.
  */
 function s7PayloadUrls(): array
 {

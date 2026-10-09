@@ -1530,6 +1530,24 @@ final class InterfaceStrings
             // would be thrown away.
             'checkout.gift_characters_left' => ':remaining characters left|:remaining characters left',
             'checkout.or_pay_with' => 'or pay with',
+            // Lane CO: the line under the Apple Pay / Google Pay row, which sits
+            // under the coupon box now, and the sign-in window beside "1 Contact".
+            'checkout.express_or' => 'OR',
+            'checkout.signin_link' => 'Sign in',
+            'checkout.signin_title' => 'Sign in',
+            'checkout.signin_lead' => 'Welcome back. We will fill in your saved details.',
+            'checkout.signin_email' => 'Email address',
+            'checkout.signin_password' => 'Password',
+            'checkout.signin_submit' => 'Sign in',
+            'checkout.signin_forgot' => 'Forgot password?',
+            'checkout.signin_forgot_title' => 'Reset your password',
+            'checkout.signin_forgot_lead' => 'Enter your email and we will send you a link to choose a new password.',
+            'checkout.signin_forgot_submit' => 'Send reset link',
+            'checkout.signin_back' => 'Sign in',
+            'checkout.signin_close' => 'Close',
+            'checkout.signin_done' => 'Signed in',
+            'checkout.signin_failed' => 'Something went wrong. Please try again, or use the full sign-in page.',
+            'checkout.signin_full_page' => 'Open the full sign-in page',
             'checkout.no_payment_method' => 'No payment method is available for this order total. Please contact us and we will take your order directly.',
             // The card form on this page — see partials/checkout/stripe-card.
             //

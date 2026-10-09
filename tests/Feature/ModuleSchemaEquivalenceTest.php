@@ -89,6 +89,13 @@
  *   delivery over {amount}" -- the default changed, not the cast.)
  *   (Lane QK9: `trust_card` and `m_merge` on checkout_page, 22 lines
  *   inserted, 0 modified, 0 removed, the same way.)
+ *   (Lane CO: `d_sec_same`, `d_sec_gap`, `m_sec_same`, `m_sec_gap`,
+ *   `coupon_head`, `xc_head`, `xc_head_ar` and `signin_on` on checkout_page,
+ *   74 lines inserted the same way; and slim_footer `links_pos` MOVED on
+ *   purpose: its new first option "end" is the owner's (the policy links as
+ *   the footer's last row), so the valid-option row is now "end" (1 removed,
+ *   1 inserted) and the three refused inputs answer "end" (3 modified) -- the
+ *   default changed, not the cast.)
  *
  *   Take the new rows and nothing else: rebuild the corpus, then for every line
  *   whose identity (module|key|type|input) is already in the fixture, keep the

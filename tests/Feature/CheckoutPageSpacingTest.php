@@ -280,7 +280,10 @@ it('offers spacing and nothing structural', function () {
             // under Payment (OFF, he crossed it out), and m_merge, which joins
             // the phone's bag block onto the Payment card (ON). The one card
             // is his own; nothing else is added and no section goes.
-            'd_sticky', 'policy_links', 'trust_card', 'rating_on', 'm_merge', 'd_row_bold', 'd_row_brand', 'm_row_bold', 'm_row_brand',
+            // Lane CO: d_/m_sec_same, whether the gap under each numbered
+            // section follows "Space between blocks" (ON, he asked) or its own
+            // slider. A spacing; every section stays.
+            'd_sec_same', 'd_sticky', 'm_sec_same', 'policy_links', 'trust_card', 'rating_on', 'm_merge', 'd_row_bold', 'd_row_brand', 'm_row_bold', 'm_row_brand',
             'd_head_sticky', 'm_head_sticky', 'm_t_input_floor',
             // addr_picker (Lane CK) swaps what is INSIDE section 2 -- the
             // picker row or the four typed fields -- and the section stays.
@@ -305,6 +308,10 @@ it('offers spacing and nothing structural', function () {
             'cline_on', 'shop_link', 'cart_link', 'head_back', 'dl_on', 'dl_note_on',
             // Lane QK7: the free-delivery bar on the cart and checkout pages (OFF, he asked).
             'fs_bar_on',
+            // Lane CO: "Have a discount code?" over the coupon box (OFF, he
+            // asked) and "Sign in" beside 1 Contact (ON, he asked). Neither
+            // adds or removes a section.
+            'coupon_head', 'signin_on',
         ]);
 });
 

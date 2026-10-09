@@ -126,6 +126,8 @@
    cannot disagree with the page. */
 .chv-sec{padding:var(--chv-secpad,16px);border-bottom:1px solid #ebe3e6}
 .chv-sec:last-child{border-bottom:0}
+/* (Lane CO) The gap down to the next numbered heading: the block gap, or its own slider. */
+.chv-sec:has(+ .chv-sec){padding-bottom:var(--chv-secgap,var(--chv-block,13px))}
 .chv-sec > h6{margin:calc(var(--chv-secpad,16px) * -1) calc(var(--chv-secpad,16px) * -1) 9px;
   padding:6px var(--chv-secpad,16px) 6px calc(var(--chv-secpad,16px) - 3px);
   background:#fbf5f4;border-bottom:1px solid #f0eaec;border-inline-start:3px solid #c13a5e;

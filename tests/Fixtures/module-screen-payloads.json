@@ -6552,7 +6552,7 @@
             "label": "Padding inside the top, on a phone",
             "help": "Between the top edge of the bar and its first row. This is the one to reach for when the bar sits too close to the Place order box above it.",
             "default": 10,
-            "value": 10,
+            "value": 30,
             "options": {
               "min": 0,
               "max": 60,
@@ -6788,7 +6788,7 @@
             "label": "Padding inside the top",
             "help": "Between the top edge of the bar and its first line. Left where it is, it follows \"Height\" above.",
             "default": 12,
-            "value": 12,
+            "value": 30,
             "options": {
               "min": 0,
               "max": 60,
@@ -6882,10 +6882,11 @@
             "key": "links_pos",
             "type": "select",
             "label": "Where the policy links sit",
-            "help": "Only the one-line shapes have a choice here; the stacked and ruled-row shapes put every block on its own line anyway.",
-            "default": "brand",
-            "value": "brand",
+            "help": "Last row, under a thin grey line, is what ships: Shipping & Delivery and Privacy policy close the bar, after the payment marks, on a phone and a computer. The other two keep them beside the brand.",
+            "default": "end",
+            "value": "end",
             "options": {
+              "end": "Last row, after the payment marks, under a thin grey line",
               "brand": "Under the wordmark, with the byline",
               "inline": "At the end of the row"
             }
@@ -9095,6 +9096,31 @@
             }
           },
           {
+            "key": "d_sec_same",
+            "name": "d_sec_same",
+            "type": "bool",
+            "label": "Gaps between sections follow “Space between blocks”",
+            "help": "On, as asked: the space under Contact, Shipping Details and Delivery — down to the next numbered heading — is the same number as \"Space between blocks\" above, so every gap on the page moves together. Off uses the slider below instead.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "d_sec_gap",
+            "name": "d_sec_gap",
+            "type": "range",
+            "label": "Space between sections",
+            "help": "From the last thing in a numbered section (the \"Remember my details\" tick, the delivery option) to the next section's heading bar. Only read while the switch above is off.",
+            "options": {
+              "min": 6,
+              "max": 48,
+              "step": 2,
+              "unit": "px"
+            },
+            "default": 16,
+            "value": 16
+          },
+          {
             "key": "d_sec_pad",
             "type": "range",
             "label": "Padding inside each section",
@@ -9674,6 +9700,31 @@
               "step": 1,
               "unit": "px"
             }
+          },
+          {
+            "key": "m_sec_same",
+            "name": "m_sec_same",
+            "type": "bool",
+            "label": "Gaps between sections follow “Space between blocks”",
+            "help": "On, as asked: the space under Contact, Shipping Details and Delivery — down to the next numbered heading — is the same number as \"Space between blocks\" above, so every gap on the phone page moves together. Off uses the slider below instead.",
+            "options": null,
+            "default": true,
+            "value": true
+          },
+          {
+            "key": "m_sec_gap",
+            "name": "m_sec_gap",
+            "type": "range",
+            "label": "Space between sections",
+            "help": "From the last thing in a numbered section (the \"Remember my details\" tick, the delivery option) to the next section's heading bar. Only read while the switch above is off.",
+            "options": {
+              "min": 6,
+              "max": 40,
+              "step": 1,
+              "unit": "px"
+            },
+            "default": 16,
+            "value": 16
           },
           {
             "key": "m_sec_pad",
@@ -10866,6 +10917,53 @@
             "options": null,
             "default": "للحصول على خصم، طبّق القسيمة {coupon-code}",
             "value": "للحصول على خصم، طبّق القسيمة {coupon-code}"
+          }
+        ]
+      },
+      {
+        "key": "express",
+        "label": "Coupon, express & sign in",
+        "description": "The coupon box, the Apple Pay / Google Pay row under it with its \"Express checkout\" heading and \"OR\" line, and the \"Sign in\" link beside \"1 Contact\" with its sign-in window. One set of values for both surfaces.",
+        "fields": [
+          {
+            "key": "coupon_head",
+            "name": "coupon_head",
+            "type": "bool",
+            "label": "Show “Have a discount code?” above the coupon box",
+            "help": "Off, as asked: the coupon box is just the code box and Apply. On puts the gift icon and the line back.",
+            "options": null,
+            "default": false,
+            "value": false
+          },
+          {
+            "key": "xc_head",
+            "name": "xc_head",
+            "type": "text",
+            "label": "Express checkout heading",
+            "help": "The small grey heading over the Apple Pay / Google Pay buttons under the coupon box. It and the \"OR\" line under the buttons appear only on a phone or browser that can actually pay with a wallet — nobody else sees either. Up to 120 characters.",
+            "options": null,
+            "default": "Express checkout",
+            "value": "Express checkout"
+          },
+          {
+            "key": "xc_head_ar",
+            "name": "xc_head_ar",
+            "type": "text",
+            "label": "Express checkout heading — Arabic",
+            "help": "The same on the Arabic shop (/ar/).",
+            "options": null,
+            "default": "الدفع السريع",
+            "value": "الدفع السريع"
+          },
+          {
+            "key": "signin_on",
+            "name": "signin_on",
+            "type": "bool",
+            "label": "“Sign in” beside the Contact heading",
+            "help": "On, as asked: a shopper who is not signed in sees \"Sign in\" on the right of \"1 Contact\". It opens a small sign-in window over the page (with \"Forgot password?\", no sign-up), fills in their saved name, email, phone and address, and closes itself. Never shown to a signed-in customer.",
+            "options": null,
+            "default": true,
+            "value": true
           }
         ]
       }

@@ -22,6 +22,22 @@ function sf(): SlimFooter
     return app(SlimFooter::class);
 }
 
+/*
+ * (Lane CO) The package migration 2027_10_17_100000 STORES the owner's 30px
+ * "Padding inside the top" (computer and phone) as rows, because those two
+ * keys fall back to "Height" while they have no row. This file is about the
+ * bar's own rules -- untouched prints nothing, a moved Height carries the
+ * split padding with it -- so every case starts from a shop without those two
+ * rows. The 30s themselves are pinned in CheckoutSignInPolishTest.
+ */
+beforeEach(function () {
+    \Illuminate\Support\Facades\DB::table('settings')
+        ->whereIn('key', [SlimFooter::PREFIX.'pad_top', SlimFooter::PREFIX.'m_pad_top'])->delete();
+    \App\Models\Setting::flushMap();
+    \App\Services\SettingsService::forgetMemo();
+    app(\App\Services\SettingsService::class)->flush();
+});
+
 /**
  * Make the shop genuinely able to take both wallets, or neither.
  *
@@ -140,11 +156,13 @@ it('draws no element at all for a setting left empty', function () {
         "@if (\$sfHasBrand || \$sfC['byline'] !== '' || \$sfLinksInBrand)",
         "@if (\$sfC['help_title'] !== '' || \$sfC['help_sub'] !== '')",
         "@if (\$sfC['phone'] !== '' || \$sfC['email'] !== '')",
-        // The links are drawn in ONE of two places -- inside the brand column
-        // or at the end of the row -- and the standalone block is guarded on
-        // the inverse of the same flag, so "empty means absent" still holds
-        // whichever place they are in.
-        "@if (! \$sfLinksInBrand && (\$sfC['l1_text'] !== '' || \$sfC['l2_text'] !== '' || \$sfC['l3_text'] !== ''))",
+        // The links are drawn in ONE of three places -- inside the brand
+        // column, at the end of the row, or (Lane CO, the default) as the last
+        // row -- and the standalone block is guarded on the inverse of the
+        // other two flags, so "empty means absent" still holds whichever place
+        // they are in.
+        "@if (! \$sfLinksInBrand && ! \$sfLinksAtEnd && (\$sfC['l1_text'] !== '' || \$sfC['l2_text'] !== '' || \$sfC['l3_text'] !== ''))",
+        "@if (\$sfLinksAtEnd)",
         "@if (\$sfC['copy'] !== '')",
     ] as $guard) {
         expect($partial)->toContain($guard);
@@ -227,7 +245,8 @@ it('stores only a value the select actually offers', function () {
         ->and(sf()->get('tone'))->toBe('ink')
         ->and(sf()->get('pad_y'))->toBe(40);
 
-    expect(sf()->bodyClass())->toBe(' sf-bar sf-w-page sf-links-brand sf-t-ink sf-a-between sf-wm sf-wa sf-msplit sf-m-rows');
+    // (Lane CO) No sf-links-brand: the links are the last row by default now, as the owner asked.
+    expect(sf()->bodyClass())->toBe(' sf-bar sf-w-page sf-t-ink sf-a-between sf-wm sf-wa sf-msplit sf-m-rows');
 });
 
 it('caps a pasted novel rather than printing it on every order', function () {
@@ -333,13 +352,14 @@ it('names a state class only where the stylesheet has a rule for it', function (
        which is the departure from "only what is not the default" this file
        otherwise keeps -- `between` and `rows` have rules and `start`/`bar` are
        the base, so a default that is not the base has to be said out loud. */
-    expect(sf()->bodyClass())->toBe(' sf-bar sf-w-page sf-links-brand sf-t-cream sf-a-between sf-wm sf-wa sf-msplit sf-m-rows');
+    // (Lane CO) No sf-links-brand: the links are the last row by default now, as the owner asked.
+    expect(sf()->bodyClass())->toBe(' sf-bar sf-w-page sf-t-cream sf-a-between sf-wm sf-wa sf-msplit sf-m-rows');
 
     sf()->save(['align' => 'between', 'sep' => 'dot', 'top_style' => 'solid',
         'shadow' => true, 'upper' => false, 'icons_on' => false, 'divider' => false]);
 
     expect(sf()->bodyClass())
-        ->toBe(' sf-bar sf-w-page sf-links-brand sf-t-cream sf-a-between sf-sep-dot sf-top-solid sf-noline sf-lift sf-nocaps sf-wm sf-noic sf-wa sf-msplit sf-m-rows');
+        ->toBe(' sf-bar sf-w-page sf-t-cream sf-a-between sf-sep-dot sf-top-solid sf-noline sf-lift sf-nocaps sf-wm sf-noic sf-wa sf-msplit sf-m-rows');
 });
 
 it('draws a separator only where two blocks sit side by side', function () {
@@ -761,11 +781,17 @@ it('renders the policy links inside the brand block rather than reordering them'
      * Measured in Chromium at 1440 with the default: .sf-brand .sf-links
      * exists, and its left is 220 -- the same as the wordmark's.
      */
-    expect(\App\Services\SlimFooter::SCHEMA['links_pos'][2])->toBe('brand')
+    // (Lane CO) 'brand' is no longer the default -- the owner asked for the
+    // links as the last row -- so it is chosen here, and still works as it did.
+    sf()->save(['links_pos' => 'brand']);
+    \App\Services\SettingsService::forgetMemo();
+
+    expect(\App\Services\SlimFooter::SCHEMA['links_pos'][2])->toBe('end')
         ->and($partial)->toContain('@if ($sfLinksInBrand)')
         // Drawn once, not twice: the standalone block is guarded on the inverse.
-        ->and($partial)->toContain('@if (! $sfLinksInBrand && (')
+        ->and($partial)->toContain('@if (! $sfLinksInBrand && ! $sfLinksAtEnd && (')
         ->and(substr_count($partial, '<div class="sf-links">'))->toBe(2)
+        ->and(substr_count($partial, '<div class="sf-links sf-links-end">'))->toBe(1)
         ->and(sf()->bodyClass())->toContain('sf-links-brand');
 });
 
