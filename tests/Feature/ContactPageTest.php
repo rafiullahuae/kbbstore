@@ -43,7 +43,7 @@ function ctSet(string $key, mixed $value): void
     ctForget();
 }
 
-function ctAdmin(string $role): AdminUser
+function ctcAdmin(string $role): AdminUser
 {
     return AdminUser::create([
         'name' => 'CT '.$role, 'email' => "ct-{$role}@example.test",
@@ -402,12 +402,12 @@ it('refuses Store → Inquiries to a role without the capability, and fails clos
     ContactInquiry::create(['name' => 'A', 'email' => 'a@example.com', 'message' => 'Hello there friend']);
     $id = ContactInquiry::query()->value('id');
 
-    $editor = ctAdmin('editor');
+    $editor = ctcAdmin('editor');
     $this->actingAs($editor, 'admin')->getJson('/admin-api/inquiries')->assertForbidden();
     $this->actingAs($editor, 'admin')->deleteJson("/admin-api/inquiries/{$id}")->assertForbidden();
     $this->actingAs($editor, 'admin')->getJson('/admin-api/inquiries/settings')->assertForbidden();
 
-    $support = ctAdmin('support');
+    $support = ctcAdmin('support');
     $this->actingAs($support, 'admin')->getJson('/admin-api/inquiries')->assertOk();
     $this->actingAs($support, 'admin')->postJson("/admin-api/inquiries/{$id}/read", ['read' => true])->assertOk();
     $this->actingAs($support, 'admin')->deleteJson("/admin-api/inquiries/{$id}")->assertForbidden();
@@ -424,7 +424,7 @@ it('lists newest first with the unread marked, marks read, and deletes', functio
     foreach (['First', 'Second', 'Third'] as $n) {
         ContactInquiry::create(['name' => $n, 'email' => strtolower($n).'@example.com', 'message' => "Message from {$n}", 'ip' => '10.0.0.1']);
     }
-    $owner = ctAdmin('owner');
+    $owner = ctcAdmin('owner');
 
     $j = $this->actingAs($owner, 'admin')->getJson('/admin-api/inquiries')->assertOk()->json();
     expect(array_column($j['rows'], 'name'))->toBe(['Third', 'Second', 'First'])
@@ -442,7 +442,7 @@ it('lists newest first with the unread marked, marks read, and deletes', functio
 
 it('reads the inbox in the same two queries whether it holds three inquiries or forty', function () {
     // MUTATION: count unread per row (an N+1) in toAdmin() -> red.
-    $owner = ctAdmin('owner');
+    $owner = ctcAdmin('owner');
     $count = function () use ($owner): int {
         $this->actingAs($owner, 'admin');
         $this->getJson('/admin-api/inquiries'); // warm the session and role reads
@@ -468,7 +468,7 @@ it('reads the inbox in the same two queries whether it holds three inquiries or 
 
 it('saves the contact page settings only when every value is one it can use', function () {
     // MUTATION: drop the recipient check in ContactPage::save() -> red.
-    $owner = ctAdmin('owner');
+    $owner = ctcAdmin('owner');
     $bad = $this->actingAs($owner, 'admin')->postJson('/admin-api/inquiries/settings', ['config' => array_replace(ContactPage::defaults(), ['recipient' => 'nobody'])]);
     $bad->assertStatus(422)->assertJsonPath('fields.recipient', 'The recipient is not an email address.');
 
