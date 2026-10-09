@@ -1161,6 +1161,9 @@ final class EnglishRenderWalk
             // The Google Merchant Center product feed (Lane SEO): XML for Merchant
             // Center and Meta, no Blade, no shopper string.
             'feeds/google-merchant.xml' => $file,
+            // Lane MP: the Meta and TikTok catalog feeds, the same builder as Google's.
+            'feeds/meta-catalog.xml' => $file,
+            'feeds/tiktok-catalog.xml' => $file,
             // Apple's domain-association document (Lane WAL). Machine-facing in
             // the strictest sense: Apple's own fetcher reads it to verify this
             // domain, and Apple Pay draws no sheet until it has. Both spellings
