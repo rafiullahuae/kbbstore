@@ -52,6 +52,21 @@
     space below can come closer to the edge than Auto, but never into the
     slider bars' strip (--hb-room).
 
+    100% IS THE BOTTOM EDGE (Lane QK). The owner: "100% mean full bottom." A
+    custom up-and-down (hb-vc-*) runs the column to --hb-room: the top of the
+    slider's own controls on the picture -- the inset bars' tap strip (20px),
+    the cornered capsule (16 + 36px) or ticks (16 + 20px) -- and 0px, the
+    frame's own edge, when nothing is there. --hb-room used to be the inset
+    strip's whole 66px, 44px of which is only the scrim's padding, so 100%
+    stopped 62px above the bars he could see. Auto keeps its 66/64/68px.
+    Once the box may come that low, the inset strip's 44px of scrim padding
+    must not swallow its button: the strip lets the pointer through and only
+    the bars themselves take it (measured: elementFromPoint on the button was
+    .kbbs-bars). D's card is tilted (1.2deg on a phone, 1.6 on a computer), so
+    its low corner sits half its width x sin(tilt) below the column's end:
+    1.05cqi on a phone (the box is at most the frame's width), --hb-w x .014
+    on a computer -- added, so the corner lands on the edge, not past it.
+
     The box is NOT a link and is `pointer-events:none`: a click anywhere on it
     except the button falls through to the picture's own link, which is the
     whole-slide click the slider always had. The button is the one thing in it
@@ -69,8 +84,12 @@
 @media (max-width:900px){.kbbs.has-hb{--hb-gs:var(--hb-mhl,12px);--hb-ge:var(--hb-mhr,12px)}}
 .kbbs.has-hb.hb-d{--hb-o:var(--hb-su)}
 .hb-d .hb-pos{inset-inline-end:max(var(--hb-ine),var(--hb-so) + 4px)}
-.kbbs.has-hb.is-bars.is-inset{--hb-bot:66px;--hb-bot0:66px;--hb-room:66px}
-.kbbs.has-hb.is-corner.is-bars,.kbbs.has-hb.is-corner.is-arrows{--hb-bot:64px;--hb-bot0:64px;--hb-room:64px}
+.kbbs.has-hb.is-bars.is-inset{--hb-bot:66px;--hb-bot0:66px;--hb-room:var(--kbbs-hit,20px)}
+.kbbs.has-hb.is-corner.is-bars,.kbbs.has-hb.is-corner.is-arrows{--hb-bot:64px;--hb-bot0:64px}
+.kbbs.has-hb.is-corner.is-bars{--hb-room:calc(16px + var(--kbbs-hit,20px))}
+.kbbs.has-hb.is-corner.is-arrows{--hb-room:calc(16px + var(--kbbs-navh,36px))}
+.kbbs.has-hb.is-inset:is(.hb-vc-d,.hb-vc-m,.hb-sb-d,.hb-sb-m) .kbbs-bars{pointer-events:none}
+.kbbs.has-hb.is-inset:is(.hb-vc-d,.hb-vc-m,.hb-sb-d,.hb-sb-m) .kbbs-bar{pointer-events:auto}
 .hb-pos{position:absolute;z-index:1;inset-block:calc(var(--hb-tb) + var(--hb-o)) var(--hb-bot);inset-inline:var(--hb-ins) var(--hb-ine);
   display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;pointer-events:none;container:hbpos / size}
 .hb-pos::before{content:"";flex:var(--hb-vg1) 1 var(--hb-vb)}
@@ -130,6 +149,8 @@ html[lang=ar] .hb-stk b{font-size:13px}
   .hb-pos.no-m{display:none}
   .kbbs.kbbs.has-hb.hb-sb-m{--hb-bot:max(var(--hb-sp-sb-m),var(--hb-room,0px))}
   .kbbs.kbbs.has-hb.hb-st-m{--hb-tb:var(--hb-sp-st-m)}
+  .kbbs.kbbs.kbbs.has-hb.hb-vc-m{--hb-bot:var(--hb-room,0px)}
+  .kbbs.kbbs.kbbs.has-hb.hb-d.hb-vc-m{--hb-bot:calc(var(--hb-room,0px) + 1.05cqi)}
   .kbbs.has-hb.hb-site-m{--hb-ins:max(var(--hb-pads),(100cqi - var(--hb-site)) / 2 + var(--hb-gs));--hb-ine:max(var(--hb-pade),(100cqi - var(--hb-site)) / 2 + var(--hb-ge))}
   .hb-hs-m .hb-box.is-end{margin-inline-start:clamp(0px,100% - var(--hb-rm) - var(--hb-xo),100% - var(--hb-rm))}
   .kbbs.has-hb.is-arrows:not(.is-corner) .kbbs-nav{top:34%}
@@ -144,10 +165,12 @@ html[lang=ar] .hb-stk b{font-size:13px}
   .kbbs.has-hb.hb-site-d{--hb-ins:max(var(--hb-pads),(100cqi - var(--hb-site)) / 2 + var(--hb-gs));--hb-ine:max(var(--hb-pade),(100cqi - var(--hb-site)) / 2 + var(--hb-ge))}
   .hb-hs-d .hb-box.is-end{margin-inline-start:clamp(0px,100% - var(--hb-rm) - var(--hb-xo),100% - var(--hb-rm))}
   .hb-d.hb-va-d .hb-pos{inset-block-start:calc(var(--hb-bot0) + 24px)}
-  .kbbs.has-hb.is-bars.is-inset{--hb-bot:max(66px,4cqi);--hb-bot0:max(66px,4cqi);--hb-room:66px}
-  .kbbs.has-hb.is-corner.is-bars,.kbbs.has-hb.is-corner.is-arrows{--hb-bot:68px;--hb-bot0:68px;--hb-room:68px}
+  .kbbs.has-hb.is-bars.is-inset{--hb-bot:max(66px,4cqi);--hb-bot0:max(66px,4cqi)}
+  .kbbs.has-hb.is-corner.is-bars,.kbbs.has-hb.is-corner.is-arrows{--hb-bot:68px;--hb-bot0:68px}
   .kbbs.kbbs.has-hb.hb-sb-d{--hb-bot:max(var(--hb-sp-sb-d),var(--hb-room,0px))}
   .kbbs.kbbs.has-hb.hb-st-d{--hb-tb:var(--hb-sp-st-d)}
+  .kbbs.kbbs.kbbs.has-hb.hb-vc-d{--hb-bot:var(--hb-room,0px)}
+  .kbbs.kbbs.kbbs.has-hb.hb-d.hb-vc-d{--hb-bot:calc(var(--hb-room,0px) + var(--hb-w) * .014)}
   .hb-a .hb-box{border-radius:24px}
   .hb-d .hb-box{transform:rotate(-1.6deg);border-radius:28px}
   .hb-stk{width:88px;height:88px}

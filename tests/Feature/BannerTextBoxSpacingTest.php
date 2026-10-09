@@ -102,7 +102,8 @@ it('moves the box from the bottom or top edge, but never into the slider bars\' 
         ->not->toContain('hb-sb-m')->not->toContain('hb-st-d')
         ->and(hb4Css())->toContain('.kbbs.kbbs.has-hb.hb-sb-d{--hb-bot:max(var(--hb-sp-sb-d),var(--hb-room,0px))}')
         ->and(hb4Css())->toContain('.kbbs.kbbs.has-hb.hb-sb-m{--hb-bot:max(var(--hb-sp-sb-m),var(--hb-room,0px))}')
-        ->and(hb4Css())->toContain('.kbbs.has-hb.is-bars.is-inset{--hb-bot:66px;--hb-bot0:66px;--hb-room:66px}')
+        // ▲ Lane QK: --hb-room is the bars' own 20px tap strip, not the 66px Auto inset.
+        ->and(hb4Css())->toContain('.kbbs.has-hb.is-bars.is-inset{--hb-bot:66px;--hb-bot0:66px;--hb-room:var(--kbbs-hit,20px)}')
         // D's centre stays anchored to the AUTO bottom.
         ->and(hb4Css())->toContain('.hb-d.hb-va-d .hb-pos{inset-block-start:calc(var(--hb-bot0) + 24px)}');
 });

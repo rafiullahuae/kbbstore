@@ -381,6 +381,9 @@ final class BannerTextBox
      * hb-na-m        a phone's box is not at the bottom: the arrows step aside
      * hb-sb-{d,m}    a space below the box is set (else Auto)
      * hb-st-{d,m}    a space above the box is set (else Auto)
+     * hb-vc-{d,m}    up and down is Custom: the column runs to the banner's
+     *                bottom edge (or the top of the slider's own controls), so
+     *                100% puts the box's bottom edge there -- Lane QK
      */
     public static function rootClasses(array $cfg): string
     {
@@ -395,6 +398,11 @@ final class BannerTextBox
         foreach (['d', 'm'] as $dev) {
             $out .= (float) $cfg['sp_sb_'.$dev] > 0 ? ' hb-sb-'.$dev : '';
             $out .= (float) $cfg['sp_st_'.$dev] > 0 ? ' hb-st-'.$dev : '';
+        }
+
+        // Lane QK: "100% mean full bottom." Custom's travel ends at the edge.
+        foreach (['d', 'm'] as $dev) {
+            $out .= $cfg['vpos_'.$dev] === 'custom' ? ' hb-vc-'.$dev : '';
         }
 
         // A phone's box is the full width, so wherever it sits that is not the
