@@ -77,7 +77,12 @@ it('still emits the three classes it always emitted, and no more', function () {
     // ▲ Lane M4 (6 October): `mm-v4` and `mm-an-sl` joined them deliberately —
     // Style → Menu style ships at V4 two-tone (the owner picked it) and its
     // sub-menu opens with the Slide down animation. Still no icon class.
-    expect($classes)->toBe(['mm-an-sl', 'mm-card-cream', 'mm-left', 'mm-rule-children', 'mm-v4']);
+    // ▲ Lane QK12 (9 October): `mm-nohl` and `mm-flash` joined them
+    // deliberately -- Style -> "Super Sale highlight" ships off and "Flash
+    // icon beside Super Sale" on, the owner's "remove the red color of super
+    // sale menu, add a flash icon". Qk12HeaderAndMenuTest pins them. Still no
+    // icon class.
+    expect($classes)->toBe(['mm-an-sl', 'mm-card-cream', 'mm-flash', 'mm-left', 'mm-nohl', 'mm-rule-children', 'mm-v4']);
 });
 
 it('leaves the menu icon answered by the screen that reaches the element', function () {

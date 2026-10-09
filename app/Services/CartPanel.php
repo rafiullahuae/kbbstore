@@ -166,14 +166,22 @@ class CartPanel
          * an animated tick going grey to green, super fast, gone at once, with
          * the panel still opening exactly as now.
          *
-         * ▲ SHIPS AT `tick`, WHICH IS A MOVED DEFAULT AND HIS: CLAUDE.md's
+         * ▲ SHIPPED AT `tick`, A MOVED DEFAULT AND HIS: CLAUDE.md's
          *   30-September reversal. `pill` is the old behaviour, one press away.
+         *
+         * ▲ NOW `none`, AND THAT IS HIS TOO — Lane QK12, 9 October, on a phone
+         *   screenshot of the green badge over the logo: "remove the tick arrow
+         *   that comes with cart panel when adding product to cart". The panel
+         *   still opens (open_on_add); only the badge goes. The migration
+         *   2027_10_19_100000_qk12a_header_and_menu stores `none` over any saved
+         *   value, so a shop that saved this screen moves as well. `tick` is
+         *   still the first option, one press away.
          *
          * Printed to the page inside the panel's data-cp JSON (jsConfig()),
          * which Blade escapes; cast() holds it to these three keys or the
          * default, so cart.js can only ever read one of them.
          */
-        'add_feedback'     => ['select', 'When something is added', 'tick',
+        'add_feedback'     => ['select', 'When something is added', 'none',
                                'Animated tick: a small grey tick turns green beside the opening panel and is gone in under half a second. Text pill: the "Added to bag" message, as before. None: just the panel. Messages that matter — a set that took the last one, a sold-out product — always show as text.',
                                ['tick' => 'Animated tick', 'pill' => 'Text pill (“Added to bag”)', 'none' => 'None']],
 

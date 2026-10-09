@@ -362,6 +362,11 @@ it('renders the checkout byte for byte as before this lane with both switches of
     // Lane QK8's WhatsApp button is OFF on checkout, as asked; ON is its
     // byte-for-byte way back (WhatsAppButtonTabTest), so it is set here too.
     app(\App\Services\WhatsAppButton::class)->save(['show_checkout' => true]);
+    // Lane QK12: the phone menu's flash icon beside Super Sale ships ON, as
+    // asked; OFF prints the row as before (Qk12HeaderAndMenuTest), so it is
+    // set here for the same reason. Only that key: the rest stay as stored.
+    $kbbMm = app(\App\Services\SettingsService::class)->get('mobile_menu');
+    app(\App\Services\SettingsService::class)->set('mobile_menu', array_merge(is_array($kbbMm) ? $kbbMm : [], ['sale_flash' => false]));
     \App\Services\SettingsService::forgetMemo();
     $cart = cdCart();
 

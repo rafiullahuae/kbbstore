@@ -68,6 +68,12 @@
 .pvmenu.pv4 .mm-si{font-size:var(--pv-qf,9px);min-height:var(--pv-qh,23px)}
 .pvmenu.pv4 .mm-it.hot{background:#C73345;color:#fff}
 .pvmenu.pv4.pv4-nohl .mm-it.hot{background:none;color:#B0182F}
+/* Lane QK12: Style → "Flash icon beside Super Sale" -- the shop's bolt, and
+   with the highlight off a plain row, as on the phone. */
+.pvmenu.pv4.pv4-flash.pv4-nohl .mm-it.hot{color:inherit;font-weight:400}
+.pvmenu.pv4.pv4-flash .mm-it.hot::before{content:'';display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;margin-inline-end:6px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23C13E63' d='M13.2 2 4.6 13.4h6.1L9.8 22l8.6-11.6h-6.1z'/%3E%3C/svg%3E") center/contain no-repeat}
+.pvmenu.pv4.pv4-flash:not(.pv4-nohl) .mm-it.hot::before{filter:brightness(0) invert(1)}
 </style>
 <script>
 (function () {
@@ -146,6 +152,7 @@
     var px = function (k) { return (mmVal(k) * s).toFixed(1) + 'px'; };
     menu.classList.add('pv4');
     menu.classList.toggle('pv4-nohl', !mmVal('sale_fill'));
+    menu.classList.toggle('pv4-flash', !!mmVal('sale_flash'));
     menu.style.setProperty('--pv-rh', px('row_h')); menu.style.setProperty('--pv-rf', px('row_fs'));
     menu.style.setProperty('--pv-qf', px('sub_fs')); menu.style.setProperty('--pv-qh', px('sub_h'));
     menu.style.setProperty('--pv-ch', px('chip_h')); menu.style.setProperty('--pv-cf', px('chip_fs'));

@@ -90,7 +90,9 @@ it('ships V4 two-tone with its five quick links pointing at routes the shop real
     $nav = m4Nav(m4Home());
 
     expect(MobileMenu::SCHEMA['menu_style'][2])->toBe('v4')
-        ->and($nav)->toContain('class="mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl"');
+        // ▲ Lane QK12: `mm-nohl mm-flash` follow -- Super Sale highlight off and
+        // its flash icon on, as the owner asked on 9 October.
+        ->and($nav)->toContain('class="mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl mm-nohl mm-flash"');
 
     preg_match_all('#<a class="mm-chip( a-[a-z]+)?" href="([^"]+)">([^<]+)</a>#', $nav, $m);
     expect($m[3])->toBe(['Super Sale', 'New In', 'Best Sellers', 'Under 54 AED', 'Brands A–Z'])
@@ -160,7 +162,10 @@ it('Classic puts back the 2.60.413 panel byte for byte, whatever the V4 controls
 
     // And the rest of the menu is exactly V4's: the only differences are the
     // two classes and the quick-link row.
-    $stripped = (string) preg_replace('#    <div class="mm-chips">.*?</div></div>\n#', '', str_replace(' mm-v4 mm-an-sl"', '"', $v4));
+    // ▲ Lane QK12: V4 also carries `mm-nohl mm-flash` and the Super Sale row's
+    // flash icon, which Classic does not print (Qk12HeaderAndMenuTest).
+    $v4 = str_replace('<svg class="mm-fl" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13.2 2 4.6 13.4h6.1L9.8 22l8.6-11.6h-6.1z"/></svg>', '', $v4);
+    $stripped = (string) preg_replace('#    <div class="mm-chips">.*?</div></div>\n#', '', str_replace(' mm-v4 mm-an-sl mm-nohl mm-flash"', '"', $v4));
     expect($stripped)->toBe($classic);
 });
 
@@ -339,9 +344,11 @@ it('darkens the Super Sale row for AA, and its switch takes the fill away', func
     expect($css)->toContain('.mm-v4 .mm-it[style*="background:"],.mm-v4 .mm-si[style*="background:"]{background-image:linear-gradient(rgba(0,0,0,.12),rgba(0,0,0,.12)) !important}')
         ->and($css)->toContain('.mm-v4.mm-nohl .mm-it[style*="background:"]');
 
-    expect(app(MobileMenu::class)->bodyClass())->not->toContain('mm-nohl');
-    m4Save(['sale_fill' => false]);
+    // ▲ Lane QK12: the fill now ships OFF (the owner: "remove the red color of
+    // super sale menu"); on puts the darkened fill back.
     expect(app(MobileMenu::class)->bodyClass())->toContain('mm-nohl');
+    m4Save(['sale_fill' => true]);
+    expect(app(MobileMenu::class)->bodyClass())->not->toContain('mm-nohl');
 });
 
 it('lets the quick-link row scroll sideways instead of starting a swipe-to-close', function () {

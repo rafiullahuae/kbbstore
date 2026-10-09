@@ -3399,6 +3399,14 @@ p.kbb-pol a:hover{color:var(--pink-deep,#C13E63)}
    red text, no fill. */
 .mm-v4 .mm-it[style*="background:"],.mm-v4 .mm-si[style*="background:"]{background-image:linear-gradient(rgba(0,0,0,.12),rgba(0,0,0,.12)) !important}
 .mm-v4.mm-nohl .mm-it[style*="background:"],.mm-v4.mm-nohl .mm-si[style*="background:"]{background:none !important;color:var(--sale) !important;font-weight:700}
+/* Lane QK12, Style → "Flash icon beside Super Sale": a bolt before the name
+   (partials/mobile-menu-item prints it on a highlighted row while the switch
+   is on in V4). With the fill off the row is otherwise plain, as the owner
+   asked — "remove the red color of super sale menu, add a flash icon" — and
+   the bolt is the accent; on a filled row it takes the white. */
+.mm-v4.mm-flash .mm-fl{display:block;flex:none;width:1.15em;height:1.15em;fill:var(--pink-deep)}
+.mm-v4.mm-flash:not(.mm-nohl) .mm-fl{fill:currentColor}
+.mm-v4.mm-nohl.mm-flash .mm-it[style*="background:"]{color:var(--ink) !important;font-weight:400}
 
 /* Sub-menu animation — the Sub-menu animation card. CSS only: the section's
    height runs 0fr -> 1fr on a one-row grid, so nothing is measured. A closed
@@ -3522,7 +3530,13 @@ header.hd-trendhide.scrolled .trend{max-height:0;opacity:0;padding-top:0;padding
 .kbbmi .s{position:absolute;width:9px;height:9px;border-radius:3px;background:var(--mi-c1);
   transition:transform .4s cubic-bezier(.5,-.25,.3,1.3),opacity .24s,background .3s}
 
-/* colour tiles — the default */
+/* three lines — the default since Lane QK12 ("simple three lines but
+   beautiful"): one inline SVG, 2px round-capped strokes in the header's ink,
+   the middle one shorter. The same box as every other family, so the button
+   and the logo beside it do not move. */
+.kbbmi .ln{display:block;width:24px;height:24px;fill:none;stroke:#2A2228;stroke-width:2;stroke-linecap:round}
+
+/* colour tiles — four squares, the default until Lane QK12 */
 @keyframes miTiles{0%,100%{background:var(--mi-c1)}33%{background:var(--mi-c2)}66%{background:var(--mi-c3)}}
 .kbbmi-tiles .s:nth-child(1){transform:translate(-6px,-6px);animation:miTiles var(--mi-speed) ease-in-out infinite}
 .kbbmi-tiles .s:nth-child(2){transform:translate(6px,-6px);animation:miTiles var(--mi-speed) ease-in-out infinite calc(var(--mi-speed) * .08)}

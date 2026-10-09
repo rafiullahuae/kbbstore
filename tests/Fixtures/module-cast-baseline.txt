@@ -682,10 +682,10 @@ header_settings|badge_bg|colour|""|'#C6395F'
 header_settings|badge_bg|colour|"zz"|'#C6395F'
 header_settings|badge_bg|colour|null|'#C6395F'
 header_settings|badge_bg|colour|"#e23a4e"|'#e23a4e'
-header_settings|menu_icon|select|"tiles"|'tiles'
-header_settings|menu_icon|select|"nope"|'tiles'
-header_settings|menu_icon|select|""|'tiles'
-header_settings|menu_icon|select|null|'tiles'
+header_settings|menu_icon|select|"lines"|'lines'
+header_settings|menu_icon|select|"nope"|'lines'
+header_settings|menu_icon|select|""|'lines'
+header_settings|menu_icon|select|null|'lines'
 header_settings|menu_icon_speed|range|5|5
 header_settings|menu_icon_speed|range|"5"|5
 header_settings|menu_icon_speed|range|0|2
@@ -1509,9 +1509,9 @@ cart_panel|note_ms|range|""|400
 cart_panel|note_ms|range|null|400
 cart_panel|note_ms|range|"3.7"|400
 cart_panel|add_feedback|select|"tick"|'tick'
-cart_panel|add_feedback|select|"nope"|'tick'
-cart_panel|add_feedback|select|""|'tick'
-cart_panel|add_feedback|select|null|'tick'
+cart_panel|add_feedback|select|"nope"|'none'
+cart_panel|add_feedback|select|""|'none'
+cart_panel|add_feedback|select|null|'none'
 cart_panel|txt_tab_cart|text|"abc"|'abc'
 cart_panel|txt_tab_cart|text|""|''
 cart_panel|txt_tab_cart|text|"  sp  "|'sp'
@@ -2046,6 +2046,17 @@ mobile_menu|sub_ease|select|"ease-out"|'ease-out'
 mobile_menu|sub_ease|select|"nope"|'ease-out'
 mobile_menu|sub_ease|select|""|'ease-out'
 mobile_menu|sub_ease|select|null|'ease-out'
+mobile_menu|sale_flash|bool|true|true
+mobile_menu|sale_flash|bool|false|false
+mobile_menu|sale_flash|bool|"1"|true
+mobile_menu|sale_flash|bool|"0"|false
+mobile_menu|sale_flash|bool|""|false
+mobile_menu|sale_flash|bool|"on"|true
+mobile_menu|sale_flash|bool|"off"|true
+mobile_menu|sale_flash|bool|"no"|true
+mobile_menu|sale_flash|bool|1|true
+mobile_menu|sale_flash|bool|0|false
+mobile_menu|sale_flash|bool|null|false
 product_labels|oos_on|bool|true|true
 product_labels|oos_on|bool|false|false
 product_labels|oos_on|bool|"1"|true

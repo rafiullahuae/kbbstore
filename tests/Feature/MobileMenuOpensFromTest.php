@@ -87,7 +87,9 @@ it('opens from the left by default: the side panel class is on the menu', functi
         // ▲ Lane M4: `mm-v4 mm-an-sl` follow it — Style → Menu style ships at
         // V4 two-tone, the owner's pick, with its sub-menu animation. They are
         // appended after mm-left, so this class list still starts as it did.
-        ->and(mnNavTag(mnHome()))->toContain('class="mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl"');
+        // ▲ Lane QK12: then `mm-nohl mm-flash` (Style -> Super Sale highlight
+        // off, flash icon on, as the owner asked), appended last.
+        ->and(mnNavTag(mnHome()))->toContain('class="mmenu mm-card-cream mm-rule-children mm-left mm-v4 mm-an-sl mm-nohl mm-flash"');
 });
 
 it('Bottom puts back the sheet: the same page, without the one class', function () {
@@ -100,7 +102,7 @@ it('Bottom puts back the sheet: the same page, without the one class', function 
     // ▲ Lane M4: plus V4's two classes, which are the menu STYLE and not the
     // side it opens from; MobileMenuTwoToneTest pins Classic + Bottom as the
     // 2.60.413 sheet byte for byte.
-    expect(mnNavTag($bottom))->toContain('class="mmenu mm-card-cream mm-rule-children mm-v4 mm-an-sl"')
+    expect(mnNavTag($bottom))->toContain('class="mmenu mm-card-cream mm-rule-children mm-v4 mm-an-sl mm-nohl mm-flash"')
         ->and($bottom)->not->toContain('mm-left');
 
     // And NOTHING else on the page differs. Mutation: print any other

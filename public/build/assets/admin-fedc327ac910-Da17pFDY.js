@@ -75,6 +75,7 @@
     var px = function (k) { return (mmVal(k) * s).toFixed(1) + 'px'; };
     menu.classList.add('pv4');
     menu.classList.toggle('pv4-nohl', !mmVal('sale_fill'));
+    menu.classList.toggle('pv4-flash', !!mmVal('sale_flash'));
     menu.style.setProperty('--pv-rh', px('row_h')); menu.style.setProperty('--pv-rf', px('row_fs'));
     menu.style.setProperty('--pv-qf', px('sub_fs')); menu.style.setProperty('--pv-qh', px('sub_h'));
     menu.style.setProperty('--pv-ch', px('chip_h')); menu.style.setProperty('--pv-cf', px('chip_fs'));

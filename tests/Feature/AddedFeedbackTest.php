@@ -51,23 +51,27 @@ beforeEach(function () {
     SettingsService::forgetMemo();
 });
 
-it('ships the animated tick, because he asked for it', function () {
+it('ships None, because he asked for that next', function () {
     /*
      * CLAUDE.md's 30-September reversal: what he asked for is the shop's new
-     * state. The pill is one press away.
+     * state. The tick shipped first, as he asked; on 9 October (Lane QK12) he
+     * asked for it gone: "remove the tick arrow that comes with cart panel
+     * when adding product to cart". Tick and pill are one press away.
      *
-     * MUTATION, RUN: `add_feedback` default -> 'pill' in CartPanel::SCHEMA and
-     * this is red, and the page's data-cp says "pill".
+     * MUTATION, RUN: `add_feedback` default -> 'tick' in CartPanel::SCHEMA and
+     * this is red, and the page's data-cp says "tick".
      */
     $panel = app(CartPanel::class);
 
-    expect($panel->all()['add_feedback'])->toBe('tick')
-        ->and($panel->jsConfig()['feedback'])->toBe('tick');
+    expect($panel->all()['add_feedback'])->toBe('none')
+        ->and($panel->jsConfig()['feedback'])->toBe('none');
 
     $html = test()->get('/')->assertOk()->getContent();
 
-    // Printed inside the panel's data-cp JSON, which Blade escapes.
-    expect($html)->toContain('&quot;feedback&quot;:&quot;tick&quot;')
+    // Printed inside the panel's data-cp JSON, which Blade escapes. The mark's
+    // element stays on the page (switching Animated tick back on needs it) and
+    // is never given `on` while the setting says none.
+    expect($html)->toContain('&quot;feedback&quot;:&quot;none&quot;')
         ->and(substr_count($html, '<div class="kbb-addmark" id="kbbAddMark">'))->toBe(1);
 });
 
@@ -84,17 +88,19 @@ it('stores one of its three options or the default, never what it was sent', fun
 
     expect($cast('pill'))->toBe('pill')
         ->and($cast('none'))->toBe('none')
-        ->and($cast('<script>'))->toBe('tick')
-        ->and($cast(''))->toBe('tick')
-        ->and($cast(null))->toBe('tick');
+        ->and($cast('tick'))->toBe('tick')
+        // Anything else is the default -- None since Lane QK12.
+        ->and($cast('<script>'))->toBe('none')
+        ->and($cast(''))->toBe('none')
+        ->and($cast(null))->toBe('none');
 
     test()->actingAs(afOwner(), 'admin')
         ->postJson('/admin-api/cart-panel', ['settings' => ['add_feedback' => '"><script>x</script>']])
         ->assertOk();
 
     SettingsService::forgetMemo();
-    expect(app(CartPanel::class)->all()['add_feedback'])->toBe('tick')
-        ->and(app(SettingsService::class)->get('cartpanel_add_feedback'))->toBe('tick');
+    expect(app(CartPanel::class)->all()['add_feedback'])->toBe('none')
+        ->and(app(SettingsService::class)->get('cartpanel_add_feedback'))->toBe('none');
 
     test()->postJson('/admin-api/cart-panel', ['settings' => ['add_feedback' => 'pill']])->assertOk();
 
@@ -115,20 +121,21 @@ it('puts the control on Appearance → Cart panel → Behaviour, beside "Open th
     expect($f['label'])->toBe('When something is added')
         ->and($f['type'])->toBe('select')
         ->and(array_keys($f['options']))->toBe(['tick', 'pill', 'none'])
-        ->and($f['value'])->toBe('tick');
+        ->and($f['value'])->toBe('none');
 });
 
 it('keeps a support account out of the screen', function () {
     expect(collect(AdminCapabilities::RULES)->contains(['*', 'admin-api/cart-panel', 'content.manage']))->toBeTrue();
 
-    test()->postJson('/admin-api/cart-panel', ['settings' => ['add_feedback' => 'none']])->assertStatus(401);
+    // 'pill', not the default: a refused write must be visible as unchanged.
+    test()->postJson('/admin-api/cart-panel', ['settings' => ['add_feedback' => 'pill']])->assertStatus(401);
 
     test()->actingAs(afOwner('support'), 'admin')
-        ->postJson('/admin-api/cart-panel', ['settings' => ['add_feedback' => 'none']])
+        ->postJson('/admin-api/cart-panel', ['settings' => ['add_feedback' => 'pill']])
         ->assertForbidden();
 
     SettingsService::forgetMemo();
-    expect(app(CartPanel::class)->all()['add_feedback'])->toBe('tick');
+    expect(app(CartPanel::class)->all()['add_feedback'])->toBe('none');
 });
 
 it('marks only the plain "it went in" confirmation as `added`', function () {

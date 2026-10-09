@@ -200,8 +200,17 @@ class HeaderSettings
         'badge_bg'        => ['colour', 'Count badge', '#C6395F', ''],
 
         // ── Menu icon ──
-        'menu_icon'       => ['select', 'Icon', 'tiles', 'The control that opens the mobile menu.',
-                              ['tiles' => 'Colour tiles', 'bars' => 'Three bars', 'bars-cycle' => 'Bars · brand cycle',
+        /*
+         * Lane QK12. The owner, 9 October: "the mobile menu icon i need simple
+         * three lines but beautiful. also give option on backend to change back
+         * anytime." `lines` is that icon and ships as the default -- a moved
+         * default and his; the migration 2027_10_19_100000_qk12a_header_and_menu
+         * stores it over a saved value. `tiles` is the four squares it
+         * replaces, renamed so he can find his way back, and renders byte for
+         * byte as before. First in the list, so it is the first thing he sees.
+         */
+        'menu_icon'       => ['select', 'Icon', 'lines', 'The control that opens the mobile menu.',
+                              ['lines' => 'Three lines', 'tiles' => 'Four squares (previous)', 'bars' => 'Three bars', 'bars-cycle' => 'Bars · brand cycle',
                                'bars-tri' => 'Bars · three colours', 'bars-gradient' => 'Bars · gradient',
                                'bars-glow' => 'Bars · soft glow', 'chip' => 'Bars in a chip', 'ring' => 'Bars in a ring',
                                'dots9' => 'Nine dots', 'dots3' => 'Three dots']],
@@ -1100,6 +1109,7 @@ class HeaderSettings
     public function menuIconFamily(): string
     {
         return match ($this->get('menu_icon')) {
+            'lines' => 'lines',
             'tiles' => 'tiles',
             'dots9' => 'dots9',
             'dots3' => 'dots3',

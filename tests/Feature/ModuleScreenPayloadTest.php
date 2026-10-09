@@ -276,6 +276,12 @@ it('sends every module screen the payload it sent before the shared schema', fun
     // with new help -- the policy links as the footer's last row, as asked.
     // And slim-footer's pad_top / m_pad_top VALUES read 30, not 12 / 10: the
     // rows migration 2027_10_17_100000 stores (30px above the logo, as asked).
+    // ▲ Lane QK12 chunk A (9 October), each the owner's request, spliced in,
+    // not regenerated: cart-panel add_feedback ships "none" (no green tick);
+    // header menu_icon gains its first option "lines" ("Three lines") and ships
+    // at it, "tiles" relabelled "Four squares (previous)"; mobile-menu
+    // sale_fill ships OFF and gains sale_flash ("Flash icon beside Super
+    // Sale", ON) at the end of its fields and of the Style group.
     $expected = json_decode(file_get_contents(base_path('tests/Fixtures/module-screen-payloads.json')), true);
 
     expect($expected)->toBeArray()->not->toBeEmpty();

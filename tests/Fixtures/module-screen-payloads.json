@@ -626,8 +626,8 @@
                   "pill": "Text pill (“Added to bag”)",
                   "none": "None"
               },
-              "default": "tick",
-              "value": "tick"
+              "default": "none",
+              "value": "none"
           },
           {
             "key": "added_note",
@@ -1822,10 +1822,11 @@
             "type": "select",
             "label": "Icon",
             "help": "The control that opens the mobile menu.",
-            "default": "tiles",
-            "value": "tiles",
+            "default": "lines",
+            "value": "lines",
             "options": {
-              "tiles": "Colour tiles",
+              "lines": "Three lines",
+              "tiles": "Four squares (previous)",
               "bars": "Three bars",
               "bars-cycle": "Bars · brand cycle",
               "bars-tri": "Bars · three colours",
@@ -3267,8 +3268,8 @@
         "type": "bool",
         "label": "Super Sale highlight",
         "help": "A menu row with a highlight colour (Super Sale) keeps its filled background, darkened so its white text passes AA. Off: red text, no fill.",
-        "default": true,
-        "value": true,
+        "default": false,
+        "value": false,
         "options": null
       },
       {
@@ -3577,6 +3578,15 @@
           "spring": "Spring",
           "linear": "Linear"
         }
+      },
+      {
+        "key": "sale_flash",
+        "type": "bool",
+        "label": "Flash icon beside Super Sale",
+        "help": "A small lightning bolt before the name of a row with a highlight colour (Super Sale). With the highlight off the row is otherwise plain, like the rows around it; with this off it keeps red text.",
+        "default": true,
+        "value": true,
+        "options": null
       }
     ],
     "groups": [
@@ -3648,7 +3658,8 @@
         "fields": [
           "menu_style",
           "show_chips",
-          "sale_fill"
+          "sale_fill",
+          "sale_flash"
         ]
       },
       {

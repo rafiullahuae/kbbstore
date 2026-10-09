@@ -2366,6 +2366,38 @@ final class EnglishRenderWalk
                 'with' => '$1'.self::laneLg2Lockup('checkout', '$2'),
                 'hits' => 2, // /checkout (with a basket) and /checkout/success
             ],
+            /*
+             * THE PHONE MENU BUTTON: THREE LINES. (Lane QK12, chunk A)
+             *
+             * The owner, 9 October: "the mobile menu icon i need simple three
+             * lines but beautiful. also give option on backend to change back
+             * anytime." Appearance -> Header -> Menu icon -> Icon ships at
+             * "Three lines" (the package's migration stores it). The base
+             * views do not know `lines` and fall to their default family, the
+             * three spans; the new views draw one inline SVG. The button's own
+             * tag is in the pattern, so nothing outside its contents may move.
+             * "Four squares (previous)" renders byte for byte as before --
+             * Qk12HeaderAndMenuTest pins that.
+             */
+            'the phone menu button: three lines (Lane QK12)' => [
+                'pattern' => '#(<button class="kbbmi kbbmi-lines" id="burger" type="button"\n        aria-label="Menu" aria-controls="mmenu" aria-expanded="false">\n                )<span class="b"></span><span class="b"></span><span class="b"></span>\n    </button>#',
+                'with' => '$1<svg class="ln" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.5h17M3.5 12h11M3.5 17.5h17"/></svg>'."\n".'            </button>',
+                'hits' => 31, // every page with the site header
+            ],
+            /*
+             * THE PHONE MENU'S SUPER SALE ROW: A FLASH BEFORE ITS NAME. (Lane
+             * QK12, chunk A) "in mobile menu, remove the red color of super
+             * sale menu, add a flash icon with super sale". The red goes by
+             * class (mm-nohl, from MobileMenu, identical on both sides); the
+             * bolt is markup, one constant SVG in front of the name, on the
+             * phone sheet's row only -- the desktop pill's style attribute
+             * carries ;border-radius and is not matched.
+             */
+            'the phone menu Super Sale row: a flash icon (Lane QK12)' => [
+                'pattern' => '#(style="background:\#E23A4E;color:\#fff"\s*>)Super Sale</a>#',
+                'with' => '$1<svg class="mm-fl" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13.2 2 4.6 13.4h6.1L9.8 22l8.6-11.6h-6.1z"/></svg>Super Sale</a>',
+                'hits' => 33, // every page: the phone menu is in the layout
+            ],
         ];
     }
 

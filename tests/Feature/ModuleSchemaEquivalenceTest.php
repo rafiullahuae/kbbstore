@@ -96,6 +96,13 @@
  *   the footer's last row), so the valid-option row is now "end" (1 removed,
  *   1 inserted) and the three refused inputs answer "end" (3 modified) -- the
  *   default changed, not the cast.)
+ *   (Lane QK12, chunk A: mobile_menu `sale_flash`, 11 lines inserted; and
+ *   two defaults MOVED on purpose, both the owner's of 9 October: header
+ *   `menu_icon` now first-optioned and defaulting to "lines" (the "tiles"
+ *   valid-option row replaced by "lines", 1 removed, 1 inserted, and the three
+ *   refused inputs answer "lines", 3 modified), and cart_panel `add_feedback`
+ *   defaulting to "none" (its three refused inputs, 3 modified) -- the
+ *   defaults changed, not the cast.)
  *
  *   Take the new rows and nothing else: rebuild the corpus, then for every line
  *   whose identity (module|key|type|input) is already in the fixture, keep the

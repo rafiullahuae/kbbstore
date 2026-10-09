@@ -4,6 +4,10 @@
     Different icons need different markup — tiles are four squares, the dot
     icons are dots — so the family decides what is rendered and the chosen
     style supplies the animation.
+
+    `lines` (Lane QK12, the default): the owner's "simple three lines but
+    beautiful" -- one inline SVG, a constant. `tiles` is the four squares it
+    replaced, still one choice away and rendered exactly as before.
 --}}
 @php
     $hd = app(\App\Services\HeaderSettings::class);
@@ -16,6 +20,9 @@
 <button class="kbbmi kbbmi-{{ $style }}" id="burger" type="button"
         aria-label="{{ __('store.mobile_menu.open_label') }}" aria-controls="mmenu" aria-expanded="false">
     @switch ($family)
+        @case ('lines')
+            <svg class="ln" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.5h17M3.5 12h11M3.5 17.5h17"/></svg>
+            @break
         @case ('tiles')
             <span class="s"></span><span class="s"></span><span class="s"></span><span class="s"></span>
             @break

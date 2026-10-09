@@ -4474,8 +4474,11 @@ function hdPreview(){
     --fb-h:${g('fb_height')}px;--fb-size:${g('fb_size')}px;--fb-flag-h:${g('fb_flag_h')}px;
     --fb-bg:${g('fb_bg')};--fb-ink:${g('fb_ink')};--fb-border:${g('fb_border')}`;
   const icon=g('menu_icon');
-  const fam = icon==='tiles'?'tiles' : icon==='dots9'?'dots9' : icon==='dots3'?'dots3' : 'bars';
-  const inner = fam==='tiles' ? '<span class="s"></span>'.repeat(4)
+  const fam = icon==='lines'?'lines' : icon==='tiles'?'tiles' : icon==='dots9'?'dots9' : icon==='dots3'?'dots3' : 'bars';
+  /* Lane QK12: the shop's three-line SVG, its stroke inline so the preview
+     draws it whether or not this screen carries the shop's .kbbmi .ln rule. */
+  const inner = fam==='lines' ? '<svg class="ln" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#2A2228" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3.5 6.5h17M3.5 12h11M3.5 17.5h17"/></svg>'
+              : fam==='tiles' ? '<span class="s"></span>'.repeat(4)
               : fam==='dots9' ? '<span class="d"></span>'.repeat(9)
               : fam==='dots3' ? '<span class="d"></span>'.repeat(3)
               : '<span class="b"></span>'.repeat(3);

@@ -116,7 +116,17 @@ class MobileMenu
          */
         'menu_style'    => ['select', 'Menu style', 'v4', 'V4 two-tone: a pink top band with search and quick links, the list on clearer glass. Classic is the panel exactly as 2.60.413 drew it — every control below this card does nothing in Classic.', ['v4' => 'V4 two-tone', 'classic' => 'Classic glass (2.60.413)']],
         'show_chips'    => ['bool',   'Quick links row', true, 'The row of links under the search field. Edit them in the Quick links card.'],
-        'sale_fill'     => ['bool',   'Super Sale highlight', true, 'A menu row with a highlight colour (Super Sale) keeps its filled background, darkened so its white text passes AA. Off: red text, no fill.'],
+        /*
+         * Lane QK12. The owner, 9 October, on a phone screenshot of the list:
+         * "in mobile menu, remove the red color of super sale menu, add a flash
+         * icon with super sale". The red is NOT a rule for that link: it is the
+         * row's own highlight colour from Store & content -> Mega Menu
+         * (#E23A4E, seeded with the menu), which the desktop bar paints as its
+         * pill as well -- so the colour stays stored and only this sheet stops
+         * filling with it. Off is a moved default and his; the migration
+         * 2027_10_19_100000_qk12a_header_and_menu stores it over a saved `true`.
+         */
+        'sale_fill'     => ['bool',   'Super Sale highlight', false, 'A menu row with a highlight colour (Super Sale) keeps its filled background, darkened so its white text passes AA. Off: red text, no fill.'],
 
         'panel_w_pct'   => ['range',  'Panel width',          88, 'Share of the screen the panel covers, between the two limits below.', ['min' => 60, 'max' => 100, 'step' => 1, 'unit' => '%']],
         'panel_w_min'   => ['range',  'Panel width · at least', 240, '', ['min' => 200, 'max' => 360, 'step' => 10, 'unit' => 'px']],
@@ -141,6 +151,14 @@ class MobileMenu
         'sub_anim'      => ['select', 'How a section opens', 'slide', 'Panel open/close speed is Panel → Slide duration.', ['slide' => 'Slide down', 'fade' => 'Fade', 'expand' => 'Expand', 'none' => 'None (instant)']],
         'sub_ms'        => ['range',  'Opening duration',    220, '', ['min' => 0, 'max' => 600, 'step' => 20, 'unit' => 'ms']],
         'sub_ease'      => ['select', 'Opening easing', 'ease-out', '', ['ease-out' => 'Ease out', 'spring' => 'Spring', 'linear' => 'Linear']],
+        /*
+         * Lane QK12: the flash he asked for beside Super Sale. Appended, so
+         * every key above keeps its recorded line. With the fill off (above)
+         * the row is otherwise plain -- the colour and weight of the rows
+         * around it -- and the bolt carries the accent; off, it is the old
+         * red text. V4 only, like the fill switch.
+         */
+        'sale_flash'    => ['bool',   'Flash icon beside Super Sale', true, 'A small lightning bolt before the name of a row with a highlight colour (Super Sale). With the highlight off the row is otherwise plain, like the rows around it; with this off it keeps red text.'],
     ];
 
     /**
@@ -231,7 +249,7 @@ class MobileMenu
                    ['show_support', 'support_text', 'show_account', 'account_label']],
         // Lane M4. After the five above, so their payload keeps its order.
         'style' => ['Style', 'V4 two-tone or the classic glass panel.',
-                    ['menu_style', 'show_chips', 'sale_fill']],
+                    ['menu_style', 'show_chips', 'sale_fill', 'sale_flash']],
         'sizes' => ['Sizes', 'Every size is for a 390px phone; smaller and larger phones scale it automatically.',
                     ['panel_w_pct', 'panel_w_min', 'panel_w_max', 'band_pad', 'search_h', 'search_fs',
                      'chip_fs', 'chip_h', 'chip_gap', 'chip_radius', 'row_h', 'row_fs', 'row_py', 'row_px',
@@ -543,6 +561,8 @@ class MobileMenu
                 'mm-v4',
                 self::ANIM_CLASS[$c['sub_anim']] ?? '',
                 $c['sale_fill'] ? '' : 'mm-nohl',
+                // Lane QK12: last, so every class above keeps its place.
+                $c['sale_flash'] ? 'mm-flash' : '',
             ] : []),
         ])));
     }

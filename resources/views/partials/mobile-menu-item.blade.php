@@ -52,17 +52,31 @@
     $hot = ! empty($item['badge']) || str_contains(mb_strtolower($label), 'sale');
     // Grandchildren keep their own rows; only leaf lists become columns.
     $leafOnly = $hasKids && collect($children)->every(fn ($c) => empty($c['children']));
+    /*
+     * Lane QK12: the flash the owner asked for beside Super Sale ("remove the
+     * red color of super sale menu, add a flash icon with super sale"). Printed
+     * on a row that HAS a highlight colour -- Super Sale is the one the menu
+     * carries -- and only while Appearance -> Mobile menu -> Style -> "Flash
+     * icon beside Super Sale" is on in the V4 style, so Classic and a switched-
+     * off shop print the row exactly as before. The setting is asked only for
+     * a highlighted row, from the request's memoised settings map: no query.
+     * A constant: nothing a setting holds is printed into it.
+     */
+    $flash = ! empty($item['highlight_color'])
+        && ($kbbMm = app(\App\Services\MobileMenu::class))->twoTone() && $kbbMm->get('sale_flash')
+        ? '<svg class="mm-fl" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13.2 2 4.6 13.4h6.1L9.8 22l8.6-11.6h-6.1z"/></svg>'
+        : '';
 @endphp
 
 @if (! $hasKids)
     <a class="mm-it{{ $hot ? ' hot' : '' }}" href="{{ $url }}"
         @if (! empty($item['highlight_color'])) style="background:{{ $item['highlight_color'] }};color:#fff" @endif
-        @if (! empty($item['new_tab'])) target="_blank" rel="noopener" @endif>{{ $label }}</a>
+        @if (! empty($item['new_tab'])) target="_blank" rel="noopener" @endif>{!! $flash !!}{{ $label }}</a>
 @else
     <div class="mm-node" data-depth="{{ $depth }}">
         <button class="mm-it mm-par" type="button"
             @if (! empty($item['highlight_color'])) style="background:{{ $item['highlight_color'] }};color:#fff" @endif>
-            {{ $label }}
+            {!! $flash !!}{{ $label }}
             <span class="mm-ct">{{ count($children) }}</span>
             <span class="mm-car" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
         </button>
