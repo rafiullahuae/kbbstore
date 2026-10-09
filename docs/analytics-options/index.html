@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Analytics Options</title>
+<style>
+/* Admin console tokens, copied from resources/views/admin/app.blade.php (default theme) */
+:root{
+  --bg:#f6f7fb;--surface:#fff;--surface-2:#f2f4fb;--surface-3:#eef1f9;--border:#e6e9f2;--border-2:#eef0f6;
+  --ink:#101729;--ink-2:#3c465c;--ink-soft:#626c80;--ink-faint:#97a0b2;
+  --accent:#15a85a;--accent-strong:#0f8f4b;--accent-soft:#e7f7ee;--accent-ink:#0b6e3a;
+  --green:#15a85a;--amber:#e0922f;--red:#e3493f;--blue:#3f6fe0;--violet:#7b6cf0;
+  --amber-soft:#fdf2e2;--red-soft:#fdeceb;--blue-soft:#eaf0fd;--violet-soft:#efedfd;
+  --r:18px;--r-sm:12px;--r-xs:9px;
+  --sh-s:0 1px 2px rgba(16,24,40,.05);
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --night:#0c1120;--night-2:#141a2b;--night-3:#232c42;--night-ink:#eef1f9;--night-soft:#9aa5bd;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#eef0f6}}
+:root[data-theme="dark"]{--bg:#eef0f6}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans);overflow-x:clip}
+button{font:inherit;border:0;background:none;color:inherit;cursor:pointer}
+.page{max-width:1280px;margin:0 auto;padding:28px 24px 64px}
+h1{font-size:26px;letter-spacing:-.02em;margin:0 0 4px}
+.lead{color:var(--ink-soft);margin:0 0 6px;max-width:80ch}
+.sample{display:inline-flex;gap:6px;align-items:center;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8a5a12;background:var(--amber-soft);border:1px solid #f3d9ad;border-radius:99px;padding:3px 10px}
+.anim{display:inline-flex;gap:6px;align-items:center;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--violet);background:var(--violet-soft);border-radius:99px;padding:3px 10px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-s)}
+.pad{padding:18px 20px}
+.sec-title{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 10px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pill.green{background:var(--accent-soft);color:var(--accent-ink)}
+.pill .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px}
+.seg button{font-size:12px;font-weight:600;color:var(--ink-soft);padding:6px 11px;border-radius:7px}
+.seg button.on{background:var(--surface);color:var(--accent-ink);box-shadow:var(--sh-s)}
+.up{color:var(--accent-ink);font-weight:600}.down{color:var(--red);font-weight:600}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-soft)}.faint{color:var(--ink-faint)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(21,168,90,.5);animation:pulse 2s infinite;flex:none}
+@keyframes pulse{70%{box-shadow:0 0 0 7px rgba(21,168,90,0)}100%{box-shadow:0 0 0 0 rgba(21,168,90,0)}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}.new{animation:none!important}}
+.new{animation:rowin .6s ease-out}
+@keyframes rowin{from{background:var(--accent-soft);opacity:.3;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.cc{display:inline-block;font:700 10px/1 var(--mono);padding:3px 5px;border-radius:5px;background:var(--surface-3);color:var(--ink-2)}
+.dev{width:14px;height:14px;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:1.8;color:var(--ink-faint)}
+.ar{font-family:"Geeza Pro","Noto Naskh Arabic","Segoe UI",Tahoma,sans-serif}
+.path{font:11.5px var(--mono);color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.ttl{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+/* bar list rows (Plausible-like): a tinted bar behind the label, drawn to scale */
+.bl{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.bl li{position:relative;display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:8px;min-width:0}
+.bl li>i{position:absolute;inset:0 auto 0 0;border-radius:8px;background:var(--accent-soft);z-index:0}
+.bl li>*:not(i){position:relative;z-index:1}
+.bl .l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bl .v{font-variant-numeric:tabular-nums;font-weight:600}
+.bl .p{font-variant-numeric:tabular-nums;color:var(--ink-faint);width:40px;text-align:right;font-size:12px}
+.gsc{border:1.5px dashed #c9cfdd;border-radius:12px;padding:12px 14px;background:repeating-linear-gradient(135deg,#fff,#fff 10px,#fafbfe 10px,#fafbfe 20px)}
+.gsc b{font-size:12.5px}
+.gsc .btn{display:inline-flex;margin-top:8px;font-size:12px;font-weight:600;padding:6px 11px;border-radius:9px;border:1px solid var(--border);background:#fff}
+table{border-collapse:collapse;width:100%}
+th{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+td{padding:7px 8px;border-bottom:1px solid var(--border-2);vertical-align:middle}
+th.r,td.r{text-align:right}
+tr:last-child td{border-bottom:0}
+.tbl{table-layout:fixed}
+.tbl td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* option frame */
+.opt{margin:34px 0 0}
+.oh{display:flex;gap:16px;align-items:center;margin-bottom:14px}
+.L{flex:none;width:58px;height:58px;border-radius:15px;background:var(--ink);color:#fff;display:grid;place-items:center;font:800 32px/1 var(--sans)}
+.oh h2{margin:0;font-size:19px;letter-spacing:-.01em}.oh p{margin:2px 0 0;color:var(--ink-soft)}
+.shell{background:var(--bg);border:1px solid var(--border);border-radius:22px;padding:18px}
+.topbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:16px}
+.topbar h3{margin:0;font-size:18px;letter-spacing:-.01em}
+
+/* ===== A · Calm column ===== */
+.A .col{max-width:760px;margin:0 auto;display:grid;gap:14px}
+.A .hero{display:flex;align-items:center;gap:22px}
+.A .hero .big{font-size:64px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.A .rows{display:grid}
+.A .row{display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--border-2)}
+.A .row:last-child{border-bottom:0}
+.A .row .k{color:var(--ink-soft)}
+.A .row .v{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.A .row .v small{font-size:12px;margin-left:8px}
+.A .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.A .live li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:9px 0;border-bottom:1px solid var(--border-2)}
+.A .live li:last-child{border-bottom:0}
+.A .live .meta{grid-column:1/-1;font-size:12px;color:var(--ink-soft);display:flex;gap:8px;align-items:center}
+.A .live .c{font-weight:800;font-size:16px}
+
+/* ===== B · Realtime board ===== */
+.B .board{display:grid;grid-template-columns:1.25fr 1fr;gap:14px}
+.B .night{background:var(--night);color:var(--night-ink);border-radius:var(--r);padding:20px;border:1px solid #1c2438}
+.B .night .sec-title{color:var(--night-soft)}
+.B .huge{font-size:88px;font-weight:800;letter-spacing:-.05em;line-height:.95}
+.B .night .sub{color:var(--night-soft)}
+.B .minis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.B .mini{background:var(--night-2);border:1px solid var(--night-3);border-radius:12px;padding:10px 12px}
+.B .mini b{display:block;font-size:20px;letter-spacing:-.02em}
+.B .mini span{font-size:11px;color:var(--night-soft)}
+.B .feed{list-style:none;margin:0;padding:0;max-height:332px;overflow:hidden}
+.B .feed li{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-2);font-size:13px}
+.B .feed time{font:11px var(--mono);color:var(--ink-faint)}
+.B .feed .ev{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--blue-soft);color:var(--blue)}
+.B .feed .ev.cart{background:var(--amber-soft);color:#a0620e}
+.B .feed .ev.order{background:var(--accent-soft);color:var(--accent-ink)}
+.B .now3{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;margin-top:14px}
+.B .strip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:14px}
+.B .strip .card{padding:12px 14px}
+.B .strip b{display:block;font-size:20px;letter-spacing:-.02em}
+.B .strip span{font-size:11.5px;color:var(--ink-soft)}
+.B .rest{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+
+/* ===== C · Plausible-style minimal ===== */
+.C .kp{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border)}
+.C .kp button{text-align:left;padding:14px 18px;border-right:1px solid var(--border-2);position:relative}
+.C .kp button:last-child{border-right:0}
+.C .kp button.on::after{content:"";position:absolute;left:18px;right:18px;bottom:-1px;height:2px;background:var(--accent)}
+.C .kp .lab{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);display:flex;gap:6px;align-items:center}
+.C .kp .val{font-size:24px;font-weight:800;letter-spacing:-.02em;display:block;margin-top:2px}
+.C .kp small{font-size:11.5px}
+.C .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.C .tabs{display:flex;gap:14px;font-size:12.5px;font-weight:600;color:var(--ink-faint)}
+.C .tabs b{color:var(--ink);border-bottom:2px solid var(--accent);padding-bottom:3px}
+.C .ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
+.C .ch h4{margin:0;font-size:14px}
+.C .colh{display:flex;justify-content:space-between;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);padding:0 10px 6px}
+
+/* ===== D · Dense pro grid ===== */
+.D{font-size:12.5px}
+.D .tiles{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.D .tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 11px;min-width:0}
+.D .tile .k{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint)}
+.D .tile .v{font:700 18px/1.2 var(--mono);letter-spacing:-.02em;margin-top:3px;display:block}
+.D .tile .s{display:flex;justify-content:space-between;align-items:end;gap:6px;margin-top:2px}
+.D .tile svg{width:46px;height:18px;flex:none;min-width:0}
+.D .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.D .g4{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:8px}
+.D .card{border-radius:12px}
+.D .pad{padding:11px 12px}
+.D .sec-title{margin-bottom:6px;font-size:10.5px}
+.D td,.D th{padding:4px 6px}
+.D td{font-size:12px}
+.D .mini-bar{display:inline-block;height:6px;border-radius:3px;background:var(--accent);vertical-align:middle;opacity:.75}
+
+.light{margin-top:40px}
+.light ul{margin:8px 0 0;padding-left:20px;display:grid;gap:6px;color:var(--ink-2)}
+.light .cost{margin-top:12px;background:var(--surface-2);border-radius:12px;padding:12px 14px;color:var(--ink-2)}
+.note{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 16px;margin:14px 0 0;color:var(--ink-2);font-size:13px}
+.note ol{margin:6px 0 0;padding-left:20px}
+
+/* ===== phone (the owner app is 390 wide) ===== */
+@media (max-width:760px){
+  .page{padding:18px 12px 48px}
+  h1{font-size:22px}
+  .shell{padding:12px;border-radius:18px}
+  .pad{padding:14px}
+  .oh{gap:12px}.L{width:46px;height:46px;font-size:26px;border-radius:12px}
+  .A .two,.B .board,.B .now3,.B .rest,.C .grid,.D .g3,.D .g4{grid-template-columns:minmax(0,1fr)}
+  .A .hero .big{font-size:52px}
+  .B .huge{font-size:68px}
+  .B .minis{grid-template-columns:repeat(2,1fr)}
+  .B .strip{grid-template-columns:repeat(3,1fr)}
+  .C .kp{grid-template-columns:repeat(3,1fr)}
+  .C .kp button{padding:11px 12px;border-bottom:1px solid var(--border-2)}
+  .C .kp button:nth-child(3n){border-right:0}
+  .C .kp .val{font-size:19px}
+  .D .tiles{grid-template-columns:repeat(2,1fr)}
+  .hide-s{display:none}
+  .topbar .seg button{padding:6px 8px}
+}
+</style></head>
+<body><main class="page">
+<h1>Analytics · four dashboard designs</h1>
+<p class="lead">A light, first-party analytics screen for the admin console: who is on the shop right now, what they are reading, where they came from, what they searched for and what they bought. Pick a letter; nothing on the shop or the admin has changed.</p>
+<p><span class="sample">Sample data</span> <span class="anim">Preview animation</span> <span class="faint" style="font-size:12px">Every number on this page is invented for a UAE K-beauty shop. The live parts tick every few seconds in the preview only, so you can feel them.</span></p>
+
+<div class="note"><b>What the shop records today, and what a light tracker would add</b>
+<ol>
+<li><b>Product views only:</b> <span class="mono">POST /api/viewed</span> (session + CSRF, 60/min throttle) feeds a <span class="mono">kbb_viewed</span> cookie, and <span class="mono">product_view_days</span> keeps one counter per product per day for 90 days ("Most viewed"). Nothing records categories, blog posts, the homepage, referrers or devices.</li>
+<li><b>On-site search:</b> <span class="mono">search_terms</span> keeps term · day · hits · results, so the keyword list exists already, zero-result searches included.</li>
+<li><b>Orders</b> are in the database (revenue, items), but no source or UTM campaign is stored against an order. GA4, Meta and TikTok tags (<span class="mono">App\Services\Analytics</span>) send data out to those services and bring nothing back. <span class="mono">SearchConsoleSource</span> can already fetch Google keywords once it is connected.</li>
+<li><b>Needed:</b> one cookie-less beacon per opened page (<span class="mono">navigator.sendBeacon</span>, inline, after load) carrying path, referrer host, UTM tags, language and a coarse device class. It goes to a new stateless endpoint rather than <span class="mono">/api/viewed</span>, which is product-only and session-bound. Country and city come from a CDN header or a local GeoIP lookup.</li>
+<li><b>Stored as:</b> per-minute counters (page × source × device × country) rolled into daily rows, plus a 5-minute "active" table keyed by a daily-salted hash in place of a cookie. Add-to-cart, checkout and order events reuse the same beacon, and an order stamps its first-touch source.</li>
+</ol></div>
+
+<!-- ============================ A ============================ -->
+<section class="opt" id="opt-A">
+  <div class="oh"><span class="L">A</span><div><h2>Calm column</h2><p>One quiet column of plain numbers, read top to bottom like a statement. Nothing competes; the live count leads.</p></div></div>
+  <div class="shell A"><div class="col">
+    <div class="topbar"><h3>Analytics</h3><div class="seg" data-range><button class="on">Today</button><button>7 days</button><button>30 days</button><button>Custom</button></div></div>
+    <div class="card pad">
+      <div class="hero"><div><div class="sec-title" style="display:flex;gap:8px;align-items:center"><span class="dot"></span>On the shop now</div><div class="big num" data-live="count">37</div><div class="muted" style="font-size:13px">visitors in the last 5 minutes</div></div>
+      <div style="flex:1;min-width:0"><svg data-live="spark" viewBox="0 0 300 70" preserveAspectRatio="none" style="width:100%;height:70px"></svg><div class="faint" style="font-size:11px;display:flex;justify-content:space-between"><span>30 min ago</span><span>per minute</span><span>now</span></div></div></div>
+    </div>
+    <div class="card pad"><div class="sec-title">Right now, by page</div><ul class="live" data-live="listA" style="list-style:none;margin:0;padding:0"></ul></div>
+    <div class="card pad"><div class="sec-title">Today so far</div><div class="rows" data-kpis="A"></div></div>
+    <div class="card pad"><div class="sec-title">Shop</div><div class="rows" data-ecom="A"></div><div class="sec-title" style="margin-top:16px">Revenue by source</div><ul class="bl" data-bl="revsrc"></ul></div>
+    <div class="two">
+      <div class="card pad"><div class="sec-title">Top pages</div><ul class="bl" data-bl="pages"></ul></div>
+      <div class="card pad"><div class="sec-title">Where they came from</div><ul class="bl" data-bl="sources"></ul></div>
+      <div class="card pad"><div class="sec-title">Searched on the shop</div><ul class="bl" data-bl="search"></ul></div>
+      <div class="card pad"><div class="sec-title">Google search keywords</div><div data-gsc></div></div>
+      <div class="card pad"><div class="sec-title">Entry pages</div><ul class="bl" data-bl="entry"></ul></div>
+      <div class="card pad"><div class="sec-title">Cities</div><ul class="bl" data-bl="cities"></ul></div>
+      <div class="card pad"><div class="sec-title">Devices · Browsers</div><ul class="bl" data-bl="devices"></ul><div style="height:10px"></div><ul class="bl" data-bl="browsers"></ul></div>
+      <div class="card pad"><div class="sec-title">Language</div><ul class="bl" data-bl="langs"></ul></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ============================ B ============================ -->
+<section class="opt" id="opt-B">
+  <div class="oh"><span class="L">B</span><div><h2>Realtime board</h2><p>A control-room screen: a giant live count on dark, a feed of what is happening this second, then today underneath.</p></div></div>
+  <div class="shell B">
+    <div class="topbar"><h3>Live</h3><div class="seg" data-range><button class="on">Today</button><button>7 days</button><button>30 days</button><button>Custom</button></div></div>
+    <div class="board">
+      <div class="night">
+        <div class="sec-title" style="display:flex;gap:8px;align-items:center"><span class="dot"></span>Active visitors · last 5 minutes</div>
+        <div style="display:flex;align-items:end;gap:18px;flex-wrap:wrap"><div class="huge num" data-live="count">37</div><div class="sub" style="padding-bottom:12px"><span data-live="pv5">96</span> page views<br><span data-live="carts5">5</span> carts open</div></div>
+        <svg data-live="bars" viewBox="0 0 300 80" preserveAspectRatio="none" style="width:100%;height:80px;margin-top:14px;display:block"></svg>
+        <div class="sub" style="font-size:11px;display:flex;justify-content:space-between"><span>−30 min</span><span>visitors per minute</span><span>now</span></div>
+        <div class="minis"><div class="mini"><b>78%</b><span>on mobile</span></div><div class="mini"><b>71 / 29</b><span>EN / AR</span></div><div class="mini"><b>Dubai</b><span>top city now</span></div><div class="mini"><b>Instagram</b><span>top source now</span></div></div>
+      </div>
+      <div class="card pad"><div class="sec-title" style="display:flex;justify-content:space-between"><span>Happening now</span><span class="faint" style="text-transform:none;letter-spacing:0;font-weight:500">newest first</span></div><ul class="feed" data-live="feed"></ul></div>
+    </div>
+    <div class="now3">
+      <div class="card pad"><div class="sec-title">Pages being read now</div><table class="tbl"><colgroup><col><col style="width:44px"><col style="width:96px" class="hide-s"></colgroup><tbody data-live="tableB"></tbody></table></div>
+      <div class="card pad"><div class="sec-title">Sources now</div><ul class="bl" data-bl="sourcesNow"></ul></div>
+      <div class="card pad"><div class="sec-title">Cities now</div><ul class="bl" data-bl="citiesNow"></ul></div>
+    </div>
+    <div class="strip" data-strip></div>
+    <div class="rest">
+      <div class="card pad"><div class="sec-title">Top pages today</div><ul class="bl" data-bl="pages"></ul></div>
+      <div class="card pad"><div class="sec-title">Sources &amp; campaigns</div><ul class="bl" data-bl="sources"></ul></div>
+      <div class="card pad"><div class="sec-title">Checkout funnel</div><svg data-funnel viewBox="0 0 320 150" style="width:100%;height:auto;display:block"></svg></div>
+      <div class="card pad"><div class="sec-title">Searched on the shop</div><ul class="bl" data-bl="search"></ul></div>
+      <div class="card pad"><div class="sec-title">Google search keywords</div><div data-gsc></div></div>
+      <div class="card pad"><div class="sec-title">Revenue by source · AED</div><ul class="bl" data-bl="revsrc"></ul></div>
+      <div class="card pad"><div class="sec-title">Entry pages</div><ul class="bl" data-bl="entry"></ul></div>
+      <div class="card pad"><div class="sec-title">Devices · Browsers</div><ul class="bl" data-bl="devices"></ul><div style="height:10px"></div><ul class="bl" data-bl="browsers"></ul></div>
+      <div class="card pad"><div class="sec-title">Language · Countries</div><ul class="bl" data-bl="langs"></ul><div style="height:10px"></div><ul class="bl" data-bl="countries"></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ C ============================ -->
+<section class="opt" id="opt-C">
+  <div class="oh"><span class="L">C</span><div><h2>Minimal, Plausible-style</h2><p>One headline chart and a row of numbers that switch it; everything else is a ranked list with its share drawn behind it.</p></div></div>
+  <div class="shell C">
+    <div class="topbar"><h3 style="display:flex;gap:10px;align-items:center">extrabeauty.ae <span class="pill green"><span class="d"></span><span data-live="count">37</span>&nbsp;current visitors</span></h3><div class="seg" data-range><button>Realtime</button><button class="on">Today</button><button>7 days</button><button>30 days</button><button>Custom</button></div></div>
+    <div class="card">
+      <div class="kp" data-kp></div>
+      <div class="pad"><svg data-main viewBox="0 0 1000 220" preserveAspectRatio="none" style="width:100%;height:220px;display:block"></svg><div class="faint" style="font-size:11px;display:flex;justify-content:space-between;padding-top:4px"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>now</span></div></div>
+    </div>
+    <div class="grid">
+      <div class="card pad"><div class="ch"><h4>Live pages</h4><span class="pill green"><span class="d"></span>last 5 min</span></div><div class="colh"><span>Page · where · device</span><span>Visitors</span></div><ul class="bl" data-live="blC"></ul></div>
+      <div class="card pad"><div class="ch"><h4>Sources</h4><div class="tabs"><b>Channels</b><span>Campaigns</span><span>Referrers</span></div></div><div class="colh"><span>Source</span><span>Visitors</span></div><ul class="bl" data-bl="sources"></ul></div>
+      <div class="card pad"><div class="ch"><h4>Pages</h4><div class="tabs"><b>Top</b><span>Entry</span><span>Exit</span></div></div><div class="colh"><span>Page</span><span>Views</span></div><ul class="bl" data-bl="pages"></ul></div>
+      <div class="card pad"><div class="ch"><h4>Keywords</h4><div class="tabs"><b>On-site search</b><span>Google</span></div></div><div class="colh"><span>Term</span><span>Searches</span></div><ul class="bl" data-bl="search"></ul><div style="height:12px"></div><div data-gsc></div></div>
+      <div class="card pad"><div class="ch"><h4>Locations</h4><div class="tabs"><span>Countries</span><b>Cities</b></div></div><ul class="bl" data-bl="cities"></ul></div>
+      <div class="card pad"><div class="ch"><h4>Devices</h4><div class="tabs"><b>Type</b><span>Browser</span><span>Language</span></div></div><ul class="bl" data-bl="devices"></ul><div style="height:10px"></div><ul class="bl" data-bl="langs"></ul></div>
+      <div class="card pad" style="grid-column:1/-1"><div class="ch"><h4>Goals &amp; revenue</h4><span class="faint" style="font-size:12px">today</span></div><table><thead><tr><th>Goal</th><th class="r">Uniques</th><th class="r">Conv. rate</th><th class="r hide-s">Revenue</th></tr></thead><tbody data-goals></tbody></table><div class="sec-title" style="margin-top:16px">Revenue by source</div><ul class="bl" data-bl="revsrc"></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ D ============================ -->
+<section class="opt" id="opt-D">
+  <div class="oh"><span class="L">D</span><div><h2>Dense pro grid</h2><p>Everything on one screen for the analyst: eight sparkline tiles, small tables with real columns, mono figures, no scrolling on a laptop.</p></div></div>
+  <div class="shell D">
+    <div class="topbar"><h3 style="font-size:16px">Analytics <span class="faint" style="font-weight:500;font-size:12px">· 9 Oct 2026 · Asia/Dubai</span></h3><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pill green"><span class="dot" style="width:6px;height:6px"></span><span data-live="count">37</span>&nbsp;live</span><div class="seg" data-range><button class="on">Today</button><button>Yesterday</button><button>7d</button><button>30d</button><button>Custom</button></div></div></div>
+    <div class="tiles" data-tiles></div>
+    <div class="g4">
+      <div class="card pad"><div class="sec-title">Live · pages now</div><table class="tbl"><colgroup><col><col style="width:40px"><col style="width:104px" class="hide-s"><col style="width:30px"></colgroup><thead><tr><th>Page</th><th class="r">Now</th><th class="hide-s">Top city</th><th></th></tr></thead><tbody data-live="tableD"></tbody></table></div>
+      <div class="card pad"><div class="sec-title">Funnel today</div><svg data-funnel viewBox="0 0 320 150" style="width:100%;height:auto;display:block"></svg></div>
+      <div class="card pad"><div class="sec-title">Revenue by source · AED</div><table class="tbl" data-t="revsrc"></table></div>
+    </div>
+    <div class="g3">
+      <div class="card pad"><div class="sec-title">Top pages</div><table class="tbl" data-t="pages"></table></div>
+      <div class="card pad"><div class="sec-title">Entry pages</div><table class="tbl" data-t="entry"></table></div>
+      <div class="card pad"><div class="sec-title">Sources / UTM</div><table class="tbl" data-t="sources"></table></div>
+      <div class="card pad"><div class="sec-title">On-site search</div><table class="tbl" data-t="search"></table></div>
+      <div class="card pad"><div class="sec-title">Google keywords · Search Console</div><div data-gsc></div></div>
+      <div class="card pad"><div class="sec-title">Cities</div><table class="tbl" data-t="cities"></table></div>
+      <div class="card pad"><div class="sec-title">Devices</div><table class="tbl" data-t="devices"></table></div>
+      <div class="card pad"><div class="sec-title">Browsers</div><table class="tbl" data-t="browsers"></table></div>
+      <div class="card pad"><div class="sec-title">Language · Country</div><table class="tbl" data-t="langs"></table><div style="height:6px"></div><table class="tbl" data-t="countries"></table></div>
+    </div>
+  </div>
+</section>
+
+<section class="card pad light">
+  <div class="sec-title">How it stays light</div>
+  <ul>
+    <li><b>One tiny beacon, no cookies, no extra script file.</b> A few lines inline at the end of the page send one <span class="mono">navigator.sendBeacon</span> after the page has loaded, so it never delays what the shopper sees. There is no consent banner to add and nothing extra in the &lt;head&gt;.</li>
+    <li><b>Counted per minute, not stored per visit.</b> Each beacon adds 1 to a counter row for that minute (page, source, device, country). There is no row per visitor and no raw log to grow forever; minutes roll up into days.</li>
+    <li><b>The dashboard reads summary tables only.</b> Opening Analytics never scans visits. Today, 7 days and 30 days are a few hundred summary rows at most, so the screen costs the same with 100 visitors or 100,000.</li>
+    <li><b>Live polls every 15 seconds, only while you are looking.</b> The live panel asks once every 15 s while the tab is visible and the screen is open. It stops when you switch tab, lock the phone or leave the screen.</li>
+  </ul>
+  <div class="cost"><b>Rough cost:</b> 1 small write per page view, batched, so a busy minute of 300 page views becomes a handful of counter updates. Each live refresh is one indexed read of the last 5 minutes. The shopper downloads no new file; the beacon is about 300 bytes of inline script.</div>
+</section>
+</main>
+
+<script>
+/* ===== SAMPLE DATA (invented) + preview animation. Not shop code. ===== */
+(function(){
+var seed=7;function rnd(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646}
+var fmt=function(n){return n.toLocaleString('en-US')};
+var PAGES=[
+ ['/product/beauty-of-joseon-relief-sun-spf50','Beauty of Joseon Relief Sun SPF50+'],
+ ['/product/cosrx-advanced-snail-96-mucin-essence','COSRX Advanced Snail 96 Mucin Essence'],
+ ['/ar/product/anua-heartleaf-77-soothing-toner','<span class="ar" dir="rtl">تونر أنوا هارتليف 77</span>'],
+ ['/category/sunscreen','Sunscreen · 64 products'],
+ ['/product/laneige-lip-sleeping-mask-berry','Laneige Lip Sleeping Mask Berry'],
+ ['/brand/round-lab','Round Lab'],
+ ['/ar/category/skincare','<span class="ar" dir="rtl">العناية بالبشرة</span>'],
+ ['/product/torriden-dive-in-hyaluronic-serum','Torriden Dive-In Hyaluronic Serum'],
+ ['/product/medicube-zero-pore-pad-2-0','Medicube Zero Pore Pad 2.0'],
+ ['/blog/korean-skincare-routine-dubai-summer','Korean routine for a Dubai summer'],
+ ['/','Home'],['/checkout','Checkout']];
+var CITIES=[['AE','Dubai'],['AE','Abu Dhabi'],['AE','Sharjah'],['AE','Ajman'],['AE','Al Ain'],['SA','Riyadh'],['AE','Ras Al Khaimah'],['QA','Doha']];
+var DEV={m:'<svg class="dev" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></svg>',
+ d:'<svg class="dev" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
+ t:'<svg class="dev" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M11 18h2"/></svg>'};
+var live=[[0,7,0,'m'],[1,5,0,'m'],[2,4,1,'m'],[3,4,2,'d'],[4,3,0,'m'],[5,3,1,'m'],[6,2,2,'m'],[7,2,5,'d'],[8,2,0,'m'],[9,2,3,'m'],[10,2,1,'t'],[11,1,0,'m']];
+var D={
+ pages:[[PAGES[0][1],1284],[PAGES[1][1],968],['Home',944],[PAGES[3][1],702],[PAGES[2][1],611],[PAGES[4][1],498],[PAGES[7][1],402]],
+ entry:[['Home',612],[PAGES[0][1],344],[PAGES[9][1],221],[PAGES[2][1],187],[PAGES[3][1],162],[PAGES[1][1],149]],
+ sources:[['Google · organic',742],['Instagram',481],['TikTok',306],['Direct',262],['WhatsApp',197],['Facebook ads · utm_campaign=ramadan_spf',196]],
+ sourcesNow:[['Instagram',11],['Google',9],['TikTok',7],['Direct',5],['WhatsApp',3],['Facebook ads',2]],
+ search:[['sunscreen',96],['<span class="ar" dir="rtl">واقي شمس</span>',58],['snail mucin',51],['anua toner',44],['lip mask',37],['toner pad',29],['retinol <span class="pill" style="background:var(--red-soft);color:var(--red);padding:1px 7px">0 results</span>',18]],
+ devices:[['Mobile',1704],['Desktop',393],['Tablet',87]],
+ browsers:[['Safari (iPhone)',1136],['Chrome',830],['Samsung Internet',131],['Instagram in-app',87]],
+ langs:[['English',1551],['<span class="ar">العربية</span> Arabic',633]],
+ countries:[['United Arab Emirates',1890],['Saudi Arabia',142],['Qatar',61],['Oman',48],['Kuwait',43]],
+ cities:[['Dubai',938],['Abu Dhabi',461],['Sharjah',332],['Ajman',118],['Al Ain',96],['Riyadh',71]],
+ citiesNow:[['Dubai',16],['Abu Dhabi',8],['Sharjah',6],['Ajman',3],['Riyadh',2],['Doha',2]],
+ revsrc:[['Instagram',4620],['Google · organic',3940],['TikTok',2310],['WhatsApp',1880],['Facebook ads · ramadan_spf',1240],['Direct',880]]
+};
+var KPI=[['Visitors','2,184','+12%',1],['Page views','7,906','+9%',1],['Engaged rate','61%','+3 pts',1],['Avg. time','2m 48s','−6s',0]];
+var ECOM=[['Added to cart','412','+15%',1],['Reached checkout','138','+8%',1],['Orders','61','+5%',1],['Conversion rate','2.8%','−0.1 pts',0],['Revenue','AED 14,870','+18%',1]];
+var spark=[];for(var i=0;i<30;i++)spark.push(Math.round(24+10*Math.sin(i/4)+rnd()*9));
+var hours=[];for(var h=0;h<=21;h++){var base=h<7?20+h*2:h<12?60+h*9:h<17?150+ (h-12)*8:190-(h-17)*6;hours.push(Math.round(base+rnd()*24))}
+
+function q(s,r){return (r||document).querySelectorAll(s)}
+function bl(rows,cls){var max=Math.max.apply(null,rows.map(function(r){return r[1]}));var tot=rows.reduce(function(a,r){return a+r[1]},0);
+ return rows.map(function(r){var w=(r[1]/max*100).toFixed(1);return '<li><i style="width:'+w+'%"></i><span class="l">'+r[0]+'</span><span class="v">'+(cls==='aed'?'AED '+fmt(r[1]):fmt(r[1]))+'</span><span class="p hide-s">'+Math.round(r[1]/tot*100)+'%</span></li>'}).join('')}
+q('[data-bl]').forEach(function(u){var k=u.getAttribute('data-bl');u.innerHTML=bl(D[k],k==='revsrc'?'aed':'')});
+function tbl(rows,k){var max=Math.max.apply(null,rows.map(function(r){return r[1]}));var tot=rows.reduce(function(a,r){return a+r[1]},0);
+ return '<colgroup><col><col style="width:'+(k==='revsrc'?78:56)+'px"><col style="width:46px" class="hide-s"></colgroup>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td class="r mono">'+fmt(r[1])+'</td><td class="r hide-s"><span class="mini-bar" style="width:'+Math.max(2,Math.round(r[1]/max*40))+'px"></span></td></tr>'}).join('')}
+q('[data-t]').forEach(function(t){var k=t.getAttribute('data-t');t.innerHTML=tbl(D[k],k)});
+q('[data-gsc]').forEach(function(g){g.innerHTML='<div class="gsc"><b>Google search keywords</b> <span class="faint" style="font-size:12px">from Search Console · optional connect</span><div class="muted" style="font-size:12.5px;margin-top:4px">The words people typed into Google before landing here, with clicks and position. The shop already has the connector (SEO → Keywords); this slot fills once it is connected.</div><span class="btn">Connect Search Console</span></div>'});
+function rows(list){return list.map(function(k){return '<div class="row"><span class="k">'+k[0]+'</span><span class="v num">'+k[1]+'<small class="'+(k[3]?'up':'down')+'">'+k[2]+'</small></span></div>'}).join('')}
+q('[data-kpis]').forEach(function(e){e.innerHTML=rows(KPI)});q('[data-ecom]').forEach(function(e){e.innerHTML=rows(ECOM)});
+q('[data-strip]').forEach(function(e){e.innerHTML=KPI.concat([ECOM[2],ECOM[4]]).map(function(k){return '<div class="card"><b class="num">'+k[1]+'</b><span>'+k[0]+' <span class="'+(k[3]?'up':'down')+'">'+k[2]+'</span></span></div>'}).join('')});
+q('[data-goals]').forEach(function(e){e.innerHTML=[['Add to cart',412,'18.9%',''],['Checkout started',138,'6.3%',''],['Order placed',61,'2.8%','AED 14,870']].map(function(g){return '<tr><td>'+g[0]+'</td><td class="r num">'+g[1]+'</td><td class="r num">'+g[2]+'</td><td class="r num hide-s">'+g[3]+'</td></tr>'}).join('')});
+// funnel, drawn to scale: bar width = count / visitors
+q('[data-funnel]').forEach(function(s){var st=[['Visitors',2184],['Added to cart',412],['Checkout',138],['Orders',61]],o='';st.forEach(function(r,i){var w=Math.max(3,r[1]/2184*300);o+='<rect x="0" y="'+(i*37)+'" width="'+w.toFixed(1)+'" height="22" rx="5" fill="'+(i?'#15a85a':'#cfeedd')+'" opacity="'+(1-i*.12)+'"/><text x="'+(w+6>220?6:w+6)+'" y="'+(i*37+15)+'" font-size="11.5" font-family="-apple-system,Segoe UI,Roboto,sans-serif" fill="#101729">'+r[0]+' · '+fmt(r[1])+(i?' ('+(r[1]/2184*100).toFixed(1)+'%)':'')+'</text>'});s.innerHTML=o});
+// C: the KPI row + headline chart (visitors per hour, to scale from zero)
+var KP=[['Unique visitors','2,184','+12%',1],['Page views','7,906','+9%',1],['Engaged','61%','+3 pts',1],['Avg. time','2m 48s','−6s',0],['Orders','61','+5%',1],['Revenue','AED 14,870','+18%',1]];
+q('[data-kp]').forEach(function(e){e.innerHTML=KP.map(function(k,i){return '<button class="'+(i?'':'on')+'"><span class="lab">'+k[0]+'</span><span class="val num">'+k[1]+'</span><small class="'+(k[3]?'up':'down')+'">'+k[2]+'</small></button>'}).join('')});
+q('[data-main]').forEach(function(s){var max=240,W=1000,H=220,n=24,pts=hours.map(function(v,i){return [(i/(n-1)*W).toFixed(1),(H-8-v/max*(H-16)).toFixed(1)]});var o='';for(var g=0;g<=4;g++){var y=(8+g*(H-16)/4).toFixed(1);o+='<line x1="0" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="#eef0f6" vector-effect="non-scaling-stroke"/>'}
+ o+='<path d="M'+pts[0][0]+' '+(H-8)+'L'+pts.map(function(p){return p.join(' ')}).join('L')+'L'+pts[pts.length-1][0]+' '+(H-8)+'Z" fill="rgba(21,168,90,.10)"/><path d="M'+pts.map(function(p){return p.join(' ')}).join('L')+'" fill="none" stroke="#15a85a" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>';
+ var last=pts[pts.length-1];o+='<path d="M'+last[0]+' '+last[1]+'L'+(W*23/23)+' '+(H-8-120/max*(H-16)).toFixed(1)+'" stroke="#15a85a" stroke-dasharray="4 4" stroke-width="2" vector-effect="non-scaling-stroke"/>';s.innerHTML=o});
+// D tiles with sparklines
+function sp(arr,w,h,col){var max=Math.max.apply(null,arr),min=0;return '<path d="M'+arr.map(function(v,i){return (i/(arr.length-1)*w).toFixed(1)+' '+(h-1-(v-min)/(max-min||1)*(h-2)).toFixed(1)}).join('L')+'" fill="none" stroke="'+col+'" stroke-width="1.5" vector-effect="non-scaling-stroke"/>'}
+var TILES=[['Live now','37','',1],['Visitors','2,184','+12%',1],['Views','7,906','+9%',1],['Engaged','61%','+3',1],['Avg time','2:48','−6s',0],['Carts','412','+15%',1],['Orders','61','+5%',1],['Revenue','14,870','+18%',1]];
+q('[data-tiles]').forEach(function(e){e.innerHTML=TILES.map(function(t,i){var a=[];for(var j=0;j<14;j++)a.push(20+rnd()*10+j*(t[3]?1:-.4));return '<div class="tile"><div class="k">'+t[0]+(i==7?' · AED':'')+'</div><div class="s"><span class="v"'+(i?'':' data-live="count"')+'>'+t[1]+'</span><svg viewBox="0 0 54 18" preserveAspectRatio="none" '+(i?'':'data-live="tspark"')+'>'+sp(i?a:spark.slice(-14),54,18,t[3]?'#15a85a':'#e3493f')+'</svg></div><div class="'+(t[3]?'up':'down')+'" style="font-size:11px">'+(t[2]||'last 5 min')+'</div></div>'}).join('')});
+
+// ===== live parts =====
+function liveRender(){
+ var tot=live.reduce(function(a,r){return a+r[1]},0);
+ q('[data-live="count"]').forEach(function(e){e.textContent=tot});
+ q('[data-live="pv5"]').forEach(function(e){e.textContent=Math.round(tot*2.6)});
+ q('[data-live="carts5"]').forEach(function(e){e.textContent=Math.max(2,Math.round(tot/7))});
+ var sorted=live.slice().sort(function(a,b){return b[1]-a[1]});
+ function where(r){return '<span class="cc">'+CITIES[r[2]][0]+'</span> '+CITIES[r[2]][1]}
+ q('[data-live="listA"]').forEach(function(u){u.innerHTML=sorted.slice(0,7).map(function(r){return '<li'+(r[4]?' class="new"':'')+'><span class="ttl">'+PAGES[r[0]][1]+'</span><span class="c num">'+r[1]+'</span><span class="meta"><span class="path" style="flex:1;min-width:0">'+PAGES[r[0]][0]+'</span>'+where(r)+' '+DEV[r[3]]+'</span></li>'}).join('')});
+ q('[data-live="tableB"]').forEach(function(t){t.innerHTML=sorted.slice(0,7).map(function(r){return '<tr'+(r[4]?' class="new"':'')+'><td><span class="ttl">'+PAGES[r[0]][1]+'</span><span class="path">'+PAGES[r[0]][0]+'</span></td><td class="r num" style="font-weight:700">'+r[1]+'</td><td class="hide-s" style="font-size:12px">'+where(r)+'</td></tr>'}).join('')});
+ q('[data-live="tableD"]').forEach(function(t){t.innerHTML=sorted.slice(0,8).map(function(r){return '<tr'+(r[4]?' class="new"':'')+'><td><span class="ttl" style="font-weight:500">'+PAGES[r[0]][1]+'</span><span class="path" style="font-size:10.5px">'+PAGES[r[0]][0]+'</span></td><td class="r mono" style="font-weight:700">'+r[1]+'</td><td class="hide-s">'+where(r)+'</td><td>'+DEV[r[3]]+'</td></tr>'}).join('')});
+ q('[data-live="blC"]').forEach(function(u){var max=sorted[0][1];u.innerHTML=sorted.slice(0,7).map(function(r){return '<li'+(r[4]?' class="new"':'')+'><i style="width:'+(r[1]/max*100).toFixed(1)+'%"></i><span class="l"><span class="ttl">'+PAGES[r[0]][1]+'</span><span class="faint" style="font-size:11.5px">'+where(r)+' · '+DEV[r[3]]+'</span></span><span class="v">'+r[1]+'</span></li>'}).join('')});
+ live.forEach(function(r){r[4]=0});
+ var W=300,H=70,max=Math.max.apply(null,spark)*1.15;
+ q('[data-live="spark"]').forEach(function(s){var pts=spark.map(function(v,i){return (i/(spark.length-1)*W).toFixed(1)+' '+(H-v/max*H).toFixed(1)});s.innerHTML='<path d="M0 '+H+'L'+pts.join('L')+'L'+W+' '+H+'Z" fill="rgba(21,168,90,.12)"/><path d="M'+pts.join('L')+'" fill="none" stroke="#15a85a" stroke-width="2" vector-effect="non-scaling-stroke"/>'});
+ q('[data-live="bars"]').forEach(function(s){var bw=W/spark.length,o='';spark.forEach(function(v,i){var h=v/max*80;o+='<rect x="'+(i*bw+1).toFixed(1)+'" y="'+(80-h).toFixed(1)+'" width="'+(bw-2).toFixed(1)+'" height="'+h.toFixed(1)+'" rx="1.5" fill="'+(i==spark.length-1?'#3ddc84':'#22c06c')+'" opacity="'+(i==spark.length-1?1:.55)+'"/>'});s.innerHTML=o});
+ q('[data-live="tspark"]').forEach(function(s){s.innerHTML=sp(spark.slice(-14),54,18,'#15a85a')});
+}
+var FEED=[['page',1,0,'m'],['cart',0,1,'m'],['page',2,2,'m'],['page',3,0,'d'],['order',8,1,'m'],['page',9,5,'m'],['cart',4,0,'m'],['page',6,2,'m'],['page',7,3,'d'],['page',10,0,'t']];
+var feedN=0,clock=new Date(2026,9,9,15,42,10);
+function feedRow(isNew){var f=FEED[feedN++%FEED.length];clock=new Date(clock.getTime()+ (3+Math.floor(rnd()*9))*1000);
+ var t=clock.toTimeString().slice(0,8),lab={page:'view',cart:'cart',order:'order'}[f[0]],txt=f[0]==='order'?'Order <b>AED 286</b> · '+PAGES[f[1]][1]:PAGES[f[1]][1];
+ return '<li'+(isNew?' class="new"':'')+'><time>'+t+'</time><span style="min-width:0"><span class="ttl" style="font-weight:500">'+txt+'</span><span class="faint" style="font-size:11.5px"><span class="cc">'+CITIES[f[2]][0]+'</span> '+CITIES[f[2]][1]+' · '+DEV[f[3]]+'</span></span><span class="ev '+f[0]+'">'+lab+'</span></li>'}
+q('[data-live="feed"]').forEach(function(u){var o='';for(var i=0;i<8;i++)o=feedRow(false)+o;u.innerHTML=o});
+liveRender();
+// preview animation: a visitor arrives or leaves every 2.5 s; the feed gains a row
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+ setInterval(function(){
+  if(document.hidden)return;
+  var i=Math.floor(rnd()*live.length),up=rnd()>.4;live[i][1]=Math.max(1,live[i][1]+(up?1:-1));if(up)live[i][4]=1;
+  spark[spark.length-1]=Math.max(10,spark[spark.length-1]+(up?1:-1));
+  if(rnd()>.7){spark.shift();spark.push(Math.round(24+rnd()*14))}
+  liveRender();
+  q('[data-live="feed"]').forEach(function(u){u.insertAdjacentHTML('afterbegin',feedRow(true));while(u.children.length>9)u.lastElementChild.remove()});
+ },2500);
+}
+})();
+</script>
+</body></html>
