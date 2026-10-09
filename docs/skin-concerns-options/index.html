@@ -120,11 +120,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .skc.ring .skc-art{box-shadow:0 0 0 2.5px #fff,0 0 0 4px var(--ring)}
 .skc.lift .skc-art{box-shadow:0 10px 24px -14px rgba(42,34,40,.45)}
 .skc.ring.lift .skc-art{box-shadow:0 0 0 2.5px #fff,0 0 0 4px var(--ring),0 10px 24px -14px rgba(42,34,40,.45)}
-.skc-art svg{position:absolute;left:9%;top:9%;width:82%;height:82%}
-.skc.sh-arch .skc-art svg{top:14%}
-.skc.tp-overlay .skc-art svg,.skc.tp-band .skc-art svg{top:5%;left:19%;width:62%;height:62%}
-.skc.sh-arch.tp-overlay .skc-art svg,.skc.sh-arch.tp-band .skc-art svg{top:9%;height:58%}
-.skc.tp-beside .skc-art svg{left:5%;top:5%;width:90%;height:90%}
+.skc-art svg{position:absolute;left:calc((100% - var(--ic)) / 2);top:calc((100% - var(--ic)) / 2);width:var(--ic);height:var(--ic);overflow:visible}
+.skc.tp-overlay .skc-art svg,.skc.tp-band .skc-art svg{--icx:calc(var(--ic) * .8);left:calc((100% - var(--icx)) / 2);top:9%;width:var(--icx);height:var(--icx)}
+.skc.sh-arch.tp-overlay .skc-art svg,.skc.sh-arch.tp-band .skc-art svg{top:12%}
+.skc.tp-beside .skc-art svg{left:19%;top:19%;width:62%;height:62%}
 .skc-t{font-size:var(--ts);font-weight:500;line-height:1.25;text-wrap:balance;max-width:100%}
 .skc-tag{display:block;font-size:calc(var(--ts) - 2px);font-weight:400;color:#756C74;margin-top:2px}
 .skc-in{position:absolute;inset-inline:0;bottom:0;padding:0 17% 17%;font-size:var(--ts);font-weight:600;line-height:1.2;text-wrap:balance;color:#fff;display:flex;align-items:end;justify-content:center;min-height:46%;background:linear-gradient(to bottom,transparent,color-mix(in srgb,var(--dp) 82%,transparent))}
@@ -150,12 +149,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .fr-d .skc.arrows .skc-arr{display:grid}
 .skc.tp-beside .skc-arr{top:calc(50% - 21px)}
 @media (prefers-reduced-motion:reduce){.skc-art,.skc-arr{transition:none}.skc-track{scroll-behavior:auto}}
-/* art style 3: white line on a deeper tone */
-.skc.a3{--kw:0}
-.skc.a3.bg-pastel .skc-art{background:var(--dp);color:#fff;--kg:#FFE3A6;--leaf:var(--dp)}
-.skc.a3:not(.bg-pastel) .skc-art{color:var(--dp)}
-.skc.a2 .skc-art{color:#A93A62}
-.skc.a3.bg-pastel .skc-band{color:var(--dp)}
+/* presentation: rose line on pastel (default) · white line on a deeper tone · line with a ring only */
+.skc-art{color:var(--lc)}
+.skc.pr-d.bg-pastel .skc-art{background:var(--dp);color:#fff;--acc:rgba(255,255,255,.22)}
+.skc.pr-d:not(.bg-pastel) .skc-art{color:var(--dp)}
+.skc.pr-d.bg-pastel .skc-band{color:var(--dp)}
+.skc.pr-r .skc-art,.skc.pr-r.ring .skc-art,.skc.pr-r.lift .skc-art,.skc.pr-r.ring.lift .skc-art{background:transparent;box-shadow:inset 0 0 0 1.5px var(--lc)}
+.skc.pr-r .skc-in{background:linear-gradient(to bottom,transparent,color-mix(in srgb,var(--dp) 70%,transparent))}
 /* ═══════════ end of the shippable block ═══════════ */
 
 .readout{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
@@ -165,16 +165,18 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .sheet{max-width:1640px;margin:40px auto 0}
 .sheet>h2{font-size:22px;font-weight:700;margin-bottom:4px}
 .sheet>p{color:var(--fg-2);margin:0 0 16px;max-width:72ch}
-.style-row{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
-.style-row h3{font-size:15px;font-weight:600;margin-bottom:2px}
-.style-row>p{margin:0 0 12px;color:var(--fg-2);font-size:13px}
-.art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:12px}
-.art-cell{display:grid;gap:6px;justify-items:center;text-align:center}
-.art-cell .disc{width:100%;max-width:170px;aspect-ratio:1;border-radius:50%;position:relative;background:var(--bgc);color:#A93A62}
-.art-cell .disc svg{position:absolute;inset:9%;width:82%;height:82%}
-.style-row.s3 .disc{background:var(--dp);color:#fff;--kw:0;--kg:#FFE3A6;--leaf:var(--dp)}
-.art-cell b{font-size:13px;font-weight:600;line-height:1.25}
-.art-cell small{font-family:var(--mono);font-size:11px;color:var(--fg-2)}
+.cmp{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+.cmp-g{display:grid;grid-template-columns:150px repeat(4,minmax(170px,1fr));gap:14px 18px;align-items:center;min-width:900px}
+.cmp-h{font-size:13px;font-weight:600;line-height:1.3}
+.cmp-h small{display:block;font-weight:400;color:var(--fg-2);font-size:12px}
+.cmp-h code{font-family:var(--mono);font-size:11px;color:var(--fg-2)}
+.cmp-n{font-size:13px;font-weight:600;line-height:1.3}
+.pair{display:flex;align-items:center;gap:12px}
+.disc{position:relative;flex:none;border-radius:50%;background:var(--bgc);color:var(--lc)}
+.disc.b{width:96px;height:96px}.disc.s{width:56px;height:56px}
+.disc svg{position:absolute;left:22%;top:22%;width:56%;height:56%;overflow:visible}
+.sheet.pr-d .disc{background:var(--dp);color:#fff;--acc:rgba(255,255,255,.22)}
+.sheet.pr-r .disc{background:transparent;box-shadow:inset 0 0 0 1.5px var(--lc)}
 .notes{max-width:1640px;margin:28px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
 .notes section{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
 .notes h3{font-size:15px;margin-bottom:6px}
@@ -184,258 +186,61 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 </head>
 <body>
 
-<!-- ═══ ARTWORK SPRITE: one inline SVG, every concern a <symbol>; the shop would print this once. ═══ -->
+<!-- ═══ ICON SPRITE: one inline SVG, every icon a <symbol>; the shop would print only the chosen set, once. ═══ -->
 <svg id="skc-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
-<defs>
-<path id="k-sp" d="M0-7C.6-1.2 1.2-.6 7 0 1.2.6.6 1.2 0 7-.6 1.2-1.2.6-7 0-1.2-.6-.6-1.2 0-7Z"/>
-<path id="k-drop" d="M0-46c13 19 28 34 28 54a28 28 0 0 1-56 0c0-20 15-35 28-54z"/>
-<path id="k-face" d="M33 115c0-10-1-17-5-24-8-11-10-28-6-43 5-18 20-30 36-30 14 0 22 10 23 22 1 6 0 10 2 15l6 9c1 2 0 3-2 4l-3 1c0 2 1 3 0 5-1 1-2 1-2 2 1 2 1 4-1 5-1 2-2 4-1 7 0 4-4 6-10 6-2 4-3 10-2 21z"/>
-<path id="k-hair" d="M62 19C48 12 28 18 21 36c-6 16-5 36-1 52 2 10 0 18-4 26h18c-1-10-4-18-4-26-1-14 0-32 8-46 6-10 16-14 26-12 6-4 4-9-2-11z"/>
-<path id="k-front" d="M64 30c9 3 16 10 17 22 1 6 0 10 2 15l6 9c1 2 0 3-2 4l-3 1c0 2 1 3 0 5-1 1-2 1-2 2 1 2 1 4-1 5-1 2-2 4-1 7 0 4-4 6-10 6-2 4-3 10-2 21"/>
-<path id="k-leaf" d="M0 0C2-20 16-33 36-36 36-18 24-3 0 0z"/>
-<g id="k-cica"><path d="M0 0C-5 5-19 5-21-8-23-21-11-28 0-27 11-28 23-21 21-8 19 5 5 5 0 0Z"/><path d="M0 0V-22M0 0-13-17M0 0 13-17M0 0-18-6M0 0 18-6" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".55"/></g>
-<g id="k-cical"><path style="fill:var(--leaf,#F1F7EA)" d="M0 0C-5 5-19 5-21-8-23-21-11-28 0-27 11-28 23-21 21-8 19 5 5 5 0 0Z"/><path d="M0 0V-21M0 0-12-16M0 0 12-16" stroke-width="1.2" opacity=".6"/></g>
-<linearGradient id="kg-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBE3C0"/><stop offset=".55" stop-color="#E2A46C"/><stop offset="1" stop-color="#F4C9A2"/></linearGradient>
-<radialGradient id="g1-skin" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#FFF8F6"/><stop offset=".55" stop-color="#FCDDE0"/><stop offset="1" stop-color="#F1B9C4"/></radialGradient>
-<radialGradient id="g2-skin" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#FFF8F1"/><stop offset=".55" stop-color="#FADCCB"/><stop offset="1" stop-color="#F0BBA5"/></radialGradient>
-<radialGradient id="g2-spot"><stop offset="0" stop-color="#9C6450" stop-opacity=".85"/><stop offset=".55" stop-color="#B9806A" stop-opacity=".5"/><stop offset="1" stop-color="#C99480" stop-opacity="0"/></radialGradient>
-<radialGradient id="g2-glow"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
-<linearGradient id="g2-drop" x1="0" y1="0" x2=".4" y2="1"><stop offset="0" stop-color="#FFE6C4"/><stop offset=".55" stop-color="#FFA97C"/><stop offset="1" stop-color="#EE7895"/></linearGradient>
-<radialGradient id="g2-sun" cx=".4" cy=".35"><stop offset="0" stop-color="#FFF4CF"/><stop offset="1" stop-color="#F8C35A"/></radialGradient>
-<radialGradient id="g3-patch" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".97"/><stop offset=".7" stop-color="#E9F8EF" stop-opacity=".95"/><stop offset="1" stop-color="#CBEEDA"/></radialGradient>
-<radialGradient id="g3-spot"><stop offset="0" stop-color="#F29FB0" stop-opacity=".75"/><stop offset=".6" stop-color="#F7C5CF" stop-opacity=".35"/><stop offset="1" stop-color="#F7C5CF" stop-opacity="0"/></radialGradient>
-<linearGradient id="g3-leaf" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#5DB27E"/><stop offset="1" stop-color="#C8EDD2"/></linearGradient>
-<linearGradient id="g3-drop" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#E9FAF0"/><stop offset="1" stop-color="#7ACDA1"/></linearGradient>
-<linearGradient id="g4-face" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F3EAFE"/><stop offset=".55" stop-color="#D5C0F3"/><stop offset="1" stop-color="#F2B6D0"/></linearGradient>
-<linearGradient id="g4-hair" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C9A9E8"/><stop offset="1" stop-color="#8A64BF"/></linearGradient>
-<radialGradient id="g4-pearl" cx=".35" cy=".3"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#EEE4FC"/><stop offset="1" stop-color="#C7AEEE"/></radialGradient>
-<linearGradient id="g5-drop" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#F0FAFF"/><stop offset=".5" stop-color="#A9DDF7"/><stop offset="1" stop-color="#58B0E4"/></linearGradient>
-<radialGradient id="g6-warm"><stop offset="0" stop-color="#F49C99" stop-opacity=".7"/><stop offset=".55" stop-color="#F9C3BC" stop-opacity=".45"/><stop offset="1" stop-color="#FBD8D0" stop-opacity="0"/></radialGradient>
-<linearGradient id="g6-leaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D3EEBF"/><stop offset=".6" stop-color="#83C273"/><stop offset="1" stop-color="#5E9F57"/></linearGradient>
-<linearGradient id="g7-paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFEFA"/><stop offset="1" stop-color="#FBEDCF"/></linearGradient>
-<linearGradient id="g7-oil" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#FFF1C4"/><stop offset=".55" stop-color="#F7C85C"/><stop offset="1" stop-color="#E3963A"/></linearGradient>
-<pattern id="g7-dots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r=".9" fill="#EAD39E"/></pattern>
-<radialGradient id="lw-pink"><stop offset="0" stop-color="#F6C3D3"/><stop offset=".6" stop-color="#F9D5E0" stop-opacity=".75"/><stop offset="1" stop-color="#FBE3EA" stop-opacity="0"/></radialGradient>
-<radialGradient id="lw-peach"><stop offset="0" stop-color="#FCD3BC"/><stop offset=".6" stop-color="#FDE0CF" stop-opacity=".7"/><stop offset="1" stop-color="#FEEBDF" stop-opacity="0"/></radialGradient>
-<radialGradient id="lw-mint"><stop offset="0" stop-color="#C3E9D3"/><stop offset=".6" stop-color="#D5F0E0" stop-opacity=".7"/><stop offset="1" stop-color="#E6F6EC" stop-opacity="0"/></radialGradient>
-<radialGradient id="lw-lilac"><stop offset="0" stop-color="#DECDF4"/><stop offset=".6" stop-color="#E8DCF7" stop-opacity=".7"/><stop offset="1" stop-color="#F1EAFA" stop-opacity="0"/></radialGradient>
-<radialGradient id="lw-aqua"><stop offset="0" stop-color="#C2E4F7"/><stop offset=".6" stop-color="#D6EDFA" stop-opacity=".7"/><stop offset="1" stop-color="#E8F5FC" stop-opacity="0"/></radialGradient>
-<radialGradient id="lw-sage"><stop offset="0" stop-color="#D2E8C3"/><stop offset=".6" stop-color="#E0EFD5" stop-opacity=".7"/><stop offset="1" stop-color="#EDF5E6" stop-opacity="0"/></radialGradient>
-<radialGradient id="lw-butter"><stop offset="0" stop-color="#FAE3A6"/><stop offset=".6" stop-color="#FCEBC0" stop-opacity=".7"/><stop offset="1" stop-color="#FDF3DA" stop-opacity="0"/></radialGradient>
-</defs>
+<!-- Line icons on a 48 grid. The tile's own <svg> carries fill="none" stroke="currentColor"
+     stroke-width="1.75" and round caps/joins, so every set inherits one weight and one colour. -->
+<!-- ───── SET 1 · OUTLINE ───── -->
+<symbol id="s1-pores" viewBox="0 0 48 48"><circle cx="21" cy="21" r="12"/><path d="M29.5 29.5 39 39"/><g fill="currentColor" stroke="none"><circle cx="17.2" cy="19" r="1.25"/><circle cx="24.2" cy="17.6" r="1.25"/><circle cx="21.4" cy="24.6" r="1.25"/></g></symbol>
+<symbol id="s1-spots" viewBox="0 0 48 48"><circle cx="21" cy="27" r="13"/><circle cx="17" cy="24.5" r="3"/><circle cx="37" cy="11" r="3"/><path d="M37 4.5V6M37 16v1.5M30.5 11H32M42 11h1.5M32.4 6.4l1 1M41.6 6.4l-1 1M41.6 15.6l-1-1"/><g fill="currentColor" stroke="none"><circle cx="23.6" cy="28.4" r="1.35"/><circle cx="26.8" cy="31.4" r="1"/><circle cx="29.3" cy="34" r=".7"/></g></symbol>
+<symbol id="s1-acne" viewBox="0 0 48 48"><circle cx="24" cy="24" r="14.5"/><circle cx="24" cy="24" r="9" stroke-dasharray="0 3.534"/><circle cx="24" cy="24" r="1.7" fill="currentColor" stroke="none"/></symbol>
+<symbol id="s1-aging" viewBox="0 0 48 48"><path d="M15.5 42V31.5c-3.3-2.8-5-6.6-5-11.5 0-7.5 5.5-13 12.5-13 6.5 0 10.5 4.5 10.5 10l3 5c.4.7.1 1.3-.6 1.5l-1.3.4.3 1.7-.9.8.6 1c.3.8-.2 1.5-1 1.6l-.2 1.5c-.2 1.5-1.4 2.5-3 2.5H28V42"/><path d="M26.6 18.6q1.6 1.1 3.2 0"/><path d="M41 5v6M38 8h6"/></symbol>
+<symbol id="s1-hydra" viewBox="0 0 48 48"><path d="M24 6s12 12.5 12 21.5a12 12 0 0 1-24 0C12 18.5 24 6 24 6z"/><path d="M18 28.5a6 6 0 0 0 4 5"/><path d="M39.5 7v6M36.5 10h6"/></symbol>
+<symbol id="s1-calm" viewBox="0 0 48 48"><path d="M24 31c-3.5 3-12 2-13-6.5C10 15.5 16 9.5 24 9.5s14 6 13 15c-1 8.5-9.5 9.5-13 6.5z"/><path d="M24 31V16M24 31l-7-11.5M24 31l7-11.5M24 31c0 5-1 8.5-3.5 11"/></symbol>
+<symbol id="s1-oily" viewBox="0 0 48 48"><path d="M13 9h20a3 3 0 0 1 3 3v19l-7 7H13a3 3 0 0 1-3-3V12a3 3 0 0 1 3-3z"/><path d="M36 31h-4a3 3 0 0 0-3 3v4"/><path d="M23 14.5s5.5 5.8 5.5 9.8a5.5 5.5 0 0 1-11 0c0-4 5.5-9.8 5.5-9.8z"/></symbol>
 
-<!-- ───────── STYLE 1 · GLASS: soft gradient, clay-and-glass objects ───────── -->
-<symbol id="g-pores" viewBox="0 0 120 120">
-<ellipse cx="62" cy="108" rx="30" ry="3.5" fill="#C8396B" opacity=".1"/>
-<path d="M78 76l16 16" stroke="url(#kg-gold)" stroke-width="12" stroke-linecap="round"/>
-<path d="M82 78l10 10" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".55"/>
-<circle cx="54" cy="52" r="31" fill="url(#g1-skin)"/>
-<g fill="#E39BAB" opacity=".75"><circle cx="40" cy="40" r="1.5"/><circle cx="66" cy="37" r="1.2"/><circle cx="35" cy="59" r="1.3"/><circle cx="71" cy="63" r="1.4"/><circle cx="47" cy="73" r="1.1"/><circle cx="62" cy="74" r=".9"/><circle cx="53" cy="31" r=".9"/><circle cx="75" cy="47" r=".9"/><circle cx="31" cy="47" r=".9"/></g>
-<circle cx="54" cy="52" r="2.6" fill="#D88598"/>
-<path d="M50 40l4 4 4-4M50 64l4-4 4 4M42 48l4 4-4 4M66 48l-4 4 4 4" fill="none" stroke="#C8396B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
-<path d="M31 47a24 24 0 0 1 17-19" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" opacity=".9"/>
-<circle cx="54" cy="52" r="31" fill="none" stroke="url(#kg-gold)" stroke-width="6.5"/>
-<use href="#k-sp" transform="translate(97 25) scale(1.35)" fill="#F4B860"/>
-<use href="#k-sp" transform="translate(20 94) scale(.85)" fill="#EE93B1"/>
-<use href="#k-sp" transform="translate(104 48) scale(.6)" fill="#EE93B1"/>
-</symbol>
+<!-- ───── SET 2 · SYMBOLS: a different metaphor per concern ───── -->
+<symbol id="s2-pores" viewBox="0 0 48 48"><ellipse cx="24" cy="24.5" rx="12.5" ry="16"/><g fill="currentColor" stroke="none"><circle cx="18.5" cy="16" r="1.2"/><circle cx="24" cy="16" r="1.2"/><circle cx="29.5" cy="16" r="1.2"/><circle cx="24" cy="21.5" r="1.2"/><circle cx="24" cy="27" r="1.2"/></g></symbol>
+<symbol id="s2-spots" viewBox="0 0 48 48"><circle cx="24" cy="24" r="15"/><path d="M24 9a8 15 0 0 1 0 30"/><circle cx="16.5" cy="22" r="2.4" fill="currentColor" stroke="none"/><circle cx="19" cy="29.5" r="1.3" fill="currentColor" stroke="none"/></symbol>
+<symbol id="s2-acne" viewBox="0 0 48 48"><ellipse cx="21" cy="26" rx="11.5" ry="15"/><circle cx="25" cy="30" r="1.7" fill="currentColor" stroke="none"/><path d="M33.5 15c0-5.8 3.7-9 9-9.5 0 5.6-3.4 9.3-9 9.5zM33.5 15l5.5-6"/></symbol>
+<symbol id="s2-aging" viewBox="0 0 48 48"><path d="M13 6h22M13 42h22M16 6v4c0 5.5 8 8.5 8 14s-8 8.5-8 14v4M32 6v4c0 5.5-8 8.5-8 14s8 8.5 8 14v4"/><path d="M19.5 38.5c1.5-2.6 3-3.8 4.5-3.8s3 1.2 4.5 3.8"/></symbol>
+<symbol id="s2-hydra" viewBox="0 0 48 48"><circle cx="24" cy="24" r="16"/><path d="M24 13.5s7 7.3 7 12.3a7 7 0 0 1-14 0c0-5 7-12.3 7-12.3z"/><path d="M20.5 26.5a3.5 3.5 0 0 0 2.4 3"/></symbol>
+<symbol id="s2-calm" viewBox="0 0 48 48"><path d="M24 6l13 4.5V22c0 9-5.5 15.5-13 20-7.5-4.5-13-11-13-20V10.5z"/><path d="M18.5 29.5c0-7.5 4.5-12 11.5-12.5 0 7.5-4.5 12.5-11.5 12.5zM18.5 29.5l7.5-8"/></symbol>
+<symbol id="s2-oily" viewBox="0 0 48 48"><path d="M24 6s12 12.5 12 21.5a12 12 0 0 1-24 0C12 18.5 24 6 24 6z"/><path d="M19 28h10"/><path d="M8 42h32"/></symbol>
 
-<symbol id="g-spots" viewBox="0 0 120 120">
-<ellipse cx="56" cy="108" rx="32" ry="3.5" fill="#C8396B" opacity=".1"/>
-<path d="M93 13v5M93 50v5M71 34h5M110 34h5M78 19l3.5 3.5M108 19l-3.5 3.5M104 45l3.5 3.5" stroke="#F6BE62" stroke-width="2.4" stroke-linecap="round"/>
-<circle cx="93" cy="34" r="12" fill="url(#g2-sun)"/>
-<circle cx="56" cy="70" r="36" fill="url(#g2-skin)"/>
-<path d="M27 60a31 31 0 0 1 21-23" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" opacity=".85"/>
-<circle cx="61" cy="77" r="18" fill="url(#g2-glow)"/>
-<circle cx="61" cy="77" r="10" fill="url(#g2-spot)"/>
-<g fill="#C48A74" opacity=".5"><circle cx="74" cy="71" r="1.6"/><circle cx="78" cy="79" r="1.2"/><circle cx="73" cy="87" r="1"/><circle cx="82" cy="72" r=".8"/></g>
-<use href="#k-drop" transform="translate(40 34) scale(.36)" fill="url(#g2-drop)"/>
-<path d="M34 34a5 5 0 0 0 3 5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/>
-<path d="M40 50v4M40 59v2" stroke="#F49A86" stroke-width="2" stroke-linecap="round" opacity=".6"/>
-<use href="#k-sp" transform="translate(48 92) scale(.9)" fill="#fff"/>
-<use href="#k-sp" transform="translate(80 92) scale(.6)" fill="#F4B860"/>
-</symbol>
+<!-- ───── SET 3 · FACE: one fine-line woman's face, a concern detail on it ───── -->
+<g id="k-face3"><path d="M12 40c-2.5-10-2-21 3-27.5C17.5 9.5 20.5 8 24 8s6.5 1.5 9 4.5c5 6.5 5.5 17.5 3 27.5"/><path d="M15.5 19c0 11 3.8 17.5 8.5 17.5s8.5-6.5 8.5-17.5c0-2.4-.5-4.4-1.5-6"/><path d="M15.5 19c6.5 0 12-3 14-7.5"/></g>
+<symbol id="s3-pores" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/></g><g fill="currentColor" stroke="none"><circle cx="20.5" cy="22.5" r="1.25"/><circle cx="24" cy="22.5" r="1.25"/><circle cx="27.5" cy="22.5" r="1.25"/><circle cx="24" cy="26.3" r="1.25"/><circle cx="24" cy="30.1" r="1.25"/></g></symbol>
+<symbol id="s3-spots" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><circle cx="28.5" cy="28" r="3.6" stroke-dasharray="0 2.83"/></g><circle cx="28.5" cy="28" r="1.5" fill="currentColor" stroke="none"/></symbol>
+<symbol id="s3-acne" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><circle cx="19.5" cy="28.5" r="3.6"/></g><circle cx="19.5" cy="28.5" r="1.2" fill="currentColor" stroke="none"/></symbol>
+<symbol id="s3-aging" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><path d="M17.5 30.5l1.8-1.8 1.8 1.8M26.9 30.5l1.8-1.8 1.8 1.8"/><path d="M41 5v5M38.5 7.5h5"/></g></symbol>
+<symbol id="s3-hydra" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><path d="M28.5 23.5s3 3.2 3 5.2a3 3 0 0 1-6 0c0-2 3-5.2 3-5.2z"/></g></symbol>
+<symbol id="s3-calm" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><path d="M17 29.5l2.4-2.4M19 31.5l2.4-2.4M26.6 29.5l2.4-2.4M28.6 31.5l2.4-2.4"/><path d="M38 12c0-4 2.5-6.3 6-6.5 0 3.8-2.4 6.3-6 6.5z"/></g></symbol>
+<symbol id="s3-oily" viewBox="0 0 48 48"><g stroke-width="1.5"><use href="#k-face3"/><path d="M21 21.5v4.4M18.8 23.7h4.4M27.5 26.6v3M26 28.1h3"/></g></symbol>
 
-<symbol id="g-acne" viewBox="0 0 120 120">
-<ellipse cx="58" cy="108" rx="30" ry="3.5" fill="#C8396B" opacity=".1"/>
-<use href="#k-leaf" transform="translate(68 50)" fill="url(#g3-leaf)"/>
-<path d="M68 50C80 40 90 30 101 17" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>
-<circle cx="54" cy="66" r="31" fill="url(#g3-patch)" stroke="#fff" stroke-width="3"/>
-<circle cx="54" cy="66" r="33" fill="none" stroke="#A7DCBF" stroke-width="1" opacity=".8"/>
-<circle cx="54" cy="66" r="21" fill="none" stroke="#86CDA6" stroke-width="2.6" stroke-linecap="round" stroke-dasharray=".1 6.6"/>
-<circle cx="54" cy="66" r="10" fill="url(#g3-spot)"/>
-<path d="M31 60a24 24 0 0 1 16-18" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" opacity=".95"/>
-<use href="#k-drop" transform="translate(95 92) scale(.22)" fill="url(#g3-drop)"/>
-<use href="#k-sp" transform="translate(22 30) scale(1.2)" fill="#F4B860"/>
-<use href="#k-sp" transform="translate(86 104) scale(.7)" fill="#EE93B1"/>
-</symbol>
-
-<symbol id="g-aging" viewBox="0 0 120 120">
-<path d="M88 100c12-9 17-24 13-42" fill="none" stroke="url(#kg-gold)" stroke-width="3" stroke-linecap="round"/>
-<path d="M96 62l5-5 4 6" fill="none" stroke="#E2A46C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<use href="#k-face" fill="url(#g4-face)"/>
-<use href="#k-hair" fill="url(#g4-hair)"/>
-<path d="M28 40c-6 16-6 36-2 54M38 30c-6 4-10 10-12 16" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".45"/>
-<circle cx="35" cy="66" r="2.4" fill="url(#g4-pearl)"/>
-<path d="M67 48q5 3 9 0" fill="none" stroke="#7E59B3" stroke-width="1.6" stroke-linecap="round"/>
-<path d="M69 50l-1 2M72 51v2M75 50l1 2" stroke="#7E59B3" stroke-width="1.1" stroke-linecap="round"/>
-<ellipse cx="70" cy="64" rx="7" ry="4.5" fill="#F48FB2" opacity=".4"/>
-<path d="M44 40c6-6 14-8 22-6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity=".7"/>
-<circle cx="100" cy="30" r="6" fill="url(#g4-pearl)"/>
-<circle cx="110" cy="44" r="3.6" fill="url(#g4-pearl)"/>
-<circle cx="92" cy="16" r="3" fill="url(#g4-pearl)"/>
-<use href="#k-sp" transform="translate(106 84) scale(1.1)" fill="#F4B860"/>
-</symbol>
-
-<symbol id="g-hydra" viewBox="0 0 120 120">
-<ellipse cx="60" cy="106" rx="28" ry="4.5" fill="none" stroke="#9FD6F3" stroke-width="1.6" opacity=".9"/>
-<ellipse cx="60" cy="106" rx="15" ry="2.4" fill="none" stroke="#9FD6F3" stroke-width="1.3" opacity=".7"/>
-<use href="#k-drop" transform="translate(60 64)" fill="url(#g5-drop)"/>
-<use href="#k-drop" transform="translate(60 64)" fill="none" stroke="#fff" stroke-width="1.6" opacity=".7"/>
-<ellipse cx="72" cy="84" rx="11" ry="6" fill="#F9C2D7" opacity=".4" transform="rotate(-32 72 84)"/>
-<path d="M43 64c0-10 5-19 11-27" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" opacity=".9"/>
-<circle cx="43" cy="75" r="2.6" fill="#fff" opacity=".9"/>
-<use href="#k-drop" transform="translate(25 46) scale(.22)" fill="url(#g5-drop)"/>
-<use href="#k-drop" transform="translate(96 36) scale(.16)" fill="url(#g5-drop)"/>
-<use href="#k-sp" transform="translate(97 66) scale(1.25)" fill="#F4B860"/>
-<use href="#k-sp" transform="translate(22 86) scale(.85)" fill="#EE93B1"/>
-<use href="#k-sp" transform="translate(84 18) scale(.6)" fill="#7CC5EE"/>
-</symbol>
-
-<symbol id="g-calm" viewBox="0 0 120 120">
-<circle cx="60" cy="58" r="48" fill="url(#g6-warm)"/>
-<g fill="#EE8585" opacity=".35"><circle cx="24" cy="44" r="2"/><circle cx="96" cy="40" r="1.6"/><circle cx="30" cy="80" r="1.4"/><circle cx="92" cy="78" r="2"/></g>
-<path d="M60 108c-3-12-12-22-24-30M60 108c3-12 12-22 24-30M60 108V64" fill="none" stroke="#6FAE62" stroke-width="2.6" stroke-linecap="round"/>
-<use href="#k-cica" transform="translate(36 78) rotate(-62) scale(.92)" fill="url(#g6-leaf)"/>
-<use href="#k-cica" transform="translate(84 78) rotate(62) scale(.92)" fill="url(#g6-leaf)"/>
-<use href="#k-cica" transform="translate(60 64)" fill="url(#g6-leaf)"/>
-<use href="#k-drop" transform="translate(96 98) scale(.18)" fill="url(#g5-drop)"/>
-<use href="#k-sp" transform="translate(22 22) scale(1.1)" fill="#F4B860"/>
-<use href="#k-sp" transform="translate(100 20) scale(.7)" fill="#EE93B1"/>
-</symbol>
-
-<symbol id="g-oily" viewBox="0 0 120 120">
-<ellipse cx="60" cy="108" rx="32" ry="3.5" fill="#C8396B" opacity=".1"/>
-<rect x="29" y="32" width="58" height="64" rx="9" fill="#F9E8C4" transform="rotate(-14 58 64)"/>
-<g transform="rotate(-3 60 62)"><rect x="31" y="30" width="58" height="64" rx="9" fill="url(#g7-paper)" stroke="#F0D9A6" stroke-width="1.2"/><rect x="31" y="30" width="58" height="64" rx="9" fill="url(#g7-dots)"/></g>
-<ellipse cx="60" cy="70" rx="17" ry="13" fill="#F5C766" opacity=".25"/>
-<use href="#k-drop" transform="translate(60 64) scale(.4)" fill="url(#g7-oil)"/>
-<path d="M54 66a6 6 0 0 0 3 6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/>
-<use href="#k-leaf" transform="translate(80 100) scale(.72)" fill="url(#g3-leaf)"/>
-<path d="M80 100c8-7 14-13 20-23" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".7"/>
-<use href="#k-sp" transform="translate(98 26) scale(1.2)" fill="#F4B860"/>
-<use href="#k-sp" transform="translate(22 96) scale(.8)" fill="#EE93B1"/>
-</symbol>
-
-<!-- ───────── STYLE 2 · LINE & BLUSH: one fine ink line (currentColor) over a watercolour wash ───────── -->
-<symbol id="l-pores" viewBox="0 0 120 120">
-<g style="opacity:var(--kw,1)"><circle cx="56" cy="54" r="42" fill="url(#lw-pink)"/><circle cx="88" cy="90" r="22" fill="url(#lw-peach)"/></g>
-<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-<circle cx="54" cy="52" r="29"/><circle cx="54" cy="52" r="24.5" stroke-width="1" opacity=".45"/>
-<path d="M75 73l3.5 3.5M78.5 76.5l13 13a4 4 0 0 1-5.7 5.7l-13-13a4 4 0 0 1 5.7-5.7z"/>
-<path d="M50 40l4 4 4-4M50 64l4-4 4 4M42 48l4 4-4 4M66 48l-4 4 4 4" stroke-width="1.7"/>
-<path d="M35 44a21 21 0 0 1 12-12" stroke-width="1.6" opacity=".6"/>
-</g>
-<g fill="currentColor"><circle cx="54" cy="52" r="2.2"/><circle cx="40" cy="40" r="1.1"/><circle cx="67" cy="37" r="1"/><circle cx="36" cy="60" r="1"/><circle cx="71" cy="63" r="1.1"/><circle cx="48" cy="72" r=".9"/></g>
-<use href="#k-sp" transform="translate(97 25) scale(1.3)" style="fill:var(--kg,#D3A04C)"/>
-<use href="#k-sp" transform="translate(20 94) scale(.8)" style="fill:var(--kg,#D3A04C)"/>
-</symbol>
-
-<symbol id="l-spots" viewBox="0 0 120 120">
-<g style="opacity:var(--kw,1)"><circle cx="58" cy="70" r="44" fill="url(#lw-peach)"/><circle cx="92" cy="32" r="20" fill="url(#lw-butter)"/></g>
-<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-<path d="M30 84a32 32 0 0 1 32-46 32 32 0 0 1 28 22" stroke-width="1.7" opacity=".55"/>
-<circle cx="93" cy="34" r="9"/><path d="M93 17v4M93 47v4M76 34h4M106 34h4M81 22l3 3M105 22l-3 3M105 46l-3-3"/>
-<use href="#k-drop" transform="translate(42 30) scale(.34)" stroke-width="6"/>
-<circle cx="62" cy="76" r="15" stroke-dasharray="1 5" stroke-width="2"/>
-<path d="M42 46v5M42 57v2" stroke-width="1.8"/>
-</g>
-<circle cx="62" cy="76" r="8" fill="#C99480" style="opacity:calc(.25 + var(--kw,1) * .3)"/>
-<circle cx="62" cy="76" r="8" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".5"/>
-<use href="#k-sp" transform="translate(46 94) scale(1)" style="fill:var(--kg,#D3A04C)"/>
-<use href="#k-sp" transform="translate(84 96) scale(.65)" style="fill:var(--kg,#D3A04C)"/>
-</symbol>
-
-<symbol id="l-acne" viewBox="0 0 120 120">
-<g style="opacity:var(--kw,1)"><circle cx="54" cy="66" r="42" fill="url(#lw-mint)"/><circle cx="88" cy="30" r="22" fill="url(#lw-sage)"/><circle cx="54" cy="66" r="12" fill="url(#lw-pink)"/></g>
-<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-<circle cx="54" cy="66" r="30"/>
-<circle cx="54" cy="66" r="20" stroke-width="2.6" stroke-dasharray=".1 6.3"/>
-<use href="#k-leaf" transform="translate(70 48)"/>
-<path d="M70 48c11-9 21-19 31-31" stroke-width="1.4"/>
-<use href="#k-drop" transform="translate(96 94) scale(.2)" stroke-width="10"/>
-<path d="M33 58a22 22 0 0 1 13-15" stroke-width="1.6" opacity=".6"/>
-</g>
-<circle cx="54" cy="66" r="3" fill="currentColor" opacity=".55"/>
-<use href="#k-sp" transform="translate(22 30) scale(1.2)" style="fill:var(--kg,#D3A04C)"/>
-<use href="#k-sp" transform="translate(84 106) scale(.7)" style="fill:var(--kg,#D3A04C)"/>
-</symbol>
-
-<symbol id="l-aging" viewBox="0 0 120 120">
-<g style="opacity:var(--kw,1)"><circle cx="52" cy="64" r="44" fill="url(#lw-lilac)"/><circle cx="96" cy="78" r="20" fill="url(#lw-pink)"/></g>
-<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-<use href="#k-hair" style="fill:var(--leaf,#F3ECFB)"/>
-<use href="#k-front"/>
-<path d="M28 40c-6 16-6 36-2 54M38 30c-6 4-10 10-12 16" stroke-width="1.3" opacity=".6"/>
-<path d="M67 48q5 3 9 0" stroke-width="1.8"/>
-</g>
-<path d="M88 100c12-9 17-24 13-42M96 62l5-5 4 6" fill="none" style="stroke:var(--kg,#D3A04C)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-<g style="fill:var(--kg,#D3A04C)"><circle cx="100" cy="30" r="3.6"/><circle cx="110" cy="42" r="2.2"/><circle cx="92" cy="17" r="2"/></g>
-<ellipse cx="70" cy="64" rx="6" ry="4" fill="#F28CB0" style="opacity:calc(var(--kw,1) * .45)"/>
-</symbol>
-
-<symbol id="l-hydra" viewBox="0 0 120 120">
-<g style="opacity:var(--kw,1)"><circle cx="60" cy="62" r="44" fill="url(#lw-aqua)"/><circle cx="74" cy="84" r="18" fill="url(#lw-pink)"/></g>
-<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-<use href="#k-drop" transform="translate(60 64)"/>
-<path d="M44 64c0-10 5-18 10-25" stroke-width="1.8" opacity=".7"/>
-<use href="#k-drop" transform="translate(25 46) scale(.22)" stroke-width="9"/>
-<use href="#k-drop" transform="translate(96 36) scale(.16)" stroke-width="12"/>
-<path d="M33 106c8 3 46 3 54 0M45 112c6 1.5 24 1.5 30 0" stroke-width="1.5" opacity=".6"/>
-</g>
-<circle cx="44" cy="74" r="2" fill="currentColor" opacity=".55"/>
-<use href="#k-sp" transform="translate(97 66) scale(1.2)" style="fill:var(--kg,#D3A04C)"/>
-<use href="#k-sp" transform="translate(22 86) scale(.8)" style="fill:var(--kg,#D3A04C)"/>
-</symbol>
-
-<symbol id="l-calm" viewBox="0 0 120 120">
-<g style="opacity:var(--kw,1)"><circle cx="60" cy="56" r="46" fill="url(#lw-pink)"/><circle cx="60" cy="64" r="34" fill="url(#lw-sage)"/></g>
-<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-<path d="M60 108c-3-12-12-22-24-30M60 108c3-12 12-22 24-30M60 108V64" stroke-width="1.8"/>
-<use href="#k-cical" transform="translate(36 78) rotate(-62) scale(.92)"/>
-<use href="#k-cical" transform="translate(84 78) rotate(62) scale(.92)"/>
-<use href="#k-cical" transform="translate(60 64)"/>
-</g>
-<use href="#k-sp" transform="translate(22 22) scale(1.1)" style="fill:var(--kg,#D3A04C)"/>
-<use href="#k-sp" transform="translate(100 20) scale(.7)" style="fill:var(--kg,#D3A04C)"/>
-</symbol>
-
-<symbol id="l-oily" viewBox="0 0 120 120">
-<g style="opacity:var(--kw,1)"><circle cx="60" cy="62" r="44" fill="url(#lw-butter)"/><circle cx="88" cy="94" r="18" fill="url(#lw-mint)"/></g>
-<g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-<rect x="29" y="32" width="58" height="64" rx="9" transform="rotate(-14 58 64)" stroke-width="1.4" opacity=".5"/>
-<rect x="31" y="30" width="58" height="64" rx="9" transform="rotate(-3 60 62)"/>
-<use href="#k-drop" transform="translate(60 64) scale(.4)" stroke-width="5.5"/>
-<use href="#k-leaf" transform="translate(80 100) scale(.72)" stroke-width="3"/>
-<path d="M80 100c8-7 14-13 20-23" stroke-width="1.3"/>
-</g>
-<use href="#k-drop" transform="translate(60 64) scale(.4)" fill="#F3C664" style="opacity:calc(var(--kw,1) * .6)"/>
-<g fill="currentColor" opacity=".35"><circle cx="40" cy="42" r="1"/><circle cx="48" cy="41" r="1"/><circle cx="40" cy="84" r="1"/><circle cx="48" cy="84" r="1"/><circle cx="74" cy="84" r="1"/><circle cx="80" cy="44" r="1"/></g>
-<use href="#k-sp" transform="translate(98 26) scale(1.2)" style="fill:var(--kg,#D3A04C)"/>
-<use href="#k-sp" transform="translate(22 96) scale(.8)" style="fill:var(--kg,#D3A04C)"/>
-</symbol>
+<!-- ───── SET 4 · DUOTONE: set 1's line plus one soft accent shape ───── -->
+<symbol id="s4-pores" viewBox="0 0 48 48"><circle cx="22.5" cy="22.5" r="9" style="fill:var(--acc);stroke:none"/><use href="#s1-pores"/></symbol>
+<symbol id="s4-spots" viewBox="0 0 48 48"><circle cx="37" cy="11" r="3" style="fill:var(--acc);stroke:none"/><circle cx="23" cy="29" r="10" style="fill:var(--acc);stroke:none"/><use href="#s1-spots"/></symbol>
+<symbol id="s4-acne" viewBox="0 0 48 48"><circle cx="26" cy="26" r="11" style="fill:var(--acc);stroke:none"/><use href="#s1-acne"/></symbol>
+<symbol id="s4-aging" viewBox="0 0 48 48"><circle cx="21" cy="21" r="10" style="fill:var(--acc);stroke:none"/><use href="#s1-aging"/></symbol>
+<symbol id="s4-hydra" viewBox="0 0 48 48"><circle cx="26" cy="30" r="9" style="fill:var(--acc);stroke:none"/><use href="#s1-hydra"/></symbol>
+<symbol id="s4-calm" viewBox="0 0 48 48"><circle cx="26" cy="22" r="10" style="fill:var(--acc);stroke:none"/><use href="#s1-calm"/></symbol>
+<symbol id="s4-oily" viewBox="0 0 48 48"><path d="M25 18s4.5 4.8 4.5 8a4.5 4.5 0 0 1-9 0c0-3.2 4.5-8 4.5-8z" style="fill:var(--acc);stroke:none"/><use href="#s1-oily"/></symbol>
 </svg>
 
 <header class="top">
   <div>
     <h1>Skin Concern Options</h1>
-    <p>Shop by skin concern for the homepage: five section designs and three art styles, each shown live on a phone (390px) and a laptop (1280px). Change any setting, then press Copy settings and send that line back.</p>
+    <p>Shop by skin concern for the homepage: five section designs and four sets of line icons, each shown live on a phone (390px) and a laptop (1280px). Change any setting, then press Copy settings and send that line back.</p>
   </div>
 </header>
 
 <div class="app">
   <aside class="ctl" aria-label="Settings">
-    <div class="grp"><span class="lbl">Art style</span><div class="seg" id="c-art"></div></div>
+    <div class="grp"><span class="lbl">Icon set</span><div class="seg" id="c-set"></div></div>
+    <div class="grp"><span class="lbl">Presentation</span><div class="seg" id="c-pres"></div></div>
+    <div class="grp"><span class="lbl">Line colour</span><div class="ringrow"><span id="lc-sw" class="ringrow"></span><input id="c-lc" type="color" aria-label="Line colour"></div></div>
+    <div class="grp"><label for="c-ic">Icon size in the tile <output id="o-ic"></output></label><input id="c-ic" type="range" min="36" max="76" step="1"></div>
     <div class="grp"><span class="lbl">Language</span><div class="seg" id="c-lang"></div></div>
     <div class="hr"></div>
     <div class="grp"><span class="lbl">Shape</span><div class="seg" id="c-shape"></div></div>
@@ -480,14 +285,14 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 </div>
 
 <section class="sheet" id="sheet">
-  <h2>The artwork</h2>
-  <p>Seven drawings, one per concern, in three styles. Each is hand-built SVG, so it stays sharp at any size and weighs a couple of kilobytes. The number under each is its own size plus the gradients it uses.</p>
-  <div id="sheet-rows"></div>
+  <h2>The icons, set by set</h2>
+  <p>Four sets of simple line icons, one weight and one colour each, shown at 96px and at 56px (the smallest phone size). The presentation and line colour follow the settings above.</p>
+  <div class="cmp"><div class="cmp-g" id="sheet-rows"></div></div>
 </section>
 
 <div class="notes">
   <section><h3>How it would ship</h3><ul>
-    <li>One inline SVG sprite printed once in the section; each tile is <code>&lt;svg&gt;&lt;use href="#…"/&gt;&lt;/svg&gt;</code>. No image requests.</li>
+    <li>One inline SVG sprite of the chosen set (about 3 KB), printed once; each tile is <code>&lt;svg&gt;&lt;use href="#…"/&gt;&lt;/svg&gt;</code>. No image requests.</li>
     <li>CSS scroll-snap does the swiping. Laptop arrows jump to the first hidden tile with <code>scrollIntoView</code>; nothing measures the page.</li>
     <li>The seven links are fixed addresses, so the section adds no database query.</li>
   </ul></section>
@@ -503,21 +308,23 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 (() => {
 'use strict';
 const C = [
-  {k:'pores', en:'Pore Care', ar:'العناية بالمسام', tg:'Refine & tighten', tga:'تنقية وشدّ المسام', bg:'#FCE6EE', dp:'#CC5580', link:'/concern/pores/'},
-  {k:'spots', en:'Pigmentation & Dark Spots', ar:'التصبّغات والبقع الداكنة', tg:'Even, luminous tone', tga:'لون موحّد ومشرق', bg:'#FFEBDD', dp:'#D4826A', link:'/concern/dark-spots/'},
-  {k:'acne',  en:'Acne & Blemish Care', ar:'حبّ الشباب والشوائب', tg:'Calm & clear', tga:'تهدئة وصفاء', bg:'#E3F4EA', dp:'#5A9E80', link:'/concern/acne/'},
-  {k:'aging', en:'Anti-Aging', ar:'مكافحة الشيخوخة', tg:'Firm & smooth', tga:'شدّ ونعومة', bg:'#EFE6F8', dp:'#9277BF', link:'/concern/ageing/'},
-  {k:'hydra', en:'Hydration & Glow', ar:'الترطيب والنضارة', tg:'Dewy, plump skin', tga:'بشرة ندية ممتلئة', bg:'#E0F1FB', dp:'#5A9BCB', link:'/concern/hydration/'},
-  {k:'calm',  en:'Redness & Sensitive Skin', ar:'الاحمرار والبشرة الحسّاسة', tg:'Soothe & comfort', tga:'تهدئة وراحة', bg:'#EDF4E4', dp:'#6E9E62', link:'/concern/sensitivity/'},
-  {k:'oily',  en:'Oily Skin', ar:'البشرة الدهنية', tg:'Balance & mattify', tga:'توازن ولمسة مطفية', bg:'#FFF4D8', dp:'#C39540', link:'(no page yet)'}
+  {k:'pores', en:'Pore Care', ar:'العناية بالمسام', tg:'Refine & tighten', tga:'تنقية وشدّ المسام', bg:'#FCE6EE', acc:'#F2AFC5', dp:'#CC5580', link:'/concern/pores/'},
+  {k:'spots', en:'Pigmentation & Dark Spots', ar:'التصبّغات والبقع الداكنة', tg:'Even, luminous tone', tga:'لون موحّد ومشرق', bg:'#FFEBDD', acc:'#F7BE9E', dp:'#D4826A', link:'/concern/dark-spots/'},
+  {k:'acne',  en:'Acne & Blemish Care', ar:'حبّ الشباب والشوائب', tg:'Calm & clear', tga:'تهدئة وصفاء', bg:'#E3F4EA', acc:'#A9D9BD', dp:'#5A9E80', link:'/concern/acne/'},
+  {k:'aging', en:'Anti-Aging', ar:'مكافحة الشيخوخة', tg:'Firm & smooth', tga:'شدّ ونعومة', bg:'#EFE6F8', acc:'#CDB8EC', dp:'#9277BF', link:'/concern/ageing/'},
+  {k:'hydra', en:'Hydration & Glow', ar:'الترطيب والنضارة', tg:'Dewy, plump skin', tga:'بشرة ندية ممتلئة', bg:'#E0F1FB', acc:'#A9D2F0', dp:'#5A9BCB', link:'/concern/hydration/'},
+  {k:'calm',  en:'Redness & Sensitive Skin', ar:'الاحمرار والبشرة الحسّاسة', tg:'Soothe & comfort', tga:'تهدئة وراحة', bg:'#EDF4E4', acc:'#BEDBA7', dp:'#6E9E62', link:'/concern/sensitivity/'},
+  {k:'oily',  en:'Oily Skin', ar:'البشرة الدهنية', tg:'Balance & mattify', tga:'توازن ولمسة مطفية', bg:'#FFF4D8', acc:'#F3D184', dp:'#C39540', link:'(no page yet)'}
 ];
-const ART = {g:{n:'1 · Glass', d:'Soft gradient objects with a glassy shine.'}, l:{n:'2 · Line & blush', d:'One fine rose line over a watercolour wash.'}, w:{n:'3 · Line on colour', d:'The same line, white on a deeper tone per concern.'}};
+const SETS = {1:{n:'Set 1 · Outline', d:'Objects: magnifier, sun and spot, patch, profile, drop, cica leaf, blotting sheet.'}, 2:{n:'Set 2 · Symbols', d:'Another idea for each: T-zone, half moon, face and leaf, hourglass, drop in a circle, shield, drop with a minus.'}, 3:{n:'Set 3 · Face', d:'One fine-line face, with a small concern detail on it.'}, 4:{n:'Set 4 · Duotone', d:'Set 1 with one soft colour shape behind the line.'}};
+const PRES = [['p','Rose on pastel'],['d','White on deep tone'],['r','Line, ring only']];
+const LC = ['#B03A62','#C6395F','#7A3B63','#2A2228','concern'];
 const DESIGNS = {
-  A:{name:'Halo circles', blurb:'Circle, ring, name below', shape:'circle', radius:24, tp:'below', tsM:12.5, tsD:15, tag:false, sizeM:92, sizeD:140, gapM:12, gapD:30, pv:0, ring:true, ringC:'#EFA8BF', bg:'pastel', sb:'none', head:'split', arrows:true, art:'g'},
-  B:{name:'Bloom overlay', blurb:'Big circle, name inside', shape:'circle', radius:24, tp:'overlay', tsM:12, tsD:15, tag:false, sizeM:132, sizeD:184, gapM:12, gapD:24, pv:0, ring:false, ringC:'#EFA8BF', bg:'pastel', sb:'blush', head:'center', arrows:true, art:'w'},
-  C:{name:'Pastel tiles', blurb:'Rounded squares, name + line', shape:'rounded', radius:26, tp:'below', tsM:13, tsD:16, tag:true, sizeM:138, sizeD:200, gapM:12, gapD:20, pv:6, ring:false, ringC:'#EFA8BF', bg:'pastel', sb:'none', head:'lead', arrows:true, art:'g'},
-  D:{name:'Arch windows', blurb:'Arched frames, name in a band', shape:'arch', radius:18, tp:'band', tsM:12, tsD:15, tag:false, sizeM:120, sizeD:176, gapM:12, gapD:22, pv:0, ring:true, ringC:'#E4C08F', bg:'pastel', sb:'cream', head:'center', arrows:true, art:'l'},
-  E:{name:'Concern chips', blurb:'Compact pills, art beside', shape:'circle', radius:24, tp:'beside', tsM:13, tsD:15, tag:false, sizeM:52, sizeD:60, gapM:8, gapD:12, pv:0, ring:false, ringC:'#EFA8BF', bg:'pastel', sb:'none', head:'split', arrows:true, art:'g'}
+  A:{name:'Halo circles', blurb:'Circle, ring, name below', shape:'circle', radius:24, tp:'below', tsM:12.5, tsD:15, tag:false, sizeM:92, sizeD:140, gapM:12, gapD:30, pv:0, ring:true, ringC:'#EFA8BF', bg:'pastel', sb:'none', head:'split', arrows:true, set:1, pres:'p'},
+  B:{name:'Bloom overlay', blurb:'Big circle, name inside', shape:'circle', radius:24, tp:'overlay', tsM:12, tsD:15, tag:false, sizeM:132, sizeD:184, gapM:12, gapD:24, pv:0, ring:false, ringC:'#EFA8BF', bg:'pastel', sb:'blush', head:'center', arrows:true, set:1, pres:'d'},
+  C:{name:'Pastel tiles', blurb:'Rounded squares, name + line', shape:'rounded', radius:26, tp:'below', tsM:13, tsD:16, tag:true, sizeM:138, sizeD:200, gapM:12, gapD:20, pv:6, ring:false, ringC:'#EFA8BF', bg:'pastel', sb:'none', head:'lead', arrows:true, set:4, pres:'p'},
+  D:{name:'Arch windows', blurb:'Arched frames, name in a band', shape:'arch', radius:18, tp:'band', tsM:12, tsD:15, tag:false, sizeM:120, sizeD:176, gapM:12, gapD:22, pv:0, ring:true, ringC:'#E4C08F', bg:'pastel', sb:'cream', head:'center', arrows:true, set:3, pres:'p'},
+  E:{name:'Concern chips', blurb:'Compact pills, art beside', shape:'circle', radius:24, tp:'beside', tsM:13, tsD:15, tag:false, sizeM:52, sizeD:60, gapM:8, gapD:12, pv:0, ring:false, ringC:'#EFA8BF', bg:'pastel', sb:'none', head:'split', arrows:true, set:2, pres:'p'}
 };
 const OPT = {
   shape:[['circle','Circle'],['rounded','Rounded square'],['square','Square'],['arch','Arch']],
@@ -537,8 +344,8 @@ const T = {
   en:{h:'Shop by skin concern', eb:'Find your routine', sub:'Seven concerns, each with its own edit', all:'View all'},
   ar:{h:'تسوّقي حسب مشكلة البشرة', eb:'اعثري على روتينك', sub:'سبع مشكلات، لكل منها مجموعتها', all:'عرض الكل'}
 };
-let S = Object.assign({design:'A', lang:'en', view:'both'}, DESIGNS.A);
-try { const saved = JSON.parse(localStorage.getItem('skc-opts') || 'null'); if (saved && DESIGNS[saved.design]) S = Object.assign(S, saved); } catch (e) {}
+let S = Object.assign({design:'A', lang:'en', view:'both', lc:'#B03A62', ic:56}, DESIGNS.A);
+try { const saved = JSON.parse(localStorage.getItem('skc-opts2') || 'null'); if (saved && DESIGNS[saved.design]) S = Object.assign(S, saved); } catch (e) {}
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -557,27 +364,30 @@ function range(key, unit){
   const el = $('c-' + key); el.value = S[key];
   $('o-' + key).textContent = S[key] + unit;
 }
-['radius','tsM','tsD','sizeM','sizeD','gapM','gapD'].forEach(k => $('c-' + k).addEventListener('input', e => { S[k] = +e.target.value; sync(); }));
+['radius','tsM','tsD','sizeM','sizeD','gapM','gapD','ic'].forEach(k => $('c-' + k).addEventListener('input', e => { S[k] = +e.target.value; sync(); }));
+$('c-lc').addEventListener('input', e => { S.lc = e.target.value.toUpperCase(); sync(); });
 $('c-ringC').addEventListener('input', e => { S.ringC = e.target.value.toUpperCase(); S.ring = true; sync(); });
 $('reset').addEventListener('click', () => { Object.assign(S, DESIGNS[S.design]); sync(); });
 
+const icon = (set, k) => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#s${set}-${k}"/></svg>`;
+
 function section(frame){
-  const t = T[S.lang], rtl = S.lang === 'ar', art = S.art === 'g' ? 'g' : 'l';
+  const t = T[S.lang], rtl = S.lang === 'ar';
   const desk = frame === 'd';
-  const cls = ['skc', 'sh-' + S.shape, 'tp-' + S.tp, 'bg-' + S.bg, 'hd-' + S.head, 'a' + ({g:1,l:2,w:3})[S.art]];
+  const cls = ['skc', 'sh-' + S.shape, 'tp-' + S.tp, 'bg-' + S.bg, 'hd-' + S.head, 'pr-' + S.pres];
   if (S.sb !== 'none') cls.push('sb-' + S.sb);
   if (S.ring && S.tp !== 'beside') cls.push('ring');
   if (S.design === 'C' || S.design === 'D') cls.push('lift');
   if (S.arrows) cls.push('arrows');
   if (desk && S.pv && S.tp !== 'beside') cls.push('pv');
   const r = S.shape === 'circle' ? '50%' : S.shape === 'square' ? '0px' : S.radius + 'px';
-  const style = `--s:${desk ? S.sizeD : S.sizeM}px;--g:${desk ? S.gapD : S.gapM}px;--ts:${desk ? S.tsD : S.tsM}px;--r:${r};--rr:${S.radius}px;--ring:${S.ringC};--pv:${S.pv || 1}`;
+  const style = `--s:${desk ? S.sizeD : S.sizeM}px;--g:${desk ? S.gapD : S.gapM}px;--ts:${desk ? S.tsD : S.tsM}px;--r:${r};--rr:${S.radius}px;--ring:${S.ringC};--pv:${S.pv || 1};--ic:${S.ic}%;--lc:${S.lc === 'concern' ? '#B03A62' : S.lc}`;
   const items = C.map(c => {
     const name = rtl ? c.ar : c.en, tag = rtl ? c.tga : c.tg;
     const bgc = S.bg === 'pastel' ? c.bg : S.bg === 'white' ? '#FFFFFF' : 'transparent';
     const inner = S.tp === 'overlay' ? `<span class="skc-in">${esc(name)}</span>` : S.tp === 'band' ? `<span class="skc-band">${esc(name)}</span>` : '';
     const below = (S.tp === 'below' || S.tp === 'beside') ? `<span class="skc-t">${esc(name)}${S.tag && S.tp === 'below' ? `<span class="skc-tag">${esc(tag)}</span>` : ''}</span>` : (S.tag ? `<span class="skc-t skc-tag">${esc(tag)}</span>` : '');
-    return `<a class="skc-i" href="#" style="--bgc:${bgc};--dp:${c.dp}" aria-label="${esc(name)}"><span class="skc-art"><svg viewBox="0 0 120 120" aria-hidden="true"><use href="#${art}-${c.k}"/></svg>${inner}</span>${below}</a>`;
+    return `<a class="skc-i" href="#" style="--bgc:${bgc};--dp:${c.dp};--acc:${c.acc}${S.lc === 'concern' ? ';--lc:' + c.dp : ''}" aria-label="${esc(name)}"><span class="skc-art">${icon(S.set, c.k)}${inner}</span>${below}</a>`;
   }).join('');
   const sub = S.head === 'lead' ? `<p>${esc(t.sub)}</p>` : '';
   const eb = S.head === 'center' ? `<span class="skc-eb">${esc(t.eb)}</span>` : '';
@@ -624,7 +434,7 @@ function readout(){
   const shape = OPT.shape.find(o => o[0] === S.shape)[1] + (S.shape === 'rounded' || S.shape === 'arch' ? ` ${S.radius}px` : '');
   const tp = OPT.tp.find(o => o[0] === S.tp)[1];
   return [
-    `Design ${S.design} (${d.name})`, `Art ${ART[S.art].n}`, shape, `Title ${tp.toLowerCase()} ${S.tsM}/${S.tsD}px`,
+    `Design ${S.design} (${d.name})`, `Icons ${SETS[S.set].n}`, PRES.find(o => o[0] === S.pres)[1], `line ${S.lc === 'concern' ? 'per concern' : S.lc}`, `icon ${S.ic}%`, shape, `Title ${tp.toLowerCase()} ${S.tsM}/${S.tsD}px`,
     S.tag ? 'short line on' : 'short line off',
     `Phone ${S.sizeM}px gap ${S.gapM}`, `Laptop ${S.pv && S.tp !== 'beside' ? S.pv + ' per screen' : S.sizeD + 'px'} gap ${S.gapD}`,
     S.ring && S.tp !== 'beside' ? `Ring ${S.ringC}` : 'No ring',
@@ -642,7 +452,13 @@ function sync(){
     b.addEventListener('click', () => { Object.assign(S, DESIGNS[k], {design:k}); sync(); });
     dz.appendChild(b);
   });
-  seg('c-art', 'art', Object.entries(ART).map(([k, a]) => [k, a.n]));
+  seg('c-set', 'set', Object.entries(SETS).map(([k, a]) => [+k, a.n]));
+  seg('c-pres', 'pres', PRES);
+  range('ic','%');
+  $('c-lc').value = S.lc === 'concern' ? '#B03A62' : S.lc;
+  const lsw = $('lc-sw'); lsw.innerHTML = '';
+  LC.forEach(c => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sw'; b.setAttribute('aria-pressed', String(S.lc === c)); b.style.background = c === 'concern' ? 'conic-gradient(#CC5580 0 14%,#D4826A 0 28%,#5A9E80 0 42%,#9277BF 0 57%,#5A9BCB 0 71%,#6E9E62 0 85%,#C39540 0)' : c; b.title = c === 'concern' ? 'Each concern its own colour' : c; b.setAttribute('aria-label', 'Line ' + b.title); b.addEventListener('click', () => { S.lc = c; sync(); }); lsw.appendChild(b); });
+  renderSheet();
   for (const k of ['shape','tp','tag','pv','ring','bg','sb','head','arrows','lang','view']) seg('c-' + k, k, OPT[k]);
   range('radius','px'); range('tsM','px'); range('tsD','px'); range('sizeM','px'); range('sizeD','px'); range('gapM','px'); range('gapD','px');
   $('g-radius').hidden = !(S.shape === 'rounded' || S.shape === 'arch');
@@ -662,7 +478,7 @@ function sync(){
   fit();
   $('readout').textContent = readout();
   $('copied').textContent = '';
-  try { localStorage.setItem('skc-opts', JSON.stringify(S)); } catch (e) {}
+  try { localStorage.setItem('skc-opts2', JSON.stringify(S)); } catch (e) {}
 }
 
 /* Playground only: scale the 390 and 1280 screens to the space available. */
@@ -676,7 +492,7 @@ function fit(){
   $('scr-d').style.setProperty('--zd', Math.min(1, (dW - 16) / 1280));
 }
 new ResizeObserver(fit).observe($('frames'));
-let fresh = true; try { fresh = !localStorage.getItem('skc-opts'); } catch (e) {}
+let fresh = true; try { fresh = !localStorage.getItem('skc-opts2'); } catch (e) {}
 if (fresh && matchMedia('(max-width: 979px)').matches) S.view = 'phone';
 
 $('copy').addEventListener('click', () => {
@@ -686,16 +502,22 @@ $('copy').addEventListener('click', () => {
   try { navigator.clipboard.writeText(txt).then(done, fallback); } catch (e) { fallback(); }
 });
 
-/* artwork sheet + byte sizes (symbol plus every gradient/shape it pulls in) */
-function bytes(id){
+/* icon sheet: every set side by side, at 96px and 56px, with the size of each set */
+function bytes(set){
   const seen = new Set(); let n = 0;
-  const walk = i => { if (seen.has(i)) return; seen.add(i); const el = document.getElementById(i); if (!el) return; const h = el.outerHTML; n += new Blob([h]).size; for (const m of h.matchAll(/url\(#([\w-]+)\)|href="#([\w-]+)"/g)) walk(m[1] || m[2]); };
-  walk(id); return (n / 1024).toFixed(1) + ' KB';
+  const walk = i => { if (seen.has(i)) return; seen.add(i); const el = document.getElementById(i); if (!el) return; const h = el.outerHTML; n += new Blob([h]).size; for (const m of h.matchAll(/href="#([\w-]+)"/g)) walk(m[1]); };
+  C.forEach(c => walk('s' + set + '-' + c.k)); return (n / 1024).toFixed(1) + ' KB for all 7';
 }
-$('sheet-rows').innerHTML = Object.entries(ART).map(([k, a], i) => {
-  const p = k === 'g' ? 'g' : 'l';
-  return `<div class="style-row s${i + 1}"><h3>Style ${a.n}</h3><p>${a.d}</p><div class="art-grid">${C.map(c => `<div class="art-cell"><span class="disc" style="--bgc:${c.bg};--dp:${c.dp}"><svg viewBox="0 0 120 120" aria-hidden="true"><use href="#${p}-${c.k}"/></svg></span><b>${esc(c.en)}</b><small>${k === 'w' ? 'same file as 2' : bytes(p + '-' + c.k)}</small></div>`).join('')}</div></div>`;
-}).join('');
+const SIZES = {}; [1,2,3,4].forEach(k => { SIZES[k] = bytes(k); });
+function renderSheet(){
+  $('sheet').className = 'sheet pr-' + S.pres;
+  const lc = c => S.lc === 'concern' ? c.dp : S.lc;
+  let h = '<div></div>' + Object.entries(SETS).map(([k, a]) => `<div class="cmp-h">${esc(a.n)}<small>${esc(a.d)}</small><code>${SIZES[k]}</code></div>`).join('');
+  C.forEach(c => {
+    h += `<div class="cmp-n">${esc(c.en)}</div>` + Object.keys(SETS).map(k => `<div class="pair" style="--bgc:${c.bg};--dp:${c.dp};--acc:${c.acc};--lc:${lc(c)}"><span class="disc b">${icon(k, c.k)}</span><span class="disc s">${icon(k, c.k)}</span></div>`).join('');
+  });
+  $('sheet-rows').innerHTML = h;
+}
 $('links').innerHTML = C.map(c => `<li>${esc(c.en)} → <code>${esc(c.link)}</code></li>`).join('');
 
 sync();

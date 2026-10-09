@@ -44,7 +44,10 @@ const click = (p, sel, text) => p.locator(sel + ' button', { hasText: text }).fi
 const only = process.argv[3];
 const { p, ctx, errors } = await page(1720, 1000); // wide enough that the laptop screen draws at zoom 1
 if (!only || only === 'art') {
-  await p.locator('#sheet').screenshot({ path: join(out, 'artwork-sheet.png') });
+  for (const [label, file] of [['White on deep tone', 'artwork-sheet-deep.png'], ['Line, ring only', 'artwork-sheet-ring.png'], ['Rose on pastel', 'artwork-sheet.png']]) {
+    await click(p, '#c-pres', label);
+    await p.locator('#sheet').screenshot({ path: join(out, file) });
+  }
 }
 if (!only || only === 'designs') {
   for (const d of ['A', 'B', 'C', 'D', 'E']) {
