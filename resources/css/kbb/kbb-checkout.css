@@ -311,7 +311,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    edge. Hard-coded 16s here would come adrift the moment the slider moved,
    leaving a bar floating inside its own section. The inline-start side is
    3px short because the bar carries a 3px pink border there. */
-.kbb-checkout .sec > h2{font-size:calc(13px * var(--cop-th2));font-weight:700;margin:calc(var(--cop-secpad) * -1) calc(var(--cop-secpad) * -1) 13px;padding:10px var(--cop-secpad) 10px calc(var(--cop-secpad) - 3px);background:var(--cream);border-bottom:1px solid var(--line);border-inline-start:3px solid var(--pink);display:flex;align-items:center;gap:9px;color:var(--ink)}
+.kbb-checkout .sec > h2{font-size:calc(15px * var(--cop-th2));font-weight:700;margin:calc(var(--cop-secpad) * -1) calc(var(--cop-secpad) * -1) 13px;padding:10px var(--cop-secpad) 10px calc(var(--cop-secpad) - 3px);background:var(--cream);border-bottom:1px solid var(--line);border-inline-start:3px solid var(--pink);display:flex;align-items:center;gap:9px;color:var(--ink)}
 /* The round number takes the heading's factor too, so the bar keeps its
    shape instead of a bigger heading beside the same small disc. */
 .kbb-checkout .sec > h2 .n{width:calc(21px * var(--cop-th2));height:calc(21px * var(--cop-th2));border-radius:50%;background:var(--pink);color:#fff;font-size:calc(11.5px * var(--cop-th2));display:grid;place-items:center;font-weight:800;box-shadow:0 4px 10px -4px rgba(193,62,99,.5)}

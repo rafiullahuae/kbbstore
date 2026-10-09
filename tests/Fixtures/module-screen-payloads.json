@@ -9282,7 +9282,7 @@
             "key": "d_t_h2",
             "type": "range",
             "label": "Section heading size",
-            "help": "The four numbered bars — Contact, Shipping address, Delivery, Payment — 13px today. The round number in each one scales with it, so the bar keeps its shape.",
+            "help": "The four numbered bars — Contact, Shipping Details, Delivery, Payment — 15px today (2px up, the owner asked, 9 October). The round number in each one scales with it, so the bar keeps its shape.",
             "default": 100,
             "value": 100,
             "options": {
@@ -9862,7 +9862,7 @@
             "key": "m_t_h2",
             "type": "range",
             "label": "Section heading size",
-            "help": "The four numbered bars — 13px today. The round number in each one scales with it.",
+            "help": "The four numbered bars — 15px today (2px up, the owner asked). The round number in each one scales with it.",
             "default": 100,
             "value": 100,
             "options": {
