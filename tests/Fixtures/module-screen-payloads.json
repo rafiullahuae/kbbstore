@@ -9282,7 +9282,7 @@
             "key": "d_t_h2",
             "type": "range",
             "label": "Section heading size",
-            "help": "The four numbered bars — Contact, Shipping address, Delivery, Payment — 13px today. The round number in each one scales with it, so the bar keeps its shape.",
+            "help": "The four numbered bars — Contact, Shipping Details, Delivery, Payment — 15px today (2px up, the owner asked, 9 October). The round number in each one scales with it, so the bar keeps its shape.",
             "default": 100,
             "value": 100,
             "options": {
@@ -9715,6 +9715,15 @@
               "smart": "Only once the in-page button scrolls away",
               "always": "Always, from the moment the page loads"
             }
+          },
+          {
+            "key": "m_merge",
+            "type": "bool",
+            "label": "Payment and Place order as one card",
+            "help": "The phone page joins the \"Your bag\" / totals / Place order block onto the bottom of the Payment card: one white card, the same width, a thin grey line between the payment methods and the bag. Nothing on this row reaches a desktop, where Place order sits in the order summary beside the form.",
+            "default": true,
+            "value": true,
+            "options": null
           }
         ]
       },
@@ -9853,7 +9862,7 @@
             "key": "m_t_h2",
             "type": "range",
             "label": "Section heading size",
-            "help": "The four numbered bars — 13px today. The round number in each one scales with it.",
+            "help": "The four numbered bars — 15px today (2px up, the owner asked). The round number in each one scales with it.",
             "default": 100,
             "value": 100,
             "options": {
@@ -10296,8 +10305,17 @@
       {
         "key": "trust",
         "label": "Trust & reviews",
-        "description": "The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — \"100% authentic\" beside the pay button and \"100% authentic K-beauty\" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims. The two policy links under Place order are switched here too.",
+        "description": "The card under Payment with the stars, the score and \"100% authentic K-beauty\" — off, as asked, so Place order sits right under the payment methods; the first switch brings it back. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — \"100% authentic\" beside the pay button and \"100% authentic K-beauty\" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims. The two policy links under Place order are switched here too.",
         "fields": [
+          {
+            "key": "trust_card",
+            "type": "bool",
+            "label": "Reviews & authenticity card under Payment",
+            "help": "The white card under the payment methods with the stars, the score and \"100% authentic K-beauty\". Off, as asked, so Place order sits right under the payment methods.",
+            "default": false,
+            "value": false,
+            "options": null
+          },
           {
             "key": "rating_on",
             "type": "bool",

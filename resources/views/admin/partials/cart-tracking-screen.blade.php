@@ -1,5 +1,7 @@
 {{--
-    Growth & Marketing → Cart Tracking.                              Lane CT
+    Cart Tracking — a top-level sidebar row under Analytics.          Lane CT
+    (Moved out of Growth & Marketing by Lane QK10, 9 October: the owner
+    wants it "at the top third of the left panel menu".)
 
     The owner, 4 October, with screenshots of the WordPress "Cart Tracking"
     plugin: "I want a super functional Cart Tracking Functionality as attached,
@@ -1113,8 +1115,9 @@
       screen: SCREEN,
       label: 'Cart Tracking',
       icon: '<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/><path d="m11 10 2 2 3-3"/>',
-      group: 'Growth & Marketing',
-      after: ['searchterms', 'pixels', 'meta', 'labels', 'newsletter']
+      // A top-level row under Analytics since Lane QK10 (the owner asked for
+      // it "at the top"); AdminNav draws it there, this only finds it.
+      after: ['dash']
     });
   }
 
@@ -1129,12 +1132,10 @@
     document.querySelectorAll('.side .nav-item').forEach(function (b) {
       b.classList.toggle('on', b.dataset.go === SCREEN);
     });
-    var group = document.querySelector('#nav .nav-group[data-sec="Growth & Marketing"]');
-    if (group) group.classList.add('open');
-
+    // A top-level row since Lane QK10, like Analytics: no group to open.
     var crumb = document.querySelector('#crumb');
     var title = document.querySelector('#ptitle');
-    if (crumb) crumb.textContent = 'Growth & Marketing';
+    if (crumb) crumb.textContent = 'Overview';
     if (title) title.textContent = 'Cart Tracking';
 
     var side = document.querySelector('#side');

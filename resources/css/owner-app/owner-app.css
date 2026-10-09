@@ -636,6 +636,16 @@ details summary::-webkit-details-marker { display: none; }
 .an-funnel text { font: 11.5px var(--font); fill: var(--ink); }
 .row .rm small.src { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 99px; background: var(--surface2); color: var(--ink2); max-width: 100%; }
 
+/* Cart tracking (Lane QK10): the list's rows are buttons that open a sheet. */
+.ct-row { width: 100%; text-align: left; }
+.ct-st { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 7px; font-size: 12px; }
+.ct-open { background: #FDF0E1; color: #9A5B13; }
+.ct-bot { background: #EEF0F4; color: #555D6E; }
+.ct-sheet .card { margin-bottom: 10px; }
+.ct-sheet .re { flex-direction: row; align-items: center; gap: 10px; }
+.ct-rm { font-size: 12.5px; margin: 8px 0 0; }
+.ct-pc { font-size: 14px; font-weight: 500; }
+
 /* ---------------------------------------------- Customise app (Lane OA4)
  * Users & Roles → Owner app → Customise app. Every rule below hangs off a
  * class the app puts on <html> (core.js applyUi) — or, for the font, the
@@ -717,5 +727,3 @@ html.oa-nosync .ib.sync { display: none; }
 html.oa-nocontact .cu-act { display: none; }
 html.oa-nobulk :is([data-act="selall"], [data-act="selmode"], .bulk) { display: none; }
 html.oa-nobulk .sel { pointer-events: none; }
-
-

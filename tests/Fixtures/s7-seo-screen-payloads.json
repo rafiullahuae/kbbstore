@@ -17,6 +17,8 @@
             "waf_show_cart": "0",
             "waf_show_checkout": "0",
             "checkoutpage_cline_on": "0",
+            "checkoutpage_trust_card": "0",
+            "checkoutpage_m_merge": "1",
             "ga": "",
             "meta_pixel": "",
             "trust_authentic_title": "100% original",

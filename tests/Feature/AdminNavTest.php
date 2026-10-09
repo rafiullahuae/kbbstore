@@ -328,3 +328,38 @@ it('gives the sidebar one accessible hide / show button that slides with transfo
         expect($js)->not->toContain($api);
     }
 });
+
+it('puts Cart Tracking third at the top of the sidebar, under Analytics, for a role that may open it', function () {
+    /*
+     * The owner, 9 October (Lane QK10): "also bring the Cart tracking page to
+     * the top third of the left panel menu, so i can access it instantly".
+     *
+     * THE DEFECT this guards: Cart Tracking sat eighth in the collapsed
+     * Growth & Marketing group, two clicks deep. It is now the third bare
+     * top-level row -- Dashboard, Analytics, Cart Tracking -- drawn like them
+     * (icon + label, no group header), exactly once, with its id, read and
+     * capability unchanged. MUTATION: move the row back into Growth &
+     * Marketing and the first two expectations are red; drop the `read` and
+     * the capability one is (it would fail closed to Full Admin only).
+     */
+    $owner = apConsole('owner');
+    expect(array_slice(apNavIds($owner), 0, 3))->toBe(['dash', 'site-analytics', 'carttracking'])
+        ->and(substr_count($owner, 'data-go="carttracking"'))->toBe(1);
+
+    $open = (int) strpos($owner, '<nav class="nav" id="nav"');
+    $nav = substr($owner, $open, (int) strpos($owner, '</nav>', $open) - $open);
+    // A bare row before the first group header, not inside a .nav-sub.
+    expect(strpos($nav, 'data-go="carttracking"'))->toBeLessThan((int) strpos($nav, '<div class="nav-group'));
+
+    $row = AdminNav::rows()['carttracking'];
+    expect($row['sec'])->toBe('Overview')
+        ->and($row['label'])->toBe('Cart Tracking')
+        ->and($row['read'])->toBe('admin-api/cart-tracking')
+        ->and(AdminNav::capability($row))->toBe('carttracking.view');
+
+    // Capability unchanged: owner + manager see it, support and editor do not.
+    expect(apNavIds(apConsole('manager')))->toContain('carttracking');
+    foreach (['support', 'editor'] as $role) {
+        expect(apNavIds(apConsole($role)))->not->toContain('carttracking');
+    }
+});

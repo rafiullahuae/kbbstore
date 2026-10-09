@@ -3,6 +3,20 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.456
+**Checkout: Payment and Place order as one card, reviews card off, section headings 2px
+larger; Cart Tracking at the top of the sidebar and in the owner app.** Apply after .455.
+Runs its migrations. Hard refresh the admin and the shop.
+
+| Your request | Now |
+|---|---|
+| "remove the rating row, and also the empty space ... place order block ... match to the payment gateway block width ... bring the Place Order button more near" | On a phone (and tablet) Payment and Place order are one white card, same width, with a thin grey line between; the reviews card and the gap are gone. Last payment method to Place order: 382 px -> 251 px. Appearance -> Checkout page -> Trust & reviews -> "Reviews & authenticity card under Payment" (Off); Mobile · Layout -> "Payment and Place order as one card" (On) |
+| "the headings of the sections like shipping details etc, make 2 font size increase" | Contact, Shipping Details, Delivery, Payment: 13 px -> 15 px. Still adjustable at Appearance -> Checkout page -> Mobile / Desktop · Text sizes -> Section heading size (100% = the new size) |
+| "bring the Cart tracking page to the top third of the left panel menu" | Sidebar: Dashboard, Analytics, Cart Tracking |
+| "give this cart tracking access to the owner app too" | Owner app -> More -> Cart tracking: carts with time, items, value, country, customer; Today / 7 / 30 days / All, Not bought / Became orders; tap a cart for details. Read-only |
+
+Files: see the package's update.json.
+
 ## 2.60.455
 **Checkout polish: plain payment boxes, "(<-) Checkout" heading on top, no WhatsApp button on
 cart and checkout, centred field labels, Privacy policy in the checkout footer.** Apply after

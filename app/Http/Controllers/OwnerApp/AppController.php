@@ -316,6 +316,8 @@ final class AppController extends Controller
                     'products' => $can('catalog.view'),
                     'products_edit' => $can('catalog.manage'),
                     'customers' => $can('customers.view'),
+                    // Cart tracking (Lane QK10): the console's capability.
+                    'carts' => $can('carttracking.view'),
                 ],
                 'notify' => OwnerAppEvents::groupsFrom($device->member->notify),
             ],

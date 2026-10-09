@@ -1,0 +1,279 @@
+[
+ {
+  "L": "en",
+  "w": 320,
+  "reassure": {
+   "top": 1992,
+   "bottom": 2066.8,
+   "left": 21,
+   "right": 299,
+   "w": 278
+  },
+  "reassureText": "★★★★★\n4.9 from 7 reviews\n100% authentic K-beauty",
+  "formbox": {
+   "top": 338.1,
+   "bottom": 2067.8,
+   "left": 20,
+   "right": 300,
+   "w": 280
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "mobileOrder": {
+   "top": 2107.8,
+   "bottom": 2481,
+   "left": 0,
+   "right": 320,
+   "w": 320
+  },
+  "mobileOrderStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.26) 0px 14px 40px -18"
+  },
+  "gapFormToOrder": 40,
+  "lastMethodBottom": 1959,
+  "placeTop": 2340.7,
+  "placeIn": "mobile-order",
+  "METHOD_TO_PLACE": 381.7,
+  "trust": "SSL secure\n100% authentic",
+  "scrollWidth": 320,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)",
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ },
+ {
+  "L": "en",
+  "w": 390,
+  "reassure": {
+   "top": 1811.7,
+   "bottom": 1886.5,
+   "left": 21,
+   "right": 369,
+   "w": 348
+  },
+  "reassureText": "★★★★★\n4.9 from 7 reviews\n100% authentic K-beauty",
+  "formbox": {
+   "top": 339.1,
+   "bottom": 1887.5,
+   "left": 20,
+   "right": 370,
+   "w": 350
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "mobileOrder": {
+   "top": 1927.5,
+   "bottom": 2300.8,
+   "left": 0,
+   "right": 390,
+   "w": 390
+  },
+  "mobileOrderStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.26) 0px 14px 40px -18"
+  },
+  "gapFormToOrder": 40,
+  "lastMethodBottom": 1778.7,
+  "placeTop": 2160.4,
+  "placeIn": "mobile-order",
+  "METHOD_TO_PLACE": 381.7,
+  "trust": "SSL secure\n100% authentic",
+  "scrollWidth": 390,
+  "errors": [
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ },
+ {
+  "L": "en",
+  "w": 1280,
+  "reassure": {
+   "top": 1580,
+   "bottom": 1654.8,
+   "left": 141,
+   "right": 733,
+   "w": 592
+  },
+  "reassureText": "★★★★★\n4.9 from 7 reviews\n100% authentic K-beauty",
+  "formbox": {
+   "top": 282.5,
+   "bottom": 1655.8,
+   "left": 140,
+   "right": 734,
+   "w": 594
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "mobileOrder": null,
+  "mobileOrderStyle": {
+   "bg": "rgba(0, 0, 0, 0)",
+   "border": "0px rgb(42, 34, 40) / b 0px",
+   "radius": "0px 0px 0px 0px",
+   "shadow": "none"
+  },
+  "gapFormToOrder": null,
+  "lastMethodBottom": 1547,
+  "placeTop": 302,
+  "placeIn": "summary",
+  "METHOD_TO_PLACE": -1245,
+  "trust": "\n         SSL secure\n                     100% authentic\n            ",
+  "scrollWidth": 1280,
+  "errors": [
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ },
+ {
+  "L": "ar",
+  "w": 320,
+  "reassure": {
+   "top": 2010.4,
+   "bottom": 2085.1,
+   "left": 21,
+   "right": 299,
+   "w": 278
+  },
+  "reassureText": "★★★★★\n4.9 from 7 reviews\n100% authentic K-beauty",
+  "formbox": {
+   "top": 339.1,
+   "bottom": 2086.1,
+   "left": 20,
+   "right": 300,
+   "w": 280
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "mobileOrder": {
+   "top": 2126.1,
+   "bottom": 2509.4,
+   "left": 0,
+   "right": 320,
+   "w": 320
+  },
+  "mobileOrderStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.26) 0px 14px 40px -18"
+  },
+  "gapFormToOrder": 40,
+  "lastMethodBottom": 1977.4,
+  "placeTop": 2359.1,
+  "placeIn": "mobile-order",
+  "METHOD_TO_PLACE": 381.7,
+  "trust": "محمي بـ SSL\n100% authentic",
+  "scrollWidth": 320,
+  "errors": [
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ },
+ {
+  "L": "ar",
+  "w": 390,
+  "reassure": {
+   "top": 1811.7,
+   "bottom": 1886.5,
+   "left": 21,
+   "right": 369,
+   "w": 348
+  },
+  "reassureText": "★★★★★\n4.9 from 7 reviews\n100% authentic K-beauty",
+  "formbox": {
+   "top": 339.1,
+   "bottom": 1887.5,
+   "left": 20,
+   "right": 370,
+   "w": 350
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "mobileOrder": {
+   "top": 1927.5,
+   "bottom": 2310.8,
+   "left": 0,
+   "right": 390,
+   "w": 390
+  },
+  "mobileOrderStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.26) 0px 14px 40px -18"
+  },
+  "gapFormToOrder": 40,
+  "lastMethodBottom": 1778.7,
+  "placeTop": 2160.4,
+  "placeIn": "mobile-order",
+  "METHOD_TO_PLACE": 381.7,
+  "trust": "محمي بـ SSL\n100% authentic",
+  "scrollWidth": 390,
+  "errors": [
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ },
+ {
+  "L": "ar",
+  "w": 1280,
+  "reassure": {
+   "top": 1580,
+   "bottom": 1654.8,
+   "left": 547,
+   "right": 1139,
+   "w": 592
+  },
+  "reassureText": "★★★★★\n4.9 from 7 reviews\n100% authentic K-beauty",
+  "formbox": {
+   "top": 282.5,
+   "bottom": 1655.8,
+   "left": 546,
+   "right": 1140,
+   "w": 594
+  },
+  "formboxStyle": {
+   "bg": "rgb(255, 255, 255)",
+   "border": "1px rgba(42, 34, 40, 0.06) / b 1px",
+   "radius": "13px 13px 13px 13px",
+   "shadow": "rgba(42, 34, 40, 0.22) 0px 12px 36px -24"
+  },
+  "mobileOrder": null,
+  "mobileOrderStyle": {
+   "bg": "rgba(0, 0, 0, 0)",
+   "border": "0px rgb(42, 34, 40) / b 0px",
+   "radius": "0px 0px 0px 0px",
+   "shadow": "none"
+  },
+  "gapFormToOrder": null,
+  "lastMethodBottom": 1547,
+  "placeTop": 302,
+  "placeIn": "summary",
+  "METHOD_TO_PLACE": -1245,
+  "trust": "\n         محمي بـ SSL\n                     100% authentic\n            ",
+  "scrollWidth": 1280,
+  "errors": [
+   "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+  ]
+ }
+]

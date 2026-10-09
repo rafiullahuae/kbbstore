@@ -12,8 +12,8 @@
   "file": "resources/views/admin/app.blade.php",
   "count": 1,
   "what": "the breadcrumb and page title, in TITLES after Cart Tracking (the console guard reads the literal)",
-  "anchor": "'carttracking':['Growth & Marketing','Cart Tracking'],",
-  "replacement": "'carttracking':['Growth & Marketing','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],"
+  "anchor": "'carttracking':['Overview','Cart Tracking'],",
+  "replacement": "'carttracking':['Overview','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],"
  },
  {
   "n": 3,
@@ -36,16 +36,16 @@
   "file": "docs/GS-ADMIN-APP-BLOCKS.md",
   "count": 1,
   "what": "keep Lane GS's handover record in step with block 2 (its block 3 quotes the whole TITLES line, and GridSectionConsoleReachTest holds it to the console)",
-  "anchor": "'carttracking':['Growth & Marketing','Cart Tracking'],",
-  "replacement": "'carttracking':['Growth & Marketing','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],"
+  "anchor": "'carttracking':['Overview','Cart Tracking'],",
+  "replacement": "'carttracking':['Overview','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],"
  },
  {
   "n": 6,
   "file": "docs/BG-ADMIN-APP-BLOCKS.md",
   "count": 1,
   "what": "keep Lane BG's handover record in step with block 2 (it quotes the whole TITLES line)",
-  "anchor": "'carttracking':['Growth & Marketing','Cart Tracking'],",
-  "replacement": "'carttracking':['Growth & Marketing','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],"
+  "anchor": "'carttracking':['Overview','Cart Tracking'],",
+  "replacement": "'carttracking':['Overview','Cart Tracking'],'push':['Growth & Marketing','Push Notifications'],"
  },
  {
   "n": 7,

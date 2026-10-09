@@ -251,6 +251,11 @@ it('finds the places the owner named, in the words he would use', function () {
     // drop SiteLayout from SCHEMA_SCREENS and the Brand page tab is gone.
     expect($has('header', 'Navigation', 'How it fills the row'))->toBeTrue()
         ->and(AdminSearchIndex::build()['sitelayout'][0])->toContain('Brand page');
+    // Lane QK10 moved Cart Tracking to the top of the sidebar (the owner, 9
+    // October: "bring the Cart tracking page to the top third of the left
+    // panel menu"). Its search entry travels with the id, tabs unchanged.
+    expect(AdminSearchIndex::build()['carttracking'][0] ?? [])->toContain('Carts', 'Blocked', 'Settings')
+        ->and(srSidebarIds())->toContain('carttracking');
 });
 
 it('lists only labels the admin actually draws', function () {

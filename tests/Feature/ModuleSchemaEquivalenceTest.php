@@ -87,6 +87,8 @@
  *   way; and 4 MODIFIED on purpose: an empty or null `dl_note` / `dl_note_ar`
  *   answers the shipped wording, which the owner moved to "Free express
  *   delivery over {amount}" -- the default changed, not the cast.)
+ *   (Lane QK9: `trust_card` and `m_merge` on checkout_page, 22 lines
+ *   inserted, 0 modified, 0 removed, the same way.)
  *
  *   Take the new rows and nothing else: rebuild the corpus, then for every line
  *   whose identity (module|key|type|input) is already in the fixture, keep the

@@ -343,7 +343,10 @@ export async function renderMore(view) {
   const r = (icon, t, right, sub, attrs) => '<' + (attrs && attrs.indexOf('href') === 0 ? 'a ' + attrs : 'div') + ' class="row"><span class="ico">' + ic(icon) + '</span><div class="rm"><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>' + right + '</' + (attrs && attrs.indexOf('href') === 0 ? 'a' : 'div') + '>';
   const ch = ic('chev', 'chev s');
   // Screens switched off under Customise app (Lane OA4) leave More's list.
-  const go = (me.can.customers && scr('customers') ? r('users', 'Customers', ch, '', 'href="#/customers"') : '')
+  // Cart tracking (Lane QK10), FIRST: the owner asked for it on the phone, and
+  // the bottom bar already holds five tabs, so it is one tap from More.
+  const go = (me.can.carts ? r('cart', 'Cart tracking', ch, 'Live carts, items and value', 'href="#/carts"') : '')
+    + (me.can.customers && scr('customers') ? r('users', 'Customers', ch, '', 'href="#/customers"') : '')
     + (scr('notifications') ? r('bell', 'Notifications', ch, S.unread ? S.unread + ' unread' : 'All caught up', 'href="#/notifications"') : '')
     + (me.can.products && scr('products') ? r('stack', 'Low stock', ch, '', 'href="#/products?low"') : '');
   const g = (k, icon, label) => r(icon, esc(label), tgl(me.notify.indexOf(k) !== -1, label, 'data-group="' + k + '"' + (on ? '' : ' disabled')));
