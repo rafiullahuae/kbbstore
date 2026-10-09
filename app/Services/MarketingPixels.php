@@ -152,12 +152,23 @@ class MarketingPixels
         $pid = json_encode((string) $product->id);
 
         if ($this->analytics->active('meta')) {
-            $out .= "<script>fbq('track','ViewContent',{content_ids:[{$pid}],content_type:'product',value:{$price},currency:{$currency}});</script>\n";
+            // (Lane MP) A product sold in variants is a GROUP in the Meta
+            // catalog feed (item_group_id = the product id), so the view says
+            // product_group and matches it. A simple product is unchanged.
+            $type = $product->requiresVariant() ? 'product_group' : 'product';
+            $out .= "<script>fbq('track','ViewContent',{content_ids:[{$pid}],content_type:'{$type}',value:{$price},currency:{$currency}});</script>\n";
         }
 
         if ($this->analytics->active('ga4')) {
             $name = json_encode((string) $product->name);
             $out .= "<script>gtag('event','view_item',{currency:{$currency},value:{$price},items:[{item_id:{$pid},item_name:{$name},price:{$price}}]});</script>\n";
+        }
+
+        // (Lane MP) TikTok had no product-view event at all; its catalog ads
+        // and "viewed but did not buy" audiences start here.
+        if ($this->analytics->active('tiktok')) {
+            $name = json_encode((string) $product->name);
+            $out .= "<script>if(window.ttq)ttq.track('ViewContent',{contents:[{content_id:{$pid},content_type:'product',content_name:{$name},price:{$price}}],value:{$price},currency:{$currency}});</script>\n";
         }
 
         return $out;
@@ -195,8 +206,20 @@ class MarketingPixels
 
         $calls = [];
 
+        /*
+         * (Lane MP) When Meta or TikTok also receive this from the server, the
+         * click mints one id, hands it to the browser event AND to the add
+         * request (a 60-second kbb_eid cookie the request carries), so the two
+         * copies are one event to the platform. With no server token nothing
+         * of this is printed and the listener is what it always was.
+         */
+        $server = app(\App\Services\Pixels\ServerEvents::class);
+        $dedup = $server->metaOn() || $server->tiktokOn();
+        $metaOpt = $dedup && $server->metaOn() ? ',{eventID:eid}' : '';
+        $ttOpt = $dedup && $server->tiktokOn() ? ',{event_id:eid}' : '';
+
         if ($this->analytics->active('meta')) {
-            $calls[] = "if(window.fbq)fbq('track','AddToCart',{content_ids:[id],content_type:'product',value:v,currency:{$currency}});";
+            $calls[] = "if(window.fbq)fbq('track','AddToCart',{content_ids:[c],content_type:'product',value:v*q,currency:{$currency}}{$metaOpt});";
         }
 
         /*
@@ -214,7 +237,7 @@ class MarketingPixels
         }
 
         if ($this->analytics->active('tiktok')) {
-            $calls[] = "if(window.ttq)ttq.track('AddToCart',{content_id:String(id),content_type:'product',value:v,currency:{$currency}});";
+            $calls[] = "if(window.ttq)ttq.track('AddToCart',{contents:[{content_id:c,content_type:'product',content_name:n,price:v,quantity:q}],value:v*q,currency:{$currency}}{$ttOpt});";
         }
 
         if ($calls === []) {
@@ -222,6 +245,7 @@ class MarketingPixels
         }
 
         $body = implode("\n    ", $calls);
+        $mint = $dedup ? "\n  var eid='atc-'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);document.cookie='kbb_eid='+eid+';path=/;max-age=60;SameSite=Lax';" : '';
 
         return <<<HTML
 <script>
@@ -233,6 +257,8 @@ document.addEventListener('click', function (e) {
   var v = parseFloat(el.getAttribute('data-price') || '0') || 0;
   var n = el.getAttribute('data-name') || '';
   var q = parseInt(el.getAttribute('data-quantity') || '1', 10) || 1;
+  var vr = el.getAttribute('data-kbb-variant');
+  var c = vr ? id + '-' + vr : String(id);{$mint}
   try {
     {$body}
   } catch (err) {}
@@ -257,12 +283,29 @@ HTML;
         $currency = json_encode($this->currency());
         $out = '';
 
+        // (Lane MP) The server copy of InitiateCheckout carries this same id;
+        // it is minted only when a server token is set, and sent after the
+        // response — never on a prefetch (ServerEvents checks).
+        $server = app(\App\Services\Pixels\ServerEvents::class);
+        $eventId = ($server->metaOn() || $server->tiktokOn()) ? 'ic-' . bin2hex(random_bytes(8)) : null;
+        $eid = $eventId === null ? '' : json_encode($eventId);
+
         if ($this->analytics->active('meta')) {
-            $out .= "<script>fbq('track','InitiateCheckout',{value:{$value},currency:{$currency}});</script>\n";
+            $opt = $eventId !== null && $server->metaOn() ? ",{eventID:{$eid}}" : '';
+            $out .= "<script>fbq('track','InitiateCheckout',{value:{$value},currency:{$currency}}{$opt});</script>\n";
         }
 
         if ($this->analytics->active('ga4')) {
             $out .= "<script>gtag('event','begin_checkout',{currency:{$currency},value:{$value}});</script>\n";
+        }
+
+        if ($this->analytics->active('tiktok')) {
+            $opt = $eventId !== null && $server->tiktokOn() ? ",{event_id:{$eid}}" : '';
+            $out .= "<script>if(window.ttq)ttq.track('InitiateCheckout',{value:{$value},currency:{$currency}}{$opt});</script>\n";
+        }
+
+        if ($eventId !== null && app()->bound('request')) {
+            $server->initiateCheckout(app('request'), $eventId, $totalFils);
         }
 
         return $out;
@@ -275,7 +318,17 @@ HTML;
      */
     public function purchase(Order $order): string
     {
-        if (! $this->active() || $order->pixels_fired_at !== null) {
+        $adsOnly = ! $this->active() && $this->enabled() && app(\App\Services\Pixels\GoogleAds::class)->adsId() !== null;
+
+        if ((! $this->active() && ! $adsOnly) || $order->pixels_fired_at !== null) {
+            return '';
+        }
+
+        // (Lane MP) A prefetch renders the page but runs none of it; claiming
+        // the order here would spend its one Purchase on a page nobody saw.
+        // The success page is on InstantNav's exclusion list, so this is a
+        // second lock on a door that is already shut.
+        if (\App\Support\InstantNav::isSpeculative()) {
             return '';
         }
 
@@ -323,8 +376,13 @@ HTML;
         $ids = [];
         $items = [];
 
+        $contents = [];
+
         foreach ($order->items as $item) {
-            $ids[] = (string) $item->product_id;
+            $cid = \App\Services\Pixels\CatalogIds::line((int) $item->product_id, $item->product_variant_id ? (int) $item->product_variant_id : null);
+            $ids[] = $cid;
+            $contents[] = ['content_id' => $cid, 'content_type' => 'product', 'content_name' => (string) $item->name,
+                'quantity' => (int) $item->quantity, 'price' => (float) $item->unit_price / 100];
             $items[] = [
                 'item_id' => (string) $item->product_id,
                 'item_name' => (string) $item->name,
@@ -335,9 +393,14 @@ HTML;
 
         $out = '';
 
+        // (Lane MP) The same id the server-side Purchase carries, so Meta and
+        // TikTok keep one of the two. Built from the order number, which both
+        // sides know without having to pass anything between them.
+        $eventId = json_encode(\App\Services\Pixels\ServerEvents::purchaseId($order));
+
         if ($this->analytics->active('meta')) {
             $out .= '<script>fbq(\'track\',\'Purchase\',{value:' . $total . ',currency:' . $currency
-                . ',content_type:\'product\',content_ids:' . json_encode($ids) . '});</script>' . "\n";
+                . ',content_type:\'product\',content_ids:' . json_encode($ids) . '},{eventID:' . $eventId . '});</script>' . "\n";
         }
 
         if ($this->analytics->active('ga4')) {
@@ -346,8 +409,11 @@ HTML;
                 . ',currency:' . $currency . ',items:' . json_encode($items) . '});</script>' . "\n";
         }
 
+        $out .= app(\App\Services\Pixels\GoogleAds::class)->purchase($order, $total, $currency);
+
         if ($this->analytics->active('tiktok')) {
-            $out .= '<script>ttq.track(\'CompletePayment\',{value:' . $total . ',currency:' . $currency . '});</script>' . "\n";
+            $out .= '<script>ttq.track(\'CompletePayment\',{contents:' . json_encode($contents) . ',value:' . $total . ',currency:' . $currency
+                . ',content_type:\'product\'},{event_id:' . $eventId . '});</script>' . "\n";
         }
 
         // pixels_fired_at was already claimed atomically above, before any

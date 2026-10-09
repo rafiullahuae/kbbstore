@@ -27,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
          */
         $this->app->register(OwnerAppServiceProvider::class);
 
+        // Marketing Pixels server events (Lane MP): registered here for the same
+        // reason -- bootstrap/ never ships in a package.
+        $this->app->register(MarketingPixelsServiceProvider::class);
+
         /*
          * Update services need filesystem paths, and Laravel cannot guess a
          * string constructor argument — asking the container for BackupService
