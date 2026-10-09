@@ -86,7 +86,7 @@ use Tests\Support\KeyOrder;
  * line off, and the other settings it ships); the diff was read, nothing else moved.
  *
  * ▲ 2.60.456: + the `checkoutpage_*` rows Lane QK9 (one card, reviews card off)
- * and the section-heading size (115%) migrations write. Diff read; nothing else.
+ * migration writes (the section heading size ships as a 15px base instead). Diff read; nothing else.
  */
 function s7PayloadUrls(): array
 {
