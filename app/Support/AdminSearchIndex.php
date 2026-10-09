@@ -423,7 +423,7 @@ final class AdminSearchIndex
         'quiz-leads' => [],
         // Store → Inquiries (Lane CT): the inbox and the contact page's settings.
         'inquiries' => [
-            '' => ['Contact page', 'Inquiry form', 'Unread', 'WhatsApp card', 'Phone card', 'Email card', 'Social media icons', 'Opening hours', 'Send inquiries to', 'Topics'],
+            '' => ['Contact page', 'Inquiry form', 'Unread', 'WhatsApp card', 'Instagram card', 'Email card', 'Phone card', 'Social media icons', 'Opening hours', 'Send inquiries to', 'Topics'],
         ],
         'emails' => [
             'At a glance' => [],

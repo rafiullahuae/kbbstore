@@ -11,7 +11,7 @@
 <tr><td style="padding:0 24px">
 <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.5">
 <tr><td style="padding:3px 14px 3px 0;color:#756C74">Email</td><td style="padding:3px 0"><a href="mailto:{{ $q['email'] }}" style="color:#C6395F">{{ $q['email'] }}</a></td></tr>
-@if ($q['phone'] !== '')<tr><td style="padding:3px 14px 3px 0;color:#756C74">Phone</td><td style="padding:3px 0">{{ $q['phone'] }}</td></tr>@endif
+@if ($q['phone'] !== '')<tr><td style="padding:3px 14px 3px 0;color:#756C74">WhatsApp</td><td style="padding:3px 0">{{ $q['phone'] }}</td></tr>@endif
 @if ($q['topic'] !== '')<tr><td style="padding:3px 14px 3px 0;color:#756C74">Topic</td><td style="padding:3px 0">{{ $q['topic'] }}</td></tr>@endif
 <tr><td style="padding:3px 14px 3px 0;color:#756C74">Page</td><td style="padding:3px 0">{{ $q['locale'] === 'ar' ? 'Arabic' : 'English' }}</td></tr>
 </table>

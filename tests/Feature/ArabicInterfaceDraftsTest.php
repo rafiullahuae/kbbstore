@@ -696,10 +696,10 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // 1478 -> 1479 (Lane SW): "Confirming payment" over a card order's total
     // while the shop records it (store.order_received.fact_total_confirming),
     // seeded by 2027_10_11_100000_seed_card_confirming_arabic_draft.
-    // 1479 -> 1520 (Lane CT): the contact page's cards, icons and inquiry
-    // form (store.contact.*, 41 keys), seeded by
+    // 1479 -> 1523 (Lane CT): the contact page's cards, icons and inquiry
+    // form (store.contact.*, 44 keys), seeded by
     // 2027_10_15_120100_seed_contact_page_arabic_drafts.
-    expect($ui['drafts'])->toBe(1520, 'the shipped Arabic is not showing as drafts to review')
+    expect($ui['drafts'])->toBe(1523, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });

@@ -112,6 +112,7 @@ class ContactInquiriesApiController extends Controller
             // no address" instead of offering a switch that draws nothing.
             'values' => [
                 'wa' => SupportContact::whatsapp(),
+                'ig' => ContactPage::instagramFor(app(\App\Services\SettingsService::class))['detail'] ?? '',
                 'phone' => SupportContact::phone(),
                 'email' => SupportContact::email(),
             ],

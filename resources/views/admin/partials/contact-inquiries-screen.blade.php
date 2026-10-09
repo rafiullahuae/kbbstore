@@ -173,7 +173,7 @@
     return '<div class="ctx-card ctx-detail">' + msg
       + '<h3>' + esc(r.name) + '</h3>'
       + '<dl class="ctx-meta"><dt>Email</dt><dd><a href="mailto:' + esc(encodeURI(r.email)) + '?subject=' + esc(encodeURIComponent(subject)) + '">' + esc(r.email) + '</a></dd>'
-      + (r.phone ? '<dt>Phone</dt><dd>' + esc(r.phone) + '</dd>' : '')
+      + (r.phone ? '<dt>WhatsApp</dt><dd>' + esc(r.phone) + '</dd>' : '')
       + (r.topic ? '<dt>Topic</dt><dd>' + esc(r.topic) + '</dd>' : '')
       + '<dt>Received</dt><dd>' + esc(when(r.at)) + ' · ' + (r.locale === 'ar' ? 'Arabic page' : 'English page') + '</dd>'
       + '<dt>Email alert</dt><dd>' + (r.mailed ? 'Sent' : 'Not sent — see Emails → Sent mail') + '</dd></dl>'
@@ -216,11 +216,14 @@
     var shown = function (val) { return val ? 'Shows ' + val + '.' : 'No address set, so this card is hidden whatever this switch says.'; };
     return '<div class="ctx-set">'
       + '<div class="ctx-card"><h4>Cards</h4><p class="ctx-help">The numbers and the address come from Settings → Business → How customers reach you — change them there and every page, these cards included, follows.</p>'
-      + sw('wa', 'WhatsApp card', shown(v.wa)) + sw('phone', 'Phone card', shown(v.phone)) + sw('email', 'Email card', shown(v.email))
+      + sw('wa', 'WhatsApp card', shown(v.wa))
+      + sw('ig', 'Instagram card', v.ig ? 'Shows ' + v.ig + ' and opens a direct message. The profile is the footer’s (Instagram URL).' : 'No Instagram profile set, so this card is hidden whatever this switch says.')
+      + sw('email', 'Email card', shown(v.email))
+      + sw('phone', 'Phone card', (v.phone ? 'Would show ' + v.phone + '. ' : '') + 'Off by default: the shop supports customers on WhatsApp, Instagram and email, not by phone.')
       + sw('socials', 'Social media icons', 'The footer’s own profiles (Instagram, TikTok, Facebook, YouTube) — each shows once it has an address.')
       + sw('hours', 'Opening hours', 'Shown when Settings → Business → Opening hours holds valid hours.') + '</div>'
       + '<div class="ctx-card"><h4>Inquiry form</h4>'
-      + sw('form', 'Show the inquiry form', 'Name, email, phone (optional), topic and message. Messages arrive here and by email.')
+      + sw('form', 'Show the inquiry form', 'Name, email, WhatsApp number (optional), topic and message. Messages arrive here and by email.')
       + '<div class="ctx-field" style="margin-top:10px"><label for="ctx-rcpt">Send inquiries to</label><input id="ctx-rcpt" type="email" data-ctx-k="recipient" value="' + esc(cfg.recipient) + '" placeholder="' + esc(set.fallback || 'no address set') + '"' + (bad.indexOf('recipient') >= 0 || fieldErr.recipient ? ' class="bad"' : '') + '>'
       + '<span class="ctx-help">Blank sends to ' + (set.fallback ? esc(set.fallback) + (set.fallbackFrom === 'merchant' ? ' — the shop’s new-order alert address (Emails)' : ' — the support email (Settings → Business)') : 'nobody: set a new-order alert address under Emails, or type one here') + '. Every inquiry is kept here either way.</span></div>'
       + '<div class="ctx-field" style="margin-top:12px"><label for="ctx-topics">Topics, one per line</label><textarea id="ctx-topics" data-ctx-k="topicsText"' + (bad.indexOf('topics') >= 0 || fieldErr.topics ? ' class="bad"' : '') + '>' + esc(cfg.topicsText) + '</textarea>'

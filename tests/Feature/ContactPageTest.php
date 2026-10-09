@@ -84,7 +84,7 @@ beforeEach(function () {
 
 /* ══════════════════════════════ the page ══════════════════════════════ */
 
-it('draws the WhatsApp, phone and email cards from the settings the shop already has', function () {
+it('draws the WhatsApp, Instagram and email cards, in that order, from the settings the shop already has', function () {
     /*
      * The defect: a contact page that invents a number, or prints one the
      * header does not dial. MUTATION: build the WhatsApp href from
@@ -93,11 +93,57 @@ it('draws the WhatsApp, phone and email cards from the settings the shop already
      */
     $html = ctContact();
 
-    expect($html)->toContain('href="https://wa.me/971585052611"')
-        ->and($html)->toContain('href="tel:+971585052611"')
-        ->and($html)->toContain('href="mailto:info@kbeautybliss.com"')
-        ->and(substr_count($html, 'class="ctc-card"'))->toBe(3)
-        ->and($html)->toContain('+971 58 505 2611');
+    preg_match_all('/class="ctc-card" data-ct="([a-z]+)"/', $html, $m);
+    expect($m[1])->toBe(['wa', 'ig', 'email'])
+        ->and($html)->toContain('href="https://wa.me/971585052611"')
+        ->and($html)->toContain('href="https://ig.me/m/kbeauty.bliss"')
+        ->and($html)->toContain('@kbeauty.bliss')
+        ->and($html)->toContain('href="mailto:info@kbeautybliss.com"');
+});
+
+it('ships the phone card off and says nothing about calls, but keeps the switch', function () {
+    /*
+     * The owner: "remove the call option, we don't receive calls, we provide
+     * support on whatsapp, instagram and email." MUTATION: take 'phone' out of
+     * ContactPage::OFF_BY_DEFAULT -> a "Call us" card and a tel: link, red.
+     */
+    $html = ctContact();
+    preg_match('#<main.*</main>#s', $html, $main);
+    $body = strip_tags((string) preg_replace('#<(style|script)\b.*?</\1>#s', '', $main[0] ?? $html));
+
+    expect($html)->not->toContain('data-ct="phone"')
+        ->and($html)->not->toContain('href="tel:')
+        ->and($body)->not->toMatch('/\b(call us|call now|phone(?! calls))\b/i')
+        ->and($body)->toContain('We don’t take phone calls');
+
+    // Switched back on by the owner, it draws again.
+    expect(ContactPage::save(array_replace(ContactPage::defaults(), ['phone' => true, 'topics' => 'Other'])))->toBe([]);
+    expect(ctContact())->toContain('href="tel:+971585052611"');
+});
+
+it('opens the footer’s Instagram profile as a direct message, and hides the card without one', function () {
+    /*
+     * MUTATION: return the profile URL instead of ig.me/m/<handle> in
+     * ContactPage::instagram() -> red; drop the `$instagram !== null` check ->
+     * an empty profile still draws a card, red.
+     */
+    expect(ContactPage::instagram('https://www.instagram.com/kbeauty.bliss/'))->toBe(['href' => 'https://ig.me/m/kbeauty.bliss', 'detail' => '@kbeauty.bliss'])
+        ->and(ContactPage::instagram('https://instagram.com/some.shop'))->toBe(['href' => 'https://ig.me/m/some.shop', 'detail' => '@some.shop'])
+        ->and(ContactPage::instagram('https://linktr.ee/kbb'))->toBe(['href' => 'https://linktr.ee/kbb', 'detail' => 'linktr.ee/kbb'])
+        ->and(ContactPage::instagram('javascript:alert(1)'))->toBeNull()
+        ->and(ContactPage::instagram('#'))->toBeNull()
+        ->and(ContactPage::instagram(''))->toBeNull();
+
+    ctSet('social_instagram', '');
+    $html = ctContact();
+    expect($html)->not->toContain('data-ct="ig"')->and($html)->toContain('data-ct="wa"');
+
+    ctSet('social_instagram', 'javascript:alert(1)');
+    expect(ctContact())->not->toContain('data-ct="ig"');
+
+    ctSet('social_instagram', 'https://www.instagram.com/kbeauty.bliss/');
+    expect(ContactPage::save(array_replace(ContactPage::defaults(), ['ig' => false, 'topics' => 'Other'])))->toBe([]);
+    expect(ctContact())->not->toContain('data-ct="ig"');
 });
 
 it('leaves out a card whose value is empty, and a card switched off', function () {
@@ -113,7 +159,7 @@ it('leaves out a card whose value is empty, and a card switched off', function (
     ctSet('support_email', 'not an address');
     expect(ctContact())->not->toContain('mailto:');
 
-    expect(ContactPage::save(['wa' => false, 'phone' => true, 'email' => true, 'socials' => true, 'hours' => true, 'form' => true, 'topics' => "Other"]))->toBe([]);
+    expect(ContactPage::save(['wa' => false, 'ig' => true, 'phone' => false, 'email' => true, 'socials' => true, 'hours' => true, 'form' => true, 'topics' => "Other"]))->toBe([]);
     ctSet('support_email', 'info@kbeautybliss.com');
     $html = ctContact();
     expect($html)->not->toContain('data-ct="wa"')->and($html)->toContain('data-ct="email"');
@@ -436,9 +482,9 @@ it('saves the contact page settings only when every value is one it can use', fu
     expect(ContactPage::config())->toMatchArray(['form' => true, 'recipient' => '', 'topics' => array_values(ContactPage::DEFAULT_TOPICS)]);
 });
 
-it('ships every part on, as the owner asked, and the four sane topics', function () {
+it('ships every part on as the owner asked, the phone card off as he then asked, and the four sane topics', function () {
     expect(ContactPage::defaults())->toBe([
-        'wa' => true, 'phone' => true, 'email' => true, 'socials' => true, 'hours' => true, 'form' => true,
+        'wa' => true, 'ig' => true, 'email' => true, 'phone' => false, 'socials' => true, 'hours' => true, 'form' => true,
         'recipient' => '', 'topics' => ['Order question', 'Product advice', 'Wholesale', 'Other'],
     ]);
 });
@@ -470,4 +516,54 @@ it('labels the Arabic page through the shop’s translations, once the owner app
     $this->post('/ar/contact-us/send', ctPost())->assertRedirect('/ar/contact-us/');
     expect(ContactInquiry::query()->sole()->locale)->toBe('ar')
         ->and(ContactInquiry::query()->sole()->topic)->toBe('Product advice');
+});
+
+/* ═══════════════════════════ the page's own words ═══════════════════════════ */
+
+it('replaces the seeded contact wording, keeps the old one as a hidden draft, and gives it back on rollback', function () {
+    /*
+     * The owner: "remove the foot line, bcz we have already have the contact
+     * details on the contact page … write nicely this stuff." MUTATION: skip
+     * the backup insert in up() -> down() has nothing to restore, red; drop the
+     * "still holds our text" check in down() -> the owner's later edit is
+     * overwritten, red.
+     */
+    $migration = require database_path('migrations/2027_10_15_120300_contact_us_support_copy.php');
+    $page = fn () => DB::table('pages')->where('slug', 'contact-us')->first();
+    $copy = $migration::copyHtml();
+
+    // The migration set has already run: the new words are in, the old ones kept as a draft.
+    expect($page()->content)->toBe($copy)->and($page()->title)->toBe('Contact Us');
+    $backup = DB::table('pages')->where('slug', 'contact-us-previous')->first();
+    expect($backup->status)->toBe('draft')
+        ->and($backup->title)->toBe('Contact Us — previous wording')
+        ->and($backup->content)->toContain('printed at the foot of every page');
+
+    // The draft is never served.
+    $this->get('/contact-us-previous/')->assertNotFound();
+
+    // The shop shows the new words, none of the old, and no h1 of its own.
+    $html = ctContact();
+    expect($html)->toContain('WhatsApp</strong> is the quickest way to reach us')
+        ->and($html)->not->toContain('foot of every page')
+        ->and($html)->not->toContain('placeholder wording')
+        ->and(substr_count($html, '<h1'))->toBe(1)
+        ->and($copy)->not->toContain('<h1')
+        ->and($copy)->not->toMatch('/\+?\d[\d ]{7,}/')
+        ->and(\App\Support\RichText::clean($copy))->toBe($copy);
+
+    // A re-run changes nothing and keeps the one backup.
+    $migration->up();
+    expect(DB::table('pages')->where('slug', 'contact-us-previous')->count())->toBe(1);
+
+    // Rollback puts the old words back and removes the draft.
+    $migration->down();
+    expect($page()->content)->toBe($backup->content)
+        ->and(DB::table('pages')->where('slug', 'contact-us-previous')->exists())->toBeFalse();
+
+    // But never over a page the owner has edited since.
+    $migration->up();
+    DB::table('pages')->where('slug', 'contact-us')->update(['content' => '<p>His own words.</p>']);
+    $migration->down();
+    expect($page()->content)->toBe('<p>His own words.</p>');
 });

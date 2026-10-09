@@ -15,8 +15,9 @@ use App\Services\SiteFooter;
  * The owner, 9 October: "the contact page should have proper sections for
  * whatsapp, contact, email, and a inquiry form nicely design. and our social
  * media icons." He asked for it, so it SHIPS ON (CLAUDE.md, 30 September):
- * every card, the icons and the form are on by default, and Store → Inquiries →
- * Contact page can take each one back off.
+ * every card, the icons and the form are on by default — except the phone
+ * card, which he then asked to remove ("we don't receive calls") — and
+ * Store → Inquiries → Contact page can switch each one.
  *
  * ── NOTHING HERE IS A NEW FACT ABOUT THE SHOP ───────────────────────────────
  *
@@ -25,7 +26,8 @@ use App\Services\SiteFooter;
  *
  *   WhatsApp   SupportContact::whatsapp() / whatsappDigits() — the number the
  *              floating button, the header and the footer already dial
- *   Phone      SupportContact::phone() — what the header chip prints
+ *   Instagram  SiteFooter::socials()' instagram profile, as ig.me/m/<handle>
+ *   Phone      SupportContact::phone() — what the header chip prints (off)
  *   Email      SupportContact::email() — `support_email`, no shipped fallback,
  *              so a shop that cleared it shows no email card at all
  *   Icons      SiteFooter::socials() and SiteFooter::SOCIAL_ICONS — the footer's
@@ -50,8 +52,16 @@ final class ContactPage
     /** The one settings row. */
     public const KEY = 'contact_page';
 
-    /** The switches, all on: he asked for every one of them. */
-    public const SWITCHES = ['wa', 'phone', 'email', 'socials', 'hours', 'form'];
+    /**
+     * The switches. All on — he asked for every one — except the phone card:
+     * "remove the call option, we don't receive calls, we provide support on
+     * whatsapp, instagram and email" (the owner, 9 October, on the first
+     * screenshot). It stays a switch so he can bring it back.
+     */
+    public const SWITCHES = ['wa', 'ig', 'email', 'phone', 'socials', 'hours', 'form'];
+
+    /** The switches that ship off. */
+    public const OFF_BY_DEFAULT = ['phone'];
 
     /**
      * The topic list the form ships with, keyed so a default line can be shown
@@ -80,7 +90,12 @@ final class ContactPage
     /** @return array<string, mixed> */
     public static function defaults(): array
     {
-        return array_fill_keys(self::SWITCHES, true) + [
+        $on = [];
+        foreach (self::SWITCHES as $k) {
+            $on[$k] = ! in_array($k, self::OFF_BY_DEFAULT, true);
+        }
+
+        return $on + [
             'recipient' => '',
             'topics' => array_values(self::DEFAULT_TOPICS),
         ];
@@ -245,14 +260,16 @@ final class ContactPage
             ];
         }
 
-        $phone = SupportContact::phone();
-        $digits = (string) preg_replace('/\D+/', '', $phone);
-        if ($c['phone'] && strlen($digits) >= 6) {
+        // Instagram: the footer's own profile (SiteFooter::socials(), already
+        // through SafeUrl::href()), opened as a direct message when it names a
+        // profile. Hidden when the shop has no Instagram address.
+        $instagram = self::instagramFor($settings);
+        if ($c['ig'] && $instagram !== null) {
             $cards[] = [
-                'key' => 'phone', 'icon' => $icon('phone'),
-                'title' => __('store.contact.phone_title'), 'note' => __('store.contact.phone_note'),
-                'detail' => $phone,
-                'href' => 'tel:'.(str_contains($phone, '+') ? '+' : '').$digits, 'action' => __('store.contact.phone_action'), 'external' => false,
+                'key' => 'ig', 'icon' => SiteFooter::SOCIAL_ICONS['instagram'],
+                'title' => __('store.contact.ig_title'), 'note' => __('store.contact.ig_note'),
+                'detail' => $instagram['detail'],
+                'href' => $instagram['href'], 'action' => __('store.contact.ig_action'), 'external' => true,
             ];
         }
 
@@ -263,6 +280,17 @@ final class ContactPage
                 'title' => __('store.contact.email_title'), 'note' => __('store.contact.email_note'),
                 'detail' => $email,
                 'href' => 'mailto:'.$email, 'action' => __('store.contact.email_action'), 'external' => false,
+            ];
+        }
+
+        $phone = SupportContact::phone();
+        $digits = (string) preg_replace('/\D+/', '', $phone);
+        if ($c['phone'] && strlen($digits) >= 6) {
+            $cards[] = [
+                'key' => 'phone', 'icon' => $icon('phone'),
+                'title' => __('store.contact.phone_title'), 'note' => __('store.contact.phone_note'),
+                'detail' => $phone,
+                'href' => 'tel:'.(str_contains($phone, '+') ? '+' : '').$digits, 'action' => __('store.contact.phone_action'), 'external' => false,
             ];
         }
 
@@ -294,6 +322,50 @@ final class ContactPage
         }
 
         return ['cards' => $cards, 'socials' => $socials, 'hours' => $hours, 'form' => $form];
+    }
+
+    /** The Instagram card for this shop's footer profile, or null when it has none. */
+    public static function instagramFor(SettingsService $settings): ?array
+    {
+        foreach (SiteFooter::socials($settings) as [$key, , $href]) {
+            if ($key === 'instagram') {
+                return self::instagram($href);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The Instagram card's link and the words it prints, from the profile
+     * address the footer already uses (`social_instagram`, which holds a URL:
+     * https://www.instagram.com/kbeauty.bliss/ by default).
+     *
+     * A plain profile address on instagram.com becomes https://ig.me/m/<handle>,
+     * Instagram's own "send a message" link, and prints as @handle. Anything
+     * else that SafeUrl let through (an http/https address) is linked as typed
+     * and printed without its scheme. An empty or refused address: null, and
+     * the card is not drawn.
+     *
+     * @return array{href:string, detail:string}|null
+     */
+    public static function instagram(string $href): ?array
+    {
+        $href = trim($href);
+
+        if ($href === '' || $href === '#' || preg_match('#^https?://#i', $href) !== 1) {
+            return null;
+        }
+
+        $host = strtolower((string) parse_url($href, PHP_URL_HOST));
+        $path = trim((string) parse_url($href, PHP_URL_PATH), '/');
+
+        if (in_array($host, ['instagram.com', 'www.instagram.com', 'm.instagram.com'], true)
+            && preg_match('/^[A-Za-z0-9._]{1,30}$/', $path) === 1) {
+            return ['href' => 'https://ig.me/m/'.$path, 'detail' => '@'.$path];
+        }
+
+        return ['href' => $href, 'detail' => (string) preg_replace('#^https?://(www\.)?#i', '', rtrim($href, '/'))];
     }
 
     /**
