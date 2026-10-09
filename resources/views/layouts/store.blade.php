@@ -384,7 +384,7 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
         call returns nothing.
     --}}
     {!! app(\App\Services\Analytics::class)->headTags() !!}
-    {!! app(\App\Services\MarketingPixels::class)->addToCart() !!}
+    {!! app(\App\Services\MarketingPixels::class)->addToCart() !!}{!! app(\App\Services\Pixels\ShopTags::class)->head() !!}
 </head>
 @php
     $kbbCards = app(\App\Services\ProductStyles::class);
@@ -431,7 +431,7 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
     package whose migration did not run, would otherwise be "Call to undefined
     method" on every storefront page.
 --}}<body class="@yield('body-class') {{ $kbbDiv->bodyClass() }}{{ $kbbCards->bodyClass() === '' ? '' : ' ' . $kbbCards->bodyClass() }}"
-      style="{{ $kbbCards->cssVariables() }};{{ $kbbDiv->cssVariables() }}">
+      style="{{ $kbbCards->cssVariables() }};{{ $kbbDiv->cssVariables() }}">{!! app(\App\Services\Pixels\ShopTags::class)->bodyStart() !!}
 
 {{--
     Bare pages render no site header.
@@ -643,5 +643,5 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
 @endif
 
 @stack('scripts')
-</body>
+{!! app(\App\Services\Pixels\ShopTags::class)->footer() !!}</body>
 </html>

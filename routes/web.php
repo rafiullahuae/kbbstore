@@ -46,6 +46,10 @@ Route::withoutMiddleware(SeoFilesController::STATELESS)->group(function () {
     // machine-read like the three files above. Growth & Marketing -> Google Shopping feed.
     require __DIR__.'/merchant-feed.php';
 
+    // Meta and TikTok catalog feeds (Lane MP): /feeds/meta-catalog.xml and
+    // /feeds/tiktok-catalog.xml, the Google feed's builder with the ids the pixels send.
+    require __DIR__.'/marketing-catalog-feeds.php';
+
     /*
      * The fourth document of the same kind (Lane WAL): Apple's domain
      * association file, machine-read, no session and no per-visitor content.
@@ -834,24 +838,9 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/ugc-admin.php';
 
-        /*
-         * Content → Instagram (Lane IG). Seven endpoints: the screen's read and
-         * save, the two halves of the OAuth handshake behind "Configure now", a
-         * manual refetch, and disconnect. Its own capabilities, instagram.view
-         * and instagram.manage, for the same reason the UGC block above has its
-         * own — and WRITES ABOVE READS inside the file, because two of the
-         * handshake steps arrive as GETs that write.
-         *
-         * The redirect URI this shop hands Instagram is built by the server on a
-         * fixed path and is deliberately NOT under the secret `admin_path`: it
-         * has to be typed into a Meta app by hand, and a callback address that
-         * moves with the admin path would have to be retyped every time it did.
-         *
-         * A `clear_caches_*` migration ships with it, and that one is not
-         * optional: without the route clear the OAuth callback 404s AFTER the
-         * owner has already granted access.
-         */
-        require __DIR__.'/instagram-admin.php';
+        // (Lane IGR) Content → Instagram, the API module and its "Connect with
+        // Facebook" handshake, was retired at the owner's request; its require
+        // of instagram-admin.php is gone. Instagram is Content → Instagram embeds.
         require __DIR__.'/spotted-admin.php';   // Appearance → #KBeautyBliss Spotted (Lane HB)
         require __DIR__.'/ig-embeds-admin.php';   // Content → Instagram embeds (Lane IGE), `igembeds.manage`
 
@@ -905,6 +894,9 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Growth & Marketing → Marketing Pixels.
         Route::get('/marketing-pixels',  [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'show']);
         Route::post('/marketing-pixels', [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'save']);
+        // Connect wizards, checks, Last events, Connect with Facebook, Custom code (Lane MP).
+        // marketing.pixels.connect (owner, manager); custom code marketing.customcode (owner).
+        require __DIR__.'/marketing-pixels-connect-admin.php';
 
         // Catalogue → Product Labels.
         Route::get('/product-labels',  [\App\Http\Controllers\Admin\ProductLabelsApiController::class, 'show']);
@@ -1047,6 +1039,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/category-header-admin.php'; // Category "Edit header" panel (Lane CH)
         require __DIR__.'/pagination-admin.php';      // Catalog → Pagination (Lane PG)
         require __DIR__.'/not-found-page-admin.php';  // Safety → 404 page (Lane NF)
+        require __DIR__.'/contact-inquiries-admin.php';  // Store → Inquiries (Lane CT)
 
         // Core Updates panel (JSON). Sits alongside the standalone page, which
         // stays as the fallback for when the admin bundle itself is broken.
@@ -1374,6 +1367,7 @@ require __DIR__.'/instant-nav.php';   // Appearance -> Site layout -> Page speed
  * reachable without a login AND carry CSRF, which only this group gives.
  */
 require __DIR__.'/newsletter-public.php';
+require __DIR__.'/contact-form.php';      // Contact page inquiry form (Lane CT); web group for the session and CSRF
 require __DIR__.'/site-app-push.php';   // App → Site App: the shop app's notification ask (Lane NT); web group for the session and CSRF
 
 /*

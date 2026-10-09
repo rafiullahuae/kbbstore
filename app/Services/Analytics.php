@@ -252,11 +252,23 @@ final class Analytics
             $out .= "<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',{$id});fbq('track','PageView');</script>\n";
         }
 
-        if ($ga4 !== null) {
-            $id = json_encode($ga4);
-            $src = rawurlencode($ga4);
+        /*
+         * (Lane MP) Google Ads and Consent Mode ride on the SAME gtag.js: the
+         * consent default goes first (Google requires it before any config),
+         * the Ads config after GA4's. Both are '' until the owner sets them, so
+         * this block prints exactly what it always did for a GA4-only shop.
+         * With an Ads ID and no GA4, gtag.js is loaded for the Ads ID alone.
+         */
+        $ads = app(\App\Services\Pixels\GoogleAds::class);
+        $consent = $ads->consentDefault();
+        $adsConfig = $ads->config();
+        $tagId = $ga4 ?? ($adsConfig !== '' ? $ads->adsId() : null);
+
+        if ($tagId !== null) {
+            $src = rawurlencode($tagId);
+            $ga4Config = $ga4 !== null ? "gtag('config'," . json_encode($ga4) . ');' : '';
             $out .= "<script async src=\"https://www.googletagmanager.com/gtag/js?id={$src}\"></script>\n";
-            $out .= "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',{$id});</script>\n";
+            $out .= "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}{$consent}gtag('js',new Date());{$ga4Config}{$adsConfig}</script>\n";
         }
 
         if ($tiktok !== null) {

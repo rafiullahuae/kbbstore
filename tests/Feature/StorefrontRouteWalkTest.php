@@ -168,6 +168,10 @@ function walkExpectations(array $seed): array
         'robots.txt'               => ['status' => 200],
         'llms.txt'                 => ['status' => 200],
         'feeds/google-merchant.xml' => ['status' => 200], // Google Shopping feed (Lane SEO)
+        // Meta and TikTok catalog feeds (Lane MP, 2.60.449): the Merchant feed's
+        // own gate (MerchantFeed::enabled(), not a private host), so the same 200.
+        'feeds/meta-catalog.xml'   => ['status' => 200],
+        'feeds/tiktok-catalog.xml' => ['status' => 200],
         /*
          * Apple's domain-association document (Lane WAL), both spellings Apple
          * publishes. 404 IS THE CORRECT ANSWER ON A SHOP THAT HAS NOT SET ONE

@@ -67,6 +67,16 @@ use Illuminate\Support\Facades\DB;
  */
 final class MerchantFeed
 {
+    /**
+     * Item ids. SKU (the default): Merchant Center's preference, this feed's
+     * shape since it shipped. SHOP: the ids the Meta and TikTok pixels send
+     * (App\Services\Pixels\CatalogIds), for the two catalog feeds Lane MP
+     * serves from this same builder, so a catalog ad can match a view.
+     */
+    public const SCHEME_SKU = 'sku';
+
+    public const SCHEME_SHOP = 'shop';
+
     /** Settings key for the switch. Ships '1' -- see the class note. */
     public const SETTING = 'merchant_feed';
 
@@ -117,10 +127,12 @@ final class MerchantFeed
      *
      * @return array{xml: string, items: int, products: int, built_at: string}
      */
-    public function cached(): array
+    public function cached(string $scheme = self::SCHEME_SKU): array
     {
         $s = SeoSettings::map();
+        $scheme = $scheme === self::SCHEME_SHOP ? self::SCHEME_SHOP : self::SCHEME_SKU;
         $key = self::CACHE_PREFIX . md5(implode('|', [
+            $scheme,
             self::stamp(),
             (string) Cache::get(self::VERSION_KEY, 0),
             self::base($s),
@@ -133,7 +145,7 @@ final class MerchantFeed
             return $hit;
         }
 
-        $built = $this->build($s);
+        $built = $this->build($s, $scheme);
         Cache::put($key, $built, self::TTL);
 
         return $built;
@@ -144,7 +156,7 @@ final class MerchantFeed
      *
      * @return array{xml: string, items: int, products: int, built_at: string}
      */
-    public function build(?array $settings = null): array
+    public function build(?array $settings = null, string $scheme = self::SCHEME_SKU): array
     {
         $s = $settings ?? SeoSettings::map();
         $base = self::base($s);
@@ -169,7 +181,7 @@ final class MerchantFeed
 
         self::onlyExistingColumns($query);
 
-        $query->chunkById(self::CHUNK, function ($chunk) use (&$items, &$products, &$ids, $base, $paths, $currency) {
+        $query->chunkById(self::CHUNK, function ($chunk) use (&$items, &$products, &$ids, $base, $paths, $currency, $scheme) {
             SetEagerLoad::on($chunk);
 
             foreach ($chunk as $product) {
@@ -177,7 +189,7 @@ final class MerchantFeed
                     continue;
                 }
 
-                $rows = $this->itemsFor($product, $base, $paths, $currency, $ids);
+                $rows = $this->itemsFor($product, $base, $paths, $currency, $ids, $scheme);
 
                 if ($rows !== []) {
                     $products++;
@@ -217,8 +229,10 @@ final class MerchantFeed
      * @param  array<string, true>  $ids  ids already used in this feed
      * @return list<array<string, string|list<string>>>
      */
-    private function itemsFor(Product $product, string $base, array $paths, string $currency, array &$ids): array
+    private function itemsFor(Product $product, string $base, array $paths, string $currency, array &$ids, string $scheme = self::SCHEME_SKU): array
     {
+        $shop = $scheme === self::SCHEME_SHOP;
+
         $name = trim((string) $product->name);
 
         if ($name === '' || trim((string) $product->slug) === '') {
@@ -249,7 +263,7 @@ final class MerchantFeed
             $gtin = Gtin::normalise(is_string($product->gtin) ? $product->gtin : null);
 
             return [self::item(
-                self::uniqueId((string) $product->sku, 'kbb-' . $product->id, $ids),
+                $shop ? \App\Services\Pixels\CatalogIds::product((int) $product->id) : self::uniqueId((string) $product->sku, 'kbb-' . $product->id, $ids),
                 null,
                 $name,
                 $common,
@@ -265,7 +279,7 @@ final class MerchantFeed
             )];
         }
 
-        $group = self::uniqueGroup((string) $product->sku, 'kbb-' . $product->id);
+        $group = $shop ? \App\Services\Pixels\CatalogIds::product((int) $product->id) : self::uniqueGroup((string) $product->sku, 'kbb-' . $product->id);
         $out = [];
 
         foreach ($variants as $variant) {
@@ -283,7 +297,7 @@ final class MerchantFeed
             }
 
             $out[] = self::item(
-                self::uniqueId((string) $variant->sku, 'kbb-' . $product->id . '-' . $variant->id, $ids),
+                $shop ? \App\Services\Pixels\CatalogIds::line((int) $product->id, (int) $variant->id) : self::uniqueId((string) $variant->sku, 'kbb-' . $product->id . '-' . $variant->id, $ids),
                 $group,
                 $label !== '' ? $name . ' - ' . $label : $name,
                 $common,

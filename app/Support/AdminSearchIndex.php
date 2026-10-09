@@ -10,7 +10,6 @@ use App\Services\CartPanel;
 use App\Services\CheckoutPage;
 use App\Services\HeaderSettings;
 use App\Services\HomepageContent;
-use App\Services\InstagramSettings;
 use App\Services\MobileHeader;
 use App\Services\NewsletterSettings;
 use App\Services\PageWash;
@@ -95,7 +94,6 @@ final class AdminSearchIndex
         'dividers'     => [SectionDividers::class],
         'prodstyles'   => [ProductStyles::class],
         'pagewash'     => [PageWash::class],
-        'instagram'    => [InstagramSettings::class],
         'productpage'  => [ProductLayout::class],
         'hpcontent'    => [HomepageContent::class],
         'wabutton'     => [\App\Services\WhatsAppButton::class],
@@ -135,7 +133,7 @@ final class AdminSearchIndex
                 // Lane DW2: the installer's step titles (SwitchInstaller::STEPS).
                 'Before you start', 'Tell the shop its new name', 'Coming Soon page ON', 'Cloudways: add the domain',
                 'Internet.bs: DNS records', 'Wait for DNS', 'SSL certificate', 'Make kbeautybliss.com the main address',
-                'Clear caches', 'Old links in content', 'Payments', 'Instagram and other callbacks', 'Test orders',
+                'Clear caches', 'Old links in content', 'Payments', 'Callbacks: Stripe Connect and the Meta pixel', 'Test orders',
                 'Coming Soon page OFF', 'Forward the old address', 'Search Console, sitemap, IndexNow', 'Verify', 'Skip for now',
             ],
         ],
@@ -421,6 +419,10 @@ final class AdminSearchIndex
         ],
         'customers' => [],
         'quiz-leads' => [],
+        // Store → Inquiries (Lane CT): the inbox and the contact page's settings.
+        'inquiries' => [
+            '' => ['Contact page', 'Inquiry form', 'Unread', 'WhatsApp card', 'Instagram card', 'Email card', 'Phone card', 'Social media icons', 'Opening hours', 'Send inquiries to', 'Topics'],
+        ],
         'emails' => [
             'At a glance' => [],
             'Where things are' => [
@@ -508,13 +510,6 @@ final class AdminSearchIndex
                 'Tiles across on a phone', 'Tile width on a phone', 'Tile width from 900px',
                 'Space between tiles', 'Corner radius',
             ],
-        ],
-        'instagram' => [
-            '' => [
-                'Instagram app ID', 'Instagram app secret', 'What a tap does',
-            ],
-            'Look' => [],
-            'What a tile shows' => [],
         ],
         // Content → Instagram embeds (Lane IGE): one screen, no tabs.
         'igembeds' => [

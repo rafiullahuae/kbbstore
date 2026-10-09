@@ -19,9 +19,9 @@
     "n": 4,
     "what": "arm the deep-link replay (#notfoundpage on a cold load); appended at the END of LATE_RENDERED, a spot no other lane's record quotes",
     "file": "resources/views/admin/app.blade.php",
-    "anchor": "'spotted','mkt-email']);",
+    "anchor": "'spotted','mkt-email','inquiries']);",
     "count": 1,
-    "replacement": "'spotted','mkt-email','notfoundpage']);"
+    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
   },
   {
     "n": 5,
@@ -43,24 +43,24 @@
     "n": 7,
     "what": "keep Lane T1B's handover record in step with block 4 (TranslationConsoleTest reads it against the console)",
     "file": "docs/T1B-ADMIN-APP-BLOCKS.md",
-    "anchor": "'spotted','mkt-email']);",
+    "anchor": "'spotted','mkt-email','inquiries']);",
     "count": 1,
-    "replacement": "'spotted','mkt-email','notfoundpage']);"
+    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
   },
   {
     "n": 8,
     "what": "keep Lane BG's handover record in step with block 4",
     "file": "docs/BG-ADMIN-APP-BLOCKS.md",
-    "anchor": "'spotted','mkt-email']);",
+    "anchor": "'spotted','mkt-email','inquiries']);",
     "count": 1,
-    "replacement": "'spotted','mkt-email','notfoundpage']);"
+    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
   },
   {
     "n": 9,
     "what": "keep Lane GS's handover record in step with block 4 (GridSectionConsoleReachTest reads its replacement against the console; its anchor quotes the line too)",
     "file": "docs/GS-ADMIN-APP-BLOCKS.md",
-    "anchor": "'spotted','mkt-email']);",
+    "anchor": "'spotted','mkt-email','inquiries']);",
     "count": 2,
-    "replacement": "'spotted','mkt-email','notfoundpage']);"
+    "replacement": "'spotted','mkt-email','notfoundpage','inquiries']);"
   }
 ]

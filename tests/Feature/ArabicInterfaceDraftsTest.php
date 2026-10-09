@@ -697,7 +697,11 @@ it('counts them as drafts awaiting review and not as work already done', functio
     // while the shop records it (store.order_received.fact_total_confirming),
     // seeded by 2027_10_11_100000_seed_card_confirming_arabic_draft.
     // 1479 -> 1480 (Lane IGE): "Show the post" on an Instagram embed set to load on tap.
-    expect($ui['drafts'])->toBe(1480, 'the shipped Arabic is not showing as drafts to review')
+    // +43 (Lane CT): the contact page's cards, icons and inquiry form
+    // (store.contact.*), seeded by 2027_10_15_120100_seed_contact_page_arabic_drafts.
+    // -13 (Lane IGR): the retired Instagram API module's shop strings
+    // (store.instagram.* profile section, store.spotted.* API cards and player).
+    expect($ui['drafts'])->toBe(1510, 'the shipped Arabic is not showing as drafts to review')
         ->and($ui['translated'])->toBe(0, 'unreviewed Arabic is being counted as translated work')
         ->and($ui['total'])->toBe(count(InterfaceStrings::flat()));
 });
@@ -1021,14 +1025,16 @@ it('never labels two controls on one screen with the same Arabic', function () {
         ['store.account.dashboard_title', 'store.account_panel.default_name', 'store.account_panel.link_account', 'store.footer.account_heading', 'store.footer.link_account_home', 'store.footer.link_my_account', 'store.header.account_label', 'store.mobile_menu.link_account'],
         ['store.account.orders_empty', 'store.collection.empty'],
         ['store.account.register_title', 'store.account_panel.register_button', 'store.account_panel.tab_register', 'store.mobile_menu.link_register'],
-        ['store.account_panel.field_email', 'store.checkout.field_email', 'store.quiz.js_label_email', 'store.reviews.field_email'],
+        // (Lane CT) + store.contact.label_email, the contact form's "Email address": the same field as the other four.
+        ['store.account_panel.field_email', 'store.checkout.field_email', 'store.contact.label_email', 'store.quiz.js_label_email', 'store.reviews.field_email'],
         ['store.addresses.add_address', 'store.addresses.form_heading_add'],
         ['store.brands.card_count', 'store.cart.item_count', 'store.home.category_product_count', 'store.set.count_note'],
         ['store.checkout.field_address', 'store.reviews.field_title'],
         ['store.checkout.secure_badge', 'store.home.trust_payments_title'],
         ['store.collection.title_best_sellers', 'store.footer.link_best_sellers', 'store.home.bestsellers_grid_label', 'store.home.bestsellers_heading', 'store.product.recs_best_eyebrow', 'store.product_card.label_bestseller', 'store.shop.sort_popularity'],
         ['store.home.flash_link', 'store.product_grid.view_all'],
-        ['store.instagram.follow', 'store.quiz.js_continue'],
+        // (Lane IGR) ['store.instagram.follow', 'store.quiz.js_continue'] went
+        // with the Instagram API section's words.
         ['store.order_received.show_more', 'store.set.show_all'],
         ['store.order_status.on-hold', 'store.order_status.onhold'],
         ['store.orders.pager_newer', 'store.shop.sort_date'],

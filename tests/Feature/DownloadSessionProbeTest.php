@@ -284,6 +284,9 @@ it('is the export that decides, so a probe cannot reach an address the map does 
  *   payStripeOauth()                   /admin-api/payments/stripe/connect/start
  *   instagram-screen's openPopup()     /admin-api/instagram/start
  *
+ * (Lane IGR: the Instagram leg was retired with the Instagram API module at
+ * the owner's request; its route is gone, so only Stripe's is asked below.)
+ *
  * Both are admin-guarded GETs at addresses outside the secret admin path, so
  * both answer an expired session with a blank 404 in a popup, with nothing said
  * on the console behind it. Neither address is written anywhere this lane's
@@ -310,7 +313,6 @@ it('lets the console ask before it opens an OAuth popup', function () {
 
     foreach ([
         '/admin-api/payments/stripe/connect/start?mode=test&probe=1',
-        '/admin-api/instagram/start?probe=1',
     ] as $url) {
         expect($this->getJson($url)->json())->toBe(
             ['ok' => true],
@@ -356,11 +358,8 @@ it('mints no OAuth state when it is only being probed', function () {
     $stripe->save();
     app(\App\Services\Payments\GatewayCredentials::class)->forget();
 
-    \App\Services\Instagram\InstagramCredentials::saveApp('1234567890123456', 'abcdef0123456789abcdef0123456789');
-
     $stateKeys = [
         'Stripe Connect' => \App\Services\Payments\StripeConnect::STATE_SESSION_KEY,
-        'Instagram OAuth' => \App\Services\Instagram\InstagramAuth::STATE_SESSION_KEY,
     ];
 
     /*
@@ -373,7 +372,6 @@ it('mints no OAuth state when it is only being probed', function () {
     }
 
     $this->get('/admin-api/payments/stripe/connect/start?mode=test');
-    $this->get('/admin-api/instagram/start');
 
     foreach ($stateKeys as $what => $key) {
         expect(session()->has($key))->toBeTrue("{$what} does not mint a state even unprobed, so this case asserts nothing");
@@ -385,7 +383,6 @@ it('mints no OAuth state when it is only being probed', function () {
     }
 
     $this->getJson('/admin-api/payments/stripe/connect/start?mode=test&probe=1');
-    $this->getJson('/admin-api/instagram/start?probe=1');
 
     foreach ($stateKeys as $what => $key) {
         expect(session()->has($key))->toBeFalse("a probe minted a {$what} state");
@@ -407,7 +404,6 @@ it('refuses a probe on either OAuth leg to a caller with no admin session', func
      */
     foreach ([
         '/admin-api/payments/stripe/connect/start?mode=test&probe=1',
-        '/admin-api/instagram/start?probe=1',
     ] as $url) {
         expect($this->getJson($url)->status())->toBe(401, "{$url} answered a guest");
     }

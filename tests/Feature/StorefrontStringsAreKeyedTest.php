@@ -111,6 +111,13 @@ function keyedStorefrontBlades(): array
             continue;
         }
 
+        // (Lane IGR) The retired Instagram API module's shop views are on disk
+        // (packages cannot delete a file) and rendered by nothing; their words
+        // went with the module. RetiredInstagramApiTest proves nothing reaches them.
+        if (\Tests\Support\RetiredInstagramApi::isRetired($file->getPathname())) {
+            continue;
+        }
+
         $files[$relative] = $file->getPathname();
     }
 

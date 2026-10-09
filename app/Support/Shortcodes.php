@@ -9,8 +9,6 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\UgcSection;
-use App\Services\InstagramFeed;
-use App\Services\InstagramSettings;
 use App\Services\UgcRail;
 use App\Services\UgcSettings;
 use Illuminate\Support\Facades\Cache;
@@ -29,9 +27,8 @@ use Illuminate\Support\Facades\Cache;
  *   [kbb_block slug="free-shipping-note"]              a reusable HTML block
  *
  *   [kbb_videos section="glass-skin"]                  a shoppable video rail
- *   [kbb_instagram]                                    our own Instagram grid
- *   [kbb_instagram layout="rail" limit="6"]
  *   [kbb_instagram_embeds]                             pasted Instagram posts (Lane IGE)
+ *   [kbb_instagram]                                    RETIRED (Lane IGR): renders nothing
  *
  * Rendered server-side, so the output is crawlable and needs no JavaScript.
  */
@@ -118,23 +115,14 @@ final class Shortcodes
         );
 
         /*
-         * The Instagram grid, and the ordering argument is the same one the three
-         * arms above make: a block may contain [kbb_instagram], so blocks are
-         * expanded first. This one cannot contain a shortcode — its content is rows
-         * in `instagram_posts` written by a fetch rather than operator markup — so
-         * nothing has to run after it.
-         *
-         * ▲ AND resources/views/instagram/section.blade.php IS REACHED FROM HERE AND
-         * FROM NOWHERE ELSE, which a grep for the partial's own name does not find.
-         * The same shape self::videos() carries a note about: a grep for
-         * 'instagram.section' finds this file and a grep for 'section.blade.php'
-         * finds nothing at all.
+         * (Lane IGR) [kbb_instagram] — the API-fed Instagram grid — was retired
+         * with the Instagram API module at the owner's request. It renders the
+         * empty string, never its own text: migration 2027_10_15_140300
+         * rewrote every stored one to [kbb_instagram_embeds], and this catches
+         * any typed afterwards. `\b` does not match before "_embeds", so the
+         * arm below keeps its own tag.
          */
-        $content = (string) preg_replace_callback(
-            '/\[kbb_instagram\b([^\]]*)\]/',
-            fn ($m) => self::instagram(self::attributes($m[1])),
-            $content
-        );
+        $content = (string) preg_replace('/\[kbb_instagram\b[^\]]*\]/', '', $content);
 
         /*
          * (Lane IGE) Pasted Instagram posts and reels, drawn with Instagram's
@@ -162,10 +150,16 @@ final class Shortcodes
      * takes it only if it is one of that option's own keys. '' when the section
      * is off or nothing is switched on, so an empty list leaves no wrapper.
      *
-     * The stylesheet is printed by the FIRST section on a page only; see
-     * self::instagram() for why that is a container binding and not @once.
+     * The stylesheet is printed by the FIRST section on a page only, through a
+     * container binding rather than @once: @once is scoped to one render cycle
+     * and every section is its own view(...)->render() call, so a second section
+     * on the page would print it again; a static would be per-process and leave a
+     * second page in a worker or a test with none. The container is per request.
+     *
+     * Public for the #KBeautyBliss Spotted page (Lane IGR), which draws the same
+     * section above its grid with the heading the owner gave it there.
      */
-    private static function instagramEmbeds(array $a): string
+    public static function instagramEmbeds(array $a): string
     {
         $section = app(\App\Services\InstagramEmbeds::class)->section(array_map('strval', $a));
 
@@ -351,117 +345,6 @@ final class Shortcodes
              * value from outside.
              */
             'likeUrl' => Url::to('/api/ugc/__SLUG__/like'),
-        ])->render();
-    }
-
-    /**
-     * [kbb_instagram] — our own Instagram grid, anywhere.
-     *
-     * The owner: "can be used shortcode to display this section anywhere."
-     * Which is what this is: a page body, a post body and an HTML block all go
-     * through render(), so the section can sit in any of them, as many times as he
-     * likes, in any order beside anything else.
-     *
-     * ── IT RENDERS THE EMPTY STRING AND SAYS NOTHING, IN EVERY FAILURE ──────
-     *
-     * Module off, nothing fetched yet, a lapsed token with no posts ever stored, or
-     * every stored post's thumbnail missing — all of them return ''. THE SAME RULE
-     * self::block() AND self::videos() FOLLOW, and for the reason their docblocks
-     * give: a shortcode that cannot resolve must not leave "[kbb_instagram]" in the
-     * middle of a published page for a shopper to read, and it must not print an
-     * error either, because the storefront is not where a configuration problem is
-     * reported. Content → Instagram is, and it says which of the six setup steps is
-     * outstanding.
-     *
-     * THE MODULE SWITCH IS CHECKED FIRST, BEFORE ANY READ. InstagramFeed::section()
-     * checks it too — this is the second lock and the cheap one, because it means a
-     * shop with the module off does not resolve the service out of the container to
-     * be told no.
-     *
-     * ── NOT CACHED HERE ────────────────────────────────────────────────────
-     *
-     * App\Services\InstagramFeed already caches the tiles for ten minutes under its
-     * own index and is the layer that knows when to drop them (every admin write
-     * calls InstagramFeed::flush()). A second cache over the top would hold a
-     * rendered string that Shortcodes::flush() clears and the Instagram admin does
-     * not — so a refresh would change the section for ten minutes and then change it
-     * back, which is the worst of both. Exactly the argument self::videos() makes.
-     *
-     * ── EVERY ATTRIBUTE IS VALIDATED AGAINST THE SCREEN'S OWN OPTION SET ────
-     *
-     * `layout` and `limit` are things an AUTHOR TYPES, so they are checked against
-     * the same sets the admin screen offers and anything else is dropped rather than
-     * passed through. Rule 5's "a select stores one of its own options or the
-     * default", applied to a shortcode attribute — which is a place a value arrives
-     * from outside just as much as a POST body is.
-     */
-    private static function instagram(array $a): string
-    {
-        $settings = app(InstagramSettings::class);
-
-        if (! $settings->enabled()) {
-            return '';
-        }
-
-        $limit = isset($a['limit']) ? max(1, min(48, (int) $a['limit'])) : null;
-
-        $layout = isset($a['layout']) && isset(InstagramSettings::LAYOUTS[(string) $a['layout']])
-            ? (string) $a['layout']
-            : null;
-
-        $profile = isset($a['profile']) && isset(InstagramSettings::PROFILE_STYLES[(string) $a['profile']])
-            ? (string) $a['profile']
-            : null;
-
-        $section = app(InstagramFeed::class)->section($limit);
-
-        if ($section['tiles'] === []) {
-            return '';
-        }
-
-        /*
-         * ONE STYLESHEET AND ONE SCRIPT PER PAGE, AND @once DOES NOT DO IT.
-         *
-         * The argument is self::videos()' own, measured there: Blade's @once is
-         * scoped to a RENDER CYCLE and every section on a page is its own
-         * view(...)->render() call from here, so the counter is back at zero by the
-         * time the second one starts and the directive fires again. Two sections on
-         * one page shipped the CSS twice and, worse, the SCRIPT twice — and this
-         * script registers a delegated document click listener, so a second copy
-         * opens the lightbox twice on one tap.
-         *
-         * A static on this class would be wrong in the other direction: it is
-         * per-process, so in a queue worker or a test process the second page would
-         * render no stylesheet at all. The container IS per request in production and
-         * per test in the suite, which is exactly the scope wanted.
-         */
-        $first = ! app()->bound('kbb.ig.assets');
-
-        if ($first) {
-            app()->instance('kbb.ig.assets', true);
-        }
-
-        $conf = $settings->all();
-
-        // An author-supplied layout wins over the saved one, so the same account can
-        // be a square grid on the homepage and a slim strip in the footer.
-        if ($layout !== null) {
-            $conf['layout'] = $layout;
-        }
-
-        if ($profile !== null) {
-            $conf['profile_style'] = $profile;
-        }
-
-        return view('instagram.section', [
-            'tiles' => $section['tiles'],
-            'profile' => $section['profile'],
-            'conf' => $conf,
-            'withAssets' => $first,
-            // An author-supplied heading wins over the setting, and an EXPLICIT
-            // empty one draws no heading at all — which is why this is a
-            // three-valued null/string rather than a `?:`.
-            'headingOverride' => isset($a['title']) ? (string) $a['title'] : null,
         ])->render();
     }
 

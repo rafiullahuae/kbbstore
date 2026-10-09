@@ -775,61 +775,10 @@ $kfbHomeClass = trim(app(\App\Services\HeaderSettings::class)->flagBarClass((boo
 <section class="sec {{ $sections->classFor('videos') }}"><div class="wrap">{!! $videoRail !!}</div></section>
 @endif
 @endunless
-{{--
-
-     INSTAGRAM PROFILE — Lane IG.
-
-     The owner: "i want another function called Instagram Profile ... i want a nice
-     grid type instagram section where all our recent posts/videos display".
-
-     The `instagram` row went into HomepageSections::REGISTRY in the same change
-     that added `videos`, AND THE PREVIOUS RUN OF THIS LANE NEVER DREW IT. That is
-     a switch on Appearance → Homepage that moves a row on a screen and nothing on
-     the shop — precisely the fault docs/FO-HOMEPAGE-INVENTORY.md was written to
-     catalogue and HomepageSections::NESTED carries a paragraph about. Pinned now by
-     HomepageInstagramSectionTest, which pairs every REGISTRY key against this file.
-
-     ── THE SHAPE IS THE VIDEO RAIL'S, AND FOR THE SAME THREE REASONS ─────────
-
-     Read the block above for the full argument; it applies here unchanged.
-
-       · the <section> is INSIDE the @if, not around it, so a shop that has not
-         connected an account emits not one byte more than it does today — an empty
-         wrapper with a classFor() on it is still a changed page, and
-         StorefrontEnglishUnchangedTest compares this file's output byte for byte.
-       · the @unless is kept as well, because it is what makes the Desktop/Mobile
-         switches on Appearance → Homepage → Instagram Profile work at all, and it
-         short-circuits before any read on a shop that has switched the row off.
-       · the directive is GLUED to the end of this comment. A Blade comment is
-         replaced by the empty string and ITS TRAILING NEWLINE SURVIVES, where a
-         line holding only a directive contributes nothing — the video block above
-         cost two newlines on every homepage on earth written the readable way, and
-         StorefrontEnglishUnchangedTest reported it at byte 51624.
-
-     ── AND THE SHORTCODE IS THE GATE, NOT A SETTING ─────────────────────────
-
-     Unlike the rail there is nothing to pick: there is one Instagram account, so
-     `[kbb_instagram]` is the whole of it and no handle has to be validated into
-     somebody else's syntax. Shortcodes::instagram() returns '' when the module is
-     off, when nothing has been fetched, and when every fetched post's thumbnail
-     failed to download — so this renders nothing until the owner has connected the
-     account AND a fetch has stored a drawable post. The layout, the profile box and
-     the counts all come from the saved settings, which is what makes the homepage
-     row and the shortcode the same section rather than two.
-
-     It is a CONSTANT STRING, so nothing from a setting reaches a shortcode's syntax
-     here and there is no handle to escape — the one respect in which this block is
-     simpler than the rail's, and the reason it needs no UgcSettings::homeShortcode()
-     equivalent.
-     --}}@unless ($sections->hidden('instagram'))
-@php $igSection = \App\Support\Shortcodes::render('[kbb_instagram]'); @endphp
-@if ($igSection !== '')
-<section class="sec {{ $sections->classFor('instagram') }}"><div class="wrap">{!! $igSection !!}</div></section>
-@endif
-@endunless
 {{-- INSTAGRAM EMBEDS — Lane IGE. Posts and reels the owner pasted by address,
-     drawn with Instagram's own embed (Content → Instagram embeds). The shape is
-     the Instagram Profile block's above, for its three reasons: the <section> is
+     drawn with Instagram's own embed (Content → Instagram embeds). (Lane IGR: it
+     replaced the API-fed Instagram Profile block that stood here, retired at the
+     owner's request.) The shape is the video rail's above, for its reasons: the <section> is
      inside the @if so an empty list emits not one byte, the @unless makes the
      row's Desktop/Mobile switches work, and the directive is glued to the end of
      this comment so no newline survives. --}}@unless ($sections->hidden('igembeds'))

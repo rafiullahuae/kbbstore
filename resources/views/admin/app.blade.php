@@ -3373,7 +3373,7 @@ const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overv
    to ask of one set of seven settings. The id stays routable for #rev-capsule
    and ?go=rev-capsule, and it names the screen it actually opens rather than a
    second one. */
-'rev-badge':['Reviews','Rating Badge'],'rev-capsule':['Reviews','Rating Badge'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],tax:['Store','Tax'],customers:['Store','Customers'],mail:['Emails','All mail settings'],'emails':['Emails','Overview'],'emails-sending':['Emails','Sending & delivery'],'emails-customer':['Emails','Customer emails'],'emails-edit':['Emails','Customer emails'],'emails-branding':['Emails','Design & branding'],'emails-sent':['Emails','Sent mail'],payments:['Store','Payments'],'firewall':['Store → Security','Firewall'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
+'rev-badge':['Reviews','Rating Badge'],'rev-capsule':['Reviews','Rating Badge'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],tax:['Store','Tax'],customers:['Store','Customers'],mail:['Emails','All mail settings'],'emails':['Emails','Overview'],'emails-sending':['Emails','Sending & delivery'],'emails-customer':['Emails','Customer emails'],'emails-edit':['Emails','Customer emails'],'emails-branding':['Emails','Design & branding'],'emails-sent':['Emails','Sent mail'],payments:['Store','Payments'],'firewall':['Store → Security','Firewall'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'inquiries':['Store','Inquiries'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
    and 'posts' open the same screen. The id stays routable for #blog and
    ?go=blog, and it names that screen honestly rather than a second one. */
 'blog':['Content','Blog Posts'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'hpcontent':['Appearance','Homepage content'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'pagebanners':['Pages','Page banners'],'pageheader':['Pages','Page header'],'siteapp':['App','Site App'],'posts':['Content','Blog Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library'],
@@ -3385,7 +3385,7 @@ const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overv
    safe. Breadcrumbs match what each partial's own go() writes into #crumb and
    #ptitle, because two answers for one screen is how a heading ends up
    disagreeing with the page under it. */
-'ugcsections':['Content','Shoppable video'],'ugcvideo':['Content','All clips'],'ugcstyle':['Appearance','Video rail'],'instagram':['Content','Instagram'],'igembeds':['Content','Instagram embeds'],'sets':['Catalog','Sets'],'product-tabs':['Catalog','Product tabs'],'pagination':['Catalog','Pagination'],'ownerapp':['App','Owner App'],'banners':['Appearance','Banners'],'setap':['Appearance','Set'],
+'ugcsections':['Content','Shoppable video'],'ugcvideo':['Content','All clips'],'ugcstyle':['Appearance','Video rail'],'igembeds':['Content','Instagram embeds'],'sets':['Catalog','Sets'],'product-tabs':['Catalog','Product tabs'],'pagination':['Catalog','Pagination'],'ownerapp':['App','Owner App'],'banners':['Appearance','Banners'],'setap':['Appearance','Set'],
 /* And the seven the new guard found alongside them, every one with a sidebar row
    the owner clicks every day and no deep link at all: a link to any of these
    opened the dashboard. Same fix, same condition, and the strings are copied
@@ -8519,7 +8519,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','notfoundpage']);
+const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','notfoundpage','inquiries']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -24543,25 +24543,9 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      every record editor (one fetch hook; App\Support\EditPresence is the guard). --}}
 @include('admin.partials.edit-presence')
 
-{{-- LANE IG · Content → Instagram.
-
-     The grid of our own recent posts, the profile box, five layouts, and the
-     "Configure now" handshake that reaches Instagram, takes permission and
-     writes the connection down.
-
-     SHIPS OFF: `instagram_profile` is false in ModuleRegistry and the homepage
-     section's content ships empty, so neither of the two new homepage rows emits
-     one byte until the owner configures it — the <section> element is INSIDE the
-     content check, not around it.
-
-     Thumbnails are downloaded to our own disk at fetch time rather than hotlinked:
-     Instagram's media_url is a signed, expiring CDN address, so a page pointing at
-     one is a page that breaks on somebody else's clock. Tapping a tile opens the
-     post on Instagram by default; the in-page player is opt-in and uses
-     Instagram's own embed iframe, which carries no token and nothing that expires.
-     That opt-in needs `frame-src` widened by one host — docs/IG-PROFILE.md §3 has
-     the exact line — and the setting ships at the value that needs nothing. --}}
-@include('admin.partials.instagram-screen')
+{{-- (Lane IGR) LANE IG's Content → Instagram screen (the API module and its
+     "Connect with Facebook" page) was retired at the owner's request; its
+     include is gone. Instagram is the Instagram embeds screen below. --}}
 {{-- Content → Instagram embeds (Lane IGE): paste post and reel addresses, the shop
      draws Instagram's own embed. Wraps window.go for 'igembeds'; its sidebar row is
      App\Support\AdminNav's. Endpoints: routes/ig-embeds-admin.php, `igembeds.manage`. --}}
@@ -24574,9 +24558,15 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 @include('admin.partials.owner-app-screen')
 {{-- Safety -> 404 page (Lane NF): the design, the words, the links and the per-device sizes of the shop's 404 page. It wraps window.go for 'notfoundpage'; its sidebar row is the LATE_NAV entry. --}}
 @include('admin.partials.not-found-page-screen')
+{{-- Store -> Inquiries (Lane CT): the contact page's messages (list, read, mark read, delete) and its Contact page settings. It wraps window.go for 'inquiries'; its sidebar row is AdminNav's late entry. --}}
+@include('admin.partials.contact-inquiries-screen')
 @include('admin.partials.banners-screen')
 {{-- Growth & Marketing -> Marketing Pixels (Lane PX): an eye button in front of each ID that opens its how-to guide with the official Meta / Google / TikTok links. Wraps window.paintPixels; static text, no request. --}}
 @include('admin.partials.marketing-pixels-guide')
+{{-- Marketing Pixels tabs: Meta / Google / TikTok Connect wizards, Custom code,
+     Last events, Guide (Lane MP). Wraps window.paintPixels after the guide does.
+     Endpoints: routes/marketing-pixels-connect-admin.php. --}}
+@include('admin.partials.marketing-pixels-connect')
 {{-- Appearance -> Set -> Desktop / Mobile (Lane SA). Late-rendered for the same
      reason the four above it are: it runs after this file's own script has
      defined window.go, window.kbbAddNavEntry and toast(), appending its sidebar

@@ -250,7 +250,16 @@ it('puts every page back exactly as it was under "Normal page banner", byte for 
     pbhLayout(['pg_hero' => 'banner', 'pg_blog' => 'pages']);
 
     $current = config('view.paths');
-    $paths = ['/about/', '/contact-us/', '/privacy-policy/', '/terms-and-conditions/', '/blog/'];
+    /*
+     * /contact-us/ left this list at 2.60.449: Lane CT rebuilt that page on
+     * the owner's brief (its own inline <style>, the cards and the inquiry
+     * form, all behind page.blade.php's `$contactHub`, which is null on every
+     * other page), so it no longer matches the 838ac564 views and is not meant
+     * to. The four pages left still render through the same page.blade.php,
+     * so printing anything outside the `$pagePanel` guards stays red here;
+     * the contact page's own header is covered by "lets one page choose".
+     */
+    $paths = ['/about/', '/privacy-policy/', '/terms-and-conditions/', '/blog/'];
     $render = function () use ($paths): array {
         $out = [];
         foreach ($paths as $path) {

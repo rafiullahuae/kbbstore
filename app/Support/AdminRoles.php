@@ -108,7 +108,7 @@ final class AdminRoles
             'marketing.view', 'marketing.manage', 'marketing.export',
             'marketing.email.view', 'marketing.email.manage', 'emails.view', 'emails.test',
             'banners.view', 'banners.manage', 'gridsections.view', 'gridsections.manage',
-            'spotted.manage', 'spotted.instagram', 'instagram.view', 'ugc.view', 'ugc.manage', 'wabutton.manage',
+            'spotted.manage', 'ugc.view', 'ugc.manage', 'wabutton.manage',
         ],
     ];
 
@@ -141,6 +141,8 @@ final class AdminRoles
             'customers.manage' => 'Edit customers',
             'customers.export' => 'Export the customer list',
             'customers.invite' => 'Email guests an account invite',
+            'inquiries.view' => 'Read the contact page’s inquiries and mark them read (Store → Inquiries)',
+            'inquiries.manage' => 'Delete inquiries and change the contact page’s cards, form and recipient',
         ]],
         ['products', 'Products & catalogue', [
             'catalog.view' => 'See products, categories and brands',
@@ -171,8 +173,6 @@ final class AdminRoles
             'pages.manage' => 'Edit content pages (terms, privacy, FAQ…)',
             'ugc.view' => 'See the shoppable-video library',
             'ugc.manage' => 'Upload and edit shoppable videos',
-            'instagram.view' => 'See the Instagram connection',
-            'instagram.manage' => 'Connect or disconnect Instagram',
         ]],
         ['seo', 'SEO', [
             'seo.audit' => 'SEO overview and audit',
@@ -195,7 +195,6 @@ final class AdminRoles
             'slimfooter.manage' => 'Footer bar',
             'footer.preview' => 'Footer previews',
             'spotted.manage' => '#KBeautyBliss Spotted',
-            'spotted.instagram' => '#KBeautyBliss Spotted — pick posts from Instagram',
             'igembeds.manage' => 'Instagram embeds — paste post and reel addresses',
             'sitelayout.manage' => 'Site width and columns',
             'pagewash.manage' => 'Page background',
@@ -220,6 +219,8 @@ final class AdminRoles
             'push.view' => 'See push notification campaigns, reports and subscriber analytics',
             'push.send' => 'Send, schedule and test push notifications, and change their automations and rules',
             'marketing.feed' => 'Google Shopping feed: see its address and switch it on or off',
+            'marketing.pixels.connect' => 'Marketing Pixels: connect Meta, Google and TikTok, paste their tokens and run the checks',
+            'marketing.customcode' => 'Marketing Pixels: custom head, body and footer code on the shop (Full Admin only by default)',
             'carttracking.view' => 'See Cart Tracking',
             'carttracking.block' => 'Block and unblock IP addresses',
         ]],

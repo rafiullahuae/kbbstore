@@ -159,11 +159,16 @@ class HomepageSections
          * thing to remember to turn on.
          */
         'videos'      => ['Video rail', 'A shoppable video rail. Pick which section in Content → Shoppable video → Appearance → Homepage; nothing shows until you do.', false, null],
-        'instagram'   => ['Instagram Profile', 'Recent posts and reels from our own Instagram, with the profile box. Connect it in Content → Instagram; nothing shows until you do.', false, null],
+        /*
+         * (Lane IGR) `instagram` — the API-fed "Instagram Profile" row — stood
+         * here until the owner retired the Instagram API module on 9 October
+         * 2026. Migration 2027_10_15_140200 put `igembeds` in its saved place
+         * and on/off state wherever it was switched on.
+         */
         /*
          * (Lane IGE) Pasted Instagram posts and reels, drawn with Instagram's own
-         * embed — no API, no login. Directly after the API-based Instagram
-         * Profile row it replaces in the owner's plan, by the same insertion
+         * embed — no API, no login. Where the API-based Instagram Profile row
+         * stood, which it replaced in the owner's plan, by the same insertion
          * argument the two rows above make: a saved order keeps every other row
          * where it is. It renders NO BYTES until a post is pasted and switched
          * on, so the switch ships ON (the owner asked for the system).
@@ -414,7 +419,7 @@ class HomepageSections
 
     public const OFF_BY_DEFAULT = [
         'delivery', 'ticker', 'categories', 'recommended', 'routine', 'quiz',
-        'videos', 'instagram', 'bestsellers', 'flash', 'reviews', 'trust', 'newsletter',
+        'videos', 'bestsellers', 'flash', 'reviews', 'trust', 'newsletter',
     ];
 
     /**

@@ -280,6 +280,9 @@ final class ContentSecurityPolicy
             // is created only when a shopper taps a reel on /kbeautybliss-spotted/.
             // The policy is report-only, so this stops a violation report per tap
             // today and keeps the player working the day it is enforced.
+            // (Lane IGR) That player went with the API module; the host stays
+            // for Instagram embeds (Lane IGE), whose frames load from it on the
+            // homepage, in [kbb_instagram_embeds] and on the Spotted page.
             'https://www.instagram.com',
         ],
 

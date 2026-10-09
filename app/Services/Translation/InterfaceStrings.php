@@ -953,6 +953,50 @@ final class InterfaceStrings
         return [
             'page.page_title' => ':title · K-Beauty Bliss',
             'page.last_updated' => 'Last updated :date',
+            // The contact page's cards, icons and inquiry form (Lane CT).
+            'contact.reach_heading' => 'Get in touch',
+            'contact.wa_title' => 'WhatsApp',
+            'contact.wa_note' => 'The fastest way to reach us',
+            'contact.wa_action' => 'Chat on WhatsApp',
+            'contact.ig_title' => 'Instagram',
+            'contact.ig_note' => 'Send us a direct message',
+            'contact.ig_action' => 'Message us on Instagram',
+            'contact.phone_title' => 'Call us',
+            'contact.phone_note' => 'Speak to us directly',
+            'contact.phone_action' => 'Call now',
+            'contact.email_title' => 'Email',
+            'contact.email_note' => 'Write to us any time',
+            'contact.email_action' => 'Send an email',
+            'contact.hours_title' => 'Opening hours',
+            'contact.follow_title' => 'Follow us',
+            'contact.follow_note' => 'New arrivals, routines and K-beauty tips.',
+            'contact.form_title' => 'Send us a message',
+            'contact.form_intro' => 'Fill in the form and we will reply by email.',
+            'contact.label_name' => 'Your name',
+            'contact.label_email' => 'Email address',
+            'contact.label_phone' => 'WhatsApp number',
+            'contact.optional' => 'optional',
+            'contact.label_topic' => 'Topic',
+            'contact.label_message' => 'Message',
+            'contact.message_placeholder' => 'Tell us how we can help',
+            'contact.submit' => 'Send message',
+            'contact.privacy' => 'We use your details only to answer this message.',
+            'contact.hp_label' => 'Leave this field empty',
+            'contact.sent_title' => 'Thank you!',
+            'contact.sent' => 'Your message has been sent. We will get back to you soon.',
+            'contact.err_summary' => 'Please check the fields marked below.',
+            'contact.err_name' => 'Please enter your name.',
+            'contact.err_email' => 'Please enter a valid email address.',
+            'contact.err_phone' => 'Please enter a valid WhatsApp number, or leave it empty.',
+            'contact.err_topic' => 'Please choose a topic.',
+            'contact.err_message' => 'Please write a message of at least 10 characters.',
+            'contact.err_message_long' => 'Please keep your message under 5,000 characters.',
+            'contact.err_fast' => 'That was quick! Please check your message and press Send again.',
+            'contact.err_limit' => 'You have sent several messages in a short time. Please try again later, or reach us on WhatsApp.',
+            'contact.topic_order' => 'Order question',
+            'contact.topic_advice' => 'Product advice',
+            'contact.topic_wholesale' => 'Wholesale',
+            'contact.topic_other' => 'Other',
             'wishlist.breadcrumb_home' => 'Home',
             'wishlist.breadcrumb_current' => 'Wishlist',
             'wishlist.title' => 'Wishlist',
@@ -1083,19 +1127,10 @@ final class InterfaceStrings
             // until he types one.
             'spotted.grid_heading' => '#KBEAUTYBLISS Spotted',
             'spotted.grid_photo' => '#KBeautyBliss Spotted photo :n',
-            // (Lane SG) The Instagram cards on /kbeautybliss-spotted/: the
-            // counts' spoken names, the type badges, and the video player.
-            'spotted.comments' => 'comments',
-            'spotted.shares' => 'shares',
-            'spotted.views' => 'views',
+            // (Lane SG) The Instagram cards' words went with the API module
+            // (Lane IGR); `reel` and `view_on_ig` stay, Instagram embeds use them.
             'spotted.reel' => 'Reel',
-            'spotted.album' => 'Album',
-            'spotted.ig_alt' => 'Instagram post by @:handle',
-            'spotted.ig_alt_video' => 'Instagram reel by @:handle',
-            'spotted.play' => 'Play the video here',
-            'spotted.close' => 'Close',
             'spotted.view_on_ig' => 'View on Instagram',
-            'spotted.video_dialog' => 'Instagram video',
             'home.bestsellers_heading' => 'Best sellers',
             'home.bestsellers_badge' => 'This month',
             'home.bestsellers_subtitle' => 'The products customers keep coming back for.',
@@ -2147,15 +2182,9 @@ final class InterfaceStrings
     private static function storeInstagram(): array
     {
         return [
-            'instagram.followers' => ':formatted follower|:formatted followers',
-            'instagram.posts' => ':formatted post|:formatted posts',
-            'instagram.follow' => 'Follow',
             // The alt text on a tile whose caption is empty. A picture with no
             // caption still needs a name a screen reader can read.
             'instagram.post_alt' => 'Instagram post',
-            // The tile's own label, used when the caption is empty so the link is
-            // never announced as just a URL.
-            'instagram.open_post' => 'Open this post on Instagram',
             // (Lane IGE) The button on an Instagram embed set to load on tap:
             // the frame loads in place, it does not leave the shop.
             'igembed.load' => 'Show the post',
