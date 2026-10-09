@@ -3,6 +3,13 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.458
+**Hotfix: the homepage trust strip full width again.** Apply after .457. No migrations.
+
+| Your request | Now |
+|---|---|
+| "the width is totally disturbed, i need immidiately fix with a dedicated patch" | The homepage card spans the page again. Cause: a custom homepage section order lays the page out as a column of flex items, and the strip shrank to its words (318 px of a 390 px phone). Measured with that layout: 318 -> 390 px at 390, 657 -> 1280 px at 1280. One CSS rule; nothing else moves |
+
 ## 2.60.457
 **Trust strips: homepage card, above-footer row, Super Sale row and thin delivery line.** Apply after .456.
 Runs its migrations. Hard refresh the shop.
