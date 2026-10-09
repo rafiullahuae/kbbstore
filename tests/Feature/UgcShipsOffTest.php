@@ -43,6 +43,14 @@ it('renders every storefront page identically with and without a published video
     $pages = ['/', '/shop', '/cart', '/checkout', '/contact-us'];
 
     /*
+     * Frozen, because /contact-us prints a time-signed field
+     * (ContactPage::stamp(now()), `<input name="ts">`): the two passes
+     * straddled a second boundary in the 2.60.451 integration run and the page
+     * "changed" by its clock, not by the video.
+     */
+    $this->freezeTime();
+
+    /*
      * The product exists BEFORE the first render, deliberately. It is the thing
      * the video will be tagged to, and the homepage prints a stocked-product
      * count — so creating it between the two passes would move those bytes and

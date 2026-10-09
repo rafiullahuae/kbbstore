@@ -248,6 +248,15 @@ it('puts every page back exactly as it was under "Normal page banner", byte for 
      */
     $this->travelTo(\Carbon\Carbon::parse('2026-06-15 09:30:00'));
     pbhLayout(['pg_hero' => 'banner', 'pg_blog' => 'pages']);
+    /*
+     * The site LOGO is not this test's subject; the page header is. Since
+     * 2.60.451 the header logo ships as the lotus lockup (Lane LG2, the
+     * owner's choice), which the 838ac564 views cannot print. "Text only (as
+     * before)" is the old wordmark byte for byte by design (LogoLockupTest and
+     * EnglishRenderWalk pin that), so it is set here and the comparison stays
+     * whole: every other byte of all four pages is still compared.
+     */
+    app(\App\Services\HeaderSettings::class)->save(['logo_style' => 'text']);
 
     $current = config('view.paths');
     /*
