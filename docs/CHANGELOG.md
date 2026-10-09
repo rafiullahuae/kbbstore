@@ -3,6 +3,22 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.457
+**Trust strips: homepage card, above-footer row, Super Sale row and thin delivery line.** Apply after .456.
+Runs its migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "reduce little bit overall height, and reduce the spacing between banner and this strip" | Homepage card (H1) directly under the banner, phone and laptop: 100 -> 83 px tall at 390, 86 -> 66 px at 1280. Replaces the old Trust row |
+| "the same strip will come right above the support strip in footer, without the box! ... all pages except homepage, super-sale, cart, checkout ... DESKTOP ... reduce the height" | Above the footer's pink help strip on every other page: no box on a phone (93 px), the F1 big-icon row on a laptop (211 -> 151 px). Never drawn on home, Super Sale, cart, checkout or order-pay |
+| "this without box strip will come on super sale header below, and remove the previous strip" | /super-sale: the no-box strip under the header; the Page banners "Super Sale" strip is unassigned from /super-sale only (the banner and its other pages are kept) |
+| "this thin 1-3 days delivery strip will also come on super sale page at the top" | Thin pink line at the very top of /super-sale: "1-3 Days Delivery all over UAE - Free Delivery over AED 199" (the figure comes from Store -> Delivery & Shipping) |
+
+Controls: Appearance -> Homepage content -> Trust strip -> "Homepage · under the banner", "Above the footer · every other page",
+"Super Sale · under the page header", "Super Sale · thin delivery line at the top" (each Phone and laptop / Phone only / Laptop only / Off; all On),
+"Thin line wording · English / Arabic". The four items' words: Translation -> Strings, "trust_strip" (Arabic drafts await approval).
+No new script or request; kbb.css +537 B gzipped; product / category / brand queries unchanged (12 / 5 / 5).
+
 ## 2.60.456
 **Checkout: Payment and Place order as one card, reviews card off, section headings 2px
 larger; Cart Tracking at the top of the sidebar and in the owner app.** Apply after .455.
