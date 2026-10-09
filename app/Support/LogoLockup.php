@@ -21,18 +21,21 @@ namespace App\Support;
  *
  * On a phone the logo link is `flex:1` between the menu button and the icons,
  * so its width IS the room the row leaves it. kbb.css makes it an inline-size
- * container and sizes everything inside it in `cqi`, from three numbers this
- * class works out from the settings and the words:
+ * container and sizes everything inside it in `cqi`. The phone lockup is the
+ * desktop one, smaller: the big icon on the left, as tall as the name, the
+ * gap and the tagline together, and the name (ONE line, always -- the owner:
+ * "it should come in one line always in any case") over the tagline in a
+ * column beside it. One length, --u, scales the name, icon and gap; the
+ * tagline stays at its set size (never under 8px). The numbers:
  *
- *   r   from this many px of room up, the name is drawn at its set size with
- *       its full letter-spacing (.085em)
- *   c1  below r, the letter-spacing tightens to .04em and the name, icon and
- *       gap shrink together at c1 cqi per px of their set size, so the name
- *       stays on ONE line at any width (the owner: "the logo must not come in
- *       two lines. it should come in one line always in any case")
- *   wf  the tagline, which on a phone runs beneath the whole lockup, is
- *       drawn from this many px of room up at its full size and steps out
- *       below it; the one-line name always has priority
+ *   r   from this much room up: set sizes, full letter-spacing; below it the
+ *       name tightens to .04em and the tagline to -.03em
+ *   c1  the name, icon and gap shrink to the room at c1 cqi per px
+ *   wt  with the tagline drawn, the icon and gap get the room the tagline
+ *   b   leaves: u = (room - wt) * b
+ *   wf  the tagline is drawn from this much room up -- where the icon beside
+ *       it is still at least 75% of its size -- and steps out below, so the
+ *       icon stays big beside the one-line name
  *
  * The widths come from Outfit's own advances (ADVANCE, measured in Chromium
  * at 100px), so a name the owner retypes is fitted as well as the default one.
@@ -68,11 +71,15 @@ final class LogoLockup
 
     public const TRACK_TAG_PHONE = .04;
 
+    /** The tagline's letter-spacing on a phone too narrow for the one above. */
+    public const TRACK_TAG_TIGHT = -.03;
+
+    /** With the tagline beside it, the icon may shrink to this share of its size. */
+    private const ICON_MIN_WITH_TAG = .75;
+
     /** The space between "K-BEAUTY" and "BLISS", em of the name. */
     public const WORD_GAP = .24;
 
-    /** On a phone the tagline's rules may shrink to nothing; their .4em gaps stay. */
-    private const TAG_GAPS_PHONE = 2 * .4;
 
     /** The icon's viewBox, 780 x 582. */
     public const ICON_RATIO = 780 / 582;
@@ -140,23 +147,35 @@ final class LogoLockup
     }
 
     /**
+     * A phone's icon: the set number, or "auto" -- as tall as the name, the
+     * .3em gap and the 1.15 line of the tagline beside it, as on a computer.
+     */
+    public static function iconPhonePx(int $set, int $name, int $tag): int
+    {
+        return $set > 0 ? $set : (int) round($name + 1.45 * $tag);
+    }
+
+    /**
      * The phone fit numbers (see the class note). Every input is an integer
      * the schema has already clamped; every output is a plain number.
      *
-     * @return array{c1: float, r: float, wf: float}
+     * @return array{c1: float, r: float, wt: float, b: float, wf: float}
      */
     public static function fit(string $name, string $accent, string $tagline, bool $tagOn, int $size, int $icon, int $gap, int $tag): array
     {
-        $line = static fn (float $track): float => ($icon * self::ICON_RATIO + $gap
-            + $size * (self::em($name, $track) + self::WORD_GAP + self::em($accent, $track))) * self::SAFETY;
-        $tagW = $tagOn && $tagline !== '' ? $tag * (self::em($tagline, self::TRACK_TAG_PHONE) + self::TAG_GAPS_PHONE) : 0.0;
+        $side = $icon * self::ICON_RATIO + $gap;
+        $nameW = static fn (float $track): float => $size * (self::em($name, $track) + self::WORD_GAP + self::em($accent, $track));
+        $tagOn = $tagOn && $tagline !== '';
+        $tagWide = $tagOn ? $tag * self::em($tagline, self::TRACK_TAG_PHONE) : 0.0;
+        $tagTight = $tagOn ? $tag * self::em($tagline, self::TRACK_TAG_TIGHT) : 0.0;
 
         return [
-            'c1' => round(100 / $line(self::TRACK_NAME_TIGHT), 4),
-            'r' => round($line(self::TRACK_NAME), 1),
-            // Beneath the whole lockup, so it needs only its own width. No
-            // tagline: a threshold no phone reaches, so it is never drawn.
-            'wf' => $tagW > 0 ? round($tagW * self::SAFETY, 1) : 9999.0,
+            'c1' => round(100 / (($side + $nameW(self::TRACK_NAME_TIGHT)) * self::SAFETY), 4),
+            'r' => round(($side + max($nameW(self::TRACK_NAME), $tagWide)) * self::SAFETY, 1),
+            'wt' => round($tagTight * self::SAFETY, 1),
+            'b' => round(1 / ($side * self::SAFETY), 5),
+            // No tagline on a phone: a threshold no phone reaches.
+            'wf' => $tagOn ? round(($tagTight + self::ICON_MIN_WITH_TAG * $side) * self::SAFETY, 1) : 9999.0,
         ];
     }
 }

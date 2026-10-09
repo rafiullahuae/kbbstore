@@ -85,7 +85,7 @@ class HeaderSettings
                               '0 is auto: in proportion to the name (38px at a 22px name).',
                               ['min' => 0, 'max' => 64, 'step' => 1, 'unit' => 'px']],
         'logo_icon_m'     => ['range',  'Icon size · phone', 0,
-                              '0 is auto: in proportion to the phone name size.',
+                              '0 is auto: as tall as the name and the tagline beside it (26px at a 14px name).',
                               ['min' => 0, 'max' => 44, 'step' => 1, 'unit' => 'px']],
         'logo_tag_d'      => ['range',  'Tagline size · computer', 10, '',
                               ['min' => 8, 'max' => 16, 'step' => 1, 'unit' => 'px']],
@@ -726,9 +726,9 @@ class HeaderSettings
 
         $sizeD = (int) $c['logo_size'];
         $sizeM = (int) $c['logo_name_m'];
-        $iconM = \App\Support\LogoLockup::iconPx((int) $c['logo_icon_m'], $sizeM);
+        $iconM = \App\Support\LogoLockup::iconPhonePx((int) $c['logo_icon_m'], $sizeM, (int) $c['logo_tag_m']);
         $fit = \App\Support\LogoLockup::fit(
-            (string) $c['logo_text'], (string) $c['logo_accent'], $tag, $tag !== '',
+            (string) $c['logo_text'], (string) $c['logo_accent'], $tag, $tag !== '' && $c['logo_tag_m_on'] !== 'hide',
             $sizeM, $iconM, (int) $c['logo_gap_m'], (int) $c['logo_tag_m'],
         );
 
@@ -747,6 +747,8 @@ class HeaderSettings
             '--lg-ym' => (int) $c['logo_pad_y_m'],
             '--lg-c1' => $fit['c1'],
             '--lg-r' => $fit['r'],
+            '--lg-wt' => $fit['wt'],
+            '--lg-b' => $fit['b'],
             '--lg-wf' => $fit['wf'],
             '--lg-sh' => (int) $c['logo_shine'],
             '--lg-c' => $c['logo_colour'],
@@ -758,7 +760,7 @@ class HeaderSettings
         $style = [];
 
         foreach ($vars as $name => $value) {
-            $value = is_float($value) ? rtrim(rtrim(sprintf('%.4F', $value), '0'), '.') : (string) $value;
+            $value = is_float($value) ? rtrim(rtrim(sprintf('%.5F', $value), '0'), '.') : (string) $value;
 
             if ($value !== (self::LOCKUP_CSS_DEFAULTS[$name] ?? null)) {
                 $style[] = $name.':'.$value;
@@ -785,8 +787,8 @@ class HeaderSettings
      */
     public const LOCKUP_CSS_DEFAULTS = [
         '--lg-sd' => '22', '--lg-id' => '38', '--lg-gd' => '8', '--lg-td' => '10', '--lg-xd' => '0', '--lg-yd' => '0',
-        '--lg-sm' => '14', '--lg-im' => '24', '--lg-gm' => '5', '--lg-tm' => '8', '--lg-xm' => '0', '--lg-ym' => '0',
-        '--lg-c1' => '0.6165', '--lg-r' => '170.8', '--lg-wf' => '135.8', '--lg-sh' => '7',
+        '--lg-sm' => '14', '--lg-im' => '26', '--lg-gm' => '5', '--lg-tm' => '8', '--lg-xm' => '0', '--lg-ym' => '0',
+        '--lg-c1' => '0.606', '--lg-r' => '173.6', '--lg-wt' => '115', '--lg-b' => '0.0239', '--lg-wf' => '146.3', '--lg-sh' => '7',
         '--lg-c' => '#2A2228', '--lg-a' => '#C6395F', '--lg-p' => '#D94A76', '--lg-l' => '#E5567E',
     ];
 

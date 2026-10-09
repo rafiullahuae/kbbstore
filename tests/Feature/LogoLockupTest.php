@@ -273,25 +273,34 @@ it('keeps kbb.css\'s fallbacks and the server\'s defaults the same numbers', fun
 it('fits the default lockup on ONE line into the phone row the way Chromium measured it', function () {
     /*
      * The owner, on a 320 shot of a two-line stack: "the logo must not come in
-     * two lines. it should come in one line always in any case." And the
-     * tagline beneath the logo on phones from 360 up, at 8px or more.
+     * two lines. it should come in one line always in any case." And on the
+     * phone shots: "in mobile you placed different logo, i liked the icon big
+     * beside the title and text. in the desktop, you placed the correct one."
+     * So a phone draws the computer's lockup, smaller: the big icon beside a
+     * column of the one-line name over the tagline.
      *
      * The room the row leaves the logo, measured in Chromium with the default
      * header (tools/lg2-header.cjs): 138px at 360, 153 at 375, 168 at 390,
      * 208 at 430 -- and 128 at 320 and 108 at 300, after the row's own gaps
      * close to 4px and its buttons to 40px at 340px and under.
      *
-     * MUTATION: put `flex-wrap:wrap` back on .lgx-w, drop the 340px rule, or
-     * raise SAFETY so far that the tagline misses 360, and this is red.
+     * MUTATION: put `flex-wrap:wrap` back on .lgx-w, span the tagline under
+     * the icon (grid-column / display:contents), drop the 340px rule, or
+     * lower ICON_MIN_WITH_TAG so the tagline squeezes the icon at 360, and
+     * this is red.
      */
-    $fit = LogoLockup::fit('K-Beauty', 'Bliss', 'Korean Skincare & Makeup', true, 14, 24, 5, 8);
+    $icon = LogoLockup::iconPhonePx(0, 14, 8);
+    $fit = LogoLockup::fit('K-Beauty', 'Bliss', 'Korean Skincare & Makeup', true, 14, $icon, 5, 8);
+    expect($icon)->toBe(26);
 
     foreach ([300 => 108, 320 => 128, 360 => 138, 375 => 153, 390 => 168, 430 => 208] as $width => $room) {
-        $name = 14 * min(1, $room * $fit['c1'] / 100);
         $tag = $room >= $fit['wf'];
+        $u = min(1, $room * $fit['c1'] / 100, $tag ? ($room - $fit['wt']) * $fit['b'] : 1);
 
-        expect($name)->toBeGreaterThanOrEqual($width >= 320 ? 10.5 : 9.0, "{$width}px: the name drew at {$name}px")
-            ->and($tag)->toBe($width >= 360, "{$width}px: tagline");
+        expect(14 * $u)->toBeGreaterThanOrEqual($width >= 320 ? 10.5 : 9.0, "{$width}px: the name")
+            // The icon stays big: at least 75% of its size wherever the tagline is drawn.
+            ->and($tag ? $u >= 0.75 : true)->toBeTrue("{$width}px: the icon beside the tagline")
+            ->and($tag)->toBe($width >= 375, "{$width}px: tagline");
     }
 
     $css = lgCss();
@@ -299,14 +308,16 @@ it('fits the default lockup on ONE line into the phone row the way Chromium meas
 
     // One line, always: nowrap on the name and no wrapping rule anywhere.
     expect($flat)->toContain('.lgx .lgx-w{display:flex;flex-wrap:nowrap;white-space:nowrap;')
-        ->and($flat)->not->toContain('flex-wrap:wrap')
-        ->and($flat)->not->toContain('--lg-c2');
+        ->and($flat)->not->toContain('flex-wrap:wrap');
 
-    // The tagline is drawn on a phone by default: beneath the whole lockup,
-    // from a threshold the 360px room clears, at the 8px setting.
-    expect($flat)->toContain('.lgx .lgx-g{grid-row:2;grid-column:1/-1;gap:.4em;font-size:calc(var(--lg-tm,8) * 1px)')
-        ->and($flat)->toContain('font-size:clamp(0px,calc((100cqi - var(--lg-wf,'.HeaderSettings::LOCKUP_CSS_DEFAULTS['--lg-wf'].') * 1px) * 1000),calc(var(--lg-tm,8) * 1px))')
-        ->and((float) HeaderSettings::LOCKUP_CSS_DEFAULTS['--lg-wf'])->toBeLessThanOrEqual(138.0);
+    // On a phone the tagline is in the name's column, as on a computer: the
+    // column is never dissolved and nothing spans under the icon.
+    expect($flat)->not->toContain('display:contents')
+        ->and($flat)->not->toContain('grid-column')
+        ->and($flat)->not->toContain('display:grid')
+        ->and($flat)->toContain('.lgx .lgx-t{display:flex;flex-direction:column;')
+        ->and($flat)->toContain('font-size:clamp(0px,calc((100cqi - var(--lg-wf,'.HeaderSettings::LOCKUP_CSS_DEFAULTS['--lg-wf'].') * 1px) * 1000),calc(var(--lg-tm,8) * 1px))');
+    expect(lgPage('/'))->toContain('<b class="lgx-t"><bdi class="lgx-w">K-Beauty<em>Bliss</em></bdi><small class="lgx-g">');
 
     // The room it takes back at 340px and under, and no tap target under 40px.
     expect($flat)->toContain('@media (max-width:340px){')
@@ -334,6 +345,8 @@ it('hides the tagline on phones only with "Tagline on phones: Hide"', function (
     $html = lgPage('/');
 
     expect($html)->toContain('<a class="logo lgx lgx-nt"')
+        // The fit no longer makes room for it on a phone: the icon keeps its size.
+        ->and($html)->toContain('--lg-wf:9999')
         // Still in the page for a computer.
         ->and($html)->toContain('<small class="lgx-g">Korean Skincare &amp; Makeup</small>')
         ->and(preg_replace('#/\*.*?\*/#s', '', lgCss()))->toMatch('/@media \(max-width:900px\)\{[^@]*\.lgx-nt \.lgx-g\{display:none\}/');
@@ -355,5 +368,5 @@ it('draws the icon at whole pixels on a computer', function () {
 
     lgSet(['logo_size' => 23]);
     expect(app(HeaderSettings::class)->lockup()['style'])->toContain('--lg-id:40')
-        ->and(lgCss())->toContain('round(nearest,calc(var(--lg-im,24) * var(--u)),1px)');
+        ->and(lgCss())->toContain('round(nearest,calc(var(--lg-im,26) * var(--u)),1px)');
 });

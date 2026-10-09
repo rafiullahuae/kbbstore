@@ -1472,7 +1472,7 @@
             "key": "logo_icon_m",
             "type": "range",
             "label": "Icon size · phone",
-            "help": "0 is auto: in proportion to the phone name size.",
+            "help": "0 is auto: as tall as the name and the tagline beside it (26px at a 14px name).",
             "default": 0,
             "value": 0,
             "options": {
