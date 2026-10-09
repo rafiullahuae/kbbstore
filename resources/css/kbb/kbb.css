@@ -2884,6 +2884,20 @@ header{border-bottom:1px solid var(--line-2)}
 .kbb-home .policy-body th{color:var(--ink);font-weight:700}
 .kbb-home .policy-body blockquote{margin:0 0 16px;padding:2px 0 2px 16px;border-inline-start:3px solid var(--line-2)}
 .kbb-home .policy-date{margin-top:26px;padding-top:16px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--muted)}
+/* Lane AB — the owner's About us story ("input this text nicely"). Scoped to
+   .kbb-about, which only the about row's content carries; logical properties
+   only, so the Arabic shop's RTL fallback reads the same way round. */
+.kbb-home .policy-body .kbb-about{max-width:640px}
+.kbb-home .policy-body .kbb-about-eyebrow{margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--pink-deep)}
+.kbb-home .policy-body .kbb-about h2{margin:0 0 18px;padding:0;border:0;font-size:clamp(23px,2.4vw,30px);font-weight:800;letter-spacing:-.015em;text-transform:none;line-height:1.2;color:var(--ink)}
+.kbb-home .policy-body .kbb-about-lead{font-size:clamp(16.5px,1.5vw,18px);line-height:1.7;color:var(--ink)}
+.kbb-home .policy-body .kbb-about-facts{display:flex;flex-wrap:wrap;gap:10px;list-style:none;margin:2px 0 20px;padding:0}
+.kbb-home .policy-body .kbb-about-facts li{margin:0;padding:9px 16px;border:1px solid var(--blush);border-radius:99px;background:var(--pink-soft);color:var(--ink);font-size:13.5px;line-height:1.35}
+.kbb-home .policy-body .kbb-about-facts strong{color:var(--pink-deep)}
+.kbb-home .policy-body .kbb-about-close{margin:24px 0 0;padding:16px 18px;border-inline-start:3px solid var(--pink);border-start-end-radius:var(--r-s);border-end-end-radius:var(--r-s);background:var(--cream);color:var(--ink);font-weight:600}
+.kbb-home .policy-body .kbb-about-cta{margin:20px 0 0}
+.kbb-home .policy-body .kbb-about-cta a{display:inline-flex;align-items:center;min-height:44px;padding:0 26px;border-radius:99px;background:var(--pink);color:#fff;font-size:14px;font-weight:700;text-decoration:none}
+.kbb-home .policy-body .kbb-about-cta a:hover{background:var(--pink-deep)}
 
 
 /* Lane TP — Shipping & Delivery and Returns Information under the cart and

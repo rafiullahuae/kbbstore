@@ -1165,7 +1165,14 @@ it('changes no page by existing', function () {
      * MUTATION, RUN: have the clear_caches migration touch a page — a status, a
      * title, a seo default — and this is red.
      */
-    expect(Page::query()->count())->toBe(7)
+    /*
+     * Lane AB: 2027_10_15_110000_owner_about_us_story keeps the about page's
+     * previous wording as ONE draft row, `about-previous`, so the owner can get
+     * it back. It is never served (a draft), and this package still creates
+     * none: the seven routed pages are counted without it.
+     */
+    expect(Page::query()->where('slug', '!=', 'about-previous')->count())->toBe(7)
+        ->and(Page::query()->where('slug', 'about-previous')->value('status'))->toBe('draft')
         ->and(Page::query()->whereNotNull('seo')->count())->toBe(0);
 
     foreach (RoutedPages::paths() as $path) {

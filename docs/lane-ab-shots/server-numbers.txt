@@ -1,0 +1,7 @@
+Lane AB -- /about/, in-process kernel against the preview DB (storage/ab-logs/measure.sh, not committed)
+                 queries (cold/warm)   server ms (warm, 3 runs)   HTML bytes
+before           2 / 1                 10.0 10.2 10.2             66,141
+after            2 / 1                 9.7  8.9  9.6              66,942  (+801, the story itself)
+kbb.css (render-blocking, every page): 252,943 -> 254,426 bytes raw (+1,483); 43,884 -> 44,117 gzip (+233)
+No new request, no script; the only CSS file changed is kbb.css, which content pages already load.
+Rollback (migrate:rollback --step=1) on the preview served 66,141 bytes again, identical to before but CSRF tokens.
