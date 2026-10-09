@@ -3,6 +3,17 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.447
+**Parent categories also list their sub-categories' products; Instagram posts and reels by
+pasting their address.** Apply after .446. Runs its migrations. Hard refresh the shop.
+
+| Your request | Now |
+|---|---|
+| "all the products of sub categories should also show in the main parent category too, automatically. give this option on backend also" | ON now: a parent category page lists its own products and every sub-category's (any depth), each product once; counts, filters, sorting, pages and Arabic follow. Shop-wide: Appearance -> Site layout -> Product grid -> "Sub-category products on a parent category" (Include sub-categories / Only its own products). One category: Catalog -> Categories -> Edit -> "Sub-category products". Same number of database queries however big the tree |
+| "i want the embed functionality ... place the instagram post or video url ... without any api or login ... give me cards styles to choose from" | Content -> Instagram embeds: paste post or reel addresses; choose frame style (clean, soft, polaroid, ring), grid or slider, columns per device, how many show. Homepage row "Instagram embeds" (Appearance -> Homepage), or the shortcode [kbb_instagram_embeds] on any page. Nothing shows until you paste a post |
+
+Files: see the package's update.json.
+
 ## 2.60.446
 **Footer support icon, WhatsApp button steps aside from the footer strip, banner text
 box spacing, Firewall in tabs.** Apply after .445. Hard refresh the shop.

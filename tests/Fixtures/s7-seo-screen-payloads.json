@@ -2,7 +2,6 @@
     "settings": {
         "settings": {
             "seo_default_description": "Shop Korean skincare in the UAE \u2014 serums, creams, moisturisers and beauty devices from Korean beauty brands.",
-            "sitemap_images": "1",
             "gift_enabled": "1",
             "gift_fee": "1500",
             "canonical_host": "",
@@ -10,6 +9,7 @@
             "host_redirect_enabled": "0",
             "search_visibility": "public",
             "set_stock_mode": "members",
+            "sitemap_images": "1",
             "ga": "",
             "meta_pixel": "",
             "trust_authentic_title": "100% original",
@@ -49,11 +49,13 @@
                 "header_description": null,
                 "header_style": null,
                 "sold_out_mode": null,
+                "sub_products": null,
                 "header_layout": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
                 "children_count": 0,
+                "listed_count": 4,
                 "translations": {
                     "ar": {
                         "name": {
@@ -90,11 +92,13 @@
                 "header_description": null,
                 "header_style": null,
                 "sold_out_mode": null,
+                "sub_products": null,
                 "header_layout": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
                 "children_count": 0,
+                "listed_count": 4,
                 "translations": {
                     "ar": {
                         "name": {
@@ -131,11 +135,13 @@
                 "header_description": null,
                 "header_style": null,
                 "sold_out_mode": null,
+                "sub_products": null,
                 "header_layout": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
                 "children_count": 0,
+                "listed_count": 4,
                 "translations": {
                     "ar": {
                         "name": {
@@ -172,11 +178,13 @@
                 "header_description": null,
                 "header_style": null,
                 "sold_out_mode": null,
+                "sub_products": null,
                 "header_layout": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
                 "children_count": 0,
+                "listed_count": 4,
                 "translations": {
                     "ar": {
                         "name": {
@@ -213,11 +221,13 @@
                 "header_description": null,
                 "header_style": null,
                 "sold_out_mode": null,
+                "sub_products": null,
                 "header_layout": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
                 "children_count": 0,
+                "listed_count": 4,
                 "translations": {
                     "ar": {
                         "name": {
@@ -254,11 +264,13 @@
                 "header_description": null,
                 "header_style": null,
                 "sold_out_mode": null,
+                "sub_products": null,
                 "header_layout": null,
                 "products_count": 4,
                 "filed_count": 4,
                 "primary_count": 4,
                 "children_count": 0,
+                "listed_count": 4,
                 "translations": {
                     "ar": {
                         "name": {
@@ -292,7 +304,8 @@
                     "stale": false
                 }
             }
-        }
+        },
+        "sub_products_default": "include"
     },
     "brands": {
         "ok": true,
