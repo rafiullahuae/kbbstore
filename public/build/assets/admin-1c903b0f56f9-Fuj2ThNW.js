@@ -552,7 +552,7 @@
     page: 1,
     perPage: +(localStorage.getItem('kbb_ord_pp') || 50),
     search: '', filter: 'all', sort: 'newest',
-    from: '', to: '', totalMin: '', totalMax: '', payment: '',
+    from: '', to: '', totalMin: '', totalMax: '', payment: '', source: '',
     adv: false, colsOpen: false, cols: null, data: null, err: null, sel: {}, busy: false,
     /* Lane ORD: the status picked in "Set status to…" and waiting for Proceed,
        the request in flight, and the one-line answer drawn where the bar was. */
@@ -561,7 +561,7 @@
 
   var OL_COLDEF = [
     ['status', 'Status'], ['items', 'Items'], ['total', 'Total'], ['refunded', 'Refunded'],
-    ['payment', 'Payment'], ['placed', 'Placed'], ['location', 'City'],
+    ['payment', 'Payment'], ['source', 'Source'], ['placed', 'Placed'], ['location', 'City'],
     ['contact', 'Phone'], ['wc', 'Woo ID']
   ];
 
@@ -571,7 +571,7 @@
      every page load. */
   var OL_COLS_DEFAULT = {
     status: true, items: true, total: true, refunded: false,
-    payment: true, placed: true, location: false, contact: false, wc: false
+    payment: true, source: true, placed: true, location: false, contact: false, wc: false
   };
 
   /* Which sort each sortable header maps to, so the header caret and the Sort
@@ -619,6 +619,7 @@
     if(OL.totalMin !== '') p.set('total_min', OL.totalMin);
     if(OL.totalMax !== '') p.set('total_max', OL.totalMax);
     if(OL.payment) p.set('payment', OL.payment);
+    if(OL.source) p.set('source', OL.source);
     return p.toString();
   }
 
@@ -718,6 +719,7 @@
     if(OL.from || OL.to) n++;
     if(OL.totalMin !== '' || OL.totalMax !== '') n++;
     if(OL.payment) n++;
+    if(OL.source) n++;
     return n;
   }
 
@@ -908,6 +910,10 @@
         '<div class="fld" style="margin:0"><label>Payment</label><select id="olPayment"><option value="">Any payment method</option>' +
           Object.keys(methods).sort().map(function(k){ return '<option value="' + sesc(k) + '"' + (OL.payment === k ? ' selected' : '') + '>' + sesc(methods[k]) + '</option>'; }).join('') +
         '</select></div>' +
+        /* Source (Lane AN): where the order came from, from analytics. */
+        '<div class="fld" style="margin:0"><label>Source</label><select id="olSource"><option value="">Any source</option>' +
+          Object.keys(d.sources || {}).map(function(k){ return '<option value="' + sesc(k) + '"' + (OL.source === k ? ' selected' : '') + '>' + sesc(d.sources[k]) + '</option>'; }).join('') +
+        '</select></div>' +
       '</div>' +
       '<div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap"><button class="btn sm" id="olApply">Apply filters</button>' +
       '<button class="btn ghost sm" id="olClearFilters">Clear all</button>' +
@@ -985,6 +991,10 @@
       case 'refunded':
         return '<td class="odlnum" style="text-align:right;color:' + (o.refunded_fils ? 'var(--red)' : 'var(--ink-faint)') + '">' +
           (o.refunded_fils ? sesc(o.refunded_display) : '—') + '</td>';
+      case 'source':
+        /* Lane AN: "Instagram Ads · eid_sale"; Unknown for orders before analytics, imports and manual ones. */
+        return '<td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + sesc(o.source || 'Unknown') + '">' +
+          '<span class="chip" style="cursor:default;font-size:11.5px;padding:2px 8px;display:inline-block;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle' + (o.source_key ? '' : ';opacity:.6') + '">' + sesc(o.source || 'Unknown') + '</span></td>';
       case 'payment':
         return '<td style="font-size:12px">' + olDash(o.payment) +
           (o.captured ? '<div class="pbrand">captured</div>' : '') + '</td>';
@@ -1147,12 +1157,13 @@
       OL.from = (byId('olFrom') || {}).value || '';
       OL.to = (byId('olTo') || {}).value || '';
       OL.payment = (byId('olPayment') || {}).value || '';
+      OL.source = (byId('olSource') || {}).value || '';
       OL.page = 1; olLoad();
     };
 
     var clearAll = function(){
       OL.totalMin = ''; OL.totalMax = ''; OL.from = ''; OL.to = '';
-      OL.payment = ''; OL.search = ''; OL.filter = 'all';
+      OL.payment = ''; OL.source = ''; OL.search = ''; OL.filter = 'all';
       OL.page = 1; olLoad();
     };
     var clearBtn = byId('olClearFilters'); if(clearBtn) clearBtn.onclick = clearAll;
@@ -1960,6 +1971,17 @@
   function odAttributionCard(o){
     var a = o.attribution||{};
     var na = '<span style="color:var(--ink-faint)">Not tracked yet</span>';
+    /* Lane AN: where the order came from, recorded by analytics at checkout. */
+    var sv = o.source||{};
+    if(sv.known){
+      var fld = function(l, v){ return '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">'+l+'</label><div style="font-size:13px">'+(v?sesc(v):'<span style="color:var(--ink-faint)">—</span>')+'</div></div>'; };
+      var tch = function(t){ return t ? [t.channel, t.source && t.source !== t.channel.toLowerCase() ? t.source : '', t.medium, t.campaign, t.click].filter(Boolean).join(' · ') : ''; };
+      return '<div class="odcard" style="margin-bottom:14px" id="odAttr">'+odCardHead('Source')+'<div class="pad" style="padding:18px 20px">'+
+        fld('SOURCE', sv.chip)+fld('LAST TOUCH', tch(sv.last))+fld('FIRST TOUCH', tch(sv.first))+
+        fld('LANDING PAGE', sv.first && sv.first.landing ? (function(p){ try{ return decodeURIComponent(p); }catch(x){ return p; } })(sv.first.landing) : '')+
+        '<div class="odfld" style="margin-bottom:0"><label style="font-weight:700;color:var(--ink-faint)">TIME TO ORDER</label><div style="font-size:13px">'+(sv.days==null?'—':sv.days===0?'Same day':sv.days+' day'+(sv.days===1?'':'s')+' after the first visit')+'</div></div>'+
+        '</div></div>';
+    }
     return '<div class="odcard" style="margin-bottom:14px" id="odAttr">'+odCardHead('Order attribution')+'<div class="pad" style="padding:18px 20px">'+
       '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">SOURCE</label><div style="font-size:13px">'+(a.origin?sesc(a.origin):na)+'</div></div>'+
       '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">DEVICE TYPE</label><div style="font-size:13px">'+(a.device_type?sesc(a.device_type):na)+'</div></div>'+
