@@ -3385,7 +3385,7 @@ const TITLES={'mkt-email':['Growth & Marketing','Marketing Emails'],dash:['Overv
    safe. Breadcrumbs match what each partial's own go() writes into #crumb and
    #ptitle, because two answers for one screen is how a heading ends up
    disagreeing with the page under it. */
-'ugcsections':['Content','Shoppable video'],'ugcvideo':['Content','All clips'],'ugcstyle':['Appearance','Video rail'],'instagram':['Content','Instagram'],'sets':['Catalog','Sets'],'product-tabs':['Catalog','Product tabs'],'pagination':['Catalog','Pagination'],'ownerapp':['App','Owner App'],'banners':['Appearance','Banners'],'setap':['Appearance','Set'],
+'ugcsections':['Content','Shoppable video'],'ugcvideo':['Content','All clips'],'ugcstyle':['Appearance','Video rail'],'instagram':['Content','Instagram'],'igembeds':['Content','Instagram embeds'],'sets':['Catalog','Sets'],'product-tabs':['Catalog','Product tabs'],'pagination':['Catalog','Pagination'],'ownerapp':['App','Owner App'],'banners':['Appearance','Banners'],'setap':['Appearance','Set'],
 /* And the seven the new guard found alongside them, every one with a sidebar row
    the owner clicks every day and no deep link at all: a link to any of these
    opened the dashboard. Same fix, same condition, and the strings are copied
@@ -8519,7 +8519,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    set's condition — its partial wraps window.go and calls render() before
    load(), synchronously, so the replay's marker inside #content is destroyed
    before the task runs. */
-const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','notfoundpage']);
+const LATE_RENDERED=new Set(['cartpanel','push','media','tax','comingsoon','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent','ugcvideo','ugcsections','ugcstyle','instagram','igembeds','sets','product-tabs','pagination','ownerapp','banners','setap','cache','domainswitch','cartpage','checkoutpage','routines','imageseo','security','firewall','paygw','sitelayout','slimfooter','gridsections','pagewash','wabutton','searchterms','merchantfeed','carttracking','seokeywords','pagebanners','emails','pageheader','emails-sending','emails-branding','emails-sent','emails-customer','emails-edit','siteapp','spotted','mkt-email','notfoundpage']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -24375,6 +24375,10 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
      That opt-in needs `frame-src` widened by one host — docs/IG-PROFILE.md §3 has
      the exact line — and the setting ships at the value that needs nothing. --}}
 @include('admin.partials.instagram-screen')
+{{-- Content → Instagram embeds (Lane IGE): paste post and reel addresses, the shop
+     draws Instagram's own embed. Wraps window.go for 'igembeds'; its sidebar row is
+     App\Support\AdminNav's. Endpoints: routes/ig-embeds-admin.php, `igembeds.manage`. --}}
+@include('admin.partials.ig-embeds-screen')
 @include('admin.partials.sets-screen')
 @include('admin.partials.product-tabs-screen')
 {{-- Catalog -> Pagination (Lane PG): the global switch and the per-listing overrides. It wraps window.go for 'pagination'; its sidebar row is the LATE_NAV entry. --}}

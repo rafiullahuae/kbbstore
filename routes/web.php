@@ -853,6 +853,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/instagram-admin.php';
         require __DIR__.'/spotted-admin.php';   // Appearance → #KBeautyBliss Spotted (Lane HB)
+        require __DIR__.'/ig-embeds-admin.php';   // Content → Instagram embeds (Lane IGE), `igembeds.manage`
 
         // Content → Media Library → "Make phone-sized copies": the tally, and
         // the bounded batch that walks the existing catalogue making the
